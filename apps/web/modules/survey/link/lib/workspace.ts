@@ -4,6 +4,7 @@ import { prisma } from "@formbricks/database";
 import { Prisma, Workspace } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
+import type { TCustomCssStored } from "@formbricks/types/custom-css";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TOrganizationBilling, TOrganizationWhitelabel } from "@formbricks/types/organizations";
 import { validateInputs } from "@/lib/utils/validate";
@@ -15,6 +16,11 @@ type TWorkspaceForLinkSurvey = Pick<
 
 export interface TWorkspaceContextForLinkSurvey {
   workspace: TWorkspaceForLinkSurvey;
+  /**
+   * Stored workspace custom CSS (ENG-3552), source included. Deliberately NOT on `workspace`, which is
+   * handed to client components as a whole; only its compiled form reaches the browser.
+   */
+  customCss: TCustomCssStored | null;
   organizationId: string;
   organizationBilling: TOrganizationBilling;
   organizationWhitelabel: TOrganizationWhitelabel | null;
@@ -44,6 +50,7 @@ export const getWorkspaceContextForLinkSurvey = reactCache(
           logo: true,
           linkSurveyBranding: true,
           customHeadScripts: true,
+          customCss: true,
           organizationId: true,
           organization: {
             select: {
@@ -83,6 +90,7 @@ export const getWorkspaceContextForLinkSurvey = reactCache(
           linkSurveyBranding: workspace.linkSurveyBranding,
           customHeadScripts: workspace.customHeadScripts,
         },
+        customCss: (workspace.customCss as TCustomCssStored | null) ?? null,
         organizationId: workspace.organizationId,
         organizationBilling: {
           stripeCustomerId: workspace.organization.billing.stripeCustomerId,

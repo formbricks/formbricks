@@ -10,6 +10,7 @@ const appSurvey = {
   displayLimit: 3,
   recontactDays: 7,
   autoClose: 30,
+  keepEndingCardOpen: true,
   autoComplete: 100,
   delay: 5,
   triggers: [{ actionClass: { id: "claa1234567890123456789012" } }],
@@ -24,10 +25,43 @@ describe("surveyToV3Distribution", () => {
       displayLimit: 3,
       recontactDays: 7,
       autoClose: 30,
+      keepEndingCardOpen: true,
       autoComplete: 100,
       delay: 5,
+      showConditions: null,
       triggers: [{ actionClassId: "claa1234567890123456789012" }],
     });
+  });
+
+  test("returns stored show conditions as they are", () => {
+    const showConditions = {
+      id: "grp1",
+      connector: "and",
+      conditions: [
+        {
+          id: "cnd1",
+          leftOperand: { type: "visit", value: "pagesViewed" },
+          operator: "isGreaterThanOrEqual",
+          rightOperand: { type: "static", value: 3 },
+        },
+      ],
+    };
+
+    expect(
+      surveyToV3Distribution({ ...appSurvey, showConditions } as unknown as TSurvey).showConditions
+    ).toEqual(showConditions);
+  });
+
+  test("leaves out a condition a draft has not filled in yet", () => {
+    const showConditions = {
+      id: "grp1",
+      connector: "and",
+      conditions: [{ id: "cnd1", leftOperand: { type: "visit", value: "pagesViewed" }, operator: "equals" }],
+    };
+
+    expect(
+      surveyToV3Distribution({ ...appSurvey, showConditions } as unknown as TSurvey).showConditions
+    ).toBeNull();
   });
 
   test("clamps legacy out-of-bounds values to schema-valid ones so reconstruction never fails", () => {
@@ -60,8 +94,10 @@ describe("v3DistributionToScalars", () => {
       displayLimit: null,
       recontactDays: null,
       autoClose: null,
+      keepEndingCardOpen: false,
       autoComplete: null,
       delay: 0,
+      showConditions: null,
       triggers: [{ actionClassId: "claa1234567890123456789012" }],
     };
 
@@ -74,8 +110,10 @@ describe("v3DistributionToScalars", () => {
       displayLimit: null,
       recontactDays: null,
       autoClose: null,
+      keepEndingCardOpen: false,
       autoComplete: null,
       delay: 0,
+      showConditions: null,
     });
   });
 });

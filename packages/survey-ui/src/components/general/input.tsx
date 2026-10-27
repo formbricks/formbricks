@@ -1,4 +1,5 @@
 import * as React from "react";
+import { FB_PART } from "@/lib/parts";
 import { cn } from "@/lib/utils";
 
 interface InputProps extends React.ComponentProps<"input"> {
@@ -19,6 +20,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(function Input(
         type={type}
         dir={dir}
         data-slot="input"
+        data-fb-part={FB_PART.input}
         className={cn(
           // Layout and behavior
           "flex min-w-0 border transition-[color,box-shadow] outline-none",

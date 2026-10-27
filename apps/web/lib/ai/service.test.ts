@@ -1,4 +1,6 @@
+import { LEAKY_AI_ERRORS, buildRetryError, findPlantedContent } from "@/lib/ai/__mocks__/leaky-ai-errors";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { z } from "zod";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   assertOrganizationAIConfigured,
@@ -25,13 +27,18 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("server-only", () => ({}));
 
-vi.mock("@formbricks/ai", () => ({
+vi.mock("@formbricks/ai", async (importOriginal) => ({
+  // Real: the service and its log helper only check `instanceof` against it.
+  AIOAuthTokenError: (await importOriginal<typeof import("@formbricks/ai")>()).AIOAuthTokenError,
   AIConfigurationError: class AIConfigurationError extends Error {
     code: string;
+    details: Record<string, unknown>;
 
-    constructor(code: string, message: string) {
+    constructor(code: string, message: string, details: Record<string, unknown> = {}) {
       super(message);
+      this.name = "AIConfigurationError";
       this.code = code;
+      this.details = details;
     }
   },
   AIOutputTokenLimitError: class AIOutputTokenLimitError extends Error {
@@ -234,7 +241,7 @@ describe("AI organization service", () => {
     });
   });
 
-  test("logs and rethrows generation errors", async () => {
+  test("logs generation errors by name and frames, never the message, and rethrows them", async () => {
     const modelError = new Error("provider boom");
     mocks.generateText.mockRejectedValueOnce(modelError);
 
@@ -253,13 +260,14 @@ describe("AI organization service", () => {
         isQuotaExhausted: undefined,
         isRetryable: undefined,
         isAuthFailure: undefined,
-        err: modelError,
+        errName: "Error",
+        errStack: expect.stringMatching(/^ +at \S.*(?:\n +at \S.*)*$/),
       },
       "Failed to generate organization AI text"
     );
   });
 
-  test("logs and rethrows object generation errors", async () => {
+  test("logs object generation errors by name and frames, never the message, and rethrows them", async () => {
     const modelError = new Error("provider boom");
     mocks.generateObject.mockRejectedValueOnce(modelError);
 
@@ -279,7 +287,8 @@ describe("AI organization service", () => {
         isQuotaExhausted: undefined,
         isRetryable: undefined,
         isAuthFailure: undefined,
-        err: modelError,
+        errName: "Error",
+        errStack: expect.stringMatching(/^ +at \S.*(?:\n +at \S.*)*$/),
       },
       "Failed to generate organization AI object"
     );
@@ -305,6 +314,70 @@ describe("AI organization service", () => {
       { organizationId: "org_1", ...details },
       "Failed to generate organization AI object: output token limit reached"
     );
+  });
+
+  test("warns rather than logging an error when a call runs out of its own timeout, with the same fields", async () => {
+    const timeoutError = new DOMException("The operation timed out.", "TimeoutError");
+    mocks.generateObject.mockRejectedValueOnce(timeoutError);
+
+    await expect(
+      generateOrganizationAIObject({
+        organizationId: "org_1",
+        schema: z.object({}),
+        prompt: "Plan this import",
+        timeout: 45_000,
+      })
+    ).rejects.toBe(timeoutError);
+    expect(mocks.loggerError).not.toHaveBeenCalled();
+    expect(mocks.loggerWarn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organizationId: "org_1",
+        isInstanceConfigured: true,
+        errName: "TimeoutError",
+      }),
+      "Failed to generate organization AI object"
+    );
+    expect(JSON.stringify(mocks.loggerWarn.mock.calls)).not.toContain("The operation timed out.");
+  });
+
+  test("does not log an abort when the caller's own signal fired, even with a timeout set", async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const abortError = new DOMException("This operation was aborted", "AbortError");
+    mocks.generateObject.mockRejectedValueOnce(abortError);
+
+    await expect(
+      generateOrganizationAIObject({
+        organizationId: "org_1",
+        schema: z.object({}),
+        prompt: "Plan this import",
+        timeout: 45_000,
+        abortSignal: controller.signal,
+      })
+    ).rejects.toBe(abortError);
+    expect(mocks.loggerError).not.toHaveBeenCalled();
+    expect(mocks.loggerWarn).not.toHaveBeenCalled();
+  });
+
+  test("warns about an abort the caller did not make: its timeout firing during the SDK's retry backoff", async () => {
+    const abortError = new DOMException("Delay was aborted", "AbortError");
+    mocks.generateObject.mockRejectedValueOnce(abortError);
+
+    await expect(
+      generateOrganizationAIObject({
+        organizationId: "org_1",
+        schema: z.object({}),
+        prompt: "Plan this import",
+        timeout: 45_000,
+        abortSignal: new AbortController().signal,
+      })
+    ).rejects.toBe(abortError);
+    expect(mocks.loggerError).not.toHaveBeenCalled();
+    expect(mocks.loggerWarn).toHaveBeenCalledWith(
+      expect.objectContaining({ organizationId: "org_1", errName: "AbortError" }),
+      "Failed to generate organization AI object"
+    );
+    expect(JSON.stringify(mocks.loggerWarn.mock.calls)).not.toContain("Delay was aborted");
   });
 
   test("converts a provider 429 from text generation into a TooManyRequestsError", async () => {
@@ -363,21 +436,168 @@ describe("AI organization service", () => {
     ).rejects.toBe(serverError);
   });
 
-  describe("streamOrganizationAIObject", () => {
-    // Cast rather than `any`: `@formbricks/ai` is mocked here, so the schema is never read — but the
-    // input type still requires one.
-    const streamInput = () =>
-      ({ organizationId: "org_1", prompt: "Generate", schema: { type: "object" } }) as unknown as Parameters<
-        typeof streamOrganizationAIObject
-      >[0];
-
-    const streamResult = (completion: Promise<unknown>) => {
-      // The service hands this promise back untouched; keep it handled so a rejection asserted on
-      // later does not surface as an unhandled rejection first.
-      completion.catch(() => undefined);
-      return { partialObjectStream: {}, completion };
+  describe("a caller that retries itself (`maxRetries: 0`)", () => {
+    const failWith = async (
+      statusCode: number,
+      isRetryable: boolean,
+      maxRetries: number | undefined,
+      isAuthFailure = false
+    ) => {
+      const providerError = new Error(`provider ${statusCode}`);
+      mocks.generateObject.mockRejectedValueOnce(providerError);
+      mocks.classifyAIProviderError.mockReturnValue({
+        isQuotaExhausted: false,
+        isRetryable,
+        isAuthFailure,
+        statusCode,
+      });
+      await expect(
+        generateOrganizationAIObject({
+          organizationId: "org_1",
+          schema: z.object({}),
+          prompt: "Plan this import",
+          timeout: 45_000,
+          ...(maxRetries === undefined ? {} : { maxRetries }),
+        })
+      ).rejects.toBe(providerError);
     };
 
+    test("warns about a retryable failure: one attempt of its own retry policy is not an incident", async () => {
+      await failWith(503, true, 0);
+
+      expect(mocks.loggerError).not.toHaveBeenCalled();
+      expect(mocks.loggerWarn).toHaveBeenCalledWith(
+        expect.objectContaining({ organizationId: "org_1", statusCode: 503, isRetryable: true }),
+        "Failed to generate organization AI object"
+      );
+      expect(JSON.stringify(mocks.loggerWarn.mock.calls)).not.toContain("provider 503");
+    });
+
+    test("still logs a failure it will not retry as an error", async () => {
+      await failWith(401, false, 0, true);
+
+      expect(mocks.loggerWarn).not.toHaveBeenCalled();
+      expect(mocks.loggerError).toHaveBeenCalledWith(
+        expect.objectContaining({ statusCode: 401, isAuthFailure: true }),
+        "Failed to generate organization AI object"
+      );
+    });
+
+    test("leaves a caller that keeps the SDK's retries as it was: a 503 is an error", async () => {
+      await failWith(503, true, undefined);
+
+      expect(mocks.loggerWarn).not.toHaveBeenCalled();
+      expect(mocks.loggerError).toHaveBeenCalledWith(
+        expect.objectContaining({ statusCode: 503 }),
+        "Failed to generate organization AI object"
+      );
+    });
+  });
+
+  // Casts rather than `any`: `@formbricks/ai` is mocked here, so the schema is never read — but the input
+  // types still require a real one.
+  const objectInput = () =>
+    ({
+      organizationId: "org_1",
+      schema: { type: "object" },
+      prompt: "Generate a survey",
+    }) as unknown as Parameters<typeof generateOrganizationAIObject>[0];
+
+  const streamInput = () =>
+    ({ organizationId: "org_1", prompt: "Generate", schema: { type: "object" } }) as unknown as Parameters<
+      typeof streamOrganizationAIObject
+    >[0];
+
+  const streamResult = (completion: Promise<unknown>) => {
+    // The service hands this promise back untouched; keep it handled so a rejection asserted on
+    // later does not surface as an unhandled rejection first.
+    completion.catch(() => undefined);
+    return { partialObjectStream: {}, completion };
+  };
+
+  test("logs which part of the AI configuration is wrong by field name, never the message", async () => {
+    const { AIConfigurationError } = await import("@formbricks/ai");
+    const configurationError = new AIConfigurationError(
+      "providerNotConfigured",
+      "AWS Bedrock credentials are incomplete",
+      { provider: "aws", missingFields: ["AI_AWS_REGION"] }
+    );
+    mocks.generateObject.mockRejectedValueOnce(configurationError);
+
+    await expect(generateOrganizationAIObject(objectInput())).rejects.toBe(configurationError);
+
+    const [logged] = mocks.loggerError.mock.calls[0];
+    expect(logged).toMatchObject({
+      errorCode: "providerNotConfigured",
+      configuration: { provider: "aws", missingFields: ["AI_AWS_REGION"] },
+      errName: "AIConfigurationError",
+    });
+    expect(JSON.stringify(logged)).not.toContain("credentials are incomplete");
+  });
+
+  // ENG-3720: an AI SDK error carries the prompt (`requestBodyValues`, once per retry attempt) and the
+  // model's output (`text`, `value`, and the messages built from them). The failure log must locate and
+  // classify the failure without any of it — and the caller still gets the original error to branch on.
+  describe("never logs what the AI call carried", () => {
+    beforeEach(async () => {
+      const actual = await vi.importActual<typeof import("@formbricks/ai")>("@formbricks/ai");
+      mocks.classifyAIProviderError.mockImplementation(actual.classifyAIProviderError);
+    });
+
+    const expectCleanFailureLog = (error: Error) => {
+      expect(mocks.loggerError).toHaveBeenCalledTimes(1);
+      expect(mocks.loggerError.mock.calls[0][0]).toMatchObject({
+        organizationId: "org_1",
+        errName: error.name,
+        errStack: expect.stringMatching(/^ +at \S.*(?:\n +at \S.*)*$/),
+      });
+      expect(findPlantedContent([mocks.loggerError.mock.calls, mocks.loggerWarn.mock.calls])).toBeUndefined();
+    };
+
+    test.each(LEAKY_AI_ERRORS)("text generation failing with %s", async (_, build) => {
+      const error = build();
+      mocks.generateText.mockRejectedValueOnce(error);
+
+      await expect(
+        generateOrganizationAIText({ organizationId: "org_1", prompt: "Translate this survey" })
+      ).rejects.toBe(error);
+      expectCleanFailureLog(error);
+    });
+
+    test.each(LEAKY_AI_ERRORS)("object generation failing with %s", async (_, build) => {
+      const error = build();
+      mocks.generateObject.mockRejectedValueOnce(error);
+
+      await expect(generateOrganizationAIObject(objectInput())).rejects.toBe(error);
+      expectCleanFailureLog(error);
+    });
+
+    test.each(LEAKY_AI_ERRORS)("a streamed generation whose completion fails with %s", async (_, build) => {
+      const error = build();
+      mocks.streamObject.mockReturnValueOnce(streamResult(Promise.reject(error)));
+
+      const result = await streamOrganizationAIObject(streamInput());
+
+      await expect(result.completion).rejects.toBe(error);
+      expectCleanFailureLog(error);
+    });
+
+    test("keeps the provider status and the retry outcome in the log", async () => {
+      mocks.generateObject.mockRejectedValueOnce(buildRetryError());
+
+      await expect(generateOrganizationAIObject(objectInput())).rejects.toThrow();
+
+      expect(mocks.loggerError.mock.calls[0][0]).toMatchObject({
+        statusCode: 500,
+        isRetryable: true,
+        retryReason: "maxRetriesExceeded",
+        retryAttempts: 3,
+        lastErrName: "AI_APICallError",
+      });
+    });
+  });
+
+  describe("streamOrganizationAIObject", () => {
     test("a cancelled generation is not an error: no error log, and the rejection is untouched", async () => {
       // Stop and tab-close both land here. Logging them at error level pages someone for a user
       // doing exactly what the button offers.

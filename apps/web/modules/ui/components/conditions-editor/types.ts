@@ -50,4 +50,9 @@ export interface TConditionsEditorConfig<T extends TGenericCondition = TGenericC
    * combobox described by `getValueProps`, `null` to render nothing (a valueless operator).
    */
   renderValueInput?: (condition: T) => ReactNode | undefined;
+  /**
+   * Whether a condition at this nesting depth (0 = the top level) may be wrapped in a new group.
+   * Omitted means always, as long as `onCreateGroup` is given; a caller with a depth limit says no here.
+   */
+  canCreateGroup?: (depth: number) => boolean;
 }

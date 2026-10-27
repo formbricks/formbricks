@@ -35,27 +35,27 @@
       "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/cache#build": {
-      "dependsOn": ["@formbricks/logger#build", "^build"],
+      "dependsOn": ["@formbricks/logger#build", "^build", "@formbricks/redis-config#build"],
       "outputs": ["dist/**"]
     },
     "@formbricks/cache#go": {
       "cache": false,
-      "dependsOn": ["@formbricks/logger#build"],
+      "dependsOn": ["@formbricks/logger#build", "@formbricks/redis-config#build"],
       "persistent": true
     },
     "@formbricks/cache#lint": {
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": ["@formbricks/logger#build", "@formbricks/redis-config#build"]
     },
     "@formbricks/cache#test": {
       "cache": false,
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": ["@formbricks/logger#build", "@formbricks/redis-config#build"]
     },
     "@formbricks/cache#test:coverage": {
       "cache": false,
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": ["@formbricks/logger#build", "@formbricks/redis-config#build"]
     },
     "@formbricks/cache#typecheck": {
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": ["@formbricks/logger#build", "@formbricks/redis-config#build"]
     },
     "@formbricks/database#build": {
       "dependsOn": ["^build", "@formbricks/database#generate"],
@@ -82,11 +82,13 @@
     },
     "@formbricks/database#test": {
       "cache": false,
-      "dependsOn": ["@formbricks/i18n-utils#build"]
+      "dependsOn": ["@formbricks/i18n-utils#build"],
+      "env": ["ONLINE_UPGRADE_TEST_DATABASE_URL"]
     },
     "@formbricks/database#test:coverage": {
       "cache": false,
-      "dependsOn": ["@formbricks/i18n-utils#build"]
+      "dependsOn": ["@formbricks/i18n-utils#build"],
+      "env": ["ONLINE_UPGRADE_TEST_DATABASE_URL"]
     },
     "@formbricks/database#typecheck": {
       "dependsOn": ["@formbricks/logger#build", "@formbricks/database#build"]
@@ -103,26 +105,34 @@
       "dependsOn": ["@formbricks/i18n-utils#build"]
     },
     "@formbricks/jobs#build": {
-      "dependsOn": ["@formbricks/logger#build"],
+      "dependsOn": ["@formbricks/logger#build", "@formbricks/redis-config#build"],
       "outputs": ["dist/**"]
     },
     "@formbricks/jobs#lint": {
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": ["@formbricks/logger#build", "@formbricks/redis-config#build"]
     },
     "@formbricks/jobs#test": {
       "cache": false,
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": ["@formbricks/logger#build", "@formbricks/redis-config#build"],
+      "env": ["ONLINE_UPGRADE_TEST_REDIS_URL"],
+      "passThroughEnv": ["REDIS_TLS_CA"]
     },
     "@formbricks/jobs#test:coverage": {
       "cache": false,
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": ["@formbricks/logger#build", "@formbricks/redis-config#build"],
+      "env": ["ONLINE_UPGRADE_TEST_REDIS_URL"],
+      "passThroughEnv": ["REDIS_TLS_CA"]
     },
     "@formbricks/jobs#typecheck": {
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": ["@formbricks/logger#build", "@formbricks/redis-config#build"]
     },
     "@formbricks/js-core#build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", "$TURBO_ROOT$/apps/web/public/js/formbricks.*"]
+      "outputs": [
+        "dist/**",
+        "$TURBO_ROOT$/apps/web/public/js/formbricks.*",
+        "$TURBO_ROOT$/apps/web/public/js/formbricks-debug.*"
+      ]
     },
     "@formbricks/js-core#go": {
       "cache": false,
@@ -206,7 +216,8 @@
         "@formbricks/database#build",
         "@formbricks/jobs#build",
         "@formbricks/logger#build",
-        "@formbricks/storage#build"
+        "@formbricks/storage#build",
+        "@formbricks/redis-config#build"
       ],
       "persistent": true
     },
@@ -219,7 +230,8 @@
         "@formbricks/database#db:setup",
         "@formbricks/jobs#build",
         "@formbricks/logger#build",
-        "@formbricks/storage#build"
+        "@formbricks/storage#build",
+        "@formbricks/redis-config#build"
       ],
       "persistent": true
     },
@@ -232,8 +244,10 @@
         "@formbricks/storage#build",
         "@formbricks/cache#build",
         "@formbricks/jobs#build",
-        "@formbricks/surveys#build"
-      ]
+        "@formbricks/surveys#build",
+        "@formbricks/redis-config#build"
+      ],
+      "passThroughEnv": ["REDIS_TLS_TEST_URL", "REDIS_TLS_CA", "NODE_TLS_REJECT_UNAUTHORIZED"]
     },
     "@formbricks/web#test:coverage": {
       "cache": false,
@@ -244,8 +258,10 @@
         "@formbricks/storage#build",
         "@formbricks/cache#build",
         "@formbricks/jobs#build",
-        "@formbricks/surveys#build"
-      ]
+        "@formbricks/surveys#build",
+        "@formbricks/redis-config#build"
+      ],
+      "passThroughEnv": ["REDIS_TLS_TEST_URL", "REDIS_TLS_CA", "NODE_TLS_REJECT_UNAUTHORIZED"]
     },
     "@formbricks/web#typecheck": {
       "dependsOn": [
@@ -256,7 +272,8 @@
         "@formbricks/jobs#build",
         "@formbricks/logger#build",
         "@formbricks/storage#build",
-        "@formbricks/surveys#build"
+        "@formbricks/surveys#build",
+        "@formbricks/redis-config#build"
       ]
     },
     "@formbricks/workflows#build": {
@@ -318,6 +335,7 @@
         "PROMETHEUS_ENABLED",
         "PROMETHEUS_EXPORTER_PORT",
         "REDIS_URL",
+        "REDIS_TLS_CA",
         "S3_ACCESS_KEY",
         "S3_BUCKET_NAME",
         "S3_FORCE_PATH_STYLE",
@@ -325,6 +343,7 @@
         "S3_SECRET_KEY",
         "SAML_DATABASE_URL",
         "SURVEY_VISIBILITY_FORCE_DISABLED",
+        "FORMBRICKS_UPGRADE_MODE",
         "SURVEY_WORKSPACE_LIMIT",
         "TELEMETRY_DISABLED",
         "VERSION",

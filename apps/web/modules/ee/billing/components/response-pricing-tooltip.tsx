@@ -1,8 +1,9 @@
 "use client";
 
 import type { TFunction } from "i18next";
+import type { ReactNode } from "react";
 import { Trans, useTranslation } from "react-i18next";
-import { TooltipRenderer } from "@/modules/ui/components/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import type { TResponseOverageDisplay } from "../lib/stripe-billing-catalog";
 
 type TResponsePricingPlan = "pro" | "scale";
@@ -65,6 +66,28 @@ interface PlanResponseFeatureProps {
   t: TFunction;
 }
 
+// Composed from the tooltip primitives rather than `TooltipRenderer`, whose `<span>` trigger the
+// keyboard cannot reach. A `<button>` takes focus, and Radix opens the tooltip on focus, so Tab
+// reaches the rate table too.
+const PricingTiersTooltip = ({
+  overage,
+  locale,
+  children,
+}: Readonly<{ overage: TResponseOverageDisplay; locale: string; children?: ReactNode }>) => (
+  <TooltipProvider delayDuration={0}>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button type="button" className="cursor-help border-b border-dotted border-slate-400">
+          {children}
+        </button>
+      </TooltipTrigger>
+      <TooltipContent className="max-w-none p-3">
+        <ResponsePricingTable overage={overage} locale={locale} />
+      </TooltipContent>
+    </Tooltip>
+  </TooltipProvider>
+);
+
 // The <span /> placeholder child is replaced by react-i18next's <Trans> with
 // the translated text inside the <dynamicPricing> tag.
 const dynamicPricingComponent = (overage: TResponseOverageDisplay | null, locale: string) => {
@@ -73,12 +96,9 @@ const dynamicPricingComponent = (overage: TResponseOverageDisplay | null, locale
   }
 
   return (
-    <TooltipRenderer
-      tooltipContent={<ResponsePricingTable overage={overage} locale={locale} />}
-      className="max-w-none p-3"
-      triggerClass="cursor-help border-b border-dotted border-slate-400">
+    <PricingTiersTooltip overage={overage} locale={locale}>
       <span />
-    </TooltipRenderer>
+    </PricingTiersTooltip>
   );
 };
 
@@ -90,6 +110,26 @@ export const PlanResponseFeature = ({ plan, locale, overage, t }: Readonly<PlanR
 
   return (
     <Trans i18nKey={i18nKey} components={{ dynamicPricing: dynamicPricingComponent(overage, locale) }} />
+  );
+};
+
+interface ResponseOverageNoteProps {
+  limit: number;
+  locale: string;
+  overage: TResponseOverageDisplay;
+}
+
+// Shown under the Responses usage bar on plans with metered overage, so the bar's limit reads as an
+// included volume rather than a hard cap.
+export const ResponseOverageNote = ({ limit, locale, overage }: Readonly<ResponseOverageNoteProps>) => {
+  return (
+    <p className="text-sm text-slate-500">
+      <Trans
+        i18nKey="workspace.settings.billing.responses_above_limit_billed_per_response"
+        values={{ limit: limit.toLocaleString(locale) }}
+        components={{ dynamicPricing: dynamicPricingComponent(overage, locale) }}
+      />
+    </p>
   );
 };
 

@@ -11,6 +11,7 @@ import type {
 } from "@formbricks/types/surveys/types";
 import type { TTemplate, TTemplateRole } from "@formbricks/types/templates";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
+import { DEFAULT_ENDING_CARD_BUTTON_LINK } from "@/lib/survey/default-ending-card";
 
 // Helper function to create standard jump logic based on operator
 export const createJumpLogic = (
@@ -84,8 +85,7 @@ export const getDefaultEndingCard = (languages: TSurveyLanguage[], t: TFunction)
     headline: createI18nString(t("templates.default_ending_card_headline"), languageCodes),
     subheader: createI18nString(t("templates.default_ending_card_subheader"), languageCodes),
     buttonLabel: createI18nString(t("templates.default_ending_card_button_label"), languageCodes),
-    buttonLink:
-      "https://formbricks.com?utm_source=formbricks-app&utm_medium=survey&utm_campaign=default_ending_cta",
+    buttonLink: DEFAULT_ENDING_CARD_BUTTON_LINK,
   };
 };
 

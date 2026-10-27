@@ -5,6 +5,7 @@ import {
   SURVEY_VISIBILITY_READINESS_MEMO_TTL_MS,
   clearProjectionScopeReady,
   isSurveyVisibilityReady,
+  readProjectionScopeReadiness,
   resetSurveyVisibilityReadinessMemo,
   setProjectionScopeReady,
 } from "./scope-readiness";
@@ -93,12 +94,12 @@ describe("isSurveyVisibilityReady", () => {
     now.mockRestore();
   });
 
-  test("the emergency override wins without reading the database", async () => {
+  test("the emergency override cannot disable graph enforcement", async () => {
     (env as { SURVEY_VISIBILITY_FORCE_DISABLED?: string }).SURVEY_VISIBILITY_FORCE_DISABLED = "1";
     findUnique.mockResolvedValue({ readyAt: new Date() } as never);
 
-    await expect(isSurveyVisibilityReady()).resolves.toBe(false);
-    expect(findUnique).not.toHaveBeenCalled();
+    await expect(isSurveyVisibilityReady()).resolves.toBe(true);
+    expect(findUnique).toHaveBeenCalledOnce();
   });
 });
 
@@ -120,4 +121,11 @@ describe("readiness marker writes", () => {
       where: { scope: "survey" },
     });
   });
+});
+
+test("operator status reports both an absent marker and a ready marker", async () => {
+  findUnique.mockResolvedValueOnce(null);
+  expect(await readProjectionScopeReadiness()).toEqual({ survey: "not-ready" });
+  findUnique.mockResolvedValueOnce({ readyAt: new Date() } as never);
+  expect(await readProjectionScopeReadiness()).toEqual({ survey: "ready" });
 });

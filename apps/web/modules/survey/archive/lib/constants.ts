@@ -1,7 +1,6 @@
 import { env } from "@/lib/env";
 
-// Archived surveys are permanently deleted after this many days (see ENG-1042).
-export const SURVEY_ARCHIVE_RETENTION_DAYS = 30;
+export { SURVEY_ARCHIVE_RETENTION_DAYS } from "./retention-days";
 
 // Number of archived surveys purged per DB round-trip.
 export const SURVEY_ARCHIVE_PURGE_BATCH_SIZE = 100;

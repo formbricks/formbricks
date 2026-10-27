@@ -2,6 +2,7 @@ import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import { AI_PROVIDERS } from "@formbricks/types/ai";
+import { AI_MAX_TIMEOUT_MULTIPLIER } from "@formbricks/types/ai-timeout";
 import { isValidIanaTimeZone } from "@formbricks/types/common";
 import { throwEnvValidationError } from "./env-validation-error";
 
@@ -562,6 +563,10 @@ const parsedEnv = createEnv({
    * Will throw if you access these variables on the client.
    */
   server: {
+    AI_TIMEOUT_MULTIPLIER: z.preprocess(
+      emptyStringToUndefined,
+      z.coerce.number().min(1).max(AI_MAX_TIMEOUT_MULTIPLIER).default(1)
+    ),
     AI_PROVIDER: ZActiveAIProvider.optional(),
     AI_MODEL: z.string().optional(),
     AIRTABLE_CLIENT_ID: z.string().optional(),
@@ -702,6 +707,7 @@ const parsedEnv = createEnv({
     OIDC_DISPLAY_NAME: z.string().optional(),
     OIDC_ISSUER: z.string().optional(),
     OIDC_SIGNING_ALGORITHM: z.string().optional(),
+    REDIS_TLS_CA: z.string().min(1).optional(),
     REDIS_URL:
       process.env.NODE_ENV === "test"
         ? z.string().optional()
@@ -789,8 +795,11 @@ const parsedEnv = createEnv({
     SURVEY_SCHEDULING_TIME_ZONE: ZSurveySchedulingTimeZone.optional().default("Europe/Berlin"),
     SURVEY_SCHEDULING_LOCAL_HOUR: ZSurveySchedulingLocalHour.optional().default(0),
     SURVEY_SCHEDULING_LOCAL_MINUTE: ZSurveySchedulingLocalMinute.optional().default(0),
-    // ENG-3282 emergency switch: "1" makes the survey-visibility readiness marker read as unset, so the
-    // evaluator collapses to workspace permissions everywhere without touching the database.
+    // Online upgrade settings.
+    FORMBRICKS_DEPLOYMENT_ID: z.string().min(1).optional(),
+    MIGRATE_DATABASE_URL: z.string().optional(),
+    FORMBRICKS_UPGRADE_MODE: z.enum(["online", "maintenance"]).optional(),
+    // "1" disables visibility mutations; stored restrictions remain enforced.
     SURVEY_VISIBILITY_FORCE_DISABLED: z.enum(["1", "0"]).optional(),
     // ENG-3282: most surveys one workspace may hold (archived included). Unset means 10,000.
     SURVEY_WORKSPACE_LIMIT: z.coerce.number().int().positive().optional(),
@@ -804,6 +813,7 @@ const parsedEnv = createEnv({
    * 💡 You'll get type errors if not all variables from `server` & `client` are included here.
    */
   runtimeEnv: {
+    AI_TIMEOUT_MULTIPLIER: process.env.AI_TIMEOUT_MULTIPLIER,
     AI_PROVIDER: process.env.AI_PROVIDER,
     AI_MODEL: process.env.AI_MODEL,
     AIRTABLE_CLIENT_ID: process.env.AIRTABLE_CLIENT_ID,
@@ -904,6 +914,9 @@ const parsedEnv = createEnv({
     SURVEY_SCHEDULING_LOCAL_HOUR: process.env.SURVEY_SCHEDULING_LOCAL_HOUR,
     SURVEY_SCHEDULING_LOCAL_MINUTE: process.env.SURVEY_SCHEDULING_LOCAL_MINUTE,
     SURVEY_SCHEDULING_TIME_ZONE: process.env.SURVEY_SCHEDULING_TIME_ZONE,
+    FORMBRICKS_DEPLOYMENT_ID: process.env.FORMBRICKS_DEPLOYMENT_ID,
+    MIGRATE_DATABASE_URL: process.env.MIGRATE_DATABASE_URL,
+    FORMBRICKS_UPGRADE_MODE: process.env.FORMBRICKS_UPGRADE_MODE,
     SURVEY_VISIBILITY_FORCE_DISABLED: process.env.SURVEY_VISIBILITY_FORCE_DISABLED,
     SURVEY_WORKSPACE_LIMIT: process.env.SURVEY_WORKSPACE_LIMIT,
     SENTRY_DSN: process.env.SENTRY_DSN,
@@ -914,6 +927,7 @@ const parsedEnv = createEnv({
     OIDC_DISPLAY_NAME: process.env.OIDC_DISPLAY_NAME,
     OIDC_ISSUER: process.env.OIDC_ISSUER,
     OIDC_SIGNING_ALGORITHM: process.env.OIDC_SIGNING_ALGORITHM,
+    REDIS_TLS_CA: process.env.REDIS_TLS_CA,
     REDIS_URL: process.env.REDIS_URL,
     PASSWORD_HIBP_CHECK_DISABLED: process.env.PASSWORD_HIBP_CHECK_DISABLED,
     PASSWORD_RESET_DISABLED: process.env.PASSWORD_RESET_DISABLED,

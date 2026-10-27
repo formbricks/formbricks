@@ -1,0 +1,537 @@
+{
+  "SurveyEntry": {
+    "SurveyID": "SV_fixture000000000",
+    "SurveyName": "Logic showcase",
+    "SurveyDescription": null,
+    "SurveyOwnerID": "UR_fixture",
+    "SurveyBrandID": "fixture",
+    "DivisionID": null,
+    "SurveyLanguage": "EN",
+    "SurveyActiveResponseSet": "RS_fixture",
+    "SurveyStatus": "Active",
+    "SurveyStartDate": "0000-00-00 00:00:00",
+    "SurveyExpirationDate": "0000-00-00 00:00:00",
+    "SurveyCreationDate": "2026-09-01 10:00:00",
+    "CreatorID": "UR_fixture",
+    "LastModified": "2026-09-08 10:00:00",
+    "LastAccessed": "0000-00-00 00:00:00",
+    "LastActivated": "2026-09-01 10:00:00",
+    "Deleted": null
+  },
+  "SurveyElements": [
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID1",
+      "SecondaryAttribute": "Do you use our product?",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Do you use our product?",
+        "DataExportTag": "Q1",
+        "QuestionType": "MC",
+        "Selector": "SAVR",
+        "SubSelector": "TX",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Do you use our product?",
+        "Choices": {
+          "1": {
+            "Display": "Yes"
+          },
+          "2": {
+            "Display": "No"
+          }
+        },
+        "ChoiceOrder": [
+          "1",
+          "2"
+        ],
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "ON",
+            "ForceResponseType": "ON",
+            "Type": "None"
+          }
+        },
+        "SkipLogic": [
+          {
+            "SkipLogicID": "SL_1",
+            "ChoiceLocator": "q://QID1/SelectableChoice/2",
+            "Condition": "Selected",
+            "SkipToDestination": "ENDOFSURVEY",
+            "SkipToDescription": "End of Survey",
+            "Locator": "q://QID1/SelectableChoice/2",
+            "Type": "SkipLogic"
+          }
+        ],
+        "QuestionID": "QID1",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 3,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID2",
+      "SecondaryAttribute": "How often?",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "How often?",
+        "DataExportTag": "Q2",
+        "QuestionType": "MC",
+        "Selector": "SAVR",
+        "SubSelector": "TX",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "How often?",
+        "Choices": {
+          "1": {
+            "Display": "Daily"
+          },
+          "2": {
+            "Display": "Weekly"
+          },
+          "3": {
+            "Display": "Rarely"
+          }
+        },
+        "ChoiceOrder": [
+          "1",
+          "2",
+          "3"
+        ],
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "DisplayLogic": {
+          "0": {
+            "0": {
+              "LogicType": "Question",
+              "QuestionID": "QID1",
+              "QuestionIsInLoop": "no",
+              "ChoiceLocator": "q://QID1/SelectableChoice/1",
+              "Operator": "Selected",
+              "QuestionIDFromLocator": "QID1",
+              "LeftOperand": "q://QID1/SelectableChoice/1",
+              "Type": "Expression",
+              "Description": "If Do you use our product? Yes Is Selected"
+            },
+            "Type": "If"
+          },
+          "Type": "BooleanExpression",
+          "inPage": false
+        },
+        "QuestionID": "QID2",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 4,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID3",
+      "SecondaryAttribute": "Which region are you in?",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Which region are you in?",
+        "DataExportTag": "Q3",
+        "QuestionType": "MC",
+        "Selector": "DL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Which region are you in?",
+        "Choices": {
+          "1": {
+            "Display": "EU"
+          },
+          "2": {
+            "Display": "US"
+          },
+          "3": {
+            "Display": "Other"
+          }
+        },
+        "ChoiceOrder": [
+          "1",
+          "2",
+          "3"
+        ],
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "SkipLogic": [
+          {
+            "SkipLogicID": "SL_2",
+            "ChoiceLocator": "q://QID3/SelectableChoice/3",
+            "Condition": "Selected",
+            "SkipToDestination": "QID5",
+            "SkipToDescription": "Any final comments?",
+            "Locator": "q://QID3/SelectableChoice/3",
+            "Type": "SkipLogic"
+          }
+        ],
+        "QuestionID": "QID3",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 4,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID4",
+      "SecondaryAttribute": "EU: are you GDPR compliant?",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "EU: are you GDPR compliant?",
+        "DataExportTag": "Q4",
+        "QuestionType": "MC",
+        "Selector": "SAVR",
+        "SubSelector": "TX",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "EU: are you GDPR compliant?",
+        "Choices": {
+          "1": {
+            "Display": "Yes"
+          },
+          "2": {
+            "Display": "No"
+          }
+        },
+        "ChoiceOrder": [
+          "1",
+          "2"
+        ],
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "DisplayLogic": {
+          "0": {
+            "0": {
+              "LogicType": "EmbeddedField",
+              "LeftOperand": "region",
+              "Operator": "EqualTo",
+              "RightOperand": "DE",
+              "Type": "Expression",
+              "Description": "If region Is Equal to DE"
+            },
+            "Type": "If"
+          },
+          "Type": "BooleanExpression",
+          "inPage": false
+        },
+        "QuestionID": "QID4",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 3,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID5",
+      "SecondaryAttribute": "Any final comments?",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Any final comments?",
+        "DataExportTag": "Q5",
+        "QuestionType": "TE",
+        "Selector": "ML",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Any final comments?",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID5",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID6",
+      "SecondaryAttribute": "Unreadable logic",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Unreadable logic",
+        "DataExportTag": "Q6",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Unreadable logic",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "DisplayLogic": {
+          "0": {
+            "0": {
+              "Type": "Expression",
+              "LogicType": "Quota"
+            },
+            "Type": "If"
+          },
+          "Type": "BooleanExpression"
+        },
+        "QuestionID": "QID6",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "BL",
+      "PrimaryAttribute": "Survey Blocks",
+      "SecondaryAttribute": null,
+      "TertiaryAttribute": null,
+      "Payload": [
+        {
+          "Type": "Default",
+          "Description": "Usage",
+          "ID": "BL_1",
+          "BlockElements": [
+            {
+              "Type": "Question",
+              "QuestionID": "QID1"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID2"
+            },
+            {
+              "Type": "Page Break"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID3"
+            }
+          ]
+        },
+        {
+          "Type": "Standard",
+          "Description": "Compliance",
+          "ID": "BL_2",
+          "BlockElements": [
+            {
+              "Type": "Question",
+              "QuestionID": "QID4"
+            }
+          ]
+        },
+        {
+          "Type": "Standard",
+          "Description": "Wrap up",
+          "ID": "BL_3",
+          "BlockElements": [
+            {
+              "Type": "Question",
+              "QuestionID": "QID5"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "FL",
+      "PrimaryAttribute": "Survey Flow",
+      "SecondaryAttribute": null,
+      "TertiaryAttribute": null,
+      "Payload": {
+        "Type": "Root",
+        "FlowID": "FL_root",
+        "Flow": [
+          {
+            "Type": "EmbeddedData",
+            "FlowID": "FL_1",
+            "EmbeddedData": [
+              {
+                "Description": "region",
+                "Type": "Custom",
+                "Field": "region",
+                "VariableType": "String",
+                "DataVisibility": [],
+                "AnalyzeText": false
+              }
+            ]
+          },
+          {
+            "Type": "Block",
+            "ID": "BL_1",
+            "FlowID": "FL_2"
+          },
+          {
+            "Type": "Branch",
+            "FlowID": "FL_4",
+            "Description": "EU branch",
+            "BranchLogic": {
+              "0": {
+                "0": {
+                  "LogicType": "Question",
+                  "QuestionID": "QID3",
+                  "QuestionIsInLoop": "no",
+                  "ChoiceLocator": "q://QID3/SelectableChoice/1",
+                  "Operator": "Selected",
+                  "QuestionIDFromLocator": "QID3",
+                  "LeftOperand": "q://QID3/SelectableChoice/1",
+                  "Type": "Expression",
+                  "Description": "If Which region are you in? EU Is Selected"
+                },
+                "Type": "If"
+              },
+              "Type": "BooleanExpression",
+              "inPage": false
+            },
+            "Flow": [
+              {
+                "Type": "Block",
+                "ID": "BL_2",
+                "FlowID": "FL_3"
+              }
+            ]
+          },
+          {
+            "Type": "Block",
+            "ID": "BL_3",
+            "FlowID": "FL_5"
+          },
+          {
+            "Type": "EndSurvey",
+            "FlowID": "FL_6"
+          }
+        ],
+        "Properties": {
+          "Count": 5
+        }
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SO",
+      "PrimaryAttribute": "Survey Options",
+      "SecondaryAttribute": null,
+      "TertiaryAttribute": null,
+      "Payload": {
+        "BackButton": "false",
+        "SaveAndContinue": "true",
+        "SurveyProtection": "PublicSurvey",
+        "ProgressBarDisplay": "None",
+        "PartialData": "+1 week",
+        "EOSMessage": "",
+        "EOSRedirectURL": "",
+        "NextButton": "→",
+        "PreviousButton": "←",
+        "ShowExportTags": "false"
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "QC",
+      "PrimaryAttribute": "Survey Question Count",
+      "SecondaryAttribute": "6",
+      "TertiaryAttribute": null,
+      "Payload": null
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "STAT",
+      "PrimaryAttribute": "Survey Statistics",
+      "SecondaryAttribute": null,
+      "TertiaryAttribute": null,
+      "Payload": {
+        "MobileCompatible": true,
+        "ID": "Survey Statistics"
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "RS",
+      "PrimaryAttribute": "RS_fixture",
+      "SecondaryAttribute": "Default Response Set",
+      "TertiaryAttribute": null,
+      "Payload": null
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SCO",
+      "PrimaryAttribute": "Scoring",
+      "SecondaryAttribute": null,
+      "TertiaryAttribute": null,
+      "Payload": {
+        "ScoringCategories": [],
+        "ScoringCategoryGroups": [],
+        "ScoringSummaryCategory": null,
+        "ScoringSummaryAfterQuestions": 0,
+        "ScoringSummaryAfterSurvey": 0,
+        "DefaultScoringCategory": null,
+        "AutoScoringCategory": null
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "PROJ",
+      "PrimaryAttribute": "CORE",
+      "SecondaryAttribute": null,
+      "TertiaryAttribute": "1.1.0",
+      "Payload": {
+        "ProjectCategory": "CORE",
+        "SchemaVersion": "1.1.0"
+      }
+    }
+  ]
+}

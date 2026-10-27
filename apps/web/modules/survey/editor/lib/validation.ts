@@ -49,6 +49,11 @@ export const isLabelValidForAllLanguages = (
   return languages.every((language) => label?.[language] && getTextContent(label[language]).length > 0);
 };
 
+// An optional field left empty in the default language (e.g. the alt text of a decorative image) needs no
+// translations; once the default has text, every enabled language needs it too.
+const isOptionalLabelValid = (label: TI18nString | undefined, surveyLanguages: TSurveyLanguage[]): boolean =>
+  !label?.default?.trim() || isLabelValidForAllLanguages(label, surveyLanguages);
+
 // Validation logic for multiple choice elements
 const handleI18nCheckForMultipleChoice = (
   element: TSurveyMultipleChoiceElement,
@@ -126,8 +131,11 @@ export const validationRules = {
   consent: (element: TSurveyConsentElement, languages: TSurveyLanguage[]) => {
     return isLabelValidForAllLanguages(element.label, languages);
   },
-  pictureSelection: (element: TSurveyPictureSelectionElement) => {
-    return element.choices.length >= 2;
+  pictureSelection: (element: TSurveyPictureSelectionElement, languages: TSurveyLanguage[]) => {
+    return (
+      element.choices.length >= 2 &&
+      element.choices.every((choice) => isOptionalLabelValid(choice.imageAltText, languages))
+    );
   },
   cta: (element: TSurveyCTAElement, languages: TSurveyLanguage[]) => {
     return element.buttonExternal && element.ctaButtonLabel
@@ -156,7 +164,7 @@ export const validationRules = {
     let isValid = isHeadlineValid && isSubheaderValid;
     const defaultLanguageCode = "default";
     // Element specific fields (note: buttonLabel and backButtonLabel are now block-level, not element-level)
-    let fieldsToValidate = ["upperLabel", "lowerLabel"];
+    let fieldsToValidate = ["upperLabel", "lowerLabel", "imageAltText"];
 
     for (const field of fieldsToValidate) {
       const fieldValue = (element as unknown as Record<string, Record<string, string> | undefined>)[field];
@@ -246,7 +254,8 @@ export const isEndingCardValid = (
     return (
       isContentValid(card.headline, surveyLanguages) &&
       isContentValid(card.subheader, surveyLanguages) &&
-      isContentValid(card.buttonLabel, surveyLanguages)
+      isContentValid(card.buttonLabel, surveyLanguages) &&
+      isOptionalLabelValid(card.imageAltText, surveyLanguages)
     );
   } else {
     // Use ZEndingCardUrl for consistent validation - allows dynamic URLs via hidden fields/recall values
@@ -335,6 +344,7 @@ export const isSurveyValid = (
 const I18N_STRING_FIELDS = new Set([
   "headline",
   "subheader",
+  "imageAltText",
   "html",
   "label",
   "placeholder",
@@ -357,6 +367,7 @@ const NUMBERED_COLLECTION_LABEL_KEYS: Record<string, string> = {
 // t() calls rather than a key table, because the translation scanner only sees literal keys.
 const getElementFieldLabel = (field: string, t: TFunction): string | undefined => {
   if (field === "shuffleOption") return t("workspace.surveys.edit.field_label_shuffle_option");
+  if (field === "imageAltText") return t("workspace.surveys.edit.image_alt_text");
   return undefined;
 };
 

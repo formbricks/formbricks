@@ -19,6 +19,7 @@ import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
 import { useSingleUseId } from "@/modules/survey/hooks/useSingleUseId";
 import { copySurveyToOtherWorkspaceAction } from "@/modules/survey/list/actions";
+import { getCustomCssCopyNotice } from "@/modules/survey/list/lib/custom-css-notice";
 import { AiGlyph, AiStatusLine } from "@/modules/ui/components/ai";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
@@ -113,6 +114,8 @@ export const SurveyAnalysisCTA = ({
     });
     if (duplicatedSurveyResponse?.data) {
       toast.success(t("workspace.surveys.survey_duplicated_successfully"));
+      const customCssNotice = getCustomCssCopyNotice(duplicatedSurveyResponse.data, t);
+      if (customCssNotice) toast.error(customCssNotice, { duration: 8000 });
       router.push(`/workspaces/${workspace?.id}/surveys/${duplicatedSurveyResponse.data.id}/edit`);
     } else {
       const errorMessage = getFormattedErrorMessage(duplicatedSurveyResponse);

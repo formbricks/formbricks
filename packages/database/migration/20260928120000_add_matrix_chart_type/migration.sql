@@ -1,3 +1,4 @@
+SET lock_timeout = '1s';
 -- AlterEnum
 -- Additive only: existing charts keep their type, and `IF NOT EXISTS` keeps a re-run (or a database
 -- created with `db:push`) a no-op instead of an error. Placed after `big_number` explicitly so the
@@ -12,3 +13,5 @@ SET LOCAL lock_timeout = '5s';
 ALTER TYPE "ChartType" ADD VALUE IF NOT EXISTS 'matrix' AFTER 'big_number';
 
 COMMIT;
+
+RESET lock_timeout;

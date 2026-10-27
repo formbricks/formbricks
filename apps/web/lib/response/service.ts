@@ -1,6 +1,5 @@
 import "server-only";
 import { cache as reactCache } from "react";
-import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
@@ -35,6 +34,7 @@ import { getOrganization } from "../organization/service";
 import { getSurvey } from "../survey/service";
 import { convertToCsv, convertToXlsxBuffer } from "../utils/file-conversion";
 import { validateInputs } from "../utils/validate";
+import { TResponseCursor, ZResponseCursor, whereAfterResponseCursor } from "./pagination";
 import {
   calculateTtcTotal,
   extractSurveyDetails,
@@ -356,14 +356,14 @@ export const getResponses = reactCache(
     limit?: number,
     offset?: number,
     filterCriteria?: TResponseFilterCriteria,
-    cursor?: string
+    cursor?: TResponseCursor
   ): Promise<TResponseWithQuotas[]> => {
     validateInputs(
       [surveyId, ZId],
       [limit, ZOptionalNumber],
       [offset, ZOptionalNumber],
       [filterCriteria, ZResponseFilterCriteria.optional()],
-      [cursor, z.cuid2().optional()]
+      [cursor, ZResponseCursor.optional()]
     );
 
     limit = limit ?? RESPONSES_PER_PAGE;
@@ -375,15 +375,8 @@ export const getResponses = reactCache(
         ...buildWhereClause(survey, filterCriteria),
       };
 
-      // Add cursor condition for cursor-based pagination
-      if (cursor) {
-        whereClause.id = {
-          lt: cursor, // Get responses with ID less than cursor (for desc order)
-        };
-      }
-
       const responses = await prisma.response.findMany({
-        where: whereClause,
+        where: whereAfterResponseCursor(whereClause, cursor),
         select: {
           ...responseSelection,
           quotaLinks: {
@@ -450,18 +443,18 @@ export const getResponseDownloadFile = async (
 
     // Use cursor-based pagination instead of count + offset to avoid expensive queries
     const responses: TResponse[] = [];
-    let cursor: string | undefined = undefined;
+    let cursor: TResponseCursor | undefined = undefined;
     let hasMore = true;
 
     while (hasMore) {
       const batch = await getResponses(surveyId, batchSize, 0, filterCriteria, cursor);
       responses.push(...batch);
 
-      if (batch.length < batchSize) {
+      const lastResponse = batch.at(-1);
+      if (!lastResponse || batch.length < batchSize) {
         hasMore = false;
       } else {
-        // Use the last response's ID as cursor for next batch
-        cursor = batch[batch.length - 1].id;
+        cursor = { id: lastResponse.id, createdAt: lastResponse.createdAt };
       }
     }
 

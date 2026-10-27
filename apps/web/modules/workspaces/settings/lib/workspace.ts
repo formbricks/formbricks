@@ -204,7 +204,17 @@ export const updateWorkspace = async (
   // owner move their workspace (and all its data) into another organization, so it is stripped.
   // expectedUpdatedAt is a concurrency baseline, not a column — writing it would be nonsense and
   // would also fight Prisma's own @updatedAt.
-  const { organizationId: _organizationId, expectedUpdatedAt, ...data } = inputWorkspace;
+  //
+  // ENG-2949: custom CSS is written only by `updateWorkspaceCustomCss`, which checks the stricter role,
+  // the plan and the processor. `ZWorkspaceUpdateInput` has no such keys, but validation above does not
+  // replace the input, so a caller passing them would otherwise reach the write untouched.
+  const {
+    organizationId: _organizationId,
+    expectedUpdatedAt,
+    customCss: _customCss,
+    customCssPrevious: _customCssPrevious,
+    ...data
+  } = inputWorkspace as TWorkspaceUpdateInput & { customCss?: unknown; customCssPrevious?: unknown };
   let updatedWorkspace;
   let previousLogoUrl: string | undefined;
   try {
@@ -284,9 +294,63 @@ export const updateWorkspace = async (
   return updatedWorkspace as TWorkspace;
 };
 
+/**
+ * Enforces the organization's workspace cap inside the creating transaction (ENG-3921).
+ *
+ * A count read outside the transaction is a check-then-act race: a burst of concurrent creates all
+ * read the same count before any of them commits, so every one passes and the organization lands as
+ * far past its cap as the burst is wide. Locking the organization row first makes concurrent creates
+ * for one organization take turns, and under READ COMMITTED the count that follows sees every
+ * workspace an earlier lock holder committed.
+ *
+ * The parent row is locked rather than the workspaces because it always exists: `FOR UPDATE` over an
+ * organization's workspaces locks nothing while it has none. FOR NO KEY UPDATE (not FOR UPDATE)
+ * because concurrent creates only need to serialize with each other; it does not conflict with the
+ * FOR KEY SHARE lock every insert of an organization-owned row takes on this row through its foreign
+ * key, so teams, memberships and invites are not held up behind a workspace create. It must be the
+ * transaction's first lock: the caller holds nothing yet while it waits, so it cannot close a
+ * deadlock cycle.
+ */
+const assertWorkspaceLimitNotReached = async (
+  tx: Prisma.TransactionClient,
+  organizationId: string,
+  workspaceLimit: number
+): Promise<void> => {
+  const organizations = await tx.$queryRaw<Array<{ id: string }>>`
+    SELECT "id"
+    FROM "Organization"
+    WHERE "id" = ${organizationId}
+    FOR NO KEY UPDATE
+  `;
+
+  if (organizations.length === 0) {
+    throw new ResourceNotFoundError("Organization", organizationId);
+  }
+
+  const workspaceCount = await tx.workspace.count({ where: { organizationId } });
+
+  if (workspaceCount >= workspaceLimit) {
+    throw new OperationNotAllowedError("Organization workspace limit reached");
+  }
+};
+
+export type TCreateWorkspaceOptions = {
+  /**
+   * The most workspaces the organization may own once this one exists, as resolved by
+   * `getOrganizationWorkspacesLimit`. Resolve it before calling: it can read through to Stripe, and
+   * that must not happen while the organization row is locked. `Infinity` means unlimited.
+   *
+   * `null` only for the first workspace of an organization the caller has just created, which owns
+   * none yet. It is required rather than optional so a new path that adds a workspace to an existing
+   * organization cannot skip the cap by omission.
+   */
+  workspaceLimit: number | null;
+};
+
 export const createWorkspace = async (
   organizationId: string,
-  workspaceInput: TWorkspaceUpdateInput
+  workspaceInput: TWorkspaceUpdateInput,
+  { workspaceLimit }: TCreateWorkspaceOptions
 ): Promise<TWorkspace> => {
   validateInputs([organizationId, ZId], [workspaceInput, ZWorkspaceUpdateInput]);
 
@@ -296,17 +360,30 @@ export const createWorkspace = async (
 
   // expectedUpdatedAt shares ZWorkspaceUpdateInput with the update path but is a concurrency
   // baseline, not a column; leaving it in would hand Prisma an unknown field on create.
-  const { teamIds, config: configInput, expectedUpdatedAt: _expectedUpdatedAt, ...data } = workspaceInput;
+  // ENG-2949: a new workspace starts without custom CSS; see `updateWorkspace` for why it is stripped.
+  const {
+    teamIds,
+    config: configInput,
+    expectedUpdatedAt: _expectedUpdatedAt,
+    customCss: _customCss,
+    customCssPrevious: _customCssPrevious,
+    ...data
+  } = workspaceInput as TWorkspaceUpdateInput & { customCss?: unknown; customCssPrevious?: unknown };
   // Captured out here so the guard above still narrows it: inside the transaction callback below,
   // TypeScript widens workspaceInput.name back to `string | undefined`.
   const name = workspaceInput.name;
   let workspace: TWorkspace;
 
   try {
-    // The ownership check and both writes share one transaction: it keeps the check and the link
-    // atomic (a team cannot leave the organization in between), and stops a failed createMany from
-    // leaving an orphan workspace with no team links.
+    // The cap check, the ownership check and both writes share one transaction: it keeps each check
+    // atomic with the write it guards (the cap cannot be raced past, a team cannot leave the
+    // organization in between), and stops a failed createMany from leaving an orphan workspace with no
+    // team links.
     workspace = (await prisma.$transaction(async (tx) => {
+      if (workspaceLimit !== null && Number.isFinite(workspaceLimit)) {
+        await assertWorkspaceLimitNotReached(tx, organizationId, workspaceLimit);
+      }
+
       // ENG-1922: teamIds are caller-supplied. Validate that every team belongs to this
       // organization before linking it — otherwise a caller could attach another org's team
       // to their workspace (a cross-tenant WorkspaceTeam write). The FK only enforces that the

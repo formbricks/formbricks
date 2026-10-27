@@ -5,11 +5,17 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { TActionClassType } from "@formbricks/types/action-classes";
-import { DatabaseError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
+import {
+  DatabaseError,
+  OperationNotAllowedError,
+  ResourceNotFoundError,
+  TooManyRequestsError,
+} from "@formbricks/types/errors";
 import { can } from "@/lib/authorization";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { checkForInvalidMediaInBlocks } from "@/lib/survey/utils";
 import { validateInputs } from "@/lib/utils/validate";
+import { resolveCopiedSurveyCustomCss } from "@/modules/custom-css/lib/service";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
 import { buildWhereClause } from "@/modules/survey/lib/utils";
@@ -70,6 +76,12 @@ vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getIsQuotasEnabled: vi.fn(),
 }));
 
+// ENG-2949: the copy's CSS decision is the shared service's (its rules have their own suite); here only
+// that the copy asks it, with the destination's organization, and acts on the answer.
+vi.mock("@/modules/custom-css/lib/service", () => ({
+  resolveCopiedSurveyCustomCss: vi.fn(async () => ({ customCss: null })),
+}));
+
 vi.mock("@/modules/ee/quotas/lib/quotas", () => ({
   getQuotas: vi.fn(),
 }));
@@ -85,6 +97,7 @@ vi.mock("@/lingodotdev/server", () => ({
 vi.mock("@formbricks/database", () => ({
   prisma: {
     survey: {
+      update: vi.fn(),
       findMany: vi.fn(),
       findUnique: vi.fn(),
       findFirst: vi.fn(),
@@ -127,6 +140,7 @@ vi.mock("@formbricks/database", () => ({
       updateMany: vi.fn(),
     },
     $transaction: vi.fn(),
+    $executeRaw: vi.fn(),
   },
 }));
 
@@ -404,6 +418,7 @@ describe("copySurveyToOtherWorkspace", () => {
       pin: "1234",
       autoComplete: 50,
       autoClose: 30,
+      keepEndingCardOpen: true,
       delay: 5,
       redirectUrl: "https://example.com/thanks",
       displayPercentage: 25,
@@ -427,6 +442,28 @@ describe("copySurveyToOtherWorkspace", () => {
     expect(prisma.survey.create).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining(configuredSettings) })
     );
+  });
+
+  test("carries the show conditions onto the copy, as their own object", async () => {
+    const showConditions = {
+      id: "grp1",
+      connector: "and",
+      conditions: [
+        {
+          id: "cnd1",
+          leftOperand: { type: "page", value: "currentUrl" },
+          operator: "pathIsAnyOf",
+          rightOperand: { type: "static", value: ["/pricing"] },
+        },
+      ],
+    };
+    mockSourceSurvey({ showConditions });
+
+    await copySurveyToOtherWorkspace(sourceWorkspaceId, surveyId, targetWorkspaceId, userId);
+
+    const { data } = vi.mocked(prisma.survey.create).mock.calls[0][0];
+    expect(data.showConditions).toEqual(showConditions);
+    expect(data.showConditions).not.toBe(showConditions);
   });
 
   test("does not carry the scheduling dates onto the copy", async () => {
@@ -486,12 +523,81 @@ describe("copySurveyToOtherWorkspace", () => {
     expect(prisma.survey.create).toHaveBeenCalled();
   });
 
+  describe("custom CSS (ENG-2949)", () => {
+    const sourceCss = {
+      light: { source: ".a{}", compiled: "@layer fb-survey{.a}" },
+      dark: null,
+      processorVersion: 1,
+    };
+    const processedCss = { ...sourceCss, light: { source: ".a{}", compiled: "NEW" }, processorVersion: 2 };
+
+    test("carries the source's CSS as source, processed for the destination organization", async () => {
+      mockSourceSurvey({ customCss: sourceCss });
+      vi.mocked(resolveCopiedSurveyCustomCss).mockResolvedValueOnce({ customCss: processedCss });
+
+      const result = await copySurveyToOtherWorkspace(sourceWorkspaceId, surveyId, targetWorkspaceId, userId);
+
+      // Charged to the user copying it, on the budget every other custom CSS write spends.
+      expect(resolveCopiedSurveyCustomCss).toHaveBeenCalledWith({
+        source: sourceCss,
+        destinationOrganizationId: "org_123",
+        principal: userId,
+      });
+      const { data } = vi.mocked(prisma.survey.create).mock.calls[0][0];
+      expect(data.customCss).toEqual(processedCss);
+      expect(result).not.toHaveProperty("customCssNotice");
+      // The source survey is only ever read: the client mock here has no survey write but `create`.
+      expect(prisma.survey.create).toHaveBeenCalledTimes(1);
+    });
+
+    test("a destination without the plan still gets the copy — without the CSS, and with a notice", async () => {
+      mockSourceSurvey({ customCss: sourceCss });
+      vi.mocked(resolveCopiedSurveyCustomCss).mockResolvedValueOnce({
+        customCss: null,
+        notice: "plan_required",
+      });
+
+      const result = await copySurveyToOtherWorkspace(sourceWorkspaceId, surveyId, targetWorkspaceId, userId);
+
+      expect(prisma.survey.create).toHaveBeenCalled();
+      expect(vi.mocked(prisma.survey.create).mock.calls[0][0].data).not.toHaveProperty("customCss");
+      expect(result).toMatchObject({ id: "new_cuid2_id", customCssNotice: "plan_required" });
+    });
+
+    test("a spent custom CSS budget refuses the copy before anything is written", async () => {
+      mockSourceSurvey({ customCss: sourceCss });
+      vi.mocked(resolveCopiedSurveyCustomCss).mockRejectedValueOnce(new TooManyRequestsError("Slow down"));
+
+      await expect(
+        copySurveyToOtherWorkspace(sourceWorkspaceId, surveyId, targetWorkspaceId, userId)
+      ).rejects.toBeInstanceOf(TooManyRequestsError);
+      expect(prisma.survey.create).not.toHaveBeenCalled();
+    });
+
+    test("a duplicate in the same workspace follows the same policy", async () => {
+      vi.mocked(getWorkspaceWithLanguages).mockReset();
+      vi.mocked(getWorkspaceWithLanguages).mockResolvedValue(mockSourceWorkspace);
+      mockSourceSurvey({ customCss: sourceCss });
+      vi.mocked(resolveCopiedSurveyCustomCss).mockResolvedValueOnce({
+        customCss: null,
+        notice: "plan_required",
+      });
+
+      const result = await copySurveyToOtherWorkspace(sourceWorkspaceId, surveyId, sourceWorkspaceId, userId);
+
+      expect(result).toMatchObject({ customCssNotice: "plan_required" });
+    });
+  });
+
   test("accounts for every Survey column, so a new one cannot be dropped silently", async () => {
     // The copy is built by spreading whatever `getExistingSurvey` selects, so a column that is
     // neither selected nor listed below is reset to its database default without anyone noticing.
     // That is the ENG-2144 bug, and #6802 before it. Adding a Survey column fails this test until
     // you decide which side it belongs on.
     const RESET_ON_COPY = new Set([
+      "variables",
+      "hiddenFields",
+      "ownershipInitialized",
       // Identity and ownership: the copy is a new row in a workspace the caller chose.
       "id",
       "createdAt",

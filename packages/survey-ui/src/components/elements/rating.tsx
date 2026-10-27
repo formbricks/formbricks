@@ -15,102 +15,57 @@ import {
   TiredFace,
   WearyFace,
 } from "@/components/general/smileys";
+import { FB_PART } from "@/lib/parts";
+import { type RatingRange, getSmileyColorClasses } from "@/lib/smiley-colors";
 import { useRovingRadioGroup } from "@/lib/use-roving-radio-group";
 import { cn, getRTLScaleOptionClasses } from "@/lib/utils";
 
 /**
- * Get smiley color class based on range and index
+ * Get the smiley icon at the given position in the face set, painted with the given fill
  */
-const getSmileyColor = (range: number, idx: number): string => {
-  if (range > 5) {
-    if (range - idx < 3) return "fill-emerald-100";
-    if (range - idx < 5) return "fill-orange-100";
-    return "fill-rose-100";
-  } else if (range < 5) {
-    if (range - idx < 2) return "fill-emerald-100";
-    if (range - idx < 3) return "fill-orange-100";
-    return "fill-rose-100";
-  }
-  if (range - idx < 3) return "fill-emerald-100";
-  if (range - idx < 4) return "fill-orange-100";
-  return "fill-rose-100";
-};
-
-/**
- * Get active smiley color class based on range and index
- */
-const getActiveSmileyColor = (range: number, idx: number): string => {
-  if (range > 5) {
-    if (range - idx < 3) return "fill-emerald-300";
-    if (range - idx < 5) return "fill-orange-300";
-    return "fill-rose-300";
-  } else if (range < 5) {
-    if (range - idx < 2) return "fill-emerald-300";
-    if (range - idx < 3) return "fill-orange-300";
-    return "fill-rose-300";
-  }
-  if (range - idx < 3) return "fill-emerald-300";
-  if (range - idx < 4) return "fill-orange-300";
-  return "fill-rose-300";
-};
-
-/**
- * Get the appropriate smiley icon based on range and index
- */
-const getSmileyIcon = (
-  iconIdx: number,
-  idx: number,
-  range: number,
-  active: boolean,
-  addColors: boolean
-): React.JSX.Element => {
-  const activeColor = addColors ? getActiveSmileyColor(range, idx) : "fill-yellow-200";
-  const inactiveColor = addColors ? getSmileyColor(range, idx) : "fill-none";
-
+const getSmileyIcon = (iconIdx: number, fillClass: string): React.JSX.Element => {
   const icons = [
-    <TiredFace key="tired-face" className={active ? activeColor : inactiveColor} />,
-    <WearyFace key="weary-face" className={active ? activeColor : inactiveColor} />,
-    <PerseveringFace key="persevering-face" className={active ? activeColor : inactiveColor} />,
-    <FrowningFace key="frowning-face" className={active ? activeColor : inactiveColor} />,
-    <ConfusedFace key="confused-face" className={active ? activeColor : inactiveColor} />,
-    <NeutralFace key="neutral-face" className={active ? activeColor : inactiveColor} />,
-    <SlightlySmilingFace key="slightly-smiling-face" className={active ? activeColor : inactiveColor} />,
-    <SmilingFaceWithSmilingEyes
-      key="smiling-face-with-smiling-eyes"
-      className={active ? activeColor : inactiveColor}
-    />,
-    <GrinningFaceWithSmilingEyes
-      key="grinning-face-with-smiling-eyes"
-      className={active ? activeColor : inactiveColor}
-    />,
-    <GrinningSquintingFace key="grinning-squinting-face" className={active ? activeColor : inactiveColor} />,
+    <TiredFace key="tired-face" className={fillClass} />,
+    <WearyFace key="weary-face" className={fillClass} />,
+    <PerseveringFace key="persevering-face" className={fillClass} />,
+    <FrowningFace key="frowning-face" className={fillClass} />,
+    <ConfusedFace key="confused-face" className={fillClass} />,
+    <NeutralFace key="neutral-face" className={fillClass} />,
+    <SlightlySmilingFace key="slightly-smiling-face" className={fillClass} />,
+    <SmilingFaceWithSmilingEyes key="smiling-face-with-smiling-eyes" className={fillClass} />,
+    <GrinningFaceWithSmilingEyes key="grinning-face-with-smiling-eyes" className={fillClass} />,
+    <GrinningSquintingFace key="grinning-squinting-face" className={fillClass} />,
   ];
   return icons[iconIdx];
+};
+
+/**
+ * Which faces each scale length is drawn from, as indices into the icon set above: a short scale
+ * uses the middle of the range, a long one spreads across all ten.
+ */
+const FACE_SET: Record<RatingRange, number[]> = {
+  3: [4, 5, 7],
+  4: [4, 5, 6, 7],
+  5: [3, 4, 5, 6, 7],
+  6: [0, 2, 4, 5, 7, 9],
+  7: [1, 3, 4, 5, 6, 8, 9],
+  10: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
 };
 
 /**
  * Smiley component for rating scale
  */
 const RatingSmiley = ({
-  active,
   idx,
   range,
-  addColors = false,
-}: {
-  active: boolean;
+  fillClass,
+}: Readonly<{
   idx: number;
-  range: number;
-  addColors?: boolean;
-}): React.JSX.Element => {
-  let iconsIdx: number[] = [];
-  if (range === 10) iconsIdx = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
-  else if (range === 7) iconsIdx = [1, 3, 4, 5, 6, 8, 9];
-  else if (range === 6) iconsIdx = [0, 2, 4, 5, 7, 9];
-  else if (range === 5) iconsIdx = [3, 4, 5, 6, 7];
-  else if (range === 4) iconsIdx = [4, 5, 6, 7];
-  else if (range === 3) iconsIdx = [4, 5, 7];
-
-  return getSmileyIcon(iconsIdx[idx], idx, range, active, addColors);
+  range: RatingRange;
+  /** Tailwind `fill-*` class for the face circle (see getSmileyColorClasses) */
+  fillClass: string;
+}>): React.JSX.Element => {
+  return getSmileyIcon(FACE_SET[range][idx], fillClass);
 };
 
 interface RatingProps {
@@ -125,7 +80,7 @@ interface RatingProps {
   /** Rating scale type: 'number', 'star', or 'smiley' */
   scale: "number" | "star" | "smiley";
   /** Number of rating options (3, 4, 5, 6, 7, or 10) */
-  range: 3 | 4 | 5 | 6 | 7 | 10;
+  range: RatingRange;
   /** Currently selected rating value (1 to range) */
   value?: number;
   /** Callback function called when rating changes */
@@ -148,6 +103,8 @@ interface RatingProps {
   disabled?: boolean;
   /** Image URL to display above the headline */
   imageUrl?: string;
+  /** Alt text for the image; empty or absent marks it decorative */
+  imageAltText?: string;
   /** Video URL to display above the headline */
   videoUrl?: string;
 }
@@ -170,6 +127,7 @@ function Rating({
   dir = "auto",
   disabled = false,
   imageUrl,
+  imageAltText,
   videoUrl,
 }: Readonly<RatingProps>): React.JSX.Element {
   const errorAria = getElementErrorAria(inputId, errorMessage);
@@ -238,6 +196,8 @@ function Rating({
       <label
         key={number}
         data-fb-scale-cell
+        data-fb-part={FB_PART.option}
+        data-checked={isSelected ? "true" : undefined}
         className={cn(
           "text-input-text font-input font-input-weight relative flex w-full cursor-pointer items-center justify-center overflow-hidden transition-colors",
           borderClasses,
@@ -292,6 +252,8 @@ function Rating({
       // global focus ring hugs the star (matching the design) instead of spanning the whole cell.
       <div key={number} className="flex flex-1 items-center justify-center">
         <label
+          data-fb-part={FB_PART.option}
+          data-checked={isSelected ? "true" : undefined}
           className={cn(
             "flex min-h-[48px] w-full max-w-[74px] cursor-pointer items-center justify-center rounded-lg transition-opacity",
             disabled && "cursor-not-allowed opacity-50"
@@ -333,12 +295,17 @@ function Rating({
   const renderSmileyOption = (number: number, index: number): React.JSX.Element => {
     const isSelected = currentValue === number;
     const isActive = isSelected || previewValue === number;
+    // Fill and ink are one decision: a face with a fill carries its own ink, because every fill the
+    // scale paints is light in both appearances (ENG-3937).
+    const { fill, ink } = getSmileyColorClasses(range, index, isActive, colorCoding);
 
     return (
       // The flex-1 wrapper keeps the even column layout; the label is sized to the icon so the
       // global focus ring hugs the smiley (matching the design) instead of spanning the whole cell.
       <div key={number} className="flex flex-1 items-center justify-center">
         <label
+          data-fb-part={FB_PART.option}
+          data-checked={isSelected ? "true" : undefined}
           className={cn(
             "relative flex max-h-16 min-h-9 w-full max-w-[74px] cursor-pointer justify-center rounded-lg transition-colors",
             isActive ? "stroke-brand text-brand" : "stroke-muted-foreground text-muted-foreground",
@@ -365,8 +332,8 @@ function Rating({
             aria-label={`Rate ${String(number)} out of ${String(range)}`}
             {...getRadioProps(String(number))}
           />
-          <div className="text-input-text pointer-events-none h-full w-full object-contain">
-            <RatingSmiley active={isActive} idx={index} range={range} addColors={colorCoding} />
+          <div className={cn("text-input-text pointer-events-none h-full w-full object-contain", ink)}>
+            <RatingSmiley idx={index} range={range} fillClass={fill} />
           </div>
         </label>
       </div>
@@ -397,6 +364,7 @@ function Rating({
           required={required}
           requiredLabel={requiredLabel}
           imageUrl={imageUrl}
+          imageAltText={imageAltText}
           videoUrl={videoUrl}
         />
 

@@ -426,6 +426,8 @@ post:
             properties:
               data:
                 $ref: ../components/schemas/SurveyResource.yml
+              warnings:
+                $ref: ../components/schemas/CustomCssWarnings.yml
     "400":
       description: >
         Bad Request — the document failed schema validation, i.e. any rule checkable from the
@@ -450,7 +452,9 @@ post:
       description: >-
         Forbidden — no write access, missing external URL permission, missing
         Contacts entitlement for app-survey targeting, or workspace does not
-        exist (404 not used; avoids existence leak)
+        exist (404 not used; avoids existence leak). Survey custom CSS on an
+        organization without the Scale plan (Formbricks Cloud) is refused with
+        `code: custom_css_plan_required`.
       content:
         application/problem+json:
           schema:
@@ -468,6 +472,10 @@ post:
         service applies on write — for example a CTA `buttonUrl` whose scheme the service does not
         accept. The `invalid_params`
         array pinpoints each issue (e.g. `code: invalid_reference` with the offending `identifier`).
+
+        Also returned when `customCss` cannot be processed (a syntax error, the 20 000-byte survey budget,
+        a complexity limit): `invalid_params` names `customCss.light` / `customCss.dark` and
+        `details.errors` carries the processor's located errors. Nothing is created.
 
         Also returned with `code: workspace_survey_limit_reached` when the workspace already holds
         the maximum number of surveys. That problem carries no `invalid_params`; instead `details`

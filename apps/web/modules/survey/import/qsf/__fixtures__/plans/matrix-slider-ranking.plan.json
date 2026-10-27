@@ -1,0 +1,178 @@
+{
+  "plan": {
+    "pages": [],
+    "questions": [
+      {
+        "choicesFrom": null,
+        "columnsFrom": null,
+        "contactFields": [],
+        "excludedKeys": [],
+        "format": null,
+        "inputType": null,
+        "labelKey": null,
+        "logicNotes": [],
+        "noneChoiceKey": null,
+        "otherChoiceKey": null,
+        "range": null,
+        "ref": "QID6",
+        "required": false,
+        "rowsFrom": null,
+        "scale": null,
+        "type": "cta"
+      },
+      {
+        "choicesFrom": null,
+        "columnsFrom": "answers",
+        "contactFields": [],
+        "excludedKeys": [],
+        "format": null,
+        "inputType": null,
+        "labelKey": null,
+        "logicNotes": [],
+        "noneChoiceKey": null,
+        "otherChoiceKey": null,
+        "range": null,
+        "ref": "QID1",
+        "required": true,
+        "rowsFrom": "choices",
+        "scale": null,
+        "type": "matrix"
+      },
+      {
+        "choicesFrom": null,
+        "columnsFrom": "answers",
+        "contactFields": [],
+        "excludedKeys": [],
+        "format": null,
+        "inputType": null,
+        "labelKey": null,
+        "logicNotes": [],
+        "noneChoiceKey": null,
+        "otherChoiceKey": null,
+        "range": null,
+        "ref": "QID2",
+        "required": false,
+        "rowsFrom": "choices",
+        "scale": null,
+        "type": "matrix"
+      },
+      {
+        "choicesFrom": null,
+        "columnsFrom": null,
+        "contactFields": [],
+        "excludedKeys": [],
+        "format": null,
+        "inputType": null,
+        "labelKey": null,
+        "logicNotes": [],
+        "noneChoiceKey": null,
+        "otherChoiceKey": null,
+        "range": "5",
+        "ref": "QID4",
+        "required": false,
+        "rowsFrom": null,
+        "scale": "star",
+        "type": "rating"
+      },
+      {
+        "choicesFrom": "choices",
+        "columnsFrom": null,
+        "contactFields": [],
+        "excludedKeys": [],
+        "format": null,
+        "inputType": null,
+        "labelKey": null,
+        "logicNotes": [],
+        "noneChoiceKey": null,
+        "otherChoiceKey": null,
+        "range": null,
+        "ref": "QID5",
+        "required": false,
+        "rowsFrom": null,
+        "scale": null,
+        "type": "ranking"
+      },
+      {
+        "choicesFrom": null,
+        "columnsFrom": null,
+        "contactFields": [],
+        "excludedKeys": [],
+        "format": null,
+        "inputType": null,
+        "labelKey": null,
+        "logicNotes": [],
+        "noneChoiceKey": null,
+        "otherChoiceKey": null,
+        "range": null,
+        "ref": "QID7",
+        "required": false,
+        "rowsFrom": null,
+        "scale": null,
+        "type": "fileUpload"
+      },
+      {
+        "choicesFrom": null,
+        "columnsFrom": null,
+        "contactFields": [
+          {
+            "field": "firstName",
+            "key": "c11"
+          },
+          {
+            "field": "lastName",
+            "key": "c12"
+          },
+          {
+            "field": "company",
+            "key": "c13"
+          }
+        ],
+        "excludedKeys": [],
+        "format": null,
+        "inputType": null,
+        "labelKey": null,
+        "logicNotes": [],
+        "noneChoiceKey": null,
+        "otherChoiceKey": null,
+        "range": null,
+        "ref": "QID8",
+        "required": false,
+        "rowsFrom": null,
+        "scale": null,
+        "type": "contactInfo"
+      },
+      {
+        "choicesFrom": null,
+        "columnsFrom": null,
+        "contactFields": [],
+        "excludedKeys": [],
+        "format": "M-d-y",
+        "inputType": null,
+        "labelKey": null,
+        "logicNotes": [],
+        "noneChoiceKey": null,
+        "otherChoiceKey": null,
+        "range": null,
+        "ref": "QID13",
+        "required": false,
+        "rowsFrom": null,
+        "scale": null,
+        "type": "date"
+      }
+    ],
+    "skipped": [
+      {
+        "reason": "A slider with two statements; a Formbricks rating question holds one.",
+        "ref": "QID3"
+      },
+      {
+        "reason": "A ranking of 26 options; Formbricks ranks at most 25.",
+        "ref": "QID12"
+      }
+    ]
+  },
+  "recording": {
+    "note": "Written by hand in the shape the model returns, to run CI without a model. Re-record with `pnpm qsf:eval --record` against a real provider.",
+    "source": "hand-authored"
+  }
+}

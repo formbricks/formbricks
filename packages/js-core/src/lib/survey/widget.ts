@@ -1,5 +1,7 @@
+import { getAppearance } from "@/lib/common/appearance";
 import { Config } from "@/lib/common/config";
 import { CONTAINER_ID, LIVE_REGION_ID } from "@/lib/common/constants";
+import { emitDebugSurveyEvent } from "@/lib/common/debug";
 import { FORMBRICKS_EVENTS, emitFormbricksEvent } from "@/lib/common/events";
 import { Logger } from "@/lib/common/logger";
 import { executeRecaptcha, loadRecaptchaScript } from "@/lib/common/recaptcha";
@@ -7,12 +9,15 @@ import { TimeoutStack } from "@/lib/common/timeout-stack";
 import {
   filterSurveys,
   getBrowserLanguageCodes,
+  getCustomCss,
   getStyling,
   shouldDisplayBasedOnPercentage,
   surveyHasSegmentFilters,
 } from "@/lib/common/utils";
 import { buildDisplayHiddenFields } from "@/lib/survey/embedded-data";
+import { passesShowConditions } from "@/lib/survey/show-conditions";
 import { UpdateQueue } from "@/lib/user/update-queue";
+import { getVisitSnapshot } from "@/lib/visit/visit-store";
 import { type TUserState, type TWorkspaceStateSurvey } from "@/types/config";
 import { type TTrackProperties } from "@/types/survey";
 
@@ -69,11 +74,16 @@ export const triggerSurvey = async (
 ): Promise<void> => {
   const logger = Logger.getInstance();
 
+  // Before the percentage draw, so only visitors who qualify are sampled (ENG-3875), and before
+  // `renderWidget` takes `isSurveyRunning`, so a survey that fails here never blocks the next one.
+  if (!passesShowConditions(survey, action, "trigger")) return;
+
   // Check if the survey should be displayed based on displayPercentage
   if (survey.displayPercentage) {
     const shouldDisplaySurvey = shouldDisplayBasedOnPercentage(survey.displayPercentage);
     if (!shouldDisplaySurvey) {
       logger.debug(`Survey display of "${survey.id}" skipped based on displayPercentage.`);
+      emitDebugSurveyEvent({ surveyId: survey.id, action, stage: "trigger", outcome: "notSampled" });
       return; // skip displaying the survey
     }
   }
@@ -96,6 +106,7 @@ export const renderWidget = async (
 
   if (isSurveyRunning) {
     logger.debug("A survey is already running. Skipping.");
+    emitDebugSurveyEvent({ surveyId: survey.id, action, stage: "trigger", outcome: "anotherSurveyOpen" });
     return;
   }
 
@@ -162,6 +173,15 @@ export const renderWidget = async (
   }
 
   const timeoutId = setTimeout(() => {
+    // Checked again right before it shows (ENG-3875). Time has passed since the check in
+    // `triggerSurvey`, even with no delay: identification, the surveys bundle and reCAPTCHA all load
+    // in between, and an SPA can move to a page the conditions exclude meanwhile.
+    if (!passesShowConditions(survey, action, "beforeShow")) {
+      timeoutStack.remove(timeoutId as unknown as number);
+      setIsSurveyRunning(false);
+      return;
+    }
+
     // First, before anything below can throw: from here the survey is on screen, so its TimeoutStack
     // entry must stop looking like a cancellable schedule. `checkPageUrl` releases `isSurveyRunning`
     // for the entries it cancels, and doing that to a live survey lets the next trigger render a
@@ -177,12 +197,16 @@ export const renderWidget = async (
     // would deliver the two out of order. What was persisted is the dashboard's Displays count; this
     // event is what the respondent saw.
     emitFormbricksEvent(FORMBRICKS_EVENTS.surveyShown, { surveyId: survey.id });
+    emitDebugSurveyEvent({ surveyId: survey.id, action, stage: "trigger", outcome: "shown" });
 
     formbricksSurveys.renderSurvey({
+      appearance: getAppearance(),
       appUrl: config.get().appUrl,
       workspaceId: config.get().workspaceId,
       contactId: config.get().user.data.contactId ?? undefined,
       action,
+      // The visit at the moment the survey shows (ENG-3876), saved as the response's visit fields.
+      visit: getVisitSnapshot() ?? undefined,
       survey,
       isBrandingEnabled,
       clickOutside,
@@ -190,6 +214,8 @@ export const renderWidget = async (
       languageCode,
       placement,
       styling: getStyling(settings, survey),
+      // Both scopes from the cached workspace state; the renderer applies CSS from this prop only.
+      customCss: getCustomCss(settings, survey),
       // The ambient Embedded Data bag (ENG-1844) under the per-trigger `track({ hiddenFields })`
       // values — explicit beats ambient, case-insensitively (see `buildDisplayHiddenFields`).
       // Built here, inside the delay timeout at the moment the survey actually shows, from a
@@ -296,6 +322,9 @@ export const closeSurvey = (surveyId?: string): void => {
 
   // remove the survey modal container from DOM
   removeWidgetContainer();
+  // Dropping the container does not unmount the survey, so the renderer's custom CSS would outlive it.
+  // Feature-detected: renderer bundles older than custom CSS have no such function and no such CSS.
+  globalThis.window.formbricksSurveys?.removeCustomCss?.();
 
   const { workspace, user } = config.get();
   const filteredSurveys = filterSurveys(workspace, user);

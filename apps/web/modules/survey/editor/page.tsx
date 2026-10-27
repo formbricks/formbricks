@@ -1,4 +1,7 @@
+import { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { type TSurvey } from "@formbricks/types/surveys/types";
 import {
   DEFAULT_LOCALE,
   ENTERPRISE_LICENSE_REQUEST_FORM_URL,
@@ -11,8 +14,15 @@ import {
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getUserVisibleSurveyWhere } from "@/lib/survey/visibility/actor-context";
 import { getTranslate } from "@/lingodotdev/server";
+import { getCustomCssSource } from "@/modules/custom-css/components/lib/draft";
+import { hasStylesInHeadScripts } from "@/modules/custom-css/components/lib/hints";
+import { type TSurveyCustomCssEditorConfig } from "@/modules/custom-css/components/types";
+import { getCustomCssPlanAllowed } from "@/modules/custom-css/lib/access";
+import { getCustomCssHealth, toDeliveredCustomCss } from "@/modules/custom-css/lib/delivery";
+import { getWorkspaceCustomCssRecord, parseStoredCustomCss } from "@/modules/custom-css/lib/service";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
+import { getSurveyDataRetentionContext } from "@/modules/ee/data-retention/lib/survey-context";
 import {
   getIsContactsEnabled,
   getIsQuotasEnabled,
@@ -31,7 +41,7 @@ import {
   getResponseCountBySurveyId,
 } from "@/modules/survey/lib/response";
 import { getOrganizationBilling, getSurvey } from "@/modules/survey/lib/survey";
-import { getSurveyAuth } from "@/modules/survey/lib/survey-auth";
+import { canReadSurveyInWorkspace, getSurveyAuth } from "@/modules/survey/lib/survey-auth";
 import { getWorkspaceWithTeamIds } from "@/modules/survey/lib/workspace";
 import { SURVEY_SCHEDULING_CONFIG } from "@/modules/survey/scheduling/lib/constants";
 import { getSurveyVisibilityViewer } from "@/modules/survey/visibility/lib/gate";
@@ -39,12 +49,22 @@ import { ErrorComponent } from "@/modules/ui/components/error-component";
 import { SurveyEditor } from "./components/survey-editor";
 import { getUserLocale } from "./lib/user";
 
-// No `generateMetadata` here on purpose: Next only reads metadata from the exports of the route
-// segment's own module, and the /edit route file re-exports the default alone
-// (app/(app)/(survey-editor)/workspaces/[workspaceId]/surveys/[surveyId]/edit/page.tsx). A
-// `generateMetadata` exported from this module would never run, so the editor has no title of its
-// own and no survey name to protect. Wiring one up is a UI change, not part of this fix — see
-// ENG-2372.
+type TSurveyEditorPageParams = { params: Promise<{ workspaceId: string; surveyId: string }> };
+
+// Re-exported by the /edit route file — Next only reads metadata from the route segment's own module.
+export const generateSurveyEditorMetadata = async (props: TSurveyEditorPageParams): Promise<Metadata> => {
+  const params = await props.params;
+  const t = await getTranslate();
+
+  // Metadata resolves independently of the page's own access check, so the survey name only goes
+  // into the title once the caller may read this survey through this workspace.
+  if (!(await canReadSurveyInWorkspace(params.workspaceId, params.surveyId))) {
+    return { title: t("common.survey") };
+  }
+
+  const survey = await getSurvey(params.surveyId);
+  return { title: t("workspace.surveys.edit.edit_survey_title", { surveyName: survey.name }) };
+};
 
 export const SurveyEditorPage = async (props: {
   params: Promise<{ workspaceId: string; surveyId: string }>;
@@ -90,7 +110,7 @@ export const SurveyEditorPage = async (props: {
   ]);
 
   if (!workspaceWithTeamIds) {
-    throw new ResourceNotFoundError(t("common.workspace"), null);
+    return notFound();
   }
 
   const organizationBilling = await getOrganizationBilling(workspaceWithTeamIds.organizationId);
@@ -111,6 +131,7 @@ export const SurveyEditorPage = async (props: {
     isExternalUrlsAllowed,
     isUserTargetingAllowed,
     isWorkflowsAllowed,
+    isCustomCssPlanAllowed,
   ] = await Promise.all([
     getSurveyFollowUpsPermission(workspaceWithTeamIds.organizationId),
     getIsSpamProtectionEnabled(workspaceWithTeamIds.organizationId),
@@ -119,6 +140,7 @@ export const SurveyEditorPage = async (props: {
     getIsContactsEnabled(workspaceWithTeamIds.organizationId),
     // Drives the Follow-ups deprecation: the tab only survives where Workflows cannot replace it.
     getIsWorkflowsEnabled(workspaceWithTeamIds.organizationId),
+    getCustomCssPlanAllowed(workspaceWithTeamIds.organizationId),
   ]);
 
   const quotas = isQuotasAllowed && survey ? await getQuotas(survey.id) : [];
@@ -127,24 +149,31 @@ export const SurveyEditorPage = async (props: {
     getTeamMemberDetails(workspaceWithTeamIds.teamIds),
   ]);
 
-  if (
-    !survey ||
-    !actionClasses ||
-    !contactAttributeKeys ||
-    !workspaceWithTeamIds ||
-    !userEmail ||
-    isSurveyCreationDeletionDisabled
-  ) {
+  // A survey that is gone, or that this viewer may not edit, 404s like any other inaccessible resource.
+  if (!survey || isSurveyCreationDeletionDisabled) {
+    return notFound();
+  }
+
+  if (!actionClasses || !contactAttributeKeys || !workspaceWithTeamIds || !userEmail) {
     return <ErrorComponent />;
   }
 
   const isCxMode = searchParams.mode === "cx";
   const publicDomain = getPublicDomain();
-  const { surveyVisibilityGate, visibility, surveyAccess, ownerName } = await getSurveyVisibilityViewer(
+  const [{ surveyVisibilityGate, visibility, surveyAccess, ownerName }, dataRetention] = await Promise.all([
+    getSurveyVisibilityViewer(survey, session.user.id, workspaceWithTeamIds.organizationId),
+    getSurveyDataRetentionContext(organization, session.user.id),
+  ]);
+
+  // The workspace row reaches the editor without its CSS columns (source, compiled output and the
+  // previous revision); the editor gets only what the Custom CSS card shows, read here on the server.
+  const customCssEditor = await getSurveyCustomCssEditorConfig({
+    storedWorkspaceCustomCss: (await getWorkspaceCustomCssRecord(workspaceWithTeamIds.id)).customCss,
     survey,
-    session.user.id,
-    workspaceWithTeamIds.organizationId
-  );
+    workspaceHeadScripts: workspaceWithTeamIds.customHeadScripts,
+    organizationId: workspaceWithTeamIds.organizationId,
+    planAllowed: isCustomCssPlanAllowed,
+  });
 
   return (
     <SurveyEditor
@@ -181,6 +210,44 @@ export const SurveyEditorPage = async (props: {
       visibility={visibility}
       surveyAccess={surveyAccess}
       ownerName={ownerName}
+      customCssEditor={customCssEditor}
+      dataRetention={dataRetention}
     />
   );
+};
+
+/**
+ * What the survey's Custom CSS card needs (ENG-3553), mirroring the server's own rules: the inherited
+ * workspace CSS as source (read-only) and as delivered compiled output (for the preview), the health
+ * of both saved values, the plan gate, and — self-hosted only — whether either set of Custom Head
+ * Scripts already adds page styles. Survey edit permission is the editor's own: reaching it is it.
+ */
+const getSurveyCustomCssEditorConfig = async (params: {
+  storedWorkspaceCustomCss: unknown;
+  survey: TSurvey;
+  workspaceHeadScripts: string | null;
+  organizationId: string;
+  planAllowed: boolean;
+}): Promise<TSurveyCustomCssEditorConfig> => {
+  const workspaceCustomCss = parseStoredCustomCss(params.storedWorkspaceCustomCss);
+  const [workspaceCompiled, workspaceHealth, surveyHealth] = await Promise.all([
+    toDeliveredCustomCss(workspaceCustomCss, "workspace"),
+    getCustomCssHealth(workspaceCustomCss, "workspace"),
+    getCustomCssHealth(params.survey.customCss, "survey"),
+  ]);
+
+  return {
+    planAllowed: params.planAllowed,
+    billingHref: IS_FORMBRICKS_CLOUD ? `/organizations/${params.organizationId}/settings/billing` : null,
+    hasHeadScriptStyles:
+      !IS_FORMBRICKS_CLOUD &&
+      (hasStylesInHeadScripts(params.workspaceHeadScripts) ||
+        hasStylesInHeadScripts(params.survey.customHeadScripts)),
+    surveyStatus: surveyHealth.status,
+    workspace: {
+      source: getCustomCssSource(workspaceCustomCss),
+      compiled: workspaceCompiled ?? null,
+      status: workspaceHealth.status,
+    },
+  };
 };

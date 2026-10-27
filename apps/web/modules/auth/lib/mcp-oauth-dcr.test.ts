@@ -302,6 +302,29 @@ describe("MCP OAuth Dynamic Client Registration → authorize (real-client shape
   });
 
   /**
+   * ENG-3470. A spec-following client — the MCP SDK takes its scope from the 401 challenge, then the
+   * protected-resource metadata — only ever requests what is advertised. While `responses:*` were held
+   * back from that list, such a client was never offered them and every response tool answered 403,
+   * even though the scopes were grantable. Asserted on what reaches the consent step (the login
+   * redirect carries the requested scope), not on the constant, so it fails the way a real client
+   * failed.
+   */
+  test("a spec client that authorizes with the advertised scopes is offered the response scopes", async () => {
+    const auth = createAuthInstance();
+    const advertisedScopes = await fetchAdvertisedScopes();
+    const registration = await registerClient(auth, advertisedScopes);
+
+    const authorize = await requestAuthorize(auth, registration.body.client_id as string, advertisedScopes);
+    const requested = (new URLSearchParams(authorize.location.split("?")[1] ?? "").get("scope") ?? "").split(
+      " "
+    );
+
+    expect(authorize.location).toContain("/auth/login");
+    expect(authorize.location).not.toContain("error=");
+    expect(requested).toEqual(expect.arrayContaining(["responses:read", "responses:write"]));
+  });
+
+  /**
    * Behaviour change in Better Auth 1.7, pinned deliberately (ENG-2343).
    *
    * In 1.6 a client was registered with exactly the scopes it asked for, so a client that requested

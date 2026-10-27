@@ -55,7 +55,8 @@
               "platform/introduction",
               "platform/what-is-formbricks",
               "platform/open-source",
-              "platform/accessibility"
+              "platform/accessibility",
+              "platform/changelog"
             ]
           },
           {
@@ -70,11 +71,13 @@
                   "platform/features/integrations/overview",
                   "platform/features/integrations/activepieces",
                   "platform/features/integrations/airtable",
+                  "platform/features/integrations/attio",
                   "platform/features/integrations/google-sheets",
                   "platform/features/integrations/hubspot",
                   "platform/features/integrations/make",
                   "platform/features/integrations/n8n",
                   "platform/features/integrations/notion",
+                  "platform/features/integrations/salesforce",
                   "platform/features/integrations/slack",
                   "platform/features/integrations/wordpress",
                   "platform/features/integrations/zapier",
@@ -115,10 +118,12 @@
                   "surveys/general-features/add-image-or-video-question",
                   "surveys/general-features/conditional-logic",
                   "surveys/general-features/overwrite-styling",
+                  "surveys/general-features/custom-css",
                   "surveys/general-features/hidden-fields",
                   "surveys/general-features/limit-submissions",
                   "surveys/general-features/survey-scheduling",
                   "surveys/general-features/multi-language-surveys",
+                  "surveys/general-features/migrate-from-qualtrics",
                   "surveys/general-features/partial-submissions",
                   "surveys/general-features/recall",
                   "surveys/general-features/metadata",
@@ -176,6 +181,7 @@
                 "pages": [
                   "surveys/website-app-surveys/quickstart",
                   "surveys/website-app-surveys/framework-guides",
+                  "surveys/website-app-surveys/sdk-compatibility",
                   "surveys/website-app-surveys/google-tag-manager",
                   "surveys/website-app-surveys/custom-css",
                   {
@@ -185,6 +191,7 @@
                       "surveys/website-app-surveys/actions",
                       "surveys/website-app-surveys/user-identification",
                       "surveys/website-app-surveys/attribute-based-targeting",
+                      "surveys/website-app-surveys/show-conditions",
                       "surveys/website-app-surveys/recontact",
                       "surveys/website-app-surveys/cooldown-period",
                       "surveys/website-app-surveys/survey-display-logic",
@@ -306,7 +313,7 @@
         "groups": [
           {
             "group": "Self Hosting",
-            "pages": ["self-hosting/overview"]
+            "pages": ["self-hosting/overview", "self-hosting/deployment-components"]
           },
           {
             "group": "Setup",
@@ -314,6 +321,7 @@
               "self-hosting/setup/one-click",
               "self-hosting/setup/docker",
               "self-hosting/setup/monitoring",
+              "self-hosting/setup/deployment-check",
               "self-hosting/setup/cluster-setup",
               "self-hosting/setup/kubernetes"
             ]
@@ -367,6 +375,7 @@
             "group": "Advanced",
             "pages": [
               "self-hosting/advanced/release-maintenance-policy",
+              "self-hosting/advanced/upgrade",
               "self-hosting/advanced/migration",
               "self-hosting/advanced/v6-maintenance-upgrade",
               "self-hosting/advanced/migrating-surveys",
@@ -408,6 +417,7 @@
               "development/technical-handbook/api-v3-schema-generation",
               "development/technical-handbook/mcp-server",
               "development/technical-handbook/cube-tenant-isolation",
+              "development/technical-handbook/custom-css-rollout",
               "development/technical-handbook/database-model",
               "development/technical-handbook/tenant-separation"
             ]

@@ -8,6 +8,7 @@ import { type Plugin, loadEnv } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { defineConfig } from "vitest/config";
 import { copyCompiledAssetsPlugin } from "../vite-plugins/copy-compiled-assets";
+import { UMD_WITHOUT_AMD_OUTPUT } from "../vite-plugins/umd-without-amd";
 
 // Stubs the @formbricks/survey-ui/styles?inline import during vitest runs so that
 // tests do not require packages/survey-ui to be built first. The plugin only
@@ -100,13 +101,14 @@ const config = ({ mode }) => {
       build: {
         emptyOutDir: false,
         lib: {
-          entry: resolve(__dirname, "src/index.ts"),
+          entry: resolve(__dirname, "src/umd.ts"),
           name: "formbricksSurveys",
           formats: ["umd"],
           fileName: () => "index.umd.cjs",
         },
         rollupOptions: {
           external: ["node-html-parser"],
+          output: UMD_WITHOUT_AMD_OUTPUT,
         },
         outDir: "dist",
       },

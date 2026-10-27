@@ -194,6 +194,7 @@ const baseSurveyProperties = {
   id: mockId,
   name: "Mock Survey",
   autoClose: 10,
+  keepEndingCardOpen: false,
   delay: 0,
   autoComplete: 7,
   publishOn: null,
@@ -277,6 +278,10 @@ export const mockSyncSurveyOutput: SurveyMock = {
   slug: null,
   customHeadScripts: null,
   customHeadScriptsMode: null,
+  customCss: null,
+  showConditions: null,
+  ownershipInitialized: true,
+  variables: [],
 };
 
 export const mockSurveyOutput: SurveyMock = {
@@ -311,6 +316,10 @@ export const mockSurveyOutput: SurveyMock = {
   slug: null,
   customHeadScripts: null,
   customHeadScriptsMode: null,
+  customCss: null,
+  showConditions: null,
+  ownershipInitialized: true,
+  variables: [],
 };
 
 export const createSurveyInput: TSurveyCreateInput = {
@@ -373,7 +382,9 @@ export const mockTransformedSurveyOutput = withInlinedEmbeddedFields(mockSurveyO
 
 export const mockTransformedSyncSurveyOutput = withInlinedEmbeddedFields(mockSyncSurveyOutput);
 
-export const mockSurveyWithLogic: TSurvey = {
+// Without `customCss`: `evaluateLogic` takes the respondent-facing survey, whose `customCss` is compiled
+// output, never the stored value a `TSurvey` carries (ENG-2949).
+export const mockSurveyWithLogic: Omit<TSurvey, "customCss"> = {
   ...mockSyncSurveyOutput,
   ...baseSurveyProperties,
   displayPercentage: null,

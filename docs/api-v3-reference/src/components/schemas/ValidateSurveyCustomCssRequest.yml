@@ -1,0 +1,42 @@
+type: object
+description: >-
+  Validate custom CSS alone, for a live editor preview (ENG-3641). Processes the CSS exactly as a save
+  would and returns the compiled result and warnings, without saving, versioning, touching timestamps
+  or invalidating caches. Requires read access to `workspaceId`, and to `surveyId` when given; a valid
+  result grants nothing — the write path checks permissions and the plan again.
+required:
+  - operation
+  - workspaceId
+  - scope
+  - data
+properties:
+  operation:
+    type: string
+    enum:
+      - customCss
+  workspaceId:
+    type: string
+    format: cuid2
+  scope:
+    type: string
+    enum:
+      - workspace
+      - survey
+    description: Which budget and cascade layer the CSS is processed for.
+  surveyId:
+    type: string
+    format: cuid2
+    description: >-
+      Optional, `scope: survey` only. An existing survey, which must belong to `workspaceId`; omit it
+      to validate an unsaved draft.
+  data:
+    type: object
+    required:
+      - customCss
+    properties:
+      customCss:
+        anyOf:
+          - $ref: ./CustomCssInput.yml
+          - type: "null"
+    additionalProperties: false
+additionalProperties: false

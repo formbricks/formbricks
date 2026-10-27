@@ -19,7 +19,7 @@ jobs:
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with:
           egress-policy: audit
 
@@ -123,10 +123,12 @@ jobs:
           fi
 
           # The CLI exits 1 both for an invalid config and for its own inability to fetch the
-          # schema. This check gates every merge, so a CodeRabbit outage must not block the
-          # queue — but it must be loud rather than silently green.
-          if printf '%s' "$output" | grep -qF "Could not load the current CodeRabbit configuration schema"; then
-            echo "::warning file=.coderabbit.yaml::Could not reach the CodeRabbit schema; skipped schema validation. The path_filters check above still ran."
+          # schema ("Could not load") or to compile it ("Could not use" — e.g. a new keyword
+          # such as `x-undocumented` that the CLI's strict validator rejects). This check gates
+          # every merge, so a CodeRabbit-side problem must not block the queue — but it must be
+          # loud rather than silently green.
+          if grep -qE '^✖ Could not (load|use) the current CodeRabbit configuration schema:' <<< "$output"; then
+            echo "::warning file=.coderabbit.yaml::Could not load or compile the CodeRabbit schema; skipped schema validation. The path_filters check above still ran."
             exit 0
           fi
 

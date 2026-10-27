@@ -194,6 +194,7 @@ export function MultipleChoiceSingleElement({
         otherValue={otherValue}
         onOtherValueChange={handleOtherValueChange}
         imageUrl={element.imageUrl}
+        imageAltText={getLocalizedValue(element.imageAltText, languageCode)}
         videoUrl={element.videoUrl}
         searchPlaceholder={t("common.search")}
         searchNoResultsText={t("common.no_results_found")}

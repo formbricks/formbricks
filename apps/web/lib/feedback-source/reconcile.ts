@@ -1,5 +1,6 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
+import { mapWithConcurrency } from "@/lib/utils/map-with-concurrency";
 import {
   type HubFeedbackRecordResult,
   createFeedbackRecordsBatch,
@@ -113,7 +114,7 @@ export const UPDATE_FIELD_KEYS = {
  * this one.
  */
 const toUpdateParams = (record: FeedbackRecordCreateParams): FeedbackRecordUpdateParams => ({
-  // The SDK types value_text as nullable on create but not on update. Coerce null to undefined,
+  // The SDK types value_text and value_id as nullable on create but not on update. Coerce null to undefined,
   // which Hub reads as "leave unchanged" — transform.ts never emits a record without a value, so a
   // null here would mean "no answer to send" rather than "clear the stored answer".
   value_text: record.value_text ?? undefined,
@@ -123,7 +124,12 @@ const toUpdateParams = (record: FeedbackRecordCreateParams): FeedbackRecordUpdat
   // Carries the selected choice's id for single/multi select. Omitting it left a reconciled record
   // pointing at the *old* choice while its text showed the new one, and value_id is what the charts
   // group by — so the correction landed everywhere except the place it is read.
-  value_id: record.value_id,
+  //
+  // `?? undefined` changes nothing on the wire: Hub decodes `value_id` into a pointer and only writes it when
+  // non-nil (`UpdateFeedbackRecord`), so a JSON null and an absent key both mean "leave unchanged". The update
+  // API cannot clear a value_id at all — which is safe only because transform.ts omits the key for an answer
+  // without a choice rather than sending null. A record whose answer *loses* its choice would keep the old id.
+  value_id: record.value_id ?? undefined,
   metadata: record.metadata,
   language: record.language,
   user_id: record.user_id,
@@ -208,28 +214,6 @@ const reconcileConflict = async (
   }
 
   return { status: "reconciled" };
-};
-
-/** Run `fn` over `items` with at most `limit` in flight, preserving input order in the output. */
-const mapWithConcurrency = async <TIn, TOut>(
-  items: TIn[],
-  limit: number,
-  fn: (item: TIn) => Promise<TOut>
-): Promise<TOut[]> => {
-  const results = new Array<TOut>(items.length);
-  let cursor = 0;
-
-  const worker = async (): Promise<void> => {
-    while (cursor < items.length) {
-      const index = cursor;
-      cursor += 1;
-      results[index] = await fn(items[index]);
-    }
-  };
-
-  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
-
-  return results;
 };
 
 /** One record Hub rejected as already existing, with its index in the input. */

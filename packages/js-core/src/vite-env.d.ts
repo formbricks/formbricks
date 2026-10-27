@@ -10,6 +10,10 @@ declare global {
       // Optional: the surveys bundle is served by the (possibly self-hosted, older)
       // Formbricks instance, so it may predate setNonce.
       setNonce?: (nonce: string | undefined) => void;
+      // Optional for the same reason: older renderers have no appearance support.
+      setAppearance?: (appearance: "light" | "dark" | "system") => void;
+      // Optional for the same reason: renderers older than custom CSS have nothing to remove.
+      removeCustomCss?: () => void;
       // The shared survey language resolver. Lives in the surveys bundle so the SDK never ships the
       // canonical language table; optional for the same reason as setNonce. Hand-mirrors the signature
       // of `resolveSurveyLanguage` in @formbricks/i18n-utils (js-core deliberately has no dependency on

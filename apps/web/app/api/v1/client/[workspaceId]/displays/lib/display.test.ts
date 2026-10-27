@@ -182,6 +182,7 @@ describe("createDisplay", () => {
     expect(getContactByUserId).toHaveBeenCalledWith(workspaceId, userId);
     expect(prisma.survey.findUnique).toHaveBeenCalledWith({
       where: { id: surveyId, workspaceId },
+      select: { status: true },
     });
     expect(prisma.display.create).not.toHaveBeenCalled();
   });

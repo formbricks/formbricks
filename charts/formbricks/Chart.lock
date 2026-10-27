@@ -1,7 +1,7 @@
 dependencies:
 - name: spicedb-operator
   repository: file://../spicedb-operator
-  version: 0.1.0
+  version: 0.2.0
 - name: postgresql
   repository: oci://registry-1.docker.io/bitnamicharts
   version: 16.4.16
@@ -14,5 +14,5 @@ dependencies:
 - name: vllm-stack
   repository: https://vllm-project.github.io/production-stack
   version: 0.1.11
-digest: sha256:2a3f9fbdc5f5972314eca75f52d1938386d0c89da178dafe49343b0d7f096306
-generated: "2026-09-16T16:11:35.286223+05:30"
+digest: sha256:155923cbd335e42b26cb0ec9fd96f860b58a5739c338e272ffb3b207cbf3385a
+generated: "2026-10-22T10:36:08.962455256Z"

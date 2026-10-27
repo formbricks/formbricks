@@ -1,0 +1,32 @@
+type: object
+description: >-
+  Result of `operation: customCss`. On success it carries the compiled CSS and warnings; on failure
+  the processor's errors, with no compiled output.
+required:
+  - valid
+  - operation
+  - invalid_params
+properties:
+  valid:
+    type: boolean
+  operation:
+    type: string
+    enum:
+      - customCss
+  invalid_params:
+    type: array
+    items:
+      $ref: ./InvalidParam.yml
+  customCss:
+    $ref: ./CustomCssCompiled.yml
+  warnings:
+    type: array
+    maxItems: 50
+    items:
+      $ref: ./CustomCssWarning.yml
+  errors:
+    type: array
+    maxItems: 50
+    items:
+      $ref: ./CustomCssError.yml
+additionalProperties: false

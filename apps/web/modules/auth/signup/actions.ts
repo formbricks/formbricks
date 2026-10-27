@@ -11,7 +11,7 @@ import {
   SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE,
   UnknownError,
 } from "@formbricks/types/errors";
-import { ZUser, ZUserEmail, ZUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
+import { ZUser, ZUserLocale } from "@formbricks/types/user";
 import { IS_FORMBRICKS_CLOUD, IS_TURNSTILE_CONFIGURED, TURNSTILE_SECRET_KEY } from "@/lib/constants";
 import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
@@ -42,6 +42,7 @@ import {
   runWithSignupRequestContext,
 } from "@/modules/auth/lib/signup-request-context";
 import { updateUser } from "@/modules/auth/lib/user";
+import { ZCreateUserAction } from "@/modules/auth/signup/lib/create-user-input";
 import {
   type InviteMatch,
   deleteInvite,
@@ -68,23 +69,6 @@ const ZCreatedUser = ZUser.pick({
 });
 
 type TCreatedUser = z.infer<typeof ZCreatedUser>;
-
-const ZCreateUserAction = z.object({
-  name: ZUserName,
-  email: ZUserEmail,
-  password: ZUserPassword,
-  inviteToken: z.string().optional(),
-  userLocale: ZUserLocale.optional(),
-  turnstileToken: z
-    .string()
-    .optional()
-    .refine(
-      (token) => !IS_TURNSTILE_CONFIGURED || (IS_TURNSTILE_CONFIGURED && token),
-      "CAPTCHA verification required"
-    ),
-  subscribeToSecurityUpdates: z.boolean().optional(),
-  subscribeToProductUpdates: z.boolean().optional(),
-});
 
 async function verifyTurnstileIfConfigured(turnstileToken: string | undefined): Promise<void> {
   if (!IS_TURNSTILE_CONFIGURED) return;
@@ -282,9 +266,12 @@ async function handleOrganizationCreation(ctx: ActionClientCtx, user: TCreatedUs
     });
   }
 
-  const workspace = await createWorkspace(organization.id, {
-    name: DEFAULT_WORKSPACE_NAME,
-  });
+  // The organization was created just above and owns no workspaces, so there is no cap to enforce.
+  const workspace = await createWorkspace(
+    organization.id,
+    { name: DEFAULT_WORKSPACE_NAME },
+    { workspaceLimit: null }
+  );
 
   groupIdentifyPostHog("organization", organization.id, {
     name: organization.name,
@@ -404,8 +391,8 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
     }
 
     // The domain policy passed, so mark the request scope: user.create.before uses this to tell a
-    // sign-up that went through this action apart from a direct POST to Better Auth's native
-    // /sign-up/email endpoint (which bypasses the action and is re-checked in the hook).
+    // sign-up that went through this action apart from any other caller of Better Auth's native
+    // /sign-up/email endpoint, which the hook re-checks. That endpoint is closed over HTTP (ENG-3988).
     const outcome = await runWithSignupRequestContext(() => {
       markSignupDomainAllowed();
       // ENG-2247: carried into user.create.before, which stamps the marker on the row it inserts. The

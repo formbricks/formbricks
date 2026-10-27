@@ -31,9 +31,9 @@ export const NO_CONFIG_ERROR = {
 /**
  * "Hub is switched off on this deployment" — as opposed to a Hub that is configured but unreachable.
  *
- * `status: 0` alone cannot tell them apart: the SDK reports a connection failure or timeout without a
- * status too, so `getErrorStatus` returns 0 for both. Match on the sentinel's message so a dead socket
- * still reads as an upstream fault (502) while a missing config reads as "not enabled here" (503).
+ * `status: 0` alone cannot tell them apart: a connection failure or timeout has no status either, so
+ * `getErrorStatus` returns 0 for both. Match on the sentinel's message so a dead socket still reads as an
+ * upstream fault (502) while a missing config reads as "not enabled here" (503).
  */
 export const isHubNotConfigured = (error: HubError): boolean =>
   error.status === NO_CONFIG_ERROR.status && error.message === NO_CONFIG_ERROR.message;
@@ -44,8 +44,8 @@ export const getErrorMessage = (err: unknown): string => {
   return "Unknown error";
 };
 
-// Duck-typed: `instanceof` against the SDK error class breaks under Next dev/Turbopack
-// when @formbricks/hub is loaded into more than one module scope.
+// Duck-typed: `instanceof` against an error class breaks under Next dev/Turbopack when the module
+// defining it is loaded into more than one module scope.
 export const getErrorStatus = (err: unknown): number =>
   err && typeof err === "object" && typeof (err as { status?: unknown }).status === "number"
     ? (err as { status: number }).status
@@ -55,9 +55,49 @@ const asRecord = (value: unknown): Record<string, unknown> | null =>
   typeof value === "object" && value !== null ? (value as Record<string, unknown>) : null;
 
 /**
- * Reads the RFC 9457 problem members off a Hub SDK error (which exposes the parsed JSON body as
- * `error`). Duck-typed for the same reason as `getErrorStatus`: `instanceof` against the SDK error
- * class breaks when @formbricks/hub is loaded into more than one module scope under Next dev/Turbopack.
+ * Mirrors Stainless's `APIError.makeMessage`, so `HubError.message` keeps the text it had before the SDK
+ * moved to Hey API: `"<status> <body.message | JSON body | raw text>"`.
+ */
+const makeHubApiErrorMessage = (status: number, body: unknown): string => {
+  const bodyMessage = asRecord(body)?.message;
+  let text: string | undefined;
+
+  if (typeof bodyMessage === "string") text = bodyMessage;
+  else if (bodyMessage !== undefined) text = JSON.stringify(bodyMessage);
+  else if (typeof body === "string") text = body || undefined;
+  else if (body !== undefined && body !== null) text = JSON.stringify(body);
+
+  return text ? `${status} ${text}` : `${status} status code (no body)`;
+};
+
+/**
+ * A Hub response that was not 2xx — or a 2xx whose body could not be parsed, passed as `options.cause`.
+ *
+ * The Hey API client does not throw an `Error` for these: with `throwOnError` it throws the *parsed
+ * body* itself — no status, no stack, and `String(body)` is `"[object Object]"`. The error interceptor in
+ * `hub-client.ts` wraps it in this instead, keeping the members Stainless's `APIError` had (`status`, the
+ * parsed body as `error`, `headers`), so everything below reads it the same way it always has.
+ */
+export class HubApiError extends Error {
+  readonly status: number;
+  readonly error: unknown;
+  readonly headers: Headers;
+
+  constructor(status: number, body: unknown, headers: Headers, options?: { cause: unknown }) {
+    super(
+      options ? `${status} response body could not be parsed` : makeHubApiErrorMessage(status, body),
+      options
+    );
+    this.name = "HubApiError";
+    this.status = status;
+    this.error = body;
+    this.headers = headers;
+  }
+}
+
+/**
+ * Reads the RFC 9457 problem members off a `HubApiError` (which exposes the parsed JSON body as
+ * `error`). Duck-typed for the same reason as `getErrorStatus`.
  */
 export const getErrorProblem = (err: unknown): Pick<HubError, "code" | "problemDetail" | "invalidParams"> => {
   const body = asRecord(asRecord(err)?.error);
@@ -86,8 +126,8 @@ export const createHubResultFromError = <T>(err: unknown): HubResult<T> => {
 };
 
 // Node network errnos meaning the Hub process was never reached, as opposed to Hub answering with
-// an error. The SDK surfaces these as APIConnectionError with the original errno buried in the
-// cause chain, so the message alone ("Connection error.") can't tell the two apart.
+// an error. They surface as fetch's own TypeError with the original errno buried in the cause chain,
+// so the message alone ("fetch failed") can't tell the two apart.
 const CONNECTION_ERROR_CODES = new Set([
   "ECONNREFUSED",
   "ECONNRESET",
@@ -103,8 +143,8 @@ const HUB_UNREACHABLE_HINT =
   "Hub looks unreachable at HUB_API_URL — is it running? Try: docker logs formbricks-hub-1";
 
 // Walks `cause` and AggregateError.errors looking for a network errno. Node's fetch failure nests
-// them two or three deep (APIConnectionError → TypeError: fetch failed → AggregateError → errno),
-// and the depth cap keeps a self-referencing cause from looping forever.
+// them one or two deep (TypeError: fetch failed → AggregateError → errno), deeper if something wraps
+// the error again, and the depth cap keeps a self-referencing cause from looping forever.
 const hasConnectionErrno = (err: unknown, depth = 0): boolean => {
   if (!err || typeof err !== "object" || depth > 8) return false;
 

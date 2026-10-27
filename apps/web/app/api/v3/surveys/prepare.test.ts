@@ -1,8 +1,9 @@
 import { describe, expect, test, vi } from "vitest";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { prepareV3SurveyCreate, prepareV3SurveyCreateInput, prepareV3SurveyPatchInput } from "./prepare";
-import { ZV3CreateSurveyBody } from "./schemas";
+import { type TV3SurveyDocument, ZV3CreateSurveyBody } from "./schemas";
 import { serializeV3SurveyResource } from "./serializers";
+import { getV3SurveyIntroducedMediaInvalidParams } from "./validation";
 
 // ENG-3282: marker off, a session user — every survey reads as workspace-visible, no controls.
 const TEST_VISIBILITY = {
@@ -349,6 +350,45 @@ describe("v3 survey preparation", () => {
         expect.objectContaining({ name: "variables", reason: "Too big: expected array to have <=100 items" }),
       ]);
     }
+  });
+
+  test("a draft holding an unfinished show condition stays patchable, without that condition", () => {
+    // Autosave stores the row an author has not filled in yet. Parsed strictly, it made every patch
+    // of the survey fail as `stored_survey_invalid` (review on #9655).
+    const finished = {
+      id: "cnd1",
+      leftOperand: { type: "visit", value: "timeOnSite" },
+      operator: "isGreaterThanOrEqual",
+      rightOperand: { type: "static", value: 30 },
+    };
+    const unfinished = {
+      id: "cnd2",
+      leftOperand: { type: "page", value: "currentUrl" },
+      operator: "pathIsAnyOf",
+    };
+    const draftAppSurvey = {
+      ...survey,
+      type: "app",
+      displayOption: "displayOnce",
+      displayPercentage: null,
+      displayLimit: null,
+      recontactDays: null,
+      autoClose: null,
+      autoComplete: null,
+      delay: 0,
+      triggers: [],
+      segment: null,
+      showConditions: { id: "grp1", connector: "and", conditions: [finished, unfinished] },
+    } as unknown as TSurvey;
+
+    const renamed = prepareV3SurveyPatchInput(draftAppSurvey, { name: "Renamed" });
+
+    expect(renamed.ok).toBe(true);
+    expect(renamed.ok && renamed.document.distribution?.showConditions).toEqual({
+      id: "grp1",
+      connector: "and",
+      conditions: [finished],
+    });
   });
 
   test("applies a patch over the current document before validating references", () => {
@@ -778,10 +818,110 @@ describe("v3 survey preparation", () => {
   });
 });
 
+describe("prepareV3SurveyPatchInput with cyclic block logic (ENG-3946)", () => {
+  type TKey = "rate" | "why" | "pick";
+  const ids: Record<TKey, string> = {
+    rate: "clbkrate000000000000000000",
+    why: "clbkwhy0000000000000000000",
+    pick: "clbkpick000000000000000000",
+  };
+  const names: Record<TKey, string> = { rate: "Rate", why: "Why", pick: "Pick" };
+
+  const jumpLogic = (from: TKey, to: TKey) => ({
+    id: `cllogic${from}${to}`.padEnd(26, "0"),
+    conditions: {
+      id: `clgroup${from}${to}`.padEnd(26, "0"),
+      connector: "and",
+      conditions: [
+        {
+          id: `clcond${from}${to}`.padEnd(26, "0"),
+          leftOperand: { type: "element", value: `q_${from}` },
+          operator: "isSubmitted",
+        },
+      ],
+    },
+    actions: [{ id: `clact${from}${to}`.padEnd(26, "0"), objective: "jumpToBlock", target: ids[to] }],
+  });
+
+  // `Rate` jumps to `Pick` unless told otherwise. Stored as Rate → Why → Pick that is a plain skip; move
+  // `Rate` after `Pick` and the jump points back at a block whose next step is `Rate` again — a loop.
+  const buildBlocks = (
+    localeKey: "default" | "en-US",
+    order: TKey[],
+    jumps: Partial<Record<TKey, TKey>> = { rate: "pick" }
+  ) =>
+    order.map((key) => {
+      const target = jumps[key];
+      return {
+        id: ids[key],
+        name: names[key],
+        elements: [
+          {
+            id: `q_${key}`,
+            type: "openText",
+            headline: { [localeKey]: names[key], "de-DE": `${names[key]} (de)` },
+            required: false,
+          },
+        ],
+        ...(target ? { logic: [jumpLogic(key, target)] } : {}),
+      };
+    });
+
+  const storedSurvey = (order: TKey[], jumps?: Partial<Record<TKey, TKey>>) =>
+    ({ ...survey, blocks: buildBlocks("default", order, jumps) }) as unknown as TSurvey;
+
+  const loopParam = (index: number, key: TKey) => ({
+    name: `blocks.${String(index)}.logic`,
+    reason: `Conditional Logic: Cyclic logic detected in block ${String(index + 1)} (${names[key]}).`,
+  });
+
+  test("rejects a reorder that turns a forward jump into a loop, naming only the blocks on it", () => {
+    const preparation = prepareV3SurveyPatchInput(storedSurvey(["rate", "why", "pick"]), {
+      blocks: buildBlocks("en-US", ["why", "pick", "rate"]),
+    });
+
+    expect(preparation.ok).toBe(false);
+    if (!preparation.ok) {
+      expect(preparation.origin).toBe("request");
+      // `Why` only leads into the loop, so it is not reported.
+      expect(preparation.validation.invalidParams).toEqual([loopParam(1, "pick"), loopParam(2, "rate")]);
+    }
+  });
+
+  test("keeps a survey that already loops patchable, and accepts the patch that breaks the loop", () => {
+    const looping = storedSurvey(["why", "pick", "rate"]);
+
+    expect(prepareV3SurveyPatchInput(looping, { name: "Renamed" }).ok).toBe(true);
+    expect(
+      prepareV3SurveyPatchInput(looping, { blocks: buildBlocks("en-US", ["rate", "why", "pick"]) }).ok
+    ).toBe(true);
+  });
+
+  test("accepts moving a block in front of an existing loop — it leads in, it is not on it", () => {
+    const preparation = prepareV3SurveyPatchInput(storedSurvey(["pick", "rate", "why"]), {
+      blocks: buildBlocks("en-US", ["why", "pick", "rate"]),
+    });
+
+    expect(preparation.ok).toBe(true);
+  });
+
+  test("rejects a new loop between blocks that already loop", () => {
+    // Pick → Why → Rate → Pick already loops; a Pick → Rate jump is a second loop over the same blocks.
+    const preparation = prepareV3SurveyPatchInput(storedSurvey(["pick", "why", "rate"]), {
+      blocks: buildBlocks("en-US", ["pick", "why", "rate"], { rate: "pick", pick: "rate" }),
+    });
+
+    expect(preparation.ok).toBe(false);
+    if (!preparation.ok) {
+      expect(preparation.validation.invalidParams).toEqual([loopParam(0, "pick")]);
+    }
+  });
+});
+
 describe("prepareV3SurveyPatchInput with a semantically invalid stored survey", () => {
-  // ENG-3070. The stored survey parses fine but fails the semantic pass: `de-DE` is configured and
-  // the headline has no German. Both halves of the ticket are asserted here — the failure must be
-  // attributed to the stored survey, and a patch that repairs the offending field must be accepted.
+  // ENG-3070 / ENG-3975. The stored survey parses fine but fails the semantic pass: `de-DE` is
+  // configured and the headline has no German. A patch that leaves that issue as it was is accepted,
+  // one that adds a new issue is refused, and one that repairs it is accepted.
   const storedInvalidSurvey = {
     ...survey,
     blocks: [
@@ -800,14 +940,16 @@ describe("prepareV3SurveyPatchInput with a semantically invalid stored survey", 
     ],
   } as unknown as TSurvey;
 
-  test("attributes the failure to the stored survey, not the request", () => {
+  test("accepts a rename that leaves the pre-existing issue as it was", () => {
+    // ENG-3975: refusing this blocked the survey list's Rename on any survey with a stored issue.
     const result = prepareV3SurveyPatchInput(storedInvalidSurvey, { name: "Renamed" });
 
-    expect(result.ok).toBe(false);
-    if (result.ok) return;
-    // Without this the caller is told its `{ name }` patch is malformed, and the reported path is
-    // `blocks.0.…` — an array it never sent.
-    expect(result.origin).toBe("storedSurvey");
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.document.name).toBe("Renamed");
+    expect(result.document.blocks).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: "clbk1234567890123456789012" })])
+    );
   });
 
   test("blames the request when it adds a new problem beside a pre-existing one", () => {
@@ -849,6 +991,119 @@ describe("prepareV3SurveyPatchInput with a semantically invalid stored survey", 
     // The whole point of the restructure: sending corrected values has to actually work. Judging the
     // stored document on its own makes this impossible, because the patch is never reached.
     expect(result.ok).toBe(true);
+  });
+
+  test("refuses replacing the offending element with another that has the same issue", () => {
+    // Same path, code and identifier as the stored issue, but a different value: a new problem, not
+    // the old one left alone.
+    const result = prepareV3SurveyPatchInput(storedInvalidSurvey, {
+      blocks: [
+        {
+          id: "clbk1234567890123456789012",
+          name: "Main Block",
+          elements: [
+            {
+              id: "satisfaction",
+              type: "openText",
+              headline: { "en-US": "How satisfied are you?" },
+              required: true,
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.origin).toBe("request");
+    expect(result.validation.invalidParams).toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: "blocks.0.elements.0.headline" })])
+    );
+  });
+
+  test("refuses publishing a draft that still has the issue", () => {
+    // The editor checks a draft in full before it goes live; leniency for untouched issues must not
+    // become a way around that.
+    const result = prepareV3SurveyPatchInput(storedInvalidSurvey, { status: "inProgress" });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.origin).toBe("storedSurvey");
+  });
+
+  test("accepts a status change on a survey that is already live", () => {
+    const result = prepareV3SurveyPatchInput({ ...storedInvalidSurvey, status: "inProgress" } as TSurvey, {
+      status: "paused",
+    });
+
+    expect(result.ok).toBe(true);
+  });
+});
+
+describe("prepareV3SurveyPatchInput with stored media that fails the media check", () => {
+  // ENG-3975: an extension-less image URL saved before the check existed.
+  const blockWithImage = (imageUrl: string) => ({
+    id: "clbk1234567890123456789012",
+    name: "Main Block",
+    elements: [
+      {
+        id: "satisfaction",
+        type: "openText",
+        headline: { "en-US": "What should we improve?" },
+        required: true,
+        imageUrl,
+      },
+    ],
+  });
+  const storedBadMediaSurvey = {
+    ...survey,
+    languages: survey.languages.filter((language) => language.default),
+    blocks: [blockWithImage("https://example.com/picture")],
+  } as unknown as TSurvey;
+
+  test("accepts a rename that leaves the media untouched", () => {
+    expect(prepareV3SurveyPatchInput(storedBadMediaSurvey, { name: "Renamed" }).ok).toBe(true);
+  });
+
+  test("refuses a patch that swaps in another invalid media URL", () => {
+    const result = prepareV3SurveyPatchInput(storedBadMediaSurvey, {
+      blocks: [blockWithImage("https://example.com/other-picture")],
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.origin).toBe("request");
+  });
+});
+
+describe("getV3SurveyIntroducedMediaInvalidParams", () => {
+  // The write path's own media check (`executeV3SurveyPatch`) compares against the stored survey's
+  // internal blocks, not the v3 document — only the URLs have to line up.
+  const blocks = (imageUrl: string) =>
+    [
+      {
+        id: "clbk1234567890123456789012",
+        name: "Main Block",
+        elements: [{ id: "q", type: "openText", headline: {}, required: true, imageUrl }],
+      },
+    ] as unknown as TV3SurveyDocument["blocks"];
+
+  test("reports nothing when every media URL is where it was", () => {
+    expect(
+      getV3SurveyIntroducedMediaInvalidParams(
+        blocks("https://example.com/a"),
+        blocks("https://example.com/a")
+      )
+    ).toEqual([]);
+  });
+
+  test("judges the media in full once a URL changed", () => {
+    expect(
+      getV3SurveyIntroducedMediaInvalidParams(
+        blocks("https://example.com/b"),
+        blocks("https://example.com/a")
+      )
+    ).toEqual([expect.objectContaining({ name: "blocks" })]);
   });
 });
 
@@ -896,9 +1151,9 @@ describe("prepareV3SurveyPatchInput failure attribution for cross-key breakage",
     expect(result.origin).toBe("request");
   });
 
-  test("still blames the stored survey when the same problem pre-dates the request", () => {
-    // Same shape, but the recall is already dangling before anything is patched. A blocks patch that
-    // does not repair it must keep reporting `storedSurvey`, or ENG-3070 regresses.
+  test("accepts a patch when the same problem pre-dates the request", () => {
+    // Same shape, but the recall is already dangling before anything is patched. A patch that neither
+    // repairs nor worsens it is accepted (ENG-3975).
     const alreadyBroken = {
       ...survey,
       endings: [
@@ -912,9 +1167,7 @@ describe("prepareV3SurveyPatchInput failure attribution for cross-key breakage",
 
     const result = prepareV3SurveyPatchInput(alreadyBroken, { name: "Renamed" });
 
-    expect(result.ok).toBe(false);
-    if (result.ok) return;
-    expect(result.origin).toBe("storedSurvey");
+    expect(result.ok).toBe(true);
   });
 });
 
@@ -935,7 +1188,7 @@ describe("prepareV3SurveyPatchInput failure attribution for language patches", (
 });
 
 /**
- * The delta in `deriveFailureOrigin` compares `invalidParamSignature` — `<path>\0<code>\0<recallId>` —
+ * The delta in `getIntroducedIssues` compares `invalidParamSignature` — `<path>\0<code>\0<recallId>` —
  * against the stored survey's own findings. The `introduced` precedence filter it is paired with keys
  * on `violation.key`, which is `recall|<scopeKey>|<recallId>`: a *scope*, not a path. Two different
  * lenses, so a violation the request genuinely introduced can carry the same signature as a stored one

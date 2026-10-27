@@ -301,6 +301,39 @@ describe("deleteScopedResponses, against real Postgres", () => {
     expect(await prisma.display.count({ where: { id: display.id } })).toBe(0);
   });
 
+  /**
+   * Deleted means deleted (ENG-3614): the batch leaves Hub records behind unless it queues their cleanup,
+   * and it must queue it in its own transaction, so a delete that commits can't lose it.
+   */
+  test("queues each survey's Hub records for cleanup, committed with the delete", async () => {
+    const mine = await makeWorkspace("Mine");
+    const { organizationId } = await prisma.workspace.findUniqueOrThrow({
+      where: { id: mine.workspaceId },
+      select: { organizationId: true },
+    });
+    const directory = await prisma.feedbackDirectory.create({ data: { name: "Main", organizationId } });
+    const second = await prisma.survey.create({
+      data: { name: "Mine Survey 2", workspaceId: mine.workspaceId },
+    });
+    const firstIds = await addResponses(mine.surveyId, 2);
+    const secondIds = await addResponses(second.id, 1);
+
+    await deleteScopedResponses([...firstIds, ...secondIds], { workspaceId: mine.workspaceId });
+
+    const queued = await prisma.deletionCleanup.findMany({ where: { kind: "hubResponses" } });
+    expect(
+      queued.map((row) => [row.surveyId, [...row.responseIds].sort(), row.tenantIds, row.organizationId])
+    ).toEqual(
+      expect.arrayContaining([
+        [mine.surveyId, [...firstIds].sort(), [directory.id], organizationId],
+        [second.id, secondIds, [directory.id], organizationId],
+      ])
+    );
+    expect(queued).toHaveLength(2);
+    // Not before a record still on its way to the Hub can have landed.
+    expect(queued.every((row) => row.nextAttemptAt.getTime() > Date.now())).toBe(true);
+  });
+
   test("spans several surveys in the same workspace", async () => {
     const mine = await makeWorkspace("Mine");
     const second = await prisma.survey.create({

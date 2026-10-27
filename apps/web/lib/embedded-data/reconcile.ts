@@ -11,9 +11,11 @@ import {
   type TLegacyEmbeddedFields,
   linkedToDesiredEmbeddedFields,
   toDesiredEmbeddedFields,
+  toLegacyEmbeddedFields,
 } from "@formbricks/types/embedded-data-mapping";
 import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import { InvalidInputError } from "@formbricks/types/errors";
+import { assertNewReleaseWorkEnabled } from "@/lib/upgrade/compatibility";
 
 /** One field a survey currently has, as the link plus the definition it points at. */
 export interface TCurrentEmbeddedField {
@@ -302,9 +304,8 @@ export const planEmbeddedDataReconcile = (
 /**
  * Brings a survey's `EmbeddedData` rows and links in step with the payload it was just saved with.
  *
- * **The payload, not the persisted survey** (ENG-2412). The rows are the only place Embedded Data is
- * stored (ENG-2404 dropped `Survey.variables` / `Survey.hiddenFields`), so reading them here would be
- * circular — the target would always equal the current state and no edit would ever persist.
+ * The payload supplies the desired state; rows remain authoritative for reads. During 6.1 the
+ * legacy columns are also written for 6.0 readers, never used as a fallback for an empty row set.
  *
  * Runs inside the caller's transaction so a survey never commits without its fields, and takes
  * `workspaceId` explicitly because the copy flow writes into a *different* workspace than the one it
@@ -332,7 +333,7 @@ export const reconcileEmbeddedData = async (
     field: link.embeddedData,
   }));
 
-  const desired = resolveDesiredEmbeddedFields(
+  let desired = resolveDesiredEmbeddedFields(
     current.map(({ storageKey, field }) => ({
       storageKey,
       name: field.name,
@@ -346,6 +347,12 @@ export const reconcileEmbeddedData = async (
     patch
   );
   assertNoDuplicateStorageKeys(desired);
+  const currentSharedIds = new Set(
+    current.filter(({ field }) => field.key !== null).map(({ field }) => field.id)
+  );
+  if (desired.some((field) => field.key !== null && !currentSharedIds.has(field.embeddedDataId ?? ""))) {
+    await assertNewReleaseWorkEnabled();
+  }
 
   // Only for the V2 carrier. The legacy branch above returns entries built either from the legacy
   // input — whose own schemas already gate it — or from rows this survey already holds, and re-checking
@@ -353,7 +360,20 @@ export const reconcileEmbeddedData = async (
   // refusal rolls the caller's transaction back with nothing persisted.
   if (patch.embeddedFields !== undefined) {
     assertWritableEmbeddedFields(desired);
-    await assertLinkableEmbeddedFields(tx, { workspaceId, desired });
+    desired = await assertLinkableEmbeddedFields(tx, { workspaceId, desired });
+  }
+
+  // Before replacing a legacy-only survey with its first authoritative rows, retain its old
+  // declarations for the deferred salvage. This recovery copy is never served as a fallback.
+  if (current.length === 0 && desired.length > 0) {
+    await tx.$executeRaw`
+      UPDATE "Survey"
+      SET "legacyEmbeddedDataBackup" = jsonb_build_object('variables', "variables", 'hiddenFields', "hiddenFields")
+      WHERE "id" = ${surveyId} AND "workspaceId" = ${workspaceId}
+        AND "legacyEmbeddedDataBackup" IS NULL
+        AND ("variables" IS DISTINCT FROM '[]'::jsonb
+          OR COALESCE("hiddenFields" -> 'fieldIds', '[]'::jsonb) <> '[]'::jsonb)
+    `;
   }
 
   const plan = planEmbeddedDataReconcile(surveyId, current, desired);
@@ -441,6 +461,18 @@ export const reconcileEmbeddedData = async (
         storageKey: entry.storageKey,
         order: entry.order,
       },
+    });
+  }
+
+  // 6.0 editors still read these columns. Project from the authoritative rows and commit both
+  // representations in the caller's transaction, including an intentional empty field set.
+  // A zero-row survey may still hold legacy-only declarations awaiting deferred cleanup.
+  // Preserve that copy when there are no authoritative fields to change; never read it back
+  // into the row set. Deleting existing rows still writes empty columns in this transaction.
+  if (current.length > 0 || desired.length > 0) {
+    await tx.survey.update({
+      where: { id: surveyId, workspaceId },
+      data: toLegacyEmbeddedFields(desired),
     });
   }
 };

@@ -76,6 +76,7 @@ export function OpenTextElement({
         dir={dir}
         rows={3}
         imageUrl={element.imageUrl}
+        imageAltText={getLocalizedValue(element.imageAltText, languageCode)}
         videoUrl={element.videoUrl}
       />
     </form>

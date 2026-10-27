@@ -2,7 +2,9 @@ import "server-only";
 import { z } from "zod";
 import { type TChartQuery } from "@formbricks/types/analysis";
 import { InvalidInputError } from "@formbricks/types/errors";
+import { redactAIError } from "@/lib/ai/loggable-error";
 import { generateOrganizationAIObject } from "@/lib/ai/service";
+import { getAITimeoutMs } from "@/lib/ai/timeout";
 import { DATE_RANGE_PRESETS } from "@/lib/date-ranges";
 import { AI_TRACING_FEATURE } from "@/lib/posthog/ai-tracing-feature";
 import { formatDataProfile } from "@/modules/ee/analysis/lib/ai-data-profile";
@@ -195,7 +197,7 @@ export const generateAIChartQuery = async ({
       prompt: `User request: ${JSON.stringify(prompt)}`,
       temperature: 0,
       maxOutputTokens: AI_CHART_GENERATION_MAX_OUTPUT_TOKENS,
-      timeout: AI_CHART_GENERATION_TIMEOUT_MS,
+      timeout: getAITimeoutMs(AI_CHART_GENERATION_TIMEOUT_MS),
     });
     output = response.object;
   } catch (error) {
@@ -204,7 +206,10 @@ export const generateAIChartQuery = async ({
       throw promptError;
     }
 
-    throw error;
+    // Logged by the AI service already. From here it reaches the server action client, which logs and
+    // reports a thrown error whole — and an AI SDK error carries the user's question and the directory's
+    // profile.
+    throw redactAIError(error);
   }
 
   if (!output.answerable) {

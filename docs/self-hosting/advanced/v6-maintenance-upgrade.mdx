@@ -174,15 +174,35 @@ spec:
           envFrom:
             - secretRef:
                 name: formbricks-maintenance-env
+          # Inert placeholders for the shared environment check. Preparation never reads them, and they are
+          # not application secrets: never reuse these values in a running installation.
+          env:
+            - { name: ENCRYPTION_KEY, value: maintenance-unused }
+            - { name: CUBEJS_API_SECRET, value: maintenance-unused }
+            - { name: CUBEJS_API_URL, value: "http://localhost" }
+            - { name: HUB_API_KEY, value: maintenance-unused }
+            - { name: HUB_API_URL, value: "http://localhost" }
+            - { name: REDIS_URL, value: "redis://localhost" }
 ```
 
 This is a template, not a ready-to-apply manifest: set the namespace, digest, resource requests/limits,
-image-pull credentials, network policy, and environment bindings for your installation. The example
-Secret must contain the required runtime/migration environment; the chart's application Secret does
-not necessarily contain `DATABASE_URL` or AuthZed values that it normally injects separately. Prefer
-explicit `valueFrom.secretKeyRef` bindings to existing Secrets when possible. Never put secrets on a
-command line or commit their values. If migrations use a different database credential, bind
-`MIGRATE_DATABASE_URL` as well as `DATABASE_URL`; the target image's migration runner uses it when set.
+image-pull credentials, network policy, and environment bindings for your installation. The
+`formbricks-maintenance-env` Secret holds what preparation uses, with the values your release already uses:
+
+- `DATABASE_URL`
+- `AUTHZED_ENABLED=true`, `AUTHZED_ENDPOINT`, `AUTHZED_TOKEN`, `AUTHZED_SYSTEM_KEY`, `AUTHZED_INSECURE`, and
+  `AUTHZED_CONSISTENCY=fully_consistent`
+- `WEBAPP_URL`, in every case. Preparation runs the database migrations, and the OAuth resource-link data
+  migration (`eng_2343_backfill_oauth_resource_links`, first released in 5.4.0) derives each MCP OAuth client's
+  resource link from it. Whenever that migration runs on a database with MCP OAuth clients, as in any upgrade
+  from before 5.4.0, preparation stops with `upgrade_database_migration_failed` without it.
+
+The chart's application Secret does not necessarily contain `DATABASE_URL` or the AuthZed values, which the
+chart injects separately. Prefer explicit `valueFrom.secretKeyRef` bindings to existing Secrets when possible.
+Never put secrets on a command line or commit their values. If migrations use a different database credential,
+bind `MIGRATE_DATABASE_URL` as well as `DATABASE_URL`; the target image's migration runner uses it when set. If
+the configuration is still incomplete, the Job reports `upgrade_configuration_invalid` with the names of the
+variables to fix.
 
 Wait for Job completion and inspect its sanitized result before running `helm upgrade` or resuming an
 Argo CD/Flux reconciliation. Preparation is not a Helm migration hook or a permanent chart component.
@@ -218,15 +238,25 @@ including when arguments were rejected before any work ran. The code identifies 
 | `upgrade_maintenance_required` | Complete and acknowledge backup and writer shutdown. |
 | `upgrade_invalid_arguments` | Check options and the reviewed digest format. |
 | `upgrade_timeout_unavailable` | Use the supported release image containing `timeout`. |
-| `upgrade_configuration_invalid` | Correct the required runtime environment and fully consistent mode. |
+| `upgrade_configuration_invalid` | Correct the required runtime environment and fully consistent mode. The result's `variables` array, when present, names the variables to fix, never their values. |
 | `upgrade_spicedb_unhealthy` | Check datastore migrations, networking, TLS, and token configuration. |
 | `upgrade_database_migration_failed` | Diagnose the migration in a restricted operator session; do not restart v5 blindly. |
 | `upgrade_graph_not_ready` | Inspect `schema check`, outbox status, and aggregate `upgrade check`; investigate invalid/orphaned data. |
 | `upgrade_verification_failed` | Keep maintenance active and resolve remaining graph or outbox drift. |
 
-Each subprocess has a 30-minute limit. If the rehearsal exceeds it, budget a longer maintenance window
-and run the existing migration and operational commands individually under a reviewed Job deadline.
-Interrupted containers can exit with a signal code rather than JSON; any nonzero exit remains blocked.
+A blocked result can carry more fields, never values from your data:
+
+- `"reason":"timeout"` and `timeoutSeconds`: the step ran out its time limit. It did not report a failure, so
+  the code names the step, not a problem in it. Raise the limit and run preparation again.
+- `cause` and `retryable`: the step's own error code, such as `authzed_unavailable`, and whether that error is
+  transient. Retry a `"retryable":true` result once its cause, such as SpiceDB availability, has recovered.
+
+Each step has a 90-minute limit. Set `FORMBRICKS_AUTHZED_PREPARE_STEP_TIMEOUT_SECONDS` (60 to 86400) to change
+it. The graph step rewrites every organization's relationships and then audits them all, so its runtime grows
+with the number of organizations: an instance with about 50,000 organizations needed about 35 minutes. Time the
+rehearsal, and keep the Job's `activeDeadlineSeconds` above the sum of its steps: a Job deadline stops the
+container before the wrapper can print a result. Interrupted containers can exit with a signal code rather
+than JSON; any nonzero exit remains blocked.
 
 The command never restarts a workload on success, failure, or interruption. Retry preparation with the
 same image after correcting the cause, provided the interrupted migration is safe to rerun. Never mark
@@ -242,6 +272,8 @@ For failures before Prisma records the attempt, check connectivity and permissio
 session. If a migration must be retried, first establish whether partial changes need repair, then use
 the target image's `node /home/nextjs/packages/database/dist/scripts/apply-migrations.js` under maintenance.
 Capture any diagnostic output only in operator-controlled storage; never enable it on normal startup.
+[If a migration fails](/self-hosting/advanced/migration#if-a-migration-fails) shows how to find the real error,
+check what the failed migration left behind, and clear its failed record before retrying.
 
 After database changes, **`helm rollback` or changing the image is not necessarily a safe rollback**.
 Remain in maintenance and either complete the v6 preparation or restore the coordinated backup and

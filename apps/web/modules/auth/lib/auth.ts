@@ -34,7 +34,8 @@ import { EMAIL_VERIFICATION_TTL_SECONDS, USE_SECURE_COOKIES } from "./auth-cooki
 import { rejectInactiveUserOnSessionCreate } from "./better-auth-active-user-gate";
 import { runAfterEmailVerificationHooks } from "./better-auth-email-verification";
 import { hibpBreachCheckBeforeHandler } from "./better-auth-hibp";
-import { auditPasswordReset, betterAuthLogger, signInAuditDatabaseHook } from "./better-auth-observability";
+import { lastActivePlugin, recordActivityOnSessionUpdate } from "./better-auth-last-active";
+import { auditPasswordReset, betterAuthLogger, signInAuditPlugin } from "./better-auth-observability";
 import { requirePasswordResetEnabledBeforeHandler } from "./better-auth-password-reset-gate";
 import { healCredentialAccountIssuerBeforeHandler } from "./credential-issuer-heal";
 import { getMcpOauthProviderOptions } from "./mcp-oauth-provider-options";
@@ -44,6 +45,21 @@ import { redisSecondaryStorage } from "./secondary-storage";
 import { signupPolicyBeforeHandler } from "./signup-policy";
 
 const DAY_IN_SECONDS = 60 * 60 * 24;
+
+/**
+ * Lifetime of the signed OAuth `state` cookie, matched to the state it binds to this browser (ENG-3314).
+ *
+ * Better Auth 1.7 gives an SSO sign-in 10 minutes at the identity provider — the verification record and
+ * the `expiresAt` it enforces on callback — but hardcodes the cookie at 5 (`maxAge: 300` in
+ * `better-auth/dist/state.mjs`). A user who spent 5–10 minutes on 2FA, consent or an account chooser came
+ * back to a valid state and no cookie, and was rejected with `state_security_mismatch`. Equal rather than
+ * longer: past 10 minutes the state is gone anyway, and the cookie only proves which browser started it.
+ *
+ * Applied through `advanced.cookies.state`, which Better Auth spreads over its own default. Drop it once
+ * upstream derives the cookie from the state expiry (better-auth/better-auth#11170);
+ * `oauth-state-cookie.integration.test.ts` fails if a version bump moves either lifetime apart.
+ */
+const OAUTH_STATE_COOKIE_MAX_AGE_SECONDS = 10 * 60;
 
 // `USE_SECURE_COOKIES` and `EMAIL_VERIFICATION_TTL_SECONDS` live in auth-cookies.ts — the sign-up
 // intent cookie (ENG-2562) needs both, and it is reached FROM this module, so keeping them here and
@@ -103,7 +119,14 @@ export const auth = betterAuth({
   // write and SMTP send, so its response time told password accounts from everything else, and it
   // skipped the forgot-password flow's per-account mail limit (ENG-3640). Nothing calls it over HTTP:
   // forgotPasswordAction and the profile action both use `auth.api.requestPasswordReset` in-process.
-  disabledPaths: ["/token", "/update-user", "/request-password-reset"],
+  //
+  // `/sign-up/email` (ENG-3988) too. Every check a credential sign-up has to pass lives in
+  // `createUserAction`: Turnstile on Cloud, the invite and domain policy, `ZUserEmail`/`ZUserPassword`,
+  // the app-level IP limit, org provisioning and the audit entry. A raw POST skipped all of them and
+  // still created the account. The form, `/setup` included, calls `auth.api.signUpEmail` in-process, so
+  // closing the route leaves the action as the only way in. `signupPolicyBeforeHandler` and the
+  // `user.create.before` backstop stay as defence in depth for any other in-process caller.
+  disabledPaths: ["/token", "/update-user", "/request-password-reset", "/sign-up/email"],
   trustedOrigins: AUTH_TRUSTED_ORIGINS,
   telemetry: { enabled: false },
 
@@ -296,15 +319,20 @@ export const auth = betterAuth({
 
   // SSO sign-up flow — email-verification, identity denormalization, and JIT provisioning
   // (gate + writes) re-expressed as Better Auth database hooks (design doc §13). Verify-before-link
-  // recovery is the remaining Phase 5c work. The session hook composes the isActive gate (reject
+  // recovery is the remaining Phase 5c work. The session hook is the isActive gate (reject
   // deactivated users before a session is created — parity with authOptions, covers every sign-in
-  // path) with the Phase 7 `signedIn` success audit.
+  // path), and records every session renewal as the user's last activity (`User.lastActiveAt`, the data
+  // retention members clock). A completed sign-in is recorded by plugins below, not here: a session
+  // created here may still be withdrawn by the two-factor plugin (ENG-3271) — the `signedIn` audit by
+  // `signInAuditPlugin`, the activity by `lastActivePlugin`.
   databaseHooks: {
     ...ssoDatabaseHooks,
     session: {
       create: {
         before: rejectInactiveUserOnSessionCreate,
-        after: signInAuditDatabaseHook.create?.after,
+      },
+      update: {
+        after: recordActivityOnSessionUpdate,
       },
     },
   },
@@ -324,10 +352,11 @@ export const auth = betterAuth({
       // ENG-2105: reject password-reset requests at the native Better Auth layer when the operator
       // has disabled password resets (PASSWORD_RESET_DISABLED=1). See better-auth-password-reset-gate.ts.
       await requirePasswordResetEnabledBeforeHandler(ctx, PASSWORD_RESET_DISABLED);
-      // ENG-2293: enforce the closed-sign-up policy on Better Auth's native /sign-up/email, which is
-      // served beside createUserAction and used to bypass it entirely. Runs BEFORE the endpoint so the
-      // rejection can't double as an account-existence oracle (the handler looks the address up first,
-      // and an address that already has one never reaches a create hook). See signup-policy.ts.
+      // ENG-2293: enforce the closed-sign-up policy on Better Auth's native /sign-up/email, which used
+      // to be served beside createUserAction and bypassed it entirely. The HTTP route is now closed
+      // (`disabledPaths`, ENG-3988), so this guards in-process callers other than the action. Runs
+      // BEFORE the endpoint because a rejection from the create hook would be swallowed into Better
+      // Auth's synthetic duplicate-email 200, a fake success. See signup-policy.ts.
       // Ordered ahead of the breach check so a sign-up on a closed instance costs no outbound HIBP call.
       // Path-disjoint from the reset gate above, so their relative order is not load-bearing.
       await signupPolicyBeforeHandler(ctx);
@@ -356,7 +385,6 @@ export const auth = betterAuth({
     storage: "secondary-storage",
     customRules: {
       "/sign-in/email": { window: 60, max: 5 },
-      "/sign-up/email": { window: 60, max: 3 },
       "/reset-password": { window: 60, max: 5 },
       // ENG-2562: the two verification endpoints, deliberately asymmetric because their risk is.
       //
@@ -394,6 +422,8 @@ export const auth = betterAuth({
     // write path) would reject BA-created users at cutover — caught by the SSO-provisioning test.
     database: { generateId: () => createId() },
     defaultCookieAttributes: { sameSite: "lax", httpOnly: true, secure: USE_SECURE_COOKIES, path: "/" },
+    // The OAuth state cookie would otherwise expire 5 minutes before the state it guards (ENG-3314).
+    cookies: { state: { attributes: { maxAge: OAUTH_STATE_COOKIE_MAX_AGE_SECONDS } } },
     // Proxy has already selected the configured trusted hop. Do not re-parse forwarding chains or add
     // Better Auth trustedProxies here; the private single-value header is the canonical identity.
     ipAddress: BETTER_AUTH_IP_ADDRESS_CONFIG,
@@ -410,9 +440,12 @@ export const auth = betterAuth({
         audience: getMcpResourceUrl(),
       },
     }),
-    // Options extracted to mcp-oauth-provider-options.ts so the DCR/authorize scope semantics are
-    // integration-testable against a throwaway Better Auth instance.
-    oauthProvider(getMcpOauthProviderOptions()),
+    // twoFactor() MUST come before every plugin whose after hook acts on the session a request set:
+    // Better Auth runs plugin after hooks in list order (the root `hooks.after` runs before all of them,
+    // so it gets no such guarantee), and for a user with 2FA a correct password alone sets a session
+    // that twoFactor()'s after hook then withdraws until the second factor arrives. Ahead of it,
+    // oauthProvider() resumed a pending MCP authorization with that session and minted an authorization
+    // code for a password alone (ENG-3933).
     // TOTP + backup codes, matched to the current otplib setup (6 digits / 30s) and 10 encrypted
     // backup codes. Trusted-device is left off (never passed client-side) so 2FA is required every
     // login — strict parity. Cutover work (Phase 7): migrate secrets/backup codes out of
@@ -424,12 +457,22 @@ export const auth = betterAuth({
       totpOptions: { digits: 6, period: 30 },
       backupCodeOptions: { amount: 10, length: 10, storeBackupCodes: "encrypted" },
     }),
+    // Options extracted to mcp-oauth-provider-options.ts so the DCR/authorize scope semantics are
+    // integration-testable against a throwaway Better Auth instance.
+    oauthProvider(getMcpOauthProviderOptions()),
     // SSO via generic OAuth (Azure/OIDC + the BoxyHQ SAML bridge); empty config when no license or
     // providers are configured. The account-linking/provisioning hooks are a separate reviewed pass.
     genericOAuth({ config: ssoGenericOAuthConfig }),
     // SSO-recovery magic-link sign-in — the BA replacement for the "token" provider's sso_recovery
     // path (recovery-scoped, not a general magic-link). See better-auth-recovery-signin.ts.
     ssoRecoverySignInPlugin,
+    // The `signedIn` audit and `lastLoginAt`, from the session a sign-in really ends with. MUST come
+    // after twoFactor(), whose after hook withdraws the session a password alone created while 2FA is
+    // pending (ENG-3271).
+    signInAuditPlugin,
+    // Records a completed sign-in as the user's last activity (the members retention clock). After
+    // twoFactor(), for the same reason.
+    lastActivePlugin,
     // nextCookies MUST remain the last plugin so server-action sign-in/out can set cookies.
     nextCookies(),
   ],

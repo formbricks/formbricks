@@ -4,6 +4,7 @@ import * as React from "react";
 import { type DayButton, DayPicker, getDefaultClassNames } from "react-day-picker";
 import { Button, buttonVariants } from "@/components/general/button";
 import { getDateFnsLocale } from "@/lib/locale";
+import { FB_PART } from "@/lib/parts";
 import { cn } from "@/lib/utils";
 
 // Extracted components to avoid defining during render
@@ -223,6 +224,8 @@ function CalendarDayButton({
       variant="ghost"
       size="icon"
       data-day={day.date.toLocaleDateString()}
+      data-fb-part={FB_PART.option}
+      data-checked={modifiers.selected ? "true" : undefined}
       data-selected-single={
         modifiers.selected && !modifiers.range_start && !modifiers.range_end ? !modifiers.range_middle : null
       }

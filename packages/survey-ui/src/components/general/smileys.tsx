@@ -24,6 +24,7 @@ export const TiredFace: FunctionComponent<React.SVGProps<SVGCircleElement>> = (p
           d="m21.88 23.92c5.102-0.06134 7.273-1.882 8.383-3.346"
         />
         <path
+          fill="currentColor"
           stroke="currentColor"
           strokeMiterlimit="10"
           strokeWidth="2"
@@ -85,6 +86,7 @@ export const WearyFace: FunctionComponent<React.SVGProps<SVGCircleElement>> = (p
           d="m22.88 23.92c5.102-0.06134 7.273-1.882 8.383-3.346"
         />
         <path
+          fill="currentColor"
           stroke="currentColor"
           strokeMiterlimit="10"
           strokeWidth="2"
@@ -216,10 +218,12 @@ export const FrowningFace: FunctionComponent<React.SVGProps<SVGCircleElement>> =
           d="M26.5,48c1.8768-3.8326,5.8239-6.1965,10-6c3.8343,0.1804,7.2926,2.4926,9,6"
         />
         <path
+          fill="currentColor"
           stroke="currentColor"
           d="M30,31c0,1.6568-1.3448,3-3,3c-1.6553,0-3-1.3433-3-3c0-1.6552,1.3447-3,3-3C28.6552,28,30,29.3448,30,31"
         />
         <path
+          fill="currentColor"
           stroke="currentColor"
           d="M48,31c0,1.6568-1.3447,3-3,3s-3-1.3433-3-3c0-1.6552,1.3447-3,3-3S48,29.3448,48,31"
         />
@@ -251,10 +255,12 @@ export const ConfusedFace: FunctionComponent<React.SVGProps<SVGCircleElement>> =
           d="m44.7 43.92c-6.328-1.736-11.41-0.906-17.4 1.902"
         />
         <path
+          fill="currentColor"
           stroke="currentColor"
           d="M30,31c0,1.6568-1.3448,3-3,3c-1.6553,0-3-1.3433-3-3c0-1.6552,1.3447-3,3-3C28.6552,28,30,29.3448,30,31"
         />
         <path
+          fill="currentColor"
           stroke="currentColor"
           d="M48,31c0,1.6568-1.3447,3-3,3s-3-1.3433-3-3c0-1.6552,1.3447-3,3-3S48,29.3448,48,31"
         />
@@ -290,10 +296,12 @@ export const NeutralFace: FunctionComponent<React.SVGProps<SVGCircleElement>> = 
           strokeWidth="2"
         />
         <path
+          fill="currentColor"
           stroke="currentColor"
           d="M30,31c0,1.6568-1.3448,3-3,3c-1.6553,0-3-1.3433-3-3c0-1.6552,1.3447-3,3-3C28.6552,28,30,29.3448,30,31"
         />
         <path
+          fill="currentColor"
           stroke="currentColor"
           d="M48,31c0,1.6568-1.3447,3-3,3s-3-1.3433-3-3c0-1.6552,1.3447-3,3-3S48,29.3448,48,31"
         />
@@ -326,10 +334,12 @@ export const SlightlySmilingFace: FunctionComponent<React.SVGProps<SVGCircleElem
           d="M45.8149,44.9293 c-2.8995,1.6362-6.2482,2.5699-9.8149,2.5699s-6.9153-0.9336-9.8149-2.5699"
         />
         <path
+          fill="currentColor"
           stroke="currentColor"
           d="M30,31c0,1.6568-1.3448,3-3,3c-1.6553,0-3-1.3433-3-3c0-1.6552,1.3447-3,3-3C28.6552,28,30,29.3448,30,31"
         />
         <path
+          fill="currentColor"
           stroke="currentColor"
           d="M48,31c0,1.6568-1.3447,3-3,3s-3-1.3433-3-3c0-1.6552,1.3447-3,3-3S48,29.3448,48,31"
         />

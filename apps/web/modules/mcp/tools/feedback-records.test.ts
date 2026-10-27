@@ -138,6 +138,8 @@ describe("feedback-record tool input schemas", () => {
       "source_type",
       "submission_id",
       "until",
+      "updated_since",
+      "updated_until",
       "user_id",
       "value_date_max",
       "value_date_min",
@@ -228,7 +230,9 @@ describe("tool arguments are validated by the SDK (ENG-2256)", () => {
         headers: {
           "content-type": "application/json",
           accept: "application/json, text/event-stream",
-          ...(modern ? { "Mcp-Method": "tools/call", "Mcp-Name": name } : {}),
+          ...(modern
+            ? { "Mcp-Method": "tools/call", "Mcp-Name": name, "MCP-Protocol-Version": "2026-07-28" }
+            : {}),
         },
         body: JSON.stringify({
           jsonrpc: "2.0",

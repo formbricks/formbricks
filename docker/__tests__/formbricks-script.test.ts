@@ -6,6 +6,7 @@ import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  readdirSync,
   rmSync,
   statSync,
   writeFileSync,
@@ -37,6 +38,9 @@ const dockerComposeOverrideKeys = [
   "FORMBRICKS_UNSET_PASSWORD_SENTINEL",
 ];
 const dockerComposeTestTimeout = 30_000;
+// Runs update_formbricks as on a host without IPv6, so its commands do not depend on the machine running the test.
+// The IPv6 network step has its own tests (ENG-3897).
+const updateFormbricksWithoutIpv6 = 'source "$1"; host_has_ipv6() { return 1; }; update_formbricks';
 
 const dockerComposeTest = (name: string, testFunction: () => void): void => {
   test(name, testFunction, dockerComposeTestTimeout);
@@ -273,7 +277,7 @@ const migrateLegacyValkeyImage = (composePath: string, validationResult: "succes
       "-lc",
       `source "$1"
 sudo() {
-  printf '%s\\n' "$*" >> "$VALIDATION_LOG_PATH"
+  printf '[%s] %s\\n' "$PWD" "$*" >> "$VALIDATION_LOG_PATH"
   [[ "$VALIDATION_RESULT" == "success" ]]
 }
 migrate_legacy_valkey_image "$2"`,
@@ -293,6 +297,59 @@ migrate_legacy_valkey_image "$2"`,
 
   return validationLogPath;
 };
+
+// What `docker compose config --format json formbricks` prints for the formbricks service's port bindings.
+const renderFormbricksPorts = (...ports: Record<string, unknown>[]): string =>
+  `${JSON.stringify({ services: { formbricks: { ports } } }, null, 2)}\n`;
+const loopbackPort = {
+  mode: "ingress",
+  host_ip: "127.0.0.1",
+  target: 3000,
+  published: "3000",
+  protocol: "tcp",
+};
+const everyInterfacePort = { mode: "ingress", target: 3000, published: "3000", protocol: "tcp" };
+
+const bindFormbricksPortToLoopback = (
+  composePath: string,
+  mode: "install" | "update",
+  validationResult: "success" | "failure" = "success"
+): string => {
+  const validationLogPath = join(createTempDir(), "validation.log");
+
+  execFileSync(
+    "bash",
+    [
+      "-lc",
+      `source "$1"
+sudo() {
+  printf '[%s] %s\\n' "$PWD" "$*" >> "$VALIDATION_LOG_PATH"
+  [[ "$*" == *"--format json formbricks" ]] && printf '%s' "$RENDERED_JSON"
+  [[ "$VALIDATION_RESULT" == "success" ]]
+}
+bind_formbricks_port_to_loopback "$2" "$3"`,
+      "bash",
+      formbricksScriptPath,
+      composePath,
+      mode === "update" ? "validate" : "",
+    ],
+    {
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        VALIDATION_LOG_PATH: validationLogPath,
+        VALIDATION_RESULT: validationResult,
+        RENDERED_JSON: renderFormbricksPorts(loopbackPort),
+      },
+    }
+  );
+
+  return validationLogPath;
+};
+
+const getPublishedPorts = (composeContents: string, serviceName: string): string[] =>
+  (load(composeContents) as { services: Record<string, { ports?: string[] }> }).services[serviceName]
+    ?.ports ?? [];
 
 const getServiceBlock = (composeContents: string, serviceName: string): string => {
   const lines = composeContents.split("\n");
@@ -801,9 +858,22 @@ describe("docker/formbricks.sh AuthZed setup", () => {
     expect(env.get("AUTHZED_TOKEN")).toBe(authzedToken);
     expect(env.get("AUTHZED_DATABASE_PASSWORD")).toBe(authzedDatabasePassword);
     expect(env.get("AUTHZED_ENABLED")).toBe("true");
+    expect(env.get("AUTHZED_ENDPOINT")).toBe("spicedb:50051");
+    expect(env.get("AUTHZED_SYSTEM_KEY")).toBe("formbricks");
     expect(env.get("AUTHZED_CONSISTENCY")).toBe("fully_consistent");
     expect(env.get("FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED")).toBe("true");
     expect(statSync(envPath).mode & 0o777).toBe(0o600);
+  });
+
+  dockerComposeTest("passes generated AuthZed defaults to the migration service", () => {
+    const envPath = join(createTempDir(), ".env");
+    writeGeneratedEnvFile(envPath);
+
+    const config = renderDockerCompose(readFileSync(envPath, "utf8"));
+    const migrationEnvironment = getRenderedServiceEnvironment(config, "formbricks-migrate");
+
+    expect(migrationEnvironment.AUTHZED_ENDPOINT).toBe("spicedb:50051");
+    expect(migrationEnvironment.AUTHZED_SYSTEM_KEY).toBe("formbricks");
   });
 
   test("blocks customized updates until the AuthZed v6 contract is present and acknowledged", () => {
@@ -825,7 +895,7 @@ describe("docker/formbricks.sh AuthZed setup", () => {
     expect(updateFunction.indexOf("upgrade check")).toBeLessThan(updateFunction.indexOf("compose down"));
   });
 
-  test("blocks an update before pulling images when the Hub worker is missing", () => {
+  test("warns and continues the update when the Hub worker is missing", () => {
     const tempDir = createTempDir();
     const installationDir = join(tempDir, "formbricks");
     const binDir = join(tempDir, "bin");
@@ -847,7 +917,7 @@ describe("docker/formbricks.sh AuthZed setup", () => {
       { mode: 0o700 }
     );
 
-    const result = spawnSync("bash", ["-c", 'source "$1"; update_formbricks', "bash", formbricksScriptPath], {
+    const result = spawnSync("bash", ["-c", updateFormbricksWithoutIpv6, "bash", formbricksScriptPath], {
       cwd: tempDir,
       encoding: "utf8",
       env: {
@@ -857,10 +927,55 @@ describe("docker/formbricks.sh AuthZed setup", () => {
       },
     });
 
+    // A minor release must not require the operator to change their Compose file first, so the update runs.
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("does not contain the Hub worker service");
+    expect(result.stdout).toContain("/self-hosting/advanced/migration#hub-worker-for-docker");
+
+    const commands = readFileSync(commandLog, "utf8");
+    expect(commands).toContain("docker compose pull");
+    expect(commands).toContain("run --rm --no-deps formbricks-migrate");
+    // The file is rewritten only where documented — the Valkey pin — and the worker the warning is about is
+    // not inserted: merging it stays the operator's decision.
+    const rewritten = readFileSync(composePath, "utf8");
+    expect(rewritten).toContain(multiArchValkeyImage);
+    expect(readFileSync(`${composePath}.before-valkey-8.1.9`, "utf8")).toContain(legacyValkeyImage);
+    expect(rewritten).not.toContain("hub-worker");
+  });
+
+  test("leaves the Compose file untouched when a later gate stops the update", () => {
+    const tempDir = createTempDir();
+    const installationDir = join(tempDir, "formbricks");
+    const binDir = join(tempDir, "bin");
+    const composePath = join(installationDir, "docker-compose.yml");
+    // No hub-worker, so the warning path runs, and no AuthZed services, so the AuthZed gate stops the update.
+    const composeContents = `services:
+  redis:
+    image: ${legacyValkeyImage}
+`;
+    mkdirSync(installationDir, { recursive: true });
+    mkdirSync(binDir, { recursive: true });
+    writeFileSync(composePath, composeContents);
+    writeFileSync(join(installationDir, ".env"), "FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true\n");
+    writeFileSync(
+      join(binDir, "sudo"),
+      '#!/bin/sh\nprintf "%s\\n" "$*" >> "$COMMAND_LOG"\ncase "$*" in *"config --services") printf "redis\\n" ;; esac\n',
+      { mode: 0o700 }
+    );
+
+    const result = spawnSync("bash", ["-c", updateFormbricksWithoutIpv6, "bash", formbricksScriptPath], {
+      cwd: tempDir,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        COMMAND_LOG: join(tempDir, "commands.log"),
+        PATH: `${binDir}:${process.env.PATH ?? ""}`,
+      },
+    });
+
     expect(result.status).toBe(1);
-    expect(result.stderr).toContain("does not contain the required Hub worker service");
-    expect(result.stderr).toContain("/self-hosting/advanced/migration#hub-worker-required-for-docker");
-    expect(readFileSync(commandLog, "utf8")).toBe("docker compose config --services\n");
+    expect(result.stdout).toContain("does not yet contain the AuthZed v6 Compose services");
+    // That gate runs before the Valkey rewrite, so a stopped update leaves the file exactly as it was.
     expect(readFileSync(composePath, "utf8")).toBe(composeContents);
     expect(existsSync(`${composePath}.before-valkey-8.1.9`)).toBe(false);
   });
@@ -880,7 +995,7 @@ describe("docker/formbricks.sh AuthZed setup", () => {
       { mode: 0o700 }
     );
 
-    const result = spawnSync("bash", ["-c", 'source "$1"; update_formbricks', "bash", formbricksScriptPath], {
+    const result = spawnSync("bash", ["-c", updateFormbricksWithoutIpv6, "bash", formbricksScriptPath], {
       cwd: tempDir,
       encoding: "utf8",
       env: {
@@ -921,21 +1036,17 @@ describe("docker/formbricks.sh AuthZed setup", () => {
         }
       );
 
-      const result = spawnSync(
-        "bash",
-        ["-c", 'source "$1"; update_formbricks', "bash", formbricksScriptPath],
-        {
-          cwd: tempDir,
-          encoding: "utf8",
-          env: {
-            ...process.env,
-            CHECK_EXIT_CODE: String(checkExitCode),
-            MIGRATION_EXIT_CODE: String(migrationExitCode),
-            COMMAND_LOG: commandLog,
-            PATH: `${binDir}:${process.env.PATH ?? ""}`,
-          },
-        }
-      );
+      const result = spawnSync("bash", ["-c", updateFormbricksWithoutIpv6, "bash", formbricksScriptPath], {
+        cwd: tempDir,
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          CHECK_EXIT_CODE: String(checkExitCode),
+          MIGRATION_EXIT_CODE: String(migrationExitCode),
+          COMMAND_LOG: commandLog,
+          PATH: `${binDir}:${process.env.PATH ?? ""}`,
+        },
+      });
 
       expect(result.status).toBe(checkExitCode || migrationExitCode);
       const commands = readFileSync(commandLog, "utf8").trim().split("\n");
@@ -945,6 +1056,7 @@ describe("docker/formbricks.sh AuthZed setup", () => {
         "docker compose --profile authzed-ops run --rm --no-deps authzed-ops upgrade check",
         ...(checkExitCode === 0
           ? [
+              "docker version --format {{.Server.Version}}",
               "docker compose down",
               "docker compose up -d --wait postgres",
               "docker compose run --rm --no-deps formbricks-migrate",
@@ -966,6 +1078,42 @@ describe("docker/formbricks.sh AuthZed setup", () => {
     expect(setupStart).toBeGreaterThanOrEqual(0);
     expect(migrationWait).toBeGreaterThan(setupStart);
     expect(upgradePrepare).toBeGreaterThan(migrationWait);
+  });
+
+  test("reaches application startup when Compose run can consume the setup input", () => {
+    const script = readFileSync(formbricksScriptPath, "utf8");
+    const setupCommands = script.match(
+      /newgrp docker <<[ \t]*([^\r\n]+)\r?\n([\s\S]*?)\r?\n\1(?:\r?\n|$)/
+    )?.[2];
+    expect(setupCommands).toBeDefined();
+
+    const tempDir = createTempDir();
+    const binDir = join(tempDir, "bin");
+    const commandLog = join(tempDir, "commands.log");
+    mkdirSync(binDir);
+    writeFileSync(
+      join(binDir, "docker"),
+      `#!/usr/bin/env bash
+printf '%s\\n' "$*" >> "$COMMAND_LOG"
+if [[ "$*" == *" run "* && "$*" != *" --interactive=false "* ]]; then
+  cat >/dev/null
+fi
+`,
+      { mode: 0o700 }
+    );
+
+    const result = spawnSync("bash", [], {
+      input: `set -e\n${setupCommands}\n`,
+      cwd: tempDir,
+      encoding: "utf8",
+      env: { ...process.env, COMMAND_LOG: commandLog, PATH: `${binDir}:${process.env.PATH ?? ""}` },
+    });
+
+    expect(result.status).toBe(0);
+    const commands = readFileSync(commandLog, "utf8").trim().split("\n");
+    expect(commands.some((command) => command.includes("authzed-ops upgrade prepare"))).toBe(true);
+    expect(commands.some((command) => command.includes("authzed-ops upgrade check"))).toBe(true);
+    expect(commands.at(-1)).toBe("compose up -d");
   });
 
   test("pins and verifies the downloaded bootstrap helper before making it executable", () => {
@@ -1024,7 +1172,7 @@ describe("docker/formbricks.sh Valkey image migration", () => {
     expect(readFileSync(`${composePath}.before-valkey-8.1.9`, "utf8")).toContain(legacyValkeyImage);
     expect(statSync(composePath).mode & 0o777).toBe(0o600);
     expect(statSync(`${composePath}.before-valkey-8.1.9`).mode & 0o777).toBe(0o600);
-    expect(readFileSync(validationLogPath, "utf8")).toBe(`docker compose -f ${composePath} config\n`);
+    expect(readFileSync(validationLogPath, "utf8")).toBe(`[${dirname(composePath)}] docker compose config\n`);
   });
 
   test("updates the live redis service when Compose uses four-space indentation", () => {
@@ -1047,7 +1195,7 @@ volumes:
 
     expect(readFileSync(composePath, "utf8")).toContain(multiArchValkeyImage);
     expect(readFileSync(`${composePath}.before-valkey-8.1.9`, "utf8")).toContain(legacyValkeyImage);
-    expect(readFileSync(validationLogPath, "utf8")).toBe(`docker compose -f ${composePath} config\n`);
+    expect(readFileSync(validationLogPath, "utf8")).toBe(`[${dirname(composePath)}] docker compose config\n`);
   });
 
   test.each([multiArchValkeyImage, "example.com/custom-valkey@sha256:custom"])(
@@ -1077,7 +1225,1080 @@ volumes:
   });
 });
 
+describe("docker/formbricks.sh loopback-only app port (ENG-3983)", () => {
+  test("binds the formbricks service's published port to loopback and leaves the rest of the file alone", () => {
+    const composePath = writeDockerComposeTemplate();
+    const originalCompose = readFileSync(composePath, "utf8");
+    expect(getPublishedPorts(originalCompose, "formbricks")).toEqual(["3000:3000"]);
+
+    bindFormbricksPortToLoopback(composePath, "install");
+
+    const updatedCompose = readFileSync(composePath, "utf8");
+    expect(getPublishedPorts(updatedCompose, "formbricks")).toEqual(["127.0.0.1:3000:3000"]);
+    expect(updatedCompose).toContain('      - "127.0.0.1:3000:3000"\n');
+    expect(updatedCompose.replace('"127.0.0.1:3000:3000"', "3000:3000")).toBe(originalCompose);
+    expect(existsSync(`${composePath}.before-loopback-port`)).toBe(false);
+  });
+
+  test.each([
+    ['"3000:3000"', '"127.0.0.1:3000:3000"'],
+    ["'3000:3000'", "'127.0.0.1:3000:3000'"],
+    ["3000:3000/tcp", '"127.0.0.1:3000:3000/tcp"'],
+  ])("rewrites %s, quoted as Compose recommends", (mapping, expected) => {
+    const composePath = writeDockerComposeTemplate();
+    writeFileSync(composePath, readFileSync(composePath, "utf8").replace("- 3000:3000", `- ${mapping}`));
+
+    bindFormbricksPortToLoopback(composePath, "install");
+
+    expect(readFileSync(composePath, "utf8")).toContain(`      - ${expected}\n`);
+  });
+
+  test.each(["127.0.0.1:3000:3000", "0.0.0.0:3000:3000", "8080:3000", "10.0.0.5:3000:3000"])(
+    "leaves an operator's %s mapping untouched",
+    (mapping) => {
+      const composePath = writeDockerComposeTemplate();
+      const customCompose = readFileSync(composePath, "utf8").replace("- 3000:3000", `- ${mapping}`);
+      writeFileSync(composePath, customCompose);
+
+      const validationLogPath = bindFormbricksPortToLoopback(composePath, "update");
+
+      expect(readFileSync(composePath, "utf8")).toBe(customCompose);
+      expect(existsSync(`${composePath}.before-loopback-port`)).toBe(false);
+      expect(existsSync(validationLogPath)).toBe(false);
+    }
+  );
+
+  test("only touches the formbricks service, with any indentation", () => {
+    const tempDir = createTempDir();
+    const composePath = join(tempDir, "docker-compose.yml");
+    writeFileSync(
+      composePath,
+      `services:
+    other:
+        image: example
+        ports:
+            - 3000:3000
+    formbricks:
+        image: ghcr.io/formbricks/formbricks:latest
+        ports:
+            - 3000:3000
+        environment:
+            WEBAPP_URL: http://localhost:3000
+`
+    );
+
+    bindFormbricksPortToLoopback(composePath, "install");
+
+    const updatedCompose = readFileSync(composePath, "utf8");
+    expect(getPublishedPorts(updatedCompose, "formbricks")).toEqual(["127.0.0.1:3000:3000"]);
+    expect(getPublishedPorts(updatedCompose, "other")).toEqual(["3000:3000"]);
+  });
+
+  test("on update, keeps a backup with the file's mode and validates the result", () => {
+    const composePath = writeDockerComposeTemplate();
+    const originalCompose = readFileSync(composePath, "utf8");
+    chmodSync(composePath, 0o600);
+
+    const validationLogPath = bindFormbricksPortToLoopback(composePath, "update");
+
+    expect(getPublishedPorts(readFileSync(composePath, "utf8"), "formbricks")).toEqual([
+      "127.0.0.1:3000:3000",
+    ]);
+    expect(readFileSync(`${composePath}.before-loopback-port`, "utf8")).toBe(originalCompose);
+    expect(statSync(composePath).mode & 0o777).toBe(0o600);
+    expect(statSync(`${composePath}.before-loopback-port`).mode & 0o777).toBe(0o600);
+    expect(readFileSync(validationLogPath, "utf8")).toBe(
+      `[${dirname(composePath)}] docker compose config\n[${dirname(composePath)}] docker compose config --format json formbricks\n`
+    );
+  });
+
+  test("on update, restores the original when the result does not validate", () => {
+    const composePath = writeDockerComposeTemplate();
+    const originalCompose = readFileSync(composePath, "utf8");
+
+    expect(() => bindFormbricksPortToLoopback(composePath, "update", "failure")).toThrow();
+
+    expect(readFileSync(composePath, "utf8")).toBe(originalCompose);
+    expect(existsSync(`${composePath}.tmp`)).toBe(false);
+  });
+
+  const duplicateRender = renderFormbricksPorts(loopbackPort, { ...loopbackPort, host_ip: "0.0.0.0" });
+
+  const bareOverride = `services:
+  formbricks:
+    ports:
+      - 3000:3000
+`;
+
+  const runUpdate = ({
+    failPortValidation = false,
+    failUpgradeCheck = false,
+    withOverride = false,
+    overrideContents = "services: {}\n",
+    renderedFormbricks = renderFormbricksPorts(loopbackPort),
+    engineVersion = "",
+    extraFiles = {},
+    envExtra = "",
+    failRestore = false,
+  }: {
+    failPortValidation?: boolean;
+    failUpgradeCheck?: boolean;
+    withOverride?: boolean;
+    overrideContents?: string;
+    renderedFormbricks?: string;
+    engineVersion?: string;
+    extraFiles?: Record<string, string>;
+    envExtra?: string;
+    failRestore?: boolean;
+  } = {}) => {
+    const tempDir = createTempDir();
+    const installationDir = join(tempDir, "formbricks");
+    const binDir = join(tempDir, "bin");
+    const commandLog = join(tempDir, "commands.log");
+    const composePath = join(installationDir, "docker-compose.yml");
+    const composeContents = `services:
+  authzed-ops:
+  spicedb:
+  hub-worker:
+  formbricks:
+    image: ghcr.io/formbricks/formbricks:latest
+    ports:
+      - 3000:3000
+`;
+    mkdirSync(installationDir, { recursive: true });
+    mkdirSync(binDir, { recursive: true });
+    writeFileSync(composePath, composeContents);
+    if (withOverride) writeFileSync(join(installationDir, "docker-compose.override.yml"), overrideContents);
+    writeFileSync(join(tempDir, "rendered.json"), renderedFormbricks);
+    for (const [name, contents] of Object.entries(extraFiles))
+      writeFileSync(join(installationDir, name), contents);
+    writeFileSync(
+      join(installationDir, ".env"),
+      `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true\n${envExtra}`
+    );
+    if (failRestore) {
+      writeFileSync(
+        join(binDir, "cp"),
+        '#!/bin/sh\ncase "$2" in *.before-loopback-port) exit 1 ;; esac\nexec /bin/cp "$@"\n',
+        { mode: 0o700 }
+      );
+    }
+    writeFileSync(
+      join(binDir, "sudo"),
+      `#!/bin/sh
+printf "%s\\n" "$*" >> "$COMMAND_LOG"
+case "$*" in
+  *"config --services") printf "authzed-ops\\nspicedb\\nhub-worker\\nformbricks\\n" ;;
+  "docker compose config") [ "$FAIL_PORT_VALIDATION" = "1" ] && exit 1 ;;
+  *"upgrade check") [ "$FAIL_UPGRADE_CHECK" = "1" ] && exit 1 ;;
+  *"docker version"*) [ -n "$ENGINE_VERSION" ] && printf "%s\\n" "$ENGINE_VERSION" ;;
+  *"--format json formbricks") cat "$RENDERED_JSON" ;;
+esac
+exit 0
+`,
+      { mode: 0o700 }
+    );
+
+    const result = spawnSync("bash", ["-c", updateFormbricksWithoutIpv6, "bash", formbricksScriptPath], {
+      cwd: tempDir,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        COMMAND_LOG: commandLog,
+        FAIL_PORT_VALIDATION: failPortValidation ? "1" : "0",
+        FAIL_UPGRADE_CHECK: failUpgradeCheck ? "1" : "0",
+        ENGINE_VERSION: engineVersion,
+        RENDERED_JSON: join(tempDir, "rendered.json"),
+        PATH: `${binDir}:${process.env.PATH ?? ""}`,
+      },
+    });
+
+    return { result, composePath, composeContents, commands: readFileSync(commandLog, "utf8") };
+  };
+
+  test("the updater narrows an existing install's port after its last gate, before stopping the stack", () => {
+    const { result, composePath, composeContents, commands } = runUpdate();
+
+    expect(result.status).toBe(0);
+    expect(getPublishedPorts(readFileSync(composePath, "utf8"), "formbricks")).toEqual([
+      "127.0.0.1:3000:3000",
+    ]);
+    expect(readFileSync(`${composePath}.before-loopback-port`, "utf8")).toBe(composeContents);
+    const validation = commands.indexOf("docker compose config\n");
+    expect(validation).toBeGreaterThan(commands.indexOf("upgrade check"));
+    expect(validation).toBeLessThan(commands.indexOf("docker compose down"));
+  });
+
+  test("a gate that stops the update leaves the port and the file untouched", () => {
+    const { result, composePath, composeContents, commands } = runUpdate({ failUpgradeCheck: true });
+
+    expect(result.status).not.toBe(0);
+    expect(readFileSync(composePath, "utf8")).toBe(composeContents);
+    expect(existsSync(`${composePath}.before-loopback-port`)).toBe(false);
+    expect(commands).not.toContain("docker compose config\n");
+    expect(result.stdout).not.toContain("127.0.0.1 only");
+  });
+
+  test("the updater restores the file and still updates when the narrowed file does not validate", () => {
+    const { result, composePath, composeContents, commands } = runUpdate({ failPortValidation: true });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain(
+      "Restored docker-compose.yml from docker-compose.yml.before-loopback-port"
+    );
+    expect(result.stdout).toContain("Continuing the update with port 3000 published as before");
+    expect(readFileSync(composePath, "utf8")).toBe(composeContents);
+    expect(commands).toContain("docker compose up -d");
+  });
+
+  test("the updater validates the project the way its own `up` loads it, with no -f", () => {
+    const { commands } = runUpdate({ withOverride: true });
+
+    expect(commands).toContain("docker compose config\n");
+    expect(commands).not.toMatch(/docker compose -f .* config/);
+  });
+
+  test("the updater narrows the override's bare mapping in the same transaction", () => {
+    const overrideContents = `services:
+  formbricks:
+    ports:
+      - 3000:3000 # from an older guide
+`;
+    const { result, composePath } = runUpdate({ withOverride: true, overrideContents });
+    const overridePath = composePath.replace("docker-compose.yml", "docker-compose.override.yml");
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Changed: docker-compose.yml docker-compose.override.yml (");
+    expect(readFileSync(overridePath, "utf8")).toContain(
+      '      - "127.0.0.1:3000:3000" # from an older guide\n'
+    );
+    expect(readFileSync(`${overridePath}.before-loopback-port`, "utf8")).toBe(overrideContents);
+    expect(getPublishedPorts(readFileSync(composePath, "utf8"), "formbricks")).toEqual([
+      "127.0.0.1:3000:3000",
+    ]);
+  });
+
+  test.each([
+    ["the port would be published twice", { renderedFormbricks: duplicateRender }],
+    ["the merged project does not render", { failPortValidation: true }],
+  ])("the updater restores the override too when %s", (_case, options) => {
+    const { result, composePath, composeContents, commands } = runUpdate({
+      withOverride: true,
+      overrideContents: bareOverride,
+      ...options,
+    });
+    const overridePath = composePath.replace("docker-compose.yml", "docker-compose.override.yml");
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain(
+      "Restored docker-compose.yml from docker-compose.yml.before-loopback-port"
+    );
+    expect(result.stdout).toContain(
+      "Restored docker-compose.override.yml from docker-compose.override.yml.before-loopback-port"
+    );
+    expect(readFileSync(composePath, "utf8")).toBe(composeContents);
+    expect(readFileSync(overridePath, "utf8")).toBe(bareOverride);
+    expect(commands).toContain("docker compose up -d");
+  });
+
+  const runBindWithRealCompose = (files: Record<string, string>) => {
+    const installationDir = createTempDir();
+    for (const [name, contents] of Object.entries(files))
+      writeFileSync(join(installationDir, name), contents);
+    const result = spawnSync(
+      "bash",
+      [
+        "-c",
+        'source "$1"; sudo() { "$@"; }; cd "$2"; bind_formbricks_port_to_loopback docker-compose.yml validate',
+        "bash",
+        formbricksScriptPath,
+        installationDir,
+      ],
+      { encoding: "utf8", env: getDockerComposeProcessEnv() }
+    );
+    const rendered = runDockerCompose([
+      "--project-directory",
+      installationDir,
+      "config",
+      "--format",
+      "json",
+      "formbricks",
+    ]);
+    return { result, installationDir, rendered: JSON.parse(rendered) as RenderedDockerComposeConfig };
+  };
+
+  const realComposeFile = `services:
+  formbricks:
+    image: ghcr.io/formbricks/formbricks:latest
+    ports:
+      - 3000:3000
+`;
+
+  dockerComposeTest("with real Compose, the narrowed project publishes the port on loopback only", () => {
+    const { result, installationDir, rendered } = runBindWithRealCompose({
+      "docker-compose.yml": realComposeFile,
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("publishes port 3000 on 127.0.0.1 only");
+    expect(existsSync(join(installationDir, "docker-compose.yml.before-loopback-port"))).toBe(true);
+    expect(rendered.services.formbricks.ports).toEqual([
+      expect.objectContaining({ host_ip: "127.0.0.1", published: "3000", target: 3000 }),
+    ]);
+  });
+
+  dockerComposeTest(
+    "with real Compose, a compose.yaml it prefers keeps the update from claiming the port is narrowed",
+    () => {
+      const { result, installationDir } = runBindWithRealCompose({
+        "docker-compose.yml": realComposeFile,
+        "compose.yaml": realComposeFile,
+      });
+
+      expect(result.status).toBe(1);
+      expect(result.stdout).toContain("would not publish port 3000 on 127.0.0.1 only");
+      expect(result.stdout).not.toContain("127.0.0.1 only. Traefik");
+      expect(readFileSync(join(installationDir, "docker-compose.yml"), "utf8")).toBe(realComposeFile);
+    }
+  );
+
+  test("the updater stops before stopping the stack when a restore fails", () => {
+    const { result, commands } = runUpdate({ failPortValidation: true, failRestore: true });
+
+    expect(result.status).not.toBe(0);
+    expect(result.stdout).toContain("Could not restore docker-compose.yml");
+    expect(result.stdout).toContain("Stopped the update before touching the running stack");
+    expect(result.stdout).not.toContain("Continuing the update");
+    expect(commands).not.toContain("docker compose down");
+  });
+
+  test("the updater narrows the override Compose loads first, in Compose's order", () => {
+    const { result, composePath } = runUpdate({
+      extraFiles: { "compose.override.yml": bareOverride, "docker-compose.override.yml": bareOverride },
+    });
+    const installationDir = dirname(composePath);
+
+    expect(result.status).toBe(0);
+    expect(
+      getPublishedPorts(readFileSync(join(installationDir, "compose.override.yml"), "utf8"), "formbricks")
+    ).toEqual(["127.0.0.1:3000:3000"]);
+    expect(readFileSync(join(installationDir, "docker-compose.override.yml"), "utf8")).toBe(bareOverride);
+  });
+
+  test("the updater narrows a docker-compose.override.yaml", () => {
+    const { result, composePath } = runUpdate({
+      extraFiles: { "docker-compose.override.yaml": bareOverride },
+    });
+
+    expect(result.status).toBe(0);
+    expect(
+      getPublishedPorts(
+        readFileSync(join(dirname(composePath), "docker-compose.override.yaml"), "utf8"),
+        "formbricks"
+      )
+    ).toEqual(["127.0.0.1:3000:3000"]);
+  });
+
+  test.each([
+    "COMPOSE_FILE=docker-compose.yml:extra.yml",
+    "COMPOSE_FILE: docker-compose.yml:extra.yml",
+    "export COMPOSE_FILE=docker-compose.yml:extra.yml",
+  ])("the updater leaves the port alone when .env has %s", (setting) => {
+    const { result, composePath, composeContents, commands } = runUpdate({ envExtra: `${setting}\n` });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain(".env sets COMPOSE_FILE");
+    expect(result.stdout).toContain("Continuing the update with port 3000 published as before");
+    expect(readFileSync(composePath, "utf8")).toBe(composeContents);
+    expect(existsSync(`${composePath}.before-loopback-port`)).toBe(false);
+    expect(commands).toContain("docker compose up -d");
+  });
+
+  test.each([
+    [
+      "a compose.yaml Compose prefers still publishes it on every interface",
+      renderFormbricksPorts(everyInterfacePort),
+    ],
+    ["the project Compose loads publishes no port 3000", renderFormbricksPorts()],
+    ["the binding is on another address", renderFormbricksPorts({ ...loopbackPort, host_ip: "::1" })],
+  ])("the updater restores the file and keeps going when %s", (_case, renderedFormbricks) => {
+    const { result, composePath, composeContents, commands } = runUpdate({
+      extraFiles: { "compose.yaml": bareOverride },
+      renderedFormbricks,
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("would not publish port 3000 on 127.0.0.1 only");
+    expect(result.stdout).toContain(
+      "Restored docker-compose.yml from docker-compose.yml.before-loopback-port"
+    );
+    expect(result.stdout).not.toContain("127.0.0.1 only. Traefik");
+    expect(readFileSync(composePath, "utf8")).toBe(composeContents);
+    expect(readFileSync(join(dirname(composePath), "compose.yaml"), "utf8")).toBe(bareOverride);
+    expect(commands).toContain("docker compose up -d");
+  });
+
+  test("the updater spots a double publication in compact JSON too", () => {
+    const { result, composePath, composeContents } = runUpdate({
+      renderedFormbricks: JSON.stringify(JSON.parse(duplicateRender)),
+    });
+
+    expect(result.stdout).toContain("would publish port 3000 more than once");
+    expect(readFileSync(composePath, "utf8")).toBe(composeContents);
+  });
+
+  test("the updater restores every file and keeps going when the port would be published twice", () => {
+    const renderedFormbricks = duplicateRender;
+    const { result, composePath, composeContents, commands } = runUpdate({ renderedFormbricks });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("would publish port 3000 more than once");
+    expect(result.stdout).toContain(
+      "Restored docker-compose.yml from docker-compose.yml.before-loopback-port"
+    );
+    expect(result.stdout).not.toContain("127.0.0.1 only");
+    expect(readFileSync(composePath, "utf8")).toBe(composeContents);
+    expect(commands).toContain("docker compose up -d");
+  });
+
+  test.each([
+    ["27.5.1", true],
+    ["28.2.2", true],
+    ["28.3.3", false],
+    ["29.0.1", false],
+  ])("the updater warns about Docker Engine %s: %s", (engineVersion, warns) => {
+    const { result } = runUpdate({ engineVersion });
+
+    expect(result.stdout.includes("Upgrade Docker Engine to 28.3.3 or later")).toBe(warns);
+  });
+
+  test("a commented service header still scopes the rewrite to the formbricks service", () => {
+    const tempDir = createTempDir();
+    const composePath = join(tempDir, "docker-compose.yml");
+    writeFileSync(
+      composePath,
+      `services:
+  formbricks: # the app
+    ports:
+      - 3000:3000
+  hub: # the hub
+    ports:
+      - 3000:3000
+`
+    );
+
+    bindFormbricksPortToLoopback(composePath, "install");
+
+    const updatedCompose = readFileSync(composePath, "utf8");
+    expect(getPublishedPorts(updatedCompose, "formbricks")).toEqual(["127.0.0.1:3000:3000"]);
+    expect(getPublishedPorts(updatedCompose, "hub")).toEqual(["3000:3000"]);
+  });
+
+  test("leaves a formbricks key outside the services section alone", () => {
+    const tempDir = createTempDir();
+    const composePath = join(tempDir, "docker-compose.yml");
+    const compose = `services:
+  web:
+    image: example
+volumes:
+  formbricks:
+    ports:
+      - 3000:3000
+`;
+    writeFileSync(composePath, compose);
+
+    bindFormbricksPortToLoopback(composePath, "install");
+
+    expect(readFileSync(composePath, "utf8")).toBe(compose);
+  });
+
+  test("recognises quoted, anchored and dotted service headers", () => {
+    const tempDir = createTempDir();
+    const composePath = join(tempDir, "docker-compose.yml");
+    writeFileSync(
+      composePath,
+      `services:
+  "formbricks": &app
+    ports:
+      - 3000:3000
+  hub.v2:
+    ports:
+      - 3000:3000
+`
+    );
+
+    bindFormbricksPortToLoopback(composePath, "install");
+
+    const updated = readFileSync(composePath, "utf8");
+    expect(updated).toContain('  "formbricks": &app\n    ports:\n      - "127.0.0.1:3000:3000"\n');
+    expect(updated).toContain("  hub.v2:\n    ports:\n      - 3000:3000\n");
+  });
+
+  test.each([
+    ["27.5.1", false],
+    ["28.0.0", true],
+    ["28.1.1", true],
+    ["28.2.0", false],
+    ["28.3.2", false],
+    ["28.3.3", true],
+    ["29.1.0-rc.1", true],
+    ["", true],
+    ["unknown", true],
+  ])("docker_engine_isolates_loopback_ports(%s) is %s", (version, isolates) => {
+    const result = spawnSync(
+      "bash",
+      [
+        "-c",
+        'source "$1"; set +e; docker_engine_isolates_loopback_ports "$2"',
+        "bash",
+        formbricksScriptPath,
+        version,
+      ],
+      { encoding: "utf8" }
+    );
+
+    expect(result.status === 0).toBe(isolates);
+  });
+
+  test.each([
+    ["- 3000:3000 # app port", '- "127.0.0.1:3000:3000" # app port'],
+    ['- "3000:3000" # app port', '- "127.0.0.1:3000:3000" # app port'],
+    ["- '3000:3000'   # app", "- '127.0.0.1:3000:3000'   # app"],
+  ])("keeps the trailing comment on %s", (mapping, expected) => {
+    const composePath = writeDockerComposeTemplate();
+    writeFileSync(composePath, readFileSync(composePath, "utf8").replace("- 3000:3000", mapping));
+
+    bindFormbricksPortToLoopback(composePath, "install");
+
+    expect(readFileSync(composePath, "utf8")).toContain(`      ${expected}\n`);
+  });
+
+  test("recognises comments after services: and ports:", () => {
+    const tempDir = createTempDir();
+    const composePath = join(tempDir, "docker-compose.yml");
+    writeFileSync(
+      composePath,
+      `services: # the stack
+  formbricks:
+    ports: # published for local checks
+      - 3000:3000
+`
+    );
+
+    bindFormbricksPortToLoopback(composePath, "install");
+
+    expect(getPublishedPorts(readFileSync(composePath, "utf8"), "formbricks")).toEqual([
+      "127.0.0.1:3000:3000",
+    ]);
+  });
+
+  test.each(["- 3000:3000:3000 # odd", '- "3000:3000"x', "- '3000:3000' :tcp"])(
+    "leaves %s alone",
+    (mapping) => {
+      const composePath = writeDockerComposeTemplate();
+      const custom = readFileSync(composePath, "utf8").replace("- 3000:3000", mapping);
+      writeFileSync(composePath, custom);
+
+      bindFormbricksPortToLoopback(composePath, "install");
+
+      expect(readFileSync(composePath, "utf8")).toBe(custom);
+    }
+  );
+
+  test("stops before writing when the mode-preserving copy fails", () => {
+    const composePath = writeDockerComposeTemplate();
+    const originalCompose = readFileSync(composePath, "utf8");
+    chmodSync(composePath, 0o600);
+    const binDir = join(createTempDir(), "bin");
+    mkdirSync(binDir, { recursive: true });
+    writeFileSync(join(binDir, "cp"), '#!/bin/sh\ncase "$*" in *.tmp) exit 1 ;; esac\nexec /bin/cp "$@"\n', {
+      mode: 0o700,
+    });
+
+    const result = spawnSync(
+      "bash",
+      [
+        "-c",
+        'source "$1"; set +e; bind_formbricks_port_to_loopback "$2"',
+        "bash",
+        formbricksScriptPath,
+        composePath,
+      ],
+      { encoding: "utf8", env: { ...process.env, PATH: `${binDir}:${process.env.PATH ?? ""}` } }
+    );
+
+    expect(result.status).not.toBe(0);
+    expect(readFileSync(composePath, "utf8")).toBe(originalCompose);
+    expect(statSync(composePath).mode & 0o777).toBe(0o600);
+    expect(existsSync(`${composePath}.tmp`)).toBe(false);
+    expect(existsSync(`${composePath}.before-loopback-port`)).toBe(false);
+  });
+
+  test("on install, narrows an override kept from an earlier install and backs it up", () => {
+    const composePath = writeDockerComposeTemplate();
+    const overridePath = join(dirname(composePath), "docker-compose.override.yml");
+    writeFileSync(overridePath, bareOverride);
+
+    bindFormbricksPortToLoopback(composePath, "install");
+
+    expect(getPublishedPorts(readFileSync(composePath, "utf8"), "formbricks")).toEqual([
+      "127.0.0.1:3000:3000",
+    ]);
+    expect(getPublishedPorts(readFileSync(overridePath, "utf8"), "formbricks")).toEqual([
+      "127.0.0.1:3000:3000",
+    ]);
+    expect(readFileSync(`${overridePath}.before-loopback-port`, "utf8")).toBe(bareOverride);
+  });
+
+  test.each([
+    [
+      "a later service header with a dotted anchor",
+      `services:
+  formbricks:
+    ports:
+      - 3000:3000
+  hub: &hub.v2
+    ports:
+      - 3000:3000
+`,
+    ],
+    [
+      "a block scalar that mentions ports",
+      `services:
+  formbricks:
+    image: example
+    command: |
+      ports:
+      - 3000:3000
+`,
+    ],
+    [
+      "a nested ports: key",
+      `services:
+  formbricks:
+    deploy:
+      ports:
+        - 3000:3000
+`,
+    ],
+  ])("only rewrites the formbricks service's own ports, with %s", (_case, contents) => {
+    const composePath = join(createTempDir(), "docker-compose.yml");
+    writeFileSync(composePath, contents);
+
+    bindFormbricksPortToLoopback(composePath, "install");
+
+    const expectedFormbricksOnly = contents.replace("- 3000:3000\n  hub", '- "127.0.0.1:3000:3000"\n  hub');
+    expect(readFileSync(composePath, "utf8")).toBe(expectedFormbricksOnly);
+  });
+
+  test("keeps CRLF line endings", () => {
+    const composePath = writeDockerComposeTemplate();
+    const crlf = readFileSync(composePath, "utf8").replace(/\n/g, "\r\n");
+    writeFileSync(composePath, crlf);
+
+    bindFormbricksPortToLoopback(composePath, "install");
+
+    expect(readFileSync(composePath, "utf8")).toBe(
+      crlf.replace("- 3000:3000\r\n", '- "127.0.0.1:3000:3000"\r\n')
+    );
+  });
+
+  test.each([
+    ["a tab", "\t"],
+    ["spaces and a tab", "  \t "],
+  ])("keeps reading the formbricks service past a blank line with %s", (_case, blank) => {
+    const composePath = join(createTempDir(), "docker-compose.yml");
+    writeFileSync(
+      composePath,
+      `services:\n  formbricks:\n    image: x\n${blank}\n    ports:\n${blank}\n      - 3000:3000\n`
+    );
+
+    bindFormbricksPortToLoopback(composePath, "install");
+
+    expect(readFileSync(composePath, "utf8")).toContain('      - "127.0.0.1:3000:3000"\n');
+  });
+
+  test("keeps reading the formbricks service past a blank CRLF line", () => {
+    const composePath = join(createTempDir(), "docker-compose.yml");
+    writeFileSync(
+      composePath,
+      "services:\r\n  formbricks:\r\n    image: example\r\n\r\n    ports:\r\n      - 3000:3000\r\n"
+    );
+
+    bindFormbricksPortToLoopback(composePath, "install");
+
+    expect(readFileSync(composePath, "utf8")).toContain('      - "127.0.0.1:3000:3000"\r\n');
+  });
+
+  test("reads past a comment line inside the ports list", () => {
+    const composePath = join(createTempDir(), "docker-compose.yml");
+    writeFileSync(
+      composePath,
+      `services:
+  formbricks:
+    ports:
+# published for local checks
+      - 3000:3000
+`
+    );
+
+    bindFormbricksPortToLoopback(composePath, "install");
+
+    expect(getPublishedPorts(readFileSync(composePath, "utf8"), "formbricks")).toEqual([
+      "127.0.0.1:3000:3000",
+    ]);
+  });
+
+  test("is idempotent", () => {
+    const composePath = writeDockerComposeTemplate();
+    bindFormbricksPortToLoopback(composePath, "install");
+    const onceCompose = readFileSync(composePath, "utf8");
+
+    bindFormbricksPortToLoopback(composePath, "update");
+
+    expect(readFileSync(composePath, "utf8")).toBe(onceCompose);
+    expect(existsSync(`${composePath}.before-loopback-port`)).toBe(false);
+  });
+});
+
+describe("docker/formbricks.sh Cube model refresh (ENG-3951)", () => {
+  const releaseUrl = "https://raw.githubusercontent.com/formbricks/formbricks/stable/docker";
+  const previousModel = { config: "// previous cube.js\n", schema: "// previous model\n" };
+  const releaseModel = { config: "// release cube.js\n", schema: "// release FeedbackRecords.js\n" };
+
+  // An update that passes every gate, from an installation that may or may not run the bundled Cube.
+  const runUpdate = ({
+    withCubeFiles,
+    downloadFails = "",
+    replaceFails = "",
+    restoreFails = "",
+    backupBlocked = false,
+    formbricksImage = "ghcr.io/formbricks/formbricks:latest",
+  }: {
+    withCubeFiles: boolean;
+    // Fails every download whose URL contains this.
+    downloadFails?: string;
+    // Fails moving a file onto this path, relative to the installation.
+    replaceFails?: string;
+    // Fails copying a file onto this path, relative to the installation.
+    restoreFails?: string;
+    backupBlocked?: boolean;
+    formbricksImage?: string;
+  }) => {
+    const tempDir = createTempDir();
+    const installationDir = join(tempDir, "formbricks");
+    const binDir = join(tempDir, "bin");
+    const commandLog = join(tempDir, "commands.log");
+    mkdirSync(installationDir, { recursive: true });
+    mkdirSync(binDir, { recursive: true });
+    writeFileSync(
+      join(installationDir, "docker-compose.yml"),
+      "services:\n  authzed-ops:\n  hub-worker:\n  spicedb:\n"
+    );
+    writeFileSync(join(installationDir, ".env"), "FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true\n");
+    if (withCubeFiles) {
+      mkdirSync(join(installationDir, "cube", "schema"), { recursive: true });
+      writeFileSync(join(installationDir, "cube", "cube.js"), previousModel.config);
+      writeFileSync(join(installationDir, "cube", "schema", "FeedbackRecords.js"), previousModel.schema);
+    }
+    if (backupBlocked) {
+      // A file where the backup directory belongs, so no backup can be written.
+      writeFileSync(join(installationDir, "cube", "previous"), "not a directory\n");
+    }
+    // The operator keeps the updater next to the installation. This copy runs through /usr/bin/env, which every
+    // test host has, unlike the /bin/env the released script names.
+    writeFileSync(
+      join(tempDir, "formbricks.sh"),
+      readFileSync(formbricksScriptPath, "utf8").replace(/^#!.*\n/, "#!/usr/bin/env bash\n"),
+      { mode: 0o700 }
+    );
+    writeFileSync(
+      join(binDir, "sudo"),
+      [
+        "#!/bin/sh",
+        'printf "%s\\n" "$*" >> "$COMMAND_LOG"',
+        'case "$*" in',
+        '  *"config --services") printf "authzed-ops\\nhub-worker\\nspicedb\\n" ;;',
+        '  *"config --images") printf "pgvector/pgvector:pg18\\n%s\\n%s\\n" "$FORMBRICKS_IMAGE" "$FORMBRICKS_IMAGE" ;;',
+        "esac",
+        "",
+      ].join("\n"),
+      { mode: 0o700 }
+    );
+    // Serves the release's copy of whatever file is requested, or fails like an unreachable GitHub.
+    writeFileSync(
+      join(binDir, "curl"),
+      [
+        "#!/bin/sh",
+        'for arg; do url="$arg"; done',
+        'printf "curl %s\\n" "$url" >> "$COMMAND_LOG"',
+        'if [ -n "$DOWNLOAD_FAILS" ]; then case "$url" in *"$DOWNLOAD_FAILS"*) exit 22 ;; esac; fi',
+        'while [ $# -gt 0 ]; do [ "$1" = "-o" ] && out="$2"; shift; done',
+        'printf "// release %s\\n" "${url##*/}" > "$out"',
+        "",
+      ].join("\n"),
+      { mode: 0o700 }
+    );
+    writeFileSync(
+      join(binDir, "mv"),
+      '#!/bin/sh\nfor arg; do target="$arg"; done\n[ -n "$MV_FAILS" ] && [ "$target" = "$MV_FAILS" ] && exit 1\nexec /bin/mv "$@"\n',
+      { mode: 0o700 }
+    );
+    writeFileSync(
+      join(binDir, "cp"),
+      '#!/bin/sh\nfor arg; do target="$arg"; done\n[ -n "$CP_FAILS" ] && [ "$target" = "$CP_FAILS" ] && exit 1\nexec /bin/cp "$@"\n',
+      { mode: 0o700 }
+    );
+
+    const env = {
+      ...process.env,
+      COMMAND_LOG: commandLog,
+      FORMBRICKS_IMAGE: formbricksImage,
+      PATH: `${binDir}:${process.env.PATH ?? ""}`,
+    };
+    const result = spawnSync("bash", ["-c", updateFormbricksWithoutIpv6, "bash", formbricksScriptPath], {
+      cwd: tempDir,
+      encoding: "utf8",
+      env: { ...env, DOWNLOAD_FAILS: downloadFails, MV_FAILS: replaceFails, CP_FAILS: restoreFails },
+    });
+
+    // Runs a printed command the way an operator would: pasted where they started the updater, once the cause
+    // of the failure is gone.
+    const runAsOperator = (command: string) =>
+      spawnSync("bash", ["-c", command], { cwd: tempDir, encoding: "utf8", env });
+    const readCommands = () => readFileSync(commandLog, "utf8").trim().split("\n");
+    const read = (path: string) => readFileSync(join(installationDir, path), "utf8");
+
+    return {
+      result,
+      installationDir,
+      runAsOperator,
+      readCommands,
+      read,
+      commands: readCommands(),
+      model: () => ({ config: read("cube/cube.js"), schema: read("cube/schema/FeedbackRecords.js") }),
+    };
+  };
+
+  const retryCommandFor = (stdout: string): string => {
+    const lines = stdout.split("\n");
+    const warning = lines.findIndex((line) => line.includes("Cube model was left as it was"));
+    expect(warning).toBeGreaterThanOrEqual(0);
+    return lines[warning + 1].trim();
+  };
+
+  test("serves the release's model after the update and keeps the previous files", () => {
+    const { result, installationDir, commands, read, model } = runUpdate({ withCubeFiles: true });
+
+    expect(result.status).toBe(0);
+    expect(model()).toEqual(releaseModel);
+    expect(read("cube/previous/cube.js")).toBe(previousModel.config);
+    expect(read("cube/previous/schema/FeedbackRecords.js")).toBe(previousModel.schema);
+    // Cube mounts cube/schema as its model directory, so a backup or download left there would load too.
+    expect(readdirSync(join(installationDir, "cube", "schema"))).toEqual(["FeedbackRecords.js"]);
+    expect(existsSync(join(installationDir, "cube", ".download"))).toBe(false);
+    // While the stack is down, which is only after every gate, so Cube's next start reads the new model.
+    for (const cubeFile of ["cube/cube.js", "cube/schema/FeedbackRecords.js"]) {
+      const download = commands.indexOf(`curl ${releaseUrl}/${cubeFile}`);
+      expect(download).toBeGreaterThan(commands.indexOf("docker compose down"));
+      expect(download).toBeLessThan(commands.indexOf("docker compose up -d --wait postgres"));
+    }
+  });
+
+  test("keeps the whole model when only the second download fails, and the retry refreshes both", () => {
+    const { result, installationDir, commands, runAsOperator, readCommands, read, model } = runUpdate({
+      withCubeFiles: true,
+      downloadFails: "FeedbackRecords.js",
+    });
+
+    expect(result.status).toBe(0);
+    expect(commands).toContain(`curl ${releaseUrl}/cube/cube.js`);
+    expect(result.stdout).toContain("Could not download cube/schema/FeedbackRecords.js from stable");
+    expect(model()).toEqual(previousModel);
+    expect(existsSync(join(installationDir, "cube", "previous"))).toBe(false);
+    expect(existsSync(join(installationDir, "cube", ".download"))).toBe(false);
+    expect(commands.at(-1)).toBe("docker compose up -d");
+
+    const retry = runAsOperator(retryCommandFor(result.stdout));
+    expect(retry.status).toBe(0);
+    expect(model()).toEqual(releaseModel);
+    expect(read("cube/previous/schema/FeedbackRecords.js")).toBe(previousModel.schema);
+    expect(readCommands().at(-1)).toBe("docker compose up -d --force-recreate cube");
+  });
+
+  test("puts cube.js back when the model file cannot be replaced", () => {
+    const { result, installationDir, commands, model } = runUpdate({
+      withCubeFiles: true,
+      replaceFails: "cube/schema/FeedbackRecords.js",
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Could not replace cube/schema/FeedbackRecords.js");
+    expect(model()).toEqual(previousModel);
+    expect(readdirSync(join(installationDir, "cube", "schema"))).toEqual(["FeedbackRecords.js"]);
+    expect(existsSync(join(installationDir, "cube", ".download"))).toBe(false);
+    expect(commands.at(-1)).toBe("docker compose up -d");
+  });
+
+  test("says how to fix a model it could neither replace nor restore, and still finishes the update", () => {
+    const { result, installationDir, commands, runAsOperator, readCommands, model } = runUpdate({
+      withCubeFiles: true,
+      replaceFails: "cube/schema/FeedbackRecords.js",
+      restoreFails: "cube/cube.js",
+    });
+
+    expect(result.status).toBe(0);
+    expect(model()).toEqual({ config: releaseModel.config, schema: previousModel.schema });
+    expect(result.stdout).not.toContain("left as it was");
+    expect(existsSync(join(installationDir, "cube", ".download"))).toBe(false);
+    expect(commands.at(-1)).toBe("docker compose up -d");
+
+    const lines = result.stdout.split("\n");
+    const warning = lines.findIndex((line) =>
+      line.includes("the Cube model files are from different releases")
+    );
+    expect(warning).toBeGreaterThanOrEqual(0);
+    const recovery = runAsOperator(lines[warning + 1].trim());
+    expect(recovery.status).toBe(0);
+    expect(model()).toEqual(previousModel);
+    expect(readCommands().at(-1)).toBe("docker compose up -d --force-recreate cube");
+  });
+
+  test("never replaces the model without a backup, in the update or its retry", () => {
+    const { result, commands, runAsOperator, readCommands, model } = runUpdate({
+      withCubeFiles: true,
+      backupBlocked: true,
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Could not back up cube/cube.js to cube/previous/");
+    expect(model()).toEqual(previousModel);
+    expect(commands.at(-1)).toBe("docker compose up -d");
+
+    // cube/previous is still a file, so the retry has to stop the same way rather than replace unsaved files.
+    const retry = runAsOperator(retryCommandFor(result.stdout));
+    expect(retry.status).not.toBe(0);
+    expect(model()).toEqual(previousModel);
+    expect(readCommands()).not.toContain("docker compose up -d --force-recreate cube");
+  });
+
+  test("serves the model of the release the Formbricks image is pinned to", () => {
+    const { result, commands, model } = runUpdate({
+      withCubeFiles: true,
+      formbricksImage: "ghcr.io/formbricks/formbricks:6.0.2",
+    });
+    const pinnedUrl = "https://raw.githubusercontent.com/formbricks/formbricks/6.0.2/docker";
+
+    expect(result.status).toBe(0);
+    expect(commands.filter((command) => command.startsWith("curl "))).toEqual([
+      `curl ${pinnedUrl}/cube/cube.js`,
+      `curl ${pinnedUrl}/cube/schema/FeedbackRecords.js`,
+    ]);
+    expect(model()).toEqual(releaseModel);
+  });
+
+  // A tag next to a digest is only a label: the digest decides what runs.
+  test.each([
+    `ghcr.io/formbricks/formbricks@sha256:${"a".repeat(64)}`,
+    `ghcr.io/formbricks/formbricks:6.0.2@sha256:${"a".repeat(64)}`,
+  ])("leaves the model alone when the image names no release: %s", (formbricksImage) => {
+    const { result, commands, model } = runUpdate({ withCubeFiles: true, formbricksImage });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("migration#cube-model-files-for-docker");
+    expect(commands.some((command) => command.startsWith("curl "))).toBe(false);
+    expect(model()).toEqual(previousModel);
+    expect(commands.at(-1)).toBe("docker compose up -d");
+  });
+
+  test("leaves an installation without the bundled Cube model alone", () => {
+    const { result, installationDir, commands } = runUpdate({ withCubeFiles: false });
+
+    expect(result.status).toBe(0);
+    expect(commands.some((command) => command.startsWith("curl "))).toBe(false);
+    expect(existsSync(join(installationDir, "cube"))).toBe(false);
+  });
+});
+
 describe("docker/formbricks.sh Traefik label injection", () => {
+  test("pins a Traefik whose buffering middleware keeps empty auth redirects", () => {
+    // Before v3.6.15 the auth routers' buffering middleware turned an empty chunked 302, the answer to every
+    // OAuth/SSO callback, into a 500 (traefik#11568). docker/traefik-auth-smoke.sh proves it live.
+    const image = execFileSync(
+      "bash",
+      ["-c", 'source "$1"; printf %s "$traefik_image"', "bash", formbricksScriptPath],
+      { encoding: "utf8" }
+    );
+    const version = /^traefik:v(\d+)\.(\d+)\.(\d+)$/.exec(image);
+
+    expect(version).not.toBeNull();
+    const [major, minor, patch] = (version ?? []).slice(1).map(Number);
+    expect(major * 1_000_000 + minor * 1_000 + patch).toBeGreaterThanOrEqual(3_006_015);
+  });
+
+  test.each([
+    ["y", "y"],
+    ["y", "n"],
+    ["n", "y"],
+    ["n", "n"],
+  ])("writes a static config that refuses encoded path characters (HSTS %s, HTTPS %s)", (hsts, https) => {
+    const configPath = join(createTempDir(), "traefik.yaml");
+    execFileSync(
+      "bash",
+      [
+        "-c",
+        'source "$1"; write_traefik_config "$2" "$3" "$4" ops@example.com',
+        "bash",
+        formbricksScriptPath,
+        configPath,
+        hsts,
+        https,
+      ],
+      { encoding: "utf8" }
+    );
+    type EntryPointHttp = {
+      encodedCharacters?: Record<string, boolean>;
+      redirections?: { entryPoint: { to: string } };
+      middlewares?: string[];
+      tls?: { certResolver?: string };
+    };
+    type EntryPoint = {
+      http: EntryPointHttp;
+      transport: { respondingTimeouts: { readTimeout: string } };
+    };
+    const config = load(readFileSync(configPath, "utf8")) as {
+      entryPoints: { web: EntryPoint; websecure: EntryPoint };
+      providers: { docker: { exposedByDefault: boolean }; file: { directory: string } };
+      certificatesResolvers?: { default: { acme: { email: string } } };
+    };
+    const { web, websecure } = config.entryPoints;
+
+    // The read timeout is what bounds how long a slow sender can hold the auth routers' buffer.
+    expect(web.transport.respondingTimeouts.readTimeout).toBe("60s");
+    expect(websecure.transport.respondingTimeouts.readTimeout).toBe("60s");
+    expect(config.providers.docker.exposedByDefault).toBe(false);
+    expect(config.providers.file.directory).toBe("/");
+
+    // Traefik refused all seven by default until v3.6.7; the installer keeps refusing them on both entry points.
+    for (const entryPoint of [web.http, websecure.http]) {
+      expect(entryPoint.encodedCharacters).toEqual({
+        allowEncodedSlash: false,
+        allowEncodedBackSlash: false,
+        allowEncodedNullCharacter: false,
+        allowEncodedSemicolon: false,
+        allowEncodedPercent: false,
+        allowEncodedQuestionMark: false,
+        allowEncodedHash: false,
+      });
+    }
+    expect(web.http.redirections?.entryPoint.to).toBe(hsts === "y" ? "websecure" : undefined);
+    expect(websecure.http.middlewares).toEqual(hsts === "y" ? ["hstsHeader"] : undefined);
+    expect(websecure.http.tls?.certResolver).toBe(https === "y" ? "default" : undefined);
+    expect(config.certificatesResolvers?.default.acme.email).toBe(
+      https === "y" ? "ops@example.com" : undefined
+    );
+  });
+
   test("adds HTTPS Traefik labels to the formbricks service only", () => {
     const composePath = writeDockerComposeTemplate();
 
@@ -1095,7 +2316,7 @@ describe("docker/formbricks.sh Traefik label injection", () => {
     expect(formbricksMigrateBlock).not.toContain("traefik.enable=true");
     expect(authzedBootstrapBlock).toContain("authzed-postgres-bootstrap.sh");
     expect(authzedBootstrapBlock).not.toContain("traefik.enable=true");
-    expect(spicedbBlock).toContain("authzed/spicedb:v1.52.0");
+    expect(spicedbBlock).toContain("authzed/spicedb:v1.56.2");
     expect(spicedbBlock).not.toContain("traefik.enable=true");
     expect(authzedOpsBlock).toContain('profiles: ["authzed-ops"]');
     expect(authzedOpsBlock).not.toContain("traefik.enable=true");
@@ -1113,6 +2334,26 @@ describe("docker/formbricks.sh Traefik label injection", () => {
     expect(formbricksBlock).toContain("traefik.http.routers.feedback-records-token.tls.certresolver=default");
     expect(formbricksBlock).toContain("traefik.http.middlewares.hstsHeader.headers.stsSeconds=31536000");
     expect(formbricksBlock).not.toContain("traefik.http.routers.formbricks_http.entrypoints=web");
+    expect(formbricksBlock).toContain(
+      "traefik.http.middlewares.auth-body-limit.buffering.maxRequestBodyBytes=1048576"
+    );
+    expect(formbricksBlock).toContain(
+      "traefik.http.middlewares.auth-body-limit.buffering.memRequestBodyBytes=1048576"
+    );
+    expect(formbricksBlock).toContain(
+      "traefik.http.routers.formbricks-auth.rule=Host(`example.com`) && PathPrefix(`/api/auth`)"
+    );
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth.priority=1000");
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth.entrypoints=websecure");
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth.tls.certresolver=default");
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth.service=formbricks");
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth.middlewares=auth-body-limit");
+    expect(formbricksBlock).not.toContain("formbricks-auth-http");
+
+    const compose = load(composeContents) as { services: { formbricks: { labels: string[] } } };
+    expect(compose.services.formbricks.labels).toContain(
+      "traefik.http.routers.formbricks-auth.rule=Host(`example.com`) && PathPrefix(`/api/auth`)"
+    );
   });
 
   test("omits ACME certresolver labels when HTTPS setup is disabled", () => {
@@ -1126,8 +2367,11 @@ describe("docker/formbricks.sh Traefik label injection", () => {
     expect(formbricksBlock).toContain("traefik.http.routers.formbricks.entrypoints=websecure");
     expect(formbricksBlock).toContain("traefik.http.routers.formbricks.tls=true");
     expect(formbricksBlock).toContain("traefik.http.routers.feedback-records-token.tls=true");
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth.tls=true");
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth.middlewares=auth-body-limit");
     expect(formbricksBlock).toContain("traefik.http.middlewares.hstsHeader.headers.stsSeconds=31536000");
     expect(formbricksBlock).not.toContain("tls.certresolver=default");
+    expect(formbricksBlock).not.toContain("formbricks-auth-http");
   });
 
   test("adds HTTP fallback labels when HSTS is disabled", () => {
@@ -1146,8 +2390,35 @@ describe("docker/formbricks.sh Traefik label injection", () => {
     expect(formbricksBlock).toContain(
       "traefik.http.routers.feedback-records-token-http.rule=Host(`example.com`) && Path(`/api/v3/feedbackRecords/token`)"
     );
+    expect(formbricksBlock).toContain(
+      "traefik.http.routers.formbricks-auth-http.rule=Host(`example.com`) && PathPrefix(`/api/auth`)"
+    );
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth-http.entrypoints=web");
+    expect(formbricksBlock).toContain(
+      "traefik.http.routers.formbricks-auth-http.middlewares=auth-body-limit"
+    );
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth-http.priority=1000");
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth-http.service=formbricks");
+    expect(formbricksBlock).not.toContain("formbricks-auth-http.tls");
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth.middlewares=auth-body-limit");
     expect(formbricksBlock).not.toContain("tls.certresolver=default");
     expect(formbricksBlock).not.toContain("traefik.http.middlewares.hstsHeader.headers.stsSeconds=31536000");
+  });
+
+  test("caps auth bodies on both entrypoints when HTTPS is on and HSTS is off", () => {
+    const composePath = writeDockerComposeTemplate();
+
+    addFormbricksTraefikLabels(composePath, "n", "y");
+
+    const formbricksBlock = getServiceBlock(readFileSync(composePath, "utf8"), "formbricks");
+
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth.tls.certresolver=default");
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth.middlewares=auth-body-limit");
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth-http.entrypoints=web");
+    expect(formbricksBlock).toContain(
+      "traefik.http.routers.formbricks-auth-http.middlewares=auth-body-limit"
+    );
+    expect(formbricksBlock).not.toContain("formbricks-auth-http.tls");
   });
 
   test("fails when the formbricks service insertion point is missing", () => {
@@ -1166,5 +2437,352 @@ describe("docker/formbricks.sh Traefik label injection", () => {
       addFormbricksTraefikLabels(composePath, "y", "y");
     }).toThrow();
     expect(existsSync(`${composePath}.tmp`)).toBe(false);
+  });
+});
+
+describe("docker/formbricks.sh IPv6 Compose network (ENG-3897)", () => {
+  const ipv6Block = "\nnetworks:\n  default:\n    enable_ipv6: true\n";
+
+  // Runs enable_compose_ipv6 with `sudo` replaced by `prelude`, so a test picks the real Docker Compose or a fake.
+  const enableComposeIpv6 = (
+    composePath: string,
+    mode: "install" | "update",
+    prelude = 'sudo() { "$@"; }'
+  ): ReturnType<typeof spawnSync> =>
+    spawnSync(
+      "bash",
+      [
+        "-c",
+        `source "$1"; set +e; ${prelude}\nenable_compose_ipv6 "$2" "$3"`,
+        "bash",
+        formbricksScriptPath,
+        composePath,
+        mode === "update" ? "validate" : "",
+      ],
+      { encoding: "utf8", env: getDockerComposeProcessEnv() }
+    );
+
+  const getNetworks = (composeContents: string): unknown =>
+    (load(composeContents) as { networks?: unknown }).networks;
+
+  test.each([
+    ["26.1.4", false],
+    ["27.0.0", true],
+    ["27.5.1", true],
+    ["29.9.0-rc.1", true],
+    ["", false],
+    ["unknown", false],
+  ])("docker_engine_supports_ipv6_networks(%s) is %s", (version, supported) => {
+    const result = spawnSync(
+      "bash",
+      [
+        "-c",
+        'source "$1"; set +e; docker_engine_supports_ipv6_networks "$2"',
+        "bash",
+        formbricksScriptPath,
+        version,
+      ],
+      { encoding: "utf8" }
+    );
+
+    expect(result.status === 0).toBe(supported);
+  });
+
+  test.each([
+    ["IPv6 on", true, "0", true],
+    ["IPv6 off by sysctl", true, "1", false],
+    ["IPv6 disabled at boot", false, "", false],
+  ])("host_has_ipv6 with %s is %s", (_name, hasInterfaces, disableIpv6, expected) => {
+    const procRoot = createTempDir();
+    mkdirSync(join(procRoot, "net"));
+    mkdirSync(join(procRoot, "sys/net/ipv6/conf/all"), { recursive: true });
+    if (hasInterfaces) writeFileSync(join(procRoot, "net/if_inet6"), "");
+    if (disableIpv6) writeFileSync(join(procRoot, "sys/net/ipv6/conf/all/disable_ipv6"), `${disableIpv6}\n`);
+
+    const result = spawnSync(
+      "bash",
+      ["-c", 'source "$1"; set +e; host_has_ipv6 "$2"', "bash", formbricksScriptPath, procRoot],
+      { encoding: "utf8" }
+    );
+
+    expect(result.status === 0).toBe(expected);
+  });
+
+  test("on install, adds an IPv6 default network and leaves the rest of the template alone", () => {
+    const composePath = writeDockerComposeTemplate();
+    const originalCompose = readFileSync(composePath, "utf8");
+
+    const result = enableComposeIpv6(composePath, "install");
+
+    expect(result.status).toBe(0);
+    expect(readFileSync(composePath, "utf8")).toBe(originalCompose + ipv6Block);
+    expect(existsSync(`${composePath}.before-ipv6-network`)).toBe(false);
+  });
+
+  dockerComposeTest(
+    "on update, Docker Compose renders the default network with IPv6 and a backup is kept",
+    () => {
+      const { composePath } = writeDockerComposeFixture("POSTGRES_PASSWORD=test-password\n");
+      const originalCompose = readFileSync(composePath, "utf8");
+      chmodSync(composePath, 0o600);
+
+      const result = enableComposeIpv6(composePath, "update");
+
+      expect(result.status).toBe(0);
+      expect(readFileSync(`${composePath}.before-ipv6-network`, "utf8")).toBe(originalCompose);
+      expect(statSync(composePath).mode & 0o777).toBe(0o600);
+      const rendered = JSON.parse(
+        runDockerCompose(["-f", composePath, "config", "--format", "json"], {
+          POSTGRES_PASSWORD: "test-password",
+          AUTHZED_TOKEN: "test-authzed-token",
+          AUTHZED_DATABASE_PASSWORD: "test-authzed-database-password",
+        })
+      ) as { networks: Record<string, { enable_ipv6?: boolean }> };
+      expect(rendered.networks.default.enable_ipv6).toBe(true);
+
+      expect(enableComposeIpv6(composePath, "update").status).toBe(3);
+    }
+  );
+
+  test("on update, restores the original when the result does not turn IPv6 on", () => {
+    const composePath = writeDockerComposeTemplate();
+    const originalCompose = readFileSync(composePath, "utf8");
+
+    const result = enableComposeIpv6(
+      composePath,
+      "update",
+      `sudo() { [[ "$*" == *"--format json" ]] && printf '{"networks":{"default":{"ipam":{}}}}'; return 0; }`
+    );
+
+    expect(result.status).toBe(1);
+    expect(result.stdout).toContain("would not turn on IPv6 for the default network");
+    expect(readFileSync(composePath, "utf8")).toBe(originalCompose);
+    expect(existsSync(`${composePath}.tmp`)).toBe(false);
+  });
+
+  test("adds default to an existing networks: block at its own indent", () => {
+    const tempDir = createTempDir();
+    const composePath = join(tempDir, "docker-compose.yml");
+    writeFileSync(
+      composePath,
+      `services:
+  formbricks:
+    image: ghcr.io/formbricks/formbricks:latest
+networks:
+    # Shared with the reverse proxy.
+    proxy:
+        external: true
+volumes:
+  postgres:
+`
+    );
+
+    expect(enableComposeIpv6(composePath, "install").status).toBe(0);
+
+    expect(getNetworks(readFileSync(composePath, "utf8"))).toEqual({
+      default: { enable_ipv6: true },
+      proxy: { external: true },
+    });
+  });
+
+  test.each([
+    ["a block default", "networks:\n  default:\n    name: my-network\n"],
+    ["a quoted default", 'networks:\n  "default":\n    driver: bridge\n'],
+    ["an inline default", "networks: {default: {name: my-network}}\n"],
+    [
+      "an inline default on a later line",
+      "networks: {\n  proxy: {external: true},\n  default: {name: my-network}\n}\n",
+    ],
+  ])("leaves %s the operator set untouched", (_name, networks) => {
+    const tempDir = createTempDir();
+    const composePath = join(tempDir, "docker-compose.yml");
+    const composeContents = `services:\n  formbricks:\n    image: example\n${networks}`;
+    writeFileSync(composePath, composeContents);
+
+    expect(enableComposeIpv6(composePath, "update").status).toBe(3);
+    expect(readFileSync(composePath, "utf8")).toBe(composeContents);
+  });
+
+  test("says IPv6 stays off when an inline networks: has no default", () => {
+    const tempDir = createTempDir();
+    const composePath = join(tempDir, "docker-compose.yml");
+    const composeContents =
+      "services:\n  formbricks:\n    image: example\nnetworks: {proxy: {external: true}}\n";
+    writeFileSync(composePath, composeContents);
+
+    const result = enableComposeIpv6(composePath, "update");
+
+    expect(result.status).toBe(1);
+    expect(result.stdout).toContain("writes networks: inline, so IPv6 cannot be turned on for you");
+    expect(readFileSync(composePath, "utf8")).toBe(composeContents);
+  });
+
+  test("leaves the file untouched when an override sets the default network", () => {
+    const composePath = writeDockerComposeTemplate();
+    const originalCompose = readFileSync(composePath, "utf8");
+    writeFileSync(
+      join(dirname(composePath), "docker-compose.override.yml"),
+      "networks:\n  default:\n    enable_ipv6: false\n"
+    );
+
+    expect(enableComposeIpv6(composePath, "update").status).toBe(3);
+    expect(readFileSync(composePath, "utf8")).toBe(originalCompose);
+  });
+
+  // update_formbricks with `sudo` faked and the host's IPv6 support decided by the test, not the machine running it.
+  const runUpdate = ({
+    hostHasIpv6 = true,
+    engineVersion = "29.0.0",
+    failValidation = false,
+    networkInUse = false,
+    postgresFailsOnce = false,
+    networkAfterFailedUp = false,
+  } = {}) => {
+    const tempDir = createTempDir();
+    const installationDir = join(tempDir, "formbricks");
+    const binDir = join(tempDir, "bin");
+    const commandLog = join(tempDir, "commands.log");
+    const composePath = join(installationDir, "docker-compose.yml");
+    const composeContents = `services:
+  authzed-ops:
+  spicedb:
+  hub-worker:
+  formbricks:
+    image: ghcr.io/formbricks/formbricks:latest
+    ports:
+      - "127.0.0.1:3000:3000"
+`;
+    mkdirSync(installationDir, { recursive: true });
+    mkdirSync(binDir, { recursive: true });
+    writeFileSync(composePath, composeContents);
+    writeFileSync(join(installationDir, ".env"), "FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true\n");
+    writeFileSync(
+      join(binDir, "sudo"),
+      `#!/bin/sh
+printf "%s\\n" "$*" >> "$COMMAND_LOG"
+case "$*" in
+  *"config --services") printf "authzed-ops\\nspicedb\\nhub-worker\\nformbricks\\n" ;;
+  *"docker version"*) printf "%s\\n" "$ENGINE_VERSION" ;;
+  *"config --format json") [ "$FAIL_VALIDATION" = "1" ] || printf '{"networks":{"default":{"name":"formbricks_default","ipam":{},"enable_ipv6":true}}}' ;;
+  *"up -d --wait postgres")
+    if [ "$POSTGRES_FAILS_ONCE" = "1" ] && [ ! -f "$STATE_DIR/postgres-failed" ]; then
+      touch "$STATE_DIR/postgres-failed"
+      exit 1
+    fi ;;
+  *"network inspect formbricks_default")
+    [ "$NETWORK_IN_USE" = "1" ] && exit 0
+    [ "$NETWORK_AFTER_FAILED_UP" = "1" ] && [ -f "$STATE_DIR/postgres-failed" ] && exit 0
+    exit 1 ;;
+esac
+exit 0
+`,
+      { mode: 0o700 }
+    );
+
+    const result = spawnSync(
+      "bash",
+      [
+        "-c",
+        `source "$1"; host_has_ipv6() { [[ "$HOST_HAS_IPV6" == "1" ]]; }; update_formbricks`,
+        "bash",
+        formbricksScriptPath,
+      ],
+      {
+        cwd: tempDir,
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          COMMAND_LOG: commandLog,
+          ENGINE_VERSION: engineVersion,
+          FAIL_VALIDATION: failValidation ? "1" : "0",
+          HOST_HAS_IPV6: hostHasIpv6 ? "1" : "0",
+          NETWORK_IN_USE: networkInUse ? "1" : "0",
+          POSTGRES_FAILS_ONCE: postgresFailsOnce ? "1" : "0",
+          NETWORK_AFTER_FAILED_UP: networkAfterFailedUp ? "1" : "0",
+          STATE_DIR: tempDir,
+          PATH: `${binDir}:${process.env.PATH ?? ""}`,
+        },
+      }
+    );
+
+    return { result, composePath, composeContents, commands: readFileSync(commandLog, "utf8") };
+  };
+
+  test("the updater turns IPv6 on after its last gate and before `down` recreates the network", () => {
+    const { result, composePath, composeContents, commands } = runUpdate();
+
+    expect(result.status).toBe(0);
+    expect(readFileSync(composePath, "utf8")).toBe(composeContents + ipv6Block);
+    const validation = commands.indexOf("docker compose config --format json\n");
+    expect(validation).toBeGreaterThan(commands.indexOf("upgrade check"));
+    expect(validation).toBeLessThan(commands.indexOf("docker compose down"));
+    expect(commands).toContain("docker compose up -d");
+  });
+
+  test("the updater puts the file back when `down` leaves the network attached to an outside container", () => {
+    const { result, composePath, composeContents, commands } = runUpdate({ networkInUse: true });
+
+    expect(result.status).toBe(0);
+    expect(readFileSync(composePath, "utf8")).toBe(composeContents);
+    expect(result.stdout).toContain("attached to the formbricks_default network, so it could not get IPv6");
+    const inspect = commands.indexOf("docker network inspect formbricks_default");
+    expect(inspect).toBeGreaterThan(commands.indexOf("docker compose down"));
+    expect(inspect).toBeLessThan(commands.indexOf("docker compose up -d"));
+    expect(commands).toContain("docker compose up -d\n");
+  });
+
+  test("the updater starts again without IPv6 when Docker cannot create the network", () => {
+    const { result, composePath, composeContents, commands } = runUpdate({ postgresFailsOnce: true });
+
+    expect(result.status).toBe(0);
+    expect(readFileSync(composePath, "utf8")).toBe(composeContents);
+    expect(result.stdout).toContain("Docker could not create the Compose network with IPv6");
+    expect(commands.split("docker compose up -d --wait postgres").length - 1).toBe(2);
+    expect(commands).toContain("docker compose up -d\n");
+  });
+
+  test("the updater stops on a failed start that left the network in place, keeping IPv6", () => {
+    const { result, composePath, composeContents, commands } = runUpdate({
+      postgresFailsOnce: true,
+      networkAfterFailedUp: true,
+    });
+
+    expect(result.status).not.toBe(0);
+    expect(readFileSync(composePath, "utf8")).toBe(composeContents + ipv6Block);
+    expect(commands.split("docker compose up -d --wait postgres").length - 1).toBe(1);
+    expect(commands).not.toContain("formbricks-migrate");
+  });
+
+  test("the updater only looks for a leftover network when it changed the file", () => {
+    const { commands } = runUpdate({ engineVersion: "26.1.4", networkInUse: true });
+
+    expect(commands).not.toContain("network inspect");
+  });
+
+  test("the updater restores the file and still updates when the result does not validate", () => {
+    const { result, composePath, composeContents, commands } = runUpdate({ failValidation: true });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Continuing the update with IPv6 left off on the Compose network");
+    expect(readFileSync(composePath, "utf8")).toBe(composeContents);
+    expect(commands).toContain("docker compose up -d");
+  });
+
+  test("the updater leaves the network alone on a host without IPv6", () => {
+    const { result, composePath, composeContents, commands } = runUpdate({ hostHasIpv6: false });
+
+    expect(result.status).toBe(0);
+    expect(readFileSync(composePath, "utf8")).toBe(composeContents);
+    expect(commands).not.toContain("config --format json\n");
+    expect(result.stdout).not.toContain("IPv6");
+  });
+
+  test.each(["26.1.4", ""])("the updater says why it left IPv6 off on Docker Engine %j", (engineVersion) => {
+    const { result, composePath, composeContents } = runUpdate({ engineVersion });
+
+    expect(result.status).toBe(0);
+    expect(readFileSync(composePath, "utf8")).toBe(composeContents);
+    expect(result.stdout).toContain("it needs Docker Engine 27.0 or later");
+    expect(result.stdout).toContain("one-click#ipv6-visitors");
   });
 });

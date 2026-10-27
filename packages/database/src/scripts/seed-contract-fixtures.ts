@@ -201,6 +201,46 @@ async function seedSurvey(
   await prisma.survey.upsert({ where: { id }, update: fields, create: { id, ...fields } });
 }
 
+/**
+ * Custom CSS on the read survey and the workspace (ENG-3641), so `GET /api/v3/surveys/{surveyId}` and
+ * `GET /api/v3/workspaces/{workspaceId}/custom-css` return a populated `customCss` (and `previous`) rather
+ * than `null`, and their schemas are validated against real values. Seeded under processor version 0 —
+ * older than any real processor — so the workspace read also exercises the reprocess path behind
+ * `status`. Synthetic CSS only; never a customer stylesheet.
+ */
+const CONTRACT_CUSTOM_CSS = {
+  light: {
+    source: '[data-fb-part="headline"] { font-weight: 600; }',
+    compiled: '@layer fb-survey { #fbjs [data-fb-part="headline"] { font-weight: 600 !important; } }',
+  },
+  dark: {
+    source: '#fbjs[data-appearance="dark"] { --acme-ink: #e6eef5; }',
+    compiled: '@layer fb-survey-dark { #fbjs[data-appearance="dark"] { --acme-ink: #e6eef5 !important; } }',
+  },
+  processorVersion: 0,
+};
+
+async function seedCustomCss(readSurveyId: string): Promise<void> {
+  await prisma.survey.update({
+    where: { id: readSurveyId },
+    data: { customCss: CONTRACT_CUSTOM_CSS, updatedAt: CONTRACT_FIXTURE_UPDATED_AT },
+  });
+  await prisma.workspace.update({
+    where: { id: SEED_IDS.WORKSPACE },
+    data: {
+      customCss: {
+        ...CONTRACT_CUSTOM_CSS,
+        light: {
+          source: CONTRACT_CUSTOM_CSS.light.source,
+          compiled: CONTRACT_CUSTOM_CSS.light.compiled.replace("fb-survey", "fb-workspace"),
+        },
+        dark: null,
+      },
+      customCssPrevious: { light: null, dark: CONTRACT_CUSTOM_CSS.dark, processorVersion: 0 },
+    },
+  });
+}
+
 async function seedWorkflow(
   id: string,
   name: string,
@@ -267,6 +307,7 @@ async function main(): Promise<void> {
   await seedSurvey(CONTRACT_IDS.SURVEY_READ, "Contract fixture — read", false);
   await seedSurveyLanguages(CONTRACT_IDS.SURVEY_READ, READ_SURVEY_LANGUAGES);
   await seedResponse(CONTRACT_IDS.RESPONSE_READ, CONTRACT_IDS.SURVEY_READ);
+  await seedCustomCss(CONTRACT_IDS.SURVEY_READ);
   await seedSurvey(CONTRACT_IDS.SURVEY_PATCH, "Contract fixture — patch", false);
   await seedSurvey(CONTRACT_IDS.SURVEY_DELETE, "Contract fixture — delete", false);
   await seedSurvey(CONTRACT_IDS.SURVEY_ARCHIVE, "Contract fixture — archive", false);

@@ -5,9 +5,9 @@ interface SignupRequestStore {
   /**
    * Set by `createUserAction` once its personal-email domain policy (Cloud gate + invite exemption)
    * has passed, immediately before it calls `auth.api.signUpEmail`. `user.create.before` reads it to
-   * know the credential sign-up already went through the action; its ABSENCE means a direct POST to
-   * Better Auth's native `/sign-up/email`, which bypasses the action — the hook re-enforces the block
-   * there so it can't be used to skip the gate.
+   * know the credential sign-up already went through the action; its ABSENCE means some other caller
+   * reached Better Auth's native `/sign-up/email`, so the hook re-enforces the block there. Since
+   * ENG-3988 that endpoint is closed over HTTP, so such a caller can only be in-process.
    */
   domainAllowed?: boolean;
   /**

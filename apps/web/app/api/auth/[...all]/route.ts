@@ -1,4 +1,5 @@
 import { auth } from "@/modules/auth/lib/auth";
+import { withAuthRequestBodyLimit } from "@/modules/auth/lib/auth-request-body-limit";
 import {
   recordSsoCallbackOutcome,
   recordSsoCallbackThrow,
@@ -52,7 +53,7 @@ const labelAuthPath = createAuthPathLabeller(Object.values(auth.api).map((endpoi
  * route at all (ENG-2259 / FORMBRICKS-183).
  *
  * NOTE (S2 / observability): the old route also emitted the failed-`signedIn` audit + Sentry capture
- * on thrown errors. The success audit is covered by `signInAuditDatabaseHook`; the failure audit by
+ * on thrown errors. The success audit is covered by `signInAuditPlugin`; the failure audit by
  * `auditFailedAuthAfter` in `hooks.after`, because a rejected sign-in is a handled `APIError`
  * *response* rather than a throw. `onAPIError.onError` is deliberately NOT configured: Better Auth
  * calls it and `return`s (`better-auth/dist/api/index.mjs:194-197`), skipping the logger path
@@ -73,11 +74,6 @@ const handler = async (request: Request): Promise<Response> => {
   // acceptable: a rejected registration writes no client row (the limit exists to cap client creation,
   // and this check actually strengthens that cap) and is not a callback. Re-limiting here would cost a
   // Redis round-trip to save one JSON parse, which is the wrong trade.
-  //
-  // That parse is of a body bounded only by `proxyClientMaxBodySize` (16mb, next.config.mjs) — but so
-  // was the read this replaced, and so is Better Auth's own, which also runs after the body is
-  // buffered. Bounding it belongs to the whole `/api/auth/*` surface rather than this one branch:
-  // ENG-3248.
   if (preparedRequest instanceof Response) return preparedRequest;
   const mappedRequest = preparedRequest;
   try {
@@ -107,4 +103,8 @@ const handler = async (request: Request): Promise<Response> => {
   }
 };
 
-export { handler as GET, handler as POST };
+// Bounded before anything above reads the body: the DCR parse, Better Auth's own reads, and every
+// other `/api/auth/*` route (the SAML bridge, SSO recovery) go through the same guard (ENG-3846).
+const limitedHandler = withAuthRequestBodyLimit(handler);
+
+export { limitedHandler as GET, limitedHandler as POST };

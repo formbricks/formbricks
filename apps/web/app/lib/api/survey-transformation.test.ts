@@ -7,6 +7,7 @@ import {
   transformBlocksToQuestions,
   transformQuestionsToBlocks,
   validateSurveyInput,
+  withoutInternalSurveyProjections,
 } from "./survey-transformation";
 
 describe("validateSurveyInput", () => {
@@ -1369,5 +1370,17 @@ describe("round-trip transformation", () => {
     if (action.objective === "jumpToQuestion" || action.objective === "requireAnswer") {
       expect(action.target).toBe("q2");
     }
+  });
+});
+
+describe("withoutInternalSurveyProjections", () => {
+  test("keeps stored custom CSS out of the legacy v1 contract (ENG-2949)", () => {
+    const survey = {
+      id: "s1",
+      name: "Survey",
+      customCss: { light: { source: "a{}", compiled: "x" }, dark: null, processorVersion: 1 },
+    };
+
+    expect(withoutInternalSurveyProjections(survey)).toEqual({ id: "s1", name: "Survey" });
   });
 });

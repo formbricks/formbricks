@@ -97,6 +97,13 @@ describe("isSurveyRuntimeLanguage", () => {
     expect(isSurveyRuntimeLanguage("pt-PT")).toBe(true);
     expect(isSurveyRuntimeLanguage("km-KH")).toBe(true);
     expect(isSurveyRuntimeLanguage("ne-NP")).toBe(true);
+    expect(isSurveyRuntimeLanguage("ms-MY")).toBe(true);
+    expect(isSurveyRuntimeLanguage("ms")).toBe(true);
+  });
+
+  test("Korean ships a bundle of its own, so a bare `ko` resolves to it (ENG-3882)", () => {
+    expect(resolveSurveyRuntimeBundle("ko")).toBe("ko-KR");
+    expect(resolveSurveyRuntimeBundle("ko-KR")).toBe("ko-KR");
   });
 
   test("is false for a language with no strings at all", () => {
@@ -181,7 +188,10 @@ describe("the European market matrix ships runtime strings end to end (ENG-3221)
   test("region variants with no bundle of their own borrow their language's", () => {
     expect(resolveSurveyRuntimeBundle("de-LU")).toBe("de-DE");
     expect(resolveSurveyRuntimeBundle("fr-LU")).toBe("fr-FR");
-    expect(resolveSurveyRuntimeBundle("it-CH")).toBe("it-IT");
-    expect(resolveSurveyRuntimeBundle("nl-BE")).toBe("nl-NL");
+  });
+
+  test("Swiss Italian and Belgian Dutch ship bundles of their own", () => {
+    expect(resolveSurveyRuntimeBundle("it-CH")).toBe("it-CH");
+    expect(resolveSurveyRuntimeBundle("nl-BE")).toBe("nl-BE");
   });
 });

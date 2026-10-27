@@ -1,0 +1,8 @@
+type: array
+description: >-
+  Processing warnings for this write: constructs the processor removed. Additive, returned beside
+  `data` (never inside it, so `data` can be sent back unchanged); present only when the write
+  processed custom CSS.
+maxItems: 50
+items:
+  $ref: ./CustomCssWarning.yml

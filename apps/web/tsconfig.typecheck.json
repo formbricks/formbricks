@@ -15,6 +15,7 @@
     "modules/**/*.tsx",
     "playwright/**/*.ts",
     "scripts/**/*.ts",
+    "scripts/**/*.mts",
     "../../packages/types/*.d.ts"
   ]
 }

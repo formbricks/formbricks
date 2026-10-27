@@ -1,11 +1,7 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
-import {
-  dropLegacySurveyColumns,
-  restoreLegacySurveyColumns,
-  setLegacySurveyColumns,
-} from "@/integration/legacy-survey-columns";
+import { restoreLegacySurveyColumns, setLegacySurveyColumns } from "@/integration/legacy-survey-columns";
 import { resetDb } from "@/integration/reset-db";
 // The data migration under test (auto-discovered by the migration runner at deploy).
 import { backfillRemainingEmbeddedDataRows } from "../../../packages/database/migration/20260928120000_eng_2404_backfill_remaining_embedded_data/migration";
@@ -59,10 +55,6 @@ const tier = { id: "clx000000000000000000002", name: "tier", type: "text", value
 
 beforeAll(async () => {
   await restoreLegacySurveyColumns();
-});
-
-afterAll(async () => {
-  await dropLegacySurveyColumns();
 });
 
 beforeEach(async () => {

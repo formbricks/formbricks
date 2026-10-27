@@ -1,7 +1,7 @@
 import { type TFunction } from "i18next";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import type { TSurveyMultipleChoiceElement, TSurveyRankingElement } from "@formbricks/types/surveys/elements";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { isI18nObject } from "@/lib/i18n/utils";
 import type { TranslatableString, TranslationProgress } from "./types";
@@ -115,6 +115,7 @@ export const extractTranslatableStrings = (survey: TSurvey, t: TFunction): Trans
       // Common fields
       pushIfI18n(result, element, "headline", base, did, t("common.headline"), eid);
       pushIfI18n(result, element, "subheader", base, did, t("common.subheader"), eid);
+      pushIfI18n(result, element, "imageAltText", base, did, t("workspace.surveys.edit.image_alt_text"), eid);
 
       // Type-specific fields
       switch (element.type) {
@@ -149,6 +150,19 @@ export const extractTranslatableStrings = (survey: TSurvey, t: TFunction): Trans
           );
           break;
         }
+        case TSurveyElementTypeEnum.PictureSelection:
+          element.choices.forEach((choice, ci) => {
+            pushIfI18n(
+              result,
+              choice,
+              "imageAltText",
+              `${base}.choices.${ci}`,
+              did,
+              t("workspace.surveys.edit.image_alt_text_choice_n", { n: ci + 1 }),
+              eid
+            );
+          });
+          break;
         case TSurveyElementTypeEnum.NPS:
         case TSurveyElementTypeEnum.Rating:
         case TSurveyElementTypeEnum.CSAT:
@@ -267,6 +281,7 @@ export const extractTranslatableStrings = (survey: TSurvey, t: TFunction): Trans
       const eid = ending.id;
       pushIfI18n(result, ending, "headline", base, did, t("common.headline"), eid);
       pushIfI18n(result, ending, "subheader", base, did, t("common.subheader"), eid);
+      pushIfI18n(result, ending, "imageAltText", base, did, t("workspace.surveys.edit.image_alt_text"), eid);
       pushIfI18n(result, ending, "buttonLabel", base, did, t("workspace.surveys.edit.button_label"), eid);
     }
   });
@@ -330,6 +345,50 @@ export const removeLanguageKeysFromSurvey = (survey: TSurvey, languageCode: stri
   processObject(clone);
   return clone;
 };
+
+/**
+ * Strips every translation from the survey's i18n strings, keeping only their "default" value —
+ * including keys of languages no longer on the survey. The `languages` list itself is left untouched;
+ * callers decide what it becomes.
+ */
+export const removeAllTranslations = (survey: TSurvey): TSurvey => {
+  const { languages, metadata, ...content } = survey;
+  const clone = structuredClone(content);
+  const metadataClone = structuredClone(metadata);
+
+  const stripTranslations = (value: unknown) => {
+    if (Array.isArray(value)) {
+      value.forEach(stripTranslations);
+    } else if (value && typeof value === "object") {
+      const record = value as Record<string, unknown>;
+      if (typeof record.default === "string") {
+        for (const key of Object.keys(record)) {
+          if (key !== "default" && typeof record[key] === "string") delete record[key];
+        }
+        return;
+      }
+      Object.values(record).forEach(stripTranslations);
+    }
+  };
+
+  stripTranslations(clone);
+  // metadata accepts arbitrary extra keys; only its declared i18n fields are translations.
+  if (metadataClone) {
+    stripTranslations(metadataClone.title);
+    stripTranslations(metadataClone.description);
+  }
+  return { ...clone, metadata: metadataClone, languages } as TSurvey;
+};
+
+/**
+ * Removes all translations and makes `language` the survey's only (and default) language. The
+ * promoted language's own code keys go too: the default is always keyed as "default", so a leftover
+ * code key next to it is the stale state that breaks the response API (ENG-2001).
+ */
+export const makeLanguageSoleDefault = (survey: TSurvey, language: TSurveyLanguage["language"]): TSurvey => ({
+  ...removeAllTranslations(survey),
+  languages: [{ language, default: true, enabled: true }],
+});
 
 type Traversable = Record<string, unknown> | unknown[];
 

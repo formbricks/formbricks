@@ -40,6 +40,9 @@ const mapLicenseFeaturesToEntitlements = (
   if (features.workflows) {
     entitlementKeys.push(CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.WORKFLOWS);
   }
+  if (features.dataRetention) {
+    entitlementKeys.push(CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.DATA_RETENTION);
+  }
 
   return entitlementKeys;
 };

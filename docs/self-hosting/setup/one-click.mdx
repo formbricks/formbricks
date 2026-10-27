@@ -4,9 +4,17 @@ description: "How to set up Formbricks instance with a one-click script"
 icon: "rocket"
 ---
 
-<Note>This only works with an Ubuntu machine, so ensure the underlying OS is verified beforehand!</Note>
+See [deployment components](/self-hosting/deployment-components) for the stack, managed alternatives and
+the release-specific image inventory.
 
-If you’re looking to quickly set up a production instance of Formbricks on an Ubuntu server, this guide is for you. Using a convenient shell script, you can install everything—including Docker, Postgres DB, SpiceDB, and an SSL certificate—in just a few steps. The script takes care of all the dependencies and configuration for your server, making the process smooth and simple.
+<Note>
+  The one-click installer supports Debian 12/13 and Ubuntu hosts. Fresh Debian 12 and 13 arm64 Docker-in-Docker
+  containers were verified through app startup and a clean apt update. For other distributions or derivatives,
+  use the [manual Docker setup](/self-hosting/setup/docker).
+</Note>
+
+Use this script to set up Formbricks on a Debian or Ubuntu server. It installs Docker when needed and configures
+Postgres, SpiceDB, Traefik, and an optional SSL certificate.
 
 <Note>
   This setup uses **Traefik** as a **reverse proxy**, essential for directing incoming traffic to the correct
@@ -40,11 +48,15 @@ For other operating systems or a more customized installation, please refer to t
 
 ### Requirements
 
-- An Ubuntu Virtual Machine with SSH access.
+- A Debian 12/13 or Ubuntu server with SSH access, `curl`, and a user with `sudo` privileges.
 
-- A custom domain with an **A record** pointing to your server.
+- A custom domain with an **A and/or AAAA record** pointing to your server. Every A and AAAA record on the domain
+  must point to this server: remove any that point elsewhere, such as an AAAA record left over from a previous
+  host or added by default by your DNS provider.
 
-- Ports **80** and **443** are open in your VM's Security Group, allowing Traefik to create an SSL certificate.
+- Ports **80** and **443** are open in your VM's Security Group and host firewall. Traefik serves HTTPS on port
+  443, which Let's Encrypt also uses to validate the SSL certificate, and plain HTTP on port 80 (redirected to
+  HTTPS by default). If your domain has an AAAA record, open both ports for IPv6 too.
 
 ### Deployment
 
@@ -73,253 +85,15 @@ curl -fsSL https://raw.githubusercontent.com/formbricks/formbricks/stable/docker
 
 ### Script Prompts
 
-During installation, the script will prompt you to provide some details:
+During installation, the script asks for:
 
-- **Overwriting Docker GPG Keys**:
-  If Docker GPG keys already exist, the script will ask whether you want to overwrite them.
+- Permission to remove conflicting legacy packages if Docker is absent. The default keeps them in place.
+- Your app domain and HTTPS choice. For HTTPS, confirm DNS and ports 80/443, then provide a certificate email and choose whether to enable HSTS.
+- Optional SMTP and file-upload configuration.
 
-```
-🚀 Executing default step of installing Formbricks
-🧱 Welcome to the Formbricks Setup Script
-
-🛸 Fasten your seatbelts! We're setting up your Formbricks environment on your Ubuntu 24.04 LTS server.
-
-🧹 Time to sweep away any old Docker installations.
-🔄 Updating your package list.
-📦 Installing the necessary dependencies.
-🔑 Adding Docker's official GPG key and setting up the stable repository.
-File '/etc/apt/keyrings/docker.gpg' exists. Overwrite? (y/N)
-```
-
-- **Domain Name**:
-  Enter the domain name where you’ll host Formbricks. The domain will be used to generate an SSL certificate. Do not include the protocol (http/https).
-
-```
-🚀 Executing default step of installing Formbricks
-🧱 Welcome to the Formbricks Setup Script
-
-🛸 Fasten your seatbelts! We're setting up your Formbricks environment on your Ubuntu 24.04 LTS server.
-
-🧹 Time to sweep away any old Docker installations.
-🔄 Updating your package list.
-📦 Installing the necessary dependencies.
-🔑 Adding Docker's official GPG key and setting up the stable repository.
-File '/etc/apt/keyrings/docker.gpg' exists. Overwrite? (y/N) y
-🔄 Updating your package list again.
-🐳 Installing Docker.
-🚀 Testing your Docker installation.
-🎉 Docker is installed!
-🐳 Adding your user to the Docker group to avoid using sudo with docker commands.
-🎉 Hooray! Docker is all set and ready to go. You're now ready to run your Formbricks instance!
-📁 Created Formbricks Quickstart directory at ./formbricks.
-🔗 Please enter your domain name for the SSL certificate (🚨 do NOT enter the protocol (http/https/etc)):
-```
-
-- **HTTPS Certificate Setup**:
-  The script will ask if you’d like to create an HTTPS certificate for your domain. Enter `Y` to proceed (highly recommended for secure access).
-
-```
-🚀 Executing default step of installing Formbricks
-🧱 Welcome to the Formbricks Setup Script
-
-🛸 Fasten your seatbelts! We're setting up your Formbricks environment on your Ubuntu 24.04 LTS server.
-
-🧹 Time to sweep away any old Docker installations.
-🔄 Updating your package list.
-📦 Installing the necessary dependencies.
-🔑 Adding Docker's official GPG key and setting up the stable repository.
-File '/etc/apt/keyrings/docker.gpg' exists. Overwrite? (y/N) y
-🔄 Updating your package list again.
-🐳 Installing Docker.
-🚀 Testing your Docker installation.
-🎉 Docker is installed!
-🐳 Adding your user to the Docker group to avoid using sudo with docker commands.
-🎉 Hooray! Docker is all set and ready to go. You're now ready to run your Formbricks instance!
-📁 Created Formbricks Quickstart directory at ./formbricks.
-🔗 Please enter your domain name for the SSL certificate (🚨 do NOT enter the protocol (http/https/etc)):
-my.hosted.url.com
-🔗 Do you want us to set up an HTTPS certificate for you? [Y/n]
-```
-
-- **DNS Setup Prompt**: Ensure that your domain's DNS is correctly configured and ports 80 and 443 are open. Confirm this by entering `Y`. This step is crucial for proper SSL certificate issuance and secure server access.
-
-```
-🚀 Executing default step of installing Formbricks
-🧱 Welcome to the Formbricks Setup Script
-
-🛸 Fasten your seatbelts! We're setting up your Formbricks environment on your Ubuntu 24.04 LTS server.
-
-🧹 Time to sweep away any old Docker installations.
-🔄 Updating your package list.
-📦 Installing the necessary dependencies.
-🔑 Adding Docker's official GPG key and setting up the stable repository.
-File '/etc/apt/keyrings/docker.gpg' exists. Overwrite? (y/N) y
-🔄 Updating your package list again.
-🐳 Installing Docker.
-🚀 Testing your Docker installation.
-🎉 Docker is installed!
-🐳 Adding your user to the Docker group to avoid using sudo with docker commands.
-🎉 Hooray! Docker is all set and ready to go. You're now ready to run your Formbricks instance!
-📁 Created Formbricks Quickstart directory at ./formbricks.
-🔗 Please enter your domain name for the SSL certificate (🚨 do NOT enter the protocol (http/https/etc)):
-my.hosted.url.com
-🔗 Do you want us to set up an HTTPS certificate for you? [Y/n]
-Y
-🔗 Please make sure that the domain points to the server's IP address and that ports 80 & 443 are open in your server's firewall. Is everything set up? [Y/n]
-```
-
-- **Email Address for SSL Certificate**:
-  Provide an email address to register the SSL certificate. Notifications regarding the certificate will be sent to this address.
-
-```
-🚀 Executing default step of installing Formbricks
-🧱 Welcome to the Formbricks Setup Script
-
-🛸 Fasten your seatbelts! We're setting up your Formbricks environment on your Ubuntu 24.04 LTS server.
-
-🧹 Time to sweep away any old Docker installations.
-🔄 Updating your package list.
-📦 Installing the necessary dependencies.
-🔑 Adding Docker's official GPG key and setting up the stable repository.
-File '/etc/apt/keyrings/docker.gpg' exists. Overwrite? (y/N) y
-🔄 Updating your package list again.
-🐳 Installing Docker.
-🚀 Testing your Docker installation.
-🎉 Docker is installed!
-🐳 Adding your user to the Docker group to avoid using sudo with docker commands.
-🎉 Hooray! Docker is all set and ready to go. You're now ready to run your Formbricks instance!
-📁 Created Formbricks Quickstart directory at ./formbricks.
-🔗 Please enter your domain name for the SSL certificate (🚨 do NOT enter the protocol (http/https/etc)):
-my.hosted.url.com
-🔗 Do you want us to set up an HTTPS certificate for you? [Y/n]
-Y
-🔗 Please make sure that the domain points to the server's IP address and that ports 80 & 443 are open in your server's firewall. Is everything set up? [Y/n]
-Y
-💡 Please enter your email address for the SSL certificate:
-```
-
-- **Enforce HTTPS with HSTS**:
-  Enabling HTTP Strict Transport Security (HSTS) ensures all communication with your server is encrypted. It’s a recommended best practice. Enter `Y` to enforce HTTPS.
-
-```
-🚀 Executing default step of installing Formbricks
-🧱 Welcome to the Formbricks Setup Script
-
-🛸 Fasten your seatbelts! We're setting up your Formbricks environment on your Ubuntu 24.04 LTS server.
-
-🧹 Time to sweep away any old Docker installations.
-🔄 Updating your package list.
-📦 Installing the necessary dependencies.
-🔑 Adding Docker's official GPG key and setting up the stable repository.
-File '/etc/apt/keyrings/docker.gpg' exists. Overwrite? (y/N) y
-🔄 Updating your package list again.
-🐳 Installing Docker.
-🚀 Testing your Docker installation.
-🎉 Docker is installed!
-🐳 Adding your user to the Docker group to avoid using sudo with docker commands.
-🎉 Hooray! Docker is all set and ready to go. You're now ready to run your Formbricks instance!
-📁 Created Formbricks Quickstart directory at ./formbricks.
-🔗 Please enter your domain name for the SSL certificate (🚨 do NOT enter the protocol (http/https/etc)):
-my.hosted.url.com
-🔗 Do you want us to set up an HTTPS certificate for you? [Y/n]
-Y
-🔗 Please make sure that the domain points to the server's IP address and that ports 80 & 443 are open in your server's firewall. Is everything set up? [Y/n]
-Y
-💡 Please enter your email address for the SSL certificate:
-docs@formbricks.com
-🔗 Do you want to enforce HTTPS (HSTS)? [Y/n]
-```
-
-- **Email Service Setup Prompt**: The script will ask if you want to set up the email service. Enter `Y` to proceed.(default is `N`). You can skip this step if you don't want to set up the email service. You will still be able to use Formbricks without setting up the email service.
-
-```
-🚀 Executing default step of installing Formbricks
-🧱 Welcome to the Formbricks Setup Script
-
-🛸 Fasten your seatbelts! We're setting up your Formbricks environment on your Ubuntu 24.04 LTS server.
-
-🧹 Time to sweep away any old Docker installations.
-🔄 Updating your package list.
-📦 Installing the necessary dependencies.
-🔑 Adding Docker's official GPG key and setting up the stable repository.
-File '/etc/apt/keyrings/docker.gpg' exists. Overwrite? (y/N) y
-🔄 Updating your package list again.
-🐳 Installing Docker.
-🚀 Testing your Docker installation.
-🎉 Docker is installed!
-🐳 Adding your user to the Docker group to avoid using sudo with docker commands.
-🎉 Hooray! Docker is all set and ready to go. You're now ready to run your Formbricks instance!
-📁 Created Formbricks Quickstart directory at ./formbricks.
-🔗 Please enter your domain name for the SSL certificate (🚨 do NOT enter the protocol (http/https/etc)):
-my.hosted.url.com
-🔗 Do you want us to set up an HTTPS certificate for you? [Y/n]
-Y
-🔗 Please make sure that the domain points to the server's IP address and that ports 80 & 443 are open in your server's firewall. Is everything set up? [Y/n]
-Y
-💡 Please enter your email address for the SSL certificate:
-docs@formbricks.com
-🔗 Do you want to enforce HTTPS (HSTS)? [Y/n]
-Y
-🚗 Configuring Traefik...
-💡 Created traefik.yaml and traefik-dynamic.yaml file.
-💡 Created acme.json file with correct permissions.
-📧 Do you want to set up the email service? You will need SMTP credentials for the same! [y/N]
-
-```
-
-**That's it**! After running the command and providing the required information, visit the domain name you entered, and you should see the Formbricks home wizard!
-
-```
-🚀 Executing default step of installing Formbricks
-🧱 Welcome to the Formbricks Setup Script
-
-🛸 Fasten your seatbelts! We're setting up your Formbricks environment on your Ubuntu 24.04 LTS server.
-
-🧹 Time to sweep away any old Docker installations.
-🔄 Updating your package list.
-📦 Installing the necessary dependencies.
-🔑 Adding Docker's official GPG key and setting up the stable repository.
-File '/etc/apt/keyrings/docker.gpg' exists. Overwrite? (y/N) y
-🔄 Updating your package list again.
-🐳 Installing Docker.
-🚀 Testing your Docker installation.
-🎉 Docker is installed!
-🐳 Adding your user to the Docker group to avoid using sudo with docker commands.
-🎉 Hooray! Docker is all set and ready to go. You're now ready to run your Formbricks instance!
-📁 Created Formbricks Quickstart directory at ./formbricks.
-🔗 Please enter your domain name for the SSL certificate (🚨 do NOT enter the protocol (http/https/etc)):
-my.hosted.url.com
-🔗 Do you want us to set up an HTTPS certificate for you? [Y/n]
-Y
-🔗 Please make sure that the domain points to the server's IP address and that ports 80 & 443 are open in your server's firewall. Is everything set up? [Y/n]
-Y
-💡 Please enter your email address for the SSL certificate:
-docs@formbricks.com
-🔗 Do you want to enforce HTTPS (HSTS)? [Y/n]
-Y
-🚗 Configuring Traefik...
-💡 Created traefik.yaml and traefik-dynamic.yaml file.
-💡 Created acme.json file with correct permissions.
-📧 Do you want to set up the email service? You will need SMTP credentials for the same! [y/N] N
-📥 Downloading docker-compose.yml from Formbricks GitHub repository...
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-100  6632  100  6632    0     0  24280      0 --:--:-- --:--:-- --:--:-- 24382
-🚙 Updating docker-compose.yml with your custom inputs...
-🚗 BETTER_AUTH_SECRET updated successfully!
-🚗 ENCRYPTION_KEY updated successfully!
-🚗 CRON_SECRET updated successfully!
-
-[+] Running 4/4
- ✔ Network formbricks_default         Created                                                                                                                                                    0.2s
- ✔ Container formbricks-postgres-1    Started                                                                                                                                                    1.0s
- ✔ Container formbricks-formbricks-1  Started                                                                                                                                                    1.6s
- ✔ Container traefik                  Started                                                                                                                                                    2.8s
-🔗 To edit more variables and deeper config, go to the formbricks/docker-compose.yml, edit the file, and restart the container!
-🚨 Make sure you have set up the DNS records as well as inbound rules for the domain name and IP address of this instance.
-
-🎉 All done! Please setup your Formbricks instance by visiting your domain at https://my.hosted.url.com. You can check the status of Formbricks & Traefik with 'cd formbricks && sudo docker compose ps.'
-```
+If Docker is already installed, the script reuses it. Repository setup failures show the apt error and clean up the
+new Docker source. On Debian hosts affected by the old Ubuntu repository entry, the script disables that entry
+before updating apt and prints the path to its backup.
 
 ## Update
 
@@ -334,31 +108,52 @@ chmod +x formbricks.sh
 ./formbricks.sh update
 ```
 
-The script first validates the resolved Compose project and requires the baseline `hub-worker`, then pulls
-images and runs the read-only AuthZed upgrade check. A failed preflight leaves the existing application running.
+The script first validates the resolved Compose project and warns — without stopping — when the baseline
+`hub-worker` is missing, then pulls images and runs the read-only AuthZed upgrade check. A failed preflight leaves
+the existing application running.
 Otherwise it stops the stack, waits for PostgreSQL, completes application migrations, and only then starts the
 new stack. A failed migration leaves the stack stopped for recovery; preparation is never run against a live
 installation by the updater.
+
+Once those checks pass, the update also publishes the Formbricks container's port `3000` on `127.0.0.1` only, if
+your `docker-compose.yml` or your Compose override file (such as `docker-compose.override.yml`) still publishes it on
+every interface (`- 3000:3000`). Traefik reaches Formbricks over the Compose network and keeps serving it on ports
+`80` and `443`, so outside traffic always passes through Traefik. Each file it changes is kept as
+`<file>.before-loopback-port`. Before stopping anything, it renders the Compose files exactly as Docker Compose will
+load them and checks that they publish port `3000` once, on `127.0.0.1`; if not, it restores the files it changed and
+continues the update with the port as it was. A mapping with an address you chose, such as `- 0.0.0.0:3000:3000`, is
+left as it is, and so is everything when `.env` sets `COMPOSE_FILE`. On Docker Engine before 28.0, and on 28.2.0 to
+28.3.2, other machines on your local network can still reach a port published on `127.0.0.1`, so the installer and
+the update warn you to upgrade Docker.
 
 Starting with v5.4, the updater also recognizes the old amd64-only bundled Valkey digest. It backs up your
 Compose file, replaces only that exact image reference with the native amd64/arm64 digest, and validates the
 result before pulling. An already-updated or custom Valkey image is left unchanged. The named `redis` volume
 and its AOF data are preserved.
 
+While the stack is stopped, the updater also refreshes the bundled Cube model (`cube/cube.js` and
+`cube/schema/FeedbackRecords.js`), so analytics charts can use members a release adds. It downloads the files
+of the release your Formbricks image runs: the `stable` branch for `latest`, or the tag the image is pinned to.
+It keeps the previous files in `cube/previous/`. The two files change together: if either cannot be
+downloaded, backed up or replaced, both stay as they were, the update finishes, and the updater prints the
+command to retry, `./formbricks.sh refresh-cube`. An image pinned to anything else, such as a digest, leaves
+both files unchanged.
+
 Existing one-click installations keep the database credentials in their local `docker-compose.yml` or `.env`.
 The update command does not regenerate or rotate them.
 
 <Warning>
-  Apart from the exact v5.4 Valkey pin migration described above, `./formbricks.sh update` does **not** rewrite
-  your existing `formbricks/docker-compose.yml`. For a major migration such as Formbricks 4.x to 5.0, follow
+  Apart from the exact v5.4 Valkey pin migration, the port `3000` narrowing described above, and the IPv6
+  network setting described in [IPv6 visitors](#ipv6-visitors), `./formbricks.sh update` does **not** rewrite your existing `formbricks/docker-compose.yml`. For a major migration such as Formbricks 4.x to 5.0, follow
   the [migration guide](/self-hosting/advanced/migration#v5) first, merge the current v5 Compose changes into
   your existing deployment, confirm `HUB_API_KEY` is set, and only then run the update command. If your older
   one-click install also uses bundled MinIO for file uploads, review that storage path separately before the
   first v5 restart; newer self-hosting updates move the bundled object-storage path to RustFS, while external
-  S3-compatible storage keeps the same `S3_*` app contract. The updater refuses to continue until the Compose
-  project includes the release-matched `hub-worker`; follow the
-  [Hub worker migration](/self-hosting/advanced/migration#hub-worker-required-for-docker) if that preflight
-  fails. The v6 updater also requires the release-matched AuthZed services and requires `.env` to contain
+  S3-compatible storage keeps the same `S3_*` app contract. The updater warns and continues when the Compose
+  project is missing the release-matched `hub-worker`; adding it is recommended, and the next major release will
+  require it — see the
+  [Hub worker migration](/self-hosting/advanced/migration#hub-worker-for-docker). The v6 updater also requires the
+  release-matched AuthZed services and requires `.env` to contain
   `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` after a clean preparation.
 
   The same applies to pinned third-party images. Because the update command only re-pulls what your Compose
@@ -371,7 +166,8 @@ The update command does not regenerate or rotate them.
 
 ### Add SpiceDB to an Existing One-Click Installation
 
-The update command intentionally preserves your customized Compose file, so it cannot add SpiceDB by itself.
+Beyond the narrow edits listed in the warning above, the update command preserves your customized Compose file, so
+it cannot add SpiceDB by itself.
 Before upgrading to a release that uses AuthZed:
 
 1. Follow the [maintenance upgrade guide](/self-hosting/advanced/v6-maintenance-upgrade): stop writers and
@@ -405,6 +201,109 @@ stores both Formbricks and SpiceDB data.
 
 For upgrades, restoration, schema changes, and relationship repair, follow the canonical
 [AuthZed Operations guide](/self-hosting/configuration/authzed-operations).
+
+### Limit request bodies on authentication routes
+
+New installations cap request bodies on `/api/auth/*` at 1 MiB in Traefik. An oversized upload to a sign-in or
+OAuth endpoint is refused by Traefik, and a slow one is read in full by Traefik first, so it does not tie up
+Formbricks while it arrives. No legitimate request to these routes comes close to that size. The cap applies to
+requests that go through Traefik, which is every outside request once port `3000` is published on `127.0.0.1` only
+(see [Update](#update)). The update command does not add the cap to an existing installation, so add it yourself
+if you want it.
+
+<Warning>
+  These labels need Traefik v3.6.15 or later. Before that version, the buffering middleware turns the empty
+  redirects that sign-in and SSO callbacks answer with into errors (a `500` or a timeout), so nobody can sign in;
+  Traefik v2.7 also lets paths such as `/x/../api/auth/...` skip the cap. Check the `image: traefik:` line in
+  `formbricks/docker-compose.yml` and upgrade Traefik first (new installations use v3.6.25). From Traefik v2,
+  follow the [v2 to v3 migration guide](https://doc.traefik.io/traefik/migration/v2-to-v3/).
+</Warning>
+
+Since v3.6.7, Traefik accepts encoded characters such as `%2F` in request paths, which would let a request reach
+`/api/auth/*` without passing through these routers. In `formbricks/traefik.yaml`, add this block under `http:` of
+both the `web` and the `websecure` entry point (create `http:` under `web` if it has none). New installations
+already have it.
+
+```yaml
+encodedCharacters:
+  allowEncodedSlash: false
+  allowEncodedBackSlash: false
+  allowEncodedNullCharacter: false
+  allowEncodedSemicolon: false
+  allowEncodedPercent: false
+  allowEncodedQuestionMark: false
+  allowEncodedHash: false
+```
+
+In `formbricks/docker-compose.yml`, add these lines to the `labels` of the `formbricks` service, replacing
+`your-domain.com` with your domain:
+
+```yaml
+- "traefik.http.middlewares.auth-body-limit.buffering.maxRequestBodyBytes=1048576"
+- "traefik.http.middlewares.auth-body-limit.buffering.memRequestBodyBytes=1048576"
+- "traefik.http.routers.formbricks-auth.rule=Host(`your-domain.com`) && PathPrefix(`/api/auth`)"
+- "traefik.http.routers.formbricks-auth.entrypoints=websecure"
+- "traefik.http.routers.formbricks-auth.tls=true"
+- "traefik.http.routers.formbricks-auth.service=formbricks"
+- "traefik.http.routers.formbricks-auth.priority=1000"
+- "traefik.http.routers.formbricks-auth.middlewares=auth-body-limit"
+```
+
+Copy the `tls.certresolver` line from your existing `formbricks` router as well, with the router name changed
+to `formbricks-auth`. If your installation also has a `formbricks_http` router (HSTS disabled), add these lines
+too, or plain-HTTP requests to `/api/auth/*` stay uncapped:
+
+```yaml
+- "traefik.http.routers.formbricks-auth-http.rule=Host(`your-domain.com`) && PathPrefix(`/api/auth`)"
+- "traefik.http.routers.formbricks-auth-http.entrypoints=web"
+- "traefik.http.routers.formbricks-auth-http.service=formbricks"
+- "traefik.http.routers.formbricks-auth-http.priority=1000"
+- "traefik.http.routers.formbricks-auth-http.middlewares=auth-body-limit"
+```
+
+Then apply the changes from the `formbricks` directory. Traefik only reads `traefik.yaml` when it starts, hence the
+restart:
+
+```bash
+docker compose up -d formbricks traefik
+docker compose restart traefik
+```
+
+A request to `/api/auth/*` with a body over 1 MiB now gets `413 Request Entity Too Large` from Traefik.
+
+### IPv6 visitors
+
+If your domain has an AAAA record, visitors who connect over IPv6 keep their own address only when the Compose
+network has IPv6. Without it, Docker hands their connections to Traefik from its bridge gateway (such as
+`172.18.0.1`), so Formbricks sees every IPv6 visitor as that one address. They then share one rate limit, including
+the sign-in limit of 5 attempts per minute, and logs and response metadata record the gateway instead of the
+visitor.
+
+New installations and `./formbricks.sh update` add this to `formbricks/docker-compose.yml` when the server has
+IPv6 and runs Docker Engine 27.0 or later:
+
+```yaml
+networks:
+  default:
+    enable_ipv6: true
+```
+
+The update keeps the previous file as `docker-compose.yml.before-ipv6-network` and recreates the network when it
+restarts the stack. With an older Docker Engine, the script leaves the network as it is and says so: before 27.0,
+Docker cannot create the network without an IPv6 subnet you choose. Upgrade Docker Engine, then run the update
+again. If you have set `networks.default` yourself, the script leaves it alone, so add `enable_ipv6: true` to it
+by hand.
+
+To keep IPv6 off, set `enable_ipv6: false` under `networks.default` in `formbricks/docker-compose.yml`; a later update
+leaves that setting alone. If a container that is not part of Formbricks is attached to the network, the update
+cannot recreate it: it puts the previous file back, says so, and finishes the update without IPv6. Detach that
+container and run the update again.
+
+<Note>
+  This relies on Docker routing IPv6 with `ip6tables`, which is on by default from Docker Engine 27.0. If your
+  daemon runs with `"ip6tables": false` (or `--ip6tables=false`), IPv6 visitors still share one address, the
+  network's IPv6 gateway, even after this change.
+</Note>
 
 ## Stop
 
@@ -465,13 +364,18 @@ If you encounter any issues, you can check the logs of the containers with:
 
 If you encounter any issues, consider the following steps:
 
-- **Inbound Rules**: Make sure you have added inbound rules for Port 80 and 443 in your VM's Security Group.
+- **Inbound Rules**: Make sure you have added inbound rules for ports 80 and 443 in your VM's Security Group and
+  host firewall: for IPv4 if your domain has an A record, and for IPv6 if it has an AAAA record. Some cloud
+  firewalls, such as AWS Security Groups, need a separate IPv6 rule (source `::/0`).
 
-- **A Record**: Verify that you have set up an A record for your domain, pointing to your VM's IP address.
+- **A/AAAA Records**: Verify that your domain's records point to this VM: A records to its IPv4 address, AAAA
+  records to its IPv6 address. Let's Encrypt connects over IPv6 first when an AAAA record exists, so an AAAA
+  record pointing to another server can make certificate issuance fail even when the A record is correct. If
+  your domain has an AAAA record, ports 80 and 443 must also be open for IPv6; with only an AAAA record, there
+  is no IPv4 to fall back to.
 
 - **Check Docker Instances**: Run `docker ps` to check the status of the Docker instances.
 
 - **Check Formbricks Logs**: Run `cd formbricks && docker compose logs` to check the logs of the Formbricks stack.
 
-If you have any questions or require help, feel free to reach out to us on [**GitHub Discussions**](https://github.com/formbricks/formbricks/discussions). 😃[
-](https://formbricks.com/docs/developer-docs/rest-api)
+If you have any questions or require help, feel free to reach out to us on [**GitHub Discussions**](https://github.com/formbricks/formbricks/discussions). 😃

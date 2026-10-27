@@ -2,6 +2,7 @@ import { type ButtonHTMLAttributes } from "preact";
 import { useRef } from "preact/compat";
 import { useCallback, useEffect, useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
+import { FB_PART } from "@formbricks/survey-ui/parts";
 import { Button } from "./button";
 
 interface SubmitButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -17,7 +18,9 @@ export function SubmitButton({
   focus = false,
   onClick,
   disabled,
-  type,
+  // An inline survey can sit inside the host page's own <form>. A default `submit` button there would
+  // submit that form on click, and would become its Enter-to-submit default button.
+  type = "button",
   ...props
 }: Readonly<SubmitButtonProps>) {
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -96,6 +99,7 @@ export function SubmitButton({
       {...props}
       dir="auto"
       variant="primary"
+      data-fb-part={FB_PART.buttonPrimary}
       ref={buttonRef}
       type={type}
       tabIndex={tabIndex}

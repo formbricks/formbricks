@@ -96,6 +96,7 @@ export const FollowUpModal = ({
   const { t } = useTranslation();
   const ELEMENTS_ICON_MAP = getElementIconMap(t);
   const containerRef = useRef<HTMLDivElement>(null);
+  const wasOpen = useRef(false);
   const [firstRender, setFirstRender] = useState(true);
 
   const emailSendToOptions: EmailSendToOption[] = useMemo(
@@ -285,7 +286,7 @@ export const FollowUpModal = ({
   }, [open, firstRender]);
 
   useEffect(() => {
-    if (open && defaultValues) {
+    if (open && !wasOpen.current && defaultValues) {
       // Same builder as the initial `defaultValues` above: two hand-maintained copies of this object
       // is what shipped #7218, and this one had already drifted — its `subject` fallback was a
       // hardcoded English string, so a non-English author editing a follow-up with no stored subject
@@ -299,6 +300,9 @@ export const FollowUpModal = ({
         })
       );
     }
+    // Parent renders recreate defaultValues and recipient options. Only initialize on opening;
+    // resetting an already-open form would silently replace the user's unsaved edits.
+    wasOpen.current = open;
   }, [open, defaultValues, emailSendToOptions, form, userEmail, locale, t]);
 
   const handleModalClose = (open: boolean) => {

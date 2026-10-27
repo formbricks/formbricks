@@ -39,6 +39,16 @@ export const createCacheKey = {
     fetch_lock: (organizationId: string): CacheKey => makeCacheKey("license", organizationId, "fetch_lock"),
   },
 
+  // Custom CSS (ENG-2949, ENG-3552)
+  customCss: {
+    /**
+     * Output of reprocessing stored source under the current processor. Keyed by the processor version and
+     * a hash of the source, so a processor or policy change can never be answered from an older entry.
+     */
+    reprocessed: (scope: "workspace" | "survey", processorVersion: number, sourceHash: string): CacheKey =>
+      makeCacheKey("custom-css", scope, `v${String(processorVersion)}`, sourceHash),
+  },
+
   // Response-related keys
   response: {
     countBySurveyId: (surveyId: string): CacheKey => makeCacheKey("response", surveyId, "count"),

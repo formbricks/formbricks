@@ -173,6 +173,8 @@ const FILTER_KEY_KIND = {
   until: "scalar",
   created_since: "scalar",
   created_until: "scalar",
+  updated_since: "scalar",
+  updated_until: "scalar",
   value_date_min: "scalar",
   value_date_max: "scalar",
   value_number_min: "scalar",

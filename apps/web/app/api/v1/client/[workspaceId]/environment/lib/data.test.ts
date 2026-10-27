@@ -6,6 +6,7 @@ import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { PUBLIC_API_SURVEY_NAME_PLACEHOLDER } from "@formbricks/types/js-constants";
 import { selectPublicSurveyEmbeddedDataLinks } from "@/lib/embedded-data/survey-fields";
 import { transformPrismaSurvey } from "@/modules/survey/lib/utils";
+import { resolveRespondentCustomCss } from "@/modules/survey/link/lib/respondent-custom-css";
 import { getWorkspaceStateData } from "./data";
 
 vi.mock("server-only", () => ({}));
@@ -38,6 +39,11 @@ vi.mock("@/modules/storage/utils", () => ({
 
 vi.mock("@/modules/survey/lib/utils", () => ({
   transformPrismaSurvey: vi.fn((survey) => survey),
+}));
+
+// No custom CSS unless a test says otherwise (ENG-3552).
+vi.mock("@/modules/survey/link/lib/respondent-custom-css", () => ({
+  resolveRespondentCustomCss: vi.fn(async () => ({ surveys: new Map() })),
 }));
 
 const workspaceId = "cjld2cjxh0000qzrmn831i7rn";
@@ -689,5 +695,76 @@ describe("custom overlay appearance on the wire (ENG-3313)", () => {
     expect(byId["custom-survey"].overlayAppearance).toEqual({ color: null, opacity: 25 });
     // Overriding the overlay with a preset drops the workspace's custom colour along with it.
     expect(byId["preset-survey"]).not.toHaveProperty("overlayAppearance");
+  });
+});
+
+/**
+ * ENG-3552: respondents get compiled custom CSS only — the workspace's once, in `workspaceSettings`,
+ * each survey's in that survey — and nothing when there is none to deliver. The stored values carry the
+ * editable source, so they must never reach the payload, whatever delivery decides.
+ */
+describe("custom CSS on the wire (ENG-3552)", () => {
+  const storedWorkspaceCss = {
+    light: { source: "/* workspace source */ .a { color: red }", compiled: "@layer fb-workspace {}" },
+    dark: null,
+    processorVersion: 1,
+  };
+  const storedSurveyCss = {
+    light: null,
+    dark: { source: "/* survey source */ .b { color: blue }", compiled: "@layer fb-survey-dark {}" },
+    processorVersion: 1,
+  };
+  const workspaceWithCss = {
+    ...mockWorkspaceData,
+    organizationId: "org-1",
+    customCss: storedWorkspaceCss,
+    surveys: [
+      { ...mockWorkspaceData.surveys[0], id: "styled", customCss: storedSurveyCss },
+      { ...mockWorkspaceData.surveys[0], id: "plain", customCss: null },
+    ],
+  };
+
+  test("sends the workspace CSS once in workspaceSettings and each survey's in that survey", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue(workspaceWithCss as never);
+    vi.mocked(resolveRespondentCustomCss).mockResolvedValueOnce({
+      workspace: { light: "@layer fb-workspace {}" },
+      surveys: new Map([["styled", { dark: "@layer fb-survey-dark {}" }]]),
+    });
+
+    const result = await getWorkspaceStateData(workspaceId);
+    const byId = Object.fromEntries(result.surveys.map((survey) => [survey.id, survey]));
+
+    // Resolved from the stored values, with what decides whether each survey's own CSS applies.
+    expect(resolveRespondentCustomCss).toHaveBeenCalledWith({
+      workspaceCustomCss: storedWorkspaceCss,
+      allowStyleOverwrite: false,
+      surveys: [
+        { id: "styled", customCss: storedSurveyCss, styling: mockWorkspaceData.surveys[0].styling },
+        { id: "plain", customCss: null, styling: mockWorkspaceData.surveys[0].styling },
+      ],
+    });
+    expect(result.workspace.workspaceSettings.customCss).toEqual({ light: "@layer fb-workspace {}" });
+    expect(byId.styled.customCss).toEqual({ dark: "@layer fb-survey-dark {}" });
+    expect(byId.plain).not.toHaveProperty("customCss");
+    expect(JSON.stringify(result)).not.toMatch(/source|processorVersion/);
+    expect(prisma.workspace.findUnique).toHaveBeenCalledWith({
+      where: { id: workspaceId },
+      select: expect.objectContaining({
+        organizationId: true,
+        customCss: true,
+        surveys: expect.objectContaining({ select: expect.objectContaining({ customCss: true }) }),
+      }),
+    });
+  });
+
+  test("omits every customCss key when nothing is delivered (no CSS, withheld, or overrides off)", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue(workspaceWithCss as never);
+    vi.mocked(resolveRespondentCustomCss).mockResolvedValueOnce({ surveys: new Map() });
+
+    const result = await getWorkspaceStateData(workspaceId);
+
+    expect(result.workspace.workspaceSettings).not.toHaveProperty("customCss");
+    for (const survey of result.surveys) expect(survey).not.toHaveProperty("customCss");
+    expect(JSON.stringify(result)).not.toMatch(/source|processorVersion/);
   });
 });

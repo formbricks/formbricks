@@ -19,6 +19,9 @@
 !.nvmrc
 !prisma.config.mjs
 !authzed/schema.zed
+!authzed/upgrade/schema-6.0.zed
+!authzed/upgrade/source-images.json
+!authzed/upgrade/source-migrations.json
 
 # Workspaces
 !apps
@@ -66,3 +69,6 @@ packages/database/schema-test-boolean
 apps/storybook/**
 !apps/storybook/package.json
 apps/web/playwright
+
+# Local output of the post-deployment check
+apps/deployment-check/report

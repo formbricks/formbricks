@@ -1,3 +1,4 @@
+import { createInMemoryResponseFindMany } from "./__mocks__/response-find-many.mock";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
@@ -619,5 +620,26 @@ describe("getResponseDownloadFile", () => {
       false,
       "UTC"
     );
+  });
+
+  test("exports every response once across batches when ids differ from createdAt order", async () => {
+    // 3,100 responses, so the export needs two 3,000-row batches. Ids follow insertion order but
+    // createdAt does not, as with imported responses.
+    const start = Date.UTC(2026, 0, 1);
+    const rows = Array.from({ length: 3100 }, (_, i) => ({
+      id: `response-${String(i).padStart(4, "0")}`,
+      createdAt: new Date(start + ((i * 7919) % 3100) * 1000),
+      contact: null,
+      tags: [],
+      quotaLinks: [],
+    }));
+    vi.mocked(prisma.response.findMany).mockImplementation(createInMemoryResponseFindMany(rows) as never);
+
+    await getResponseDownloadFile("survey-123", "csv");
+
+    const exportedIds = vi.mocked(getResponsesJson).mock.calls[0][1].map((response) => response.id);
+    expect(prisma.response.findMany).toHaveBeenCalledTimes(2);
+    expect(exportedIds).toHaveLength(rows.length);
+    expect(new Set(exportedIds).size).toBe(rows.length);
   });
 });

@@ -193,8 +193,9 @@ const toLegacyVariable = (field: TDesiredEmbeddedField): TSurveyVariable =>
  * Derives the legacy `variables` / `hiddenFields` shape out of a survey's fields — the inverse of
  * {@link toDesiredEmbeddedFields}.
  *
- * Nothing stores the result any more (ENG-2404). It is the read-only projection deployed SDK bundles
- * and v1 / v3 API consumers still receive (ENG-1838), derived from the rows at every read, and what
+ * During the 6.1 compatibility period, writes also store this projection in the retained legacy
+ * columns for 6.0 readers. SDK bundles and v1 / v3 API consumers receive the same shape, derived
+ * from authoritative rows at every read. It is also what
  * the `ZSurvey` refinement resolves logic operands against for a payload that declares its fields as
  * `embeddedFields`. Both sides deriving it with this one function is what keeps them agreeing.
  *

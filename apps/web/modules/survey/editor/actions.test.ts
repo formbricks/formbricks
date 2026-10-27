@@ -137,6 +137,32 @@ describe.each([
       type: "workspace",
       id: "ws_1",
     });
-    expect(write).toHaveBeenCalledWith(expect.objectContaining({ customHeadScripts: script }));
+    expect(write).toHaveBeenCalledWith(
+      expect.objectContaining({ customHeadScripts: script }),
+      expect.anything()
+    );
+  });
+});
+
+// The editor's save, publish and autosave all reach the survey write through these two actions, so any
+// custom CSS the write processes has to be charged to the acting user — the budget CSS validation spends.
+describe.each([
+  ["updateSurveyAction", updateSurveyAction, updateSurvey],
+  ["updateSurveyDraftAction", updateSurveyDraftAction, updateSurveyDraft],
+] as const)("%s custom CSS budget", (_name, action, write) => {
+  beforeEach(() => {
+    vi.mocked(can).mockResolvedValue(true);
+    vi.mocked(getOrganizationIdFromSurveyId).mockResolvedValue("org_1");
+    vi.mocked(getWorkspaceIdFromSurveyId).mockResolvedValue("ws_1");
+    vi.mocked(getSurvey).mockResolvedValue(storedSurvey);
+    vi.mocked(write).mockImplementation(async (survey) => survey);
+  });
+
+  test("names the session user as the principal custom CSS processing is charged to", async () => {
+    await run(action, { ...storedSurvey, name: "Renamed" } as TSurvey);
+
+    expect(write).toHaveBeenCalledWith(expect.objectContaining({ id: "survey_1" }), {
+      customCssPrincipal: "user_1",
+    });
   });
 });

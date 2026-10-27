@@ -4,6 +4,7 @@ import { Prisma, type Team, type WorkspaceTeam } from "@formbricks/database/pris
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
+import { lockUserActiveState, reactivateLockedUser } from "@/lib/user/reactivation";
 import { TGetUsersFilter } from "@/modules/api/v2/organizations/[organizationId]/users/types/users";
 import { createUser, getUsers, updateUser } from "../users";
 
@@ -38,6 +39,7 @@ vi.mock("@formbricks/database", () => ({
       findMany: vi.fn(),
       count: vi.fn(),
       findFirst: vi.fn(),
+      findUniqueOrThrow: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
     },
@@ -61,6 +63,31 @@ vi.mock("@/lib/authzed/organization-membership", () => ({
 vi.mock("@/lib/authzed/team-workspace", () => ({
   reconcileTeamWorkspaceRelationships: vi.fn(),
 }));
+vi.mock("@/lib/user/reactivation", () => ({
+  lockUserActiveState: vi.fn(),
+  reactivateLockedUser: vi.fn(),
+}));
+
+/** Run the interactive transaction against the mocked client, standing in for `tx`. */
+const runInTransaction = () => {
+  const options: unknown[] = [];
+  vi.mocked(prisma.$transaction).mockImplementationOnce(((
+    callback: (tx: typeof prisma) => unknown,
+    given?: unknown
+  ) => {
+    options.push(given);
+    return callback(prisma);
+  }) as never);
+  return options;
+};
+
+/** The account as `lockAndCheckAccountFields` reads it under the user row's lock. */
+const lockedAccount = (account: { name?: string; isActive?: boolean; otherOrganizations?: string[] } = {}) =>
+  vi.mocked(prisma.user.findUniqueOrThrow).mockResolvedValueOnce({
+    name: account.name ?? mockUser.name,
+    isActive: account.isActive ?? true,
+    memberships: (account.otherOrganizations ?? []).map((organizationId) => ({ organizationId })),
+  } as never);
 
 describe("Users Lib", () => {
   beforeEach(() => {
@@ -193,8 +220,10 @@ describe("Users Lib", () => {
 
   describe("updateUser", () => {
     test("updates user and revalidates caches", async () => {
+      runInTransaction();
       (prisma.user.findFirst as any).mockResolvedValueOnce(mockUser);
-      (prisma.$transaction as any).mockResolvedValueOnce([{ ...mockUser, name: "Updated User" }]);
+      lockedAccount();
+      vi.mocked(prisma.user.update).mockResolvedValueOnce({ ...mockUser, name: "Updated User" } as never);
       const result = await updateUser({ email: mockUser.email, name: "Updated User" }, "org456");
       expect(prisma.user.findFirst).toHaveBeenCalled();
       expect(reconcileOrganizationMembership).toHaveBeenCalledWith("org456", mockUser.id);
@@ -265,8 +294,9 @@ describe("Users Lib", () => {
         ...mockUser,
         teamUsers: [],
       });
-      (prisma.team.findMany as any).mockResolvedValueOnce([]);
-      (prisma.$transaction as any).mockResolvedValueOnce([{ ...mockUser, name: "Renamed" }]);
+      runInTransaction();
+      lockedAccount();
+      vi.mocked(prisma.user.update).mockResolvedValueOnce({ ...mockUser, name: "Renamed" } as never);
 
       await updateUser({ email: mockUser.email, name: "Renamed" }, "org456");
 
@@ -274,6 +304,8 @@ describe("Users Lib", () => {
       expect(prisma.user.update).toHaveBeenCalledWith(
         expect.objectContaining({ where: { id: mockUser.id } })
       );
+      // The email it was found by is never written back: it is the account's, not this organization's.
+      expect(vi.mocked(prisma.user.update).mock.calls[0][0].data).not.toHaveProperty("email");
     });
 
     test("returns internal_server_error if update fails", async () => {
@@ -346,6 +378,124 @@ describe("Users Lib", () => {
     });
   });
 
+  describe("updateUser reactivating a user", () => {
+    const inactiveUser = { ...mockUser, isActive: false, teamUsers: [] };
+    const lookup = (user: typeof inactiveUser) =>
+      vi.mocked(prisma.user.findFirst).mockResolvedValueOnce(user as never);
+
+    test("turns an inactive account back on through the shared reactivation, in the same transaction", async () => {
+      const options = runInTransaction();
+      lookup(inactiveUser);
+      lockedAccount({ isActive: false });
+      vi.mocked(prisma.user.update).mockResolvedValueOnce({ ...mockUser, isActive: true } as never);
+
+      const result = await updateUser({ email: mockUser.email, isActive: true }, "org456");
+
+      expect(result.ok).toBe(true);
+      // Decided under the user row's lock, then the clock restarts and the members notices go, so the
+      // sweep doesn't deactivate them again the next night without a warning.
+      expect(lockUserActiveState).toHaveBeenCalledWith(prisma, mockUser.id);
+      expect(reactivateLockedUser).toHaveBeenCalledWith(prisma, mockUser.id);
+      expect(vi.mocked(reactivateLockedUser).mock.invocationCallOrder[0]).toBeGreaterThan(
+        vi.mocked(prisma.user.update).mock.invocationCallOrder[0]
+      );
+      // No owner is being demoted, so no serializable isolation.
+      expect(options).toEqual([undefined]);
+    });
+
+    test("restarts nothing for an account that is already active under the lock", async () => {
+      runInTransaction();
+      lookup(inactiveUser);
+      lockedAccount({ isActive: true });
+      vi.mocked(prisma.user.update).mockResolvedValueOnce({ ...mockUser, isActive: true } as never);
+
+      await expect(updateUser({ email: mockUser.email, isActive: true }, "org456")).resolves.toMatchObject({
+        ok: true,
+      });
+      expect(reactivateLockedUser).not.toHaveBeenCalled();
+    });
+
+    test("never reactivates for any other update", async () => {
+      runInTransaction();
+      lookup(inactiveUser);
+      lockedAccount({ isActive: false });
+      vi.mocked(prisma.user.update).mockResolvedValueOnce({ ...mockUser, isActive: false } as never);
+
+      await updateUser({ email: mockUser.email, isActive: false }, "org456");
+
+      expect(reactivateLockedUser).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("updateUser on a user who also belongs to other organizations", () => {
+    test("decides under the user row's lock, counting only other organizations' memberships", async () => {
+      runInTransaction();
+      vi.mocked(prisma.user.findFirst).mockResolvedValueOnce({ ...mockUser, teamUsers: [] } as never);
+      lockedAccount({ otherOrganizations: ["org789"] });
+
+      const result = await updateUser({ email: mockUser.email, isActive: false, name: "Other" }, "org456");
+
+      expect(result).toMatchObject({
+        ok: false,
+        error: {
+          type: "conflict",
+          details: [{ field: "isActive" }, { field: "name" }],
+        },
+      });
+      expect(lockUserActiveState).toHaveBeenCalledWith(prisma, mockUser.id);
+      expect(vi.mocked(lockUserActiveState).mock.invocationCallOrder[0]).toBeLessThan(
+        vi.mocked(prisma.user.findUniqueOrThrow).mock.invocationCallOrder[0]
+      );
+      expect(prisma.user.findUniqueOrThrow).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: mockUser.id },
+          select: expect.objectContaining({
+            memberships: expect.objectContaining({ where: { organizationId: { not: "org456" } } }),
+          }),
+        })
+      );
+      expect(prisma.user.update).not.toHaveBeenCalled();
+      expect(reconcileOrganizationMembership).not.toHaveBeenCalled();
+    });
+
+    test("demotes an owner and changes their account fields in one Serializable transaction", async () => {
+      const options = runInTransaction();
+      vi.mocked(prisma.user.findFirst).mockResolvedValueOnce({
+        ...mockUser,
+        memberships: [{ organizationId: "org456", role: "owner" }],
+        teamUsers: [],
+      } as never);
+      lockedAccount();
+      vi.mocked(prisma.membership.count).mockResolvedValueOnce(2);
+      vi.mocked(prisma.user.update).mockResolvedValueOnce({
+        ...mockUser,
+        name: "Renamed",
+        memberships: [{ organizationId: "org456", role: "member" }],
+      } as never);
+
+      const result = await updateUser({ email: mockUser.email, role: "member", name: "Renamed" }, "org456");
+
+      expect(result.ok).toBe(true);
+      expect(options).toEqual([{ isolationLevel: Prisma.TransactionIsolationLevel.Serializable }]);
+      expect(lockUserActiveState).toHaveBeenCalledWith(prisma, mockUser.id);
+      expect(prisma.user.update).toHaveBeenCalledTimes(1);
+    });
+
+    test("lets the stored values through unchanged", async () => {
+      runInTransaction();
+      vi.mocked(prisma.user.findFirst).mockResolvedValueOnce({ ...mockUser, teamUsers: [] } as never);
+      lockedAccount({ otherOrganizations: ["org789"] });
+      vi.mocked(prisma.user.update).mockResolvedValueOnce(mockUser as never);
+
+      const result = await updateUser(
+        { email: mockUser.email, isActive: true, name: mockUser.name, role: "member" },
+        "org456"
+      );
+
+      expect(result.ok).toBe(true);
+    });
+  });
+
   describe("createUser with teams", () => {
     test("creates user with existing teams", async () => {
       (prisma.team.findMany as any).mockResolvedValueOnce([
@@ -377,16 +527,9 @@ describe("Users Lib", () => {
       (prisma.team.findMany as any).mockResolvedValueOnce([
         { id: "team456", name: "NewTeam", workspaceTeams: [] },
       ]);
-      (prisma.$transaction as any).mockResolvedValueOnce([
-        // deleted OldTeam from user
-        { team: { id: "team123", name: "OldTeam", workspaceTeams: [{ workspaceId: "proj789" }] } },
-        // created teamUsers for NewTeam
-        {
-          team: { id: "team456", name: "NewTeam", workspaceTeams: [] },
-        },
-        // updated user
-        { ...mockUser, name: "Updated Name" },
-      ]);
+      runInTransaction();
+      lockedAccount();
+      vi.mocked(prisma.user.update).mockResolvedValueOnce({ ...mockUser, name: "Updated Name" } as never);
 
       const result = await updateUser(
         { email: mockUser.email, name: "Updated Name", teams: ["NewTeam"] },

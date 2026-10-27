@@ -5,6 +5,7 @@ import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
 import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
+import { lockUserActiveState, reactivateLockedUser } from "@/lib/user/reactivation";
 import { isUniqueConstraintError } from "@/lib/utils/prisma-constraint";
 import { getUsersQuery } from "@/modules/api/v2/organizations/[organizationId]/users/lib/utils";
 import {
@@ -12,7 +13,7 @@ import {
   TUserInput,
   TUserInputPatch,
 } from "@/modules/api/v2/organizations/[organizationId]/users/types/users";
-import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
+import { ApiErrorDetails, ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { ApiResponseWithMeta } from "@/modules/api/v2/types/api-success";
 import { getOrganizationOwnerCount } from "@/modules/organization/settings/teams/lib/membership";
 
@@ -174,6 +175,62 @@ export const createUser = async (
 // generic catch block below without it being reported as an internal_server_error.
 class LastOwnerConflictError extends Error {}
 
+// Thrown inside updateUser's transaction when the request would change an account-wide field of a
+// user who also belongs to another organization; carried out as a 409, like LastOwnerConflictError:
+// the same request succeeds for a user in this organization alone, so it conflicts with the user's
+// current state rather than being malformed.
+class AccountFieldsConflictError extends Error {
+  constructor(readonly details: ApiErrorDetails) {
+    super("Cannot change the account-wide fields of this user from this organization");
+  }
+}
+
+const OTHER_ORGANIZATIONS_ISSUE =
+  "cannot be changed from one organization while the user also belongs to other organizations";
+
+/**
+ * `name` and `isActive` belong to the account, not to this organization's membership: changing them here
+ * changes them in every other organization the user belongs to, and deactivating locks the user out of
+ * all of them. So only an organization the user belongs to alone may change them, as the data retention
+ * members policy and Reactivate in the member list already require. Sending the stored value is no
+ * change and stays allowed, so a client that echoes the whole user back keeps working.
+ *
+ * Decided under the user row's lock (`lockUserActiveState`), which a membership being added in another
+ * organization waits on, so one added meanwhile is counted. Returns whether the account was active.
+ */
+const lockAndCheckAccountFields = async (
+  tx: Prisma.TransactionClient,
+  userId: string,
+  organizationId: string,
+  { name, isActive }: Pick<TUserInputPatch, "name" | "isActive">
+): Promise<{ wasActive: boolean }> => {
+  await lockUserActiveState(tx, userId);
+  const account = await tx.user.findUniqueOrThrow({
+    where: { id: userId },
+    select: {
+      name: true,
+      isActive: true,
+      memberships: {
+        where: { organizationId: { not: organizationId } },
+        select: { organizationId: true },
+        take: 1,
+      },
+    },
+  });
+
+  const changedFields: ("isActive" | "name")[] = [];
+  if (isActive !== undefined && isActive !== account.isActive) changedFields.push("isActive");
+  if (name !== undefined && name !== account.name) changedFields.push("name");
+
+  if (account.memberships.length > 0 && changedFields.length > 0) {
+    throw new AccountFieldsConflictError(
+      changedFields.map((field) => ({ field, issue: OTHER_ORGANIZATIONS_ISSUE }))
+    );
+  }
+
+  return { wasActive: account.isActive };
+};
+
 export const updateUser = async (
   userInput: TUserInputPatch,
   organizationId: string
@@ -287,9 +344,10 @@ export const updateUser = async (
       }
     });
 
+    // `email` is how the user was found, so it is never written: another account-wide field this
+    // organization has no business changing.
     const prismaData: Prisma.UserUpdateInput = {
       name: name ?? undefined,
-      email: email ?? undefined,
       isActive: isActive ?? undefined,
       memberships: {
         updateMany: {
@@ -308,16 +366,35 @@ export const updateUser = async (
     // (already loosely-typed) User <-> TUser mapping isn't written to satisfy.
     let updatedUser: any;
 
-    if (isDemotingOwner) {
+    const touchesAccountFields = name !== undefined || isActive !== undefined;
+
+    if (isDemotingOwner || touchesAccountFields) {
       // The owner-count re-check and the role write must be one atomic unit: read then act in two
       // separate statements lets two callers demoting different owners at once both read "more
       // than one owner" and both writes land, leaving none. Serializable isolation makes Postgres
       // abort one side of that race instead, surfaced here as a thrown LastOwnerConflictError.
+      //
+      // A change to the account's own fields is decided under the user row's lock
+      // (`lockAndCheckAccountFields`). A false→true change then goes through `reactivateLockedUser`,
+      // like Reactivate in the member list, so the data retention members clock restarts and the old
+      // notice is cleared. Without it the member would be deactivated again the next night, with no
+      // warning.
       updatedUser = await prisma.$transaction(
         async (tx) => {
-          const ownerCount = await getOrganizationOwnerCount(organizationId, tx);
-          if (ownerCount <= 1) {
-            throw new LastOwnerConflictError();
+          const account = touchesAccountFields
+            ? await lockAndCheckAccountFields(tx, existingUser.id, organizationId, { name, isActive })
+            : null;
+          const reactivating = isActive === true && account?.wasActive === false;
+          // When an owner is also being demoted this transaction is Serializable, so the membership
+          // read in lockAndCheckAccountFields uses the snapshot taken before the row lock was granted:
+          // a membership another organization was adding while we waited is not seen. That ends the
+          // same as this change landing just before the membership did, which this organization was
+          // entitled to do, so it is accepted rather than splitting the request across transactions.
+          if (isDemotingOwner) {
+            const ownerCount = await getOrganizationOwnerCount(organizationId, tx);
+            if (ownerCount <= 1) {
+              throw new LastOwnerConflictError();
+            }
           }
 
           // Re-run against `tx` rather than reusing deleteTeamOps/createTeamOps below: those are
@@ -346,7 +423,7 @@ export const updateUser = async (
 
           // Update by id so the mutation is bound to the org-scoped lookup above. Email is
           // a global unique key and using it here would defeat the membership check.
-          return tx.user.update({
+          const user = await tx.user.update({
             where: { id: existingUser.id },
             data: prismaData,
             include: {
@@ -355,8 +432,10 @@ export const updateUser = async (
               },
             },
           });
+          if (reactivating) await reactivateLockedUser(tx, existingUser.id);
+          return user;
         },
-        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
+        isDemotingOwner ? { isolationLevel: Prisma.TransactionIsolationLevel.Serializable } : undefined
       );
     } else {
       // Update by id so the mutation is bound to the org-scoped lookup above. Email is
@@ -413,6 +492,9 @@ export const updateUser = async (
         type: "conflict",
         details: [{ field: "role", issue: "Cannot remove the last owner of the organization" }],
       });
+    }
+    if (error instanceof AccountFieldsConflictError) {
+      return err({ type: "conflict", details: error.details });
     }
 
     return err({

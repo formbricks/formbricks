@@ -1,13 +1,22 @@
-import { expect } from "@playwright/test";
+import { type Page, expect } from "@playwright/test";
+import { randomBytes } from "crypto";
 import http from "http";
+import type { AddressInfo } from "net";
 import { prisma } from "@formbricks/database";
 import { PUBLIC_API_SURVEY_NAME_PLACEHOLDER } from "@formbricks/types/js-constants";
 import { test } from "./lib/fixtures";
 import { gotoSurveyList, gotoSurveyTemplates } from "./lib/utils";
+import { seedAppSurvey } from "./utils/app-survey";
 import { activateSurvey, useSelectedTemplate } from "./utils/helper";
 
 const HTML_TEMPLATE = `<head>
-  <script type="text/javascript">
+  <script type="text/javascript" nonce="CSP_NONCE">
+    // An AMD loader stub, kept for the whole page life, so both UMD bundles (the SDK and the lazily
+    // loaded survey renderer) must still take their browser-global branch on an AMD page (ENG-3657).
+    window.define = function () {};
+    window.define.amd = {};
+  </script>
+  <script type="text/javascript" nonce="CSP_NONCE">
     !(function () {
       var t = document.createElement("script");
       (t.type = "text/javascript"), (t.async = !0), (t.src = "http://localhost:3000/js/formbricks.umd.cjs");
@@ -24,6 +33,9 @@ const HTML_TEMPLATE = `<head>
               });
             }
           );
+          // The host page's CSP has no 'unsafe-inline' for styles, so the renderer's <style> elements
+          // only apply because they carry this nonce. Called before setup(), as the docs require.
+          window.formbricks.setNonce("CSP_NONCE");
           window.formbricks.setup({workspaceId: "WORKSPACE_ID", appUrl: "http://localhost:3000"});
         } else {
           console.error("Formbricks library failed to load properly. The formbricks object is not available.");
@@ -34,10 +46,64 @@ const HTML_TEMPLATE = `<head>
   </script>
 </head>
 
-<body style="background-color: #fff">
+<body>
   <p>This is my sample page using the Formbricks JS javascript widget</p>
 </body>
 `;
+
+// A customer-style policy for the host page, built from what the CSP section of the framework guide
+// (docs/surveys/website-app-surveys/framework-guides.mdx) tells customers to allow: the SDK host in
+// script-src/connect-src, and a per-response nonce instead of 'unsafe-inline' for styles. Anything the
+// SDK or the survey renderer needs beyond this shows up as a violation and fails the journey.
+// 'strict-dynamic' and reCAPTCHA are deliberately not covered (ENG-1878).
+const buildHostCsp = (nonce: string): string =>
+  [
+    "default-src 'self'",
+    `script-src 'nonce-${nonce}' http://localhost:3000`,
+    `style-src 'self' 'nonce-${nonce}'`,
+    "connect-src http://localhost:3000",
+    "img-src http://localhost:3000",
+    "font-src http://localhost:3000",
+  ].join("; ");
+
+type TCspViolation = { directive: string; blockedURI: string; sourceFile: string; sample: string };
+
+// Registered before navigation so nothing the page does is missed. Each document starts its own list.
+const collectCspViolations = async (page: Page): Promise<string[]> => {
+  await page.addInitScript(() => {
+    const violations: TCspViolation[] = [];
+    (window as unknown as { __cspViolations: TCspViolation[] }).__cspViolations = violations;
+    document.addEventListener(
+      "securitypolicyviolation",
+      (event) => {
+        violations.push({
+          directive: event.effectiveDirective,
+          blockedURI: event.blockedURI,
+          sourceFile: event.sourceFile,
+          sample: event.sample,
+        });
+      },
+      true
+    );
+  });
+
+  // The browser's own console report too, in case a violation fires before the listener exists.
+  const consoleMessages: string[] = [];
+  page.on("console", (message) => {
+    if (message.text().includes("Content Security Policy")) consoleMessages.push(message.text());
+  });
+  return consoleMessages;
+};
+
+const expectNoCspViolations = async (page: Page, consoleMessages: string[]): Promise<void> => {
+  const violations = await page.evaluate(
+    () => (window as unknown as { __cspViolations?: TCspViolation[] }).__cspViolations ?? []
+  );
+  expect(
+    { violations, consoleMessages },
+    `CSP violations on ${page.url()}:\n${JSON.stringify({ violations, consoleMessages }, null, 2)}`
+  ).toEqual({ violations: [], consoleMessages: [] });
+};
 
 test.describe("JS Package Test", async () => {
   let server: http.Server;
@@ -47,8 +113,12 @@ test.describe("JS Package Test", async () => {
   test.beforeAll(async () => {
     // Create a simple HTTP server
     server = http.createServer((_, res) => {
-      const htmlContent = HTML_TEMPLATE.replace("WORKSPACE_ID", workspaceId || "");
-      res.writeHead(200, { "Content-Type": "text/html" });
+      const nonce = randomBytes(16).toString("base64");
+      const htmlContent = HTML_TEMPLATE.replace("WORKSPACE_ID", workspaceId || "").replaceAll(
+        "CSP_NONCE",
+        nonce
+      );
+      res.writeHead(200, { "Content-Type": "text/html", "Content-Security-Policy": buildHostCsp(nonce) });
       res.end(htmlContent);
     });
 
@@ -63,6 +133,8 @@ test.describe("JS Package Test", async () => {
   });
 
   test("Create, display and validate PMF survey", async ({ page, users }) => {
+    const cspConsoleMessages = await collectCspViolations(page);
+
     // Create and login user
     const user = await users.create();
     await user.login();
@@ -116,8 +188,71 @@ test.describe("JS Package Test", async () => {
     const surveyId = /\/surveys\/([^/]+)\/summary/.exec(page.url())?.[1];
     if (!surveyId) throw new Error(`Unable to parse surveyId from ${page.url()}`);
 
+    // ENG-3552: workspace and survey custom CSS, saved through the same v3 endpoints the editors use, so
+    // the processor, storage and cache invalidation are the real ones. Both style the same hook so one
+    // assertion proves both arrive and that survey CSS outranks workspace CSS (M2.03).
+    await test.step("save workspace and survey custom CSS", async () => {
+      const workspaceCss = await page.request.patch(`/api/v3/workspaces/${workspaceId}/custom-css`, {
+        data: {
+          customCss: {
+            light: '[data-fb-part="headline"] { letter-spacing: 3px; color: rgb(10, 20, 30); }',
+            dark: null,
+          },
+        },
+      });
+      expect(workspaceCss.ok()).toBe(true);
+
+      // Survey CSS is delivered only while the survey uses custom styling (ENG-3723). The v3 survey
+      // API has no styling field, so it is set directly, before the PATCH below invalidates the cache.
+      const { styling } = await prisma.survey.findUniqueOrThrow({
+        where: { id: surveyId },
+        select: { styling: true },
+      });
+      await prisma.survey.update({
+        where: { id: surveyId },
+        data: { styling: { ...styling, overwriteThemeStyling: true } },
+      });
+
+      const surveyCss = await page.request.patch(`/api/v3/surveys/${surveyId}`, {
+        data: { customCss: { light: '[data-fb-part="headline"] { color: rgb(40, 50, 60); }', dark: null } },
+      });
+      expect(surveyCss.ok()).toBe(true);
+    });
+
+    const environmentResponse = page.waitForResponse((response) =>
+      /\/api\/v1\/client\/[^/]+\/environment/.test(response.url())
+    );
+    // Only what happens from the host page on counts towards the host-page assertion below.
+    cspConsoleMessages.length = 0;
     await page.goto("http://localhost:3004");
     await expect(page.locator("#formbricks-modal-container")).toHaveCount(1, { timeout: 120000 });
+
+    await test.step("the SDK receives compiled custom CSS only, workspace CSS once", async () => {
+      // The endpoint wraps the state in its own envelope: `{ data: { data: <state>, expiresAt } }`.
+      const { data } = ((await (await environmentResponse).json()) as { data: unknown }).data as {
+        data: {
+          workspace: { customCss?: Record<string, string> };
+          project?: { customCss?: unknown };
+          surveys: { id: string; customCss?: Record<string, string> }[];
+        };
+      };
+      const surveyCustomCss = data.surveys.find((survey) => survey.id === surveyId)?.customCss;
+
+      // Compiled `{ light?, dark? }` only — no source, no processor internals — and not repeated in the
+      // legacy `project` alias.
+      expect(Object.keys(data.workspace.customCss ?? {})).toEqual(["light"]);
+      expect(data.workspace.customCss?.light).toContain("fb-workspace");
+      expect(Object.keys(surveyCustomCss ?? {})).toEqual(["light"]);
+      expect(surveyCustomCss?.light).toContain("fb-survey");
+      expect(data.project?.customCss).toBeUndefined();
+    });
+
+    await test.step("workspace and survey custom CSS style the app survey", async () => {
+      const headline = page.locator('#formbricks-modal-container [data-fb-part="headline"]').first();
+      // Workspace CSS applies (letter-spacing), and survey CSS wins where both set a property (color).
+      await expect(headline).toHaveCSS("letter-spacing", "3px");
+      await expect(headline).toHaveCSS("color", "rgb(40, 50, 60)");
+    });
 
     // The widget reads the survey from the public client API, which substitutes a placeholder for
     // every survey name so names are not exposed over an unauthenticated endpoint. This is the only
@@ -169,6 +304,13 @@ test.describe("JS Package Test", async () => {
       )
       .toBe(true);
 
+    // A customer reported CSP breaking the widget on their site after QA had passed it: survey-ui
+    // rendered raw `style="..."` attributes, which a nonce-based style-src blocks. Asserted after the
+    // survey was shown, answered and closed, so every card, the custom CSS and the ending are covered.
+    await test.step("the SDK journey raises no violation under the host page's CSP", async () => {
+      await expectNoCspViolations(page, cspConsoleMessages);
+    });
+
     // The `responseId` on the events is the PERSISTED id (ENG-1846). This is the only level that
     // can prove it: the id is minted by the server, so `onResponseCreated`/`onFinished` can only
     // carry it by firing from the response queue's creation ack — and the renderer that passes it
@@ -216,6 +358,7 @@ test.describe("JS Package Test", async () => {
     });
 
     // Validate displays and response
+    cspConsoleMessages.length = 0;
     await page.goto("/");
     await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
     await page.getByRole("link", { name: "product Market Fit (Superhuman)" }).click();
@@ -233,5 +376,150 @@ test.describe("JS Package Test", async () => {
     await expect(page.getByText("People who believe that PMF").first()).toBeVisible();
     await expect(page.getByText("Much higher response rates!").first()).toBeVisible();
     await expect(page.getByText("Make this end to end test").first()).toBeVisible();
+
+    // Our own CSP (next.config.mjs) in the browser: next-config-csp.test.ts checks the header text, but
+    // only a browser shows what it blocks — like Sentry Replay's blob: worker (ENG-3194), or Zod's eval
+    // probe on every app page (ENG-3969).
+    await test.step("an app page and a link survey raise no violation under our own CSP", async () => {
+      await expectNoCspViolations(page, cspConsoleMessages);
+
+      await prisma.survey.update({ where: { id: surveyId }, data: { type: "link" } });
+      cspConsoleMessages.length = 0;
+      await page.goto(`/s/${surveyId}`);
+      await expect(page.locator("#questionCard-0")).toBeVisible();
+      await expectNoCspViolations(page, cspConsoleMessages);
+    });
+  });
+});
+
+// The workspace is injected with `addInitScript`, so the same page can be served at any path and
+// a test can walk through several pages of one visit in one tab.
+const VISIT_HOST_PAGE = `<!doctype html>
+<html>
+  <head>
+    <script type="text/javascript">
+      !(function () {
+        var t = document.createElement("script");
+        (t.type = "text/javascript"), (t.async = !0), (t.src = "http://localhost:3000/js/formbricks.umd.cjs");
+        t.onload = function () {
+          window.formbricks.setup({ workspaceId: window.__workspaceId, appUrl: "http://localhost:3000" });
+        };
+        var e = document.getElementsByTagName("script")[0];
+        e.parentNode.insertBefore(t, e);
+      })();
+    </script>
+  </head>
+  <body style="background-color: #fff">
+    <p>A page of a site that runs the Formbricks SDK</p>
+  </body>
+</html>`;
+
+const trackAction = (key: string) => {
+  const sdk = (window as unknown as { formbricks?: { track: (actionKey: string) => Promise<unknown> } })
+    .formbricks;
+  if (!sdk) throw new Error("Formbricks SDK is not loaded");
+  return sdk.track(key);
+};
+
+test.describe("Show conditions and the visit (ENG-3926)", () => {
+  let server: http.Server;
+  let hostUrl: string;
+
+  test.beforeAll(async () => {
+    server = http.createServer((_, res) => {
+      res.writeHead(200, { "Content-Type": "text/html" });
+      res.end(VISIT_HOST_PAGE);
+    });
+    await new Promise<void>((resolve) => {
+      server.listen(0, () => {
+        hostUrl = `http://localhost:${(server.address() as AddressInfo).port.toString()}`;
+        resolve();
+      });
+    });
+  });
+
+  test.afterAll(async () => {
+    await new Promise((resolve) => server.close(resolve));
+  });
+
+  test("a survey waits for its show conditions, then saves the visit on the response", async ({
+    page,
+    users,
+  }) => {
+    const seeded = await seedAppSurvey(users, {
+      showConditions: {
+        id: "e2erule",
+        connector: "and",
+        conditions: [
+          {
+            id: "e2epages",
+            leftOperand: { type: "visit", value: "pagesViewed" },
+            operator: "isGreaterThanOrEqual",
+            rightOperand: { type: "static", value: 2 },
+          },
+        ],
+      },
+    });
+    await page.addInitScript((workspaceId) => {
+      (window as unknown as { __workspaceId: string }).__workspaceId = workspaceId;
+    }, seeded.workspaceId);
+    const widget = page.locator("#formbricks-modal-container");
+
+    await test.step("on the first page the trigger fires, and the debug panel says why nothing shows", async () => {
+      await page.goto(`${hostUrl}/plans?formbricksDebug=true`);
+      await page.waitForFunction(
+        () => Boolean((window as unknown as { formbricks?: unknown }).formbricks),
+        null,
+        {
+          timeout: 120000,
+        }
+      );
+      await page.evaluate(trackAction, seeded.actionKey);
+
+      // The panel is a separate bundle the SDK loads only with the flag; it renders into an open
+      // shadow root, which Playwright locators pierce.
+      await expect(page.getByText("Not shown: show conditions not met")).toBeVisible();
+      await expect(page.getByText("✗ Pages viewed ≥ 2 — read: 1")).toBeVisible();
+      await expect(widget).toHaveCount(0);
+    });
+
+    await test.step("on the second page of the same visit, the trigger shows the survey", async () => {
+      // No flag in this URL: debug mode stays on for the tab, so the panel explains this page too.
+      await page.goto(`${hostUrl}/plans/compare`);
+      await page.waitForFunction(
+        () => Boolean((window as unknown as { formbricks?: unknown }).formbricks),
+        null,
+        {
+          timeout: 120000,
+        }
+      );
+      await page.evaluate(trackAction, seeded.actionKey);
+
+      await expect(widget.getByRole("dialog")).toBeVisible();
+      await expect(page.getByText("Show conditions met")).toBeVisible();
+    });
+
+    await test.step("the response records the visit as it was when the survey showed", async () => {
+      await widget.getByRole("textbox").fill("Comparing plans");
+      await widget.getByRole("button", { name: "Finish" }).click();
+
+      await expect
+        .poll(
+          async () =>
+            (
+              await prisma.response.findFirst({
+                where: { surveyId: seeded.surveyId },
+                select: { meta: true },
+              })
+            )?.meta,
+          { timeout: 15000 }
+        )
+        .toMatchObject({
+          visitPagesViewed: 2,
+          visitUniquePagesViewed: 2,
+          visitUrls: "/plans · /plans/compare",
+          visitTimeOnSite: expect.any(Number),
+        });
+    });
   });
 });

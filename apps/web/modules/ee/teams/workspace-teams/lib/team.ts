@@ -11,10 +11,12 @@ export const getTeamsByWorkspaceId = reactCache(
   async (workspaceId: string): Promise<TWorkspaceTeam[] | null> => {
     validateInputs([workspaceId, ZId]);
     try {
+      // Existence check only; never read the whole row (custom CSS alone can be ~400 KB, ENG-2949).
       const workspace = await prisma.workspace.findUnique({
         where: {
           id: workspaceId,
         },
+        select: { id: true },
       });
 
       if (!workspace) {

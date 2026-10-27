@@ -93,6 +93,11 @@ interface VariableStackEntry {
   variables: TResponseVariables;
 }
 
+// Close-button and language-switch hover tint. Read through a variable so the dark palette can
+// replace it; light mode resolves to the same literal as before (ENG-2939).
+const getHoverColor = (styling: SurveyContainerProps["styling"]) =>
+  `var(--fb-hover-bg-color, ${styling.inputBgColor?.light ?? "#f8fafc"})`;
+
 export function Survey({
   appUrl,
   workspaceId: workspaceIdProp,
@@ -129,6 +134,7 @@ export function Survey({
   fullSizeCards = false,
   autoFocus,
   action,
+  visit,
   singleUseId,
   singleUseResponseId,
   pinAuthToken,
@@ -790,9 +796,10 @@ export function Survey({
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [history.length, isSurveyFinished, offlinePersistEnabled, responseQueue, pendingSyncCount]);
 
+  // Merges into the latest answers, not this render's copy: a file upload calls this when it
+  // finishes, seconds after the render it started in, and other answers may have changed since.
   const onChange = (responseDataUpdate: TResponseData) => {
-    const updatedResponseData = { ...responseData, ...responseDataUpdate };
-    setResponseData(updatedResponseData);
+    setResponseData((prev) => ({ ...prev, ...responseDataUpdate }));
   };
 
   const onChangeVariables = (variables: TResponseVariables) => {
@@ -878,7 +885,7 @@ export function Survey({
    * the survey, not when some earlier action queued it.
    */
   const webSurveyMetaRef = useRef<(() => TWebSurveyMeta) | null>(null);
-  webSurveyMetaRef.current ??= createWebSurveyMetaSnapshot(isWebEnvironment);
+  webSurveyMetaRef.current ??= createWebSurveyMetaSnapshot(isWebEnvironment, visit);
 
   const getWebSurveyMeta = useCallback((): TWebSurveyMeta => webSurveyMetaRef.current?.() ?? {}, []);
 
@@ -1229,7 +1236,7 @@ export function Survey({
                     )}>
                     <SurveyCloseButton
                       onClose={onClose}
-                      hoverColor={styling.inputBgColor?.light ?? "#f8fafc"}
+                      hoverColor={getHoverColor(styling)}
                       borderRadius={styling.roundness ?? 8}
                     />
                   </div>
@@ -1258,7 +1265,7 @@ export function Survey({
                     )}>
                     <SurveyCloseButton
                       onClose={onClose}
-                      hoverColor={styling.inputBgColor?.light ?? "#f8fafc"}
+                      hoverColor={getHoverColor(styling)}
                       borderRadius={styling.roundness ?? 8}
                     />
                   </div>
@@ -1368,9 +1375,11 @@ export function Survey({
         hasInteracted={hasInteracted}
         setHasInteracted={setHasInteracted}>
         <div
+          // No background of its own: the card wrapper around it (the `card` styling hook) already
+          // paints bg-survey-bg, and a second fill here would cover a background set on that hook.
           className={cn(
             "no-scrollbar flex w-full flex-col justify-between transition-opacity duration-1000 ease-in-out",
-            isCardless ? "" : "bg-survey-bg h-full overflow-hidden",
+            isCardless ? "" : "h-full overflow-hidden",
             offset === 0 || cardArrangement === "simple" || isCardless ? "opacity-100" : "opacity-0"
           )}>
           <div className={cn("relative")}>
@@ -1393,7 +1402,7 @@ export function Survey({
                           surveyLanguages={localSurvey.languages}
                           selectedLanguageCode={selectedLanguage}
                           setSelectedLanguageCode={setSelectedLanguage}
-                          hoverColor={styling.inputBgColor?.light ?? "#f8fafc"}
+                          hoverColor={getHoverColor(styling)}
                           borderRadius={styling.roundness ?? 8}
                           setDir={setDir}
                           dir={dir}
@@ -1406,7 +1415,7 @@ export function Survey({
                       {isCloseButtonVisible && (
                         <SurveyCloseButton
                           onClose={onClose}
-                          hoverColor={styling.inputBgColor?.light ?? "#f8fafc"}
+                          hoverColor={getHoverColor(styling)}
                           borderRadius={styling.roundness ?? 8}
                         />
                       )}
@@ -1473,6 +1482,7 @@ export function Survey({
       shouldResetBlockId={shouldResetQuestionId}
       fullSizeCards={fullSizeCards}
       placement={placement}
+      hasError={showError}
     />
   );
 

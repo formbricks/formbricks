@@ -110,7 +110,7 @@ The iOS SDK requires the following:
 
 - **Swift Version**: 5.7+
 - **Platform**: iOS 16.6+
-- **Package Manager**: Swift Package Manager and CocoaPods support
+- **Package Manager**: Swift Package Manager
 - **ARC**: Automatic Reference Counting enabled
 
 **Package.swift Configuration:**
@@ -122,13 +122,9 @@ platforms: [
 ],
 ```
 
-**CocoaPods Configuration:**
-
-```ruby
-s.platform = :ios, "16.6"
-s.swift_version = "5.7"
-s.requires_arc = true
-```
+SDK versions are distributed through semantic-version Git tags in
+[`formbricks/ios`](https://github.com/formbricks/ios). Publish a GitHub release from the tested tag;
+Swift Package Manager does not require a separate registry publishing step.
 
 ### Key Conventions
 

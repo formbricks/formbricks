@@ -1,41 +1,8 @@
-import { AIOutputTokenLimitError, classifyAIProviderError } from "@formbricks/ai";
+import { AIOutputTokenLimitError } from "@formbricks/ai";
 import { logger } from "@formbricks/logger";
-import {
-  OperationNotAllowedError,
-  ResourceNotFoundError,
-  TooManyRequestsError,
-} from "@formbricks/types/errors";
-import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
-import {
-  problemAIUnavailable,
-  problemBadGateway,
-  problemBadRequest,
-  problemTooManyRequests,
-  problemUnprocessableContent,
-} from "@/app/api/v3/lib/response";
-import { AI_ERROR_CODES, type TAIErrorCode } from "@/lib/ai/service";
+import { loggableAIError, mapV3AIError } from "@/app/api/v3/lib/ai-errors";
+import { problemBadGateway, problemBadRequest, problemUnprocessableContent } from "@/app/api/v3/lib/response";
 import { V3SurveyGeneratePromptError, V3SurveyGeneratedPayloadValidationError } from "./service";
-
-/**
- * The AI error codes that describe a capability the caller cannot use, and so map to an AI-unavailable
- * problem response.
- *
- * Quota exhaustion is deliberately not one of them: `@/lib/ai/service` raises it as a
- * `TooManyRequestsError` (never an `OperationNotAllowedError`), so it is answered as a 429 by the branch
- * below. Excluding it here is what keeps every code this mapper can emit inside `V3_PROBLEM_CODES` —
- * `ai_quota_exceeded` is not a published problem code.
- */
-type TAIUnavailableCode = Exclude<TAIErrorCode, typeof AI_ERROR_CODES.QUOTA_EXCEEDED>;
-
-const AI_UNAVAILABLE_DETAILS: Record<TAIUnavailableCode, string> = {
-  [AI_ERROR_CODES.FEATURES_NOT_ENABLED]: "AI smart tools are not available for this organization.",
-  [AI_ERROR_CODES.SMART_TOOLS_DISABLED]: "AI smart tools are disabled for this organization.",
-  [AI_ERROR_CODES.INSTANCE_NOT_CONFIGURED]: "AI is not configured for this Formbricks instance.",
-};
-
-function isAIUnavailableCode(value: string): value is TAIUnavailableCode {
-  return Object.hasOwn(AI_UNAVAILABLE_DETAILS, value);
-}
 
 interface TGenerateErrorContext {
   requestId: string;
@@ -47,28 +14,18 @@ interface TGenerateErrorContext {
 /**
  * Map an error thrown while generating a survey draft to its problem+json Response. Extracted from
  * the route handler to keep that handler's cognitive complexity within bounds.
+ *
+ * Errors any AI-backed operation can raise (the AI gate, quota, provider credentials) go through the
+ * shared `mapV3AIError`; this maps only what is specific to generating a draft from a prompt.
  */
-export function mapV3SurveyGenerateError(
-  error: unknown,
-  { requestId, instance, workspaceId, organizationId }: TGenerateErrorContext
-): Response {
+export function mapV3SurveyGenerateError(error: unknown, context: TGenerateErrorContext): Response {
+  const { requestId, instance, workspaceId, organizationId } = context;
+
   if (error instanceof V3SurveyGeneratePromptError) {
     return problemBadRequest(requestId, error.message, {
       instance,
       invalid_params: error.invalidParams,
     });
-  }
-
-  if (error instanceof TooManyRequestsError) {
-    return problemTooManyRequests(
-      requestId,
-      "The AI provider is temporarily rate-limited. Try again shortly.",
-      error.retryAfter
-    );
-  }
-
-  if (error instanceof OperationNotAllowedError && isAIUnavailableCode(error.message)) {
-    return problemAIUnavailable(requestId, AI_UNAVAILABLE_DETAILS[error.message], error.message, instance);
   }
 
   if (error instanceof V3SurveyGeneratedPayloadValidationError) {
@@ -90,39 +47,14 @@ export function mapV3SurveyGenerateError(
     );
   }
 
-  /**
-   * The organization behind a workspace the caller already has access to. A 404 here both contradicts
-   * `problemNotFound`'s own contract — its body carries `resource_type` and `resource_id`, which must not
-   * go to a caller who may not know the resource exists — and reports a server-derived id back as though
-   * the caller had asked for it. 403 matches every other v3 surface.
-   */
-  if (error instanceof ResourceNotFoundError) {
-    return mapV3ThrownError(error, {
-      log: logger.withContext({ requestId, workspaceId, organizationId }),
-      requestId,
-      instance,
-      operation: "surveys.generate",
-    });
+  const aiResponse = mapV3AIError(error, { ...context, operation: "surveys.generate" });
+  if (aiResponse) {
+    return aiResponse;
   }
 
-  // Logged with its status by handleAIError already; the caller gets an operator-facing message
-  // instead of the prompt advice below, which cannot fix a credentials problem.
-  if (classifyAIProviderError(error)?.isAuthFailure) {
-    return problemBadGateway(
-      requestId,
-      "The AI provider rejected this instance's credentials. Ask your administrator to check the AI provider configuration.",
-      instance,
-      "ai_provider_auth_failed"
-    );
-  }
-
+  // Name, frames and provider status only: the message can repeat the prompt or the model's output.
   logger.error(
-    {
-      err: error,
-      requestId,
-      workspaceId,
-      organizationId,
-    },
+    { ...loggableAIError(error), requestId, workspaceId, organizationId },
     "Failed to generate v3 survey create payload"
   );
 

@@ -98,6 +98,22 @@ describe("generateObject", () => {
     await expect(response.json()).resolves.toEqual(generated.output);
   });
 
+  test("forwards the call's retry and timeout options to the AI SDK", async () => {
+    // The QSF import turns the SDK's retries off (`maxRetries: 0`) to run its own policy.
+    mocks.generateText.mockResolvedValueOnce({
+      output: {},
+      finishReason: "stop",
+      usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2, outputTokenDetails: {} },
+    });
+    const schema = { type: "object" } as unknown as TGenerateObjectOptions["schema"];
+
+    await generateObject({ schema, prompt: "p", maxRetries: 0, timeout: 45_000 });
+
+    expect(mocks.generateText).toHaveBeenCalledWith(
+      expect.objectContaining({ maxRetries: 0, timeout: 45_000 })
+    );
+  });
+
   test("applies wrapModel to the resolved model when provided", async () => {
     const schema = { type: "object" } as unknown as TGenerateObjectOptions<{ title: string }>["schema"];
     const wrappedModel = { provider: "test", modelId: "model", wrapped: true };

@@ -1,11 +1,7 @@
 import { EventEmitter } from "node:events";
 import { Client, Pool, type PoolClient } from "pg";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import {
-  DEFAULT_POOL_ACQUIRE_TIMEOUT_MS,
-  type TPrismaPgAdapterOptions,
-  createPrismaPgAdapter,
-} from "./prisma-adapter";
+import { DEFAULT_POOL_ACQUIRE_TIMEOUT_MS, createPrismaPgAdapter } from "./prisma-adapter";
 
 type TPoolConnectCallback = (
   error: Error | undefined,
@@ -27,8 +23,8 @@ vi.mock("@formbricks/logger", () => ({
 
 const pools: Pool[] = [];
 
-const connectAdapter = async (databaseUrl: string, options?: TPrismaPgAdapterOptions) => {
-  const result = createPrismaPgAdapter(databaseUrl, options);
+const connectAdapter = async (databaseUrl: string) => {
+  const result = createPrismaPgAdapter(databaseUrl);
   const adapter = await result.adapter.connect();
   const pool = adapter.underlyingDriver();
   pools.push(pool);
@@ -259,7 +255,6 @@ describe("createPrismaPgAdapter", () => {
 
   describe("idle_in_transaction_session_timeout", () => {
     const BASE_URL = "postgresql://app:secret@database:5432/formbricks";
-    const APP_DEFAULT = { idleInTransactionSessionTimeoutMillis: 60_000 };
 
     // What pg sends to the server at connect time, built the way pg-pool builds each client. This is
     // the end-to-end check: pg merges connection-string params over the pool options, so asserting on
@@ -269,36 +264,44 @@ describe("createPrismaPgAdapter", () => {
         new Client(pool.options) as unknown as { getStartupConf: () => Record<string, string> }
       ).getStartupConf();
 
-    test("is never sent for a client that did not opt in, even when DATABASE_URL sets it", async () => {
+    test("sends nothing unless DATABASE_URL asks for it", async () => {
+      const { pool, result } = await connectAdapter(BASE_URL);
+
+      expect(pool.options).not.toHaveProperty("idle_in_transaction_session_timeout");
+      expect(startupParams(pool)).not.toHaveProperty("idle_in_transaction_session_timeout");
+      expect(loggerWarnMock).not.toHaveBeenCalled();
+      expect(result.connectionString).toBe(BASE_URL);
+    });
+
+    test("sends the value DATABASE_URL asks for, in milliseconds", async () => {
       const { pool, result } = await connectAdapter(`${BASE_URL}?idle_in_transaction_session_timeout=5000`);
 
-      expect(pool.options).not.toHaveProperty("idle_in_transaction_session_timeout");
-      expect(startupParams(pool)).not.toHaveProperty("idle_in_transaction_session_timeout");
-      // Stripped, so the migration runner (which builds its adapter here) cannot inherit it.
+      expect(startupParams(pool).idle_in_transaction_session_timeout).toBe("5000");
+      // Stripped from the connection string, so pg cannot apply it a second time and read "60s" as 60 ms.
       expect(result.connectionString).toBe(BASE_URL);
     });
 
-    test("applies the caller's default when DATABASE_URL does not set it", async () => {
-      const { pool } = await connectAdapter(BASE_URL, APP_DEFAULT);
+    test("sends nothing when DATABASE_URL says 0 — opting out in as many words", async () => {
+      const { pool } = await connectAdapter(`${BASE_URL}?idle_in_transaction_session_timeout=0`);
 
-      expect(startupParams(pool).idle_in_transaction_session_timeout).toBe("60000");
+      expect(pool.options).not.toHaveProperty("idle_in_transaction_session_timeout");
+      expect(startupParams(pool)).not.toHaveProperty("idle_in_transaction_session_timeout");
     });
 
-    test("lets DATABASE_URL override the default, in milliseconds", async () => {
-      const { pool, result } = await connectAdapter(
-        `${BASE_URL}?idle_in_transaction_session_timeout=5000`,
-        APP_DEFAULT
+    test("warns on a parameter that is present but blank, instead of passing for an absent one", async () => {
+      const { pool: empty } = await connectAdapter(`${BASE_URL}?idle_in_transaction_session_timeout=`);
+      const { pool: whitespace } = await connectAdapter(
+        `${BASE_URL}?idle_in_transaction_session_timeout=${encodeURIComponent("  ")}`
       );
 
-      expect(startupParams(pool).idle_in_transaction_session_timeout).toBe("5000");
-      expect(result.connectionString).toBe(BASE_URL);
-    });
-
-    test("sends nothing when DATABASE_URL sets 0 — the opt-out for poolers that reject the parameter", async () => {
-      const { pool } = await connectAdapter(`${BASE_URL}?idle_in_transaction_session_timeout=0`, APP_DEFAULT);
-
-      expect(pool.options).not.toHaveProperty("idle_in_transaction_session_timeout");
-      expect(startupParams(pool)).not.toHaveProperty("idle_in_transaction_session_timeout");
+      // Nothing is sent either way; the point is that the operator hears about the mistake.
+      expect(startupParams(empty)).not.toHaveProperty("idle_in_transaction_session_timeout");
+      expect(startupParams(whitespace)).not.toHaveProperty("idle_in_transaction_session_timeout");
+      expect(loggerWarnMock).toHaveBeenCalledTimes(2);
+      expect(loggerWarnMock).toHaveBeenCalledWith(
+        { idle_in_transaction_session_timeout: "" },
+        expect.stringContaining("Invalid idle_in_transaction_session_timeout")
+      );
     });
 
     test.each([
@@ -307,50 +310,38 @@ describe("createPrismaPgAdapter", () => {
       ["a negative number", "-5"],
       ["a fraction", "1.5"],
       ["a value past Postgres's 32-bit limit", "2147483648"],
-    ])("falls back to the default and warns on %s", async (_, value) => {
+    ])("sends nothing and warns on %s", async (_, value) => {
       const { pool } = await connectAdapter(
-        `${BASE_URL}?idle_in_transaction_session_timeout=${encodeURIComponent(value)}`,
-        APP_DEFAULT
+        `${BASE_URL}?idle_in_transaction_session_timeout=${encodeURIComponent(value)}`
       );
 
-      expect(startupParams(pool).idle_in_transaction_session_timeout).toBe("60000");
+      expect(startupParams(pool)).not.toHaveProperty("idle_in_transaction_session_timeout");
       expect(loggerWarnMock).toHaveBeenCalledWith(
-        { idle_in_transaction_session_timeout: value, default_ms: 60_000 },
+        { idle_in_transaction_session_timeout: value },
         expect.stringContaining("Invalid idle_in_transaction_session_timeout")
       );
       // Never the URL: it carries the database password.
       expect(JSON.stringify(loggerWarnMock.mock.calls)).not.toContain("secret");
     });
 
-    test("sends nothing by default through a declared PgBouncer, which rejects unknown startup parameters", async () => {
-      const { pool } = await connectAdapter(`${BASE_URL}?pgbouncer=true`, APP_DEFAULT);
-
-      expect(pool.options).not.toHaveProperty("idle_in_transaction_session_timeout");
-      expect(startupParams(pool)).not.toHaveProperty("idle_in_transaction_session_timeout");
-      expect(loggerWarnMock).toHaveBeenCalledWith(
-        expect.objectContaining({ reason: "pgbouncer=true" }),
-        expect.stringContaining("declares PgBouncer")
-      );
-      expect(JSON.stringify(loggerWarnMock.mock.calls)).not.toContain("secret");
-    });
-
-    test("still sends an explicit value through a declared PgBouncer — the operator asked for it", async () => {
-      const { pool } = await connectAdapter(
-        `${BASE_URL}?pgbouncer=true&idle_in_transaction_session_timeout=5000`,
-        APP_DEFAULT
-      );
-
-      expect(startupParams(pool).idle_in_transaction_session_timeout).toBe("5000");
-    });
-
     test("accepts Postgres's maximum", async () => {
-      const { pool } = await connectAdapter(
-        `${BASE_URL}?idle_in_transaction_session_timeout=2147483647`,
-        APP_DEFAULT
-      );
+      const { pool } = await connectAdapter(`${BASE_URL}?idle_in_transaction_session_timeout=2147483647`);
 
       expect(startupParams(pool).idle_in_transaction_session_timeout).toBe("2147483647");
       expect(loggerWarnMock).not.toHaveBeenCalled();
+    });
+
+    test("sends an explicit value through a declared PgBouncer, and warns that it will be refused", async () => {
+      const { pool } = await connectAdapter(
+        `${BASE_URL}?pgbouncer=true&idle_in_transaction_session_timeout=5000`
+      );
+
+      expect(startupParams(pool).idle_in_transaction_session_timeout).toBe("5000");
+      expect(loggerWarnMock).toHaveBeenCalledWith(
+        expect.objectContaining({ reason: "pgbouncer=true" }),
+        expect.stringContaining("ignore_startup_parameters")
+      );
+      expect(JSON.stringify(loggerWarnMock.mock.calls)).not.toContain("secret");
     });
   });
 

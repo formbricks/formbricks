@@ -20,13 +20,13 @@ import posthog from "posthog-js";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import type { Workspace } from "@formbricks/database/prisma-browser";
 import type { TSurveyType } from "@formbricks/types/surveys/types";
 import type { TTemplateRole } from "@formbricks/types/templates";
 import type { TUserLocale } from "@formbricks/types/user";
 import { templates } from "@/app/lib/templates";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { type TWorkspaceWithoutCustomCss } from "@/modules/custom-css/lib/types";
 import { CreateWithAIDialog } from "@/modules/survey/components/template-list/components/create-with-ai-dialog";
 import { useCreateSurveyFromTemplate } from "@/modules/survey/components/template-list/hooks/use-create-survey-from-template";
 import { getRoleMapping } from "@/modules/survey/components/template-list/lib/utils";
@@ -61,7 +61,7 @@ const ROLE_COLORS: Record<TTemplateRole, string> = {
 type TDefaultTemplate = { id: string; icon: LucideIcon; title: string; description: string };
 
 interface FeaturedTemplatesProps {
-  workspace: Workspace;
+  workspace: TWorkspaceWithoutCustomCss;
   locale: TUserLocale;
   isAIAvailable: boolean;
   aiUnavailableReason?: TAIUnavailableReason;

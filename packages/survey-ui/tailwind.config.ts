@@ -8,7 +8,9 @@ function getForeground(color: string) {
 }
 
 export default {
-  darkMode: "class",
+  // `dark:` follows the survey's own appearance attribute (set by the renderer on every #fbjs root),
+  // never the host page's `.dark` class or the OS setting.
+  darkMode: ["variant", "&:where([id=fbjs][data-appearance=dark], [id=fbjs][data-appearance=dark] *)"],
   // Scope all utilities to #fbjs when used in surveys package
   // This ensures proper specificity and prevents conflicts with preflight CSS
   important: "#fbjs",
@@ -52,8 +54,11 @@ export default {
         ring: "var(--fb-survey-brand-color)",
         brand: {
           DEFAULT: "var(--fb-survey-brand-color)",
-          "20": "color-mix(in srgb, var(--fb-survey-brand-color) 20%, white)",
+          "20": "color-mix(in srgb, var(--fb-survey-brand-color) 20%, var(--fb-tint-color, white))",
           foreground: getForeground("var(--fb-survey-brand-color)"),
+          // Brand as text and selection indicators: only set in dark, where the raw brand can be unreadable
+          // on the card. Fills (buttons, checked boxes) keep the typed brand (D12).
+          readable: "var(--fb-brand-readable-color, var(--fb-survey-brand-color))",
         },
         // Input CSS variables (shorter names)
         "input-bg": "var(--fb-input-bg-color)",
@@ -63,11 +68,12 @@ export default {
         // Option CSS variables
         "option-bg": "var(--fb-option-bg-color)",
         "option-border":
-          "var(--fb-option-border-color, color-mix(in srgb, var(--fb-option-bg-color) 95%, black 5%))",
+          "var(--fb-option-border-color, color-mix(in srgb, var(--fb-option-bg-color) 95%, var(--fb-shade-color, black) 5%))",
         "option-label": "var(--fb-option-label-color)",
-        "option-selected-bg": "color-mix(in srgb, var(--fb-option-bg-color) 95%, black)",
-        "option-hover-bg": "color-mix(in srgb, var(--fb-option-bg-color) 95%, black)",
-        "input-selected-bg": "color-mix(in srgb, var(--fb-input-bg-color) 95%, black)",
+        "option-selected-bg":
+          "color-mix(in srgb, var(--fb-option-bg-color) 95%, var(--fb-shade-color, black))",
+        "option-hover-bg": "color-mix(in srgb, var(--fb-option-bg-color) 95%, var(--fb-shade-color, black))",
+        "input-selected-bg": "color-mix(in srgb, var(--fb-input-bg-color) 95%, var(--fb-shade-color, black))",
         // Button CSS variables
         "button-bg": "var(--fb-button-bg-color)",
         "button-text": "var(--fb-button-text-color)",

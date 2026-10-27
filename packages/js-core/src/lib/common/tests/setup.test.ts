@@ -1,6 +1,7 @@
 import { type Mock, type MockInstance, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { Config } from "@/lib/common/config";
 import { JS_LOCAL_STORAGE_KEY } from "@/lib/common/constants";
+import { startDebugSession } from "@/lib/common/debug";
 import { addCleanupEventListeners, addEventListeners } from "@/lib/common/event-listeners";
 import { Logger } from "@/lib/common/logger";
 import { handleErrorOnFirstSetup, setup, tearDown } from "@/lib/common/setup";
@@ -10,6 +11,7 @@ import type * as Utils from "@/lib/common/utils";
 import { addLiveRegionContainer } from "@/lib/survey/widget";
 import { DEFAULT_USER_STATE_NO_USER_ID } from "@/lib/user/state";
 import { sendUpdatesToBackend } from "@/lib/user/update";
+import { startVisitTracking } from "@/lib/visit/visit-tracking";
 import { fetchWorkspaceState } from "@/lib/workspace/state";
 import type { TConfig, TConfigUpdateInput } from "@/types/config";
 
@@ -43,6 +45,15 @@ vi.mock("@/lib/common/event-listeners", () => ({
   addEventListeners: vi.fn(),
   addCleanupEventListeners: vi.fn(),
   removeAllEventListeners: vi.fn(),
+}));
+
+// The visit store and the debug panel have their own tests; here they only need to stay out of the way.
+vi.mock("@/lib/visit/visit-tracking", () => ({
+  startVisitTracking: vi.fn(),
+}));
+
+vi.mock("@/lib/common/debug", () => ({
+  startDebugSession: vi.fn(),
 }));
 
 // 5) Mock fetchWorkspaceState
@@ -313,6 +324,60 @@ describe("setup.ts", () => {
       expect(mockLogger.debug).toHaveBeenCalledWith(
         "Formbricks is in error state, but debug mode is active. Resetting config and continuing."
       );
+    });
+
+    test("counts the page before the workspace state arrives", async () => {
+      const mockConfig = { get: vi.fn().mockReturnValue(undefined), resetConfig: vi.fn(), update: vi.fn() };
+      getInstanceConfigMock.mockReturnValue(mockConfig as unknown as Config);
+      // The fetch never settles: a visitor who leaves while it is in flight still saw this page.
+      (fetchWorkspaceState as unknown as Mock).mockReturnValueOnce(new Promise(() => undefined));
+
+      void setup({ workspaceId: "ws_123", appUrl: "https://my.url" });
+      await Promise.resolve();
+
+      expect(fetchWorkspaceState).toHaveBeenCalled();
+      expect(startVisitTracking).toHaveBeenCalledOnce();
+    });
+
+    test("loads the debug panel only once appUrl is known", async () => {
+      (getIsDebug as unknown as Mock).mockReturnValue(true);
+      const mockConfig = { get: vi.fn().mockReturnValue(undefined), resetConfig: vi.fn(), update: vi.fn() };
+      getInstanceConfigMock.mockReturnValue(mockConfig as unknown as Config);
+
+      // The panel script comes from appUrl: injected without one, it would point at the host page
+      // and block the later, valid setup() from loading the real one.
+      const result = await setup({ workspaceId: "ws_123", appUrl: "" });
+
+      expect(result.ok).toBe(false);
+      expect(startVisitTracking).toHaveBeenCalledOnce();
+      expect(startDebugSession).not.toHaveBeenCalled();
+
+      (fetchWorkspaceState as unknown as Mock).mockReturnValueOnce(new Promise(() => undefined));
+      void setup({ workspaceId: "ws_123", appUrl: "https://my.url" });
+      await Promise.resolve();
+
+      expect(startDebugSession).toHaveBeenCalledWith("https://my.url");
+    });
+
+    test("counts the page while Formbricks is in an error state", async () => {
+      (getIsDebug as unknown as Mock).mockReturnValue(false);
+      const mockConfig = {
+        get: vi.fn().mockReturnValue({
+          workspaceId: "ws_123",
+          appUrl: "https://my.url",
+          workspace: {},
+          user: { data: {}, expiresAt: null },
+          status: { value: "error", expiresAt: new Date(Date.now() + 10000) },
+        }),
+        resetConfig: vi.fn(),
+      };
+      getInstanceConfigMock.mockReturnValue(mockConfig as unknown as Config);
+      (isNowExpired as unknown as Mock).mockReturnValue(false);
+
+      await setup({ workspaceId: "ws_123", appUrl: "https://my.url" });
+
+      expect(fetchWorkspaceState).not.toHaveBeenCalled();
+      expect(startVisitTracking).toHaveBeenCalledOnce();
     });
 
     test("skips initialization if error state is active (not expired)", async () => {

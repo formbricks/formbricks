@@ -169,4 +169,77 @@ describe("deleteResponseFileUrls", () => {
     );
     expect(mockDeleteFromS3).not.toHaveBeenCalled();
   });
+
+  // ENG-3612: the cleanup drain retries what this reports, so only a failure that can change on retry
+  // may be reported: a refusal reported as failed would be retried forever.
+  describe("reports which deletes are worth retrying", () => {
+    const own = (name: string) => `/storage/${OWN_WORKSPACE}/private/${name}`;
+
+    beforeEach(() => {
+      mockedResolve.mockImplementation(async (id: string) => ({ id, organizationId: "org-1" }));
+    });
+
+    test("reports storage errors and a throw, but not success, not-found or a refused key", async () => {
+      mockedDeleteFile.mockImplementation((async (_id: string, _access: string, fileName: string) => {
+        if (fileName === "s3-down.png") return { ok: false, error: { code: "s3_client_error" } };
+        if (fileName === "throws.png") throw new Error("socket hang up");
+        if (fileName === "gone.png") return { ok: false, error: { code: "file_not_found_error" } };
+        if (fileName === "refused.png") return { ok: false, error: { code: "invalid_input" } };
+        return { ok: true, data: undefined };
+      }) as never);
+
+      const result = await deleteResponseFileUrls(
+        ["ok.png", "s3-down.png", "throws.png", "gone.png", "refused.png"].map(own),
+        OWN_WORKSPACE
+      );
+
+      expect(result.failed.sort()).toEqual([own("s3-down.png"), own("throws.png")].sort());
+    });
+
+    test("never reports a foreign, unparseable or malformed URL", async () => {
+      mockedResolve.mockResolvedValue({ id: FOREIGN_WORKSPACE, organizationId: "org-2" });
+
+      const result = await deleteResponseFileUrls(
+        [`/storage/${FOREIGN_WORKSPACE}/private/theirs.png`, "not-a-storage-url", own("bad%E0%A4%A.png")],
+        OWN_WORKSPACE
+      );
+
+      expect(result.failed).toEqual([]);
+      expect(mockedDeleteFile).not.toHaveBeenCalled();
+    });
+
+    test("reports a failed workspace lookup, which can succeed on retry", async () => {
+      mockedResolve.mockRejectedValue(new Error("db down"));
+
+      const result = await deleteResponseFileUrls([own("a.png")], OWN_WORKSPACE);
+
+      expect(result.failed).toEqual([own("a.png")]);
+    });
+  });
+
+  // ENG-3721: a response file URL carries the file name the respondent chose, which can be personal data.
+  test("never logs a file name, whatever the outcome", async () => {
+    const secret = "passport_jane_doe.pdf";
+    mockedResolve.mockImplementation(async (id: string) =>
+      id === OWN_WORKSPACE ? { id, organizationId: "org-1" } : { id, organizationId: "org-2" }
+    );
+    mockedDeleteFile.mockImplementation((async () => {
+      throw new Error("socket hang up");
+    }) as never);
+    mockedDeleteFile.mockResolvedValueOnce({ ok: false, error: { code: "s3_client_error" } } as never);
+
+    await deleteResponseFileUrls(
+      [
+        `/storage/${OWN_WORKSPACE}/private/${secret}`,
+        `/storage/${OWN_WORKSPACE}/private/2-${secret}`,
+        `/storage/${FOREIGN_WORKSPACE}/private/${secret}`,
+        `/storage/${OWN_WORKSPACE}/private/bad%E0%A4%A${secret}`,
+        `not-a-storage-url-${secret}`,
+      ],
+      OWN_WORKSPACE
+    );
+
+    expect(vi.mocked(logger.error).mock.calls.length).toBeGreaterThanOrEqual(4);
+    expect(JSON.stringify(vi.mocked(logger.error).mock.calls)).not.toContain("jane_doe");
+  });
 });

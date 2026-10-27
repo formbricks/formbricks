@@ -71,6 +71,7 @@ describe("setup invite rate-limit settlement", () => {
 
     await expect(inviteOrganizationMemberAction({ ctx, parsedInput } as never)).rejects.toBe(error);
 
+    expect(mocks.reserveInviteRateLimit).toHaveBeenCalledWith(organizationId, ctx.user.id);
     expect(mocks.settleInviteRateLimit).toHaveBeenCalledWith(reservation, 0);
     expect(mocks.sendInviteMemberEmail).not.toHaveBeenCalled();
   });

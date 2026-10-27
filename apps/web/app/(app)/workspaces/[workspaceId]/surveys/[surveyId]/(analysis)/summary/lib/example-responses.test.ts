@@ -1,3 +1,4 @@
+import { LEAKY_AI_ERRORS, findPlantedContent } from "@/lib/ai/__mocks__/leaky-ai-errors";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { z } from "zod";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
@@ -18,7 +19,21 @@ const mocks = vi.hoisted(() => ({
   loggerError: vi.fn(),
 }));
 
+const aiTimeoutEnv = vi.hoisted(() => ({ multiplier: 1 }));
+
 vi.mock("server-only", () => ({}));
+vi.mock("@/lib/env", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@/lib/env")>();
+  return {
+    ...original,
+    env: {
+      ...original.env,
+      get AI_TIMEOUT_MULTIPLIER() {
+        return aiTimeoutEnv.multiplier;
+      },
+    },
+  };
+});
 
 vi.mock("@/lib/ai/service", () => ({
   generateOrganizationAIObject: mocks.generateOrganizationAIObject,
@@ -86,7 +101,10 @@ const getOpenTextRowsFromPrompt = (
 };
 
 describe("buildExampleResponsesSchema", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    aiTimeoutEnv.multiplier = 1;
+  });
 
   test("collects supported elements and tracks open-text ids for the text-only LLM schema", () => {
     const survey = makeSurvey([
@@ -171,7 +189,10 @@ describe("buildExampleResponsesSchema", () => {
 });
 
 describe("generateExampleResponseDataset", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    aiTimeoutEnv.multiplier = 1;
+  });
 
   test("returns an empty dataset when the survey has no supported question types", async () => {
     const survey = makeSurvey([
@@ -231,7 +252,8 @@ describe("generateExampleResponseDataset", () => {
     expect(mocks.generateOrganizationAIObject).not.toHaveBeenCalled();
   });
 
-  test("asks the LLM only for open-text answers and merges them with planned answers", async () => {
+  test.each([1, 3])("fills open text at multiplier %i", async (multiplier) => {
+    aiTimeoutEnv.multiplier = multiplier;
     const survey = makeSurvey([
       { ...baseQuestion, id: "q_text", type: TSurveyElementTypeEnum.OpenText },
       { ...baseQuestion, id: "q_nps", type: TSurveyElementTypeEnum.NPS },
@@ -258,7 +280,7 @@ describe("generateExampleResponseDataset", () => {
     expect(call.prompt).not.toContain("Generate 10 diverse example responses");
     expect(call.temperature).toBe(0);
     expect(call.maxOutputTokens).toBe(4096);
-    expect(call.timeout).toBe(45_000);
+    expect(call.timeout).toBe(45_000 * multiplier);
   });
 
   test("chunks large open-text batches and falls back only for failed chunks", async () => {
@@ -303,7 +325,11 @@ describe("generateExampleResponseDataset", () => {
     expect(result.responses[7].data.q_text_1).not.toBe("AI row_7 q_text_1");
     expect(result.responses[7].data.q_text_1).toBeTypeOf("string");
     expect(mocks.loggerError).toHaveBeenCalledWith(
-      { err: providerError, organizationId: "org_1" },
+      {
+        errName: "Error",
+        errStack: expect.stringMatching(/^ +at \S.*(?:\n +at \S.*)*$/),
+        organizationId: "org_1",
+      },
       "Failed to generate open-text example responses with AI; using fallback answers"
     );
   });
@@ -439,10 +465,39 @@ describe("generateExampleResponseDataset", () => {
     expect(result.responses).toHaveLength(EXAMPLE_RESPONSE_COUNT);
     expect(result.responses.some((response) => typeof response.data.q_text === "string")).toBe(true);
     expect(mocks.loggerError).toHaveBeenCalledWith(
-      { err: error, organizationId: "org_1" },
+      {
+        errName: "Error",
+        errStack: expect.stringMatching(/^ +at \S.*(?:\n +at \S.*)*$/),
+        organizationId: "org_1",
+      },
       "Failed to generate open-text example responses with AI; using fallback answers"
     );
   });
+
+  // ENG-3720: the prompt carries the survey's questions, and the AI SDK's errors carry the prompt.
+  test.each(LEAKY_AI_ERRORS)(
+    "logs an open-text call failing with %s without what it carried",
+    async (_, build) => {
+      const survey = makeSurvey([
+        { ...baseQuestion, id: "q_text", type: TSurveyElementTypeEnum.OpenText },
+      ] as unknown as TSurvey["questions"]);
+      const error = build();
+      vi.mocked(mocks.generateOrganizationAIObject).mockRejectedValue(error);
+
+      await generateExampleResponseDataset({
+        survey,
+        organizationId: "org_1",
+        workspaceId: "workspace_1",
+        userId: "user_1",
+      });
+
+      expect(mocks.loggerError).toHaveBeenCalledWith(
+        expect.objectContaining({ errName: error.name, organizationId: "org_1" }),
+        "Failed to generate open-text example responses with AI; using fallback answers"
+      );
+      expect(findPlantedContent(mocks.loggerError.mock.calls)).toBeUndefined();
+    }
+  );
 
   test("strips HTML from headlines before sending them to the LLM", async () => {
     const survey = makeSurvey([
@@ -631,7 +686,10 @@ describe("generateExampleResponseDataset", () => {
 });
 
 describe("response language", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    aiTimeoutEnv.multiplier = 1;
+  });
 
   const withLanguages = (survey: TSurvey, languages: TSurvey["languages"]): TSurvey =>
     ({ ...survey, languages }) as TSurvey;

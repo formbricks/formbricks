@@ -437,7 +437,7 @@ describe("validateV3SurveyReferences", () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      // Uncapped here on purpose: `deriveFailureOrigin` diffs this list against the stored survey's, and
+      // Uncapped here on purpose: `getIntroducedIssues` diffs this list against the stored survey's, and
       // a capped pair would blame the stored survey for a new problem past the cap.
       expect(result.invalidParams).toHaveLength(60);
 

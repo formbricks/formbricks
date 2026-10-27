@@ -10,6 +10,8 @@ import { createOrganization } from "@/lib/organization/service";
 import { capturePostHogEvent, getEmailDomain, groupIdentifyPostHog } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { DEFAULT_WORKSPACE_NAME } from "@/lib/workspace/constants";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { ensureCloudStripeSetupForOrganization } from "@/modules/ee/billing/lib/organization-billing";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -23,6 +25,8 @@ export const createOrganizationAction = authenticatedActionClient
   .inputSchema(ZCreateOrganizationAction)
   .action(
     withAuditLogging("created", "organization", async ({ ctx, parsedInput }) => {
+      await applyRateLimit(rateLimitConfigs.actions.createOrganization, ctx.user.id);
+
       const hasNoOrganizations = await getHasNoOrganizations();
       const isMultiOrgEnabled = await getIsMultiOrgEnabled();
 
@@ -49,9 +53,12 @@ export const createOrganizationAction = authenticatedActionClient
         });
       }
 
-      const newWorkspace = await createWorkspace(newOrganization.id, {
-        name: DEFAULT_WORKSPACE_NAME,
-      });
+      // The organization was created just above and owns no workspaces, so there is no cap to enforce.
+      const newWorkspace = await createWorkspace(
+        newOrganization.id,
+        { name: DEFAULT_WORKSPACE_NAME },
+        { workspaceLimit: null }
+      );
 
       ctx.auditLoggingCtx.organizationId = newOrganization.id;
       ctx.auditLoggingCtx.newObject = newOrganization;

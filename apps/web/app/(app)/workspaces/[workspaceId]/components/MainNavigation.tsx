@@ -31,7 +31,10 @@ import { useLatestStableRelease } from "@/app/(app)/workspaces/[workspaceId]/lib
 import { cn } from "@/lib/cn";
 import { getBillingFallbackPath } from "@/lib/membership/navigation";
 import { getAccessFlags } from "@/lib/membership/utils";
-import { SwitcherDropdownBody } from "@/modules/settings/components/switcher-dropdown-body";
+import {
+  SWITCHER_DROPDOWN_CONTENT_CLASS_NAME,
+  SwitcherDropdownBody,
+} from "@/modules/settings/components/switcher-dropdown-body";
 import { UserDropdown } from "@/modules/settings/components/user-dropdown";
 import { useSwitcherData } from "@/modules/settings/hooks/use-switcher-data";
 import { Badge } from "@/modules/ui/components/badge";
@@ -68,9 +71,8 @@ interface NavigationProps {
 /**
  * A nav section header carrying a Beta badge.
  *
- * Analyze and Act are both pre-1.0 surfaces, and the badge is what tells someone the difference
- * between "this is finished" and "this is early". Extracted rather than duplicated so the two
- * sections cannot drift into looking subtly different from each other.
+ * Act is still a pre-1.0 surface, and the badge is what tells someone the difference between
+ * "this is finished" and "this is early". Analyze graduated out of beta and no longer carries it.
  */
 const sectionLabelWithBeta = (label: React.ReactNode) => (
   <span className="inline-flex items-center gap-2">
@@ -204,7 +206,7 @@ export const MainNavigation = ({
         id: "unify-feedback",
         // Same policy as "Ask" above: product section labels stay English in every locale.
         // Was "Unify" until ENG-2742 settled on Ask / Analyze / Act as the three pillars.
-        name: sectionLabelWithBeta("Analyze"),
+        name: "Analyze",
         items: [
           {
             name: t("workspace.unify.feedback_data"),
@@ -261,11 +263,15 @@ export const MainNavigation = ({
   const [isOrganizationDropdownOpen, setIsOrganizationDropdownOpen] = useState(false);
   const workspaceSwitcher = useSwitcherData(
     () => getWorkspacesForSwitcherAction({ organizationId: organization.id }),
-    t("common.failed_to_load_workspaces")
+    t("common.failed_to_load_workspaces"),
+    undefined,
+    workspace.name
   );
   const organizationSwitcher = useSwitcherData(
     () => getOrganizationsForSwitcherAction({ organizationId: organization.id }),
-    t("common.failed_to_load_organizations")
+    t("common.failed_to_load_organizations"),
+    undefined,
+    organization.name
   );
   const { load: loadWorkspaces } = workspaceSwitcher;
   const { load: loadOrganizations } = organizationSwitcher;
@@ -525,7 +531,12 @@ export const MainNavigation = ({
                         />
                       </button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent side="right" sideOffset={10} alignOffset={5} align="end">
+                    <DropdownMenuContent
+                      side="right"
+                      sideOffset={10}
+                      alignOffset={5}
+                      align="end"
+                      className={SWITCHER_DROPDOWN_CONTENT_CLASS_NAME}>
                       <SwitcherDropdownBody
                         type="workspace"
                         isLoading={workspaceSwitcher.isLoading || isInitialWorkspacesLoading}
@@ -567,7 +578,12 @@ export const MainNavigation = ({
                         />
                       </button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent side="right" sideOffset={10} alignOffset={5} align="end">
+                    <DropdownMenuContent
+                      side="right"
+                      sideOffset={10}
+                      alignOffset={5}
+                      align="end"
+                      className={SWITCHER_DROPDOWN_CONTENT_CLASS_NAME}>
                       <SwitcherDropdownBody
                         type="organization"
                         isLoading={organizationSwitcher.isLoading}

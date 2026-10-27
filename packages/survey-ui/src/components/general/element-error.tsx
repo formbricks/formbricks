@@ -1,5 +1,6 @@
 import { AlertCircle } from "lucide-react";
 import * as React from "react";
+import { FB_PART } from "@/lib/parts";
 import { cn } from "@/lib/utils";
 
 interface ElementErrorProps {
@@ -45,11 +46,13 @@ function ElementError({ errorMessage, dir = "auto", id }: Readonly<ElementErrorP
       {/* Error message - shown at top. The live region is always mounted, even with no message:
           screen readers only reliably announce content inserted into a region that already
           existed, and an aria-describedby target must never be a missing id. While empty it has no
-          children and no classes, so it paints nothing and takes no space. */}
+          children, no classes and no styling hook, so it paints nothing and takes no space — not even
+          when custom CSS gives the error hook a background or border. */}
       <div
         id={id}
         aria-live="polite"
         aria-atomic="true"
+        data-fb-part={errorMessage ? FB_PART.error : undefined}
         className={errorMessage ? "text-destructive mb-2 flex items-center gap-1 text-sm" : undefined}
         dir={dir}>
         {errorMessage ? (

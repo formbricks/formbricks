@@ -1,8 +1,10 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Response, Workspace } from "@formbricks/database/prisma-browser";
+import type { TRendererCustomCss } from "@formbricks/types/custom-css";
 import { getLinkSurveyCardMaxWidth } from "@formbricks/types/styling";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -12,6 +14,7 @@ import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { validateSurveyPinAction } from "@/modules/survey/link/actions";
 import { SurveyClientWrapper } from "@/modules/survey/link/components/survey-client-wrapper";
 import { useAppLocale } from "@/modules/survey/link/hooks/use-app-locale";
+import { isLinkSurveyGoneError } from "@/modules/survey/link/lib/public-access";
 import { OTPInput } from "@/modules/ui/components/otp-input";
 
 interface PinScreenProps {
@@ -65,10 +68,12 @@ export const PinScreen = (props: Readonly<PinScreenProps>) => {
   const [localPinEntry, setLocalPinEntry] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const { t } = useTranslation();
+  const router = useRouter();
   const isLocaleReady = useAppLocale(locale);
   const [error, setError] = useState("");
   const [survey, setSurvey] = useState<TSurvey>();
   const [pinAuthToken, setPinAuthToken] = useState<string | undefined>();
+  const [customCss, setCustomCss] = useState<TRendererCustomCss | undefined>();
   const isCardless = styling.cardArrangement?.linkSurveys === "cardless";
   const linkSurveyCardMaxWidth = getLinkSurveyCardMaxWidth(styling.linkSurveyCardWidth);
 
@@ -95,20 +100,34 @@ export const PinScreen = (props: Readonly<PinScreenProps>) => {
       const isValidPin = validPinRegex.test(localPinEntry);
       if (isValidPin) {
         setLoading(true);
-        const response = await validateSurveyPinAction({ surveyId, pin: localPinEntry });
-        if (response?.data?.survey) {
-          setSurvey(response.data.survey);
-          setPinAuthToken(response.data.pinAuthToken ?? undefined);
-        } else {
-          const errorMessage = getFormattedErrorMessage(response);
-          setError(errorMessage);
+        try {
+          const response = await validateSurveyPinAction({ surveyId, pin: localPinEntry });
+          if (response?.data?.survey) {
+            setSurvey(response.data.survey);
+            setPinAuthToken(response.data.pinAuthToken ?? undefined);
+            setCustomCss(response.data.customCss);
+          } else {
+            setError(getFormattedErrorMessage(response));
+            // "Not found" means the survey stopped taking responses (closed, archived or gone) after this
+            // page loaded (ENG-4032), so no PIN can ever be accepted here. The boxes only show an error as a
+            // red border, so re-render the page and let the server show what a fresh load would.
+            if (isLinkSurveyGoneError(response?.serverError, surveyId)) {
+              router.refresh();
+            }
+          }
+        } catch {
+          // A rejected call (offline, or an action id a newer deploy no longer serves) must still release the
+          // PIN boxes, or they stay disabled for good.
+          // Only its presence is shown (a red border), so the text is never rendered.
+          setError("UNEXPECTED_ERROR");
+        } finally {
+          setLoading(false);
         }
-        setLoading(false);
       }
     };
 
     void validateSurveyPin();
-  }, [localPinEntry, surveyId]);
+  }, [localPinEntry, router, surveyId]);
 
   if (!survey) {
     // The gate is nothing but translated chrome, so it waits for its locale instead of asking for the
@@ -162,6 +181,7 @@ export const PinScreen = (props: Readonly<PinScreenProps>) => {
       TERMS_URL={TERMS_URL}
       IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
       pinAuthToken={pinAuthToken}
+      customCss={customCss}
     />
   );
 };

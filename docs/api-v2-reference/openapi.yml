@@ -3538,7 +3538,11 @@ paths:
       operationId: updateUser
       summary: Update a user
       description: Updates an existing user in the database.<br />Only available for
-        self-hosted Formbricks.
+        self-hosted Formbricks.<br />`name` and `isActive` apply to the whole
+        account, so they can only be changed for a user who belongs to this
+        organization alone. For a user who also belongs to other organizations,
+        a request that changes either is rejected with 409 and nothing in it is
+        applied.
       tags:
         - Organizations API - Users
       parameters:
@@ -5518,6 +5522,9 @@ components:
             - number
             - "null"
           description: Auto close time in seconds
+        keepEndingCardOpen:
+          type: boolean
+          description: Keep the ending card open until the respondent closes it instead of closing after 3 seconds
         autoComplete:
           type:
             - number
@@ -5825,6 +5832,7 @@ components:
         - recontactDays
         - displayLimit
         - autoClose
+        - keepEndingCardOpen
         - autoComplete
         - delay
         - surveyClosedMessage

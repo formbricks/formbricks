@@ -1,10 +1,6 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, test } from "vitest";
+import { beforeAll, beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
-import {
-  dropLegacySurveyColumns,
-  restoreLegacySurveyColumns,
-  setLegacySurveyColumns,
-} from "@/integration/legacy-survey-columns";
+import { restoreLegacySurveyColumns, setLegacySurveyColumns } from "@/integration/legacy-survey-columns";
 import { resetDb } from "@/integration/reset-db";
 // The data migration under test (auto-discovered by the migration runner at deploy).
 import { backfillEmbeddedDataRows } from "../../../packages/database/migration/20260812121944_backfill_embedded_data/migration";
@@ -68,10 +64,6 @@ const numberVariable = { id: "clx000000000000000000001", name: "score", type: "n
 
 beforeAll(async () => {
   await restoreLegacySurveyColumns();
-});
-
-afterAll(async () => {
-  await dropLegacySurveyColumns();
 });
 
 beforeEach(async () => {

@@ -414,6 +414,17 @@
     border-radius: 8px;
   }
 
+  /* Thin thumb on a transparent track, for scroll areas inside menus and popovers where the
+     default grey track reads as a second frame. */
+  .subtle-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+  }
+
+  .subtle-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
   input:focus,
   textarea:focus {
     --tw-ring-color: none;

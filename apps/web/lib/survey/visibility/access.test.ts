@@ -60,19 +60,19 @@ describe("deriveSurveyAccess", () => {
     ["api key", row("workspace"), apiKey, on, { canManageVisibility: false, via: "workspace" }],
     // Entitlement off keeps restricted surveys hidden but takes the controls away (README §5 row 2).
     ["owner, unentitled", row("restricted"), owner, unentitled, { canManageVisibility: false, via: "owner" }],
-    // Marker off: everything reads as workspace-visible, no controls (README §5 row 3).
-    ["owner, marker off", row("restricted"), owner, off, { canManageVisibility: false, via: "workspace" }],
+    // Marker off: stored visibility remains enforced, no controls (README §5 row 3).
+    ["owner, marker off", row("restricted"), owner, off, { canManageVisibility: false, via: "owner" }],
   ] as const)("%s", (_label, survey, ctx, gates, expected) => {
     expect(deriveSurveyAccess(survey, ctx, gates)).toEqual(expected);
   });
 });
 
 describe("getReportedVisibility", () => {
-  test("reports the enforced value: pending counts as restricted, marker off reads as workspace", () => {
+  test("reports the enforced value: pending counts as restricted, marker off still enforces stored restrictions", () => {
     expect(getReportedVisibility(row("restricted"), on)).toBe("restricted");
     expect(getReportedVisibility(row("workspace", true), on)).toBe("restricted");
     expect(getReportedVisibility(row("workspace"), on)).toBe("workspace");
-    expect(getReportedVisibility(row("restricted"), off)).toBe("workspace");
+    expect(getReportedVisibility(row("restricted"), off)).toBe("restricted");
   });
 });
 
