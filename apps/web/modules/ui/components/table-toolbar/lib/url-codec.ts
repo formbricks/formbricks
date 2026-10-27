@@ -1,4 +1,5 @@
 import { DATE_RANGE_PRESETS, type TDateRangePreset } from "@/lib/date-ranges";
+import { coversAllValues, getFixedValues } from "./filter-state";
 import { operatorTakesValue, operatorTakesValues } from "./operators";
 import {
   TABLE_FILTER_OPERATORS,
@@ -77,6 +78,8 @@ const normalizeFilter = (property: TFilterProperty, filter: TTableFilter): TTabl
     const [from, to] = validValues;
     return from <= to ? { ...filter, values: [from, to] } : { ...filter, values: [to, from] };
   }
+  // Ticking every value of a fixed list keeps every row: a shared link with it reads as no filter.
+  if (filter.operator === "in" && coversAllValues(values, getFixedValues(property))) return null;
   if (filter.operator === "in" || operatorTakesValues(filter.operator)) {
     return values.length > 0 ? { ...filter, values: values.slice(0, MAX_FILTER_VALUES) } : null;
   }

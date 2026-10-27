@@ -22,6 +22,7 @@ const properties: TFilterProperty[] = [
     options: [
       { label: "Draft", value: "draft" },
       { label: "Live", value: "live" },
+      { label: "Closed", value: "closed" },
     ],
   },
   { id: "name", label: "Name", valueType: "string", ruleOperators: ["contains"] },

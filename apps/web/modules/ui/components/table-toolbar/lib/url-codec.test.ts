@@ -26,6 +26,7 @@ const properties: TFilterProperty[] = [
     options: [
       { value: "draft", label: "Draft" },
       { value: "inProgress", label: "In progress" },
+      { value: "paused", label: "Paused" },
     ],
   },
   { id: "createdAt", label: "Created", valueType: "date", quick: true, ruleOperators: ["isBefore"] },
@@ -246,5 +247,19 @@ describe("every operator round-trips through the URL", () => {
       for (const [key, value] of serializeTableFilters([filter])) params.append(key, value);
       expect(parseTableFilters(params, allProperties)).toEqual([filter]);
     }
+  });
+});
+
+describe("a link that ticks every value", () => {
+  test("reads as no filter, while a partial list and the hidden switch still apply", () => {
+    expect(parse("filter[status][in]=draft&filter[status][in]=inProgress&filter[status][in]=paused")).toEqual(
+      []
+    );
+    expect(parse("filter[status][in]=draft")).toEqual([
+      { property: "status", operator: "in", values: ["draft"] },
+    ]);
+    expect(parse("filter[archived][in]=true")).toEqual([
+      { property: "archived", operator: "in", values: ["true"] },
+    ]);
   });
 });

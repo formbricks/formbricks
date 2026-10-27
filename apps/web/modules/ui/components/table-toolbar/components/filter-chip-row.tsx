@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
 import { getChipParts } from "../lib/chip-label";
 import {
+  getFixedValues,
   isQuickFilter,
   removeFilterAt,
   setDateQuickFilter,
@@ -59,7 +60,9 @@ const QuickFilterChip = ({
           <FilterValueList
             property={property}
             selected={filter.values}
-            onToggle={(value) => onFiltersChange(toggleQuickFilterValue(filters, property.id, value))}
+            onToggle={(value) =>
+              onFiltersChange(toggleQuickFilterValue(filters, property.id, value, getFixedValues(property)))
+            }
           />
         )}
       </PopoverContent>

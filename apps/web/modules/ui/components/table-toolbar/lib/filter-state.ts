@@ -1,4 +1,4 @@
-import type { TTableFilter } from "./types";
+import type { TFilterProperty, TTableFilter } from "./types";
 
 // Pure edits on a table's active filters. Each returns a new list; the toolbar writes it to the URL.
 
@@ -11,21 +11,41 @@ export const getQuickFilter = (
 ): TTableFilter | undefined =>
   filters.find((filter) => filter.property === property && isQuickFilter(filter));
 
-/** Ticks or unticks one value of an enum quick filter; unticking the last value removes the filter. */
+/**
+ * Every value a property can hold, when its list is fixed and has a choice in it; undefined for lists
+ * loaded on demand, single-value switches and hidden view switches (Show archived), where "all" still
+ * means something.
+ */
+export const getFixedValues = (property: TFilterProperty): string[] | undefined => {
+  if (!property.options || property.loadOptions || property.hidden || property.options.length < 2) {
+    return undefined;
+  }
+  return property.options.map((option) => option.value);
+};
+
+/** Whether ticked values cover a fixed list completely: a filter that keeps every row filters nothing. */
+export const coversAllValues = (values: readonly string[], allValues: readonly string[] | undefined) =>
+  !!allValues && allValues.length > 0 && allValues.every((value) => values.includes(value));
+
+/**
+ * Ticks or unticks one value of an enum quick filter. Unticking the last value removes the filter, and so
+ * does ticking every value of a fixed list: "any status" is no filter, and should page like none.
+ */
 export const toggleQuickFilterValue = (
   filters: readonly TTableFilter[],
   property: string,
-  value: string
+  value: string,
+  allValues?: readonly string[]
 ): TTableFilter[] => {
   const current = getQuickFilter(filters, property);
-  if (!current) return [...filters, { property, operator: "in", values: [value] }];
-
-  const values = current.values.includes(value)
-    ? current.values.filter((existing) => existing !== value)
-    : [...current.values, value];
-  return values.length === 0
-    ? filters.filter((filter) => filter !== current)
-    : filters.map((filter) => (filter === current ? { ...filter, values } : filter));
+  const previous = current?.values ?? [];
+  const values = previous.includes(value)
+    ? previous.filter((existing) => existing !== value)
+    : [...previous, value];
+  const rest = filters.filter((filter) => filter !== current);
+  if (values.length === 0 || coversAllValues(values, allValues)) return rest;
+  if (!current) return [...filters, { property, operator: "in", values }];
+  return filters.map((filter) => (filter === current ? { ...filter, values } : filter));
 };
 
 /** Sets a property's date quick filter to a preset or a range, replacing the one it had. */

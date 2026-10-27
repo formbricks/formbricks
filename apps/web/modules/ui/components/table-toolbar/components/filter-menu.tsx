@@ -14,7 +14,12 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
-import { getQuickFilter, setDateQuickFilter, toggleQuickFilterValue } from "../lib/filter-state";
+import {
+  getFixedValues,
+  getQuickFilter,
+  setDateQuickFilter,
+  toggleQuickFilterValue,
+} from "../lib/filter-state";
 import type { TFilterProperty, TTableFilter } from "../lib/types";
 import { DateFilterEditor } from "./date-filter-editor";
 import { FilterValueList } from "./filter-value-list";
@@ -101,7 +106,9 @@ export const FilterMenu = ({
                       property={property}
                       selected={current?.values ?? []}
                       onToggle={(value) =>
-                        onFiltersChange(toggleQuickFilterValue(filters, property.id, value))
+                        onFiltersChange(
+                          toggleQuickFilterValue(filters, property.id, value, getFixedValues(property))
+                        )
                       }
                     />
                   )}
