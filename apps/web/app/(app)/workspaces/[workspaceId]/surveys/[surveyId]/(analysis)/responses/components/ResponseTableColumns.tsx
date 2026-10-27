@@ -4,6 +4,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { TFunction } from "i18next";
 import { CircleHelpIcon, EyeOffIcon, MailIcon, TagIcon } from "lucide-react";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { labelEmbeddedFields } from "@formbricks/types/embedded-data-label";
 import {
   getComputedEmbeddedFields,
@@ -28,6 +29,7 @@ import { IdBadge } from "@/modules/ui/components/id-badge";
 import { ResponseBadges } from "@/modules/ui/components/response-badges";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { cn } from "@/modules/ui/lib/utils";
+import { isEmptyCellContent, isEmptyResponseValue } from "../lib/empty-cell";
 import {
   RESERVED_COLUMN_ENTRIES,
   getAddressFieldLabel,
@@ -36,6 +38,23 @@ import {
   getReservedColumnLabel,
   reservedColumnId,
 } from "../lib/utils";
+
+/** What a cell with no value shows, as in every other table. */
+const EMPTY_CELL = <span className="text-slate-400">—</span>;
+
+/** A column whose cell shows a dash instead of rendering nothing. */
+const withEmptyDash = (column: ColumnDef<TResponseTableData>): ColumnDef<TResponseTableData> => {
+  const render = column.cell;
+  if (render !== undefined && typeof render !== "function") return column;
+  return {
+    ...column,
+    cell: (context) => {
+      // A column without a cell renderer shows its raw value, which may be empty too.
+      const content = (render ? render(context) : context.getValue()) as ReactNode;
+      return isEmptyCellContent(content) ? EMPTY_CELL : content;
+    },
+  };
+};
 
 const COMPACT_DATE_TIME: Intl.DateTimeFormatOptions = {
   year: "numeric",
@@ -182,6 +201,7 @@ const getElementColumnsData = (
           meta: { label: elementHeadline },
           cell: ({ row }) => {
             const responseValue = row.original.responseData[element.id];
+            if (isEmptyResponseValue(responseValue)) return EMPTY_CELL;
             const language = row.original.language;
             return (
               <RenderResponse
@@ -240,6 +260,7 @@ const getElementColumnsData = (
           ),
           cell: ({ row }) => {
             const responseValue = row.original.responseData[element.id];
+            if (isEmptyResponseValue(responseValue)) return EMPTY_CELL;
             const language = row.original.language;
             return (
               <RenderResponse
@@ -496,5 +517,6 @@ export const generateResponseTableColumns = (
     tagsColumn,
   ];
 
-  return isReadOnly ? baseColumns : [getSelectionColumn(), ...baseColumns];
+  const columns = baseColumns.map(withEmptyDash);
+  return isReadOnly ? columns : [getSelectionColumn(), ...columns];
 };
