@@ -14,7 +14,6 @@ import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
 import { ImageAltTextButton } from "@/modules/survey/components/element-form-input/components/image-alt-text-button";
 import { isValueIncomplete } from "@/modules/survey/components/element-form-input/utils";
-import { ValidationRulesEditor } from "@/modules/survey/editor/components/validation-rules-editor";
 import { Button } from "@/modules/ui/components/button";
 import { FileInput } from "@/modules/ui/components/file-input";
 import { Label } from "@/modules/ui/components/label";
@@ -219,18 +218,6 @@ export const PictureSelectionForm = ({
           </div>
         </Label>
       </div>
-      {element.allowMulti && (
-        <ValidationRulesEditor
-          elementType={element.type}
-          validation={element.validation}
-          onUpdateValidation={(validation) => {
-            updateElement(elementIdx, {
-              validation,
-            });
-          }}
-          element={element}
-        />
-      )}
     </form>
   );
 };

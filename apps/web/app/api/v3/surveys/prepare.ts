@@ -1,4 +1,9 @@
 import { isDeepStrictEqual } from "node:util";
+import {
+  type TPublishedLockViolation,
+  type TPublishedLockViolationKind,
+  getPublishedLockViolations,
+} from "@formbricks/types/surveys/published-lock";
 import type { TSurvey as TInternalSurvey } from "@formbricks/types/surveys/types";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { toCustomCssSource } from "@/modules/custom-css/lib/source";
@@ -289,6 +294,38 @@ function getImmutableElementIdIssues(
   });
 
   return issues;
+}
+
+const PUBLISHED_LOCK_INVALID_PARAM_CODES = {
+  question_code_changed: "immutable_question_code",
+  answer_code_changed: "immutable_answer_code",
+  question_type_changed: "immutable_question_type",
+  option_text_changed: "immutable_option_text",
+  option_deleted: "immutable_option_deletion",
+} as const satisfies Record<TPublishedLockViolationKind, InvalidParam["code"]>;
+
+/**
+ * ENG-6783: the published lock (ADR 0015) as v3 invalid params. Unlike `getImmutableElementIdIssues`
+ * this matches by element id and option id against the stored document, so it holds for reordered and
+ * moved elements, and it covers codes, question types and option text, not just element ids.
+ */
+export function getPublishedLockIssues(
+  currentDocument: TV3SurveyDocument,
+  patchedDocument: TV3SurveyDocument
+): InvalidParam[] {
+  return getPublishedLockViolations(currentDocument, patchedDocument).map(
+    (violation: TPublishedLockViolation): InvalidParam => ({
+      // The document keys the default language's text as `default`; the wire speaks its language code.
+      name: (violation.languageCode === "default"
+        ? [...violation.path.slice(0, -1), currentDocument.defaultLanguage]
+        : violation.path
+      ).join("."),
+      reason: violation.message,
+      code: PUBLISHED_LOCK_INVALID_PARAM_CODES[violation.kind],
+      identifier: violation.optionId ?? violation.elementId,
+      referenceType: "element",
+    })
+  );
 }
 
 /**
@@ -584,6 +621,11 @@ export function prepareV3SurveyPatchInput(
   const immutableElementIdIssues = getImmutableElementIdIssues(currentDocument.document, patchedDocument);
   if (immutableElementIdIssues.length > 0) {
     return invalidPreparation(immutableElementIdIssues);
+  }
+
+  const publishedLockIssues = getPublishedLockIssues(currentDocument.document, patchedDocument);
+  if (publishedLockIssues.length > 0) {
+    return invalidPreparation(publishedLockIssues);
   }
 
   // `introduced`: only ordering violations this request newly creates are rejected. Enforcing the
