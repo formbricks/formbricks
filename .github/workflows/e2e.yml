@@ -18,12 +18,13 @@ jobs:
     name: Run E2E Tests
     # Browsers run on this runner (the Azure Playwright service is retired, ENG-3763). Default is an
     # 8 vCPU Blacksmith runner: measured 7.6–8.7 min per job against 17.8+ on GitHub's 4 vCPU runner.
-    # The repository variable E2E_RUNNER overrides it, and setting it to `ubuntu-latest` is the
-    # rollback; Playwright sizes its workers to the runner's CPUs. A label with no runner behind it
-    # queues until the job timeout, so check the runner exists before setting it. Fork PRs stay on
+    # For non-fork runs, E2E_RUNNER overrides it; `ubuntu-24.04` is the GitHub-hosted rollback.
+    # Fork PRs ignore E2E_RUNNER. Playwright sizes its workers to the runner's CPUs. A label with no
+    # runner behind it queues until the job timeout, so check it exists before setting it. Fork PRs stay on
     # GitHub's free runner: a third-party runner may not serve them, and they shouldn't spend paid
-    # minutes. merge_group and same-repo PRs have no fork flag and take the default.
-    runs-on: ${{ github.event.pull_request.head.repo.fork && 'ubuntu-latest' || vars.E2E_RUNNER || 'blacksmith-8vcpu-ubuntu-2404' }}
+    # minutes. Pin their OS too: Playwright 1.58.2 does not support Ubuntu 26.04.
+    # merge_group and same-repo PRs have no fork flag and take the default.
+    runs-on: ${{ github.event.pull_request.head.repo.fork && 'ubuntu-24.04' || vars.E2E_RUNNER || 'blacksmith-8vcpu-ubuntu-2404' }}
     # Chosen so the step timeouts below always fire FIRST, because a step timeout names
     # the culprit while a job timeout just says "exceeded the maximum execution time" —
     # the opaque symptom this workflow is being changed to eliminate.
@@ -57,7 +58,7 @@ jobs:
       # The egress audit only happens on GitHub-hosted runners. On Blacksmith the action logs "TLS is not
       # enabled for this organization. Bravo agent installation skipped" and no agent runs, so outbound
       # calls from this job are not audited there. It is audit-only (nothing is blocked), and fork PRs,
-      # which run on ubuntu-latest, are still audited. Enabling StepSecurity's third-party runner support
+      # which run on ubuntu-24.04, are still audited. Enabling StepSecurity's third-party runner support
       # for the organization would close the gap.
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
