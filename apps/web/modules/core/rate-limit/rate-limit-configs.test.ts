@@ -79,18 +79,21 @@ describe("rateLimitConfigs", () => {
         interval: 3600,
         allowedPerInterval: 5,
         namespace: "auth:reset-password",
+        failClosed: true,
       });
       // Per-account cap on forgot-password mail (ENG-3640): loosening it re-opens inbox flooding.
       expect(rateLimitConfigs.auth.forgotPasswordPerAccount).toEqual({
         interval: 3600,
         allowedPerInterval: 3,
         namespace: "auth:forgot:account",
+        failClosed: true,
       });
       // Below email_verification's per-recipient cap of 5, so strangers cannot spend all of it (ENG-3823).
       expect(rateLimitConfigs.auth.verifyEmailPerAccount).toEqual({
         interval: 3600,
         allowedPerInterval: 3,
         namespace: "auth:verify:account",
+        failClosed: true,
       });
       // The values, not just the key: emailToken throttles an unauthenticated endpoint that also
       // reveals whether an address is registered, so a loosened quota is a security regression.
@@ -98,6 +101,7 @@ describe("rateLimitConfigs", () => {
         interval: 3600,
         allowedPerInterval: 10,
         namespace: "auth:email-token",
+        failClosed: true,
       });
       // How often one IP can make the SAML callback parse an anonymous XML document (ENG-3973).
       expect(rateLimitConfigs.auth.samlCallback).toEqual({
@@ -175,16 +179,19 @@ describe("rateLimitConfigs", () => {
         interval: 3600 * 24,
         allowedPerInterval: 50,
         namespace: "action:invite-member",
+        failClosed: true,
       });
       expect(rateLimitConfigs.actions.inviteMemberPerUser).toEqual({
         interval: 3600 * 24,
         allowedPerInterval: 50,
         namespace: "action:invite-member:user",
+        failClosed: true,
       });
       expect(rateLimitConfigs.actions.createOrganization).toEqual({
         interval: 3600 * 24,
         allowedPerInterval: 5,
         namespace: "action:create-organization",
+        failClosed: true,
       });
       expect(rateLimitConfigs.actions.aiChartGeneration).toEqual({
         interval: 60,
@@ -236,6 +243,46 @@ describe("rateLimitConfigs", () => {
 
       const uniqueNamespaces = new Set(allNamespaces);
       expect(uniqueNamespaces.size).toBe(allNamespaces.length);
+    });
+
+    // docs/adr/0015-abuse-limits-fail-closed.md: abuse limits refuse while Redis is down, throughput
+    // limits never do, or a Redis blip would take the whole app down.
+    test("abuse limits fail closed and throughput limits fail open", () => {
+      const { auth, api, actions } = rateLimitConfigs;
+      const abuseLimits = [
+        auth.signup,
+        auth.forgotPassword,
+        auth.forgotPasswordPerAccount,
+        auth.resetPassword,
+        auth.verifyEmail,
+        auth.verifyEmailPerAccount,
+        auth.emailToken,
+        api.mcpAuth,
+        actions.emailUpdate,
+        actions.passwordResetRequest,
+        actions.accountDeletion,
+        actions.surveyFollowUp,
+        actions.sendLinkSurveyEmail,
+        actions.validateSurveyPin,
+        actions.inviteMember,
+        actions.inviteMemberPerUser,
+        actions.createOrganization,
+      ];
+      const throughputLimits = [
+        api.v1,
+        api.v2,
+        api.v3,
+        api.client,
+        api.clientEnvironment,
+        actions.stateMutation,
+      ];
+
+      for (const config of abuseLimits) {
+        expect(config, config.namespace).toHaveProperty("failClosed", true);
+      }
+      for (const config of throughputLimits) {
+        expect(config, config.namespace).not.toHaveProperty("failClosed");
+      }
     });
   });
 
