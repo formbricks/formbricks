@@ -18,6 +18,8 @@ Work items live as Linear issues in the Engineering team (`ENG`); specs and PRDs
 
 PRs link to issues through the template's ticket line (`Fixes ENG-1234` / `Ref ENG-1234`) and the branch name (`type/ENG-1234_feature`). PRs are not a triage surface.
 
+A PR built from a spec, including the draft PR `/implement-spec` opens, names the build's Linear issue on that line. The spec document and local tickets have no issue identifier, so the PR never references them.
+
 ## When a skill says "publish to the issue tracker"
 
 Create a Linear issue in `ENG`, in the project the work belongs to. Issues are for units of work.
@@ -39,7 +41,9 @@ Pick the path from those two questions:
 | Outgrows one session, one engineer runs it | `/to-tickets`, then `/implement-spec` to build them in parallel, or `/implement` per ticket in a fresh session each | Local files under `.scratch/<feature-slug>/issues/`, plus one Linear issue for the build, which the PR closes |
 | Engineers split it                         | `/to-tickets`, then each engineer runs `/implement` per ticket                                                      | Linear issues, as in Conventions, with `blockedBy` edges                                                      |
 
-Local tickets are the agent's working files: they follow `/to-tickets`' local template, close by setting their `Status:` line to `done`, and stay out of git (`.scratch/` is gitignored).
+This table decides where `/to-tickets` publishes, ahead of the configured tracker: the middle row writes local files even though the tracker is Linear.
+
+Local tickets are the agent's working files: they follow `/to-tickets`' local template, close by setting their `Status:` line to `done` (whenever a skill says to resolve a ticket the way the tracker closes work), and stay out of git (`.scratch/` is gitignored).
 
 When `/to-tickets` asks about granularity, cut the coarsest vertical slices that still fit one fresh context window.
 
