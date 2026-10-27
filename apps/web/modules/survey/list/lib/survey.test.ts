@@ -400,7 +400,9 @@ describe("copySurveyToOtherWorkspace", () => {
         }),
       })
     );
-    expect(checkForInvalidMediaInBlocks).toHaveBeenCalledWith(mockExistingSurveyDetails.blocks);
+    expect(checkForInvalidMediaInBlocks).toHaveBeenCalledWith([
+      expect.objectContaining({ id: "block1", name: "Block 1" }),
+    ]);
   });
 
   // Resolve only what the query selects, the way Prisma does. Returning the whole survey regardless
@@ -412,6 +414,40 @@ describe("copySurveyToOtherWorkspace", () => {
         Object.fromEntries(Object.keys(select).map((column) => [column, sourceSurvey[column]]))
       )) as never);
   };
+
+  test("keeps every code of the source and codes what an older survey never had (ENG-6782)", async () => {
+    mockSourceSurvey({
+      blocks: [
+        {
+          id: "block1",
+          name: "Block 1",
+          elements: [
+            {
+              id: "a",
+              type: "multipleChoiceSingle",
+              code: "age",
+              headline: { default: "Age?" },
+              choices: [
+                { id: "c1", code: "7", label: { default: "Young" } },
+                { id: "c2", label: { default: "Old" } },
+              ],
+            },
+            { id: "b", type: "openText", headline: { default: "Why?" } },
+          ],
+        },
+      ],
+    });
+
+    await copySurveyToOtherWorkspace(sourceWorkspaceId, surveyId, sourceWorkspaceId, userId);
+
+    const { data } = vi.mocked(prisma.survey.create).mock.calls[0][0] as unknown as {
+      data: { blocks: { elements: { code: string; choices?: { code: string }[] }[] }[] };
+    };
+    const [first, second] = data.blocks[0].elements;
+    expect(first.code).toBe("age");
+    expect(first.choices?.map((choice) => choice.code)).toEqual(["7", "8"]);
+    expect(second.code).toBe("q1");
+  });
 
   test("carries the source survey's behaviour and security settings onto the copy", async () => {
     const configuredSettings = {

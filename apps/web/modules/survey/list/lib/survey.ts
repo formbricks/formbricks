@@ -20,6 +20,7 @@ import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyFilterCriteria } from "@formbricks/types/surveys/types";
 import { reconcileEmbeddedData } from "@/lib/embedded-data/reconcile";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
+import { fillSurveyBlockCodes } from "@/lib/survey/fill-codes";
 import { checkForInvalidMediaInBlocks } from "@/lib/survey/utils";
 import type { TSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { resolveSurveyCreationFacts } from "@/lib/survey/visibility/creation";
@@ -325,7 +326,10 @@ export const copySurveyToOtherWorkspace = async (
       type: existingSurvey.type,
       status: "draft",
       welcomeCard: structuredClone(existingSurvey.welcomeCard),
-      blocks: structuredClone(existingSurvey.blocks),
+      // ENG-6782: the copy keeps every code; an older survey that never had any is coded here.
+      blocks: fillSurveyBlockCodes(structuredClone(existingSurvey.blocks), {
+        embeddedFields: copiedEmbeddedFields,
+      }),
       endings: structuredClone(existingSurvey.endings),
       languages: hasLanguages
         ? {

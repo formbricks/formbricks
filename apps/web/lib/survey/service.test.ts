@@ -392,6 +392,46 @@ describe("Tests for updateSurvey", () => {
       });
     });
 
+    test("fills the question and answer codes the editor payload lacks before writing blocks (ENG-6782)", async () => {
+      prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+      prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);
+
+      await updateSurvey(updateSurveyInput);
+
+      const written = vi.mocked(prisma.survey.update).mock.calls.at(0)?.[0].data.blocks as {
+        elements: { type: string; code?: string; choices?: { code?: string }[] }[];
+      }[];
+      const elements = written.flatMap((block) => block.elements);
+      const coded = elements.filter((element) => element.type !== "cta");
+      expect(coded.length).toBeGreaterThan(0);
+      expect(coded.map((element) => element.code)).toEqual(coded.map((_, index) => `q${index + 1}`));
+      for (const element of coded) {
+        element.choices?.forEach((choice, index) => expect(choice.code).toBe(String(index + 1)));
+      }
+    });
+
+    test("keeps the stored code of an element a payload re-sends without one (ENG-6782)", async () => {
+      const [firstBlock, ...otherBlocks] = mockSurveyOutput.blocks as unknown as {
+        elements: Record<string, unknown>[];
+      }[];
+      const [firstElement, ...otherElements] = firstBlock.elements;
+      prisma.survey.findUnique.mockResolvedValueOnce({
+        ...mockSurveyOutput,
+        blocks: [
+          { ...firstBlock, elements: [{ ...firstElement, code: "age" }, ...otherElements] },
+          ...otherBlocks,
+        ],
+      } as never);
+      prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);
+
+      await updateSurvey(updateSurveyInput);
+
+      const written = vi.mocked(prisma.survey.update).mock.calls.at(0)?.[0].data.blocks as {
+        elements: { id: string; code?: string }[];
+      }[];
+      expect(written[0].elements.find((element) => element.id === firstElement.id)?.code).toBe("age");
+    });
+
     test("deletes a removed language even when it was enabled", async () => {
       // The current survey carries en (default) and de, both enabled; the update keeps only en.
       prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
@@ -1447,6 +1487,30 @@ describe("Tests for createSurvey", () => {
       expect(prisma.survey.create).toHaveBeenCalled();
       expect(result.name).toEqual(mockSurveyOutput.name);
       expect(subscribeOrganizationMembersToSurveyResponses).toHaveBeenCalled();
+    });
+
+    test("fills the codes a created survey lacks (ENG-6782)", async () => {
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
+      prisma.survey.create.mockResolvedValueOnce({ ...mockSurveyOutput });
+
+      await createSurvey(
+        mockWorkspaceId,
+        {
+          ...mockCreateSurveyInput,
+          questions: undefined,
+          blocks: updateSurveyInput.blocks,
+        } as never,
+        { creationFacts: WORKSPACE_CREATION_FACTS }
+      );
+
+      const { data } = prisma.survey.create.mock.calls[0][0] as {
+        data: { blocks: { elements: { type: string; code?: string }[] }[] };
+      };
+      const coded = data.blocks
+        .flatMap((block) => block.elements)
+        .filter((element) => element.type !== "cta");
+      expect(coded.length).toBeGreaterThan(0);
+      expect(coded.map((element) => element.code)).toEqual(coded.map((_, index) => `q${index + 1}`));
     });
 
     test("writes the visibility and owner it was handed, not anything from the body (ENG-3282)", async () => {
