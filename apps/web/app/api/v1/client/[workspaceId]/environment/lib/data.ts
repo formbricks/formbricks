@@ -20,9 +20,11 @@ import { toLegacyLanguageCodes } from "@/lib/i18n/utils";
 import { validateInputs } from "@/lib/utils/validate";
 import {
   MAX_DELIVERED_CREATIVES,
+  type TDeliveredCreativeRow,
   deliveredCreativeSelect,
-  getDeliverableCreativesWhere,
+  getCreativesShowingNowWhere,
   getPopupSurveyIds,
+  getUpcomingCreativesWhere,
   toCreativePayloads,
 } from "@/modules/ee/creatives/lib/delivery";
 import { getIsCreativesEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -159,6 +161,29 @@ const appSurveySelect = {
 } satisfies Prisma.SurveySelect;
 
 /**
+ * The creatives the payload carries: those that can show now, then the soonest upcoming ones in the
+ * capacity left, so creatives scheduled for later never push out one that is showing. An upcoming one
+ * past the cap arrives once it has started, with the next payload the SDK reads (every 30 minutes).
+ * Newest first, like `showingNow`.
+ */
+const withUpcomingCreatives = async (
+  workspaceId: string,
+  showingNow: TDeliveredCreativeRow[],
+  now: Date
+): Promise<TDeliveredCreativeRow[]> => {
+  const capacity = MAX_DELIVERED_CREATIVES - showingNow.length;
+  if (capacity <= 0) return showingNow;
+  const upcoming = await prisma.creative.findMany({
+    where: { workspaceId, ...getUpcomingCreativesWhere(now) },
+    orderBy: [{ startAt: "asc" }, { createdAt: "desc" }],
+    take: capacity,
+    select: deliveredCreativeSelect,
+  });
+  if (upcoming.length === 0) return showingNow;
+  return [...showingNow, ...upcoming].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+};
+
+/**
  * Single optimized query that fetches all required data
  * Replaces multiple separate service calls with one efficient database operation
  */
@@ -166,6 +191,7 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
   validateInputs([workspaceId, ZId]);
 
   try {
+    const now = new Date();
     // Single query that fetches everything needed for environment state
     // Uses strategic includes and selects to minimize data transfer
     const workspaceData = await prisma.workspace.findUnique({
@@ -212,9 +238,9 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
           take: 30, // Limit for performance
           select: appSurveySelect,
         },
-        // ENG-3994: the creatives the SDK shows, newest first.
+        // ENG-3994: the creatives the SDK shows, newest first; those that can show now come first.
         creatives: {
-          where: getDeliverableCreativesWhere(new Date()),
+          where: getCreativesShowingNowWhere(now),
           orderBy: { createdAt: "desc" },
           take: MAX_DELIVERED_CREATIVES,
           select: deliveredCreativeSelect,
@@ -231,10 +257,13 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
     // and this payload's own 60 s cache adds at most a minute to the licence's refresh. Each creative's
     // look is computed from the workspace Look & Feel, never its survey's (ENG-3998).
     const creatives = (await getIsCreativesEnabled(workspaceData.organizationId))
-      ? await toCreativePayloads(workspaceData.creatives, {
-          publicDomain: getPublicDomain(),
-          workspaceStyling: workspaceData.styling,
-        })
+      ? await toCreativePayloads(
+          await withUpcomingCreatives(workspaceData.id, workspaceData.creatives, now),
+          {
+            publicDomain: getPublicDomain(),
+            workspaceStyling: workspaceData.styling,
+          }
+        )
       : [];
 
     // A creative opens its survey as a popup from this payload alone, so every such survey has to be in

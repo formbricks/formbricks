@@ -22,6 +22,8 @@ export const MAX_DELIVERED_CREATIVES = 100;
 
 export const deliveredCreativeSelect = {
   id: true,
+  // Orders the payload newest first: the SDK stacks banners in payload order.
+  createdAt: true,
   type: true,
   content: true,
   styling: true,
@@ -63,6 +65,18 @@ export const getDeliverableCreativesWhere = (now: Date): Prisma.CreativeWhereInp
     { OR: [{ endAt: null }, { endAt: { gt: now } }] },
     { OR: [{ surveyId: null }, { survey: { is: { status: "inProgress", archivedAt: null } } }] },
   ],
+});
+
+/** Deliverable and already started (or with no start): it can show now. */
+export const getCreativesShowingNowWhere = (now: Date): Prisma.CreativeWhereInput => ({
+  ...getDeliverableCreativesWhere(now),
+  OR: [{ startAt: null }, { startAt: { lte: now } }],
+});
+
+/** Deliverable but scheduled to start later. */
+export const getUpcomingCreativesWhere = (now: Date): Prisma.CreativeWhereInput => ({
+  ...getDeliverableCreativesWhere(now),
+  startAt: { gt: now },
 });
 
 const getDestination = (row: TDeliveredCreativeRow, publicDomain: string): TCreativeDestination | null => {

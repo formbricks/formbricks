@@ -18,7 +18,11 @@ vi.mock("server-only", () => ({}));
 // Banner words come from the dashboard translator (getTranslate); its session-locale lookup is unused here.
 vi.mock("@/lingodotdev/language", () => ({ getLocale: vi.fn() }));
 vi.mock("@formbricks/database", () => ({
-  prisma: { workspace: { findUnique: vi.fn(), update: vi.fn() }, segment: { findMany: vi.fn() } },
+  prisma: {
+    workspace: { findUnique: vi.fn(), update: vi.fn() },
+    segment: { findMany: vi.fn() },
+    creative: { findMany: vi.fn(async () => []) },
+  },
 }));
 vi.mock("@formbricks/logger", () => ({ logger: { error: vi.fn(), warn: vi.fn() } }));
 vi.mock("@/lib/cache", () => ({ cache: { withCache: vi.fn((fn: () => Promise<unknown>) => fn()) } }));

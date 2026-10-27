@@ -23,6 +23,10 @@ vi.mock("@formbricks/database", () => ({
     survey: {
       findMany: vi.fn(),
     },
+    // No upcoming creatives unless a test says otherwise.
+    creative: {
+      findMany: vi.fn(async () => []),
+    },
     segment: {
       findMany: vi.fn(),
     },
@@ -798,6 +802,7 @@ describe("custom CSS on the wire (ENG-3552)", () => {
 describe("creatives on the wire (ENG-3994)", () => {
   const storedButton = {
     id: "creative-1",
+    createdAt: new Date("2026-10-10T00:00:00.000Z"),
     type: "feedbackButton",
     content: { label: { "en-US": "Feedback" }, icon: null },
     styling: {
@@ -884,15 +889,60 @@ describe("creatives on the wire (ENG-3994)", () => {
     const [{ select }] = vi.mocked(prisma.workspace.findUnique).mock.calls[0] as [
       { select: { creatives: { where: Record<string, unknown>; take: number } } },
     ];
-    expect(select.creatives.where).toEqual({
+    const deliverable = {
       status: "inProgress",
       archivedAt: null,
       AND: [
         { OR: [{ endAt: null }, { endAt: { gt: expect.any(Date) } }] },
         { OR: [{ surveyId: null }, { survey: { is: { status: "inProgress", archivedAt: null } } }] },
       ],
+    };
+    expect(select.creatives.where).toEqual({
+      ...deliverable,
+      OR: [{ startAt: null }, { startAt: { lte: expect.any(Date) } }],
     });
     expect(select.creatives.take).toBe(100);
+    expect(prisma.creative.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { workspaceId, ...deliverable, startAt: { gt: expect.any(Date) } },
+        orderBy: [{ startAt: "asc" }, { createdAt: "desc" }],
+      })
+    );
+  });
+
+  // Bhagya's review of formbricks#9666: creatives scheduled for later must not crowd out one showing now.
+  test("fills the capacity left by the creatives that can show now with the soonest upcoming, newest first", async () => {
+    const showing = { ...storedButton, id: "showing", createdAt: new Date("2026-10-01T00:00:00.000Z") };
+    const upcoming = {
+      ...storedButton,
+      id: "upcoming",
+      createdAt: new Date("2026-10-20T00:00:00.000Z"),
+      startAt: new Date("2099-01-01T00:00:00.000Z"),
+    };
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+      ...mockWorkspaceData,
+      creatives: [showing],
+    } as never);
+    vi.mocked(prisma.creative.findMany).mockResolvedValue([upcoming] as never);
+
+    const result = await getWorkspaceStateData(workspaceId);
+
+    expect(vi.mocked(prisma.creative.findMany).mock.calls[0][0]).toEqual(
+      expect.objectContaining({ take: 99 })
+    );
+    expect(result.creatives.map(({ id }) => id)).toEqual(["upcoming", "showing"]);
+  });
+
+  test("reads no upcoming creatives when those that can show now fill the payload", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+      ...mockWorkspaceData,
+      creatives: Array.from({ length: 100 }, (_, index) => ({ ...storedButton, id: `showing-${index}` })),
+    } as never);
+
+    const result = await getWorkspaceStateData(workspaceId);
+
+    expect(prisma.creative.findMany).not.toHaveBeenCalled();
+    expect(result.creatives).toHaveLength(100);
   });
 
   test("adds a popup Destination survey outside the 30 newest, with triggers: [] and the fields SDKs read", async () => {
