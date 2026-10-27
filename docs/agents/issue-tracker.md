@@ -45,11 +45,13 @@ This table decides where `/to-tickets` publishes, ahead of the configured tracke
 
 Local tickets are the agent's working files: they follow `/to-tickets`' local template, close by setting their `Status:` line to `done` (whenever a skill says to resolve a ticket the way the tracker closes work), and stay out of git (`.scratch/` is gitignored).
 
+Because `.scratch/` is gitignored, a new worktree has no copy of it. When a skill hands a local ticket to a subagent in its own worktree (as `/implement-spec` does), pass the ticket's absolute path in the main checkout, or its full contents.
+
 When `/to-tickets` asks about granularity, cut the coarsest vertical slices that still fit one fresh context window.
 
 ## When a skill says "fetch the relevant ticket"
 
-`get_issue` with its identifier.
+An `ENG-1234` identifier: `get_issue`. A local ticket (a `.scratch/<feature-slug>/issues/` path, or a ticket number or title from that folder): read the file. That includes `/implement` given a local ticket.
 
 ## Wayfinding operations
 
