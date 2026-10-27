@@ -20,19 +20,43 @@ import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { type TWebhookDeliveryOutcome, recordWebhookDeliveryOutcome } from "./webhook-delivery-metrics";
 
 /**
- * The wire body. Byte-for-byte what the pipeline job sent before deliveries were fanned out — receivers
- * and their signature checks must not notice the refactor — so this shape is pinned by a parity test and
- * is not the place for new fields. The one addition is `outcome` (ENG-6780), always present and `null`
- * when unset, including for a job queued before the column existed.
+ * Same values as `data`, keyed by question code instead of Question ID (ADR 0016), so a receiver that
+ * can only read the response object's root (Make) still gets the public names. Every coded question is
+ * listed, `null` when nothing is stored; a question without a code has no entry and hidden fields stay in
+ * `data` only. Null-prototype because a code may be `constructor` or `toString`. Built here, from the
+ * `{ elementId: code }` map the pipeline job captured, so a job queued before the map existed still parses.
  */
-export const buildWebhookDeliveryBody = (data: TWebhookDeliveryJobData): string =>
-  JSON.stringify({
+const buildDataByQuestionCode = (
+  resolvedData: Record<string, unknown>,
+  questionCodes: Record<string, string>
+): Record<string, unknown> => {
+  const byCode: Record<string, unknown> = Object.create(null);
+  for (const [elementId, code] of Object.entries(questionCodes)) {
+    byCode[code] = resolvedData[elementId] ?? null;
+  }
+  return byCode;
+};
+
+/**
+ * The wire body. What the pipeline job sent before deliveries were fanned out, plus additive keys only:
+ * receivers and their signature checks must not notice the refactor, so the existing keys are pinned by a
+ * parity test and a literal key-list test, and a new response column does not slip in unannounced. The
+ * additions are `outcome` (ENG-6780), always present and `null` when unset, including for a job queued
+ * before the column existed, and `dataByQuestionCode` (ENG-6784), absent only for a job queued before
+ * `survey.questionCodes` existed.
+ */
+export const buildWebhookDeliveryBody = (data: TWebhookDeliveryJobData): string => {
+  const resolvedData = resolveStorageUrlsInObject(data.response.data);
+  const questionCodes = data.survey.questionCodes;
+
+  return JSON.stringify({
     webhookId: data.webhookId,
     event: data.event,
     data: {
       ...data.response,
       outcome: data.response.outcome ?? null,
-      data: resolveStorageUrlsInObject(data.response.data),
+      data: resolvedData,
+      ...(questionCodes ? { dataByQuestionCode: buildDataByQuestionCode(resolvedData, questionCodes) } : {}),
       survey: {
         title: data.survey.name,
         type: data.survey.type,
@@ -42,6 +66,7 @@ export const buildWebhookDeliveryBody = (data: TWebhookDeliveryJobData): string 
       },
     },
   });
+};
 
 /**
  * Receiver answered, but not with a success: worth another attempt only when the condition can change on
