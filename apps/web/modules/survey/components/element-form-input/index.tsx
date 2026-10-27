@@ -69,6 +69,8 @@ interface ElementFormInputProps {
   firstRender?: boolean;
   setFirstRender?: Dispatch<SetStateAction<boolean>>;
   isExternalUrlsAllowed?: boolean;
+  /** Read-only, e.g. option text on a published survey. */
+  disabled?: boolean;
 }
 
 export const ElementFormInput = ({
@@ -94,6 +96,7 @@ export const ElementFormInput = ({
   firstRender: externalFirstRender,
   setFirstRender: externalSetFirstRender,
   isExternalUrlsAllowed,
+  disabled = false,
 }: ElementFormInputProps) => {
   const { t } = useTranslation();
   const defaultLanguageCode =
@@ -642,6 +645,7 @@ export const ElementFormInput = ({
                     }
                     autoComplete={isRecallSelectVisible ? "off" : "on"}
                     autoFocus={false}
+                    disabled={disabled}
                     onKeyDown={handleKeyDown}
                   />
                   {recallComponents}

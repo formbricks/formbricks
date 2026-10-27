@@ -266,9 +266,35 @@ You can also use the official [Standard Webhooks libraries](https://github.com/s
 
 ---
 
+## Reading answers by question code
+
+Every response payload carries the answers twice, inside the response object (`data` of the request body):
+
+- `data.data` holds the answers keyed by **Question ID**, as before. Existing receivers keep working.
+- `data.dataByQuestionCode` holds the same answers keyed by **question code**, such as `visit_reason`. Codes are readable, you choose them in the survey editor, and they do not change once the survey is active.
+
+Every question that has a question code is listed. A question the respondent has not answered yet has the value `null`, so the keys are the same in all three events. Cards that are not questions, such as the welcome card, and hidden fields stay in `data.data` only. Hidden fields and variables keep their own names.
+
+Tools such as Make only show the first level of the response object, so `dataByQuestionCode` gives them readable keys without digging into `data`.
+
+Two more keys are new in the response object:
+
+- `dataByQuestionCode`: the answers by question code, as above.
+- `outcome`: `null` for a normal response, or `"lowQuality"` when a reviewer marked the response as Low quality. Marking or restoring a response sends a `responseUpdated` event. Webhooks keep sending Low quality responses, so filter on `outcome` in your receiver if you want to skip them.
+
+<Warning>
+  Both keys are additive. If your receiver validates the payload against a strict schema, allow unknown keys, or add `dataByQuestionCode` and `outcome` to the schema. A webhook that was queued before an update can arrive without `dataByQuestionCode`.
+</Warning>
+
+<Note>
+  Zapier, Make, n8n and Activepieces show the fields of the last sample they received. After you update Formbricks or add questions, re-test the trigger to see the new fields.
+</Note>
+
 ## Example Webhook Payloads
 
 We provide the following webhook payloads, `responseCreated`, `responseUpdated`, and `responseFinished`.
+
+In these examples the question IDs (`cm9k2v7q00003`) are generated, and the questions carry the question codes `visit_reason` and `newsletter_consent`. The welcome card is not a question, so it has an answer under `data` but no entry in `dataByQuestionCode`. See [Reading answers by question code](#reading-answers-by-question-code).
 
 ### Response Created
 
@@ -282,6 +308,9 @@ Example of Response Created webhook payload:
     "createdAt": "2025-07-24T07:47:29.507Z",
     "data": {
       "welcome_card_cta": "clicked"
+    },
+    "dataByQuestionCode": {
+      "visit_reason": null
     },
     "displayId": "displayId",
     "endingId": null,
@@ -330,8 +359,11 @@ Example of Response Updated webhook payload:
     "contactAttributes": null,
     "createdAt": "2025-07-24T07:47:29.507Z",
     "data": {
-      "visit_reason": "Just browsing",
+      "cm9k2v7q00003": "Just browsing",
       "welcome_card_cta": "clicked"
+    },
+    "dataByQuestionCode": {
+      "visit_reason": "Just browsing"
     },
     "displayId": "displayId",
     "endingId": null,
@@ -359,7 +391,7 @@ Example of Response Updated webhook payload:
     "surveyId": "surveyId",
     "tags": [],
     "ttc": {
-      "visit_reason": 3855.799999952316,
+      "cm9k2v7q00003": 3855.799999952316,
       "welcome_card_cta": 2154.700000047684
     },
     "updatedAt": "2025-07-24T07:47:33.696Z",
@@ -381,8 +413,13 @@ Example of Response Finished webhook payload:
     "contactAttributes": null,
     "createdAt": "2025-07-24T07:47:29.507Z",
     "data": {
-      "newsletter_consent": "accepted",
+      "cm9k2v7q00004": "accepted",
+      "cm9k2v7q00003": "Just browsing",
       "welcome_card_cta": "clicked"
+    },
+    "dataByQuestionCode": {
+      "newsletter_consent": "accepted",
+      "visit_reason": "Just browsing"
     },
     "displayId": "displayId",
     "endingId": "endingId",
@@ -411,7 +448,8 @@ Example of Response Finished webhook payload:
     "tags": [],
     "ttc": {
       "_total": 4947.899999035763,
-      "newsletter_consent": 2793.199999988079,
+      "cm9k2v7q00004": 2793.199999988079,
+      "cm9k2v7q00003": 3855.799999952316,
       "welcome_card_cta": 2154.700000047684
     },
     "updatedAt": "2025-07-24T07:47:56.116Z",

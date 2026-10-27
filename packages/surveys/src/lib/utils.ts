@@ -389,11 +389,13 @@ export const getElementsFromSurveyBlocks = (blocks: TSurveyBlock[]): TSurveyElem
  * Finds the parent block that contains the specified element ID.
  * Useful for accessing block-level properties like logic and button labels.
  * @param survey The survey object with blocks
- * @param elementId The ID of the element to find
+ * @param elementId The Question ID of the element to find, or failing that its question code
  * @returns The parent block or undefined if not found
  */
 export const findBlockByElementId = (blocks: TSurveyBlock[], elementId: string) =>
-  blocks.find((block) => block.elements.some((e) => e.id === elementId));
+  blocks.find((block) => block.elements.some((e) => e.id === elementId)) ??
+  // A question code is accepted next to the Question ID (ADR 0016); the ID wins on a clash.
+  blocks.find((block) => block.elements.some((e) => "code" in e && e.code === elementId));
 
 /**
  * Converts a block ID to the first element ID in that block.

@@ -9,7 +9,7 @@ The `startAt` URL parameter lets you open a Link Survey at a specific **block** 
 
 ## How it works
 
-The survey navigation is block-based: each block can contain one or more questions. When you pass `startAt` with a Question ID, the survey finds the **block** that contains that question and opens at that block. All questions in that block are shown together.
+The survey navigation is block-based: each block can contain one or more questions. When you pass `startAt` with a question code or a Question ID, the survey finds the **block** that contains that question and opens at that block. All questions in that block are shown together.
 
 <Note>
   **Multi-question blocks:** When a block has multiple questions, `startAt` opens at the block—you will see all questions in that block, not only the question whose ID you used. For precise "start at this exact question" behavior, use one question per block.
@@ -19,20 +19,24 @@ The survey navigation is block-based: each block can contain one or more questio
 
 1. In the Survey Editor, open the Questions Tab and ensure the survey is set as a **Link Survey**.
 
-2. Find the question (or block) you want to start at, click on **Show Question settings**, and copy the **Question ID** of any question in that block.
+2. Find the question (or block) you want to start at, open the **Settings** tab of the question, and note its **question code** in the **Recode** section.
 
 <Note>
-  Each question has a unique Question ID. Since `startAt` resolves to the block containing the question, you can use any question ID from the target block—typically the first question in that block.
+  Each question has a unique question code. Since `startAt` resolves to the block containing the question, you can use the code of any question in the target block—typically the first question in that block. The code is locked once the survey is active.
 </Note>
 
-3. Append `?startAt=question_id` to your survey's URL, replacing `question_id` with the copied Question ID.
+3. Append `?startAt=question_code` to your survey's URL, replacing `question_code` with the question code, for example `?startAt=q3`.
+
+<Note>
+  `startAt` also accepts a Question ID, and a Question ID wins if it matches. To copy the Question ID, choose **Copy question ID** in the question's **⋯** menu. Links that already use a Question ID keep working.
+</Note>
 
 4. Share this modified URL with your users to start the survey at the specified block.
 
 ### Sample Link Survey URL with `startAt`
 
 ```sh Example Link Survey URL with startAt configured
-https://formbricks.com/clny997dj087ho30fdzyf4nkl?startAt=bqd29m94l9k0hnc3azbrexl8
+https://formbricks.com/clny997dj087ho30fdzyf4nkl?startAt=q3
 ```
 
 ## Use cases

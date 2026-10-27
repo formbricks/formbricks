@@ -18,6 +18,7 @@ import {
   deleteHubRecords,
   isHubCallBudgetSpent,
 } from "./hub-cleanup";
+import { type TOutcomeCleanupResult, reconcileResponseOutcomes } from "./hub-outcome";
 
 type TClaimedCleanup = {
   id: string;
@@ -95,6 +96,27 @@ const fromHubResult = (result: THubCleanupResult): TCleanupOutcome => {
       return { status: "again", delayMs: 0 };
     case "failed":
       return { status: "failed", error: result.error };
+  }
+};
+
+/**
+ * The `hubResponseOutcome` rows of a claim, reconciled together: they share their reads of the responses, the
+ * surveys and the Hub listings, which a row-by-row pass would repeat per response. A row left out of the result
+ * (an exhausted budget) is due again at once.
+ */
+const reconcileOutcomeRows = async (
+  rows: readonly TClaimedCleanup[],
+  hubBudget: THubCallBudget
+): Promise<Map<string, TOutcomeCleanupResult>> => {
+  const outcomeRows = rows.filter((row) => row.kind === "hubResponseOutcome");
+  if (outcomeRows.length === 0 || isHubCallBudgetSpent(hubBudget)) return new Map();
+  try {
+    return await reconcileResponseOutcomes(outcomeRows, hubBudget);
+  } catch (error) {
+    for (const row of outcomeRows) {
+      logger.error({ err: error, cleanupId: row.id, kind: row.kind }, "Deletion cleanup threw");
+    }
+    return new Map(outcomeRows.map((row) => [row.id, { status: "failed", error: "error" } as const]));
   }
 };
 
@@ -211,6 +233,8 @@ export const drainDeletionCleanups = async ({
     const rows = await claimDueCleanups(new Date(), ids);
     if (rows.length === 0) break;
 
+    const outcomes = await reconcileOutcomeRows(rows, hubBudget);
+
     for (const [index, row] of rows.entries()) {
       // Out of time, or out of Hub calls (a row that hit the budget is due again at once, so claiming on
       // would only spin): leave the rest to the next run.
@@ -221,7 +245,10 @@ export const drainDeletionCleanups = async ({
 
       let outcome: TCleanupOutcome;
       try {
-        outcome = await processCleanup(row, hubBudget);
+        outcome =
+          row.kind === "hubResponseOutcome"
+            ? (outcomes.get(row.id) ?? { status: "again", delayMs: 0 })
+            : await processCleanup(row, hubBudget);
       } catch (error) {
         logger.error({ err: error, cleanupId: row.id, kind: row.kind }, "Deletion cleanup threw");
         outcome = { status: "failed", error: "error" };

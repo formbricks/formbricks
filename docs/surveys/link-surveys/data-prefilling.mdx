@@ -19,12 +19,12 @@ Data prefilling via URL comes in handy when you:
 ## Quick Example
 
 ```sh Example URL
-https://app.formbricks.com/s/clin3dxja02k8l80hpwmx4bjy?question_id_1=answer_1&question_id_2=answer_2&skipPrefilled=true
+https://app.formbricks.com/s/clin3dxja02k8l80hpwmx4bjy?age=34&nps=9&skipPrefilled=true
 ```
 
 ## How it works
 
-1. To prefill survey questions, add query parameters to the survey URL using the format `questionId=answer`.
+1. To prefill survey questions, add query parameters to the survey URL using the format `questionCode=answer`, for example `age=34`. The parameter name can also be the Question ID (`questionId=answer`).
 2. The answer must match the question’s expected type to pass [validation](/surveys/link-surveys/data-prefilling#validation). For Single Select and Multi Select questions, `answer` can be either the option label text or the option ID.
 3. The answer needs to be [URL encoded](https://www.urlencoder.org/) (if it contains spaces or special characters)
 
@@ -34,29 +34,41 @@ https://app.formbricks.com/s/clin3dxja02k8l80hpwmx4bjy?question_id_1=answer_1&qu
 You can skip prefilled questions by adding the `skipPrefilled` parameter in the URL. To skip prefilled questions and show the next available question, add `skipPrefilled=true` to the URL. By default, `skipPrefilled` is set to `false`.
 
 ```sh Skipping prefilled questions
-app.formbricks.com/s/clin3dxj?question_id_1=answer_1&skipPrefilled=true
+app.formbricks.com/s/clin3dxj?age=34&skipPrefilled=true
 ```
 
 ### Prefilling multiple values
 
 Formbricks lets you prefill as many values as you want. Combine multiple values in the URL using `&`, for example: `name=Bernadette&age=18`. The order of query parameters doesn’t matter, so you can move questions around or add new ones without worrying about the parameter order.
 
-### Where do I find my question Id?
+### Where do I find my question code?
 
-Open a question in the Survey Editor and click **Show Question settings** at the foot of its card. The `questionId` is the first field there. You can change it to any string you like **before you activate a survey**; after activation it is fixed, because the responses already collected refer to it.
+Open a question in the Survey Editor and go to its **Settings** tab. The **question code** is in the **Recode** section, for example `age` or `nps`. Formbricks sets a code for every question (`q1`, `q2` and so on), and you can change it **before you activate the survey**. After activation it is locked, so the links you have shared keep working. Learn more in [Question codes and answer codes](/surveys/analysis/question-codes).
 
-![The question Id is located at the bottom of each question card in the survey editor.](/images/surveys/link-surveys/data-prefilling/question-id.webp)
+The parameter name is matched with the **Question ID** first and with the **question code** second. If you need the Question ID, choose **Copy question ID** in the question's **⋯** menu. Links that already use a Question ID keep working.
+
+<Note>
+  A question code never replaces a reserved link parameter such as `lang`, `startAt` or `skipPrefilled`. Those keep their own meaning.
+</Note>
+
+<Note>
+  A question code only names the **question** in the link. The value for a Single Select or Multi Select question is still an option ID or the option label, not the answer code you set in **Recode**.
+</Note>
 
 ## Examples
 
 Here are a few examples to get you started:
+
+<Note>
+  The examples below use question codes such as `rating_question`. Replace them with the code of your own question, or with its Question ID.
+</Note>
 
 ### Rating Question
 
 Translates to 5 stars / points / emojis:
 
 ```sh Rating Question
-https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?rating_question_id=5
+https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?rating_question=5
 ```
 
 ### NPS Question
@@ -64,7 +76,7 @@ https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?rating_question_id=5
 Translates to an NPS rating of 10:
 
 ```sh NPS Questions
-https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?nps_question_id=10
+https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?nps_question=10
 ```
 
 ### Single Select Question (Radio)
@@ -72,7 +84,7 @@ https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?nps_question_id=10
 Chooses the option 'Very disappointed' in the single select question. The string has to be identical to the option in your question:
 
 ```sh Single-select Question
-https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?single_select_question_id=Very%20disappointed
+https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?single_select_question=Very%20disappointed
 ```
 
 ### Multi Select Question (Checkbox)
@@ -80,7 +92,7 @@ https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?single_select_question_id
 Selects three options 'Sun, Palms and Beach' in the multi select question. The strings have to be identical to the options in your question:
 
 ```sh Multi-select Question
-https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?multi_select_question_id=Sun%2CPalms%2CBeach
+https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?multi_select_question=Sun%2CPalms%2CBeach
 ```
 
 ### Open Text Question
@@ -88,7 +100,7 @@ https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?multi_select_question_id=
 Adds 'I love Formbricks' as the answer to the open text question:
 
 ```sh Open Text Question
-https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?openText_question_id=I%20love%20Formbricks
+https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?open_text_question=I%20love%20Formbricks
 ```
 
 ### Consent Question
@@ -96,7 +108,7 @@ https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?openText_question_id=I%20
 Adds 'accepted' as the answer to the Consent question. Alternatively, you can set it to 'dismissed' to skip the question.
 
 ```txt Consent Question
-https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?consent_question_id=accepted
+https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?consent_question=accepted
 ```
 
 ### Picture Selection Question
@@ -104,7 +116,7 @@ https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?consent_question_id=accep
 Adds index of the selected image(s) as the answer to the Picture Selection question. The index starts from 1
 
 ```txt Picture Selection Question
-https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?pictureSelection_question_id=1%2C2%2C3
+https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?picture_selection_question=1%2C2%2C3
 ```
 
 
@@ -128,28 +140,27 @@ https://app.formbricks.com/s/cmoh0584taxoxu501jyvk8tzn?tuk2i9ktui1lee0mfos82czb=
 
 In this example:
 
-- `tuk2i9ktui1lee0mfos82czb` is the question ID.
+- `tuk2i9ktui1lee0mfos82czb` is the Question ID. A question code such as `plan` works in the same place.
 - `e2r697fou23n7ba4vmt7you6` is the selected option ID.
 
 ### How to Find Option IDs
 
 1. Open your survey in the Survey Editor
 2. Click on the question you want to prefill
-3. Click **Show Question settings** at the foot of the question card
-4. Each option shows its unique ID that you can copy
+3. Next to each option, choose **Copy option ID**. The ID of every option is read-only and can be copied from there
 
 ### Examples with Option IDs
 
 **Single Select:**
 
 ```sh Single Select with Option ID
-https://app.formbricks.com/s/surveyId?questionId=option-abc123
+https://app.formbricks.com/s/surveyId?plan=option-abc123
 ```
 
 **Multi Select:**
 
 ```sh Multi Select with Option IDs
-https://app.formbricks.com/s/surveyId?questionId=option-1,option-2,option-3
+https://app.formbricks.com/s/surveyId?interests=option-1,option-2,option-3
 ```
 
 **Mixed IDs and Labels:**
@@ -157,7 +168,7 @@ https://app.formbricks.com/s/surveyId?questionId=option-1,option-2,option-3
 You can even mix option IDs and labels in the same URL (though using IDs consistently is recommended):
 
 ```sh Mixed Approach
-https://app.formbricks.com/s/surveyId?questionId=option-abc,Some%20Label,option-xyz
+https://app.formbricks.com/s/surveyId?interests=option-abc,Some%20Label,option-xyz
 ```
 
 ### Backward Compatibility

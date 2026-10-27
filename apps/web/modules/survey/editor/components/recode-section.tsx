@@ -9,6 +9,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { isExternalImageSrc } from "@/lib/image-hosts";
+import { PublishedLockNotice } from "@/modules/survey/editor/components/published-lock-notice";
 import {
   TOptionListKey,
   describeCodeIssue,
@@ -20,6 +21,7 @@ import {
   setElementCode,
   setOptionCode,
 } from "@/modules/survey/editor/lib/element-codes";
+import { NO_ELEMENT_LOCK, TElementLock } from "@/modules/survey/editor/lib/published-lock";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
@@ -29,6 +31,8 @@ interface CodeFieldProps {
   value: string | undefined;
   issue: TCodeIssue | undefined;
   kind: "question" | "answer";
+  /** The published lock: the field is read-only and a lock icon says why. */
+  locked?: boolean;
   onChange: (value: string) => void;
   ariaLabel?: string;
   className?: string;
@@ -40,6 +44,7 @@ export const CodeField = ({
   value,
   issue,
   kind,
+  locked = false,
   onChange,
   ariaLabel,
   className,
@@ -50,26 +55,30 @@ export const CodeField = ({
   const [draft, setDraft] = useState<string | null>(null);
   return (
     <div className={className}>
-      <Input
-        id={id}
-        value={draft ?? value ?? ""}
-        placeholder={t("workspace.surveys.edit.code_auto_placeholder")}
-        aria-label={ariaLabel}
-        aria-invalid={issue ? true : undefined}
-        aria-describedby={issue ? `${id}-error` : undefined}
-        isInvalid={Boolean(issue)}
-        autoComplete="off"
-        spellCheck={false}
-        onChange={(event) => {
-          setDraft(event.target.value);
-          if (event.target.value !== "") onChange(event.target.value);
-        }}
-        onBlur={() => {
-          if (draft === "") onChange("");
-          setDraft(null);
-        }}
-        className="h-9 font-mono"
-      />
+      <div className="flex items-center gap-2">
+        <Input
+          id={id}
+          disabled={locked}
+          value={draft ?? value ?? ""}
+          placeholder={t("workspace.surveys.edit.code_auto_placeholder")}
+          aria-label={ariaLabel}
+          aria-invalid={issue ? true : undefined}
+          aria-describedby={issue ? `${id}-error` : undefined}
+          isInvalid={Boolean(issue)}
+          autoComplete="off"
+          spellCheck={false}
+          onChange={(event) => {
+            setDraft(event.target.value);
+            if (event.target.value !== "") onChange(event.target.value);
+          }}
+          onBlur={() => {
+            if (draft === "") onChange("");
+            setDraft(null);
+          }}
+          className="h-9 font-mono"
+        />
+        {locked && <PublishedLockNotice kind="code" />}
+      </div>
       {issue && (
         <p id={`${id}-error`} className="mt-1 text-xs text-red-600">
           {describeCodeIssue(issue, kind, t)}
@@ -83,6 +92,7 @@ interface RecodeSectionProps {
   element: TSurveyElement;
   elementIdx: number;
   localSurvey: TSurvey;
+  lock?: TElementLock;
   updateElement: (elementIdx: number, updatedAttributes: Record<string, unknown>) => void;
 }
 
@@ -95,6 +105,7 @@ export const RecodeSection = ({
   element,
   elementIdx,
   localSurvey,
+  lock = NO_ELEMENT_LOCK,
   updateElement,
 }: Readonly<RecodeSectionProps>) => {
   const { t } = useTranslation();
@@ -134,6 +145,7 @@ export const RecodeSection = ({
           id={`code-${element.id}`}
           className="mt-2"
           kind="question"
+          locked={lock.isCodeLocked}
           value={"code" in element ? element.code : undefined}
           issue={issues?.question}
           onChange={(value) => updateElement(elementIdx, setElementCode(value))}
@@ -167,6 +179,7 @@ export const RecodeSection = ({
                   <CodeField
                     id={fieldId}
                     kind="answer"
+                    locked={lock.isAnswerCodeLocked(key, option.id)}
                     ariaLabel={label || optionFallbackLabel(key, optionIdx, t)}
                     value={option.code}
                     issue={issues?.options.get(optionIssueKey(key, option.id))}

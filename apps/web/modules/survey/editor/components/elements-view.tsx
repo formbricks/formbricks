@@ -912,6 +912,7 @@ export const ElementsView = ({
         collisionDetection={closestCorners}>
         <BlocksDroppable
           localSurvey={localSurvey}
+          persistedSurvey={persistedSurvey}
           setLocalSurvey={setLocalSurvey}
           workspace={workspace}
           moveElement={stableMoveElement}

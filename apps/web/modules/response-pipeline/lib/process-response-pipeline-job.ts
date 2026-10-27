@@ -29,6 +29,7 @@ import { sendResponseFinishedEmail } from "@/modules/email";
 import { captureSurveyResponsePostHogEvent } from "@/modules/response-pipeline/lib/posthog";
 import { sendFollowUpsForResponse } from "@/modules/survey/follow-ups/lib/follow-ups";
 import { FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { getFinishedResponseCountBySurveyId } from "@/modules/survey/lib/response";
 import { handleIntegrations } from "./handle-integrations";
 import { recordSurveyOutboundSkipped } from "./outbound-visibility-metrics";
@@ -179,6 +180,17 @@ const getWebhooksForPipeline = async (
   });
 };
 
+/** `{ Question ID: question code }` for the coded questions, captured now so delivery can key the body by code. */
+const getQuestionCodes = (survey: TPipelineSurvey): Record<string, string> => {
+  const questionCodes: Record<string, string> = {};
+  for (const element of getElementsFromBlocks(survey.blocks)) {
+    if ("code" in element && element.code) {
+      questionCodes[element.id] = element.code;
+    }
+  }
+  return questionCodes;
+};
+
 /**
  * Fans the event out as one `webhook-delivery.process` job per matching webhook and returns without
  * waiting on any HTTP. Each delivery then retries on its own budget, so a dead endpoint neither delays
@@ -203,6 +215,7 @@ const enqueueWebhookDeliveryJobs = async ({
     return;
   }
 
+  const questionCodes = getQuestionCodes(survey);
   const enqueue = await isNewReleaseWorkEnabled();
   const deliver: (...args: Parameters<typeof enqueueWebhookDeliveryJob>) => Promise<unknown> = enqueue
     ? enqueueWebhookDeliveryJob
@@ -248,6 +261,7 @@ const enqueueWebhookDeliveryJobs = async ({
             status: survey.status,
             createdAt: survey.createdAt,
             updatedAt: survey.updatedAt,
+            questionCodes,
           },
         },
         { jobId: createWebhookDeliveryJobId(logContext.jobId, webhook.id) }
@@ -606,6 +620,10 @@ const handleSurveyAutoCompleteSafely = async ({
   }
 };
 
+const isLowQuality = async (responseId: string): Promise<boolean> =>
+  (await prisma.response.findUnique({ where: { id: responseId }, select: { outcome: true } }))?.outcome ===
+  "lowQuality";
+
 /**
  * The responseFinished work that sends the response out of the app: integrations, the feedback-source
  * pipeline and follow-ups. ENG-3283: none of it runs for a survey that is not workspace-visible.
@@ -649,7 +667,13 @@ const runOutboundResponseFinishedEffects = async ({
   }
 
   try {
-    await handleFeedbackSourcePipeline(data.response, survey, workspaceId);
+    // The job carries the response as it was when the event was queued. A partial marked Low quality and
+    // then finished by the respondent still says "no outcome" there, so the outcome is read now (ENG-6785).
+    // Failing to read it publishes nothing rather than risking a Low quality response's records; a restore,
+    // or the historical import, brings them back.
+    if (!(await isLowQuality(data.response.id))) {
+      await handleFeedbackSourcePipeline(data.response, survey, workspaceId);
+    }
   } catch (error) {
     logger.error(
       {
