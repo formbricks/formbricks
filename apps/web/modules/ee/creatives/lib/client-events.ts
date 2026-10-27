@@ -132,7 +132,10 @@ export const countCreativeEvents = async (request: Request, workspaceIdParam: st
   const body = await parseBody(request);
   if (!body) return;
 
-  const named = [...new Set(body.events.map(({ creativeId }) => creativeId))].sort();
+  // Code-unit order (the ids are unique), so the set's cache key doesn't depend on the server's locale.
+  const named = [...new Set(body.events.map(({ creativeId }) => creativeId))].sort((a, b) =>
+    a < b ? -1 : 1
+  );
   const countable = new Set(await getCountableCreativeIds(workspaceIdParam, named));
   const counts = toCreativeEventCounts(body, countable);
   if (counts.creatives.length === 0) return;

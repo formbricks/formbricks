@@ -5,6 +5,6 @@
  * `<b>` someone typed would come back as a tag.
  */
 export const toEditorOutputHtml = (html: string, { keepEscapedText = false } = {}): string => {
-  const text = keepEscapedText ? html : html.replace(/&lt;/g, "<").replace(/&gt;/g, ">");
+  const text = keepEscapedText ? html : html.replaceAll("&lt;", "<").replaceAll("&gt;", ">");
   return text.replace(/white-space:\s*pre-wrap;?/g, "");
 };
