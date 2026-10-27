@@ -100,9 +100,13 @@ export const POST = withV1ApiWrapper({
     // API already refuses its writes (ENG-872), so anything stored here lands in the workspace's bucket
     // under a survey prefix no response can reference — an orphan that counts against storage, and one
     // an anonymous caller can keep producing for a survey closed precisely to stop abuse (ENG-4044).
-    // `archivedAt` is checked alongside `status` because archiving only forces `paused` on a survey that
-    // was `inProgress`; a draft, scheduled or completed one keeps its status while archived. Answer both
-    // the way the response API answers a closed survey, so the two surfaces cannot be told apart.
+    // Answer the way the response API answers a closed survey, so the two surfaces cannot be told apart.
+    //
+    // `archivedAt` is read too, because the two fields are not interchangeable: archiving only forces
+    // `paused` on a survey that was `inProgress` (modules/survey/lib/surveys.ts), so a survey can carry
+    // `archivedAt` under any status, and a publish racing an archive can leave it `inProgress` and
+    // archived at once. Today that second read is defensive — it costs no query, since `selectSurvey`
+    // already loads both — and it is what keeps the gate from depending on an archive invariant.
     if (survey.status !== "inProgress" || survey.archivedAt) {
       return {
         response: responses.forbiddenResponse("Survey is not accepting submissions", true, {

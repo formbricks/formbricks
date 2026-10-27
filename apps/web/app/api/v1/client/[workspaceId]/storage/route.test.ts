@@ -12,7 +12,6 @@ import { POST } from "./route";
 const mocks = vi.hoisted(() => ({
   applyRateLimit: vi.fn(),
   getBiggerUploadFileSizePermission: vi.fn(),
-  getErrorResponseFromStorageError: vi.fn(),
   getOrganization: vi.fn(),
   getOrganizationIdFromWorkspaceId: vi.fn(),
   getSignedUrlForUpload: vi.fn(),
@@ -58,7 +57,6 @@ vi.mock("@/modules/storage/service", () => ({
 }));
 
 vi.mock("@/modules/storage/utils", () => ({
-  getErrorResponseFromStorageError: mocks.getErrorResponseFromStorageError,
   validateSurveyAllowsFileUpload: mocks.validateSurveyAllowsFileUpload,
 }));
 
@@ -124,12 +122,17 @@ describe("POST /api/v1/client/[workspaceId]/storage — survey lifecycle gates (
       // No URL is signed and no licence lookup runs: the refusal has to land before either.
       expect(mocks.getSignedUrlForUpload).not.toHaveBeenCalled();
       expect(mocks.getBiggerUploadFileSizePermission).not.toHaveBeenCalled();
+      // The element and file-type checks are skipped rather than answered, so a closed survey
+      // cannot be probed for which elements it carries.
+      expect(mocks.validateSurveyAllowsFileUpload).not.toHaveBeenCalled();
     }
   );
 
   /**
-   * Archiving only forces `paused` on a survey that was `inProgress` — a draft or completed one is
-   * archived with its status untouched, so the status gate alone would still sign for it.
+   * The `archivedAt` read is the second gate, not a restatement of the first. Archiving only forces
+   * `paused` on a survey that was `inProgress`, so a survey can carry `archivedAt` under any status,
+   * and a publish racing an archive can leave it `inProgress` and archived at once. This seeds that
+   * pair directly to prove the route refuses on `archivedAt` alone.
    */
   test("refuses an upload URL for an archived survey that still reads as in progress", async () => {
     mocks.getSurvey.mockResolvedValue(getSurveyWith({ status: "inProgress", archivedAt: new Date() }));
@@ -165,7 +168,7 @@ describe("POST /api/v1/client/[workspaceId]/storage — survey lifecycle gates (
       workspaceId,
       uploadBody.fileType,
       "private",
-      expect.any(Number),
+      10 * 1024 * 1024,
       ["surveys", surveyId, "elements", elementId]
     );
   });
