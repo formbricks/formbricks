@@ -253,8 +253,9 @@ A blocked result can carry more fields, never values from your data:
 
 Each step has a 90-minute limit. Set `FORMBRICKS_AUTHZED_PREPARE_STEP_TIMEOUT_SECONDS` (60 to 86400) to change
 it. The graph step rewrites every organization's relationships and then audits them all, so its runtime grows
-with the number of organizations: an instance with about 50,000 organizations needed about 35 minutes. Time the
-rehearsal, and keep the Job's `activeDeadlineSeconds` above the sum of its steps: a Job deadline stops the
+with the number of organizations. For reference, when it processed organizations one at a time, an instance with
+about 50,000 organizations needed about 35 minutes; it now processes several at once. Size the limit from your own
+timed rehearsal rather than from that figure, and keep the Job's `activeDeadlineSeconds` above the sum of its steps: a Job deadline stops the
 container before the wrapper can print a result. Interrupted containers can exit with a signal code rather
 than JSON; any nonzero exit remains blocked.
 
