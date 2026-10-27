@@ -82,7 +82,8 @@ export const TrialEndingWarningModal = ({ daysRemaining, billingHref }: TrialEnd
             ))}
           </ul>
 
-          <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-center">
+          {/* Equal-width columns sized to the longer label, centred; stacked with Upgrade first on mobile. */}
+          <div className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-2">
             <Button
               variant="secondary"
               onClick={() => {
@@ -96,6 +97,7 @@ export const TrialEndingWarningModal = ({ daysRemaining, billingHref }: TrialEnd
             </Button>
             <Button
               asChild
+              className="order-first sm:order-none"
               onClick={() => {
                 posthog.capture("trial_ending_warning_cta_clicked", {
                   days_remaining: daysRemaining,
