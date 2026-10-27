@@ -357,6 +357,12 @@ servers:
     description: >-
       Formbricks Cloud. Paths in this spec already include the `/api/v3` prefix;
       self-hosted instances substitute their own origin.
+security:
+  # Default for the whole spec (CKV_OPENAPI_4). Every operation states its own requirement, so this
+  # changes no operation's meaning: it is the documented fallback, not a widening of any route.
+  - apiKeyAuth: []
+  - bearerAuth: []
+  - sessionAuth: []
 paths:
   /api/v3/surveys:
     $ref: paths/api_v3_surveys.yml

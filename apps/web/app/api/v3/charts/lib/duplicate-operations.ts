@@ -8,7 +8,7 @@ import type { TV3AuditLog } from "@/app/api/v3/lib/types";
 import { type TV3ChartOperationContext, getSessionUserId, loadAuthorizedChart } from "./access";
 import type { TV3ChartDuplicateBody } from "./duplicate-schemas";
 import { duplicateChartRow } from "./duplicate-service";
-import { chartNameTaken, dashboardFull, refuseMatrixUntilUpgraded } from "./problems";
+import { chartNameTaken, dashboardFull, dashboardNoSpace, refuseMatrixUntilUpgraded } from "./problems";
 import { serializeV3Chart } from "./serializers";
 
 /**
@@ -64,6 +64,7 @@ export async function duplicateV3Chart({
     const result = created.value;
     if (result.kind === "gone") return problemForbidden(requestId, undefined, instance);
     if (result.kind === "full") return dashboardFull(context);
+    if (result.kind === "noSpace") return dashboardNoSpace(context);
     if (result.kind === "overlap") {
       return problemUnprocessableContent(requestId, "The layout overlaps another widget", {
         instance,

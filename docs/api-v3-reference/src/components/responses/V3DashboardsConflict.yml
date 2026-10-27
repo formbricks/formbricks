@@ -1,7 +1,8 @@
 description: >-
   Conflict (`code: conflict`) — the request clashes with the current state: a chart or dashboard
   name already used in the workspace, a chart already on the dashboard, a dashboard already holding
-  its 250 widgets, or a dashboard changed since the `expectedUpdatedAt` the caller sent.
+  its 250 widgets, a dashboard with no open slot left above its grid's last row, or a dashboard
+  changed since the `expectedUpdatedAt` the caller sent.
 headers:
   X-Request-Id:
     schema:

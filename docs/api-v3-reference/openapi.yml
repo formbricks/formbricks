@@ -117,6 +117,10 @@ info:
 servers:
   - url: https://app.formbricks.com
     description: Formbricks Cloud. Paths in this spec already include the `/api/v3` prefix; self-hosted instances substitute their own origin.
+security:
+  - apiKeyAuth: []
+  - bearerAuth: []
+  - sessionAuth: []
 paths:
   /api/v3/surveys:
     get:
@@ -4388,8 +4392,8 @@ paths:
         Copies a chart — same Feedback Dataset, type, chart query and display settings — so the copy can
         change without touching the dashboards that show the original. With `dashboardId`, the copy is
         also put on that dashboard (first open slot, or `layout`) in the same transaction, and the
-        dashboard's `updatedAt` moves; a dashboard already holding 250 widgets answers 409 and no copy is
-        made. Needs write access to the chart's workspace and to its Feedback Dataset.
+        dashboard's `updatedAt` moves; a dashboard already holding 250 widgets, or with no open slot above
+        the grid's last row, answers 409 and no copy is made. Needs write access to the chart's workspace and to its Feedback Dataset.
       tags:
         - V3 Charts
       parameters:
@@ -4849,7 +4853,8 @@ paths:
         at its chart type's default size; with one, exactly there. Widgets may leave gaps but not overlap:
         a layout covering another widget answers 422 naming it. A chart appears at most once per
         dashboard (409), and must live in the dashboard's workspace. A dashboard holds at most 250
-        widgets; an add past that answers 409. Moves the dashboard's `updatedAt`.
+        widgets, and a new widget takes the first open slot: an add past the cap, or with no open slot
+        above the grid's last row, answers 409. Moves the dashboard's `updatedAt`.
         Needs write access to the dashboard's workspace.
       tags:
         - V3 Dashboards
@@ -13203,7 +13208,7 @@ components:
           schema:
             $ref: '#/components/schemas/Problem'
     V3DashboardsConflict:
-      description: 'Conflict (`code: conflict`) — the request clashes with the current state: a chart or dashboard name already used in the workspace, a chart already on the dashboard, a dashboard already holding its 250 widgets, or a dashboard changed since the `expectedUpdatedAt` the caller sent.'
+      description: 'Conflict (`code: conflict`) — the request clashes with the current state: a chart or dashboard name already used in the workspace, a chart already on the dashboard, a dashboard already holding its 250 widgets, a dashboard with no open slot left above its grid''s last row, or a dashboard changed since the `expectedUpdatedAt` the caller sent.'
       headers:
         X-Request-Id:
           schema:

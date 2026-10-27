@@ -4,6 +4,7 @@ import type { Prisma } from "@formbricks/database/prisma";
 import type { TWidgetLayout } from "@formbricks/types/analysis";
 import { retryOnTransactionConflict } from "@/lib/utils/prisma-error";
 import {
+  MAX_WIDGET_Y,
   findOverlappingWidget,
   getDefaultWidgetLayout,
   resolveWidgetPosition,
@@ -36,6 +37,8 @@ export type TWidgetWriteResult =
   | { kind: "overlap"; widgetId: string }
   /** The dashboard already holds `MAX_DASHBOARD_WIDGETS` widgets. */
   | { kind: "full" }
+  /** The dashboard's grid has no room left: the first open slot is below its last row (`MAX_WIDGET_Y`). */
+  | { kind: "noSpace" }
   /** The dashboard or widget is gone — deleted after it was authorized. */
   | { kind: "gone" };
 
@@ -89,7 +92,8 @@ export const planNewWidget = (
 ):
   | { kind: "ok"; layout: TWidgetLayout; order: number }
   | { kind: "overlap"; widgetId: string }
-  | { kind: "full" } => {
+  | { kind: "full" }
+  | { kind: "noSpace" } => {
   // The cap a whole-dashboard save carries, so an add never makes a dashboard the editor cannot save.
   if (siblings.length >= MAX_DASHBOARD_WIDGETS) return { kind: "full" };
   // After the last widget, but never past the column: a save may set any order up to it, and ties are read
@@ -103,7 +107,12 @@ export const planNewWidget = (
     return clash ? { kind: "overlap", widgetId: clash.id } : { kind: "ok", layout, order };
   }
   const size = getDefaultWidgetLayout(chartType);
-  return { kind: "ok", layout: { ...size, ...resolveWidgetPosition(siblings, size) }, order };
+  const placed = { ...size, ...resolveWidgetPosition(siblings, size) };
+  // A whole-dashboard save must be able to carry this widget, so the auto-placed slot stays within the row
+  // bound the API accepts back. Only a grid packed down to its last row gets here: the fallback slot below
+  // everything would sit past `MAX_WIDGET_Y`, and the dashboard could then never be saved whole.
+  if (placed.y > MAX_WIDGET_Y) return { kind: "noSpace" };
+  return { kind: "ok", layout: placed, order };
 };
 
 /**

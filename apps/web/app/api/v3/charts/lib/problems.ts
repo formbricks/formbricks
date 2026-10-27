@@ -29,6 +29,23 @@ export const dashboardFull = ({ requestId, instance }: { requestId: string; inst
   );
 
 /**
+ * 409 for an add with no auto-placed slot left: the grid's first open slot is below its last row, so the
+ * widget could not be carried by a whole-dashboard save.
+ */
+export const dashboardNoSpace = ({
+  requestId,
+  instance,
+}: {
+  requestId: string;
+  instance?: string;
+}): Response =>
+  problemConflict(
+    requestId,
+    "The dashboard has no free space left: a new widget goes in the first open slot, and none remains above the grid's last row. Move or remove a widget first.",
+    instance
+  );
+
+/**
  * Matrix charts read data the 6.1 online upgrade migrates, so none may be created or switched to until
  * it has finished. Checked per request: activation only moves forward, and a running pod sees it from
  * the database without a redeploy.

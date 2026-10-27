@@ -17,7 +17,9 @@ export type TChartDuplicateResult =
   /** The requested layout would cover this widget on the target dashboard. */
   | { kind: "overlap"; widgetId: string }
   /** The target dashboard already holds `MAX_DASHBOARD_WIDGETS` widgets. */
-  | { kind: "full" };
+  | { kind: "full" }
+  /** The target dashboard's grid has no room left above its last row. */
+  | { kind: "noSpace" };
 
 /**
  * Copy a chart — same Feedback Dataset, type, query and display settings — and, given a `dashboardId`,

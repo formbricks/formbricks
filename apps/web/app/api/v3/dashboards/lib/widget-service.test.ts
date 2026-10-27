@@ -5,6 +5,7 @@ import {
   addWidgetRow,
   deleteWidgetRow,
   getChartTypeInWorkspace,
+  planNewWidget,
   replaceDashboardRow,
   updateWidgetRow,
 } from "./widget-service";
@@ -547,5 +548,37 @@ describe("replaceDashboardRow", () => {
     const [[dashboardUpdate]] = tx.dashboard.update.mock.calls as unknown as [[{ data: object }]];
     expect(dashboardUpdate.data).not.toHaveProperty("name");
     expect(dashboardUpdate.data).toHaveProperty("updatedAt");
+  });
+});
+
+describe("planNewWidget", () => {
+  test("places a new widget in the first open slot while the grid has room", () => {
+    expect(planNewWidget([], "bar")).toEqual({
+      kind: "ok",
+      layout: { x: 0, y: 0, w: 4, h: 4 },
+      order: 0,
+    });
+  });
+
+  test("refuses a slot below the grid's last row, which a whole-dashboard save could not carry", () => {
+    // 126 full-width widgets stacked 0..1000: the next open slot is row 1008, past MAX_WIDGET_Y.
+    const siblings = Array.from({ length: 126 }, (_, index) => ({
+      id: `widget-${index.toString()}`,
+      layout: { x: 0, y: index * 8, w: 12, h: 8 },
+      order: index,
+    }));
+    expect(planNewWidget(siblings, "bar")).toEqual({ kind: "noSpace" });
+  });
+
+  test("keeps taking widgets while the next open slot is on the last row", () => {
+    const siblings = Array.from({ length: 125 }, (_, index) => ({
+      id: `widget-${index.toString()}`,
+      layout: { x: 0, y: index * 8, w: 12, h: 8 },
+      order: index,
+    }));
+    expect(planNewWidget(siblings, "big_number")).toMatchObject({
+      kind: "ok",
+      layout: { x: 0, y: 1000 },
+    });
   });
 });

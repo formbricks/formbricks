@@ -1,7 +1,7 @@
 import "server-only";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { logger } from "@formbricks/logger";
-import { dashboardFull } from "@/app/api/v3/charts/lib/problems";
+import { dashboardFull, dashboardNoSpace } from "@/app/api/v3/charts/lib/problems";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import {
   createdResponse,
@@ -63,6 +63,8 @@ const refuseWidgetWrite = (
       return overlapsWidget(result.widgetId, context);
     case "full":
       return dashboardFull(context);
+    case "noSpace":
+      return dashboardNoSpace(context);
     case "gone":
       return problemForbidden(context.requestId, undefined, context.instance);
   }

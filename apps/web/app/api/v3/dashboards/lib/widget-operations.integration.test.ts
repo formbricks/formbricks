@@ -430,3 +430,62 @@ describe("DELETE /api/v3/dashboards/{dashboardId}/widgets/{widgetId}", () => {
     ).toEqual({ status: 403, code: "forbidden" });
   });
 });
+
+describe("the grid's last row", () => {
+  test("refuses an auto-placed widget past it, and the dashboard still saves whole", async () => {
+    const board = await prisma.dashboard.create({
+      data: { name: "Last row", workspaceId: fixture.workspaceId },
+    });
+    const chartIds = await prisma.chart.createManyAndReturn({
+      data: Array.from({ length: 127 }, (_unused, index) => ({
+        name: `Last row ${index}`,
+        type: "bar" as const,
+        workspaceId: fixture.workspaceId,
+        feedbackDirectoryId: fixture.datasetId,
+        query: { measures: ["FeedbackRecords.count"] },
+        config: {},
+      })),
+      select: { id: true },
+    });
+    // 126 full-width, full-height widgets stacked down to the grid's last row: no gap is left.
+    await prisma.dashboardWidget.createMany({
+      data: chartIds.slice(0, 126).map(({ id }, index) => ({
+        dashboardId: board.id,
+        chartId: id,
+        layout: { x: 0, y: index * 8, w: 12, h: 8 },
+        order: index,
+      })),
+    });
+
+    const refused = await addV3DashboardWidget({
+      dashboardId: board.id,
+      body: { chartId: chartIds[126].id },
+      ...context(editor()),
+    });
+    expect(refused.status).toBe(409);
+    expect((await bodyOf<{ detail: string }>(refused)).detail).toContain("no free space");
+    expect(await prisma.dashboardWidget.count({ where: { dashboardId: board.id } })).toBe(126);
+
+    // The invariant the bound exists for: nothing the API placed can stop a whole-dashboard save.
+    const [dashboard, widgets] = await Promise.all([
+      prisma.dashboard.findUniqueOrThrow({ where: { id: board.id }, select: { updatedAt: true } }),
+      prisma.dashboardWidget.findMany({
+        where: { dashboardId: board.id },
+        select: { id: true, layout: true, order: true },
+      }),
+    ]);
+    const replaced = await replaceDashboardRow({
+      dashboardId: board.id,
+      expectedUpdatedAt: dashboard.updatedAt,
+      widgets: widgets.map((widget) => ({
+        widgetId: widget.id,
+        layout: widget.layout as { x: number; y: number; w: number; h: number },
+        order: widget.order,
+      })),
+    });
+    expect(replaced.kind).toBe("ok");
+
+    await prisma.dashboard.delete({ where: { id: board.id } });
+    await prisma.chart.deleteMany({ where: { id: { in: chartIds.map(({ id }) => id) } } });
+  });
+});
