@@ -5,7 +5,8 @@ description: >-
   self-hosted license that does not include it). It is checked only
   after the caller's own access, so it says nothing about a workspace the caller cannot see. A workspace
   that still has creatives is in wind-down: listing, reading, stats, a PATCH that sets nothing but
-  `status` to `paused` or `completed`, and DELETE keep working, and everything else answers this. A
+  `status` to `paused` or `completed`, pausing a survey's creatives (`POST /api/v3/creatives/pause`),
+  and DELETE keep working, and everything else answers this. A
   workspace without creatives answers it on every operation.
 headers:
   X-Request-Id:

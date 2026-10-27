@@ -20,6 +20,7 @@ import {
   insertCreativeRecord,
   lockCreativeRecord,
   lockDestinationSurvey,
+  pauseSurveyCreativeRecords,
   replaceCreativeRecord,
   runInCreativeTransaction,
   updateCreativeLifecycleColumns,
@@ -259,6 +260,17 @@ export const restoreCreative = async (
   }
   throw new Error(`Creative ${creativeId} kept changing its survey while it was being restored`);
 };
+
+/**
+ * Pauses every In progress creative the survey opens, however many, and returns their ids; `null` when
+ * no such survey is in the workspace. A survey-side change, so it takes its locks in the order above:
+ * the survey's first, then the creatives' rows, which the single update takes as it reaches them.
+ */
+export const pauseSurveyCreatives = (surveyId: string, workspaceId: string): Promise<string[] | null> =>
+  runInCreativeTransaction(async (tx) => {
+    if (!(await lockDestinationSurvey(tx, surveyId, workspaceId))) return null;
+    return pauseSurveyCreativeRecords(tx, surveyId, workspaceId);
+  });
 
 /** Copies the creative into a new Draft, without counts, created by `createdBy`. */
 export const duplicateCreative = async ({

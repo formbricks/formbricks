@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { zCreativeResource, zCreativeStats } from "@formbricks/api-v3-schemas";
+import { zCreativeResource, zCreativeStats, zPausedCreatives } from "@formbricks/api-v3-schemas";
+import { queueV3AuditLog, skipV3AuditLog } from "@/app/api/v3/lib/audit";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
-import type { TV3Authentication } from "@/app/api/v3/lib/types";
+import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { getCustomCssPlanAllowed } from "@/modules/custom-css/lib/access";
 import { getCreativesAccess } from "@/modules/ee/creatives/lib/access";
 import type { TCreativesAccess, TCreativesOperation } from "@/modules/ee/creatives/lib/access-rules";
@@ -12,6 +13,8 @@ import {
   findCreativeRecord,
   findCreativeRecordsPage,
   insertCreativeRecord,
+  lockDestinationSurvey,
+  pauseSurveyCreativeRecords,
   replaceCreativeRecord,
 } from "@/modules/ee/creatives/lib/repository";
 import type {
@@ -27,6 +30,7 @@ import {
   getV3CreativeStats,
   listV3Creatives,
   patchV3Creative,
+  pauseV3SurveyCreatives,
   restoreV3Creative,
 } from "./operations";
 import type { TV3CreateCreativeBody, TV3PatchCreativeBody } from "./schemas";
@@ -48,6 +52,7 @@ vi.mock("@/modules/custom-css/lib/access", async (importOriginal) => ({
   getCustomCssPlanAllowed: vi.fn(),
 }));
 vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyRateLimit: vi.fn() }));
+vi.mock("@/app/api/v3/lib/audit", () => ({ queueV3AuditLog: vi.fn(), skipV3AuditLog: vi.fn() }));
 // The instance's licence (ENG-6602): `full` unless a test says otherwise.
 vi.mock("@/modules/ee/creatives/lib/access", () => ({ getCreativesAccess: vi.fn() }));
 vi.mock("@formbricks/logger", () => ({
@@ -214,6 +219,20 @@ vi.mock("@/modules/ee/creatives/lib/repository", () => ({
       return withRelations(record);
     }
   ),
+  // The selection itself is the database's; `repository.integration.test.ts` proves it against Postgres.
+  pauseSurveyCreativeRecords: vi.fn(async (_tx: unknown, surveyId: string, workspaceId: string) => {
+    const paused = [...store.values()].filter(
+      (record) =>
+        record.surveyId === surveyId &&
+        record.workspaceId === workspaceId &&
+        record.archivedAt === null &&
+        record.status === "inProgress"
+    );
+    for (const record of paused) {
+      store.set(record.id, { ...record, status: "paused", updatedAt: new Date() });
+    }
+    return paused.map(({ id }) => id);
+  }),
   deleteCreativeRecord: vi.fn(async (id: string) => {
     store.delete(id);
   }),
@@ -1484,6 +1503,125 @@ describe("getV3CreativeStats", () => {
 
     vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(Response.json({}, { status: 403 }));
     expect((await stats(id)).status).toBe(403);
+  });
+});
+
+describe("pauseV3SurveyCreatives", () => {
+  const pauseBody = (surveyId = APP_SURVEY_ID) => ({ workspaceId: WORKSPACE_ID, surveyId });
+  const pause = (surveyId?: string, overrides: Partial<Parameters<typeof pauseV3SurveyCreatives>[0]> = {}) =>
+    pauseV3SurveyCreatives({ ...base, body: pauseBody(surveyId), ...overrides });
+
+  const auditLog = (): TV3AuditLog => ({
+    action: "updated",
+    targetType: "creative",
+    userId: USER_ID,
+    userType: "user",
+    targetId: "unknown",
+    organizationId: "unknown",
+    status: "failure",
+    apiUrl: "http://localhost/api/v3/creatives/pause",
+  });
+
+  test("pauses the survey's In progress creatives with one write after locking the survey, and names them", async () => {
+    const first = await created(feedbackButton({ status: "inProgress" }));
+    const second = await created(feedbackButton({ status: "inProgress" }));
+    const draft = await created(feedbackButton());
+
+    const response = await pause();
+    const { data } = await readBody(response);
+
+    expect(response.status).toBe(200);
+    expect(zPausedCreatives.safeParse(data).error?.issues ?? []).toEqual([]);
+    expect(data.paused).toBe(2);
+    expect([...data.creativeIds].sort()).toEqual([first.id, second.id].sort());
+    expect(store.get(first.id)?.status).toBe("paused");
+    expect(store.get(draft.id)?.status).toBe("draft");
+    expect(pauseSurveyCreativeRecords).toHaveBeenCalledOnce();
+    expect(pauseSurveyCreativeRecords).toHaveBeenCalledWith(expect.anything(), APP_SURVEY_ID, WORKSPACE_ID);
+    // The survey-side lock order: the survey first, then the creatives' rows.
+    expect(vi.mocked(lockDestinationSurvey).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(pauseSurveyCreativeRecords).mock.invocationCallOrder[0]
+    );
+  });
+
+  test("a survey with nothing to pause answers 200 with none paused", async () => {
+    await created(feedbackButton({ status: "paused" }));
+
+    const response = await pause();
+
+    expect(response.status).toBe(200);
+    expect((await readBody(response)).data).toEqual({ paused: 0, creativeIds: [] });
+  });
+
+  test("audits each paused creative as a status update by the caller, and not the request itself", async () => {
+    const { id } = await created(feedbackButton({ status: "inProgress" }));
+    const log = auditLog();
+
+    await pause(APP_SURVEY_ID, { authentication: SESSION, auditLog: log });
+
+    expect(queueV3AuditLog).toHaveBeenCalledOnce();
+    expect(queueV3AuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "updated",
+        targetType: "creative",
+        targetId: id,
+        userId: USER_ID,
+        organizationId: ORGANIZATION_ID,
+        status: "success",
+        oldObject: { status: "inProgress" },
+        newObject: { status: "paused" },
+      }),
+      "req_1",
+      expect.anything()
+    );
+    expect(skipV3AuditLog).toHaveBeenCalledWith(log);
+  });
+
+  test.each([
+    ["unknown", UNKNOWN_ID],
+    ["in another workspace", FOREIGN_SURVEY_ID],
+  ])("an %s survey answers the same 403 as an unknown id, and pauses nothing", async (_kind, surveyId) => {
+    const response = await pause(surveyId);
+
+    expect(response.status).toBe(403);
+    expect((await readBody(response)).code).toBe("forbidden");
+    expect(pauseSurveyCreativeRecords).not.toHaveBeenCalled();
+  });
+
+  test("needs read/write access to the workspace: a read-only member is refused", async () => {
+    const { id } = await created(feedbackButton({ status: "inProgress" }));
+    vi.mocked(requireV3WorkspaceAccess).mockImplementation(async (_auth, _workspaceId, permission) =>
+      permission === "read"
+        ? { workspaceId: WORKSPACE_ID, organizationId: ORGANIZATION_ID }
+        : Response.json({ code: "forbidden" }, { status: 403 })
+    );
+
+    const response = await pause();
+
+    expect(response.status).toBe(403);
+    expect(store.get(id)?.status).toBe("inProgress");
+    expect(pauseSurveyCreativeRecords).not.toHaveBeenCalled();
+  });
+
+  test("is allowed in wind-down, like pausing one creative", async () => {
+    const { id } = await created(feedbackButton({ status: "inProgress" }));
+    vi.mocked(getCreativesAccess).mockResolvedValue("windDown");
+
+    const response = await pause();
+
+    expect(response.status).toBe(200);
+    expect(store.get(id)?.status).toBe("paused");
+  });
+
+  test("is refused when Creatives is not available, and pauses nothing", async () => {
+    const { id } = await created(feedbackButton({ status: "inProgress" }));
+    vi.mocked(getCreativesAccess).mockResolvedValue("none");
+
+    const response = await pause();
+
+    expect(response.status).toBe(403);
+    expect((await readBody(response)).code).toBe("creatives_not_entitled");
+    expect(store.get(id)?.status).toBe("inProgress");
   });
 });
 

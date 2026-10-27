@@ -95,21 +95,21 @@ export const unlinkSurveyCreatives = async (
 };
 
 /** Who made the survey-side change: the request's own audit entry, or the system for the purge. */
-type TUnlinkAuditActor = Omit<
+type TSurveySideAuditActor = Omit<
   TAuditEventInput,
   "action" | "targetType" | "targetId" | "status" | "oldObject" | "newObject"
 >;
 
 /**
- * One audit entry per creative a survey-side change unlinked: the same actor and request as the change
- * itself, recorded as an update of the creative's Destination to nothing.
+ * One audit entry per creative a survey-side change wrote: the same actor and request as the change
+ * itself, recorded as an update of the one column it changed.
  */
-export const toUnlinkedCreativeAuditEvents = (
-  actor: TUnlinkAuditActor,
-  surveyId: string,
-  creatives: readonly TLinkedCreative[]
+const toCreativeUpdateAuditEvents = (
+  actor: TSurveySideAuditActor,
+  creativeIds: readonly string[],
+  change: Readonly<{ oldObject: Record<string, unknown>; newObject: Record<string, unknown> }>
 ): TAuditEventInput[] =>
-  creatives.map(({ id }) => ({
+  creativeIds.map((id) => ({
     ...actor,
     // The change's own eventId correlates a failure; these entries are only written for a success.
     eventId: undefined,
@@ -117,9 +117,30 @@ export const toUnlinkedCreativeAuditEvents = (
     targetType: "creative",
     targetId: id,
     status: "success",
-    oldObject: { surveyId },
-    newObject: { surveyId: null },
+    ...change,
   }));
+
+/** The creatives a survey-side change unlinked: their Destination updated to nothing. */
+export const toUnlinkedCreativeAuditEvents = (
+  actor: TSurveySideAuditActor,
+  surveyId: string,
+  creatives: readonly TLinkedCreative[]
+): TAuditEventInput[] =>
+  toCreativeUpdateAuditEvents(
+    actor,
+    creatives.map(({ id }) => id),
+    { oldObject: { surveyId }, newObject: { surveyId: null } }
+  );
+
+/** The creatives a resume kept paused (`POST /api/v3/creatives/pause`): their status updated to paused. */
+export const toPausedCreativeAuditEvents = (
+  actor: TSurveySideAuditActor,
+  creativeIds: readonly string[]
+): TAuditEventInput[] =>
+  toCreativeUpdateAuditEvents(actor, creativeIds, {
+    oldObject: { status: "inProgress" },
+    newObject: { status: "paused" },
+  });
 
 /** A change to a survey refused because linked creatives open it (409). */
 export type TLinkedCreativesBlockedChange = "delete" | "singleUse" | "pin";

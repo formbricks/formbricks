@@ -1467,6 +1467,26 @@ export const zCreateCreativeRequest = z.discriminatedUnion("type", [
 export type CreateCreativeRequestZodType = z.infer<typeof zCreateCreativeRequest>;
 
 /**
+ * The survey whose creatives to pause, and the workspace it belongs to. Unknown fields are rejected with **400**.
+ */
+export const zPauseCreativesRequest = z.strictObject({
+  workspaceId: z.cuid2(),
+  surveyId: z.cuid2(),
+});
+
+export type PauseCreativesRequestZodType = z.infer<typeof zPauseCreativesRequest>;
+
+/**
+ * The creatives one `POST /api/v3/creatives/pause` paused.
+ */
+export const zPausedCreatives = z.strictObject({
+  paused: z.int().gte(0),
+  creativeIds: z.array(z.cuid2()),
+});
+
+export type PausedCreativesZodType = z.infer<typeof zPausedCreatives>;
+
+/**
  * Changes to a creative. Each top-level field is a group that **replaces** the stored one as a whole: send the complete `content`, `styling`, `destination`, `distribution` or `schedule` you want, and omit a group to leave it untouched. `defaultLanguage` and `languages` replace the languages; the stored texts must still fit them, so send `content` alongside when they no longer do.
  *
  * `content` and `styling` must have the shape of the creative's own `type`, which never changes; `type` itself is not accepted. Publish, pause, close and reopen by setting `status`. Unknown fields are rejected with **400**.
@@ -1707,6 +1727,10 @@ export type GetCreativesV3QueryZodType = z.infer<typeof zGetCreativesV3Query>;
 export const zCreateCreativeV3Body = zCreateCreativeRequest;
 
 export type CreateCreativeV3BodyZodType = z.infer<typeof zCreateCreativeV3Body>;
+
+export const zPauseCreativesV3Body = zPauseCreativesRequest;
+
+export type PauseCreativesV3BodyZodType = z.infer<typeof zPauseCreativesV3Body>;
 
 export const zDeleteCreativeV3Path = z.object({
   creativeId: z.cuid2(),

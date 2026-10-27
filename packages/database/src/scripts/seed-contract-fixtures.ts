@@ -42,6 +42,7 @@ const CONTRACT_IDS = {
   SURVEY_RESTORE: "clctsurveyrestore0000001",
   SURVEY_VISIBILITY: "clctsurveyvisibility0001",
   SURVEY_VISIBILITY_PRIVATE: "clctsurveyvisibilityp001",
+  SURVEY_PAUSE_CREATIVES: "clctsurveypausecreatives",
   WORKFLOW_PATCH: "clctworkflowpatch0000001",
   WORKFLOW_DELETE: "clctworkflowdelete000001",
   WORKFLOW_DUPLICATE: "clctworkflowduplicate001",
@@ -58,6 +59,7 @@ const CONTRACT_IDS = {
   CREATIVE_ARCHIVE: "clctcreativearchive00001",
   CREATIVE_RESTORE: "clctcreativerestore00001",
   CREATIVE_DUPLICATE: "clctcreativeduplicate001",
+  CREATIVE_PAUSE: "clctcreativepause0000001",
 } as const;
 
 /**
@@ -534,6 +536,14 @@ async function main(): Promise<void> {
     type: "banner",
     status: "inProgress",
   });
+  // A survey of its own for `POST /api/v3/creatives/pause`, so pausing it never touches the read creative.
+  await seedSurvey(CONTRACT_IDS.SURVEY_PAUSE_CREATIVES, "Contract fixture — pause creatives", false);
+  await seedCreative(CONTRACT_IDS.CREATIVE_PAUSE, {
+    name: "Contract fixture — pause",
+    type: "feedbackButton",
+    status: "inProgress",
+    surveyId: CONTRACT_IDS.SURVEY_PAUSE_CREATIVES,
+  });
 
   // No tag fixtures: every /api/v3/tags operation is `auth: "session"`, so an API key is rejected
   // with a documented 401 before a handler ever looks for a row. Seeding them would read as coverage
@@ -601,6 +611,7 @@ async function main(): Promise<void> {
       archiveCreativeV3: { path: { creativeId: CONTRACT_IDS.CREATIVE_ARCHIVE } },
       restoreCreativeV3: { path: { creativeId: CONTRACT_IDS.CREATIVE_RESTORE } },
       duplicateCreativeV3: { path: { creativeId: CONTRACT_IDS.CREATIVE_DUPLICATE } },
+      pauseCreativesV3: { body: { surveyId: CONTRACT_IDS.SURVEY_PAUSE_CREATIVES } },
     },
   };
 

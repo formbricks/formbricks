@@ -4,6 +4,7 @@ import {
   zGetCreativeStatsV3Query,
   zGetCreativeV3Path,
   zPatchCreativeRequest,
+  zPauseCreativesRequest,
 } from "@formbricks/api-v3-schemas";
 import { ZShowConditions } from "@formbricks/types/show-conditions";
 import { isWebUrl } from "@formbricks/types/web-url";
@@ -97,3 +98,7 @@ export const ZV3PatchCreativeBody = zPatchCreativeRequest.superRefine((body, ctx
   refineWebLinks(body, ctx);
 });
 export type TV3PatchCreativeBody = z.infer<typeof ZV3PatchCreativeBody>;
+
+/** `POST /api/v3/creatives/pause`: the generated body as it is, ids only, closed. */
+export const ZV3PauseCreativesBody = zPauseCreativesRequest;
+export type TV3PauseCreativesBody = z.infer<typeof ZV3PauseCreativesBody>;

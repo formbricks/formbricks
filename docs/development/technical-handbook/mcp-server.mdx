@@ -1176,9 +1176,12 @@ so callers can correlate the audit trail:
 
 ### Creative tools
 
-Nine tools over the v3 Creatives API, one per documented operation: `list_creatives`, `get_creative`,
+Nine tools over the v3 Creatives API, one per documented operation but one: `list_creatives`, `get_creative`,
 `get_creative_stats`, `create_creative`, `patch_creative`, `delete_creative`, `duplicate_creative`,
-`archive_creative` and `restore_creative`. A creative is a feedback button or banner the web SDK renders
+`archive_creative` and `restore_creative`. The one operation without a tool is `POST
+/api/v3/creatives/pause`, which pauses every creative a survey opens so the survey screens stay within
+the rate limit however many there are; an agent pauses one with `patch_creative`. A creative is a
+feedback button or banner the web SDK renders
 on a customer's site. Each tool is a thin adapter: it maps its input onto the operation in
 `app/api/v3/creatives/lib/operations.ts` and relays the answer, so validation, status rules and
 authorization are the REST API's, tested once there.

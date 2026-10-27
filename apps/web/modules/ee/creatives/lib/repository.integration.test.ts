@@ -3,7 +3,13 @@ import { prisma } from "@formbricks/database";
 import { resetDb } from "@/integration/reset-db";
 import { DEFAULT_CREATIVE_DISTRIBUTION, DEFAULT_CREATIVE_STYLING, type TCreativeState } from "./creative";
 import { type TCreativeRecord, findCreativeRecordsPage, workspaceHasCreatives } from "./repository";
-import { CreativeReferenceError, archiveCreative, createCreative, updateCreative } from "./service";
+import {
+  CreativeReferenceError,
+  archiveCreative,
+  createCreative,
+  pauseSurveyCreatives,
+  updateCreative,
+} from "./service";
 
 /**
  * The creatives storage against a real PostgreSQL: the list query (the derived-status filter, the
@@ -250,5 +256,67 @@ describe("a write to an existing creative", () => {
       archivedAt: NOW,
       surveyId: activeSurvey.id,
     });
+  });
+});
+
+// "Keep creatives paused" when a survey resumes (ENG-6602): one request, however many creatives.
+describe("pauseSurveyCreatives", () => {
+  const opens = (surveyId: string) => ({ destination: { type: "survey" as const, surveyId } });
+  const readRow = (id: string) => prisma.creative.findUniqueOrThrow({ where: { id } });
+
+  test("pauses only the survey's own In progress creatives that aren't archived, writing only their status", async () => {
+    const { workspaceId, activeSurvey, pausedSurvey } = await seedWorkspace("Pause");
+    const other = await seedWorkspace("Pause elsewhere");
+    const live = await create(workspaceId, { name: "live", ...opens(activeSurvey.id) });
+    const untouched = await Promise.all([
+      create(workspaceId, { name: "draft", status: "draft", publishedAt: null, ...opens(activeSurvey.id) }),
+      create(workspaceId, { name: "paused", status: "paused", ...opens(activeSurvey.id) }),
+      create(workspaceId, { name: "closed", status: "completed", ...opens(activeSurvey.id) }),
+      create(workspaceId, { name: "archived", archivedAt: hoursFromNow(-1), ...opens(activeSurvey.id) }),
+      create(workspaceId, { name: "another survey's", ...opens(pausedSurvey.id) }),
+      create(other.workspaceId, { name: "another workspace's", ...opens(other.activeSurvey.id) }),
+    ]);
+    const liveBefore = await readRow(live.id);
+    const untouchedBefore = await Promise.all(untouched.map(({ id }) => readRow(id)));
+
+    expect(await pauseSurveyCreatives(activeSurvey.id, workspaceId)).toEqual([live.id]);
+
+    const { status, updatedAt, ...rest } = await readRow(live.id);
+    const { status: _status, updatedAt: _updatedAt, ...restBefore } = liveBefore;
+    expect(status).toBe("paused");
+    expect(updatedAt.getTime()).toBeGreaterThanOrEqual(liveBefore.updatedAt.getTime());
+    expect(rest).toEqual(restBefore);
+    expect(await Promise.all(untouched.map(({ id }) => readRow(id)))).toEqual(untouchedBefore);
+  });
+
+  test("pauses all 251 creatives of a survey in one call", async () => {
+    const { workspaceId, activeSurvey } = await seedWorkspace("Many");
+    await prisma.creative.createMany({
+      data: Array.from({ length: 251 }, (_, index) => ({
+        name: `Creative ${index}`,
+        type: "feedbackButton" as const,
+        status: "inProgress" as const,
+        publishedAt: NOW,
+        workspaceId,
+        surveyId: activeSurvey.id,
+        content: {},
+        styling: {},
+      })),
+    });
+
+    const paused = await pauseSurveyCreatives(activeSurvey.id, workspaceId);
+
+    expect(paused).toHaveLength(251);
+    expect(await prisma.creative.count({ where: { surveyId: activeSurvey.id, status: "paused" } })).toBe(251);
+  });
+
+  test("answers null, and pauses nothing, for a survey that is not in the workspace", async () => {
+    const { workspaceId } = await seedWorkspace("Mine");
+    const other = await seedWorkspace("Theirs");
+    const theirs = await create(other.workspaceId, opens(other.activeSurvey.id));
+
+    expect(await pauseSurveyCreatives(other.activeSurvey.id, workspaceId)).toBeNull();
+    expect(await pauseSurveyCreatives("clunknownsurvey000000001", workspaceId)).toBeNull();
+    expect((await readRow(theirs.id)).status).toBe("inProgress");
   });
 });

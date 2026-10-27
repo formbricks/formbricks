@@ -35,7 +35,9 @@ import { registerScopedTool } from "./guard-scopes";
 import { runMcpMutation } from "./run-mcp-mutation";
 
 /**
- * MCP tools over the v3 Creatives API (ENG-4004) — one per documented operation.
+ * MCP tools over the v3 Creatives API (ENG-4004) — one per documented operation but
+ * `POST /api/v3/creatives/pause`, which lets the survey screens keep any number of creatives paused
+ * within the API's rate limit; an agent pauses one with `patch_creative`.
  *
  * Every tool is a thin adapter: it maps its input onto the operation and relays the answer, so what an
  * agent can do here is exactly what an API key can do over HTTP, and validation, status rules and

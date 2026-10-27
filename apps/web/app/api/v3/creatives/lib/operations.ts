@@ -1,5 +1,6 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
+import { queueV3AuditLog, skipV3AuditLog } from "@/app/api/v3/lib/audit";
 import { getV3SessionUserId } from "@/app/api/v3/lib/auth";
 import { capCustomCssIssues, customCssErrorsToInvalidParams } from "@/app/api/v3/lib/custom-css";
 import { getV3CustomCssPrincipal } from "@/app/api/v3/lib/custom-css-rate-limit";
@@ -35,6 +36,7 @@ import {
 } from "@/modules/ee/creatives/lib/authorization";
 import type { TCreativeState } from "@/modules/ee/creatives/lib/creative";
 import { assertCreativeCustomCssWrite } from "@/modules/ee/creatives/lib/custom-css-write";
+import { toPausedCreativeAuditEvents } from "@/modules/ee/creatives/lib/linked-creatives";
 import {
   type TCreativeRecord,
   findCreativeRecord,
@@ -49,6 +51,7 @@ import {
   createCreative,
   deleteCreative,
   duplicateCreative,
+  pauseSurveyCreatives,
   restoreCreative,
   updateCreative,
 } from "@/modules/ee/creatives/lib/service";
@@ -63,7 +66,12 @@ import {
   validateCreativeState,
 } from "@/modules/ee/creatives/lib/write-rules";
 import { parseV3CreativesListQuery } from "./list-query";
-import type { TV3CreateCreativeBody, TV3CreativeStatsQuery, TV3PatchCreativeBody } from "./schemas";
+import type {
+  TV3CreateCreativeBody,
+  TV3CreativeStatsQuery,
+  TV3PatchCreativeBody,
+  TV3PauseCreativesBody,
+} from "./schemas";
 import { type TV3CreativeResource, serializeV3Creative } from "./serializers";
 
 /**
@@ -439,6 +447,52 @@ export async function deleteV3Creative(params: TCreativeOperationParams): Promis
     return noContentResponse({ requestId });
   } catch (error) {
     return mapV3ThrownError(error, { log, requestId, instance, operation: "creatives.delete" });
+  }
+}
+
+/**
+ * Pauses every In progress creative a survey opens, in one request: keeping a resumed survey's creatives
+ * paused must work for any number of them, and one PATCH each would run into the 100 requests a minute
+ * the API allows. Access is pausing one creative's: `readWrite` on the workspace, then the licence's
+ * `pause` (allowed in wind-down). The workspace is supplied, as for a create, and the survey is looked up
+ * within it, so an unknown survey or one in another workspace answers the same 403 as an unknown id.
+ *
+ * Audited like the survey-side unlinks: one entry per paused creative, by the same caller, and none for
+ * the request itself, which has no one target.
+ */
+export async function pauseV3SurveyCreatives({
+  body,
+  authentication,
+  requestId,
+  instance,
+  auditLog,
+}: TOperationContext & { body: TV3PauseCreativesBody }): Promise<Response> {
+  const log = logger.withContext({ requestId, workspaceId: body.workspaceId, surveyId: body.surveyId });
+
+  try {
+    const authorized = await authorizeWorkspaceOperation(body.workspaceId, "pause", {
+      authentication,
+      requestId,
+      instance,
+    });
+    if (authorized instanceof Response) return authorized;
+
+    const creativeIds = await pauseSurveyCreatives(body.surveyId, authorized.workspaceId);
+    if (!creativeIds) {
+      log.warn({ statusCode: 403 }, "Survey not found in the workspace");
+      return problemForbidden(requestId, "You are not authorized to access this resource", instance);
+    }
+
+    if (auditLog) {
+      const actor = { ...auditLog, organizationId: authorized.organizationId };
+      const events = toPausedCreativeAuditEvents(actor, creativeIds);
+      await Promise.all(events.map((event) => queueV3AuditLog(event, requestId, log)));
+      skipV3AuditLog(auditLog);
+    }
+
+    return successResponse({ paused: creativeIds.length, creativeIds }, { requestId });
+  } catch (error) {
+    return mapV3ThrownError(error, { log, requestId, instance, operation: "creatives.pause" });
   }
 }
 

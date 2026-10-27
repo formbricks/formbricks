@@ -21,6 +21,7 @@ export const ADOPTED_OPERATIONS: Readonly<Record<string, readonly string[]>> = {
     "restoreCreativeV3",
     "duplicateCreativeV3",
     "getCreativeStatsV3",
+    "pauseCreativesV3",
   ],
   "V3 Responses": [
     "getResponsesV3",

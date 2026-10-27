@@ -12,9 +12,9 @@ info:
 
     **Responses**: **GET /api/v3/responses**, **GET /api/v3/responses/count**, **POST /api/v3/responses/validate**, **POST /api/v3/responses/batch-delete**, **GET /api/v3/responses/{responseId}**, **POST /api/v3/responses**, **PATCH /api/v3/responses/{responseId}**, and **DELETE /api/v3/responses/{responseId}**.
 
-    **Creatives**: **GET /api/v3/creatives**, **POST /api/v3/creatives**, **GET**, **PATCH** and **DELETE /api/v3/creatives/{creativeId}**, **POST /api/v3/creatives/{creativeId}/archive**, **/restore** and **/duplicate**, and **GET /api/v3/creatives/{creativeId}/stats**. A creative is a feedback button or a banner the web SDK renders on the customer's site; pressing it opens its Destination, a survey or a link. Writes set the author's `status`; reads add the derived `displayStatus`; `stats` returns its daily Impressions and Clicks.
+    **Creatives**: **GET /api/v3/creatives**, **POST /api/v3/creatives**, **GET**, **PATCH** and **DELETE /api/v3/creatives/{creativeId}**, **POST /api/v3/creatives/{creativeId}/archive**, **/restore** and **/duplicate**, **GET /api/v3/creatives/{creativeId}/stats**, and **POST /api/v3/creatives/pause**, which pauses every creative that opens a survey. A creative is a feedback button or a banner the web SDK renders on the customer's site; pressing it opens its Destination, a survey or a link. Writes set the author's `status`; reads add the derived `displayStatus`; `stats` returns its daily Impressions and Clicks.
 
-    Creatives needs a self-hosted license that includes it; Formbricks Cloud does not offer it. With one, every operation is available. Without one, a workspace that still has creatives is in **wind-down**: its creatives are no longer shown on sites, and they can only be listed, read (stats included), paused, closed (a PATCH that sets nothing but `status`) or deleted. A workspace with no creatives has no access at all. Anything not allowed answers **403** `creatives_not_entitled`.
+    Creatives needs a self-hosted license that includes it; Formbricks Cloud does not offer it. With one, every operation is available. Without one, a workspace that still has creatives is in **wind-down**: its creatives are no longer shown on sites, and they can only be listed, read (stats included), paused (a PATCH that sets nothing but `status`, or **POST /api/v3/creatives/pause**), closed (the same PATCH) or deleted. A workspace with no creatives has no access at all. Anything not allowed answers **403** `creatives_not_entitled`.
 
     **Workflows extension**: **GET /api/v3/workflows**, **POST /api/v3/workflows**, **GET /api/v3/workflows/{workflowId}**, **PATCH /api/v3/workflows/{workflowId}**, **DELETE /api/v3/workflows/{workflowId}**, **POST /api/v3/workflows/{workflowId}/duplicate**, **POST /api/v3/workflows/{workflowId}/enable**, **POST /api/v3/workflows/{workflowId}/disable**, **POST /api/v3/workflows/{workflowId}/archive**, **POST /api/v3/workflows/{workflowId}/unarchive**, **POST /api/v3/workflows/{workflowId}/test**, **GET /api/v3/workflows/runs**, and **GET /api/v3/workflows/runs/{runId}**.
 
@@ -4115,6 +4115,72 @@ paths:
           $ref: '#/components/responses/V3CreativesForbidden'
         '422':
           $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/creatives/pause:
+    post:
+      operationId: pauseCreativesV3
+      summary: Pause every creative that opens a survey
+      description: |
+        Pauses, in one request, every creative whose Destination is `surveyId` and whose `status` is `inProgress`, however many there are. Each one's `status` becomes `paused`, set by its author, so it stays paused whatever the survey does until it is resumed; nothing else about it changes. Drafts, creatives already paused or closed, archived creatives and the creatives of other surveys are left as they are. A creative whose schedule has ended but whose `status` is still `inProgress` is paused too. The survey screens call it before resuming a survey whose creatives the author keeps paused.
+
+        Read/write access to `workspaceId`, the same access pausing one creative needs; an unknown `surveyId`, or one in another workspace, answers **403**. Allowed in wind-down, like pausing one creative. A survey with nothing to pause answers **200** with `paused: 0`. Each paused creative is audited as an update of its `status`.
+      tags:
+        - V3 Creatives
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PauseCreativesRequest'
+            examples:
+              pauseSurveyCreatives:
+                summary: Pause the creatives that open a survey
+                value:
+                  workspaceId: clws1234567890123456789012
+                  surveyId: clsv1234567890123456789012
+      responses:
+        '200':
+          description: The survey's In progress creatives are paused.
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PausedCreatives'
+              examples:
+                paused:
+                  summary: Two creatives paused
+                  value:
+                    data:
+                      paused: 2
+                      creativeIds:
+                        - clcr1234567890123456789012
+                        - clcr2234567890123456789012
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3CreativesForbidden'
         '429':
           $ref: '#/components/responses/V3TooManyRequests'
         '500':
@@ -12244,6 +12310,40 @@ components:
           feedbackButton: '#/components/schemas/CreateFeedbackButtonCreativeRequest'
           banner: '#/components/schemas/CreateBannerCreativeRequest'
       description: A new creative. `type` selects the `content` and `styling` shape and can never change afterwards. Unknown fields are rejected with **400**.
+    PauseCreativesRequest:
+      type: object
+      description: The survey whose creatives to pause, and the workspace it belongs to. Unknown fields are rejected with **400**.
+      required:
+        - workspaceId
+        - surveyId
+      properties:
+        workspaceId:
+          type: string
+          format: cuid2
+          description: Workspace the survey belongs to. Requires read/write access.
+        surveyId:
+          type: string
+          format: cuid2
+          description: The survey whose creatives to pause, the ones whose Destination it is.
+      additionalProperties: false
+    PausedCreatives:
+      type: object
+      description: The creatives one `POST /api/v3/creatives/pause` paused.
+      required:
+        - paused
+        - creativeIds
+      properties:
+        paused:
+          type: integer
+          minimum: 0
+          description: How many creatives this request paused.
+        creativeIds:
+          type: array
+          items:
+            type: string
+            format: cuid2
+          description: The ids of the creatives this request paused, in no particular order.
+      additionalProperties: false
     PatchCreativeRequest:
       type: object
       description: |
@@ -13357,7 +13457,7 @@ components:
           schema:
             $ref: '#/components/schemas/Problem'
     V3CreativesForbidden:
-      description: 'Forbidden, one of two codes. `forbidden`: the caller lacks the workspace access the operation needs, or the creative does not exist (404 is not used, so creative ids cannot be probed for existence). `creatives_not_entitled`: Creatives is not available on this instance (Formbricks Cloud, or a self-hosted license that does not include it). It is checked only after the caller''s own access, so it says nothing about a workspace the caller cannot see. A workspace that still has creatives is in wind-down: listing, reading, stats, a PATCH that sets nothing but `status` to `paused` or `completed`, and DELETE keep working, and everything else answers this. A workspace without creatives answers it on every operation.'
+      description: 'Forbidden, one of two codes. `forbidden`: the caller lacks the workspace access the operation needs, or the creative does not exist (404 is not used, so creative ids cannot be probed for existence). `creatives_not_entitled`: Creatives is not available on this instance (Formbricks Cloud, or a self-hosted license that does not include it). It is checked only after the caller''s own access, so it says nothing about a workspace the caller cannot see. A workspace that still has creatives is in wind-down: listing, reading, stats, a PATCH that sets nothing but `status` to `paused` or `completed`, pausing a survey''s creatives (`POST /api/v3/creatives/pause`), and DELETE keep working, and everything else answers this. A workspace without creatives answers it on every operation.'
       headers:
         X-Request-Id:
           schema:

@@ -14,6 +14,7 @@ import {
   ZV3CreativeIdParams,
   ZV3CreativeStatsQuery,
   ZV3PatchCreativeBody,
+  ZV3PauseCreativesBody,
 } from "./schemas";
 
 vi.mock("server-only", () => ({}));
@@ -34,6 +35,7 @@ describe("the creative route schemas match the contract", () => {
   test.each([
     ["CreateCreativeRequest", ZV3CreateCreativeBody],
     ["PatchCreativeRequest", ZV3PatchCreativeBody],
+    ["PauseCreativesRequest", ZV3PauseCreativesBody],
   ])("%s differs from its contract schema only by its pinned constraints", (name, schema) => {
     const diffs = diffAgainstSpec(bundle, { $ref: `#/components/schemas/${name}` }, schema);
     expect(diffs.map((diff) => `${diff.path} ${diff.attr}`).sort()).toEqual(pinned(name));
@@ -87,6 +89,7 @@ describe("the creative route schemas match the contract", () => {
       "restoreCreativeV3",
       "duplicateCreativeV3",
       "getCreativeStatsV3",
+      "pauseCreativesV3",
     ])
   );
 

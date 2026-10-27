@@ -294,6 +294,25 @@ export const updateCreativeLifecycleColumns = (
     include: creativeRecordInclude,
   });
 
+/**
+ * Pauses every non-archived, In progress creative the survey opens, in one statement, and returns the
+ * ids it paused. Writes `status` (and `updatedAt`) and nothing else. Each row is locked as the statement
+ * reaches it, and one a concurrent write changed meanwhile is checked again against these conditions
+ * once that write commits, so a creative paused, closed or archived in between is left alone.
+ */
+export const pauseSurveyCreativeRecords = async (
+  tx: TCreativeTx,
+  surveyId: string,
+  workspaceId: string
+): Promise<string[]> => {
+  const paused = await tx.creative.updateManyAndReturn({
+    where: { surveyId, workspaceId, archivedAt: null, status: "inProgress" },
+    data: { status: "paused" },
+    select: { id: true },
+  });
+  return paused.map(({ id }) => id);
+};
+
 /** Deletes the creative; its triggers and languages (and, later, its counts) go with it by cascade. */
 export const deleteCreativeRecord = async (creativeId: string, workspaceId: string): Promise<void> => {
   await prisma.creative.delete({ where: { id: creativeId, workspaceId } });
