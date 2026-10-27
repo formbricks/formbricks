@@ -1,7 +1,6 @@
 "use client";
 
 import type { ComponentProps, ReactNode } from "react";
-import type { TResponseFilterCriteria } from "@formbricks/types/responses";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { ResponseDownloadMenu } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/ResponseDownloadMenu";
 import { TableToolbar } from "@/modules/ui/components/table-toolbar";
@@ -9,7 +8,6 @@ import type { useResponseTableFilters } from "../hooks/use-response-table-filter
 
 export type TResponseToolbarState = {
   filterState: ReturnType<typeof useResponseTableFilters>;
-  criteria: TResponseFilterCriteria;
   matchCount: number | null;
 };
 
@@ -20,7 +18,6 @@ export type TResponseToolbarState = {
 export const ResponseToolbar = ({
   survey,
   filterState,
-  criteria,
   matchCount,
   isLoading,
   settings,
@@ -29,7 +26,6 @@ export const ResponseToolbar = ({
 }: Readonly<{
   survey: TSurvey;
   filterState: ReturnType<typeof useResponseTableFilters>;
-  criteria: TResponseFilterCriteria;
   matchCount: number | null;
   isLoading?: boolean;
   settings?: NonNullable<ComponentProps<typeof TableToolbar>["settings"]>;
@@ -43,7 +39,7 @@ export const ResponseToolbar = ({
       onFiltersChange: filterState.setFilters,
     }}
     matchCount={{ count: matchCount }}
-    actions={<ResponseDownloadMenu survey={survey} filters={criteria} />}
+    actions={<ResponseDownloadMenu survey={survey} getFilters={filterState.resolveFreshCriteria} />}
     isLoading={isLoading}
     settings={settings}
     selectionContent={selectionContent}

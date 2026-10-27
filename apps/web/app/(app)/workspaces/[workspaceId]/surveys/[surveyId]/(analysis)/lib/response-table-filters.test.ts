@@ -281,6 +281,7 @@ describe("normalizeSummaryFilterRow", () => {
     ({
       "workspace.surveys.summary.includes_either": "Enthält eines von",
       "workspace.surveys.summary.is_equal_to": "Ist gleich",
+      "common.skipped": "Übersprungen",
     })[key] ?? key) as unknown as TFunction;
 
   test("maps a translated Summary operator back, so a click filters in every language", () => {
@@ -298,6 +299,23 @@ describe("normalizeSummaryFilterRow", () => {
       property: "question.plan",
       operator: "includesOneOf",
       values: ["Pro"],
+    });
+  });
+
+  test("maps the NPS dismissed link's translated Skipped", () => {
+    const row = {
+      elementType: {
+        type: OptionsType.ELEMENTS,
+        id: "nps",
+        label: "nps",
+        elementType: TSurveyElementTypeEnum.NPS,
+      },
+      filterType: { filterValue: "Übersprungen", filterComboBoxValue: undefined },
+    };
+    expect(filterValueToTableFilter(normalizeSummaryFilterRow(row, german), survey)).toEqual({
+      property: "question.nps",
+      operator: "isNotSet",
+      values: [],
     });
   });
 

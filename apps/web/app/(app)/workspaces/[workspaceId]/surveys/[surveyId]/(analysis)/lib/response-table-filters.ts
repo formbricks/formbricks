@@ -557,6 +557,7 @@ export const normalizeSummaryFilterRow = (row: FilterValue, t: TFunction): Filte
     [t("workspace.surveys.summary.includes_all")]: "Includes all",
     [t("workspace.surveys.summary.is_equal_to")]: "Is equal to",
     [t("workspace.surveys.summary.is_less_than")]: "Is less than",
+    [t("common.skipped")]: "Skipped",
   };
   const { filterValue, filterComboBoxValue } = row.filterType;
   const isPicture = row.elementType.elementType === TSurveyElementTypeEnum.PictureSelection;

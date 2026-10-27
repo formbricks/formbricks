@@ -116,7 +116,8 @@ export const ResponsePage = ({
         surveyId,
         limit: responsesPerPage,
         offset: 0,
-        filterCriteria: filters,
+        // A refresh asks about now: a relative date window may have moved on since the filter was set.
+        filterCriteria: filterState.resolveFreshCriteria(),
       });
 
       if (getResponsesActionResponse?.serverError) {
@@ -131,7 +132,7 @@ export const ResponsePage = ({
     } finally {
       setIsFetchingFirstPage(false);
     }
-  }, [filters, refetchMatchCount, responsesPerPage, surveyId, t]);
+  }, [filterState.resolveFreshCriteria, refetchMatchCount, responsesPerPage, surveyId, t]);
 
   useEffect(() => {
     return registerAnalysisRefreshHandler(refetchResponses);
@@ -195,7 +196,7 @@ export const ResponsePage = ({
       locale={locale}
       isQuotasAllowed={isQuotasAllowed}
       quotas={quotas}
-      toolbar={{ filterState, criteria: filters, matchCount: matchCountQuery.data ?? null }}
+      toolbar={{ filterState, matchCount: matchCountQuery.data ?? null }}
     />
   );
 };

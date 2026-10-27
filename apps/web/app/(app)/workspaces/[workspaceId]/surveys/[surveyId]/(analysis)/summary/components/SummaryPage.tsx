@@ -133,7 +133,8 @@ export const SummaryPage = ({
   }, [tab, loadInitialDisplays]);
 
   const fetchSummary = useCallback(async () => {
-    const currentFilters = getFormattedFilters(survey, selectedFilter, dateRange);
+    // Asked about now: a refresh after midnight must not reuse yesterday's relative date window.
+    const currentFilters = filterState.resolveFreshCriteria();
     const updatedSurveySummary = await getSurveySummaryAction({
       surveyId,
       filterCriteria: currentFilters,
@@ -144,7 +145,7 @@ export const SummaryPage = ({
     }
 
     setSurveySummary(updatedSurveySummary?.data ?? defaultSurveySummary);
-  }, [dateRange, selectedFilter, survey, surveyId]);
+  }, [filterState.resolveFreshCriteria, surveyId]);
 
   const refreshSummary = useCallback(async () => {
     setIsLoading(true);
@@ -218,11 +219,6 @@ export const SummaryPage = ({
     return replaceHeadlineRecall(survey, "default");
   }, [survey]);
 
-  const criteria = useMemo(
-    () => getFormattedFilters(survey, selectedFilter, dateRange),
-    [survey, selectedFilter, dateRange]
-  );
-
   return (
     <>
       <SummaryMetadata
@@ -249,7 +245,6 @@ export const SummaryPage = ({
       <ResponseToolbar
         survey={surveyMemoized}
         filterState={filterState}
-        criteria={criteria}
         matchCount={isLoading ? null : surveySummary.meta.totalResponses}
       />
       <ScrollToTop containerId="mainContent" />

@@ -29,8 +29,8 @@ enum FilterDownload {
  */
 export const ResponseDownloadMenu = ({
   survey,
-  filters,
-}: Readonly<{ survey: TSurvey; filters: TResponseFilterCriteria }>) => {
+  getFilters,
+}: Readonly<{ survey: TSurvey; getFilters: () => TResponseFilterCriteria }>) => {
   const { t } = useTranslation();
   const [isDownloadDropDownOpen, setIsDownloadDropDownOpen] = useState<boolean>(false);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
@@ -54,7 +54,7 @@ export const ResponseDownloadMenu = ({
     const buildUrl = (extra?: Record<string, string>) => {
       const params = new URLSearchParams(extra);
       if (filter === FilterDownload.FILTER) {
-        params.set("filters", JSON.stringify(filters));
+        params.set("filters", JSON.stringify(getFilters()));
       }
       return `/api/surveys/${survey.id}/attachments?${params.toString()}`;
     };
@@ -107,7 +107,7 @@ export const ResponseDownloadMenu = ({
 
   const handleDownloadResponses = async (filter: FilterDownload, fileType: "csv" | "xlsx") => {
     try {
-      const responseFilters = filter === FilterDownload.ALL ? {} : filters;
+      const responseFilters = filter === FilterDownload.ALL ? {} : getFilters();
       setIsDownloading(true);
 
       const responsesDownloadUrlResponse = await getResponsesDownloadUrlAction({

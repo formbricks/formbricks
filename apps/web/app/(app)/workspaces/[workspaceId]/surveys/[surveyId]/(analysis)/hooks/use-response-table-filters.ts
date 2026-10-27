@@ -11,7 +11,7 @@ import type {
   SelectedFilterValue,
 } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
 import { getSurveyFilterDataAction } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/actions";
-import { generateElementAndFilterOptions } from "@/app/lib/surveys/surveys";
+import { generateElementAndFilterOptions, getFormattedFilters } from "@/app/lib/surveys/surveys";
 import { getReportingTimeZone } from "@/lib/date-ranges";
 import { useTableUrlState } from "@/modules/ui/components/table-toolbar/hooks/use-table-url-state";
 import { STRING_RULE_OPERATORS } from "@/modules/ui/components/table-toolbar/lib/operators";
@@ -108,6 +108,17 @@ export const useResponseTableFilters = (survey: TSurvey) => {
   const state = useMemo<{ selectedFilter: SelectedFilterValue; dateRange: DateRange }>(() => raw, [stateKey]);
 
   /**
+   * The filter as request criteria, with relative dates resolved against this moment. A refresh or a
+   * download that runs after midnight in the reporting zone must ask about today, not the day the
+   * filter was set; paging through a list keeps `dateRange` so every page shares one window.
+   */
+  const resolveFreshCriteria = useCallback(() => {
+    const fresh = toResponseFilterState(filters, model.fields, timeZone, new Date());
+    return getFormattedFilters(survey, fresh.selectedFilter, fresh.dateRange);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `filtersKey` / `surveyKey` stand in for their objects
+  }, [filtersKey, model.fields, timeZone, surveyKey]);
+
+  /**
    * The Summary's "filter by this answer": replaces whatever rules that question had. Returns whether
    * a filter was applied, so the caller only confirms one that was.
    */
@@ -132,6 +143,7 @@ export const useResponseTableFilters = (survey: TSurvey) => {
     dateRange: state.dateRange,
     hasFilters: filters.length > 0,
     applyQuestionFilter,
+    resolveFreshCriteria,
     isFilterDataLoading: filterData.isLoading,
   };
 };
