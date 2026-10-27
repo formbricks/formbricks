@@ -488,6 +488,8 @@ const ELEMENT_BASE_KEYS = new Set([
   "required",
   "isDraft",
 ]);
+// Everything but CTA can carry a question code (ENG-6778); a missing entry here would silently drop it.
+const CODED_ELEMENT_BASE_KEYS = new Set([...ELEMENT_BASE_KEYS, "code"]);
 const ELEMENT_REQUIRED_KEYS = ["id", "type", "headline", "required"] as const;
 const ALL_ELEMENT_EXTRA_KEYS = new Set([
   "allowMulti",
@@ -529,10 +531,10 @@ const ALL_ELEMENT_EXTRA_KEYS = new Set([
   "validation",
   "zip",
 ]);
-const ELEMENT_KEYS = new Set([...ELEMENT_BASE_KEYS, ...ALL_ELEMENT_EXTRA_KEYS]);
+const ELEMENT_KEYS = new Set([...CODED_ELEMENT_BASE_KEYS, ...ALL_ELEMENT_EXTRA_KEYS]);
 const ELEMENT_KEYS_BY_TYPE = {
   address: new Set([
-    ...ELEMENT_BASE_KEYS,
+    ...CODED_ELEMENT_BASE_KEYS,
     "addressLine1",
     "addressLine2",
     "city",
@@ -541,11 +543,18 @@ const ELEMENT_KEYS_BY_TYPE = {
     "country",
     "validation",
   ]),
-  cal: new Set([...ELEMENT_BASE_KEYS, "calUserName", "calHost"]),
-  ces: new Set([...ELEMENT_BASE_KEYS, "scale", "range", "lowerLabel", "upperLabel", "isColorCodingEnabled"]),
-  consent: new Set([...ELEMENT_BASE_KEYS, "label", "validation"]),
+  cal: new Set([...CODED_ELEMENT_BASE_KEYS, "calUserName", "calHost"]),
+  ces: new Set([
+    ...CODED_ELEMENT_BASE_KEYS,
+    "scale",
+    "range",
+    "lowerLabel",
+    "upperLabel",
+    "isColorCodingEnabled",
+  ]),
+  consent: new Set([...CODED_ELEMENT_BASE_KEYS, "label", "validation"]),
   contactInfo: new Set([
-    ...ELEMENT_BASE_KEYS,
+    ...CODED_ELEMENT_BASE_KEYS,
     "firstName",
     "lastName",
     "email",
@@ -553,19 +562,26 @@ const ELEMENT_KEYS_BY_TYPE = {
     "company",
     "validation",
   ]),
-  csat: new Set([...ELEMENT_BASE_KEYS, "scale", "range", "lowerLabel", "upperLabel", "isColorCodingEnabled"]),
+  csat: new Set([
+    ...CODED_ELEMENT_BASE_KEYS,
+    "scale",
+    "range",
+    "lowerLabel",
+    "upperLabel",
+    "isColorCodingEnabled",
+  ]),
   cta: new Set([...ELEMENT_BASE_KEYS, "buttonExternal", "buttonUrl", "ctaButtonLabel"]),
-  date: new Set([...ELEMENT_BASE_KEYS, "html", "format", "validation"]),
+  date: new Set([...CODED_ELEMENT_BASE_KEYS, "html", "format", "validation"]),
   fileUpload: new Set([
-    ...ELEMENT_BASE_KEYS,
+    ...CODED_ELEMENT_BASE_KEYS,
     "allowMultipleFiles",
     "maxSizeInMB",
     "allowedFileExtensions",
     "validation",
   ]),
-  matrix: new Set([...ELEMENT_BASE_KEYS, "rows", "columns", "shuffleOption", "validation"]),
+  matrix: new Set([...CODED_ELEMENT_BASE_KEYS, "rows", "columns", "shuffleOption", "validation"]),
   multipleChoiceMulti: new Set([
-    ...ELEMENT_BASE_KEYS,
+    ...CODED_ELEMENT_BASE_KEYS,
     "choices",
     "shuffleOption",
     "otherOptionPlaceholder",
@@ -573,15 +589,15 @@ const ELEMENT_KEYS_BY_TYPE = {
     "displayType",
   ]),
   multipleChoiceSingle: new Set([
-    ...ELEMENT_BASE_KEYS,
+    ...CODED_ELEMENT_BASE_KEYS,
     "choices",
     "shuffleOption",
     "otherOptionPlaceholder",
     "displayType",
   ]),
-  nps: new Set([...ELEMENT_BASE_KEYS, "lowerLabel", "upperLabel", "isColorCodingEnabled"]),
+  nps: new Set([...CODED_ELEMENT_BASE_KEYS, "lowerLabel", "upperLabel", "isColorCodingEnabled"]),
   openText: new Set([
-    ...ELEMENT_BASE_KEYS,
+    ...CODED_ELEMENT_BASE_KEYS,
     "placeholder",
     "longAnswer",
     "inputType",
@@ -589,16 +605,16 @@ const ELEMENT_KEYS_BY_TYPE = {
     "charLimit",
     "validation",
   ]),
-  pictureSelection: new Set([...ELEMENT_BASE_KEYS, "allowMulti", "choices", "validation"]),
+  pictureSelection: new Set([...CODED_ELEMENT_BASE_KEYS, "allowMulti", "choices", "validation"]),
   ranking: new Set([
-    ...ELEMENT_BASE_KEYS,
+    ...CODED_ELEMENT_BASE_KEYS,
     "choices",
     "otherOptionPlaceholder",
     "shuffleOption",
     "validation",
   ]),
   rating: new Set([
-    ...ELEMENT_BASE_KEYS,
+    ...CODED_ELEMENT_BASE_KEYS,
     "scale",
     "range",
     "lowerLabel",
@@ -611,8 +627,8 @@ type ElementTypeWithStrictKeys = keyof typeof ELEMENT_KEYS_BY_TYPE;
 function isElementTypeWithStrictKeys(type: string): type is ElementTypeWithStrictKeys {
   return Object.hasOwn(ELEMENT_KEYS_BY_TYPE, type);
 }
-const LABEL_CHOICE_KEYS = new Set(["id", "label"]);
-const PICTURE_CHOICE_KEYS = new Set(["id", "imageUrl", "imageAltText"]);
+const LABEL_CHOICE_KEYS = new Set(["id", "label", "code"]);
+const PICTURE_CHOICE_KEYS = new Set(["id", "code", "imageUrl", "imageAltText"]);
 const TOGGLE_INPUT_KEYS = new Set(["show", "required", "placeholder"]);
 const CHAR_LIMIT_KEYS = new Set(["enabled", "min", "max"]);
 const VALIDATION_KEYS = new Set(["rules", "logic"]);
