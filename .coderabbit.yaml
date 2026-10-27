@@ -87,10 +87,10 @@ reviews:
     - "!packages/api-v3-schemas/src/generated/**"
     # Agent skills vendored from upstream and pinned by hash in skills-lock.json; the next
     # `skills` update overwrites local edits. Formbricks-specific behaviour belongs in
-    # docs/agents/, which is reviewed. nextjs-docs is ours, so it stays in review.
+    # docs/agents/, which is reviewed. nextjs-docs is ours, so it stays in review, and so
+    # does skills-lock.json: it records each skill's source and hash.
     - "!.agents/skills/!(nextjs-docs)/**"
     - "!.claude/skills/**"
-    - "!skills-lock.json"
 
   path_instructions:
     - path: "**/*.test.tsx"
