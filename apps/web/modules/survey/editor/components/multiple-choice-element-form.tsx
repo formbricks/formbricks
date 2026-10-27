@@ -10,19 +10,17 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getLanguageLabel } from "@formbricks/i18n-utils/utils";
 import {
-  TMultipleChoiceOptionDisplayType,
   TSurveyElement,
   TSurveyElementChoice,
   TSurveyElementTypeEnum,
   TSurveyMultipleChoiceElement,
 } from "@formbricks/types/surveys/elements";
-import { TShuffleOption, TSurvey } from "@formbricks/types/surveys/types";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
 import { BulkEditOptionsModal } from "@/modules/survey/editor/components/bulk-edit-options-modal";
 import { ElementOptionChoice } from "@/modules/survey/editor/components/element-option-choice";
-import { ValidationRulesEditor } from "@/modules/survey/editor/components/validation-rules-editor";
 import {
   ensureSpecialChoicesOrder,
   getShuffleOptionAfterAddingSpecialChoice,
@@ -31,8 +29,6 @@ import {
 import { findOptionUsedInLogic } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
-import { OptionsSwitch } from "@/modules/ui/components/options-switch";
-import { ShuffleOptionSelect } from "@/modules/ui/components/shuffle-option-select";
 
 interface MultipleChoiceElementFormProps {
   localSurvey: TSurvey;
@@ -66,38 +62,6 @@ export const MultipleChoiceElementForm = ({
   const elementRef = useRef<HTMLInputElement>(null);
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
   const surveyLanguages = localSurvey.languages ?? [];
-  const shuffleOptionsTypes: Record<TShuffleOption, { id: TShuffleOption; label: string; show: boolean }> = {
-    none: {
-      id: "none",
-      label: t("workspace.surveys.edit.keep_current_order"),
-      show: true,
-    },
-    all: {
-      id: "all",
-      label: t("workspace.surveys.edit.randomize_all"),
-      show: element.choices.every((c) => c.id !== "other" && c.id !== "none"),
-    },
-    exceptLast: {
-      id: "exceptLast",
-      label: t("workspace.surveys.edit.randomize_all_except_last"),
-      show: true,
-    },
-    reverseOrderOccasionally: {
-      id: "reverseOrderOccasionally",
-      label: t("workspace.surveys.edit.reverse_order_occasionally"),
-      show: element.choices.every((c) => c.id !== "other" && c.id !== "none"),
-    },
-    reverseOrderExceptLast: {
-      id: "reverseOrderExceptLast",
-      label: t("workspace.surveys.edit.reverse_order_occasionally_except_last"),
-      show: true,
-    },
-  };
-
-  const multipleChoiceOptionDisplayTypeOptions = [
-    { value: "list", label: t("workspace.surveys.edit.list") },
-    { value: "dropdown", label: t("workspace.surveys.edit.dropdown") },
-  ];
 
   const updateChoice = (choiceIdx: number, updatedAttributes: Partial<TSurveyElementChoice>) => {
     let newChoices: any[] = [];
@@ -385,29 +349,7 @@ export const MultipleChoiceElementForm = ({
                 ? t("workspace.surveys.edit.convert_to_multiple_choice")
                 : t("workspace.surveys.edit.convert_to_single_choice")}
             </Button>
-
-            <div className="flex flex-1 items-center justify-end gap-2">
-              <ShuffleOptionSelect
-                elementIdx={elementIdx}
-                shuffleOption={element.shuffleOption}
-                updateElement={updateElement}
-                shuffleOptionsTypes={shuffleOptionsTypes}
-              />
-            </div>
           </div>
-        </div>
-      </div>
-
-      <div className="mt-3">
-        <Label>{t("workspace.surveys.edit.display_type")}</Label>
-        <div className="mt-2">
-          <OptionsSwitch
-            options={multipleChoiceOptionDisplayTypeOptions}
-            currentOption={element.displayType ?? "list"}
-            handleOptionChange={(value: string) =>
-              updateElement(elementIdx, { displayType: value as TMultipleChoiceOptionDisplayType })
-            }
-          />
         </div>
       </div>
 
@@ -427,19 +369,6 @@ export const MultipleChoiceElementForm = ({
         surveyLanguageCodes={surveyLanguageCodes}
         locale={locale}
       />
-
-      {element.type === TSurveyElementTypeEnum.MultipleChoiceMulti && (
-        <ValidationRulesEditor
-          elementType={element.type}
-          validation={element.validation}
-          onUpdateValidation={(validation) => {
-            updateElement(elementIdx, {
-              validation,
-            });
-          }}
-          element={element}
-        />
-      )}
     </form>
   );
 };

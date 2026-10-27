@@ -10,6 +10,7 @@ import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/survey
 import { TSurvey, TSurveyEndScreenCard, TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
 import { type TWorkspaceWithoutCustomCss } from "@/modules/custom-css/lib/types";
 import { getBlockDisplayName } from "@/modules/survey/editor/lib/blocks";
+import { getChoiceTypeSwitchUpdate } from "@/modules/survey/editor/lib/element-type-switch";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { getElementDefaults, getGroupedElementTypes } from "@/modules/survey/lib/elements";
 import { Button } from "@/modules/ui/components/button";
@@ -96,24 +97,9 @@ export const EditorCardMenu = ({
 
     const elementDefaults = getElementDefaults(type, workspace, t);
 
-    if (
-      (type === TSurveyElementTypeEnum.MultipleChoiceSingle &&
-        card.type === TSurveyElementTypeEnum.MultipleChoiceMulti) ||
-      (type === TSurveyElementTypeEnum.MultipleChoiceMulti &&
-        card.type === TSurveyElementTypeEnum.MultipleChoiceSingle) ||
-      (type === TSurveyElementTypeEnum.MultipleChoiceMulti && card.type === TSurveyElementTypeEnum.Ranking) ||
-      (type === TSurveyElementTypeEnum.Ranking && card.type === TSurveyElementTypeEnum.MultipleChoiceMulti) ||
-      (type === TSurveyElementTypeEnum.MultipleChoiceSingle &&
-        card.type === TSurveyElementTypeEnum.Ranking) ||
-      (type === TSurveyElementTypeEnum.Ranking && card.type === TSurveyElementTypeEnum.MultipleChoiceSingle)
-    ) {
-      updateCard(cardIdx, {
-        choices: card.choices,
-        type,
-        logic: undefined,
-        validation: undefined,
-      });
-
+    const choiceSwitch = getChoiceTypeSwitchUpdate(card as EditorCardMenuSurveyElement, type);
+    if (choiceSwitch) {
+      updateCard(cardIdx, choiceSwitch);
       return;
     }
 

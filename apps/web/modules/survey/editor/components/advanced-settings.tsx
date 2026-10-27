@@ -1,7 +1,9 @@
 import { TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { ElementSettings } from "@/modules/survey/editor/components/element-settings";
 import { OptionIds } from "@/modules/survey/editor/components/option-ids";
+import { RecodeSection } from "@/modules/survey/editor/components/recode-section";
 import { UpdateElementId } from "@/modules/survey/editor/components/update-element-id";
 
 interface AdvancedSettingsProps {
@@ -13,6 +15,10 @@ interface AdvancedSettingsProps {
   updateBlockLogicFallback: (elementIdx: number, logicFallback: string | undefined) => void;
 }
 
+/**
+ * The body of a question's Settings tab: the question's own settings (order, display options,
+ * validation rules), then the Recode section, then the identifiers.
+ */
 export const AdvancedSettings = ({
   element,
   elementIdx,
@@ -26,7 +32,16 @@ export const AdvancedSettings = ({
     element.type === TSurveyElementTypeEnum.Ranking;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
+      <ElementSettings element={element} elementIdx={elementIdx} updateElement={updateElement} />
+
+      <RecodeSection
+        element={element}
+        elementIdx={elementIdx}
+        localSurvey={localSurvey}
+        updateElement={updateElement}
+      />
+
       <UpdateElementId
         element={element}
         elementIdx={elementIdx}
