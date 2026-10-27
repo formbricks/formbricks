@@ -1735,17 +1735,18 @@ export const undoPendingOrganizationPlanChange = async (
   customerId: string
 ): Promise<void> => {
   const subscription = await getRequiredActiveSubscription(organizationId, customerId);
-  // A trial's pending Hobby downgrade is the cancel flag, and clearing that flag also clears cancel_at — the
-  // trial's Hobby fallback. Re-express it as cancel_at at the exact trial end instead: the flag and its
-  // "Scheduled" banner go, and the trial still ends on Hobby rather than billing a saved card.
-  if (
-    stripeClient &&
-    subscription.status === "trialing" &&
-    subscription.cancel_at_period_end &&
-    subscription.trial_end
-  ) {
+  // On a trial, both ways a downgrade can be pending would drop the trial's Hobby fallback when undone:
+  // clearing cancel_at_period_end also clears cancel_at, and releasing a schedule can take its cancellation
+  // with it. So release any schedule, then set cancel_at to the exact trial end — Stripe drops the flag and
+  // the "Scheduled" banner, and the trial still ends on Hobby rather than billing a saved card.
+  if (stripeClient && subscription.status === "trialing" && subscription.trial_end) {
+    if (subscription.schedule) {
+      const scheduleId =
+        typeof subscription.schedule === "string" ? subscription.schedule : subscription.schedule.id;
+      await stripeClient.subscriptionSchedules.release(scheduleId, { preserve_cancel_date: false });
+    }
     await stripeClient.subscriptions.update(subscription.id, { cancel_at: subscription.trial_end });
-    await clearPendingPlanState(organizationId, { ...subscription, cancel_at_period_end: false });
+    await updatePendingPlanChangeSnapshot(organizationId, null);
     return;
   }
   await clearPendingPlanState(organizationId, subscription);

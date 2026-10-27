@@ -2515,6 +2515,68 @@ describe("organization-billing", () => {
     );
   });
 
+  test("undoPendingOrganizationPlanChange on a trial with a schedule re-applies the fallback after releasing it", async () => {
+    // Releasing the schedule can drop its cancellation, so cancel_at is set again at the exact trial end.
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_trial",
+          status: "trialing",
+          billing_cycle_anchor: 1739923200,
+          cancel_at_period_end: false,
+          cancel_at: 1742515200,
+          trial_end: 1742515200,
+          schedule: "sched_trial",
+          items: {
+            data: [
+              {
+                id: "si_pro_base",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_pro_monthly",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "base",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: { workspaces: 3, monthly: { responses: 1500 } },
+      usageCycleAnchor: new Date(),
+      stripe: {
+        subscriptionId: "sub_trial",
+        plan: "pro",
+        interval: "monthly",
+        subscriptionStatus: "trialing",
+      },
+    });
+
+    await undoPendingOrganizationPlanChange("org_1", "cus_1");
+
+    expect(mocks.subscriptionSchedulesRelease).toHaveBeenCalledWith("sched_trial", {
+      preserve_cancel_date: false,
+    });
+    expect(mocks.subscriptionsUpdate).toHaveBeenCalledWith("sub_trial", { cancel_at: 1742515200 });
+    expect(mocks.subscriptionSchedulesRelease.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.subscriptionsUpdate.mock.invocationCallOrder[0]
+    );
+    expect(mocks.subscriptionsUpdate).not.toHaveBeenCalledWith("sub_trial", { cancel_at_period_end: false });
+    expect(mocks.prismaOrganizationBillingUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: { stripe: expect.objectContaining({ pendingChange: null }) },
+      })
+    );
+  });
+
   test("undoPendingOrganizationPlanChange clears the pending snapshot", async () => {
     mocks.subscriptionsList.mockResolvedValue({
       data: [
