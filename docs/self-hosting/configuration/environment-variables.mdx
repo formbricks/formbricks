@@ -191,8 +191,12 @@ visibility mutations and workspace survey limits:
 | SURVEY_VISIBILITY_FORCE_DISABLED | `1` disables visibility mutations. Stored survey restrictions remain enforced, including before projection readiness. Takes effect on restart. | optional | unset    |
 | SURVEY_WORKSPACE_LIMIT           | Most surveys one workspace may hold, archived surveys included. Creating one past it answers `422 workspace_survey_limit_reached`.                        | optional | `10000`  |
 
-Docker Compose additionally requires `AUTHZED_DATABASE_PASSWORD` for its dedicated `spicedb` PostgreSQL
-login. Generate both it and `AUTHZED_TOKEN` with `openssl rand -hex 32`. `SPICEDB_IMAGE_REF` can override the
+Bundled Docker Compose requires `AUTHZED_DATABASE_PASSWORD` for its dedicated `spicedb` PostgreSQL login.
+Generate both it and `AUTHZED_TOKEN` with `openssl rand -hex 32`. With the
+[external SpiceDB PostgreSQL override](/self-hosting/setup/docker#external-postgresql-for-spicedb), set
+`SPICEDB_DATASTORE_CONN_URI` instead and omit `AUTHZED_DATABASE_PASSWORD`. The full PostgreSQL URI, including
+TLS options such as `sslmode=verify-full`, reaches both the migration and runtime services. A private CA file
+referenced by `sslrootcert` must be mounted read-only into both containers. `SPICEDB_IMAGE_REF` can override the
 bundled `authzed/spicedb:v1.56.2` image for an explicitly reviewed upgrade; the migration and server services
 always use the same reference.
 
