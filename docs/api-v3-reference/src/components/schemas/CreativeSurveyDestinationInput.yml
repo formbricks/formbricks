@@ -1,0 +1,17 @@
+type: object
+description: >-
+  Open a survey. It must be in the creative's workspace, visible to the whole workspace (never
+  Restricted, and no visibility change pending), and neither single-use nor PIN-protected; anything
+  else answers **422**. Email verification is fine.
+required:
+  - type
+  - surveyId
+properties:
+  type:
+    type: string
+    enum:
+      - survey
+  surveyId:
+    type: string
+    format: cuid2
+additionalProperties: false

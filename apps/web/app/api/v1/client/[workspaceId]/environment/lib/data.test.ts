@@ -5,11 +5,14 @@ import { logger } from "@formbricks/logger";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { PUBLIC_API_SURVEY_NAME_PLACEHOLDER } from "@formbricks/types/js-constants";
 import { selectPublicSurveyEmbeddedDataLinks } from "@/lib/embedded-data/survey-fields";
+import { getIsCreativesEnabled } from "@/modules/ee/license-check/lib/utils";
 import { transformPrismaSurvey } from "@/modules/survey/lib/utils";
 import { resolveRespondentCustomCss } from "@/modules/survey/link/lib/respondent-custom-css";
 import { getWorkspaceStateData } from "./data";
 
 vi.mock("server-only", () => ({}));
+// Banner words come from the dashboard translator (getTranslate); its session-locale lookup is unused here.
+vi.mock("@/lingodotdev/language", () => ({ getLocale: vi.fn() }));
 
 // Mock dependencies
 vi.mock("@formbricks/database", () => ({
@@ -17,15 +20,27 @@ vi.mock("@formbricks/database", () => ({
     workspace: {
       findUnique: vi.fn(),
     },
+    survey: {
+      findMany: vi.fn(),
+    },
+    // No upcoming creatives unless a test says otherwise.
+    creative: {
+      findMany: vi.fn(async () => []),
+    },
     segment: {
       findMany: vi.fn(),
     },
   },
 }));
 
+vi.mock("@/lib/getPublicUrl", () => ({
+  getPublicDomain: () => "https://surveys.example.com",
+}));
+
 vi.mock("@formbricks/logger", () => ({
   logger: {
     error: vi.fn(),
+    warn: vi.fn(),
   },
 }));
 
@@ -40,6 +55,14 @@ vi.mock("@/modules/storage/utils", () => ({
 vi.mock("@/modules/survey/lib/utils", () => ({
   transformPrismaSurvey: vi.fn((survey) => survey),
 }));
+
+// A creative's CSS is compiled through the cache; here it is compiled on every call.
+vi.mock("@/lib/cache", () => ({
+  cache: { withCache: (fn: () => Promise<unknown>) => fn() },
+}));
+
+// The licence includes Creatives unless a test says otherwise (ENG-6602).
+vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsCreativesEnabled: vi.fn(async () => true) }));
 
 // No custom CSS unless a test says otherwise (ENG-3552).
 vi.mock("@/modules/survey/link/lib/respondent-custom-css", () => ({
@@ -93,6 +116,7 @@ const mockWorkspaceData = {
       workspaceOverwrites: null,
     },
   ],
+  creatives: [],
 };
 
 describe("getWorkspaceStateData", () => {
@@ -132,6 +156,7 @@ describe("getWorkspaceStateData", () => {
         },
       ],
       actionClasses: mockWorkspaceData.actionClasses,
+      creatives: [],
     });
 
     expect(prisma.workspace.findUnique).toHaveBeenCalledWith({
@@ -766,5 +791,399 @@ describe("custom CSS on the wire (ENG-3552)", () => {
     expect(result.workspace.workspaceSettings).not.toHaveProperty("customCss");
     for (const survey of result.surveys) expect(survey).not.toHaveProperty("customCss");
     expect(JSON.stringify(result)).not.toMatch(/source|processorVersion/);
+  });
+});
+
+/**
+ * ENG-3994: creatives reach the SDK in the `@formbricks/creatives` payload shape, and every app survey
+ * one of them opens as a popup travels with them, even outside the 30 newest app surveys and even with
+ * no trigger of its own.
+ */
+describe("creatives on the wire (ENG-3994)", () => {
+  const storedButton = {
+    id: "creative-1",
+    createdAt: new Date("2026-10-10T00:00:00.000Z"),
+    type: "feedbackButton",
+    content: { label: { "en-US": "Feedback" }, icon: null },
+    styling: {
+      position: { desktop: { edge: "right", offset: 50 }, phone: null },
+      theme: {
+        customStyles: false,
+        backgroundColor: null,
+        textColor: null,
+        borderColor: null,
+        borderRadius: null,
+        fontWeight: null,
+        fontSize: { desktop: null, phone: null },
+        paddingX: { desktop: null, phone: null },
+        paddingY: { desktop: null, phone: null },
+      },
+    },
+    surveyId: "survey-1",
+    linkUrl: null,
+    showOn: "pageView",
+    showConditions: null,
+    displayPercentage: null,
+    startAt: new Date("2026-10-20T02:00:00.000Z"),
+    endAt: null,
+    survey: { type: "app", autoSelectLanguage: false, languages: [] },
+    triggers: [],
+    languages: [{ default: true, enabled: true, language: { code: "en-US", alias: null } }],
+  };
+
+  // Not among the 30 newest, and opened only by a creative: no trigger of its own.
+  const olderCreativeOnlySurvey = {
+    ...mockWorkspaceData.surveys[0],
+    id: "older-survey",
+    triggers: [],
+    displayOption: "displayMultiple",
+    autoSelectLanguage: false,
+    languages: [],
+    workspaceOverwrites: { placement: "center", overlay: "dark" },
+  };
+
+  test("sends the deliverable creatives in the SDK's shape, schedule as ISO times", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+      ...mockWorkspaceData,
+      creatives: [storedButton],
+    } as never);
+
+    const result = await getWorkspaceStateData(workspaceId);
+
+    expect(result.creatives).toEqual([
+      {
+        id: "creative-1",
+        type: "feedbackButton",
+        defaultLanguage: "en-US",
+        languages: [{ default: true, enabled: true, language: { code: "en-US", alias: null } }],
+        // One language each: nothing to match on the page.
+        languageMatch: { keys: {}, bases: {} },
+        surveyLanguageMatch: { keys: {}, bases: {} },
+        autoSelectLanguage: false,
+        style: {
+          element: expect.objectContaining({ light: expect.any(Object), dark: expect.any(Object) }),
+          button: null,
+          pageFont: false,
+          customCss: null,
+        },
+        content: { label: { "en-US": "Feedback" }, icon: null },
+        position: { desktop: { edge: "right", offset: 50 }, phone: null },
+        destination: { type: "survey", surveyId: "survey-1", opensAs: "popup" },
+        showOn: "pageView",
+        triggers: [],
+        conditions: null,
+        displayPercentage: null,
+        startAt: "2026-10-20T02:00:00.000Z",
+        endAt: null,
+      },
+    ]);
+    // Its survey is already among the newest, so nothing more is read.
+    expect(prisma.survey.findMany).not.toHaveBeenCalled();
+  });
+
+  test("reads only creatives that are published, on, not archived, not ended, and open an Active survey", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue(mockWorkspaceData as never);
+
+    await getWorkspaceStateData(workspaceId);
+
+    const [{ select }] = vi.mocked(prisma.workspace.findUnique).mock.calls[0] as [
+      { select: { creatives: { where: Record<string, unknown>; take: number } } },
+    ];
+    const deliverable = {
+      status: "inProgress",
+      archivedAt: null,
+      AND: [
+        { OR: [{ endAt: null }, { endAt: { gt: expect.any(Date) } }] },
+        { OR: [{ surveyId: null }, { survey: { is: { status: "inProgress", archivedAt: null } } }] },
+      ],
+    };
+    expect(select.creatives.where).toEqual({
+      ...deliverable,
+      OR: [{ startAt: null }, { startAt: { lte: expect.any(Date) } }],
+    });
+    expect(select.creatives.take).toBe(100);
+    expect(prisma.creative.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { workspaceId, ...deliverable, startAt: { gt: expect.any(Date) } },
+        orderBy: [{ startAt: "asc" }, { createdAt: "desc" }],
+      })
+    );
+  });
+
+  // Bhagya's review of formbricks#9666: creatives scheduled for later must not crowd out one showing now.
+  test("fills the capacity left by the creatives that can show now with the soonest upcoming, newest first", async () => {
+    const showing = { ...storedButton, id: "showing", createdAt: new Date("2026-10-01T00:00:00.000Z") };
+    const upcoming = {
+      ...storedButton,
+      id: "upcoming",
+      createdAt: new Date("2026-10-20T00:00:00.000Z"),
+      startAt: new Date("2099-01-01T00:00:00.000Z"),
+    };
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+      ...mockWorkspaceData,
+      creatives: [showing],
+    } as never);
+    vi.mocked(prisma.creative.findMany).mockResolvedValue([upcoming] as never);
+
+    const result = await getWorkspaceStateData(workspaceId);
+
+    expect(vi.mocked(prisma.creative.findMany).mock.calls[0][0]).toEqual(
+      expect.objectContaining({ take: 99 })
+    );
+    expect(result.creatives.map(({ id }) => id)).toEqual(["upcoming", "showing"]);
+  });
+
+  test("reads no upcoming creatives when those that can show now fill the payload", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+      ...mockWorkspaceData,
+      creatives: Array.from({ length: 100 }, (_, index) => ({ ...storedButton, id: `showing-${index}` })),
+    } as never);
+
+    const result = await getWorkspaceStateData(workspaceId);
+
+    expect(prisma.creative.findMany).not.toHaveBeenCalled();
+    expect(result.creatives).toHaveLength(100);
+  });
+
+  test("adds a popup Destination survey outside the 30 newest, with triggers: [] and the fields SDKs read", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+      ...mockWorkspaceData,
+      creatives: [{ ...storedButton, surveyId: "older-survey" }],
+    } as never);
+    vi.mocked(prisma.survey.findMany).mockResolvedValue([olderCreativeOnlySurvey] as never);
+
+    const result = await getWorkspaceStateData(workspaceId);
+
+    expect(prisma.survey.findMany).toHaveBeenCalledWith({
+      where: {
+        id: { in: ["older-survey"] },
+        workspaceId,
+        type: "app",
+        status: "inProgress",
+        archivedAt: null,
+      },
+      select: (
+        vi.mocked(prisma.workspace.findUnique).mock.calls[0][0] as {
+          select: { surveys: { select: unknown } };
+        }
+      ).select.surveys.select,
+    });
+    expect(result.surveys.map((survey) => survey.id)).toEqual(["survey-1", "older-survey"]);
+    expect(result.surveys[1]).toEqual(
+      expect.objectContaining({
+        triggers: [],
+        displayOption: "displayMultiple",
+        languages: [],
+        workspaceOverwrites: { placement: "center", overlay: "dark" },
+        name: PUBLIC_API_SURVEY_NAME_PLACEHOLDER,
+      })
+    );
+  });
+
+  test("leaves creatives, and the surveys only they open, out while the licence doesn't include Creatives", async () => {
+    vi.mocked(getIsCreativesEnabled).mockResolvedValue(false);
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+      ...mockWorkspaceData,
+      organizationId: "org-1",
+      creatives: [storedButton, { ...storedButton, id: "creative-2", surveyId: "older-survey" }],
+    } as never);
+
+    const result = await getWorkspaceStateData(workspaceId);
+
+    expect(getIsCreativesEnabled).toHaveBeenCalledWith("org-1");
+    expect(result.creatives).toEqual([]);
+    expect(result.surveys.map((survey) => survey.id)).toEqual(["survey-1"]);
+    expect(prisma.survey.findMany).not.toHaveBeenCalled();
+  });
+
+  test("opens a link survey Destination at its public link, in a new tab", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+      ...mockWorkspaceData,
+      creatives: [
+        {
+          ...storedButton,
+          surveyId: "link-survey",
+          survey: { type: "link", autoSelectLanguage: false, languages: [] },
+        },
+      ],
+    } as never);
+
+    const result = await getWorkspaceStateData(workspaceId);
+
+    expect(result.creatives[0].destination).toEqual({
+      type: "survey",
+      surveyId: "link-survey",
+      opensAs: "newTab",
+      url: "https://surveys.example.com/s/link-survey",
+    });
+    expect(prisma.survey.findMany).not.toHaveBeenCalled();
+  });
+
+  test("names the actions that show a creative the way survey triggers do", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+      ...mockWorkspaceData,
+      creatives: [{ ...storedButton, showOn: "action", triggers: [{ actionClass: { name: "Checkout" } }] }],
+    } as never);
+
+    const result = await getWorkspaceStateData(workspaceId);
+
+    expect(result.creatives[0]).toEqual(
+      expect.objectContaining({ showOn: "action", triggers: ["Checkout"] })
+    );
+  });
+
+  /** ENG-4003: the SDK picks the language, with what the server knows filled in. */
+  test("sends the creative's languages, its survey's browser-language setting and a banner's own words in each", async () => {
+    const languages = [
+      { default: true, enabled: true, language: { code: "en-US", alias: null } },
+      { default: false, enabled: true, language: { code: "de-DE", alias: "de" } },
+      { default: false, enabled: false, language: { code: "it-IT", alias: null } },
+    ];
+    const surveyLanguages = [
+      { default: true, enabled: true, language: { code: "en-US", alias: null } },
+      { default: false, enabled: true, language: { code: "fr-FR", alias: null } },
+    ];
+    const storedBanner = {
+      ...storedButton,
+      id: "banner-1",
+      type: "banner",
+      content: {
+        message: { "en-US": [{ text: "Down tonight." }], "de-DE": [{ text: "Heute Nacht offline." }] },
+        button: null,
+        dismissible: true,
+        accessibleName: null,
+      },
+      styling: {
+        position: { desktop: { placement: "top", layout: "inPage" }, phone: null },
+        theme: {
+          customStyles: false,
+          backgroundColor: null,
+          textColor: null,
+          borderColor: null,
+          fontWeight: null,
+          fontSize: { desktop: null, phone: null },
+          paddingX: { desktop: null, phone: null },
+          paddingY: { desktop: null, phone: null },
+        },
+      },
+      surveyId: null,
+      survey: null,
+      languages,
+    };
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+      ...mockWorkspaceData,
+      creatives: [
+        {
+          ...storedButton,
+          survey: { type: "app", autoSelectLanguage: true, languages: surveyLanguages },
+          languages,
+        },
+        storedBanner,
+      ],
+    } as never);
+
+    const [button, banner] = (await getWorkspaceStateData(workspaceId)).creatives;
+
+    expect(button).toEqual(
+      expect.objectContaining({ defaultLanguage: "en-US", languages, autoSelectLanguage: true })
+    );
+    // Precomputed for the page: its own texts by code, alias or base language, its survey's skip
+    // by the survey's languages; the disabled Italian is never matched.
+    expect(button.languageMatch.keys).toMatchObject({ "de-de": "de-DE", de: "de-DE", "en-us": "default" });
+    expect(button.languageMatch.bases).toMatchObject({ de: "de-DE", en: "default" });
+    expect(button.languageMatch.keys).not.toHaveProperty("it-it");
+    expect(button.surveyLanguageMatch?.keys).toMatchObject({ "fr-fr": "fr-FR" });
+    expect(button.surveyLanguageMatch?.keys).not.toHaveProperty("de-de");
+    expect(banner.surveyLanguageMatch).toBeNull();
+    expect(banner).toEqual(
+      expect.objectContaining({
+        autoSelectLanguage: false,
+        // Every language a visitor can get: the default and the enabled ones.
+        labels: {
+          siteNotice: { "en-US": "Site notice", "de-DE": expect.any(String) },
+          dismiss: { "en-US": "Dismiss", "de-DE": expect.any(String) },
+        },
+      })
+    );
+  });
+
+  test("leaves out a creative that could never show", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+      ...mockWorkspaceData,
+      creatives: [
+        { ...storedButton, id: "opens-nothing", surveyId: null, survey: null },
+        { ...storedButton, id: "no-action", showOn: "action", triggers: [] },
+        { ...storedButton, id: "broken", content: { label: "not per language" } },
+      ],
+    } as never);
+
+    const result = await getWorkspaceStateData(workspaceId);
+
+    expect(result.creatives).toEqual([]);
+  });
+
+  /** ENG-3998: the look arrives computed; the SDK only applies it. */
+  describe("look", () => {
+    const withCustomStyles = (theme: Record<string, unknown>) => ({
+      ...storedButton,
+      styling: {
+        ...storedButton.styling,
+        theme: { ...storedButton.styling.theme, customStyles: true, ...theme },
+      },
+    });
+
+    test("comes from the workspace Look & Feel, never from the survey's own styling", async () => {
+      vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+        ...mockWorkspaceData,
+        styling: { allowStyleOverwrite: true, buttonBgColor: { light: "#0b5394" }, pageFont: true },
+        surveys: [
+          {
+            ...mockWorkspaceData.surveys[0],
+            styling: { overwriteThemeStyling: true, buttonBgColor: { light: "#ff0000" } },
+          },
+        ],
+        creatives: [storedButton],
+      } as never);
+
+      const [creative] = (await getWorkspaceStateData(workspaceId)).creatives;
+
+      expect(creative.style.element.light.backgroundColor).toBe("#0b5394");
+      expect(creative.style.pageFont).toBe(true);
+    });
+
+    test("carries the creative's own CSS compiled for its shadow root, and never the workspace CSS", async () => {
+      vi.mocked(resolveRespondentCustomCss).mockResolvedValue({
+        workspace: { light: "#fbjs .workspace-rule{color:red!important}" },
+        surveys: new Map(),
+      });
+      vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+        ...mockWorkspaceData,
+        creatives: [withCustomStyles({ customCss: { light: "span { color: #ff0000; }", dark: null } })],
+      } as never);
+
+      const [creative] = (await getWorkspaceStateData(workspaceId)).creatives;
+
+      expect(creative.style.customCss?.light).toContain(".fb-creative-button span{");
+      expect(JSON.stringify(creative)).not.toMatch(/workspace-rule|#fbjs|span \{ color/);
+    });
+
+    test("leaves the CSS out while the creative's custom styles are off", async () => {
+      vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+        ...mockWorkspaceData,
+        creatives: [
+          {
+            ...storedButton,
+            styling: {
+              ...storedButton.styling,
+              theme: { ...storedButton.styling.theme, customCss: { light: "span{color:red}", dark: null } },
+            },
+          },
+        ],
+      } as never);
+
+      const [creative] = (await getWorkspaceStateData(workspaceId)).creatives;
+
+      expect(creative.style.customCss).toBeNull();
+    });
   });
 });

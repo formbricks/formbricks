@@ -99,3 +99,4 @@ authzed/*.perf.jsonl
 docs/api-v3-reference/contract-tests/fixtures.json
 .schemathesis/
 __pycache__/
+skills-lock.json

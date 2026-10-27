@@ -315,9 +315,10 @@ export const RECAPTCHA_SITE_KEY = env.RECAPTCHA_SITE_KEY;
 export const RECAPTCHA_SECRET_KEY = env.RECAPTCHA_SECRET_KEY;
 export const IS_RECAPTCHA_CONFIGURED = Boolean(RECAPTCHA_SITE_KEY && RECAPTCHA_SECRET_KEY);
 
-// Use the app version for Sentry release (updated during build in production)
-// Fallback to environment variable if package.json is not accessible
-export const SENTRY_RELEASE = (() => {
+// The app's release version (CI bumps package.json during the production build); undefined for a
+// development, local or self-built (0.0.0) build. Sentry tags events with it, and the link survey
+// page loads the survey renderer under it so a release never waits out the CDN copy of the last one.
+export const APP_RELEASE_VERSION = (() => {
   if (!IS_PRODUCTION) {
     return undefined;
   }
@@ -332,6 +333,7 @@ export const SENTRY_RELEASE = (() => {
     return undefined;
   }
 })();
+export const SENTRY_RELEASE = APP_RELEASE_VERSION;
 export const SENTRY_ENVIRONMENT = env.SENTRY_ENVIRONMENT;
 export const SENTRY_DSN = env.SENTRY_DSN;
 

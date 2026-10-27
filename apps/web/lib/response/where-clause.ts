@@ -52,6 +52,8 @@ export const RESERVED_FILTER_LOCATORS: Record<string, TReservedFilterLocator> = 
   visitTimeOnSite: { kind: "meta", path: ["visitTimeOnSite"] },
   visitEntryReferrer: { kind: "meta", path: ["visitEntryReferrer"] },
   visitUrls: { kind: "meta", path: ["visitUrls"] },
+  openedByCreativeId: { kind: "meta", path: ["openedByCreativeId"] },
+  openedByCreativeName: { kind: "meta", path: ["openedByCreativeName"] },
   durationSeconds: { kind: "ttcTotalMs" },
 };
 

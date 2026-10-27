@@ -420,6 +420,7 @@
               "development/technical-handbook/custom-css-rollout",
               "development/technical-handbook/database-model",
               "development/technical-handbook/email-sending",
+              "development/technical-handbook/license-check",
               "development/technical-handbook/tenant-separation"
             ]
           },

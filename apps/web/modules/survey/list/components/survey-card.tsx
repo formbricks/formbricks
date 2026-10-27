@@ -1,6 +1,5 @@
 "use client";
 
-import { ArchiveIcon } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -24,7 +23,8 @@ import { WorkspaceVisibilityMarker } from "@/modules/survey/visibility/component
 import { getRestrictedAuthor, getVisibilityErrorReaction } from "@/modules/survey/visibility/lib/collaborate";
 import { type TRowVisibilityMarker, getRowVisibilityMarker } from "@/modules/survey/visibility/lib/markers";
 import { type TSurveyVisibilityUiGate, showVisibilityControls } from "@/modules/survey/visibility/lib/state";
-import { SurveyStatusIndicator } from "@/modules/ui/components/survey-status-indicator";
+import type { TSurveyVisibilityBlocker } from "@/modules/survey/visibility/types";
+import { SurveyStatusPill } from "@/modules/ui/components/survey-status-indicator";
 import { SurveyDropDownMenu } from "./survey-dropdown-menu";
 
 interface SurveyCardProps {
@@ -43,26 +43,8 @@ interface SurveyCardProps {
   listQueryKey: ReturnType<typeof surveyKeys.list>;
   updateSurveyVisibility: (surveyId: string, visibility: TSurveyVisibility) => Promise<void>;
   onVisibilityNotEnabled: () => void;
+  onDeleteBlocked: (blockers: TSurveyVisibilityBlocker[]) => void;
 }
-const getSurveyStatusLabel = (
-  status: TSurveyStatus,
-  isScheduled: boolean,
-  t: ReturnType<typeof useTranslation>["t"]
-): string | undefined => {
-  switch (status) {
-    case "inProgress":
-      return t("common.in_progress");
-    case "completed":
-      return t("common.closed");
-    case "draft":
-      return t("common.draft");
-    case "paused":
-      return isScheduled ? t("common.scheduled") : t("common.paused");
-    default:
-      return undefined;
-  }
-};
-
 type MakeVisibleStripProps = Pick<
   SurveyCardProps,
   "workspaceName" | "updateSurveyVisibility" | "onVisibilityNotEnabled"
@@ -134,39 +116,6 @@ const SurveyNameCell = ({
   );
 };
 
-const SurveyStatusPill = ({
-  status,
-  isArchived,
-  isScheduled,
-}: Readonly<{ status: TSurveyStatus; isArchived: boolean; isScheduled: boolean }>) => {
-  const { t } = useTranslation();
-  return (
-    <div
-      className={cn(
-        "col-span-1 flex w-fit items-center gap-2 rounded-full py-1 pr-2 pl-1 text-sm whitespace-nowrap text-slate-800",
-        isArchived && "bg-slate-100",
-        !isArchived && status === "inProgress" && "bg-emerald-50",
-        !isArchived && status === "completed" && "bg-slate-200",
-        !isArchived && status === "draft" && "bg-slate-100",
-        !isArchived && status === "paused" && "bg-slate-100"
-      )}>
-      {isArchived ? (
-        <>
-          <div className="rounded-full bg-slate-300 p-1">
-            <ArchiveIcon className="size-3 text-slate-600" />
-          </div>{" "}
-          {t("common.archived")}
-        </>
-      ) : (
-        <>
-          <SurveyStatusIndicator status={status} isScheduled={isScheduled} />{" "}
-          {getSurveyStatusLabel(status, isScheduled, t)}{" "}
-        </>
-      )}
-    </div>
-  );
-};
-
 export const SurveyCard = ({
   survey,
   publicDomain,
@@ -182,6 +131,7 @@ export const SurveyCard = ({
   listQueryKey,
   updateSurveyVisibility,
   onVisibilityNotEnabled,
+  onDeleteBlocked,
 }: Readonly<SurveyCardProps>) => {
   const { workspace } = useWorkspace();
   const workspaceBasePath = `/workspaces/${workspace?.id}`;
@@ -290,6 +240,7 @@ export const SurveyCard = ({
           workspaceName={workspaceName}
           listQueryKey={listQueryKey}
           onVisibilityNotEnabled={onVisibilityNotEnabled}
+          onDeleteBlocked={onDeleteBlocked}
         />
       </div>
     </div>

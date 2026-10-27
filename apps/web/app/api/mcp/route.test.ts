@@ -110,6 +110,19 @@ vi.mock("@/app/api/v3/responses/lib/operations", () => ({
   updateV3ResponseFromRawInput: vi.fn(),
 }));
 
+// Mocked like the other operations: this file tests the route, and the real module reaches the repository.
+vi.mock("@/app/api/v3/creatives/lib/operations", () => ({
+  archiveV3Creative: vi.fn(),
+  createV3Creative: vi.fn(),
+  deleteV3Creative: vi.fn(),
+  duplicateV3Creative: vi.fn(),
+  getV3Creative: vi.fn(),
+  getV3CreativeStats: vi.fn(),
+  listV3Creatives: vi.fn(),
+  patchV3Creative: vi.fn(),
+  restoreV3Creative: vi.fn(),
+}));
+
 vi.mock("@/app/api/v3/responses/lib/validate-operations", () => ({
   validateV3ResponseFromRawInput: vi.fn(),
 }));
@@ -554,6 +567,15 @@ describe("POST /api/mcp", () => {
       "update_response",
       "delete_response",
       "batch_delete_responses",
+      "list_creatives",
+      "get_creative",
+      "get_creative_stats",
+      "create_creative",
+      "patch_creative",
+      "delete_creative",
+      "duplicate_creative",
+      "archive_creative",
+      "restore_creative",
     ]);
     const tools = new Map(message.result.tools.map((tool: { name: string }) => [tool.name, tool]));
     expect(Object.keys((tools.get("create_survey") as any).inputSchema.properties)).toEqual(

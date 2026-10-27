@@ -1,0 +1,20 @@
+type: object
+description: The link the creative opens.
+required:
+  - type
+  - url
+  - opensAs
+properties:
+  type:
+    type: string
+    enum:
+      - link
+  url:
+    type: string
+  opensAs:
+    type: string
+    enum:
+      - newTab
+    readOnly: true
+    description: A link always opens in a new tab.
+additionalProperties: false

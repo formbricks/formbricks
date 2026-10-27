@@ -1,0 +1,19 @@
+type: object
+description: Impressions, Clicks and Click rate (Clicks divided by Impressions; `null` without Impressions).
+required:
+  - impressions
+  - clicks
+  - clickRate
+properties:
+  impressions:
+    type: integer
+    minimum: 0
+  clicks:
+    type: integer
+    minimum: 0
+  clickRate:
+    type:
+      - number
+      - "null"
+    minimum: 0
+additionalProperties: false
