@@ -191,7 +191,7 @@ visibility mutations and workspace survey limits:
 
 Docker Compose additionally requires `AUTHZED_DATABASE_PASSWORD` for its dedicated `spicedb` PostgreSQL
 login. Generate both it and `AUTHZED_TOKEN` with `openssl rand -hex 32`. `SPICEDB_IMAGE_REF` can override the
-bundled `authzed/spicedb:v1.52.0` image for an explicitly reviewed upgrade; the migration and server services
+bundled `authzed/spicedb:v1.56.2` image for an explicitly reviewed upgrade; the migration and server services
 always use the same reference.
 
 The v6 server requires `AUTHZED_ENABLED=true` or `1`; unset, `false`, and `0` are rejected before it accepts

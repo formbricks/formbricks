@@ -1,10 +1,8 @@
-import { redirect } from "next/navigation";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { notFound, redirect } from "next/navigation";
 import { DEFAULT_LOCALE } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { resolveDefaultSurveyLanguage } from "@/lib/i18n/default-survey-language";
 import { getUserLocale } from "@/lib/user/service";
-import { getTranslate } from "@/lingodotdev/server";
 import { getSurveyAIAvailability } from "@/modules/survey/lib/get-survey-ai-availability";
 import { getWorkspaceWithTeamIds } from "@/modules/survey/lib/workspace";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
@@ -17,7 +15,6 @@ interface SurveyTemplateProps {
 }
 
 export const SurveyTemplatesPage = async (props: Readonly<SurveyTemplateProps>) => {
-  const t = await getTranslate();
   const params = await props.params;
   const workspaceId = params.workspaceId;
 
@@ -26,7 +23,7 @@ export const SurveyTemplatesPage = async (props: Readonly<SurveyTemplateProps>) 
   const workspace = await getWorkspaceWithTeamIds(workspaceId);
 
   if (!workspace) {
-    throw new ResourceNotFoundError(t("common.workspace"), null);
+    return notFound();
   }
 
   if (isReadOnly) {

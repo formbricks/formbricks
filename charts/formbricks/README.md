@@ -24,41 +24,98 @@ version at `0.0.0-dev`; the release workflow stamps the requested chart version 
 | oci://registry-1.docker.io/bitnamicharts        | envoyRedis   | 20.11.2 |
 | https://vllm-project.github.io/production-stack | vllm-stack   | 0.1.11  |
 
-## Envoy bundle modes
+## Envoy CRD ownership
 
-The chart can optionally deploy Formbricks behind Envoy Gateway with a dedicated Redis HA backend for Envoy global
-rate limiting.
+The Envoy dependency is pinned to **v1.8.4** and bundles Gateway API **v1.5.1 Experimental** CRDs.
+`envoy.crds.enabled=false` disables **both** Gateway API and Envoy Gateway CRDs, including the bundled
+Gateway API safe-upgrade admission resources. It does not disable the controller or Formbricks Gateway,
+routes, and policies. A platform that supplies only Gateway API must also provision the matching Envoy
+Gateway CRDs. The optional safe-upgrade policy remains disabled by default because it applies cluster-wide.
 
-- `envoy.enabled=true` enables the app-bound Envoy resources such as `Gateway`, `HTTPRoute`, and rate-limit policies.
-- `envoy.controller.enabled=true` installs a bundled Envoy Gateway controller with the release.
-- `envoy.crds.enabled=true` installs Gateway API v1.5.1 and the matching Envoy Gateway CRDs. Set it to `false`
-  only when the platform manages both CRD sets separately.
-- `envoy.crds.gatewayAPI.safeUpgradePolicy.enabled=true` opts into a cluster-wide admission policy that denies
-  Gateway API CRD versions older than v1.5.0. It is disabled by default because it also affects unrelated releases.
-- `envoy.controller.enabled=false` keeps the chart in external-controller mode and assumes the cluster already has
-  Gateway API CRDs plus an Envoy Gateway controller compatible with
-  `envoy.config.envoyGateway.gateway.controllerName`.
-- `envoyRedis.enabled=true` deploys a dedicated Redis replication + Sentinel bundle for Envoy RLS. It is intentionally
-  separate from the bundled app Valkey deployment.
-- The bundled controller reads its Redis backend from `envoy.config.envoyGateway.rateLimit.backend.redis.url`.
-  If you enable Redis authentication or override `envoyRedis.fullnameOverride`, set that URL explicitly so the
-  controller points at the correct backend.
-- OpenTelemetry proxy metrics can target either `envoy.formbricks.proxy.telemetry.openTelemetry.host`/`port`
-  or `backendRefs`, but not both. Prefer `host`/`port` for collectors that live in another namespace.
-- When both the main app ingress and the Envoy API ingress are enabled, set `envoy.formbricks.ingress.host`
-  explicitly so the Envoy host choice is intentional.
+| Owner of Gateway API CRDs | Owner of Envoy CRDs | Envoy controller | Tested values example |
+| --- | --- | --- | --- |
+| Formbricks | Formbricks | Formbricks | [Bundled](examples/envoy/bundled.yaml) |
+| Platform | Separate Envoy CRD installation | Formbricks | [Platform Gateway API](examples/envoy/platform-gateway-api.yaml) |
+| Separate platform installation | Separate platform installation | Formbricks | [External CRDs](examples/envoy/external-crds.yaml) |
+| Platform | Platform | Shared platform controller | [Shared controller](examples/envoy/shared-controller.yaml) |
 
-The intended defaults are:
+All examples enable Formbricks rate-limit policies. Bundled-controller examples use a dedicated external
+Redis/Valkey backend because chart 6.1.0's bundled Envoy Redis images are unavailable upstream. Replace
+`redis.example.internal:6379` with your backend and set `maxmemory-policy noeviction`. A shared controller
+must supply a compatible Redis backend itself. Configure the public ingress or load balancer to send traffic
+to the Envoy proxy before exposing the app. The shared controller's `controllerName` must own the named
+GatewayClass. If the class needs proxy settings, point
+its `parametersRef` at a platform-owned `EnvoyProxy` so it survives a Formbricks uninstall.
+On a controller handoff, the proxy Service may move into the shared controller's namespace. Point the
+public ingress at the Gateway's current proxy address and verify a request before retiring the old proxy.
 
-- self-hosted / single-tenant clusters: bundled controller mode
-- shared clusters with an existing platform controller: external-controller mode
+### Provision externally owned CRDs
 
-The chart leaves both `ingress.enabled` and `envoy.enabled` disabled because ingress and gateway choices are
-cluster-specific. Do not expose Formbricks v5 directly with those defaults: enable the chart-managed Envoy path
-or provide equivalent edge rate limiting for the documented route coverage. The default
-`autoscaling.minReplicas: 1` and `pdb.minAvailable: 1` are also a quick-start combination; raise the minimum to at
-least two for availability during voluntary disruptions, or change/disable the PDB for an intentional
-single-replica deployment.
+When the platform already owns compatible Gateway API v1.5.1 Standard or Experimental CRDs, install **only**
+the Envoy CRDs from the matching v1.8.4 chart. When the platform owns both sets outside the Formbricks
+release, use the same chart with `crds.gatewayAPI.enabled=true`,
+`crds.gatewayAPI.channel=standard`, and `crds.envoyGateway.enabled=true` for a fresh cluster. During a
+handoff from bundled Experimental CRDs, keep `crds.gatewayAPI.channel=experimental` until clients using
+Experimental-only served versions, such as `TLSRoute` v1alpha2, have migrated. The v1.5.1 Standard bundle
+does not serve those versions. Do not apply the both-sets variant over provider-managed Gateway API CRDs;
+the Envoy-only command below is appropriate there.
+
+```bash
+crd_dir="$(mktemp -d)"
+helm pull oci://docker.io/envoyproxy/gateway-crds-helm \
+  --version v1.8.4 --untar --untardir "$crd_dir"
+helm template envoy-crds "$crd_dir/gateway-crds-helm" \
+  --set crds.gatewayAPI.enabled=false \
+  --set crds.envoyGateway.enabled=true \
+  | kubectl --context my-cluster apply --server-side -f -
+rm -rf "$crd_dir"
+```
+
+If a platform manages Gateway API directly, it must provide v1.5.1 CRDs with the APIs Envoy v1.8.4
+requires, including `BackendTLSPolicy` and `ListenerSet`. From a checkout at the immutable source commit
+used to publish your chart, run the optional
+read-only check **after** provisioning external CRDs and **before** installing or upgrading Formbricks:
+
+```bash
+bash charts/formbricks/scripts/preflight-envoy-crds.sh --context my-cluster
+```
+
+The script reads CRDs only, checks the Envoy CRD schemas against the published v1.8.4 bundle, and rejects
+missing or unverified prerequisites. Envoy CRDs have no release annotation; their owner must pin the CRD
+package to v1.8.4. It is never a Helm hook; offline `helm template` and GitOps rendering stay independent of
+cluster access. Replace `my-cluster` with the target kubectl context and use the corresponding example file
+with `helm install` or `helm upgrade` after it passes.
+
+### Install and upgrade order
+
+With bundled ownership, Helm installs the Formbricks-owned CRDs during the initial chart installation.
+For externally owned CRDs, use this order:
+
+1. Have the CRD owner apply the compatible Gateway API bundle and Envoy CRDs. Wait until every CRD is
+   `Established`, then run the preflight.
+2. Install or upgrade the Formbricks release with the matching values example, then verify GatewayClass,
+   Gateway, route, and policy status and actual traffic through Envoy.
+3. On later Envoy version changes, upgrade CRDs through their existing owner **before** the controller and
+   Formbricks release. [Helm does not upgrade or delete CRDs](https://helm.sh/docs/chart_best_practices/custom_resource_definitions/)
+   stored in a chart's `crds/` directory.
+
+For **Argo CD**, keep externally owned CRDs in a separate platform Application, wait for them to be
+`Established`, and run preflight before syncing Formbricks. Sync waves within one Application do not
+establish readiness across independent Applications. Set `envoy.crds.enabled=false` in the Formbricks values. Do not use global Helm
+`skipCrds` merely to skip Envoy: it also omits the bundled SpiceDB operator CRD when that operator is enabled.
+
+For **Flux**, put the external CRDs in a separate Kustomization or release, wait for `Established`, run
+preflight, then reconcile Formbricks after the CRD owner's Ready condition. Use `envoy.crds.enabled=false`.
+Likewise, `spec.install.crds: Skip` and
+`spec.upgrade.crds: Skip` apply to **all** chart CRDs, including SpiceDB. Set them only when every required CRD
+is separately managed. Wait for the CRD owner to finish an upgrade before reconciling the dependent
+`HelmRelease`.
+
+The chart leaves both `ingress.enabled` and `envoy.enabled` disabled because edge choices are
+cluster-specific. Do not expose Formbricks v5 directly with those defaults: use Envoy or equivalent edge
+rate limiting for the documented route coverage. The default `autoscaling.minReplicas: 1` and
+`pdb.minAvailable: 1` can block voluntary node drains; use at least two app replicas for availability or
+change the PDB for an intentional single-replica deployment.
 
 ## SpiceDB authorization
 
@@ -639,7 +696,7 @@ taxonomy:
       region: us-east-1
 ```
 
-Bedrock needs a taxonomy image of version 0.1.6 or later; earlier images, including the chart's default `v0.1.0`,
+Bedrock needs a taxonomy image of version 0.1.6 or later (the chart default, `0.1.12`, qualifies); earlier images
 ship without the AWS SDK and fail on the first Bedrock request whichever way credentials are supplied. Set
 `taxonomy.image.tag` (or `taxonomy.image.digest`) accordingly.
 
@@ -673,8 +730,21 @@ taxonomy:
 
 Never put AWS credentials in `taxonomy.env`, a committed values file, or `--set` arguments.
 
-The default `v0.1.0` taxonomy image exposes public `/health`, so the chart uses it for both liveness and readiness
-probes. Taxonomy images that implement the newer readiness contract also expose `/ready` for cached Hub-auth,
+The chart runs Taxonomy as UID/GID 65532 with a read-only root filesystem and a writable `/tmp` volume. Its
+`UV_CACHE_DIR` default keeps older `v0.1.0` images usable under these settings. Set
+`taxonomy.securityContext` and `taxonomy.podSecurityContext` for custom images that use a different UID or GID.
+
+### Upgrading a custom Taxonomy image
+
+The new Taxonomy security defaults are a breaking change for custom images that require root or write outside
+`/tmp`: those images may fail to start after an upgrade. Set `taxonomy.securityContext.runAsUser` and
+`runAsGroup`, plus `taxonomy.podSecurityContext.fsGroup`, to match the image's UID/GID. For other writable paths, set
+`taxonomy.securityContext.readOnlyRootFilesystem: false` or add writable volume mounts to a customized
+Deployment. Root-only images also need `taxonomy.securityContext.runAsNonRoot: false`, where the cluster's
+admission policy permits it.
+
+The older `v0.1.0` taxonomy image exposes public `/health`, so the chart uses it for both liveness and readiness
+probes. Newer images that implement the readiness contract also expose `/ready` for cached Hub-auth,
 context-budget, provider, and structured-output readiness; set `taxonomy.probes.readinessProbe.httpGet.path` to
 `/ready` only with such an image. Use authenticated `/v1/preflight` as an operator check after install:
 
@@ -1098,13 +1168,14 @@ Upgrading from a chart that did not render the web container context:
 | serviceMonitor.endpoints[0].port                                   | string | `"metrics"`                                                                 |                                                           |
 | taxonomy.autoConfigureHub                                          | bool   | `true`                                                                      | Inject taxonomy service env vars into Hub API when taxonomy is enabled. |
 | taxonomy.enabled                                                   | bool   | `false`                                                                     | Deploy the optional standalone taxonomy service.          |
+| taxonomy.env.UV_CACHE_DIR                                          | string | `"/tmp/uv-cache"`                                                           | Writable uv cache for older images running as non-root.   |
 | taxonomy.envFrom                                                   | list   | `[]`                                                                          | Secret or ConfigMap sources for Taxonomy runtime environment variables. |
 | taxonomy.heartbeatIntervalSeconds                                  | string | `"30"`                                                                      | Hub heartbeat interval; `0` intentionally disables heartbeats in supporting images. |
 | taxonomy.hubClientMaxAttempts                                      | string | `"3"`                                                                       | Maximum idempotent Hub callback/fetch attempts.            |
 | taxonomy.hubReaperIntervalSeconds                                  | string | `"60"`                                                                      | Interval between Hub stale-run reaper passes.             |
 | taxonomy.hubStaleRunTimeoutSeconds                                 | string | `"1800"`                                                                    | Hub stale-run timeout; lower only with a callback-heartbeating taxonomy image. |
 | taxonomy.image.repository                                          | string | `"ghcr.io/formbricks/taxonomy"`                                             | Taxonomy service image repository.                        |
-| taxonomy.image.tag                                                 | string | `"v0.1.0"`                                                                  | Taxonomy service image tag.                               |
+| taxonomy.image.tag                                                 | string | `"0.1.12"`                                                                  | Taxonomy service image tag.                               |
 | taxonomy.llm.baseUrl                                               | string | `""`                                                                        | Defaults to bundled vLLM router URL when `llm.enabled=true`; set for external LLMs. |
 | taxonomy.llm.bedrock.region                                        | string | `""`                                                                        | AWS region for Bedrock; alternatively set `taxonomy.env.AWS_REGION`. |
 | taxonomy.llm.bundledModelSpecName                                  | string | `""`                                                                        | Enabled bundled `modelSpec` used by Taxonomy; required when multiple bundled models are enabled. |
@@ -1126,7 +1197,9 @@ Upgrading from a chart that did not render the web container context:
 | taxonomy.llm.vertex.thinkingBudget                                 | string | `"0"`                                                                       | Legacy Vertex thinking-token budget; used when thinkingLevel is unset.   |
 | taxonomy.llm.vertex.thinkingLevel                                  | string | `""`                                                                        | Optional `minimal`, `low`, `medium`, or `high`; replaces thinkingBudget. Requires a taxonomy image supporting thinking levels. |
 | taxonomy.maxClusters                                               | string | `"80"`                                                                      | Compatibility value; production Taxonomy images enforce 80 at startup. |
+| taxonomy.podSecurityContext                                        | object | `{fsGroup: 65532, seccompProfile: {type: RuntimeDefault}}`                  | Default pod volume group and seccomp profile.             |
 | taxonomy.runDeadlineSeconds                                        | string | `"900"`                                                                     | Total taxonomy run deadline.                              |
+| taxonomy.securityContext                                           | object | `{runAsNonRoot: true, runAsUser: 65532, runAsGroup: 65532, readOnlyRootFilesystem: true, allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}` | Default container hardening; read-only root mounts `/tmp`. |
 | taxonomy.service.type                                              | string | `"ClusterIP"`                                                               | Internal taxonomy service type.                           |
 | taxonomy.serviceAccount.additionalLabels                           | object | `{}`                                                                        | Extra labels on the created ServiceAccount; requires `create=true`. |
 | taxonomy.serviceAccount.annotations                                | object | `{}`                                                                        | Annotations on the created ServiceAccount, e.g. `eks.amazonaws.com/role-arn`; requires `create=true`. |
