@@ -37,6 +37,8 @@ interface FileInputProps {
   isStorageConfigured: boolean;
   // Extra control overlaid on an uploaded image preview, e.g. the editor's alt text button.
   renderImageAction?: (url: string) => ReactNode;
+  // When it returns text for an image, that image's remove button is disabled and the text explains why.
+  getRemoveLockReason?: (url: string) => string | undefined;
 }
 
 interface SelectedFile {
@@ -59,6 +61,7 @@ export const FileInput = ({
   disabled = false,
   isStorageConfigured = true,
   renderImageAction,
+  getRemoveLockReason,
 }: FileInputProps) => {
   const { t } = useTranslation();
   const options = [
@@ -270,7 +273,9 @@ export const FileInput = ({
                             {file.uploaded ? (
                               <button
                                 type="button"
-                                className="absolute top-2 right-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
+                                disabled={Boolean(getRemoveLockReason?.(file.url))}
+                                title={getRemoveLockReason?.(file.url)}
+                                className="absolute top-2 right-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-50"
                                 onClick={(e) => {
                                   e.preventDefault();
                                   handleRemove(idx);

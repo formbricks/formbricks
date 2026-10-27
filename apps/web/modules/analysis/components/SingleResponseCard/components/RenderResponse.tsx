@@ -10,6 +10,7 @@ import { getChoiceIdByValue } from "@/lib/response/utils";
 import { processResponseData } from "@/lib/responses";
 import { formatStoredDateForDisplay } from "@/lib/utils/date-display";
 import { renderHyperlinkedContent } from "@/modules/analysis/utils";
+import { getChoiceBadgeText } from "@/modules/survey/lib/element-code-label";
 import { ArrayResponse } from "@/modules/ui/components/array-response";
 import { FileUploadResponse } from "@/modules/ui/components/file-upload-response";
 import { PictureSelectionResponse } from "@/modules/ui/components/picture-selection-response";
@@ -159,7 +160,7 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
         const choiceId = getChoiceIdByValue(responseData.toString(), element);
         return (
           <ResponseBadges
-            items={[{ value: responseData.toString(), id: choiceId }]}
+            items={[{ value: responseData.toString(), id: getChoiceBadgeText(element, choiceId) }]}
             isExpanded={isExpanded}
             showId={showId}
           />
@@ -169,7 +170,7 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
           .filter((choice) => choice !== "")
           .map((choice) => {
             const choiceId = getChoiceIdByValue(choice, element);
-            return { value: choice, id: choiceId };
+            return { value: choice, id: getChoiceBadgeText(element, choiceId) };
           });
         return (
           <>

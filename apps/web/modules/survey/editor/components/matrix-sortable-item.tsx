@@ -10,6 +10,8 @@ import { TSurveyMatrixElement, TSurveyMatrixElementChoice } from "@formbricks/ty
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
+import { PublishedLockNotice } from "@/modules/survey/editor/components/published-lock-notice";
+import { NO_ELEMENT_LOCK, TElementLock } from "@/modules/survey/editor/lib/published-lock";
 import { Button } from "@/modules/ui/components/button";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
@@ -27,6 +29,7 @@ interface MatrixSortableItemProps {
   isInvalid: boolean;
   locale: TUserLocale;
   isStorageConfigured: boolean;
+  lock?: TElementLock;
 }
 
 export const MatrixSortableItem = ({
@@ -42,12 +45,17 @@ export const MatrixSortableItem = ({
   isInvalid,
   locale,
   isStorageConfigured,
+  lock = NO_ELEMENT_LOCK,
 }: MatrixSortableItemProps): JSX.Element => {
   const { t } = useTranslation();
 
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: choice.id,
   });
+
+  const listKey = type === "row" ? "rows" : "columns";
+  const isTextLocked = lock.isOptionTextLocked(listKey, choice.id, "default");
+  const isDeleteLocked = lock.isOptionLocked(listKey, choice.id);
 
   const style = {
     transition: transition ?? "transform 100ms ease",
@@ -73,13 +81,21 @@ export const MatrixSortableItem = ({
           locale={locale}
           onKeyDown={onKeyDown}
           isStorageConfigured={isStorageConfigured}
+          disabled={isTextLocked}
         />
+        {isTextLocked && <PublishedLockNotice kind="optionText" className="ml-2" />}
         {canDelete && (
-          <TooltipRenderer data-testid="tooltip-renderer" tooltipContent={t("common.delete")}>
+          <TooltipRenderer
+            data-testid="tooltip-renderer"
+            tooltipContent={
+              isDeleteLocked ? t("workspace.surveys.edit.lock_explanation_option_delete") : t("common.delete")
+            }
+            className={isDeleteLocked ? "max-w-xs text-xs" : undefined}>
             <Button
               variant="ghost"
               size="icon"
               className="ml-2"
+              disabled={isDeleteLocked}
               onClick={(e) => {
                 e.preventDefault();
                 onDelete(index);

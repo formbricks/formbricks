@@ -17,6 +17,7 @@ import { getSurveyDateFormatMap } from "@/lib/utils/date-display";
 import { parseRecallInfo } from "@/lib/utils/recall";
 import { ResponseCardQuotas } from "@/modules/ee/quotas/components/single-response-card-quotas";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
+import { IdBadge } from "@/modules/ui/components/id-badge";
 import { isValidValue, splitRecallHighlights } from "../util";
 import { ElementSkip } from "./ElementSkip";
 import { HiddenFields } from "./HiddenFields";
@@ -109,7 +110,8 @@ export const SingleResponseCardBody = ({
             <div key={`${question.id}`}>
               {isValidValue(response.data[question.id]) ? (
                 <div>
-                  <p className="mb-1 text-sm font-semibold text-slate-600">
+                  <p className="mb-1 flex items-center gap-2 text-sm font-semibold text-slate-600">
+                    {question.type !== "cta" && question.code && <IdBadge id={question.code} />}
                     {formatTextWithSlashes(
                       getTextContent(
                         parseRecallInfo(

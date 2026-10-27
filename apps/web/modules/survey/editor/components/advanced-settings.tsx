@@ -1,15 +1,15 @@
 import { TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
-import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { ElementSettings } from "@/modules/survey/editor/components/element-settings";
-import { OptionIds } from "@/modules/survey/editor/components/option-ids";
 import { RecodeSection } from "@/modules/survey/editor/components/recode-section";
-import { UpdateElementId } from "@/modules/survey/editor/components/update-element-id";
+import { TElementLock } from "@/modules/survey/editor/lib/published-lock";
 
 interface AdvancedSettingsProps {
   element: TSurveyElement;
   elementIdx: number;
   localSurvey: TSurvey;
+  lock: TElementLock;
   updateElement: (elementIdx: number, updatedAttributes: any) => void;
   updateBlockLogic: (elementIdx: number, logic: TSurveyBlockLogic[]) => void;
   updateBlockLogicFallback: (elementIdx: number, logicFallback: string | undefined) => void;
@@ -17,20 +17,16 @@ interface AdvancedSettingsProps {
 
 /**
  * The body of a question's Settings tab: the question's own settings (order, display options,
- * validation rules), then the Recode section, then the identifiers.
+ * validation rules), then the Recode section. The question ID is read-only and lives in the ⋯ menu (Copy question ID);
+ * each option's ID is copied from the button beside its input.
  */
 export const AdvancedSettings = ({
   element,
   elementIdx,
   localSurvey,
+  lock,
   updateElement,
 }: AdvancedSettingsProps) => {
-  const showOptionIds =
-    element.type === TSurveyElementTypeEnum.PictureSelection ||
-    element.type === TSurveyElementTypeEnum.MultipleChoiceSingle ||
-    element.type === TSurveyElementTypeEnum.MultipleChoiceMulti ||
-    element.type === TSurveyElementTypeEnum.Ranking;
-
   return (
     <div className="flex flex-col gap-6">
       <ElementSettings element={element} elementIdx={elementIdx} updateElement={updateElement} />
@@ -39,17 +35,9 @@ export const AdvancedSettings = ({
         element={element}
         elementIdx={elementIdx}
         localSurvey={localSurvey}
+        lock={lock}
         updateElement={updateElement}
       />
-
-      <UpdateElementId
-        element={element}
-        elementIdx={elementIdx}
-        localSurvey={localSurvey}
-        updateElement={updateElement}
-      />
-
-      {showOptionIds && <OptionIds type="element" element={element} />}
     </div>
   );
 };
