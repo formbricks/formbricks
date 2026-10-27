@@ -100,6 +100,10 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
     singleUseId ? getResponseBySingleUseId(survey.id, singleUseId)() : Promise.resolve(undefined),
   ]);
 
+  const singleUseResponseSummary = singleUseResponse
+    ? { id: singleUseResponse.id, finished: singleUseResponse.finished }
+    : undefined;
+
   // Fetch responseCount only if needed (depends on survey config)
   const responseCount = survey.welcomeCard.showResponseCount
     ? await getResponseCountBySurveyId(survey.id)
@@ -110,7 +114,7 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
     survey,
     searchParams,
     singleUseId,
-    singleUseResponse: singleUseResponse ?? undefined,
+    singleUseResponse: singleUseResponseSummary,
     allowUrlUserIdLookup: true,
     isPreview,
     workspaceContext,
