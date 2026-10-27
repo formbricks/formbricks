@@ -22,6 +22,7 @@ import {
   successResponse,
 } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog } from "@/app/api/v3/lib/types";
+import type { V3WorkspaceContext } from "@/app/api/v3/lib/workspace-context";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { type TChartQueryIssue, validateChartQuery } from "@/modules/ee/analysis/lib/chart-query-validator";
@@ -34,7 +35,7 @@ import {
   type TChartWrite,
   createChartRow,
   deleteChartRow,
-  isFeedbackDatasetAssigned,
+  isFeedbackDatasetGrantable,
   listChartResourceRows,
   updateChartRow,
 } from "./service";
@@ -246,12 +247,37 @@ const chartUpdateOf = (
 };
 
 /**
+ * The Feedback Dataset rule every chart write shares: write access to the chart's dataset, as creating one
+ * needs, while it can be granted in the chart's workspace. Once it is unassigned there or archived nobody
+ * can be granted it, so a chart left behind can still be renamed, restyled or deleted with workspace
+ * write; changing what it reads (`evenIfUngrantable`) still needs the dataset, and so is refused. The
+ * check is not atomic with the write: a dataset reassigned in between lets that one rename or delete
+ * through on workspace write, which reads no data and touches only the caller's own workspace.
+ */
+const refuseChartDatasetWrite = async (
+  loaded: { row: TChartResourceRow; access: V3WorkspaceContext },
+  { authentication, requestId, instance }: TV3ChartWriteContext,
+  { evenIfUngrantable }: { evenIfUngrantable: boolean }
+): Promise<Response | null> => {
+  const { feedbackDirectoryId, workspaceId } = loaded.row;
+  if (!evenIfUngrantable && !(await isFeedbackDatasetGrantable(feedbackDirectoryId, workspaceId)))
+    return null;
+  return refuseUnlessFeedbackDatasetAccess(
+    authentication,
+    loaded.access,
+    feedbackDirectoryId,
+    "readWrite",
+    requestId,
+    instance
+  );
+};
+
+/**
  * `PATCH /api/v3/charts/{chartId}` → 200 `{ data }`.
  *
- * Needs write access to the chart's workspace, and to its Feedback Dataset too when the edit changes the
- * query or the type — what the chart reads. A rename or new display settings touch no data. The chart may
- * sit on several dashboards, and the edit shows on every one of them — `dashboards` in the response names
- * them.
+ * Needs write access to the chart's workspace and, as every chart write does, to its Feedback Dataset
+ * while that is assigned to the workspace (`refuseChartDatasetWrite`). The chart may sit on several
+ * dashboards, and the edit shows on every one of them — `dashboards` in the response names them.
  */
 export async function updateV3Chart({
   chartId,
@@ -263,11 +289,11 @@ export async function updateV3Chart({
   const log = logger.withContext({ requestId, chartId });
 
   try {
-    const changesWhatItReads = body.query !== undefined || body.type !== undefined;
-    const loaded = await loadAuthorizedChart(chartId, "readWrite", context, {
-      datasetPermission: changesWhatItReads ? "readWrite" : undefined,
-    });
+    const loaded = await loadAuthorizedChart(chartId, "readWrite", context);
     if (loaded instanceof Response) return loaded;
+    const changesWhatItReads = body.query !== undefined || body.type !== undefined;
+    const refused = await refuseChartDatasetWrite(loaded, context, { evenIfUngrantable: changesWhatItReads });
+    if (refused) return refused;
 
     const update = chartUpdateOf(body, loaded.row.query);
     if (!update.ok) return refuseChartQuery(update.issues, context);
@@ -311,8 +337,8 @@ export async function updateV3Chart({
 /**
  * `DELETE /api/v3/charts/{chartId}` → 204 for a chart on no dashboard. A chart still on one answers 409
  * `chart_in_use` naming them in `details.dashboards`; there is no force option. Needs write access to the
- * chart's workspace and, while the dataset is still assigned to that workspace, to its Feedback Dataset: a
- * chart whose dataset was unassigned can still be cleaned up, since nobody can be granted that dataset there.
+ * chart's workspace and, while its Feedback Dataset is assigned there, to the dataset
+ * (`refuseChartDatasetWrite`).
  */
 export async function deleteV3Chart({
   chartId,
@@ -325,17 +351,8 @@ export async function deleteV3Chart({
   try {
     const loaded = await loadAuthorizedChart(chartId, "readWrite", context);
     if (loaded instanceof Response) return loaded;
-    if (await isFeedbackDatasetAssigned(loaded.row.feedbackDirectoryId, loaded.row.workspaceId)) {
-      const refused = await refuseUnlessFeedbackDatasetAccess(
-        context.authentication,
-        loaded.access,
-        loaded.row.feedbackDirectoryId,
-        "readWrite",
-        requestId,
-        instance
-      );
-      if (refused) return refused;
-    }
+    const refused = await refuseChartDatasetWrite(loaded, context, { evenIfUngrantable: false });
+    if (refused) return refused;
 
     const result = await deleteChartRow(chartId);
     if (result.kind === "inUse") return problemChartInUse(requestId, result.dashboards, instance);

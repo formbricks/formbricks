@@ -51,8 +51,10 @@ patch:
     Edits a chart's name, type, chart query or display settings. The chart may sit on several
     dashboards (`dashboards` in the response), and the edit shows on every one of them — duplicate
     the chart and repoint one dashboard's widget to change it there only. A chart's Feedback Dataset
-    cannot change. Needs write access to the chart's workspace, and to its Feedback Dataset when the
-    edit changes `query` or `type`; a rename or display settings alone touch no data.
+    cannot change. Needs write access to the chart's workspace and, while its Feedback Dataset is
+    assigned to that workspace and not archived, to the dataset, as a delete does. Once the dataset is
+    unassigned or archived, the chart can still be renamed or restyled, but its `query` and `type` can
+    no longer change.
   tags:
     - V3 Charts
   parameters:
@@ -111,8 +113,8 @@ delete:
     (`DELETE /api/v3/dashboards/{dashboardId}/widgets/{widgetId}`); there is no force option. The
     check and the delete are one transaction, so a widget added at the same moment is never removed
     with the chart. Needs write access to the chart's workspace and, while its Feedback Dataset is
-    assigned to that workspace, to the dataset; a chart whose dataset was unassigned can still be
-    deleted.
+    assigned to that workspace and not archived, to the dataset; a chart whose dataset was unassigned
+    or archived can still be deleted.
   tags:
     - V3 Charts
   parameters:

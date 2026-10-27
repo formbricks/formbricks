@@ -407,6 +407,34 @@ describe("PATCH /api/v3/charts/{chartId}", () => {
     await update(sessionOf(fixture.users.owner), charts.other, { name: "50% done" });
   });
 
+  test("renames a chart whose dataset was archived but is still assigned, and refuses changing what it reads", async () => {
+    const archived = await prisma.feedbackDirectory.create({
+      data: {
+        name: "Archived dataset",
+        organizationId: fixture.organizationId,
+        isArchived: true,
+        workspaces: { create: { workspaceId: fixture.workspaceId } },
+      },
+    });
+    const chart = await prisma.chart.create({
+      data: {
+        name: "On an archived dataset",
+        type: "bar",
+        workspaceId: fixture.workspaceId,
+        feedbackDirectoryId: archived.id,
+        query: { measures: ["FeedbackRecords.count"] },
+        config: {},
+      },
+    });
+
+    expect(
+      (await update(sessionOf(fixture.users.owner), chart.id, { name: "Archived, renamed" })).status
+    ).toBe(200);
+    expect(await outcomeOf(await update(sessionOf(fixture.users.owner), chart.id, { type: "area" }))).toEqual(
+      { status: 403, code: "forbidden" }
+    );
+  });
+
   test("needs write access to the chart's Feedback Dataset to change its query, even for the organization owner", async () => {
     expect(
       await outcomeOf(

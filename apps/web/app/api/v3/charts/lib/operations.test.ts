@@ -15,7 +15,7 @@ import {
   createChartRow,
   deleteChartRow,
   getChartResourceRow,
-  isFeedbackDatasetAssigned,
+  isFeedbackDatasetGrantable,
   listChartResourceRows,
   updateChartRow,
 } from "./service";
@@ -42,7 +42,7 @@ vi.mock("./service", () => ({
   createChartRow: vi.fn(),
   updateChartRow: vi.fn(),
   deleteChartRow: vi.fn(),
-  isFeedbackDatasetAssigned: vi.fn(),
+  isFeedbackDatasetGrantable: vi.fn(),
 }));
 
 vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: vi.fn() }));
@@ -97,6 +97,7 @@ beforeEach(() => {
   vi.mocked(refuseUnlessFeedbackDatasetAccess).mockResolvedValue(null);
   vi.mocked(isNewReleaseWorkEnabled).mockResolvedValue(true);
   vi.mocked(getChartResourceRow).mockResolvedValue(rowOf());
+  vi.mocked(isFeedbackDatasetGrantable).mockResolvedValue(true);
 });
 
 describe("listV3Charts", () => {
@@ -438,13 +439,26 @@ describe("updateV3Chart", () => {
     expect(updateChartRow).not.toHaveBeenCalled();
   });
 
-  test("renames or restyles a chart with workspace write alone: that touches no data", async () => {
+  test("needs the dataset for a rename too while it is assigned, like every chart write", async () => {
+    vi.mocked(isFeedbackDatasetGrantable).mockResolvedValue(true);
+    vi.mocked(refuseUnlessFeedbackDatasetAccess).mockResolvedValue(
+      problemForbidden(requestId, "You are not authorized to use this Feedback Dataset", instance)
+    );
+
+    expect((await update({ name: "Renamed" })).status).toBe(403);
+    expect(updateChartRow).not.toHaveBeenCalled();
+  });
+
+  test("renames or restyles a chart whose dataset was unassigned with workspace write alone", async () => {
+    vi.mocked(isFeedbackDatasetGrantable).mockResolvedValue(false);
     vi.mocked(refuseUnlessFeedbackDatasetAccess).mockResolvedValue(
       problemForbidden(requestId, "You are not authorized to use this Feedback Dataset", instance)
     );
 
     expect((await update({ name: "Renamed", config: { showLegend: false } })).status).toBe(200);
     expect(refuseUnlessFeedbackDatasetAccess).not.toHaveBeenCalled();
+    // Changing what it reads still needs the dataset, which nobody can hold there any more.
+    expect((await update({ query: { measures: ["FeedbackRecords.count"] } })).status).toBe(403);
   });
 
   test("keeps a relative range the stored query already had, however the editor normalized it, and only that", async () => {
@@ -568,13 +582,13 @@ describe("deleteV3Chart", () => {
     deleteV3Chart({ chartId, authentication: session, requestId, instance, auditLog });
 
   test("needs write access to the chart's Feedback Dataset while it is assigned, and deletes nothing without it", async () => {
-    vi.mocked(isFeedbackDatasetAssigned).mockResolvedValue(true);
+    vi.mocked(isFeedbackDatasetGrantable).mockResolvedValue(true);
     vi.mocked(refuseUnlessFeedbackDatasetAccess).mockResolvedValueOnce(
       problemForbidden(requestId, "You are not authorized to use this Feedback Dataset", instance)
     );
 
     expect((await remove()).status).toBe(403);
-    expect(isFeedbackDatasetAssigned).toHaveBeenCalledWith(datasetId, internalWorkspaceId);
+    expect(isFeedbackDatasetGrantable).toHaveBeenCalledWith(datasetId, internalWorkspaceId);
     expect(refuseUnlessFeedbackDatasetAccess).toHaveBeenCalledWith(
       session,
       expect.objectContaining({ workspaceId: internalWorkspaceId }),
@@ -587,7 +601,7 @@ describe("deleteV3Chart", () => {
   });
 
   test("deletes a chart whose dataset was unassigned with workspace write alone, so it can be cleaned up", async () => {
-    vi.mocked(isFeedbackDatasetAssigned).mockResolvedValue(false);
+    vi.mocked(isFeedbackDatasetGrantable).mockResolvedValue(false);
     vi.mocked(deleteChartRow).mockResolvedValue({ kind: "deleted" });
 
     expect((await remove()).status).toBe(204);

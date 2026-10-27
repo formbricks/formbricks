@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
 import type { Prisma } from "@formbricks/database/prisma";
+import { getFeedbackDirectoryAssignmentAuthorizationScope } from "@/lib/authorization/resolvers";
 import { escapeLikePattern } from "@/lib/utils/like-pattern";
 import { retryOnTransactionConflict } from "@/lib/utils/prisma-error";
 
@@ -34,14 +35,14 @@ export const selectChartResource = {
 
 export type TChartResourceRow = Prisma.ChartGetPayload<{ select: typeof selectChartResource }>;
 
-/** One chart with what its resource embeds, or `null`. The caller authorizes `workspaceId` before use. */
-/** Whether a Feedback Dataset is still assigned to a workspace; an unassigned one grants nobody access there. */
-export const isFeedbackDatasetAssigned = async (datasetId: string, workspaceId: string): Promise<boolean> =>
-  (await prisma.feedbackDirectoryWorkspace.findUnique({
-    where: { feedbackDirectoryId_workspaceId: { feedbackDirectoryId: datasetId, workspaceId } },
-    select: { workspaceId: true },
-  })) !== null;
+/**
+ * Whether anyone can still be granted a Feedback Dataset in a workspace: it is assigned there and not
+ * archived. The same lookup authorization makes (and caches for the request), so the two never disagree.
+ */
+export const isFeedbackDatasetGrantable = async (datasetId: string, workspaceId: string): Promise<boolean> =>
+  (await getFeedbackDirectoryAssignmentAuthorizationScope(datasetId, workspaceId)) !== null;
 
+/** One chart with what its resource embeds, or `null`. The caller authorizes `workspaceId` before use. */
 export const getChartResourceRow = (chartId: string): Promise<TChartResourceRow | null> =>
   prisma.chart.findUnique({ where: { id: chartId }, select: selectChartResource });
 

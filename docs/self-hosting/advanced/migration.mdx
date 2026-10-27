@@ -230,8 +230,9 @@ change for an existing installation:
 - **Every write API key can manage charts and dashboards.** An API key with `write` or `manage` on a workspace
   can now create and change its charts and dashboards through `/api/v3` and the MCP server, and delete them
   through `/api/v3` (the MCP server has no delete tools). Reading a chart's numbers also needs access to its
-  feedback dataset, and changing a chart's query or type, or deleting it, needs write access to it. Review your
-  keys if that is broader than you want.
+  feedback dataset, and changing or deleting a chart needs write access to it while it is assigned to the
+  chart's workspace and not archived. After that, a chart can still be renamed, restyled or deleted, but its
+  query and type can no longer change. Review your keys if that is broader than you want.
 - **OAuth apps ask again.** Two data migrations add the `dashboards:read` and `dashboards:write` scopes to the
   MCP resource and to each registered OAuth client that already holds an MCP scope: `dashboards:read` with
   any MCP read scope, `dashboards:write` with any MCP write scope. Clients set to skip consent are left
