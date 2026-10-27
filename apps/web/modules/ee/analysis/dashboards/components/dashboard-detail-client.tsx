@@ -2,7 +2,7 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import { usePathname, useSearchParams } from "next/navigation";
-import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ResponsiveGridLayout, useContainerWidth, verticalCompactor } from "react-grid-layout";
 import type { Layout, LayoutItem } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
@@ -64,6 +64,8 @@ import { draftOverLatest, toSavedWidgets, widgetsRemovedByOverwrite } from "../l
 import { findNextOpenSlot } from "../lib/widget-placement";
 
 const ROW_HEIGHT = 80;
+
+const NO_WIDGET_IDS: ReadonlySet<string> = new Set();
 
 interface DashboardDetailClientProps {
   workspaceId: string;
@@ -263,6 +265,9 @@ function DashboardDetailView({
   // The version the edit started from: what the save sends as its precondition, so a refetch while
   // editing can never make a save silently overwrite someone else's change.
   const [editBaseUpdatedAt, setEditBaseUpdatedAt] = useState<string | null>(null);
+  // The widgets the edit started with. The stale warning lists what a whole-dashboard save removes that
+  // the editor never removed itself; without this, their own removals read as "added meanwhile".
+  const [editBaseWidgetIds, setEditBaseWidgetIds] = useState<ReadonlySet<string> | null>(null);
   // Set when a save was refused because the dashboard changed meanwhile: its latest version.
   const [staleLatest, setStaleLatest] = useState<TAppDashboard | null>(null);
   const [editingChartId, setEditingChartId] = useState<string | null>(null);
@@ -280,11 +285,38 @@ function DashboardDetailView({
   const dateRange = useMemo(() => JSON.parse(dateRangeKey) as TChartDateRangeInput | null, [dateRangeKey]);
 
   /** After a write, read the dashboard again — and the lists that count its widgets. */
-  const refreshDashboard = useCallback(() => {
-    void queryClient.invalidateQueries({ queryKey: dashboardKeys.detail(dashboard.id) });
-    void queryClient.invalidateQueries({ queryKey: dashboardKeys.lists() });
-    void queryClient.invalidateQueries({ queryKey: chartKeys.lists() });
+  const refreshDashboard = useCallback(async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.detail(dashboard.id) }),
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.lists() }),
+      queryClient.invalidateQueries({ queryKey: chartKeys.lists() }),
+    ]);
   }, [queryClient, dashboard.id]);
+
+  /**
+   * Writes made outside edit mode — duplicate, remove, undo — move the dashboard's version on the server.
+   * They are counted so entering edit mode waits for them: pinning the edit's base from a copy read before
+   * one of them landed would make the first save look stale, and offer to drop the change just made.
+   */
+  const viewWritesRef = useRef(0);
+  const viewWriteWaitersRef = useRef<(() => void)[]>([]);
+  const beginViewWrite = useCallback(() => {
+    viewWritesRef.current += 1;
+  }, []);
+  const endViewWrite = useCallback(() => {
+    viewWritesRef.current = Math.max(0, viewWritesRef.current - 1);
+    if (viewWritesRef.current === 0) {
+      const waiters = viewWriteWaitersRef.current;
+      viewWriteWaitersRef.current = [];
+      for (const resolve of waiters) resolve();
+    }
+  }, []);
+  const waitForViewWrites = useCallback(() => {
+    if (viewWritesRef.current === 0) return Promise.resolve();
+    const { promise, resolve } = Promise.withResolvers<void>();
+    viewWriteWaitersRef.current.push(resolve);
+    return promise;
+  }, []);
 
   // The name as the user typed it in edit mode, or `null` while they have not: the header otherwise shows the
   // dashboard's current name, so a rename made elsewhere shows on refetch and is never saved back over.
@@ -316,15 +348,25 @@ function DashboardDetailView({
     [dashboard.widgets]
   );
 
-  const handleEnterEditMode = useCallback(() => {
+  const enterEditMode = useCallback(async () => {
     if (isEditing) {
       return;
     }
 
-    setDraftWidgets((current) => current ?? dashboard.widgets);
-    setEditBaseUpdatedAt(dashboard.updatedAt);
+    // A view-mode write (duplicate, remove, undo) moves the dashboard's version on the server. Its
+    // read-back was awaited before the write was marked done, so the cache is current once nothing is
+    // pending — and the edit base is pinned from there, never from a copy the write has moved past.
+    await waitForViewWrites();
+    const base = queryClient.getQueryData<TAppDashboard>(dashboardKeys.detail(dashboard.id)) ?? dashboard;
+    setDraftWidgets(base.widgets);
+    setEditBaseWidgetIds(new Set(base.widgets.map((widget) => widget.id)));
+    setEditBaseUpdatedAt(base.updatedAt);
     setIsEditing(true);
-  }, [dashboard.widgets, dashboard.updatedAt, isEditing]);
+  }, [dashboard, isEditing, queryClient, waitForViewWrites]);
+
+  const handleEnterEditMode = useCallback(() => {
+    void enterEditMode();
+  }, [enterEditMode]);
 
   const handleEditChart = useCallback((chartId: string) => {
     setEditingChartId(chartId);
@@ -333,38 +375,45 @@ function DashboardDetailView({
   const handleDuplicateWidget = useCallback(
     async (widget: TDashboardWidget) => {
       // The copy keeps the original's size and takes the first gap it fits, so it never lands on top of
-      // the original.
+      // the original. A slot below the grid's last row is refused like any taken one, and the client
+      // retries without a layout — the server then answers 409 with the reason, if it has no room.
       const slot = findNextOpenSlot(
         dashboard.widgets.map((current) => current.layout),
         widget.layout
       );
+      beginViewWrite();
       try {
         await duplicateChart(widget.chartId, {
           dashboardId: dashboard.id,
           layout: { ...widget.layout, ...slot },
         });
         toast.success(t("workspace.analysis.dashboards.chart_duplicated"));
-        refreshDashboard();
+        await refreshDashboard();
       } catch (error) {
         toast.error(
           getChartApiErrorMessage(error, t("workspace.analysis.dashboards.chart_duplicate_failed"))
         );
+      } finally {
+        endViewWrite();
       }
     },
-    [dashboard.id, dashboard.widgets, refreshDashboard, t]
+    [beginViewWrite, dashboard.id, dashboard.widgets, endViewWrite, refreshDashboard, t]
   );
 
   const handleUndoRemoveWidget = useCallback(
     async (snapshot: TDashboardWidget) => {
+      beginViewWrite();
       try {
         await restoreDashboardWidget(dashboard.id, snapshot);
         toast.success(t("workspace.analysis.dashboards.chart_restored"));
-        refreshDashboard();
+        await refreshDashboard();
       } catch (error) {
         toast.error(getChartApiErrorMessage(error, t("workspace.analysis.dashboards.chart_restore_failed")));
+      } finally {
+        endViewWrite();
       }
     },
-    [dashboard.id, refreshDashboard, t]
+    [beginViewWrite, dashboard.id, endViewWrite, refreshDashboard, t]
   );
 
   const handleRemoveWidgetFromMenu = useCallback(
@@ -378,6 +427,7 @@ function DashboardDetailView({
       const snapshot = (draftWidgets ?? dashboard.widgets).find((w) => w.id === widgetId);
       if (!snapshot) return;
 
+      beginViewWrite();
       try {
         await removeDashboardWidget(dashboard.id, widgetId);
 
@@ -398,15 +448,19 @@ function DashboardDetailView({
           ),
           { duration: 6000 }
         );
-        refreshDashboard();
+        await refreshDashboard();
       } catch (error) {
         toast.error(getChartApiErrorMessage(error, t("workspace.analysis.dashboards.chart_remove_failed")));
+      } finally {
+        endViewWrite();
       }
     },
     [
+      beginViewWrite,
       draftWidgets,
       dashboard.widgets,
       dashboard.id,
+      endViewWrite,
       handleRemoveWidget,
       handleUndoRemoveWidget,
       isEditing,
@@ -419,6 +473,7 @@ function DashboardDetailView({
     setDraftName(null);
     setDraftWidgets(null);
     setEditBaseUpdatedAt(null);
+    setEditBaseWidgetIds(null);
     setIsEditing(false);
   }, []);
 
@@ -444,6 +499,7 @@ function DashboardDetailView({
         setDraftName(null);
         setDraftWidgets(null);
         setEditBaseUpdatedAt(null);
+        setEditBaseWidgetIds(null);
         setIsEditing(false);
       } catch (error) {
         if (isStaleDashboardError(error)) {
@@ -480,8 +536,9 @@ function DashboardDetailView({
     setStaleLatest(null);
     setDraftWidgets(null);
     setEditBaseUpdatedAt(null);
+    setEditBaseWidgetIds(null);
     setIsEditing(false);
-    refreshDashboard();
+    void refreshDashboard();
   }, [staleLatest, queryClient, dashboard.id, refreshDashboard]);
 
   /** Save the edit over the latest version, knowing what it removes. */
@@ -498,9 +555,11 @@ function DashboardDetailView({
   const removedByOverwrite = useMemo(
     () =>
       staleLatest
-        ? widgetsRemovedByOverwrite(staleLatest.widgets, widgets).map((widget) => widget.chart.name)
+        ? widgetsRemovedByOverwrite(staleLatest.widgets, widgets, editBaseWidgetIds ?? NO_WIDGET_IDS).map(
+            (widget) => widget.chart.name
+          )
         : [],
-    [staleLatest, widgets]
+    [staleLatest, widgets, editBaseWidgetIds]
   );
 
   // `E` toggles edit mode: it enters from view mode, and inside edit mode it saves when there is
@@ -587,7 +646,7 @@ function DashboardDetailView({
             isAIAvailable={isAIAvailable}
             aiUnavailableReason={aiUnavailableReason}
             onRefresh={() => {
-              refreshDashboard();
+              void refreshDashboard();
               void queryClient.invalidateQueries({ queryKey: chartKeys.allData() });
             }}
             editHotkey={EDIT_HOTKEY}
@@ -679,7 +738,7 @@ function DashboardDetailView({
           chartId={editingChartId ?? undefined}
           onSuccess={() => {
             setEditingChartId(null);
-            refreshDashboard();
+            void refreshDashboard();
             void queryClient.invalidateQueries({ queryKey: chartKeys.allData() });
           }}
           directories={directories}

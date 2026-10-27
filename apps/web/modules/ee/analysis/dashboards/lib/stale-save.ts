@@ -1,16 +1,17 @@
 import type { TDashboardWidget } from "@/modules/ee/analysis/types/analysis";
 
 /**
- * What saving an edit over a dashboard that changed meanwhile would do. The save sends the editor's
- * widgets as the whole dashboard, so a widget someone else added since the edit began is removed by it;
- * those are what the editor is warned about before overwriting.
+ * What saving an edit over a dashboard that changed meanwhile would remove without the editor asking:
+ * a widget that appeared after the edit began and is not in the draft. A widget the editor removed in the
+ * draft is absent from `base` too, so it is their own change, not a warning.
  */
 export const widgetsRemovedByOverwrite = (
   latest: TDashboardWidget[],
-  draft: TDashboardWidget[]
+  draft: TDashboardWidget[],
+  base: ReadonlySet<string>
 ): TDashboardWidget[] => {
   const kept = new Set(draft.map((widget) => widget.id));
-  return latest.filter((widget) => !kept.has(widget.id));
+  return latest.filter((widget) => !kept.has(widget.id) && !base.has(widget.id));
 };
 
 /**
