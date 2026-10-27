@@ -120,7 +120,8 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
    ```
 
    If validation fails, check that `.env` contains the required values and that `docker-compose.yml` has valid
-   syntax.
+   syntax. In bundled mode, ensure `AUTHZED_DATABASE_PASSWORD` is non-empty; bootstrap also checks it before
+   creating the SpiceDB database.
 
 1. **Start the Docker Setup**
 

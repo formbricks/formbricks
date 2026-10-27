@@ -125,6 +125,10 @@ if external_compose ps --status running --services spicedb | grep --fixed-string
   printf '%s\n' "External SpiceDB started before its datastore migration completed." >&2
   exit 1
 fi
+failed_migration_id="$(external_compose ps -a -q spicedb-migrate)"
+[[ -n "${failed_migration_id}" ]]
+[[ "$(docker inspect --format '{{.State.Status}}' "${failed_migration_id}")" == "exited" ]]
+[[ "$(docker inspect --format '{{.State.ExitCode}}' "${failed_migration_id}")" != "0" ]]
 
 external_database_uri="postgresql://spicedb:${EXTERNAL_ROLE_PASSWORD}@external-db:5432/spicedb?sslmode=disable"
 external_compose up --detach --force-recreate spicedb-migrate spicedb

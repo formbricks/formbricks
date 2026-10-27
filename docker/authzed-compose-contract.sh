@@ -36,6 +36,10 @@ docker compose --file "${PROD_COMPOSE_FILE}" config --services >"${temp_dir}/pro
 env -u AUTHZED_DATABASE_PASSWORD SPICEDB_DATASTORE_CONN_URI="${EXTERNAL_DATABASE_URI}" \
   docker compose --file "${PROD_COMPOSE_FILE}" --file "${EXTERNAL_COMPOSE_FILE}" \
   config --format json >"${temp_dir}/external.json"
+env -u AUTHZED_DATABASE_PASSWORD SPICEDB_DATASTORE_CONN_URI="${EXTERNAL_DATABASE_URI}" \
+  docker compose --file "${PROD_COMPOSE_FILE}" config --format json >"${temp_dir}/missing-override.json"
+env -u AUTHZED_DATABASE_PASSWORD -u SPICEDB_DATASTORE_CONN_URI \
+  docker compose --file "${PROD_COMPOSE_FILE}" config --format json >"${temp_dir}/missing-bundled.json"
 docker compose --file "${DEV_COMPOSE_FILE}" --profile authzed-ui --profile authzed-tools config --format json >"${temp_dir}/development.json"
 
 jq --exit-status --arg token "${AUTHZED_TOKEN}" --arg password "${AUTHZED_DATABASE_PASSWORD}" '
@@ -92,11 +96,25 @@ jq --exit-status --arg uri "${EXTERNAL_DATABASE_URI}" '
   ([.services[] | .environment.POSTGRES_ADMIN_URL?] | all(. == null))
 ' "${temp_dir}/external.json" >/dev/null
 
-if env -u AUTHZED_DATABASE_PASSWORD -u SPICEDB_DATASTORE_CONN_URI \
-  docker compose --file "${PROD_COMPOSE_FILE}" config --quiet >"${temp_dir}/missing-bundled.log" 2>&1; then
-  printf '%s\n' "Bundled SpiceDB unexpectedly accepted a missing database password." >&2
+jq --exit-status --arg uri "${EXTERNAL_DATABASE_URI}" '
+  .services["authzed-db-bootstrap"].environment.SPICEDB_EXTERNAL_POSTGRES == "true" and
+  .services["spicedb-migrate"].environment.SPICEDB_DATASTORE_CONN_URI == $uri and
+  .services.spicedb.environment.SPICEDB_DATASTORE_CONN_URI == $uri
+' "${temp_dir}/missing-override.json" >/dev/null
+
+jq --exit-status '
+  .services["authzed-db-bootstrap"].environment.AUTHZED_DATABASE_PASSWORD == "" and
+  .services["spicedb-migrate"].environment.SPICEDB_DATASTORE_CONN_URI ==
+    "postgresql://spicedb:@postgres:5432/spicedb?sslmode=disable"
+' "${temp_dir}/missing-bundled.json" >/dev/null
+
+bootstrap_entrypoint="$(jq -r '.services["authzed-db-bootstrap"].entrypoint[2]' "${temp_dir}/production.json" | sed 's/\$\$/\$/g')"
+if env -u AUTHZED_DATABASE_PASSWORD SPICEDB_EXTERNAL_POSTGRES= sh -ec "${bootstrap_entrypoint}" \
+  >"${temp_dir}/missing-bundled.log" 2>&1; then
+  printf '%s\n' "Bundled bootstrap accepted a missing database password." >&2
   exit 1
 fi
+grep --fixed-strings 'AUTHZED_DATABASE_PASSWORD is required' "${temp_dir}/missing-bundled.log" >/dev/null
 
 if env -u SPICEDB_DATASTORE_CONN_URI \
   docker compose --file "${PROD_COMPOSE_FILE}" --file "${EXTERNAL_COMPOSE_FILE}" \
@@ -105,8 +123,7 @@ if env -u SPICEDB_DATASTORE_CONN_URI \
   exit 1
 fi
 
-if SPICEDB_EXTERNAL_POSTGRES=true sh -ec \
-  "$(jq -r '.services["authzed-db-bootstrap"].entrypoint[2]' "${temp_dir}/production.json")" \
+if SPICEDB_EXTERNAL_POSTGRES=true sh -ec "${bootstrap_entrypoint}" \
   >"${temp_dir}/bootstrap-guard.log" 2>&1; then
   printf '%s\n' "Bundled bootstrap ran despite an external datastore URI." >&2
   exit 1
