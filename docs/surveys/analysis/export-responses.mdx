@@ -27,26 +27,30 @@ The Standard export is the file Formbricks has always produced, so pipelines tha
 
 <Steps>
   <Step title="Filter the responses">
-    Set the filter and time range on the Summary or Responses tab first. The export contains the responses the filter matches. To export only some responses, tick their rows in the Responses table and use the export action there: it opens the same modal for the selection.
+    Set the filter and time range on the Summary or Responses tab first. The export contains the responses the filter matches. To export only some responses, tick their rows in the Responses table and select **Download** in the selection bar: it opens the same modal for the selection.
   </Step>
   <Step title="Open the Export modal">
-    Select **Export**. The count line tells you how many responses are included, for example "Include 1,240 responses", and how many Low quality responses were left out.
+    Select **Export**. The modal is titled **Export responses** and opens with the settings of the Standard export. At the bottom, a count line tells you how many responses are included and, for an Analysis export, how many Low quality responses are left out, for example "Include 1,240 responses. · 3 Low quality left out".
   </Step>
   <Step title="Pick the options">
-    - **Format**: CSV or Excel.
-    - **Add SPSS syntax file**: CSV only. It adds a `.sps` file that reads the export into SPSS. It turns off **Text only**, because the syntax reads codes.
+    - **Format**: **CSV** or **Excel**.
+    - **Add SPSS syntax file**: CSV only. It adds a syntax file that reads the CSV into SPSS. It needs answer codes, so it switches **Text only** off.
     - **Display questions and answers**: **Text only**, **Code only** or **Text and code**.
-    - **Include columns**: choose **Select all** to add the response columns, such as timestamp, tags and Embedded Data. Block groups and ranges are not available yet.
-    - **Advanced options**: further analysis options. An option can force the zip file.
+    - **Include columns**: shows a ticked **Select all** that you cannot change yet. An Analysis export always has all response columns, such as timestamp, tags and Embedded Data. Picking columns is not available yet.
+    - **Advanced options**: **Add datamap** and **Add unmapped values**, both for CSV and Excel. On CSV, each one adds a file, so the download becomes a zip.
   </Step>
   <Step title="Export">
-    Select **Export**. A toast shows the progress, then the file downloads. If it fails, the toast offers **Try again**.
+    Select **Export**. The modal closes, a toast shows "Preparing your export…" and then the size received so far, and the file downloads. If it fails, the toast offers **Try again**.
   </Step>
 </Steps>
 
 <Note>
-  The export runs in the app and streams the file as it is built. You can close the modal or move between Summary and Responses while it runs. If you leave Formbricks or reload the page, the export stops and you have to start it again.
+  The export runs in the app and streams the file as it is built. You can move between Summary and Responses while it runs. If you leave the survey, close the tab or reload the page, the export stops and you have to start it again. Only one export runs at a time.
 </Note>
+
+### Attachments
+
+If the survey has a file upload question, the modal also has an **Attachments** section with a **Download attachments** button. It downloads the files respondents uploaded, in one zip, for the responses the current filter matches, then closes the modal. The attachments section is not offered when you open the modal for ticked rows.
 
 ## Files in an Analysis export
 
@@ -56,10 +60,27 @@ An export that has more than one file is always a zip.
 | --- | --- | --- |
 | Text only, or Code only | One data sheet, `Labels` or `Codes` | `data.csv` |
 | Text and code | Two data sheets, `Labels` and `Codes` | `labels.csv` and `codes.csv` |
-| Always | Sheets `Datamap` and `Unmapped values` | `datamap.csv` and `unmapped-values.csv`, all in the zip |
-| SPSS syntax file | | `labels.sps` in the zip |
+| **Add datamap** | Sheet `Datamap` in the workbook | `datamap.csv` in the zip |
+| **Add unmapped values** | Sheet `Unmapped values` in the workbook | `unmapped-values.csv` in the zip |
+| **Add SPSS syntax file** | Not available | `labels.sps` in the zip |
 
-An Excel file is built whole in memory, so a very large export may not be offered as Excel. In that case use the zip.
+The datamap and the unmapped values list are only in the file when you tick them.
+
+### Size limit for Excel
+
+An Analysis export as Excel is built whole in memory, so there is a limit: **1,000,000 cells**, counted over the data sheets. A cell is one position in the sheet, so the count is the number of columns times the number of responses plus the header row, blank cells included. **Text and code** has two data sheets and doubles the count. The Standard export as Excel has no such limit.
+
+As a guide, with **Text only** or **Code only**:
+
+| Columns in the export | Responses that fit in Excel |
+| --- | --- |
+| 50 | about 20,000 |
+| 100 | about 10,000 |
+| 300 | about 3,300 |
+
+With **Text and code**, halve those numbers. The columns are one per question, one per option of a multi-select, one per matrix row, and the response columns such as timestamp, tags and metadata.
+
+When a selection is over the limit, the **Excel** option is greyed out, the modal says "Excel is off for this export: the file would hold N cells, more than the 1,000,000 an Excel file can", and **Export** stays off. A button switches the format for you. If your settings produce a zip, it reads **Export as a zip of CSV files**, which we recommend. Otherwise it reads **Export as CSV**. CSV and zip exports have no size limit. You can also narrow the filter until the selection fits.
 
 <Tip>
   Every file of an Analysis export is UTF-8, so Arabic and other non-Latin text stays readable. CSV files start with a byte-order mark so that Excel and SPSS detect the encoding.
@@ -82,7 +103,7 @@ An Excel file is built whole in memory, so a very large export may not be offere
 
 ## Datamap
 
-The datamap explains the export. It is in long format, with one row per column and per answer code, and one row for a column that has no codes. The headers are always in English, in this order:
+The datamap explains the export. Tick **Add datamap** to get it. It is in long format, with one row per column and per answer code, and one row for a column that has no codes. The headers are always in English, in this order:
 
 | Header | Content |
 | --- | --- |
@@ -91,7 +112,7 @@ The datamap explains the export. It is in long format, with one row per column a
 | Question text | The full question text in the default language, repeated on every row |
 | Type | The kind of question and its detail, such as `csat . 5-point`, `numeric . integer` or `embedded data . true/false` |
 | Code | The answer code, as text |
-| Value label | What the code stands for. Scales get one row per point, and a picture option uses its alt text |
+| Value label | What the code stands for. Scales get one row per point. A picture option uses its alt text, or its option ID when it has none |
 | Notes | What blank means for the column, and other remarks, such as a column that holds unmapped values |
 
 Embedded Data and response information columns are listed with their types. A legacy Embedded Data field that is named like an export column gets an `ed_` prefix and a note.
@@ -100,7 +121,7 @@ Embedded Data and response information columns are listed with their types. A le
 
 Answers are stored as the text the respondent saw, so Formbricks finds the code of an answer by matching that text with the options of your survey, first in the language of the response and then in any language.
 
-An answer that matches no option is an **unmapped value**. It is never guessed and never counted as Other. In the data, its code cell holds `UNMAPPED:` followed by the text as given. The `Unmapped values` sheet, or `unmapped-values.csv`, lists each one:
+Tick **Add unmapped values** to get the list. An answer that matches no option is an **unmapped value**. It is never guessed and never counted as Other. In the data, its code cell holds `UNMAPPED:` followed by the text as given. The cell is marked even when you do not add the list. The `Unmapped values` sheet, or `unmapped-values.csv`, lists each one:
 
 | Column | Content |
 | --- | --- |
@@ -118,21 +139,21 @@ Typical causes are an option that was renamed or deleted before the survey was p
 
 ## SPSS syntax file
 
-With **Add SPSS syntax file** the zip contains `labels.sps`, UTF-8 with a byte-order mark. It reads the codes file into SPSS and sets up the labels, so that you do not have to.
+With **Add SPSS syntax file** the zip contains `labels.sps`, UTF-8 with a byte-order mark. It reads the CSV of codes into SPSS (`data.csv`, or `codes.csv` with **Text and code**) and sets up the labels, so that you do not have to.
 
 Before you run it:
 
-- Open the file in SPSS and **set the folder in the `CD` line** to the place where you unzipped the export. Run all.
-- Use SPSS in Unicode mode so that non-Latin text is read correctly. The file asks for UTF-8 when it reads the data.
+- Open the file in SPSS. Near the top is a line `CD 'C:\path\to\the\unzipped\export'.` It is a placeholder: **set it to the folder where you unzipped the export**, then run all.
 
 What it does:
 
+- Reads the file as UTF-8 (`/ENCODING='UTF8'`), skipping the header row.
 - Reads the data with an explicit variable list, so SPSS never guesses a type from the first rows. A column is numeric only when every answer code is a plain integer. If an answer code is a letter, the column is a text variable, which SPSS can label but not compute with.
 - Sets variable labels (at most 256 bytes) and value labels (at most 120 bytes), cut on a character boundary. Quotes are doubled and line breaks become spaces.
 - Defines a multiple response set for each multi-select with at least two option columns.
 - Does not define user-missing values. Blank is system-missing.
 - Reads a column that holds `UNMAPPED:` cells as text, keeps the original in a `<column>_raw` variable, then converts the column with `ALTER TYPE`. SPSS reports a warning for every `UNMAPPED:` cell it cannot turn into a number, and the file raises the warning limit so the run does not stop early.
-- Reads the timestamp as UTC text and adds a date-time variable.
+- Reads the timestamp as text, for example `2025-05-06 14:30:00 UTC` in the display time zone of your organization, and adds a date-time variable `timestamp_dt` made from its first 19 characters.
 
 ## Low quality responses
 
@@ -140,14 +161,14 @@ Mark a response as **Low quality** when it should not count, for example a speed
 
 - On a response card, use **Mark as low quality** in the header, and **Restore as complete** to undo it.
 - In the Responses table, tick several rows and use the bulk action in the selection bar.
-- The response type filter has **Low quality responses**, so you can review them.
-- Read-only seats see the outcome of each response but cannot change it.
+- The response status dropdown in the filter, under "Show all responses that match", has **Low quality responses**, so you can review them. The other choices do not hide them.
+- Read-only seats see the outcome of each response but do not get these buttons.
 - Through the API, set `outcome` to `lowQuality`, or to `null` to restore, with `PATCH /api/v3/responses/{responseId}`. `POST /api/v3/responses/batch-outcome` does it for up to 100 responses at once.
 
 What changes for a Low quality response:
 
-- It is left out of the Analysis export by default, and the count line says how many were left out. If your filter selects Low quality responses, the export contains them.
-- The Responses table shows its outcome, and the export has an `outcome` column that reads `lowQuality`.
+- It is left out of the Analysis export by default, and the count line says how many were left out. This also holds when you export ticked rows. If your filter selects Low quality responses, the export contains them.
+- The Responses table has an **Outcome** column, and a response card shows a **Low quality** badge. The Analysis export has an `outcome` column that reads `lowQuality`.
 - Its Feedback Records are removed, so it drops out of [Dashboards](/unify-feedback/dashboards-charts). Restoring the response creates them again.
 
 What does not change: the Summary, response counts, API lists, webhooks and integrations keep counting Low quality responses. Webhooks and API responses carry `outcome`, so you can filter on it yourself. The Standard export includes Low quality responses too.
