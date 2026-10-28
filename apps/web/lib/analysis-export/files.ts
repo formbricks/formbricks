@@ -8,5 +8,5 @@ export {
   type TAnalysisFileOptions,
   type TAnalysisWorkbookOptions,
 } from "./analysis-workbook";
-export { createAnalysisZip } from "./analysis-zip";
+export { createAnalysisZip, createSingleFileZip } from "./analysis-zip";
 export { XLSX_LIMITS, XlsxLimitError, createXlsxWorkbook } from "./xlsx-writer";

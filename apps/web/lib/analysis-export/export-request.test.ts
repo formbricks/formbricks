@@ -3,6 +3,7 @@ import {
   EXPORT_ADVANCED_OPTIONS,
   EXPORT_MAX_SELECTED_RESPONSES,
   ZExportRequest,
+  exportFileType,
   planExport,
 } from "./export-request";
 
@@ -16,9 +17,15 @@ describe("ZExportRequest", () => {
       format: "csv",
       display: "text",
       spss: false,
+      zip: false,
       advanced: [],
       excludedColumns: [],
     });
+  });
+
+  test("Compress into .zip is for CSV", () => {
+    expect(parse({ format: "csv", zip: true }).success).toBe(true);
+    expect(parse({ format: "xlsx", zip: true }).success).toBe(false);
   });
 
   test("a filter that went through JSON gets its createdAt dates back", () => {
@@ -75,6 +82,20 @@ describe("planExport", () => {
     expect(planExport({ format: "xlsx", display: "text", spss: false, advanced: [] })).toEqual({
       kind: "standard",
       format: "xlsx",
+    });
+  });
+
+  test("Compress into .zip makes a single CSV a zip, the Standard one included", () => {
+    expect(
+      planExport({ format: "csv", display: "codes", spss: false, advanced: [], zip: true })
+    ).toMatchObject({ kind: "analysis", output: "zip" });
+    const standard = planExport({ format: "csv", display: "text", spss: false, advanced: [], zip: true });
+    expect(standard).toEqual({ kind: "standard", format: "csv", zip: true });
+    expect(exportFileType(standard).extension).toBe("zip");
+    expect(
+      planExport({ format: "xlsx", display: "codes", spss: false, advanced: [], zip: true })
+    ).toMatchObject({
+      output: "xlsx",
     });
   });
 

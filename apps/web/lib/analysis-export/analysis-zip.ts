@@ -42,6 +42,14 @@ const appendEntry = (archive: Archiver, source: Readable | string, name: string)
     archive.append(source, { name });
   });
 
+/** A zip of one file: the Standard export's CSV when "Compress into .zip" is ticked. The CSV bytes are unchanged. */
+export const createSingleFileZip = (name: string, contents: string): Readable => {
+  const archive = new ZipArchive({ zlib: { level: 6 } });
+  archive.append(contents, { name });
+  void archive.finalize();
+  return archive;
+};
+
 /**
  * The zip of an Analysis export: `data.csv` (or `labels.csv` plus `codes.csv`), `datamap.csv`,
  * `unmapped-values.csv` and `labels.sps`. Streams: rows are pulled as archiver drains the stream, so

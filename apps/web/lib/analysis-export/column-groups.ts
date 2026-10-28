@@ -16,6 +16,15 @@ export const analysisColumnGroupId = (column: TAnalysisColumn): string => {
   return `r:${column.name}`;
 };
 
+/** The entry of a multi-select option or Other text column, listed under its question. Other columns have none. */
+const analysisColumnOptionId = (column: TAnalysisColumn): string | null =>
+  column.source === "question" && column.question?.type === "multipleChoiceMulti" ? `c:${column.name}` : null;
+
+const optionLabel = (column: TAnalysisColumn): string => {
+  const label = column.option?.label ?? column.name;
+  return `${column.name} · ${column.kind === "other_text" ? `${label} (text)` : label}`;
+};
+
 const groupLabel = (column: TAnalysisColumn): string => {
   if (column.source === "question" && column.question) {
     return `${column.question.code} · ${column.question.headline}`;
@@ -24,18 +33,20 @@ const groupLabel = (column: TAnalysisColumn): string => {
   return RESPONSE_COLUMN_LABELS[column.name] ?? column.name;
 };
 
-/** The Include columns list of an Analysis export, in column order. */
+/** The Include columns list of an Analysis export, in column order. A multi-select lists its options too. */
 export const analysisColumnGroups = (columns: readonly TAnalysisColumn[]): TExportColumnGroup[] => {
   const groups = new Map<string, TExportColumnGroup>();
   for (const column of columns) {
     const id = analysisColumnGroupId(column);
     if (!groups.has(id)) groups.set(id, { id, label: groupLabel(column) });
+    const optionId = analysisColumnOptionId(column);
+    if (optionId) groups.set(optionId, { id: optionId, label: optionLabel(column), parentId: id });
   }
   return [...groups.values()];
 };
 
 /**
- * The export without the columns of the switched-off groups. The Datamap and the SPSS syntax read
+ * The export without the columns of the switched-off groups and options. The Datamap and the SPSS syntax read
  * `columns`, so they follow; the Unmapped values keep listing what the answers held.
  */
 export const withoutColumnGroups = (
@@ -43,7 +54,11 @@ export const withoutColumnGroups = (
   excluded: readonly string[]
 ): TAnalysisExport => {
   if (excluded.length === 0) return exported;
-  const keep = exported.columns.map((column) => !excluded.includes(analysisColumnGroupId(column)));
+  const keep = exported.columns.map(
+    (column) =>
+      !excluded.includes(analysisColumnGroupId(column)) &&
+      !excluded.includes(analysisColumnOptionId(column) ?? "")
+  );
   const pick = <T>(cells: T[] | null): T[] | null => (cells ? cells.filter((_, index) => keep[index]) : null);
   return {
     ...exported,

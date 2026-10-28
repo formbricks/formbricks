@@ -116,6 +116,32 @@ describe("response columns", () => {
     });
   });
 
+  test("contact attributes are one text column each, read from the response's own attributes", () => {
+    const builder = createAnalysisRowBuilder({
+      survey: surveyWith([colors]),
+      answers: "codes",
+      fields: { contactAttributes: true },
+      contactAttributeKeys: ["plan", "firstName", "seats"],
+    });
+    const row = builder.buildRow(response({}, { contactAttributes: { plan: "pro", seats: 5 } }), () => {});
+    const byName = Object.fromEntries(builder.columns.map((c, i) => [c.name, row.codes?.[i]]));
+    expect(byName).toMatchObject({ person_plan: "pro", person_first_name: null, person_seats: "5" });
+    expect(builder.columns.find((c) => c.name === "person_plan")).toMatchObject({
+      kind: "text",
+      embedded: { origin: "contact", label: "person.plan" },
+    });
+  });
+
+  test("without the field there are no contact attribute columns", () => {
+    const builder = createAnalysisRowBuilder({
+      survey: surveyWith([colors]),
+      answers: "codes",
+      fields: {},
+      contactAttributeKeys: ["plan"],
+    });
+    expect(builder.columns.map((c) => c.name)).not.toContain("person_plan");
+  });
+
   test("the language column names the default language by its code, not 'default'", () => {
     const { cells } = run([colors], [response({}, { language: "default" })]);
     expect(cells().language).toBe("en");

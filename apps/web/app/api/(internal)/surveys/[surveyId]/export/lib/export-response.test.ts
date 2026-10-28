@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { readZip } from "@/lib/analysis-export/__fixtures__/read-zip";
 import { buildSampleExport, sampleSurvey } from "@/lib/analysis-export/__fixtures__/sample-export";
 import {
   ExportCancelledError,
@@ -11,6 +12,7 @@ vi.mock("server-only", () => ({}));
 
 const mocks = vi.hoisted(() => ({
   count: vi.fn(),
+  attributeKeys: vi.fn(),
   getResponseDownloadFile: vi.fn(),
   openAnalysisExport: vi.fn(),
   cap: { value: undefined as number | undefined },
@@ -22,7 +24,9 @@ vi.mock("./export-limits", () => ({
   },
 }));
 
-vi.mock("@formbricks/database", () => ({ prisma: { response: { count: mocks.count } } }));
+vi.mock("@formbricks/database", () => ({
+  prisma: { response: { count: mocks.count }, contactAttributeKey: { findMany: mocks.attributeKeys } },
+}));
 vi.mock("@/lib/response/service", () => ({ getResponseDownloadFile: mocks.getResponseDownloadFile }));
 vi.mock("@/lib/response/where-clause", () => ({ buildWhereClause: () => ({ finished: true }) }));
 vi.mock("@/lib/analysis-export", async (importOriginal) => ({
@@ -46,6 +50,7 @@ const analysisPlan = (display: "codes" | "both", output: "csv" | "xlsx") =>
 
 beforeEach(() => {
   vi.resetAllMocks();
+  mocks.attributeKeys.mockResolvedValue([]);
   mocks.cap.value = undefined;
 });
 
@@ -82,6 +87,22 @@ describe("countExportResponses", () => {
       plan: analysisPlan("codes", "csv"),
     });
     expect(columnGroups[0]).toEqual({ id: "r:response_id", label: "responseId" });
+  });
+
+  test("the contact attributes of the workspace are columns of the list", async () => {
+    mocks.count.mockResolvedValue(1);
+    mocks.attributeKeys.mockResolvedValue([{ key: "plan" }, { key: "firstName" }]);
+    const { columnGroups } = await countExportResponses({
+      survey: { ...withId, workspaceId: "ws1" } as never,
+      plan: analysisPlan("codes", "csv"),
+    });
+    expect(columnGroups.filter((group) => group.label.startsWith("person."))).toEqual([
+      { id: "e:person_plan", label: "person.plan" },
+      { id: "e:person_first_name", label: "person.firstName" },
+    ]);
+    expect(mocks.attributeKeys).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { workspaceId: "ws1", attributes: { some: {} } } })
+    );
   });
 
   test("an Analysis export counts without Low quality and reports how many it leaves out", async () => {
@@ -173,6 +194,25 @@ describe("buildExportResponse", () => {
     expect(result.response.headers.get("Content-Disposition")).toBe(
       'attachment; filename="export-my-survey-2026-10-27-00-00-00.csv"'
     );
+  });
+
+  test("Compress into .zip wraps the Standard CSV, bytes unchanged, in a zip of one file", async () => {
+    mocks.getResponseDownloadFile.mockResolvedValue({
+      fileContents: 'No.,Response ID\n"1","r1"',
+      fileName: "export-my-survey.csv",
+    });
+    const result = await buildExportResponse({
+      ...baseArgs,
+      plan: { kind: "standard", format: "csv", zip: true },
+    });
+    if (!result.ok) throw new Error("expected a file");
+    expect(result.response.headers.get("Content-Type")).toBe("application/zip");
+    expect(result.response.headers.get("Content-Disposition")).toBe(
+      'attachment; filename="export-my-survey.zip"'
+    );
+    const entries = readZip(Buffer.from(await result.response.arrayBuffer()));
+    expect(entries.map((entry) => entry.name)).toEqual(["export-my-survey.csv"]);
+    expect(entries[0].data.toString()).toBe('No.,Response ID\n"1","r1"');
   });
 
   test("columns switched off in the modal reach the Standard export as group ids", async () => {

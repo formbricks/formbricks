@@ -7,6 +7,7 @@ import { buildAnalysisWhere, openAnalysisExport } from "@/lib/analysis-export";
 import { rowCells } from "@/lib/analysis-export/analysis-workbook";
 import { analysisColumnGroups, withoutColumnGroups } from "@/lib/analysis-export/column-groups";
 import type { TExportColumnGroup } from "@/lib/analysis-export/column-selection";
+import { getContactAttributeKeys } from "@/lib/analysis-export/contact-attribute-keys";
 import { CSV_BOM, analysisCsvLine } from "@/lib/analysis-export/csv-file";
 import { dataHeaderCells, dataParts } from "@/lib/analysis-export/data-files";
 import {
@@ -15,7 +16,12 @@ import {
   excelSizeVerdict,
 } from "@/lib/analysis-export/excel-size";
 import { type TExportPlan, exportFileType } from "@/lib/analysis-export/export-request";
-import { XlsxLimitError, buildAnalysisWorkbook, createAnalysisZip } from "@/lib/analysis-export/files";
+import {
+  XlsxLimitError,
+  buildAnalysisWorkbook,
+  createAnalysisZip,
+  createSingleFileZip,
+} from "@/lib/analysis-export/files";
 import { createAnalysisRowBuilder } from "@/lib/analysis-export/row-builder";
 import type { TAnalysisExport, TAnalysisResponseFields, TAnswerDisplay } from "@/lib/analysis-export/types";
 import { getResponseDownloadFile } from "@/lib/response/service";
@@ -24,7 +30,7 @@ import { extractSurveyDetails, getResponsesFileName } from "@/lib/response/utils
 import { buildWhereClause } from "@/lib/response/where-clause";
 import { EXCEL_EXPORT_MAX_CELLS } from "./export-limits";
 
-/** The columns an Analysis export carries: the Export modal has no column picker yet, so all of them. */
+/** The columns an Analysis export offers: all of them, the Include columns list switches some off. */
 const ANALYSIS_EXPORT_FIELDS: TAnalysisResponseFields = {
   timestamp: true,
   finished: true,
@@ -34,6 +40,7 @@ const ANALYSIS_EXPORT_FIELDS: TAnalysisResponseFields = {
   verifiedEmail: true,
   embeddedData: true,
   metadata: true,
+  contactAttributes: true,
 };
 
 /** Thrown while rows are read once the client has gone: the work stops instead of finishing for nobody. */
@@ -111,10 +118,11 @@ export const countExportResponses = async ({
     };
   }
   const where = buildAnalysisWhere(survey, filter);
-  const [included, lowQualityLeftOut, total] = await Promise.all([
+  const [included, lowQualityLeftOut, total, contactAttributeKeys] = await Promise.all([
     prisma.response.count({ where: where.included }),
     where.lowQualityLeftOut ? prisma.response.count({ where: where.lowQualityLeftOut }) : 0,
     prisma.response.count({ where: { surveyId: survey.id } }),
+    getContactAttributeKeys(survey.workspaceId),
   ]);
   const { columns } = createAnalysisRowBuilder({
     survey,
@@ -122,6 +130,7 @@ export const countExportResponses = async ({
     fields: ANALYSIS_EXPORT_FIELDS,
     isQuotasAllowed,
     timeZone,
+    contactAttributeKeys,
   });
   const cells = analysisWorkbookCells({
     display: plan.display,
@@ -225,6 +234,15 @@ export const buildExportResponse = async ({
       filter,
       excludedColumns
     );
+    if (plan.zip) {
+      const archive = createSingleFileZip(fileName, fileContents);
+      return {
+        ok: true,
+        response: new Response(Readable.toWeb(archive) as ReadableStream<Uint8Array>, {
+          headers: downloadHeaders(plan, fileName.replace(/\.csv$/, ".zip")),
+        }),
+      };
+    }
     const body = plan.format === "xlsx" ? Buffer.from(fileContents, "base64") : fileContents;
     return { ok: true, response: new Response(body, { headers: downloadHeaders(plan, fileName) }) };
   }

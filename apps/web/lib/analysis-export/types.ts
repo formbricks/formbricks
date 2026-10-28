@@ -27,6 +27,11 @@ export type TAnalysisResponseFields = {
   quotas?: boolean;
   /** `verified_email`, for surveys that verify email. */
   verifiedEmail?: boolean;
+  /**
+   * One text column per contact attribute (`person_<key>`), from the attributes the response was given with.
+   * `openAnalysisExport` looks the keys up; the row builder takes them as `contactAttributeKeys`.
+   */
+  contactAttributes?: boolean;
   /** Hidden fields and variables (Embedded Data), typed. */
   embeddedData?: boolean;
   /** Reserved Embedded Data: browser, country, UTM source and the like, typed. */
@@ -78,7 +83,11 @@ export type TAnalysisColumn = {
   /** Scale questions: the number of points. */
   scale?: { range: number };
   /** Set for `source: "embedded"`. Boolean values are written as `true` / `false`, dates as ISO text. */
-  embedded?: { type: TEmbeddedDataType; origin: "hidden" | "variable" | "metadata"; label: string };
+  embedded?: {
+    type: TEmbeddedDataType;
+    origin: "hidden" | "variable" | "metadata" | "contact";
+    label: string;
+  };
 };
 
 /** The prefix of a code cell whose text matched no option. The text follows it as given. */

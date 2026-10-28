@@ -80,6 +80,9 @@ describe("buildAnalysisSelect", () => {
     const keys = Object.keys(buildAnalysisSelect({ tags: true, contact: true, quotas: true }, true));
     expect(keys).toEqual(expect.arrayContaining(["tags", "contact", "quotaLinks"]));
     expect(Object.keys(buildAnalysisSelect({ quotas: true }, false))).not.toContain("quotaLinks");
+    expect(Object.keys(buildAnalysisSelect({ contactAttributes: true }, false))).toContain(
+      "contactAttributes"
+    );
   });
 });
 

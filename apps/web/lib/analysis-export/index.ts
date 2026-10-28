@@ -10,6 +10,7 @@ import { type TResponseCursor, whereAfterResponseCursor } from "../response/pagi
 import { buildWhereClause } from "../response/where-clause";
 import { getSurvey } from "../survey/service";
 import { validateInputs } from "../utils/validate";
+import { getContactAttributeKeys } from "./contact-attribute-keys";
 import { type TAnalysisResponse, createAnalysisRowBuilder } from "./row-builder";
 import type { TAnalysisExport, TAnalysisExportInput, TAnalysisResponseFields } from "./types";
 import { createUnmappedCollector } from "./unmapped-collector";
@@ -60,6 +61,7 @@ export const buildAnalysisSelect = (fields: TAnalysisResponseFields, isQuotasAll
     outcome: true,
     data: true,
     ...(fields.embeddedData || fields.metadata ? { variables: true } : {}),
+    ...(fields.contactAttributes ? { contactAttributes: true } : {}),
     ...(fields.metadata ? { surveyId: true, updatedAt: true, meta: true, ttc: true } : {}),
     ...(fields.tags ? { tags: { select: { tag: { select: { name: true } } } } } : {}),
     ...(fields.contact
@@ -95,6 +97,7 @@ type TAnalysisSelected = {
   data: unknown;
   tags?: { tag: { name: string } }[];
   contact?: { id: string; attributes: { value: string }[] } | null;
+  contactAttributes?: Record<string, unknown> | null;
   quotaLinks?: { quota: { name: string } }[];
   variables?: Record<string, string | number>;
   meta?: Record<string, unknown>;
@@ -117,6 +120,7 @@ const toAnalysisResponse = (row: TAnalysisSelected): TAnalysisResponse => ({
   ttc: row.ttc,
   tags: row.tags?.map(({ tag }) => tag.name),
   quotas: row.quotaLinks?.map(({ quota }) => quota.name),
+  contactAttributes: row.contactAttributes,
   contact: row.contact ? { id: row.contact.id, userId: row.contact.attributes[0]?.value } : null,
 });
 
@@ -137,9 +141,10 @@ export const openAnalysisExport = async (input: TAnalysisExportInput): Promise<T
     if (!survey) throw new ResourceNotFoundError("Survey", input.surveyId);
 
     const where = buildAnalysisWhere(survey, input.filter);
-    const [included, lowQualityLeftOut] = await Promise.all([
+    const [included, lowQualityLeftOut, contactAttributeKeys] = await Promise.all([
       prisma.response.count({ where: where.included }),
       where.lowQualityLeftOut ? prisma.response.count({ where: where.lowQualityLeftOut }) : 0,
+      fields.contactAttributes ? getContactAttributeKeys(survey.workspaceId) : [],
     ]);
 
     const builder = createAnalysisRowBuilder({
@@ -148,6 +153,7 @@ export const openAnalysisExport = async (input: TAnalysisExportInput): Promise<T
       fields,
       isQuotasAllowed,
       timeZone: input.timeZone,
+      contactAttributeKeys,
     });
     const collector = createUnmappedCollector();
     const select = buildAnalysisSelect(fields, isQuotasAllowed);

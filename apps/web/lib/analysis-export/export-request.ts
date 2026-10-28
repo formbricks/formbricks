@@ -82,6 +82,8 @@ export const ZExportRequest = z
     questions: z.enum(["text", "codes", "both"]).optional(),
     /** The SPSS syntax file. CSV only, and it needs codes. */
     spss: z.boolean().default(false),
+    /** Compress into .zip: a single CSV file downloads as a zip too. Always a zip when the export has several files. */
+    zip: z.boolean().default(false),
     /** Ids of the Advanced options that are on. */
     advanced: z.array(z.enum(ADVANCED_IDS)).max(ADVANCED_IDS.length).default([]),
     /**
@@ -96,6 +98,9 @@ export const ZExportRequest = z
   .superRefine((request, ctx) => {
     if (request.spss && request.format !== "csv") {
       ctx.addIssue({ code: "custom", path: ["spss"], message: "The SPSS syntax file is for CSV exports." });
+    }
+    if (request.zip && request.format !== "csv") {
+      ctx.addIssue({ code: "custom", path: ["zip"], message: "Compressing into a zip is for CSV exports." });
     }
     if (request.spss && request.questions === "text") {
       ctx.addIssue({ code: "custom", path: ["spss"], message: "The SPSS syntax file needs question codes." });
@@ -128,7 +133,7 @@ export type TExportOutput = "csv" | "zip" | "xlsx";
 
 export type TExportPlan =
   /** Today's file: the existing Standard export path, byte for byte. */
-  | { kind: "standard"; format: TExportFormat }
+  | { kind: "standard"; format: TExportFormat; zip?: true }
   | {
       kind: "analysis";
       format: TExportFormat;
@@ -145,12 +150,13 @@ export type TExportPlan =
  */
 export const planExport = (
   request: Pick<TExportRequest, "format" | "display" | "spss" | "advanced"> &
-    Partial<Pick<TExportRequest, "questions">>
+    Partial<Pick<TExportRequest, "questions" | "zip">>
 ): TExportPlan => {
   const { format, display, questions, spss, advanced } = request;
+  const zip = request.zip === true && format === "csv";
   const questionsAsToday = questions === undefined || questions === "text";
   if (display === "text" && questionsAsToday && !spss && advanced.length === 0) {
-    return { kind: "standard", format };
+    return { kind: "standard", format, ...(zip ? { zip } : {}) };
   }
 
   const include = {
@@ -161,6 +167,7 @@ export const planExport = (
   if (format === "xlsx") return { kind: "analysis", format, display, questions, output: "xlsx", include };
 
   const addsFile =
+    zip ||
     display === "both" ||
     spss ||
     advanced.some((id) => EXPORT_ADVANCED_OPTIONS.find((option) => option.id === id)?.forcesZip);
@@ -169,7 +176,7 @@ export const planExport = (
 
 /** The file extension and media type of what a plan downloads. */
 export const exportFileType = (plan: TExportPlan): { extension: "csv" | "xlsx" | "zip"; mime: string } => {
-  const output = plan.kind === "standard" ? plan.format : plan.output;
+  const output = plan.kind === "standard" ? (plan.zip ? "zip" : plan.format) : plan.output;
   if (output === "xlsx") {
     return { extension: "xlsx", mime: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" };
   }

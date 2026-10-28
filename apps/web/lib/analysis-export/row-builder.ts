@@ -56,6 +56,8 @@ export type TAnalysisResponse = {
   tags?: string[];
   quotas?: string[];
   contact?: { id: string; userId?: string } | null;
+  /** The contact's attributes as they were when the response was given. */
+  contactAttributes?: Record<string, unknown> | null;
 };
 
 export type TUnmappedReport = {
@@ -531,17 +533,19 @@ const buildEmbeddedColumns = ({
   survey,
   fields,
   claimEmbedded,
+  contactAttributeKeys,
 }: {
   survey: TAnalysisSurvey;
   fields: TAnalysisResponseFields;
   claimEmbedded: TNameRegistry["claimEmbedded"];
+  contactAttributeKeys: readonly string[];
 }): TEmbeddedColumn[] => {
   const columns: TEmbeddedColumn[] = [];
   const add = (
     name: string,
     label: string,
     type: TEmbeddedDataType,
-    origin: "hidden" | "variable" | "metadata",
+    origin: NonNullable<TAnalysisColumn["embedded"]>["origin"],
     read: TEmbeddedColumn["read"]
   ): void => {
     columns.push({
@@ -560,6 +564,14 @@ const buildEmbeddedColumns = ({
       add(snakeCase(entry.name), entry.name, entry.dataType, "metadata", (_r, reserved) =>
         toCell(coerceToEmbeddedDataType(reserved[entry.name], entry.dataType))
       );
+    }
+  }
+  if (fields.contactAttributes) {
+    for (const key of contactAttributeKeys) {
+      add(`person_${snakeCase(key)}`, `person.${key}`, "string", "contact", (response) => {
+        const value = response.contactAttributes?.[key];
+        return toCell(value == null ? undefined : String(value));
+      });
     }
   }
   if (fields.embeddedData) {
@@ -617,12 +629,15 @@ export const createAnalysisRowBuilder = ({
   fields,
   isQuotasAllowed = false,
   timeZone = "UTC",
+  contactAttributeKeys = [],
 }: {
   survey: TAnalysisSurvey;
   answers: TAnswerDisplay;
   fields: TAnalysisResponseFields;
   isQuotasAllowed?: boolean;
   timeZone?: string;
+  /** The contact attribute columns, when `fields.contactAttributes` is on. */
+  contactAttributeKeys?: readonly string[];
 }) => {
   const embeddedFields = getSurveyEmbeddedFields(inputSurvey);
   const blocks: TSurveyBlock[] = fillMissingCodes(
@@ -644,7 +659,12 @@ export const createAnalysisRowBuilder = ({
     claim,
   });
   const plans = buildQuestionPlans(elements, claim);
-  const embeddedColumns = buildEmbeddedColumns({ survey: inputSurvey, fields, claimEmbedded });
+  const embeddedColumns = buildEmbeddedColumns({
+    survey: inputSurvey,
+    fields,
+    claimEmbedded,
+    contactAttributeKeys,
+  });
 
   const columns: TAnalysisColumn[] = [
     ...responseColumns.map((entry) => entry.column),

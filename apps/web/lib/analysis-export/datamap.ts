@@ -98,6 +98,13 @@ const QUESTION_TYPE_NAMES: Record<string, string> = {
   calendar: "calendar",
 };
 
+const EMBEDDED_TYPE_NAMES = {
+  hidden: "embedded data",
+  variable: "embedded data",
+  metadata: "response info",
+  contact: "contact attribute",
+} as const;
+
 const EMBEDDED_DETAIL = { string: "text", number: "number", boolean: "true/false", date: "date" } as const;
 
 const scalePoints = (column: TAnalysisColumn): number[] => {
@@ -120,7 +127,7 @@ const describe = (column: TAnalysisColumn): TInfo & { type: string } => {
   if (column.source === "embedded" && column.embedded) {
     const { type, origin, label } = column.embedded;
     return {
-      type: origin === "metadata" ? "response info" : "embedded data",
+      type: EMBEDDED_TYPE_NAMES[origin],
       text: label,
       detail: EMBEDDED_DETAIL[type],
       notes: `Blank = not provided.${type === "date" ? " Written as ISO 8601 text." : ""}`,
