@@ -12,7 +12,6 @@ import { getLanguageLabel, iso639Languages } from "@formbricks/i18n-utils/utils"
 import { TUserLocale } from "@formbricks/types/user";
 import type { TWorkspace } from "@formbricks/types/workspace";
 import { isWorkspaceDefaultSurveyLanguage } from "@/lib/i18n/default-survey-language";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -26,12 +25,7 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { patchWorkspaceSettings } from "@/modules/workspaces/settings/lib/api-client";
-import {
-  createLanguageAction,
-  deleteLanguageAction,
-  getSurveysUsingGivenLanguageAction,
-  updateLanguageAction,
-} from "../lib/actions";
+import { createLanguage, deleteLanguage, listLanguageSurveys, updateLanguage } from "../lib/api-client";
 import { AddLanguageButton } from "./add-language-button";
 import { LanguageLabels } from "./language-labels";
 import { LanguageRow } from "./language-row";
@@ -41,6 +35,9 @@ interface EditLanguageProps {
   locale: TUserLocale;
   isReadOnly: boolean;
 }
+
+const getFirstFailure = (results: PromiseSettledResult<unknown>[]) =>
+  results.find((result): result is PromiseRejectedResult => result.status === "rejected");
 
 const checkIfDuplicateExists = (arr: string[]) => {
   return new Set(arr).size !== arr.length;
@@ -174,37 +171,26 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
     }
 
     try {
-      const surveysUsingLanguageResponse = await getSurveysUsingGivenLanguageAction({
-        languageId,
-      });
+      const surveysUsingLanguage = await listLanguageSurveys(languageId);
 
-      if (surveysUsingLanguageResponse?.serverError) {
-        toast.error(getFormattedErrorMessage(surveysUsingLanguageResponse));
-      } else if (surveysUsingLanguageResponse?.data) {
-        if (surveysUsingLanguageResponse.data.length > 0) {
-          const surveyList = surveysUsingLanguageResponse.data
-            .map((surveyName) => `• ${surveyName}`)
-            .join("\n");
-          setConfirmationModal({
-            isOpen: true,
-            languageId,
-            text: `${t("workspace.languages.cannot_remove_language_warning")}:\n\n${surveyList}\n\n${t("workspace.languages.remove_language_from_surveys_to_remove_it_from_workspace")}`,
-            isButtonDisabled: true,
-          });
-        } else {
-          setConfirmationModal({
-            isOpen: true,
-            languageId,
-            text: t("workspace.languages.delete_language_confirmation"),
-            isButtonDisabled: false,
-          });
-        }
+      if (surveysUsingLanguage.length > 0) {
+        const surveyList = surveysUsingLanguage.map(({ name }) => `• ${name}`).join("\n");
+        setConfirmationModal({
+          isOpen: true,
+          languageId,
+          text: `${t("workspace.languages.cannot_remove_language_warning")}:\n\n${surveyList}\n\n${t("workspace.languages.remove_language_from_surveys_to_remove_it_from_workspace")}`,
+          isButtonDisabled: true,
+        });
       } else {
-        const errorMessage = getFormattedErrorMessage(surveysUsingLanguageResponse);
-        toast.error(errorMessage);
+        setConfirmationModal({
+          isOpen: true,
+          languageId,
+          text: t("workspace.languages.delete_language_confirmation"),
+          isButtonDisabled: false,
+        });
       }
-    } catch {
-      toast.error(t("common.something_went_wrong_please_try_again"));
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
   };
 
@@ -230,23 +216,21 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
 
   const handleSaveChanges = async () => {
     if (!validateLanguages(languages, t)) return;
-    const results = await Promise.all(
-      languages.map((lang) => {
-        return lang.id === "new"
-          ? createLanguageAction({
-              workspaceId: workspace.id,
-              languageInput: { code: lang.code, alias: lang.alias },
-            })
-          : updateLanguageAction({
-              workspaceId: workspace.id,
-              languageId: lang.id,
-              languageInput: { alias: lang.alias },
-            });
-      })
+    // Settled rather than all: every row is written even when one is refused, as before, and the first
+    // refusal is the one shown.
+    const failedWrite = getFirstFailure(
+      await Promise.allSettled(
+        languages.map((lang) =>
+          lang.id === "new"
+            ? createLanguage(workspace.id, { code: lang.code, alias: lang.alias })
+            : updateLanguage(lang.id, { alias: lang.alias })
+        )
+      )
     );
-    const errorResult = results.find((result) => result?.serverError);
-    if (errorResult) {
-      toast.error(getFormattedErrorMessage(errorResult));
+    if (failedWrite) {
+      toast.error(
+        getV3ApiErrorMessage(failedWrite.reason, t("common.something_went_wrong_please_try_again"))
+      );
       return;
     }
 
@@ -269,14 +253,13 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
     // Deletions go last. The server checks a delete against the *stored* default, so removing the language
     // that used to be the default is only legal once the new default written above has landed.
     if (deletedLanguageIds.length > 0) {
-      const deletionResults = await Promise.all(
-        deletedLanguageIds.map((languageId) =>
-          deleteLanguageAction({ languageId, workspaceId: workspace.id })
-        )
+      const failedDeletion = getFirstFailure(
+        await Promise.allSettled(deletedLanguageIds.map((languageId) => deleteLanguage(languageId)))
       );
-      const failedDeletion = deletionResults.find((result) => result?.serverError);
       if (failedDeletion) {
-        toast.error(getFormattedErrorMessage(failedDeletion));
+        toast.error(
+          getV3ApiErrorMessage(failedDeletion.reason, t("common.something_went_wrong_please_try_again"))
+        );
         // Re-read from the server: the rows that survived have to come back rather than stay hidden.
         setDeletedLanguageIds([]);
         router.refresh();

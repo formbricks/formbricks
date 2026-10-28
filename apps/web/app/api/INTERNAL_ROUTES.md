@@ -10,9 +10,12 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/envoy-auth/{...path}` | GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS | custom | gateway | `(internal)` group | `app/api/(internal)/envoy-auth/[...path]/route.ts` |
 | `/api/internal/action-classes/{actionClassId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/action-classes/[actionClassId]/route.ts` |
 | `/api/internal/action-classes/{actionClassId}/surveys` | GET | session | dashboard | `/api/internal` | `app/api/internal/action-classes/[actionClassId]/surveys/route.ts` |
+| `/api/internal/ai-translations` | POST | session | dashboard | `/api/internal` | `app/api/internal/ai-translations/route.ts` |
+| `/api/internal/ai-translations/availability` | GET | session | dashboard | `/api/internal` | `app/api/internal/ai-translations/availability/route.ts` |
 | `/api/internal/api-keys` | GET, POST | session | dashboard | `/api/internal` | `app/api/internal/api-keys/route.ts` |
 | `/api/internal/api-keys/{apiKeyId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/api-keys/[apiKeyId]/route.ts` |
 | `/api/internal/charts/generate` | POST | session | dashboard | `/api/internal` | `app/api/internal/charts/generate/route.ts` |
+| `/api/internal/email-change-verifications` | POST | none | dashboard | `/api/internal` | `app/api/internal/email-change-verifications/route.ts` |
 | `/api/internal/embedded-data` | GET, POST | session | dashboard | `/api/internal` | `app/api/internal/embedded-data/route.ts` |
 | `/api/internal/embedded-data/{embeddedDataId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/embedded-data/[embeddedDataId]/route.ts` |
 | `/api/internal/embedded-data/{embeddedDataId}/promotion` | POST | session | dashboard | `/api/internal` | `app/api/internal/embedded-data/[embeddedDataId]/promotion/route.ts` |
@@ -26,14 +29,24 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/internal/feedback-sources` | POST | session | dashboard | `/api/internal` | `app/api/internal/feedback-sources/route.ts` |
 | `/api/internal/feedback-sources/{feedbackSourceId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/feedback-sources/[feedbackSourceId]/route.ts` |
 | `/api/internal/feedback-sources/{feedbackSourceId}/imports` | POST | session | dashboard | `/api/internal` | `app/api/internal/feedback-sources/[feedbackSourceId]/imports/route.ts` |
+| `/api/internal/heic-conversions` | POST | session | dashboard | `/api/internal` | `app/api/internal/heic-conversions/route.ts` |
 | `/api/internal/integrations/{type}` | PUT, DELETE | session | dashboard | `/api/internal` | `app/api/internal/integrations/[type]/route.ts` |
 | `/api/internal/integrations/{type}/channels` | GET | session | dashboard | `/api/internal` | `app/api/internal/integrations/[type]/channels/route.ts` |
 | `/api/internal/integrations/{type}/connection` | GET | session | dashboard | `/api/internal` | `app/api/internal/integrations/[type]/connection/route.ts` |
 | `/api/internal/integrations/{type}/spreadsheets/{spreadsheetId}` | GET | session | dashboard | `/api/internal` | `app/api/internal/integrations/[type]/spreadsheets/[spreadsheetId]/route.ts` |
+| `/api/internal/invites/{inviteId}` | PATCH | session | dashboard | `/api/internal` | `app/api/internal/invites/[inviteId]/route.ts` |
+| `/api/internal/languages` | POST | session | dashboard | `/api/internal` | `app/api/internal/languages/route.ts` |
+| `/api/internal/languages/{languageId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/languages/[languageId]/route.ts` |
+| `/api/internal/languages/{languageId}/surveys` | GET | session | dashboard | `/api/internal` | `app/api/internal/languages/[languageId]/surveys/route.ts` |
 | `/api/internal/license-checks` | POST | session | dashboard | `/api/internal` | `app/api/internal/license-checks/route.ts` |
 | `/api/internal/matrix-questions` | GET | session | dashboard | `/api/internal` | `app/api/internal/matrix-questions/route.ts` |
+| `/api/internal/members/{userId}` | PATCH | session | dashboard | `/api/internal` | `app/api/internal/members/[userId]/route.ts` |
 | `/api/internal/members/{userId}/reactivate` | POST | session | dashboard | `/api/internal` | `app/api/internal/members/[userId]/reactivate/route.ts` |
+| `/api/internal/onboarding-invites` | POST | session | dashboard | `/api/internal` | `app/api/internal/onboarding-invites/route.ts` |
+| `/api/internal/organizations` | POST | session | dashboard | `/api/internal` | `app/api/internal/organizations/route.ts` |
 | `/api/internal/organizations/{organizationId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/organizations/[organizationId]/route.ts` |
+| `/api/internal/organizations/{organizationId}/billing` | GET | session | dashboard | `/api/internal` | `app/api/internal/organizations/[organizationId]/billing/route.ts` |
+| `/api/internal/password-resets` | POST | none | dashboard | `/api/internal` | `app/api/internal/password-resets/route.ts` |
 | `/api/internal/releases/latest` | GET | session | dashboard | `/api/internal` | `app/api/internal/releases/latest/route.ts` |
 | `/api/internal/retention-exemptions` | GET, POST | session | dashboard | `/api/internal` | `app/api/internal/retention-exemptions/route.ts` |
 | `/api/internal/retention-exemptions/{exemptionId}` | GET | session | dashboard | `/api/internal` | `app/api/internal/retention-exemptions/[exemptionId]/route.ts` |
@@ -46,10 +59,14 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/internal/survey-retention/{surveyId}` | GET | session | dashboard | `/api/internal` | `app/api/internal/survey-retention/[surveyId]/route.ts` |
 | `/api/internal/surveys/generate/stream` | POST | session | dashboard | `/api/internal` | `app/api/internal/surveys/generate/stream/route.ts` |
 | `/api/internal/surveys/import/stream` | POST | session | dashboard | `/api/internal` | `app/api/internal/surveys/import/stream/route.ts` |
+| `/api/internal/teams` | GET, POST | session | dashboard | `/api/internal` | `app/api/internal/teams/route.ts` |
+| `/api/internal/teams/{teamId}` | GET, PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/teams/[teamId]/route.ts` |
 | `/api/internal/users/me` | PATCH | session | dashboard | `/api/internal` | `app/api/internal/users/me/route.ts` |
 | `/api/internal/users/me/deletion-requests` | POST | session | dashboard | `/api/internal` | `app/api/internal/users/me/deletion-requests/route.ts` |
 | `/api/internal/users/me/notification-settings` | GET, PATCH | session | dashboard | `/api/internal` | `app/api/internal/users/me/notification-settings/route.ts` |
 | `/api/internal/users/me/password-resets` | POST | session | dashboard | `/api/internal` | `app/api/internal/users/me/password-resets/route.ts` |
+| `/api/internal/workspaces/{workspaceId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/workspaces/[workspaceId]/route.ts` |
+| `/api/internal/workspaces/{workspaceId}/branding` | PATCH | session | dashboard | `/api/internal` | `app/api/internal/workspaces/[workspaceId]/branding/route.ts` |
 | `/api/organizations/{organizationId}/usage` | GET | session | dashboard | `(internal)` group | `app/api/(internal)/organizations/[organizationId]/usage/route.ts` |
 | `/api/surveys/{surveyId}/attachments` | GET | session | dashboard | `(internal)` group | `app/api/(internal)/surveys/[surveyId]/attachments/route.ts` |
 | `/api/traefik-auth/{...path}` | GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS | custom | gateway | `(internal)` group | `app/api/(internal)/traefik-auth/[...path]/route.ts` |
