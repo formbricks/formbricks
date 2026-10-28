@@ -271,11 +271,10 @@ const ExportProgress = ({
               ? t("workspace.surveys.export.export_starting")
               : t("workspace.surveys.export.export_preparing", { count: included })}
           </p>
-          <div
-            role="progressbar"
-            aria-label={t("workspace.surveys.export.export_starting")}
-            className="h-2 overflow-hidden rounded-full bg-slate-100">
-            <div className="h-full w-2/5 animate-pulse rounded-full bg-slate-900" />
+          <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+            <div className="h-full w-2/5 animate-pulse rounded-full bg-slate-900" aria-hidden="true" />
+            {/* No value: the size is unknown until the file arrives, so this is the indeterminate state. */}
+            <progress className="sr-only" aria-label={t("workspace.surveys.export.export_starting")} />
           </div>
           <p className="text-slate-500">
             {t("workspace.surveys.export.export_progress_hint")}

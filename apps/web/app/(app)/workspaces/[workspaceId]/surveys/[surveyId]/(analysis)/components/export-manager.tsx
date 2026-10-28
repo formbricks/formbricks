@@ -2,7 +2,16 @@
 
 import * as Sentry from "@sentry/nextjs";
 import { QueryClient, QueryClientProvider, useMutation } from "@tanstack/react-query";
-import { type ReactNode, createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import {
+  type ReactNode,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TExportRequest } from "@/lib/analysis-export/export-request";
@@ -144,12 +153,14 @@ const ExportManager = ({ children }: Readonly<{ children: ReactNode }>) => {
     };
   }, []);
 
-  return (
-    <ExportManagerContext.Provider
-      value={{ startExport, cancelExport, isExporting: isPending, progress: isPending ? progress : null }}>
-      {children}
-    </ExportManagerContext.Provider>
+  // Memoized because every progress tick re-renders this provider, and a fresh object here would
+  // re-render every `useExportManager` consumer (the modal, the export button) on each one.
+  const value = useMemo(
+    () => ({ startExport, cancelExport, isExporting: isPending, progress: isPending ? progress : null }),
+    [startExport, cancelExport, isPending, progress]
   );
+
+  return <ExportManagerContext.Provider value={value}>{children}</ExportManagerContext.Provider>;
 };
 
 /**
