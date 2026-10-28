@@ -16,6 +16,13 @@ import { CustomFilter } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surv
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
+import { OutcomeQueryClientProvider } from "@/modules/analysis/response-outcome/components/outcome-query-client-provider";
+import {
+  type TOutcomeActions,
+  type TOutcomeChanges,
+  patchOutcomes,
+  shouldDropAfterOutcome,
+} from "@/modules/analysis/response-outcome/lib/outcome";
 
 interface ResponsePageProps {
   survey: TSurvey;
@@ -100,6 +107,25 @@ export const ResponsePage = ({
     setResponses((prev) => prev.map((r) => (r.id === responseId ? updatedResponse : r)));
   };
 
+  // Patches the page's own list. Stable, so the table and the card do not re-render for it.
+  const applyOutcomes = useCallback((changes: TOutcomeChanges) => {
+    setResponses((prev) => patchOutcomes(prev, changes));
+  }, []);
+
+  const responseStatus = selectedFilter.responseStatus;
+  const outcomeActions: TOutcomeActions = useMemo(
+    () => ({
+      applyOutcomes,
+      // A restored response no longer matches a Low quality filter, so it leaves the list.
+      onSaved: (ids, outcome) => {
+        if (shouldDropAfterOutcome(responseStatus, outcome)) {
+          setResponses((prev) => prev.filter((r) => !ids.includes(r.id)));
+        }
+      },
+    }),
+    [applyOutcomes, responseStatus]
+  );
+
   const refetchResponses = useCallback(async () => {
     setIsFetchingFirstPage(true);
 
@@ -182,7 +208,7 @@ export const ResponsePage = ({
   }, [filtersKey, responsesPerPage, selectedFilter, dateRange, surveyId]);
 
   return (
-    <>
+    <OutcomeQueryClientProvider>
       <div className="flex h-9 gap-1.5">
         <CustomFilter survey={surveyMemoized} />
       </div>
@@ -201,7 +227,8 @@ export const ResponsePage = ({
         isQuotasAllowed={isQuotasAllowed}
         quotas={quotas}
         isOpenedByCreatives={isOpenedByCreatives}
+        outcomeActions={outcomeActions}
       />
-    </>
+    </OutcomeQueryClientProvider>
   );
 };

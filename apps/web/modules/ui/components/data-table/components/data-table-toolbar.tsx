@@ -18,6 +18,7 @@ interface DataTableToolbarProps<T> {
   deleteAction: (id: string, params?: Record<string, boolean>) => Promise<void>;
   downloadRowsAction?: (rowIds: string[]) => void;
   isQuotasAllowed: boolean;
+  renderExtraActions?: (table: Table<T>) => React.ReactNode;
   leftContent?: React.ReactNode;
   onRefresh?: () => Promise<void>;
 }
@@ -32,6 +33,7 @@ export const DataTableToolbar = <T,>({
   deleteAction,
   downloadRowsAction,
   isQuotasAllowed,
+  renderExtraActions,
   leftContent,
   onRefresh,
 }: DataTableToolbarProps<T>) => {
@@ -47,6 +49,7 @@ export const DataTableToolbar = <T,>({
           deleteAction={deleteAction}
           downloadRowsAction={downloadRowsAction}
           isQuotasAllowed={isQuotasAllowed}
+          renderExtraActions={renderExtraActions}
         />
       ) : (
         <div>{leftContent}</div>

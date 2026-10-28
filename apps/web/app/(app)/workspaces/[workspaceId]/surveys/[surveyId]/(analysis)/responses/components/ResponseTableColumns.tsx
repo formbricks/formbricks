@@ -20,6 +20,7 @@ import { getContactIdentifier } from "@/lib/utils/contact";
 import { formatDateTimeForDisplay } from "@/lib/utils/datetime";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { RenderResponse } from "@/modules/analysis/components/SingleResponseCard/components/RenderResponse";
+import { OutcomeBadge } from "@/modules/analysis/response-outcome/components/outcome-badge";
 import { displayEmbeddedValue } from "@/modules/embedded-data/lib/value-display";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { formatCodedLabel, getChoiceBadgeText } from "@/modules/survey/lib/element-code-label";
@@ -373,6 +374,13 @@ export const generateResponseTableColumns = (
     },
   };
 
+  const outcomeColumn: ColumnDef<TResponseTableData> = {
+    accessorKey: "outcome",
+    size: 160,
+    header: () => <div className="gap-x-1.5">{t("workspace.surveys.responses.outcome")}</div>,
+    cell: ({ row }) => <OutcomeBadge outcome={row.original.outcome} />,
+  };
+
   const tagsColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "tags",
     header: () => <div className="gap-x-1.5">{t("common.tags")}</div>,
@@ -463,6 +471,7 @@ export const generateResponseTableColumns = (
     dateColumn,
     ...(showQuotasColumn ? [quotasColumn] : []),
     statusColumn,
+    outcomeColumn,
     ...(survey.isVerifyEmailEnabled ? [verifiedEmailColumn] : []),
     ...elementColumns,
     ...variableColumns,

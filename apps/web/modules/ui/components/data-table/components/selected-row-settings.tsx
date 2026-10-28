@@ -2,7 +2,7 @@
 
 import { Table } from "@tanstack/react-table";
 import { ArrowDownToLineIcon, Trash2Icon } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TResponseWithQuotas } from "@formbricks/types/responses";
@@ -20,6 +20,8 @@ interface SelectedRowSettingsProps<T> {
   /** Opens the download for the selected rows (the Export modal, for responses). */
   downloadRowsAction?: (rowIds: string[]) => void;
   isQuotasAllowed: boolean;
+  /** Extra actions for the bar, given the table so they can read the selection when clicked. */
+  renderExtraActions?: (table: Table<T>) => ReactNode;
 }
 
 export const SelectedRowSettings = <T,>({
@@ -29,6 +31,7 @@ export const SelectedRowSettings = <T,>({
   deleteAction,
   downloadRowsAction,
   isQuotasAllowed,
+  renderExtraActions,
 }: SelectedRowSettingsProps<T>) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -163,6 +166,7 @@ export const SelectedRowSettings = <T,>({
             {t("common.download")}
           </Button>
         )}
+        {renderExtraActions?.(table)}
         <Button
           variant="secondary"
           size="sm"

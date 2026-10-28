@@ -678,6 +678,7 @@ export const ZResponseTableData = z.object({
    */
   reservedValues: z.record(z.string(), z.string()),
   quotas: z.array(z.string()).optional(),
+  outcome: ZResponseOutcome.nullish(),
 });
 
 export type TResponseTableData = z.infer<typeof ZResponseTableData>;
