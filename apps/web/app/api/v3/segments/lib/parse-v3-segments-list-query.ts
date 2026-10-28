@@ -21,7 +21,7 @@ const SUPPORTED_QUERY_PARAMS = [
   "limit",
   "cursor",
   "includeTotalCount",
-  "search",
+  "filter[title][contains]",
   "sortBy",
 ] as const;
 const SUPPORTED_QUERY_PARAM_SET = new Set<string>(SUPPORTED_QUERY_PARAMS);
@@ -45,7 +45,7 @@ const ZQuery = z.object({
   includeTotalCount: z
     .enum(["true", "false"])
     .transform((value) => value === "true")
-    .default(true),
+    .default(false),
   search: zPostgresText()
     .max(512)
     .optional()
@@ -84,7 +84,7 @@ export function parseV3SegmentsListQuery(
     limit: searchParams.get("limit") ?? undefined,
     cursor: searchParams.get("cursor")?.trim() || undefined,
     includeTotalCount: searchParams.get("includeTotalCount")?.trim() || undefined,
-    search: searchParams.get("search") ?? undefined,
+    search: searchParams.get("filter[title][contains]") ?? undefined,
     sortBy: searchParams.get("sortBy")?.trim() || undefined,
   });
 
@@ -92,7 +92,7 @@ export function parseV3SegmentsListQuery(
     return {
       ok: false,
       invalid_params: parsed.error.issues.map((issue) => ({
-        name: issue.path.join(".") || "query",
+        name: issue.path[0] === "search" ? "filter[title][contains]" : issue.path.join(".") || "query",
         reason: issue.message,
       })),
     };

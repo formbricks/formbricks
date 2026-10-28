@@ -64,7 +64,8 @@ describe("listV3Segments", () => {
 
     const response = await call([
       ["limit", "1"],
-      ["search", "50%"],
+      ["filter[title][contains]", "50%"],
+      ["includeTotalCount", "true"],
     ]);
 
     expect(response.status).toBe(200);

@@ -5,7 +5,7 @@ get:
     Returns a workspace's segments, searched, sorted and counted on the server. Private segments
     (survey-local targeting drafts) are never listed. A segment's survey references — including the
     `surveyIds` of its survey-interaction filters — only name surveys the caller may see. Requires the Contacts entitlement (**403** without it). The cursor is bound to
-    `sortBy` and `search`; changing either while paging → **400** naming `cursor`. Unknown query
+    `sortBy` and `filter[title][contains]`; changing either while paging → **400** naming `cursor`. Unknown query
     parameters → **400**. Session cookie, `x-api-key`, or a Bearer token.
   tags:
     - V3 Segments
@@ -34,12 +34,12 @@ get:
       name: includeTotalCount
       schema:
         type: boolean
-        default: true
+        default: false
       description: >
-        Whether to calculate `meta.totalCount`. Set to `false` on follow-up pages to skip the count
-        query; `meta.totalCount` is then `null`.
+        Whether to calculate `meta.totalCount`. Send `true` on the first page to get the count; when
+        omitted or `false` the count query is skipped and `meta.totalCount` is `null`.
     - in: query
-      name: search
+      name: filter[title][contains]
       schema:
         type: string
         maxLength: 512

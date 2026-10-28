@@ -48,7 +48,7 @@ describe("listSegments", () => {
     expect(result.data[0].updatedAt).toEqual(new Date("2026-10-02T11:00:00.000Z"));
   });
 
-  test("sends workspace, limit and sort, and leaves out a blank search and the cursor on page one", async () => {
+  test("sends workspace, limit and sort, and leaves out a blank search and the cursor on page one, and asks for the count", async () => {
     const fetchMock = stubFetch(jsonResponse({ data: [], meta }));
     const signal = new AbortController().signal;
 
@@ -59,9 +59,9 @@ describe("listSegments", () => {
     expect(params.get("workspaceId")).toBe("ws_1");
     expect(params.get("limit")).toBe("20");
     expect(params.get("sortBy")).toBe("name");
-    expect(params.has("search")).toBe(false);
+    expect(params.has("filter[title][contains]")).toBe(false);
     expect(params.has("cursor")).toBe(false);
-    expect(params.has("includeTotalCount")).toBe(false);
+    expect(params.get("includeTotalCount")).toBe("true");
     expect(fetchMock.mock.calls[0][1]).toEqual(expect.objectContaining({ signal }));
   });
 
@@ -77,9 +77,9 @@ describe("listSegments", () => {
     });
 
     const params = requestedParams(fetchMock);
-    expect(params.get("search")).toBe("power");
+    expect(params.get("filter[title][contains]")).toBe("power");
     expect(params.get("cursor")).toBe("cur_2");
-    expect(params.get("includeTotalCount")).toBe("false");
+    expect(params.has("includeTotalCount")).toBe(false);
   });
 
   test("throws the API's problem on an error response", async () => {

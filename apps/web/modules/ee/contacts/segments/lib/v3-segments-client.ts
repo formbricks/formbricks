@@ -30,12 +30,10 @@ export const listSegments = async ({
   signal?: AbortSignal;
 }): Promise<TSegmentListPage> => {
   const searchParams = new URLSearchParams({ workspaceId, limit: String(limit), sortBy });
-  if (search.trim()) searchParams.set("search", search.trim());
-  if (cursor) {
-    searchParams.set("cursor", cursor);
-    // The match count only needs computing for the first page of a search.
-    searchParams.set("includeTotalCount", "false");
-  }
+  if (search.trim()) searchParams.set("filter[title][contains]", search.trim());
+  // The match count only needs computing for the first page of a search.
+  if (cursor) searchParams.set("cursor", cursor);
+  else searchParams.set("includeTotalCount", "true");
   const response = await fetch(`/api/v3/segments?${searchParams.toString()}`, {
     method: "GET",
     cache: "no-store",

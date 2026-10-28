@@ -29,7 +29,7 @@ describe("parseV3SegmentsListQuery", () => {
       workspaceId,
       limit: 50,
       cursor: null,
-      includeTotalCount: true,
+      includeTotalCount: false,
       search: undefined,
       sortBy: "-updatedAt",
     });
@@ -40,17 +40,17 @@ describe("parseV3SegmentsListQuery", () => {
   });
 
   test.each([
-    ["an unknown parameter", [["filter[title][contains]", "x"]], "filter[title][contains]"],
+    ["an unknown parameter", [["search", "x"]], "search"],
     ["an unknown sort", [["sortBy", "updatedAt"]], "sortBy"],
     ["a limit above 250", [["limit", "251"]], "limit"],
     ["a non-boolean includeTotalCount", [["includeTotalCount", "yes"]], "includeTotalCount"],
     [
       "a repeated parameter",
       [
-        ["search", "a"],
-        ["search", "b"],
+        ["filter[title][contains]", "a"],
+        ["filter[title][contains]", "b"],
       ],
-      "search",
+      "filter[title][contains]",
     ],
   ] as [string, [string, string][], string][])("rejects %s", (_label, entries, name) => {
     const result = parseV3SegmentsListQuery(params(entries));
@@ -62,7 +62,7 @@ describe("parseV3SegmentsListQuery", () => {
     const result = parseV3SegmentsListQuery(
       params([
         ["sortBy", "name"],
-        ["search", "vip"],
+        ["filter[title][contains]", "vip"],
         ["cursor", cursorFor("name", "VIP users", "vip")],
       ])
     );
@@ -84,7 +84,7 @@ describe("parseV3SegmentsListQuery", () => {
       "a different search",
       [
         ["sortBy", "name"],
-        ["search", "other"],
+        ["filter[title][contains]", "other"],
         ["cursor", cursorFor("name", "VIP")],
       ],
     ],
