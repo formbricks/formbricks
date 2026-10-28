@@ -73,7 +73,7 @@ export const createUnmappedCollector = () => {
         question: entry.question,
         value: entry.value,
         responseCount: entry.responseCount,
-        languages: [...entry.languages].sort(),
+        languages: [...entry.languages].sort((a, b) => a.localeCompare(b, "en")),
         closest: closest
           ? {
               code: closest.choice.code ?? null,
