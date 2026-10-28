@@ -540,6 +540,61 @@ describe("patchV3Survey", () => {
     );
   });
 
+  test("creates a workspace language through the transaction, so a lost compare-and-set leaves none behind", async () => {
+    const tx = {
+      survey: {
+        update: vi.fn(vi.mocked(prisma.survey.update).getMockImplementation()),
+        findUniqueOrThrow: vi.fn(vi.mocked(prisma.survey.findUniqueOrThrow).getMockImplementation()),
+      },
+      language: { upsert: vi.fn(vi.mocked(prisma.language.upsert).getMockImplementation()) },
+      surveyEmbeddedData: {
+        findMany: vi.fn().mockResolvedValue([]),
+        deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+        create: vi.fn().mockResolvedValue({}),
+        updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+      },
+      embeddedData: {
+        create: vi.fn().mockResolvedValue({ id: "ed_1" }),
+        deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+        updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+      },
+    };
+    vi.mocked(prisma.$transaction).mockImplementationOnce(((
+      callback: (client: typeof tx) => Promise<unknown>
+    ) => callback(tx)) as unknown as typeof prisma.$transaction);
+
+    await patchV3Survey(
+      currentSurvey,
+      {
+        metadata: {
+          title: { "en-US": "Updated Feedback", "de-DE": "Aktualisiertes Feedback" },
+        },
+        languages: [{ code: "de-DE", enabled: true }],
+        blocks: [
+          {
+            ...createBody.blocks[0],
+            elements: [
+              {
+                ...createBody.blocks[0].elements[0],
+                headline: {
+                  "en-US": "What should we improve?",
+                  "de-DE": "Was sollen wir verbessern?",
+                },
+              },
+            ],
+          },
+        ],
+      },
+      "req_1",
+      "org_1"
+    );
+
+    expect(tx.language.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { workspaceId_code: { workspaceId, code: "de-DE" } } })
+    );
+    expect(prisma.language.upsert).not.toHaveBeenCalled();
+  });
+
   test("maps the prepared v3 patch onto the existing internal survey", async () => {
     await patchV3Survey(
       currentSurvey,
@@ -1261,6 +1316,7 @@ describe("patchV3Survey", () => {
           findUniqueOrThrow: vi.fn(vi.mocked(prisma.survey.findUniqueOrThrow).getMockImplementation()),
         },
         segment: { update: vi.fn() },
+        language: { upsert: vi.fn(vi.mocked(prisma.language.upsert).getMockImplementation()) },
         // ENG-1837: the EmbeddedData reconcile is part of the same transaction, so it has to be
         // reachable on the tx client — and the assertions below prove it used that client.
         surveyEmbeddedData: {

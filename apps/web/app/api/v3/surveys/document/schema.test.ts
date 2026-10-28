@@ -1,6 +1,7 @@
 import { describe, expect, test, vi } from "vitest";
 import {
   canonicalizeV3SurveyDocument,
+  omitUnchangedDistribution,
   parseV3SurveyDocument,
   toV3SurveyDocument,
   toV3SurveyPatchInput,
@@ -196,5 +197,31 @@ describe("canonicalizeV3SurveyDocument", () => {
     expect(JSON.stringify(canonicalizeV3SurveyDocument([1, 2]))).not.toBe(
       JSON.stringify(canonicalizeV3SurveyDocument([2, 1]))
     );
+  });
+});
+
+describe("omitUnchangedDistribution", () => {
+  const stored = { name: "S", distribution: { delay: 0, showConditions: { rows: [] } } };
+
+  test("leaves distribution out of the write when it is exactly what pull showed", () => {
+    const input = { name: "S", distribution: { showConditions: { rows: [] }, delay: 0 } };
+
+    expect(omitUnchangedDistribution(input, stored)).toEqual({ name: "S" });
+  });
+
+  test("keeps a distribution the caller changed", () => {
+    const input = { name: "S", distribution: { delay: 5, showConditions: { rows: [] } } };
+
+    expect(omitUnchangedDistribution(input, stored)).toBe(input);
+  });
+
+  test("keeps the input when either side has no distribution (link survey)", () => {
+    const input = { name: "S" };
+
+    expect(omitUnchangedDistribution(input, { name: "S" })).toBe(input);
+    expect(omitUnchangedDistribution({ name: "S", distribution: {} }, { name: "S" })).toEqual({
+      name: "S",
+      distribution: {},
+    });
   });
 });

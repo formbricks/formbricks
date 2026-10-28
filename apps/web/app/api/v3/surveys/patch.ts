@@ -424,10 +424,6 @@ export async function executeV3SurveyPatch(
 
   const { data, segmentFilterWrite } = await planV3SurveyPatchWrites(params);
 
-  // The first write: creates any workspace language the survey now names.
-  const languages = await ensureV3WorkspaceLanguages(currentSurvey.workspaceId, languageRequests, requestId);
-  data.languages = buildSurveyLanguageUpdate(currentSurvey, languages);
-
   const runSurveyUpdate = (client: Prisma.TransactionClient) =>
     client.survey.update({
       // ENG-3069: compare-and-set. `updatedAt` is legal in a unique where (extendedWhereUnique), and
@@ -462,6 +458,17 @@ export async function executeV3SurveyPatch(
     // no longer be correct.
     const persistedSurvey = await prisma.$transaction(
       async (tx) => {
+        // The first write, inside the transaction so a workspace language this survey names rolls back
+        // with the survey update: a push that loses the compare-and-set below must not leave a language
+        // behind in the workspace.
+        const languages = await ensureV3WorkspaceLanguages(
+          currentSurvey.workspaceId,
+          languageRequests,
+          requestId,
+          tx
+        );
+        data.languages = buildSurveyLanguageUpdate(currentSurvey, languages);
+
         if (segmentFilterWrite) {
           await setV3SurveySegmentFilters(segmentFilterWrite.segmentId, segmentFilterWrite.filters, tx);
         }

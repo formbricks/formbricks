@@ -17,6 +17,7 @@ import { V3SurveyUnsupportedShapeError, serializeV3SurveyResource } from "../ser
 import { surveyDestructiveGuard } from "./destructive";
 import {
   canonicalizeV3SurveyDocument,
+  omitUnchangedDistribution,
   parseV3SurveyDocument,
   toV3SurveyDocument,
   toV3SurveyPatchInput,
@@ -160,13 +161,20 @@ export const surveyDocumentAdapter: TV3DocumentAdapter = {
         }
 
         const input = toV3SurveyPatchInput(parsed.document, survey.type);
-        const changes = diffSurveyDocuments(toV3SurveyDocument(getResource()), input);
+        const stored = toV3SurveyDocument(getResource());
+        const changes = diffSurveyDocuments(stored, input);
         if (changes.length === 0) {
           return { ok: true, unchanged: true };
         }
 
         pushedDocument = input;
-        return { ok: true, input, logFields: { changedPaths: changes.length } };
+        return {
+          ok: true,
+          // What is written leaves an unchanged distribution alone; `pushedDocument` keeps it, so a dry
+          // run still answers the document as the caller sent it.
+          input: omitUnchangedDistribution(input, stored),
+          logFields: { changedPaths: changes.length },
+        };
       },
     });
   },

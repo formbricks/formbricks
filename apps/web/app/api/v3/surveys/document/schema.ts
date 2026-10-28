@@ -158,6 +158,30 @@ export function toV3SurveyPatchInput(
 }
 
 /**
+ * The patch to write, given the one the document means and the stored document it was compared with.
+ *
+ * A pulled document shows a draft app survey's distribution without the unfinished show-condition rows an
+ * autosave may have stored (`dropUnfinishedShowConditions`). Sending that cleaned copy back as a
+ * replacement would silently delete rows the document never contained, so when the pushed distribution is
+ * exactly what pull showed, the key is left out of the write and the stored value stands.
+ */
+export function omitUnchangedDistribution(
+  input: Record<string, unknown>,
+  stored: Record<string, unknown>
+): Record<string, unknown> {
+  if (!("distribution" in input) || !("distribution" in stored)) return input;
+  if (
+    JSON.stringify(canonicalizeV3SurveyDocument(input.distribution)) !==
+    JSON.stringify(canonicalizeV3SurveyDocument(stored.distribution))
+  ) {
+    return input;
+  }
+
+  const { distribution: _unchanged, ...rest } = input;
+  return rest;
+}
+
+/**
  * A survey as its document: the GET representation without the lifecycle, identity and per-caller fields,
  * and without the workspace-owned language alias. What `pull` answers and what a push is compared with.
  */
