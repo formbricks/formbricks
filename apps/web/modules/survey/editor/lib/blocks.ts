@@ -374,6 +374,11 @@ export const updateElementInBlock = (
   elementId: string,
   updatedAttributes: Partial<TSurveyElement>
 ): Result<TSurvey, Error> => {
+  // Question IDs are read-only (ENG-3885): responses are stored under them, and links and the API use them.
+  if (updatedAttributes.id !== undefined && updatedAttributes.id !== elementId) {
+    return err(new Error("Element ID cannot be updated"));
+  }
+
   const blocks = [...(survey.blocks || [])];
   const blockIndex = blocks.findIndex((b) => b.id === blockId);
 
@@ -387,13 +392,6 @@ export const updateElementInBlock = (
 
   if (elementIndex === -1) {
     return err(new Error(`Element with ID "${elementId}" not found in block "${blockId}"`));
-  }
-
-  // If changing the element ID, validate the new ID is unique across all blocks
-  if (updatedAttributes.id && updatedAttributes.id !== elementId) {
-    if (!isElementIdUnique(updatedAttributes.id, blocks)) {
-      return err(new Error(`Element ID "${updatedAttributes.id}" already exists`));
-    }
   }
 
   elements[elementIndex] = {

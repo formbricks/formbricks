@@ -6,14 +6,25 @@ import { type ReactNode, createContext, useCallback, useContext, useEffect, useR
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TExportRequest } from "@/lib/analysis-export/export-request";
-import { ExportRequestError, requestExport, saveBlob } from "./export-client";
+import { ExportRequestError, formatBytes, requestExport, saveBlob } from "./export-client";
 
-export type TStartExport = { surveyId: string; request: TExportRequest };
+export type TStartExport = {
+  surveyId: string;
+  request: TExportRequest;
+  /** How many responses the file holds, from the modal's count: for the progress text and the toast. */
+  included?: number;
+};
+
+export type TExportProgress = { bytes: number; included: number | null };
 
 type TExportManager = {
   /** Starts an export and returns at once. Progress, the download and a failure all show as a toast. */
   startExport: (args: TStartExport) => void;
   isExporting: boolean;
+  /** What the running export has received so far. `null` when none is running. */
+  progress: TExportProgress | null;
+  /** Stops the running export; the server stops reading when the request is aborted. */
+  cancelExport: () => void;
 };
 
 const ExportManagerContext = createContext<TExportManager | null>(null);
@@ -29,24 +40,33 @@ const PROGRESS_TOAST_INTERVAL_MS = 400;
 /** Reasons the route gives that a person can act on; anything else reads as a plain failure. */
 const READABLE_FAILURES = new Set([422, 429, 503]);
 
-const formatSize = (bytes: number): string =>
-  bytes < 1024 * 1024
-    ? `${Math.max(1, Math.round(bytes / 1024))} KB`
-    : `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-
 type TJob = TStartExport & { signal: AbortSignal; onProgress: (bytes: number) => void };
 
 const ExportManager = ({ children }: Readonly<{ children: ReactNode }>) => {
   const { t } = useTranslation();
   const controllerRef = useRef<AbortController | null>(null);
   const startRef = useRef<(args: TStartExport) => void>(() => undefined);
+  const [progress, setProgress] = useState<TExportProgress | null>(null);
 
   const mutation = useMutation({
     mutationFn: ({ surveyId, request, signal, onProgress }: TJob) =>
       requestExport({ surveyId, request, signal, onProgress }),
-    onSuccess: ({ blob, fileName }) => {
+    onSuccess: ({ blob, fileName }, job) => {
       saveBlob(blob, fileName ?? "export");
-      toast.success(t("workspace.surveys.export.export_finished"), { id: EXPORT_TOAST_ID, duration: 6000 });
+      toast.success(
+        <span className="flex flex-col">
+          <span className="font-semibold">{t("workspace.surveys.export.export_ready")}</span>
+          <span className="text-slate-500">
+            {job.included === undefined
+              ? t("workspace.surveys.export.export_ready_file", { fileName: fileName ?? "export" })
+              : t("workspace.surveys.export.export_ready_file_count", {
+                  fileName: fileName ?? "export",
+                  count: job.included,
+                })}
+          </span>
+        </span>,
+        { id: EXPORT_TOAST_ID, duration: 6000 }
+      );
     },
     onError: (error, job) => {
       if (job.signal.aborted) {
@@ -67,7 +87,7 @@ const ExportManager = ({ children }: Readonly<{ children: ReactNode }>) => {
               className="rounded-md border border-slate-300 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
               onClick={() => {
                 toast.dismiss(toastInstance.id);
-                startRef.current({ surveyId: job.surveyId, request: job.request });
+                startRef.current({ surveyId: job.surveyId, request: job.request, included: job.included });
               }}>
               {t("common.try_again")}
             </button>
@@ -88,6 +108,7 @@ const ExportManager = ({ children }: Readonly<{ children: ReactNode }>) => {
       }
       const controller = new AbortController();
       controllerRef.current = controller;
+      setProgress({ bytes: 0, included: args.included ?? null });
       toast.loading(t("workspace.surveys.export.export_starting"), { id: EXPORT_TOAST_ID });
 
       let lastUpdate = 0;
@@ -95,10 +116,11 @@ const ExportManager = ({ children }: Readonly<{ children: ReactNode }>) => {
         ...args,
         signal: controller.signal,
         onProgress: (bytes) => {
+          setProgress((current) => (current ? { ...current, bytes } : current));
           const now = Date.now();
           if (now - lastUpdate < PROGRESS_TOAST_INTERVAL_MS) return;
           lastUpdate = now;
-          toast.loading(t("workspace.surveys.export.export_progress", { size: formatSize(bytes) }), {
+          toast.loading(t("workspace.surveys.export.export_progress", { size: formatBytes(bytes) }), {
             id: EXPORT_TOAST_ID,
           });
         },
@@ -106,6 +128,8 @@ const ExportManager = ({ children }: Readonly<{ children: ReactNode }>) => {
     },
     [isPending, mutate, t]
   );
+
+  const cancelExport = useCallback(() => controllerRef.current?.abort(), []);
 
   useEffect(() => {
     startRef.current = startExport;
@@ -121,7 +145,8 @@ const ExportManager = ({ children }: Readonly<{ children: ReactNode }>) => {
   }, []);
 
   return (
-    <ExportManagerContext.Provider value={{ startExport, isExporting: isPending }}>
+    <ExportManagerContext.Provider
+      value={{ startExport, cancelExport, isExporting: isPending, progress: isPending ? progress : null }}>
       {children}
     </ExportManagerContext.Provider>
   );

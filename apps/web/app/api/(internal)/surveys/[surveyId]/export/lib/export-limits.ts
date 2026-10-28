@@ -3,9 +3,9 @@
  * included). Excel is built whole in memory inside the web process; CSV and the zip stream and have no
  * cap. Above it the route answers 422 and the Export modal switches Excel off and offers CSV.
  *
- * MEASURED (ENG-6793, `apps/web/scripts/excel-export-memory-spike.ts`; Node 22.22, 4 vCPU, the real
- * `buildAnalysisWorkbook`, two data sheets Labels + Codes, 300 columns, ~15% blank cells, Arabic open
- * text; one process per run, default 2 GB V8 heap; peak RSS includes ~130 MB of the script's own baseline):
+ * MEASURED (ENG-6793; Node 22.22, 4 vCPU, the real `buildAnalysisWorkbook`, two data sheets Labels + Codes,
+ * 300 columns, ~15% blank cells, Arabic open text; one process per run, default 2 GB V8 heap; peak RSS
+ * includes ~130 MB of the measuring process's own baseline):
  *
  *   rows     cells        time    peak RSS   peak heap  file
  *   1,666    1.0 M        4.5 s     617 MB     322 MB    7.9 MB   (10,000 rows x 50 columns: 574 MB)

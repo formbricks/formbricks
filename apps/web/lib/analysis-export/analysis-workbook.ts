@@ -8,6 +8,8 @@ import { XlsxLimitError, createXlsxWorkbook } from "./xlsx-writer";
 export type TAnalysisFileOptions = {
   /** What the export was opened with (`openAnalysisExport({ answers })`): which tables the rows carry. */
   display: TAnswerDisplay;
+  /** "Display questions", the header cells (see `dataHeaderCells`). Left out: the headers follow `display`. */
+  questions?: TAnswerDisplay;
   /** The zone the Timestamp column is written in. Only the SPSS syntax mentions it. Default UTC. */
   timeZone?: string;
   /** Which extras come with the data tables. Each is on unless set to `false`. */
@@ -43,12 +45,12 @@ export type TAnalysisWorkbookOptions = TAnalysisFileOptions & {
  */
 export const buildAnalysisWorkbook = async (
   exported: TAnalysisExport,
-  { display, maxCells, include }: TAnalysisWorkbookOptions
+  { display, questions, maxCells, include }: TAnalysisWorkbookOptions
 ): Promise<Buffer> => {
   const workbook = createXlsxWorkbook();
   const parts = dataParts(display).map((part) => ({
     part,
-    sheet: workbook.addSheet(part.sheet, dataHeaderCells(exported.columns, display, part.kind)),
+    sheet: workbook.addSheet(part.sheet, dataHeaderCells(exported.columns, display, part.kind, questions)),
   }));
 
   const tooBig = (cells: number): XlsxLimitError =>

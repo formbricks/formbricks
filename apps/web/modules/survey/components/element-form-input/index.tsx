@@ -19,6 +19,7 @@ import {
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { cn } from "@/lib/cn";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { debounce } from "@/lib/utils/debounce";
 import { useSyncScroll } from "@/lib/utils/hooks/useSyncScroll";
@@ -71,6 +72,8 @@ interface ElementFormInputProps {
   isExternalUrlsAllowed?: boolean;
   /** Read-only, e.g. option text on a published survey. */
   disabled?: boolean;
+  /** Overrides the default spacing around the label, e.g. `mt-0` when the input starts a panel. */
+  labelClassName?: string;
 }
 
 export const ElementFormInput = ({
@@ -97,6 +100,7 @@ export const ElementFormInput = ({
   setFirstRender: externalSetFirstRender,
   isExternalUrlsAllowed,
   disabled = false,
+  labelClassName,
 }: ElementFormInputProps) => {
   const { t } = useTranslation();
   const defaultLanguageCode =
@@ -432,7 +436,7 @@ export const ElementFormInput = ({
           </div>
         )}
         {label && (
-          <div className="mt-3 mb-2 flex items-center justify-between">
+          <div className={cn("mt-3 mb-2 flex items-center justify-between", labelClassName)}>
             <Label htmlFor={id}>{label}</Label>
           </div>
         )}
@@ -582,7 +586,7 @@ export const ElementFormInput = ({
   return (
     <div className="w-full">
       {label && (
-        <div className="mt-3 mb-2 flex items-center justify-between">
+        <div className={cn("mt-3 mb-2 flex items-center justify-between", labelClassName)}>
           <Label htmlFor={id}>{label}</Label>
         </div>
       )}

@@ -21,6 +21,7 @@ import { formatDateTimeForDisplay } from "@/lib/utils/datetime";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { RenderResponse } from "@/modules/analysis/components/SingleResponseCard/components/RenderResponse";
 import { OutcomeBadge } from "@/modules/analysis/response-outcome/components/outcome-badge";
+import { responseStatus } from "@/modules/analysis/response-outcome/lib/outcome";
 import { displayEmbeddedValue } from "@/modules/embedded-data/lib/value-display";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { formatCodedLabel, getChoiceBadgeText } from "@/modules/survey/lib/element-code-label";
@@ -369,16 +370,14 @@ export const generateResponseTableColumns = (
     size: 200,
     header: () => <div className="gap-x-1.5">{t("common.status")}</div>,
     cell: ({ row }) => {
-      const status = row.original.status;
-      return <ResponseBadges items={[{ value: status }]} showId={false} />;
+      const status = responseStatus(row.original.status, row.original.outcome);
+      if (status === "lowQuality") return <OutcomeBadge outcome="lowQuality" />;
+      return status === "notCompleted" ? (
+        <span className="text-slate-500">{t("workspace.surveys.responses.status_not_completed")}</span>
+      ) : (
+        <span>{t("workspace.surveys.responses.status_complete")}</span>
+      );
     },
-  };
-
-  const outcomeColumn: ColumnDef<TResponseTableData> = {
-    accessorKey: "outcome",
-    size: 160,
-    header: () => <div className="gap-x-1.5">{t("workspace.surveys.responses.outcome")}</div>,
-    cell: ({ row }) => <OutcomeBadge outcome={row.original.outcome} />,
   };
 
   const tagsColumn: ColumnDef<TResponseTableData> = {
@@ -471,7 +470,6 @@ export const generateResponseTableColumns = (
     dateColumn,
     ...(showQuotasColumn ? [quotasColumn] : []),
     statusColumn,
-    outcomeColumn,
     ...(survey.isVerifyEmailEnabled ? [verifiedEmailColumn] : []),
     ...elementColumns,
     ...variableColumns,

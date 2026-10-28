@@ -75,10 +75,20 @@ export const ZExportRequest = z
     format: z.enum(["csv", "xlsx"]),
     /** Text only is today's Standard export; Code only and Text and code are Analysis exports. */
     display: z.enum(["text", "codes", "both"]).default("text"),
+    /**
+     * Display questions: what the column headers say. Text only is today's Standard export. Left out, the
+     * headers follow `display` (the first version of this route), which only a hand-written request does.
+     */
+    questions: z.enum(["text", "codes", "both"]).optional(),
     /** The SPSS syntax file. CSV only, and it needs codes. */
     spss: z.boolean().default(false),
     /** Ids of the Advanced options that are on. */
     advanced: z.array(z.enum(ADVANCED_IDS)).max(ADVANCED_IDS.length).default([]),
+    /**
+     * Ids of the column groups the Include columns list switched off (see `column-selection.ts`). The
+     * Standard defaults leave none off, which is today's file with every column.
+     */
+    excludedColumns: z.array(z.string().min(1).max(300)).max(2000).default([]),
     /** The Responses filter, or `{ responseIds }` for a selection of rows. */
     filter: z.preprocess(reviveFilterDates, ZResponseFilterCriteria.optional()),
   })
@@ -86,6 +96,9 @@ export const ZExportRequest = z
   .superRefine((request, ctx) => {
     if (request.spss && request.format !== "csv") {
       ctx.addIssue({ code: "custom", path: ["spss"], message: "The SPSS syntax file is for CSV exports." });
+    }
+    if (request.spss && request.questions === "text") {
+      ctx.addIssue({ code: "custom", path: ["spss"], message: "The SPSS syntax file needs question codes." });
     }
     if (request.spss && request.display === "text") {
       ctx.addIssue({ code: "custom", path: ["spss"], message: "The SPSS syntax file needs answer codes." });
@@ -120,6 +133,8 @@ export type TExportPlan =
       kind: "analysis";
       format: TExportFormat;
       display: TAnswerDisplay;
+      /** Display questions, or `undefined` when the headers follow `display`. */
+      questions?: TAnswerDisplay;
       output: TExportOutput;
       include: { datamap: boolean; unmappedValues: boolean; spssSyntax: boolean };
     };
@@ -129,23 +144,27 @@ export type TExportPlan =
  * defaults, that is codes, an advanced option or the SPSS file, is an Analysis export.
  */
 export const planExport = (
-  request: Pick<TExportRequest, "format" | "display" | "spss" | "advanced">
+  request: Pick<TExportRequest, "format" | "display" | "spss" | "advanced"> &
+    Partial<Pick<TExportRequest, "questions">>
 ): TExportPlan => {
-  const { format, display, spss, advanced } = request;
-  if (display === "text" && !spss && advanced.length === 0) return { kind: "standard", format };
+  const { format, display, questions, spss, advanced } = request;
+  const questionsAsToday = questions === undefined || questions === "text";
+  if (display === "text" && questionsAsToday && !spss && advanced.length === 0) {
+    return { kind: "standard", format };
+  }
 
   const include = {
     datamap: advanced.includes("datamap"),
     unmappedValues: advanced.includes("unmappedValues"),
     spssSyntax: spss,
   };
-  if (format === "xlsx") return { kind: "analysis", format, display, output: "xlsx", include };
+  if (format === "xlsx") return { kind: "analysis", format, display, questions, output: "xlsx", include };
 
   const addsFile =
     display === "both" ||
     spss ||
     advanced.some((id) => EXPORT_ADVANCED_OPTIONS.find((option) => option.id === id)?.forcesZip);
-  return { kind: "analysis", format, display, output: addsFile ? "zip" : "csv", include };
+  return { kind: "analysis", format, display, questions, output: addsFile ? "zip" : "csv", include };
 };
 
 /** The file extension and media type of what a plan downloads. */

@@ -30,7 +30,13 @@ vi.mock("./export-response", () => ({
 const survey = { id: "survey1", name: "Survey", workspaceId: "ws1" };
 const authentication = { user: { id: "user1" } } as never;
 const forbidden = new Response("forbidden", { status: 403 });
-const defaults: TExportRequest = { format: "csv", display: "text", spss: false, advanced: [] };
+const defaults: TExportRequest = {
+  format: "csv",
+  display: "text",
+  spss: false,
+  advanced: [],
+  excludedColumns: [],
+};
 
 const run = (overrides: Partial<Parameters<typeof handleExportRequest>[0]> = {}) =>
   handleExportRequest({

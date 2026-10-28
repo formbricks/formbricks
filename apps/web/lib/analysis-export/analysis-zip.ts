@@ -57,7 +57,7 @@ const appendEntry = (archive: Archiver, source: Readable | string, name: string)
  */
 export const createAnalysisZip = (
   exported: TAnalysisExport,
-  { display, timeZone, include }: TAnalysisFileOptions
+  { display, questions, timeZone, include }: TAnalysisFileOptions
 ): Readable => {
   const archive = new ZipArchive({ zlib: { level: 6 } });
   const parts = dataParts(display);
@@ -75,11 +75,13 @@ export const createAnalysisZip = (
         spoolPath = join(spoolDir, spooled.csvName);
         spool = createWriteStream(spoolPath);
         spool.on("error", () => undefined);
-        spool.write(CSV_BOM + analysisCsvLine(dataHeaderCells(exported.columns, display, spooled.kind)));
+        spool.write(
+          CSV_BOM + analysisCsvLine(dataHeaderCells(exported.columns, display, spooled.kind, questions))
+        );
       }
 
       async function* primaryCsv(): AsyncGenerator<string> {
-        yield CSV_BOM + analysisCsvLine(dataHeaderCells(exported.columns, display, primary.kind));
+        yield CSV_BOM + analysisCsvLine(dataHeaderCells(exported.columns, display, primary.kind, questions));
         for await (const batch of exported.rows()) {
           let text = "";
           let spoolText = "";

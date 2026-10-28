@@ -84,6 +84,7 @@ export const SingleResponseCardHeader = ({
                 </div>
               )}
               {response.contact?.userId && <IdBadge id={response.contact.userId} />}
+              <OutcomeBadge outcome={response.outcome} />
             </>
           )}
 
@@ -101,7 +102,7 @@ export const SingleResponseCardHeader = ({
         </div>
 
         <div className="flex items-center gap-x-2 text-sm">
-          <OutcomeBadge outcome={response.outcome} />
+          {pageType !== "response" && <OutcomeBadge outcome={response.outcome} />}
           <time className="text-slate-500" dateTime={timeSince(response.createdAt.toISOString(), locale)}>
             {timeSince(response.createdAt.toISOString(), locale)}
           </time>

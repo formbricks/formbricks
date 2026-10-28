@@ -61,6 +61,7 @@ export const BlockSettings = ({
           localSurvey={localSurvey}
           elementIdx={blockIndex}
           isInvalid={false}
+          labelClassName="mt-0"
           updateElement={(_, updatedAttributes) => {
             if ("buttonLabel" in updatedAttributes) {
               const languageSymbols = extractLanguageCodes(localSurvey.languages ?? []);
@@ -105,6 +106,7 @@ export const BlockSettings = ({
             localSurvey={localSurvey}
             elementIdx={blockIndex}
             isInvalid={false}
+            labelClassName="mt-0"
             updateElement={(_, updatedAttributes) => {
               if ("backButtonLabel" in updatedAttributes) {
                 const backButtonLabel = updatedAttributes.backButtonLabel as TI18nString;

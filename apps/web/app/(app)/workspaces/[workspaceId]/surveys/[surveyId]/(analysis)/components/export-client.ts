@@ -1,3 +1,4 @@
+import type { TExportColumnGroup } from "@/lib/analysis-export/column-selection";
 import type { TExcelSizeVerdict } from "@/lib/analysis-export/excel-size";
 import type { TExportRequest } from "@/lib/analysis-export/export-request";
 
@@ -80,6 +81,10 @@ export const requestExport = async ({
 export type TExportCounts = {
   included: number;
   lowQualityLeftOut: number;
+  /** Every response of the survey, filter or not. */
+  total: number;
+  /** The Include columns list for this export. */
+  columnGroups: TExportColumnGroup[];
   kind: "standard" | "analysis";
   /** Excel's size for this selection against the cap. `null` for the Standard export. */
   excel: TExcelSizeVerdict | null;
@@ -119,3 +124,9 @@ export const saveBlob = (blob: Blob, fileName: string): void => {
   // Revoked on the next turn: some browsers start the download after the click returns.
   setTimeout(() => URL.revokeObjectURL(url), 0);
 };
+
+/** A byte count for people: `340 KB`, `2.4 MB`. */
+export const formatBytes = (bytes: number): string =>
+  bytes < 1024 * 1024
+    ? `${Math.max(1, Math.round(bytes / 1024))} KB`
+    : `${(bytes / (1024 * 1024)).toFixed(1)} MB`;

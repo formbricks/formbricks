@@ -107,6 +107,12 @@ const submitAnswer = async (page: Page, answer: string, colour: string): Promise
   await expect(page.getByText(ENDING_HEADLINE)).toBeVisible({ timeout: 60000 });
 };
 
+/** Picks an option of one of the modal's selects. */
+const pick = async (page: Page, select: "format" | "display-questions" | "display-answers", name: string) => {
+  await page.locator(`#export-${select}`).click();
+  await page.getByRole("option", { name, exact: true }).click();
+};
+
 /** Opens the Export modal on the Responses page, ticks what `choose` ticks, and returns the download. */
 const exportFile = async (
   page: Page,
@@ -217,11 +223,12 @@ test.describe("Response export @slow", () => {
 
     await test.step("Excel with codes, a datamap and unmapped values", async () => {
       const download = await exportFile(page, async (modal) => {
-        await modal.getByLabel("Excel").click();
-        await modal.getByLabel("Code only").click();
+        await pick(page, "format", ".xlsx");
+        await pick(page, "display-questions", "Code only");
+        await pick(page, "display-answers", "Code only");
         await modal.getByLabel("Add datamap").click();
         await modal.getByLabel("Add unmapped values").click();
-        await expect(page.getByTestId("export-count-line")).toHaveText("Include 4 responses.");
+        await expect(page.getByTestId("export-count-line")).toContainText("Include 4 responses");
       });
       const xlsxPath = testInfo.outputPath(download.suggestedFilename());
       await download.saveAs(xlsxPath);
@@ -257,11 +264,11 @@ test.describe("Response export @slow", () => {
       await page.keyboard.press("Escape");
 
       const download = await exportFile(page, async (modal) => {
-        await modal.getByLabel("Code only").click();
+        await pick(page, "display-questions", "Code only");
+        await pick(page, "display-answers", "Code only");
         await modal.getByLabel("Add datamap").click();
-        await expect(page.getByTestId("export-count-line")).toHaveText(
-          "Include 3 responses. · 1 Low quality left out"
-        );
+        await expect(page.getByTestId("export-count-line")).toContainText("Include 3 responses");
+        await expect(page.getByTestId("export-count-line")).toContainText("1 Low quality left out");
       });
       const zipPath = testInfo.outputPath(download.suggestedFilename());
       await download.saveAs(zipPath);

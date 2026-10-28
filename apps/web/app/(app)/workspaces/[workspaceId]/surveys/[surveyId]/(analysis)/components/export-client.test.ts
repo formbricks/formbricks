@@ -1,8 +1,20 @@
 import { describe, expect, test, vi } from "vitest";
 import type { TExportRequest } from "@/lib/analysis-export/export-request";
-import { ExportRequestError, fetchExportCounts, parseFileName, requestExport } from "./export-client";
+import {
+  ExportRequestError,
+  fetchExportCounts,
+  formatBytes,
+  parseFileName,
+  requestExport,
+} from "./export-client";
 
-const request: TExportRequest = { format: "csv", display: "text", spss: false, advanced: [] };
+const request: TExportRequest = {
+  format: "csv",
+  display: "text",
+  spss: false,
+  advanced: [],
+  excludedColumns: [],
+};
 
 const streamOf = (chunks: string[]) =>
   new ReadableStream<Uint8Array>({
@@ -85,5 +97,13 @@ describe("fetchExportCounts", () => {
     });
     expect(fetchImpl.mock.calls[0][0]).toBe("/api/surveys/s1/export?dryRun=true");
     expect(counts).toEqual({ included: 5, lowQualityLeftOut: 1, kind: "analysis" });
+  });
+});
+
+describe("formatBytes", () => {
+  test("small sizes in KB, at least 1, and larger ones in MB with a decimal", () => {
+    expect(formatBytes(10)).toBe("1 KB");
+    expect(formatBytes(340 * 1024)).toBe("340 KB");
+    expect(formatBytes(2.4 * 1024 * 1024)).toBe("2.4 MB");
   });
 });
