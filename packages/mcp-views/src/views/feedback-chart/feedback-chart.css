@@ -155,6 +155,7 @@
 .fbc-tip {
   position: absolute;
   z-index: 2;
+  width: max-content;
   min-width: 120px;
   max-width: min(260px, 80%);
   padding: 8px 10px;
@@ -372,8 +373,10 @@
   line-height: 64px;
 }
 
-.fbc-number-empty {
+.fbc-numbers .fbc-number-empty {
   color: var(--fb-text-faint);
+  font-size: 20px;
+  line-height: 40px;
 }
 
 .fbc-selection {
@@ -496,8 +499,13 @@
     line-height: 52px;
   }
 
-  .fbc-card {
+  .fbc.fb-card {
     padding: 12px;
+  }
+
+  .fbc-table th,
+  .fbc-table td {
+    padding: 6px 8px;
   }
 }
 
@@ -506,4 +514,8 @@
   .fbc-slice {
     transition: none;
   }
+}
+
+.fbc-block {
+  display: block;
 }

@@ -1,68 +1,59 @@
 {
-  "toolName": "show_feedback_chart",
   "input": {
-    "workspaceId": "tz4a98xxat96iws9zmbrgj3a",
     "query": {
-      "measures": [
-        "FeedbackRecords.npsScore"
-      ],
+      "limit": 100,
+      "measures": ["FeedbackRecords.npsScore"],
       "timeDimensions": [
         {
-          "dimension": "FeedbackRecords.collectedAt",
-          "dateRange": "last 30 days"
+          "dateRange": "last 30 days",
+          "dimension": "FeedbackRecords.collectedAt"
         }
-      ],
-      "limit": 100
-    }
+      ]
+    },
+    "workspaceId": "tz4a98xxat96iws9zmbrgj3a"
   },
   "result": {
     "content": [
       {
-        "type": "text",
-        "text": "NPS: Score: 1 rows from the feedback dataset \"Product feedback\", shown to the user as a number.\n| NPS: Score |\n| --- |\n| 36.4 |"
+        "text": "NPS: Score: 1 rows from the feedback dataset \"Product feedback\", shown to the user as a number.\n| NPS: Score |\n| --- |\n| 36.4 |",
+        "type": "text"
       }
     ],
     "structuredContent": {
-      "datasetId": "ds4a98xxat96iws9zmbrgj3aaa",
-      "datasetName": "Product feedback",
-      "query": {
-        "measures": [
-          "FeedbackRecords.npsScore"
-        ],
-        "timeDimensions": [
-          {
-            "dimension": "FeedbackRecords.collectedAt",
-            "dateRange": "last 30 days"
-          }
-        ],
-        "limit": 100
-      },
       "chart": {
-        "type": "number",
         "title": "NPS: Score",
-        "y": [
-          "FeedbackRecords.npsScore"
-        ]
+        "type": "number",
+        "y": ["FeedbackRecords.npsScore"]
       },
       "columns": [
         {
+          "domain": [-100, 100],
           "id": "FeedbackRecords.npsScore",
-          "label": "NPS: Score",
           "kind": "measure",
-          "domain": [
-            -100,
-            100
-          ]
+          "label": "NPS: Score"
         }
       ],
+      "datasetId": "ds4a98xxat96iws9zmbrgj3aaa",
+      "datasetName": "Product feedback",
+      "query": {
+        "limit": 100,
+        "measures": ["FeedbackRecords.npsScore"],
+        "timeDimensions": [
+          {
+            "dateRange": "last 30 days",
+            "dimension": "FeedbackRecords.collectedAt"
+          }
+        ]
+      },
+      "requestId": "req_number",
       "rows": [
         {
           "FeedbackRecords.npsScore": 36.4
         }
       ],
-      "truncated": false,
-      "requestId": "req_number"
+      "truncated": false
     }
   },
+  "toolName": "show_feedback_chart",
   "tools": {}
 }

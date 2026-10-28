@@ -1,161 +1,25 @@
 {
-  "toolName": "show_workflow",
   "input": {
     "workflowId": "cm9zr4wf0000608l8k2m3n4p5q"
   },
   "result": {
     "content": [
       {
-        "type": "text",
-        "text": "Workflow \"Thank respondents and alert accounts\" is disabled. Recent runs unavailable: The runs store is unavailable."
+        "text": "Workflow \"Thank respondents and alert accounts\" is disabled. Recent runs unavailable: The runs store is unavailable.",
+        "type": "text"
       }
     ],
     "structuredContent": {
+      "recentRuns": [],
+      "recentRunsError": "The runs store is unavailable.",
+      "requestId": "req_u",
       "workflow": {
-        "id": "cm9zr4wf0000608l8k2m3n4p5q",
-        "workspaceId": "cm9zr4wsp000508l8y6nh9r2v",
-        "name": "Thank respondents and alert accounts",
-        "description": "Sends a thank-you to every respondent and tells the account team about qualified ones.",
-        "status": "disabled",
-        "triggerType": "response.completed",
-        "surveyId": "cm9zr4mps000008l8btfy1vtz",
+        "createdAt": "2026-05-20T12:00:00.000Z",
         "createdBy": null,
         "creator": {
           "name": "Ada Lovelace"
         },
-        "createdAt": "2026-05-20T12:00:00.000Z",
-        "updatedAt": "2026-06-09T07:00:00.000Z",
-        "lastRun": null,
-        "runCount": 128,
         "definition": {
-          "schemaVersion": 1,
-          "trigger": {
-            "id": "trigger",
-            "type": "trigger",
-            "triggerType": "response.completed",
-            "label": "Survey response completed",
-            "config": {
-              "surveyId": "cm9zr4mps000008l8btfy1vtz",
-              "endingCardIds": [
-                "cm9zr4q7i000108l84gozfggr"
-              ]
-            },
-            "ui": {
-              "position": {
-                "x": 0,
-                "y": 0
-              }
-            }
-          },
-          "nodes": [
-            {
-              "id": "send-email",
-              "type": "action",
-              "actionType": "send_email",
-              "label": "Send thank you email",
-              "config": {
-                "to": "cm9zr4mps000008l8email",
-                "from": "noreply@example.com",
-                "replyTo": [
-                  "support@example.com"
-                ],
-                "subject": "Thanks for your response",
-                "body": "<p class=\"fb-editor-paragraph\" dir=\"ltr\">Hi #recall:cm9zr4mps000008l8name/fallback:there#, we received your response &amp; will follow up.</p>",
-                "attachResponseData": true,
-                "includeHiddenFields": true,
-                "includeVariables": false
-              }
-            },
-            {
-              "id": "condition",
-              "type": "if_else",
-              "label": "Qualified response",
-              "config": {
-                "condition": {
-                  "id": "root",
-                  "connector": "and",
-                  "conditions": [
-                    {
-                      "id": "c1",
-                      "left": {
-                        "path": "response.email"
-                      },
-                      "operator": "exists"
-                    },
-                    {
-                      "id": "g1",
-                      "connector": "or",
-                      "conditions": [
-                        {
-                          "id": "c2",
-                          "left": {
-                            "path": "response.score"
-                          },
-                          "operator": "greaterThan",
-                          "right": 8
-                        },
-                        {
-                          "id": "c3",
-                          "left": {
-                            "path": "response.plan"
-                          },
-                          "operator": "equals",
-                          "right": {
-                            "path": "contact.plan",
-                            "fallback": "free"
-                          }
-                        },
-                        {
-                          "id": "c4",
-                          "left": {
-                            "path": "response.email"
-                          },
-                          "operator": "notContains",
-                          "right": "@example.org"
-                        }
-                      ]
-                    }
-                  ]
-                }
-              }
-            },
-            {
-              "id": "then-email",
-              "type": "action",
-              "actionType": "send_email",
-              "label": "Notify the account team",
-              "config": {
-                "to": "accounts@example.com",
-                "from": "noreply@example.com",
-                "replyTo": [
-                  "support@example.com"
-                ],
-                "subject": "Qualified response received",
-                "body": "<p>A qualified response just came in.</p>",
-                "attachResponseData": true,
-                "includeHiddenFields": false,
-                "includeVariables": false
-              }
-            },
-            {
-              "id": "else-email",
-              "type": "action",
-              "actionType": "send_email",
-              "label": "Send fallback email",
-              "config": {
-                "to": "cm9zr4mps000008l8email",
-                "from": "noreply@example.com",
-                "replyTo": [
-                  "support@example.com"
-                ],
-                "subject": "Thanks",
-                "body": "<p>Thanks for your response.</p>",
-                "attachResponseData": false,
-                "includeHiddenFields": false,
-                "includeVariables": false
-              }
-            }
-          ],
           "edges": [
             {
               "id": "e1",
@@ -180,48 +44,176 @@
               "target": "else-email"
             }
           ],
-          "entryNodeId": "trigger"
-        }
-      },
-      "recentRuns": [],
-      "recentRunsError": "The runs store is unavailable.",
-      "requestId": "req_u"
+          "entryNodeId": "trigger",
+          "nodes": [
+            {
+              "actionType": "send_email",
+              "config": {
+                "attachResponseData": true,
+                "body": "<p class=\"fb-editor-paragraph\" dir=\"ltr\">Hi #recall:cm9zr4mps000008l8name/fallback:there#, we received your response &amp; will follow up.</p>",
+                "from": "noreply@example.com",
+                "includeHiddenFields": true,
+                "includeVariables": false,
+                "replyTo": ["support@example.com"],
+                "subject": "Thanks for your response",
+                "to": "cm9zr4mps000008l8email"
+              },
+              "id": "send-email",
+              "label": "Send thank you email",
+              "type": "action"
+            },
+            {
+              "config": {
+                "condition": {
+                  "conditions": [
+                    {
+                      "id": "c1",
+                      "left": {
+                        "path": "response.email"
+                      },
+                      "operator": "exists"
+                    },
+                    {
+                      "conditions": [
+                        {
+                          "id": "c2",
+                          "left": {
+                            "path": "response.score"
+                          },
+                          "operator": "greaterThan",
+                          "right": 8
+                        },
+                        {
+                          "id": "c3",
+                          "left": {
+                            "path": "response.plan"
+                          },
+                          "operator": "equals",
+                          "right": {
+                            "fallback": "free",
+                            "path": "contact.plan"
+                          }
+                        },
+                        {
+                          "id": "c4",
+                          "left": {
+                            "path": "response.email"
+                          },
+                          "operator": "notContains",
+                          "right": "@example.org"
+                        }
+                      ],
+                      "connector": "or",
+                      "id": "g1"
+                    }
+                  ],
+                  "connector": "and",
+                  "id": "root"
+                }
+              },
+              "id": "condition",
+              "label": "Qualified response",
+              "type": "if_else"
+            },
+            {
+              "actionType": "send_email",
+              "config": {
+                "attachResponseData": true,
+                "body": "<p>A qualified response just came in.</p>",
+                "from": "noreply@example.com",
+                "includeHiddenFields": false,
+                "includeVariables": false,
+                "replyTo": ["support@example.com"],
+                "subject": "Qualified response received",
+                "to": "accounts@example.com"
+              },
+              "id": "then-email",
+              "label": "Notify the account team",
+              "type": "action"
+            },
+            {
+              "actionType": "send_email",
+              "config": {
+                "attachResponseData": false,
+                "body": "<p>Thanks for your response.</p>",
+                "from": "noreply@example.com",
+                "includeHiddenFields": false,
+                "includeVariables": false,
+                "replyTo": ["support@example.com"],
+                "subject": "Thanks",
+                "to": "cm9zr4mps000008l8email"
+              },
+              "id": "else-email",
+              "label": "Send fallback email",
+              "type": "action"
+            }
+          ],
+          "schemaVersion": 1,
+          "trigger": {
+            "config": {
+              "endingCardIds": ["cm9zr4q7i000108l84gozfggr"],
+              "surveyId": "cm9zr4mps000008l8btfy1vtz"
+            },
+            "id": "trigger",
+            "label": "Survey response completed",
+            "triggerType": "response.completed",
+            "type": "trigger",
+            "ui": {
+              "position": {
+                "x": 0,
+                "y": 0
+              }
+            }
+          }
+        },
+        "description": "Sends a thank-you to every respondent and tells the account team about qualified ones.",
+        "id": "cm9zr4wf0000608l8k2m3n4p5q",
+        "lastRun": null,
+        "name": "Thank respondents and alert accounts",
+        "runCount": 128,
+        "status": "disabled",
+        "surveyId": "cm9zr4mps000008l8btfy1vtz",
+        "triggerType": "response.completed",
+        "updatedAt": "2026-06-09T07:00:00.000Z",
+        "workspaceId": "cm9zr4wsp000508l8y6nh9r2v"
+      }
     }
   },
+  "toolName": "show_workflow",
   "tools": {
-    "list_workflow_runs": {
-      "isError": true,
+    "get_workflow_run": {
       "content": [
         {
-          "type": "text",
-          "text": "{\"error\":{\"status\":403,\"title\":\"Forbidden\",\"detail\":\"You are not authorized to access this resource\",\"requestId\":\"req_1\",\"code\":\"forbidden\"}}"
+          "text": "{\"error\":{\"status\":403,\"title\":\"Forbidden\",\"detail\":\"You are not authorized to access this resource\",\"requestId\":\"req_1\",\"code\":\"forbidden\"}}",
+          "type": "text"
         }
       ],
+      "isError": true,
       "structuredContent": {
         "error": {
-          "status": 403,
-          "title": "Forbidden",
+          "code": "forbidden",
           "detail": "You are not authorized to access this resource",
           "requestId": "req_1",
-          "code": "forbidden"
+          "status": 403,
+          "title": "Forbidden"
         }
       }
     },
-    "get_workflow_run": {
-      "isError": true,
+    "list_workflow_runs": {
       "content": [
         {
-          "type": "text",
-          "text": "{\"error\":{\"status\":403,\"title\":\"Forbidden\",\"detail\":\"You are not authorized to access this resource\",\"requestId\":\"req_1\",\"code\":\"forbidden\"}}"
+          "text": "{\"error\":{\"status\":403,\"title\":\"Forbidden\",\"detail\":\"You are not authorized to access this resource\",\"requestId\":\"req_1\",\"code\":\"forbidden\"}}",
+          "type": "text"
         }
       ],
+      "isError": true,
       "structuredContent": {
         "error": {
-          "status": 403,
-          "title": "Forbidden",
+          "code": "forbidden",
           "detail": "You are not authorized to access this resource",
           "requestId": "req_1",
-          "code": "forbidden"
+          "status": 403,
+          "title": "Forbidden"
         }
       }
     }

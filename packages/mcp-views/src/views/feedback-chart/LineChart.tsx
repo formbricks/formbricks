@@ -165,11 +165,11 @@ export const LineChart = ({
           tabIndex={0}
           {...handlers}
           onPointerLeave={() => setActive(null)}>
-          {axis.ticks.map((tick, index) => (
+          {axis.ticks.map((tick) => (
             <g key={tick}>
               <line className="fbc-grid" x1={left} x2={left + plotWidth} y1={y(tick)} y2={y(tick)} />
               <text className="fbc-tick" x={left - 8} y={y(tick) + 4} textAnchor="end">
-                {tickTexts[index] ?? formatTick(tick, axis.step, context.locale)}
+                {formatTick(tick, axis.step, context.locale)}
               </text>
             </g>
           ))}

@@ -1,79 +1,65 @@
 {
-  "toolName": "show_feedback_chart",
   "input": {
-    "workspaceId": "tz4a98xxat96iws9zmbrgj3a",
     "query": {
-      "measures": [
-        "FeedbackRecords.count"
-      ],
-      "dimensions": [
-        "FeedbackRecords.sentiment"
-      ],
+      "dimensions": ["FeedbackRecords.sentiment"],
       "filters": [
         {
           "member": "FeedbackRecords.language",
           "operator": "equals",
-          "values": [
-            "xx"
-          ]
+          "values": ["xx"]
         }
       ],
-      "limit": 100
-    }
+      "limit": 100,
+      "measures": ["FeedbackRecords.count"]
+    },
+    "workspaceId": "tz4a98xxat96iws9zmbrgj3a"
   },
   "result": {
     "content": [
       {
-        "type": "text",
-        "text": "Feedback Records by sentiment: 0 rows from the feedback dataset \"Product feedback\", shown to the user as a bar chart.\n| Sentiment | Feedback Records |\n| --- |\n"
+        "text": "Feedback Records by sentiment: 0 rows from the feedback dataset \"Product feedback\", shown to the user as a bar chart.\n| Sentiment | Feedback Records |\n| --- |\n",
+        "type": "text"
       }
     ],
     "structuredContent": {
-      "datasetId": "ds4a98xxat96iws9zmbrgj3aaa",
-      "datasetName": "Product feedback",
-      "query": {
-        "measures": [
-          "FeedbackRecords.count"
-        ],
-        "dimensions": [
-          "FeedbackRecords.sentiment"
-        ],
-        "filters": [
-          {
-            "member": "FeedbackRecords.language",
-            "operator": "equals",
-            "values": [
-              "xx"
-            ]
-          }
-        ],
-        "limit": 100
-      },
       "chart": {
-        "type": "bar",
         "title": "Feedback Records by sentiment",
+        "type": "bar",
         "x": "FeedbackRecords.sentiment",
         "xKind": "category",
-        "y": [
-          "FeedbackRecords.count"
-        ]
+        "y": ["FeedbackRecords.count"]
       },
       "columns": [
         {
           "id": "FeedbackRecords.sentiment",
-          "label": "Sentiment",
-          "kind": "dimension"
+          "kind": "dimension",
+          "label": "Sentiment"
         },
         {
           "id": "FeedbackRecords.count",
-          "label": "Feedback Records",
-          "kind": "measure"
+          "kind": "measure",
+          "label": "Feedback Records"
         }
       ],
+      "datasetId": "ds4a98xxat96iws9zmbrgj3aaa",
+      "datasetName": "Product feedback",
+      "query": {
+        "dimensions": ["FeedbackRecords.sentiment"],
+        "filters": [
+          {
+            "member": "FeedbackRecords.language",
+            "operator": "equals",
+            "values": ["xx"]
+          }
+        ],
+        "limit": 100,
+        "measures": ["FeedbackRecords.count"]
+      },
+      "requestId": "req_empty",
       "rows": [],
-      "truncated": false,
-      "requestId": "req_empty"
+      "truncated": false
     }
   },
+  "toolName": "show_feedback_chart",
   "tools": {}
 }

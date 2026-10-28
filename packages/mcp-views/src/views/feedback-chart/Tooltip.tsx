@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from "react";
 import { otherColorVar, seriesColorVar } from "./palette";
 import type { TooltipContent } from "./tooltip";
 
@@ -21,16 +22,24 @@ export const Tooltip = ({
   anchor,
   containerWidth,
 }: Readonly<{ content: TooltipContent; anchor: TooltipAnchor; containerWidth: number }>) => {
-  const flip = anchor.x > containerWidth / 2;
+  const ref = useRef<HTMLDivElement>(null);
+
+  // Placed after layout, once its own width is known: beside the point, on the side with more room, and
+  // never past either edge of the chart.
+  useLayoutEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    const tipWidth = element.offsetWidth;
+    const desired = anchor.x > containerWidth / 2 ? anchor.x - 12 - tipWidth : anchor.x + 12;
+    element.style.left = `${Math.min(Math.max(desired, 0), Math.max(0, containerWidth - tipWidth))}px`;
+  });
+
   return (
     <div
+      ref={ref}
       className="fbc-tip"
       aria-hidden="true"
-      style={{
-        left: anchor.x,
-        top: Math.max(0, anchor.y),
-        transform: flip ? "translate(calc(-100% - 12px), -50%)" : "translate(12px, -50%)",
-      }}>
+      style={{ left: anchor.x, top: Math.max(0, anchor.y), transform: "translateY(-50%)" }}>
       <div className="fbc-tip-title">{content.title}</div>
       {content.rows.map((row, index) => {
         const color = colorOf(row.colorIndex);

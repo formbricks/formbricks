@@ -144,9 +144,9 @@ export const BarChart = ({ data, title, width, context, selection, onSelect }: R
           tabIndex={0}
           {...handlers}
           onPointerLeave={() => setActive(null)}>
-          {axis.ticks.map((tick, index) => {
+          {axis.ticks.map((tick) => {
             const at = scale(tick);
-            const text = tickTexts[index] ?? formatTick(tick, axis.step, context.locale);
+            const text = formatTick(tick, axis.step, context.locale);
             return vertical ? (
               <g key={tick}>
                 <line className="fbc-grid" x1={left} x2={left + plotWidth} y1={TOP + at} y2={TOP + at} />

@@ -1,674 +1,814 @@
 {
-  "toolName": "show_responses",
   "input": {
-    "workspaceId": "clws000000000000000000001",
+    "limit": 10,
     "surveyId": "clsv000000000000000000001",
-    "limit": 10
+    "workspaceId": "clws000000000000000000001"
   },
   "result": {
     "content": [
       {
-        "type": "text",
-        "text": "Showing 10 of 134 responses to survey \"Customer satisfaction, Q1 2026\" (clsv000000000000000000001), newest first, created from 2026-03-07 to 2026-03-14 (UTC). 8 finished, 2 partial. More are available; the view loads them on request. The person is looking at an interactive table with filters and a detail panel, so do not repeat the rows. To read or analyse the answers yourself, call list_responses or get_response."
+        "text": "Showing 10 of 134 responses to survey \"Customer satisfaction, Q1 2026\" (clsv000000000000000000001), newest first, created from 2026-03-07 to 2026-03-14 (UTC). 8 finished, 2 partial. More are available; the view loads them on request. The person is looking at an interactive table with filters and a detail panel, so do not repeat the rows. To read or analyse the answers yourself, call list_responses or get_response.",
+        "type": "text"
       }
     ],
     "structuredContent": {
-      "survey": {
-        "id": "clsv000000000000000000001",
-        "name": "Customer satisfaction, Q1 2026"
-      },
-      "query": {
-        "workspaceId": "clws000000000000000000001",
-        "surveyId": "clsv000000000000000000001",
-        "limit": 10,
-        "sortBy": "-createdAt"
-      },
       "columns": [
         {
           "id": "q_nps",
           "label": "How likely are you to recommend us to a friend or colleague?",
-          "type": "nps",
-          "position": 1
+          "position": 1,
+          "type": "nps"
         },
         {
           "id": "q_why",
           "label": "What is the main reason for your score?",
-          "type": "openText",
-          "position": 2
+          "position": 2,
+          "type": "openText"
         },
         {
           "id": "q_plan",
           "label": "Which plan are you on?",
-          "type": "multipleChoiceSingle",
-          "position": 3
+          "position": 3,
+          "type": "multipleChoiceSingle"
         },
         {
           "id": "q_features",
           "label": "Which features do you use?",
-          "type": "multipleChoiceMulti",
-          "position": 4
+          "position": 4,
+          "type": "multipleChoiceMulti"
         },
         {
           "id": "q_ease",
           "label": "How easy was it to get started?",
-          "type": "rating",
-          "position": 5
+          "position": 5,
+          "type": "rating"
         },
         {
           "id": "q_next",
           "label": "Anything we should build next?",
-          "type": "openText",
-          "position": 6
+          "position": 6,
+          "type": "openText"
         },
         {
           "id": "q_consent",
           "label": "Can we contact you about your answers?",
-          "type": "consent",
-          "position": 7
-        }
-      ],
-      "rows": [
-        {
-          "id": "clrs00000000000000000001",
-          "createdAt": "2026-03-14T16:42:00.000Z",
-          "finished": true,
-          "language": "en",
-          "tags": [
-            "promoter"
-          ],
-          "cells": {
-            "q_nps": "10",
-            "q_why": "Fast to set up and the team replied within an hour.",
-            "q_plan": "Pro",
-            "q_features": "Surveys, Contacts",
-            "q_ease": "5 / 5",
-            "q_next": "Slack integration",
-            "q_consent": "Accepted"
-          }
-        },
-        {
-          "id": "clrs00000000000000000002",
-          "createdAt": "2026-03-14T11:05:00.000Z",
-          "finished": false,
-          "language": "en",
-          "tags": [],
-          "cells": {
-            "q_nps": "6",
-            "q_why": "The onboarding was fine, but exporting data to our warehouse took three attempts and a support ticket. Once it worked it was great. I would love scheduled exports, a proper audit log, and a way to filter responses by tag without leaving the page. The onboarding was fine, but expo…",
-            "q_plan": "Startup",
-            "q_features": "Surveys, Workflows, Contacts, Segments, Webhooks",
-            "q_ease": "3 / 5",
-            "q_next": "Scheduled exports, an audit log, and filtering by tag."
-          }
-        },
-        {
-          "id": "clrs00000000000000000003",
-          "createdAt": "2026-03-13T09:31:00.000Z",
-          "finished": true,
-          "language": "en",
-          "tags": [],
-          "cells": {
-            "q_nps": "9",
-            "q_why": "Love the agent integration, it saves me an hour a week.",
-            "q_plan": "Pro",
-            "q_features": "Surveys",
-            "q_ease": "4 / 5"
-          }
-        },
-        {
-          "id": "clrs00000000000000000004",
-          "createdAt": "2026-03-12T20:18:00.000Z",
-          "finished": true,
-          "language": "en",
-          "tags": [
-            "detractor"
-          ],
-          "cells": {
-            "q_nps": "2",
-            "q_why": "<script>alert('hi')</script> Pricing page was confusing & the trial ended before I finished.",
-            "q_plan": "Free",
-            "q_features": "Surveys",
-            "q_ease": "2 / 5",
-            "q_next": "Clearer pricing",
-            "q_consent": "Not accepted"
-          }
-        },
-        {
-          "id": "clrs00000000000000000005",
-          "createdAt": "2026-03-12T08:02:00.000Z",
-          "finished": false,
-          "language": "en",
-          "tags": [],
-          "cells": {
-            "q_nps": "8",
-            "q_plan": "Pro",
-            "q_features": "Surveys, Contacts, Workflows",
-            "q_ease": "5 / 5"
-          }
-        },
-        {
-          "id": "clrs00000000000000000006",
-          "createdAt": "2026-03-11T14:55:00.000Z",
-          "finished": true,
-          "language": "ar",
-          "tags": [],
-          "cells": {
-            "q_nps": "10",
-            "q_why": "ممتاز، سهل الاستخدام وسريع",
-            "q_plan": "Startup",
-            "q_features": "Surveys, Segments",
-            "q_ease": "5 / 5",
-            "q_next": "دعم اللغة العربية بشكل أفضل"
-          }
-        },
-        {
-          "id": "clrs00000000000000000007",
-          "createdAt": "2026-03-10T17:44:00.000Z",
-          "finished": true,
-          "language": "en",
-          "tags": [],
-          "cells": {
-            "q_nps": "7",
-            "q_why": "Good, but the response table needs more filters.",
-            "q_plan": "Pro",
-            "q_features": "Surveys, Contacts",
-            "q_ease": "4 / 5",
-            "q_next": "Per-question filters"
-          }
-        },
-        {
-          "id": "clrs00000000000000000008",
-          "createdAt": "2026-03-09T10:12:00.000Z",
-          "finished": true,
-          "language": "de",
-          "tags": [],
-          "cells": {
-            "q_nps": "9",
-            "q_why": "Das Team hat uns toll beraten 🎉",
-            "q_plan": "Enterprise",
-            "q_features": "Surveys, Workflows, Webhooks",
-            "q_ease": "4 / 5"
-          }
-        },
-        {
-          "id": "clrs00000000000000000009",
-          "createdAt": "2026-03-08T13:03:00.000Z",
-          "finished": true,
-          "language": "en",
-          "tags": [],
-          "cells": {
-            "q_nps": "5",
-            "q_why": "It works. Nothing special.",
-            "q_plan": "Free",
-            "q_features": "Surveys",
-            "q_ease": "3 / 5"
-          }
-        },
-        {
-          "id": "clrs00000000000000000010",
-          "createdAt": "2026-03-07T09:50:00.000Z",
-          "finished": true,
-          "language": "en",
-          "tags": [],
-          "cells": {
-            "q_nps": "10",
-            "q_why": "Switching from a competitor was painless.",
-            "q_plan": "Pro",
-            "q_features": "Surveys, Contacts, Segments",
-            "q_ease": "5 / 5",
-            "q_next": "More chart types"
-          }
+          "position": 7,
+          "type": "consent"
         }
       ],
       "nextCursor": "eyJrIjoicmVzcG9uc2VzIiwidiI6IjIwMjYtMDMtMDdUMDk6NTA6MDAuMDAwWiJ9",
+      "query": {
+        "limit": 10,
+        "sortBy": "-createdAt",
+        "surveyId": "clsv000000000000000000001",
+        "workspaceId": "clws000000000000000000001"
+      },
+      "requestId": "req_dev_1",
+      "rows": [
+        {
+          "cells": {
+            "q_consent": "Accepted",
+            "q_ease": "5 / 5",
+            "q_features": "Surveys, Contacts",
+            "q_next": "Slack integration",
+            "q_nps": "10",
+            "q_plan": "Pro",
+            "q_why": "Fast to set up and the team replied within an hour."
+          },
+          "createdAt": "2026-03-14T16:42:00.000Z",
+          "finished": true,
+          "id": "clrs00000000000000000001",
+          "language": "en",
+          "tags": ["promoter"]
+        },
+        {
+          "cells": {
+            "q_ease": "3 / 5",
+            "q_features": "Surveys, Workflows, Contacts, Segments, Webhooks",
+            "q_next": "Scheduled exports, an audit log, and filtering by tag.",
+            "q_nps": "6",
+            "q_plan": "Startup",
+            "q_why": "The onboarding was fine, but exporting data to our warehouse took three attempts and a support ticket. Once it worked it was great. I would love scheduled exports, a proper audit log, and a way to filter responses by tag without leaving the page. The onboarding was fine, but expo…"
+          },
+          "createdAt": "2026-03-14T11:05:00.000Z",
+          "finished": false,
+          "id": "clrs00000000000000000002",
+          "language": "en",
+          "tags": []
+        },
+        {
+          "cells": {
+            "q_ease": "4 / 5",
+            "q_features": "Surveys",
+            "q_nps": "9",
+            "q_plan": "Pro",
+            "q_why": "Love the agent integration, it saves me an hour a week."
+          },
+          "createdAt": "2026-03-13T09:31:00.000Z",
+          "finished": true,
+          "id": "clrs00000000000000000003",
+          "language": "en",
+          "tags": []
+        },
+        {
+          "cells": {
+            "q_consent": "Not accepted",
+            "q_ease": "2 / 5",
+            "q_features": "Surveys",
+            "q_next": "Clearer pricing",
+            "q_nps": "2",
+            "q_plan": "Free",
+            "q_why": "<script>alert('hi')</script> Pricing page was confusing & the trial ended before I finished."
+          },
+          "createdAt": "2026-03-12T20:18:00.000Z",
+          "finished": true,
+          "id": "clrs00000000000000000004",
+          "language": "en",
+          "tags": ["detractor"]
+        },
+        {
+          "cells": {
+            "q_ease": "5 / 5",
+            "q_features": "Surveys, Contacts, Workflows",
+            "q_nps": "8",
+            "q_plan": "Pro"
+          },
+          "createdAt": "2026-03-12T08:02:00.000Z",
+          "finished": false,
+          "id": "clrs00000000000000000005",
+          "language": "en",
+          "tags": []
+        },
+        {
+          "cells": {
+            "q_ease": "5 / 5",
+            "q_features": "Surveys, Segments",
+            "q_next": "دعم اللغة العربية بشكل أفضل",
+            "q_nps": "10",
+            "q_plan": "Startup",
+            "q_why": "ممتاز، سهل الاستخدام وسريع"
+          },
+          "createdAt": "2026-03-11T14:55:00.000Z",
+          "finished": true,
+          "id": "clrs00000000000000000006",
+          "language": "ar",
+          "tags": []
+        },
+        {
+          "cells": {
+            "q_ease": "4 / 5",
+            "q_features": "Surveys, Contacts",
+            "q_next": "Per-question filters",
+            "q_nps": "7",
+            "q_plan": "Pro",
+            "q_why": "Good, but the response table needs more filters."
+          },
+          "createdAt": "2026-03-10T17:44:00.000Z",
+          "finished": true,
+          "id": "clrs00000000000000000007",
+          "language": "en",
+          "tags": []
+        },
+        {
+          "cells": {
+            "q_ease": "4 / 5",
+            "q_features": "Surveys, Workflows, Webhooks",
+            "q_nps": "9",
+            "q_plan": "Enterprise",
+            "q_why": "Das Team hat uns toll beraten 🎉"
+          },
+          "createdAt": "2026-03-09T10:12:00.000Z",
+          "finished": true,
+          "id": "clrs00000000000000000008",
+          "language": "de",
+          "tags": []
+        },
+        {
+          "cells": {
+            "q_ease": "3 / 5",
+            "q_features": "Surveys",
+            "q_nps": "5",
+            "q_plan": "Free",
+            "q_why": "It works. Nothing special."
+          },
+          "createdAt": "2026-03-08T13:03:00.000Z",
+          "finished": true,
+          "id": "clrs00000000000000000009",
+          "language": "en",
+          "tags": []
+        },
+        {
+          "cells": {
+            "q_ease": "5 / 5",
+            "q_features": "Surveys, Contacts, Segments",
+            "q_next": "More chart types",
+            "q_nps": "10",
+            "q_plan": "Pro",
+            "q_why": "Switching from a competitor was painless."
+          },
+          "createdAt": "2026-03-07T09:50:00.000Z",
+          "finished": true,
+          "id": "clrs00000000000000000010",
+          "language": "en",
+          "tags": []
+        }
+      ],
+      "survey": {
+        "id": "clsv000000000000000000001",
+        "name": "Customer satisfaction, Q1 2026"
+      },
       "total": {
         "count": 134,
         "relation": "eq"
-      },
-      "requestId": "req_dev_1"
+      }
     }
   },
+  "toolName": "show_responses",
   "tools": {
+    "get_response": {
+      "content": [
+        {
+          "text": "(response)",
+          "type": "text"
+        }
+      ],
+      "structuredContent": {
+        "data": {
+          "answers": [
+            {
+              "elementId": "q_nps",
+              "elementLabel": "How likely are you to recommend us to a friend or colleague?",
+              "elementType": "nps",
+              "position": 1,
+              "range": {
+                "max": 10,
+                "min": 0
+              },
+              "valueNumber": 6
+            },
+            {
+              "elementId": "q_why",
+              "elementLabel": "What is the main reason for your score?",
+              "elementType": "openText",
+              "position": 2,
+              "valueText": "The onboarding was fine, but exporting data to our warehouse took three attempts and a support ticket. Once it worked it was great. I would love scheduled exports, a proper audit log, and a way to filter responses by tag without leaving the page. The onboarding was fine, but exporting data to our warehouse took three attempts and a support ticket. Once it worked it was great. I would love scheduled exports, a proper audit log, and a way to filter responses by tag without leaving the page. The onboarding was fine, but exporting data to our warehouse took three attempts and a support ticket. Once it worked it was great. I would love scheduled exports, a proper audit log, and a way to filter responses by tag without leaving the page. The onboarding was fine, but exporting data to our warehouse took three attempts and a support ticket. Once it worked it was great. I would love scheduled exports, a proper audit log, and a way to filter responses by tag without leaving the page. The onboarding was fine, but exporting data to our warehouse took three attempts and a support ticket. Once it worked it was great. I would love scheduled exports, a proper audit log, and a way to filter responses by tag without leaving the page. "
+            },
+            {
+              "elementId": "q_plan",
+              "elementLabel": "Which plan are you on?",
+              "elementType": "multipleChoiceSingle",
+              "position": 3,
+              "selections": [
+                {
+                  "match": "exact",
+                  "optionId": "p_startup",
+                  "optionLabel": "Startup",
+                  "rawValue": "Startup"
+                }
+              ]
+            },
+            {
+              "elementId": "q_features",
+              "elementLabel": "Which features do you use?",
+              "elementType": "multipleChoiceMulti",
+              "position": 4,
+              "selections": [
+                {
+                  "match": "exact",
+                  "optionId": "f_surveys",
+                  "optionLabel": "Surveys",
+                  "rawValue": "Surveys"
+                },
+                {
+                  "match": "exact",
+                  "optionId": "f_workflows",
+                  "optionLabel": "Workflows",
+                  "rawValue": "Workflows"
+                },
+                {
+                  "match": "exact",
+                  "optionId": "f_contacts",
+                  "optionLabel": "Contacts",
+                  "rawValue": "Contacts"
+                },
+                {
+                  "match": "exact",
+                  "optionId": "f_segments",
+                  "optionLabel": "Segments",
+                  "rawValue": "Segments"
+                },
+                {
+                  "match": "exact",
+                  "optionId": "f_webhooks",
+                  "optionLabel": "Webhooks",
+                  "rawValue": "Webhooks"
+                }
+              ]
+            },
+            {
+              "elementId": "q_ease",
+              "elementLabel": "How easy was it to get started?",
+              "elementType": "rating",
+              "position": 5,
+              "range": {
+                "max": 5,
+                "min": 1
+              },
+              "scale": "star",
+              "valueNumber": 3
+            },
+            {
+              "elementId": "q_next",
+              "elementLabel": "Anything we should build next?",
+              "elementType": "openText",
+              "position": 6,
+              "valueText": "Scheduled exports, an audit log, and filtering by tag."
+            }
+          ],
+          "contact": {
+            "id": "clct000000000000000000001",
+            "userId": "user_8841"
+          },
+          "createdAt": "2026-03-14T11:05:00.000Z",
+          "data": {},
+          "displayId": null,
+          "durationSeconds": 74,
+          "embeddedData": [
+            {
+              "key": "plan",
+              "kind": "ingested",
+              "label": "plan",
+              "type": "string",
+              "value": "pro"
+            },
+            {
+              "key": "utm_source",
+              "kind": "ingested",
+              "label": "utm_source",
+              "type": "string",
+              "value": "newsletter"
+            }
+          ],
+          "endingId": null,
+          "finished": false,
+          "id": "clrs00000000000000000002",
+          "language": "en",
+          "resolution": {
+            "labelPolicy": "currentSurveyDefinition",
+            "labelsLanguage": "en",
+            "surveyUpdatedAt": "2026-02-20T09:00:00.000Z"
+          },
+          "singleUseId": null,
+          "surveyId": "clsv000000000000000000001",
+          "surveyName": "Customer satisfaction, Q1 2026",
+          "tags": [],
+          "unresolved": [],
+          "updatedAt": "2026-03-14T11:05:00.000Z",
+          "workspaceId": "clws000000000000000000001"
+        },
+        "requestId": "req_dev_3"
+      }
+    },
     "list_responses": [
       {
         "content": [
           {
-            "type": "text",
-            "text": "{\"data\":\"(omitted in fixture)\"}"
+            "text": "{\"data\":\"(omitted in fixture)\"}",
+            "type": "text"
           }
         ],
         "structuredContent": {
           "data": [
             {
-              "id": "clrs00000000000000000011",
-              "surveyId": "clsv000000000000000000001",
-              "surveyName": "Customer satisfaction, Q1 2026",
-              "workspaceId": "clws000000000000000000001",
-              "createdAt": "2026-03-06T15:20:00.000Z",
-              "updatedAt": "2026-03-06T15:20:00.000Z",
-              "finished": true,
-              "endingId": "end_1",
-              "language": "en",
-              "durationSeconds": 137,
-              "resolution": {
-                "labelPolicy": "currentSurveyDefinition",
-                "labelsLanguage": "en",
-                "surveyUpdatedAt": "2026-02-20T09:00:00.000Z"
-              },
               "answers": [
                 {
-                  "position": 1,
                   "elementId": "q_nps",
-                  "elementType": "nps",
                   "elementLabel": "How likely are you to recommend us to a friend or colleague?",
-                  "valueNumber": 8,
+                  "elementType": "nps",
+                  "position": 1,
                   "range": {
-                    "min": 0,
-                    "max": 10
-                  }
+                    "max": 10,
+                    "min": 0
+                  },
+                  "valueNumber": 8
                 },
                 {
-                  "position": 2,
                   "elementId": "q_why",
-                  "elementType": "openText",
                   "elementLabel": "What is the main reason for your score?",
+                  "elementType": "openText",
+                  "position": 2,
                   "valueText": "Solid."
                 },
                 {
-                  "position": 3,
                   "elementId": "q_plan",
-                  "elementType": "multipleChoiceSingle",
                   "elementLabel": "Which plan are you on?",
+                  "elementType": "multipleChoiceSingle",
+                  "position": 3,
                   "selections": [
                     {
+                      "match": "exact",
                       "optionId": "p_startup",
                       "optionLabel": "Startup",
-                      "rawValue": "Startup",
-                      "match": "exact"
+                      "rawValue": "Startup"
                     }
                   ]
                 },
                 {
-                  "position": 4,
                   "elementId": "q_features",
-                  "elementType": "multipleChoiceMulti",
                   "elementLabel": "Which features do you use?",
+                  "elementType": "multipleChoiceMulti",
+                  "position": 4,
                   "selections": [
                     {
+                      "match": "exact",
                       "optionId": "f_surveys",
                       "optionLabel": "Surveys",
-                      "rawValue": "Surveys",
-                      "match": "exact"
+                      "rawValue": "Surveys"
                     }
                   ]
                 },
                 {
-                  "position": 5,
                   "elementId": "q_ease",
-                  "elementType": "rating",
                   "elementLabel": "How easy was it to get started?",
-                  "valueNumber": 4,
+                  "elementType": "rating",
+                  "position": 5,
                   "range": {
-                    "min": 1,
-                    "max": 5
+                    "max": 5,
+                    "min": 1
                   },
-                  "scale": "star"
+                  "scale": "star",
+                  "valueNumber": 4
                 }
               ],
+              "createdAt": "2026-03-06T15:20:00.000Z",
+              "durationSeconds": 137,
               "embeddedData": [],
-              "unresolved": [],
-              "tags": []
-            },
-            {
-              "id": "clrs00000000000000000012",
-              "surveyId": "clsv000000000000000000001",
-              "surveyName": "Customer satisfaction, Q1 2026",
-              "workspaceId": "clws000000000000000000001",
-              "createdAt": "2026-03-05T12:41:00.000Z",
-              "updatedAt": "2026-03-05T12:41:00.000Z",
-              "finished": false,
-              "endingId": null,
+              "endingId": "end_1",
+              "finished": true,
+              "id": "clrs00000000000000000011",
               "language": "en",
-              "durationSeconds": 144,
               "resolution": {
                 "labelPolicy": "currentSurveyDefinition",
                 "labelsLanguage": "en",
                 "surveyUpdatedAt": "2026-02-20T09:00:00.000Z"
               },
+              "surveyId": "clsv000000000000000000001",
+              "surveyName": "Customer satisfaction, Q1 2026",
+              "tags": [],
+              "unresolved": [],
+              "updatedAt": "2026-03-06T15:20:00.000Z",
+              "workspaceId": "clws000000000000000000001"
+            },
+            {
               "answers": [
                 {
-                  "position": 1,
                   "elementId": "q_nps",
-                  "elementType": "nps",
                   "elementLabel": "How likely are you to recommend us to a friend or colleague?",
-                  "valueNumber": 3,
+                  "elementType": "nps",
+                  "position": 1,
                   "range": {
-                    "min": 0,
-                    "max": 10
-                  }
+                    "max": 10,
+                    "min": 0
+                  },
+                  "valueNumber": 3
                 },
                 {
-                  "position": 2,
                   "elementId": "q_why",
-                  "elementType": "openText",
                   "elementLabel": "What is the main reason for your score?",
+                  "elementType": "openText",
+                  "position": 2,
                   "valueText": "Could not figure out how to embed the survey."
                 },
                 {
-                  "position": 3,
                   "elementId": "q_plan",
-                  "elementType": "multipleChoiceSingle",
                   "elementLabel": "Which plan are you on?",
+                  "elementType": "multipleChoiceSingle",
+                  "position": 3,
                   "selections": [
                     {
+                      "match": "exact",
                       "optionId": "p_free",
                       "optionLabel": "Free",
-                      "rawValue": "Free",
-                      "match": "exact"
+                      "rawValue": "Free"
                     }
                   ]
                 },
                 {
-                  "position": 4,
                   "elementId": "q_features",
-                  "elementType": "multipleChoiceMulti",
                   "elementLabel": "Which features do you use?",
+                  "elementType": "multipleChoiceMulti",
+                  "position": 4,
                   "selections": [
                     {
+                      "match": "exact",
                       "optionId": "f_surveys",
                       "optionLabel": "Surveys",
-                      "rawValue": "Surveys",
-                      "match": "exact"
+                      "rawValue": "Surveys"
                     }
                   ]
                 },
                 {
-                  "position": 5,
                   "elementId": "q_ease",
-                  "elementType": "rating",
                   "elementLabel": "How easy was it to get started?",
-                  "valueNumber": 1,
+                  "elementType": "rating",
+                  "position": 5,
                   "range": {
-                    "min": 1,
-                    "max": 5
+                    "max": 5,
+                    "min": 1
                   },
-                  "scale": "star"
+                  "scale": "star",
+                  "valueNumber": 1
                 },
                 {
-                  "position": 6,
                   "elementId": "q_next",
-                  "elementType": "openText",
                   "elementLabel": "Anything we should build next?",
+                  "elementType": "openText",
+                  "position": 6,
                   "valueText": "Embed guide"
                 }
               ],
+              "createdAt": "2026-03-05T12:41:00.000Z",
+              "durationSeconds": 144,
               "embeddedData": [],
-              "unresolved": [],
-              "tags": []
-            },
-            {
-              "id": "clrs00000000000000000013",
-              "surveyId": "clsv000000000000000000001",
-              "surveyName": "Customer satisfaction, Q1 2026",
-              "workspaceId": "clws000000000000000000001",
-              "createdAt": "2026-03-04T08:09:00.000Z",
-              "updatedAt": "2026-03-04T08:09:00.000Z",
-              "finished": true,
-              "endingId": "end_1",
+              "endingId": null,
+              "finished": false,
+              "id": "clrs00000000000000000012",
               "language": "en",
-              "durationSeconds": 151,
               "resolution": {
                 "labelPolicy": "currentSurveyDefinition",
                 "labelsLanguage": "en",
                 "surveyUpdatedAt": "2026-02-20T09:00:00.000Z"
               },
+              "surveyId": "clsv000000000000000000001",
+              "surveyName": "Customer satisfaction, Q1 2026",
+              "tags": [],
+              "unresolved": [],
+              "updatedAt": "2026-03-05T12:41:00.000Z",
+              "workspaceId": "clws000000000000000000001"
+            },
+            {
               "answers": [
                 {
-                  "position": 1,
                   "elementId": "q_nps",
-                  "elementType": "nps",
                   "elementLabel": "How likely are you to recommend us to a friend or colleague?",
-                  "valueNumber": 9,
+                  "elementType": "nps",
+                  "position": 1,
                   "range": {
-                    "min": 0,
-                    "max": 10
-                  }
+                    "max": 10,
+                    "min": 0
+                  },
+                  "valueNumber": 9
                 },
                 {
-                  "position": 2,
                   "elementId": "q_why",
-                  "elementType": "openText",
                   "elementLabel": "What is the main reason for your score?",
+                  "elementType": "openText",
+                  "position": 2,
                   "valueText": "Great docs."
                 },
                 {
-                  "position": 3,
                   "elementId": "q_plan",
-                  "elementType": "multipleChoiceSingle",
                   "elementLabel": "Which plan are you on?",
+                  "elementType": "multipleChoiceSingle",
+                  "position": 3,
                   "selections": [
                     {
+                      "match": "exact",
                       "optionId": "p_pro",
                       "optionLabel": "Pro",
-                      "rawValue": "Pro",
-                      "match": "exact"
+                      "rawValue": "Pro"
                     }
                   ]
                 },
                 {
-                  "position": 4,
                   "elementId": "q_features",
-                  "elementType": "multipleChoiceMulti",
                   "elementLabel": "Which features do you use?",
+                  "elementType": "multipleChoiceMulti",
+                  "position": 4,
                   "selections": [
                     {
+                      "match": "exact",
                       "optionId": "f_surveys",
                       "optionLabel": "Surveys",
-                      "rawValue": "Surveys",
-                      "match": "exact"
+                      "rawValue": "Surveys"
                     },
                     {
+                      "match": "exact",
                       "optionId": "f_workflows",
                       "optionLabel": "Workflows",
-                      "rawValue": "Workflows",
-                      "match": "exact"
+                      "rawValue": "Workflows"
                     }
                   ]
                 },
                 {
-                  "position": 5,
                   "elementId": "q_ease",
-                  "elementType": "rating",
                   "elementLabel": "How easy was it to get started?",
-                  "valueNumber": 5,
+                  "elementType": "rating",
+                  "position": 5,
                   "range": {
-                    "min": 1,
-                    "max": 5
+                    "max": 5,
+                    "min": 1
                   },
-                  "scale": "star"
+                  "scale": "star",
+                  "valueNumber": 5
                 }
               ],
+              "createdAt": "2026-03-04T08:09:00.000Z",
+              "durationSeconds": 151,
               "embeddedData": [],
-              "unresolved": [],
-              "tags": []
-            },
-            {
-              "id": "clrs00000000000000000014",
-              "surveyId": "clsv000000000000000000001",
-              "surveyName": "Customer satisfaction, Q1 2026",
-              "workspaceId": "clws000000000000000000001",
-              "createdAt": "2026-03-03T18:33:00.000Z",
-              "updatedAt": "2026-03-03T18:33:00.000Z",
-              "finished": true,
               "endingId": "end_1",
+              "finished": true,
+              "id": "clrs00000000000000000013",
               "language": "en",
-              "durationSeconds": 158,
               "resolution": {
                 "labelPolicy": "currentSurveyDefinition",
                 "labelsLanguage": "en",
                 "surveyUpdatedAt": "2026-02-20T09:00:00.000Z"
               },
+              "surveyId": "clsv000000000000000000001",
+              "surveyName": "Customer satisfaction, Q1 2026",
+              "tags": [],
+              "unresolved": [],
+              "updatedAt": "2026-03-04T08:09:00.000Z",
+              "workspaceId": "clws000000000000000000001"
+            },
+            {
               "answers": [
                 {
-                  "position": 1,
                   "elementId": "q_nps",
-                  "elementType": "nps",
                   "elementLabel": "How likely are you to recommend us to a friend or colleague?",
-                  "valueNumber": 10,
+                  "elementType": "nps",
+                  "position": 1,
                   "range": {
-                    "min": 0,
-                    "max": 10
-                  }
+                    "max": 10,
+                    "min": 0
+                  },
+                  "valueNumber": 10
                 },
                 {
-                  "position": 2,
                   "elementId": "q_why",
-                  "elementType": "openText",
                   "elementLabel": "What is the main reason for your score?",
+                  "elementType": "openText",
+                  "position": 2,
                   "valueText": "Everything I wanted."
                 },
                 {
-                  "position": 3,
                   "elementId": "q_plan",
-                  "elementType": "multipleChoiceSingle",
                   "elementLabel": "Which plan are you on?",
+                  "elementType": "multipleChoiceSingle",
+                  "position": 3,
                   "selections": [
                     {
+                      "match": "exact",
                       "optionId": "p_enterprise",
                       "optionLabel": "Enterprise",
-                      "rawValue": "Enterprise",
-                      "match": "exact"
+                      "rawValue": "Enterprise"
                     }
                   ]
                 },
                 {
-                  "position": 4,
                   "elementId": "q_features",
-                  "elementType": "multipleChoiceMulti",
                   "elementLabel": "Which features do you use?",
+                  "elementType": "multipleChoiceMulti",
+                  "position": 4,
                   "selections": [
                     {
+                      "match": "exact",
                       "optionId": "f_surveys",
                       "optionLabel": "Surveys",
-                      "rawValue": "Surveys",
-                      "match": "exact"
+                      "rawValue": "Surveys"
                     },
                     {
+                      "match": "exact",
                       "optionId": "f_contacts",
                       "optionLabel": "Contacts",
-                      "rawValue": "Contacts",
-                      "match": "exact"
+                      "rawValue": "Contacts"
                     },
                     {
+                      "match": "exact",
                       "optionId": "f_workflows",
                       "optionLabel": "Workflows",
-                      "rawValue": "Workflows",
-                      "match": "exact"
+                      "rawValue": "Workflows"
                     },
                     {
+                      "match": "exact",
                       "optionId": "f_segments",
                       "optionLabel": "Segments",
-                      "rawValue": "Segments",
-                      "match": "exact"
+                      "rawValue": "Segments"
                     }
                   ]
                 },
                 {
-                  "position": 5,
                   "elementId": "q_ease",
-                  "elementType": "rating",
                   "elementLabel": "How easy was it to get started?",
-                  "valueNumber": 5,
+                  "elementType": "rating",
+                  "position": 5,
                   "range": {
-                    "min": 1,
-                    "max": 5
+                    "max": 5,
+                    "min": 1
                   },
-                  "scale": "star"
+                  "scale": "star",
+                  "valueNumber": 5
                 }
               ],
+              "createdAt": "2026-03-03T18:33:00.000Z",
+              "durationSeconds": 158,
               "embeddedData": [],
-              "unresolved": [],
-              "tags": []
-            },
-            {
-              "id": "clrs00000000000000000015",
-              "surveyId": "clsv000000000000000000001",
-              "surveyName": "Customer satisfaction, Q1 2026",
-              "workspaceId": "clws000000000000000000001",
-              "createdAt": "2026-03-02T10:27:00.000Z",
-              "updatedAt": "2026-03-02T10:27:00.000Z",
-              "finished": true,
               "endingId": "end_1",
+              "finished": true,
+              "id": "clrs00000000000000000014",
               "language": "en",
-              "durationSeconds": 165,
               "resolution": {
                 "labelPolicy": "currentSurveyDefinition",
                 "labelsLanguage": "en",
                 "surveyUpdatedAt": "2026-02-20T09:00:00.000Z"
               },
+              "surveyId": "clsv000000000000000000001",
+              "surveyName": "Customer satisfaction, Q1 2026",
+              "tags": [],
+              "unresolved": [],
+              "updatedAt": "2026-03-03T18:33:00.000Z",
+              "workspaceId": "clws000000000000000000001"
+            },
+            {
               "answers": [
                 {
-                  "position": 1,
                   "elementId": "q_nps",
-                  "elementType": "nps",
                   "elementLabel": "How likely are you to recommend us to a friend or colleague?",
-                  "valueNumber": 7,
+                  "elementType": "nps",
+                  "position": 1,
                   "range": {
-                    "min": 0,
-                    "max": 10
-                  }
+                    "max": 10,
+                    "min": 0
+                  },
+                  "valueNumber": 7
                 },
                 {
-                  "position": 2,
                   "elementId": "q_why",
-                  "elementType": "openText",
                   "elementLabel": "What is the main reason for your score?",
+                  "elementType": "openText",
+                  "position": 2,
                   "valueText": "OK."
                 },
                 {
-                  "position": 3,
                   "elementId": "q_plan",
-                  "elementType": "multipleChoiceSingle",
                   "elementLabel": "Which plan are you on?",
+                  "elementType": "multipleChoiceSingle",
+                  "position": 3,
                   "selections": [
                     {
+                      "match": "exact",
                       "optionId": "p_pro",
                       "optionLabel": "Pro",
-                      "rawValue": "Pro",
-                      "match": "exact"
+                      "rawValue": "Pro"
                     }
                   ]
                 },
                 {
-                  "position": 4,
                   "elementId": "q_features",
-                  "elementType": "multipleChoiceMulti",
                   "elementLabel": "Which features do you use?",
+                  "elementType": "multipleChoiceMulti",
+                  "position": 4,
                   "selections": [
                     {
+                      "match": "exact",
                       "optionId": "f_contacts",
                       "optionLabel": "Contacts",
-                      "rawValue": "Contacts",
-                      "match": "exact"
+                      "rawValue": "Contacts"
                     }
                   ]
                 },
                 {
-                  "position": 5,
                   "elementId": "q_ease",
-                  "elementType": "rating",
                   "elementLabel": "How easy was it to get started?",
-                  "valueNumber": 3,
+                  "elementType": "rating",
+                  "position": 5,
                   "range": {
-                    "min": 1,
-                    "max": 5
+                    "max": 5,
+                    "min": 1
                   },
-                  "scale": "star"
+                  "scale": "star",
+                  "valueNumber": 3
                 }
               ],
+              "createdAt": "2026-03-02T10:27:00.000Z",
+              "durationSeconds": 165,
               "embeddedData": [],
+              "endingId": "end_1",
+              "finished": true,
+              "id": "clrs00000000000000000015",
+              "language": "en",
+              "resolution": {
+                "labelPolicy": "currentSurveyDefinition",
+                "labelsLanguage": "en",
+                "surveyUpdatedAt": "2026-02-20T09:00:00.000Z"
+              },
+              "surveyId": "clsv000000000000000000001",
+              "surveyName": "Customer satisfaction, Q1 2026",
+              "tags": [],
               "unresolved": [],
-              "tags": []
+              "updatedAt": "2026-03-02T10:27:00.000Z",
+              "workspaceId": "clws000000000000000000001"
             }
           ],
           "meta": {
@@ -683,387 +823,387 @@
       {
         "content": [
           {
-            "type": "text",
-            "text": "{\"data\":\"(omitted in fixture)\"}"
+            "text": "{\"data\":\"(omitted in fixture)\"}",
+            "type": "text"
           }
         ],
         "structuredContent": {
           "data": [
             {
-              "id": "clrs00000000000000000002",
-              "surveyId": "clsv000000000000000000001",
-              "surveyName": "Customer satisfaction, Q1 2026",
-              "workspaceId": "clws000000000000000000001",
-              "createdAt": "2026-03-14T11:05:00.000Z",
-              "updatedAt": "2026-03-14T11:05:00.000Z",
-              "finished": false,
-              "endingId": null,
-              "language": "en",
-              "durationSeconds": 74,
-              "resolution": {
-                "labelPolicy": "currentSurveyDefinition",
-                "labelsLanguage": "en",
-                "surveyUpdatedAt": "2026-02-20T09:00:00.000Z"
-              },
               "answers": [
                 {
-                  "position": 1,
                   "elementId": "q_nps",
-                  "elementType": "nps",
                   "elementLabel": "How likely are you to recommend us to a friend or colleague?",
-                  "valueNumber": 6,
+                  "elementType": "nps",
+                  "position": 1,
                   "range": {
-                    "min": 0,
-                    "max": 10
-                  }
+                    "max": 10,
+                    "min": 0
+                  },
+                  "valueNumber": 6
                 },
                 {
-                  "position": 2,
                   "elementId": "q_why",
-                  "elementType": "openText",
                   "elementLabel": "What is the main reason for your score?",
+                  "elementType": "openText",
+                  "position": 2,
                   "valueText": "The onboarding was fine, but exporting data to our warehouse took three attempts and a support ticket. Once it worked it was great. I would love scheduled exports, a proper audit log, and a way to filter responses by tag without leaving the page. The onboarding was fine, but exporting data to our warehouse took three attempts and a support ticket. Once it worked it was great. I would love scheduled exports, a proper audit log, and a way to filter responses by tag without leaving the page. The onboarding was fine, but exporting data to our warehouse took three attempts and a support ticket. Once it worked it was great. I would love scheduled exports, a proper audit log, and a way to filter responses by tag without leaving the page. The onboarding was fine, but exporting data to our warehouse took three attempts and a support ticket. Once it worked it was great. I would love scheduled exports, a proper audit log, and a way to filter responses by tag without leaving the page. The onboarding was fine, but exporting data to our warehouse took three attempts and a support ticket. Once it worked it was great. I would love scheduled exports, a proper audit log, and a way to filter responses by tag without leaving the page. "
                 },
                 {
-                  "position": 3,
                   "elementId": "q_plan",
-                  "elementType": "multipleChoiceSingle",
                   "elementLabel": "Which plan are you on?",
+                  "elementType": "multipleChoiceSingle",
+                  "position": 3,
                   "selections": [
                     {
+                      "match": "exact",
                       "optionId": "p_startup",
                       "optionLabel": "Startup",
-                      "rawValue": "Startup",
-                      "match": "exact"
+                      "rawValue": "Startup"
                     }
                   ]
                 },
                 {
-                  "position": 4,
                   "elementId": "q_features",
-                  "elementType": "multipleChoiceMulti",
                   "elementLabel": "Which features do you use?",
+                  "elementType": "multipleChoiceMulti",
+                  "position": 4,
                   "selections": [
                     {
+                      "match": "exact",
                       "optionId": "f_surveys",
                       "optionLabel": "Surveys",
-                      "rawValue": "Surveys",
-                      "match": "exact"
+                      "rawValue": "Surveys"
                     },
                     {
+                      "match": "exact",
                       "optionId": "f_workflows",
                       "optionLabel": "Workflows",
-                      "rawValue": "Workflows",
-                      "match": "exact"
+                      "rawValue": "Workflows"
                     },
                     {
+                      "match": "exact",
                       "optionId": "f_contacts",
                       "optionLabel": "Contacts",
-                      "rawValue": "Contacts",
-                      "match": "exact"
+                      "rawValue": "Contacts"
                     },
                     {
+                      "match": "exact",
                       "optionId": "f_segments",
                       "optionLabel": "Segments",
-                      "rawValue": "Segments",
-                      "match": "exact"
+                      "rawValue": "Segments"
                     },
                     {
+                      "match": "exact",
                       "optionId": "f_webhooks",
                       "optionLabel": "Webhooks",
-                      "rawValue": "Webhooks",
-                      "match": "exact"
+                      "rawValue": "Webhooks"
                     }
                   ]
                 },
                 {
-                  "position": 5,
                   "elementId": "q_ease",
-                  "elementType": "rating",
                   "elementLabel": "How easy was it to get started?",
-                  "valueNumber": 3,
+                  "elementType": "rating",
+                  "position": 5,
                   "range": {
-                    "min": 1,
-                    "max": 5
+                    "max": 5,
+                    "min": 1
                   },
-                  "scale": "star"
+                  "scale": "star",
+                  "valueNumber": 3
                 },
                 {
-                  "position": 6,
                   "elementId": "q_next",
-                  "elementType": "openText",
                   "elementLabel": "Anything we should build next?",
+                  "elementType": "openText",
+                  "position": 6,
                   "valueText": "Scheduled exports, an audit log, and filtering by tag."
                 }
               ],
+              "createdAt": "2026-03-14T11:05:00.000Z",
+              "durationSeconds": 74,
               "embeddedData": [],
-              "unresolved": [],
-              "tags": []
-            },
-            {
-              "id": "clrs00000000000000000003",
-              "surveyId": "clsv000000000000000000001",
-              "surveyName": "Customer satisfaction, Q1 2026",
-              "workspaceId": "clws000000000000000000001",
-              "createdAt": "2026-03-13T09:31:00.000Z",
-              "updatedAt": "2026-03-13T09:31:00.000Z",
-              "finished": true,
-              "endingId": "end_1",
+              "endingId": null,
+              "finished": false,
+              "id": "clrs00000000000000000002",
               "language": "en",
-              "durationSeconds": 81,
               "resolution": {
                 "labelPolicy": "currentSurveyDefinition",
                 "labelsLanguage": "en",
                 "surveyUpdatedAt": "2026-02-20T09:00:00.000Z"
               },
+              "surveyId": "clsv000000000000000000001",
+              "surveyName": "Customer satisfaction, Q1 2026",
+              "tags": [],
+              "unresolved": [],
+              "updatedAt": "2026-03-14T11:05:00.000Z",
+              "workspaceId": "clws000000000000000000001"
+            },
+            {
               "answers": [
                 {
-                  "position": 1,
                   "elementId": "q_nps",
-                  "elementType": "nps",
                   "elementLabel": "How likely are you to recommend us to a friend or colleague?",
-                  "valueNumber": 9,
+                  "elementType": "nps",
+                  "position": 1,
                   "range": {
-                    "min": 0,
-                    "max": 10
-                  }
+                    "max": 10,
+                    "min": 0
+                  },
+                  "valueNumber": 9
                 },
                 {
-                  "position": 2,
                   "elementId": "q_why",
-                  "elementType": "openText",
                   "elementLabel": "What is the main reason for your score?",
+                  "elementType": "openText",
+                  "position": 2,
                   "valueText": "Love the agent integration, it saves me an hour a week."
                 },
                 {
-                  "position": 3,
                   "elementId": "q_plan",
-                  "elementType": "multipleChoiceSingle",
                   "elementLabel": "Which plan are you on?",
+                  "elementType": "multipleChoiceSingle",
+                  "position": 3,
                   "selections": [
                     {
+                      "match": "exact",
                       "optionId": "p_pro",
                       "optionLabel": "Pro",
-                      "rawValue": "Pro",
-                      "match": "exact"
+                      "rawValue": "Pro"
                     }
                   ]
                 },
                 {
-                  "position": 4,
                   "elementId": "q_features",
-                  "elementType": "multipleChoiceMulti",
                   "elementLabel": "Which features do you use?",
+                  "elementType": "multipleChoiceMulti",
+                  "position": 4,
                   "selections": [
                     {
+                      "match": "exact",
                       "optionId": "f_surveys",
                       "optionLabel": "Surveys",
-                      "rawValue": "Surveys",
-                      "match": "exact"
+                      "rawValue": "Surveys"
                     }
                   ]
                 },
                 {
-                  "position": 5,
                   "elementId": "q_ease",
-                  "elementType": "rating",
                   "elementLabel": "How easy was it to get started?",
-                  "valueNumber": 4,
+                  "elementType": "rating",
+                  "position": 5,
                   "range": {
-                    "min": 1,
-                    "max": 5
+                    "max": 5,
+                    "min": 1
                   },
-                  "scale": "star"
+                  "scale": "star",
+                  "valueNumber": 4
                 }
               ],
+              "createdAt": "2026-03-13T09:31:00.000Z",
+              "durationSeconds": 81,
               "embeddedData": [],
-              "unresolved": [],
-              "tags": []
-            },
-            {
-              "id": "clrs00000000000000000004",
-              "surveyId": "clsv000000000000000000001",
-              "surveyName": "Customer satisfaction, Q1 2026",
-              "workspaceId": "clws000000000000000000001",
-              "createdAt": "2026-03-12T20:18:00.000Z",
-              "updatedAt": "2026-03-12T20:18:00.000Z",
-              "finished": true,
               "endingId": "end_1",
+              "finished": true,
+              "id": "clrs00000000000000000003",
               "language": "en",
-              "durationSeconds": 88,
               "resolution": {
                 "labelPolicy": "currentSurveyDefinition",
                 "labelsLanguage": "en",
                 "surveyUpdatedAt": "2026-02-20T09:00:00.000Z"
               },
+              "surveyId": "clsv000000000000000000001",
+              "surveyName": "Customer satisfaction, Q1 2026",
+              "tags": [],
+              "unresolved": [],
+              "updatedAt": "2026-03-13T09:31:00.000Z",
+              "workspaceId": "clws000000000000000000001"
+            },
+            {
               "answers": [
                 {
-                  "position": 1,
                   "elementId": "q_nps",
-                  "elementType": "nps",
                   "elementLabel": "How likely are you to recommend us to a friend or colleague?",
-                  "valueNumber": 2,
+                  "elementType": "nps",
+                  "position": 1,
                   "range": {
-                    "min": 0,
-                    "max": 10
-                  }
+                    "max": 10,
+                    "min": 0
+                  },
+                  "valueNumber": 2
                 },
                 {
-                  "position": 2,
                   "elementId": "q_why",
-                  "elementType": "openText",
                   "elementLabel": "What is the main reason for your score?",
+                  "elementType": "openText",
+                  "position": 2,
                   "valueText": "<script>alert('hi')</script> Pricing page was confusing & the trial ended before I finished."
                 },
                 {
-                  "position": 3,
                   "elementId": "q_plan",
-                  "elementType": "multipleChoiceSingle",
                   "elementLabel": "Which plan are you on?",
+                  "elementType": "multipleChoiceSingle",
+                  "position": 3,
                   "selections": [
                     {
+                      "match": "exact",
                       "optionId": "p_free",
                       "optionLabel": "Free",
-                      "rawValue": "Free",
-                      "match": "exact"
+                      "rawValue": "Free"
                     }
                   ]
                 },
                 {
-                  "position": 4,
                   "elementId": "q_features",
-                  "elementType": "multipleChoiceMulti",
                   "elementLabel": "Which features do you use?",
+                  "elementType": "multipleChoiceMulti",
+                  "position": 4,
                   "selections": [
                     {
+                      "match": "exact",
                       "optionId": "f_surveys",
                       "optionLabel": "Surveys",
-                      "rawValue": "Surveys",
-                      "match": "exact"
+                      "rawValue": "Surveys"
                     }
                   ]
                 },
                 {
-                  "position": 5,
                   "elementId": "q_ease",
-                  "elementType": "rating",
                   "elementLabel": "How easy was it to get started?",
-                  "valueNumber": 2,
+                  "elementType": "rating",
+                  "position": 5,
                   "range": {
-                    "min": 1,
-                    "max": 5
+                    "max": 5,
+                    "min": 1
                   },
-                  "scale": "star"
+                  "scale": "star",
+                  "valueNumber": 2
                 },
                 {
-                  "position": 6,
                   "elementId": "q_next",
-                  "elementType": "openText",
                   "elementLabel": "Anything we should build next?",
+                  "elementType": "openText",
+                  "position": 6,
                   "valueText": "Clearer pricing"
                 },
                 {
-                  "position": 7,
                   "elementId": "q_consent",
-                  "elementType": "consent",
                   "elementLabel": "Can we contact you about your answers?",
-                  "valueBoolean": false,
-                  "rawValue": "dismissed"
+                  "elementType": "consent",
+                  "position": 7,
+                  "rawValue": "dismissed",
+                  "valueBoolean": false
                 }
               ],
+              "createdAt": "2026-03-12T20:18:00.000Z",
+              "durationSeconds": 88,
               "embeddedData": [],
-              "unresolved": [],
+              "endingId": "end_1",
+              "finished": true,
+              "id": "clrs00000000000000000004",
+              "language": "en",
+              "resolution": {
+                "labelPolicy": "currentSurveyDefinition",
+                "labelsLanguage": "en",
+                "surveyUpdatedAt": "2026-02-20T09:00:00.000Z"
+              },
+              "surveyId": "clsv000000000000000000001",
+              "surveyName": "Customer satisfaction, Q1 2026",
               "tags": [
                 {
                   "id": "cltg000000000000000000002",
                   "name": "detractor"
                 }
-              ]
+              ],
+              "unresolved": [],
+              "updatedAt": "2026-03-12T20:18:00.000Z",
+              "workspaceId": "clws000000000000000000001"
             },
             {
-              "id": "clrs00000000000000000005",
-              "surveyId": "clsv000000000000000000001",
-              "surveyName": "Customer satisfaction, Q1 2026",
-              "workspaceId": "clws000000000000000000001",
+              "answers": [
+                {
+                  "elementId": "q_nps",
+                  "elementLabel": "How likely are you to recommend us to a friend or colleague?",
+                  "elementType": "nps",
+                  "position": 1,
+                  "range": {
+                    "max": 10,
+                    "min": 0
+                  },
+                  "valueNumber": 8
+                },
+                {
+                  "elementId": "q_plan",
+                  "elementLabel": "Which plan are you on?",
+                  "elementType": "multipleChoiceSingle",
+                  "position": 3,
+                  "selections": [
+                    {
+                      "match": "exact",
+                      "optionId": "p_pro",
+                      "optionLabel": "Pro",
+                      "rawValue": "Pro"
+                    }
+                  ]
+                },
+                {
+                  "elementId": "q_features",
+                  "elementLabel": "Which features do you use?",
+                  "elementType": "multipleChoiceMulti",
+                  "position": 4,
+                  "selections": [
+                    {
+                      "match": "exact",
+                      "optionId": "f_surveys",
+                      "optionLabel": "Surveys",
+                      "rawValue": "Surveys"
+                    },
+                    {
+                      "match": "exact",
+                      "optionId": "f_contacts",
+                      "optionLabel": "Contacts",
+                      "rawValue": "Contacts"
+                    },
+                    {
+                      "match": "exact",
+                      "optionId": "f_workflows",
+                      "optionLabel": "Workflows",
+                      "rawValue": "Workflows"
+                    }
+                  ]
+                },
+                {
+                  "elementId": "q_ease",
+                  "elementLabel": "How easy was it to get started?",
+                  "elementType": "rating",
+                  "position": 5,
+                  "range": {
+                    "max": 5,
+                    "min": 1
+                  },
+                  "scale": "star",
+                  "valueNumber": 5
+                }
+              ],
               "createdAt": "2026-03-12T08:02:00.000Z",
-              "updatedAt": "2026-03-12T08:02:00.000Z",
-              "finished": false,
-              "endingId": null,
-              "language": "en",
               "durationSeconds": 95,
+              "embeddedData": [],
+              "endingId": null,
+              "finished": false,
+              "id": "clrs00000000000000000005",
+              "language": "en",
               "resolution": {
                 "labelPolicy": "currentSurveyDefinition",
                 "labelsLanguage": "en",
                 "surveyUpdatedAt": "2026-02-20T09:00:00.000Z"
               },
-              "answers": [
-                {
-                  "position": 1,
-                  "elementId": "q_nps",
-                  "elementType": "nps",
-                  "elementLabel": "How likely are you to recommend us to a friend or colleague?",
-                  "valueNumber": 8,
-                  "range": {
-                    "min": 0,
-                    "max": 10
-                  }
-                },
-                {
-                  "position": 3,
-                  "elementId": "q_plan",
-                  "elementType": "multipleChoiceSingle",
-                  "elementLabel": "Which plan are you on?",
-                  "selections": [
-                    {
-                      "optionId": "p_pro",
-                      "optionLabel": "Pro",
-                      "rawValue": "Pro",
-                      "match": "exact"
-                    }
-                  ]
-                },
-                {
-                  "position": 4,
-                  "elementId": "q_features",
-                  "elementType": "multipleChoiceMulti",
-                  "elementLabel": "Which features do you use?",
-                  "selections": [
-                    {
-                      "optionId": "f_surveys",
-                      "optionLabel": "Surveys",
-                      "rawValue": "Surveys",
-                      "match": "exact"
-                    },
-                    {
-                      "optionId": "f_contacts",
-                      "optionLabel": "Contacts",
-                      "rawValue": "Contacts",
-                      "match": "exact"
-                    },
-                    {
-                      "optionId": "f_workflows",
-                      "optionLabel": "Workflows",
-                      "rawValue": "Workflows",
-                      "match": "exact"
-                    }
-                  ]
-                },
-                {
-                  "position": 5,
-                  "elementId": "q_ease",
-                  "elementType": "rating",
-                  "elementLabel": "How easy was it to get started?",
-                  "valueNumber": 5,
-                  "range": {
-                    "min": 1,
-                    "max": 5
-                  },
-                  "scale": "star"
-                }
-              ],
-              "embeddedData": [],
+              "surveyId": "clsv000000000000000000001",
+              "surveyName": "Customer satisfaction, Q1 2026",
+              "tags": [],
               "unresolved": [],
-              "tags": []
+              "updatedAt": "2026-03-12T08:02:00.000Z",
+              "workspaceId": "clws000000000000000000001"
             }
           ],
           "meta": {
@@ -1075,150 +1215,6 @@
           "requestId": "req_dev_2"
         }
       }
-    ],
-    "get_response": {
-      "content": [
-        {
-          "type": "text",
-          "text": "(response)"
-        }
-      ],
-      "structuredContent": {
-        "data": {
-          "id": "clrs00000000000000000002",
-          "surveyId": "clsv000000000000000000001",
-          "surveyName": "Customer satisfaction, Q1 2026",
-          "workspaceId": "clws000000000000000000001",
-          "createdAt": "2026-03-14T11:05:00.000Z",
-          "updatedAt": "2026-03-14T11:05:00.000Z",
-          "finished": false,
-          "endingId": null,
-          "language": "en",
-          "durationSeconds": 74,
-          "resolution": {
-            "labelPolicy": "currentSurveyDefinition",
-            "labelsLanguage": "en",
-            "surveyUpdatedAt": "2026-02-20T09:00:00.000Z"
-          },
-          "answers": [
-            {
-              "position": 1,
-              "elementId": "q_nps",
-              "elementType": "nps",
-              "elementLabel": "How likely are you to recommend us to a friend or colleague?",
-              "valueNumber": 6,
-              "range": {
-                "min": 0,
-                "max": 10
-              }
-            },
-            {
-              "position": 2,
-              "elementId": "q_why",
-              "elementType": "openText",
-              "elementLabel": "What is the main reason for your score?",
-              "valueText": "The onboarding was fine, but exporting data to our warehouse took three attempts and a support ticket. Once it worked it was great. I would love scheduled exports, a proper audit log, and a way to filter responses by tag without leaving the page. The onboarding was fine, but exporting data to our warehouse took three attempts and a support ticket. Once it worked it was great. I would love scheduled exports, a proper audit log, and a way to filter responses by tag without leaving the page. The onboarding was fine, but exporting data to our warehouse took three attempts and a support ticket. Once it worked it was great. I would love scheduled exports, a proper audit log, and a way to filter responses by tag without leaving the page. The onboarding was fine, but exporting data to our warehouse took three attempts and a support ticket. Once it worked it was great. I would love scheduled exports, a proper audit log, and a way to filter responses by tag without leaving the page. The onboarding was fine, but exporting data to our warehouse took three attempts and a support ticket. Once it worked it was great. I would love scheduled exports, a proper audit log, and a way to filter responses by tag without leaving the page. "
-            },
-            {
-              "position": 3,
-              "elementId": "q_plan",
-              "elementType": "multipleChoiceSingle",
-              "elementLabel": "Which plan are you on?",
-              "selections": [
-                {
-                  "optionId": "p_startup",
-                  "optionLabel": "Startup",
-                  "rawValue": "Startup",
-                  "match": "exact"
-                }
-              ]
-            },
-            {
-              "position": 4,
-              "elementId": "q_features",
-              "elementType": "multipleChoiceMulti",
-              "elementLabel": "Which features do you use?",
-              "selections": [
-                {
-                  "optionId": "f_surveys",
-                  "optionLabel": "Surveys",
-                  "rawValue": "Surveys",
-                  "match": "exact"
-                },
-                {
-                  "optionId": "f_workflows",
-                  "optionLabel": "Workflows",
-                  "rawValue": "Workflows",
-                  "match": "exact"
-                },
-                {
-                  "optionId": "f_contacts",
-                  "optionLabel": "Contacts",
-                  "rawValue": "Contacts",
-                  "match": "exact"
-                },
-                {
-                  "optionId": "f_segments",
-                  "optionLabel": "Segments",
-                  "rawValue": "Segments",
-                  "match": "exact"
-                },
-                {
-                  "optionId": "f_webhooks",
-                  "optionLabel": "Webhooks",
-                  "rawValue": "Webhooks",
-                  "match": "exact"
-                }
-              ]
-            },
-            {
-              "position": 5,
-              "elementId": "q_ease",
-              "elementType": "rating",
-              "elementLabel": "How easy was it to get started?",
-              "valueNumber": 3,
-              "range": {
-                "min": 1,
-                "max": 5
-              },
-              "scale": "star"
-            },
-            {
-              "position": 6,
-              "elementId": "q_next",
-              "elementType": "openText",
-              "elementLabel": "Anything we should build next?",
-              "valueText": "Scheduled exports, an audit log, and filtering by tag."
-            }
-          ],
-          "embeddedData": [
-            {
-              "key": "plan",
-              "kind": "ingested",
-              "type": "string",
-              "label": "plan",
-              "value": "pro"
-            },
-            {
-              "key": "utm_source",
-              "kind": "ingested",
-              "type": "string",
-              "label": "utm_source",
-              "value": "newsletter"
-            }
-          ],
-          "unresolved": [],
-          "tags": [],
-          "data": {},
-          "contact": {
-            "id": "clct000000000000000000001",
-            "userId": "user_8841"
-          },
-          "displayId": null,
-          "singleUseId": null
-        },
-        "requestId": "req_dev_3"
-      }
-    }
+    ]
   }
 }

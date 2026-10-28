@@ -1,84 +1,68 @@
 {
-  "toolName": "show_feedback_chart",
   "input": {
-    "workspaceId": "tz4a98xxat96iws9zmbrgj3a",
     "query": {
-      "measures": [
-        "FeedbackRecords.npsAverage"
-      ],
-      "dimensions": [
-        "FeedbackRecords.language"
-      ],
+      "dimensions": ["FeedbackRecords.language"],
+      "limit": 1000,
+      "measures": ["FeedbackRecords.npsAverage"],
       "timeDimensions": [
         {
+          "dateRange": ["2026-10-01", "2026-10-21"],
           "dimension": "FeedbackRecords.collectedAt",
-          "granularity": "day",
-          "dateRange": [
-            "2026-10-01",
-            "2026-10-21"
-          ]
+          "granularity": "day"
         }
-      ],
-      "limit": 1000
-    }
+      ]
+    },
+    "workspaceId": "tz4a98xxat96iws9zmbrgj3a"
   },
   "result": {
     "content": [
       {
-        "type": "text",
-        "text": "NPS: Average by day and language: 126 rows from the feedback dataset \"Product feedback\", shown to the user as a line chart.\n| Collected At (day) | Language | NPS: Average |\n| --- |\n| 2026-10-01T00:00:00.000 | en | 7 |\n| 2026-10-01T00:00:00.000 | de | 7.76 |\n| 2026-10-01T00:00:00.000 | fr | 7.59 |\n| 2026-10-01T00:00:00.000 | es | 6.42 |\n| 2026-10-01T00:00:00.000 | pt | 5.09 |\n| 2026-10-01T00:00:00.000 | it | 4.6 |\n| 2026-10-02T00:00:00.000 | en | 7.39 |\n| 2026-10-02T00:00:00.000 | de | 7.92 |\n| 2026-10-02T00:00:00.000 | fr | 7.37 |\n| 2026-10-02T00:00:00.000 | es | 6.02 |\n| 2026-10-02T00:00:00.000 | pt | 4.89 |\n| 2026-10-02T00:00:00.000 | it | 4.77 |"
+        "text": "NPS: Average by day and language: 126 rows from the feedback dataset \"Product feedback\", shown to the user as a line chart.\n| Collected At (day) | Language | NPS: Average |\n| --- |\n| 2026-10-01T00:00:00.000 | en | 7 |\n| 2026-10-01T00:00:00.000 | de | 7.76 |\n| 2026-10-01T00:00:00.000 | fr | 7.59 |\n| 2026-10-01T00:00:00.000 | es | 6.42 |\n| 2026-10-01T00:00:00.000 | pt | 5.09 |\n| 2026-10-01T00:00:00.000 | it | 4.6 |\n| 2026-10-02T00:00:00.000 | en | 7.39 |\n| 2026-10-02T00:00:00.000 | de | 7.92 |\n| 2026-10-02T00:00:00.000 | fr | 7.37 |\n| 2026-10-02T00:00:00.000 | es | 6.02 |\n| 2026-10-02T00:00:00.000 | pt | 4.89 |\n| 2026-10-02T00:00:00.000 | it | 4.77 |",
+        "type": "text"
       }
     ],
     "structuredContent": {
-      "datasetId": "ds4a98xxat96iws9zmbrgj3aaa",
-      "datasetName": "Product feedback",
-      "query": {
-        "measures": [
-          "FeedbackRecords.npsAverage"
-        ],
-        "dimensions": [
-          "FeedbackRecords.language"
-        ],
-        "timeDimensions": [
-          {
-            "dimension": "FeedbackRecords.collectedAt",
-            "granularity": "day",
-            "dateRange": [
-              "2026-10-01",
-              "2026-10-21"
-            ]
-          }
-        ],
-        "limit": 1000
-      },
       "chart": {
-        "type": "line",
+        "granularity": "day",
+        "series": "FeedbackRecords.language",
         "title": "NPS: Average by day and language",
+        "type": "line",
         "x": "FeedbackRecords.collectedAt.day",
         "xKind": "time",
-        "granularity": "day",
-        "y": [
-          "FeedbackRecords.npsAverage"
-        ],
-        "series": "FeedbackRecords.language"
+        "y": ["FeedbackRecords.npsAverage"]
       },
       "columns": [
         {
           "id": "FeedbackRecords.collectedAt.day",
-          "label": "Collected At (day)",
-          "kind": "time"
+          "kind": "time",
+          "label": "Collected At (day)"
         },
         {
           "id": "FeedbackRecords.language",
-          "label": "Language",
-          "kind": "dimension"
+          "kind": "dimension",
+          "label": "Language"
         },
         {
           "id": "FeedbackRecords.npsAverage",
-          "label": "NPS: Average",
-          "kind": "measure"
+          "kind": "measure",
+          "label": "NPS: Average"
         }
       ],
+      "datasetId": "ds4a98xxat96iws9zmbrgj3aaa",
+      "datasetName": "Product feedback",
+      "query": {
+        "dimensions": ["FeedbackRecords.language"],
+        "limit": 1000,
+        "measures": ["FeedbackRecords.npsAverage"],
+        "timeDimensions": [
+          {
+            "dateRange": ["2026-10-01", "2026-10-21"],
+            "dimension": "FeedbackRecords.collectedAt",
+            "granularity": "day"
+          }
+        ]
+      },
+      "requestId": "req_lines",
       "rows": [
         {
           "FeedbackRecords.collectedAt.day": "2026-10-01T00:00:00.000",
@@ -711,9 +695,9 @@
           "FeedbackRecords.npsAverage": 4.81
         }
       ],
-      "truncated": false,
-      "requestId": "req_lines"
+      "truncated": false
     }
   },
+  "toolName": "show_feedback_chart",
   "tools": {}
 }

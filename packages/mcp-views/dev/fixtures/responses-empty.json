@@ -1,42 +1,42 @@
 {
-  "toolName": "show_responses",
   "input": {
-    "workspaceId": "clws000000000000000000001",
-    "surveyId": "clsv000000000000000000001"
+    "surveyId": "clsv000000000000000000001",
+    "workspaceId": "clws000000000000000000001"
   },
   "result": {
     "content": [
       {
-        "type": "text",
-        "text": "No responses match for survey clsv000000000000000000001. The person is looking at an empty table with filters they can change."
+        "text": "No responses match for survey clsv000000000000000000001. The person is looking at an empty table with filters they can change.",
+        "type": "text"
       }
     ],
     "structuredContent": {
+      "columns": [],
+      "nextCursor": null,
+      "query": {
+        "limit": 10,
+        "sortBy": "-createdAt",
+        "surveyId": "clsv000000000000000000001",
+        "workspaceId": "clws000000000000000000001"
+      },
+      "requestId": "req_dev_1",
+      "rows": [],
       "survey": {
         "id": "clsv000000000000000000001"
       },
-      "query": {
-        "workspaceId": "clws000000000000000000001",
-        "surveyId": "clsv000000000000000000001",
-        "limit": 10,
-        "sortBy": "-createdAt"
-      },
-      "columns": [],
-      "rows": [],
-      "nextCursor": null,
       "total": {
         "count": 0,
         "relation": "eq"
-      },
-      "requestId": "req_dev_1"
+      }
     }
   },
+  "toolName": "show_responses",
   "tools": {
     "list_responses": {
       "content": [
         {
-          "type": "text",
-          "text": "{\"data\":\"(omitted in fixture)\"}"
+          "text": "{\"data\":\"(omitted in fixture)\"}",
+          "type": "text"
         }
       ],
       "structuredContent": {

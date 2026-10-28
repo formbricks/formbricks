@@ -1,74 +1,59 @@
 {
-  "toolName": "show_feedback_chart",
   "input": {
-    "workspaceId": "tz4a98xxat96iws9zmbrgj3a",
     "query": {
-      "measures": [
-        "FeedbackRecords.count",
-        "FeedbackRecords.promoterCount",
-        "FeedbackRecords.npsScore"
-      ],
-      "limit": 100
-    }
+      "limit": 100,
+      "measures": ["FeedbackRecords.count", "FeedbackRecords.promoterCount", "FeedbackRecords.npsScore"]
+    },
+    "workspaceId": "tz4a98xxat96iws9zmbrgj3a"
   },
   "result": {
     "content": [
       {
-        "type": "text",
-        "text": "Feedback Records, NPS: Promoters and NPS: Score: 1 rows from the feedback dataset \"Product feedback\", shown to the user as a number.\n| Feedback Records | NPS: Promoters | NPS: Score |\n| --- |\n| 12840 | 4210 | (none) |"
+        "text": "Feedback Records, NPS: Promoters and NPS: Score: 1 rows from the feedback dataset \"Product feedback\", shown to the user as a number.\n| Feedback Records | NPS: Promoters | NPS: Score |\n| --- |\n| 12840 | 4210 | (none) |",
+        "type": "text"
       }
     ],
     "structuredContent": {
-      "datasetId": "ds4a98xxat96iws9zmbrgj3aaa",
-      "datasetName": "Product feedback",
-      "query": {
-        "measures": [
-          "FeedbackRecords.count",
-          "FeedbackRecords.promoterCount",
-          "FeedbackRecords.npsScore"
-        ],
-        "limit": 100
-      },
       "chart": {
-        "type": "number",
         "title": "Feedback Records, NPS: Promoters and NPS: Score",
-        "y": [
-          "FeedbackRecords.count",
-          "FeedbackRecords.promoterCount",
-          "FeedbackRecords.npsScore"
-        ]
+        "type": "number",
+        "y": ["FeedbackRecords.count", "FeedbackRecords.promoterCount", "FeedbackRecords.npsScore"]
       },
       "columns": [
         {
           "id": "FeedbackRecords.count",
-          "label": "Feedback Records",
-          "kind": "measure"
+          "kind": "measure",
+          "label": "Feedback Records"
         },
         {
           "id": "FeedbackRecords.promoterCount",
-          "label": "NPS: Promoters",
-          "kind": "measure"
+          "kind": "measure",
+          "label": "NPS: Promoters"
         },
         {
+          "domain": [-100, 100],
           "id": "FeedbackRecords.npsScore",
-          "label": "NPS: Score",
           "kind": "measure",
-          "domain": [
-            -100,
-            100
-          ]
+          "label": "NPS: Score"
         }
       ],
+      "datasetId": "ds4a98xxat96iws9zmbrgj3aaa",
+      "datasetName": "Product feedback",
+      "query": {
+        "limit": 100,
+        "measures": ["FeedbackRecords.count", "FeedbackRecords.promoterCount", "FeedbackRecords.npsScore"]
+      },
+      "requestId": "req_numbers",
       "rows": [
         {
           "FeedbackRecords.count": 12840,
-          "FeedbackRecords.promoterCount": 4210,
-          "FeedbackRecords.npsScore": null
+          "FeedbackRecords.npsScore": null,
+          "FeedbackRecords.promoterCount": 4210
         }
       ],
-      "truncated": false,
-      "requestId": "req_numbers"
+      "truncated": false
     }
   },
+  "toolName": "show_feedback_chart",
   "tools": {}
 }

@@ -1,25 +1,25 @@
 {
-  "toolName": "show_workflow",
   "input": {
     "workflowId": "cm9zr4wf0000608l8k2m3n4p5q"
   },
   "result": {
-    "isError": true,
     "content": [
       {
-        "type": "text",
-        "text": "{\"error\":{\"status\":403,\"title\":\"Forbidden\",\"detail\":\"You are not authorized to access this resource\",\"requestId\":\"req_1\",\"code\":\"forbidden\"}}"
+        "text": "{\"error\":{\"status\":403,\"title\":\"Forbidden\",\"detail\":\"You are not authorized to access this resource\",\"requestId\":\"req_1\",\"code\":\"forbidden\"}}",
+        "type": "text"
       }
     ],
+    "isError": true,
     "structuredContent": {
       "error": {
-        "status": 403,
-        "title": "Forbidden",
+        "code": "forbidden",
         "detail": "You are not authorized to access this resource",
         "requestId": "req_1",
-        "code": "forbidden"
+        "status": 403,
+        "title": "Forbidden"
       }
     }
   },
+  "toolName": "show_workflow",
   "tools": {}
 }

@@ -51,6 +51,8 @@ describe("resolveYAxis", () => {
   test("stays on a bounded score's own range, widening only if the data leaves it", () => {
     const axis = resolveYAxis({ values: [10, 40], fixed: [-100, 100] });
     expect([axis.min, axis.max]).toEqual([-100, 100]);
+    expect(axis.ticks).toEqual([-100, -50, 0, 50, 100]);
+    expect(resolveYAxis({ values: [10], fixed: [-100, 100], target: 2 }).ticks).toEqual([-100, 100]);
     expect(resolveYAxis({ values: [150], fixed: [-100, 100] }).max).toBeGreaterThanOrEqual(150);
   });
 

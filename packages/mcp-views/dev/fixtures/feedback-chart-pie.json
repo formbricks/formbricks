@@ -1,117 +1,97 @@
 {
-  "toolName": "show_feedback_chart",
   "input": {
-    "workspaceId": "tz4a98xxat96iws9zmbrgj3a",
-    "query": {
-      "measures": [
-        "FeedbackRecords.count"
-      ],
-      "dimensions": [
-        "FeedbackRecords.sourceName"
-      ],
-      "order": [
-        [
-          "FeedbackRecords.count",
-          "desc"
-        ]
-      ],
-      "limit": 100
-    },
     "chart": {
       "type": "pie"
-    }
+    },
+    "query": {
+      "dimensions": ["FeedbackRecords.sourceName"],
+      "limit": 100,
+      "measures": ["FeedbackRecords.count"],
+      "order": [["FeedbackRecords.count", "desc"]]
+    },
+    "workspaceId": "tz4a98xxat96iws9zmbrgj3a"
   },
   "result": {
     "content": [
       {
-        "type": "text",
-        "text": "Feedback Records by source name: 10 rows from the feedback dataset \"Product feedback\", shown to the user as a pie chart.\n| Source Name | Feedback Records |\n| --- |\n| Website survey | 860 |\n| In-app survey | 640 |\n| Email survey | 410 |\n| Intercom | 220 |\n| App Store reviews | 180 |\n| Trustpilot | 120 |\n| Zendesk tickets | 90 |\n| Slack | 44 |\n| Sales calls | 31 |\n| Community forum | 12 |"
+        "text": "Feedback Records by source name: 10 rows from the feedback dataset \"Product feedback\", shown to the user as a pie chart.\n| Source Name | Feedback Records |\n| --- |\n| Website survey | 860 |\n| In-app survey | 640 |\n| Email survey | 410 |\n| Intercom | 220 |\n| App Store reviews | 180 |\n| Trustpilot | 120 |\n| Zendesk tickets | 90 |\n| Slack | 44 |\n| Sales calls | 31 |\n| Community forum | 12 |",
+        "type": "text"
       }
     ],
     "structuredContent": {
-      "datasetId": "ds4a98xxat96iws9zmbrgj3aaa",
-      "datasetName": "Product feedback",
-      "query": {
-        "measures": [
-          "FeedbackRecords.count"
-        ],
-        "dimensions": [
-          "FeedbackRecords.sourceName"
-        ],
-        "order": [
-          [
-            "FeedbackRecords.count",
-            "desc"
-          ]
-        ],
-        "limit": 100
-      },
       "chart": {
-        "type": "pie",
         "title": "Feedback Records by source name",
+        "type": "pie",
         "x": "FeedbackRecords.sourceName",
         "xKind": "category",
-        "y": [
-          "FeedbackRecords.count"
-        ]
+        "y": ["FeedbackRecords.count"]
       },
       "columns": [
         {
           "id": "FeedbackRecords.sourceName",
-          "label": "Source Name",
-          "kind": "dimension"
+          "kind": "dimension",
+          "label": "Source Name"
         },
         {
           "id": "FeedbackRecords.count",
-          "label": "Feedback Records",
-          "kind": "measure"
+          "kind": "measure",
+          "label": "Feedback Records"
         }
       ],
+      "datasetId": "ds4a98xxat96iws9zmbrgj3aaa",
+      "datasetName": "Product feedback",
+      "query": {
+        "dimensions": ["FeedbackRecords.sourceName"],
+        "limit": 100,
+        "measures": ["FeedbackRecords.count"],
+        "order": [["FeedbackRecords.count", "desc"]]
+      },
+      "requestId": "req_pie",
       "rows": [
         {
-          "FeedbackRecords.sourceName": "Website survey",
-          "FeedbackRecords.count": 860
+          "FeedbackRecords.count": 860,
+          "FeedbackRecords.sourceName": "Website survey"
         },
         {
-          "FeedbackRecords.sourceName": "In-app survey",
-          "FeedbackRecords.count": 640
+          "FeedbackRecords.count": 640,
+          "FeedbackRecords.sourceName": "In-app survey"
         },
         {
-          "FeedbackRecords.sourceName": "Email survey",
-          "FeedbackRecords.count": 410
+          "FeedbackRecords.count": 410,
+          "FeedbackRecords.sourceName": "Email survey"
         },
         {
-          "FeedbackRecords.sourceName": "Intercom",
-          "FeedbackRecords.count": 220
+          "FeedbackRecords.count": 220,
+          "FeedbackRecords.sourceName": "Intercom"
         },
         {
-          "FeedbackRecords.sourceName": "App Store reviews",
-          "FeedbackRecords.count": 180
+          "FeedbackRecords.count": 180,
+          "FeedbackRecords.sourceName": "App Store reviews"
         },
         {
-          "FeedbackRecords.sourceName": "Trustpilot",
-          "FeedbackRecords.count": 120
+          "FeedbackRecords.count": 120,
+          "FeedbackRecords.sourceName": "Trustpilot"
         },
         {
-          "FeedbackRecords.sourceName": "Zendesk tickets",
-          "FeedbackRecords.count": 90
+          "FeedbackRecords.count": 90,
+          "FeedbackRecords.sourceName": "Zendesk tickets"
         },
         {
-          "FeedbackRecords.sourceName": "Slack",
-          "FeedbackRecords.count": 44
+          "FeedbackRecords.count": 44,
+          "FeedbackRecords.sourceName": "Slack"
         },
         {
-          "FeedbackRecords.sourceName": "Sales calls",
-          "FeedbackRecords.count": 31
+          "FeedbackRecords.count": 31,
+          "FeedbackRecords.sourceName": "Sales calls"
         },
         {
-          "FeedbackRecords.sourceName": "Community forum",
-          "FeedbackRecords.count": 12
+          "FeedbackRecords.count": 12,
+          "FeedbackRecords.sourceName": "Community forum"
         }
       ],
-      "truncated": false,
-      "requestId": "req_pie"
+      "truncated": false
     }
   },
+  "toolName": "show_feedback_chart",
   "tools": {}
 }

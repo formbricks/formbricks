@@ -806,6 +806,57 @@ Reusing `<resource>:read` / `<resource>:write` needs nothing more. A new resourc
   result, including whole-subtree replaces. For an irreversible delete, consider confirming first the way
   `delete_response` does (elicitation, with a `confirm` argument for clients that cannot answer prompts).
 
+## Interactive views (MCP Apps)
+
+Tools can render an interactive view inside the agent. This follows the MCP Apps extension
+(`io.modelcontextprotocol/ui`, stable specification [2026-01-26](https://github.com/modelcontextprotocol/ext-apps/blob/main/specification/2026-01-26/apps.mdx)):
+
+- A view is a **resource** with a `ui://` URI and MIME type `text/html;profile=mcp-app`, one self-contained HTML document.
+- A **tool** links to its view with `_meta.ui.resourceUri`. We also write the deprecated flat `ui/resourceUri` key and ChatGPT's `openai/outputTemplate` alias (`buildMcpAppToolMeta`), so hosts on either side of the spec's transition render it. A host without MCP Apps support ignores all three and shows the tool's normal result, which is why every render tool keeps a meaningful `content` text.
+- The host renders the document in a sandboxed iframe and talks to it over `postMessage` JSON-RPC (`ui/initialize`, `ui/notifications/tool-input`, `ui/notifications/tool-result`, `tools/call`, `ui/message`, `ui/update-model-context`, `ui/open-link`). The view never holds a credential: its `tools/call` goes back through the host, on the user's own connection, and hits the same scope gate as any other call.
+- Without `_meta.ui.csp` the host applies the default policy (no network, inline scripts and styles only). A view declares only what it needs, and each declaration is a reviewable fact: today only the survey preview does (`resourceDomains` for the renderer script and storage images, `connectDomains` for the renderer's language files, both computed from `WEBAPP_URL` and `PUBLIC_URL` on every read).
+
+| View (`ui://formbricks/<view>.html`) | Tool | Notes |
+| --- | --- | --- |
+| `survey-preview` | `show_survey` | Review outline plus the real renderer in preview mode, loaded from the instance (`/js/surveys.umd.cjs`) instead of inlined (880 kB). `_meta.formbricks` carries the render payload and never the PIN or custom CSS source |
+| `document-review` | `review_document_change` | Runs `push_document` as a dry run (never writes) and diffs it against the stored document. The view's approve button calls `push_document` with the exact reviewed arguments, `confirmDestructive` only after the person ticks the checkbox, and the server re-checks staleness, scope and confirmation |
+| `feedback-chart` | `show_feedback_chart` | Same operation, limits and tenant isolation as `query_feedback`, plus a validated `chart` hint. Charts are hand-drawn SVG with a table fallback |
+| `responses` | `show_responses` | First page through the `list_responses` operation; paging, filters and detail go through `list_responses` and `get_response` |
+| `creative-preview` | `show_creative` | The real `@formbricks/creatives` renderer into a Shadow DOM on a placeholder page |
+| `workflow` | `show_workflow` | The workflow plus the 10 most recent runs, in one extra operation call |
+
+### Adding a view
+
+<Steps>
+  <Step title="Build the view">
+    Add `packages/mcp-views/src/views/<name>/` (`index.html`, `main.tsx`, `App.tsx`) and the name to `src/views.ts`.
+    Use `useToolView()` from `src/shared`, which connects with the official `@modelcontextprotocol/ext-apps` `App`
+    class, applies the host's theme and style variables, and tracks the tool input, result and host context.
+    Keep logic in `.ts` modules with unit tests and render user-authored text as text only. Build one view with
+    `node scripts/build.mjs --only=<name> --out=dist-<name>`; `pnpm build` writes every document and the
+    `dist/index.js` the web app imports.
+  </Step>
+  <Step title="Try it without a chat client">
+    `node dev/screenshot.mjs <view> <fixture> <out.png>` renders a fixture (`dev/fixtures/<fixture>.json`) through
+    the dev host (`dev/host.js`), a small host that speaks the host side of the protocol and enforces the default
+    CSP plus the domains the fixture declares. Look at light, dark and a narrow width. It is not a substitute for
+    a real client, which is the final check.
+  </Step>
+  <Step title="Register the resource and the tool">
+    In `apps/web/modules/mcp/apps/<name>/register.ts` call `registerMcpAppResource` and register the render tool
+    through `registerScopedTool` with `_meta: buildMcpAppToolMeta("<name>")`. The tool goes through the same v3
+    operation as its plain sibling, so authorization, tenancy and limits are decided in one place. Fill `content`
+    with a short summary a text-only host can use, `structuredContent` with the data the view renders, and
+    `_meta.formbricks` with bulky render data the model does not need. Add the tool to `apps/web/modules/mcp/apps/index.ts`
+    and to the roster in `app/api/mcp/route.test.ts`. Prefer reaching existing tools from the view
+    (`list_responses`, `push_document`, ...) over adding app-only tools; if one is unavoidable, mark it
+    `buildMcpAppOnlyToolMeta()` so hosts do not offer it to the model.
+  </Step>
+</Steps>
+
+Resources are not scope-gated: the document is static code and the MCP route already authenticated the caller.
+Server capability gating is not used either, because a host that ignores `_meta.ui` simply shows the text result.
+
 ## Available Tools
 
 ### list_surveys

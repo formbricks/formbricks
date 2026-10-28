@@ -1,107 +1,24 @@
 {
-  "toolName": "show_workflow",
   "input": {
     "workflowId": "cm9zr4wf0000608l8draft0001"
   },
   "result": {
     "content": [
       {
-        "type": "text",
-        "text": "Workflow \"Q3 onboarding follow-up with an unreasonably long workflow name that never breaks_anywhere_at_all_1234567890\" is draft, runs when a survey response is completed, 3 steps, no runs yet."
+        "text": "Workflow \"Q3 onboarding follow-up with an unreasonably long workflow name that never breaks_anywhere_at_all_1234567890\" is draft, runs when a survey response is completed, 3 steps, no runs yet.",
+        "type": "text"
       }
     ],
     "structuredContent": {
+      "recentRuns": [],
+      "requestId": "req_draft",
       "workflow": {
-        "id": "cm9zr4wf0000608l8draft0001",
-        "workspaceId": "cm9zr4wsp000508l8y6nh9r2v",
-        "name": "Q3 onboarding follow-up with an unreasonably long workflow name that never breaks_anywhere_at_all_1234567890",
-        "description": null,
-        "status": "draft",
-        "triggerType": "response.completed",
-        "surveyId": "cm9zr4mps000008l8btfy1vtz",
+        "createdAt": "2026-05-20T12:00:00.000Z",
         "createdBy": null,
         "creator": {
           "name": "Ada Lovelace"
         },
-        "createdAt": "2026-05-20T12:00:00.000Z",
-        "updatedAt": "2026-06-09T07:00:00.000Z",
-        "lastRun": null,
-        "runCount": 0,
         "definition": {
-          "schemaVersion": 1,
-          "trigger": {
-            "id": "trigger",
-            "type": "trigger",
-            "triggerType": "response.completed",
-            "config": {
-              "surveyId": "cm9zr4mps000008l8btfy1vtz",
-              "endingCardIds": []
-            },
-            "ui": {
-              "position": {
-                "x": 0,
-                "y": 0
-              }
-            }
-          },
-          "entryNodeId": "trigger",
-          "nodes": [
-            {
-              "id": "cond-2",
-              "type": "if_else",
-              "config": {
-                "condition": {
-                  "id": "g",
-                  "connector": "or",
-                  "conditions": [
-                    {
-                      "id": "x",
-                      "left": {
-                        "path": "response.nps"
-                      },
-                      "operator": "lessEqual",
-                      "right": 6
-                    }
-                  ]
-                }
-              }
-            },
-            {
-              "id": "mail-1",
-              "type": "action",
-              "actionType": "send_email",
-              "config": {
-                "to": "",
-                "from": "noreply@example.com",
-                "replyTo": [
-                  "support@example.com"
-                ],
-                "subject": "",
-                "body": "<p><br></p>",
-                "attachResponseData": false,
-                "includeHiddenFields": false,
-                "includeVariables": false
-              }
-            },
-            {
-              "id": "orphan",
-              "type": "action",
-              "actionType": "send_email",
-              "label": "Draft reminder (not wired up)",
-              "config": {
-                "to": "ops@example.com",
-                "from": "noreply@example.com",
-                "replyTo": [
-                  "support@example.com"
-                ],
-                "subject": "Reminder: https://example.com/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-                "body": "<p>Please follow up.</p>",
-                "attachResponseData": false,
-                "includeHiddenFields": false,
-                "includeVariables": false
-              }
-            }
-          ],
           "edges": [
             {
               "id": "d1",
@@ -114,19 +31,98 @@
               "sourceHandle": "then",
               "target": "mail-1"
             }
-          ]
-        }
-      },
-      "recentRuns": [],
-      "requestId": "req_draft"
+          ],
+          "entryNodeId": "trigger",
+          "nodes": [
+            {
+              "config": {
+                "condition": {
+                  "conditions": [
+                    {
+                      "id": "x",
+                      "left": {
+                        "path": "response.nps"
+                      },
+                      "operator": "lessEqual",
+                      "right": 6
+                    }
+                  ],
+                  "connector": "or",
+                  "id": "g"
+                }
+              },
+              "id": "cond-2",
+              "type": "if_else"
+            },
+            {
+              "actionType": "send_email",
+              "config": {
+                "attachResponseData": false,
+                "body": "<p><br></p>",
+                "from": "noreply@example.com",
+                "includeHiddenFields": false,
+                "includeVariables": false,
+                "replyTo": ["support@example.com"],
+                "subject": "",
+                "to": ""
+              },
+              "id": "mail-1",
+              "type": "action"
+            },
+            {
+              "actionType": "send_email",
+              "config": {
+                "attachResponseData": false,
+                "body": "<p>Please follow up.</p>",
+                "from": "noreply@example.com",
+                "includeHiddenFields": false,
+                "includeVariables": false,
+                "replyTo": ["support@example.com"],
+                "subject": "Reminder: https://example.com/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "to": "ops@example.com"
+              },
+              "id": "orphan",
+              "label": "Draft reminder (not wired up)",
+              "type": "action"
+            }
+          ],
+          "schemaVersion": 1,
+          "trigger": {
+            "config": {
+              "endingCardIds": [],
+              "surveyId": "cm9zr4mps000008l8btfy1vtz"
+            },
+            "id": "trigger",
+            "triggerType": "response.completed",
+            "type": "trigger",
+            "ui": {
+              "position": {
+                "x": 0,
+                "y": 0
+              }
+            }
+          }
+        },
+        "description": null,
+        "id": "cm9zr4wf0000608l8draft0001",
+        "lastRun": null,
+        "name": "Q3 onboarding follow-up with an unreasonably long workflow name that never breaks_anywhere_at_all_1234567890",
+        "runCount": 0,
+        "status": "draft",
+        "surveyId": "cm9zr4mps000008l8btfy1vtz",
+        "triggerType": "response.completed",
+        "updatedAt": "2026-06-09T07:00:00.000Z",
+        "workspaceId": "cm9zr4wsp000508l8y6nh9r2v"
+      }
     }
   },
+  "toolName": "show_workflow",
   "tools": {
     "list_workflow_runs": {
       "content": [
         {
-          "type": "text",
-          "text": "runs"
+          "text": "runs",
+          "type": "text"
         }
       ],
       "structuredContent": {

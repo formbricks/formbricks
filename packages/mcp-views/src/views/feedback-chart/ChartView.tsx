@@ -202,9 +202,9 @@ export const ChartView = ({
               {target.seriesValue ? ` · ${target.seriesValue}` : ""}
               {` · ${target.measureLabel}: `}
               <strong>{target.valueText}</strong>
-              {sendState === "sent" ? <span className="fbc-hint"> Sent to the agent.</span> : null}
+              {sendState === "sent" ? <span className="fbc-hint fbc-block">Sent to the agent.</span> : null}
               {sendState === "failed" ? (
-                <span className="fbc-hint"> The host did not accept the message.</span>
+                <span className="fbc-hint fbc-block">The host did not accept the message.</span>
               ) : null}
             </p>
             <div className="fbc-selection-actions">

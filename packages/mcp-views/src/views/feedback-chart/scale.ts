@@ -68,6 +68,13 @@ export const resolveYAxis = ({ values, fixed, target = 5 }: YDomainInput): NiceT
   const finite = values.filter((value) => Number.isFinite(value));
   const dataMin = finite.length > 0 ? Math.min(...finite) : 0;
   const dataMax = finite.length > 0 ? Math.max(...finite) : 1;
+  if (fixed && dataMin >= fixed[0] && dataMax <= fixed[1]) {
+    // The axis is the score's own range, ticked from its lower bound: no rounding out past 100.
+    const step = niceStep((fixed[1] - fixed[0]) / Math.max(1, target - 1));
+    const ticks: number[] = [];
+    for (let value = fixed[0]; value <= fixed[1] + step / 1000; value += step) ticks.push(clean(value));
+    return { ticks, min: fixed[0], max: fixed[1], step };
+  }
   const lo = fixed ? Math.min(fixed[0], dataMin) : Math.min(0, dataMin);
   const hi = fixed ? Math.max(fixed[1], dataMax) : Math.max(0, dataMax);
   return niceTicks(lo, hi, target);

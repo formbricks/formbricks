@@ -1,286 +1,276 @@
 {
-  "toolName": "show_feedback_chart",
   "input": {
-    "workspaceId": "tz4a98xxat96iws9zmbrgj3a",
-    "query": {
-      "measures": [
-        "FeedbackRecords.count"
-      ],
-      "dimensions": [
-        "FeedbackRecords.sentiment"
-      ],
-      "timeDimensions": [
-        {
-          "dimension": "FeedbackRecords.collectedAt",
-          "granularity": "week",
-          "dateRange": "last 90 days"
-        }
-      ],
-      "limit": 100
-    },
     "chart": {
       "type": "area"
-    }
+    },
+    "query": {
+      "dimensions": ["FeedbackRecords.sentiment"],
+      "limit": 100,
+      "measures": ["FeedbackRecords.count"],
+      "timeDimensions": [
+        {
+          "dateRange": "last 90 days",
+          "dimension": "FeedbackRecords.collectedAt",
+          "granularity": "week"
+        }
+      ]
+    },
+    "workspaceId": "tz4a98xxat96iws9zmbrgj3a"
   },
   "result": {
     "content": [
       {
-        "type": "text",
-        "text": "Feedback Records by week and sentiment: 40 rows from the feedback dataset \"Product feedback\", shown to the user as a area chart.\n| Collected At (week) | Sentiment | Feedback Records |\n| --- |\n| 2026-07-06T00:00:00.000 | very_positive | 30 |\n| 2026-07-06T00:00:00.000 | positive | 67 |\n| 2026-07-06T00:00:00.000 | neutral | 49 |\n| 2026-07-06T00:00:00.000 | negative | 26 |\n| 2026-07-13T00:00:00.000 | very_positive | 36 |\n| 2026-07-13T00:00:00.000 | positive | 71 |\n| 2026-07-13T00:00:00.000 | neutral | 47 |\n| 2026-07-13T00:00:00.000 | negative | 21 |\n| 2026-07-20T00:00:00.000 | very_positive | 41 |\n| 2026-07-20T00:00:00.000 | positive | 70 |\n| 2026-07-20T00:00:00.000 | neutral | 44 |\n| 2026-07-20T00:00:00.000 | negative | 18 |"
+        "text": "Feedback Records by week and sentiment: 40 rows from the feedback dataset \"Product feedback\", shown to the user as a area chart.\n| Collected At (week) | Sentiment | Feedback Records |\n| --- |\n| 2026-07-06T00:00:00.000 | very_positive | 30 |\n| 2026-07-06T00:00:00.000 | positive | 67 |\n| 2026-07-06T00:00:00.000 | neutral | 49 |\n| 2026-07-06T00:00:00.000 | negative | 26 |\n| 2026-07-13T00:00:00.000 | very_positive | 36 |\n| 2026-07-13T00:00:00.000 | positive | 71 |\n| 2026-07-13T00:00:00.000 | neutral | 47 |\n| 2026-07-13T00:00:00.000 | negative | 21 |\n| 2026-07-20T00:00:00.000 | very_positive | 41 |\n| 2026-07-20T00:00:00.000 | positive | 70 |\n| 2026-07-20T00:00:00.000 | neutral | 44 |\n| 2026-07-20T00:00:00.000 | negative | 18 |",
+        "type": "text"
       }
     ],
     "structuredContent": {
-      "datasetId": "ds4a98xxat96iws9zmbrgj3aaa",
-      "datasetName": "Product feedback",
-      "query": {
-        "measures": [
-          "FeedbackRecords.count"
-        ],
-        "dimensions": [
-          "FeedbackRecords.sentiment"
-        ],
-        "timeDimensions": [
-          {
-            "dimension": "FeedbackRecords.collectedAt",
-            "granularity": "week",
-            "dateRange": "last 90 days"
-          }
-        ],
-        "limit": 100
-      },
       "chart": {
-        "type": "area",
+        "granularity": "week",
+        "series": "FeedbackRecords.sentiment",
         "title": "Feedback Records by week and sentiment",
+        "type": "area",
         "x": "FeedbackRecords.collectedAt.week",
         "xKind": "time",
-        "granularity": "week",
-        "y": [
-          "FeedbackRecords.count"
-        ],
-        "series": "FeedbackRecords.sentiment"
+        "y": ["FeedbackRecords.count"]
       },
       "columns": [
         {
           "id": "FeedbackRecords.collectedAt.week",
-          "label": "Collected At (week)",
-          "kind": "time"
+          "kind": "time",
+          "label": "Collected At (week)"
         },
         {
           "id": "FeedbackRecords.sentiment",
-          "label": "Sentiment",
-          "kind": "dimension"
+          "kind": "dimension",
+          "label": "Sentiment"
         },
         {
           "id": "FeedbackRecords.count",
-          "label": "Feedback Records",
-          "kind": "measure"
+          "kind": "measure",
+          "label": "Feedback Records"
         }
       ],
+      "datasetId": "ds4a98xxat96iws9zmbrgj3aaa",
+      "datasetName": "Product feedback",
+      "query": {
+        "dimensions": ["FeedbackRecords.sentiment"],
+        "limit": 100,
+        "measures": ["FeedbackRecords.count"],
+        "timeDimensions": [
+          {
+            "dateRange": "last 90 days",
+            "dimension": "FeedbackRecords.collectedAt",
+            "granularity": "week"
+          }
+        ]
+      },
+      "requestId": "req_area",
       "rows": [
         {
           "FeedbackRecords.collectedAt.week": "2026-07-06T00:00:00.000",
-          "FeedbackRecords.sentiment": "very_positive",
-          "FeedbackRecords.count": 30
+          "FeedbackRecords.count": 30,
+          "FeedbackRecords.sentiment": "very_positive"
         },
         {
           "FeedbackRecords.collectedAt.week": "2026-07-06T00:00:00.000",
-          "FeedbackRecords.sentiment": "positive",
-          "FeedbackRecords.count": 67
+          "FeedbackRecords.count": 67,
+          "FeedbackRecords.sentiment": "positive"
         },
         {
           "FeedbackRecords.collectedAt.week": "2026-07-06T00:00:00.000",
-          "FeedbackRecords.sentiment": "neutral",
-          "FeedbackRecords.count": 49
+          "FeedbackRecords.count": 49,
+          "FeedbackRecords.sentiment": "neutral"
         },
         {
           "FeedbackRecords.collectedAt.week": "2026-07-06T00:00:00.000",
-          "FeedbackRecords.sentiment": "negative",
-          "FeedbackRecords.count": 26
+          "FeedbackRecords.count": 26,
+          "FeedbackRecords.sentiment": "negative"
         },
         {
           "FeedbackRecords.collectedAt.week": "2026-07-13T00:00:00.000",
-          "FeedbackRecords.sentiment": "very_positive",
-          "FeedbackRecords.count": 36
+          "FeedbackRecords.count": 36,
+          "FeedbackRecords.sentiment": "very_positive"
         },
         {
           "FeedbackRecords.collectedAt.week": "2026-07-13T00:00:00.000",
-          "FeedbackRecords.sentiment": "positive",
-          "FeedbackRecords.count": 71
+          "FeedbackRecords.count": 71,
+          "FeedbackRecords.sentiment": "positive"
         },
         {
           "FeedbackRecords.collectedAt.week": "2026-07-13T00:00:00.000",
-          "FeedbackRecords.sentiment": "neutral",
-          "FeedbackRecords.count": 47
+          "FeedbackRecords.count": 47,
+          "FeedbackRecords.sentiment": "neutral"
         },
         {
           "FeedbackRecords.collectedAt.week": "2026-07-13T00:00:00.000",
-          "FeedbackRecords.sentiment": "negative",
-          "FeedbackRecords.count": 21
+          "FeedbackRecords.count": 21,
+          "FeedbackRecords.sentiment": "negative"
         },
         {
           "FeedbackRecords.collectedAt.week": "2026-07-20T00:00:00.000",
-          "FeedbackRecords.sentiment": "very_positive",
-          "FeedbackRecords.count": 41
+          "FeedbackRecords.count": 41,
+          "FeedbackRecords.sentiment": "very_positive"
         },
         {
           "FeedbackRecords.collectedAt.week": "2026-07-20T00:00:00.000",
-          "FeedbackRecords.sentiment": "positive",
-          "FeedbackRecords.count": 70
+          "FeedbackRecords.count": 70,
+          "FeedbackRecords.sentiment": "positive"
         },
         {
           "FeedbackRecords.collectedAt.week": "2026-07-20T00:00:00.000",
-          "FeedbackRecords.sentiment": "neutral",
-          "FeedbackRecords.count": 44
+          "FeedbackRecords.count": 44,
+          "FeedbackRecords.sentiment": "neutral"
         },
         {
           "FeedbackRecords.collectedAt.week": "2026-07-20T00:00:00.000",
-          "FeedbackRecords.sentiment": "negative",
-          "FeedbackRecords.count": 18
+          "FeedbackRecords.count": 18,
+          "FeedbackRecords.sentiment": "negative"
         },
         {
           "FeedbackRecords.collectedAt.week": "2026-07-27T00:00:00.000",
-          "FeedbackRecords.sentiment": "very_positive",
-          "FeedbackRecords.count": 43
+          "FeedbackRecords.count": 43,
+          "FeedbackRecords.sentiment": "very_positive"
         },
         {
           "FeedbackRecords.collectedAt.week": "2026-07-27T00:00:00.000",
-          "FeedbackRecords.sentiment": "positive",
-          "FeedbackRecords.count": 66
+          "FeedbackRecords.count": 66,
+          "FeedbackRecords.sentiment": "positive"
         },
         {
           "FeedbackRecords.collectedAt.week": "2026-07-27T00:00:00.000",
-          "FeedbackRecords.sentiment": "neutral",
-          "FeedbackRecords.count": 40
+          "FeedbackRecords.count": 40,
+          "FeedbackRecords.sentiment": "neutral"
         },
         {
           "FeedbackRecords.collectedAt.week": "2026-07-27T00:00:00.000",
-          "FeedbackRecords.sentiment": "negative",
-          "FeedbackRecords.count": 16
+          "FeedbackRecords.count": 16,
+          "FeedbackRecords.sentiment": "negative"
         },
         {
           "FeedbackRecords.collectedAt.week": "2026-08-03T00:00:00.000",
-          "FeedbackRecords.sentiment": "very_positive",
-          "FeedbackRecords.count": 43
+          "FeedbackRecords.count": 43,
+          "FeedbackRecords.sentiment": "very_positive"
         },
         {
           "FeedbackRecords.collectedAt.week": "2026-08-03T00:00:00.000",
-          "FeedbackRecords.sentiment": "positive",
-          "FeedbackRecords.count": 60
+          "FeedbackRecords.count": 60,
+          "FeedbackRecords.sentiment": "positive"
         },
         {
           "FeedbackRecords.collectedAt.week": "2026-08-03T00:00:00.000",
-          "FeedbackRecords.sentiment": "neutral",
-          "FeedbackRecords.count": 39
+          "FeedbackRecords.count": 39,
+          "FeedbackRecords.sentiment": "neutral"
         },
         {
           "FeedbackRecords.collectedAt.week": "2026-08-03T00:00:00.000",
-          "FeedbackRecords.sentiment": "negative",
-          "FeedbackRecords.count": 16
+          "FeedbackRecords.count": 16,
+          "FeedbackRecords.sentiment": "negative"
         },
         {
           "FeedbackRecords.collectedAt.week": "2026-08-10T00:00:00.000",
-          "FeedbackRecords.sentiment": "very_positive",
-          "FeedbackRecords.count": 41
+          "FeedbackRecords.count": 41,
+          "FeedbackRecords.sentiment": "very_positive"
         },
         {
           "FeedbackRecords.collectedAt.week": "2026-08-10T00:00:00.000",
-          "FeedbackRecords.sentiment": "positive",
-          "FeedbackRecords.count": 55
+          "FeedbackRecords.count": 55,
+          "FeedbackRecords.sentiment": "positive"
         },
         {
           "FeedbackRecords.collectedAt.week": "2026-08-10T00:00:00.000",
-          "FeedbackRecords.sentiment": "neutral",
-          "FeedbackRecords.count": 40
+          "FeedbackRecords.count": 40,
+          "FeedbackRecords.sentiment": "neutral"
         },
         {
           "FeedbackRecords.collectedAt.week": "2026-08-10T00:00:00.000",
-          "FeedbackRecords.sentiment": "negative",
-          "FeedbackRecords.count": 18
+          "FeedbackRecords.count": 18,
+          "FeedbackRecords.sentiment": "negative"
         },
         {
           "FeedbackRecords.collectedAt.week": "2026-08-17T00:00:00.000",
-          "FeedbackRecords.sentiment": "very_positive",
-          "FeedbackRecords.count": 39
+          "FeedbackRecords.count": 39,
+          "FeedbackRecords.sentiment": "very_positive"
         },
         {
           "FeedbackRecords.collectedAt.week": "2026-08-17T00:00:00.000",
-          "FeedbackRecords.sentiment": "positive",
-          "FeedbackRecords.count": 53
+          "FeedbackRecords.count": 53,
+          "FeedbackRecords.sentiment": "positive"
         },
         {
           "FeedbackRecords.collectedAt.week": "2026-08-17T00:00:00.000",
-          "FeedbackRecords.sentiment": "neutral",
-          "FeedbackRecords.count": 45
+          "FeedbackRecords.count": 45,
+          "FeedbackRecords.sentiment": "neutral"
         },
         {
           "FeedbackRecords.collectedAt.week": "2026-08-17T00:00:00.000",
-          "FeedbackRecords.sentiment": "negative",
-          "FeedbackRecords.count": 21
+          "FeedbackRecords.count": 21,
+          "FeedbackRecords.sentiment": "negative"
         },
         {
           "FeedbackRecords.collectedAt.week": "2026-08-24T00:00:00.000",
-          "FeedbackRecords.sentiment": "very_positive",
-          "FeedbackRecords.count": 38
+          "FeedbackRecords.count": 38,
+          "FeedbackRecords.sentiment": "very_positive"
         },
         {
           "FeedbackRecords.collectedAt.week": "2026-08-24T00:00:00.000",
-          "FeedbackRecords.sentiment": "positive",
-          "FeedbackRecords.count": 56
+          "FeedbackRecords.count": 56,
+          "FeedbackRecords.sentiment": "positive"
         },
         {
           "FeedbackRecords.collectedAt.week": "2026-08-24T00:00:00.000",
-          "FeedbackRecords.sentiment": "neutral",
-          "FeedbackRecords.count": 52
+          "FeedbackRecords.count": 52,
+          "FeedbackRecords.sentiment": "neutral"
         },
         {
           "FeedbackRecords.collectedAt.week": "2026-08-24T00:00:00.000",
-          "FeedbackRecords.sentiment": "negative",
-          "FeedbackRecords.count": 23
+          "FeedbackRecords.count": 23,
+          "FeedbackRecords.sentiment": "negative"
         },
         {
           "FeedbackRecords.collectedAt.week": "2026-08-31T00:00:00.000",
-          "FeedbackRecords.sentiment": "very_positive",
-          "FeedbackRecords.count": 39
+          "FeedbackRecords.count": 39,
+          "FeedbackRecords.sentiment": "very_positive"
         },
         {
           "FeedbackRecords.collectedAt.week": "2026-08-31T00:00:00.000",
-          "FeedbackRecords.sentiment": "positive",
-          "FeedbackRecords.count": 63
+          "FeedbackRecords.count": 63,
+          "FeedbackRecords.sentiment": "positive"
         },
         {
           "FeedbackRecords.collectedAt.week": "2026-08-31T00:00:00.000",
-          "FeedbackRecords.sentiment": "neutral",
-          "FeedbackRecords.count": 60
+          "FeedbackRecords.count": 60,
+          "FeedbackRecords.sentiment": "neutral"
         },
         {
           "FeedbackRecords.collectedAt.week": "2026-08-31T00:00:00.000",
-          "FeedbackRecords.sentiment": "negative",
-          "FeedbackRecords.count": 23
+          "FeedbackRecords.count": 23,
+          "FeedbackRecords.sentiment": "negative"
         },
         {
           "FeedbackRecords.collectedAt.week": "2026-09-07T00:00:00.000",
-          "FeedbackRecords.sentiment": "very_positive",
-          "FeedbackRecords.count": 42
+          "FeedbackRecords.count": 42,
+          "FeedbackRecords.sentiment": "very_positive"
         },
         {
           "FeedbackRecords.collectedAt.week": "2026-09-07T00:00:00.000",
-          "FeedbackRecords.sentiment": "positive",
-          "FeedbackRecords.count": 73
+          "FeedbackRecords.count": 73,
+          "FeedbackRecords.sentiment": "positive"
         },
         {
           "FeedbackRecords.collectedAt.week": "2026-09-07T00:00:00.000",
-          "FeedbackRecords.sentiment": "neutral",
-          "FeedbackRecords.count": 66
+          "FeedbackRecords.count": 66,
+          "FeedbackRecords.sentiment": "neutral"
         },
         {
           "FeedbackRecords.collectedAt.week": "2026-09-07T00:00:00.000",
-          "FeedbackRecords.sentiment": "negative",
-          "FeedbackRecords.count": 22
+          "FeedbackRecords.count": 22,
+          "FeedbackRecords.sentiment": "negative"
         }
       ],
-      "truncated": false,
-      "requestId": "req_area"
+      "truncated": false
     }
   },
+  "toolName": "show_feedback_chart",
   "tools": {}
 }

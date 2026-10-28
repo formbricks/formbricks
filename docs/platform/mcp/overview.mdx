@@ -42,13 +42,13 @@ delete require the `:write` scope. Everything below is offered on the consent sc
 
 | Scope | Tools | What it allows |
 | --- | --- | --- |
-| `surveys:read` | `list_surveys`, `get_survey`, `validate_survey`, `get_workspace_custom_css`, `list_creatives`, `get_creative`, `get_creative_stats`, `list_tags`, `list_action_classes`, `list_contact_attribute_keys`, `get_survey_visibility`, `pull_document`⁴ | Read surveys, creatives, response tags and their counts, and surveys' custom CSS, and validate survey documents and CSS |
-| `surveys:write` | `create_survey`, `patch_survey`, `edit_survey_blocks`, `set_survey_block_order`, `delete_survey`, `patch_workspace_custom_css`, `create_creative`, `patch_creative`, `delete_creative`, `duplicate_creative`, `archive_creative`, `restore_creative`, `rename_tag`, `delete_tag`, `merge_tags`, `archive_survey`, `restore_survey`, `set_survey_visibility`, `generate_survey`, `pause_creatives`, `push_document`⁴ | Create, update, and delete surveys and creatives, rename, merge and delete response tags, and save a workspace's shared survey CSS — which additionally needs an organization owner or manager |
-| `workflows:read` | `list_workflows`, `get_workflow`, `list_workflow_runs`, `get_workflow_run`, `test_workflow`¹, `pull_document`⁴ | Read workflows and their runs |
-| `workflows:write` | `create_workflow`, `patch_workflow`, `duplicate_workflow`, `delete_workflow`, `enable_workflow`, `disable_workflow`, `archive_workflow`, `unarchive_workflow`, `push_document`⁴ | Create, update, and delete workflows |
-| `feedbackRecords:read` | `list_feedback_datasets`, `list_feedback_records`, `count_feedback_records`, `get_feedback_record`, `search_feedback_records`, `find_similar_feedback_records`, `get_feedback_field_catalog`, `query_feedback`, `list_taxonomy_fields`, `get_taxonomy_state`, `get_taxonomy_run`, `get_taxonomy_record_counts`, `list_taxonomy_node_records`, `get_enrichment_status` | Read, count, search and aggregate feedback records in a workspace's feedback dataset, and read its topics |
+| `surveys:read` | `list_surveys`, `get_survey`, `validate_survey`, `get_workspace_custom_css`, `list_creatives`, `get_creative`, `show_creative`⁵, `show_survey`⁵, `get_creative_stats`, `list_tags`, `list_action_classes`, `list_contact_attribute_keys`, `get_survey_visibility`, `pull_document`⁴ | Read surveys, creatives, response tags and their counts, and surveys' custom CSS, and validate survey documents and CSS |
+| `surveys:write` | `create_survey`, `patch_survey`, `edit_survey_blocks`, `set_survey_block_order`, `delete_survey`, `patch_workspace_custom_css`, `create_creative`, `patch_creative`, `delete_creative`, `duplicate_creative`, `archive_creative`, `restore_creative`, `rename_tag`, `delete_tag`, `merge_tags`, `archive_survey`, `restore_survey`, `set_survey_visibility`, `generate_survey`, `pause_creatives`, `push_document`⁴, `review_document_change`⁵ | Create, update, and delete surveys and creatives, rename, merge and delete response tags, and save a workspace's shared survey CSS — which additionally needs an organization owner or manager |
+| `workflows:read` | `list_workflows`, `get_workflow`, `show_workflow`⁵, `list_workflow_runs`, `get_workflow_run`, `test_workflow`¹, `pull_document`⁴ | Read workflows and their runs |
+| `workflows:write` | `create_workflow`, `patch_workflow`, `duplicate_workflow`, `delete_workflow`, `enable_workflow`, `disable_workflow`, `archive_workflow`, `unarchive_workflow`, `push_document`⁴, `review_document_change`⁵ | Create, update, and delete workflows |
+| `feedbackRecords:read` | `list_feedback_datasets`, `list_feedback_records`, `count_feedback_records`, `get_feedback_record`, `search_feedback_records`, `find_similar_feedback_records`, `get_feedback_field_catalog`, `query_feedback`, `show_feedback_chart`⁵, `list_taxonomy_fields`, `get_taxonomy_state`, `get_taxonomy_run`, `get_taxonomy_record_counts`, `list_taxonomy_node_records`, `get_enrichment_status` | Read, count, search and aggregate feedback records in a workspace's feedback dataset, and read its topics |
 | `feedbackRecords:write` | `create_feedback_record`, `create_feedback_records`, `update_feedback_record`², `delete_feedback_record`², `start_taxonomy_run`, `rename_taxonomy_node`, `remove_taxonomy_node` | Create, correct and delete feedback records, and build and edit the topic tree |
-| `responses:read` | `list_responses`, `count_responses`, `get_response` | Read and count survey responses |
+| `responses:read` | `list_responses`, `show_responses`⁵, `count_responses`, `get_response` | Read and count survey responses |
 | `responses:write` | `validate_response`, `create_response`, `update_response`, `delete_response`, `batch_delete_responses` | Record, correct and delete survey responses |
 | `contacts:read` | `list_contacts`, `count_contacts`, `get_contact`, `list_segments`, `get_segment` | Read contacts, their attributes and segments (respondent personal data) |
 | `contacts:write` | `upsert_contact`, `update_contact`, `delete_contact`³, `create_contact_attribute_key`, `update_contact_attribute_key`, `delete_contact_attribute_key`, `create_segment`, `update_segment`, `delete_segment` | Create, change and delete contacts, attribute keys and segments |
@@ -63,6 +63,8 @@ delete require the `:write` scope. Everything below is offered on the consent sc
 ³ These tools also need a response scope: `delete_contact` needs `responses:write` (a contact's responses are deleted with it), and `create_webhook` and `update_webhook` need `responses:read` (a webhook delivers response data to the URL you give it). Without it the call is refused with a 403.
 
 ⁴ `pull_document` and `push_document` read and replace a survey, a creative or a workflow as one document. Surveys and creatives need the survey scope and workflows the workflow scope, so the same tool needs a different scope for each kind. A push never publishes or enables anything, and it is refused if the resource changed since you pulled it.
+
+⁵ These tools show an interactive view in clients that support MCP Apps (see [Interactive views](#interactive-views)). Everywhere else they return their usual text and JSON. `review_document_change` needs the write scope of the document's kind and its read scope, and never writes anything itself.
 
 A response is someone's submitted answers, so grant `responses:read` deliberately — it is respondent
 data, which `surveys:read` never exposes. An integration you connected before these scopes existed
@@ -105,6 +107,28 @@ searchable a short while after they arrive, and records without text are never s
   target workspace — and deleting a feedback record needs manage. An agent can never do more than
   you can.
 </Warning>
+
+## Interactive views
+
+Some tools can show an interactive view inside your agent instead of only text. Formbricks uses the
+[MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) extension for this, so a client that supports it draws the view in the chat;
+any other client gets the same information as plain text. Views are read-only, apart from the approval button
+in the change review: changes are made by asking the agent.
+
+| Ask your agent to... | Tool | What you see |
+| --- | --- | --- |
+| Show or review a survey | `show_survey` | An outline of the survey (questions, logic, languages, settings) and a **Try it** tab that runs the real survey, without saving any response |
+| Review a change before it is applied | `review_document_change` | What would change in a survey, creative or workflow document, with destructive changes called out, and **Approve and apply** or **Cancel** |
+| Chart feedback | `show_feedback_chart` | A bar, line, area, donut, number or table chart of a feedback query, with a table view of the same data |
+| Browse responses | `show_responses` | A table of responses with filters, paging and a detail panel |
+| Preview a creative | `show_creative` | The creative drawn on a placeholder page, with its display status and conditions |
+| Inspect a workflow | `show_workflow` | The workflow's steps as a flow and its recent runs |
+
+Clients that render MCP Apps include Claude and Claude Desktop, ChatGPT, VS Code with GitHub Copilot, and Goose;
+the [client matrix](https://modelcontextprotocol.io/extensions/client-matrix) lists the current state. Nothing
+changes for a client that does not: the tools still answer, and the views never carry credentials, because every
+call from a view goes back through your agent with your own connection and scopes. The survey preview loads the
+survey renderer from your Formbricks address, so a client that blocks that address shows the outline only.
 
 ## Prerequisites
 

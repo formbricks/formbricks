@@ -1,73 +1,50 @@
 {
-  "toolName": "show_feedback_chart",
   "input": {
-    "workspaceId": "tz4a98xxat96iws9zmbrgj3a",
     "query": {
-      "measures": [
-        "FeedbackRecords.npsScore"
-      ],
-      "dimensions": [
-        "FeedbackRecords.fieldLabel"
-      ],
-      "order": [
-        [
-          "FeedbackRecords.npsScore",
-          "desc"
-        ]
-      ],
-      "limit": 100
-    }
+      "dimensions": ["FeedbackRecords.fieldLabel"],
+      "limit": 100,
+      "measures": ["FeedbackRecords.npsScore"],
+      "order": [["FeedbackRecords.npsScore", "desc"]]
+    },
+    "workspaceId": "tz4a98xxat96iws9zmbrgj3a"
   },
   "result": {
     "content": [
       {
-        "type": "text",
-        "text": "NPS: Score by field label: 6 rows from the feedback dataset \"Product feedback\", shown to the user as a bar chart.\n| Field Label | NPS: Score |\n| --- |\n| How likely are you to recommend us to a friend or colleague? | 42 |\n| How easy was it to find what you were looking for? | 18 |\n| How satisfied are you with the onboarding? | -12 |\n| Would you recommend the mobile app? | 7 |\n| How likely are you to renew your subscription next year? | 33 |\n| Overall | 25 |"
+        "text": "NPS: Score by field label: 6 rows from the feedback dataset \"Product feedback\", shown to the user as a bar chart.\n| Field Label | NPS: Score |\n| --- |\n| How likely are you to recommend us to a friend or colleague? | 42 |\n| How easy was it to find what you were looking for? | 18 |\n| How satisfied are you with the onboarding? | -12 |\n| Would you recommend the mobile app? | 7 |\n| How likely are you to renew your subscription next year? | 33 |\n| Overall | 25 |",
+        "type": "text"
       }
     ],
     "structuredContent": {
-      "datasetId": "ds4a98xxat96iws9zmbrgj3aaa",
-      "datasetName": "Product feedback",
-      "query": {
-        "measures": [
-          "FeedbackRecords.npsScore"
-        ],
-        "dimensions": [
-          "FeedbackRecords.fieldLabel"
-        ],
-        "order": [
-          [
-            "FeedbackRecords.npsScore",
-            "desc"
-          ]
-        ],
-        "limit": 100
-      },
       "chart": {
-        "type": "bar",
         "title": "NPS: Score by field label",
+        "type": "bar",
         "x": "FeedbackRecords.fieldLabel",
         "xKind": "category",
-        "y": [
-          "FeedbackRecords.npsScore"
-        ]
+        "y": ["FeedbackRecords.npsScore"]
       },
       "columns": [
         {
           "id": "FeedbackRecords.fieldLabel",
-          "label": "Field Label",
-          "kind": "dimension"
+          "kind": "dimension",
+          "label": "Field Label"
         },
         {
+          "domain": [-100, 100],
           "id": "FeedbackRecords.npsScore",
-          "label": "NPS: Score",
           "kind": "measure",
-          "domain": [
-            -100,
-            100
-          ]
+          "label": "NPS: Score"
         }
       ],
+      "datasetId": "ds4a98xxat96iws9zmbrgj3aaa",
+      "datasetName": "Product feedback",
+      "query": {
+        "dimensions": ["FeedbackRecords.fieldLabel"],
+        "limit": 100,
+        "measures": ["FeedbackRecords.npsScore"],
+        "order": [["FeedbackRecords.npsScore", "desc"]]
+      },
+      "requestId": "req_bar",
       "rows": [
         {
           "FeedbackRecords.fieldLabel": "How likely are you to recommend us to a friend or colleague?",
@@ -94,9 +71,9 @@
           "FeedbackRecords.npsScore": 25
         }
       ],
-      "truncated": false,
-      "requestId": "req_bar"
+      "truncated": false
     }
   },
+  "toolName": "show_feedback_chart",
   "tools": {}
 }
