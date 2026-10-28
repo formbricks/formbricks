@@ -108,7 +108,7 @@ Supported scopes:
 | Scope | Use |
 | --- | --- |
 | `surveys:read` | `list_surveys`, `get_survey`, `validate_survey`, `get_workspace_custom_css`, `list_creatives`, `get_creative`, `get_creative_stats`, `list_tags`, `list_action_classes`, `list_contact_attribute_keys`, `get_survey_visibility`, `pull_document` (survey, creative) |
-| `surveys:write` | `create_survey`, `patch_survey`, `edit_survey_blocks`, `set_survey_block_order`, `delete_survey`, `patch_workspace_custom_css`, `create_creative`, `patch_creative`, `delete_creative`, `duplicate_creative`, `archive_creative`, `restore_creative`, `rename_tag`, `delete_tag`, `merge_tags`, `archive_survey`, `restore_survey`, `set_survey_visibility`, `generate_survey`, `pause_creatives`, `push_document` (survey, creative) |
+| `surveys:write` | `create_survey`, `patch_survey`, `edit_survey_blocks`, `set_survey_block_order`, `delete_survey`, `patch_workspace_custom_css`, `create_creative`, `patch_creative`, `delete_creative`, `duplicate_creative`, `archive_creative`, `restore_creative`, `rename_tag`, `delete_tag`, `merge_tags`, `archive_survey`, `restore_survey`, `set_survey_visibility`, `generate_survey`, `pause_creatives`, `push_document` (survey, creative), and the agent-led setup tools `update_organization`, `create_workspace`, `update_workspace`, `set_workspace_branding`, `invite_member` (ADR 0018: no scope of their own, the operation checks the role) |
 | `workflows:read` | `list_workflows`, `get_workflow`, `list_workflow_runs`, `get_workflow_run`, `test_workflow`, `pull_document` (workflow) |
 | `workflows:write` | `create_workflow`, `patch_workflow`, `duplicate_workflow`, `delete_workflow`, the enable/disable/archive/unarchive mutations, and `push_document` (workflow) |
 | `feedbackRecords:read` | `list_feedback_datasets`, `list_feedback_records`, `count_feedback_records`, `get_feedback_record`, `search_feedback_records`, `find_similar_feedback_records`, `get_feedback_field_catalog`, `query_feedback`, `list_taxonomy_fields`, `get_taxonomy_state`, `get_taxonomy_run`, `get_taxonomy_record_counts`, `list_taxonomy_node_records`, `get_enrichment_status` |
@@ -233,6 +233,12 @@ API key permissions are enforced through the same workspace access checks as the
 | `delete_survey` | `write` or `manage` |
 | `get_workspace_custom_css` | `read` |
 | `patch_workspace_custom_css` | `manage` for an API key; an organization owner or manager for an OAuth user — stricter than `surveys:write` |
+| `get_account_context` | None beyond being signed in: any resource read scope admits it, and it is derived from the caller's own memberships (organizations, roles, workspaces, survey and invite counts). An API key sees only its own organization |
+| `update_organization` | An organization owner or manager signed in with OAuth; API keys get a 403 |
+| `create_workspace` | An organization owner or manager signed in with OAuth, within the plan's workspace limit; API keys get a 403 |
+| `update_workspace` | An organization owner or manager, or an API key with `manage` on the workspace |
+| `set_workspace_branding` | The same as `update_workspace`. The logo is an https URL the server downloads behind the webhook SSRF guard (no redirects, 1 MB, png, jpeg or webp checked by magic bytes) |
+| `invite_member` | An organization owner or manager signed in with OAuth; agents may grant `member` or `manager` only, and only an owner may invite a manager. Nothing is written until the call carries `confirm: true`; without it the tool returns a preview |
 | `list_tags` | `read` |
 | `rename_tag` | `write` or `manage` — resolved from the tag's workspace |
 | `delete_tag` | `write` or `manage` |
