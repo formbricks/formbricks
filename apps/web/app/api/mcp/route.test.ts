@@ -682,6 +682,59 @@ describe("POST /api/mcp", () => {
     });
   });
 
+  test("serves the MCP Apps views as ui:// resources and links the render tools to them", async () => {
+    const call = async (id: number, method: string, params: Record<string, unknown> = {}) => {
+      const response = await POST(createMcpRequest({ jsonrpc: "2.0", id, method, params }));
+      expect(response.status).toBe(200);
+      return (await readMcpResponse(response)).result;
+    };
+
+    const listed = await call(1, "resources/list");
+    expect(
+      listed.resources.map((resource: { uri: string; mimeType: string }) => [resource.uri, resource.mimeType])
+    ).toEqual(
+      [
+        "survey-preview",
+        "document-review",
+        "feedback-chart",
+        "responses",
+        "creative-preview",
+        "workflow",
+      ].map((view) => [`ui://formbricks/${view}.html`, "text/html;profile=mcp-app"])
+    );
+
+    const read = await call(2, "resources/read", { uri: "ui://formbricks/workflow.html" });
+    expect(read.contents).toHaveLength(1);
+    expect(read.contents[0]).toMatchObject({
+      uri: "ui://formbricks/workflow.html",
+      mimeType: "text/html;profile=mcp-app",
+    });
+    expect(read.contents[0].text.toLowerCase()).toContain("<!doctype html");
+
+    const tools = await call(3, "tools/list");
+    const viewOf = (name: string) =>
+      tools.tools.find((tool: { name: string }) => tool.name === name)?._meta?.ui?.resourceUri;
+    expect({
+      show_survey: viewOf("show_survey"),
+      review_document_change: viewOf("review_document_change"),
+      show_feedback_chart: viewOf("show_feedback_chart"),
+      show_responses: viewOf("show_responses"),
+      show_creative: viewOf("show_creative"),
+      show_workflow: viewOf("show_workflow"),
+    }).toEqual({
+      show_survey: "ui://formbricks/survey-preview.html",
+      review_document_change: "ui://formbricks/document-review.html",
+      show_feedback_chart: "ui://formbricks/feedback-chart.html",
+      show_responses: "ui://formbricks/responses.html",
+      show_creative: "ui://formbricks/creative-preview.html",
+      show_workflow: "ui://formbricks/workflow.html",
+    });
+    // Tools without a view carry no UI metadata at all.
+    expect(
+      tools.tools.find((tool: { name: string }) => tool.name === "list_surveys")?._meta?.ui
+    ).toBeUndefined();
+  });
+
   test("calls list_surveys through the MCP route", async () => {
     const response = await POST(
       createMcpRequest(

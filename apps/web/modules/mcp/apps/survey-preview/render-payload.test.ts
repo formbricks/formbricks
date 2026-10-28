@@ -91,12 +91,12 @@ describe("toPreviewSurvey", () => {
     expect(serialized).not.toContain("customCss");
   });
 
-  test("turns captcha off and reduces the segment to the SDK shape", () => {
+  test("turns captcha off and carries no segment", () => {
     const preview = toPreviewSurvey(
       makeSurvey({ segment: { id: "s1", title: "Everyone", filters: [{}], workspaceId: "w" } })
     );
     expect(preview.recaptcha).toBeNull();
-    expect(preview.segment).toEqual({ id: "s1", hasFilters: true });
+    expect(preview.segment).toBeNull();
   });
 });
 

@@ -310,7 +310,7 @@ describe("review_document_change", () => {
 
   test("the view resource carries no CSP: it needs no network", async () => {
     const { server } = createServer();
-    const read = vi.mocked(server.registerResource).mock.calls[0][3] as () => Promise<{
+    const read = (vi.mocked(server.registerResource).mock.calls[0] as unknown[])[3] as () => Promise<{
       contents: Array<{ mimeType: string; _meta?: unknown }>;
     }>;
     const { contents } = await read();

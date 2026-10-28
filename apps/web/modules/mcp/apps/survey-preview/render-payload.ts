@@ -131,7 +131,8 @@ export const toPreviewSurvey = (survey: TSurvey): TJsPreviewSurvey => ({
   keepEndingCardOpen: survey.keepEndingCardOpen,
   styling: survey.styling,
   status: survey.status,
-  segment: survey.segment ? { id: survey.segment.id, hasFilters: survey.segment.filters.length > 0 } : null,
+  // The renderer never reads the segment (targeting is the SDK's job), so the preview carries none.
+  segment: null,
   recontactDays: survey.recontactDays,
   displayLimit: survey.displayLimit,
   displayOption: survey.displayOption,
