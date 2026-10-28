@@ -162,10 +162,10 @@ export const buildSampleExport = (answers: TAnswerDisplay = "codes"): TAnalysisE
     counts: { included: responses.length, lowQualityLeftOut: 0 },
     // Two batches, so writers are shown to cope with more than one.
     rows: async function* () {
-      yield built.slice(0, 2);
-      rowCount += 2;
-      yield built.slice(2);
-      rowCount += built.length - 2;
+      for await (const batch of [built.slice(0, 2), built.slice(2)]) {
+        yield batch;
+        rowCount += batch.length;
+      }
     },
     summary: () => {
       const { unmapped, dropped } = collector.result();
