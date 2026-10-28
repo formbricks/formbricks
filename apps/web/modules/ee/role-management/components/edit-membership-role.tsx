@@ -7,7 +7,8 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TOrganizationRole } from "@formbricks/types/memberships";
 import { getAccessFlags, getOrganizationRoleLabels } from "@/lib/membership/utils";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { updateInviteRole, updateMemberRole } from "@/modules/ee/role-management/lib/api-client";
 import { isRoleEditDisabled } from "@/modules/ee/role-management/lib/role-edit-rules";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
@@ -18,7 +19,6 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
-import { updateInviteAction, updateMembershipAction } from "../actions";
 
 interface Role {
   currentUserRole: TOrganizationRole;
@@ -68,24 +68,16 @@ export function EditMembershipRole({
 
     try {
       if (memberAccepted && memberId) {
-        const result = await updateMembershipAction({ userId: memberId, organizationId, data: { role } });
-        if (result?.serverError) {
-          toast.error(getFormattedErrorMessage(result));
-          setLoading(false);
-          return;
-        }
+        await updateMemberRole({ userId: memberId, organizationId, body: { role } });
       }
 
       if (inviteId) {
-        const result = await updateInviteAction({ inviteId: inviteId, data: { role } });
-        if (result?.serverError) {
-          toast.error(getFormattedErrorMessage(result));
-          setLoading(false);
-          return;
-        }
+        await updateInviteRole({ inviteId, body: { role } });
       }
     } catch (error) {
-      toast.error(t("common.something_went_wrong_please_try_again"));
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
+      setLoading(false);
+      return;
     }
 
     setLoading(false);
