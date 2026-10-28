@@ -26,7 +26,7 @@ describe("the refused-name enumeration in the docs matches the two reserved sets
 
   const surfaces = [
     "docs/api-v3-reference/src/components/schemas/SurveyHiddenFields.yml",
-    "docs/surveys/general-features/hidden-fields.mdx",
+    "docs/surveys/embedded-data/reserved-fields.mdx",
     // Create-only variable schemas carry the same rule: `collectDeclaredFieldNames` maps variables
     // too, so a new variable named `country` or `1foo` gets the identical 400.
     "docs/api-v3-reference/src/components/schemas/CreateSurveyTextVariable.yml",

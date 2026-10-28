@@ -128,6 +128,14 @@ That is deliberate: a recall token can end up interpolated into a redirect URL o
   link, whatever this toggle is set to. See Never pass sensitive data in the URL.
 </Warning>
 
+## Names Reserved For Link Parameters
+
+A field you declare on a survey is filled from the link survey's URL (`?yourField=value`), so a few names are taken by the link survey itself and are refused, in any casing, when you create a hidden field, variable or other declared field: `userId`, `source`, `suid`, `end`, `start`, `welcomeCard`, `hidden`, `verifiedEmail`, `multiLanguage`, `embed` and `verify`.
+
+The link survey also reads these parameters to drive the page rather than to carry response data, so a field can never be filled from them: `suId`, `suToken`, `lang`, `preview`, `startAt`, `skipPrefilled` and `offlineSupport`.
+
+Everything in the auto-captured catalog above is refused as well.
+
 ## Where Reserved Fields Show Up
 
 Auto-captured fields are part of every response. Read them from a response through the [v3 Responses API](/api-v3-reference/introduction) or the `list_responses` and `get_response` tools of the [MCP server](/platform/mcp/overview). `responseId`, `surveyId`, `finished`, `language`, `durationSeconds`, `startedAt` and `finishedAt` are top-level properties of a response rather than metadata entries.
