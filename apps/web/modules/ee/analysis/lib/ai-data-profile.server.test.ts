@@ -70,7 +70,12 @@ describe("getAIDataProfile", () => {
     await getAIDataProfile(input);
 
     for (const [call] of mocks.executeTenantScopedQuery.mock.calls) {
-      expect(call).toMatchObject({ ...input, source: "charts.aiDataProfile" });
+      const { userId, ...scope } = input;
+      expect(call).toMatchObject({
+        ...scope,
+        actor: { type: "user", id: userId },
+        source: "charts.aiDataProfile",
+      });
     }
   });
 

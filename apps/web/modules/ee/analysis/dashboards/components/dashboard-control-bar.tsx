@@ -1,14 +1,15 @@
 "use client";
 
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CheckIcon, PencilIcon, PlusIcon, RefreshCwIcon, TrashIcon, XIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import { deleteDashboardAction } from "@/modules/ee/analysis/dashboards/actions";
 import { AddExistingChartsDialog } from "@/modules/ee/analysis/dashboards/components/add-existing-charts-dialog";
+import { deleteDashboard, getChartApiErrorMessage } from "@/modules/ee/analysis/lib/api-client";
+import { dashboardKeys } from "@/modules/ee/analysis/lib/query";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { IconBar } from "@/modules/ui/components/iconbar";
@@ -17,7 +18,6 @@ interface DashboardControlBarProps {
   workspaceId: string;
   dashboardId: string;
   directories: { id: string; name: string }[];
-  existingChartIds: string[];
   isEditing: boolean;
   isSaving: boolean;
   hasChanges: boolean;
@@ -39,7 +39,6 @@ export const DashboardControlBar = ({
   workspaceId,
   dashboardId,
   directories,
-  existingChartIds,
   isEditing,
   isSaving,
   hasChanges,
@@ -54,29 +53,27 @@ export const DashboardControlBar = ({
 }: Readonly<DashboardControlBarProps>) => {
   const router = useRouter();
   const { t } = useTranslation();
-  const [, startTransition] = useTransition();
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [isAddExistingDialogOpen, setIsAddExistingDialogOpen] = useState(false);
+  const queryClient = useQueryClient();
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteDashboard(dashboardId),
+    onSuccess: () => {
+      queryClient.removeQueries({ queryKey: dashboardKeys.detail(dashboardId) });
+      return queryClient.invalidateQueries({ queryKey: dashboardKeys.lists() });
+    },
+  });
 
-  const handleDeleteDashboard = async () => {
-    setIsDeleting(true);
-    try {
-      const result = await deleteDashboardAction({ workspaceId, dashboardId });
-      if (result?.data) {
+  const handleDeleteDashboard = () =>
+    deleteMutation.mutate(undefined, {
+      onSuccess: () => {
         router.push(`/workspaces/${workspaceId}/dashboards`);
         toast.success(t("workspace.analysis.dashboards.delete_success"));
-      } else {
-        const errorMessage = getFormattedErrorMessage(result);
-        toast.error(errorMessage);
-      }
-    } catch {
-      toast.error(t("workspace.analysis.dashboards.delete_failed"));
-    } finally {
-      setIsDeleting(false);
-      setDeleteDialogOpen(false);
-    }
-  };
+      },
+      onError: (error) =>
+        toast.error(getChartApiErrorMessage(error, t("workspace.analysis.dashboards.delete_failed"))),
+      onSettled: () => setDeleteDialogOpen(false),
+    });
 
   const editModeActions = [
     {
@@ -141,7 +138,7 @@ export const DashboardControlBar = ({
         setOpen={setDeleteDialogOpen}
         onDelete={handleDeleteDashboard}
         text={t("workspace.analysis.dashboards.dashboard_delete_confirmation")}
-        isDeleting={isDeleting}
+        isDeleting={deleteMutation.isPending}
       />
       <AddExistingChartsDialog
         open={isAddExistingDialogOpen}
@@ -149,12 +146,9 @@ export const DashboardControlBar = ({
         workspaceId={workspaceId}
         dashboardId={dashboardId}
         directories={directories}
-        existingChartIds={existingChartIds}
         onSuccess={() => {
           setIsAddExistingDialogOpen(false);
-          startTransition(() => {
-            router.refresh();
-          });
+          onRefresh();
         }}
         isAIAvailable={isAIAvailable}
         aiUnavailableReason={aiUnavailableReason}

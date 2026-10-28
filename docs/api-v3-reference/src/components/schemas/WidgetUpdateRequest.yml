@@ -1,0 +1,13 @@
+type: object
+description: >-
+  Send a `layout`, a `chartId`, or both. Repointing shows another chart in the widget's place — the way
+  to give one dashboard its own copy of a shared chart.
+minProperties: 1
+properties:
+  layout:
+    $ref: ./WidgetLayout.yml
+  chartId:
+    type: string
+    format: cuid2
+    description: A chart in the dashboard's workspace that is not already on the dashboard.
+additionalProperties: false

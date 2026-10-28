@@ -1,0 +1,64 @@
+post:
+  operationId: addDashboardWidgetV3
+  summary: Add a chart to a dashboard
+  description: |
+    Puts an existing chart on a dashboard. Without a `layout` the chart lands in the first open slot
+    at its chart type's default size; with one, exactly there. Widgets may leave gaps but not overlap:
+    a layout covering another widget answers 422 naming it. A chart appears at most once per
+    dashboard (409), and must live in the dashboard's workspace. A dashboard holds at most 250
+    widgets, and a new widget takes the first open slot: an add past the cap, or with no open slot
+    above the grid's last row, answers 409. Moves the dashboard's `updatedAt`.
+    Needs write access to the dashboard's workspace.
+  tags:
+    - V3 Dashboards
+  parameters:
+    - $ref: ../components/parameters/DashboardIdPath.yml
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/WidgetCreateRequest.yml
+  responses:
+    "201":
+      description: The new widget
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+        Location:
+          schema:
+            type: string
+          example: /api/v3/dashboards/cldash00000000000000000001/widgets/clwidget000000000000000001
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/DashboardWidget.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3DashboardsForbidden.yml
+    "409":
+      $ref: ../components/responses/V3DashboardsConflict.yml
+    "422":
+      $ref: ../components/responses/V3UnprocessableContent.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

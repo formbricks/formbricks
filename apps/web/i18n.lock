@@ -89,6 +89,8 @@ checksums:
     auth/oauth/requested_permissions: 7cd285529a4e57f46975b2623ec87681
     auth/oauth/revoke: be57685a85b6dfeaeb6eab4e9560b520
     auth/oauth/revoke_confirmation: 04bce52d76968647a8c2ba8c8db4c7a9
+    auth/oauth/scopes/dashboards_read: 523d6321fd81f3cc4d9fa16b29110ada
+    auth/oauth/scopes/dashboards_write: 562ea89a51ebd328e6cc0ad4bb51fa38
     auth/oauth/scopes/email: c28cf6b6c6221b0045539a5f7712230f
     auth/oauth/scopes/feedback_records_read: 720898c950af227bb3be529a64e3bc38
     auth/oauth/scopes/feedback_records_write: a929a6212367549f904d78362e56006c
@@ -152,7 +154,6 @@ checksums:
     common/activity: 1948763de8e531483a798b68195e297e
     common/add: 87c4a663507f2bcbbf79934af8164e13
     common/add_action: 66fefc4dd6a7b939c2224272cf0d2669
-    common/add_chart: 0c8539d3ccc83fce87bb1e0dc3e30005
     common/add_charts: c377a42e165e8ab67bfbb8ad72026dd8
     common/add_existing_chart_description: b1292a1d6df2e03ad7b399689312c37f
     common/add_filter: ed5d8e9bfcb05cd1e10e4c403befbae6
@@ -1744,6 +1745,8 @@ checksums:
     workspace/analysis/charts/chart_deletion_error: 267eb65c168e726075d7cea678dd32e0
     workspace/analysis/charts/chart_duplicated_successfully: 755c4ce5bf533764d549a53c33e32165
     workspace/analysis/charts/chart_duplication_error: 90d7166c85188b52f821c9d9f53ff8c4
+    workspace/analysis/charts/chart_in_use_description: 1d504304cc20c4cadb525f0200d13dd9
+    workspace/analysis/charts/chart_in_use_title: 0d83e59494765e049bdae0d2eca41bdb
     workspace/analysis/charts/chart_name: 7370d4f88f27aea337ba1c36465c3f8b
     workspace/analysis/charts/chart_name_placeholder: 7370d4f88f27aea337ba1c36465c3f8b
     workspace/analysis/charts/chart_render_error: 01e9ece0c86a1fedf301afa0dbbf6aeb
@@ -1943,7 +1946,6 @@ checksums:
     workspace/analysis/charts/no_dashboards_create_first: 28ded0d72247191eb23f6f77925df539
     workspace/analysis/charts/no_data_available: fe1d34a45e22b5611d255b84b2d67232
     workspace/analysis/charts/no_data_returned: 73949b8732604b9e2d22d046cc4a6ef9
-    workspace/analysis/charts/no_data_returned_for_chart: b9ff6c85697c683f40b3d0c05eeb2046
     workspace/analysis/charts/no_data_source_available: 0b247d065eaf2d0fc1c8ec558eebfba6
     workspace/analysis/charts/no_grouping: e3a6943e61407600cae057e0833a482d
     workspace/analysis/charts/no_valid_data_to_display: d1ba2b0686520c0a2c62ee73daa1c9c9
@@ -2005,6 +2007,7 @@ checksums:
     workspace/analysis/charts/value_band_satisfied: 4d542ba354b85e644acbca5691d2ce45
     workspace/analysis/charts/vertical_bars: 408174fe449ea6f5457988dd218183be
     workspace/analysis/dashboards/add_count_charts: b4ee1f29efce0bb380a060e0bc5d64fa
+    workspace/analysis/dashboards/already_on_this_dashboard: a4668a6a887b0bcd312cf30ebb1a89ad
     workspace/analysis/dashboards/chart_duplicate_failed: 90d7166c85188b52f821c9d9f53ff8c4
     workspace/analysis/dashboards/chart_duplicated: 52765f173bd6fd5382731f8e06e436e0
     workspace/analysis/dashboards/chart_remove_failed: 198f5c3bdd522b40b80cb7479d3051a1
@@ -2036,11 +2039,18 @@ checksums:
     workspace/analysis/dashboards/duplicate_failed: 6ebaf8ad373b156f88f1ed79a5efd441
     workspace/analysis/dashboards/duplicate_success: 37cbb14143776d4c215432673e32ebd9
     workspace/analysis/dashboards/failed_to_load_chart_data: ea980a6d12b1b1efed90d991dd0dd0fd
+    workspace/analysis/dashboards/failed_to_load_dashboard: 6fb0efd73e55a235e75ece8c35aa2ebe
     workspace/analysis/dashboards/new_dashboard: 994b8a982af4c22385861d26e373a949
+    workspace/analysis/dashboards/no_charts_match_search: 7ef6b1e501080e8a50d9997234a51fca
     workspace/analysis/dashboards/no_dashboards_found: b4d9dce52bf5f83d074306980b505477
     workspace/analysis/dashboards/no_dashboards_found_description: d5b83ba325d50cf69d8f0258981357ce
     workspace/analysis/dashboards/no_data_message: 464d50cf30281a5b6af2726846eb14b4
     workspace/analysis/dashboards/please_enter_name: b9211ed8a0882c0e0109beba48685d68
+    workspace/analysis/dashboards/stale_description: 1121ce6eb8eceb3151f3dc2596cd68c5
+    workspace/analysis/dashboards/stale_overwrite_removes: eebe816783653c081af3f5f799e0cdfc
+    workspace/analysis/dashboards/stale_reload: b2ade3e814cfd4cf6bcce526e70bcb34
+    workspace/analysis/dashboards/stale_save_anyway: bee56f4b85457c1c692851b8a5c49c01
+    workspace/analysis/dashboards/stale_title: 3225dec0fef3d3d84e61f3d7f92dcd70
     workspace/analysis/dashboards/upgrade_prompt_description: 738cf2e2aa5365b1199d11b683505050
     workspace/analysis/dashboards/upgrade_prompt_title: eef434745b5ef7ecc7f49a16e67e5a7a
     workspace/analysis/dashboards/widget_view: 3104ba698f31ac027f53195f44427f28

@@ -58,6 +58,42 @@ info:
     **GET /api/v3/workflows/runs/{runId}**.
 
 
+    **Charts and dashboards**: charts on a Feedback Dataset (**GET**, **POST /api/v3/charts**;
+    **GET**, **PATCH**, **DELETE /api/v3/charts/{chartId}**; **POST
+    /api/v3/charts/{chartId}/duplicate**), their numbers (**GET /api/v3/charts/{chartId}/data**,
+    **POST /api/v3/charts/preview**), the field catalog (**GET /api/v3/charts/fields**, **GET
+    /api/v3/charts/fields/{field}/values**), and dashboards (**GET**, **POST /api/v3/dashboards**;
+    **GET**, **PATCH**, **PUT**, **DELETE /api/v3/dashboards/{dashboardId}**; **POST
+    /api/v3/dashboards/{dashboardId}/duplicate**; **POST
+    /api/v3/dashboards/{dashboardId}/widgets**; **GET**, **PATCH**, **DELETE
+    /api/v3/dashboards/{dashboardId}/widgets/{widgetId}**).
+
+    - **Field catalog.** A chart query names fields exactly as `GET /api/v3/charts/fields` lists
+      them; the validator refuses anything else, and Cube options (`timezone`, `segments`, `ungrouped`,
+      …), with **422** naming each problem. Counts, filter depth, `limit` and `offset` are bounded.
+    - **Date ranges.** A preset from the catalog's `datePresets`, `all-time`, or two ISO dates, both
+      inclusive, read in the organization's time zone. On the data operation a requested range
+      replaces the chart's own range on `collectedAt`, the way a dashboard's date filter does.
+    - **Data needs the dataset.** Reading a chart's rows, previewing one and looking up field values
+      need read access to its Feedback Dataset as well as the workspace. They share one budget of
+      **600 per minute** per user or key, sized for dashboards that load one query per widget, and at
+      most **20 run at once** (429 with `Retry-After: 1` past that).
+    - **Plan.** Every operation answers **403 `dashboards_plan_required`** for an organization without
+      the Dashboards feature, after authorization.
+    - **Shared charts.** A chart can sit on several dashboards; each chart says which in `dashboards`.
+      Editing it changes all of them — duplicate it and repoint one dashboard's widget to change it
+      there only. A chart still on a dashboard cannot be deleted: **409 `chart_in_use`** lists them in
+      `details.dashboards`.
+    - **Grid.** Widgets sit on a 12-column grid in whole units (`1 ≤ w ≤ 12`, `x + w ≤ 12`,
+      `1 ≤ h ≤ 8`, `0 ≤ y ≤ 1000`). Gaps are allowed, overlaps answer **422** naming the widget, and a
+      chart appears at most once per dashboard (**409**). A widget added without a layout takes the
+      first open slot at its chart type's default size.
+    - **Stale-check.** `PUT /api/v3/dashboards/{dashboardId}` saves the name and every widget at once
+      and removes widgets left out. Send the `updatedAt` you read: if the dashboard changed since,
+      nothing is saved and **409** carries `expectedUpdatedAt` and `currentUpdatedAt` in `details`.
+      Every widget change moves `updatedAt`.
+
+
     Authenticate all management endpoints with **session cookie** or
     **`x-api-key`** (management key with access to the workspace).
 
@@ -341,6 +377,12 @@ servers:
     description: >-
       Formbricks Cloud. Paths in this spec already include the `/api/v3` prefix;
       self-hosted instances substitute their own origin.
+security:
+  # Default for the whole spec (CKV_OPENAPI_4). Every operation states its own requirement, so this
+  # changes no operation's meaning: it is the documented fallback, not a widening of any route.
+  - apiKeyAuth: []
+  - bearerAuth: []
+  - sessionAuth: []
 paths:
   /api/v3/surveys:
     $ref: paths/api_v3_surveys.yml
@@ -390,6 +432,30 @@ paths:
     $ref: paths/api_v3_workflows_{workflowId}_unarchive.yml
   /api/v3/workflows/{workflowId}/test:
     $ref: paths/api_v3_workflows_{workflowId}_test.yml
+  /api/v3/charts:
+    $ref: paths/api_v3_charts.yml
+  /api/v3/charts/fields:
+    $ref: paths/api_v3_charts_fields.yml
+  /api/v3/charts/fields/{field}/values:
+    $ref: paths/api_v3_charts_fields_{field}_values.yml
+  /api/v3/charts/preview:
+    $ref: paths/api_v3_charts_preview.yml
+  /api/v3/charts/{chartId}:
+    $ref: paths/api_v3_charts_{chartId}.yml
+  /api/v3/charts/{chartId}/data:
+    $ref: paths/api_v3_charts_{chartId}_data.yml
+  /api/v3/charts/{chartId}/duplicate:
+    $ref: paths/api_v3_charts_{chartId}_duplicate.yml
+  /api/v3/dashboards:
+    $ref: paths/api_v3_dashboards.yml
+  /api/v3/dashboards/{dashboardId}:
+    $ref: paths/api_v3_dashboards_{dashboardId}.yml
+  /api/v3/dashboards/{dashboardId}/duplicate:
+    $ref: paths/api_v3_dashboards_{dashboardId}_duplicate.yml
+  /api/v3/dashboards/{dashboardId}/widgets:
+    $ref: paths/api_v3_dashboards_{dashboardId}_widgets.yml
+  /api/v3/dashboards/{dashboardId}/widgets/{widgetId}:
+    $ref: paths/api_v3_dashboards_{dashboardId}_widgets_{widgetId}.yml
   /api/v3/creatives:
     $ref: paths/api_v3_creatives.yml
   /api/v3/creatives/pause:
