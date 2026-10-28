@@ -15,7 +15,7 @@ import { previewSurvey } from "@/app/lib/templates";
 import { cn } from "@/lib/cn";
 import { COLOR_DEFAULTS, STYLE_DEFAULTS, getSuggestedColors } from "@/lib/styling/constants";
 import { type TStylingAppearance } from "@/lib/styling/dark-mode";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { type TWorkspaceCustomCssAccess } from "@/modules/custom-css/components/types";
 import {
   type TWorkspaceCustomCssSaveHandle,
@@ -43,7 +43,7 @@ import {
 import { ColorField, PageFontField } from "@/modules/ui/components/styling-fields";
 import { Switch } from "@/modules/ui/components/switch";
 import { ThemeStylingPreviewSurvey } from "@/modules/ui/components/theme-styling-preview-survey";
-import { updateWorkspaceAction } from "@/modules/workspaces/settings/actions";
+import { patchWorkspaceSettings } from "@/modules/workspaces/settings/lib/api-client";
 
 interface ThemeStylingProps {
   workspace: TWorkspace;
@@ -126,21 +126,14 @@ export const ThemeStyling = ({
       ...STYLE_DEFAULTS,
       ...(typeof savedPageFont === "boolean" ? { pageFont: savedPageFont } : {}),
     };
-    const updatedWorkspaceResponse = await updateWorkspaceAction({
-      workspaceId: workspace.id,
-      data: {
-        styling: resetStyling,
-      },
-    });
-
-    if (updatedWorkspaceResponse?.data) {
+    try {
+      await patchWorkspaceSettings(workspace.id, { styling: resetStyling });
       form.reset(resetStyling);
       setPreviewBrandColor(STYLE_DEFAULTS.brandColor?.light ?? COLOR_DEFAULTS.brandColor);
       toast.success(t("workspace.look.styling_updated_successfully"));
       router.refresh();
-    } else {
-      const errorMessage = getFormattedErrorMessage(updatedWorkspaceResponse);
-      toast.error(errorMessage);
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
   }, [form, workspace.id, router, t, savedStyling?.pageFont]);
 
@@ -174,15 +167,8 @@ export const ThemeStyling = ({
     const customCss = (await customCssSaveRef.current?.save()) ?? { status: "skipped" };
     if (customCss.status === "stopped") return;
 
-    const updatedWorkspaceResponse = await updateWorkspaceAction({
-      workspaceId: workspace.id,
-      data: {
-        styling: data,
-      },
-    });
-
-    if (updatedWorkspaceResponse?.data) {
-      const saved = updatedWorkspaceResponse.data.styling;
+    try {
+      const { styling: saved } = await patchWorkspaceSettings(workspace.id, { styling: data });
       form.reset({ ...saved });
       setPreviewBrandColor(
         saved?.brandColor?.light ?? STYLE_DEFAULTS.brandColor?.light ?? COLOR_DEFAULTS.brandColor
@@ -192,9 +178,8 @@ export const ThemeStyling = ({
           ? t("workspace.custom_css.saved_with_warnings", { count: customCss.removedCount })
           : t("workspace.look.styling_updated_successfully")
       );
-    } else {
-      const errorMessage = getFormattedErrorMessage(updatedWorkspaceResponse);
-      toast.error(errorMessage);
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
   };
 
