@@ -661,6 +661,9 @@ const processElementFilters = (
   elements.forEach(({ filterType, elementType }) => {
     const elementId = elementType.id ?? "";
     const element = surveyElements.find((q) => q.id === elementId);
+    // A second rule on the same question (a range: "> 1" and "< 5") must not replace the first, so the
+    // first moves to `dataAnd` and both apply. Matrix rows already share one condition.
+    const previous = filters.data?.[elementId];
 
     switch (elementType.elementType) {
       case TSurveyElementTypeEnum.OpenText:
@@ -693,6 +696,10 @@ const processElementFilters = (
       case TSurveyElementTypeEnum.Matrix:
         processMatrixFilter(filterType, elementId, filters);
         break;
+    }
+    const current = filters.data?.[elementId];
+    if (previous && current && current !== previous && current.op !== "matrix") {
+      filters.dataAnd = [...(filters.dataAnd ?? []), { key: elementId, condition: previous }];
     }
   });
 };

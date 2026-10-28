@@ -144,7 +144,7 @@ describe("listV3Segments", () => {
     ] as never);
     const first = await (
       await call([
-        ["sortBy", "name"],
+        ["sortBy", "title"],
         ["limit", "1"],
       ])
     ).json();
@@ -156,7 +156,7 @@ describe("listV3Segments", () => {
     vi.mocked(prisma.segment.findMany).mockClear();
     vi.mocked(prisma.segment.findMany).mockResolvedValue([] as never);
     await call([
-      ["sortBy", "name"],
+      ["sortBy", "title"],
       ["limit", "1"],
       ["cursor", first.meta.nextCursor],
     ]);
@@ -177,7 +177,7 @@ describe("listV3Segments", () => {
     ] as never);
     const first = await (
       await call([
-        ["sortBy", "name"],
+        ["sortBy", "title"],
         ["limit", "1"],
       ])
     ).json();
@@ -186,7 +186,7 @@ describe("listV3Segments", () => {
     vi.mocked(prisma.segment.findMany).mockResolvedValue([] as never);
     vi.mocked(prisma.segment.findFirst).mockResolvedValue({ title: longTitle } as never);
     const next = await call([
-      ["sortBy", "name"],
+      ["sortBy", "title"],
       ["limit", "1"],
       ["cursor", first.meta.nextCursor],
     ]);
@@ -207,7 +207,7 @@ describe("listV3Segments", () => {
 
     vi.mocked(prisma.segment.findFirst).mockResolvedValue(null);
     const gone = await call([
-      ["sortBy", "name"],
+      ["sortBy", "title"],
       ["limit", "1"],
       ["cursor", first.meta.nextCursor],
     ]);

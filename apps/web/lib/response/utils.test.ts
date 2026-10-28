@@ -588,6 +588,24 @@ describe("Response Utils", () => {
       });
     });
 
+    test("dataAnd conditions apply alongside data on the same key", () => {
+      const survey = {
+        id: "s6",
+        blocks: [],
+        questions: [],
+        hiddenFields: { enabled: false, fieldIds: [] },
+      } as unknown as TSurvey;
+      const result = buildWhereClause(survey, {
+        data: { qRating: { op: "lessThan", value: 5 } },
+        dataAnd: [{ key: "qRating", condition: { op: "greaterThan", value: 1 } }],
+      });
+      expect(result.AND).toEqual([
+        {
+          AND: [{ data: { path: ["qRating"], lt: 5 } }, { data: { path: ["qRating"], gt: 1 } }],
+        },
+      ]);
+    });
+
     test("includesAll with Other needs the picked choices and a write-in", () => {
       const survey = {
         id: "s5",

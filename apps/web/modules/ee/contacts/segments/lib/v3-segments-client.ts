@@ -11,7 +11,7 @@ export type TSegmentListPage = {
   meta: { limit: number; nextCursor: string | null; totalCount: number | null };
 };
 
-export const SEGMENT_SORT_VALUES = ["-updatedAt", "-createdAt", "name"] as const;
+export const SEGMENT_SORT_VALUES = ["-updatedAt", "-createdAt", "title"] as const;
 export const DEFAULT_SEGMENT_SORT = "-updatedAt";
 
 export const listSegments = async ({

@@ -51,9 +51,9 @@ get:
         enum:
           - -updatedAt
           - -createdAt
-          - name
+          - title
         default: -updatedAt
-      description: "`-updatedAt` (default), `-createdAt` (both newest first) or `name` (title, A–Z)."
+      description: "`-updatedAt` (default), `-createdAt` (both newest first) or `title` (A–Z)."
   responses:
     "200":
       description: Segments retrieved successfully

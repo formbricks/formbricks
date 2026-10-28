@@ -52,13 +52,13 @@ describe("listSegments", () => {
     const fetchMock = stubFetch(jsonResponse({ data: [], meta }));
     const signal = new AbortController().signal;
 
-    await listSegments({ workspaceId: "ws_1", limit: 20, search: "   ", sortBy: "name", signal });
+    await listSegments({ workspaceId: "ws_1", limit: 20, search: "   ", sortBy: "title", signal });
 
     expect((fetchMock.mock.calls[0][0] as string).startsWith("/api/v3/segments?")).toBe(true);
     const params = requestedParams(fetchMock);
     expect(params.get("workspaceId")).toBe("ws_1");
     expect(params.get("limit")).toBe("20");
-    expect(params.get("sortBy")).toBe("name");
+    expect(params.get("sortBy")).toBe("title");
     expect(params.has("filter[title][contains]")).toBe(false);
     expect(params.has("cursor")).toBe(false);
     expect(params.get("includeTotalCount")).toBe("true");
@@ -73,7 +73,7 @@ describe("listSegments", () => {
       limit: 20,
       cursor: "cur_2",
       search: " power ",
-      sortBy: "name",
+      sortBy: "title",
     });
 
     const params = requestedParams(fetchMock);

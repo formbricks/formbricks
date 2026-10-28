@@ -16,7 +16,7 @@ const SORT_SPECS: Record<
   TV3SegmentSort,
   { column: "title" | "updatedAt" | "createdAt"; direction: "asc" | "desc" }
 > = {
-  name: { column: "title", direction: "asc" },
+  title: { column: "title", direction: "asc" },
   "-updatedAt": { column: "updatedAt", direction: "desc" },
   "-createdAt": { column: "createdAt", direction: "desc" },
 };

@@ -477,16 +477,19 @@ const toDateRange = (filters: readonly TTableFilter[], timeZone: string, now: Da
 };
 
 /**
- * The filters the response pipeline can apply. It holds one condition per question, attribute, hidden
- * field and so on, so a second rule on the same property would replace the first there while both
- * chips still showed: the last rule on a property wins here too, and only it is shown. Tags stack, so
- * every tag rule stays.
+ * The filters the response pipeline can apply. Rules on one question all apply (a range is two
+ * rules), and so do tag rules. Attributes, hidden fields, variables, meta, language and status hold one
+ * condition each there, so a second rule on one of those would replace the first while both chips
+ * still showed: the last one wins here too, and only it is shown.
  */
 export const applicableResponseFilters = (filters: readonly TTableFilter[]): TTableFilter[] => {
   const lastIndex = new Map<string, number>();
   filters.forEach((filter, index) => lastIndex.set(filter.property, index));
   return filters.filter(
-    (filter, index) => filter.property === TAG_PROPERTY || lastIndex.get(filter.property) === index
+    (filter, index) =>
+      filter.property === TAG_PROPERTY ||
+      filter.property.startsWith("question.") ||
+      lastIndex.get(filter.property) === index
   );
 };
 

@@ -335,13 +335,34 @@ describe("normalizeSummaryFilterRow", () => {
 });
 
 describe("applicableResponseFilters", () => {
-  test("a second rule on one question replaces the first, so the chips show what applies", () => {
+  test("rules on one question all stay, so a range applies both bounds", () => {
     const filters: TTableFilter[] = [
-      { property: "question.rating", operator: "greaterThan", values: ["3"] },
+      { property: "question.rating", operator: "greaterThan", values: ["1"] },
       { property: "status", operator: "in", values: ["complete"] },
-      { property: "question.rating", operator: "lessThan", values: ["2"] },
+      { property: "question.rating", operator: "lessThan", values: ["5"] },
     ];
-    expect(applicableResponseFilters(filters)).toEqual([filters[1], filters[2]]);
+    expect(applicableResponseFilters(filters)).toEqual(filters);
+  });
+
+  test("a second rule on a single-condition field replaces the first, so the chips show what applies", () => {
+    const filters: TTableFilter[] = [
+      { property: "meta.utmSource", operator: "equals", values: ["ads"] },
+      { property: "meta.utmSource", operator: "equals", values: ["newsletter"] },
+    ];
+    expect(applicableResponseFilters(filters)).toEqual([filters[1]]);
+  });
+
+  test("a range on an NPS question reaches the criteria as two conditions", () => {
+    const criteria = criteriaFor([
+      { property: "question.nps", operator: "greaterThan", values: ["1"] },
+      { property: "question.nps", operator: "lessThan", values: ["5"] },
+    ]);
+    expect([criteria.data?.nps, ...(criteria.dataAnd ?? []).map((entry) => entry.condition)]).toEqual(
+      expect.arrayContaining([
+        { op: "greaterThan", value: 1 },
+        { op: "lessThan", value: 5 },
+      ])
+    );
   });
 
   test("tag rules stack", () => {

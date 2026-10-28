@@ -13,7 +13,7 @@ export const V3_SEGMENTS_DEFAULT_LIMIT = 50;
 export const V3_SEGMENTS_MAX_LIMIT = 250;
 export const SEGMENTS_CURSOR_KIND = "segments";
 
-export const V3_SEGMENT_SORTS = ["name", "-updatedAt", "-createdAt"] as const;
+export const V3_SEGMENT_SORTS = ["title", "-updatedAt", "-createdAt"] as const;
 export type TV3SegmentSort = (typeof V3_SEGMENT_SORTS)[number];
 
 const SUPPORTED_QUERY_PARAMS = [
@@ -106,7 +106,7 @@ export function parseV3SegmentsListQuery(
     try {
       cursor = decodeSortCursor(q.cursor, { kind: SEGMENTS_CURSOR_KIND, sortBy: q.sortBy, fp: fingerprint });
       // A timestamp sort's position must be an instant, or the page query would bind an Invalid Date.
-      if (q.sortBy !== "name" && !z.iso.datetime().safeParse(cursor.value).success) {
+      if (q.sortBy !== "title" && !z.iso.datetime().safeParse(cursor.value).success) {
         throw new Error("The cursor is invalid.");
       }
     } catch (error) {

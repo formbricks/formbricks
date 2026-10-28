@@ -658,11 +658,16 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
 
   whereClause.push(...buildEmbeddedDataFilterClauses(survey, filterCriteria));
 
-  if (filterCriteria?.data) {
+  // `dataAnd` carries further conditions on keys `data` already holds; every one of them must hold.
+  const dataEntries = [
+    ...Object.entries(filterCriteria?.data ?? {}),
+    ...(filterCriteria?.dataAnd ?? []).map(({ key, condition }) => [key, condition] as const),
+  ];
+  if (dataEntries.length > 0) {
     const data: Prisma.ResponseWhereInput[] = [];
     const rangeableIngestedKeys = rangeableIngestedDataKeys(survey);
 
-    Object.entries(filterCriteria.data).forEach(([key, val]) => {
+    dataEntries.forEach(([key, val]) => {
       const elements = getElementsFromBlocks(survey.blocks);
       const element = elements.find((element) => element.id === key);
 

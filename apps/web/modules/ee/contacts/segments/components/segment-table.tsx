@@ -103,7 +103,7 @@ export function SegmentTable({
             options: [
               { value: "-updatedAt", label: t("common.table_toolbar.sort_recently_updated") },
               { value: "-createdAt", label: t("common.table_toolbar.sort_recently_created") },
-              { value: "name", label: t("common.table_toolbar.sort_name") },
+              { value: "title", label: t("common.table_toolbar.sort_name") },
             ],
             value: tableState.sortBy,
             onChange: tableState.setSortBy,

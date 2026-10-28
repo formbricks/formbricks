@@ -35,7 +35,7 @@ describe("parseV3SegmentsListQuery", () => {
     });
   });
 
-  test.each(["name", "-updatedAt", "-createdAt"])("accepts sortBy=%s", (sortBy) => {
+  test.each(["title", "-updatedAt", "-createdAt"])("accepts sortBy=%s", (sortBy) => {
     expect(parseV3SegmentsListQuery(params([["sortBy", sortBy]])).ok).toBe(true);
   });
 
@@ -61,9 +61,9 @@ describe("parseV3SegmentsListQuery", () => {
   test("decodes a cursor issued for the same sort and search", () => {
     const result = parseV3SegmentsListQuery(
       params([
-        ["sortBy", "name"],
+        ["sortBy", "title"],
         ["filter[title][contains]", "vip"],
-        ["cursor", cursorFor("name", "VIP users", "vip")],
+        ["cursor", cursorFor("title", "VIP users", "vip")],
       ])
     );
     expect(result.ok && result.cursor).toMatchObject({
@@ -77,15 +77,15 @@ describe("parseV3SegmentsListQuery", () => {
       "a different sort",
       [
         ["sortBy", "-createdAt"],
-        ["cursor", cursorFor("name", "VIP")],
+        ["cursor", cursorFor("title", "VIP")],
       ],
     ],
     [
       "a different search",
       [
-        ["sortBy", "name"],
+        ["sortBy", "title"],
         ["filter[title][contains]", "other"],
-        ["cursor", cursorFor("name", "VIP")],
+        ["cursor", cursorFor("title", "VIP")],
       ],
     ],
     ["a timestamp sort with a non-date position", [["cursor", cursorFor("-updatedAt", "VIP")]]],
