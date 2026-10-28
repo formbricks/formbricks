@@ -7,16 +7,24 @@
  * - `Authorization: Bearer <key>`; anything else is a 401 problem body.
  * - `POST` creates a record and answers 201; a repeated `tenant_id` + `submission_id` + `field_id` is a 409
  *   with code `conflict` (terminal), which is what `reconcileFeedbackRecords` branches on.
- * - `GET` lists, newest `collected_at` first, honouring the repeatable `tenant_id`-scoped filters
- *   `source_type`, `source_id`, `submission_id`, `field_id` (a record must match any value of each filter
- *   given) and `limit` (default 50, at most 1000). Paging cursors are not modelled: the cleanup never uses
- *   them, since its own deletes move the pages.
+ * - `GET` lists, newest `collected_at` first, honouring the repeatable `source_type`, `source_id`,
+ *   `submission_id`, `field_id` filters (a record must match any value of each filter given) and `limit`
+ *   (default 100, at most 1000; 0 means the default, more than 1000 is a 400). `tenant_id` is required (400
+ *   without it), and an empty filter value matches nothing. Paging cursors are not modelled: the cleanup
+ *   never uses them, since its own deletes move the pages.
  * - `PATCH` updates the answer fields and bumps `updated_at`; `DELETE` answers 204; both answer 404 for an id
- *   that is not there. The Hub takes a bare id on both and checks no tenant, as the cleanup's comments say.
- * - Errors are RFC 9457-style problem bodies carrying `code`, `status` and `request_id`.
+ *   that is not there and 400 for one that is not a UUID. The Hub takes a bare id on both and checks no
+ *   tenant, as the cleanup's comments say. Deleting twice is a 404 the second time.
+ * - Errors are RFC 9457 problem bodies carrying `type`, `title`, `status`, `detail`, `instance`, `code` and
+ *   `request_id`.
+ * - `outage = "purge"`: a tenant data purge is running, so every write (POST, PATCH, DELETE) is a 409 with
+ *   code `tenant_write_conflict`, which is a different 409 from a duplicate create (`conflict`).
  *
- * Not modelled: enrichment (sentiment, emotions, translation), taxonomy, webhooks, tenant purges and
- * cursor paging. What it does NOT prove is therefore the real Hub's behaviour on those, or its timing.
+ * All of the above was checked against the real Hub 0.14.1 (ENG-6785, evidence in the task notes). Not
+ * modelled: enrichment (sentiment, emotions, translation), taxonomy, webhooks, the purge itself and cursor
+ * paging. The SDK's own retries (it re-sends a `tenant_write_conflict` 409 and idempotent calls on 5xx or
+ * timeouts) are not modelled either: this answers each request once. Timing is not modelled: the real Hub
+ * can also accept a connection and never answer, which the SDK waits out for 60 s per attempt.
  *
  * `handle` takes a standard `Request` and returns a `Response`, so it plugs into `vi.stubGlobal("fetch")` and
  * into a plain `node:http` server (`startFakeHubServer`) alike.
@@ -39,7 +47,7 @@ type TFakeRecord = Record<string, unknown> & {
 export type TFakeHubRequestLog = { method: string; path: string; search: string };
 
 /** `down`: every call fails with a 503, as a Hub behind a failing proxy would. `unreachable`: no answer at all. */
-export type TFakeHubOutage = "down" | "unreachable" | null;
+export type TFakeHubOutage = "down" | "unreachable" | "purge" | null;
 
 const REQUIRED_CREATE_FIELDS = ["tenant_id", "source_type", "submission_id", "field_id", "field_type"];
 const UPDATABLE_FIELDS = [
@@ -52,7 +60,8 @@ const UPDATABLE_FIELDS = [
   "value_number",
   "value_text",
 ];
-const DEFAULT_LIMIT = 50;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const DEFAULT_LIMIT = 100;
 const MAX_LIMIT = 1000;
 
 export class FakeHub {
@@ -104,11 +113,20 @@ export class FakeHub {
     }
 
     const idMatch = /^\/v1\/feedback-records\/([^/]+)$/.exec(url.pathname);
+    if (this.outage === "purge" && ["POST", "PATCH", "DELETE"].includes(request.method)) {
+      return problem(
+        409,
+        "tenant_write_conflict",
+        "tenant data purge in progress for this tenant; retry later"
+      );
+    }
     if (url.pathname === "/v1/feedback-records") {
       if (request.method === "GET") return this.list(url);
       if (request.method === "POST") return this.create(request);
     } else if (idMatch) {
       const id = decodeURIComponent(idMatch[1] ?? "");
+      if (!UUID.test(id) && request.method !== "POST")
+        return problem(400, "validation", "id must be a valid UUID");
       if (request.method === "GET") return this.read(id);
       if (request.method === "PATCH") return this.update(id, request);
       if (request.method === "DELETE") return this.destroy(id);
@@ -148,20 +166,23 @@ export class FakeHub {
   }
 
   private list(url: URL): Response {
-    const all = (name: string) => url.searchParams.getAll(name).filter((v) => v !== "");
+    const all = (name: string) => url.searchParams.getAll(name);
     const tenant = url.searchParams.get("tenant_id");
+    if (!tenant) return problem(400, "validation", "tenant_id is required");
     const [sourceTypes, sourceIds, submissionIds, fieldIds] = [
       all("source_type"),
       all("source_id"),
       all("submission_id"),
       all("field_id"),
     ];
-    const requested = Number(url.searchParams.get("limit") ?? DEFAULT_LIMIT);
-    const limit =
-      Number.isInteger(requested) && requested > 0 ? Math.min(requested, MAX_LIMIT) : DEFAULT_LIMIT;
+    const requested = Number(url.searchParams.get("limit") ?? 0);
+    if (!Number.isInteger(requested) || requested > MAX_LIMIT) {
+      return problem(400, "validation", `limit must be an integer of at most ${MAX_LIMIT}`);
+    }
+    const limit = requested > 0 ? requested : DEFAULT_LIMIT;
 
     const matches = [...this.store.values()]
-      .filter((r) => !tenant || r.tenant_id === tenant)
+      .filter((r) => r.tenant_id === tenant)
       .filter((r) => sourceTypes.length === 0 || sourceTypes.includes(r.source_type))
       .filter((r) => sourceIds.length === 0 || (r.source_id !== undefined && sourceIds.includes(r.source_id)))
       .filter((r) => submissionIds.length === 0 || submissionIds.includes(r.submission_id))
@@ -194,8 +215,22 @@ export class FakeHub {
   }
 }
 
-const problem = (status: number, code: string, detail: string): Response =>
-  Response.json({ status, code, detail, request_id: randomUUID() }, { status });
+const problem = (status: number, code: string, detail: string): Response => {
+  const requestId = randomUUID();
+  const slug = code.replaceAll("_", "-");
+  return Response.json(
+    {
+      type: `https://hub.formbricks.com/problems/${slug}`,
+      title: detail,
+      status,
+      detail,
+      instance: "/v1/feedback-records",
+      code,
+      request_id: requestId,
+    },
+    { status, headers: { "content-type": "application/problem+json" } }
+  );
+};
 
 const readBody = async (req: IncomingMessage): Promise<Buffer> => {
   const chunks: Buffer[] = [];

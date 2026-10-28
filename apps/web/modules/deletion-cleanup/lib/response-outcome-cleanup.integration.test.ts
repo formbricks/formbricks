@@ -144,7 +144,13 @@ describe("response outcome and the Hub (real Postgres, fake Hub)", () => {
 
     await mark(ids, "lowQuality");
 
-    // The first drain found the Hub down: nothing deleted, every row waiting with a backoff.
+    // The first drain found the Hub down: nothing deleted, every row waiting with a backoff. The request
+    // only waits INLINE_DRAIN_WAIT_MS for it (the SDK retries a failing list for seconds per round of ten
+    // rows), so the drain is given the time it needs to finish before the rows are read.
+    await vi.waitFor(async () => expect((await queue()).every((r) => r.attempts === 1)).toBe(true), {
+      timeout: 30_000,
+      interval: 250,
+    });
     const rows = await queue();
     expect(rows).toHaveLength(100);
     expect(new Set(rows.map((r) => r.responseIds[0])).size).toBe(100);

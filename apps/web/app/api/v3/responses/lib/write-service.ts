@@ -677,19 +677,36 @@ const enqueueOutcomeCleanup = async (
 };
 
 /**
+ * How long a request waits for the first attempt at the Hub cleanup. The Hub's client waits up to a minute
+ * per attempt, so a Hub that accepts the connection and never answers would hold the request that much
+ * longer for an outcome that is already committed (seen against the real Hub, ENG-6785). The drain keeps
+ * running past this; it just stops being waited for, and its row backs off if it fails.
+ */
+export const INLINE_DRAIN_WAIT_MS = 5000;
+
+/**
  * The first attempt at the Hub cleanup, straight after commit. A Hub outage, or any failure here, only
  * delays it to the drain job with its backoff: the outcome is already committed, so it must never fail the
- * request that set it.
+ * request that set it, nor hold it for long.
  */
 const drainOutcomeCleanups = async (drainNowIds: string[], workspaceId: string): Promise<void> => {
   if (drainNowIds.length === 0) return;
-  try {
-    await drainDeletionCleanups({ ids: drainNowIds });
-  } catch (error) {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const drain = drainDeletionCleanups({ ids: drainNowIds }).catch((error: unknown) => {
     logger.error(
       { err: error, workspaceId, responseCount: drainNowIds.length },
       "Deferred the Feedback Record cleanup of an outcome change to the drain job"
     );
+  });
+  try {
+    await Promise.race([
+      drain,
+      new Promise<void>((resolve) => {
+        timer = setTimeout(resolve, INLINE_DRAIN_WAIT_MS);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
   }
 };
 

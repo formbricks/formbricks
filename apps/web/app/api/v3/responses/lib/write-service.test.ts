@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZResponse } from "@formbricks/types/responses";
 import {
+  INLINE_DRAIN_WAIT_MS,
   type TV3CreateResponsePersist,
   type TV3WriteReadbackRow,
   type TV3WriteSurveyRow,
@@ -965,5 +966,25 @@ describe("updateScopedResponse — the Feedback Record cleanup on an outcome cha
     mockDrainCleanups.mockRejectedValueOnce(new Error("hub down"));
 
     await expect(patchOutcome("lowQuality")).resolves.toEqual({ ok: true, responseId: "clrs1" });
+  });
+
+  // Against the real Hub: a Hub that accepts the connection and never answers held the request for the
+  // SDK's 60 s attempt timeout, although the outcome was long committed.
+  test("a Hub that never answers does not hold the patch past the inline drain's wait", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      outcomeTx(null);
+      mockEnqueueOutcomeCleanups.mockResolvedValueOnce({ drainNowIds: ["cln-1"] });
+      mockDrainCleanups.mockReturnValueOnce(new Promise(() => {}));
+
+      const settled = vi.fn();
+      const pending = patchOutcome("lowQuality").then(settled);
+      await vi.advanceTimersByTimeAsync(INLINE_DRAIN_WAIT_MS);
+      await pending;
+
+      expect(settled).toHaveBeenCalledWith({ ok: true, responseId: "clrs1" });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
