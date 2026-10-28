@@ -184,27 +184,39 @@ Two backstops:
 
 #### Finding them
 
-There is still **no `## Credit` section in the PR template** — ENG-2836 tracks adding one and
-carrying credits into the release automatically, and it is open. Until it lands, the format is
-whatever the author wrote, so scan for all of it:
+The source of truth is the **Linear ticket**, not the PR. Since 2026-10-28, every externally
+reported vulnerability carries one `Credit:` line per reporter in its `## Security assessment`
+block, recorded when the reporter answers in Plain:
 
-```shell
-jq -r 'select((.body//"") | test("(?i)credit|reported by|disclos|responsible")) | "#\(.number) \(.title)"' bodies.ndjson
+```
+Credit: <name exactly as they asked> · first report <date> · Plain T-nn
+Credit: anonymous
+Credit: not requested
+Credit: asked <date>, no answer yet
 ```
 
-Real 6.0 examples, both of which a `## Credit`-heading-only scan would have missed: one credit sat
-under a `## Credit` heading (#8848, the 5.4 precedent), one as a prose line above `## What & why`
-(#8971), one as a bullet inside `## What & why` (#9255).
-
-Cross-check against Linear, because a reporter's name may live only on the issue:
+Credit stays out of PR descriptions on purpose: `formbricks/formbricks` is public, and a credit line
+in a fix PR announces a vulnerability fix before the patch ships.
 
 1. Extract every `ENG-\d+` from the in-range PR titles and bodies.
 2. List Linear issues labeled `vulnerability` — **that is the operative label**; `security` is the
    retired duplicate (ENG-2383) still carried by older issues, so check both and union them.
 3. Intersect with the PR-referenced ids, then drop every `[Dependabot …]` title — in 6.0 that was
    37 of 57. Dependency bumps get no researcher credit.
-4. Read what survives. Most are internally found; the tell for an external report is a
-   "Reported by" / "Reporter:" / "Plain thread T-nn" line in the description.
+4. Read the `Credit:` lines on what survives. Credit every `Credit: <name>` line, in the order
+   listed (earliest report first). Skip `anonymous` and `not requested`. A ticket with `asked …,
+   no answer yet` is a question for the human before publishing, never a guess.
+5. **Older tickets** (before 2026-10-28) have no `Credit:` line. For those, fall back to the old
+   scan: a "Reported by" / "Reporter:" / "Plain thread T-nn" line in the ticket description, then
+   the PR body —
+
+   ```shell
+   jq -r 'select((.body//"") | test("(?i)credit|reported by|disclos|responsible")) | "#\(.number) \(.title)"' bodies.ndjson
+   ```
+
+   (6.0 examples: a `## Credit` heading in #8848, a prose line above `## What & why` in #8971, a
+   bullet inside `## What & why` in #9255.) ENG-2836, which planned a `## Credit` section in the
+   PR template, is superseded by the ticket line.
 
 #### Placement
 
@@ -225,7 +237,7 @@ Credit belongs to the **first release that carries the fix**. Before crediting, 
 not already ship on the older line (`git log --oneline $PREVIOUS_TAG --grep="#PR-NUMBER"`); if it
 did, the credit belonged in that release's notes.
 
-Honour what the reporter asked for, exactly as the PR or issue words it — some ask for a GitHub
+Honour what the reporter asked for, exactly as the `Credit:` line (or, for older tickets, the PR or issue) words it — some ask for a GitHub
 handle, some for a real name, some for an employer to be named too ("credit is owed to Google and
 Ada Logics"), some explicitly decline. Never invent or infer a name, never credit someone not
 explicitly named, and never describe the vulnerability beyond what the PR already made public.
@@ -310,7 +322,7 @@ sections). Only stable releases get this treatment.
 - A **draft** GitHub release exists for the new tag, targeting the release branch, never published.
 - Its notes follow the Compose shape: no empty type-section, "No breaking changes" stated when there are none, every PR title verbatim with its author and full URL.
 - Every docs page the notes link exists on the release branch.
-- Security credits name only reporters who were explicitly named, worded as they asked.
+- Security credits match the tickets' `Credit:` lines: every named reporter, in that order, worded as they asked; none left as an unanswered request.
 - Everything for the human (an unlabelled contract change, the tested upgrade pair, the support-end date) is in the reply, not in the notes.
 
 ## Guardrails
@@ -323,6 +335,8 @@ sections). Only stable releases get this treatment.
 - Breaking changes are an index that links the migration guide, not restated tables.
 - Check that every docs page the notes link exists on the release branch; offer a backport if not.
 - Security credits go in their own `### 🔒 Security credits` section, never inline on the bullet.
+- Credits come from the ticket's `Credit:` lines. An unanswered credit request is a question for
+  the human, never a guess.
 - Never fabricate a reporter's name or credit someone not explicitly named. Honour the exact
   wording they asked for, including any employer.
 - Ask the human for the tested upgrade pair and the support-end date. Never assert either.
