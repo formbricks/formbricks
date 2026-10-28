@@ -5,6 +5,7 @@
  * values (one a near miss, one far off), a multi-select (1/0 columns), a ranking, an NPS and coded
  * answers whose codes are plain integers with a leading zero.
  */
+import { Readable } from "node:stream";
 import { type TAnalysisSurvey, createAnalysisRowBuilder } from "../row-builder";
 import type {
   TAnalysisExport,
@@ -162,7 +163,7 @@ export const buildSampleExport = (answers: TAnswerDisplay = "codes"): TAnalysisE
     counts: { included: responses.length, lowQualityLeftOut: 0 },
     // Two batches, so writers are shown to cope with more than one.
     rows: async function* () {
-      for await (const batch of [built.slice(0, 2), built.slice(2)]) {
+      for await (const batch of Readable.from([built.slice(0, 2), built.slice(2)])) {
         yield batch;
         rowCount += batch.length;
       }

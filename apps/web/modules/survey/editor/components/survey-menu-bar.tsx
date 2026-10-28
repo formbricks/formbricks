@@ -617,16 +617,12 @@ export const SurveyMenuBar = ({
     return () => clearInterval(intervalId);
   }, [localSurvey.publishOn, localSurvey.status, saveAttemptOrder, setLocalSurvey]);
 
-  // Add new handler after handleSurveySave
   // The reload prompt already explains a stale-deployment failure, so don't also claim the save itself
-  // went wrong. Always resolves to `false`: the save did not go through.
-  const reportSaveException = (e: unknown): false => {
-    if (reportStaleServerActionError(e)) {
-      return false;
-    }
+  // went wrong. Callers return `false` themselves: the save did not go through.
+  const reportSaveException = (e: unknown) => {
+    if (reportStaleServerActionError(e)) return;
     console.error(e);
     toast.error(t("workspace.surveys.edit.error_saving_changes"));
-    return false;
   };
 
   // ENG-6783: the server refused an edit to a locked field; say why, with its details.
@@ -671,7 +667,8 @@ export const SurveyMenuBar = ({
     } catch (e) {
       setIsSurveySaving(false);
       saveAttemptOrder.settle(attempt);
-      return reportSaveException(e);
+      reportSaveException(e);
+      return false;
     }
   };
 
@@ -735,7 +732,8 @@ export const SurveyMenuBar = ({
     } catch (e) {
       setIsSurveySaving(false);
       if (attempt !== undefined) saveAttemptOrder.settle(attempt);
-      return reportSaveException(e);
+      reportSaveException(e);
+      return false;
     }
   };
 
