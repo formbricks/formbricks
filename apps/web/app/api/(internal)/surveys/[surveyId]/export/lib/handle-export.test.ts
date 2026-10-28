@@ -36,6 +36,7 @@ const defaults: TExportRequest = {
   spss: false,
   advanced: [],
   excludedColumns: [],
+  zip: false,
 };
 
 const run = (overrides: Partial<Parameters<typeof handleExportRequest>[0]> = {}) =>

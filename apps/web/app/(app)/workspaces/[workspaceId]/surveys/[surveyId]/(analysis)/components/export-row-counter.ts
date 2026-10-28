@@ -30,6 +30,9 @@ const firstFileStart = (head: Uint8Array): number | "unsupported" | null => {
   return head.length < start ? null : start;
 };
 
+/** Response chunks are ArrayBuffer-backed; the stream types only accept that, not a SharedArrayBuffer view. */
+const asBufferSource = (bytes: Uint8Array): Uint8Array<ArrayBuffer> => bytes as Uint8Array<ArrayBuffer>;
+
 export const createRowCounter = (output: "csv" | "zip", onRows: (rows: number) => void): TRowCounter => {
   let lines = 0;
   const count = (text: Uint8Array): void => {
@@ -47,14 +50,14 @@ export const createRowCounter = (output: "csv" | "zip", onRows: (rows: number) =
     writer = inflate.writable.getWriter();
     // The bytes after the first file are not deflate data: that ends the stream with an error, and the count stops there.
     inflate.readable.pipeTo(new WritableStream({ write: count })).catch(() => undefined);
-    writer.write(compressed).catch(() => undefined);
+    writer.write(asBufferSource(compressed)).catch(() => undefined);
   };
 
   return {
     write: (chunk) => {
       if (unsupported) return;
       if (writer) {
-        writer.write(chunk).catch(() => undefined);
+        writer.write(asBufferSource(chunk)).catch(() => undefined);
         return;
       }
       head = concat(head, chunk);
