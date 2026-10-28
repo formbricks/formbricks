@@ -163,7 +163,14 @@ function isOriginAllowed(request: NextRequest): boolean {
  * respondent answers — that is handled by the scope being separately grantable, not by omitting it here.
  */
 function getMcpScopes(authentication: TAuthenticationApiKey): string[] {
-  const scopes = new Set(["surveys:read", "workflows:read", "feedbackRecords:read", "responses:read"]);
+  const scopes = new Set([
+    "surveys:read",
+    "workflows:read",
+    "feedbackRecords:read",
+    "responses:read",
+    "contacts:read",
+    "webhooks:read",
+  ]);
   if (
     authentication.workspacePermissions.some(
       (permission) => permission.permission === "write" || permission.permission === "manage"
@@ -173,6 +180,12 @@ function getMcpScopes(authentication: TAuthenticationApiKey): string[] {
     scopes.add("workflows:write");
     scopes.add("feedbackRecords:write");
     scopes.add("responses:write");
+    scopes.add("contacts:write");
+    scopes.add("webhooks:write");
+  }
+  // Audit logs are an organization-level admin record, so reading them needs `manage`, not `read`.
+  if (authentication.workspacePermissions.some((permission) => permission.permission === "manage")) {
+    scopes.add("audit:read");
   }
 
   return Array.from(scopes);

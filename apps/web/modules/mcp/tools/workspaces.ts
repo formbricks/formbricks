@@ -52,7 +52,17 @@ export function registerWorkspaceTools(server: McpServer): void {
     },
     // Every tool group needs a workspaceId first, so this has to admit any of them — `responses:read`
     // included, which a responses-only token can hold now that the pair is advertised (ENG-3470).
-    { anyOf: ["surveys:read", "workflows:read", "feedbackRecords:read", "responses:read"] },
+    {
+      anyOf: [
+        "surveys:read",
+        "workflows:read",
+        "feedbackRecords:read",
+        "responses:read",
+        "contacts:read",
+        "webhooks:read",
+        "audit:read",
+      ],
+    },
     async (_input: TMcpListWorkspacesInput, ctx) => {
       const authInfo = getMcpToolAuthInfo(ctx);
       const requestId = getMcpRequestId(authInfo);

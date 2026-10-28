@@ -119,6 +119,15 @@ export const MCP_OAUTH_SCOPES = [
   // its literal repairs nothing and only makes it claim something it never did.
   "responses:read",
   "responses:write",
+  // Agent-first experiment (ADR 0015). Contacts hold respondent identity, webhooks send data to
+  // third parties, and audit logs are an admin record, so none of them rides on an existing family.
+  // Same two-migration rule as `responses:*` above: 20261028100000 for the resource row,
+  // 20261028100100 for registered clients.
+  "contacts:read",
+  "contacts:write",
+  "webhooks:read",
+  "webhooks:write",
+  "audit:read",
 ] as const;
 
 /**
@@ -146,6 +155,11 @@ export const MCP_RESOURCE_SCOPES = [
   "feedbackRecords:write",
   "responses:read",
   "responses:write",
+  "contacts:read",
+  "contacts:write",
+  "webhooks:read",
+  "webhooks:write",
+  "audit:read",
 ] as const;
 
 // Scopes advertised in the RFC 9728 protected-resource metadata. MCP clients derive their

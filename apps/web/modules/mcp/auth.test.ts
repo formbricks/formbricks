@@ -284,6 +284,10 @@ describe("authenticateMcpRequest", () => {
           "workflows:write",
           "feedbackRecords:write",
           "responses:write",
+          "contacts:read",
+          "contacts:write",
+          "webhooks:read",
+          "webhooks:write",
         ].sort()
       );
     }
@@ -307,9 +311,33 @@ describe("authenticateMcpRequest", () => {
       // `responses:read` rides along (ENG-2862): the same key can already read responses through v1/v2
       // management, so withholding it would make MCP narrower than the REST surface this credential has.
       expect([...result.authInfo.scopes].sort()).toEqual(
-        ["surveys:read", "workflows:read", "feedbackRecords:read", "responses:read"].sort()
+        [
+          "surveys:read",
+          "workflows:read",
+          "feedbackRecords:read",
+          "responses:read",
+          "contacts:read",
+          "webhooks:read",
+        ].sort()
       );
     }
+  });
+
+  test("grants audit:read only to an API key with manage access", async () => {
+    const withPermission = async (permission: ApiKeyPermission) => {
+      vi.mocked(authenticateApiKeyFromHeaders).mockResolvedValue({
+        ...apiKeyAuth,
+        workspacePermissions: [{ workspaceId: "workspace_1", workspaceName: "Workspace", permission }],
+      });
+      const result = await authenticateMcpRequest(
+        createRequest("http://localhost/api/mcp", { "x-api-key": "fbk_test" })
+      );
+      return result.ok ? result.authInfo.scopes : [];
+    };
+
+    expect(await withPermission(ApiKeyPermission.read)).not.toContain("audit:read");
+    expect(await withPermission(ApiKeyPermission.write)).not.toContain("audit:read");
+    expect(await withPermission(ApiKeyPermission.manage)).toContain("audit:read");
   });
 
   test("returns 429 when rate limited", async () => {
@@ -443,7 +471,7 @@ describe("authenticateMcpRequest", () => {
       // added, the baseline auth gate has been widened and MCP is accepting a token that grants no
       // resource access.
       expect(result.response.headers.get("WWW-Authenticate")).toContain(
-        'scope="surveys:read surveys:write workflows:read workflows:write feedbackRecords:read feedbackRecords:write responses:read responses:write"'
+        'scope="surveys:read surveys:write workflows:read workflows:write feedbackRecords:read feedbackRecords:write responses:read responses:write contacts:read contacts:write webhooks:read webhooks:write audit:read"'
       );
     }
     expect(applyRateLimit).not.toHaveBeenCalled();
