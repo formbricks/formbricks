@@ -184,5 +184,6 @@ export const useResponseTableFilters = (survey: TSurvey) => {
      */
     isReady: !needsFilterData || filterData.isSuccess,
     isFilterDataError,
+    retryFilterData: filterData.refetch,
   };
 };

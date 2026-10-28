@@ -18,6 +18,7 @@ import { useResponseTableFilters } from "@/app/(app)/workspaces/[workspaceId]/su
 import { ResponseDataView } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/responses/components/ResponseDataView";
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { Button } from "@/modules/ui/components/button";
 
 interface ResponsePageProps {
   survey: TSurvey;
@@ -169,17 +170,22 @@ export const ResponsePage = ({
 
   useEffect(() => {
     const fetchFilteredResponses = async () => {
+      // The server rendered the unfiltered list; it stays behind the loading state until the rules in
+      // the URL can be resolved. Checked first: an unresolved rule is not in `hasFilters` yet.
+      if (!isReady) {
+        firstPageRequestRef.current += 1;
+        setIsFetchingFirstPage(true);
+        return;
+      }
       // skip call for initial mount
       if (page === null && !hasFilters) {
         setPage(1);
+        setIsFetchingFirstPage(false);
         return;
       }
       setPage(1);
       setIsFetchingFirstPage(true);
       const requestId = ++firstPageRequestRef.current;
-      // The server rendered the unfiltered list; it stays behind the loading state until the rules in
-      // the URL can be resolved.
-      if (!isReady) return;
 
       try {
         const getResponsesActionResponse = await getResponsesAction({
@@ -205,22 +211,35 @@ export const ResponsePage = ({
   }, [filtersKey, isReady, responsesPerPage, selectedFilter, dateRange, surveyId]);
 
   return (
-    <ResponseDataView
-      survey={survey}
-      responses={responses}
-      user={user}
-      environmentTags={environmentTags}
-      isReadOnly={isReadOnly}
-      fetchNextPage={fetchNextPage}
-      hasMore={hasMore}
-      updateResponseList={updateResponseList}
-      updateResponse={updateResponse}
-      isFetchingFirstPage={isFetchingFirstPage}
-      locale={locale}
-      isQuotasAllowed={isQuotasAllowed}
-      quotas={quotas}
-      isOpenedByCreatives={isOpenedByCreatives}
-      toolbar={{ filterState, matchCount: matchCountQuery.data ?? null }}
-    />
+    <>
+      {filterState.isFilterDataError && (
+        // The rules in the URL could not be resolved, so the list stays hidden rather than unfiltered.
+        <div
+          role="alert"
+          className="mb-3 flex items-center justify-between gap-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          <span>{t("common.something_went_wrong_please_try_again")}</span>
+          <Button size="sm" variant="secondary" onClick={() => void filterState.retryFilterData()}>
+            {t("common.try_again")}
+          </Button>
+        </div>
+      )}
+      <ResponseDataView
+        survey={survey}
+        responses={responses}
+        user={user}
+        environmentTags={environmentTags}
+        isReadOnly={isReadOnly}
+        fetchNextPage={fetchNextPage}
+        hasMore={hasMore}
+        updateResponseList={updateResponseList}
+        updateResponse={updateResponse}
+        isFetchingFirstPage={isFetchingFirstPage}
+        locale={locale}
+        isQuotasAllowed={isQuotasAllowed}
+        quotas={quotas}
+        isOpenedByCreatives={isOpenedByCreatives}
+        toolbar={{ filterState, matchCount: matchCountQuery.data ?? null }}
+      />
+    </>
   );
 };

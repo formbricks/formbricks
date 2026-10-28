@@ -159,10 +159,26 @@ export const updateSegmentAction = authenticatedActionClient.inputSchema(ZUpdate
       await assertSurveysInWorkspace(parsedInput.data.surveys, segmentWorkspaceId, visibleSurveyWhere);
     }
 
+    const oldObject = await getSegment(parsedInput.segmentId);
+    let data = parsedInput.data;
     const { filters } = parsedInput.data;
     if (filters) {
-      const parsedFilters = ZSegmentFilters.safeParse(filters);
+      // Only the ids the caller sent must be visible to them; the stored ones they could not see are
+      // put back afterwards, since the editor never held them.
+      await assertSurveyInteractionSurveyIds(filters, segmentWorkspaceId, visibleSurveyWhere);
+      const merged =
+        Object.keys(visibleSurveyWhere).length > 0
+          ? await restoreHiddenSegmentSurveyIds(
+              filters,
+              oldObject.filters,
+              segmentWorkspaceId,
+              visibleSurveyWhere
+            )
+          : filters;
 
+      // The merged tree is what gets stored, so it is the one held to the bounds (at most 100 surveys
+      // per filter, and so on).
+      const parsedFilters = ZSegmentFilters.safeParse(merged);
       if (!parsedFilters.success) {
         const errMsg =
           parsedFilters.error.issues.find((issue) => issue.code === "custom")?.message || "Invalid filters";
@@ -170,24 +186,9 @@ export const updateSegmentAction = authenticatedActionClient.inputSchema(ZUpdate
       }
 
       await checkForRecursiveSegmentFilter(parsedFilters.data, parsedInput.segmentId);
-
-      await assertSurveyInteractionSurveyIds(parsedFilters.data, segmentWorkspaceId, visibleSurveyWhere);
+      data = { ...parsedInput.data, filters: parsedFilters.data };
     }
 
-    const oldObject = await getSegment(parsedInput.segmentId);
-    // The editor only held the ids this caller may see; keep the others the segment already targets.
-    const data =
-      filters && Object.keys(visibleSurveyWhere).length > 0
-        ? {
-            ...parsedInput.data,
-            filters: await restoreHiddenSegmentSurveyIds(
-              filters,
-              oldObject.filters,
-              segmentWorkspaceId,
-              visibleSurveyWhere
-            ),
-          }
-        : parsedInput.data;
     const updated = await updateSegment(parsedInput.segmentId, data);
 
     ctx.auditLoggingCtx.segmentId = parsedInput.segmentId;
