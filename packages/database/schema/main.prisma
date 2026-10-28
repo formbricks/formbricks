@@ -257,15 +257,17 @@ enum SurveyStatus {
 /// @property survey - The survey that was displayed
 /// @property contact - The contact who saw the survey
 /// @property response - The associated response if one exists
+/// @property creativeId - The creative that opened the survey. No foreign key, so the record survives the creative's deletion.
 model Display {
-  id        String    @id @default(cuid())
-  createdAt DateTime  @default(now()) @map(name: "created_at")
-  updatedAt DateTime  @updatedAt @map(name: "updated_at")
-  survey    Survey    @relation(fields: [surveyId], references: [id], onDelete: Cascade)
-  surveyId  String
-  contact   Contact?  @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  contactId String?
-  response  Response?
+  id         String    @id @default(cuid())
+  createdAt  DateTime  @default(now()) @map(name: "created_at")
+  updatedAt  DateTime  @updatedAt @map(name: "updated_at")
+  survey     Survey    @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  surveyId   String
+  contact    Contact?  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId  String?
+  response   Response?
+  creativeId String?
 
   @@index([surveyId])
   @@index([contactId, createdAt])
@@ -486,6 +488,9 @@ model Survey {
   /// by the shared custom CSS save service. null = no survey CSS. Kept outside `styling` (M2.07).
   customCss Json?
 
+  /// Creatives whose Destination is this survey (ENG-3993).
+  creatives Creative[]
+
   /// [SurveyShowConditions] App surveys: conditions checked in the browser when a trigger fires
   /// (ENG-3873). null = no conditions, which is what every existing survey keeps.
   showConditions Json?
@@ -580,18 +585,19 @@ enum ActionType {
 /// @property noCodeConfig - Configuration for no-code setup
 /// @property workspace - The workspace this action belongs to
 model ActionClass {
-  id             String          @id @default(cuid())
-  createdAt      DateTime        @default(now()) @map(name: "created_at")
-  updatedAt      DateTime        @updatedAt @map(name: "updated_at")
-  name           String
-  description    String?
-  type           ActionType
-  key            String?
+  id               String            @id @default(cuid())
+  createdAt        DateTime          @default(now()) @map(name: "created_at")
+  updatedAt        DateTime          @updatedAt @map(name: "updated_at")
+  name             String
+  description      String?
+  type             ActionType
+  key              String?
   /// [ActionClassNoCodeConfig]
-  noCodeConfig   Json?
-  workspace      Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId    String
-  surveyTriggers SurveyTrigger[]
+  noCodeConfig     Json?
+  workspace        Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId      String
+  surveyTriggers   SurveyTrigger[]
+  creativeTriggers CreativeTrigger[]
 
   @@unique([key, workspaceId])
   @@unique([name, workspaceId])
@@ -707,6 +713,7 @@ model Workspace {
   feedbackDirectoryWorkspaces FeedbackDirectoryWorkspace[]
   charts                      Chart[]
   dashboards                  Dashboard[]
+  creatives                   Creative[]
 
   surveys              Survey[]
   contacts             Contact[]
@@ -1292,6 +1299,7 @@ model User {
   ownedSurveys              Survey[]             @relation("SurveyOwner")
   charts                    Chart[]              @relation("chartCreatedBy")
   dashboards                Dashboard[]          @relation("dashboardCreatedBy")
+  creatives                 Creative[]           @relation("CreativeCreator")
   feedbackSources           FeedbackSource[]
   teamUsers                 TeamUser[]
   workflows                 Workflow[]           @relation("workflowCreatedBy")
@@ -1352,14 +1360,15 @@ model Segment {
 /// @property alias - Optional friendly name
 /// @property workspace - The workspace this language is enabled for
 model Language {
-  id              String           @id @default(cuid())
-  createdAt       DateTime         @default(now()) @map(name: "created_at")
-  updatedAt       DateTime         @updatedAt @map(name: "updated_at")
-  code            String
-  alias           String?
-  workspace       Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId     String
-  surveyLanguages SurveyLanguage[]
+  id                String             @id @default(cuid())
+  createdAt         DateTime           @default(now()) @map(name: "created_at")
+  updatedAt         DateTime           @updatedAt @map(name: "updated_at")
+  code              String
+  alias             String?
+  workspace         Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId       String
+  surveyLanguages   SurveyLanguage[]
+  creativeLanguages CreativeLanguage[]
 
   @@unique([workspaceId, code])
 }

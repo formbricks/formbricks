@@ -63,6 +63,8 @@ interface ResponseTableProps {
   quotas: TSurveyQuota[];
   selectedResponseId: string | null;
   setSelectedResponseId: (id: string | null) => void;
+  /** Creatives open this survey: its table then shows "Opened by creative" by default. */
+  isOpenedByCreatives: boolean;
 }
 
 export const ResponseTable = ({
@@ -82,7 +84,8 @@ export const ResponseTable = ({
   quotas,
   selectedResponseId,
   setSelectedResponseId,
-}: ResponseTableProps) => {
+  isOpenedByCreatives,
+}: Readonly<ResponseTableProps>) => {
   const { t } = useTranslation();
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
@@ -183,14 +186,15 @@ export const ResponseTable = ({
     // visible in TanStack, so the `secondary` ones need an explicit `false` to start hidden.
     setColumnVisibility(
       seedReservedColumnVisibility(
-        savedColumnVisibility ? (JSON.parse(savedColumnVisibility) as VisibilityState) : {}
+        savedColumnVisibility ? (JSON.parse(savedColumnVisibility) as VisibilityState) : {},
+        { isOpenedByCreatives }
       )
     );
 
     if (savedExpandedSettings !== null) {
       setIsExpanded(JSON.parse(savedExpandedSettings));
     }
-  }, [survey.id, defaultColumnOrder]);
+  }, [survey.id, defaultColumnOrder, isOpenedByCreatives]);
 
   // Handle column drag end
   const handleDragEnd = (event: DragEndEvent) => {

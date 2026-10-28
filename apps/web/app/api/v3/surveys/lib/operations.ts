@@ -26,6 +26,7 @@ import {
   problemBadRequest,
   problemConflict,
   problemForbidden,
+  problemSurveyHasLinkedCreatives,
   problemUnprocessableContent,
   problemWorkspaceSurveyLimit,
   successListResponse,
@@ -40,6 +41,11 @@ import { WorkspaceSurveyLimitError } from "@/lib/survey/visibility/limit";
 import { isAwaitingProjection } from "@/lib/survey/visibility/policy";
 import { buildVisibleSurveyWhere } from "@/lib/survey/visibility/predicate";
 import { type TCustomCssPreview, previewCustomCss } from "@/modules/custom-css/lib/service";
+import { getCreativeCssRoot } from "@/modules/ee/creatives/lib/custom-css";
+import {
+  SurveyLinkedCreativesError,
+  toUnlinkedCreativeAuditEvents,
+} from "@/modules/ee/creatives/lib/linked-creatives";
 import { archiveSurvey, deleteSurvey, restoreSurvey } from "@/modules/survey/lib/surveys";
 import { getSurveyCount, getWorkspaceSurveyCount } from "@/modules/survey/list/lib/survey";
 import { getSurveyListPage } from "@/modules/survey/list/lib/survey-page";
@@ -258,7 +264,11 @@ async function validateV3SurveyCustomCss({
     }
   }
 
-  const preview = previewCustomCss(body.scope, body.data.customCss);
+  const preview = previewCustomCss(
+    body.scope,
+    body.data.customCss,
+    body.creativeType ? getCreativeCssRoot(body.creativeType) : undefined
+  );
   return successResponse(
     preview.ok
       ? {
@@ -657,10 +667,24 @@ export async function deleteV3Survey({
       auditLog.oldObject = survey;
     }
 
-    await deleteSurvey(surveyId);
+    await deleteSurvey(surveyId, {
+      // The archived creatives the delete unlinked: one event each, by the same caller.
+      onCreativesUnlinked: async (creatives, { organizationId }) => {
+        if (!auditLog) return;
+        const events = toUnlinkedCreativeAuditEvents({ ...auditLog, organizationId }, surveyId, creatives);
+        await Promise.all(events.map((event) => queueV3AuditLog(event, requestId, log)));
+      },
+    });
 
     return noContentResponse({ requestId });
   } catch (error) {
+    if (error instanceof SurveyLinkedCreativesError) {
+      log.warn(
+        { statusCode: 409, creativeCount: error.creatives.length },
+        "Survey delete blocked by creatives"
+      );
+      return problemSurveyHasLinkedCreatives(requestId, error.creatives, instance);
+    }
     return mapV3ThrownError(error, { log, requestId, instance, operation: "surveys.delete" });
   }
 }

@@ -76,6 +76,24 @@ const buildCreatedByClause = (
   return null;
 };
 
+/**
+ * `singleUse` is a nullable JSON column, so the "not single-use" side has to say NULL out loud:
+ * `NOT (singleUse->enabled = true)` is NULL, not true, for a NULL column, a JSON `null` or an object
+ * without `enabled`, and would drop exactly the surveys it should keep. The path's `DbNull` covers all
+ * three (`singleUse #> '{enabled}' IS NULL`).
+ */
+const buildSingleUseClause = (singleUse: boolean): Prisma.SurveyWhereInput => {
+  const isSingleUse: Prisma.SurveyWhereInput = { singleUse: { path: ["enabled"], equals: true } };
+  if (singleUse) return isSingleUse;
+  return { OR: [{ singleUse: { path: ["enabled"], equals: Prisma.DbNull } }, { NOT: isSingleUse }] };
+};
+
+/** An empty PIN asks for nothing, so it counts as no PIN, as everywhere a survey's `pin` is read. */
+const buildPinProtectedClause = (pinProtected: boolean): Prisma.SurveyWhereInput =>
+  pinProtected
+    ? { AND: [{ pin: { not: null } }, { pin: { not: "" } }] }
+    : { OR: [{ pin: null }, { pin: "" }] };
+
 export const buildWhereClause = (filterCriteria?: TSurveyFilterCriteria) => {
   const whereClause: Prisma.SurveyWhereInput["AND"] = [];
 
@@ -95,6 +113,14 @@ export const buildWhereClause = (filterCriteria?: TSurveyFilterCriteria) => {
   const createdByClause = buildCreatedByClause(filterCriteria?.createdBy);
   if (createdByClause) {
     whereClause.push(createdByClause);
+  }
+
+  if (filterCriteria?.singleUse !== undefined) {
+    whereClause.push(buildSingleUseClause(filterCriteria.singleUse));
+  }
+
+  if (filterCriteria?.pinProtected !== undefined) {
+    whereClause.push(buildPinProtectedClause(filterCriteria.pinProtected));
   }
 
   return { AND: whereClause };

@@ -1,0 +1,11 @@
+oneOf:
+  - $ref: ./CreativeSurveyDestinationInput.yml
+  - $ref: ./CreativeLinkDestinationInput.yml
+discriminator:
+  propertyName: type
+  mapping:
+    survey: ./CreativeSurveyDestinationInput.yml
+    link: ./CreativeLinkDestinationInput.yml
+description: >-
+  What the creative opens when pressed: a survey or a link. A creative opens exactly one Destination;
+  many creatives may open the same survey.

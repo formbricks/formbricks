@@ -1,0 +1,21 @@
+type: object
+description: What a feedback button shows.
+required:
+  - label
+  - icon
+properties:
+  label:
+    $ref: ./CreativeText.yml
+    description: The button's text. Publishing needs a non-empty default-language label.
+  icon:
+    type:
+      - string
+      - "null"
+    enum:
+      - messageSquare
+      - messageCircle
+      - megaphone
+      - sparkles
+      - null
+    description: An icon before the label, or `null` for none.
+additionalProperties: false

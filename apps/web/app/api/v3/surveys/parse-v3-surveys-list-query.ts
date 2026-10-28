@@ -28,6 +28,8 @@ const FILTER_STATUS_IN_QUERY_PARAM = "filter[status][in]" as const;
 const FILTER_TYPE_IN_QUERY_PARAM = "filter[type][in]" as const;
 const FILTER_VISIBILITY_IN_QUERY_PARAM = "filter[visibility][in]" as const;
 const FILTER_OWNER_IN_QUERY_PARAM = "filter[owner][in]" as const;
+const FILTER_SINGLE_USE_EQ_QUERY_PARAM = "filter[singleUse][eq]" as const;
+const FILTER_PIN_PROTECTED_EQ_QUERY_PARAM = "filter[pinProtected][eq]" as const;
 
 const SUPPORTED_QUERY_PARAMS = [
   "workspaceId",
@@ -39,6 +41,8 @@ const SUPPORTED_QUERY_PARAMS = [
   FILTER_TYPE_IN_QUERY_PARAM,
   FILTER_VISIBILITY_IN_QUERY_PARAM,
   FILTER_OWNER_IN_QUERY_PARAM,
+  FILTER_SINGLE_USE_EQ_QUERY_PARAM,
+  FILTER_PIN_PROTECTED_EQ_QUERY_PARAM,
   "sortBy",
 ] as const;
 const SUPPORTED_QUERY_PARAM_SET = new Set<string>(SUPPORTED_QUERY_PARAMS);
@@ -56,6 +60,12 @@ export function collectMultiValueQueryParam(searchParams: URLSearchParams, key: 
   }
   return [...new Set(acc)];
 }
+
+/** A `true` / `false` query value; anything else is a 400. */
+const zQueryBoolean = z
+  .enum(["true", "false"])
+  .transform((value) => value === "true")
+  .optional();
 
 const ZV3SurveysListQuery = z.object({
   workspaceId: ZId,
@@ -77,6 +87,8 @@ const ZV3SurveysListQuery = z.object({
   // ENG-3282 (contract §6): relative to the caller; API keys sending `owner` get 400 in the operation.
   [FILTER_VISIBILITY_IN_QUERY_PARAM]: z.array(ZSurveyVisibility).optional(),
   [FILTER_OWNER_IN_QUERY_PARAM]: z.array(z.enum(["me", "others"])).optional(),
+  [FILTER_SINGLE_USE_EQ_QUERY_PARAM]: zQueryBoolean,
+  [FILTER_PIN_PROTECTED_EQ_QUERY_PARAM]: zQueryBoolean,
   sortBy: ZSurveyFilters.shape.sortBy.optional(),
 });
 
@@ -117,6 +129,10 @@ function buildFilterCriteria(q: TV3SurveysListQuery): TSurveyFilterCriteria | un
   if (realStatuses.length) f.status = realStatuses;
   if (statusValues.includes("archived")) f.includeArchived = true;
   if (q[FILTER_TYPE_IN_QUERY_PARAM]?.length) f.type = q[FILTER_TYPE_IN_QUERY_PARAM];
+  if (q[FILTER_SINGLE_USE_EQ_QUERY_PARAM] !== undefined) f.singleUse = q[FILTER_SINGLE_USE_EQ_QUERY_PARAM];
+  if (q[FILTER_PIN_PROTECTED_EQ_QUERY_PARAM] !== undefined) {
+    f.pinProtected = q[FILTER_PIN_PROTECTED_EQ_QUERY_PARAM];
+  }
   return Object.keys(f).length > 0 ? f : undefined;
 }
 
@@ -144,6 +160,10 @@ export function parseV3SurveysListQuery(searchParams: URLSearchParams): TV3Surve
     [FILTER_TYPE_IN_QUERY_PARAM]: typeVals.length > 0 ? typeVals : undefined,
     [FILTER_VISIBILITY_IN_QUERY_PARAM]: visibilityVals.length > 0 ? visibilityVals : undefined,
     [FILTER_OWNER_IN_QUERY_PARAM]: ownerVals.length > 0 ? ownerVals : undefined,
+    [FILTER_SINGLE_USE_EQ_QUERY_PARAM]:
+      searchParams.get(FILTER_SINGLE_USE_EQ_QUERY_PARAM)?.trim() || undefined,
+    [FILTER_PIN_PROTECTED_EQ_QUERY_PARAM]:
+      searchParams.get(FILTER_PIN_PROTECTED_EQ_QUERY_PARAM)?.trim() || undefined,
     sortBy: searchParams.get("sortBy")?.trim() || undefined,
   };
 

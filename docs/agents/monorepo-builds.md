@@ -8,8 +8,8 @@ config, styling inside a workspace package, or when a package change does not sh
 Turbo runs a task only in packages that define the matching script and **silently skips** the rest.
 Every `packages/*` workspace therefore exposes the standard `lint` / `typecheck` / `test` /
 `test:coverage` scripts (plus `build` where there is a compile step). Deliberate exceptions:
-`config-*` packages hold only config files (no scripts beyond `clean`); `api-v3-schemas`, `email`,
-`types`, and `vite-plugins` are consumed from source, so they have no `build`; `apps/storybook` has no
+`config-*` packages hold only config files (no scripts beyond `clean`); `api-v3-schemas`, `creatives`,
+`email`, `types`, and `vite-plugins` are consumed from source, so they have no `build`; `apps/storybook` has no
 unit tests by policy (its components are exercised by the feature journeys in `apps/web/playwright`).
 Keep new packages on this matrix or document the exception here.
 

@@ -1,0 +1,17 @@
+type: object
+description: >-
+  The survey whose creatives to pause, and the workspace it belongs to. Unknown fields are rejected
+  with **400**.
+required:
+  - workspaceId
+  - surveyId
+properties:
+  workspaceId:
+    type: string
+    format: cuid2
+    description: Workspace the survey belongs to. Requires read/write access.
+  surveyId:
+    type: string
+    format: cuid2
+    description: The survey whose creatives to pause, the ones whose Destination it is.
+additionalProperties: false

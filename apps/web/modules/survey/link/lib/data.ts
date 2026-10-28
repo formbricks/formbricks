@@ -197,9 +197,6 @@ export const getResponseBySingleUseId = reactCache((surveyId: string, singleUseI
       select: {
         id: true,
         finished: true,
-        // Include additional fields that might be useful
-        createdAt: true,
-        data: true,
       },
     });
 
@@ -218,10 +215,16 @@ export const getResponseBySingleUseId = reactCache((surveyId: string, singleUseI
  */
 export const getExistingContactResponse = reactCache((surveyId: string, contactId: string) => async () => {
   try {
+    // A contact can hold a finished response and an unfinished attempt at once, so the unordered pick could
+    // return the unfinished one and hide the finished one. Prefer the finished row: the contact page gates
+    // "already answered" on it, and only an unfinished row is left to resume.
     const response = await prisma.response.findFirst({
       where: {
         surveyId,
         contactId,
+      },
+      orderBy: {
+        finished: "desc",
       },
       select: {
         id: true,
@@ -249,3 +252,20 @@ export const getOrganizationBilling = reactCache(async (organizationId: string) 
   }
   return billing;
 });
+
+/**
+ * The survey's owner, who carries the rate limits on the emails its public page sends (ENG-3823). Read on
+ * its own so the owner's id is never added to the survey the public page loads. Only the server sets it,
+ * unlike `createdBy`, which an API caller can name.
+ */
+export const getSurveyOwnerId = async (surveyId: string): Promise<string | null> => {
+  try {
+    const survey = await prisma.survey.findUnique({ where: { id: surveyId }, select: { ownerId: true } });
+    return survey?.ownerId ?? null;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
+};

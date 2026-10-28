@@ -4,8 +4,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { CheckIcon, ChevronDownIcon } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import { getDimensionValuesAction } from "@/modules/ee/analysis/charts/actions";
+import { listChartFieldValues } from "@/modules/ee/analysis/lib/api-client";
 import { QUESTION_LABEL_DIMENSION_ID } from "@/modules/ee/analysis/lib/dimension-value-lookup";
 import { FieldTypeIcon } from "@/modules/ee/unify-feedback/lib/field-type-icons";
 import { formatFieldTypeLabel } from "@/modules/ee/unify-feedback/lib/utils";
@@ -82,20 +81,14 @@ export function FilterValueCombobox({
     error,
   } = useQuery({
     queryKey: ["dimensionValues", workspaceId, feedbackDirectoryId, dimension, debouncedSearch],
-    queryFn: async () => {
-      const result = await getDimensionValuesAction({
+    queryFn: ({ signal }) =>
+      listChartFieldValues({
         workspaceId,
-        feedbackDirectoryId,
-        dimension,
-        ...(debouncedSearch ? { search: debouncedSearch } : {}),
-      });
-
-      if (result?.serverError || result?.validationErrors) {
-        throw new Error(getFormattedErrorMessage(result));
-      }
-
-      return Array.isArray(result?.data) ? result.data : [];
-    },
+        datasetId: feedbackDirectoryId,
+        field: dimension,
+        search: debouncedSearch || undefined,
+        signal,
+      }),
     enabled: open,
     placeholderData: keepPreviousData,
     staleTime: 1000 * 60 * 5, // 5 minutes cache validity

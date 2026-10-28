@@ -11,6 +11,9 @@ export const rateLimitConfigs = {
     // Keep redemption independent so requesting an email cannot exhaust the budget to use its token.
     resetPassword: { interval: 3600, allowedPerInterval: 5, namespace: "auth:reset-password" }, // 5 per hour
     verifyEmail: { interval: 3600, allowedPerInterval: 10, namespace: "auth:verify" }, // 10 per hour
+    // Verification email anyone can request for one account, keyed by user id. Below that email's
+    // per-recipient cap of 5, so a signed-in resend always has room left (ENG-3823).
+    verifyEmailPerAccount: { interval: 3600, allowedPerInterval: 3, namespace: "auth:verify:account" }, // 3 per hour
     emailToken: { interval: 3600, allowedPerInterval: 10, namespace: "auth:email-token" }, // 10 per hour — unauthenticated, tells the caller whether an email is registered
     // The SAML callback parses the posted XML before it can tell an IdP from a stranger (ENG-3973), so this caps
     // how often one IP can make it parse. Generous on purpose: every SAML sign-in at a company behind one NAT
@@ -40,6 +43,24 @@ export const rateLimitConfigs = {
       namespace: "api:v3:custom-css",
     }, // 60 per minute per principal, on top of v3 — custom CSS processing is synchronous and CPU-bound, and
     // the editor validates ~300 ms after typing stops, so normal editing stays far below this
+    v3ChartQueries: {
+      interval: 60,
+      allowedPerInterval: 600,
+      namespace: "api:v3:charts:queries",
+    }, // 600 per minute per user or API key, instead of v3 — chart data, preview and field values (ENG-6586).
+    // Sized for dashboards: every widget fetches its own data, so a page load is one query per chart.
+    v3ChartQueriesInFlight: {
+      interval: 120,
+      allowedPerInterval: 20,
+      namespace: "api:v3:charts:in-flight",
+    }, // At most 20 chart queries running at once per user or API key, so one caller cannot fill the shared
+    // Cube's queue with 60-second queries. An in-flight limit (`in-flight.ts`), not a window: `interval` is
+    // each slot's lease, twice the query timeout, after which a slot a crashed pod never released frees itself.
+    internalChartGeneration: {
+      interval: 60,
+      allowedPerInterval: 1,
+      namespace: "api:internal:charts:generate",
+    }, // 1 per minute per user — bounds concurrent and repeated LLM-backed chart generations
     internalDatasetPurge: {
       interval: 3600,
       allowedPerInterval: 5,
@@ -56,11 +77,25 @@ export const rateLimitConfigs = {
       allowedPerInterval: 1000,
       namespace: "api:client:environment",
     }, // 1000 per minute per environment (Client API)
+    clientCreativeEvents: {
+      interval: 60,
+      allowedPerInterval: 600,
+      namespace: "api:client:creative-events",
+    }, // 600 per minute per IP — the SDK sends one creative events request per page view (ENG-4000);
+    // an office or carrier NAT puts many visitors behind one IP, and a request over it is dropped
+    // silently, so this only bounds a client flooding the counters
   },
 
   // Server actions - varies by action type
   actions: {
     emailUpdate: { interval: 3600, allowedPerInterval: 3, namespace: "action:email" }, // 3 per hour
+    // A signed-in user asking for a reset link to their own address. Its own budget rather than
+    // forgot-password's per-account one, which strangers can spend for any address (ENG-3823).
+    passwordResetRequest: {
+      interval: 3600,
+      allowedPerInterval: 3,
+      namespace: "action:password-reset-request",
+    }, // 3 per hour
     accountDeletion: { interval: 3600, allowedPerInterval: 5, namespace: "action:account-delete" }, // 5 per hour
     surveyFollowUp: { interval: 3600, allowedPerInterval: 50, namespace: "action:followup" }, // 50 per hour
     sendLinkSurveyEmail: {
@@ -96,11 +131,6 @@ export const rateLimitConfigs = {
       allowedPerInterval: 1,
       namespace: "action:generate-example-responses",
     }, // 1 per minute per user — closes the multi-click race and bounds LLM spend
-    aiChartGeneration: {
-      interval: 60,
-      allowedPerInterval: 1,
-      namespace: "action:ai-chart-generation",
-    }, // 1 per minute per user — bounds concurrent and repeated LLM-backed chart generations
     integrationMutation: {
       interval: 60,
       allowedPerInterval: 30,
@@ -118,11 +148,6 @@ export const rateLimitConfigs = {
       allowedPerInterval: 10,
       namespace: "action:historical-response-import",
     }, // 10 per hour per user — bounds repeated full-survey imports
-    chartCreation: {
-      interval: 60,
-      allowedPerInterval: 60,
-      namespace: "action:chart-creation",
-    }, // 60 per minute per user
     feedbackDirectoryMutation: {
       interval: 60,
       allowedPerInterval: 60,

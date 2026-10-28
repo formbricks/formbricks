@@ -10,11 +10,13 @@ import {
   filterSurveys,
   getBrowserLanguageCodes,
   getCustomCss,
+  getPageFont,
   getStyling,
   shouldDisplayBasedOnPercentage,
   surveyHasSegmentFilters,
 } from "@/lib/common/utils";
 import { buildDisplayHiddenFields } from "@/lib/survey/embedded-data";
+import { type TLanguageResolver, chooseSurveyLanguage, resolveLanguageExactly } from "@/lib/survey/language";
 import { passesShowConditions } from "@/lib/survey/show-conditions";
 import { UpdateQueue } from "@/lib/user/update-queue";
 import { getVisitSnapshot } from "@/lib/visit/visit-store";
@@ -30,9 +32,31 @@ let isSurveyRunning = false;
 // after every skip check — so a survey that was never shown never reports a close.
 const openSurveyIds = new Set<string>();
 
+// The survey a creative's click is opening while nothing is on screen yet (identification, renderer
+// load). A second press treats it as open (see `getOpenSurveyIds`), so it is not opened twice. A survey
+// its own trigger is preparing, or delaying, is not open: a press opens it now.
+let surveyInFlight: string | null = null;
+
+// Bumped by every creative click (the click wins). A render already on its way when the click
+// lands sees its generation go stale and stops before it shows anything or touches the shared flags.
+let renderGeneration = 0;
+
+/** Who asked for a survey other than its own triggers. */
+interface TSurveyOpener {
+  /** The creative whose click opens it (ENG-3994); the renderer sends it with the display (ENG-4001). */
+  creativeId: string;
+}
+
 export const setIsSurveyRunning = (value: boolean): void => {
   isSurveyRunning = value;
+  if (!value) surveyInFlight = null;
 };
+
+/** The surveys on screen, plus one a creative's click has on its way there. */
+export const getOpenSurveyIds = (): string[] =>
+  surveyInFlight === null || openSurveyIds.has(surveyInFlight)
+    ? [...openSurveyIds]
+    : [...openSurveyIds, surveyInFlight];
 
 type TInteractionSource = keyof NonNullable<TWorkspaceStateSurvey["interactionRefresh"]>;
 
@@ -95,39 +119,69 @@ export const triggerSurvey = async (
   await renderWidget(survey, action, properties?.hiddenFields);
 };
 
+/**
+ * Whether a failed user identification skips the survey: it does when the survey has segment filters,
+ * which need the user, unless a creative's click opens it.
+ */
+const skipsWithoutIdentification = (
+  survey: TWorkspaceStateSurvey,
+  opener: TSurveyOpener | undefined
+): boolean => {
+  const logger = Logger.getInstance();
+  if (surveyHasSegmentFilters(survey) && !opener) {
+    logger.debug("User identification failed. Skipping survey with segment filters.");
+    return true;
+  }
+  logger.debug("User identification failed but survey has no segment filters. Proceeding.");
+  return false;
+};
+
+/**
+ * Shows a survey. Its triggers call it with the `action` that fired; a creative's click calls it with an
+ * `opener` (through `openSurveyForCreative`), which skips the one-survey-at-a-time guard and segment
+ * filters; the click path also takes away the survey's delay and auto-close.
+ *
+ * Resolves to whether the survey reached the screen. A creative's click waits until it has: it has no
+ * delay, and nothing but a later click calls it off. A trigger's call resolves once its survey is
+ * scheduled, since a delay can still call it off (its timeout cleared) long after.
+ */
 export const renderWidget = async (
   survey: TWorkspaceStateSurvey,
   action?: string,
-  hiddenFieldsObject?: TTrackProperties["hiddenFields"]
-): Promise<void> => {
+  hiddenFieldsObject?: TTrackProperties["hiddenFields"],
+  opener?: TSurveyOpener
+): Promise<boolean> => {
   const logger = Logger.getInstance();
   const config = Config.getInstance();
   const timeoutStack = TimeoutStack.getInstance();
 
-  if (isSurveyRunning) {
+  if (isSurveyRunning && !opener) {
     logger.debug("A survey is already running. Skipping.");
     emitDebugSurveyEvent({ surveyId: survey.id, action, stage: "trigger", outcome: "anotherSurveyOpen" });
-    return;
+    return false;
   }
 
   setIsSurveyRunning(true);
 
-  // Wait for pending user identification to complete before rendering
+  const generation = renderGeneration;
+  const isSuperseded = (): boolean => generation !== renderGeneration;
+  // A superseded render leaves the guard alone: it belongs to the click that superseded it.
+  const release = (): void => {
+    if (!isSuperseded()) setIsSurveyRunning(false);
+  };
+
+  // Wait for pending user identification to complete before rendering. Only a pending one is awaited:
+  // without it this runs straight on, as before, and `isSuperseded()` below is still false.
   const updateQueue = UpdateQueue.getInstance();
-  if (updateQueue.hasPendingWork()) {
+  const hasPendingIdentification = updateQueue.hasPendingWork();
+  if (hasPendingIdentification) {
     logger.debug("Waiting for pending user identification before rendering survey");
-    const identificationSucceeded = await updateQueue.waitForPendingWork();
-    if (!identificationSucceeded) {
-      const hasSegmentFilters = surveyHasSegmentFilters(survey);
-
-      if (hasSegmentFilters) {
-        logger.debug("User identification failed. Skipping survey with segment filters.");
-        setIsSurveyRunning(false);
-        return;
-      }
-
-      logger.debug("User identification failed but survey has no segment filters. Proceeding.");
-    }
+  }
+  const identificationSucceeded = !hasPendingIdentification || (await updateQueue.waitForPendingWork());
+  if (isSuperseded()) return false;
+  if (!identificationSucceeded && skipsWithoutIdentification(survey, opener)) {
+    release();
+    return false;
   }
 
   if (survey.delay) {
@@ -148,17 +202,18 @@ export const renderWidget = async (
     formbricksSurveys = await loadFormbricksSurveysExternally();
   } catch (error) {
     logger.error(`Failed to load surveys library: ${String(error)}`);
-    setIsSurveyRunning(false);
-    return;
+    release();
+    return false;
   }
+  if (isSuperseded()) return false;
 
   // Resolved here, after the surveys bundle loads but before anything is scheduled, recorded or shown:
   // a skip below leaves no display, event or timeout behind, only the released `isSurveyRunning`.
   const languageCode = resolveDisplayLanguage(survey, language, formbricksSurveys);
   if (!languageCode) {
     logger.debug(`Survey "${survey.id}" is not available in specified language.`);
-    setIsSurveyRunning(false);
-    return;
+    release();
+    return false;
   }
 
   const recaptchaSiteKey = config.get().workspace.data.recaptchaSiteKey;
@@ -168,17 +223,30 @@ export const renderWidget = async (
     return executeRecaptcha(recaptchaSiteKey);
   };
 
-  if (isSpamProtectionEnabled && recaptchaSiteKey) {
-    await loadRecaptchaScript(recaptchaSiteKey);
-  }
+  if (isSpamProtectionEnabled) await loadRecaptchaScript(recaptchaSiteKey);
+  // Without spam protection nothing was awaited since the check above, so this one is false then.
+  if (isSuperseded()) return false;
+
+  // Settled by the timeout below, once it has run: whether the survey reached the screen.
+  let settleShown: (isShown: boolean) => void = () => undefined;
+  const shown = new Promise<boolean>((resolve) => {
+    settleShown = resolve;
+  });
 
   const timeoutId = setTimeout(() => {
+    if (isSuperseded()) {
+      settleShown(false);
+      return;
+    }
+
     // Checked again right before it shows (ENG-3875). Time has passed since the check in
     // `triggerSurvey`, even with no delay: identification, the surveys bundle and reCAPTCHA all load
-    // in between, and an SPA can move to a page the conditions exclude meanwhile.
-    if (!passesShowConditions(survey, action, "beforeShow")) {
+    // in between, and an SPA can move to a page the conditions exclude meanwhile. A creative's click
+    // never went through `triggerSurvey`, so it is not held to the trigger's conditions here either.
+    if (!opener && !passesShowConditions(survey, action, "beforeShow")) {
       timeoutStack.remove(timeoutId as unknown as number);
-      setIsSurveyRunning(false);
+      release();
+      settleShown(false);
       return;
     }
 
@@ -188,6 +256,7 @@ export const renderWidget = async (
     // second one over it (ENG-2849).
     timeoutStack.markFired(timeoutId as unknown as number);
 
+    surveyInFlight = null;
     openSurveyIds.add(survey.id);
 
     // Render-gated, paired with "formbricks_survey_closed" off the same set so a host counting opens
@@ -205,6 +274,8 @@ export const renderWidget = async (
       workspaceId: config.get().workspaceId,
       contactId: config.get().user.data.contactId ?? undefined,
       action,
+      // Sent with the display and the response, so both record the creative (ENG-4001).
+      creativeId: opener?.creativeId,
       // The visit at the moment the survey shows (ENG-3876), saved as the response's visit fields.
       visit: getVisitSnapshot() ?? undefined,
       survey,
@@ -214,6 +285,8 @@ export const renderWidget = async (
       languageCode,
       placement,
       styling: getStyling(settings, survey),
+      // Only the web SDK passes it: an app survey on a web page is the one with a page font to take.
+      pageFont: getPageFont(settings, survey),
       // Both scopes from the cached workspace state; the renderer applies CSS from this prop only.
       customCss: getCustomCss(settings, survey),
       // The ambient Embedded Data bag (ENG-1844) under the per-trigger `track({ hiddenFields })`
@@ -227,7 +300,7 @@ export const renderWidget = async (
       onDisplayCreated: () => {
         const existingDisplays = config.get().user.data.displays;
         const newDisplay = { surveyId: survey.id, createdAt: new Date() };
-        const displays = existingDisplays.length ? [...existingDisplays, newDisplay] : [newDisplay];
+        const displays = [...existingDisplays, newDisplay];
         const previousConfig = config.get();
 
         const updatedUserState: TUserState = {
@@ -243,7 +316,6 @@ export const renderWidget = async (
 
         config.update({
           ...previousConfig,
-          workspace: previousConfig.workspace,
           user: updatedUserState,
           filteredSurveys,
         });
@@ -260,7 +332,7 @@ export const renderWidget = async (
           ...config.get().user,
           data: {
             ...config.get().user.data,
-            responses: responses.length ? [...responses, survey.id] : [survey.id],
+            responses: [...responses, survey.id],
           },
         };
 
@@ -268,7 +340,6 @@ export const renderWidget = async (
 
         config.update({
           ...config.get(),
-          workspace: config.get().workspace,
           user: newPersonState,
           filteredSurveys,
         });
@@ -310,11 +381,41 @@ export const renderWidget = async (
       },
       getSetIsResponseSendingFinished: (_f: (value: boolean) => void) => undefined,
     });
+    settleShown(true);
   }, survey.delay * 1000);
 
   if (action) {
     timeoutStack.add(action, timeoutId as unknown as number);
   }
+
+  return opener ? shown : true;
+};
+
+/**
+ * The click path: opens the survey a creative was pressed for, right away.
+ * `close` is what `resolveClick` says to close first — the surveys on screen, each reported as closed —
+ * and anything still on its way to the screen (a delay, a renderer load) is called off for good.
+ * Resolves to whether the survey reached the screen: one that did not (its renderer failed to load, a
+ * later click called it off) is no Click.
+ */
+export const openSurveyForCreative = async (
+  survey: TWorkspaceStateSurvey,
+  creativeId: string,
+  close: readonly string[]
+): Promise<boolean> => {
+  renderGeneration += 1;
+
+  const timeoutStack = TimeoutStack.getInstance();
+  // `remove` replaces the stack's array rather than changing it, so walking this one is safe.
+  for (const { timeoutId, fired } of timeoutStack.getTimeouts()) {
+    if (!fired) timeoutStack.remove(timeoutId);
+  }
+  for (const surveyId of close) closeSurvey(surveyId);
+
+  // After the closes above, which clear it: the survey is on its way to the screen.
+  surveyInFlight = survey.id;
+  // Shown right away, and until the visitor closes it: no delay, no auto-close.
+  return renderWidget({ ...survey, delay: 0, autoClose: null }, undefined, undefined, { creativeId });
 };
 
 export const closeSurvey = (surveyId?: string): void => {
@@ -388,64 +489,47 @@ const SURVEYS_POLL_INTERVAL_MS = 200;
 type TFormbricksSurveys = NonNullable<typeof globalThis.window.formbricksSurveys>;
 
 /**
- * The SDK's pre-ENG-3289 matcher: exact stored code, then alias, case-insensitive, no canonical table.
- * Only used while the instance still serves a cached surveys bundle without `resolveSurveyLanguage`
- * (`/js/*` is CDN-cached for up to 30 days), so explicit languages keep working as they did before
- * instead of every one of them being skipped; `resolveDisplayLanguage` also runs browser languages
- * through it when the survey opted in. Disabled languages (other than the default) are left out, so a disabled alias cannot shadow an
- * enabled code.
+ * The language matcher for an app survey once the surveys bundle is loaded: its `resolveSurveyLanguage`,
+ * which carries the canonical language table for the renderer (bundling it here would grow the SDK on
+ * every customer page). A surveys bundle that predates the resolver (`/js/*` is CDN-cached for up to 30
+ * days) gets the SDK's previous exact matcher, code then alias, as the final word, so explicit languages
+ * keep working as they did before instead of every one of them being skipped.
  */
-const matchLanguageExactly = (survey: TWorkspaceStateSurvey, language: string | undefined): string | null => {
-  const requested = language?.trim().toLowerCase();
-  if (!requested) return "default";
-  const candidates = survey.languages.filter(
-    (surveyLanguage) => surveyLanguage.default || surveyLanguage.enabled
-  );
-  const match =
-    candidates.find((surveyLanguage) => surveyLanguage.language.code.toLowerCase() === requested) ??
-    candidates.find((surveyLanguage) => surveyLanguage.language.alias?.toLowerCase() === requested);
-  if (!match) return null;
-  return match.default ? "default" : match.language.code;
-};
+const toLanguageResolver = (formbricksSurveys: TFormbricksSurveys): TLanguageResolver =>
+  formbricksSurveys.resolveSurveyLanguage ?? resolveLanguageExactly;
 
 /**
- * The language a survey renders in, or `null` to skip it.
- *
- * Matching runs in the surveys bundle (`resolveSurveyLanguage`), which already carries the canonical
- * language table for the renderer — bundling it here would grow the SDK on every customer page. An
- * explicit language (`setLanguage()`) that matches nothing skips the survey, as it always has; the
- * browser languages only apply when no explicit language is set.
- *
- * A surveys bundle that predates the resolver gets the SDK's previous matcher instead — see
- * `matchLanguageExactly`.
+ * The language a survey renders in, or `null` to skip it. An explicit language (`setLanguage()`) that
+ * matches nothing skips the survey, as it always has; the browser languages only apply when no explicit
+ * language is set and the survey uses browser language. Creatives hide by the same rule (ENG-4003), from
+ * the survey languages the server precomputes for them.
  */
 const resolveDisplayLanguage = (
   survey: TWorkspaceStateSurvey,
   language: string | undefined,
   formbricksSurveys: TFormbricksSurveys
-): string | null => {
-  if (survey.languages.length <= 1) return "default";
-
-  if (!formbricksSurveys.resolveSurveyLanguage) {
-    if (language?.trim() || !survey.autoSelectLanguage) return matchLanguageExactly(survey, language);
-    // Exact-only, so a browser tag reaches a survey language only when the codes or alias agree.
-    for (const browserLanguage of getBrowserLanguageCodes()) {
-      const match = matchLanguageExactly(survey, browserLanguage);
-      if (match) return match;
-    }
-    return "default";
-  }
-
-  return formbricksSurveys.resolveSurveyLanguage({
-    languages: survey.languages,
-    explicitLanguage: language,
-    browserLanguages: survey.autoSelectLanguage ? getBrowserLanguageCodes() : [],
-    autoSelectLanguage: survey.autoSelectLanguage,
-    unmatchedExplicitLanguage: "skip",
-  });
-};
+): string | null =>
+  chooseSurveyLanguage(
+    survey,
+    { explicit: language, browser: survey.autoSelectLanguage ? getBrowserLanguageCodes() : [] },
+    toLanguageResolver(formbricksSurveys)
+  );
 
 let surveysLoadPromise: Promise<TFormbricksSurveys> | null = null;
+
+/**
+ * Content hash of the survey renderer this SDK was built against, inlined by the production build (see
+ * `vite.config.ts`). `/js/*` is served with a 30-day `s-maxage` (`apps/web/next.config.mjs`), so without
+ * a token that moves with the renderer a new SDK could be handed a month-old cached renderer, which
+ * silently drops anything newer — creative attribution, for one. Absent in dev builds and tests.
+ */
+declare const __FB_SURVEY_RENDERER_HASH__: string;
+
+/** The renderer URL, the same for the load and the prefetch so the load reuses the prefetched file. */
+const getSurveysScriptUrl = (appUrl: string): string => {
+  const version = typeof __FB_SURVEY_RENDERER_HASH__ === "string" ? __FB_SURVEY_RENDERER_HASH__ : "dev";
+  return `${appUrl}/js/surveys.umd.cjs?v=${version}`;
+};
 
 const waitForSurveysGlobal = (): Promise<TFormbricksSurveys> => {
   return new Promise((resolve, reject) => {
@@ -473,7 +557,7 @@ const waitForSurveysGlobal = (): Promise<TFormbricksSurveys> => {
   });
 };
 
-const loadFormbricksSurveysExternally = (): Promise<TFormbricksSurveys> => {
+export const loadFormbricksSurveysExternally = (): Promise<TFormbricksSurveys> => {
   if (globalThis.window.formbricksSurveys) {
     return Promise.resolve(globalThis.window.formbricksSurveys);
   }
@@ -485,7 +569,7 @@ const loadFormbricksSurveysExternally = (): Promise<TFormbricksSurveys> => {
   surveysLoadPromise = new Promise<TFormbricksSurveys>((resolve, reject: (error: unknown) => void) => {
     const config = Config.getInstance();
     const script = document.createElement("script");
-    script.src = `${config.get().appUrl}/js/surveys.umd.cjs`;
+    script.src = getSurveysScriptUrl(config.get().appUrl);
     script.async = true;
     script.onload = () => {
       waitForSurveysGlobal()
@@ -526,6 +610,6 @@ export const prefetchSurveysScript = (appUrl: string): void => {
   isPrefetched = true;
   const link = document.createElement("link");
   link.rel = "prefetch";
-  link.href = `${appUrl}/js/surveys.umd.cjs`;
+  link.href = getSurveysScriptUrl(appUrl);
   document.head.appendChild(link);
 };

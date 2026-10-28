@@ -1,0 +1,28 @@
+type: object
+description: The survey the creative opens.
+required:
+  - type
+  - surveyId
+  - surveyName
+  - opensAs
+properties:
+  type:
+    type: string
+    enum:
+      - survey
+  surveyId:
+    type: string
+    format: cuid2
+  surveyName:
+    type: string
+    readOnly: true
+  opensAs:
+    type: string
+    enum:
+      - popup
+      - newTab
+    readOnly: true
+    description: >-
+      Follows the survey's type: an app survey opens as a popup in its own placement, a link survey in
+      a new tab.
+additionalProperties: false

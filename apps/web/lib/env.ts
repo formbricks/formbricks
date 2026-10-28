@@ -618,9 +618,20 @@ const parsedEnv = createEnv({
     BULLMQ_WORKER_ENABLED: z.enum(["1", "0"]).optional(),
     E2E_TESTING: z.enum(["1", "0"]).optional(),
     EMAIL_AUTH_DISABLED: z.enum(["1", "0"]).optional(),
+    // Scales the per-organization, per-sender and per-deployment email caps
+    // (modules/email/lib/email-rate-limits.ts), for deployments that legitimately send more than the defaults
+    // allow. Per-recipient caps are not scaled. Blank counts as unset, so a templated empty value does not stop
+    // boot.
+    EMAIL_RATE_LIMIT_MULTIPLIER: z.preprocess(
+      (value) => (value === "" ? undefined : value),
+      z.coerce.number().positive().max(100).optional().default(1)
+    ),
     EMAIL_VERIFICATION_DISABLED: z.enum(["1", "0"]).optional(),
     ENCRYPTION_KEY: z.string(),
     ENTERPRISE_LICENSE_KEY: z.string().optional(),
+    // Development only: a local licence server for QA. Ignored unless NODE_ENV is "development" and the
+    // host is loopback (`resolveLicenseServerUrl` in modules/ee/license-check/lib/license-server-url.ts).
+    ENTERPRISE_LICENSE_SERVER_URL: z.url().optional(),
     ENVIRONMENT: z.enum(["production", "staging"]).prefault("production"),
     GITHUB_ID: z.string().optional(),
     GITHUB_SECRET: z.string().optional(),
@@ -850,9 +861,11 @@ const parsedEnv = createEnv({
     BULLMQ_WORKER_ENABLED: process.env.BULLMQ_WORKER_ENABLED,
     E2E_TESTING: process.env.E2E_TESTING,
     EMAIL_AUTH_DISABLED: process.env.EMAIL_AUTH_DISABLED,
+    EMAIL_RATE_LIMIT_MULTIPLIER: process.env.EMAIL_RATE_LIMIT_MULTIPLIER,
     EMAIL_VERIFICATION_DISABLED: process.env.EMAIL_VERIFICATION_DISABLED,
     ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
     ENTERPRISE_LICENSE_KEY: process.env.ENTERPRISE_LICENSE_KEY,
+    ENTERPRISE_LICENSE_SERVER_URL: process.env.ENTERPRISE_LICENSE_SERVER_URL,
     ENVIRONMENT: process.env.ENVIRONMENT,
     GITHUB_ID: process.env.GITHUB_ID,
     GITHUB_SECRET: process.env.GITHUB_SECRET,

@@ -1,0 +1,131 @@
+get:
+  operationId: listChartsV3
+  summary: List charts
+  description: |
+    Lists a workspace's charts, newest first, page by page. Each chart embeds the dashboards that
+    hold it. Needs read access to the workspace. Session cookie, `x-api-key`, or a Bearer token.
+  tags:
+    - V3 Charts
+  parameters:
+    - $ref: ../components/parameters/WorkspaceIdQuery.yml
+    - in: query
+      name: limit
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 250
+        default: 50
+      description: Page size (max 250). Treat `meta.nextCursor` as the only end-of-collection signal.
+    - $ref: ../components/parameters/CursorQuery.yml
+    - in: query
+      name: filter[name][contains]
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 255
+      description: Only charts whose name contains this text, ignoring case. `%` and `_` match themselves.
+    - in: query
+      name: filter[datasetId][eq]
+      schema:
+        type: string
+        format: cuid2
+      description: Only charts reading this Feedback Dataset.
+  responses:
+    "200":
+      description: A page of charts
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: ../components/schemas/ChartResource.yml
+              meta:
+                $ref: ../components/schemas/CursorPaginationMeta.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3DashboardsForbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []
+post:
+  operationId: createChartV3
+  summary: Create a chart
+  description: |
+    Creates a chart on a Feedback Dataset. The chart query goes through the chart query validator
+    (422 naming each problem); write it against `GET /api/v3/charts/fields` and check it with
+    `POST /api/v3/charts/preview` first. Needs write access to the workspace and to the Feedback
+    Dataset. A name already used in the workspace answers 409.
+  tags:
+    - V3 Charts
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/ChartCreateRequest.yml
+  responses:
+    "201":
+      description: Chart created
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+        Location:
+          schema:
+            type: string
+          example: /api/v3/charts/clchart000000000000000001
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/ChartResource.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3DashboardsForbidden.yml
+    "409":
+      $ref: ../components/responses/V3DashboardsConflict.yml
+    "422":
+      $ref: ../components/responses/V3UnprocessableContent.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

@@ -10,15 +10,23 @@ import {
 } from "@/lib/common/events";
 import * as Setup from "@/lib/common/setup";
 import { getIsDebug } from "@/lib/common/utils";
+import { reconcileCreatives } from "@/lib/creatives/creatives";
 import * as Action from "@/lib/survey/action";
 import { EmbeddedDataStore, type TEmbeddedDataInput } from "@/lib/survey/embedded-data";
 import { checkPageUrl } from "@/lib/survey/no-code-action";
 import * as Attribute from "@/lib/user/attribute";
 import * as User from "@/lib/user/user";
 import { type TConfigInput, type TLegacyConfigInput } from "@/types/config";
+import { type Result, okVoid } from "@/types/error";
 import { type TTrackProperties } from "@/types/survey";
 
 const queue = CommandQueue.getInstance();
+
+/** `reconcileCreatives` as a queued command, which must report a result. */
+const redrawCreatives = (): Result<void, never> => {
+  reconcileCreatives();
+  return okVoid();
+};
 
 const setup = async (setupConfigWithAppearance: TConfigInput): Promise<void> => {
   // Appearance is local, not part of the persisted setup config, and must be in place before the
@@ -78,6 +86,9 @@ const setAttributes = async (attributes: Record<string, string>): Promise<void> 
 
 const setLanguage = async (language: string): Promise<void> => {
   await queue.add(Attribute.setAttributes, CommandType.UserAction, true, { language });
+  // Creatives follow the visitor's language (ENG-4003). A general action runs only once the language
+  // update above has landed in the config.
+  await queue.add(redrawCreatives, CommandType.GeneralAction);
 };
 
 const logout = async (): Promise<void> => {
@@ -172,11 +183,14 @@ const setNonce = (nonce: string | undefined): void => {
   // Set nonce in surveys package if it's already loaded
 
   globalThis.window.formbricksSurveys?.setNonce?.(nonce);
+
+  // Creatives already on the page redraw with it: a style element without the nonce stays blocked.
+  reconcileCreatives();
 };
 
 /**
- * Set how surveys render: "light" (default), "dark", or "system" to follow the browser setting.
- * Not queued, so it works before setup(), and an open survey switches in place.
+ * Set how surveys and creatives render: "light" (default), "dark", or "system" to follow the browser
+ * setting. Not queued, so it works before setup(), and an open survey or a shown creative switches in place.
  * @param appearance - "light" | "dark" | "system"
  */
 const setAppearance = (appearance: Appearance.TAppearance): void => {
@@ -184,7 +198,10 @@ const setAppearance = (appearance: Appearance.TAppearance): void => {
     console.warn(
       `🧱 Formbricks - Warning: Unknown appearance "${String(appearance)}", keeping the current one`
     );
+    return;
   }
+  // Creatives follow the survey's appearance (ENG-3998); a no-op before setup.
+  reconcileCreatives();
 };
 
 const formbricks = {

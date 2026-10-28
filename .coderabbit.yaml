@@ -85,6 +85,12 @@ reviews:
     # Generated from the reviewed OpenAPI bundle and byte-checked by `pnpm api:v3:schemas:check`;
     # the review belongs on docs/api-v3-reference/src/ and the generator, not on its output.
     - "!packages/api-v3-schemas/src/generated/**"
+    # Agent skills vendored from upstream and pinned by hash in skills-lock.json; the next
+    # `skills` update overwrites local edits. Formbricks-specific behaviour belongs in
+    # docs/agents/, which is reviewed. nextjs-docs is ours, so it stays in review, and so
+    # does skills-lock.json: it records each skill's source and hash.
+    - "!.agents/skills/!(nextjs-docs)/**"
+    - "!.claude/skills/**"
 
   path_instructions:
     - path: "**/*.test.tsx"
@@ -629,7 +635,8 @@ knowledge_base:
     enabled: true
   code_guidelines:
     enabled: true
-    filePatterns: []
+    filePatterns:
+      - "**/CODING_STANDARDS.md"
   learnings:
     scope: auto
     # Not 0. A learning is a durable review rule, and at 0 it applies immediately —

@@ -89,6 +89,12 @@ export const recurringJobDescriptors = {
     name: JOB_NAMES.authzedSurveyAudit,
     scheduleId: "daily-authzed-survey-audit",
   }),
+  // Copies creative counters from Redis to Postgres every minute (ENG-4000); idempotent by design.
+  creativeStatsFlush: defineRecurringJob({
+    label: "creative stats flush",
+    name: JOB_NAMES.creativeStatsFlush,
+    scheduleId: "creative-stats-flush",
+  }),
   // Its own queue: it may run for half an hour, and must not hold up the default queue's jobs.
   dataRetentionSweep: defineRecurringJob({
     label: "data retention sweep",

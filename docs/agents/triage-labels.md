@@ -10,4 +10,4 @@ Engineering uses no triage labels (`agent-ready` was retired on 23 Sep 2026). Th
 | `ready-for-human` | **Todo**                                          | Same as above                                                                |
 | `wontfix`         | **Canceled** state                                | Will not be actioned                                                         |
 
-When a skill says "apply the ready-for-agent label", move the issue to Todo instead.
+When a skill says "apply the ready-for-agent label", move the issue to Todo instead. A spec is a Linear document and has no state, so `/to-spec` skips this step; the build's Linear issue goes to Todo.
