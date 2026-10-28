@@ -18,6 +18,7 @@ import * as documentSchemas from "./document-schemas";
 import * as feedbackQuerySchemas from "./feedback-query-schemas";
 import * as lifecycleSchemas from "./lifecycle-schemas";
 import * as surveyAndFeedbackSchemas from "./schemas";
+import * as setupSchemas from "./setup-schemas";
 import * as tagSchemas from "./tag-schemas";
 import * as taxonomySchemas from "./taxonomy-schemas";
 import * as webhookSchemas from "./webhook-schemas";
@@ -150,6 +151,7 @@ const allExports: [string, unknown][] = Object.entries({
   ...webhookSchemas,
   ...lifecycleSchemas,
   ...contactSchemas,
+  ...setupSchemas,
 });
 
 const allSchemas = allExports.filter((entry): entry is [string, z.ZodType] => entry[1] instanceof z.ZodType);

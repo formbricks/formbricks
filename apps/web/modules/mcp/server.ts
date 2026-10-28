@@ -7,6 +7,7 @@ import { instrumentMcpServerWithTracing } from "@/lib/posthog/mcp-tracing";
 import { registerMcpApps } from "./apps";
 import { getMcpAuthentication } from "./auth";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./constants";
+import { getMcpServerInstructions, registerMcpPrompts } from "./prompts";
 import { MCP_REQUEST_MAX_ELEMENTS } from "./request-budget";
 import { mcpRequestStateCodec } from "./request-state";
 import { registerAuditEventTools } from "./tools/audit-events";
@@ -17,6 +18,7 @@ import { registerFeedbackQueryTools } from "./tools/feedback-queries";
 import { registerFeedbackRecordTools } from "./tools/feedback-records";
 import { registerLifecycleTools } from "./tools/lifecycle";
 import { registerResponseTools } from "./tools/responses";
+import { registerSetupTools } from "./tools/setup";
 import { registerSurveyTools } from "./tools/surveys";
 import { registerTagTools } from "./tools/tags";
 import { registerTaxonomyTools } from "./tools/taxonomy";
@@ -86,6 +88,8 @@ export const MCP_HANDLER_OPTIONS = {
     name: MCP_SERVER_NAME,
     version: MCP_SERVER_VERSION,
   },
+  // Tells a connecting client where to start: get_account_context, then the setup guide (ADR 0018).
+  instructions: getMcpServerInstructions(),
   verboseLogs: false,
   // GHSA-46jr-4wx8-v453: SDK 2.3 leaves its pre-validation limit disabled unless configured.
   // The route also checks the combined budget across calls in a legacy batch.
@@ -130,6 +134,7 @@ export const mcpHandler = createMcpHandler((server) => {
   registerSurveyTools(server);
   registerWorkflowTools(server);
   registerWorkspaceTools(server);
+  registerSetupTools(server);
   registerFeedbackRecordTools(server);
   registerFeedbackQueryTools(server);
   registerResponseTools(server);
@@ -142,5 +147,6 @@ export const mcpHandler = createMcpHandler((server) => {
   registerLifecycleTools(server);
   registerContactTools(server);
   registerMcpApps(server);
+  registerMcpPrompts(server);
   instrumentMcpServerWithTracing(server, identifyMcpUser);
 }, MCP_HANDLER_OPTIONS);
