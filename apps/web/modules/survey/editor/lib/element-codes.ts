@@ -1,4 +1,3 @@
-import { TFunction } from "i18next";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TCodeIssue, validateSurveyCodes } from "@formbricks/types/surveys/codes";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
@@ -106,37 +105,6 @@ export const getBlockCodeIssueKey = (survey: TSurvey, block: TSurveyBlock): stri
       ];
     })
     .join(";");
-};
-
-/** The text under a field with a code problem. Literal t() calls, so the translation scanner sees them. */
-export const describeCodeIssue = (issue: TCodeIssue, kind: "question" | "answer", t: TFunction): string => {
-  switch (issue.kind) {
-    case "duplicate_question_code":
-      return t("workspace.surveys.edit.code_error_duplicate_question");
-    case "duplicate_answer_code":
-      return t("workspace.surveys.edit.code_error_duplicate_answer");
-    case "clashes_embedded_data":
-      return t("workspace.surveys.edit.code_error_embedded_data", { name: issue.clashesWith });
-    case "clashes_question_id":
-      return t("workspace.surveys.edit.code_error_question_id", { id: issue.clashesWith });
-    case "invalid_format":
-      switch (issue.reason) {
-        case "too_long":
-          return kind === "question"
-            ? t("workspace.surveys.edit.code_error_too_long", { max: 30 })
-            : t("workspace.surveys.edit.code_error_too_long", { max: 20 });
-        case "spss_reserved_word":
-          return t("workspace.surveys.edit.code_error_reserved_word");
-        case "export_column_name":
-          return t("workspace.surveys.edit.code_error_export_column");
-        case "must_start_with_letter_or_digit":
-          return t("workspace.surveys.edit.code_error_answer_format");
-        default:
-          return kind === "question"
-            ? t("workspace.surveys.edit.code_error_question_format")
-            : t("workspace.surveys.edit.code_error_answer_format");
-      }
-  }
 };
 
 /**
