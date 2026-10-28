@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -10,7 +10,8 @@ import { z } from "zod";
 import { ZWorkspace } from "@formbricks/types/workspace";
 import { createWorkspaceAction } from "@/app/(app)/workspaces/[workspaceId]/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
+import { ApiQueryClientProvider } from "@/modules/api/components/api-query-client-provider";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -31,7 +32,7 @@ import {
 } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
 import { MultiSelect } from "@/modules/ui/components/multi-select";
-import { getTeamsByOrganizationIdAction } from "@/modules/workspaces/settings/actions";
+import { useOrganizationTeams } from "./hooks/use-organization-teams";
 
 const ZCreateWorkspaceForm = z.object({
   name: ZWorkspace.shape.name,
@@ -47,16 +48,24 @@ interface CreateWorkspaceModalProps {
   isAccessControlAllowed: boolean;
 }
 
-export const CreateWorkspaceModal = ({
+/** The dialog reads the organization's teams through the dashboard API, so it brings its own query client. */
+export const CreateWorkspaceModal = (props: Readonly<CreateWorkspaceModalProps>) => (
+  <ApiQueryClientProvider>
+    <CreateWorkspaceDialog {...props} />
+  </ApiQueryClientProvider>
+);
+
+const CreateWorkspaceDialog = ({
   open,
   setOpen,
   organizationId,
   isAccessControlAllowed,
-}: CreateWorkspaceModalProps) => {
+}: Readonly<CreateWorkspaceModalProps>) => {
   const { t } = useTranslation();
   const router = useRouter();
 
-  const [organizationTeams, setOrganizationTeams] = useState<TOrganizationTeam[]>([]);
+  const teamsQuery = useOrganizationTeams(organizationId, { enabled: open });
+  const organizationTeams = teamsQuery.data ?? [];
 
   const form = useForm<TCreateWorkspaceForm>({
     resolver: zodResolver(ZCreateWorkspaceForm),
@@ -67,20 +76,10 @@ export const CreateWorkspaceModal = ({
   });
 
   useEffect(() => {
-    if (!open) return;
-
-    const fetchModalData = async () => {
-      const teamsResponse = await getTeamsByOrganizationIdAction({ organizationId });
-
-      if (teamsResponse?.data) {
-        setOrganizationTeams(teamsResponse.data);
-      } else {
-        const errorMessage = getFormattedErrorMessage(teamsResponse);
-        toast.error(errorMessage);
-      }
-    };
-    fetchModalData();
-  }, [open, organizationId]);
+    if (teamsQuery.error) {
+      toast.error(getV3ApiErrorMessage(teamsQuery.error, t("common.something_went_wrong_please_try_again")));
+    }
+  }, [teamsQuery.error, t]);
 
   const { isSubmitting } = form.formState;
 

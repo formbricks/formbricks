@@ -19,11 +19,12 @@ import {
   createTeam,
   deleteTeam,
   getTeamDetails,
+  getTeamsByOrganizationId,
   updateTeamDetails,
 } from "@/modules/ee/teams/team-list/lib/team";
 import { hasWorkspaceAccessChanges } from "@/modules/ee/teams/team-list/lib/workspace-access";
 import type { TTeamCreateBody, TTeamUpdateBody } from "../schemas";
-import { serializeTeam } from "../serializers";
+import { serializeTeam, serializeTeamOption } from "../serializers";
 
 /**
  * Teams, for the organization's Teams settings page. Enterprise-gated: every operation checks the role
@@ -186,4 +187,27 @@ export async function deleteTeamOperation({
   await deleteTeam(teamId);
   if (auditLog) auditLog.oldObject = before;
   return noContentResponse({ requestId });
+}
+
+/**
+ * `GET /api/internal/teams?organizationId=`: the organization's teams, for assigning a new workspace to
+ * them. Owners and managers, who are the ones who can create a workspace.
+ */
+export async function listTeamsOperation({
+  authentication,
+  organizationId,
+  requestId,
+  instance,
+}: Omit<TRequestContext, "auditLog"> & { organizationId: string }): Promise<Response> {
+  const access = await requireOrgActionAccess({
+    authentication,
+    organizationId,
+    action: "organization.manage",
+    requestId,
+    instance,
+  });
+  if (access instanceof Response) return access;
+
+  const teams = (await getTeamsByOrganizationId(access.organizationId)) ?? [];
+  return successResponse(teams.map(serializeTeamOption), { requestId });
 }

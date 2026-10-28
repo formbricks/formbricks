@@ -2,8 +2,9 @@ import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ZTeamSettingsFormSchema } from "@/modules/ee/teams/team-list/types/team";
 
-/** `POST /api/internal/teams?organizationId=`: the organization the team is created in. */
+/** `/api/internal/teams?organizationId=`: the organization the teams are listed or created in. */
 export const ZTeamsQuery = z.object({ organizationId: ZId }).strict();
+export type TTeamsQuery = z.infer<typeof ZTeamsQuery>;
 
 /** `/api/internal/teams/{teamId}` path. */
 export const ZTeamIdParams = z.object({ teamId: ZId }).strict();

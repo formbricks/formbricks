@@ -1,66 +1,18 @@
+import "server-only";
 import { cookies } from "next/headers";
-import { z } from "zod";
 import { logger } from "@formbricks/logger";
-import { ZId } from "@formbricks/types/common";
-import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { assertCan } from "@/lib/authorization";
+import type { TWorkspace } from "@formbricks/types/workspace";
 import { FORMBRICKS_WORKSPACE_ID_COOKIE } from "@/lib/localStorage";
-import { getWorkspace, getWorkspaces } from "@/lib/workspace/service";
-import { deleteWorkspaceIfNotLast } from "@/modules/workspaces/settings/lib/workspace";
-import {
-  WORKSPACE_DELETE_CONFIRMATION_ERROR,
-  hasMatchingWorkspaceDeleteConfirmation,
-} from "./delete-workspace-confirmation";
+import { getWorkspaces } from "@/lib/workspace/service";
 import {
   TPostWorkspaceDeletionDestination,
   getPostDeletionDestination,
 } from "./post-workspace-deletion-redirect";
 
-const ZWorkspaceDeleteAction = z.object({
-  workspaceId: ZId,
-  confirmationName: z.string().trim().min(1),
-});
-
-export const DELETE_WORKSPACE_CONFIRMATION_REQUIRED_ERROR =
-  "Workspace name confirmation is required to delete this workspace.";
-
-export const parseWorkspaceDeleteActionInput = (input: unknown) => {
-  const parsedInput = ZWorkspaceDeleteAction.safeParse(input);
-
-  if (!parsedInput.success) {
-    throw new InvalidInputError(DELETE_WORKSPACE_CONFIRMATION_REQUIRED_ERROR);
-  }
-
-  return parsedInput.data;
+const FALLBACK_DESTINATION: TPostWorkspaceDeletionDestination = {
+  workspaceId: null,
+  path: "/",
 };
-
-export const getWorkspaceIdForLogging = (input: unknown) => {
-  if (typeof input !== "object" || input === null || !("workspaceId" in input)) {
-    return "unknown";
-  }
-
-  const workspaceId = input.workspaceId;
-
-  return typeof workspaceId === "string" ? workspaceId : "unknown";
-};
-
-const assertMatchingWorkspaceDeleteConfirmation = (confirmationName: string, workspaceName: string) => {
-  if (!hasMatchingWorkspaceDeleteConfirmation(confirmationName, workspaceName)) {
-    throw new InvalidInputError(WORKSPACE_DELETE_CONFIRMATION_ERROR);
-  }
-};
-
-interface DeleteWorkspaceWithConfirmationParams {
-  input: unknown;
-  userId: string;
-  auditLoggingCtx: {
-    organizationId?: string;
-    workspaceId?: string;
-    oldObject?: unknown;
-  };
-}
-
-const FALLBACK_DESTINATION: TPostWorkspaceDeletionDestination = { workspaceId: null, path: "/" };
 
 /**
  * Points the server-readable "last active workspace" at the workspace we are about to open.
@@ -85,37 +37,18 @@ const rememberActiveWorkspace = async (workspaceId: string | null) => {
   }
 };
 
-export const deleteWorkspaceWithConfirmation = async ({
-  input,
-  userId,
-  auditLoggingCtx,
-}: DeleteWorkspaceWithConfirmationParams) => {
-  const { confirmationName, workspaceId } = parseWorkspaceDeleteActionInput(input);
-  const workspace = await getWorkspace(workspaceId);
-
-  if (!workspace) {
-    throw new ResourceNotFoundError("workspace", workspaceId);
-  }
-
-  assertMatchingWorkspaceDeleteConfirmation(confirmationName, workspace.name);
-
-  const organizationId = workspace.organizationId;
-
-  await assertCan({ type: "user", id: userId }, "organization.manage", {
-    type: "organization",
-    id: organizationId,
-  });
-
-  auditLoggingCtx.organizationId = organizationId;
-  auditLoggingCtx.workspaceId = workspaceId;
-  auditLoggingCtx.oldObject = workspace;
-
-  const deletedWorkspace = await deleteWorkspaceIfNotLast(workspaceId, organizationId);
+/**
+ * Where the dashboard goes once `deletedWorkspace` is gone, with the workspace cookie pointed at it. Call it
+ * only after the deletion has committed. Never throws: the workspace is already gone, so failing to pick
+ * where to go next must not report the deletion as failed.
+ */
+export const resolvePostWorkspaceDeletionDestination = async (
+  deletedWorkspace: Pick<TWorkspace, "id" | "organizationId">
+): Promise<TPostWorkspaceDeletionDestination> => {
+  const { id: workspaceId, organizationId } = deletedWorkspace;
 
   // Resolved here rather than when the settings page rendered, so the surviving workspaces and the
-  // onboarding gate are both read at navigation time. Deliberately not `availableWorkspaces`: that
-  // is a pre-deletion snapshot, so a workspace deleted concurrently since would still be picked and
-  // we would navigate to an id that no longer exists. `getWorkspaces` has not been called in this
+  // onboarding gate are both read at navigation time. `getWorkspaces` has not been called in this
   // request yet, so its React cache entry is cold and this is a fresh read. Only owners and managers
   // reach this point, and they can open every workspace of the organization.
   let destination = FALLBACK_DESTINATION;
@@ -123,12 +56,11 @@ export const deleteWorkspaceWithConfirmation = async ({
     const remainingWorkspaces = await getWorkspaces(organizationId);
     destination = await getPostDeletionDestination({
       organizationId,
-      currentWorkspace: workspace,
+      currentWorkspace: deletedWorkspace,
       availableWorkspaces: remainingWorkspaces,
     });
   } catch (error) {
-    // The workspace is already gone; failing to pick where to go next must not report the deletion
-    // as failed. "/" re-resolves a landing workspace on its own.
+    // "/" re-resolves a landing workspace on its own.
     logger.error({ error, workspaceId, organizationId }, "Post-deletion destination resolution failed");
   }
 
@@ -140,5 +72,5 @@ export const deleteWorkspaceWithConfirmation = async ({
     logger.error({ error, workspaceId, organizationId }, "Post-deletion active workspace update failed");
   }
 
-  return { workspace: deletedWorkspace, destination };
+  return destination;
 };

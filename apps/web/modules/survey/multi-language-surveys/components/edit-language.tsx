@@ -13,6 +13,7 @@ import { TUserLocale } from "@formbricks/types/user";
 import type { TWorkspace } from "@formbricks/types/workspace";
 import { isWorkspaceDefaultSurveyLanguage } from "@/lib/i18n/default-survey-language";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
@@ -24,7 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
-import { updateWorkspaceAction } from "@/modules/workspaces/settings/actions";
+import { patchWorkspaceSettings } from "@/modules/workspaces/settings/lib/api-client";
 import {
   createLanguageAction,
   deleteLanguageAction,
@@ -253,15 +254,14 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
     // exists, which a language added in this same edit does not until the writes above land.
     const storedDefaultLanguage = normalizeLanguageCode(workspace.config.defaultSurveyLanguage ?? "") ?? "";
     if (defaultLanguage !== storedDefaultLanguage) {
-      const defaultLanguageResult = await updateWorkspaceAction({
-        workspaceId: workspace.id,
-        // Only the key being changed: the action merges it onto the stored config, so a stale
+      try {
+        // Only the key being changed: the server merges it onto the stored config, so a stale
         // `channel`/`industry` from this page's render can never overwrite a newer value.
-        data: { config: { defaultSurveyLanguage: defaultLanguage || null } },
-      });
-
-      if (!defaultLanguageResult?.data) {
-        toast.error(getFormattedErrorMessage(defaultLanguageResult));
+        await patchWorkspaceSettings(workspace.id, {
+          config: { defaultSurveyLanguage: defaultLanguage || null },
+        });
+      } catch (error) {
+        toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
         return;
       }
     }

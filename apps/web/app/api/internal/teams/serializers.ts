@@ -1,4 +1,4 @@
-import type { TTeamDetails, TTeamRole } from "@/modules/ee/teams/team-list/types/team";
+import type { TOrganizationTeam, TTeamDetails, TTeamRole } from "@/modules/ee/teams/team-list/types/team";
 
 /** A team as the team settings modal shows it: its members and its workspace grants. */
 export type TTeamResource = TTeamDetails;
@@ -17,4 +17,12 @@ export const serializeTeam = (team: TTeamDetails): TTeamResource => ({
     workspaceName,
     permission,
   })),
+});
+
+/** A team as a picker lists it: its id and name, nothing about its members or workspaces. */
+export type TTeamOptionResource = { id: string; name: string };
+
+export const serializeTeamOption = (team: TOrganizationTeam): TTeamOptionResource => ({
+  id: team.id,
+  name: team.name,
 });

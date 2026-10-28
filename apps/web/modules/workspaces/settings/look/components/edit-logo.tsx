@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TWorkspace } from "@formbricks/types/workspace";
 import { isExternalImageSrc } from "@/lib/image-hosts";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { handleFileUpload } from "@/modules/storage/file-upload";
 import { showFileUploadErrorToast } from "@/modules/storage/file-upload-error";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
@@ -18,7 +18,7 @@ import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { FileInput } from "@/modules/ui/components/file-input";
 import { Input } from "@/modules/ui/components/input";
 import { showStorageNotConfiguredToast } from "@/modules/ui/components/storage-not-configured-toast/lib/utils";
-import { updateWorkspaceAction } from "@/modules/workspaces/settings/actions";
+import { patchWorkspaceSettings } from "@/modules/workspaces/settings/lib/api-client";
 
 interface EditLogoProps {
   workspace: TWorkspace;
@@ -78,24 +78,16 @@ export const EditLogo = ({ workspace, workspaceId, isReadOnly, isStorageConfigur
         // tab cannot restore a logo url whose object another save has already deleted.
         expectedUpdatedAt: workspace.updatedAt,
       };
-      const updateWorkspaceResponse = await updateWorkspaceAction({
-        workspaceId: workspace.id,
-        data: updatedWorkspace,
-      });
-      if (updateWorkspaceResponse?.data) {
-        toast.success(t("workspace.look.logo_updated_successfully"));
-        router.refresh();
-      } else {
-        // Deliberately no refresh here. The draft below lives in useState and is seeded once, so
-        // refreshing would hand this page a current `updatedAt` while it still holds the old logo
-        // url — the next save would then pass the version check and restore a deleted object.
-        // Leaving the stale baseline in place keeps every retry rejected until the user reloads,
-        // which is what the message asks for.
-        const errorMessage = getFormattedErrorMessage(updateWorkspaceResponse);
-        toast.error(errorMessage);
-      }
+      await patchWorkspaceSettings(workspace.id, updatedWorkspace);
+      toast.success(t("workspace.look.logo_updated_successfully"));
+      router.refresh();
     } catch (error) {
-      toast.error(t("workspace.look.failed_to_update_logo"));
+      // Deliberately no refresh here. The draft below lives in useState and is seeded once, so
+      // refreshing would hand this page a current `updatedAt` while it still holds the old logo
+      // url — the next save would then pass the version check and restore a deleted object.
+      // Leaving the stale baseline in place keeps every retry rejected until the user reloads,
+      // which is what the server's message asks for.
+      toast.error(getV3ApiErrorMessage(error, t("workspace.look.failed_to_update_logo")));
     } finally {
       setIsEditing(false);
       setIsLoading(false);
@@ -115,20 +107,12 @@ export const EditLogo = ({ workspace, workspaceId, isReadOnly, isStorageConfigur
         logo: { url: undefined, bgColor: undefined },
         expectedUpdatedAt: workspace.updatedAt,
       };
-      const updateWorkspaceResponse = await updateWorkspaceAction({
-        workspaceId: workspace.id,
-        data: updatedWorkspace,
-      });
-      if (updateWorkspaceResponse?.data) {
-        toast.success(t("workspace.look.logo_removed_successfully"));
-        router.refresh();
-      } else {
-        // Same as saveChanges: no refresh, so a rejected stale save cannot pick up a fresh baseline.
-        const errorMessage = getFormattedErrorMessage(updateWorkspaceResponse);
-        toast.error(errorMessage);
-      }
+      await patchWorkspaceSettings(workspace.id, updatedWorkspace);
+      toast.success(t("workspace.look.logo_removed_successfully"));
+      router.refresh();
     } catch (error) {
-      toast.error(t("workspace.look.failed_to_remove_logo"));
+      // Same as saveChanges: no refresh, so a rejected stale save cannot pick up a fresh baseline.
+      toast.error(getV3ApiErrorMessage(error, t("workspace.look.failed_to_remove_logo")));
     } finally {
       setIsEditing(false);
       setIsLoading(false);
