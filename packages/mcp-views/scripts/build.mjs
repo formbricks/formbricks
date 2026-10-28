@@ -12,12 +12,18 @@ import { viteSingleFile } from "vite-plugin-singlefile";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const viewsDir = path.join(root, "src", "views");
 // Several people (or agents) can build different views at once: `--out=dist-mine` redirects the output
-// and `--only=<view>` builds a single view, so nobody deletes anyone else's `dist`. Only a full build
+// and `--only=<view>` builds a single view and leaves the rest of the output alone, so nobody deletes anyone else's `dist`. Only a full build
 // writes the `index.js` the web app imports.
 const argument = (name) => process.argv.find((item) => item.startsWith(`--${name}=`))?.slice(name.length + 3);
 const distDir = path.join(root, argument("out") ?? "dist");
 const only = argument("only");
 const stagingDir = path.join(distDir, ".staging");
+
+// A full build starts from an empty output so a renamed or removed view leaves no stale document behind.
+// A `--only` build never clears anything: it adds one view to whatever the output already holds.
+if (!only) {
+  await rm(distDir, { recursive: true, force: true });
+}
 
 const viewNames = JSON.parse(await readFile(path.join(root, "src", "views.json"), "utf8"));
 if (!Array.isArray(viewNames) || viewNames.length === 0) {

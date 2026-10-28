@@ -16,7 +16,7 @@
     }
   },
   "scripts": {
-    "build": "rimraf dist && node scripts/build.mjs",
+    "build": "node scripts/build.mjs",
     "dev:host": "node dev/serve.mjs",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
