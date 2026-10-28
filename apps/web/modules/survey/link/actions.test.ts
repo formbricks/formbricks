@@ -412,6 +412,10 @@ describe("sendLinkSurveyEmailAction", () => {
         expect.objectContaining({ surveyName: "Stored survey name", logoUrl: "/storage/org-logo.png" }),
         expect.anything()
       );
+      // Not under any other field either.
+      const [emailData] = vi.mocked(sendLinkSurveyToVerifiedEmail).mock.calls[0];
+      expect(JSON.stringify(emailData)).not.toContain(callerChosen.surveyName);
+      expect(JSON.stringify(emailData)).not.toContain(callerChosen.logoUrl);
     });
   });
 });

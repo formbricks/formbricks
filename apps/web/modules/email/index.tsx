@@ -19,7 +19,7 @@ import {
 } from "@formbricks/email";
 import { TEmailTemplateLegalProps } from "@formbricks/email/src/types/email";
 import { logger } from "@formbricks/logger";
-import type { TVerifiedLinkSurveyEmailData } from "@formbricks/types/email";
+import type { TLinkSurveyEmailData } from "@formbricks/types/email";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import type { TResponse } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
@@ -529,6 +529,13 @@ export const sendEmailCustomizationPreviewEmail = async (
     html: emailHtmlBody,
     rateLimit: { actorUserId },
   });
+};
+
+// The respondent's request plus what the server reads from the survey and its organization. Never built from
+// client input: the action behind the public verify-email screen sets both (ENG-4043).
+export type TVerifiedLinkSurveyEmailData = TLinkSurveyEmailData & {
+  surveyName: string;
+  logoUrl?: string;
 };
 
 export const sendLinkSurveyToVerifiedEmail = async (

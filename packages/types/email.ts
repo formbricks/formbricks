@@ -19,9 +19,3 @@ export const ZLinkSurveyEmailData = z.object({
 });
 
 export type TLinkSurveyEmailData = z.infer<typeof ZLinkSurveyEmailData>;
-
-// The respondent's request plus what the server adds from the survey and its organization.
-export type TVerifiedLinkSurveyEmailData = TLinkSurveyEmailData & {
-  surveyName: string;
-  logoUrl?: string;
-};

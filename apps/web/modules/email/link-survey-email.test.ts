@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import type { TVerifiedLinkSurveyEmailData } from "@formbricks/types/email";
-import { sendLinkSurveyToVerifiedEmail } from "./index";
+import { type TVerifiedLinkSurveyEmailData, sendLinkSurveyToVerifiedEmail } from "./index";
 
 const mocks = vi.hoisted(() => ({ sendEmail: vi.fn(async () => true) }));
 
