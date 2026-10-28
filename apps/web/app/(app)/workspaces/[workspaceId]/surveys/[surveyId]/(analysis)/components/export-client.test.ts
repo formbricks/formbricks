@@ -12,6 +12,7 @@ const request: TExportRequest = {
   format: "csv",
   display: "text",
   spss: false,
+  zip: false,
   advanced: [],
   excludedColumns: [],
 };
@@ -60,6 +61,20 @@ describe("requestExport", () => {
     expect(result.fileName).toBe("f.csv");
     expect(await result.blob.text()).toBe("abcde");
     expect(progress.at(-1)).toBe(5);
+  });
+
+  test("counts the rows of a CSV as they arrive: the lines less the header", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(new Response(streamOf(["a,b\r\n1,2\r\n3", ",4\r\n5,6\r\n"])));
+    const rows: number[] = [];
+    await requestExport({
+      surveyId: "s1",
+      request,
+      signal: new AbortController().signal,
+      rowOutput: "csv",
+      onRows: (count) => rows.push(count),
+      fetchImpl,
+    });
+    expect(rows).toEqual([1, 3]);
   });
 
   test("a failed request throws with the server's reason", async () => {

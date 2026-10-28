@@ -19,6 +19,8 @@ export type TExportOptions = {
   /** Display answers: what the cells hold. */
   display: TAnswerDisplay;
   spss: boolean;
+  /** Compress into .zip, for a single CSV. Meaningless when the export is a zip anyway. */
+  zip: boolean;
   advanced: TExportAdvancedOptionId[];
   /** Include columns: the groups switched OFF, so the defaults (everything on) send nothing. */
   excludedColumns: string[];
@@ -30,6 +32,7 @@ export const DEFAULT_EXPORT_OPTIONS: TExportOptions = {
   questions: "text",
   display: "text",
   spss: false,
+  zip: false,
   advanced: [],
   excludedColumns: [],
 };
@@ -63,6 +66,7 @@ export const setFormat = (options: TExportOptions, format: TExportFormat): TExpo
   ...options,
   format,
   spss: format === "csv" ? options.spss : false,
+  zip: format === "csv" ? options.zip : false,
   advanced: options.advanced.filter((id) =>
     EXPORT_ADVANCED_OPTIONS.find((option) => option.id === id)?.appliesTo.includes(format)
   ),
@@ -88,6 +92,8 @@ export const setQuestions = (options: TExportOptions, questions: TAnswerDisplay)
   return { ...options, questions };
 };
 
+export const setZip = (options: TExportOptions, zip: boolean): TExportOptions => ({ ...options, zip });
+
 export const setExcludedColumns = (options: TExportOptions, excludedColumns: string[]): TExportOptions => ({
   ...options,
   excludedColumns,
@@ -98,7 +104,21 @@ export const exportFileExtension = (options: TExportOptions): "csv" | "xlsx" | "
   exportFileType(planExport(toExportRequest(options))).extension;
 
 /** Compress into .zip is not a choice when the export has several files: it is a zip, always. */
-export const isZipLocked = (options: TExportOptions): boolean => exportFileExtension(options) === "zip";
+export const isZipLocked = (options: TExportOptions): boolean =>
+  exportFileExtension({ ...options, zip: false }) === "zip";
+
+/** Excel is one file and has no zip to choose. */
+export const isZipAvailable = (options: TExportOptions): boolean => options.format === "csv";
+
+/**
+ * What the row count can be read from while the file arrives: a CSV has one line per row, and the first
+ * file of a zip is a CSV. Excel is built whole and the Standard export is built whole too: no rows to count.
+ */
+export const rowProgressOutput = (request: TExportRequest): "csv" | "zip" | null => {
+  const plan = planExport(request);
+  if (plan.kind === "standard" || plan.output === "xlsx") return null;
+  return plan.output;
+};
 
 export type TCountLinePart =
   | { key: "filters" }
@@ -154,6 +174,7 @@ export const toExportRequest = (
     questions: options.questions,
     display: options.display,
     spss: options.spss,
+    zip: options.zip,
     advanced: options.advanced,
     excludedColumns: scope.columnGroups
       ? excludedForRequest(scope.columnGroups, options.excludedColumns)

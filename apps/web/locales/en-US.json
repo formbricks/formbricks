@@ -4633,10 +4633,12 @@
         "export_preparing": "Preparing your export… {count, number} responses",
         "export_progress": "Exporting… {size} received",
         "export_progress_hint": "You can close this window. The download starts when the file is ready.",
+        "export_progress_rows": "Exporting… {rows, number} of {total, number} responses",
         "export_ready": "Export ready",
         "export_ready_file": "{fileName} downloaded",
         "export_ready_file_count": "{fileName} downloaded · {count, number} responses",
         "export_received": "{size} received",
+        "export_rows_of_total": "{rows, number} of {total, number} responses",
         "export_starting": "Preparing your export…",
         "exporting": "Exporting…",
         "format_csv": ".csv",
@@ -4645,6 +4647,7 @@
         "modal_title": "Export options",
         "spss_label": "Add SPSS syntax file (.sps)",
         "zip_description": "Always on when the export has more than one file",
+        "zip_description_optional": "Download the file as a zip",
         "zip_label": "Compress into .zip"
       },
       "featured_templates": {

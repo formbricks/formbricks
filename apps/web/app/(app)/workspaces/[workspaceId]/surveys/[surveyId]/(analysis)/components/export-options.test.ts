@@ -9,12 +9,15 @@ import {
   isExcelTooLarge,
   isSpssAvailable,
   isTextOnlyAvailable,
+  isZipAvailable,
   isZipLocked,
+  rowProgressOutput,
   setDisplay,
   setExcludedColumns,
   setFormat,
   setQuestions,
   setSpss,
+  setZip,
   toExportRequest,
   toggleAdvanced,
 } from "./export-options";
@@ -128,6 +131,29 @@ describe("Display questions and Include columns", () => {
     expect(isZipLocked(spss)).toBe(true);
     expect(isZipLocked(DEFAULT_EXPORT_OPTIONS)).toBe(false);
     expect(exportFileExtension(setDisplay(DEFAULT_EXPORT_OPTIONS, "both"))).toBe("zip");
+  });
+
+  test("Compress into .zip is free for a single CSV, locked when the export is a zip anyway, off for Excel", () => {
+    const zipped = setZip(setDisplay(DEFAULT_EXPORT_OPTIONS, "codes"), true);
+    expect(exportFileExtension(zipped)).toBe("zip");
+    expect(isZipLocked(zipped)).toBe(false);
+    expect(toExportRequest(zipped).zip).toBe(true);
+
+    const locked = setZip(setSpss(DEFAULT_EXPORT_OPTIONS, true), true);
+    expect(isZipLocked(locked)).toBe(true);
+
+    expect(isZipAvailable(zipped)).toBe(true);
+    const excel = setFormat(zipped, "xlsx");
+    expect(isZipAvailable(excel)).toBe(false);
+    expect(excel.zip).toBe(false);
+  });
+
+  test("rows can be counted as the file arrives for a CSV and a zip, not for Excel or the Standard export", () => {
+    const codes = setDisplay(DEFAULT_EXPORT_OPTIONS, "codes");
+    expect(rowProgressOutput(toExportRequest(codes))).toBe("csv");
+    expect(rowProgressOutput(toExportRequest(setZip(codes, true)))).toBe("zip");
+    expect(rowProgressOutput(toExportRequest(setFormat(codes, "xlsx")))).toBeNull();
+    expect(rowProgressOutput(toExportRequest(DEFAULT_EXPORT_OPTIONS))).toBeNull();
   });
 });
 

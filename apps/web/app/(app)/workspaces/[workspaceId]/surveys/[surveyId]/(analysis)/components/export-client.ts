@@ -1,6 +1,7 @@
 import type { TExportColumnGroup } from "@/lib/analysis-export/column-selection";
 import type { TExcelSizeVerdict } from "@/lib/analysis-export/excel-size";
 import type { TExportRequest } from "@/lib/analysis-export/export-request";
+import { createRowCounter } from "./export-row-counter";
 
 /** The export route's refusal, with the reason it gave when it gave one. */
 export class ExportRequestError extends Error {
@@ -42,20 +43,26 @@ export const parseFileName = (contentDisposition: string | null): string | null 
 
 /**
  * Requests the file and reads it to the end. The server streams CSV and zip, so `onProgress` follows the
- * bytes as they arrive; Excel is built whole on the server and arrives in one go. The file is held as a
- * Blob in the tab, which the browser backs with disk past a threshold.
+ * bytes as they arrive and, with `rowOutput`, `onRows` the rows written so far; Excel is built whole on the
+ * server and arrives in one go. The file is held as a Blob in the tab, which the browser backs with disk past
+ * a threshold.
  */
 export const requestExport = async ({
   surveyId,
   request,
   signal,
   onProgress,
+  rowOutput,
+  onRows,
   fetchImpl = fetch,
 }: {
   surveyId: string;
   request: TExportRequest;
   signal: AbortSignal;
   onProgress?: (bytesReceived: number) => void;
+  /** The file's shape when its rows can be counted as it arrives (see `rowProgressOutput`). */
+  rowOutput?: "csv" | "zip" | null;
+  onRows?: (rowsReceived: number) => void;
   fetchImpl?: TFetch;
 }): Promise<{ blob: Blob; fileName: string | null }> => {
   const response = await post(fetchImpl, exportUrl(surveyId), request, signal);
@@ -67,12 +74,14 @@ export const requestExport = async ({
 
   const reader = response.body.getReader();
   const chunks: Uint8Array<ArrayBuffer>[] = [];
+  const counter = rowOutput && onRows ? createRowCounter(rowOutput, onRows) : null;
   let received = 0;
   for (;;) {
     const { done, value } = await reader.read();
     if (done) break;
     chunks.push(value as Uint8Array<ArrayBuffer>);
     received += value.byteLength;
+    counter?.write(value);
     onProgress?.(received);
   }
   return { blob: new Blob(chunks, { type }), fileName };

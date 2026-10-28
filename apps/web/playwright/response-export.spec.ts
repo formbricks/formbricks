@@ -254,6 +254,18 @@ test.describe("Response export @slow", () => {
       expect(unmapped.flat()).toContain("Purple");
     });
 
+    await test.step("Compress into .zip downloads a single CSV as a zip", async () => {
+      const download = await exportFile(page, async (modal) => {
+        await pick(page, "display-answers", "Code only");
+        await modal.getByLabel("Compress into .zip").click();
+      });
+      const zipPath = testInfo.outputPath(download.suggestedFilename());
+      await download.saveAs(zipPath);
+      expect(zipPath).toMatch(/\.zip$/);
+      // "PK": the signature every zip file starts with.
+      expect((await readFile(zipPath)).subarray(0, 2).toString()).toBe("PK");
+    });
+
     await test.step("a response marked Low quality on its card is left out by default", async () => {
       await page.getByText(SPAM_ANSWER).first().click();
       await page.getByRole("button", { name: "Mark as low quality" }).click();

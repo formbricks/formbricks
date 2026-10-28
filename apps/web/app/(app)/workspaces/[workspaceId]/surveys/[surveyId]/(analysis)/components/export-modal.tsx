@@ -15,6 +15,7 @@ import { useTranslation } from "react-i18next";
 import type { TResponseFilterCriteria } from "@formbricks/types/responses";
 import {
   type TExportColumnGroup,
+  groupState,
   hasNoColumnSelected,
   selectAllState,
   toggleGroup,
@@ -48,12 +49,14 @@ import {
   isExcelTooLarge,
   isSpssAvailable,
   isTextOnlyAvailable,
+  isZipAvailable,
   isZipLocked,
   setDisplay,
   setExcludedColumns,
   setFormat,
   setQuestions,
   setSpss,
+  setZip,
   toExportRequest,
   toggleAdvanced,
 } from "./export-options";
@@ -206,11 +209,13 @@ const ColumnPicker = ({
               </Label>
             </div>
             {groups.map((group) => (
-              <div key={group.id} className="flex min-h-4 items-center gap-2">
+              <div key={group.id} className={cn("flex min-h-4 items-center gap-2", group.parentId && "pl-6")}>
                 <Checkbox
                   id={`export-column-${group.id}`}
-                  checked={!excluded.includes(group.id)}
-                  onCheckedChange={(checked) => onChange(toggleGroup(excluded, group.id, checked === true))}
+                  checked={groupState(groups, excluded, group)}
+                  onCheckedChange={(checked) =>
+                    onChange(toggleGroup(groups, excluded, group.id, checked === true))
+                  }
                   className={checkboxClass}
                 />
                 <Label
@@ -254,6 +259,7 @@ const ExportProgress = ({
 }: Readonly<{ included: number | null; onClose: () => void }>) => {
   const { t } = useTranslation();
   const { progress, cancelExport } = useExportManager();
+  const rows = progress?.rows ?? null;
   return (
     <>
       <ExportHeader />
@@ -267,14 +273,35 @@ const ExportProgress = ({
         </CountBox>
         <div className="flex flex-col gap-2 py-2">
           <p className="font-medium text-slate-900">
-            {included === null
-              ? t("workspace.surveys.export.export_starting")
-              : t("workspace.surveys.export.export_preparing", { count: included })}
+            {rows !== null && included !== null
+              ? t("workspace.surveys.export.export_rows_of_total", { rows, total: included })
+              : included === null
+                ? t("workspace.surveys.export.export_starting")
+                : t("workspace.surveys.export.export_preparing", { count: included })}
           </p>
           <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-            <div className="h-full w-2/5 animate-pulse rounded-full bg-slate-900" aria-hidden="true" />
-            {/* No value: the size is unknown until the file arrives, so this is the indeterminate state. */}
-            <progress className="sr-only" aria-label={t("workspace.surveys.export.export_starting")} />
+            {rows !== null && included ? (
+              <>
+                <div
+                  data-testid="export-progress-bar"
+                  className="h-full rounded-full bg-slate-900 transition-[width]"
+                  style={{ width: `${Math.round((rows / included) * 100)}%` }}
+                  aria-hidden="true"
+                />
+                <progress
+                  className="sr-only"
+                  value={rows}
+                  max={included}
+                  aria-label={t("workspace.surveys.export.exporting")}
+                />
+              </>
+            ) : (
+              <>
+                <div className="h-full w-2/5 animate-pulse rounded-full bg-slate-900" aria-hidden="true" />
+                {/* No value: nothing tells how far along the file is, so this is the indeterminate state. */}
+                <progress className="sr-only" aria-label={t("workspace.surveys.export.export_starting")} />
+              </>
+            )}
           </div>
           <p className="text-slate-500">
             {t("workspace.surveys.export.export_progress_hint")}
@@ -379,6 +406,7 @@ const ExportModalBody = ({
     option.appliesTo.includes(options.format)
   );
   const extension = exportFileExtension(options);
+  const zipLocked = isZipLocked(options);
 
   return (
     <>
@@ -506,14 +534,18 @@ const ExportModalBody = ({
                   description={option.description(t)}
                 />
               ))}
-              {isZipLocked(options) && (
+              {isZipAvailable(options) && (
                 <OptionRow
                   id="export-zip"
-                  checked
-                  disabled
-                  onCheckedChange={() => undefined}
+                  checked={zipLocked || options.zip}
+                  disabled={zipLocked}
+                  onCheckedChange={(checked) => setOptions((current) => setZip(current, checked))}
                   label={t("workspace.surveys.export.zip_label")}
-                  description={t("workspace.surveys.export.zip_description")}
+                  description={
+                    zipLocked
+                      ? t("workspace.surveys.export.zip_description")
+                      : t("workspace.surveys.export.zip_description_optional")
+                  }
                 />
               )}
             </div>
