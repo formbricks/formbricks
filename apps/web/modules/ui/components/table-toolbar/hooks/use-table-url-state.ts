@@ -12,7 +12,7 @@ type TTableUrlState = {
 };
 
 /**
- * A table's filters, search and sort, read from and written to the page URL (ADR 0003). Writes use
+ * A table's filters, search and sort, read from and written to the page URL (ADR 0015). Writes use
  * `history.replaceState`, which Next.js syncs into `useSearchParams` without a navigation, so typing in
  * search or ticking a value does not refetch the page or pile up history entries.
  */

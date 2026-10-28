@@ -1,7 +1,7 @@
 import type { TDateRangePreset } from "@/lib/date-ranges";
 
 /**
- * The one operator list every table filters with (ADR 0003). A table offers a subset per filter
+ * The one operator list every table filters with (ADR 0015). A table offers a subset per filter
  * property; its adapter maps each one onto its backend.
  *
  * - `in`: a quick filter. The row matches any of the ticked values.

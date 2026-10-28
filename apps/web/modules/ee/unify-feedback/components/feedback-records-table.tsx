@@ -272,7 +272,7 @@ export const FeedbackRecordsTable = ({
 }: Readonly<FeedbackRecordsTableProps>) => {
   const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
-  // Calendar days are cut in the organization's reporting zone, never the browser's (ADR 0003).
+  // Calendar days are cut in the organization's reporting zone, never the browser's (ADR 0015).
   const { organization } = useOrganization();
   const timeZone = getReportingTimeZone(organization?.displayTimeZone);
   // Reaches the same query client as the enrichment-status banner (provided above this table by

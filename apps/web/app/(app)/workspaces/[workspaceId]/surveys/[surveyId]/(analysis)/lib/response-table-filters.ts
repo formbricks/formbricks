@@ -24,7 +24,7 @@ import type {
   TTableFilter,
 } from "@/modules/ui/components/table-toolbar/lib/types";
 
-// Responses keep their filter in the page URL like every other table (ADR 0003), shared by the
+// Responses keep their filter in the page URL like every other table (ADR 0015), shared by the
 // Responses and Summary tabs. The response filter pipeline underneath stays as it was: these helpers
 // translate table filters to the `SelectedFilterValue` / `DateRange` pair `getFormattedFilters` reads,
 // and back, so the server query, the download and the Summary's click-to-filter are unchanged.

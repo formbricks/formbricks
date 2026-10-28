@@ -49,7 +49,7 @@ const surveyFilterDataKey = (surveyId: string) => ["surveys", surveyId, "filter-
 
 /**
  * The Responses / Summary filter, kept in the page URL so it follows a tab switch, a reload and a shared
- * link (ADR 0003). It hands the pages the same `selectedFilter` / `dateRange` the response pipeline
+ * link (ADR 0015). It hands the pages the same `selectedFilter` / `dateRange` the response pipeline
  * always read, with an identity that only changes when the filter does: every server action refreshes
  * the route, and a filter that changed identity on each refresh would refetch forever.
  */

@@ -3,7 +3,7 @@ import type { FeedbackRecordData } from "@/modules/hub/types";
 import { type THubRecordQuery, appendHubQuery } from "./table-filters";
 
 // The Records table reads the public v3 feedbackRecords list and count, which take the Hub's query as
-// is (ADR 0003). A workspace can see several feedback directories, each a separate Hub tenant, so the
+// is (ADR 0015). A workspace can see several feedback directories, each a separate Hub tenant, so the
 // table asks each one and merges.
 
 export const RECORDS_PER_PAGE = 50;

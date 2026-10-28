@@ -9,7 +9,7 @@ import {
 } from "./types";
 
 // Active filters live in the page URL in the v3 query syntax, `filter[<property>][<operator>]=<value>`
-// (ADR 0003). A multi-value filter repeats the key rather than joining values with commas, because a
+// (ADR 0015). A multi-value filter repeats the key rather than joining values with commas, because a
 // value — a contact attribute, a source name — may itself hold a comma. Search and sort sit beside
 // them as `search` and `sortBy`.
 

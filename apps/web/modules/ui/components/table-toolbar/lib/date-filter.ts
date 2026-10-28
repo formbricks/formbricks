@@ -22,7 +22,7 @@ export const formatCalendarDay = (day: Date): string => {
 
 /**
  * Resolves a date filter to the absolute instants a backend filters on, in the organization's
- * reporting time zone — never the browser's (ADR 0003). The URL keeps the preset by name, so a shared
+ * reporting time zone — never the browser's (ADR 0015). The URL keeps the preset by name, so a shared
  * link means "the last 7 days" on the day it is opened; this runs just before each request.
  *
  * Returns null for a filter that is not a date quick filter or rule.

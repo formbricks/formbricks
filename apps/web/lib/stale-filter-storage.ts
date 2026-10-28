@@ -1,6 +1,6 @@
 /**
  * Surveys, Workflows and Creatives used to remember their filters in browser storage; since filters moved into
- * the URL (ADR 0003) nothing reads these keys, so they are removed the next time one of those lists opens.
+ * the URL (ADR 0015) nothing reads these keys, so they are removed the next time one of those lists opens.
  */
 export const STALE_FILTER_STORAGE_KEYS = [
   "formbricks-surveys-filters",
