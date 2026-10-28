@@ -26,6 +26,9 @@ import { useExportManager } from "./export-manager";
 import {
   DEFAULT_EXPORT_OPTIONS,
   type TExportOptions,
+  excelAlternative,
+  isExcelBlocked,
+  isExcelTooLarge,
   isSpssAvailable,
   isTextOnlyAvailable,
   setDisplay,
@@ -126,6 +129,16 @@ const ExportModalBody = ({
     retry: false,
   });
 
+  // Excel is built whole in memory, so a selection past the cap is switched off and CSV recommended.
+  const excelTooLarge = isExcelTooLarge(counts.data);
+  const excelBlocked = isExcelBlocked(options, counts.data);
+  const alternative = excelAlternative(options);
+  const excelSize = { cells: counts.data?.excel?.cells ?? 0, max: counts.data?.excel?.maxCells ?? 0 };
+  const excelTooLargeMessage =
+    alternative === "zip"
+      ? t("workspace.surveys.export.excel_too_large_zip", excelSize)
+      : t("workspace.surveys.export.excel_too_large_csv", excelSize);
+
   const displayChoices: { value: TAnswerDisplay; label: string }[] = [
     { value: "text", label: t("workspace.surveys.export.display_text") },
     { value: "codes", label: t("workspace.surveys.export.display_codes") },
@@ -150,8 +163,27 @@ const ExportModalBody = ({
               id="export-format-xlsx"
               value="xlsx"
               label={t("workspace.surveys.export.format_excel")}
+              disabled={excelTooLarge}
+              disabledReason={excelTooLargeMessage}
             />
           </RadioGroup>
+          {excelBlocked && (
+            <div
+              role="alert"
+              data-testid="export-excel-too-large"
+              className="flex flex-col items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+              <p>{excelTooLargeMessage}</p>
+              <Button
+                variant="secondary"
+                size="sm"
+                data-testid="export-excel-switch"
+                onClick={() => setOptions((current) => setFormat(current, "csv"))}>
+                {alternative === "zip"
+                  ? t("workspace.surveys.export.excel_too_large_zip_switch")
+                  : t("workspace.surveys.export.excel_too_large_csv_switch")}
+              </Button>
+            </div>
+          )}
           <CheckboxRow
             id="export-spss"
             checked={options.spss}
@@ -241,6 +273,7 @@ const ExportModalBody = ({
           </Button>
           <Button
             data-testid="export-submit"
+            disabled={excelBlocked}
             onClick={() => {
               startExport({ surveyId, request });
               onClose();

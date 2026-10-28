@@ -4,6 +4,7 @@ import {
   type TExportAdvancedOptionId,
   type TExportFormat,
   type TExportRequest,
+  planExport,
 } from "@/lib/analysis-export/export-request";
 import type { TAnswerDisplay } from "@/lib/analysis-export/types";
 
@@ -28,6 +29,25 @@ export const isTextOnlyAvailable = (options: TExportOptions): boolean => !option
 
 /** The SPSS syntax file goes with CSV. */
 export const isSpssAvailable = (options: TExportOptions): boolean => options.format === "csv";
+
+/**
+ * Whether Excel would be over the size cap for this selection, from the count request's `excel` verdict.
+ * Unknown (still loading) and the Standard export (`null`) are not too large.
+ */
+export const isExcelTooLarge = (counts: { excel: { tooLarge: boolean } | null } | undefined): boolean =>
+  counts?.excel?.tooLarge === true;
+
+/** Excel is chosen and would be refused: the modal explains it and offers CSV instead of a download. */
+export const isExcelBlocked = (
+  options: TExportOptions,
+  counts: { excel: { tooLarge: boolean } | null } | undefined
+): boolean => options.format === "xlsx" && isExcelTooLarge(counts);
+
+/** What switching the same choices to CSV downloads: a zip of CSV files, or one CSV file. */
+export const excelAlternative = (options: TExportOptions): "csv" | "zip" => {
+  const plan = planExport(toExportRequest(setFormat(options, "csv")));
+  return plan.kind === "analysis" && plan.output === "zip" ? "zip" : "csv";
+};
 
 export const setFormat = (options: TExportOptions, format: TExportFormat): TExportOptions => ({
   ...options,

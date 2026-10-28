@@ -71,7 +71,13 @@ export const handleExportRequest = async ({
       auditLog.organizationId = authResult.organizationId;
       auditLog.targetId = survey.id;
     }
-    const counts = await countExportResponses({ survey, plan, filter: body.filter });
+    // The quotas column is part of the Excel size the counts report.
+    const counts = await countExportResponses({
+      survey,
+      plan,
+      filter: body.filter,
+      isQuotasAllowed: await getIsQuotasEnabled(authResult.organizationId),
+    });
     return successResponse({ ...counts, kind: plan.kind }, { requestId });
   }
 
