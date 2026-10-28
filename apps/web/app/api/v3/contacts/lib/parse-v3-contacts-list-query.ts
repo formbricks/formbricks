@@ -52,26 +52,16 @@ const ATTRIBUTE_FILTER_PATTERN = /^filter\[attribute\.([^\]]+)\]\[([A-Za-z]+)\]$
 
 export const STRING_OPERATORS = [
   "in",
-  "equals",
-  "notEquals",
+  "eq",
+  "ne",
   "contains",
-  "doesNotContain",
+  "notContains",
   "startsWith",
   "endsWith",
   "isSet",
   "isNotSet",
 ] as const;
-export const NUMBER_OPERATORS = [
-  "in",
-  "equals",
-  "notEquals",
-  "greaterThan",
-  "greaterEqual",
-  "lessThan",
-  "lessEqual",
-  "isSet",
-  "isNotSet",
-] as const;
+export const NUMBER_OPERATORS = ["in", "eq", "ne", "gt", "gte", "lt", "lte", "isSet", "isNotSet"] as const;
 export const DATE_OPERATORS = ["gte", "lte", "isSet", "isNotSet"] as const;
 
 /**
@@ -80,9 +70,9 @@ export const DATE_OPERATORS = ["gte", "lte", "isSet", "isNotSet"] as const;
  */
 export const REPEATABLE_OPERATORS: ReadonlySet<string> = new Set([
   "in",
-  "notEquals",
+  "ne",
   "contains",
-  "doesNotContain",
+  "notContains",
   "startsWith",
   "endsWith",
 ]);

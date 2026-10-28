@@ -6201,19 +6201,19 @@ paths:
 
         | dataType | operators |
         | -------- | --------- |
-        | `string` | `in`, `equals`, `notEquals`, `contains`, `doesNotContain`, `startsWith`, `endsWith`, `isSet`, `isNotSet` |
-        | `number` | `in`, `equals`, `notEquals`, `greaterThan`, `greaterEqual`, `lessThan`, `lessEqual`, `isSet`, `isNotSet` |
+        | `string` | `in`, `eq`, `ne`, `contains`, `notContains`, `startsWith`, `endsWith`, `isSet`, `isNotSet` |
+        | `number` | `in`, `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, `isSet`, `isNotSet` |
         | `date`   | `gte`, `lte` (ISO 8601 date-time with offset, inclusive), `isSet`, `isNotSet` |
 
         Text comparisons are case-insensitive. `in` matches any of its values: repeat the key once per
         value (`filter[attribute.plan][in]=Pro&filter[attribute.plan][in]=Team`). String values are taken
         verbatim — never split on commas, since a value can contain one; a `number` `in` also accepts
-        comma-separated values. `notEquals`, `contains`, `doesNotContain`, `startsWith` and `endsWith` may
+        comma-separated values. `ne`, `contains`, `notContains`, `startsWith` and `endsWith` may
         also be repeated, and then every value must hold (AND). Every other operator takes exactly one
         value (repeating it → **400**).
         `isSet` / `isNotSet` ignore their value (send `true`). A value is *set* when the attribute row
-        exists and carries a value (non-empty text, or a non-null number/date). `notEquals` and
-        `doesNotContain` match only contacts whose value is set and differs — use `isNotSet` for contacts
+        exists and carries a value (non-empty text, or a non-null number/date). `ne` and
+        `notContains` match only contacts whose value is set and differs — use `isNotSet` for contacts
         without one. All filters combine with AND. At most 50 distinct filter parameters per request and
         at most 100 values per `in`.
 

@@ -36,14 +36,14 @@ const rowCondition = (filter: TV3ContactAttributeFilter): ContactAttributeWhereI
     switch (filter.operator) {
       case "in":
         return { value: { in: filter.values, mode: INSENSITIVE } };
-      case "equals":
+      case "eq":
         return { value: { equals: value, mode: INSENSITIVE } };
       // Set-and-differs: a contact with no value for the key does not match; `isNotSet` covers it.
-      case "notEquals":
+      case "ne":
         return { AND: [setCondition(filter), { NOT: { value: { equals: value, mode: INSENSITIVE } } }] };
       case "contains":
         return { value: { contains: pattern, mode: INSENSITIVE } };
-      case "doesNotContain":
+      case "notContains":
         return { AND: [setCondition(filter), { NOT: { value: { contains: pattern, mode: INSENSITIVE } } }] };
       case "startsWith":
         return { value: { startsWith: pattern, mode: INSENSITIVE } };
@@ -60,17 +60,17 @@ const rowCondition = (filter: TV3ContactAttributeFilter): ContactAttributeWhereI
     switch (filter.operator) {
       case "in":
         return { valueNumber: { in: filter.values } };
-      case "equals":
+      case "eq":
         return { valueNumber: { equals: value } };
-      case "notEquals":
+      case "ne":
         return { AND: [setCondition(filter), { NOT: { valueNumber: { equals: value } } }] };
-      case "greaterThan":
+      case "gt":
         return { valueNumber: { gt: value } };
-      case "greaterEqual":
+      case "gte":
         return { valueNumber: { gte: value } };
-      case "lessThan":
+      case "lt":
         return { valueNumber: { lt: value } };
-      case "lessEqual":
+      case "lte":
         return { valueNumber: { lte: value } };
       case "isSet":
       case "isNotSet":

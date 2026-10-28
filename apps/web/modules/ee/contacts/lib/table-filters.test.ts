@@ -59,7 +59,7 @@ describe("toContactListParams", () => {
     ).toEqual([
       ["filter[attribute.plan][in]", "pro"],
       ["filter[attribute.plan][in]", "team"],
-      ["filter[attribute.seats][greaterThan]", "5"],
+      ["filter[attribute.seats][gt]", "5"],
       ["filter[attribute.email][isSet]", "true"],
       ["search", "acme"],
       ["sortBy", "createdAt"],
@@ -138,8 +138,8 @@ describe("toContactListParams — stacked rules on one attribute", () => {
         { property: "attribute.seats", operator: "lessEqual", values: ["200"] },
       ])
     ).toEqual([
-      ["filter[attribute.seats][greaterThan]", "90"],
-      ["filter[attribute.seats][lessEqual]", "200"],
+      ["filter[attribute.seats][gt]", "90"],
+      ["filter[attribute.seats][lte]", "200"],
       ["sortBy", "-createdAt"],
     ]);
   });
@@ -167,8 +167,8 @@ describe("toContactListParams — stacked rules on one attribute", () => {
         { property: "attribute.plan", operator: "doesNotContain", values: ["trial"] },
       ])
     ).toEqual([
-      ["filter[attribute.plan][doesNotContain]", "trial"],
-      ["filter[attribute.plan][doesNotContain]", "legacy"],
+      ["filter[attribute.plan][notContains]", "trial"],
+      ["filter[attribute.plan][notContains]", "legacy"],
       ["sortBy", "-createdAt"],
     ]);
   });

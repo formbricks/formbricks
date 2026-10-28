@@ -77,14 +77,14 @@ describe("parseV3ContactsListQuery", () => {
       "filter[createdAt][gte]",
     ],
     ["an unknown operator", [["filter[attribute.plan][like]", "x"]], "filter[attribute.plan][like]"],
-    ["a malformed filter key", [["filter[plan][equals]", "x"]], "filter[plan][equals]"],
+    ["a malformed filter key", [["filter[plan][eq]", "x"]], "filter[plan][eq]"],
     [
       "a repeated single-value operator",
       [
-        ["filter[attribute.plan][equals]", "a"],
-        ["filter[attribute.plan][equals]", "b"],
+        ["filter[attribute.plan][eq]", "a"],
+        ["filter[attribute.plan][eq]", "b"],
       ],
-      "filter[attribute.plan][equals]",
+      "filter[attribute.plan][eq]",
     ],
     [
       "a repeated fixed parameter",
@@ -114,7 +114,7 @@ describe("parseV3ContactsListQuery", () => {
   test("caps the number of distinct filter parameters", () => {
     const entries = Array.from(
       { length: V3_CONTACTS_MAX_FILTER_PARAMS + 1 },
-      (_unused, index): [string, string] => [`filter[attribute.key${String(index)}][equals]`, "x"]
+      (_unused, index): [string, string] => [`filter[attribute.key${String(index)}][eq]`, "x"]
     );
     expect(parseV3ContactsListQuery(params(entries))).toEqual({
       ok: false,
@@ -146,21 +146,21 @@ describe("parseV3ContactsListQuery", () => {
   test("accepts a repeated AND-able text operator and keeps every distinct value", () => {
     expect(
       parseOk([
-        ["filter[attribute.plan][doesNotContain]", "trial"],
-        ["filter[attribute.plan][doesNotContain]", "legacy"],
-        ["filter[attribute.plan][doesNotContain]", "trial"],
+        ["filter[attribute.plan][notContains]", "trial"],
+        ["filter[attribute.plan][notContains]", "legacy"],
+        ["filter[attribute.plan][notContains]", "trial"],
       ]).attributeFilters
     ).toEqual([
       {
-        param: "filter[attribute.plan][doesNotContain]",
+        param: "filter[attribute.plan][notContains]",
         key: "plan",
-        operator: "doesNotContain",
+        operator: "notContains",
         values: ["trial", "legacy"],
       },
     ]);
   });
 
-  test.each(["greaterThan", "gte", "isSet"])("still rejects a repeated %s", (operator) => {
+  test.each(["gt", "gte", "isSet"])("still rejects a repeated %s", (operator) => {
     const name = `filter[attribute.seats][${operator}]`;
     const result = parseV3ContactsListQuery(
       params([
@@ -188,30 +188,23 @@ describe("parseV3ContactsListQuery", () => {
 });
 
 describe("resolveV3ContactAttributeFilters", () => {
-  test.each([
-    "in",
-    "equals",
-    "notEquals",
-    "contains",
-    "doesNotContain",
-    "startsWith",
-    "endsWith",
-    "isSet",
-    "isNotSet",
-  ])("accepts the string operator %s", (operator) => {
-    const resolved = resolve([[`filter[attribute.plan][${operator}]`, "pro"]]);
-    expect(resolved.ok).toBe(true);
-    if (resolved.ok) {
-      expect(resolved.filters[0]).toMatchObject({
-        attributeKeyId: "clak0000000000000000000001",
-        dataType: "string",
-        operator,
-        values: operator === "isSet" || operator === "isNotSet" ? [] : ["pro"],
-      });
+  test.each(["in", "eq", "ne", "contains", "notContains", "startsWith", "endsWith", "isSet", "isNotSet"])(
+    "accepts the string operator %s",
+    (operator) => {
+      const resolved = resolve([[`filter[attribute.plan][${operator}]`, "pro"]]);
+      expect(resolved.ok).toBe(true);
+      if (resolved.ok) {
+        expect(resolved.filters[0]).toMatchObject({
+          attributeKeyId: "clak0000000000000000000001",
+          dataType: "string",
+          operator,
+          values: operator === "isSet" || operator === "isNotSet" ? [] : ["pro"],
+        });
+      }
     }
-  });
+  );
 
-  test.each(["in", "equals", "notEquals", "greaterThan", "greaterEqual", "lessThan", "lessEqual"])(
+  test.each(["in", "eq", "ne", "gt", "gte", "lt", "lte"])(
     "accepts the number operator %s and types its value",
     (operator) => {
       const resolved = resolve([[`filter[attribute.seats][${operator}]`, "12.5"]]);
@@ -253,8 +246,8 @@ describe("resolveV3ContactAttributeFilters", () => {
 
   test.each([
     ["contains on a number key", "filter[attribute.seats][contains]", "1"],
-    ["greaterThan on a string key", "filter[attribute.plan][greaterThan]", "1"],
-    ["equals on a date key", "filter[attribute.renewal][equals]", "2026-01-01T00:00:00Z"],
+    ["greaterThan on a string key", "filter[attribute.plan][gt]", "1"],
+    ["equals on a date key", "filter[attribute.renewal][eq]", "2026-01-01T00:00:00Z"],
     ["gte on a string key", "filter[attribute.plan][gte]", "a"],
   ])("rejects %s", (_label, param, value) => {
     const resolved = resolve([[param, value]]);
@@ -263,18 +256,18 @@ describe("resolveV3ContactAttributeFilters", () => {
   });
 
   test.each([
-    ["a non-numeric number", "filter[attribute.seats][equals]", "ten"],
-    ["an infinite number", "filter[attribute.seats][equals]", "Infinity"],
+    ["a non-numeric number", "filter[attribute.seats][eq]", "ten"],
+    ["an infinite number", "filter[attribute.seats][eq]", "Infinity"],
     ["a date without an offset", "filter[attribute.renewal][gte]", "2026-01-01"],
-    ["an empty string value", "filter[attribute.plan][equals]", ""],
+    ["an empty string value", "filter[attribute.plan][eq]", ""],
   ])("rejects %s", (_label, param, value) => {
     expect(resolve([[param, value]]).ok).toBe(false);
   });
 
   test("rejects an unknown attribute key", () => {
-    expect(resolve([["filter[attribute.nope][equals]", "x"]])).toEqual({
+    expect(resolve([["filter[attribute.nope][eq]", "x"]])).toEqual({
       ok: false,
-      invalid_params: [{ name: "filter[attribute.nope][equals]", reason: 'Unknown attribute key "nope".' }],
+      invalid_params: [{ name: "filter[attribute.nope][eq]", reason: 'Unknown attribute key "nope".' }],
     });
   });
 });
@@ -284,7 +277,7 @@ describe("contacts cursor binding", () => {
 
   test("the fingerprint changes with any filter", () => {
     const plain = computeV3ContactsFingerprint(base, []);
-    const resolved = resolve([["filter[attribute.plan][equals]", "pro"]]);
+    const resolved = resolve([["filter[attribute.plan][eq]", "pro"]]);
     if (!resolved.ok) throw new Error("expected ok");
 
     expect(computeV3ContactsFingerprint(base, resolved.filters)).not.toBe(plain);

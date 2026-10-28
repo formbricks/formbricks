@@ -22,16 +22,16 @@ const some = (condition: object) => ({ attributes: { some: { attributeKeyId, ...
 describe("buildAttributeFilterCondition — string", () => {
   test.each([
     ["in", str("in", ["Pro", "Team"]), some({ value: { in: ["Pro", "Team"], mode: "insensitive" } })],
-    ["equals", str("equals"), some({ value: { equals: "Pro", mode: "insensitive" } })],
+    ["eq", str("eq"), some({ value: { equals: "Pro", mode: "insensitive" } })],
     [
-      "notEquals",
-      str("notEquals"),
+      "ne",
+      str("ne"),
       some({ AND: [{ value: { not: "" } }, { NOT: { value: { equals: "Pro", mode: "insensitive" } } }] }),
     ],
     ["contains", str("contains"), some({ value: { contains: "Pro", mode: "insensitive" } })],
     [
-      "doesNotContain",
-      str("doesNotContain"),
+      "notContains",
+      str("notContains"),
       some({ AND: [{ value: { not: "" } }, { NOT: { value: { contains: "Pro", mode: "insensitive" } } }] }),
     ],
     ["startsWith", str("startsWith"), some({ value: { startsWith: "Pro", mode: "insensitive" } })],
@@ -61,16 +61,16 @@ describe("buildAttributeFilterCondition — string", () => {
 describe("buildAttributeFilterCondition — number", () => {
   test.each([
     ["in", num("in", [1, 2]), some({ valueNumber: { in: [1, 2] } })],
-    ["equals", num("equals"), some({ valueNumber: { equals: 5 } })],
+    ["eq", num("eq"), some({ valueNumber: { equals: 5 } })],
     [
-      "notEquals",
-      num("notEquals"),
+      "ne",
+      num("ne"),
       some({ AND: [{ valueNumber: { not: null } }, { NOT: { valueNumber: { equals: 5 } } }] }),
     ],
-    ["greaterThan", num("greaterThan"), some({ valueNumber: { gt: 5 } })],
-    ["greaterEqual", num("greaterEqual"), some({ valueNumber: { gte: 5 } })],
-    ["lessThan", num("lessThan"), some({ valueNumber: { lt: 5 } })],
-    ["lessEqual", num("lessEqual"), some({ valueNumber: { lte: 5 } })],
+    ["gt", num("gt"), some({ valueNumber: { gt: 5 } })],
+    ["gte", num("gte"), some({ valueNumber: { gte: 5 } })],
+    ["lt", num("lt"), some({ valueNumber: { lt: 5 } })],
+    ["lte", num("lte"), some({ valueNumber: { lte: 5 } })],
     ["isSet", num("isSet", []), some({ valueNumber: { not: null } })],
     [
       "isNotSet",
@@ -109,7 +109,7 @@ describe("buildV3ContactsWhere", () => {
       workspaceId,
       search: "ada",
       createdAtGte,
-      filters: [str("equals"), num("greaterThan")],
+      filters: [str("eq"), num("gt")],
     });
 
     expect(where).toEqual({

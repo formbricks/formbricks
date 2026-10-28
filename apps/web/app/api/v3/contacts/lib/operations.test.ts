@@ -70,7 +70,7 @@ describe("listV3Contacts", () => {
     const response = await call([
       ["limit", "1"],
       ["includeTotalCount", "true"],
-      ["filter[attribute.seats][greaterThan]", "10"],
+      ["filter[attribute.seats][gt]", "10"],
     ]);
 
     expect(response.status).toBe(200);
@@ -169,7 +169,7 @@ describe("listV3Contacts", () => {
   });
 
   test("an unknown attribute key or a wrong operator for its type is a 400 before any contact query", async () => {
-    expect((await call([["filter[attribute.plan][equals]", "x"]])).status).toBe(400);
+    expect((await call([["filter[attribute.plan][eq]", "x"]])).status).toBe(400);
     expect((await call([["filter[attribute.seats][contains]", "1"]])).status).toBe(400);
     expect(prisma.contact.findMany).not.toHaveBeenCalled();
   });

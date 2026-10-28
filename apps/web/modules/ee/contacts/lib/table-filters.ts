@@ -69,7 +69,18 @@ export const getContactFilterProperties = (
   }),
 ];
 
-const SINGLE_VALUE_KEY = (property: string, operator: string) => `filter[${property}][${operator}]`;
+/** The toolbar's operator names as the v3 contacts list spells them (the shared v3 vocabulary). */
+const API_OPERATORS: Readonly<Record<string, string>> = {
+  equals: "eq",
+  notEquals: "ne",
+  doesNotContain: "notContains",
+  greaterThan: "gt",
+  greaterEqual: "gte",
+  lessThan: "lt",
+  lessEqual: "lte",
+};
+const SINGLE_VALUE_KEY = (property: string, operator: string) =>
+  `filter[${property}][${API_OPERATORS[operator] ?? operator}]`;
 
 const tightenDate = (bounds: Map<string, string>, key: string, iso: string, keep: "later" | "earlier") => {
   const current = bounds.get(key);
