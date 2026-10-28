@@ -344,7 +344,7 @@ const BlockCardComponent = ({
                         "-mx-2 h-6 w-full rounded-md border-transparent bg-transparent px-2 py-0",
                         // The placeholder is muted on purpose: a cleared name is an invalid state
                         // that must not look like a block still called something.
-                        "text-sm font-medium text-slate-700 placeholder:font-normal placeholder:text-slate-400",
+                        "text-sm font-semibold text-slate-900 placeholder:font-normal placeholder:text-slate-400",
                         // Wide enough to type a real title into without the box clipping the text,
                         // and capped so a long one can't crowd out the block menu.
                         "max-w-[34rem] min-w-[20rem]",
@@ -384,9 +384,13 @@ const BlockCardComponent = ({
 
           <Collapsible.CollapsibleContent>
             <Tabs value={blockTab} onValueChange={setBlockTab} className="gap-0">
-              <TabsList className="mx-4 mb-2" width="fit">
-                <TabsTrigger value="questions">{t("common.questions")}</TabsTrigger>
-                <TabsTrigger value="settings">{t("common.settings")}</TabsTrigger>
+              <TabsList variant="underline" className="mx-4 mb-2 w-auto">
+                <TabsTrigger value="questions" variant="underline" className="py-2">
+                  {t("common.questions")}
+                </TabsTrigger>
+                <TabsTrigger value="settings" variant="underline" className="py-2">
+                  {t("common.settings")}
+                </TabsTrigger>
               </TabsList>
               <TabsContent value="questions">
                 {/* Render each element in the block */}

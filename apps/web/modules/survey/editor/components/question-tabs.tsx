@@ -26,10 +26,12 @@ export const QuestionTabs = ({
   const [tab, setTab] = useState("content");
 
   return (
-    <Tabs value={tab} onValueChange={setTab} className="mt-4">
-      <TabsList>
-        <TabsTrigger value="content">{t("workspace.surveys.edit.question_tab_content")}</TabsTrigger>
-        <TabsTrigger value="settings">
+    <Tabs value={tab} onValueChange={setTab} className="mt-2 gap-4">
+      <TabsList variant="underline" className="w-full">
+        <TabsTrigger value="content" variant="underline" className="py-2">
+          {t("workspace.surveys.edit.question_tab_content")}
+        </TabsTrigger>
+        <TabsTrigger value="settings" variant="underline" className="py-2">
           {t("common.settings")}
           {hasSettingsIssue && (
             <span
@@ -41,9 +43,7 @@ export const QuestionTabs = ({
         </TabsTrigger>
       </TabsList>
       <TabsContent value="content">{content}</TabsContent>
-      <TabsContent value="settings" className="pt-2">
-        {settings}
-      </TabsContent>
+      <TabsContent value="settings">{settings}</TabsContent>
     </Tabs>
   );
 };
