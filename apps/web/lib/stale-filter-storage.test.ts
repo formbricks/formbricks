@@ -6,7 +6,11 @@ describe("removeStaleFilterStorage", () => {
     const removeItem = vi.fn();
     removeStaleFilterStorage({ removeItem });
     expect(removeItem.mock.calls.map(([key]) => key)).toEqual(STALE_FILTER_STORAGE_KEYS);
-    expect(STALE_FILTER_STORAGE_KEYS).toEqual(["formbricks-surveys-filters", "formbricks-workflows-filters"]);
+    expect(STALE_FILTER_STORAGE_KEYS).toEqual([
+      "formbricks-surveys-filters",
+      "formbricks-workflows-filters",
+      "formbricks-creatives-filters",
+    ]);
   });
 
   test("swallows blocked storage", () => {

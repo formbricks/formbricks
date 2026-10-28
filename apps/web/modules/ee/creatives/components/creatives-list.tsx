@@ -1,28 +1,34 @@
 "use client";
 
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { LinkIcon, MessageCircleIcon, PanelTopIcon, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { type ColumnDef, getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import type { TFunction } from "i18next";
+import { LinkIcon, MessageCircleIcon, PanelTopIcon } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import type { CreativeDisplayStatusZodType, CreativeTypeZodType } from "@formbricks/api-v3-schemas";
-import { FORMBRICKS_CREATIVES_FILTERS_KEY_LS } from "@/lib/localStorage";
+import { removeStaleFilterStorage } from "@/lib/stale-filter-storage";
 import { timeSince } from "@/lib/time";
-import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { formatDateForDisplay } from "@/lib/utils/datetime";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Button } from "@/modules/ui/components/button";
-import { CardTableHeader, CardTableRow } from "@/modules/ui/components/card-table";
-import { FilterDropdown, type TFilterOption } from "@/modules/ui/components/filter-dropdown";
-import { SearchBar } from "@/modules/ui/components/search-bar";
+import { ListTable, TableToolbar } from "@/modules/ui/components/table-toolbar";
+import { useTableColumnState } from "@/modules/ui/components/table-toolbar/hooks/use-table-column-state";
+import { useTableUrlState } from "@/modules/ui/components/table-toolbar/hooks/use-table-url-state";
+import { buildColumnSettings } from "@/modules/ui/components/table-toolbar/lib/column-settings";
 import { useActiveCreatives, useCreativesList } from "../hooks/use-creatives-list";
 import { type TCreativesAccess, canWriteCreatives } from "../lib/access-rules";
 import { getLinkTargetLabel } from "../lib/link-target";
 import type { TCreativeListItem } from "../lib/list-api";
 import {
+  CREATIVE_SORT_VALUES,
+  DEFAULT_CREATIVE_SORT,
   INITIAL_CREATIVE_FILTERS,
-  type TCreativeListFilters,
-  hasActiveCreativeFilters,
-  parseStoredCreativeFilters,
+  getCreativeFilterProperties,
+  getCreativeSortOptions,
+  isShowingArchived,
+  setShowArchived,
+  toCreativeListFilters,
 } from "../lib/list-filters";
 import { findCreativeOverlaps } from "../lib/overlap";
 import { getCreativeEditPath, getCreativeSummaryPath } from "../lib/paths";
@@ -31,18 +37,15 @@ import { CreativeTypeIcon } from "./creative-icons";
 import { CreativeListActions } from "./creative-list-actions";
 import { CreativeRowWarnings } from "./creative-row-warnings";
 import { CreativeStatusPill } from "./creative-status-pill";
-import { CreativesListBodySkeleton } from "./creatives-list-skeleton";
-import { CreativesSortDropdown } from "./creatives-sort-dropdown";
 
-// Same layout as the surveys list: toolbar, then a card table with the columns of the surveys list,
-// where Responses becomes what the creative opens (counts live on the summary page only). The type is
-// the icon before the name, so the name takes the Type column's room.
-const GRID = "grid-cols-8";
 const CREATIVES_PER_PAGE = 12;
+const CREATIVE_COLUMN_IDS = ["name", "status", "opens", "createdAt", "updatedAt", "createdBy", "actions"];
+// One shared empty list, so a filter that matches nothing does not hand the table a new array each render.
+const NO_CREATIVES: TCreativeListItem[] = [];
 
 const OpensCell = ({ destination }: Readonly<{ destination: TCreativeListItem["destination"] }>) => {
   const { t } = useTranslation();
-  if (!destination) return <span>-</span>;
+  if (!destination) return <span className="text-slate-400">—</span>;
   const isLink = destination.type === "link";
   const Icon = isLink ? LinkIcon : MessageCircleIcon;
   const text = isLink
@@ -56,6 +59,114 @@ const OpensCell = ({ destination }: Readonly<{ destination: TCreativeListItem["d
   );
 };
 
+const CreativesEmptyState = () => {
+  const { t } = useTranslation();
+  return (
+    <div className="mx-auto flex max-w-xl flex-col items-center gap-4 py-16 text-center">
+      <PanelTopIcon className="size-8 text-slate-400" />
+      <div className="space-y-2">
+        <h3 className="text-base font-semibold text-slate-900">{t("workspace.creatives.empty_title")}</h3>
+        <p className="text-sm text-balance text-slate-600">{t("workspace.creatives.empty_description")}</p>
+      </div>
+    </div>
+  );
+};
+
+/** The table's columns, built outside the component so each cell renderer is not a nested component. */
+const getCreativeColumns = ({
+  t,
+  locale,
+  workspaceId,
+  isReadOnly,
+  creativesAccess,
+  getRowHref,
+  getOverlapNames,
+}: {
+  t: TFunction;
+  locale: ReturnType<typeof getUiLocale>;
+  workspaceId: string;
+  isReadOnly: boolean;
+  creativesAccess: TCreativesAccess;
+  getRowHref: (creative: TCreativeListItem) => string;
+  getOverlapNames: (creative: TCreativeListItem) => string[];
+}): ColumnDef<TCreativeListItem>[] => [
+  {
+    id: "name",
+    header: t("common.name"),
+    size: 260,
+    cell: ({ row }) => (
+      <div className="flex min-w-0 items-center gap-2">
+        <CreativeTypeIcon type={row.original.type} />
+        <Link
+          href={getRowHref(row.original)}
+          className="focus-visible:ring-ring min-w-0 truncate font-medium text-slate-900 hover:underline focus-visible:ring-1 focus-visible:outline-hidden">
+          {row.original.name || t("workspace.creatives.untitled_creative")}
+        </Link>
+        <CreativeRowWarnings warnings={row.original.warnings} overlapNames={getOverlapNames(row.original)} />
+      </div>
+    ),
+  },
+  {
+    id: "status",
+    header: t("common.status"),
+    size: 160,
+    cell: ({ row }) => (
+      <CreativeStatusPill
+        state={{ status: row.original.displayStatus, reason: row.original.displayStatusReason }}
+      />
+    ),
+  },
+  {
+    id: "opens",
+    header: t("workspace.creatives.column_opens"),
+    size: 180,
+    cell: ({ row }) => (
+      <span className="min-w-0 text-slate-500">
+        <OpensCell destination={row.original.destination} />
+      </span>
+    ),
+  },
+  {
+    id: "createdAt",
+    header: t("common.created_at"),
+    size: 150,
+    cell: ({ row }) => (
+      <span className="truncate text-slate-500">
+        {formatDateForDisplay(new Date(row.original.createdAt), locale)}
+      </span>
+    ),
+  },
+  {
+    id: "updatedAt",
+    header: t("common.updated_at"),
+    size: 150,
+    cell: ({ row }) => (
+      <span className="truncate text-slate-500">{timeSince(row.original.updatedAt, locale)}</span>
+    ),
+  },
+  {
+    id: "createdBy",
+    header: t("common.created_by"),
+    size: 150,
+    cell: ({ row }) => <span className="truncate text-slate-500">{row.original.creator?.name ?? "—"}</span>,
+  },
+  {
+    id: "actions",
+    header: () => <span className="sr-only">{t("common.actions")}</span>,
+    size: 64,
+    cell: ({ row }) =>
+      isReadOnly ? null : (
+        <div className="flex w-full justify-end">
+          <CreativeListActions
+            workspaceId={workspaceId}
+            creative={row.original}
+            creativesAccess={creativesAccess}
+          />
+        </div>
+      ),
+  },
+];
+
 interface CreativesListProps {
   workspaceId: string;
   isReadOnly: boolean;
@@ -63,40 +174,38 @@ interface CreativesListProps {
   creativesAccess: TCreativesAccess;
 }
 
+/** The Creatives list as a table on the shared toolbar, like Surveys and Workflows. */
 export const CreativesList = ({ workspaceId, isReadOnly, creativesAccess }: Readonly<CreativesListProps>) => {
   const { t, i18n } = useTranslation();
+  const router = useRouter();
   const locale = getUiLocale(i18n);
-  const [animationParent] = useAutoAnimate();
-  const [filters, setFilters] = useState<TCreativeListFilters>(INITIAL_CREATIVE_FILTERS);
-  const [isFilterInitialized, setIsFilterInitialized] = useState(false);
-  const [openFilter, setOpenFilter] = useState<"status" | "type" | null>(null);
-  const debouncedName = useDebouncedValue(filters.name, 300);
 
-  // Restore the toolbar from the last visit once mounted (localStorage doesn't exist on the server),
-  // then keep it there, like the surveys and workflows lists.
-  useEffect(() => {
-    const stored = globalThis.localStorage?.getItem(FORMBRICKS_CREATIVES_FILTERS_KEY_LS) ?? null;
-    const parsed = parseStoredCreativeFilters(stored);
-    if (parsed) setFilters(parsed);
-    else if (stored) globalThis.localStorage.removeItem(FORMBRICKS_CREATIVES_FILTERS_KEY_LS);
-    setIsFilterInitialized(true);
-  }, []);
+  useEffect(() => removeStaleFilterStorage(globalThis.window?.localStorage), []);
 
-  useEffect(() => {
-    if (!isFilterInitialized) return;
-    globalThis.localStorage?.setItem(FORMBRICKS_CREATIVES_FILTERS_KEY_LS, JSON.stringify(filters));
-  }, [filters, isFilterInitialized]);
+  const filterProperties = getCreativeFilterProperties(t);
+  const tableState = useTableUrlState({
+    properties: filterProperties,
+    sortOptions: CREATIVE_SORT_VALUES,
+    defaultSortBy: DEFAULT_CREATIVE_SORT,
+  });
+  const listFilters = toCreativeListFilters(tableState.filters, tableState.search, tableState.sortBy);
+  const hasFilters = tableState.filters.length > 0 || tableState.search.trim().length > 0;
+  const columnState = useTableColumnState({
+    storagePrefix: `${workspaceId}-creatives`,
+    columnIds: CREATIVE_COLUMN_IDS,
+  });
 
   const list = useCreativesList({
     workspaceId,
     limit: CREATIVES_PER_PAGE,
-    filters: { ...filters, name: debouncedName.trim() },
-    enabled: isFilterInitialized,
+    filters: listFilters ?? INITIAL_CREATIVE_FILTERS,
+    // Filters that exclude every status or type cannot match anything; there is nothing to ask the API.
+    enabled: listFilters !== null,
   });
   const { data: activeCreatives } = useActiveCreatives(workspaceId);
 
   // Pairwise over every Active creative in the workspace, so it runs when they change, not on every
-  // keystroke in the search.
+  // search.
   const { overlaps, activeNames } = useMemo(
     () => ({
       overlaps: findCreativeOverlaps(activeCreatives ?? []),
@@ -105,177 +214,107 @@ export const CreativesList = ({ workspaceId, isReadOnly, creativesAccess }: Read
     [activeCreatives]
   );
 
-  const statusOptions: TFilterOption<CreativeDisplayStatusZodType>[] = [
-    { label: t("common.draft"), value: "draft" },
-    { label: t("common.scheduled"), value: "scheduled" },
-    { label: t("common.active"), value: "active" },
-    { label: t("common.paused"), value: "paused" },
-    { label: t("common.closed"), value: "closed" },
-    { label: t("common.archived"), value: "archived", separatorBefore: true },
+  const rows = listFilters === null ? NO_CREATIVES : list.creatives;
+
+  const columns = useMemo(() => {
+    // A draft has nothing to count yet, so it opens in the editor, unless the editor is out of reach.
+    const getRowHref = (creative: TCreativeListItem) =>
+      creative.displayStatus === "draft" && canWriteCreatives(creativesAccess)
+        ? getCreativeEditPath(workspaceId, creative.id)
+        : getCreativeSummaryPath(workspaceId, creative.id);
+    const getOverlapNames = (creative: TCreativeListItem) =>
+      (overlaps.get(creative.id) ?? []).map((id) => activeNames.get(id) ?? id);
+    return {
+      getRowHref,
+      defs: getCreativeColumns({
+        t,
+        locale,
+        workspaceId,
+        isReadOnly,
+        creativesAccess,
+        getRowHref,
+        getOverlapNames,
+      }),
+    };
+  }, [t, locale, workspaceId, isReadOnly, creativesAccess, overlaps, activeNames]);
+
+  const table = useReactTable({
+    data: rows,
+    columns: columns.defs,
+    getRowId: (creative) => creative.id,
+    getCoreRowModel: getCoreRowModel(),
+    state: { columnOrder: columnState.columnOrder, columnVisibility: columnState.columnVisibility },
+  });
+
+  const columnLabels = [
+    { id: "name", label: t("common.name") },
+    { id: "status", label: t("common.status") },
+    { id: "opens", label: t("workspace.creatives.column_opens") },
+    { id: "createdAt", label: t("common.created_at") },
+    { id: "updatedAt", label: t("common.updated_at") },
+    { id: "createdBy", label: t("common.created_by") },
   ];
-  const typeOptions: TFilterOption<CreativeTypeZodType>[] = [
-    { label: t("workspace.creatives.type_feedback_button"), value: "feedbackButton" },
-    { label: t("workspace.creatives.type_banner"), value: "banner" },
-  ];
-  const toggle = <K extends "displayStatuses" | "types">(key: K, value: TCreativeListFilters[K][number]) =>
-    setFilters((current) => {
-      const selected: string[] = current[key];
-      const next = selected.includes(value)
-        ? selected.filter((item) => item !== value)
-        : [...selected, value];
-      return { ...current, [key]: next };
-    });
-
-  const hasFilters = hasActiveCreativeFilters(filters);
-  // A draft has nothing to count yet, so it opens in the editor, unless the editor is out of reach.
-  const getRowHref = (creative: TCreativeListItem) =>
-    creative.displayStatus === "draft" && canWriteCreatives(creativesAccess)
-      ? getCreativeEditPath(workspaceId, creative.id)
-      : getCreativeSummaryPath(workspaceId, creative.id);
-
-  let listContent: React.ReactNode;
-  if (list.isPending) {
-    listContent = <CreativesListBodySkeleton />;
-  } else if (list.isError && list.creatives.length === 0) {
-    listContent = (
-      <div className="flex w-full flex-col items-center justify-center gap-4 py-16 text-slate-600">
-        <p>{getV3ApiErrorMessage(list.error, t("common.something_went_wrong_please_try_again"))}</p>
-        <Button variant="secondary" size="sm" onClick={() => list.refetch()}>
-          {t("common.try_again")}
-        </Button>
-      </div>
-    );
-  } else if (list.creatives.length === 0) {
-    // The toolbar stays put either way, so the filter that emptied the list stays reachable.
-    listContent = (
-      <div className="mx-auto flex max-w-xl flex-col items-center gap-4 py-16 text-center">
-        <PanelTopIcon className="size-8 text-slate-400" />
-        <div className="space-y-2">
-          <h3 className="text-base font-semibold text-slate-900">
-            {hasFilters ? t("workspace.creatives.no_matches") : t("workspace.creatives.empty_title")}
-          </h3>
-          {hasFilters ? null : (
-            <p className="text-sm text-balance text-slate-600">
-              {t("workspace.creatives.empty_description")}
-            </p>
-          )}
-        </div>
-      </div>
-    );
-  } else {
-    listContent = (
-      <div>
-        <div ref={animationParent} className="space-y-3">
-          <CardTableHeader className={GRID}>
-            <div className="col-span-3 place-self-start">{t("common.name")}</div>
-            <div className="col-span-1">{t("common.status")}</div>
-            <div className="col-span-1">{t("workspace.creatives.column_opens")}</div>
-            <div className="col-span-1">{t("common.created_at")}</div>
-            <div className="col-span-1">{t("common.updated_at")}</div>
-            <div className="col-span-1">{t("common.created_by")}</div>
-          </CardTableHeader>
-          {list.creatives.map((creative) => {
-            const overlapNames = (overlaps.get(creative.id) ?? []).map((id) => activeNames.get(id) ?? id);
-            return (
-              <CardTableRow
-                key={creative.id}
-                href={getRowHref(creative)}
-                className={GRID}
-                actions={
-                  isReadOnly ? undefined : (
-                    <CreativeListActions
-                      workspaceId={workspaceId}
-                      creative={creative}
-                      creativesAccess={creativesAccess}
-                    />
-                  )
-                }>
-                <div className="col-span-3 flex max-w-full items-center gap-2 justify-self-start text-sm font-medium text-slate-900">
-                  <CreativeTypeIcon type={creative.type} />
-                  <div className="min-w-0 truncate">
-                    {creative.name || t("workspace.creatives.untitled_creative")}
-                  </div>
-                  <CreativeRowWarnings warnings={creative.warnings} overlapNames={overlapNames} />
-                </div>
-                <CreativeStatusPill
-                  state={{ status: creative.displayStatus, reason: creative.displayStatusReason }}
-                />
-                <div className="col-span-1 max-w-full overflow-hidden text-sm text-slate-600">
-                  <OpensCell destination={creative.destination} />
-                </div>
-                <div className="col-span-1 max-w-full overflow-hidden text-sm text-ellipsis whitespace-nowrap text-slate-600">
-                  {formatDateForDisplay(new Date(creative.createdAt), locale)}
-                </div>
-                <div className="col-span-1 max-w-full overflow-hidden text-sm text-ellipsis whitespace-nowrap text-slate-600">
-                  {timeSince(creative.updatedAt, locale)}
-                </div>
-                <div className="col-span-1 max-w-full overflow-hidden text-sm text-ellipsis whitespace-nowrap text-slate-600">
-                  {creative.creator?.name ?? "-"}
-                </div>
-              </CardTableRow>
-            );
-          })}
-        </div>
-
-        {list.hasNextPage ? (
-          <div className="flex justify-center py-5">
-            <Button
-              onClick={() => list.fetchNextPage()}
-              variant="secondary"
-              size="sm"
-              loading={list.isFetchingNextPage}>
-              {t("common.load_more")}
-            </Button>
-          </div>
-        ) : null}
-      </div>
-    );
-  }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-x-2">
-          <SearchBar
-            value={filters.name}
-            onChange={(name) => setFilters((current) => ({ ...current, name }))}
-            placeholder={t("workspace.creatives.search_placeholder")}
-            className="w-80 border-slate-700"
-          />
-          <FilterDropdown
-            title={t("common.status")}
-            className="creativeFilterDropdown"
-            options={statusOptions}
-            selectedOptions={filters.displayStatuses}
-            onToggleOption={(value) => toggle("displayStatuses", value)}
-            isOpen={openFilter === "status"}
-            onOpenChange={(open) => setOpenFilter(open ? "status" : null)}
-          />
-          <FilterDropdown
-            title={t("common.type")}
-            className="creativeFilterDropdown"
-            options={typeOptions}
-            selectedOptions={filters.types}
-            onToggleOption={(value) => toggle("types", value)}
-            isOpen={openFilter === "type"}
-            onOpenChange={(open) => setOpenFilter(open ? "type" : null)}
-          />
-          {hasFilters ? (
-            <Button
-              size="sm"
-              className="h-8"
-              onClick={() => setFilters({ ...INITIAL_CREATIVE_FILTERS, sortBy: filters.sortBy })}>
-              {t("common.clear_filters")}
-              <X />
-            </Button>
-          ) : null}
+    <div className="space-y-3">
+      <TableToolbar
+        settings={{
+          sort: {
+            options: getCreativeSortOptions(t),
+            value: tableState.sortBy,
+            onChange: tableState.setSortBy,
+          },
+          toggles: [
+            {
+              id: "show-archived",
+              label: t("common.table_toolbar.show_archived"),
+              checked: isShowingArchived(tableState.filters),
+              onCheckedChange: (checked) =>
+                tableState.setFilters(setShowArchived(tableState.filters, checked)),
+            },
+          ],
+          columns: {
+            items: buildColumnSettings(columnLabels, columnState.columnOrder, columnState.columnVisibility, [
+              "name",
+            ]),
+            onVisibilityChange: (id, visible) =>
+              columnState.setColumnVisibility((current) => ({ ...current, [id]: visible })),
+            onMove: columnState.moveColumn,
+          },
+        }}
+        search={{
+          value: tableState.search,
+          onChange: tableState.setSearch,
+          placeholder: t("workspace.creatives.search_placeholder"),
+        }}
+        filter={{
+          properties: filterProperties,
+          filters: tableState.filters,
+          onFiltersChange: tableState.setFilters,
+        }}
+        isLoading={list.isLoading}
+      />
+      {list.isError && rows.length === 0 ? (
+        <div className="flex w-full flex-col items-center justify-center gap-4 py-16 text-slate-600">
+          <p>{getV3ApiErrorMessage(list.error, t("common.something_went_wrong_please_try_again"))}</p>
+          <Button variant="secondary" size="sm" onClick={() => list.refetch()}>
+            {t("common.try_again")}
+          </Button>
         </div>
-        <CreativesSortDropdown
-          sortBy={filters.sortBy}
-          onSortChange={(sortBy) => setFilters((current) => ({ ...current, sortBy }))}
+      ) : (
+        <ListTable
+          table={table}
+          testId="creatives-list-table"
+          isLoading={listFilters !== null && list.isPending}
+          hasFilters={hasFilters}
+          onClearFilters={tableState.clearFilters}
+          onRowClick={(row) => router.push(columns.getRowHref(row.original))}
+          emptyContent={<CreativesEmptyState />}
+          hasNextPage={listFilters !== null && Boolean(list.hasNextPage)}
+          isFetchingNextPage={list.isFetchingNextPage}
+          onLoadMore={() => void list.fetchNextPage()}
         />
-      </div>
-      {listContent}
+      )}
     </div>
   );
 };

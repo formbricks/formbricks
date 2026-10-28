@@ -7,6 +7,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
+import { useMemo } from "react";
 import { creativeKeys } from "../lib/editor-api";
 import {
   ACTIVE_CREATIVES_LIMIT,
@@ -43,7 +44,9 @@ export const useCreativesList = ({
     getNextPageParam: (lastPage) => lastPage.meta.nextCursor ?? undefined,
   });
 
-  return { ...query, creatives: flattenCreativePages(query.data) };
+  // One array per fetched page set: the table re-renders whenever its `data` changes identity.
+  const creatives = useMemo(() => flattenCreativePages(query.data), [query.data]);
+  return { ...query, creatives };
 };
 
 const ACTIVE_FILTERS: TCreativeListFilters = { ...INITIAL_CREATIVE_FILTERS, displayStatuses: ["active"] };
