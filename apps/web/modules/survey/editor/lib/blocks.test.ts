@@ -683,25 +683,26 @@ describe("updateElementInBlock", () => {
     }
   });
 
-  test("should update element ID if new ID is unique", () => {
+  test("should refuse to change the element ID", () => {
     const survey = createMockSurvey([createMockBlock("block-1", "Block 1", [createMockElement("q1")])]);
-    const result = updateElementInBlock(survey, "block-1", "q1", { id: "q2" });
-
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.data.blocks[0].elements[0].id).toBe("q2");
-    }
-  });
-
-  test("should return error when updating to duplicate element ID", () => {
-    const survey = createMockSurvey([
-      createMockBlock("block-1", "Block 1", [createMockElement("q1"), createMockElement("q2")]),
-    ]);
     const result = updateElementInBlock(survey, "block-1", "q1", { id: "q2" });
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error.message).toContain('Element ID "q2" already exists');
+      expect(result.error.message).toBe("Element ID cannot be updated");
+    }
+  });
+
+  test("should accept an update that repeats the element's own ID", () => {
+    const survey = createMockSurvey([createMockBlock("block-1", "Block 1", [createMockElement("q1")])]);
+    const result = updateElementInBlock(survey, "block-1", "q1", {
+      id: "q1",
+      headline: { default: "Same ID" },
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.blocks[0].elements[0].id).toBe("q1");
     }
   });
 
