@@ -40,6 +40,8 @@
     "@formbricks/js": "5.0.0",
     "@formbricks/js-core": "workspace:*",
     "@formbricks/logger": "workspace:*",
+    "@formbricks/mcp-views": "workspace:*",
+    "@formbricks/redis-config": "workspace:*",
     "@formbricks/storage": "workspace:*",
     "@formbricks/survey-ui": "workspace:*",
     "@formbricks/surveys": "workspace:*",
@@ -127,8 +129,7 @@
     "uuid": "catalog:",
     "xlsx": "file:vendor/xlsx-0.20.3.tgz",
     "yaml": "2.9.0",
-    "zod": "catalog:",
-    "@formbricks/redis-config": "workspace:*"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@formbricks/config-eslint": "workspace:*",

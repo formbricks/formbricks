@@ -1,0 +1,50 @@
+{
+  "name": "@formbricks/mcp-views",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Interactive views (MCP Apps, spec 2026-01-26) that Formbricks MCP tools render in the user's agent: survey preview, change review, charts and more. Built to single-file HTML and served as ui:// resources by apps/web.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "rimraf dist && node scripts/build.mjs",
+    "dev:host": "node dev/serve.mjs",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "clean": "rimraf .turbo node_modules coverage dist",
+    "screenshot": "node dev/screenshot.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/ext-apps": "2.0.3",
+    "react": "catalog:",
+    "react-dom": "catalog:"
+  },
+  "devDependencies": {
+    "@formbricks/config-eslint": "workspace:*",
+    "@formbricks/config-typescript": "workspace:*",
+    "@playwright/test": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
+    "globals": "catalog:",
+    "jsdom": "catalog:",
+    "rimraf": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vite-plugin-singlefile": "2.3.4",
+    "vitest": "catalog:"
+  }
+}

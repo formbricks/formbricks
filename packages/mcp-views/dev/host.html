@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>MCP Apps dev host</title>
+    <style>
+      body { margin: 0; font-family: system-ui, sans-serif; background: #f1f5f9; }
+      #bar { display: flex; gap: 12px; padding: 8px 12px; background: #fff; border-bottom: 1px solid #e2e8f0; font-size: 13px; }
+      #frame-wrap { max-width: var(--w, 720px); margin: 16px auto; background: var(--bg, #fff); border: 1px solid #cbd5e1; border-radius: 12px; overflow: hidden; }
+      iframe { width: 100%; border: 0; display: block; min-height: 80px; }
+      #log { max-width: 720px; margin: 8px auto; font: 12px ui-monospace, monospace; white-space: pre-wrap; color: #334155; }
+    </style>
+  </head>
+  <body>
+    <div id="bar">
+      <strong>Dev host</strong>
+      <span id="label"></span>
+    </div>
+    <div id="frame-wrap"><iframe id="view" sandbox="allow-scripts allow-same-origin" title="MCP App view"></iframe></div>
+    <div id="log"></div>
+    <script type="module" src="./host.js"></script>
+  </body>
+</html>

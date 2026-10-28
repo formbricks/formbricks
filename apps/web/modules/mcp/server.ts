@@ -4,6 +4,7 @@ import type { MCPAnalyticsOptions } from "@posthog/mcp";
 import { createMcpHandler } from "mcp-handler";
 import { logger } from "@formbricks/logger";
 import { instrumentMcpServerWithTracing } from "@/lib/posthog/mcp-tracing";
+import { registerMcpApps } from "./apps";
 import { getMcpAuthentication } from "./auth";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./constants";
 import { MCP_REQUEST_MAX_ELEMENTS } from "./request-budget";
@@ -92,8 +93,8 @@ export const MCP_HANDLER_OPTIONS = {
   // Refuse `subscriptions/listen` outright. Protocol 2026-07-28 replaced the GET SSE endpoint and
   // `resources/subscribe` with a long-lived POST-response stream, which this POST route now serves -
   // under the v1 `disableSse: true` there was no long-lived path at all, so the migration would
-  // otherwise open one. We register no resources and emit no list-changed notifications, so such a
-  // stream can never deliver anything: a 2026-era client opens one on connect and then holds a
+  // otherwise open one. We register resources (the MCP Apps views) but they never change at runtime and we
+  // emit no list-changed notifications, so such a stream can never deliver anything: a 2026-era client opens one on connect and then holds a
   // connection plus a keepalive timer for nothing. The SDK's default cap is 1024 *per process*, and
   // this handler is a module singleton, so any authenticated caller could hold that many.
   //
@@ -140,5 +141,6 @@ export const mcpHandler = createMcpHandler((server) => {
   registerWebhookTools(server);
   registerLifecycleTools(server);
   registerContactTools(server);
+  registerMcpApps(server);
   instrumentMcpServerWithTracing(server, identifyMcpUser);
 }, MCP_HANDLER_OPTIONS);

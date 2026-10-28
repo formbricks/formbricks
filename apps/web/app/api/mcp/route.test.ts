@@ -622,6 +622,13 @@ describe("POST /api/mcp", () => {
       "create_segment",
       "update_segment",
       "delete_segment",
+      // MCP Apps: the tools that render a view (modules/mcp/apps), in registration order.
+      "show_survey",
+      "review_document_change",
+      "show_feedback_chart",
+      "show_responses",
+      "show_creative",
+      "show_workflow",
     ]);
     const tools = new Map(message.result.tools.map((tool: { name: string }) => [tool.name, tool]));
     expect(Object.keys((tools.get("create_survey") as any).inputSchema.properties)).toEqual(

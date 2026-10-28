@@ -153,6 +153,11 @@ type ScopedToolConfig<
   outputSchema?: OutputSchema;
   annotations?: ToolAnnotations;
   /**
+   * Passed through to `tools/list`. The MCP Apps link to a view (`_meta.ui.resourceUri`) and its
+   * visibility live here; build them with `buildMcpAppToolMeta` / `buildMcpAppOnlyToolMeta`.
+   */
+  _meta?: Record<string, unknown>;
+  /**
    * Set on every mutating tool and on nothing else (ENG-2872). A refused *read* discloses nothing and
    * would only add noise; a refused mutation is exactly what an audit reviewer wants to see, and it is
    * the guard's to record because the tool's own runner never runs.

@@ -1,0 +1,8 @@
+{
+  "input": { "workflowId": "wf_1" },
+  "result": {
+    "content": [{ "text": "Workflow wf_1", "type": "text" }],
+    "structuredContent": {}
+  },
+  "toolName": "show_workflow"
+}
