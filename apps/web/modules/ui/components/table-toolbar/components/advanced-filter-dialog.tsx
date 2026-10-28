@@ -111,7 +111,16 @@ export const AdvancedFilterDialog = ({
       }
       return {
         show: true,
-        options: [],
+        // Seen values to pick from; typing anything else still makes a valid rule.
+        options: property.suggestions?.length
+          ? [
+              {
+                label: property.label,
+                value: property.id,
+                options: property.suggestions.map((value) => ({ label: value, value })),
+              },
+            ]
+          : [],
         showInput: true,
         inputType: INPUT_TYPE_BY_VALUE_TYPE[property.valueType],
       };

@@ -588,6 +588,53 @@ describe("Response Utils", () => {
       });
     });
 
+    test("includesAll with Other needs the picked choices and a write-in", () => {
+      const survey = {
+        id: "s5",
+        blocks: [
+          {
+            id: "b1",
+            name: "Block 1",
+            elements: [
+              {
+                id: "qMulti",
+                type: TSurveyElementTypeEnum.MultipleChoiceMulti,
+                headline: { default: "Pick many" },
+                required: false,
+                choices: [
+                  { id: "a", label: { default: "A" } },
+                  { id: "other", label: { default: "Other" } },
+                ],
+                shuffleOption: "none",
+              },
+            ],
+          },
+        ],
+        questions: [],
+        hiddenFields: { enabled: false, fieldIds: [] },
+      } as unknown as TSurvey;
+
+      const result = buildWhereClause(survey, {
+        data: { qMulti: { op: "includesAll", value: ["A", "Other"] } },
+      });
+
+      expect(result.AND).toEqual([
+        {
+          AND: [
+            { data: { path: ["qMulti"], array_contains: ["A"] } },
+            {
+              OR: Array.from({ length: 10 }, (_unused, index) => ({
+                AND: [
+                  { data: { path: ["qMulti", String(index)], not: Prisma.DbNull } },
+                  { data: { path: ["qMulti", String(index)], not: "A" } },
+                ],
+              })),
+            },
+          ],
+        },
+      ]);
+    });
+
     describe("includesOne: 'Other' clause budget (ENG-3161)", () => {
       /**
        * One choice element per id in `elementIds`, each carrying `choiceCount` predefined choices

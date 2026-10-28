@@ -36,6 +36,8 @@ import type {
 const STATUS_PROPERTY = "status";
 const CREATED_AT_PROPERTY = "createdAt";
 const TAG_PROPERTY = "tag";
+/** Seen values offered while typing a hidden-field, variable or meta rule; the rest stay typeable. */
+const MAX_SUGGESTIONS = 100;
 const LANGUAGE_PROPERTY = "language";
 
 type TResponseFieldKind =
@@ -251,8 +253,10 @@ const typedFieldEntries = (
         label,
         group: groupLabel(typed, context.t),
         valueType,
-        // Observed values are suggestions for a free-text field, not the only values it may hold.
-        ...(valueType === "enum" ? { options, loadOptions: () => Promise.resolve(options) } : {}),
+        // Observed values: the only values of an enum, suggestions for a free-text field.
+        ...(valueType === "enum"
+          ? { options, loadOptions: () => Promise.resolve(options) }
+          : { suggestions: options.map((option) => option.value).slice(0, MAX_SUGGESTIONS) }),
         ruleOperators,
       },
       field: { kind: typed, id, label },

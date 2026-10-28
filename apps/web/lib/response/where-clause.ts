@@ -418,6 +418,29 @@ const createClauseBudget = (): ((count: number) => void) => {
   };
 };
 
+/**
+ * "At least one entry of this multi answer is not one of `predefinedLabels`": the Other write-in, which
+ * is stored as the typed text. Prisma's JSON filters have no subset operator, so each array position
+ * is probed by numeric path segment (see the includesOne branch for why the probe has slack).
+ */
+const writeInEntryClause = (
+  key: string,
+  choiceCount: number,
+  predefinedLabels: readonly string[],
+  spend: (count: number) => void
+): Prisma.ResponseWhereInput => {
+  const positions = choiceCount + OTHER_WRITE_IN_PROBE_SLACK;
+  spend(positions * (predefinedLabels.length + 1));
+  return {
+    OR: Array.from({ length: positions }, (_unused, index) => ({
+      AND: [
+        { data: { path: [key, String(index)], not: Prisma.DbNull } },
+        ...predefinedLabels.map((label) => ({ data: { path: [key, String(index)], not: label } })),
+      ],
+    })),
+  };
+};
+
 export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilterCriteria) => {
   const whereClause: Prisma.ResponseWhereInput["AND"] = [];
 
@@ -716,14 +739,31 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
         case "notInRange":
           data.push(...buildDataRangeConditions(key, val, rangeableIngestedKeys));
           break;
-        case "includesAll":
-          data.push({
-            data: {
-              path: [key],
-              array_contains: val.value,
-            },
-          });
+        case "includesAll": {
+          // "Other" is never stored as such: the answer holds the typed text instead. So Other among
+          // the chosen values means "has a write-in", alongside the predefined values it must contain.
+          const otherChoice =
+            element?.type === "multipleChoiceMulti"
+              ? element.choices.find((choice) => choice.id === "other")
+              : undefined;
+          const otherLabels = new Set(otherChoice ? Object.values(otherChoice.label) : []);
+          const wantsOther = val.value.some((value) => otherLabels.has(String(value)));
+          if (!element || element.type !== "multipleChoiceMulti" || !wantsOther) {
+            data.push({ data: { path: [key], array_contains: val.value } });
+            break;
+          }
+          const predefined = val.value.filter((value) => !otherLabels.has(String(value)));
+          if (predefined.length > 0) data.push({ data: { path: [key], array_contains: predefined } });
+          const predefinedLabels = [
+            ...new Set(
+              element.choices
+                .filter((choice) => choice.id !== "other")
+                .flatMap((choice) => Object.values(choice.label))
+            ),
+          ];
+          data.push(writeInEntryClause(key, element.choices.length, predefinedLabels, spend));
           break;
+        }
         case "includesOne": {
           const values = new Set(val.value.map((v) => v.toString()));
           const otherChoice =
@@ -773,19 +813,7 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
               // The slack covers both at realistic sizes. It cannot close the class — an array with
               // more than SLACK duplicates still escapes — because a positional probe cannot bound an
               // unbounded array. Bounding the stored array on write is the real fix and its own ticket.
-              const positions = element.choices.length + OTHER_WRITE_IN_PROBE_SLACK;
-              spend(positions * (predefinedLabels.length + 1));
-
-              data.push({
-                OR: Array.from({ length: positions }, (_unused, index) => ({
-                  AND: [
-                    { data: { path: [key, String(index)], not: Prisma.DbNull } },
-                    ...predefinedLabels.map((label) => ({
-                      data: { path: [key, String(index)], not: label },
-                    })),
-                  ],
-                })),
-              });
+              data.push(writeInEntryClause(key, element.choices.length, predefinedLabels, spend));
             } else {
               // A single answer is a scalar string, so "not any predefined label" is directly
               // expressible and stays linear in the label count.

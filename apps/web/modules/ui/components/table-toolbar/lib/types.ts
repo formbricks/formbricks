@@ -69,6 +69,11 @@ export type TFilterProperty = {
   quick?: boolean;
   /** Fixed values for an enum quick filter. */
   options?: TFilterOption[];
+  /**
+   * Values worth offering while a free-text rule is typed (values already seen). Unlike `options`
+   * they never limit what the rule may hold.
+   */
+  suggestions?: readonly string[];
   /** Values loaded on demand, for value lists too long or too dynamic to ship with the page. */
   loadOptions?: (search: string) => Promise<TFilterOption[]>;
   /** Heading the property sits under in Advanced filter's picker. Absent: the table's one list. */

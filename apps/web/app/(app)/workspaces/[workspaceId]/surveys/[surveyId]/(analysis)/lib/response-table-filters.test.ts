@@ -352,3 +352,29 @@ describe("applicableResponseFilters", () => {
     expect(applicableResponseFilters(filters)).toEqual(filters);
   });
 });
+
+describe("suggested values", () => {
+  test("a meta rule suggests the values seen, without limiting what can be typed", () => {
+    const seen = generateElementAndFilterOptions({
+      survey,
+      environmentTags: [],
+      attributes: {},
+      reservedValues: { utmSource: ["newsletter", "ads"] },
+      hiddenFields: {},
+      variableValues: {},
+      quotas: [],
+      t,
+    });
+    const { properties } = buildResponseFilterModel({
+      survey,
+      elementOptions: seen.elementOptions,
+      elementFilterOptions: seen.elementFilterOptions,
+      tagNames: [],
+      t,
+    });
+    const utm = properties.find((item) => item.id === "meta.utmSource");
+
+    expect(utm?.suggestions).toEqual(["newsletter", "ads"]);
+    expect(utm?.options).toBeUndefined();
+  });
+});
