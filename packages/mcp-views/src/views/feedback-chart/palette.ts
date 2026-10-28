@@ -56,9 +56,15 @@ export const contrastRatio = (a: string, b: string): number => {
   return (light + 0.05) / (dark + 0.05);
 };
 
-/** White or near-black, whichever reads better on `fill`: for a label set inside a coloured slice. */
-export const labelColorOn = (fill: string): string =>
-  contrastRatio(fill, "#ffffff") >= contrastRatio(fill, "#0b0b0b") ? "#ffffff" : "#0b0b0b";
+/**
+ * White or near-black for a label set inside a coloured slice: white while it holds 4:1, otherwise
+ * whichever of the two reads better (the lighter hues need the dark ink).
+ */
+export const labelColorOn = (fill: string): string => {
+  const white = contrastRatio(fill, "#ffffff");
+  if (white >= 4) return "#ffffff";
+  return white >= contrastRatio(fill, "#0b0b0b") ? "#ffffff" : "#0b0b0b";
+};
 
 export const paletteFor = (theme: "light" | "dark"): readonly string[] =>
   theme === "dark" ? CATEGORICAL_DARK : CATEGORICAL_LIGHT;

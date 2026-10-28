@@ -105,7 +105,9 @@ describe("computeSurveyStyling", () => {
 
   test("uses the survey's own styling only when the workspace allows it and the survey opts in", () => {
     expect(computeSurveyStyling(workspaceStyling, surveyStyling)).toBe(surveyStyling);
-    expect(computeSurveyStyling(workspaceStyling, { overwriteThemeStyling: false } as never)).toBe(workspaceStyling);
+    expect(computeSurveyStyling(workspaceStyling, { overwriteThemeStyling: false } as never)).toBe(
+      workspaceStyling
+    );
     expect(computeSurveyStyling({ ...workspaceStyling, allowStyleOverwrite: false }, surveyStyling)).toEqual({
       ...workspaceStyling,
       allowStyleOverwrite: false,
@@ -115,7 +117,9 @@ describe("computeSurveyStyling", () => {
 
 describe("getSurveyPublicUrl", () => {
   test("is the public link of a link survey that is taking responses", () => {
-    expect(getSurveyPublicUrl(makeSurvey(), "https://app.example.com/")).toBe("https://app.example.com/s/clsurvey1");
+    expect(getSurveyPublicUrl(makeSurvey(), "https://app.example.com/")).toBe(
+      "https://app.example.com/s/clsurvey1"
+    );
   });
 
   test("is null for app, draft, paused and archived surveys", () => {
@@ -142,7 +146,9 @@ describe("getSurveyPreviewProblems", () => {
     expect(getSurveyPreviewProblems(makeSurvey({ type: "app" }))).toEqual([
       expect.stringContaining("no trigger"),
     ]);
-    expect(getSurveyPreviewProblems(makeSurvey({ blocks: [] }))).toEqual(["This survey has no questions yet."]);
+    expect(getSurveyPreviewProblems(makeSurvey({ blocks: [] }))).toEqual([
+      "This survey has no questions yet.",
+    ]);
   });
 
   test("is empty for a healthy survey, and for an app draft without triggers", () => {

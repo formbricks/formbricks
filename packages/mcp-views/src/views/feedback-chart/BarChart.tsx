@@ -10,6 +10,7 @@ import {
   layoutBands,
   seriesAtOffset,
   truncateLabel,
+  wrapLabel,
 } from "./layout";
 import { seriesColorVar } from "./palette";
 import { linearScale, resolveYAxis } from "./scale";
@@ -49,9 +50,9 @@ export const BarChart = ({ data, title, width, context, selection, onSelect }: R
   const vertical = orientation === "vertical";
 
   const categoryLabelWidth = Math.min(
-    Math.max(...labels.map((label) => estimateTextWidth(label))),
-    Math.floor(width * 0.4),
-    170
+    Math.max(...labels.map((label) => estimateTextWidth(label, 11))),
+    Math.floor(width * 0.42),
+    230
   );
   const left = vertical ? valueAxisWidth : categoryLabelWidth + 12;
   const plotWidth = Math.max(40, width - left - RIGHT);
@@ -194,8 +195,15 @@ export const BarChart = ({ data, title, width, context, selection, onSelect }: R
                     {truncateLabel(category.label, labelRoom, 11)}
                   </text>
                 ) : (
-                  <text className="fbc-tick" x={left - 8} y={start + layout.band / 2 + 4} textAnchor="end">
-                    {truncateLabel(category.label, labelRoom, 11)}
+                  <text className="fbc-tick" x={left - 8} textAnchor="end">
+                    {wrapLabel(category.label, labelRoom, 2, 11).map((line, index, lines) => (
+                      <tspan
+                        key={index}
+                        x={left - 8}
+                        y={start + layout.band / 2 + 4 + (index - (lines.length - 1) / 2) * 12}>
+                        {line}
+                      </tspan>
+                    ))}
                   </text>
                 )}
               </g>

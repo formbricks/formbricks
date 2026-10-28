@@ -222,7 +222,7 @@ export const LineChart = ({
                           key={`a-${segment[0].x}`}
                           d={areaPath(segment, baseline)}
                           fill={color}
-                          fillOpacity={0.1}
+                          fillOpacity={series.length > 1 ? 0.08 : 0.1}
                         />
                       ))
                   : null}

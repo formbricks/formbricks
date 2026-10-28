@@ -13,6 +13,34 @@ export const truncateLabel = (text: string, maxWidth: number, fontSize = 12): st
   return `${text.slice(0, chars).trimEnd()}…`;
 };
 
+/**
+ * Word-wrap `text` into at most `maxLines` lines of about `maxWidth` px. The last line is cut with an
+ * ellipsis when the text does not fit; the full text stays in the tooltip and the table.
+ */
+export const wrapLabel = (text: string, maxWidth: number, maxLines = 2, fontSize = 12): string[] => {
+  const words = text.split(/\s+/).filter(Boolean);
+  const lines: string[] = [];
+  let current = "";
+  for (const [index, word] of words.entries()) {
+    const candidate = current ? `${current} ${word}` : word;
+    if (estimateTextWidth(candidate, fontSize) <= maxWidth) {
+      current = candidate;
+      continue;
+    }
+    if (lines.length === maxLines - 1) {
+      // No line left: this one takes the rest, cut to fit.
+      return [
+        ...lines,
+        truncateLabel([current, ...words.slice(index)].filter(Boolean).join(" "), maxWidth, fontSize),
+      ];
+    }
+    if (current) lines.push(current);
+    current = word;
+  }
+  if (current) lines.push(truncateLabel(current, maxWidth, fontSize));
+  return lines.length > 0 ? lines : [""];
+};
+
 export type BarOrientation = "vertical" | "horizontal";
 
 /**

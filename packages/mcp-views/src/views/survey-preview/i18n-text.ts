@@ -21,11 +21,18 @@ export const resolveText = (value: unknown, languageCode: string, defaultLanguag
   if (typeof value === "string") return toPlainText(value);
   if (!isI18nString(value)) return "";
   const key = findKey(value, languageCode) ?? findKey(value, defaultLanguage) ?? findKey(value, "default");
-  const raw: string | undefined = key !== undefined ? value[key] : Object.values(value)[0];
+  const raw = (key !== undefined ? value[key] : Object.values(value)[0]) as string | undefined;
   return toPlainText(raw ?? "");
 };
 
-const ENTITIES: Record<string, string | undefined> = { "&amp;": "&", "&lt;": "<", "&gt;": ">", "&quot;": '"', "&#39;": "'", "&nbsp;": " " };
+const ENTITIES: Record<string, string | undefined> = {
+  "&amp;": "&",
+  "&lt;": "<",
+  "&gt;": ">",
+  "&quot;": '"',
+  "&#39;": "'",
+  "&nbsp;": " ",
+};
 
 /** Tags out, common entities decoded, whitespace collapsed. Output is only ever rendered as text. */
 export const toPlainText = (raw: string): string =>
@@ -39,7 +46,9 @@ export const toPlainText = (raw: string): string =>
 
 /** Whether a translation exists for this language (used to flag missing translations in the outline). */
 export const hasTranslation = (value: unknown, languageCode: string): boolean =>
-  isI18nString(value) && findKey(value, languageCode) !== undefined && value[findKey(value, languageCode) ?? ""] !== "";
+  isI18nString(value) &&
+  findKey(value, languageCode) !== undefined &&
+  value[findKey(value, languageCode) ?? ""] !== "";
 
 export const getEnabledLanguages = (languages: SurveyLanguage[]): SurveyLanguage[] =>
   languages.filter((language) => language.enabled);

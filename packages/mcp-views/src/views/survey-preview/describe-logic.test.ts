@@ -72,13 +72,27 @@ describe("describeBlockLogic", () => {
       rule(
         [{ id: "c", leftOperand: { type: "element", value: "q_score" }, operator: "isSkipped" }],
         [
-          { id: "a1", objective: "calculate", variableId: "var_1", operator: "add", value: { type: "static", value: 1 } },
-          { id: "a2", objective: "calculate", variableId: "var_1", operator: "assign", value: { type: "static", value: 0 } },
+          {
+            id: "a1",
+            objective: "calculate",
+            variableId: "var_1",
+            operator: "add",
+            value: { type: "static", value: 1 },
+          },
+          {
+            id: "a2",
+            objective: "calculate",
+            variableId: "var_1",
+            operator: "assign",
+            value: { type: "static", value: 0 },
+          },
         ]
       ),
       context
     );
-    expect(sentence).toBe('If Question 1 is skipped, add "1" to variable score and set variable score to "0".');
+    expect(sentence).toBe(
+      'If Question 1 is skipped, add "1" to variable score and set variable score to "0".'
+    );
   });
 
   test("says so when a rule points at something that was removed", () => {

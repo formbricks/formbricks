@@ -81,7 +81,9 @@ const readMeta = (result: ToolResult): PreviewMeta | null => {
     surveyUrl: typeof surveyUrl === "string" ? surveyUrl : null,
     render,
     settings,
-    problems: Array.isArray(problems) ? problems.filter((item): item is string => typeof item === "string") : [],
+    problems: Array.isArray(problems)
+      ? problems.filter((item): item is string => typeof item === "string")
+      : [],
   };
 };
 

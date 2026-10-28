@@ -44,7 +44,9 @@ describe("toScriptUrl", () => {
     expect(toScriptUrl("https://app.example.com/js/surveys.umd.cjs?v=1", "https://host.test/")).toBe(
       "https://app.example.com/js/surveys.umd.cjs?v=1"
     );
-    expect(toScriptUrl("/js/surveys.umd.cjs", "http://localhost:4000/x")).toBe("http://localhost:4000/js/surveys.umd.cjs");
+    expect(toScriptUrl("/js/surveys.umd.cjs", "http://localhost:4000/x")).toBe(
+      "http://localhost:4000/js/surveys.umd.cjs"
+    );
   });
 
   test("refuses every other scheme and unparseable input", () => {

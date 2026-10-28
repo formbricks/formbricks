@@ -41,16 +41,17 @@ const survey = {
   updatedAt: "2026-10-27T16:40:12.000Z",
   defaultLanguage: "en-US",
   languages: [{ code: "en-US", default: true, enabled: true }],
-  blocks: [
-    { name: "One", elements: [{ type: "openText", required: true, headline: { "en-US": "Why?" } }] },
-  ],
+  blocks: [{ name: "One", elements: [{ type: "openText", required: true, headline: { "en-US": "Why?" } }] }],
   endings: [],
 };
 
 const previewMeta = { appUrl: "https://surveys.example.com", rendererUrl: "x", surveyUrl: null };
 
 function setup() {
-  const tools = new Map<string, { config: Record<string, any>; handler: (input: any, extra: any) => Promise<any> }>();
+  const tools = new Map<
+    string,
+    { config: Record<string, any>; handler: (input: any, extra: any) => Promise<any> }
+  >();
   const resources: { uri: string; read: () => Promise<any> }[] = [];
   const server = {
     registerTool: vi.fn((name: string, config: Record<string, any>, handler: any) => {
@@ -74,7 +75,11 @@ describe("show_survey", () => {
     const { tools } = setup();
     const { config } = tools.get("show_survey")!;
 
-    expect(config.annotations).toMatchObject({ readOnlyHint: true, destructiveHint: false, idempotentHint: true });
+    expect(config.annotations).toMatchObject({
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+    });
     expect(config._meta).toEqual({
       ui: { resourceUri: "ui://formbricks/survey-preview.html" },
       "ui/resourceUri": "ui://formbricks/survey-preview.html",
@@ -123,7 +128,12 @@ describe("show_survey", () => {
       .handler({ surveyId: SURVEY_ID, lang: ["en-US"] }, { http: { authInfo: authInfo(["surveys:read"]) } });
 
     expect(getV3Survey).toHaveBeenCalledWith(
-      expect.objectContaining({ surveyId: SURVEY_ID, lang: ["en-US"], requestId: "req_tool", instance: "/api/mcp" })
+      expect.objectContaining({
+        surveyId: SURVEY_ID,
+        lang: ["en-US"],
+        requestId: "req_tool",
+        instance: "/api/mcp",
+      })
     );
     expect(loadSurveyPreviewMeta).toHaveBeenCalledWith({
       surveyId: SURVEY_ID,

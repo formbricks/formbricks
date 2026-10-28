@@ -30,7 +30,8 @@ export const pickInitialLanguage = (
     const match = languages.find(
       (language) =>
         language.enabled &&
-        (language.code.toLowerCase() === wanted.toLowerCase() || language.alias?.toLowerCase() === wanted.toLowerCase())
+        (language.code.toLowerCase() === wanted.toLowerCase() ||
+          language.alias?.toLowerCase() === wanted.toLowerCase())
     );
     if (match) return match.code;
   }

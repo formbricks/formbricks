@@ -45,7 +45,9 @@ const survey: SurveyDocument = {
     {
       id: "b2",
       name: "Second",
-      elements: [{ id: "q3", type: "openText", headline: { "en-US": "Why?" }, required: false, inputType: "email" }],
+      elements: [
+        { id: "q3", type: "openText", headline: { "en-US": "Why?" }, required: false, inputType: "email" },
+      ],
       logic: [
         {
           id: "r",
@@ -153,7 +155,12 @@ describe("buildSettingLines", () => {
       { ...settings, publishOn: "2026-11-03T08:00:00.000Z", autoComplete: 500, pinProtected: true },
       format
     );
-    expect(lines.map((line) => line.label)).toEqual(["Visibility", "Scheduled to start", "Response limit", "Access"]);
+    expect(lines.map((line) => line.label)).toEqual([
+      "Visibility",
+      "Scheduled to start",
+      "Response limit",
+      "Access",
+    ]);
     expect(lines[1].value).toBe("date(2026-11-03T08:00:00.000Z)");
   });
 

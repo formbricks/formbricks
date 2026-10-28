@@ -1,120 +1,149 @@
 {
-  "toolName": "show_survey",
+  "csp": {
+    "connectDomains": ["'self'"],
+    "resourceDomains": []
+  },
   "input": {
     "surveyId": "clsurvey0000000000000001"
   },
-  "csp": {
-    "resourceDomains": [],
-    "connectDomains": [
-      "'self'"
-    ]
-  },
   "result": {
-    "content": [
-      {
-        "type": "text",
-        "text": "Showing the survey \"Untriggered survey\" (app survey; inProgress) to the user in an interactive preview."
-      }
-    ],
-    "structuredContent": {
-      "data": {
-        "id": "clsurvey0000000000000001",
-        "workspaceId": "clworkspace00000000000001",
-        "createdAt": "2026-09-02T09:14:00.000Z",
-        "updatedAt": "2026-10-27T16:40:12.000Z",
-        "name": "Untriggered survey",
-        "type": "app",
-        "status": "inProgress",
-        "archivedAt": null,
-        "visibility": "workspace",
-        "owner": {
-          "name": "Mara Okafor"
-        },
-        "access": "write",
-        "metadata": {},
-        "defaultLanguage": "en-US",
-        "languages": [
-          {
-            "code": "en-US",
-            "default": true,
-            "enabled": true
-          }
-        ],
-        "showLanguageSwitch": false,
-        "autoSelectLanguage": false,
-        "welcomeCard": {
-          "enabled": true,
-          "headline": {
-            "en-US": "Help us improve"
-          },
-          "subheader": {
-            "en-US": "It takes about two minutes."
-          },
-          "timeToFinish": true,
-          "showResponseCount": false
-        },
-        "blocks": [],
-        "endings": [],
-        "hiddenFields": {
-          "enabled": true,
-          "fieldIds": [
-            "utm_source",
-            "plan"
-          ]
-        },
-        "variables": [
-          {
-            "id": "clvariablescore00000000001",
-            "name": "score",
-            "type": "number",
-            "value": 0
-          }
-        ],
-        "distribution": {
-          "displayOption": "displayOnce",
-          "displayPercentage": null,
-          "displayLimit": null,
-          "recontactDays": null,
-          "autoClose": null,
-          "keepEndingCardOpen": false,
-          "autoComplete": null,
-          "delay": 0,
-          "showConditions": null,
-          "triggers": []
-        },
-        "targeting": {
-          "filters": []
-        },
-        "customCss": null
-      },
-      "requestId": "req_fixture"
-    },
     "_meta": {
       "formbricks": {
         "appUrl": "",
-        "rendererUrl": "/js/surveys.umd.cjs",
-        "surveyUrl": null,
+        "problems": [
+          "This app survey has no trigger, so it never shows unless a creative opens it. Add a trigger before it goes live.",
+          "This survey has no questions yet."
+        ],
         "render": {
-          "survey": {
-            "id": "clsurvey0000000000000001",
-            "name": "Untriggered survey",
-            "type": "app",
-            "status": "inProgress",
-            "workspaceId": "clworkspace00000000000001",
-            "welcomeCard": {
-              "enabled": true,
-              "headline": {
-                "default": "Help us improve"
-              },
-              "subheader": {
-                "default": "It takes about two minutes."
-              },
-              "timeToFinish": true,
-              "showResponseCount": false
+          "isBrandingEnabled": true,
+          "styling": {
+            "allowStyleOverwrite": true,
+            "background": {
+              "bg": "#dbe0f1",
+              "bgType": "color",
+              "brightness": 100
             },
-            "questions": [],
+            "brandColor": {
+              "light": "#1e40af"
+            },
+            "buttonBgColor": {
+              "light": "#1e40af"
+            },
+            "buttonBorderRadius": 8,
+            "buttonFontSize": 16,
+            "buttonFontWeight": 500,
+            "buttonHeight": "auto",
+            "buttonPaddingX": 12,
+            "buttonPaddingY": 12,
+            "buttonTextColor": {
+              "light": "#ffffff"
+            },
+            "cardArrangement": {
+              "appSurveys": "simple",
+              "linkSurveys": "cardless"
+            },
+            "cardBackgroundColor": {
+              "light": "#ffffff"
+            },
+            "cardBorderColor": {
+              "light": "#d2d9ef"
+            },
+            "elementDescriptionColor": {
+              "light": "#142a72"
+            },
+            "elementDescriptionFontSize": 14,
+            "elementDescriptionFontWeight": 400,
+            "elementHeadlineColor": {
+              "light": "#142a72"
+            },
+            "elementHeadlineFontSize": 16,
+            "elementHeadlineFontWeight": 500,
+            "elementUpperLabelColor": {
+              "light": "#142a72"
+            },
+            "elementUpperLabelFontSize": 12,
+            "elementUpperLabelFontWeight": 400,
+            "highlightBorderColor": {
+              "light": "#4a68c8"
+            },
+            "inputBgColor": {
+              "light": "#edf0f9"
+            },
+            "inputBorderColor": {
+              "light": "#a5b3df"
+            },
+            "inputBorderRadius": 8,
+            "inputFontSize": 14,
+            "inputHeight": 20,
+            "inputPaddingX": 8,
+            "inputPaddingY": 8,
+            "inputPlaceholderOpacity": 0.5,
+            "inputTextColor": {
+              "light": "#142a72"
+            },
+            "isLogoHidden": false,
+            "linkSurveyCardWidth": "default",
+            "optionBgColor": {
+              "light": "#edf0f9"
+            },
+            "optionBorderColor": {
+              "light": "#a5b3df"
+            },
+            "optionBorderRadius": 8,
+            "optionFontSize": 14,
+            "optionLabelColor": {
+              "light": "#142a72"
+            },
+            "optionPaddingX": 16,
+            "optionPaddingY": 16,
+            "progressIndicatorBgColor": {
+              "light": "#1e40af"
+            },
+            "progressTrackBgColor": {
+              "light": "#c3cdea"
+            },
+            "progressTrackHeight": 8,
+            "roundness": 8
+          },
+          "survey": {
+            "autoClose": null,
+            "autoSelectLanguage": false,
             "blocks": [],
+            "delay": 0,
+            "displayLimit": null,
+            "displayOption": "displayOnce",
+            "displayPercentage": null,
             "endings": [],
+            "hiddenFields": {
+              "enabled": true,
+              "fieldIds": ["utm_source", "plan"]
+            },
+            "id": "clsurvey0000000000000001",
+            "isAutoProgressingEnabled": false,
+            "isBackButtonHidden": false,
+            "keepEndingCardOpen": false,
+            "languages": [
+              {
+                "default": true,
+                "enabled": true,
+                "language": {
+                  "alias": null,
+                  "code": "en-US",
+                  "id": "cllangen"
+                }
+              }
+            ],
+            "name": "Untriggered survey",
+            "questions": [],
+            "recaptcha": null,
+            "recontactDays": null,
+            "segment": null,
+            "showConditions": null,
+            "showLanguageSwitch": false,
+            "status": "inProgress",
+            "styling": null,
+            "triggers": [],
+            "type": "app",
             "variables": [
               {
                 "id": "clvariablescore00000000001",
@@ -123,157 +152,120 @@
                 "value": 0
               }
             ],
-            "hiddenFields": {
+            "welcomeCard": {
               "enabled": true,
-              "fieldIds": [
-                "utm_source",
-                "plan"
-              ]
+              "headline": {
+                "default": "Help us improve"
+              },
+              "showResponseCount": false,
+              "subheader": {
+                "default": "It takes about two minutes."
+              },
+              "timeToFinish": true
             },
-            "languages": [
-              {
-                "default": true,
-                "enabled": true,
-                "language": {
-                  "id": "cllangen",
-                  "code": "en-US",
-                  "alias": null
-                }
-              }
-            ],
-            "showLanguageSwitch": false,
-            "autoSelectLanguage": false,
-            "autoClose": null,
-            "keepEndingCardOpen": false,
-            "styling": null,
-            "segment": null,
-            "recontactDays": null,
-            "displayLimit": null,
-            "displayOption": "displayOnce",
-            "triggers": [],
-            "displayPercentage": null,
-            "delay": 0,
-            "workspaceOverwrites": null,
-            "isBackButtonHidden": false,
-            "isAutoProgressingEnabled": false,
-            "recaptcha": null,
-            "showConditions": null
-          },
-          "styling": {
-            "allowStyleOverwrite": true,
-            "brandColor": {
-              "light": "#1e40af"
-            },
-            "inputBorderColor": {
-              "light": "#a5b3df"
-            },
-            "cardBackgroundColor": {
-              "light": "#ffffff"
-            },
-            "cardBorderColor": {
-              "light": "#d2d9ef"
-            },
-            "isLogoHidden": false,
-            "highlightBorderColor": {
-              "light": "#4a68c8"
-            },
-            "roundness": 8,
-            "cardArrangement": {
-              "linkSurveys": "cardless",
-              "appSurveys": "simple"
-            },
-            "linkSurveyCardWidth": "default",
-            "elementHeadlineColor": {
-              "light": "#142a72"
-            },
-            "elementHeadlineFontSize": 16,
-            "elementHeadlineFontWeight": 500,
-            "elementDescriptionColor": {
-              "light": "#142a72"
-            },
-            "elementDescriptionFontSize": 14,
-            "elementDescriptionFontWeight": 400,
-            "elementUpperLabelColor": {
-              "light": "#142a72"
-            },
-            "elementUpperLabelFontSize": 12,
-            "elementUpperLabelFontWeight": 400,
-            "inputBgColor": {
-              "light": "#edf0f9"
-            },
-            "inputTextColor": {
-              "light": "#142a72"
-            },
-            "inputBorderRadius": 8,
-            "inputHeight": 20,
-            "inputFontSize": 14,
-            "inputPaddingX": 8,
-            "inputPaddingY": 8,
-            "inputPlaceholderOpacity": 0.5,
-            "buttonBgColor": {
-              "light": "#1e40af"
-            },
-            "buttonTextColor": {
-              "light": "#ffffff"
-            },
-            "buttonBorderRadius": 8,
-            "buttonHeight": "auto",
-            "buttonFontSize": 16,
-            "buttonFontWeight": 500,
-            "buttonPaddingX": 12,
-            "buttonPaddingY": 12,
-            "optionBgColor": {
-              "light": "#edf0f9"
-            },
-            "optionLabelColor": {
-              "light": "#142a72"
-            },
-            "optionBorderColor": {
-              "light": "#a5b3df"
-            },
-            "optionBorderRadius": 8,
-            "optionPaddingX": 16,
-            "optionPaddingY": 16,
-            "optionFontSize": 14,
-            "progressTrackHeight": 8,
-            "progressTrackBgColor": {
-              "light": "#c3cdea"
-            },
-            "progressIndicatorBgColor": {
-              "light": "#1e40af"
-            },
-            "background": {
-              "bg": "#dbe0f1",
-              "bgType": "color",
-              "brightness": 100
-            }
-          },
-          "isBrandingEnabled": true
+            "workspaceId": "clworkspace00000000000001",
+            "workspaceOverwrites": null
+          }
         },
+        "rendererUrl": "/js/surveys.umd.cjs",
         "settings": {
-          "publishOn": null,
-          "closeOn": null,
+          "autoCloseSeconds": null,
           "autoComplete": null,
-          "pinProtected": false,
-          "verifyEmail": false,
-          "singleUse": false,
-          "backButtonHidden": false,
           "autoProgress": false,
-          "triggers": [],
-          "segment": null,
+          "backButtonHidden": false,
+          "closeOn": null,
+          "delaySeconds": 0,
+          "displayLimit": null,
           "displayOption": "displayOnce",
           "displayPercentage": null,
-          "displayLimit": null,
+          "pinProtected": false,
+          "publishOn": null,
           "recontactDays": null,
-          "delaySeconds": 0,
-          "autoCloseSeconds": null
+          "segment": null,
+          "singleUse": false,
+          "triggers": [],
+          "verifyEmail": false
         },
-        "problems": [
-          "This app survey has no trigger, so it never shows unless a creative opens it. Add a trigger before it goes live.",
-          "This survey has no questions yet."
-        ]
+        "surveyUrl": null
       }
+    },
+    "content": [
+      {
+        "text": "Showing the survey \"Untriggered survey\" (app survey; inProgress) to the user in an interactive preview.",
+        "type": "text"
+      }
+    ],
+    "structuredContent": {
+      "data": {
+        "access": "write",
+        "archivedAt": null,
+        "autoSelectLanguage": false,
+        "blocks": [],
+        "createdAt": "2026-09-02T09:14:00.000Z",
+        "customCss": null,
+        "defaultLanguage": "en-US",
+        "distribution": {
+          "autoClose": null,
+          "autoComplete": null,
+          "delay": 0,
+          "displayLimit": null,
+          "displayOption": "displayOnce",
+          "displayPercentage": null,
+          "keepEndingCardOpen": false,
+          "recontactDays": null,
+          "showConditions": null,
+          "triggers": []
+        },
+        "endings": [],
+        "hiddenFields": {
+          "enabled": true,
+          "fieldIds": ["utm_source", "plan"]
+        },
+        "id": "clsurvey0000000000000001",
+        "languages": [
+          {
+            "code": "en-US",
+            "default": true,
+            "enabled": true
+          }
+        ],
+        "metadata": {},
+        "name": "Untriggered survey",
+        "owner": {
+          "name": "Mara Okafor"
+        },
+        "showLanguageSwitch": false,
+        "status": "inProgress",
+        "targeting": {
+          "filters": []
+        },
+        "type": "app",
+        "updatedAt": "2026-10-27T16:40:12.000Z",
+        "variables": [
+          {
+            "id": "clvariablescore00000000001",
+            "name": "score",
+            "type": "number",
+            "value": 0
+          }
+        ],
+        "visibility": "workspace",
+        "welcomeCard": {
+          "enabled": true,
+          "headline": {
+            "en-US": "Help us improve"
+          },
+          "showResponseCount": false,
+          "subheader": {
+            "en-US": "It takes about two minutes."
+          },
+          "timeToFinish": true
+        },
+        "workspaceId": "clworkspace00000000000001"
+      },
+      "requestId": "req_fixture"
     }
   },
+  "toolName": "show_survey",
   "tools": {}
 }

@@ -8,7 +8,9 @@ describe("getStageBackground", () => {
 
   test("ignores image backgrounds and anything that is not a hex colour", () => {
     expect(getStageBackground({ background: { bgType: "upload", bg: "https://x/y.png" } })).toBeUndefined();
-    expect(getStageBackground({ background: { bgType: "color", bg: "red; background: url(//evil)" } })).toBeUndefined();
+    expect(
+      getStageBackground({ background: { bgType: "color", bg: "red; background: url(//evil)" } })
+    ).toBeUndefined();
     expect(getStageBackground({})).toBeUndefined();
   });
 });

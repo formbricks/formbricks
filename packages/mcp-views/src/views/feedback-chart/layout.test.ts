@@ -9,6 +9,7 @@ import {
   selectTickIndices,
   seriesAtOffset,
   truncateLabel,
+  wrapLabel,
 } from "./layout";
 
 describe("truncateLabel", () => {
@@ -108,5 +109,26 @@ describe("seriesAtOffset", () => {
     expect(seriesAtOffset(layout, layout.offsets[1] + 1)).toBe(1);
     expect(seriesAtOffset(layout, 0)).toBe(0);
     expect(seriesAtOffset(layout, layout.band)).toBe(1);
+  });
+});
+
+describe("wrapLabel", () => {
+  test("keeps a short label on one line", () => {
+    expect(wrapLabel("Overall", 200)).toEqual(["Overall"]);
+  });
+
+  test("wraps at word boundaries and cuts the last line with an ellipsis", () => {
+    const lines = wrapLabel("How likely are you to recommend us to a friend or colleague?", 150, 2, 11);
+    expect(lines).toHaveLength(2);
+    expect(lines[0]).toBe("How likely are you to");
+    expect(lines[1].endsWith("…")).toBe(true);
+  });
+
+  test("breaks a single word longer than the line", () => {
+    expect(wrapLabel("Supercalifragilisticexpialidocious", 80, 2, 11)[0].endsWith("…")).toBe(true);
+  });
+
+  test("an empty label stays one empty line", () => {
+    expect(wrapLabel("   ", 80)).toEqual([""]);
   });
 });

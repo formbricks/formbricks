@@ -44,11 +44,12 @@ describe("label colour on a fill", () => {
   test("picks the better of white and near-black for each slot", () => {
     expect(labelColorOn("#eda100")).toBe("#0b0b0b");
     expect(labelColorOn("#0d366b")).toBe("#ffffff");
+    expect(labelColorOn("#2a78d6")).toBe("#ffffff");
+    expect(labelColorOn("#eb6834")).toBe("#0b0b0b");
     expect(labelColorOn("#6250d6")).toBe("#ffffff");
     for (const hex of [...CATEGORICAL_LIGHT, ...CATEGORICAL_DARK]) {
-      const chosen = labelColorOn(hex);
-      const other = chosen === "#ffffff" ? "#0b0b0b" : "#ffffff";
-      expect(contrastRatio(hex, chosen)).toBeGreaterThanOrEqual(contrastRatio(hex, other));
+      // Whatever it picks, a label holds at least 3:1 (large-text bar) on every slot of both themes.
+      expect(contrastRatio(hex, labelColorOn(hex))).toBeGreaterThanOrEqual(3);
     }
   });
 });

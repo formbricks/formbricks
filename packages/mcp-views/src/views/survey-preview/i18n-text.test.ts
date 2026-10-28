@@ -29,7 +29,9 @@ describe("resolveText", () => {
 
 describe("toPlainText", () => {
   test("strips markup and decodes entities so content is only ever shown as text", () => {
-    expect(toPlainText('<p>Tom &amp; <b>Jerry</b></p><script>alert("x")</script>')).toBe('Tom & Jerry alert("x")');
+    expect(toPlainText('<p>Tom &amp; <b>Jerry</b></p><script>alert("x")</script>')).toBe(
+      'Tom & Jerry alert("x")'
+    );
   });
 
   test("keeps words apart across block elements and line breaks", () => {

@@ -29,7 +29,9 @@ describe("buildShowSurveySummary", () => {
   test("states what was shown and the counts", () => {
     const text = buildShowSurveySummary(survey);
     expect(text).toContain('Showing the survey "Feedback"');
-    expect(text).toContain("link survey; in progress; 1 block; 2 questions; languages: en-US (default), de-DE");
+    expect(text).toContain(
+      "link survey; in progress; 1 block; 2 questions; languages: en-US (default), de-DE"
+    );
     expect(text).toContain("nothing they enter in the preview is stored");
   });
 
@@ -44,7 +46,12 @@ describe("buildShowSurveySummary", () => {
   test("caps a long outline and points at structuredContent", () => {
     const many = {
       ...survey,
-      blocks: [{ name: "B", elements: Array.from({ length: 60 }, () => ({ type: "openText", headline: { "en-US": "Q" } })) }],
+      blocks: [
+        {
+          name: "B",
+          elements: Array.from({ length: 60 }, () => ({ type: "openText", headline: { "en-US": "Q" } })),
+        },
+      ],
     };
     const text = buildShowSurveySummary(many);
     expect(text).toContain("more lines; the full survey is in structuredContent");
@@ -52,7 +59,9 @@ describe("buildShowSurveySummary", () => {
   });
 
   test("survives a shape it does not recognise", () => {
-    expect(buildShowSurveySummary(undefined)).toBe("Showing the survey to the user in an interactive preview.");
+    expect(buildShowSurveySummary(undefined)).toBe(
+      "Showing the survey to the user in an interactive preview."
+    );
     expect(buildShowSurveySummary({ blocks: "nope", endings: [null] })).toContain("0 blocks");
   });
 });

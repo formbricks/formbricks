@@ -1,433 +1,193 @@
 {
-  "toolName": "show_survey",
+  "csp": {
+    "connectDomains": ["'self'"],
+    "resourceDomains": []
+  },
   "input": {
     "surveyId": "clsurvey0000000000000001"
   },
-  "csp": {
-    "resourceDomains": [],
-    "connectDomains": [
-      "'self'"
-    ]
-  },
   "result": {
-    "content": [
-      {
-        "type": "text",
-        "text": "Showing the survey \"Customer feedback\" (link survey; inProgress) to the user in an interactive preview."
-      }
-    ],
-    "structuredContent": {
-      "data": {
-        "id": "clsurvey0000000000000001",
-        "workspaceId": "clworkspace00000000000001",
-        "createdAt": "2026-09-02T09:14:00.000Z",
-        "updatedAt": "2026-10-27T16:40:12.000Z",
-        "name": "Customer feedback",
-        "type": "link",
-        "status": "inProgress",
-        "archivedAt": null,
-        "visibility": "workspace",
-        "owner": {
-          "name": "Mara Okafor"
-        },
-        "access": "write",
-        "metadata": {},
-        "defaultLanguage": "en-US",
-        "languages": [
-          {
-            "code": "en-US",
-            "default": true,
-            "enabled": true
-          },
-          {
-            "code": "de-DE",
-            "default": false,
-            "enabled": true
-          }
-        ],
-        "showLanguageSwitch": true,
-        "autoSelectLanguage": false,
-        "welcomeCard": {
-          "enabled": true,
-          "headline": {
-            "en-US": "Help us improve",
-            "de-DE": "Helfen Sie uns, besser zu werden"
-          },
-          "subheader": {
-            "en-US": "It takes about two minutes.",
-            "de-DE": "Das dauert etwa zwei Minuten."
-          },
-          "timeToFinish": true,
-          "showResponseCount": false
-        },
-        "blocks": [
-          {
-            "id": "clblocknps0000000000000001",
-            "name": "Recommendation",
-            "elements": [
-              {
-                "id": "nps_recommend",
-                "type": "nps",
-                "headline": {
-                  "en-US": "How likely are you to recommend us to a friend or colleague?",
-                  "de-DE": "Wie wahrscheinlich ist es, dass Sie uns weiterempfehlen?"
-                },
-                "required": true,
-                "lowerLabel": {
-                  "en-US": "Not at all likely",
-                  "de-DE": "Gar nicht wahrscheinlich"
-                },
-                "upperLabel": {
-                  "en-US": "Extremely likely",
-                  "de-DE": "Sehr wahrscheinlich"
-                },
-                "isColorCodingEnabled": false
-              }
-            ]
-          },
-          {
-            "id": "clblockchoice00000000000001",
-            "name": "Main reason",
-            "elements": [
-              {
-                "id": "single_reason",
-                "type": "multipleChoiceSingle",
-                "headline": {
-                  "en-US": "What is the main reason for your score?",
-                  "de-DE": "Was ist der Hauptgrund für Ihre Bewertung?"
-                },
-                "subheader": {
-                  "en-US": "Pick the one that fits best.",
-                  "de-DE": "Wählen Sie die passendste Antwort."
-                },
-                "required": true,
-                "shuffleOption": "none",
-                "choices": [
-                  {
-                    "id": "ch_quality",
-                    "label": {
-                      "en-US": "Product quality",
-                      "de-DE": "Produktqualität"
-                    }
-                  },
-                  {
-                    "id": "ch_support",
-                    "label": {
-                      "en-US": "Customer support",
-                      "de-DE": "Kundensupport"
-                    }
-                  },
-                  {
-                    "id": "ch_price",
-                    "label": {
-                      "en-US": "Price",
-                      "de-DE": "Preis"
-                    }
-                  },
-                  {
-                    "id": "other",
-                    "label": {
-                      "en-US": "Other",
-                      "de-DE": "Sonstiges"
-                    }
-                  }
-                ]
-              }
-            ],
-            "logic": [
-              {
-                "id": "clrule0000000000000000001",
-                "conditions": {
-                  "id": "clgroup00000000000000001",
-                  "connector": "and",
-                  "conditions": [
-                    {
-                      "id": "clcond000000000000000001",
-                      "leftOperand": {
-                        "type": "element",
-                        "value": "single_reason"
-                      },
-                      "operator": "equals",
-                      "rightOperand": {
-                        "type": "static",
-                        "value": "ch_price"
-                      }
-                    }
-                  ]
-                },
-                "actions": [
-                  {
-                    "id": "clact0000000000000000001",
-                    "objective": "jumpToBlock",
-                    "target": "clblocktext000000000000001"
-                  }
-                ]
-              }
-            ],
-            "logicFallback": "clblockmulti00000000000001"
-          },
-          {
-            "id": "clblockmulti00000000000001",
-            "name": "Improvements",
-            "elements": [
-              {
-                "id": "multi_improve",
-                "type": "multipleChoiceMulti",
-                "headline": {
-                  "en-US": "Which of these should we improve first?",
-                  "de-DE": "Was sollten wir zuerst verbessern?"
-                },
-                "required": false,
-                "shuffleOption": "all",
-                "choices": [
-                  {
-                    "id": "i1",
-                    "label": {
-                      "en-US": "Onboarding",
-                      "de-DE": "Onboarding"
-                    }
-                  },
-                  {
-                    "id": "i2",
-                    "label": {
-                      "en-US": "Documentation",
-                      "de-DE": "Dokumentation"
-                    }
-                  },
-                  {
-                    "id": "i3",
-                    "label": {
-                      "en-US": "Integrations",
-                      "de-DE": "Integrationen"
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "id": "clblocktext000000000000001",
-            "name": "Open feedback",
-            "elements": [
-              {
-                "id": "text_feedback",
-                "type": "openText",
-                "headline": {
-                  "en-US": "Anything else you would like to tell us?",
-                  "de-DE": "Möchten Sie uns noch etwas mitteilen?"
-                },
-                "placeholder": {
-                  "en-US": "Type your answer here…",
-                  "de-DE": "Antwort hier eingeben …"
-                },
-                "required": false,
-                "longAnswer": true,
-                "inputType": "text",
-                "charLimit": {
-                  "enabled": true,
-                  "max": 400
-                },
-                "validation": {
-                  "logic": "and",
-                  "rules": [
-                    {
-                      "id": "r1",
-                      "type": "minLength",
-                      "params": {
-                        "min": 5
-                      }
-                    }
-                  ]
-                }
-              },
-              {
-                "id": "email_contact",
-                "type": "openText",
-                "headline": {
-                  "en-US": "Your email, if we may follow up",
-                  "de-DE": "Ihre E-Mail, falls wir nachfragen dürfen"
-                },
-                "required": false,
-                "longAnswer": false,
-                "inputType": "email",
-                "charLimit": {
-                  "enabled": false
-                }
-              }
-            ]
-          },
-          {
-            "id": "clblockrating00000000000001",
-            "name": "Overall rating",
-            "elements": [
-              {
-                "id": "rating_overall",
-                "type": "rating",
-                "headline": {
-                  "en-US": "How would you rate your experience overall?",
-                  "de-DE": "Wie bewerten Sie Ihre Erfahrung insgesamt?"
-                },
-                "required": true,
-                "scale": "star",
-                "range": 5,
-                "lowerLabel": {
-                  "en-US": "Poor",
-                  "de-DE": "Schlecht"
-                },
-                "upperLabel": {
-                  "en-US": "Excellent",
-                  "de-DE": "Ausgezeichnet"
-                },
-                "isColorCodingEnabled": false
-              }
-            ]
-          }
-        ],
-        "endings": [
-          {
-            "id": "clendingthanks000000000001",
-            "type": "endScreen",
-            "headline": {
-              "en-US": "Thank you!",
-              "de-DE": "Vielen Dank!"
-            },
-            "subheader": {
-              "en-US": "We read every answer and use it to improve.",
-              "de-DE": "Wir lesen jede Antwort und nutzen sie zur Verbesserung."
-            }
-          },
-          {
-            "id": "clendingredirect0000000001",
-            "type": "redirectToUrl",
-            "url": "https://formbricks.com/thanks",
-            "label": "Thank-you page"
-          }
-        ],
-        "hiddenFields": {
-          "enabled": true,
-          "fieldIds": [
-            "utm_source",
-            "plan"
-          ]
-        },
-        "variables": [
-          {
-            "id": "clvariablescore00000000001",
-            "name": "score",
-            "type": "number",
-            "value": 0
-          }
-        ],
-        "customCss": null
-      },
-      "requestId": "req_fixture"
-    },
     "_meta": {
       "formbricks": {
         "appUrl": "",
-        "rendererUrl": "/js/surveys.umd.cjs",
-        "surveyUrl": "https://app.formbricks.com/s/clsurvey0000000000000001",
+        "problems": [],
         "render": {
-          "survey": {
-            "id": "clsurvey0000000000000001",
-            "name": "Customer feedback",
-            "type": "link",
-            "status": "inProgress",
-            "workspaceId": "clworkspace00000000000001",
-            "welcomeCard": {
-              "enabled": true,
-              "headline": {
-                "default": "Help us improve",
-                "de-DE": "Helfen Sie uns, besser zu werden"
-              },
-              "subheader": {
-                "default": "It takes about two minutes.",
-                "de-DE": "Das dauert etwa zwei Minuten."
-              },
-              "timeToFinish": true,
-              "showResponseCount": false
+          "isBrandingEnabled": true,
+          "styling": {
+            "allowStyleOverwrite": true,
+            "background": {
+              "bg": "#dbe0f1",
+              "bgType": "color",
+              "brightness": 100
             },
-            "questions": [],
+            "brandColor": {
+              "light": "#1e40af"
+            },
+            "buttonBgColor": {
+              "light": "#1e40af"
+            },
+            "buttonBorderRadius": 8,
+            "buttonFontSize": 16,
+            "buttonFontWeight": 500,
+            "buttonHeight": "auto",
+            "buttonPaddingX": 12,
+            "buttonPaddingY": 12,
+            "buttonTextColor": {
+              "light": "#ffffff"
+            },
+            "cardArrangement": {
+              "appSurveys": "simple",
+              "linkSurveys": "cardless"
+            },
+            "cardBackgroundColor": {
+              "light": "#ffffff"
+            },
+            "cardBorderColor": {
+              "light": "#d2d9ef"
+            },
+            "elementDescriptionColor": {
+              "light": "#142a72"
+            },
+            "elementDescriptionFontSize": 14,
+            "elementDescriptionFontWeight": 400,
+            "elementHeadlineColor": {
+              "light": "#142a72"
+            },
+            "elementHeadlineFontSize": 16,
+            "elementHeadlineFontWeight": 500,
+            "elementUpperLabelColor": {
+              "light": "#142a72"
+            },
+            "elementUpperLabelFontSize": 12,
+            "elementUpperLabelFontWeight": 400,
+            "highlightBorderColor": {
+              "light": "#4a68c8"
+            },
+            "inputBgColor": {
+              "light": "#edf0f9"
+            },
+            "inputBorderColor": {
+              "light": "#a5b3df"
+            },
+            "inputBorderRadius": 8,
+            "inputFontSize": 14,
+            "inputHeight": 20,
+            "inputPaddingX": 8,
+            "inputPaddingY": 8,
+            "inputPlaceholderOpacity": 0.5,
+            "inputTextColor": {
+              "light": "#142a72"
+            },
+            "isLogoHidden": false,
+            "linkSurveyCardWidth": "default",
+            "optionBgColor": {
+              "light": "#edf0f9"
+            },
+            "optionBorderColor": {
+              "light": "#a5b3df"
+            },
+            "optionBorderRadius": 8,
+            "optionFontSize": 14,
+            "optionLabelColor": {
+              "light": "#142a72"
+            },
+            "optionPaddingX": 16,
+            "optionPaddingY": 16,
+            "progressIndicatorBgColor": {
+              "light": "#1e40af"
+            },
+            "progressTrackBgColor": {
+              "light": "#c3cdea"
+            },
+            "progressTrackHeight": 8,
+            "roundness": 8
+          },
+          "survey": {
+            "autoClose": null,
+            "autoSelectLanguage": false,
             "blocks": [
               {
-                "id": "clblocknps0000000000000001",
-                "name": "Recommendation",
                 "elements": [
                   {
-                    "id": "nps_recommend",
-                    "type": "nps",
                     "headline": {
-                      "default": "How likely are you to recommend us to a friend or colleague?",
-                      "de-DE": "Wie wahrscheinlich ist es, dass Sie uns weiterempfehlen?"
+                      "de-DE": "Wie wahrscheinlich ist es, dass Sie uns weiterempfehlen?",
+                      "default": "How likely are you to recommend us to a friend or colleague?"
+                    },
+                    "id": "nps_recommend",
+                    "isColorCodingEnabled": false,
+                    "lowerLabel": {
+                      "de-DE": "Gar nicht wahrscheinlich",
+                      "default": "Not at all likely"
                     },
                     "required": true,
-                    "lowerLabel": {
-                      "default": "Not at all likely",
-                      "de-DE": "Gar nicht wahrscheinlich"
-                    },
+                    "type": "nps",
                     "upperLabel": {
-                      "default": "Extremely likely",
-                      "de-DE": "Sehr wahrscheinlich"
-                    },
-                    "isColorCodingEnabled": false
+                      "de-DE": "Sehr wahrscheinlich",
+                      "default": "Extremely likely"
+                    }
                   }
-                ]
+                ],
+                "id": "clblocknps0000000000000001",
+                "name": "Recommendation"
               },
               {
-                "id": "clblockchoice00000000000001",
-                "name": "Main reason",
                 "elements": [
                   {
-                    "id": "single_reason",
-                    "type": "multipleChoiceSingle",
-                    "headline": {
-                      "default": "What is the main reason for your score?",
-                      "de-DE": "Was ist der Hauptgrund für Ihre Bewertung?"
-                    },
-                    "subheader": {
-                      "default": "Pick the one that fits best.",
-                      "de-DE": "Wählen Sie die passendste Antwort."
-                    },
-                    "required": true,
-                    "shuffleOption": "none",
                     "choices": [
                       {
                         "id": "ch_quality",
                         "label": {
-                          "default": "Product quality",
-                          "de-DE": "Produktqualität"
+                          "de-DE": "Produktqualität",
+                          "default": "Product quality"
                         }
                       },
                       {
                         "id": "ch_support",
                         "label": {
-                          "default": "Customer support",
-                          "de-DE": "Kundensupport"
+                          "de-DE": "Kundensupport",
+                          "default": "Customer support"
                         }
                       },
                       {
                         "id": "ch_price",
                         "label": {
-                          "default": "Price",
-                          "de-DE": "Preis"
+                          "de-DE": "Preis",
+                          "default": "Price"
                         }
                       },
                       {
                         "id": "other",
                         "label": {
-                          "default": "Other",
-                          "de-DE": "Sonstiges"
+                          "de-DE": "Sonstiges",
+                          "default": "Other"
                         }
                       }
-                    ]
+                    ],
+                    "headline": {
+                      "de-DE": "Was ist der Hauptgrund für Ihre Bewertung?",
+                      "default": "What is the main reason for your score?"
+                    },
+                    "id": "single_reason",
+                    "required": true,
+                    "shuffleOption": "none",
+                    "subheader": {
+                      "de-DE": "Wählen Sie die passendste Antwort.",
+                      "default": "Pick the one that fits best."
+                    },
+                    "type": "multipleChoiceSingle"
                   }
                 ],
+                "id": "clblockchoice00000000000001",
                 "logic": [
                   {
-                    "id": "clrule0000000000000000001",
+                    "actions": [
+                      {
+                        "id": "clact0000000000000000001",
+                        "objective": "jumpToBlock",
+                        "target": "clblocktext000000000000001"
+                      }
+                    ],
                     "conditions": {
-                      "id": "clgroup00000000000000001",
-                      "connector": "and",
                       "conditions": [
                         {
                           "id": "clcond000000000000000001",
@@ -441,156 +201,196 @@
                             "value": "ch_price"
                           }
                         }
-                      ]
+                      ],
+                      "connector": "and",
+                      "id": "clgroup00000000000000001"
                     },
-                    "actions": [
-                      {
-                        "id": "clact0000000000000000001",
-                        "objective": "jumpToBlock",
-                        "target": "clblocktext000000000000001"
-                      }
-                    ]
+                    "id": "clrule0000000000000000001"
                   }
                 ],
-                "logicFallback": "clblockmulti00000000000001"
+                "logicFallback": "clblockmulti00000000000001",
+                "name": "Main reason"
               },
               {
-                "id": "clblockmulti00000000000001",
-                "name": "Improvements",
                 "elements": [
                   {
-                    "id": "multi_improve",
-                    "type": "multipleChoiceMulti",
-                    "headline": {
-                      "default": "Which of these should we improve first?",
-                      "de-DE": "Was sollten wir zuerst verbessern?"
-                    },
-                    "required": false,
-                    "shuffleOption": "all",
                     "choices": [
                       {
                         "id": "i1",
                         "label": {
-                          "default": "Onboarding",
-                          "de-DE": "Onboarding"
+                          "de-DE": "Onboarding",
+                          "default": "Onboarding"
                         }
                       },
                       {
                         "id": "i2",
                         "label": {
-                          "default": "Documentation",
-                          "de-DE": "Dokumentation"
+                          "de-DE": "Dokumentation",
+                          "default": "Documentation"
                         }
                       },
                       {
                         "id": "i3",
                         "label": {
-                          "default": "Integrations",
-                          "de-DE": "Integrationen"
+                          "de-DE": "Integrationen",
+                          "default": "Integrations"
                         }
                       }
-                    ]
+                    ],
+                    "headline": {
+                      "de-DE": "Was sollten wir zuerst verbessern?",
+                      "default": "Which of these should we improve first?"
+                    },
+                    "id": "multi_improve",
+                    "required": false,
+                    "shuffleOption": "all",
+                    "type": "multipleChoiceMulti"
                   }
-                ]
+                ],
+                "id": "clblockmulti00000000000001",
+                "name": "Improvements"
               },
               {
-                "id": "clblocktext000000000000001",
-                "name": "Open feedback",
                 "elements": [
                   {
-                    "id": "text_feedback",
-                    "type": "openText",
-                    "headline": {
-                      "default": "Anything else you would like to tell us?",
-                      "de-DE": "Möchten Sie uns noch etwas mitteilen?"
-                    },
-                    "placeholder": {
-                      "default": "Type your answer here…",
-                      "de-DE": "Antwort hier eingeben …"
-                    },
-                    "required": false,
-                    "longAnswer": true,
-                    "inputType": "text",
                     "charLimit": {
                       "enabled": true,
                       "max": 400
                     },
+                    "headline": {
+                      "de-DE": "Möchten Sie uns noch etwas mitteilen?",
+                      "default": "Anything else you would like to tell us?"
+                    },
+                    "id": "text_feedback",
+                    "inputType": "text",
+                    "longAnswer": true,
+                    "placeholder": {
+                      "de-DE": "Antwort hier eingeben …",
+                      "default": "Type your answer here…"
+                    },
+                    "required": false,
+                    "type": "openText",
                     "validation": {
                       "logic": "and",
                       "rules": [
                         {
                           "id": "r1",
-                          "type": "minLength",
                           "params": {
                             "min": 5
-                          }
+                          },
+                          "type": "minLength"
                         }
                       ]
                     }
                   },
                   {
-                    "id": "email_contact",
-                    "type": "openText",
-                    "headline": {
-                      "default": "Your email, if we may follow up",
-                      "de-DE": "Ihre E-Mail, falls wir nachfragen dürfen"
-                    },
-                    "required": false,
-                    "longAnswer": false,
-                    "inputType": "email",
                     "charLimit": {
                       "enabled": false
-                    }
+                    },
+                    "headline": {
+                      "de-DE": "Ihre E-Mail, falls wir nachfragen dürfen",
+                      "default": "Your email, if we may follow up"
+                    },
+                    "id": "email_contact",
+                    "inputType": "email",
+                    "longAnswer": false,
+                    "required": false,
+                    "type": "openText"
                   }
-                ]
+                ],
+                "id": "clblocktext000000000000001",
+                "name": "Open feedback"
               },
               {
-                "id": "clblockrating00000000000001",
-                "name": "Overall rating",
                 "elements": [
                   {
-                    "id": "rating_overall",
-                    "type": "rating",
                     "headline": {
-                      "default": "How would you rate your experience overall?",
-                      "de-DE": "Wie bewerten Sie Ihre Erfahrung insgesamt?"
+                      "de-DE": "Wie bewerten Sie Ihre Erfahrung insgesamt?",
+                      "default": "How would you rate your experience overall?"
                     },
+                    "id": "rating_overall",
+                    "isColorCodingEnabled": false,
+                    "lowerLabel": {
+                      "de-DE": "Schlecht",
+                      "default": "Poor"
+                    },
+                    "range": 5,
                     "required": true,
                     "scale": "star",
-                    "range": 5,
-                    "lowerLabel": {
-                      "default": "Poor",
-                      "de-DE": "Schlecht"
-                    },
+                    "type": "rating",
                     "upperLabel": {
-                      "default": "Excellent",
-                      "de-DE": "Ausgezeichnet"
-                    },
-                    "isColorCodingEnabled": false
+                      "de-DE": "Ausgezeichnet",
+                      "default": "Excellent"
+                    }
                   }
-                ]
+                ],
+                "id": "clblockrating00000000000001",
+                "name": "Overall rating"
               }
             ],
+            "delay": 0,
+            "displayLimit": null,
+            "displayOption": "displayOnce",
+            "displayPercentage": null,
             "endings": [
               {
-                "id": "clendingthanks000000000001",
-                "type": "endScreen",
                 "headline": {
-                  "default": "Thank you!",
-                  "de-DE": "Vielen Dank!"
+                  "de-DE": "Vielen Dank!",
+                  "default": "Thank you!"
                 },
+                "id": "clendingthanks000000000001",
                 "subheader": {
-                  "default": "We read every answer and use it to improve.",
-                  "de-DE": "Wir lesen jede Antwort und nutzen sie zur Verbesserung."
-                }
+                  "de-DE": "Wir lesen jede Antwort und nutzen sie zur Verbesserung.",
+                  "default": "We read every answer and use it to improve."
+                },
+                "type": "endScreen"
               },
               {
                 "id": "clendingredirect0000000001",
+                "label": "Thank-you page",
                 "type": "redirectToUrl",
-                "url": "https://formbricks.com/thanks",
-                "label": "Thank-you page"
+                "url": "https://formbricks.com/thanks"
               }
             ],
+            "hiddenFields": {
+              "enabled": true,
+              "fieldIds": ["utm_source", "plan"]
+            },
+            "id": "clsurvey0000000000000001",
+            "isAutoProgressingEnabled": false,
+            "isBackButtonHidden": false,
+            "keepEndingCardOpen": false,
+            "languages": [
+              {
+                "default": true,
+                "enabled": true,
+                "language": {
+                  "alias": null,
+                  "code": "en-US",
+                  "id": "cllangen"
+                }
+              },
+              {
+                "default": false,
+                "enabled": true,
+                "language": {
+                  "alias": null,
+                  "code": "de-DE",
+                  "id": "cllangde"
+                }
+              }
+            ],
+            "name": "Customer feedback",
+            "questions": [],
+            "recaptcha": null,
+            "recontactDays": null,
+            "segment": null,
+            "showConditions": null,
+            "showLanguageSwitch": true,
+            "status": "inProgress",
+            "styling": null,
+            "triggers": [],
+            "type": "link",
             "variables": [
               {
                 "id": "clvariablescore00000000001",
@@ -599,163 +399,355 @@
                 "value": 0
               }
             ],
-            "hiddenFields": {
+            "welcomeCard": {
               "enabled": true,
-              "fieldIds": [
-                "utm_source",
-                "plan"
-              ]
-            },
-            "languages": [
-              {
-                "default": true,
-                "enabled": true,
-                "language": {
-                  "id": "cllangen",
-                  "code": "en-US",
-                  "alias": null
-                }
+              "headline": {
+                "de-DE": "Helfen Sie uns, besser zu werden",
+                "default": "Help us improve"
               },
+              "showResponseCount": false,
+              "subheader": {
+                "de-DE": "Das dauert etwa zwei Minuten.",
+                "default": "It takes about two minutes."
+              },
+              "timeToFinish": true
+            },
+            "workspaceId": "clworkspace00000000000001",
+            "workspaceOverwrites": null
+          }
+        },
+        "rendererUrl": "/js/surveys.umd.cjs",
+        "settings": {
+          "autoCloseSeconds": null,
+          "autoComplete": 1000,
+          "autoProgress": false,
+          "backButtonHidden": false,
+          "closeOn": "2026-12-31T23:00:00.000Z",
+          "delaySeconds": 0,
+          "displayLimit": null,
+          "displayOption": "displayOnce",
+          "displayPercentage": null,
+          "pinProtected": false,
+          "publishOn": null,
+          "recontactDays": null,
+          "segment": null,
+          "singleUse": false,
+          "triggers": [],
+          "verifyEmail": false
+        },
+        "surveyUrl": "https://app.formbricks.com/s/clsurvey0000000000000001"
+      }
+    },
+    "content": [
+      {
+        "text": "Showing the survey \"Customer feedback\" (link survey; inProgress) to the user in an interactive preview.",
+        "type": "text"
+      }
+    ],
+    "structuredContent": {
+      "data": {
+        "access": "write",
+        "archivedAt": null,
+        "autoSelectLanguage": false,
+        "blocks": [
+          {
+            "elements": [
               {
-                "default": false,
-                "enabled": true,
-                "language": {
-                  "id": "cllangde",
-                  "code": "de-DE",
-                  "alias": null
+                "headline": {
+                  "de-DE": "Wie wahrscheinlich ist es, dass Sie uns weiterempfehlen?",
+                  "en-US": "How likely are you to recommend us to a friend or colleague?"
+                },
+                "id": "nps_recommend",
+                "isColorCodingEnabled": false,
+                "lowerLabel": {
+                  "de-DE": "Gar nicht wahrscheinlich",
+                  "en-US": "Not at all likely"
+                },
+                "required": true,
+                "type": "nps",
+                "upperLabel": {
+                  "de-DE": "Sehr wahrscheinlich",
+                  "en-US": "Extremely likely"
                 }
               }
             ],
-            "showLanguageSwitch": true,
-            "autoSelectLanguage": false,
-            "autoClose": null,
-            "keepEndingCardOpen": false,
-            "styling": null,
-            "segment": null,
-            "recontactDays": null,
-            "displayLimit": null,
-            "displayOption": "displayOnce",
-            "triggers": [],
-            "displayPercentage": null,
-            "delay": 0,
-            "workspaceOverwrites": null,
-            "isBackButtonHidden": false,
-            "isAutoProgressingEnabled": false,
-            "recaptcha": null,
-            "showConditions": null
+            "id": "clblocknps0000000000000001",
+            "name": "Recommendation"
           },
-          "styling": {
-            "allowStyleOverwrite": true,
-            "brandColor": {
-              "light": "#1e40af"
-            },
-            "inputBorderColor": {
-              "light": "#a5b3df"
-            },
-            "cardBackgroundColor": {
-              "light": "#ffffff"
-            },
-            "cardBorderColor": {
-              "light": "#d2d9ef"
-            },
-            "isLogoHidden": false,
-            "highlightBorderColor": {
-              "light": "#4a68c8"
-            },
-            "roundness": 8,
-            "cardArrangement": {
-              "linkSurveys": "cardless",
-              "appSurveys": "simple"
-            },
-            "linkSurveyCardWidth": "default",
-            "elementHeadlineColor": {
-              "light": "#142a72"
-            },
-            "elementHeadlineFontSize": 16,
-            "elementHeadlineFontWeight": 500,
-            "elementDescriptionColor": {
-              "light": "#142a72"
-            },
-            "elementDescriptionFontSize": 14,
-            "elementDescriptionFontWeight": 400,
-            "elementUpperLabelColor": {
-              "light": "#142a72"
-            },
-            "elementUpperLabelFontSize": 12,
-            "elementUpperLabelFontWeight": 400,
-            "inputBgColor": {
-              "light": "#edf0f9"
-            },
-            "inputTextColor": {
-              "light": "#142a72"
-            },
-            "inputBorderRadius": 8,
-            "inputHeight": 20,
-            "inputFontSize": 14,
-            "inputPaddingX": 8,
-            "inputPaddingY": 8,
-            "inputPlaceholderOpacity": 0.5,
-            "buttonBgColor": {
-              "light": "#1e40af"
-            },
-            "buttonTextColor": {
-              "light": "#ffffff"
-            },
-            "buttonBorderRadius": 8,
-            "buttonHeight": "auto",
-            "buttonFontSize": 16,
-            "buttonFontWeight": 500,
-            "buttonPaddingX": 12,
-            "buttonPaddingY": 12,
-            "optionBgColor": {
-              "light": "#edf0f9"
-            },
-            "optionLabelColor": {
-              "light": "#142a72"
-            },
-            "optionBorderColor": {
-              "light": "#a5b3df"
-            },
-            "optionBorderRadius": 8,
-            "optionPaddingX": 16,
-            "optionPaddingY": 16,
-            "optionFontSize": 14,
-            "progressTrackHeight": 8,
-            "progressTrackBgColor": {
-              "light": "#c3cdea"
-            },
-            "progressIndicatorBgColor": {
-              "light": "#1e40af"
-            },
-            "background": {
-              "bg": "#dbe0f1",
-              "bgType": "color",
-              "brightness": 100
-            }
+          {
+            "elements": [
+              {
+                "choices": [
+                  {
+                    "id": "ch_quality",
+                    "label": {
+                      "de-DE": "Produktqualität",
+                      "en-US": "Product quality"
+                    }
+                  },
+                  {
+                    "id": "ch_support",
+                    "label": {
+                      "de-DE": "Kundensupport",
+                      "en-US": "Customer support"
+                    }
+                  },
+                  {
+                    "id": "ch_price",
+                    "label": {
+                      "de-DE": "Preis",
+                      "en-US": "Price"
+                    }
+                  },
+                  {
+                    "id": "other",
+                    "label": {
+                      "de-DE": "Sonstiges",
+                      "en-US": "Other"
+                    }
+                  }
+                ],
+                "headline": {
+                  "de-DE": "Was ist der Hauptgrund für Ihre Bewertung?",
+                  "en-US": "What is the main reason for your score?"
+                },
+                "id": "single_reason",
+                "required": true,
+                "shuffleOption": "none",
+                "subheader": {
+                  "de-DE": "Wählen Sie die passendste Antwort.",
+                  "en-US": "Pick the one that fits best."
+                },
+                "type": "multipleChoiceSingle"
+              }
+            ],
+            "id": "clblockchoice00000000000001",
+            "logic": [
+              {
+                "actions": [
+                  {
+                    "id": "clact0000000000000000001",
+                    "objective": "jumpToBlock",
+                    "target": "clblocktext000000000000001"
+                  }
+                ],
+                "conditions": {
+                  "conditions": [
+                    {
+                      "id": "clcond000000000000000001",
+                      "leftOperand": {
+                        "type": "element",
+                        "value": "single_reason"
+                      },
+                      "operator": "equals",
+                      "rightOperand": {
+                        "type": "static",
+                        "value": "ch_price"
+                      }
+                    }
+                  ],
+                  "connector": "and",
+                  "id": "clgroup00000000000000001"
+                },
+                "id": "clrule0000000000000000001"
+              }
+            ],
+            "logicFallback": "clblockmulti00000000000001",
+            "name": "Main reason"
           },
-          "isBrandingEnabled": true
+          {
+            "elements": [
+              {
+                "choices": [
+                  {
+                    "id": "i1",
+                    "label": {
+                      "de-DE": "Onboarding",
+                      "en-US": "Onboarding"
+                    }
+                  },
+                  {
+                    "id": "i2",
+                    "label": {
+                      "de-DE": "Dokumentation",
+                      "en-US": "Documentation"
+                    }
+                  },
+                  {
+                    "id": "i3",
+                    "label": {
+                      "de-DE": "Integrationen",
+                      "en-US": "Integrations"
+                    }
+                  }
+                ],
+                "headline": {
+                  "de-DE": "Was sollten wir zuerst verbessern?",
+                  "en-US": "Which of these should we improve first?"
+                },
+                "id": "multi_improve",
+                "required": false,
+                "shuffleOption": "all",
+                "type": "multipleChoiceMulti"
+              }
+            ],
+            "id": "clblockmulti00000000000001",
+            "name": "Improvements"
+          },
+          {
+            "elements": [
+              {
+                "charLimit": {
+                  "enabled": true,
+                  "max": 400
+                },
+                "headline": {
+                  "de-DE": "Möchten Sie uns noch etwas mitteilen?",
+                  "en-US": "Anything else you would like to tell us?"
+                },
+                "id": "text_feedback",
+                "inputType": "text",
+                "longAnswer": true,
+                "placeholder": {
+                  "de-DE": "Antwort hier eingeben …",
+                  "en-US": "Type your answer here…"
+                },
+                "required": false,
+                "type": "openText",
+                "validation": {
+                  "logic": "and",
+                  "rules": [
+                    {
+                      "id": "r1",
+                      "params": {
+                        "min": 5
+                      },
+                      "type": "minLength"
+                    }
+                  ]
+                }
+              },
+              {
+                "charLimit": {
+                  "enabled": false
+                },
+                "headline": {
+                  "de-DE": "Ihre E-Mail, falls wir nachfragen dürfen",
+                  "en-US": "Your email, if we may follow up"
+                },
+                "id": "email_contact",
+                "inputType": "email",
+                "longAnswer": false,
+                "required": false,
+                "type": "openText"
+              }
+            ],
+            "id": "clblocktext000000000000001",
+            "name": "Open feedback"
+          },
+          {
+            "elements": [
+              {
+                "headline": {
+                  "de-DE": "Wie bewerten Sie Ihre Erfahrung insgesamt?",
+                  "en-US": "How would you rate your experience overall?"
+                },
+                "id": "rating_overall",
+                "isColorCodingEnabled": false,
+                "lowerLabel": {
+                  "de-DE": "Schlecht",
+                  "en-US": "Poor"
+                },
+                "range": 5,
+                "required": true,
+                "scale": "star",
+                "type": "rating",
+                "upperLabel": {
+                  "de-DE": "Ausgezeichnet",
+                  "en-US": "Excellent"
+                }
+              }
+            ],
+            "id": "clblockrating00000000000001",
+            "name": "Overall rating"
+          }
+        ],
+        "createdAt": "2026-09-02T09:14:00.000Z",
+        "customCss": null,
+        "defaultLanguage": "en-US",
+        "endings": [
+          {
+            "headline": {
+              "de-DE": "Vielen Dank!",
+              "en-US": "Thank you!"
+            },
+            "id": "clendingthanks000000000001",
+            "subheader": {
+              "de-DE": "Wir lesen jede Antwort und nutzen sie zur Verbesserung.",
+              "en-US": "We read every answer and use it to improve."
+            },
+            "type": "endScreen"
+          },
+          {
+            "id": "clendingredirect0000000001",
+            "label": "Thank-you page",
+            "type": "redirectToUrl",
+            "url": "https://formbricks.com/thanks"
+          }
+        ],
+        "hiddenFields": {
+          "enabled": true,
+          "fieldIds": ["utm_source", "plan"]
         },
-        "settings": {
-          "publishOn": null,
-          "closeOn": "2026-12-31T23:00:00.000Z",
-          "autoComplete": 1000,
-          "pinProtected": false,
-          "verifyEmail": false,
-          "singleUse": false,
-          "backButtonHidden": false,
-          "autoProgress": false,
-          "triggers": [],
-          "segment": null,
-          "displayOption": "displayOnce",
-          "displayPercentage": null,
-          "displayLimit": null,
-          "recontactDays": null,
-          "delaySeconds": 0,
-          "autoCloseSeconds": null
+        "id": "clsurvey0000000000000001",
+        "languages": [
+          {
+            "code": "en-US",
+            "default": true,
+            "enabled": true
+          },
+          {
+            "code": "de-DE",
+            "default": false,
+            "enabled": true
+          }
+        ],
+        "metadata": {},
+        "name": "Customer feedback",
+        "owner": {
+          "name": "Mara Okafor"
         },
-        "problems": []
-      }
+        "showLanguageSwitch": true,
+        "status": "inProgress",
+        "type": "link",
+        "updatedAt": "2026-10-27T16:40:12.000Z",
+        "variables": [
+          {
+            "id": "clvariablescore00000000001",
+            "name": "score",
+            "type": "number",
+            "value": 0
+          }
+        ],
+        "visibility": "workspace",
+        "welcomeCard": {
+          "enabled": true,
+          "headline": {
+            "de-DE": "Helfen Sie uns, besser zu werden",
+            "en-US": "Help us improve"
+          },
+          "showResponseCount": false,
+          "subheader": {
+            "de-DE": "Das dauert etwa zwei Minuten.",
+            "en-US": "It takes about two minutes."
+          },
+          "timeToFinish": true
+        },
+        "workspaceId": "clworkspace00000000000001"
+      },
+      "requestId": "req_fixture"
     }
   },
+  "toolName": "show_survey",
   "tools": {}
 }

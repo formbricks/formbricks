@@ -131,9 +131,7 @@ export const toPreviewSurvey = (survey: TSurvey): TJsPreviewSurvey => ({
   keepEndingCardOpen: survey.keepEndingCardOpen,
   styling: survey.styling,
   status: survey.status,
-  segment: survey.segment
-    ? { id: survey.segment.id, hasFilters: survey.segment.filters.length > 0 }
-    : null,
+  segment: survey.segment ? { id: survey.segment.id, hasFilters: survey.segment.filters.length > 0 } : null,
   recontactDays: survey.recontactDays,
   displayLimit: survey.displayLimit,
   displayOption: survey.displayOption,
@@ -163,7 +161,9 @@ export const toPreviewSettings = (survey: TSurvey): TSurveyPreviewSettings => ({
     name: actionClass.name,
     type: actionClass.type,
   })),
-  segment: survey.segment ? { title: survey.segment.title, filterCount: survey.segment.filters.length } : null,
+  segment: survey.segment
+    ? { title: survey.segment.title, filterCount: survey.segment.filters.length }
+    : null,
   displayOption: survey.displayOption,
   displayPercentage: survey.displayPercentage ?? null,
   displayLimit: survey.displayLimit ?? null,

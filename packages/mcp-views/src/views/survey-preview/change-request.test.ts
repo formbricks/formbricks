@@ -14,8 +14,8 @@ describe("buildChangeRequest", () => {
   });
 
   test("addresses the whole survey when no question is picked", () => {
-    expect(
-      buildChangeRequest({ surveyId: "x", surveyName: "S", target: null, request: "shorter" })
-    ).toBe('Change the survey "S" (id x), about the survey as a whole: shorter');
+    expect(buildChangeRequest({ surveyId: "x", surveyName: "S", target: null, request: "shorter" })).toBe(
+      'Change the survey "S" (id x), about the survey as a whole: shorter'
+    );
   });
 });

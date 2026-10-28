@@ -5,7 +5,10 @@ import type { Formatters } from "./outline";
  * when the host sends none or sends one `Intl` rejects.
  */
 export const createFormatters = (locale: string | undefined, timeZone: string | undefined): Formatters => {
-  const build = <T>(make: (locale: string | undefined, timeZone: string | undefined) => T, fallback: () => T): T => {
+  const build = <T>(
+    make: (locale: string | undefined, timeZone: string | undefined) => T,
+    fallback: () => T
+  ): T => {
     try {
       return make(locale, timeZone);
     } catch {

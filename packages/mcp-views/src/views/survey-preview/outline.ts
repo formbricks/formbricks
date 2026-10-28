@@ -88,7 +88,10 @@ const describeScale = (element: JsonRecord, reader: Reader): string[] => {
   const range = typeof element.range === "number" ? element.range : undefined;
   const scale = asString(element.scale);
   const facts: string[] = [];
-  if (range) facts.push(`${range}-point ${scale === "star" ? "star" : scale === "smiley" ? "smiley" : "number"} scale`);
+  if (range)
+    facts.push(
+      `${range}-point ${scale === "star" ? "star" : scale === "smiley" ? "smiley" : "number"} scale`
+    );
   const lower = reader.text(element.lowerLabel);
   const upper = reader.text(element.upperLabel);
   if (lower || upper) facts.push(`${lower || "…"} to ${upper || "…"}`);
@@ -98,7 +101,10 @@ const describeScale = (element: JsonRecord, reader: Reader): string[] => {
 const describeToggles = (element: JsonRecord, keys: [string, string][]): string[] => {
   const shown = keys
     .filter(([key]) => isRecord(element[key]) && element[key].show === true)
-    .map(([key, label]) => `${label}${isRecord(element[key]) && element[key].required === true ? " (required)" : ""}`);
+    .map(
+      ([key, label]) =>
+        `${label}${isRecord(element[key]) && element[key].required === true ? " (required)" : ""}`
+    );
   return shown.length > 0 ? [`Fields: ${shown.join(", ")}`] : [];
 };
 
@@ -107,7 +113,8 @@ const describeByType = (element: JsonRecord, reader: Reader): string[] => {
     case "openText": {
       const facts = [`${asString(element.inputType) || "text"} input`];
       if (element.longAnswer === true) facts.push("long answer");
-      const limit = isRecord(element.charLimit) && element.charLimit.enabled === true ? element.charLimit : null;
+      const limit =
+        isRecord(element.charLimit) && element.charLimit.enabled === true ? element.charLimit : null;
       if (limit) {
         const min = typeof limit.min === "number" ? `at least ${limit.min}` : "";
         const max = typeof limit.max === "number" ? `at most ${limit.max}` : "";
@@ -126,7 +133,9 @@ const describeByType = (element: JsonRecord, reader: Reader): string[] => {
     case "ces":
       return describeScale(element, reader);
     case "pictureSelection":
-      return [`${records(element.choices).length} pictures${element.allowMulti === true ? ", several can be picked" : ""}`];
+      return [
+        `${records(element.choices).length} pictures${element.allowMulti === true ? ", several can be picked" : ""}`,
+      ];
     case "matrix":
       return [
         `${records(element.rows).length} rows: ${joinList(records(element.rows).map((row) => reader.text(row.label)))}`,
@@ -180,10 +189,7 @@ const describeValidation = (element: JsonRecord): string[] => {
   return [`${count} validation ${count === 1 ? "rule" : "rules"}${count > 1 ? ` (${logic} must pass)` : ""}`];
 };
 
-export const buildLogicContext = (
-  survey: SurveyDocument,
-  languageCode: string
-): LogicContext => {
+export const buildLogicContext = (survey: SurveyDocument, languageCode: string): LogicContext => {
   const context: LogicContext = {
     languageCode,
     defaultLanguage: survey.defaultLanguage,
@@ -208,7 +214,9 @@ export const buildLogicContext = (
     });
   });
   survey.endings.forEach((ending, index) => context.endings.set(asString(ending.id), index + 1));
-  survey.variables.forEach((variable) => context.variables.set(asString(variable.id), asString(variable.name)));
+  survey.variables.forEach((variable) =>
+    context.variables.set(asString(variable.id), asString(variable.name))
+  );
   return context;
 };
 
@@ -276,7 +284,9 @@ export const buildOutline = (survey: SurveyDocument, languageCode: string): Outl
     blocks,
     endings,
     questionCount: questionNumber,
-    hiddenFields: Array.isArray(hiddenFieldIds) ? hiddenFieldIds.filter((id): id is string => typeof id === "string") : [],
+    hiddenFields: Array.isArray(hiddenFieldIds)
+      ? hiddenFieldIds.filter((id): id is string => typeof id === "string")
+      : [],
     variables: survey.variables.map((variable) => asString(variable.name)).filter(Boolean),
   };
 };
@@ -291,7 +301,13 @@ const STATUS_LABELS: Record<string, string> = {
 export const getStatusLabel = (status: string): string => STATUS_LABELS[status] ?? status;
 
 export const getStatusTone = (status: string): "neutral" | "success" | "warning" | "info" =>
-  status === "inProgress" ? "success" : status === "paused" ? "warning" : status === "completed" ? "info" : "neutral";
+  status === "inProgress"
+    ? "success"
+    : status === "paused"
+      ? "warning"
+      : status === "completed"
+        ? "info"
+        : "neutral";
 
 export const getTypeName = (type: string): string => (type === "app" ? "App survey" : "Link survey");
 
@@ -330,7 +346,10 @@ export const buildSettingLines = (
   if (settings.publishOn) lines.push({ label: "Scheduled to start", value: format.date(settings.publishOn) });
   if (settings.closeOn) lines.push({ label: "Closes on", value: format.date(settings.closeOn) });
   if (settings.autoComplete !== null) {
-    lines.push({ label: "Response limit", value: `Closes after ${format.number(settings.autoComplete)} responses` });
+    lines.push({
+      label: "Response limit",
+      value: `Closes after ${format.number(settings.autoComplete)} responses`,
+    });
   }
   if (settings.pinProtected) lines.push({ label: "Access", value: "Protected by a PIN" });
   if (settings.verifyEmail) lines.push({ label: "Access", value: "Respondents verify their email first" });
@@ -348,19 +367,32 @@ export const buildSettingLines = (
         value: `${settings.segment.title}${settings.segment.filterCount > 0 ? ` (${settings.segment.filterCount} filters)` : " (everyone)"}`,
       });
     }
-    lines.push({ label: "Frequency", value: DISPLAY_OPTION_WORDS[settings.displayOption] ?? settings.displayOption });
+    lines.push({
+      label: "Frequency",
+      value: DISPLAY_OPTION_WORDS[settings.displayOption] ?? settings.displayOption,
+    });
     if (settings.displayPercentage !== null) {
-      lines.push({ label: "Sampling", value: `Shown to ${settings.displayPercentage}% of matching visitors` });
+      lines.push({
+        label: "Sampling",
+        value: `Shown to ${settings.displayPercentage}% of matching visitors`,
+      });
     }
     if (settings.displayLimit !== null && settings.displayLimit > 0) {
       lines.push({ label: "Display limit", value: `${settings.displayLimit} times` });
     }
     if (settings.recontactDays !== null) {
-      lines.push({ label: "Cooldown", value: `${settings.recontactDays} days before this person sees another survey` });
+      lines.push({
+        label: "Cooldown",
+        value: `${settings.recontactDays} days before this person sees another survey`,
+      });
     }
-    if (settings.delaySeconds > 0) lines.push({ label: "Delay", value: `${settings.delaySeconds} seconds after the trigger` });
+    if (settings.delaySeconds > 0)
+      lines.push({ label: "Delay", value: `${settings.delaySeconds} seconds after the trigger` });
     if (settings.autoCloseSeconds !== null) {
-      lines.push({ label: "Auto close", value: `After ${settings.autoCloseSeconds} seconds without interaction` });
+      lines.push({
+        label: "Auto close",
+        value: `After ${settings.autoCloseSeconds} seconds without interaction`,
+      });
     }
   }
   return lines;

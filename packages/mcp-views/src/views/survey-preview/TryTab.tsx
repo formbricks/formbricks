@@ -39,7 +39,8 @@ export const TryTab = ({ meta, languageCode, surveyLanguages, theme, app }: Read
   const idPrefix = useId().replace(/[^a-zA-Z0-9]/g, "");
 
   const rendererLanguage = useMemo(
-    () => (meta ? toRendererLanguage(languageCode, surveyLanguages, meta.render.survey.languages) : "default"),
+    () =>
+      meta ? toRendererLanguage(languageCode, surveyLanguages, meta.render.survey.languages) : "default",
     [meta, languageCode, surveyLanguages]
   );
   // Dark applies to app surveys only: a link survey has no dark palette and always renders light.
@@ -100,8 +101,8 @@ export const TryTab = ({ meta, languageCode, surveyLanguages, theme, app }: Read
   if (!meta) {
     return (
       <Callout>
-        The preview needs data this result does not carry. The Review tab shows the whole survey; ask the agent to show
-        the survey again to try it.
+        The preview needs data this result does not carry. The Review tab shows the whole survey; ask the
+        agent to show the survey again to try it.
       </Callout>
     );
   }
@@ -116,14 +117,17 @@ export const TryTab = ({ meta, languageCode, surveyLanguages, theme, app }: Read
       </div>
       {status === "unavailable" ? (
         <Callout tone="warning">
-          The survey could not be loaded for trying out ({reason}). The agent&apos;s host may be blocking scripts from
-          this Formbricks instance. The Review tab still shows the whole survey.
+          The survey could not be loaded for trying out ({reason}). The agent&apos;s host may be blocking
+          scripts from this Formbricks instance. The Review tab still shows the whole survey.
         </Callout>
       ) : (
         <div
           className="sp-stage"
           {...{ [PREVIEW_BOUNDARY_ATTRIBUTE]: "" }}
-          style={{ background: meta.render.survey.type === "link" ? getStageBackground(meta.render.styling) : undefined }}>
+          style={{
+            background:
+              meta.render.survey.type === "link" ? getStageBackground(meta.render.styling) : undefined,
+          }}>
           {status === "loading" ? (
             <div className="sp-center">
               <Loading label="Loading the survey…" />

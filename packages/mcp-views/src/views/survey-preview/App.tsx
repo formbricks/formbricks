@@ -4,15 +4,15 @@ import { Badge, Loading } from "../../shared/ui";
 import { useToolView } from "../../shared/use-tool-view";
 import { Callout } from "./Callout";
 import { ReviewTab } from "./ReviewTab";
-import { type TabId, SurveyTabs, panelId, tabId } from "./SurveyTabs";
+import { SurveyTabs, type TabId, panelId, tabId } from "./SurveyTabs";
 import { TryTab } from "./TryTab";
 import { createFormatters } from "./formatters";
 import { getEnabledLanguages } from "./i18n-text";
 import { getStatusLabel, getStatusTone, getTypeName } from "./outline";
 import { parseShowSurveyResult } from "./read-result";
 import { pickInitialLanguage } from "./renderer-config";
-import type { ShowSurveyData } from "./types";
 import "./survey-preview.css";
+import type { ShowSurveyData } from "./types";
 
 const SurveyPreview = ({
   data,
@@ -129,7 +129,9 @@ export const App = () => {
   const parsed = useMemo(() => (result ? parseShowSurveyResult(result) : null), [result]);
 
   if (connectionError) {
-    return <Callout tone="danger">This view could not connect to the chat: {connectionError.message}</Callout>;
+    return (
+      <Callout tone="danger">This view could not connect to the chat: {connectionError.message}</Callout>
+    );
   }
   if (cancelledReason) {
     return <Callout>The request was cancelled before the survey arrived.</Callout>;
@@ -141,7 +143,9 @@ export const App = () => {
     return <Callout tone="danger">The survey could not be shown: {parsed.message}</Callout>;
   }
   if (parsed.kind === "unreadable") {
-    return <Callout tone="warning">{getResultText(result) ?? "This result does not contain a survey."}</Callout>;
+    return (
+      <Callout tone="warning">{getResultText(result) ?? "This result does not contain a survey."}</Callout>
+    );
   }
   return <SurveyPreview data={parsed.data} input={input} toolView={toolView} />;
 };

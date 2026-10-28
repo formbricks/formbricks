@@ -9,7 +9,10 @@ const TONE_CLASS: Record<CalloutTone, string> = {
 };
 
 /** Same look as the shared `Notice`, with the tone class separated from the base class by a space. */
-export const Callout = ({ tone = "neutral", children }: Readonly<{ tone?: CalloutTone; children: ReactNode }>) => (
+export const Callout = ({
+  tone = "neutral",
+  children,
+}: Readonly<{ tone?: CalloutTone; children: ReactNode }>) => (
   <div className={TONE_CLASS[tone]} role={tone === "neutral" ? "status" : "alert"}>
     {children}
   </div>

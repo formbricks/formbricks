@@ -23,7 +23,10 @@ const meta = {
 
 describe("parseShowSurveyResult", () => {
   test("reads the survey, the render data and the problems", () => {
-    const parsed = parseShowSurveyResult({ structuredContent: { data: survey }, _meta: { formbricks: meta } });
+    const parsed = parseShowSurveyResult({
+      structuredContent: { data: survey },
+      _meta: { formbricks: meta },
+    });
     expect(parsed.kind).toBe("ok");
     if (parsed.kind !== "ok") return;
     expect(parsed.data.survey.name).toBe("Feedback");
@@ -58,7 +61,9 @@ describe("parseShowSurveyResult", () => {
   });
 
   test("reports a result that holds no survey", () => {
-    expect(parseShowSurveyResult({ structuredContent: { data: { nope: true } } })).toEqual({ kind: "unreadable" });
+    expect(parseShowSurveyResult({ structuredContent: { data: { nope: true } } })).toEqual({
+      kind: "unreadable",
+    });
     expect(parseShowSurveyResult({})).toEqual({ kind: "unreadable" });
   });
 });

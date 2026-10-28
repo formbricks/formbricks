@@ -129,7 +129,11 @@ const ChangeRequest = ({
         <label className="sp-field-label" htmlFor={aboutId}>
           About
         </label>
-        <select id={aboutId} className="sp-select" value={about} onChange={(event) => setAbout(event.target.value)}>
+        <select
+          id={aboutId}
+          className="sp-select"
+          value={about}
+          onChange={(event) => setAbout(event.target.value)}>
           <option value="survey">The whole survey</option>
           {questions.map((question) => (
             <option key={question.id} value={question.id}>
@@ -152,7 +156,9 @@ const ChangeRequest = ({
         }}
       />
       <div className="fb-row">
-        <Button variant="primary" disabled={!text.trim() || status === "sending"}
+        <Button
+          variant="primary"
+          disabled={!text.trim() || status === "sending"}
           onClick={() => {
             void send();
           }}>
@@ -173,14 +179,24 @@ const ChangeRequest = ({
   );
 };
 
-export const ReviewTab = ({ data, languageCode, formatters, app, canMessage, canOpenLinks }: Readonly<ReviewTabProps>) => {
+export const ReviewTab = ({
+  data,
+  languageCode,
+  formatters,
+  app,
+  canMessage,
+  canOpenLinks,
+}: Readonly<ReviewTabProps>) => {
   const outline = useMemo(() => buildOutline(data.survey, languageCode), [data.survey, languageCode]);
   const settingLines = useMemo(
     () => buildSettingLines(data.survey, data.meta?.settings ?? null, formatters),
     [data.survey, data.meta, formatters]
   );
   const showConditions = useMemo(() => describeShowConditions(data.survey), [data.survey]);
-  const facts = [...settingLines, ...(showConditions ? [{ label: "Shows when", value: showConditions }] : [])];
+  const facts = [
+    ...settingLines,
+    ...(showConditions ? [{ label: "Shows when", value: showConditions }] : []),
+  ];
   const surveyUrl = data.meta?.surveyUrl ?? null;
 
   return (
@@ -201,8 +217,8 @@ export const ReviewTab = ({ data, languageCode, formatters, app, canMessage, can
 
       <section className="sp-section" aria-label="Questions">
         <h2 className="sp-section-title">
-          {outline.questionCount} {outline.questionCount === 1 ? "question" : "questions"} in {outline.blocks.length}{" "}
-          {outline.blocks.length === 1 ? "block" : "blocks"}
+          {outline.questionCount} {outline.questionCount === 1 ? "question" : "questions"} in{" "}
+          {outline.blocks.length} {outline.blocks.length === 1 ? "block" : "blocks"}
         </h2>
         {outline.welcome ? (
           <div className="sp-block">
@@ -210,7 +226,9 @@ export const ReviewTab = ({ data, languageCode, formatters, app, canMessage, can
               <span className="sp-number" aria-hidden="true" />
               <div>
                 <div className="sp-headline">{outline.welcome.headline || "Welcome"}</div>
-                {outline.welcome.description ? <div className="sp-detail">{outline.welcome.description}</div> : null}
+                {outline.welcome.description ? (
+                  <div className="sp-detail">{outline.welcome.description}</div>
+                ) : null}
                 <div className="sp-meta">
                   <Badge>Welcome screen</Badge>
                 </div>

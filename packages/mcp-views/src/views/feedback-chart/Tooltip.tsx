@@ -37,7 +37,7 @@ export const Tooltip = ({
         return (
           <div
             key={`${row.label}-${index}`}
-            className={`fbc-tip-row${row.emphasis ? "fbc-tip-row-emphasis" : ""}`}>
+            className={row.emphasis ? "fbc-tip-row fbc-tip-row-emphasis" : "fbc-tip-row"}>
             {color ? <span className="fbc-tip-key" style={{ background: color }} /> : null}
             <span className="fbc-tip-label">{row.label}</span>
             <span className="fbc-tip-value">{row.value}</span>

@@ -55,17 +55,14 @@ const OPERATOR_WORDS: Record<string, string> = {
   isAnyOf: "is any of",
 };
 
-export const describeOperand = (
-  operand: unknown,
-  context: LogicContext,
-  leftElementId?: string
-): string => {
+export const describeOperand = (operand: unknown, context: LogicContext, leftElementId?: string): string => {
   if (!isRecord(operand)) return "?";
   const { type, value } = operand;
 
   if (type === "static") {
     const choices = leftElementId ? context.elements.get(leftElementId)?.choices : undefined;
-    const label = (entry: unknown) => (typeof entry === "string" ? (choices?.get(entry) ?? entry) : String(entry));
+    const label = (entry: unknown) =>
+      typeof entry === "string" ? (choices?.get(entry) ?? entry) : String(entry);
     return Array.isArray(value) ? value.map(label).join(", ") : `"${label(value)}"`;
   }
   if (typeof value !== "string") return "?";
@@ -81,10 +78,14 @@ export const describeOperand = (
 
 const describeCondition = (condition: JsonRecord, context: LogicContext): string => {
   const left = condition.leftOperand;
-  const leftElementId = isRecord(left) && left.type === "element" && typeof left.value === "string" ? left.value : undefined;
+  const leftElementId =
+    isRecord(left) && left.type === "element" && typeof left.value === "string" ? left.value : undefined;
   const operator = typeof condition.operator === "string" ? condition.operator : "";
   const words = OPERATOR_WORDS[operator] ?? operator;
-  const right = condition.rightOperand === undefined ? "" : ` ${describeOperand(condition.rightOperand, context, leftElementId)}`;
+  const right =
+    condition.rightOperand === undefined
+      ? ""
+      : ` ${describeOperand(condition.rightOperand, context, leftElementId)}`;
   return `${describeOperand(left, context)} ${words}${right}`;
 };
 
@@ -92,9 +93,13 @@ const describeCondition = (condition: JsonRecord, context: LogicContext): string
 export const describeConditionGroup = (group: unknown, context: LogicContext, nested = false): string => {
   if (!isRecord(group) || !Array.isArray(group.conditions)) return "";
   const connector = group.connector === "or" ? " or " : " and ";
-  const parts = group.conditions.filter(isRecord).map((entry) =>
-    Array.isArray(entry.conditions) ? describeConditionGroup(entry, context, true) : describeCondition(entry, context)
-  );
+  const parts = group.conditions
+    .filter(isRecord)
+    .map((entry) =>
+      Array.isArray(entry.conditions)
+        ? describeConditionGroup(entry, context, true)
+        : describeCondition(entry, context)
+    );
   const joined = parts.filter(Boolean).join(connector);
   return nested && parts.length > 1 ? `(${joined})` : joined;
 };
