@@ -1,7 +1,8 @@
 # Monorepo Builds & Packages
 
 Read before adding a workspace package or shared dependency, wiring one package into another's build
-config, styling inside a workspace package, or when a package change does not show up in the app.
+config, styling inside a workspace package, adding tests outside a workspace, or diagnosing a missing
+package change or a direct test failure after switching branches.
 
 ## Turbo Task Matrix
 
@@ -65,9 +66,11 @@ The `@formbricks/surveys` package is pre-compiled (Vite → UMD + ESM) and the b
   (ENG-2924). Only `build` declares them: `build:dev` copies through the same plugin, and a second task
   declaring the same paths makes each cache entry capture whatever the other left on disk. If a build
   still looks stale, bypass the cache explicitly:
+
   ```
   pnpm build --filter=@formbricks/surveys... --force
   ```
+
 - The browser also caches the UMD bundle (`surveys.umd.cjs`) served from `public/js/`. After rebuilding, do a **hard refresh** (Cmd+Shift+R / Ctrl+Shift+R) or disable the browser cache via DevTools to pick up the new bundle.
 - If changes still don't appear, restart the Next.js dev server (`pnpm dev`).
 

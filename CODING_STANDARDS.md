@@ -4,30 +4,34 @@ Read at review time: the `code-review` skill's Standards pass and every reviewer
 It holds judgement calls. What an implementer needs before the first line stays in `AGENTS.md`, and task
 process lives under `docs/agents/`.
 
-## Already Enforced by Tooling
+## Tooling and Review Scope
 
-CI checks these, so a review comment about them adds nothing:
+Apply the judgment calls below to the diff. Check the relevant tool output before repeating a finding:
+Prettier owns formatting and import order; ESLint owns its enabled rules; schema freshness checks own
+generated API drift. `packages/config-eslint/` and `apps/web/eslint.config.mjs` define lint severity and
+exceptions. A warning is still actionable when CI does not block it.
 
-- Import order is set by `@trivago/prettier-plugin-sort-imports` and verified in CI by `pnpm format:check`, so it is not a matter of taste: `__mocks__` imports come first (they carry `vi.mock` calls), then `server-only`, then third-party packages, then `@formbricks/*`, `~/*`, `@/*`, and relative imports. Do not ask for or apply a different order in review — it will fail the check.
-- `process.env` in `apps/web`: an ESLint rule enforces the env-module rule in `AGENTS.md` ("Environment
-  Variables").
-- `any`: `@typescript-eslint/no-explicit-any` fails `packages/*`, but is still only a warning in `apps/web`,
-  so a new `any` there is worth flagging (see "Quality Checklist").
-- We are using SonarQube to identify code smells and security hotspots.
+Static `unstable_cache` imports from `next/cache` are lint errors. `pnpm workflow:check` enforces explicit
+permission maps and runner hardening first for literal `ubuntu-latest` jobs. Reviewers still judge
+whether requested token permissions are minimal and whether dynamic runner choices need hardening.
 
-## Coding Style & Naming Conventions
+## Conventions Awaiting Automated Enforcement
 
-TypeScript, React, and Prisma are the primary languages. Use the shared ESLint presets (`@formbricks/config-eslint`) and Prettier preset (110-char width, semicolons, double quotes, sorted import groups). Two-space indentation is standard; prefer `PascalCase` for React components and folders under `modules/`, `camelCase` for functions/variables, and `SCREAMING_SNAKE_CASE` only for constants. When adding mocks, place them inside `__mocks__` so import ordering stays stable.
-Always mark React component props as `Readonly<>` (e.g., `({ children }: Readonly<MyProps>)`).
+These remain review checks until their enforcement handles the repository's existing patterns:
+
+- React component props use `Readonly<>`.
+- Cache keys use `createCacheKey.*` utilities.
+- Mock boundaries live in `__mocks__` so their imports register before the module under test.
+
+Prefer `PascalCase` for React components and folders under `modules/`, `camelCase` for functions and
+variables, and `SCREAMING_SNAKE_CASE` for constants.
 
 ## Quality Checklist
 
-- Keep code DRY and small; remove dead code and unused imports.
+- Keep responsibilities focused; consolidate duplicated behavior when it has one reason to change.
 - Follow React hooks rules, keep effects focused, and avoid unnecessary `useMemo`/`useCallback`.
-- Prefer type inference, avoid `any`, and use shared types from `@formbricks/types`. This is enforced:
-  `@typescript-eslint/no-explicit-any` is an error in `packages/*` and a warning in `apps/web`, where the
-  typescript-eslint baseline is being ratcheted to error rule by rule (ENG-2264). Never add new `any`s —
-  a warning today becomes an error once its rule's backlog is cleared.
+- Prefer type inference and shared types from `@formbricks/types`; new `any`s are still findings where
+  ESLint reports them only as warnings.
 - Keep components focused, avoid deep nesting, and ensure basic accessibility.
 - Context providers should guard against missing provider usage and use cleanup patterns that snapshot refs inside `useEffect` to avoid React hooks warnings
 
@@ -75,8 +79,6 @@ raises them too — but that is a second pair of eyes, and its silence is not a 
 ## Caching
 
 - Use React `cache()` for request-level dedupe and `cache.withCache()` or explicit Redis for expensive data.
-- Do not use Next.js `unstable_cache()`.
-- Always use `createCacheKey.*` utilities for cache keys.
 
 ## Date and Time Rendering
 
@@ -141,18 +143,10 @@ Do:
   evaluators, calculations, and edge cases. Keep assertions on inputs and outputs, colocate specs with
   the code they exercise (`utility.test.ts`), and mock network and storage boundaries through helpers
   from `@formbricks/*`.
-- API v3 contract tests (Schemathesis): every documented `/api/v3` operation is driven against a real
-  instance on each PR and must match the committed OpenAPI bundle — status codes, content type and
-  response schema. Nothing to register per endpoint; documenting an operation is what enrolls it. To
-  exercise a new one against real data rather than its documented 403, add the resource in
-  `packages/database/src/scripts/seed-contract-fixtures.ts`. Harness and local run:
-  `docs/api-v3-reference/contract-tests/README.md`.
-- API v3 schemas are generated, not handwritten, for the tags listed in
-  `packages/api-v3-schemas/scripts/adopted.ts`: edit the spec under `docs/api-v3-reference/src/`, then
-  run `pnpm api:v3:sync` (bundle + `pnpm api:v3:schemas`) and commit both outputs. `pnpm lint` fails on a
-  stale bundle or stale schemas. Constraints the generator cannot express are pinned in
-  `src/testing/unenforced.ts` and enforced by the consuming route's refinement layer; how to adopt a
-  resource is in `docs/development/technical-handbook/api-v3-schema-generation.mdx`.
+- For API v3 changes, check that the spec, generated schemas, and route refinements agree. Review
+  contract coverage against real fixtures using `docs/api-v3-reference/contract-tests/README.md`;
+  generation and adoption procedures live in
+  `docs/development/technical-handbook/api-v3-schema-generation.mdx`.
 - Manual QA, especially for releases: verify on staging and file bugs. If a bug is critical, backport and
   re-test. For UI detail below the journey level, manual verification plus a screenshot in the PR is the
   expected answer, not a new spec.
@@ -187,7 +181,10 @@ Do not:
 - Use `@storybook/react-vite` and organize argTypes into `Behavior`, `Appearance`, `Content`.
 - Include Default, Disabled (if supported), WithIcon (if supported), all variants, and edge cases.
 
-## Documentation (root docs/)
+## Documentation (Mintlify MDX)
+
+The following conventions apply to published `.mdx` pages. Internal Markdown references such as
+`docs/agents/*.md` use a document title (H1) and section headings (H2).
 
 - Add frontmatter with `title`, `description`, and `icon` at the top of the MDX file.
 - Do not start with an H1; use Camel Case headings (only capitalize the feature name).
@@ -197,4 +194,4 @@ Do not:
 ## GitHub Actions
 
 - Always set minimal `permissions` for `GITHUB_TOKEN`.
-- On `ubuntu-latest`, add `step-security/harden-runner` as the first step.
+- For dynamic runner selection, verify that each `ubuntu-latest` job hardens the runner before other steps.
