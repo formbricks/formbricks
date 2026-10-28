@@ -51,9 +51,6 @@ export type {
   Team,
   TeamUser,
   WorkspaceTeam,
-  Chart,
-  Dashboard,
-  DashboardWidget,
   FeedbackSource,
   FeedbackSourceFormbricksMapping,
   FeedbackSourceFieldMapping,
@@ -96,7 +93,6 @@ export namespace Prisma {
     GlobalOmitOptions = {},
   > = PrismaNamespaceTypes.TypeMap<ExtArgs, GlobalOmitOptions>;
   export type ActionClassSelect = PrismaModelTypes.ActionClassSelect;
-  export type ChartFindManyArgs = PrismaModelTypes.ChartFindManyArgs;
   export type ContactAttributeKeyCreateInput = PrismaModelTypes.ContactAttributeKeyCreateInput;
   export type ContactAttributeKeyCreateWithoutWorkspaceInput =
     PrismaModelTypes.ContactAttributeKeyCreateWithoutWorkspaceInput;
@@ -114,7 +110,6 @@ export namespace Prisma {
   export type CreativeInclude = PrismaModelTypes.CreativeInclude;
   export type CreativeSelect = PrismaModelTypes.CreativeSelect;
   export type CreativeWhereInput = PrismaModelTypes.CreativeWhereInput;
-  export type DashboardFindManyArgs = PrismaModelTypes.DashboardFindManyArgs;
   export type DateTimeFilter = PrismaModelTypes.DateTimeFilter;
   export type DateTimeNullableFilter = PrismaModelTypes.DateTimeNullableFilter;
   export type DisplaySelect = PrismaModelTypes.DisplaySelect;

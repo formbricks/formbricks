@@ -44,7 +44,6 @@
 #   survey:leaky (workspace:main) with a FORGED `#shared_workspace@workspace:foreign` edge, where
 #     workspace:foreign belongs to organization:globex (owner user:gary). Documents why the projector
 #     must derive that edge from `Survey.workspaceId` alone: the edge alone hands another tenant read.
-#   dashboard:insights (workspace:main)
 #   response:r1 (survey:onboarding), response:r2 (survey:draft)
 
 schemaFile: schema.zed
@@ -101,7 +100,6 @@ relationships: |-
   workspace:foreign#organization@organization:globex
   survey:leaky#workspace@workspace:main
   survey:leaky#shared_workspace@workspace:foreign
-  dashboard:insights#workspace@workspace:main
   response:r1#survey@survey:onboarding
   response:r2#survey@survey:draft
 
@@ -142,8 +140,6 @@ assertions:
     - response:r1#write_v2@user:olivia
     - response:r1#manage_v2@user:mark
     - response:r1#export_v2@user:olivia
-    - dashboard:insights#read@user:mark
-    - dashboard:insights#write@user:mark
     - api_key:org_reader_key#manage@user:olivia
     - api_key:org_reader_key#manage@user:mark
     - feedback_directory:customer_feedback#manage@user:olivia
@@ -181,8 +177,6 @@ assertions:
     - survey:onboarding#response_read_v2@user:tina
     - survey:onboarding#response_export_v2@user:tina
     - response:r1#write_v2@user:tina
-    - dashboard:insights#read@user:tina
-    - dashboard:insights#write@user:tina
     - team:product#manage@user:tom
     - team:product#member@user:tom
     - team:product#read@user:tina
@@ -199,15 +193,6 @@ assertions:
     - survey:onboarding#response_export_v2@user:uma
     - response:r1#read_v2@user:uma
     - response:r1#export_v2@user:uma
-
-    # ------------------------------------------------------------------
-    # Scenario 5 — Dashboard read derives from workspace read.
-    # Dashboards carry no ACL of their own; whoever can read the
-    # workspace can read its dashboards (checkWorkspaceAccess).
-    # ------------------------------------------------------------------
-    - dashboard:insights#read@user:uma
-    - dashboard:insights#read@user:olivia
-    - dashboard:insights#read@api_key:ci_reader
 
     # ------------------------------------------------------------------
     # Scenario 6 — API key as scoped principal.
@@ -231,12 +216,10 @@ assertions:
     - workspace:main#write@api_key:ci_writer
     - survey:onboarding#write_v2@api_key:ci_writer
     - survey:onboarding#delete_v2@api_key:ci_writer
-    - dashboard:insights#write@api_key:ci_writer
     - response:r1#write_v2@api_key:ci_writer
     - workspace:main#manage@api_key:ci_manager
     - survey:onboarding#manage_v2@api_key:ci_manager
     - survey:onboarding#delete_v2@api_key:ci_manager
-    - dashboard:insights#write@api_key:ci_manager
     - response:r1#manage_v2@api_key:ci_manager
 
     # Scenario 7 (ENG-3282) — a private survey is reachable by its owner, along the owner's own
@@ -306,7 +289,6 @@ assertions:
     - organization:acme#manage_billing@user:mia
     - workspace:main#read@user:mia
     - survey:onboarding#read_v2@user:mia
-    - dashboard:insights#read@user:mia
     - api_key:org_reader_key#manage@user:mia
     - feedback_directory:customer_feedback#read@user:mia
     - feedback_directory:customer_feedback#read@user:bella
@@ -341,8 +323,6 @@ assertions:
     - response:r1#write_v2@user:bella
     - response:r1#manage_v2@user:bella
     - response:r1#export_v2@user:bella
-    - dashboard:insights#read@user:bella
-    - dashboard:insights#write@user:bella
 
     # A team row without a membership in the team's organization grants nothing, mirroring
     # legacy's `if (!orgMembership) return false;` ahead of the team ladder.
@@ -370,14 +350,9 @@ assertions:
     - survey:onboarding#manage_v2@user:uma
     - response:r1#write_v2@user:uma
     - response:r1#manage_v2@user:uma
-    - dashboard:insights#write@user:uma
     - workspace:other#read@user:uma
     - survey:internal#read_v2@user:uma
     - team:product#member@user:uma
-
-    # Scenario 5 — no workspace read, no dashboard read (covered for bella
-    # and mia above; org-only API keys likewise see no dashboards).
-    - dashboard:insights#read@api_key:org_writer_key
 
     # Scenario 6 — workspace keys must not exceed their level or workspace;
     # organization-only keys have no product access; accessControl.read
@@ -386,7 +361,6 @@ assertions:
     - workspace:main#manage@api_key:ci_reader
     - workspace:main#share@api_key:ci_reader
     - survey:onboarding#delete_v2@api_key:ci_reader
-    - dashboard:insights#write@api_key:ci_reader
     - response:r1#write_v2@api_key:ci_reader
     - response:r1#manage_v2@api_key:ci_reader
     - workspace:main#manage@api_key:ci_writer

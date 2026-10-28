@@ -1,4 +1,4 @@
-import type { TChartQuery } from "@formbricks/types/analysis";
+import type { TCubeQuery } from "@formbricks/types/analysis";
 import { isSubDayDateRangePreset, resolveDateRangePreset } from "@/lib/date-ranges";
 import { formatLocalDay } from "@/lib/utils/datetime";
 
@@ -11,10 +11,10 @@ import { formatLocalDay } from "@/lib/utils/datetime";
  * the same names through the same module, so both surfaces cover the same days for the same viewer.
  */
 export const expandPresetDateRanges = (
-  query: TChartQuery,
+  query: TCubeQuery,
   timeZone: string,
   now: Date = new Date()
-): TChartQuery => {
+): TCubeQuery => {
   const timeDimensions = query.timeDimensions?.map((td) => {
     const preset = td.dateRange;
     if (typeof preset !== "string") return td;

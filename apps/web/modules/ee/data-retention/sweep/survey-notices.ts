@@ -40,8 +40,9 @@ export type TNoticeLine<TEntity extends "surveys" | "responses"> = TEntity exten
   ? TRetentionNoticeResponseDeletion
   : TRetentionNoticeArchivedSurvey;
 
-const surveyUrl = (survey: { id: string; workspaceId: string }) =>
-  `${WEBAPP_URL}/workspaces/${survey.workspaceId}/surveys/${survey.id}/summary`;
+// There is no per-survey page any more: surveys are read and changed by agents, so the notice links
+// to the organization home, where the person opens their agent connection.
+const organizationUrl = (organizationId: string) => `${WEBAPP_URL}/organizations/${organizationId}`;
 
 /** Dates as the rest of Data retention shows them, in the organisation's reporting time zone. */
 const formatFor = (locale: string, timeZone: string): TNoticeFormat => {
@@ -186,8 +187,10 @@ const emailRecipient = async (
   const archivedSurveys: TRetentionNoticeArchivedSurvey[] = [];
   const responseDeletions: TRetentionNoticeResponseDeletion[] = [];
   for (const notice of notices) {
-    if (notice.entity === "surveys") archivedSurveys.push(notice.describe(format, surveyUrl(notice.survey)));
-    else responseDeletions.push(notice.describe(format, surveyUrl(notice.survey)));
+    if (notice.entity === "surveys")
+      archivedSurveys.push(notice.describe(format, organizationUrl(notice.context.policy.organizationId)));
+    else
+      responseDeletions.push(notice.describe(format, organizationUrl(notice.context.policy.organizationId)));
   }
 
   try {

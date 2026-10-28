@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import type { TChartQuery } from "@formbricks/types/analysis";
+import type { TCubeQuery } from "@formbricks/types/analysis";
 import {
   DATE_RANGE_PRESETS,
   getCalendarDayInTimeZone,
@@ -9,7 +9,7 @@ import {
 import { formatLocalDay } from "@/lib/utils/datetime";
 import { expandPresetDateRanges } from "./date-presets";
 
-const queryWithDateRange = (dateRange: string | [string, string]): TChartQuery => ({
+const queryWithDateRange = (dateRange: string | [string, string]): TCubeQuery => ({
   measures: ["FeedbackRecords.count"],
   timeDimensions: [{ dimension: "FeedbackRecords.collectedAt", dateRange }],
 });
@@ -93,7 +93,7 @@ describe("expandPresetDateRanges", () => {
   });
 
   test("sets the time zone even when the query has no time dimension", () => {
-    const q: TChartQuery = { measures: ["FeedbackRecords.count"] };
+    const q: TCubeQuery = { measures: ["FeedbackRecords.count"] };
     expect(expandPresetDateRanges(q, BERLIN, NOW)).toEqual({ ...q, timezone: BERLIN });
   });
 
@@ -106,7 +106,7 @@ describe("expandPresetDateRanges", () => {
   });
 
   test("preserves other timeDimension fields (granularity, dimension)", () => {
-    const q: TChartQuery = {
+    const q: TCubeQuery = {
       measures: ["FeedbackRecords.count"],
       timeDimensions: [
         { dimension: "FeedbackRecords.collectedAt", granularity: "day", dateRange: "last 7 days" },

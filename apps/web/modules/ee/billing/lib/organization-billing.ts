@@ -683,7 +683,7 @@ export const createPaidPlanCheckoutSession = async (input: {
       // Carries the purchased plan so the confirmation page can force a Stripe sync — the read-
       // through sync only refreshes a >5min-stale snapshot and would otherwise serve the old plan.
       success_url: `${WEBAPP_URL}/billing-confirmation?organizationId=${input.organizationId}&checkout_success=1&plan=${input.plan}`,
-      cancel_url: `${WEBAPP_URL}/organizations/${input.organizationId}/settings/billing`,
+      cancel_url: `${WEBAPP_URL}/organizations/${input.organizationId}/billing`,
       metadata: {
         organizationId: input.organizationId,
         targetPlan: input.plan,

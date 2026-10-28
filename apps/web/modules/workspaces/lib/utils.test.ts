@@ -86,7 +86,7 @@ describe("getWorkspaceAuth billing gate (ENG-1763)", () => {
 
     await getWorkspaceAuth(workspaceId);
 
-    expect(getBillingFallbackPath).toHaveBeenCalledWith(organizationId, mocks.isFormbricksCloud);
+    expect(getBillingFallbackPath).toHaveBeenCalledWith(organizationId);
     expect(redirect).toHaveBeenCalledWith(billingFallbackPath);
   });
 

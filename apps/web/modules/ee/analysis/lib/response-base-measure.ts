@@ -1,4 +1,4 @@
-import type { TChartQuery } from "@formbricks/types/analysis";
+import type { TCubeQuery } from "@formbricks/types/analysis";
 import { getResponseBaseMeasureId } from "@/modules/ee/analysis/lib/schema-definition";
 
 /**
@@ -9,7 +9,7 @@ import { getResponseBaseMeasureId } from "@/modules/ee/analysis/lib/schema-defin
  * Lives here, not next to the chart renderer that shows the "Based on N answers" footer, because the
  * Cube client applies it and must not depend on chart code.
  */
-export const withResponseBaseMeasure = (query: TChartQuery): TChartQuery => {
+export const withResponseBaseMeasure = (query: TCubeQuery): TCubeQuery => {
   const measures = query.measures ?? [];
   const base = getResponseBaseMeasureId(measures);
   if (!base || measures.includes(base)) return query;

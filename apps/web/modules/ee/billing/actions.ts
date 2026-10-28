@@ -57,7 +57,7 @@ export const manageSubscriptionAction = authenticatedActionClient
       ctx.auditLoggingCtx.organizationId = organizationId;
       const result = await createCustomerPortalSession(
         organization.billing.stripeCustomerId,
-        `${WEBAPP_URL}/organizations/${organizationId}/settings/billing`
+        `${WEBAPP_URL}/organizations/${organizationId}/billing`
       );
       ctx.auditLoggingCtx.newObject = { portalSessionCreated: true };
       return result;
@@ -191,7 +191,7 @@ export const createTrialPaymentCheckoutAction = authenticatedActionClient
       }
 
       ctx.auditLoggingCtx.organizationId = organizationId;
-      const returnUrl = `${WEBAPP_URL}/organizations/${organizationId}/settings/billing`;
+      const returnUrl = `${WEBAPP_URL}/organizations/${organizationId}/billing`;
       const upgradeIntent =
         parsedInput.targetPlan !== undefined
           ? {

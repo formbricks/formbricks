@@ -1,5 +1,5 @@
 import "server-only";
-import type { TChartQuery } from "@formbricks/types/analysis";
+import type { TCubeQuery } from "@formbricks/types/analysis";
 import { VALUE_BAND_DIMENSION_ID } from "@/modules/ee/analysis/lib/schema-definition";
 
 export const TENANT_MEMBER = "FeedbackRecords.tenantId";
@@ -280,7 +280,7 @@ const addValidatedTimeDimensions = (timeDimensions: unknown, result: TMemberVali
  * Validates all Cube member references controlled by users, saved charts, or AI output.
  * Tenant scoping is deliberately excluded from query JSON and enforced by Cube queryRewrite.
  */
-export const validateCubeQueryMembers = (query: TChartQuery): void => {
+export const validateCubeQueryMembers = (query: TCubeQuery): void => {
   const result: TMemberValidationResult = {
     invalidMembers: [],
     tenantMembers: [],
@@ -318,7 +318,7 @@ export const validateCubeQueryMembers = (query: TChartQuery): void => {
   }
 };
 
-export const getCubeQueryAuditSummary = (query: TChartQuery): TQueryAuditSummary => {
+export const getCubeQueryAuditSummary = (query: TCubeQuery): TQueryAuditSummary => {
   const cubeQuery = isRecord(query) ? query : {};
   const filters = collectFilterMembers(cubeQuery.filters);
   const order = collectOrderMembers(cubeQuery.order);
@@ -341,7 +341,7 @@ export const getCubeQueryAuditSummary = (query: TChartQuery): TQueryAuditSummary
  * Drop it at execution time with a `set` filter on the band. Applied only to the query sent to Cube,
  * never to the saved chart, so the builder shows the query exactly as the user wrote it.
  */
-export const applyValueBandNullGuard = (query: TChartQuery): TChartQuery => {
+export const applyValueBandNullGuard = (query: TCubeQuery): TCubeQuery => {
   if (!query.dimensions?.includes(VALUE_BAND_DIMENSION_ID)) return query;
   const hasGuard = (query.filters ?? []).some(
     (filter) => "member" in filter && filter.member === VALUE_BAND_DIMENSION_ID && filter.operator === "set"

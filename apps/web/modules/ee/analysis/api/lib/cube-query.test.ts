@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
-import type { TChartQuery } from "@formbricks/types/analysis";
+import type { TCubeQuery } from "@formbricks/types/analysis";
 import { applyValueBandNullGuard, getCubeQueryAuditSummary, validateCubeQueryMembers } from "./cube-query";
 
 vi.mock("server-only", () => ({}));
@@ -42,7 +42,7 @@ describe("cube-query", () => {
         validateCubeQueryMembers({
           measures: ["FeedbackRecords.count"],
           filters: [{ dimension: "FeedbackRecords.tenantId", operator: "equals", values: ["workspace-2"] }],
-        } as unknown as TChartQuery)
+        } as unknown as TCubeQuery)
       ).toThrow(/Tenant filters are enforced by Cube/);
     });
 
@@ -91,7 +91,7 @@ describe("cube-query", () => {
           timeDimensions: [null, { dimension: null }],
           filters: [null, { member: { name: "FeedbackRecords.sourceType" } }, { and: [0] }, { or: "bad" }],
           order: [[null, "asc"], null],
-        } as unknown as TChartQuery)
+        } as unknown as TCubeQuery)
       ).toThrow(/Invalid query members.*invalid member reference/);
     });
   });
@@ -132,7 +132,7 @@ describe("cube-query", () => {
         [null, "asc"],
         ["FeedbackRecords.collectedAt", "desc"],
       ],
-    } as unknown as TChartQuery);
+    } as unknown as TCubeQuery);
 
     expect(summary).toEqual({
       measures: ["FeedbackRecords.count"],
@@ -150,7 +150,7 @@ describe("cube-query", () => {
     const bandGuard = { member: "FeedbackRecords.valueBand", operator: "set" };
 
     test("drops the NULL band when the query groups by valueBand", () => {
-      const query: TChartQuery = {
+      const query: TCubeQuery = {
         measures: ["FeedbackRecords.npsCount"],
         dimensions: ["FeedbackRecords.valueBand"],
       };
@@ -176,7 +176,7 @@ describe("cube-query", () => {
       });
       expect(applyValueBandNullGuard(once)).toBe(once);
 
-      const ungrouped: TChartQuery = {
+      const ungrouped: TCubeQuery = {
         measures: ["FeedbackRecords.count"],
         dimensions: ["FeedbackRecords.sourceType"],
         filters: [{ member: "FeedbackRecords.valueBand", operator: "equals", values: ["promoter"] }],

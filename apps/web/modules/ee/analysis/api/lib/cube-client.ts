@@ -2,7 +2,7 @@ import "server-only";
 import cubejs, { type Query, type ResultSet } from "@cubejs-client/core";
 import { randomUUID } from "node:crypto";
 import { logger } from "@formbricks/logger";
-import type { TChartQuery } from "@formbricks/types/analysis";
+import type { TCubeQuery } from "@formbricks/types/analysis";
 import { AUDIT_LOG_ENABLED } from "@/lib/constants";
 import { getReportingTimeZone } from "@/lib/date-ranges";
 import { getOrganization } from "@/lib/organization/service";
@@ -34,7 +34,7 @@ export class CubeQueryError extends Error {
 }
 
 type TScopedCubeQueryInput = {
-  query: TChartQuery;
+  query: TCubeQuery;
   feedbackDirectoryId: string;
   workspaceId: string;
   organizationId: string;
@@ -145,7 +145,7 @@ const restoreNullMeasures = (
  * True when Cube's error names a member that was injected into `executed` on top of `plain` — the
  * "Member 'FeedbackRecords.npsCount' not found" a schema without that measure answers with.
  */
-const isInjectedMemberRejection = (error: unknown, executed: TChartQuery, plain: TChartQuery): boolean => {
+const isInjectedMemberRejection = (error: unknown, executed: TCubeQuery, plain: TCubeQuery): boolean => {
   const plainMeasures = new Set(plain.measures ?? []);
   const injected = (executed.measures ?? []).filter((measure) => !plainMeasures.has(measure));
   if (injected.length === 0) return false;
@@ -212,7 +212,7 @@ export async function executeTenantScopedQuery(input: TScopedCubeQueryInput) {
     // formatting charts and tables apply. castNumerics turns back into numbers exactly the members
     // the response annotates as `number`; string members such as a text answer of "123", and nulls,
     // are left alone.
-    const load = (query: TChartQuery) =>
+    const load = (query: TCubeQuery) =>
       client.load(expandPresetDateRanges(query, timeZone) as Query, { castNumerics: true });
     let resultSet: ResultSet;
     try {

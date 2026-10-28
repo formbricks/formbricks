@@ -77,7 +77,7 @@ definition organization {
     /**
      * Full product access across all of the organization's workspaces. This is
      * the arrow target that grants owners and managers unrestricted access to
-     * every workspace, survey, response, and dashboard.
+     * every workspace, survey, and response.
      */
     permission manage: user = owner + manager
 
@@ -160,7 +160,7 @@ definition team {
 }
 
 /**
- * The product container (surveys, responses, dashboards, contacts …),
+ * The product container (surveys, responses, contacts …),
  * identified by the Prisma `Workspace.id`.
  *
  * Users are never granted workspace access directly — only via teams
@@ -269,8 +269,7 @@ definition feedback_directory_assignment {
  *
  * `response_read` and `response_export` both equal `read` — the export gate
  * is identical to the response-view gate. They stay separate permissions so
- * response access keeps a stable vocabulary. Responses and dashboards remain
- * unprojected.
+ * response access keeps a stable vocabulary. Responses remain unprojected.
  */
 definition survey {
     /** The owning workspace (`Survey.workspaceId`). Always written. */
@@ -330,25 +329,6 @@ definition survey {
      * which `schema-validation.yaml` asserts.
      */
     permission change_visibility: user | api_key = (owner & workspace->read) + workspace->administer
-}
-
-/**
- * An analysis dashboard, identified by the Prisma `Dashboard.id`. Dashboards
- * carry no access control of their own today: access derives from the owning
- * workspace (`checkWorkspaceAccess`).
- */
-definition dashboard {
-    /** The owning workspace (`Dashboard.workspaceId`). */
-    relation workspace: workspace
-
-    /** View the dashboard and its widgets. */
-    permission read: user | api_key = workspace->read
-
-    /**
-     * Create, update, duplicate, or delete the dashboard and mutate its widgets.
-     * Every dashboard mutation currently uses the workspace readWrite gate.
-     */
-    permission write: user | api_key = workspace->write
 }
 
 /**

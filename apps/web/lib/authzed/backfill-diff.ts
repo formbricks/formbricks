@@ -30,7 +30,7 @@ import {
  * than orphaned — pruning them would delete relationships a future projector is expected to own.
  * `survey` left this list with ENG-3282, when `./survey` began projecting it.
  */
-const UNPROJECTED_RESOURCE_TYPES = ["dashboard", "response"] as const;
+const UNPROJECTED_RESOURCE_TYPES = ["response"] as const;
 
 export type TAuthzedRelationshipRef = Readonly<{
   objectId: string;

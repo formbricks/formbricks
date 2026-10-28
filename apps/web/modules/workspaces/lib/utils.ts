@@ -75,7 +75,7 @@ const resolveWorkspaceAuth = async (workspaceId: string): Promise<TWorkspaceAuth
   // once and keeps this helper aligned with the central `workspace.read` contract, which also denies
   // billing. Individual pages that also guard billing inline remain correct (defense in depth).
   if (isBilling) {
-    redirect(getBillingFallbackPath(organization.id, IS_FORMBRICKS_CLOUD));
+    redirect(getBillingFallbackPath(organization.id));
   }
 
   // Enforce workspace access here instead of delegating to the route layout, so

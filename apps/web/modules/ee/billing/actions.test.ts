@@ -247,7 +247,7 @@ describe("billing actions", () => {
     expect(mocks.createSetupCheckoutSession).toHaveBeenCalledWith(
       "cus_1",
       "sub_1",
-      "https://app.formbricks.com/organizations/org_1/settings/billing",
+      "https://app.formbricks.com/organizations/org_1/billing",
       "org_1",
       {
         targetPlan: "pro",
@@ -281,7 +281,7 @@ describe("billing actions", () => {
     expect(mocks.createSetupCheckoutSession).toHaveBeenCalledWith(
       "cus_1",
       "sub_1",
-      "https://app.formbricks.com/organizations/org_1/settings/billing",
+      "https://app.formbricks.com/organizations/org_1/billing",
       "org_1",
       undefined
     );

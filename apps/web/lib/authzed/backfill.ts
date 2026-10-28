@@ -159,7 +159,7 @@ export type TAuthzedBackfillDependencies = Readonly<{
 export type TAuthzedBackfillCounters = Readonly<{
   failed: number;
   /**
-   * Relationships on a deliberately unprojected resource type — `dashboard`, `response`.
+   * Relationships on a deliberately unprojected resource type — `response`.
    *
    * Expected to be 0, and structurally so: every read this tool issues filters to a managed type, so
    * there is no path by which an unprojected type is observed. The classification behind it is kept

@@ -248,7 +248,7 @@ export const sendSsoRecoveryFactorsRemovedEmail = async ({
     apiKeysRemoved,
     // The account profile page is where both factors this mail can name are re-enrolled — the password
     // form and the 2FA card both live there. There is no separate /settings/security route.
-    securitySettingsLink: `${WEBAPP_URL}/account/settings/profile`,
+    securitySettingsLink: `${WEBAPP_URL}/account`,
     t,
     ...legalProps,
   });
@@ -314,7 +314,7 @@ export const sendSurveyRetentionNoticeEmail = async ({
     organizationName,
     archivedSurveys,
     responseDeletions,
-    settingsLink: `${WEBAPP_URL}/organizations/${organizationId}/settings/data-retention/exemptions`,
+    settingsLink: `${WEBAPP_URL}/organizations/${organizationId}`,
     t,
     ...legalProps,
   });

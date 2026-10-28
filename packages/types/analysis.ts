@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-// ── Cube.js Query shape (stored as JSON in Chart.query) ─────────────────────
+// ── Cube.js Query shape (accepted by POST /api/v3/feedback-queries) ──────────
 // Mirrors https://cube.dev/docs/product/apis-integrations/core-data-apis/rest-api/query-format
 
 const ZCubeTimeDimension = z.object({
@@ -28,7 +28,7 @@ const ZCubeLogicalFilter: z.ZodType<TCubeFilter> = z.union([
   z.object({ or: z.array(z.lazy(() => ZCubeLogicalFilter)) }),
 ]);
 
-export const ZChartQuery = z.object({
+export const ZCubeQuery = z.object({
   measures: z.array(z.string()).optional(),
   dimensions: z.array(z.string()).optional(),
   segments: z.array(z.string()).optional(),
@@ -49,48 +49,4 @@ export const ZChartQuery = z.object({
   joinHints: z.array(z.tuple([z.string(), z.string()])).optional(),
 });
 
-export type TChartQuery = z.infer<typeof ZChartQuery>;
-
-// ── Chart visualization config (stored as JSON in Chart.config) ─────────────
-
-export const ZChartConfig = z.object({
-  /** Bar charts only: bars run up from the category axis ("vertical", default) or across it. */
-  barOrientation: z.enum(["vertical", "horizontal"]).optional(),
-  /** Pie charts only: the classic pie ("pie", default) or one bar split by share ("breakdown"). */
-  pieDisplay: z.enum(["pie", "breakdown"]).optional(),
-  /** Area charts only: a solid band under the stroke ("filled", default) or a line with a soft fade ("line"). */
-  areaDisplay: z.enum(["filled", "line"]).optional(),
-  /** Matrix charts only: what each cell prints — share of its row ("percent", default), the raw "count", or "both". */
-  matrixCellValue: z.enum(["percent", "count", "both"]).optional(),
-  /** Matrix charts only: tint cells by value (default true). */
-  matrixColorScale: z.boolean().optional(),
-  /** Matrix charts only: add a total column and a total row (default false). */
-  matrixShowTotals: z.boolean().optional(),
-  /** Matrix charts only: swap rows and columns on screen. The query is unchanged (default false). */
-  matrixTranspose: z.boolean().optional(),
-  colors: z.array(z.string()).optional(),
-  xAxisLabel: z.string().optional(),
-  yAxisLabel: z.string().optional(),
-  showLegend: z.boolean().optional(),
-  legendPosition: z.enum(["top", "bottom", "left", "right"]).optional(),
-  stacked: z.boolean().optional(),
-  showGrid: z.boolean().optional(),
-  showValues: z.boolean().optional(),
-  numberFormat: z.string().optional(),
-  dateFormat: z.string().optional(),
-  prefix: z.string().optional(),
-  suffix: z.string().optional(),
-});
-
-export type TChartConfig = z.infer<typeof ZChartConfig>;
-
-// ── Widget grid layout (stored as JSON in DashboardWidget.layout) ───────────
-
-export const ZWidgetLayout = z.object({
-  x: z.number().int().nonnegative(),
-  y: z.number().int().nonnegative(),
-  w: z.number().int().positive(),
-  h: z.number().int().positive(),
-});
-
-export type TWidgetLayout = z.infer<typeof ZWidgetLayout>;
+export type TCubeQuery = z.infer<typeof ZCubeQuery>;

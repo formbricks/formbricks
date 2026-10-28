@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-namespace -- using namespaces is required for prisma-json-types-generator */
 import { type TActionClassNoCodeConfig } from "@formbricks/types/action-classes";
-import type { TChartConfig, TChartQuery, TWidgetLayout } from "@formbricks/types/analysis";
 import type { TOrganizationAccess } from "@formbricks/types/api-key";
 import type { TCustomCssStored } from "@formbricks/types/custom-css";
 import { type TEmbeddedDataDefaultValue } from "@formbricks/types/embedded-data";
@@ -91,9 +90,6 @@ declare global {
     export type SurveyMetadata = TSurveyMetadata;
     export type SurveyQuotaLogic = TSurveyQuotaLogic;
     export type EmbeddedDataDefaultValue = TEmbeddedDataDefaultValue;
-    export type ChartQuery = TChartQuery;
-    export type ChartConfig = TChartConfig;
-    export type WidgetLayout = TWidgetLayout;
     export type WorkflowDefinition = TWorkflowDefinition;
     export type WorkflowExecutableDefinition = TWorkflowExecutableDefinition;
     export type WorkflowTriggerRunPayload = TWorkflowTriggerRunPayload;

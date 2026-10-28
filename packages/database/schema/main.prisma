@@ -711,8 +711,6 @@ model Workspace {
   /// submitting its source again through the current processor and authorization checks.
   customCssPrevious           Json?
   feedbackDirectoryWorkspaces FeedbackDirectoryWorkspace[]
-  charts                      Chart[]
-  dashboards                  Dashboard[]
   creatives                   Creative[]
 
   surveys              Survey[]
@@ -742,7 +740,7 @@ model Workspace {
 /// @property billing - JSON field containing billing information
 /// @property whitelabel - Whitelabel configuration for the organization
 /// @property isAISmartToolsEnabled - Controls access to AI smart tools (e.g. translations) that never touch collected data
-/// @property displayTimeZone - Optional IANA time zone used for human-facing response timestamps (exports, integrations) and for the calendar days behind the analytics date filters (survey summary, charts, dashboards); null means UTC
+/// @property displayTimeZone - Optional IANA time zone used for human-facing response timestamps (exports, integrations) and for the calendar days behind the analytics date filters (feedback queries); null means UTC
 model Organization {
   id                    String               @id @default(cuid())
   createdAt             DateTime             @default(now()) @map(name: "created_at")
@@ -1298,8 +1296,6 @@ model User {
   locale                    String               @default("en-US")
   surveys                   Survey[]             @relation("SurveyCreator")
   ownedSurveys              Survey[]             @relation("SurveyOwner")
-  charts                    Chart[]              @relation("chartCreatedBy")
-  dashboards                Dashboard[]          @relation("dashboardCreatedBy")
   creatives                 Creative[]           @relation("CreativeCreator")
   feedbackSources           FeedbackSource[]
   teamUsers                 TeamUser[]
@@ -1565,95 +1561,6 @@ model WorkspaceTeam {
   @@index([teamId])
 }
 
-enum ChartType {
-  area
-  bar
-  pie
-  big_number
-  matrix
-}
-
-/// Represents a chart/visualization that can be used in multiple dashboards.
-/// Charts are reusable components that query analytics data.
-///
-/// @property id - Unique identifier for the chart
-/// @property name - Display name of the chart
-/// @property type - Type of visualization (bar, line, pie, etc.)
-/// @property workspace - The workspace this chart belongs to
-/// @property query - Cube.js query configuration (JSON)
-/// @property config - Chart-specific configuration (colors, labels, etc.)
-/// @property createdBy - User who created the chart
-/// @property dashboards - Dashboards that use this chart
-model Chart {
-  id                  String            @id @default(cuid())
-  createdAt           DateTime          @default(now()) @map(name: "created_at")
-  updatedAt           DateTime          @updatedAt @map(name: "updated_at")
-  name                String
-  type                ChartType
-  workspace           Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId         String
-  /// [ChartQuery] - Cube.js query configuration
-  query               Json              @default("{}")
-  /// [ChartConfig] - Visualization configuration (colors, labels, formatting)
-  config              Json              @default("{}")
-  creator             User?             @relation("chartCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
-  createdBy           String?
-  feedbackDirectory   FeedbackDirectory @relation(fields: [feedbackDirectoryId], references: [id])
-  feedbackDirectoryId String
-  widgets             DashboardWidget[]
-
-  @@unique([workspaceId, name])
-  @@index([workspaceId, createdAt])
-  @@index([feedbackDirectoryId])
-}
-
-/// Represents a dashboard containing multiple charts.
-/// Dashboards aggregate analytics insights at the workspace level.
-///
-/// @property id - Unique identifier for the dashboard
-/// @property name - Display name of the dashboard
-/// @property workspace - The workspace this dashboard belongs to
-/// @property widgets - Charts on this dashboard
-/// @property createdBy - User who created the dashboard
-model Dashboard {
-  id          String            @id @default(cuid())
-  createdAt   DateTime          @default(now()) @map(name: "created_at")
-  updatedAt   DateTime          @updatedAt @map(name: "updated_at")
-  name        String
-  workspace   Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId String
-  creator     User?             @relation("dashboardCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
-  createdBy   String?
-  widgets     DashboardWidget[]
-
-  @@unique([workspaceId, name])
-  @@index([workspaceId, createdAt])
-}
-
-/// Represents a chart widget on a dashboard.
-/// Widgets are positioned using a grid layout system.
-///
-/// @property id - Unique identifier for the widget
-/// @property dashboard - The dashboard this widget belongs to
-/// @property chart - The chart displayed in this widget (chart name is used for display)
-/// @property layout - Grid layout configuration (x, y, width, height)
-/// @property order - Display order within the dashboard
-model DashboardWidget {
-  id          String    @id @default(cuid())
-  createdAt   DateTime  @default(now()) @map(name: "created_at")
-  updatedAt   DateTime  @updatedAt @map(name: "updated_at")
-  dashboard   Dashboard @relation(fields: [dashboardId], references: [id], onDelete: Cascade)
-  dashboardId String
-  chart       Chart     @relation(fields: [chartId], references: [id], onDelete: Cascade)
-  chartId     String
-  /// [WidgetLayout] - Grid layout: { x, y, w, h }
-  layout      Json      @default("{\"x\":0,\"y\":0,\"w\":4,\"h\":3}")
-  order       Int       @default(0)
-
-  @@unique([dashboardId, chartId])
-  @@index([dashboardId, order])
-}
-
 enum FeedbackSourceType {
   formbricks_survey
   csv
@@ -1856,7 +1763,6 @@ model FeedbackDirectory {
   organization    Organization                 @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   workspaces      FeedbackDirectoryWorkspace[]
   feedbackSources FeedbackSource[]
-  charts          Chart[]
 
   @@unique([organizationId, name])
 }
