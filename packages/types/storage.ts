@@ -140,7 +140,11 @@ export const ZUploadPrivateFileRequest = z
   .object({
     fileName: z.string().trim().min(1),
     fileType: z.string().trim().min(1),
-    allowedFileExtensions: z.array(ZAllowedFileExtension).optional(),
+    // The element's extension list, picked from the allowed set — so never longer than that set.
+    allowedFileExtensions: z
+      .array(ZAllowedFileExtension)
+      .max(ALLOWED_FILE_EXTENSIONS_TUPLE.length)
+      .optional(),
     surveyId: z.cuid2(),
     elementId: z
       .string()
