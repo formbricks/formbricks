@@ -139,6 +139,17 @@ export const createTokenForLinkSurvey = (surveyId: string, userEmail: string): s
 };
 
 /**
+ * An email change token that can't be honoured: malformed, minted for something else, or bound to a
+ * credential state that has since changed. Anything else `verifyEmailChangeToken` throws is a fault.
+ */
+export class InvalidEmailChangeTokenError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "InvalidEmailChangeTokenError";
+  }
+}
+
+/**
  * Fingerprint of the credential state an email-change token was minted against.
  *
  * The email-change link is deliberately consumable without a session — the user clicks it from the new
@@ -162,17 +173,6 @@ export const createTokenForLinkSurvey = (surveyId: string, userEmail: string): s
  * HMAC rather than a bare hash so the claim, which travels in a readable JWT payload, cannot be
  * recomputed or probed by whoever holds the token.
  */
-/**
- * An email change token that can't be honoured: malformed, minted for something else, or bound to a
- * credential state that has since changed. Anything else `verifyEmailChangeToken` throws is a fault.
- */
-export class InvalidEmailChangeTokenError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "InvalidEmailChangeTokenError";
-  }
-}
-
 const getEmailChangeCredentialFingerprint = async (userId: string): Promise<string> => {
   const authSecret = requireAuthSecret();
 
@@ -214,12 +214,15 @@ export const verifyEmailChangeToken = async (token: string): Promise<{ id: strin
     throw new Error("ENCRYPTION_KEY is not set");
   }
 
-  const payload = jwt.verify(token, authSecret, { algorithms: ["HS256"] }) as {
-    id: string;
-    email: string;
-    purpose?: string;
-    fingerprint?: string;
-  };
+  let payload: { id: string; email: string; purpose?: string; fingerprint?: string };
+  try {
+    payload = jwt.verify(token, authSecret, { algorithms: ["HS256"] }) as typeof payload;
+  } catch (error) {
+    // `jwt.verify` lets a SyntaxError through for a token whose payload segment isn't JSON: still a bad
+    // token, not a fault of ours.
+    if (error instanceof jwt.JsonWebTokenError) throw error;
+    throw new InvalidEmailChangeTokenError("Token is malformed");
+  }
 
   if (!payload?.id || !payload?.email) {
     throw new InvalidEmailChangeTokenError("Token is invalid or missing required fields");
