@@ -97,7 +97,7 @@ export type TUpdateSharedEmbeddedDataInput = z.infer<typeof ZUpdateSharedEmbedde
 export const ZPromoteEmbeddedDataInput = z
   .object({
     key: z.string(),
-    description: z.string().nullish(),
+    description: z.string().max(DESCRIPTION_MAX).nullish(),
   })
   .strict();
 

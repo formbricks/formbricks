@@ -223,6 +223,7 @@ describe("POST /api/internal/teams", () => {
   test.each([
     ["a blank name", { name: "   " }],
     ["no name", {}],
+    ["a name over 255 characters", { name: "x".repeat(256) }],
     ["an unknown field", { name: "Team", organizationId: OTHER_ORG_ID }],
   ])("answers 400 for %s", async (_label, body) => {
     expect((await create(body)).status).toBe(400);

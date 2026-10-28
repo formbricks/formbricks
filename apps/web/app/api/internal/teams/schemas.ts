@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import { ZTeamSettingsFormSchema } from "@/modules/ee/teams/team-list/types/team";
+import { TEAM_NAME_MAX, ZTeamSettingsFormSchema } from "@/modules/ee/teams/team-list/types/team";
 
 /** `/api/internal/teams?organizationId=`: the organization the teams are listed or created in. */
 export const ZTeamsQuery = z.object({ organizationId: ZId }).strict();
@@ -10,7 +10,9 @@ export type TTeamsQuery = z.infer<typeof ZTeamsQuery>;
 export const ZTeamIdParams = z.object({ teamId: ZId }).strict();
 
 /** `POST /api/internal/teams` body: a new team starts with a name and nothing else. */
-export const ZTeamCreateBody = z.object({ name: z.string().trim().min(1, "Team name is required") }).strict();
+export const ZTeamCreateBody = z
+  .object({ name: z.string().trim().min(1, "Team name is required").max(TEAM_NAME_MAX) })
+  .strict();
 export type TTeamCreateBody = z.infer<typeof ZTeamCreateBody>;
 
 /**
