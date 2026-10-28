@@ -7,11 +7,11 @@ import { parse } from "tldts";
 // survey names have no length limit at all.
 export const MAX_EMAIL_DISPLAY_TEXT_LENGTH = 60;
 
-const ZERO_WIDTH_SPACE = String.fromCodePoint(0x200b);
 // Control characters, line/paragraph separators and bidi controls that can reorder or hide text.
 const HIDDEN_CHARACTERS = /[\p{Cc}\p{Zl}\p{Zp}\p{Bidi_Control}]/gu;
-// Remaining invisible format characters (word joiner, joiners, soft hyphen, BOM). They are removed
-// rather than spaced so `https:<U+2060>//host` becomes a contiguous URL again before the link check runs.
+// Invisible format characters (zero-width space, word joiner, joiners, soft hyphen, BOM). They are removed
+// rather than spaced so `https:<U+200B>//host` becomes a contiguous URL again before the link check runs,
+// and a name that reads as one word still does.
 const INVISIBLE_FORMAT_CHARACTERS = /\p{Cf}/gu;
 // Scheme URLs, `www.` hosts and email addresses. Checked per whitespace-delimited token with plain
 // string searches: a single regex for all three backtracks quadratically on a long name that has no
@@ -68,7 +68,6 @@ const isBareDomain = (token: string): boolean => token.split(NON_HOST_CHARACTERS
 
 export const toEmailDisplayText = (text: string, fallback: string): string => {
   const cleaned = text
-    .replaceAll(ZERO_WIDTH_SPACE, " ")
     .replaceAll(HIDDEN_CHARACTERS, " ")
     .replaceAll(INVISIBLE_FORMAT_CHARACTERS, "")
     .split(/\s+/u)

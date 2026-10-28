@@ -401,6 +401,15 @@ describe("sendLinkSurveyEmailAction", () => {
       expect(() => emailActionSchema.parse({ ...emailInput({}), email })).toThrow();
     });
 
+    test("leaves a survey without single-use links out of the link's single-use values", async () => {
+      mockSurvey();
+
+      await sendEmailWith({ suId: "Call +1 555 0100", suToken: "refund" });
+
+      const [emailData] = vi.mocked(sendLinkSurveyToVerifiedEmail).mock.calls[0];
+      expect(emailData).toMatchObject({ suId: undefined, suToken: undefined });
+    });
+
     // Past the schema too: the action itself sets both from the survey and its organization.
     test("emails the stored survey name and the organization's logo, even if the caller's got through", async () => {
       mockSurvey({ name: "Stored survey name" });

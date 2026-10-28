@@ -76,6 +76,9 @@ describe("toEmailDisplayText", () => {
 
   test("removes links that hide an invisible character inside the scheme or host", () => {
     expect(toEmailDisplayText(`Win https:${WORD_JOINER}//spam.example now`, "Anonymous")).toBe("Win now");
+    expect(toEmailDisplayText(`Win https:${ZERO_WIDTH_SPACE}//spam.example now`, "Anonymous")).toBe(
+      "Win now"
+    );
     expect(toEmailDisplayText(`Visit www${WORD_JOINER}.spam.example today`, "Anonymous")).toBe("Visit today");
   });
 
