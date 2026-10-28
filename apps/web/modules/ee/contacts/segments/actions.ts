@@ -26,6 +26,7 @@ import {
   assertSurveyInteractionSurveyIds,
   assertSurveysInWorkspace,
   checkForRecursiveSegmentFilter,
+  restoreHiddenSegmentSurveyIds,
 } from "@/modules/ee/contacts/segments/lib/helper";
 import {
   cloneSegment,
@@ -174,7 +175,20 @@ export const updateSegmentAction = authenticatedActionClient.inputSchema(ZUpdate
     }
 
     const oldObject = await getSegment(parsedInput.segmentId);
-    const updated = await updateSegment(parsedInput.segmentId, parsedInput.data);
+    // The editor only held the ids this caller may see; keep the others the segment already targets.
+    const data =
+      filters && Object.keys(visibleSurveyWhere).length > 0
+        ? {
+            ...parsedInput.data,
+            filters: await restoreHiddenSegmentSurveyIds(
+              filters,
+              oldObject.filters,
+              segmentWorkspaceId,
+              visibleSurveyWhere
+            ),
+          }
+        : parsedInput.data;
+    const updated = await updateSegment(parsedInput.segmentId, data);
 
     ctx.auditLoggingCtx.segmentId = parsedInput.segmentId;
     ctx.auditLoggingCtx.organizationId = organizationId;

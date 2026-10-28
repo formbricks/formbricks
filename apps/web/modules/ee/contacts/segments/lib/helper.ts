@@ -3,6 +3,10 @@ import type { Prisma } from "@formbricks/database/prisma";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TBaseFilters, TSegmentSurveyInteractionFilter } from "@formbricks/types/segment";
 import { andVisibleSurveys } from "@/lib/survey/visibility/predicate";
+import {
+  collectSegmentFilterSurveyIds,
+  restoreHiddenSurveyIds,
+} from "@/modules/ee/contacts/segments/lib/filter-survey-ids";
 import { getSegment } from "@/modules/ee/contacts/segments/lib/segments";
 import {
   SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE,
@@ -124,3 +128,22 @@ export const assertSurveyInteractionSurveyIds = (
   workspaceId: string,
   visibleSurveyWhere: Prisma.SurveyWhereInput = {}
 ) => assertSurveysInWorkspace(collectSurveyIdsFromSegmentFilters(filters), workspaceId, visibleSurveyWhere);
+
+/**
+ * `filters` as saved, with the stored survey ids this caller may not see put back into the filters
+ * they came from (see `restoreHiddenSurveyIds`). One query over the stored tree's ids.
+ */
+export const restoreHiddenSegmentSurveyIds = async (
+  filters: TBaseFilters,
+  storedFilters: TBaseFilters,
+  workspaceId: string,
+  visibleSurveyWhere: Prisma.SurveyWhereInput
+): Promise<TBaseFilters> => {
+  const storedIds = [...new Set(collectSegmentFilterSurveyIds(storedFilters))];
+  if (storedIds.length === 0) return filters;
+  const visible = await prisma.survey.findMany({
+    where: { AND: [{ workspaceId, id: { in: storedIds } }, visibleSurveyWhere] },
+    select: { id: true },
+  });
+  return restoreHiddenSurveyIds(filters, storedFilters, new Set(visible.map((survey) => survey.id)));
+};
