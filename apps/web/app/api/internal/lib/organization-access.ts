@@ -11,13 +11,15 @@ import { can } from "@/lib/authorization";
  * - `manage`: owners and managers
  * - `manage_access`: user management (owners and managers, per `USER_MANAGEMENT_MINIMUM_ROLE`)
  * - `manage_api_keys`: minting and managing the organization's API keys (owners and managers)
+ * - `manage_billing`: the organization's plan and its limits (owners, managers and billing)
  */
 export type TOrgAction =
   | "organization.read_access"
   | "organization.write"
   | "organization.manage"
   | "organization.manage_access"
-  | "organization.manage_api_keys";
+  | "organization.manage_api_keys"
+  | "organization.manage_billing";
 
 /**
  * Authorize a request against one organization: a session user who may take `action` on it. No
