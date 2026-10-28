@@ -1,4 +1,4 @@
-type TNamedElement = { id: string; code?: string | undefined };
+type TNamedElement = { id: string; code?: string };
 
 /**
  * Resolves the name a link carries (prefill key, `startAt`) to an element: the Question ID first, then

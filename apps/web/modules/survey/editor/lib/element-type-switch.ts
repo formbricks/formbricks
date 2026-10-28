@@ -1,10 +1,10 @@
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 
-const CHOICE_TYPES: readonly string[] = [
+const CHOICE_TYPES: ReadonlySet<string> = new Set([
   TSurveyElementTypeEnum.MultipleChoiceSingle,
   TSurveyElementTypeEnum.MultipleChoiceMulti,
   TSurveyElementTypeEnum.Ranking,
-];
+]);
 
 /**
  * The update for switching between single select, multi select and ranking: the options travel along
@@ -16,6 +16,6 @@ export const getChoiceTypeSwitchUpdate = (
   card: { type: string; choices?: unknown },
   type: TSurveyElementTypeEnum
 ) => {
-  if (card.type === type || !CHOICE_TYPES.includes(card.type) || !CHOICE_TYPES.includes(type)) return null;
+  if (card.type === type || !CHOICE_TYPES.has(card.type) || !CHOICE_TYPES.has(type)) return null;
   return { choices: card.choices, type, logic: undefined, validation: undefined };
 };

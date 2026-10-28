@@ -388,8 +388,10 @@ export function validateV3SurveyDocument(
     );
   }
 
-  invalidParams.push(...getV3SurveyCyclicLogicInvalidParams(document.blocks, precedence));
-  invalidParams.push(...getV3SurveyCodeInvalidParams(document));
+  invalidParams.push(
+    ...getV3SurveyCyclicLogicInvalidParams(document.blocks, precedence),
+    ...getV3SurveyCodeInvalidParams(document)
+  );
 
   if (invalidParams.length > 0) {
     return {
