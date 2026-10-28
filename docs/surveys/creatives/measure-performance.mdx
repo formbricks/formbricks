@@ -27,7 +27,7 @@ The header shows what the creative opens and its schedule, with the status menu,
 
 ### Date range
 
-Pick a range above the numbers: **Last 30 days** by default, from **Today** to **Last year**, or a **Custom range** of up to 366 days. Days are counted in UTC, and the numbers can be up to a minute behind.
+Pick a range above the numbers: **Last 30 days** by default, from **Today** to **Last year**, or a **Custom range** of up to 366 days. Days are counted in UTC, and the numbers are usually up to a minute behind; on instances with thousands of busy creatives they can lag a little longer.
 
 ### What isn't counted
 
@@ -38,13 +38,14 @@ Deleting a creative deletes its numbers. Archiving it keeps them, and duplicatin
 
 <Note>
   **Self-hosting:** impressions and clicks are counted in Redis and written to the database every minute by
-  the background job worker, which runs by default. Without a running worker, the counts expire after about two
-  days and the summary page stays empty. See [Job Runner](/self-hosting/configuration/job-runner).
+  the background job worker, which runs by default. Without a running worker, counts not yet written expire
+  after about two days and are lost; counts already written stay on the summary page. See [Job
+  Runner](/self-hosting/configuration/job-runner).
 </Note>
 
 ## Responses opened by a creative
 
-Every response to a survey opened by a creative records which creative opened it, as **Opened by creative** (the creative's name when the response came in) and **Opened by creative ID**:
+Every response to a survey opened by a creative records which creative opened it, as **Opened by creative** (the creative's name when the response came in) and **Opened by creative ID**, as long as that creative still exists and still opens the survey when the response arrives:
 
 - on the response card, with the rest of the response's [metadata](/surveys/general-features/metadata);
 - as a column in the response table, shown by default on surveys that creatives open;

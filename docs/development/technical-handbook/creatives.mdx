@@ -76,10 +76,10 @@ ADR [0007](https://github.com/formbricks/formbricks/blob/main/docs/adr/0007-coun
 
 **Decision.**
 
-- The SDK batches a page view's events into one request, sent 2 s after the first event, on `pagehide` or when 100 events are queued. It goes as `text/plain` with `keepalive`, so there is no CORS preflight. An Impression is once per creative per page view (host + path); a Click is a press that opened the Destination.
+- The SDK batches a page view's events into requests of at most 100 events, sent 2 s after the first event, on `pagehide`, or as soon as 100 are queued; a page view with more events sends more than one. It goes as `text/plain` with `keepalive`, so there is no CORS preflight. An Impression is once per creative per page view (host + path); a Click is a press that opened the Destination.
 - The events endpoint always answers 204. It drops bots, bodies over 16 KB, ids that aren't countable creatives of the workspace (cached for 60 s) and requests over the IP rate limit (`rateLimitConfigs.api.clientCreativeEvents`, 600 a minute).
 - One Lua script increments Redis hashes per creative and UTC day: by device type, and by page, capped at 1,000 pages a creative a day with the rest under `(other)`. Keys live about 48 h.
-- The `creative-stats.flush` job runs every 60 s and upserts yesterday's and today's totals into `CreativeDailyStat` and `CreativeDailyPageStat` with `GREATEST(stored, counted)`.
+- The `creative-stats.flush` job runs every 60 s and upserts yesterday's and today's totals into `CreativeDailyStat` and `CreativeDailyPageStat` with `GREATEST(stored, counted)`. A run takes at most 50 claims of 100 creatives per day; a larger backlog waits for the next run, so counts can then lag more than a minute.
 
 **Rejected.** A row per event (about a billion rows a year); a synchronous increment per request (hot-row contention at peaks); client-side sampling (product wants exact counts).
 
@@ -87,7 +87,7 @@ ADR [0007](https://github.com/formbricks/formbricks/blob/main/docs/adr/0007-coun
 
 - Only aggregates can be reported, and a new breakdown can't be backfilled. That is why device type is on the daily totals from day one.
 - The flush is idempotent, so overlapping replicas and a repeated run are harmless.
-- Without a BullMQ worker the counters never reach Postgres and expire from Redis after about 48 h. If Redis refuses writes, the endpoint still answers 204 and the counts are lost.
+- Without a BullMQ worker the counters never reach Postgres and expire from Redis after about 48 h. If Redis is unavailable or refuses writes, the endpoint still answers 204 and the counts are lost.
 
 ## Why A Creative's Status Is Derived
 
