@@ -19,11 +19,7 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponse } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
-import {
-  mockContactAttributeKey,
-  mockOrganizationOutput,
-  mockSurveyOutput,
-} from "../../survey/__mock__/survey.mock";
+import { mockOrganizationOutput, mockSurveyOutput } from "../../survey/__mock__/survey.mock";
 import {
   deleteResponse,
   getResponse,
