@@ -139,61 +139,6 @@ const nextConfig = {
         destination: "/:path*",
         permanent: false,
       },
-      {
-        source: "/api/v1/surveys",
-        destination: "/api/v1/management/surveys",
-        permanent: true,
-      },
-      {
-        source: "/api/v1/responses",
-        destination: "/api/v1/management/responses",
-        permanent: true,
-      },
-      {
-        source: "/api/v1/me",
-        destination: "/api/v1/management/me",
-        permanent: true,
-      },
-      // Redirect old project URLs to new workspace URLs
-      {
-        source: "/environments/:environmentId/project/:path*",
-        destination: "/environments/:environmentId/workspace/:path*",
-        permanent: true,
-      },
-      {
-        source: "/organizations/:organizationId/projects/new/:path*",
-        destination: "/organizations/:organizationId/workspaces/new/:path*",
-        permanent: true,
-      },
-      {
-        source: "/projects/:projectId",
-        destination: "/workspaces/:projectId",
-        permanent: true,
-      },
-      // Redirect old workspace-scoped account settings to the account-scoped routes.
-      {
-        source: "/workspaces/:workspaceId/settings/account",
-        destination: "/account/settings/profile",
-        permanent: true,
-      },
-      {
-        source: "/workspaces/:workspaceId/settings/account/:path*",
-        destination: "/account/settings/:path*",
-        permanent: true,
-      },
-      // Old workspace-scoped org settings need workspaceId -> organizationId resolution, so they go
-      // through a server route shim (not a static redirect). Non-permanent: the target is resolved
-      // at request time.
-      {
-        source: "/workspaces/:workspaceId/settings/organization",
-        destination: "/legacy-organization-settings/:workspaceId",
-        permanent: false,
-      },
-      {
-        source: "/workspaces/:workspaceId/settings/organization/:path*",
-        destination: "/legacy-organization-settings/:workspaceId/:path*",
-        permanent: false,
-      },
     ];
   },
   async headers() {
@@ -487,13 +432,7 @@ const nextConfig = {
           },
         ]
       : [];
-    return [
-      ...posthogRewrites,
-      {
-        source: "/api/v2/organizations/:organizationId/project-teams",
-        destination: "/api/v2/organizations/:organizationId/workspace-teams",
-      },
-    ];
+    return posthogRewrites;
   },
   env: {
     NEXTAUTH_URL: process.env.NEXTAUTH_URL, // TODO: Remove this once we have a proper solution for the base path

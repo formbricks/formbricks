@@ -120,62 +120,6 @@ describe("endpoint-validator", () => {
       });
     });
 
-    test("should return correct object for storage management routes with both authentication methods", () => {
-      expect(isManagementApiRoute("/api/v1/management/storage")).toEqual({
-        isManagementApi: true,
-        authenticationMethod: AuthenticationMethod.Both,
-      });
-      expect(isManagementApiRoute("/api/v1/management/storage/files")).toEqual({
-        isManagementApi: true,
-        authenticationMethod: AuthenticationMethod.Both,
-      });
-      expect(isManagementApiRoute("/api/v1/management/storage/upload")).toEqual({
-        isManagementApi: true,
-        authenticationMethod: AuthenticationMethod.Both,
-      });
-    });
-
-    test("should return correct object for webhooks routes with API key authentication", () => {
-      expect(isManagementApiRoute("/api/v1/webhooks")).toEqual({
-        isManagementApi: true,
-        authenticationMethod: AuthenticationMethod.ApiKey,
-      });
-      expect(isManagementApiRoute("/api/v1/webhooks/123")).toEqual({
-        isManagementApi: true,
-        authenticationMethod: AuthenticationMethod.ApiKey,
-      });
-      expect(isManagementApiRoute("/api/v1/webhooks/webhook-id/config")).toEqual({
-        isManagementApi: true,
-        authenticationMethod: AuthenticationMethod.ApiKey,
-      });
-    });
-
-    test("should return correct object for non-v1 storage management routes (only v1 supports both auth methods)", () => {
-      expect(isManagementApiRoute("/api/v2/management/storage")).toEqual({
-        isManagementApi: true,
-        authenticationMethod: AuthenticationMethod.ApiKey,
-      });
-      expect(isManagementApiRoute("/api/v3/management/storage/upload")).toEqual({
-        isManagementApi: true,
-        authenticationMethod: AuthenticationMethod.ApiKey,
-      });
-    });
-
-    test("should return correct object for non-v1 webhooks routes (falls back to management regex)", () => {
-      expect(isManagementApiRoute("/api/v2/webhooks")).toEqual({
-        isManagementApi: false,
-        authenticationMethod: AuthenticationMethod.ApiKey,
-      });
-      expect(isManagementApiRoute("/api/v3/webhooks/123")).toEqual({
-        isManagementApi: false,
-        authenticationMethod: AuthenticationMethod.ApiKey,
-      });
-      expect(isManagementApiRoute("/api/v2/management/webhooks")).toEqual({
-        isManagementApi: true,
-        authenticationMethod: AuthenticationMethod.ApiKey,
-      });
-    });
-
     test("should return correct object for non-management API routes", () => {
       expect(isManagementApiRoute("/api/v1/client/something")).toEqual({
         isManagementApi: false,
@@ -209,21 +153,6 @@ describe("endpoint-validator", () => {
         authenticationMethod: AuthenticationMethod.ApiKey,
       });
     });
-
-    test("should handle webhooks edge cases", () => {
-      expect(isManagementApiRoute("/api/v1/webhook")).toEqual({
-        isManagementApi: false,
-        authenticationMethod: AuthenticationMethod.ApiKey,
-      });
-      expect(isManagementApiRoute("/api/webhooks")).toEqual({
-        isManagementApi: false,
-        authenticationMethod: AuthenticationMethod.ApiKey,
-      });
-      expect(isManagementApiRoute("/webhooks/api/v1")).toEqual({
-        isManagementApi: false,
-        authenticationMethod: AuthenticationMethod.ApiKey,
-      });
-    });
   });
 
   describe("isIntegrationRoute", () => {
@@ -251,14 +180,17 @@ describe("endpoint-validator", () => {
 
   describe("isAuthProtectedRoute", () => {
     test("should return true for protected routes", () => {
-      expect(isAuthProtectedRoute("/environments")).toBe(true);
-      expect(isAuthProtectedRoute("/environments/something")).toBe(true);
-      expect(isAuthProtectedRoute("/environments/123/surveys")).toBe(true);
       expect(isAuthProtectedRoute("/setup/organization")).toBe(true);
       expect(isAuthProtectedRoute("/setup/organization/create")).toBe(true);
       expect(isAuthProtectedRoute("/organizations")).toBe(true);
       expect(isAuthProtectedRoute("/organizations/something")).toBe(true);
       expect(isAuthProtectedRoute("/organizations/123/settings")).toBe(true);
+    });
+
+    test("should not protect routes that no longer exist or handle their own login", () => {
+      expect(isAuthProtectedRoute("/environments/123/surveys")).toBe(false);
+      expect(isAuthProtectedRoute("/workspaces/123")).toBe(false);
+      expect(isAuthProtectedRoute("/account/authorize")).toBe(false); // OAuth consent redirects to login itself
     });
 
     test("should return false for non-protected routes", () => {
@@ -274,7 +206,6 @@ describe("endpoint-validator", () => {
     });
 
     test("should handle edge cases", () => {
-      expect(isAuthProtectedRoute("/environment")).toBe(false); // partial match should not work
       expect(isAuthProtectedRoute("/organization")).toBe(false); // partial match should not work
       expect(isAuthProtectedRoute("/setup/team")).toBe(false); // not in protected routes
       expect(isAuthProtectedRoute("/setup")).toBe(false); // partial match should not work
@@ -354,7 +285,7 @@ describe("endpoint-validator", () => {
 
     test("should return false for admin-only routes", () => {
       expect(isPublicDomainRoute("/")).toBe(false);
-      expect(isPublicDomainRoute("/environments/123")).toBe(false);
+      expect(isPublicDomainRoute("/organizations/123")).toBe(false);
       expect(isPublicDomainRoute("/auth/login")).toBe(false);
       expect(isPublicDomainRoute("/setup/organization")).toBe(false);
       expect(isPublicDomainRoute("/organizations/123")).toBe(false);
@@ -378,8 +309,8 @@ describe("endpoint-validator", () => {
 
     test("should return true for admin routes", () => {
       expect(isAdminDomainRoute("/")).toBe(true);
-      expect(isAdminDomainRoute("/environments/123")).toBe(true);
-      expect(isAdminDomainRoute("/environments/123/surveys")).toBe(true);
+      expect(isAdminDomainRoute("/organizations/123")).toBe(true);
+      expect(isAdminDomainRoute("/organizations/123/connections")).toBe(true);
       expect(isAdminDomainRoute("/auth/login")).toBe(true);
       expect(isAdminDomainRoute("/auth/signup")).toBe(true);
       expect(isAdminDomainRoute("/setup/organization")).toBe(true);
@@ -427,7 +358,7 @@ describe("endpoint-validator", () => {
 
       test("should block admin routes on public domain", () => {
         expect(isRouteAllowedForDomain("/", true)).toBe(false);
-        expect(isRouteAllowedForDomain("/environments/123", true)).toBe(false);
+        expect(isRouteAllowedForDomain("/organizations/123", true)).toBe(false);
         expect(isRouteAllowedForDomain("/auth/login", true)).toBe(false);
         expect(isRouteAllowedForDomain("/api/v1/management/users", true)).toBe(false);
         expect(isRouteAllowedForDomain("/api/v1/integrations/webhook", true)).toBe(false);
@@ -439,7 +370,7 @@ describe("endpoint-validator", () => {
     describe("admin domain routing", () => {
       test("should allow admin routes on admin domain", () => {
         expect(isRouteAllowedForDomain("/", false)).toBe(true);
-        expect(isRouteAllowedForDomain("/environments/123", false)).toBe(true);
+        expect(isRouteAllowedForDomain("/organizations/123", false)).toBe(true);
         expect(isRouteAllowedForDomain("/auth/login", false)).toBe(true);
         expect(isRouteAllowedForDomain("/api/v1/management/users", false)).toBe(true);
         expect(isRouteAllowedForDomain("/api/v1/integrations/webhook", false)).toBe(true);
@@ -472,8 +403,8 @@ describe("endpoint-validator", () => {
         expect(isRouteAllowedForDomain("/s/survey123#section", true)).toBe(true);
         expect(isRouteAllowedForDomain("/p/pretty123?param=value", true)).toBe(true);
         expect(isRouteAllowedForDomain("/p/pretty123#section", true)).toBe(true);
-        expect(isRouteAllowedForDomain("/environments/123?tab=settings", true)).toBe(false);
-        expect(isRouteAllowedForDomain("/environments/123?tab=settings", false)).toBe(true);
+        expect(isRouteAllowedForDomain("/organizations/123?tab=settings", true)).toBe(false);
+        expect(isRouteAllowedForDomain("/organizations/123?tab=settings", false)).toBe(true);
       });
     });
   });
@@ -484,15 +415,15 @@ describe("endpoint-validator", () => {
         expect(isPublicDomainRoute("/s/survey123?param=value&other=test")).toBe(true);
         expect(isPublicDomainRoute("/p/pretty123?param=value&other=test")).toBe(true);
         expect(isPublicDomainRoute("/api/v1/client/test?query=data")).toBe(true);
-        expect(isPublicDomainRoute("/environments/123?tab=settings")).toBe(false);
-        expect(isAuthProtectedRoute("/environments/123?tab=overview")).toBe(true);
+        expect(isPublicDomainRoute("/organizations/123?tab=settings")).toBe(false);
+        expect(isAuthProtectedRoute("/organizations/123?tab=overview")).toBe(true);
       });
 
       test("should handle paths with fragments", () => {
         expect(isPublicDomainRoute("/s/survey123#section")).toBe(true);
         expect(isPublicDomainRoute("/c/jwt-token#top")).toBe(true);
         expect(isPublicDomainRoute("/p/pretty123#section")).toBe(true);
-        expect(isPublicDomainRoute("/environments/123#overview")).toBe(false);
+        expect(isPublicDomainRoute("/organizations/123#overview")).toBe(false);
         expect(isAuthProtectedRoute("/organizations/456#settings")).toBe(true);
       });
 
@@ -529,7 +460,7 @@ describe("endpoint-validator", () => {
       });
 
       test("should handle deeply nested admin routes", () => {
-        expect(isAuthProtectedRoute("/environments/123/surveys/456/settings")).toBe(true);
+        expect(isAuthProtectedRoute("/organizations/123/connections/456/settings")).toBe(true);
         expect(isAuthProtectedRoute("/organizations/789/members/123/roles")).toBe(true);
         expect(isAuthProtectedRoute("/setup/organization/team/invites")).toBe(true);
       });
@@ -584,7 +515,7 @@ describe("endpoint-validator", () => {
         // Path traversal attempts
         expect(isPublicDomainRoute("/s/../../../etc/passwd")).toBe(true); // Still matches pattern
         expect(isPublicDomainRoute("/p/../../../etc/passwd")).toBe(true);
-        expect(isAuthProtectedRoute("/environments/../../../etc/passwd")).toBe(true);
+        expect(isAuthProtectedRoute("/organizations/../../../etc/passwd")).toBe(true);
 
         // XSS-like attempts
         expect(isPublicDomainRoute("/s/<script>alert('xss')</script>")).toBe(true);
@@ -599,7 +530,7 @@ describe("endpoint-validator", () => {
         expect(isPublicDomainRoute("/s/survey%20123")).toBe(true);
         expect(isPublicDomainRoute("/c/jwt%2Etoken")).toBe(true);
         expect(isPublicDomainRoute("/p/pretty%20123")).toBe(true);
-        expect(isAuthProtectedRoute("/environments%2F123")).toBe(true);
+        expect(isAuthProtectedRoute("/organizations%2F123")).toBe(true);
         expect(isManagementApiRoute("/api/v1/management/test%20route")).toEqual({
           isManagementApi: true,
           authenticationMethod: AuthenticationMethod.ApiKey,
@@ -644,7 +575,7 @@ describe("endpoint-validator", () => {
           authenticationMethod: AuthenticationMethod.ApiKey,
         });
         expect(isIntegrationRoute("/API/V1/INTEGRATIONS/test")).toBe(false);
-        expect(isAuthProtectedRoute("/ENVIRONMENTS/123")).toBe(false);
+        expect(isAuthProtectedRoute("/ORGANIZATIONS/123")).toBe(false);
       });
     });
   });

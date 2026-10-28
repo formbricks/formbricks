@@ -10,7 +10,7 @@ Enrichment automatically adds AI-generated context to your open-text feedback. W
 - **Emotions**: which emotions the text expresses.
 - **Language consolidation**: a translated copy of the text in one common language, so feedback written in different languages can be compared and analyzed together.
 
-These fields turn free text, which is normally hard to count, into structured signals you can filter, chart, and trend over time.
+These fields turn free text, which is normally hard to count, into structured signals you can filter, aggregate, and trend over time.
 
 ## How enrichment works
 
@@ -18,7 +18,7 @@ Enrichment is **automatic and per-record**. Individual records are never trigger
 
 1. A Feedback Record is ingested with a text answer in `value_text`.
 2. Formbricks enriches the record **asynchronously**. The enrichment fields are absent until processing finishes, so a record may show as **Not enriched** for a short time after it arrives.
-3. Once complete, the sentiment, emotion, and translation fields appear on the record and in charts.
+3. Once complete, the sentiment, emotion, and translation fields appear on the record and in queries.
 
 Only records with open text receive AI enrichment. Records that only carry a rating, NPS score, or categorical choice have no text to analyze. Categorical answers are still consolidated across languages through their **Value ID**, which is not AI enrichment. See [Consolidating the same option across languages](#consolidating-the-same-option-across-languages).
 
@@ -45,11 +45,7 @@ Sentiment classifies each text answer on a polarity scale and assigns a signed s
 
 **Sentiment score** is a number from **-1.0** (very negative) to **1.0** (very positive). `Mixed` records score near 0.
 
-Where you see it:
-
-- **Record detail drawer**, under the **AI enrichment** section, e.g. `Positive (0.82)`.
-- **Topics & Subtopics**, as a colored sentiment badge on each record card.
-- **Charts**, where you can group by **Sentiment** or chart the average **Sentiment Score**. Records that haven't been enriched yet fall into a **Not enriched** bucket.
+Where you see it: on the record itself, e.g. `Positive (0.82)`, and in `query_feedback`, where you can group by **Sentiment** or average the **Sentiment Score**. Records that haven't been enriched yet fall into a **Not enriched** bucket.
 
 ## Emotion enrichment
 
@@ -64,14 +60,10 @@ The six recognized emotions are:
 - **Surprise**
 - **Disgust**
 
-Where you see it:
-
-- **Record detail drawer**, listed in the **AI enrichment** section.
-- **Topics & Subtopics**, as one colored badge per detected emotion on each record card.
-- **Charts**, where you can chart the count of each emotion.
+Where you see it: on the record itself, and in `query_feedback`, where you can count each emotion.
 
 <Note>
-  Because emotions are a multi-label set, filter charts on a single emotion
+  Because emotions are a multi-label set, filter on a single emotion
   using the **contains** operator rather than an exact-match equals.
 </Note>
 
@@ -81,12 +73,9 @@ Feedback often arrives in many languages, which makes it hard to read and analyz
 
 ### Translation into a common language
 
-Every open-text answer is translated into your organization's configured target language and stored alongside the original:
+Every open-text answer is translated into your organization's configured target language and stored alongside the original. The translated text is what analysis uses, and the original text stays on the record.
 
-- The **translated text** is shown throughout Unify Feedback in place of the original, with a **Translated to {language}** chip. The original text is always available in the tooltip and in the record detail drawer.
-- In **Topics & Subtopics**, a **Comment language** toggle lets you switch between the original and the translated text.
-
-This means an analyst working in English can read, cluster, and chart feedback that was originally submitted in German, French, Spanish, and more, all consolidated into one comparable language.
+This means an analyst working in English can read, cluster, and query feedback that was originally submitted in German, French, Spanish, and more, all consolidated into one comparable language.
 
 <Note>
   The target language is set at the service level for your organization. On
@@ -96,13 +85,13 @@ This means an analyst working in English can read, cluster, and chart feedback t
 
 ### Consolidating the same option across languages
 
-For multiple-choice answers, Formbricks also carries a stable **Value ID**, the option's identifier from the source system (for example, a survey choice id). This lets charts group the **same option** together even when its label was captured in different languages or later edited, instead of splitting it into a separate category per localized label.
+For multiple-choice answers, Formbricks also carries a stable **Value ID**, the option's identifier from the source system (for example, a survey choice id). This lets queries group the **same option** together even when its label was captured in different languages or later edited, instead of splitting it into a separate category per localized label.
 
-When charting choice questions, group by **Value (Option)** rather than the raw text value to keep categories consolidated across languages.
+When aggregating choice questions, group by **Value (Option)** rather than the raw text value to keep categories consolidated across languages.
 
-## Using enrichment in charts
+## Using enrichment in queries
 
-All enrichment fields are available in [Dashboards & Charts](/unify-feedback/dashboards-charts) as dimensions and measures. Records that haven't finished enriching are grouped under a **Not enriched** value, so you can see enrichment coverage at a glance.
+All enrichment fields are available to `query_feedback` as dimensions and measures. Read them with `get_feedback_field_catalog`, and check coverage with `get_enrichment_status`. Records that haven't finished enriching are grouped under a **Not enriched** value, so you can see enrichment coverage at a glance.
 
 ## Requirements
 

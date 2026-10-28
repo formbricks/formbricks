@@ -23,7 +23,7 @@ https://formbricks.com/s/clin3dxja02k8l80hpwmx4bjy?source=Google
 
 To track the source of users in your link surveys effectively, follow these steps:
 
-1. **Generate Survey URL**: Create a Link Survey and get the sharable link. Append `?source=YourSouce` to the link to reference it with your campaigns and sources.
+1. **Get the survey URL**: Take the link of a published link survey. Append `?source=YourSouce` to the link to reference it with your campaigns and sources.
 
 ```sh Example Source as Google
 https://formbricks.com/s/clin3dxja02k8l80hpwmx4bjy?source=Google
@@ -31,10 +31,6 @@ https://formbricks.com/s/clin3dxja02k8l80hpwmx4bjy?source=Google
 
 2. **Collect Data**: When users access the survey through these links, the URL parameters will capture the source information from which they were shared.
 
-3. **View Responses**: The value lands in the response's metadata, alongside the URL, browser, OS, device and country Formbricks records anyway. Open the **Responses** tab and scroll the table right to reach those columns.
-
-   ![The metadata columns of the responses table](/images/surveys/link-surveys/source-tracking/responses-table.webp)
-
-4. **Analyse Data**: Download all the responses as a CSV/Excel and get access to the source information. This can provide valuable insights into your audience.
+3. **Read the responses**: The value lands in the response's metadata, alongside the URL, browser, OS, device and country Formbricks records anyway. Ask your agent to list the survey's responses (`list_responses` over [MCP](/platform/mcp/overview)), or read the source from each response's metadata through the [v3 API](/api-v3-reference/introduction). This can provide valuable insights into your audience.
 
 Source tracking allows you to make informed decisions based on the origin of your survey participants, helping you tailor your surveys and marketing strategies accordingly.

@@ -780,9 +780,9 @@ describe("scope and observation completeness", () => {
       cursor: null,
       relationships: [
         {
-          relation: "workspace",
-          resource: { objectId: "dashboard-1", objectType: "dashboard" },
-          subject: { objectId: "ws-1", objectType: "workspace" },
+          relation: "survey",
+          resource: { objectId: "response-1", objectType: "response" },
+          subject: { objectId: "survey-1", objectType: "survey" },
         },
       ],
       snapshot: { token: "revision-1" },

@@ -22,13 +22,9 @@ export const isClientSideApiRoute = (url: string): { isClientSideApi: boolean; i
 export const isManagementApiRoute = (
   url: string
 ): { isManagementApi: boolean; authenticationMethod: AuthenticationMethod } => {
-  // V3 surveys: session cookie or x-api-key (same pattern as management storage)
+  // V3 surveys: session cookie or x-api-key
   if (/^\/api\/v3\/surveys(?:\/|$)/.test(url))
     return { isManagementApi: true, authenticationMethod: AuthenticationMethod.Both };
-  if (url.includes("/api/v1/management/storage"))
-    return { isManagementApi: true, authenticationMethod: AuthenticationMethod.Both };
-  if (url.includes("/api/v1/webhooks"))
-    return { isManagementApi: true, authenticationMethod: AuthenticationMethod.ApiKey };
 
   const regex = /^\/api\/v\d+\/management\//;
   return { isManagementApi: regex.test(url), authenticationMethod: AuthenticationMethod.ApiKey };
@@ -41,7 +37,7 @@ export const isIntegrationRoute = (url: string): boolean => {
 
 export const isAuthProtectedRoute = (url: string): boolean => {
   // List of routes that require authentication
-  const protectedRoutes = ["/environments", "/setup/organization", "/organizations"];
+  const protectedRoutes = ["/setup/organization", "/organizations"];
 
   return protectedRoutes.some((route) => url.startsWith(route));
 };

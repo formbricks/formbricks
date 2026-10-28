@@ -15,9 +15,9 @@ type TResourceCategory =
 /**
  * Non-runtime review inventory for every Prisma model.
  *
- * `FeedbackDirectory` is the product's “Feedback Dataset”. Charts and workflows inherit workspace
- * authorization; chart `createdBy` is metadata, not ownership. Feedback records live in Hub rather than
- * Prisma and remain protected by dataset/workspace authorization plus tenant and integrity checks.
+ * `FeedbackDirectory` is the product's “Feedback Dataset”. Workflows inherit workspace authorization.
+ * Feedback records live in Hub rather than Prisma and remain protected by dataset/workspace authorization
+ * plus tenant and integrity checks.
  */
 export const PRISMA_AUTHORIZATION_RESOURCE_INVENTORY = {
   Account: "authentication_or_application",
@@ -29,7 +29,6 @@ export const PRISMA_AUTHORIZATION_RESOURCE_INVENTORY = {
   AuditEvent: "parent_derived_or_data_integrity",
   AuthzedProjectionOutbox: "authentication_or_application",
   AuthzedProjectionScopeState: "authentication_or_application",
-  Chart: "workspace_inherited_resource",
   Contact: "workspace_inherited_resource",
   ContactAttribute: "parent_derived_or_data_integrity",
   ContactAttributeKey: "workspace_inherited_resource",
@@ -40,8 +39,6 @@ export const PRISMA_AUTHORIZATION_RESOURCE_INVENTORY = {
   CreativeDailyStat: "parent_derived_or_data_integrity",
   CreativeLanguage: "parent_derived_or_data_integrity",
   CreativeTrigger: "parent_derived_or_data_integrity",
-  Dashboard: "direct_authorization_resource",
-  DashboardWidget: "parent_derived_or_data_integrity",
   DataMigration: "public_or_out_of_scope",
   // A system queue of cleanup work (Hub records, storage files) left by deletes; no user reads it.
   DeletionCleanup: "authentication_or_application",
@@ -108,13 +105,10 @@ export const PRISMA_AUTHORIZATION_RESOURCE_INVENTORY = {
 export const AUDIT_TARGET_AUTHORIZATION_RESOURCE_INVENTORY = {
   actionClass: "workspace_inherited_resource",
   apiKey: "relationship_or_grant_source",
-  chart: "workspace_inherited_resource",
   contact: "workspace_inherited_resource",
   contactAttributeKey: "workspace_inherited_resource",
   creative: "workspace_inherited_resource",
   cubeQuery: "parent_derived_or_data_integrity",
-  dashboard: "direct_authorization_resource",
-  dashboardWidget: "parent_derived_or_data_integrity",
   // Every write to a shared Embedded Data field is authorized as `workspace.read` / `workspace.write`
   // against the workspace resolved from the row, so the audit target inherits from the workspace even
   // though the Prisma model also carries survey-owned rows.

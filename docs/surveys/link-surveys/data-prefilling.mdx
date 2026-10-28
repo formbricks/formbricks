@@ -43,9 +43,7 @@ Formbricks lets you prefill as many values as you want. Combine multiple values 
 
 ### Where do I find my question Id?
 
-Open a question in the Survey Editor and click **Show Question settings** at the foot of its card. The `questionId` is the first field there. You can change it to any string you like **before you activate a survey**; after activation it is fixed, because the responses already collected refer to it.
-
-![The question Id is located at the bottom of each question card in the survey editor.](/images/surveys/link-surveys/data-prefilling/question-id.webp)
+Every question in the survey document has an `id`. Ask your agent to read the survey (`get_survey` over [MCP](/platform/mcp/overview), or `GET /api/v3/surveys/{surveyId}`) and list the question IDs. An ID can be any string you like **before you publish a survey**; after that it is fixed, because the responses already collected refer to it.
 
 ## Examples
 
@@ -133,10 +131,7 @@ In this example:
 
 ### How to Find Option IDs
 
-1. Open your survey in the Survey Editor
-2. Click on the question you want to prefill
-3. Click **Show Question settings** at the foot of the question card
-4. Each option shows its unique ID that you can copy
+Ask your agent to read the survey (`get_survey` over [MCP](/platform/mcp/overview), or `GET /api/v3/surveys/{surveyId}`). Each choice of a select question carries its own unique ID next to its label.
 
 ### Examples with Option IDs
 

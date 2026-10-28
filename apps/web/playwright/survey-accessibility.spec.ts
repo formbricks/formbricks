@@ -18,7 +18,7 @@ import {
   WELCOME_CARD_HEADLINE,
   seedAccessibilitySurveys,
 } from "./utils/accessibility";
-import { mockStorageUploads } from "./utils/helper";
+import { mockStorageUploads } from "./utils/storage-mock";
 
 /**
  * Accessibility gate for the rendered link survey (axe-core).

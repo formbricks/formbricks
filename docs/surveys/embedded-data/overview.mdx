@@ -16,19 +16,11 @@ That makes it the counterpart to **contact attributes**, which are **data about 
 | Set with              | URL params, `setEmbeddedData()`, survey logic | `setUserId()`, `setAttributes()`, `setEmail()`        |
 | Lives past the survey | no                                           | yes                                                  |
 
-<Note>
-  **The API payloads keep their shape** and no survey needs editing; only `hiddenFields.enabled` is now
-  derived (`true` whenever a passed-in field exists) and ignored on write. What did change is the editor: the
-  Hidden Fields and Variables cards are now one **Embedded Data** card, where a field's source is **Passed in**
-  or **Calculated**. See [Hidden Fields and Variables](/surveys/embedded-data/migration) if you already use
-  them.
-</Note>
-
 ## The Three Sources
 
 Every Embedded Data field has exactly one source, and the source decides who is allowed to write it.
 
-| Source       | Written by                                   | Called this in the editor | Types today                           |
+| Source       | Written by                                   | Also called               | Types today                           |
 | ------------ | -------------------------------------------- | ------------------------- | ------------------------------------- |
 | **Ingested** | the outside world: URL params or the SDK     | **Passed in**             | `string`, `number`, `boolean`, `date` |
 | **Computed** | the survey itself, through logic actions      | **Calculated**            | `string`, `number`                    |
@@ -61,16 +53,20 @@ A field does not care which channel filled it. `plan` is declared the same way, 
 
 ## Declaring a Field
 
-An ingested or computed field has to exist before anything can fill it, and there are two places to declare one:
+An ingested or computed field has to exist before anything can fill it. Fields are declared on the survey itself: ask your agent to add them to the survey document (`patch_survey` over [MCP](/platform/mcp/overview), or `PATCH /api/v3/surveys/{surveyId}`). Reserved fields are never declared, they are always available.
 
-- **In the survey editor**, for a field only that survey uses: the **Embedded Data** card, where one dialog creates either source.
-- **In Settings → Workspace → Embedded Data**, for a field the whole workspace shares. A field declared there can be linked from any survey, and editing it once changes it for every survey using it. The same page lists which surveys use each field, and refuses to delete one that is still in use. See [Field library](/surveys/embedded-data/library).
+A passed-in field carries two things, and they do different jobs. Its **name** is what you call it — what exports show, renameable at any time. Its **key** is the address the value lives under: the URL parameter, the SDK key, and what recall and logic resolve. The key fills itself in from the name, and cannot change once the field exists, because responses are already stored under it.
 
-Reserved fields are never declared, they are always available.
+### Naming
 
-A passed-in field carries two things you type, and they do different jobs. Its **name** is what you call it — what the response table, the summary and your exports show, renameable at any time. Its **key** is the address the value lives under: the URL parameter, the SDK key, and what recall and logic resolve. The key fills itself in from the name, and cannot change once the field exists, because responses are already stored under it. A calculated field added on a survey has a name only; one in the [library](/surveys/embedded-data/library) also takes a key, because that is how other surveys find it. Either way its storage address is generated.
+Keys follow one rule everywhere, in the survey document and in the API alike:
 
-Keys follow one rule everywhere, and reserved names are refused for new fields in any casing. The full rule and the refused list live on the [Hidden Fields](/surveys/general-features/hidden-fields#naming) page.
+- A **new** key must start with a lowercase letter and then contain only lowercase letters, numbers and underscores: `^[a-z][a-z0-9_]*$`. So `page_type`, not `pageType` or `Page Type`.
+- **Reserved names are refused in any casing.** These are the link-survey system params and internal ids: `userId`, `source`, `suid`, `end`, `start`, `welcomeCard`, `hidden`, `verifiedEmail`, `multiLanguage`, `embed`, `verify`, `suToken`, `lang`, `preview`, `startAt`, `skipPrefilled`, `offlineSupport`. A field named exactly like one of them is never filled from a survey URL, whatever the casing of the parameter: that parameter belongs to the survey link.
+- **Auto-captured field names are refused too**: every survey can already read those by name without declaring them, and a second field under the same name would be ambiguous in recall and logic. The full list is on the [Reserved Fields](/surveys/embedded-data/reserved-fields) page.
+- **A passed-in and a calculated field may not answer to the same address**, in any casing, for the same reason: recall and logic resolve one namespace.
+
+Addresses a survey **already declares keep working**: they load, collect values and can be re-saved unchanged — only adding such a name to a *new* field is refused.
 
 A field also carries a **type** that decides how its value is read back and compared. In this release:
 
@@ -80,7 +76,7 @@ A field also carries a **type** that decides how its value is read back and comp
 
 <Note>
   A field's type and default are set in its own dialog, on a survey field and a
-  [library field](/surveys/embedded-data/library) alike. A **passed-in** field also has a **lock** there: a
+  survey field. A **passed-in** field also has a **lock** there: a
   locked field ignores whatever a URL param or the SDK sends and uses its default instead, which is how you
   fix a value nobody outside can change. A calculated field has no lock: only the survey's own logic writes it.
 </Note>
@@ -106,7 +102,7 @@ The same contract runs in the browser when the survey is displayed, and again on
     response stores, what an export column shows, and what a filter compares against; a `date` field accepts `2026-08-06` and full ISO 8601
     datetimes, stores ISO 8601, and reads a datetime with no zone as UTC rather than as the respondent's
     local time. A value that cannot be coerced is stored verbatim and flagged, so a bad parameter never
-    blocks a response. A field left as `string` — every field declared in the survey editor — passes through
+    blocks a response. A field left as `string` — the default type — passes through
     this step unchanged, since every scalar has a lossless text form; it does visible work on a shared field
     that declares a narrower type.
   </Step>
@@ -146,7 +142,7 @@ Once a value is on a response it behaves like any other response data:
 - **Recall** it into question copy, ending cards and redirect URLs with `#recall:<name>/fallback:<text>#`.
 - Use it as a **logic** operand to branch the survey.
 - Filter and group **responses** by it.
-- **Export** it as a stable, typed column in CSV and Excel.
+- Read it as a stable, typed value from the response API, in webhook payloads and in feedback records.
 
 Mid-survey surfaces (recall inside a running survey, logic conditions) can only use values that exist while the respondent is still answering. Server-derived reserved fields such as `country` or `durationSeconds` are only known once the response reaches Formbricks, so they are available on the response but not offered to a running survey. The [Reserved Fields](/surveys/embedded-data/reserved-fields) page marks which is which.
 
@@ -165,7 +161,4 @@ Mid-survey surfaces (recall inside a running survey, logic conditions) can only 
     `setEmbeddedData` on React Native, iOS, Android and Flutter, with each language's value types.
   </Card>
 
-  <Card title="Hidden Fields & Variables" icon="arrow-right-arrow-left" href="/surveys/embedded-data/migration">
-    What changes for surveys you already run, and what does not.
-  </Card>
 </CardGroup>

@@ -22,7 +22,7 @@ const securityContext = {
   organizationId: "organization-1",
   userId: "user-1",
   scope: "xm:cube:query",
-  source: "charts.executeQueryAction",
+  source: "feedbackQueries.execute",
   jti: "request-1",
 };
 
@@ -133,7 +133,7 @@ describe("cube queryRewrite", () => {
       organizationId: "organization-1",
       userId: "user-1",
       requestId: "request-1",
-      source: "charts.executeQueryAction",
+      source: "feedbackQueries.execute",
       errorName: "Error",
     });
     expect(parsed.members).toContain("FeedbackRecords.tenantId");
@@ -369,7 +369,7 @@ describe("cube queryRewrite", () => {
       organizationId: "organization-1",
       userId: "user-1",
       requestId: "request-1",
-      source: "charts.executeQueryAction",
+      source: "feedbackQueries.execute",
     });
     expect(parsed.members).toContain("FeedbackRecords.tenantId");
     expect(logPayload).not.toContain("secret-value");

@@ -40,7 +40,7 @@ describe("cube-config", () => {
       workspaceId: "workspace-1",
       organizationId: "organization-1",
       userId: "user-1",
-      source: "charts.executeQueryAction",
+      source: "feedbackQueries.execute",
     });
 
     const payload = jwt.verify(config.token, "cube-secret", {
@@ -58,7 +58,7 @@ describe("cube-config", () => {
       organizationId: "organization-1",
       userId: "user-1",
       scope: CUBE_QUERY_SCOPE,
-      source: "charts.executeQueryAction",
+      source: "feedbackQueries.execute",
       jti: config.requestId,
     });
     expect(payload.exp! - payload.iat!).toBe(CUBE_API_TOKEN_TTL_SECONDS);
@@ -74,7 +74,7 @@ describe("cube-config", () => {
       workspaceId: "workspace-1",
       organizationId: "organization-1",
       userId: "user-1",
-      source: "charts.executeQueryAction",
+      source: "feedbackQueries.execute",
     } as unknown as Parameters<typeof getCubeApiConfig>[0]);
 
     const payload = jwt.verify(config.token, "cube-secret", {

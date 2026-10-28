@@ -1,16 +1,16 @@
 ---
 title: "AI Features"
-description: "Connect an LLM to your instance and enable AI-powered helpers like survey translation and AI chart creation."
+description: "Connect an LLM to your instance and enable AI-powered helpers like survey drafting and feedback enrichment."
 icon: "sparkles"
 sidebarTitle: "AI Features"
 ---
 
-A single organization toggle unlocks AI-assisted survey translation and AI chart creation across the app.
+Connect a model to your instance to unlock AI-assisted helpers such as survey drafting (`generate_survey`).
 Formbricks runs fine without AI — nothing is enabled until you connect a model.
 
 <Note>
   AI features are part of the [Enterprise Edition](/self-hosting/advanced/license). See [AI
-  Features](/platform/features/ai-features) for what the toggle unlocks and how your data is handled.
+  Features](/platform/ai-features) for what it unlocks and how your data is handled.
 </Note>
 
 Wiring up an LLM takes two steps:
@@ -21,8 +21,8 @@ Wiring up an LLM takes two steps:
     restart your containers.
   </Step>
   <Step title="Turn AI on for the organization">
-    In the app, go to **Settings → Organization → General → Smart functionality (AI)** and enable the toggle.
-    Only Owners and Managers can change it.
+    AI smart tools are also switched on per organization and need an Enterprise license. The account shell has no
+    screen for that switch yet.
   </Step>
 </Steps>
 
@@ -153,12 +153,9 @@ Invalid values prevent the app from starting.
 
 | Operation | Default | With `AI_TIMEOUT_MULTIPLIER=3` |
 | --- | --- | --- |
-| AI chart creation | 30 seconds | 90 seconds |
-| Survey generation, translation, example responses, and each QSF AI call | 45 seconds | 135 seconds |
-| Complete QSF import | 120 seconds | 360 seconds |
+| Survey generation | 45 seconds | 135 seconds |
 
-The call budget includes retries. QSF attempts share their call's budget and are also limited by the remaining
-import deadline; five seconds remain reserved for assembling the draft. The setting applies to every AI
+The call budget includes retries. The setting applies to every AI
 provider configured for the web app. Hub and taxonomy have their own configuration, and OAuth token requests
 retain their separate ten-second timeout.
 
@@ -188,16 +185,16 @@ retain their separate ten-second timeout.
     For Kubernetes, apply your Helm values with your usual upgrade command and let the app pods restart.
   </Step>
   <Step title="Verify a slow operation">
-    Generate a survey or translate one against your model and confirm it finishes. Pressing **Stop** during
-    survey generation still cancels the model request immediately. To restore the default limits, set the
+    Ask your agent to draft a survey with `generate_survey` against your model and confirm it finishes. An
+    agent that cancels the request also cancels the model request immediately. To restore the default limits, set the
     multiplier to `1` and apply the environment change again.
   </Step>
 </Steps>
 
 <Note>
   Your ingress, reverse tunnel, gateway, and model server can impose shorter limits. Increase those limits
-  as needed: non-streaming operations may send no response until generation finishes. Survey generation and
-  QSF imports send a keepalive after ten seconds of silence, but that does not override a proxy's maximum
+  as needed: non-streaming operations may send no response until generation finishes. Survey generation
+  sends a keepalive after ten seconds of silence, but that does not override a proxy's maximum
   request duration or a provider's own timeout.
 </Note>
 
@@ -270,21 +267,18 @@ deployment platform.
 
 ## Verifying the setup
 
-Restart your containers after changing any of these variables, then open **Settings → Organization → General**.
-While the instance is not configured, the AI toggle stays disabled and the page says so — the setting cannot be
-turned on from the UI until the environment variables are in place.
+Restart your containers after changing any of these variables.
 
 <Warning>
-  An enabled toggle only means the variables are present and well-formed. Formbricks does not call your provider
+  Starting without errors only means the variables are present and well-formed. Formbricks does not call your provider
   to check it: an unreachable base URL, a wrong API key, or a deployment name that does not exist all pass this
   check and fail on the first real request.
 </Warning>
 
-So finish by exercising the model once — translate a survey into a second language, or ask the AI chart builder
-for a chart. If that request fails while the toggle is on, the credentials or the endpoint are wrong, not the
-configuration shape.
+So finish by exercising the model once — ask your agent to draft a survey with `generate_survey`. If that request
+fails, the credentials or the endpoint are wrong, not the configuration shape.
 
-If the toggle stays disabled after a restart, check the app logs:
+If AI stays unavailable after a restart, check the app logs:
 
 ```bash
 docker compose logs formbricks | grep -i "ai"

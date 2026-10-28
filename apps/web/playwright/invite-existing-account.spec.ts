@@ -23,22 +23,23 @@ test.describe("Invite sign-up with an address that already has an account @slow"
 
     // Invite the address through the real UI, then read the link the inviter would share.
     const inviteLink = await test.step("Invite the existing user and copy the link", async () => {
-      // Navigate by the fixture's known workspace id rather than waiting on the post-login landing
-      // page, which differs depending on whether the workspace has any surveys.
-      await page.goto(`/workspaces/${inviter.workspaceId}/settings/organization/teams`);
-      await page.waitForURL(/\/organizations\/[^/]+\/settings\/teams/);
-      await page.locator('[data-testid="members-loading-card"]:first-child').waitFor({ state: "hidden" });
+      await page.goto(`/organizations/${inviter.organizationId}/members`);
 
       await page.getByRole("button", { name: "Invite member" }).click();
-      await page.getByLabel("Full Name").fill("Existing Person");
-      await page.getByLabel("Email").fill(inviteeEmail);
-      await page.getByRole("button", { name: "Invite", exact: true }).click();
-      await expect(page.locator(".formbricks__toast__success")).toBeVisible({ timeout: 15000 });
+      const inviteDialog = page.getByRole("dialog", { name: "Invite member" });
+      await inviteDialog.getByLabel("Full name").fill("Existing Person");
+      await inviteDialog.getByLabel("Email", { exact: true }).fill(inviteeEmail);
+      await inviteDialog.getByRole("button", { name: "Invite", exact: true }).click();
+      await expect(inviteDialog).toBeHidden();
 
-      const invitedMemberInfo = page.locator("#singleMemberInfo").filter({ hasText: inviteeEmail });
-      await expect(invitedMemberInfo).toBeVisible({ timeout: 10000 });
-      await invitedMemberInfo.locator("#shareInviteButton").click();
-      return (await page.waitForSelector("#inviteLinkText")).inputValue();
+      const invitedRow = page.getByRole("row", { name: new RegExp(inviteeEmail) });
+      await expect(invitedRow).toBeVisible();
+      await expect(invitedRow.getByText("Pending", { exact: true })).toBeVisible();
+      await invitedRow.getByRole("button", { name: /^Manage/ }).click();
+
+      const manageDialog = page.getByRole("dialog", { name: "Existing Person" });
+      await manageDialog.getByRole("button", { name: "Get invite link" }).click();
+      return manageDialog.getByLabel("Invite link").inputValue();
     });
     expect(inviteLink).toBeTruthy();
 
@@ -47,15 +48,12 @@ test.describe("Invite sign-up with an address that already has an account @slow"
     const inviteeContext = await browser.newContext();
     const inviteePage = await inviteeContext.newPage();
     try {
+      // The invite page carries the sign-up form itself, with the invited address filled in and locked.
       await inviteePage.goto(inviteLink);
-      await inviteePage.getByRole("link", { name: "Create an account" }).click();
-      await inviteePage.waitForURL(/\/auth\/signup\?inviteToken=/);
-
-      await inviteePage.getByText("Continue with Email").click();
-      await inviteePage.fill('input[name="name"]', "Existing Person");
-      await inviteePage.fill('input[name="email"]', inviteeEmail);
-      await inviteePage.fill('input[name="password"]', "SomeOtherPassword1!");
-      await inviteePage.press('input[name="password"]', "Enter");
+      await expect(inviteePage.getByTestId("signup-email")).toHaveValue(inviteeEmail);
+      await inviteePage.getByTestId("signup-name").fill("Existing Person");
+      await inviteePage.getByTestId("signup-password").fill("SomeOtherPassword1!");
+      await inviteePage.getByTestId("signup-password").press("Enter");
 
       // Lands on the SAME success screen a brand-new address gets, so the response can't be used to tell
       // whether the account exists (ENG-2099) — which of the two it is depends only on
@@ -69,7 +67,7 @@ test.describe("Invite sign-up with an address that already has an account @slow"
       // Asserted unconditionally on BOTH screens: the callback used to be carried only on the
       // verification-requested one, which left the verification-disabled path — the self-hosted default
       // and what CI runs here — dropping the visitor at the app root with no way back to the invite.
-      const loginLink = inviteePage.getByRole("link", { name: "Log in" });
+      const loginLink = inviteePage.getByRole("link", { name: "Log in", exact: true });
       await expect(loginLink).toBeVisible();
       await expect(loginLink).toHaveAttribute("href", /callbackUrl=.*invite/);
     } finally {

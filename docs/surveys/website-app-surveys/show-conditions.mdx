@@ -21,20 +21,7 @@ Trigger survey when one of the actions is fired… Exit intent
 
 ## Set up show conditions
 
-<Steps>
-  <Step title="Open the Survey Trigger card">
-    In the survey editor, go to **Settings** and open the **Survey Trigger** card. Show conditions are for website and app surveys; link surveys don't have them.
-  </Step>
-  <Step title="Add a condition">
-    Under **…and only show it**, click **Add condition**. Pick what to check, how to compare, and the value. Add more conditions with the row menu, and choose whether **all** or **any** of them must hold.
-  </Step>
-  <Step title="Group conditions when you need both">
-    To mix "all" and "any" in one rule, use **Create group** in a row's menu. A group can't hold another group.
-  </Step>
-  <Step title="Test your URL">
-    Paste a URL into **Test your URL** to see which of your URL conditions it matches, before you publish.
-  </Step>
-</Steps>
+Show conditions are part of a website or app survey; link surveys don't have them. Ask your agent to add them to the survey's trigger settings when it creates or patches the survey: say which pages, visits or devices it should show on, and whether **all** or **any** of the conditions must hold. To mix "all" and "any" in one rule, conditions can be grouped; a group can't hold another group.
 
 Leave the block empty to show the survey on every trigger, exactly as before.
 
@@ -77,7 +64,7 @@ Pages are told apart by their path, the same way **path is any of** compares the
 
 Conditions are checked when a trigger fires, and again right before the survey appears: after its **delay** if it has one, so time on site has grown and a visitor who moved to an excluded page in the meantime doesn't see it. Conditions never show a survey by themselves: a visitor who meets them but triggers nothing sees nothing.
 
-They apply on top of everything else that decides whether a survey shows: the action's own page filters, [Recontact Options](/surveys/website-app-surveys/recontact), the [Cooldown Period](/surveys/website-app-surveys/cooldown-period) and [segment targeting](/surveys/website-app-surveys/attribute-based-targeting). The [display percentage](/surveys/website-app-surveys/show-survey-to-percent-of-users) comes after them, so it samples only visitors who meet the conditions. See [Survey Display Logic](/surveys/website-app-surveys/survey-display-logic) for the full order.
+They apply on top of everything else that decides whether a survey shows: the action's own page filters, the survey's recontact options, the Cooldown Period and segment targeting. The display percentage comes after them, so it samples only visitors who meet the conditions. See [Survey Display Logic](/surveys/website-app-surveys/survey-display-logic) for the full order.
 
 <Warning>
   Show conditions are for websites only. The mobile SDKs (iOS, Android, React Native, Flutter) ignore them and show the survey on its trigger as before.
@@ -88,7 +75,7 @@ They apply on top of everything else that decides whether a survey shows: the ac
 Add `?formbricksDebug=true` to the URL of a page with the Formbricks snippet. A small debug panel opens in the corner of the page and lists, for every survey on a trigger that fired:
 
 - whether it was dropped before the trigger fired, and why (shown once already, already answered, display limit, Cooldown Period, segment);
-- each show condition with what it read on this page, marked ✓ or ✗, grouped as in the editor: every "all of" or "any of" group shows its own ✓ or ✗, so a ✗ inside an "any of" group that passed did not stop the survey;
+- each show condition with what it read on this page, marked ✓ or ✗, grouped as in the survey: every "all of" or "any of" group shows its own ✓ or ✗, so a ✗ inside an "any of" group that passed did not stop the survey;
 - whether the display percentage or another open survey stopped it.
 
 It also shows the live visit: pages viewed, time on site, entry referrer, visited paths and the detected device.
@@ -107,7 +94,7 @@ A new subscriber first receives everything that already happened on the page. Un
 
 ## What lands on each response
 
-Every response to a website survey records the visit at the moment the survey showed, as five [reserved fields](/surveys/embedded-data/reserved-fields): **Pages Viewed**, **Unique Pages Viewed**, **Time on Site**, **Entry Referrer** and **Visited URLs**. They appear on the response card, as table columns, in the response filter and in the CSV export, and you can use them in survey logic and recall. **Visited URLs** is the journey in order: the first page and the last 49 steps.
+Every response to a website survey records the visit at the moment the survey showed, as five [reserved fields](/surveys/embedded-data/reserved-fields): **Pages Viewed**, **Unique Pages Viewed**, **Time on Site**, **Entry Referrer** and **Visited URLs**. They are part of the response metadata, and you can use them in survey logic and recall. **Visited URLs** is the journey in order: the first page and the last 49 steps.
 
 <Note>
   The **Device** shown on a response comes from the server, which can't tell an iPad from a Mac: iPads are recorded as desktop there. The **Device** show condition runs in the browser and detects them as tablets.

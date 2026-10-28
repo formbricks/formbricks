@@ -30,14 +30,11 @@ const parseAction = (
 };
 
 /**
- * The workspace permission a survey, response or dashboard action is decided by whenever the decision is
- * made on the workspace node: always for dashboards, and for surveys and responses while survey
- * visibility is not enforced (readiness marker off) or a change is pending. `survey.change_visibility`
- * is deliberately absent — it has no workspace equivalent.
+ * The workspace permission a survey or response action is decided by whenever the decision is made on the
+ * workspace node: while survey visibility is not enforced (readiness marker off) or a change is pending.
+ * `survey.change_visibility` is deliberately absent — it has no workspace equivalent.
  */
 const WORKSPACE_PERMISSION_FOR_DERIVED_ACTION = {
-  "dashboard.read": "read",
-  "dashboard.write": "write",
   "response.export": "read",
   "response.manage": "manage",
   "response.read": "read",

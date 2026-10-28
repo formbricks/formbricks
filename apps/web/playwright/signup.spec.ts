@@ -9,18 +9,20 @@ const normalizedEmailPattern = new RegExp(email.replace(/[.*+?^${}()|[\]\\]/g, "
 
 test.describe("Email Signup Flow Test", async () => {
   test.describe.configure({ mode: "serial" });
+
+  // The email and password fields are always on the page; there is no "continue with email" step.
   test.beforeEach(async ({ page }) => {
     await page.goto("/auth/signup");
-    await page.getByText("Continue with Email").click();
+    await expect(page.getByTestId("signup-email")).toBeVisible();
   });
 
+  const submitButton = (page: Page) => page.getByRole("button", { name: "Create account" });
+
   test("Valid User", async ({ page }) => {
-    await page.fill('input[name="name"]', name);
-    await page.getByPlaceholder("Full Name").press("Tab");
-    await page.fill('input[name="email"]', mixedCaseEmail);
-    await page.getByPlaceholder("work@email.com").press("Tab");
-    await page.fill('input[name="password"]', password);
-    await page.press('input[name="password"]', "Enter");
+    await page.getByTestId("signup-name").fill(name);
+    await page.getByTestId("signup-email").fill(mixedCaseEmail);
+    await page.getByTestId("signup-password").fill(password);
+    await page.getByTestId("signup-password").press("Enter");
     await page.waitForURL(/\/auth\/signup-without-verification-success.*/);
     await expect(page).toHaveURL(/\/auth\/signup-without-verification-success.*/);
     await expect(page).not.toHaveURL(/token=undefined/);
@@ -28,36 +30,24 @@ test.describe("Email Signup Flow Test", async () => {
   });
 
   test("No Name", async ({ page }) => {
-    await page.fill('input[name="name"]', "");
-    await page.getByPlaceholder("Full Name").press("Tab");
-    await page.fill('input[name="email"]', email);
-    await page.getByPlaceholder("work@email.com").press("Tab");
-    await page.fill('input[name="password"]', password);
-    await page.press('input[name="password"]', "Enter");
-    const button = page.getByText("Continue with Email");
-    await expect(button).toBeDisabled();
+    await page.getByTestId("signup-name").fill("");
+    await page.getByTestId("signup-email").fill(email);
+    await page.getByTestId("signup-password").fill(password);
+    await expect(submitButton(page)).toBeDisabled();
   });
 
   test("Invalid Email", async ({ page }) => {
-    await page.fill('input[name="name"]', name);
-    await page.getByPlaceholder("Full Name").press("Tab");
-    await page.fill('input[name="email"]', "invalid");
-    await page.getByPlaceholder("work@email.com").press("Tab");
-    await page.fill('input[name="password"]', password);
-    await page.press('input[name="password"]', "Enter");
-    const button = page.getByText("Continue with Email");
-    await expect(button).toBeDisabled();
+    await page.getByTestId("signup-name").fill(name);
+    await page.getByTestId("signup-email").fill("invalid");
+    await page.getByTestId("signup-password").fill(password);
+    await expect(submitButton(page)).toBeDisabled();
   });
 
   test("Invalid Password", async ({ page }) => {
-    await page.fill('input[name="name"]', name);
-    await page.getByPlaceholder("Full Name").press("Tab");
-    await page.fill('input[name="email"]', email);
-    await page.getByPlaceholder("work@email.com").press("Tab");
-    await page.fill('input[name="password"]', "invalid");
-    await page.press('input[name="password"]', "Enter");
-    const button = page.getByText("Continue with Email");
-    await expect(button).toBeDisabled();
+    await page.getByTestId("signup-name").fill(name);
+    await page.getByTestId("signup-email").fill(email);
+    await page.getByTestId("signup-password").fill("invalid");
+    await expect(submitButton(page)).toBeDisabled();
   });
 });
 
@@ -85,12 +75,10 @@ test.describe("Signed-out screens on a phone", () => {
         expect(await horizontalOverflow(page), `${path} at ${width}px`).toBe(0);
       }
 
-      // The email step is what actually fills the card — six SSO buttons, two fields and a
-      // captcha only exist once it is expanded.
+      // The login card is at its fullest with both fields and the SSO options on screen.
       await page.goto("/auth/login");
-      await page.getByRole("button", { name: "Log in with Email" }).dispatchEvent("click");
-      await expect(page.getByPlaceholder("work@email.com")).toBeVisible();
-      expect(await horizontalOverflow(page), `expanded login at ${width}px`).toBe(0);
+      await expect(page.getByLabel("Email", { exact: true })).toBeVisible();
+      expect(await horizontalOverflow(page), `login form at ${width}px`).toBe(0);
     }
   });
 
@@ -100,7 +88,6 @@ test.describe("Signed-out screens on a phone", () => {
 
     await page.setViewportSize(MOBILE);
     await page.goto("/auth/signup");
-    await page.getByText("Continue with Email").click();
 
     await page.getByTestId("signup-name").fill(name);
     await page.getByTestId("signup-email").fill(mobileEmail);

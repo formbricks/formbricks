@@ -57,8 +57,7 @@ describe("authorization resource inventory", () => {
     }
   });
 
-  test("keeps charts and workflows workspace-inherited rather than standalone Phase 1 ACLs", () => {
-    expect(PRISMA_AUTHORIZATION_RESOURCE_INVENTORY.Chart).toBe("workspace_inherited_resource");
+  test("keeps workflows workspace-inherited rather than a standalone Phase 1 ACL", () => {
     expect(PRISMA_AUTHORIZATION_RESOURCE_INVENTORY.Workflow).toBe("workspace_inherited_resource");
   });
 });

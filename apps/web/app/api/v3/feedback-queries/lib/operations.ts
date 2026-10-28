@@ -14,7 +14,7 @@ import {
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { CubeQueryError, executeTenantScopedQuery } from "@/modules/ee/analysis/api/lib/cube-client";
-import { getIsDashboardsEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getIsFeedbackAnalyticsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { serializeV3FeedbackFieldCatalog } from "./catalog";
 import { FEEDBACK_QUERY_RATE_LIMIT } from "./rate-limit";
 import { type TV3FeedbackQuery, V3_FEEDBACK_QUERY_DEFAULT_LIMIT } from "./schemas";
@@ -38,15 +38,15 @@ type TBaseParams = {
 };
 
 /**
- * The licence feature behind feedback queries. Analysis is still gated by the `dashboards` entitlement,
- * the one the Cube-backed charts always used; this is the single place to point at a renamed feature when
- * dashboards are removed.
+ * The licence feature behind feedback queries: the analytics entitlement, kept distinct from the Feedback
+ * Datasets one because the licence server sells them as separate flags. Its wire name is still
+ * `dashboards` (see `getIsFeedbackAnalyticsEnabled`).
  */
 async function requireFeedbackQueryEntitlement(
   organizationId: string,
   { requestId, instance }: Pick<TBaseParams, "requestId" | "instance">
 ): Promise<Response | null> {
-  if (await getIsDashboardsEnabled(organizationId)) return null;
+  if (await getIsFeedbackAnalyticsEnabled(organizationId)) return null;
 
   return problemForbidden(
     requestId,

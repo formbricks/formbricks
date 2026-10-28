@@ -17,12 +17,12 @@ The survey navigation is block-based: each block can contain one or more questio
 
 ## How to use it
 
-1. In the Survey Editor, open the Questions Tab and ensure the survey is set as a **Link Survey**.
+1. Make sure the survey is a **Link Survey**.
 
-2. Find the question (or block) you want to start at, click on **Show Question settings**, and copy the **Question ID** of any question in that block.
+2. Find the question (or block) you want to start at and note its **question ID**. Ask your agent to read the survey (`get_survey` over [MCP](/platform/mcp/overview)) and list the IDs of the questions in each block.
 
 <Note>
-  Each question has a unique Question ID. Since `startAt` resolves to the block containing the question, you can use any question ID from the target block—typically the first question in that block.
+  Each question has a unique question ID. Since `startAt` resolves to the block containing the question, you can use any question ID from the target block—typically the first question in that block.
 </Note>
 
 3. Append `?startAt=question_id` to your survey's URL, replacing `question_id` with the copied Question ID.

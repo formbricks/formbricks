@@ -8,13 +8,7 @@ export const CUBE_QUERY_SCOPE = "xm:cube:query";
 export const DEFAULT_CUBE_JWT_AUDIENCE = "formbricks-cube";
 export const DEFAULT_CUBE_JWT_ISSUER = "formbricks-web";
 
-export type TCubeQuerySource =
-  | "charts.aiDataProfile"
-  | "charts.executeQueryAction"
-  | "charts.generateAIChartAction"
-  | "charts.getDimensionValuesAction"
-  | "dashboards.widget"
-  | "feedbackQueries.execute";
+export type TCubeQuerySource = "feedbackQueries.execute";
 
 export type TCubeTenantScope = {
   feedbackDirectoryId: string;

@@ -13,11 +13,12 @@ production SLO.
 
 ## Summary
 
-- **The N+1 claim is proven, not argued, on three list/export paths.** A workspace's
-  survey list, its dashboard list, and a survey's response export each issue a
+- **The N+1 claim is proven, not argued, on the list/export paths.** A workspace's
+  survey list and a survey's response export each issue a
   row-count-independent number of authorization checks — confirmed against real Postgres,
-  and mutation-checked against all three together (removing the counter call from `can()`
-  fails all 9 tests across the three files in one run). The suite costs 3.8s of test time
+  and mutation-checked (removing the counter call from `can()` fails the tests in one run;
+  the figures below were measured when a dashboard list was a third path, since deleted
+  with dashboards, ADR 0016). The suite costs 3.8s of test time
   (8.6s including Vitest startup); the slowest single test is 889ms against a 30s budget.
 - **A single authorization decision is cheap: legacy evaluator sub-2ms p50, sub-5ms**
   **p99; raw SpiceDB engine sub-0.5ms p50, sub-2ms p99.** The full `can()` path
@@ -128,14 +129,12 @@ report can close on its own.
 
 ```text
 apps/web/lib/authorization/checks-per-request.integration.test.ts
-apps/web/lib/authorization/checks-per-request-dashboards.integration.test.ts
 ```
 
 | Path                                                     | Small   | Large   | Δ     |
 | -------------------------------------------------------- | ------- | ------- | ----- |
 | Survey list (50 → 3,000 surveys)                         | 1 check | 1 check | **0** |
 | Survey list as a _member_, access via team (100 surveys) | 1 check | —       | **0** |
-| Dashboard list (10 → 2,000 dashboards)                   | 1 check | 1 check | **0** |
 
 The member row is the one that exercises the interesting code. Owners short-circuit
 nearly every authorization branch, so an owner-only suite never touches the scope
@@ -143,11 +142,10 @@ resolver or the team-membership walk that real non-admin users go through; that 
 seeds a `member` whose workspace access arrives through a `WorkspaceTeam` grant and
 confirms the count is still one.
 
-One `workspace.read` decision gates the survey list and the dashboard list; neither
-`getSurveys` nor `getDashboards` runs authorization of its own.
+One `workspace.read` decision gates the survey list; `getSurveys` runs no authorization of its own.
 
 None of these grows with the row count — the property "Prove current workspace-scoped
-list paths do not perform one AuthZed check per survey or dashboard" from the
+list paths do not perform one AuthZed check per survey" from the
 ticket scope, stated as passing assertions rather than a grep result.
 
 This is backed by a request-scoped counter
@@ -158,7 +156,7 @@ regardless of caller — and reported in production as
 authorization operations: scalar `can()`/`assertCan()` decisions and authoritative list operations each
 contribute one, independent of row count. That metric
 is the thing to watch on a real dashboard for the general "no page regresses into an N+1"
-question; this report exercised the three paths the ticket named explicitly by name.
+question; this report exercised the paths the ticket named explicitly by name.
 
 **What this does not cover:** API-key scoped listing was investigated, not tested the same
 way, because it doesn't fit the pattern. The v2 API-key response-list route
@@ -223,9 +221,8 @@ pnpm authzed:backfill --apply --scope=all
 # 3. Measure
 pnpm authzed:perf run --iterations=5000 --concurrency=16
 
-# 4. The N+1 proofs (survey list, dashboard list, response export). 9 tests, ~4s.
+# 4. The N+1 proofs (survey list, response export).
 pnpm --dir apps/web test:integration lib/authorization/checks-per-request.integration.test.ts \
-  lib/authorization/checks-per-request-dashboards.integration.test.ts \
   lib/authorization/checks-per-request-response-export.integration.test.ts
 
 # 5. Tear down every row the seed created, and nothing else

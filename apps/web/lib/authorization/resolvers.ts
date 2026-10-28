@@ -202,26 +202,6 @@ export const getSurveyAuthorizationScopeRow = reactCache(
   }
 );
 
-/** The workspace and organization a dashboard belongs to. */
-export const getDashboardAuthorizationWorkspaceScope = reactCache(
-  async (dashboardId: string): Promise<TAuthorizationWorkspaceScope | null> => {
-    try {
-      const dashboard = await prisma.dashboard.findUnique({
-        where: { id: dashboardId },
-        select: {
-          workspaceId: true,
-          workspace: { select: { organizationId: true } },
-        },
-      });
-      return dashboard
-        ? { organizationId: dashboard.workspace.organizationId, workspaceId: dashboard.workspaceId }
-        : null;
-    } catch (error) {
-      return rethrowAsDatabaseError(error);
-    }
-  }
-);
-
 /** The workspace and organization a response's survey belongs to. */
 export const getResponseAuthorizationWorkspaceScope = reactCache(
   async (responseId: string): Promise<TAuthorizationWorkspaceScope | null> => {
@@ -257,19 +237,6 @@ export const getSurveyWorkspaceId = reactCache(async (surveyId: string): Promise
       select: { workspaceId: true },
     });
     return survey?.workspaceId ?? null;
-  } catch (error) {
-    return rethrowAsDatabaseError(error);
-  }
-});
-
-/** The workspace a dashboard belongs to (`Dashboard.workspaceId`). */
-export const getDashboardWorkspaceId = reactCache(async (dashboardId: string): Promise<string | null> => {
-  try {
-    const dashboard = await prisma.dashboard.findUnique({
-      where: { id: dashboardId },
-      select: { workspaceId: true },
-    });
-    return dashboard?.workspaceId ?? null;
   } catch (error) {
     return rethrowAsDatabaseError(error);
   }

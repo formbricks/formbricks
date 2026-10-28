@@ -153,11 +153,9 @@ describe("rateLimitConfigs", () => {
         "inviteMemberPerUser",
         "createOrganization",
         "generateExampleResponses",
-        "aiChartGeneration",
         "integrationMutation",
         "feedbackSourceMutation",
         "historicalResponseImport",
-        "chartCreation",
         "feedbackDirectoryMutation",
         "feedbackRecordDeletion",
         "stateMutation",
@@ -185,11 +183,6 @@ describe("rateLimitConfigs", () => {
         interval: 3600 * 24,
         allowedPerInterval: 5,
         namespace: "action:create-organization",
-      });
-      expect(rateLimitConfigs.actions.aiChartGeneration).toEqual({
-        interval: 60,
-        allowedPerInterval: 1,
-        namespace: "action:ai-chart-generation",
       });
       expect(rateLimitConfigs.actions.historicalResponseImport).toEqual({
         interval: 3600,

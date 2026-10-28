@@ -18,7 +18,6 @@ import { resolveAuthorizationScope } from "./source-scope";
 vi.mock("./resolvers", () => ({
   getApiKeyOrganizationId: vi.fn(),
   getAuthorizationOrganizationId: vi.fn(),
-  getDashboardAuthorizationWorkspaceScope: vi.fn(),
   getFeedbackDirectoryAssignmentAuthorizationScope: vi.fn(),
   getFeedbackDirectoryAuthorizationScope: vi.fn(),
   getResponseAuthorizationWorkspaceScope: vi.fn(),

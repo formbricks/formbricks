@@ -478,21 +478,6 @@ describe("withAuditLogging", () => {
     expect(serviceLogAuditEventMockHandle).not.toHaveBeenCalled();
   });
 
-  test("resolves targetId for chart target type", async () => {
-    const chartCtx = {
-      ...mockCtxBase,
-      auditLoggingCtx: { ...mockCtxBase.auditLoggingCtx, chartId: "chart-1" },
-    };
-    const handlerImpl = vi.fn().mockResolvedValue("ok");
-    const wrapped = OriginalHandler.withAuditLogging("created", "chart", handlerImpl);
-    await wrapped({ ctx: chartCtx as any, parsedInput: mockParsedInput });
-    await new Promise(setImmediate);
-    expect(serviceLogAuditEventMockHandle).toHaveBeenCalled();
-    const callArgs = serviceLogAuditEventMockHandle.mock.calls[0][0];
-    expect(callArgs.target.type).toBe("chart");
-    expect(callArgs.target.id).toBe("chart-1");
-  });
-
   test("resolves targetId for feedback source target type", async () => {
     const feedbackSourceCtx = {
       ...mockCtxBase,
@@ -521,36 +506,6 @@ describe("withAuditLogging", () => {
     const callArgs = serviceLogAuditEventMockHandle.mock.calls[0][0];
     expect(callArgs.target.type).toBe("embeddedData");
     expect(callArgs.target.id).toBe("embedded-data-1");
-  });
-
-  test("resolves targetId for dashboard target type", async () => {
-    const dashCtx = {
-      ...mockCtxBase,
-      auditLoggingCtx: { ...mockCtxBase.auditLoggingCtx, dashboardId: "dash-1" },
-    };
-    const handlerImpl = vi.fn().mockResolvedValue("ok");
-    const wrapped = OriginalHandler.withAuditLogging("created", "dashboard", handlerImpl);
-    await wrapped({ ctx: dashCtx as any, parsedInput: mockParsedInput });
-    await new Promise(setImmediate);
-    expect(serviceLogAuditEventMockHandle).toHaveBeenCalled();
-    const callArgs = serviceLogAuditEventMockHandle.mock.calls[0][0];
-    expect(callArgs.target.type).toBe("dashboard");
-    expect(callArgs.target.id).toBe("dash-1");
-  });
-
-  test("resolves targetId for dashboardWidget target type", async () => {
-    const widgetCtx = {
-      ...mockCtxBase,
-      auditLoggingCtx: { ...mockCtxBase.auditLoggingCtx, dashboardWidgetId: "widget-1" },
-    };
-    const handlerImpl = vi.fn().mockResolvedValue("ok");
-    const wrapped = OriginalHandler.withAuditLogging("created", "dashboardWidget", handlerImpl);
-    await wrapped({ ctx: widgetCtx as any, parsedInput: mockParsedInput });
-    await new Promise(setImmediate);
-    expect(serviceLogAuditEventMockHandle).toHaveBeenCalled();
-    const callArgs = serviceLogAuditEventMockHandle.mock.calls[0][0];
-    expect(callArgs.target.type).toBe("dashboardWidget");
-    expect(callArgs.target.id).toBe("widget-1");
   });
 });
 

@@ -6,6 +6,7 @@ const config = loadConfig({
   FORMBRICKS_URL: "https://admin.example.com",
   FORMBRICKS_PUBLIC_URL: "https://surveys.example.com",
   FORMBRICKS_API_KEY: "fbk_secret",
+  FORMBRICKS_WORKSPACE_ID: "ws_123",
 });
 
 afterEach(() => {
@@ -27,9 +28,9 @@ describe("createApiClient", () => {
   test("sends the key to the admin origin by default", async () => {
     const fetchMock = stubFetch(new Response("{}", { status: 200 }));
 
-    await createApiClient(config).get("/api/v2/me");
+    await createApiClient(config).get("/api/v3/surveys");
 
-    expect(fetchMock.mock.calls[0]?.[0]).toBe("https://admin.example.com/api/v2/me");
+    expect(fetchMock.mock.calls[0]?.[0]).toBe("https://admin.example.com/api/v3/surveys");
     expect(headersOf(fetchMock)["x-api-key"]).toBe("fbk_secret");
   });
 
@@ -68,10 +69,10 @@ describe("createApiClient", () => {
   test("turns a network error into a failure naming the URL and a next step, without the key", async () => {
     stubFetch(new Error("ECONNREFUSED"));
 
-    const failure = createApiClient(config).get("/api/v2/me");
+    const failure = createApiClient(config).get("/api/v3/surveys");
 
     await expect(failure).rejects.toThrow(
-      /Network: could not reach https:\/\/admin\.example\.com\/api\/v2\/me.*ECONNREFUSED.*Next step/
+      /Network: could not reach https:\/\/admin\.example\.com\/api\/v3\/surveys.*ECONNREFUSED.*Next step/
     );
     await expect(failure).rejects.not.toThrow(/fbk_secret/);
   });

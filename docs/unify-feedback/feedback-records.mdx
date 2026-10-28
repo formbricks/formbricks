@@ -4,7 +4,7 @@ description: "The normalized unit of feedback inside a Feedback Dataset."
 icon: "list-check"
 ---
 
-A **Feedback Record** is one piece of feedback expressed in a normalized schema. Whether it came from a survey response, a CSV row, or an API push, it lands in the same shape so you can query everything together.
+A **Feedback Record** is one piece of feedback expressed in a normalized schema. Whether it came from a survey response or an API push, it lands in the same shape so you can query everything together.
 
 ## The Feedback Record schema
 
@@ -14,7 +14,7 @@ Every record has the following fields. Required fields must be mapped by every s
 | --- | --- | --- | --- |
 | `submission_id` | string | Yes | Stable ID for the submission (e.g. `response_id`, `ticket_id`, `order_id`). Used for idempotent re-imports. |
 | `collected_at` | timestamp | Yes | When the feedback was originally collected. |
-| `source_type` | string | Yes | The kind of source (e.g. `survey`, `csv`, `review`). |
+| `source_type` | string | Yes | The kind of source (e.g. `survey`, `review`, `ticket`). |
 | `field_id` | string | Yes | Stable identifier for the question/field. |
 | `field_type` | enum | Yes | One of `text`, `categorical`, `nps`, `csat`, `ces`, `rating`, `number`, `boolean`, `date`. |
 | `tenant_id` | string | No | Feedback Dataset ID. Set automatically when ingesting. |
@@ -56,24 +56,22 @@ Four things can leave a declared field out of `embedded_data`, so do not assume 
 - The value is missing on that response, or does not match the field's type, **and the field has no default value**. A field with a default falls back to it rather than going missing.
 - Two fields share a name. Only one is published: an **ingested** field wins over a **computed** one, and between two of the same source, the one declared first. The winner keeps the name even when it has no value on that response, so the other field does not take its place.
 - `embedded_data` is capped at 8 KiB, measured as its serialized JSON. Once a response's fields reach it, any further field that does not fit is skipped while smaller ones still publish — so a field may be present on some responses and absent on others.
-- The field is named `__proto__`. Readers of the record, the record drawer among them, cannot keep a key with that name, so it is not published.
+- The field is named `__proto__`. Readers of the record cannot keep a key with that name, so it is not published.
 
 <Note>
   `metadata` is returned with a record but is not filterable or searchable through the API, so narrowing by a metadata value means fetching and filtering on your side.
 </Note>
 
-## Viewing and managing records
+## Reading and managing records
 
-Inside a workspace, navigate to **Analyze → Feedback Data → Feedback Records**. You'll see the latest records across every dataset the workspace has access to, sorted by `collected_at`.
+Agents work with records through the `feedbackRecords:read` and `feedbackRecords:write` scopes of the [MCP server](/platform/mcp/overview):
 
-From the table you can:
-
-- **Filter** by dataset, source, field type, or date range.
-- **Open** a record drawer to see the full field set and metadata.
-- **Edit** values inline for cleanup (e.g. relabel a categorical answer).
-- **Delete** a record.
-- **Add** a record manually via the "+ Add" button.
+- **List and count** with `list_feedback_records` and `count_feedback_records`, filtered by source, question, submission, end user, chosen option, language, date range, and enrichment output.
+- **Search by meaning** with `search_feedback_records`, and find echoes of one piece of feedback with `find_similar_feedback_records`.
+- **Aggregate** with `query_feedback`, after reading the available fields with `get_feedback_field_catalog`.
+- **Create** with `create_feedback_record` and `create_feedback_records`.
+- **Correct or delete** with `update_feedback_record` and `delete_feedback_record`. Both are irreversible and need a higher level of access; see [Feedback Datasets](/unify-feedback/feedback-datasets).
 
 ## Idempotent imports
 
-Sources that re-ingest data (CSV uploads, API ingestions) use `submission_id` as the dedup key. Re-importing the same `submission_id` updates the existing record instead of creating a duplicate.
+Sources that re-ingest data (API and agent ingestions) use `submission_id` as the dedup key. Re-importing the same `submission_id` updates the existing record instead of creating a duplicate.

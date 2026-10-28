@@ -938,8 +938,6 @@ envoy:
       authCallback: true
       v1Client: true
       v2Client: true
-      v1Management: true
-      v1Webhooks: true
       feedbackRecords: false
       storage: true
     policies:
@@ -947,8 +945,6 @@ envoy:
       authCallback: true
       v1Client: true
       v2Client: true
-      v1Management: true
-      v1Webhooks: true
       storage: true
 
 ##########################################################

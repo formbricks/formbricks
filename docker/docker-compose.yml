@@ -123,9 +123,6 @@ x-environment: &environment
     # Set the below if you want to ship JS & CSS files from a complete URL instead of the current domain
     # ASSET_PREFIX_URL:
 
-    # Set the below to your Unsplash API Key for their Survey Backgrounds
-    # UNSPLASH_ACCESS_KEY:
-
     # Set the below to your public domain (default is WEBAPP_URL)
     # PUBLIC_URL:
 
@@ -182,24 +179,6 @@ x-environment: &environment
 
     # Set the below to SAML Provider if you want to enable SAML
     # SAML_DATABASE_URL: "postgresql://<user>:<password>@postgres:5432/formbricks-saml?sslmode=disable"
-
-    ########################################## OPTIONAL (THIRD PARTY INTEGRATIONS) ###########################################
-
-    # Oauth credentials for Notion Integration
-    # NOTION_OAUTH_CLIENT_ID:
-    # NOTION_OAUTH_CLIENT_SECRET:
-
-    # Oauth credentials for Google Sheet Integration
-    # GOOGLE_SHEETS_CLIENT_ID:
-    # GOOGLE_SHEETS_CLIENT_SECRET:
-    # GOOGLE_SHEETS_REDIRECT_URL:
-
-    # Oauth credentials for Airtable Integration
-    # AIRTABLE_CLIENT_ID:
-
-    # Oauth credentials for Slack Integration
-    # SLACK_CLIENT_ID:
-    # SLACK_CLIENT_SECRET:
 
     ############################################### OPTIONAL (LEGAL INFORMATION) ################################################
 

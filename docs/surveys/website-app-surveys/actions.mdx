@@ -12,9 +12,9 @@ icon: "code"
   </Step>
 
 <Step title="Formbricks widget detects action">
-  The embedded widget (SDK) detects the action, if you set up a [No Code
-  Action](/surveys/website-app-surveys/actions#setting-up-no-code-actions) or a [Code
-  Action](/surveys/website-app-surveys/actions#setting-up-code-actions) to do so.
+  The embedded widget (SDK) detects the action, if it is a [No Code
+  Action](/surveys/website-app-surveys/actions#no-code-action-types) or a [Code
+  Action](/surveys/website-app-surveys/actions#code-actions) that exists in the workspace.
 </Step>
 
 <Step title="Check for survey trigger">
@@ -22,9 +22,9 @@ icon: "code"
 </Step>
 
   <Step title="Check for user or visitor qualification">
-    If a [Cooldown Period](/surveys/website-app-surveys/cooldown-period) applies and the user or visitor was **shown** a survey inside it, this one will not be shown, to prevent survey fatigue. Three things about that gate are easy to get wrong: the interval is whatever you configured, not a fixed one; a survey can set its own, which overrides the workspace value, and a survey set to ignore the cooldown skips the check entirely; and it counts displays of **any** survey, not answers to this one — so declining to answer, or being shown a different survey, still starts the clock.
+    If a Cooldown Period applies and the user or visitor was **shown** a survey inside it, this one will not be shown, to prevent survey fatigue. Three things about that gate are easy to get wrong: the interval is whatever you configured, not a fixed one; a survey can set its own, which overrides the workspace value, and a survey set to ignore the cooldown skips the check entirely; and it counts displays of **any** survey, not answers to this one — so declining to answer, or being shown a different survey, still starts the clock.
 
-    Also, if this user or visitor has seen this specific survey before, Formbricks might not show it as this is dependent on the [Recontact Options](/surveys/website-app-surveys/recontact).
+    Also, if this user or visitor has seen this specific survey before, Formbricks might not show it, depending on the survey's recontact options. See [Survey Display Logic](/surveys/website-app-surveys/survey-display-logic).
 
   </Step>
 
@@ -45,30 +45,17 @@ icon: "code"
   configurations, and survey trigger updates.
 </Note>
 
-## Setting up no-code Actions
+## No-code action types
 
-Formbricks offers an intuitive No-Code interface that allows you to configure actions without needing to write any code.
+No-code actions are detected by the SDK without any code on your side.
 
 <Note>
-  No Code Actions are **not available for surveys in mobile apps**. No Code Action tracking are heavily
+  No Code Actions are **not available for surveys in mobile apps**. No Code Action tracking is heavily
   dependent on JavaScript and most mobile apps are compiled into a different programming language. To track
-  user actions in mobile apps use [Code
-  Actions.](/surveys/website-app-surveys/actions#setting-up-code-actions)
+  user actions in mobile apps use [Code Actions](/surveys/website-app-surveys/actions#code-actions).
 </Note>
 
-<Steps>
-  <Step title="Open Settings → Workspace → User Actions">
-    Every action in the workspace is listed here, no-code and code alike.
-
-    ![The User Actions list](/images/surveys/website-app-surveys/actions/user-actions.webp "The User Actions list")
-  </Step>
-
-  <Step title="Click Add action">
-    Name the action, say what the user is doing, and — optionally — limit it to certain pages.
-
-    ![The Track New User Action dialog](/images/surveys/website-app-surveys/actions/add-action.webp "The Track New User Action dialog")
-  </Step>
-</Steps>
+Ask your agent to list the actions of a workspace with `list_action_classes` over [MCP](/platform/mcp/overview), or with `GET /api/v3/action-classes`. Every action in the workspace is listed, no-code and code alike.
 
 There are five types of no-code action.
 
@@ -150,38 +137,24 @@ Every no-code action can be limited to certain pages. Leave it on **On all pages
 
 ## Triggering a survey with an Action
 
-An action does nothing until a survey listens for it. In the survey editor, open **Settings → Survey Trigger** and add one. A survey can listen for several actions; any one of them is enough to show it. To show it only on certain pages, visits or devices when the action fires, add [show conditions](/surveys/website-app-surveys/show-conditions) in the same card.
+An action does nothing until a survey listens for it. An app survey lists the actions it triggers on as `distribution.triggers[].actionClassId` in its survey document; any one of them is enough to show it. Ask your agent to set the triggers when it creates or patches the survey, using the IDs from `list_action_classes`. To show it only on certain pages, visits or devices when the action fires, add [show conditions](/surveys/website-app-surveys/show-conditions) to the same survey.
 
-![The Survey Trigger section with one action attached](/images/surveys/website-app-surveys/actions/survey-trigger.webp "The Survey Trigger section with one action attached")
+## Code actions
 
-## Setting up code Actions
+For more granular control, fire an action directly from your code. A code action is identified by its key, which is the string your code sends:
 
-For more granular control, you can implement actions directly in your code:
+```javascript
+formbricks.track("Button Clicked");
+```
 
-<Steps>
-  <Step title="Configure action in Formbricks">
-    First, add the action via the Formbricks web interface to make it available for survey configuration. Switch the dialog to **Code** and give the action a key — that key is the string your code will send.
+Here is an example of how to fire an action when a user clicks a button:
 
-![The Track New User Action dialog on its Code tab](/images/surveys/website-app-surveys/actions/code-action.webp "The Track New User Action dialog on its Code tab")
+```javascript
+const handleClick = () => {
+  formbricks.track("Button Clicked");
+};
 
-  </Step>
+return <button onClick={handleClick}>Click Me</button>;
+```
 
-  <Step title="Add action tracking to your code">
-    Use formbricks.track() to send an action event to Formbricks:
-
-    ```
-    formbricks.track("action");
-    ```
-
-    Here is an example of how to fire an action when a user clicks a button:
-
-    ```javascript
-    const handleClick = () => {
-      formbricks.track("Button Clicked");
-    };
-
-    return <button onClick={handleClick}>Click Me</button>;
-    ```
-
-  </Step>
-</Steps>
+The key has to match the key of a code action that exists in the workspace, and a survey has to list that action as a trigger before anything is shown.

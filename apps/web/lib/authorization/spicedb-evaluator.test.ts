@@ -25,7 +25,7 @@ beforeEach(() => {
     actorValid: true,
     organizationId: "org-1",
     permissionResource:
-      resource.type === "survey" || resource.type === "dashboard" || resource.type === "response"
+      resource.type === "survey" || resource.type === "response"
         ? { type: "workspace", id: "workspace-1" }
         : resource.type === "feedbackDirectoryAssignment"
           ? { type: resource.type, id: "assignment-1" }
@@ -65,8 +65,6 @@ describe("spicedbEvaluator", () => {
           ).resolves.toBe(true);
 
           const derivedPermission = {
-            "dashboard.read": "read",
-            "dashboard.write": "write",
             "response.export": "read",
             "response.manage": "manage",
             "response.read": "read",

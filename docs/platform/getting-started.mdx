@@ -1,0 +1,56 @@
+---
+title: "Getting started"
+description: "Sign up, connect your agent, approve access, and let it build surveys and read feedback for you."
+icon: "rocket"
+---
+
+Formbricks has no survey editor and no results screens. You describe what you want to an AI agent, and the agent builds surveys, reads responses and runs analysis through the Formbricks [MCP server](/platform/mcp/overview) and the [v3 API](/api-v3-reference/introduction). You keep a small account area for the things an agent should not do on its own: signing in, managing your organization, and deciding what each agent may do.
+
+<Steps>
+  <Step title="Sign up and create your organization">
+    Create an account at [app.formbricks.com](https://app.formbricks.com/auth/signup), or on your own instance if you [self-host](/self-hosting/overview). Formbricks creates your **organization** and a first **workspace**. A workspace holds the surveys, responses and contacts of one product or site, and your agent picks it by its ID.
+  </Step>
+
+  <Step title="Connect your agent">
+    The **Connect your agent** page is the home of the account area. It shows your server URL (`https://app.formbricks.com/api/mcp` on Cloud) and the exact command for your agent. For Claude Code:
+
+    ```bash
+    claude mcp add --transport http formbricks https://app.formbricks.com/api/mcp
+    ```
+
+    Codex, Cursor and the Claude apps work the same way: add the server URL and approve access in the browser. The [MCP setup guides](/platform/mcp/setup) have the commands for each client, and self-hosters swap in `https://<your-formbricks-domain>/api/mcp`.
+  </Step>
+
+  <Step title="Approve access">
+    Your agent opens Formbricks in your browser. Sign in if needed, **choose the permissions** it may use, and select **Allow access**. Reading responses and contacts is a separate permission, so you decide whether the agent sees respondent data. The agent acts as you and can never do more than you can.
+
+    <Note>
+      Using a script, CI or a client that cannot sign in? Create an **API key** instead: open **Agent connections**, select **Create API key**, name it, pick the workspaces it may reach and a level (read only, author, or full access). Copy the key right away, because Formbricks stores only a hash of it.
+    </Note>
+  </Step>
+
+  <Step title="Check that it works">
+    Ask your agent: *"List my Formbricks workspaces."* It should answer with your workspaces.
+  </Step>
+</Steps>
+
+## What your agent can do
+
+Everything below is a conversation, not a screen:
+
+- **Surveys:** draft a survey from a prompt, create and change link or in-app surveys, add logic, languages and styling, and publish. See [Surveys](/surveys/overview).
+- **Responses:** count, read, tag and correct responses, and send them to your systems with [webhooks](/platform/webhooks).
+- **Feedback:** bring feedback from other sources into [Unify Feedback](/unify-feedback/overview), then search it by meaning, aggregate it and cluster it into topics.
+- **Workflows:** set up and monitor automations that react to completed responses. See [Workflows](/workflows/overview).
+- **Contacts, creatives and tags:** manage the people who respond, the creatives that open surveys, and the tags on responses.
+
+Each connected agent appears under **Agent connections**, where you can see what it may do and revoke it at any time. Managing people, teams and plans happens under [Organization](/platform/organization).
+
+<CardGroup cols={2}>
+  <Card title="Connect AI agents (MCP)" icon="robot" href="/platform/mcp/overview">
+    The permissions an agent can ask for and the tools behind them.
+  </Card>
+  <Card title="Your first link survey" icon="link" href="/surveys/link-surveys/quickstart">
+    Have your agent create a survey and share its link.
+  </Card>
+</CardGroup>

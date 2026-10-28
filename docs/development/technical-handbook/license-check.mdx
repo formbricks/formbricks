@@ -8,7 +8,8 @@ icon: "key"
 
 - **Defined:** the feature flags of a license are the schema in `apps/web/modules/ee/license-check/types/enterprise-license.ts`, mirrored by the response schema in `lib/license.ts`.
 - **Fetched:** `lib/license.ts` posts the key to the license server's `/api/licenses/check`, caches the answer in Valkey (24 hours, 10 minutes after a failed check) and keeps it in process memory for a minute.
-- **Read:** feature code asks the helpers in `lib/utils.ts` (`getIsDashboardsEnabled`, `getIsCreativesEnabled`, …) rather than reading the license itself.
+- **Read:** feature code asks the helpers in `lib/utils.ts` (`getIsFeedbackAnalyticsEnabled`, `getIsCreativesEnabled`, …) rather than reading the license itself.
+- The feedback analytics flag keeps its wire name `dashboards` (the license server and the Stripe feature lookup key define it, and parsed licenses are cached under it), even though dashboards no longer exist. Only the accessor and the Stripe catalog constant carry the new name.
 - A flag added after the first release (`dashboards`, `workflows`, `creatives`, …) defaults to **off** when the server's answer omits it, so a license server that predates the flag never unlocks the feature.
 
 ## Point the App at a Local License Server

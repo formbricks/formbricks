@@ -2085,7 +2085,7 @@ contacts a segment matches.
 
 Two read-only tools expose the Cube query layer that used to feed charts (ADR 0001, ADR 0016). They need
 `feedbackRecords:read`, and the organization needs the feedback datasets entitlement and the analytics
-entitlement (still the `dashboards` licence feature).
+entitlement (`getIsFeedbackAnalyticsEnabled`; its licence flag keeps the wire name `dashboards`).
 
 - `get_feedback_field_catalog` returns the measures (`FeedbackRecords.npsScore`, `.count`, ...), dimensions, the
   filter operators per field type, time granularities, date presets and the query limits. Call it first: a

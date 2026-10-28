@@ -14,7 +14,7 @@ Formbricks decides a survey's eligibility from three gates, evaluated in this or
 
 A **Trigger** (a matching action) is the event that then shows an already-eligible survey — it is not a fourth gate, it is what starts a display attempt. The gates are computed up front (on load and whenever the user's data syncs); the trigger is checked against that result.
 
-When the trigger fires, the survey's [show conditions](/surveys/website-app-surveys/show-conditions) are checked: the page, the visit so far and the device. Only a survey that meets them goes on to the [display percentage](/surveys/website-app-surveys/show-survey-to-percent-of-users), so the percentage samples visitors who qualify. They are covered in Level 5.
+When the trigger fires, the survey's [show conditions](/surveys/website-app-surveys/show-conditions) are checked: the page, the visit so far and the device. Only a survey that meets them goes on to the display percentage (`displayPercentage`, from 0.01% to 100% of users), so the percentage samples visitors who qualify. They are covered in Level 5.
 
 ## Level 0 — Always show
 
@@ -45,7 +45,7 @@ flowchart LR
     R -->|"yes"| X["Skip"]
 ```
 
-See [Recontact Options](/surveys/website-app-surveys/recontact) for setup.
+The option is `distribution.displayOption` in the survey document; ask your agent to set it when it creates or patches the survey.
 
 ## Level 2 — Cooldown Period between surveys
 
@@ -69,12 +69,12 @@ flowchart LR
     W -->|"yes"| S["Show survey"]
 ```
 
-See [Cooldown Period](/surveys/website-app-surveys/cooldown-period) for setup.
+The per-survey override is part of the survey; the workspace value is set on the workspace.
 
 ## Level 3 — Targeting with Segments
 
 <Note>
-  Targeting is part of [Attribute-based Targeting](/surveys/website-app-surveys/attribute-based-targeting), included in the [Enterprise Edition](/self-hosting/advanced/license).
+  Targeting with segments is included in the [Enterprise Edition](/self-hosting/advanced/license).
 </Note>
 
 Targeting restricts **who** is eligible. A survey can be assigned a Segment built from **Attributes**, other **Segments**, and **Devices**. Only users who match the Segment pass this layer; everyone else never sees the survey, regardless of triggers or the Cooldown Period.
@@ -90,7 +90,7 @@ flowchart LR
     S -->|"yes"| Show["Show survey"]
 ```
 
-See [Attribute-based Targeting](/surveys/website-app-surveys/attribute-based-targeting) for setup.
+An app survey carries its targeting as `targeting.filters` in the survey document; `list_contact_attribute_keys` over [MCP](/platform/mcp/overview) lists the attribute keys a filter can use.
 
 ## Level 4 — Interaction-based Segments
 

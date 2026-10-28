@@ -77,7 +77,7 @@ The SDK pushes its own lifecycle events to `window.dataLayer`, so you can trigge
 | `formbricks_response_submitted` | The first answer is stored (`finished: false`) and again when it completes | `{ surveyId, responseId?, finished }` |
 | `formbricks_survey_closed`      | The survey was dismissed or finished (once per appearance)                | `{ surveyId }`                       |
 
-`formbricks_survey_shown` reports what the respondent saw, so every appearance is paired with a `formbricks_survey_closed`. The Displays number in your Formbricks dashboard counts what reached the server instead, so it can be lower if the network dropped — worth knowing before you reconcile a GTM-side count against the dashboard.
+`formbricks_survey_shown` reports what the respondent saw, so every appearance is paired with a `formbricks_survey_closed`. The display count Formbricks stores counts what reached the server instead, so it can be lower if the network dropped — worth knowing before you reconcile a GTM-side count against Formbricks.
 
 The push happens through the standard `window.dataLayer = window.dataLayer || []` idiom, so it survives load order: events emitted before GTM loads are still in the array when GTM drains it.
 

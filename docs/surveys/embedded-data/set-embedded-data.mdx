@@ -14,13 +14,13 @@ formbricks.setEmbeddedData({ pageType: "product", plan: "pro" });
 
 <Note>
   This is for **website & app surveys** only, where the JavaScript SDK runs. Link surveys have no SDK on the
-  page and are filled from [URL parameters](/surveys/general-features/hidden-fields#set-hidden-field-via-url)
+  page and are filled from [URL parameters](/surveys/embedded-data/overview#where-values-come-from)
   instead. For React Native, iOS, Android and Flutter see [Mobile SDKs](/surveys/embedded-data/mobile-sdks).
 </Note>
 
 ## What It Writes
 
-The bag reaches a response only through the survey's **declared ingested fields**, which are the passed-in entries in the survey editor's Embedded Data card. A key nothing declares is dropped and logged; so is a key naming a variable, a reserved field or a locked field. Nothing here is ever fatal, and a rejected key never blocks a response.
+The bag reaches a response only through the survey's **declared ingested fields**, which are the passed-in entries of the survey's embedded data. A key nothing declares is dropped and logged; so is a key naming a variable, a reserved field or a locked field. Nothing here is ever fatal, and a rejected key never blocks a response.
 
 That means the workflow is always: declare the field on the survey first, then push a value under the same name.
 

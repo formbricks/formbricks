@@ -115,7 +115,7 @@ const createToken = (environment, tenantId) => {
     organizationId: `${tenantId}-organization`,
     userId: `${tenantId}-user`,
     scope: "xm:cube:query",
-    source: "charts.executeQueryAction",
+    source: "feedbackQueries.execute",
     iat: now,
     exp: now + 5 * 60,
     aud: environment.CUBEJS_JWT_AUDIENCE,

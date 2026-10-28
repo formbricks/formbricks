@@ -147,7 +147,7 @@ describe("toSourceRef", () => {
   });
 
   test.each([
-    ["an unknown resource type", tuple("chart", "chart-1", "workspace", "workspace", "ws-1")],
+    ["an unknown resource type", tuple("legacy_resource", "legacy-1", "workspace", "workspace", "ws-1")],
     ["an unknown relation", tuple("organization", "org-1", "superuser", "user", "user-1")],
     ["a role relation with the wrong subject type", tuple("organization", "org-1", "owner", "api_key", "k")],
     [
@@ -185,16 +185,13 @@ describe("resource type classification", () => {
     expect(isUnprojectedResourceType(resourceType)).toBe(false);
   });
 
-  test.each(["dashboard", "response"])(
-    "treats %s as deliberately unprojected, not managed",
-    (resourceType) => {
-      // These exist in the schema for later resource-level sharing. Pruning them would delete
-      // relationships a future projector is expected to own.
-      // No type may be both: managed means the sweep reads it and may prune what it finds.
-      expect(isUnprojectedResourceType(resourceType)).toBe(true);
-      expect(getManagedResourceTypes()).not.toContain(resourceType);
-    }
-  );
+  test.each(["response"])("treats %s as deliberately unprojected, not managed", (resourceType) => {
+    // These exist in the schema for later resource-level sharing. Pruning them would delete
+    // relationships a future projector is expected to own.
+    // No type may be both: managed means the sweep reads it and may prune what it finds.
+    expect(isUnprojectedResourceType(resourceType)).toBe(true);
+    expect(getManagedResourceTypes()).not.toContain(resourceType);
+  });
 
   test("exposes the managed types for a resource-type sweep", () => {
     expect([...getManagedResourceTypes()].sort()).toEqual([
@@ -304,13 +301,10 @@ describe("summarizeObservation", () => {
   });
 
   test("counts unprojected resource types as ignored without naming a record", () => {
-    const summary = summarizeObservation([
-      tuple("dashboard", "dash-1", "workspace", "workspace", "ws-1"),
-      tuple("response", "resp-1", "survey", "survey", "survey-1"),
-    ]);
+    const summary = summarizeObservation([tuple("response", "resp-1", "survey", "survey", "survey-1")]);
 
     expect(summary).toEqual({
-      ignored: 2,
+      ignored: 1,
       managedRelationships: [],
       parentEdges: [],
       sourceRefs: [],
@@ -321,14 +315,14 @@ describe("summarizeObservation", () => {
   test("reports unrecognized relationships without naming a record for them", () => {
     const summary = summarizeObservation([
       tuple("organization", "org-1", "superuser", "user", "user-1"),
-      tuple("chart", "chart-1", "workspace", "workspace", "ws-1"),
+      tuple("legacy_resource", "legacy-1", "workspace", "workspace", "ws-1"),
     ]);
 
     // Reported so they are visible, but never reconciled: the tooling cannot know which source record,
     // if any, should own them.
     expect(summary.sourceRefs).toEqual([]);
     expect(summary.unmanaged).toEqual([
-      { objectId: "chart-1", objectType: "chart", relation: "workspace" },
+      { objectId: "legacy-1", objectType: "legacy_resource", relation: "workspace" },
       { objectId: "org-1", objectType: "organization", relation: "superuser" },
     ]);
   });

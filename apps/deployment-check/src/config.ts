@@ -8,7 +8,7 @@ const ZEnv = z.object({
   FORMBRICKS_URL: ZBaseUrl,
   FORMBRICKS_PUBLIC_URL: ZBaseUrl.optional(),
   FORMBRICKS_API_KEY: z.string().trim().min(1, "must not be empty"),
-  FORMBRICKS_WORKSPACE_ID: z.string().trim().min(1).optional(),
+  FORMBRICKS_WORKSPACE_ID: z.string().trim().min(1, "must not be empty"),
   CHECK_STORAGE: z.enum(["auto", "true", "false"]).default("auto"),
   CHECK_TIMEOUT_MS: z.coerce.number().int().min(1000).max(300_000).default(30_000),
 });
@@ -22,7 +22,8 @@ export interface TConfig {
   publicUrl: string;
   splitDomain: boolean;
   apiKey: string;
-  workspaceId: string | undefined;
+  /** The one workspace the check creates its throwaway surveys in. */
+  workspaceId: string;
   storage: TStorageMode;
   timeoutMs: number;
 }

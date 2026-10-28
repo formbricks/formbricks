@@ -55,24 +55,6 @@ spec:
                 port:
                   number: 80
           {{- end }}
-          {{- if .Values.envoy.formbricks.routes.v1Management }}
-          - path: /api/v1/management
-            pathType: Prefix
-            backend:
-              service:
-                name: {{ $proxyServiceName }}
-                port:
-                  number: 80
-          {{- end }}
-          {{- if .Values.envoy.formbricks.routes.v1Webhooks }}
-          - path: /api/v1/webhooks
-            pathType: Prefix
-            backend:
-              service:
-                name: {{ $proxyServiceName }}
-                port:
-                  number: 80
-          {{- end }}
           {{- if .Values.envoy.formbricks.routes.feedbackRecords }}
           - path: /api/v3/feedbackRecords
             pathType: Prefix

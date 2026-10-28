@@ -7,7 +7,7 @@ import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { executeTenantScopedQuery } from "@/modules/ee/analysis/api/lib/cube-client";
 import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import {
-  getIsDashboardsEnabled,
+  getIsFeedbackAnalyticsEnabled,
   getIsFeedbackDirectoriesEnabled,
 } from "@/modules/ee/license-check/lib/utils";
 import { getV3FeedbackFieldCatalog, queryV3Feedback } from "./operations";
@@ -30,7 +30,7 @@ vi.mock("@/app/api/v3/lib/auth", () => ({
 vi.mock("@/lib/authorization", () => ({ can: vi.fn() }));
 vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyRateLimit: vi.fn() }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
-  getIsDashboardsEnabled: vi.fn(),
+  getIsFeedbackAnalyticsEnabled: vi.fn(),
   getIsFeedbackDirectoriesEnabled: vi.fn(),
 }));
 vi.mock("@/modules/ee/feedback-directory/lib/feedback-directory", () => ({
@@ -72,7 +72,7 @@ describe("queryV3Feedback", () => {
   beforeEach(() => {
     vi.mocked(requireV3WorkspaceAccess).mockResolvedValue({ workspaceId, organizationId });
     vi.mocked(getIsFeedbackDirectoriesEnabled).mockResolvedValue(true);
-    vi.mocked(getIsDashboardsEnabled).mockResolvedValue(true);
+    vi.mocked(getIsFeedbackAnalyticsEnabled).mockResolvedValue(true);
     vi.mocked(getFeedbackDirectoriesByWorkspaceId).mockResolvedValue(directories(ownDatasetId));
     vi.mocked(can).mockResolvedValue(true);
     vi.mocked(applyRateLimit).mockResolvedValue(undefined as never);
@@ -163,13 +163,13 @@ describe("queryV3Feedback", () => {
 
   describe("licence gate", () => {
     test("an organization without the analytics entitlement is refused before Cube", async () => {
-      vi.mocked(getIsDashboardsEnabled).mockResolvedValue(false);
+      vi.mocked(getIsFeedbackAnalyticsEnabled).mockResolvedValue(false);
 
       const response = await queryV3Feedback({ ...baseParams, authentication: session, query });
 
       expect(response.status).toBe(403);
       expect((await readJson(response)).detail).toContain("not enabled");
-      expect(getIsDashboardsEnabled).toHaveBeenCalledWith(organizationId);
+      expect(getIsFeedbackAnalyticsEnabled).toHaveBeenCalledWith(organizationId);
       expect(executeTenantScopedQuery).not.toHaveBeenCalled();
       expect(applyRateLimit).not.toHaveBeenCalled();
     });
@@ -254,7 +254,7 @@ describe("getV3FeedbackFieldCatalog", () => {
   beforeEach(() => {
     vi.mocked(requireV3WorkspaceAccess).mockResolvedValue({ workspaceId, organizationId });
     vi.mocked(getIsFeedbackDirectoriesEnabled).mockResolvedValue(true);
-    vi.mocked(getIsDashboardsEnabled).mockResolvedValue(true);
+    vi.mocked(getIsFeedbackAnalyticsEnabled).mockResolvedValue(true);
   });
 
   test("returns the catalog the query schema validates against", async () => {
@@ -278,7 +278,7 @@ describe("getV3FeedbackFieldCatalog", () => {
   });
 
   test("is refused without the analytics entitlement, like a query", async () => {
-    vi.mocked(getIsDashboardsEnabled).mockResolvedValue(false);
+    vi.mocked(getIsFeedbackAnalyticsEnabled).mockResolvedValue(false);
 
     const response = await getV3FeedbackFieldCatalog({ ...baseParams, authentication: session });
 

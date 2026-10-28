@@ -4,7 +4,7 @@ description: "Style every survey in a workspace, or a single survey, with your o
 icon: "code"
 ---
 
-Custom CSS lets you style surveys beyond what the theme editor offers: a pill-shaped Next button, your own focus ring, a shaded consent box. You write ordinary CSS against a small set of stable hooks, and Formbricks applies it to link surveys, website & app surveys and surveys in mobile apps.
+Custom CSS lets you style surveys beyond the built-in theme: a pill-shaped Next button, your own focus ring, a shaded consent box. You write ordinary CSS against a small set of stable hooks, and Formbricks applies it to link surveys, website & app surveys and surveys in mobile apps.
 
 <Note>
   **Plans.** On Formbricks Cloud, Custom CSS is part of the **Scale** plan. Self-hosted instances get it on
@@ -12,49 +12,25 @@ Custom CSS lets you style surveys beyond what the theme editor offers: a pill-sh
   applying, but it can only be cleared, not changed.
 </Note>
 
-<Tip>
-  Start with the [Styling Theme](/platform/features/styling-theme). Colors, fonts, radii and spacing are all
-  in the theme editor. Use Custom CSS for what the theme editor cannot do.
-</Tip>
-
 ## Where To Add CSS
 
-There are two places, and they add up: survey CSS is applied on top of workspace CSS, never instead of it.
+You do not edit CSS in a screen: ask your agent to write it through [MCP](/platform/mcp/overview) or the [v3 API](/api-v3-reference/introduction). There are two levels, and they add up: survey CSS is applied on top of workspace CSS, never instead of it.
 
-| Level | Where | Applies to | Who can edit |
+| Level | How | Applies to | Who can edit |
 | --- | --- | --- | --- |
-| Workspace | **Settings → Workspace → Appearance**, card **Custom CSS** | Every survey in the workspace | Organization owners and managers |
-| Survey | Survey editor → **Styling** tab, card **Custom CSS** | This survey only | Anyone who can edit the survey |
+| Workspace | `patch_workspace_custom_css`, or `PATCH /api/v3/workspaces/{workspaceId}/custom-css` | Every survey in the workspace | Organization owners and managers, or an API key with `manage` on the workspace |
+| Survey | `customCss` on the survey, through `create_survey`, `patch_survey` or the surveys API | This survey only | Anyone who can edit the survey |
 
-Survey CSS follows the survey's other style overrides. It applies only while the workspace allows them (**Allow survey-level styling** in **Appearance**) and the survey uses them (**Use custom styling for this survey** in its **Styling** tab). With either one off, respondents get the workspace CSS only, and the survey's **Custom CSS** card is greyed out like the other styling cards. Nothing is deleted: the survey's CSS applies again once both are on. The API and MCP tools can set survey CSS either way.
+Survey CSS follows the survey's other style overrides. It applies only while the workspace allows them and the survey uses them. With either one off, respondents get the workspace CSS only. Nothing is deleted: the survey's CSS applies again once both are on.
 
-Each level has two fields, switched with the **Light / Dark** toggle at the top of the styling editor:
+Each level has two fields, `light` and `dark`:
 
-- **Base CSS** (Light selected) applies in light **and** dark mode.
-- **Dark CSS** (Dark selected) applies only when the survey is shown dark, on top of the base CSS. Leave it empty and the base CSS alone is used in dark mode.
+- base CSS (`light`) applies in light **and** dark mode.
+- dark CSS (`dark`) applies only when the survey is shown dark, on top of the base CSS. Leave it empty and the base CSS alone is used in dark mode.
 
-<Steps>
-  <Step title="Open the Custom CSS card">
-    In the workspace **Appearance** settings or in a survey's **Styling** tab.
-  </Step>
-  <Step title="Pick the field">
-    Select **Light** to edit the base CSS or **Dark** to edit the dark CSS.
-  </Step>
-  <Step title="Write or upload your CSS">
-    Type into the field, or use **Upload .css** to load a `.css` file. The upload replaces the content of the field that is currently selected; the other field is not touched, and undo brings the replaced CSS back. Type `[` or `--fb` to get suggestions for the [stable hooks](#stable-hooks), [states](#states) and [variables](#variables). Tab indents; press Esc, then Tab, to leave the field.
-  </Step>
-  <Step title="Check the preview, then save">
-    The preview updates shortly after you stop typing. Lines with an error get a red line number, and lines with a removed rule an amber one; the list under the field says what Formbricks removed or rejected, and why. Survey CSS is saved with the survey. Workspace CSS is saved with the **Save** button of the **Appearance** page, together with the theme, and changes every survey in the workspace. **Restore previous version** loads the workspace CSS from before the last save.
-  </Step>
-</Steps>
+The server checks the CSS when it is saved and returns warnings for everything it removed or rejected, and why. Use `validate_survey` to check CSS without writing anything. Workspace CSS keeps the one previous version, which `get_workspace_custom_css` returns as `previous`; restore it by saving it again.
 
 Respondents get saved changes within about an hour, as their browsers and apps refresh the survey configuration. A survey that is already open keeps its styling until the respondent finishes it.
-
-<Info>
-  Custom CSS styles the card. Head scripts are for scripts, tags and page-level styles. If a self-hosted
-  link survey also has [Custom Head Scripts](/surveys/link-surveys/custom-head-scripts) with styles, both
-  apply, and on the survey card your Custom CSS wins.
-</Info>
 
 ## How Your CSS Is Applied
 
@@ -70,9 +46,9 @@ Every rule is scoped to the survey root, `#fbjs`. You do not need to write `#fbj
 
 The survey's appearance is set by the app or page that shows it (light by default). In dark mode, the survey root carries `data-appearance="dark"`.
 
-- Rules in the **Dark CSS** field are scoped to `#fbjs[data-appearance="dark"]` for you. Write them like base rules: `[data-fb-part="card"] { background: #0f1b24; }`, and `:root { … }` sets variables for dark mode only.
-- In the **Base CSS** field you can also write dark rules yourself, starting with `#fbjs[data-appearance="dark"]`.
-- Anything in base CSS also applies in dark mode, including colors. A base rule that sets a text or background color replaces the dark color Formbricks would otherwise derive, so set the dark value in **Dark CSS**. The editor reminds you when base CSS sets colors and the dark field is empty.
+- Rules in the dark CSS field are scoped to `#fbjs[data-appearance="dark"]` for you. Write them like base rules: `[data-fb-part="card"] { background: #0f1b24; }`, and `:root { … }` sets variables for dark mode only.
+- In the base CSS field you can also write dark rules yourself, starting with `#fbjs[data-appearance="dark"]`.
+- Anything in base CSS also applies in dark mode, including colors. A base rule that sets a text or background color replaces the dark color Formbricks would otherwise derive, so set the dark value in dark CSS. 
 
 ### Nesting
 
@@ -97,7 +73,7 @@ The sources apply in this order. Where two style the same thing, the later one w
 | Order | Source | Applies |
 | --- | --- | --- |
 | 1 | Built-in survey styles | Always |
-| 2 | Theme editor (workspace theme, or the survey's own styles) | Always |
+| 2 | Workspace theme, or the survey's own styles | Always |
 | 3 | Workspace base CSS | Always |
 | 4 | Workspace dark CSS | Dark mode only |
 | 5 | Survey base CSS | While the survey's style overrides apply |
@@ -108,7 +84,7 @@ Inside one field the normal cascade applies: the more specific selector wins, th
 Two consequences worth knowing:
 
 - In dark mode, survey base CSS wins over workspace dark CSS. If a survey's base CSS sets colors, give that survey its own dark CSS too.
-- When your CSS sets a property, the theme editor can no longer change it. If changing a color in the theme editor seems to do nothing, check your Custom CSS.
+- When your CSS sets a property, the theme can no longer change it. If changing a theme color seems to do nothing, check your Custom CSS.
 
 ## Stable Hooks
 
@@ -153,13 +129,13 @@ Interactive states are on the hooked element itself, so `:hover`, `:active` and 
 | Checked consent box | `[data-fb-part="consent"]:has([aria-checked="true"])`, or `[data-fb-part="option-control"][aria-checked="true"]` on the checkbox itself |
 | Invalid field | `[data-fb-part="input"][aria-invalid="true"]`, also on `textarea` and `dropdown` |
 | Disabled | `[data-fb-part="button-primary"]:disabled`; on choices `[data-fb-part="option"]:has(:disabled)` |
-| Dark mode | `#fbjs[data-appearance="dark"] [data-fb-part="card"]`, or any rule in **Dark CSS** |
+| Dark mode | `#fbjs[data-appearance="dark"] [data-fb-part="card"]`, or any rule in dark CSS |
 
 To style selected choices in lists and in dropdowns with one rule, combine both forms: `[data-fb-part="option"]:is([aria-checked="true"], [data-checked="true"])`.
 
 ## Variables
 
-The theme editor writes its values to `--fb-*` variables on the survey root. Setting them in Custom CSS is often the shortest way to restyle a whole group of elements, including the ones without hooks.
+The theme writes its values to `--fb-*` variables on the survey root. Setting them in Custom CSS is often the shortest way to restyle a whole group of elements, including the ones without hooks.
 
 | Area | Variables |
 | --- | --- |
@@ -457,13 +433,13 @@ Define `@keyframes` in the same field as the rules that use them.
 
 Sizes are counted in bytes of UTF-8 text, so most characters count as one byte. The processed output adds scoping to every selector, so CSS close to the size limit that consists of many short rules can exceed the output limit. At most 50 warnings are listed per check; anything beyond that is still removed.
 
-The editor only mentions sizes when CSS goes over a limit, with the size it counted and the limit.
+Sizes are only mentioned when CSS goes over a limit, with the size it counted and the limit.
 
 Two notes do not remove anything: **Unknown property** (for example a typo like `colr`) and **Invalid value** (for example `color: notacolor`). The declaration stays, but browsers ignore it, so it has no effect.
 
 ### Responsive Rules
 
-`@media` width queries read the width of the page, not of the survey. A website survey shown as a 400 px pop-up on a desktop page matches desktop breakpoints, and the editor preview can match different breakpoints than the live page. Use width queries for page-level layout only, and keep survey styles that must hold at any size outside them.
+`@media` width queries read the width of the page, not of the survey. A website survey shown as a 400 px pop-up on a desktop page matches desktop breakpoints, and a preview can match different breakpoints than the live page. Use width queries for page-level layout only, and keep survey styles that must hold at any size outside them.
 
 ## Browser And App Support
 
@@ -482,19 +458,19 @@ Link surveys and website & app surveys get your CSS as soon as it is saved. **Mo
 
 ## API
 
-The [Management API v3](/api-v3-reference/introduction) reads and writes Custom CSS too: `customCss` on surveys, and the workspace's Custom CSS under `/workspaces/{workspaceId}/custom-css`. Both use the same checks, warnings and limits as the editor.
+The [Management API v3](/api-v3-reference/introduction) and the MCP tools read and write Custom CSS: `customCss` on surveys, and the workspace's Custom CSS under `/workspaces/{workspaceId}/custom-css`. Both use the same checks, warnings and limits.
 
 ## Troubleshooting
 
 **A rule has no effect**
 
-- Check the warnings under the field. The rule may have been removed.
+- Check the warnings returned when the CSS was saved. The rule may have been removed.
 - Make sure it targets a hook, a state or a variable from this page, not a generated class name.
 - For headlines and descriptions, set the typography variables instead of `font-size` or `color` directly.
 
 **Dark mode looks wrong**
 
-- Base CSS also applies in dark mode. Add the dark colors to **Dark CSS**.
+- Base CSS also applies in dark mode. Add the dark colors to dark CSS.
 - In dark mode, survey base CSS beats workspace dark CSS. Add survey dark CSS.
 
 **Respondents still see the old styling**

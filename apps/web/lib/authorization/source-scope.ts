@@ -11,7 +11,6 @@ import {
   getActiveAuthorizationUserIds,
   getApiKeyOrganizationId,
   getAuthorizationOrganizationId,
-  getDashboardAuthorizationWorkspaceScope,
   getFeedbackDirectoryAssignmentAuthorizationScope,
   getFeedbackDirectoryAuthorizationScope,
   getResponseSurveyId,
@@ -63,16 +62,6 @@ const resolveWorkspaceScope = async (workspaceId: string): Promise<TResourceScop
     ? { organizationId, permissionResource: { type: "workspace", id: workspaceId } }
     : null;
 };
-
-const toWorkspaceResourceScope = (
-  scope: Readonly<{ organizationId: string; workspaceId: string }> | null
-): TResourceScope | null =>
-  scope
-    ? {
-        organizationId: scope.organizationId,
-        permissionResource: { type: "workspace", id: scope.workspaceId },
-      }
-    : null;
 
 /**
  * A survey decided on the survey's own graph node once visibility is enforced — unless the graph does
@@ -141,9 +130,6 @@ const resolveResourceScope = async (resource: TAuthorizationResource): Promise<T
     }
     case "survey":
       return resolveSurveyScope(resource.id);
-    case "dashboard": {
-      return toWorkspaceResourceScope(await getDashboardAuthorizationWorkspaceScope(resource.id));
-    }
     case "response":
       return resolveResponseScope(resource.id);
     case "feedbackDirectory": {

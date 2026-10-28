@@ -11,7 +11,10 @@ export const CLOUD_STRIPE_FEATURE_LOOKUP_KEYS = {
   CONTACTS: "contacts",
   AI_SMART_TOOLS: "ai-smart-tools",
   FEEDBACK_DIRECTORIES: "feedback-directories",
-  DASHBOARDS: "dashboards",
+  // Feedback analytics (`POST /api/v3/feedback-queries` and its MCP tools, ADR 0016). The value stays
+  // "dashboards": it is the Stripe feature lookup key and the licence-server flag name, both defined outside
+  // this repository, so renaming the constant is the only rename that does not cut off a paying plan.
+  FEEDBACK_ANALYTICS: "dashboards",
   WORKFLOWS: "workflows",
   DATA_RETENTION: "data-retention",
   BULK_INVITE: "bulk-invite",

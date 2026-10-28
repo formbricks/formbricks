@@ -1,22 +1,22 @@
 ---
 title: "Surveys"
-description: "Design, distribute, and analyze surveys with Formbricks."
+description: "Collect feedback with link surveys and in-app surveys that your agent builds and reads."
 icon: "tablet-screen"
 ---
 
-Formbricks surveys let you collect feedback from customers, users, and employees through link surveys, website surveys, and in-app surveys.
+Formbricks surveys collect feedback from customers, users, and employees through link surveys, website surveys, and in-app surveys. Your agent creates, changes and reads them through [MCP](/platform/mcp/overview) and the [v3 API](/api-v3-reference/introduction). What respondents see stays the same: a hosted survey page, an embed, or a survey inside your website or app.
 
 ## Build
 
-A drag-and-drop builder with conditional logic, recall, variables, hidden fields, multi-language support, and over a dozen question types. Surveys can be fully styled to match your brand.
+Ask your agent for the survey you need. It writes the survey document: blocks with questions, conditional logic, recall, variables, hidden fields, multiple languages, styling and Custom CSS. `generate_survey` drafts one from a prompt, `validate_survey` checks it, and `create_survey`, `patch_survey` and `edit_survey_blocks` save it. Nothing goes live until it is published.
 
 ## Distribute
 
-Share surveys via a public link, embed them in your website, or trigger them in your web or mobile app. Use targeting, recontact rules, and quotas to control who sees a survey and when.
+Share a survey through a public link, embed it in your website, or trigger it in your web or mobile app. Display rules, such as triggers, recontact options, the Cooldown Period and show conditions, control who sees a survey and when.
 
 ## Analyze
 
-Each survey has a built-in summary view and response table. For cross-survey analytics, pipe responses into [Dashboards & Charts](/unify-feedback/dashboards-charts) to build custom visualizations and KPIs. Export to CSV/XLSX, or stream responses out via webhooks and the REST API.
+Your agent reads responses (`list_responses`, `count_responses`, `get_response`), and surveys can feed [Unify Feedback](/unify-feedback/overview) so responses can be queried together with feedback from other sources. Stream responses out of Formbricks with [webhooks](/platform/webhooks).
 
 ## Next steps
 
@@ -25,15 +25,15 @@ Each survey has a built-in summary view and response table. For cross-survey ana
     Share standalone survey links by email, chat, or QR code.
   </Card>
   <Card title="Website & App Surveys" icon="mobile" href="/surveys/website-app-surveys/quickstart">
-    Trigger surveys inside your website or app.
+    Trigger surveys inside your website or app with the SDK.
   </Card>
-  <Card title="Question Types" icon="question" href="/surveys/question-type/free-text">
-    Browse every available question type.
+  <Card title="Survey Display Logic" icon="traffic-light" href="/surveys/website-app-surveys/survey-display-logic">
+    How Formbricks decides whether to show an app survey.
   </Card>
-  <Card title="Best Practices" icon="lightbulb" href="/surveys/best-practices/understanding-survey-types">
-    Templates and proven survey patterns.
+  <Card title="Embedded Data" icon="database" href="/surveys/embedded-data/overview">
+    Attach context to a response from URLs and the SDK.
   </Card>
-  <Card title="Migrate from Qualtrics" icon="file-import" href="/surveys/general-features/migrate-from-qualtrics">
-    Import a Qualtrics survey export as a draft survey.
+  <Card title="Custom CSS" icon="code" href="/surveys/general-features/custom-css">
+    Style surveys with your own CSS.
   </Card>
 </CardGroup>

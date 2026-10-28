@@ -12,8 +12,6 @@ Setting up file storage enables important features in Formbricks, including:
 
 - Adding images to surveys (questions, backgrounds, logos)
 - 'File Upload' and 'Picture Selection' question types
-- Workspace logos and branding
-- Custom organization logos in emails
 - Survey background images from uploads
 
 <Warning>
@@ -420,10 +418,9 @@ When using bundled RustFS:
 
 To test if file uploads are working:
 
-1. **Admin Panel**: Try uploading a Workspace logo in **Settings → Workspace → Appearance**
-2. **Survey Editor**: Attempt to add a background image to a survey
-3. **Question Types**: Create a 'File Upload' or 'Picture Selection' question
-4. **Check Logs**: Monitor container logs for any storage-related errors
+1. **Survey with a file upload**: Ask your agent to create a draft survey with a 'File Upload' question, open it, and upload a file
+2. **Survey images**: Ask your agent to add an image to a survey, such as a picture selection question or a background image, and open the survey
+3. **Check Logs**: Monitor container logs for any storage-related errors
 
 ```bash
 # Check Formbricks logs

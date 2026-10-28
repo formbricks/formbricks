@@ -5,6 +5,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { type TSurveyEnding } from "@formbricks/types/surveys/types";
 import { transformQuestionsToBlocks } from "@/app/lib/api/survey-transformation";
 import { test } from "./lib/fixtures";
+import { type SdkHostPage, serveSdkHostPage } from "./utils/sdk-host-page";
 
 /**
  * Progress semantics of the rendered link survey (ENG-1070).
@@ -77,6 +78,8 @@ interface SeedOptions {
   name: string;
   /** Defaults to a link survey; "app" is only used for the auto-close countdown. */
   type?: "link" | "app";
+  /** App surveys only: the code action that triggers the survey, created in the survey's workspace. */
+  triggerActionKey?: string;
   styling?: Record<string, unknown>;
   welcomeCardEnabled?: boolean;
   autoCloseSeconds?: number;
@@ -86,7 +89,7 @@ interface SeedOptions {
  * Seeds a published multi-card survey straight through Prisma — the same boundary
  * the `users` fixture writes through, so no login or dashboard step is needed for
  * the link-survey cases. The legacy `questions` shape is converted with the SAME
- * `transformQuestionsToBlocks` the v1 management API uses server-side, so the stored
+ * `transformQuestionsToBlocks` the API compatibility layer uses server-side, so the stored
  * blocks cannot drift from the API contract. Created as `inProgress` because
  * `/s/<id>` 404s for drafts.
  */
@@ -105,6 +108,18 @@ const seedProgressSurvey = async (
   ] as unknown as TSurveyEnding[];
   const blocks = transformQuestionsToBlocks(buildQuestions() as unknown as TLegacyQuestions, endings);
 
+  const actionClass = options.triggerActionKey
+    ? await prisma.actionClass.create({
+        data: {
+          name: options.triggerActionKey,
+          type: "code",
+          key: options.triggerActionKey,
+          workspaceId,
+        },
+        select: { id: true },
+      })
+    : null;
+
   const survey = await prisma.survey.create({
     data: {
       workspaceId,
@@ -112,6 +127,15 @@ const seedProgressSurvey = async (
       name: options.name,
       type: options.type ?? "link",
       status: "inProgress",
+      // An app survey re-displays on every trigger, so a retried test is never blocked by recontact rules.
+      ...(actionClass
+        ? {
+            displayOption: "respondMultiple" as const,
+            recontactDays: 0,
+            delay: 0,
+            triggers: { create: { actionClassId: actionClass.id } },
+          }
+        : {}),
       welcomeCard: {
         enabled: options.welcomeCardEnabled ?? true,
         headline: i18nValue("Welcome"),
@@ -371,43 +395,77 @@ test.describe("Survey progress accessibility @slow", () => {
 });
 
 /**
- * The auto-close countdown only renders for `type: "app"` surveys with `autoClose`
- * set, and `/s/<id>` 404s for anything that is not a link survey — so it is
- * unreachable from the link-survey fixtures above. The editor's live preview renders
- * the very same `AutoCloseProgressBar` through `SurveyInline`, which makes it the
- * cheapest surface that exercises this component: seed + login + one navigation, no
- * js-core widget harness.
- *
- * What this does NOT cover: the countdown as delivered by the js-core widget in a
- * host page (js.spec.ts territory). The component and its ARIA output are identical;
- * only the embedding differs.
+ * The auto-close countdown only renders for `type: "app"` surveys with `autoClose` set, and `/s/<id>`
+ * 404s for anything that is not a link survey — so it is unreachable from the link-survey fixtures
+ * above. It is reached the way a customer reaches it: the js-core widget on a host page, opened by a
+ * code action.
  */
 const COUNTDOWN_LABEL = "Time remaining before the survey closes";
 const AUTO_CLOSE_SECONDS = 30;
 /** en-US resolution of `common.survey_closes_automatically_in_x_seconds` (plural branch). */
 const COUNTDOWN_ANNOUNCEMENT = `This survey closes automatically in ${AUTO_CLOSE_SECONDS.toString()} seconds unless you respond`;
-/** The editor route is heavier than a link survey; a cold dev server compiles it on first hit. */
-const EDITOR_TIMEOUT = 60_000;
+/** The widget loads the SDK and the survey bundle from a cold dev server on first use. */
+const WIDGET_TIMEOUT = 120_000;
+
+// `window.formbricks` is typed by @formbricks/js as optional; the test has already waited for it.
+const trackAction = (key: string) => {
+  const sdk = (window as unknown as { formbricks?: { track: (actionKey: string) => Promise<unknown> } })
+    .formbricks;
+  if (!sdk) throw new Error("Formbricks SDK is not loaded");
+  return sdk.track(key);
+};
 
 test.describe("App survey auto-close countdown accessibility @slow", () => {
-  let editorUrl: string | undefined;
+  test.setTimeout(3 * 60 * 1000);
 
-  // Seeded per test rather than per worker: each test gets its own browser context,
-  // so the login the editor route needs has to happen inside the test's own context.
+  let hostPage: SdkHostPage;
+  let workspaceId = "";
+  let actionKey = "";
+
+  test.beforeAll(async () => {
+    hostPage = await serveSdkHostPage({
+      appUrl: test.info().project.use.baseURL ?? "http://localhost:3000",
+      getWorkspaceId: () => workspaceId,
+    });
+  });
+
+  test.afterAll(async () => {
+    await hostPage.close();
+  });
+
+  // Seeded per test: each test gets its own browser context and the workspace is read per request.
   test.beforeEach(async ({ users }) => {
     const user = await users.create({ skipSurveySeed: true });
     if (!user.workspaceId) throw new Error("users.create() did not return a workspaceId");
-    const surveyId = await seedProgressSurvey(user.workspaceId, user.id, {
+    workspaceId = user.workspaceId;
+    actionKey = `e2e-countdown-${createId()}`;
+    await seedProgressSurvey(user.workspaceId, user.id, {
       name: "Auto-close countdown semantics",
       type: "app",
+      triggerActionKey: actionKey,
       // No welcome card, so the countdown shows on the first question card — the
       // wrapper only renders it while `isFirstQuestion && !hasInteracted`.
       welcomeCardEnabled: false,
       autoCloseSeconds: AUTO_CLOSE_SECONDS,
     });
-    editorUrl = `/workspaces/${user.workspaceId}/surveys/${surveyId}/edit`;
-    await user.login();
   });
+
+  /** Opens the host page, waits for the SDK and fires the action that shows the survey. */
+  const openSurvey = async (page: Page): Promise<Locator> => {
+    await page.goto(hostPage.url);
+    await page.waitForFunction(
+      () => Boolean((window as unknown as { formbricks?: unknown }).formbricks),
+      null,
+      { timeout: WIDGET_TIMEOUT }
+    );
+    await page.evaluate(trackAction, actionKey);
+
+    const widget = page.locator("#formbricks-modal-container");
+    await expect(widget.getByRole("dialog"), "the app survey should open in the widget").toBeVisible({
+      timeout: WIDGET_TIMEOUT,
+    });
+    return widget;
+  };
 
   test("countdown is an indeterminate progressbar with a polite one-shot announcement", async ({ page }) => {
     await page.addInitScript(() => {
@@ -448,11 +506,7 @@ test.describe("App survey auto-close countdown accessibility @slow", () => {
       }).observe(document, { childList: true, subtree: true });
     });
 
-    await page.goto(editorUrl ?? "");
-    const preview = page.locator("#formbricks-survey-container");
-    await expect(preview, "editor preview should render the app survey").toBeVisible({
-      timeout: EDITOR_TIMEOUT,
-    });
+    const preview = await openSurvey(page);
 
     // Two progress bars share the screen here; a screen reader user can only tell
     // them apart by their accessible names, so both must be uniquely named.
@@ -491,9 +545,7 @@ test.describe("App survey auto-close countdown accessibility @slow", () => {
   test("countdown and its announcement leave the accessibility tree once the user interacts", async ({
     page,
   }) => {
-    await page.goto(editorUrl ?? "");
-    const preview = page.locator("#formbricks-survey-container");
-    await expect(preview).toBeVisible({ timeout: EDITOR_TIMEOUT });
+    const preview = await openSurvey(page);
     await expect(preview.getByRole("progressbar", { name: COUNTDOWN_LABEL })).toHaveCount(1);
 
     // Answering cancels the countdown, so the "closes in 30 seconds" statement must

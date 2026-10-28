@@ -4,7 +4,7 @@ import { logger } from "@formbricks/logger";
 import { isPublicDomainConfigured, isRequestFromPublicDomain } from "@/app/middleware/domain-utils";
 import { isAuthProtectedRoute, isRouteAllowedForDomain } from "@/app/middleware/endpoint-validator";
 import { TRUSTED_PROXY_HOP_COUNT, WEBAPP_URL } from "@/lib/constants";
-import { FORMBRICKS_ORGANIZATION_ID_COOKIE, FORMBRICKS_WORKSPACE_ID_COOKIE } from "@/lib/localStorage";
+import { FORMBRICKS_ORGANIZATION_ID_COOKIE } from "@/lib/localStorage";
 import { FORMBRICKS_CLIENT_IP_HEADER, resolveClientIp } from "@/lib/utils/client-ip";
 import { getValidatedCallbackUrl } from "@/lib/utils/url";
 import { getProxySession } from "@/modules/auth/lib/proxy-session";
@@ -149,19 +149,15 @@ export const proxy = async (originalRequest: NextRequest) => {
   const authResponse = await handleAuth(request);
   if (authResponse) return authResponse;
 
-  // Remember the active workspace (and organization) so the workspace-agnostic settings shell can
-  // resolve it server-side (localStorage is browser-only). Mirrors the /workspaces/[workspaceId] and
-  // /organizations/[organizationId] path segments — see `rememberActiveContext`.
+  // Remember the active organization so the account shell can resolve it server-side (localStorage is
+  // browser-only). Mirrors the /organizations/[organizationId] path segment — see `rememberActiveContext`.
   // Only set a cookie when the value actually changes: a Set-Cookie on a server-action POST makes
   // Next.js treat the action as revalidated, forcing a router refresh after every action — on pages
   // that call an action on mount this becomes an infinite POST/refresh loop.
   //
   // Prefetches are excluded because they are not visits. The router re-prefetches the links of a
-  // tree it rendered earlier, so after deleting a workspace it still prefetches that workspace's
-  // now-stale links — and letting one write this cookie overwrote the surviving workspace the
-  // delete action had just stored, pointing it at a workspace that no longer exists. The
-  // org-settings shell then cannot trust the cookie and falls back to `organizations[0]`, dropping
-  // a member of several organizations into an unrelated one.
+  // tree it rendered earlier, so a prefetch of a stale organization link must not overwrite the
+  // organization the user is actually in.
   if (!isPrefetchRequest(request)) {
     rememberActiveContext(request, nextResponseWithCustomHeader);
   }
@@ -177,28 +173,12 @@ const ACTIVE_CONTEXT_COOKIE_OPTIONS = {
 } as const;
 
 /**
- * Records where the user is so account settings (which carry no organization in the URL) render the
- * organization the user is in. A workspace visit stores the workspace and drops the organization
- * cookie, because the workspace now names the organization. An organization-scoped visit stores the
- * organization — this is the only signal for an organization with no workspace yet, whose landing
- * page would otherwise leave the workspace cookie pointing into the previous organization.
- *
- * Each cookie is written only when its value changes (see the server-action note above).
+ * Records which organization the user is in, so account pages that carry no organization in the URL
+ * (see `modules/shell/lib/active-organization.ts`) render that one. Written only when the value
+ * changes (see the server-action note above).
  */
 const rememberActiveContext = (request: NextRequest, response: NextResponse): void => {
-  const { pathname } = request.nextUrl;
-  const workspaceId = /^\/workspaces\/([^/]+)/.exec(pathname)?.[1];
-  const organizationId = /^\/organizations\/([^/]+)/.exec(pathname)?.[1];
-
-  if (workspaceId) {
-    if (request.cookies.get(FORMBRICKS_WORKSPACE_ID_COOKIE)?.value !== workspaceId) {
-      response.cookies.set(FORMBRICKS_WORKSPACE_ID_COOKIE, workspaceId, ACTIVE_CONTEXT_COOKIE_OPTIONS);
-    }
-    if (request.cookies.has(FORMBRICKS_ORGANIZATION_ID_COOKIE)) {
-      response.cookies.delete(FORMBRICKS_ORGANIZATION_ID_COOKIE);
-    }
-    return;
-  }
+  const organizationId = /^\/organizations\/([^/]+)/.exec(request.nextUrl.pathname)?.[1];
 
   if (organizationId && request.cookies.get(FORMBRICKS_ORGANIZATION_ID_COOKIE)?.value !== organizationId) {
     response.cookies.set(FORMBRICKS_ORGANIZATION_ID_COOKIE, organizationId, ACTIVE_CONTEXT_COOKIE_OPTIONS);

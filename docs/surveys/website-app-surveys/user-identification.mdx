@@ -31,7 +31,7 @@ This method is recommended for applications where users are required to log in a
 
 ### Setting User ID
 
-To enable user identification, call the `setUserId` function of Formbricks and pass the user id. The user will show up in the Formbricks dashboard. Use a unique string, like a database ID or a unique email address. You can also anonymize the identifier, as long as it is unique for each user.
+To enable user identification, call the `setUserId` function of Formbricks and pass the user id. The user is stored as a contact, which your agent can read over [MCP](/platform/mcp/overview) (`list_contacts`). Use a unique string, like a database ID or a unique email address. You can also anonymize the identifier, as long as it is unique for each user.
 
 ```javascript
 formbricks.setUserId("<user-id>");
@@ -39,7 +39,7 @@ formbricks.setUserId("<user-id>");
 
 ### Setting User Email
 
-Use the `setEmail` function to store the user's email address on the contact. Email is one of the built-in contact attributes, so it gets its own column in the Contacts table and is never removed by an attribute update that omits it.
+Use the `setEmail` function to store the user's email address on the contact. Email is one of the built-in contact attributes, so it is stored as its own value and is never removed by an attribute update that omits it.
 
 ```javascript Setting User Email
 formbricks.setEmail("hola@formbricks.com");

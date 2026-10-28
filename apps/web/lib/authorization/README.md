@@ -60,14 +60,12 @@ Team and workspace grants use ordered permission ladders:
 | `ApiKey.organizationAccess.accessControl.read`  | Organization access-control and team read access.                                                           |
 | `ApiKey.organizationAccess.accessControl.write` | Read access plus organization access management and team management/deletion.                               |
 
-Surveys, dashboards, and responses inherit access through their workspace:
+Surveys and responses inherit access through their workspace:
 
 - Survey read/write/publish follow workspace read/write.
 - Survey deletion in the web application and V3 API currently requires
   workspace write; legacy management deletion and language management require
   workspace manage.
-- Dashboard read/write follow workspace read/write, including dashboard
-  deletion.
 - Response read and export currently both follow workspace read. They remain
   separate actions so a future policy split is explicit.
 - Response updates, tags, and web-application deletion follow workspace write;
@@ -136,7 +134,7 @@ including unscoped calls, so the sole-evaluator cutover does not trade away N+1
 visibility. Instrumentation failures are fail-safe and cannot change an
 authorization result.
 
-Surveys, dashboards, and responses are intentionally resolved to their owning
+Surveys and responses are intentionally resolved to their owning
 workspace before the SpiceDB check. Their parent relationships are not yet
 projected, so checking those resource definitions directly would turn every
 valid legacy decision into a false denial. This remains a current-model
@@ -191,8 +189,7 @@ helper — a page that awaited `getWorkspaceAuth()` and then authorized anything
 else did so outside any surface, back on the unconditional legacy path. That was
 not merely missing evidence: it would have bypassed enforcement invisibly, since
 a check with no surface never compares and so never mismatches. Nine routes were
-affected, two of them issuing one unscoped check _per feedback directory_ or _per
-dashboard widget_.
+affected, one of them issuing one unscoped check _per feedback directory_.
 
 `page` is now held in a React `cache()` slot, which is scoped to the whole render
 pass, so a layout and its page share one context and it outlives every helper.
@@ -277,12 +274,12 @@ fails when a new model or target has not been reviewed. The inventory distinguis
 resources, relationship/grant sources, workspace-inherited resources, parent-derived integrity data,
 authentication/application concerns, and explicit public/out-of-scope data.
 
-Charts and workflows remain workspace-inherited. Feedback records remain protected by their
+Workflows remain workspace-inherited. Feedback records remain protected by their
 dataset/workspace authorization decision plus application-level tenant and integrity validation.
 
 ## Explicit exclusions
 
 The current contract has no system/service principal, survey-level sharing,
-per-dashboard ACL, audit-log permission, contextual data-policy capability, or
+audit-log permission, contextual data-policy capability, or
 generic Phase 2 list-resource abstraction. Current-model organization/workspace discovery is part of the
 direct cutover and must not be confused with future per-resource sharing.

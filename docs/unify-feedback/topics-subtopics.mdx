@@ -5,29 +5,25 @@ icon: "tags"
 ---
 
 <Warning>
-  Topics & Subtopics is a **Preview** feature. The schema and UI may change.
+  Topics & Subtopics is a **Preview** feature. The schema may change.
 </Warning>
 
 Open-text feedback ("Why did you give this score?", support tickets, app reviews) is rich but hard to count. Topics & Subtopics uses AI to cluster free text into a two-level taxonomy you can filter, count, and trend over time.
 
 ## How it works
 
-1. Pick a Feedback Dataset under **Analyze → Feedback Data → Topics & Subtopics**.
+1. Your agent starts a run for a Feedback Dataset with `start_taxonomy_run`.
 2. Formbricks scans `value_text` across the dataset and proposes a set of **Topics** (broad categories) and **Subtopics** (specific themes within a topic).
 3. Each record can be assigned to one Topic and one Subtopic.
 
-## What you can do today
+## What your agent can do
 
-- **Browse** the proposed Topic / Subtopic tree for a dataset.
-- **Inspect** which records cluster under each Topic.
-
-## Roadmap
-
-- Manual edits to topic labels and assignments.
-- Topic filters on Charts and Dashboards.
-- Per-source topic confidence scoring.
+- **Read** the Topic and Subtopic tree with `get_taxonomy_state`, the fields that are clustered with `list_taxonomy_fields`, and the state of a run with `get_taxonomy_run`.
+- **Count** records per topic with `get_taxonomy_record_counts`, and **inspect** the records under a topic with `list_taxonomy_node_records`.
+- **Edit** the tree with `rename_taxonomy_node` and `remove_taxonomy_node`.
 
 ## Requirements
 
 - A Feedback Dataset with records.
-- Smart functionality (AI) enabled at the organization level. See [AI Features](/platform/features/ai-features).
+- Smart functionality (AI) enabled for the organization. See [AI Features](/platform/ai-features).
+- The `feedbackRecords:write` scope to start a run or edit the tree, and `feedbackRecords:read` to read it.

@@ -14,6 +14,9 @@ FORMBRICKS_WORKSPACE_ID=... \
 pnpm --filter @formbricks/deployment-check check
 ```
 
+`FORMBRICKS_WORKSPACE_ID` is required: there is no REST operation to discover a key's workspaces (`list_workspaces` is
+MCP-only), so the check reads and writes the workspace you name and fails with a clear message when the key cannot.
+
 First time only: `pnpm --filter @formbricks/deployment-check exec playwright install chromium`.
 
 ## Layout

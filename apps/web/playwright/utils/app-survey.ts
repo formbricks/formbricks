@@ -11,9 +11,9 @@ import { type UserFixture, type UsersFixture } from "../fixtures/users";
  *
  * Provisions a workspace plus a published app survey wired to a code action, all
  * through Prisma — the same boundary the `users` fixture writes through — so a spec
- * does not have to drive the survey editor UI to get a survey on a host page. The
+ * does not need an API key or an agent to get a survey on a host page. The
  * legacy `questions` shape is converted with the SAME `transformQuestionsToBlocks`
- * the v1 management API uses server-side rather than hand-crafting blocks JSON.
+ * the API compatibility layer uses server-side rather than hand-crafting blocks JSON.
  *
  * Widget placement and overlay live on the Workspace, not the Survey (see
  * `packages/database/schema/main.prisma` `WidgetPlacement` / `SurveyOverlay`), so the
@@ -42,21 +42,21 @@ export interface SeedAppSurveyOptions {
   placement?: "bottomRight" | "bottomLeft" | "topRight" | "topLeft" | "center";
   /** Show conditions the survey is checked against when its trigger fires (ENG-3926). */
   showConditions?: TShowConditionGroup;
+  /** How many open-text questions the survey has, one per card. Defaults to one. */
+  questionCount?: number;
 }
 
-const buildQuestions = () =>
-  [
-    {
-      id: "openText",
-      type: "openText",
-      headline: i18nValue("What would you like to know?"),
-      required: false,
-      inputType: "text",
-      longAnswer: false,
-      charLimit: { enabled: false },
-      placeholder: i18nValue("Type your answer here..."),
-    },
-  ] as unknown as TLegacyQuestions;
+const buildQuestions = (count: number) =>
+  Array.from({ length: count }, (_, index) => ({
+    id: index === 0 ? "openText" : `openText${(index + 1).toString()}`,
+    type: "openText",
+    headline: i18nValue(index === 0 ? "What would you like to know?" : `Question ${(index + 1).toString()}`),
+    required: false,
+    inputType: "text",
+    longAnswer: false,
+    charLimit: { enabled: false },
+    placeholder: i18nValue("Type your answer here..."),
+  })) as unknown as TLegacyQuestions;
 
 const buildEndings = () =>
   [
@@ -79,7 +79,7 @@ export const seedAppSurvey = async (
   users: UsersFixture,
   options: SeedAppSurveyOptions = {}
 ): Promise<SeededAppSurvey> => {
-  const { overlay = "none", placement = "bottomRight", showConditions } = options;
+  const { overlay = "none", placement = "bottomRight", showConditions, questionCount = 1 } = options;
 
   const user = await users.create({ skipSurveySeed: true });
   const workspaceId = user.workspaceId;
@@ -99,13 +99,13 @@ export const seedAppSurvey = async (
   });
 
   const endings = buildEndings();
-  const blocks = transformQuestionsToBlocks(buildQuestions(), endings);
+  const blocks = transformQuestionsToBlocks(buildQuestions(questionCount), endings);
 
   const survey = await prisma.survey.create({
     data: {
       workspaceId,
       createdBy: user.id,
-      name: "App survey (non-blocking widget spec)",
+      name: "E2E app survey",
       type: "app",
       status: "inProgress",
       displayOption: "respondMultiple",

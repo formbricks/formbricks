@@ -1,68 +1,30 @@
 ---
 title: "Quickstart - Link Surveys"
-description: "Create your first link survey in under 5 minutes."
+description: "Create your first link survey with your agent and share its link in a few minutes."
 icon: "rocket"
 sidebarTitle: "Quickstart"
 ---
 
-Link Surveys make it easy for your users to give you feedback. They are a great way to get feedback from your users, without interrupting their workflow. This quickstart guide will show you how to create your first link survey in under 5 minutes.
+Link Surveys make it easy for your users to give you feedback without interrupting their workflow. Each one has a shareable URL, so respondents need nothing but a browser. This quickstart has your agent create one and shares its link.
 
 <Steps>
-  <Step title="Create a free Formbricks Cloud account">
-    While you can [self-host](/self-hosting/overview) Formbricks, the quickest and easiest way to get started is with the free Cloud plan. Just [sign up here](https://app.formbricks.com/auth/signup) and click through the onboarding.
+  <Step title="Sign up and connect your agent">
+    Create a free Formbricks Cloud account at [app.formbricks.com](https://app.formbricks.com/auth/signup), or [self-host](/self-hosting/overview) Formbricks. Then connect Claude, Codex or Cursor. [Getting started](/platform/getting-started) walks through it in a few minutes.
   </Step>
 
-  <Step title="Choose a template">
-    In your workspace, click **New Survey** and pick **Choose a template**. We'll use the **Product Market Fit (Superhuman)** template for this quickstart guide.
-
-    Click the template to preview it, then hit **Use this template**.
-
-    ![Choosing the Product Market Fit template](/images/surveys/link-surveys/quickstart/choose-template.webp)
+  <Step title="Ask for a survey">
+    Describe the survey you want, for example: *"Create a link survey in my workspace that asks how likely people are to recommend us (0 to 10) and why."* The agent drafts the survey document with `generate_survey` or writes it directly, checks it with `validate_survey`, and saves it with `create_survey`. New surveys start as drafts.
   </Step>
 
-  <Step title="Create your first survey">
-    You'll be taken to the survey editor. The **Questions** tab holds the blocks and questions that came with the template, and the preview on the right updates as you edit. To keep it simple, we'll leave the questions as they are.
-
-    ![The survey editor with the template questions](/images/surveys/link-surveys/quickstart/survey-editor.webp)
+  <Step title="Tune the settings">
+    Ask for what the survey needs: when it runs or closes, what happens at the end, hidden fields, multiple languages, custom CSS. Everything a survey can do lives in the survey document, and the agent reads the field reference of the [v3 API](/api-v3-reference/introduction) through the same tools.
   </Step>
 
-  <Step title="Set the survey type to Link Survey">
-    Open the **Settings** tab and choose **Link Survey** under **Survey Type**. This is what gives your survey a shareable URL, instead of running it inside your app or website.
-
-    ![Selecting Link Survey as the survey type](/images/surveys/link-surveys/quickstart/survey-type-link.webp)
+  <Step title="Publish and share">
+    Ask the agent to publish the survey. Its link is your instance's public survey URL followed by `/s/<surveyId>`, for example `https://app.formbricks.com/s/<surveyId>`. Share it by email, chat or QR code, [embed it](/surveys/link-surveys/embed-surveys) in a web page, and add [URL parameters](/surveys/link-surveys/data-prefilling) to prefill answers or [track the source](/surveys/link-surveys/source-tracking).
   </Step>
 
-  <Step title="Configure your survey settings">
-    Still in the **Settings** tab, open **Response Options**. Formbricks packs a lot of useful functionality out of the box. You can:
-
-    - Close the survey on a specific date
-    - Close the survey after a number of responses
-    - Redirect users to a URL after they completed the survey
-    - Protect the survey with a PIN
-    - ... and much more!
-
-    ![Response Options in the survey settings](/images/surveys/link-surveys/quickstart/response-options.webp)
-  </Step>
-
-  <Step title="Style your survey">
-    Switch to the **Styling** tab and turn on **Use custom styling for this survey** to override your workspace theme for this survey. You can keep it simplistic or use animated backgrounds, and you can change the colors, the card layout and the logo.
-
-    ![The Styling tab with custom styles enabled](/images/surveys/link-surveys/quickstart/styling.webp)
-
-    <Note>
-      Want the same look across all of your surveys? Set your theme once in the Look & Feel settings instead. See [Styling Theme](/platform/features/styling-theme).
-    </Note>
-  </Step>
-
-  <Step title="Activate your survey">
-    Once you're happy with your survey settings, hit the **Activate** button. You'll be forwarded to the Summary Page where all the responses to your survey will appear.
-
-    ![The survey summary page](/images/surveys/link-surveys/quickstart/summary-page.webp)
-  </Step>
-
-  <Step title="Distribute your survey">
-    Congratulations! Your survey is now active and ready for your users. Click **Distribute** to copy the survey link, or pick one of the other channels: a website or email embed, social media, a QR code or a dynamic pop-up.
-
-    ![Sharing the survey link](/images/surveys/link-surveys/quickstart/share-survey.webp)
+  <Step title="Read the responses">
+    Ask the agent to count and read the responses (`count_responses`, `list_responses`), summarize them, or tag and group them. Responses can also be sent to your own systems with a [webhook](/platform/webhooks).
   </Step>
 </Steps>

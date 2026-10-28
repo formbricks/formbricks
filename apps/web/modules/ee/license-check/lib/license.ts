@@ -110,6 +110,8 @@ const LicenseFeaturesSchema = z.object({
   accessControl: z.boolean(),
   quotas: z.boolean(),
   feedbackDirectories: z.boolean().default(false),
+  // Wire name of the feedback analytics flag (feedback queries, ADR 0016). Dashboards are gone but the licence
+  // server still sends `dashboards`, and parsed licences are cached under it, so the name stays.
   dashboards: z.boolean().default(false),
   workflows: z.boolean().default(false),
   dataRetention: z.boolean().default(false),

@@ -17,8 +17,8 @@ type TLegacyQuestions = Parameters<typeof transformQuestionsToBlocks>[0];
  * SURVEY_URL. Seeding goes straight through Prisma — the same boundary the
  * `users` fixture writes through — so no login, dashboard navigation, or API key
  * is needed. To stay aligned with the real survey schema, the legacy `questions`
- * shape is converted with the SAME `transformQuestionsToBlocks` the v1 management
- * API uses server-side, instead of hand-crafting blocks JSON. The survey is
+ * shape is converted with the SAME `transformQuestionsToBlocks` the API
+ * compatibility layer uses server-side, instead of hand-crafting blocks JSON. The survey is
  * created directly as `inProgress` because `/s/<id>` returns 404 for drafts
  * (see apps/web/modules/survey/link/components/survey-renderer.tsx).
  *
@@ -296,8 +296,8 @@ type FixtureQuestionList =
 
 /**
  * Creates a published link survey directly through Prisma from a legacy `questions`
- * list. The list is converted to blocks with the same transform the v1 management
- * API applies server-side, so the stored shape cannot drift from the API contract.
+ * list. The list is converted to blocks with the same transform the API
+ * compatibility layer applies server-side, so the stored shape cannot drift from the API contract.
  */
 const createLinkSurvey = async (
   workspaceId: string,

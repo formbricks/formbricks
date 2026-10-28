@@ -71,22 +71,6 @@ export const INVITE_DISABLED = env.INVITE_DISABLED === "1";
 export const INVITE_RATE_LIMIT_PER_24_HOURS = env.INVITE_RATE_LIMIT_PER_24_HOURS;
 export const EMAIL_RATE_LIMIT_MULTIPLIER = env.EMAIL_RATE_LIMIT_MULTIPLIER;
 
-export const SLACK_CLIENT_SECRET = env.SLACK_CLIENT_SECRET;
-export const SLACK_CLIENT_ID = env.SLACK_CLIENT_ID;
-export const SLACK_REDIRECT_URI = `${WEBAPP_URL}/api/v1/integrations/slack/callback`;
-export const SLACK_AUTH_URL = `https://slack.com/oauth/v2/authorize?client_id=${env.SLACK_CLIENT_ID}&scope=channels:read,chat:write,chat:write.public,chat:write.customize,groups:read&redirect_uri=${SLACK_REDIRECT_URI}`;
-
-export const GOOGLE_SHEETS_CLIENT_ID = env.GOOGLE_SHEETS_CLIENT_ID;
-export const GOOGLE_SHEETS_CLIENT_SECRET = env.GOOGLE_SHEETS_CLIENT_SECRET;
-export const GOOGLE_SHEETS_REDIRECT_URL = env.GOOGLE_SHEETS_REDIRECT_URL;
-
-export const NOTION_OAUTH_CLIENT_ID = env.NOTION_OAUTH_CLIENT_ID;
-export const NOTION_OAUTH_CLIENT_SECRET = env.NOTION_OAUTH_CLIENT_SECRET;
-export const NOTION_REDIRECT_URI = `${WEBAPP_URL}/api/v1/integrations/notion/callback`;
-export const NOTION_AUTH_URL = `https://api.notion.com/v1/oauth/authorize?client_id=${env.NOTION_OAUTH_CLIENT_ID}&response_type=code&owner=user&redirect_uri=${NOTION_REDIRECT_URI}`;
-
-export const AIRTABLE_CLIENT_ID = env.AIRTABLE_CLIENT_ID;
-
 export const SES_CONFIGURATION_SET = env.SES_CONFIGURATION_SET;
 export const SES_EMAIL_ENVIRONMENT = env.SES_EMAIL_ENVIRONMENT;
 export const SMTP_HOST = env.SMTP_HOST;
@@ -155,10 +139,7 @@ export const AUTH_TRUSTED_ORIGINS = [
 ];
 
 export const ITEMS_PER_PAGE = 30;
-export const SURVEYS_PER_PAGE = 12;
 export const RESPONSES_PER_PAGE = 25;
-export const TEXT_RESPONSES_PER_PAGE = 5;
-export const MAX_RESPONSES_FOR_INSIGHT_GENERATION = 500;
 export const MAX_OTHER_OPTION_LENGTH = 250;
 
 /**
@@ -188,11 +169,6 @@ export const DEFAULT_ORGANIZATION_ROLE = env.AUTH_DEFAULT_ORGANIZATION_ROLE;
 // users (default exempts invites). See @/modules/auth/lib/signup-email-domain.
 export const SIGNUP_DOMAIN_CHECK_ON_INVITES = env.SIGNUP_DOMAIN_CHECK_ON_INVITES === "1";
 
-export const SLACK_MESSAGE_LIMIT = 2995;
-export const GOOGLE_SHEET_MESSAGE_LIMIT = 49995;
-export const AIRTABLE_MESSAGE_LIMIT = 99995;
-export const NOTION_RICH_TEXT_LIMIT = 1995;
-
 // Storage constants
 export const S3_ACCESS_KEY = env.S3_ACCESS_KEY;
 export const S3_SECRET_KEY = env.S3_SECRET_KEY;
@@ -207,34 +183,6 @@ export const MAX_FILE_UPLOAD_SIZES = {
 export const IS_STORAGE_CONFIGURED = Boolean(S3_BUCKET_NAME);
 
 // Colors for Survey Bg
-export const SURVEY_BG_COLORS = [
-  "#FFFFFF",
-  "#FFF2D8",
-  "#EAD7BB",
-  "#BCA37F",
-  "#113946",
-  "#04364A",
-  "#176B87",
-  "#64CCC5",
-  "#DAFFFB",
-  "#132043",
-  "#1F4172",
-  "#F1B4BB",
-  "#FDF0F0",
-  "#001524",
-  "#445D48",
-  "#D6CC99",
-  "#FDE5D4",
-  "#BEADFA",
-  "#D0BFFF",
-  "#DFCCFB",
-  "#FFF8C9",
-  "#FF8080",
-  "#FFCF96",
-  "#F6FDC3",
-  "#CDFAD5",
-];
-
 export const DEBUG = env.DEBUG === "1";
 
 // Enterprise License constant
@@ -263,9 +211,6 @@ export const PASSWORD_HIBP_CHECK_DISABLED = env.PASSWORD_HIBP_CHECK_DISABLED ===
 
 export const BREVO_API_KEY = env.BREVO_API_KEY;
 export const BREVO_LIST_ID = env.BREVO_LIST_ID;
-
-export const UNSPLASH_ACCESS_KEY = env.UNSPLASH_ACCESS_KEY;
-export const UNSPLASH_ALLOWED_DOMAINS = ["api.unsplash.com"];
 
 export const STRIPE_API_VERSION = "2026-02-25.clover";
 
@@ -298,12 +243,6 @@ export const IS_PLAIN_CHAT_CONFIGURED = isPlainChatConfigured({
   appId: env.PLAIN_APP_ID,
   hmacSecret: env.PLAIN_CHAT_HMAC_SECRET,
 });
-
-// Formbricks-in-Formbricks: in-app surveys served by a Formbricks instance
-// (defaults to Formbricks Cloud). The widget only mounts when a workspace id is set.
-export const FORMBRICKS_WORKSPACE_ID = env.FORMBRICKS_WORKSPACE_ID;
-export const FORMBRICKS_APP_URL = env.FORMBRICKS_APP_URL || "https://app.formbricks.com";
-export const IS_FORMBRICKS_SURVEYS_CONFIGURED = Boolean(env.FORMBRICKS_WORKSPACE_ID);
 
 export const POSTHOG_KEY = env.POSTHOG_KEY;
 

@@ -31,7 +31,6 @@ export const AUTHORIZATION_PERMISSION_MAP = {
     "response_export",
     "change_visibility",
   ],
-  dashboard: ["read", "write"],
   feedbackDirectory: ["read", "write", "manage"],
   feedbackDirectoryAssignment: ["read", "write", "manage"],
   response: ["read", "write", "manage", "export"],

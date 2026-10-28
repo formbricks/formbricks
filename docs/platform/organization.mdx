@@ -1,0 +1,54 @@
+---
+title: "Organization and account"
+description: "Manage members, teams, workspaces, security and billing in the account area, and your own login."
+icon: "building"
+---
+
+The account area is the only screen-based part of Formbricks. It covers what an agent should not decide for you: who is in your organization, which workspaces exist, what your agents may do, and how you pay. Everything else is done by agents.
+
+## Organization
+
+Open the organization from the menu in the sidebar. It has five sections.
+
+### Members
+
+Invite people by name and email; they receive a link to join. You can resend or delete an invitation, copy the invite link, remove a member, and see whether each member has two-factor authentication turned on.
+
+A role decides what a person can change in the organization itself:
+
+| Role | What it can do |
+| --- | --- |
+| **Owner** | Full access, including billing and deleting the organization. |
+| **Manager** | Manages members, teams and workspaces. Cannot delete the organization. |
+| **Billing** | Manages billing and the license, and nothing else. |
+| **Member** | Works in the workspaces their teams give them. |
+
+<Note>
+  Choosing a role and adding people to teams is part of the [Enterprise Edition](/self-hosting/advanced/license). Until then everyone you invite is an owner. Owners can invite owners, managers and members; managers can invite members only.
+</Note>
+
+### Teams
+
+A team gives its members access to workspaces. Each team lists its members, with a role of **Team admin** or **Contributor**, and the workspaces it can use, with a permission of **read**, **read and write**, or **manage**. Organization owners and managers can create and change teams, and a team admin can manage their own team. Teams are part of the [Enterprise Edition](/self-hosting/advanced/license).
+
+### Workspaces
+
+Owners and managers create, rename and delete workspaces here. The list shows each workspace's ID, which is what you give the SDK and your agent. Agents can list workspaces, but they cannot create or delete them. Deleting a workspace removes its surveys, responses and contacts, and an organization always keeps at least one.
+
+### Security
+
+The **audit log** records every change an agent or a person makes, with who made it, what it touched and when. Owners and managers can read the recent events here; agents with the `audit:read` permission can read the full log. Audit logging is part of the [Enterprise Edition](/self-hosting/advanced/enterprise-features/audit-logging).
+
+Owners can also delete the organization from this section. That removes its workspaces, surveys, responses, contacts and agent connections and cannot be undone.
+
+### Billing
+
+On Formbricks Cloud, billing shows your plan, its usage for the cycle, and a button that opens the subscription portal for invoices, payment methods and plan changes. When you self-host, it shows your license: its status, when it was last checked, and which Enterprise features it includes. The key itself is set with the `ENTERPRISE_LICENSE_KEY` environment variable on your server. See [License](/self-hosting/advanced/license).
+
+## Agent connections
+
+Every agent that can act in your organization is listed under **Agent connections**, whether it signed in with OAuth or uses an API key. An OAuth connection acts as the person who approved it and is listed for that person. API keys belong to the organization. Revoke any connection to cut it off; an OAuth connection can keep working for up to 15 minutes, until its current access token expires. [Getting started](/platform/getting-started) shows how to connect an agent.
+
+## Your account
+
+Under **Account** you change your name and email, ask for a password reset email, delete your account, and turn on **two-factor authentication**, which asks for a code from your authenticator app when you log in. Two-factor authentication is part of a paid plan, and it works with email and password logins, not with a third-party single sign-on. Single sign-on for self-hosted instances is covered in [Auth & SSO](/self-hosting/auth-behavior).

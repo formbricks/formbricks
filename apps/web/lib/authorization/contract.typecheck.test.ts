@@ -41,8 +41,6 @@ type TExpectedAuthorizationAction =
   | "survey.response_read"
   | "survey.response_export"
   | "survey.change_visibility"
-  | "dashboard.read"
-  | "dashboard.write"
   | "feedbackDirectory.read"
   | "feedbackDirectory.write"
   | "feedbackDirectory.manage"
@@ -132,13 +130,13 @@ describe("current authorization contract types", () => {
     // @ts-expect-error Survey-level sharing is a deferred capability.
     const surveyShareResult = checkAuthorizationTypes(actor, "survey.share", resource);
 
-    const dashboardManageResult = checkAuthorizationTypes(
+    const dashboardReadResult = checkAuthorizationTypes(
       actor,
-      // @ts-expect-error Per-dashboard management is a deferred capability.
-      "dashboard.manage",
+      // @ts-expect-error Dashboards were removed (ADR 0016); no dashboard action exists.
+      "dashboard.read",
       {
-        type: "dashboard",
-        id: "dashboard-id",
+        type: "workspace",
+        id: "workspace-id",
       }
     );
 
@@ -171,7 +169,7 @@ describe("current authorization contract types", () => {
 
     expect(systemActorResult).toBeUndefined();
     expect(surveyShareResult).toBeUndefined();
-    expect(dashboardManageResult).toBeUndefined();
+    expect(dashboardReadResult).toBeUndefined();
     expect(auditLogReadResult).toBeUndefined();
     expect(mismatchedResourceResult).toBeUndefined();
     expect(assignmentWithoutWorkspaceResult).toBeUndefined();

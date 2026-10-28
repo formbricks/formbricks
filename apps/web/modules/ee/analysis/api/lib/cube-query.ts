@@ -277,7 +277,7 @@ const addValidatedTimeDimensions = (timeDimensions: unknown, result: TMemberVali
 };
 
 /**
- * Validates all Cube member references controlled by users, saved charts, or AI output.
+ * Validates all Cube member references controlled by API callers.
  * Tenant scoping is deliberately excluded from query JSON and enforced by Cube queryRewrite.
  */
 export const validateCubeQueryMembers = (query: TCubeQuery): void => {
@@ -303,7 +303,7 @@ export const validateCubeQueryMembers = (query: TCubeQuery): void => {
 
   if (result.tenantMembers.length > 0) {
     throw new Error(
-      `Tenant filters are enforced by Cube and cannot be included in chart queries: ${uniqueSorted(
+      `Tenant filters are enforced by Cube and cannot be included in feedback queries: ${uniqueSorted(
         result.tenantMembers
       ).join(", ")}`
     );

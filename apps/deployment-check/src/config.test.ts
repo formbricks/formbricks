@@ -1,7 +1,11 @@
 import { describe, expect, test } from "vitest";
 import { ConfigError, loadConfig, redact } from "./config.ts";
 
-const base = { FORMBRICKS_URL: "https://app.example.com", FORMBRICKS_API_KEY: "fbk_secret123" };
+const base = {
+  FORMBRICKS_URL: "https://app.example.com",
+  FORMBRICKS_API_KEY: "fbk_secret123",
+  FORMBRICKS_WORKSPACE_ID: "ws_123",
+};
 
 describe("loadConfig", () => {
   test("applies defaults and falls back PUBLIC_URL to URL", () => {
@@ -10,7 +14,7 @@ describe("loadConfig", () => {
       publicUrl: "https://app.example.com",
       splitDomain: false,
       apiKey: "fbk_secret123",
-      workspaceId: undefined,
+      workspaceId: "ws_123",
       storage: "auto",
       timeoutMs: 30_000,
     });
@@ -33,12 +37,14 @@ describe("loadConfig", () => {
       ...base,
       FORMBRICKS_PUBLIC_URL: "",
       CHECK_STORAGE: "",
-      FORMBRICKS_WORKSPACE_ID: "",
     });
 
     expect(config.splitDomain).toBe(false);
     expect(config.storage).toBe("auto");
-    expect(config.workspaceId).toBeUndefined();
+  });
+
+  test("requires the workspace id, and reads an empty one as unset", () => {
+    expect(() => loadConfig({ ...base, FORMBRICKS_WORKSPACE_ID: "" })).toThrow(/FORMBRICKS_WORKSPACE_ID/);
   });
 
   test.each(["auto", "true", "false"] as const)("accepts CHECK_STORAGE=%s", (value) => {
@@ -50,7 +56,9 @@ describe("loadConfig", () => {
   });
 
   test("names every missing required variable", () => {
-    expect(() => loadConfig({})).toThrow(/FORMBRICKS_URL[\s\S]*FORMBRICKS_API_KEY/);
+    expect(() => loadConfig({})).toThrow(
+      /FORMBRICKS_URL[\s\S]*FORMBRICKS_API_KEY[\s\S]*FORMBRICKS_WORKSPACE_ID/
+    );
   });
 
   test("rejects a non-http URL", () => {

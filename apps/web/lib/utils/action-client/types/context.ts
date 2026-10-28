@@ -34,9 +34,6 @@ export type AuditLoggingCtx = {
   quotaId?: string;
   teamId?: string;
   integrationId?: string;
-  chartId?: string;
-  dashboardId?: string;
-  dashboardWidgetId?: string;
   feedbackDirectoryId?: string;
   feedbackRecordId?: string;
   feedbackSourceId?: string;

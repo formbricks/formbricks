@@ -19,6 +19,7 @@ const ZEnterpriseLicenseFeatures = z.object({
   accessControl: z.boolean(),
   quotas: z.boolean(),
   feedbackDirectories: z.boolean().default(false),
+  // Wire name of the feedback analytics flag (feedback queries, ADR 0016); see `getIsFeedbackAnalyticsEnabled`.
   dashboards: z.boolean().default(false),
   workflows: z.boolean().default(false),
   dataRetention: z.boolean().default(false),

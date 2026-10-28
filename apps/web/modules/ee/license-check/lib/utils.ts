@@ -54,7 +54,7 @@ const getCustomPlanFeaturePermission = async (
       contacts: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.CONTACTS,
       aiSmartTools: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.AI_SMART_TOOLS,
       feedbackDirectories: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.FEEDBACK_DIRECTORIES,
-      dashboards: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.DASHBOARDS,
+      dashboards: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.FEEDBACK_ANALYTICS,
       workflows: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.WORKFLOWS,
       dataRetention: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.DATA_RETENTION,
     };
@@ -197,7 +197,12 @@ export const getIsFeedbackDirectoriesEnabled = async (organizationId: string): P
   return getCustomPlanFeaturePermission(organizationId, "feedbackDirectories");
 };
 
-export const getIsDashboardsEnabled = async (organizationId: string): Promise<boolean> => {
+/**
+ * Feedback analytics: the Cube-backed feedback query operation and MCP tools (ADR 0016). The licence flag
+ * keeps its old wire name, `dashboards` — the licence server and Stripe define it, and the parsed licence is
+ * cached under that shape — so only this accessor carries the new name.
+ */
+export const getIsFeedbackAnalyticsEnabled = async (organizationId: string): Promise<boolean> => {
   return getCustomPlanFeaturePermission(organizationId, "dashboards");
 };
 

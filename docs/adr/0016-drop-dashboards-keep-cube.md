@@ -19,4 +19,5 @@ Neither earlier ADR was fully built in this checkout. Charts and widgets only ev
 
 - A migration drops the Chart and Dashboard tables and their widget rows.
 - The Cube service, its secrets and the field catalog stay in the deployment files.
-- The query route is gated by the old `dashboards` licence feature key, which needs a new name or a fold into `feedbackDirectories` when the dashboards code is deleted.
+- The query route and MCP tools stay gated by the analytics entitlement, now read through `getIsFeedbackAnalyticsEnabled`. The licence-server flag and the Stripe feature lookup key keep the wire value `dashboards`, because both are defined outside this repository and parsed licences are cached under that name, so only the code-side names changed. Folding it into `feedbackDirectories` was rejected: the route already requires that entitlement, and the two are sold as separate licence flags, so a fold would hand analytics to every licence that has Feedback Datasets.
+- Migration `20261028120000_drop_charts_and_dashboards` deletes every stored chart, dashboard and widget row. SpiceDB needs no cleanup: the `dashboard` definition was never projected, so no relationship exists for it.

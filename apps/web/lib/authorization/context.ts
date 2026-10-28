@@ -16,8 +16,8 @@ import { recordAuthorizationChecksPerRequest } from "./metrics";
  * `AsyncLocalStorage` closes when the awaited callback returns, so the surface used to end with the
  * choke-point helper: a page that awaited `getWorkspaceAuth()` and then authorized anything else did
  * so with no surface, and those decisions were labelled `unscoped` in the authoritative decision
- * telemetry the direct-authority rollout is monitored on. Nine routes were affected, two of them
- * issuing one such check *per feedback directory* or *per dashboard widget*.
+ * telemetry the direct-authority rollout is monitored on. Nine routes were affected, one of them
+ * issuing one such check *per feedback directory*.
  *
  * `page` is now held in a React `cache()` slot, which is scoped to the whole render pass, so a layout
  * and its page share one context and it outlives every helper. Two consequences, both improvements on

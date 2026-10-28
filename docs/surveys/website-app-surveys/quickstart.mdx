@@ -1,91 +1,56 @@
 ---
 title: "Setup Web & Mobile SDK connection"
-description: "App surveys deliver 6–10x higher conversion rates compared to email surveys. If you are new to Formbricks, follow the steps in this guide to launch a survey in your web or mobile app (React Native) within 10–15 minutes."
+description: "Connect your website or app to Formbricks with the SDK, then have your agent create a survey that appears inside it."
 icon: "rocket"
 sidebarTitle: "SDK Setup"
 ---
 
+App surveys run inside your website or mobile app. You add the SDK once; surveys are created and changed by your agent, with no further code changes.
+
 <Steps>
-  <Step title="Create a free Formbricks Cloud account">
-    While you can [self-host](/self-hosting/overview) Formbricks, the quickest and easiest way to get started is with the free Cloud plan. Just [sign up here](https://app.formbricks.com/auth/signup) and click through the onboarding.
-  </Step>
+  <Step title="Get your workspace ID">
+    Open **Organization → Workspaces** in the Formbricks account shell and copy the **ID** of the workspace the surveys belong to. Your agent can also read it with `list_workspaces` over [MCP](/platform/mcp/overview).
 
-  <Step title="Open Web & Mobile SDK">
-    In your workspace, go to **Settings** and open **Web & Mobile SDK** under **Workspace**. **Workspace details** holds the two values the SDK needs — your **Workspace ID** and your **SDK Connection URL** — and the **Connection status** card tells you whether Formbricks has heard from your app yet.
-
-    ![The Web & Mobile SDK settings page with a grey Connection status card reading "Formbricks SDK is not yet connected", the Workspace details card and the How to install card](/images/surveys/website-app-surveys/quickstart/web-and-mobile-sdk.webp)
+    The SDK needs two values: the **workspace ID** and the **app URL** of your Formbricks instance (`https://app.formbricks.com` on Cloud, your own domain when you self-host).
 
     <Note>
-      Not the person who will add the SDK? The banner at the top of the page invites a technical team member into the organization so they can do this step for you.
+      Not the person who will add the SDK? Send them the two values, or invite them to the organization under **Organization → Members**.
     </Note>
   </Step>
 
   <Step title="Add the Formbricks SDK to your app">
-    Under **How to install**, expand the method that matches your stack:
+    Pick the method that matches your stack and follow its guide. Each snippet takes the workspace ID and app URL from the previous step.
 
     | Method | Covers |
     | :--- | :--- |
     | **Website** | HTML, React.js, Next.js, Vue.js |
     | **Mobile** | React Native, Swift, Android, Flutter |
     | **Google Tag Manager** | Any website, without touching its code |
-    | **WordPress** | WordPress sites, via the official plugin |
 
-    Each method gives you a handful of numbered steps and a snippet that already carries your Workspace ID and SDK Connection URL, so there is nothing left to fill in. For plain HTML, paste the snippet into the `<head>` of every page of your website.
-
-    ![The How to install card with the Website method expanded, showing the HTML, React.js, Next.js and Vue.js tabs and the pre-filled HTML snippet](/images/surveys/website-app-surveys/quickstart/how-to-install.webp)
-
-    Each method also links out to its full guide: the [framework guides](/surveys/website-app-surveys/framework-guides) for code, [Google Tag Manager](/surveys/website-app-surveys/google-tag-manager) and [WordPress](/platform/features/integrations/wordpress) for the no-code routes.
+    See the [framework guides](/surveys/website-app-surveys/framework-guides) for code and [Google Tag Manager](/surveys/website-app-surveys/google-tag-manager) for the no-code route. For plain HTML, paste the snippet into the `<head>` of every page of your website.
   </Step>
 
   <Step title="Confirm the connection">
-    Open the website or launch the app you added the SDK to, then come back to **Web & Mobile SDK** and hit **Re-check**. Once Formbricks has the first data point, the **Connection status** card turns green:
+    Open the website or launch the app you added the SDK to. If surveys do not show up later, turn on [Debug Mode](/surveys/website-app-surveys/framework-guides#activate-debug-mode) and read your browser console. On mobile, check your platform's log output instead: the Xcode console, Logcat, or your Metro or Flutter console.
+  </Step>
 
-    ![The Connection status card, green, reading "Receiving data" and "Formbricks SDK is connected"](/images/surveys/website-app-surveys/quickstart/connection-status.webp)
+  <Step title="Ask your agent for a survey">
+    [Connect your agent](/platform/getting-started), then ask it to create a **website & app survey** in the workspace, triggered on an existing action such as a page view, and to publish it. `list_action_classes` shows the actions the workspace has; the survey references one as `distribution.triggers[].actionClassId`. The survey appears whenever the Formbricks widget detects that action.
+  </Step>
+
+  <Step title="Choose how often it shows">
+    A common hiccup is users seeing one survey but it doesn't appear again. This is due to the defaults we chose to avoid survey fatigue: a survey is shown once per user, and a Cooldown Period applies across surveys. While testing, ask your agent to ignore the Cooldown Period and keep showing the survey while conditions match, and change this after testing to avoid user fatigue. [Survey Display Logic](/surveys/website-app-surveys/survey-display-logic) explains every gate.
+  </Step>
+
+  <Step title="Understand caching behavior">
+    For better scalability, we cache the request the SDK makes to the server. This allows you to use Formbricks on websites with millions of visitors without high hosting cost.
 
     <Note>
-      Still grey? The card only re-reads the status on **Re-check** or a page reload, so give the SDK a moment and check again. If it stays grey on the web, turn on [Debug Mode](/surveys/website-app-surveys/framework-guides#activate-debug-mode) and read your browser console. On mobile, check your platform's log output instead — the Xcode console, Logcat, or your Metro or Flutter console.
+      **Important**: Any changes to surveys, action classes, or workspace settings will take **up to 1 minute** to reflect in your app/website due to server-side caching. This includes survey modifications, new triggers, styling changes, and other updates.
     </Note>
+
+    For troubleshooting, you can enable [Debug Mode](/surveys/website-app-surveys/framework-guides#activate-debug-mode) to see detailed logs in your browser console.
   </Step>
-
-  <Step title="Create your first survey">
-    Head back to **Surveys**, click **New Survey** and pick a template. Then open the **Settings** tab of the editor and set **Survey Type** to **Website & App Survey** — that is what makes the survey run inside your app instead of on a shareable link.
-
-    ![The Survey Type section of the survey settings, with Website & App Survey selected](/images/surveys/website-app-surveys/quickstart/survey-type.webp)
-  </Step>
-
-  <Step title="Create trigger to show survey">
-    Still in the **Settings** tab, scroll to **Survey Trigger** and click **Add action**. On the **Capture new action** tab, name the action, choose **Page View** and click **Create action**. The survey now appears whenever the Formbricks widget detects a page load.
-
-    ![The Add action dialog on the Capture new action tab, with the No code action type and Page View selected](/images/surveys/website-app-surveys/quickstart/page-view-action.webp)
-  </Step>
-
-  <Step title="Set Recontact Options right">
-    A common hiccup is users seeing one survey but it doesn't appear again. This is due to the default settings we chose to avoid survey fatigue. While setting up, open **Display & Recontact** and choose **Ignore Cooldown Period** and **Keep showing while conditions match**:
-
-    ![The Display & Recontact section with Ignore Cooldown Period and Keep showing while conditions match selected](/images/surveys/website-app-surveys/quickstart/recontact-options.webp)
-
-    <Note>
-      Please change this setting after testing your survey to avoid user fatigue.
-    </Note>
-  </Step>
-
-<Step title="Activate the survey">
-  Activate the survey to make it available for the SDK to pull into the website or app where you want to show
-  it.
-</Step>
-
-<Step title="Understand caching behavior">
-  For better scalability, we cache the request the SDK makes to the server. This allows you to use Formbricks
-  on websites with millions of visitors without high hosting cost.
-  <Note>
-    **Important**: Any changes to surveys, action classes, or Workspace settings will
-    take **up to 1 minute** to reflect in your app/website due to server-side caching. This includes survey
-    modifications, new triggers, styling changes, and other updates.
-  </Note>
-  For troubleshooting, you can enable [Debug
-  Mode](/surveys/website-app-surveys/framework-guides#activate-debug-mode) to see detailed logs
-  in your browser console.
-</Step>
 
   <Step title="Check browser compatibility">
     Formbricks is designed to work with all modern browsers. Please ensure your users are using a supported version:
@@ -98,7 +63,6 @@ sidebarTitle: "SDK Setup"
     | **Safari** | 16.4+ | March 2023 |
 
     *Internet Explorer is not supported.*
-
   </Step>
 </Steps>
 

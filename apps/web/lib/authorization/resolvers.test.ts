@@ -6,8 +6,6 @@ import {
   getApiKeyAuthById,
   getApiKeyOrganizationId,
   getAuthorizationOrganizationId,
-  getDashboardAuthorizationWorkspaceScope,
-  getDashboardWorkspaceId,
   getFeedbackDirectoryAssignmentAuthorizationScope,
   getFeedbackDirectoryAuthorizationScope,
   getResponseAuthorizationWorkspaceScope,
@@ -23,7 +21,6 @@ import {
 vi.mock("@formbricks/database", () => ({
   prisma: {
     survey: { findUnique: vi.fn() },
-    dashboard: { findUnique: vi.fn() },
     response: { findUnique: vi.fn() },
     feedbackDirectory: { findUnique: vi.fn() },
     feedbackDirectoryWorkspace: { findUnique: vi.fn() },
@@ -48,12 +45,6 @@ describe("parent-id resolvers", () => {
   // Distinct ids per assertion avoid React.cache reuse across calls in one test.
   const cases = [
     { fn: getSurveyWorkspaceId, model: prisma.survey.findUnique, row: { workspaceId: "ws1" }, value: "ws1" },
-    {
-      fn: getDashboardWorkspaceId,
-      model: prisma.dashboard.findUnique,
-      row: { workspaceId: "ws2" },
-      value: "ws2",
-    },
     { fn: getResponseSurveyId, model: prisma.response.findUnique, row: { surveyId: "sv1" }, value: "sv1" },
     { fn: getTeamOrganizationId, model: prisma.team.findUnique, row: { organizationId: "o1" }, value: "o1" },
     {
@@ -111,18 +102,6 @@ describe("authorization workspace scope resolvers", () => {
     });
   });
 
-  test("resolves dashboard scope in one query", async () => {
-    vi.mocked(prisma.dashboard.findUnique).mockResolvedValueOnce({
-      workspaceId: "ws-dashboard",
-      workspace: { organizationId: "org-2" },
-    } as never);
-
-    await expect(getDashboardAuthorizationWorkspaceScope("dashboard-scope")).resolves.toEqual({
-      organizationId: "org-2",
-      workspaceId: "ws-dashboard",
-    });
-  });
-
   test("resolves response scope in one query", async () => {
     vi.mocked(prisma.response.findUnique).mockResolvedValueOnce({
       survey: {
@@ -150,7 +129,6 @@ describe("authorization workspace scope resolvers", () => {
 
   test.each([
     [getSurveyAuthorizationWorkspaceScope, prisma.survey.findUnique],
-    [getDashboardAuthorizationWorkspaceScope, prisma.dashboard.findUnique],
     [getResponseAuthorizationWorkspaceScope, prisma.response.findUnique],
   ] as const)("returns null when missing and maps Prisma errors", async (resolver, model) => {
     vi.mocked(model).mockResolvedValueOnce(null);

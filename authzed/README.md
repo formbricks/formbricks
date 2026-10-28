@@ -363,10 +363,9 @@ replacement, archive/restore, workspace deletion, and organization deletion reco
 and current pairs. The repair command covers existing rows, missing edges, stale archived edges, parent
 drift, and exact three-edge permission drift.
 
-Feedback records, feedback sources, charts, workflows, contacts, attributes, and segments do not receive
-standalone Phase 1 SpiceDB resources. Charts and workflows inherit workspace authorization. Chart
-`createdBy` is metadata rather than authorization ownership, and record-level tenant/integrity checks
-remain in the application and Hub layers.
+Feedback records, feedback sources, workflows, contacts, attributes, and segments do not receive
+standalone Phase 1 SpiceDB resources. Workflows inherit workspace authorization, and record-level
+tenant/integrity checks remain in the application and Hub layers.
 
 ### Feedback Dataset authorization routing
 
@@ -374,7 +373,7 @@ Current feedback access is routed through the central Formbricks authorization i
 its effective rules:
 
 - dataset administration checks `organization.manage`;
-- workspace-scoped records, taxonomy, sources, CSV imports, chart queries, and server-rendered Unify
+- workspace-scoped records, taxonomy, sources, CSV imports, and feedback queries
   entry points check the exact `feedbackDirectoryAssignment` resource;
 - directory-wide gateway reads and creates check `feedbackDirectory.read` or
   `feedbackDirectory.write` across all active assignments;
@@ -441,10 +440,10 @@ mismatched parent.
 ## Resource parent resolution during the current-model migration
 
 The initial migration deliberately does not project one relationship for every
-dashboard and response (surveys are projected — see above). ENG-1738's restricted evaluator uses
+response (surveys are projected — see above). ENG-1738's restricted evaluator uses
 the existing server-only PostgreSQL resolvers to map:
 
-- a survey or dashboard to its workspace;
+- a survey to its workspace;
 - a response to its survey, then to its workspace.
 
 It then checks the equivalent workspace permission in SpiceDB. This preserves
@@ -453,10 +452,13 @@ the current authorization boundary and avoids adding a high-cardinality
 Resolver database failures remain operational errors and missing resources
 remain denials, preserving the current authorization contract.
 
-The `dashboard#workspace` and `response#survey` relations
-remain in the schema for later resource-level sharing. They must not be queried
-directly until a future projector and matching backfill scope cover those edges;
-the backfill classifies them as ignored today and never prunes them.
+The `response#survey` relation remains in the schema for later resource-level sharing. It must not be
+queried directly until a future projector and matching backfill scope cover that edge; the backfill
+classifies it as ignored today and never prunes it.
+
+The `dashboard` definition was removed with dashboards (ADR 0016). It was never projected, so no
+`dashboard:*` relationship exists to clean up, and a schema write that drops it needs no relationship
+deletion first.
 Phase 2 direct resource grants must add that projection and repair scope before
 enforcement.
 
@@ -476,16 +478,16 @@ contract](https://linear.app/formbricks/document/direct-authzed-cutover-and-roll
 
 ## Mapping from the current system
 
-| Application concept                                                  | Schema element                                                                           |
-| -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `Membership.role` (`owner`/`manager`/`member`/`billing`)             | `organization` relations `owner`/`manager`/`member`/`billing`                            |
-| `TeamUser.role` (`admin`/`contributor`)                              | `team` relations `admin`/`contributor`                                                   |
-| `WorkspaceTeam.permission` (`read`/`readWrite`/`manage`)             | `workspace` relations `reader_team`/`writer_team`/`manager_team` (subject `team#member`) |
-| `ApiKeyWorkspace.permission` (`read`/`write`/`manage`)               | `workspace` relations `reader`/`writer`/`manager` (subject `api_key`)                    |
-| `ApiKey.organizationAccess.accessControl` (`read`/`write`)           | `organization` relations `api_key_reader`/`api_key_writer`                               |
-| `FeedbackDirectory.organizationId`                                   | `feedback_directory#organization@organization`                                           |
-| Active `FeedbackDirectoryWorkspace`                                  | Three-edge `feedback_directory_assignment` graph to the exact workspace                  |
-| `Survey.workspaceId` / `Dashboard.workspaceId` / `Response.surveyId` | `survey`/`dashboard` relation `workspace`; `response` relation `survey`                  |
+| Application concept                                        | Schema element                                                                           |
+| ---------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `Membership.role` (`owner`/`manager`/`member`/`billing`)   | `organization` relations `owner`/`manager`/`member`/`billing`                            |
+| `TeamUser.role` (`admin`/`contributor`)                    | `team` relations `admin`/`contributor`                                                   |
+| `WorkspaceTeam.permission` (`read`/`readWrite`/`manage`)   | `workspace` relations `reader_team`/`writer_team`/`manager_team` (subject `team#member`) |
+| `ApiKeyWorkspace.permission` (`read`/`write`/`manage`)     | `workspace` relations `reader`/`writer`/`manager` (subject `api_key`)                    |
+| `ApiKey.organizationAccess.accessControl` (`read`/`write`) | `organization` relations `api_key_reader`/`api_key_writer`                               |
+| `FeedbackDirectory.organizationId`                         | `feedback_directory#organization@organization`                                           |
+| Active `FeedbackDirectoryWorkspace`                        | Three-edge `feedback_directory_assignment` graph to the exact workspace                  |
+| `Survey.workspaceId` / `Response.surveyId`                 | `survey` relation `workspace`; `response` relation `survey`                              |
 
 Resource permissions preserve the operation-specific gates that exist today:
 
@@ -497,7 +499,6 @@ Resource permissions preserve the operation-specific gates that exist today:
 | Read or edit a survey                                            | `survey.read`, `survey.write`               | workspace `read` or `readWrite`                         |
 | Delete a survey through the web application or V3 API            | `survey.delete`                             | workspace `readWrite`                                   |
 | Manage survey languages or delete through legacy management APIs | `survey.manage`                             | workspace `manage`                                      |
-| Read or mutate a dashboard, including deletion                   | `dashboard.read`, `dashboard.write`         | workspace `read` or `readWrite`                         |
 | Read/export a response                                           | `response.read`, `response.export`          | workspace `read`                                        |
 | Update, tag, or delete a response through the web application    | `response.write`                            | workspace `readWrite`                                   |
 | Delete a response through legacy management APIs                 | `response.manage`                           | workspace `manage`                                      |
@@ -524,14 +525,13 @@ doc comments):
    access to every workspace and its content; only owners may update or delete
    the organization itself.
 2. **Billing role blocked from product data** — billing reaches billing
-   surfaces only; never workspaces, surveys, responses, or dashboards.
+   surfaces only; never workspaces, surveys, or responses.
 3. **Team-based workspace access** — teams are the only path from a plain
    member to a workspace; a member without a team has no product access.
 4. **Externally scoped read-only access** — a read-level team confines an
    external (agency) user to viewing a single workspace. (Per-survey scoping
    does not exist today and is deliberately not modeled.)
-5. **Dashboard read derives from workspace read** — dashboards carry no ACL of
-   their own. Response export currently equals response read; the separate
+5. **Response export equals response read** — currently the same gate; the separate
    `response_export` permission keeps the vocabulary ready for a future split,
    which would be an asserted schema change.
 6. **API key as scoped principal** — workspace-scoped keys act only inside
@@ -657,7 +657,7 @@ Guards on the destructive path:
   cap aborts before the first delete rather than part-way through. A large orphan
   count is a symptom — wrong endpoint, wrong database, a restore in progress — not
   a big cleanup job;
-- `survey`, `dashboard`, and `response` relationships are classified ignored, and
+- `response` relationships are classified ignored, and
   anything outside the vocabulary is reported but never touched.
 
 Two limits worth knowing before relying on a run:

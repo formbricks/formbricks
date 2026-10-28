@@ -4,9 +4,7 @@ import type { AddressInfo } from "net";
 import { prisma } from "@formbricks/database";
 import { PUBLIC_API_SURVEY_NAME_PLACEHOLDER } from "@formbricks/types/js-constants";
 import { test } from "./lib/fixtures";
-import { gotoSurveyList, gotoSurveyTemplates } from "./lib/utils";
 import { seedAppSurvey } from "./utils/app-survey";
-import { activateSurvey, useSelectedTemplate } from "./utils/helper";
 import {
   type SdkHostPage,
   collectCspViolations,
@@ -31,63 +29,16 @@ test.describe("JS Package Test", async () => {
     await hostPage.close();
   });
 
-  test("Create, display and validate PMF survey", async ({ page, users }) => {
+  test("Display, answer and validate an app survey", async ({ page, users }) => {
     const cspConsoleMessages = await collectCspViolations(page);
 
-    // Create and login user
-    const user = await users.create();
-    await user.login();
+    // Two questions, so the first answer and the completion are two separate submissions.
+    const seeded = await seedAppSurvey(users, { questionCount: 2 });
+    workspaceId = seeded.workspaceId;
+    const { surveyId, actionKey } = seeded;
+    await seeded.user.login();
 
-    await gotoSurveyList(page);
-
-    // Get the workspaceId from the fixture (needed for SDK setup)
-    workspaceId =
-      user.workspaceId ??
-      (() => {
-        throw new Error("Unable to get workspaceId from user fixture");
-      })();
-
-    await gotoSurveyTemplates(page, workspaceId);
-
-    // Create survey from template
-    await page.getByRole("heading", { name: "Product Market Fit (Superhuman)" }).isVisible();
-    await page.getByRole("heading", { name: "Product Market Fit (Superhuman)" }).click();
-    await page.getByRole("button", { name: "Use this template" }).isVisible();
-    await useSelectedTemplate(page);
-
-    // Configure survey settings
-    await page.getByRole("button", { name: "Settings", exact: true }).click();
-
-    await expect(page.locator("#howToSendCardTrigger")).toBeVisible();
-    await page.locator("#howToSendCardTrigger").click();
-    await expect(page.locator("#howToSendCardOption-app")).toBeVisible();
-    await page.locator("#howToSendCardOption-app").click();
-
-    await page.locator("#whenToSendCardTrigger").click();
-    await page.getByRole("button", { name: "Add action" }).click();
-
-    await page.getByRole("button", { name: "Capture new action" }).click();
-    await page.getByPlaceholder("E.g. Clicked Download").click();
-    await page.getByPlaceholder("E.g. Clicked Download").fill("New Session");
-    await page.getByText("Page View").click();
-    await page.getByRole("button", { name: "Create action" }).click();
-
-    await page.locator("#recontactOptionsCardTrigger").click();
-    await page.locator('[data-testid="recontact-option-respondMultiple"]').click();
-    await page.locator('[data-testid="cooldown-period-option-ignore"]').click();
-
-    await page.getByRole("button", { name: "Save as draft", exact: true }).click();
-    await expect(page.getByText("Changes saved.")).toBeVisible();
-
-    await Promise.all([
-      page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/summary/, { timeout: 120000 }),
-      activateSurvey(page),
-    ]);
-
-    const surveyId = /\/surveys\/([^/]+)\/summary/.exec(page.url())?.[1];
-    if (!surveyId) throw new Error(`Unable to parse surveyId from ${page.url()}`);
-
-    // ENG-3552: workspace and survey custom CSS, saved through the same v3 endpoints the editors use, so
+    // ENG-3552: workspace and survey custom CSS, saved through the same v3 endpoints the agents use, so
     // the processor, storage and cache invalidation are the real ones. Both style the same hook so one
     // assertion proves both arrive and that survey CSS outranks workspace CSS (M2.03).
     await test.step("save workspace and survey custom CSS", async () => {
@@ -124,6 +75,12 @@ test.describe("JS Package Test", async () => {
     // Only what happens from the host page on counts towards the host-page assertion below.
     cspConsoleMessages.length = 0;
     await page.goto(hostPage.url);
+    await page.waitForFunction(
+      () => Boolean((window as unknown as { formbricks?: unknown }).formbricks),
+      null,
+      { timeout: 120000 }
+    );
+    await page.evaluate(trackAction, actionKey);
     await expect(page.locator("#formbricks-modal-container")).toHaveCount(1, { timeout: 120000 });
 
     await test.step("the SDK receives compiled custom CSS only, workspace CSS once", async () => {
@@ -172,20 +129,10 @@ test.describe("JS Package Test", async () => {
     ).toBeVisible();
 
     // Fill the survey
-    await page.getByRole("button", { name: "Happy to help!" }).click();
-    await page.locator("#questionCard-1 label").filter({ hasText: "Somewhat disappointed" }).click();
-    await page.locator("#questionCard-1").getByRole("button", { name: "Next" }).click();
-    await page.locator("#questionCard-2 label").filter({ hasText: "Founder" }).click();
-    await page.locator("#questionCard-2").getByRole("button", { name: "Next" }).click();
-    await page
-      .locator("#questionCard-3")
-      .getByRole("textbox")
-      .fill("People who believe that PMF is necessary");
-    await page.locator("#questionCard-3").getByRole("button", { name: "Next" }).click();
-    await page.locator("#questionCard-4").getByRole("textbox").fill("Much higher response rates!");
-    await page.locator("#questionCard-4").getByRole("button", { name: "Next" }).click();
-    await page.locator("#questionCard-5").getByRole("textbox").fill("Make this end to end test pass!");
-    await page.locator("#questionCard-5").getByRole("button", { name: "Finish" }).click();
+    await page.locator("#questionCard-0").getByRole("textbox").fill("The first answer");
+    await page.locator("#questionCard-0").getByRole("button", { name: "Next" }).click();
+    await page.locator("#questionCard-1").getByRole("textbox").fill("The second answer");
+    await page.locator("#questionCard-1").getByRole("button", { name: "Finish" }).click();
 
     await page.getByTestId("loading-spinner").waitFor({ state: "hidden" });
     await page.waitForLoadState("networkidle");
@@ -256,30 +203,27 @@ test.describe("JS Package Test", async () => {
       expect(events[2].responseId).toBe(storedResponse.id);
     });
 
-    // Validate displays and response
-    cspConsoleMessages.length = 0;
-    await page.goto("/");
-    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
-    await page.getByRole("link", { name: "product Market Fit (Superhuman)" }).click();
-    await page.waitForSelector("text=Responses");
-    await page.waitForTimeout(5000);
+    // The survey journey leaves one display and one finished response behind, with both answers.
+    await test.step("the display and the response are stored", async () => {
+      await expect.poll(() => prisma.display.count({ where: { surveyId } })).toBe(1);
 
-    const impressionsCount = await page.getByRole("button", { name: "Impressions" }).innerText();
-    expect(impressionsCount).toEqual("Impressions\n\n1");
-
-    await expect(page.getByRole("link", { name: "Responses" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Completed 100%" })).toBeVisible();
-    await expect(page.getByText("1 response", { exact: true }).first()).toBeVisible();
-    await expect(page.getByText("Somewhat disappointed")).toBeVisible();
-    await expect(page.getByText("Founder")).toBeVisible();
-    await expect(page.getByText("People who believe that PMF").first()).toBeVisible();
-    await expect(page.getByText("Much higher response rates!").first()).toBeVisible();
-    await expect(page.getByText("Make this end to end test").first()).toBeVisible();
+      const storedResponse = await prisma.response.findFirstOrThrow({
+        where: { surveyId },
+        select: { finished: true, data: true },
+      });
+      expect(storedResponse.finished).toBe(true);
+      expect(Object.values(storedResponse.data as Record<string, unknown>)).toEqual(
+        expect.arrayContaining(["The first answer", "The second answer"])
+      );
+    });
 
     // Our own CSP (next.config.mjs) in the browser: next-config-csp.test.ts checks the header text, but
     // only a browser shows what it blocks — like Sentry Replay's blob: worker (ENG-3194), or Zod's eval
     // probe on every app page (ENG-3969).
     await test.step("an app page and a link survey raise no violation under our own CSP", async () => {
+      cspConsoleMessages.length = 0;
+      await page.goto("/");
+      await expect(page.getByRole("heading", { name: "Connect your agent" })).toBeVisible();
       await expectNoCspViolations(page, cspConsoleMessages);
 
       await prisma.survey.update({ where: { id: surveyId }, data: { type: "link" } });
