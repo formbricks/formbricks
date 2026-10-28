@@ -94,13 +94,19 @@ test.describe("Response filtering by reserved fields @slow", () => {
     await expect(page.getByText(BARE_ANSWER).first()).toBeVisible();
 
     await test.step("UTM Source equals newsletter → only the campaign response remains", async () => {
-      await page.getByRole("button", { name: /^Filter/ }).click();
-      await page.getByRole("button", { name: "Add filter" }).click();
-
-      // The field dropdown offers the catalog entry even though only one response carries it.
-      // The option list only renders after the combobox is clicked open.
-      await page.getByPlaceholder("Select filter").click();
-      await page.getByPlaceholder("Search...").fill("UTM Source");
+      // The field dropdown offers the catalog entry even though only one response carries it. The
+      // popover loads its options with one server action when it opens, and under load the browser can
+      // abort that request (ERR_ABORTED) with no retry, leaving the list on "No result found" for good.
+      // Reload and reopen until the options arrive instead of waiting out the test timeout.
+      await expect(async () => {
+        await page.goto(`/workspaces/${owner.workspaceId}/surveys/${surveyId}/responses`);
+        await page.getByRole("button", { name: /^Filter/ }).click();
+        await page.getByRole("button", { name: "Add filter" }).click();
+        // The option list only renders after the combobox is clicked open.
+        await page.getByPlaceholder("Select filter").click();
+        await page.getByPlaceholder("Search...").fill("UTM Source");
+        await expect(page.getByRole("option", { name: "UTM Source" })).toBeVisible({ timeout: 10000 });
+      }).toPass({ timeout: 90000 });
       await page.getByRole("option", { name: "UTM Source" }).click();
 
       // Default operator is Equals; the observed value is offered in the combobox.
