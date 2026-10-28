@@ -4,7 +4,12 @@ import { type TVerifiedLinkSurveyEmailData, sendLinkSurveyToVerifiedEmail } from
 const mocks = vi.hoisted(() => ({ sendEmail: vi.fn(async () => true) }));
 
 vi.mock("@/modules/email/lib/send-email", () => ({ sendEmail: mocks.sendEmail }));
-vi.mock("@/lingodotdev/server", () => ({ getTranslate: async () => (key: string) => key }));
+const SURVEY_NAME_LABEL = "Survey name";
+
+vi.mock("@/lingodotdev/server", () => ({
+  getTranslate: async () => (key: string) =>
+    key === "emails.verification_email_survey_name" ? SURVEY_NAME_LABEL : key,
+}));
 vi.mock("@/lib/jwt", () => ({ createTokenForLinkSurvey: () => "token" }));
 vi.mock("@/lib/organization/service", () => ({ getOrganizationByWorkspaceId: vi.fn() }));
 
@@ -33,7 +38,7 @@ describe("sendLinkSurveyToVerifiedEmail survey name", () => {
   test("shows an ordinary survey name", async () => {
     const html = await sentHtml("Customer Satisfaction");
 
-    expect(html).toContain("emails.verification_email_survey_name");
+    expect(html).toContain(SURVEY_NAME_LABEL);
     expect(html).toContain("Customer Satisfaction");
   });
 
@@ -48,7 +53,7 @@ describe("sendLinkSurveyToVerifiedEmail survey name", () => {
   test("leaves the survey-name line out when nothing displayable is left", async () => {
     const html = await sentHtml("https://spam.example");
 
-    expect(html).not.toContain("emails.verification_email_survey_name");
+    expect(html).not.toContain(SURVEY_NAME_LABEL);
     expect(html).not.toContain("spam.example");
   });
 });
