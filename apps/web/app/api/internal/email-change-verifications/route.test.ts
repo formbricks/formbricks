@@ -1,3 +1,4 @@
+import { TokenExpiredError } from "jsonwebtoken";
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { TooManyRequestsError } from "@formbricks/types/errors";
@@ -12,9 +13,13 @@ const mocks = vi.hoisted(() => ({
   updateBrevoCustomer: vi.fn(),
   applyIPRateLimit: vi.fn(),
   queueAuditEvent: vi.fn(),
+  InvalidEmailChangeTokenError: class InvalidEmailChangeTokenError extends Error {},
 }));
 
-vi.mock("@/lib/jwt", () => ({ verifyEmailChangeToken: mocks.verifyEmailChangeToken }));
+vi.mock("@/lib/jwt", () => ({
+  verifyEmailChangeToken: mocks.verifyEmailChangeToken,
+  InvalidEmailChangeTokenError: mocks.InvalidEmailChangeTokenError,
+}));
 vi.mock("@/modules/auth/lib/user", () => ({ getUser: mocks.getUser, updateUser: mocks.updateUser }));
 vi.mock("@/modules/auth/lib/brevo", () => ({ updateBrevoCustomer: mocks.updateBrevoCustomer }));
 vi.mock("@/modules/core/rate-limit/helpers", () => ({
@@ -100,10 +105,15 @@ describe("POST /api/internal/email-change-verifications", () => {
     expect(response.status).toBe(429);
     expect(mocks.verifyEmailChangeToken).not.toHaveBeenCalled();
     expect(mocks.updateUser).not.toHaveBeenCalled();
+    // The limiter logs it; an audit row per refused request would be unbounded.
+    expect(mocks.queueAuditEvent).not.toHaveBeenCalled();
   });
 
-  test("answers 422 for a token that is invalid, expired or no longer bound to the credentials", async () => {
-    mocks.verifyEmailChangeToken.mockRejectedValue(new Error("Email change token is no longer valid"));
+  test.each([
+    ["no longer bound to the credentials", new mocks.InvalidEmailChangeTokenError("no longer valid")],
+    ["expired", new TokenExpiredError("jwt expired", new Date())],
+  ])("answers 422 for a token that is %s", async (_label, error) => {
+    mocks.verifyEmailChangeToken.mockRejectedValue(error);
 
     const response = await verify();
 
@@ -111,6 +121,15 @@ describe("POST /api/internal/email-change-verifications", () => {
     expect((await response.json()).details).toEqual({ reason: "invalid_or_expired" });
     expect(mocks.updateUser).not.toHaveBeenCalled();
     expect(mocks.queueAuditEvent).toHaveBeenCalledWith(expect.objectContaining({ status: "failure" }));
+  });
+
+  test("answers 500, not 422, when verification fails for a reason of ours", async () => {
+    mocks.verifyEmailChangeToken.mockRejectedValue(new Error("ENCRYPTION_KEY is not set"));
+
+    const response = await verify();
+
+    expect(response.status).toBe(500);
+    expect(mocks.updateUser).not.toHaveBeenCalled();
   });
 
   test.each([

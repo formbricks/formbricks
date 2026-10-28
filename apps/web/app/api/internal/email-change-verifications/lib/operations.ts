@@ -1,9 +1,11 @@
 import "server-only";
+import { JsonWebTokenError } from "jsonwebtoken";
 import { logger } from "@formbricks/logger";
+import { skipV3AuditLog } from "@/app/api/v3/lib/audit";
 import { applyIPRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
 import { noContentResponse, problemUnprocessableContent } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog } from "@/app/api/v3/lib/types";
-import { verifyEmailChangeToken } from "@/lib/jwt";
+import { InvalidEmailChangeTokenError, verifyEmailChangeToken } from "@/lib/jwt";
 import { updateBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { getUser, updateUser } from "@/modules/auth/lib/user";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
@@ -24,12 +26,18 @@ export async function verifyEmailChangeOperation({
 }: TRequestContext & { body: TEmailChangeVerificationBody }): Promise<Response> {
   const { requestId, instance, auditLog } = context;
   const limited = await applyIPRateLimitOrRespond(rateLimitConfigs.auth.verifyEmail, context);
-  if (limited) return limited;
+  if (limited) {
+    // The limiter logs the refusal; auditing it too would let one address add rows without bound.
+    skipV3AuditLog(auditLog);
+    return limited;
+  }
 
   let verified: { id: string; email: string };
   try {
     verified = await verifyEmailChangeToken(body.token);
   } catch (error) {
+    // A bad or stale link is the caller's problem; a missing key or a database failure is ours.
+    if (!(error instanceof JsonWebTokenError || error instanceof InvalidEmailChangeTokenError)) throw error;
     logger.warn({ err: error }, "Email change token refused");
     return problemUnprocessableContent(requestId, "The confirmation link is invalid or has expired.", {
       instance,

@@ -789,8 +789,8 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
       // The rejection a reviewer wants — the 403 an authenticated caller gets for someone else's
       // resource — is raised by the operation below and is audited as a failure. MCP's scope gate
       // audits its own refusals in `registerScopedTool`. A pre-login route that names an audit action is
-      // audited with no actor: what it changes (an account, through a link's token) is worth a record, and
-      // its own IP budget bounds how fast anyone can add rows.
+      // audited with no actor: what it changes (an account, through a link's token) is worth a record. Its
+      // operation charges an IP budget and skips the entry when that refuses, so the budget bounds the rows.
       auditLog = buildV3AuditLog(authResult.authentication, action, targetType, req.url, auth === "none");
 
       const execute = () =>

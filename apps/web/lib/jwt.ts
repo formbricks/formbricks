@@ -162,6 +162,17 @@ export const createTokenForLinkSurvey = (surveyId: string, userEmail: string): s
  * HMAC rather than a bare hash so the claim, which travels in a readable JWT payload, cannot be
  * recomputed or probed by whoever holds the token.
  */
+/**
+ * An email change token that can't be honoured: malformed, minted for something else, or bound to a
+ * credential state that has since changed. Anything else `verifyEmailChangeToken` throws is a fault.
+ */
+export class InvalidEmailChangeTokenError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "InvalidEmailChangeTokenError";
+  }
+}
+
 const getEmailChangeCredentialFingerprint = async (userId: string): Promise<string> => {
   const authSecret = requireAuthSecret();
 
@@ -186,7 +197,9 @@ const getEmailChangeCredentialFingerprint = async (userId: string): Promise<stri
   // Fail closed: with no credential account there is nothing to bind to, and an email change is only
   // ever offered to credential users in the first place.
   if (!user || !credentialUpdatedAt) {
-    throw new Error("Email change token cannot be bound: user has no credential account");
+    throw new InvalidEmailChangeTokenError(
+      "Email change token cannot be bound: user has no credential account"
+    );
   }
 
   return createHmac("sha256", authSecret)
@@ -209,7 +222,7 @@ export const verifyEmailChangeToken = async (token: string): Promise<{ id: strin
   };
 
   if (!payload?.id || !payload?.email) {
-    throw new Error("Token is invalid or missing required fields");
+    throw new InvalidEmailChangeTokenError("Token is invalid or missing required fields");
   }
 
   // Every token in this file is signed with the same auth secret, so require the claims that say
@@ -218,7 +231,7 @@ export const verifyEmailChangeToken = async (token: string): Promise<{ id: strin
   // this check exists to reject. Links already in flight when this shipped stop working; re-requesting
   // the change issues a bound one.
   if (payload.purpose !== EMAIL_CHANGE_TOKEN_PURPOSE || !payload.fingerprint) {
-    throw new Error("Token is invalid or missing required fields");
+    throw new InvalidEmailChangeTokenError("Token is invalid or missing required fields");
   }
 
   // Decrypt both fields with fallback
@@ -228,7 +241,7 @@ export const verifyEmailChangeToken = async (token: string): Promise<{ id: strin
   const currentFingerprint = await getEmailChangeCredentialFingerprint(decryptedId);
 
   if (!constantTimeEqual(payload.fingerprint, currentFingerprint, "hex")) {
-    throw new Error("Email change token is no longer valid");
+    throw new InvalidEmailChangeTokenError("Email change token is no longer valid");
   }
 
   return {
