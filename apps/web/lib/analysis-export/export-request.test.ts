@@ -12,7 +12,13 @@ describe("ZExportRequest", () => {
   test("the Standard defaults need only a format", () => {
     const result = parse({ format: "csv" });
     expect(result.success).toBe(true);
-    expect(result.data).toEqual({ format: "csv", display: "text", spss: false, advanced: [] });
+    expect(result.data).toEqual({
+      format: "csv",
+      display: "text",
+      spss: false,
+      advanced: [],
+      excludedColumns: [],
+    });
   });
 
   test("a filter that went through JSON gets its createdAt dates back", () => {
@@ -120,5 +126,30 @@ describe("planExport", () => {
         include: { datamap: true },
       }
     );
+  });
+});
+
+describe("Display questions", () => {
+  test("Text only questions with Text only answers is still the Standard export, even with columns switched off", () => {
+    expect(
+      planExport({ format: "csv", display: "text", questions: "text", spss: false, advanced: [] }).kind
+    ).toBe("standard");
+    expect(parse({ format: "csv", excludedColumns: ["tags"] }).data?.excludedColumns).toEqual(["tags"]);
+  });
+
+  test("any other Display questions makes it an Analysis export, whatever the answers say", () => {
+    const plan = planExport({
+      format: "csv",
+      display: "text",
+      questions: "codes",
+      spss: false,
+      advanced: [],
+    });
+    expect(plan).toMatchObject({ kind: "analysis", display: "text", questions: "codes", output: "csv" });
+  });
+
+  test("rejects the SPSS syntax file with Text only questions", () => {
+    expect(parse({ format: "csv", display: "codes", questions: "text", spss: true }).success).toBe(false);
+    expect(parse({ format: "csv", display: "codes", questions: "both", spss: true }).success).toBe(true);
   });
 });

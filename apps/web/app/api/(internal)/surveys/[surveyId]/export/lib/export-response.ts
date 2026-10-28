@@ -5,6 +5,8 @@ import type { TResponseFilterCriteria } from "@formbricks/types/responses";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { buildAnalysisWhere, openAnalysisExport } from "@/lib/analysis-export";
 import { rowCells } from "@/lib/analysis-export/analysis-workbook";
+import { analysisColumnGroups, withoutColumnGroups } from "@/lib/analysis-export/column-groups";
+import type { TExportColumnGroup } from "@/lib/analysis-export/column-selection";
 import { CSV_BOM, analysisCsvLine } from "@/lib/analysis-export/csv-file";
 import { dataHeaderCells, dataParts } from "@/lib/analysis-export/data-files";
 import {
@@ -15,9 +17,10 @@ import {
 import { type TExportPlan, exportFileType } from "@/lib/analysis-export/export-request";
 import { XlsxLimitError, buildAnalysisWorkbook, createAnalysisZip } from "@/lib/analysis-export/files";
 import { createAnalysisRowBuilder } from "@/lib/analysis-export/row-builder";
-import type { TAnalysisExport, TAnalysisResponseFields } from "@/lib/analysis-export/types";
+import type { TAnalysisExport, TAnalysisResponseFields, TAnswerDisplay } from "@/lib/analysis-export/types";
 import { getResponseDownloadFile } from "@/lib/response/service";
-import { getResponsesFileName } from "@/lib/response/utils";
+import { standardColumnGroups } from "@/lib/response/standard-columns";
+import { extractSurveyDetails, getResponsesFileName } from "@/lib/response/utils";
 import { buildWhereClause } from "@/lib/response/where-clause";
 import { EXCEL_EXPORT_MAX_CELLS } from "./export-limits";
 
@@ -59,12 +62,22 @@ export const buildExportFileName = (surveyName: string, plan: TExportPlan): stri
 export type TExportCounts = {
   included: number;
   lowQualityLeftOut: number;
+  /** Every response of the survey, filter or not: the count line's "N responses total". */
+  total: number;
+  /** The Include columns list for this export. Standard and Analysis name their columns differently. */
+  columnGroups: TExportColumnGroup[];
   /**
    * How big the Excel file of this selection would be against the cap, so the modal can switch Excel off
    * before anyone waits for a refusal. `null` for the Standard export, which the cap does not cover.
    */
   excel: TExcelSizeVerdict | null;
 };
+
+/** The Standard export's Include columns list: from the survey alone, so no response is read for it. */
+const standardGroupsOf = (survey: TSurvey, isQuotasAllowed: boolean) =>
+  standardColumnGroups({ survey, details: extractSurveyDetails(survey, []), isQuotasAllowed }).map(
+    ({ id, label }) => ({ id, label })
+  );
 
 /**
  * The modal's count line: what the export writes, and the Low quality responses it leaves out. For an
@@ -85,15 +98,23 @@ export const countExportResponses = async ({
 }): Promise<TExportCounts> => {
   if (plan.kind === "standard") {
     // Today's file keeps Low quality responses, so nothing is left out.
-    const included = await prisma.response.count({
-      where: { surveyId: survey.id, ...buildWhereClause(survey, filter) },
-    });
-    return { included, lowQualityLeftOut: 0, excel: null };
+    const [included, total] = await Promise.all([
+      prisma.response.count({ where: { surveyId: survey.id, ...buildWhereClause(survey, filter) } }),
+      prisma.response.count({ where: { surveyId: survey.id } }),
+    ]);
+    return {
+      included,
+      lowQualityLeftOut: 0,
+      total,
+      columnGroups: standardGroupsOf(survey, isQuotasAllowed),
+      excel: null,
+    };
   }
   const where = buildAnalysisWhere(survey, filter);
-  const [included, lowQualityLeftOut] = await Promise.all([
+  const [included, lowQualityLeftOut, total] = await Promise.all([
     prisma.response.count({ where: where.included }),
     where.lowQualityLeftOut ? prisma.response.count({ where: where.lowQualityLeftOut }) : 0,
+    prisma.response.count({ where: { surveyId: survey.id } }),
   ]);
   const { columns } = createAnalysisRowBuilder({
     survey,
@@ -107,7 +128,13 @@ export const countExportResponses = async ({
     columns: columns.length,
     responses: included,
   });
-  return { included, lowQualityLeftOut, excel: excelSizeVerdict(cells, EXCEL_EXPORT_MAX_CELLS) };
+  return {
+    included,
+    lowQualityLeftOut,
+    total,
+    columnGroups: analysisColumnGroups(columns),
+    excel: excelSizeVerdict(cells, EXCEL_EXPORT_MAX_CELLS),
+  };
 };
 
 const downloadHeaders = (plan: TExportPlan, fileName: string): Record<string, string> => ({
@@ -120,7 +147,8 @@ const downloadHeaders = (plan: TExportPlan, fileName: string): Record<string, st
 /** `data.csv` of an Analysis export, streamed batch by batch: one batch of rows in memory at a time. */
 const streamAnalysisCsv = (
   exported: TAnalysisExport,
-  display: "codes" | "text"
+  display: "codes" | "text",
+  questions: TAnswerDisplay | undefined
 ): ReadableStream<Uint8Array> => {
   const [part] = dataParts(display);
   const encoder = new TextEncoder();
@@ -132,7 +160,9 @@ const streamAnalysisCsv = (
         if (!started) {
           started = true;
           controller.enqueue(
-            encoder.encode(CSV_BOM + analysisCsvLine(dataHeaderCells(exported.columns, display, part.kind)))
+            encoder.encode(
+              CSV_BOM + analysisCsvLine(dataHeaderCells(exported.columns, display, part.kind, questions))
+            )
           );
           return;
         }
@@ -156,7 +186,7 @@ const streamAnalysisCsv = (
 
 export type TExportResult =
   | { ok: true; response: Response }
-  | { ok: false; reason: "excel_too_large"; message: string };
+  | { ok: false; reason: "excel_too_large" | "no_columns"; message: string };
 
 /**
  * The file of an export, as a download. The Standard export goes through the existing path unchanged
@@ -167,6 +197,7 @@ export const buildExportResponse = async ({
   survey,
   plan,
   filter,
+  excludedColumns = [],
   isQuotasAllowed,
   timeZone,
   signal,
@@ -174,33 +205,52 @@ export const buildExportResponse = async ({
   survey: TSurvey;
   plan: TExportPlan;
   filter?: TResponseFilterCriteria;
+  /** Include columns groups switched off. */
+  excludedColumns?: readonly string[];
   isQuotasAllowed: boolean;
   timeZone: string;
   signal: AbortSignal;
 }): Promise<TExportResult> => {
+  const noColumns: TExportResult = {
+    ok: false,
+    reason: "no_columns",
+    message: "Select at least 1 column to export.",
+  };
   if (plan.kind === "standard") {
-    const { fileContents, fileName } = await getResponseDownloadFile(survey.id, plan.format, filter);
+    const groups = standardGroupsOf(survey, isQuotasAllowed);
+    if (groups.length > 0 && groups.every((group) => excludedColumns.includes(group.id))) return noColumns;
+    const { fileContents, fileName } = await getResponseDownloadFile(
+      survey.id,
+      plan.format,
+      filter,
+      excludedColumns
+    );
     const body = plan.format === "xlsx" ? Buffer.from(fileContents, "base64") : fileContents;
     return { ok: true, response: new Response(body, { headers: downloadHeaders(plan, fileName) }) };
   }
 
-  const exported = stopWhenAborted(
-    await openAnalysisExport({
-      surveyId: survey.id,
-      filter,
-      answers: plan.display,
-      fields: ANALYSIS_EXPORT_FIELDS,
-      isQuotasAllowed,
-      timeZone,
-    }),
-    signal
+  const exported = withoutColumnGroups(
+    stopWhenAborted(
+      await openAnalysisExport({
+        surveyId: survey.id,
+        filter,
+        answers: plan.display,
+        fields: ANALYSIS_EXPORT_FIELDS,
+        isQuotasAllowed,
+        timeZone,
+      }),
+      signal
+    ),
+    excludedColumns
   );
+  if (exported.columns.length === 0) return noColumns;
   const headers = downloadHeaders(plan, buildExportFileName(survey.name, plan));
 
   if (plan.output === "xlsx") {
     try {
       const workbook = await buildAnalysisWorkbook(exported, {
         display: plan.display,
+        questions: plan.questions,
         timeZone,
         include: plan.include,
         maxCells: EXCEL_EXPORT_MAX_CELLS,
@@ -219,7 +269,12 @@ export const buildExportResponse = async ({
   }
 
   if (plan.output === "zip") {
-    const archive = createAnalysisZip(exported, { display: plan.display, timeZone, include: plan.include });
+    const archive = createAnalysisZip(exported, {
+      display: plan.display,
+      questions: plan.questions,
+      timeZone,
+      include: plan.include,
+    });
     return {
       ok: true,
       response: new Response(Readable.toWeb(archive) as ReadableStream<Uint8Array>, { headers }),
@@ -229,8 +284,11 @@ export const buildExportResponse = async ({
   // `csv`: one data table, Code only or Text only (Text and code is always a zip).
   return {
     ok: true,
-    response: new Response(streamAnalysisCsv(exported, plan.display === "text" ? "text" : "codes"), {
-      headers,
-    }),
+    response: new Response(
+      streamAnalysisCsv(exported, plan.display === "text" ? "text" : "codes", plan.questions),
+      {
+        headers,
+      }
+    ),
   };
 };

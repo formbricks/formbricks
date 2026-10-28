@@ -2,13 +2,18 @@ import { describe, expect, test } from "vitest";
 import { planExport } from "@/lib/analysis-export/export-request";
 import {
   DEFAULT_EXPORT_OPTIONS,
+  countLineParts,
   excelAlternative,
+  exportFileExtension,
   isExcelBlocked,
   isExcelTooLarge,
   isSpssAvailable,
   isTextOnlyAvailable,
+  isZipLocked,
   setDisplay,
+  setExcludedColumns,
   setFormat,
+  setQuestions,
   setSpss,
   toExportRequest,
   toggleAdvanced,
@@ -82,5 +87,79 @@ describe("Excel against the size cap", () => {
     expect(excelAlternative(setDisplay(xlsx, "codes"))).toBe("csv");
     expect(excelAlternative(setDisplay(xlsx, "both"))).toBe("zip");
     expect(excelAlternative(toggleAdvanced(setDisplay(xlsx, "codes"), "datamap", true))).toBe("zip");
+  });
+});
+
+describe("Display questions and Include columns", () => {
+  test("the defaults send no columns off and the Standard file's name", () => {
+    const request = toExportRequest(DEFAULT_EXPORT_OPTIONS, { columnGroups: [{ id: "no", label: "no." }] });
+    expect(request).toMatchObject({ questions: "text", display: "text", excludedColumns: [] });
+    expect(exportFileExtension(DEFAULT_EXPORT_OPTIONS)).toBe("csv");
+  });
+
+  test("switching columns off keeps it the Standard export, and only ids of the current list travel", () => {
+    const options = setExcludedColumns(DEFAULT_EXPORT_OPTIONS, ["no", "q:gone"]);
+    const request = toExportRequest(options, {
+      columnGroups: [
+        { id: "no", label: "no." },
+        { id: "tags", label: "tags" },
+      ],
+    });
+    expect(request.excludedColumns).toEqual(["no"]);
+    expect(planExport(request).kind).toBe("standard");
+  });
+
+  test("the SPSS file moves Text only questions to Code only too, and blocks Text only again", () => {
+    const options = setSpss(DEFAULT_EXPORT_OPTIONS, true);
+    expect(options.questions).toBe("codes");
+    expect(setQuestions(options, "text").questions).toBe("codes");
+    expect(setQuestions(options, "both").questions).toBe("both");
+  });
+
+  test("Text only answers with coded questions is already an Analysis export", () => {
+    const options = setQuestions(DEFAULT_EXPORT_OPTIONS, "codes");
+    expect(planExport(toExportRequest(options)).kind).toBe("analysis");
+  });
+
+  test("the button names the file: csv, xlsx, or zip when there are several files", () => {
+    expect(exportFileExtension(setFormat(DEFAULT_EXPORT_OPTIONS, "xlsx"))).toBe("xlsx");
+    const spss = setSpss(DEFAULT_EXPORT_OPTIONS, true);
+    expect(exportFileExtension(spss)).toBe("zip");
+    expect(isZipLocked(spss)).toBe(true);
+    expect(isZipLocked(DEFAULT_EXPORT_OPTIONS)).toBe(false);
+    expect(exportFileExtension(setDisplay(DEFAULT_EXPORT_OPTIONS, "both"))).toBe("zip");
+  });
+});
+
+describe("countLineParts", () => {
+  test("no filter, nothing left out: no second line", () => {
+    expect(countLineParts({ scope: {}, lowQualityLeftOut: 0, total: 50 })).toEqual([]);
+    expect(countLineParts({ scope: { filter: {} }, lowQualityLeftOut: 0, total: 50 })).toEqual([]);
+  });
+
+  test("a filter says so and gives the survey total", () => {
+    expect(
+      countLineParts({ scope: { filter: { finished: true } }, lowQualityLeftOut: 0, total: 22103 })
+    ).toEqual([{ key: "filters" }, { key: "total", count: 22103 }]);
+  });
+
+  test("Low quality left out is named between the filter and the total", () => {
+    expect(
+      countLineParts({ scope: { filter: { finished: true } }, lowQualityLeftOut: 88, total: 22103 })
+    ).toEqual([
+      { key: "filters" },
+      { key: "low_quality_left_out", count: 88 },
+      { key: "total", count: 22103 },
+    ]);
+    expect(countLineParts({ scope: {}, lowQualityLeftOut: 2, total: 9 })).toEqual([
+      { key: "low_quality_left_out", count: 2 },
+      { key: "total", count: 9 },
+    ]);
+  });
+
+  test("a selection of rows is not a filter", () => {
+    expect(countLineParts({ scope: { responseIds: ["a"] }, lowQualityLeftOut: 0, total: 9 })[0]).toEqual({
+      key: "selection",
+    });
   });
 });

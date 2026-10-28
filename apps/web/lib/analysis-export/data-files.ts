@@ -18,18 +18,34 @@ export const dataParts = (display: TAnswerDisplay): TDataPart[] => {
   ];
 };
 
+/** What a question column asks, as one line of text: the question, then the option or matrix row it stands for. */
+export const columnQuestionText = (column: TAnalysisColumn): string => {
+  if (!column.question) return column.name;
+  const part = column.matrixRow ?? column.option;
+  return part ? `${column.question.headline} – ${part.label}` : column.question.headline;
+};
+
 /**
- * Header cells of a data table. With "Text and code" the labels table says what each question column
- * asks (`q2; Question text`), so a reader of that file does not need the Datamap open; the codes table
- * keeps the bare column names SPSS and other tools expect. Everywhere else the header is the name.
+ * Header cells of a data table. `questions` is the modal's "Display questions": Text only writes what the
+ * column asks, Code only the bare column name SPSS and other tools expect, Text and code both in one cell
+ * (`q2; Question text`). Only question columns have text; the response columns keep their names.
+ *
+ * Without `questions` the header follows "Display answers", as the first version of the route did: with
+ * Text and code the labels table reads `q2; Question text` and the codes table keeps the plain names.
  */
 export const dataHeaderCells = (
   columns: readonly TAnalysisColumn[],
   display: TAnswerDisplay,
-  kind: TDataKind
+  kind: TDataKind,
+  questions?: TAnswerDisplay
 ): string[] =>
-  columns.map((column) =>
-    display === "both" && kind === "labels" && column.question
-      ? `${column.name}; ${column.question.headline}`
-      : column.name
-  );
+  columns.map((column) => {
+    if (questions === undefined) {
+      return display === "both" && kind === "labels" && column.question
+        ? `${column.name}; ${column.question.headline}`
+        : column.name;
+    }
+    if (!column.question || questions === "codes") return column.name;
+    const text = columnQuestionText(column);
+    return questions === "text" ? text : `${column.name}; ${text}`;
+  });
