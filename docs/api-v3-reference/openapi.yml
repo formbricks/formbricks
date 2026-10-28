@@ -8198,7 +8198,7 @@ components:
           maxItems: 2
     SegmentFilter:
       description: |
-        A single targeting condition. `root.type` selects the subject and determines the valid `qualifier.operator` set: `attribute` (a workspace contact-attribute key), `person` (a built-in person identifier such as `userId`/`email`), `segment` (membership in another segment), or `device`. Each variant is one member of this union; the matching member is chosen by `root.type`.
+        A single targeting condition. `root.type` selects the subject and determines the valid `qualifier.operator` set: `attribute` (a workspace contact-attribute key), `person` (a built-in person identifier such as `userId`/`email`), `segment` (membership in another segment), `device`, or `surveyInteraction` (how the contact interacted with surveys). Each variant is one member of this union; the matching member is chosen by `root.type`.
       oneOf:
         - title: AttributeFilter
           description: Matches on a workspace contact-attribute value.
@@ -8381,6 +8381,80 @@ components:
               additionalProperties: false
             value:
               $ref: '#/components/schemas/SegmentFilterValue'
+          additionalProperties: false
+        - title: SurveyInteractionFilter
+          description: Matches on how the contact interacted with surveys within a time window. `surveyIds` only names surveys the caller may see; ids of other surveys the segment targets are left out.
+          type: object
+          required:
+            - id
+            - root
+            - qualifier
+            - value
+          properties:
+            id:
+              type: string
+              format: cuid2
+            root:
+              type: object
+              required:
+                - type
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - surveyInteraction
+              additionalProperties: false
+            qualifier:
+              type: object
+              required:
+                - operator
+              properties:
+                operator:
+                  type: string
+                  enum:
+                    - haveCompleted
+                    - haveNotCompleted
+                    - haveSeen
+                    - haveNotSeen
+                    - haveStartedRespondingTo
+              additionalProperties: false
+            value:
+              type: object
+              required:
+                - surveyScope
+                - surveyIds
+                - within
+              properties:
+                surveyScope:
+                  type: string
+                  enum:
+                    - any
+                    - specific
+                  description: '`any` matches every survey in the workspace; `specific` only `surveyIds`.'
+                surveyIds:
+                  type: array
+                  maxItems: 100
+                  items:
+                    type: string
+                    format: cuid2
+                within:
+                  type: object
+                  required:
+                    - amount
+                    - unit
+                  properties:
+                    amount:
+                      type: integer
+                      minimum: 1
+                      maximum: 999
+                    unit:
+                      type: string
+                      enum:
+                        - days
+                        - weeks
+                        - months
+                  additionalProperties: false
+              additionalProperties: false
           additionalProperties: false
     SegmentFilters:
       type: array

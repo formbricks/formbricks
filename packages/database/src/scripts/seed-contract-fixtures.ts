@@ -16,6 +16,7 @@ import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { logger } from "@formbricks/logger";
+import type { TBaseFilters } from "@formbricks/types/segment";
 import { type TSurveyBlocks } from "@formbricks/types/surveys/blocks";
 import type { TWorkflowDefinition } from "@formbricks/workflows";
 import { PrismaClient } from "../prisma";
@@ -304,7 +305,30 @@ async function seedContactsAndSegment(): Promise<void> {
     title: "Contract fixture — segment",
     description: "Disposable fixture for the v3 API contract tests.",
     isPrivate: false,
-    filters: [],
+    // One attribute rule and one survey-interaction rule, so the response carries both filter
+    // shapes the schema documents. `any` scope names no survey, so no survey's targeting changes.
+    filters: [
+      {
+        id: "clctsegfilterattribute01",
+        connector: null,
+        resource: {
+          id: "clctsegfilterattrres0001",
+          root: { type: "attribute", contactAttributeKey: CONTRACT_ATTRIBUTE_KEY },
+          qualifier: { operator: "equals" },
+          value: "Enterprise",
+        },
+      },
+      {
+        id: "clctsegfilterinteract001",
+        connector: "and",
+        resource: {
+          id: "clctsegfilterinterres001",
+          root: { type: "surveyInteraction" },
+          qualifier: { operator: "haveCompleted" },
+          value: { surveyScope: "any", surveyIds: [], within: { amount: 30, unit: "days" } },
+        },
+      },
+    ] satisfies TBaseFilters,
     workspaceId: SEED_IDS.WORKSPACE,
   };
   await prisma.segment.upsert({
