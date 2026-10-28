@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -55,6 +55,7 @@ export const ResponsePage = ({
   const filterState = useResponseTableFilters(survey);
   const { selectedFilter, dateRange } = filterState;
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const computedFilters = useMemo(
     () => getFormattedFilters(survey, selectedFilter, dateRange),
 
@@ -83,10 +84,10 @@ export const ResponsePage = ({
 
   // Rows matching the filters, for the toolbar. Refetched with the list, so a delete or a refresh
   // keeps it honest.
+  const matchCountKey = ["surveys", surveyId, "response-count", filtersKey];
   const matchCountQuery = useQuery({
-    queryKey: ["surveys", surveyId, "response-count", filtersKey],
-    queryFn: async () =>
-      (await getResponseCountAction({ surveyId, filterCriteria: listCriteriaRef.current }))?.data ?? null,
+    queryKey: matchCountKey,
+    queryFn: async () => (await getResponseCountAction({ surveyId, filterCriteria: filters }))?.data ?? null,
     enabled: isReady,
   });
   const { refetch: refetchMatchCount } = matchCountQuery;
@@ -137,6 +138,10 @@ export const ResponsePage = ({
       });
       if (requestId !== firstPageRequestRef.current) return;
       listCriteriaRef.current = criteria;
+      // The count answers for the same window as the refreshed page.
+      void getResponseCountAction({ surveyId, filterCriteria: criteria }).then((count) =>
+        queryClient.setQueryData(matchCountKey, count?.data ?? null)
+      );
 
       if (getResponsesActionResponse?.serverError) {
         toast.error(getFormattedErrorMessage(getResponsesActionResponse) ?? t("common.something_went_wrong"));
@@ -144,13 +149,13 @@ export const ResponsePage = ({
 
       const freshResponses = getResponsesActionResponse?.data ?? [];
       setResponses(freshResponses);
-      void refetchMatchCount();
       setPage(1);
       setHasMore(freshResponses.length >= responsesPerPage);
     } finally {
       setIsFetchingFirstPage(false);
     }
-  }, [filterState.resolveFreshCriteria, isReady, refetchMatchCount, responsesPerPage, surveyId, t]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `matchCountKey` is rebuilt from `filtersKey`
+  }, [filterState.resolveFreshCriteria, filtersKey, isReady, queryClient, responsesPerPage, surveyId, t]);
 
   useEffect(() => {
     return registerAnalysisRefreshHandler(refetchResponses);
