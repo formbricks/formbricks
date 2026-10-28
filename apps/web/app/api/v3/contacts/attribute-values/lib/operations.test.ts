@@ -80,13 +80,25 @@ describe("listV3ContactAttributeValues", () => {
     const response = await call({ key: "plan", limit: "2" });
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ data: [{ value: "Enterprise" }, { value: "Pro" }] });
+    expect(await response.json()).toEqual({
+      data: [{ value: "Enterprise" }, { value: "Pro" }],
+      meta: { limit: 2, truncated: false },
+    });
     expect(prisma.contactAttributeKey.findUnique).toHaveBeenCalledWith({
       where: { key_workspaceId: { key: "plan", workspaceId } },
       select: { id: true },
     });
     const [sql] = vi.mocked(prisma.$queryRaw).mock.calls[0] as unknown as [{ values: unknown[] }];
-    expect(sql.values).toEqual([attributeKeyId, 2]);
+    expect(sql.values).toEqual([attributeKeyId, 3]);
+  });
+
+  test("one value past the limit is dropped and marks the list truncated", async () => {
+    vi.mocked(prisma.contactAttributeKey.findUnique).mockResolvedValue({ id: attributeKeyId } as never);
+    vi.mocked(prisma.$queryRaw).mockResolvedValue([{ value: "A" }, { value: "B" }, { value: "C" }] as never);
+
+    const body = await (await call({ key: "plan", limit: "2", "filter[value][contains]": "x" })).json();
+
+    expect(body).toEqual({ data: [{ value: "A" }, { value: "B" }], meta: { limit: 2, truncated: true } });
   });
 
   test("an unknown key is a 400 naming key", async () => {

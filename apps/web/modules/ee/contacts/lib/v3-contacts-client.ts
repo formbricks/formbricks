@@ -57,7 +57,7 @@ export const listContactAttributeValues = async ({
   limit?: number;
 }): Promise<string[]> => {
   const searchParams = new URLSearchParams({ workspaceId, key, limit: String(limit) });
-  if (search) searchParams.set("search", search);
+  if (search) searchParams.set("filter[value][contains]", search);
   const response = await fetch(`/api/v3/contacts/attribute-values?${searchParams.toString()}`, {
     method: "GET",
     cache: "no-store",

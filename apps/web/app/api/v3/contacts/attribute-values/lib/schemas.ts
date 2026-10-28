@@ -9,7 +9,7 @@ export const ZV3ContactAttributeValuesQuery = z
   .object({
     workspaceId: z.cuid2(),
     key: zPostgresText().min(1).max(255),
-    search: zPostgresText()
+    "filter[value][contains]": zPostgresText()
       .max(512)
       .optional()
       .transform((value) => (value === undefined || value.trim() === "" ? undefined : value.trim())),

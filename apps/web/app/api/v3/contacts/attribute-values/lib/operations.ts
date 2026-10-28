@@ -86,13 +86,19 @@ export async function listV3ContactAttributeValues({
       });
     }
 
+    // One row past the limit says whether more values exist, without a count over the whole attribute.
     const rows = await prisma.$queryRaw<{ value: string }[]>(
-      buildAttributeValuesQuery({ attributeKeyId: attributeKey.id, search: query.search, limit: query.limit })
+      buildAttributeValuesQuery({
+        attributeKeyId: attributeKey.id,
+        search: query["filter[value][contains]"],
+        limit: query.limit + 1,
+      })
     );
+    const truncated = rows.length > query.limit;
 
     return successResponse(
-      rows.map((row) => ({ value: row.value })),
-      { requestId, cache: "private, no-store" }
+      rows.slice(0, query.limit).map((row) => ({ value: row.value })),
+      { requestId, cache: "private, no-store", extensions: { meta: { limit: query.limit, truncated } } }
     );
   } catch (err) {
     return mapV3ThrownError(err, { log, requestId, instance, operation: "contact-attribute-values.list" });

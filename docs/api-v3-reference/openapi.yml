@@ -6323,7 +6323,8 @@ paths:
       summary: List distinct values of a contact attribute
       description: |
         Returns the distinct, non-empty values one contact attribute takes in a workspace, in ascending
-        order and bounded by `limit` — for quick-filter value pickers. Number and date attributes return
+        order and bounded by `limit` — for quick-filter value pickers. Not paginated: `meta.truncated` says
+        whether more values match than were returned, so a picker can ask the user to narrow the search. Number and date attributes return
         their stored text `value`. Requires the Contacts entitlement (**403** without it). An unknown
         `key` → **400**. Session cookie, `x-api-key`, or a Bearer token.
       tags:
@@ -6345,7 +6346,7 @@ paths:
             maxLength: 255
           description: The attribute key (`ContactAttributeKeyResource.key`).
         - in: query
-          name: search
+          name: filter[value][contains]
           schema:
             type: string
             maxLength: 512
@@ -6376,7 +6377,22 @@ paths:
                 type: object
                 required:
                   - data
+                  - meta
                 properties:
+                  meta:
+                    type: object
+                    required:
+                      - limit
+                      - truncated
+                    properties:
+                      limit:
+                        type: integer
+                        minimum: 1
+                        description: The limit actually applied.
+                      truncated:
+                        type: boolean
+                        description: True when more values match than `limit` returned.
+                    additionalProperties: false
                   data:
                     type: array
                     items:

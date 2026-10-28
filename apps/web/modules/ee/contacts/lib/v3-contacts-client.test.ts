@@ -88,7 +88,7 @@ describe("listContactAttributeValues", () => {
     expect(path).toBe("/api/v3/contacts/attribute-values");
     expect(params.get("key")).toBe("plan");
     expect(params.get("limit")).toBe("50");
-    expect(params.has("search")).toBe(false);
+    expect(params.has("filter[value][contains]")).toBe(false);
   });
 
   test("passes a search term and a custom limit", async () => {
@@ -97,7 +97,7 @@ describe("listContactAttributeValues", () => {
     await listContactAttributeValues({ workspaceId: "ws_1", key: "plan", search: "pr", limit: 10 });
 
     const { params } = requestedParams(fetchMock);
-    expect(params.get("search")).toBe("pr");
+    expect(params.get("filter[value][contains]")).toBe("pr");
     expect(params.get("limit")).toBe("10");
   });
 
