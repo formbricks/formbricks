@@ -4633,10 +4633,12 @@
         "export_preparing": "エクスポートを準備中… {count, number} 件の回答",
         "export_progress": "エクスポート中… {size} を受信",
         "export_progress_hint": "このウィンドウは閉じても大丈夫です。ファイルの準備ができるとダウンロードが始まります。",
+        "export_progress_rows": "エクスポート中… {total, number}件中{rows, number}件の回答",
         "export_ready": "エクスポートの準備ができました",
         "export_ready_file": "{fileName} をダウンロードしました",
         "export_ready_file_count": "{fileName} をダウンロードしました · {count, number} 件の回答",
         "export_received": "{size} を受信",
+        "export_rows_of_total": "{total, number}件中{rows, number}件の回答",
         "export_starting": "エクスポートを準備中…",
         "exporting": "エクスポート中…",
         "format_csv": ".csv",
@@ -4645,6 +4647,7 @@
         "modal_title": "エクスポートオプション",
         "spss_label": "SPSSシンタックスファイル(.sps)を追加",
         "zip_description": "エクスポートに複数のファイルが含まれる場合は常にオンになります",
+        "zip_description_optional": "ファイルをzip形式でダウンロード",
         "zip_label": ".zipに圧縮"
       },
       "featured_templates": {

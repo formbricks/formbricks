@@ -4633,10 +4633,12 @@
         "export_preparing": "A preparar a tua exportação… {count, number} respostas",
         "export_progress": "A exportar… {size} recebidos",
         "export_progress_hint": "Podes fechar esta janela. A transferência começa quando o ficheiro estiver pronto.",
+        "export_progress_rows": "A exportar… {rows, number} de {total, number} respostas",
         "export_ready": "Exportação concluída",
         "export_ready_file": "{fileName} transferido",
         "export_ready_file_count": "{fileName} transferido · {count, number} respostas",
         "export_received": "{size} recebidos",
+        "export_rows_of_total": "{rows, number} de {total, number} respostas",
         "export_starting": "A preparar a tua exportação…",
         "exporting": "A exportar…",
         "format_csv": ".csv",
@@ -4645,6 +4647,7 @@
         "modal_title": "Opções de exportação",
         "spss_label": "Adicionar ficheiro de sintaxe SPSS (.sps)",
         "zip_description": "Sempre ativo quando a exportação tem mais de um ficheiro",
+        "zip_description_optional": "Transferir o ficheiro em formato zip",
         "zip_label": "Comprimir em .zip"
       },
       "featured_templates": {

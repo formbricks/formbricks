@@ -4633,10 +4633,12 @@
         "export_preparing": "Az exportálás előkészítése folyamatban… {count, number} válasz",
         "export_progress": "Exportálás folyamatban… {size} fogadva",
         "export_progress_hint": "Ezt az ablakot bezárhatja. A letöltés automatikusan elindul, amint a fájl elkészült.",
+        "export_progress_rows": "Exportálás folyamatban… {rows, number}/{total, number} válasz",
         "export_ready": "Az exportálás elkészült",
         "export_ready_file": "{fileName} letöltve",
         "export_ready_file_count": "{fileName} letöltve · {count, number} válasz",
         "export_received": "{size} fogadva",
+        "export_rows_of_total": "{rows, number}/{total, number} válasz",
         "export_starting": "Az exportálás előkészítése…",
         "exporting": "Exportálás…",
         "format_csv": ".csv",
@@ -4645,6 +4647,7 @@
         "modal_title": "Exportálási beállítások",
         "spss_label": "SPSS-szintaxisfájl (.sps) hozzáadása",
         "zip_description": "Mindig be van kapcsolva, ha az exportálás egynél több fájlt tartalmaz",
+        "zip_description_optional": "A fájl letöltése zip-formátumban",
         "zip_label": "Tömörítés .zip formátumba"
       },
       "featured_templates": {

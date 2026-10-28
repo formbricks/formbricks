@@ -4633,10 +4633,12 @@
         "export_preparing": "Dışa aktarman hazırlanıyor… {count, number} yanıt",
         "export_progress": "Dışa aktarılıyor… {size} alındı",
         "export_progress_hint": "Bu pencereyi kapatabilirsin. Dosya hazır olduğunda indirme başlayacak.",
+        "export_progress_rows": "Dışa aktarılıyor… {total, number} yanıtın {rows, number} tanesi tamamlandı",
         "export_ready": "Dışa aktarma hazır",
         "export_ready_file": "{fileName} indirildi",
         "export_ready_file_count": "{fileName} indirildi · {count, number} yanıt",
         "export_received": "{size} alındı",
+        "export_rows_of_total": "{total, number} yanıttan {rows, number} tanesi",
         "export_starting": "Dışa aktarman hazırlanıyor…",
         "exporting": "Dışa aktarılıyor…",
         "format_csv": ".csv",
@@ -4645,6 +4647,7 @@
         "modal_title": "Dışa aktarma seçenekleri",
         "spss_label": "SPSS sözdizimi dosyası ekle (.sps)",
         "zip_description": "Dışa aktarma birden fazla dosya içerdiğinde her zaman açıktır",
+        "zip_description_optional": "Dosyayı zip olarak indir",
         "zip_label": ".zip olarak sıkıştır"
       },
       "featured_templates": {

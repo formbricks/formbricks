@@ -4484,10 +4484,12 @@ checksums:
     workspace/surveys/export/export_preparing: b9d30ef1748ab76352d256a8c2e927c3
     workspace/surveys/export/export_progress: c05acdc5c65594f6bec269b164f940a2
     workspace/surveys/export/export_progress_hint: 1bcbb4cdf772972b743c99cda2e3270a
+    workspace/surveys/export/export_progress_rows: 1545a1b2c64a4dd2bb90ee837285b71a
     workspace/surveys/export/export_ready: a6a43cef297d0fd5e5ea79d7123d8f4f
     workspace/surveys/export/export_ready_file: 98042980b017525696bfbdaf9d908758
     workspace/surveys/export/export_ready_file_count: b7d9169c2378f25ca4af25ca3caaeb97
     workspace/surveys/export/export_received: 153cd80bc7b8d6fb52c6edec9ac5a8b8
+    workspace/surveys/export/export_rows_of_total: f21e469e9bc830a571f2971d44b6c164
     workspace/surveys/export/export_starting: e17b99baee4ab19409e747a567211c8d
     workspace/surveys/export/exporting: cdd5590a156c6df1f372d51a0497ca55
     workspace/surveys/export/format_csv: 4b1a5d1038279bac3d3dc46f386c87a6
@@ -4496,6 +4498,7 @@ checksums:
     workspace/surveys/export/modal_title: e08e77577b795bfb5e9f33202d79472a
     workspace/surveys/export/spss_label: 0f122c2c3f72fa739ea01a1d6fc1c230
     workspace/surveys/export/zip_description: 0586b42d64d044a0c5ac9b8655fb8216
+    workspace/surveys/export/zip_description_optional: c590c195f31080ceccd7189a6c573d2b
     workspace/surveys/export/zip_label: 673e64c3f9861a7655a2ff22ab947e1b
     workspace/surveys/featured_templates/churn_description: 095b315526140f3633b3da354b766ed4
     workspace/surveys/featured_templates/churn_title: 5ecbb56a7bc54e945fff08fed017a545

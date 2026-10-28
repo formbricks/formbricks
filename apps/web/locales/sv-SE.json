@@ -4633,10 +4633,12 @@
         "export_preparing": "Förbereder din export… {count, number} svar",
         "export_progress": "Exporterar… {size} mottagna",
         "export_progress_hint": "Du kan stänga det här fönstret. Nedladdningen startar när filen är klar.",
+        "export_progress_rows": "Exporterar… {rows, number} av {total, number} svar",
         "export_ready": "Exporten är klar",
         "export_ready_file": "{fileName} har laddats ned",
         "export_ready_file_count": "{fileName} har laddats ned · {count, number} svar",
         "export_received": "{size} mottagna",
+        "export_rows_of_total": "{rows, number} av {total, number} svar",
         "export_starting": "Förbereder din export…",
         "exporting": "Exporterar…",
         "format_csv": ".csv",
@@ -4645,6 +4647,7 @@
         "modal_title": "Exportalternativ",
         "spss_label": "Lägg till SPSS-syntaxfil (.sps)",
         "zip_description": "Alltid aktiverat när exporten innehåller fler än en fil",
+        "zip_description_optional": "Ladda ner filen som zip",
         "zip_label": "Komprimera till .zip"
       },
       "featured_templates": {
