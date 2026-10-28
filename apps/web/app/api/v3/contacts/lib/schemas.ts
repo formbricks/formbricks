@@ -89,7 +89,11 @@ type TContactFilterFields = {
 const attributeFilterIsComplete = ({ attributeKey, attributeValue }: TContactFilterFields): boolean =>
   (attributeKey === undefined) === (attributeValue === undefined);
 
-const ATTRIBUTE_FILTER_PAIR_MESSAGE = "attributeKey and attributeValue must be given together";
+/** Shared with the MCP tools, whose inputs extend the base objects below and re-apply this rule. */
+export const ATTRIBUTE_FILTER_PAIR_CHECK = {
+  check: attributeFilterIsComplete,
+  params: { error: "attributeKey and attributeValue must be given together", path: ["attributeValue"] },
+} as const;
 
 export const ZV3ContactListQueryBase = z
   .object({
@@ -99,17 +103,17 @@ export const ZV3ContactListQueryBase = z
   })
   .strict();
 
-export const ZV3ContactListQuery = ZV3ContactListQueryBase.refine(attributeFilterIsComplete, {
-  error: ATTRIBUTE_FILTER_PAIR_MESSAGE,
-  path: ["attributeValue"],
-});
+export const ZV3ContactListQuery = ZV3ContactListQueryBase.refine(
+  ATTRIBUTE_FILTER_PAIR_CHECK.check,
+  ATTRIBUTE_FILTER_PAIR_CHECK.params
+);
 
 export const ZV3ContactCountQueryBase = z.object(contactFilterShape).strict();
 
-export const ZV3ContactCountQuery = ZV3ContactCountQueryBase.refine(attributeFilterIsComplete, {
-  error: ATTRIBUTE_FILTER_PAIR_MESSAGE,
-  path: ["attributeValue"],
-});
+export const ZV3ContactCountQuery = ZV3ContactCountQueryBase.refine(
+  ATTRIBUTE_FILTER_PAIR_CHECK.check,
+  ATTRIBUTE_FILTER_PAIR_CHECK.params
+);
 
 export const ZV3ContactIdParams = z.object({ contactId: z.cuid2() }).strict();
 
@@ -117,17 +121,28 @@ export const ZV3ContactIdParams = z.object({ contactId: z.cuid2() }).strict();
  * Create the contact for `userId`, or update it when one already exists in the workspace. `userId` is the
  * identity, so it is a field of its own rather than a key of `attributes`.
  */
-export const ZV3UpsertContactBody = z
+export const ZV3UpsertContactBodyBase = z
   .object({
     workspaceId: z.cuid2(),
     userId: z.string().trim().min(1).max(V3_CONTACT_ATTRIBUTE_VALUE_MAX_LENGTH),
     attributes: ZV3ContactAttributesInput.optional(),
   })
-  .strict()
-  .refine((body) => !(body.attributes && "userId" in body.attributes), {
+  .strict();
+
+/** Object-level rules are exported so the MCP input, which extends the base, applies the same ones. */
+export const UPSERT_CONTACT_CHECK = {
+  check: (body: { attributes?: Record<string, unknown> }) =>
+    !(body.attributes && "userId" in body.attributes),
+  params: {
     error: "Set the userId with the top-level userId field, not inside attributes",
     path: ["attributes", "userId"],
-  });
+  },
+} as const;
+
+export const ZV3UpsertContactBody = ZV3UpsertContactBodyBase.refine(
+  UPSERT_CONTACT_CHECK.check,
+  UPSERT_CONTACT_CHECK.params
+);
 
 const ZV3RemoveAttributeKeys = z
   .array(z.string().min(1).max(V3_CONTACT_ATTRIBUTE_KEY_MAX_LENGTH))
@@ -137,32 +152,38 @@ const ZV3RemoveAttributeKeys = z
 const protectedKeys: ReadonlySet<string> = new Set(V3_PROTECTED_CONTACT_ATTRIBUTE_KEYS);
 
 /** Attributes to set (merged into what the contact has) and attribute keys to remove from it. */
-export const ZV3PatchContactBody = z
+export const ZV3PatchContactBodyBase = z
   .object({
     attributes: ZV3ContactAttributesInput.optional(),
     removeAttributeKeys: ZV3RemoveAttributeKeys.optional(),
   })
-  .strict()
-  .superRefine((body, ctx) => {
-    if (body.attributes === undefined && body.removeAttributeKeys === undefined) {
-      ctx.addIssue({ code: "custom", message: "Provide attributes, removeAttributeKeys or both" });
+  .strict();
+
+export const checkPatchContactBody = (
+  body: { attributes?: Record<string, unknown>; removeAttributeKeys?: string[] },
+  ctx: z.RefinementCtx
+): void => {
+  if (body.attributes === undefined && body.removeAttributeKeys === undefined) {
+    ctx.addIssue({ code: "custom", message: "Provide attributes, removeAttributeKeys or both" });
+  }
+  body.removeAttributeKeys?.forEach((key, index) => {
+    if (protectedKeys.has(key)) {
+      ctx.addIssue({
+        code: "custom",
+        message: `${key} is a default attribute and cannot be removed`,
+        path: ["removeAttributeKeys", index],
+      });
+    } else if (body.attributes && key in body.attributes) {
+      ctx.addIssue({
+        code: "custom",
+        message: `${key} cannot be set and removed in the same call`,
+        path: ["removeAttributeKeys", index],
+      });
     }
-    body.removeAttributeKeys?.forEach((key, index) => {
-      if (protectedKeys.has(key)) {
-        ctx.addIssue({
-          code: "custom",
-          message: `${key} is a default attribute and cannot be removed`,
-          path: ["removeAttributeKeys", index],
-        });
-      } else if (body.attributes && key in body.attributes) {
-        ctx.addIssue({
-          code: "custom",
-          message: `${key} cannot be set and removed in the same call`,
-          path: ["removeAttributeKeys", index],
-        });
-      }
-    });
   });
+};
+
+export const ZV3PatchContactBody = ZV3PatchContactBodyBase.superRefine(checkPatchContactBody);
 
 export const ZV3CreateContactAttributeKeyBody = z
   .object({
@@ -185,15 +206,23 @@ export const ZV3CreateContactAttributeKeyBody = z
 
 export const ZV3ContactAttributeKeyIdParams = z.object({ attributeKeyId: z.cuid2() }).strict();
 
-export const ZV3PatchContactAttributeKeyBody = z
+export const ZV3PatchContactAttributeKeyBodyBase = z
   .object({
     name: z.string().trim().min(1).max(255).optional(),
     description: z.string().max(1000).optional(),
   })
-  .strict()
-  .refine((body) => body.name !== undefined || body.description !== undefined, {
-    error: "Provide name, description or both",
-  });
+  .strict();
+
+export const PATCH_ATTRIBUTE_KEY_CHECK = {
+  check: (body: { name?: string; description?: string }) =>
+    body.name !== undefined || body.description !== undefined,
+  params: { error: "Provide name, description or both" },
+} as const;
+
+export const ZV3PatchContactAttributeKeyBody = ZV3PatchContactAttributeKeyBodyBase.refine(
+  PATCH_ATTRIBUTE_KEY_CHECK.check,
+  PATCH_ATTRIBUTE_KEY_CHECK.params
+);
 
 /** A contact as the v3 API answers it, so MCP output schemas derive from it instead of retyping the shape. */
 export const ZV3ContactResource = z.object({
@@ -203,6 +232,9 @@ export const ZV3ContactResource = z.object({
   updatedAt: z.string(),
   attributes: z.record(z.string(), z.string()),
 });
+
+/** `GET /api/v3/contacts/count`. */
+export const ZV3ContactCountResource = z.object({ count: z.number().int() });
 
 /** What a delete answers: only the id that no longer resolves. Shared by contacts and attribute keys. */
 export const ZV3IdResource = z.object({ id: z.string() });

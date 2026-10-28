@@ -40,16 +40,24 @@ export const ZV3CreateSegmentBody = z
  * `description: null` clears it. Linking a segment to surveys is not part of this body: it is a property
  * of a survey's targeting, not of the segment.
  */
-export const ZV3PatchSegmentBody = z
+export const ZV3PatchSegmentBodyBase = z
   .object({
     title: ZV3SegmentTitle.optional(),
     description: ZV3SegmentDescription.nullable().optional(),
     filters: ZV3SegmentFilters.optional(),
   })
-  .strict()
-  .refine((body) => Object.values(body).some((value) => value !== undefined), {
-    error: "Provide at least one of title, description or filters",
-  });
+  .strict();
+
+/** Exported so the MCP input, which extends the base, applies the same rule. */
+export const PATCH_SEGMENT_CHECK = {
+  check: (body: Record<string, unknown>) => Object.values(body).some((value) => value !== undefined),
+  params: { error: "Provide at least one of title, description or filters" },
+} as const;
+
+export const ZV3PatchSegmentBody = ZV3PatchSegmentBodyBase.refine(
+  PATCH_SEGMENT_CHECK.check,
+  PATCH_SEGMENT_CHECK.params
+);
 
 /** A survey that uses the segment, limited to the ones the caller may see. */
 export const ZV3SegmentSurveyRef = z.object({ id: z.string(), name: z.string(), status: z.string() });

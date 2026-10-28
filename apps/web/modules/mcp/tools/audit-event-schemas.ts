@@ -2,10 +2,8 @@ import { z } from "zod";
 import {
   AUDIT_EVENTS_DEFAULT_LIMIT,
   AUDIT_EVENTS_MAX_LIMIT,
-  ZV3AuditEventResource,
   ZV3AuditEventsQueryBase,
 } from "@/app/api/v3/audit-events/lib/schemas";
-import { mcpToolOutput } from "./output-schemas";
 
 /**
  * Input and output of `list_audit_events`. The input extends the v3 query's own fields, so a filter, a
@@ -50,8 +48,3 @@ export const ZMcpListAuditEventsInput = ZV3AuditEventsQueryBase.extend({
   ),
 }).strict();
 export type TMcpListAuditEventsInput = z.infer<typeof ZMcpListAuditEventsInput>;
-
-/** An audit page's `meta` is the limit and cursor only: there is no total on this contract. */
-export const ZMcpAuditEventListOutput = mcpToolOutput(ZV3AuditEventResource.array()).extend({
-  meta: z.object({ limit: z.number().int(), nextCursor: z.string().nullable() }).strict().optional(),
-});

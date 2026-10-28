@@ -1,14 +1,18 @@
 import type { McpServer } from "@modelcontextprotocol/server";
+import { z } from "zod";
 import { listV3AuditEventsFromInput } from "@/app/api/v3/audit-events/lib/operations";
+import { ZV3AuditEventResource } from "@/app/api/v3/audit-events/lib/schemas";
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import { getMcpAuthentication, getMcpRequestId, getMcpToolAuthInfo } from "../auth";
 import { responseToMcpToolResult } from "../errors";
-import {
-  type TMcpListAuditEventsInput,
-  ZMcpAuditEventListOutput,
-  ZMcpListAuditEventsInput,
-} from "./audit-event-schemas";
+import { type TMcpListAuditEventsInput, ZMcpListAuditEventsInput } from "./audit-event-schemas";
 import { registerScopedTool } from "./guard-scopes";
+import { mcpToolOutput } from "./output-schemas";
+
+/** An audit page's `meta` is the limit and cursor only: there is no total on this contract. */
+const ZMcpAuditEventListOutput = mcpToolOutput(ZV3AuditEventResource.array()).extend({
+  meta: z.object({ limit: z.number().int(), nextCursor: z.string().nullable() }).strict().optional(),
+});
 
 /**
  * The audit trail, read-only. Its own scope family (`audit:read`, ADR 0015): an audit record names people
