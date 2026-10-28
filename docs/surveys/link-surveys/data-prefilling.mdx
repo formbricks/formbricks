@@ -25,7 +25,7 @@ https://app.formbricks.com/s/clin3dxja02k8l80hpwmx4bjy?age=34&nps=9&skipPrefille
 ## How it works
 
 1. To prefill survey questions, add query parameters to the survey URL using the format `questionCode=answer`, for example `age=34`. The parameter name can also be the Question ID (`questionId=answer`).
-2. The answer must match the question’s expected type to pass [validation](/surveys/link-surveys/data-prefilling#validation). For Single Select and Multi Select questions, `answer` can be either the option label text or the option ID.
+2. The answer must match the question’s expected type to pass [validation](/surveys/link-surveys/data-prefilling#validation). For Single Select and Multi Select questions, `answer` can be the option ID, the option label text or the option's answer code.
 3. The answer needs to be [URL encoded](https://www.urlencoder.org/) (if it contains spaces or special characters)
 
 
@@ -52,7 +52,7 @@ The parameter name is matched with the **Question ID** first and with the **ques
 </Note>
 
 <Note>
-  A question code only names the **question** in the link. The value for a Single Select or Multi Select question is still an option ID or the option label, not the answer code you set in **Recode**.
+  A question code names the **question** in the link. For a Single Select or Multi Select question, the value can be an option ID, the option label or the **answer code** you set in **Recode**. See [Using answer codes](#using-answer-codes-for-single-select-and-multi-select-questions).
 </Note>
 
 ## Examples
@@ -173,7 +173,31 @@ https://app.formbricks.com/s/surveyId?interests=option-abc,Some%20Label,option-x
 
 ### Backward Compatibility
 
-All existing URLs using option labels continue to work. The system tries to match by option ID first, then falls back to matching by label text if no ID match is found.
+All existing URLs using option IDs or option labels continue to work. A value is only read as an answer code when it matches neither an option ID nor a label.
+
+## Using Answer Codes For Single Select and Multi Select Questions
+
+Every answer option has an **answer code** (`1`, `2`, `98` and so on) in the **Recode** section of the question. Use it as the value, for example on a question with the code `hello` and two options coded `1` and `2`:
+
+```sh Single Select with an answer code
+https://app.formbricks.com/s/surveyId?hello=2
+```
+
+```sh Multi Select with answer codes
+https://app.formbricks.com/s/surveyId?interests=1,2
+```
+
+The value is matched in this order, and the first match wins:
+
+1. The **option ID**
+2. The **option label** in the survey language of the respondent
+3. The **answer code**, exactly as written (codes are lowercase, so `YES_1` does not match `yes_1`)
+
+<Note>
+  If a label looks like another option's code, the label wins. With the options "1" (code `2`) and "2" (code `1`), `?question=1` selects the option labelled "1". Avoid labels that are numbers if you link by answer code.
+</Note>
+
+If the question has an **Other** option, a value that matches an option by ID, label or code selects that option. Only a value that matches none of them is used as the free-text Other answer.
 
 ## Validation
 
@@ -184,7 +208,7 @@ The URL validation works as follows:
 - **Rating or NPS questions:** The response is parsed as a number and verified to be within the valid range.
 - **Consent type questions:** Valid values are "accepted" (consent given) and "dismissed" (consent not given).
 - **Picture Selection questions:** The response is parsed as comma-separated numbers (1-based indices) and verified against available choices.
-- **Single/Multi Select questions:** Values can be either option IDs or exact label text. The system tries option ID matching first, then falls back to label matching.
+- **Single/Multi Select questions:** Values can be option IDs, exact label text or answer codes. The system tries the option ID first, then the label, then the answer code.
 - **Open Text questions:** Any string value is accepted.
 
 <Note>

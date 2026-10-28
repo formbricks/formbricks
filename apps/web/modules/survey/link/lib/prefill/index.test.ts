@@ -365,3 +365,107 @@ describe("prefill by question code", () => {
     expect(getPrefillValue(survey, new URLSearchParams("lang=de"), "default")).toBeUndefined();
   });
 });
+
+describe("prefill by answer code", () => {
+  const choice = (id: string, label: string, code?: string) => ({ id, label: { default: label }, code });
+  const survey = {
+    id: "survey1",
+    name: "Codes",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    blocks: [
+      {
+        id: "block1",
+        elements: [
+          {
+            id: "q1id",
+            code: "hello",
+            type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+            headline: { default: "Single" },
+            required: false,
+            shuffleOption: "none",
+            choices: [choice("o1", "Red", "1"), choice("o2", "Blue", "2")],
+          },
+          {
+            id: "q2id",
+            code: "many",
+            type: TSurveyElementTypeEnum.MultipleChoiceMulti,
+            headline: { default: "Multi" },
+            required: false,
+            shuffleOption: "none",
+            choices: [choice("m1", "Red", "1"), choice("m2", "Blue", "2"), choice("m3", "Green", "3")],
+          },
+          {
+            id: "q3id",
+            code: "swap",
+            type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+            headline: { default: "Collision" },
+            required: false,
+            shuffleOption: "none",
+            choices: [choice("s1", "1", "2"), choice("s2", "2", "1")],
+          },
+          {
+            id: "q4id",
+            code: "withother",
+            type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+            headline: { default: "Other" },
+            required: false,
+            shuffleOption: "none",
+            choices: [choice("t1", "Cat", "1"), choice("other", "Other", "98")],
+          },
+          {
+            id: "q5id",
+            code: "nocodes",
+            type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+            headline: { default: "No codes" },
+            required: false,
+            shuffleOption: "none",
+            choices: [choice("n1", "Yes"), choice("n2", "No")],
+          },
+        ],
+      },
+    ],
+  } as unknown as TSurvey;
+
+  const prefill = (query: string) => getPrefillValue(survey, new URLSearchParams(query), "default");
+
+  test("?hello=2 selects the second option by its answer code", () => {
+    expect(prefill("hello=2")).toEqual({ q1id: "Blue" });
+    expect(prefill("hello=1")).toEqual({ q1id: "Red" });
+  });
+
+  test("option ID and label links behave as before", () => {
+    expect(prefill("hello=o2")).toEqual({ q1id: "Blue" });
+    expect(prefill("hello=Blue")).toEqual({ q1id: "Blue" });
+    expect(prefill("q1id=o2")).toEqual({ q1id: "Blue" });
+    expect(prefill("q1id=2")).toEqual({ q1id: "Blue" }); // a code also works under the Question ID
+  });
+
+  test("a label that looks like another option's code wins", () => {
+    expect(prefill("swap=1")).toEqual({ q3id: "1" });
+    expect(prefill("swap=2")).toEqual({ q3id: "2" });
+  });
+
+  test("multi select takes comma-separated codes, in order, mixed with labels", () => {
+    expect(prefill("many=1,2")).toEqual({ q2id: ["Red", "Blue"] });
+    expect(prefill("many=3,1")).toEqual({ q2id: ["Green", "Red"] });
+    expect(prefill("many=3,Red")).toEqual({ q2id: ["Green", "Red"] });
+  });
+
+  test("with an Other option a code selects the option, other text stays free text", () => {
+    expect(prefill("withother=1")).toEqual({ q4id: "Cat" });
+    expect(prefill("withother=98")).toEqual({ q4id: "Other" });
+    expect(prefill("withother=dog")).toEqual({ q4id: "dog" });
+  });
+
+  test("an unknown code is ignored", () => {
+    expect(prefill("hello=3")).toBeUndefined();
+    expect(prefill("many=1,9")).toBeUndefined();
+  });
+
+  test("a question whose options have no codes ignores code-looking values", () => {
+    expect(prefill("nocodes=1")).toBeUndefined();
+    expect(prefill("nocodes=undefined")).toBeUndefined();
+    expect(prefill("nocodes=Yes")).toEqual({ q5id: "Yes" });
+  });
+});
