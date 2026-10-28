@@ -8,7 +8,7 @@ Formbricks has no survey editor and no results screens. You describe what you wa
 
 <Steps>
   <Step title="Sign up and create your organization">
-    Create an account at [app.formbricks.com](https://app.formbricks.com/auth/signup), or on your own instance if you [self-host](/self-hosting/overview). Formbricks creates your **organization** and a first **workspace**. A workspace holds the surveys, responses and contacts of one product or site, and your agent picks it by its ID.
+    Create an account at [app.formbricks.com](https://app.formbricks.com/auth/signup), or on your own instance if you [self-host](/self-hosting/overview). Formbricks creates your **organization**. Your first **workspace**, which holds the surveys, responses and contacts of one product or site, is created by your agent in the next steps. If a teammate invited you, you join their organization instead and skip creating anything.
   </Step>
 
   <Step title="Connect your agent">
@@ -27,6 +27,16 @@ Formbricks has no survey editor and no results screens. You describe what you wa
     <Note>
       Using a script, CI or a client that cannot sign in? Create an **API key** instead: open **Agent connections**, select **Create API key**, name it, pick the workspaces it may reach and a level (read only, author, or full access). Copy the key right away, because Formbricks stores only a hash of it.
     </Note>
+  </Step>
+
+  <Step title="Let your agent set up Formbricks">
+    Paste this into your agent (the **Connect your agent** page has it with your own URL filled in):
+
+    ```text
+    Set up my Formbricks account by following https://app.formbricks.com/agents/setup.md
+    ```
+
+    The agent works out who you are from your account. If you are new, it interviews you, looks at your website and brand, creates your first workspace, applies your branding and drafts a first survey for you to preview. It saves and publishes only after you approve, and it never invents answers about you. If you were invited to an existing organization, it shows what your role allows and suggests things to try on your team's surveys. You can run it again at any time. Clients that support MCP prompts also offer it as `setup`.
   </Step>
 
   <Step title="Check that it works">

@@ -60,3 +60,7 @@ that is not listed here.
 **View** — An interactive page that a tool renders inside the agent (survey preview, document review, feedback chart, response browser, creative preview, workflow viewer) through the MCP Apps extension. It shows data and can ask the agent to act; it holds no credential. _Avoid_: widget, app, dashboard.
 
 **Account shell** — The few human screens left: sign-up and login, organization management, connecting an agent, creating agent connections, and OAuth consent. Everything else is done by an agent. _Avoid_: dashboard, app.
+
+**Setup guide** — The instructions an agent follows to set up a person's Formbricks account and walk them through first use. It is one piece of text, offered both as a page the person's agent can fetch and as an MCP prompt. It adapts to who the person is: a new owner, an invited member or a returning user. _Avoid_: onboarding flow, wizard, tutorial.
+
+**Account context** — What an agent can learn about the person it acts for: their role, organizations and workspaces, and how far setup has got. The Setup guide starts from it; nothing is stored to track setup.
