@@ -2301,6 +2301,7 @@ describe("docker/formbricks.sh Traefik label injection", () => {
 
   test("adds HTTPS Traefik labels to the formbricks service only", () => {
     const composePath = writeDockerComposeTemplate();
+    const originalSpicedbBlock = getServiceBlock(readFileSync(composePath, "utf8"), "spicedb");
 
     addFormbricksTraefikLabels(composePath, "y", "y");
 
@@ -2316,7 +2317,7 @@ describe("docker/formbricks.sh Traefik label injection", () => {
     expect(formbricksMigrateBlock).not.toContain("traefik.enable=true");
     expect(authzedBootstrapBlock).toContain("authzed-postgres-bootstrap.sh");
     expect(authzedBootstrapBlock).not.toContain("traefik.enable=true");
-    expect(spicedbBlock).toContain("authzed/spicedb:v1.56.2");
+    expect(spicedbBlock).toBe(originalSpicedbBlock);
     expect(spicedbBlock).not.toContain("traefik.enable=true");
     expect(authzedOpsBlock).toContain('profiles: ["authzed-ops"]');
     expect(authzedOpsBlock).not.toContain("traefik.enable=true");
