@@ -15,4 +15,5 @@ Everything on the platform, from authoring surveys to reading responses, is done
 
 - Every capability that was UI-only needs an MCP tool or is deleted. The 14 session-only v3 routes move to API key and OAuth auth.
 - The respondent runtime (SDK, survey renderer, client API, hosted survey pages) is unchanged.
+- The shell is rebuilt, responsive, on the Formbricks design system and a small fresh component set; the rest of `modules/ui` is deleted. "Connect your agent" is the home page, and OAuth grants and API keys merge into one Agent connections screen.
 - v1 and v2 management APIs and their docs are deleted along with the UI.
