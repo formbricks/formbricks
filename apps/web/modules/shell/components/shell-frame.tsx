@@ -1,5 +1,4 @@
 import { getTranslate } from "@/lingodotdev/server";
-import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getShellNavItems } from "../lib/nav-items";
 import { getShellData } from "../lib/shell-data";
 import { MobileNav } from "./mobile-nav";
@@ -15,11 +14,7 @@ export const ShellFrame = async ({
   organizationId,
   children,
 }: Readonly<{ organizationId: string; children: React.ReactNode }>) => {
-  const [t, shell, canCreateOrganization] = await Promise.all([
-    getTranslate(),
-    getShellData(organizationId),
-    getIsMultiOrgEnabled(),
-  ]);
+  const [t, shell] = await Promise.all([getTranslate(), getShellData(organizationId)]);
 
   const items = getShellNavItems({
     organizationId,
@@ -34,7 +29,6 @@ export const ShellFrame = async ({
   const labels = {
     openMenu: t("shell.nav.open_menu"),
     navigation: t("shell.nav.sections"),
-    createOrganization: t("shell.nav.create_organization"),
     switchOrganization: t("shell.nav.switch_organization"),
   };
 
@@ -46,8 +40,6 @@ export const ShellFrame = async ({
         <OrgSwitcher
           organization={{ id: shell.organization.id, name: shell.organization.name }}
           organizations={shell.organizations}
-          canCreateOrganization={canCreateOrganization}
-          createLabel={labels.createOrganization}
           switchLabel={labels.switchOrganization}
         />
         <ShellNavLinks items={items} organizationId={organizationId} ariaLabel={labels.navigation} />
@@ -65,7 +57,6 @@ export const ShellFrame = async ({
           items={items}
           organization={{ id: shell.organization.id, name: shell.organization.name }}
           organizations={shell.organizations}
-          canCreateOrganization={canCreateOrganization}
           user={shell.user}
           labels={labels}
         />

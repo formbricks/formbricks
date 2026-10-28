@@ -8,6 +8,7 @@ import { getIsFreshInstance } from "@/lib/instance/service";
 import { createMembership } from "@/lib/membership/service";
 import { capturePostHogEvent, identifyPostHogPerson } from "@/lib/posthog";
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
+import { createOwnedOrganization } from "@/modules/auth/lib/owned-organization";
 import { updateUser } from "@/modules/auth/lib/user";
 import { resolveInviteMatch } from "@/modules/auth/signup/lib/invite";
 import { getAccessControlPermission, getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -34,6 +35,7 @@ vi.mock("@/lib/instance/service", () => ({ getIsFreshInstance: vi.fn() }));
 vi.mock("@/lib/membership/service", () => ({ createMembership: vi.fn() }));
 vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: vi.fn(), identifyPostHogPerson: vi.fn() }));
 vi.mock("@/modules/auth/lib/brevo", () => ({ createBrevoCustomer: vi.fn() }));
+vi.mock("@/modules/auth/lib/owned-organization", () => ({ createOwnedOrganization: vi.fn() }));
 vi.mock("@/modules/auth/lib/user", () => ({ updateUser: vi.fn() }));
 vi.mock("@/modules/auth/signup/lib/invite", () => ({ resolveInviteMatch: vi.fn() }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
@@ -453,16 +455,27 @@ describe("provisionSsoUserMemberships", () => {
     });
   });
 
-  test("skips org writes when there is no organization but still syncs analytics", async () => {
-    await provisionSsoUserMemberships({ ...baseArgs, organizationId: null });
+  test("gives the user an organization of their own, and no assignment, on a fresh instance or multi-org", async () => {
+    await provisionSsoUserMemberships({ ...baseArgs, organizationId: null, name: "Ada" });
+    expect(createOwnedOrganization).toHaveBeenCalledWith({
+      id: "u1",
+      name: "Ada",
+      email: "new@example.com",
+    });
     expect(createMembership).not.toHaveBeenCalled();
-    expect(updateUser).not.toHaveBeenCalled();
     expect(createBrevoCustomer).toHaveBeenCalledWith({ id: "u1", email: "new@example.com" });
     expect(capturePostHogEvent).toHaveBeenCalledWith(
       "u1",
       "user_signed_up",
       expect.objectContaining({ invite_organization_id: null })
     );
+  });
+
+  test("a failing organization create is logged, not thrown, and analytics still run", async () => {
+    vi.mocked(createOwnedOrganization).mockRejectedValue(new Error("db down"));
+    await expect(provisionSsoUserMemberships({ ...baseArgs, organizationId: null })).resolves.toBeUndefined();
+    expect(logger.error).toHaveBeenCalled();
+    expect(createBrevoCustomer).toHaveBeenCalled();
   });
 
   test("logs (does not throw) when assignment fails on every attempt, and still syncs analytics", async () => {

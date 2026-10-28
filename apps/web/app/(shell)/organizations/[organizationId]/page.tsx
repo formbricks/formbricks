@@ -1,15 +1,30 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { cn } from "@/lib/cn";
 import { getTranslate } from "@/lingodotdev/server";
+import { getSetupGuideUrl } from "@/modules/agent-setup/urls";
 import { getMcpResourceUrl } from "@/modules/auth/lib/oauth-urls";
 import { ShellPage, ShellPageHeader } from "@/modules/shell/components/shell-page";
 import { AgentConnectTabs } from "@/modules/shell/connect/components/agent-connect-tabs";
+import {
+  type TConnectSection,
+  type TConnectSectionId,
+  getConnectLayout,
+} from "@/modules/shell/connect/lib/connect-layout";
 import { canManageApiKeys, countAgentConnections } from "@/modules/shell/connections/lib/load-connections";
 import { getShellData } from "@/modules/shell/lib/shell-data";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/modules/ui/components/card";
 import { CodeBlock } from "@/modules/ui/components/code-block";
 import { IdBadge } from "@/modules/ui/components/id-badge";
+
+const PromptBox = ({ children }: Readonly<{ children: string }>) => (
+  <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 pt-2.5 pb-3.5">
+    <CodeBlock noMargin language="text" customEditorClass="pr-8">
+      {children}
+    </CodeBlock>
+  </div>
+);
 
 /** Connect your agent: the organization's landing page, since agents are how Formbricks is used. */
 const ConnectAgentPage = async ({ params }: Readonly<{ params: Promise<{ organizationId: string }> }>) => {
@@ -27,30 +42,22 @@ const ConnectAgentPage = async ({ params }: Readonly<{ params: Promise<{ organiz
     canManageApiKeys(shell.user.id, organizationId),
   ]);
   const serverUrl = getMcpResourceUrl();
+  const setupPrompt = t("shell.connect.setup_prompt", { url: getSetupGuideUrl() });
   const connectionsHref = `/organizations/${organizationId}/connections`;
+  const layout = getConnectLayout(connectionCount);
 
-  return (
-    <ShellPage>
-      <ShellPageHeader title={t("shell.connect.title")} lead={t("shell.connect.lead")} />
+  const stepPrefix = (step: number | null) => (step ? `${step}. ` : "");
 
-      {connectionCount === 0 ? (
-        <Alert variant="info" role="status">
-          <AlertTitle>{t("shell.connect.none_title")}</AlertTitle>
-          <AlertDescription>{t("shell.connect.none_description")}</AlertDescription>
-        </Alert>
-      ) : (
-        <Alert variant="default" role="status">
-          <AlertTitle>{t("shell.connect.some_title")}</AlertTitle>
-          <AlertDescription>{t("shell.connect.some_description")}</AlertDescription>
-          <AlertButton asChild>
-            <Link href={connectionsHref}>{t("shell.connect.some_cta")}</Link>
-          </AlertButton>
-        </Alert>
-      )}
-
-      <Card>
+  const sections: Record<TConnectSectionId, (section: TConnectSection) => React.ReactNode> = {
+    connect: (section) => (
+      <Card key="connect">
         <CardHeader>
-          <CardTitle className="text-base">{t("shell.connect.step_add_title")}</CardTitle>
+          <CardTitle className={cn("text-base", section.emphasis === "secondary" && "text-slate-700")}>
+            {stepPrefix(section.step)}
+            {layout.hasAgent
+              ? t("shell.connect.part_connect_more_title")
+              : t("shell.connect.part_connect_title")}
+          </CardTitle>
           <CardDescription>{t("shell.connect.step_add_description")}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
@@ -61,29 +68,61 @@ const ConnectAgentPage = async ({ params }: Readonly<{ params: Promise<{ organiz
             className="max-w-full text-left break-all"
           />
           <AgentConnectTabs serverUrl={serverUrl} mode="oauth" />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">{t("shell.connect.step_approve_title")}</CardTitle>
-          <CardDescription>{t("shell.connect.step_approve_description")}</CardDescription>
-        </CardHeader>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">{t("shell.connect.step_check_title")}</CardTitle>
-          <CardDescription>{t("shell.connect.step_check_description")}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 pt-2.5 pb-3.5">
-            <CodeBlock noMargin language="text" customEditorClass="pr-8">
-              {t("shell.connect.check_prompt")}
-            </CodeBlock>
+          <div className="flex flex-col gap-1 pt-2">
+            <span className="text-sm font-medium text-slate-700">
+              {t("shell.connect.step_approve_title")}
+            </span>
+            <p className="text-sm text-slate-500">{t("shell.connect.step_approve_description")}</p>
           </div>
         </CardContent>
       </Card>
+    ),
+    setup: (section) => (
+      <Card key="setup">
+        <CardHeader>
+          <CardTitle className={cn("text-base", section.emphasis === "secondary" && "text-slate-700")}>
+            {stepPrefix(section.step)}
+            {t("shell.connect.part_setup_title")}
+          </CardTitle>
+          <CardDescription>
+            {layout.hasAgent
+              ? t("shell.connect.part_setup_description")
+              : t("shell.connect.part_setup_description_waiting")}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3">
+          <PromptBox>{setupPrompt}</PromptBox>
+          <p className="text-sm text-slate-500">{t("shell.connect.setup_prompt_hint")}</p>
+          <div className="flex flex-col gap-1 pt-2">
+            <span className="text-sm font-medium text-slate-700">{t("shell.connect.check_title")}</span>
+            <p className="text-sm text-slate-500">{t("shell.connect.check_description")}</p>
+          </div>
+          <PromptBox>{t("shell.connect.check_prompt")}</PromptBox>
+        </CardContent>
+      </Card>
+    ),
+  };
+
+  return (
+    <ShellPage>
+      <ShellPageHeader title={t("shell.connect.title")} lead={t("shell.connect.lead")} />
+
+      {layout.hasAgent ? (
+        <Alert variant="default" role="status">
+          <AlertTitle>{t("shell.connect.some_title")}</AlertTitle>
+          <AlertDescription>{t("shell.connect.some_description")}</AlertDescription>
+          <AlertButton asChild>
+            <Link href={connectionsHref}>{t("shell.connect.some_cta")}</Link>
+          </AlertButton>
+        </Alert>
+      ) : (
+        <Alert variant="info" role="status">
+          <AlertTitle>{t("shell.connect.none_title")}</AlertTitle>
+          <AlertDescription>{t("shell.connect.none_description")}</AlertDescription>
+        </Alert>
+      )}
+
+      {layout.sections.map((section) => sections[section.id](section))}
 
       {mayCreateApiKey && (
         <Alert variant="default" role="status">

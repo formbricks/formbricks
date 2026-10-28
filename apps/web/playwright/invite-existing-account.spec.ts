@@ -21,16 +21,21 @@ test.describe("Invite sign-up with an address that already has an account @slow"
     const inviter = await users.create({ skipSurveySeed: true });
     await inviter.login();
 
-    // Invite the address through the real UI, then read the link the inviter would share.
-    const inviteLink = await test.step("Invite the existing user and copy the link", async () => {
-      await page.goto(`/organizations/${inviter.organizationId}/members`);
+    // Inviting is the agent's job now (`invite_member`), so seed the invite the way that tool stores it,
+    // then read the link the inviter would share through the Members page, which still shows invites.
+    await prisma.invite.create({
+      data: {
+        email: inviteeEmail,
+        name: "Existing Person",
+        organizationId: inviter.organizationId,
+        creatorId: inviter.id,
+        role: "member",
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      },
+    });
 
-      await page.getByRole("button", { name: "Invite member" }).click();
-      const inviteDialog = page.getByRole("dialog", { name: "Invite member" });
-      await inviteDialog.getByLabel("Full name").fill("Existing Person");
-      await inviteDialog.getByLabel("Email", { exact: true }).fill(inviteeEmail);
-      await inviteDialog.getByRole("button", { name: "Invite", exact: true }).click();
-      await expect(inviteDialog).toBeHidden();
+    const inviteLink = await test.step("Open the pending invite and copy the link", async () => {
+      await page.goto(`/organizations/${inviter.organizationId}/members`);
 
       const invitedRow = page.getByRole("row", { name: new RegExp(inviteeEmail) });
       await expect(invitedRow).toBeVisible();

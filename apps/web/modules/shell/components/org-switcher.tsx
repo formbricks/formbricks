@@ -7,15 +7,12 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 
 interface OrgSwitcherProps {
   organization: { id: string; name: string };
   organizations: { id: string; name: string }[];
-  canCreateOrganization: boolean;
-  createLabel: string;
   switchLabel: string;
 }
 
@@ -27,14 +24,8 @@ const OrgInitial = ({ name }: Readonly<{ name: string }>) => (
   </span>
 );
 
-export const OrgSwitcher = ({
-  organization,
-  organizations,
-  canCreateOrganization,
-  createLabel,
-  switchLabel,
-}: Readonly<OrgSwitcherProps>) => {
-  const canSwitch = organizations.length > 1 || canCreateOrganization;
+export const OrgSwitcher = ({ organization, organizations, switchLabel }: Readonly<OrgSwitcherProps>) => {
+  const canSwitch = organizations.length > 1;
 
   const trigger = (
     <button
@@ -67,14 +58,6 @@ export const OrgSwitcher = ({
             </Link>
           </DropdownMenuItem>
         ))}
-        {canCreateOrganization && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link href="/setup/organization/create">{createLabel}</Link>
-            </DropdownMenuItem>
-          </>
-        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

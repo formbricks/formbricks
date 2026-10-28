@@ -3,9 +3,9 @@ import { getOrganizationWorkspacesCount } from "@/lib/workspace/service";
 import { getLocale } from "@/lingodotdev/language";
 import { getTranslate } from "@/lingodotdev/server";
 import { getOrganizationWorkspacesLimit } from "@/modules/ee/license-check/lib/utils";
+import { AskYourAgent } from "@/modules/shell/components/ask-your-agent";
 import { OrganizationHeader } from "@/modules/shell/components/organization-header";
 import { ShellPage } from "@/modules/shell/components/shell-page";
-import { CreateWorkspaceDialog } from "@/modules/shell/organization/components/create-workspace-dialog";
 import { SectionHeading } from "@/modules/shell/organization/components/section-heading";
 import { WorkspacesTable } from "@/modules/shell/organization/components/workspaces-table";
 import { requireNonBillingRole } from "@/modules/shell/organization/lib/restricted-section";
@@ -39,12 +39,14 @@ const WorkspacesPage = async ({ params }: Readonly<{ params: Promise<{ organizat
       <SectionHeading
         title={t("common.workspaces")}
         description={t("shell.organization.workspaces.description")}
-        cta={
-          isOwnerOrManager ? (
-            <CreateWorkspaceDialog organizationId={organizationId} isLimitReached={isLimitReached} />
-          ) : undefined
-        }
       />
+
+      {isOwnerOrManager && !isLimitReached && (
+        <AskYourAgent
+          description={t("shell.organization.workspaces.ask_agent_create")}
+          prompt={t("shell.organization.workspaces.ask_agent_create_prompt")}
+        />
+      )}
 
       {isLimitReached && (
         <Alert variant="warning" role="status">
@@ -63,6 +65,13 @@ const WorkspacesPage = async ({ params }: Readonly<{ params: Promise<{ organizat
         <p className="rounded-xl border border-slate-200 p-6 text-center text-slate-500">
           {t("shell.organization.workspaces.empty")}
         </p>
+      )}
+
+      {isOwnerOrManager && workspaces.length > 0 && (
+        <AskYourAgent
+          description={t("shell.organization.workspaces.ask_agent_rename")}
+          prompt={t("shell.organization.workspaces.ask_agent_rename_prompt")}
+        />
       )}
 
       <Alert variant="info" role="status">

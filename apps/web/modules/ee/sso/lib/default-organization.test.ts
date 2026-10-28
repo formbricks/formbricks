@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 import { createOrganization } from "@/lib/organization/service";
 import { ensureCloudStripeSetupForOrganization } from "@/modules/ee/billing/lib/organization-billing";
-import { createWorkspace } from "@/modules/workspaces/settings/lib/workspace";
 import { ensureDefaultOrganization } from "./default-organization";
 
 vi.mock("@formbricks/logger", () => ({ logger: { error: vi.fn(), warn: vi.fn() } }));
@@ -11,7 +10,6 @@ vi.mock("@/lib/organization/service", () => ({ createOrganization: vi.fn() }));
 vi.mock("@/modules/ee/billing/lib/organization-billing", () => ({
   ensureCloudStripeSetupForOrganization: vi.fn(),
 }));
-vi.mock("@/modules/workspaces/settings/lib/workspace", () => ({ createWorkspace: vi.fn() }));
 
 const constantsOverrides = vi.hoisted(() => ({
   DEFAULT_ORGANIZATION_ID: "default-org" as string | undefined,
@@ -40,7 +38,6 @@ beforeEach(() => {
   constantsOverrides.DEFAULT_ORGANIZATION_ROLE = undefined;
   constantsOverrides.IS_FORMBRICKS_CLOUD = false;
   vi.mocked(createOrganization).mockReset();
-  vi.mocked(createWorkspace).mockResolvedValue({ id: "ws-1" } as never);
 });
 
 describe("ensureDefaultOrganization — existing organization", () => {
@@ -54,7 +51,6 @@ describe("ensureDefaultOrganization — existing organization", () => {
       role: "manager",
     });
     expect(createOrganization).not.toHaveBeenCalled();
-    expect(createWorkspace).not.toHaveBeenCalled();
   });
 
   test("honors DEFAULT_ORGANIZATION_ROLE when set", async () => {
@@ -72,7 +68,7 @@ describe("ensureDefaultOrganization — creating the organization", () => {
     vi.mocked(createOrganization).mockResolvedValue({ id: "default-org" } as never);
   });
 
-  test("creates the org under the configured id, gives it a workspace, and makes the user owner", async () => {
+  test("creates the org under the configured id, with no workspace, and makes the user owner", async () => {
     expect(await ensureDefaultOrganization("Ada")).toEqual({
       organizationId: "default-org",
       role: "owner",
@@ -81,32 +77,11 @@ describe("ensureDefaultOrganization — creating the organization", () => {
       id: "default-org",
       name: "Ada's Organization",
     });
-    // v5 needs a workspace: an organization without one drops the user into an unusable instance.
-    expect(createWorkspace).toHaveBeenCalledWith(
-      "default-org",
-      { name: "My workspace" },
-      { workspaceLimit: null }
-    );
   });
 
   test("owner wins over DEFAULT_ORGANIZATION_ROLE, so the first user can administer the new org", async () => {
     constantsOverrides.DEFAULT_ORGANIZATION_ROLE = "member";
     expect(await ensureDefaultOrganization("Ada")).toMatchObject({ role: "owner" });
-  });
-
-  test("hands the creator owner and logs when setup fails after the org committed", async () => {
-    // createOrganization and createWorkspace commit separately, so a workspace failure leaves the
-    // organization in place. The creator must not be downgraded to the configured role: they are its
-    // only member, and an owner can still create the missing workspace.
-    // findUnique stays null (this describe's beforeEach): the org does not exist, so we create it and
-    // only then fail. A non-null first read would return early and never reach the create at all.
-    vi.mocked(createWorkspace).mockRejectedValue(new Error("workspace insert failed"));
-
-    expect(await ensureDefaultOrganization("Ada")).toEqual({
-      organizationId: "default-org",
-      role: "owner",
-    });
-    expect(logger.error).toHaveBeenCalled();
   });
 
   test("skips Stripe setup when not on Formbricks Cloud", async () => {

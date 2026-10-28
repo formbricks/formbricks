@@ -13,6 +13,7 @@ import { getIsFreshInstance } from "@/lib/instance/service";
 import { createMembership } from "@/lib/membership/service";
 import { capturePostHogEvent, identifyPostHogPerson } from "@/lib/posthog";
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
+import { createOwnedOrganization } from "@/modules/auth/lib/owned-organization";
 import { isSignupEmailDomainBlocked } from "@/modules/auth/lib/signup-email-domain";
 import type { TSsoProvisioningRejectReason } from "@/modules/auth/lib/sso-provisioning-reject-reasons";
 import { updateUser } from "@/modules/auth/lib/user";
@@ -31,7 +32,7 @@ export type TSsoProvisioningDecision =
   | { action: "reject"; reason: TSsoProvisioningRejectReason }
   | {
       action: "provision";
-      /** Org to auto-assign the new member to; null = fresh instance / multi-org (no auto-assignment). */
+      /** Org to auto-assign the new member to; null = fresh instance / multi-org (they get their own). */
       organizationId: string | null;
       assignToDefaultTeam: boolean;
       signupSource: "invite" | "direct";
@@ -158,8 +159,8 @@ export const gateSsoProvisioning = async ({
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
   const isFirstUser = await getIsFreshInstance();
 
-  // Fresh instance or multi-org: create the user with no org auto-assignment (handled by onboarding
-  // / explicit invites elsewhere).
+  // Fresh instance or multi-org: no existing organization to assign. The write phase gives the new
+  // user an organization of their own (`provisionSsoUserMemberships`), and no workspace.
   if (isFirstUser || isMultiOrgEnabled) {
     return {
       action: "provision",
@@ -274,6 +275,19 @@ const assignSsoUserToOrganization = async ({
 };
 
 /**
+ * Fresh instance or multi-org: the new user owns an organization of their own, like a credentials
+ * sign-up. Never throws — the user is already committed, so a failure here is logged and the user is
+ * provisioned without an organization (the shell then explains that nothing is attached to the account).
+ */
+const provisionOwnOrganization = async (user: { id: string; name: string; email: string }): Promise<void> => {
+  try {
+    await createOwnedOrganization(user);
+  } catch (error) {
+    logger.error(error, "SSO provisioning: failed to create an organization for the new SSO user");
+  }
+};
+
+/**
  * Provisioning WRITES for a newly created SSO user — mirrors the legacy NextAuth SSO provisioning
  * writes. Called from
  * `databaseHooks.user.create.after` (post-commit), so it CANNOT share Better Auth's user/account
@@ -311,6 +325,9 @@ export const provisionSsoUserMemberships = async ({
     assignment = await ensureDefaultOrganization(name || email.split("@")[0]);
   } else if (organizationId) {
     assignment = { organizationId, role: "member" };
+  } else {
+    // Not an assignment: the helper writes the owner membership itself, and this is no invite.
+    await provisionOwnOrganization({ id: userId, name: name || email.split("@")[0], email });
   }
 
   if (assignment) {

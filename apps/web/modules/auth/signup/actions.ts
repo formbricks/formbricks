@@ -15,7 +15,7 @@ import { ZUser, ZUserLocale } from "@formbricks/types/user";
 import { IS_FORMBRICKS_CLOUD, IS_TURNSTILE_CONFIGURED, TURNSTILE_SECRET_KEY } from "@/lib/constants";
 import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
-import { createOrganization, getOrganization } from "@/lib/organization/service";
+import { getOrganization } from "@/lib/organization/service";
 import {
   capturePostHogEvent,
   getEmailDomain,
@@ -25,10 +25,10 @@ import {
 import { getUserByEmail } from "@/lib/user/service";
 import { actionClient } from "@/lib/utils/action-client";
 import { ActionClientCtx } from "@/lib/utils/action-client/types/context";
-import { DEFAULT_WORKSPACE_NAME } from "@/lib/workspace/constants";
 import { ATTRIBUTION_COOKIE_NAME, getAttributionPropertiesFromCookies } from "@/modules/auth/lib/attribution";
 import { auth } from "@/modules/auth/lib/auth";
 import { isPasswordCompromisedError } from "@/modules/auth/lib/better-auth-hibp";
+import { createOwnedOrganization } from "@/modules/auth/lib/owned-organization";
 import { isSignupEmailDomainBlocked } from "@/modules/auth/lib/signup-email-domain";
 import {
   SIGNUP_INTENT_COOKIE_NAME,
@@ -54,11 +54,9 @@ import { verifyTurnstileToken } from "@/modules/auth/signup/lib/utils";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
-import { ensureCloudStripeSetupForOrganization } from "@/modules/ee/billing/lib/organization-billing";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { subscribeUserToMailingList } from "@/modules/ee/mailing/lib/mailing-subscription";
 import { sendInviteAcceptedEmail } from "@/modules/email";
-import { createWorkspace } from "@/modules/workspaces/settings/lib/workspace";
 
 const ZCreatedUser = ZUser.pick({
   name: true,
@@ -250,72 +248,20 @@ async function handleInviteAcceptance(
   await deleteInvite(invite.id);
 }
 
-async function handleOrganizationCreation(ctx: ActionClientCtx, user: TCreatedUser): Promise<void> {
-  const isMultiOrgEnabled = await getIsMultiOrgEnabled();
-  if (!isMultiOrgEnabled) return;
+/**
+ * Every self-signup gets an organization it owns, and no workspace (the agent creates that). Open
+ * sign-up (multi-org) and the single-use fresh-instance administrator qualify; on any other instance an
+ * uninvited sign-up is refused before this runs, so this never lets a second account self-create an org.
+ */
+async function handleOrganizationCreation(
+  ctx: ActionClientCtx,
+  user: TCreatedUser,
+  isBootstrapAdmin: boolean
+): Promise<void> {
+  if (!isBootstrapAdmin && !(await getIsMultiOrgEnabled())) return;
 
-  const organization = await createOrganization({ name: `${user.name}'s Organization` });
+  const organization = await createOwnedOrganization(user);
   ctx.auditLoggingCtx.organizationId = organization.id;
-
-  await createMembership(organization.id, user.id, {
-    role: "owner",
-    accepted: true,
-  });
-
-  // Stripe setup must run AFTER membership is created so the owner email is available
-  if (IS_FORMBRICKS_CLOUD) {
-    ensureCloudStripeSetupForOrganization(organization.id).catch((error) => {
-      logger.error(
-        { error, organizationId: organization.id },
-        "Stripe setup failed after organization creation"
-      );
-    });
-  }
-
-  // The organization was created just above and owns no workspaces, so there is no cap to enforce.
-  const workspace = await createWorkspace(
-    organization.id,
-    { name: DEFAULT_WORKSPACE_NAME },
-    { workspaceLimit: null }
-  );
-
-  groupIdentifyPostHog("organization", organization.id, {
-    name: organization.name,
-    email_domain: getEmailDomain(user.email),
-  });
-  groupIdentifyPostHog("workspace", workspace.id, { name: workspace.name });
-
-  capturePostHogEvent(
-    user.id,
-    "organization_created",
-    {
-      organization_id: organization.id,
-      is_first_org: true,
-    },
-    { organizationId: organization.id, workspaceId: workspace.id }
-  );
-
-  capturePostHogEvent(
-    user.id,
-    "workspace_created",
-    {
-      organization_id: organization.id,
-      workspace_id: workspace.id,
-      name: workspace.name,
-    },
-    { organizationId: organization.id, workspaceId: workspace.id }
-  );
-
-  await updateUser(user.id, {
-    notificationSettings: {
-      ...user.notificationSettings,
-      alert: { ...user.notificationSettings?.alert },
-
-      unsubscribedOrganizationIds: Array.from(
-        new Set([...(user.notificationSettings?.unsubscribedOrganizationIds ?? []), organization.id])
-      ),
-    },
-  });
 }
 
 /**
@@ -325,12 +271,13 @@ async function handleOrganizationCreation(ctx: ActionClientCtx, user: TCreatedUs
 async function handlePostUserCreation(
   ctx: ActionClientCtx,
   { user }: Extract<TSignUpOutcome, { status: "created" }>,
-  inviteToken: string | undefined
+  inviteToken: string | undefined,
+  isBootstrapAdmin: boolean
 ): Promise<void> {
   if (inviteToken) {
     await handleInviteAcceptance(ctx, inviteToken, user);
   } else {
-    await handleOrganizationCreation(ctx, user);
+    await handleOrganizationCreation(ctx, user, isBootstrapAdmin);
   }
   // Better Auth sends the verification email itself during signUpEmail (sendOnSignUp) — no manual
   // send here. The legacy EMAIL_VERIFICATION_DISABLED branch (ENG-1527) is folded into auth.ts'
@@ -445,7 +392,7 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
         );
       }
 
-      await handlePostUserCreation(ctx, outcome, inviteToken);
+      await handlePostUserCreation(ctx, outcome, inviteToken, isBootstrapAdmin);
 
       await subscribeUserToMailingList({
         email: user.email,

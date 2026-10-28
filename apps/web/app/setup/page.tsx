@@ -1,24 +1,11 @@
 import { redirect } from "next/navigation";
-import { getHasNoOrganizations, getIsFreshInstance } from "@/lib/instance/service";
-import { getSession } from "@/modules/auth/lib/session";
+import { getIsFreshInstance } from "@/lib/instance/service";
 
 const Page = async () => {
-  const [session, isFreshInstance, hasNoOrganizations] = await Promise.all([
-    getSession(),
-    getIsFreshInstance(),
-    getHasNoOrganizations(),
-  ]);
-
-  if (isFreshInstance) {
+  // Only a fresh instance has anything to set up: the administrator signs up, and sign-up creates the
+  // organization. Everywhere else `/` decides where a person belongs.
+  if (await getIsFreshInstance()) {
     return redirect("/setup/intro");
-  }
-
-  if (hasNoOrganizations) {
-    if (session) {
-      return redirect("/setup/organization/create");
-    }
-
-    return redirect("/auth/login?callbackUrl=%2Fsetup%2Forganization%2Fcreate");
   }
 
   return redirect("/");

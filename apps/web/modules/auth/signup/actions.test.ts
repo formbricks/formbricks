@@ -12,6 +12,7 @@ import { capturePostHogEvent } from "@/lib/posthog";
 import { getUserByEmail } from "@/lib/user/service";
 import { AuditLoggingCtx } from "@/lib/utils/action-client/types/context";
 import { auth } from "@/modules/auth/lib/auth";
+import { createOwnedOrganization } from "@/modules/auth/lib/owned-organization";
 import { readSignupIntent } from "@/modules/auth/lib/signup-intent";
 import { updateUser } from "@/modules/auth/lib/user";
 import { deleteInvite, getInvite, resolveInviteMatch } from "@/modules/auth/signup/lib/invite";
@@ -80,7 +81,9 @@ vi.mock("@/modules/ee/billing/lib/organization-billing", () => ({
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsMultiOrgEnabled: vi.fn() }));
 vi.mock("@/modules/ee/mailing/lib/mailing-subscription", () => ({ subscribeUserToMailingList: vi.fn() }));
 vi.mock("@/modules/email", () => ({ sendInviteAcceptedEmail: vi.fn() }));
-vi.mock("@/modules/workspaces/settings/lib/workspace", () => ({ createWorkspace: vi.fn() }));
+vi.mock("@/modules/auth/lib/owned-organization", () => ({
+  createOwnedOrganization: vi.fn(),
+}));
 
 // Getters so individual tests can flip the Cloud gate / invite kill-switch at runtime. The real
 // signup-email-domain utility reads these through live bindings; only the constants are mocked.
@@ -150,6 +153,7 @@ describe("createUserAction — signup verification email callbackURL", () => {
     vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true } as never);
     vi.mocked(getUserByEmail).mockResolvedValue(createdUser as never);
     vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
+    vi.mocked(createOwnedOrganization).mockResolvedValue({ id: "org-new" } as never);
     // Real Better Auth resolves with the user it wrote; the action compares that id against the
     // persisted row to tell a creation from a duplicate (ENG-2091). Matching ids => "created".
     vi.mocked(auth.api.signUpEmail).mockResolvedValue({ user: createdUser } as never);
@@ -346,6 +350,39 @@ describe("createUserAction — signup verification email callbackURL", () => {
       expect(auth.api.signUpEmail).toHaveBeenCalled();
     });
 
+    test("gives the fresh-instance administrator an organization of their own, without a workspace form", async () => {
+      vi.mocked(getIsFreshInstance).mockResolvedValue(true);
+      vi.mocked(createOwnedOrganization).mockResolvedValue({ id: "org-new" } as never);
+      const ctx = newCtx();
+
+      await createUserAction({ ctx, parsedInput: baseInput } as never);
+
+      expect(createOwnedOrganization).toHaveBeenCalledWith(expect.objectContaining({ id: "user-1" }));
+      expect(ctx.auditLoggingCtx.organizationId).toBe("org-new");
+    });
+
+    test("a valid invite joins the inviter's organization and creates none", async () => {
+      vi.mocked(resolveInviteMatch).mockResolvedValue("valid");
+      vi.mocked(verifyInviteToken).mockReturnValue({
+        inviteId: "invite-1",
+        email: "ada@example.com",
+      } as never);
+      vi.mocked(getInvite).mockResolvedValue({
+        id: "invite-1",
+        organizationId: "org-1",
+        role: "member",
+        teamIds: null,
+        creator: { name: "Owner", email: "owner@example.com", locale: "en-US" },
+      } as never);
+
+      await createUserAction({
+        ctx: newCtx(),
+        parsedInput: { ...baseInput, inviteToken: "invite-jwt-123" },
+      } as never);
+
+      expect(createOwnedOrganization).not.toHaveBeenCalled();
+    });
+
     test("still allows a signup backed by a valid matching invite", async () => {
       vi.mocked(resolveInviteMatch).mockResolvedValue("valid");
       vi.mocked(verifyInviteToken).mockReturnValue({
@@ -368,6 +405,17 @@ describe("createUserAction — signup verification email callbackURL", () => {
       expect(result).toEqual({ success: true });
       expect(createMembership).toHaveBeenCalled();
     });
+  });
+
+  test("open multi-org sign-up creates an owned organization", async () => {
+    constantsOverrides.SIGNUP_ENABLED = true;
+    vi.mocked(getIsFreshInstance).mockResolvedValue(false);
+    vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
+    vi.mocked(createOwnedOrganization).mockResolvedValue({ id: "org-new" } as never);
+
+    await createUserAction({ ctx: newCtx(), parsedInput: baseInput } as never);
+
+    expect(createOwnedOrganization).toHaveBeenCalledTimes(1);
   });
 
   // The catch branch is still live: flipping EMAIL_VERIFICATION_DISABLED / autoSignIn makes Better Auth
@@ -412,6 +460,7 @@ describe("createUserAction — personal email domain block (Cloud)", () => {
     vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true } as never);
     vi.mocked(getUserByEmail).mockResolvedValue(createdUser as never);
     vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
+    vi.mocked(createOwnedOrganization).mockResolvedValue({ id: "org-new" } as never);
     // Real Better Auth resolves with the user it wrote; the action compares that id against the
     // persisted row to tell a creation from a duplicate (ENG-2091). Matching ids => "created".
     vi.mocked(auth.api.signUpEmail).mockResolvedValue({ user: createdUser } as never);

@@ -7,17 +7,17 @@ import { DeleteAccountModal } from "@/modules/account/components/DeleteAccountMo
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 
-interface RemovedFromOrganizationProps {
+interface NoOrganizationCardProps {
   isFormbricksCloud: boolean;
   requiresPasswordConfirmation: boolean;
   user: TUser;
 }
 
-export const RemovedFromOrganization = ({
+export const NoOrganizationCard = ({
   user,
   isFormbricksCloud,
   requiresPasswordConfirmation,
-}: Readonly<RemovedFromOrganizationProps>) => {
+}: Readonly<NoOrganizationCardProps>) => {
   const { t } = useTranslation();
   const [isModalOpen, setIsModalOpen] = useState(false);
   return (

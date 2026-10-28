@@ -18,19 +18,11 @@ interface MobileNavProps {
   items: ShellNavItem[];
   organization: { id: string; name: string };
   organizations: { id: string; name: string }[];
-  canCreateOrganization: boolean;
   user: { name: string; email: string };
-  labels: { openMenu: string; navigation: string; createOrganization: string; switchOrganization: string };
+  labels: { openMenu: string; navigation: string; switchOrganization: string };
 }
 
-export const MobileNav = ({
-  items,
-  organization,
-  organizations,
-  canCreateOrganization,
-  user,
-  labels,
-}: Readonly<MobileNavProps>) => {
+export const MobileNav = ({ items, organization, organizations, user, labels }: Readonly<MobileNavProps>) => {
   const [open, setOpen] = useState(false);
 
   return (
@@ -51,8 +43,6 @@ export const MobileNav = ({
           <OrgSwitcher
             organization={organization}
             organizations={organizations}
-            canCreateOrganization={canCreateOrganization}
-            createLabel={labels.createOrganization}
             switchLabel={labels.switchOrganization}
           />
           <ShellNavLinks

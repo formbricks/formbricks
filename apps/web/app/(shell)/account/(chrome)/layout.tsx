@@ -7,7 +7,7 @@ import { getActiveOrganizationId } from "@/modules/shell/lib/active-organization
 const AccountShellLayout = async ({ children }: Readonly<{ children: React.ReactNode }>) => {
   const organizationId = await getActiveOrganizationId();
   if (!organizationId) {
-    return redirect("/setup/organization/create");
+    return redirect("/account/no-organization");
   }
 
   return (

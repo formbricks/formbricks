@@ -12,13 +12,12 @@ export const MEMBER_DIRECTORY_LIMIT = 500;
 
 export interface TMemberDirectory {
   rows: TMemberRow[];
-  teams: { id: string; name: string }[];
   /** More members or invites exist than the page shows. */
   isTruncated: boolean;
 }
 
 /**
- * Members, pending invites and teams of an organization for the members table: three queries, whatever
+ * Members and pending invites of an organization for the members table (teams only supply names): three queries, whatever
  * the size. Team names and two-factor state ride along on the member query, so no row costs another one.
  *
  * Two-factor state and team memberships are security-relevant, so they are selected only when
@@ -96,7 +95,6 @@ export const getMemberDirectory = reactCache(
           teamNameById: new Map(teams.map((team) => [team.id, team.name])),
           now: new Date(),
         }),
-        teams,
         isTruncated,
       };
     } catch (error) {

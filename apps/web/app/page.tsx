@@ -19,7 +19,7 @@ const Page = async () => {
 
   const organizationId = await getActiveOrganizationId();
   if (!organizationId) {
-    return redirect("/setup/organization/create");
+    return redirect("/account/no-organization");
   }
 
   return redirect(`/organizations/${organizationId}`);

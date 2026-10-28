@@ -52,6 +52,13 @@ const TeamsPage = async ({ params }: Readonly<{ params: Promise<{ organizationId
         }
       />
 
+      {isAccessControlAllowed && (
+        <Alert variant="info" role="status">
+          <AlertTitle>{t("shell.organization.teams.agent_note_title")}</AlertTitle>
+          <AlertDescription>{t("shell.organization.teams.agent_note_description")}</AlertDescription>
+        </Alert>
+      )}
+
       {isAccessControlAllowed ? (
         teams.length > 0 ? (
           <TeamsTable

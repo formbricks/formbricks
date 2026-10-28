@@ -4,18 +4,18 @@ import { test } from "./lib/fixtures";
 import { mockUsers } from "./utils/mock";
 
 /**
- * The account shell is the only human UI: a person signs up, creates an organization, connects an agent
- * and hands it a credential. Everything else is done by agents through MCP and `/api/v3`. This is the
+ * The account shell is the only human UI: a person signs up (which creates their organization and no
+ * workspace), connects an agent and hands it a credential. Everything else is done by agents through MCP and `/api/v3`. This is the
  * one journey that crosses those pages in the order a new customer meets them; the logic behind each
  * (key presets, member rows, nav items) is unit-tested next to its module.
  *
- * Needs an instance that lets a signed-up user create an organization (multi-organization, enabled by the
+ * Needs an instance that lets a signed-up user own an organization (multi-organization, enabled by the
  * Enterprise license the E2E job boots with) and where e-mail verification is off, as in the other specs.
  */
 test.describe("Account shell journey", () => {
   test.setTimeout(3 * 60 * 1000);
 
-  test("sign up, create an organization, connect an agent, create and revoke an API key", async ({
+  test("sign up, get an organization, connect an agent, create and revoke an API key", async ({
     page,
     request,
   }) => {
@@ -23,7 +23,8 @@ test.describe("Account shell journey", () => {
     const name = "Shell Journey User";
     const email = `shell-journey-${stamp}@formbricks.com`;
     const { password } = mockUsers.signup[0];
-    const organizationName = `Shell Org ${stamp}`;
+    // Sign-up names the organization after the person; it creates no workspace.
+    const organizationName = `${name}'s Organization`;
     const workspaceName = `Shell Workspace ${stamp}`;
     const keyName = `Journey key ${stamp}`;
 
@@ -43,18 +44,30 @@ test.describe("Account shell journey", () => {
       await page.getByLabel("Password", { exact: true }).press("Enter");
     });
 
-    await test.step("create the organization with its first workspace", async () => {
-      // A new account has no organization yet, so the landing page sends it to step 1 of onboarding.
-      await page.waitForURL(/\/setup\/organization\/create/);
-      await expect(page.getByRole("heading", { name: "Create your organization" })).toBeVisible();
+    const organizationId = await test.step("sign-up created an organization and no workspace", async () => {
+      await page.waitForURL(/\/organizations\/[^/]+$/);
+      const membership = await prisma.membership.findFirstOrThrow({
+        where: { user: { email } },
+        select: { role: true, organizationId: true, organization: { select: { name: true } } },
+      });
+      expect(membership.role).toBe("owner");
+      expect(membership.organization.name).toBe(organizationName);
+      expect(await prisma.workspace.count({ where: { organizationId: membership.organizationId } })).toBe(0);
+      return membership.organizationId;
+    });
 
-      await page.getByLabel("Organization name").fill(organizationName);
-      await page.getByLabel("First workspace").fill(workspaceName);
-      await page.getByRole("button", { name: "Create organization" }).click();
+    await test.step("an organization without workspaces renders read-only with an agent prompt", async () => {
+      await page.goto(`/organizations/${organizationId}/workspaces`);
+      await expect(page.getByText("No workspaces yet.")).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Ask your agent" }).first()).toBeVisible();
+      await expect(page.getByRole("button", { name: "Create workspace" })).toHaveCount(0);
+
+      // The agent creates the first workspace during setup; stand in for it here.
+      await prisma.workspace.create({ data: { name: workspaceName, organizationId } });
+      await page.goto(`/organizations/${organizationId}`);
     });
 
     await test.step("land on Connect your agent with the server URL and the agent tabs", async () => {
-      await page.waitForURL(/\/organizations\/[^/]+$/);
       await expect(page.getByRole("heading", { level: 1, name: "Connect your agent" })).toBeVisible();
       await expect(page.getByText("No agent connected yet")).toBeVisible();
 
