@@ -11,6 +11,8 @@ import {
   withGeneratedInsertIds,
 } from "@/app/api/v3/surveys/lib/operations";
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
+import { attachSurveyPreview } from "../apps/survey-preview/attach-preview";
+import { buildMcpAppToolMeta } from "../apps/tool-meta";
 import { getMcpAuthentication, getMcpRequestId, getMcpToolAuthInfo } from "../auth";
 import { responseToMcpToolResult } from "../errors";
 import { registerScopedTool } from "./guard-scopes";
@@ -168,9 +170,10 @@ export function registerSurveyTools(server: McpServer): void {
     {
       title: "Create survey",
       description:
-        "Create a Formbricks link survey using the v3 Surveys API contract. Optional `customCss` source is processed by the server; removed constructs come back as top-level `warnings`.",
+        "Create a Formbricks link survey using the v3 Surveys API contract. Optional `customCss` source is processed by the server; removed constructs come back as top-level `warnings`. The result opens the new survey in an interactive preview for the user (in clients that support it), so do not call show_survey afterwards.",
       inputSchema: ZMcpCreateSurveyInput,
       audit: { action: "created", targetType: "survey" },
+      _meta: buildMcpAppToolMeta("survey-preview"),
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
@@ -180,17 +183,20 @@ export function registerSurveyTools(server: McpServer): void {
     },
     ["surveys:write"],
     async (input: TMcpCreateSurveyInput, ctx) =>
-      runMcpMutation(
-        ctx,
-        { action: "created", resource: "survey", logContext: { workspaceId: input.workspaceId } },
-        ({ authentication, requestId, auditLog }) =>
-          createV3SurveyResponseFromRawInput({
-            body: input,
-            authentication,
-            requestId,
-            instance: MCP_API_ROUTE,
-            auditLog,
-          })
+      attachSurveyPreview(
+        await runMcpMutation(
+          ctx,
+          { action: "created", resource: "survey", logContext: { workspaceId: input.workspaceId } },
+          ({ authentication, requestId, auditLog }) =>
+            createV3SurveyResponseFromRawInput({
+              body: input,
+              authentication,
+              requestId,
+              instance: MCP_API_ROUTE,
+              auditLog,
+            })
+        ),
+        getMcpRequestId(getMcpToolAuthInfo(ctx))
       )
   );
 
@@ -238,9 +244,11 @@ export function registerSurveyTools(server: McpServer): void {
         "Provided top-level arrays and objects replace that whole subtree, so a partial `blocks` array deletes every block it leaves out.",
         "The full get_survey output can be sent back unchanged; `updatedAt` is then an optimistic-concurrency precondition and a mismatch returns 409.",
         "App surveys: `distribution.showConditions` limits when a triggered survey shows (page URL lists, referrer, query parameter, pages viewed, time on site, visited URLs, device, browser, window width); `distribution` replaces as a whole, so send the full object from get_survey.",
+        "The result opens the changed survey in an interactive preview for the user (in clients that support it), so do not call show_survey afterwards.",
       ].join(" "),
       inputSchema: ZMcpPatchSurveyInput,
       audit: { action: "updated", targetType: "survey", targetIdArg: "surveyId" },
+      _meta: buildMcpAppToolMeta("survey-preview"),
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,
@@ -250,18 +258,21 @@ export function registerSurveyTools(server: McpServer): void {
     },
     ["surveys:write"],
     async (input: TMcpPatchSurveyInput, ctx) =>
-      runMcpMutation(
-        ctx,
-        { action: "updated", resource: "survey", logContext: { surveyId: input.surveyId } },
-        ({ authentication, requestId, auditLog }) =>
-          patchV3SurveyResponse({
-            surveyId: input.surveyId,
-            body: input.data,
-            authentication,
-            requestId,
-            instance: MCP_API_ROUTE,
-            auditLog,
-          })
+      attachSurveyPreview(
+        await runMcpMutation(
+          ctx,
+          { action: "updated", resource: "survey", logContext: { surveyId: input.surveyId } },
+          ({ authentication, requestId, auditLog }) =>
+            patchV3SurveyResponse({
+              surveyId: input.surveyId,
+              body: input.data,
+              authentication,
+              requestId,
+              instance: MCP_API_ROUTE,
+              auditLog,
+            })
+        ),
+        getMcpRequestId(getMcpToolAuthInfo(ctx))
       )
   );
 

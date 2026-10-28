@@ -708,6 +708,8 @@ describe("POST /api/mcp", () => {
       tools.tools.find((tool: { name: string }) => tool.name === name)?._meta?.ui?.resourceUri;
     expect({
       show_survey: viewOf("show_survey"),
+      create_survey: viewOf("create_survey"),
+      patch_survey: viewOf("patch_survey"),
       review_document_change: viewOf("review_document_change"),
       show_feedback_chart: viewOf("show_feedback_chart"),
       show_responses: viewOf("show_responses"),
@@ -715,6 +717,8 @@ describe("POST /api/mcp", () => {
       show_workflow: viewOf("show_workflow"),
     }).toEqual({
       show_survey: "ui://formbricks/survey-preview.html",
+      create_survey: "ui://formbricks/survey-preview.html",
+      patch_survey: "ui://formbricks/survey-preview.html",
       review_document_change: "ui://formbricks/document-review.html",
       show_feedback_chart: "ui://formbricks/feedback-chart.html",
       show_responses: "ui://formbricks/responses.html",

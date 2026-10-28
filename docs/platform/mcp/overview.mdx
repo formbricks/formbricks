@@ -117,6 +117,7 @@ in the change review: changes are made by asking the agent.
 
 | Ask your agent to... | Tool | What you see |
 | --- | --- | --- |
+| Create or change a survey | `create_survey`, `patch_survey` | The same survey view opens with the result, so you see what was made without asking. Block-level edits (`edit_survey_blocks`, `set_survey_block_order`) do not; ask for `show_survey` after them |
 | Show or review a survey | `show_survey` | An outline of the survey (questions, logic, languages, settings) and a **Try it** tab that runs the real survey, without saving any response |
 | Review a change before it is applied | `review_document_change` | What would change in a survey, creative or workflow document, with destructive changes called out, and **Approve and apply** or **Cancel** |
 | Chart feedback | `show_feedback_chart` | A bar, line, area, donut, number or table chart of a feedback query, with a table view of the same data |
