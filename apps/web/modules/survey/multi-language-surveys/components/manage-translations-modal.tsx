@@ -6,11 +6,11 @@ import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
-import { getAIUnavailableMessage, getAIUnavailableMessageForErrorCode } from "@/lib/ai/availability";
+import { getAIUnavailableMessage } from "@/lib/ai/availability";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { cn } from "@/lib/cn";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import { translateSurveyFieldsAction } from "@/modules/ee/ai-translation/lib/actions";
+import { translateSurveyFields } from "@/modules/ee/ai-translation/lib/api-client";
+import { getAITranslationErrorMessage } from "@/modules/ee/ai-translation/lib/error-message";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -142,27 +142,6 @@ export const ManageTranslationsModal = ({
     });
   }, [strings, draftTranslations]);
 
-  const getAIErrorMessage = useCallback(
-    (errorCode: string): string => {
-      const aiUnavailableMessage = getAIUnavailableMessageForErrorCode(errorCode, t);
-      if (aiUnavailableMessage) {
-        return aiUnavailableMessage;
-      }
-
-      if (errorCode === "ai_quota_exceeded") {
-        return t("workspace.surveys.edit.ai_translation_quota_exceeded");
-      }
-
-      if (errorCode === "ai_output_too_long") {
-        return t("workspace.surveys.edit.ai_translation_output_too_long");
-      }
-
-      // Fall back to the generic failure message rather than leaking a raw error code to the user.
-      return t("workspace.surveys.edit.ai_translation_failed");
-    },
-    [t]
-  );
-
   const handleTranslateWithAI = async () => {
     if (emptyFields.length === 0) return;
 
@@ -173,8 +152,7 @@ export const ManageTranslationsModal = ({
     const toastId = toast.loading(t("workspace.surveys.edit.ai_translating"));
 
     try {
-      const result = await translateSurveyFieldsAction({
-        workspaceId,
+      const { translations } = await translateSurveyFields(workspaceId, {
         fields: emptyFields.map((s) => ({
           path: s.path,
           defaultText: s.value.default || "",
@@ -184,22 +162,10 @@ export const ManageTranslationsModal = ({
         targetLanguage: languageName,
       });
 
-      if (!result?.data?.translations) {
-        const errorMessage = getFormattedErrorMessage(result);
-        toast.error(
-          errorMessage ? getAIErrorMessage(errorMessage) : t("workspace.surveys.edit.ai_translation_failed"),
-          { id: toastId }
-        );
-        return;
-      }
-
-      setDraftTranslations((prev) => ({ ...prev, ...result.data?.translations }));
+      setDraftTranslations((prev) => ({ ...prev, ...translations }));
       toast.success(t("workspace.surveys.edit.ai_translation_complete"), { id: toastId });
-    } catch {
-      // The action surfaces server-side failures via result.serverError (handled above). This catch
-      // only fires on genuine client-side throws (e.g. network) whose messages aren't error codes,
-      // so show the generic failure message.
-      toast.error(t("workspace.surveys.edit.ai_translation_failed"), { id: toastId });
+    } catch (error) {
+      toast.error(getAITranslationErrorMessage(error, t), { id: toastId });
     } finally {
       setIsTranslating(false);
       setTranslatingPaths(new Set());
