@@ -601,6 +601,7 @@
       "properties": "Proprietăți",
       "remove_filter": "Elimină {filter}",
       "reorder_column": "Reordonează {column}",
+      "resize_column": "Redimensionează coloana",
       "result_count": "{count, plural, one {{formattedCount} rezultat} few {{formattedCount} rezultate} other {{formattedCount} de rezultate}}",
       "result_count_capped": "{formattedCount}+ rezultate",
       "search_values": "Caută valori pentru {property}",

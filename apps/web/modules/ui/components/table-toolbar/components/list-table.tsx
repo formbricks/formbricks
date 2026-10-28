@@ -66,7 +66,12 @@ export const ListTable = <TData,>({
   // sideways because the visible columns happen to add up to more than the screen is wide.
   const totalSize = visibleColumns.reduce((sum, column) => sum + column.getSize(), 0) || 1;
   const isPinned = pinnedColumnIds.length > 0;
-  const widthOf = (size: number) => (isPinned ? `${size}px` : `${((size / totalSize) * 100).toFixed(3)}%`);
+  const canResize = Boolean(table.options.enableColumnResizing);
+  // Once a column has been dragged to a width, every width is that many pixels: proportions would
+  // hand the change to every other column instead. The table may then scroll sideways.
+  const isResized = Object.keys(table.getState().columnSizing ?? {}).length > 0;
+  const usesPixels = isPinned || isResized;
+  const widthOf = (size: number) => (usesPixels ? `${size}px` : `${((size / totalSize) * 100).toFixed(3)}%`);
 
   // Each pinned column sticks at the summed width of the pinned columns before it.
   const pinOffsets = new Map<string, number>();
@@ -91,7 +96,7 @@ export const ListTable = <TData,>({
       columnId === lastPinnedId && "border-r border-slate-200"
     );
   const tableStyle = (): CSSProperties | undefined => {
-    if (isPinned) return { width: totalSize, minWidth: "100%" };
+    if (usesPixels) return { width: totalSize, minWidth: "100%" };
     return minWidth ? { minWidth } : undefined;
   };
   const emptyState = () => {
@@ -137,19 +142,31 @@ export const ListTable = <TData,>({
     return rows.map((row) => {
       const clickable = Boolean(onRowClick) && (isRowClickable?.(row) ?? true);
       const addon = renderRowAddon?.(row);
+      const isFromControl = (target: HTMLElement, row: HTMLElement) =>
+        // A dialog or menu opened from the row renders in a portal: its events still bubble here
+        // through React, but they are not the row's.
+        !row.contains(target) ||
+        // An event on a control inside the row (menu, checkbox, link) is that control's.
+        Boolean(target.closest("button, a, input, [role='menuitem'], [role='checkbox']"));
       return (
         <Fragment key={row.id}>
           <TableRow
             data-state={row.getIsSelected() ? "selected" : undefined}
-            className={cn("group", clickable && "cursor-pointer hover:bg-slate-50")}
+            className={cn(
+              "group",
+              clickable &&
+                "cursor-pointer outline-none hover:bg-slate-50 focus-visible:bg-slate-50 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-inset"
+            )}
+            // Reachable and openable from the keyboard, like the link a row stands in for.
+            tabIndex={clickable ? 0 : undefined}
+            onKeyDown={(event) => {
+              if (!clickable || (event.key !== "Enter" && event.key !== " ")) return;
+              if (event.target !== event.currentTarget) return;
+              event.preventDefault();
+              onRowClick?.(row);
+            }}
             onClick={(event) => {
-              if (!clickable) return;
-              const target = event.target as HTMLElement;
-              // A dialog or menu opened from the row renders in a portal: its clicks still bubble here
-              // through React, but they are not clicks on the row.
-              if (!event.currentTarget.contains(target)) return;
-              // A click on a control inside the row (menu, checkbox, link) is that control's.
-              if (target.closest("button, a, input, [role='menuitem'], [role='checkbox']")) return;
+              if (!clickable || isFromControl(event.target as HTMLElement, event.currentTarget)) return;
               onRowClick?.(row);
             }}>
             {row.getVisibleCells().map((cell) => (
@@ -197,13 +214,29 @@ export const ListTable = <TData,>({
                     key={header.id}
                     style={pinStyle(header.column.id, header.getSize())}
                     className={cn(
-                      "h-10 text-xs font-medium whitespace-nowrap text-slate-600",
+                      "group/head relative h-10 text-xs font-medium whitespace-nowrap text-slate-600",
                       pinClass(header.column.id, true),
                       CONTROL_COLUMNS.has(header.column.id) ? "px-2" : "px-4"
                     )}>
                     {header.isPlaceholder
                       ? null
                       : flexRender(header.column.columnDef.header, header.getContext())}
+                    {canResize && header.column.getCanResize() && !CONTROL_COLUMNS.has(header.column.id) && (
+                      // Drag to resize; double-click puts the column back to its default width.
+                      <div
+                        role="separator"
+                        aria-orientation="vertical"
+                        aria-label={t("common.table_toolbar.resize_column")}
+                        onMouseDown={header.getResizeHandler()}
+                        onTouchStart={header.getResizeHandler()}
+                        onDoubleClick={() => header.column.resetSize()}
+                        className={cn(
+                          "absolute top-0 right-0 h-full w-1.5 cursor-col-resize touch-none select-none",
+                          "after:absolute after:inset-y-2 after:right-0 after:w-px after:bg-slate-200 after:opacity-0 group-hover/head:after:opacity-100",
+                          header.column.getIsResizing() && "after:bg-slate-500 after:opacity-100"
+                        )}
+                      />
+                    )}
                   </TableHead>
                 ))}
               </TableRow>

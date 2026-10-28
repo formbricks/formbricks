@@ -9,6 +9,7 @@ import type { TSegmentWithSurveyRefs } from "@formbricks/types/segment";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Button } from "@/modules/ui/components/button";
 import { ListTable, TableToolbar } from "@/modules/ui/components/table-toolbar";
+import { useColumnSizing } from "@/modules/ui/components/table-toolbar/hooks/use-table-column-state";
 import { useTableUrlState } from "@/modules/ui/components/table-toolbar/hooks/use-table-url-state";
 import { contactQueryKeys } from "../../lib/query-keys";
 import { DEFAULT_SEGMENT_SORT, SEGMENT_SORT_VALUES, listSegments } from "../lib/v3-segments-client";
@@ -84,11 +85,14 @@ export function SegmentTable({
 
   const rows = useMemo(() => (query.data?.pages ?? []).flatMap((page) => page.data), [query.data]);
   const columns = useMemo(() => generateSegmentTableColumns(t, locale), [locale, t]);
+  const sizing = useColumnSizing(`${workspaceId}-segments-columnSizing`);
   const table = useReactTable({
     data: rows,
     columns,
     getRowId: (row) => row.id,
     getCoreRowModel: getCoreRowModel(),
+    state: { columnSizing: sizing.columnSizing },
+    ...sizing.tableOptions,
   });
 
   return (

@@ -601,6 +601,7 @@
       "properties": "属性",
       "remove_filter": "移除{filter}",
       "reorder_column": "重新排序{column}",
+      "resize_column": "调整列宽",
       "result_count": "{count, plural, other {{formattedCount} 个结果}}",
       "result_count_capped": "{formattedCount}+ 个结果",
       "search_values": "搜索{property}的值",

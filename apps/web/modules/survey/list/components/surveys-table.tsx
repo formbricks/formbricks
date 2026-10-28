@@ -18,6 +18,7 @@ import type { TSurveyVisibilityUiGate } from "@/modules/survey/visibility/lib/st
 import type { TSurveyVisibilityBlocker } from "@/modules/survey/visibility/types";
 import { SurveyStatusPill } from "@/modules/ui/components/survey-status-indicator";
 import { ListTable } from "@/modules/ui/components/table-toolbar";
+import type { useTableColumnState } from "@/modules/ui/components/table-toolbar/hooks/use-table-column-state";
 import type { TColumnLabel } from "@/modules/ui/components/table-toolbar/lib/column-settings";
 import { SurveyDropDownMenu } from "./survey-dropdown-menu";
 import { MakeVisibleStrip, SurveyNameCell, getSurveyRowState } from "./survey-row";
@@ -54,6 +55,9 @@ type TSurveysTableProps = {
   onLoadMore: () => void;
   columnOrder: string[];
   columnVisibility: Record<string, boolean>;
+  /** Column widths and the resize options, from `useTableColumnState`. */
+  columnSizing: ReturnType<typeof useTableColumnState>["columnSizing"];
+  sizingOptions: ReturnType<typeof useTableColumnState>["sizingOptions"];
   workspaceBasePath: string;
   workspaceName: string;
   publicDomain: string;
@@ -227,6 +231,8 @@ export const SurveysTable = ({
   onLoadMore,
   columnOrder,
   columnVisibility,
+  columnSizing,
+  sizingOptions,
   workspaceBasePath,
   workspaceName,
   publicDomain,
@@ -300,7 +306,8 @@ export const SurveysTable = ({
     columns,
     getRowId: (survey) => survey.id,
     getCoreRowModel: getCoreRowModel(),
-    state: { columnOrder, columnVisibility },
+    state: { columnOrder, columnVisibility, columnSizing },
+    ...sizingOptions,
   });
 
   return (

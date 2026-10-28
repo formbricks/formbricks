@@ -601,6 +601,7 @@
       "properties": "Eigenschaften",
       "remove_filter": "{filter} entfernen",
       "reorder_column": "{column} neu anordnen",
+      "resize_column": "Spaltengröße ändern",
       "result_count": "{count, plural, one {{formattedCount} Ergebnis} other {{formattedCount} Ergebnisse}}",
       "result_count_capped": "{formattedCount}+ Ergebnisse",
       "search_values": "{property}-Werte durchsuchen",

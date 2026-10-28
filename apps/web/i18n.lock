@@ -567,6 +567,7 @@ checksums:
     common/table_toolbar/properties: d9d4b7cdfa9324272f895ed8687f607b
     common/table_toolbar/remove_filter: 086d53e6da9f98509b240125588fe942
     common/table_toolbar/reorder_column: 3cf041d5a9cc252f99c48fddb87d2fad
+    common/table_toolbar/resize_column: 9ddfe782ddba0272e0691d5726dc4cb1
     common/table_toolbar/result_count: eeaaef6044758a554987b92d5d30283b
     common/table_toolbar/result_count_capped: 5c9eb1f333275e866da1de778af5f455
     common/table_toolbar/search_values: 1a8eedfc49ce6ab17b2d066c8406c5c8

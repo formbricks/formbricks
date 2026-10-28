@@ -601,6 +601,7 @@
       "properties": "プロパティ",
       "remove_filter": "{filter}を削除",
       "reorder_column": "{column}を並べ替え",
+      "resize_column": "列のサイズを変更",
       "result_count": "{count, plural, other {{formattedCount}件の結果}}",
       "result_count_capped": "{formattedCount}件以上の結果",
       "search_values": "{property}の値を検索",

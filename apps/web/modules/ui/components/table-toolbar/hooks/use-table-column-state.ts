@@ -1,6 +1,6 @@
 "use client";
 
-import type { VisibilityState } from "@tanstack/react-table";
+import type { ColumnSizingState, OnChangeFn, VisibilityState } from "@tanstack/react-table";
 import { useCallback, useEffect, useState } from "react";
 import { reconcileColumnOrder, reconcileColumnVisibility } from "../lib/column-state";
 
@@ -19,6 +19,34 @@ const writeJson = (key: string, value: unknown) => {
   } catch {
     // A full or blocked storage only loses the remembered layout, never the table.
   }
+};
+
+/**
+ * Column widths a user dragged, remembered per browser under `storageKey`. Spread the result into
+ * `useReactTable`; `ListTable` draws the resize handles for any table that enables it.
+ */
+export const useColumnSizing = (storageKey: string) => {
+  const [columnSizing, setColumnSizingState] = useState<ColumnSizingState>({});
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    setColumnSizingState(readJson<ColumnSizingState>(storageKey) ?? {});
+    setIsLoaded(true);
+  }, [storageKey]);
+
+  useEffect(() => {
+    if (isLoaded) writeJson(storageKey, columnSizing);
+  }, [isLoaded, storageKey, columnSizing]);
+
+  const onColumnSizingChange: OnChangeFn<ColumnSizingState> = setColumnSizingState;
+  return {
+    columnSizing,
+    tableOptions: {
+      enableColumnResizing: true,
+      columnResizeMode: "onChange" as const,
+      onColumnSizingChange,
+    },
+  };
 };
 
 /**
@@ -43,6 +71,7 @@ export const useTableColumnState = ({
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [isExpanded, setIsExpanded] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const sizing = useColumnSizing(`${storagePrefix}-columnSizing`);
   const columnKey = columnIds.join("|");
 
   useEffect(() => {
@@ -82,5 +111,8 @@ export const useTableColumnState = ({
     isExpanded,
     setIsExpanded,
     moveColumn,
+    columnSizing: sizing.columnSizing,
+    /** Spread into `useReactTable` so its columns can be resized. */
+    sizingOptions: sizing.tableOptions,
   };
 };

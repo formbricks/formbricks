@@ -132,7 +132,9 @@ export const AttributesTable = ({ isReadOnly, workspaceId, locale }: Readonly<At
       rowSelection,
       columnOrder: columnState.columnOrder,
       columnVisibility: columnState.columnVisibility,
+      columnSizing: columnState.columnSizing,
     },
+    ...columnState.sizingOptions,
   });
 
   const columnLabels = [

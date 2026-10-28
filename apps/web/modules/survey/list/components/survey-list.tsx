@@ -376,6 +376,8 @@ export const SurveysList = ({
         onLoadMore={() => void fetchNextPage()}
         columnOrder={columnState.columnOrder}
         columnVisibility={columnState.columnVisibility}
+        columnSizing={columnState.columnSizing}
+        sizingOptions={columnState.sizingOptions}
         workspaceBasePath={`/workspaces/${workspace.id}`}
         workspaceName={workspace.name}
         publicDomain={publicDomain}

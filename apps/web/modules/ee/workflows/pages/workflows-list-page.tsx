@@ -218,7 +218,12 @@ export const WorkflowsListPage = ({
     columns,
     getRowId: (workflow) => workflow.id,
     getCoreRowModel: getCoreRowModel(),
-    state: { columnOrder: columnState.columnOrder, columnVisibility: columnState.columnVisibility },
+    state: {
+      columnOrder: columnState.columnOrder,
+      columnVisibility: columnState.columnVisibility,
+      columnSizing: columnState.columnSizing,
+    },
+    ...columnState.sizingOptions,
   });
 
   return (

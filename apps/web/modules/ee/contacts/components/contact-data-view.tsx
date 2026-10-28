@@ -139,7 +139,9 @@ export const ContactDataView = ({
       rowSelection,
       columnOrder: columnState.columnOrder,
       columnVisibility: columnState.columnVisibility,
+      columnSizing: columnState.columnSizing,
     },
+    ...columnState.sizingOptions,
   });
 
   const columnLabels = [

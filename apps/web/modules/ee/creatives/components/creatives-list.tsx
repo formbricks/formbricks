@@ -243,7 +243,12 @@ export const CreativesList = ({ workspaceId, isReadOnly, creativesAccess }: Read
     columns: columns.defs,
     getRowId: (creative) => creative.id,
     getCoreRowModel: getCoreRowModel(),
-    state: { columnOrder: columnState.columnOrder, columnVisibility: columnState.columnVisibility },
+    state: {
+      columnOrder: columnState.columnOrder,
+      columnVisibility: columnState.columnVisibility,
+      columnSizing: columnState.columnSizing,
+    },
+    ...columnState.sizingOptions,
   });
 
   const columnLabels = [

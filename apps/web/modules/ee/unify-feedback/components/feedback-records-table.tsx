@@ -470,7 +470,9 @@ export const FeedbackRecordsTable = ({
       rowSelection,
       columnOrder: columnState.columnOrder,
       columnVisibility: columnState.columnVisibility,
+      columnSizing: columnState.columnSizing,
     },
+    ...columnState.sizingOptions,
   });
 
   const hasCsvSources = csvSources.length > 0;

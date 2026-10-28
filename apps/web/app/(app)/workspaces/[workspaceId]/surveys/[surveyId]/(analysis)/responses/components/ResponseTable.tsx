@@ -23,6 +23,7 @@ import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { deleteResponseAction } from "@/modules/analysis/components/SingleResponseCard/actions";
 import { SelectedRowSettings } from "@/modules/ui/components/data-table/components/selected-row-settings";
 import { ListTable } from "@/modules/ui/components/table-toolbar";
+import { useColumnSizing } from "@/modules/ui/components/table-toolbar/hooks/use-table-column-state";
 import { buildColumnSettings } from "@/modules/ui/components/table-toolbar/lib/column-settings";
 import { reconcileColumnOrder, seedReservedColumnVisibility } from "../lib/column-state";
 
@@ -106,6 +107,8 @@ export const ResponseTable = ({
     }
   }, [columnOrder, columnVisibility, isExpanded, survey.id]);
 
+  const sizing = useColumnSizing(`${survey.id}-columnSizing`);
+
   // React Table instance
   const table = useReactTable({
     data,
@@ -122,7 +125,9 @@ export const ResponseTable = ({
       columnVisibility,
       rowSelection,
       columnPinning: { left: PINNED_COLUMNS },
+      columnSizing: sizing.columnSizing,
     },
+    ...sizing.tableOptions,
   });
 
   const defaultColumnOrder = useMemo(() => table.getAllLeafColumns().map((d) => d.id), [table]);
