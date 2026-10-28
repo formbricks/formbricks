@@ -106,7 +106,8 @@ export const getRecordFilterProperties = (
       label: t("workspace.unify.source_name"),
       valueType: "enum",
       quick: sourceOptions.length > 0,
-      ruleOperators: ["equals"],
+      // With no source names to pick from, a rule could never be completed: offer none.
+      ruleOperators: sourceOptions.length > 0 ? ["equals"] : [],
       options: sourceOptions,
     },
     {

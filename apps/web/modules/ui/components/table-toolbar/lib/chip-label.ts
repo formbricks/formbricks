@@ -2,7 +2,7 @@ import type { TFunction } from "i18next";
 import { formatDateForDisplay } from "@/lib/utils/datetime";
 import { getTranslatedDatePresetLabel } from "@/modules/ee/analysis/lib/schema-definition";
 import { parseCalendarDay } from "./date-filter";
-import { getOperatorLabel, operatorTakesValue } from "./operators";
+import { MULTI_VALUE_OPERATORS, getOperatorLabel, operatorTakesValue } from "./operators";
 import type { TFilterProperty, TTableFilter } from "./types";
 import { datePresetFromSlug } from "./url-codec";
 
@@ -49,9 +49,11 @@ export const getChipParts = (
       break;
     default:
       label = `${property.label} ${getOperatorLabel(filter.operator, t)}`;
-      value = operatorTakesValue(filter.operator)
-        ? formatValue(property, filter.values[0] ?? "", locale)
-        : "";
+      value = MULTI_VALUE_OPERATORS.includes(filter.operator)
+        ? filter.values.map((v) => formatValue(property, v, locale)).join(", ")
+        : operatorTakesValue(filter.operator)
+          ? formatValue(property, filter.values[0] ?? "", locale)
+          : "";
   }
 
   const accessibleName = t("common.table_toolbar.chip_accessible_name", {

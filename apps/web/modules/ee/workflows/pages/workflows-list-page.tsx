@@ -150,7 +150,11 @@ export const WorkflowsListPage = ({
     columnIds: WORKFLOW_COLUMN_IDS,
   });
 
-  const selectedStatuses: TWorkflowStatus[] = statusIn ?? [];
+  // Held steady per value: the tracking hook keys its effect on this list, so a fresh array each
+  // render would report the same filter on every render.
+  const statusKey = (statusIn ?? []).join(",");
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on the joined statuses
+  const selectedStatuses = useMemo<TWorkflowStatus[]>(() => statusIn ?? [], [statusKey]);
   // The URL is the settled state: search is already debounced by the toolbar before it lands there.
   useTrackWorkflowListFilters({
     isFilterInitialized: true,

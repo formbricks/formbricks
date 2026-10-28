@@ -87,6 +87,16 @@ describe("getChipParts", () => {
     expect(parts.accessibleName).toBe("common.table_toolbar.chip_accessible_name(Seats > 100)");
   });
 
+  test("an includes-any-of rule lists every value", () => {
+    const parts = getChipParts(
+      { property: "status", operator: "includesOneOf", values: ["draft", "inProgress"] },
+      status,
+      t,
+      "en-US"
+    );
+    expect(parts.value).toBe("Draft, In progress");
+  });
+
   test("a date rule formats its day", () => {
     const parts = getChipParts(
       { property: "createdAt", operator: "isBefore", values: ["2026-01-31"] },
