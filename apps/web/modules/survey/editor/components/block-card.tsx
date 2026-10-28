@@ -394,7 +394,7 @@ const BlockCardComponent = ({
               </TabsList>
               <TabsContent value="questions">
                 {/* Render each element in the block */}
-                <div ref={elementsParent}>
+                <div ref={elementsParent} className="flex flex-col gap-4 pb-4">
                   {block.elements.map((element, elementIndex) => {
                     // Calculate the actual element index in the flattened elements array
                     let elementIdx = 0;
@@ -409,7 +409,10 @@ const BlockCardComponent = ({
                       <div
                         key={element.id}
                         id={element.id}
-                        className={cn("scroll-mt-16", elementIndex > 0 && "border-t border-slate-200")}>
+                        className={cn(
+                          "mx-4 scroll-mt-16 rounded-lg border",
+                          isOpen ? "border-slate-400" : "border-slate-200"
+                        )}>
                         <Collapsible.Root
                           open={isOpen}
                           onOpenChange={() => {
@@ -423,7 +426,7 @@ const BlockCardComponent = ({
                           <Collapsible.CollapsibleTrigger
                             asChild
                             className={cn(
-                              isOpen ? "bg-slate-50" : "",
+                              isOpen ? "rounded-t-lg bg-slate-50" : "rounded-lg",
                               "flex w-full cursor-pointer justify-between gap-4 p-4 hover:bg-slate-50"
                             )}
                             aria-label="Toggle question details">
