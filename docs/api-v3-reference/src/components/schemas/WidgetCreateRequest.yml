@@ -1,0 +1,14 @@
+type: object
+required:
+  - chartId
+properties:
+  chartId:
+    type: string
+    format: cuid2
+    description: A chart in the dashboard's workspace. A chart appears at most once per dashboard.
+  layout:
+    $ref: ./WidgetLayout.yml
+    description: >-
+      Where to put the chart. Without one it lands in the first open slot at its chart type's
+      default size.
+additionalProperties: false

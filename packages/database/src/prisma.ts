@@ -97,6 +97,9 @@ export namespace Prisma {
   > = PrismaNamespaceTypes.TypeMap<ExtArgs, GlobalOmitOptions>;
   export type ActionClassSelect = PrismaModelTypes.ActionClassSelect;
   export type ChartFindManyArgs = PrismaModelTypes.ChartFindManyArgs;
+  export type ChartGetPayload<S extends boolean | null | undefined | PrismaModelTypes.ChartDefaultArgs> =
+    PrismaModelTypes.ChartGetPayload<S>;
+  export type ChartSelect = PrismaModelTypes.ChartSelect;
   export type ContactAttributeKeyCreateInput = PrismaModelTypes.ContactAttributeKeyCreateInput;
   export type ContactAttributeKeyCreateWithoutWorkspaceInput =
     PrismaModelTypes.ContactAttributeKeyCreateWithoutWorkspaceInput;
@@ -115,6 +118,14 @@ export namespace Prisma {
   export type CreativeSelect = PrismaModelTypes.CreativeSelect;
   export type CreativeWhereInput = PrismaModelTypes.CreativeWhereInput;
   export type DashboardFindManyArgs = PrismaModelTypes.DashboardFindManyArgs;
+  export type DashboardGetPayload<
+    S extends boolean | null | undefined | PrismaModelTypes.DashboardDefaultArgs,
+  > = PrismaModelTypes.DashboardGetPayload<S>;
+  export type DashboardSelect = PrismaModelTypes.DashboardSelect;
+  export type DashboardWidgetGetPayload<
+    S extends boolean | null | undefined | PrismaModelTypes.DashboardWidgetDefaultArgs,
+  > = PrismaModelTypes.DashboardWidgetGetPayload<S>;
+  export type DashboardWidgetSelect = PrismaModelTypes.DashboardWidgetSelect;
   export type DateTimeFilter = PrismaModelTypes.DateTimeFilter;
   export type DateTimeNullableFilter = PrismaModelTypes.DateTimeNullableFilter;
   export type DisplaySelect = PrismaModelTypes.DisplaySelect;

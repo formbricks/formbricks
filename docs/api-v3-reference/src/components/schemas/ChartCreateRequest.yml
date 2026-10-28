@@ -1,0 +1,37 @@
+type: object
+required:
+  - workspaceId
+  - datasetId
+  - name
+  - type
+  - query
+properties:
+  workspaceId:
+    type: string
+    format: cuid2
+  datasetId:
+    type: string
+    format: cuid2
+    description: >-
+      The Feedback Dataset the chart reads. Needs write access to it from `workspaceId`. Fixed once
+      the chart exists.
+  name:
+    type: string
+    minLength: 1
+    maxLength: 255
+    description: Unique within the workspace; leading and trailing spaces are trimmed.
+  type:
+    type: string
+    enum:
+      - area
+      - bar
+      - pie
+      - big_number
+      - matrix
+    description: >-
+      `matrix` is refused with 422 while an instance's online upgrade to 6.1 is unfinished.
+  query:
+    $ref: ./ChartQuery.yml
+  config:
+    $ref: ./ChartConfig.yml
+additionalProperties: false
