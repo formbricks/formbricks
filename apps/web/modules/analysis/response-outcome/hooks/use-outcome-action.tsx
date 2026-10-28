@@ -23,9 +23,18 @@ export const useOutcomeAction = ({
     onSaved: ({ updated }, { ids, outcome }) => {
       actions.onSaved(ids, outcome);
       toast.success(
-        outcome === "lowQuality"
-          ? t("workspace.surveys.responses.marked_low_quality", { count: updated })
-          : t("workspace.surveys.responses.restored_as_complete", { count: updated })
+        outcome === "lowQuality" ? (
+          <span className="flex flex-col">
+            <span className="font-semibold">
+              {t("workspace.surveys.responses.marked_low_quality", { count: updated })}
+            </span>
+            <span className="text-slate-500">
+              {t("workspace.surveys.responses.marked_low_quality_description")}
+            </span>
+          </span>
+        ) : (
+          t("workspace.surveys.responses.restored_as_complete", { count: updated })
+        )
       );
     },
     onFailed: (error, { outcome }) => {
