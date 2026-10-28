@@ -3,8 +3,8 @@
 import { useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { AuthFooter } from "@/modules/auth/components/auth-card";
 import { AuthLink } from "@/modules/auth/components/auth-link";
-import { AuthFooter } from "@/modules/auth/components/form-wrapper";
 import { buildAttributionQuerySuffix } from "@/modules/auth/lib/attribution";
 
 /**

@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import Turnstile, { useTurnstile } from "react-turnstile";
@@ -214,6 +214,7 @@ export const SignupForm = ({
   };
 
   const { errors } = form.formState;
+  const password = useWatch({ control: form.control, name: "password" });
   const registerName = form.register("name");
   const registerEmail = form.register("email");
   const registerPassword = form.register("password");
@@ -244,7 +245,6 @@ export const SignupForm = ({
               data-testid="signup-name"
               autoComplete="name"
               autoFocus={!emailLocked}
-              placeholder={t("shell.auth.signup.name_placeholder")}
               isInvalid={Boolean(errors.name)}
               {...registerName}
             />
@@ -281,7 +281,7 @@ export const SignupForm = ({
               required
               {...registerPassword}
             />
-            <PasswordChecks password={form.watch("password")} />
+            <PasswordChecks password={password} />
           </AuthField>
 
           {isTurnstileConfigured && turnstileSiteKey && (

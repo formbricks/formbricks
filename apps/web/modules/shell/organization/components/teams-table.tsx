@@ -95,6 +95,7 @@ export const TeamsTable = ({
 
       {managedTeam && (
         <TeamSettingsDialog
+          key={managedTeam.id}
           teamId={managedTeam.id}
           teamName={managedTeam.name}
           open

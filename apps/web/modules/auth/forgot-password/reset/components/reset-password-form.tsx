@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter, useSearchParams } from "next/navigation";
-import { SubmitHandler, useForm } from "react-hook-form";
+import { SubmitHandler, useForm, useWatch } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
@@ -66,6 +66,7 @@ export const ResetPasswordForm = () => {
   };
 
   const { errors } = form.formState;
+  const password = useWatch({ control: form.control, name: "password" });
 
   return (
     <form onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-col gap-4">
@@ -79,7 +80,7 @@ export const ResetPasswordForm = () => {
           required
           {...form.register("password")}
         />
-        <PasswordChecks password={form.watch("password")} />
+        <PasswordChecks password={password} />
       </AuthField>
       <AuthField
         id="reset-confirm-password"

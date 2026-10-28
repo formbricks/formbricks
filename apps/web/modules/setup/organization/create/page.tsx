@@ -8,7 +8,7 @@ import { getUser } from "@/lib/user/service";
 import { DEFAULT_WORKSPACE_NAME } from "@/lib/workspace/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { requiresPasswordConfirmationForAccountDeletion } from "@/modules/account/lib/account-deletion-auth";
-import { AuthCard } from "@/modules/auth/components/form-wrapper";
+import { AuthCard } from "@/modules/auth/components/auth-card";
 import { getSession } from "@/modules/auth/lib/session";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { RemovedFromOrganization } from "@/modules/setup/organization/create/components/removed-from-organization";

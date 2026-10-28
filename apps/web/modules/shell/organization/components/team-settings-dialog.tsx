@@ -67,7 +67,10 @@ interface TeamSettingsDialogProps {
 const byLabel = (a: { label: string }, b: { label: string }) =>
   a.label.localeCompare(b.label, undefined, { sensitivity: "base" });
 
-/** Loads the team's members and workspace access when the dialog opens, then hands them to the form. */
+/**
+ * Loads the team's members and workspace access when the dialog opens, then hands them to the form. The
+ * caller mounts one dialog per managed team (`key` the team id), so its state always starts empty.
+ */
 export const TeamSettingsDialog = ({
   open,
   onOpenChange,
@@ -82,8 +85,6 @@ export const TeamSettingsDialog = ({
   useEffect(() => {
     if (!open) return;
     let isStale = false;
-    setDetails(null);
-    setLoadError(null);
 
     getTeamDetailsAction({ teamId })
       .then((result) => {

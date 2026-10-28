@@ -1,8 +1,8 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { getTranslate } from "@/lingodotdev/server";
+import { AuthCard } from "@/modules/auth/components/auth-card";
 import { AuthHeading } from "@/modules/auth/components/auth-heading";
-import { AuthCard } from "@/modules/auth/components/form-wrapper";
 import { Button } from "@/modules/ui/components/button";
 
 export const metadata: Metadata = {

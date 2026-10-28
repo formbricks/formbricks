@@ -13,7 +13,6 @@ import { TeamsTable } from "@/modules/shell/organization/components/teams-table"
 import { requireNonBillingRole } from "@/modules/shell/organization/lib/restricted-section";
 import { getTeamDirectory } from "@/modules/shell/organization/lib/team-directory";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
-import { Button } from "@/modules/ui/components/button";
 
 const TeamsPage = async ({ params }: Readonly<{ params: Promise<{ organizationId: string }> }>) => {
   const { organizationId } = await params;

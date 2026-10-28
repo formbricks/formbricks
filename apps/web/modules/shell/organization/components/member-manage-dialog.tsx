@@ -166,19 +166,18 @@ export const MemberManageDialog = ({ organizationId, member, access }: Readonly<
   };
 
   const removeOrLeave = async () => {
-    let succeeded: boolean;
     if (access.canLeave) {
-      succeeded = await run(
+      const hasLeft = await run(
         "remove",
         () => leaveOrganizationAction({ organizationId }),
         t("shell.organization.members.left_organization")
       );
       // The viewer no longer belongs here, so the page they are on stops existing for them.
-      if (succeeded) globalThis.location.assign("/");
+      if (hasLeft) globalThis.location.assign("/");
       return;
     }
 
-    succeeded = await run(
+    const isRemoved = await run(
       "remove",
       () =>
         isInvite
@@ -188,7 +187,7 @@ export const MemberManageDialog = ({ organizationId, member, access }: Readonly<
         ? t("shell.organization.members.invitation_deleted")
         : t("shell.organization.members.member_removed")
     );
-    if (succeeded) handleOpenChange(false);
+    if (isRemoved) handleOpenChange(false);
   };
 
   let removeLabel = t("shell.organization.members.remove_member");

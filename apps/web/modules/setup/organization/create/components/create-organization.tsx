@@ -10,9 +10,9 @@ import { ZOrganization } from "@formbricks/types/organizations";
 import { ZWorkspace } from "@formbricks/types/workspace";
 import { createOrganizationAction } from "@/app/setup/organization/create/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { AuthCard } from "@/modules/auth/components/auth-card";
 import { AuthField } from "@/modules/auth/components/auth-field";
 import { AuthHeading } from "@/modules/auth/components/auth-heading";
-import { AuthCard } from "@/modules/auth/components/form-wrapper";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 

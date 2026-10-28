@@ -4,7 +4,7 @@ import { AuthenticationError } from "@formbricks/types/errors";
 import { withAuthorizationSurface } from "@/lib/authorization/context";
 import { SMTP_HOST, SMTP_PASSWORD, SMTP_PORT, SMTP_USER } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
-import { AuthCard } from "@/modules/auth/components/form-wrapper";
+import { AuthCard } from "@/modules/auth/components/auth-card";
 import { getSession } from "@/modules/auth/lib/session";
 import { InviteMembers } from "@/modules/setup/organization/[organizationId]/invite/components/invite-members";
 import { hasSetupInviteAccess } from "@/modules/setup/organization/[organizationId]/invite/lib/authorization";
