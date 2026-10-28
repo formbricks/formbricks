@@ -34,11 +34,10 @@ export const QuestionTabs = ({
         <TabsTrigger value="settings" variant="underline" className="py-2">
           {t("common.settings")}
           {hasSettingsIssue && (
-            <span
-              role="img"
-              aria-label={t("workspace.surveys.edit.code_needs_attention")}
-              className="ml-1.5 size-2 rounded-full bg-red-500"
-            />
+            <>
+              <span aria-hidden="true" className="ml-1.5 size-2 rounded-full bg-red-500" />
+              <span className="sr-only">{t("workspace.surveys.edit.code_needs_attention")}</span>
+            </>
           )}
         </TabsTrigger>
       </TabsList>

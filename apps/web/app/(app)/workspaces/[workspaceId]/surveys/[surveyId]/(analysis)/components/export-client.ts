@@ -120,7 +120,7 @@ export const saveBlob = (blob: Blob, fileName: string): void => {
   link.download = fileName;
   document.body.appendChild(link);
   link.click();
-  document.body.removeChild(link);
+  link.remove();
   // Revoked on the next turn: some browsers start the download after the click returns.
   setTimeout(() => URL.revokeObjectURL(url), 0);
 };

@@ -644,6 +644,45 @@ function refuseOverConcurrency(
   return problemCapacityReached(requestId, concurrency.retryAfterSeconds, instance);
 }
 
+type TConcurrencyConfig = NonNullable<TWithV3ApiWrapperParams<undefined>["concurrency"]>;
+
+type TSlotAcquisition = { refusal: Response } | { release: TReleaseSlot | undefined };
+
+/**
+ * Takes a concurrency slot when the route has a limit that applies to this request. Either a refusal
+ * to return as-is, or the release for the slot held (undefined when the route takes none).
+ */
+function acquireConcurrencySlot(
+  req: NextRequest,
+  authentication: TV3Authentication,
+  concurrency: TConcurrencyConfig | undefined,
+  refusalContext: Parameters<typeof refuseOverConcurrency>[2]
+): TSlotAcquisition {
+  if (!concurrency || !(concurrency.appliesTo?.(req) ?? true)) {
+    return { release: undefined };
+  }
+
+  const slot = concurrency.limiter.tryAcquire(getRateLimitIdentifier(authentication) ?? undefined);
+  if (!slot.ok) {
+    return { refusal: refuseOverConcurrency(slot.reason, concurrency, refusalContext) };
+  }
+
+  return { release: slot.release };
+}
+
+/** Marks the audit entry for the outcome of the handler: a success, or the request id as the event id. */
+const recordAuditOutcome = (auditLog: TV3AuditLog | undefined, response: Response, requestId: string) => {
+  if (!auditLog) {
+    return;
+  }
+
+  if (response.ok) {
+    auditLog.status = "success";
+  } else {
+    auditLog.eventId = requestId;
+  }
+};
+
 export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unknown>(
   params: TWithV3ApiWrapperParams<S, TProps>
 ): ((req: NextRequest, props: TProps) => Promise<Response>) => {
@@ -709,15 +748,15 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
         return rateLimitResponse;
       }
 
-      if (concurrency && (concurrency.appliesTo?.(req) ?? true)) {
-        const slot = concurrency.limiter.tryAcquire(
-          getRateLimitIdentifier(authResult.authentication) ?? undefined
-        );
-        if (!slot.ok) {
-          return refuseOverConcurrency(slot.reason, concurrency, { requestId, instance, log });
-        }
-        releaseSlot = slot.release;
+      const acquisition = acquireConcurrencySlot(req, authResult.authentication, concurrency, {
+        requestId,
+        instance,
+        log,
+      });
+      if ("refusal" in acquisition) {
+        return acquisition.refusal;
       }
+      releaseSlot = acquisition.release;
 
       const parsedInputResult = await parseV3Input(req, props, schemas, {
         requestId,
@@ -761,13 +800,7 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
         ? await withAuthorizationSurface("api_v3", execute)
         : await execute();
 
-      if (auditLog) {
-        if (response.ok) {
-          auditLog.status = "success";
-        } else {
-          auditLog.eventId = requestId;
-        }
-      }
+      recordAuditOutcome(auditLog, response, requestId);
 
       await queueV3AuditLog(auditLog, requestId, log);
       reportServerError(req, response);

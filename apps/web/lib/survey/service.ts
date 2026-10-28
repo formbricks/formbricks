@@ -1133,6 +1133,82 @@ const assertSurveySegmentBelongsToWorkspace = async (
   }
 };
 
+const toDateOrNull = (value: unknown): Date | null => (value instanceof Date ? value : null);
+
+const buildSurveyLanguagesCreateData = (
+  languages: TSurveyCreateInput["languages"]
+): Prisma.SurveyLanguageCreateNestedManyWithoutSurveyInput | undefined => {
+  if (!languages?.length) {
+    return undefined;
+  }
+
+  return {
+    create: languages.map((surveyLanguage) => ({
+      language: {
+        connect: {
+          id: surveyLanguage.language.id,
+        },
+      },
+      default: surveyLanguage.default,
+      enabled: surveyLanguage.enabled,
+    })),
+  };
+};
+
+/**
+ * ENG-3228: same refusal as the update path — the legacy projection the read seam will derive
+ * from these rows has to be one `ZSurvey` can parse, and a shared entry is canonicalized from its
+ * library row first so the projection checked is the one that will actually be derived.
+ * `reconcileEmbeddedData` re-runs the link refusals inside the transaction, doing it up front
+ * turns a bad link into a 400 rather than a rolled-back create.
+ */
+const assertCreateEmbeddedFieldsAreStorable = async (
+  workspaceId: string,
+  embeddedFields: TSurveyCreateInput["embeddedFields"]
+): Promise<void> => {
+  if (embeddedFields === undefined) {
+    return;
+  }
+
+  const desired = await assertLinkableEmbeddedFields(prisma, {
+    workspaceId,
+    desired: linkedToDesiredEmbeddedFields(embeddedFields),
+  });
+  assertDerivedLegacyColumnsAreStorable(toLegacyEmbeddedFields(desired));
+};
+
+/** The private targeting segment an app survey is created with, written in the survey's transaction. */
+const createPrivateSegmentForSurvey = async (
+  tx: Prisma.TransactionClient,
+  { surveyId, workspaceId, filters }: { surveyId: string; workspaceId: string; filters: TBaseFilters }
+): Promise<void> => {
+  const newSegment = await tx.segment.create({
+    data: {
+      title: surveyId,
+      filters,
+      isPrivate: true,
+      workspace: {
+        connect: {
+          id: workspaceId,
+        },
+      },
+    },
+  });
+
+  await tx.survey.update({
+    where: {
+      id: surveyId,
+    },
+    data: {
+      segment: {
+        connect: {
+          id: newSegment.id,
+        },
+      },
+    },
+  });
+};
+
 export type TCreateSurveyOptions = Readonly<{
   /**
    * ENG-3282: visibility and owner, from `resolveSurveyCreationFacts` — never from the request body,
@@ -1182,18 +1258,7 @@ export const createSurvey = async (
     // keeps duplicating a survey that already declares `country` working.
     assertValidNewDeclaredFields({ existing: {}, incoming: parsedSurveyBody });
 
-    // ENG-3228: same refusal as the update path — the legacy projection the read seam will derive
-    // from these rows has to be one `ZSurvey` can parse, and a shared entry is canonicalized from its
-    // library row first so the projection checked is the one that will actually be derived.
-    // `reconcileEmbeddedData` re-runs the link refusals inside the transaction below; doing it out
-    // here too turns a bad link into a 400 rather than a rolled-back create.
-    if (embeddedFields !== undefined) {
-      const desired = await assertLinkableEmbeddedFields(prisma, {
-        workspaceId: parsedWorkspaceId,
-        desired: linkedToDesiredEmbeddedFields(embeddedFields),
-      });
-      assertDerivedLegacyColumnsAreStorable(toLegacyEmbeddedFields(desired));
-    }
+    await assertCreateEmbeddedFieldsAreStorable(parsedWorkspaceId, embeddedFields);
 
     // An app survey can never be shown without a trigger, so block creating one directly in a
     // non-draft status with zero triggers (mirrors the editor's publish guard). No creative can open a
@@ -1208,23 +1273,8 @@ export const createSurvey = async (
     ) {
       throw new InvalidInputError(APP_SURVEY_TRIGGER_REQUIRED_MESSAGE);
     }
-    const normalizedCloseOn = restSurveyBody.closeOn instanceof Date ? restSurveyBody.closeOn : null;
-    const normalizedPublishOn = restSurveyBody.publishOn instanceof Date ? restSurveyBody.publishOn : null;
-    const surveyLanguagesCreateData: Prisma.SurveyLanguageCreateNestedManyWithoutSurveyInput | undefined =
-      languages?.length
-        ? {
-            create: languages.map((surveyLanguage) => ({
-              language: {
-                connect: {
-                  id: surveyLanguage.language.id,
-                },
-              },
-              default: surveyLanguage.default,
-              enabled: surveyLanguage.enabled,
-            })),
-          }
-        : undefined;
-
+    const normalizedCloseOn = toDateOrNull(restSurveyBody.closeOn);
+    const normalizedPublishOn = toDateOrNull(restSurveyBody.publishOn);
     const actionClasses = await getActionClasses(parsedWorkspaceId);
 
     const baseData = {
@@ -1239,7 +1289,7 @@ export const createSurvey = async (
         publishOn: normalizedPublishOn,
         status: restSurveyBody.status ?? "draft",
       }),
-      languages: surveyLanguagesCreateData,
+      languages: buildSurveyLanguagesCreateData(languages),
       segment: segment?.id ? { connect: { id: segment.id } } : undefined,
       triggers: restSurveyBody.triggers
         ? handleTriggerUpdates(restSurveyBody.triggers, [], actionClasses)
@@ -1280,30 +1330,10 @@ export const createSurvey = async (
         });
 
         if (createdSurvey.type === "app") {
-          const newSegment = await tx.segment.create({
-            data: {
-              title: createdSurvey.id,
-              filters: privateSegmentFilters,
-              isPrivate: true,
-              workspace: {
-                connect: {
-                  id: parsedWorkspaceId,
-                },
-              },
-            },
-          });
-
-          await tx.survey.update({
-            where: {
-              id: createdSurvey.id,
-            },
-            data: {
-              segment: {
-                connect: {
-                  id: newSegment.id,
-                },
-              },
-            },
+          await createPrivateSegmentForSurvey(tx, {
+            surveyId: createdSurvey.id,
+            workspaceId: parsedWorkspaceId,
+            filters: privateSegmentFilters,
           });
         }
 

@@ -16,8 +16,6 @@ import {
   TSurveyStatus,
   TSurveyVisibility,
   ZSurvey,
-  ZSurveyEndScreenCard,
-  ZSurveyRedirectUrlCard,
 } from "@formbricks/types/surveys/types";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import type { TSurveyAccess } from "@/lib/survey/visibility/access";
@@ -33,6 +31,10 @@ import {
   isCustomCssBlockingManualSave,
 } from "@/modules/survey/editor/lib/custom-css-autosave";
 import { getLogicDestinationErrorMessage } from "@/modules/survey/editor/lib/logic-destination-error";
+import {
+  parseSurveyEndings,
+  removeDraftFlagsFromBlocks,
+} from "@/modules/survey/editor/lib/survey-save-payload";
 import { hasUnsavedSurveyChanges, isJustSavedBypassValid } from "@/modules/survey/editor/lib/unsaved-changes";
 import { scrollElementCardIntoView } from "@/modules/survey/editor/lib/utils";
 import { TSurveyDraft } from "@/modules/survey/editor/types/survey";
@@ -616,6 +618,27 @@ export const SurveyMenuBar = ({
   }, [localSurvey.publishOn, localSurvey.status, saveAttemptOrder, setLocalSurvey]);
 
   // Add new handler after handleSurveySave
+  // The reload prompt already explains a stale-deployment failure, so don't also claim the save itself
+  // went wrong. Always resolves to `false`: the save did not go through.
+  const reportSaveException = (e: unknown): false => {
+    if (reportStaleServerActionError(e)) {
+      return false;
+    }
+    console.error(e);
+    toast.error(t("workspace.surveys.edit.error_saving_changes"));
+    return false;
+  };
+
+  // ENG-6783: the server refused an edit to a locked field; say why, with its details.
+  const toastSaveRefusal = (errorMessage: string) => {
+    const lockDetails = parsePublishedLockErrorMessage(errorMessage);
+    toast.error(
+      lockDetails === null
+        ? errorMessage
+        : t("workspace.surveys.edit.published_survey_locked", { details: lockDetails })
+    );
+  };
+
   const handleSurveySaveDraft = async (): Promise<boolean> => {
     if (blockOnInvalidCustomCss()) return false;
 
@@ -648,14 +671,7 @@ export const SurveyMenuBar = ({
     } catch (e) {
       setIsSurveySaving(false);
       saveAttemptOrder.settle(attempt);
-      // The reload prompt already explains a stale-deployment failure, so don't also claim the
-      // save itself went wrong.
-      if (reportStaleServerActionError(e)) {
-        return false;
-      }
-      console.error(e);
-      toast.error(t("workspace.surveys.edit.error_saving_changes"));
-      return false;
+      return reportSaveException(e);
     }
   };
 
@@ -684,25 +700,13 @@ export const SurveyMenuBar = ({
 
       // Clean up blocks by removing isDraft from elements
       if (localSurvey.blocks) {
-        localSurvey.blocks = localSurvey.blocks.map((block) => ({
-          ...block,
-          elements: block.elements.map((element) => {
-            const { isDraft, ...rest } = element;
-            return rest;
-          }),
-        }));
+        localSurvey.blocks = removeDraftFlagsFromBlocks(localSurvey.blocks);
       }
 
       // Set questions to empty array for blocks-based surveys
       localSurvey.questions = [];
 
-      localSurvey.endings = localSurvey.endings.map((ending) => {
-        if (ending.type === "redirectToUrl") {
-          return ZSurveyRedirectUrlCard.parse(ending);
-        } else {
-          return ZSurveyEndScreenCard.parse(ending);
-        }
-      });
+      localSurvey.endings = parseSurveyEndings(localSurvey.endings);
 
       attempt = saveAttemptOrder.begin();
       const segment = await handleSegmentUpdate();
@@ -723,14 +727,7 @@ export const SurveyMenuBar = ({
         router.refresh();
       } else {
         saveAttemptOrder.settle(attempt);
-        const errorMessage = getFormattedErrorMessage(updatedSurveyResponse);
-        // ENG-6783: the server refused an edit to a locked field; say why, with its details.
-        const lockDetails = parsePublishedLockErrorMessage(errorMessage);
-        toast.error(
-          lockDetails === null
-            ? errorMessage
-            : t("workspace.surveys.edit.published_survey_locked", { details: lockDetails })
-        );
+        toastSaveRefusal(getFormattedErrorMessage(updatedSurveyResponse));
         return false;
       }
 
@@ -738,12 +735,7 @@ export const SurveyMenuBar = ({
     } catch (e) {
       setIsSurveySaving(false);
       if (attempt !== undefined) saveAttemptOrder.settle(attempt);
-      if (reportStaleServerActionError(e)) {
-        return false;
-      }
-      console.error(e);
-      toast.error(t("workspace.surveys.edit.error_saving_changes"));
-      return false;
+      return reportSaveException(e);
     }
   };
 

@@ -444,11 +444,15 @@ const BlockCardComponent = ({
                                     <h3 className="flex items-center gap-2 text-sm font-semibold">
                                       {getElementHeadline(element, selectedLanguageCode)}
                                       {codeIssues.has(element.id) && (
-                                        <span
-                                          role="img"
-                                          aria-label={t("workspace.surveys.edit.code_needs_attention")}
-                                          className="size-2 shrink-0 rounded-full bg-red-500"
-                                        />
+                                        <>
+                                          <span
+                                            aria-hidden="true"
+                                            className="size-2 shrink-0 rounded-full bg-red-500"
+                                          />
+                                          <span className="sr-only">
+                                            {t("workspace.surveys.edit.code_needs_attention")}
+                                          </span>
+                                        </>
                                       )}
                                     </h3>
                                     {!isOpen && element.type !== TSurveyElementTypeEnum.CTA && (
