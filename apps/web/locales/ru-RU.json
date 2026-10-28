@@ -4633,10 +4633,12 @@
         "export_preparing": "Готовим экспорт… Ответов: {count, number}",
         "export_progress": "Экспортируем… Получено: {size}",
         "export_progress_hint": "Это окно можно закрыть. Загрузка начнётся, когда файл будет готов.",
+        "export_progress_rows": "Экспорт… {rows, number} из {total, number} ответов",
         "export_ready": "Экспорт готов",
         "export_ready_file": "Файл {fileName} скачан",
         "export_ready_file_count": "Файл {fileName} скачан · Ответов: {count, number}",
         "export_received": "Получено: {size}",
+        "export_rows_of_total": "{rows, number} из {total, number} ответов",
         "export_starting": "Готовим экспорт…",
         "exporting": "Экспортируем…",
         "format_csv": ".csv",
@@ -4645,6 +4647,7 @@
         "modal_title": "Параметры экспорта",
         "spss_label": "Добавить файл синтаксиса SPSS (.sps)",
         "zip_description": "Всегда включено, если в экспорте больше одного файла",
+        "zip_description_optional": "Скачать файл в формате zip",
         "zip_label": "Сжать в .zip"
       },
       "featured_templates": {

@@ -4633,10 +4633,12 @@
         "export_preparing": "Se pregătește exportul… {count, number} răspunsuri",
         "export_progress": "Se exportă… {size} primiți",
         "export_progress_hint": "Poți închide această fereastră. Descărcarea începe când fișierul este gata.",
+        "export_progress_rows": "Se exportă… {rows, number} din {total, number} răspunsuri",
         "export_ready": "Export finalizat",
         "export_ready_file": "{fileName} descărcat",
         "export_ready_file_count": "{fileName} descărcat · {count, number} răspunsuri",
         "export_received": "{size} primiți",
+        "export_rows_of_total": "{rows, number} din {total, number} răspunsuri",
         "export_starting": "Se pregătește exportul…",
         "exporting": "Se exportă…",
         "format_csv": ".csv",
@@ -4645,6 +4647,7 @@
         "modal_title": "Opțiuni de export",
         "spss_label": "Adaugă fișier de sintaxă SPSS (.sps)",
         "zip_description": "Întotdeauna activat când exportul conține mai multe fișiere",
+        "zip_description_optional": "Descarcă fișierul ca arhivă zip",
         "zip_label": "Comprimă în .zip"
       },
       "featured_templates": {

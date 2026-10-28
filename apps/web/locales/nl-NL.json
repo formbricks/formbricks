@@ -4633,10 +4633,12 @@
         "export_preparing": "Je export wordt voorbereid… {count, number} reacties",
         "export_progress": "Exporteren… {size} ontvangen",
         "export_progress_hint": "Je kunt dit venster sluiten. De download start zodra het bestand klaar is.",
+        "export_progress_rows": "Exporteren… {rows, number} van {total, number} reacties",
         "export_ready": "Export gereed",
         "export_ready_file": "{fileName} gedownload",
         "export_ready_file_count": "{fileName} gedownload · {count, number} reacties",
         "export_received": "{size} ontvangen",
+        "export_rows_of_total": "{rows, number} van {total, number} reacties",
         "export_starting": "Je export wordt voorbereid…",
         "exporting": "Exporteren…",
         "format_csv": ".csv",
@@ -4645,6 +4647,7 @@
         "modal_title": "Exportopties",
         "spss_label": "SPSS-syntaxbestand (.sps) toevoegen",
         "zip_description": "Altijd aan als de export uit meer dan één bestand bestaat",
+        "zip_description_optional": "Download het bestand als zip",
         "zip_label": "Comprimeren naar .zip"
       },
       "featured_templates": {

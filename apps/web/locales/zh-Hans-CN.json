@@ -4633,10 +4633,12 @@
         "export_preparing": "正在准备导出… {count, number} 条回复",
         "export_progress": "正在导出… 已接收 {size}",
         "export_progress_hint": "你可以关闭此窗口。文件准备好后会自动开始下载。",
+        "export_progress_rows": "正在导出… 已导出 {rows, number} / {total, number} 份回复",
         "export_ready": "导出完成",
         "export_ready_file": "已下载 {fileName}",
         "export_ready_file_count": "已下载 {fileName} · {count, number} 条回复",
         "export_received": "已接收 {size}",
+        "export_rows_of_total": "{rows, number} / {total, number} 份回复",
         "export_starting": "正在准备导出…",
         "exporting": "正在导出…",
         "format_csv": ".csv",
@@ -4645,6 +4647,7 @@
         "modal_title": "导出选项",
         "spss_label": "添加 SPSS 语法文件 (.sps)",
         "zip_description": "当导出包含多个文件时,此选项始终开启",
+        "zip_description_optional": "以 zip 压缩包形式下载文件",
         "zip_label": "压缩为 .zip"
       },
       "featured_templates": {
