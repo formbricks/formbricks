@@ -98,8 +98,15 @@ export type TWithV3ApiWrapperParams<S extends TV3Schemas | undefined, TProps = u
    *
    * Rate limiting runs first on purpose, so a rate-limited caller never holds a slot; the price is that
    * a refusal still spends one rate-limit token.
+   *
+   * `appliesTo` narrows the limit to the requests that are expensive: one that returns false takes no
+   * slot and cannot be refused for lack of one (a cheap pre-flight of the same route, say).
    */
-  concurrency?: { limiter: ConcurrencyLimiter; retryAfterSeconds: number };
+  concurrency?: {
+    limiter: ConcurrencyLimiter;
+    retryAfterSeconds: number;
+    appliesTo?: (req: NextRequest) => boolean;
+  };
   action?: TAuditAction;
   targetType?: TAuditTarget;
   handler: (params: TV3HandlerParams<TV3ParsedInput<S>, TProps>) => MaybePromise<Response>;
@@ -702,7 +709,7 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
         return rateLimitResponse;
       }
 
-      if (concurrency) {
+      if (concurrency && (concurrency.appliesTo?.(req) ?? true)) {
         const slot = concurrency.limiter.tryAcquire(
           getRateLimitIdentifier(authResult.authentication) ?? undefined
         );

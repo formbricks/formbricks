@@ -29,14 +29,22 @@ const querySchema = z.object({
     .transform((value) => value === "true"),
 });
 
-/** Per process, and per signed-in user: an export holds a database connection and a stream for minutes. */
+/**
+ * Per process, and per signed-in user: an export holds a database connection and a stream for minutes.
+ * The modal's `dryRun` count requests are not exports and take no slot: it fires one per option the owner
+ * toggles, and counting them here turned a few quick clicks into a 429 or 503 with no count shown.
+ */
 const exportConcurrency = new ConcurrencyLimiter(6, { maxPerKey: 3 });
 
 export const POST = withV3ApiWrapper({
   auth: "session",
   action: "exported",
   targetType: "file",
-  concurrency: { limiter: exportConcurrency, retryAfterSeconds: 15 },
+  concurrency: {
+    limiter: exportConcurrency,
+    retryAfterSeconds: 15,
+    appliesTo: (req) => req.nextUrl.searchParams.get("dryRun") !== "true",
+  },
   schemas: { params: paramsSchema, query: querySchema, body: ZExportRequest },
   handler: ({ req, parsedInput, authentication, requestId, instance, auditLog }) =>
     handleExportRequest({
