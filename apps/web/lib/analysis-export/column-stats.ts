@@ -13,6 +13,19 @@ export type TColumnStats = {
  * Observes rows one at a time, so the writers need no second pass over data they have already
  * streamed out. Cost is one comparison per cell.
  */
+const observeText = (entry: TColumnStats, text: string): void => {
+  const bytes = Buffer.byteLength(text, "utf8");
+  if (bytes > entry.maxTextBytes) entry.maxTextBytes = bytes;
+};
+
+const observeNumber = (entry: TColumnStats, value: number): void => {
+  const written = String(value);
+  if (written.length > entry.maxNumberChars) entry.maxNumberChars = written.length;
+  const point = written.indexOf(".");
+  const decimals = point === -1 ? 0 : written.length - point - 1;
+  if (decimals > entry.maxDecimals) entry.maxDecimals = decimals;
+};
+
 export const createColumnStats = (columnCount: number) => {
   const stats: TColumnStats[] = Array.from({ length: columnCount }, () => ({
     maxTextBytes: 0,
@@ -26,16 +39,8 @@ export const createColumnStats = (columnCount: number) => {
         const cell = cells[index];
         if (cell === null) continue;
         const entry = stats[index];
-        if (typeof cell === "string") {
-          const bytes = Buffer.byteLength(cell, "utf8");
-          if (bytes > entry.maxTextBytes) entry.maxTextBytes = bytes;
-        } else {
-          const written = String(cell);
-          if (written.length > entry.maxNumberChars) entry.maxNumberChars = written.length;
-          const point = written.indexOf(".");
-          const decimals = point === -1 ? 0 : written.length - point - 1;
-          if (decimals > entry.maxDecimals) entry.maxDecimals = decimals;
-        }
+        if (typeof cell === "string") observeText(entry, cell);
+        else observeNumber(entry, cell);
       }
     },
     result: (): TColumnStats[] => stats,

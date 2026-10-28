@@ -132,13 +132,15 @@ const describe = (column: TAnalysisColumn): TInfo & { type: string } => {
   const typeName = QUESTION_TYPE_NAMES[question?.type ?? ""] ?? question?.type ?? "question";
   const option = column.option?.label ?? "";
 
+  const matrixRowNote = column.matrixRow ? ` Matrix row: ${column.matrixRow.label}.` : "";
+
   switch (column.kind) {
     case "code":
       return {
         type: typeName,
         text,
         detail: "code",
-        notes: `${BLANK_MEANS}${column.matrixRow ? ` Matrix row: ${column.matrixRow.label}.` : ""}`,
+        notes: `${BLANK_MEANS}${matrixRowNote}`,
         codes: (column.codes ?? []).map(({ code, label }) => [code, label]),
       };
     case "flag":
@@ -174,7 +176,7 @@ const describe = (column: TAnalysisColumn): TInfo & { type: string } => {
           notes: BLANK_MEANS,
           codes: points.map((point): [string, string] => [
             String(point),
-            point === lowest ? "Lowest" : point === highest ? "Highest" : "",
+            scalePointLabel(point, lowest, highest),
           ]),
         };
       }
@@ -183,6 +185,11 @@ const describe = (column: TAnalysisColumn): TInfo & { type: string } => {
     default:
       return { type: typeName, text, detail: "text", notes: BLANK_MEANS };
   }
+};
+
+const scalePointLabel = (point: number, lowest: number, highest: number | undefined): string => {
+  if (point === lowest) return "Lowest";
+  return point === highest ? "Highest" : "";
 };
 
 /**

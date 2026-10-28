@@ -19,6 +19,19 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { ExportCancelledError, buildExportResponse, countExportResponses } from "./export-response";
 
+/** Charged on the download path only, so the modal's count requests do not spend an export's allowance. */
+const rateLimitedResponse = async (
+  sessionUserId: string | null | undefined,
+  requestId: string
+): Promise<Response | null> => {
+  if (!sessionUserId) return null;
+  const limit = await checkRateLimit(rateLimitConfigs.storage.responsesExport, sessionUserId);
+  if (limit.ok && !limit.data.allowed) {
+    return problemTooManyRequests(requestId, "Too many exports. Try again shortly.", limit.data.retryAfter);
+  }
+  return null;
+};
+
 /**
  * What `POST /api/surveys/{surveyId}/export` does once the wrapper has parsed the request.
  *
@@ -82,13 +95,8 @@ export const handleExportRequest = async ({
   }
 
   const sessionUserId = getSessionUserId(authentication);
-  // Charged on the download path only, so the modal's count requests do not spend an export's allowance.
-  if (sessionUserId) {
-    const limit = await checkRateLimit(rateLimitConfigs.storage.responsesExport, sessionUserId);
-    if (limit.ok && !limit.data.allowed) {
-      return problemTooManyRequests(requestId, "Too many exports. Try again shortly.", limit.data.retryAfter);
-    }
-  }
+  const rateLimited = await rateLimitedResponse(sessionUserId, requestId);
+  if (rateLimited) return rateLimited;
 
   if (auditLog) {
     auditLog.organizationId = authResult.organizationId;

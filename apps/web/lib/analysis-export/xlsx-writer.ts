@@ -55,7 +55,7 @@ const cutCell = (text: string): string => {
 const columnLetters = (index: number): string => {
   let letters = "";
   for (let n = index + 1; n > 0; n = Math.floor((n - 1) / 26)) {
-    letters = String.fromCharCode(65 + ((n - 1) % 26)) + letters;
+    letters = String.fromCodePoint(65 + ((n - 1) % 26)) + letters;
   }
   return letters;
 };
@@ -102,9 +102,8 @@ export const createXlsxWorkbook = ({ limits = XLSX_LIMITS }: { limits?: TLimits 
           throw new XlsxLimitError(`A sheet holds at most ${limits.rows} rows`);
         }
         const number = sheet.rows.length + 2;
-        sheet.rows.push(
-          `<row r="${number}">${row.map((cell, index) => cellXml(`${columnLetters(index)}${number}`, cell)).join("")}</row>`
-        );
+        const cellsXml = row.map((cell, index) => cellXml(`${columnLetters(index)}${number}`, cell)).join("");
+        sheet.rows.push(`<row r="${number}">${cellsXml}</row>`);
         cells += row.length;
       },
     };
@@ -120,7 +119,10 @@ export const createXlsxWorkbook = ({ limits = XLSX_LIMITS }: { limits?: TLimits 
         return `<col min="${index + 1}" max="${index + 1}" width="${width}" customWidth="1"/>`;
       })
       .join("");
-    const headerRow = `<row r="1">${header.map((title, index) => cellXml(`${columnLetters(index)}1`, title, HEADER_STYLE)).join("")}</row>`;
+    const headerCells = header
+      .map((title, index) => cellXml(`${columnLetters(index)}1`, title, HEADER_STYLE))
+      .join("");
+    const headerRow = `<row r="1">${headerCells}</row>`;
     return (
       `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n` +
       `<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">` +
@@ -165,9 +167,15 @@ export const createXlsxWorkbook = ({ limits = XLSX_LIMITS }: { limits?: TLimits 
           `</Relationships>`,
         { name: "_rels/.rels" }
       );
+      const sheetEntries = sheets
+        .map(
+          (sheet, index) =>
+            `<sheet name="${escapeXml(sheet.name)}" sheetId="${index + 1}" r:id="rId${index + 1}"/>`
+        )
+        .join("");
       archive.append(
         `${xmlHeader}<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">` +
-          `<sheets>${sheets.map((sheet, index) => `<sheet name="${escapeXml(sheet.name)}" sheetId="${index + 1}" r:id="rId${index + 1}"/>`).join("")}</sheets>` +
+          `<sheets>${sheetEntries}</sheets>` +
           `</workbook>`,
         { name: "xl/workbook.xml" }
       );

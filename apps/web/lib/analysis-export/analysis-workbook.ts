@@ -38,6 +38,19 @@ export type TAnalysisWorkbookOptions = TAnalysisFileOptions & {
   maxCells?: number;
 };
 
+type TWorkbook = ReturnType<typeof createXlsxWorkbook>;
+
+const addDatamapSheet = (workbook: TWorkbook, exported: TAnalysisExport): void => {
+  const datamap = workbook.addSheet("Datamap", DATAMAP_HEADERS);
+  const unmappedColumns = unmappedColumnNames(exported.summary());
+  for (const row of buildDatamap(exported.columns, { unmappedColumns })) datamap.addRow(row);
+};
+
+const addUnmappedSheet = (workbook: TWorkbook, exported: TAnalysisExport): void => {
+  const unmapped = workbook.addSheet("Unmapped values", UNMAPPED_HEADERS);
+  for (const row of buildUnmappedValuesTable(exported.summary())) unmapped.addRow(row);
+};
+
 /**
  * The Excel file of an Analysis export: sheets Labels and Codes (one or both, as Display answers
  * says), then Datamap and Unmapped values. Built whole in memory, by nature of the format; set
@@ -53,35 +66,28 @@ export const buildAnalysisWorkbook = async (
     sheet: workbook.addSheet(part.sheet, dataHeaderCells(exported.columns, display, part.kind, questions)),
   }));
 
-  const tooBig = (cells: number): XlsxLimitError =>
-    new XlsxLimitError(`The workbook would hold ${cells} cells, more than the ${maxCells} allowed`);
-  if (maxCells !== undefined) {
-    const expected = analysisWorkbookCells({
+  const assertWithinLimit = (cells: number): void => {
+    if (maxCells !== undefined && cells > maxCells) {
+      throw new XlsxLimitError(`The workbook would hold ${cells} cells, more than the ${maxCells} allowed`);
+    }
+  };
+  assertWithinLimit(
+    analysisWorkbookCells({
       display,
       columns: exported.columns.length,
       responses: exported.counts.included,
-    });
-    if (expected > maxCells) throw tooBig(expected);
-  }
+    })
+  );
 
   for await (const batch of exported.rows()) {
     for (const row of batch) {
       for (const { part, sheet } of parts) sheet.addRow(rowCells(row, part.kind));
     }
-    if (maxCells !== undefined && workbook.cellCount() > maxCells) throw tooBig(workbook.cellCount());
+    assertWithinLimit(workbook.cellCount());
   }
 
-  const summary = exported.summary();
-  if (include?.datamap !== false) {
-    const datamap = workbook.addSheet("Datamap", DATAMAP_HEADERS);
-    for (const row of buildDatamap(exported.columns, { unmappedColumns: unmappedColumnNames(summary) })) {
-      datamap.addRow(row);
-    }
-  }
-  if (include?.unmappedValues !== false) {
-    const unmapped = workbook.addSheet("Unmapped values", UNMAPPED_HEADERS);
-    for (const row of buildUnmappedValuesTable(summary)) unmapped.addRow(row);
-  }
+  if (include?.datamap !== false) addDatamapSheet(workbook, exported);
+  if (include?.unmappedValues !== false) addUnmappedSheet(workbook, exported);
 
   return workbook.toBuffer();
 };
