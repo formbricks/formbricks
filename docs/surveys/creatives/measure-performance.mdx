@@ -38,9 +38,9 @@ Deleting a creative deletes its numbers. Archiving it keeps them, and duplicatin
 
 <Note>
   **Self-hosting:** impressions and clicks are counted in Redis and written to the database every minute by
-  the background job worker, which runs by default. Without a running worker, counts not yet written expire
-  after about two days and are lost; counts already written stay on the summary page. See [Job
-  Runner](/self-hosting/configuration/job-runner).
+  the background job worker, which runs by default. The worker only picks up today and yesterday (UTC), so
+  without it, counts not written by the end of the next UTC day are lost; counts already written stay on the
+  summary page. See [Job Runner](/self-hosting/configuration/job-runner).
 </Note>
 
 ## Responses opened by a creative

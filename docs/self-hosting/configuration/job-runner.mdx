@@ -88,9 +88,9 @@ Current workloads on the shared `background-jobs` queue include:
 
 <Note>
   [Creative](/surveys/creatives/measure-performance) Impressions and Clicks live only in Redis until
-  `creative-stats.flush` copies them to the database. If no worker serves `background-jobs`, counts not yet
-  copied expire after about two days and are lost; counts already copied stay on the creatives' summary pages.
-  The job is safe to run on several replicas at once.
+  `creative-stats.flush` copies them to the database. The job only picks up the current and the previous UTC
+  day, so if no worker serves `background-jobs`, counts not copied by the end of the next UTC day are lost.
+  Counts already copied stay on the creatives' summary pages. The job is safe to run on several replicas at once.
 </Note>
 
 Two jobs run on [dedicated queues](#dedicated-queues) of their own instead:
