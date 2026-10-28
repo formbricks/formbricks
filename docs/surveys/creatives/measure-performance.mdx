@@ -6,6 +6,11 @@ icon: "chart-simple"
 
 Every creative counts how often it was shown and clicked. Open a creative from the **Creatives** list to see its summary page, and find the responses it brought in on the survey it opens.
 
+<Note>
+  Creatives are part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license), on self-hosted
+  instances whose license includes Creatives. They are not available on Formbricks Cloud.
+</Note>
+
 ## The summary page
 
 ![The summary page of a feedback button with impressions, clicks, click rate, daily totals and pages](/images/surveys/creatives/measure-performance/summary.webp)
@@ -18,7 +23,7 @@ The header shows what the creative opens and its schedule, with the status menu,
 | **Clicks** | Presses that opened its survey or link. Closing a banner isn't a click, nor is following a link in a banner's text, nor pressing the creative while its survey is already open. |
 | **Click rate** | Clicks divided by impressions. |
 
-**Daily totals** charts impressions and clicks per day. **Pages** lists the 100 pages with the most impressions, each with its impressions, clicks and click rate, and adds up all other pages in one row. A page is the host and path, such as `www.acme-bank.com/loans/mortgages`, without the query string or `#hash`.
+**Daily totals** charts impressions and clicks per day. **Pages** lists the 100 pages with the most impressions, each with its impressions, clicks and click rate, and adds up all other pages in one row. A page is the host and path, such as `www.acme-bank.com/loans/mortgages`, without the query string or `#hash`. Each UTC day, a creative counts its first 1,000 different pages one by one and any further pages together, so on a very large site a busy page reached late in the day can land in the all-other-pages row.
 
 ### Date range
 

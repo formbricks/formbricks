@@ -6,11 +6,16 @@ icon: "calendar-clock"
 
 A creative's **Settings** tab decides where and when it appears. With nothing set, a published creative shows on every page of every site that runs the Formbricks snippet for this workspace.
 
+<Note>
+  Creatives are part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license), on self-hosted
+  instances whose license includes Creatives. They are not available on Formbricks Cloud.
+</Note>
+
 ![The Settings tab of a creative with Show on, Show when, Share of visitors and Schedule](/images/surveys/creatives/when-it-shows/settings.webp)
 
 A creative shows on a page when all of these hold:
 
-1. It is **Active**: published, inside its [schedule](#schedule), and the survey it opens is running.
+1. It is **Active**: published, inside its [schedule](#schedule), and, if it opens a survey, that survey is active. A creative that opens a link, or a banner without a button, doesn't depend on any survey.
 2. **Show on** matches: it's a page view, or one of its actions fired on this page.
 3. Its **Show when** conditions match this page, visit and device.
 4. The visitor is in its **Share of visitors**.

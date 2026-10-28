@@ -6,6 +6,11 @@ icon: "megaphone"
 
 ## Context
 
+<Note>
+  Creatives are part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license), on self-hosted
+  instances whose license includes Creatives. They are not available on Formbricks Cloud.
+</Note>
+
 A creative is a feedback button or a banner that the web SDK draws on the customer's site and that opens a survey or a link when pressed. The customer-facing behavior lives in [Creatives](/surveys/creatives/overview); this page is for engineers who meet the code later. Each decision below has a short ADR in [`docs/adr/`](https://github.com/formbricks/formbricks/tree/main/docs/adr) (0003–0014); this page connects them.
 
 A creative has three parts:
@@ -124,13 +129,13 @@ ADR [0004](https://github.com/formbricks/formbricks/blob/main/docs/adr/0004-stor
 | A missing translation falls back to the default language, unless the popup survey would be skipped | [0013](https://github.com/formbricks/formbricks/blob/main/docs/adr/0013-default-language-fallback.md) |
 | Only the creative's own CSS, scoped to `.fb-creative-button` or `.fb-creative-banner` | [0014](https://github.com/formbricks/formbricks/blob/main/docs/adr/0014-own-css-only.md) |
 
-**License gate.** `getCreativesAccess` (`modules/ee/creatives/lib/access.ts`) returns `full` when the license includes `creatives`, `windDown` on a self-hosted instance without it whose workspace still has creatives, and `none` otherwise, always on Cloud. Only `full` delivers creatives and counts events. `windDown` keeps the list, summary and API reads, and allows pause, close and delete (`CREATIVES_WIND_DOWN_OPERATIONS` in `access-rules.ts`); everything else answers 403 `creatives_not_entitled`. Nothing is written, so creatives come back on their own when the license does. See [License Check](/development/technical-handbook/license-check).
+**License gate.** `getCreativesAccess` (`modules/ee/creatives/lib/access.ts`) returns `full` when the license includes `creatives`, `windDown` on a self-hosted instance without it whose workspace still has creatives, and `none` otherwise, always on Cloud. Only `full` delivers creatives and counts events. `windDown` keeps the list, summary and API reads, and allows pause, close and delete (`CREATIVES_WIND_DOWN_OPERATIONS` in `access-rules.ts`); everything else answers 403 `creatives_not_entitled`. Losing the license writes nothing to creatives, so they come back on their own when the license does; a pause, close or delete made during wind-down is written as usual and stays. See [License Check](/development/technical-handbook/license-check).
 
 ## How To Add A Creative Type
 
-No new columns or migration (ADR 0003). A type needs:
+No new columns (ADR 0003). The one schema change is a new value in the PostgreSQL `CreativeType` enum behind `Creative.type`, which needs an additive migration before the type can be stored. A type needs:
 
-1. **A payload variant:** add the type to the `CreativeType` enum, and its `content` and `styling` schemas to the API v3 spec under `docs/api-v3-reference/src/`, then run `pnpm api:v3:sync`. Add the variant to `TCreativePayload` in `packages/creatives/src/types.ts`.
+1. **A payload variant:** add the value to `CreativeType` in `packages/database/schema/creatives.prisma` and create its migration with `pnpm fb-migrate-dev`. Add its `content` and `styling` schemas to the API v3 spec under `docs/api-v3-reference/src/`, then run `pnpm api:v3:sync`. Add the variant to `TCreativePayload` in `packages/creatives/src/types.ts`.
 2. **A renderer module** in `packages/creatives/src/render.ts`, and its rules in `resolve.ts` if it shows differently. Mind the bundle budget in `bundle-size.test.ts`.
 3. **Style resolution** in `modules/ee/creatives/lib/style.ts`: which workspace Look & Feel tokens it starts from and which overrides it allows.
 4. **The editor:** its Content and Styling cards (`components/editor/content-tab.tsx`, `styling-tab.tsx`), its publish checks (`lib/publish-check.ts`) and its placement in the overlap check (`lib/overlap.ts`) and the SDK layout (`packages/js-core/src/lib/creatives/layout.ts`).
