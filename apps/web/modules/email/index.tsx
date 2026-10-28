@@ -2,8 +2,6 @@ import {
   type TRetentionNoticeArchivedSurvey,
   type TRetentionNoticeResponseDeletion,
   renderAccountDeletionEmail,
-  renderEmailCustomizationPreviewEmail,
-  renderEmbedSurveyPreviewEmail,
   renderForgotPasswordEmail,
   renderInviteAcceptedEmail,
   renderInviteEmail,
@@ -11,7 +9,6 @@ import {
   renderMemberRetentionNoticeEmail,
   renderNewEmailVerification,
   renderPasswordResetNotifyEmail,
-  renderResponseFinishedEmail,
   renderSsoRecoveryFactorsRemovedEmail,
   renderSsoSignInHintEmail,
   renderSurveyRetentionNoticeEmail,
@@ -20,12 +17,8 @@ import {
 import { TEmailTemplateLegalProps } from "@formbricks/email/src/types/email";
 import { logger } from "@formbricks/logger";
 import type { TLinkSurveyEmailData } from "@formbricks/types/email";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
-import type { TResponse } from "@formbricks/types/responses";
-import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
-import type { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserEmail, TUserLocale } from "@formbricks/types/user";
-import { IMPRINT_ADDRESS, IMPRINT_URL, MAIL_FROM, PRIVACY_URL, TERMS_URL, WEBAPP_URL } from "@/lib/constants";
+import { IMPRINT_ADDRESS, IMPRINT_URL, PRIVACY_URL, TERMS_URL, WEBAPP_URL } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import {
   createEmailChangeToken,
@@ -34,8 +27,6 @@ import {
   createToken,
   createTokenForLinkSurvey,
 } from "@/lib/jwt";
-import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
-import { TElementResponseMappingSurvey, getElementResponseMapping } from "@/lib/responses";
 import { getTranslate } from "@/lingodotdev/server";
 import {
   TVerificationRequestPurpose,
@@ -57,11 +48,6 @@ const legalProps: TEmailTemplateLegalProps = {
   imprintUrl: IMPRINT_URL || undefined,
   imprintAddress: IMPRINT_ADDRESS || undefined,
 };
-
-export type TResponseFinishedEmailSurvey = TElementResponseMappingSurvey &
-  // `variables` / `hiddenFields` are the resolver's fallback; `embeddedFields` carries the joined
-  // EmbeddedData rows the template resolves definitions through (ENG-1837).
-  Pick<TSurvey, "id" | "name" | "variables" | "hiddenFields" | "embeddedFields">;
 
 export const sendVerificationNewEmail = async (
   id: string,
@@ -406,128 +392,6 @@ export const sendInviteAcceptedEmail = async (
     to: email,
     subject: t("emails.invite_accepted_email_subject"),
     html,
-  });
-};
-
-export const sendResponseFinishedEmail = async (
-  email: string,
-  locale: TUserLocale,
-  workspaceId: string,
-  survey: TResponseFinishedEmailSurvey,
-  response: TResponse,
-  responseCount: number
-): Promise<void> => {
-  const t = await getTranslate(locale);
-  const personEmail = response.contactAttributes?.email;
-  const organization = await getOrganizationByWorkspaceId(workspaceId);
-
-  if (!organization) {
-    throw new ResourceNotFoundError("Organization", null);
-  }
-
-  // Pre-process the element response mapping before passing to email
-  const elements = getElementResponseMapping(survey, response);
-
-  // Resolve relative storage URLs to absolute URLs for email rendering
-  const elementsWithResolvedUrls = elements.map((element) => {
-    if (
-      (element.type === TSurveyElementTypeEnum.PictureSelection ||
-        element.type === TSurveyElementTypeEnum.FileUpload) &&
-      Array.isArray(element.response)
-    ) {
-      return {
-        ...element,
-        response: element.response.map((url) => resolveStorageUrl(url)),
-      };
-    }
-
-    return element;
-  });
-
-  // The whitelabel logo is stored as a relative `/storage/...` path, which an email client cannot
-  // resolve — it has no origin to resolve against, so the `<img>` renders broken. Resolve it to an
-  // absolute URL here, exactly like every other email sender does.
-  const logoUrl = organization.whitelabel?.logoUrl
-    ? resolveStorageUrl(organization.whitelabel.logoUrl)
-    : undefined;
-
-  const html = await renderResponseFinishedEmail({
-    survey,
-    responseCount,
-    response,
-    WEBAPP_URL,
-    workspaceId,
-    organization,
-    elements: elementsWithResolvedUrls,
-    logoUrl,
-    t,
-    ...legalProps,
-  });
-
-  await sendEmail({
-    emailType: "response_notification",
-    to: email,
-    // Never put the respondent's email address in the subject — it's PII that ends up in
-    // notification previews and mailbox lists; replying still reaches them via replyTo.
-    subject: t("emails.response_finished_email_subject", {
-      surveyName: survey.name,
-    }),
-    replyTo: personEmail?.toString() ?? MAIL_FROM,
-    html,
-    rateLimit: { organizationId: organization.id },
-  });
-};
-
-export const sendEmbedSurveyPreviewEmail = async (
-  to: string,
-  innerHtml: string,
-  workspaceId: string,
-  locale: TUserLocale,
-  actorUserId: string,
-  logoUrl?: string
-): Promise<boolean> => {
-  const t = await getTranslate(locale);
-  // Resolve relative storage URLs to absolute URLs for email rendering
-  const resolvedLogoUrl = logoUrl ? resolveStorageUrl(logoUrl) : undefined;
-  const html = await renderEmbedSurveyPreviewEmail({
-    html: innerHtml,
-    workspaceId,
-    logoUrl: resolvedLogoUrl,
-    t,
-    ...legalProps,
-  });
-  return await sendEmail({
-    emailType: "survey_preview",
-    to,
-    subject: t("emails.embed_survey_preview_email_subject"),
-    html,
-    rateLimit: { actorUserId },
-  });
-};
-
-export const sendEmailCustomizationPreviewEmail = async (
-  to: string,
-  userName: string,
-  locale: TUserLocale,
-  actorUserId: string,
-  logoUrl?: string
-): Promise<boolean> => {
-  const t = await getTranslate(locale);
-  // Resolve relative storage URLs to absolute URLs for email rendering
-  const resolvedLogoUrl = logoUrl ? resolveStorageUrl(logoUrl) : undefined;
-  const emailHtmlBody = await renderEmailCustomizationPreviewEmail({
-    userName,
-    logoUrl: resolvedLogoUrl,
-    t,
-    ...legalProps,
-  });
-
-  return await sendEmail({
-    emailType: "customization_preview",
-    to,
-    subject: t("emails.email_customization_preview_email_subject"),
-    html: emailHtmlBody,
-    rateLimit: { actorUserId },
   });
 };
 

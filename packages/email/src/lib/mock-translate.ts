@@ -19,20 +19,9 @@ const translations: Record<TranslationKey, TranslationValue> = {
     "You have requested to delete your Formbricks account. To confirm, please click the button below:",
   "emails.delete_account_email_warning":
     "This will permanently delete your account and all associated data. This action cannot be undone.",
-  "emails.email_customization_preview_email_heading": "Hey {userName}",
-  "emails.email_customization_preview_email_subject": "Formbricks Email Customization Preview",
-  "emails.email_customization_preview_email_text":
-    "This is an email preview to show you which logo will be rendered in the emails.",
   "emails.email_footer_text_1": "Have a great day!",
   "emails.email_footer_text_2": "The Formbricks Team",
   "emails.email_template_text_1": "This email was sent via Formbricks.",
-  "emails.embed_survey_preview_email_didnt_request": "Didn't request this?",
-  "emails.embed_survey_preview_email_workspace_id": "Workspace ID",
-  "emails.embed_survey_preview_email_fight_spam":
-    "Help us fight spam and forward this mail to hola@formbricks.com",
-  "emails.embed_survey_preview_email_heading": "Preview Email Embed",
-  "emails.embed_survey_preview_email_subject": "Formbricks Email Survey Preview",
-  "emails.embed_survey_preview_email_text": "This is how the code snippet looks embedded into an email:",
   "emails.forgot_password_email_change_password": "Change password",
   "emails.forgot_password_email_did_not_request": "If you didn't request this, please ignore this email.",
   "emails.forgot_password_email_heading": "Change password",
@@ -110,19 +99,8 @@ const translations: Record<TranslationKey, TranslationValue> = {
   "emails.sso_sign_in_hint_email_text_unavailable":
     "We received a request to reset the password for your Formbricks account. Your account does not use a password: it signs in with single sign-on, which is not available on this Formbricks instance right now. Contact your administrator to get access again.",
   "emails.response_data": "Response data",
-  "emails.response_finished_email_subject": "A response for {surveyName} was completed ✅",
   "emails.schedule_your_meeting": "Schedule your meeting",
   "emails.select_a_date": "Select a date",
-  "emails.survey_response_finished_email_congrats":
-    "Congrats, you received a new response to your survey! Someone just completed your survey: {surveyName}",
-  "emails.survey_response_finished_email_dont_want_notifications": "Don't want to get these notifications?",
-  "emails.survey_response_finished_email_hey": "Hey 👋",
-  "emails.survey_response_finished_email_turn_off_notifications_for_all_new_forms":
-    "Turn off notifications for all newly created forms",
-  "emails.survey_response_finished_email_turn_off_notifications_for_this_form":
-    "Turn off notifications for this form",
-  "emails.survey_response_finished_email_view_more_responses": "View {responseCount} more responses",
-  "emails.survey_response_finished_email_view_survey_summary": "View survey summary",
   "emails.text_variable": "Text variable",
   "emails.verification_email_click_on_this_link": "You can also click on this link:",
   "emails.verification_email_heading": "Almost there!",

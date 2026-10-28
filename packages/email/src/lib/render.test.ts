@@ -10,8 +10,6 @@ import {
   Text,
   render,
   renderAccountDeletionEmail,
-  renderEmailCustomizationPreviewEmail,
-  renderEmbedSurveyPreviewEmail,
   renderFollowUpEmail,
   renderForgotPasswordEmail,
   renderInviteAcceptedEmail,
@@ -20,7 +18,6 @@ import {
   renderMemberRetentionNoticeEmail,
   renderNewEmailVerification,
   renderPasswordResetNotifyEmail,
-  renderResponseFinishedEmail,
   renderSsoRecoveryFactorsRemovedEmail,
   renderSsoSignInHintEmail,
   renderSurveyRetentionNoticeEmail,
@@ -28,16 +25,6 @@ import {
 } from "../index";
 import { exampleData } from "./example-data";
 import { t } from "./mock-translate";
-
-// `elements` is pre-processed by the web app rather than by the template, so the
-// preview fixture does not carry it. Keep a minimal stand-in here.
-const responseFinishedElements = [
-  {
-    element: "What did you like most?",
-    response: "The customer service was excellent!",
-    type: TSurveyElementTypeEnum.OpenText,
-  },
-];
 
 // Render every email with the legal props supplied. The imprint/privacy footer is a
 // conditional branch of the shared chrome, so leaving them out would hide anything that
@@ -92,25 +79,6 @@ const renderers: [string, () => Promise<string>][] = [
     "renderLinkSurveyEmail",
     () => renderLinkSurveyEmail({ ...exampleData.linkSurveyEmail, logoUrl: "", ...legal, t }),
   ],
-  [
-    "renderEmbedSurveyPreviewEmail",
-    () => renderEmbedSurveyPreviewEmail({ ...exampleData.embedSurveyPreviewEmail, ...legal, t }),
-  ],
-  [
-    "renderResponseFinishedEmail",
-    () =>
-      renderResponseFinishedEmail({
-        ...exampleData.responseFinishedEmail,
-        elements: responseFinishedElements,
-        ...legal,
-        t,
-      }),
-  ],
-  [
-    "renderEmailCustomizationPreviewEmail",
-    () =>
-      renderEmailCustomizationPreviewEmail({ ...exampleData.emailCustomizationPreviewEmail, ...legal, t }),
-  ],
   ["renderFollowUpEmail", () => renderFollowUpEmail({ ...exampleData.followUpEmail, ...legal, t })],
 ];
 
@@ -149,31 +117,6 @@ describe("translation threading", () => {
     });
 
     expect(html).toContain("The link is valid for 30 minutes.");
-  });
-
-  test("interpolates caller data into the notification copy", async () => {
-    const html = await renderResponseFinishedEmail({
-      ...exampleData.responseFinishedEmail,
-      responseCount: 15,
-      elements: responseFinishedElements,
-      t,
-    });
-
-    expect(html).toContain(exampleData.responseFinishedEmail.survey.name);
-    // The response that triggered the notification is not "more", so the CTA counts 14.
-    expect(html).toContain("View 14 more responses");
-  });
-
-  test("falls back to the summary CTA when this is the only response", async () => {
-    const html = await renderResponseFinishedEmail({
-      ...exampleData.responseFinishedEmail,
-      responseCount: 1,
-      elements: responseFinishedElements,
-      t,
-    });
-
-    expect(html).toContain("View survey summary");
-    expect(html).not.toContain("more responses");
   });
 });
 
@@ -251,23 +194,19 @@ describe("legal footer", () => {
 });
 
 describe("custom branding", () => {
-  test("response-finished notification falls back to the Formbricks logo when no organization logo is set", async () => {
-    const html = await renderResponseFinishedEmail({
-      ...exampleData.responseFinishedEmail,
-      elements: responseFinishedElements,
-      t,
-    });
+  test("falls back to the Formbricks logo when no organization logo is set", async () => {
+    const html = await renderLinkSurveyEmail({ ...exampleData.linkSurveyEmail, logoUrl: "", ...legal, t });
 
     expect(html).toContain('data-testid="default-logo-image"');
     expect(html).not.toContain('data-testid="logo-image"');
   });
 
-  test("response-finished notification renders the organization's custom logo when set", async () => {
+  test("renders the organization's custom logo when set", async () => {
     const customLogoUrl = "https://example.com/custom-logo.png";
-    const html = await renderResponseFinishedEmail({
-      ...exampleData.responseFinishedEmail,
-      elements: responseFinishedElements,
+    const html = await renderLinkSurveyEmail({
+      ...exampleData.linkSurveyEmail,
       logoUrl: customLogoUrl,
+      ...legal,
       t,
     });
 
@@ -293,9 +232,9 @@ describe("logo centering (ENG-2438)", () => {
   };
 
   test("the default logo sits in a center-aligned cell and carries a pixel width", async () => {
-    const html = await renderEmailCustomizationPreviewEmail({
-      ...exampleData.emailCustomizationPreviewEmail,
-      logoUrl: undefined,
+    const html = await renderLinkSurveyEmail({
+      ...exampleData.linkSurveyEmail,
+      logoUrl: "",
       ...legal,
       t,
     });
@@ -311,8 +250,8 @@ describe("logo centering (ENG-2438)", () => {
   });
 
   test("a custom logo sits in a center-aligned cell and carries a pixel width", async () => {
-    const html = await renderEmailCustomizationPreviewEmail({
-      ...exampleData.emailCustomizationPreviewEmail,
+    const html = await renderLinkSurveyEmail({
+      ...exampleData.linkSurveyEmail,
       logoUrl: "https://example.com/custom-logo.png",
       ...legal,
       t,

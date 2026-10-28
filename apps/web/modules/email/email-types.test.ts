@@ -5,15 +5,12 @@ import { applyEmailRateLimits } from "@/modules/email/lib/email-rate-limits";
 import { sendFollowUpEmail } from "@/modules/survey/follow-ups/lib/email";
 import {
   sendDeleteAccountConfirmationEmail,
-  sendEmailCustomizationPreviewEmail,
-  sendEmbedSurveyPreviewEmail,
   sendInviteAcceptedEmail,
   sendInviteMemberEmail,
   sendLinkSurveyToVerifiedEmail,
   sendMemberRetentionNoticeEmail,
   sendPasswordResetLinkEmail,
   sendPasswordResetNotifyEmail,
-  sendResponseFinishedEmail,
   sendSsoRecoveryFactorsRemovedEmail,
   sendSsoSignInHintEmail,
   sendSurveyRetentionNoticeEmail,
@@ -38,22 +35,17 @@ vi.mock("@/lib/jwt", () => ({
   createInviteToken: () => "token",
   createTokenForLinkSurvey: () => "token",
 }));
-vi.mock("@/lib/organization/service", () => ({ getOrganizationByWorkspaceId: async () => ({ id: "org" }) }));
-vi.mock("@/lib/responses", () => ({ getElementResponseMapping: () => [] }));
 vi.mock("@/modules/email/lib/survey-response-email", () => ({
   buildSurveyResponseEmailHtml: async () => "<p>Body</p>",
 }));
 vi.mock("@formbricks/email", () => ({
   renderAccountDeletionEmail: async () => "html",
-  renderEmailCustomizationPreviewEmail: async () => "html",
-  renderEmbedSurveyPreviewEmail: async () => "html",
   renderForgotPasswordEmail: async () => "html",
   renderInviteAcceptedEmail: vi.fn(async () => "html"),
   renderInviteEmail: async () => "html",
   renderLinkSurveyEmail: async () => "html",
   renderNewEmailVerification: async () => "html",
   renderPasswordResetNotifyEmail: async () => "html",
-  renderResponseFinishedEmail: async () => "html",
   renderSsoRecoveryFactorsRemovedEmail: async () => "html",
   renderSsoSignInHintEmail: async () => "html",
   renderSurveyRetentionNoticeEmail: async () => "html",
@@ -121,9 +113,6 @@ const senders: [string, () => Promise<unknown>][] = [
         deactivateDate: "Dec 7, 2026",
       }),
   ],
-  ["response_notification", () => sendResponseFinishedEmail(email, locale, "workspace", survey, response, 1)],
-  ["survey_preview", () => sendEmbedSurveyPreviewEmail(email, "html", "workspace", locale, "user")],
-  ["customization_preview", () => sendEmailCustomizationPreviewEmail(email, "User", locale, "user")],
   [
     "verified_survey_link",
     () =>
@@ -155,9 +144,6 @@ describe("email source attribution", () => {
 
   test.each([
     ["invite", { organizationId: "organization" }],
-    ["response_notification", { organizationId: "org" }],
-    ["survey_preview", { actorUserId: "user" }],
-    ["customization_preview", { actorUserId: "user" }],
     [
       "verified_survey_link",
       { organizationId: "organization", actorUserId: "creator", externalRecipient: true },

@@ -14,9 +14,6 @@ export {
 export { InviteEmail } from "../emails/invite/invite-email";
 export { InviteAcceptedEmail } from "../emails/invite/invite-accepted-email";
 export { LinkSurveyEmail } from "../emails/survey/link-survey-email";
-export { EmbedSurveyPreviewEmail } from "../emails/survey/embed-survey-preview-email";
-export { ResponseFinishedEmail } from "../emails/survey/response-finished-email";
-export { EmailCustomizationPreviewEmail } from "../emails/general/email-customization-preview-email";
 export { FollowUpEmail } from "../emails/survey/follow-up-email";
 
 export { EmailButton } from "./components/email-button";
@@ -37,9 +34,6 @@ export {
   renderInviteEmail,
   renderInviteAcceptedEmail,
   renderLinkSurveyEmail,
-  renderEmbedSurveyPreviewEmail,
-  renderResponseFinishedEmail,
-  renderEmailCustomizationPreviewEmail,
   renderFollowUpEmail,
 } from "./lib/render";
 

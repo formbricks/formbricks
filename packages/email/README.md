@@ -83,27 +83,6 @@ const html = await renderVerificationEmail({
 });
 ```
 
-For complex emails with pre-processing:
-
-```typescript
-import { renderResponseFinishedEmail } from "@formbricks/email";
-import { getElementResponseMapping } from "@/lib/responses";
-
-// Pre-process data before rendering
-const elements = getElementResponseMapping(survey, response);
-
-const html = await renderResponseFinishedEmail({
-  survey,
-  responseCount,
-  response,
-  WEBAPP_URL,
-  workspaceId,
-  organization,
-  elements, // Pre-processed data
-  t,
-});
-```
-
 ## Architecture
 
 - **Preview Mode**: Templates use mock `t()` function and example data for visual QA

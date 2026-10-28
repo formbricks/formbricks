@@ -6,7 +6,6 @@ import { PasswordResetNotifyEmail } from "../../emails/auth/password-reset-notif
 import { SsoRecoveryFactorsRemovedEmail } from "../../emails/auth/sso-recovery-factors-removed-email";
 import { SsoSignInHintEmail } from "../../emails/auth/sso-sign-in-hint-email";
 import { VerificationEmail } from "../../emails/auth/verification-email";
-import { EmailCustomizationPreviewEmail } from "../../emails/general/email-customization-preview-email";
 import { InviteAcceptedEmail } from "../../emails/invite/invite-accepted-email";
 import { InviteEmail } from "../../emails/invite/invite-email";
 import { MemberRetentionNoticeEmail } from "../../emails/retention/member-retention-notice-email";
@@ -15,13 +14,8 @@ import {
   type TRetentionNoticeArchivedSurvey,
   type TRetentionNoticeResponseDeletion,
 } from "../../emails/retention/survey-retention-notice-email";
-import { EmbedSurveyPreviewEmail } from "../../emails/survey/embed-survey-preview-email";
 import { FollowUpEmail, FollowUpEmailProps } from "../../emails/survey/follow-up-email";
 import { LinkSurveyEmail } from "../../emails/survey/link-survey-email";
-import {
-  ResponseFinishedEmail,
-  ResponseFinishedEmailProps,
-} from "../../emails/survey/response-finished-email";
 import { TEmailTemplateLegalProps } from "../types/email";
 import { TFunction } from "../types/translations";
 
@@ -145,33 +139,6 @@ export async function renderLinkSurveyEmail(
   } & TEmailTemplateLegalProps
 ): Promise<string> {
   return await render(LinkSurveyEmail(props));
-}
-
-export async function renderEmbedSurveyPreviewEmail(
-  props: {
-    html: string;
-    workspaceId: string;
-    logoUrl?: string;
-    t: TFunction;
-  } & TEmailTemplateLegalProps
-): Promise<string> {
-  return await render(EmbedSurveyPreviewEmail(props));
-}
-
-export async function renderResponseFinishedEmail(
-  props: ResponseFinishedEmailProps & TEmailTemplateLegalProps
-): Promise<string> {
-  return await render(ResponseFinishedEmail(props));
-}
-
-export async function renderEmailCustomizationPreviewEmail(
-  props: {
-    userName: string;
-    logoUrl?: string;
-    t: TFunction;
-  } & TEmailTemplateLegalProps
-): Promise<string> {
-  return await render(EmailCustomizationPreviewEmail(props));
 }
 
 export async function renderFollowUpEmail(
