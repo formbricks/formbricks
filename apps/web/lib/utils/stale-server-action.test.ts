@@ -137,10 +137,9 @@ describe("reportStaleServerActionError", () => {
 });
 
 /**
- * The path that covers every call site which never delegates. `createOrganizationAction` and
- * `updateMembershipAction` are two of 72 components that `catch` around an action and show their own
- * generic message; none of them reach `unhandledrejection`, so the response header is the only signal
- * left that the prompt can be raised from.
+ * The path that covers every call site which never delegates: the many components that `catch` around an
+ * action and show their own generic message. None of them reach `unhandledrejection`, so the response
+ * header is the only signal left that the prompt can be raised from.
  */
 describe("the stale action response observer", () => {
   const addEventListener = vi.fn();

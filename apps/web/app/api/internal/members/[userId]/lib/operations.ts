@@ -32,6 +32,11 @@ class LastOwnerDemotionError extends Error {}
  * Change the role, demoting an owner only while another active owner remains. The owner count and the
  * update are one Serializable transaction: read then act in two statements would let two owners demoting
  * each other concurrently both see "more than one owner", leaving none. Postgres aborts one of the two.
+ *
+ * The organization's owner memberships are locked first, in `userId` order, the same lock the data
+ * retention members sweep takes before deactivating an owner (`deactivateDueMember`). Serializable alone
+ * doesn't order this against that sweep, so a self-demotion racing the deactivation of the other owner could
+ * leave no active owner.
  */
 const applyRoleChange = (
   target: TMembership,
@@ -45,6 +50,12 @@ const applyRoleChange = (
   return prisma
     .$transaction(
       async (tx) => {
+        await tx.$queryRaw`
+          SELECT 1 FROM "Membership"
+          WHERE "organizationId" = ${organizationId} AND "role" = 'owner'
+          ORDER BY "userId"
+          FOR UPDATE
+        `;
         if ((await getOrganizationOwnerCount(organizationId, tx)) <= 1) throw new LastOwnerDemotionError();
         return updateMembership(userId, organizationId, body, tx);
       },

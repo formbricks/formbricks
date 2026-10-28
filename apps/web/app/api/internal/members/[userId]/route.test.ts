@@ -56,7 +56,7 @@ const ORG_ID = "cm9gptbhg0000192zceq9ayuc";
 const OTHER_ORG_ID = "cm9gptbhg0003192zceq9ayuf";
 const CURRENT_USER_ID = "cm9gptbhg0001192zceq9ayud";
 const TARGET_USER_ID = "cm9gptbhg0002192zceq9ayue";
-const TX = { tx: true };
+const TX = { $queryRaw: vi.fn() };
 
 const membership = (userId: string, role: string) => ({
   userId,
@@ -142,6 +142,19 @@ describe("PATCH /api/internal/members/{userId}", () => {
       });
       expect(mocks.getOrganizationOwnerCount).toHaveBeenCalledWith(ORG_ID, TX);
       expect(mocks.updateMembership).toHaveBeenCalledWith(TARGET_USER_ID, ORG_ID, { role: "member" }, TX);
+    });
+
+    test("locks the organization's owner memberships before counting them, as the members sweep does", async () => {
+      await setRole("member");
+
+      const [sql, ...values] = TX.$queryRaw.mock.calls[0];
+      expect(sql.join("?")).toMatch(
+        /FROM "Membership"[\s\S]*"role" = 'owner'[\s\S]*ORDER BY "userId"[\s\S]*FOR UPDATE/
+      );
+      expect(values).toEqual([ORG_ID]);
+      expect(TX.$queryRaw.mock.invocationCallOrder[0]).toBeLessThan(
+        mocks.getOrganizationOwnerCount.mock.invocationCallOrder[0]
+      );
     });
 
     test("changes a non-owner's role without counting owners", async () => {
