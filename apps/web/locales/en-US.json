@@ -840,6 +840,20 @@
       "this_user_has_all_the_power": "This user has all the power."
     }
   },
+  "shell": {
+    "nav": {
+      "connect": "Connect your agent",
+      "connections": "Agent connections",
+      "create_organization": "Create organization",
+      "open_menu": "Open menu",
+      "primary": "Primary",
+      "sections": "Sections",
+      "switch_organization": "Switch organization"
+    },
+    "organization": {
+      "sections": "Organization sections"
+    }
+  },
   "templates": {
     "address": "Address",
     "address_description": "Ask for a mailing address",
