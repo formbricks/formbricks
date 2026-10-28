@@ -1,179 +1,179 @@
 {
-  "toolName": "review_document_change",
   "input": {
-    "kind": "workflow",
-    "id": "kj4a98xxat96iws9zmbrgj3a",
-    "schemaVersion": 1,
-    "expectedUpdatedAt": "2026-10-28T12:00:00.000Z",
     "document": {
-      "name": "Route negative NPS",
-      "description": "Alerts CX when a promoter turns detractor",
       "definition": {
-        "nodes": [
+        "edges": [
           {
-            "id": "n1",
-            "type": "trigger",
-            "config": {
-              "event": "responseCreated"
-            }
+            "from": "n1",
+            "id": "x1",
+            "to": "n2"
           },
           {
-            "id": "n2",
-            "type": "condition",
+            "from": "n2",
+            "id": "x2",
+            "to": "n3"
+          }
+        ],
+        "nodes": [
+          {
+            "config": {
+              "event": "responseCreated"
+            },
+            "id": "n1",
+            "type": "trigger"
+          },
+          {
             "config": {
               "field": "nps",
               "op": "lte",
               "value": 5
-            }
+            },
+            "id": "n2",
+            "type": "condition"
           },
           {
-            "id": "n3",
-            "type": "slack",
             "config": {
               "channel": "#cx-alerts"
-            }
-          }
-        ],
-        "edges": [
-          {
-            "id": "x1",
-            "from": "n1",
-            "to": "n2"
-          },
-          {
-            "id": "x2",
-            "from": "n2",
-            "to": "n3"
+            },
+            "id": "n3",
+            "type": "slack"
           }
         ]
-      }
-    }
+      },
+      "description": "Alerts CX when a promoter turns detractor",
+      "name": "Route negative NPS"
+    },
+    "expectedUpdatedAt": "2026-10-28T12:00:00.000Z",
+    "id": "kj4a98xxat96iws9zmbrgj3a",
+    "kind": "workflow",
+    "schemaVersion": 1
   },
   "result": {
     "content": [
       {
-        "type": "text",
-        "text": "Review of workflow \"Route negative NPS\": 3 changes (0 added, 0 removed, 3 changed), 0 destructive. Changes: changed definition.nodes[n2].config.value; changed definition.nodes[n3].config.channel; changed description. Nothing was written. The user decides in the review view; do not call push_document until they approve there. If you cannot see the view, list these changes to the user and ask before pushing."
+        "text": "Review of workflow \"Route negative NPS\": 3 changes (0 added, 0 removed, 3 changed), 0 destructive. Changes: changed definition.nodes[n2].config.value; changed definition.nodes[n3].config.channel; changed description. Nothing was written. The user decides in the review view; do not call push_document until they approve there. If you cannot see the view, list these changes to the user and ask before pushing.",
+        "type": "text"
       }
     ],
     "structuredContent": {
       "data": {
-        "kind": "workflow",
-        "id": "kj4a98xxat96iws9zmbrgj3a",
-        "name": "Route negative NPS",
-        "workspaceId": "ws_demo",
-        "status": "valid",
-        "updatedAt": "2026-10-28T12:00:00.000Z",
-        "expectedUpdatedAt": "2026-10-28T12:00:00.000Z",
-        "summary": {
-          "total": 3,
-          "added": 0,
-          "removed": 0,
-          "changed": 3,
-          "destructive": 0
-        },
         "changes": [
           {
-            "path": "definition.nodes[n2].config.value",
-            "kind": "changed",
+            "after": 5,
             "before": 6,
-            "after": 5
+            "kind": "changed",
+            "path": "definition.nodes[n2].config.value"
           },
           {
-            "path": "definition.nodes[n3].config.channel",
-            "kind": "changed",
+            "after": "#cx-alerts",
             "before": "#cx",
-            "after": "#cx-alerts"
+            "kind": "changed",
+            "path": "definition.nodes[n3].config.channel"
           },
           {
-            "path": "description",
-            "kind": "changed",
+            "after": "Alerts CX when a promoter turns detractor",
             "before": null,
-            "after": "Alerts CX when a promoter turns detractor"
+            "kind": "changed",
+            "path": "description"
           }
         ],
-        "omittedChanges": 0,
         "destructive": [],
-        "issues": []
+        "expectedUpdatedAt": "2026-10-28T12:00:00.000Z",
+        "id": "kj4a98xxat96iws9zmbrgj3a",
+        "issues": [],
+        "kind": "workflow",
+        "name": "Route negative NPS",
+        "omittedChanges": 0,
+        "status": "valid",
+        "summary": {
+          "added": 0,
+          "changed": 3,
+          "destructive": 0,
+          "removed": 0,
+          "total": 3
+        },
+        "updatedAt": "2026-10-28T12:00:00.000Z",
+        "workspaceId": "ws_demo"
       },
       "requestId": "req_review"
     }
   },
+  "toolName": "review_document_change",
   "tools": {
     "push_document": {
       "content": [
         {
-          "type": "text",
-          "text": "Applied."
+          "text": "Applied.",
+          "type": "text"
         }
       ],
       "structuredContent": {
         "data": {
+          "changes": [
+            {
+              "change": "changed",
+              "path": "p0"
+            },
+            {
+              "change": "changed",
+              "path": "p1"
+            },
+            {
+              "change": "changed",
+              "path": "p2"
+            }
+          ],
+          "dryRun": false,
           "envelope": {
-            "kind": "workflow",
-            "schemaVersion": 1,
-            "id": "kj4a98xxat96iws9zmbrgj3a",
-            "workspaceId": "ws_demo",
-            "updatedAt": "2026-10-28T12:07:31.000Z",
             "document": {
-              "name": "Route negative NPS",
-              "description": "Alerts CX when a promoter turns detractor",
               "definition": {
-                "nodes": [
+                "edges": [
                   {
-                    "id": "n1",
-                    "type": "trigger",
-                    "config": {
-                      "event": "responseCreated"
-                    }
+                    "from": "n1",
+                    "id": "x1",
+                    "to": "n2"
                   },
                   {
-                    "id": "n2",
-                    "type": "condition",
+                    "from": "n2",
+                    "id": "x2",
+                    "to": "n3"
+                  }
+                ],
+                "nodes": [
+                  {
+                    "config": {
+                      "event": "responseCreated"
+                    },
+                    "id": "n1",
+                    "type": "trigger"
+                  },
+                  {
                     "config": {
                       "field": "nps",
                       "op": "lte",
                       "value": 5
-                    }
+                    },
+                    "id": "n2",
+                    "type": "condition"
                   },
                   {
-                    "id": "n3",
-                    "type": "slack",
                     "config": {
                       "channel": "#cx-alerts"
-                    }
-                  }
-                ],
-                "edges": [
-                  {
-                    "id": "x1",
-                    "from": "n1",
-                    "to": "n2"
-                  },
-                  {
-                    "id": "x2",
-                    "from": "n2",
-                    "to": "n3"
+                    },
+                    "id": "n3",
+                    "type": "slack"
                   }
                 ]
-              }
-            }
-          },
-          "dryRun": false,
-          "changes": [
-            {
-              "path": "p0",
-              "change": "changed"
+              },
+              "description": "Alerts CX when a promoter turns detractor",
+              "name": "Route negative NPS"
             },
-            {
-              "path": "p1",
-              "change": "changed"
-            },
-            {
-              "path": "p2",
-              "change": "changed"
-            }
-          ]
+            "id": "kj4a98xxat96iws9zmbrgj3a",
+            "kind": "workflow",
+            "schemaVersion": 1,
+            "updatedAt": "2026-10-28T12:07:31.000Z",
+            "workspaceId": "ws_demo"
+          }
         },
         "requestId": "req_push"
       }

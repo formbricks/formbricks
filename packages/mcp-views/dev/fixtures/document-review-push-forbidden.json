@@ -1,358 +1,347 @@
 {
-  "toolName": "review_document_change",
   "input": {
-    "kind": "survey",
-    "id": "kj4a98xxat96iws9zmbrgj3a",
-    "schemaVersion": 1,
-    "expectedUpdatedAt": "2026-10-28T12:00:00.000Z",
     "document": {
-      "name": "Customer onboarding survey v2",
-      "welcomeCard": {
-        "enabled": true,
-        "headline": {
-          "default": "Welcome to Formbricks"
-        },
-        "buttonLabel": {
-          "default": "Start"
-        }
-      },
       "blocks": [
         {
-          "id": "b_role",
-          "name": "Role",
           "elements": [
             {
-              "id": "e_role",
-              "type": "openText",
               "headline": {
                 "default": "What is your role?"
               },
+              "id": "e_role",
+              "inputType": "text",
               "required": true,
-              "inputType": "text"
+              "type": "openText"
             }
-          ]
+          ],
+          "id": "b_role",
+          "name": "Role"
         },
         {
-          "id": "b_goal",
-          "name": "Goal",
           "elements": [
             {
-              "id": "e_goal",
-              "type": "openText",
               "headline": {
                 "default": "Tell us in a few sentences what you want to achieve with Formbricks during your first month, which tools it replaces for you today, and who else on your team will rely on the results. The more context you give, the better the agent can set up your first survey."
               },
+              "id": "e_goal",
+              "inputType": "text",
               "required": true,
-              "inputType": "text"
+              "type": "openText"
             }
-          ]
+          ],
+          "id": "b_goal",
+          "name": "Goal"
         },
         {
-          "id": "b_budget",
-          "name": "Budget",
           "elements": [
             {
-              "id": "e_budget",
-              "type": "openText",
               "headline": {
                 "default": "What is your monthly research budget?"
               },
+              "id": "e_budget",
+              "inputType": "text",
               "required": false,
-              "inputType": "text"
+              "type": "openText"
             }
-          ]
+          ],
+          "id": "b_budget",
+          "name": "Budget"
         },
         {
-          "id": "b_team",
-          "name": "Team",
           "elements": [
             {
-              "id": "e_team",
-              "type": "openText",
               "headline": {
                 "default": "How large is your team?"
               },
+              "id": "e_team",
+              "inputType": "text",
               "required": false,
-              "inputType": "text"
+              "type": "openText"
             }
-          ]
+          ],
+          "id": "b_team",
+          "name": "Team"
         }
       ],
       "endings": [
         {
-          "id": "end_1",
-          "type": "endScreen",
           "headline": {
             "default": "Thanks!"
-          }
+          },
+          "id": "end_1",
+          "type": "endScreen"
         }
       ],
       "hiddenFields": {
         "enabled": true,
-        "fieldIds": [
-          "userId",
-          "plan"
-        ]
+        "fieldIds": ["userId", "plan"]
+      },
+      "name": "Customer onboarding survey v2",
+      "welcomeCard": {
+        "buttonLabel": {
+          "default": "Start"
+        },
+        "enabled": true,
+        "headline": {
+          "default": "Welcome to Formbricks"
+        }
       }
-    }
+    },
+    "expectedUpdatedAt": "2026-10-28T12:00:00.000Z",
+    "id": "kj4a98xxat96iws9zmbrgj3a",
+    "kind": "survey",
+    "schemaVersion": 1
   },
   "result": {
     "content": [
       {
-        "type": "text",
-        "text": "Review of survey \"Customer onboarding survey\": 7 changes (1 added, 1 removed, 5 changed), 0 destructive. Changes: changed blocks[b_goal].elements[e_goal].headline.default; changed blocks[b_goal].elements[e_goal].required; added blocks[b_budget]; removed endings[end_2]; changed hiddenFields.fieldIds; changed name; changed welcomeCard.headline.default. Nothing was written. The user decides in the review view; do not call push_document until they approve there. If you cannot see the view, list these changes to the user and ask before pushing."
+        "text": "Review of survey \"Customer onboarding survey\": 7 changes (1 added, 1 removed, 5 changed), 0 destructive. Changes: changed blocks[b_goal].elements[e_goal].headline.default; changed blocks[b_goal].elements[e_goal].required; added blocks[b_budget]; removed endings[end_2]; changed hiddenFields.fieldIds; changed name; changed welcomeCard.headline.default. Nothing was written. The user decides in the review view; do not call push_document until they approve there. If you cannot see the view, list these changes to the user and ask before pushing.",
+        "type": "text"
       }
     ],
     "structuredContent": {
       "data": {
-        "kind": "survey",
-        "id": "kj4a98xxat96iws9zmbrgj3a",
-        "name": "Customer onboarding survey",
-        "workspaceId": "ws_demo",
-        "status": "valid",
-        "updatedAt": "2026-10-28T12:00:00.000Z",
-        "expectedUpdatedAt": "2026-10-28T12:00:00.000Z",
-        "summary": {
-          "total": 7,
-          "added": 1,
-          "removed": 1,
-          "changed": 5,
-          "destructive": 0
-        },
         "changes": [
           {
-            "path": "blocks[b_goal].elements[e_goal].headline.default",
-            "kind": "changed",
+            "after": "Tell us in a few sentences what you want to achieve with Formbricks during your first month, which tools it replaces for you today, and who else on your team will rely on the results. The more context you give, the better the agent can set up your first survey.",
             "before": "What do you want to achieve with Formbricks in your first month?",
-            "after": "Tell us in a few sentences what you want to achieve with Formbricks during your first month, which tools it replaces for you today, and who else on your team will rely on the results. The more context you give, the better the agent can set up your first survey."
-          },
-          {
-            "path": "blocks[b_goal].elements[e_goal].required",
             "kind": "changed",
-            "before": false,
-            "after": true
+            "path": "blocks[b_goal].elements[e_goal].headline.default"
           },
           {
-            "path": "blocks[b_budget]",
-            "kind": "added",
+            "after": true,
+            "before": false,
+            "kind": "changed",
+            "path": "blocks[b_goal].elements[e_goal].required"
+          },
+          {
             "after": {
-              "id": "b_budget",
-              "name": "Budget",
               "elements": [
                 {
-                  "id": "e_budget",
-                  "type": "openText",
                   "headline": {
                     "default": "What is your monthly research budget?"
                   },
+                  "id": "e_budget",
+                  "inputType": "text",
                   "required": false,
-                  "inputType": "text"
+                  "type": "openText"
                 }
-              ]
-            }
+              ],
+              "id": "b_budget",
+              "name": "Budget"
+            },
+            "kind": "added",
+            "path": "blocks[b_budget]"
           },
           {
-            "path": "endings[end_2]",
-            "kind": "removed",
             "before": {
               "id": "end_2",
+              "label": "Done",
               "type": "redirectToUrl",
-              "url": "https://example.com/done",
-              "label": "Done"
-            }
+              "url": "https://example.com/done"
+            },
+            "kind": "removed",
+            "path": "endings[end_2]"
           },
           {
-            "path": "hiddenFields.fieldIds",
+            "after": ["userId", "plan"],
+            "before": ["userId"],
             "kind": "changed",
-            "before": [
-              "userId"
-            ],
-            "after": [
-              "userId",
-              "plan"
-            ]
+            "path": "hiddenFields.fieldIds"
           },
           {
-            "path": "name",
-            "kind": "changed",
+            "after": "Customer onboarding survey v2",
             "before": "Customer onboarding survey",
-            "after": "Customer onboarding survey v2"
+            "kind": "changed",
+            "path": "name"
           },
           {
-            "path": "welcomeCard.headline.default",
-            "kind": "changed",
+            "after": "Welcome to Formbricks",
             "before": "Welcome aboard",
-            "after": "Welcome to Formbricks"
+            "kind": "changed",
+            "path": "welcomeCard.headline.default"
           }
         ],
-        "omittedChanges": 0,
         "destructive": [],
-        "issues": []
+        "expectedUpdatedAt": "2026-10-28T12:00:00.000Z",
+        "id": "kj4a98xxat96iws9zmbrgj3a",
+        "issues": [],
+        "kind": "survey",
+        "name": "Customer onboarding survey",
+        "omittedChanges": 0,
+        "status": "valid",
+        "summary": {
+          "added": 1,
+          "changed": 5,
+          "destructive": 0,
+          "removed": 1,
+          "total": 7
+        },
+        "updatedAt": "2026-10-28T12:00:00.000Z",
+        "workspaceId": "ws_demo"
       },
       "requestId": "req_review"
     }
   },
+  "toolName": "review_document_change",
   "tools": {
     "push_document": [
       {
-        "isError": true,
         "content": [
           {
-            "type": "text",
-            "text": "{\"error\":{\"status\":403,\"title\":\"Forbidden\",\"detail\":\"You are not authorized to access this resource\"}}"
+            "text": "{\"error\":{\"status\":403,\"title\":\"Forbidden\",\"detail\":\"You are not authorized to access this resource\"}}",
+            "type": "text"
           }
         ],
+        "isError": true,
         "structuredContent": {
           "error": {
-            "status": 403,
-            "title": "Forbidden",
+            "code": "forbidden",
             "detail": "You are not authorized to access this resource",
             "requestId": "req_push",
-            "code": "forbidden"
+            "status": 403,
+            "title": "Forbidden"
           }
         }
       },
       {
         "content": [
           {
-            "type": "text",
-            "text": "Applied."
+            "text": "Applied.",
+            "type": "text"
           }
         ],
         "structuredContent": {
           "data": {
+            "changes": [
+              {
+                "change": "changed",
+                "path": "p0"
+              },
+              {
+                "change": "changed",
+                "path": "p1"
+              },
+              {
+                "change": "changed",
+                "path": "p2"
+              },
+              {
+                "change": "changed",
+                "path": "p3"
+              },
+              {
+                "change": "changed",
+                "path": "p4"
+              },
+              {
+                "change": "changed",
+                "path": "p5"
+              },
+              {
+                "change": "changed",
+                "path": "p6"
+              },
+              {
+                "change": "changed",
+                "path": "p7"
+              }
+            ],
+            "dryRun": false,
             "envelope": {
-              "kind": "survey",
-              "schemaVersion": 1,
-              "id": "kj4a98xxat96iws9zmbrgj3a",
-              "workspaceId": "ws_demo",
-              "updatedAt": "2026-10-28T12:07:31.000Z",
               "document": {
-                "name": "Customer onboarding survey v2",
-                "welcomeCard": {
-                  "enabled": true,
-                  "headline": {
-                    "default": "Welcome to Formbricks"
-                  },
-                  "buttonLabel": {
-                    "default": "Start"
-                  }
-                },
                 "blocks": [
                   {
-                    "id": "b_role",
-                    "name": "Role",
                     "elements": [
                       {
-                        "id": "e_role",
-                        "type": "openText",
                         "headline": {
                           "default": "What is your role?"
                         },
+                        "id": "e_role",
+                        "inputType": "text",
                         "required": true,
-                        "inputType": "text"
+                        "type": "openText"
                       }
-                    ]
+                    ],
+                    "id": "b_role",
+                    "name": "Role"
                   },
                   {
-                    "id": "b_goal",
-                    "name": "Goal",
                     "elements": [
                       {
-                        "id": "e_goal",
-                        "type": "openText",
                         "headline": {
                           "default": "Tell us in a few sentences what you want to achieve with Formbricks during your first month, which tools it replaces for you today, and who else on your team will rely on the results. The more context you give, the better the agent can set up your first survey."
                         },
+                        "id": "e_goal",
+                        "inputType": "text",
                         "required": true,
-                        "inputType": "text"
+                        "type": "openText"
                       }
-                    ]
+                    ],
+                    "id": "b_goal",
+                    "name": "Goal"
                   },
                   {
-                    "id": "b_budget",
-                    "name": "Budget",
                     "elements": [
                       {
-                        "id": "e_budget",
-                        "type": "openText",
                         "headline": {
                           "default": "What is your monthly research budget?"
                         },
+                        "id": "e_budget",
+                        "inputType": "text",
                         "required": false,
-                        "inputType": "text"
+                        "type": "openText"
                       }
-                    ]
+                    ],
+                    "id": "b_budget",
+                    "name": "Budget"
                   },
                   {
-                    "id": "b_team",
-                    "name": "Team",
                     "elements": [
                       {
-                        "id": "e_team",
-                        "type": "openText",
                         "headline": {
                           "default": "How large is your team?"
                         },
+                        "id": "e_team",
+                        "inputType": "text",
                         "required": false,
-                        "inputType": "text"
+                        "type": "openText"
                       }
-                    ]
+                    ],
+                    "id": "b_team",
+                    "name": "Team"
                   }
                 ],
                 "endings": [
                   {
-                    "id": "end_1",
-                    "type": "endScreen",
                     "headline": {
                       "default": "Thanks!"
-                    }
+                    },
+                    "id": "end_1",
+                    "type": "endScreen"
                   }
                 ],
                 "hiddenFields": {
                   "enabled": true,
-                  "fieldIds": [
-                    "userId",
-                    "plan"
-                  ]
+                  "fieldIds": ["userId", "plan"]
+                },
+                "name": "Customer onboarding survey v2",
+                "welcomeCard": {
+                  "buttonLabel": {
+                    "default": "Start"
+                  },
+                  "enabled": true,
+                  "headline": {
+                    "default": "Welcome to Formbricks"
+                  }
                 }
-              }
-            },
-            "dryRun": false,
-            "changes": [
-              {
-                "path": "p0",
-                "change": "changed"
               },
-              {
-                "path": "p1",
-                "change": "changed"
-              },
-              {
-                "path": "p2",
-                "change": "changed"
-              },
-              {
-                "path": "p3",
-                "change": "changed"
-              },
-              {
-                "path": "p4",
-                "change": "changed"
-              },
-              {
-                "path": "p5",
-                "change": "changed"
-              },
-              {
-                "path": "p6",
-                "change": "changed"
-              },
-              {
-                "path": "p7",
-                "change": "changed"
-              }
-            ]
+              "id": "kj4a98xxat96iws9zmbrgj3a",
+              "kind": "survey",
+              "schemaVersion": 1,
+              "updatedAt": "2026-10-28T12:07:31.000Z",
+              "workspaceId": "ws_demo"
+            }
           },
           "requestId": "req_push"
         }

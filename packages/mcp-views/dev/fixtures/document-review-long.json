@@ -1,89 +1,68 @@
 {
-  "toolName": "review_document_change",
   "input": {
-    "kind": "survey",
-    "id": "kj4a98xxat96iws9zmbrgj3a",
-    "schemaVersion": 1,
-    "expectedUpdatedAt": "2026-10-28T12:00:00.000Z",
     "document": {
-      "name": "Customer onboarding survey",
-      "welcomeCard": {
-        "enabled": true,
-        "headline": {
-          "default": "Welcome aboard"
-        },
-        "buttonLabel": {
-          "default": "Start"
-        }
-      },
       "blocks": [
         {
-          "id": "b_role",
-          "name": "Role",
           "elements": [
             {
-              "id": "e_role",
-              "type": "openText",
               "headline": {
                 "default": "What is your role?"
               },
+              "id": "e_role",
+              "inputType": "text",
               "required": true,
-              "inputType": "text"
+              "type": "openText"
             }
-          ]
+          ],
+          "id": "b_role",
+          "name": "Role"
         },
         {
-          "id": "b_goal",
-          "name": "Goal",
           "elements": [
             {
-              "id": "e_goal",
-              "type": "openText",
               "headline": {
                 "default": "What do you want to achieve with Formbricks in your first month?"
               },
+              "id": "e_goal",
+              "inputType": "text",
               "required": false,
-              "inputType": "text"
+              "type": "openText"
             }
-          ]
+          ],
+          "id": "b_goal",
+          "name": "Goal"
         },
         {
-          "id": "b_team",
-          "name": "Team",
           "elements": [
             {
-              "id": "e_team",
-              "type": "openText",
               "headline": {
                 "default": "How large is your team?"
               },
+              "id": "e_team",
+              "inputType": "text",
               "required": false,
-              "inputType": "text"
+              "type": "openText"
             }
-          ]
+          ],
+          "id": "b_team",
+          "name": "Team"
         }
       ],
       "endings": [
         {
-          "id": "end_1",
-          "type": "endScreen",
           "headline": {
             "default": "Thanks!"
-          }
+          },
+          "id": "end_1",
+          "type": "endScreen"
         },
         {
           "id": "end_2",
+          "label": "Done",
           "type": "redirectToUrl",
-          "url": "https://example.com/done",
-          "label": "Done"
+          "url": "https://example.com/done"
         }
       ],
-      "hiddenFields": {
-        "enabled": true,
-        "fieldIds": [
-          "userId"
-        ]
-      },
       "field000": "renamed value 0",
       "field001": 2,
       "field002": 3,
@@ -243,657 +222,1314 @@
       "field156": "renamed value 156",
       "field157": 158,
       "field158": 159,
-      "field159": "renamed value 159"
-    }
+      "field159": "renamed value 159",
+      "hiddenFields": {
+        "enabled": true,
+        "fieldIds": ["userId"]
+      },
+      "name": "Customer onboarding survey",
+      "welcomeCard": {
+        "buttonLabel": {
+          "default": "Start"
+        },
+        "enabled": true,
+        "headline": {
+          "default": "Welcome aboard"
+        }
+      }
+    },
+    "expectedUpdatedAt": "2026-10-28T12:00:00.000Z",
+    "id": "kj4a98xxat96iws9zmbrgj3a",
+    "kind": "survey",
+    "schemaVersion": 1
   },
   "result": {
     "content": [
       {
-        "type": "text",
-        "text": "Review of survey \"Customer onboarding survey\": 160 changes (0 added, 0 removed, 160 changed), 0 destructive. Changes: changed field000; changed field001; changed field002; changed field003; changed field004; changed field005; changed field006; changed field007; changed field008; changed field009; changed field010; changed field011; and 148 more. Nothing was written. The user decides in the review view; do not call push_document until they approve there. If you cannot see the view, list these changes to the user and ask before pushing."
+        "text": "Review of survey \"Customer onboarding survey\": 160 changes (0 added, 0 removed, 160 changed), 0 destructive. Changes: changed field000; changed field001; changed field002; changed field003; changed field004; changed field005; changed field006; changed field007; changed field008; changed field009; changed field010; changed field011; and 148 more. Nothing was written. The user decides in the review view; do not call push_document until they approve there. If you cannot see the view, list these changes to the user and ask before pushing.",
+        "type": "text"
       }
     ],
     "structuredContent": {
       "data": {
-        "kind": "survey",
-        "id": "kj4a98xxat96iws9zmbrgj3a",
-        "name": "Customer onboarding survey",
-        "workspaceId": "ws_demo",
-        "status": "valid",
-        "updatedAt": "2026-10-28T12:00:00.000Z",
-        "expectedUpdatedAt": "2026-10-28T12:00:00.000Z",
-        "summary": {
-          "total": 160,
-          "added": 0,
-          "removed": 0,
-          "changed": 160,
-          "destructive": 0
-        },
         "changes": [
           {
-            "path": "field000",
-            "kind": "changed",
+            "after": "renamed value 0",
             "before": 0,
-            "after": "renamed value 0"
+            "kind": "changed",
+            "path": "field000"
           },
           {
-            "path": "field001",
-            "kind": "changed",
+            "after": 2,
             "before": 1,
-            "after": 2
+            "kind": "changed",
+            "path": "field001"
           },
           {
-            "path": "field002",
-            "kind": "changed",
+            "after": 3,
             "before": 2,
-            "after": 3
+            "kind": "changed",
+            "path": "field002"
           },
           {
-            "path": "field003",
-            "kind": "changed",
+            "after": "renamed value 3",
             "before": 3,
-            "after": "renamed value 3"
+            "kind": "changed",
+            "path": "field003"
           },
           {
-            "path": "field004",
-            "kind": "changed",
+            "after": 5,
             "before": 4,
-            "after": 5
+            "kind": "changed",
+            "path": "field004"
           },
           {
-            "path": "field005",
-            "kind": "changed",
+            "after": 6,
             "before": 5,
-            "after": 6
+            "kind": "changed",
+            "path": "field005"
           },
           {
-            "path": "field006",
-            "kind": "changed",
+            "after": "renamed value 6",
             "before": 6,
-            "after": "renamed value 6"
+            "kind": "changed",
+            "path": "field006"
           },
           {
-            "path": "field007",
-            "kind": "changed",
+            "after": 8,
             "before": 7,
-            "after": 8
+            "kind": "changed",
+            "path": "field007"
           },
           {
-            "path": "field008",
-            "kind": "changed",
+            "after": 9,
             "before": 8,
-            "after": 9
+            "kind": "changed",
+            "path": "field008"
           },
           {
-            "path": "field009",
-            "kind": "changed",
+            "after": "renamed value 9",
             "before": 9,
-            "after": "renamed value 9"
+            "kind": "changed",
+            "path": "field009"
           },
           {
-            "path": "field010",
-            "kind": "changed",
+            "after": 11,
             "before": 10,
-            "after": 11
+            "kind": "changed",
+            "path": "field010"
           },
           {
-            "path": "field011",
-            "kind": "changed",
+            "after": 12,
             "before": 11,
-            "after": 12
+            "kind": "changed",
+            "path": "field011"
           },
           {
-            "path": "field012",
-            "kind": "changed",
+            "after": "renamed value 12",
             "before": 12,
-            "after": "renamed value 12"
+            "kind": "changed",
+            "path": "field012"
           },
           {
-            "path": "field013",
-            "kind": "changed",
+            "after": 14,
             "before": 13,
-            "after": 14
+            "kind": "changed",
+            "path": "field013"
           },
           {
-            "path": "field014",
-            "kind": "changed",
+            "after": 15,
             "before": 14,
-            "after": 15
+            "kind": "changed",
+            "path": "field014"
           },
           {
-            "path": "field015",
-            "kind": "changed",
+            "after": "renamed value 15",
             "before": 15,
-            "after": "renamed value 15"
+            "kind": "changed",
+            "path": "field015"
           },
           {
-            "path": "field016",
-            "kind": "changed",
+            "after": 17,
             "before": 16,
-            "after": 17
+            "kind": "changed",
+            "path": "field016"
           },
           {
-            "path": "field017",
-            "kind": "changed",
+            "after": 18,
             "before": 17,
-            "after": 18
+            "kind": "changed",
+            "path": "field017"
           },
           {
-            "path": "field018",
-            "kind": "changed",
+            "after": "renamed value 18",
             "before": 18,
-            "after": "renamed value 18"
+            "kind": "changed",
+            "path": "field018"
           },
           {
-            "path": "field019",
-            "kind": "changed",
+            "after": 20,
             "before": 19,
-            "after": 20
+            "kind": "changed",
+            "path": "field019"
           },
           {
-            "path": "field020",
-            "kind": "changed",
+            "after": 21,
             "before": 20,
-            "after": 21
+            "kind": "changed",
+            "path": "field020"
           },
           {
-            "path": "field021",
-            "kind": "changed",
+            "after": "renamed value 21",
             "before": 21,
-            "after": "renamed value 21"
+            "kind": "changed",
+            "path": "field021"
           },
           {
-            "path": "field022",
-            "kind": "changed",
+            "after": 23,
             "before": 22,
-            "after": 23
+            "kind": "changed",
+            "path": "field022"
           },
           {
-            "path": "field023",
-            "kind": "changed",
+            "after": 24,
             "before": 23,
-            "after": 24
+            "kind": "changed",
+            "path": "field023"
           },
           {
-            "path": "field024",
-            "kind": "changed",
+            "after": "renamed value 24",
             "before": 24,
-            "after": "renamed value 24"
+            "kind": "changed",
+            "path": "field024"
           },
           {
-            "path": "field025",
-            "kind": "changed",
+            "after": 26,
             "before": 25,
-            "after": 26
+            "kind": "changed",
+            "path": "field025"
           },
           {
-            "path": "field026",
-            "kind": "changed",
+            "after": 27,
             "before": 26,
-            "after": 27
+            "kind": "changed",
+            "path": "field026"
           },
           {
-            "path": "field027",
-            "kind": "changed",
+            "after": "renamed value 27",
             "before": 27,
-            "after": "renamed value 27"
+            "kind": "changed",
+            "path": "field027"
           },
           {
-            "path": "field028",
-            "kind": "changed",
+            "after": 29,
             "before": 28,
-            "after": 29
+            "kind": "changed",
+            "path": "field028"
           },
           {
-            "path": "field029",
-            "kind": "changed",
+            "after": 30,
             "before": 29,
-            "after": 30
+            "kind": "changed",
+            "path": "field029"
           },
           {
-            "path": "field030",
-            "kind": "changed",
+            "after": "renamed value 30",
             "before": 30,
-            "after": "renamed value 30"
+            "kind": "changed",
+            "path": "field030"
           },
           {
-            "path": "field031",
-            "kind": "changed",
+            "after": 32,
             "before": 31,
-            "after": 32
+            "kind": "changed",
+            "path": "field031"
           },
           {
-            "path": "field032",
-            "kind": "changed",
+            "after": 33,
             "before": 32,
-            "after": 33
+            "kind": "changed",
+            "path": "field032"
           },
           {
-            "path": "field033",
-            "kind": "changed",
+            "after": "renamed value 33",
             "before": 33,
-            "after": "renamed value 33"
+            "kind": "changed",
+            "path": "field033"
           },
           {
-            "path": "field034",
-            "kind": "changed",
+            "after": 35,
             "before": 34,
-            "after": 35
+            "kind": "changed",
+            "path": "field034"
           },
           {
-            "path": "field035",
-            "kind": "changed",
+            "after": 36,
             "before": 35,
-            "after": 36
+            "kind": "changed",
+            "path": "field035"
           },
           {
-            "path": "field036",
-            "kind": "changed",
+            "after": "renamed value 36",
             "before": 36,
-            "after": "renamed value 36"
+            "kind": "changed",
+            "path": "field036"
           },
           {
-            "path": "field037",
-            "kind": "changed",
+            "after": 38,
             "before": 37,
-            "after": 38
+            "kind": "changed",
+            "path": "field037"
           },
           {
-            "path": "field038",
-            "kind": "changed",
+            "after": 39,
             "before": 38,
-            "after": 39
+            "kind": "changed",
+            "path": "field038"
           },
           {
-            "path": "field039",
-            "kind": "changed",
+            "after": "renamed value 39",
             "before": 39,
-            "after": "renamed value 39"
+            "kind": "changed",
+            "path": "field039"
           },
           {
-            "path": "field040",
-            "kind": "changed",
+            "after": 41,
             "before": 40,
-            "after": 41
+            "kind": "changed",
+            "path": "field040"
           },
           {
-            "path": "field041",
-            "kind": "changed",
+            "after": 42,
             "before": 41,
-            "after": 42
+            "kind": "changed",
+            "path": "field041"
           },
           {
-            "path": "field042",
-            "kind": "changed",
+            "after": "renamed value 42",
             "before": 42,
-            "after": "renamed value 42"
+            "kind": "changed",
+            "path": "field042"
           },
           {
-            "path": "field043",
-            "kind": "changed",
+            "after": 44,
             "before": 43,
-            "after": 44
+            "kind": "changed",
+            "path": "field043"
           },
           {
-            "path": "field044",
-            "kind": "changed",
+            "after": 45,
             "before": 44,
-            "after": 45
+            "kind": "changed",
+            "path": "field044"
           },
           {
-            "path": "field045",
-            "kind": "changed",
+            "after": "renamed value 45",
             "before": 45,
-            "after": "renamed value 45"
+            "kind": "changed",
+            "path": "field045"
           },
           {
-            "path": "field046",
-            "kind": "changed",
+            "after": 47,
             "before": 46,
-            "after": 47
+            "kind": "changed",
+            "path": "field046"
           },
           {
-            "path": "field047",
-            "kind": "changed",
+            "after": 48,
             "before": 47,
-            "after": 48
+            "kind": "changed",
+            "path": "field047"
           },
           {
-            "path": "field048",
-            "kind": "changed",
+            "after": "renamed value 48",
             "before": 48,
-            "after": "renamed value 48"
+            "kind": "changed",
+            "path": "field048"
           },
           {
-            "path": "field049",
-            "kind": "changed",
+            "after": 50,
             "before": 49,
-            "after": 50
+            "kind": "changed",
+            "path": "field049"
           },
           {
-            "path": "field050",
-            "kind": "changed",
+            "after": 51,
             "before": 50,
-            "after": 51
+            "kind": "changed",
+            "path": "field050"
           },
           {
-            "path": "field051",
-            "kind": "changed",
+            "after": "renamed value 51",
             "before": 51,
-            "after": "renamed value 51"
+            "kind": "changed",
+            "path": "field051"
           },
           {
-            "path": "field052",
-            "kind": "changed",
+            "after": 53,
             "before": 52,
-            "after": 53
+            "kind": "changed",
+            "path": "field052"
           },
           {
-            "path": "field053",
-            "kind": "changed",
+            "after": 54,
             "before": 53,
-            "after": 54
+            "kind": "changed",
+            "path": "field053"
           },
           {
-            "path": "field054",
-            "kind": "changed",
+            "after": "renamed value 54",
             "before": 54,
-            "after": "renamed value 54"
+            "kind": "changed",
+            "path": "field054"
           },
           {
-            "path": "field055",
-            "kind": "changed",
+            "after": 56,
             "before": 55,
-            "after": 56
+            "kind": "changed",
+            "path": "field055"
           },
           {
-            "path": "field056",
-            "kind": "changed",
+            "after": 57,
             "before": 56,
-            "after": 57
+            "kind": "changed",
+            "path": "field056"
           },
           {
-            "path": "field057",
-            "kind": "changed",
+            "after": "renamed value 57",
             "before": 57,
-            "after": "renamed value 57"
+            "kind": "changed",
+            "path": "field057"
           },
           {
-            "path": "field058",
-            "kind": "changed",
+            "after": 59,
             "before": 58,
-            "after": 59
+            "kind": "changed",
+            "path": "field058"
           },
           {
-            "path": "field059",
-            "kind": "changed",
+            "after": 60,
             "before": 59,
-            "after": 60
+            "kind": "changed",
+            "path": "field059"
           },
           {
-            "path": "field060",
-            "kind": "changed",
+            "after": "renamed value 60",
             "before": 60,
-            "after": "renamed value 60"
+            "kind": "changed",
+            "path": "field060"
           },
           {
-            "path": "field061",
-            "kind": "changed",
+            "after": 62,
             "before": 61,
-            "after": 62
+            "kind": "changed",
+            "path": "field061"
           },
           {
-            "path": "field062",
-            "kind": "changed",
+            "after": 63,
             "before": 62,
-            "after": 63
+            "kind": "changed",
+            "path": "field062"
           },
           {
-            "path": "field063",
-            "kind": "changed",
+            "after": "renamed value 63",
             "before": 63,
-            "after": "renamed value 63"
+            "kind": "changed",
+            "path": "field063"
           },
           {
-            "path": "field064",
-            "kind": "changed",
+            "after": 65,
             "before": 64,
-            "after": 65
+            "kind": "changed",
+            "path": "field064"
           },
           {
-            "path": "field065",
-            "kind": "changed",
+            "after": 66,
             "before": 65,
-            "after": 66
+            "kind": "changed",
+            "path": "field065"
           },
           {
-            "path": "field066",
-            "kind": "changed",
+            "after": "renamed value 66",
             "before": 66,
-            "after": "renamed value 66"
+            "kind": "changed",
+            "path": "field066"
           },
           {
-            "path": "field067",
-            "kind": "changed",
+            "after": 68,
             "before": 67,
-            "after": 68
+            "kind": "changed",
+            "path": "field067"
           },
           {
-            "path": "field068",
-            "kind": "changed",
+            "after": 69,
             "before": 68,
-            "after": 69
+            "kind": "changed",
+            "path": "field068"
           },
           {
-            "path": "field069",
-            "kind": "changed",
+            "after": "renamed value 69",
             "before": 69,
-            "after": "renamed value 69"
+            "kind": "changed",
+            "path": "field069"
           },
           {
-            "path": "field070",
-            "kind": "changed",
+            "after": 71,
             "before": 70,
-            "after": 71
+            "kind": "changed",
+            "path": "field070"
           },
           {
-            "path": "field071",
-            "kind": "changed",
+            "after": 72,
             "before": 71,
-            "after": 72
+            "kind": "changed",
+            "path": "field071"
           },
           {
-            "path": "field072",
-            "kind": "changed",
+            "after": "renamed value 72",
             "before": 72,
-            "after": "renamed value 72"
+            "kind": "changed",
+            "path": "field072"
           },
           {
-            "path": "field073",
-            "kind": "changed",
+            "after": 74,
             "before": 73,
-            "after": 74
+            "kind": "changed",
+            "path": "field073"
           },
           {
-            "path": "field074",
-            "kind": "changed",
+            "after": 75,
             "before": 74,
-            "after": 75
+            "kind": "changed",
+            "path": "field074"
           },
           {
-            "path": "field075",
-            "kind": "changed",
+            "after": "renamed value 75",
             "before": 75,
-            "after": "renamed value 75"
+            "kind": "changed",
+            "path": "field075"
           },
           {
-            "path": "field076",
-            "kind": "changed",
+            "after": 77,
             "before": 76,
-            "after": 77
+            "kind": "changed",
+            "path": "field076"
           },
           {
-            "path": "field077",
-            "kind": "changed",
+            "after": 78,
             "before": 77,
-            "after": 78
+            "kind": "changed",
+            "path": "field077"
           },
           {
-            "path": "field078",
-            "kind": "changed",
+            "after": "renamed value 78",
             "before": 78,
-            "after": "renamed value 78"
+            "kind": "changed",
+            "path": "field078"
           },
           {
-            "path": "field079",
-            "kind": "changed",
+            "after": 80,
             "before": 79,
-            "after": 80
+            "kind": "changed",
+            "path": "field079"
           },
           {
-            "path": "field080",
-            "kind": "changed",
+            "after": 81,
             "before": 80,
-            "after": 81
+            "kind": "changed",
+            "path": "field080"
           },
           {
-            "path": "field081",
-            "kind": "changed",
+            "after": "renamed value 81",
             "before": 81,
-            "after": "renamed value 81"
+            "kind": "changed",
+            "path": "field081"
           },
           {
-            "path": "field082",
-            "kind": "changed",
+            "after": 83,
             "before": 82,
-            "after": 83
+            "kind": "changed",
+            "path": "field082"
           },
           {
-            "path": "field083",
-            "kind": "changed",
+            "after": 84,
             "before": 83,
-            "after": 84
+            "kind": "changed",
+            "path": "field083"
           },
           {
-            "path": "field084",
-            "kind": "changed",
+            "after": "renamed value 84",
             "before": 84,
-            "after": "renamed value 84"
+            "kind": "changed",
+            "path": "field084"
           },
           {
-            "path": "field085",
-            "kind": "changed",
+            "after": 86,
             "before": 85,
-            "after": 86
+            "kind": "changed",
+            "path": "field085"
           },
           {
-            "path": "field086",
-            "kind": "changed",
+            "after": 87,
             "before": 86,
-            "after": 87
+            "kind": "changed",
+            "path": "field086"
           },
           {
-            "path": "field087",
-            "kind": "changed",
+            "after": "renamed value 87",
             "before": 87,
-            "after": "renamed value 87"
+            "kind": "changed",
+            "path": "field087"
           },
           {
-            "path": "field088",
-            "kind": "changed",
+            "after": 89,
             "before": 88,
-            "after": 89
+            "kind": "changed",
+            "path": "field088"
           },
           {
-            "path": "field089",
-            "kind": "changed",
+            "after": 90,
             "before": 89,
-            "after": 90
+            "kind": "changed",
+            "path": "field089"
           },
           {
-            "path": "field090",
-            "kind": "changed",
+            "after": "renamed value 90",
             "before": 90,
-            "after": "renamed value 90"
+            "kind": "changed",
+            "path": "field090"
           },
           {
-            "path": "field091",
-            "kind": "changed",
+            "after": 92,
             "before": 91,
-            "after": 92
+            "kind": "changed",
+            "path": "field091"
           },
           {
-            "path": "field092",
-            "kind": "changed",
+            "after": 93,
             "before": 92,
-            "after": 93
+            "kind": "changed",
+            "path": "field092"
           },
           {
-            "path": "field093",
-            "kind": "changed",
+            "after": "renamed value 93",
             "before": 93,
-            "after": "renamed value 93"
+            "kind": "changed",
+            "path": "field093"
           },
           {
-            "path": "field094",
-            "kind": "changed",
+            "after": 95,
             "before": 94,
-            "after": 95
+            "kind": "changed",
+            "path": "field094"
           },
           {
-            "path": "field095",
-            "kind": "changed",
+            "after": 96,
             "before": 95,
-            "after": 96
+            "kind": "changed",
+            "path": "field095"
           },
           {
-            "path": "field096",
-            "kind": "changed",
+            "after": "renamed value 96",
             "before": 96,
-            "after": "renamed value 96"
+            "kind": "changed",
+            "path": "field096"
           },
           {
-            "path": "field097",
-            "kind": "changed",
+            "after": 98,
             "before": 97,
-            "after": 98
+            "kind": "changed",
+            "path": "field097"
           },
           {
-            "path": "field098",
-            "kind": "changed",
+            "after": 99,
             "before": 98,
-            "after": 99
+            "kind": "changed",
+            "path": "field098"
           },
           {
-            "path": "field099",
-            "kind": "changed",
+            "after": "renamed value 99",
             "before": 99,
-            "after": "renamed value 99"
+            "kind": "changed",
+            "path": "field099"
           }
         ],
-        "omittedChanges": 60,
         "destructive": [],
-        "issues": []
+        "expectedUpdatedAt": "2026-10-28T12:00:00.000Z",
+        "id": "kj4a98xxat96iws9zmbrgj3a",
+        "issues": [],
+        "kind": "survey",
+        "name": "Customer onboarding survey",
+        "omittedChanges": 60,
+        "status": "valid",
+        "summary": {
+          "added": 0,
+          "changed": 160,
+          "destructive": 0,
+          "removed": 0,
+          "total": 160
+        },
+        "updatedAt": "2026-10-28T12:00:00.000Z",
+        "workspaceId": "ws_demo"
       },
       "requestId": "req_review"
     }
   },
+  "toolName": "review_document_change",
   "tools": {
     "push_document": {
       "content": [
         {
-          "type": "text",
-          "text": "Applied."
+          "text": "Applied.",
+          "type": "text"
         }
       ],
       "structuredContent": {
         "data": {
+          "changes": [
+            {
+              "change": "changed",
+              "path": "p0"
+            },
+            {
+              "change": "changed",
+              "path": "p1"
+            },
+            {
+              "change": "changed",
+              "path": "p2"
+            },
+            {
+              "change": "changed",
+              "path": "p3"
+            },
+            {
+              "change": "changed",
+              "path": "p4"
+            },
+            {
+              "change": "changed",
+              "path": "p5"
+            },
+            {
+              "change": "changed",
+              "path": "p6"
+            },
+            {
+              "change": "changed",
+              "path": "p7"
+            },
+            {
+              "change": "changed",
+              "path": "p8"
+            },
+            {
+              "change": "changed",
+              "path": "p9"
+            },
+            {
+              "change": "changed",
+              "path": "p10"
+            },
+            {
+              "change": "changed",
+              "path": "p11"
+            },
+            {
+              "change": "changed",
+              "path": "p12"
+            },
+            {
+              "change": "changed",
+              "path": "p13"
+            },
+            {
+              "change": "changed",
+              "path": "p14"
+            },
+            {
+              "change": "changed",
+              "path": "p15"
+            },
+            {
+              "change": "changed",
+              "path": "p16"
+            },
+            {
+              "change": "changed",
+              "path": "p17"
+            },
+            {
+              "change": "changed",
+              "path": "p18"
+            },
+            {
+              "change": "changed",
+              "path": "p19"
+            },
+            {
+              "change": "changed",
+              "path": "p20"
+            },
+            {
+              "change": "changed",
+              "path": "p21"
+            },
+            {
+              "change": "changed",
+              "path": "p22"
+            },
+            {
+              "change": "changed",
+              "path": "p23"
+            },
+            {
+              "change": "changed",
+              "path": "p24"
+            },
+            {
+              "change": "changed",
+              "path": "p25"
+            },
+            {
+              "change": "changed",
+              "path": "p26"
+            },
+            {
+              "change": "changed",
+              "path": "p27"
+            },
+            {
+              "change": "changed",
+              "path": "p28"
+            },
+            {
+              "change": "changed",
+              "path": "p29"
+            },
+            {
+              "change": "changed",
+              "path": "p30"
+            },
+            {
+              "change": "changed",
+              "path": "p31"
+            },
+            {
+              "change": "changed",
+              "path": "p32"
+            },
+            {
+              "change": "changed",
+              "path": "p33"
+            },
+            {
+              "change": "changed",
+              "path": "p34"
+            },
+            {
+              "change": "changed",
+              "path": "p35"
+            },
+            {
+              "change": "changed",
+              "path": "p36"
+            },
+            {
+              "change": "changed",
+              "path": "p37"
+            },
+            {
+              "change": "changed",
+              "path": "p38"
+            },
+            {
+              "change": "changed",
+              "path": "p39"
+            },
+            {
+              "change": "changed",
+              "path": "p40"
+            },
+            {
+              "change": "changed",
+              "path": "p41"
+            },
+            {
+              "change": "changed",
+              "path": "p42"
+            },
+            {
+              "change": "changed",
+              "path": "p43"
+            },
+            {
+              "change": "changed",
+              "path": "p44"
+            },
+            {
+              "change": "changed",
+              "path": "p45"
+            },
+            {
+              "change": "changed",
+              "path": "p46"
+            },
+            {
+              "change": "changed",
+              "path": "p47"
+            },
+            {
+              "change": "changed",
+              "path": "p48"
+            },
+            {
+              "change": "changed",
+              "path": "p49"
+            },
+            {
+              "change": "changed",
+              "path": "p50"
+            },
+            {
+              "change": "changed",
+              "path": "p51"
+            },
+            {
+              "change": "changed",
+              "path": "p52"
+            },
+            {
+              "change": "changed",
+              "path": "p53"
+            },
+            {
+              "change": "changed",
+              "path": "p54"
+            },
+            {
+              "change": "changed",
+              "path": "p55"
+            },
+            {
+              "change": "changed",
+              "path": "p56"
+            },
+            {
+              "change": "changed",
+              "path": "p57"
+            },
+            {
+              "change": "changed",
+              "path": "p58"
+            },
+            {
+              "change": "changed",
+              "path": "p59"
+            },
+            {
+              "change": "changed",
+              "path": "p60"
+            },
+            {
+              "change": "changed",
+              "path": "p61"
+            },
+            {
+              "change": "changed",
+              "path": "p62"
+            },
+            {
+              "change": "changed",
+              "path": "p63"
+            },
+            {
+              "change": "changed",
+              "path": "p64"
+            },
+            {
+              "change": "changed",
+              "path": "p65"
+            },
+            {
+              "change": "changed",
+              "path": "p66"
+            },
+            {
+              "change": "changed",
+              "path": "p67"
+            },
+            {
+              "change": "changed",
+              "path": "p68"
+            },
+            {
+              "change": "changed",
+              "path": "p69"
+            },
+            {
+              "change": "changed",
+              "path": "p70"
+            },
+            {
+              "change": "changed",
+              "path": "p71"
+            },
+            {
+              "change": "changed",
+              "path": "p72"
+            },
+            {
+              "change": "changed",
+              "path": "p73"
+            },
+            {
+              "change": "changed",
+              "path": "p74"
+            },
+            {
+              "change": "changed",
+              "path": "p75"
+            },
+            {
+              "change": "changed",
+              "path": "p76"
+            },
+            {
+              "change": "changed",
+              "path": "p77"
+            },
+            {
+              "change": "changed",
+              "path": "p78"
+            },
+            {
+              "change": "changed",
+              "path": "p79"
+            },
+            {
+              "change": "changed",
+              "path": "p80"
+            },
+            {
+              "change": "changed",
+              "path": "p81"
+            },
+            {
+              "change": "changed",
+              "path": "p82"
+            },
+            {
+              "change": "changed",
+              "path": "p83"
+            },
+            {
+              "change": "changed",
+              "path": "p84"
+            },
+            {
+              "change": "changed",
+              "path": "p85"
+            },
+            {
+              "change": "changed",
+              "path": "p86"
+            },
+            {
+              "change": "changed",
+              "path": "p87"
+            },
+            {
+              "change": "changed",
+              "path": "p88"
+            },
+            {
+              "change": "changed",
+              "path": "p89"
+            },
+            {
+              "change": "changed",
+              "path": "p90"
+            },
+            {
+              "change": "changed",
+              "path": "p91"
+            },
+            {
+              "change": "changed",
+              "path": "p92"
+            },
+            {
+              "change": "changed",
+              "path": "p93"
+            },
+            {
+              "change": "changed",
+              "path": "p94"
+            },
+            {
+              "change": "changed",
+              "path": "p95"
+            },
+            {
+              "change": "changed",
+              "path": "p96"
+            },
+            {
+              "change": "changed",
+              "path": "p97"
+            },
+            {
+              "change": "changed",
+              "path": "p98"
+            },
+            {
+              "change": "changed",
+              "path": "p99"
+            },
+            {
+              "change": "changed",
+              "path": "p100"
+            },
+            {
+              "change": "changed",
+              "path": "p101"
+            },
+            {
+              "change": "changed",
+              "path": "p102"
+            },
+            {
+              "change": "changed",
+              "path": "p103"
+            },
+            {
+              "change": "changed",
+              "path": "p104"
+            },
+            {
+              "change": "changed",
+              "path": "p105"
+            },
+            {
+              "change": "changed",
+              "path": "p106"
+            },
+            {
+              "change": "changed",
+              "path": "p107"
+            },
+            {
+              "change": "changed",
+              "path": "p108"
+            },
+            {
+              "change": "changed",
+              "path": "p109"
+            },
+            {
+              "change": "changed",
+              "path": "p110"
+            },
+            {
+              "change": "changed",
+              "path": "p111"
+            },
+            {
+              "change": "changed",
+              "path": "p112"
+            },
+            {
+              "change": "changed",
+              "path": "p113"
+            },
+            {
+              "change": "changed",
+              "path": "p114"
+            },
+            {
+              "change": "changed",
+              "path": "p115"
+            },
+            {
+              "change": "changed",
+              "path": "p116"
+            },
+            {
+              "change": "changed",
+              "path": "p117"
+            },
+            {
+              "change": "changed",
+              "path": "p118"
+            },
+            {
+              "change": "changed",
+              "path": "p119"
+            },
+            {
+              "change": "changed",
+              "path": "p120"
+            },
+            {
+              "change": "changed",
+              "path": "p121"
+            },
+            {
+              "change": "changed",
+              "path": "p122"
+            },
+            {
+              "change": "changed",
+              "path": "p123"
+            },
+            {
+              "change": "changed",
+              "path": "p124"
+            },
+            {
+              "change": "changed",
+              "path": "p125"
+            },
+            {
+              "change": "changed",
+              "path": "p126"
+            },
+            {
+              "change": "changed",
+              "path": "p127"
+            },
+            {
+              "change": "changed",
+              "path": "p128"
+            },
+            {
+              "change": "changed",
+              "path": "p129"
+            },
+            {
+              "change": "changed",
+              "path": "p130"
+            },
+            {
+              "change": "changed",
+              "path": "p131"
+            },
+            {
+              "change": "changed",
+              "path": "p132"
+            },
+            {
+              "change": "changed",
+              "path": "p133"
+            },
+            {
+              "change": "changed",
+              "path": "p134"
+            },
+            {
+              "change": "changed",
+              "path": "p135"
+            },
+            {
+              "change": "changed",
+              "path": "p136"
+            },
+            {
+              "change": "changed",
+              "path": "p137"
+            },
+            {
+              "change": "changed",
+              "path": "p138"
+            },
+            {
+              "change": "changed",
+              "path": "p139"
+            },
+            {
+              "change": "changed",
+              "path": "p140"
+            },
+            {
+              "change": "changed",
+              "path": "p141"
+            },
+            {
+              "change": "changed",
+              "path": "p142"
+            },
+            {
+              "change": "changed",
+              "path": "p143"
+            },
+            {
+              "change": "changed",
+              "path": "p144"
+            },
+            {
+              "change": "changed",
+              "path": "p145"
+            },
+            {
+              "change": "changed",
+              "path": "p146"
+            },
+            {
+              "change": "changed",
+              "path": "p147"
+            },
+            {
+              "change": "changed",
+              "path": "p148"
+            },
+            {
+              "change": "changed",
+              "path": "p149"
+            },
+            {
+              "change": "changed",
+              "path": "p150"
+            },
+            {
+              "change": "changed",
+              "path": "p151"
+            },
+            {
+              "change": "changed",
+              "path": "p152"
+            },
+            {
+              "change": "changed",
+              "path": "p153"
+            },
+            {
+              "change": "changed",
+              "path": "p154"
+            },
+            {
+              "change": "changed",
+              "path": "p155"
+            },
+            {
+              "change": "changed",
+              "path": "p156"
+            },
+            {
+              "change": "changed",
+              "path": "p157"
+            },
+            {
+              "change": "changed",
+              "path": "p158"
+            },
+            {
+              "change": "changed",
+              "path": "p159"
+            }
+          ],
+          "dryRun": false,
           "envelope": {
-            "kind": "survey",
-            "schemaVersion": 1,
-            "id": "kj4a98xxat96iws9zmbrgj3a",
-            "workspaceId": "ws_demo",
-            "updatedAt": "2026-10-28T12:07:31.000Z",
             "document": {
               "field000": "renamed value 0",
               "field001": 2,
@@ -1055,651 +1691,13 @@
               "field157": 158,
               "field158": 159,
               "field159": "renamed value 159"
-            }
-          },
-          "dryRun": false,
-          "changes": [
-            {
-              "path": "p0",
-              "change": "changed"
             },
-            {
-              "path": "p1",
-              "change": "changed"
-            },
-            {
-              "path": "p2",
-              "change": "changed"
-            },
-            {
-              "path": "p3",
-              "change": "changed"
-            },
-            {
-              "path": "p4",
-              "change": "changed"
-            },
-            {
-              "path": "p5",
-              "change": "changed"
-            },
-            {
-              "path": "p6",
-              "change": "changed"
-            },
-            {
-              "path": "p7",
-              "change": "changed"
-            },
-            {
-              "path": "p8",
-              "change": "changed"
-            },
-            {
-              "path": "p9",
-              "change": "changed"
-            },
-            {
-              "path": "p10",
-              "change": "changed"
-            },
-            {
-              "path": "p11",
-              "change": "changed"
-            },
-            {
-              "path": "p12",
-              "change": "changed"
-            },
-            {
-              "path": "p13",
-              "change": "changed"
-            },
-            {
-              "path": "p14",
-              "change": "changed"
-            },
-            {
-              "path": "p15",
-              "change": "changed"
-            },
-            {
-              "path": "p16",
-              "change": "changed"
-            },
-            {
-              "path": "p17",
-              "change": "changed"
-            },
-            {
-              "path": "p18",
-              "change": "changed"
-            },
-            {
-              "path": "p19",
-              "change": "changed"
-            },
-            {
-              "path": "p20",
-              "change": "changed"
-            },
-            {
-              "path": "p21",
-              "change": "changed"
-            },
-            {
-              "path": "p22",
-              "change": "changed"
-            },
-            {
-              "path": "p23",
-              "change": "changed"
-            },
-            {
-              "path": "p24",
-              "change": "changed"
-            },
-            {
-              "path": "p25",
-              "change": "changed"
-            },
-            {
-              "path": "p26",
-              "change": "changed"
-            },
-            {
-              "path": "p27",
-              "change": "changed"
-            },
-            {
-              "path": "p28",
-              "change": "changed"
-            },
-            {
-              "path": "p29",
-              "change": "changed"
-            },
-            {
-              "path": "p30",
-              "change": "changed"
-            },
-            {
-              "path": "p31",
-              "change": "changed"
-            },
-            {
-              "path": "p32",
-              "change": "changed"
-            },
-            {
-              "path": "p33",
-              "change": "changed"
-            },
-            {
-              "path": "p34",
-              "change": "changed"
-            },
-            {
-              "path": "p35",
-              "change": "changed"
-            },
-            {
-              "path": "p36",
-              "change": "changed"
-            },
-            {
-              "path": "p37",
-              "change": "changed"
-            },
-            {
-              "path": "p38",
-              "change": "changed"
-            },
-            {
-              "path": "p39",
-              "change": "changed"
-            },
-            {
-              "path": "p40",
-              "change": "changed"
-            },
-            {
-              "path": "p41",
-              "change": "changed"
-            },
-            {
-              "path": "p42",
-              "change": "changed"
-            },
-            {
-              "path": "p43",
-              "change": "changed"
-            },
-            {
-              "path": "p44",
-              "change": "changed"
-            },
-            {
-              "path": "p45",
-              "change": "changed"
-            },
-            {
-              "path": "p46",
-              "change": "changed"
-            },
-            {
-              "path": "p47",
-              "change": "changed"
-            },
-            {
-              "path": "p48",
-              "change": "changed"
-            },
-            {
-              "path": "p49",
-              "change": "changed"
-            },
-            {
-              "path": "p50",
-              "change": "changed"
-            },
-            {
-              "path": "p51",
-              "change": "changed"
-            },
-            {
-              "path": "p52",
-              "change": "changed"
-            },
-            {
-              "path": "p53",
-              "change": "changed"
-            },
-            {
-              "path": "p54",
-              "change": "changed"
-            },
-            {
-              "path": "p55",
-              "change": "changed"
-            },
-            {
-              "path": "p56",
-              "change": "changed"
-            },
-            {
-              "path": "p57",
-              "change": "changed"
-            },
-            {
-              "path": "p58",
-              "change": "changed"
-            },
-            {
-              "path": "p59",
-              "change": "changed"
-            },
-            {
-              "path": "p60",
-              "change": "changed"
-            },
-            {
-              "path": "p61",
-              "change": "changed"
-            },
-            {
-              "path": "p62",
-              "change": "changed"
-            },
-            {
-              "path": "p63",
-              "change": "changed"
-            },
-            {
-              "path": "p64",
-              "change": "changed"
-            },
-            {
-              "path": "p65",
-              "change": "changed"
-            },
-            {
-              "path": "p66",
-              "change": "changed"
-            },
-            {
-              "path": "p67",
-              "change": "changed"
-            },
-            {
-              "path": "p68",
-              "change": "changed"
-            },
-            {
-              "path": "p69",
-              "change": "changed"
-            },
-            {
-              "path": "p70",
-              "change": "changed"
-            },
-            {
-              "path": "p71",
-              "change": "changed"
-            },
-            {
-              "path": "p72",
-              "change": "changed"
-            },
-            {
-              "path": "p73",
-              "change": "changed"
-            },
-            {
-              "path": "p74",
-              "change": "changed"
-            },
-            {
-              "path": "p75",
-              "change": "changed"
-            },
-            {
-              "path": "p76",
-              "change": "changed"
-            },
-            {
-              "path": "p77",
-              "change": "changed"
-            },
-            {
-              "path": "p78",
-              "change": "changed"
-            },
-            {
-              "path": "p79",
-              "change": "changed"
-            },
-            {
-              "path": "p80",
-              "change": "changed"
-            },
-            {
-              "path": "p81",
-              "change": "changed"
-            },
-            {
-              "path": "p82",
-              "change": "changed"
-            },
-            {
-              "path": "p83",
-              "change": "changed"
-            },
-            {
-              "path": "p84",
-              "change": "changed"
-            },
-            {
-              "path": "p85",
-              "change": "changed"
-            },
-            {
-              "path": "p86",
-              "change": "changed"
-            },
-            {
-              "path": "p87",
-              "change": "changed"
-            },
-            {
-              "path": "p88",
-              "change": "changed"
-            },
-            {
-              "path": "p89",
-              "change": "changed"
-            },
-            {
-              "path": "p90",
-              "change": "changed"
-            },
-            {
-              "path": "p91",
-              "change": "changed"
-            },
-            {
-              "path": "p92",
-              "change": "changed"
-            },
-            {
-              "path": "p93",
-              "change": "changed"
-            },
-            {
-              "path": "p94",
-              "change": "changed"
-            },
-            {
-              "path": "p95",
-              "change": "changed"
-            },
-            {
-              "path": "p96",
-              "change": "changed"
-            },
-            {
-              "path": "p97",
-              "change": "changed"
-            },
-            {
-              "path": "p98",
-              "change": "changed"
-            },
-            {
-              "path": "p99",
-              "change": "changed"
-            },
-            {
-              "path": "p100",
-              "change": "changed"
-            },
-            {
-              "path": "p101",
-              "change": "changed"
-            },
-            {
-              "path": "p102",
-              "change": "changed"
-            },
-            {
-              "path": "p103",
-              "change": "changed"
-            },
-            {
-              "path": "p104",
-              "change": "changed"
-            },
-            {
-              "path": "p105",
-              "change": "changed"
-            },
-            {
-              "path": "p106",
-              "change": "changed"
-            },
-            {
-              "path": "p107",
-              "change": "changed"
-            },
-            {
-              "path": "p108",
-              "change": "changed"
-            },
-            {
-              "path": "p109",
-              "change": "changed"
-            },
-            {
-              "path": "p110",
-              "change": "changed"
-            },
-            {
-              "path": "p111",
-              "change": "changed"
-            },
-            {
-              "path": "p112",
-              "change": "changed"
-            },
-            {
-              "path": "p113",
-              "change": "changed"
-            },
-            {
-              "path": "p114",
-              "change": "changed"
-            },
-            {
-              "path": "p115",
-              "change": "changed"
-            },
-            {
-              "path": "p116",
-              "change": "changed"
-            },
-            {
-              "path": "p117",
-              "change": "changed"
-            },
-            {
-              "path": "p118",
-              "change": "changed"
-            },
-            {
-              "path": "p119",
-              "change": "changed"
-            },
-            {
-              "path": "p120",
-              "change": "changed"
-            },
-            {
-              "path": "p121",
-              "change": "changed"
-            },
-            {
-              "path": "p122",
-              "change": "changed"
-            },
-            {
-              "path": "p123",
-              "change": "changed"
-            },
-            {
-              "path": "p124",
-              "change": "changed"
-            },
-            {
-              "path": "p125",
-              "change": "changed"
-            },
-            {
-              "path": "p126",
-              "change": "changed"
-            },
-            {
-              "path": "p127",
-              "change": "changed"
-            },
-            {
-              "path": "p128",
-              "change": "changed"
-            },
-            {
-              "path": "p129",
-              "change": "changed"
-            },
-            {
-              "path": "p130",
-              "change": "changed"
-            },
-            {
-              "path": "p131",
-              "change": "changed"
-            },
-            {
-              "path": "p132",
-              "change": "changed"
-            },
-            {
-              "path": "p133",
-              "change": "changed"
-            },
-            {
-              "path": "p134",
-              "change": "changed"
-            },
-            {
-              "path": "p135",
-              "change": "changed"
-            },
-            {
-              "path": "p136",
-              "change": "changed"
-            },
-            {
-              "path": "p137",
-              "change": "changed"
-            },
-            {
-              "path": "p138",
-              "change": "changed"
-            },
-            {
-              "path": "p139",
-              "change": "changed"
-            },
-            {
-              "path": "p140",
-              "change": "changed"
-            },
-            {
-              "path": "p141",
-              "change": "changed"
-            },
-            {
-              "path": "p142",
-              "change": "changed"
-            },
-            {
-              "path": "p143",
-              "change": "changed"
-            },
-            {
-              "path": "p144",
-              "change": "changed"
-            },
-            {
-              "path": "p145",
-              "change": "changed"
-            },
-            {
-              "path": "p146",
-              "change": "changed"
-            },
-            {
-              "path": "p147",
-              "change": "changed"
-            },
-            {
-              "path": "p148",
-              "change": "changed"
-            },
-            {
-              "path": "p149",
-              "change": "changed"
-            },
-            {
-              "path": "p150",
-              "change": "changed"
-            },
-            {
-              "path": "p151",
-              "change": "changed"
-            },
-            {
-              "path": "p152",
-              "change": "changed"
-            },
-            {
-              "path": "p153",
-              "change": "changed"
-            },
-            {
-              "path": "p154",
-              "change": "changed"
-            },
-            {
-              "path": "p155",
-              "change": "changed"
-            },
-            {
-              "path": "p156",
-              "change": "changed"
-            },
-            {
-              "path": "p157",
-              "change": "changed"
-            },
-            {
-              "path": "p158",
-              "change": "changed"
-            },
-            {
-              "path": "p159",
-              "change": "changed"
-            }
-          ]
+            "id": "kj4a98xxat96iws9zmbrgj3a",
+            "kind": "survey",
+            "schemaVersion": 1,
+            "updatedAt": "2026-10-28T12:07:31.000Z",
+            "workspaceId": "ws_demo"
+          }
         },
         "requestId": "req_push"
       }
