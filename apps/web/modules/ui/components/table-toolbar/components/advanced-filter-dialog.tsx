@@ -181,10 +181,12 @@ export const AdvancedFilterDialog = ({
         </DialogHeader>
         <DialogBody className="space-y-3">
           <ConditionsEditor conditions={group} config={config} callbacks={callbacks} isConnectorLocked />
+          {/* Lined up under the rules' first field: past the 40px connector slot and its 8px gap. */}
           <Button
             type="button"
-            variant="ghost"
+            variant="secondary"
             size="sm"
+            className="ml-12"
             onClick={() => updateConditions((conditions) => [...conditions, emptyCondition()])}>
             <PlusIcon />
             {t("common.add_filter")}
