@@ -32,6 +32,11 @@ export const rateLimitConfigs = {
       allowedPerInterval: 10,
       namespace: "api:v3:surveys:generate",
     }, // 10 per minute (AI survey generation)
+    internalAiTranslate: {
+      interval: 60,
+      allowedPerInterval: 20,
+      namespace: "api:internal:ai-translations",
+    }, // 20 per minute per user — one call per target language, each up to 8192 output tokens
     v3SurveyVisibility: {
       interval: 60,
       allowedPerInterval: 10,

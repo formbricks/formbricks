@@ -10,6 +10,7 @@ import {
 } from "@formbricks/types/errors";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { RedactedAIError } from "@/lib/ai/loggable-error";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { GET as AVAILABILITY } from "./availability/route";
 import { POST as TRANSLATE } from "./route";
 
@@ -250,6 +251,15 @@ describe("POST /api/internal/ai-translations", () => {
 
     expect((await translate()).status).toBe(429);
     expect(mocks.translateFields).not.toHaveBeenCalled();
+  });
+
+  test("charges the AI translation budget, not the default request budget", async () => {
+    await translate();
+
+    expect(mocks.applyRateLimit).toHaveBeenCalledWith(
+      rateLimitConfigs.api.internalAiTranslate,
+      expect.any(String)
+    );
   });
 
   test("answers a batch too large for one answer with 422 ai_output_too_long", async () => {
