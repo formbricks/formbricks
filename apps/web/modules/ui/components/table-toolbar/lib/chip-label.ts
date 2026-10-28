@@ -49,11 +49,13 @@ export const getChipParts = (
       break;
     default:
       label = `${property.label} ${getOperatorLabel(filter.operator, t)}`;
-      value = MULTI_VALUE_OPERATORS.includes(filter.operator)
-        ? filter.values.map((v) => formatValue(property, v, locale)).join(", ")
-        : operatorTakesValue(filter.operator)
-          ? formatValue(property, filter.values[0] ?? "", locale)
-          : "";
+      if (MULTI_VALUE_OPERATORS.includes(filter.operator)) {
+        value = filter.values.map((v) => formatValue(property, v, locale)).join(", ");
+      } else if (operatorTakesValue(filter.operator)) {
+        value = formatValue(property, filter.values[0] ?? "", locale);
+      } else {
+        value = "";
+      }
   }
 
   const accessibleName = t("common.table_toolbar.chip_accessible_name", {

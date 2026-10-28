@@ -601,7 +601,6 @@
       "properties": "Egenskaper",
       "remove_filter": "Ta bort {filter}",
       "reorder_column": "Ändra ordning på {column}",
-      "resize_column": "Ändra kolumnens storlek",
       "result_count": "{count, plural, one {{formattedCount} resultat} other {{formattedCount} resultat}}",
       "result_count_capped": "{formattedCount}+ resultat",
       "search_values": "Sök bland värden för {property}",

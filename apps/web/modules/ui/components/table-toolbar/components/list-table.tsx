@@ -222,11 +222,13 @@ export const ListTable = <TData,>({
                       ? null
                       : flexRender(header.column.columnDef.header, header.getContext())}
                     {canResize && header.column.getCanResize() && !CONTROL_COLUMNS.has(header.column.id) && (
-                      // Drag to resize; double-click puts the column back to its default width.
-                      <div
-                        role="separator"
-                        aria-orientation="vertical"
-                        aria-label={t("common.table_toolbar.resize_column")}
+                      // Drag to resize; double-click puts the column back to its default width. A pointer
+                      // affordance only, kept out of the header's accessible name.
+                      <button
+                        type="button"
+                        tabIndex={-1}
+                        aria-hidden="true"
+                        data-testid="column-resize-handle"
                         onMouseDown={header.getResizeHandler()}
                         onTouchStart={header.getResizeHandler()}
                         onDoubleClick={() => header.column.resetSize()}

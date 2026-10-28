@@ -126,6 +126,7 @@ export const AdvancedFilterDialog = ({
       };
     },
     getDefaultOperator: () => "",
+    showWhenLabel: false,
     formatLeftOperandValue: (condition) => condition.leftOperand.value,
   };
 

@@ -601,7 +601,6 @@
       "properties": "Tulajdonságok",
       "remove_filter": "{filter} eltávolítása",
       "reorder_column": "{column} átrendezése",
-      "resize_column": "Oszlop átméretezése",
       "result_count": "{count, plural, one {{formattedCount} találat} other {{formattedCount} találat}}",
       "result_count_capped": "{formattedCount}+ találat",
       "search_values": "{property} értékeinek keresése",

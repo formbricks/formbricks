@@ -441,6 +441,36 @@ const writeInEntryClause = (
   };
 };
 
+/**
+ * "Includes all" of a multi answer. Other is never stored as such: the answer holds the typed text
+ * instead, so Other among the values means "has a write-in", next to the predefined values it must
+ * contain.
+ */
+const includesAllClauses = (
+  key: string,
+  element: ReturnType<typeof getElementsFromBlocks>[number] | undefined,
+  values: (string | number)[],
+  spend: (count: number) => void
+): Prisma.ResponseWhereInput[] => {
+  if (element?.type !== "multipleChoiceMulti") return [{ data: { path: [key], array_contains: values } }];
+  const otherChoice = element.choices.find((choice) => choice.id === "other");
+  const otherLabels = new Set(otherChoice ? Object.values(otherChoice.label) : []);
+  const predefined = values.filter((value) => !otherLabels.has(String(value)));
+  if (predefined.length === values.length) return [{ data: { path: [key], array_contains: values } }];
+
+  const predefinedLabels = [
+    ...new Set(
+      element.choices
+        .filter((choice) => choice.id !== "other")
+        .flatMap((choice) => Object.values(choice.label))
+    ),
+  ];
+  return [
+    ...(predefined.length > 0 ? [{ data: { path: [key], array_contains: predefined } }] : []),
+    writeInEntryClause(key, element.choices.length, predefinedLabels, spend),
+  ];
+};
+
 export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilterCriteria) => {
   const whereClause: Prisma.ResponseWhereInput["AND"] = [];
 
@@ -739,31 +769,9 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
         case "notInRange":
           data.push(...buildDataRangeConditions(key, val, rangeableIngestedKeys));
           break;
-        case "includesAll": {
-          // "Other" is never stored as such: the answer holds the typed text instead. So Other among
-          // the chosen values means "has a write-in", alongside the predefined values it must contain.
-          const otherChoice =
-            element?.type === "multipleChoiceMulti"
-              ? element.choices.find((choice) => choice.id === "other")
-              : undefined;
-          const otherLabels = new Set(otherChoice ? Object.values(otherChoice.label) : []);
-          const wantsOther = val.value.some((value) => otherLabels.has(String(value)));
-          if (!element || element.type !== "multipleChoiceMulti" || !wantsOther) {
-            data.push({ data: { path: [key], array_contains: val.value } });
-            break;
-          }
-          const predefined = val.value.filter((value) => !otherLabels.has(String(value)));
-          if (predefined.length > 0) data.push({ data: { path: [key], array_contains: predefined } });
-          const predefinedLabels = [
-            ...new Set(
-              element.choices
-                .filter((choice) => choice.id !== "other")
-                .flatMap((choice) => Object.values(choice.label))
-            ),
-          ];
-          data.push(writeInEntryClause(key, element.choices.length, predefinedLabels, spend));
+        case "includesAll":
+          data.push(...includesAllClauses(key, element, val.value, spend));
           break;
-        }
         case "includesOne": {
           const values = new Set(val.value.map((v) => v.toString()));
           const otherChoice =

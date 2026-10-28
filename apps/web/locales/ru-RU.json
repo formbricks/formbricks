@@ -601,7 +601,6 @@
       "properties": "Свойства",
       "remove_filter": "Удалить {filter}",
       "reorder_column": "Изменить порядок: {column}",
-      "resize_column": "Изменить ширину столбца",
       "result_count": "{count, plural, one {{formattedCount} результат} few {{formattedCount} результата} many {{formattedCount} результатов} other {{formattedCount} результата}}",
       "result_count_capped": "{formattedCount}+ результатов",
       "search_values": "Поиск по значениям {property}",

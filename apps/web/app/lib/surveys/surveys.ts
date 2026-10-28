@@ -81,15 +81,11 @@ const getElementFilterOption = (
   };
 
   switch (element.type) {
+    // Other included: "Includes either/all … Other" match answers with a write-in.
     case TSurveyElementTypeEnum.MultipleChoiceSingle:
-      return {
-        ...baseOption,
-        filterComboBoxOptions: element.choices?.map((c) => c.label) ?? [""],
-      };
     case TSurveyElementTypeEnum.MultipleChoiceMulti:
       return {
         ...baseOption,
-        // Other included: "Includes either/all … Other" match answers with a write-in.
         filterComboBoxOptions: element.choices?.map((c) => c.label) ?? [""],
       };
     case TSurveyElementTypeEnum.PictureSelection:

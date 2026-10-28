@@ -26,11 +26,11 @@ const writeJson = (key: string, value: unknown) => {
  * `useReactTable`; `ListTable` draws the resize handles for any table that enables it.
  */
 export const useColumnSizing = (storageKey: string) => {
-  const [columnSizing, setColumnSizingState] = useState<ColumnSizingState>({});
+  const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    setColumnSizingState(readJson<ColumnSizingState>(storageKey) ?? {});
+    setColumnSizing(readJson<ColumnSizingState>(storageKey) ?? {});
     setIsLoaded(true);
   }, [storageKey]);
 
@@ -38,7 +38,7 @@ export const useColumnSizing = (storageKey: string) => {
     if (isLoaded) writeJson(storageKey, columnSizing);
   }, [isLoaded, storageKey, columnSizing]);
 
-  const onColumnSizingChange: OnChangeFn<ColumnSizingState> = setColumnSizingState;
+  const onColumnSizingChange: OnChangeFn<ColumnSizingState> = setColumnSizing;
   return {
     columnSizing,
     tableOptions: {

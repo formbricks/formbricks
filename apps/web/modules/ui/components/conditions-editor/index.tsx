@@ -165,7 +165,9 @@ export function ConditionsEditor({
 
     const getConnector = () => {
       if (index > 0) return <div>{connector}</div>;
-      if (parentConditionGroup.conditions.length === 1) return <div>{t("workspace.surveys.edit.when")}</div>;
+      if (parentConditionGroup.conditions.length === 1 && config.showWhenLabel !== false) {
+        return <div>{t("workspace.surveys.edit.when")}</div>;
+      }
       return <div />;
     };
 

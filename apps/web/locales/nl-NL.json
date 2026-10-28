@@ -601,7 +601,6 @@
       "properties": "Eigenschappen",
       "remove_filter": "{filter} verwijderen",
       "reorder_column": "{column} opnieuw ordenen",
-      "resize_column": "Kolom aanpassen",
       "result_count": "{count, plural, one {{formattedCount} resultaat} other {{formattedCount} resultaten}}",
       "result_count_capped": "{formattedCount}+ resultaten",
       "search_values": "Zoek in waarden van {property}",
