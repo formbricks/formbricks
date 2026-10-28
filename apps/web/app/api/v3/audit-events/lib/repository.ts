@@ -40,19 +40,13 @@ export async function listAuditEventRows({
   query,
 }: {
   organizationId: string;
-  query: Pick<
-    TV3AuditEventsListQuery,
-    | "actorId"
-    | "actorType"
-    | "action"
-    | "targetType"
-    | "targetId"
-    | "status"
-    | "from"
-    | "to"
-    | "limit"
-    | "cursor"
-  >;
+  query: Partial<
+    Pick<
+      TV3AuditEventsListQuery,
+      "actorId" | "actorType" | "action" | "targetType" | "targetId" | "status" | "from" | "to"
+    >
+  > &
+    Pick<TV3AuditEventsListQuery, "limit" | "cursor">;
 }): Promise<TAuditEventRow[]> {
   const clauses = [Prisma.sql`a."organizationId" = ${organizationId}`];
   if (query.actorId) clauses.push(Prisma.sql`a."actorId" = ${query.actorId}`);

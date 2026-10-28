@@ -1,0 +1,91 @@
+type: object
+description: >-
+  A read-only Cube.js query over the `FeedbackRecords` model (ADR 0001), tightened for API callers. Every
+  member must come from the field catalog (`GET /api/v3/feedback-queries/field-catalog`); Cube options the
+  product does not use (`segments`, `offset`, `total`, `ungrouped`, `renewQuery`, `joinHints`, `timezone`,
+  `compareDateRange`) and the legacy `dimension` alias for a filter `member` are rejected with **400**. There
+  is no way to name a tenant: the Feedback Dataset is resolved from the workspace, and the server filters to
+  it. Select at least one measure or dimension.
+properties:
+  measures:
+    type: array
+    maxItems: 10
+    items:
+      type: string
+    description: What to compute per group, for example `FeedbackRecords.npsScore` or `FeedbackRecords.count`.
+    example:
+      - FeedbackRecords.npsScore
+  dimensions:
+    type: array
+    maxItems: 5
+    items:
+      type: string
+    description: What to group by, for example `FeedbackRecords.fieldLabel`. Query a dimension with `FeedbackRecords.count` to see the values it holds.
+    example:
+      - FeedbackRecords.sentiment
+  timeDimensions:
+    type: array
+    maxItems: 1
+    description: >-
+      One time axis. Calendar days are read in the organization's reporting time zone, the same zone the
+      survey summary filters use.
+    items:
+      type: object
+      required:
+        - dimension
+      properties:
+        dimension:
+          type: string
+          description: A time dimension from the field catalog, such as `FeedbackRecords.collectedAt`.
+        granularity:
+          type: string
+          enum:
+            - hour
+            - day
+            - week
+            - month
+            - quarter
+            - year
+        dateRange:
+          description: >-
+            A preset name (`dateRangePresets` in the field catalog, for example `last 30 days`; ranges
+            include today) or a `[start, end]` pair of `YYYY-MM-DD` dates or ISO 8601 UTC timestamps.
+          oneOf:
+            - type: string
+            - type: array
+              minItems: 2
+              maxItems: 2
+              items:
+                type: string
+      additionalProperties: false
+  filters:
+    type: array
+    maxItems: 20
+    description: Conditions that must all hold. Wrap alternatives in an `or` group.
+    items:
+      $ref: ./FeedbackQueryFilter.yml
+  order:
+    type: array
+    maxItems: 5
+    description: >-
+      `[member, direction]` pairs in priority order. Each member must be one of the query's measures,
+      dimensions or time dimensions.
+    items:
+      type: array
+      minItems: 2
+      maxItems: 2
+      prefixItems:
+        - type: string
+        - type: string
+          enum:
+            - asc
+            - desc
+    example:
+      - - FeedbackRecords.count
+        - desc
+  limit:
+    type: integer
+    minimum: 1
+    maximum: 1000
+    description: Maximum rows. 100 when omitted. There is no paging; narrow the query instead.
+additionalProperties: false

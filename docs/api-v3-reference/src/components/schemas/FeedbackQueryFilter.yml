@@ -1,0 +1,55 @@
+description: >-
+  One condition on a dimension, or an `and` / `or` group of them. Groups nest at most 3 levels deep, and a
+  query holds at most 20 conditions and groups in total. A condition's operator must suit the field's
+  `type` in the field catalog (`filterOperators`); `set` and `notSet` take no `values`, every other operator
+  needs at least one, and every value is a string that reads as the field's type.
+oneOf:
+  - type: object
+    required:
+      - member
+      - operator
+    properties:
+      member:
+        type: string
+        description: A dimension id from the field catalog. Measures cannot be filtered.
+        example: FeedbackRecords.fieldType
+      operator:
+        type: string
+        enum:
+          - equals
+          - notEquals
+          - contains
+          - notContains
+          - set
+          - notSet
+          - gt
+          - gte
+          - lt
+          - lte
+      values:
+        type: array
+        maxItems: 50
+        items:
+          type: string
+          maxLength: 256
+    additionalProperties: false
+  - type: object
+    required:
+      - and
+    properties:
+      and:
+        type: array
+        maxItems: 20
+        items:
+          $ref: ./FeedbackQueryFilter.yml
+    additionalProperties: false
+  - type: object
+    required:
+      - or
+    properties:
+      or:
+        type: array
+        maxItems: 20
+        items:
+          $ref: ./FeedbackQueryFilter.yml
+    additionalProperties: false

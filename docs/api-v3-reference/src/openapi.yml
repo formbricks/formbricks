@@ -418,6 +418,8 @@ paths:
     $ref: paths/api_v3_webhooks_{webhookId}.yml
   /api/v3/webhooks/{webhookId}/test:
     $ref: paths/api_v3_webhooks_{webhookId}_test.yml
+  /api/v3/audit-events:
+    $ref: paths/api_v3_audit-events.yml
   /api/v3/workspaces/{workspaceId}/custom-css:
     $ref: paths/api_v3_workspaces_{workspaceId}_custom-css.yml
   /api/v3/feedbackRecords:
@@ -428,6 +430,10 @@ paths:
     $ref: paths/api_v3_feedbackRecords_{id}.yml
   /api/v3/feedbackRecords/{id}/similar:
     $ref: paths/api_v3_feedbackRecords_{id}_similar.yml
+  /api/v3/feedback-queries:
+    $ref: paths/api_v3_feedback-queries.yml
+  /api/v3/feedback-queries/field-catalog:
+    $ref: paths/api_v3_feedback-queries_field-catalog.yml
   /api/v3/unify-feedback/taxonomy/fields:
     $ref: paths/api_v3_unify-feedback_taxonomy_fields.yml
   /api/v3/unify-feedback/taxonomy/state:

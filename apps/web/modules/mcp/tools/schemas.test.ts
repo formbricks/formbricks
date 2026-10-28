@@ -12,6 +12,7 @@ import {
 } from "@/app/api/v3/surveys/schemas";
 import { CREATIVE_TEXTS, type TCreativeTextSpec } from "@/modules/ee/creatives/lib/creative-texts";
 import * as auditEventSchemas from "./audit-event-schemas";
+import * as contactSchemas from "./contact-schemas";
 import * as creativeSchemas from "./creative-schemas";
 import * as feedbackQuerySchemas from "./feedback-query-schemas";
 import * as lifecycleSchemas from "./lifecycle-schemas";
@@ -146,6 +147,7 @@ const allExports: [string, unknown][] = Object.entries({
   ...taxonomySchemas,
   ...webhookSchemas,
   ...lifecycleSchemas,
+  ...contactSchemas,
 });
 
 const allSchemas = allExports.filter((entry): entry is [string, z.ZodType] => entry[1] instanceof z.ZodType);
@@ -198,6 +200,14 @@ const EXPECTED_FREE_FORM_PATHS: Record<string, string[]> = {
   ZMcpValidateSurveyInput: ["ZMcpValidateSurveyInput.data"],
   ZMcpCreateFeedbackRecordInput: ["ZMcpCreateFeedbackRecordInput.metadata"],
   ZMcpCreateFeedbackRecordsInput: ["ZMcpCreateFeedbackRecordsInput.records[].metadata"],
+  // A contact's attributes are a map keyed by attribute key: the keys are data, not declared fields. The
+  // operation checks each value's type against the key and reports what it skipped as warnings.
+  ZMcpUpsertContactInput: ["ZMcpUpsertContactInput.attributes"],
+  ZMcpUpdateContactInput: ["ZMcpUpdateContactInput.attributes"],
+  // A segment's filter tree is recursive and is not advertised as a schema; `ZSegmentFilters` validates it
+  // when the call reaches the operation, and the description carries the grammar.
+  ZMcpCreateSegmentInput: ["ZMcpCreateSegmentInput.filters[]"],
+  ZMcpUpdateSegmentInput: ["ZMcpUpdateSegmentInput.filters[]"],
   ZMcpUpdateFeedbackRecordInput: ["ZMcpUpdateFeedbackRecordInput.metadata"],
   // A creative's texts are maps keyed by locale code ({"en-US": "..."}): the keys are data, not declared
   // fields. The operation checks each against the languages the creative declares, so a misspelled locale

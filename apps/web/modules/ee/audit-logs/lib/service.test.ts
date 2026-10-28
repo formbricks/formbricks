@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { Prisma } from "@formbricks/database/prisma";
-import { UNKNOWN_DATA } from "../types/audit-log";
+import { type TAuditLogEvent, UNKNOWN_DATA } from "../types/audit-log";
 import { MAX_PERSISTED_CHANGES_BYTES, logAuditEvent } from "./service";
 
 // Mocks
@@ -126,12 +126,12 @@ describe("logAuditEvent export", () => {
 });
 
 describe("persisting audit events", () => {
-  let logger: any;
+  let logger: Record<"audit" | "error" | "warn", ReturnType<typeof vi.fn>>;
   let createAuditEvent: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    logger = (await import("@formbricks/logger")).logger;
+    logger = (await import("@formbricks/logger")).logger as unknown as typeof logger;
     createAuditEvent = (await import("@formbricks/database")).prisma.auditEvent.create as ReturnType<
       typeof vi.fn
     >;
@@ -171,7 +171,7 @@ describe("persisting audit events", () => {
   });
 
   test("does not store an event that failed validation", async () => {
-    await logAuditEvent({ ...validEvent, action: "invalid.action" } as any);
+    await logAuditEvent({ ...validEvent, action: "invalid.action" } as unknown as TAuditLogEvent);
     expect(createAuditEvent).not.toHaveBeenCalled();
   });
 

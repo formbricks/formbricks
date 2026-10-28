@@ -9,6 +9,7 @@ import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./constants";
 import { MCP_REQUEST_MAX_ELEMENTS } from "./request-budget";
 import { mcpRequestStateCodec } from "./request-state";
 import { registerAuditEventTools } from "./tools/audit-events";
+import { registerContactTools } from "./tools/contacts";
 import { registerCreativeTools } from "./tools/creatives";
 import { registerFeedbackQueryTools } from "./tools/feedback-queries";
 import { registerFeedbackRecordTools } from "./tools/feedback-records";
@@ -136,5 +137,6 @@ export const mcpHandler = createMcpHandler((server) => {
   registerTaxonomyTools(server);
   registerWebhookTools(server);
   registerLifecycleTools(server);
+  registerContactTools(server);
   instrumentMcpServerWithTracing(server, identifyMcpUser);
 }, MCP_HANDLER_OPTIONS);

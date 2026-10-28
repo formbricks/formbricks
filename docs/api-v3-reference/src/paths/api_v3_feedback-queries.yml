@@ -1,0 +1,99 @@
+post:
+  operationId: queryFeedbackV3
+  summary: Query feedback
+  description: |
+    Runs a read-only aggregate query over a workspace's Feedback Dataset and returns the rows. Nothing is
+    written; it is a `POST` only because the query is a structured body.
+
+    The query is in the Cube.js query format (ADR 0001): measures such as `FeedbackRecords.npsScore`,
+    dimensions to group by, one time axis, filters, order and limit. Fields come from the field catalog,
+    `GET /api/v3/feedback-queries/field-catalog`; anything outside it, and every Cube option the product
+    does not use, is rejected with **400** naming the offending key. Filters, groups, `limit` and the
+    number of members are bounded. To read individual records rather than aggregates, use
+    `GET /api/v3/feedbackRecords`.
+
+    **Tenancy.** The Feedback Dataset is resolved from `workspaceId` (and `datasetId` when the workspace has
+    several) after checking the caller's read access to both; the server filters Cube to it and the query
+    cannot name or widen it.
+
+    **Licence and limits.** Needs the analytics entitlement and the feedback datasets entitlement,
+    otherwise **403**. Callers are limited to 30 queries per minute, on top of the default v3 limit
+    (**429** with `Retry-After`).
+
+    Session cookie, `x-api-key`, or a Bearer token.
+  tags:
+    - V3 Feedback Queries
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/FeedbackQueryRequest.yml
+        examples:
+          npsBySentiment:
+            summary: NPS by sentiment over the last 30 days
+            value:
+              workspaceId: tz4a98xxat96iws9zmbrgj3a
+              query:
+                measures:
+                  - FeedbackRecords.npsScore
+                  - FeedbackRecords.count
+                dimensions:
+                  - FeedbackRecords.sentiment
+                timeDimensions:
+                  - dimension: FeedbackRecords.collectedAt
+                    dateRange: last 30 days
+                filters:
+                  - member: FeedbackRecords.fieldType
+                    operator: equals
+                    values:
+                      - nps
+                order:
+                  - - FeedbackRecords.count
+                    - desc
+  responses:
+    "200":
+      description: The query ran.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/FeedbackQueryResult.yml
+            additionalProperties: false
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "422":
+      $ref: ../components/responses/V3UnprocessableContent.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+    "502":
+      description: >-
+        Bad Gateway — the analytics service did not answer the query (`code: bad_gateway`). The detail is
+        fixed text; correlate on `requestId`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

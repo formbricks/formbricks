@@ -1,0 +1,137 @@
+get:
+  operationId: listAuditEventsV3
+  summary: List audit events
+  description: |
+    Returns an organization's audit events, newest first (`timestamp` descending, ties broken by `id`).
+    Narrow by actor, action, target, status or a time range, and page with `meta.nextCursor`.
+
+    Requires an organization owner or manager (session cookie or Bearer token), or an API key with
+    `manage` access to a workspace of that organization. A key is limited to its own organization.
+    Anyone else, and an unknown organization, answers `403`. Audit logging must be enabled on the
+    instance (`AUDIT_LOG_ENABLED` and an Enterprise license); otherwise this answers `403` too.
+
+    Only events written while audit logging was enabled exist, and events are kept until their
+    organization is deleted. Events are summaries: changed values are not returned.
+
+    A cursor is only valid with the filters it was issued for; changing `organizationId` or any filter
+    mid-walk is a `400`. Changing `limit` is allowed. Reading audit events is not itself audited.
+  tags:
+    - V3 Audit Events
+  parameters:
+    - in: query
+      name: organizationId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: >-
+        The organization whose events to read. Each workspace returned by `list_workspaces` carries its
+        `organizationId`.
+    - in: query
+      name: limit
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      description: >-
+        Page size. A value above the maximum is rejected with **400** rather than silently reduced to it.
+        The server may return fewer items than requested, so treat `meta.nextCursor` as the only
+        end-of-collection signal.
+    - $ref: ../components/parameters/CursorQuery.yml
+    - in: query
+      name: actorId
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 255
+      description: Only events caused by this actor (a user id, an API key id, or `system`).
+    - in: query
+      name: actorType
+      schema:
+        type: string
+        enum:
+          - user
+          - api
+          - system
+      description: Only events caused by this kind of actor.
+    - in: query
+      name: action
+      schema:
+        type: string
+      description: >-
+        Only events with this action, e.g. `deleted`. An action this API does not know is a **400**.
+    - in: query
+      name: targetType
+      schema:
+        type: string
+      description: >-
+        Only events about this kind of resource, e.g. `survey`. A type this API does not know is a
+        **400**. Required when `targetId` is set.
+    - in: query
+      name: targetId
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 255
+      description: Only events about this one resource. Requires `targetType`.
+    - in: query
+      name: status
+      schema:
+        type: string
+        enum:
+          - success
+          - failure
+      description: Only events that succeeded, or only attempts that failed.
+    - in: query
+      name: from
+      schema:
+        type: string
+        format: date-time
+      description: Only events at or after this instant (**inclusive**).
+    - in: query
+      name: to
+      schema:
+        type: string
+        format: date-time
+      description: Only events before this instant (**exclusive**). Must be later than `from`.
+  responses:
+    "200":
+      description: Audit events retrieved successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: ../components/schemas/AuditEvent.yml
+              meta:
+                $ref: ../components/schemas/CursorPaginationMeta.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

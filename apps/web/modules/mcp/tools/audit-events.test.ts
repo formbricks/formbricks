@@ -67,15 +67,17 @@ describe("registerAuditEventTools", () => {
     const result = await tools.get("list_audit_events")!.handler(
       { organizationId },
       {
-        authInfo: authInfoFor([
-          "surveys:read",
-          "surveys:write",
-          "workflows:read",
-          "feedbackRecords:read",
-          "responses:read",
-          "contacts:read",
-          "webhooks:read",
-        ]),
+        http: {
+          authInfo: authInfoFor([
+            "surveys:read",
+            "surveys:write",
+            "workflows:read",
+            "feedbackRecords:read",
+            "responses:read",
+            "contacts:read",
+            "webhooks:read",
+          ]),
+        },
       }
     );
 
@@ -92,7 +94,7 @@ describe("registerAuditEventTools", () => {
     const input = { organizationId, limit: 5, status: "failure" };
 
     const result = await tools.get("list_audit_events")!.handler(input, {
-      authInfo: authInfoFor(["audit:read"]),
+      http: { authInfo: authInfoFor(["audit:read"]) },
     });
 
     expect(listV3AuditEventsFromInput).toHaveBeenCalledWith(
@@ -108,7 +110,7 @@ describe("registerAuditEventTools", () => {
 
     const result = await tools
       .get("list_audit_events")!
-      .handler({ organizationId }, { authInfo: authInfoFor(["audit:read"]) });
+      .handler({ organizationId }, { http: { authInfo: authInfoFor(["audit:read"]) } });
 
     expect(result.isError).toBe(true);
     expect(result.structuredContent.error?.status).toBe(403);

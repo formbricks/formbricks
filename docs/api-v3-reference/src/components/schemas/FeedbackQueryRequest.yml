@@ -1,0 +1,18 @@
+type: object
+required:
+  - workspaceId
+  - query
+properties:
+  workspaceId:
+    type: string
+    format: cuid2
+    description: Workspace whose Feedback Dataset is queried. The caller needs read access to it.
+  datasetId:
+    type: string
+    format: cuid2
+    description: >-
+      The Feedback Dataset to query. Optional when the workspace has exactly one; required (**400**
+      otherwise) when it has more than one. A dataset the workspace does not hold answers **403**.
+  query:
+    $ref: ./FeedbackQuery.yml
+additionalProperties: false

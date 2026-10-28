@@ -1,0 +1,52 @@
+get:
+  operationId: getFeedbackFieldCatalogV3
+  summary: Get the feedback field catalog
+  description: |
+    Returns the measures, dimensions, filter operators, time granularities, date presets and limits a
+    feedback query may use. It is the list `POST /api/v3/feedback-queries` validates against, built from the
+    same source, so a member advertised here is accepted there.
+
+    The catalog is the same for every workspace; it is read per workspace so that it answers behind the same
+    access and licence checks as a query, and a caller without the analytics entitlement learns that here.
+
+    Requires read access to the workspace. Session cookie, `x-api-key`, or a Bearer token.
+  tags:
+    - V3 Feedback Queries
+  parameters:
+    - $ref: ../components/parameters/WorkspaceIdQuery.yml
+  responses:
+    "200":
+      description: Catalog retrieved successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/FeedbackFieldCatalog.yml
+            additionalProperties: false
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

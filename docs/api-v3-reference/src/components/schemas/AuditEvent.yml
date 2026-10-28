@@ -1,0 +1,81 @@
+type: object
+description: >-
+  One audit event: who did what to which resource, when, and how it ended. A summary: the changed values
+  (stored, redacted) and the requester's address and user agent are not returned.
+required:
+  - id
+  - timestamp
+  - actor
+  - action
+  - target
+  - status
+  - eventId
+  - apiUrl
+properties:
+  id:
+    type: string
+    format: cuid2
+    description: Identifier of the stored event.
+  timestamp:
+    type: string
+    format: date-time
+    description: When the audited action happened.
+  actor:
+    type: object
+    description: Who caused the event.
+    required:
+      - id
+      - type
+    properties:
+      id:
+        type: string
+        description: A user id, an API key id, or `system`/`unknown` for events raised inside the app.
+      type:
+        type: string
+        enum:
+          - user
+          - api
+          - system
+        description: >-
+          `user` for a person or an OAuth client acting for one, `api` for an API key, `system` for the
+          app itself.
+    additionalProperties: false
+  action:
+    type: string
+    description: What was done, e.g. `created`, `updated`, `deleted`, `merged`.
+  target:
+    type: object
+    description: The resource the action was about.
+    required:
+      - type
+      - id
+    properties:
+      type:
+        type: string
+        description: The kind of resource, e.g. `survey`, `response`, `tag`, `apiKey`.
+      id:
+        type:
+          - string
+          - "null"
+        description: Identifier of the resource. Null when the action had no single target.
+    additionalProperties: false
+  status:
+    type: string
+    enum:
+      - success
+      - failure
+    description: >-
+      `failure` is an attempt that did not complete, including one refused for lack of permission or
+      scope.
+  eventId:
+    type:
+      - string
+      - "null"
+    description: The request id of a failed attempt, for correlating it with logs. Null on a success.
+  apiUrl:
+    type:
+      - string
+      - "null"
+    format: uri
+    description: The API route or MCP resource the action went through. Null for events raised inside the app.
+additionalProperties: false

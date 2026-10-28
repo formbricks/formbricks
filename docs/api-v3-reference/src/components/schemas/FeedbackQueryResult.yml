@@ -1,0 +1,30 @@
+type: object
+required:
+  - datasetId
+  - datasetName
+  - query
+  - rows
+properties:
+  datasetId:
+    type: string
+    description: The Feedback Dataset the rows were computed from, so an empty result says where it looked.
+  datasetName:
+    type: string
+  query:
+    $ref: ./FeedbackQuery.yml
+    description: The query that ran, which is the one sent with the default `limit` filled in.
+  rows:
+    type: array
+    description: >-
+      One object per group, keyed by member id (`FeedbackRecords.npsScore`; a time bucket is keyed
+      `FeedbackRecords.collectedAt.<granularity>`). Numeric members are numbers. A score or average over a
+      group with nothing to score is `null`, not `0`. A time axis with a granularity includes the empty
+      buckets in its range, with counts of `0`.
+    items:
+      type: object
+      additionalProperties:
+        type:
+          - string
+          - number
+          - boolean
+          - "null"

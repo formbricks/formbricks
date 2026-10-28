@@ -1,0 +1,85 @@
+type: object
+required:
+  - measures
+  - dimensions
+  - filterOperators
+  - granularities
+  - dateRangePresets
+  - limits
+properties:
+  measures:
+    type: array
+    items:
+      type: object
+      required:
+        - id
+        - label
+        - type
+        - group
+      properties:
+        id:
+          type: string
+          example: FeedbackRecords.npsScore
+        label:
+          type: string
+        type:
+          type: string
+          enum:
+            - count
+            - number
+        group:
+          type: string
+          enum:
+            - count
+            - average
+            - score
+            - other
+        description:
+          type: string
+      additionalProperties: false
+  dimensions:
+    type: array
+    items:
+      type: object
+      required:
+        - id
+        - label
+        - type
+      properties:
+        id:
+          type: string
+          example: FeedbackRecords.fieldLabel
+        label:
+          type: string
+        type:
+          type: string
+          enum:
+            - string
+            - number
+            - time
+            - boolean
+          description: Decides which filter operators apply and how a filter value is read.
+        description:
+          type: string
+      additionalProperties: false
+  filterOperators:
+    type: object
+    description: Filter operators by dimension `type`.
+    additionalProperties:
+      type: array
+      items:
+        type: string
+  granularities:
+    type: array
+    items:
+      type: string
+  dateRangePresets:
+    type: array
+    items:
+      type: string
+  limits:
+    type: object
+    description: The bounds the query validation enforces.
+    additionalProperties:
+      type: integer
+additionalProperties: false

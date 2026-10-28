@@ -3,6 +3,7 @@ import { logger } from "@formbricks/logger";
 import { InvalidInputError } from "@formbricks/types/errors";
 import type { TBaseFilters } from "@formbricks/types/segment";
 import { requireV3ContactsAccess } from "@/app/api/v3/contacts/lib/access";
+import { formatZodIssues } from "@/app/api/v3/lib/api-wrapper";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import { computeFilterFingerprint, decodeKeysetCursor } from "@/app/api/v3/lib/keyset-cursor";
 import {
@@ -26,7 +27,13 @@ import {
   getSegment,
   updateSegment,
 } from "@/modules/ee/contacts/segments/lib/segments";
-import type { TV3CreateSegmentBody, TV3PatchSegmentBody, TV3SegmentListQuery } from "./schemas";
+import {
+  type TV3CreateSegmentBody,
+  type TV3PatchSegmentBody,
+  type TV3SegmentListQuery,
+  ZV3CreateSegmentBody,
+  ZV3PatchSegmentBody,
+} from "./schemas";
 import { serializeV3Segment, serializeV3SegmentListItem } from "./serializers";
 import {
   SEGMENT_LIST_KIND,
@@ -334,4 +341,41 @@ export function deleteV3Segment(params: TMutationParams & { segmentId: string })
 
     return successResponse({ id: segmentId }, { requestId });
   });
+}
+
+/**
+ * For callers that did not go through the route wrapper's body parsing, namely the MCP tools, whose input
+ * schema types `filters` loosely (the tree is recursive and too large to advertise). The same schema the
+ * route uses decides here, so both surfaces accept and refuse exactly the same segments.
+ */
+const parseBody = <TSchema extends typeof ZV3CreateSegmentBody | typeof ZV3PatchSegmentBody>(
+  schema: TSchema,
+  body: unknown,
+  { requestId, instance }: TBaseParams
+) => {
+  const parsed = schema.safeParse(body);
+  if (parsed.success) return { body: parsed.data as ReturnType<TSchema["parse"]> };
+
+  return {
+    response: problemBadRequest(requestId, "Invalid request body", {
+      instance,
+      invalid_params: formatZodIssues(parsed.error, "body"),
+    }),
+  };
+};
+
+export function createV3SegmentFromRawInput(params: TMutationParams & { body: unknown }): Promise<Response> {
+  const parsed = parseBody(ZV3CreateSegmentBody, params.body, params);
+  if ("response" in parsed) return Promise.resolve(parsed.response);
+
+  return createV3Segment({ ...params, body: parsed.body });
+}
+
+export function updateV3SegmentFromRawInput(
+  params: TMutationParams & { segmentId: string; body: unknown }
+): Promise<Response> {
+  const parsed = parseBody(ZV3PatchSegmentBody, params.body, params);
+  if ("response" in parsed) return Promise.resolve(parsed.response);
+
+  return updateV3Segment({ ...params, body: parsed.body });
 }
