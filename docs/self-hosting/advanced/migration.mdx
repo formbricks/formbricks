@@ -622,18 +622,16 @@ strings for them.
 Cube keeps no state of its own, so rolling back only this change means restoring the backed-up Compose file or
 your previous `cube.image` values and recreating the `cube` service.
 
-### Cross-origin writes to the v3 API (action required for some scripts)
+### Cross-origin check on dashboard writes (no action needed)
 
-A `POST`, `PUT`, `PATCH` or `DELETE` to `/api/v3` that authenticates with a **session cookie** is now refused
-with `403` unless the Formbricks app itself sent it. A browser on your instance always qualifies: it sends
-`Sec-Fetch-Site: same-origin`, or an `Origin` matching the host it is talking to. Requests with an API key
-(`x-api-key` or `Authorization: Bearer`) are not affected.
+A `POST`, `PUT`, `PATCH` or `DELETE` that authenticates with the Formbricks **session cookie** is now accepted
+only when the Formbricks app sent it: the browser's `Sec-Fetch-Site: same-origin`, or an `Origin` matching the
+host the request was sent to (the first `X-Forwarded-Host`, else `Host`), which is the rule your dashboard's
+server actions already had to pass. Anything else gets `403`. Requests with an API key (`x-api-key` or
+`Authorization: Bearer`) are not affected; the session was never a supported way for scripts to call the API.
 
-- **Scripts that replay a browser's session cookie** to write through `/api/v3` now get `403`. Create an API key
-  and send that instead.
-- **Instances reached under more than one hostname** need nothing as long as the proxy passes the original
-  `Host` or sets `X-Forwarded-Host`. If yours rewrites `Host` without either, list the extra origins in
-  `BETTER_AUTH_TRUSTED_ORIGINS` (comma-separated), which sign-in already honours.
+If the dashboard is also reached from another origin that your proxy forwards without the original host, list
+it in `BETTER_AUTH_TRUSTED_ORIGINS` (comma-separated), which sign-in already honours.
 
 ## v5.4
 
