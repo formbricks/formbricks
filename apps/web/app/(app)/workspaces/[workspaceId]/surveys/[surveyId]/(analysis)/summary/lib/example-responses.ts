@@ -2,11 +2,13 @@ import "server-only";
 import { randomInt, randomUUID } from "node:crypto";
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
+import { AI_DEFAULT_TIMEOUT_MS } from "@formbricks/types/ai-timeout";
 import { type TResponseData, type TResponseInput, type TResponseTtc } from "@formbricks/types/responses";
 import { type TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { type TSurvey } from "@formbricks/types/surveys/types";
 import { loggableAIError } from "@/lib/ai/loggable-error";
 import { generateOrganizationAIObject } from "@/lib/ai/service";
+import { getAITimeoutMs } from "@/lib/ai/timeout";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { AI_TRACING_FEATURE } from "@/lib/posthog/ai-tracing-feature";
 
@@ -21,7 +23,7 @@ export const EXAMPLE_AI_GENERATED_TAG_NAME = "AI-generated example response";
 // abandonment. The remaining ~80% are finished.
 const DROP_OFF_RATE = 0.2;
 const RESPONSE_TIME_SPREAD_DAYS = 10;
-const OPEN_TEXT_AI_TIMEOUT_MS = 45_000;
+const OPEN_TEXT_AI_TIMEOUT_MS = AI_DEFAULT_TIMEOUT_MS;
 const OPEN_TEXT_AI_MAX_OUTPUT_TOKENS = 4096;
 const OPEN_TEXT_AI_MAX_REQUESTED_ANSWERS_PER_CHUNK = 20;
 
@@ -965,7 +967,7 @@ Survey context (JSON):
 ${JSON.stringify(buildOpenTextLlmContext(survey, rowsChunk), null, 2)}`,
         temperature: 0,
         maxOutputTokens: OPEN_TEXT_AI_MAX_OUTPUT_TOKENS,
-        timeout: OPEN_TEXT_AI_TIMEOUT_MS,
+        timeout: getAITimeoutMs(OPEN_TEXT_AI_TIMEOUT_MS),
       });
       aiResponses.push(...result.object.responses);
     } catch (error) {

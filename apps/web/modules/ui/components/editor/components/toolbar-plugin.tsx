@@ -44,6 +44,7 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { cn } from "@/modules/ui/lib/utils";
+import { toEditorOutputHtml } from "../lib/exported-html";
 import type { TextEditorProps } from "./editor";
 
 const LowPriority = 1;
@@ -293,16 +294,15 @@ export const ToolbarPlugin = (
   useEffect(() => {
     const unregister = editor.registerUpdateListener(({ editorState }) => {
       editorState.read(() => {
-        const textInHtml = $generateHtmlFromNodes(editor)
-          .replace(/&lt;/g, "<")
-          .replace(/&gt;/g, ">")
-          .replace(/white-space:\s*pre-wrap;?/g, "");
+        const textInHtml = toEditorOutputHtml($generateHtmlFromNodes(editor), {
+          keepEscapedText: props.keepEscapedText,
+        });
         setText.current(textInHtml);
       });
     });
 
     return unregister;
-  }, [editor]);
+  }, [editor, props.keepEscapedText]);
 
   useEffect(() => {
     return mergeRegister(

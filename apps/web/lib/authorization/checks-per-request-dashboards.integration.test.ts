@@ -1,16 +1,21 @@
-import { beforeAll, describe, expect, test } from "vitest";
+import { beforeAll, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { listV3Dashboards } from "@/app/api/v3/dashboards/lib/operations";
+import { ZV3DashboardListQuery } from "@/app/api/v3/dashboards/lib/schemas";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
+import { sessionOf } from "@/integration/dashboards-fixture";
 import { resetDb } from "@/integration/reset-db";
-import { can } from "@/lib/authorization";
 import { getIssuedAuthorizationCheckCount, withAuthorizationSurface } from "@/lib/authorization/context";
-import { getDashboards } from "@/modules/ee/analysis/dashboards/lib/dashboards";
+
+vi.mock("@/modules/ee/license-check/lib/utils", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/ee/license-check/lib/utils")>()),
+  getIsDashboardsEnabled: vi.fn(async () => true),
+}));
 
 /**
  * ENG-1739 follow-up: the same N+1 proof `checks-per-request.integration.test.ts` gives the survey
- * list, for the dashboard list. `getDashboards` runs no authorization of its own — the gate is the
- * workspace check a dashboard page resolves once — so the claim under test is the same one: fetching
- * many dashboards costs the same single check as fetching few.
+ * list, for the dashboard list — now `GET /api/v3/dashboards` (ENG-6591). The operation authorizes the
+ * workspace once and never per row, so a page of many dashboards costs the same checks as a page of few.
  */
 const scenario: { organizationId: string; userId: string; workspaceId: string } = {
   organizationId: "",
@@ -50,18 +55,19 @@ describe("dashboard list authorization amplification, against a real database", 
         })),
       });
 
-      const result = await withAuthorizationSurface("server_action", async () => {
-        const canRead = await can({ type: "user", id: scenario.userId }, "workspace.read", {
-          type: "workspace",
-          id: scenario.workspaceId,
+      const result = await withAuthorizationSurface("api_v3", async () => {
+        const response = await listV3Dashboards({
+          query: ZV3DashboardListQuery.parse({ workspaceId: scenario.workspaceId, limit: "250" }),
+          authentication: sessionOf(scenario.userId),
+          requestId: "req",
+          instance: "/api/v3/dashboards",
         });
-        expect(canRead).toBe(true);
-
-        const dashboards = await getDashboards(scenario.workspaceId);
-        return { checksIssued: getIssuedAuthorizationCheckCount(), rowCount: dashboards.length };
+        expect(response.status).toBe(200);
+        const { data } = (await response.json()) as { data: unknown[] };
+        return { checksIssued: getIssuedAuthorizationCheckCount(), rowCount: data.length };
       });
 
-      expect(result.rowCount).toBe(dashboardCount);
+      expect(result.rowCount).toBe(Math.min(dashboardCount, 250));
       expect(result.checksIssued).toBe(1);
     }
   );

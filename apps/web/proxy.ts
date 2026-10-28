@@ -61,7 +61,7 @@ const handleDomainAwareRouting = (request: NextRequest): NextResponse | null => 
 
 /**
  * Largest body the PostHog `/ingest` rewrite will forward: the size Next cut these bodies off at before
- * `patches/next@16.3.8.patch` stopped it cloning them (ENG-3972), so nothing that passed before is refused.
+ * `patches/next@16.4.1.patch` stopped it cloning them (ENG-3972), so nothing that passed before is refused.
  */
 export const INGEST_REQUEST_BODY_LIMIT_BYTES = 16 * 1024 * 1024;
 
@@ -109,7 +109,7 @@ const isPrefetchRequest = (request: NextRequest): boolean =>
   NEXT_PREFETCH_HEADERS.some((header) => request.headers.has(header));
 
 /**
- * Never read the request body here. `patches/next@16.3.8.patch` stops Next handing the proxy one
+ * Never read the request body here. `patches/next@16.4.1.patch` stops Next handing the proxy one
  * (ENG-3972), so a read would find nothing, while the route still gets the untouched stream.
  * `lib/next-proxy-body.test.ts` enforces both halves.
  */

@@ -1,0 +1,26 @@
+type: object
+description: >-
+  The field catalog: the fields a chart query may use, and the named date ranges it may use on
+  `FeedbackRecords.collectedAt` and other time dimensions. The chart query validator checks
+  against this same list, so the catalog is the contract.
+required:
+  - fields
+  - datePresets
+properties:
+  fields:
+    type: array
+    items:
+      $ref: ./ChartField.yml
+  datePresets:
+    type: array
+    description: >-
+      Named date ranges, resolved in the organization's display time zone. `all-time` means no
+      range at all. A date range may also be a pair of ISO calendar dates.
+    items:
+      type: string
+    example:
+      - today
+      - last 7 days
+      - this month
+      - all-time
+additionalProperties: false

@@ -1,15 +1,26 @@
 import "server-only";
 import type { IConnectionAPIController, IOAuthController, JacksonOption } from "@boxyhq/saml-jackson";
 import { logger } from "@formbricks/logger";
-import { SAML_AUDIENCE, SAML_DATABASE_URL, SAML_PATH, WEBAPP_URL } from "@/lib/constants";
+import {
+  SAML_AUDIENCE,
+  SAML_DATABASE_URL,
+  SAML_PATH,
+  SAML_PRODUCT,
+  SAML_TENANT,
+  WEBAPP_URL,
+} from "@/lib/constants";
 import { toLogText } from "@/lib/utils/strings";
 import { preloadConnection } from "@/modules/ee/auth/saml/lib/preload-connection";
+import type { SamlIdpVerification } from "@/modules/ee/auth/saml/lib/saml-parse-worker";
 import { getIsSamlSsoEnabled } from "@/modules/ee/license-check/lib/utils";
 
 declare global {
   var oauthController: IOAuthController | undefined;
   var connectionController: IConnectionAPIController | undefined;
   var samlDecryptionKey: (() => Promise<string>) | undefined;
+  var samlIdpVerification: SamlIdpVerification | null | undefined;
+  /** When the next request may read the connection's certificates again, after a failed read; unset otherwise. */
+  var samlIdpVerificationRetryAt: number | undefined;
 }
 
 const g = global;
@@ -37,8 +48,64 @@ const jacksonLogger = (level: "info" | "warn" | "error") => (message: string, er
     toLogText(message, JACKSON_LOG_TEXT_LIMIT) ?? ""
   );
 
+/**
+ * What jackson checks a response's signature with: the configured connection's IdP certificates (comma-joined when
+ * its metadata lists several, as during a rollover), or else its thumbprint, as jackson picks them for `validate`.
+ * The parse worker runs the same check with them, so it is timed as jackson will run it: once per certificate when
+ * none matches (ENG-4108). `null` when no connection is configured, where jackson refuses before validating.
+ * Formbricks configures its one connection only when jackson starts (`preloadConnection`), so it is read then.
+ */
+const readIdpVerification = async (
+  connectionController: IConnectionAPIController
+): Promise<SamlIdpVerification | null> => {
+  const [connection] = await connectionController.getConnections({
+    tenant: SAML_TENANT,
+    product: SAML_PRODUCT,
+  });
+  if (!connection || !("idpMetadata" in connection)) return null;
+  const { publicKey, thumbprint } = connection.idpMetadata;
+  if (publicKey) return { publicKey };
+  return thumbprint ? { thumbprint } : null;
+};
+
+/**
+ * How long after a failed read of the connection's certificates the next request tries again. Short, because the
+ * worker does not time jackson's signature check until a read succeeds; one store read per interval is nothing next
+ * to the reads jackson makes on every request.
+ */
+const IDP_VERIFICATION_RETRY_MS = 5_000;
+
+/**
+ * Reads the connection's certificates into `g.samlIdpVerification`. jackson validates with the connection it reads per
+ * request, so a failed read here costs no sign-in; it does turn off the worker's timing of jackson's signature check
+ * (ENG-4108) until a read succeeds, since there is nothing to time it with. That window is only opened by the store
+ * failing, which jackson needs too, not by a request. So a failed read is logged and leaves `null` rather than failing
+ * jackson's start and with it every SAML sign-in, and a request after `IDP_VERIFICATION_RETRY_MS` reads again (see
+ * `init`). A read that fails after an earlier one succeeded keeps the certificates it has.
+ */
+const loadIdpVerification = async (connectionController: IConnectionAPIController): Promise<void> => {
+  try {
+    g.samlIdpVerification = await readIdpVerification(connectionController);
+    g.samlIdpVerificationRetryAt = undefined;
+  } catch (error) {
+    logger.error(
+      { error: error instanceof Error ? toLogText(error.message, JACKSON_LOG_TEXT_LIMIT) : undefined },
+      "Could not read the SAML connection's certificates; the parse worker will not time signature checks"
+    );
+    if (g.samlIdpVerification == null) {
+      g.samlIdpVerification = null;
+      g.samlIdpVerificationRetryAt = Date.now() + IDP_VERIFICATION_RETRY_MS;
+    }
+  }
+};
+
 export default async function init() {
-  if (!g.oauthController || !g.connectionController || !g.samlDecryptionKey) {
+  if (
+    !g.oauthController ||
+    !g.connectionController ||
+    !g.samlDecryptionKey ||
+    g.samlIdpVerification === undefined
+  ) {
     const isSamlSsoEnabled = await getIsSamlSsoEnabled();
     if (!isSamlSsoEnabled) return;
 
@@ -70,6 +137,7 @@ export default async function init() {
     const ret = await controllers(opts);
 
     await preloadConnection(ret.connectionAPIController);
+    await loadIdpVerification(ret.connectionAPIController);
 
     g.oauthController = ret.oauthController;
     g.connectionController = ret.connectionAPIController;
@@ -82,9 +150,17 @@ export default async function init() {
     g.samlDecryptionKey = async () => (await x509.getDefaultCertificate()).privateKey;
   }
 
+  // A failed certificate read is retried apart from jackson's start, one request at a time.
+  const retryAt = g.samlIdpVerificationRetryAt;
+  if (retryAt !== undefined && Date.now() >= retryAt && g.connectionController) {
+    g.samlIdpVerificationRetryAt = Date.now() + IDP_VERIFICATION_RETRY_MS;
+    await loadIdpVerification(g.connectionController);
+  }
+
   return {
     oauthController: g.oauthController,
     connectionController: g.connectionController,
     getDecryptionKey: g.samlDecryptionKey,
+    idpVerification: g.samlIdpVerification ?? null,
   };
 }

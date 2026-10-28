@@ -13,6 +13,7 @@ const getPromptLabel = (body: TV3SurveyGenerateBody) => body.prompt;
 
 type UseCreateSurveyWithAIProps = {
   workspaceId: string;
+  /** The creator's dashboard locale: the fallback when the prompt's own language is unclear. */
   language: TUserLocale;
   isAIAvailable: boolean;
   onSuccess: (surveyId: string) => void;
@@ -33,6 +34,9 @@ export const useCreateSurveyWithAI = ({
   // Deliberately outside the reducer: the prompt is never touched by a transition, so it survives a
   // failed generation without a restore path that could get it wrong.
   const [prompt, setPrompt] = useState("");
+  // `null` is "match my prompt". A picked language is sent as `surveyLanguage`, which the generator
+  // treats as binding — unlike `language`, which only breaks a tie (ENG-3882).
+  const [surveyLanguage, setSurveyLanguage] = useState<string | null>(null);
 
   // What both entry points need: AI on, and a prompt worth sending.
   const hasUsablePrompt = isAIAvailable && prompt.trim().length >= AI_SURVEY_PROMPT_MIN_LENGTH;
@@ -58,8 +62,14 @@ export const useCreateSurveyWithAI = ({
   const { submit, regenerate } = draft;
 
   const buildBody = useCallback(
-    (): TV3SurveyGenerateBody => ({ workspaceId, prompt: prompt.trim(), type: "link", language }),
-    [language, prompt, workspaceId]
+    (): TV3SurveyGenerateBody => ({
+      workspaceId,
+      prompt: prompt.trim(),
+      type: "link",
+      language,
+      ...(surveyLanguage ? { surveyLanguage } : {}),
+    }),
+    [language, prompt, surveyLanguage, workspaceId]
   );
 
   const handleGenerate = useCallback(
@@ -102,6 +112,8 @@ export const useCreateSurveyWithAI = ({
   return {
     prompt,
     setPrompt,
+    surveyLanguage,
+    setSurveyLanguage,
     status: draft.status,
     draft: draft.draft,
     /** The prompt the draft on screen came from, which is not always the one in the textarea. */

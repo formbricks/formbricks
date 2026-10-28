@@ -14,6 +14,7 @@ import {
   ColorField,
   DimensionInput,
   NumberField,
+  PageFontField,
   StylingSection,
   TextField,
 } from "@/modules/ui/components/styling-fields";
@@ -27,6 +28,11 @@ type FormStylingSettingsProps = {
   onSuggestColorsClick?: () => void;
   /** Rendered right under the brand color, e.g. its dark contrast warnings. */
   brandColorNotice?: React.ReactNode;
+  /**
+   * Shows the Font field (ENG-3864), for app surveys only: link surveys always use the survey font. The
+   * value is what the survey renders in while its own styling has no Page font yet: the workspace's.
+   */
+  pageFontFallback?: boolean;
 };
 
 export const FormStylingSettings = ({
@@ -37,6 +43,7 @@ export const FormStylingSettings = ({
   form,
   onSuggestColorsClick,
   brandColorNotice,
+  pageFontFallback,
 }: Readonly<FormStylingSettingsProps>) => {
   const { t } = useTranslation();
   // In Dark the brand color field shows an "Automatic" hint under the input; the button keeps the
@@ -108,6 +115,15 @@ export const FormStylingSettings = ({
             </div>
           )}
           {!isSettingsPage && brandColorNotice}
+
+          {pageFontFallback !== undefined && (
+            <PageFontField
+              form={form}
+              description={t("workspace.look.font_survey_description")}
+              fallback={pageFontFallback}
+              disabled={disabled}
+            />
+          )}
 
           {/* Headlines & Descriptions */}
           <StylingSection

@@ -64,6 +64,8 @@ export interface TComboboxOption {
   value: string | number;
   meta?: Record<string, string>;
   children?: TComboboxOption[];
+  /** Listed, searchable and dimmed, but can't be picked (say why with `meta.badge` or a note nearby). */
+  disabled?: boolean;
 }
 
 export interface TComboboxGroupedOption {
@@ -522,6 +524,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
                       key={opt.value}
                       value={String(opt.value)}
                       keywords={getOptionKeywords(opt)}
+                      disabled={opt.disabled}
                       onSelect={() => handleSelect(opt)}
                       className={getOptionItemClassName()}>
                       <ComboboxOptionLabel
@@ -604,6 +607,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
                           key={opt.value}
                           value={String(opt.value)}
                           keywords={getOptionKeywords(opt)}
+                          disabled={opt.disabled}
                           onSelect={() => handleSelect(opt)}
                           className={getOptionItemClassName()}>
                           <ComboboxOptionLabel

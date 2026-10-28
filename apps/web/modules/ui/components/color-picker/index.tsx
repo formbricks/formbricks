@@ -12,6 +12,11 @@ interface ColorPickerProps {
   placeholder?: string;
   /** Shown greyed in the input and in the swatch while `color` is empty (e.g. a derived dark color). */
   placeholderColor?: string;
+  /**
+   * The hex input's id, for a `<label htmlFor>` that names it. Without one the input is named
+   * "Primary color".
+   */
+  id?: string;
 }
 export const ColorPicker = ({
   color,
@@ -20,7 +25,8 @@ export const ColorPicker = ({
   disabled = false,
   placeholder,
   placeholderColor,
-}: ColorPickerProps) => {
+  id,
+}: Readonly<ColorPickerProps>) => {
   return (
     <div className={cn(containerClass)}>
       <div className="flex h-10 w-full items-center gap-2 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-400">
@@ -29,8 +35,8 @@ export const ColorPicker = ({
           className="min-w-0 flex-1 border-0 bg-transparent text-slate-500 outline-hidden focus:border-none"
           color={color}
           onChange={onChange}
-          id="color"
-          aria-label="Primary color"
+          id={id ?? "color"}
+          aria-label={id ? undefined : "Primary color"}
           disabled={disabled}
           placeholder={placeholder ?? placeholderColor?.replace(/^#/, "")}
         />

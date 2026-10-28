@@ -696,7 +696,7 @@ taxonomy:
       region: us-east-1
 ```
 
-Bedrock needs a taxonomy image of version 0.1.6 or later (the chart default, `0.1.12`, qualifies); earlier images
+Bedrock needs a taxonomy image of version 0.1.6 or later (the chart default, `0.1.14`, qualifies); earlier images
 ship without the AWS SDK and fail on the first Bedrock request whichever way credentials are supplied. Set
 `taxonomy.image.tag` (or `taxonomy.image.digest`) accordingly.
 
@@ -730,8 +730,21 @@ taxonomy:
 
 Never put AWS credentials in `taxonomy.env`, a committed values file, or `--set` arguments.
 
-The default `v0.1.0` taxonomy image exposes public `/health`, so the chart uses it for both liveness and readiness
-probes. Taxonomy images that implement the newer readiness contract also expose `/ready` for cached Hub-auth,
+The chart runs Taxonomy as UID/GID 65532 with a read-only root filesystem and a writable `/tmp` volume. Its
+`UV_CACHE_DIR` default keeps older `v0.1.0` images usable under these settings. Set
+`taxonomy.securityContext` and `taxonomy.podSecurityContext` for custom images that use a different UID or GID.
+
+### Upgrading a custom Taxonomy image
+
+The new Taxonomy security defaults are a breaking change for custom images that require root or write outside
+`/tmp`: those images may fail to start after an upgrade. Set `taxonomy.securityContext.runAsUser` and
+`runAsGroup`, plus `taxonomy.podSecurityContext.fsGroup`, to match the image's UID/GID. For other writable paths, set
+`taxonomy.securityContext.readOnlyRootFilesystem: false` or add writable volume mounts to a customized
+Deployment. Root-only images also need `taxonomy.securityContext.runAsNonRoot: false`, where the cluster's
+admission policy permits it.
+
+The older `v0.1.0` taxonomy image exposes public `/health`, so the chart uses it for both liveness and readiness
+probes. Newer images that implement the readiness contract also expose `/ready` for cached Hub-auth,
 context-budget, provider, and structured-output readiness; set `taxonomy.probes.readinessProbe.httpGet.path` to
 `/ready` only with such an image. Use authenticated `/v1/preflight` as an operator check after install:
 
@@ -1118,7 +1131,7 @@ Upgrading from a chart that did not render the web container context:
 | redis.enabled                                                      | bool   | `true`                                                                      |                                                           |
 | redis.externalRedisUrl                                             | string | `""`                                                                        |                                                           |
 | redis.fullnameOverride                                             | string | `"formbricks-redis"`                                                        |                                                           |
-| redis.image.digest                                                 | string | `"sha256:e0eb7c480958d32bdc4357a74bdd70653ae15f2f9b4c93c4a5a9fad1dc471c84"` |                                                           |
+| redis.image.digest                                                 | string | `"sha256:418652cfb58ef879d4978c33553735d7147016032d5aefaa14c828e611eb9dfd"` |                                                           |
 | redis.image.pullPolicy                                             | string | `"IfNotPresent"`                                                            |                                                           |
 | redis.image.repository                                             | string | `"valkey/valkey"`                                                           |                                                           |
 | redis.image.tag                                                    | string | `""`                                                                        |                                                           |
@@ -1155,13 +1168,14 @@ Upgrading from a chart that did not render the web container context:
 | serviceMonitor.endpoints[0].port                                   | string | `"metrics"`                                                                 |                                                           |
 | taxonomy.autoConfigureHub                                          | bool   | `true`                                                                      | Inject taxonomy service env vars into Hub API when taxonomy is enabled. |
 | taxonomy.enabled                                                   | bool   | `false`                                                                     | Deploy the optional standalone taxonomy service.          |
+| taxonomy.env.UV_CACHE_DIR                                          | string | `"/tmp/uv-cache"`                                                           | Writable uv cache for older images running as non-root.   |
 | taxonomy.envFrom                                                   | list   | `[]`                                                                          | Secret or ConfigMap sources for Taxonomy runtime environment variables. |
 | taxonomy.heartbeatIntervalSeconds                                  | string | `"30"`                                                                      | Hub heartbeat interval; `0` intentionally disables heartbeats in supporting images. |
 | taxonomy.hubClientMaxAttempts                                      | string | `"3"`                                                                       | Maximum idempotent Hub callback/fetch attempts.            |
 | taxonomy.hubReaperIntervalSeconds                                  | string | `"60"`                                                                      | Interval between Hub stale-run reaper passes.             |
 | taxonomy.hubStaleRunTimeoutSeconds                                 | string | `"1800"`                                                                    | Hub stale-run timeout; lower only with a callback-heartbeating taxonomy image. |
 | taxonomy.image.repository                                          | string | `"ghcr.io/formbricks/taxonomy"`                                             | Taxonomy service image repository.                        |
-| taxonomy.image.tag                                                 | string | `"0.1.12"`                                                                  | Taxonomy service image tag.                               |
+| taxonomy.image.tag                                                 | string | `"0.1.14"`                                                                  | Taxonomy service image tag.                               |
 | taxonomy.llm.baseUrl                                               | string | `""`                                                                        | Defaults to bundled vLLM router URL when `llm.enabled=true`; set for external LLMs. |
 | taxonomy.llm.bedrock.region                                        | string | `""`                                                                        | AWS region for Bedrock; alternatively set `taxonomy.env.AWS_REGION`. |
 | taxonomy.llm.bundledModelSpecName                                  | string | `""`                                                                        | Enabled bundled `modelSpec` used by Taxonomy; required when multiple bundled models are enabled. |
@@ -1183,7 +1197,9 @@ Upgrading from a chart that did not render the web container context:
 | taxonomy.llm.vertex.thinkingBudget                                 | string | `"0"`                                                                       | Legacy Vertex thinking-token budget; used when thinkingLevel is unset.   |
 | taxonomy.llm.vertex.thinkingLevel                                  | string | `""`                                                                        | Optional `minimal`, `low`, `medium`, or `high`; replaces thinkingBudget. Requires a taxonomy image supporting thinking levels. |
 | taxonomy.maxClusters                                               | string | `"80"`                                                                      | Compatibility value; production Taxonomy images enforce 80 at startup. |
+| taxonomy.podSecurityContext                                        | object | `{fsGroup: 65532, seccompProfile: {type: RuntimeDefault}}`                  | Default pod volume group and seccomp profile.             |
 | taxonomy.runDeadlineSeconds                                        | string | `"900"`                                                                     | Total taxonomy run deadline.                              |
+| taxonomy.securityContext                                           | object | `{runAsNonRoot: true, runAsUser: 65532, runAsGroup: 65532, readOnlyRootFilesystem: true, allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}` | Default container hardening; read-only root mounts `/tmp`. |
 | taxonomy.service.type                                              | string | `"ClusterIP"`                                                               | Internal taxonomy service type.                           |
 | taxonomy.serviceAccount.additionalLabels                           | object | `{}`                                                                        | Extra labels on the created ServiceAccount; requires `create=true`. |
 | taxonomy.serviceAccount.annotations                                | object | `{}`                                                                        | Annotations on the created ServiceAccount, e.g. `eks.amazonaws.com/role-arn`; requires `create=true`. |

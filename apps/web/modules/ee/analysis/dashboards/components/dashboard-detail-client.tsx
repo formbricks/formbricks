@@ -1,24 +1,25 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Suspense, memo, useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { usePathname, useSearchParams } from "next/navigation";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ResponsiveGridLayout, useContainerWidth, verticalCompactor } from "react-grid-layout";
 import type { Layout, LayoutItem } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import "react-resizable/css/styles.css";
-import type { TChartQuery } from "@formbricks/types/analysis";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { CreateChartDialog } from "@/modules/ee/analysis/charts/components/create-chart-dialog";
 import { resolveChartType } from "@/modules/ee/analysis/charts/lib/chart-utils";
+import { ListLoadError } from "@/modules/ee/analysis/components/list-load-error";
 import { DashboardControlBar } from "@/modules/ee/analysis/dashboards/components/dashboard-control-bar";
 import { DashboardDateFilter } from "@/modules/ee/analysis/dashboards/components/dashboard-date-filter";
 import { DashboardPageHeader } from "@/modules/ee/analysis/dashboards/components/dashboard-page-header";
 import { DashboardWidget } from "@/modules/ee/analysis/dashboards/components/dashboard-widget";
 import { DashboardWidgetData } from "@/modules/ee/analysis/dashboards/components/dashboard-widget-data";
 import { DashboardWidgetSkeleton } from "@/modules/ee/analysis/dashboards/components/dashboard-widget-skeleton";
+import { StaleDashboardDialog } from "@/modules/ee/analysis/dashboards/components/stale-dashboard-dialog";
 import {
   ALL_TIME_VALUE,
   CUSTOM_VALUE,
@@ -26,6 +27,8 @@ import {
   DATE_FILTER_PARAM,
   DATE_FILTER_TO_PARAM,
   type TDashboardDateFilter,
+  parseDashboardDateFilter,
+  toChartDateRange,
   writeStoredDateFilter,
 } from "@/modules/ee/analysis/dashboards/lib/dashboard-date-filter";
 import {
@@ -40,36 +43,35 @@ import {
   readStoredWidgetView,
   writeStoredWidgetView,
 } from "@/modules/ee/analysis/dashboards/lib/widget-view";
-import type {
-  TChartDataRow,
-  TChartLabelMaps,
-  TDashboardDetail,
-  TDashboardWidget,
-} from "@/modules/ee/analysis/types/analysis";
+import {
+  type TAppDashboard,
+  type TChartDateRangeInput,
+  duplicateChart,
+  getChartApiErrorMessage,
+  getDashboard,
+  isStaleDashboardError,
+  removeDashboardWidget,
+  replaceDashboard,
+  restoreDashboardWidget,
+} from "@/modules/ee/analysis/lib/api-client";
+import { chartKeys, dashboardKeys } from "@/modules/ee/analysis/lib/query";
+import type { TDashboardWidget } from "@/modules/ee/analysis/types/analysis";
 import { EmptyState } from "@/modules/ui/components/empty-state";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
-import {
-  addChartToDashboardAction,
-  duplicateChartAndAddWidgetAction,
-  removeWidgetFromDashboardAction,
-  updateDashboardAction,
-  updateWidgetLayoutsAction,
-} from "../actions";
-import type { TDashboardWidgetError } from "../lib/widget-errors";
+import { useDashboard } from "../hooks/use-dashboard";
+import { draftOverLatest, toSavedWidgets, widgetsRemovedByOverwrite } from "../lib/stale-save";
+import { findNextOpenSlot } from "../lib/widget-placement";
 
 const ROW_HEIGHT = 80;
 
+const NO_WIDGET_IDS: ReadonlySet<string> = new Set();
+
 interface DashboardDetailClientProps {
   workspaceId: string;
-  dashboard: TDashboardDetail;
-  widgetDataPromises: Map<
-    string,
-    Promise<
-      ({ data: TChartDataRow[]; query: TChartQuery } & TChartLabelMaps) | { error: TDashboardWidgetError }
-    >
-  >;
-  dateFilter: TDashboardDateFilter | null;
+  dashboardId: string;
+  /** The filter persisted in this dashboard's cookie; a filter pinned in the URL wins over it. */
+  storedDateFilter: TDashboardDateFilter | null;
   directories: { id: string; name: string }[];
   isReadOnly: boolean;
   isAIAvailable: boolean;
@@ -137,36 +139,30 @@ const applyLayoutToWidgets = (widgets: TDashboardWidget[], newLayout: Layout): T
 
 const MemoizedWidgetContent = memo(function WidgetContent({
   widget,
-  dataPromise,
+  dateRange,
   view,
 }: Readonly<{
   widget: TDashboardWidget;
-  dataPromise?: Promise<
-    ({ data: TChartDataRow[]; query: TChartQuery } & TChartLabelMaps) | { error: TDashboardWidgetError }
-  >;
+  dateRange: TChartDateRangeInput | null;
   view: TWidgetView;
 }>) {
-  if (widget.chart && dataPromise) {
-    return (
-      <Suspense fallback={<DashboardWidgetSkeleton />}>
-        <DashboardWidgetData
-          dataPromise={dataPromise}
-          // Through resolveChartType like every other read of a stored type, so a row still
-          // carrying a retired value renders as its replacement instead of "not yet supported".
-          chartType={resolveChartType(widget.chart.type)}
-          config={widget.chart.config}
-          view={view}
-        />
-      </Suspense>
-    );
-  }
-  return <DashboardWidgetSkeleton />;
+  return (
+    <DashboardWidgetData
+      chartId={widget.chartId}
+      dateRange={dateRange}
+      // Through resolveChartType like every other read of a stored type, so a row still
+      // carrying a retired value renders as its replacement instead of "not yet supported".
+      chartType={resolveChartType(widget.chart.type)}
+      config={widget.chart.config}
+      view={view}
+    />
+  );
 });
 
 const MemoizedWidgetItem = memo(function WidgetItem({
   widget,
   isEditing,
-  dataPromise,
+  dateRange,
   onEdit,
   onDuplicate,
   onResize,
@@ -174,9 +170,7 @@ const MemoizedWidgetItem = memo(function WidgetItem({
 }: Readonly<{
   widget: TDashboardWidget;
   isEditing: boolean;
-  dataPromise?: Promise<
-    ({ data: TChartDataRow[]; query: TChartQuery } & TChartLabelMaps) | { error: TDashboardWidgetError }
-  >;
+  dateRange: TChartDateRangeInput | null;
   onEdit?: () => void;
   onDuplicate?: () => void;
   onResize?: () => void;
@@ -199,54 +193,144 @@ const MemoizedWidgetItem = memo(function WidgetItem({
     [widget.id]
   );
 
-  const hasData = Boolean(widget.chart && dataPromise);
-
   return (
     <DashboardWidget
       title={title}
       isEditing={isEditing}
-      view={hasData ? view : undefined}
-      onViewChange={hasData ? handleViewChange : undefined}
+      view={view}
+      onViewChange={handleViewChange}
       onEdit={onEdit}
       onDuplicate={onDuplicate}
       onResize={onResize}
       onRemove={onRemove}>
-      <MemoizedWidgetContent widget={widget} dataPromise={dataPromise} view={view} />
+      <MemoizedWidgetContent widget={widget} dateRange={dateRange} view={view} />
     </DashboardWidget>
   );
 });
 
-export function DashboardDetailClient({
+/**
+ * The dashboard page: the frame comes from one dashboard read, then every widget loads its own data
+ * (`DashboardWidgetData`), so the page shows as soon as the dashboard is known.
+ */
+export function DashboardDetailClient(props: Readonly<DashboardDetailClientProps>) {
+  const { t } = useTranslation();
+  const { data: dashboard, isPending, error, refetch } = useDashboard(props.dashboardId);
+
+  if (isPending) {
+    return (
+      <PageContentWrapper>
+        <GoBackButton url={`/workspaces/${props.workspaceId}/dashboards`} />
+        <div className="flex h-64 items-center justify-center" aria-busy="true">
+          <DashboardWidgetSkeleton />
+        </div>
+      </PageContentWrapper>
+    );
+  }
+
+  // A failed background refetch keeps the last dashboard (TanStack Query holds `data` on error), so the
+  // full-page error is only for a dashboard that never loaded; replacing the view would drop an open edit.
+  if (!dashboard) {
+    return (
+      <PageContentWrapper>
+        <GoBackButton url={`/workspaces/${props.workspaceId}/dashboards`} />
+        <ListLoadError
+          error={error}
+          onRetry={refetch}
+          title={t("workspace.analysis.dashboards.failed_to_load_dashboard")}
+        />
+      </PageContentWrapper>
+    );
+  }
+
+  return <DashboardDetailView {...props} dashboard={dashboard} />;
+}
+
+function DashboardDetailView({
   workspaceId,
   dashboard,
-  widgetDataPromises,
-  dateFilter,
+  storedDateFilter,
   directories,
   isReadOnly,
   isAIAvailable,
   aiUnavailableReason,
-}: Readonly<DashboardDetailClientProps>) {
-  const router = useRouter();
+}: Readonly<Omit<DashboardDetailClientProps, "dashboardId"> & { dashboard: TAppDashboard }>) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
   const { t } = useTranslation();
   const { width, containerRef, mounted } = useContainerWidth();
 
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  // The version the edit started from: what the save sends as its precondition, so a refetch while
+  // editing can never make a save silently overwrite someone else's change.
+  const [editBaseUpdatedAt, setEditBaseUpdatedAt] = useState<string | null>(null);
+  // The widgets the edit started with. The stale warning lists what a whole-dashboard save removes that
+  // the editor never removed itself; without this, their own removals read as "added meanwhile".
+  const [editBaseWidgetIds, setEditBaseWidgetIds] = useState<ReadonlySet<string> | null>(null);
+  // Set when a save was refused because the dashboard changed meanwhile: its latest version.
+  const [staleLatest, setStaleLatest] = useState<TAppDashboard | null>(null);
   const [editingChartId, setEditingChartId] = useState<string | null>(null);
-  const [, startTransition] = useTransition();
 
-  const [name, setName] = useState(dashboard.name);
+  // A filter pinned in the URL (a shared link, back/forward) wins; otherwise the one this viewer last
+  // chose here, seeded from the cookie so the first fetch is already filtered.
+  const [chosenDateFilter, setChosenDateFilter] = useState(storedDateFilter);
+  const urlDateFilter = useMemo(
+    () => parseDashboardDateFilter(Object.fromEntries(searchParams.entries())),
+    [searchParams]
+  );
+  const dateFilter = urlDateFilter ?? chosenDateFilter;
+  // Stable across renders for the same filter, so the memoized widgets do not re-render on every one.
+  const dateRangeKey = JSON.stringify(toChartDateRange(dateFilter));
+  const dateRange = useMemo(() => JSON.parse(dateRangeKey) as TChartDateRangeInput | null, [dateRangeKey]);
+
+  /** After a write, read the dashboard again — and the lists that count its widgets. */
+  const refreshDashboard = useCallback(async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.detail(dashboard.id) }),
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.lists() }),
+      queryClient.invalidateQueries({ queryKey: chartKeys.lists() }),
+    ]);
+  }, [queryClient, dashboard.id]);
+
+  /**
+   * Writes made outside edit mode — duplicate, remove, undo — move the dashboard's version on the server.
+   * They are counted so entering edit mode waits for them: pinning the edit's base from a copy read before
+   * one of them landed would make the first save look stale, and offer to drop the change just made.
+   */
+  const viewWritesRef = useRef(0);
+  const viewWriteWaitersRef = useRef<(() => void)[]>([]);
+  const beginViewWrite = useCallback(() => {
+    viewWritesRef.current += 1;
+  }, []);
+  const endViewWrite = useCallback(() => {
+    viewWritesRef.current = Math.max(0, viewWritesRef.current - 1);
+    if (viewWritesRef.current === 0) {
+      const waiters = viewWriteWaitersRef.current;
+      viewWriteWaitersRef.current = [];
+      for (const resolve of waiters) resolve();
+    }
+  }, []);
+  const waitForViewWrites = useCallback(() => {
+    if (viewWritesRef.current === 0) return Promise.resolve();
+    const { promise, resolve } = Promise.withResolvers<void>();
+    viewWriteWaitersRef.current.push(resolve);
+    return promise;
+  }, []);
+
+  // The name as the user typed it in edit mode, or `null` while they have not: the header otherwise shows the
+  // dashboard's current name, so a rename made elsewhere shows on refetch and is never saved back over.
+  const [draftName, setDraftName] = useState<string | null>(null);
+  const name = draftName ?? dashboard.name;
   const [draftWidgets, setDraftWidgets] = useState<TDashboardWidget[] | null>(null);
 
   const widgets = draftWidgets ?? dashboard.widgets;
 
   const hasChanges = useMemo(() => {
-    if (name !== dashboard.name) return true;
+    if (draftName !== null && draftName !== dashboard.name) return true;
     if (!draftWidgets) return false;
     return widgetLayoutsChanged(draftWidgets, dashboard.widgets);
-  }, [name, draftWidgets, dashboard]);
+  }, [draftName, draftWidgets, dashboard]);
 
   const layout = useMemo(() => widgetsToLayout(widgets), [widgets]);
 
@@ -264,14 +348,25 @@ export function DashboardDetailClient({
     [dashboard.widgets]
   );
 
-  const handleEnterEditMode = useCallback(() => {
+  const enterEditMode = useCallback(async () => {
     if (isEditing) {
       return;
     }
 
-    setDraftWidgets((current) => current ?? dashboard.widgets);
+    // A view-mode write (duplicate, remove, undo) moves the dashboard's version on the server. Its
+    // read-back was awaited before the write was marked done, so the cache is current once nothing is
+    // pending — and the edit base is pinned from there, never from a copy the write has moved past.
+    await waitForViewWrites();
+    const base = queryClient.getQueryData<TAppDashboard>(dashboardKeys.detail(dashboard.id)) ?? dashboard;
+    setDraftWidgets(base.widgets);
+    setEditBaseWidgetIds(new Set(base.widgets.map((widget) => widget.id)));
+    setEditBaseUpdatedAt(base.updatedAt);
     setIsEditing(true);
-  }, [dashboard.widgets, isEditing]);
+  }, [dashboard, isEditing, queryClient, waitForViewWrites]);
+
+  const handleEnterEditMode = useCallback(() => {
+    void enterEditMode();
+  }, [enterEditMode]);
 
   const handleEditChart = useCallback((chartId: string) => {
     setEditingChartId(chartId);
@@ -279,47 +374,46 @@ export function DashboardDetailClient({
 
   const handleDuplicateWidget = useCallback(
     async (widget: TDashboardWidget) => {
+      // The copy keeps the original's size and takes the first gap it fits, so it never lands on top of
+      // the original. A slot below the grid's last row is refused like any taken one, and the client
+      // retries without a layout — the server then answers 409 with the reason, if it has no room.
+      const slot = findNextOpenSlot(
+        dashboard.widgets.map((current) => current.layout),
+        widget.layout
+      );
+      beginViewWrite();
       try {
-        const result = await duplicateChartAndAddWidgetAction({
-          workspaceId,
+        await duplicateChart(widget.chartId, {
           dashboardId: dashboard.id,
-          chartId: widget.chartId,
-          layout: widget.layout,
+          layout: { ...widget.layout, ...slot },
         });
-        if (!result?.data) {
-          toast.error(getFormattedErrorMessage(result));
-          return;
-        }
         toast.success(t("workspace.analysis.dashboards.chart_duplicated"));
-        startTransition(() => router.refresh());
-      } catch {
-        toast.error(t("workspace.analysis.dashboards.chart_duplicate_failed"));
+        await refreshDashboard();
+      } catch (error) {
+        toast.error(
+          getChartApiErrorMessage(error, t("workspace.analysis.dashboards.chart_duplicate_failed"))
+        );
+      } finally {
+        endViewWrite();
       }
     },
-    [workspaceId, dashboard.id, router, t, startTransition]
+    [beginViewWrite, dashboard.id, dashboard.widgets, endViewWrite, refreshDashboard, t]
   );
 
   const handleUndoRemoveWidget = useCallback(
     async (snapshot: TDashboardWidget) => {
+      beginViewWrite();
       try {
-        const result = await addChartToDashboardAction({
-          workspaceId,
-          dashboardId: dashboard.id,
-          chartId: snapshot.chartId,
-          layout: snapshot.layout,
-          respectY: true,
-        });
-        if (!result?.data) {
-          toast.error(getFormattedErrorMessage(result));
-          return;
-        }
+        await restoreDashboardWidget(dashboard.id, snapshot);
         toast.success(t("workspace.analysis.dashboards.chart_restored"));
-        startTransition(() => router.refresh());
-      } catch {
-        toast.error(t("workspace.analysis.dashboards.chart_restore_failed"));
+        await refreshDashboard();
+      } catch (error) {
+        toast.error(getChartApiErrorMessage(error, t("workspace.analysis.dashboards.chart_restore_failed")));
+      } finally {
+        endViewWrite();
       }
     },
-    [workspaceId, dashboard.id, router, t, startTransition]
+    [beginViewWrite, dashboard.id, endViewWrite, refreshDashboard, t]
   );
 
   const handleRemoveWidgetFromMenu = useCallback(
@@ -333,16 +427,9 @@ export function DashboardDetailClient({
       const snapshot = (draftWidgets ?? dashboard.widgets).find((w) => w.id === widgetId);
       if (!snapshot) return;
 
+      beginViewWrite();
       try {
-        const result = await removeWidgetFromDashboardAction({
-          workspaceId,
-          dashboardId: dashboard.id,
-          widgetId,
-        });
-        if (!result?.data) {
-          toast.error(getFormattedErrorMessage(result));
-          return;
-        }
+        await removeDashboardWidget(dashboard.id, widgetId);
 
         toast.success(
           (toastInstance) => (
@@ -361,88 +448,119 @@ export function DashboardDetailClient({
           ),
           { duration: 6000 }
         );
-        startTransition(() => router.refresh());
-      } catch {
-        toast.error(t("workspace.analysis.dashboards.chart_remove_failed"));
+        await refreshDashboard();
+      } catch (error) {
+        toast.error(getChartApiErrorMessage(error, t("workspace.analysis.dashboards.chart_remove_failed")));
+      } finally {
+        endViewWrite();
       }
     },
     [
+      beginViewWrite,
       draftWidgets,
       dashboard.widgets,
       dashboard.id,
+      endViewWrite,
       handleRemoveWidget,
       handleUndoRemoveWidget,
       isEditing,
-      router,
-      startTransition,
+      refreshDashboard,
       t,
-      workspaceId,
     ]
   );
 
   const handleCancel = useCallback(() => {
-    setName(dashboard.name);
+    setDraftName(null);
     setDraftWidgets(null);
+    setEditBaseUpdatedAt(null);
+    setEditBaseWidgetIds(null);
     setIsEditing(false);
-  }, [dashboard]);
+  }, []);
+
+  /**
+   * One call saves the name and every widget's place, carrying the `updatedAt` the edit started from.
+   * If the dashboard changed since, nothing is saved and the editor chooses between the latest version
+   * and their own.
+   */
+  const saveDashboard = useCallback(
+    async (baseUpdatedAt: string, savedName: string, savedWidgets: TDashboardWidget[]) => {
+      setIsSaving(true);
+      try {
+        const saved = await replaceDashboard(dashboard.id, {
+          name: savedName.trim(),
+          expectedUpdatedAt: baseUpdatedAt,
+          widgets: toSavedWidgets(savedWidgets),
+        });
+        queryClient.setQueryData(dashboardKeys.detail(dashboard.id), saved);
+        void queryClient.invalidateQueries({ queryKey: dashboardKeys.lists() });
+        void queryClient.invalidateQueries({ queryKey: chartKeys.lists() });
+        toast.success(t("workspace.analysis.dashboards.dashboard_saved"));
+        setStaleLatest(null);
+        setDraftName(null);
+        setDraftWidgets(null);
+        setEditBaseUpdatedAt(null);
+        setEditBaseWidgetIds(null);
+        setIsEditing(false);
+      } catch (error) {
+        if (isStaleDashboardError(error)) {
+          try {
+            setStaleLatest(await getDashboard(dashboard.id));
+          } catch (readError) {
+            toast.error(
+              getChartApiErrorMessage(readError, t("workspace.analysis.dashboards.dashboard_save_failed"))
+            );
+          }
+          return;
+        }
+        toast.error(getChartApiErrorMessage(error, t("workspace.analysis.dashboards.dashboard_save_failed")));
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [dashboard.id, queryClient, t]
+  );
 
   const handleSave = useCallback(async () => {
     if (!name.trim()) {
       toast.error(t("workspace.analysis.dashboards.dashboard_name_required"));
       return;
     }
+    await saveDashboard(editBaseUpdatedAt ?? dashboard.updatedAt, name, widgets);
+  }, [name, saveDashboard, editBaseUpdatedAt, dashboard.updatedAt, widgets, t]);
 
-    setIsSaving(true);
+  /** Discard the edit and show the dashboard as it now is. */
+  const handleReloadLatest = useCallback(() => {
+    if (!staleLatest) return;
+    queryClient.setQueryData(dashboardKeys.detail(dashboard.id), staleLatest);
+    setDraftName(null);
+    setStaleLatest(null);
+    setDraftWidgets(null);
+    setEditBaseUpdatedAt(null);
+    setEditBaseWidgetIds(null);
+    setIsEditing(false);
+    void refreshDashboard();
+  }, [staleLatest, queryClient, dashboard.id, refreshDashboard]);
 
-    try {
-      if (name !== dashboard.name) {
-        const dashboardResult = await updateDashboardAction({
-          workspaceId,
-          dashboardId: dashboard.id,
-          name: name.trim(),
-        });
+  /** Save the edit over the latest version, knowing what it removes. */
+  const handleSaveAnyway = useCallback(() => {
+    if (!staleLatest) return;
+    // A name this editor did not touch is the latest one, so someone else's rename survives the overwrite.
+    void saveDashboard(
+      staleLatest.updatedAt,
+      draftName ?? staleLatest.name,
+      draftOverLatest(staleLatest.widgets, widgets)
+    );
+  }, [staleLatest, saveDashboard, draftName, widgets]);
 
-        if (!dashboardResult?.data) {
-          const errorMessage = getFormattedErrorMessage(dashboardResult);
-          toast.error(errorMessage);
-          setIsSaving(false);
-          return;
-        }
-      }
-
-      if (widgetLayoutsChanged(widgets, dashboard.widgets)) {
-        const widgetUpdates = widgets.map((widget, i) => ({
-          id: widget.id,
-          layout: widget.layout,
-          order: i,
-        }));
-
-        const widgetsResult = await updateWidgetLayoutsAction({
-          workspaceId,
-          dashboardId: dashboard.id,
-          widgets: widgetUpdates,
-        });
-
-        if (!widgetsResult?.data) {
-          const errorMessage = getFormattedErrorMessage(widgetsResult);
-          toast.error(errorMessage);
-          setIsSaving(false);
-          return;
-        }
-      }
-
-      toast.success(t("workspace.analysis.dashboards.dashboard_saved"));
-      startTransition(() => {
-        router.refresh();
-        setDraftWidgets(null);
-        setIsEditing(false);
-      });
-    } catch {
-      toast.error(t("workspace.analysis.dashboards.dashboard_save_failed"));
-    } finally {
-      setIsSaving(false);
-    }
-  }, [name, widgets, dashboard, workspaceId, router, t, startTransition]);
+  const removedByOverwrite = useMemo(
+    () =>
+      staleLatest
+        ? widgetsRemovedByOverwrite(staleLatest.widgets, widgets, editBaseWidgetIds ?? NO_WIDGET_IDS).map(
+            (widget) => widget.chart.name
+          )
+        : [],
+    [staleLatest, widgets, editBaseWidgetIds]
+  );
 
   // `E` toggles edit mode: it enters from view mode, and inside edit mode it saves when there is
   // something to save and cancels otherwise - the same button the key cap sits on in the control bar.
@@ -484,18 +602,20 @@ export function DashboardDetailClient({
         params.set(DATE_FILTER_TO_PARAM, filter.range[1]);
       }
 
+      // A shallow history entry: the widgets refetch through their queries, so the page itself has
+      // nothing to re-render on the server. Next.js keeps `useSearchParams` in step with it.
       const queryString = params.toString();
-      router.push(queryString ? `${pathname}?${queryString}` : pathname);
+      window.history.pushState(null, "", queryString ? `${pathname}?${queryString}` : pathname);
     },
-    [pathname, router, searchParams]
+    [pathname, searchParams]
   );
 
   const handleDateFilterChange = useCallback(
     (filter: TDashboardDateFilter | null) => {
-      // Persist the choice (cookie) so it survives across sessions and the server can apply it on the
-      // next visit, then reflect it in the URL (the server reads the URL params to fetch each chart's
-      // data for this navigation).
+      // Persist the choice (cookie) so it survives across sessions and seeds the next visit's first
+      // fetch, then reflect it in the URL so the view can be shared.
       writeStoredDateFilter(dashboard.id, filter);
+      setChosenDateFilter(filter);
       applyDateFilterToUrl(filter);
     },
     [applyDateFilterToUrl, dashboard.id]
@@ -503,11 +623,9 @@ export function DashboardDetailClient({
 
   const isEmpty = widgets.length === 0;
 
-  // Persistence is now cookie-based and read by the server on the first render pass (see
-  // dashboard-detail-page), so there is no client-side restore effect: a revisit renders filtered
-  // directly instead of re-running every widget query after a `router.replace` round trip. A pinned
-  // URL param still wins and is intentionally NOT written back to the cookie, so opening a shared
-  // link never overwrites the viewer's own saved preference.
+  // The cookie is read by the server and seeds `chosenDateFilter`, so there is no client-side restore
+  // effect. A pinned URL param still wins and is intentionally NOT written back to the cookie, so
+  // opening a shared link never overwrites the viewer's own saved preference.
 
   return (
     <PageContentWrapper>
@@ -515,26 +633,39 @@ export function DashboardDetailClient({
       <DashboardPageHeader
         name={name}
         isEditing={isEditing}
-        onNameChange={setName}
+        onNameChange={setDraftName}
         cta={
           <DashboardControlBar
             workspaceId={workspaceId}
             dashboardId={dashboard.id}
             directories={directories}
-            existingChartIds={widgets.map((w) => w.chartId)}
             isEditing={isEditing}
             isSaving={isSaving}
             hasChanges={hasChanges}
             isReadOnly={isReadOnly}
             isAIAvailable={isAIAvailable}
             aiUnavailableReason={aiUnavailableReason}
-            onRefresh={() => router.refresh()}
+            onRefresh={() => {
+              void refreshDashboard();
+              void queryClient.invalidateQueries({ queryKey: chartKeys.allData() });
+            }}
             editHotkey={EDIT_HOTKEY}
             onEditToggle={handleEnterEditMode}
             onSave={handleSave}
             onCancel={handleCancel}
           />
         }
+      />
+
+      <StaleDashboardDialog
+        open={staleLatest !== null}
+        removedChartNames={removedByOverwrite}
+        isSaving={isSaving}
+        onReload={handleReloadLatest}
+        onSaveAnyway={handleSaveAnyway}
+        onOpenChange={(open) => {
+          if (!open) setStaleLatest(null);
+        }}
       />
 
       {/* The date range only filters existing charts, so hide it on an empty dashboard where it
@@ -580,7 +711,7 @@ export function DashboardDetailClient({
                     <MemoizedWidgetItem
                       widget={widget}
                       isEditing={isEditing}
-                      dataPromise={widgetDataPromises.get(widget.id)}
+                      dateRange={dateRange}
                       onEdit={isReadOnly ? undefined : () => handleEditChart(widget.chartId)}
                       // Duplicate is hidden in edit mode: saving edit-mode drafts removes any
                       // widget not present in the draft, which would delete the fresh copy.
@@ -607,9 +738,8 @@ export function DashboardDetailClient({
           chartId={editingChartId ?? undefined}
           onSuccess={() => {
             setEditingChartId(null);
-            startTransition(() => {
-              router.refresh();
-            });
+            void refreshDashboard();
+            void queryClient.invalidateQueries({ queryKey: chartKeys.allData() });
           }}
           directories={directories}
         />

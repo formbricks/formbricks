@@ -8,9 +8,10 @@ import { spawnSync } from "node:child_process";
 import { createHmac, randomBytes, randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 
+// Tenant a queries as a user, tenant b as an API key: the token names exactly one of the two actors.
 const TENANTS = {
-  "smoke-tenant-a": { sourceName: "smoke-source-a", npsValues: [9, 10, 3] },
-  "smoke-tenant-b": { sourceName: "smoke-source-b", npsValues: [0, 6] },
+  "smoke-tenant-a": { sourceName: "smoke-source-a", npsValues: [9, 10, 3], actor: { userId: "smoke-user" } },
+  "smoke-tenant-b": { sourceName: "smoke-source-b", npsValues: [0, 6], actor: { apiKeyId: "smoke-api-key" } },
 };
 const TENANT_FILTER_REJECTION = "tenant filters are enforced by Cube";
 const CONTINUE_WAIT_ATTEMPTS = 60;
@@ -105,7 +106,7 @@ const printSeedSql = () => {
 const base64Url = (value) => Buffer.from(JSON.stringify(value)).toString("base64url");
 
 // Mirrors createCubeApiToken in apps/web/modules/ee/analysis/api/lib/cube-config.ts.
-const createToken = (environment, tenantId) => {
+const createToken = (environment, tenantId, actor) => {
   const now = Math.floor(Date.now() / 1000);
   const header = base64Url({ alg: "HS256", typ: "JWT" });
   const payload = base64Url({
@@ -113,9 +114,9 @@ const createToken = (environment, tenantId) => {
     feedbackDirectoryId: tenantId,
     workspaceId: `${tenantId}-workspace`,
     organizationId: `${tenantId}-organization`,
-    userId: `${tenantId}-user`,
+    ...actor,
     scope: "xm:cube:query",
-    source: "charts.executeQueryAction",
+    source: "v3.charts.preview",
     iat: now,
     exp: now + 5 * 60,
     aud: environment.CUBEJS_JWT_AUDIENCE,
@@ -146,8 +147,8 @@ const checkQueries = async (composeJsonPath, baseUrl) => {
     measures: ["FeedbackRecords.count", "FeedbackRecords.npsAverage"],
   };
 
-  for (const [tenantId, { sourceName, npsValues }] of Object.entries(TENANTS)) {
-    const { status, body } = await load(baseUrl, createToken(environment, tenantId), query);
+  for (const [tenantId, { sourceName, npsValues, actor }] of Object.entries(TENANTS)) {
+    const { status, body } = await load(baseUrl, createToken(environment, tenantId, actor), query);
     if (status !== 200) fail(`load as ${tenantId} returned HTTP ${status}: ${JSON.stringify(body)}`);
 
     const rows = (body.data ?? []).map((row) => ({
@@ -165,11 +166,22 @@ const checkQueries = async (composeJsonPath, baseUrl) => {
     ) {
       fail(`load as ${tenantId} returned ${JSON.stringify(rows)}; expected only its own ${sourceName} rows`);
     }
-    pass(`a JWT for ${tenantId} returns only ${tenantId}'s rows`);
+    pass(`a JWT for ${tenantId} (${Object.keys(actor)[0]}) returns only ${tenantId}'s rows`);
   }
 
   const [tenantId, otherTenantId] = Object.keys(TENANTS);
-  const { status, body } = await load(baseUrl, createToken(environment, tenantId), {
+  for (const [label, actor, rejection] of [
+    ["both userId and apiKeyId", { userId: "smoke-user", apiKeyId: "smoke-api-key" }, "mutually exclusive"],
+    ["neither userId nor apiKeyId", {}, "missing userId or apiKeyId"],
+  ]) {
+    const { status, body } = await load(baseUrl, createToken(environment, tenantId, actor), query);
+    if (status === 200 || !String(body.error ?? "").includes(rejection)) {
+      fail(`a JWT naming ${label} was not rejected: HTTP ${status} ${JSON.stringify(body)}`);
+    }
+    pass(`a JWT naming ${label} is rejected`);
+  }
+
+  const { status, body } = await load(baseUrl, createToken(environment, tenantId, TENANTS[tenantId].actor), {
     measures: ["FeedbackRecords.count"],
     filters: [{ member: "FeedbackRecords.tenantId", operator: "equals", values: [otherTenantId] }],
   });

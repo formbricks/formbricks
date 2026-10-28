@@ -415,6 +415,12 @@ export const createWorkspace = async (
       const workspace = await tx.workspace.create({
         data: {
           ...data,
+          // Page font (ENG-3864): on for every new workspace. Workspaces from before it have no flag and
+          // keep the survey font, which is why the column default and STYLE_DEFAULTS leave it out.
+          styling: {
+            ...(data.styling ?? { allowStyleOverwrite: true }),
+            pageFont: data.styling?.pageFont ?? true,
+          },
           // Built explicitly rather than spread from the caller: the default survey language has to be
           // one of the workspace's own languages, and a workspace being created has only the seeded
           // `DEFAULT_WORKSPACE_LANGUAGE`. It is configured afterwards from workspace settings, where

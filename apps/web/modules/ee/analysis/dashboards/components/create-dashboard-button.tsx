@@ -1,13 +1,14 @@
 "use client";
 
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import { createDashboardAction } from "@/modules/ee/analysis/dashboards/actions";
 import { CreateDashboardDialog } from "@/modules/ee/analysis/dashboards/components/create-dashboard-dialog";
+import { createDashboard, getChartApiErrorMessage } from "@/modules/ee/analysis/lib/api-client";
+import { dashboardKeys } from "@/modules/ee/analysis/lib/query";
 import { Button, type ButtonProps } from "@/modules/ui/components/button";
 
 interface CreateDashboardButtonProps {
@@ -25,7 +26,11 @@ export const CreateDashboardButton = ({
   const router = useRouter();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [dashboardName, setDashboardName] = useState("");
-  const [isCreating, setIsCreating] = useState(false);
+  const queryClient = useQueryClient();
+  const createMutation = useMutation({
+    mutationFn: createDashboard,
+    onSettled: () => queryClient.invalidateQueries({ queryKey: dashboardKeys.lists() }),
+  });
 
   const handleOpenChange = (open: boolean) => {
     setIsCreateDialogOpen(open);
@@ -34,33 +39,25 @@ export const CreateDashboardButton = ({
     }
   };
 
-  const handleCreate = async () => {
-    if (!dashboardName.trim()) {
+  const handleCreate = () => {
+    const name = dashboardName.trim();
+    if (!name) {
       toast.error(t("workspace.analysis.dashboards.please_enter_name"));
       return;
     }
 
-    setIsCreating(true);
-    try {
-      const result = await createDashboardAction({
-        workspaceId,
-        name: dashboardName.trim(),
-      });
-
-      if (!result?.data) {
-        const errorMessage = getFormattedErrorMessage(result);
-        toast.error(errorMessage);
-        return;
+    createMutation.mutate(
+      { workspaceId, name },
+      {
+        onSuccess: (dashboard) => {
+          toast.success(t("workspace.analysis.dashboards.create_success"));
+          handleOpenChange(false);
+          router.push(`/workspaces/${workspaceId}/dashboards/${dashboard.id}`);
+        },
+        onError: (error) =>
+          toast.error(getChartApiErrorMessage(error, t("workspace.analysis.dashboards.create_failed"))),
       }
-
-      toast.success(t("workspace.analysis.dashboards.create_success"));
-      handleOpenChange(false);
-      router.push(`/workspaces/${workspaceId}/dashboards/${result.data.id}`);
-    } catch {
-      toast.error(t("workspace.analysis.dashboards.create_failed"));
-    } finally {
-      setIsCreating(false);
-    }
+    );
   };
 
   return (
@@ -75,7 +72,7 @@ export const CreateDashboardButton = ({
         dashboardName={dashboardName}
         onDashboardNameChange={setDashboardName}
         onCreate={handleCreate}
-        isCreating={isCreating}
+        isCreating={createMutation.isPending}
       />
     </>
   );

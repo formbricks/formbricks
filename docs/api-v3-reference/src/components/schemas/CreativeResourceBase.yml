@@ -1,0 +1,100 @@
+type: object
+description: >-
+  Fields every creative carries, whatever its type. `type` selects the `content` and `styling`
+  shape; see `CreativeResource`.
+required:
+  - id
+  - workspaceId
+  - name
+  - type
+  - status
+  - displayStatus
+  - displayStatusReason
+  - createdAt
+  - updatedAt
+  - publishedAt
+  - archivedAt
+  - creator
+  - defaultLanguage
+  - languages
+  - destination
+  - distribution
+  - schedule
+  - warnings
+properties:
+  id:
+    type: string
+    format: cuid2
+  workspaceId:
+    type: string
+    format: cuid2
+  name:
+    type: string
+    description: Internal name, shown to authors only. Never shown or announced to visitors.
+  type:
+    $ref: ./CreativeType.yml
+  status:
+    $ref: ./CreativeStatus.yml
+  displayStatus:
+    $ref: ./CreativeDisplayStatus.yml
+    readOnly: true
+  displayStatusReason:
+    $ref: ./CreativeDisplayStatusReason.yml
+    readOnly: true
+  createdAt:
+    type: string
+    format: date-time
+    readOnly: true
+  updatedAt:
+    type: string
+    format: date-time
+    readOnly: true
+  publishedAt:
+    type:
+      - string
+      - "null"
+    format: date-time
+    readOnly: true
+    description: When the creative was first published; `null` while it has never been.
+  archivedAt:
+    type:
+      - string
+      - "null"
+    format: date-time
+    readOnly: true
+    description: When the creative was archived; `null` unless it is archived.
+  creator:
+    type:
+      - object
+      - "null"
+    readOnly: true
+    description: The user who created the creative, or `null` for one created with an API key.
+    required:
+      - name
+    properties:
+      name:
+        type: string
+    additionalProperties: false
+  defaultLanguage:
+    $ref: ./LocaleCode.yml
+  languages:
+    type: array
+    items:
+      $ref: ./CreativeLanguage.yml
+    description: Every language the texts are written in, the default first.
+  destination:
+    anyOf:
+      - $ref: ./CreativeDestination.yml
+      - type: "null"
+    description: >-
+      What pressing the creative opens, or `null` when it opens nothing (a banner without a button,
+      or a draft whose Destination isn't chosen yet).
+  distribution:
+    $ref: ./CreativeDistribution.yml
+  schedule:
+    $ref: ./CreativeSchedule.yml
+  warnings:
+    type: array
+    readOnly: true
+    items:
+      $ref: ./CreativeWarning.yml
