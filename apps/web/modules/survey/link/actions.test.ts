@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { actionClient } from "@/lib/utils/action-client";
 import { generateSurveySingleUseLinkParams } from "@/lib/utils/single-use-surveys";
+import { getOrganizationLogoUrl } from "@/modules/ee/whitelabel/email-customization/lib/organization";
 import { sendLinkSurveyToVerifiedEmail } from "@/modules/email";
 import { sendLinkSurveyEmailAction, validateSurveyPinAction } from "./actions";
 import { getResponseBySingleUseId, getSurveyWithMetadata } from "./lib/data";
@@ -92,7 +93,6 @@ const validatePin = (pin = "1234") => validateSurveyPinAction({ parsedInput: { s
 const emailInput = (link: { suId?: string; suToken?: string }) => ({
   surveyId,
   email: "respondent@example.com",
-  surveyName: "s",
   locale: "en-US",
   ...link,
 });
@@ -355,5 +355,52 @@ describe("sendLinkSurveyEmailAction", () => {
     expect(recordSingleUseLinkValidation).toHaveBeenCalledWith(
       expect.objectContaining({ outcome: "accepted", surface: "link_email_action" })
     );
+  });
+
+  // ENG-4043: the action is public, so a caller must not choose what the email says, shows or reaches.
+  describe("what a caller can put into the email", () => {
+    const callerChosen = {
+      surveyName: "Call +1 555 0100 about your refund",
+      logoUrl: "https://attacker.example/logo.png",
+    };
+
+    test("its input schema drops a survey name and logo", () => {
+      const parsed = emailActionSchema.parse({ ...emailInput({}), ...callerChosen });
+
+      expect(parsed).not.toHaveProperty("surveyName");
+      expect(parsed).not.toHaveProperty("logoUrl");
+    });
+
+    test.each([
+      ["an address list", "a@example.com, b@example.com"],
+      ["a named address", "Support <a@example.com>"],
+    ])("its input schema refuses %s", (_label, email) => {
+      expect(() => emailActionSchema.parse({ ...emailInput({}), email })).toThrow();
+    });
+
+    test("leaves a survey without single-use links out of the link's single-use values", async () => {
+      mockSurvey();
+
+      await sendEmailWith({ suId: "Call +1 555 0100", suToken: "refund" });
+
+      const [emailData] = vi.mocked(sendLinkSurveyToVerifiedEmail).mock.calls[0];
+      expect(emailData).toMatchObject({ suId: undefined, suToken: undefined });
+    });
+
+    // Past the schema too: the action itself sets both from the survey and its organization.
+    test("emails the stored survey name and the organization's logo, even if the caller's got through", async () => {
+      mockSurvey({ name: "Stored survey name" });
+      vi.mocked(getOrganizationLogoUrl).mockResolvedValueOnce("/storage/org-logo.png");
+
+      await sendLinkSurveyEmailAction({ parsedInput: { ...emailInput({}), ...callerChosen } } as never);
+
+      expect(sendLinkSurveyToVerifiedEmail).toHaveBeenCalledWith(
+        expect.objectContaining({ surveyName: "Stored survey name", logoUrl: "/storage/org-logo.png" })
+      );
+      // Not under any other field either.
+      const [emailData] = vi.mocked(sendLinkSurveyToVerifiedEmail).mock.calls[0];
+      expect(JSON.stringify(emailData)).not.toContain(callerChosen.surveyName);
+      expect(JSON.stringify(emailData)).not.toContain(callerChosen.logoUrl);
+    });
   });
 });

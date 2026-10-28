@@ -38,7 +38,7 @@ import {
   VERIFICATION_LINK_TTL_SECONDS,
   buildVerificationLinks,
 } from "@/modules/auth/lib/verification-links";
-import { toInviteDisplayName } from "@/modules/email/lib/invite-display-name";
+import { toEmailDisplayText } from "@/modules/email/lib/email-display-text";
 import { sendEmail } from "@/modules/email/lib/send-email";
 import { buildVerifiedLinkSurveyUrl } from "@/modules/email/lib/verified-link-survey-url";
 import { resolveStorageUrl } from "@/modules/storage/utils";
@@ -298,8 +298,8 @@ export const sendInviteMemberEmail = async (
   const verifyLink = `${WEBAPP_URL}/invite?token=${encodeURIComponent(token)}`;
 
   const html = await renderInviteEmail({
-    inviteeName: toInviteDisplayName(inviteeName, ""),
-    inviterName: toInviteDisplayName(inviterName, t("common.anonymous")),
+    inviteeName: toEmailDisplayText(inviteeName, ""),
+    inviterName: toEmailDisplayText(inviterName, t("common.anonymous")),
     verifyLink,
     t,
     ...legalProps,
@@ -445,10 +445,20 @@ export const sendEmailCustomizationPreviewEmail = async (
   });
 };
 
-export const sendLinkSurveyToVerifiedEmail = async (data: TLinkSurveyEmailData): Promise<boolean> => {
+// The respondent's request plus what the server reads from the survey and its organization. Never built from
+// client input: the action behind the public verify-email screen sets both (ENG-4043).
+export type TVerifiedLinkSurveyEmailData = TLinkSurveyEmailData & {
+  surveyName: string;
+  logoUrl?: string;
+};
+
+export const sendLinkSurveyToVerifiedEmail = async (data: TVerifiedLinkSurveyEmailData): Promise<boolean> => {
   const surveyId = data.surveyId;
   const email = data.email;
-  const surveyName = data.surveyName;
+  // Whoever triggers this email picks its recipient, so the survey name is the one piece of the
+  // survey owner's free text it carries. Empty when nothing displayable is left; the template then
+  // leaves the line out.
+  const surveyName = toEmailDisplayText(data.surveyName, "");
   const singleUseId = data.suId;
   const singleUseToken = data.suToken;
   // Resolve relative storage URLs to absolute URLs for email rendering
