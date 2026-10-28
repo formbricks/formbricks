@@ -30,17 +30,18 @@ import { registerScopedTool } from "./guard-scopes";
 import { mcpToolOutput } from "./output-schemas";
 import { runMcpMutation } from "./run-mcp-mutation";
 
+/** The `kind` of a raw tool input, before schema validation has run. */
+const kindOf = (input: unknown): TV3DocumentKind | undefined => {
+  const parsed = ZV3DocumentKind.safeParse((input as { kind?: unknown } | undefined)?.kind);
+  return parsed.success ? parsed.data : undefined;
+};
+
 /**
  * Pull and push (ADR 0015): one generic pair for surveys, creatives and workflows instead of six tools.
  * Surveys and creatives ride on the survey scopes, workflows on the workflow scopes, as their own tools
  * do. The registration gate admits either family, because the family a call needs depends on its `kind`;
  * the kind's own scope is then checked here, before the adapter, and a refusal is audited like any other.
  */
-const kindOf = (input: unknown): TV3DocumentKind | undefined => {
-  const parsed = ZV3DocumentKind.safeParse((input as { kind?: unknown } | undefined)?.kind);
-  return parsed.success ? parsed.data : undefined;
-};
-
 export function registerDocumentTools(server: McpServer): void {
   registerScopedTool(
     server,

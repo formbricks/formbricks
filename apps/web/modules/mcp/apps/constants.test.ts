@@ -1,24 +1,17 @@
 import { describe, expect, test } from "vitest";
-import {
-  MCP_APP_MIME_TYPE,
-  MCP_APP_URI_SCHEME,
-  MCP_UI_EXTENSION_ID,
-  getMcpAppResourceUri,
-} from "./constants";
-import { buildMcpAppOnlyToolMeta, buildMcpAppToolMeta } from "./tool-meta";
+import { MCP_APP_MIME_TYPE, getMcpAppResourceUri } from "./constants";
+import { buildMcpAppToolMeta } from "./tool-meta";
 
 // The expected strings are quoted from the MCP Apps specification (2026-01-26), not derived from the
 // code under test, so a typo in either place is caught.
 describe("MCP Apps constants", () => {
   test("match the spec's normative identifiers", () => {
     expect(MCP_APP_MIME_TYPE).toBe("text/html;profile=mcp-app");
-    expect(MCP_UI_EXTENSION_ID).toBe("io.modelcontextprotocol/ui");
-    expect(MCP_APP_URI_SCHEME).toBe("ui://");
   });
 
   test("view resources use the ui:// scheme", () => {
     expect(getMcpAppResourceUri("survey-preview")).toBe("ui://formbricks/survey-preview.html");
-    expect(getMcpAppResourceUri("workflow").startsWith(MCP_APP_URI_SCHEME)).toBe(true);
+    expect(getMcpAppResourceUri("workflow").startsWith("ui://")).toBe(true);
   });
 });
 
@@ -37,9 +30,5 @@ describe("tool metadata", () => {
       resourceUri: "ui://formbricks/responses.html",
       visibility: ["model"],
     });
-  });
-
-  test("an app-only tool is hidden from the model and links no view", () => {
-    expect(buildMcpAppOnlyToolMeta()).toEqual({ ui: { visibility: ["app"] } });
   });
 });

@@ -19,10 +19,9 @@ const distDir = path.join(root, argument("out") ?? "dist");
 const only = argument("only");
 const stagingDir = path.join(distDir, ".staging");
 
-const viewsSource = await readFile(path.join(root, "src", "views.ts"), "utf8");
-const viewNames = [...viewsSource.matchAll(/^\s+"([a-z-]+)",$/gm)].map((match) => match[1]);
-if (viewNames.length === 0) {
-  throw new Error("No view names found in src/views.ts");
+const viewNames = JSON.parse(await readFile(path.join(root, "src", "views.json"), "utf8"));
+if (!Array.isArray(viewNames) || viewNames.length === 0) {
+  throw new Error("No view names found in src/views.json");
 }
 if (only && !viewNames.includes(only)) {
   throw new Error(`Unknown view for --only: ${only}`);

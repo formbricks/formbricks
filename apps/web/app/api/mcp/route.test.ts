@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ApiKeyPermission } from "@formbricks/database/prisma";
+import { VIEW_NAMES } from "@formbricks/mcp-views";
 import { V3_REQUEST_ARRAY_MAX_ITEMS } from "@/app/api/v3/lib/array-budget";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import {
@@ -692,16 +693,7 @@ describe("POST /api/mcp", () => {
     const listed = await call(1, "resources/list");
     expect(
       listed.resources.map((resource: { uri: string; mimeType: string }) => [resource.uri, resource.mimeType])
-    ).toEqual(
-      [
-        "survey-preview",
-        "document-review",
-        "feedback-chart",
-        "responses",
-        "creative-preview",
-        "workflow",
-      ].map((view) => [`ui://formbricks/${view}.html`, "text/html;profile=mcp-app"])
-    );
+    ).toEqual(VIEW_NAMES.map((view) => [`ui://formbricks/${view}.html`, "text/html;profile=mcp-app"]));
 
     const read = await call(2, "resources/read", { uri: "ui://formbricks/workflow.html" });
     expect(read.contents).toHaveLength(1);

@@ -54,12 +54,3 @@ export const getToolFailure = (result: ToolResult | null | undefined): ToolFailu
 /** The failure as a single sentence, for views that only need to show it. */
 export const getToolError = (result: ToolResult | null | undefined): string | undefined =>
   getToolFailure(result)?.detail;
-
-/** Narrow `structuredContent` to the shape a view expects, or `undefined` when it does not fit. */
-export const readStructured = <T>(
-  result: ToolResult | null | undefined,
-  isShape: (value: unknown) => value is T
-): T | undefined => {
-  const structured = result?.structuredContent;
-  return isShape(structured) ? structured : undefined;
-};

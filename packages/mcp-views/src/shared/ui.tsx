@@ -62,26 +62,3 @@ export const Loading = ({ label }: Readonly<{ label: string }>) => (
     <span className="fb-muted">{label}</span>
   </div>
 );
-
-interface TabsProps<T extends string> {
-  tabs: { id: T; label: string }[];
-  active: T;
-  onChange: (id: T) => void;
-  label: string;
-}
-
-export const Tabs = <T extends string>({ tabs, active, onChange, label }: Readonly<TabsProps<T>>) => (
-  <div className="fb-tabs" role="tablist" aria-label={label}>
-    {tabs.map((tab) => (
-      <button
-        key={tab.id}
-        type="button"
-        role="tab"
-        className="fb-tab"
-        aria-selected={tab.id === active}
-        onClick={() => onChange(tab.id)}>
-        {tab.label}
-      </button>
-    ))}
-  </div>
-);

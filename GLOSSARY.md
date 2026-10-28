@@ -57,6 +57,6 @@ that is not listed here.
 
 **Push** — An agent writing a Document onto a live resource. It applies directly, is refused if the resource changed since the Document was pulled, and is recorded in the audit log. _Avoid_: import, sync, deploy.
 
-**View** — An interactive page that a tool renders inside the agent (survey preview, change review, feedback chart, response browser, creative preview, workflow viewer) through the MCP Apps extension. It shows data and can ask the agent to act; it holds no credential. _Avoid_: widget, app, dashboard.
+**View** — An interactive page that a tool renders inside the agent (survey preview, document review, feedback chart, response browser, creative preview, workflow viewer) through the MCP Apps extension. It shows data and can ask the agent to act; it holds no credential. _Avoid_: widget, app, dashboard.
 
 **Account shell** — The few human screens left: sign-up and login, organization management, connecting an agent, creating agent connections, and OAuth consent. Everything else is done by an agent. _Avoid_: dashboard, app.

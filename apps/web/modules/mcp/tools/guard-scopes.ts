@@ -153,8 +153,8 @@ type ScopedToolConfig<
   outputSchema?: OutputSchema;
   annotations?: ToolAnnotations;
   /**
-   * Passed through to `tools/list`. The MCP Apps link to a view (`_meta.ui.resourceUri`) and its
-   * visibility live here; build them with `buildMcpAppToolMeta` / `buildMcpAppOnlyToolMeta`.
+   * Passed through to `tools/list`. The MCP Apps link to a view (`_meta.ui.resourceUri`) lives here;
+   * build it with `buildMcpAppToolMeta`.
    */
   _meta?: Record<string, unknown>;
   /**

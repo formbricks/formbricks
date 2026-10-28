@@ -93,7 +93,7 @@ export const MCP_HANDLER_OPTIONS = {
   // Refuse `subscriptions/listen` outright. Protocol 2026-07-28 replaced the GET SSE endpoint and
   // `resources/subscribe` with a long-lived POST-response stream, which this POST route now serves -
   // under the v1 `disableSse: true` there was no long-lived path at all, so the migration would
-  // otherwise open one. We register resources (the MCP Apps views) but they never change at runtime and we
+  // otherwise open one. The only resources are the MCP Apps views, which never change at runtime, and we
   // emit no list-changed notifications, so such a stream can never deliver anything: a 2026-era client opens one on connect and then holds a
   // connection plus a keepalive timer for nothing. The SDK's default cap is 1024 *per process*, and
   // this handler is a module singleton, so any authenticated caller could hold that many.

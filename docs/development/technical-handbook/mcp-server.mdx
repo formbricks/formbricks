@@ -829,7 +829,7 @@ Tools can render an interactive view inside the agent. This follows the MCP Apps
 
 <Steps>
   <Step title="Build the view">
-    Add `packages/mcp-views/src/views/<name>/` (`index.html`, `main.tsx`, `App.tsx`) and the name to `src/views.ts`.
+    Add `packages/mcp-views/src/views/<name>/` (`index.html`, `main.tsx`, `App.tsx`) and the name to `src/views.json`.
     Use `useToolView()` from `src/shared`, which connects with the official `@modelcontextprotocol/ext-apps` `App`
     class, applies the host's theme and style variables, and tracks the tool input, result and host context.
     Keep logic in `.ts` modules with unit tests and render user-authored text as text only. Build one view with
@@ -848,9 +848,8 @@ Tools can render an interactive view inside the agent. This follows the MCP Apps
     operation as its plain sibling, so authorization, tenancy and limits are decided in one place. Fill `content`
     with a short summary a text-only host can use, `structuredContent` with the data the view renders, and
     `_meta.formbricks` with bulky render data the model does not need. Add the tool to `apps/web/modules/mcp/apps/index.ts`
-    and to the roster in `app/api/mcp/route.test.ts`. Prefer reaching existing tools from the view
-    (`list_responses`, `push_document`, ...) over adding app-only tools; if one is unavoidable, mark it
-    `buildMcpAppOnlyToolMeta()` so hosts do not offer it to the model.
+    and to the roster in `app/api/mcp/route.test.ts`. Reach existing tools from the view
+    (`list_responses`, `push_document`, ...) rather than adding tools only a view may call.
   </Step>
 </Steps>
 

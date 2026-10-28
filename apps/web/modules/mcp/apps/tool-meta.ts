@@ -22,12 +22,3 @@ export const buildMcpAppToolMeta = (
     "openai/outputTemplate": resourceUri,
   };
 };
-
-/**
- * `_meta` for a tool only a view may call (its follow-up reads and refreshes). The host must not list it
- * to the model and must reject any other caller; the scope gate in `registerScopedTool` still applies to
- * the view's own grant, because the call goes through the same connection and authorization.
- */
-export const buildMcpAppOnlyToolMeta = (): Record<string, unknown> => ({
-  ui: { visibility: ["app"] satisfies McpAppVisibility[] },
-});

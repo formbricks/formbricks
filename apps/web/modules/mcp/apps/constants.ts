@@ -8,8 +8,6 @@ import type { ViewName } from "@formbricks/mcp-views";
  * not depend on the ext-apps package; `constants.test.ts` pins every one.
  */
 export const MCP_APP_MIME_TYPE = "text/html;profile=mcp-app";
-export const MCP_UI_EXTENSION_ID = "io.modelcontextprotocol/ui";
-export const MCP_APP_URI_SCHEME = "ui://";
 
 export const getMcpAppResourceUri = (view: ViewName): string => `ui://formbricks/${view}.html`;
 
