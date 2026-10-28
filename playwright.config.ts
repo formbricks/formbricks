@@ -45,6 +45,9 @@ export default defineConfig({
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: "on-first-retry",
+    /* PW_CHROMIUM_PATH points at an installed Chromium when the one this Playwright version expects is
+       not on the machine (a container with a pre-installed browser of another build). Unset in CI. */
+    launchOptions: { executablePath: process.env.PW_CHROMIUM_PATH || undefined },
     permissions: ["clipboard-read", "clipboard-write"],
     screenshot: "only-on-failure", // Capture screenshots only on test failure
     video: "retain-on-failure", // Optionally record video on failure

@@ -6,6 +6,8 @@ Formbricks runs as a pnpm/turbo monorepo. `apps/web` is the Next.js product surf
 
 ## Build, Test & Development Commands
 
+Node 24 (`.nvmrc`) is required; another Node fails with odd errors such as `Promise.try is not a function`.
+
 - `pnpm install` — install workspace dependencies pinned by `pnpm-lock.yaml`.
 - `pnpm db:up` / `pnpm db:down` — start/stop the Docker services backing the app.
 - `pnpm dev` — run all app and worker dev servers in parallel via Turborepo.
@@ -13,7 +15,7 @@ Formbricks runs as a pnpm/turbo monorepo. `apps/web` is the Next.js product surf
 - `pnpm lint` — apply the shared ESLint rules across the workspace.
 - `pnpm format` / `pnpm format:check` — apply or verify Prettier across the workspace; `format:check` is what CI runs, so run `pnpm format` before pushing if you committed with `--no-verify`.
 - `pnpm test` / `pnpm test:coverage` — execute Vitest suites with optional coverage.
-- `pnpm test:e2e` — launch the Playwright browser regression suite.
+- `pnpm test:e2e` — launch the Playwright browser regression suite. Outside CI (a sandbox, no Docker), read `docs/agents/e2e-local.md` first.
 - `pnpm db:migrate:dev` — apply Prisma migrations against the dev database.
 
 Turbo runs a task only in packages that define the matching script and **silently skips** the rest.
@@ -22,7 +24,7 @@ Every `packages/*` workspace therefore exposes the standard `lint` / `typecheck`
 `config-*` packages hold only config files (no scripts beyond `clean`); `api-v3-schemas`, `creatives`,
 `email`, `types`, and `vite-plugins` are consumed from source, so they have no `build`; `apps/storybook` has no
 unit tests by policy (its components are exercised by the feature journeys in `apps/web/playwright`).
-Keep new packages on this matrix or document the exception here.
+Keep new packages on this matrix or document the exception here. `pnpm lint` enforces the Sonar half through `scripts/check-sonar-scope.mjs`: a package with a `test:coverage` script is listed in `sonar-project.properties` or in the script's `OUT_OF_SCOPE` with a reason.
 
 The same skip catches test files that sit outside every workspace. Tests for repo-level scripts
 (`scripts/`, `.github/actions/`) run in the root `//#test:root` Turbo task, which `pnpm test` invokes
@@ -65,97 +67,13 @@ it may legitimately be looser than the catalog (`packages/survey-ui` declares re
 pinning 19.2.6 to build against). Adding a new package needs no wiring: the check resolves the
 workspace globs from `pnpm-workspace.yaml` itself.
 
-### Survey Packages Build & Cache
+### Build caches and stale `dist/`
 
-The `@formbricks/surveys` package is pre-compiled (Vite → UMD + ESM) and the built bundle is copied to `apps/web/public/js/`. The Next.js app imports from `dist/`, **not** the source files. This means:
+`apps/web` imports the built `dist/` of `@formbricks/surveys`, `ai`, `database` and `i18n-utils`, not their `src/`. When a source change does not show in the app, or tests/`tsc` fail in files you did not touch after switching branches, read `docs/agents/build-caches.md`. The fix is `pnpm build --filter=@formbricks/web^...`; a scoped build is `pnpm build -- --only=<view>` in `packages/mcp-views`.
 
-- After any change to `packages/surveys` or its dependencies (`packages/survey-ui`, `packages/types`, etc.), you **must rebuild** for changes to take effect in the running app.
-- Turborepo caches build outputs aggressively. The copied bundles are declared outputs of the two
-  packages' `build` tasks (`$TURBO_ROOT$/apps/web/public/js/…`), so a `pnpm build` cache hit restores
-  them together with `dist/**` instead of leaving the app without `/js/formbricks.umd.cjs`
-  (ENG-2924). Only `build` declares them: `build:dev` copies through the same plugin, and a second task
-  declaring the same paths makes each cache entry capture whatever the other left on disk. If a build
-  still looks stale, bypass the cache explicitly:
-  ```
-  pnpm build --filter=@formbricks/surveys... --force
-  ```
-- The browser also caches the UMD bundle (`surveys.umd.cjs`) served from `public/js/`. After rebuilding, do a **hard refresh** (Cmd+Shift+R / Ctrl+Shift+R) or disable the browser cache via DevTools to pick up the new bundle.
-- If changes still don't appear, restart the Next.js dev server (`pnpm dev`).
+### Tailwind in workspace packages
 
-### Stale package builds after a branch switch
-
-The same trap applies to **every** workspace package consumed through its built output rather than its
-source — `@formbricks/ai`, `@formbricks/database` and `@formbricks/i18n-utils` resolve via `dist/` in
-their `exports` map, so `apps/web` imports the build, not `src/`. `git switch`, a rebase, or a pull changes `src/` but leaves
-`dist/` exactly as it was, and nothing warns you.
-
-**This only bites when you bypass Turborepo.** Running `vitest` or `tsc` directly inside `apps/web`,
-`pnpm --filter @formbricks/web test`, or an IDE test runner all skip the task graph — which is how you
-usually meet it, iterating on one test file. The root `pnpm test` and `pnpm typecheck` are safe:
-`@formbricks/web#test` and `@formbricks/web#typecheck` in `turbo.json` each declare `dependsOn` on
-`@formbricks/ai#build`, `@formbricks/database#build` and five more, so turbo rebuilds them before the
-suite runs. That is also why the unit-test workflow (`test.yml`) stays green with no build step of its
-own — do **not** read "green on CI, red locally" as evidence of a stale `dist/`; both run the same
-graph.
-
-The failure looks nothing like a stale build. A symbol added on the branch you just checked out is
-absent from `dist/`, so depending on what is missing the import either resolves to `undefined` or fails
-outright at module resolution — and both read like real regressions:
-
-- `TypeError: Right-hand side of 'instanceof' is not an object` (the class is in `src/`, not `dist/`)
-- a missing named export, or `Failed to resolve entry for package "@formbricks/…"` when `dist/` is
-  absent altogether
-- `tsc` or Vitest failures in files you never touched
-
-This has cost real time: four failing tests read as a broken `main` from an unrelated PR, when the only
-problem was a `dist/` built days earlier. To confirm the diagnosis, check whether a symbol you expect
-the package to *export* is in the built output — present in `src/`, absent from `dist/`, is the
-signature. (Pick one the entry really re-exports; an internal helper is legitimately absent from
-`dist/index.js` and would read as a false positive.)
-
-```shell
-grep -rc "MyNewExport" packages/<pkg>/src packages/<pkg>/dist/index.js
-```
-
-Recursive on purpose: `packages/ai/src` has nested directories (`providers/`), and a non-recursive
-`src/*.ts` glob reports a symbol defined in one of them as missing from *both* sides.
-
-The fix is to rebuild the dependency graph:
-
-```shell
-pnpm build --filter=@formbricks/web^...
-```
-
-(Dependencies only — `^...` excludes the Next app itself. This is the same command
-`.github/workflows/integration-tests.yml` runs before its suites, for exactly this reason.)
-
-### Tailwind & Workspace Package CSS
-
-Tailwind v4 detects sources starting from the consuming app's own root (`apps/web` for the Next.js
-PostCSS build, the Vite root for `apps/storybook`) and **never descends into `node_modules`** — which
-is exactly where every `@formbricks/*` workspace package is linked. A utility used only inside a
-workspace package therefore never reaches the consuming app's stylesheet. Consumed workspace packages
-ship their own CSS rather than relying on the app to scan them:
-
-- `@formbricks/surveys` — prebuilt bundle served from `apps/web/public/js/` (see the section above).
-- `@formbricks/survey-ui` — exports `./styles` (`dist/survey-ui.css`), scoped to `#fbjs`.
-- `@formbricks/email` — ships no stylesheet at all; `react-email`'s `Tailwind` component compiles and
-  inlines the classes into the email HTML at render time.
-
-If you ever consume a workspace package as raw source **for its styling**, the app has to be told
-about that package's files explicitly — detection stops at the app's own root, so nothing else will
-pick them up. `apps/storybook` is the worked example: it consumes `packages/survey-ui` as raw source
-(its `stories` glob loads `packages/survey-ui/src/**` directly, and Vite aliases the package specifier
-to that same source), and it works because `apps/storybook/src/index.css` imports **survey-ui's own
-stylesheet**, which carries the `@config` and `@source` covering `packages/survey-ui/src/**` — those
-resolve relative to survey-ui's file, so the package declares its own coverage and the app just pulls
-it in. Prefer that: let the package own its globs. Only write an `@source` in the app entry when the
-files are the app's own (as `index.css` does for `.storybook/**` and `src/**`).
-
-Tailwind is configured CSS-first everywhere. Only two JS/TS Tailwind configs remain
-(`packages/survey-ui/tailwind.config.ts` and `packages/surveys/tailwind.config.cjs`) and both are
-reached through an explicit `@config` bridge from the package's own stylesheet. Do not add a
-`tailwind.config.js` that nothing `@config`s — Tailwind v4 will not load it, and it will silently rot.
+Tailwind v4 never scans `node_modules`, so a class used only inside a `@formbricks/*` package is missing from the app. Each consumed package ships its own CSS; read `docs/agents/tailwind-workspace-css.md` before consuming a package as raw source for styling.
 
 ## Coding Style & Naming Conventions
 
@@ -168,6 +86,7 @@ Always mark React component props as `Readonly<>` (e.g., `({ children }: Readonl
 
 - Next.js app router lives in `apps/web/app` with route groups like `(app)` and `(auth)`. Services live in `apps/web/lib`, feature modules in `apps/web/modules`.
 - Server actions are legacy — do not add new ones. New backend work belongs in an `/api/v3` route consumed from the client with TanStack Query, with server data living in the query cache rather than mirrored into `useState` or Jotai. The existing server actions wrap service calls and return `{ data }` or `{ error }` consistently; keep that contract when changing them.
+- MCP views (`packages/mcp-views`, served from `apps/web/modules/mcp/apps`) render inside the agent. Before adding or changing one, read "Interactive views" in the same handbook page: workspace-authored text (names, headlines, answers) never goes into a message the view sends or a tool summary the model reads; use ids.
 - MCP tools (`apps/web/modules/mcp`) are thin adapters over v3 operations, registered only through `registerScopedTool`. Before adding a tool or a scope, read "Adding a tool" in `docs/development/technical-handbook/mcp-server.mdx`.
 - Context providers should guard against missing provider usage and use cleanup patterns that snapshot refs inside `useEffect` to avoid React hooks warnings
 
@@ -211,22 +130,7 @@ Always mark React component props as `Readonly<>` (e.g., `({ children }: Readonl
 
 ## Performance Testing & SigNoz MCP
 
-- Run application load tests only as human-supervised experiments against the isolated Artemis
-  workspace. Never point the suite at production, a customer workspace, or a survey with live
-  integrations. The maintained k6 suite and cleanup runbook live in the private
-  `formbricks/performance-test-q2-2025` repository under `scripts/formbricks-core/`.
-- Configure the private SigNoz MCP endpoint from the GitOps `signoz/mcp/README.md` runbook. Keep the
-  Codex `enabled_tools` list limited to telemetry reads; do not enable dashboard, alert, view, or
-  notification-channel mutations for performance investigations.
-- Correlate every analysis to the k6 run ID and its exact UTC start/end window. For Artemis, begin with
-  `deployment.environment=artemis` and `service.namespace=formbricks-artemis`, then confirm the live
-  service and operation names instead of assuming them.
-- Use aggregate metrics to find a pattern, then inspect representative p95/p99 or error traces and their
-  child spans before calling something a code-level bottleneck. Record the query/filter and trace ID or
-  evidence link, and label unsupported explanations as hypotheses.
-- A run is not complete until its synthetic survey/response data cleanup reports success and the final
-  pod state, restarts, CPU/memory samples, k6 summary, and SigNoz findings are attached to the ticket.
-  Missing telemetry is an open gap, never a zero value.
+Load tests run only as human-supervised experiments against the isolated Artemis workspace, never production. Read `docs/agents/performance-testing.md` before running one or reading SigNoz telemetry.
 
 ## Performance in Review
 
@@ -261,6 +165,8 @@ rather than guessing. `.coderabbit.yaml` carries the same checks as path instruc
 raises them too — but that is a second pair of eyes, and its silence is not a pass.
 
 ## Testing Guidelines
+
+Splitting work across several agents: read `docs/agents/parallel-work.md` first.
 
 Principles:
 
@@ -375,7 +281,7 @@ Do not:
 
 ## Quality Checklist
 
-- Keep code DRY and small; remove dead code and unused imports.
+- Keep code DRY and small; remove dead code and unused imports. Before and after deleting a module, run `node scripts/unreachable-files.cjs --unreachable` (flags in its header) to see what nothing in `apps/web` reaches.
 - Follow React hooks rules, keep effects focused, and avoid unnecessary `useMemo`/`useCallback`.
 - Prefer type inference, avoid `any`, and use shared types from `@formbricks/types`. This is enforced:
   `@typescript-eslint/no-explicit-any` is an error in `packages/*` and a warning in `apps/web`, where the

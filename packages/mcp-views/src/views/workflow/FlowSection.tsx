@@ -1,3 +1,4 @@
+import { classNames } from "../../shared/class-names";
 import { DetailList } from "./DetailList";
 import type { ConditionTree } from "./describe";
 import { type FlowBranch, type FlowModel, type FlowStep, getStepKindLabel } from "./flow";
@@ -33,7 +34,7 @@ const Branch = ({ branch }: Readonly<{ branch: FlowBranch }>) => (
 
 const Step = ({ step }: Readonly<{ step: FlowStep }>) => (
   <li className="wf-step">
-    <div className={`wf-card wf-card-${step.kind}`}>
+    <div className={classNames("wf-card", `wf-card-${step.kind}`)}>
       <div className="fb-row wf-step-head">
         <span className="wf-kind">{getStepKindLabel(step)}</span>
         <h3 className="wf-step-title">{step.title}</h3>
