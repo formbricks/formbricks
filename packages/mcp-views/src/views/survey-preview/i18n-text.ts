@@ -21,11 +21,11 @@ export const resolveText = (value: unknown, languageCode: string, defaultLanguag
   if (typeof value === "string") return toPlainText(value);
   if (!isI18nString(value)) return "";
   const key = findKey(value, languageCode) ?? findKey(value, defaultLanguage) ?? findKey(value, "default");
-  const raw = key !== undefined ? value[key] : Object.values(value)[0];
+  const raw: string | undefined = key !== undefined ? value[key] : Object.values(value)[0];
   return toPlainText(raw ?? "");
 };
 
-const ENTITIES: Record<string, string> = { "&amp;": "&", "&lt;": "<", "&gt;": ">", "&quot;": '"', "&#39;": "'", "&nbsp;": " " };
+const ENTITIES: Record<string, string | undefined> = { "&amp;": "&", "&lt;": "<", "&gt;": ">", "&quot;": '"', "&#39;": "'", "&nbsp;": " " };
 
 /** Tags out, common entities decoded, whitespace collapsed. Output is only ever rendered as text. */
 export const toPlainText = (raw: string): string =>

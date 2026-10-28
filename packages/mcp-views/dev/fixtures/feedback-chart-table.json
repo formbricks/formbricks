@@ -1,0 +1,190 @@
+{
+  "toolName": "show_feedback_chart",
+  "input": {
+    "workspaceId": "tz4a98xxat96iws9zmbrgj3a",
+    "query": {
+      "measures": [
+        "FeedbackRecords.count"
+      ],
+      "dimensions": [
+        "FeedbackRecords.language",
+        "FeedbackRecords.sentiment"
+      ],
+      "limit": 25
+    }
+  },
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Feedback Records by language and sentiment: 25 rows from the feedback dataset \"Product feedback\", shown to the user as a table.\n| Language | Sentiment | Feedback Records |\n| --- |\n| en | very_positive | 5 |\n| en | positive | 42 |\n| en | neutral | 79 |\n| en | negative | 116 |\n| en | (none) | 33 |\n| de | very_positive | 70 |\n| de | positive | 107 |\n| de | neutral | 24 |\n| de | negative | 61 |\n| de | (none) | 98 |\n| fr | very_positive | 15 |\n| fr | positive | 52 |"
+      }
+    ],
+    "structuredContent": {
+      "datasetId": "ds4a98xxat96iws9zmbrgj3aaa",
+      "datasetName": "Product feedback",
+      "query": {
+        "measures": [
+          "FeedbackRecords.count"
+        ],
+        "dimensions": [
+          "FeedbackRecords.language",
+          "FeedbackRecords.sentiment"
+        ],
+        "limit": 25
+      },
+      "chart": {
+        "type": "table",
+        "title": "Feedback Records by language and sentiment",
+        "y": []
+      },
+      "columns": [
+        {
+          "id": "FeedbackRecords.language",
+          "label": "Language",
+          "kind": "dimension"
+        },
+        {
+          "id": "FeedbackRecords.sentiment",
+          "label": "Sentiment",
+          "kind": "dimension"
+        },
+        {
+          "id": "FeedbackRecords.count",
+          "label": "Feedback Records",
+          "kind": "measure"
+        }
+      ],
+      "rows": [
+        {
+          "FeedbackRecords.language": "en",
+          "FeedbackRecords.sentiment": "very_positive",
+          "FeedbackRecords.count": 5
+        },
+        {
+          "FeedbackRecords.language": "en",
+          "FeedbackRecords.sentiment": "positive",
+          "FeedbackRecords.count": 42
+        },
+        {
+          "FeedbackRecords.language": "en",
+          "FeedbackRecords.sentiment": "neutral",
+          "FeedbackRecords.count": 79
+        },
+        {
+          "FeedbackRecords.language": "en",
+          "FeedbackRecords.sentiment": "negative",
+          "FeedbackRecords.count": 116
+        },
+        {
+          "FeedbackRecords.language": "en",
+          "FeedbackRecords.sentiment": null,
+          "FeedbackRecords.count": 33
+        },
+        {
+          "FeedbackRecords.language": "de",
+          "FeedbackRecords.sentiment": "very_positive",
+          "FeedbackRecords.count": 70
+        },
+        {
+          "FeedbackRecords.language": "de",
+          "FeedbackRecords.sentiment": "positive",
+          "FeedbackRecords.count": 107
+        },
+        {
+          "FeedbackRecords.language": "de",
+          "FeedbackRecords.sentiment": "neutral",
+          "FeedbackRecords.count": 24
+        },
+        {
+          "FeedbackRecords.language": "de",
+          "FeedbackRecords.sentiment": "negative",
+          "FeedbackRecords.count": 61
+        },
+        {
+          "FeedbackRecords.language": "de",
+          "FeedbackRecords.sentiment": null,
+          "FeedbackRecords.count": 98
+        },
+        {
+          "FeedbackRecords.language": "fr",
+          "FeedbackRecords.sentiment": "very_positive",
+          "FeedbackRecords.count": 15
+        },
+        {
+          "FeedbackRecords.language": "fr",
+          "FeedbackRecords.sentiment": "positive",
+          "FeedbackRecords.count": 52
+        },
+        {
+          "FeedbackRecords.language": "fr",
+          "FeedbackRecords.sentiment": "neutral",
+          "FeedbackRecords.count": 89
+        },
+        {
+          "FeedbackRecords.language": "fr",
+          "FeedbackRecords.sentiment": "negative",
+          "FeedbackRecords.count": 6
+        },
+        {
+          "FeedbackRecords.language": "fr",
+          "FeedbackRecords.sentiment": null,
+          "FeedbackRecords.count": 43
+        },
+        {
+          "FeedbackRecords.language": "",
+          "FeedbackRecords.sentiment": "very_positive",
+          "FeedbackRecords.count": 80
+        },
+        {
+          "FeedbackRecords.language": "",
+          "FeedbackRecords.sentiment": "positive",
+          "FeedbackRecords.count": 117
+        },
+        {
+          "FeedbackRecords.language": "",
+          "FeedbackRecords.sentiment": "neutral",
+          "FeedbackRecords.count": 34
+        },
+        {
+          "FeedbackRecords.language": "",
+          "FeedbackRecords.sentiment": "negative",
+          "FeedbackRecords.count": 71
+        },
+        {
+          "FeedbackRecords.language": "",
+          "FeedbackRecords.sentiment": null,
+          "FeedbackRecords.count": 108
+        },
+        {
+          "FeedbackRecords.language": "es",
+          "FeedbackRecords.sentiment": "very_positive",
+          "FeedbackRecords.count": 25
+        },
+        {
+          "FeedbackRecords.language": "es",
+          "FeedbackRecords.sentiment": "positive",
+          "FeedbackRecords.count": 62
+        },
+        {
+          "FeedbackRecords.language": "es",
+          "FeedbackRecords.sentiment": "neutral",
+          "FeedbackRecords.count": 99
+        },
+        {
+          "FeedbackRecords.language": "es",
+          "FeedbackRecords.sentiment": "negative",
+          "FeedbackRecords.count": 16
+        },
+        {
+          "FeedbackRecords.language": "es",
+          "FeedbackRecords.sentiment": null,
+          "FeedbackRecords.count": 53
+        }
+      ],
+      "truncated": true,
+      "requestId": "req_table"
+    }
+  },
+  "tools": {}
+}

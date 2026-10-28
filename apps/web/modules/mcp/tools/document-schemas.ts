@@ -1,5 +1,25 @@
 import { z } from "zod";
-import { V3_DOCUMENT_SCHEMA_VERSION, ZV3DocumentKind } from "@/app/api/v3/documents/lib/envelope";
+import {
+  type TV3DocumentKind,
+  V3_DOCUMENT_SCHEMA_VERSION,
+  ZV3DocumentKind,
+} from "@/app/api/v3/documents/lib/envelope";
+
+/**
+ * The scope each document kind rides on. Surveys and creatives use the survey scopes, workflows the
+ * workflow scopes, as their own tools do.
+ */
+export const DOCUMENT_READ_SCOPE: Record<TV3DocumentKind, string> = {
+  survey: "surveys:read",
+  creative: "surveys:read",
+  workflow: "workflows:read",
+};
+
+export const DOCUMENT_WRITE_SCOPE: Record<TV3DocumentKind, string> = {
+  survey: "surveys:write",
+  creative: "surveys:write",
+  workflow: "workflows:write",
+};
 
 const kindField = ZV3DocumentKind.describe(
   "What the document is: `survey`, `creative` or `workflow`. Use the same kind the document was pulled as."

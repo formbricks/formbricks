@@ -1,0 +1,103 @@
+{
+  "toolName": "show_feedback_chart",
+  "input": {
+    "workspaceId": "tz4a98xxat96iws9zmbrgj3a",
+    "query": {
+      "measures": [
+        "FeedbackRecords.count",
+        "FeedbackRecords.uniqueRespondents"
+      ],
+      "dimensions": [
+        "FeedbackRecords.valueBand"
+      ],
+      "filters": [
+        {
+          "member": "FeedbackRecords.fieldType",
+          "operator": "equals",
+          "values": [
+            "nps"
+          ]
+        }
+      ],
+      "limit": 100
+    }
+  },
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Feedback Records and Unique respondents by value band: 3 rows from the feedback dataset \"Product feedback\", shown to the user as a bar chart.\n| Value band | Feedback Records | Unique respondents |\n| --- |\n| promoter | 412 | 330 |\n| passive | 188 | 150 |\n| detractor | 97 | 78 |"
+      }
+    ],
+    "structuredContent": {
+      "datasetId": "ds4a98xxat96iws9zmbrgj3aaa",
+      "datasetName": "Product feedback",
+      "query": {
+        "measures": [
+          "FeedbackRecords.count",
+          "FeedbackRecords.uniqueRespondents"
+        ],
+        "dimensions": [
+          "FeedbackRecords.valueBand"
+        ],
+        "filters": [
+          {
+            "member": "FeedbackRecords.fieldType",
+            "operator": "equals",
+            "values": [
+              "nps"
+            ]
+          }
+        ],
+        "limit": 100
+      },
+      "chart": {
+        "type": "bar",
+        "title": "Feedback Records and Unique respondents by value band",
+        "x": "FeedbackRecords.valueBand",
+        "xKind": "category",
+        "y": [
+          "FeedbackRecords.count",
+          "FeedbackRecords.uniqueRespondents"
+        ]
+      },
+      "columns": [
+        {
+          "id": "FeedbackRecords.valueBand",
+          "label": "Value band",
+          "kind": "dimension"
+        },
+        {
+          "id": "FeedbackRecords.count",
+          "label": "Feedback Records",
+          "kind": "measure"
+        },
+        {
+          "id": "FeedbackRecords.uniqueRespondents",
+          "label": "Unique respondents",
+          "kind": "measure"
+        }
+      ],
+      "rows": [
+        {
+          "FeedbackRecords.valueBand": "promoter",
+          "FeedbackRecords.count": 412,
+          "FeedbackRecords.uniqueRespondents": 330
+        },
+        {
+          "FeedbackRecords.valueBand": "passive",
+          "FeedbackRecords.count": 188,
+          "FeedbackRecords.uniqueRespondents": 150
+        },
+        {
+          "FeedbackRecords.valueBand": "detractor",
+          "FeedbackRecords.count": 97,
+          "FeedbackRecords.uniqueRespondents": 78
+        }
+      ],
+      "truncated": false,
+      "requestId": "req_bar-grouped"
+    }
+  },
+  "tools": {}
+}

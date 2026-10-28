@@ -1,0 +1,130 @@
+{
+  "toolName": "show_feedback_chart",
+  "input": {
+    "workspaceId": "tz4a98xxat96iws9zmbrgj3a",
+    "query": {
+      "measures": [
+        "FeedbackRecords.npsScore"
+      ],
+      "timeDimensions": [
+        {
+          "dimension": "FeedbackRecords.collectedAt",
+          "granularity": "month",
+          "dateRange": "last year"
+        }
+      ]
+    }
+  },
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "NPS: Score by month: 14 rows from the feedback dataset \"Product feedback\", shown to the user as a line chart.\n| Collected At (month) | NPS: Score |\n| --- |\n| 2025-09-01T00:00:00.000 | 18 |\n| 2025-10-01T00:00:00.000 | 21 |\n| 2025-11-01T00:00:00.000 | 19 |\n| 2025-12-01T00:00:00.000 | 24 |\n| 2026-01-01T00:00:00.000 | 27 |\n| 2026-02-01T00:00:00.000 | 22 |\n| 2026-03-01T00:00:00.000 | 29 |\n| 2026-04-01T00:00:00.000 | 31 |\n| 2026-05-01T00:00:00.000 | 35 |\n| 2026-06-01T00:00:00.000 | 33 |\n| 2026-07-01T00:00:00.000 | 38 |\n| 2026-08-01T00:00:00.000 | (none) |"
+      }
+    ],
+    "structuredContent": {
+      "datasetId": "ds4a98xxat96iws9zmbrgj3aaa",
+      "datasetName": "Product feedback",
+      "query": {
+        "measures": [
+          "FeedbackRecords.npsScore"
+        ],
+        "timeDimensions": [
+          {
+            "dimension": "FeedbackRecords.collectedAt",
+            "granularity": "month",
+            "dateRange": "last year"
+          }
+        ],
+        "limit": 100
+      },
+      "chart": {
+        "type": "line",
+        "title": "NPS: Score by month",
+        "x": "FeedbackRecords.collectedAt.month",
+        "xKind": "time",
+        "granularity": "month",
+        "y": [
+          "FeedbackRecords.npsScore"
+        ]
+      },
+      "columns": [
+        {
+          "id": "FeedbackRecords.collectedAt.month",
+          "label": "Collected At (month)",
+          "kind": "time"
+        },
+        {
+          "id": "FeedbackRecords.npsScore",
+          "label": "NPS: Score",
+          "kind": "measure",
+          "domain": [
+            -100,
+            100
+          ]
+        }
+      ],
+      "rows": [
+        {
+          "FeedbackRecords.collectedAt.month": "2025-09-01T00:00:00.000",
+          "FeedbackRecords.npsScore": 18
+        },
+        {
+          "FeedbackRecords.collectedAt.month": "2025-10-01T00:00:00.000",
+          "FeedbackRecords.npsScore": 21
+        },
+        {
+          "FeedbackRecords.collectedAt.month": "2025-11-01T00:00:00.000",
+          "FeedbackRecords.npsScore": 19
+        },
+        {
+          "FeedbackRecords.collectedAt.month": "2025-12-01T00:00:00.000",
+          "FeedbackRecords.npsScore": 24
+        },
+        {
+          "FeedbackRecords.collectedAt.month": "2026-01-01T00:00:00.000",
+          "FeedbackRecords.npsScore": 27
+        },
+        {
+          "FeedbackRecords.collectedAt.month": "2026-02-01T00:00:00.000",
+          "FeedbackRecords.npsScore": 22
+        },
+        {
+          "FeedbackRecords.collectedAt.month": "2026-03-01T00:00:00.000",
+          "FeedbackRecords.npsScore": 29
+        },
+        {
+          "FeedbackRecords.collectedAt.month": "2026-04-01T00:00:00.000",
+          "FeedbackRecords.npsScore": 31
+        },
+        {
+          "FeedbackRecords.collectedAt.month": "2026-05-01T00:00:00.000",
+          "FeedbackRecords.npsScore": 35
+        },
+        {
+          "FeedbackRecords.collectedAt.month": "2026-06-01T00:00:00.000",
+          "FeedbackRecords.npsScore": 33
+        },
+        {
+          "FeedbackRecords.collectedAt.month": "2026-07-01T00:00:00.000",
+          "FeedbackRecords.npsScore": 38
+        },
+        {
+          "FeedbackRecords.collectedAt.month": "2026-08-01T00:00:00.000",
+          "FeedbackRecords.npsScore": null
+        },
+        {
+          "FeedbackRecords.collectedAt.month": "2026-09-01T00:00:00.000",
+          "FeedbackRecords.npsScore": 41
+        },
+        {
+          "FeedbackRecords.collectedAt.month": "2026-10-01T00:00:00.000",
+          "FeedbackRecords.npsScore": 44
+        }
+      ],
+      "truncated": false,
+      "requestId": "req_"
+    }
+  },
+  "tools": {}
+}

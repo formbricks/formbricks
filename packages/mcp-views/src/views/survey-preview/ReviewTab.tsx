@@ -152,7 +152,10 @@ const ChangeRequest = ({
         }}
       />
       <div className="fb-row">
-        <Button variant="primary" disabled={!text.trim() || status === "sending"} onClick={send}>
+        <Button variant="primary" disabled={!text.trim() || status === "sending"}
+          onClick={() => {
+            void send();
+          }}>
           Send to the agent
         </Button>
         {status === "sent" ? (
@@ -267,7 +270,12 @@ export const ReviewTab = ({ data, languageCode, formatters, app, canMessage, can
 
       {surveyUrl && canOpenLinks && app ? (
         <div className="fb-row">
-          <Button onClick={() => void app.openLink({ url: surveyUrl })}>Open survey</Button>
+          <Button
+            onClick={() => {
+              void app.openLink({ url: surveyUrl });
+            }}>
+            Open survey
+          </Button>
           <span className="fb-faint">Opens the public link in your browser.</span>
         </div>
       ) : null}

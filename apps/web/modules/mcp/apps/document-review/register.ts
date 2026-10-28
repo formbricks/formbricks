@@ -11,6 +11,7 @@ import {
   hasMcpScopes,
 } from "../../auth";
 import { responseToMcpToolResult } from "../../errors";
+import { DOCUMENT_READ_SCOPE, DOCUMENT_WRITE_SCOPE } from "../../tools/document-schemas";
 import { registerScopedTool } from "../../tools/guard-scopes";
 import { mcpToolOutput } from "../../tools/output-schemas";
 import { registerMcpAppResource } from "../register-app-resource";
@@ -18,16 +19,6 @@ import { buildMcpAppToolMeta } from "../tool-meta";
 import { classifyDryRun, readPushResult } from "./classify";
 import { type TDryRunOutcome, ZDocumentReview, buildDocumentReview, buildReviewText } from "./review";
 import { type TMcpReviewDocumentChangeInput, ZMcpReviewDocumentChangeInput } from "./schemas";
-
-// The scopes push_document gates on per kind (tools/documents.ts).
-// A review also reads the stored document to diff against, so it needs the kind's read scope as well:
-// without it a write-only token could read documents through the diff.
-const READ_SCOPE = { survey: "surveys:read", creative: "surveys:read", workflow: "workflows:read" } as const;
-const WRITE_SCOPE = {
-  survey: "surveys:write",
-  creative: "surveys:write",
-  workflow: "workflows:write",
-} as const;
 
 export function registerDocumentReviewApp(server: McpServer): void {
   registerMcpAppResource(server, {
@@ -54,7 +45,7 @@ export function registerDocumentReviewApp(server: McpServer): void {
     async (input: TMcpReviewDocumentChangeInput, ctx): Promise<CallToolResult> => {
       const authInfo = getMcpToolAuthInfo(ctx);
       const requestId = getMcpRequestId(authInfo);
-      const scopes = [WRITE_SCOPE[input.kind], READ_SCOPE[input.kind]];
+      const scopes = [DOCUMENT_WRITE_SCOPE[input.kind], DOCUMENT_READ_SCOPE[input.kind]];
 
       if (!hasMcpScopes(authInfo, scopes)) {
         return await responseToMcpToolResult(

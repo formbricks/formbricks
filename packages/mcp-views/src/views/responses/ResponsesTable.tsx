@@ -19,17 +19,19 @@ interface ResponsesTableProps {
 
 interface CellProps {
   text: string;
-  label: string;
   expanded: boolean;
   onToggle: () => void;
 }
 
-const Cell = ({ text, label, expanded, onToggle }: Readonly<CellProps>) => {
+const Cell = ({ text, expanded, onToggle }: Readonly<CellProps>) => {
   if (text === "") {
     return (
-      <span className="fb-faint" aria-label={`No answer to ${label}`}>
-        —
-      </span>
+      <>
+        <span className="fb-faint" aria-hidden="true">
+          —
+        </span>
+        <span className="fb-sr-only">No answer</span>
+      </>
     );
   }
   const clipped = text.length > CLIP_CHARS;
@@ -125,7 +127,6 @@ export const ResponsesTable = ({
                   <td key={column.id} className="rv-answer">
                     <Cell
                       text={row.cells[column.id] ?? ""}
-                      label={column.label}
                       expanded={expanded.has(key)}
                       onToggle={() => toggle(key)}
                     />

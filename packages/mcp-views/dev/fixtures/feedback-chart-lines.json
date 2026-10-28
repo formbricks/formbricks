@@ -1,0 +1,719 @@
+{
+  "toolName": "show_feedback_chart",
+  "input": {
+    "workspaceId": "tz4a98xxat96iws9zmbrgj3a",
+    "query": {
+      "measures": [
+        "FeedbackRecords.npsAverage"
+      ],
+      "dimensions": [
+        "FeedbackRecords.language"
+      ],
+      "timeDimensions": [
+        {
+          "dimension": "FeedbackRecords.collectedAt",
+          "granularity": "day",
+          "dateRange": [
+            "2026-10-01",
+            "2026-10-21"
+          ]
+        }
+      ],
+      "limit": 1000
+    }
+  },
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "NPS: Average by day and language: 126 rows from the feedback dataset \"Product feedback\", shown to the user as a line chart.\n| Collected At (day) | Language | NPS: Average |\n| --- |\n| 2026-10-01T00:00:00.000 | en | 7 |\n| 2026-10-01T00:00:00.000 | de | 7.76 |\n| 2026-10-01T00:00:00.000 | fr | 7.59 |\n| 2026-10-01T00:00:00.000 | es | 6.42 |\n| 2026-10-01T00:00:00.000 | pt | 5.09 |\n| 2026-10-01T00:00:00.000 | it | 4.6 |\n| 2026-10-02T00:00:00.000 | en | 7.39 |\n| 2026-10-02T00:00:00.000 | de | 7.92 |\n| 2026-10-02T00:00:00.000 | fr | 7.37 |\n| 2026-10-02T00:00:00.000 | es | 6.02 |\n| 2026-10-02T00:00:00.000 | pt | 4.89 |\n| 2026-10-02T00:00:00.000 | it | 4.77 |"
+      }
+    ],
+    "structuredContent": {
+      "datasetId": "ds4a98xxat96iws9zmbrgj3aaa",
+      "datasetName": "Product feedback",
+      "query": {
+        "measures": [
+          "FeedbackRecords.npsAverage"
+        ],
+        "dimensions": [
+          "FeedbackRecords.language"
+        ],
+        "timeDimensions": [
+          {
+            "dimension": "FeedbackRecords.collectedAt",
+            "granularity": "day",
+            "dateRange": [
+              "2026-10-01",
+              "2026-10-21"
+            ]
+          }
+        ],
+        "limit": 1000
+      },
+      "chart": {
+        "type": "line",
+        "title": "NPS: Average by day and language",
+        "x": "FeedbackRecords.collectedAt.day",
+        "xKind": "time",
+        "granularity": "day",
+        "y": [
+          "FeedbackRecords.npsAverage"
+        ],
+        "series": "FeedbackRecords.language"
+      },
+      "columns": [
+        {
+          "id": "FeedbackRecords.collectedAt.day",
+          "label": "Collected At (day)",
+          "kind": "time"
+        },
+        {
+          "id": "FeedbackRecords.language",
+          "label": "Language",
+          "kind": "dimension"
+        },
+        {
+          "id": "FeedbackRecords.npsAverage",
+          "label": "NPS: Average",
+          "kind": "measure"
+        }
+      ],
+      "rows": [
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-01T00:00:00.000",
+          "FeedbackRecords.language": "en",
+          "FeedbackRecords.npsAverage": 7
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-01T00:00:00.000",
+          "FeedbackRecords.language": "de",
+          "FeedbackRecords.npsAverage": 7.76
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-01T00:00:00.000",
+          "FeedbackRecords.language": "fr",
+          "FeedbackRecords.npsAverage": 7.59
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-01T00:00:00.000",
+          "FeedbackRecords.language": "es",
+          "FeedbackRecords.npsAverage": 6.42
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-01T00:00:00.000",
+          "FeedbackRecords.language": "pt",
+          "FeedbackRecords.npsAverage": 5.09
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-01T00:00:00.000",
+          "FeedbackRecords.language": "it",
+          "FeedbackRecords.npsAverage": 4.6
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-02T00:00:00.000",
+          "FeedbackRecords.language": "en",
+          "FeedbackRecords.npsAverage": 7.39
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-02T00:00:00.000",
+          "FeedbackRecords.language": "de",
+          "FeedbackRecords.npsAverage": 7.92
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-02T00:00:00.000",
+          "FeedbackRecords.language": "fr",
+          "FeedbackRecords.npsAverage": 7.37
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-02T00:00:00.000",
+          "FeedbackRecords.language": "es",
+          "FeedbackRecords.npsAverage": 6.02
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-02T00:00:00.000",
+          "FeedbackRecords.language": "pt",
+          "FeedbackRecords.npsAverage": 4.89
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-02T00:00:00.000",
+          "FeedbackRecords.language": "it",
+          "FeedbackRecords.npsAverage": 4.77
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-03T00:00:00.000",
+          "FeedbackRecords.language": "en",
+          "FeedbackRecords.npsAverage": 7.74
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-03T00:00:00.000",
+          "FeedbackRecords.language": "de",
+          "FeedbackRecords.npsAverage": 7.94
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-03T00:00:00.000",
+          "FeedbackRecords.language": "fr",
+          "FeedbackRecords.npsAverage": 7.05
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-03T00:00:00.000",
+          "FeedbackRecords.language": "es",
+          "FeedbackRecords.npsAverage": 5.65
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-03T00:00:00.000",
+          "FeedbackRecords.language": "pt",
+          "FeedbackRecords.npsAverage": 4.8
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-03T00:00:00.000",
+          "FeedbackRecords.language": "it",
+          "FeedbackRecords.npsAverage": 5.06
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-04T00:00:00.000",
+          "FeedbackRecords.language": "en",
+          "FeedbackRecords.npsAverage": 8.01
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-04T00:00:00.000",
+          "FeedbackRecords.language": "de",
+          "FeedbackRecords.npsAverage": 7.84
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-04T00:00:00.000",
+          "FeedbackRecords.language": "fr",
+          "FeedbackRecords.npsAverage": 6.67
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-04T00:00:00.000",
+          "FeedbackRecords.language": "es",
+          "FeedbackRecords.npsAverage": 5.34
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-04T00:00:00.000",
+          "FeedbackRecords.language": "pt",
+          "FeedbackRecords.npsAverage": 4.85
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-04T00:00:00.000",
+          "FeedbackRecords.language": "it",
+          "FeedbackRecords.npsAverage": 5.41
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-05T00:00:00.000",
+          "FeedbackRecords.language": "en",
+          "FeedbackRecords.npsAverage": 8.17
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-05T00:00:00.000",
+          "FeedbackRecords.language": "de",
+          "FeedbackRecords.npsAverage": 7.62
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-05T00:00:00.000",
+          "FeedbackRecords.language": "fr",
+          "FeedbackRecords.npsAverage": 6.27
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-05T00:00:00.000",
+          "FeedbackRecords.language": "es",
+          "FeedbackRecords.npsAverage": 5.14
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-05T00:00:00.000",
+          "FeedbackRecords.language": "pt",
+          "FeedbackRecords.npsAverage": 5.02
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-05T00:00:00.000",
+          "FeedbackRecords.language": "it",
+          "FeedbackRecords.npsAverage": 5.81
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-06T00:00:00.000",
+          "FeedbackRecords.language": "en",
+          "FeedbackRecords.npsAverage": 8.19
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-06T00:00:00.000",
+          "FeedbackRecords.language": "de",
+          "FeedbackRecords.npsAverage": 7.3
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-06T00:00:00.000",
+          "FeedbackRecords.language": "fr",
+          "FeedbackRecords.npsAverage": 5.9
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-06T00:00:00.000",
+          "FeedbackRecords.language": "es",
+          "FeedbackRecords.npsAverage": 5.05
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-06T00:00:00.000",
+          "FeedbackRecords.language": "pt",
+          "FeedbackRecords.npsAverage": 5.31
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-06T00:00:00.000",
+          "FeedbackRecords.language": "it",
+          "FeedbackRecords.npsAverage": 6.2
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-07T00:00:00.000",
+          "FeedbackRecords.language": "en",
+          "FeedbackRecords.npsAverage": 8.09
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-07T00:00:00.000",
+          "FeedbackRecords.language": "de",
+          "FeedbackRecords.npsAverage": 6.92
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-07T00:00:00.000",
+          "FeedbackRecords.language": "fr",
+          "FeedbackRecords.npsAverage": 5.59
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-07T00:00:00.000",
+          "FeedbackRecords.language": "es",
+          "FeedbackRecords.npsAverage": 5.1
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-07T00:00:00.000",
+          "FeedbackRecords.language": "pt",
+          "FeedbackRecords.npsAverage": 5.66
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-07T00:00:00.000",
+          "FeedbackRecords.language": "it",
+          "FeedbackRecords.npsAverage": 6.54
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-08T00:00:00.000",
+          "FeedbackRecords.language": "en",
+          "FeedbackRecords.npsAverage": 7.87
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-08T00:00:00.000",
+          "FeedbackRecords.language": "de",
+          "FeedbackRecords.npsAverage": 6.52
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-08T00:00:00.000",
+          "FeedbackRecords.language": "fr",
+          "FeedbackRecords.npsAverage": 5.39
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-08T00:00:00.000",
+          "FeedbackRecords.language": "es",
+          "FeedbackRecords.npsAverage": 5.27
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-08T00:00:00.000",
+          "FeedbackRecords.language": "pt",
+          "FeedbackRecords.npsAverage": 6.06
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-08T00:00:00.000",
+          "FeedbackRecords.language": "it",
+          "FeedbackRecords.npsAverage": 6.79
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-09T00:00:00.000",
+          "FeedbackRecords.language": "en",
+          "FeedbackRecords.npsAverage": 7.55
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-09T00:00:00.000",
+          "FeedbackRecords.language": "de",
+          "FeedbackRecords.npsAverage": 6.15
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-09T00:00:00.000",
+          "FeedbackRecords.language": "fr",
+          "FeedbackRecords.npsAverage": 5.3
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-09T00:00:00.000",
+          "FeedbackRecords.language": "es",
+          "FeedbackRecords.npsAverage": 5.56
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-09T00:00:00.000",
+          "FeedbackRecords.language": "pt",
+          "FeedbackRecords.npsAverage": 6.45
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-09T00:00:00.000",
+          "FeedbackRecords.language": "it",
+          "FeedbackRecords.npsAverage": 6.93
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-10T00:00:00.000",
+          "FeedbackRecords.language": "en",
+          "FeedbackRecords.npsAverage": 7.17
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-10T00:00:00.000",
+          "FeedbackRecords.language": "de",
+          "FeedbackRecords.npsAverage": 5.84
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-10T00:00:00.000",
+          "FeedbackRecords.language": "fr",
+          "FeedbackRecords.npsAverage": null
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-10T00:00:00.000",
+          "FeedbackRecords.language": "es",
+          "FeedbackRecords.npsAverage": 5.91
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-10T00:00:00.000",
+          "FeedbackRecords.language": "pt",
+          "FeedbackRecords.npsAverage": 6.79
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-10T00:00:00.000",
+          "FeedbackRecords.language": "it",
+          "FeedbackRecords.npsAverage": 6.94
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-11T00:00:00.000",
+          "FeedbackRecords.language": "en",
+          "FeedbackRecords.npsAverage": 6.77
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-11T00:00:00.000",
+          "FeedbackRecords.language": "de",
+          "FeedbackRecords.npsAverage": 5.64
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-11T00:00:00.000",
+          "FeedbackRecords.language": "fr",
+          "FeedbackRecords.npsAverage": 5.52
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-11T00:00:00.000",
+          "FeedbackRecords.language": "es",
+          "FeedbackRecords.npsAverage": 6.31
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-11T00:00:00.000",
+          "FeedbackRecords.language": "pt",
+          "FeedbackRecords.npsAverage": 7.04
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-11T00:00:00.000",
+          "FeedbackRecords.language": "it",
+          "FeedbackRecords.npsAverage": 6.81
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-12T00:00:00.000",
+          "FeedbackRecords.language": "en",
+          "FeedbackRecords.npsAverage": 6.4
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-12T00:00:00.000",
+          "FeedbackRecords.language": "de",
+          "FeedbackRecords.npsAverage": 5.55
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-12T00:00:00.000",
+          "FeedbackRecords.language": "fr",
+          "FeedbackRecords.npsAverage": 5.81
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-12T00:00:00.000",
+          "FeedbackRecords.language": "es",
+          "FeedbackRecords.npsAverage": 6.7
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-12T00:00:00.000",
+          "FeedbackRecords.language": "pt",
+          "FeedbackRecords.npsAverage": 7.18
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-12T00:00:00.000",
+          "FeedbackRecords.language": "it",
+          "FeedbackRecords.npsAverage": 6.58
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-13T00:00:00.000",
+          "FeedbackRecords.language": "en",
+          "FeedbackRecords.npsAverage": 6.09
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-13T00:00:00.000",
+          "FeedbackRecords.language": "de",
+          "FeedbackRecords.npsAverage": 5.6
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-13T00:00:00.000",
+          "FeedbackRecords.language": "fr",
+          "FeedbackRecords.npsAverage": 6.16
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-13T00:00:00.000",
+          "FeedbackRecords.language": "es",
+          "FeedbackRecords.npsAverage": 7.04
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-13T00:00:00.000",
+          "FeedbackRecords.language": "pt",
+          "FeedbackRecords.npsAverage": 7.19
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-13T00:00:00.000",
+          "FeedbackRecords.language": "it",
+          "FeedbackRecords.npsAverage": 6.24
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-14T00:00:00.000",
+          "FeedbackRecords.language": "en",
+          "FeedbackRecords.npsAverage": 5.89
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-14T00:00:00.000",
+          "FeedbackRecords.language": "de",
+          "FeedbackRecords.npsAverage": 5.77
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-14T00:00:00.000",
+          "FeedbackRecords.language": "fr",
+          "FeedbackRecords.npsAverage": 6.56
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-14T00:00:00.000",
+          "FeedbackRecords.language": "es",
+          "FeedbackRecords.npsAverage": 7.29
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-14T00:00:00.000",
+          "FeedbackRecords.language": "pt",
+          "FeedbackRecords.npsAverage": 7.06
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-14T00:00:00.000",
+          "FeedbackRecords.language": "it",
+          "FeedbackRecords.npsAverage": 5.86
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-15T00:00:00.000",
+          "FeedbackRecords.language": "en",
+          "FeedbackRecords.npsAverage": 5.8
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-15T00:00:00.000",
+          "FeedbackRecords.language": "de",
+          "FeedbackRecords.npsAverage": 6.06
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-15T00:00:00.000",
+          "FeedbackRecords.language": "fr",
+          "FeedbackRecords.npsAverage": 6.95
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-15T00:00:00.000",
+          "FeedbackRecords.language": "es",
+          "FeedbackRecords.npsAverage": 7.43
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-15T00:00:00.000",
+          "FeedbackRecords.language": "pt",
+          "FeedbackRecords.npsAverage": 6.83
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-15T00:00:00.000",
+          "FeedbackRecords.language": "it",
+          "FeedbackRecords.npsAverage": 5.46
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-16T00:00:00.000",
+          "FeedbackRecords.language": "en",
+          "FeedbackRecords.npsAverage": 5.85
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-16T00:00:00.000",
+          "FeedbackRecords.language": "de",
+          "FeedbackRecords.npsAverage": 6.41
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-16T00:00:00.000",
+          "FeedbackRecords.language": "fr",
+          "FeedbackRecords.npsAverage": 7.29
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-16T00:00:00.000",
+          "FeedbackRecords.language": "es",
+          "FeedbackRecords.npsAverage": 7.44
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-16T00:00:00.000",
+          "FeedbackRecords.language": "pt",
+          "FeedbackRecords.npsAverage": 6.49
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-16T00:00:00.000",
+          "FeedbackRecords.language": "it",
+          "FeedbackRecords.npsAverage": 5.1
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-17T00:00:00.000",
+          "FeedbackRecords.language": "en",
+          "FeedbackRecords.npsAverage": 6.02
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-17T00:00:00.000",
+          "FeedbackRecords.language": "de",
+          "FeedbackRecords.npsAverage": 6.81
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-17T00:00:00.000",
+          "FeedbackRecords.language": "fr",
+          "FeedbackRecords.npsAverage": 7.54
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-17T00:00:00.000",
+          "FeedbackRecords.language": "es",
+          "FeedbackRecords.npsAverage": 7.31
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-17T00:00:00.000",
+          "FeedbackRecords.language": "pt",
+          "FeedbackRecords.npsAverage": 6.11
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-17T00:00:00.000",
+          "FeedbackRecords.language": "it",
+          "FeedbackRecords.npsAverage": 4.8
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-18T00:00:00.000",
+          "FeedbackRecords.language": "en",
+          "FeedbackRecords.npsAverage": 6.31
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-18T00:00:00.000",
+          "FeedbackRecords.language": "de",
+          "FeedbackRecords.npsAverage": 7.2
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-18T00:00:00.000",
+          "FeedbackRecords.language": "fr",
+          "FeedbackRecords.npsAverage": 7.68
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-18T00:00:00.000",
+          "FeedbackRecords.language": "es",
+          "FeedbackRecords.npsAverage": 7.08
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-18T00:00:00.000",
+          "FeedbackRecords.language": "pt",
+          "FeedbackRecords.npsAverage": 5.71
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-18T00:00:00.000",
+          "FeedbackRecords.language": "it",
+          "FeedbackRecords.npsAverage": 4.61
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-19T00:00:00.000",
+          "FeedbackRecords.language": "en",
+          "FeedbackRecords.npsAverage": 6.66
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-19T00:00:00.000",
+          "FeedbackRecords.language": "de",
+          "FeedbackRecords.npsAverage": 7.54
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-19T00:00:00.000",
+          "FeedbackRecords.language": "fr",
+          "FeedbackRecords.npsAverage": 7.69
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-19T00:00:00.000",
+          "FeedbackRecords.language": "es",
+          "FeedbackRecords.npsAverage": 6.74
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-19T00:00:00.000",
+          "FeedbackRecords.language": "pt",
+          "FeedbackRecords.npsAverage": 5.35
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-19T00:00:00.000",
+          "FeedbackRecords.language": "it",
+          "FeedbackRecords.npsAverage": 4.55
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-20T00:00:00.000",
+          "FeedbackRecords.language": "en",
+          "FeedbackRecords.npsAverage": 7.06
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-20T00:00:00.000",
+          "FeedbackRecords.language": "de",
+          "FeedbackRecords.npsAverage": 7.79
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-20T00:00:00.000",
+          "FeedbackRecords.language": "fr",
+          "FeedbackRecords.npsAverage": 7.56
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-20T00:00:00.000",
+          "FeedbackRecords.language": "es",
+          "FeedbackRecords.npsAverage": 6.36
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-20T00:00:00.000",
+          "FeedbackRecords.language": "pt",
+          "FeedbackRecords.npsAverage": 5.05
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-20T00:00:00.000",
+          "FeedbackRecords.language": "it",
+          "FeedbackRecords.npsAverage": 4.62
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-21T00:00:00.000",
+          "FeedbackRecords.language": "en",
+          "FeedbackRecords.npsAverage": 7.45
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-21T00:00:00.000",
+          "FeedbackRecords.language": "de",
+          "FeedbackRecords.npsAverage": 7.93
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-21T00:00:00.000",
+          "FeedbackRecords.language": "fr",
+          "FeedbackRecords.npsAverage": 7.33
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-21T00:00:00.000",
+          "FeedbackRecords.language": "es",
+          "FeedbackRecords.npsAverage": 5.96
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-21T00:00:00.000",
+          "FeedbackRecords.language": "pt",
+          "FeedbackRecords.npsAverage": 4.86
+        },
+        {
+          "FeedbackRecords.collectedAt.day": "2026-10-21T00:00:00.000",
+          "FeedbackRecords.language": "it",
+          "FeedbackRecords.npsAverage": 4.81
+        }
+      ],
+      "truncated": false,
+      "requestId": "req_lines"
+    }
+  },
+  "tools": {}
+}

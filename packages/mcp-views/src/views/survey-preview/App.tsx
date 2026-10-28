@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { getResultText } from "../../shared/tool-result";
 import { Badge, Loading } from "../../shared/ui";
 import { useToolView } from "../../shared/use-tool-view";
@@ -30,12 +30,15 @@ const SurveyPreview = ({
     pickInitialLanguage(input?.lang, survey.languages, survey.defaultLanguage)
   );
   const [tab, setTab] = useState<TabId>("review");
+  // The renderer is only loaded once the person asks for it, and then kept mounted so their progress
+  // survives a look at the Review tab.
   const [hasOpenedTry, setHasOpenedTry] = useState(false);
   const languageId = useId();
 
-  useEffect(() => {
-    if (tab === "try") setHasOpenedTry(true);
-  }, [tab]);
+  const selectTab = (id: TabId) => {
+    setTab(id);
+    if (id === "try") setHasOpenedTry(true);
+  };
 
   const formatters = useMemo(
     () => createFormatters(hostContext?.locale, hostContext?.timeZone),
@@ -82,7 +85,7 @@ const SurveyPreview = ({
       ))}
 
       <div>
-        <SurveyTabs active={tab} onChange={setTab} />
+        <SurveyTabs active={tab} onChange={selectTab} />
         <div
           id={panelId("review")}
           role="tabpanel"

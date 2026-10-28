@@ -1,0 +1,30 @@
+{
+  "toolName": "show_feedback_chart",
+  "input": {
+    "workspaceId": "tz4a98xxat96iws9zmbrgj3a",
+    "query": {
+      "measures": [
+        "FeedbackRecords.count"
+      ]
+    }
+  },
+  "result": {
+    "isError": true,
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"error\":{\"status\":403,\"title\":\"Forbidden\",\"detail\":\"Feedback analytics is not enabled for this organization. It requires an Enterprise plan or license — an organization owner can enable it from the organization's billing or license settings.\",\"requestId\":\"req_error\",\"code\":\"forbidden\"}}"
+      }
+    ],
+    "structuredContent": {
+      "error": {
+        "status": 403,
+        "title": "Forbidden",
+        "detail": "Feedback analytics is not enabled for this organization. It requires an Enterprise plan or license — an organization owner can enable it from the organization's billing or license settings.",
+        "requestId": "req_error",
+        "code": "forbidden"
+      }
+    }
+  },
+  "tools": {}
+}

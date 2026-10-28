@@ -406,7 +406,11 @@ const describeShowCondition = (entry: JsonRecord): string => {
   const operand = asString(left.value);
   const key = isRecord(left.meta) ? asString(left.meta.key) : "";
   const right = isRecord(entry.rightOperand) ? entry.rightOperand.value : undefined;
-  const value = Array.isArray(right) ? joinList(right.map(String), 4) : right === undefined ? "" : String(right);
+  const value = Array.isArray(right)
+    ? joinList(right.map(String), 4)
+    : typeof right === "string" || typeof right === "number"
+      ? String(right)
+      : "";
   const operator = asString(entry.operator);
   return `${OPERAND_PHRASES[operand] ?? operand}${key ? ` "${key}"` : ""} ${OPERATOR_PHRASES[operator] ?? operator}${value ? ` ${value}` : ""}`;
 };

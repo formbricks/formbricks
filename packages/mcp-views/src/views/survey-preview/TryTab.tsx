@@ -17,6 +17,13 @@ interface TryTabProps {
 
 type Status = "loading" | "ready" | "unavailable";
 
+/** What the renderer load came to, for the container it was started for. */
+interface Outcome {
+  containerId: string;
+  status: Exclude<Status, "loading">;
+  reason: string;
+}
+
 /** The attribute the renderer looks for to keep dropdown menus inside the preview's contained box. */
 const PREVIEW_BOUNDARY_ATTRIBUTE = "data-fb-preview-boundary";
 
@@ -28,8 +35,7 @@ const PREVIEW_BOUNDARY_ATTRIBUTE = "data-fb-preview-boundary";
  */
 export const TryTab = ({ meta, languageCode, surveyLanguages, theme, app }: Readonly<TryTabProps>) => {
   const [restarts, setRestarts] = useState(0);
-  const [status, setStatus] = useState<Status>("loading");
-  const [reason, setReason] = useState("");
+  const [outcome, setOutcome] = useState<Outcome | null>(null);
   const idPrefix = useId().replace(/[^a-zA-Z0-9]/g, "");
 
   const rendererLanguage = useMemo(
@@ -40,17 +46,11 @@ export const TryTab = ({ meta, languageCode, surveyLanguages, theme, app }: Read
   const appearance = meta?.render.survey.type === "app" && theme === "dark" ? "dark" : "light";
   const containerId = `fb-preview-${idPrefix}-${restarts}-${rendererLanguage}-${appearance}`;
 
-  useEffect(() => {
-    if (!meta) return;
-    let cancelled = false;
-    setStatus("loading");
+  const scriptUrl = meta ? toScriptUrl(meta.rendererUrl, document.baseURI) : null;
 
-    const scriptUrl = toScriptUrl(meta.rendererUrl, document.baseURI);
-    if (!scriptUrl) {
-      setReason("The survey renderer address is not valid.");
-      setStatus("unavailable");
-      return;
-    }
+  useEffect(() => {
+    if (!meta || !scriptUrl) return;
+    let cancelled = false;
 
     loadRenderer(scriptUrl)
       .then((surveys) => {
@@ -72,18 +72,30 @@ export const TryTab = ({ meta, languageCode, surveyLanguages, theme, app }: Read
             if (isHttpUrl(url)) void app?.openLink({ url });
           },
         });
-        setStatus("ready");
+        setOutcome({ containerId, status: "ready", reason: "" });
       })
       .catch((error: unknown) => {
         if (cancelled) return;
-        setReason(error instanceof Error ? error.message : "unknown error");
-        setStatus("unavailable");
+        setOutcome({
+          containerId,
+          status: "unavailable",
+          reason: error instanceof Error ? error.message : "unknown error",
+        });
       });
 
     return () => {
       cancelled = true;
     };
-  }, [meta, rendererLanguage, appearance, containerId, app]);
+  }, [meta, scriptUrl, rendererLanguage, appearance, containerId, app]);
+
+  // A new container (restart, language, theme) has no outcome yet, so it reads as loading until its own
+  // load settles.
+  let status: Status = outcome?.containerId === containerId ? outcome.status : "loading";
+  let reason = outcome?.containerId === containerId ? outcome.reason : "";
+  if (meta && !scriptUrl) {
+    status = "unavailable";
+    reason = "The survey renderer address is not valid.";
+  }
 
   if (!meta) {
     return (

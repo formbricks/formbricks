@@ -125,8 +125,10 @@
   .rv-table tbody th,
   .rv-sticky-head {
     white-space: normal;
-    min-width: 96px;
-    max-width: 96px;
+    min-width: 112px;
+    max-width: 112px;
+    padding-left: 8px;
+    padding-right: 8px;
   }
 }
 

@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { classNames } from "./class-names";
 
 type Tone = "neutral" | "info" | "success" | "warning" | "danger";
 
@@ -23,16 +24,21 @@ export const Button = ({
   className,
   type = "button",
   ...props
-}: Readonly<ButtonProps>) => {
-  const variantClass =
-    variant === "primary" ? " fb-btn-primary" : variant === "danger" ? " fb-btn-danger" : "";
-  return (
-    <button type={type} className={`fb-btn${variantClass}${className ? ` ${className}` : ""}`} {...props} />
-  );
-};
+}: Readonly<ButtonProps>) => (
+  <button
+    type={type}
+    className={classNames(
+      "fb-btn",
+      variant === "primary" && "fb-btn-primary",
+      variant === "danger" && "fb-btn-danger",
+      className
+    )}
+    {...props}
+  />
+);
 
 export const Card = ({ children, className }: Readonly<{ children: ReactNode; className?: string }>) => (
-  <div className={`fb-card${className ? ` ${className}` : ""}`}>{children}</div>
+  <div className={classNames("fb-card", className)}>{children}</div>
 );
 
 export const Notice = ({
@@ -40,7 +46,11 @@ export const Notice = ({
   children,
 }: Readonly<{ tone?: "neutral" | "warning" | "danger"; children: ReactNode }>) => (
   <div
-    className={`fb-notice${tone === "danger" ? " fb-notice-danger" : tone === "warning" ? " fb-notice-warning" : ""}`}
+    className={classNames(
+      "fb-notice",
+      tone === "danger" && "fb-notice-danger",
+      tone === "warning" && "fb-notice-warning"
+    )}
     role={tone === "neutral" ? "status" : "alert"}>
     {children}
   </div>

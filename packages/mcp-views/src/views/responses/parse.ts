@@ -116,7 +116,7 @@ export const parseShowResponses = (result: RawToolResult | null | undefined): Pa
   return {
     ok: true,
     value: {
-      survey: { id: surveyId, name: asString(survey?.name) ?? "Survey" },
+      survey: { id: surveyId, name: asString(survey?.name) ?? "Responses" },
       query,
       columns: structured.columns
         .map(readColumn)

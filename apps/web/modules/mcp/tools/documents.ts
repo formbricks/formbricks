@@ -19,6 +19,8 @@ import {
 } from "../auth";
 import { responseToMcpToolResult } from "../errors";
 import {
+  DOCUMENT_READ_SCOPE,
+  DOCUMENT_WRITE_SCOPE,
   type TMcpPullDocumentInput,
   type TMcpPushDocumentInput,
   ZMcpPullDocumentInput,
@@ -34,18 +36,6 @@ import { runMcpMutation } from "./run-mcp-mutation";
  * do. The registration gate admits either family, because the family a call needs depends on its `kind`;
  * the kind's own scope is then checked here, before the adapter, and a refusal is audited like any other.
  */
-const READ_SCOPE: Record<TV3DocumentKind, string> = {
-  survey: "surveys:read",
-  creative: "surveys:read",
-  workflow: "workflows:read",
-};
-
-const WRITE_SCOPE: Record<TV3DocumentKind, string> = {
-  survey: "surveys:write",
-  creative: "surveys:write",
-  workflow: "workflows:write",
-};
-
 const kindOf = (input: unknown): TV3DocumentKind | undefined => {
   const parsed = ZV3DocumentKind.safeParse((input as { kind?: unknown } | undefined)?.kind);
   return parsed.success ? parsed.data : undefined;
@@ -68,9 +58,9 @@ export function registerDocumentTools(server: McpServer): void {
       const authInfo = getMcpToolAuthInfo(ctx);
       const requestId = getMcpRequestId(authInfo);
 
-      if (!hasMcpScopes(authInfo, [READ_SCOPE[input.kind]])) {
+      if (!hasMcpScopes(authInfo, [DOCUMENT_READ_SCOPE[input.kind]])) {
         return await responseToMcpToolResult(
-          createMcpInsufficientScopeResponse(requestId, [READ_SCOPE[input.kind]]),
+          createMcpInsufficientScopeResponse(requestId, [DOCUMENT_READ_SCOPE[input.kind]]),
           requestId
         );
       }
@@ -110,7 +100,7 @@ export function registerDocumentTools(server: McpServer): void {
       const authInfo = getMcpToolAuthInfo(ctx);
       const requestId = getMcpRequestId(authInfo);
       const adapter = getDocumentAdapter(input.kind);
-      const scope = WRITE_SCOPE[input.kind];
+      const scope = DOCUMENT_WRITE_SCOPE[input.kind];
 
       if (!hasMcpScopes(authInfo, [scope])) {
         // The registration gate only saw "some write scope"; record the refusal against the right kind.

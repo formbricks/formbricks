@@ -1,0 +1,74 @@
+{
+  "toolName": "show_feedback_chart",
+  "input": {
+    "workspaceId": "tz4a98xxat96iws9zmbrgj3a",
+    "query": {
+      "measures": [
+        "FeedbackRecords.count",
+        "FeedbackRecords.promoterCount",
+        "FeedbackRecords.npsScore"
+      ],
+      "limit": 100
+    }
+  },
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Feedback Records, NPS: Promoters and NPS: Score: 1 rows from the feedback dataset \"Product feedback\", shown to the user as a number.\n| Feedback Records | NPS: Promoters | NPS: Score |\n| --- |\n| 12840 | 4210 | (none) |"
+      }
+    ],
+    "structuredContent": {
+      "datasetId": "ds4a98xxat96iws9zmbrgj3aaa",
+      "datasetName": "Product feedback",
+      "query": {
+        "measures": [
+          "FeedbackRecords.count",
+          "FeedbackRecords.promoterCount",
+          "FeedbackRecords.npsScore"
+        ],
+        "limit": 100
+      },
+      "chart": {
+        "type": "number",
+        "title": "Feedback Records, NPS: Promoters and NPS: Score",
+        "y": [
+          "FeedbackRecords.count",
+          "FeedbackRecords.promoterCount",
+          "FeedbackRecords.npsScore"
+        ]
+      },
+      "columns": [
+        {
+          "id": "FeedbackRecords.count",
+          "label": "Feedback Records",
+          "kind": "measure"
+        },
+        {
+          "id": "FeedbackRecords.promoterCount",
+          "label": "NPS: Promoters",
+          "kind": "measure"
+        },
+        {
+          "id": "FeedbackRecords.npsScore",
+          "label": "NPS: Score",
+          "kind": "measure",
+          "domain": [
+            -100,
+            100
+          ]
+        }
+      ],
+      "rows": [
+        {
+          "FeedbackRecords.count": 12840,
+          "FeedbackRecords.promoterCount": 4210,
+          "FeedbackRecords.npsScore": null
+        }
+      ],
+      "truncated": false,
+      "requestId": "req_numbers"
+    }
+  },
+  "tools": {}
+}
