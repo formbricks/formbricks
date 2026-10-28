@@ -33,6 +33,7 @@ properties:
       - immutable_question_type
       - invalid_locale
       - invalid_reference
+      - limit_exceeded
       - missing_required_field
       - misordered_reference
       - missing_translation
@@ -59,6 +60,11 @@ properties:
       `name` points at the offending field (at the option list for a deletion) and `identifier` is the
       option id, or the element id when the option is not the subject. Adding questions and options is
       still allowed.
+
+
+      `limit_exceeded`: the field is well formed but past a limit the operation states, which
+      `reason` names together with what to change. Chart queries use it for a date range that spans
+      more time buckets than its granularity allows.
 
 
       `qsf_not_recognized` and `qsf_limit_exceeded` come from the Qualtrics import (an internal,

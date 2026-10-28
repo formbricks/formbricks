@@ -63,9 +63,12 @@ const scopedInput = {
   feedbackDirectoryId: "frd-1",
   workspaceId: "workspace-1",
   organizationId: "organization-1",
-  userId: "user-1",
-  source: "charts.executeQueryAction" as const,
+  actor: { type: "user" as const, id: "user-1" },
+  source: "v3.charts.data" as const,
 };
+
+/** A stand-in Cube result: `tablePivot` is the mock, and it echoes a query with no time dimension. */
+const stubResultSet = () => ({ tablePivot: mockTablePivot, query: () => ({}), rawData: () => [] });
 
 type TCubeJsMock = {
   mock: { calls: [string, { apiUrl: string }][] };
@@ -96,7 +99,7 @@ describe("executeTenantScopedQuery", () => {
       ipAddress: "203.0.113.7",
       userAgent: "cube-test-agent",
     });
-    mockLoad.mockResolvedValue({ tablePivot: mockTablePivot });
+    mockLoad.mockResolvedValue(stubResultSet());
     mockGetOrganization.mockResolvedValue({ displayTimeZone: null });
     mockQueueAuditEventWithoutRequest.mockResolvedValue(undefined);
     mockTablePivot.mockReturnValue([{ id: "1", count: 42 }]);
@@ -134,6 +137,7 @@ describe("executeTenantScopedQuery", () => {
 
     expect(cubejs).toHaveBeenCalledWith(expect.any(String), {
       apiUrl: "https://cube.example.com/cubejs-api/v1",
+      signal: expect.any(AbortSignal),
     });
     expect(payload).toMatchObject({
       tenantId: "frd-1",
@@ -142,7 +146,7 @@ describe("executeTenantScopedQuery", () => {
       organizationId: "organization-1",
       userId: "user-1",
       scope: "xm:cube:query",
-      source: "charts.executeQueryAction",
+      source: "v3.charts.data",
     });
     expect(typeof payload.jti).toBe("string");
   });
@@ -474,7 +478,7 @@ describe("executeTenantScopedQuery", () => {
     // A self-hosted Cube running an older schema has no npsCount.
     mockLoad
       .mockRejectedValueOnce(new Error("Error: 'npsCount' not found for path 'FeedbackRecords.npsCount'"))
-      .mockResolvedValueOnce({ tablePivot: mockTablePivot });
+      .mockResolvedValueOnce(stubResultSet());
     mockTablePivot.mockReturnValue([{ "FeedbackRecords.npsScore": "40" }]);
 
     const { executeTenantScopedQuery } = await import("./cube-client");
@@ -620,7 +624,10 @@ describe("executeTenantScopedQuery", () => {
     await executeTenantScopedQuery(scopedInput);
 
     const cubejs = await getCubeJsMock();
-    expect(cubejs).toHaveBeenCalledWith(expect.any(String), { apiUrl: fullUrl });
+    expect(cubejs).toHaveBeenCalledWith(expect.any(String), {
+      apiUrl: fullUrl,
+      signal: expect.any(AbortSignal),
+    });
   });
 
   test("fails at env validation when Cube env is missing", async () => {
@@ -638,12 +645,60 @@ describe("executeTenantScopedQuery", () => {
 
   test("logs Cube runtime failures and returns a generic query execution error", async () => {
     mockLoad.mockRejectedValueOnce(new Error("connect ECONNREFUSED"));
-    const { executeTenantScopedQuery } = await import("./cube-client");
+    const { CubeQueryError, executeTenantScopedQuery } = await import("./cube-client");
 
-    await expect(executeTenantScopedQuery(scopedInput)).rejects.toThrow(
+    const failure = executeTenantScopedQuery(scopedInput);
+    await expect(failure).rejects.toThrow(
       "Cube query failed. Verify CUBEJS_API_URL and CUBEJS_API_SECRET, and ensure the Cube service is running."
     );
-    expect(mockLoggerError).toHaveBeenCalledWith(expect.any(Error), "Cube query failed");
+    await expect(failure).rejects.toBeInstanceOf(CubeQueryError);
+    await expect(failure).rejects.toMatchObject({ timedOut: false });
+    expect(mockLoggerError).toHaveBeenCalledWith(
+      expect.objectContaining({ err: expect.any(Error), timedOut: false }),
+      "Cube query failed"
+    );
+  });
+
+  // ENG-6582: one deadline covers the whole load, every "Continue wait" poll included, and running out
+  // of it surfaces as the same generic failure — never Cube's own error.
+  test("gives every query one shared deadline and reports running out of it as a timeout", async () => {
+    // Fake timers do not drive `AbortSignal.timeout`, so the deadline is handed a controller to fire.
+    const deadline = new AbortController();
+    const timeoutSpy = vi.spyOn(AbortSignal, "timeout").mockReturnValue(deadline.signal);
+    const { CUBE_QUERY_TIMEOUT_MS, executeTenantScopedQuery } = await import("./cube-client");
+    const cubejs = await getCubeJsMock();
+    mockLoad.mockImplementationOnce(() => {
+      const { signal } = cubejs.mock.calls[0][1] as unknown as { signal: AbortSignal };
+      return new Promise((_resolve, reject) => {
+        signal.addEventListener("abort", () => reject(new Error("Cube said: SELECT … timed out")));
+      });
+    });
+
+    const failure = executeTenantScopedQuery(scopedInput);
+    await vi.waitFor(() => expect(mockLoad).toHaveBeenCalled());
+    deadline.abort(new DOMException("timed out", "TimeoutError"));
+
+    await expect(failure).rejects.toMatchObject({ name: "CubeQueryError", timedOut: true });
+    await expect(failure).rejects.not.toThrow(/SELECT/);
+    expect(timeoutSpy).toHaveBeenCalledWith(CUBE_QUERY_TIMEOUT_MS);
+  });
+
+  test("attributes an API-key query to the key in the token and the audit event", async () => {
+    const { executeTenantScopedQuery } = await import("./cube-client");
+
+    await executeTenantScopedQuery({ ...scopedInput, actor: { type: "apiKey", id: "key-1" } });
+
+    const cubejs = await getCubeJsMock();
+    const payload = jwt.decode(cubejs.mock.calls[0][0]) as jwt.JwtPayload;
+    expect(payload).toMatchObject({ apiKeyId: "key-1" });
+    expect(payload).not.toHaveProperty("userId");
+    expect(mockQueueAuditEventWithoutRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: "key-1",
+        userType: "api",
+        newObject: expect.objectContaining({ actor: { type: "apiKey", id: "key-1" } }),
+      })
+    );
   });
 
   test("records sanitized audit metadata without raw filter values", async () => {
@@ -684,6 +739,100 @@ describe("executeTenantScopedQuery", () => {
         expect.any(Error),
         "Failed to queue Cube query audit event"
       );
+    });
+  });
+
+  describe("time-bucket cap (ENG-6603)", () => {
+    const hourly = "FeedbackRecords.collectedAt.hour";
+
+    /** A real Cube result for an hourly count, echoing `dateRange` as Cube normalizes it. */
+    const hourlyLoadResponse = (dateRange: [string, string] | undefined, hours: string[]) => {
+      const query = {
+        measures: ["FeedbackRecords.count"],
+        timeDimensions: [
+          {
+            dimension: "FeedbackRecords.collectedAt",
+            granularity: "hour",
+            ...(dateRange ? { dateRange } : {}),
+          },
+        ],
+      };
+      return {
+        queryType: "regularQuery",
+        pivotQuery: { ...query, queryType: "regularQuery" },
+        results: [
+          {
+            query,
+            annotation: {
+              measures: { "FeedbackRecords.count": { type: "number" } },
+              dimensions: {},
+              segments: {},
+              timeDimensions: { [hourly]: { type: "time" } },
+            },
+            data: hours.map((hour) => ({
+              [hourly]: hour,
+              "FeedbackRecords.collectedAt": hour,
+              "FeedbackRecords.count": "1",
+            })),
+          },
+        ],
+      };
+    };
+
+    const runHourly = async (loadResponse: unknown) => {
+      const transport = createCubeTransport(loadResponse);
+      const { CubeApi } = await vi.importActual<typeof CubeClient>("@cubejs-client/core");
+      mockLoad.mockImplementationOnce((query: CubeClient.Query, options?: CubeClient.LoadMethodOptions) =>
+        new CubeApi("token", { apiUrl: "https://cube.example.com/cubejs-api/v1", transport }).load(
+          query,
+          options
+        )
+      );
+      const { executeTenantScopedQuery } = await import("./cube-client");
+      return executeTenantScopedQuery({
+        ...scopedInput,
+        query: {
+          measures: ["FeedbackRecords.count"],
+          timeDimensions: [{ dimension: "FeedbackRecords.collectedAt", granularity: "hour" }],
+        },
+      });
+    };
+
+    test("fills every empty bucket of a range within the cap", async () => {
+      const rows = await runHourly(
+        hourlyLoadResponse(
+          ["2024-01-01T00:00:00.000", "2024-01-02T23:59:59.999"],
+          ["2024-01-01T05:00:00.000"]
+        )
+      );
+
+      expect(rows).toHaveLength(48);
+      expect(mockLoggerWarn).not.toHaveBeenCalled();
+    });
+
+    test("returns only the real rows when the requested range spans more buckets than the cap", async () => {
+      // 50 years by the hour is ~438,000 buckets; filled, it would build a row for each of them.
+      const rows = await runHourly(
+        hourlyLoadResponse(
+          ["2000-01-01T00:00:00.000", "2049-12-31T23:59:59.999"],
+          ["2024-01-01T05:00:00.000"]
+        )
+      );
+
+      expect(rows).toEqual([{ [hourly]: "2024-01-01T05:00:00.000", "FeedbackRecords.count": 1 }]);
+      expect(mockLoggerWarn).toHaveBeenCalledWith(
+        expect.objectContaining({ maxTimeBuckets: 10_000 }),
+        "Chart query spans more time buckets than the cap; empty buckets are not filled"
+      );
+    });
+
+    test("caps an all-time chart by the span of its rows", async () => {
+      // No date range: the pivot fills from the earliest row to the latest, ~1.1 million hours here.
+      const rows = await runHourly(
+        hourlyLoadResponse(undefined, ["1900-01-01T00:00:00.000", "2024-01-01T05:00:00.000"])
+      );
+
+      expect(rows).toHaveLength(2);
     });
   });
 });

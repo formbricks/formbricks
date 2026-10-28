@@ -77,6 +77,7 @@ WORKSPACE_ID: str = _FIXTURES[WORKSPACE_FIELD]
 READ_IDS: dict[str, str] = _FIXTURES.get("read", {})
 # Per-operationId overrides: {"deleteSurveyV3": {"path": {...}, "body": {...}}}. Mutating operations
 # get their own disposable resource here so a DELETE cannot decide what a GET elsewhere sees.
+# Values are usually ids, but may be whole objects or lists — a dashboard save carries its widget list.
 OPERATION_IDS: dict[str, dict[str, dict[str, Any]]] = _FIXTURES.get("operations", {})
 
 schemathesis.openapi.format("cuid2", CUID2_STRATEGY)

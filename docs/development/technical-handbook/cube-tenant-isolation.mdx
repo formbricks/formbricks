@@ -31,7 +31,9 @@ The controls assume query bodies are attacker-influenced. Tenant identity is nev
   </Step>
   <Step title="Mint a short-lived JWT">
     The app mints a short-lived JWT per Cube request with `tenantId`, `feedbackDirectoryId`,
-    `workspaceId`, `organizationId`, `userId`, `scope`, `iss`, `aud`, `jti`, and `exp` claims.
+    `workspaceId`, `organizationId`, `scope`, `source`, `iss`, `aud`, `jti`, and `exp` claims, plus exactly
+    one actor claim: `userId` for a signed-in or OAuth user, `apiKeyId` for an API key. Cube refuses a token
+    carrying both or neither, so a query is never attributed to someone who did not run it.
   </Step>
   <Step title="Verify the JWT in Cube">
     Cube verifies the JWT and exposes the claims through `securityContext`.
@@ -46,8 +48,12 @@ The controls assume query bodies are attacker-influenced. Tenant identity is nev
 
 The app records a sanitized `cubeQuery` audit event for each Cube query attempt, keyed by the JWT `jti`. Cube also
 emits a structured audit log line from `queryRewrite` with tenant, feedback directory, workspace,
-organization, user, request ID, source, and queried member names. Raw filter values are intentionally omitted from
-both logs.
+organization, actor (`{ type: "user" | "apiKey", id }`), request ID, source, and queried member names. Raw filter
+values are intentionally omitted from both logs.
+
+Each query has one deadline (`CUBE_QUERY_TIMEOUT_MS`, a minute) covering every round trip, including Cube's
+"Continue wait" polls. Running out of it, like any other Cube failure, reaches callers as a generic error; Cube's
+own error text is logged server-side and never returned.
 
 ## Operational Notes
 

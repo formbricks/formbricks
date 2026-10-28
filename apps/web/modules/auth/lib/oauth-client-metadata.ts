@@ -56,6 +56,10 @@ export const getOAuthScopeLabel = (scope: string, t: (key: string) => string): s
       return t("auth.oauth.scopes.responses_read");
     case "responses:write":
       return t("auth.oauth.scopes.responses_write");
+    case "dashboards:read":
+      return t("auth.oauth.scopes.dashboards_read");
+    case "dashboards:write":
+      return t("auth.oauth.scopes.dashboards_write");
     default:
       return scope;
   }

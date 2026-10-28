@@ -1,0 +1,11 @@
+type: object
+description: A rename. Only the name changes; the layout is saved with `PUT /api/v3/dashboards/{dashboardId}`.
+required:
+  - name
+properties:
+  name:
+    type: string
+    minLength: 1
+    maxLength: 255
+    description: Unique within the workspace; leading and trailing whitespace is trimmed.
+additionalProperties: false
