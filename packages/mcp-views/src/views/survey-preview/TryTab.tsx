@@ -123,6 +123,7 @@ export const TryTab = ({ meta, languageCode, surveyLanguages, theme, app }: Read
       ) : (
         <div
           className="sp-stage"
+          data-appearance={appearance}
           {...{ [PREVIEW_BOUNDARY_ATTRIBUTE]: "" }}
           style={{
             background:

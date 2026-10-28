@@ -225,7 +225,18 @@
   min-height: 420px;
   border: 1px solid var(--fb-border);
   border-radius: var(--fb-radius-lg);
-  background: var(--fb-bg-muted);
+  /* The survey is not part of the host's theme. A link survey always renders light, and an app survey
+     brings its own dark palette, so the stage fixes the text color and background the renderer inherits
+     instead of taking the host's (a dark host made the rating numbers white on a pale tint). */
+  color-scheme: light;
+  color: #0f172a;
+  background: #f1f5f9;
+}
+
+.sp-stage[data-appearance="dark"] {
+  color-scheme: dark;
+  color: #f8fafc;
+  background: #0f172a;
 }
 
 .sp-stage-inner {
