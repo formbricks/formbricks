@@ -397,6 +397,13 @@ describe("refusals", () => {
     expect(mocks.library.promoteEmbeddedDataToShared).not.toHaveBeenCalled();
   });
 
+  test("a promote with a description over 1000 characters is a 400, like create and update", async () => {
+    const response = await promote({ key: "plan_tier", description: "d".repeat(1001) });
+
+    expect(response.status).toBe(400);
+    expect(mocks.library.promoteEmbeddedDataToShared).not.toHaveBeenCalled();
+  });
+
   test("an unexpected failure is a 500 that relays nothing, audited as a failure", async () => {
     mocks.library.createSharedEmbeddedData.mockRejectedValue(new Error("connection to db-7.internal lost"));
     const response = await create({ key: "plan_tier", name: "Plan tier", source: "ingested" });
