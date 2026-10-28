@@ -54,6 +54,12 @@ describe("OAuth protected resource metadata", () => {
         // registered before they existed — without it those clients would earn `invalid_scope`.
         "responses:read",
         "responses:write",
+        // Agent-first experiment (ADR 0015): advertised with the migrations that grant them to clients.
+        "contacts:read",
+        "contacts:write",
+        "webhooks:read",
+        "webhooks:write",
+        "audit:read",
         "offline_access",
       ],
       bearer_methods_supported: ["header"],
