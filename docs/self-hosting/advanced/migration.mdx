@@ -36,6 +36,7 @@ The steps below run SQL as the user that owns the Formbricks tables:
     <Info>
       If your PostgreSQL pod has a different name, run `kubectl get pods -n formbricks` to find it.
     </Info>
+
   </Tab>
 </Tabs>
 
@@ -120,8 +121,7 @@ It is also on GitHub under any release that ships it, for example
   before the failing one may have taken effect, even inside a `BEGIN; … COMMIT;` block. For a stopped runner,
   possibly every statement in the file did: a file Prisma sends as one string runs to its end without a client.
   Check which did (`\d "Table"` for schema changes, a `SELECT` for data) and undo those before you continue. If
-  the new version is already serving, stop it first (`docker compose stop formbricks`, or scale the Deployment to
-  0) and keep it stopped until you run the migrations again. Undoing a `DROP` means recreating the object so the
+  the new version is already serving, stop it first (`docker compose stop formbricks`, or scale the Deployment to 0) and keep it stopped until you run the migrations again. Undoing a `DROP` means recreating the object so the
   retry can drop it again; if a change cannot be undone, such as an `UPDATE` whose old values are gone, stop and
   restore the pre-upgrade backup instead. You need not undo:
   - `IF NOT EXISTS`, `IF EXISTS` and `CREATE OR REPLACE` statements are safe to repeat, apart from a failed
@@ -159,6 +159,7 @@ Then run the migrations again:
 
     During a v5 to v6 upgrade, re-run `formbricks-authzed-prepare` as the
     [v6 maintenance upgrade guide](/self-hosting/advanced/v6-maintenance-upgrade) describes instead.
+
   </Tab>
   <Tab title="Kubernetes">
     Delete the failed Job, then run the same `helm upgrade` (or Argo CD sync) again. Helm does not re-run a Job
@@ -177,6 +178,7 @@ Then run the migrations again:
 
     During a v5 to v6 upgrade, delete and re-create the `formbricks-v6-prepare` Job as the
     [v6 maintenance upgrade guide](/self-hosting/advanced/v6-maintenance-upgrade) describes instead.
+
   </Tab>
 </Tabs>
 
@@ -220,6 +222,39 @@ backups rather than running `helm rollback`. Pin explicit releases and digests, 
 The Helm chart and Formbricks image are versioned independently. A chart-only patch can retain the same
 `appVersion`; review both pins and the rendered image rather than assuming their version numbers match.
 
+### Charts and dashboards API
+
+Charts and dashboards are now part of API v3 and the MCP server, and the app uses the same API. Five things
+change for an existing installation:
+
+- **Every write API key can manage charts and dashboards.** An API key with `write` or `manage` on a workspace
+  can now create and change its charts and dashboards through `/api/v3` and the MCP server, and delete them
+  through `/api/v3` (the MCP server has no delete tools). Reading a chart's numbers also needs access to its
+  feedback dataset, and changing or deleting a chart needs write access to it while it is assigned to the
+  chart's workspace and not archived. After that, a chart can still be renamed, restyled or deleted, but its
+  query and type can no longer change. Review your keys if that is broader than you want.
+- **OAuth apps ask again.** Two data migrations add the `dashboards:read` and `dashboards:write` scopes to the
+  MCP resource and to each registered OAuth client that already holds an MCP scope: `dashboards:read` with
+  any MCP read scope, `dashboards:write` with any MCP write scope. Clients set to skip consent are left
+  unchanged. Users see a consent screen naming the new scopes the next time an MCP client signs in; until
+  they approve, the client keeps its current access and has no dashboard tools.
+- **Deleting a chart that is on a dashboard is refused**, in the app and in the API, naming the dashboards that
+  hold it. Remove the chart from them first. Deleting a dashboard still keeps its charts.
+- **Widget layouts are tidied once.** Dashboards can now only be saved with widgets that fit the grid (at most
+  8 rows tall) and do not overlap, and older versions could store either. The data migration
+  `20261026120000_normalize_dashboard_widget_layouts` shortens over-tall widgets and moves overlapping ones down,
+  keeping each in its column. It is a short pass over the widget table that only updates rows that change.
+  A dashboard now takes at most 250 widgets; one that grew past that before still opens and saves, and the
+  migration log lists any such dashboards.
+- **A chart grouped by time alone spans at most 10,000 buckets.** Each bucket is a row, empty or not, so a
+  saved chart wider than that, such as two years by the hour, now shows a `limit_exceeded` error instead of
+  rendering. Change it to a coarser granularity or a shorter range.
+
+The Cube configuration file `cube/cube.js` changed too: it now accepts queries made with an API key, which the
+previous file rejects. Refresh it the way [Cube model files for Docker](#cube-model-files-for-docker) describes
+(one-click `./formbricks.sh update`, the Compose refresh step, or `helm upgrade`). Until then, chart data read
+with an API key or over MCP fails with `502`; the app keeps working. There are no new environment variables.
+
 ### Survey visibility (opt-in)
 
 Surveys can now be restricted to their owner and the organization's owners and managers. New columns on the
@@ -228,8 +263,8 @@ workspace-visible and make its creator the owner, so **access is unchanged after
 
 <Note>
   Once the marker is set, every survey a person creates starts **Restricted** to its author and the
-  organization's owners and managers. They can make it visible to the workspace from **Collaborate** or
-  when activating it. See [Survey visibility](/surveys/general-features/visibility).
+  organization's owners and managers. They can make it visible to the workspace from **Collaborate** or when
+  activating it. See [Survey visibility](/surveys/general-features/visibility).
 </Note>
 
 Stored visibility is always enforced. New visibility mutations and survey graph checks become available
@@ -294,11 +329,11 @@ longest a migration leaves a transaction idle, or leave the parameter out.
 
 <Warning>
   Do not set it if Formbricks reaches PostgreSQL through **PgBouncer, Supavisor, RDS Proxy or another
-  pooler**: PgBouncer answers a connection carrying a startup parameter it does not know with
-  `FATAL: unsupported startup parameter: idle_in_transaction_session_timeout`. Listing the parameter in
-  PgBouncer's `ignore_startup_parameters` lets the connection through, but PgBouncer then drops it, so the
-  safeguard does not apply either way. If `DATABASE_URL` carries both the parameter and `pgbouncer=true`,
-  Formbricks sends it and logs a warning.
+  pooler**: PgBouncer answers a connection carrying a startup parameter it does not know with `FATAL:
+  unsupported startup parameter: idle_in_transaction_session_timeout`. Listing the parameter in PgBouncer's
+  `ignore_startup_parameters` lets the connection through, but PgBouncer then drops it, so the safeguard does
+  not apply either way. If `DATABASE_URL` carries both the parameter and `pgbouncer=true`, Formbricks sends it
+  and logs a warning.
 </Warning>
 
 ### One-click: port 3000 is published on the host only
@@ -333,9 +368,9 @@ if you patched a sender to do so.
 ### Changes in Environment Variables
 
 <Note>
-  `DEFAULT_ORGANIZATION_ID` and `DEFAULT_ORGANIZATION_ROLE` drive SSO just-in-time provisioning, which is
-  part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license). On a community instance
-  they have no effect, so there is nothing to rename.
+  `DEFAULT_ORGANIZATION_ID` and `DEFAULT_ORGANIZATION_ROLE` drive SSO just-in-time provisioning, which is part
+  of the Formbricks [Enterprise Edition](/self-hosting/advanced/license). On a community instance they have no
+  effect, so there is nothing to rename.
 </Note>
 
 - **DEFAULT_ORGANIZATION_ID** has been renamed to **AUTH_SSO_DEFAULT_ORGANIZATION_ID**, matching the
@@ -354,12 +389,12 @@ if you patched a sender to do so.
   installs configure the `BETTER_AUTH_*` names, which is what the setup guides now show.
 
   <Warning>
-    If you do choose to move to the new names, **copy the existing value across** rather than generating a
-    new one. `BETTER_AUTH_SECRET` takes precedence, so setting it to a *different* value signs everyone
-    out and invalidates outstanding invite, email-verification and email-change links. Formbricks logs a
-    warning at startup when both are set to different values. The secret is no longer rejected for being
-    shorter than 32 characters, so a shorter legacy value can be renamed as-is — you will see a startup
-    warning recommending a longer one, which you can act on whenever a forced sign-out is acceptable.
+    If you do choose to move to the new names, **copy the existing value across** rather than generating a new
+    one. `BETTER_AUTH_SECRET` takes precedence, so setting it to a *different* value signs everyone out and
+    invalidates outstanding invite, email-verification and email-change links. Formbricks logs a warning at
+    startup when both are set to different values. The secret is no longer rejected for being shorter than 32
+    characters, so a shorter legacy value can be renamed as-is — you will see a startup warning recommending a
+    longer one, which you can act on whenever a forced sign-out is acceptable.
   </Warning>
 
   Formbricks now refuses to start when neither variable has a value, in every environment. Before this
@@ -396,7 +431,7 @@ IDs need no changes.
 
 #### What you will see if you skip it
 
-Opening an old encrypted link shows *"This survey can only be taken by invitation"*, and submissions
+Opening an old encrypted link shows _"This survey can only be taken by invitation"_, and submissions
 against it are rejected. Server logs record one `warn` per rejection carrying the survey id and a
 `reason` of `missing_signature`.
 
@@ -420,11 +455,11 @@ Nothing else changes: links with URL encryption off are untouched, a `suToken` t
 wrong is still rejected, and the id must still decrypt under your `ENCRYPTION_KEY`.
 
 <Warning>
-  This re-opens the vulnerability the release closed, for as long as it is set. An unsigned encrypted
-  link is bound to no survey, so a link issued for one survey opens **any** survey on the same
-  instance — on a deployment serving more than one organisation, that is across organisations. Set it
-  only on a single-tenant instance, only for as long as re-issuing takes, and only as a deliberate
-  decision. It is not a substitute for step 3 above.
+  This re-opens the vulnerability the release closed, for as long as it is set. An unsigned encrypted link is
+  bound to no survey, so a link issued for one survey opens **any** survey on the same instance — on a
+  deployment serving more than one organisation, that is across organisations. Set it only on a single-tenant
+  instance, only for as long as re-issuing takes, and only as a deliberate decision. It is not a substitute
+  for step 3 above.
 </Warning>
 
 Each accepted legacy link is logged at `warn` with the survey id and the configured expiry, and
@@ -641,15 +676,15 @@ All seven migrations apply automatically during the upgrade. Two want something 
 `WEBAPP_URL` set if you use MCP OAuth, and one deserves a step of its own on large instances. So here
 is the full list rather than a summary:
 
-| Migration | What it does | Impact |
-| --- | --- | --- |
-| `add_feedback_source_import_mode` | Adds `FeedbackSource.import_mode`, which controls whether a source's historical import includes partial responses. Existing sources take the `completedOnly` default, which aligns the historical import with the live ingestion path — that path only ever ran on finished responses, while the import used to pull partials too. Records already in Hub are left alone, so this shows up the next time you run an import: set a source to `all` if it should keep importing partial responses. | Instant |
-| `add_organization_display_time_zone` | Adds the nullable `Organization.displayTimeZone`, which formats response timestamps in file exports and in the payloads pushed to Google Sheets, Slack and Airtable (Notion is passed a raw date and is unaffected). | Instant |
-| `eng_2343_better_auth_17_resource_model` | The Better Auth 1.7 schema: the `oauthResource` tables, resource columns on OAuth tokens and consents, `alg`/`crv` on `jwks`, and `Account.issuer` with its backfill. Details in the Better Auth 1.7 section below. | Additive and fast. The issuer backfill is what keeps password sign-in working on 1.7, so it must not be skipped — it runs on its own, listed here so it is not mistaken for optional |
-| `eng_2343_backfill_oauth_resource_links` | Data migration linking existing MCP OAuth clients, refresh tokens and consents to this instance's `${WEBAPP_URL}/api/mcp` resource, so already-registered MCP clients survive the upgrade. It is a no-op only when the instance has no OAuth client at all, which in practice means a fresh install. | **Set `WEBAPP_URL` before upgrading if you use MCP OAuth.** The resource identifier is derived from it, so on an instance that has OAuth clients an unset or unparseable `WEBAPP_URL` fails this migration and stops the upgrade — set it and re-run |
-| `add_feedback_source_element_scope` | Adds `FeedbackSource.elementScope`, which controls whether a source picks up survey questions added later. Existing sources keep the current behaviour (`specific`). | Instant |
-| `add_response_survey_finished_index` | Adds an index on `Response(surveyId, finished)` so the survey list's response counts are served from the index instead of scanning the table. | **Blocks response writes while it builds, unless you build the index first — see below** |
-| `repair_account_issuer` | Data migration rewriting `Account.issuer` rows that were written with a non-canonical value, which locked the affected Google SSO users into a sign-in loop. Idempotent; a no-op when nothing is wrong. | Fast |
+| Migration                                | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | Impact                                                                                                                                                                                                                                               |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `add_feedback_source_import_mode`        | Adds `FeedbackSource.import_mode`, which controls whether a source's historical import includes partial responses. Existing sources take the `completedOnly` default, which aligns the historical import with the live ingestion path — that path only ever ran on finished responses, while the import used to pull partials too. Records already in Hub are left alone, so this shows up the next time you run an import: set a source to `all` if it should keep importing partial responses. | Instant                                                                                                                                                                                                                                              |
+| `add_organization_display_time_zone`     | Adds the nullable `Organization.displayTimeZone`, which formats response timestamps in file exports and in the payloads pushed to Google Sheets, Slack and Airtable (Notion is passed a raw date and is unaffected).                                                                                                                                                                                                                                                                             | Instant                                                                                                                                                                                                                                              |
+| `eng_2343_better_auth_17_resource_model` | The Better Auth 1.7 schema: the `oauthResource` tables, resource columns on OAuth tokens and consents, `alg`/`crv` on `jwks`, and `Account.issuer` with its backfill. Details in the Better Auth 1.7 section below.                                                                                                                                                                                                                                                                              | Additive and fast. The issuer backfill is what keeps password sign-in working on 1.7, so it must not be skipped — it runs on its own, listed here so it is not mistaken for optional                                                                 |
+| `eng_2343_backfill_oauth_resource_links` | Data migration linking existing MCP OAuth clients, refresh tokens and consents to this instance's `${WEBAPP_URL}/api/mcp` resource, so already-registered MCP clients survive the upgrade. It is a no-op only when the instance has no OAuth client at all, which in practice means a fresh install.                                                                                                                                                                                             | **Set `WEBAPP_URL` before upgrading if you use MCP OAuth.** The resource identifier is derived from it, so on an instance that has OAuth clients an unset or unparseable `WEBAPP_URL` fails this migration and stops the upgrade — set it and re-run |
+| `add_feedback_source_element_scope`      | Adds `FeedbackSource.elementScope`, which controls whether a source picks up survey questions added later. Existing sources keep the current behaviour (`specific`).                                                                                                                                                                                                                                                                                                                             | Instant                                                                                                                                                                                                                                              |
+| `add_response_survey_finished_index`     | Adds an index on `Response(surveyId, finished)` so the survey list's response counts are served from the index instead of scanning the table.                                                                                                                                                                                                                                                                                                                                                    | **Blocks response writes while it builds, unless you build the index first — see below**                                                                                                                                                             |
+| `repair_account_issuer`                  | Data migration rewriting `Account.issuer` rows that were written with a non-canonical value, which locked the affected Google SSO users into a sign-in loop. Idempotent; a no-op when nothing is wrong.                                                                                                                                                                                                                                                                                          | Fast                                                                                                                                                                                                                                                 |
 
 <Warning>
   `add_response_survey_finished_index` builds its index with a plain `CREATE INDEX`, which holds a `SHARE`
@@ -659,14 +694,15 @@ is the full list rather than a summary:
   upgrade](#build-the-response-index-before-you-upgrade) so the migration has nothing left to do, or run the
   upgrade in a window where a pause in response collection is acceptable.
 
-  If you leave the build to the migration, neither documented deployment avoids the pause. On Kubernetes the
-  chart runs migrations in their own job while the pods already running keep serving traffic, so the
-  responses arriving during the build are the ones that block. On Docker Compose the app container does
-  **not** wait for `formbricks-migrate` — it has no `depends_on` on that service and skips startup
-  migrations itself — so after the documented `docker compose down && docker compose up -d` the two come up
-  in parallel: you get downtime while the app boots, and then blocked writes for however much of the index
-  build is left once it starts serving. Compose also stops the migration runner after 300 seconds, so a longer
-  build ends as a failed migration; see [If a migration fails](#if-a-migration-fails).
+If you leave the build to the migration, neither documented deployment avoids the pause. On Kubernetes the
+chart runs migrations in their own job while the pods already running keep serving traffic, so the
+responses arriving during the build are the ones that block. On Docker Compose the app container does
+**not** wait for `formbricks-migrate` — it has no `depends_on` on that service and skips startup
+migrations itself — so after the documented `docker compose down && docker compose up -d` the two come up
+in parallel: you get downtime while the app boots, and then blocked writes for however much of the index
+build is left once it starts serving. Compose also stops the migration runner after 300 seconds, so a longer
+build ends as a failed migration; see [If a migration fails](#if-a-migration-fails).
+
 </Warning>
 
 #### Build the response index before you upgrade
@@ -688,6 +724,7 @@ build can take a while, so run it from a session that survives a dropped connect
     SELECT indisvalid FROM pg_index WHERE indexrelid = to_regclass('"Response_surveyId_finished_idx"');
     SQL
     ```
+
   </Tab>
   <Tab title="Kubernetes">
     If you are using the in-cluster PostgreSQL deployed by the Helm chart:
@@ -704,6 +741,7 @@ build can take a while, so run it from a session that survives a dropped connect
     <Info>
       If your PostgreSQL pod has a different name, run `kubectl get pods -n formbricks` to find it.
     </Info>
+
   </Tab>
 </Tabs>
 
@@ -809,6 +847,7 @@ security fixes that are not present in 8.1.1.
     chmod +x formbricks.sh
     ./formbricks.sh update
     ```
+
   </Tab>
   <Tab title="Docker Compose">
     Back up your Compose file before changing it:
@@ -834,6 +873,7 @@ security fixes that are not present in 8.1.1.
     redis_image_id=$(docker inspect --format '{{.Image}}' "$(docker compose ps -q redis)")
     docker image inspect --format '{{.Architecture}}' "$redis_image_id"
     ```
+
   </Tab>
   <Tab title="Helm">
     A normal upgrade with the current chart uses the new default digest. If you explicitly set
@@ -849,6 +889,7 @@ security fixes that are not present in 8.1.1.
 
     The Valkey StatefulSet rolls while its existing PVC remains attached. Check the rendered image and
     `valkey-cli ping` after the rollout.
+
   </Tab>
 </Tabs>
 
@@ -863,12 +904,12 @@ workspace a given record belongs to. Two rules now follow from that:
 - **A key cannot update or delete records in a shared dataset.** If a dataset is assigned to two or more
   workspaces, an API key is refused regardless of its permission level, with a `403` explaining why.
 
-| Operation | Before | After |
-| --- | --- | --- |
-| `GET`, search, similar, count | `read` | unchanged |
-| `POST /api/v3/feedbackRecords` (create) | `write` | unchanged |
-| `PATCH /api/v3/feedbackRecords/{id}` | `write` | `write`, **and** the dataset assigned to one workspace |
-| `DELETE /api/v3/feedbackRecords/{id}` | `write` | `manage`, **and** the dataset assigned to one workspace |
+| Operation                                    | Before  | After                                                   |
+| -------------------------------------------- | ------- | ------------------------------------------------------- |
+| `GET`, search, similar, count                | `read`  | unchanged                                               |
+| `POST /api/v3/feedbackRecords` (create)      | `write` | unchanged                                               |
+| `PATCH /api/v3/feedbackRecords/{id}`         | `write` | `write`, **and** the dataset assigned to one workspace  |
+| `DELETE /api/v3/feedbackRecords/{id}`        | `write` | `manage`, **and** the dataset assigned to one workspace |
 | `DELETE /api/v3/feedbackRecords?tenant_id=…` | `write` | `manage`, **and** the dataset assigned to one workspace |
 
 The same applies to the MCP tools `update_feedback_record` and `delete_feedback_record` when the client
@@ -877,8 +918,8 @@ authenticates with an API key. The required MCP **scope** is unchanged — both 
 <Note>
   **Only API keys are affected.** Users signing in through the UI, OAuth/MCP connections, and SAML/OIDC
   sessions authorize through their organization role instead, which is unchanged: organization owners and
-  managers can still update and delete feedback records, including in a shared dataset. Reading, searching
-  and creating records are unaffected for every principal.
+  managers can still update and delete feedback records, including in a shared dataset. Reading, searching and
+  creating records are unaffected for every principal.
 </Note>
 
 To find out whether any dataset on your instance is shared, and would therefore start refusing API-key
@@ -954,12 +995,12 @@ well-known tenant, so that authority advertises a real issuer and keeps full id_
 
 Your SSO callback URLs stay exactly as they are:
 
-| Provider | Callback URL | Action required? |
-| --- | --- | --- |
-| Azure AD / Entra ID | `https://your-domain.com/api/auth/oauth2/callback/azuread` | No |
-| Generic OIDC / Keycloak | `https://your-domain.com/api/auth/oauth2/callback/openid` | No |
-| SAML (BoxyHQ / Jackson) | `https://your-domain.com/api/auth/oauth2/callback/saml` | No |
-| Google / GitHub | `https://your-domain.com/api/auth/callback/{provider}` | No |
+| Provider                | Callback URL                                               | Action required? |
+| ----------------------- | ---------------------------------------------------------- | ---------------- |
+| Azure AD / Entra ID     | `https://your-domain.com/api/auth/oauth2/callback/azuread` | No               |
+| Generic OIDC / Keycloak | `https://your-domain.com/api/auth/oauth2/callback/openid`  | No               |
+| SAML (BoxyHQ / Jackson) | `https://your-domain.com/api/auth/oauth2/callback/saml`    | No               |
+| Google / GitHub         | `https://your-domain.com/api/auth/callback/{provider}`     | No               |
 
 Better Auth 1.7 rebuilds its generic-OAuth support on top of the built-in social-provider route, which
 would otherwise have moved these three callbacks to `/api/auth/callback/{providerId}` and required you to
@@ -979,9 +1020,9 @@ API — a future authentication-core upgrade will not move them either.
 </Note>
 
 <Note>
-  Nothing to do, and nothing to undo. If you added a `/api/auth/callback/{providerId}` redirect URI in
-  advance based on an earlier draft of these notes, leaving it registered is harmless — most identity
-  providers accept several redirect URIs, and Formbricks simply will not use it.
+  Nothing to do, and nothing to undo. If you added a `/api/auth/callback/{providerId}` redirect URI in advance
+  based on an earlier draft of these notes, leaving it registered is harmless — most identity providers accept
+  several redirect URIs, and Formbricks simply will not use it.
 </Note>
 
 #### MCP access tokens now end with their session
@@ -1021,8 +1062,8 @@ startup. The only self-hosting-relevant changes are a few new optional variables
 setting before you deploy is `TRUSTED_PROXY_HOP_COUNT` for your proxy setup; everything else is optional.
 
 <Info>
-  All new environment variables are optional and defaulted — none of them block startup. You can upgrade
-  to v5.3 without changing any environment variables and everything will run.
+  All new environment variables are optional and defaulted — none of them block startup. You can upgrade to
+  v5.3 without changing any environment variables and everything will run.
 </Info>
 
 ### Client IP Resolution Behind a Proxy (recommended)
@@ -1041,9 +1082,9 @@ hops:
   your real hop count) unless you deliberately want to stop capturing client IPs.
 
 <Warning>
-  Setting `TRUSTED_PROXY_HOP_COUNT` **higher** than your real hop count lets a client spoof its IP by
-  sending a forged `X-Forwarded-For` header. Set it to the exact number of proxies in front of the app —
-  no higher. The default of `1` is correct for a single reverse proxy / ingress.
+  Setting `TRUSTED_PROXY_HOP_COUNT` **higher** than your real hop count lets a client spoof its IP by sending
+  a forged `X-Forwarded-For` header. Set it to the exact number of proxies in front of the app — no higher.
+  The default of `1` is correct for a single reverse proxy / ingress.
 </Warning>
 
 ### Renamed Configuration
@@ -1107,10 +1148,9 @@ you must re-register the OAuth callback URL at your identity provider before the
 or SSO sign-in will fail with a redirect-URI mismatch.
 
 <Warning>
-  All users are signed out once when you upgrade to v5.2. Better Auth takes over session handling and
-  there is no dual-read from the old NextAuth sessions, so the cutover is a one-time forced re-login.
-  Passwords are preserved — existing credential hashes are migrated automatically, so no password reset
-  is needed.
+  All users are signed out once when you upgrade to v5.2. Better Auth takes over session handling and there is
+  no dual-read from the old NextAuth sessions, so the cutover is a one-time forced re-login. Passwords are
+  preserved — existing credential hashes are migrated automatically, so no password reset is needed.
 </Warning>
 
 ### SSO Callback URL Change (action required for SSO users)
@@ -1123,21 +1163,22 @@ Better Auth serves the OAuth2/OIDC callback at a new path:
 Update the redirect / callback URIs at your identity provider to the new path. Replace `https://your-domain.com`
 with your instance URL:
 
-| Provider | Where to update | New callback URL |
-| --- | --- | --- |
-| Azure AD / Entra ID | Azure portal -> App registration -> Authentication -> Redirect URIs | `https://your-domain.com/api/auth/oauth2/callback/azuread` |
-| Generic OIDC | At your OIDC provider | `https://your-domain.com/api/auth/oauth2/callback/openid` |
-| SAML (BoxyHQ / Jackson) | The Jackson connection's `redirect_uri` | `https://your-domain.com/api/auth/oauth2/callback/saml` |
+| Provider                | Where to update                                                     | New callback URL                                           |
+| ----------------------- | ------------------------------------------------------------------- | ---------------------------------------------------------- |
+| Azure AD / Entra ID     | Azure portal -> App registration -> Authentication -> Redirect URIs | `https://your-domain.com/api/auth/oauth2/callback/azuread` |
+| Generic OIDC            | At your OIDC provider                                               | `https://your-domain.com/api/auth/oauth2/callback/openid`  |
+| SAML (BoxyHQ / Jackson) | The Jackson connection's `redirect_uri`                             | `https://your-domain.com/api/auth/oauth2/callback/saml`    |
 
 <Note>
   **Google and GitHub sign-in do not change.** They use Better Auth's built-in social providers, whose
   callback path (`/api/auth/callback/{provider}`) is unchanged — nothing to do there.
 
-  For SAML, only the Jackson connection's `redirect_uri` changes. The IdP-side ACS endpoint
-  (`/api/auth/saml/callback`) is unchanged, so you do **not** need to reconfigure your IdP's SAML app.
+For SAML, only the Jackson connection's `redirect_uri` changes. The IdP-side ACS endpoint
+(`/api/auth/saml/callback`) is unchanged, so you do **not** need to reconfigure your IdP's SAML app.
 
-  Leave the old `/api/auth/callback/*` redirect URIs registered through the transition. Keeping them in
-  place is harmless and makes a rollback to v5.1 clean.
+Leave the old `/api/auth/callback/*` redirect URIs registered through the transition. Keeping them in
+place is harmless and makes a rollback to v5.1 clean.
+
 </Note>
 
 ### Authentication Environment Variables
@@ -1147,13 +1188,13 @@ back to your existing NextAuth configuration:
 
 - `BETTER_AUTH_SECRET` — cookie/session signing secret. Falls back to `NEXTAUTH_SECRET` when unset. On
   these releases it must be at least 32 characters when set explicitly. Use the value `NEXTAUTH_SECRET`
-  already holds: a *different* one invalidates every session and every outstanding invite and
+  already holds: a _different_ one invalidates every session and every outstanding invite and
   verification link.
 - `BETTER_AUTH_URL` — the auth base URL. Falls back to `NEXTAUTH_URL` (and then `WEBAPP_URL`) when unset.
 
 <Info>
-  If your instance already sets `NEXTAUTH_SECRET` and `NEXTAUTH_URL` (all v5.1 instances do), you can
-  upgrade without adding any new auth variables.
+  If your instance already sets `NEXTAUTH_SECRET` and `NEXTAUTH_URL` (all v5.1 instances do), you can upgrade
+  without adding any new auth variables.
 </Info>
 
 **Removed:** `DISABLE_ACCOUNT_DELETION_SSO_CONFIRMATION` no longer exists. Remove it from your environment
@@ -1177,8 +1218,8 @@ Supported providers: `openai`, `google` (AI Studio, needs `*_PROVIDER_API_KEY`),
 (Vertex, needs `*_GOOGLE_CLOUD_PROJECT` / `*_LOCATION` plus Application Default Credentials).
 
 <Warning>
-  A provider set **without** its required credentials crash-loops both Hub containers on startup — it does
-  not degrade gracefully. Set the credentials, or leave the provider unset.
+  A provider set **without** its required credentials crash-loops both Hub containers on startup — it does not
+  degrade gracefully. Set the credentials, or leave the provider unset.
 </Warning>
 
 #### AI Taxonomy (beta)
@@ -1242,8 +1283,8 @@ deployment, review this section before starting the new version.
 
 <Warning>
   Formbricks v5 removes application-level rate limiting for several routes that are now expected to be
-  protected by Envoy Gateway or an equivalent edge rate limiter. If your self-hosted instance does not
-  already have equivalent edge protection, add it before exposing the v5 stack.
+  protected by Envoy Gateway or an equivalent edge rate limiter. If your self-hosted instance does not already
+  have equivalent edge protection, add it before exposing the v5 stack.
 </Warning>
 
 ### Before You Upgrade
@@ -1271,9 +1312,9 @@ Formbricks v5 expects Hub to be part of the self-hosted stack.
   migration steps are idempotent
 
 <Note>
-  Hub-specific source code and standalone deployment assets live in the
-  [Formbricks Hub repository](https://github.com/formbricks/hub). For a normal Formbricks v5 upgrade, use that
-  repository as reference material only; the canonical migration steps stay in these Formbricks docs.
+  Hub-specific source code and standalone deployment assets live in the [Formbricks Hub
+  repository](https://github.com/formbricks/hub). For a normal Formbricks v5 upgrade, use that repository as
+  reference material only; the canonical migration steps stay in these Formbricks docs.
 </Note>
 
 #### Edge Rate Limiting
@@ -1331,6 +1372,7 @@ Cube is part of the baseline Formbricks v5 stack.
     <Info>
       If your PostgreSQL service name differs, run <code>docker compose ps</code> first and adjust the command.
     </Info>
+
   </Tab>
   <Tab title="Docker Compose">
     From the directory that contains your `docker-compose.yml`:
@@ -1343,6 +1385,7 @@ Cube is part of the baseline Formbricks v5 stack.
       If your service is not named <code>postgres</code>, use <code>docker compose ps</code> to find the correct
       name.
     </Info>
+
   </Tab>
   <Tab title="Kubernetes">
     If you are using the in-cluster PostgreSQL released by the Helm chart:
@@ -1353,6 +1396,7 @@ Cube is part of the baseline Formbricks v5 stack.
 
     If you use a managed PostgreSQL service, create a provider snapshot or run `pg_dump` directly against the
     external host before continuing.
+
   </Tab>
 </Tabs>
 
@@ -1391,6 +1435,7 @@ Cube is part of the baseline Formbricks v5 stack.
     ```bash
     ./formbricks.sh update
     ```
+
   </Tab>
   <Tab title="Docker Compose">
     Pull the current production compose file and merge the v5 changes into your existing deployment config before
@@ -1429,6 +1474,7 @@ Cube is part of the baseline Formbricks v5 stack.
       The v5 Docker Compose stack bundles Hub and Cube. Keep the bundled `cube/` config files in sync with
       `docker-compose.yml` when you update this path.
     </Info>
+
   </Tab>
   <Tab title="Kubernetes">
     Upgrade using the current Formbricks chart:
@@ -1449,6 +1495,7 @@ Cube is part of the baseline Formbricks v5 stack.
     - if you already have an equivalent edge rate limiter outside the chart, keep that protection in place
     - `CUBEJS_API_SECRET` is provided (Cube is bundled by default at `cube.enabled: true`; set to `false`
       and point `CUBEJS_API_URL` at your own endpoint if you prefer an external Cube cluster)
+
   </Tab>
 </Tabs>
 
@@ -1495,8 +1542,9 @@ integrations backward compatible during migration.
 **Website & App Surveys SDK: Migrate to Workspace ID**
 
 <Info>
-  Formbricks v5 also includes the Environment ID to Workspace ID transition for SDK setup. If you still rely on a
-  legacy Environment ID, read the [Migrate to Workspace ID guide](/surveys/website-app-surveys/workspace-id-migration).
+  Formbricks v5 also includes the Environment ID to Workspace ID transition for SDK setup. If you still rely
+  on a legacy Environment ID, read the [Migrate to Workspace ID
+  guide](/surveys/website-app-surveys/workspace-id-migration).
 </Info>
 
 ## v4.7

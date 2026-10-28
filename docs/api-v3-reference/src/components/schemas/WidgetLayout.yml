@@ -1,0 +1,28 @@
+type: object
+description: >-
+  A widget's position and size on the dashboard's 12-column grid, in whole grid units: `1 ≤ w ≤ 12`,
+  `x + w ≤ 12`, `1 ≤ h ≤ 8`, `0 ≤ y ≤ 1000`. Widgets may not overlap; gaps are allowed and close
+  upward when the dashboard is drawn.
+required:
+  - x
+  - y
+  - w
+  - h
+properties:
+  x:
+    type: integer
+    minimum: 0
+    maximum: 11
+  y:
+    type: integer
+    minimum: 0
+    maximum: 1000
+  w:
+    type: integer
+    minimum: 1
+    maximum: 12
+  h:
+    type: integer
+    minimum: 1
+    maximum: 8
+additionalProperties: false
