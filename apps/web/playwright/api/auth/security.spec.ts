@@ -478,7 +478,7 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
       try {
         await preLogoutContext.addCookies([sessionCookie!]);
         const preLogoutPage = await preLogoutContext.newPage();
-        await preLogoutPage.goto("http://localhost:3000/environments");
+        await preLogoutPage.goto("http://localhost:3000/account");
         await expect(preLogoutPage).not.toHaveURL(/\/auth\/login/);
       } finally {
         await preLogoutContext.close();
@@ -512,7 +512,7 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
       try {
         await replayContext.addCookies([sessionCookie!]);
         const replayPage = await replayContext.newPage();
-        await replayPage.goto("http://localhost:3000/environments");
+        await replayPage.goto("http://localhost:3000/account");
         await expect(replayPage).toHaveURL(/\/auth\/login/);
       } finally {
         await replayContext.close();
