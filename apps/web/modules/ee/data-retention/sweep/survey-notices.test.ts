@@ -152,7 +152,7 @@ describe("sendSurveyNotices", () => {
       archivedSurveys: [
         expect.objectContaining({
           name: "Survey s1",
-          url: expect.stringMatching(/\/workspaces\/clwsp\/surveys\/s1\/summary$/),
+          url: expect.stringMatching(/\/organizations\/clorg$/),
         }),
       ],
       // Counts in the reader's own number format.

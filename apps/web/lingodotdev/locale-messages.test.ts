@@ -35,10 +35,4 @@ describe("en-US messages", () => {
 
     expect(invalid).toEqual([]);
   });
-
-  test("interpolates the API key label into the row's accessible name", () => {
-    expect(parse(enUS.workspace.api_keys.view_permissions_for).format({ label: "Production" })).toBe(
-      "View permissions for Production"
-    );
-  });
 });

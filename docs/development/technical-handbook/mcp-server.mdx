@@ -2487,7 +2487,7 @@ query, like `create_feedback_record`.
   that are valid today, which needs its own versioned rollout.
 - `stored_survey_invalid` (422) means the *stored* survey cannot be read as a v3 document (legacy
   questions, no v3 block list, a shape that does not parse); the reported paths are into the survey,
-  not the request — repair it in the editor. A survey that reads fine but already fails validation
+  not the request — have the agent repair it. A survey that reads fine but already fails validation
   stays patchable: issues it already had are not refused, only issues a patch newly introduces
   (ENG-3975). Publishing a draft is the exception — it is refused as `stored_survey_invalid` until
   the survey passes.
