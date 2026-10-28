@@ -1,3 +1,4 @@
+import type { FormatContext } from "../../shared/format";
 import { Badge, Button, Loading } from "../../shared/ui";
 import { DetailList } from "./DetailList";
 import type { Loaded } from "./calls";
@@ -15,11 +16,6 @@ import {
 } from "./runs";
 
 export type DetailState = { status: "loading" } | ({ status: "done" } & Loaded<RunDetail>);
-
-interface Format {
-  locale?: string;
-  timeZone?: string;
-}
 
 const RunDetailPanel = ({
   run,
@@ -68,7 +64,7 @@ const RunDetailPanel = ({
   );
 };
 
-interface RunsSectionProps extends Format {
+interface RunsSectionProps extends FormatContext {
   runs: RunSummary[];
   runsError: string | null;
   openRunId: string | null;
@@ -138,7 +134,7 @@ export const RunsSection = ({
                   <span className="fb-row">
                     <Badge tone={status.tone}>{status.label}</Badge>
                     {run.isDryRun ? <Badge>Test</Badge> : null}
-                    <span className="wf-run-time">{describeRunStart(run, locale, timeZone)}</span>
+                    <span className="wf-run-time">{describeRunStart(run, { locale, timeZone })}</span>
                   </span>
                   <span className="fb-faint">
                     {describeRunTrigger(run)} · {describeRunDuration(run)}

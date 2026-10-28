@@ -40,7 +40,11 @@ export interface ListQuery {
   finished?: boolean;
 }
 
-/** `structuredContent` of `show_responses`. */
+/**
+ * What the view renders from. Assembled from two places on purpose: the `show_responses` result's
+ * `structuredContent` (which hosts show to the model, so it holds only ids, the query, counts and the
+ * cursor) and its view-only `_meta.formbricks` (the rows, question labels, survey name and tags).
+ */
 export interface ShowResponsesData {
   survey: { id: string; name: string };
   query: ListQuery;
@@ -68,4 +72,6 @@ export interface RawToolResult {
   content?: { type: string; text?: string }[];
   structuredContent?: unknown;
   isError?: boolean;
+  /** `_meta.formbricks` carries `show_responses`' table data. View-only: hosts do not show it to the model. */
+  _meta?: unknown;
 }

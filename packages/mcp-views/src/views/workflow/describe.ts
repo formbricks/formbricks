@@ -1,4 +1,6 @@
-import { type WorkflowNode, isRecord } from "./model";
+import { isRecord } from "../../shared/guards";
+import { plural } from "../../shared/plural";
+import type { WorkflowNode } from "./model";
 
 /** A labelled fact about a step: "Subject", "Thanks for your response". Rendered as text only. */
 export interface Detail {
@@ -109,8 +111,6 @@ const TRIGGER_WORDS: Record<string, string> = {
   "response.completed": "A survey response is completed",
 };
 
-const plural = (count: number, one: string, many: string): string => `${count} ${count === 1 ? one : many}`;
-
 export const describeTrigger = (node: WorkflowNode): { summary: string; details: Detail[] } => {
   const summary = TRIGGER_WORDS[node.triggerType ?? ""] ?? `Trigger: ${node.triggerType ?? "unknown"}`;
   const details: Detail[] = [];
@@ -121,7 +121,7 @@ export const describeTrigger = (node: WorkflowNode): { summary: string; details:
   const endings = Array.isArray(node.config.endingCardIds) ? node.config.endingCardIds.length : 0;
   details.push({
     label: "Endings",
-    value: endings === 0 ? "Any ending" : `Only ${plural(endings, "chosen ending", "chosen endings")}`,
+    value: endings === 0 ? "Any ending" : `Only ${plural(endings, "chosen ending")}`,
   });
   return { summary, details };
 };

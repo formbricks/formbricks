@@ -1,7 +1,8 @@
 import { useState } from "react";
+import { formatDateTime } from "../../shared/format";
 import { Badge } from "../../shared/ui";
 import { truncate } from "./cells";
-import { type Display, formatDateTime, typeLabel } from "./format";
+import { type Display, typeLabel } from "./format";
 import type { ViewColumn, ViewRow } from "./types";
 
 /** Cell text longer than this is clipped in the table and expands in place. */

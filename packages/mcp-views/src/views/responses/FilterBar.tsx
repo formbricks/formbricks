@@ -1,6 +1,5 @@
 import { Button } from "../../shared/ui";
-import { type Filters, type StatusFilter, isFiltered } from "./filters";
-import type { SortBy } from "./types";
+import { type Filters, isFiltered, parseSortBy, parseStatusFilter } from "./filters";
 
 interface FilterBarProps {
   filters: Filters;
@@ -17,7 +16,9 @@ export const FilterBar = ({ filters, problem, busy, onChange, onClear }: Readonl
       <select
         className="rv-input"
         value={filters.status}
-        onChange={(event) => onChange({ ...filters, status: event.target.value as StatusFilter })}>
+        onChange={(event) =>
+          onChange({ ...filters, status: parseStatusFilter(event.target.value) ?? filters.status })
+        }>
         <option value="all">All responses</option>
         <option value="finished">Finished</option>
         <option value="partial">Partial</option>
@@ -48,7 +49,9 @@ export const FilterBar = ({ filters, problem, busy, onChange, onClear }: Readonl
       <select
         className="rv-input"
         value={filters.sortBy}
-        onChange={(event) => onChange({ ...filters, sortBy: event.target.value as SortBy })}>
+        onChange={(event) =>
+          onChange({ ...filters, sortBy: parseSortBy(event.target.value) ?? filters.sortBy })
+        }>
         <option value="-createdAt">Newest first</option>
         <option value="createdAt">Oldest first</option>
       </select>

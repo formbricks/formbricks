@@ -35,12 +35,26 @@ const ZRow = z.object({
 });
 
 /**
- * Everything on the success branch is optional and `error` carries the failure, for the reason
+ * `_meta.formbricks` of a `show_responses` result: the table's data. View-only on purpose. Hosts show
+ * `structuredContent` to the model, so everything respondents or authors wrote (answers, question labels,
+ * the survey name, tags) lives here, where ChatGPT hides it from the model and the view alone reads it.
+ * Not part of the tool's `outputSchema`, which describes `structuredContent` only.
+ */
+export const ZMcpShowResponsesViewMeta = z.object({
+  survey: z.object({ name: z.string().optional() }),
+  columns: z.array(ZColumn),
+  rows: z.array(ZRow),
+});
+export type TMcpShowResponsesViewMeta = z.infer<typeof ZMcpShowResponsesViewMeta>;
+
+/**
+ * `structuredContent`, which hosts show to the model: ids, the effective query, counts and the cursor,
+ * never answers or any text a respondent or author wrote. Everything on the success branch is optional and `error` carries the failure, for the reason
  * `mcpToolOutput` states: one object root keeps the wire shape identical for every client era.
  */
 export const ZMcpShowResponsesOutput = z
   .object({
-    survey: z.object({ id: z.string(), name: z.string().optional() }).optional(),
+    survey: z.object({ id: z.string() }).optional(),
     query: z
       .object({
         workspaceId: z.string(),
@@ -54,8 +68,9 @@ export const ZMcpShowResponsesOutput = z
         finished: z.boolean().optional(),
       })
       .optional(),
-    columns: z.array(ZColumn).optional(),
-    rows: z.array(ZRow).optional(),
+    /** How many rows and questions the view has; the values themselves are in the view-only `_meta`. */
+    rowCount: z.number().int().optional(),
+    columnCount: z.number().int().optional(),
     nextCursor: z.string().nullable().optional(),
     total: z.object({ count: z.number().int(), relation: z.enum(["eq", "gte"]) }).optional(),
     requestId: z.string().optional(),

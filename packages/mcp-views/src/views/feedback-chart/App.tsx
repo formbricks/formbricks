@@ -1,10 +1,10 @@
 import { useMemo } from "react";
+import type { FormatContext } from "../../shared/format";
 import { getResultText } from "../../shared/tool-result";
 import { Card, Loading } from "../../shared/ui";
 import { useToolView } from "../../shared/use-tool-view";
 import { ChartView } from "./ChartView";
 import "./feedback-chart.css";
-import type { FormatContext } from "./format";
 import { parseFeedbackChart, readChartError } from "./model";
 
 export const App = () => {

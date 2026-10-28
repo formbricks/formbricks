@@ -17,6 +17,14 @@ export interface Filters {
   sortBy: SortBy;
 }
 
+/** The status a `<select>` value names, or `undefined` for anything else. */
+export const parseStatusFilter = (value: string): StatusFilter | undefined =>
+  value === "all" || value === "finished" || value === "partial" ? value : undefined;
+
+/** The sort order a `<select>` value names, or `undefined` for anything else. */
+export const parseSortBy = (value: string): SortBy | undefined =>
+  value === "-createdAt" || value === "createdAt" ? value : undefined;
+
 export const EMPTY_BOUND: DayBound = { day: "" };
 
 const DAY_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;

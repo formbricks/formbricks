@@ -1,11 +1,12 @@
 import type { App } from "@modelcontextprotocol/ext-apps";
 import { useRef, useState } from "react";
+import { formatNumber } from "../../shared/format";
 import { Button, Loading } from "../../shared/ui";
 import { DetailPanel } from "./DetailPanel";
 import { FilterBar } from "./FilterBar";
 import { ResponsesTable } from "./ResponsesTable";
 import { isFiltered } from "./filters";
-import { type Display, formatNumber } from "./format";
+import type { Display } from "./format";
 import { describeCount } from "./state";
 import type { ShowResponsesData } from "./types";
 import { useResponsesList } from "./use-responses-list";

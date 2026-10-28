@@ -1,3 +1,4 @@
+import { isRecord } from "../../shared/guards";
 import type { ViewColumn, ViewRow } from "./types";
 
 /** Longest cell text the table keeps. The full answer is one click away in the detail panel. */
@@ -8,9 +9,6 @@ export const DETAIL_VALUE_MAX_CHARS = 4000;
 export const MAX_ANSWER_ENTRIES = 50;
 
 type UnknownRecord = Record<string, unknown>;
-
-export const isRecord = (value: unknown): value is UnknownRecord =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
 
 const asString = (value: unknown): string | undefined => (typeof value === "string" ? value : undefined);
 const asRecords = (value: unknown): UnknownRecord[] => (Array.isArray(value) ? value.filter(isRecord) : []);

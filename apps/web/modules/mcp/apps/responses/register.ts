@@ -9,7 +9,11 @@ import { ZMcpResponseListOutput } from "../../tools/response-schemas";
 import { buildListResponsesSearchParams } from "../../tools/responses";
 import { registerMcpAppResource } from "../register-app-resource";
 import { buildMcpAppToolMeta } from "../tool-meta";
-import { buildShowResponsesPayload, buildShowResponsesText } from "./build-view";
+import {
+  buildShowResponsesStructuredContent,
+  buildShowResponsesText,
+  buildShowResponsesViewMeta,
+} from "./build-view";
 import { type TMcpShowResponsesInput, ZMcpShowResponsesInput, ZMcpShowResponsesOutput } from "./schemas";
 
 /**
@@ -20,6 +24,11 @@ import { type TMcpShowResponsesInput, ZMcpShowResponsesInput, ZMcpShowResponsesO
  * panel go through the host (`tools/call` to `list_responses` and `get_response`), so the spec's default
  * policy (`connect-src 'none'`, no external resources) is exactly what it needs. Respondent answers are
  * rendered as text only, never as markup, and never copied into the model's context by the view.
+ *
+ * **Answers never reach the model.** `content` and `structuredContent` (both shown to the model) carry
+ * counts, ids and the query only; the rows, question labels, survey name and tags are in
+ * `_meta.formbricks`, which is view-only (ChatGPT hides `_meta` from the model). The model reads answers
+ * through `list_responses` / `get_response`, as an explicit, scoped tool call.
  *
  * **Same operation, same gates.** The first page comes from `listV3Responses`, the operation behind
  * `list_responses`, so authorization, tenant scoping, the survey-visibility check and the page cap are
@@ -79,11 +88,12 @@ export function registerResponsesApp(server: McpServer): void {
 
       const items = body.data.data;
       const meta = body.data.meta;
-      const structuredContent = { ...buildShowResponsesPayload(input, items, meta), requestId };
+      const structuredContent = { ...buildShowResponsesStructuredContent(input, items, meta), requestId };
 
       return {
         content: [{ type: "text", text: buildShowResponsesText(input, items, meta) }],
         structuredContent,
+        _meta: { formbricks: buildShowResponsesViewMeta(items) },
       };
     }
   );

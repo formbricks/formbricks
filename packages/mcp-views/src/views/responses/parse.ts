@@ -1,4 +1,5 @@
-import { deriveColumns, isRecord, toViewRow } from "./cells";
+import { isRecord } from "../../shared/guards";
+import { deriveColumns, toViewRow } from "./cells";
 import type {
   ListPage,
   ListQuery,
@@ -95,20 +96,39 @@ const readQuery = (value: unknown): ListQuery | undefined => {
   };
 };
 
-/** The `show_responses` result, or the reason it cannot be drawn. */
+const UNREADABLE = "The responses came back in a shape this view cannot read.";
+
+/**
+ * The view-only half of a `show_responses` result. The rows, question labels and survey name are
+ * respondent- and author-written text, so the server keeps them out of `structuredContent` (which hosts
+ * show to the model) and sends them in `_meta.formbricks`. A host that drops `_meta` leaves nothing to draw.
+ */
+const readViewMeta = (result: RawToolResult | null | undefined) => {
+  const meta = isRecord(result?._meta) ? result._meta : undefined;
+  const view = isRecord(meta?.formbricks) ? meta.formbricks : undefined;
+  if (!view || !Array.isArray(view.rows) || !Array.isArray(view.columns)) return undefined;
+  return {
+    surveyName: isRecord(view.survey) ? asString(view.survey.name) : undefined,
+    rows: view.rows.map(readRow).filter((row): row is ViewRow => row !== undefined),
+    columns: view.columns.map(readColumn).filter((column): column is ViewColumn => column !== undefined),
+  };
+};
+
+/**
+ * The `show_responses` result, or the reason it cannot be drawn: the query, cursor and total from
+ * `structuredContent`, the table's data from `_meta.formbricks`.
+ */
 export const parseShowResponses = (result: RawToolResult | null | undefined): Parsed<ShowResponsesData> => {
   const failure = readFailure(result);
   if (failure) return fail(failure);
 
   const structured = result?.structuredContent;
-  if (!isRecord(structured)) return fail("The responses came back in a shape this view cannot read.");
+  if (!isRecord(structured)) return fail(UNREADABLE);
 
-  const survey = isRecord(structured.survey) ? structured.survey : undefined;
-  const surveyId = asString(survey?.id);
+  const surveyId = isRecord(structured.survey) ? asString(structured.survey.id) : undefined;
   const query = readQuery(structured.query);
-  if (!surveyId || !query || !Array.isArray(structured.rows) || !Array.isArray(structured.columns)) {
-    return fail("The responses came back in a shape this view cannot read.");
-  }
+  const view = readViewMeta(result);
+  if (!surveyId || !query || !view) return fail(UNREADABLE);
 
   const total = isRecord(structured.total)
     ? readTotal(structured.total.count, structured.total.relation)
@@ -116,26 +136,29 @@ export const parseShowResponses = (result: RawToolResult | null | undefined): Pa
   return {
     ok: true,
     value: {
-      survey: { id: surveyId, name: asString(survey?.name) ?? "Responses" },
+      survey: { id: surveyId, name: view.surveyName ?? "Responses" },
       query,
-      columns: structured.columns
-        .map(readColumn)
-        .filter((column): column is ViewColumn => column !== undefined),
-      rows: structured.rows.map(readRow).filter((row): row is ViewRow => row !== undefined),
+      columns: view.columns,
+      rows: view.rows,
       nextCursor: readNextCursor(structured.nextCursor),
       ...(total ? { total } : {}),
     },
   };
 };
 
-/** A `list_responses` result, reduced to table rows. */
+/**
+ * A `list_responses` result, reduced to table rows. The view asks for it with `callServerTool`, so it
+ * comes back to the view alone: the host answers the iframe's `tools/call` and does not add the result to
+ * the model's context, and the view never forwards it there. That is why it may hold answers, unlike
+ * `show_responses`' own `structuredContent`.
+ */
 export const parseListPage = (result: RawToolResult | null | undefined): Parsed<ListPage> => {
   const failure = readFailure(result);
   if (failure) return fail(failure);
 
   const structured = result?.structuredContent;
   const data = isRecord(structured) ? structured.data : undefined;
-  if (!Array.isArray(data)) return fail("The responses came back in a shape this view cannot read.");
+  if (!Array.isArray(data)) return fail(UNREADABLE);
 
   const meta = isRecord(structured) && isRecord(structured.meta) ? structured.meta : undefined;
   const total = readTotal(meta?.totalCount, meta?.totalCountRelation);

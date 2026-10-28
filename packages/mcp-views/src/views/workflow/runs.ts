@@ -1,5 +1,6 @@
+import { type FormatContext, formatDateTime } from "../../shared/format";
 import { type Detail, htmlToPreviewText, humanizeKey, humanizeStepType, truncate } from "./describe";
-import { formatDateTime, formatDuration } from "./format";
+import { formatDuration } from "./format";
 import type { RunDetail, RunStatus, RunStepLog, RunSummary, StepStatus } from "./model";
 
 export type Tone = "neutral" | "info" | "success" | "warning" | "danger";
@@ -47,12 +48,11 @@ export const describeRunDuration = (run: Pick<RunSummary, "status" | "startedAt"
 /** When the run started; a run that has not started yet is dated by when it was queued. */
 export const describeRunStart = (
   run: Pick<RunSummary, "startedAt" | "createdAt">,
-  locale?: string,
-  timeZone?: string
+  context: FormatContext = {}
 ): string =>
   run.startedAt
-    ? formatDateTime(run.startedAt, locale, timeZone)
-    : `Created ${formatDateTime(run.createdAt, locale, timeZone)}`;
+    ? formatDateTime(run.startedAt, context)
+    : `Created ${formatDateTime(run.createdAt, context)}`;
 
 const shortId = (id: string): string => (id.length > 10 ? `${id.slice(0, 8)}…` : id);
 

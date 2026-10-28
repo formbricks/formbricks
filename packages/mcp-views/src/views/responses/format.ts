@@ -1,29 +1,7 @@
-export interface Display {
-  locale: string;
-  timeZone: string;
-}
+import type { FormatContext } from "../../shared/format";
 
-/** Locale and zone come from the host; a value `Intl` rejects falls back to English and UTC. */
-const withFallback = <T>(make: (locale: string, timeZone: string) => T, display: Display): T => {
-  try {
-    return make(display.locale, display.timeZone);
-  } catch {
-    return make("en-US", "UTC");
-  }
-};
-
-export const formatDateTime = (iso: string, display: Display): string => {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return iso;
-  return withFallback(
-    (locale, timeZone) =>
-      new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short", timeZone }),
-    display
-  ).format(date);
-};
-
-export const formatNumber = (value: number, display: Display): string =>
-  withFallback((locale) => new Intl.NumberFormat(locale), display).format(value);
+/** The host's locale and zone with the defaults filled in, for code that needs both as strings. */
+export type Display = Required<FormatContext>;
 
 export const formatDuration = (seconds: number): string => {
   const whole = Math.max(0, Math.round(seconds));

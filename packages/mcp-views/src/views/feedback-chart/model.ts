@@ -1,3 +1,4 @@
+import { isRecord } from "../../shared/guards";
 import { type ToolResult, getResultText } from "../../shared/tool-result";
 
 /**
@@ -33,16 +34,26 @@ export interface FeedbackChartModel {
   columns: ChartColumn[];
   rows: ChartRow[];
   truncated: boolean;
+  datasetId?: string;
   datasetName?: string;
   query?: Record<string, unknown>;
   requestId?: string;
 }
 
-const CHART_TYPES: readonly string[] = ["bar", "line", "area", "pie", "number", "table"];
-const GRANULARITIES: readonly string[] = ["hour", "day", "week", "month", "quarter", "year"];
+const CHART_TYPES = ["bar", "line", "area", "pie", "number", "table"] as const satisfies readonly ChartType[];
+const GRANULARITIES = [
+  "hour",
+  "day",
+  "week",
+  "month",
+  "quarter",
+  "year",
+] as const satisfies readonly Granularity[];
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
+const isChartType = (value: unknown): value is ChartType => CHART_TYPES.some((type) => type === value);
+
+const isGranularity = (value: unknown): value is Granularity =>
+  GRANULARITIES.some((granularity) => granularity === value);
 
 const isCell = (value: unknown): value is CellValue =>
   value === null || ["string", "number", "boolean"].includes(typeof value);
@@ -50,32 +61,36 @@ const isCell = (value: unknown): value is CellValue =>
 const isStringArray = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every((item) => typeof item === "string");
 
+const readDomain = (value: unknown): [number, number] | undefined => {
+  if (!Array.isArray(value) || value.length !== 2) return undefined;
+  const low: unknown = value[0];
+  const high: unknown = value[1];
+  return typeof low === "number" && Number.isFinite(low) && typeof high === "number" && Number.isFinite(high)
+    ? [low, high]
+    : undefined;
+};
+
 const readColumn = (value: unknown): ChartColumn | undefined => {
   if (!isRecord(value)) return undefined;
   const { id, label, kind, domain } = value;
   if (typeof id !== "string" || typeof label !== "string") return undefined;
   if (kind !== "time" && kind !== "dimension" && kind !== "measure") return undefined;
-  const hasDomain =
-    Array.isArray(domain) &&
-    domain.length === 2 &&
-    domain.every((bound) => typeof bound === "number" && Number.isFinite(bound));
-  return { id, label, kind, ...(hasDomain ? { domain: [domain[0], domain[1]] as [number, number] } : {}) };
+  const bounds = readDomain(domain);
+  return { id, label, kind, ...(bounds ? { domain: bounds } : {}) };
 };
 
 const readSpec = (value: unknown): ChartSpec | undefined => {
   if (!isRecord(value)) return undefined;
   const { type, title, x, xKind, granularity, y, series, omittedMeasures } = value;
-  if (typeof type !== "string" || !CHART_TYPES.includes(type) || typeof title !== "string") return undefined;
+  if (!isChartType(type) || typeof title !== "string") return undefined;
   if (!isStringArray(y)) return undefined;
   return {
-    type: type as ChartType,
+    type,
     title,
     y,
     ...(typeof x === "string" ? { x } : {}),
     ...(xKind === "time" || xKind === "category" ? { xKind } : {}),
-    ...(typeof granularity === "string" && GRANULARITIES.includes(granularity)
-      ? { granularity: granularity as Granularity }
-      : {}),
+    ...(isGranularity(granularity) ? { granularity } : {}),
     ...(typeof series === "string" ? { series } : {}),
     ...(isStringArray(omittedMeasures) && omittedMeasures.length > 0 ? { omittedMeasures } : {}),
   };
@@ -108,6 +123,7 @@ export const parseFeedbackChart = (structured: unknown): FeedbackChartModel | un
     columns: columns.filter((column): column is ChartColumn => column !== undefined),
     rows,
     truncated: structured.truncated === true,
+    ...(typeof structured.datasetId === "string" ? { datasetId: structured.datasetId } : {}),
     ...(typeof structured.datasetName === "string" ? { datasetName: structured.datasetName } : {}),
     ...(isRecord(structured.query) ? { query: structured.query } : {}),
     ...(typeof structured.requestId === "string" ? { requestId: structured.requestId } : {}),

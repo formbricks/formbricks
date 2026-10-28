@@ -1,5 +1,5 @@
+import type { FormatContext } from "../../shared/format";
 import {
-  type FormatContext,
   formatCompact,
   formatFull,
   formatTimeFull,
@@ -72,14 +72,14 @@ const buildCategories = (
   const seen = new Map<string, number>();
   const categories: Category[] = [];
   if (!xId) return { categories, order: [] };
-  const isTime = spec.xKind === "time" && spec.granularity !== undefined;
+  const timeGranularity = spec.xKind === "time" ? spec.granularity : undefined;
 
   for (const row of model.rows) {
     const raw = row[xId] ?? null;
     const id = String(raw);
     if (seen.has(id)) continue;
     seen.set(id, categories.length);
-    const point = isTime ? parseTimestamp(raw) : undefined;
+    const point = timeGranularity ? parseTimestamp(raw) : undefined;
     categories.push({
       id,
       label: id,
@@ -89,10 +89,9 @@ const buildCategories = (
     });
   }
 
-  if (isTime) {
+  if (timeGranularity) {
     categories.sort((a, b) => (a.ms ?? Number.POSITIVE_INFINITY) - (b.ms ?? Number.POSITIVE_INFINITY));
     const withYear = spansYears(categories);
-    const granularity = spec.granularity as Granularity;
     for (const category of categories) {
       const point = parseTimestamp(category.raw);
       if (!point) {
@@ -100,8 +99,8 @@ const buildCategories = (
         category.fullLabel = category.label;
         continue;
       }
-      category.label = formatTimeLabel(point, granularity, context, withYear);
-      category.fullLabel = formatTimeFull(point, granularity, context);
+      category.label = formatTimeLabel(point, timeGranularity, context, withYear);
+      category.fullLabel = formatTimeFull(point, timeGranularity, context);
     }
   } else {
     for (const category of categories) {

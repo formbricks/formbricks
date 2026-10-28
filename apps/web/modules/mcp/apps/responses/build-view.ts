@@ -5,8 +5,6 @@ import type { TMcpShowResponsesInput } from "./schemas";
 export const CELL_MAX_CHARS = 280;
 /** Most entries (selections, matrix rows, fields) one answer contributes to a cell. */
 const MAX_ANSWER_ENTRIES = 50;
-/** Longest survey name quoted in the text the model reads. */
-const NAME_MAX_CHARS = 80;
 
 /** Cut to `max` characters with an ellipsis, without splitting a surrogate pair. */
 export const truncate = (text: string, max: number): string => {
@@ -139,20 +137,37 @@ const toQuery = (input: TMcpShowResponsesInput) => ({
   ...(input.finished === undefined ? {} : { finished: input.finished }),
 });
 
-/** `structuredContent` of `show_responses`: what the view renders from. */
-export const buildShowResponsesPayload = (
+/**
+ * `structuredContent` of `show_responses`. Hosts show it to the model, so it holds ids, the effective
+ * query, counts and the paging cursor, and nothing a respondent, a survey author or a colleague wrote:
+ * no answers, no question labels, no survey name, no tags, no contact data. Those ride in the view-only
+ * `_meta.formbricks` (see `buildShowResponsesViewMeta`).
+ */
+export const buildShowResponsesStructuredContent = (
   input: TMcpShowResponsesInput,
   items: readonly TV3ResponseListItem[],
   meta: TListMeta
 ) => ({
-  survey: { id: input.surveyId, ...(items[0] ? { name: items[0].surveyName } : {}) },
+  survey: { id: input.surveyId },
   query: toQuery(input),
-  columns: deriveColumns(items),
-  rows: items.map(toRow),
+  rowCount: items.length,
+  columnCount: deriveColumns(items).length,
   nextCursor: meta.nextCursor,
   ...(meta.totalCount !== null && meta.totalCountRelation !== null
     ? { total: { count: meta.totalCount, relation: meta.totalCountRelation } }
     : {}),
+});
+
+/**
+ * `_meta.formbricks` of `show_responses`: what the table renders. ChatGPT hides `_meta` from the model
+ * and the view is the only reader, so this is where the respondents' answers, contact-adjacent data, tags
+ * and the author-written question labels and survey name go. Kept in step with
+ * `packages/mcp-views/src/views/responses/parse.ts`.
+ */
+export const buildShowResponsesViewMeta = (items: readonly TV3ResponseListItem[]) => ({
+  survey: items[0] ? { name: items[0].surveyName } : {},
+  columns: deriveColumns(items),
+  rows: items.map(toRow),
 });
 
 const dayOf = (iso: string): string => iso.slice(0, 10);
@@ -160,15 +175,14 @@ const dayOf = (iso: string): string => iso.slice(0, 10);
 /**
  * `content` for the model: how much is on screen and how to read more, never the answers themselves —
  * the person has the table, and the model can call `list_responses` when it needs the data. The survey
- * name is respondent-adjacent free text, so it is flattened and capped before it is quoted.
+ * is named by id only: its name is workspace-stored free text, and the model can look it up.
  */
 export const buildShowResponsesText = (
   input: TMcpShowResponsesInput,
   items: readonly TV3ResponseListItem[],
   meta: TListMeta
 ): string => {
-  const name = items[0] ? truncate(collapseWhitespace(items[0].surveyName), NAME_MAX_CHARS) : undefined;
-  const survey = name ? `survey "${name}" (${input.surveyId})` : `survey ${input.surveyId}`;
+  const survey = `survey ${input.surveyId}`;
 
   if (items.length === 0) {
     return `No responses match for ${survey}. The person is looking at an empty table with filters they can change.`;

@@ -4,6 +4,7 @@
  * that package or on zod, so each reader below checks the few things it needs and drops what does not fit:
  * a malformed run or node never blanks the whole view.
  */
+import { isRecord } from "../../shared/guards";
 
 export type WorkflowStatus = "draft" | "enabled" | "disabled" | "archived";
 export type RunStatus = "queued" | "running" | "completed" | "failed" | "canceled";
@@ -79,13 +80,16 @@ export interface WorkflowViewData {
   recentRunsError: string | null;
 }
 
-const WORKFLOW_STATUSES: readonly string[] = ["draft", "enabled", "disabled", "archived"];
-const RUN_STATUSES: readonly string[] = ["queued", "running", "completed", "failed", "canceled"];
-const STEP_STATUSES: readonly string[] = ["pending", "running", "succeeded", "failed", "skipped"];
-const NODE_TYPES: readonly string[] = ["trigger", "action", "if_else"];
+/** A guard for a closed set of strings, so parsed JSON is narrowed instead of cast. */
+const isOneOf =
+  <T extends string>(options: readonly T[]) =>
+  (value: unknown): value is T =>
+    options.some((option) => option === value);
 
-export const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
+const isWorkflowStatus = isOneOf<WorkflowStatus>(["draft", "enabled", "disabled", "archived"]);
+const isRunStatus = isOneOf<RunStatus>(["queued", "running", "completed", "failed", "canceled"]);
+const isStepStatus = isOneOf<StepStatus>(["pending", "running", "succeeded", "failed", "skipped"]);
+const isNodeType = isOneOf<WorkflowNode["type"]>(["trigger", "action", "if_else"]);
 
 const asString = (value: unknown): string | undefined => (typeof value === "string" ? value : undefined);
 const asStringOrNull = (value: unknown): string | null => (typeof value === "string" ? value : null);
@@ -93,10 +97,10 @@ const asStringOrNull = (value: unknown): string | null => (typeof value === "str
 const readNode = (value: unknown): WorkflowNode | null => {
   if (!isRecord(value)) return null;
   const { id, type } = value;
-  if (typeof id !== "string" || typeof type !== "string" || !NODE_TYPES.includes(type)) return null;
+  if (typeof id !== "string" || !isNodeType(type)) return null;
   return {
     id,
-    type: type as WorkflowNode["type"],
+    type,
     label: asString(value.label),
     triggerType: asString(value.triggerType),
     actionType: asString(value.actionType),
@@ -124,10 +128,10 @@ export const readRunSummary = (value: unknown): RunSummary | null => {
   if (!isRecord(value)) return null;
   const { id, status, createdAt } = value;
   if (typeof id !== "string" || typeof createdAt !== "string") return null;
-  if (typeof status !== "string" || !RUN_STATUSES.includes(status)) return null;
+  if (!isRunStatus(status)) return null;
   return {
     id,
-    status: status as RunStatus,
+    status,
     isDryRun: value.isDryRun === true,
     surveyId: asStringOrNull(value.surveyId),
     responseId: asStringOrNull(value.responseId),
@@ -146,13 +150,13 @@ const readStepLog = (value: unknown): RunStepLog | null => {
   if (!isRecord(value)) return null;
   const { id, stepId, stepType, status } = value;
   if (typeof id !== "string" || typeof stepId !== "string" || typeof stepType !== "string") return null;
-  if (typeof status !== "string" || !STEP_STATUSES.includes(status)) return null;
+  if (!isStepStatus(status)) return null;
   return {
     id,
     sequence: typeof value.sequence === "number" ? value.sequence : 0,
     stepId,
     stepType,
-    status: status as StepStatus,
+    status,
     error: asStringOrNull(value.error),
     startedAt: asStringOrNull(value.startedAt),
     finishedAt: asStringOrNull(value.finishedAt),
@@ -167,7 +171,7 @@ export const readWorkflowView = (structured: unknown): WorkflowViewData | undefi
   const source = structured.workflow;
   const { id, workspaceId, name, status } = source;
   if (typeof id !== "string" || typeof workspaceId !== "string" || typeof name !== "string") return undefined;
-  if (typeof status !== "string" || !WORKFLOW_STATUSES.includes(status)) return undefined;
+  if (!isWorkflowStatus(status)) return undefined;
 
   return {
     workflow: {
@@ -175,7 +179,7 @@ export const readWorkflowView = (structured: unknown): WorkflowViewData | undefi
       workspaceId,
       name,
       description: asStringOrNull(source.description),
-      status: status as WorkflowStatus,
+      status,
       runCount: typeof source.runCount === "number" ? source.runCount : 0,
       definition: readDefinition(source.definition),
     },

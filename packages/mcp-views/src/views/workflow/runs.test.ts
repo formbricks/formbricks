@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { formatDateTime, formatDuration } from "./format";
+import { formatDuration } from "./format";
 import type { RunDetail, RunStepLog } from "./model";
 import {
   buildStepOutcomes,
@@ -87,25 +87,17 @@ describe("describeRunFailure", () => {
 });
 
 describe("dates", () => {
-  test("format in the host's locale and time zone", () => {
-    expect(formatDateTime("2026-06-09T22:30:00.000Z", "en-US", "Asia/Tokyo")).toBe("Jun 10, 2026, 7:30 AM");
-    expect(formatDateTime("2026-06-09T22:30:00.000Z", "de-DE", "UTC")).toBe("09.06.2026, 22:30");
-  });
-
-  test("fall back instead of throwing on a locale or zone the runtime rejects", () => {
-    expect(() => formatDateTime("2026-06-09T22:30:00.000Z", "not a locale", "Mars/Olympus")).not.toThrow();
-    expect(formatDateTime("garbage")).toBe("garbage");
-  });
-
   test("date a run that has not started by when it was created", () => {
-    expect(describeRunStart({ startedAt: null, createdAt: "2026-06-09T12:00:00.000Z" }, "en-US", "UTC")).toBe(
-      "Created Jun 9, 2026, 12:00 PM"
-    );
+    expect(
+      describeRunStart(
+        { startedAt: null, createdAt: "2026-06-09T12:00:00.000Z" },
+        { locale: "en-US", timeZone: "UTC" }
+      )
+    ).toBe("Created Jun 9, 2026, 12:00 PM");
     expect(
       describeRunStart(
         { startedAt: "2026-06-09T12:01:00.000Z", createdAt: "2026-06-09T12:00:00.000Z" },
-        "en-US",
-        "UTC"
+        { locale: "en-US", timeZone: "UTC" }
       )
     ).toBe("Jun 9, 2026, 12:01 PM");
   });

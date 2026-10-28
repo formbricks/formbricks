@@ -79,6 +79,7 @@ describe("pie", () => {
       xValue: "Positive",
       measureLabel: "Feedback Records",
       valueText: "75",
+      ref: {},
     });
   });
 });
@@ -110,6 +111,9 @@ describe("describeCartesianPoint", () => {
           seriesLabel: "Sentiment",
           measureLabel: "Feedback Records",
           granularity: "month",
+          datasetId: "ds1",
+          xMember: "FeedbackRecords.collectedAt.month",
+          seriesMember: "FeedbackRecords.sentiment",
         },
         context
       )
@@ -122,6 +126,12 @@ describe("describeCartesianPoint", () => {
       seriesValue: "Negative",
       measureLabel: "Feedback Records",
       valueText: "30.5",
+      ref: {
+        datasetId: "ds1",
+        x: "FeedbackRecords.collectedAt.month",
+        series: "FeedbackRecords.sentiment",
+        measure: "m",
+      },
     });
   });
 

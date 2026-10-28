@@ -1,4 +1,4 @@
-import type { FormatContext } from "./format";
+import type { FormatContext } from "../../shared/format";
 import type { FeedbackChartModel } from "./model";
 import { formatTableCell } from "./table";
 

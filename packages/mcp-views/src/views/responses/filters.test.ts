@@ -7,6 +7,8 @@ import {
   defaultFilters,
   filtersFromQuery,
   isFiltered,
+  parseSortBy,
+  parseStatusFilter,
   toDayString,
   validateFilters,
 } from "./filters";
@@ -163,5 +165,14 @@ describe("buildListArguments", () => {
       "next"
     );
     for (const key of Object.keys(args)) expect(declared.has(key), key).toBe(true);
+  });
+});
+
+describe("select value guards", () => {
+  test("accept only the values the selects offer", () => {
+    expect(parseStatusFilter("partial")).toBe("partial");
+    expect(parseStatusFilter("everything")).toBeUndefined();
+    expect(parseSortBy("-createdAt")).toBe("-createdAt");
+    expect(parseSortBy("name")).toBeUndefined();
   });
 });

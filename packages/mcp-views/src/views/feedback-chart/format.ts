@@ -1,46 +1,5 @@
+import { type FormatContext, dateFormat, numberFormat } from "../../shared/format";
 import type { CellValue, Granularity } from "./model";
-
-/** Locale and zone the host reports (`hostContext.locale`, `hostContext.timeZone`). Both are optional. */
-export interface FormatContext {
-  locale?: string;
-  timeZone?: string;
-}
-
-const numberFormats = new Map<string, Intl.NumberFormat>();
-const dateFormats = new Map<string, Intl.DateTimeFormat>();
-
-const numberFormat = (locale: string | undefined, options: Intl.NumberFormatOptions): Intl.NumberFormat => {
-  const key = `${locale ?? ""}|${JSON.stringify(options)}`;
-  let format = numberFormats.get(key);
-  if (!format) {
-    try {
-      format = new Intl.NumberFormat(locale, options);
-    } catch {
-      // A locale the runtime does not know falls back to its default rather than breaking the chart.
-      format = new Intl.NumberFormat(undefined, options);
-    }
-    numberFormats.set(key, format);
-  }
-  return format;
-};
-
-const dateFormat = (
-  locale: string | undefined,
-  timeZone: string | undefined,
-  options: Intl.DateTimeFormatOptions
-): Intl.DateTimeFormat => {
-  const key = `${locale ?? ""}|${timeZone ?? ""}|${JSON.stringify(options)}`;
-  let format = dateFormats.get(key);
-  if (!format) {
-    try {
-      format = new Intl.DateTimeFormat(locale, { ...options, timeZone });
-    } catch {
-      format = new Intl.DateTimeFormat(undefined, { ...options, timeZone: "UTC" });
-    }
-    dateFormats.set(key, format);
-  }
-  return format;
-};
 
 /** 1,234.56: the full value, for tooltips and tables. */
 export const formatFull = (value: number, locale?: string): string =>
@@ -89,8 +48,9 @@ export const parseTimestamp = (value: CellValue): TimePoint | undefined => {
   return Number.isNaN(ms) ? undefined : { ms, naive };
 };
 
-const zoneFor = (point: TimePoint, context: FormatContext): string | undefined =>
-  point.naive ? "UTC" : context.timeZone;
+/** A bucket's own formatter: zone-less text is read in UTC, anything else in the host's zone. */
+const pointFormat = (point: TimePoint, context: FormatContext, options: Intl.DateTimeFormatOptions) =>
+  dateFormat({ locale: context.locale, timeZone: point.naive ? "UTC" : context.timeZone }, options);
 
 const quarterOf = (month: number): number => Math.floor(month / 3) + 1;
 
@@ -102,21 +62,18 @@ export const formatTimeLabel = (
   withYear: boolean
 ): string => {
   const date = new Date(point.ms);
-  const zone = zoneFor(point, context);
   switch (granularity) {
     case "hour":
-      return dateFormat(context.locale, zone, { month: "short", day: "numeric", hour: "numeric" }).format(
-        date
-      );
+      return pointFormat(point, context, { month: "short", day: "numeric", hour: "numeric" }).format(date);
     case "day":
     case "week":
-      return dateFormat(context.locale, zone, {
+      return pointFormat(point, context, {
         month: "short",
         day: "numeric",
         ...(withYear ? { year: "2-digit" } : {}),
       }).format(date);
     case "month":
-      return dateFormat(context.locale, zone, {
+      return pointFormat(point, context, {
         month: "short",
         ...(withYear ? { year: "numeric" } : {}),
       }).format(date);
@@ -134,10 +91,9 @@ export const formatTimeFull = (
   context: FormatContext
 ): string => {
   const date = new Date(point.ms);
-  const zone = zoneFor(point, context);
   switch (granularity) {
     case "hour":
-      return dateFormat(context.locale, zone, {
+      return pointFormat(point, context, {
         year: "numeric",
         month: "short",
         day: "numeric",
@@ -145,16 +101,16 @@ export const formatTimeFull = (
         minute: "2-digit",
       }).format(date);
     case "day":
-      return dateFormat(context.locale, zone, {
+      return pointFormat(point, context, {
         weekday: "short",
         year: "numeric",
         month: "short",
         day: "numeric",
       }).format(date);
     case "week":
-      return `Week of ${dateFormat(context.locale, zone, { year: "numeric", month: "short", day: "numeric" }).format(date)}`;
+      return `Week of ${pointFormat(point, context, { year: "numeric", month: "short", day: "numeric" }).format(date)}`;
     case "month":
-      return dateFormat(context.locale, zone, { year: "numeric", month: "long" }).format(date);
+      return pointFormat(point, context, { year: "numeric", month: "long" }).format(date);
     case "quarter":
       return `Q${quarterOf(date.getUTCMonth())} ${date.getUTCFullYear()}`;
     case "year":
@@ -166,9 +122,10 @@ export const formatTimeFull = (
 export const formatCalendarDate = (value: string, context: FormatContext): string => {
   const point = parseTimestamp(value);
   if (!point) return value;
-  return dateFormat(context.locale, "UTC", { year: "numeric", month: "short", day: "numeric" }).format(
-    new Date(point.ms)
-  );
+  return dateFormat(
+    { locale: context.locale, timeZone: "UTC" },
+    { year: "numeric", month: "short", day: "numeric" }
+  ).format(new Date(point.ms));
 };
 
 const SENTIMENT_LABELS: Record<string, string> = {

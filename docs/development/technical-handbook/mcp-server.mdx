@@ -821,7 +821,7 @@ Tools can render an interactive view inside the agent. This follows the MCP Apps
 | `survey-preview` | `show_survey` | Review outline plus the real renderer in preview mode, loaded from the instance (`/js/surveys.umd.cjs`) instead of inlined (880 kB). `_meta.formbricks` carries the render payload and never the PIN or custom CSS source |
 | `document-review` | `review_document_change` | Runs `push_document` as a dry run (never writes) and diffs it against the stored document. The view's approve button calls `push_document` with the exact reviewed arguments, `confirmDestructive` only after the person ticks the checkbox, and the server re-checks staleness, scope and confirmation. The review carries the document's `schemaVersion`; the view refuses to push when the push's version differs from the reviewed one |
 | `feedback-chart` | `show_feedback_chart` | Same operation, limits and tenant isolation as `query_feedback`, plus a validated `chart` hint. Charts are hand-drawn SVG with a table fallback |
-| `responses` | `show_responses` | First page through the `list_responses` operation; paging, filters and detail go through `list_responses` and `get_response` |
+| `responses` | `show_responses` | First page through the `list_responses` operation; paging, filters and detail go through `list_responses` and `get_response`. Rows (answers, contact data) travel only in `_meta.formbricks`, which hosts keep from the model; `content` and `structuredContent` carry ids and counts |
 | `creative-preview` | `show_creative` | The real `@formbricks/creatives` renderer into a Shadow DOM on a placeholder page |
 | `workflow` | `show_workflow` | The workflow plus the 10 most recent runs, in one extra operation call |
 
@@ -832,7 +832,11 @@ Tools can render an interactive view inside the agent. This follows the MCP Apps
     Add `packages/mcp-views/src/views/<name>/` (`index.html`, `main.tsx`, `App.tsx`) and the name to `src/views.json`.
     Use `useToolView()` from `src/shared`, which connects with the official `@modelcontextprotocol/ext-apps` `App`
     class, applies the host's theme and style variables, and tracks the tool input, result and host context.
-    Keep logic in `.ts` modules with unit tests and render user-authored text as text only. Build one view with
+    Keep logic in `.ts` modules with unit tests and render user-authored text as text only. A message a view
+    sends to the agent (`sendMessage`, `updateModelContext`) holds fixed text, validated ids and the
+    person's own typed request, never a survey, creative or workflow name, a headline, an answer or a
+    server error string: those are written by other people and would reach the model as if the user had
+    said them. The agent looks names up by id. Build one view with
     `node scripts/build.mjs --only=<name> --out=dist-<name>`; `pnpm build` writes every document and the
     `dist/index.js` the web app imports.
   </Step>
@@ -2556,11 +2560,10 @@ query, like `create_feedback_record`.
   JSON-RPC code `-32600`; split them into requests of at most 100 messages. Individual calls are unaffected.
 - Tool arguments are strict: undeclared keys are rejected rather than ignored (see [Tool
   Arguments](#tool-arguments)).
-- Resources and prompts are not exposed — the server registers tools only, so there is no MCP resource
-  for the survey document contract yet.
+- Prompts are not exposed, and the only resources are the `ui://` documents of the MCP Apps views.
 - `subscriptions/listen` is refused (`maxSubscriptions: 0`). The 2026-07-28 revision replaced the GET SSE
-  endpoint with a long-lived POST-response stream, but with no resources registered and no list-changed
-  notifications emitted, such a stream could never deliver anything — it would just hold a connection.
+  endpoint with a long-lived POST-response stream, but the only resources are static view documents and no
+  list-changed notifications are emitted, such a stream could never deliver anything — it would just hold a connection.
   A client that opens one gets `Subscription limit reached`; the list endpoints remain the way to see
   current tools, prompts and resources.
 

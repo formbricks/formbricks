@@ -1,4 +1,5 @@
-import { type FormatContext, formatFull, formatTimeFull, humanizeValue, parseTimestamp } from "./format";
+import type { FormatContext } from "../../shared/format";
+import { formatFull, formatTimeFull, humanizeValue, parseTimestamp } from "./format";
 import type { CellValue, ChartColumn, ChartSpec } from "./model";
 
 /** A cell of the table view: the text shown and whether it is a number (right-aligned) or missing. */

@@ -4,15 +4,7 @@ import { Badge, Button, Card, Loading } from "../../shared/ui";
 import { useToolView } from "../../shared/use-tool-view";
 import { FlowSection } from "./FlowSection";
 import { type DetailState, RunsSection } from "./RunsSection";
-import {
-  buildRunDetailArguments,
-  buildRunListArguments,
-  buildTestRequestMessage,
-  describeCallError,
-  describeToolFailure,
-  interpretRunDetail,
-  interpretRunList,
-} from "./calls";
+import { describeToolFailure, loadRunDetail, refreshRuns, requestTestRun } from "./calls";
 import { buildFlow, buildStepNames, countSteps } from "./flow";
 import { type RunSummary, type WorkflowStatus, readWorkflowView } from "./model";
 import "./workflow.css";
@@ -48,17 +40,8 @@ export const App = () => {
     async (runId: string) => {
       if (!app) return;
       setDetails((previous) => ({ ...previous, [runId]: { status: "loading" } }));
-      let outcome: DetailState;
-      try {
-        const response = await app.callServerTool({
-          name: "get_workflow_run",
-          arguments: buildRunDetailArguments(runId),
-        });
-        outcome = { status: "done", ...interpretRunDetail(response as ToolResult) };
-      } catch (error) {
-        outcome = { status: "done", ok: false, error: describeCallError(error) };
-      }
-      setDetails((previous) => ({ ...previous, [runId]: outcome }));
+      const loaded = await loadRunDetail((params) => app.callServerTool(params), runId);
+      setDetails((previous) => ({ ...previous, [runId]: { status: "done", ...loaded } }));
     },
     [app]
   );
@@ -107,41 +90,21 @@ export const App = () => {
     if (!app) return;
     setRefreshing(true);
     setRunsError(null);
-    try {
-      const response = await app.callServerTool({
-        name: "list_workflow_runs",
-        arguments: buildRunListArguments(workflow),
-      });
-      const loaded = interpretRunList(response as ToolResult);
-      if (loaded.ok) {
-        setRefreshed({ source: result, runs: loaded.value });
-        setDetails({});
-        if (openRunId && loaded.value.some((run) => run.id === openRunId)) {
-          void loadDetail(openRunId);
-        } else {
-          setOpenRunId(null);
-        }
-      } else {
-        setRunsError(loaded.error);
-      }
-    } catch (error) {
-      setRunsError(describeCallError(error));
-    } finally {
-      setRefreshing(false);
+    const refresh = await refreshRuns((params) => app.callServerTool(params), workflow, openRunId);
+    if (refresh.ok) {
+      setRefreshed({ source: result, runs: refresh.runs });
+      setDetails({});
+      setOpenRunId(refresh.reloadRunId);
+      if (refresh.reloadRunId) void loadDetail(refresh.reloadRunId);
+    } else {
+      setRunsError(refresh.error);
     }
+    setRefreshing(false);
   };
 
   const onAskForTest = async () => {
     if (!app) return;
-    try {
-      const response = await app.sendMessage({
-        role: "user",
-        content: [{ type: "text", text: buildTestRequestMessage(workflow) }],
-      });
-      setTestRequest(response.isError ? "failed" : "sent");
-    } catch {
-      setTestRequest("failed");
-    }
+    setTestRequest(await requestTestRun((params) => app.sendMessage(params), workflow));
   };
 
   return (

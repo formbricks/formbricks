@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import { parseFeedbackChart, readChartError, readChartErrorStatus } from "./model";
 
 const valid = {
+  datasetId: "ds1",
   datasetName: "Main",
   query: { limit: 100 },
   chart: { type: "bar", title: "T", x: "d", xKind: "category", y: ["m"] },
@@ -21,6 +22,7 @@ describe("parseFeedbackChart", () => {
     expect(model?.rows).toEqual([{ d: "positive", m: 4 }]);
     expect(model?.truncated).toBe(true);
     expect(model?.datasetName).toBe("Main");
+    expect(model?.datasetId).toBe("ds1");
   });
 
   test("is undefined for anything that is not a chart result", () => {

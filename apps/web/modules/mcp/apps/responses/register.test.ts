@@ -3,7 +3,7 @@ import { ApiKeyPermission } from "@formbricks/database/prisma";
 import { problemForbidden, successListResponse } from "@/app/api/v3/lib/response";
 import { listV3Responses } from "@/app/api/v3/responses/lib/operations";
 import { registerResponsesApp } from "./register";
-import { ZMcpShowResponsesInput, ZMcpShowResponsesOutput } from "./schemas";
+import { ZMcpShowResponsesInput, ZMcpShowResponsesOutput, ZMcpShowResponsesViewMeta } from "./schemas";
 
 vi.mock("@/app/api/v3/responses/lib/operations", () => ({
   batchDeleteV3Responses: vi.fn(),
@@ -58,7 +58,8 @@ type TRegisteredTool = {
 type TShowResult = {
   isError?: boolean;
   content: { text: string }[];
-  structuredContent: { rows: { cells: Record<string, string> }[]; error?: unknown } & Record<string, unknown>;
+  structuredContent: { rowCount?: number; error?: unknown } & Record<string, unknown>;
+  _meta?: { formbricks?: { rows: { cells: Record<string, string> }[] } & Record<string, unknown> };
 };
 
 function register() {
@@ -212,10 +213,13 @@ describe("show_responses handler", () => {
     expect(params.searchParams.has("cursor")).toBe(false);
   });
 
-  test("answers a short summary for the model and the render data for the view, and the structure matches the advertised schema", async () => {
+  test("answers a short summary for the model and keeps the answers in the view-only _meta", async () => {
     vi.mocked(listV3Responses).mockResolvedValue(
       successListResponse(
-        [listItem("clrs000000000000000000001"), listItem("clrs000000000000000000002", { finished: false })],
+        [
+          listItem("clrs000000000000000000001"),
+          listItem("clrs000000000000000000002", { finished: false, surveyName: "HOSTILE-SURVEY-NAME" }),
+        ],
         {
           limit: 20,
           nextCursor: "next-page",
@@ -230,19 +234,39 @@ describe("show_responses handler", () => {
     expect(result.isError).toBeUndefined();
     const summary = result.content[0]!.text;
     expect(summary).toContain("Showing 2 of 41 responses");
-    // The model gets counts, never answers.
-    expect(summary).not.toContain("RESPONDENT-FREE-TEXT");
 
+    // What the model can read: counts and ids, never an answer, a label or a name.
     expect(result.structuredContent).toMatchObject({
-      survey: { id: SURVEY_ID, name: "Customer satisfaction" },
-      columns: [{ id: "q1", label: "What did you like?", type: "openText", position: 1 }],
+      survey: { id: SURVEY_ID },
+      rowCount: 2,
+      columnCount: 1,
       nextCursor: "next-page",
       total: { count: 41, relation: "eq" },
       requestId: "req_tool",
     });
-    expect(result.structuredContent.rows).toHaveLength(2);
-    expect(result.structuredContent.rows[0]!.cells).toEqual({ q1: "RESPONDENT-FREE-TEXT" });
+    const modelVisible = JSON.stringify({
+      content: result.content,
+      structuredContent: result.structuredContent,
+    });
+    for (const hidden of [
+      "RESPONDENT-FREE-TEXT",
+      "What did you like?",
+      "Customer satisfaction",
+      "HOSTILE-SURVEY-NAME",
+    ]) {
+      expect(modelVisible).not.toContain(hidden);
+    }
     expect(ZMcpShowResponsesOutput.safeParse(result.structuredContent).success).toBe(true);
+
+    // What only the view reads.
+    const viewMeta = result._meta?.formbricks;
+    expect(viewMeta?.rows).toHaveLength(2);
+    expect(viewMeta?.rows[0]?.cells).toEqual({ q1: "RESPONDENT-FREE-TEXT" });
+    expect(viewMeta).toMatchObject({
+      survey: { name: "Customer satisfaction" },
+      columns: [{ id: "q1", label: "What did you like?", type: "openText", position: 1 }],
+    });
+    expect(ZMcpShowResponsesViewMeta.safeParse(viewMeta).success).toBe(true);
   });
 
   test("an empty survey still answers a valid result", async () => {
@@ -251,7 +275,8 @@ describe("show_responses handler", () => {
     );
     const result = await call(input);
     expect(result.content[0]!.text).toContain("No responses match");
-    expect(result.structuredContent.rows).toEqual([]);
+    expect(result.structuredContent.rowCount).toBe(0);
+    expect(result._meta?.formbricks?.rows).toEqual([]);
     expect(ZMcpShowResponsesOutput.safeParse(result.structuredContent).success).toBe(true);
   });
 
@@ -260,7 +285,8 @@ describe("show_responses handler", () => {
     const result = await call(input);
     expect(result.isError).toBe(true);
     expect(result.structuredContent.error).toMatchObject({ status: 403 });
-    expect(result.structuredContent).not.toHaveProperty("rows");
+    expect(result.structuredContent).not.toHaveProperty("rowCount");
+    expect(result._meta).toBeUndefined();
   });
 
   test("is refused without the responses:read scope and never reaches the operation", async () => {

@@ -1,8 +1,9 @@
 import type { App } from "@modelcontextprotocol/ext-apps";
 import { useEffect, useRef } from "react";
+import { formatDateTime } from "../../shared/format";
 import { Badge, Button, Loading } from "../../shared/ui";
 import type { DetailModel } from "./detail";
-import { type Display, formatDateTime, formatDuration, typeLabel } from "./format";
+import { type Display, formatDuration, typeLabel } from "./format";
 import { useResponseDetail } from "./use-response-detail";
 
 interface DetailPanelProps {

@@ -1,6 +1,7 @@
 import type { App } from "@modelcontextprotocol/ext-apps";
 import { useCallback, useEffect, useState } from "react";
-import { type DetailModel, parseDetail } from "./detail";
+import type { DetailModel } from "./detail";
+import { loadResponseDetail } from "./loaders";
 
 export type DetailState =
   | { status: "loading" }
@@ -21,22 +22,12 @@ export const useResponseDetail = (
   useEffect(() => {
     if (!app) return;
     const run = { cancelled: false };
-    void (async () => {
-      let next: DetailState;
-      try {
-        const result = await app.callServerTool({ name: "get_response", arguments: { responseId } });
-        const parsed = parseDetail(result);
-        next = parsed.ok
-          ? { status: "ready", detail: parsed.value }
-          : { status: "error", message: parsed.message };
-      } catch (error) {
-        next = {
-          status: "error",
-          message: error instanceof Error && error.message ? error.message : "The request failed.",
-        };
-      }
-      if (!run.cancelled) setState(next);
-    })();
+    void loadResponseDetail((params) => app.callServerTool(params), responseId).then((parsed) => {
+      if (run.cancelled) return;
+      setState(
+        parsed.ok ? { status: "ready", detail: parsed.value } : { status: "error", message: parsed.message }
+      );
+    });
     return () => {
       run.cancelled = true;
     };

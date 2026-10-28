@@ -1,6 +1,7 @@
 import { useState } from "react";
+import type { FormatContext } from "../../shared/format";
 import { Tooltip } from "./Tooltip";
-import { type FormatContext, formatCompact, formatFull, formatPercent } from "./format";
+import { formatCompact, formatFull, formatPercent } from "./format";
 import { OTHER_COLOR, labelColorOn, otherColorVar, paletteFor, seriesColorVar } from "./palette";
 import type { PieData, Slice } from "./series";
 import { announce, buildPieTooltip } from "./tooltip";

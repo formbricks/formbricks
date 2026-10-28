@@ -1,22 +1,22 @@
 import type { App as McpApp } from "@modelcontextprotocol/ext-apps";
 import { useMemo, useRef, useState } from "react";
+import type { FormatContext } from "../../shared/format";
+import { plural } from "../../shared/plural";
 import { Button, Card } from "../../shared/ui";
+import { useElementWidth } from "../../shared/use-element-width";
 import { BarChart } from "./BarChart";
 import { BigNumbers } from "./BigNumbers";
 import { DataTable } from "./DataTable";
 import { LineChart } from "./LineChart";
 import { PieChart } from "./PieChart";
-import type { FormatContext } from "./format";
+import { sendDigDeeper } from "./dig-deeper";
 import type { FeedbackChartModel } from "./model";
-import { buildDigDeeperPrompt, describeScope } from "./prompt";
+import { describeScope } from "./prompt";
 import { buildCartesian, buildNumbers, buildPie } from "./series";
 import { describeCartesianPoint, describePieSlice } from "./tooltip";
 import type { PointContext, Selection } from "./tooltip";
-import { useElementWidth } from "./use-element-width";
 
 type SendState = "idle" | "sending" | "sent" | "failed";
-
-const plural = (count: number, one: string, many: string): string => (count === 1 ? one : many);
 
 export const ChartView = ({
   model,
@@ -61,6 +61,10 @@ export const ChartView = ({
     measureLabel: labelOf(spec.y[0]) ?? "Value",
     ...(spec.series ? { seriesLabel: labelOf(spec.series) ?? spec.series } : {}),
     ...(spec.granularity ? { granularity: spec.granularity } : {}),
+    ...(model.datasetId ? { datasetId: model.datasetId } : {}),
+    ...(spec.x ? { xMember: spec.x } : {}),
+    ...(spec.series ? { seriesMember: spec.series } : {}),
+    ...(spec.y[0] ? { measureMember: spec.y[0] } : {}),
   };
 
   let target = undefined;
@@ -78,15 +82,7 @@ export const ChartView = ({
   const send = async () => {
     if (!app || !target) return;
     setSendState("sending");
-    try {
-      const response = await app.sendMessage({
-        role: "user",
-        content: [{ type: "text", text: buildDigDeeperPrompt(target) }],
-      });
-      setSendState(response.isError ? "failed" : "sent");
-    } catch {
-      setSendState("failed");
-    }
+    setSendState(await sendDigDeeper((params) => app.sendMessage(params), target));
   };
 
   const drawable =
@@ -98,18 +94,16 @@ export const ChartView = ({
   const notes: string[] = [];
   if (cartesian && cartesian.hiddenSeries > 0) {
     notes.push(
-      `${cartesian.hiddenSeries} smaller ${plural(cartesian.hiddenSeries, "series is", "series are")} not drawn; the table view has ${plural(cartesian.hiddenSeries, "it", "them")}.`
+      `Not drawn: ${plural(cartesian.hiddenSeries, "smaller series", "smaller series")}. The table view has them.`
     );
   }
   if (cartesian && cartesian.hiddenCategories > 0) {
     notes.push(
-      `Showing the first ${cartesian.categories.length} categories; ${cartesian.hiddenCategories} more ${plural(cartesian.hiddenCategories, "is", "are")} in the table view.`
+      `Showing the first ${cartesian.categories.length} categories. The table view has ${plural(cartesian.hiddenCategories, "more category", "more categories")}.`
     );
   }
   if (pie && pie.skipped > 0) {
-    notes.push(
-      `${pie.skipped} ${plural(pie.skipped, "group has", "groups have")} no positive value and ${plural(pie.skipped, "is", "are")} not drawn.`
-    );
+    notes.push(`Not drawn, because they have no positive value: ${plural(pie.skipped, "group")}.`);
   }
   if (spec.omittedMeasures && spec.omittedMeasures.length > 0) {
     notes.push(
@@ -124,7 +118,7 @@ export const ChartView = ({
   const subtitle = [
     model.datasetName,
     ...describeScope(model.query, stableContext),
-    `${model.rows.length} ${plural(model.rows.length, "row", "rows")}`,
+    plural(model.rows.length, "row"),
   ].filter(Boolean);
 
   return (

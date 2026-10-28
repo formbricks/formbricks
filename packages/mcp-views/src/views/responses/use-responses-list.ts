@@ -1,17 +1,9 @@
 import type { App } from "@modelcontextprotocol/ext-apps";
-import { useCallback, useReducer, useRef, useState } from "react";
-import {
-  type Filters,
-  buildListArguments,
-  defaultFilters,
-  filtersFromQuery,
-  validateFilters,
-} from "./filters";
-import { parseListPage } from "./parse";
+import { useCallback, useReducer, useState } from "react";
+import { type Filters, defaultFilters, filtersFromQuery, validateFilters } from "./filters";
+import { type CallTool, createLatestGate, loadMoreList, refreshList } from "./loaders";
 import { type ListState, createListState, listReducer } from "./state";
-import type { ListPage, Parsed, ShowResponsesData } from "./types";
-
-const LIST_TOOL = "list_responses";
+import type { ShowResponsesData } from "./types";
 
 export interface ResponsesList {
   state: ListState;
@@ -25,10 +17,10 @@ export interface ResponsesList {
 }
 
 /**
- * The table's data (mount it with a `key` that changes with the tool result): the first page the tool returned, then every follow-up page and filter change
- * through the existing `list_responses` tool (the host forwards the call; the view never talks to the
- * server itself). A counter drops answers that arrive after a newer request was started, so a slow
- * response for old filters cannot overwrite the list for new ones.
+ * The table's data (mount it with a `key` that changes with the tool result): the first page the tool
+ * returned, then every follow-up page and filter change through the existing `list_responses` tool (the host forwards the call; the view never talks to the
+ * server itself). The call-and-interpret flow, including dropping answers that arrive after a newer
+ * request started, lives in `loaders.ts`; this hook only wires it to React state.
  */
 export const useResponsesList = (
   app: App | null,
@@ -37,41 +29,21 @@ export const useResponsesList = (
 ): ResponsesList => {
   const [state, dispatch] = useReducer(listReducer, initial, createListState);
   const [filters, setFilters] = useState<Filters>(() => filtersFromQuery(initial.query, timeZone));
-  const latest = useRef(0);
+  const [gate] = useState(createLatestGate);
 
-  const fetchPage = useCallback(
-    async (nextFilters: Filters, cursor?: string): Promise<Parsed<ListPage> | undefined> => {
-      if (!app) return undefined;
-      latest.current += 1;
-      const ticket = latest.current;
-      let page: Parsed<ListPage>;
-      try {
-        const result = await app.callServerTool({
-          name: LIST_TOOL,
-          arguments: buildListArguments(initial.query, nextFilters, timeZone, cursor),
-        });
-        page = parseListPage(result);
-      } catch (error) {
-        page = {
-          ok: false,
-          message: error instanceof Error && error.message ? error.message : "The request failed.",
-        };
-      }
-      return ticket === latest.current ? page : undefined;
-    },
-    [app, initial.query, timeZone]
+  const callTool = useCallback<CallTool>(
+    (params) => app?.callServerTool(params) ?? Promise.reject(new Error("The host is not connected.")),
+    [app]
   );
 
   const refresh = useCallback(
     async (nextFilters: Filters) => {
+      if (!app) return;
       dispatch({ type: "refreshStart" });
-      const page = await fetchPage(nextFilters);
-      if (!page) return;
-      dispatch(
-        page.ok ? { type: "refreshDone", page: page.value } : { type: "refreshFailed", message: page.message }
-      );
+      const action = await refreshList(gate, callTool, initial.query, nextFilters, timeZone);
+      if (action) dispatch(action);
     },
-    [fetchPage]
+    [app, callTool, gate, initial.query, timeZone]
   );
 
   const changeFilters = useCallback(
@@ -90,14 +62,11 @@ export const useResponsesList = (
 
   const loadMore = useCallback(async () => {
     const cursor = state.nextCursor;
-    if (!cursor || state.phase !== "idle") return;
+    if (!app || !cursor || state.phase !== "idle") return;
     dispatch({ type: "moreStart" });
-    const page = await fetchPage(filters, cursor);
-    if (!page) return;
-    dispatch(
-      page.ok ? { type: "moreDone", page: page.value } : { type: "moreFailed", message: page.message }
-    );
-  }, [fetchPage, filters, state.nextCursor, state.phase]);
+    const action = await loadMoreList(gate, callTool, initial.query, filters, timeZone, cursor);
+    if (action) dispatch(action);
+  }, [app, callTool, filters, gate, initial.query, state.nextCursor, state.phase, timeZone]);
 
   const retry = useCallback(() => {
     if (state.rows.length === 0) void refresh(filters);

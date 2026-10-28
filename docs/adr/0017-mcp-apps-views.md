@@ -19,4 +19,5 @@ Six tools render a view in the user's agent through the MCP Apps extension (`io.
 - A new workspace package, `@formbricks/mcp-views`, builds one HTML file per view; `apps/web/modules/mcp/apps` serves them and links the tools. Handbook: "Interactive views (MCP Apps)".
 - A client that does not support MCP Apps gets each tool's text and JSON result, so no tool depends on its view. Tools carry the nested `_meta.ui.resourceUri` plus the deprecated flat key and ChatGPT's alias until the specification drops the flat key.
 - The approve button in the change review is the only mutation a view can start. It reuses the exact reviewed arguments, adds `confirmDestructive` only after an explicit tick, and the server re-checks scope, staleness and confirmation, so the view is not a trust boundary.
+- A view never puts workspace-authored text (names, headlines, answers) into a message it sends to the agent, only ids and what the person typed; response rows travel in `_meta`, which hosts keep from the model.
 - The views were exercised in a small dev host, not in Claude, ChatGPT or VS Code; a pass in each is still needed before anyone relies on them.

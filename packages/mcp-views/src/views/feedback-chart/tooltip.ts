@@ -1,4 +1,5 @@
-import { type FormatContext, formatFull, formatPercent } from "./format";
+import type { FormatContext } from "../../shared/format";
+import { formatFull, formatPercent } from "./format";
 import type { DigDeeperTarget } from "./prompt";
 import type { CartesianData, PieData } from "./series";
 
@@ -79,6 +80,12 @@ export interface PointContext {
   seriesLabel?: string;
   measureLabel: string;
   granularity?: DigDeeperTarget["granularity"];
+  /** Dataset and query members of the chart, for the message to the agent (see `DigDeeperRef`). */
+  datasetId?: string;
+  xMember?: string;
+  seriesMember?: string;
+  /** The measure of a pie, or of a cartesian chart's one measure; a series that is a measure names its own. */
+  measureMember?: string;
 }
 
 /** The selected point of a cartesian chart, as the pieces the selection bar and the message need. */
@@ -100,6 +107,12 @@ export const describeCartesianPoint = (
     ...(hasSeriesDimension ? { seriesLabel: point.seriesLabel, seriesValue: series.label } : {}),
     measureLabel: hasSeriesDimension ? point.measureLabel : series.label,
     valueText: valueText(series.values[selection.category] ?? null, context),
+    ref: {
+      ...(point.datasetId ? { datasetId: point.datasetId } : {}),
+      ...(point.xMember ? { x: point.xMember } : {}),
+      ...(hasSeriesDimension && point.seriesMember ? { series: point.seriesMember } : {}),
+      measure: series.measureId,
+    },
   };
 };
 
@@ -117,5 +130,10 @@ export const describePieSlice = (
     xValue: slice.label,
     measureLabel: point.measureLabel,
     valueText: formatFull(slice.value, context.locale),
+    ref: {
+      ...(point.datasetId ? { datasetId: point.datasetId } : {}),
+      ...(point.xMember ? { x: point.xMember } : {}),
+      ...(point.measureMember ? { measure: point.measureMember } : {}),
+    },
   };
 };

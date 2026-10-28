@@ -1,26 +1,4 @@
-/**
- * Dates and durations for the view. Locale and time zone come from the host (`hostContext.locale`,
- * `hostContext.timeZone`); a value the runtime rejects falls back to its defaults rather than throwing
- * inside render.
- */
-export const formatDateTime = (iso: string, locale?: string, timeZone?: string): string => {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return iso;
-
-  const format = (formatLocale: string | undefined, formatTimeZone: string | undefined): string =>
-    new Intl.DateTimeFormat(formatLocale, {
-      dateStyle: "medium",
-      timeStyle: "short",
-      ...(formatTimeZone ? { timeZone: formatTimeZone } : {}),
-    }).format(date);
-
-  try {
-    return format(locale, timeZone);
-  } catch {
-    // The host sent a locale or time zone this runtime does not know: UTC in the default locale.
-    return format(undefined, "UTC");
-  }
-};
+/** Durations for the view. Dates come from the shared formatter, in the host's locale and time zone. */
 
 /** "850 ms", "4.2 s", "3 min 5 s", "2 h 10 min". */
 export const formatDuration = (ms: number): string => {

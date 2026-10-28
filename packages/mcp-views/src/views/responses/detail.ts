@@ -1,4 +1,5 @@
-import { DETAIL_VALUE_MAX_CHARS, answerToLines, isRecord, truncate } from "./cells";
+import { isRecord } from "../../shared/guards";
+import { DETAIL_VALUE_MAX_CHARS, answerToLines, truncate } from "./cells";
 import { readFailure } from "./parse";
 import type { Parsed, RawToolResult } from "./types";
 
@@ -27,7 +28,12 @@ const MAX_EMBEDDED = 50;
 
 const asString = (value: unknown): string | undefined => (typeof value === "string" ? value : undefined);
 
-/** The `get_response` result as the detail panel renders it. Everything is text; nothing is HTML. */
+/**
+ * The `get_response` result as the detail panel renders it. Everything is text; nothing is HTML. This
+ * result comes back to the view through `callServerTool` and goes nowhere else: the host answers the
+ * iframe's `tools/call`, it does not add the result to the model's context, and the view never copies it
+ * there (it sends no message and no model context).
+ */
 export const parseDetail = (result: RawToolResult | null | undefined): Parsed<DetailModel> => {
   const failure = readFailure(result);
   if (failure) return { ok: false, message: failure };
@@ -68,9 +74,10 @@ export const parseDetail = (result: RawToolResult | null | undefined): Parsed<De
       return [{ label, value: truncate(String(value), DETAIL_VALUE_MAX_CHARS) }];
     });
 
+  const contactId = isRecord(data.contact) ? asString(data.contact.id) : undefined;
   const contact =
-    isRecord(data.contact) && asString(data.contact.id)
-      ? { id: asString(data.contact.id) as string, userId: asString(data.contact.userId) ?? null }
+    isRecord(data.contact) && contactId
+      ? { id: contactId, userId: asString(data.contact.userId) ?? null }
       : null;
 
   return {

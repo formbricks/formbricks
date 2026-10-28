@@ -1,7 +1,8 @@
 import { useRef } from "react";
+import type { FormatContext } from "../../shared/format";
 import { Legend } from "./Legend";
 import { Tooltip } from "./Tooltip";
-import { type FormatContext, formatTick } from "./format";
+import { formatTick } from "./format";
 import { estimateTextWidth, placeEndLabels, selectTickIndices, truncateLabel } from "./layout";
 import { seriesColorVar } from "./palette";
 import { linearScale, nearestIndex, resolveYAxis } from "./scale";
