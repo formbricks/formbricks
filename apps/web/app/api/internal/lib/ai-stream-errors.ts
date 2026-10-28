@@ -41,8 +41,6 @@ export function classifyAIStreamFailure(error: unknown): TAIStreamFailure | null
  * error: on abort the AI SDK rejects with a DOMException whose shape varies by runtime, while
  * `signal.aborted` is unambiguous. Getting this order wrong logs every user pressing Stop as a failure.
  */
-export function isClientAbort(error: unknown, signal: AbortSignal): boolean {
-  if (signal.aborted) return true;
-
-  return error instanceof Error && error.name === "AbortError";
+export function isClientAbort(signal: AbortSignal): boolean {
+  return signal.aborted;
 }

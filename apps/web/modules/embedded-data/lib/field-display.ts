@@ -10,6 +10,7 @@ import {
   HourglassIcon,
   LanguagesIcon,
   LayersIcon,
+  LayoutTemplateIcon,
   LogInIcon,
   type LucideIcon,
   MegaphoneIcon,
@@ -88,6 +89,9 @@ const RESERVED_FIELD_LABELS: Record<string, (t: TFunction) => string> = {
   visitTimeOnSite: (t) => t("workspace.surveys.responses.visit_time_on_site"),
   visitUniquePagesViewed: (t) => t("workspace.surveys.responses.visit_unique_pages_viewed"),
   visitUrls: (t) => t("workspace.surveys.responses.visit_urls"),
+  // Opened by creative (ENG-4001): the name is what an author reads; the id is for joins and exports.
+  openedByCreativeName: (t) => t("workspace.surveys.responses.opened_by_creative"),
+  openedByCreativeId: (t) => t("workspace.surveys.responses.opened_by_creative_id"),
   // The two `display: "none"` entries a picker offers but no column ever shows: `durationSeconds`
   // to the response filter (ENG-1848/ENG-2894), and `language` — the only `availability: "both"`
   // entry — to the mid-survey recall and logic pickers (ENG-1853). Both reuse a key that already
@@ -132,6 +136,9 @@ export const RESERVED_FIELD_ICONS: Record<string, LucideIcon> = {
   // The survey language the respondent is answering in, beside `locale`, the device's own setting.
   language: FlagIcon,
   locale: LanguagesIcon,
+  // The Creatives navigation icon, so the pair reads as "a creative" in the table and the filter.
+  openedByCreativeId: LayoutTemplateIcon,
+  openedByCreativeName: LayoutTemplateIcon,
   os: AirplayIcon,
   pagePath: FileTextIcon,
   pageReferrer: ArrowUpFromDotIcon,

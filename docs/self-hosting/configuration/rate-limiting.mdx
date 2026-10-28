@@ -29,6 +29,7 @@ Rate limits are scoped by identifier, depending on the endpoint and enforcement 
 - API key ID (for Envoy-managed and app-managed authenticated API calls)
 - User ID (for authenticated session-based calls and server actions)
 - Organization ID (for follow-up email dispatch and invitation budgets)
+- Email type, organization, sender and recipient address (for every outgoing email; see [Email Limits](#email-limits))
 
 When a limit is exceeded, the API returns `429 Too Many Requests`.
 
@@ -84,9 +85,11 @@ These are the limits that still run inside the Formbricks application server:
 | `api.v2`                      | 100 requests | 1 minute   | API key ID                    | Authenticated v2 API wrapper outside the Envoy-managed `/api/v2/client/*` subset                                                                          |
 | `api.v3`                      | 100 requests | 1 minute   | API key ID or session user ID | v3 API wrapper                                                                                                                                            |
 | `api.client`                  | 100 requests | 1 minute   | IP hash                       | Uncovered client routes such as `GET /api/v1/client/og`, `GET /api/v2/client/[workspaceId]/environment`, and `POST /api/v2/client/[workspaceId]/user` |
+| `api.clientCreativeEvents`    | 600 requests | 1 minute   | IP hash                       | `POST /api/v2/client/[workspaceId]/creatives/events`, the SDK's creative Impressions and Clicks; a request over the limit still gets 204, uncounted |
 | `storage.upload`              | 5 requests   | 1 minute   | Session user ID               | Session-authenticated `POST /api/v1/management/storage`                                                                                                   |
 | `storage.delete`              | 5 requests   | 1 minute   | Session user ID               | Session-authenticated `DELETE /storage/[workspaceId]/[accessType]/[fileName]`                                                                           |
 | `actions.emailUpdate`         | 3 requests   | 60 minutes | User ID                       | Profile email update action                                                                                                                               |
+| `actions.passwordResetRequest` | 3 requests | 60 minutes | User ID                     | "Reset password" from the signed-in profile settings                                                                                                    |
 | `actions.inviteMember`        | 50 recipients | 24 hours  | Organization ID               | Single, bulk, onboarding, and resend invite actions                                                                                                       |
 | `actions.inviteMemberPerUser` | 50 recipients | 24 hours  | User ID                       | The same invite actions, counted for the inviting user across all of their organizations                                                                  |
 | `actions.createOrganization`  | 5 requests    | 24 hours  | User ID                       | Organization creation actions (onboarding and the organization switcher)                                                                                  |
@@ -100,6 +103,62 @@ not consume the daily budget. Self-hosters can change the limit with `INVITE_RAT
 Formbricks Cloud organizations with the `bulk-invite` entitlement receive a limit of 500 recipients.
 The same allowance also applies to each inviting user across all of their organizations, so creating another
 organization does not reset it.
+
+## Email Limits
+
+Every email the application sends is also counted by type, however it was triggered, against the limits below.
+"Per sender" means the user who acted or, for email a survey or workflow sends, its owner (for one created with
+an API key, the organization's owner), counted across all of their organizations. "Per recipient" counts one
+address from one organization, except for account email, which an address only ever gets from its own account.
+The address is stored only as a keyed hash.
+
+| **Email type**                | **Per organization** | **Per sender**         | **Per recipient** | **Per deployment** |
+| ----------------------------- | -------------------- | ---------------------- | ----------------- | ------------------ |
+| `invite`                      | see invite limits    | see invite limits      | 3 per day         | 5000 per day       |
+| `email_verification`          | —                    | 3 per hour per account | 5 per hour        | —                  |
+| `sso_recovery_verification`   | —                    | —                      | 5 per hour        | —                  |
+| `email_change_verification`   | —                    | 3 per hour             | —                 | 1000 per hour      |
+| `password_reset`              | —                    | 3 per hour             | 6 per hour        | —                  |
+| `sso_sign_in_hint`            | —                    | 3 per hour per account | 3 per hour        | —                  |
+| `response_notification`       | 2000 per hour        | —                      | —                 | —                  |
+| `survey_preview`              | —                    | 10 per hour            | —                 | —                  |
+| `customization_preview`       | —                    | 10 per hour            | —                 | —                  |
+| Survey email to outside addresses | 200 per hour     | 300 per hour           | 5 per hour        | —                  |
+
+"Survey email to outside addresses" is one budget shared by verified survey links, follow-ups and workflow
+emails sent to an address that is not a member of the organization: a respondent's answer, a visitor's
+verification request, or an address the author typed. Follow-ups and workflow emails to an address the author
+typed that belongs to a member are not counted against it, so respondents cannot use it up for them. The
+per-sender cap is higher than the per-organization one, so respondents flooding one organization cannot use up
+the owner's email in their other organizations.
+
+`invite_accepted`, `password_reset_notification`, `account_deletion`, `sso_recovery_notification` and
+`data_retention_notice` go to an account or an organization's own members and are bounded by the flow that sends
+them.
+
+A per-deployment cap is shared by every organization, so whoever can reach it stops that email for everyone.
+Only email a signed-in user sends to an address they typed in has one, set far above what a few accounts can
+send. Sign-in and account email has none, and neither does email that respondents or visitors trigger.
+
+What happens when an email is capped depends on the flow:
+
+- **Previews, invite resends, the verified survey link and SSO account recovery** show a "too many requests"
+  error; a capped recovery email stops that SSO sign-in.
+- **New invites** are still created, and the action reports success; the invite can be resent or shared by link.
+- **Sign-up and resent verification, forgot password, the signed-in password reset, email changes and the SSO
+  sign-in hint** look the same as a sent email, so a capped email cannot reveal whether an account or address
+  exists. The verification resend and the signed-in reset also have their own per-account limit of 3 an hour,
+  which does show an error.
+- **Follow-ups, workflow emails and response notifications** are skipped, and a workflow step is recorded as
+  failed.
+
+An email is charged before it is sent, so one the SMTP server then refuses still counts. Every capped email is
+logged as `Outbound email suppressed: rate limit reached` with the email type and the limit that was spent, never
+the address.
+
+If your instance legitimately sends more, raise the per-organization, per-sender and per-deployment caps at once with
+`EMAIL_RATE_LIMIT_MULTIPLIER` (for example `EMAIL_RATE_LIMIT_MULTIPLIER=5`). Per-recipient caps do not change: they
+protect a person's inbox.
 
 ## Explicit Envoy Exclusions
 

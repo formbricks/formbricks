@@ -27,13 +27,17 @@ describe("isUnexpectedServerActionResponseError", () => {
     expect(isUnexpectedServerActionResponseError(unexpectedResponseError())).toBe(true);
   });
 
-  test("matches the code, not the message, which can be the server's own text", () => {
+  test("matches the code when present, since the message can be the server's own text", () => {
     expect(isUnexpectedServerActionResponseError(unexpectedResponseError("upstream connect error"))).toBe(
       true
     );
+  });
+
+  test("matches the generic message when Next.js ships no error code", () => {
     expect(
       isUnexpectedServerActionResponseError(new Error("An unexpected response was received from the server."))
-    ).toBe(false);
+    ).toBe(true);
+    expect(isUnexpectedServerActionResponseError(new Error("upstream connect error"))).toBe(false);
   });
 
   test("leaves Next's control-flow errors alone, though redirect() shares the code", () => {

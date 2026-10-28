@@ -9,10 +9,15 @@ const validationsTotal = meter.createCounter("formbricks_survey_single_use_link_
     "Single-use survey link validations by outcome, rejection reason, encryption mode and calling surface",
 });
 
-/** Which of the four entry points validated the link. */
+/**
+ * Which of the six entry points validated the link. `link_page` and `contact_link_page` cover their page's
+ * metadata too, since each page and its metadata share one resolution per request.
+ */
 export type TSingleUseLinkSurface =
   | "link_page"
   | "contact_link_page"
+  | "link_pin_action"
+  | "link_email_action"
   | "client_response_v1"
   | "client_response_v2";
 

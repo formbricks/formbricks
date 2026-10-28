@@ -47,6 +47,8 @@ interface ResponseTableProps {
   selectedResponseId: string | null;
   setSelectedResponseId: (id: string | null) => void;
   toolbar: TResponseToolbarState;
+  /** Creatives open this survey: its table then shows "Opened by creative" by default. */
+  isOpenedByCreatives: boolean;
 }
 
 /** The gear's column names: each column's text label, which its rendered header does not give. */
@@ -74,7 +76,9 @@ export const ResponseTable = ({
   selectedResponseId,
   setSelectedResponseId,
   toolbar,
-}: ResponseTableProps) => {
+
+  isOpenedByCreatives,
+}: Readonly<ResponseTableProps>) => {
   const { t } = useTranslation();
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
@@ -139,14 +143,15 @@ export const ResponseTable = ({
     // visible in TanStack, so the `secondary` ones need an explicit `false` to start hidden.
     setColumnVisibility(
       seedReservedColumnVisibility(
-        savedColumnVisibility ? (JSON.parse(savedColumnVisibility) as VisibilityState) : {}
+        savedColumnVisibility ? (JSON.parse(savedColumnVisibility) as VisibilityState) : {},
+        { isOpenedByCreatives }
       )
     );
 
     if (savedExpandedSettings !== null) {
       setIsExpanded(JSON.parse(savedExpandedSettings));
     }
-  }, [survey.id, defaultColumnOrder]);
+  }, [survey.id, defaultColumnOrder, isOpenedByCreatives]);
 
   const deleteResponse = async (responseId: string, params?: { decrementQuotas?: boolean }) => {
     const result = await deleteResponseAction({

@@ -1,0 +1,13 @@
+type: object
+description: >-
+  Plain text per language, keyed by locale code. Must hold `defaultLanguage`; every other key must be
+  declared in `languages`. A visitor whose language is missing sees the default language.
+propertyNames:
+  type: string
+  description: A locale code, `defaultLanguage` or one declared in `languages`.
+additionalProperties:
+  type: string
+  maxLength: 200
+examples:
+  - en-US: Feedback
+    de-DE: Feedback geben

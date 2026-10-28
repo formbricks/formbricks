@@ -15,10 +15,12 @@ import type { surveyKeys } from "@/modules/survey/list/lib/query";
 import type { TSurveyListItem } from "@/modules/survey/list/types/survey-overview";
 import { getRestrictedAuthor } from "@/modules/survey/visibility/lib/collaborate";
 import type { TSurveyVisibilityUiGate } from "@/modules/survey/visibility/lib/state";
+import type { TSurveyVisibilityBlocker } from "@/modules/survey/visibility/types";
+import { SurveyStatusPill } from "@/modules/ui/components/survey-status-indicator";
 import { ListTable } from "@/modules/ui/components/table-toolbar";
 import type { TColumnLabel } from "@/modules/ui/components/table-toolbar/lib/column-settings";
 import { SurveyDropDownMenu } from "./survey-dropdown-menu";
-import { MakeVisibleStrip, SurveyNameCell, SurveyStatusPill, getSurveyRowState } from "./survey-row";
+import { MakeVisibleStrip, SurveyNameCell, getSurveyRowState } from "./survey-row";
 
 /** The columns the gear lists, in their default order. Name is locked; the row menu is not listed. */
 export const getSurveyColumnLabels = (t: TFunction): TColumnLabel[] => [
@@ -66,6 +68,7 @@ type TSurveysTableProps = {
   renameSurvey: (surveyId: string, name: string) => Promise<void>;
   updateSurveyVisibility: (surveyId: string, visibility: TSurveyVisibility) => Promise<void>;
   onVisibilityNotEnabled: () => void;
+  onDeleteBlocked: (blockers: TSurveyVisibilityBlocker[]) => void;
 };
 
 type TSurveyColumnContext = Pick<
@@ -82,6 +85,7 @@ type TSurveyColumnContext = Pick<
   | "surveyVisibilityGate"
   | "listQueryKey"
   | "onVisibilityNotEnabled"
+  | "onDeleteBlocked"
 > & { t: TFunction; rowStates: Map<string, ReturnType<typeof getSurveyRowState>> };
 
 /** The table's columns, built outside the component so each cell renderer is not a nested component. */
@@ -100,6 +104,7 @@ const getSurveyColumns = ({
   surveyVisibilityGate,
   listQueryKey,
   onVisibilityNotEnabled,
+  onDeleteBlocked,
 }: TSurveyColumnContext): ColumnDef<TSurveyListItem>[] => [
   {
     id: "name",
@@ -204,6 +209,7 @@ const getSurveyColumns = ({
           workspaceName={workspaceName}
           listQueryKey={listQueryKey}
           onVisibilityNotEnabled={onVisibilityNotEnabled}
+          onDeleteBlocked={onDeleteBlocked}
         />
       </div>
     ),
@@ -235,6 +241,7 @@ export const SurveysTable = ({
   renameSurvey,
   updateSurveyVisibility,
   onVisibilityNotEnabled,
+  onDeleteBlocked,
 }: Readonly<TSurveysTableProps>) => {
   const { t } = useTranslation();
   const router = useRouter();
@@ -267,6 +274,7 @@ export const SurveysTable = ({
         surveyVisibilityGate,
         listQueryKey,
         onVisibilityNotEnabled,
+        onDeleteBlocked,
       }),
     [
       t,
@@ -283,6 +291,7 @@ export const SurveysTable = ({
       surveyVisibilityGate,
       listQueryKey,
       onVisibilityNotEnabled,
+      onDeleteBlocked,
     ]
   );
 

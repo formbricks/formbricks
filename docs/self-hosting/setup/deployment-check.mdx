@@ -1,0 +1,107 @@
+---
+title: "Deployment Check"
+description: "Verify a self-hosted Formbricks instance works end to end after you deploy or upgrade it."
+icon: "clipboard-check"
+---
+
+The deployment check proves that a running instance is wired up correctly: the app answers, Postgres and Redis are
+healthy, your API key works, a real survey can be answered in a browser and its response read back, file storage
+round-trips a file, and the JavaScript SDK is served. It runs from a Docker image, talks to your instance over HTTP
+only, and needs no database access.
+
+Run it after the first install, after every upgrade, and after changing a proxy, domain, or storage setting.
+
+## Run The Check
+
+<Steps>
+  <Step title="Create a dedicated workspace">
+    In Formbricks, create a workspace named **Deployment check**. The check creates and deletes its test surveys
+    there, so keep it separate from real data.
+  </Step>
+  <Step title="Create an API key">
+    Go to **Organization settings → API keys** and create a key with **write** access to the Deployment check
+    workspace only. No organization-level access is needed.
+  </Step>
+  <Step title="Run the image">
+    Pass the workspace id when the key has no organization access, which is the recommended setup.
+
+    ```bash
+    docker run --rm \
+      -e FORMBRICKS_URL=https://formbricks.example.com \
+      -e FORMBRICKS_API_KEY=fbk_your_key \
+      -e FORMBRICKS_WORKSPACE_ID=your_workspace_id \
+      -v "$PWD/report:/report" \
+      ghcr.io/formbricks/deployment-check:latest
+    ```
+
+    If you serve surveys from a separate domain, also set `FORMBRICKS_PUBLIC_URL`:
+
+    ```bash
+    docker run --rm \
+      -e FORMBRICKS_URL=https://admin.example.com \
+      -e FORMBRICKS_PUBLIC_URL=https://surveys.example.com \
+      -e FORMBRICKS_API_KEY=fbk_your_key \
+      -e FORMBRICKS_WORKSPACE_ID=your_workspace_id \
+      -v "$PWD/report:/report" \
+      ghcr.io/formbricks/deployment-check:latest
+    ```
+  </Step>
+</Steps>
+
+Use the image tag that matches your Formbricks version, for example `ghcr.io/formbricks/deployment-check:6.0.0`.
+
+## Configuration
+
+| Variable                  | Required | Default            | Description                                                                                                                      |
+| ------------------------- | -------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| `FORMBRICKS_URL`          | Yes      |                    | The `WEBAPP_URL` of your instance.                                                                                               |
+| `FORMBRICKS_PUBLIC_URL`   | No       | `FORMBRICKS_URL`   | The `PUBLIC_URL`, when surveys are served from a different domain.                                                               |
+| `FORMBRICKS_API_KEY`      | Yes      |                    | API key with write access to one workspace.                                                                                      |
+| `FORMBRICKS_WORKSPACE_ID` | No       | Resolved from key  | Required when the key has no organization access, or can write to more than one workspace.                                       |
+| `CHECK_STORAGE`           | No       | `auto`             | `auto` skips the storage check when file storage is not configured, `true` fails instead, `false` always skips it.                |
+| `CHECK_TIMEOUT_MS`        | No       | `30000`            | Timeout for each network request.                                                                                                |
+
+The container must be able to reach your instance. When file storage points at a bucket that only the app can
+reach, the storage check reports that as a failure, because browsers would not reach it either.
+
+## Read The Results
+
+Each check prints one line:
+
+```text
+✅ 01-infra.spec.ts › app answers /health
+✅ 01-infra.spec.ts › database and cache are healthy
+❌ 02-auth.spec.ts › API key can read the workspace
+     API key: API key invalid (HTTP 401). Next step: create a new organization API key and pass it as FORMBRICKS_API_KEY.
+⏭  03-survey-loop.spec.ts › creates a link survey through the API — skipped: auth failed
+```
+
+- **✅** passed. **❌** failed, with the broken component and the next step. **⏭** skipped, because an earlier check
+  it depends on failed. Fix the first ❌ and run again.
+- The exit code is `0` when nothing failed. Skipped checks do not fail the run.
+- `report/html/index.html` is a browsable report, with a trace and screenshot for failed browser steps.
+  `report/junit.xml` is for CI systems.
+
+If the instance is unhealthy, the **infrastructure** checks fail first and everything else is skipped, so you see
+one root cause instead of a wall of errors.
+
+### Common Failures
+
+| Message                                | Likely cause                                                           | Fix                                                                  |
+| -------------------------------------- | ---------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `Redis unreachable`                    | `REDIS_URL` wrong, or the cache is down.                               | Check `REDIS_URL` and the cache container.                           |
+| `Postgres unreachable`                 | `DATABASE_URL` wrong, or the database is down.                         | Check `DATABASE_URL` and the database container.                     |
+| `API key invalid (HTTP 401)`           | Wrong or deleted key.                                                  | Create a new key.                                                    |
+| `key lacks access to workspace`        | Key does not cover the workspace.                                      | Give the key write access to the Deployment check workspace.         |
+| `survey page ... ending card`          | Survey bundle, client API, or database write failing.                  | Check the app logs for `/api/v1/client/.../responses`.               |
+| `SDK API ... returned HTTP 404`        | Split domain: the proxy does not forward client routes to `PUBLIC_URL`. | Forward `/api/v1/client/*` and `/js/*` on the public domain.         |
+| `File storage ... signed URL`          | Bucket endpoint not reachable from outside the app.                    | Check `S3_ENDPOINT_URL` and network access.                          |
+
+## What It Creates
+
+Each run creates up to two surveys named `[deployment-check] ...` in the workspace and submits one response to
+one of them. Everything is deleted at the end of the run, including when a check fails. Surveys older than one hour
+that carry the prefix are deleted too, so a run that was killed does not leave data behind. The check only ever
+touches surveys with that prefix.
+
+The single test response is stored with its survey and removed with it, so it does not remain in your usage counts.

@@ -8,6 +8,7 @@ import {
   ValidationError,
 } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
+import { getCreativeAttribution } from "@/modules/ee/creatives/lib/attribution";
 import { TDisplayCreateInputV2 } from "../types/display";
 import { doesContactExistInWorkspace } from "./contact";
 import { createDisplay } from "./display";
@@ -33,6 +34,10 @@ vi.mock("./contact", () => ({
   doesContactExistInWorkspace: vi.fn(),
 }));
 
+vi.mock("@/modules/ee/creatives/lib/attribution", () => ({
+  getCreativeAttribution: vi.fn(),
+}));
+
 const workspaceId = "workspace-id-mock";
 const surveyId = "test-survey-id";
 const contactId = "test-contact-id";
@@ -54,6 +59,7 @@ const mockDisplay = {
   contactId,
   surveyId,
   responseId: null,
+  creativeId: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -63,6 +69,7 @@ const mockDisplayWithoutContact = {
   contactId: null,
   surveyId,
   responseId: null,
+  creativeId: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -112,6 +119,44 @@ describe("createDisplay", () => {
       select: { id: true, contactId: true, surveyId: true },
     });
     expect(result).toEqual(mockDisplayWithoutContact); // Changed this line
+  });
+
+  describe("opened by a creative", () => {
+    const creativeId = "clh7m1qkx0000qwer1234abcd";
+
+    test("records the creative when it is in the workspace and opens this survey", async () => {
+      vi.mocked(getCreativeAttribution).mockResolvedValue({ id: creativeId, name: "Feedback tab" });
+      vi.mocked(prisma.display.create).mockResolvedValue(mockDisplayWithoutContact);
+
+      await createDisplay({ ...displayInputWithoutContact, creativeId });
+
+      expect(getCreativeAttribution).toHaveBeenCalledWith({ creativeId, workspaceId, surveyId });
+      expect(prisma.display.create).toHaveBeenCalledWith({
+        data: { survey: { connect: { id: surveyId } }, creativeId },
+        select: { id: true, contactId: true, surveyId: true },
+      });
+    });
+
+    test("still creates the display, without the creative, when the creative does not check out", async () => {
+      vi.mocked(getCreativeAttribution).mockResolvedValue(null);
+      vi.mocked(prisma.display.create).mockResolvedValue(mockDisplayWithoutContact);
+
+      const result = await createDisplay({ ...displayInputWithoutContact, creativeId });
+
+      expect(prisma.display.create).toHaveBeenCalledWith({
+        data: { survey: { connect: { id: surveyId } } },
+        select: { id: true, contactId: true, surveyId: true },
+      });
+      expect(result).toEqual(mockDisplayWithoutContact);
+    });
+
+    test("looks no creative up when none opened the survey", async () => {
+      vi.mocked(prisma.display.create).mockResolvedValue(mockDisplayWithoutContact);
+
+      await createDisplay(displayInputWithoutContact);
+
+      expect(getCreativeAttribution).not.toHaveBeenCalled();
+    });
   });
 
   test("should create a display without contact if contact does not exist in the workspace", async () => {

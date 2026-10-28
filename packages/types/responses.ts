@@ -520,6 +520,15 @@ export const ZResponseMeta = ZAutoCapturedResponseMeta.extend({
   country: z.string().optional(),
   action: z.string().optional(),
   ipAddress: z.string().optional(),
+  /**
+   * The creative that opened the survey. A client asks with the id; the ingest routes
+   * keep it only after checking the creative is in the workspace and opens this survey, and stamp the
+   * name themselves — a client-sent name never reaches the database. The name is the one the creative
+   * had when the response was created, so a later rename leaves stored responses as they were.
+   */
+  // Anything but text is dropped rather than refusing the response (the routes check the id anyway).
+  openedByCreativeId: z.string().optional().catch(undefined),
+  openedByCreativeName: z.string().optional(),
 });
 
 export type TResponseMeta = z.infer<typeof ZResponseMeta>;
@@ -626,6 +635,8 @@ export const ZResponseUpdate = z.object({
     url: z.string().optional(),
     source: z.string().optional(),
     action: z.string().optional(),
+    // The id only: the ingest routes check it and stamp the name (ENG-4001).
+    openedByCreativeId: z.string().optional(),
   }).optional(),
   // `ZResponseData`, not the narrower `ZResponseHiddenFieldValue`: `ResponseQueue` merges this map
   // over `data` on every submit, so `data`'s value shape is literally its type. The renderer now

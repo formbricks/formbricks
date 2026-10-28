@@ -1,0 +1,27 @@
+allOf:
+  - $ref: ./Problem.yml
+  - type: object
+    required:
+      - details
+    properties:
+      details:
+        type: object
+        required:
+          - creatives
+        properties:
+          creatives:
+            type: array
+            minItems: 1
+            description: The non-archived creatives whose Destination is this survey, by name.
+            items:
+              type: object
+              required:
+                - id
+                - name
+              properties:
+                id:
+                  type: string
+                  description: Creative identifier.
+                name:
+                  type: string
+              additionalProperties: false

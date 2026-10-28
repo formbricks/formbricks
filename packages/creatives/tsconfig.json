@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "exclude": ["node_modules", "coverage"],
+  "extends": "@formbricks/config-typescript/js-library.json",
+  "include": ["src", "vitest.config.mts"]
+}

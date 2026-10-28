@@ -1,5 +1,6 @@
 // Import modules after mocking
 import { afterAll, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { logger } from "@formbricks/logger";
 // Import after mocking
 import {
   type TRateLimitReservation,
@@ -98,6 +99,18 @@ describe("checkRateLimit", () => {
     if (result.ok) {
       expect(result.data.allowed).toBe(false);
     }
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({
+        violationId: expect.stringMatching(/^[0-9a-f-]{36}$/),
+        namespace: "test",
+      }),
+      "Rate limit exceeded"
+    );
+
+    const firstViolation = vi.mocked(logger.error).mock.calls.at(-1)?.[0] as { violationId: string };
+    await checkRateLimit(testConfig, "test-user");
+    const secondViolation = vi.mocked(logger.error).mock.calls.at(-1)?.[0] as { violationId: string };
+    expect(secondViolation.violationId).not.toBe(firstViolation.violationId);
   });
 
   test("should fail open when Redis is unavailable", async () => {
@@ -488,6 +501,10 @@ describe("peekRateLimit", () => {
       expect(result.data.allowed).toBe(false);
       expect(result.data.retryAfter).toBeGreaterThan(0);
     }
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ violationId: expect.any(String), namespace: "test" }),
+      "Rate limit exceeded"
+    );
   });
 
   test("should treat missing redis key as zero usage", async () => {

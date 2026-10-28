@@ -119,6 +119,27 @@ describe("@formbricks/cache cacheKeys", () => {
       });
     });
 
+    describe("creative stats namespace", () => {
+      test("keys one UTC day's counters of a creative, and the day's flush sets", () => {
+        expect(createCacheKey.creativeStats.devices("2026-10-16", "clcr1")).toBe(
+          "fb:creative-stats:2026-10-16:clcr1:devices"
+        );
+        expect(createCacheKey.creativeStats.pages("2026-10-16", "clcr1")).toBe(
+          "fb:creative-stats:2026-10-16:clcr1:pages"
+        );
+        expect(createCacheKey.creativeStats.pending("2026-10-16")).toBe(
+          "fb:creative-stats:2026-10-16:pending"
+        );
+        expect(createCacheKey.creativeStats.flushing("2026-10-16")).toBe(
+          "fb:creative-stats:2026-10-16:flushing"
+        );
+      });
+
+      test("keys the countable creative ids by workspace, next to its state, and by the ids' hash", () => {
+        expect(createCacheKey.workspace.creativeIds("clws1", "ab12")).toBe("fb:env:clws1:creative-ids:ab12");
+      });
+    });
+
     describe("hub namespace", () => {
       test("should create feedback record tenant key", () => {
         const key = createCacheKey.hub.feedbackRecordTenant("0194d8a0-3d55-7ff4-9f62-8d02c3fbcfe8");

@@ -45,6 +45,9 @@ const toColumnNames = (fields: unknown[]): string[] =>
  */
 const UNIQUE_INDEX_COLUMNS: Readonly<Record<string, readonly string[]>> = {
   AuthzedProjectionScopeState_pkey: ["scope"],
+  CreativeDailyPageStat_pkey: ["creativeId", "date", "page"],
+  CreativeDailyStat_pkey: ["creativeId", "date", "deviceType"],
+  CreativeLanguage_pkey: ["languageId", "creativeId"],
   FeedbackDirectoryWorkspace_pkey: ["feedbackDirectoryId", "workspaceId"],
   FeedbackSourceFieldMapping_workspaceId_feedbackSourceId_sourceF: [
     "workspaceId",

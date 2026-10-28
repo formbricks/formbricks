@@ -1,19 +1,50 @@
 type: string
 enum:
+  - ar-EG
+  - bg-BG
+  - cs-CZ
+  - da-DK
   - de-DE
+  - el-GR
   - en-US
   - es-ES
+  - et-EE
+  - fi-FI
   - fr-FR
+  - hi-IN
+  - hr-HR
   - hu-HU
+  - id-ID
+  - it-CH
+  - it-IT
   - ja-JP
+  - km-KH
+  - ko-KR
+  - lt-LT
+  - lv-LV
+  - ms-MY
+  - nb-NO
+  - ne-NP
+  - nl-BE
   - nl-NL
+  - no-NO
+  - pl-PL
   - pt-BR
   - pt-PT
   - ro-RO
   - ru-RU
+  - sk-SK
+  - sl-SI
   - sv-SE
   - tr-TR
+  - uk-UA
+  - ur-PK
+  - uz-UZ
+  - vi-VN
   - zh-Hans-CN
   - zh-Hant-TW
-description: Supported app locale code that AI survey creation can return.
+description: >-
+  Survey language code AI survey creation can write a draft in: every language
+  the survey runtime ships button and validation strings for, plus the
+  dashboard locales.
 example: en-US

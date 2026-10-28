@@ -13,6 +13,7 @@ type TV3ProblemBody = {
   code?: string;
   requestId?: string;
   invalid_params?: TV3InvalidParam[];
+  details?: unknown;
 };
 
 export class V3ApiError extends Error {
@@ -20,6 +21,8 @@ export class V3ApiError extends Error {
   code?: string;
   requestId?: string;
   invalid_params?: TV3InvalidParam[];
+  /** The problem's `details`, unparsed: their shape depends on `code`, so the caller reads them. */
+  details?: unknown;
 
   constructor({
     status,
@@ -27,12 +30,14 @@ export class V3ApiError extends Error {
     code,
     requestId,
     invalid_params,
+    details,
   }: {
     status: number;
     detail: string;
     code?: string;
     requestId?: string;
     invalid_params?: TV3InvalidParam[];
+    details?: unknown;
   }) {
     super(detail);
     this.name = "V3ApiError";
@@ -40,6 +45,7 @@ export class V3ApiError extends Error {
     this.code = code;
     this.requestId = requestId;
     this.invalid_params = invalid_params;
+    this.details = details;
   }
 
   get detail(): string {
@@ -74,5 +80,6 @@ export async function parseV3ApiError(response: Response): Promise<V3ApiError> {
     code: problemBody?.code,
     requestId: problemBody?.requestId ?? response.headers.get("X-Request-Id") ?? undefined,
     invalid_params: problemBody?.invalid_params,
+    details: problemBody?.details,
   });
 }

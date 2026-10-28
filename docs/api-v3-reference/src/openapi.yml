@@ -28,6 +28,24 @@ info:
     /api/v3/responses/{responseId}**, and **DELETE /api/v3/responses/{responseId}**.
 
 
+    **Creatives**: **GET /api/v3/creatives**, **POST /api/v3/creatives**, **GET**, **PATCH** and
+    **DELETE /api/v3/creatives/{creativeId}**, **POST /api/v3/creatives/{creativeId}/archive**,
+    **/restore** and **/duplicate**, **GET /api/v3/creatives/{creativeId}/stats**, and **POST
+    /api/v3/creatives/pause**, which pauses every creative that opens a survey. A creative is a
+    feedback button or a banner the web SDK renders on the customer's site; pressing it opens its
+    Destination, a survey or a link. Writes set the author's `status`; reads add the derived
+    `displayStatus`; `stats` returns its daily Impressions and Clicks.
+
+
+    Creatives needs a self-hosted license that includes it; Formbricks Cloud does not offer it. With
+    one, every operation is available. Without one, a workspace that still has creatives is in
+    **wind-down**: its creatives are no longer shown on sites, and they can only be listed, read
+    (stats included), paused (a PATCH that sets nothing but `status`, or **POST
+    /api/v3/creatives/pause**), closed (the same PATCH) or deleted. A workspace
+    with no creatives has no access at all. Anything not allowed answers **403**
+    `creatives_not_entitled`.
+
+
     **Workflows extension**: **GET /api/v3/workflows**, **POST
     /api/v3/workflows**, **GET /api/v3/workflows/{workflowId}**, **PATCH
     /api/v3/workflows/{workflowId}**, **DELETE /api/v3/workflows/{workflowId}**,
@@ -372,6 +390,20 @@ paths:
     $ref: paths/api_v3_workflows_{workflowId}_unarchive.yml
   /api/v3/workflows/{workflowId}/test:
     $ref: paths/api_v3_workflows_{workflowId}_test.yml
+  /api/v3/creatives:
+    $ref: paths/api_v3_creatives.yml
+  /api/v3/creatives/pause:
+    $ref: paths/api_v3_creatives_pause.yml
+  /api/v3/creatives/{creativeId}:
+    $ref: paths/api_v3_creatives_{creativeId}.yml
+  /api/v3/creatives/{creativeId}/archive:
+    $ref: paths/api_v3_creatives_{creativeId}_archive.yml
+  /api/v3/creatives/{creativeId}/restore:
+    $ref: paths/api_v3_creatives_{creativeId}_restore.yml
+  /api/v3/creatives/{creativeId}/duplicate:
+    $ref: paths/api_v3_creatives_{creativeId}_duplicate.yml
+  /api/v3/creatives/{creativeId}/stats:
+    $ref: paths/api_v3_creatives_{creativeId}_stats.yml
   /api/v3/action-classes:
     $ref: paths/api_v3_action-classes.yml
   /api/v3/contact-attribute-keys:

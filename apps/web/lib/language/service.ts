@@ -136,22 +136,29 @@ export const getSurveysUsingGivenLanguage = reactCache(
   }
 );
 
-/** How many in-use survey names a refused delete lists before it summarises the rest. */
+/** How many in-use survey (and creative) names a refused delete lists before it summarises the rest. */
 const LANGUAGE_IN_USE_NAMED_SURVEY_LIMIT = 10;
-
-const LANGUAGE_IN_USE_REMEDY = "Remove the language from those surveys before deleting it.";
 
 const pluralizeSurveys = (count: number): string => (count === 1 ? "1 survey" : `${count} surveys`);
 
 /**
- * The refusal for a language some surveys still use. It names only surveys the caller may see (ENG-3282):
- * the rest are a bare count, so a restricted survey's name never reaches someone outside it.
+ * The refusal for a language some surveys or creatives still use. It names only surveys the caller may
+ * see (ENG-3282): the rest are a bare count, so a restricted survey's name never reaches someone outside
+ * it. Creatives are visible to the whole workspace, so they are named.
  */
 export const describeLanguageInUse = ({
   hiddenCount,
   visibleCount,
   visibleNames,
-}: Readonly<{ hiddenCount: number; visibleCount: number; visibleNames: ReadonlyArray<string> }>): string => {
+  creativeCount = 0,
+  creativeNames = [],
+}: Readonly<{
+  hiddenCount: number;
+  visibleCount: number;
+  visibleNames: ReadonlyArray<string>;
+  creativeCount?: number;
+  creativeNames?: ReadonlyArray<string>;
+}>): string => {
   const parts: string[] = [];
   if (visibleNames.length > 0) {
     const unnamed = visibleCount - visibleNames.length;
@@ -160,13 +167,24 @@ export const describeLanguageInUse = ({
     parts.push(visibleNames.join(", ") + more);
   }
   if (hiddenCount > 0) parts.push(`${pluralizeSurveys(hiddenCount)} you can't see`);
-  return `This language is still used by ${parts.join(" and ")}. ${LANGUAGE_IN_USE_REMEDY}`;
+  if (creativeCount > 0) {
+    const unnamed = creativeCount - creativeNames.length;
+    const more = unnamed > 0 ? ` and ${unnamed} more` : "";
+    parts.push(`the ${creativeCount === 1 ? "creative" : "creatives"} ${creativeNames.join(", ")}${more}`);
+  }
+  const users = [
+    ...(visibleCount + hiddenCount > 0 ? ["surveys"] : []),
+    ...(creativeCount > 0 ? ["creatives"] : []),
+  ];
+  return `This language is still used by ${parts.join(" and ")}. Remove the language from those ${users.join(" and ")} before deleting it.`;
 };
 
 /**
- * Refuses to delete a language any survey uses: `SurveyLanguage` cascades, so the delete would silently
- * strip it from every survey — including restricted ones the caller cannot see, and so cannot have been
- * warned about. Counts every survey, visible or not; names only the visible ones.
+ * Refuses to delete a language any survey or creative uses: `SurveyLanguage` and `CreativeLanguage`
+ * cascade, so the delete would silently strip it from every survey — including restricted ones the
+ * caller cannot see, and so cannot have been warned about — and from every creative, which would fall
+ * back to another language its texts don't have. Counts every survey, visible or not; names only the
+ * visible ones, and the creatives.
  */
 const assertLanguageNotInUse = async (
   languageId: string,
@@ -178,7 +196,7 @@ const assertLanguageNotInUse = async (
     ...(Object.keys(visible).length > 0 ? { survey: visible } : {}),
   };
 
-  const [totalCount, visibleCount, visibleRows] = await Promise.all([
+  const [totalCount, visibleCount, visibleRows, creativeCount, creativeRows] = await Promise.all([
     prisma.surveyLanguage.count({ where: { languageId } }),
     prisma.surveyLanguage.count({ where: visibleWhere }),
     prisma.surveyLanguage.findMany({
@@ -187,14 +205,24 @@ const assertLanguageNotInUse = async (
       orderBy: { survey: { name: "asc" } },
       take: LANGUAGE_IN_USE_NAMED_SURVEY_LIMIT,
     }),
+    // Its default language as well as its translations: each is a `CreativeLanguage` row.
+    prisma.creativeLanguage.count({ where: { languageId } }),
+    prisma.creativeLanguage.findMany({
+      where: { languageId },
+      select: { creative: { select: { name: true } } },
+      orderBy: { creative: { name: "asc" } },
+      take: LANGUAGE_IN_USE_NAMED_SURVEY_LIMIT,
+    }),
   ]);
-  if (totalCount === 0) return;
+  if (totalCount === 0 && creativeCount === 0) return;
 
   throw new OperationNotAllowedError(
     describeLanguageInUse({
       hiddenCount: Math.max(totalCount - visibleCount, 0),
       visibleCount,
       visibleNames: visibleRows.map((row) => row.survey.name),
+      creativeCount,
+      creativeNames: creativeRows.map((row) => row.creative.name),
     })
   );
 };
@@ -234,9 +262,9 @@ export const deleteLanguage = async (
     await assertLanguageNotInUse(languageId, visibleSurveyWhere);
 
     const prismaLanguage = await prisma.language.delete({
-      // Scoped to the workspace as well as the id, and to a language no survey uses: the checks above
-      // read a snapshot, this is what the database enforces at write time.
-      where: { id: languageId, workspaceId, surveyLanguages: { none: {} } },
+      // Scoped to the workspace as well as the id, and to a language no survey or creative uses: the
+      // checks above read a snapshot, this is what the database enforces at write time.
+      where: { id: languageId, workspaceId, surveyLanguages: { none: {} }, creativeLanguages: { none: {} } },
       select: { ...languageSelect, surveyLanguages: { select: { surveyId: true } } },
     });
 
@@ -245,10 +273,11 @@ export const deleteLanguage = async (
 
     return language;
   } catch (error) {
-    // The write-time scope matched nothing: a survey started using the language after the check above.
+    // The write-time scope matched nothing: a survey or creative started using the language after the
+    // check above.
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
       throw new OperationNotAllowedError(
-        "This language could not be deleted: a survey may have started using it. Reload and try again."
+        "This language could not be deleted: a survey or creative may have started using it. Reload and try again."
       );
     }
     if (error instanceof Prisma.PrismaClientKnownRequestError) {

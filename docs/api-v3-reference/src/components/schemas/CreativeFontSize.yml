@@ -1,0 +1,21 @@
+type: object
+description: >-
+  Font size in px, per device. `phone` applies below 768 px viewport width; `null` there uses the
+  `desktop` value, and `null` on `desktop` uses the workspace Look & Feel.
+required:
+  - desktop
+  - phone
+properties:
+  desktop:
+    type:
+      - integer
+      - "null"
+    minimum: 8
+    maximum: 72
+  phone:
+    type:
+      - integer
+      - "null"
+    minimum: 8
+    maximum: 72
+additionalProperties: false

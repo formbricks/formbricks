@@ -1,11 +1,9 @@
 "use client";
 
-import { ArchiveIcon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import type { TSurveyStatus, TSurveyVisibility } from "@formbricks/types/surveys/types";
-import { cn } from "@/lib/cn";
+import type { TSurveyVisibility } from "@formbricks/types/surveys/types";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { TSurveyListItem } from "@/modules/survey/list/types/survey-overview";
 import { RestrictedVisibilityMarker } from "@/modules/survey/visibility/components/restricted-visibility-marker";
@@ -17,26 +15,6 @@ import { WorkspaceVisibilityMarker } from "@/modules/survey/visibility/component
 import { getRestrictedAuthor, getVisibilityErrorReaction } from "@/modules/survey/visibility/lib/collaborate";
 import { type TRowVisibilityMarker, getRowVisibilityMarker } from "@/modules/survey/visibility/lib/markers";
 import { type TSurveyVisibilityUiGate, showVisibilityControls } from "@/modules/survey/visibility/lib/state";
-import { SurveyStatusIndicator } from "@/modules/ui/components/survey-status-indicator";
-
-const getSurveyStatusLabel = (
-  status: TSurveyStatus,
-  isScheduled: boolean,
-  t: ReturnType<typeof useTranslation>["t"]
-): string | undefined => {
-  switch (status) {
-    case "inProgress":
-      return t("common.in_progress");
-    case "completed":
-      return t("common.closed");
-    case "draft":
-      return t("common.draft");
-    case "paused":
-      return isScheduled ? t("common.scheduled") : t("common.paused");
-    default:
-      return undefined;
-  }
-};
 
 type MakeVisibleStripProps = {
   surveyId: string;
@@ -108,39 +86,6 @@ export const SurveyNameCell = ({
       <RestrictedVisibilityMarker author={author}>{nameNode}</RestrictedVisibilityMarker>
       {marker.detail && <RoleAccessMarker kind={marker.detail} workspaceName={workspaceName} />}
     </>
-  );
-};
-
-export const SurveyStatusPill = ({
-  status,
-  isArchived,
-  isScheduled,
-}: Readonly<{ status: TSurveyStatus; isArchived: boolean; isScheduled: boolean }>) => {
-  const { t } = useTranslation();
-  return (
-    <div
-      className={cn(
-        "flex w-fit items-center gap-2 rounded-full py-1 pr-2 pl-1 text-sm whitespace-nowrap text-slate-800",
-        isArchived && "bg-slate-100",
-        !isArchived && status === "inProgress" && "bg-emerald-50",
-        !isArchived && status === "completed" && "bg-slate-200",
-        !isArchived && status === "draft" && "bg-slate-100",
-        !isArchived && status === "paused" && "bg-slate-100"
-      )}>
-      {isArchived ? (
-        <>
-          <div className="rounded-full bg-slate-300 p-1">
-            <ArchiveIcon className="size-3 text-slate-600" />
-          </div>{" "}
-          {t("common.archived")}
-        </>
-      ) : (
-        <>
-          <SurveyStatusIndicator status={status} isScheduled={isScheduled} />{" "}
-          {getSurveyStatusLabel(status, isScheduled, t)}{" "}
-        </>
-      )}
-    </div>
   );
 };
 

@@ -8,7 +8,21 @@ import {
   translateFields,
 } from "./translate-fields";
 
+const aiTimeoutEnv = vi.hoisted(() => ({ multiplier: 1 }));
+
 vi.mock("server-only", () => ({}));
+vi.mock("@/lib/env", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@/lib/env")>();
+  return {
+    ...original,
+    env: {
+      ...original.env,
+      get AI_TIMEOUT_MULTIPLIER() {
+        return aiTimeoutEnv.multiplier;
+      },
+    },
+  };
+});
 
 const mockGenerateOrganizationAIObject = vi.fn();
 vi.mock("@/lib/ai/service", () => ({
@@ -47,6 +61,7 @@ const mockTranslationsFor = (fieldList: TAITranslationField[]): void => {
 
 describe("translateFields", () => {
   beforeEach(() => {
+    aiTimeoutEnv.multiplier = 1;
     vi.clearAllMocks();
   });
 
@@ -81,7 +96,8 @@ describe("translateFields", () => {
     ]);
   });
 
-  test("requests deterministic output (temperature: 0) for stable translations", async () => {
+  test.each([1, 3])("translates with timeout multiplier %i", async (multiplier) => {
+    aiTimeoutEnv.multiplier = multiplier;
     mockGenerateOrganizationAIObject.mockResolvedValue({
       object: { t0: "Willkommen", t1: "<p>Hallo</p>" },
     });
@@ -91,7 +107,7 @@ describe("translateFields", () => {
     expect(mockGenerateOrganizationAIObject.mock.calls[0][0]).toMatchObject({
       temperature: 0,
       maxOutputTokens: 1024,
-      timeout: 45000,
+      timeout: 45_000 * multiplier,
     });
   });
 
