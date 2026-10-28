@@ -104,11 +104,15 @@ const RESERVED = new Set(SPSS_RESERVED_WORDS.map((word) => word.toLowerCase()));
  */
 const COMMENT_WORD = /^comm(e(n(t)?)?)?$/;
 
+/** A linear scan: `/\.+$/` backtracks quadratically on a long run of dots that does not end the text. */
+const trimTrailingDots = (text: string): string => {
+  let end = text.length;
+  while (end > 0 && text[end - 1] === ".") end -= 1;
+  return text.slice(0, end);
+};
+
 const sanitizeName = (name: string): string => {
-  let result = name
-    .normalize("NFC")
-    .replace(/[^\p{L}\p{N}_.$#@]/gu, "_")
-    .replace(/\.+$/, "");
+  let result = trimTrailingDots(name.normalize("NFC").replace(/[^\p{L}\p{N}_.$#@]/gu, "_"));
   if (result === "" || !/^[\p{L}@#$]/u.test(result)) result = `v_${result}`;
   result = cutToBytes(result, NAME_MAX_BYTES);
   const lower = result.toLowerCase();
@@ -121,9 +125,11 @@ const createNameAllocator = () => {
   return (wanted: string): string => {
     const base = sanitizeName(wanted);
     let candidate = base;
-    for (let n = 2; taken.has(candidate.toLowerCase()); n++) {
-      const suffix = `_${n}`;
+    let attempt = 2;
+    while (taken.has(candidate.toLowerCase())) {
+      const suffix = `_${attempt}`;
       candidate = `${cutToBytes(base, NAME_MAX_BYTES - suffix.length)}${suffix}`;
+      attempt += 1;
     }
     taken.add(candidate.toLowerCase());
     return candidate;
@@ -198,6 +204,58 @@ const levelOf = (column: TAnalysisColumn): TLevel => {
   }
 };
 
+const isNumericCodeList = (parsed: (number | null)[]): boolean =>
+  parsed.length > 0 &&
+  parsed.every((value) => value !== null && Number.isSafeInteger(value)) &&
+  new Set(parsed).size === parsed.length;
+
+type TPlanSource = {
+  base: TVariable;
+  stat: TColumnStats;
+  readsCodes: boolean;
+  hasUnmapped: boolean;
+  allocate: (name: string) => string;
+};
+
+const planCodeColumn = ({ base, stat, readsCodes, hasUnmapped, allocate }: TPlanSource): TVariable => {
+  const column = base.column;
+  const codes = column.codes ?? [];
+  const textWidth = stringWidth(stat.maxTextBytes, ...codes.map(({ code }) => bytes(code)));
+  const parsed = codes.map(({ code }) => (PLAIN_INTEGER.test(code) ? Number(code) : null));
+  if (!readsCodes || !isNumericCodeList(parsed)) {
+    return {
+      ...base,
+      readFormat: `A${textWidth}`,
+      valueLabels: readsCodes
+        ? { numeric: false, pairs: codes.map(({ code, label }) => [spssStringKey(code), label]) }
+        : null,
+    };
+  }
+  // Wide enough for the code as written: reading "01" with F1.0 would take only its first character.
+  const width = Math.max(...codes.map(({ code }) => code.length));
+  return {
+    ...base,
+    readFormat: hasUnmapped ? `A${textWidth}` : `F${width}.0`,
+    convertFormat: hasUnmapped ? `F${width}.0` : null,
+    rawName: hasUnmapped ? allocate(`${column.name}_raw`) : null,
+    valueLabels: {
+      numeric: true,
+      pairs: codes.map(({ label }, index) => [String(parsed[index]), label]),
+    },
+  };
+};
+
+const planNumberColumn = ({ base, stat, hasUnmapped, allocate }: TPlanSource): TVariable => {
+  const format = numericFormat(stat);
+  if (!hasUnmapped) return { ...base, readFormat: format };
+  return {
+    ...base,
+    readFormat: `A${stringWidth(stat.maxTextBytes, stat.maxNumberChars)}`,
+    convertFormat: format,
+    rawName: allocate(`${base.column.name}_raw`),
+  };
+};
+
 const planColumn = (
   column: TAnalysisColumn,
   name: string,
@@ -205,8 +263,6 @@ const planColumn = (
   input: TSpssInput,
   allocate: (name: string) => string
 ): TVariable => {
-  const readsCodes = input.display !== "text";
-  const hasUnmapped = input.unmappedColumns.has(column.name);
   const base: TVariable = {
     column,
     name,
@@ -217,49 +273,19 @@ const planColumn = (
     valueLabels: null,
     timestampName: null,
   };
+  const source: TPlanSource = {
+    base,
+    stat,
+    readsCodes: input.display !== "text",
+    hasUnmapped: input.unmappedColumns.has(column.name),
+    allocate,
+  };
 
   switch (column.kind) {
-    case "code": {
-      const codes = column.codes ?? [];
-      const textWidth = stringWidth(stat.maxTextBytes, ...codes.map(({ code }) => bytes(code)));
-      const parsed = codes.map(({ code }) => (PLAIN_INTEGER.test(code) ? Number(code) : null));
-      const isNumeric =
-        readsCodes &&
-        codes.length > 0 &&
-        parsed.every((value) => value !== null && Number.isSafeInteger(value)) &&
-        new Set(parsed).size === parsed.length;
-      if (!isNumeric) {
-        return {
-          ...base,
-          readFormat: `A${textWidth}`,
-          valueLabels: readsCodes
-            ? { numeric: false, pairs: codes.map(({ code, label }) => [spssStringKey(code), label]) }
-            : null,
-        };
-      }
-      // Wide enough for the code as written: reading "01" with F1.0 would take only its first character.
-      const width = Math.max(...codes.map(({ code }) => code.length));
-      return {
-        ...base,
-        readFormat: hasUnmapped ? `A${textWidth}` : `F${width}.0`,
-        convertFormat: hasUnmapped ? `F${width}.0` : null,
-        rawName: hasUnmapped ? allocate(`${column.name}_raw`) : null,
-        valueLabels: {
-          numeric: true,
-          pairs: codes.map(({ label }, index) => [String(parsed[index]), label]),
-        },
-      };
-    }
-    case "number": {
-      const format = numericFormat(stat);
-      if (!hasUnmapped) return { ...base, readFormat: format };
-      return {
-        ...base,
-        readFormat: `A${stringWidth(stat.maxTextBytes, stat.maxNumberChars)}`,
-        convertFormat: format,
-        rawName: allocate(`${column.name}_raw`),
-      };
-    }
+    case "code":
+      return planCodeColumn(source);
+    case "number":
+      return planNumberColumn(source);
     case "flag":
       return {
         ...base,
@@ -287,99 +313,91 @@ const valueLabelLines = (pairs: readonly [string, string][]): string[] =>
 
 const MULTI_SELECT_TYPES = new Set(["multipleChoiceMulti", "pictureSelection"]);
 
-export const buildSpssSyntax = (input: TSpssInput): string => {
-  const allocate = createNameAllocator();
-  const names = input.columns.map((column) => allocate(column.name));
-  const variables = input.columns.map((column, index) =>
-    planColumn(
-      column,
-      names[index],
-      input.stats[index] ?? { maxTextBytes: 0, maxNumberChars: 0, maxDecimals: 0 },
-      input,
-      allocate
-    )
-  );
-  const file = input.display === "both" ? "codes.csv" : "data.csv";
-  const lines: string[] = [];
-  const add = (...more: string[]): void => {
-    lines.push(...more);
-  };
+/** Ends a statement: the last line gets the closing period. */
+const terminate = (statementLines: string[]): string[] => [
+  ...statementLines.slice(0, -1),
+  `${statementLines.at(-1)}.`,
+];
 
-  add(
-    "* Analysis export: SPSS syntax for the CSV file next to this one.",
-    "* Set the folder in the CD line below to where you unzipped the export, then run all.",
-    "CD 'C:\\path\\to\\the\\unzipped\\export'."
-  );
-  if (input.display === "both") {
-    add("* This syntax reads the codes file. The labels file is for reading, not for SPSS.");
-  }
-  add("");
+const headerSection = (display: TAnswerDisplay): string[] => [
+  "* Analysis export: SPSS syntax for the CSV file next to this one.",
+  "* Set the folder in the CD line below to where you unzipped the export, then run all.",
+  String.raw`CD 'C:\path\to\the\unzipped\export'.`,
+  ...(display === "both"
+    ? ["* This syntax reads the codes file. The labels file is for reading, not for SPSS."]
+    : []),
+  "",
+];
 
-  // Read.
-  add(
-    "GET DATA",
-    "  /TYPE=TXT",
-    `  /FILE='${file}'`,
-    "  /ENCODING='UTF8'",
-    "  /DELCASE=LINE",
-    '  /DELIMITERS=","',
-    `  /QUALIFIER='"'`,
-    "  /ARRANGEMENT=DELIMITED",
-    "  /FIRSTCASE=2",
-    "  /VARIABLES=",
-    ...variables.map((variable) => `    ${variable.name} ${variable.readFormat}`),
-    "  ."
-  );
-  add("");
+const readSection = (variables: readonly TVariable[], file: string): string[] => [
+  "GET DATA",
+  "  /TYPE=TXT",
+  `  /FILE='${file}'`,
+  "  /ENCODING='UTF8'",
+  "  /DELCASE=LINE",
+  '  /DELIMITERS=","',
+  `  /QUALIFIER='"'`,
+  "  /ARRANGEMENT=DELIMITED",
+  "  /FIRSTCASE=2",
+  "  /VARIABLES=",
+  ...variables.map((variable) => `    ${variable.name} ${variable.readFormat}`),
+  "  .",
+  "",
+];
 
-  // Convert.
+const convertSection = (variables: readonly TVariable[]): string[] => {
   const converted = variables.filter((variable) => variable.convertFormat);
   const timestamps = variables.filter((variable) => variable.timestampName);
-  if (converted.length > 0 || timestamps.length > 0) {
-    add(
-      "* Columns with answers that matched no option are read as text, kept in a _raw column, then converted."
-    );
-    if (converted.length > 0) {
-      // Each UNMAPPED cell that cannot become a number is a warning; SPSS stops at its low default.
-      add("SET MXWARNS=10000.");
-    }
-    for (const variable of converted) {
-      if (variable.rawName) {
-        add(
-          `STRING ${variable.rawName} (${variable.readFormat}).`,
-          `COMPUTE ${variable.rawName} = ${variable.name}.`
-        );
-      }
-      add(`ALTER TYPE ${variable.name} (${variable.convertFormat}).`);
-    }
-    for (const variable of timestamps) {
-      add(
-        `COMPUTE ${variable.timestampName} = NUMBER(SUBSTR(${variable.name}, 1, 19), YMDHMS19).`,
-        `FORMATS ${variable.timestampName} (DATETIME20).`
+  if (converted.length === 0 && timestamps.length === 0) return [];
+
+  const lines = [
+    "* Columns with answers that matched no option are read as text, kept in a _raw column, then converted.",
+  ];
+  // Each UNMAPPED cell that cannot become a number is a warning; SPSS stops at its low default.
+  if (converted.length > 0) lines.push("SET MXWARNS=10000.");
+  for (const variable of converted) {
+    if (variable.rawName) {
+      lines.push(
+        `STRING ${variable.rawName} (${variable.readFormat}).`,
+        `COMPUTE ${variable.rawName} = ${variable.name}.`
       );
     }
-    add("EXECUTE.", "");
+    lines.push(`ALTER TYPE ${variable.name} (${variable.convertFormat}).`);
   }
+  for (const variable of timestamps) {
+    lines.push(
+      `COMPUTE ${variable.timestampName} = NUMBER(SUBSTR(${variable.name}, 1, 19), YMDHMS19).`,
+      `FORMATS ${variable.timestampName} (DATETIME20).`
+    );
+  }
+  lines.push("EXECUTE.", "");
+  return lines;
+};
 
-  // Variable labels.
-  const labelEntries: [string, string][] = [];
+const variableLabelEntries = (variables: readonly TVariable[], timeZone: string): [string, string][] => {
+  const entries: [string, string][] = [];
   for (const variable of variables) {
     const label = cutToBytes(columnLabel(variable.column), VARIABLE_LABEL_MAX_BYTES);
-    labelEntries.push([variable.name, label]);
+    entries.push([variable.name, label]);
     if (variable.rawName) {
-      labelEntries.push([variable.rawName, cutToBytes(`${label} (raw text)`, VARIABLE_LABEL_MAX_BYTES)]);
+      entries.push([variable.rawName, cutToBytes(`${label} (raw text)`, VARIABLE_LABEL_MAX_BYTES)]);
     }
     if (variable.timestampName) {
-      labelEntries.push([
-        variable.timestampName,
-        `Timestamp as a date and time (${input.timeZone ?? "UTC"})`,
-      ]);
+      entries.push([variable.timestampName, `Timestamp as a date and time (${timeZone})`]);
     }
   }
-  const labelBlock = labelEntries.flatMap(([name, label]) => labelLines("  ", name, label));
-  add("VARIABLE LABELS", ...labelBlock.slice(0, -1), `${labelBlock.at(-1)}.`, "");
+  return entries;
+};
 
-  // Value labels, one block per distinct set of labels.
+const variableLabelsSection = (variables: readonly TVariable[], timeZone: string): string[] => {
+  const block = variableLabelEntries(variables, timeZone).flatMap(([name, label]) =>
+    labelLines("  ", name, label)
+  );
+  return ["VARIABLE LABELS", ...terminate(block), ""];
+};
+
+/** Value labels, one block per distinct set of labels. */
+const valueLabelsSection = (variables: readonly TVariable[]): string[] => {
   const groups = new Map<string, { names: string[]; labels: TValueLabels }>();
   for (const variable of variables) {
     if (!variable.valueLabels) continue;
@@ -388,40 +406,48 @@ export const buildSpssSyntax = (input: TSpssInput): string => {
     group.names.push(variable.name);
     groups.set(key, group);
   }
-  for (const { names: groupNames, labels } of groups.values()) {
-    const body = valueLabelLines(labels.pairs);
-    add("VALUE LABELS", ...wrapWords("  ", groupNames), ...body.slice(0, -1), `${body.at(-1)}.`);
-  }
-  if (groups.size > 0) add("");
+  if (groups.size === 0) return [];
+  const blocks = [...groups.values()].flatMap(({ names, labels }) => [
+    "VALUE LABELS",
+    ...wrapWords("  ", names),
+    ...terminate(valueLabelLines(labels.pairs)),
+  ]);
+  return [...blocks, ""];
+};
 
-  // Measurement level.
+const measurementLevelSection = (variables: readonly TVariable[]): string[] => {
   const byLevel = new Map<TLevel, string[]>();
+  const addToLevel = (level: TLevel, name: string): void => {
+    byLevel.set(level, [...(byLevel.get(level) ?? []), name]);
+  };
   for (const variable of variables) {
-    byLevel.set(variable.level, [...(byLevel.get(variable.level) ?? []), variable.name]);
-    if (variable.timestampName) {
-      byLevel.set("SCALE", [...(byLevel.get("SCALE") ?? []), variable.timestampName]);
-    }
+    addToLevel(variable.level, variable.name);
+    if (variable.timestampName) addToLevel("SCALE", variable.timestampName);
   }
-  const levelParts = [...byLevel.entries()].map(([level, levelNames]) =>
-    wrapWords("  ", levelNames, ` (${level})`)
-  );
-  add("VARIABLE LEVEL");
-  levelParts.forEach((part, index) => {
-    const partLines = index === 0 ? part : [`  /${part[0].trimStart()}`, ...part.slice(1)];
-    add(...partLines);
+  const parts = [...byLevel.entries()].map(([level, names]) => wrapWords("  ", names, ` (${level})`));
+  const lines = ["VARIABLE LEVEL"];
+  parts.forEach((part, index) => {
+    lines.push(...(index === 0 ? part : [`  /${part[0].trimStart()}`, ...part.slice(1)]));
   });
   lines[lines.length - 1] += ".";
-  add("");
+  lines.push("");
+  return lines;
+};
 
-  // Multiple response sets.
+/** Variables of each multi-select question, keyed by question id. */
+const groupMultiSelectFlags = (variables: readonly TVariable[]): Map<string, TVariable[]> => {
   const sets = new Map<string, TVariable[]>();
   for (const variable of variables) {
     const question = variable.column.question;
     if (variable.column.kind !== "flag" || !question || !MULTI_SELECT_TYPES.has(question.type)) continue;
     sets.set(question.id, [...(sets.get(question.id) ?? []), variable]);
   }
+  return sets;
+};
+
+const multipleResponseSection = (variables: readonly TVariable[]): string[] => {
   const setAllocate = createNameAllocator();
-  const setBlocks = [...sets.values()]
+  const setBlocks = [...groupMultiSelectFlags(variables).values()]
     .filter((members) => members.length >= 2)
     .map((members) => {
       const question = members[0].column.question;
@@ -438,11 +464,33 @@ export const buildSpssSyntax = (input: TSpssInput): string => {
         "    VALUE=1",
       ];
     });
-  if (setBlocks.length > 0) {
-    const flat = setBlocks.flat();
-    add("MRSETS", ...flat.slice(0, -1), `${flat.at(-1)}.`, "");
-  }
+  if (setBlocks.length === 0) return [];
+  return ["MRSETS", ...terminate(setBlocks.flat()), ""];
+};
 
-  add("EXECUTE.", "");
-  return lines.join("\n");
+export const buildSpssSyntax = (input: TSpssInput): string => {
+  const allocate = createNameAllocator();
+  const names = input.columns.map((column) => allocate(column.name));
+  const variables = input.columns.map((column, index) =>
+    planColumn(
+      column,
+      names[index],
+      input.stats[index] ?? { maxTextBytes: 0, maxNumberChars: 0, maxDecimals: 0 },
+      input,
+      allocate
+    )
+  );
+  const file = input.display === "both" ? "codes.csv" : "data.csv";
+
+  return [
+    ...headerSection(input.display),
+    ...readSection(variables, file),
+    ...convertSection(variables),
+    ...variableLabelsSection(variables, input.timeZone ?? "UTC"),
+    ...valueLabelsSection(variables),
+    ...measurementLevelSection(variables),
+    ...multipleResponseSection(variables),
+    "EXECUTE.",
+    "",
+  ].join("\n");
 };

@@ -84,6 +84,14 @@ describe("assignSpssNames", () => {
     expect(names(["comment", "Comm", "comment1", "com"])).toEqual(["comment_", "Comm_", "comment1", "com"]);
   });
 
+  test("drops trailing dots, and stays fast on a very long run of dots", () => {
+    expect(names(["a..", "b.c.", "..."])).toEqual(["a", "b.c", "v_"]);
+    const started = performance.now();
+    const [name] = names([`${".".repeat(200_000)}x`]);
+    expect(performance.now() - started).toBeLessThan(1000);
+    expect(bytes(name)).toBeLessThanOrEqual(64);
+  });
+
   test("names are unique ignoring case", () => {
     expect(names(["Score", "score", "SCORE"])).toEqual(["Score", "score_2", "SCORE_3"]);
   });
