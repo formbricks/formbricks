@@ -197,6 +197,47 @@ export type TExportResult =
   | { ok: true; response: Response }
   | { ok: false; reason: "excel_too_large" | "no_columns"; message: string };
 
+const NO_COLUMNS: TExportResult = {
+  ok: false,
+  reason: "no_columns",
+  message: "Select at least 1 column to export.",
+};
+
+/** The Standard export: the existing path, its bytes unchanged; `zip` only wraps them in a one-file archive. */
+const buildStandardResponse = async ({
+  survey,
+  plan,
+  filter,
+  excludedColumns,
+  isQuotasAllowed,
+}: {
+  survey: TSurvey;
+  plan: Extract<TExportPlan, { kind: "standard" }>;
+  filter?: TResponseFilterCriteria;
+  excludedColumns: readonly string[];
+  isQuotasAllowed: boolean;
+}): Promise<TExportResult> => {
+  const groups = standardGroupsOf(survey, isQuotasAllowed);
+  if (groups.length > 0 && groups.every((group) => excludedColumns.includes(group.id))) return NO_COLUMNS;
+  const { fileContents, fileName } = await getResponseDownloadFile(
+    survey.id,
+    plan.format,
+    filter,
+    excludedColumns
+  );
+  if (plan.zip) {
+    const archive = createSingleFileZip(fileName, fileContents);
+    return {
+      ok: true,
+      response: new Response(Readable.toWeb(archive) as ReadableStream<Uint8Array>, {
+        headers: downloadHeaders(plan, fileName.replace(/\.csv$/, ".zip")),
+      }),
+    };
+  }
+  const body = plan.format === "xlsx" ? Buffer.from(fileContents, "base64") : fileContents;
+  return { ok: true, response: new Response(body, { headers: downloadHeaders(plan, fileName) }) };
+};
+
 /**
  * The file of an export, as a download. The Standard export goes through the existing path unchanged
  * (`getResponseDownloadFile`, ENG-6779 pins its bytes). An Analysis export streams when it can: the CSV
@@ -220,31 +261,8 @@ export const buildExportResponse = async ({
   timeZone: string;
   signal: AbortSignal;
 }): Promise<TExportResult> => {
-  const noColumns: TExportResult = {
-    ok: false,
-    reason: "no_columns",
-    message: "Select at least 1 column to export.",
-  };
   if (plan.kind === "standard") {
-    const groups = standardGroupsOf(survey, isQuotasAllowed);
-    if (groups.length > 0 && groups.every((group) => excludedColumns.includes(group.id))) return noColumns;
-    const { fileContents, fileName } = await getResponseDownloadFile(
-      survey.id,
-      plan.format,
-      filter,
-      excludedColumns
-    );
-    if (plan.zip) {
-      const archive = createSingleFileZip(fileName, fileContents);
-      return {
-        ok: true,
-        response: new Response(Readable.toWeb(archive) as ReadableStream<Uint8Array>, {
-          headers: downloadHeaders(plan, fileName.replace(/\.csv$/, ".zip")),
-        }),
-      };
-    }
-    const body = plan.format === "xlsx" ? Buffer.from(fileContents, "base64") : fileContents;
-    return { ok: true, response: new Response(body, { headers: downloadHeaders(plan, fileName) }) };
+    return buildStandardResponse({ survey, plan, filter, excludedColumns, isQuotasAllowed });
   }
 
   const exported = withoutColumnGroups(
@@ -261,7 +279,7 @@ export const buildExportResponse = async ({
     ),
     excludedColumns
   );
-  if (exported.columns.length === 0) return noColumns;
+  if (exported.columns.length === 0) return NO_COLUMNS;
   const headers = downloadHeaders(plan, buildExportFileName(survey.name, plan));
 
   if (plan.output === "xlsx") {

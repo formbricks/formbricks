@@ -81,8 +81,8 @@ export const toggleGroup = (
   id: string,
   on: boolean
 ): string[] => {
-  const options = groups.filter((group) => group.parentId === id).map((group) => group.id);
-  const rest = excluded.filter((current) => current !== id && !options.includes(current));
+  const options = new Set(groups.filter((group) => group.parentId === id).map((group) => group.id));
+  const rest = excluded.filter((current) => current !== id && !options.has(current));
   if (!on) return [...rest, id];
   const parentId = groups.find((group) => group.id === id)?.parentId;
   if (!parentId || !isOff(excluded, parentId)) return rest;

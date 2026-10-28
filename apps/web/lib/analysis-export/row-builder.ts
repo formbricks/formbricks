@@ -570,7 +570,8 @@ const buildEmbeddedColumns = ({
     for (const key of contactAttributeKeys) {
       add(`person_${snakeCase(key)}`, `person.${key}`, "string", "contact", (response) => {
         const value = response.contactAttributes?.[key];
-        return toCell(value == null ? undefined : String(value));
+        if (value == null) return toCell(undefined);
+        return toCell(typeof value === "string" ? value : JSON.stringify(value));
       });
     }
   }

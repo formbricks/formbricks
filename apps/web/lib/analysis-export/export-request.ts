@@ -176,7 +176,8 @@ export const planExport = (
 
 /** The file extension and media type of what a plan downloads. */
 export const exportFileType = (plan: TExportPlan): { extension: "csv" | "xlsx" | "zip"; mime: string } => {
-  const output = plan.kind === "standard" ? (plan.zip ? "zip" : plan.format) : plan.output;
+  let output = plan.kind === "standard" ? plan.format : plan.output;
+  if (plan.kind === "standard" && plan.zip) output = "zip";
   if (output === "xlsx") {
     return { extension: "xlsx", mime: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" };
   }

@@ -22,7 +22,8 @@ const analysisColumnOptionId = (column: TAnalysisColumn): string | null =>
 
 const optionLabel = (column: TAnalysisColumn): string => {
   const label = column.option?.label ?? column.name;
-  return `${column.name} · ${column.kind === "other_text" ? `${label} (text)` : label}`;
+  const shown = column.kind === "other_text" ? `${label} (text)` : label;
+  return `${column.name} · ${shown}`;
 };
 
 const groupLabel = (column: TAnalysisColumn): string => {

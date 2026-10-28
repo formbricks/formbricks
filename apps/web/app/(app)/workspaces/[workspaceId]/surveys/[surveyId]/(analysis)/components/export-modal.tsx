@@ -260,6 +260,13 @@ const ExportProgress = ({
   const { t } = useTranslation();
   const { progress, cancelExport } = useExportManager();
   const rows = progress?.rows ?? null;
+  let status = t("workspace.surveys.export.export_starting");
+  if (included !== null) {
+    status =
+      rows === null
+        ? t("workspace.surveys.export.export_preparing", { count: included })
+        : t("workspace.surveys.export.export_rows_of_total", { rows, total: included });
+  }
   return (
     <>
       <ExportHeader />
@@ -272,13 +279,7 @@ const ExportProgress = ({
           )}
         </CountBox>
         <div className="flex flex-col gap-2 py-2">
-          <p className="font-medium text-slate-900">
-            {rows !== null && included !== null
-              ? t("workspace.surveys.export.export_rows_of_total", { rows, total: included })
-              : included === null
-                ? t("workspace.surveys.export.export_starting")
-                : t("workspace.surveys.export.export_preparing", { count: included })}
-          </p>
+          <p className="font-medium text-slate-900">{status}</p>
           <div className="h-2 overflow-hidden rounded-full bg-slate-100">
             {rows !== null && included ? (
               <>
