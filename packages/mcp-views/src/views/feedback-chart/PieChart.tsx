@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Tooltip } from "./Tooltip";
 import { type FormatContext, formatCompact, formatFull, formatPercent } from "./format";
 import { OTHER_COLOR, labelColorOn, otherColorVar, paletteFor, seriesColorVar } from "./palette";
-import type { PieData } from "./series";
+import type { PieData, Slice } from "./series";
 import { announce, buildPieTooltip } from "./tooltip";
 import type { Selection } from "./tooltip";
 
@@ -72,15 +72,14 @@ export const PieChart = ({
   const inner = outer * 0.58;
   const palette = paletteFor(theme);
 
-  let angle = 0;
-  const arcs = pie.slices.map((slice) => {
-    const start = angle;
-    angle += slice.share * Math.PI * 2;
-    return { slice, start, end: angle };
-  });
+  const arcs = pie.slices.reduce<{ slice: Slice; start: number; end: number }[]>((list, slice) => {
+    const start = list.at(-1)?.end ?? 0;
+    list.push({ slice, start, end: start + slice.share * Math.PI * 2 });
+    return list;
+  }, []);
 
   const tooltip = active ? buildPieTooltip(pie, active, measureLabel, context) : undefined;
-  const activeArc = active ? arcs[active.category] : undefined;
+  const activeArc = active ? arcs.at(active.category) : undefined;
   const anchorAngle = activeArc ? (activeArc.start + activeArc.end) / 2 : 0;
   const anchor = polar(cx, cx, (outer + inner) / 2, anchorAngle);
 

@@ -81,5 +81,14 @@ export const App = () => {
     );
   }
 
-  return <ChartView model={model} app={app} context={context} theme={theme} />;
+  // A new result is a new chart: keyed by the request so nothing from the previous one stays selected.
+  return (
+    <ChartView
+      key={model.requestId ?? model.spec.title}
+      model={model}
+      app={app}
+      context={context}
+      theme={theme}
+    />
+  );
 };

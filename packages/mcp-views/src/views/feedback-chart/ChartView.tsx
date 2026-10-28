@@ -1,5 +1,5 @@
 import type { App as McpApp } from "@modelcontextprotocol/ext-apps";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Button, Card } from "../../shared/ui";
 import { BarChart } from "./BarChart";
 import { BigNumbers } from "./BigNumbers";
@@ -35,13 +35,6 @@ export const ChartView = ({
   const [showTable, setShowTable] = useState(spec.type === "table");
   const [selection, setSelection] = useState<Selection | null>(null);
   const [sendState, setSendState] = useState<SendState>("idle");
-
-  // A new result is a new chart: nothing from the previous one stays selected.
-  useEffect(() => {
-    setSelection(null);
-    setSendState("idle");
-    setShowTable(spec.type === "table");
-  }, [model, spec.type]);
 
   const { locale, timeZone } = context;
   const stableContext = useMemo<FormatContext>(() => ({ locale, timeZone }), [locale, timeZone]);
@@ -219,7 +212,7 @@ export const ChartView = ({
                 <Button
                   variant="primary"
                   disabled={sendState === "sending" || sendState === "sent"}
-                  onClick={send}>
+                  onClick={() => void send()}>
                   Ask the agent to break this down
                 </Button>
               ) : null}

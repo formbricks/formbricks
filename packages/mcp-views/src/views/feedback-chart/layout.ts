@@ -109,7 +109,7 @@ export interface EndLabel {
 export const placeEndLabels = (labels: readonly EndLabel[], minGap = 14): Set<string> => {
   const placed: EndLabel[] = [];
   for (const label of [...labels].sort((a, b) => a.y - b.y)) {
-    const previous = placed[placed.length - 1];
+    const previous = placed.at(-1);
     if (!previous || label.y - previous.y >= minGap) placed.push(label);
   }
   return new Set(placed.map((label) => label.id));

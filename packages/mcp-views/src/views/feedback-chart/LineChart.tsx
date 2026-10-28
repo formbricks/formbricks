@@ -84,13 +84,12 @@ export const LineChart = ({
   const axis = resolveYAxis({ values, fixed: data.fixedDomain, target: 5 });
   const y = linearScale([axis.min, axis.max], [TOP + plotHeight, TOP]);
 
-  const times = categories.map((category) => category.ms);
-  const useTime = data.isTime && times.every((ms): ms is number => ms !== undefined) && count > 1;
+  const times = categories.flatMap((category) => (category.ms === undefined ? [] : [category.ms]));
+  const useTime = data.isTime && times.length === count && count > 1;
   const xs = categories.map((_, index) => {
     if (count === 1) return left + plotWidth / 2;
     if (useTime) {
-      const ms = times as number[];
-      return left + linearScale([ms[0], ms[count - 1]], [INSET, plotWidth - INSET])(ms[index]);
+      return left + linearScale([times[0], times[count - 1]], [INSET, plotWidth - INSET])(times[index]);
     }
     return left + INSET + (index * (plotWidth - INSET * 2)) / (count - 1);
   });
@@ -117,7 +116,7 @@ export const LineChart = ({
     let best = 0;
     let bestDistance = Number.POSITIVE_INFINITY;
     series.forEach((entry, index) => {
-      const value = entry.values[category];
+      const value = entry.values.at(category);
       if (value === null || value === undefined) return;
       const distance = Math.abs(y(value) - py);
       if (distance < bestDistance) {
@@ -136,7 +135,7 @@ export const LineChart = ({
   };
 
   const tooltip = active ? buildCartesianTooltip(data, active, context) : undefined;
-  const activeValue = active ? series[active.series]?.values[active.category] : undefined;
+  const activeValue = active ? series.at(active.series)?.values.at(active.category) : undefined;
   const anchor = active
     ? { x: xs[active.category], y: typeof activeValue === "number" ? y(activeValue) : TOP + plotHeight / 2 }
     : undefined;
@@ -267,7 +266,7 @@ export const LineChart = ({
           {[active, selection].map((position, which) =>
             position && position.category < count
               ? series.map((entry, index) => {
-                  const value = entry.values[position.category];
+                  const value = entry.values.at(position.category);
                   if (value === null || value === undefined) return null;
                   const chosen = index === position.series;
                   return (

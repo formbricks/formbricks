@@ -59,7 +59,8 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 /** "Last 30 days", "Jan 1, 2026 to Jan 31, 2026", "2 filters": what the query was scoped to. */
 export const describeScope = (query: QueryLike, context: FormatContext = {}): string[] => {
   const parts: string[] = [];
-  const timeDimension = Array.isArray(query?.timeDimensions) ? query.timeDimensions[0] : undefined;
+  const timeDimensions: unknown = query?.timeDimensions;
+  const timeDimension: unknown = Array.isArray(timeDimensions) ? (timeDimensions as unknown[])[0] : undefined;
   if (isRecord(timeDimension)) {
     const range = timeDimension.dateRange;
     if (typeof range === "string") {

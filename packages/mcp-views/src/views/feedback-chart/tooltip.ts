@@ -36,7 +36,7 @@ export const buildCartesianTooltip = (
   active: Selection,
   context: FormatContext
 ): TooltipContent | undefined => {
-  const category = data.categories[active.category];
+  const category = data.categories.at(active.category);
   if (!category) return undefined;
   return {
     title: category.fullLabel,
@@ -55,7 +55,7 @@ export const buildPieTooltip = (
   measureLabel: string,
   context: FormatContext
 ): TooltipContent | undefined => {
-  const slice = pie.slices[active.category];
+  const slice = pie.slices.at(active.category);
   if (!slice) return undefined;
   return {
     title: slice.label,
@@ -88,8 +88,8 @@ export const describeCartesianPoint = (
   point: PointContext,
   context: FormatContext
 ): DigDeeperTarget | undefined => {
-  const category = data.categories[selection.category];
-  const series = data.series[selection.series];
+  const category = data.categories.at(selection.category);
+  const series = data.series.at(selection.series);
   if (!category || !series) return undefined;
   const hasSeriesDimension = point.seriesLabel !== undefined;
   return {
@@ -109,7 +109,7 @@ export const describePieSlice = (
   point: PointContext,
   context: FormatContext
 ): DigDeeperTarget | undefined => {
-  const slice = pie.slices[selection.category];
+  const slice = pie.slices.at(selection.category);
   if (!slice) return undefined;
   return {
     chartTitle: point.chartTitle,

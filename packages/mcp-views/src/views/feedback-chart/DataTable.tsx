@@ -26,7 +26,6 @@ export const DataTable = ({
       <tbody>
         {model.rows.map((row, index) => (
           // Rows have no identity of their own; they are a static list that never reorders.
-          // eslint-disable-next-line react/no-array-index-key
           <tr key={index}>
             {model.columns.map((column) => {
               const cell = formatTableCell(column, row[column.id] ?? null, model.spec, context);

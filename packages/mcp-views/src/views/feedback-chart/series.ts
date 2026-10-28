@@ -270,7 +270,7 @@ export interface BigNumber {
 
 /** One number per plotted measure, read from the first row. A missing value stays missing, never zero. */
 export const buildNumbers = (model: FeedbackChartModel, context: FormatContext = {}): BigNumber[] => {
-  const row = model.rows[0];
+  const row = model.rows.at(0);
   return model.spec.y.map((measureId) => {
     const value = row ? asNumber(row[measureId]) : null;
     return {

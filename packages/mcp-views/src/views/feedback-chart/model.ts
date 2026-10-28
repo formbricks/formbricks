@@ -35,6 +35,7 @@ export interface FeedbackChartModel {
   truncated: boolean;
   datasetName?: string;
   query?: Record<string, unknown>;
+  requestId?: string;
 }
 
 const CHART_TYPES: readonly string[] = ["bar", "line", "area", "pie", "number", "table"];
@@ -109,6 +110,7 @@ export const parseFeedbackChart = (structured: unknown): FeedbackChartModel | un
     truncated: structured.truncated === true,
     ...(typeof structured.datasetName === "string" ? { datasetName: structured.datasetName } : {}),
     ...(isRecord(structured.query) ? { query: structured.query } : {}),
+    ...(typeof structured.requestId === "string" ? { requestId: structured.requestId } : {}),
   };
 };
 

@@ -78,7 +78,7 @@ export const BarChart = ({ data, title, width, context, selection, onSelect }: R
   });
 
   const bar = (category: number, seriesIndex: number) => {
-    const value = series[seriesIndex].values[category];
+    const value = series[seriesIndex].values.at(category);
     if (value === null || value === undefined) return undefined;
     const end = scale(value);
     const along = (vertical ? left : TOP) + category * layout.band + layout.offsets[seriesIndex];
