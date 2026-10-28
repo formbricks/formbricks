@@ -15,6 +15,6 @@ Creatives put a feedback button or a banner on the websites that run the Formbri
   the license includes Creatives again.
 </Note>
 
-Impressions and clicks are written to the database by the background [job worker](/self-hosting/configuration/job-runner), which runs by default. No other configuration is needed.
+Impressions and clicks are written to the database by the background [job worker](/self-hosting/configuration/job-runner), which runs inside Formbricks by default. If you turned it off for a [custom external worker](/self-hosting/configuration/job-runner#use-a-custom-external-worker), that worker has to run `creative-stats.flush`, or the counts never reach the summary pages.
 
 Read the full guide: [Creatives](/surveys/creatives/overview).
