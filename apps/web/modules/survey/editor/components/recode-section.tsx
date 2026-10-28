@@ -10,6 +10,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { isExternalImageSrc } from "@/lib/image-hosts";
+import { CopyIdButton } from "@/modules/survey/editor/components/copy-id-button";
 import { PublishedLockNotice } from "@/modules/survey/editor/components/published-lock-notice";
 import { describeCodeIssue, getCodeClashLabel } from "@/modules/survey/editor/lib/code-messages";
 import {
@@ -172,7 +173,9 @@ export const RecodeSection = ({
       </div>
 
       {lists.map(({ key, options }) => (
-        <div key={key} className="flex max-w-[300px] flex-col gap-2">
+        <div
+          key={key}
+          className={cn("flex flex-col gap-2", key === "choices" ? "max-w-[400px]" : "max-w-[300px]")}>
           <Label>{optionListTitle(key, t)}</Label>
           <div className="flex flex-col gap-2">
             {options.map((option, optionIdx) => {
@@ -181,7 +184,7 @@ export const RecodeSection = ({
               const fieldId = `code-${element.id}-${key}-${option.id}`;
               const issue = issues?.options.get(optionIssueKey(key, option.id));
               return (
-                <div key={option.id} className="flex items-end gap-4">
+                <div key={option.id} className="flex items-end gap-2">
                   {option.imageUrl && (
                     <Image
                       src={option.imageUrl}
@@ -210,6 +213,9 @@ export const RecodeSection = ({
                       updateElement(elementIdx, setOptionCode(element, key, option.id, value))
                     }
                   />
+                  {key === "choices" && (
+                    <CopyIdButton id={option.id} label={t("workspace.surveys.edit.copy_option_id")} />
+                  )}
                 </div>
               );
             })}

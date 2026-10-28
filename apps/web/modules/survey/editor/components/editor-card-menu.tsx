@@ -224,28 +224,8 @@ export const EditorCardMenu = ({
           <EllipsisIcon className="mx-auto size-4 text-slate-700 hover:text-slate-600" />
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent>
+        <DropdownMenuContent className="w-56">
           <div className="flex flex-col">
-            {cardType === "element" && (
-              <>
-                <DropdownMenuItem
-                  className="h-auto min-h-8 items-start"
-                  data-testid="copy-question-id"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    void copyId(card.id);
-                  }}
-                  icon={<CopyIcon className="size-4" />}>
-                  <span className="ml-2 flex flex-col">
-                    <span>{t("workspace.surveys.edit.copy_question_id")}</span>
-                    <span className="font-mono text-xs text-slate-500" data-testid="question-id-value">
-                      {card.id}
-                    </span>
-                  </span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-              </>
-            )}
             {cardType === "element" && isTypeLocked && (
               <DropdownMenuItem
                 disabled
@@ -253,7 +233,7 @@ export const EditorCardMenu = ({
                 data-testid="change-question-type-locked"
                 title={t("workspace.surveys.edit.lock_explanation_type")}
                 icon={<LockIcon className="size-4" />}>
-                <span className="ml-2 flex flex-col">
+                <span className="flex flex-col">
                   <span>{t("workspace.surveys.edit.change_question_type")}</span>
                   <span className="text-xs text-slate-500">
                     {t("workspace.surveys.edit.locked_after_publishing")}
@@ -264,7 +244,7 @@ export const EditorCardMenu = ({
             {cardType === "element" && !isTypeLocked && (
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger
-                  className="cursor-pointer text-sm text-slate-600 hover:text-slate-700"
+                  className="min-h-8 cursor-pointer text-slate-700"
                   onClick={(e) => e.preventDefault()}>
                   {t("workspace.surveys.edit.change_question_type")}
                 </DropdownMenuSubTrigger>
@@ -320,7 +300,9 @@ export const EditorCardMenu = ({
 
             {cardType === "element" && (
               <DropdownMenuSub>
-                <DropdownMenuSubTrigger className="cursor-pointer" onClick={(e) => e.preventDefault()}>
+                <DropdownMenuSubTrigger
+                  className="min-h-8 cursor-pointer text-slate-700"
+                  onClick={(e) => e.preventDefault()}>
                   {t("workspace.surveys.edit.add_question_below")}
                 </DropdownMenuSubTrigger>
 
@@ -356,7 +338,9 @@ export const EditorCardMenu = ({
             )}
             {cardType === "element" && moveElementToBlock && survey.blocks.length > 1 && (
               <DropdownMenuSub>
-                <DropdownMenuSubTrigger className="cursor-pointer" onClick={(e) => e.preventDefault()}>
+                <DropdownMenuSubTrigger
+                  className="min-h-8 cursor-pointer text-slate-700"
+                  onClick={(e) => e.preventDefault()}>
                   {t("workspace.surveys.edit.move_question_to_block")}
                 </DropdownMenuSubTrigger>
 
@@ -382,29 +366,28 @@ export const EditorCardMenu = ({
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
             )}
-            <DropdownMenuItem
-              onClick={(e) => {
-                if (cardIdx !== 0) {
-                  e.stopPropagation();
-                  moveCard(cardIdx, true);
-                }
-              }}
-              icon={<ArrowUpIcon className="size-4" />}
-              disabled={cardIdx === 0}>
-              <span>{t("common.move_up")}</span>
-            </DropdownMenuItem>
-
-            <DropdownMenuItem
-              onClick={(e) => {
-                if (!lastCard) {
-                  e.stopPropagation();
-                  moveCard(cardIdx, false);
-                }
-              }}
-              icon={<ArrowDownIcon className="size-4" />}
-              disabled={lastCard}>
-              <span>{t("common.move_down")}</span>
-            </DropdownMenuItem>
+            {cardType === "element" && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="h-auto min-h-8 items-start bg-slate-100 py-1.5"
+                  data-testid="copy-question-id"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    void copyId(card.id);
+                  }}
+                  icon={<CopyIcon className="mt-0.5 size-4" />}>
+                  <span className="flex flex-col">
+                    <span>{t("workspace.surveys.edit.copy_question_id")}</span>
+                    <span
+                      className="font-mono text-xs font-normal text-slate-500"
+                      data-testid="question-id-value">
+                      {card.id}
+                    </span>
+                  </span>
+                </DropdownMenuItem>
+              </>
+            )}
           </div>
         </DropdownMenuContent>
       </DropdownMenu>

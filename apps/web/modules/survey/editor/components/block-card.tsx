@@ -384,7 +384,7 @@ const BlockCardComponent = ({
 
           <Collapsible.CollapsibleContent>
             <Tabs value={blockTab} onValueChange={setBlockTab} className="gap-0">
-              <TabsList variant="underline" className="mx-4 mb-2 w-auto">
+              <TabsList variant="underline" className="mx-4 mb-4 w-auto">
                 <TabsTrigger value="questions" variant="underline" className="py-2">
                   {t("common.questions")}
                 </TabsTrigger>
@@ -540,7 +540,7 @@ const BlockCardComponent = ({
 
                 {/* Conditional Logic */}
                 {block.elements[0] && (
-                  <div className="p-4 pb-0">
+                  <div className="px-4 pb-4">
                     <ConditionalLogic
                       localSurvey={localSurvey}
                       block={block}
@@ -554,7 +554,7 @@ const BlockCardComponent = ({
               </TabsContent>
               <TabsContent value="settings">
                 {/* Block Settings */}
-                <div className="p-4">
+                <div className="px-4 pb-4">
                   <BlockSettings
                     localSurvey={localSurvey}
                     block={block}
