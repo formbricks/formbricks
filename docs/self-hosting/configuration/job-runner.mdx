@@ -86,6 +86,12 @@ Current workloads on the shared `background-jobs` queue include:
 | Usage telemetry   | `usage-telemetry.process`                        | Sends the instance's daily usage update.                                                   |
 | Workflows         | `workflow-run.process`, `workflow-run.reconcile` | Executes workflow runs and recovers stalled runs.                                          |
 
+<Note>
+  [Creative](/surveys/creatives/measure-performance) Impressions and Clicks live only in Redis until
+  `creative-stats.flush` copies them. If no worker serves `background-jobs`, the counters expire after about two
+  days and the creatives' summary pages stay empty. The job is safe to run on several replicas at once.
+</Note>
+
 Two jobs run on [dedicated queues](#dedicated-queues) of their own instead:
 
 | Workload         | Job names                    | Purpose                                                                |

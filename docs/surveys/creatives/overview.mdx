@@ -1,0 +1,194 @@
+---
+title: "Creatives"
+sidebarTitle: "Overview"
+description: "Put a feedback button or a notice banner on your website with no code beyond the Formbricks snippet. A creative has its own look, targeting and schedule, and opens a survey or a link on every click."
+icon: "megaphone"
+---
+
+Creatives put a **Feedback button** or a **Banner** on your website, next to your website surveys. Your team builds, schedules and pauses them in Formbricks; your developers add nothing beyond the Formbricks snippet that already runs your surveys. Each creative counts how often it was shown and clicked, and every response it brings in records which creative opened the survey.
+
+<Note>
+  Creatives are part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license), on self-hosted
+  instances whose license includes Creatives. They are not available on Formbricks Cloud. They show on
+  websites through the [JavaScript SDK](/surveys/website-app-surveys/quickstart); the mobile SDKs don't show
+  them.
+</Note>
+
+<CardGroup cols={2}>
+  <Card title="Feedback button" icon="message" href="/surveys/creatives/feedback-button">
+    A tab on the left, right or bottom edge of the page that opens a survey or a link. Always there, never
+    dismissed.
+  </Card>
+  <Card title="Banner" icon="window-maximize" href="/surveys/creatives/banner">
+    A bar across the top or bottom of the page, with a formatted message, an optional button and an optional
+    close control.
+  </Card>
+</CardGroup>
+
+## How a creative works
+
+A creative is made of three parts:
+
+- **What visitors see:** its text and look, on the **Content** and **Styling** tabs.
+- **Where and when it shows:** on every page view or when an action fires, narrowed by show conditions, a share of visitors and a schedule, on the **Settings** tab. See [When It Shows](/surveys/creatives/when-it-shows).
+- **What it opens:** a survey or a link, under **On click** on the **Content** tab. A banner can also have no button at all and just inform.
+
+**A click always opens.** Pressing a creative opens its survey right away, every time, even if the visitor already answered it. The survey's own triggers, show conditions, segment, recontact options, cooldown, display percentage, delay and auto-close don't apply to the click; they only decide when the survey pops up by itself. An app survey opens as a popup on the page; a link survey opens in a new tab. See [Survey Display Logic](/surveys/website-app-surveys/survey-display-logic#surveys-opened-by-a-creative) for how a click-opened display counts for the survey's own rules.
+
+## Create a creative
+
+<Steps>
+  <Step title="Open Creatives">
+    In the main navigation, under **Ask**, click **Creatives**. It sits between **Surveys** and **Contacts**.
+  </Step>
+  <Step title="Pick a type">
+    Click **New creative**, choose **Feedback button** or **Banner**, and click **Continue**.
+
+    ![The New creative dialog with the two creative types](/images/surveys/creatives/overview/new-creative.webp)
+  </Step>
+  <Step title="Build it in the editor">
+    Formbricks creates a **Draft** called "Untitled creative" and opens the editor. Click the name at the top to rename it. The type can't be changed later.
+  </Step>
+  <Step title="Publish">
+    Click **Publish**. Formbricks checks that nothing is missing, then takes the creative live, or schedules it if its start time is ahead.
+  </Step>
+</Steps>
+
+## The editor
+
+The editor has four tabs:
+
+| Tab | What you set |
+| --- | --- |
+| **Content** | The label or message, and **On click**: the survey or link it opens. See [Feedback Button](/surveys/creatives/feedback-button#content) and [Banner](/surveys/creatives/banner#content). |
+| **Language** | Translations of everything visitors read. See [Languages](#languages). |
+| **Styling** | Colors, font, size, position and Custom CSS. By default a creative matches your workspace [Look & Feel](/platform/features/styling-theme). |
+| **Settings** | **Show on**, **Show when**, **Share of visitors** and **Schedule**. See [When It Shows](/surveys/creatives/when-it-shows). |
+
+A live preview next to the tabs shows the creative on a sample page. Switch it between **Desktop** and **Phone** and between light and dark mode. Clicking the creative in the preview tells you what it would open on your site instead of opening it. The preview is hidden on narrow screens.
+
+A draft is saved with **Save** even when it isn't finished. Once a creative is published, every **Save** has to pass the same checks as **Publish**. If someone else saved the creative after you opened it, your save is refused and you're asked to reload, so nobody overwrites another person's changes.
+
+### Languages
+
+The **Language** tab translates everything visitors read: the label, the banner message, the banner's button label and its accessible name. Add any of the workspace's languages with **Add language**, then fill in each one with **Edit translation**. A text you leave empty shows the default language's text. Turn **Shown** off to keep a translation without showing it to visitors, and use **Make default** in a row's menu to change the default language.
+
+A visitor gets the language your site sets with [`setLanguage`](/surveys/general-features/multi-language-surveys), then their browser's language if the survey the creative opens uses the browser language, and otherwise the default language.
+
+<Note>
+  If a creative opens a multi-language app survey that lacks the language your site set, the survey couldn't
+  open for those visitors, so they don't see the creative at all. A link survey, or an app survey with a single
+  language, opens in its default language instead. The editor warns you in both cases.
+</Note>
+
+## Publish
+
+**Publish** takes a draft live. It checks that the creative has:
+
+- a name;
+- a label (feedback button) or a message (banner), and a button label if the banner has a button;
+- a survey it is allowed to open, or a valid link;
+- at least one action, if it shows **When an action fires**;
+- a value in every **Show when** condition;
+- an end after its start, if it has a schedule.
+
+If something is missing, the editor opens the tab that needs it, marks it with a red dot and tells you what to fix.
+
+### Status
+
+A creative uses the same status words as a survey:
+
+| Status | Meaning |
+| --- | --- |
+| **Draft** | Not published yet. Never shown. |
+| **Scheduled** | Published, waiting for its start time. |
+| **Active** | Showing on your site wherever its settings match. |
+| **Paused** | Paused by you, or paused automatically. Hover the status to see why. |
+| **Closed** | Closed by you, or its schedule has ended. |
+| **Archived** | Out of the list and never shown. Restore it to use it again. |
+
+A creative is **paused automatically**, without anything being changed on it, when:
+
+- the survey it opens isn't active (it's a draft, paused, closed or archived). It comes back by itself as soon as the survey runs again, unless you paused it yourself;
+- it has nothing to open, for example after an archived survey it opened was deleted;
+- it shows **When an action fires** but has no action.
+
+Change a published creative's status from the status menu at the top of its summary page or editor: **Active**, **Paused** or **Closed**. A published creative can't go back to **Draft**. Saving changes never takes a paused or closed creative live by itself: it stays **Paused** until you resume it.
+
+## Manage creatives
+
+The **Creatives** list shows each creative's name, status, what it opens, when it was created and updated, and who created it. Search by name, filter by **Status** and **Type**, and sort by update date, creation date or name. Archived creatives only appear when you filter for **Archived**.
+
+![The Creatives list with feedback buttons and banners in different statuses](/images/surveys/creatives/overview/creatives-list.webp)
+
+Clicking a draft opens the editor; clicking any other creative opens its [summary](/surveys/creatives/measure-performance). A row's menu has:
+
+- **Edit**;
+- **Pause**, **Resume**, **Close** or **Reopen**, depending on its status;
+- **Duplicate**: a new draft called "… (copy)", without the original's numbers;
+- **Archive**: takes it off your site and out of the list, and keeps its numbers. **Restore** brings it back as a draft;
+- **Delete**: removes it from your site right away, together with its numbers. Responses it brought in keep the name of the creative that opened them.
+
+A warning icon marks a row that needs attention, with the reason in its tooltip:
+
+- it has nothing to open;
+- its survey can't be opened by a creative anymore (see [Which surveys a creative can open](#which-surveys-a-creative-can-open));
+- it shows when an action fires but has no action;
+- it could overlap another active creative on the same page.
+
+The overlap warning compares the positions of active creatives: two feedback buttons close together on the same edge or corner, or two banners on the same edge when at least one is an Overlay. It leaves out pairs whose **Show when** conditions clearly never meet, such as one for phones only and one for desktops only. It is a cautious check and can flag pairs that never actually meet.
+
+## Creatives and their surveys
+
+### Which surveys a creative can open
+
+**On click** lists the workspace's app and link surveys, running ones first. A creative can't open a survey that:
+
+- is **Restricted** (visible only to some people in the workspace). It is listed but can't be picked, because everyone who can see the creative would see which survey it opens. See [Survey Visibility](/surveys/general-features/visibility);
+- uses [single-use links](/surveys/link-surveys/single-use-links) or is [PIN-protected](/surveys/link-surveys/pin-protected-surveys). These aren't listed.
+
+A survey that isn't running can be picked: the creative stays paused until the survey runs.
+
+### What changes on the survey side
+
+Once a creative opens a survey, the survey shows it:
+
+- **App surveys can go live without an action.** The **Survey Trigger** card lists the creatives that open the survey under **Opened by**, and the survey can be published with no trigger of its own: it then shows only when someone clicks a creative.
+
+  ![The Survey Trigger card of an app survey, opened by a feedback button](/images/surveys/creatives/overview/opened-by.webp)
+
+- **Recontact options apply to popups only.** On a survey that only creatives open, the **Display & Recontact** settings are disabled, because a click always opens the survey. On a survey that also has its own actions, they still apply to its automatic popups.
+- **Pausing, closing or resuming the survey** names the creatives that open it. While the survey isn't running, they show as **Paused** and disappear from your site; when you resume it, they come back by themselves. The resume dialog lets you **Keep these creatives paused** instead.
+
+  ![The Pause this survey dialog naming the creatives that open it](/images/surveys/creatives/overview/pause-survey.webp)
+
+- **Deleting the survey** isn't possible while creatives still open it, drafts and paused ones included. Delete them, archive them or point them at another survey first. Archived creatives don't block it: they just lose what they open.
+- **Making the survey Restricted, turning on single-use links or setting a PIN** is blocked the same way. Turning single-use links or the PIN off is always possible.
+- **Archiving the survey** keeps its creatives paused. If an archived survey is deleted for good after 30 days, its creatives lose what they open.
+
+If a live app survey has no actions of its own and you archive, delete or point elsewhere the last creative that opens it, Formbricks warns you that the survey won't show anywhere anymore.
+
+## Who can do what
+
+Creatives follow the workspace access of your [team](/platform/features/user-management/teams-and-roles):
+
+- **Read** access lets a member see the list, the summaries and the editor, read-only.
+- **Read & Write** and **Manage** access let a member create, edit, publish, pause, archive, duplicate and delete creatives.
+
+Organization owners and managers have full access. Members with the **Billing** role can't open Creatives.
+
+## If your license no longer includes Creatives
+
+If your license stops including Creatives while a workspace still has some, they are taken off your sites, and Creatives stays visible read-only with a notice. You can still pause, close or delete creatives; everything else is locked. Nothing about the creatives is changed: when your license includes Creatives again, the ones you didn't pause, close or delete show again on their own.
+
+On instances that have never had Creatives, and on Formbricks Cloud, the **Creatives** entry doesn't appear.
+
+## API and MCP
+
+Everything in the editor is also available through the [Management API v3](/api-v3-reference/introduction) under `/api/v3/creatives`: list, get, create, update (including publish, pause, close and reopen through `status`), delete, archive, restore, duplicate, and read counts by day, page or device type. `POST /api/v3/creatives/pause` pauses every creative that opens a given survey. Reading needs read access to the workspace; everything else needs read & write access.
+
+The [Formbricks MCP server](/platform/mcp/overview) offers the same as tools, except the bulk pause: `list_creatives`, `get_creative` and `get_creative_stats` with the `surveys:read` scope; `create_creative`, `patch_creative`, `delete_creative`, `duplicate_creative`, `archive_creative` and `restore_creative` with `surveys:write`.
+
+---
+
+Still have questions? [Join us in GitHub Discussions](https://github.com/formbricks/formbricks/discussions) and we'll be glad to help.

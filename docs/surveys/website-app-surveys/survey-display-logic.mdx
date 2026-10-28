@@ -16,6 +16,8 @@ A **Trigger** (a matching action) is the event that then shows an already-eligib
 
 When the trigger fires, the survey's [show conditions](/surveys/website-app-surveys/show-conditions) are checked: the page, the visit so far and the device. Only a survey that meets them goes on to the [display percentage](/surveys/website-app-surveys/show-survey-to-percent-of-users), so the percentage samples visitors who qualify. They are covered in Level 5.
 
+A click on a [creative](/surveys/creatives/overview) that opens the survey skips all of this; see [Surveys opened by a creative](#surveys-opened-by-a-creative).
+
 ## Level 0 — Always show
 
 Take a survey with **no targeting**, **no Cooldown Period**, and Recontact set to **"Keep showing while conditions match"**. Nothing gates it, so it shows **every time its trigger fires**. Simple, but usually too aggressive for anything but a persistent feedback button.
@@ -181,6 +183,17 @@ Both control how often a user sees a survey, and both can look at the same surve
 - **re-engage drop-offs** (`have started responding to Onboarding AND have not completed Onboarding within 14 days`).
 
 **Combine them for a cadence.** Recontact Options have no notion of "3 months", so a repeating survey sets Recontact to *Keep showing while conditions match* and lets the segment supply the time window. Recontact is checked first, so *Show only once* would block the survey permanently no matter what the segment says.
+
+## Surveys opened by a creative
+
+A [creative](/surveys/creatives/overview), a feedback button or a banner, opens its survey on every click, without going through any of the levels on this page. The survey's triggers, Recontact Options, Cooldown Period, segment, show conditions, display percentage, delay and auto-close don't apply to the click: the visitor asked for the survey. If another survey is on screen, it closes first.
+
+The display still counts for the survey's own rules, like any other display:
+
+- It counts toward the survey's **Recontact Options**. After a click, a survey set to *Show only once* no longer pops up by itself for that visitor.
+- It starts the **Cooldown Period** for every other survey that uses it.
+
+An app survey that only creatives open needs no action of its own, and its **Display & Recontact** settings are disabled in the editor, because they only govern automatic popups.
 
 ## Putting it all together
 
