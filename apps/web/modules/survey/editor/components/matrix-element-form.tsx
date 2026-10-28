@@ -223,7 +223,7 @@ export const MatrixElementForm = ({
           </Button>
         )}
       </div>
-      <div className="mt-3 grid grid-cols-2 gap-4">
+      <div className="mt-3 flex flex-col gap-6">
         <div>
           {/* Rows section */}
           <Label htmlFor="rows">{t("workspace.surveys.edit.rows")}</Label>

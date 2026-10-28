@@ -53,42 +53,7 @@ export const BlockSettings = ({
 
   return (
     <div className="w-full space-y-4">
-      <div className="flex gap-x-2">
-        {blockIndex !== 0 && (
-          <ElementFormInput
-            id="backButtonLabel"
-            value={block.backButtonLabel}
-            label={t("workspace.surveys.edit.back_button_label")}
-            localSurvey={localSurvey}
-            elementIdx={blockIndex}
-            isInvalid={false}
-            updateElement={(_, updatedAttributes) => {
-              if ("backButtonLabel" in updatedAttributes) {
-                const backButtonLabel = updatedAttributes.backButtonLabel as TI18nString;
-                updateBlockButtonLabel(blockIndex, "backButtonLabel", {
-                  ...block.backButtonLabel,
-                  [selectedLanguageCode]: backButtonLabel[selectedLanguageCode],
-                });
-              }
-            }}
-            placeholder={t("common.back")}
-            locale={locale}
-            isStorageConfigured={isStorageConfigured}
-            onBlur={(e) => {
-              const languageSymbols = extractLanguageCodes(localSurvey.languages ?? []);
-              const existingLabel = block.backButtonLabel || {};
-              const translatedBackButtonLabel = addMultiLanguageLabels(
-                {
-                  ...existingLabel,
-                  [selectedLanguageCode]: e.target.value,
-                },
-                languageSymbols
-              );
-              updateBlockButtonLabel(blockIndex, "backButtonLabel", translatedBackButtonLabel);
-              updateEmptyButtonLabels("backButtonLabel", translatedBackButtonLabel, blockIndex);
-            }}
-          />
-        )}
+      <div className="flex max-w-[300px] flex-col gap-4">
         <ElementFormInput
           id="buttonLabel"
           value={block.buttonLabel}
@@ -132,6 +97,41 @@ export const BlockSettings = ({
             }
           }}
         />
+        {blockIndex !== 0 && (
+          <ElementFormInput
+            id="backButtonLabel"
+            value={block.backButtonLabel}
+            label={t("workspace.surveys.edit.back_button_label")}
+            localSurvey={localSurvey}
+            elementIdx={blockIndex}
+            isInvalid={false}
+            updateElement={(_, updatedAttributes) => {
+              if ("backButtonLabel" in updatedAttributes) {
+                const backButtonLabel = updatedAttributes.backButtonLabel as TI18nString;
+                updateBlockButtonLabel(blockIndex, "backButtonLabel", {
+                  ...block.backButtonLabel,
+                  [selectedLanguageCode]: backButtonLabel[selectedLanguageCode],
+                });
+              }
+            }}
+            placeholder={t("common.back")}
+            locale={locale}
+            isStorageConfigured={isStorageConfigured}
+            onBlur={(e) => {
+              const languageSymbols = extractLanguageCodes(localSurvey.languages ?? []);
+              const existingLabel = block.backButtonLabel || {};
+              const translatedBackButtonLabel = addMultiLanguageLabels(
+                {
+                  ...existingLabel,
+                  [selectedLanguageCode]: e.target.value,
+                },
+                languageSymbols
+              );
+              updateBlockButtonLabel(blockIndex, "backButtonLabel", translatedBackButtonLabel);
+              updateEmptyButtonLabels("backButtonLabel", translatedBackButtonLabel, blockIndex);
+            }}
+          />
+        )}
       </div>
     </div>
   );
