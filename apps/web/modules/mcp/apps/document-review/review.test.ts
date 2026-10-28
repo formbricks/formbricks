@@ -180,7 +180,7 @@ describe("buildReviewText", () => {
   test("a valid review counts the changes, names the paths and tells the model to wait", () => {
     const text = buildReviewText(review({ type: "ok", result: pushResult(proposed) }));
 
-    expect(text).toContain('survey "Onboarding"');
+    expect(text).toContain(`survey ${id}`);
     expect(text).toContain("2 changes (0 added, 1 removed, 1 changed), 0 destructive");
     expect(text).toContain("removed blocks[b2]; changed name");
     expect(text).toContain("Nothing was written");

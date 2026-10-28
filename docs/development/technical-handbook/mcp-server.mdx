@@ -836,7 +836,10 @@ Tools can render an interactive view inside the agent. This follows the MCP Apps
     sends to the agent (`sendMessage`, `updateModelContext`) holds fixed text, validated ids and the
     person's own typed request, never a survey, creative or workflow name, a headline, an answer or a
     server error string: those are written by other people and would reach the model as if the user had
-    said them. The agent looks names up by id. Build one view with
+    said them. The agent looks names up by id.
+    The same goes for the summary text a render tool returns in `content`: it names the creative, workflow,
+    dataset or reviewed document by id, not by name. The survey preview is the exception, because its outline
+    is the content the agent was asked to read, and `show_survey` returns it as `structuredContent` too. Build one view with
     `node scripts/build.mjs --only=<name> --out=dist-<name>`; `pnpm build` writes every document and the
     `dist/index.js` the web app imports.
   </Step>

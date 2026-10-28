@@ -111,7 +111,7 @@ export async function showFeedbackChart(
           columns: resolved.columns,
           rows,
           truncated,
-          datasetName: data.datasetName,
+          datasetId: data.datasetId,
         }),
       },
     ],

@@ -76,10 +76,10 @@ describe("buildChartSummary", () => {
       columns,
       rows: [{ d: "positive", m: 40 }],
       truncated: true,
-      datasetName: "Main",
+      datasetId: "ds4a98xxat96iws9zmbrgj3aaa",
     });
     expect(text).toContain(
-      'NPS: Score by sentiment: 1 row from the feedback dataset "Main", shown to the user as a bar chart.'
+      "NPS: Score by sentiment: 1 row from feedback dataset ds4a98xxat96iws9zmbrgj3aaa, shown to the user as a bar chart."
     );
     expect(text).toContain("row limit");
     expect(text).toContain("Not plotted, but in the table: FeedbackRecords.count");
@@ -92,7 +92,7 @@ describe("buildChartSummary", () => {
       columns,
       rows: [],
       truncated: false,
-      datasetName: "Main",
+      datasetId: "ds4a98xxat96iws9zmbrgj3aaa",
     });
     expect(text).toContain("the query returned no rows");
     expect(text).not.toContain("|");

@@ -65,19 +65,19 @@ export const buildChartSummary = ({
   columns,
   rows,
   truncated,
-  datasetName,
+  datasetId,
 }: {
   spec: TFeedbackChartSpec;
   columns: TFeedbackChartColumn[];
   rows: TFeedbackChartRow[];
   truncated: boolean;
-  datasetName: string;
+  datasetId: string;
 }): string => {
   const lines: string[] = [];
   const drawn =
     spec.type === "table" ? "a table" : `a ${spec.type === "number" ? "number" : `${spec.type} chart`}`;
   lines.push(
-    `${spec.title}: ${rows.length === 0 ? "the query returned no rows" : `${rows.length} ${rows.length === 1 ? "row" : "rows"}`} from the feedback dataset "${datasetName}", shown to the user as ${drawn}.`
+    `${spec.title}: ${rows.length === 0 ? "the query returned no rows" : `${rows.length} ${rows.length === 1 ? "row" : "rows"}`} from feedback dataset ${datasetId}, shown to the user as ${drawn}.`
   );
   if (truncated) {
     lines.push(

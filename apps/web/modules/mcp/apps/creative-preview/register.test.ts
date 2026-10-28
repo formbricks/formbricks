@@ -11,6 +11,7 @@ import {
   makeBanner,
   makeFeedbackButton,
   otherWorkspaceId,
+  surveyId,
   workspaceId,
 } from "./fixtures";
 import { registerCreativePreviewApp } from "./register";
@@ -182,7 +183,7 @@ describe("show_creative", () => {
     expect(result.content).toEqual([
       {
         type: "text",
-        text: 'Creative "Pricing tab" (feedback button) is active. Shows on every page view. It opens the survey "Pricing feedback" as a popup.',
+        text: `Creative ${creative.id} (feedback button) is active. Shows on every page view. It opens survey ${surveyId} as a popup.`,
       },
     ]);
     expect(result.structuredContent).toEqual({ data: creative, requestId: "req_op" });
@@ -227,7 +228,8 @@ describe("show_creative", () => {
     expect(getWorkspace).not.toHaveBeenCalledWith(otherWorkspaceId);
     expect(getActionClasses).toHaveBeenCalledWith(workspaceId);
     expect(result._meta?.formbricks?.triggerNames).toEqual(["Exit intent", "Cart abandoned"]);
-    expect(result.content[0].text).toContain("Exit intent, Cart abandoned");
+    expect(result.content[0].text).toContain("Shows when one of its 2 actions fires.");
+    expect(result.content[0].text).not.toContain("Exit intent");
   });
 
   test("does not look up actions for a creative shown on page views", async () => {

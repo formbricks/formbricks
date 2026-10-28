@@ -4,9 +4,9 @@ const TRIGGER_WORDS: Record<string, string> = {
   "response.completed": "a survey response is completed",
 };
 
-/** The one sentence the model (and a host without MCP Apps) reads instead of the view. */
+/** The one sentence the model (the workflow is named by id: its name is workspace-stored text)  (and a host without MCP Apps) reads instead of the view. */
 export const buildShowWorkflowSummary = (
-  workflow: Pick<TWorkflowResource, "name" | "status" | "triggerType" | "definition">,
+  workflow: Pick<TWorkflowResource, "id" | "status" | "triggerType" | "definition">,
   recentRuns: readonly Pick<TWorkflowRunListItem, "status" | "isDryRun" | "startedAt" | "createdAt">[]
 ): string => {
   const steps = workflow.definition.nodes.length;
@@ -19,7 +19,7 @@ export const buildShowWorkflowSummary = (
     : "no runs yet";
 
   return [
-    `Workflow "${workflow.name}" is ${workflow.status}`,
+    `Workflow ${workflow.id} is ${workflow.status}`,
     trigger,
     `${steps} ${steps === 1 ? "step" : "steps"}`,
     `${lastRunText}.`,

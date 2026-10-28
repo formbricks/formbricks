@@ -113,7 +113,7 @@ export function registerCreativePreviewApp(server: McpServer): void {
 
       return {
         ...result,
-        content: [{ type: "text" as const, text: buildCreativePreviewText(creative, meta.triggerNames) }],
+        content: [{ type: "text" as const, text: buildCreativePreviewText(creative) }],
         _meta: { formbricks: meta },
       };
     }

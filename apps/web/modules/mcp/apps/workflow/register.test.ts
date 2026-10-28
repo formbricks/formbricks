@@ -206,7 +206,7 @@ describe("registerWorkflowApp", () => {
     });
     expect(ZMcpShowWorkflowOutput.safeParse(result.structuredContent).success).toBe(true);
     expect(result.content[0].text).toBe(
-      `Workflow "Thank respondents" is enabled, runs when a survey response is completed, 1 step, last run completed at ${NOW}.`
+      `Workflow ${WORKFLOW_ID} is enabled, runs when a survey response is completed, 1 step, last run completed at ${NOW}.`
     );
   });
 
@@ -221,7 +221,7 @@ describe("registerWorkflowApp", () => {
     const result = await callShowWorkflow();
 
     expect(result.content[0].text).toBe(
-      'Workflow "Thank respondents" is draft, has no trigger yet, 1 step, no runs yet.'
+      `Workflow ${WORKFLOW_ID} is draft, has no trigger yet, 1 step, no runs yet.`
     );
   });
 

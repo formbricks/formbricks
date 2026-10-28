@@ -43,15 +43,10 @@ const REASON_PHRASES = {
 const describeStatus = ({ displayStatus, displayStatusReason }: TCreativeResource): string =>
   displayStatusReason ? REASON_PHRASES[displayStatusReason] : STATUS_PHRASES[displayStatus];
 
-const describeShows = (
-  { distribution }: TCreativeResource,
-  triggerNames: readonly string[] | null
-): string => {
+const describeShows = ({ distribution }: TCreativeResource): string => {
   const parts: string[] = [];
   if (distribution.showOn === "pageView") {
     parts.push("on every page view");
-  } else if (triggerNames && triggerNames.length > 0) {
-    parts.push(`when one of these actions fires: ${triggerNames.join(", ")}`);
   } else {
     const count = distribution.triggers.length;
     if (count === 0) parts.push("when an action fires, but none is set");
@@ -68,7 +63,7 @@ const describeShows = (
 const describeDestination = ({ destination }: TCreativeResource): string => {
   if (!destination) return "It opens nothing.";
   if (destination.type === "link") return `It opens ${destination.url} in a new tab.`;
-  return `It opens the survey "${destination.surveyName}" ${
+  return `It opens survey ${destination.surveyId} ${
     destination.opensAs === "popup" ? "as a popup" : "in a new tab"
   }.`;
 };
@@ -80,14 +75,11 @@ const describeSchedule = ({ schedule }: TCreativeResource): string | null => {
   return null;
 };
 
-/** The short text every host gets, with or without MCP Apps support: name, kind, status, where it shows. */
-export const buildCreativePreviewText = (
-  creative: TCreativeResource,
-  triggerNames: readonly string[] | null
-): string =>
+/** The short text every host gets, with or without MCP Apps support: kind, status, where it shows. Named by id only: the name is workspace-stored text, and the model can look it up. */
+export const buildCreativePreviewText = (creative: TCreativeResource): string =>
   [
-    `Creative "${creative.name}" (${TYPE_LABELS[creative.type]}) is ${describeStatus(creative)}.`,
-    describeShows(creative, triggerNames),
+    `Creative ${creative.id} (${TYPE_LABELS[creative.type]}) is ${describeStatus(creative)}.`,
+    describeShows(creative),
     describeSchedule(creative),
     describeDestination(creative),
     ...creative.warnings.map(({ message }) => `Needs attention: ${message}`),

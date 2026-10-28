@@ -179,7 +179,8 @@ const joinWithAnd = (items: string[]): string =>
  * plainly that nothing has been written and the push waits for the person.
  */
 export function buildReviewText(review: TDocumentReview): string {
-  const subject = `${review.kind} "${review.name}"`;
+  // Named by id: the name is workspace-stored text, and the model can look it up.
+  const subject = `${review.kind} ${review.id}`;
   const waiting =
     "Nothing was written. The user decides in the review view; do not call push_document until they approve there. If you cannot see the view, list these changes to the user and ask before pushing.";
 
