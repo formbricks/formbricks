@@ -4,6 +4,11 @@ import { ZOrganization, ZOrganizationUpdateInput } from "@formbricks/types/organ
 
 export const ZOrganizationIdParams = z.object({ organizationId: ZId });
 
+/** `POST /api/internal/organizations`: the organization set up during onboarding. */
+export const ZOrganizationCreateBody = z.object({ name: ZOrganization.shape.name }).strict();
+
+export type TOrganizationCreateBody = z.infer<typeof ZOrganizationCreateBody>;
+
 /**
  * The organization settings the general settings page edits. Each field has its own permission: the name is
  * the owner's, the AI and display settings are owners' and managers' (see `requiredOrganizationActions`).

@@ -1,17 +1,36 @@
 import "server-only";
+import { logger } from "@formbricks/logger";
 import { type TOrgAction, requireOrgActionAccess } from "@/app/api/internal/lib/organization-access";
+import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
+import { applyRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
 import {
+  createdResponse,
   noContentResponse,
   problemAIUnavailable,
   problemForbidden,
+  problemUnauthorized,
   successResponse,
 } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { isInstanceAIConfigured } from "@/lib/ai/service";
-import { deleteOrganization, getOrganization, updateOrganization } from "@/lib/organization/service";
+import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { getHasNoOrganizations } from "@/lib/instance/service";
+import { createMembership } from "@/lib/membership/service";
+import {
+  createOrganization,
+  deleteOrganization,
+  getOrganization,
+  updateOrganization,
+} from "@/lib/organization/service";
+import { capturePostHogEvent, getEmailDomain, groupIdentifyPostHog } from "@/lib/posthog";
+import { getUser } from "@/lib/user/service";
+import { DEFAULT_WORKSPACE_NAME } from "@/lib/workspace/constants";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
+import { ensureCloudStripeSetupForOrganization } from "@/modules/ee/billing/lib/organization-billing";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
-import type { TOrganizationPatchBody } from "../schemas";
-import { serializeOrganizationSettings } from "../serializers";
+import { createWorkspace } from "@/modules/workspaces/settings/lib/workspace";
+import type { TOrganizationCreateBody, TOrganizationPatchBody } from "../schemas";
+import { serializeCreatedOrganization, serializeOrganizationSettings } from "../serializers";
 
 type TRequestContext = {
   authentication: TV3Authentication;
@@ -104,4 +123,82 @@ export async function deleteOrganizationOperation(context: TRequestContext): Pro
   await deleteOrganization(organizationId);
   if (auditLog) auditLog.oldObject = organization;
   return noContentResponse({ requestId });
+}
+
+/**
+ * `POST /api/internal/organizations`: the organization a new account creates during setup, with its owner
+ * membership and a first workspace. Allowed on a fresh instance, or anywhere the licence allows more than
+ * one organization.
+ */
+export async function createOrganizationOperation({
+  authentication,
+  body,
+  requestId,
+  instance,
+  auditLog,
+}: Omit<TRequestContext, "organizationId"> & { body: TOrganizationCreateBody }): Promise<Response> {
+  const actor = getV3AuthorizationActor(authentication);
+  if (actor?.type !== "user") return problemUnauthorized(requestId, "Session required", instance);
+  const user = await getUser(actor.id);
+  if (!user) return problemUnauthorized(requestId, "Session required", instance);
+
+  const limited = await applyRateLimitOrRespond(rateLimitConfigs.actions.createOrganization, user.id, {
+    requestId,
+    instance,
+  });
+  if (limited) return limited;
+
+  const hasNoOrganizations = await getHasNoOrganizations();
+  if (!hasNoOrganizations && !(await getIsMultiOrgEnabled())) {
+    return problemForbidden(requestId, "This action can only be performed on a fresh instance.", instance);
+  }
+
+  const organization = await createOrganization({ name: body.name });
+  await createMembership(organization.id, user.id, { role: "owner", accepted: true });
+
+  // Stripe setup must run AFTER membership is created so the owner email is available.
+  if (IS_FORMBRICKS_CLOUD) {
+    ensureCloudStripeSetupForOrganization(organization.id).catch((error) => {
+      logger.error(
+        { error, organizationId: organization.id },
+        "Stripe setup failed after organization creation"
+      );
+    });
+  }
+
+  // The organization was created just above and owns no workspaces, so there is no cap to enforce.
+  const workspace = await createWorkspace(
+    organization.id,
+    { name: DEFAULT_WORKSPACE_NAME },
+    { workspaceLimit: null }
+  );
+
+  if (auditLog) {
+    auditLog.organizationId = organization.id;
+    auditLog.targetId = organization.id;
+    auditLog.newObject = organization;
+  }
+
+  groupIdentifyPostHog("organization", organization.id, {
+    name: organization.name,
+    email_domain: getEmailDomain(user.email),
+  });
+  groupIdentifyPostHog("workspace", workspace.id, { name: workspace.name });
+  capturePostHogEvent(
+    user.id,
+    "organization_created",
+    { organization_id: organization.id, is_first_org: hasNoOrganizations },
+    { organizationId: organization.id, workspaceId: workspace.id }
+  );
+  capturePostHogEvent(
+    user.id,
+    "workspace_created",
+    { organization_id: organization.id, workspace_id: workspace.id, name: workspace.name },
+    { organizationId: organization.id, workspaceId: workspace.id }
+  );
+
+  return createdResponse(serializeCreatedOrganization(organization), {
+    location: `/api/internal/organizations/${organization.id}`,
+    requestId,
+  });
 }

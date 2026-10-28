@@ -8,13 +8,20 @@ export function buildV3AuditLog(
   authentication: TV3Authentication,
   action?: TAuditAction,
   targetType?: TAuditTarget,
-  apiUrl?: string
+  apiUrl?: string,
+  /** A pre-login route (`auth: "none"`) that audits a change made with a link's token, actor unknown. */
+  anonymous = false
 ): TV3AuditLog | undefined {
-  if (!authentication || !action || !targetType || !apiUrl) {
+  if ((!authentication && !anonymous) || !action || !targetType || !apiUrl) {
     return undefined;
   }
 
   const auditLog = buildAuditLogBaseObject(action, targetType, apiUrl);
+  if (!authentication) {
+    // The person holding the link, who is not signed in: a user, not an API key, but not one we can name.
+    auditLog.userType = "user";
+    return auditLog;
+  }
 
   if ("user" in authentication && authentication.user?.id) {
     auditLog.userId = authentication.user.id;
