@@ -4,7 +4,9 @@ import { problemDestructiveChange, problemStaleDocument } from "@/app/api/v3/doc
 import { getDocumentAdapter } from "@/app/api/v3/documents/lib/registry";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import { problemNotFound, problemUnprocessableContent, successResponse } from "@/app/api/v3/lib/response";
+import { mcpToolOutput } from "../../tools/output-schemas";
 import { registerDocumentReviewApp } from "./register";
+import { ZDocumentReview } from "./review";
 import { ZMcpReviewDocumentChangeInput } from "./schemas";
 
 vi.mock("@/app/api/v3/documents/lib/registry", () => ({ getDocumentAdapter: vi.fn() }));
@@ -206,12 +208,14 @@ describe("review_document_change", () => {
       kind: "survey",
       id,
       name: "Onboarding",
+      schemaVersion: 1,
       status: "valid",
       updatedAt,
       summary: { total: 1, removed: 1, destructive: 0 },
       changes: [{ path: "blocks[b2]", kind: "removed" }],
     });
     expect(result.structuredContent).toMatchObject({ requestId: "req_tool" });
+    expect(mcpToolOutput(ZDocumentReview).safeParse(result.structuredContent).success).toBe(true);
     expect(result.content).toHaveLength(1);
     expect(result.content[0].text).toContain("1 change");
     expect(result.content[0].text).toContain("do not call push_document until they approve");

@@ -1,26 +1,25 @@
 import type { App as McpApp } from "@modelcontextprotocol/ext-apps";
 import { type ReactNode, useId, useMemo, useState } from "react";
-import { type ToolResult, getResultText } from "../../shared/tool-result";
+import { classNames } from "../../shared/class-names";
+import { type FormatContext, formatDateTime, formatNumber } from "../../shared/format";
+import { getResultText } from "../../shared/tool-result";
 import { Badge, Button, Card, Loading } from "../../shared/ui";
 import { useToolView } from "../../shared/use-tool-view";
+import { approveReview } from "./approve";
+import { buildDecisionMessage } from "./messages";
 import {
   type ApplyOutcome,
   type ChangeGroup,
   type DocumentReview,
   type ReviewChange,
-  buildOutcomeNote,
-  buildPushArguments,
   capitalize,
   describeValue,
-  formatCount,
-  formatTimestamp,
   getApprovalBlock,
   getConfirmLabel,
   getDocumentLabel,
   getReviewedArguments,
   groupChanges,
   isLongValue,
-  readApplyOutcome,
   readReview,
 } from "./review";
 import "./review.css";
@@ -31,10 +30,6 @@ type Phase =
   | { type: "applied"; outcome: Extract<ApplyOutcome, { ok: true }> }
   | { type: "failed"; outcome: Extract<ApplyOutcome, { ok: false }> }
   | { type: "declined" };
-
-// Joined by hand: the Prettier class sorter rewrites class names inside template strings and drops the
-// space that separates a conditional class from the one before it.
-const classNames = (...names: (string | false | undefined)[]): string => names.filter(Boolean).join(" ");
 
 // A path breaks after its dots and brackets first, so a narrow chat column wraps it between fields.
 const breakablePath = (path: string): ReactNode =>
@@ -134,7 +129,9 @@ const Issues = ({ issues }: Readonly<{ issues: { name: string; reason: string }[
     </ul>
   ) : null;
 
-const notifyModel = (app: McpApp, text: string, asMessage: boolean): void => {
+// Only the fixed-template message from `buildDecisionMessage` goes to the model, never text from the document.
+const notifyModel = (app: McpApp, text: string | undefined, asMessage: boolean): void => {
+  if (!text) return;
   const content = [{ type: "text" as const, text }];
   const canMessage = Boolean(app.getHostCapabilities()?.message);
   const send =
@@ -150,14 +147,12 @@ const ReviewView = ({
   review,
   input,
   app,
-  locale,
-  timeZone,
+  format,
 }: Readonly<{
   review: DocumentReview;
   input: Record<string, unknown> | null;
   app: McpApp;
-  locale?: string;
-  timeZone?: string;
+  format: FormatContext;
 }>) => {
   const [confirmed, setConfirmed] = useState(false);
   const [phase, setPhase] = useState<Phase>({ type: "review" });
@@ -166,7 +161,7 @@ const ReviewView = ({
 
   const reviewed = getReviewedArguments(input, review);
   const block = getApprovalBlock(review, reviewed, confirmed);
-  const staleAfterPush = phase.type === "failed" && phase.outcome.stale;
+  const staleAfterPush = phase.type === "failed" && phase.outcome.reason === "stale";
   const settled = phase.type === "applied" || phase.type === "declined";
   const busy = phase.type === "applying";
   const documentLabel = getDocumentLabel(review.kind);
@@ -176,31 +171,19 @@ const ReviewView = ({
   const approve = async () => {
     if (!reviewed.ok || block || busy) return;
     setPhase({ type: "applying" });
-    let outcome: ApplyOutcome;
-    try {
-      // Exactly the reviewed arguments; `confirmDestructive` only if the person ticked the box.
-      const result = await app.callServerTool({
-        name: "push_document",
-        arguments: buildPushArguments(reviewed.args, confirmed),
-      });
-      outcome = readApplyOutcome(result as ToolResult);
-    } catch (error) {
-      outcome = {
-        ok: false,
-        stale: false,
-        title: "The push did not go through",
-        detail:
-          error instanceof Error && error.message ? error.message : "The host could not reach the server.",
-        issues: [],
-      };
-    }
+    const outcome = await approveReview({
+      callTool: (params) => app.callServerTool(params),
+      review,
+      reviewed,
+      confirmed,
+    });
     setPhase(outcome.ok ? { type: "applied", outcome } : { type: "failed", outcome });
-    notifyModel(app, buildOutcomeNote(review, outcome), false);
+    notifyModel(app, buildDecisionMessage(review, outcome), false);
   };
 
   const decline = () => {
     setPhase({ type: "declined" });
-    notifyModel(app, buildOutcomeNote(review, "declined"), true);
+    notifyModel(app, buildDecisionMessage(review, "declined"), true);
   };
 
   return (
@@ -222,7 +205,7 @@ const ReviewView = ({
             )}
           </div>
           <p className="fb-faint">
-            Stored version from {formatTimestamp(review.updatedAt, locale, timeZone)}
+            Stored version from {formatDateTime(review.updatedAt, format)}
             {" · "}
             <span className="fb-mono dr-id">{review.id}</span>
           </p>
@@ -231,19 +214,19 @@ const ReviewView = ({
         {summary.total > 0 ? (
           <div className="fb-row" aria-label="Summary of changes">
             <Badge>
-              {formatCount(summary.total, locale)} {summary.total === 1 ? "change" : "changes"}
+              {formatNumber(summary.total, format)} {summary.total === 1 ? "change" : "changes"}
             </Badge>
             {summary.added > 0 ? (
-              <Badge tone="success">{formatCount(summary.added, locale)} added</Badge>
+              <Badge tone="success">{formatNumber(summary.added, format)} added</Badge>
             ) : null}
             {summary.removed > 0 ? (
-              <Badge tone="danger">{formatCount(summary.removed, locale)} removed</Badge>
+              <Badge tone="danger">{formatNumber(summary.removed, format)} removed</Badge>
             ) : null}
             {summary.changed > 0 ? (
-              <Badge tone="info">{formatCount(summary.changed, locale)} changed</Badge>
+              <Badge tone="info">{formatNumber(summary.changed, format)} changed</Badge>
             ) : null}
             {summary.destructive > 0 ? (
-              <Badge tone="warning">{formatCount(summary.destructive, locale)} destructive</Badge>
+              <Badge tone="warning">{formatNumber(summary.destructive, format)} destructive</Badge>
             ) : null}
           </div>
         ) : null}
@@ -253,6 +236,15 @@ const ReviewView = ({
             <p>
               Ask the agent to pull it again and redo the change. Nothing was written. The changes below are
               measured against the version stored now.
+            </p>
+          </Alert>
+        ) : null}
+
+        {block === "version" || (phase.type === "failed" && phase.outcome.reason === "version") ? (
+          <Alert tone="warning" title="This review is for a different document version">
+            <p>
+              The document version in the change is not the one the review was made against. Nothing was
+              written. Ask the agent to pull the document again and review the change again.
             </p>
           </Alert>
         ) : null}
@@ -280,7 +272,7 @@ const ReviewView = ({
             ))}
             {review.omittedChanges > 0 ? (
               <p className="fb-muted dr-omitted">
-                {formatCount(review.omittedChanges, locale)} more{" "}
+                {formatNumber(review.omittedChanges, format)} more{" "}
                 {review.omittedChanges === 1 ? "change is" : "changes are"} not listed here.
               </p>
             ) : null}
@@ -309,7 +301,7 @@ const ReviewView = ({
           </Alert>
         ) : null}
 
-        {phase.type === "failed" && !phase.outcome.stale ? (
+        {phase.type === "failed" && phase.outcome.reason !== "stale" && phase.outcome.reason !== "version" ? (
           <Alert tone="danger" title={phase.outcome.title}>
             <p>{phase.outcome.detail}</p>
             <Issues issues={phase.outcome.issues} />
@@ -323,7 +315,7 @@ const ReviewView = ({
           <Alert tone="success" title="Applied">
             <p>
               The {documentLabel} now has your changes. It was last updated{" "}
-              {formatTimestamp(phase.outcome.updatedAt, locale, timeZone)}.
+              {formatDateTime(phase.outcome.updatedAt, format)}.
             </p>
           </Alert>
         ) : null}
@@ -369,6 +361,8 @@ const ReviewView = ({
 export const App = () => {
   const { app, isConnected, connectionError, input, result, cancelledReason, hostContext } = useToolView();
 
+  const format: FormatContext = { locale: hostContext?.locale, timeZone: hostContext?.timeZone };
+
   // A late tool result replaces the earlier one in state; the key restarts the decision with it.
   const shown = useMemo(() => readReview(result), [result]);
 
@@ -409,8 +403,7 @@ export const App = () => {
       review={shown}
       input={input}
       app={app}
-      locale={hostContext?.locale}
-      timeZone={hostContext?.timeZone}
+      format={format}
     />
   );
 };

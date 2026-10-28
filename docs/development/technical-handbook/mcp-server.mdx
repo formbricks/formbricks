@@ -819,7 +819,7 @@ Tools can render an interactive view inside the agent. This follows the MCP Apps
 | View (`ui://formbricks/<view>.html`) | Tool | Notes |
 | --- | --- | --- |
 | `survey-preview` | `show_survey` | Review outline plus the real renderer in preview mode, loaded from the instance (`/js/surveys.umd.cjs`) instead of inlined (880 kB). `_meta.formbricks` carries the render payload and never the PIN or custom CSS source |
-| `document-review` | `review_document_change` | Runs `push_document` as a dry run (never writes) and diffs it against the stored document. The view's approve button calls `push_document` with the exact reviewed arguments, `confirmDestructive` only after the person ticks the checkbox, and the server re-checks staleness, scope and confirmation |
+| `document-review` | `review_document_change` | Runs `push_document` as a dry run (never writes) and diffs it against the stored document. The view's approve button calls `push_document` with the exact reviewed arguments, `confirmDestructive` only after the person ticks the checkbox, and the server re-checks staleness, scope and confirmation. The review carries the document's `schemaVersion`; the view refuses to push when the push's version differs from the reviewed one |
 | `feedback-chart` | `show_feedback_chart` | Same operation, limits and tenant isolation as `query_feedback`, plus a validated `chart` hint. Charts are hand-drawn SVG with a table fallback |
 | `responses` | `show_responses` | First page through the `list_responses` operation; paging, filters and detail go through `list_responses` and `get_response` |
 | `creative-preview` | `show_creative` | The real `@formbricks/creatives` renderer into a Shadow DOM on a placeholder page |

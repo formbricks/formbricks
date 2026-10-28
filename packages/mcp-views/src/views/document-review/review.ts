@@ -4,11 +4,18 @@
  * declared again here because a view cannot import from the web app), deciding whether the person may
  * approve, and building the exact arguments of the push that approval sends.
  */
+import { isRecord } from "../../shared/guards";
 import type { ToolResult } from "../../shared/tool-result";
 
-export type DocumentKind = "survey" | "creative" | "workflow";
-export type ReviewStatus = "valid" | "stale" | "destructive" | "invalid";
+const KINDS = ["survey", "creative", "workflow"] as const;
+const STATUSES = ["valid", "stale", "destructive", "invalid"] as const;
+
+export type DocumentKind = (typeof KINDS)[number];
+export type ReviewStatus = (typeof STATUSES)[number];
 export type ChangeKind = "added" | "removed" | "changed";
+
+export const isDocumentKind = (value: unknown): value is DocumentKind => KINDS.some((kind) => kind === value);
+const isReviewStatus = (value: unknown): value is ReviewStatus => STATUSES.some((status) => status === value);
 
 export interface ReviewChange {
   path: string;
@@ -32,6 +39,8 @@ export interface DocumentReview {
   id: string;
   name: string;
   workspaceId: string;
+  /** The `schemaVersion` of the stored document this review was made against. */
+  schemaVersion: number;
   status: ReviewStatus;
   updatedAt: string;
   expectedUpdatedAt: string;
@@ -42,9 +51,6 @@ export interface DocumentReview {
   destructive: DestructiveItem[];
   issues: { name: string; reason: string }[];
 }
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
 
 const isString = (value: unknown): value is string => typeof value === "string";
 const isCount = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value);
@@ -64,9 +70,6 @@ const isDestructiveItem = (value: unknown): value is DestructiveItem =>
 const isIssue = (value: unknown): value is { name: string; reason: string } =>
   isRecord(value) && isString(value.name) && isString(value.reason);
 
-const KINDS: readonly string[] = ["survey", "creative", "workflow"];
-const STATUSES: readonly string[] = ["valid", "stale", "destructive", "invalid"];
-
 /**
  * The review in a tool result, or `undefined` when the result is not one (an error result, a host that
  * dropped `structuredContent`). Checked field by field: the view renders what it is given, so a shape it
@@ -79,13 +82,12 @@ export const readReview = (result: ToolResult | null | undefined): DocumentRevie
   const { summary } = data;
 
   if (
-    !isString(data.kind) ||
-    !KINDS.includes(data.kind) ||
-    !isString(data.status) ||
-    !STATUSES.includes(data.status) ||
+    !isDocumentKind(data.kind) ||
+    !isReviewStatus(data.status) ||
     !isString(data.id) ||
     !isString(data.name) ||
     !isString(data.workspaceId) ||
+    !isCount(data.schemaVersion) ||
     !isString(data.updatedAt) ||
     !isString(data.expectedUpdatedAt) ||
     !Array.isArray(data.changes) ||
@@ -101,11 +103,12 @@ export const readReview = (result: ToolResult | null | undefined): DocumentRevie
   }
 
   return {
-    kind: data.kind as DocumentKind,
+    kind: data.kind,
     id: data.id,
     name: data.name,
     workspaceId: data.workspaceId,
-    status: data.status as ReviewStatus,
+    schemaVersion: data.schemaVersion,
+    status: data.status,
     updatedAt: data.updatedAt,
     expectedUpdatedAt: data.expectedUpdatedAt,
     ...(isString(data.detail) && { detail: data.detail }),
@@ -148,8 +151,7 @@ export const getReviewedArguments = (
 
   const { kind, id, schemaVersion, expectedUpdatedAt, document } = input;
   if (
-    !isString(kind) ||
-    !KINDS.includes(kind) ||
+    !isDocumentKind(kind) ||
     !isString(id) ||
     !isCount(schemaVersion) ||
     !isString(expectedUpdatedAt) ||
@@ -170,7 +172,7 @@ export const buildPushArguments = (args: PushArguments, confirmed: boolean): Pus
   return confirmed ? { ...reviewed, confirmDestructive: true } : reviewed;
 };
 
-export type ApprovalBlock = "nothing" | "stale" | "invalid" | "confirm" | "arguments" | undefined;
+export type ApprovalBlock = "nothing" | "stale" | "invalid" | "confirm" | "arguments" | "version" | undefined;
 
 /** Why approval is unavailable right now, or `undefined` when the person may approve. */
 export const getApprovalBlock = (
@@ -182,6 +184,9 @@ export const getApprovalBlock = (
   if (review.status === "invalid") return "invalid";
   if (review.summary.total === 0) return "nothing";
   if (!reviewed.ok) return "arguments";
+  // The push carries the version the agent pulled; the review was made against the stored document's.
+  // A push whose version differs would be refused, or worse, mean a different shape than the one on screen.
+  if (reviewed.args.schemaVersion !== review.schemaVersion) return "version";
   if (review.status === "destructive" && !confirmed) return "confirm";
   return undefined;
 };
@@ -247,37 +252,30 @@ const COLLAPSE_LINES = 4;
 export const isLongValue = (text: string): boolean =>
   text.length > COLLAPSE_CHARACTERS || text.split("\n").length > COLLAPSE_LINES;
 
-/** A timestamp in the host's locale and time zone; the raw text when it cannot be formatted. */
-export const formatTimestamp = (iso: string, locale?: string, timeZone?: string): string => {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return iso;
-  try {
-    return new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short", timeZone }).format(
-      date
-    );
-  } catch {
-    return iso;
-  }
-};
-
-export const formatCount = (value: number, locale?: string): string => {
-  try {
-    return new Intl.NumberFormat(locale).format(value);
-  } catch {
-    return String(value);
-  }
-};
+/** Why a push did not happen or did not go through. */
+export type FailureReason =
+  /** The push never left the view: approval was not allowed (checked again at the moment of approving). */
+  | "blocked"
+  /** The reviewed document version is not the one the push carries; nothing was sent. */
+  | "version"
+  /** The server refused: the document changed since it was pulled. */
+  | "stale"
+  /** The server refused for another reason (not valid, would remove data, not allowed, a fault). */
+  | "refused"
+  /** The host could not reach the server. */
+  | "unreachable";
 
 export type ApplyOutcome =
   | { ok: true; updatedAt: string; changeCount: number }
   | {
       ok: false;
-      /** The push was refused because the document changed since it was pulled. */
-      stale: boolean;
+      reason: FailureReason;
       title: string;
       detail: string;
       issues: { name: string; reason: string }[];
       requestId?: string;
+      /** The HTTP status the server answered, when it said one. */
+      status?: number;
     };
 
 /**
@@ -305,35 +303,21 @@ export const readApplyOutcome = (result: ToolResult | null | undefined): ApplyOu
     const details = isRecord(error.details) ? error.details : {};
     return {
       ok: false,
-      stale: error.status === 409 && isString(details.currentUpdatedAt),
+      reason: error.status === 409 && isString(details.currentUpdatedAt) ? "stale" : "refused",
       title: isString(error.title) ? error.title : "The push failed",
       detail: isString(error.detail) ? error.detail : "The server refused the change.",
       issues: Array.isArray(error.invalid_params) ? error.invalid_params.filter(isIssue) : [],
       ...(isString(error.requestId) && { requestId: error.requestId }),
+      ...(isCount(error.status) && { status: error.status }),
     };
   }
 
   const text = result?.content?.find((block) => block.type === "text")?.text;
   return {
     ok: false,
-    stale: false,
+    reason: "refused",
     title: "The push failed",
     detail: result?.isError && text ? text : "The server did not confirm that the change was applied.",
     issues: [],
   };
-};
-
-/** The note the model gets once the person has decided, so its next turn starts from what happened. */
-export const buildOutcomeNote = (review: DocumentReview, outcome: ApplyOutcome | "declined"): string => {
-  const subject = `${getDocumentLabel(review.kind)} "${review.name}" (${review.id})`;
-  if (outcome === "declined") {
-    return `The user reviewed the change to ${subject} and declined it. Nothing was pushed. Do not push it unless they ask you to.`;
-  }
-  if (outcome.ok) {
-    return `The user approved the change to ${subject} in the review view and push_document applied it (${outcome.changeCount} ${outcome.changeCount === 1 ? "change" : "changes"}). The stored document's updatedAt is now ${outcome.updatedAt}; pull it again before editing further.`;
-  }
-  if (outcome.stale) {
-    return `The user approved the change to ${subject} but the push was refused: the document changed since it was pulled. Nothing was written. Pull it again, redo the edit and review again.`;
-  }
-  return `The user approved the change to ${subject} but push_document refused it: ${outcome.detail.replace(/[.\s]+$/, "")}. Nothing was written.`;
 };

@@ -51,6 +51,7 @@ describe("buildDocumentReview", () => {
       id,
       name: "Onboarding",
       workspaceId: "ws1",
+      schemaVersion: 1,
       status: "valid",
       updatedAt: storedAt,
       expectedUpdatedAt: storedAt,
@@ -70,6 +71,14 @@ describe("buildDocumentReview", () => {
     const result = review({ type: "ok", result: pushResult(normalised) });
 
     expect(result.changes.find((change) => change.path === "name")?.after).toBe("Onboarding v2 (normalised)");
+  });
+
+  test("carries the schema version of the stored document, which the view checks before it pushes", () => {
+    const result = review({ type: "ok", result: pushResult(proposed) });
+    expect(result.schemaVersion).toBe(current.schemaVersion);
+
+    const { schemaVersion: _omitted, ...withoutVersion } = result;
+    expect(ZDocumentReview.safeParse(withoutVersion).success).toBe(false);
   });
 
   test("an unchanged document is valid with no changes", () => {

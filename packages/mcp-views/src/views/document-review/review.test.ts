@@ -1,11 +1,9 @@
+import { makeReview, toolInput, updatedAt } from "./__mocks__/fixtures";
 import { describe, expect, test } from "vitest";
 import {
-  type DocumentReview,
-  buildOutcomeNote,
   buildPushArguments,
   capitalize,
   describeValue,
-  formatTimestamp,
   getApprovalBlock,
   getConfirmLabel,
   getReviewedArguments,
@@ -16,34 +14,7 @@ import {
   readReview,
 } from "./review";
 
-const updatedAt = "2026-10-28T12:00:00.000Z";
-
-const review = (overrides: Partial<DocumentReview> = {}): DocumentReview => ({
-  kind: "survey",
-  id: "s1",
-  name: "Onboarding",
-  workspaceId: "ws1",
-  status: "valid",
-  updatedAt,
-  expectedUpdatedAt: updatedAt,
-  summary: { total: 2, added: 0, removed: 1, changed: 1, destructive: 0 },
-  changes: [
-    { path: "name", kind: "changed", before: "A", after: "B" },
-    { path: "blocks[b2]", kind: "removed", before: { id: "b2" } },
-  ],
-  omittedChanges: 0,
-  destructive: [],
-  issues: [],
-  ...overrides,
-});
-
-const toolInput = {
-  kind: "survey",
-  id: "s1",
-  schemaVersion: 1,
-  expectedUpdatedAt: updatedAt,
-  document: { name: "B" },
-};
+const review = makeReview;
 
 describe("readReview", () => {
   test("reads the review out of structuredContent.data", () => {
@@ -67,6 +38,13 @@ describe("readReview", () => {
       },
     });
     expect(parsed?.changes).toEqual([{ path: "a", kind: "changed" }]);
+  });
+
+  test("needs the schema version of the stored document", () => {
+    const { schemaVersion: _version, ...rest } = review();
+    expect(readReview({ structuredContent: { data: rest } })).toBeUndefined();
+    expect(readReview({ structuredContent: { data: { ...rest, schemaVersion: "1" } } })).toBeUndefined();
+    expect(readReview({ structuredContent: { data: review({ schemaVersion: 2 }) } })?.schemaVersion).toBe(2);
   });
 
   test("defaults the omitted count", () => {
@@ -98,7 +76,7 @@ describe("getReviewedArguments", () => {
 });
 
 describe("buildPushArguments", () => {
-  const args = { ...toolInput, kind: "survey" as const };
+  const args = { ...toolInput };
 
   test("adds confirmDestructive only when the box was ticked, and never a dryRun", () => {
     expect(buildPushArguments(args, false)).toEqual(args);
@@ -143,6 +121,13 @@ describe("getApprovalBlock", () => {
     const destructive = review({ status: "destructive" });
     expect(getApprovalBlock(destructive, ok, false)).toBe("confirm");
     expect(getApprovalBlock(destructive, ok, true)).toBeUndefined();
+  });
+
+  test("a push whose document version is not the one reviewed is blocked", () => {
+    const other = getReviewedArguments({ ...toolInput, schemaVersion: 2 }, review());
+    expect(getApprovalBlock(review(), other, false)).toBe("version");
+    expect(getApprovalBlock(review({ schemaVersion: 2 }), ok, false)).toBe("version");
+    expect(getApprovalBlock(review({ schemaVersion: 2 }), other, false)).toBeUndefined();
   });
 
   test("without trustworthy arguments nothing can be approved", () => {
@@ -224,19 +209,6 @@ describe("values", () => {
   });
 });
 
-describe("formatTimestamp", () => {
-  test("uses the host's locale and time zone", () => {
-    expect(formatTimestamp(updatedAt, "en-US", "UTC")).toBe("Oct 28, 2026, 12:00 PM");
-    expect(formatTimestamp(updatedAt, "en-US", "Asia/Tokyo")).toBe("Oct 28, 2026, 9:00 PM");
-    expect(formatTimestamp(updatedAt, "de-DE", "UTC")).toContain("28.10.2026");
-  });
-
-  test("returns the text unchanged when it cannot be formatted", () => {
-    expect(formatTimestamp("not a date", "en-US", "UTC")).toBe("not a date");
-    expect(formatTimestamp(updatedAt, "en-US", "Not/AZone")).toBe(updatedAt);
-  });
-});
-
 describe("readApplyOutcome", () => {
   test("a real write that names the stored document is a success", () => {
     expect(
@@ -273,11 +245,12 @@ describe("readApplyOutcome", () => {
     });
     expect(outcome).toEqual({
       ok: false,
-      stale: true,
+      reason: "stale",
       title: "Conflict",
       detail: "The resource changed since this document was pulled.",
       issues: [],
       requestId: "req_1",
+      status: 409,
     });
   });
 
@@ -294,28 +267,16 @@ describe("readApplyOutcome", () => {
         },
       },
     });
-    expect(outcome).toMatchObject({ ok: false, stale: false, issues: [{ name: "blocks", reason: "bad" }] });
+    expect(outcome).toMatchObject({
+      ok: false,
+      reason: "refused",
+      issues: [{ name: "blocks", reason: "bad" }],
+    });
   });
 
   test("falls back to the text of a bare error result", () => {
     expect(
       readApplyOutcome({ isError: true, content: [{ type: "text", text: "Tool unavailable" }] })
     ).toMatchObject({ ok: false, detail: "Tool unavailable" });
-  });
-});
-
-describe("buildOutcomeNote", () => {
-  test("tells the model what happened in each case", () => {
-    const r = review();
-    expect(buildOutcomeNote(r, "declined")).toContain("declined it. Nothing was pushed");
-    expect(
-      buildOutcomeNote(r, { ok: true, updatedAt: "2026-10-28T12:05:00.000Z", changeCount: 1 })
-    ).toContain("updatedAt is now 2026-10-28T12:05:00.000Z");
-    expect(buildOutcomeNote(r, { ok: false, stale: true, title: "t", detail: "d", issues: [] })).toContain(
-      "Pull it again"
-    );
-    expect(
-      buildOutcomeNote(r, { ok: false, stale: false, title: "t", detail: "Forbidden.", issues: [] })
-    ).toContain("refused it: Forbidden.");
   });
 });

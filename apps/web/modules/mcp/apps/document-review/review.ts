@@ -36,6 +36,11 @@ export const ZDocumentReview = z.object({
   id: z.string(),
   name: z.string(),
   workspaceId: z.string(),
+  /**
+   * The `schemaVersion` of the stored document the review was made against. The view refuses to push when
+   * the push it would send carries another one.
+   */
+  schemaVersion: z.number().int(),
   status: ZDocumentReviewStatus,
   /** The `updatedAt` the stored document had when it was reviewed. */
   updatedAt: z.string(),
@@ -149,6 +154,7 @@ export function buildDocumentReview({
     id,
     name: nameOf(current, proposed),
     workspaceId: current.workspaceId,
+    schemaVersion: current.schemaVersion,
     status,
     updatedAt: current.updatedAt,
     expectedUpdatedAt,
