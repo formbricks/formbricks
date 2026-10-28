@@ -14,6 +14,7 @@ import { CREATIVE_TEXTS, type TCreativeTextSpec } from "@/modules/ee/creatives/l
 import * as auditEventSchemas from "./audit-event-schemas";
 import * as contactSchemas from "./contact-schemas";
 import * as creativeSchemas from "./creative-schemas";
+import * as documentSchemas from "./document-schemas";
 import * as feedbackQuerySchemas from "./feedback-query-schemas";
 import * as lifecycleSchemas from "./lifecycle-schemas";
 import * as surveyAndFeedbackSchemas from "./schemas";
@@ -142,6 +143,7 @@ const allExports: [string, unknown][] = Object.entries({
   ...workflowSchemas,
   ...creativeSchemas,
   ...tagSchemas,
+  ...documentSchemas,
   ...auditEventSchemas,
   ...feedbackQuerySchemas,
   ...taxonomySchemas,
@@ -209,6 +211,9 @@ const EXPECTED_FREE_FORM_PATHS: Record<string, string[]> = {
   ZMcpCreateSegmentInput: ["ZMcpCreateSegmentInput.filters[]"],
   ZMcpUpdateSegmentInput: ["ZMcpUpdateSegmentInput.filters[]"],
   ZMcpUpdateFeedbackRecordInput: ["ZMcpUpdateFeedbackRecordInput.metadata"],
+  // A pushed document is a survey, creative or workflow body: which fields it has depends on its `kind`,
+  // and the kind's strict document schema validates it when the call reaches the operation.
+  ZMcpPushDocumentInput: ["ZMcpPushDocumentInput.document"],
   // A creative's texts are maps keyed by locale code ({"en-US": "..."}): the keys are data, not declared
   // fields. The operation checks each against the languages the creative declares, so a misspelled locale
   // is refused (422) rather than dropped.

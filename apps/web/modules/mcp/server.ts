@@ -11,6 +11,7 @@ import { mcpRequestStateCodec } from "./request-state";
 import { registerAuditEventTools } from "./tools/audit-events";
 import { registerContactTools } from "./tools/contacts";
 import { registerCreativeTools } from "./tools/creatives";
+import { registerDocumentTools } from "./tools/documents";
 import { registerFeedbackQueryTools } from "./tools/feedback-queries";
 import { registerFeedbackRecordTools } from "./tools/feedback-records";
 import { registerLifecycleTools } from "./tools/lifecycle";
@@ -133,6 +134,7 @@ export const mcpHandler = createMcpHandler((server) => {
   registerResponseTools(server);
   registerCreativeTools(server);
   registerTagTools(server);
+  registerDocumentTools(server);
   registerAuditEventTools(server);
   registerTaxonomyTools(server);
   registerWebhookTools(server);

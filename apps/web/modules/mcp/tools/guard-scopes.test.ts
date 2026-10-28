@@ -181,6 +181,39 @@ describe("registerScopedTool — auditing refused mutations", () => {
     expect(vi.mocked(queueV3AuditLog).mock.calls[0][0]).not.toHaveProperty("targetId");
   });
 
+  test("names the audit target from the input when the tool acts on more than one kind", async () => {
+    const { server, tools } = createToolServer();
+    const byKind = {
+      ...CONFIG,
+      audit: {
+        action: "updated",
+        targetType: (input: unknown) =>
+          (input as { kind?: string })?.kind === "workflow" ? "workflow" : undefined,
+        targetIdArg: "id",
+      },
+    } as const;
+    registerScopedTool(server as any, "push_document", byKind, ["surveys:write"], vi.fn() as any);
+    const authInfo = authInfoWithScopes(["surveys:read"], "req_push", API_KEY_AUTH);
+
+    await tools
+      .get("push_document")!
+      .handler({ kind: "workflow", id: "clwf000000000000000000001" }, { http: { authInfo } });
+    expect(buildV3AuditLog).toHaveBeenCalledWith(
+      API_KEY_AUTH,
+      "updated",
+      "workflow",
+      "https://app.test/api/mcp"
+    );
+    expect(vi.mocked(queueV3AuditLog).mock.calls[0][0]).toMatchObject({
+      targetId: "clwf000000000000000000001",
+    });
+
+    // A kind it cannot name records nothing, rather than a false target.
+    vi.clearAllMocks();
+    await tools.get("push_document")!.handler({ kind: "unknown", id: "x" }, { http: { authInfo } });
+    expect(queueV3AuditLog).not.toHaveBeenCalled();
+  });
+
   test("audits nothing when the refused tool declares no audit — reads are not attempts", async () => {
     const { server, tools } = createToolServer();
     registerScopedTool(server as any, "list_responses", CONFIG, ["responses:read"], vi.fn() as any);

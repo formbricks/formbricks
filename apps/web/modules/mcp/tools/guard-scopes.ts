@@ -83,7 +83,15 @@ async function guardMcpAnyScope(
  * a survey would go into, the workflow `duplicate_workflow` would copy — and recording one of those as the
  * target of a failed creation would be a false record.
  */
-type TMcpToolAudit = { action: TAuditAction; targetType: TAuditTarget; targetIdArg?: string };
+type TMcpToolAudit = {
+  action: TAuditAction;
+  /**
+   * A tool that acts on more than one kind of resource (`push_document`) names the target from its input;
+   * returning `undefined` records nothing rather than a false target.
+   */
+  targetType: TAuditTarget | ((input: unknown) => TAuditTarget | undefined);
+  targetIdArg?: string;
+};
 
 /**
  * Record a scope refusal on a mutating tool as a failed audit event (ENG-2872).
@@ -100,10 +108,15 @@ async function auditRefusedMutation(
   authInfo: AuthInfo | undefined,
   requestId: string
 ): Promise<void> {
+  const targetType = typeof audit.targetType === "function" ? audit.targetType(input) : audit.targetType;
+  if (!targetType) {
+    return;
+  }
+
   const auditLog = buildV3AuditLog(
     getMcpAuthentication(authInfo),
     audit.action,
-    audit.targetType,
+    targetType,
     getMcpResourceUrl()
   );
   if (!auditLog) {
