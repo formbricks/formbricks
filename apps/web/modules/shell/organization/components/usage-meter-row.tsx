@@ -16,7 +16,7 @@ export const UsageMeterRow = ({ label, meter, value }: Readonly<UsageMeterRowPro
       <span className="text-slate-500">{value}</span>
     </div>
     {meter.limit !== null && (
-      <ProgressBar progress={meter.ratio} barColor={USAGE_METER_BAR_CLASS[meter.tone]} height={2} />
+      <ProgressBar progress={meter.ratio} barColor={USAGE_METER_BAR_CLASS[meter.tone]} height={5} />
     )}
   </div>
 );
