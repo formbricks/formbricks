@@ -1,0 +1,28 @@
+type: object
+description: A survey document with the identity and version a push has to name.
+required:
+  - kind
+  - schemaVersion
+  - id
+  - workspaceId
+  - updatedAt
+  - document
+properties:
+  kind:
+    type: string
+    enum:
+      - survey
+  schemaVersion:
+    type: integer
+    enum:
+      - 1
+  id:
+    type: string
+  workspaceId:
+    type: string
+  updatedAt:
+    type: string
+    format: date-time
+    description: Send this back as `expectedUpdatedAt` when you push the edited document.
+  document:
+    $ref: ./SurveyDocument.yml

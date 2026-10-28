@@ -251,6 +251,54 @@ describe("updateWorkflow", () => {
   });
 });
 
+describe("updateWorkflowIfUnchanged", () => {
+  const params = { workflowId: "cm9zr4t2b000208l8h2m1aq3c", workspaceId };
+  const expectedUpdatedAt = new Date("2026-06-12T09:30:00.000Z");
+
+  test("writes with updatedAt in the UPDATE's where clause, scoped by workspace, and returns the row", async () => {
+    updateMany.mockResolvedValue({ count: 1 });
+    findUnique.mockResolvedValue(makeRow({ name: "Renamed" }));
+
+    const outcome = await service.updateWorkflowIfUnchanged(params, { name: "Renamed" }, expectedUpdatedAt);
+
+    expect(updateMany).toHaveBeenCalledWith({
+      where: { id: params.workflowId, workspaceId, updatedAt: expectedUpdatedAt },
+      data: { name: "Renamed" },
+    });
+    expect(update).not.toHaveBeenCalled();
+    expect(outcome.result).toBe("updated");
+    expect(outcome.result === "updated" && outcome.row.name).toBe("Renamed");
+  });
+
+  test("answers stale, with the current updatedAt, when the precondition matched no row", async () => {
+    const current = new Date("2026-06-12T09:45:00.000Z");
+    updateMany.mockResolvedValue({ count: 0 });
+    findUnique.mockResolvedValue(makeRow({ updatedAt: current }));
+
+    const outcome = await service.updateWorkflowIfUnchanged(params, { name: "Renamed" }, expectedUpdatedAt);
+
+    expect(outcome).toEqual({ result: "stale", currentUpdatedAt: current });
+  });
+
+  test("throws a conflict when the workflow was deleted meanwhile", async () => {
+    updateMany.mockResolvedValue({ count: 0 });
+    findUnique.mockResolvedValue(null);
+
+    await expect(
+      service.updateWorkflowIfUnchanged(params, { name: "Renamed" }, expectedUpdatedAt)
+    ).rejects.toBeInstanceOf(WorkflowConflictError);
+  });
+
+  test("does not treat a row of another workspace as the workflow", async () => {
+    updateMany.mockResolvedValue({ count: 0 });
+    findUnique.mockResolvedValue(makeRow({ workspaceId: "cm9zr4mps000008l8btfy1vzz" }));
+
+    await expect(
+      service.updateWorkflowIfUnchanged(params, { name: "Renamed" }, expectedUpdatedAt)
+    ).rejects.toBeInstanceOf(WorkflowConflictError);
+  });
+});
+
 describe("duplicateWorkflow", () => {
   const uniqueViolation = (): Error & { code: string } =>
     Object.assign(new Error("Unique constraint failed"), { code: "P2002" });

@@ -65,6 +65,7 @@ const service = {
   createWorkflow: vi.fn<WorkflowsService["createWorkflow"]>(),
   getWorkflowById: vi.fn<WorkflowsService["getWorkflowById"]>(),
   updateWorkflow: vi.fn<WorkflowsService["updateWorkflow"]>(),
+  updateWorkflowIfUnchanged: vi.fn<WorkflowsService["updateWorkflowIfUnchanged"]>(),
   duplicateWorkflow: vi.fn<WorkflowsService["duplicateWorkflow"]>(),
   deleteWorkflow: vi.fn<WorkflowsService["deleteWorkflow"]>(),
   setStatus: vi.fn<WorkflowsService["setStatus"]>(),
@@ -371,6 +372,204 @@ describe("patch", () => {
 
     expect(res.status).toBe(403);
     expect(service.updateWorkflow).not.toHaveBeenCalled();
+  });
+});
+
+describe("pushDocument", () => {
+  const otherSurveyId = "cm9zr4q7i000108l84gozfggs";
+  const expectedUpdatedAt = "2026-06-12T09:30:00.000Z";
+  const state = (
+    overrides: Partial<{ name: string; description: string | null; definition: unknown }> = {}
+  ) =>
+    ({ name: "Notify team", description: null, definition, ...overrides }) as Parameters<
+      typeof handlers.pushDocument
+    >[0]["state"];
+  const push = (
+    stateOverrides: Parameters<typeof state>[0] = {},
+    options: { expectedUpdatedAt?: string; dryRun?: boolean; ctx?: WorkflowApiContext } = {}
+  ) =>
+    handlers.pushDocument({
+      ctx: options.ctx ?? makeCtx(),
+      params: { workflowId },
+      state: state(stateOverrides),
+      expectedUpdatedAt: options.expectedUpdatedAt ?? expectedUpdatedAt,
+      dryRun: options.dryRun,
+    });
+  const expectProblem = async (res: unknown, status: number, code: string) => {
+    expect(res).toBeInstanceOf(Response);
+    expect((res as Response).status).toBe(status);
+    expect((await readJson<{ code: string }>(res as Response)).code).toBe(code);
+  };
+
+  test("writes only what changed, through the compare-and-set, and audits old and new with PII masked", async () => {
+    const recordAudit = vi.fn();
+    service.getWorkflowById.mockResolvedValue(makeRow());
+    service.updateWorkflowIfUnchanged.mockResolvedValue({
+      result: "updated",
+      row: makeRow({ name: "Renamed", updatedAt: new Date("2026-06-12T10:00:00.000Z") }),
+    });
+
+    const outcome = await push({ name: "Renamed" }, { ctx: makeCtx({ recordAudit }) });
+
+    expect(service.updateWorkflowIfUnchanged).toHaveBeenCalledWith(
+      { workflowId, workspaceId },
+      { name: "Renamed" },
+      new Date(expectedUpdatedAt)
+    );
+    expect(service.updateWorkflow).not.toHaveBeenCalled();
+    expect(outcome).toMatchObject({ kind: "pushed", written: true });
+    expect(outcome).toMatchObject({ after: { name: "Renamed", updatedAt: "2026-06-12T10:00:00.000Z" } });
+
+    const detail = recordAudit.mock.calls[0][0] as {
+      oldObject: { definition: { nodes: Array<{ config: { to: string; body: string } }> } };
+      newObject: { definition: { nodes: Array<{ config: { to: string; body: string } }> } };
+    };
+    for (const snapshot of [detail.oldObject, detail.newObject]) {
+      expect(snapshot.definition.nodes[0].config.to).toMatch(/^\[redacted:/);
+      expect(snapshot.definition.nodes[0].config.body).toMatch(/^\[redacted:/);
+    }
+    expect(JSON.stringify(detail)).not.toContain("support@example.com");
+  });
+
+  test("a document equal to the stored state writes nothing, even with the keys in another order", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow());
+    const reordered = JSON.parse(JSON.stringify(definition)) as typeof definition;
+    const shuffled = Object.fromEntries(Object.entries(reordered).reverse()) as typeof definition;
+
+    const outcome = await push({ definition: shuffled });
+
+    expect(outcome).toMatchObject({ kind: "pushed", written: false });
+    expect(service.updateWorkflowIfUnchanged).not.toHaveBeenCalled();
+  });
+
+  test("a null description clears a stored one", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ description: "old" }));
+    service.updateWorkflowIfUnchanged.mockResolvedValue({
+      result: "updated",
+      row: makeRow({ description: null }),
+    });
+
+    await push({ description: null });
+
+    expect(service.updateWorkflowIfUnchanged).toHaveBeenCalledWith(
+      { workflowId, workspaceId },
+      { description: null },
+      expect.any(Date)
+    );
+  });
+
+  test("answers stale, with both timestamps, when updatedAt differs; nothing is written", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ updatedAt: new Date("2026-06-12T09:45:00.000Z") }));
+
+    const outcome = await push({ name: "Renamed" });
+
+    expect(outcome).toEqual({
+      kind: "stale",
+      expectedUpdatedAt,
+      currentUpdatedAt: "2026-06-12T09:45:00.000Z",
+    });
+    expect(service.updateWorkflowIfUnchanged).not.toHaveBeenCalled();
+  });
+
+  test("answers stale when the write's compare-and-set loses the race", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow());
+    service.updateWorkflowIfUnchanged.mockResolvedValue({
+      result: "stale",
+      currentUpdatedAt: new Date("2026-06-12T09:31:00.000Z"),
+    });
+    const recordAudit = vi.fn();
+
+    const outcome = await push({ name: "Renamed" }, { ctx: makeCtx({ recordAudit }) });
+
+    expect(outcome).toEqual({
+      kind: "stale",
+      expectedUpdatedAt,
+      currentUpdatedAt: "2026-06-12T09:31:00.000Z",
+    });
+    expect(recordAudit).not.toHaveBeenCalled();
+  });
+
+  test("refuses a definition change on an enabled workflow, but allows a rename", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "enabled" }));
+    const changed = { ...definition, edges: [] };
+
+    await expectProblem(await push({ definition: changed }), 422, "invalid_workflow_state");
+    expect(service.updateWorkflowIfUnchanged).not.toHaveBeenCalled();
+
+    service.updateWorkflowIfUnchanged.mockResolvedValue({
+      result: "updated",
+      row: makeRow({ status: "enabled", name: "Renamed" }),
+    });
+    expect(await push({ name: "Renamed" })).toMatchObject({ kind: "pushed", written: true });
+  });
+
+  test("refuses any push to an archived workflow", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "archived" }));
+
+    await expectProblem(await push({ name: "Renamed" }), 422, "invalid_workflow_state");
+    expect(service.updateWorkflowIfUnchanged).not.toHaveBeenCalled();
+  });
+
+  test("refuses a trigger survey the workspace cannot see, like patch does", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow());
+    verifyTriggerSurvey.mockResolvedValue({
+      surveyExists: true,
+      missingEndingCardIds: [],
+      surveyNotWorkspaceVisible: true,
+    });
+    const rebound = {
+      ...definition,
+      trigger: { ...definition.trigger, config: { surveyId: otherSurveyId, endingCardIds: [] } },
+    };
+
+    await expectProblem(await push({ definition: rebound }), 422, "workflow_not_executable");
+    expect(service.updateWorkflowIfUnchanged).not.toHaveBeenCalled();
+  });
+
+  test("a dry run runs the checks and projects the result without writing or auditing", async () => {
+    const recordAudit = vi.fn();
+    service.getWorkflowById.mockResolvedValue(makeRow());
+
+    const outcome = await push({ name: "Renamed" }, { dryRun: true, ctx: makeCtx({ recordAudit }) });
+
+    expect(outcome).toMatchObject({
+      kind: "pushed",
+      written: false,
+      before: { name: "Notify team" },
+      after: { name: "Renamed" },
+    });
+    expect(service.updateWorkflowIfUnchanged).not.toHaveBeenCalled();
+    expect(recordAudit).not.toHaveBeenCalled();
+
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "archived" }));
+    await expectProblem(await push({ name: "Renamed" }, { dryRun: true }), 422, "invalid_workflow_state");
+  });
+
+  test("an unknown workflow answers 403 and a caller without write access gets the denial", async () => {
+    service.getWorkflowById.mockResolvedValue(null);
+    await expectProblem(await push(), 403, "forbidden");
+
+    service.getWorkflowById.mockResolvedValue(makeRow());
+    const ctx = makeCtx({ authorize: vi.fn().mockResolvedValue(deniedResponse()) });
+    await expectProblem(await push({ name: "Renamed" }, { ctx }), 403, "forbidden");
+    expect(service.updateWorkflowIfUnchanged).not.toHaveBeenCalled();
+  });
+});
+
+describe("pullDocument", () => {
+  test("returns the resource for a reader and a problem for an unknown id", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow());
+    expect(await handlers.pullDocument({ ctx: makeCtx(), params: { workflowId } })).toMatchObject({
+      id: workflowId,
+      name: "Notify team",
+      updatedAt: "2026-06-12T09:30:00.000Z",
+    });
+    expect(authorizeAllow).toHaveBeenCalledWith(workspaceId, "read");
+
+    service.getWorkflowById.mockResolvedValue(null);
+    const res = await handlers.pullDocument({ ctx: makeCtx(), params: { workflowId } });
+    expect(res).toBeInstanceOf(Response);
+    expect((res as Response).status).toBe(403);
   });
 });
 

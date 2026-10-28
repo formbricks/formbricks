@@ -4,6 +4,7 @@ import {
 } from "../analytics/definition-summary";
 import {
   type TWorkflowIdInput,
+  type TWorkflowResource,
   type TWorkflowRunIdInput,
   type TWorkflowTestProblem,
   ZCreateWorkflowInput,
@@ -42,6 +43,7 @@ import type {
   WorkflowApiAccess,
   WorkflowApiContext,
 } from "./context";
+import { type WorkflowDocumentPushOutcome, type WorkflowEditableState, isSameJson } from "./document-state";
 import { parseListWorkflowRunsQuery, parseListWorkflowsQuery } from "./parse-list-query";
 import {
   toWorkflowListItem,
@@ -271,6 +273,13 @@ interface WorkflowResourceArgs {
 interface WorkflowResourceBodyArgs extends WorkflowResourceArgs {
   req: Request;
 }
+interface WorkflowPushDocumentArgs extends WorkflowResourceArgs {
+  /** Already validated by the caller (the document schema); this handler does not parse it. */
+  state: WorkflowEditableState;
+  /** The `updatedAt` the document was pulled at, as an ISO 8601 string. */
+  expectedUpdatedAt: string;
+  dryRun?: boolean;
+}
 interface WorkflowRunResourceArgs {
   ctx: WorkflowApiContext;
   params: TWorkflowRunIdInput;
@@ -281,6 +290,13 @@ export interface WorkflowsHandlers {
   create: (args: WorkflowRequestArgs) => Promise<Response>;
   get: (args: WorkflowResourceArgs) => Promise<Response>;
   patch: (args: WorkflowResourceBodyArgs) => Promise<Response>;
+  /** Read for the pull/push document: the resource, or a problem `Response`. */
+  pullDocument: (args: WorkflowResourceArgs) => Promise<TWorkflowResource | Response>;
+  /**
+   * Replace the editable state (see `WorkflowEditableState`) if the workflow is still at
+   * `expectedUpdatedAt`. Same authorization, state rules, trigger-survey guard and audit as `patch`.
+   */
+  pushDocument: (args: WorkflowPushDocumentArgs) => Promise<WorkflowDocumentPushOutcome | Response>;
   duplicate: (args: WorkflowResourceBodyArgs) => Promise<Response>;
   delete: (args: WorkflowResourceArgs) => Promise<Response>;
   archive: (args: WorkflowResourceArgs) => Promise<Response>;
@@ -391,6 +407,91 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
       });
 
       return dataResponse(validateOutput(ZWorkflowResource, toWorkflowResource(updated)), ctx.requestId);
+    } catch (error) {
+      return toProblemResponse(error, ctx);
+    }
+  },
+
+  async pullDocument({ ctx, params }) {
+    try {
+      const loaded = await loadAndAuthorize(service, ctx, params.workflowId, "read");
+      if (loaded instanceof Response) return loaded;
+
+      return validateOutput(ZWorkflowResource, toWorkflowResource(loaded));
+    } catch (error) {
+      return toProblemResponse(error, ctx);
+    }
+  },
+
+  async pushDocument({ ctx, params, state, expectedUpdatedAt, dryRun = false }) {
+    try {
+      const loaded = await loadAndAuthorize(service, ctx, params.workflowId, "readWrite");
+      if (loaded instanceof Response) return loaded;
+      if (loaded.status === "archived") {
+        throw new WorkflowInvalidStateError("Archived workflows are read-only; unarchive before editing.");
+      }
+
+      const before = validateOutput(ZWorkflowResource, toWorkflowResource(loaded));
+      const expected = new Date(expectedUpdatedAt);
+      // Early exit for the common case and for a dry run. The authoritative check is the write's own
+      // compare-and-set below: this read alone would let two concurrent pushes both pass.
+      if (expected.getTime() !== loaded.updatedAt.getTime()) {
+        return { kind: "stale", expectedUpdatedAt, currentUpdatedAt: before.updatedAt };
+      }
+
+      const changes: Partial<WorkflowEditableState> = {};
+      if (state.name !== loaded.name) changes.name = state.name;
+      if (state.description !== loaded.description) changes.description = state.description;
+      if (!isSameJson(state.definition, loaded.definition)) changes.definition = state.definition;
+
+      // Same rules as `patch`, applied to what actually changes: renaming an enabled workflow is fine,
+      // changing its live definition is not.
+      if (changes.definition !== undefined && loaded.status === "enabled") {
+        throw new WorkflowInvalidStateError(
+          "A workflow's definition can only be updated while it is draft or disabled."
+        );
+      }
+      if (changes.definition !== undefined) {
+        await assertTriggerSurveyAttachable(ctx, loaded.workspaceId, changes.definition, loaded.definition);
+      }
+
+      // Nothing to write: no row is touched, so `updatedAt` stays and nothing is audited.
+      if (Object.keys(changes).length === 0) {
+        return { kind: "pushed", before, after: before, written: false };
+      }
+
+      if (dryRun) {
+        const projected = validateOutput(ZWorkflowResource, toWorkflowResource({ ...loaded, ...changes }));
+        return { kind: "pushed", before, after: projected, written: false };
+      }
+
+      const result = await service.updateWorkflowIfUnchanged(
+        { workflowId: params.workflowId, workspaceId: loaded.workspaceId },
+        changes,
+        expected
+      );
+      if (result.result === "stale") {
+        return {
+          kind: "stale",
+          expectedUpdatedAt,
+          currentUpdatedAt: result.currentUpdatedAt.toISOString(),
+        };
+      }
+
+      const updated = result.row;
+      await recordAuditSafely(ctx, {
+        targetId: updated.id,
+        workspaceId: updated.workspaceId,
+        oldObject: toAuditSnapshot(loaded, ctx.auditRedactionKey),
+        newObject: toAuditSnapshot(updated, ctx.auditRedactionKey),
+      });
+
+      return {
+        kind: "pushed",
+        before,
+        after: validateOutput(ZWorkflowResource, toWorkflowResource(updated)),
+        written: true,
+      };
     } catch (error) {
       return toProblemResponse(error, ctx);
     }

@@ -210,6 +210,41 @@ export const lockDestinationSurvey = async (
   return tx.survey.findFirst({ where: { id: surveyId, workspaceId }, select: destinationSurveySelect });
 };
 
+/** What decides whether a survey shows without one creative: see `leavesSurveyUnopened`. */
+export type TSurveyOpenerFacts = {
+  type: Prisma.SurveyGetPayload<{ select: { type: true } }>["type"];
+  status: Prisma.SurveyGetPayload<{ select: { status: true } }>["status"];
+  /** The survey's own actions. */
+  triggerCount: number;
+  /** Other non-archived creatives that open it. */
+  otherOpenerCount: number;
+};
+
+/** The survey a creative opens, as far as `leavesSurveyUnopened` needs; `null` when it is not in the workspace. */
+export const findOpenedSurveyFacts = async (
+  tx: TCreativeTx,
+  surveyId: string,
+  workspaceId: string,
+  creativeId: string
+): Promise<TSurveyOpenerFacts | null> => {
+  const [survey, otherOpenerCount] = await Promise.all([
+    tx.survey.findFirst({
+      where: { id: surveyId, workspaceId },
+      select: { type: true, status: true, _count: { select: { triggers: true } } },
+    }),
+    tx.creative.count({
+      where: { surveyId, workspaceId, archivedAt: null, id: { not: creativeId } },
+    }),
+  ]);
+  if (!survey) return null;
+  return {
+    type: survey.type,
+    status: survey.status,
+    triggerCount: survey._count.triggers,
+    otherOpenerCount,
+  };
+};
+
 export const findWorkspaceActionClassIds = async (
   tx: TCreativeTx,
   workspaceId: string,

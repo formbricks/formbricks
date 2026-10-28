@@ -45,6 +45,14 @@ export interface WorkflowUpdateInput {
 }
 
 /**
+ * Outcome of an update that carries an `updatedAt` precondition: the updated row, or `stale` with the
+ * `updatedAt` the row has now, so the caller can tell its edit apart from a missing row or a failure.
+ */
+export type WorkflowConditionalUpdateResult =
+  | { result: "updated"; row: WorkflowRowWithLastRun }
+  | { result: "stale"; currentUpdatedAt: Date };
+
+/**
  * Eagerly load the most recent run and the creating user's name so the serializer can emit
  * `lastRun` and `creator` without an N+1. Every resource-returning path uses this include.
  */
@@ -75,6 +83,13 @@ const updateWorkflowRow = (
 // Bound on copy-name retries in `duplicateWorkflow`; high enough to never hit in practice, low
 // enough to fail fast instead of looping forever against a pathological set of taken names.
 const MAX_DUPLICATE_NAME_ATTEMPTS = 50;
+
+/** The columns a patch persists; a field that is `undefined` is left alone. */
+const toUpdateData = (data: WorkflowUpdateInput): WorkflowUpdateData => ({
+  ...(data.name !== undefined ? { name: data.name } : {}),
+  ...(data.description !== undefined ? { description: data.description } : {}),
+  ...(data.definition !== undefined ? { definition: data.definition } : {}),
+});
 
 const buildCopyName = (baseName: string, attempt: number): string =>
   attempt === 1 ? `${baseName} (copy)` : `${baseName} (copy ${attempt.toString()})`;
@@ -175,6 +190,16 @@ export interface WorkflowsService {
     params: WorkflowScopedParams,
     data: WorkflowUpdateInput
   ) => Promise<WorkflowRowWithLastRun>;
+  /**
+   * `updateWorkflow` with a compare-and-set on `updatedAt`: the write happens only if the row still
+   * carries `expectedUpdatedAt`. The check is the UPDATE's own `where`, so two concurrent callers cannot
+   * both win; the loser gets `stale`.
+   */
+  updateWorkflowIfUnchanged: (
+    params: WorkflowScopedParams,
+    data: WorkflowUpdateInput,
+    expectedUpdatedAt: Date
+  ) => Promise<WorkflowConditionalUpdateResult>;
   duplicateWorkflow: (
     source: WorkflowRowWithLastRun,
     options: { name?: string; createdBy: string | null }
@@ -242,15 +267,29 @@ export const createWorkflowsService = ({ prisma }: { prisma: WorkflowsDb }): Wor
   },
 
   async updateWorkflow({ workflowId, workspaceId }, data) {
-    return updateWorkflowRow(
-      prisma.workflow,
-      { workflowId, workspaceId },
-      {
-        ...(data.name !== undefined ? { name: data.name } : {}),
-        ...(data.description !== undefined ? { description: data.description } : {}),
-        ...(data.definition !== undefined ? { definition: data.definition } : {}),
+    return updateWorkflowRow(prisma.workflow, { workflowId, workspaceId }, toUpdateData(data));
+  },
+
+  async updateWorkflowIfUnchanged({ workflowId, workspaceId }, data, expectedUpdatedAt) {
+    // One conditional UPDATE inside a transaction: `updatedAt` is part of the statement's WHERE, so a
+    // concurrent writer that got in first (any write bumps `updatedAt`, lifecycle changes included) makes
+    // this match zero rows. A read before the transaction could not give that: two callers would both
+    // pass it. The row is re-read in the same transaction so the result is exactly this write.
+    return prisma.$transaction(async (tx) => {
+      const { count } = await tx.workflow.updateMany({
+        where: { id: workflowId, workspaceId, updatedAt: expectedUpdatedAt },
+        data: toUpdateData(data),
+      });
+
+      const row = await tx.workflow.findUnique({ where: { id: workflowId }, include: LAST_RUN_INCLUDE });
+      if (!row || row.workspaceId !== workspaceId) {
+        throw new WorkflowConflictError("The workflow no longer exists.");
       }
-    );
+
+      return count === 1
+        ? ({ result: "updated", row } as const)
+        : ({ result: "stale", currentUpdatedAt: row.updatedAt } as const);
+    });
   },
 
   async duplicateWorkflow(source, { name, createdBy }) {

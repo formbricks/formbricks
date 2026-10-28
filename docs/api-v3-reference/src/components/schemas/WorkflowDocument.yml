@@ -1,0 +1,26 @@
+type: object
+description: >
+  A workflow as an editable document: the state an agent edits and pushes back, and nothing the
+  server owns. It carries no `status` (lifecycle stays with `enable`, `disable`, `archive` and
+  `unarchive`), no `triggerType` or `surveyId` (derived from `definition.trigger`), no runs, no
+  creator and no timestamps (`updatedAt` is in the envelope). A push replaces this state: an
+  omitted `description` resets to `null`, and inside `definition` an omitted `schemaVersion`,
+  `nodes` or `edges` fall back to what a create without them stores. The document is strict: a key
+  that is not a field is refused with a **422** naming it, and so is a key the definition schema
+  would otherwise drop silently, such as a misspelled option inside a node's `config`.
+required:
+  - name
+  - definition
+properties:
+  name:
+    type: string
+    minLength: 1
+    maxLength: 120
+  description:
+    type:
+      - string
+      - "null"
+    maxLength: 500
+  definition:
+    $ref: ./WorkflowDefinition.yml
+additionalProperties: false

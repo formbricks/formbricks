@@ -1,0 +1,35 @@
+type: object
+required:
+  - schemaVersion
+  - expectedUpdatedAt
+  - document
+properties:
+  schemaVersion:
+    type: integer
+    enum:
+      - 1
+  expectedUpdatedAt:
+    type: string
+    format: date-time
+    description: >-
+      The envelope's `updatedAt` from the pull this document was edited from. The push is applied only
+      if the survey has not changed since; otherwise **409** with `details.currentUpdatedAt`. Enforced
+      as a compare-and-set in the write itself, so two concurrent pushes cannot both succeed.
+  document:
+    $ref: ./SurveyDocument.yml
+  dryRun:
+    type: boolean
+    default: false
+    description: >-
+      Run every check (validation, authorization, the stale check, the destructive-change check,
+      entitlement and reference checks) and answer the changes, writing and auditing nothing. A dry
+      run that finds a problem answers the same problem a real push would. Two things it cannot know
+      without writing: whether a new workspace language can be created, and whether the stale check
+      still holds when a later real push writes.
+  confirmDestructive:
+    type: boolean
+    default: false
+    description: >-
+      Apply a push that removes blocks or elements of a survey that has responses. Without it such a
+      push is refused with a **409**.
+additionalProperties: false

@@ -1,0 +1,17 @@
+type: object
+required:
+  - path
+  - change
+properties:
+  path:
+    type: string
+    description: >-
+      A top-level document key, or `blocks[<id>]` / `endings[<id>]` / `variables[<id>]` for an entry of
+      an id-keyed array. Deliberately shallow: the audit event carries the full difference.
+    example: blocks[k1p9wq2m4x7c3v8b5n6t0j2r]
+  change:
+    type: string
+    enum:
+      - added
+      - removed
+      - changed

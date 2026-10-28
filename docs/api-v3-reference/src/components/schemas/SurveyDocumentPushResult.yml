@@ -1,0 +1,19 @@
+type: object
+required:
+  - envelope
+  - dryRun
+  - changes
+properties:
+  envelope:
+    allOf:
+      - $ref: ./SurveyDocumentEnvelope.yml
+    description: >-
+      The document as stored after the push. For a dry run, the document as pushed, with omitted keys
+      reset, under the survey's current `updatedAt`. When the pushed document equals the stored one
+      nothing is written, `updatedAt` does not change and `changes` is empty.
+  dryRun:
+    type: boolean
+  changes:
+    type: array
+    items:
+      $ref: ./SurveyDocumentChange.yml

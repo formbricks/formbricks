@@ -1,0 +1,26 @@
+type: object
+required:
+  - schemaVersion
+  - expectedUpdatedAt
+  - document
+properties:
+  schemaVersion:
+    type: integer
+    enum:
+      - 1
+  expectedUpdatedAt:
+    type: string
+    format: date-time
+    description: The `updatedAt` of the envelope the document was pulled from.
+  document:
+    $ref: ./WorkflowDocument.yml
+  dryRun:
+    type: boolean
+    description: >
+      Runs every check and answers what would change, without writing or recording an audit event.
+  confirmDestructive:
+    type: boolean
+    description: >
+      Accepted for every document kind. A workflow push has nothing destructive to confirm, so it has
+      no effect here.
+additionalProperties: false

@@ -1,0 +1,31 @@
+type: object
+description: >
+  A pulled or pushed workflow document with the identity and `updatedAt` it belongs to. Send
+  `updatedAt` back as `expectedUpdatedAt` when pushing.
+required:
+  - kind
+  - schemaVersion
+  - id
+  - workspaceId
+  - updatedAt
+  - document
+properties:
+  kind:
+    type: string
+    enum:
+      - workflow
+  schemaVersion:
+    type: integer
+    enum:
+      - 1
+  id:
+    type: string
+    format: cuid2
+  workspaceId:
+    type: string
+    format: cuid2
+  updatedAt:
+    type: string
+    format: date-time
+  document:
+    $ref: ./WorkflowDocument.yml

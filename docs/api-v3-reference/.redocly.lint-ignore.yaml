@@ -8,3 +8,4 @@ src/openapi.yml:
     - '#/paths/~1api~1v3~1workflows~1{workflowId}~1archive'
     - '#/paths/~1api~1v3~1workflows~1{workflowId}~1unarchive'
     - '#/paths/~1api~1v3~1workflows~1{workflowId}~1test'
+    - '#/paths/~1api~1v3~1workflows~1{workflowId}~1document'

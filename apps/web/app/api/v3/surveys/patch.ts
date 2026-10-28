@@ -288,12 +288,20 @@ async function resolveUpdateMiss(
   return new DatabaseError(cause.message);
 }
 
-export async function executeV3SurveyPatch(params: {
+/**
+ * A last look at the prepared document before anything is written, for a caller that has a refusal of
+ * its own: the document push uses it to hold back a change that removes answered questions. It runs after
+ * every other check and before the first write (including the workspace languages the write may create),
+ * so a throw from it leaves nothing behind.
+ */
+export type TV3SurveyPatchGuard = (context: {
   currentSurvey: TSurvey;
   document: TV3SurveyDocument;
-  languageRequests: TV3SurveyLanguageRequest[];
-  requestId?: string;
-  precondition?: TV3SurveyWritePrecondition;
+}) => Promise<void>;
+
+type TV3SurveyPatchPlanParams = {
+  currentSurvey: TSurvey;
+  document: TV3SurveyDocument;
   /** The surveys the caller may reference in targeting (ENG-3282). Omitted, nothing is referenceable. */
   visibleSurveyWhere?: Prisma.SurveyWhereInput;
   /**
@@ -303,16 +311,24 @@ export async function executeV3SurveyPatch(params: {
   customCss?: { stored: TCustomCssStored | null };
   /** Whether the request sent `distribution`, which replaces the stored one whole. */
   replacesDistribution?: boolean;
-}): Promise<TSurvey> {
+  guard?: TV3SurveyPatchGuard;
+};
+
+/**
+ * Every check a patch makes before its first write, and the survey `data` it would write (without
+ * `languages`, which need the workspace languages created first). Shared by the write and by the document
+ * push's dry run, so a dry run cannot pass a push that the write would refuse.
+ */
+async function planV3SurveyPatchWrites(
+  params: TV3SurveyPatchPlanParams
+): Promise<{ data: Prisma.SurveyUpdateInput; segmentFilterWrite: TV3SegmentFilterWrite | null }> {
   const {
     currentSurvey,
     document,
-    languageRequests,
-    requestId,
-    precondition,
     visibleSurveyWhere = NO_VISIBLE_SURVEYS,
     customCss,
     replacesDistribution = false,
+    guard,
   } = params;
   // Same rule as prepare's validation (ENG-3975): media the stored survey already had does not block a
   // patch that leaves it untouched.
@@ -358,7 +374,6 @@ export async function executeV3SurveyPatch(params: {
     );
   }
 
-  const languages = await ensureV3WorkspaceLanguages(currentSurvey.workspaceId, languageRequests, requestId);
   const normalizedScheduling = normalizeSurveyScheduling({
     currentStatus: currentSurvey.status,
     closeOn: currentSurvey.closeOn,
@@ -377,12 +392,11 @@ export async function executeV3SurveyPatch(params: {
     endings: document.endings,
     closeOn: normalizedScheduling.closeOn,
     publishOn: normalizedScheduling.publishOn,
-    languages: buildSurveyLanguageUpdate(currentSurvey, languages),
     ...(customCss ? { customCss: customCss.stored ?? Prisma.DbNull } : {}),
   };
 
   // App-only runtime/distribution settings (display scalars, triggers); also yields the segment
-  // targeting write to perform, if any.
+  // targeting write to perform, if any. Reads only: it resolves trigger ids and targeting references.
   const segmentFilterWrite =
     currentSurvey.type === "app"
       ? await buildV3AppSurveyPatchWrites({
@@ -393,6 +407,26 @@ export async function executeV3SurveyPatch(params: {
           replacesDistribution,
         })
       : null;
+
+  await guard?.({ currentSurvey, document });
+
+  return { data, segmentFilterWrite };
+}
+
+export async function executeV3SurveyPatch(
+  params: TV3SurveyPatchPlanParams & {
+    languageRequests: TV3SurveyLanguageRequest[];
+    requestId?: string;
+    precondition?: TV3SurveyWritePrecondition;
+  }
+): Promise<TSurvey> {
+  const { currentSurvey, document, languageRequests, requestId, precondition, customCss } = params;
+
+  const { data, segmentFilterWrite } = await planV3SurveyPatchWrites(params);
+
+  // The first write: creates any workspace language the survey now names.
+  const languages = await ensureV3WorkspaceLanguages(currentSurvey.workspaceId, languageRequests, requestId);
+  data.languages = buildSurveyLanguageUpdate(currentSurvey, languages);
 
   const runSurveyUpdate = (client: Prisma.TransactionClient) =>
     client.survey.update({
@@ -528,19 +562,25 @@ async function resolveV3SurveyPatchCustomCss(
   return outcome;
 }
 
-export async function patchV3Survey(
+type TV3SurveyPatchOptions = {
+  /** See {@link TV3SurveyPatchGuard}. */
+  guard?: TV3SurveyPatchGuard;
+};
+
+/**
+ * Everything a patch settles before it plans a write: the merged, validated document, the precondition
+ * (checked here as a pre-flight; the compare-and-set at the write enforces it), the entitlements the
+ * change needs, and the custom CSS resolved through the shared service. Shared by the write and the
+ * document push's dry run.
+ */
+async function prepareAuthorizedV3SurveyPatch(
   currentSurvey: TSurvey,
   input: unknown,
-  requestId?: string,
-  organizationId?: string,
-  precondition?: TV3SurveyWritePrecondition,
-  reportedVisibility?: TV3SurveyReportedVisibility,
-  visibleSurveyWhere: Prisma.SurveyWhereInput = NO_VISIBLE_SURVEYS,
-  /** Filled with the custom CSS warnings when the patch changed the survey's custom CSS. */
-  report?: TV3SurveyWriteReport,
-  /** Who processing an added or edited `customCss` is charged to (`getV3CustomCssPrincipal`). */
-  customCssPrincipal?: string | null
-): Promise<TSurvey> {
+  organizationId: string | undefined,
+  precondition: TV3SurveyWritePrecondition | undefined,
+  reportedVisibility: TV3SurveyReportedVisibility | undefined,
+  customCssPrincipal: string | null | undefined
+) {
   const preparation = prepareV3SurveyPatchInput(currentSurvey, input, { reportedVisibility });
   if (!preparation.ok) {
     throw preparation.origin === "storedSurvey"
@@ -577,15 +617,48 @@ export async function patchV3Survey(
     customCssPrincipal
   );
 
+  return {
+    preparation,
+    precondition: effectivePrecondition,
+    customCss,
+    replacesDistribution: typeof input === "object" && input !== null && "distribution" in input,
+  };
+}
+
+export async function patchV3Survey(
+  currentSurvey: TSurvey,
+  input: unknown,
+  requestId?: string,
+  organizationId?: string,
+  precondition?: TV3SurveyWritePrecondition,
+  reportedVisibility?: TV3SurveyReportedVisibility,
+  visibleSurveyWhere: Prisma.SurveyWhereInput = NO_VISIBLE_SURVEYS,
+  /** Filled with the custom CSS warnings when the patch changed the survey's custom CSS. */
+  report?: TV3SurveyWriteReport,
+  /** Who processing an added or edited `customCss` is charged to (`getV3CustomCssPrincipal`). */
+  customCssPrincipal?: string | null,
+  options: TV3SurveyPatchOptions = {}
+): Promise<TSurvey> {
+  const prepared = await prepareAuthorizedV3SurveyPatch(
+    currentSurvey,
+    input,
+    organizationId,
+    precondition,
+    reportedVisibility,
+    customCssPrincipal
+  );
+  const { customCss } = prepared;
+
   const survey = await executeV3SurveyPatch({
     currentSurvey,
-    document: preparation.document,
-    languageRequests: preparation.languageRequests,
+    document: prepared.preparation.document,
+    languageRequests: prepared.preparation.languageRequests,
     requestId,
-    precondition: effectivePrecondition,
+    precondition: prepared.precondition,
     visibleSurveyWhere,
     ...(customCss.changed ? { customCss: { stored: customCss.stored } } : {}),
-    replacesDistribution: typeof input === "object" && input !== null && "distribution" in input,
+    replacesDistribution: prepared.replacesDistribution,
+    guard: options.guard,
   });
 
   if (report && customCss.changed) {
@@ -593,4 +666,48 @@ export async function patchV3Survey(
   }
 
   return survey;
+}
+
+/**
+ * {@link patchV3Survey} up to, and not including, its first write: the same preparation, entitlement,
+ * reference and guard checks, answering the same refusals, then stopping. What the document push's dry run
+ * runs. Two things it cannot know without writing: whether the workspace languages the survey names can be
+ * created, and whether the compare-and-set will still hold at write time; the pre-flight precondition
+ * check does run. It does spend the custom CSS budget, as a real push would, since the CSS is processed.
+ */
+export async function dryRunV3SurveyPatch(
+  currentSurvey: TSurvey,
+  input: unknown,
+  organizationId?: string,
+  precondition?: TV3SurveyWritePrecondition,
+  reportedVisibility?: TV3SurveyReportedVisibility,
+  visibleSurveyWhere: Prisma.SurveyWhereInput = NO_VISIBLE_SURVEYS,
+  report?: TV3SurveyWriteReport,
+  customCssPrincipal?: string | null,
+  options: TV3SurveyPatchOptions = {}
+): Promise<{ document: TV3SurveyDocument }> {
+  const prepared = await prepareAuthorizedV3SurveyPatch(
+    currentSurvey,
+    input,
+    organizationId,
+    precondition,
+    reportedVisibility,
+    customCssPrincipal
+  );
+  const { customCss } = prepared;
+
+  await planV3SurveyPatchWrites({
+    currentSurvey,
+    document: prepared.preparation.document,
+    visibleSurveyWhere,
+    ...(customCss.changed ? { customCss: { stored: customCss.stored } } : {}),
+    replacesDistribution: prepared.replacesDistribution,
+    guard: options.guard,
+  });
+
+  if (report && customCss.changed) {
+    report.customCssWarnings = customCss.warnings;
+  }
+
+  return { document: prepared.preparation.document };
 }

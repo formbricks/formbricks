@@ -1,0 +1,31 @@
+type: object
+description: >-
+  Replaces a creative's editable state with `document`. Unknown fields are rejected with **400**; unknown
+  fields inside `document` with **422**.
+required:
+  - schemaVersion
+  - expectedUpdatedAt
+  - document
+properties:
+  schemaVersion:
+    type: integer
+    enum:
+      - 1
+  expectedUpdatedAt:
+    type: string
+    format: date-time
+    description: >-
+      The `updatedAt` of the document you pulled. Required. Compared under the write's row lock, so a
+      creative that changed since answers **409** and two pushes of the same `updatedAt` cannot both win.
+  document:
+    $ref: ./CreativeDocument.yml
+  dryRun:
+    type: boolean
+    description: >-
+      Run every check and answer what would change, writing nothing and recording no audit event. A dry
+      run that finds a problem answers the problem a real push would.
+  confirmDestructive:
+    type: boolean
+    description: >-
+      Apply a push that removes data (see the operation). Without it such a push answers **409**.
+additionalProperties: false

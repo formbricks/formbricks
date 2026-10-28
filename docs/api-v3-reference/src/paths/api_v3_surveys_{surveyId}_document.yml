@@ -1,0 +1,251 @@
+get:
+  operationId: pullSurveyDocumentV3
+  summary: Pull a survey document
+  description: >
+    Reads a survey as one editable document: the editable state only, with no status, counts or other
+    server-owned fields. Edit it locally and send it back with `PUT`, naming the envelope's `updatedAt`
+    as `expectedUpdatedAt`. Unlike `GET /api/v3/surveys/{surveyId}` it takes no `lang` selector.
+    Session cookie or x-api-key.
+  tags:
+    - V3 Surveys
+  parameters:
+    - in: path
+      name: surveyId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Survey identifier.
+  responses:
+    "200":
+      description: The survey document.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/SurveyDocumentEnvelope.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "422":
+      description: >-
+        The stored survey is a legacy question-based survey, which the v3 API does not support
+        (`stored_survey_invalid`).
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []
+put:
+  operationId: pushSurveyDocumentV3
+  summary: Push a survey document
+  description: >
+    Replaces a survey's editable state with an edited document from `GET`. Update only: it never
+    creates a survey, and never changes its status (publish, pause, close, archive and restore stay
+    separate calls).
+
+
+    **Replace, not merge.** A document key you leave out is reset to its default, so send everything
+    you want to keep; `name` and `blocks` are required. The document is strict and an unknown key is a
+    **422** naming it.
+
+
+    **Stale check.** `expectedUpdatedAt` is required. A survey that changed since is refused with a
+    **409** carrying `details.expectedUpdatedAt` and `details.currentUpdatedAt`; the check is a
+    compare-and-set in the write itself.
+
+
+    **Destructive changes.** A push that removes blocks or elements (by id) from a survey that has
+    responses is refused with a **409** whose `details` is `{ reason: "destructive_change", changes }`,
+    each change a `blocks_removed` or `elements_removed` with the removed `ids` and the survey's
+    `responseCount`. Repeat the push with `confirmDestructive: true` to apply it. Changing the id of
+    an element of a published survey in place stays a **422** `immutable_identifier`, confirmed or not.
+
+
+    **Same rules as PATCH.** Validation, entitlements (external URLs, contact targeting, custom CSS)
+    and reference checks are those of `PATCH /api/v3/surveys/{surveyId}`, as are its refusals: an
+    archived survey is a **422**, and a published app survey cannot be left without a trigger.
+
+
+    **Dry run.** `dryRun: true` runs every check and answers the changes without writing or recording
+    an audit event. A real push is audited as an update of the survey.
+  tags:
+    - V3 Surveys
+  parameters:
+    - in: path
+      name: surveyId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Survey identifier.
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/SurveyDocumentPushRequest.yml
+        examples:
+          rename:
+            summary: Rename a survey, keeping its blocks
+            value:
+              schemaVersion: 1
+              expectedUpdatedAt: 2026-04-21T10:00:00.000Z
+              document:
+                name: Product feedback (v2)
+                blocks:
+                  - id: k1p9wq2m4x7c3v8b5n6t0j2r
+                    name: Satisfaction
+                    elements:
+                      - id: satisfaction
+                        type: openText
+                        headline:
+                          en-US: How satisfied were you?
+                        required: true
+                        inputType: text
+          dryRun:
+            summary: See what a push would change
+            value:
+              schemaVersion: 1
+              expectedUpdatedAt: 2026-04-21T10:00:00.000Z
+              dryRun: true
+              document:
+                name: Product feedback
+                blocks:
+                  - id: k1p9wq2m4x7c3v8b5n6t0j2r
+                    name: Satisfaction
+                    elements:
+                      - id: satisfaction
+                        type: openText
+                        headline:
+                          en-US: How satisfied were you?
+                        required: true
+                        inputType: text
+  responses:
+    "200":
+      description: The push was applied (or checked, for a dry run). Carries `warnings` when custom CSS was processed.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/SurveyDocumentPushResult.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "409":
+      description: >
+        Either the survey changed since `expectedUpdatedAt` (`details` holds `expectedUpdatedAt` and
+        `currentUpdatedAt`), or the push would remove blocks or elements that have responses
+        (`details.reason` is `destructive_change`; repeat with `confirmDestructive: true`). Nothing
+        was written.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+          examples:
+            stale:
+              summary: The survey changed since it was pulled
+              value:
+                title: Conflict
+                status: 409
+                detail: >-
+                  Survey was modified since it was last read; updatedAt is now
+                  2026-04-21T11:30:00.000Z. Re-read the survey and retry.
+                code: conflict
+                requestId: 6f1f7f3e-3b0e-4a1a-9f0a-7c9a1d2b3c4d
+                details:
+                  expectedUpdatedAt: 2026-04-21T10:00:00.000Z
+                  currentUpdatedAt: 2026-04-21T11:30:00.000Z
+            destructive:
+              summary: The push would remove answered questions
+              value:
+                title: Conflict
+                status: 409
+                detail: >-
+                  This push would remove data. Review `details.changes`, then repeat it with
+                  confirmDestructive: true if that is intended.
+                code: conflict
+                requestId: 6f1f7f3e-3b0e-4a1a-9f0a-7c9a1d2b3c4d
+                details:
+                  reason: destructive_change
+                  changes:
+                    - type: elements_removed
+                      ids:
+                        - satisfaction
+                      responseCount: 120
+    "413":
+      description: The request body exceeds the size limit.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "422":
+      description: >
+        The document is well-formed JSON the survey cannot take: an unknown key, a missing `name` or
+        `blocks`, or any validation, entitlement or reference failure `PATCH /api/v3/surveys/{surveyId}`
+        reports, with `invalid_params` naming the offending paths. An archived survey is refused too.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+          example:
+            title: Unprocessable Content
+            status: 422
+            detail: Survey document failed validation
+            code: unprocessable_content
+            requestId: 6f1f7f3e-3b0e-4a1a-9f0a-7c9a1d2b3c4d
+            invalid_params:
+              - name: status
+                reason: >-
+                  Unsupported field 'status': a push never publishes, pauses or closes a survey; use
+                  the lifecycle tools. Allowed fields: autoSelectLanguage, blocks, customCss,
+                  distribution, endings, hiddenFields, languages, metadata, name, showLanguageSwitch,
+                  targeting, variables, welcomeCard
+                code: unsupported_field
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

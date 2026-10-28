@@ -1,0 +1,17 @@
+oneOf:
+  - $ref: ./FeedbackButtonCreativeDocument.yml
+  - $ref: ./BannerCreativeDocument.yml
+discriminator:
+  propertyName: type
+  mapping:
+    feedbackButton: ./FeedbackButtonCreativeDocument.yml
+    banner: ./BannerCreativeDocument.yml
+description: >-
+  A creative's editable state: what `POST /api/v3/creatives` accepts, without `workspaceId` and `status`.
+  Nothing the server owns is in it (no `id`, `status`, `displayStatus`, `createdAt`, `updatedAt`,
+  `publishedAt`, `archivedAt`, `creator` or `warnings`, and no `surveyName` or `opensAs` on the
+  destination), so a push never publishes, pauses or archives anything. `type` picks the `content` and
+  `styling` shape and never changes. `languages` lists only the non-default languages, as on create.
+  A push **replaces** the state: an omitted field resets to what a create without it stores (no languages,
+  no destination, `showOn: pageView`, no schedule, the type's default styling). Unknown fields answer
+  **422**, each named in `invalid_params`.

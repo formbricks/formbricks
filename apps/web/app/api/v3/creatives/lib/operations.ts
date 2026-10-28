@@ -92,7 +92,7 @@ type TOperationContext = {
   auditLog?: TV3AuditLog;
 };
 
-type TCreativeOperationParams = TOperationContext & { creativeId: string };
+export type TCreativeOperationParams = TOperationContext & { creativeId: string };
 
 /** Where a creative's own Custom CSS sits in the body; processor errors are named after it. */
 const CUSTOM_CSS_FIELD = "styling.theme.customCss";
@@ -101,7 +101,7 @@ const CUSTOM_CSS_FIELD = "styling.theme.customCss";
  * The plan gate and the processor for the creative's own CSS (ENG-3998), before anything is written.
  * Throws what `mapWriteError` turns into the 403 or 422.
  */
-const assertCustomCssWrite = (
+export const assertCustomCssWrite = (
   previous: TCreativeState | null,
   next: TCreativeState,
   organizationId: string,
@@ -151,7 +151,7 @@ const recordAudit = (
 };
 
 /** Audits a write to an existing creative as stored right before and after it; returns the result. */
-const auditChange = (
+export const auditChange = (
   auditLog: TV3AuditLog | undefined,
   organizationId: string,
   { before, after }: TCreativeChange,
@@ -165,7 +165,7 @@ const auditChange = (
   return resource;
 };
 
-const mapWriteError = (
+export const mapWriteError = (
   error: unknown,
   {
     log,
@@ -260,7 +260,7 @@ const authorizeCreativeOperation = async (
  * Authorizes the caller for `operation` on one creative and loads it, scoped by
  * `{ creativeId, workspaceId }`. A creative deleted in between answers the same 403 as an unknown one.
  */
-const loadAuthorizedCreative = async (
+export const loadAuthorizedCreative = async (
   { creativeId, authentication, requestId, instance }: TCreativeOperationParams,
   operation: TCreativesOperation
 ): Promise<{ response: Response } | { record: TCreativeRecord; organizationId: string }> => {

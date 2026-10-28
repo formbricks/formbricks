@@ -1,0 +1,238 @@
+get:
+  operationId: getCreativeDocumentV3
+  summary: Pull a creative as a document
+  description: >-
+    Returns a creative's editable state as one JSON document (`CreativeDocument`) with its `updatedAt`,
+    to edit locally and push back with `PUT`. Read access to the creative's workspace, which is resolved
+    from the creative; an unknown or inaccessible `creativeId` answers **403**, not **404**. Works in
+    wind-down, like reading the creative.
+  tags:
+    - V3 Documents
+  parameters:
+    - $ref: ../components/parameters/CreativeIdPath.yml
+  responses:
+    "200":
+      description: Creative document retrieved successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/CreativeDocumentEnvelope.yml
+          examples:
+            feedbackButton:
+              summary: A feedback button that opens a survey
+              value:
+                data:
+                  kind: creative
+                  schemaVersion: 1
+                  id: clcr1234567890123456789012
+                  workspaceId: clws1234567890123456789012
+                  updatedAt: "2026-10-16T09:30:00.000Z"
+                  document:
+                    type: feedbackButton
+                    name: Site feedback tab
+                    defaultLanguage: en-US
+                    languages: []
+                    content:
+                      label:
+                        en-US: Feedback
+                      icon: null
+                    styling:
+                      position:
+                        desktop:
+                          edge: right
+                          offset: 50
+                        phone: null
+                      theme:
+                        customStyles: false
+                        backgroundColor: null
+                        textColor: null
+                        borderColor: null
+                        borderRadius: null
+                        fontWeight: null
+                        fontSize:
+                          desktop: null
+                          phone: null
+                        paddingX:
+                          desktop: null
+                          phone: null
+                        paddingY:
+                          desktop: null
+                          phone: null
+                    destination:
+                      type: survey
+                      surveyId: clsv1234567890123456789012
+                    distribution:
+                      showOn: pageView
+                      triggers: []
+                      conditions: null
+                      displayPercentage: null
+                    schedule:
+                      startAt: null
+                      endAt: null
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3CreativesForbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []
+put:
+  operationId: putCreativeDocumentV3
+  summary: Push a creative document
+  description: >
+    Replaces a creative's editable state with an edited document from `GET`. Read/write access to its
+    workspace and the full license: in wind-down (the license does not include Creatives) a push answers
+    **403** `creatives_not_entitled`. An unknown or inaccessible `creativeId` answers **403**.
+
+
+    **Replace, not merge.** A field the document omits resets to what a create without it stores. The
+    push never changes `status` or archives: publish, pause, close and archive stay separate calls. It
+    validates exactly as `PATCH /api/v3/creatives/{creativeId}` does (publish rules for a published
+    creative, locales, custom CSS, the survey and actions it references), and an archived creative
+    answers **422**. `invalid_params` names are paths inside `document`.
+
+
+    **Stale push.** `expectedUpdatedAt` is required and compared under the write's row lock. A creative
+    that changed since answers **409**, with `details.expectedUpdatedAt` and `details.currentUpdatedAt`.
+
+
+    **Destructive push.** A push that would remove data from a live (not `draft`, not archived) creative
+    answers **409** with `details.reason: destructive_change` and `details.changes` until repeated with
+    `confirmDestructive: true`. Destructive is: removing the destination (`destination_removed`),
+    changing it to another survey or link (`destination_changed`), and either of those leaving a live
+    `inProgress` app survey that has no action of its own and no other non-archived creative opening it
+    (`survey_left_unopened`, with the survey id in `ids`).
+
+
+    **Dry run.** `dryRun: true` runs every check, including the stale and destructive ones, and answers
+    what would change without writing or recording an audit event.
+
+
+    A document equal to the stored one is a no-op: `changes` is empty and `updatedAt` stays.
+  tags:
+    - V3 Documents
+  parameters:
+    - $ref: ../components/parameters/CreativeIdPath.yml
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/CreativeDocumentPushRequest.yml
+        examples:
+          rename:
+            summary: Rename a pulled creative
+            value:
+              schemaVersion: 1
+              expectedUpdatedAt: "2026-10-16T09:30:00.000Z"
+              document:
+                type: banner
+                name: Maintenance notice
+                content:
+                  message:
+                    en-US:
+                      - text: Maintenance tonight.
+                  button: null
+                  dismissible: true
+                  accessibleName: null
+  responses:
+    "200":
+      description: Creative document pushed, or checked when `dryRun` is true
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/CreativeDocumentPushResult.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3CreativesForbidden.yml
+    "409":
+      description: >-
+        Conflict. Either the creative changed since the document was pulled (`details` carries
+        `expectedUpdatedAt` and the live `currentUpdatedAt`), or the push would remove data and
+        `confirmDestructive` was not set (`details.reason` is `destructive_change`, `details.changes`
+        lists what would go). Nothing was written.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+          examples:
+            stale:
+              summary: The creative changed since it was pulled
+              value:
+                title: Conflict
+                status: 409
+                detail: >-
+                  The resource changed since this document was pulled. Pull it again, reapply your
+                  edit, and push with the new updatedAt.
+                code: conflict
+                requestId: 6f1f7f3e-3b0e-4a1a-9f0a-7c9a1d2b3c4d
+                details:
+                  expectedUpdatedAt: 2026-10-16T09:30:00.000Z
+                  currentUpdatedAt: 2026-10-16T09:45:00.000Z
+            destructive:
+              summary: A live creative would lose its destination
+              value:
+                title: Conflict
+                status: 409
+                detail: >-
+                  This push would remove data. Review `details.changes`, then repeat it with
+                  confirmDestructive: true if that is intended.
+                code: conflict
+                requestId: 6f1f7f3e-3b0e-4a1a-9f0a-7c9a1d2b3c4d
+                details:
+                  reason: destructive_change
+                  changes:
+                    - type: destination_changed
+                      ids:
+                        - clsv1234567890123456789012
+                    - type: survey_left_unopened
+                      ids:
+                        - clsv1234567890123456789012
+    "422":
+      $ref: ../components/responses/V3UnprocessableContent.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

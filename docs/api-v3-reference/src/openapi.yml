@@ -348,6 +348,8 @@ paths:
     $ref: paths/api_v3_surveys_validate.yml
   /api/v3/surveys/{surveyId}:
     $ref: paths/api_v3_surveys_{surveyId}.yml
+  /api/v3/surveys/{surveyId}/document:
+    $ref: paths/api_v3_surveys_{surveyId}_document.yml
   /api/v3/surveys/{surveyId}/blocks:
     $ref: paths/api_v3_surveys_{surveyId}_blocks.yml
   /api/v3/surveys/{surveyId}/blocks/order:
@@ -376,6 +378,8 @@ paths:
     $ref: paths/api_v3_workflows_runs_{runId}.yml
   /api/v3/workflows/{workflowId}:
     $ref: paths/api_v3_workflows_{workflowId}.yml
+  /api/v3/workflows/{workflowId}/document:
+    $ref: paths/api_v3_workflows_{workflowId}_document.yml
   /api/v3/workflows/{workflowId}/duplicate:
     $ref: paths/api_v3_workflows_{workflowId}_duplicate.yml
   /api/v3/workflows/{workflowId}/enable:
@@ -402,6 +406,8 @@ paths:
     $ref: paths/api_v3_creatives_{creativeId}_duplicate.yml
   /api/v3/creatives/{creativeId}/stats:
     $ref: paths/api_v3_creatives_{creativeId}_stats.yml
+  /api/v3/creatives/{creativeId}/document:
+    $ref: paths/api_v3_creatives_{creativeId}_document.yml
   /api/v3/action-classes:
     $ref: paths/api_v3_action-classes.yml
   /api/v3/contact-attribute-keys:

@@ -136,13 +136,24 @@ export interface WorkflowDelegate {
     include: LastRunInclude;
   }) => Promise<WorkflowRowWithLastRun>;
   /**
-   * Conditional status transition. `enable` uses it inside its transaction to flip a draft/disabled
-   * row to enabled and assert exactly one row changed — the row lock serializes concurrent enables,
-   * so the guard can't be bypassed the way a pre-transaction status read could.
+   * Conditional update, one SQL `UPDATE ... WHERE`. `enable` uses it inside its transaction to flip a
+   * draft/disabled row to enabled and assert exactly one row changed — the row lock serializes
+   * concurrent enables, so the guard can't be bypassed the way a pre-transaction status read could.
+   * `updateWorkflowIfUnchanged` uses it as a compare-and-set on `updatedAt` for the document push.
    */
   updateMany: (args: {
-    where: { id: string; workspaceId: string; status: { in: TWorkflowStatus[] } };
-    data: { status: TWorkflowStatus };
+    where: {
+      id: string;
+      workspaceId: string;
+      status?: { in: TWorkflowStatus[] };
+      updatedAt?: Date;
+    };
+    data: {
+      name?: string;
+      description?: string | null;
+      status?: TWorkflowStatus;
+      definition?: TWorkflowDefinition;
+    };
   }) => Promise<{ count: number }>;
   delete: (args: {
     where: { id_workspaceId: { id: string; workspaceId: string } };

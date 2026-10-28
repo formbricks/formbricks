@@ -10,10 +10,12 @@
  */
 
 export { createWorkflowsService } from "../services/workflows.service";
-export type { WorkflowsService } from "../services/workflows.service";
+export type { WorkflowConditionalUpdateResult, WorkflowsService } from "../services/workflows.service";
 
 export { createWorkflowsHandlers } from "../handlers/workflows.handlers";
 export type { WorkflowsHandlers } from "../handlers/workflows.handlers";
+
+export type { WorkflowDocumentPushOutcome, WorkflowEditableState } from "../handlers/document-state";
 
 export type {
   WorkflowApiAccess,

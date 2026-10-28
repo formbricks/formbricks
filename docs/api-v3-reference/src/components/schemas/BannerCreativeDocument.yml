@@ -1,0 +1,35 @@
+type: object
+description: A banner as a pull/push document. See `CreativeDocument`.
+required:
+  - type
+  - name
+  - content
+properties:
+  type:
+    type: string
+    enum:
+      - banner
+  name:
+    type: string
+    minLength: 1
+    maxLength: 255
+  defaultLanguage:
+    $ref: ./LocaleCode.yml
+  languages:
+    type: array
+    maxItems: 50
+    items:
+      $ref: ./CreativeLanguageInput.yml
+  content:
+    $ref: ./BannerContent.yml
+  styling:
+    $ref: ./BannerStyling.yml
+  destination:
+    anyOf:
+      - $ref: ./CreativeDestinationInput.yml
+      - type: "null"
+  distribution:
+    $ref: ./CreativeDistribution.yml
+  schedule:
+    $ref: ./CreativeSchedule.yml
+additionalProperties: false

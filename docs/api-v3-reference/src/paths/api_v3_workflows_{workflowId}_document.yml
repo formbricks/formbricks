@@ -1,0 +1,138 @@
+get:
+  operationId: getWorkflowDocumentV3
+  summary: Pull a workflow as a document
+  description: >
+    Returns the workflow's editable state (`name`, `description`, `definition`) as one JSON document in an
+    envelope that carries `updatedAt`. Edit it locally and send it back with
+    `PUT /api/v3/workflows/{workflowId}/document`. The document holds no status, derived trigger fields or
+    runs. Unknown or inaccessible workflow ids return `403` rather than `404`.
+  tags:
+    - V3 Workflows
+  parameters:
+    - $ref: ../components/parameters/WorkflowIdPath.yml
+  responses:
+    "200":
+      description: Workflow document retrieved successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/WorkflowDocumentEnvelope.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []
+put:
+  operationId: putWorkflowDocumentV3
+  summary: Push a workflow document
+  description: >
+    Replaces the workflow's editable state with the document. Fields the document omits reset
+    (`description` to `null`; inside `definition`, `schemaVersion`, `nodes` and `edges` to their
+    defaults); nothing is merged. The document is strict: an unknown key, or a key the definition schema
+    would silently drop, is refused with a **422** whose `invalid_params` name its path.
+
+
+    `expectedUpdatedAt` must be the `updatedAt` the document was pulled at. The write itself is a
+    compare-and-set on it, so of two concurrent pushes only one applies; the other gets a **409** with
+    `details.expectedUpdatedAt` and `details.currentUpdatedAt`.
+
+
+    A push never changes `status`: enabling, disabling and archiving stay separate calls. The same state
+    rules as `PATCH /api/v3/workflows/{workflowId}` apply and answer **422** `invalid_workflow_state`: an
+    archived workflow is read-only, and the `definition` of an enabled workflow cannot change (a rename of
+    an enabled workflow is accepted). A trigger survey the workspace cannot see is refused as on a PATCH.
+    A document equal to the stored state writes nothing and returns `changes: []`.
+
+
+    With `dryRun: true` every check runs and the result says what would change, but nothing is written and
+    no audit event is recorded; a dry run that finds a problem answers the same problem a real push would.
+  tags:
+    - V3 Workflows
+  parameters:
+    - $ref: ../components/parameters/WorkflowIdPath.yml
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/WorkflowDocumentPushRequest.yml
+  responses:
+    "200":
+      description: Workflow document pushed (or checked, for a dry run)
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/WorkflowDocumentPushResult.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "409":
+      description: >-
+        Conflict — `expectedUpdatedAt` did not match the stored workflow, so it changed since the
+        document was pulled. Nothing was written. `details` carries `expectedUpdatedAt` and the live
+        `currentUpdatedAt`, so a client can pull again and reapply its edit.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+          example:
+            title: Conflict
+            status: 409
+            detail: >-
+              The resource changed since this document was pulled. Pull it again, reapply your edit, and
+              push with the new updatedAt.
+            code: conflict
+            requestId: 6f1f7f3e-3b0e-4a1a-9f0a-7c9a1d2b3c4d
+            details:
+              expectedUpdatedAt: 2026-10-16T09:30:00.000Z
+              currentUpdatedAt: 2026-10-16T09:45:00.000Z
+    "422":
+      $ref: ../components/responses/V3UnprocessableContent.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

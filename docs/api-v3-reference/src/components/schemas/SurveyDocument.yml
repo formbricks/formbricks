@@ -1,0 +1,84 @@
+type: object
+description: >
+  A survey's editable state, as `GET /api/v3/surveys/{surveyId}/document` returns it and
+  `PUT` accepts it. It carries no lifecycle, identity or per-caller field: `id`, `workspaceId` and
+  `updatedAt` are the envelope's, and `status`, `archivedAt`, `type`, `defaultLanguage`,
+  `visibility`, `owner`, `access` and `createdAt` are not in it at all, so a push can never publish,
+  pause or archive a survey. `languages[].alias` is not in it either (it belongs to the workspace
+  language).
+
+
+  The document is **strict**: a key it does not list is refused with a **422** that names it. A push
+  **replaces** the editable state, so a key you leave out is reset to what a new survey has (no
+  languages, no endings, no variables, no welcome card, no custom CSS; for an app survey the default
+  `distribution` and no `targeting` filters), and is not kept as stored. Only `name` and `blocks`
+  have no empty value and must be sent. `distribution` and `targeting` belong to app surveys; a link
+  survey's document has neither and refuses them.
+
+
+  What is inside a key (blocks, elements, logic, translations, distribution, targeting) is validated
+  exactly as `PATCH /api/v3/surveys/{surveyId}` validates it, with the same entitlement and reference
+  checks and the same refusals on a published survey.
+required:
+  - name
+  - blocks
+properties:
+  name:
+    type: string
+  metadata:
+    $ref: ./SurveyMetadata.yml
+  languages:
+    type: array
+    items:
+      type: object
+      required:
+        - code
+      properties:
+        code:
+          type: string
+          example: en-US
+        default:
+          type: boolean
+        enabled:
+          type: boolean
+      additionalProperties: false
+    description: >-
+      The survey's languages, including the default one (`default: true`), which cannot be changed.
+  showLanguageSwitch:
+    type:
+      - boolean
+      - "null"
+  autoSelectLanguage:
+    type:
+      - boolean
+      - "null"
+  welcomeCard:
+    $ref: ./SurveyWelcomeCard.yml
+  blocks:
+    type: array
+    minItems: 1
+    items:
+      $ref: ./SurveyBlock.yml
+  endings:
+    type: array
+    items:
+      $ref: ./SurveyEnding.yml
+  hiddenFields:
+    $ref: ./SurveyHiddenFields.yml
+  variables:
+    type: array
+    items:
+      $ref: ./SurveyVariable.yml
+  distribution:
+    allOf:
+      - $ref: ./SurveyDistribution.yml
+    description: App surveys only.
+  targeting:
+    allOf:
+      - $ref: ./SurveyTargeting.yml
+    description: App surveys only.
+  customCss:
+    anyOf:
+      - $ref: ./CustomCssInput.yml
+      - type: "null"
+additionalProperties: false

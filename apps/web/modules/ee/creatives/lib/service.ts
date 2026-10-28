@@ -161,24 +161,37 @@ export type TCreativeChange = { before: TCreativeRecord; after: TCreativeRecord 
 export type TCreativeChangePlan = (current: TCreativeState) => Promise<TCreativeState>;
 
 /**
- * Applies `plan` to the creative as stored now, under its row lock, and stores the result.
- * `expectedUpdatedAt` is the caller's precondition (`CreativeChangedError` when it no longer holds);
- * without one the change simply builds on whatever was committed meanwhile. `surveyIdToLink` is the
- * survey the change may link, locked before the creative (see the lock order above).
+ * Looks at a planned change once its references hold, inside the write's transaction and under the same
+ * locks, and throws to refuse it. A document push uses it to refuse a change that would remove data.
  */
-export const updateCreative = async ({
-  creativeId,
-  workspaceId,
-  expectedUpdatedAt,
-  surveyIdToLink,
-  plan,
-}: {
+export type TCreativeChangeReview = (
+  tx: TCreativeTx,
+  change: { previous: TCreativeState; next: TCreativeState }
+) => Promise<void>;
+
+type TCreativeUpdateOptions = {
   creativeId: string;
   workspaceId: string;
   expectedUpdatedAt?: Date;
   surveyIdToLink: string | null;
   plan: TCreativeChangePlan;
-}): Promise<TCreativeChange> =>
+};
+
+/**
+ * What an update did: the creative as stored before it, the state it planned, and the creative as stored
+ * after it. `after` is `null` when nothing was written: a dry run, or a plan that returned the state it
+ * was given (a change that changes nothing, which also skips the reference checks and leaves `updatedAt`).
+ */
+export type TCreativeUpdateOutcome = {
+  before: TCreativeRecord;
+  next: TCreativeState;
+  after: TCreativeRecord | null;
+};
+
+const runCreativeUpdate = (
+  { creativeId, workspaceId, expectedUpdatedAt, surveyIdToLink, plan }: TCreativeUpdateOptions,
+  { review, dryRun = false }: { review?: TCreativeChangeReview; dryRun?: boolean }
+): Promise<TCreativeUpdateOutcome> =>
   runInCreativeTransaction(async (tx) => {
     // Its facts are read again under this same lock by `assertCreativeReferences`, if it links it.
     if (surveyIdToLink) await lockDestinationSurvey(tx, surveyIdToLink, workspaceId);
@@ -188,15 +201,40 @@ export const updateCreative = async ({
 
     const previous = toCreativeState(before);
     const next = await plan(previous);
+    if (next === previous) return { before, next, after: null };
     // Rechecked against the stored link, so relinking a survey a Restrict unlinked meanwhile is refused.
     await assertCreativeReferences(tx, workspaceId, next, linkedSurveyId(previous));
+    await review?.(tx, { previous, next });
+    if (dryRun) return { before, next, after: null };
+
     const after = await replaceCreativeRecord(tx, creativeId, workspaceId, {
       row: toCreativeRowData(next),
       actionClassIds: actionClassIdsOf(next),
       languages: await ensureCreativeLanguages(tx, workspaceId, getCreativeLanguageRequests(next)),
     });
-    return { before, after };
+    return { before, next, after };
   }).catch(rethrowGone(creativeId));
+
+/**
+ * Applies `plan` to the creative as stored now, under its row lock, and stores the result.
+ * `expectedUpdatedAt` is the caller's precondition (`CreativeChangedError` when it no longer holds);
+ * without one the change simply builds on whatever was committed meanwhile. `surveyIdToLink` is the
+ * survey the change may link, locked before the creative (see the lock order above).
+ */
+export const updateCreative = async (options: TCreativeUpdateOptions): Promise<TCreativeChange> => {
+  const { before, after } = await runCreativeUpdate(options, {});
+  return { before, after: after ?? before };
+};
+
+/**
+ * `updateCreative` for a document push: the same checks in the same transaction, plus a `review` of the
+ * planned change, and `dryRun` to run all of it without writing. The precondition is compared under the
+ * row lock, so two pushes of the same `updatedAt` cannot both win.
+ */
+export const replaceCreativeState = (
+  options: TCreativeUpdateOptions & { review?: TCreativeChangeReview; dryRun?: boolean }
+): Promise<TCreativeUpdateOutcome> =>
+  runCreativeUpdate(options, { review: options.review, dryRun: options.dryRun });
 
 /** Archives the creative, writing only `archivedAt`; an archived one is returned as it is. */
 export const archiveCreative = async (

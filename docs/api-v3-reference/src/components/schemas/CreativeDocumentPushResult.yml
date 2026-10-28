@@ -1,0 +1,33 @@
+type: object
+description: >-
+  What a push answers: the document as stored afterwards (as it would be, for a `dryRun`), with the new
+  `updatedAt`, and what changed. `changes` is empty, and nothing is written or audited, when the pushed
+  document equals the stored one.
+required:
+  - envelope
+  - dryRun
+  - changes
+properties:
+  envelope:
+    $ref: ./CreativeDocumentEnvelope.yml
+  dryRun:
+    type: boolean
+  changes:
+    type: array
+    items:
+      type: object
+      required:
+        - path
+        - change
+      properties:
+        path:
+          type: string
+          description: A top-level document field, for example `distribution`.
+        change:
+          type: string
+          enum:
+            - added
+            - removed
+            - changed
+      additionalProperties: false
+additionalProperties: false

@@ -1,0 +1,31 @@
+type: object
+required:
+  - envelope
+  - dryRun
+  - changes
+properties:
+  envelope:
+    $ref: ./WorkflowDocumentEnvelope.yml
+  dryRun:
+    type: boolean
+  changes:
+    type: array
+    description: >
+      What differs from the stored workflow, as paths. `name` and `description` by field, the
+      definition by member: `definition.trigger`, `definition.entryNodeId`, and for `definition.nodes`
+      and `definition.edges` each id (`definition.nodes[send-email]`). Empty when the document equals
+      the stored state, in which case nothing is written.
+    items:
+      type: object
+      required:
+        - path
+        - change
+      properties:
+        path:
+          type: string
+        change:
+          type: string
+          enum:
+            - added
+            - removed
+            - changed

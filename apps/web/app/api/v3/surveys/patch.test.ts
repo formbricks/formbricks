@@ -23,7 +23,13 @@ import {
   normalizeSurveyScheduling,
   reconcileDueSurveySchedules,
 } from "@/modules/survey/scheduling/lib/survey-scheduling";
-import { V3SurveyArchivedError, V3SurveyStaleError, executeV3SurveyPatch, patchV3Survey } from "./patch";
+import {
+  V3SurveyArchivedError,
+  V3SurveyStaleError,
+  dryRunV3SurveyPatch,
+  executeV3SurveyPatch,
+  patchV3Survey,
+} from "./patch";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
 import { ZV3CreateSurveyBody } from "./schemas";
 import {
@@ -1685,6 +1691,96 @@ describe("patchV3Survey", () => {
       expect(err.name).toBe("V3SurveyStaleError");
       expect(err.expectedUpdatedAt).toBe(expectedUpdatedAt);
       expect(err.currentUpdatedAt).toBe(movedOnAt);
+    });
+  });
+  describe("guard and dry run (document push)", () => {
+    const refusal = new Error("guard refused");
+
+    test("runs the guard with the prepared document before the first write", async () => {
+      const guard = vi.fn().mockRejectedValue(refusal);
+
+      await expect(
+        patchV3Survey(
+          currentSurvey,
+          { name: "Guarded" },
+          "req_guard_1",
+          "org_1",
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          { guard }
+        )
+      ).rejects.toBe(refusal);
+
+      expect(guard).toHaveBeenCalledWith({
+        currentSurvey,
+        document: expect.objectContaining({ name: "Guarded" }),
+      });
+      // Not even the workspace languages the write would have created.
+      expect(prisma.language.upsert).not.toHaveBeenCalled();
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    test("lets the write through when the guard passes", async () => {
+      const guard = vi.fn().mockResolvedValue(undefined);
+
+      await patchV3Survey(
+        currentSurvey,
+        { name: "Guarded" },
+        "req_guard_2",
+        "org_1",
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        { guard }
+      );
+
+      expect(guard).toHaveBeenCalledTimes(1);
+      expect(prisma.survey.update).toHaveBeenCalledTimes(1);
+    });
+
+    test("a dry run runs the checks and the guard and writes nothing", async () => {
+      const guard = vi.fn().mockResolvedValue(undefined);
+
+      const result = await dryRunV3SurveyPatch(
+        currentSurvey,
+        { name: "Dry" },
+        "org_1",
+        { expectedUpdatedAt: currentSurvey.updatedAt },
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        { guard }
+      );
+
+      expect(result.document.name).toBe("Dry");
+      expect(guard).toHaveBeenCalledTimes(1);
+      expect(prisma.language.upsert).not.toHaveBeenCalled();
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+      expect(scheduleFeedbackSourceReconciliation).not.toHaveBeenCalled();
+    });
+
+    test("a dry run refuses what the write refuses", async () => {
+      // A stale precondition, and an external URL the plan does not allow.
+      await expect(
+        dryRunV3SurveyPatch(currentSurvey, { name: "Stale" }, "org_1", {
+          expectedUpdatedAt: new Date("2026-04-20T09:00:00.000Z"),
+        })
+      ).rejects.toMatchObject({ name: "V3SurveyStaleError", detectedAt: "read" });
+
+      vi.mocked(getExternalUrlsPermission).mockResolvedValue(false);
+      await expect(
+        dryRunV3SurveyPatch(currentSurvey, { blocks: [createExternalCtaBlock()] }, "org_1")
+      ).rejects.toBeInstanceOf(V3SurveyWritePermissionError);
+
+      expect(prisma.survey.update).not.toHaveBeenCalled();
     });
   });
 });

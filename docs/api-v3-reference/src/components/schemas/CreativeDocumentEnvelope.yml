@@ -1,0 +1,32 @@
+type: object
+description: >-
+  A creative as `GET /api/v3/creatives/{creativeId}/document` returns it. Send `updatedAt` back as
+  `expectedUpdatedAt` when you push.
+required:
+  - kind
+  - schemaVersion
+  - id
+  - workspaceId
+  - updatedAt
+  - document
+properties:
+  kind:
+    type: string
+    enum:
+      - creative
+  schemaVersion:
+    type: integer
+    enum:
+      - 1
+  id:
+    type: string
+    format: cuid2
+  workspaceId:
+    type: string
+    format: cuid2
+  updatedAt:
+    type: string
+    format: date-time
+  document:
+    $ref: ./CreativeDocument.yml
+additionalProperties: false

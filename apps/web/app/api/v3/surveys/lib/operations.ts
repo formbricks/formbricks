@@ -4,6 +4,7 @@ import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import { InvalidInputError } from "@formbricks/types/errors";
 import type { TSurvey as TInternalSurvey } from "@formbricks/types/surveys/types";
+import { problemDestructiveChange } from "@/app/api/v3/documents/lib/envelope";
 import { queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import { getV3AuthorizationActor, requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import {
@@ -64,13 +65,16 @@ import {
   V3SurveyInputValidationError,
   createV3Survey,
 } from "../create";
+import { V3SurveyDestructiveChangeError } from "../document/destructive";
 import { parseV3SurveysListQuery } from "../parse-v3-surveys-list-query";
 import {
+  type TV3SurveyPatchGuard,
   type TV3SurveyWritePrecondition,
   V3SurveyArchivedError,
   V3SurveyStaleError,
   V3SurveyStoredDocumentError,
   assertV3SurveyPrecondition,
+  dryRunV3SurveyPatch,
   patchV3Survey,
 } from "../patch";
 import {
@@ -876,6 +880,14 @@ function mapV3SurveyPatchError(
     return problemSurveyArchived(requestId, instance);
   }
 
+  if (err instanceof V3SurveyDestructiveChangeError) {
+    log.warn(
+      { statusCode: 409, workspaceId, changeTypes: err.changes.map(({ type }) => type) },
+      "Survey document push refused: it would remove answered questions"
+    );
+    return problemDestructiveChange(requestId, err.changes, instance);
+  }
+
   if (err instanceof V3SurveyStaleError) {
     const currentUpdatedAt = err.currentUpdatedAt.toISOString();
     log.warn(
@@ -961,9 +973,38 @@ function documentMutationRejection(
   });
 }
 
+/** What a document push did, for the adapter to put in its own response shape. */
+export type TV3SurveyDocumentPushOutcome =
+  | {
+      kind: "written";
+      before: ReturnType<typeof serializeV3SurveyResource>;
+      after: ReturnType<typeof serializeV3SurveyResource>;
+      extensions: ReturnType<typeof toV3WriteExtensions>;
+    }
+  // Every check passed and nothing was written.
+  | {
+      kind: "dry_run";
+      before: ReturnType<typeof serializeV3SurveyResource>;
+      extensions: ReturnType<typeof toV3WriteExtensions>;
+    }
+  // The document equals the stored one: nothing to validate, nothing written, `updatedAt` not bumped.
+  | { kind: "unchanged"; before: ReturnType<typeof serializeV3SurveyResource> };
+
+/**
+ * The document push (ADR 0015) rides the same pipeline as every other document mutation. These are the
+ * three things it adds: a dry run that stops before the first write, a guard that runs after every other
+ * check and before the first write, and its own success body.
+ */
+type TV3SurveyDocumentPush = {
+  dryRun: boolean;
+  guard?: TV3SurveyPatchGuard;
+  respond: (outcome: TV3SurveyDocumentPushOutcome) => Response;
+};
+
 type TV3SurveyDocumentMutationParams = TPatchV3SurveyParams & {
-  operation: "patch" | "blocks.edit" | "blocks.reorder";
+  operation: "patch" | "blocks.edit" | "blocks.reorder" | "document.push";
   precondition?: TV3SurveyWritePrecondition;
+  push?: TV3SurveyDocumentPush;
   buildInput: (ctx: {
     survey: TInternalSurvey;
     getResource: () => ReturnType<typeof serializeV3SurveyResource>;
@@ -978,7 +1019,7 @@ type TV3SurveyDocumentMutationParams = TPatchV3SurveyParams & {
  * guards, entitlement checks inside patchV3Survey, audit enrichment, error mapping — happens here
  * once, so a new operation cannot accidentally ship without it.
  */
-async function runV3SurveyDocumentMutation({
+export async function runV3SurveyDocumentMutation({
   surveyId,
   authentication,
   requestId,
@@ -986,6 +1027,7 @@ async function runV3SurveyDocumentMutation({
   auditLog,
   operation,
   precondition,
+  push,
   buildInput,
 }: TV3SurveyDocumentMutationParams): Promise<Response> {
   const log = logger.withContext({ requestId, surveyId, operation });
@@ -1088,6 +1130,9 @@ async function runV3SurveyDocumentMutation({
         { statusCode: 200, workspaceId, wrote: false, ...built.logFields },
         "Survey document unchanged"
       );
+      if (push) {
+        return push.respond({ kind: "unchanged", before: resource });
+      }
       return successResponse(resource, { requestId, cache: "private, no-store" });
     }
 
@@ -1095,6 +1140,26 @@ async function runV3SurveyDocumentMutation({
     const oldResource = getResource();
 
     const report: TV3SurveyWriteReport = {};
+
+    if (push?.dryRun) {
+      await dryRunV3SurveyPatch(
+        survey,
+        built.input,
+        authResult.organizationId,
+        effectivePrecondition,
+        oldResource,
+        buildVisibleSurveyWhere(visibility.actorContext),
+        report,
+        getV3CustomCssPrincipal(authentication),
+        { guard: push.guard }
+      );
+      log.info(
+        { statusCode: 200, workspaceId, wrote: false, dryRun: true, ...built.logFields },
+        "Survey document dry run"
+      );
+      return push.respond({ kind: "dry_run", before: oldResource, extensions: toV3WriteExtensions(report) });
+    }
+
     const updatedSurvey = await patchV3Survey(
       survey,
       built.input,
@@ -1104,7 +1169,9 @@ async function runV3SurveyDocumentMutation({
       oldResource,
       buildVisibleSurveyWhere(visibility.actorContext),
       report,
-      getV3CustomCssPrincipal(authentication)
+      getV3CustomCssPrincipal(authentication),
+      // Passed only when there is one, so every other caller still makes the call it always made.
+      ...(push?.guard ? [{ guard: push.guard }] : [])
     );
     // Visibility is unchanged by a document write (it is never writable through one), so the
     // request's context still describes the updated survey.
@@ -1129,6 +1196,15 @@ async function runV3SurveyDocumentMutation({
       },
       "Survey document updated"
     );
+
+    if (push) {
+      return push.respond({
+        kind: "written",
+        before: oldResource,
+        after: resource,
+        extensions: toV3WriteExtensions(report),
+      });
+    }
 
     return successResponse(resource, {
       requestId,

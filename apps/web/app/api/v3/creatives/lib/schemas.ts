@@ -36,7 +36,7 @@ export type TV3CreativeStatsQuery = z.infer<typeof ZV3CreativeStatsQuery>;
 
 const CONDITIONS_PATH = ["distribution", "conditions"] as const;
 
-const refineShowConditions = (
+export const refineShowConditions = (
   distribution: { conditions: unknown } | undefined,
   ctx: z.RefinementCtx
 ): void => {
@@ -51,8 +51,8 @@ const refineShowConditions = (
 const WEB_URL_MESSAGE = "Must be an http(s) URL with a real host, such as https://example.com";
 const WEB_HREF = /^https?:/;
 
-const refineWebLinks = (
-  { destination, content }: z.infer<typeof zCreateCreativeRequest> | z.infer<typeof zPatchCreativeRequest>,
+export const refineWebLinks = (
+  { destination, content }: Pick<z.infer<typeof zPatchCreativeRequest>, "destination" | "content">,
   ctx: z.RefinementCtx
 ): void => {
   if (destination?.type === "link" && !isWebUrl(destination.url)) {
@@ -79,7 +79,7 @@ const refineWebLinks = (
  * fail its write with a 500. `JSON.stringify` writes that character as the escape below, and nothing
  * else in a body can produce the escape, so one scan of the serialized body finds it at any depth.
  */
-const refineNoNullBytes = (body: unknown, ctx: z.RefinementCtx): void => {
+export const refineNoNullBytes = (body: unknown, ctx: z.RefinementCtx): void => {
   if (JSON.stringify(body).includes(String.raw`\u0000`)) {
     ctx.addIssue({ code: "custom", message: "Text must not contain NULL bytes", path: [] });
   }
