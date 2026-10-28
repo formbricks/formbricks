@@ -48,8 +48,11 @@ same signature, which is what the old links are missing.
 `SINGLE_USE_LEGACY_UNSIGNED_UNTIL` keeps the old links working for a fixed period, so an in-flight
 campaign does not die on upgrade day. It takes an ISO 8601 date and is unset by default:
 
-```sh
-SINGLE_USE_LEGACY_UNSIGNED_UNTIL=2026-11-15
+Set this on the app service's environment (Compose) or app Secret/environment bindings (Kubernetes),
+then recreate/redeploy the app. Replace `YYYY-MM-DD` with your chosen deadline:
+
+```dotenv
+SINGLE_USE_LEGACY_UNSIGNED_UNTIL=YYYY-MM-DD
 ```
 
 Unsigned **encrypted** links are accepted until 00:00 UTC on that date, and rejected from then on.

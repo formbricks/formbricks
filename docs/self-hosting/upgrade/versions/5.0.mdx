@@ -43,6 +43,28 @@ Compose file; pulling images alone cannot add the services.
 
 ### Hub, Cube and databases
 
+<Tabs>
+  <Tab title="Docker and one-click">
+    1. [Download the target Compose reference](/self-hosting/upgrade/configuration#download-the-selected-release)
+       into your existing Compose directory. When taking the recommended 5.4 stop, use that exact **5.4** tag.
+    2. Copy `hub`, `hub-migrate` and `cube` under your existing `services:` key. For targets 5.1 or later,
+       also copy `formbricks-migrate`. Include their dependencies, environment and mounts, following the
+       [merge checklist](/self-hosting/upgrade/configuration#merge-the-release-configuration).
+    3. [Generate missing secrets](/self-hosting/upgrade/configuration#add-only-new-secrets) for `HUB_API_KEY`
+       and `CUBEJS_API_SECRET`. Add the target's `HUB_*` and `CUBEJS_*` app environment bindings;
+       bundled endpoints are `http://hub:8080` and `http://cube:4000` respectively. For targets 5.1 or later,
+       also copy `SKIP_STARTUP_MIGRATION: "true"` into `formbricks.environment`; migrations run separately.
+    4. [Download both Cube model files](/self-hosting/upgrade/configuration#download-the-cube-model-files).
+       Install them during maintenance. Run `docker compose config --quiet` and check the
+       [image pins](/self-hosting/upgrade/configuration#merge-the-release-configuration) before pulling.
+  </Tab>
+  <Tab title="Kubernetes">
+    Merge the target chart's values into your overrides. Keep `hub.enabled=true` and configure its
+    API key from your Secret. For external Cube, set `cube.enabled=false` and configure its endpoint
+    and matching secret; otherwise retain the bundled Cube service. Render the chart before deploying.
+  </Tab>
+</Tabs>
+
 - Hub can share application PostgreSQL or use `HUB_DATABASE_URL`. Include either choice in backup/restore.
   Verify pgvector support and the migration role's permissions on the chosen database.
 - Keep Hub API, migration and worker images matched. Historical Docker assets use a floating Hub tag;
@@ -51,8 +73,6 @@ Compose file; pulling images alone cannot add the services.
   healthcheck; old examples using `wget` fail on images without that executable.
 - Keep existing database credentials. Some v5 examples embed the default password in connection URLs;
   update the app, migration, Hub and Cube bindings explicitly.
-- Kubernetes can use external Cube with `cube.enabled=false` and matching endpoint/secret overrides.
-  Keep `hub.enabled=true`.
 
 ### Existing integrations and SSO
 

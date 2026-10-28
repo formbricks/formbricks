@@ -13,26 +13,35 @@ later image fixes are not automatically present in earlier releases.
 The Formbricks image omits the shell, Python and Cube Store. Cube 1.7 returns numeric measures and
 dimensions as strings; Formbricks normalizes them, but custom consumers of the Cube API must handle strings.
 
-- **Docker Compose and one-click**: `formbricks.sh update` keeps your local `docker-compose.yml`, so the stack
-  stays on `cubejs/cube:v1.6.6` until you replace its whole `cube` service with the one from the release you
-  are upgrading to. Changing only `image:` is not enough. The new image has no shell, so the old
-  `command: sh -c '… exec cubejs server'` wrapper exits with `Error: Cannot find module '/cube/conf/sh'`. The
-  image's own command starts Cube, which still refuses to start without `CUBEJS_API_SECRET`. Keep your own
-  `CUBEJS_*` overrides when you merge the block.
+### Docker and one-click
 
-  ```bash
-  read -r -p "Target Formbricks release tag: " version
-  : "${version:?Choose a release first}"
-  cp -p docker-compose.yml docker-compose.yml.before-cube-image
-  curl -fsSL -o docker-compose.release.yml \
-    "https://raw.githubusercontent.com/formbricks/formbricks/${version}/docker/docker-compose.yml"
-  # Copy the release's `cube` service into docker-compose.yml, then:
-  docker compose config >/dev/null
-  docker compose pull cube
-  # Recreate during the maintenance procedure, after migrations:
-  docker compose up -d --no-deps --force-recreate cube
-  docker compose ps cube
-  ```
+The updater preserves your customized Compose file. Replace the **whole** `cube` service: the new image
+has no shell, so an old `command: sh -c '…'` wrapper fails with `Cannot find module '/cube/conf/sh'`.
+
+1. From your existing Compose directory, [download the selected release reference](/self-hosting/upgrade/configuration#download-the-selected-release).
+   Back up your file with `cp -p docker-compose.yml docker-compose.yml.before-cube-image`.
+2. In your editor, replace the `cube:` block under `services:` with the downloaded one, including its
+   healthcheck and mounts. Keep your `CUBEJS_*` secret and database overrides. Remove the old shell command.
+3. [Download both model files](/self-hosting/upgrade/configuration#download-the-cube-model-files) from the same tag.
+   Validate and pull without restarting:
+
+   ```bash
+   docker compose config --quiet && docker compose pull cube
+   ```
+
+4. During your [maintenance procedure](/self-hosting/advanced/upgrade), stop Cube, back up its model files
+   and install the reviewed pair using the linked steps. After the required app/Hub migrations succeed:
+
+   ```bash
+   docker compose up -d --no-deps --force-recreate cube
+   docker compose ps cube
+   docker compose logs --tail=100 cube
+   ```
+
+   Require a healthy container and working dashboard queries. If startup fails, inspect the logs and
+   keep maintenance active. Confirm `CUBEJS_API_SECRET` is present and the old shell wrapper is gone.
+
+### Helm and custom deployments
 
 - **Helm**: the chart defaults to the new image. If your values set `cube.image.tag` without
   `cube.image.repository`, the chart now pulls a non-existent `ghcr.io/formbricks/cube:<your old tag>` and the
@@ -45,11 +54,11 @@ dimensions as strings; Formbricks normalizes them, but custom consumers of the C
 - **`CUBEJS_DEV_MODE=true`**: not supported on the new image. Dev mode relies on the embedded Cube Store the image
   leaves out, so `/readyz` answers 500 and the Helm probes and Compose healthcheck never pass. Leave it unset in
   production.
-- **Air-gapped installs and registry mirrors**: mirror `ghcr.io/formbricks/cube:1.7.47-2` along with the other
+- **Air-gapped installs and registry mirrors**: mirror the **exact Cube image in your selected release’s Compose/chart** along with the other
   Formbricks images, then point the Compose `image:` or `cube.image.repository` at your mirror.
 
-Cube keeps no state of its own, so rolling back only this change means restoring the backed-up Compose file or
-your previous `cube.image` values and recreating the `cube` service.
+To undo only the Cube service change, restore its previous configuration, image and matching model files,
+then recreate Cube. This does not undo application or Hub migrations; use coordinated recovery for a full rollback.
 
 
 ## After

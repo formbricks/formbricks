@@ -1,6 +1,6 @@
 ---
 title: "Upgrade to 5.3"
-description: "Version-specific changes and preserved upgrade instructions."
+description: "Review proxy trust and Hub images, then verify sign-in and scheduled work."
 icon: "arrow-up-right-dots"
 ---
 
@@ -68,13 +68,14 @@ Two Cube-related deltas in v5.3. Neither changes the Cube schema, so there is **
   chart). Cube Store is used only when you explicitly opt into external pre-aggregations — a safe default
   for most self-hosters. Set it back to `true` only if you run external pre-aggregations.
 - **Hub images must be pinned together.** Read the selected patch's Helm values/release notes for its
-  Hub version. Docker's default `HUB_IMAGE_REF` tracks `latest`; override it with that selected version.
-  Do not assume all 5.3 patches ship the same Hub image.
+  Hub version. Set `HUB_IMAGE_REF=:<selected-hub-tag>` in Compose's `.env`, keeping the leading colon
+  and replacing the placeholder. Check `docker compose config --images` shows the same Hub image for
+  API and migration services (and a worker if present). Do not assume all 5.3 patches ship the same Hub image.
 
 ## During
 
 Follow the [4.x/5.x maintenance procedure](/self-hosting/upgrade/legacy). Merge the target's deployment
-changes before pulling; preserve local settings and run migrations with writers stopped.
+changes using the [merge checklist](/self-hosting/upgrade/configuration#merge-the-release-configuration) before pulling; preserve local settings and run migrations with writers stopped.
 Do not enable optional AI services just because they appear in the reference Compose file.
 
 ## After

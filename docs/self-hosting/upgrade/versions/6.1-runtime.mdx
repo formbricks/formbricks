@@ -1,6 +1,6 @@
 ---
 title: "6.1 runtime changes"
-description: "Detailed actions for the 6.1 upgrade."
+description: "Add the Docker Hub worker, refresh Cube models and review Helm changes."
 icon: "arrow-up-right-dots"
 ---
 
@@ -11,10 +11,6 @@ icon: "arrow-up-right-dots"
 The Helm chart now defaults `hub.embeddings.env.RUST_LOG` to `warn` because TEI 1.9 includes its API key in
 INFO-level startup arguments. If you need a different log level, set `hub.embeddings.env.RUST_LOG` explicitly
 and use it only with a runtime that redacts credentials from its logs.
-
-
-
-
 
 ## Database transaction limits
 
@@ -54,10 +50,6 @@ longest a migration leaves a transaction idle, or leave the parameter out.
   Formbricks sends it and logs a warning.
 </Warning>
 
-
-
-
-
 <span id="one-click-port-3000-is-published-on-the-host-only" />
 
 ## 6.1.1: one-click port binding
@@ -77,10 +69,6 @@ mapping, so it leaves an address you chose alone; putting the bare mapping back 
 Compose setups that don't use the one-click script are not changed. If yours publishes `3000:3000` and a reverse
 proxy on the same host is the intended way in, bind it to `127.0.0.1:3000:3000` as well.
 
-
-
-
-
 ## Hub worker for Docker
 
 Fresh Docker and one-click installations add `hub-worker` in **6.1**. Earlier v5/v6.0 Compose files
@@ -92,24 +80,23 @@ An existing installation keeps its local `docker-compose.yml` during `formbricks
 cannot add the service for you. Adding it is recommended rather than required in this release: the updater prints
 a warning and continues when the resolved Compose project does not contain `hub-worker`. Keep the worker enabled so asynchronous processing completes; do not infer a future enforcement date from this warning.
 
-1. Start in the directory containing your customized `docker-compose.yml`, then back it up and download the file
-   from the release you are upgrading to. For a one-click installation, run `cd formbricks` first. Use that
-   release's tag instead of `stable` when your deployment is pinned.
+1. In the directory containing your existing `docker-compose.yml`,
+   [download the exact target release](/self-hosting/upgrade/configuration#download-the-selected-release).
+   That step sets `target_version` and saves `docker-compose.release.yml`. Back up your working file:
 
    ```bash
    cp -p docker-compose.yml docker-compose.yml.before-hub-worker
-   curl -fsSL -o docker-compose.release.yml \
-     "https://raw.githubusercontent.com/formbricks/formbricks/${target_version:?Set your target release tag}/docker/docker-compose.yml"
    ```
 
-2. Compare the two files. Merge `x-hub-runtime-environment` and the release's `hub` and `hub-worker` sections as
-   one unit so the API and worker retain the same database and taxonomy configuration. Preserve local proxy,
+2. Copy the reference file’s `x-hub-runtime-environment` block to the top level of your Compose file.
+   Replace `hub` and add `hub-worker` under `services:`, including their shared environment and dependencies,
+   so the API and worker receive the same database and taxonomy configuration. Preserve local proxy,
    storage, database, and image-pin customizations. `hub`, `hub-worker`, and `hub-migrate` must resolve to the
    same Hub image reference.
 3. Validate the result before changing the running stack:
 
    ```bash
-   docker compose config >/dev/null
+   docker compose config --quiet
    docker compose config --services | grep -Fx hub-worker
    ```
 
@@ -120,13 +107,14 @@ a warning and continues when the resolved Compose project does not contain `hub-
 
    ```bash
    docker compose pull hub hub-migrate hub-worker
-   docker compose run --rm --no-deps hub-migrate
-   docker compose up -d hub hub-worker
+   docker compose run --rm --no-deps hub-migrate &&
+     docker compose up -d hub hub-worker
    ```
 
 5. Verify that the worker stays running and that the existing River backlog decreases:
 
    ```bash
+   # hub-migrate must exit 0 before starting the API/worker.
    docker compose ps hub-worker
    docker compose logs --tail=200 hub-worker
    ```
@@ -147,10 +135,6 @@ Completed jobs remain committed and pending jobs remain queued, but all Hub asyn
 again. A fully custom deployment that runs Hub workers outside this Compose project can ignore the warning: the
 update is not blocked.
 
-
-
-
-
 ## Cube model files for Docker
 
 6.1 adds the `npsCount` measure and the `valueBand` dimension to the Cube model. The **NPS breakdown** and **CSAT
@@ -158,15 +142,15 @@ breakdown** chart presets use them. On Docker the model is two files next to you
 `cube/cube.js` and `cube/schema/FeedbackRecords.js`. Until they are refreshed, those presets fail with
 `'npsCount' not found`.
 
-- **One-click:** `./formbricks.sh update`, run with the current updater as described under
-  [Update](/self-hosting/setup/one-click#update), refreshes both files while the stack is stopped. It takes them
+- **One-click:** `./formbricks.sh update`, run with the **target release’s** updater as described under
+  [Docker and one-click upgrade](/self-hosting/upgrade/docker), refreshes both files while the stack is stopped. It takes them
   from the release your Formbricks image runs, and keeps the previous copies in `cube/previous/`. If either file
   cannot be refreshed, both stay as they were, and the update finishes and prints the command to retry.
   If the image is pinned to a digest or a custom tag, the updater leaves both files alone; use the Docker
   Compose step below with your release's tag.
-- **Docker Compose:** run the Cube refresh step of the [Docker update](/self-hosting/setup/docker#update) from
+- **Docker Compose:** use the [Cube model download and installation steps](/self-hosting/upgrade/configuration#download-the-cube-model-files) from
   the directory containing your `docker-compose.yml`. If you refresh outside an update, recreate Cube
-  afterwards with `docker compose up -d --force-recreate cube`.
+  afterwards with `docker compose up -d --no-deps --force-recreate cube`.
 - **Helm:** the chart ships the model, so `helm upgrade` replaces it. No action is needed.
 
 ## Envoy Redis images

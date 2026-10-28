@@ -1,6 +1,6 @@
 {
   "checks": {
-    "anchors": "284 public MDX parsed with Mintlify heading generation; 212 local fragments; zero unresolved",
+    "anchors": "284 public MDX parsed with Mintlify heading generation; 229 fragments; zero unresolved",
     "build": "passed: cd docs && NODE_USE_ENV_PROXY=1 npx mint@4.2.1126 validate",
     "formatting": "passed for changed JSON; MDX follows repository formatter exclusions",
     "isolated_failure": "lib/utils/validate-webhook-url.toctou.test.ts:36 times out at 5000ms fetching a reserved .invalid hostname; reproduced in isolation. Source unchanged by this PR.",
@@ -200,6 +200,170 @@
       "route": "platform/changelog"
     }
   ],
+  "readability_review": {
+    "changed_guidance": [
+      "docs/development/standards/practices/documentation.mdx",
+      "docs/self-hosting/upgrade/configuration.mdx",
+      "docs/self-hosting/upgrade/docker.mdx",
+      "docs/self-hosting/upgrade/kubernetes.mdx",
+      "docs/self-hosting/upgrade/legacy.mdx",
+      "docs/self-hosting/upgrade/versions/2026-10-security-patches.mdx",
+      "docs/self-hosting/upgrade/versions/4.0.mdx",
+      "docs/self-hosting/upgrade/versions/4.7.mdx",
+      "docs/self-hosting/upgrade/versions/5.0.mdx",
+      "docs/self-hosting/upgrade/versions/5.1.mdx",
+      "docs/self-hosting/upgrade/versions/5.2.mdx",
+      "docs/self-hosting/upgrade/versions/5.3.mdx",
+      "docs/self-hosting/upgrade/versions/5.4-api-permissions.mdx",
+      "docs/self-hosting/upgrade/versions/5.4-runtime.mdx",
+      "docs/self-hosting/upgrade/versions/6.0.mdx",
+      "docs/self-hosting/upgrade/versions/6.1-runtime.mdx",
+      "docs/self-hosting/upgrade/versions/6.1-single-use-links.mdx",
+      "docs/self-hosting/upgrade/versions/6.1-visibility.mdx",
+      "docs/self-hosting/upgrade/versions/cube.mdx",
+      "docs/templates/release-guidance.md"
+    ],
+    "date": "2026-10-28",
+    "preview": [
+      {
+        "route": "development/standards/practices/documentation",
+        "status": 200
+      },
+      {
+        "route": "self-hosting/upgrade/configuration",
+        "status": 200
+      },
+      {
+        "route": "self-hosting/upgrade/docker",
+        "status": 200
+      },
+      {
+        "route": "self-hosting/upgrade/kubernetes",
+        "status": 200
+      },
+      {
+        "route": "self-hosting/upgrade/legacy",
+        "status": 200
+      },
+      {
+        "route": "self-hosting/upgrade/versions/2026-10-security-patches",
+        "status": 200
+      },
+      {
+        "route": "self-hosting/upgrade/versions/4.0",
+        "status": 200
+      },
+      {
+        "route": "self-hosting/upgrade/versions/4.7",
+        "status": 200
+      },
+      {
+        "route": "self-hosting/upgrade/versions/5.0",
+        "status": 200
+      },
+      {
+        "route": "self-hosting/upgrade/versions/5.1",
+        "status": 200
+      },
+      {
+        "route": "self-hosting/upgrade/versions/5.2",
+        "status": 200
+      },
+      {
+        "route": "self-hosting/upgrade/versions/5.3",
+        "status": 200
+      },
+      {
+        "route": "self-hosting/upgrade/versions/5.4-api-permissions",
+        "status": 200
+      },
+      {
+        "route": "self-hosting/upgrade/versions/5.4-runtime",
+        "status": 200
+      },
+      {
+        "route": "self-hosting/upgrade/versions/6.0",
+        "status": 200
+      },
+      {
+        "route": "self-hosting/upgrade/versions/6.1-runtime",
+        "status": 200
+      },
+      {
+        "route": "self-hosting/upgrade/versions/6.1-single-use-links",
+        "status": 200
+      },
+      {
+        "route": "self-hosting/upgrade/versions/6.1-visibility",
+        "status": 200
+      },
+      {
+        "route": "self-hosting/upgrade/versions/cube",
+        "status": 200
+      },
+      {
+        "mobileOverflow": false,
+        "route": "self-hosting/upgrade/configuration"
+      },
+      {
+        "mobileOverflow": false,
+        "route": "self-hosting/upgrade/versions/6.0"
+      },
+      {
+        "mobileOverflow": false,
+        "route": "self-hosting/upgrade/versions/5.0"
+      },
+      {
+        "mobileOverflow": false,
+        "route": "self-hosting/upgrade/versions/cube"
+      },
+      {
+        "mobileOverflow": false,
+        "route": "self-hosting/upgrade/versions/6.1-visibility"
+      },
+      {
+        "preparationAnchor": true
+      }
+    ],
+    "runtime_limit": "Download/install commands and synthetic Compose rendering only. No database bootstrap, application upgrade or restore rehearsal executed. Helm values command source-reviewed; Helm unavailable locally.",
+    "scope": "Reviewed 4.x\u20136.x upgrade guidance for missing file sources, secret generation, execution context, setup ordering and success criteria. Earlier majors unchanged.",
+    "shared_url_checks": "125 legacy migration anchors, 26 redirects, seven stable release anchors, two additional mobile layouts passed",
+    "source_checks": [
+      {
+        "check": "v6 guide download commands",
+        "result": "passed; both downloaded files match tag 6.0.4"
+      },
+      {
+        "check": "documented service merge on synthetic 5.4.7 Compose",
+        "result": "passed; added services, bindings, script mount, image pins and migration dependency; original PostgreSQL image retained"
+      },
+      {
+        "check": "documented secret generation",
+        "result": "passed; two distinct 64-character hex values; values discarded"
+      },
+      {
+        "check": "shared Cube download/install commands at 5.4.7",
+        "result": "passed; both installed model files match selected release"
+      },
+      {
+        "check": "shared Cube download/install commands at 6.0.4",
+        "result": "passed; both installed model files match selected release"
+      },
+      {
+        "check": "shared Cube download/install commands at 6.1.1",
+        "result": "passed; both installed model files match selected release"
+      }
+    ],
+    "source_references": [
+      "6.0.4:docker/docker-compose.yml",
+      "6.0.4:docker/authzed-postgres-bootstrap.sh",
+      "6.0.4:docker/formbricks.sh",
+      "5.1.0:docker/docker-compose.yml",
+      "5.4.7:docker/docker-compose.yml",
+      "5.4.7:charts/formbricks/values.yaml",
+      "6.1.1:docker/docker-compose.yml"
+    ]
+  },
   "release_source_checks": [
     {
       "expected": "formbricks-authzed-prepare",

@@ -30,8 +30,9 @@ authenticates with an API key. The required MCP **scope** is unchanged — both 
   and creating records are unaffected for every principal.
 </Note>
 
-To find out whether any dataset on your instance is shared, and would therefore start refusing API-key
-mutations:
+Open a [SQL session to the Formbricks application database](/self-hosting/upgrade/troubleshooting#open-a-sql-session)
+with a read-capable account, then run this query. It lists shared datasets that would refuse API-key mutations;
+**no rows means no shared datasets matched**:
 
 ```sql
 SELECT d.id, d.name, d."organizationId", COUNT(w."workspaceId") AS workspaces

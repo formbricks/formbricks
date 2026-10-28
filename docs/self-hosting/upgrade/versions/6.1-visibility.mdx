@@ -1,6 +1,6 @@
 ---
 title: "Enable survey visibility"
-description: "Detailed actions for the 6.1 upgrade."
+description: "Run permission commands inside the upgraded app and enable restricted surveys."
 icon: "arrow-up-right-dots"
 ---
 
@@ -18,12 +18,8 @@ workspace-visible and make its creator the owner, so **access is unchanged after
   when activating it. See [Survey visibility](/surveys/general-features/visibility).
 </Note>
 
-Stored visibility is always enforced. New visibility mutations and survey graph checks become available
-once an operator marks the survey scope ready:
-
-```bash
-formbricks-authzed backfill --scope=survey --apply --mark-ready
-```
+Stored visibility is always enforced. To enable new visibility mutations and survey graph checks,
+complete the rollout below after upgrading.
 
 Once activated, a survey a person creates is restricted until they share it with the workspace.
 Regardless of readiness, API keys cannot see restricted surveys or responses; webhooks, integrations,
@@ -37,17 +33,34 @@ Two new environment variables:
   This applies whether or not visibility is enforced: creating a survey past it answers
   `422 workspace_survey_limit_reached`. Raise it before upgrading if a workspace is near the default.
 
-To stop new visibility mutations and use PostgreSQL policy while repairing the survey graph, clear the marker. Stored restrictions remain enforced:
-
-```bash
-formbricks-authzed backfill --scope=survey --clear-ready
-```
-
-
-
-
-
 ## Complete the visibility rollout
+
+### Open a shell in the upgraded app
+
+The commands below ship **inside the Formbricks image**; no host installation of `formbricks-authzed` is needed.
+Confirm every app container/pod runs the target release, then open one shell:
+
+<Tabs>
+  <Tab title="Docker and one-click">
+    From your existing Compose directory:
+
+    ```bash
+    docker compose exec formbricks sh
+    ```
+  </Tab>
+  <Tab title="Kubernetes">
+    Replace the namespace, deployment and app container names with your deployment's names:
+
+    ```bash
+    kubectl exec -it -n <namespace> deploy/<app-deployment> -c <app-container> -- sh
+    ```
+  </Tab>
+</Tabs>
+
+Run the following steps **inside that shell**, using the app's existing database and AuthZed settings.
+Stop on any nonzero exit; do not mark the scope ready after a failed repair. Type `exit` when finished.
+
+### Repair and verify
 
 1. Once every container or pod runs the new version, check durable delivery and replay any dead-lettered
    survey events. The migration adds the survey trigger while the previous version may still be delivering

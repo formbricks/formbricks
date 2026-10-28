@@ -10,7 +10,7 @@ Use this procedure for **v6 targets** with Helm, Argo CD or Flux. For a 4.x/5.x 
 
 <Steps>
   <Step title="Prepare the target configuration">
-    Follow the [configuration checklist](/self-hosting/upgrade/configuration). Record the chart version and all image references from its rendered manifests. Keep the application
+    Follow [Prepare Helm values](/self-hosting/upgrade/configuration#prepare-helm-values). Record the chart version and all image references from its rendered manifests. Keep the application
     image used for preparation identical to the image used for rollout. Chart and app versions are independent.
 
     Preserve Secrets, storage bindings and custom values. Review CRD ownership before changing Envoy or

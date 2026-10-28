@@ -9,8 +9,10 @@ configuration before maintenance; do not start the target services yet.
 
 ## Download the selected release
 
-Set `target_version` to the exact stable tag recorded in your plan, such as `5.4.7`. This variable is a
-local shell variable for downloads; it does not change your deployed image by itself.
+Run these commands in the directory containing your existing `docker-compose.yml` and `.env`
+(usually `formbricks/` for one-click). Choose the exact tag from [GitHub releases](https://github.com/formbricks/formbricks/releases)
+for your [next stop](/self-hosting/upgrade/paths), not an RC or a moving `stable` tag.
+`target_version` is a shell variable for downloads; it does not change deployed images.
 
 ```bash
 read -r -p "Target Formbricks release tag: " target_version
@@ -19,8 +21,21 @@ release_base="https://raw.githubusercontent.com/formbricks/formbricks/${target_v
 curl -fsSL "$release_base/docker-compose.yml" -o docker-compose.release.yml
 ```
 
-Compare that reference with your existing Compose file. **Merge changes; do not overwrite the file.**
-The reference can contain `latest` even at an old Git tag. Before pulling:
+Stop if the download fails. Keep this reference separate from the running configuration.
+
+### Merge the release configuration
+
+Open `docker-compose.release.yml` and your existing `docker-compose.yml` side by side:
+
+1. Copy each new service named in the version notes under the existing `services:` key. Include its
+   environment, mounts, healthcheck and dependencies; copying only `image:` misses required changes.
+2. Copy any referenced top-level `x-...` YAML blocks. For example, `*formbricks-database` needs the
+   matching `&formbricks-database` definition. Adapt connection URLs to your existing credentials.
+3. Add the new app settings to its existing `environment` block. Keep local networks, proxy labels,
+   SMTP, SSO, storage, volumes and secrets. A customized network must also reach the new services.
+
+Do not replace your whole Compose file. The downloaded reference can contain `latest` even at an old
+Git tag. Before pulling:
 
 | Setting | What to do |
 | --- | --- |
@@ -34,8 +49,29 @@ The reference can contain `latest` even at an old Git tag. Before pulling:
 For example, 5.4.7 and 6.0.4 select Hub `0.14.1`: use `HUB_IMAGE_REF=:0.14.1`, including the colon.
 Select future versions from their own release assets instead of reusing this example indefinitely.
 
-Save the matching Cube files to temporary paths, compare them, and replace both during maintenance.
-Keep the previous pair for recovery. Use the same `release_base` above, not today's `stable` branch.
+### Download the Cube model files
+
+For a bundled Cube service, download both files from the **same target tag**. These commands only stage
+files; they do not change the running service. They also work for a first v5 installation of Cube.
+
+```bash
+release_base="https://raw.githubusercontent.com/formbricks/formbricks/${target_version:?Set your target release tag}/docker"
+mkdir -p upgrade-files/cube/schema &&
+  curl -fsSL "$release_base/cube/cube.js" -o upgrade-files/cube/cube.js &&
+  curl -fsSL "$release_base/cube/schema/FeedbackRecords.js" -o upgrade-files/cube/schema/FeedbackRecords.js
+```
+
+Continue only if both downloads succeed. Compare any local customizations. During maintenance, with Cube
+stopped, back up the existing `cube/` directory if present, then install the reviewed pair:
+
+```bash
+mkdir -p cube/schema &&
+  cp upgrade-files/cube/cube.js cube/cube.js &&
+  cp upgrade-files/cube/schema/FeedbackRecords.js cube/schema/FeedbackRecords.js
+```
+
+Do not start Cube unless both copies succeed. The release's service mounts these two paths. Keep the
+old pair with your recovery backup; for v4 targets, skip this section because Cube is not used.
 
 ## Preserve existing state
 
@@ -46,6 +82,22 @@ Keep the previous pair for recovery. Use the same `release_base` above, not toda
 - Do not rotate `ENCRYPTION_KEY` during an upgrade. It is needed to read existing encrypted data.
 - For Helm, merge your overrides into the target chart's defaults, render privately, and check all images,
   Secrets, PVC bindings and hooks. Avoid blindly applying `--reuse-values` across changed chart schemas.
+
+## Prepare Helm values
+
+For Helm, start from your existing `values.yaml` (or values tracked in GitOps). Download the target
+chart's defaults as a **separate reference**:
+
+```bash
+helm show values oci://ghcr.io/formbricks/helm-charts/formbricks \
+  --version <target-chart-version> > values.release.yaml
+```
+
+Replace `<target-chart-version>` with the chart version selected in your plan; it is not necessarily the
+app version. Copy only the new settings required by your version notes into your existing overrides.
+Keep Secrets, PVCs, database credentials and existing operators. Render using your normal release name,
+namespace and values before following the [Kubernetes rollout](/self-hosting/upgrade/kubernetes).
+Store rendered manifests privately because they can contain secrets. A successful render is not a database-connectivity test.
 
 ## Existing MinIO and Traefik
 
@@ -62,8 +114,15 @@ in place too: Traefik routing alone does not supply the [v5 rate-limit requireme
 
 ## Add only new secrets
 
-For each missing Hub or Cube secret, run `openssl rand -hex 32` locally once, then store the result in
-your secret manager or protected `.env`. Do not regenerate an existing value on every update.
+For each missing secret, run this command once in your terminal:
+
+```bash
+openssl rand -hex 32
+```
+
+Use a different result for each secret. Save the generated text in your existing `.env` (for example,
+`HUB_API_KEY=<generated-value>`) or secret manager; do not put the generation command itself in the file.
+For Compose, run `chmod 600 .env`. Keep existing values on later upgrades.
 
 | Secret | Where the same value must be supplied |
 | --- | --- |

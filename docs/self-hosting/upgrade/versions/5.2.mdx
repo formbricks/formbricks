@@ -1,6 +1,6 @@
 ---
 title: "Upgrade to 5.2"
-description: "Version-specific changes and preserved upgrade instructions."
+description: "Update SSO callbacks and verify existing accounts after the authentication change."
 icon: "arrow-up-right-dots"
 ---
 
@@ -117,6 +117,10 @@ shares an internal token with Hub:
   (`openai-compatible` by default; `bedrock` and `vertex-gemini` also supported)
 - `TAXONOMY_IMAGE_REF` to pin a released image (e.g. `:v0.1.0`)
 
+Use the target release’s [taxonomy setup](/self-hosting/configuration/ai-deployment) for the service and
+secret bindings; do not enable the profile with empty tokens. Generate each missing token with
+`openssl rand -hex 32`, then store it in the protected environment file or Secret consumed by those services.
+
 Use `COMPOSE_PROFILES=qwen,taxonomy` to back it with the bundled Qwen/vLLM service.
 
 #### Bundled Qwen / vLLM Runtime
@@ -133,8 +137,8 @@ Docker Compose can now run a bundled OpenAI-compatible LLM for self-hosted AI fe
 
 ## During
 
-v5.2 requires no manual database migration step beyond the standard automatic Prisma migrations on startup
-(the credential-account backfill runs automatically). The Helm chart is unchanged from v5.1.
+The credential-account backfill runs in the normal application migration runner; no separate SQL step is
+needed. On Compose, run `formbricks-migrate` before Hub migrations and app startup, as shown below.
 
 Use the [4.x/5.x maintenance procedure](/self-hosting/upgrade/legacy) with the selected release's assets.
 Add the new SSO callbacks before restart and keep the old ones registered for recovery. Run the target's

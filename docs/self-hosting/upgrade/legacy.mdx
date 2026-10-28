@@ -25,14 +25,15 @@ Choose [release stops](/self-hosting/upgrade/paths), read all crossed version no
 
     1. Close traffic at the proxy and stop `formbricks`. Stop Hub, workers and scheduled/external writers
        **if present**. Leave databases running and take the [coordinated backup](/self-hosting/operate/backup-restore).
-    2. Install the reviewed configuration and Cube files. Start only the required infrastructure; keep the
-       same PostgreSQL major and existing volumes. Verify it is healthy.
+    2. Install the reviewed configuration and [Cube model files](/self-hosting/upgrade/configuration#download-the-cube-model-files)
+       (v5 targets only). Stop Cube before replacing its files if it is already running. For the bundled
+       database/cache, run `docker compose up -d --wait postgres redis`; keep the same PostgreSQL major
+       and volumes. Verify external infrastructure through its own deployment instead.
     3. For a **5.1–5.4 target**, run application migrations, then Hub migrations explicitly:
 
        ```bash
-       docker compose run --rm --no-deps formbricks-migrate
-       # Continue only after exit 0:
-       docker compose run --rm --no-deps hub-migrate
+       docker compose run --rm --no-deps formbricks-migrate &&
+         docker compose run --rm --no-deps hub-migrate
        ```
 
        Both commands must finish with exit `0`. The target Compose file's app migration command may have

@@ -175,6 +175,10 @@ Start with who must act and use short **Before / During / After / Recovery** sec
 - Integration/configuration changes, dependencies, service impact and known affected/fixed patches.
 - Validation, stop conditions, recovery limits and links to the canonical recipe and release notes.
 
+For each manual action, name the working directory, file/settings to edit, source/download, command and
+expected result. Explain secret generation and bindings; do not stop at “generate tokens” or “merge services”.
+Distinguish commands run on the host from those inside a container, and automatic setup from manual steps.
+
 Use the same four sections for a release checklist; move long commands to focused linked procedures. Link the procedure from its
 release entry and from the relevant target-minor note, so operators crossing several patches find it.
 

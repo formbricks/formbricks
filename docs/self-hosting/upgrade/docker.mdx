@@ -38,6 +38,8 @@ Keep the same project name, environment file and volume names. Complete the
     Keep databases running. Take a [coordinated backup](/self-hosting/operate/backup-restore).
   </Step>
   <Step title="Prepare migrations and permissions">
+    <span id="prepare-migrations-and-permissions" />
+
     For a first v6 upgrade, add the [v6 dependencies](/self-hosting/upgrade/versions/6.0#first-v6-dependency-setup)
     while writers stay stopped. Start and verify PostgreSQL, datastore bootstrap, SpiceDB migrations and SpiceDB
     using the reviewed configuration. For the bundled datastore, this starts its dependencies without the app:
@@ -96,24 +98,10 @@ Keep the same project name, environment file and volume names. Complete the
 
 ## Refresh the Cube model
 
-Skip this when Cube is external. Use the source tag matching your selected app image. Keep both files together; stop on download or replacement failure.
-
-```bash
-if [ -f cube/schema/FeedbackRecords.js ]; then
-  base="https://raw.githubusercontent.com/formbricks/formbricks/${target_version:?Set your target release tag}/docker"
-  curl -fsSL -o cube/cube.js.download "$base/cube/cube.js" &&
-    curl -fsSL -o cube/FeedbackRecords.js.download "$base/cube/schema/FeedbackRecords.js" &&
-    mkdir -p cube/previous/schema &&
-    cp -p cube/cube.js cube/previous/cube.js &&
-    cp -p cube/schema/FeedbackRecords.js cube/previous/schema/FeedbackRecords.js &&
-    mv cube/cube.js.download cube/cube.js &&
-    {
-      # Never leave the new cube.js paired with the old model.
-      mv cube/FeedbackRecords.js.download cube/schema/FeedbackRecords.js ||
-        { cp -p cube/previous/cube.js cube/cube.js; false; }
-    }
-fi
-```
+Skip this when Cube is external. Use the [Cube model download and installation steps](/self-hosting/upgrade/configuration#download-the-cube-model-files)
+with the same target tag as the app. Stage both files before maintenance; stop Cube with `docker compose stop cube`
+and install the reviewed pair before restarting the stack. For one-click, see the
+[automatic refresh and its limits](/self-hosting/upgrade/versions/6.1-runtime#cube-model-files-for-docker).
 
 ## Recovery
 

@@ -67,7 +67,11 @@ Choose the required stops in [Upgrade paths](/self-hosting/upgrade/paths).
 | AFFECTED SETUP | OLD → NEW | Exact setting/service/file, where to change it, and what to preserve. |
 
 State maintenance impact, migration duration factors, prerequisites and backup scope.
-New secrets: explain how to generate once, store and share between services. Preserve existing keys.
+New secrets: include the exact generation command, storage location and service bindings. Distinguish
+secrets from identifiers and provider-issued credentials; preserve existing keys.
+New files: link the release source or give a download command, destination and working directory.
+A “merge” instruction must name the blocks to copy, referenced YAML anchors and settings to preserve.
+Explain which setup runs automatically, what the operator runs, and the success/failure signals.
 Optional components: say explicitly when they can remain disabled.
 Name the first affected/fixed patch; do not apply a later patch's behavior to TARGET.0.
 
@@ -96,6 +100,8 @@ with upgrade and restore results. Never use a documentation build as runtime evi
 
 - A reader can identify their next stop and all required actions without researching an unnamed “tested pair”.
 - Commands use services/executables present in the target; dependency pins and chart/app mapping are checked.
+- A reader can obtain every file and secret, identify where each command runs, and recognize success without guessing.
+- Shared file-download and setup procedures have one canonical home; link them instead of duplicating scripts.
 - The route was walked from its oldest supported source, including patch actions and existing custom storage/SSO.
 - Test evidence, known gaps and recovery limits are explicit. “No extra action” is an assessed result.
 - Run Mintlify validation, links/anchors and a desktop/mobile preview. Preserve existing URLs and heading anchors.

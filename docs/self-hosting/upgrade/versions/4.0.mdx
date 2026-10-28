@@ -29,7 +29,9 @@ this does not extend their maintenance window.
 
 S3 storage is required **when using files**, including uploads, image choices, logos and survey backgrounds.
 Existing S3/MinIO installations can keep their bucket and credentials. RustFS is not a v4 migration requirement.
-Configure:
+Set these on the **Formbricks app service**, using credentials and a bucket created with your storage
+provider. For Compose, edit `formbricks.environment`; for Kubernetes, use your application Secret/environment
+bindings. These are placeholders, not credentials to generate with OpenSSL:
 
 ```yaml
 S3_ACCESS_KEY: your-access-key

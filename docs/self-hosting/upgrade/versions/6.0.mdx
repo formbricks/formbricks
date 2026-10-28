@@ -5,7 +5,7 @@ icon: "arrow-up-right-dots"
 ---
 
 **Applies to:** v5 installations entering v6, Community and Enterprise, Docker/one-click and Kubernetes.
-From v4, first complete the [5.4 stop](/self-hosting/upgrade/paths). Review all crossed
+From v4 or 5.0–5.3, first complete the [5.4 stop](/self-hosting/upgrade/paths). Review all crossed
 [5.x actions](/self-hosting/advanced/migration#version-5), including SSO and the response index.
 
 <span id="during-and-after" />
@@ -33,15 +33,103 @@ is not required. [Prepare the target configuration](/self-hosting/upgrade/config
 
 <Tabs>
   <Tab title="Docker and one-click">
-    - Merge `authzed-db-bootstrap`, `spicedb-migrate`, `spicedb`, `authzed-initialize` and profiled `authzed-ops`
-      from the **selected release**. Download its `docker/authzed-postgres-bootstrap.sh` beside Compose.
-    - Generate only missing `AUTHZED_TOKEN` and `AUTHZED_DATABASE_PASSWORD`; wire both ends consistently.
-      Keep the existing PostgreSQL password and ensure bootstrap/migration images use its existing major.
-    - Set `AUTHZED_ENABLED=true`, `AUTHZED_ENDPOINT`, `AUTHZED_TOKEN`, `AUTHZED_SYSTEM_KEY`,
-      `AUTHZED_INSECURE` and `AUTHZED_CONSISTENCY=fully_consistent` on the app and permission tools.
-      Insecure transport is only for the private bundled network; use TLS for external endpoints.
-    - Keep all Formbricks services on the same target image. The updater preserves customized Compose files
-      and cannot add these services for you.
+    These steps add bundled SpiceDB to an existing Compose installation. For external PostgreSQL or
+    SpiceDB, use [SpiceDB operations](/self-hosting/configuration/authzed-operations) and your platform's credentials.
+
+    <Steps>
+      <Step title="Download the two release files">
+        Open a terminal in the directory containing your existing `docker-compose.yml` and `.env`
+        (usually `formbricks/` for one-click). Choose the latest stable **6.0 patch** from
+        [GitHub releases](https://github.com/formbricks/formbricks/releases).
+        Reference files: [Compose](https://github.com/formbricks/formbricks/blob/6.0.4/docker/docker-compose.yml)
+        and [database bootstrap](https://github.com/formbricks/formbricks/blob/6.0.4/docker/authzed-postgres-bootstrap.sh).
+        The commands below download both from the exact tag you select.
+
+        ```bash
+        read -r -p "Target 6.0 release tag: " target_version
+        : "${target_version:?Choose a release first}"
+        release_base="https://raw.githubusercontent.com/formbricks/formbricks/${target_version}/docker"
+        curl -fsSL "$release_base/docker-compose.yml" -o docker-compose.release.yml &&
+          curl -fsSL "$release_base/authzed-postgres-bootstrap.sh" -o authzed-postgres-bootstrap.sh
+        ```
+
+        Continue only if both downloads succeed. `docker-compose.release.yml` is a reference to compare;
+        keep your existing `docker-compose.yml`. The script must sit beside it because Compose mounts
+        `./authzed-postgres-bootstrap.sh` into the bootstrap container.
+      </Step>
+      <Step title="Create the two new secrets">
+        Run this command **twice**, once for each missing secret:
+
+        ```bash
+        openssl rand -hex 32
+        ```
+
+        Save the two different results in your existing `.env`:
+
+        ```dotenv
+        AUTHZED_TOKEN=<first-generated-value>
+        AUTHZED_DATABASE_PASSWORD=<second-generated-value>
+        AUTHZED_ENABLED=true
+        AUTHZED_ENDPOINT=spicedb:50051
+        AUTHZED_SYSTEM_KEY=formbricks
+        AUTHZED_INSECURE=true
+        AUTHZED_CONSISTENCY=fully_consistent
+        ```
+
+        Replace both placeholders; do not paste `openssl` commands into `.env`. Protect it with
+        `chmod 600 .env`. Keep existing values if these secrets are already configured.
+
+        - `AUTHZED_TOKEN` is the shared credential used by Formbricks and SpiceDB; no AuthZed account is needed.
+        - `AUTHZED_DATABASE_PASSWORD` is a new password for SpiceDB's database login. Keep your existing
+          `POSTGRES_PASSWORD`, auth secrets and encryption key unchanged. If `.env` has no `POSTGRES_PASSWORD`
+          yet, add the password your database already uses; older Compose files may store it directly.
+        - `AUTHZED_SYSTEM_KEY=formbricks` is an identifier, not another generated secret.
+          `AUTHZED_INSECURE=true` is only for the private Compose network; external endpoints should use TLS.
+      </Step>
+      <Step title="Add the services to your existing Compose file">
+        Open `docker-compose.release.yml` beside `docker-compose.yml` in your editor:
+
+        1. Copy `authzed-db-bootstrap`, `spicedb-migrate`, `spicedb`, `authzed-initialize` and `authzed-ops`
+           under your existing `services:` key, including their `depends_on`, mounts and environment blocks.
+           Keep `profiles: ["authzed-ops"]` on the operations service.
+        2. Copy the referenced `x-formbricks-database` block at the top level and adapt its connection URL
+           to your existing database. Copy the release's `AUTHZED_*` bindings and `SKIP_STARTUP_MIGRATION`
+           setting into the existing `formbricks.environment` block. Preserve its other settings.
+        3. Check `POSTGRES_ADMIN_URL` on `authzed-db-bootstrap` uses your existing PostgreSQL admin login.
+           Keep the PostgreSQL image major, volumes and mount paths. Match the bootstrap client's image
+           to that existing major. Connect all new services to the same private network as PostgreSQL and the app.
+        4. Pin `formbricks`, `formbricks-migrate`, `authzed-initialize` and `authzed-ops` to your selected
+           Formbricks tag. Add `WEBAPP_URL` with your existing instance URL to `authzed-ops.environment`
+           for the [permission preparation](/self-hosting/upgrade/prepare#docker-and-one-click) step.
+
+        The copied bindings supply the same token to Formbricks and SpiceDB, and the same database
+        password to bootstrap, migration and server containers. `.env` alone does not add those bindings.
+        Keep your Hub, Cube, storage and proxy configuration. The one-click updater cannot add these services for you.
+      </Step>
+      <Step title="Validate, then continue the maintenance procedure">
+        ```bash
+        docker compose config --quiet
+        docker compose --profile authzed-ops config --services
+        docker compose --profile authzed-ops config --images
+        ```
+
+        The first command must exit successfully. Check all five new service names and the selected images
+        in the next two outputs. Resolve missing variables, files or YAML anchors before continuing.
+
+        Follow [Docker upgrade → Prepare migrations and permissions](/self-hosting/upgrade/docker#prepare-migrations-and-permissions)
+        **after stopping writers and taking the backup**. That step starts the following chain automatically:
+
+        1. `authzed-db-bootstrap` runs the downloaded script inside Docker. It creates the `spicedb` database
+           and login if missing, and sets that login's password to your configured value.
+        2. `spicedb-migrate` creates or updates SpiceDB's internal tables; `spicedb` then starts.
+        3. You run the separate Formbricks preparation command to migrate application data and populate permissions.
+
+        You do not run the bootstrap script on the host. It does not generate secrets or migrate Formbricks permissions.
+        Bootstrap must finish with `AuthZed database bootstrap completed.`, both setup containers must exit `0`,
+        and SpiceDB must be healthy. Check with `docker compose ps -a` and
+        `docker compose logs authzed-db-bootstrap spicedb-migrate`. Stop on failure; keep the app stopped.
+      </Step>
+    </Steps>
   </Tab>
   <Tab title="Kubernetes">
     - Configure the target chart for existing/external SpiceDB or the bundled operator, preserving cluster ownership.

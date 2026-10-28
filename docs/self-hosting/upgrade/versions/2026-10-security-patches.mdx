@@ -33,8 +33,10 @@ Split legacy JSON-RPC batches larger than 100 messages. Individual MCP calls are
 For Helm targets 6.0.4 and 5.4.7, Hub migrations run in the pre-upgrade `hub-migration` Job.
 For Compose, run `hub-migrate` after app migrations and before starting Hub. Older Compose files do not
 include `hub-worker`; use the [worker guidance](/self-hosting/upgrade/versions/6.1-runtime#hub-worker-for-docker)
-when adding a worker for asynchronous processing, preserving the selected Hub version. Estimate the size of
-`feedback_records` in the Hub database:
+when adding a worker for asynchronous processing, preserving the selected Hub version.
+
+Open a PostgreSQL client connected to **Hub’s database** (`HUB_DATABASE_URL` if configured, otherwise the
+application database). Run this read-only estimate; the result is an approximate row count, not a backfill:
 
 ```sql
 SELECT reltuples::bigint FROM pg_class WHERE relname = 'feedback_records';

@@ -11,11 +11,11 @@ Both editions and deployment methods. Apply [5.0 prerequisites](/self-hosting/up
 
 | Change | Required action |
 | --- | --- |
-| Separate Compose app migration service | Merge `formbricks-migrate` and its environment/ordering. Use the same app image for migration and runtime. |
+| Separate Compose app migration service | [Copy the target’s `formbricks-migrate` service](/self-hosting/upgrade/configuration#merge-the-release-configuration), including its environment and dependencies. Use the same app image for migration and runtime. |
 | Hub migration ordering | Run application migrations before Hub migrations; make external Secrets available before Argo migration hooks. |
 | Connector renamed to FeedbackSource | Back up first; verify existing feedback-source connections after the automatic rename. |
 | Prisma 7 runtime | Use the migration runner bundled in the target image. Do not run an older Prisma CLI against the target schema. |
-| Cube configuration/healthcheck corrections | Merge the target Cube service and model files while preserving its secret and database overrides. |
+| Cube configuration/healthcheck corrections | Copy the target Cube service and [download both model files](/self-hosting/upgrade/configuration#download-the-cube-model-files); keep its secret and database overrides. |
 
 The [configuration checklist](/self-hosting/upgrade/configuration) covers image pins, existing credentials
 and storage/proxy preservation. New optional features are not prerequisites for this upgrade.

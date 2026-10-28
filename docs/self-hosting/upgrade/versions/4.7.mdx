@@ -37,13 +37,17 @@ copies concurrently. On the recommended route, complete it at the 4.9 stop befor
 
 <Tabs>
   <Tab title="Docker">
+    Run from the directory containing your existing `docker-compose.yml`. The app must be running on the
+    upgraded image; keep public traffic closed until the backfill finishes.
+
     ```bash
     docker compose exec -T formbricks node packages/database/dist/scripts/backfill-attribute-values.js
     ```
   </Tab>
   <Tab title="Kubernetes">
     ```bash
-    kubectl exec -n <namespace> deploy/<app-deployment> --       node packages/database/dist/scripts/backfill-attribute-values.js
+    kubectl exec -n <namespace> deploy/<app-deployment> -- \
+      node packages/database/dist/scripts/backfill-attribute-values.js
     ```
     Replace the namespace and app deployment with your existing names.
   </Tab>

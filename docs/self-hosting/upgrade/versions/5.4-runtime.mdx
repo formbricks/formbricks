@@ -28,7 +28,17 @@ Use the `redis` image selected in the target release's Compose/chart, preserving
 configuration. Apply it during the maintenance procedure; validate the rendered configuration before rollout.
 For Helm, update any old `redis.image.digest` override as well as the repository/tag so it does not mask the new image.
 
-After rollout, verify `valkey-cli ping`, `valkey-server --version` and the actual image architecture.
+After rollout, run these from your Compose directory (`redis` is the service name):
+
+```bash
+docker compose exec -T redis valkey-cli ping
+docker compose exec -T redis valkey-server --version
+docker compose ps redis
+```
+
+Expect `PONG`, the target Valkey version and a healthy container. For Kubernetes, run the same commands
+inside the cache pod with `kubectl exec -n <namespace> <redis-pod> -- <command>`. Check the resolved image
+supports your nodes’ architecture.
 The one-click updater can replace the exact old pin, but use the release-matched updater for your target;
 do not download today's `stable` script for a historical upgrade.
 
