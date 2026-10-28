@@ -1,15 +1,10 @@
 get:
   operationId: listTagsV3
-  # Session-only by design, so an API-key caller reading the published reference would only ever get a
-  # 401. Excluded from the generated docs pages until ENG-2533 decides between dropping the paths
-  # and opening them to API keys; the operation stays in the bundle for the contract tests.
-  x-excluded: true
   summary: List tags
   description: |
     Returns a workspace's response tags, each with the number of responses currently carrying it.
 
-    Session cookie only. Tags are managed from the Formbricks app (Workspace settings → Tags); these
-    endpoints back that screen, so they do not accept `x-api-key`.
+    Requires read access to the workspace. Session cookie, `x-api-key`, or a Bearer token.
   tags:
     - V3 Tags
   parameters:
@@ -47,7 +42,7 @@ get:
     "400":
       $ref: ../components/responses/V3BadRequest.yml
     "401":
-      $ref: ../components/responses/V3UnauthorizedSession.yml
+      $ref: ../components/responses/V3Unauthorized.yml
     "403":
       $ref: ../components/responses/V3Forbidden.yml
     "429":
@@ -56,3 +51,5 @@ get:
       $ref: ../components/responses/V3InternalServerError.yml
   security:
     - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

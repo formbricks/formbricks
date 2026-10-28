@@ -1,14 +1,11 @@
 patch:
   operationId: renameTagV3
-  # Session-only by design, so an API-key caller reading the published reference would only ever get a
-  # 401. Excluded from the generated docs pages until ENG-2533 decides between dropping the paths
-  # and opening them to API keys; the operation stays in the bundle for the contract tests.
-  x-excluded: true
   summary: Rename a tag
   description: |
     Renames a tag. The workspace is resolved from the tag itself, so the caller cannot choose which scope
     it is authorized against. Requires organization owner/manager, or a workspace team membership with
-    read-write permission.
+    read-write permission; for an API key, write or manage access to the tag's workspace. Session
+    cookie, `x-api-key`, or a Bearer token.
 
     An unknown `tagId` answers `403`, not `404`, so tag ids cannot be probed for existence. A name that
     collides with another tag in the same workspace answers `422`.
@@ -51,7 +48,7 @@ patch:
     "400":
       $ref: ../components/responses/V3BadRequest.yml
     "401":
-      $ref: ../components/responses/V3UnauthorizedSession.yml
+      $ref: ../components/responses/V3Unauthorized.yml
     "403":
       $ref: ../components/responses/V3Forbidden.yml
     "422":
@@ -62,12 +59,10 @@ patch:
       $ref: ../components/responses/V3InternalServerError.yml
   security:
     - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []
 delete:
   operationId: deleteTagV3
-  # Session-only by design, so an API-key caller reading the published reference would only ever get a
-  # 401. Excluded from the generated docs pages until ENG-2533 decides between dropping the paths
-  # and opening them to API keys; the operation stays in the bundle for the contract tests.
-  x-excluded: true
   summary: Delete a tag
   description: |
     Deletes a tag and removes it from every response carrying it. Same authorization as rename.
@@ -102,7 +97,7 @@ delete:
     "400":
       $ref: ../components/responses/V3BadRequest.yml
     "401":
-      $ref: ../components/responses/V3UnauthorizedSession.yml
+      $ref: ../components/responses/V3Unauthorized.yml
     "403":
       $ref: ../components/responses/V3Forbidden.yml
     "429":
@@ -111,3 +106,5 @@ delete:
       $ref: ../components/responses/V3InternalServerError.yml
   security:
     - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

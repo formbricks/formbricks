@@ -13,5 +13,18 @@ export const ZV3RenameTagBody = z.object({ name: z.string().trim().min(1).max(25
 
 export const ZV3MergeTagBody = z.object({ newTagId: z.cuid2() }).strict();
 
+/** A tag as the v3 API answers it, so MCP output schemas derive from it instead of retyping the shape. */
+export const ZV3TagResource = z.object({
+  id: z.string(),
+  name: z.string(),
+  workspaceId: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  count: z.number().int(),
+});
+
+/** What delete and merge answer: only the id that remains addressable. */
+export const ZV3TagIdResource = z.object({ id: z.string() });
+
 export type TV3TagIdParams = z.infer<typeof ZV3TagIdParams>;
 export type TV3TagListQuery = z.infer<typeof ZV3TagListQuery>;

@@ -4867,13 +4867,11 @@ paths:
   /api/v3/tags:
     get:
       operationId: listTagsV3
-      x-excluded: true
       summary: List tags
       description: |
         Returns a workspace's response tags, each with the number of responses currently carrying it.
 
-        Session cookie only. Tags are managed from the Formbricks app (Workspace settings → Tags); these
-        endpoints back that screen, so they do not accept `x-api-key`.
+        Requires read access to the workspace. Session cookie, `x-api-key`, or a Bearer token.
       tags:
         - V3 Tags
       parameters:
@@ -4911,7 +4909,7 @@ paths:
         '400':
           $ref: '#/components/responses/V3BadRequest'
         '401':
-          $ref: '#/components/responses/V3UnauthorizedSession'
+          $ref: '#/components/responses/V3Unauthorized'
         '403':
           $ref: '#/components/responses/V3Forbidden'
         '429':
@@ -4920,15 +4918,17 @@ paths:
           $ref: '#/components/responses/V3InternalServerError'
       security:
         - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/tags/{tagId}:
     patch:
       operationId: renameTagV3
-      x-excluded: true
       summary: Rename a tag
       description: |
         Renames a tag. The workspace is resolved from the tag itself, so the caller cannot choose which scope
         it is authorized against. Requires organization owner/manager, or a workspace team membership with
-        read-write permission.
+        read-write permission; for an API key, write or manage access to the tag's workspace. Session
+        cookie, `x-api-key`, or a Bearer token.
 
         An unknown `tagId` answers `403`, not `404`, so tag ids cannot be probed for existence. A name that
         collides with another tag in the same workspace answers `422`.
@@ -4971,7 +4971,7 @@ paths:
         '400':
           $ref: '#/components/responses/V3BadRequest'
         '401':
-          $ref: '#/components/responses/V3UnauthorizedSession'
+          $ref: '#/components/responses/V3Unauthorized'
         '403':
           $ref: '#/components/responses/V3Forbidden'
         '422':
@@ -4982,9 +4982,10 @@ paths:
           $ref: '#/components/responses/V3InternalServerError'
       security:
         - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
     delete:
       operationId: deleteTagV3
-      x-excluded: true
       summary: Delete a tag
       description: |
         Deletes a tag and removes it from every response carrying it. Same authorization as rename.
@@ -5019,7 +5020,7 @@ paths:
         '400':
           $ref: '#/components/responses/V3BadRequest'
         '401':
-          $ref: '#/components/responses/V3UnauthorizedSession'
+          $ref: '#/components/responses/V3Unauthorized'
         '403':
           $ref: '#/components/responses/V3Forbidden'
         '429':
@@ -5028,10 +5029,11 @@ paths:
           $ref: '#/components/responses/V3InternalServerError'
       security:
         - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/tags/{tagId}/merge:
     post:
       operationId: mergeTagsV3
-      x-excluded: true
       summary: Merge a tag into another
       description: |
         Moves every response tagged `{tagId}` onto `newTagId`, then deletes `{tagId}`.
@@ -5086,7 +5088,7 @@ paths:
         '400':
           $ref: '#/components/responses/V3BadRequest'
         '401':
-          $ref: '#/components/responses/V3UnauthorizedSession'
+          $ref: '#/components/responses/V3Unauthorized'
         '403':
           $ref: '#/components/responses/V3Forbidden'
         '429':
@@ -5095,6 +5097,8 @@ paths:
           $ref: '#/components/responses/V3InternalServerError'
       security:
         - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/workspaces/{workspaceId}/custom-css:
     get:
       operationId: getWorkspaceCustomCssV3
@@ -13535,21 +13539,6 @@ components:
                 detail: 'Creatives is not included in this instance''s license: existing creatives can only be listed, read, paused, closed or deleted'
                 code: creatives_not_entitled
                 requestId: req_01j8z5
-    V3UnauthorizedSession:
-      description: Not authenticated (no valid session).
-      headers:
-        X-Request-Id:
-          schema:
-            type: string
-          description: Request correlation ID
-        Cache-Control:
-          schema:
-            type: string
-          example: private, no-store
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/Problem'
     FeedbackRecordsBadRequest:
       description: 'Bad Request. From the **gateway** (`text/plain`): a missing or malformed `tenant_id`; a request body that is not a single JSON object; a body whose top-level keys can be read more than one way (a repeated key, a key with non-ASCII characters, or a key that differs from `tenant_id` only in letter case); a `tenant_id` query parameter given more than once; or a path under `/api/v3/feedbackRecords` that is not one of the documented operations. A record id that is not a UUID and a path such as `/count` both fall in that last case and share the one `Unsupported FeedbackRecords route` body, so the two cannot be told apart from the response. From the **feedback store** (`application/problem+json`): schema validation failures — an unknown enum value, an inverted range, a malformed or re-ordered cursor, or a string with NULL bytes or invalid UTF-8.'
       content:

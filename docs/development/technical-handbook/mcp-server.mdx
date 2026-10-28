@@ -107,8 +107,8 @@ Supported scopes:
 
 | Scope | Use |
 | --- | --- |
-| `surveys:read` | `list_surveys`, `get_survey`, `validate_survey`, `get_workspace_custom_css`, `list_creatives`, `get_creative`, `get_creative_stats` |
-| `surveys:write` | `create_survey`, `patch_survey`, `edit_survey_blocks`, `set_survey_block_order`, `delete_survey`, `patch_workspace_custom_css`, `create_creative`, `patch_creative`, `delete_creative`, `duplicate_creative`, `archive_creative`, `restore_creative` |
+| `surveys:read` | `list_surveys`, `get_survey`, `validate_survey`, `get_workspace_custom_css`, `list_creatives`, `get_creative`, `get_creative_stats`, `list_tags` |
+| `surveys:write` | `create_survey`, `patch_survey`, `edit_survey_blocks`, `set_survey_block_order`, `delete_survey`, `patch_workspace_custom_css`, `create_creative`, `patch_creative`, `delete_creative`, `duplicate_creative`, `archive_creative`, `restore_creative`, `rename_tag`, `delete_tag`, `merge_tags` |
 | `workflows:read` | `list_workflows`, `get_workflow`, `list_workflow_runs`, `get_workflow_run`, `test_workflow` |
 | `workflows:write` | `create_workflow`, `patch_workflow`, `duplicate_workflow`, `delete_workflow`, and the enable/disable/archive/unarchive mutations |
 | `feedbackRecords:read` | `list_feedback_datasets`, `list_feedback_records`, `count_feedback_records`, `get_feedback_record`, `search_feedback_records`, `find_similar_feedback_records` |
@@ -225,6 +225,10 @@ API key permissions are enforced through the same workspace access checks as the
 | `delete_survey` | `write` or `manage` |
 | `get_workspace_custom_css` | `read` |
 | `patch_workspace_custom_css` | `manage` for an API key; an organization owner or manager for an OAuth user — stricter than `surveys:write` |
+| `list_tags` | `read` |
+| `rename_tag` | `write` or `manage` — resolved from the tag's workspace |
+| `delete_tag` | `write` or `manage` |
+| `merge_tags` | `write` or `manage`, on both tags' shared workspace |
 | `list_creatives` | `read` |
 | `get_creative` | `read` |
 | `get_creative_stats` | `read` |
@@ -1174,6 +1178,15 @@ so callers can correlate the audit trail:
 }
 ```
 
+### Tag tools
+
+Four tools over the v3 Tags API: `list_tags`, `rename_tag`, `delete_tag` and `merge_tags`. A tag labels
+responses, so the tools ride on `surveys:read` and `surveys:write` instead of a family of their own. The
+operations resolve the workspace from the tag, never from input, so a tag id cannot be paired with a
+workspace the caller happens to hold. `delete_tag` removes the tag from every response carrying it;
+`merge_tags` moves the responses onto `newTagId` first, so prefer it when the labels should survive.
+An unknown tag id answers `403`, not `404`, so ids cannot be probed.
+
 ### Creative tools
 
 Nine tools over the v3 Creatives API, one per documented operation but one: `list_creatives`, `get_creative`,
@@ -2080,6 +2093,7 @@ query, like `create_feedback_record`.
 - `apps/web/modules/mcp/tools/workflows.ts`
 - `apps/web/modules/mcp/tools/workflow-schemas.ts`
 - `apps/web/modules/mcp/tools/creatives.ts`
+- `apps/web/modules/mcp/tools/tags.ts` and `tag-schemas.ts`
 - `apps/web/modules/mcp/tools/creative-schemas.ts` and `creative-output-schemas.ts`
 - `apps/web/app/api/v3/creatives/lib/operations.ts`
 - `apps/web/app/api/v3/surveys/lib/operations.ts`

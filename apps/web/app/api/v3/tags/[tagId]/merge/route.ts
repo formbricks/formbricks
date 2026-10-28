@@ -7,7 +7,7 @@ import { mergeV3Tags } from "../../lib/operations";
 import { ZV3MergeTagBody, ZV3TagIdParams } from "../../lib/schemas";
 
 export const POST = withV3ApiWrapper({
-  auth: "session",
+  auth: "both",
   action: "merged",
   targetType: "tag",
   schemas: { params: ZV3TagIdParams, body: ZV3MergeTagBody },
