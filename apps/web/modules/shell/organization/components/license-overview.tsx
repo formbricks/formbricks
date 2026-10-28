@@ -74,7 +74,7 @@ export const LicenseOverview = async ({
     { key: "contacts", label: t("workspace.settings.enterprise.contacts_and_segments") },
     { key: "quotas", label: t("workspace.settings.enterprise.quota_management") },
     { key: "feedbackDirectories", label: t("workspace.settings.enterprise.feedback_directories") },
-    { key: "dashboards", label: t("workspace.settings.enterprise.insights_dashboards") },
+    { key: "dashboards", label: t("shell.organization.billing.feature_feedback_analytics") },
     { key: "auditLogs", label: t("workspace.settings.enterprise.audit_logs") },
     { key: "sso", label: t("workspace.settings.enterprise.oidc_sso") },
     { key: "saml", label: t("workspace.settings.enterprise.saml_sso") },

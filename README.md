@@ -77,17 +77,17 @@ Formbricks is both a free and open source survey platform - and a privacy-first 
 
 ### Features
 
-- 📲 Create **conversion-optimized surveys** with our no-code editor with several question types.
+- 🤖 **Agent-first**: connect Claude, Codex or Cursor through the **MCP server** and let your agent build surveys, read responses and analyze feedback.
 
-- 📚 Choose from a variety of best-practice **templates**.
+- 📲 Create **conversion-optimized surveys** with several question types, logic and styling, written by your agent.
 
 - 👩🏻 Launch and **target your surveys to specific user groups** without changing your application code.
 
-- 🔗 Create shareable **link surveys**.
+- 🔗 Create shareable **link surveys** and embed them anywhere.
 
-- 👨‍👩‍👦 Invite your organization members to **collaborate** on your surveys.
+- 👨‍👩‍👦 Invite your organization members and choose what each **agent connection** may do.
 
-- 🔌 Integrate Formbricks with **Slack, Notion, Zapier, n8n and more**.
+- 🔌 Send responses to your own systems with **signed webhooks** and the **v3 API**.
 
 - 🔒 All **open source**, transparent and self-hostable.
 
@@ -129,7 +129,7 @@ Formbricks is available Open-Source under AGPLv3 license. You can host Formbrick
 
 #### Docker
 
-To get started with self-hosting with Docker, take a look at our [self-hosting docs](https://formbricks.com/docs/self-hosting/deployment).
+To get started with self-hosting with Docker, take a look at our [self-hosting docs](https://formbricks.com/docs/self-hosting/overview).
 
 <a id="development"></a>
 
@@ -219,11 +219,11 @@ The Formbricks core application is licensed under the [AGPLv3 Open Source Licens
 
 ### The Enterprise Edition
 
-Additional to the AGPL licensed Formbricks core, this repository contains code licensed under an Enterprise license. The [code](https://github.com/formbricks/formbricks/tree/main/apps/web/modules/ee) and [license](https://github.com/formbricks/formbricks/blob/main/apps/web/modules/ee/LICENSE) for the enterprise functionality can be found in the `/apps/web/modules/ee` folder of this repository. This additional functionality is not part of the AGPLv3 licensed Formbricks core and is designed to meet the needs of larger teams and enterprises. This advanced functionality is already included in the Docker images, but you need an [Enterprise License Key](https://formbricks.com/docs/self-hosting/enterprise) to unlock it.
+Additional to the AGPL licensed Formbricks core, this repository contains code licensed under an Enterprise license. The [code](https://github.com/formbricks/formbricks/tree/main/apps/web/modules/ee) and [license](https://github.com/formbricks/formbricks/blob/main/apps/web/modules/ee/LICENSE) for the enterprise functionality can be found in the `/apps/web/modules/ee` folder of this repository. This additional functionality is not part of the AGPLv3 licensed Formbricks core and is designed to meet the needs of larger teams and enterprises. This advanced functionality is already included in the Docker images, but you need an [Enterprise License Key](https://formbricks.com/docs/self-hosting/advanced/license) to unlock it.
 
 ### White-Labeling Formbricks and Other Licensing Needs
 
-We currently do not offer Formbricks white-labeled. That means that we don't sell a license which let's other companies resell Formbricks to third parties under their name nor take parts (like the survey editor) out of Formbricks to add to their own software products. Any other needs? [Send us an email](mailto:hola@formbricks.com).
+We currently do not offer Formbricks white-labeled. That means that we don't sell a license which let's other companies resell Formbricks to third parties under their name nor take parts (like the survey renderer) out of Formbricks to add to their own software products. Any other needs? [Send us an email](mailto:hola@formbricks.com).
 
 ### Why charge for Enterprise Features?
 

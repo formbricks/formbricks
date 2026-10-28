@@ -1048,6 +1048,7 @@
       "billing": {
         "access": "Access",
         "feature": "Feature",
+        "feature_feedback_analytics": "Feedback analytics",
         "feature_included": "Included",
         "feature_not_included": "Not included",
         "features_title": "License features",

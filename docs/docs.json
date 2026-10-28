@@ -79,7 +79,7 @@
               {
                 "group": "General Features",
                 "icon": "wrench",
-                "pages": ["surveys/general-features/custom-css"]
+                "pages": ["surveys/general-features/visibility", "surveys/general-features/custom-css"]
               },
               {
                 "group": "Embedded Data",
@@ -1182,10 +1182,6 @@
       "source": "/docs/surveys/analysis/:slug*"
     },
     {
-      "destination": "/docs/surveys/overview",
-      "source": "/docs/surveys/general-features/:slug*"
-    },
-    {
       "destination": "/docs/unify-feedback/overview",
       "source": "/docs/unify-feedback/dashboards-charts/:slug*"
     },
@@ -1219,7 +1215,107 @@
     },
     {
       "destination": "/docs/self-hosting/advanced/license",
-      "source": "/docs/self-hosting/advanced/enterprise-features/:slug*"
+      "source": "/docs/self-hosting/advanced/enterprise-features/team-access"
+    },
+    {
+      "destination": "/docs/self-hosting/advanced/license",
+      "source": "/docs/self-hosting/advanced/enterprise-features/contact-management-segments"
+    },
+    {
+      "destination": "/docs/self-hosting/advanced/license",
+      "source": "/docs/self-hosting/advanced/enterprise-features/hide-powered-by-formbricks"
+    },
+    {
+      "destination": "/docs/self-hosting/advanced/license",
+      "source": "/docs/self-hosting/advanced/enterprise-features/whitelabel-email-follow-ups"
+    },
+    {
+      "destination": "/docs/self-hosting/advanced/license",
+      "source": "/docs/self-hosting/advanced/enterprise-features/unify-feedback"
+    },
+    {
+      "destination": "/docs/self-hosting/advanced/license",
+      "source": "/docs/self-hosting/advanced/enterprise-features/dashboards"
+    },
+    {
+      "destination": "/docs/self-hosting/advanced/license",
+      "source": "/docs/self-hosting/advanced/enterprise-features/workflows"
+    },
+    {
+      "destination": "/docs/self-hosting/advanced/license",
+      "source": "/docs/self-hosting/advanced/enterprise-features/ai-features"
+    },
+    {
+      "destination": "/docs/surveys/overview",
+      "source": "/docs/surveys/general-features/spam-protection"
+    },
+    {
+      "destination": "/docs/surveys/overview",
+      "source": "/docs/surveys/general-features/quota-management"
+    },
+    {
+      "destination": "/docs/surveys/overview",
+      "source": "/docs/surveys/general-features/recall"
+    },
+    {
+      "destination": "/docs/surveys/overview",
+      "source": "/docs/surveys/general-features/migrate-from-qualtrics"
+    },
+    {
+      "destination": "/docs/surveys/overview",
+      "source": "/docs/surveys/general-features/metadata"
+    },
+    {
+      "destination": "/docs/surveys/overview",
+      "source": "/docs/surveys/general-features/email-followups"
+    },
+    {
+      "destination": "/docs/surveys/overview",
+      "source": "/docs/surveys/general-features/partial-submissions"
+    },
+    {
+      "destination": "/docs/surveys/embedded-data/overview",
+      "source": "/docs/surveys/general-features/hidden-fields"
+    },
+    {
+      "destination": "/docs/surveys/overview",
+      "source": "/docs/surveys/general-features/variables"
+    },
+    {
+      "destination": "/docs/surveys/overview",
+      "source": "/docs/surveys/general-features/conditional-logic"
+    },
+    {
+      "destination": "/docs/surveys/overview",
+      "source": "/docs/surveys/general-features/overwrite-styling"
+    },
+    {
+      "destination": "/docs/surveys/overview",
+      "source": "/docs/surveys/general-features/limit-submissions"
+    },
+    {
+      "destination": "/docs/surveys/overview",
+      "source": "/docs/surveys/general-features/hide-back-button"
+    },
+    {
+      "destination": "/docs/surveys/overview",
+      "source": "/docs/surveys/general-features/tags"
+    },
+    {
+      "destination": "/docs/surveys/overview",
+      "source": "/docs/surveys/general-features/survey-scheduling"
+    },
+    {
+      "destination": "/docs/surveys/overview",
+      "source": "/docs/surveys/general-features/validation-rules"
+    },
+    {
+      "destination": "/docs/surveys/overview",
+      "source": "/docs/surveys/general-features/multi-language-surveys"
+    },
+    {
+      "destination": "/docs/surveys/overview",
+      "source": "/docs/surveys/general-features/add-image-or-video-question"
     }
   ],
   "theme": "mint"

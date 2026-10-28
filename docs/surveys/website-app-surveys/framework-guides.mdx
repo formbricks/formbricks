@@ -60,7 +60,7 @@ Before getting started, make sure you have:
 
 - A running web application with user authentication in your chosen framework.
 
-- A Formbricks account with your **Workspace ID** and **SDK Connection URL** (the `appUrl` in every snippet below), available under **Settings → Workspace → Web & Mobile SDK**, on the **Workspace details** card.
+- A Formbricks account with your **Workspace ID** and **SDK Connection URL** (the `appUrl` in every snippet below), the workspace ID is shown next to each workspace under **Organization → Workspaces**, and the app URL is the address of your Formbricks instance.
 
 ## HTML
 
@@ -663,13 +663,7 @@ Now, visit the [Validate Your Setup](#validate-your-setup) section to verify you
 
 ## Validate your setup
 
-Once you've completed the steps above, load your app so the SDK sends its first request, then open the **Connection status** card under **Settings → Workspace → Web & Mobile SDK** and hit **Re-check**. The card reads the status on load and on **Re-check** only, so it will not turn green while you watch it. It should change from this:
-
-![The Connection status card, grey, reading "Formbricks SDK is not yet connected."](/images/surveys/website-app-surveys/framework-guides/widget-status-not-connected.webp)
-
-To this:
-
-![The Connection status card, green, reading "Receiving data" and "Formbricks SDK is connected"](/images/surveys/website-app-surveys/framework-guides/widget-status-connected.webp)
+Once you've completed the steps above, load your app so the SDK sends its first request. Turn on [debug mode](#activate-debug-mode) and watch your browser console for the API calls and any initialization errors. If you see an error, check that the workspace ID and app URL are correct and that your app can reach your Formbricks instance.
 
 ## Dark Mode
 
@@ -694,8 +688,8 @@ formbricks.setAppearance("light");
 - `"system"` follows the visitor's browser setting and updates if it changes. If your app has its own light/dark toggle, pass `"light"` or `"dark"` from that toggle instead, because the SDK cannot see your app's theme.
 - A survey that is already open switches in place. Answers, progress and focus are kept.
 - `setAppearance` can be called before `setup`. The value is kept for the page session and survives `logout`.
-- The dark colors are derived from your brand color, which is the same in light and dark. Override any other color in **Look & Feel** (or a survey's **Styling** tab) with the **Light / Dark** toggle at the top of the styling settings.
-- Link surveys always render light: they do not follow dark mode. For a dark link survey, design it dark in the light theme: pick a dark color in **Background styling**, set light text, input and button colors, and use the **Cardless** card arrangement so the background fills the page.
+- The dark colors are derived from your brand color, which is the same in light and dark. Override any other color with [Custom CSS](/surveys/general-features/custom-css), using the dark CSS field for dark mode.
+- Link surveys always render light: they do not follow dark mode. For a dark link survey, design it dark in the light theme: ask your agent for a dark background, light text, input and button colors, and the cardless card arrangement so the background fills the page.
 - `setAppearance` needs a recent SDK. If you support older SDK versions, check `typeof formbricks.setAppearance === "function"` before calling it.
 
 The iOS, Android, React Native and Flutter SDKs offer the same appearance setting and also apply your [Custom CSS](/surveys/general-features/custom-css). See [SDK Compatibility](/surveys/website-app-surveys/sdk-compatibility) for the versions, how `"system"` is resolved on each platform, and what respondents see while versions are mixed.

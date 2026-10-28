@@ -13,7 +13,7 @@ open a link survey or are shown a website or in-app survey. It covers what alrea
 how to reach us.
 
 <Note>
-  This page covers the respondent-facing survey UI only. The Formbricks application that survey creators use
+  This page covers the respondent-facing survey UI only. The Formbricks account area, the tools agents use
   to build surveys, and the self-hosting and administration interfaces, have not been assessed to the same
   standard and are not described here.
 </Note>
@@ -98,8 +98,7 @@ that criterion as supported, and a later review of the code found otherwise.
 Formbricks lets a survey creator add an image to a question or to an ending card. As assessed, those images
 were announced only as "Image", with nothing about what they show, and a survey creator had no way to change that.
 
-Since 6.1, question images, ending card images and each Picture Selection option take alt text: select the
-**Alt** button on the image in the editor. It is translated per survey language like the headline. The text is
+Since 6.1, question images, ending card images and each Picture Selection option take alt text, which your agent sets on the image in the survey document. It is translated per survey language like the headline. The text is
 read out as the image's alternative. An image whose alt text is left empty is marked decorative, so a screen reader skips it
 instead of announcing a meaningless "Image"; a Picture Selection option without alt text is still named by
 position — "Option 1", "Option 2" — so a respondent can tell the options apart. The field is optional, so
@@ -198,8 +197,7 @@ The switcher now names the active language, in that language rather than in tran
 screen reader pronounces every language name using that language's rules.
 
 **Workaround for versions before 5.4:** For link surveys, the `lang` URL parameter sends a respondent straight to
-the correct language, so they do not need to use the switcher. See
-[Multi-language Surveys](/surveys/general-features/multi-language-surveys).
+the correct language, so they do not need to use the switcher.
 
 ### Semantic Headings
 
@@ -328,13 +326,12 @@ respondent seeing red versus green, add a label, a number, or a word that carrie
 [Embedded Third-Party Video](#embedded-third-party-video) above.
 
 **Set the survey language correctly.** Choose the right default language and add translations for every
-language you send the survey in, so that assistive technology pronounces the content correctly. See
-[Multi-language Surveys](/surveys/general-features/multi-language-surveys).
+language you send the survey in, so that assistive technology pronounces the content correctly. Your agent sets
+the languages in the survey document.
 
 **Leave the Back button enabled.** It is on by default, and it is what allows a respondent to review and correct
 an answer before submitting. Turn it off only when the survey design genuinely requires it — for example a quiz
-where going back would let a respondent change an answer after seeing the result. See
-[Hide Back Button](/surveys/general-features/hide-back-button).
+where going back would let a respondent change an answer after seeing the result.
 
 **Keep questions short and ask one thing at a time.** This helps every respondent, and it particularly helps
 people using screen readers, screen magnification, or switch access, who move through content more slowly.
