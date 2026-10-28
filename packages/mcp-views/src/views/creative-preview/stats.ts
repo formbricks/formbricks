@@ -1,4 +1,5 @@
-import { type TFormatContext, formatNumber } from "./describe";
+import { type FormatContext, formatNumber } from "../../shared/format";
+import { isRecord } from "../../shared/guards";
 
 /** The totals of `get_creative_stats` the panel shows: Impressions, Clicks and the Click rate. */
 export interface TCreativeStatsTotals {
@@ -10,16 +11,13 @@ export interface TCreativeStatsTotals {
   clickRate: number | null;
 }
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
-
 const isCount = (value: unknown): value is number =>
   typeof value === "number" && Number.isFinite(value) && value >= 0;
 
+type TStatsResult = { isError?: boolean; structuredContent?: unknown } | null | undefined;
+
 /** The totals from a stats result, or `undefined` for an error or any other shape. */
-export const readCreativeStats = (
-  result: { isError?: boolean; structuredContent?: unknown } | null | undefined
-): TCreativeStatsTotals | undefined => {
+export const readCreativeStats = (result: TStatsResult): TCreativeStatsTotals | undefined => {
   if (!result || result.isError) return undefined;
   const data = isRecord(result.structuredContent) ? result.structuredContent.data : undefined;
   if (!isRecord(data) || !isRecord(data.totals)) return undefined;
@@ -31,7 +29,7 @@ export const readCreativeStats = (
   return { from, to, impressions, clicks, clickRate: isCount(clickRate) ? clickRate : null };
 };
 
-export const formatClickRate = (clickRate: number | null, format: TFormatContext = {}): string =>
+export const formatClickRate = (clickRate: number | null, format: FormatContext = {}): string =>
   clickRate === null
     ? "No impressions"
     : formatNumber(clickRate, format, { style: "percent", maximumFractionDigits: 1 });
@@ -39,3 +37,18 @@ export const formatClickRate = (clickRate: number | null, format: TFormatContext
 /** Stats exist only for a creative that was published at some point. */
 export const hasStats = (creative: { displayStatus: string; status: string }): boolean =>
   creative.displayStatus !== "draft" || creative.status !== "draft";
+
+/**
+ * The totals of the last 30 days through `get_creative_stats`, or `undefined` when the call failed, threw
+ * or answered something else. The view then says the figures are not available here.
+ */
+export const fetchCreativeStats = async (
+  callTool: (name: string, args: Record<string, unknown>) => Promise<TStatsResult>,
+  creativeId: string
+): Promise<TCreativeStatsTotals | undefined> => {
+  try {
+    return readCreativeStats(await callTool("get_creative_stats", { creativeId }));
+  } catch {
+    return undefined;
+  }
+};

@@ -1,3 +1,4 @@
+import { type FormatContext, formatDateTime, formatNumber } from "../../shared/format";
 import type {
   TCreativeData,
   TCreativeDestinationData,
@@ -8,44 +9,10 @@ import type {
 /*
  * The creative in words, for the status panel. Pure functions of the creative and a formatting context
  * (the host's locale and time zone), so they are tested without a browser. Dates and numbers go through
- * `Intl` with the host's locale and time zone; nothing here reads the browser's own.
+ * the shared formatters, which never fall back to the browser's own locale.
  */
 
-export interface TFormatContext {
-  locale?: string;
-  timeZone?: string;
-}
-
 export type TTone = "neutral" | "info" | "success" | "warning" | "danger";
-
-const safeIntl = <T>(create: () => T, fallback: () => T): T => {
-  try {
-    return create();
-  } catch {
-    // An unsupported locale or time zone from the host must not break the panel.
-    return fallback();
-  }
-};
-
-export const formatInstant = (iso: string, { locale, timeZone }: TFormatContext = {}): string => {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return iso;
-  const options: Intl.DateTimeFormatOptions = { dateStyle: "medium", timeStyle: "short", timeZone };
-  return safeIntl(
-    () => new Intl.DateTimeFormat(locale, options).format(date),
-    () => new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(date)
-  );
-};
-
-export const formatNumber = (
-  value: number,
-  { locale }: TFormatContext = {},
-  options: Intl.NumberFormatOptions = {}
-): string =>
-  safeIntl(
-    () => new Intl.NumberFormat(locale, options).format(value),
-    () => new Intl.NumberFormat("en-US", options).format(value)
-  );
 
 export interface TStatusDescription {
   label: string;
@@ -68,7 +35,7 @@ const destinationSurveyName = (creative: TCreativeData): string =>
 /** The derived display status with the reason a visitor would not (or would) see it, in plain words. */
 export const describeDisplayStatus = (
   creative: TCreativeData,
-  format: TFormatContext = {}
+  format: FormatContext = {}
 ): TStatusDescription => {
   const { label, tone } = DISPLAY_STATUS_LABELS[creative.displayStatus];
   const { displayStatus, displayStatusReason: reason, schedule } = creative;
@@ -81,7 +48,7 @@ export const describeDisplayStatus = (
         label,
         tone,
         explanation: schedule.startAt
-          ? `Published. Starts ${formatInstant(schedule.startAt, format)}.`
+          ? `Published. Starts ${formatDateTime(schedule.startAt, format)}.`
           : "Published, waiting for its start time.",
       };
     case "draft":
@@ -98,7 +65,7 @@ export const describeDisplayStatus = (
         tone,
         explanation:
           reason === "scheduleEnded" && schedule.endAt
-            ? `Its end time passed on ${formatInstant(schedule.endAt, format)}.`
+            ? `Its end time passed on ${formatDateTime(schedule.endAt, format)}.`
             : "Closed by its author, so it shows nowhere.",
       };
     case "paused":
@@ -134,18 +101,18 @@ export const describeShowOn = (
   return count === 1 ? "When its action fires" : `When one of its ${count} actions fires`;
 };
 
-export const describeShare = (percentage: number | null, format: TFormatContext = {}): string =>
+export const describeShare = (percentage: number | null, format: FormatContext = {}): string =>
   percentage === null
     ? "Every visitor"
     : `${formatNumber(percentage, format, { maximumFractionDigits: 2 })}% of visitors, decided once per visitor`;
 
 export const describeSchedule = (
   { startAt, endAt }: TCreativeData["schedule"],
-  format: TFormatContext = {}
+  format: FormatContext = {}
 ): string => {
-  if (startAt && endAt) return `${formatInstant(startAt, format)} to ${formatInstant(endAt, format)}`;
-  if (startAt) return `From ${formatInstant(startAt, format)}, no end`;
-  if (endAt) return `Until ${formatInstant(endAt, format)}`;
+  if (startAt && endAt) return `${formatDateTime(startAt, format)} to ${formatDateTime(endAt, format)}`;
+  if (startAt) return `From ${formatDateTime(startAt, format)}, no end`;
+  if (endAt) return `Until ${formatDateTime(endAt, format)}`;
   return "No schedule: runs while published";
 };
 

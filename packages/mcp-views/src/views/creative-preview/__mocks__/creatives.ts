@@ -1,4 +1,4 @@
-import type { TBannerData, TCreativeData, TFeedbackButtonData } from "./model";
+import type { TBannerData, TCreativeData, TFeedbackButtonData } from "../model";
 
 /** Minimal creatives for the unit tests of this view. */
 const common = {

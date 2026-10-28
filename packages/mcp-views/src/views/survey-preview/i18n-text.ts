@@ -21,7 +21,7 @@ export const resolveText = (value: unknown, languageCode: string, defaultLanguag
   if (typeof value === "string") return toPlainText(value);
   if (!isI18nString(value)) return "";
   const key = findKey(value, languageCode) ?? findKey(value, defaultLanguage) ?? findKey(value, "default");
-  const raw = (key !== undefined ? value[key] : Object.values(value)[0]) as string | undefined;
+  const raw = key === undefined ? Object.values(value).at(0) : value[key];
   return toPlainText(raw ?? "");
 };
 

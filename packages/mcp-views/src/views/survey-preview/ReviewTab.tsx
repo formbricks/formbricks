@@ -1,7 +1,8 @@
 import type { App } from "@modelcontextprotocol/ext-apps";
 import { useId, useMemo, useState } from "react";
+import { plural } from "../../shared/plural";
 import { Badge, Button, Notice } from "../../shared/ui";
-import { buildChangeRequest } from "./change-request";
+import { sendChangeRequest } from "./change-request";
 import {
   type Formatters,
   type OutlineBlock,
@@ -96,30 +97,14 @@ const ChangeRequest = ({
     if (!app || !text.trim()) return;
     const target = questions.find((question) => question.id === about);
     setStatus("sending");
-    try {
-      const result = await app.sendMessage({
-        role: "user",
-        content: [
-          {
-            type: "text",
-            text: buildChangeRequest({
-              surveyId: data.survey.id,
-              surveyName: data.survey.name,
-              target: target ? { number: target.number, headline: target.headline } : null,
-              request: text,
-            }),
-          },
-        ],
-      });
-      if (result.isError) {
-        setStatus("failed");
-        return;
-      }
-      setText("");
-      setStatus("sent");
-    } catch {
-      setStatus("failed");
-    }
+    const outcome = await sendChangeRequest({
+      send: (message) => app.sendMessage({ role: "user", content: [{ type: "text", text: message }] }),
+      surveyId: data.survey.id,
+      target: target ? { id: target.id, number: target.number } : null,
+      request: text,
+    });
+    if (outcome === "sent") setText("");
+    setStatus(outcome);
   };
 
   return (
@@ -217,8 +202,7 @@ export const ReviewTab = ({
 
       <section className="sp-section" aria-label="Questions">
         <h2 className="sp-section-title">
-          {outline.questionCount} {outline.questionCount === 1 ? "question" : "questions"} in{" "}
-          {outline.blocks.length} {outline.blocks.length === 1 ? "block" : "blocks"}
+          {plural(outline.questionCount, "question")} in {plural(outline.blocks.length, "block")}
         </h2>
         {outline.welcome ? (
           <div className="sp-block">

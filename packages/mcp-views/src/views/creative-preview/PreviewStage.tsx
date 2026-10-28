@@ -1,8 +1,8 @@
 import { useEffect, useRef } from "react";
 import { render } from "../../shared/creatives-renderer";
 import type { TCreativeView } from "../../shared/creatives-renderer";
+import { useElementWidth } from "../../shared/use-element-width";
 import { DEVICE_FRAMES, type TDevice, getScaledSize } from "./geometry";
-import { useElementWidth } from "./use-element-width";
 
 interface PreviewStageProps {
   view: TCreativeView;
@@ -65,22 +65,25 @@ export const PreviewStage = ({
   }, [view, device, appearance, onPress, onDismiss]);
 
   return (
-    <div className="cp-stage" ref={wrapRef} data-appearance={appearance}>
-      <div className="cp-chrome" aria-hidden="true">
-        <span className="cp-dot" />
-        <span className="cp-dot" />
-        <span className="cp-dot" />
-        <span className="cp-url">example.com/pricing</span>
-      </div>
-      <div className="cp-viewport" style={{ width, height }}>
-        <div
-          className="cp-page"
-          data-appearance={appearance}
-          data-device={device}
-          style={{ width: frame.width, height: frame.height, transform: `scale(${scale})` }}>
-          {/* The renderer owns what goes in here, so React never manages its children. */}
-          <div className="cp-slot" ref={mountRef} />
-          <PlaceholderContent device={device} />
+    <div className="cp-stage" data-appearance={appearance}>
+      {/* Measured inside the stage's border, so the page is scaled to the width it can really use. */}
+      <div ref={wrapRef}>
+        <div className="cp-chrome" aria-hidden="true">
+          <span className="cp-dot" />
+          <span className="cp-dot" />
+          <span className="cp-dot" />
+          <span className="cp-url">example.com/pricing</span>
+        </div>
+        <div className="cp-viewport" style={{ width, height }}>
+          <div
+            className="cp-page"
+            data-appearance={appearance}
+            data-device={device}
+            style={{ width: frame.width, height: frame.height, transform: `scale(${scale})` }}>
+            {/* The renderer owns what goes in here, so React never manages its children. */}
+            <div className="cp-slot" ref={mountRef} />
+            <PlaceholderContent device={device} />
+          </div>
         </div>
       </div>
     </div>

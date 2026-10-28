@@ -47,21 +47,33 @@ const survey = {
 
 const previewMeta = { appUrl: "https://surveys.example.com", rendererUrl: "x", surveyUrl: null };
 
+type TToolConfig = {
+  _meta?: unknown;
+  annotations?: unknown;
+  outputSchema?: unknown;
+  inputSchema: { shape: Record<string, unknown> };
+};
+type TToolResult = {
+  isError?: boolean;
+  content: { type: string; text: string }[];
+  structuredContent: Record<string, unknown>;
+  _meta?: unknown;
+};
+type TToolHandler = (input: unknown, extra: unknown) => Promise<TToolResult>;
+type TResourceReader = () => Promise<{ contents: Record<string, unknown>[] }>;
+
 function setup() {
-  const tools = new Map<
-    string,
-    { config: Record<string, any>; handler: (input: any, extra: any) => Promise<any> }
-  >();
-  const resources: { uri: string; read: () => Promise<any> }[] = [];
+  const tools = new Map<string, { config: TToolConfig; handler: TToolHandler }>();
+  const resources: { uri: string; read: TResourceReader }[] = [];
   const server = {
-    registerTool: vi.fn((name: string, config: Record<string, any>, handler: any) => {
+    registerTool: vi.fn((name: string, config: TToolConfig, handler: TToolHandler) => {
       tools.set(name, { config, handler });
     }),
-    registerResource: vi.fn((_title: string, uri: string, _config: unknown, read: () => Promise<any>) => {
+    registerResource: vi.fn((_title: string, uri: string, _config: unknown, read: TResourceReader) => {
       resources.push({ uri, read });
     }),
   };
-  registerSurveyPreviewApp(server as any);
+  registerSurveyPreviewApp(server as unknown as Parameters<typeof registerSurveyPreviewApp>[0]);
   return { tools, resources };
 }
 
@@ -159,6 +171,21 @@ describe("show_survey", () => {
 
     expect(result.structuredContent.data).toEqual(survey);
     expect(result).not.toHaveProperty("_meta");
+  });
+
+  test("returns an answer that is not a survey as it is, without building a preview", async () => {
+    const { tools } = setup();
+    vi.mocked(getV3Survey).mockResolvedValue(
+      successResponse({ unexpected: true }, { requestId: "req_tool" })
+    );
+
+    const result = await tools
+      .get("show_survey")!
+      .handler({ surveyId: SURVEY_ID }, { http: { authInfo: authInfo(["surveys:read"]) } });
+
+    expect(result.structuredContent).toEqual({ data: { unexpected: true }, requestId: "req_tool" });
+    expect(result).not.toHaveProperty("_meta");
+    expect(loadSurveyPreviewMeta).not.toHaveBeenCalled();
   });
 
   test("passes the operation's refusal through and loads nothing else", async () => {

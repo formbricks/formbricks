@@ -1,12 +1,13 @@
 import type { App as McpApp } from "@modelcontextprotocol/ext-apps";
 import { useCallback, useEffect, useId, useMemo, useState } from "react";
+import { type FormatContext, formatNumber } from "../../shared/format";
 import { getResultText } from "../../shared/tool-result";
 import { Badge, Button, Card, Loading } from "../../shared/ui";
 import { useToolView } from "../../shared/use-tool-view";
 import { PreviewStage } from "./PreviewStage";
+import { sendChangeRequest } from "./change-request";
 import "./creative-preview.css";
 import {
-  type TFormatContext,
   describeConditions,
   describeDestination,
   describeDisplayStatus,
@@ -15,7 +16,6 @@ import {
   describeSchedule,
   describeShare,
   describeShowOn,
-  formatNumber,
 } from "./describe";
 import type { TDevice } from "./geometry";
 import {
@@ -25,7 +25,7 @@ import {
   readCreativePreview,
   readFailure,
 } from "./model";
-import { type TCreativeStatsTotals, formatClickRate, hasStats, readCreativeStats } from "./stats";
+import { type TCreativeStatsTotals, fetchCreativeStats, formatClickRate, hasStats } from "./stats";
 
 const TYPE_LABELS = { feedbackButton: "Feedback button", banner: "Banner" } as const;
 
@@ -78,16 +78,12 @@ const useCreativeStats = (app: McpApp | null, creative: TCreativePreviewData["cr
   useEffect(() => {
     if (!app || !eligible) return;
     let cancelled = false;
-    app
-      .callServerTool({ name: "get_creative_stats", arguments: { creativeId: creative.id } })
-      .then((result) => {
+    void fetchCreativeStats((name, args) => app.callServerTool({ name, arguments: args }), creative.id).then(
+      (totals) => {
         if (cancelled) return;
-        const totals = readCreativeStats(result);
         setState(totals ? { status: "ready", totals } : { status: "unavailable" });
-      })
-      .catch(() => {
-        if (!cancelled) setState({ status: "unavailable" });
-      });
+      }
+    );
     return () => {
       cancelled = true;
     };
@@ -96,7 +92,7 @@ const useCreativeStats = (app: McpApp | null, creative: TCreativePreviewData["cr
   return state;
 };
 
-const StatsFact = ({ state, format }: Readonly<{ state: TStatsState; format: TFormatContext }>) => {
+const StatsFact = ({ state, format }: Readonly<{ state: TStatsState; format: FormatContext }>) => {
   if (state.status === "loading") return <span className="fb-muted">Loading the last 30 days…</span>;
   if (state.status === "unavailable")
     return <span className="fb-muted">Not available for this creative here.</span>;
@@ -123,24 +119,18 @@ const AskAgent = ({
   const [sent, setSent] = useState<"idle" | "sent" | "failed">("idle");
   const fieldId = useId();
 
-  const send = () => {
-    const request = text.trim();
-    if (!request) return;
-    app
-      .sendMessage({
-        role: "user",
-        content: [
-          { type: "text", text: `Change the creative "${creative.name}" (${creative.id}): ${request}` },
-        ],
-      })
-      .then(({ isError }) => {
-        setSent(isError ? "failed" : "sent");
-        if (!isError) {
-          setText("");
-          setOpen(false);
-        }
-      })
-      .catch(() => setSent("failed"));
+  const send = async () => {
+    if (!text.trim()) return;
+    const outcome = await sendChangeRequest({
+      send: (message) => app.sendMessage({ role: "user", content: [{ type: "text", text: message }] }),
+      creativeId: creative.id,
+      request: text,
+    });
+    setSent(outcome);
+    if (outcome === "sent") {
+      setText("");
+      setOpen(false);
+    }
   };
 
   return (
@@ -159,7 +149,12 @@ const AskAgent = ({
             placeholder="For example: move the tab to the left edge and use a green background"
           />
           <div className="fb-row">
-            <Button variant="primary" disabled={!text.trim()} onClick={send}>
+            <Button
+              variant="primary"
+              disabled={!text.trim()}
+              onClick={() => {
+                void send();
+              }}>
               Send to the agent
             </Button>
             <Button onClick={() => setOpen(false)}>Cancel</Button>
@@ -198,7 +193,7 @@ const Preview = ({
 }: Readonly<{
   app: McpApp | null;
   preview: TCreativePreviewData;
-  format: TFormatContext;
+  format: FormatContext;
   hostTheme: "light" | "dark";
 }>) => {
   const { creative, style, styleIsExact, triggerNames } = preview;

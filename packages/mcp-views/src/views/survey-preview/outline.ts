@@ -1,3 +1,5 @@
+import { isRecord } from "../../shared/guards";
+import { plural } from "../../shared/plural";
 import { type LogicContext, describeBlockLogic, describeFallback } from "./describe-logic";
 import { hasTranslation, resolveText } from "./i18n-text";
 import type { JsonRecord, PreviewSettings, SurveyDocument } from "./types";
@@ -63,9 +65,6 @@ const TYPE_LABELS: Record<string, string> = {
 
 export const getTypeLabel = (type: unknown): string =>
   typeof type === "string" ? (TYPE_LABELS[type] ?? type) : "Question";
-
-const isRecord = (value: unknown): value is JsonRecord =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
 
 const records = (value: unknown): JsonRecord[] => (Array.isArray(value) ? value.filter(isRecord) : []);
 
@@ -186,7 +185,7 @@ const describeValidation = (element: JsonRecord): string[] => {
   if (!isRecord(validation) || !Array.isArray(validation.rules) || validation.rules.length === 0) return [];
   const count = validation.rules.length;
   const logic = validation.logic === "or" ? "any of" : "all of";
-  return [`${count} validation ${count === 1 ? "rule" : "rules"}${count > 1 ? ` (${logic} must pass)` : ""}`];
+  return [`${plural(count, "validation rule")}${count > 1 ? ` (${logic} must pass)` : ""}`];
 };
 
 export const buildLogicContext = (survey: SurveyDocument, languageCode: string): LogicContext => {

@@ -41,7 +41,7 @@ const SurveyPreview = ({
   };
 
   const formatters = useMemo(
-    () => createFormatters(hostContext?.locale, hostContext?.timeZone),
+    () => createFormatters({ locale: hostContext?.locale, timeZone: hostContext?.timeZone }),
     [hostContext?.locale, hostContext?.timeZone]
   );
   const capabilities = app?.getHostCapabilities();

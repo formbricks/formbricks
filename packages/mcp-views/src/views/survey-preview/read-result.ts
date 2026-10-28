@@ -1,3 +1,4 @@
+import { isRecord } from "../../shared/guards";
 import { type ToolResult, getToolError } from "../../shared/tool-result";
 import type {
   JsonRecord,
@@ -8,9 +9,6 @@ import type {
   SurveyDocument,
   SurveyLanguage,
 } from "./types";
-
-export const isRecord = (value: unknown): value is JsonRecord =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
 
 const asRecords = (value: unknown): JsonRecord[] => (Array.isArray(value) ? value.filter(isRecord) : []);
 

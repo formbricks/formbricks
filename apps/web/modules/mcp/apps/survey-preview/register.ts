@@ -83,10 +83,14 @@ export function registerSurveyPreviewApp(server: McpServer): void {
         return result;
       }
 
-      const data = (result.structuredContent as { data?: { workspaceId?: string } } | undefined)?.data;
+      // Anything that is not the survey this operation documents has no preview to build.
+      const parsed = ZMcpShowSurveyOutput.safeParse(result.structuredContent);
+      const data = parsed.success ? parsed.data.data : undefined;
+      if (!data) return result;
+
       const preview = await loadSurveyPreviewMeta({
         surveyId: input.surveyId,
-        expectedWorkspaceId: data?.workspaceId,
+        expectedWorkspaceId: data.workspaceId,
         requestId,
       });
 

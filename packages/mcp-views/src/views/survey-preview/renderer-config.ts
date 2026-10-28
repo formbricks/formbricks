@@ -25,7 +25,8 @@ export const pickInitialLanguage = (
   languages: SurveyLanguage[],
   defaultLanguage: string
 ): string => {
-  const wanted: unknown = Array.isArray(requested) ? (requested as unknown[])[0] : undefined;
+  const requestedList: unknown[] = Array.isArray(requested) ? requested : [];
+  const wanted = requestedList[0];
   if (typeof wanted === "string") {
     const match = languages.find(
       (language) =>

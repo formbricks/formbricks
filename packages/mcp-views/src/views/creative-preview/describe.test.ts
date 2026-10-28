@@ -1,3 +1,4 @@
+import { makeBanner, makeFeedbackButton } from "./__mocks__/creatives";
 import { describe, expect, test } from "vitest";
 import {
   describeConditions,
@@ -8,10 +9,8 @@ import {
   describeSchedule,
   describeShare,
   describeShowOn,
-  formatInstant,
 } from "./describe";
 import type { TShowConditionGroupData } from "./model";
-import { makeBanner, makeFeedbackButton } from "./test-creatives";
 
 const format = { locale: "en-US", timeZone: "UTC" };
 
@@ -131,21 +130,6 @@ describe("describeSchedule", () => {
     expect(
       describeSchedule({ startAt: "2026-10-01T00:00:00.000Z", endAt: "2026-10-02T00:00:00.000Z" }, format)
     ).toBe("Oct 1, 2026, 12:00 AM to Oct 2, 2026, 12:00 AM");
-  });
-});
-
-describe("formatInstant", () => {
-  test("uses the host's locale", () => {
-    expect(formatInstant("2026-10-12T08:00:00.000Z", { locale: "de-DE", timeZone: "UTC" })).toContain(
-      "12.10.2026"
-    );
-  });
-
-  test("survives an unsupported locale or time zone, and returns text that is not a date as is", () => {
-    expect(
-      formatInstant("2026-10-12T08:00:00.000Z", { locale: "xx-invalid-locale-!", timeZone: "Nowhere/City" })
-    ).toContain("2026");
-    expect(formatInstant("soon")).toBe("soon");
   });
 });
 

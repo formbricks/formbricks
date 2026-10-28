@@ -1,3 +1,4 @@
+import { isRecord } from "../../shared/guards";
 import type { JsonRecord } from "./types";
 
 /**
@@ -16,9 +17,6 @@ export interface LogicContext {
   endings: Map<string, number>;
   variables: Map<string, string>;
 }
-
-const isRecord = (value: unknown): value is JsonRecord =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
 
 const OPERATOR_WORDS: Record<string, string> = {
   equals: "equals",

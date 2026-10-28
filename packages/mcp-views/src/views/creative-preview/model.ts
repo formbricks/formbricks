@@ -10,6 +10,7 @@ import {
   type TFeedbackButtonPlacement,
   type TFeedbackButtonView,
 } from "../../shared/creatives-renderer";
+import { isRecord } from "../../shared/guards";
 import { type ToolResult, getToolError } from "../../shared/tool-result";
 
 /*
@@ -102,9 +103,6 @@ export interface TCreativePreviewData {
   triggerNames: string[] | null;
 }
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
-
 const CREATIVE_TYPES: readonly string[] = ["feedbackButton", "banner"];
 const DISPLAY_STATUSES: readonly string[] = ["draft", "scheduled", "active", "paused", "closed", "archived"];
 
@@ -178,12 +176,15 @@ const pickText = (
   return own?.trim() ? own : (text?.[fallback] ?? "");
 };
 
+/** A record entry that may be missing, typed as such. */
+const lookup = <T>(record: Record<string, T>, key: string): T | undefined => record[key];
+
 const pickRuns = (
   message: Record<string, TCreativeTextRun[]>,
   code: string,
   fallback: string
 ): TCreativeTextRun[] => {
-  const own = message[code] as TCreativeTextRun[] | undefined;
+  const own = lookup(message, code);
   return own?.some(({ text }) => text.trim()) ? own : (message[fallback] ?? []);
 };
 

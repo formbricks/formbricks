@@ -1,3 +1,4 @@
+import { asStructured, makeBanner, makeFeedbackButton } from "./__mocks__/creatives";
 import { describe, expect, test } from "vitest";
 import { DEFAULT_CREATIVE_STYLE } from "../../shared/creatives-renderer";
 import {
@@ -7,7 +8,6 @@ import {
   readCreativePreview,
   readFailure,
 } from "./model";
-import { asStructured, makeBanner, makeFeedbackButton } from "./test-creatives";
 
 describe("readCreativePreview", () => {
   test("reads the creative, its resolved style and the trigger names", () => {
