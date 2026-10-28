@@ -1,0 +1,211 @@
+get:
+  operationId: getDashboardV3
+  summary: Get a dashboard
+  description: |
+    Returns a dashboard with every widget and its full chart, so one call tells a caller what is on
+    it. Read each widget's numbers from `GET /api/v3/charts/{chartId}/data`. The workspace is resolved
+    from the dashboard, so the operation takes no query parameters. Needs read access to the
+    dashboard's workspace; a dashboard the caller cannot see, or that does not exist, answers 403.
+  tags:
+    - V3 Dashboards
+  parameters:
+    - $ref: ../components/parameters/DashboardIdPath.yml
+  responses:
+    "200":
+      description: The dashboard
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/DashboardResource.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3DashboardsForbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []
+patch:
+  operationId: renameDashboardV3
+  summary: Rename a dashboard
+  description: |
+    Renames a dashboard and moves its `updatedAt`, so an editor holding the dashboard from before is
+    told when saving. Needs write access to the dashboard's workspace. A name already used in the
+    workspace answers 409.
+  tags:
+    - V3 Dashboards
+  parameters:
+    - $ref: ../components/parameters/DashboardIdPath.yml
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/DashboardRenameRequest.yml
+  responses:
+    "200":
+      description: The renamed dashboard
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/DashboardResource.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3DashboardsForbidden.yml
+    "409":
+      $ref: ../components/responses/V3DashboardsConflict.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []
+put:
+  operationId: replaceDashboardV3
+  summary: Save a whole dashboard
+  description: |
+    Replaces a dashboard's name and every widget's place in one transaction — all of it or none of
+    it. A widget left out is removed; its chart is kept. Widgets may leave gaps but not overlap (422).
+    Send the `updatedAt` from your read as `expectedUpdatedAt`: if the dashboard changed since, the save
+    is refused with 409 and nothing is written. Needs write access to the dashboard's workspace.
+  tags:
+    - V3 Dashboards
+  parameters:
+    - $ref: ../components/parameters/DashboardIdPath.yml
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/DashboardReplaceRequest.yml
+  responses:
+    "200":
+      description: The saved dashboard
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/DashboardResource.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3DashboardsForbidden.yml
+    "409":
+      description: >-
+        Conflict — the dashboard changed since your read, or the name is already used in the
+        workspace. Nothing was written. For a changed dashboard, `details` carries
+        `expectedUpdatedAt` and the live `currentUpdatedAt`: read it again and retry.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+          example:
+            title: Conflict
+            status: 409
+            detail: The dashboard changed since your read, so nothing was saved. Read it again, then retry.
+            code: conflict
+            requestId: 6f1f7f3e-3b0e-4a1a-9f0a-7c9a1d2b3c4d
+            details:
+              expectedUpdatedAt: 2026-10-22T10:00:00.000Z
+              currentUpdatedAt: 2026-10-22T11:30:00.000Z
+    "422":
+      $ref: ../components/responses/V3UnprocessableContent.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []
+delete:
+  operationId: deleteDashboardV3
+  summary: Delete a dashboard
+  description: |
+    Deletes a dashboard and its widgets. Every chart stays, including charts no other dashboard
+    holds; delete those with `DELETE /api/v3/charts/{chartId}`. Needs write access to the
+    dashboard's workspace.
+  tags:
+    - V3 Dashboards
+  parameters:
+    - $ref: ../components/parameters/DashboardIdPath.yml
+  responses:
+    "204":
+      description: Dashboard deleted
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3DashboardsForbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

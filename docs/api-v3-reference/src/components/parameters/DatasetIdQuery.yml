@@ -1,0 +1,10 @@
+in: query
+name: datasetId
+required: true
+schema:
+  type: string
+  format: cuid2
+description: >-
+  The Feedback Dataset the chart reads. Access to a dataset is granted per workspace it is assigned
+  to, so it is always authorized together with `workspaceId`: a dataset that is not assigned to the
+  workspace, or that the caller may not use, answers 403.

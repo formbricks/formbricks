@@ -18,6 +18,33 @@ info:
 
     **Workflows extension**: **GET /api/v3/workflows**, **POST /api/v3/workflows**, **GET /api/v3/workflows/{workflowId}**, **PATCH /api/v3/workflows/{workflowId}**, **DELETE /api/v3/workflows/{workflowId}**, **POST /api/v3/workflows/{workflowId}/duplicate**, **POST /api/v3/workflows/{workflowId}/enable**, **POST /api/v3/workflows/{workflowId}/disable**, **POST /api/v3/workflows/{workflowId}/archive**, **POST /api/v3/workflows/{workflowId}/unarchive**, **POST /api/v3/workflows/{workflowId}/test**, **GET /api/v3/workflows/runs**, and **GET /api/v3/workflows/runs/{runId}**.
 
+    **Charts and dashboards**: charts on a Feedback Dataset (**GET**, **POST /api/v3/charts**; **GET**, **PATCH**, **DELETE /api/v3/charts/{chartId}**; **POST /api/v3/charts/{chartId}/duplicate**), their numbers (**GET /api/v3/charts/{chartId}/data**, **POST /api/v3/charts/preview**), the field catalog (**GET /api/v3/charts/fields**, **GET /api/v3/charts/fields/{field}/values**), and dashboards (**GET**, **POST /api/v3/dashboards**; **GET**, **PATCH**, **PUT**, **DELETE /api/v3/dashboards/{dashboardId}**; **POST /api/v3/dashboards/{dashboardId}/duplicate**; **POST /api/v3/dashboards/{dashboardId}/widgets**; **GET**, **PATCH**, **DELETE /api/v3/dashboards/{dashboardId}/widgets/{widgetId}**).
+    - **Field catalog.** A chart query names fields exactly as `GET /api/v3/charts/fields` lists
+      them; the validator refuses anything else, and Cube options (`timezone`, `segments`, `ungrouped`,
+      …), with **422** naming each problem. Counts, filter depth, `limit` and `offset` are bounded.
+    - **Date ranges.** A preset from the catalog's `datePresets`, `all-time`, or two ISO dates, both
+      inclusive, read in the organization's time zone. On the data operation a requested range
+      replaces the chart's own range on `collectedAt`, the way a dashboard's date filter does.
+    - **Data needs the dataset.** Reading a chart's rows, previewing one and looking up field values
+      need read access to its Feedback Dataset as well as the workspace. They share one budget of
+      **600 per minute** per user or key, sized for dashboards that load one query per widget, and at
+      most **20 run at once** (429 with `Retry-After: 1` past that).
+    - **Plan.** Every operation answers **403 `dashboards_plan_required`** for an organization without
+      the Dashboards feature, after authorization.
+    - **Shared charts.** A chart can sit on several dashboards; each chart says which in `dashboards`.
+      Editing it changes all of them — duplicate it and repoint one dashboard's widget to change it
+      there only. A chart still on a dashboard cannot be deleted: **409 `chart_in_use`** lists them in
+      `details.dashboards`.
+    - **Grid.** Widgets sit on a 12-column grid in whole units (`1 ≤ w ≤ 12`, `x + w ≤ 12`,
+      `1 ≤ h ≤ 8`, `0 ≤ y ≤ 1000`). Gaps are allowed, overlaps answer **422** naming the widget, and a
+      chart appears at most once per dashboard (**409**). A widget added without a layout takes the
+      first open slot at its chart type's default size.
+    - **Stale-check.** `PUT /api/v3/dashboards/{dashboardId}` saves the name and every widget at once
+      and removes widgets left out. Send the `updatedAt` you read: if the dashboard changed since,
+      nothing is saved and **409** carries `expectedUpdatedAt` and `currentUpdatedAt` in `details`.
+      Every widget change moves `updatedAt`.
+
+
     Authenticate all management endpoints with **session cookie** or **`x-api-key`** (management key with access to the workspace).
 
     **Spec location:** source of truth is the multi-file tree at `docs/api-v3-reference/src/` (root `openapi.yml` plus one file per path and component); `docs/api-v3-reference/openapi.yml` is the generated single-file bundle (alongside v2 at `docs/api-v2-reference/openapi.yml`).
@@ -94,6 +121,10 @@ info:
 servers:
   - url: https://app.formbricks.com
     description: Formbricks Cloud. Paths in this spec already include the `/api/v3` prefix; self-hosted instances substitute their own origin.
+security:
+  - apiKeyAuth: []
+  - bearerAuth: []
+  - sessionAuth: []
 paths:
   /api/v3/surveys:
     get:
@@ -3809,6 +3840,1234 @@ paths:
         - sessionAuth: []
         - apiKeyAuth: []
         - bearerAuth: []
+  /api/v3/charts:
+    get:
+      operationId: listChartsV3
+      summary: List charts
+      description: |
+        Lists a workspace's charts, newest first, page by page. Each chart embeds the dashboards that
+        hold it. Needs read access to the workspace. Session cookie, `x-api-key`, or a Bearer token.
+      tags:
+        - V3 Charts
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdQuery'
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 250
+            default: 50
+          description: Page size (max 250). Treat `meta.nextCursor` as the only end-of-collection signal.
+        - $ref: '#/components/parameters/CursorQuery'
+        - in: query
+          name: filter[name][contains]
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 255
+          description: Only charts whose name contains this text, ignoring case. `%` and `_` match themselves.
+        - in: query
+          name: filter[datasetId][eq]
+          schema:
+            type: string
+            format: cuid2
+          description: Only charts reading this Feedback Dataset.
+      responses:
+        '200':
+          description: A page of charts
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ChartResource'
+                  meta:
+                    $ref: '#/components/schemas/CursorPaginationMeta'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+    post:
+      operationId: createChartV3
+      summary: Create a chart
+      description: |
+        Creates a chart on a Feedback Dataset. The chart query goes through the chart query validator
+        (422 naming each problem); write it against `GET /api/v3/charts/fields` and check it with
+        `POST /api/v3/charts/preview` first. Needs write access to the workspace and to the Feedback
+        Dataset. A name already used in the workspace answers 409.
+      tags:
+        - V3 Charts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChartCreateRequest'
+      responses:
+        '201':
+          description: Chart created
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+            Location:
+              schema:
+                type: string
+              example: /api/v3/charts/clchart000000000000000001
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ChartResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '409':
+          $ref: '#/components/responses/V3DashboardsConflict'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/charts/fields:
+    get:
+      operationId: listChartFieldsV3
+      summary: List chart fields
+      description: |
+        Returns the field catalog for a Feedback Dataset: every field a chart query may use, with its
+        kind, type, label, description, filter operators and granularities, plus the date presets.
+        Write chart queries against this list — the chart query validator refuses any field that is not
+        in it, so the catalog cannot drift from what the API accepts.
+
+        Needs read access to the workspace and to the Feedback Dataset. Session cookie, `x-api-key`, or
+        a Bearer token.
+      tags:
+        - V3 Charts
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdQuery'
+        - $ref: '#/components/parameters/DatasetIdQuery'
+      responses:
+        '200':
+          description: Field catalog
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ChartFieldCatalog'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/charts/fields/{field}/values:
+    get:
+      operationId: listChartFieldValuesV3
+      summary: List a field's values
+      description: |
+        Returns up to 100 distinct stored values of a field, so a filter can use a value that really
+        occurs — an `equals` filter on a picked value cannot miss on casing or spacing. Only fields the
+        catalog marks `valueLookup: true` qualify; any other field, or one outside the catalog, answers
+        422. Narrow a field with more values using `search`. The list is not paged.
+
+        Needs read access to the workspace and the Feedback Dataset. Counts against the chart-query
+        budget (600 per minute, 20 at once, per user or API key), not the v3 default.
+      tags:
+        - V3 Charts
+      parameters:
+        - in: path
+          name: field
+          required: true
+          schema:
+            type: string
+            maxLength: 128
+          description: A field name from the catalog, prefix included.
+          example: FeedbackRecords.sourceName
+        - $ref: '#/components/parameters/WorkspaceIdQuery'
+        - $ref: '#/components/parameters/DatasetIdQuery'
+        - in: query
+          name: search
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 255
+          description: Only values containing this text, ignoring case.
+      responses:
+        '200':
+          description: The field's values, in ascending order
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: array
+                    maxItems: 100
+                    items:
+                      type: object
+                      required:
+                        - value
+                      properties:
+                        value:
+                          type: string
+                        fieldType:
+                          type: string
+                          description: The question type, present when the field is `FeedbackRecords.fieldLabel`.
+                      additionalProperties: false
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3ChartQueryTooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+        '502':
+          $ref: '#/components/responses/V3ChartQueryFailed'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/charts/preview:
+    post:
+      operationId: previewChartV3
+      summary: Preview a chart
+      description: |
+        Runs an unsaved chart and returns its rows, so a caller can check it shows what was meant before
+        saving it. Saves nothing. The chart query is checked by the chart query validator first: a field
+        outside the catalog, a refused Cube option, a `timezone`, a bound exceeded or an invalid date
+        range answers 422 naming each problem in `invalid_params`. On a chart grouped by time
+        alone, a date range wider than 10,000 buckets of its granularity is one such bound
+        (`limit_exceeded`).
+
+        Needs read access to the workspace and the Feedback Dataset. Counts against the chart-query
+        budget (600 per minute, 20 at once, per user or API key), not the v3 default.
+      tags:
+        - V3 Charts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChartPreviewRequest'
+      responses:
+        '200':
+          description: The chart's rows
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ChartData'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3ChartQueryTooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+        '502':
+          $ref: '#/components/responses/V3ChartQueryFailed'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/charts/{chartId}:
+    get:
+      operationId: getChartV3
+      summary: Get a chart
+      description: |
+        Returns one chart with the dashboards that hold it. The workspace is resolved from the chart, so
+        the operation takes no query parameters — a `workspaceId` is refused with 400. Needs read access
+        to the chart's workspace; a chart the caller cannot see, or that does not exist, answers 403.
+      tags:
+        - V3 Charts
+      parameters:
+        - $ref: '#/components/parameters/ChartIdPath'
+      responses:
+        '200':
+          description: The chart
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ChartResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+    patch:
+      operationId: updateChartV3
+      summary: Update a chart
+      description: |
+        Edits a chart's name, type, chart query or display settings. The chart may sit on several
+        dashboards (`dashboards` in the response), and the edit shows on every one of them — duplicate
+        the chart and repoint one dashboard's widget to change it there only. A chart's Feedback Dataset
+        cannot change. Needs write access to the chart's workspace and, while its Feedback Dataset is
+        assigned to that workspace and not archived, to the dataset, as a delete does. Once the dataset is
+        unassigned or archived, the chart can still be renamed or restyled, but its `query` and `type` can
+        no longer change.
+      tags:
+        - V3 Charts
+      parameters:
+        - $ref: '#/components/parameters/ChartIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChartUpdateRequest'
+      responses:
+        '200':
+          description: The updated chart
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ChartResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '409':
+          $ref: '#/components/responses/V3DashboardsConflict'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+    delete:
+      operationId: deleteChartV3
+      summary: Delete a chart
+      description: |
+        Deletes a chart that sits on no dashboard. A chart still on one is refused with 409
+        `chart_in_use`, naming those dashboards in `details.dashboards` — remove it from them first
+        (`DELETE /api/v3/dashboards/{dashboardId}/widgets/{widgetId}`); there is no force option. The
+        check and the delete are one transaction, so a widget added at the same moment is never removed
+        with the chart. Needs write access to the chart's workspace and, while its Feedback Dataset is
+        assigned to that workspace and not archived, to the dataset; a chart whose dataset was unassigned
+        or archived can still be deleted.
+      tags:
+        - V3 Charts
+      parameters:
+        - $ref: '#/components/parameters/ChartIdPath'
+      responses:
+        '204':
+          description: Chart deleted
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '409':
+          description: 'Conflict (`code: chart_in_use`) — the chart is on at least one dashboard, so nothing was deleted. `details.dashboards` lists them as `{ id, name }`.'
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              example:
+                title: Conflict
+                status: 409
+                detail: This chart is on 1 dashboard(s), so it was not deleted. Remove it from them first.
+                code: chart_in_use
+                requestId: 6f1f7f3e-3b0e-4a1a-9f0a-7c9a1d2b3c4d
+                details:
+                  dashboards:
+                    - id: cldash00000000000000000001
+                      name: Matchday 1
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/charts/{chartId}/data:
+    get:
+      operationId: getChartDataV3
+      summary: Get a chart's data
+      description: |
+        Runs a saved chart and returns its rows — the endpoint every dashboard widget loads its data
+        from. A date range given here replaces the chart's own range on `FeedbackRecords.collectedAt`,
+        exactly as a dashboard's date filter does, so the numbers match what a person sees on a
+        dashboard filtered the same way. `dateRange=all-time` removes the range; without a date range
+        the chart's saved range applies. Every range is read in the organization's display time zone;
+        a `timezone` parameter is refused with 400. For a chart grouped by time alone, a requested
+        range that spans more than 10,000 buckets of its granularity answers 422 `limit_exceeded` on
+        `dateRange`: request a shorter range, or use a chart with a coarser granularity.
+
+        Needs read access to the chart's workspace and to its Feedback Dataset. Counts against the
+        chart-query budget (600 per minute, 20 at once, per user or API key), not the v3 default.
+      tags:
+        - V3 Charts
+      parameters:
+        - $ref: '#/components/parameters/ChartIdPath'
+        - in: query
+          name: dateRange
+          schema:
+            type: string
+            maxLength: 64
+          description: A date preset from the field catalog's `datePresets`, or `all-time`. Not together with `from`/`to`.
+          example: last 7 days
+        - in: query
+          name: from
+          schema:
+            type: string
+            format: date
+          description: First day of a custom range (inclusive). Requires `to`.
+        - in: query
+          name: to
+          schema:
+            type: string
+            format: date
+          description: Last day of a custom range (inclusive). Requires `from`.
+      responses:
+        '200':
+          description: The chart's rows
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ChartData'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3ChartQueryTooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+        '502':
+          $ref: '#/components/responses/V3ChartQueryFailed'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/charts/{chartId}/duplicate:
+    post:
+      operationId: duplicateChartV3
+      summary: Duplicate a chart
+      description: |
+        Copies a chart — same Feedback Dataset, type, chart query and display settings — so the copy can
+        change without touching the dashboards that show the original. With `dashboardId`, the copy is
+        also put on that dashboard (first open slot, or `layout`) in the same transaction, and the
+        dashboard's `updatedAt` moves; a dashboard already holding 250 widgets, or with no open slot above
+        the grid's last row, answers 409 and no copy is made. Needs write access to the chart's workspace and to its Feedback Dataset.
+      tags:
+        - V3 Charts
+      parameters:
+        - $ref: '#/components/parameters/ChartIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChartDuplicateRequest'
+      responses:
+        '201':
+          description: The copy
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+            Location:
+              schema:
+                type: string
+              example: /api/v3/charts/clchart000000000000000002
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ChartResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '409':
+          $ref: '#/components/responses/V3DashboardsConflict'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/dashboards:
+    get:
+      operationId: listDashboardsV3
+      summary: List dashboards
+      description: |
+        Lists a workspace's dashboards, newest first, page by page, each with its widget count.
+        `filter[chartId][eq]` lists the dashboards that hold a chart. Needs read access to the workspace.
+      tags:
+        - V3 Dashboards
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdQuery'
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 250
+            default: 50
+          description: Page size (max 250). Treat `meta.nextCursor` as the only end-of-collection signal.
+        - $ref: '#/components/parameters/CursorQuery'
+        - in: query
+          name: filter[name][contains]
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 255
+          description: Only dashboards whose name contains this text, ignoring case.
+        - in: query
+          name: filter[chartId][eq]
+          schema:
+            type: string
+            format: cuid2
+          description: Only dashboards that hold this chart.
+      responses:
+        '200':
+          description: A page of dashboards
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DashboardListItem'
+                  meta:
+                    $ref: '#/components/schemas/CursorPaginationMeta'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+    post:
+      operationId: createDashboardV3
+      summary: Create a dashboard
+      description: |
+        Creates an empty dashboard in a workspace. Needs write access to the workspace. A name already
+        used in the workspace answers 409.
+      tags:
+        - V3 Dashboards
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardCreateRequest'
+      responses:
+        '201':
+          description: Dashboard created
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+            Location:
+              schema:
+                type: string
+              example: /api/v3/dashboards/cldash00000000000000000001
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '409':
+          $ref: '#/components/responses/V3DashboardsConflict'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/dashboards/{dashboardId}:
+    get:
+      operationId: getDashboardV3
+      summary: Get a dashboard
+      description: |
+        Returns a dashboard with every widget and its full chart, so one call tells a caller what is on
+        it. Read each widget's numbers from `GET /api/v3/charts/{chartId}/data`. The workspace is resolved
+        from the dashboard, so the operation takes no query parameters. Needs read access to the
+        dashboard's workspace; a dashboard the caller cannot see, or that does not exist, answers 403.
+      tags:
+        - V3 Dashboards
+      parameters:
+        - $ref: '#/components/parameters/DashboardIdPath'
+      responses:
+        '200':
+          description: The dashboard
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+    patch:
+      operationId: renameDashboardV3
+      summary: Rename a dashboard
+      description: |
+        Renames a dashboard and moves its `updatedAt`, so an editor holding the dashboard from before is
+        told when saving. Needs write access to the dashboard's workspace. A name already used in the
+        workspace answers 409.
+      tags:
+        - V3 Dashboards
+      parameters:
+        - $ref: '#/components/parameters/DashboardIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardRenameRequest'
+      responses:
+        '200':
+          description: The renamed dashboard
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '409':
+          $ref: '#/components/responses/V3DashboardsConflict'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+    put:
+      operationId: replaceDashboardV3
+      summary: Save a whole dashboard
+      description: |
+        Replaces a dashboard's name and every widget's place in one transaction — all of it or none of
+        it. A widget left out is removed; its chart is kept. Widgets may leave gaps but not overlap (422).
+        Send the `updatedAt` from your read as `expectedUpdatedAt`: if the dashboard changed since, the save
+        is refused with 409 and nothing is written. Needs write access to the dashboard's workspace.
+      tags:
+        - V3 Dashboards
+      parameters:
+        - $ref: '#/components/parameters/DashboardIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardReplaceRequest'
+      responses:
+        '200':
+          description: The saved dashboard
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '409':
+          description: 'Conflict — the dashboard changed since your read, or the name is already used in the workspace. Nothing was written. For a changed dashboard, `details` carries `expectedUpdatedAt` and the live `currentUpdatedAt`: read it again and retry.'
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              example:
+                title: Conflict
+                status: 409
+                detail: The dashboard changed since your read, so nothing was saved. Read it again, then retry.
+                code: conflict
+                requestId: 6f1f7f3e-3b0e-4a1a-9f0a-7c9a1d2b3c4d
+                details:
+                  expectedUpdatedAt: '2026-10-22T10:00:00.000Z'
+                  currentUpdatedAt: '2026-10-22T11:30:00.000Z'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+    delete:
+      operationId: deleteDashboardV3
+      summary: Delete a dashboard
+      description: |
+        Deletes a dashboard and its widgets. Every chart stays, including charts no other dashboard
+        holds; delete those with `DELETE /api/v3/charts/{chartId}`. Needs write access to the
+        dashboard's workspace.
+      tags:
+        - V3 Dashboards
+      parameters:
+        - $ref: '#/components/parameters/DashboardIdPath'
+      responses:
+        '204':
+          description: Dashboard deleted
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/dashboards/{dashboardId}/duplicate:
+    post:
+      operationId: duplicateDashboardV3
+      summary: Duplicate a dashboard
+      description: |
+        Copies a dashboard, in one transaction, with its layout. The copy **shares** the original's
+        charts: its widgets point at the same charts, so editing one of them changes both dashboards. To
+        change a chart on the copy only, duplicate the chart and repoint the copy's widget. Needs write
+        access to the dashboard's workspace. A `name` already used in the workspace answers 409.
+      tags:
+        - V3 Dashboards
+      parameters:
+        - $ref: '#/components/parameters/DashboardIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardDuplicateRequest'
+      responses:
+        '201':
+          description: The copy
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+            Location:
+              schema:
+                type: string
+              example: /api/v3/dashboards/cldash00000000000000000002
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '409':
+          $ref: '#/components/responses/V3DashboardsConflict'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/dashboards/{dashboardId}/widgets:
+    post:
+      operationId: addDashboardWidgetV3
+      summary: Add a chart to a dashboard
+      description: |
+        Puts an existing chart on a dashboard. Without a `layout` the chart lands in the first open slot
+        at its chart type's default size; with one, exactly there. Widgets may leave gaps but not overlap:
+        a layout covering another widget answers 422 naming it. A chart appears at most once per
+        dashboard (409), and must live in the dashboard's workspace. A dashboard holds at most 250
+        widgets, and a new widget takes the first open slot: an add past the cap, or with no open slot
+        above the grid's last row, answers 409. Moves the dashboard's `updatedAt`.
+        Needs write access to the dashboard's workspace.
+      tags:
+        - V3 Dashboards
+      parameters:
+        - $ref: '#/components/parameters/DashboardIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WidgetCreateRequest'
+      responses:
+        '201':
+          description: The new widget
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+            Location:
+              schema:
+                type: string
+              example: /api/v3/dashboards/cldash00000000000000000001/widgets/clwidget000000000000000001
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardWidget'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '409':
+          $ref: '#/components/responses/V3DashboardsConflict'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/dashboards/{dashboardId}/widgets/{widgetId}:
+    get:
+      operationId: getDashboardWidgetV3
+      summary: Get a widget
+      description: |
+        Returns one widget on a dashboard with its full chart: the resource an add's `Location` names.
+        Needs read access to the dashboard's workspace; a widget that is not on the dashboard, or a
+        dashboard the caller cannot see, answers 403.
+      tags:
+        - V3 Dashboards
+      parameters:
+        - $ref: '#/components/parameters/DashboardIdPath'
+        - $ref: '#/components/parameters/WidgetIdPath'
+      responses:
+        '200':
+          description: The widget
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardWidget'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+    patch:
+      operationId: updateDashboardWidgetV3
+      summary: Move a widget or show another chart in it
+      description: |
+        Moves or resizes a widget, points it at another chart, or both. A layout covering another widget
+        answers 422 naming it; a chart already on the dashboard answers 409. Moves the dashboard's
+        `updatedAt`. Needs write access to the dashboard's workspace.
+      tags:
+        - V3 Dashboards
+      parameters:
+        - $ref: '#/components/parameters/DashboardIdPath'
+        - $ref: '#/components/parameters/WidgetIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WidgetUpdateRequest'
+      responses:
+        '200':
+          description: The updated widget
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardWidget'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '409':
+          $ref: '#/components/responses/V3DashboardsConflict'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+    delete:
+      operationId: removeDashboardWidgetV3
+      summary: Remove a chart from a dashboard
+      description: |
+        Takes a widget off its dashboard. The chart is kept, with every other dashboard it sits on. Moves
+        the dashboard's `updatedAt`. Needs write access to the dashboard's workspace.
+      tags:
+        - V3 Dashboards
+      parameters:
+        - $ref: '#/components/parameters/DashboardIdPath'
+        - $ref: '#/components/parameters/WidgetIdPath'
+      responses:
+        '204':
+          description: Widget removed; the chart is kept
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/creatives:
     get:
       operationId: getCreativesV3
@@ -6301,6 +7560,7 @@ components:
             - immutable_identifier
             - invalid_locale
             - invalid_reference
+            - limit_exceeded
             - missing_required_field
             - misordered_reference
             - missing_translation
@@ -6313,6 +7573,8 @@ components:
             Machine-readable validation category, when available.
 
             This is the shared error shape every v3 operation returns, so it lists what the API can emit today and nothing more — `INVALID_PARAM_CODES` in `app/api/v3/lib/response.ts` is the registry, and a code absent from it is dropped before the response is built. Categories for operations that do not exist yet are added with the code that emits them, not ahead of it.
+
+            `limit_exceeded`: the field is well formed but past a limit the operation states, which `reason` names together with what to change. Chart queries use it for a date range that spans more time buckets than its granularity allows.
 
             `qsf_not_recognized` and `qsf_limit_exceeded` come from the Qualtrics import (an internal, session-only route sharing this shape): the file is not a Qualtrics export it can read, or it is one past an import limit, which `identifier` names.
         identifier:
@@ -6376,9 +7638,11 @@ components:
             - ai_smart_tools_disabled
             - bad_gateway
             - bad_request
+            - chart_in_use
             - conflict
             - creatives_not_entitled
             - custom_css_plan_required
+            - dashboards_plan_required
             - forbidden
             - internal_server_error
             - invalid_workflow_state
@@ -11248,6 +12512,792 @@ components:
               message:
                 type: string
                 description: Human-readable explanation of the problem.
+    ChartDateRange:
+      description: |-
+        A date range on a time dimension: a named preset from the field catalog's `datePresets` (`last 7 days`, `this month`, …), `all-time` (no range), or a pair of ISO calendar dates `[from, to]`, both inclusive, `from` not after `to`. Every range is read in the organization's display time zone; a `timezone` cannot be supplied.
+
+        Charts saved before ranges were limited to presets may hold a relative range Cube reads itself (`last 3 months`, `this week`). Such a chart still renders and can be previewed, within the bucket limit below, and can be saved with that same range kept; a new chart, or an update to another range, must use a preset or a pair.
+
+        A chart grouped by time alone (one time dimension with a `granularity`, no other dimensions) gets one row per bucket in its range, empty or not, so its range may span at most 10,000 buckets: about 13 months by the hour, or 27 years by the day. A wider range is refused with **422** `limit_exceeded`; use a coarser granularity or a shorter range. An older chart's relative range is measured back from now (`last 999 years` spans 999 years). Every preset fits at every granularity, and a chart with other dimensions returns only its real rows, so it is not limited.
+      oneOf:
+        - type: string
+          description: A preset name from `datePresets`, or `all-time`.
+          example: last 30 days
+        - type: array
+          minItems: 2
+          maxItems: 2
+          items:
+            type: string
+            format: date
+          example:
+            - '2026-01-01'
+            - '2026-03-31'
+    ChartQueryFilter:
+      description: 'A filter: either one condition on a field, or an `and` / `or` group of filters. Filters nest at most three levels: a group, a group inside it, and conditions inside that. A chart query holds at most 25 conditions in all.'
+      oneOf:
+        - type: object
+          title: Condition
+          required:
+            - member
+            - operator
+          properties:
+            member:
+              type: string
+              description: A field name from the field catalog.
+              example: FeedbackRecords.sourceType
+            operator:
+              type: string
+              description: One of the field's `filterOperators` in the catalog.
+              enum:
+                - equals
+                - notEquals
+                - contains
+                - notContains
+                - set
+                - notSet
+                - gt
+                - gte
+                - lt
+                - lte
+            values:
+              type: array
+              description: The values to compare against. Required by every operator except `set` and `notSet`, which take none.
+              maxItems: 100
+              items:
+                type: string
+                maxLength: 1000
+          additionalProperties: false
+        - type: object
+          title: And group
+          required:
+            - and
+          properties:
+            and:
+              type: array
+              minItems: 1
+              items:
+                $ref: '#/components/schemas/ChartQueryFilter'
+          additionalProperties: false
+        - type: object
+          title: Or group
+          required:
+            - or
+          properties:
+            or:
+              type: array
+              minItems: 1
+              items:
+                $ref: '#/components/schemas/ChartQueryFilter'
+          additionalProperties: false
+    ChartQuery:
+      type: object
+      description: |-
+        What a chart computes, in Cube's query format (ADR 0001): measures, dimensions, time dimensions, filters, order and limit over its Feedback Dataset's fields. Every field must come from the field catalog (`GET /api/v3/charts/fields`), named with its data-source prefix. Display settings are separate (`config`).
+
+        Refused with **422** (`invalid_params` names each problem): a field that is not in the catalog; Cube options the app does not use (`ungrouped`, `segments`, `renewQuery`, `joinHints`, `total`, `compareDateRange`); a `timezone` (every range is read in the organization's display time zone); more than 15 fields across `measures`, `dimensions` and `timeDimensions`; more than 25 filter conditions or filters nested deeper than three levels; a date range that is not a preset, `all-time` or two ISO calendar dates; on a chart grouped by time alone, a date range that spans more than 10,000 buckets of its `granularity` (code `limit_exceeded`).
+      properties:
+        measures:
+          type: array
+          maxItems: 10
+          items:
+            type: string
+            description: A field of kind `measure`.
+          example:
+            - FeedbackRecords.npsScore
+        dimensions:
+          type: array
+          maxItems: 5
+          items:
+            type: string
+            description: A field of kind `dimension` or `timeDimension`.
+          example:
+            - FeedbackRecords.sourceName
+        timeDimensions:
+          type: array
+          maxItems: 2
+          items:
+            type: object
+            required:
+              - dimension
+            properties:
+              dimension:
+                type: string
+                description: A field of kind `timeDimension`.
+                example: FeedbackRecords.collectedAt
+              granularity:
+                type: string
+                enum:
+                  - hour
+                  - day
+                  - week
+                  - month
+                  - quarter
+                  - year
+              dateRange:
+                $ref: '#/components/schemas/ChartDateRange'
+            additionalProperties: false
+        filters:
+          type: array
+          maxItems: 25
+          items:
+            $ref: '#/components/schemas/ChartQueryFilter'
+        order:
+          description: 'Sort order: `[field, direction]` pairs, or an object mapping a field to its direction. At most 10 entries.'
+          oneOf:
+            - type: array
+              maxItems: 10
+              items:
+                type: array
+                minItems: 2
+                maxItems: 2
+                prefixItems:
+                  - type: string
+                  - type: string
+                    enum:
+                      - asc
+                      - desc
+            - type: object
+              maxProperties: 10
+              additionalProperties:
+                type: string
+                enum:
+                  - asc
+                  - desc
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 5000
+        offset:
+          type: integer
+          minimum: 0
+          maximum: 10000
+      additionalProperties: false
+    ChartConfig:
+      type: object
+      description: Display settings, kept apart from the chart query. Every key is optional; each applies to the chart types named in its description and is ignored by the others.
+      properties:
+        barOrientation:
+          type: string
+          enum:
+            - vertical
+            - horizontal
+          description: Bar charts. Defaults to `vertical`.
+        pieDisplay:
+          type: string
+          enum:
+            - pie
+            - breakdown
+          description: Pie charts. Defaults to `pie`.
+        areaDisplay:
+          type: string
+          enum:
+            - filled
+            - line
+          description: Area charts. Defaults to `filled`.
+        matrixCellValue:
+          type: string
+          enum:
+            - percent
+            - count
+            - both
+          description: Matrix charts. Defaults to `percent`.
+        matrixColorScale:
+          type: boolean
+          description: Matrix charts. Defaults to `true`.
+        matrixShowTotals:
+          type: boolean
+          description: Matrix charts. Defaults to `false`.
+        matrixTranspose:
+          type: boolean
+          description: Matrix charts. Swaps rows and columns on screen; the query is unchanged.
+        colors:
+          type: array
+          maxItems: 50
+          items:
+            type: string
+            maxLength: 64
+        xAxisLabel:
+          type: string
+          maxLength: 255
+        yAxisLabel:
+          type: string
+          maxLength: 255
+        showLegend:
+          type: boolean
+        legendPosition:
+          type: string
+          enum:
+            - top
+            - bottom
+            - left
+            - right
+        stacked:
+          type: boolean
+        showGrid:
+          type: boolean
+        showValues:
+          type: boolean
+        numberFormat:
+          type: string
+          maxLength: 64
+        dateFormat:
+          type: string
+          maxLength: 64
+        prefix:
+          type: string
+          maxLength: 32
+        suffix:
+          type: string
+          maxLength: 32
+      additionalProperties: false
+    ChartResource:
+      type: object
+      description: 'A chart: one saved visualisation of one Feedback Dataset. It belongs to a workspace and can sit on any number of dashboards — `dashboards` lists them, so a caller can see what an edit or a delete would affect.'
+      required:
+        - id
+        - workspaceId
+        - datasetId
+        - name
+        - type
+        - query
+        - config
+        - creator
+        - dashboards
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: cuid2
+        workspaceId:
+          type: string
+          format: cuid2
+        datasetId:
+          type: string
+          format: cuid2
+          description: The Feedback Dataset the chart reads. Fixed when the chart is created.
+        name:
+          type: string
+          description: Unique within the workspace.
+        type:
+          type: string
+          enum:
+            - area
+            - bar
+            - pie
+            - big_number
+            - matrix
+        query:
+          $ref: '#/components/schemas/ChartQuery'
+        config:
+          $ref: '#/components/schemas/ChartConfig'
+        creator:
+          description: Who created the chart, for display only; `null` once that user is gone.
+          oneOf:
+            - type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+              additionalProperties: false
+            - type: 'null'
+        dashboards:
+          type: array
+          description: The dashboards that hold the chart, by name.
+          items:
+            type: object
+            required:
+              - id
+              - name
+            properties:
+              id:
+                type: string
+                format: cuid2
+              name:
+                type: string
+            additionalProperties: false
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    ChartCreateRequest:
+      type: object
+      required:
+        - workspaceId
+        - datasetId
+        - name
+        - type
+        - query
+      properties:
+        workspaceId:
+          type: string
+          format: cuid2
+        datasetId:
+          type: string
+          format: cuid2
+          description: The Feedback Dataset the chart reads. Needs write access to it from `workspaceId`. Fixed once the chart exists.
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Unique within the workspace; leading and trailing spaces are trimmed.
+        type:
+          type: string
+          enum:
+            - area
+            - bar
+            - pie
+            - big_number
+            - matrix
+          description: '`matrix` is refused with 422 while an instance''s online upgrade to 6.1 is unfinished.'
+        query:
+          $ref: '#/components/schemas/ChartQuery'
+        config:
+          $ref: '#/components/schemas/ChartConfig'
+      additionalProperties: false
+    ChartField:
+      type: object
+      description: One field a chart query may use. Use `name` exactly as given, data-source prefix included (`FeedbackRecords.npsScore`); a field that is not in the catalog is refused.
+      required:
+        - name
+        - kind
+        - type
+        - label
+        - description
+        - filterOperators
+        - granularities
+        - valueLookup
+      properties:
+        name:
+          type: string
+          example: FeedbackRecords.npsScore
+        kind:
+          type: string
+          enum:
+            - measure
+            - dimension
+            - timeDimension
+          description: 'Where the field may appear: a `measure` in `measures`, a `dimension` in `dimensions`, a `timeDimension` in `timeDimensions` (or `dimensions`). Any kind may be filtered.'
+        type:
+          type: string
+          enum:
+            - number
+            - string
+            - time
+            - boolean
+        label:
+          type: string
+          example: 'NPS: Score'
+        description:
+          type:
+            - string
+            - 'null'
+        filterOperators:
+          type: array
+          description: The operators a filter on this field may use.
+          items:
+            type: string
+            enum:
+              - equals
+              - notEquals
+              - contains
+              - notContains
+              - set
+              - notSet
+              - gt
+              - gte
+              - lt
+              - lte
+        granularities:
+          type: array
+          description: The granularities a time dimension may be grouped by; empty for other kinds.
+          items:
+            type: string
+            enum:
+              - hour
+              - day
+              - week
+              - month
+              - quarter
+              - year
+        valueLookup:
+          type: boolean
+          description: Whether `GET /api/v3/charts/fields/{field}/values` lists this field's stored values, for filters that need an exact value.
+      additionalProperties: false
+    ChartFieldCatalog:
+      type: object
+      description: 'The field catalog: the fields a chart query may use, and the named date ranges it may use on `FeedbackRecords.collectedAt` and other time dimensions. The chart query validator checks against this same list, so the catalog is the contract.'
+      required:
+        - fields
+        - datePresets
+      properties:
+        fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChartField'
+        datePresets:
+          type: array
+          description: Named date ranges, resolved in the organization's display time zone. `all-time` means no range at all. A date range may also be a pair of ISO calendar dates.
+          items:
+            type: string
+          example:
+            - today
+            - last 7 days
+            - this month
+            - all-time
+      additionalProperties: false
+    ChartPreviewRequest:
+      type: object
+      required:
+        - workspaceId
+        - datasetId
+        - type
+        - query
+      properties:
+        workspaceId:
+          type: string
+          format: cuid2
+        datasetId:
+          type: string
+          format: cuid2
+          description: The Feedback Dataset to read; needs read access to it from `workspaceId`.
+        type:
+          type: string
+          enum:
+            - area
+            - bar
+            - pie
+            - big_number
+            - matrix
+          description: The chart type. A `big_number` shows one value, so its grouping is dropped.
+        query:
+          $ref: '#/components/schemas/ChartQuery'
+        dateRange:
+          description: 'Replaces the query''s date range on `FeedbackRecords.collectedAt`: a preset, `all-time` to remove it, or `{ from, to }` ISO calendar dates. Read in the organization''s display time zone.'
+          oneOf:
+            - type: string
+              example: last 7 days
+            - type: object
+              required:
+                - from
+                - to
+              properties:
+                from:
+                  type: string
+                  format: date
+                to:
+                  type: string
+                  format: date
+              additionalProperties: false
+      additionalProperties: false
+    ChartData:
+      type: object
+      description: 'What a chart query returns: one row per group, keyed by field name, the label maps to display stored ids with, and the query as it ran.'
+      required:
+        - rows
+        - optionLabels
+        - fieldLabels
+        - query
+      properties:
+        rows:
+          type: array
+          items:
+            type: object
+            additionalProperties:
+              type:
+                - string
+                - number
+                - boolean
+                - 'null'
+          example:
+            - FeedbackRecords.sourceName: Web
+              FeedbackRecords.count: 42
+        optionLabels:
+          type: object
+          description: Choice option ids to their labels in the survey's default language, in survey order. Filled when the rows group by `FeedbackRecords.valueId` (or a `valueText` grouping the server rewrote to it); empty otherwise.
+          additionalProperties:
+            type: string
+        fieldLabels:
+          type: object
+          description: Matrix row field ids (`<elementId>__<rowId>`) to their statements, in survey order. Filled when the rows group by `FeedbackRecords.fieldId` over matrix questions; empty otherwise.
+          additionalProperties:
+            type: string
+        query:
+          type: object
+          description: 'The query as it ran: after the requested date range replaced the saved one, and after a `valueText` grouping on a single-choice question was rewritten to `valueId`. The row keys follow this query.'
+      additionalProperties: false
+    ChartUpdateRequest:
+      type: object
+      description: 'Send at least one field. `config` replaces the display settings whole. A chart''s Feedback Dataset and workspace are fixed: `datasetId` or `workspaceId` in the body is refused with 400 (`read_only_field`) — create a new chart to chart another dataset.'
+      minProperties: 1
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        type:
+          type: string
+          enum:
+            - area
+            - bar
+            - pie
+            - big_number
+            - matrix
+        query:
+          $ref: '#/components/schemas/ChartQuery'
+        config:
+          $ref: '#/components/schemas/ChartConfig'
+      additionalProperties: false
+    WidgetLayout:
+      type: object
+      description: 'A widget''s position and size on the dashboard''s 12-column grid, in whole grid units: `1 ≤ w ≤ 12`, `x + w ≤ 12`, `1 ≤ h ≤ 8`, `0 ≤ y ≤ 1000`. Widgets may not overlap; gaps are allowed and close upward when the dashboard is drawn.'
+      required:
+        - x
+        - 'y'
+        - w
+        - h
+      properties:
+        x:
+          type: integer
+          minimum: 0
+          maximum: 11
+        'y':
+          type: integer
+          minimum: 0
+          maximum: 1000
+        w:
+          type: integer
+          minimum: 1
+          maximum: 12
+        h:
+          type: integer
+          minimum: 1
+          maximum: 8
+      additionalProperties: false
+    ChartDuplicateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Name for the copy, unique within the workspace. Without one the copy is named "<original> (copy)", then "(copy 2)" and so on.
+        dashboardId:
+          type: string
+          format: cuid2
+          description: 'Also put the copy on this dashboard, in the same transaction: if placing it fails, no copy is left behind. Must be in the chart''s workspace.'
+        layout:
+          $ref: '#/components/schemas/WidgetLayout'
+          description: Where to put the copy on `dashboardId`. Without one, the first open slot.
+      additionalProperties: false
+    DashboardCreator:
+      description: Who created the dashboard, for display only; `null` once that user is gone.
+      oneOf:
+        - type: object
+          required:
+            - name
+          properties:
+            name:
+              type: string
+          additionalProperties: false
+        - type: 'null'
+    DashboardListItem:
+      type: object
+      description: A dashboard as a list shows it — its widgets counted, not loaded.
+      required:
+        - id
+        - workspaceId
+        - name
+        - creator
+        - widgetCount
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: cuid2
+        workspaceId:
+          type: string
+          format: cuid2
+        name:
+          type: string
+        creator:
+          $ref: '#/components/schemas/DashboardCreator'
+        widgetCount:
+          type: integer
+          minimum: 0
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+          description: Changes on every rename, save and widget change. Send it back on a full update (`PUT /api/v3/dashboards/{dashboardId}`) to be told if the dashboard changed in between.
+      additionalProperties: false
+    DashboardCreateRequest:
+      type: object
+      description: A new, empty dashboard. Put charts on it with `POST /api/v3/dashboards/{dashboardId}/widgets`.
+      required:
+        - workspaceId
+        - name
+      properties:
+        workspaceId:
+          type: string
+          format: cuid2
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Unique within the workspace; leading and trailing whitespace is trimmed.
+      additionalProperties: false
+    DashboardWidget:
+      type: object
+      description: One chart's placement on the dashboard. `chart` is exactly what reading the chart returns.
+      required:
+        - id
+        - chartId
+        - layout
+        - order
+        - chart
+      properties:
+        id:
+          type: string
+          format: cuid2
+        chartId:
+          type: string
+          format: cuid2
+        layout:
+          $ref: '#/components/schemas/WidgetLayout'
+        order:
+          type: integer
+          minimum: 0
+        chart:
+          $ref: '#/components/schemas/ChartResource'
+      additionalProperties: false
+    DashboardResource:
+      type: object
+      description: 'A dashboard: a named grid of widgets in a workspace. Its charts can come from different Feedback Datasets. Each widget''s data is read separately, from `GET /api/v3/charts/{chartId}/data`.'
+      required:
+        - id
+        - workspaceId
+        - name
+        - creator
+        - widgets
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: cuid2
+        workspaceId:
+          type: string
+          format: cuid2
+        name:
+          type: string
+          description: Unique within the workspace.
+        creator:
+          $ref: '#/components/schemas/DashboardCreator'
+        widgets:
+          type: array
+          description: In display order.
+          items:
+            $ref: '#/components/schemas/DashboardWidget'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+          description: Changes on every rename, save and widget change. Send it back on a full update to be told if the dashboard changed in between.
+      additionalProperties: false
+    DashboardReplaceRequest:
+      type: object
+      description: 'The whole edited dashboard: its name and every widget''s place. A widget left out of `widgets` is removed (its chart is kept). `expectedUpdatedAt` is the dashboard''s `updatedAt` from your read; if it changed since, nothing is saved.'
+      required:
+        - name
+        - expectedUpdatedAt
+        - widgets
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        expectedUpdatedAt:
+          type: string
+          format: date-time
+          description: The dashboard's `updatedAt` from your read.
+        widgets:
+          type: array
+          maxItems: 1000
+          items:
+            type: object
+            required:
+              - widgetId
+              - layout
+              - order
+            properties:
+              widgetId:
+                type: string
+                format: cuid2
+              layout:
+                $ref: '#/components/schemas/WidgetLayout'
+              order:
+                type: integer
+                minimum: 0
+                maximum: 2147483647
+                description: Sort key; any non-negative integer, in the order widgets should list.
+            additionalProperties: false
+      additionalProperties: false
+    DashboardRenameRequest:
+      type: object
+      description: A rename. Only the name changes; the layout is saved with `PUT /api/v3/dashboards/{dashboardId}`.
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Unique within the workspace; leading and trailing whitespace is trimmed.
+      additionalProperties: false
+    DashboardDuplicateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Name for the copy, unique within the workspace. Without one the copy is named "<original> (copy)", then "(copy 2)" and so on — never "(copy) (copy)".
+      additionalProperties: false
+    WidgetCreateRequest:
+      type: object
+      required:
+        - chartId
+      properties:
+        chartId:
+          type: string
+          format: cuid2
+          description: A chart in the dashboard's workspace. A chart appears at most once per dashboard.
+        layout:
+          $ref: '#/components/schemas/WidgetLayout'
+          description: Where to put the chart. Without one it lands in the first open slot at its chart type's default size.
+      additionalProperties: false
+    WidgetUpdateRequest:
+      type: object
+      description: Send a `layout`, a `chartId`, or both. Repointing shows another chart in the widget's place — the way to give one dashboard its own copy of a shared chart.
+      minProperties: 1
+      properties:
+        layout:
+          $ref: '#/components/schemas/WidgetLayout'
+        chartId:
+          type: string
+          format: cuid2
+          description: A chart in the dashboard's workspace that is not already on the dashboard.
+      additionalProperties: false
     CreativeType:
       type: string
       enum:
@@ -13496,6 +15546,66 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
+    V3DashboardsForbidden:
+      description: 'Forbidden. `code: forbidden` when the caller has no access to the workspace, the Feedback Dataset or the resource (which may also not exist; 404 is not used, to avoid leaking existence). `code: dashboards_plan_required` when the caller is authorized but the organization does not have the Dashboards add-on or a license that includes it — checked after authorization, so a caller without access never learns the organization''s plan.'
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    V3DashboardsConflict:
+      description: 'Conflict (`code: conflict`) — the request clashes with the current state: a chart or dashboard name already used in the workspace, a chart already on the dashboard, a dashboard already holding its 250 widgets, a dashboard with no open slot left above its grid''s last row, or a dashboard changed since the `expectedUpdatedAt` the caller sent.'
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    V3ChartQueryTooManyRequests:
+      description: 'Too Many Requests (`code: too_many_requests`). Chart data, preview and field-value lookups share one budget of 600 requests per minute per user or API key, separate from the 100 per minute of the rest of v3, so a dashboard can load every widget''s data. At most 20 of them run at once per user or key; past that the answer is 429 with `Retry-After: 1`. `Retry-After` says when to retry.'
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Retry-After:
+          schema:
+            type: integer
+          description: Seconds until the budget refills.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    V3ChartQueryFailed:
+      description: 'Bad Gateway (`code: bad_gateway`) — the chart query could not be run: the analytics engine was unreachable, refused it, or it ran longer than the one-minute limit and was stopped. The engine''s own error is never returned. Retrying later is safe; a query that timed out needs a narrower date range or grouping.'
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
     V3CreativesForbidden:
       description: 'Forbidden, one of two codes. `forbidden`: the caller lacks the workspace access the operation needs, or the creative does not exist (404 is not used, so creative ids cannot be probed for existence). `creatives_not_entitled`: Creatives is not available on this instance (Formbricks Cloud, or a self-hosted license that does not include it). It is checked only after the caller''s own access, so it says nothing about a workspace the caller cannot see. A workspace that still has creatives is in wind-down: listing, reading, stats, a PATCH that sets nothing but `status` to `paused` or `completed`, pausing a survey''s creatives (`POST /api/v3/creatives/pause`), and DELETE keep working, and everything else answers this. A workspace without creatives answers it on every operation.'
       headers:
@@ -13718,6 +15828,38 @@ components:
         type: string
         format: cuid2
       description: Workflow identifier.
+    DatasetIdQuery:
+      in: query
+      name: datasetId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: 'The Feedback Dataset the chart reads. Access to a dataset is granted per workspace it is assigned to, so it is always authorized together with `workspaceId`: a dataset that is not assigned to the workspace, or that the caller may not use, answers 403.'
+    ChartIdPath:
+      in: path
+      name: chartId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Chart identifier.
+    DashboardIdPath:
+      in: path
+      name: dashboardId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Dashboard identifier.
+    WidgetIdPath:
+      in: path
+      name: widgetId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: The widget's id, from the dashboard's `widgets`.
     CreativeIdPath:
       in: path
       name: creativeId

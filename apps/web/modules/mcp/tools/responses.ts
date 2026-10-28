@@ -19,7 +19,7 @@ import {
 } from "@/app/api/v3/responses/lib/operations";
 import { validateV3ResponseFromRawInput } from "@/app/api/v3/responses/lib/validate-operations";
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
-import { type TMcpToolContext, getMcpAuthentication, getMcpRequestId, getMcpToolAuthInfo } from "../auth";
+import type { TMcpToolContext } from "../auth";
 import { responseToMcpToolResult } from "../errors";
 import { type TMcpConfirmationState, mcpRequestStateCodec } from "../request-state";
 import { registerScopedTool } from "./guard-scopes";
@@ -48,6 +48,7 @@ import {
   ZMcpValidateResponseInput,
 } from "./response-schemas";
 import { runMcpMutation } from "./run-mcp-mutation";
+import { READ_ANNOTATIONS, toolContext } from "./tool-context";
 
 /**
  * MCP tools over the v3 Responses API — one per documented operation, and no more.
@@ -95,14 +96,6 @@ const FEEDBACK_RECORD_BOUNDARY = [
 const FEEDBACK_RECORD_BOUNDARY_SHORT =
   "Operates on submission-shaped responses, not on the feedback records the analysis tools read.";
 
-/** Read tools: no side effects, safe to repeat, reaching data this server does not itself own. */
-const READ_ANNOTATIONS = {
-  readOnlyHint: true,
-  destructiveHint: false,
-  idempotentHint: true,
-  openWorldHint: true,
-} as const;
-
 const toSearchParams = (entries: Record<string, string | string[] | undefined>): URLSearchParams => {
   const searchParams = new URLSearchParams();
 
@@ -149,14 +142,6 @@ export const buildListResponsesSearchParams = (input: TMcpListResponsesInput): U
 
 export const buildCountResponsesSearchParams = (input: TMcpCountResponsesInput): URLSearchParams =>
   toSearchParams({ ...sharedFilterParams(input), precision: input.precision });
-
-/** The context every tool derives the same way, so no tool invents its own request id. */
-const toolContext = (ctx: TMcpToolContext) => {
-  const authInfo = getMcpToolAuthInfo(ctx);
-  const requestId = getMcpRequestId(authInfo);
-
-  return { authentication: getMcpAuthentication(authInfo), requestId, instance: MCP_API_ROUTE };
-};
 
 export function registerResponseTools(server: McpServer): void {
   registerScopedTool(

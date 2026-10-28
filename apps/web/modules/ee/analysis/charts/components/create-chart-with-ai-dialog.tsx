@@ -1,20 +1,20 @@
 "use client";
 
+import { useMutation } from "@tanstack/react-query";
 import { type KeyboardEvent, type SyntheticEvent, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { AIUnavailableAlert } from "@/modules/ai/components/ai-unavailable-alert";
-import { generateAIChartAction } from "@/modules/ee/analysis/charts/actions";
 import { NoFeedbackDirectoryAlert } from "@/modules/ee/analysis/charts/components/no-feedback-directory-alert";
-import { getTranslatedAIChartError } from "@/modules/ee/analysis/charts/lib/ai-chart-errors";
+import { getAIChartErrorMessage } from "@/modules/ee/analysis/charts/lib/ai-chart-errors";
 import {
   AI_CHART_PROMPT_MAX_LENGTH,
   canGenerateChart,
   getChartHelperPrompts,
 } from "@/modules/ee/analysis/charts/lib/ai-chart-prompts";
+import { generateChart } from "@/modules/ee/analysis/lib/api-client";
 import type { AnalyticsResponse } from "@/modules/ee/analysis/types/analysis";
 import { AiIcon, AiStatusLine } from "@/modules/ui/components/ai";
 import { Button } from "@/modules/ui/components/button";
@@ -67,6 +67,8 @@ export function CreateChartWithAIDialog({
   const stopButtonRef = useRef<HTMLButtonElement>(null);
   // Survives Stop: a late response from an abandoned run must not open the builder behind the user.
   const runIdRef = useRef(0);
+  const abortRef = useRef<AbortController | null>(null);
+  const generateMutation = useMutation({ mutationFn: generateChart });
 
   const helperPrompts = useMemo(() => getChartHelperPrompts(t), [t]);
   const hasFeedbackDirectory = Boolean(feedbackDirectoryId);
@@ -81,6 +83,7 @@ export function CreateChartWithAIDialog({
   }, [isGenerating]);
 
   const closeAndReset = () => {
+    abortRef.current?.abort();
     runIdRef.current += 1;
     setIsGenerating(false);
     onOpenChange(false);
@@ -103,43 +106,38 @@ export function CreateChartWithAIDialog({
   };
 
   const handleStop = () => {
-    // The server action cannot be aborted, so this abandons the result rather than the request.
+    abortRef.current?.abort();
     runIdRef.current += 1;
     setIsGenerating(false);
   };
 
-  const handleGenerate = async (event: SyntheticEvent<HTMLFormElement>) => {
+  const handleGenerate = (event: SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!canGenerate || !feedbackDirectoryId) return;
 
     const runId = runIdRef.current + 1;
     runIdRef.current = runId;
+    const controller = new AbortController();
+    abortRef.current = controller;
     setIsGenerating(true);
 
-    try {
-      const result = await generateAIChartAction({
-        workspaceId,
-        prompt: prompt.trim(),
-        feedbackDirectoryId,
-      });
-
-      // Stopped, or the dialog was closed and reopened: this result is no longer wanted.
-      if (runIdRef.current !== runId) return;
-
-      if (result?.data) {
-        setIsGenerating(false);
-        onOpenChange(false);
-        onChartGenerated(result.data);
-        return;
+    generateMutation.mutate(
+      { workspaceId, datasetId: feedbackDirectoryId, prompt: prompt.trim(), signal: controller.signal },
+      {
+        onSuccess: (chart) => {
+          // Stopped, or the dialog was closed and reopened: this result is no longer wanted.
+          if (runIdRef.current !== runId) return;
+          setIsGenerating(false);
+          onOpenChange(false);
+          onChartGenerated(chart);
+        },
+        onError: (error) => {
+          if (runIdRef.current !== runId) return;
+          toast.error(getAIChartErrorMessage(error, t));
+          setIsGenerating(false);
+        },
       }
-
-      toast.error(getTranslatedAIChartError(getFormattedErrorMessage(result), t));
-      setIsGenerating(false);
-    } catch (error: unknown) {
-      if (runIdRef.current !== runId) return;
-      toast.error(error instanceof Error ? error.message : t("common.something_went_wrong_please_try_again"));
-      setIsGenerating(false);
-    }
+    );
   };
 
   const handlePromptKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {

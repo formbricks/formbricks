@@ -1,0 +1,59 @@
+post:
+  operationId: duplicateDashboardV3
+  summary: Duplicate a dashboard
+  description: |
+    Copies a dashboard, in one transaction, with its layout. The copy **shares** the original's
+    charts: its widgets point at the same charts, so editing one of them changes both dashboards. To
+    change a chart on the copy only, duplicate the chart and repoint the copy's widget. Needs write
+    access to the dashboard's workspace. A `name` already used in the workspace answers 409.
+  tags:
+    - V3 Dashboards
+  parameters:
+    - $ref: ../components/parameters/DashboardIdPath.yml
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/DashboardDuplicateRequest.yml
+  responses:
+    "201":
+      description: The copy
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+        Location:
+          schema:
+            type: string
+          example: /api/v3/dashboards/cldash00000000000000000002
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/DashboardResource.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3DashboardsForbidden.yml
+    "409":
+      $ref: ../components/responses/V3DashboardsConflict.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

@@ -1,0 +1,45 @@
+type: object
+required:
+  - workspaceId
+  - datasetId
+  - type
+  - query
+properties:
+  workspaceId:
+    type: string
+    format: cuid2
+  datasetId:
+    type: string
+    format: cuid2
+    description: The Feedback Dataset to read; needs read access to it from `workspaceId`.
+  type:
+    type: string
+    enum:
+      - area
+      - bar
+      - pie
+      - big_number
+      - matrix
+    description: The chart type. A `big_number` shows one value, so its grouping is dropped.
+  query:
+    $ref: ./ChartQuery.yml
+  dateRange:
+    description: >-
+      Replaces the query's date range on `FeedbackRecords.collectedAt`: a preset, `all-time` to
+      remove it, or `{ from, to }` ISO calendar dates. Read in the organization's display time zone.
+    oneOf:
+      - type: string
+        example: last 7 days
+      - type: object
+        required:
+          - from
+          - to
+        properties:
+          from:
+            type: string
+            format: date
+          to:
+            type: string
+            format: date
+        additionalProperties: false
+additionalProperties: false
