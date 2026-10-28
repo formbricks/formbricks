@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import { shouldRetryQuery } from "@/modules/api/lib/query-client";
+import { QUERY_RETRY } from "@/modules/api/lib/query-client";
 import { getEmbeddedDataUsage, listEmbeddedData } from "./api-client";
 
 export const embeddedDataKeys = {
@@ -19,7 +19,7 @@ export const embeddedDataListQueryOptions = (workspaceId: string) =>
   queryOptions({
     queryKey: embeddedDataKeys.list(workspaceId),
     queryFn: ({ signal }) => listEmbeddedData(workspaceId, { signal }),
-    retry: shouldRetryQuery,
+    ...QUERY_RETRY,
   });
 
 /** The surveys linking one field — fetched when its popover opens, not with the list. */
@@ -27,5 +27,5 @@ export const embeddedDataUsageQueryOptions = (id: string) =>
   queryOptions({
     queryKey: embeddedDataKeys.usage(id),
     queryFn: ({ signal }) => getEmbeddedDataUsage(id, { signal }),
-    retry: shouldRetryQuery,
+    ...QUERY_RETRY,
   });

@@ -2,8 +2,8 @@ import "server-only";
 import { AuthenticationError, OperationNotAllowedError, UnknownError } from "@formbricks/types/errors";
 import type { TIntegrationInput } from "@formbricks/types/integration";
 import type { TIntegrationGoogleSheets } from "@formbricks/types/integration/google-sheet";
-import { applyRateLimitOrRespond } from "@/app/api/internal/lib/rate-limit";
 import { requireSessionWorkspaceAccess } from "@/app/api/v3/lib/auth";
+import { applyRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
 import {
   noContentResponse,
   problemBadGateway,

@@ -33,11 +33,15 @@ export const buildApiUrl = (path: string, searchParams?: TSearchParams): string 
 const transportError = (cause: unknown) =>
   new V3ApiError({ status: 0, detail: "", code: "network_error", cause });
 
-const readData = async <T>(response: Response): Promise<T> => {
+/** One page of a list route: its items and the cursor to the next page. */
+export type TApiListPage<T> = { data: T[]; meta: { limit: number; nextCursor: string | null } };
+
+/** The response body, parsed: the whole `{ data, … }` envelope, or `undefined` for a 204. */
+const readEnvelope = async <T>(response: Response): Promise<T> => {
   if (!response.ok) throw await parseV3ApiError(response);
   if (response.status === 204) return undefined as T;
   try {
-    return ((await response.json()) as { data: T }).data;
+    return (await response.json()) as T;
   } catch (error) {
     // A 2xx that isn't our JSON, e.g. a proxy's or a challenge page's HTML.
     throw transportError(error);
@@ -53,35 +57,51 @@ const request = async <T>(url: string, init: RequestInit): Promise<T> => {
     if (init.signal?.aborted && init.signal.reason?.name === "AbortError") throw error;
     throw transportError(error);
   }
-  return readData<T>(response);
+  return readEnvelope<T>(response);
 };
 
+const unwrap = <T>(envelope: { data: T } | undefined): T => envelope?.data as T;
+
 /** `GET` a resource and unwrap its `{ data }` envelope. Throws a `V3ApiError` on any failure. */
-export const getApiData = <T>(url: string, { signal }: { signal?: AbortSignal } = {}): Promise<T> =>
-  request<T>(url, { method: "GET", cache: "no-store", signal });
+export const getApiData = async <T>(url: string, { signal }: { signal?: AbortSignal } = {}): Promise<T> =>
+  unwrap(await request<{ data: T }>(url, { method: "GET", cache: "no-store", signal }));
+
+/** `GET` one page of a list route, keeping its `meta` (the next cursor) along with the items. */
+export const getApiPage = <T>(
+  url: string,
+  { signal }: { signal?: AbortSignal } = {}
+): Promise<TApiListPage<T>> => request<TApiListPage<T>>(url, { method: "GET", cache: "no-store", signal });
 
 /**
  * Send a write and unwrap its `{ data }` envelope (`undefined` for a 204). Throws a `V3ApiError` on any
  * failure, which callers turn into a message with `getV3ApiErrorMessage`.
  */
-export const sendApiRequest = <T>(
+export const sendApiRequest = async <T>(
   url: string,
   {
     method,
     body,
     timeoutMs = API_MUTATION_TIMEOUT_MS,
+    signal,
   }: {
     method: "POST" | "PUT" | "PATCH" | "DELETE";
     body?: unknown;
     /** `null` for a write that is meant to run long; the server finishes it either way. */
     timeoutMs?: number | null;
+    /** The caller's own abort (a query's cancellation, a Stop button), on top of the timeout. */
+    signal?: AbortSignal;
   }
-): Promise<T> =>
-  request<T>(url, {
-    method,
-    cache: "no-store",
-    ...(body === undefined
-      ? {}
-      : { headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }),
-    ...(timeoutMs === null ? {} : { signal: AbortSignal.timeout(timeoutMs) }),
-  });
+): Promise<T> => {
+  const timeout = timeoutMs === null ? undefined : AbortSignal.timeout(timeoutMs);
+  const combined = signal && timeout ? AbortSignal.any([signal, timeout]) : (signal ?? timeout);
+  return unwrap(
+    await request<{ data: T }>(url, {
+      method,
+      cache: "no-store",
+      ...(body === undefined
+        ? {}
+        : { headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }),
+      ...(combined ? { signal: combined } : {}),
+    })
+  );
+};

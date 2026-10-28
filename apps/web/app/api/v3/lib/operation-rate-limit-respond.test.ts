@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { TooManyRequestsError } from "@formbricks/types/errors";
-import { applyRateLimitOrRespond } from "./rate-limit";
+import { applyRateLimitOrRespond } from "./operation-rate-limit";
 
 const applyRateLimit = vi.hoisted(() => vi.fn());
 vi.mock("server-only", () => ({}));
+vi.mock("@formbricks/logger", () => ({ logger: { withContext: vi.fn(() => ({ warn: vi.fn() })) } }));
 vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyRateLimit }));
 
 const CONFIG = { interval: 60, allowedPerInterval: 5, namespace: "action:test" };

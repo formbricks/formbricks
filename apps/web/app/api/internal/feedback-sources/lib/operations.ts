@@ -1,8 +1,8 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
 import { InvalidInputError, OperationNotAllowedError } from "@formbricks/types/errors";
-import { applyRateLimitOrRespond } from "@/app/api/internal/lib/rate-limit";
 import { requireSessionWorkspaceAccess } from "@/app/api/v3/lib/auth";
+import { applyRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
 import {
   createdResponse,
   noContentResponse,

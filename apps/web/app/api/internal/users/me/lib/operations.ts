@@ -11,8 +11,8 @@ import {
   getNotificationSettingsView,
   updateNotificationSetting,
 } from "@/app/(app)/workspaces/[workspaceId]/settings/account/notifications/lib/notification-settings";
-import { applyRateLimitOrRespond, rateLimitedResponse } from "@/app/api/internal/lib/rate-limit";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
+import { applyRateLimitOrRespond, rateLimitedResponse } from "@/app/api/v3/lib/operation-rate-limit";
 import {
   noContentResponse,
   problemBadRequest,

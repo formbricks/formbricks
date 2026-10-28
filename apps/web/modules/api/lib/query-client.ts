@@ -1,5 +1,5 @@
 import { QueryClient, defaultShouldDehydrateQuery } from "@tanstack/react-query";
-import { V3ApiError } from "@/modules/api/lib/v3-client";
+import { retryUnlessClientError, v3RetryDelay } from "@/modules/api/lib/v3-client";
 
 /**
  * How long fetched data counts as fresh. Non-zero so data a server component prefetched and hydrated is not
@@ -7,17 +7,17 @@ import { V3ApiError } from "@/modules/api/lib/v3-client";
  */
 export const QUERY_STALE_TIME_MS = 30_000;
 
-const MAX_QUERY_RETRIES = 2;
+const MAX_QUERY_RETRIES = 3;
 
 /**
- * Retry a failed read only when retrying can help: a network failure or a 5xx. A 4xx (forbidden, invalid
- * input, not authenticated) answers the same way every time, so retrying it only delays the error the user
- * needs to see.
+ * The house retry rule for reads, also for a query that has to carry it itself (one rendered under a client
+ * without these defaults): retry a request that got no answer or a 5xx, never a 4xx, which answers the
+ * same way every time, except a 429 asking for a few seconds' wait (see `retryUnlessClientError`).
  */
-export const shouldRetryQuery = (failureCount: number, error: unknown): boolean => {
-  if (error instanceof V3ApiError && error.status < 500) return false;
-  return failureCount < MAX_QUERY_RETRIES;
-};
+export const QUERY_RETRY = {
+  retry: retryUnlessClientError(MAX_QUERY_RETRIES),
+  retryDelay: v3RetryDelay,
+} as const;
 
 /**
  * The app's `QueryClient` with house defaults, for client providers and for server-side prefetching alike,
@@ -29,7 +29,7 @@ export const shouldRetryQuery = (failureCount: number, error: unknown): boolean 
 export const makeQueryClient = (): QueryClient =>
   new QueryClient({
     defaultOptions: {
-      queries: { staleTime: QUERY_STALE_TIME_MS, retry: shouldRetryQuery },
+      queries: { staleTime: QUERY_STALE_TIME_MS, ...QUERY_RETRY },
       dehydrate: {
         // Also hand over queries still pending when the server finished rendering, so a prefetch that was
         // not awaited streams in instead of being fetched again.

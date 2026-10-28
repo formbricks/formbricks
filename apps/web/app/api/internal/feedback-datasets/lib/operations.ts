@@ -1,6 +1,6 @@
 import "server-only";
 import { InvalidInputError } from "@formbricks/types/errors";
-import { applyRateLimitOrRespond } from "@/app/api/internal/lib/rate-limit";
+import { applyRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
 import {
   createdResponse,
   problemBadGateway,

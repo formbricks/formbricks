@@ -1,22 +1,28 @@
 import { describe, expect, test } from "vitest";
-import { QUERY_STALE_TIME_MS, makeQueryClient, shouldRetryQuery } from "./query-client";
+import { QUERY_RETRY, QUERY_STALE_TIME_MS, makeQueryClient } from "./query-client";
 import { V3ApiError } from "./v3-client";
 
-describe("shouldRetryQuery", () => {
-  test.each([400, 401, 403, 404, 422, 429])(
-    "never retries a %i: it answers the same way every time",
-    (status) => {
-      expect(shouldRetryQuery(0, new V3ApiError({ status, detail: "x" }))).toBe(false);
-    }
-  );
+describe("QUERY_RETRY", () => {
+  const { retry } = QUERY_RETRY;
 
-  test("retries a 5xx and a network failure, at most twice", () => {
+  test.each([400, 401, 403, 404, 422])("never retries a %i: it answers the same way every time", (status) => {
+    expect(retry(0, new V3ApiError({ status, detail: "x" }))).toBe(false);
+  });
+
+  test("retries a 5xx, a request that got no answer, and a failed fetch, at most three times", () => {
     const serverError = new V3ApiError({ status: 503, detail: "x" });
+    const noAnswer = new V3ApiError({ status: 0, detail: "" });
     const networkError = new TypeError("Failed to fetch");
 
-    expect(shouldRetryQuery(0, serverError)).toBe(true);
-    expect(shouldRetryQuery(1, networkError)).toBe(true);
-    expect(shouldRetryQuery(2, serverError)).toBe(false);
+    expect(retry(0, serverError)).toBe(true);
+    expect(retry(1, noAnswer)).toBe(true);
+    expect(retry(2, networkError)).toBe(true);
+    expect(retry(3, serverError)).toBe(false);
+  });
+
+  test("waits out a 429 that asks for a short wait, but not a spent budget", () => {
+    expect(retry(0, new V3ApiError({ status: 429, detail: "busy", retryAfter: 1 }))).toBe(true);
+    expect(retry(0, new V3ApiError({ status: 429, detail: "spent", retryAfter: 1800 }))).toBe(false);
   });
 });
 
@@ -25,7 +31,8 @@ describe("makeQueryClient", () => {
     const options = makeQueryClient().getDefaultOptions();
 
     expect(options.queries?.staleTime).toBe(QUERY_STALE_TIME_MS);
-    expect(options.queries?.retry).toBe(shouldRetryQuery);
+    expect(options.queries?.retry).toBe(QUERY_RETRY.retry);
+    expect(options.queries?.retryDelay).toBe(QUERY_RETRY.retryDelay);
     expect(options.mutations?.retry).toBeUndefined();
   });
 
