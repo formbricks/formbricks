@@ -106,6 +106,7 @@ export const handleExportRequest = async ({
       survey,
       plan,
       filter: body.filter,
+      excludedColumns: body.excludedColumns,
       isQuotasAllowed,
       timeZone: organization?.displayTimeZone ?? "UTC",
       signal,

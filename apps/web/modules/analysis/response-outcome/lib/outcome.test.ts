@@ -3,6 +3,7 @@ import {
   OUTCOME_BATCH_SIZE,
   chunkIds,
   patchOutcomes,
+  responseStatus,
   shouldDropAfterOutcome,
   snapshotOutcomes,
 } from "./outcome";
@@ -56,5 +57,14 @@ describe("shouldDropAfterOutcome", () => {
     expect(shouldDropAfterOutcome("lowQuality", "lowQuality")).toBe(false);
     expect(shouldDropAfterOutcome("all", null)).toBe(false);
     expect(shouldDropAfterOutcome("complete", "lowQuality")).toBe(false);
+  });
+});
+
+describe("responseStatus", () => {
+  test("Low quality wins over finished or not, otherwise the response's own state", () => {
+    expect(responseStatus("complete", "lowQuality")).toBe("lowQuality");
+    expect(responseStatus("notCompleted", "lowQuality")).toBe("lowQuality");
+    expect(responseStatus("complete", null)).toBe("complete");
+    expect(responseStatus("notCompleted", undefined)).toBe("notCompleted");
   });
 });

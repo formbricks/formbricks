@@ -1,8 +1,6 @@
 "use client";
 
-import { TFunction } from "i18next";
 import React from "react";
-import { useTranslation } from "react-i18next";
 import { getComputedEmbeddedFields, getIngestedStorageKeys } from "@formbricks/types/embedded-data-resolver";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TResponseDataValue, TResponseTableData, TResponseWithQuotas } from "@formbricks/types/responses";
@@ -89,15 +87,12 @@ const extractResponseData = (response: TResponseWithQuotas, survey: TSurvey): Re
 const mapResponsesToTableData = (
   responses: TResponseWithQuotas[],
   survey: TSurvey,
-  t: TFunction,
   locale: TUserLocale
 ): TResponseTableData[] => {
   return responses.map((response) => ({
     responseData: extractResponseData(response, survey),
     createdAt: response.createdAt,
-    status: response.finished
-      ? t("workspace.surveys.responses.completed")
-      : t("workspace.surveys.responses.not_completed"),
+    status: response.finished ? "complete" : "notCompleted",
     responseId: response.id,
     singleUseId: response.singleUseId,
     tags: response.tags,
@@ -137,12 +132,11 @@ export const ResponseDataView: React.FC<Readonly<ResponseDataViewProps>> = ({
   isOpenedByCreatives,
   outcomeActions,
 }) => {
-  const { t } = useTranslation();
   const [selectedResponseId, setSelectedResponseId] = React.useState<string | null>(null);
   const setSelectedResponseIdTransition = React.useCallback((id: string | null) => {
     React.startTransition(() => setSelectedResponseId(id));
   }, []);
-  const data = mapResponsesToTableData(responses, survey, t, locale);
+  const data = mapResponsesToTableData(responses, survey, locale);
 
   return (
     <div className="w-full">

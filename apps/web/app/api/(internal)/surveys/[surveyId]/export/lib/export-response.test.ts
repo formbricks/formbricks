@@ -30,8 +30,9 @@ vi.mock("@/lib/analysis-export", async (importOriginal) => ({
   openAnalysisExport: mocks.openAnalysisExport,
 }));
 
-const survey = { id: "survey1", name: "My Survey" } as never;
 const signal = new AbortController().signal;
+const withId = { ...sampleSurvey, id: "survey1" };
+const survey = { ...withId, name: "My Survey" } as never;
 const baseArgs = { survey, isQuotasAllowed: false, timeZone: "UTC", signal };
 
 const analysisPlan = (display: "codes" | "both", output: "csv" | "xlsx") =>
@@ -51,17 +52,44 @@ beforeEach(() => {
 describe("countExportResponses", () => {
   test("the Standard export counts every matching response and leaves none out", async () => {
     mocks.count.mockResolvedValue(9);
-    expect(await countExportResponses({ survey, plan: { kind: "standard", format: "csv" } })).toEqual({
-      included: 9,
-      lowQualityLeftOut: 0,
-      excel: null,
+    const counts = await countExportResponses({
+      survey: withId as never,
+      plan: { kind: "standard", format: "csv" },
     });
-    expect(mocks.count).toHaveBeenCalledWith({ where: { surveyId: "survey1", finished: true } });
+    expect(counts).toMatchObject({ included: 9, lowQualityLeftOut: 0, total: 9, excel: null });
+    expect(mocks.count).toHaveBeenCalledWith({ where: { surveyId: withId.id, finished: true } });
+    expect(mocks.count).toHaveBeenCalledWith({ where: { surveyId: withId.id } });
+  });
+
+  test("the Standard export lists its columns for the picker, one entry per question", async () => {
+    mocks.count.mockResolvedValue(1);
+    const { columnGroups } = await countExportResponses({
+      survey: withId as never,
+      plan: { kind: "standard", format: "csv" },
+    });
+    expect(columnGroups.slice(0, 3)).toEqual([
+      { id: "no", label: "no." },
+      { id: "responseId", label: "responseId" },
+      { id: "timestamp", label: "timestamp" },
+    ]);
+    expect(columnGroups.some((group) => group.id.startsWith("q:"))).toBe(true);
+  });
+
+  test("an Analysis export lists its own columns", async () => {
+    mocks.count.mockResolvedValue(1);
+    const { columnGroups } = await countExportResponses({
+      survey: withId as never,
+      plan: analysisPlan("codes", "csv"),
+    });
+    expect(columnGroups[0]).toEqual({ id: "r:response_id", label: "responseId" });
   });
 
   test("an Analysis export counts without Low quality and reports how many it leaves out", async () => {
-    mocks.count.mockImplementation(async ({ where }: { where: { AND: [unknown, { outcome: unknown }] } }) =>
-      where.AND[1].outcome === null ? 8 : 3
+    mocks.count.mockImplementation(
+      async ({ where }: { where: { AND?: [unknown, { outcome: unknown }] } }) => {
+        if (!where.AND) return 20;
+        return where.AND[1].outcome === null ? 8 : 3;
+      }
     );
     const plan = {
       kind: "analysis",
@@ -70,9 +98,10 @@ describe("countExportResponses", () => {
       output: "csv",
       include: { datamap: false, unmappedValues: false, spssSyntax: false },
     } as const;
-    expect(await countExportResponses({ survey: sampleSurvey as never, plan })).toMatchObject({
+    expect(await countExportResponses({ survey: withId as never, plan })).toMatchObject({
       included: 8,
       lowQualityLeftOut: 3,
+      total: 20,
     });
   });
 
@@ -86,7 +115,7 @@ describe("countExportResponses", () => {
       include: { datamap: false, unmappedValues: false, spssSyntax: false },
     } as const;
     expect(
-      await countExportResponses({ survey: sampleSurvey as never, plan, filter: { outcome: "lowQuality" } })
+      await countExportResponses({ survey: withId as never, plan, filter: { outcome: "lowQuality" } })
     ).toMatchObject({
       included: 4,
       lowQualityLeftOut: 0,
@@ -98,7 +127,7 @@ describe("countExportResponses", () => {
       mocks.cap.value = cap;
       mocks.count.mockResolvedValue(8);
       return countExportResponses({
-        survey: sampleSurvey as never,
+        survey: withId as never,
         plan: analysisPlan(display, "csv"),
       });
     };
@@ -138,12 +167,49 @@ describe("buildExportResponse", () => {
       filter: { responseIds: ["a"] },
     });
     if (!result.ok) throw new Error("expected a file");
-    expect(mocks.getResponseDownloadFile).toHaveBeenCalledWith("survey1", "csv", { responseIds: ["a"] });
+    expect(mocks.getResponseDownloadFile).toHaveBeenCalledWith(withId.id, "csv", { responseIds: ["a"] }, []);
     expect(await result.response.text()).toBe('No.,Response ID\n"1","r1"');
     expect(mocks.openAnalysisExport).not.toHaveBeenCalled();
     expect(result.response.headers.get("Content-Disposition")).toBe(
       'attachment; filename="export-my-survey-2026-10-27-00-00-00.csv"'
     );
+  });
+
+  test("columns switched off in the modal reach the Standard export as group ids", async () => {
+    mocks.getResponseDownloadFile.mockResolvedValue({ fileContents: "x", fileName: "x.csv" });
+    await buildExportResponse({
+      ...baseArgs,
+      plan: { kind: "standard", format: "csv" },
+      excludedColumns: ["no", "tags"],
+    });
+    expect(mocks.getResponseDownloadFile).toHaveBeenCalledWith(withId.id, "csv", undefined, ["no", "tags"]);
+  });
+
+  test("with every column switched off there is nothing to export", async () => {
+    const every = (
+      await countExportResponses({ survey: withId as never, plan: { kind: "standard", format: "csv" } })
+    ).columnGroups.map((group) => group.id);
+    const result = await buildExportResponse({
+      ...baseArgs,
+      plan: { kind: "standard", format: "csv" },
+      excludedColumns: every,
+    });
+    expect(result).toMatchObject({ ok: false, reason: "no_columns" });
+    expect(mocks.getResponseDownloadFile).not.toHaveBeenCalled();
+  });
+
+  test("an Analysis export drops the columns of a switched-off group", async () => {
+    mocks.openAnalysisExport.mockResolvedValue(buildSampleExport("codes"));
+    const result = await buildExportResponse({
+      ...baseArgs,
+      plan: analysisPlan("codes", "csv"),
+      excludedColumns: ["r:language", "r:outcome"],
+    });
+    if (!result.ok) throw new Error("expected a file");
+    const header = (await result.response.text()).split("\n")[0];
+    expect(header).toContain("response_id");
+    expect(header).not.toContain("language");
+    expect(header).not.toContain("outcome");
   });
 
   test("the Standard Excel file is the base64 the existing path built, decoded", async () => {
@@ -177,7 +243,7 @@ describe("buildExportResponse", () => {
     const text = new TextDecoder().decode(bytes);
     expect(text.split("\r\n").filter(Boolean)).toHaveLength(4);
     expect(mocks.openAnalysisExport).toHaveBeenCalledWith(
-      expect.objectContaining({ surveyId: "survey1", answers: "codes" })
+      expect.objectContaining({ surveyId: withId.id, answers: "codes" })
     );
     expect(result.response.headers.get("Content-Disposition")).toMatch(/\.csv"$/);
   });

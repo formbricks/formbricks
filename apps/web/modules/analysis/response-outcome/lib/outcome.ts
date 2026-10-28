@@ -51,3 +51,15 @@ export type TOutcomeActions = {
   /** Runs once the server has saved `outcome` for `ids`. */
   onSaved: (ids: string[], outcome: TResponseOutcome | null) => void;
 };
+
+/**
+ * What the table's Status column says: a response marked Low quality is that, whether or not it was finished;
+ * otherwise it is Complete or Not completed (a partial response). `status` is the row's own finished state.
+ */
+export const responseStatus = (
+  status: string,
+  outcome: TResponseOutcome | null | undefined
+): "complete" | "notCompleted" | "lowQuality" => {
+  if (outcome === "lowQuality") return "lowQuality";
+  return status === "notCompleted" ? "notCompleted" : "complete";
+};
