@@ -98,17 +98,66 @@ const labelOf = (option: TRecord): Record<string, string> => {
   );
 };
 
+type TOptionList = (typeof OPTION_LISTS)[number];
+
+const indexOptionsById = (options: TRecord[]): Map<string, number> => {
+  const indexById = new Map<string, number>();
+  options.forEach((option, index) => {
+    if (typeof option.id === "string" && !indexById.has(option.id)) indexById.set(option.id, index);
+  });
+  return indexById;
+};
+
+const checkOptionCode = (
+  storedOption: TRecord,
+  nextOption: TRecord,
+  context: { optionId: string; elementId: string; noun: string; optionPath: (string | number)[] }
+): TPublishedLockViolation[] => {
+  const storedCode = codeOf(storedOption.code);
+  if (storedCode === undefined || !isCodeChange(storedCode, nextOption.code)) return [];
+  const { optionId, elementId, noun, optionPath } = context;
+  return [
+    {
+      kind: "answer_code_changed",
+      path: [...optionPath, "code"],
+      elementId,
+      optionId,
+      message: `The answer code "${storedCode}" of ${noun} "${optionId}" in question "${elementId}" cannot be changed after the survey is published.`,
+    },
+  ];
+};
+
+const checkOptionLabels = (
+  storedOption: TRecord,
+  nextOption: TRecord,
+  context: { optionId: string; elementId: string; noun: string; optionPath: (string | number)[] }
+): TPublishedLockViolation[] => {
+  const { optionId, elementId, noun, optionPath } = context;
+  const nextLabel = labelOf(nextOption);
+  const violations: TPublishedLockViolation[] = [];
+  for (const [languageCode, storedText] of Object.entries(labelOf(storedOption))) {
+    // An empty translation matched no answer, so filling it in cannot orphan one.
+    if (storedText.trim() === "" || nextLabel[languageCode] === storedText) continue;
+    violations.push({
+      kind: "option_text_changed",
+      path: [...optionPath, "label", languageCode],
+      elementId,
+      optionId,
+      languageCode,
+      message: `The ${languageCode === "default" ? "default-language" : languageCode} text of ${noun} "${optionId}" in question "${elementId}" cannot be changed after the survey is published.`,
+    });
+  }
+  return violations;
+};
+
 const checkOptionList = (
   stored: TLocatedElement,
   next: TLocatedElement,
-  list: (typeof OPTION_LISTS)[number]
+  list: TOptionList
 ): TPublishedLockViolation[] => {
   const violations: TPublishedLockViolation[] = [];
   const nextOptions = optionsOf(next.raw, list.key);
-  const nextIndexById = new Map<string, number>();
-  nextOptions.forEach((option, index) => {
-    if (typeof option.id === "string" && !nextIndexById.has(option.id)) nextIndexById.set(option.id, index);
-  });
+  const nextIndexById = indexOptionsById(nextOptions);
   const listPath = ["blocks", next.blockIndex, "elements", next.elementIndex, list.key];
 
   for (const storedOption of optionsOf(stored.raw, list.key)) {
@@ -128,32 +177,16 @@ const checkOptionList = (
     }
 
     const nextOption = nextOptions[nextIndex];
-    const optionPath = [...listPath, nextIndex];
-
-    const storedCode = codeOf(storedOption.code);
-    if (storedCode !== undefined && isCodeChange(storedCode, nextOption.code)) {
-      violations.push({
-        kind: "answer_code_changed",
-        path: [...optionPath, "code"],
-        elementId: next.id,
-        optionId,
-        message: `The answer code "${storedCode}" of ${list.noun} "${optionId}" in question "${next.id}" cannot be changed after the survey is published.`,
-      });
-    }
-
-    const nextLabel = labelOf(nextOption);
-    for (const [languageCode, storedText] of Object.entries(labelOf(storedOption))) {
-      // An empty translation matched no answer, so filling it in cannot orphan one.
-      if (storedText.trim() === "" || nextLabel[languageCode] === storedText) continue;
-      violations.push({
-        kind: "option_text_changed",
-        path: [...optionPath, "label", languageCode],
-        elementId: next.id,
-        optionId,
-        languageCode,
-        message: `The ${languageCode === "default" ? "default-language" : languageCode} text of ${list.noun} "${optionId}" in question "${next.id}" cannot be changed after the survey is published.`,
-      });
-    }
+    const context = {
+      optionId,
+      elementId: next.id,
+      noun: list.noun,
+      optionPath: [...listPath, nextIndex],
+    };
+    violations.push(
+      ...checkOptionCode(storedOption, nextOption, context),
+      ...checkOptionLabels(storedOption, nextOption, context)
+    );
   }
 
   return violations;
