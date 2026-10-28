@@ -653,7 +653,7 @@ describe("surveys", () => {
         filter: [],
       };
 
-      const result = getFormattedFilters(survey, selectedFilter, {} as any);
+      const result = getFormattedFilters(survey, selectedFilter, { from: undefined });
 
       expect(result.finished).toBe(true);
     });

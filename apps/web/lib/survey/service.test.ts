@@ -868,9 +868,9 @@ describe("Tests for updateSurvey", () => {
       });
       const withElement = (element: unknown) => [{ id: "block1", name: "Block 1", elements: [element] }];
       const stored = (status: string) =>
-        ({ ...mockSurveyOutput, status, blocks: withElement(choiceElement()) }) as any;
+        ({ ...mockSurveyOutput, status, blocks: withElement(choiceElement()) }) as never;
       const incoming = (element: unknown, status = "inProgress") =>
-        ({ ...updateSurveyInput, status, blocks: withElement(element) }) as any;
+        ({ ...updateSurveyInput, status, blocks: withElement(element) }) as never;
 
       test.each([
         ["a question code", { code: "renamed" }, /question code "fruit"/],
@@ -933,7 +933,7 @@ describe("Tests for updateSurvey", () => {
 
       test("does not apply to a draft", async () => {
         prisma.survey.findUnique.mockResolvedValueOnce(stored("draft"));
-        prisma.survey.update.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" } as any);
+        prisma.survey.update.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" } as never);
 
         await updateSurveyInternal(incoming(choiceElement({ code: "renamed" }), "draft"), true);
 
