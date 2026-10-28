@@ -298,9 +298,15 @@ describe("PATCH /api/internal/workspaces/{workspaceId}", () => {
     ["only the baseline", { expectedUpdatedAt: "2026-10-01T10:00:00.000Z" }],
     ["a blank name", { name: "   " }],
     ["a logo without the baseline", { logo: { url: "https://example.com/logo.png" } }],
-    ["organizationId, the tenant anchor (ENG-1919)", { organizationId: "clorg22222222222222222222" }],
-    ["teamIds, which is not a workspace setting", { teamIds: ["clteam1111111111111111111"] }],
-    ["custom CSS, which has its own resource (ENG-2949)", { customCss: "body{}" }],
+    [
+      "organizationId, the tenant anchor (ENG-1919)",
+      { name: "Moved", organizationId: "clorg22222222222222222222" },
+    ],
+    [
+      "teamIds, which is not a workspace setting",
+      { name: "Renamed", teamIds: ["clteam1111111111111111111"] },
+    ],
+    ["custom CSS, which has its own resource (ENG-2949)", { name: "Renamed", customCss: "body{}" }],
   ])("answers 400 for %s", async (_label, body) => {
     expect((await patch(body)).status).toBe(400);
     expect(mocks.updateWorkspace).not.toHaveBeenCalled();
