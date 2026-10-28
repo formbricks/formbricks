@@ -8,6 +8,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import type { TOutcomeActions } from "@/modules/analysis/response-outcome/lib/outcome";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { DecrementQuotasCheckbox } from "@/modules/ui/components/decrement-quotas-checkbox";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
@@ -33,6 +34,8 @@ interface SingleResponseCardProps {
   setSelectedResponseId?: (responseId: string | null) => void;
   locale: TUserLocale;
   renderHeader?: (props: SingleResponseCardHeaderRenderProps) => ReactNode;
+  /** Set where the card can mark and restore Low quality (the responses page); omitted elsewhere. */
+  outcomeActions?: TOutcomeActions;
 }
 
 export const SingleResponseCard = ({
@@ -46,6 +49,7 @@ export const SingleResponseCard = ({
   setSelectedResponseId,
   locale,
   renderHeader,
+  outcomeActions,
 }: Readonly<SingleResponseCardProps>) => {
   const hasQuotas = (response?.quotas && response.quotas.length > 0) ?? false;
   const [decrementQuotas, setDecrementQuotas] = useState(hasQuotas);
@@ -153,6 +157,7 @@ export const SingleResponseCard = ({
             isReadOnly={isReadOnly}
             setDeleteDialogOpen={setDeleteDialogOpen}
             locale={locale}
+            outcomeActions={outcomeActions}
           />
         )}
 

@@ -27,6 +27,8 @@ import { ResponseTableCell } from "@/app/(app)/workspaces/[workspaceId]/surveys/
 import { generateResponseTableColumns } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableColumns";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { deleteResponseAction } from "@/modules/analysis/components/SingleResponseCard/actions";
+import { BulkOutcomeActions } from "@/modules/analysis/response-outcome/components/bulk-outcome-actions";
+import type { TOutcomeActions } from "@/modules/analysis/response-outcome/lib/outcome";
 import { Button } from "@/modules/ui/components/button";
 import {
   DataTableHeader,
@@ -62,6 +64,8 @@ interface ResponseTableProps {
   setSelectedResponseId: (id: string | null) => void;
   /** Creatives open this survey: its table then shows "Opened by creative" by default. */
   isOpenedByCreatives: boolean;
+  /** Marking and restoring Low quality, wired to the page's list. */
+  outcomeActions: TOutcomeActions;
 }
 
 export const ResponseTable = ({
@@ -82,6 +86,7 @@ export const ResponseTable = ({
   selectedResponseId,
   setSelectedResponseId,
   isOpenedByCreatives,
+  outcomeActions,
 }: Readonly<ResponseTableProps>) => {
   const { t } = useTranslation();
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -238,6 +243,15 @@ export const ResponseTable = ({
           deleteAction={deleteResponse}
           downloadRowsAction={openExportForSelection}
           isQuotasAllowed={isQuotasAllowed}
+          renderExtraActions={(selectionTable) =>
+            isReadOnly ? null : (
+              <BulkOutcomeActions
+                table={selectionTable}
+                workspaceId={survey.workspaceId}
+                actions={outcomeActions}
+              />
+            )
+          }
         />
         <div className="w-fit max-w-full overflow-hidden overflow-x-auto rounded-xl border border-slate-200">
           <div className="w-full overflow-x-auto">
@@ -308,6 +322,7 @@ export const ResponseTable = ({
             user={user}
             environmentTags={environmentTags}
             isReadOnly={isReadOnly}
+            outcomeActions={outcomeActions}
             updateResponse={updateResponse}
             updateResponseList={updateResponseList}
             setSelectedResponseId={setSelectedResponseId}

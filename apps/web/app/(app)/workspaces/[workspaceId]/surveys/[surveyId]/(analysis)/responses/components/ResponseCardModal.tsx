@@ -6,6 +6,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
 import { SingleResponseCard } from "@/modules/analysis/components/SingleResponseCard";
+import type { TOutcomeActions } from "@/modules/analysis/response-outcome/lib/outcome";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -29,6 +30,7 @@ interface ResponseCardModalProps {
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   locale: TUserLocale;
+  outcomeActions?: TOutcomeActions;
 }
 
 export const ResponseCardModal = ({
@@ -44,6 +46,7 @@ export const ResponseCardModal = ({
   open,
   setOpen,
   locale,
+  outcomeActions,
 }: ResponseCardModalProps) => {
   const [currentIndex, setCurrentIndex] = useState<number | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
@@ -125,6 +128,7 @@ export const ResponseCardModal = ({
               updateResponseList={updateResponseList}
               setSelectedResponseId={setSelectedResponseId}
               locale={locale}
+              outcomeActions={outcomeActions}
             />
           </div>
         </DialogBody>

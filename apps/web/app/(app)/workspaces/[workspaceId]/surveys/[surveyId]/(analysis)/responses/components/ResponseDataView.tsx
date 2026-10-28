@@ -11,6 +11,7 @@ import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
 import { ResponseTable } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTable";
 import { getReservedColumnValues } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/responses/lib/utils";
+import type { TOutcomeActions } from "@/modules/analysis/response-outcome/lib/outcome";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 
 interface ResponseDataViewProps {
@@ -29,6 +30,7 @@ interface ResponseDataViewProps {
   quotas: TSurveyQuota[];
   /** Creatives open this survey: its table then shows "Opened by creative" by default. */
   isOpenedByCreatives: boolean;
+  outcomeActions: TOutcomeActions;
 }
 
 // Helper function to format array values to record with specified keys
@@ -114,6 +116,7 @@ const mapResponsesToTableData = (
     // Resolved here, where the whole response is in hand, so the cells stay dumb lookups.
     reservedValues: getReservedColumnValues(response, locale),
     quotas: response.quotas?.map((quota) => quota.name),
+    outcome: response.outcome ?? null,
   }));
 };
 
@@ -132,6 +135,7 @@ export const ResponseDataView: React.FC<Readonly<ResponseDataViewProps>> = ({
   isQuotasAllowed,
   quotas,
   isOpenedByCreatives,
+  outcomeActions,
 }) => {
   const { t } = useTranslation();
   const [selectedResponseId, setSelectedResponseId] = React.useState<string | null>(null);
@@ -160,6 +164,7 @@ export const ResponseDataView: React.FC<Readonly<ResponseDataViewProps>> = ({
         selectedResponseId={selectedResponseId}
         setSelectedResponseId={setSelectedResponseIdTransition}
         isOpenedByCreatives={isOpenedByCreatives}
+        outcomeActions={outcomeActions}
       />
     </div>
   );
