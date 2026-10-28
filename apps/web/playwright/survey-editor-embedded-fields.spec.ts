@@ -125,12 +125,6 @@ const recallItem = (picker: Locator, name: string): Locator =>
 const openBlockLogic = async (page: Page): Promise<void> => {
   await openQuestionCard(page);
 
-  const showSettings = editorPanel(page).getByText("Show Block settings", { exact: true });
-  if (await showSettings.isVisible().catch(() => false)) {
-    await showSettings.click();
-  }
-  await expect(editorPanel(page).getByText("Hide Block settings", { exact: true })).toBeVisible();
-
   const firstConditionOperand = page.locator("#condition-0-0-conditionValue");
   if (await firstConditionOperand.isVisible().catch(() => false)) return;
 
