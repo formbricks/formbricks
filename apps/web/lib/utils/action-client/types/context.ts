@@ -30,6 +30,7 @@ export type AuditLoggingCtx = {
   actionClassId?: string;
   contactId?: string;
   apiKeyId?: string;
+  oauthConsentId?: string;
   responseId?: string;
   quotaId?: string;
   teamId?: string;

@@ -347,17 +347,6 @@
       "paragraph_3": "Wir verpflichten uns zu höchstem Datenschutz. Mit Self-Hosting behältst Du die <b>volle Kontrolle über Deine Daten</b>.",
       "welcome_to_formbricks": "Willkommen bei Formbricks!"
     },
-    "invite": {
-      "add_another_member": "Weiteres Mitglied hinzufügen",
-      "continue": "Weiter",
-      "failed_to_invite": "Einladung fehlgeschlagen",
-      "invitation_sent_to_email": "Einladung an {email} gesendet",
-      "invite_your_organization_members": "Lade Deine Organisationsmitglieder ein",
-      "life_s_no_fun_alone": "Das Leben macht allein keinen Spaß.",
-      "skip": "Überspringen",
-      "smtp_not_configured": "SMTP nicht konfiguriert",
-      "smtp_not_configured_description": "Einladungen können derzeit nicht versendet werden, da der E-Mail-Dienst nicht konfiguriert ist. Du kannst den Einladungslink später in den Organisationseinstellungen kopieren."
-    },
     "organization": {
       "create": {
         "delete_account": "Konto löschen",

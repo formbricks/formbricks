@@ -12,7 +12,7 @@ export interface TMemberRow {
   email: string;
   role: TOrganizationRole;
   status: TMemberStatus;
-  /** `null` for an invite: there is no account to have two-factor on yet. */
+  /** `null` for an invite (no account yet) and whenever the viewer may not see two-factor state. */
   twoFactorEnabled: boolean | null;
   teamNames: string[];
   /** Invites only: when the invite was sent. */
@@ -26,8 +26,10 @@ export interface TMembershipInput {
     name: string;
     email: string;
     isActive: boolean;
-    twoFactorEnabled: boolean;
-    teamUsers: { team: { name: string } }[];
+    /** Left out of the query for viewers who are not owner or manager. */
+    twoFactorEnabled?: boolean;
+    /** Left out of the query for viewers who are not owner or manager. */
+    teamUsers?: { team: { name: string } }[];
   };
 }
 
@@ -38,7 +40,8 @@ export interface TInviteInput {
   role: TOrganizationRole;
   createdAt: Date;
   expiresAt: Date;
-  teamIds: string[];
+  /** Left out of the query for viewers who are not owner or manager. */
+  teamIds?: string[];
 }
 
 const ROLE_ORDER: Record<TOrganizationRole, number> = { owner: 0, manager: 1, member: 2, billing: 3 };
@@ -65,8 +68,8 @@ export const buildMemberRows = ({
       email: membership.user.email,
       role: membership.role,
       status: membership.user.isActive ? "active" : "inactive",
-      twoFactorEnabled: membership.user.twoFactorEnabled,
-      teamNames: membership.user.teamUsers.map(({ team }) => team.name).sort(byName),
+      twoFactorEnabled: membership.user.twoFactorEnabled ?? null,
+      teamNames: (membership.user.teamUsers ?? []).map(({ team }) => team.name).sort(byName),
       invitedAt: null,
     }))
     .sort((a, b) => ROLE_ORDER[a.role] - ROLE_ORDER[b.role] || byName(a.name || a.email, b.name || b.email));
@@ -79,7 +82,7 @@ export const buildMemberRows = ({
     role: invite.role,
     status: invite.expiresAt.getTime() < now.getTime() ? "expired" : "pending",
     twoFactorEnabled: null,
-    teamNames: invite.teamIds.flatMap((teamId) => teamNameById.get(teamId) ?? []).sort(byName),
+    teamNames: (invite.teamIds ?? []).flatMap((teamId) => teamNameById.get(teamId) ?? []).sort(byName),
     invitedAt: invite.createdAt,
   }));
 

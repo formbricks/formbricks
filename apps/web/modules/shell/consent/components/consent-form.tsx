@@ -13,7 +13,7 @@ import { resolveConsentRedirectUrl } from "../lib/consent-redirect";
 import {
   type TConsentGroupId,
   buildConsentGroups,
-  buildGrantedScope,
+  buildConsentScopeParam,
   canAllowAccess,
   getDefaultSelection,
   hasWriteScope,
@@ -57,7 +57,7 @@ export const ConsentForm = ({ requestedScopes }: Readonly<ConsentFormProps>) => 
       // is why this page has to keep the query it was opened with.
       const response = await authClient.oauth2.consent(
         accept
-          ? { accept, scope: buildGrantedScope({ requested: requestedScopes, selected, keepAccess }) }
+          ? { accept, ...buildConsentScopeParam({ requested: requestedScopes, selected, keepAccess }) }
           : { accept }
       );
       if (response.error) {
@@ -80,7 +80,7 @@ export const ConsentForm = ({ requestedScopes }: Readonly<ConsentFormProps>) => 
     }
   };
 
-  const isAllowed = canAllowAccess({ requested: requestedScopes, selected });
+  const isAllowed = canAllowAccess({ requested: requestedScopes, selected, keepAccess });
 
   return (
     <>

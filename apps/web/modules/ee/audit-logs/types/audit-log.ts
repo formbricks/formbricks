@@ -23,6 +23,8 @@ export const ZAuditTarget = z.enum([
   "membership",
   "twoFactorAuth",
   "apiKey",
+  // A person's OAuth consent for an agent connection (Better Auth `oauthConsent`).
+  "oauthConsent",
   "integration",
   "file",
   "quota",

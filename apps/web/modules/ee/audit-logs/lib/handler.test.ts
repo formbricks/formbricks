@@ -507,6 +507,21 @@ describe("withAuditLogging", () => {
     expect(callArgs.target.type).toBe("embeddedData");
     expect(callArgs.target.id).toBe("embedded-data-1");
   });
+
+  test("resolves targetId for OAuth consent target type", async () => {
+    const oauthConsentCtx = {
+      ...mockCtxBase,
+      auditLoggingCtx: { ...mockCtxBase.auditLoggingCtx, oauthConsentId: "consent-1" },
+    };
+    const handlerImpl = vi.fn().mockResolvedValue("ok");
+    const wrapped = OriginalHandler.withAuditLogging("deleted", "oauthConsent", handlerImpl);
+    await wrapped({ ctx: oauthConsentCtx as any, parsedInput: mockParsedInput });
+    await new Promise(setImmediate);
+    expect(serviceLogAuditEventMockHandle).toHaveBeenCalled();
+    const callArgs = serviceLogAuditEventMockHandle.mock.calls[0][0];
+    expect(callArgs.target.type).toBe("oauthConsent");
+    expect(callArgs.target.id).toBe("consent-1");
+  });
 });
 
 describe("v3 and MCP audit emission", () => {

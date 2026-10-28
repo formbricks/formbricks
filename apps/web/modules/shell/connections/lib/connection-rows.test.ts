@@ -51,6 +51,43 @@ describe("getApiKeyScopes", () => {
   });
 });
 
+describe("mapApiKeyToRow organization access", () => {
+  test("surfaces the member and team management grant next to the scope summary", () => {
+    const row = mapApiKeyToRow(
+      apiKey({ organizationAccess: { accessControl: { read: true, write: true } } }),
+      names
+    );
+    expect(row.access).toEqual({
+      write: [],
+      readOnly: ["surveys", "workflows", "feedbackRecords", "responses", "contacts", "webhooks", "audit"],
+      manageMembers: true,
+    });
+  });
+
+  test("a key with only the organization write grant reaches no workspace data but can manage members", () => {
+    const row = mapApiKeyToRow(
+      apiKey({
+        apiKeyWorkspaces: [],
+        organizationAccess: { accessControl: { read: false, write: true } },
+      }),
+      names
+    );
+    expect(row.access).toEqual({ write: [], readOnly: [], manageMembers: true });
+  });
+
+  test("leaves the flag off without the write grant, and OAuth connections never carry it", () => {
+    expect(mapApiKeyToRow(apiKey(), names).access).not.toHaveProperty("manageMembers");
+    expect(
+      mapOAuthConsentToRow({
+        id: "c",
+        scopes: ["surveys:read"],
+        createdAt: new Date(),
+        client: null,
+      }).access
+    ).not.toHaveProperty("manageMembers");
+  });
+});
+
 describe("mapApiKeyToRow", () => {
   test("names the workspaces with their permission and splits write from read-only access", () => {
     const row = mapApiKeyToRow(

@@ -104,16 +104,24 @@ export const isOfflineAccessRequested = (requested: readonly string[]): boolean 
 /**
  * A grant with no resource scope gives the agent nothing to call, so when the client asked for any, at
  * least one has to stay ticked. A client that asked for none has nothing to choose.
+ *
+ * A request that asked for something but would be granted nothing at all (only scopes this screen does
+ * not know) is refused as well: Better Auth rejects an empty `scope`, and omitting it would grant the
+ * whole original request instead.
  */
 export const canAllowAccess = ({
   requested,
   selected,
+  keepAccess = true,
 }: {
   requested: readonly string[];
   selected: readonly string[];
+  keepAccess?: boolean;
 }): boolean => {
   const askedForResources = requested.some((scope) => parseResourceScope(scope));
-  return !askedForResources || selected.some((scope) => parseResourceScope(scope));
+  if (askedForResources && !selected.some((scope) => parseResourceScope(scope))) return false;
+
+  return requested.length === 0 || buildGrantedScope({ requested, selected, keepAccess }) !== "";
 };
 
 /**
@@ -138,4 +146,16 @@ export const buildGrantedScope = ({
     ...(keepAccess && isOfflineAccessRequested(requested) ? [OFFLINE_ACCESS_SCOPE] : []),
     ...requested.filter((scope) => parseResourceScope(scope) && ticked.has(scope)),
   ].join(" ");
+};
+
+/**
+ * The part of the consent request that carries the scope: `{ scope }`, or nothing at all when the granted
+ * string is empty. Better Auth rejects an empty `scope` but treats an absent one as "what was originally
+ * requested", which is only a correct answer when nothing was requested (see `canAllowAccess`).
+ */
+export const buildConsentScopeParam = (
+  input: Parameters<typeof buildGrantedScope>[0]
+): { scope?: string } => {
+  const scope = buildGrantedScope(input);
+  return scope === "" ? {} : { scope };
 };

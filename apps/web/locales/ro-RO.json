@@ -347,17 +347,6 @@
       "paragraph_3": "Suntem dedicați celui mai înalt nivel de confidențialitate a datelor. Găzduiește local pentru a păstra <b>controlul deplin asupra datelor tale</b>.",
       "welcome_to_formbricks": "Bine ai venit la Formbricks!"
     },
-    "invite": {
-      "add_another_member": "Adaugă încă un membru",
-      "continue": "Continuă",
-      "failed_to_invite": "Nu s-a reușit invitarea",
-      "invitation_sent_to_email": "Invitație trimisă la {email}",
-      "invite_your_organization_members": "Invitați membrii organizației voastre",
-      "life_s_no_fun_alone": "Viața nu este distractivă singur.",
-      "skip": "Omite",
-      "smtp_not_configured": "SMTP neconfigurat",
-      "smtp_not_configured_description": "Invitațiile nu pot fi trimise în acest moment deoarece serviciul de e-mail nu este configurat. Puteți copia linkul de invitație în setările organizației mai târziu."
-    },
     "organization": {
       "create": {
         "delete_account": "Șterge Cont",

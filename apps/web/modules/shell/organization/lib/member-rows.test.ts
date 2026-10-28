@@ -218,3 +218,30 @@ describe("getMemberRowAccess", () => {
     ).toBe(false);
   });
 });
+
+describe("buildMemberRows without sensitive fields", () => {
+  test("rows built from a query that left out two-factor state and teams carry neither", () => {
+    const rows = buildMemberRows({
+      memberships: [
+        { userId: "amy", role: "member", user: { name: "amy", email: "amy@acme.com", isActive: true } },
+      ],
+      invites: [
+        {
+          id: "inv",
+          email: "inv@acme.com",
+          name: null,
+          role: "member",
+          createdAt: new Date("2026-06-08T12:00:00Z"),
+          expiresAt: new Date("2026-06-15T12:00:00Z"),
+        },
+      ],
+      teamNameById: new Map([["t1", "Product"]]),
+      now: NOW,
+    });
+
+    expect(rows.map(({ twoFactorEnabled, teamNames }) => ({ twoFactorEnabled, teamNames }))).toEqual([
+      { twoFactorEnabled: null, teamNames: [] },
+      { twoFactorEnabled: null, teamNames: [] },
+    ]);
+  });
+});

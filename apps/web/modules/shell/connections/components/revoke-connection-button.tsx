@@ -18,12 +18,18 @@ import {
 import { revokeOAuthConnectionAction } from "../actions";
 
 interface RevokeConnectionButtonProps {
+  organizationId: string;
   kind: "oauth" | "apiKey";
   id: string;
   name: string;
 }
 
-export const RevokeConnectionButton = ({ kind, id, name }: Readonly<RevokeConnectionButtonProps>) => {
+export const RevokeConnectionButton = ({
+  organizationId,
+  kind,
+  id,
+  name,
+}: Readonly<RevokeConnectionButtonProps>) => {
   const { t } = useTranslation();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -32,7 +38,9 @@ export const RevokeConnectionButton = ({ kind, id, name }: Readonly<RevokeConnec
   const handleRevoke = () => {
     startTransition(async () => {
       const result =
-        kind === "apiKey" ? await deleteApiKeyAction({ id }) : await revokeOAuthConnectionAction({ id });
+        kind === "apiKey"
+          ? await deleteApiKeyAction({ id })
+          : await revokeOAuthConnectionAction({ id, organizationId });
 
       if (result?.data) {
         toast.success(t("shell.connections.revoked"));

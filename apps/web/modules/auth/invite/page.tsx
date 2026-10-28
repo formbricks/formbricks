@@ -179,9 +179,9 @@ export const InvitePage = async (props: InvitePageProps) => {
         headline={t("shell.auth.invite.joined_title", { organization: invite.organization.name })}
         description={t("auth.invite.welcome_to_organization_description")}>
         <Button asChild className="h-11 w-full sm:h-9">
-          {/* The membership is created in `after()` above, which has long finished by the time a
-              person clicks, so the link can go straight to the organization they just joined. */}
-          <Link href={`/organizations/${invite.organizationId}`}>
+          {/* The membership is created in `after()` above, so a viewport prefetch of this page could run
+              before it exists and 404; navigate only on click, when it has long finished. */}
+          <Link href={`/organizations/${invite.organizationId}`} prefetch={false}>
             {t("shell.auth.invite.go_to_organization")}
           </Link>
         </Button>

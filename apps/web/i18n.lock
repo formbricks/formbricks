@@ -310,15 +310,6 @@ checksums:
     setup/intro/paragraph_2: 5b3cce4d8c75bab4d671e2af7fc7ee9f
     setup/intro/paragraph_3: 5568badc9cbb2e5571a38340c63e7c8e
     setup/intro/welcome_to_formbricks: 561427153e3effa108f54407dfc2126f
-    setup/invite/add_another_member: 02947deaa4710893794f3cc6e160c2b4
-    setup/invite/continue: 3cfba90b4600131e82fc4260c568d044
-    setup/invite/failed_to_invite: dc5ce0dcdf0df978f1102b729dc15584
-    setup/invite/invitation_sent_to_email: 2cc4582a20a98b33cc68fd59eec91dfd
-    setup/invite/invite_your_organization_members: 98de00cb78b11297679f1565e0c24517
-    setup/invite/life_s_no_fun_alone: e4e080c6957a10bf218fbd1b5d8cdecc
-    setup/invite/skip: b7f28dfa2f58b80b149bb82b392d0291
-    setup/invite/smtp_not_configured: aa1e949a15530733b4b9a5487772c7e4
-    setup/invite/smtp_not_configured_description: f638e327fed583acc31a762c73a82558
     setup/organization/create/delete_account: a9d11113f1a1d7e20582bdcc9633bcef
     setup/organization/create/delete_account_description: 590cf9b09211231e40c8c1cb60577ce0
     setup/organization/create/no_membership_found: 6d6e792661c79452984dc671a2590847

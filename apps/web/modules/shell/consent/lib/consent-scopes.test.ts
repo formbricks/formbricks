@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   buildConsentGroups,
+  buildConsentScopeParam,
   buildGrantedScope,
   canAllowAccess,
   getDefaultSelection,
@@ -136,7 +137,36 @@ describe("buildGrantedScope", () => {
   });
 });
 
+describe("buildConsentScopeParam", () => {
+  test("carries the granted scope when there is one", () => {
+    expect(
+      buildConsentScopeParam({
+        requested: ["openid", "surveys:read"],
+        selected: ["surveys:read"],
+        keepAccess: true,
+      })
+    ).toEqual({ scope: "openid surveys:read" });
+  });
+
+  test("omits scope instead of sending an empty string, which Better Auth rejects", () => {
+    expect(buildConsentScopeParam({ requested: [], selected: [], keepAccess: true })).toEqual({});
+    expect(
+      buildConsentScopeParam({ requested: ["offline_access"], selected: [], keepAccess: false })
+    ).toEqual({});
+  });
+});
+
 describe("canAllowAccess", () => {
+  test("a request that would grant nothing cannot be allowed, since omitting scope would grant it all", () => {
+    expect(canAllowAccess({ requested: ["offline_access"], selected: [], keepAccess: false })).toBe(false);
+    expect(canAllowAccess({ requested: ["offline_access"], selected: [], keepAccess: true })).toBe(true);
+    expect(canAllowAccess({ requested: ["billing:write"], selected: [] })).toBe(false);
+  });
+
+  test("a request with no scope at all can be allowed", () => {
+    expect(canAllowAccess({ requested: [], selected: [] })).toBe(true);
+  });
+
   test("needs a resource scope ticked when the client asked for any", () => {
     expect(canAllowAccess({ requested: MCP_REQUEST, selected: [] })).toBe(false);
     expect(canAllowAccess({ requested: MCP_REQUEST, selected: ["audit:read"] })).toBe(true);

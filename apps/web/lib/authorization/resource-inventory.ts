@@ -121,6 +121,7 @@ export const AUDIT_TARGET_AUTHORIZATION_RESOURCE_INVENTORY = {
   invite: "authentication_or_application",
   language: "parent_derived_or_data_integrity",
   membership: "relationship_or_grant_source",
+  oauthConsent: "authentication_or_application",
   organization: "direct_authorization_resource",
   quota: "parent_derived_or_data_integrity",
   response: "direct_authorization_resource",

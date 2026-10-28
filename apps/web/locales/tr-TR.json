@@ -347,17 +347,6 @@
       "paragraph_3": "En yüksek düzeyde veri gizliliğine bağlıyız. <b>Verileriniz üzerinde tam kontrol</b> sağlamak için kendi sunucunuzda barındırın.",
       "welcome_to_formbricks": "Formbricks'e hoş geldiniz!"
     },
-    "invite": {
-      "add_another_member": "Başka bir üye ekle",
-      "continue": "Devam",
-      "failed_to_invite": "Davet gönderilemedi",
-      "invitation_sent_to_email": "{email} adresine davet gönderildi",
-      "invite_your_organization_members": "Organizasyon üyelerinizi davet edin",
-      "life_s_no_fun_alone": "Hayat yalnız eğlenceli değil.",
-      "skip": "Atla",
-      "smtp_not_configured": "SMTP yapılandırılmamış",
-      "smtp_not_configured_description": "Email servisi yapılandırılmadığı için şu anda davetiye gönderilemiyor. Davet bağlantısını daha sonra organizasyon ayarlarından kopyalayabilirsiniz."
-    },
     "organization": {
       "create": {
         "delete_account": "Hesabı sil",

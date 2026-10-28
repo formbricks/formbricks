@@ -35,7 +35,7 @@ const MembersPage = async ({ params }: Readonly<{ params: Promise<{ organization
 
   const [directory, isAccessControlAllowed, isMultiOrgEnabled, userMemberships, adminTeamIds] =
     await Promise.all([
-      getMemberDirectory(organizationId),
+      getMemberDirectory(organizationId, isOwnerOrManager),
       getAccessControlPermission(organizationId),
       getIsMultiOrgEnabled(),
       getMembershipsByUserId(currentUserId),
@@ -107,7 +107,8 @@ const MembersPage = async ({ params }: Readonly<{ params: Promise<{ organization
         currentUserId={currentUserId}
         locale={locale}
         timeZone={getReportingTimeZone(shell.organization.displayTimeZone)}
-        showTeams={isAccessControlAllowed}
+        showTeams={isAccessControlAllowed && isOwnerOrManager}
+        showTwoFactor={isOwnerOrManager}
         rows={rows}
       />
 

@@ -20,12 +20,14 @@ interface LicenseOverviewProps {
   /** Set while the license server is unreachable: when the grace period runs out. */
   gracePeriodEnd: Date | null;
   features: TEnterpriseLicenseFeatures | null;
-  usage: { members: number; workspaces: number; workspaceLimit: number | null; responsesThisYear: number };
+  usage: { members: number; workspaces: number; workspaceLimit: number | null };
   /** Any workspace of the organization; the recheck action authorizes through it. `null` hides the button. */
   recheckWorkspaceId: string | null;
   trialRequestUrl: string;
   liteRequestUrl: string;
   locale: string;
+  /** The organization reporting time zone. */
+  timeZone: string;
 }
 
 type TPublicFeatureKey = Exclude<keyof TEnterpriseLicenseFeatures, "isMultiOrgEnabled">;
@@ -43,6 +45,7 @@ export const LicenseOverview = async ({
   trialRequestUrl,
   liteRequestUrl,
   locale,
+  timeZone,
 }: Readonly<LicenseOverviewProps>) => {
   const t = await getTranslate();
   const hasLicense = status !== "no-license";
@@ -108,7 +111,14 @@ export const LicenseOverview = async ({
             {hasLicense && (
               <span className="text-slate-500">
                 {t("shell.organization.billing.license_checked", {
-                  date: formatDateTimeForDisplay(lastChecked, locale),
+                  date: formatDateTimeForDisplay(lastChecked, locale, {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                    hour: "numeric",
+                    minute: "2-digit",
+                    timeZone,
+                  }),
                 })}
               </span>
             )}
@@ -179,14 +189,10 @@ export const LicenseOverview = async ({
                 })
           }
         />
-        <dl className="grid gap-4 sm:grid-cols-2">
+        <dl className="grid gap-4">
           <div className="flex flex-col gap-0.5">
             <dt className="text-slate-500">{t("common.members")}</dt>
             <dd className="text-lg font-semibold text-slate-800">{formatCount(usage.members)}</dd>
-          </div>
-          <div className="flex flex-col gap-0.5">
-            <dt className="text-slate-500">{t("shell.organization.billing.responses_this_year")}</dt>
-            <dd className="text-lg font-semibold text-slate-800">{formatCount(usage.responsesThisYear)}</dd>
           </div>
         </dl>
       </Card>

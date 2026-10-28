@@ -25,22 +25,24 @@ export const PasswordCard = ({ user }: Readonly<PasswordCardProps>) => {
   const handleSendLink = async () => {
     setIsSending(true);
 
-    const result = await resetPasswordAction();
-    if (result?.data) {
-      toast.success(t("auth.forgot-password.email-sent.heading"));
+    try {
+      const result = await resetPasswordAction();
+      if (result?.data) {
+        toast.success(t("auth.forgot-password.email-sent.heading"));
 
-      await signOut({
-        reason: "password_reset",
-        redirectUrl: "/auth/login",
-        redirect: true,
-        callbackUrl: "/auth/login",
-        clearWorkspaceId: true,
-      });
-    } else {
-      toast.error(getFormattedErrorMessage(result ?? {}));
+        await signOut({
+          reason: "password_reset",
+          redirectUrl: "/auth/login",
+          redirect: true,
+          callbackUrl: "/auth/login",
+          clearWorkspaceId: true,
+        });
+      } else {
+        toast.error(getFormattedErrorMessage(result ?? {}));
+      }
+    } finally {
+      setIsSending(false);
     }
-
-    setIsSending(false);
   };
 
   return (

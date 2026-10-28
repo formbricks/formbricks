@@ -4,6 +4,7 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { createOrganizationAction } from "./actions";
 
 const mocks = vi.hoisted(() => ({
+  inputSchema: undefined as import("zod").ZodType | undefined,
   applyRateLimit: vi.fn(),
   createMembership: vi.fn(),
   createOrganization: vi.fn(),
@@ -23,7 +24,10 @@ vi.mock("@/lib/posthog", () => ({
 }));
 vi.mock("@/lib/utils/action-client", () => ({
   authenticatedActionClient: {
-    inputSchema: vi.fn(() => ({ action: vi.fn((fn) => fn) })),
+    inputSchema: vi.fn((schema) => {
+      mocks.inputSchema = schema;
+      return { action: vi.fn((fn) => fn) };
+    }),
   },
 }));
 vi.mock("@/lib/workspace/constants", () => ({ DEFAULT_WORKSPACE_NAME: "My Workspace" }));
@@ -105,5 +109,31 @@ describe("setup createOrganizationAction first workspace", () => {
       { name: "My Workspace" },
       { workspaceLimit: null }
     );
+  });
+});
+
+describe("setup createOrganizationAction input bounds", () => {
+  const parse = (input: unknown) => mocks.inputSchema!.safeParse(input);
+
+  test("trims both names", () => {
+    expect(parse({ organizationName: "  Acme  ", workspaceName: "  Main  " }).data).toEqual({
+      organizationName: "Acme",
+      workspaceName: "Main",
+    });
+  });
+
+  test("leaves the workspace name optional", () => {
+    expect(parse({ organizationName: "Acme" }).success).toBe(true);
+  });
+
+  test("rejects an empty or whitespace-only name", () => {
+    expect(parse({ organizationName: "   " }).success).toBe(false);
+    expect(parse({ organizationName: "Acme", workspaceName: "  " }).success).toBe(false);
+  });
+
+  test("rejects a name past 255 characters, accepts exactly 255", () => {
+    expect(parse({ organizationName: "a".repeat(255) }).success).toBe(true);
+    expect(parse({ organizationName: "a".repeat(256) }).success).toBe(false);
+    expect(parse({ organizationName: "Acme", workspaceName: "a".repeat(256) }).success).toBe(false);
   });
 });

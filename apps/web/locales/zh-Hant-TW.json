@@ -347,17 +347,6 @@
       "paragraph_3": "我們致力於最高等級的資料隱私。自我託管，讓您<b>完全掌控您的資料</b>。",
       "welcome_to_formbricks": "歡迎使用 Formbricks！"
     },
-    "invite": {
-      "add_another_member": "新增另一位成員",
-      "continue": "繼續",
-      "failed_to_invite": "無法邀請",
-      "invitation_sent_to_email": "邀請已發送至 {email}",
-      "invite_your_organization_members": "邀請您的組織成員",
-      "life_s_no_fun_alone": "孤單一人生活不好玩。",
-      "skip": "跳過",
-      "smtp_not_configured": "SMTP 未設定",
-      "smtp_not_configured_description": "由於未設定電子郵件服務，因此目前無法發送邀請。您可以在稍後在組織設定中複製邀請連結。"
-    },
     "organization": {
       "create": {
         "delete_account": "刪除帳戶",

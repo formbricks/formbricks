@@ -347,17 +347,6 @@
       "paragraph_3": "我们致力于最高级别的数据隐私保护。自建部署，<b>全面掌控您的数据</b>。",
       "welcome_to_formbricks": "欢迎来到 Formbricks !"
     },
-    "invite": {
-      "add_another_member": "添加另一个成员",
-      "continue": "继续",
-      "failed_to_invite": "邀请失败",
-      "invitation_sent_to_email": "邀请已发送至 {email}",
-      "invite_your_organization_members": "邀请 您 的 组织 成员",
-      "life_s_no_fun_alone": "独 自 一 人 生 活 不 有 趣 。",
-      "skip": "跳过",
-      "smtp_not_configured": "SMTP 未配置",
-      "smtp_not_configured_description": "无法 发送 邀请，因为 电子邮件 服务 未 配置。您 可以 稍后 在 组织 设置 中 复制 邀请 链接。"
-    },
     "organization": {
       "create": {
         "delete_account": "删除账号",

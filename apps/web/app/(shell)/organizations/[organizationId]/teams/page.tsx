@@ -22,7 +22,9 @@ const TeamsPage = async ({ params }: Readonly<{ params: Promise<{ organizationId
   const isOwnerOrManager = shell.isOwner || shell.isManager;
   const isAccessControlAllowed = await getAccessControlPermission(organizationId);
 
-  const teams = isAccessControlAllowed ? await getTeamDirectory(organizationId, shell.user.id) : [];
+  const teams = isAccessControlAllowed
+    ? await getTeamDirectory(organizationId, shell.user.id, isOwnerOrManager)
+    : [];
   const canManageSomeTeam = isOwnerOrManager || teams.some((team) => team.viewerRole === "admin");
 
   // The pickers in the team dialog are only needed by someone who can open it.

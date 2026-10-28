@@ -17,8 +17,9 @@ import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 
 const ZCreateOrganizationFormSchema = z.object({
-  name: ZOrganization.shape.name,
-  workspaceName: ZWorkspace.shape.name,
+  // Same bound the create action enforces on the server.
+  name: ZOrganization.shape.name.max(255),
+  workspaceName: ZWorkspace.shape.name.max(255),
 });
 type TCreateOrganizationForm = z.infer<typeof ZCreateOrganizationFormSchema>;
 

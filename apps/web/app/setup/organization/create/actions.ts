@@ -3,7 +3,6 @@
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
-import { ZWorkspaceUpdateInput } from "@formbricks/types/workspace";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getHasNoOrganizations } from "@/lib/instance/service";
 import { createMembership } from "@/lib/membership/service";
@@ -18,10 +17,14 @@ import { ensureCloudStripeSetupForOrganization } from "@/modules/ee/billing/lib/
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createWorkspace } from "@/modules/workspaces/settings/lib/workspace";
 
+// The types package only requires a non-empty name, so the upper bound lives here: this action takes
+// the raw strings from the client and persists them as-is.
+const MAX_NAME_LENGTH = 255;
+
 const ZCreateOrganizationAction = z.object({
-  organizationName: z.string(),
+  organizationName: z.string().trim().min(1).max(MAX_NAME_LENGTH),
   // The first workspace's name. Left out, the organization gets the default one, as it always did.
-  workspaceName: ZWorkspaceUpdateInput.shape.name,
+  workspaceName: z.string().trim().min(1).max(MAX_NAME_LENGTH).optional(),
 });
 
 export const createOrganizationAction = authenticatedActionClient

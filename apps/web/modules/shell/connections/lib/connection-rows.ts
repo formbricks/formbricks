@@ -10,10 +10,17 @@ export type TConnectionWorkspaces =
 
 export type TConnectionStatus = "active" | "neverUsed";
 
+/**
+ * What a connection can do. `manageMembers` is the API key's organization-level `accessControl.write`
+ * grant (it can manage members and teams). It is not an MCP scope, so it rides next to the scope summary
+ * rather than inside it; OAuth connections never carry it.
+ */
+export type TConnectionAccess = TAccessSummary & { manageMembers?: boolean };
+
 interface TConnectionRowBase {
   id: string;
   name: string;
-  access: TAccessSummary;
+  access: TConnectionAccess;
   workspaces: TConnectionWorkspaces;
   status: TConnectionStatus;
 }
@@ -46,7 +53,8 @@ export interface TOAuthConsentRecord {
 
 /**
  * The scopes an API key carries over MCP. Mirrors `getMcpScopes` in `modules/mcp/auth.ts`, which is
- * what the server actually enforces, with one refinement: that function hands out every `:read` scope
+ * what the server actually enforces (`accessControl.write` has no MCP scope, so it is surfaced
+ * separately, see `canApiKeyManageMembers`), with one refinement: that function hands out every `:read` scope
  * even to a key with no workspace, but such a key reaches no workspace data, so it would be wrong to
  * list surveys and responses as its access.
  */
@@ -89,6 +97,10 @@ export const getApiKeyScopes = ({
   return scopes;
 };
 
+/** Whether the key's organization access lets it manage members and teams (`accessControl.write`). */
+export const canApiKeyManageMembers = (organizationAccess?: TOrganizationAccess | null): boolean =>
+  organizationAccess?.accessControl?.write === true;
+
 export const mapApiKeyToRow = (
   apiKey: TApiKeyRecord,
   workspaceNames: ReadonlyMap<string, string>
@@ -102,12 +114,15 @@ export const mapApiKeyToRow = (
     kind: "apiKey",
     id: apiKey.id,
     name: apiKey.label,
-    access: summarizeScopes(
-      getApiKeyScopes({
-        workspacePermissions: apiKey.apiKeyWorkspaces,
-        organizationAccess: apiKey.organizationAccess,
-      })
-    ),
+    access: {
+      ...summarizeScopes(
+        getApiKeyScopes({
+          workspacePermissions: apiKey.apiKeyWorkspaces,
+          organizationAccess: apiKey.organizationAccess,
+        })
+      ),
+      ...(canApiKeyManageMembers(apiKey.organizationAccess) && { manageMembers: true }),
+    },
     workspaces: items.length > 0 ? { type: "named", items } : { type: "none" },
     status: apiKey.lastUsedAt ? "active" : "neverUsed",
     createdAt: apiKey.createdAt,

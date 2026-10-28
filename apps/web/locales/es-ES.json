@@ -347,17 +347,6 @@
       "paragraph_3": "Estamos comprometidos con el más alto grado de privacidad de datos. Aloja en tu propio servidor para mantener el <b>control total sobre tus datos</b>.",
       "welcome_to_formbricks": "¡Bienvenido a Formbricks!"
     },
-    "invite": {
-      "add_another_member": "Añadir otro miembro",
-      "continue": "Continuar",
-      "failed_to_invite": "Error al invitar",
-      "invitation_sent_to_email": "Invitación enviada a {email}",
-      "invite_your_organization_members": "Invita a los miembros de tu organización",
-      "life_s_no_fun_alone": "La vida no es divertida en solitario.",
-      "skip": "Omitir",
-      "smtp_not_configured": "SMTP no configurado",
-      "smtp_not_configured_description": "Las invitaciones no pueden enviarse en este momento porque el servicio de correo electrónico no está configurado. Puedes copiar el enlace de invitación en la configuración de la organización más tarde."
-    },
     "organization": {
       "create": {
         "delete_account": "Eliminar cuenta",

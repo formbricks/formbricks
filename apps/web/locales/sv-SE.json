@@ -347,17 +347,6 @@
       "paragraph_3": "Vi är engagerade i högsta möjliga datasekretess. Självhosta för att behålla <b>full kontroll över dina data</b>.",
       "welcome_to_formbricks": "Välkommen till Formbricks!"
     },
-    "invite": {
-      "add_another_member": "Lägg till en annan medlem",
-      "continue": "Fortsätt",
-      "failed_to_invite": "Misslyckades med att bjuda in",
-      "invitation_sent_to_email": "Inbjudan skickad till {email}",
-      "invite_your_organization_members": "Bjud in dina organisationsmedlemmar",
-      "life_s_no_fun_alone": "Livet är inte roligt ensam.",
-      "skip": "Hoppa över",
-      "smtp_not_configured": "SMTP inte konfigurerat",
-      "smtp_not_configured_description": "Inbjudningar kan inte skickas just nu eftersom e-posttjänsten inte är konfigurerad. Du kan kopiera inbjudningslänken i organisationsinställningarna senare."
-    },
     "organization": {
       "create": {
         "delete_account": "Ta bort konto",

@@ -347,17 +347,6 @@
       "paragraph_3": "私たちは最高レベルのデータプライバシーを重視しています。セルフホスティングにより、<b>データを完全に管理</b>できます。",
       "welcome_to_formbricks": "Formbricksへようこそ！"
     },
-    "invite": {
-      "add_another_member": "別のメンバーを追加",
-      "continue": "続行",
-      "failed_to_invite": "招待に失敗しました",
-      "invitation_sent_to_email": "{email}に招待状を送信しました",
-      "invite_your_organization_members": "組織のメンバーを招待",
-      "life_s_no_fun_alone": "人生は一人では楽しくない。",
-      "skip": "スキップ",
-      "smtp_not_configured": "SMTPが設定されていません",
-      "smtp_not_configured_description": "メールサービスが設定されていないため、現時点では招待を送信できません。後で組織設定で招待リンクをコピーできます。"
-    },
     "organization": {
       "create": {
         "delete_account": "アカウントを削除",

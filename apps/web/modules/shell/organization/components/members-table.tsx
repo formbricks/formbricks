@@ -15,6 +15,8 @@ interface MembersTableProps {
   timeZone: string;
   /** Whether teams exist at all (licensed); the column is hidden otherwise. */
   showTeams: boolean;
+  /** Two-factor state is only loaded for owners and managers; the column is hidden otherwise. */
+  showTwoFactor: boolean;
   rows: { row: TMemberRow; access: TMemberRowAccess }[];
 }
 
@@ -28,6 +30,7 @@ export const MembersTable = async ({
   locale,
   timeZone,
   showTeams,
+  showTwoFactor,
   rows,
 }: Readonly<MembersTableProps>) => {
   const t = await getTranslate();
@@ -72,9 +75,11 @@ export const MembersTable = async ({
             {showTeams && (
               <TableHead className={`${TABLE_HEAD_CLASS} ${HIDE_BELOW_MD}`}>{t("common.teams")}</TableHead>
             )}
-            <TableHead className={`${TABLE_HEAD_CLASS} ${HIDE_BELOW_MD}`}>
-              {t("shell.organization.members.two_factor")}
-            </TableHead>
+            {showTwoFactor && (
+              <TableHead className={`${TABLE_HEAD_CLASS} ${HIDE_BELOW_MD}`}>
+                {t("shell.organization.members.two_factor")}
+              </TableHead>
+            )}
             <TableHead>
               <span className="sr-only">{t("common.actions")}</span>
             </TableHead>
@@ -121,7 +126,7 @@ export const MembersTable = async ({
                 {showTeams && (
                   <TableCell className={`${HIDE_BELOW_MD} max-w-56 truncate`}>{renderTeams(row)}</TableCell>
                 )}
-                <TableCell className={HIDE_BELOW_MD}>{renderTwoFactor(row)}</TableCell>
+                {showTwoFactor && <TableCell className={HIDE_BELOW_MD}>{renderTwoFactor(row)}</TableCell>}
                 <TableCell className="text-right">
                   {hasActions && (
                     <MemberManageDialog

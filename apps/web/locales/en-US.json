@@ -352,17 +352,6 @@
       "paragraph_3": "We are committed to the highest degree of data privacy. Self-host to keep <b>full control over your data</b>.",
       "welcome_to_formbricks": "Welcome to Formbricks!"
     },
-    "invite": {
-      "add_another_member": "Add another member",
-      "continue": "Continue",
-      "failed_to_invite": "Failed to invite",
-      "invitation_sent_to_email": "Invitation sent to {email}",
-      "invite_your_organization_members": "Invite your Organization members",
-      "life_s_no_fun_alone": "Life is no fun alone.",
-      "skip": "Skip",
-      "smtp_not_configured": "SMTP not configured",
-      "smtp_not_configured_description": "Invitations cannot be sent at this time because the email service is not configured. You can copy the invite link in the organization settings later."
-    },
     "organization": {
       "create": {
         "delete_account": "Delete account",
@@ -487,6 +476,7 @@
     },
     "connections": {
       "access": {
+        "manage_members": "Manage members and teams",
         "none": "No resource access",
         "read": "Read: {families}",
         "write": "Read and write: {families}"
@@ -609,7 +599,6 @@
         "plan_name": "{plan} plan",
         "plan_title": "Plan",
         "portal_note": "Invoices, payment methods and plan changes are in the subscription portal. Manage subscription opens it.",
-        "responses_this_year": "Responses this year",
         "setup_incomplete_description": "This organization has no billing account yet. Try again in a moment or contact support.",
         "setup_incomplete_title": "Billing is not set up yet",
         "status_active": "Active",

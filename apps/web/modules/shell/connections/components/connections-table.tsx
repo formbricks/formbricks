@@ -4,16 +4,21 @@ import { formatDateTimeForDisplay } from "@/lib/utils/datetime";
 import { getTranslate } from "@/lingodotdev/server";
 import { Badge } from "@/modules/ui/components/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
-import type { TConnectionPermission, TConnectionRow, TConnectionWorkspaces } from "../lib/connection-rows";
-import { type TAccessSummary, getScopeFamilyLabel } from "../lib/scope-families";
+import type {
+  TConnectionAccess,
+  TConnectionPermission,
+  TConnectionRow,
+  TConnectionWorkspaces,
+} from "../lib/connection-rows";
+import { getScopeFamilyLabel } from "../lib/scope-families";
 import { RevokeConnectionButton } from "./revoke-connection-button";
 
 // A phone-width table cannot carry five columns; the workspace list is the one that grows without bound.
 const MAX_NAMED_WORKSPACES = 2;
 
-const getAccessLines = (access: TAccessSummary, t: TFunction): string[] => {
+const getAccessLines = (access: TConnectionAccess, t: TFunction): string[] => {
   const lines: string[] = [];
-  const list = (families: TAccessSummary["write"]) =>
+  const list = (families: TConnectionAccess["write"]) =>
     families.map((family) => getScopeFamilyLabel(family, t)).join(", ");
 
   if (access.write.length > 0) {
@@ -21,6 +26,9 @@ const getAccessLines = (access: TAccessSummary, t: TFunction): string[] => {
   }
   if (access.readOnly.length > 0) {
     lines.push(t("shell.connections.access.read", { families: list(access.readOnly) }));
+  }
+  if (access.manageMembers) {
+    lines.push(t("shell.connections.access.manage_members"));
   }
 
   return lines.length > 0 ? lines : [t("shell.connections.access.none")];
@@ -51,7 +59,12 @@ const getWorkspacesText = (workspaces: TConnectionWorkspaces, t: TFunction): str
     : shown.join(", ");
 };
 
-const Activity = ({ row, locale, t }: Readonly<{ row: TConnectionRow; locale: string; t: TFunction }>) => {
+const Activity = ({
+  row,
+  locale,
+  timeZone,
+  t,
+}: Readonly<{ row: TConnectionRow; locale: string; timeZone: string; t: TFunction }>) => {
   const date = row.kind === "oauth" ? row.authorizedAt : row.lastUsedAt;
 
   if (!date) {
@@ -60,7 +73,16 @@ const Activity = ({ row, locale, t }: Readonly<{ row: TConnectionRow; locale: st
 
   const when = timeSinceDate(date, locale);
   return (
-    <time dateTime={date.toISOString()} title={formatDateTimeForDisplay(date, locale)}>
+    <time
+      dateTime={date.toISOString()}
+      title={formatDateTimeForDisplay(date, locale, {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        timeZone,
+      })}>
       {row.kind === "oauth"
         ? t("shell.connections.authorized", { when })
         : t("shell.connections.last_used", { when })}
@@ -69,12 +91,20 @@ const Activity = ({ row, locale, t }: Readonly<{ row: TConnectionRow; locale: st
 };
 
 interface ConnectionsTableProps {
+  organizationId: string;
   rows: TConnectionRow[];
   locale: string;
+  /** The organization reporting time zone. */
+  timeZone: string;
 }
 
 /** Rendered on the server: only the Revoke button needs the browser. */
-export const ConnectionsTable = async ({ rows, locale }: Readonly<ConnectionsTableProps>) => {
+export const ConnectionsTable = async ({
+  organizationId,
+  rows,
+  locale,
+  timeZone,
+}: Readonly<ConnectionsTableProps>) => {
   const t = await getTranslate();
 
   return (
@@ -109,7 +139,7 @@ export const ConnectionsTable = async ({ rows, locale }: Readonly<ConnectionsTab
                         type={row.kind === "oauth" ? "gray" : "info"}
                         size="tiny"
                       />
-                      <Activity row={row} locale={locale} t={t} />
+                      <Activity row={row} locale={locale} timeZone={timeZone} t={t} />
                     </span>
                     <span className="text-xs text-slate-600 md:hidden">{accessLines.join(" · ")}</span>
                   </div>
@@ -132,7 +162,12 @@ export const ConnectionsTable = async ({ rows, locale }: Readonly<ConnectionsTab
                   />
                 </TableCell>
                 <TableCell className="text-right">
-                  <RevokeConnectionButton kind={row.kind} id={row.id} name={row.name} />
+                  <RevokeConnectionButton
+                    organizationId={organizationId}
+                    kind={row.kind}
+                    id={row.id}
+                    name={row.name}
+                  />
                 </TableCell>
               </TableRow>
             );

@@ -347,17 +347,6 @@
       "paragraph_3": "We zijn toegewijd aan de hoogste mate van gegevensprivacy. Self-host om <b>volledige controle over je gegevens</b> te behouden.",
       "welcome_to_formbricks": "Welkom bij Formbricks!"
     },
-    "invite": {
-      "add_another_member": "Nog een lid toevoegen",
-      "continue": "Doorgaan",
-      "failed_to_invite": "Kan niet uitnodigen",
-      "invitation_sent_to_email": "Uitnodiging verstuurd naar {email}",
-      "invite_your_organization_members": "Nodig uw organisatieleden uit",
-      "life_s_no_fun_alone": "Het leven is niet leuk alleen.",
-      "skip": "Overslaan",
-      "smtp_not_configured": "SMTP niet geconfigureerd",
-      "smtp_not_configured_description": "Er kunnen momenteel geen uitnodigingen worden verzonden omdat de e-mailservice niet is geconfigureerd. U kunt de uitnodigingslink later kopiëren in de organisatie-instellingen."
-    },
     "organization": {
       "create": {
         "delete_account": "Account verwijderen",

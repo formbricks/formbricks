@@ -13,13 +13,15 @@ import {
   getLiteLicenseRequestUrl,
 } from "@/modules/ee/license-check/lib/lite-license";
 import { getOrganizationWorkspacesLimit } from "@/modules/ee/license-check/lib/utils";
-import { resolveUsageRange } from "@/modules/organization/usage/lib/range";
-import { getOrganizationUsage } from "@/modules/organization/usage/lib/usage";
 import { OrganizationHeader } from "@/modules/shell/components/organization-header";
 import { ShellPage } from "@/modules/shell/components/shell-page";
 import { getShellData } from "@/modules/shell/lib/shell-data";
 import { CloudBilling } from "@/modules/shell/organization/components/cloud-billing";
 import { LicenseOverview } from "@/modules/shell/organization/components/license-overview";
+import {
+  getFirstWorkspaceId,
+  getOrganizationMemberCount,
+} from "@/modules/shell/organization/lib/license-counts";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 
 /**
@@ -69,13 +71,12 @@ const BillingPage = async ({ params }: Readonly<{ params: Promise<{ organization
     }
 
     const timeZone = getReportingTimeZone(shell.organization.displayTimeZone);
-    const [license, usage, workspaceLimit] = await Promise.all([
+    // Targeted counts instead of the full usage report: that one aggregates a year of responses per view.
+    const [license, memberCount, workspaceCount, firstWorkspaceId, workspaceLimit] = await Promise.all([
       getEnterpriseLicense(),
-      getOrganizationUsage({
-        organizationId,
-        range: resolveUsageRange({ preset: "this_year" }, timeZone),
-        timeZone,
-      }),
+      getOrganizationMemberCount(organizationId),
+      getOrganizationWorkspacesCount(organizationId),
+      getFirstWorkspaceId(organizationId),
       getOrganizationWorkspacesLimit(organizationId),
     ]);
 
@@ -88,15 +89,15 @@ const BillingPage = async ({ params }: Readonly<{ params: Promise<{ organization
         }
         features={license.features}
         usage={{
-          members: usage.members.total,
-          workspaces: usage.workspaces.length,
+          members: memberCount,
+          workspaces: workspaceCount,
           workspaceLimit: Number.isFinite(workspaceLimit) ? workspaceLimit : null,
-          responsesThisYear: usage.totals.responseCount,
         }}
-        recheckWorkspaceId={usage.workspaces[0]?.id ?? null}
+        recheckWorkspaceId={firstWorkspaceId}
         trialRequestUrl={ENTERPRISE_LICENSE_REQUEST_FORM_URL}
         liteRequestUrl={getLiteLicenseRequestUrl("enterprise_settings")}
         locale={locale}
+        timeZone={timeZone}
       />
     );
   };

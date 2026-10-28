@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getReportingTimeZone } from "@/lib/date-ranges";
 import { getLocale } from "@/lingodotdev/language";
 import { getTranslate } from "@/lingodotdev/server";
 import { getMcpResourceUrl } from "@/modules/auth/lib/oauth-urls";
@@ -62,7 +63,12 @@ const AgentConnectionsPage = async ({
       </Alert>
 
       {rows.length > 0 ? (
-        <ConnectionsTable rows={rows} locale={locale} />
+        <ConnectionsTable
+          organizationId={organizationId}
+          rows={rows}
+          locale={locale}
+          timeZone={getReportingTimeZone(shell.organization.displayTimeZone)}
+        />
       ) : (
         <div className="flex flex-col gap-1 rounded-lg border border-slate-200 px-4 py-10 text-center">
           <p className="font-medium text-slate-800">{t("shell.connections.empty_title")}</p>

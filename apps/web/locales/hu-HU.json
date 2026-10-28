@@ -347,17 +347,6 @@
       "paragraph_3": "Elkötelezettek vagyunk az adatvédelem legmagasabb foka iránt. Üzemeltesse saját kiszolgálóján, hogy <b>teljes ellenőrzéssel rendelkezzen az adatai felett</b>.",
       "welcome_to_formbricks": "Üdvözli a Formbricks!"
     },
-    "invite": {
-      "add_another_member": "Másik tag hozzáadása",
-      "continue": "Folytatás",
-      "failed_to_invite": "Nem sikerült meghívni",
-      "invitation_sent_to_email": "A meghívó elküldve ide: {email}",
-      "invite_your_organization_members": "Szervezeti tagok meghívása",
-      "life_s_no_fun_alone": "Az élet nem szórakoztató egyedül.",
-      "skip": "Kihagyás",
-      "smtp_not_configured": "Az SMTP nincs beállítva",
-      "smtp_not_configured_description": "Jelenleg nem lehet meghívókat küldeni, mert az e-mail-szolgáltatás nincs beállítva. A meghívási hivatkozást később lemásolhatja a szervezet beállításaiból."
-    },
     "organization": {
       "create": {
         "delete_account": "Fiók törlése",

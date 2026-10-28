@@ -256,6 +256,9 @@ export const withAuditLogging = <
           case "apiKey":
             targetId = auditLoggingCtx.apiKeyId;
             break;
+          case "oauthConsent":
+            targetId = auditLoggingCtx.oauthConsentId;
+            break;
           case "response":
             targetId = auditLoggingCtx.responseId;
             break;
