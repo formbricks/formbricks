@@ -10,9 +10,10 @@ import { validateElement } from "./validators";
  * Extract prefilled values from URL search parameters
  *
  * Supports prefilling for all survey element types with the following features:
- * - Option ID or label matching for choice-based elements (single/multi-select, ranking, picture selection)
- * - Comma-separated values for multi-select and ranking
- * - Backward compatibility with label-based prefilling
+ * - Single and multi-select values are an option ID, the option label or the answer code, looked up in
+ *   that order (see `matchOption`), so ID and label links keep their meaning
+ * - Comma-separated values for multi-select
+ * - Picture selection takes 1-based image indices
  *
  * @param survey - The survey object containing blocks and elements
  * @param searchParams - URL search parameters (e.g., from useSearchParams() or new URLSearchParams())
@@ -25,11 +26,14 @@ import { validateElement } from "./validators";
  * // Single select with option ID
  * ?questionId=option-abc123
  *
- * // Multi-select with labels (backward compatible)
+ * // Single select with the answer code of an option, on a question coded `hello`
+ * ?hello=2
+ *
+ * // Multi-select with labels
  * ?questionId=Option1,Option2,Option3
  *
- * // Ranking with option IDs
- * ?rankingId=choice-3,choice-1,choice-2
+ * // Multi-select with answer codes
+ * ?questionId=1,2
  *
  * // NPS question
  * ?npsId=9
