@@ -67,6 +67,29 @@ const applyRoleChange = (
     });
 };
 
+/** The role rules: billing is Cloud-only, managers only assign members, and only owners change an owner. */
+const refuseRoleAssignment = (
+  callerRole: TMembership["role"],
+  targetRole: TMembership["role"] | undefined,
+  role: TMemberUpdateBody["role"],
+  requestId: string,
+  instance?: string
+): Response | null => {
+  if (!IS_FORMBRICKS_CLOUD && role === "billing") {
+    return problemBadRequest(requestId, "Billing role is not allowed", {
+      instance,
+      invalid_params: [{ name: "role", reason: "Billing role is not allowed" }],
+    });
+  }
+  if (callerRole === "manager" && role !== "member") {
+    return problemForbidden(requestId, "Managers can only assign users to the member role", instance);
+  }
+  if (callerRole !== "owner" && targetRole === "owner") {
+    return problemForbidden(requestId, "Only owners can change the role of an owner", instance);
+  }
+  return null;
+};
+
 /**
  * `PATCH /api/internal/members/{userId}?organizationId=`: change a member's organization role.
  *
@@ -126,21 +149,9 @@ export async function updateMemberRoleOperation({
   });
   if (limited) return limited;
 
-  if (!IS_FORMBRICKS_CLOUD && body.role === "billing") {
-    return problemBadRequest(requestId, "Billing role is not allowed", {
-      instance,
-      invalid_params: [{ name: "role", reason: "Billing role is not allowed" }],
-    });
-  }
-
-  if (callerMembership.role === "manager" && body.role !== "member") {
-    return problemForbidden(requestId, "Managers can only assign users to the member role", instance);
-  }
-
   const target = await getMembershipByUserIdOrganizationId(userId, organizationId);
-  if (callerMembership.role !== "owner" && target?.role === "owner") {
-    return problemForbidden(requestId, "Only owners can change the role of an owner", instance);
-  }
+  const refused = refuseRoleAssignment(callerMembership.role, target?.role, body.role, requestId, instance);
+  if (refused) return refused;
 
   const notEntitled = await requireRoleManagementEntitlement({ organizationId, requestId, instance });
   if (notEntitled) return notEntitled;

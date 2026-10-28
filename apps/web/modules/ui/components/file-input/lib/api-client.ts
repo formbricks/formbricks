@@ -6,7 +6,7 @@ import { toBase64 } from "@/modules/storage/file-upload";
 const HEIC_CONVERSION_TIMEOUT_MS = 60_000;
 
 const base64ToBytes = (base64: string): Uint8Array<ArrayBuffer> =>
-  Uint8Array.from(atob(base64), (char) => char.charCodeAt(0));
+  Uint8Array.from(atob(base64), (char) => char.codePointAt(0) ?? 0);
 
 /**
  * Convert a HEIC photo to a JPEG on the server, named like the original with a `.jpg` extension. Throws a
