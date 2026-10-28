@@ -2,6 +2,16 @@ import { type z } from "zod";
 import { ZWorkflowIdInput, ZWorkflowRunIdInput, zCursorPage } from "./common";
 import type { TCursorPage, TWorkflowIdInput, TWorkflowRunIdInput } from "./common";
 import {
+  ZPushWorkflowDocumentInput,
+  ZPushWorkflowDocumentResult,
+  ZWorkflowDocumentEnvelope,
+} from "./documents";
+import type {
+  TPushWorkflowDocumentInput,
+  TPushWorkflowDocumentResult,
+  TWorkflowDocumentEnvelope,
+} from "./documents";
+import {
   ZCreateWorkflowInput,
   ZDuplicateWorkflowInput,
   ZListWorkflowRunsInput,
@@ -56,6 +66,16 @@ export const WORKFLOW_API_OPERATIONS = {
     params: ZWorkflowIdInput,
     input: ZPatchWorkflowInput,
     output: ZWorkflowResource,
+  },
+  getWorkflowDocumentV3: {
+    params: ZWorkflowIdInput,
+    input: null,
+    output: ZWorkflowDocumentEnvelope,
+  },
+  putWorkflowDocumentV3: {
+    params: ZWorkflowIdInput,
+    input: ZPushWorkflowDocumentInput,
+    output: ZPushWorkflowDocumentResult,
   },
   deleteWorkflowV3: {
     params: ZWorkflowIdInput,
@@ -120,6 +140,11 @@ export interface TWorkflowsApiContract {
   createWorkflow: (input: TCreateWorkflowInput) => Promise<TWorkflowResource>;
   getWorkflow: (params: TWorkflowIdInput) => Promise<TWorkflowResource>;
   patchWorkflow: (params: TWorkflowIdInput, input: TPatchWorkflowInput) => Promise<TWorkflowResource>;
+  getWorkflowDocument: (params: TWorkflowIdInput) => Promise<TWorkflowDocumentEnvelope>;
+  putWorkflowDocument: (
+    params: TWorkflowIdInput,
+    input: TPushWorkflowDocumentInput
+  ) => Promise<TPushWorkflowDocumentResult>;
   deleteWorkflow: (params: TWorkflowIdInput) => Promise<void>;
   duplicateWorkflow: (params: TWorkflowIdInput, input: TDuplicateWorkflowInput) => Promise<TWorkflowResource>;
   enableWorkflow: (params: TWorkflowIdInput) => Promise<TWorkflowResource>;

@@ -583,6 +583,8 @@ describe("POST /api/mcp", () => {
       "rename_tag",
       "delete_tag",
       "merge_tags",
+      "pull_document",
+      "push_document",
       "list_audit_events",
       "list_taxonomy_fields",
       "get_taxonomy_state",

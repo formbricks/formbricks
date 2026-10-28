@@ -107,10 +107,10 @@ Supported scopes:
 
 | Scope | Use |
 | --- | --- |
-| `surveys:read` | `list_surveys`, `get_survey`, `validate_survey`, `get_workspace_custom_css`, `list_creatives`, `get_creative`, `get_creative_stats`, `list_tags`, `list_action_classes`, `list_contact_attribute_keys`, `get_survey_visibility` |
-| `surveys:write` | `create_survey`, `patch_survey`, `edit_survey_blocks`, `set_survey_block_order`, `delete_survey`, `patch_workspace_custom_css`, `create_creative`, `patch_creative`, `delete_creative`, `duplicate_creative`, `archive_creative`, `restore_creative`, `rename_tag`, `delete_tag`, `merge_tags`, `archive_survey`, `restore_survey`, `set_survey_visibility`, `generate_survey`, `pause_creatives` |
-| `workflows:read` | `list_workflows`, `get_workflow`, `list_workflow_runs`, `get_workflow_run`, `test_workflow` |
-| `workflows:write` | `create_workflow`, `patch_workflow`, `duplicate_workflow`, `delete_workflow`, and the enable/disable/archive/unarchive mutations |
+| `surveys:read` | `list_surveys`, `get_survey`, `validate_survey`, `get_workspace_custom_css`, `list_creatives`, `get_creative`, `get_creative_stats`, `list_tags`, `list_action_classes`, `list_contact_attribute_keys`, `get_survey_visibility`, `pull_document` (survey, creative) |
+| `surveys:write` | `create_survey`, `patch_survey`, `edit_survey_blocks`, `set_survey_block_order`, `delete_survey`, `patch_workspace_custom_css`, `create_creative`, `patch_creative`, `delete_creative`, `duplicate_creative`, `archive_creative`, `restore_creative`, `rename_tag`, `delete_tag`, `merge_tags`, `archive_survey`, `restore_survey`, `set_survey_visibility`, `generate_survey`, `pause_creatives`, `push_document` (survey, creative) |
+| `workflows:read` | `list_workflows`, `get_workflow`, `list_workflow_runs`, `get_workflow_run`, `test_workflow`, `pull_document` (workflow) |
+| `workflows:write` | `create_workflow`, `patch_workflow`, `duplicate_workflow`, `delete_workflow`, the enable/disable/archive/unarchive mutations, and `push_document` (workflow) |
 | `feedbackRecords:read` | `list_feedback_datasets`, `list_feedback_records`, `count_feedback_records`, `get_feedback_record`, `search_feedback_records`, `find_similar_feedback_records`, `get_feedback_field_catalog`, `query_feedback`, `list_taxonomy_fields`, `get_taxonomy_state`, `get_taxonomy_run`, `get_taxonomy_record_counts`, `list_taxonomy_node_records`, `get_enrichment_status` |
 | `feedbackRecords:write` | `create_feedback_record`, `create_feedback_records`, `update_feedback_record`, `delete_feedback_record`, `start_taxonomy_run`, `rename_taxonomy_node`, `remove_taxonomy_node` |
 | `responses:read` | `list_responses`, `count_responses`, `get_response` |
@@ -120,6 +120,8 @@ Supported scopes:
 | `webhooks:read` | `list_webhooks`, `get_webhook` |
 | `webhooks:write` | `create_webhook`, `update_webhook`, `delete_webhook`, `test_webhook` |
 | `audit:read` | `list_audit_events` |
+| `pull_document` | `read` on the resource's workspace, plus the kind's read scope |
+| `push_document` | `write` or `manage` on the resource's workspace (the same as the resource's own update), plus the kind's write scope; a dry run needs it too |
 | `openid` | OpenID Connect subject interoperability |
 | `profile` | User profile claims |
 | `email` | User email claim |
@@ -2100,6 +2102,258 @@ used (`segments`, `offset`, `total`, `ungrouped`, `renewQuery`, `joinHints`, `ti
 are refused. There is no tenant field anywhere: the dataset comes from the workspace, and the server hands it to
 Cube as signed security context; Cube appends the filter. Calls are limited to 30 per minute per caller.
 HTTP: `POST /api/v3/feedback-queries` and `GET /api/v3/feedback-queries/field-catalog?workspaceId=`.
+
+### Pull and push documents
+
+Two generic tools, `pull_document` and `push_document`, move a survey, a creative or a workflow between
+Formbricks and an agent's working files (ADR 0015). `pull_document` returns one JSON envelope (`kind`,
+`schemaVersion`, `id`, `workspaceId`, `updatedAt`, `document`); the agent edits `document` and sends it back
+with `push_document`. REST has the same pair per resource: `GET` and `PUT` on
+`/api/v3/{surveys|creatives|workflows}/{id}/document`. The contract is `app/api/v3/documents/lib/envelope.ts`;
+each kind has an adapter that reuses the resource's own update path, so validation, entitlement and reference
+checks are never reimplemented.
+
+The rules are the same for all three kinds:
+
+- **A document is editable state only.** No status, timestamps, counts or other server-owned fields. A push
+  never publishes, pauses or enables anything; those stay separate tools, each audited on its own.
+- **A push replaces.** Fields left out of the document reset to their defaults. The document schema is strict, and
+  an unknown key is a 422 naming it.
+- **The stale-check is required.** `expectedUpdatedAt` is the `updatedAt` the document was pulled at, and it is
+  enforced at write time, so two concurrent pushes cannot both win. The loser gets a 409 with `details`
+  `{ expectedUpdatedAt, currentUpdatedAt }`: pull again, redo the edit, push again.
+- **Destructive changes need confirmation.** A push that would remove survey questions that have responses, or a live
+  creative's destination, is a 409 with `details.reason: "destructive_change"` and the list of what would go;
+  repeat it with `confirmDestructive: true` to apply it. A workflow push has no such case.
+- **`dryRun: true`** runs every check and returns the changes without writing and without an audit event.
+- **Update only.** There is no create-from-document; creation stays with the create tools. Ids a document refers to
+  (action classes, segments, destination and trigger surveys, ending cards) belong to its workspace and are
+  validated exactly as an update validates them; they are not remapped.
+- **Scopes.** Surveys and creatives use `surveys:read` / `surveys:write`, workflows `workflows:read` /
+  `workflows:write`. The registration gate admits either family and the call is then checked against its `kind`.
+
+### Survey documents (pull_document / push_document, kind `survey`)
+
+REST: `GET` and `PUT /api/v3/surveys/{surveyId}/document` (session or API key). MCP: the generic `pull_document`
+and `push_document` with `kind: "survey"` (scopes `surveys:read` / `surveys:write`).
+
+#### What is in the document
+
+`name`, `metadata`, `languages` (`{ code, default, enabled }`), `showLanguageSwitch`, `autoSelectLanguage`,
+`welcomeCard`, `blocks`, `endings`, `hiddenFields`, `variables`, `customCss` (source, or null), and for an app
+survey only `distribution` and `targeting`. A link survey's document has neither and refuses both.
+
+#### What is deliberately not in it
+
+- `id`, `workspaceId`, `updatedAt`: the envelope's. `createdAt`: not editable.
+- `status`, `archivedAt`: lifecycle. A push never publishes, pauses, closes, archives or restores. Sending `status`
+  is a 422 that says so.
+- `type`, `defaultLanguage`: fixed at creation. The default language is the `languages[]` entry with
+  `default: true`; the patch pipeline refuses a document that names another one.
+- `visibility`, `owner`, `access`: per-caller; changed only by the visibility tool.
+- `languages[].alias`: DECISION: excluded. The alias belongs to the workspace language, not the survey (the patch
+  path strips it and refuses a change). In the document it is simply an unknown key, so sending it is a 422.
+- `publishOn` / `closeOn` scheduling: not exposed by the survey v3 resource at all, so not in the document. A push
+  keeps what is stored.
+
+#### Rules
+
+- Strict root: an unknown key is a 422 naming it (one invalid param per key, with the allowed list). Beneath a
+  key, validation is the patch pipeline's (`prepareV3SurveyPatchInput`, entitlement, reference and media checks),
+  not a second copy.
+- Replace: the push becomes a patch that carries EVERY editable key. A key left out is reset: `metadata {}`,
+  `languages []`, `showLanguageSwitch null`, `autoSelectLanguage null`, `welcomeCard { enabled: false }`,
+  `endings []`, `hiddenFields { enabled: false }`, `variables []`, `customCss null`; for an app survey
+  `distribution` = schema defaults and `targeting.filters []`. `name` and `blocks` have no empty value, so they are
+  required (422 `missing_required_field`).
+- A pushed document equal to the stored one (compared by content, key order ignored) writes nothing, does not bump
+  `updatedAt`, answers `changes: []` and records no audit event.
+- Stale check: `expectedUpdatedAt` required. 409 with `details { expectedUpdatedAt, currentUpdatedAt }`. Checked
+  before the document is read (so a stale caller gets 409, not 422), and enforced at write time as the existing
+  compare-and-set in the survey UPDATE's `where` (`updatedAt` and `archivedAt: null`); a lost race answers the
+  same 409. The 409 text is the survey's own; its status and `details` are the envelope's.
+- Refusals kept from PATCH: archived survey (422), legacy question-based survey (422 `stored_survey_invalid`),
+  `immutable_identifier` (an element id changed in place on a non-draft survey), a non-draft app survey left with
+  neither trigger nor creative opener, external URL / contacts / custom CSS entitlements, reserved field names,
+  invalid media, dangling references.
+
+#### Destructive changes
+
+Refused with 409 `details { reason: "destructive_change", changes }` unless `confirmDestructive: true`:
+
+- `blocks_removed { ids, responseCount }`: block ids the stored survey has and the document has not.
+- `elements_removed { ids, responseCount }`: element ids the stored survey has and the document has not, in any
+  block (an element moved to another block is not removed; elements of a removed block are listed too).
+
+Only when the survey has at least one response (one `count` on `surveyId`, asked only when something is removed).
+The count has no response-visibility clause: the caller already passed `survey.write` on this very survey, and the
+visibility predicate is survey-based, so a clause could only hide responses from the check.
+`immutable_identifier` is not confirmable (422 stays 422). Not guarded: removing hidden fields, variables, endings
+or languages (they are configuration, answers stay readable); say so if the user wants hidden fields guarded.
+
+The guard runs after every other check and before the first write (including the creation of workspace languages),
+so a refused push writes nothing and a confirmed retry meets no new error.
+
+#### Dry run
+
+`dryRun: true` runs the same pipeline up to the first write: authorization (readWrite), stale pre-flight, document
+and patch validation, entitlements, custom CSS processing (spends the custom CSS budget like a real push), trigger
+and targeting reference checks, destructive guard. Answers `dryRun: true` with the document as pushed (omitted keys
+reset) under the survey's current `updatedAt`, and `changes`. It writes nothing and records no audit event (REST:
+`skipV3AuditLog`; MCP: not routed through `runMcpMutation`). Cannot know without writing: whether a new workspace
+language can be created, and whether the compare-and-set will still hold when a later real push writes.
+`changes` of a real push are computed from the stored result, a dry run's from the pushed document, so a dry run can
+over-report a block as `changed` where the write only normalises it.
+
+#### Audit
+
+A real push is `updated` on `survey`. Old/new are the full survey resources (they include every document field plus
+the lifecycle fields), which is what PATCH records. A no-op push is not recorded.
+
+#### MCP
+
+No new tool: `pull_document` / `push_document` handle `kind: "survey"`. Tool descriptions already mention
+`confirmDestructive` and `dryRun`.
+
+### Creative documents (pull_document / push_document, kind `creative`)
+
+Surface: `GET` and `PUT /api/v3/creatives/{creativeId}/document` (session, API key or OAuth), and the generic MCP tools
+`pull_document` / `push_document` with `kind: "creative"`. Scope: `surveys:read` to pull, `surveys:write` to push (creatives ride
+on the survey scopes). Minimum workspace permission: `read` to pull, `readWrite` to push. Licence: pull works in wind-down; a
+push is an `update`, so in wind-down or without the licence it answers 403 `creatives_not_entitled` like a PATCH that changes
+anything but the status.
+
+#### The document
+
+A creative's editable state, built from the create request (`POST /api/v3/creatives`) without `workspaceId` and `status`.
+The schema is strict: an unknown key answers 422 and names it. `invalid_params` names are paths inside `document`.
+
+| Field | Notes |
+| --- | --- |
+| `type` | `feedbackButton` or `banner`. Kept in the document as the discriminator that picks the `content` and `styling` shape. It never changes: a push naming another type than the stored one is a 422 (`type`). |
+| `name` | required |
+| `defaultLanguage` | omitted resets to `en-US` |
+| `languages` | the non-default languages only, `{ code, enabled }` (as on create); omitted resets to none |
+| `content` | required, shape of the type |
+| `styling` | omitted resets to the type's default styling |
+| `destination` | `{ type: "survey", surveyId }`, `{ type: "link", url }` or `null`; omitted resets to `null` |
+| `distribution` | `showOn`, `triggers`, `conditions`, `displayPercentage`; omitted resets to page view, no triggers, no conditions, everyone |
+| `schedule` | `startAt`, `endAt`; omitted resets to open on both sides |
+
+Deliberately not in it (server-owned or derived): `id`, `workspaceId` (both in the envelope), `status`, `displayStatus`,
+`displayStatusReason`, `createdAt`, `updatedAt` (envelope), `publishedAt`, `archivedAt`, `creator`, `warnings`, the default
+language's entry in `languages`, `languages[].default`, `destination.surveyName` and `destination.opensAs`. A push never
+publishes, pauses, closes, archives or restores: those stay the PATCH `status` and the archive/restore tools.
+
+#### Push rules
+
+- Replace, not merge: every group is sent to the existing patch rules (`applyCreativePatch`) with omitted ones as their defaults.
+  Then the PATCH's own checks run: `validateCreativeState` (locales, publish rules for a published creative, banner without a
+  button cannot open anything, schedule order), custom CSS plan and processor, and inside the transaction the survey
+  destination (in the workspace, visible to the whole workspace, not single-use or PIN) and the actions
+  (`getCreativeReferenceProblems`). Ids of another workspace answer like unknown ones (422 `invalid_reference`).
+- `expectedUpdatedAt` is required and compared against the row read under the write's `FOR UPDATE` lock, in the same transaction
+  as the write: 409 with `details.expectedUpdatedAt` and `details.currentUpdatedAt`.
+- An archived creative is read-only: 422 (`archivedAt`), as for a PATCH.
+- A document equal to the stored state is a no-op: `changes: []`, nothing written, no audit event, `updatedAt` unchanged. It
+  still fails on a stale `expectedUpdatedAt` or an archived creative.
+- `dryRun: true` runs all of it (validation, access, licence, stale check, destructive check, references) and returns the result
+  without writing and without an audit event. The REST route drops the wrapper's audit entry for a dry run (including a dry run
+  that answers a problem); the MCP tool already records none.
+- A real push is one `updated` audit event on `creative`, old/new = the serialized creative before and after (the PATCH's own
+  record, which contains every document field).
+
+#### Destructive changes (409 `destructive_change` unless `confirmDestructive: true`)
+
+Only for a live creative (status not `draft`, not archived); a draft has nothing live to lose.
+
+| `changes[].type` | When |
+| --- | --- |
+| `destination_removed` | the destination goes from set to `null` (reachable for a banner whose button is removed, since a published feedback button or banner button without a destination is already a 422) |
+| `destination_changed` | the destination changes to another survey or another link (`ids` carries the previous survey id) |
+| `survey_left_unopened` | in addition to either of the above, when the previous survey is a live (`inProgress`) app survey with no action of its own and no other non-archived creative opening it (`ids` carries the survey id) |
+
+Checked after validation and the reference checks, so a 422 never hides behind a 409 that confirmation cannot fix.
+
+#### Decisions
+
+- `type` is a document field (discriminator), not envelope-only; the document stays one strict, self-describing object.
+- Document problems are 422 (not the 400 a PATCH body gets), as decided for documents.
+- A dry run that answers a problem is not audited either, including a 403 refusal (decision 6 read literally).
+
+### Workflow documents (pull_document / push_document, kind `workflow`)
+
+#### What a workflow document holds
+
+```json
+{ "name": "Notify team", "description": "Tells support", "definition": { "schemaVersion": 1, "trigger": {...}, "nodes": [...], "edges": [...], "entryNodeId": "trigger" } }
+```
+
+| Field | Notes |
+| --- | --- |
+| `name` | Required, 1-120 chars. |
+| `description` | Optional, up to 500 chars or `null`. Omitted on a push resets it to `null`. |
+| `definition` | Required. The same graph the create and patch routes take (`ZWorkflowDefinition`, graph refinements included). Inside it `schemaVersion`, `nodes` and `edges` default as on a create when omitted. |
+
+Deliberately not in the document: `status` (enable, disable, archive and unarchive stay separate tools), `triggerType`
+and `surveyId` (derived from `definition.trigger`), runs, `lastRun`, `runCount`, creator, `createdAt`. `updatedAt` is in the
+envelope, not the document.
+
+The envelope's `id`/`workspaceId` identify the workflow; `updatedAt` is the value a push sends back as `expectedUpdatedAt`.
+
+#### Push rules
+
+- Replaces the editable state. The document is strict: an unknown top-level key (for example `status`) is refused with a
+  422 naming it. Below the top level the shared definition schema is not strict (it strips unknown keys silently), so the
+  push parses the document, compares the parsed result with what was sent, and refuses any key the parse dropped with a
+  422 whose `invalid_params` names the path (`definition.nodes.0.config.recipients`, code `unsupported_field`). Nothing is
+  silently dropped.
+- Authorization is the workflow routes' own: `readWrite` on the workflow's workspace plus the workflows entitlement; an id
+  from another workspace answers 403 like an unknown id.
+- State rules (422 `invalid_workflow_state`): an archived workflow is read-only; the `definition` of an enabled workflow
+  cannot change. A push that leaves the definition as stored may still rename an enabled workflow, as PATCH does.
+- A trigger survey the workspace cannot see is refused as PATCH refuses it (422 `workflow_not_executable`,
+  `definition.trigger.config.surveyId`). Survey existence and ending cards are not checked on a push, same as PATCH:
+  that check runs at enable and in the workflow test.
+- A document equal to the stored state writes nothing (no row touched, `updatedAt` unchanged, no audit event) and returns
+  `changes: []`. Key order is not a change.
+- `changes` names `name`, `description`, and the definition by member: `definition.trigger`, `definition.entryNodeId`,
+  `definition.schemaVersion`, and for nodes and edges each id (`definition.nodes[send-email]`).
+
+#### Destructive changes
+
+None. A workflow push returns no destructive changes and `confirmDestructive` has no effect: the definition is a draft the
+agent may rewrite, and what a workflow must keep (an enabled definition, an archived workflow) is already refused above.
+
+#### Stale check
+
+`expectedUpdatedAt` is required. A mismatch answers 409 with `details.expectedUpdatedAt` and `details.currentUpdatedAt`.
+The authoritative check is the write's own `UPDATE ... WHERE id AND workspaceId AND updated_at = expected`
+(`WorkflowsService.updateWorkflowIfUnchanged`, inside a transaction); the early read only avoids work. Any write to the row
+bumps `updatedAt` (enable, disable and archive included), so a push also loses to a lifecycle change made after the pull.
+
+#### Dry run
+
+`dryRun: true` runs authorization, validation, the stale check, the state rules and the trigger-survey guard, returns the
+projected document with `dryRun: true` and the `changes`, and writes nothing and records no audit event. The projected
+envelope's `updatedAt` is the current one (nothing was written). A dry run that finds a problem answers the same problem a
+real push would.
+
+#### Audit
+
+A real push that wrote is `updated` on target `workflow`, with old/new the workflow resource as the existing PATCH records
+it; `send_email` recipient, sender, subject and body are masked by `redactWorkflowDefinitionPII` (keyed HMAC markers), so a
+changed recipient still shows as a changed marker without the address.
+
+#### Handbook notes
+
+- REST: `GET` and `PUT /api/v3/workflows/{workflowId}/document`, `auth: "both"`. OpenAPI source:
+  `paths/api_v3_workflows_{workflowId}_document.yml`, components `WorkflowDocument`, `WorkflowDocumentEnvelope`,
+  `WorkflowDocumentPushRequest`, `WorkflowDocumentPushResult` (prefixed so they do not collide with the other kinds').
+- Scopes and permissions are those of the generic tools: `pull_document` kind `workflow` needs `workflows:read` (workspace
+  `read`), `push_document` kind `workflow` needs `workflows:write` (workspace `readWrite`).
+- The `push_document` tool description says "A workflow cannot be pushed while enabled". More precisely: an enabled
+  workflow's definition cannot change; a rename still goes through. Adjust the sentence if you want it exact.
 
 ## Relationship to V3 Workflows API
 

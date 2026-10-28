@@ -1327,6 +1327,222 @@ paths:
         - sessionAuth: []
         - apiKeyAuth: []
         - bearerAuth: []
+  /api/v3/surveys/{surveyId}/document:
+    get:
+      operationId: pullSurveyDocumentV3
+      summary: Pull a survey document
+      description: |
+        Reads a survey as one editable document: the editable state only, with no status, counts or other server-owned fields. Edit it locally and send it back with `PUT`, naming the envelope's `updatedAt` as `expectedUpdatedAt`. Unlike `GET /api/v3/surveys/{surveyId}` it takes no `lang` selector. Session cookie or x-api-key.
+      tags:
+        - V3 Surveys
+      parameters:
+        - in: path
+          name: surveyId
+          required: true
+          schema:
+            type: string
+            format: cuid2
+          description: Survey identifier.
+      responses:
+        '200':
+          description: The survey document.
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SurveyDocumentEnvelope'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '422':
+          description: The stored survey is a legacy question-based survey, which the v3 API does not support (`stored_survey_invalid`).
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+    put:
+      operationId: pushSurveyDocumentV3
+      summary: Push a survey document
+      description: |
+        Replaces a survey's editable state with an edited document from `GET`. Update only: it never creates a survey, and never changes its status (publish, pause, close, archive and restore stay separate calls).
+
+        **Replace, not merge.** A document key you leave out is reset to its default, so send everything you want to keep; `name` and `blocks` are required. The document is strict and an unknown key is a **422** naming it.
+
+        **Stale check.** `expectedUpdatedAt` is required. A survey that changed since is refused with a **409** carrying `details.expectedUpdatedAt` and `details.currentUpdatedAt`; the check is a compare-and-set in the write itself.
+
+        **Destructive changes.** A push that removes blocks or elements (by id) from a survey that has responses is refused with a **409** whose `details` is `{ reason: "destructive_change", changes }`, each change a `blocks_removed` or `elements_removed` with the removed `ids` and the survey's `responseCount`. Repeat the push with `confirmDestructive: true` to apply it. Changing the id of an element of a published survey in place stays a **422** `immutable_identifier`, confirmed or not.
+
+        **Same rules as PATCH.** Validation, entitlements (external URLs, contact targeting, custom CSS) and reference checks are those of `PATCH /api/v3/surveys/{surveyId}`, as are its refusals: an archived survey is a **422**, and a published app survey cannot be left without a trigger.
+
+        **Dry run.** `dryRun: true` runs every check and answers the changes without writing or recording an audit event. A real push is audited as an update of the survey.
+      tags:
+        - V3 Surveys
+      parameters:
+        - in: path
+          name: surveyId
+          required: true
+          schema:
+            type: string
+            format: cuid2
+          description: Survey identifier.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SurveyDocumentPushRequest'
+            examples:
+              rename:
+                summary: Rename a survey, keeping its blocks
+                value:
+                  schemaVersion: 1
+                  expectedUpdatedAt: '2026-04-21T10:00:00.000Z'
+                  document:
+                    name: Product feedback (v2)
+                    blocks:
+                      - id: k1p9wq2m4x7c3v8b5n6t0j2r
+                        name: Satisfaction
+                        elements:
+                          - id: satisfaction
+                            type: openText
+                            headline:
+                              en-US: How satisfied were you?
+                            required: true
+                            inputType: text
+              dryRun:
+                summary: See what a push would change
+                value:
+                  schemaVersion: 1
+                  expectedUpdatedAt: '2026-04-21T10:00:00.000Z'
+                  dryRun: true
+                  document:
+                    name: Product feedback
+                    blocks:
+                      - id: k1p9wq2m4x7c3v8b5n6t0j2r
+                        name: Satisfaction
+                        elements:
+                          - id: satisfaction
+                            type: openText
+                            headline:
+                              en-US: How satisfied were you?
+                            required: true
+                            inputType: text
+      responses:
+        '200':
+          description: The push was applied (or checked, for a dry run). Carries `warnings` when custom CSS was processed.
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SurveyDocumentPushResult'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '409':
+          description: |
+            Either the survey changed since `expectedUpdatedAt` (`details` holds `expectedUpdatedAt` and `currentUpdatedAt`), or the push would remove blocks or elements that have responses (`details.reason` is `destructive_change`; repeat with `confirmDestructive: true`). Nothing was written.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                stale:
+                  summary: The survey changed since it was pulled
+                  value:
+                    title: Conflict
+                    status: 409
+                    detail: Survey was modified since it was last read; updatedAt is now 2026-04-21T11:30:00.000Z. Re-read the survey and retry.
+                    code: conflict
+                    requestId: 6f1f7f3e-3b0e-4a1a-9f0a-7c9a1d2b3c4d
+                    details:
+                      expectedUpdatedAt: '2026-04-21T10:00:00.000Z'
+                      currentUpdatedAt: '2026-04-21T11:30:00.000Z'
+                destructive:
+                  summary: The push would remove answered questions
+                  value:
+                    title: Conflict
+                    status: 409
+                    detail: 'This push would remove data. Review `details.changes`, then repeat it with confirmDestructive: true if that is intended.'
+                    code: conflict
+                    requestId: 6f1f7f3e-3b0e-4a1a-9f0a-7c9a1d2b3c4d
+                    details:
+                      reason: destructive_change
+                      changes:
+                        - type: elements_removed
+                          ids:
+                            - satisfaction
+                          responseCount: 120
+        '413':
+          description: The request body exceeds the size limit.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: |
+            The document is well-formed JSON the survey cannot take: an unknown key, a missing `name` or `blocks`, or any validation, entitlement or reference failure `PATCH /api/v3/surveys/{surveyId}` reports, with `invalid_params` naming the offending paths. An archived survey is refused too.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              example:
+                title: Unprocessable Content
+                status: 422
+                detail: Survey document failed validation
+                code: unprocessable_content
+                requestId: 6f1f7f3e-3b0e-4a1a-9f0a-7c9a1d2b3c4d
+                invalid_params:
+                  - name: status
+                    reason: 'Unsupported field ''status'': a push never publishes, pauses or closes a survey; use the lifecycle tools. Allowed fields: autoSelectLanguage, blocks, customCss, distribution, endings, hiddenFields, languages, metadata, name, showLanguageSwitch, targeting, variables, welcomeCard'
+                    code: unsupported_field
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/surveys/{surveyId}/blocks:
     patch:
       operationId: editSurveyBlocksV3
@@ -3527,6 +3743,124 @@ paths:
         - sessionAuth: []
         - apiKeyAuth: []
         - bearerAuth: []
+  /api/v3/workflows/{workflowId}/document:
+    get:
+      operationId: getWorkflowDocumentV3
+      summary: Pull a workflow as a document
+      description: |
+        Returns the workflow's editable state (`name`, `description`, `definition`) as one JSON document in an envelope that carries `updatedAt`. Edit it locally and send it back with `PUT /api/v3/workflows/{workflowId}/document`. The document holds no status, derived trigger fields or runs. Unknown or inaccessible workflow ids return `403` rather than `404`.
+      tags:
+        - V3 Workflows
+      parameters:
+        - $ref: '#/components/parameters/WorkflowIdPath'
+      responses:
+        '200':
+          description: Workflow document retrieved successfully
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/WorkflowDocumentEnvelope'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+    put:
+      operationId: putWorkflowDocumentV3
+      summary: Push a workflow document
+      description: |
+        Replaces the workflow's editable state with the document. Fields the document omits reset (`description` to `null`; inside `definition`, `schemaVersion`, `nodes` and `edges` to their defaults); nothing is merged. The document is strict: an unknown key, or a key the definition schema would silently drop, is refused with a **422** whose `invalid_params` name its path.
+
+        `expectedUpdatedAt` must be the `updatedAt` the document was pulled at. The write itself is a compare-and-set on it, so of two concurrent pushes only one applies; the other gets a **409** with `details.expectedUpdatedAt` and `details.currentUpdatedAt`.
+
+        A push never changes `status`: enabling, disabling and archiving stay separate calls. The same state rules as `PATCH /api/v3/workflows/{workflowId}` apply and answer **422** `invalid_workflow_state`: an archived workflow is read-only, and the `definition` of an enabled workflow cannot change (a rename of an enabled workflow is accepted). A trigger survey the workspace cannot see is refused as on a PATCH. A document equal to the stored state writes nothing and returns `changes: []`.
+
+        With `dryRun: true` every check runs and the result says what would change, but nothing is written and no audit event is recorded; a dry run that finds a problem answers the same problem a real push would.
+      tags:
+        - V3 Workflows
+      parameters:
+        - $ref: '#/components/parameters/WorkflowIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkflowDocumentPushRequest'
+      responses:
+        '200':
+          description: Workflow document pushed (or checked, for a dry run)
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/WorkflowDocumentPushResult'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '409':
+          description: Conflict — `expectedUpdatedAt` did not match the stored workflow, so it changed since the document was pulled. Nothing was written. `details` carries `expectedUpdatedAt` and the live `currentUpdatedAt`, so a client can pull again and reapply its edit.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              example:
+                title: Conflict
+                status: 409
+                detail: The resource changed since this document was pulled. Pull it again, reapply your edit, and push with the new updatedAt.
+                code: conflict
+                requestId: 6f1f7f3e-3b0e-4a1a-9f0a-7c9a1d2b3c4d
+                details:
+                  expectedUpdatedAt: '2026-10-16T09:30:00.000Z'
+                  currentUpdatedAt: '2026-10-16T09:45:00.000Z'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/workflows/{workflowId}/duplicate:
     post:
       operationId: duplicateWorkflowV3
@@ -4704,6 +5038,215 @@ paths:
           $ref: '#/components/responses/V3Unauthorized'
         '403':
           $ref: '#/components/responses/V3CreativesForbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/creatives/{creativeId}/document:
+    get:
+      operationId: getCreativeDocumentV3
+      summary: Pull a creative as a document
+      description: Returns a creative's editable state as one JSON document (`CreativeDocument`) with its `updatedAt`, to edit locally and push back with `PUT`. Read access to the creative's workspace, which is resolved from the creative; an unknown or inaccessible `creativeId` answers **403**, not **404**. Works in wind-down, like reading the creative.
+      tags:
+        - V3 Documents
+      parameters:
+        - $ref: '#/components/parameters/CreativeIdPath'
+      responses:
+        '200':
+          description: Creative document retrieved successfully
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CreativeDocumentEnvelope'
+              examples:
+                feedbackButton:
+                  summary: A feedback button that opens a survey
+                  value:
+                    data:
+                      kind: creative
+                      schemaVersion: 1
+                      id: clcr1234567890123456789012
+                      workspaceId: clws1234567890123456789012
+                      updatedAt: '2026-10-16T09:30:00.000Z'
+                      document:
+                        type: feedbackButton
+                        name: Site feedback tab
+                        defaultLanguage: en-US
+                        languages: []
+                        content:
+                          label:
+                            en-US: Feedback
+                          icon: null
+                        styling:
+                          position:
+                            desktop:
+                              edge: right
+                              offset: 50
+                            phone: null
+                          theme:
+                            customStyles: false
+                            backgroundColor: null
+                            textColor: null
+                            borderColor: null
+                            borderRadius: null
+                            fontWeight: null
+                            fontSize:
+                              desktop: null
+                              phone: null
+                            paddingX:
+                              desktop: null
+                              phone: null
+                            paddingY:
+                              desktop: null
+                              phone: null
+                        destination:
+                          type: survey
+                          surveyId: clsv1234567890123456789012
+                        distribution:
+                          showOn: pageView
+                          triggers: []
+                          conditions: null
+                          displayPercentage: null
+                        schedule:
+                          startAt: null
+                          endAt: null
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3CreativesForbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+    put:
+      operationId: putCreativeDocumentV3
+      summary: Push a creative document
+      description: |
+        Replaces a creative's editable state with an edited document from `GET`. Read/write access to its workspace and the full license: in wind-down (the license does not include Creatives) a push answers **403** `creatives_not_entitled`. An unknown or inaccessible `creativeId` answers **403**.
+
+        **Replace, not merge.** A field the document omits resets to what a create without it stores. The push never changes `status` or archives: publish, pause, close and archive stay separate calls. It validates exactly as `PATCH /api/v3/creatives/{creativeId}` does (publish rules for a published creative, locales, custom CSS, the survey and actions it references), and an archived creative answers **422**. `invalid_params` names are paths inside `document`.
+
+        **Stale push.** `expectedUpdatedAt` is required and compared under the write's row lock. A creative that changed since answers **409**, with `details.expectedUpdatedAt` and `details.currentUpdatedAt`.
+
+        **Destructive push.** A push that would remove data from a live (not `draft`, not archived) creative answers **409** with `details.reason: destructive_change` and `details.changes` until repeated with `confirmDestructive: true`. Destructive is: removing the destination (`destination_removed`), changing it to another survey or link (`destination_changed`), and either of those leaving a live `inProgress` app survey that has no action of its own and no other non-archived creative opening it (`survey_left_unopened`, with the survey id in `ids`).
+
+        **Dry run.** `dryRun: true` runs every check, including the stale and destructive ones, and answers what would change without writing or recording an audit event.
+
+        A document equal to the stored one is a no-op: `changes` is empty and `updatedAt` stays.
+      tags:
+        - V3 Documents
+      parameters:
+        - $ref: '#/components/parameters/CreativeIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreativeDocumentPushRequest'
+            examples:
+              rename:
+                summary: Rename a pulled creative
+                value:
+                  schemaVersion: 1
+                  expectedUpdatedAt: '2026-10-16T09:30:00.000Z'
+                  document:
+                    type: banner
+                    name: Maintenance notice
+                    content:
+                      message:
+                        en-US:
+                          - text: Maintenance tonight.
+                      button: null
+                      dismissible: true
+                      accessibleName: null
+      responses:
+        '200':
+          description: Creative document pushed, or checked when `dryRun` is true
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CreativeDocumentPushResult'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3CreativesForbidden'
+        '409':
+          description: Conflict. Either the creative changed since the document was pulled (`details` carries `expectedUpdatedAt` and the live `currentUpdatedAt`), or the push would remove data and `confirmDestructive` was not set (`details.reason` is `destructive_change`, `details.changes` lists what would go). Nothing was written.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                stale:
+                  summary: The creative changed since it was pulled
+                  value:
+                    title: Conflict
+                    status: 409
+                    detail: The resource changed since this document was pulled. Pull it again, reapply your edit, and push with the new updatedAt.
+                    code: conflict
+                    requestId: 6f1f7f3e-3b0e-4a1a-9f0a-7c9a1d2b3c4d
+                    details:
+                      expectedUpdatedAt: '2026-10-16T09:30:00.000Z'
+                      currentUpdatedAt: '2026-10-16T09:45:00.000Z'
+                destructive:
+                  summary: A live creative would lose its destination
+                  value:
+                    title: Conflict
+                    status: 409
+                    detail: 'This push would remove data. Review `details.changes`, then repeat it with confirmDestructive: true if that is intended.'
+                    code: conflict
+                    requestId: 6f1f7f3e-3b0e-4a1a-9f0a-7c9a1d2b3c4d
+                    details:
+                      reason: destructive_change
+                      changes:
+                        - type: destination_changed
+                          ids:
+                            - clsv1234567890123456789012
+                        - type: survey_left_unopened
+                          ids:
+                            - clsv1234567890123456789012
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
         '429':
           $ref: '#/components/responses/V3TooManyRequests'
         '500':
@@ -11325,6 +11868,164 @@ components:
                       name:
                         type: string
                     additionalProperties: false
+    SurveyDocument:
+      type: object
+      description: |
+        A survey's editable state, as `GET /api/v3/surveys/{surveyId}/document` returns it and `PUT` accepts it. It carries no lifecycle, identity or per-caller field: `id`, `workspaceId` and `updatedAt` are the envelope's, and `status`, `archivedAt`, `type`, `defaultLanguage`, `visibility`, `owner`, `access` and `createdAt` are not in it at all, so a push can never publish, pause or archive a survey. `languages[].alias` is not in it either (it belongs to the workspace language).
+
+        The document is **strict**: a key it does not list is refused with a **422** that names it. A push **replaces** the editable state, so a key you leave out is reset to what a new survey has (no languages, no endings, no variables, no welcome card, no custom CSS; for an app survey the default `distribution` and no `targeting` filters), and is not kept as stored. Only `name` and `blocks` have no empty value and must be sent. `distribution` and `targeting` belong to app surveys; a link survey's document has neither and refuses them.
+
+        What is inside a key (blocks, elements, logic, translations, distribution, targeting) is validated exactly as `PATCH /api/v3/surveys/{surveyId}` validates it, with the same entitlement and reference checks and the same refusals on a published survey.
+      required:
+        - name
+        - blocks
+      properties:
+        name:
+          type: string
+        metadata:
+          $ref: '#/components/schemas/SurveyMetadata'
+        languages:
+          type: array
+          items:
+            type: object
+            required:
+              - code
+            properties:
+              code:
+                type: string
+                example: en-US
+              default:
+                type: boolean
+              enabled:
+                type: boolean
+            additionalProperties: false
+          description: 'The survey''s languages, including the default one (`default: true`), which cannot be changed.'
+        showLanguageSwitch:
+          type:
+            - boolean
+            - 'null'
+        autoSelectLanguage:
+          type:
+            - boolean
+            - 'null'
+        welcomeCard:
+          $ref: '#/components/schemas/SurveyWelcomeCard'
+        blocks:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/SurveyBlock'
+        endings:
+          type: array
+          items:
+            $ref: '#/components/schemas/SurveyEnding'
+        hiddenFields:
+          $ref: '#/components/schemas/SurveyHiddenFields'
+        variables:
+          type: array
+          items:
+            $ref: '#/components/schemas/SurveyVariable'
+        distribution:
+          allOf:
+            - $ref: '#/components/schemas/SurveyDistribution'
+          description: App surveys only.
+        targeting:
+          allOf:
+            - $ref: '#/components/schemas/SurveyTargeting'
+          description: App surveys only.
+        customCss:
+          anyOf:
+            - $ref: '#/components/schemas/CustomCssInput'
+            - type: 'null'
+      additionalProperties: false
+    SurveyDocumentEnvelope:
+      type: object
+      description: A survey document with the identity and version a push has to name.
+      required:
+        - kind
+        - schemaVersion
+        - id
+        - workspaceId
+        - updatedAt
+        - document
+      properties:
+        kind:
+          type: string
+          enum:
+            - survey
+        schemaVersion:
+          type: integer
+          enum:
+            - 1
+        id:
+          type: string
+        workspaceId:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+          description: Send this back as `expectedUpdatedAt` when you push the edited document.
+        document:
+          $ref: '#/components/schemas/SurveyDocument'
+    SurveyDocumentPushRequest:
+      type: object
+      required:
+        - schemaVersion
+        - expectedUpdatedAt
+        - document
+      properties:
+        schemaVersion:
+          type: integer
+          enum:
+            - 1
+        expectedUpdatedAt:
+          type: string
+          format: date-time
+          description: The envelope's `updatedAt` from the pull this document was edited from. The push is applied only if the survey has not changed since; otherwise **409** with `details.currentUpdatedAt`. Enforced as a compare-and-set in the write itself, so two concurrent pushes cannot both succeed.
+        document:
+          $ref: '#/components/schemas/SurveyDocument'
+        dryRun:
+          type: boolean
+          default: false
+          description: 'Run every check (validation, authorization, the stale check, the destructive-change check, entitlement and reference checks) and answer the changes, writing and auditing nothing. A dry run that finds a problem answers the same problem a real push would. Two things it cannot know without writing: whether a new workspace language can be created, and whether the stale check still holds when a later real push writes.'
+        confirmDestructive:
+          type: boolean
+          default: false
+          description: Apply a push that removes blocks or elements of a survey that has responses. Without it such a push is refused with a **409**.
+      additionalProperties: false
+    SurveyDocumentChange:
+      type: object
+      required:
+        - path
+        - change
+      properties:
+        path:
+          type: string
+          description: 'A top-level document key, or `blocks[<id>]` / `endings[<id>]` / `variables[<id>]` for an entry of an id-keyed array. Deliberately shallow: the audit event carries the full difference.'
+          example: blocks[k1p9wq2m4x7c3v8b5n6t0j2r]
+        change:
+          type: string
+          enum:
+            - added
+            - removed
+            - changed
+    SurveyDocumentPushResult:
+      type: object
+      required:
+        - envelope
+        - dryRun
+        - changes
+      properties:
+        envelope:
+          allOf:
+            - $ref: '#/components/schemas/SurveyDocumentEnvelope'
+          description: The document as stored after the push. For a dry run, the document as pushed, with omitted keys reset, under the survey's current `updatedAt`. When the pushed document equals the stored one nothing is written, `updatedAt` does not change and `changes` is empty.
+        dryRun:
+          type: boolean
+        changes:
+          type: array
+          items:
+            $ref: '#/components/schemas/SurveyDocumentChange'
     SurveyBlockUpdateOperation:
       type: object
       additionalProperties: false
@@ -13474,6 +14175,112 @@ components:
         definition:
           $ref: '#/components/schemas/WorkflowDefinition'
       additionalProperties: false
+    WorkflowDocument:
+      type: object
+      description: |
+        A workflow as an editable document: the state an agent edits and pushes back, and nothing the server owns. It carries no `status` (lifecycle stays with `enable`, `disable`, `archive` and `unarchive`), no `triggerType` or `surveyId` (derived from `definition.trigger`), no runs, no creator and no timestamps (`updatedAt` is in the envelope). A push replaces this state: an omitted `description` resets to `null`, and inside `definition` an omitted `schemaVersion`, `nodes` or `edges` fall back to what a create without them stores. The document is strict: a key that is not a field is refused with a **422** naming it, and so is a key the definition schema would otherwise drop silently, such as a misspelled option inside a node's `config`.
+      required:
+        - name
+        - definition
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        description:
+          type:
+            - string
+            - 'null'
+          maxLength: 500
+        definition:
+          $ref: '#/components/schemas/WorkflowDefinition'
+      additionalProperties: false
+    WorkflowDocumentEnvelope:
+      type: object
+      description: |
+        A pulled or pushed workflow document with the identity and `updatedAt` it belongs to. Send `updatedAt` back as `expectedUpdatedAt` when pushing.
+      required:
+        - kind
+        - schemaVersion
+        - id
+        - workspaceId
+        - updatedAt
+        - document
+      properties:
+        kind:
+          type: string
+          enum:
+            - workflow
+        schemaVersion:
+          type: integer
+          enum:
+            - 1
+        id:
+          type: string
+          format: cuid2
+        workspaceId:
+          type: string
+          format: cuid2
+        updatedAt:
+          type: string
+          format: date-time
+        document:
+          $ref: '#/components/schemas/WorkflowDocument'
+    WorkflowDocumentPushRequest:
+      type: object
+      required:
+        - schemaVersion
+        - expectedUpdatedAt
+        - document
+      properties:
+        schemaVersion:
+          type: integer
+          enum:
+            - 1
+        expectedUpdatedAt:
+          type: string
+          format: date-time
+          description: The `updatedAt` of the envelope the document was pulled from.
+        document:
+          $ref: '#/components/schemas/WorkflowDocument'
+        dryRun:
+          type: boolean
+          description: |
+            Runs every check and answers what would change, without writing or recording an audit event.
+        confirmDestructive:
+          type: boolean
+          description: |
+            Accepted for every document kind. A workflow push has nothing destructive to confirm, so it has no effect here.
+      additionalProperties: false
+    WorkflowDocumentPushResult:
+      type: object
+      required:
+        - envelope
+        - dryRun
+        - changes
+      properties:
+        envelope:
+          $ref: '#/components/schemas/WorkflowDocumentEnvelope'
+        dryRun:
+          type: boolean
+        changes:
+          type: array
+          description: |
+            What differs from the stored workflow, as paths. `name` and `description` by field, the definition by member: `definition.trigger`, `definition.entryNodeId`, and for `definition.nodes` and `definition.edges` each id (`definition.nodes[send-email]`). Empty when the document equals the stored state, in which case nothing is written.
+          items:
+            type: object
+            required:
+              - path
+              - change
+            properties:
+              path:
+                type: string
+              change:
+                type: string
+                enum:
+                  - added
+                  - removed
+                  - changed
     DuplicateWorkflowRequest:
       type: object
       properties:
@@ -14852,6 +15659,175 @@ components:
           description: Only with `groupBy=device`. The counts per device type, always `phone`, `tablet` and `desktop`, in that order.
           items:
             $ref: '#/components/schemas/CreativeStatsDevice'
+      additionalProperties: false
+    FeedbackButtonCreativeDocument:
+      type: object
+      description: A feedback button as a pull/push document. See `CreativeDocument`.
+      required:
+        - type
+        - name
+        - content
+      properties:
+        type:
+          type: string
+          enum:
+            - feedbackButton
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        defaultLanguage:
+          $ref: '#/components/schemas/LocaleCode'
+        languages:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/CreativeLanguageInput'
+        content:
+          $ref: '#/components/schemas/FeedbackButtonContent'
+        styling:
+          $ref: '#/components/schemas/FeedbackButtonStyling'
+        destination:
+          anyOf:
+            - $ref: '#/components/schemas/CreativeDestinationInput'
+            - type: 'null'
+        distribution:
+          $ref: '#/components/schemas/CreativeDistribution'
+        schedule:
+          $ref: '#/components/schemas/CreativeSchedule'
+      additionalProperties: false
+    BannerCreativeDocument:
+      type: object
+      description: A banner as a pull/push document. See `CreativeDocument`.
+      required:
+        - type
+        - name
+        - content
+      properties:
+        type:
+          type: string
+          enum:
+            - banner
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        defaultLanguage:
+          $ref: '#/components/schemas/LocaleCode'
+        languages:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/CreativeLanguageInput'
+        content:
+          $ref: '#/components/schemas/BannerContent'
+        styling:
+          $ref: '#/components/schemas/BannerStyling'
+        destination:
+          anyOf:
+            - $ref: '#/components/schemas/CreativeDestinationInput'
+            - type: 'null'
+        distribution:
+          $ref: '#/components/schemas/CreativeDistribution'
+        schedule:
+          $ref: '#/components/schemas/CreativeSchedule'
+      additionalProperties: false
+    CreativeDocument:
+      oneOf:
+        - $ref: '#/components/schemas/FeedbackButtonCreativeDocument'
+        - $ref: '#/components/schemas/BannerCreativeDocument'
+      discriminator:
+        propertyName: type
+        mapping:
+          feedbackButton: '#/components/schemas/FeedbackButtonCreativeDocument'
+          banner: '#/components/schemas/BannerCreativeDocument'
+      description: 'A creative''s editable state: what `POST /api/v3/creatives` accepts, without `workspaceId` and `status`. Nothing the server owns is in it (no `id`, `status`, `displayStatus`, `createdAt`, `updatedAt`, `publishedAt`, `archivedAt`, `creator` or `warnings`, and no `surveyName` or `opensAs` on the destination), so a push never publishes, pauses or archives anything. `type` picks the `content` and `styling` shape and never changes. `languages` lists only the non-default languages, as on create. A push **replaces** the state: an omitted field resets to what a create without it stores (no languages, no destination, `showOn: pageView`, no schedule, the type''s default styling). Unknown fields answer **422**, each named in `invalid_params`.'
+    CreativeDocumentEnvelope:
+      type: object
+      description: A creative as `GET /api/v3/creatives/{creativeId}/document` returns it. Send `updatedAt` back as `expectedUpdatedAt` when you push.
+      required:
+        - kind
+        - schemaVersion
+        - id
+        - workspaceId
+        - updatedAt
+        - document
+      properties:
+        kind:
+          type: string
+          enum:
+            - creative
+        schemaVersion:
+          type: integer
+          enum:
+            - 1
+        id:
+          type: string
+          format: cuid2
+        workspaceId:
+          type: string
+          format: cuid2
+        updatedAt:
+          type: string
+          format: date-time
+        document:
+          $ref: '#/components/schemas/CreativeDocument'
+      additionalProperties: false
+    CreativeDocumentPushRequest:
+      type: object
+      description: Replaces a creative's editable state with `document`. Unknown fields are rejected with **400**; unknown fields inside `document` with **422**.
+      required:
+        - schemaVersion
+        - expectedUpdatedAt
+        - document
+      properties:
+        schemaVersion:
+          type: integer
+          enum:
+            - 1
+        expectedUpdatedAt:
+          type: string
+          format: date-time
+          description: The `updatedAt` of the document you pulled. Required. Compared under the write's row lock, so a creative that changed since answers **409** and two pushes of the same `updatedAt` cannot both win.
+        document:
+          $ref: '#/components/schemas/CreativeDocument'
+        dryRun:
+          type: boolean
+          description: Run every check and answer what would change, writing nothing and recording no audit event. A dry run that finds a problem answers the problem a real push would.
+        confirmDestructive:
+          type: boolean
+          description: Apply a push that removes data (see the operation). Without it such a push answers **409**.
+      additionalProperties: false
+    CreativeDocumentPushResult:
+      type: object
+      description: 'What a push answers: the document as stored afterwards (as it would be, for a `dryRun`), with the new `updatedAt`, and what changed. `changes` is empty, and nothing is written or audited, when the pushed document equals the stored one.'
+      required:
+        - envelope
+        - dryRun
+        - changes
+      properties:
+        envelope:
+          $ref: '#/components/schemas/CreativeDocumentEnvelope'
+        dryRun:
+          type: boolean
+        changes:
+          type: array
+          items:
+            type: object
+            required:
+              - path
+              - change
+            properties:
+              path:
+                type: string
+                description: A top-level document field, for example `distribution`.
+              change:
+                type: string
+                enum:
+                  - added
+                  - removed
+                  - changed
+            additionalProperties: false
       additionalProperties: false
     ActionClassResource:
       type: object

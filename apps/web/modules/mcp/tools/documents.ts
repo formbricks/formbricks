@@ -92,7 +92,7 @@ export function registerDocumentTools(server: McpServer): void {
     {
       title: "Push document",
       description:
-        "Replace a survey's, creative's or workflow's editable state with an edited document from pull_document. Send the pulled updatedAt as expectedUpdatedAt: a push over a newer edit is refused (409, currentUpdatedAt). A push never publishes, pauses or enables anything; use the lifecycle tools for that. A push that removes data (survey questions that have responses, a live creative's destination) is refused until you repeat it with confirmDestructive: true after the user agreed. Use dryRun: true to see the changes first. A workflow cannot be pushed while enabled.",
+        "Replace a survey's, creative's or workflow's editable state with an edited document from pull_document. Send the pulled updatedAt as expectedUpdatedAt: a push over a newer edit is refused (409, currentUpdatedAt). A push never publishes, pauses or enables anything; use the lifecycle tools for that. A push that removes data (survey questions that have responses, a live creative's destination) is refused until you repeat it with confirmDestructive: true after the user agreed. Use dryRun: true to see the changes first. A workflow's definition cannot be changed while it is enabled (a push may still rename it).",
       inputSchema: ZMcpPushDocumentInput,
       outputSchema: mcpToolOutput(ZV3DocumentPushResult),
       audit: {

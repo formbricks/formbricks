@@ -1,28 +1,20 @@
-import type { z } from "zod";
-import { type TWorkflowResource, ZCreateWorkflowInput } from "@formbricks/workflows";
+import { type TWorkflowDocument, type TWorkflowResource, ZWorkflowDocument } from "@formbricks/workflows";
 import type { WorkflowEditableState } from "@formbricks/workflows/server";
 import { formatZodIssues } from "@/app/api/v3/lib/api-wrapper";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 
 /**
- * A workflow as a pull/push document (ADR 0015): its editable state and nothing the server owns.
- *
- * Built from the create input, so it accepts exactly what a create accepts: `workspaceId` and `status` are
- * left out because a push never moves a workflow between workspaces or through its lifecycle, and the
- * trigger's survey linkage (`surveyId`, `triggerType`) is derived from the definition, never stored apart
- * from it. Runs are not part of it. The top level is strict, so a key that is not a field is refused,
- * naming it.
+ * A workflow as a pull/push document (ADR 0015): its editable state and nothing the server owns. The schema
+ * is the package's (`ZWorkflowDocument`, built from the create input so it accepts exactly what a create
+ * accepts); see there for what is left out. The top level is strict, so a key that is not a field is
+ * refused, naming it. Below it the definition schema is not strict, which `parseWorkflowDocument` makes up.
  *
  * A push replaces: `description` omitted resets to none, and inside the definition `nodes`, `edges` and
  * `schemaVersion` fall back to what a create without them stores. `name` and `definition` have no default
  * and are required.
  */
-export const ZV3WorkflowDocument = ZCreateWorkflowInput.pick({
-  name: true,
-  description: true,
-  definition: true,
-}).strict();
-export type TV3WorkflowDocument = z.infer<typeof ZV3WorkflowDocument>;
+export const ZV3WorkflowDocument = ZWorkflowDocument;
+export type TV3WorkflowDocument = TWorkflowDocument;
 
 /** The document of a stored workflow, every field present. */
 export const toWorkflowDocument = ({
