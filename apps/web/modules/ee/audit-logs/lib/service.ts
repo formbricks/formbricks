@@ -13,6 +13,9 @@ import {
  */
 export const MAX_PERSISTED_CHANGES_BYTES = 16 * 1024;
 
+/** `userAgent` and `apiUrl` come from the request, so a stored copy is cut to a sane length. */
+export const MAX_STORED_TEXT_LENGTH = 512;
+
 const validateEvent = (event: TAuditLogEvent): void => {
   const result = ZAuditLogEventSchema.safeParse(event);
   if (!result.success) {
@@ -49,9 +52,9 @@ const persistAuditEvent = async (event: TAuditLogEvent): Promise<void> => {
         targetId: event.target.id,
         status: event.status,
         eventId: event.eventId,
-        apiUrl: event.apiUrl,
+        apiUrl: event.apiUrl?.slice(0, MAX_STORED_TEXT_LENGTH),
         ipAddress: event.ipAddress,
-        userAgent: event.userAgent,
+        userAgent: event.userAgent.slice(0, MAX_STORED_TEXT_LENGTH),
         changes: toPersistedChanges(event.changes),
       },
     });
@@ -72,7 +75,10 @@ const persistAuditEvent = async (event: TAuditLogEvent): Promise<void> => {
   }
 };
 
-export const logAuditEvent = async (event: TAuditLogEvent): Promise<void> => {
+export const logAuditEvent = async (
+  event: TAuditLogEvent,
+  { persist = true }: { persist?: boolean } = {}
+): Promise<void> => {
   try {
     validateEvent(event);
   } catch (error) {
@@ -98,5 +104,5 @@ export const logAuditEvent = async (event: TAuditLogEvent): Promise<void> => {
   // After the logger line, so a database failure never costs the log record, and a logger transport
   // failure never costs the stored one. Callers run off the response path (`after()`, `setImmediate`,
   // workers), so awaiting the insert adds no request latency.
-  await persistAuditEvent(event);
+  if (persist) await persistAuditEvent(event);
 };

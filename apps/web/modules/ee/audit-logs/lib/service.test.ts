@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { Prisma } from "@formbricks/database/prisma";
 import { type TAuditLogEvent, UNKNOWN_DATA } from "../types/audit-log";
-import { MAX_PERSISTED_CHANGES_BYTES, logAuditEvent } from "./service";
+import { MAX_PERSISTED_CHANGES_BYTES, MAX_STORED_TEXT_LENGTH, logAuditEvent } from "./service";
 
 // Mocks
 globalThis.console = { ...globalThis.console, error: vi.fn() };
@@ -234,6 +234,25 @@ describe("persisting audit events", () => {
     await logAuditEvent({ ...validEvent, changes });
 
     expect(createAuditEvent.mock.calls[0][0].data.changes).toEqual({ truncated: true });
+  });
+
+  test("logs an event without storing it when the entry point says its organization is untrusted", async () => {
+    await logAuditEvent(validEvent, { persist: false });
+
+    expect(logger.audit).toHaveBeenCalledTimes(1);
+    expect(createAuditEvent).not.toHaveBeenCalled();
+  });
+
+  test("cuts request-supplied text to a bounded length", async () => {
+    await logAuditEvent({
+      ...validEvent,
+      userAgent: "a".repeat(5000),
+      apiUrl: `http://localhost/${"b".repeat(5000)}`,
+    });
+
+    const { data } = createAuditEvent.mock.calls[0][0];
+    expect(data.userAgent).toHaveLength(MAX_STORED_TEXT_LENGTH);
+    expect(data.apiUrl).toHaveLength(MAX_STORED_TEXT_LENGTH);
   });
 
   test("a diff at the cap is stored whole", async () => {

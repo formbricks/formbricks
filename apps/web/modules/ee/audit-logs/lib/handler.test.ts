@@ -227,7 +227,8 @@ describe("queueAuditEvent", () => {
       vi.useRealTimers();
     }
     expect(serviceLogAuditEventMockHandle).toHaveBeenCalledWith(
-      expect.objectContaining({ timestamp: "2026-10-20T10:00:00.000Z" })
+      expect.objectContaining({ timestamp: "2026-10-20T10:00:00.000Z" }),
+      { persist: true }
     );
   });
 
@@ -249,7 +250,8 @@ describe("queueAuditEvent", () => {
     await OriginalHandler.queueAuditEvent(baseEventParams);
     await flushAfter();
     expect(serviceLogAuditEventMockHandle).toHaveBeenCalledWith(
-      expect.objectContaining({ ipAddress: "untrusted-client-ip", userAgent: "audit-test-agent" })
+      expect.objectContaining({ ipAddress: "untrusted-client-ip", userAgent: "audit-test-agent" }),
+      { persist: true }
     );
   });
 });
@@ -278,7 +280,8 @@ describe("queueAuditEventBackground", () => {
       expect.objectContaining({
         ipAddress: "127.0.0.1",
         userAgent: "audit-test-agent",
-      })
+      }),
+      { persist: true }
     );
     expect(headers).toHaveBeenCalledTimes(1);
   });
@@ -296,7 +299,8 @@ describe("queueAuditEventBackground", () => {
     await OriginalHandler.queueAuditEventBackground(baseEventParams);
     await new Promise(setImmediate);
     expect(serviceLogAuditEventMockHandle).toHaveBeenCalledWith(
-      expect.objectContaining({ ipAddress: "untrusted-client-ip", userAgent: "audit-test-agent" })
+      expect.objectContaining({ ipAddress: "untrusted-client-ip", userAgent: "audit-test-agent" }),
+      { persist: true }
     );
   });
 });
@@ -316,7 +320,8 @@ describe("queueAuditEventWithoutRequest", () => {
     });
 
     expect(serviceLogAuditEventMockHandle).toHaveBeenCalledWith(
-      expect.objectContaining({ ipAddress: "203.0.113.7", userAgent: "deferred-agent" })
+      expect.objectContaining({ ipAddress: "203.0.113.7", userAgent: "deferred-agent" }),
+      { persist: true }
     );
     expect(vi.mocked(getClientIpFromHeaders)).not.toHaveBeenCalled();
   });
@@ -328,7 +333,8 @@ describe("queueAuditEventWithoutRequest", () => {
         actor: { id: "u1", type: "system" },
         ipAddress: "unknown",
         userAgent: "unknown",
-      })
+      }),
+      { persist: true }
     );
     expect(getClientIpFromHeaders).not.toHaveBeenCalled();
   });
@@ -361,6 +367,31 @@ describe("withAuditLogging", () => {
     expect(callArgs.action).toBe("created");
     expect(callArgs.status).toBe("success");
     expect(callArgs.target.id).toBe("t1");
+  });
+
+  test("stores the event only under an organization the action set itself", async () => {
+    const handlerImpl = vi.fn().mockResolvedValue("ok");
+    const wrapped = OriginalHandler.withAuditLogging("created", "survey", handlerImpl);
+    await wrapped({ ctx: mockCtxBase as any, parsedInput: mockParsedInput });
+    await new Promise(setImmediate);
+    expect(serviceLogAuditEventMockHandle.mock.calls[0][1]).toEqual({ persist: true });
+  });
+
+  test("logs but does not store an event whose organization came from the caller's input", async () => {
+    const handlerImpl = vi.fn().mockResolvedValue("ok");
+    const wrapped = OriginalHandler.withAuditLogging("created", "survey", handlerImpl);
+    const ctxWithoutOrganization = {
+      ...mockCtxBase,
+      auditLoggingCtx: { ...mockCtxBase.auditLoggingCtx, organizationId: "" },
+    };
+    await wrapped({
+      ctx: ctxWithoutOrganization as any,
+      parsedInput: { organizationId: "someone-elses-org" },
+    });
+    await new Promise(setImmediate);
+    const [event, options] = serviceLogAuditEventMockHandle.mock.calls[0];
+    expect(event.organizationId).toBe("someone-elses-org");
+    expect(options).toEqual({ persist: false });
   });
 
   test("logs audit event for failed handler and throws", async () => {
@@ -549,7 +580,8 @@ describe("v3 and MCP audit emission", () => {
           ipAddress: "127.0.0.1",
           userAgent: "audit-test-agent",
           ...(status === "failure" ? { eventId: "request-1" } : {}),
-        })
+        }),
+        { persist: true }
       );
     }
   );

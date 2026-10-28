@@ -235,13 +235,14 @@ function registerContactWriteTools(server: McpServer): void {
     {
       title: "Delete contact",
       description:
-        "Permanently delete a contact together with their responses and displays. This cannot be undone: pass confirm: true only after the user has agreed.",
+        "Permanently delete a contact together with their responses and displays. This cannot be undone: pass confirm: true only after the user has agreed. Needs the responses:write scope as well, because the contact's responses go with it.",
       inputSchema: ZMcpDeleteContactInput,
       outputSchema: ZMcpIdOutput,
       audit: { action: "deleted", targetType: "contact", targetIdArg: "contactId" },
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: true },
     },
-    ["contacts:write"],
+    // Deleting a contact cascades to its responses, so a token without `responses:write` must not reach it.
+    ["contacts:write", "responses:write"],
     async (input: TMcpDeleteContactInput, ctx) =>
       runMcpMutation(
         ctx,

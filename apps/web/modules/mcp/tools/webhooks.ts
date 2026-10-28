@@ -105,7 +105,7 @@ export function registerWebhookTools(server: McpServer): void {
     {
       title: "Create webhook",
       description:
-        "Create a webhook that receives response events. Returns the signing secret ONCE, in this result only; store it now, it cannot be read again. An empty surveyIds sends every survey in the workspace.",
+        "Create a webhook that receives response events. Returns the signing secret ONCE, in this result only; store it now, it cannot be read again. An empty surveyIds sends every survey in the workspace. Needs the responses:read scope as well, because the webhook delivers response data.",
       inputSchema: ZMcpCreateWebhookInput,
       outputSchema: ZMcpWebhookCreatedOutput,
       audit: { action: "created", targetType: "webhook" },
@@ -116,7 +116,9 @@ export function registerWebhookTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["webhooks:write"],
+    // A webhook delivers response bodies to a URL of the caller's choosing, so creating or retargeting one
+    // takes the right to read responses too.
+    ["webhooks:write", "responses:read"],
     async (input: TMcpCreateWebhookInput, ctx) =>
       runMcpMutation(
         ctx,
@@ -138,13 +140,13 @@ export function registerWebhookTools(server: McpServer): void {
     {
       title: "Update webhook",
       description:
-        "Change a webhook's name, URL, triggers or surveys. Only the fields you send change; triggers and surveyIds replace the whole list. The secret is unchanged.",
+        "Change a webhook's name, URL, triggers or surveys. Only the fields you send change; triggers and surveyIds replace the whole list. The secret is unchanged. Needs the responses:read scope as well, because the webhook delivers response data.",
       inputSchema: ZMcpUpdateWebhookInput,
       outputSchema: ZMcpWebhookOutput,
       audit: { action: "updated", targetType: "webhook", targetIdArg: "webhookId" },
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: true },
     },
-    ["webhooks:write"],
+    ["webhooks:write", "responses:read"],
     async ({ webhookId, ...body }: TMcpUpdateWebhookInput, ctx) =>
       runMcpMutation(
         ctx,

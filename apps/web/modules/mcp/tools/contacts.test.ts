@@ -164,6 +164,18 @@ describe("registerContactTools", () => {
     expect(tools.get("upsert_contact")!.config.annotations).toMatchObject({ destructiveHint: false });
   });
 
+  test("delete_contact is refused without responses:write, since the contact's responses go with it", async () => {
+    const { tools } = createToolServer();
+
+    const result = await tools
+      .get("delete_contact")!
+      .handler({ contactId, confirm: true }, { http: { authInfo: writeAuthInfo } });
+
+    expect(result.isError).toBe(true);
+    expect(result.structuredContent.error).toMatchObject({ status: 403 });
+    expect(deleteV3Contact).not.toHaveBeenCalled();
+  });
+
   test("every read tool is refused with only a write scope, without reaching the operation", async () => {
     const { tools } = createToolServer();
 

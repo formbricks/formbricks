@@ -284,11 +284,11 @@ API key permissions are enforced through the same workspace access checks as the
 | `start_taxonomy_run` | An OAuth user must be an organization owner or manager; an API key needs `write` or `manage` on the workspace, and the dataset must be assigned to that workspace alone |
 | `rename_taxonomy_node` | Same as `start_taxonomy_run` |
 | `remove_taxonomy_node` | Same as `start_taxonomy_run` |
-| `list_audit_events` | Organization-level, not workspace-level: organization owner or manager (OAuth / session), or an API key with `manage` on a workspace of the named organization. Audit logging must be enabled on the instance. |
+| `list_audit_events` | Organization-level, not workspace-level: organization owner or manager (OAuth / session), or an API key of that organization with the organization-level access-control read grant (a workspace grant, even `manage`, is not enough). Audit logging must be enabled on the instance. |
 | `list_webhooks` | `read` |
 | `get_webhook` | `read` — resolved from the webhook's workspace |
-| `create_webhook` | `write` or `manage` |
-| `update_webhook` | `write` or `manage` — resolved from the webhook's workspace |
+| `create_webhook` | `write` or `manage`; over OAuth also the `responses:read` scope, because a webhook delivers response data |
+| `update_webhook` | `write` or `manage` — resolved from the webhook's workspace; over OAuth also the `responses:read` scope |
 | `delete_webhook` | `write` or `manage` — resolved from the webhook's workspace |
 | `test_webhook` | `write` or `manage` — resolved from the webhook's workspace |
 | `list_contacts` | `read` |
@@ -296,7 +296,7 @@ API key permissions are enforced through the same workspace access checks as the
 | `get_contact` | `read` — resolved from the contact's workspace |
 | `upsert_contact` | `write` or `manage` |
 | `update_contact` | `write` or `manage` — resolved from the contact's workspace |
-| `delete_contact` | `write` or `manage` |
+| `delete_contact` | `write` or `manage`; over OAuth also the `responses:write` scope, because the contact's responses are deleted with it |
 | `create_contact_attribute_key` | `write` or `manage` |
 | `update_contact_attribute_key` | `write` or `manage` — resolved from the key's workspace |
 | `delete_contact_attribute_key` | `write` or `manage` |
@@ -2014,7 +2014,7 @@ changes to the feedback dataset (`feedbackDirectory`), with the Hub `actor_id` b
 - **Storage.** Until this change audit events were only written to the application logger. `logAuditEvent` (`modules/ee/audit-logs/lib/service.ts`) still calls `logger.audit` exactly as before and then also inserts the validated event into the `AuditEvent` table. The insert runs inside the same off-request contexts the log line already ran in (`after()`, `setImmediate`, workers), so it adds no request latency; a failed insert is logged as an error and never thrown. The existing gate (`getIsAuditLogsEnabled`, i.e. `AUDIT_LOG_ENABLED` plus the Enterprise licence) decides whether an entry point writes at all, and is unchanged. Events whose organization is `unknown` are logged but not stored.
 - **What is stored.** The event as built by the entry point: `changes` has already been through `redactPII`, and is replaced by `{ "truncated": true }` above 16 KiB. `ipAddress` and `userAgent` are stored as captured (the address is already the sentinel when `AUDIT_LOG_GET_USER_IP` is off).
 - **What is returned.** A summary only: `id`, `timestamp`, `actor { id, type }`, `action`, `target { type, id }`, `status`, `eventId` (the request id of a failed attempt), `apiUrl`. Never the `changes` diff, the address or the user agent.
-- **Authorization.** Always organization-scoped. `organizationId` is required, and the tool gets it from `list_workspaces` (each workspace carries its `organizationId`). A user must be an owner or manager of that organization; an API key must belong to it and hold `manage` on one of its workspaces (re-checked against the live authorization graph). Everything else, including an unknown organization, is the same 403. A caller who is authorized but whose instance has audit logging off also gets a 403 saying so; an unauthorized caller never learns that.
+- **Authorization.** Always organization-scoped. `organizationId` is required, and the tool gets it from `list_workspaces` (each workspace carries its `organizationId`). A user must be an owner or manager of that organization; an API key must belong to it and carry the organization-level access-control read grant. The trail names actors and targets across every workspace, members and API keys, so a workspace grant, even `manage`, is not that. Everything else, including an unknown organization, is the same 403. A caller who is authorized but whose instance has audit logging off also gets a 403 saying so; an unauthorized caller never learns that.
 - **Bounds.** Keyset pagination on `(timestamp, id)` over `AuditEvent(organizationId, timestamp, id)`; never offset. `limit` defaults to 20, maximum 100 (above that is a 400, not a silent clamp). The cursor is bound to the organization and the filter set, so changing a filter mid-walk is a 400. Filters: `actorId`, `actorType`, `action`, `targetType`, `targetId` (requires `targetType`), `status`, `from` (inclusive), `to` (exclusive). Action and target values are validated against the audit vocabulary, so a misspelling is a 400 rather than an empty page.
 - **Retention.** There is no cleanup job: rows are kept until the organization is deleted (cascade). Whether and how long to keep them belongs with the `data-retention` module and is not decided here.
 

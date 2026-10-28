@@ -71,8 +71,8 @@ const apiKeyAuth = (overrides: Record<string, unknown> = {}) => ({
   type: "apiKey",
   apiKeyId: "key_1",
   organizationId: ORG_ID,
-  organizationAccess: {},
-  workspacePermissions: [{ workspaceId: WORKSPACE_ID, workspaceName: "W", permission: "manage" }],
+  organizationAccess: { accessControl: { read: true, write: false } },
+  workspacePermissions: [{ workspaceId: WORKSPACE_ID, workspaceName: "W", permission: "read" }],
   ...overrides,
 });
 
@@ -164,43 +164,34 @@ describe("GET /api/v3/audit-events: authorization", () => {
   });
 
   describe("API key", () => {
-    test("with manage on a workspace of the organization reads it", async () => {
+    test("with organization access-control read access reads its own organization", async () => {
       const response = await getAsApiKey(`organizationId=${ORG_ID}`);
 
       expect(response.status).toBe(200);
-      expect(mockCan).toHaveBeenCalledWith({ type: "apiKey", id: "key_1" }, "workspace.manage", {
-        type: "workspace",
-        id: WORKSPACE_ID,
-      });
       expect(mockListRows).toHaveBeenCalledWith(expect.objectContaining({ organizationId: ORG_ID }));
     });
 
-    test("is refused for any other organization than its own, without a lookup", async () => {
+    test("is refused for any other organization than its own", async () => {
       const response = await getAsApiKey(`organizationId=${OTHER_ORG_ID}`);
 
       expect(response.status).toBe(403);
-      expect(mockCan).not.toHaveBeenCalled();
       expect(mockListRows).not.toHaveBeenCalled();
     });
 
-    test.each(["read", "write"])("is refused with only %s access", async (permission) => {
+    test("is refused with manage on a workspace but no organization-level grant", async () => {
       mockAuthenticateRequest.mockResolvedValue(
-        apiKeyAuth({ workspacePermissions: [{ workspaceId: WORKSPACE_ID, workspaceName: "W", permission }] })
+        apiKeyAuth({
+          organizationAccess: { accessControl: { read: false, write: false } },
+          workspacePermissions: [{ workspaceId: WORKSPACE_ID, workspaceName: "W", permission: "manage" }],
+        })
       );
 
       expect((await getAsApiKey(`organizationId=${ORG_ID}`)).status).toBe(403);
       expect(mockListRows).not.toHaveBeenCalled();
     });
 
-    test("is refused when the live authorization graph no longer grants manage", async () => {
-      mockCan.mockResolvedValue(false);
-
-      expect((await getAsApiKey(`organizationId=${ORG_ID}`)).status).toBe(403);
-      expect(mockListRows).not.toHaveBeenCalled();
-    });
-
-    test("is refused when its workspace turns out to belong to another organization", async () => {
-      mockResolveWorkspace.mockResolvedValue({ workspaceId: WORKSPACE_ID, organizationId: OTHER_ORG_ID });
+    test("is refused when it has no organization access at all", async () => {
+      mockAuthenticateRequest.mockResolvedValue(apiKeyAuth({ organizationAccess: {} }));
 
       expect((await getAsApiKey(`organizationId=${ORG_ID}`)).status).toBe(403);
       expect(mockListRows).not.toHaveBeenCalled();

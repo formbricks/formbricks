@@ -183,8 +183,9 @@ function getMcpScopes(authentication: TAuthenticationApiKey): string[] {
     scopes.add("contacts:write");
     scopes.add("webhooks:write");
   }
-  // Audit logs are an organization-level admin record, so reading them needs `manage`, not `read`.
-  if (authentication.workspacePermissions.some((permission) => permission.permission === "manage")) {
+  // The audit trail is an organization-wide record, so a workspace grant, even `manage`, is not enough:
+  // it needs the key's organization-level access-control read grant.
+  if (authentication.organizationAccess?.accessControl?.read === true) {
     scopes.add("audit:read");
   }
 

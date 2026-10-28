@@ -288,6 +288,8 @@ describe("authenticateMcpRequest", () => {
           "contacts:write",
           "webhooks:read",
           "webhooks:write",
+          // The fixture key carries organization access-control read access.
+          "audit:read",
         ].sort()
       );
     }
@@ -318,15 +320,21 @@ describe("authenticateMcpRequest", () => {
           "responses:read",
           "contacts:read",
           "webhooks:read",
+          // The fixture key carries organization access-control read access.
+          "audit:read",
         ].sort()
       );
     }
   });
 
-  test("grants audit:read only to an API key with manage access", async () => {
-    const withPermission = async (permission: ApiKeyPermission) => {
+  test("grants audit:read only to an API key with organization access-control read access", async () => {
+    const withAccess = async (
+      accessControl: { read: boolean; write: boolean },
+      permission: ApiKeyPermission
+    ) => {
       vi.mocked(authenticateApiKeyFromHeaders).mockResolvedValue({
         ...apiKeyAuth,
+        organizationAccess: { accessControl },
         workspacePermissions: [{ workspaceId: "workspace_1", workspaceName: "Workspace", permission }],
       });
       const result = await authenticateMcpRequest(
@@ -335,9 +343,11 @@ describe("authenticateMcpRequest", () => {
       return result.ok ? result.authInfo.scopes : [];
     };
 
-    expect(await withPermission(ApiKeyPermission.read)).not.toContain("audit:read");
-    expect(await withPermission(ApiKeyPermission.write)).not.toContain("audit:read");
-    expect(await withPermission(ApiKeyPermission.manage)).toContain("audit:read");
+    // A workspace grant is not an organization one, however high.
+    expect(await withAccess({ read: false, write: false }, ApiKeyPermission.manage)).not.toContain(
+      "audit:read"
+    );
+    expect(await withAccess({ read: true, write: false }, ApiKeyPermission.read)).toContain("audit:read");
   });
 
   test("returns 429 when rate limited", async () => {

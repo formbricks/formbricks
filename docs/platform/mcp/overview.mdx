@@ -51,14 +51,16 @@ delete require the `:write` scope. Everything below is offered on the consent sc
 | `responses:read` | `list_responses`, `count_responses`, `get_response` | Read and count survey responses |
 | `responses:write` | `validate_response`, `create_response`, `update_response`, `delete_response`, `batch_delete_responses` | Record, correct and delete survey responses |
 | `contacts:read` | `list_contacts`, `count_contacts`, `get_contact`, `list_segments`, `get_segment` | Read contacts, their attributes and segments (respondent personal data) |
-| `contacts:write` | `upsert_contact`, `update_contact`, `delete_contact`, `create_contact_attribute_key`, `update_contact_attribute_key`, `delete_contact_attribute_key`, `create_segment`, `update_segment`, `delete_segment` | Create, change and delete contacts, attribute keys and segments |
+| `contacts:write` | `upsert_contact`, `update_contact`, `delete_contact`³, `create_contact_attribute_key`, `update_contact_attribute_key`, `delete_contact_attribute_key`, `create_segment`, `update_segment`, `delete_segment` | Create, change and delete contacts, attribute keys and segments |
 | `webhooks:read` | `list_webhooks`, `get_webhook` | Read webhooks: URL, triggers and covered surveys. Signing secrets are never returned |
-| `webhooks:write` | `create_webhook`, `update_webhook`, `delete_webhook`, `test_webhook` | Create, change and delete webhooks that send responses to other systems, and send a test delivery |
-| `audit:read` | `list_audit_events` | Read the organization audit trail; organization owners and managers only |
+| `webhooks:write` | `create_webhook`³, `update_webhook`³, `delete_webhook`, `test_webhook` | Create, change and delete webhooks that send responses to other systems, and send a test delivery |
+| `audit:read` | `list_audit_events` | Read the organization audit trail; organization owners and managers only. An API key needs the organization-level access-control read grant |
 
 ¹ `test_workflow` is a dry-run (no changes are saved), so it only needs the `workflows:read` scope — but because it evaluates the live workflow definition, it requires **write or manage** permission on the workspace. A read-only member will get a 403 even though the scope matches.
 
 ² Changing a record that already exists is held to a higher bar than creating one, because a feedback dataset shared across workspaces has no way to tell whose records are whose. Connected over **OAuth** (the flow on this page), both tools require you to be an **organization owner or manager**. Authenticated with an **API key** instead, they require the dataset to be assigned to a **single workspace** — a workspace-scoped key cannot be shown to own a record in a shared one — and `delete_feedback_record` additionally requires **manage** permission, matching `DELETE` elsewhere in the API. Creating, reading and searching are unaffected either way.
+
+³ These tools also need a response scope: `delete_contact` needs `responses:write` (a contact's responses are deleted with it), and `create_webhook` and `update_webhook` need `responses:read` (a webhook delivers response data to the URL you give it). Without it the call is refused with a 403.
 
 A response is someone's submitted answers, so grant `responses:read` deliberately — it is respondent
 data, which `surveys:read` never exposes. An integration you connected before these scopes existed

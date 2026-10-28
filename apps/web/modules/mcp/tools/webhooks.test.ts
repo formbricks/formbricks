@@ -44,6 +44,8 @@ const authInfoFor = (scopes: string[]) => ({
 
 const readAuthInfo = authInfoFor(["webhooks:read"]);
 const writeAuthInfo = authInfoFor(["webhooks:write"]);
+// A webhook delivers response data, so creating or retargeting one also takes the right to read responses.
+const deliveryWriteAuthInfo = authInfoFor(["webhooks:write", "responses:read"]);
 // Scopes of another family never open a webhook tool.
 const surveysAuthInfo = authInfoFor(["surveys:read", "surveys:write"]);
 
@@ -143,6 +145,19 @@ describe("registerWebhookTools", () => {
     }
   });
 
+  test("create_webhook and update_webhook are refused without responses:read, since a webhook delivers response data", async () => {
+    const { tools } = createToolServer();
+
+    for (const name of ["create_webhook", "update_webhook"]) {
+      const result = await tools.get(name)!.handler(inputs[name], { http: { authInfo: writeAuthInfo } });
+      expect(result.isError, name).toBe(true);
+      expect(result.structuredContent.error, name).toMatchObject({ status: 403 });
+    }
+
+    expect(createV3Webhook).not.toHaveBeenCalled();
+    expect(updateV3Webhook).not.toHaveBeenCalled();
+  });
+
   test("every read tool is refused with only a write scope", async () => {
     const { tools } = createToolServer();
 
@@ -205,7 +220,7 @@ describe("registerWebhookTools", () => {
 
     const result = await tools
       .get("create_webhook")!
-      .handler(inputs.create_webhook, { http: { authInfo: writeAuthInfo } });
+      .handler(inputs.create_webhook, { http: { authInfo: deliveryWriteAuthInfo } });
 
     expect(createV3Webhook).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -224,7 +239,7 @@ describe("registerWebhookTools", () => {
 
     await tools
       .get("update_webhook")!
-      .handler({ webhookId, surveyIds: [surveyId] }, { http: { authInfo: writeAuthInfo } });
+      .handler({ webhookId, surveyIds: [surveyId] }, { http: { authInfo: deliveryWriteAuthInfo } });
 
     expect(updateV3Webhook).toHaveBeenCalledWith(
       expect.objectContaining({ webhookId, body: { surveyIds: [surveyId] } })

@@ -18,7 +18,7 @@ const ZMcpAuditEventListOutput = mcpToolOutput(ZV3AuditEventResource.array()).ex
  * The audit trail, read-only. Its own scope family (`audit:read`, ADR 0015): an audit record names people
  * and what they did, so it is not something a survey or response token should reach. The scope is the
  * first gate; the operation still requires an organization owner or manager (OAuth), or an API key with
- * `manage` on a workspace of that organization, and audit logging to be enabled on the instance.
+ * organization access-control read access, and audit logging to be enabled on the instance.
  *
  * Deliberately no tool to write, change or delete an event: the trail is written by the actions it
  * records, and an agent that could edit it would make it worthless as evidence.

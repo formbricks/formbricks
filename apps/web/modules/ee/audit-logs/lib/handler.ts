@@ -40,6 +40,13 @@ type TBuildAuditEventInput = TAuditEventInput & {
   requestMetadata: TAuditRequestMetadata;
   // When the audited action happened. Taken by the entry point, since the write itself is deferred.
   timestamp: string;
+  /**
+   * Whether the event is also stored for `GET /api/v3/audit-events`. False when `organizationId` is not
+   * known to be trustworthy: an id read from a request's input names whatever organization the caller
+   * typed, and storing under it would let any signed-in user write into another organization's trail.
+   * The event is still logged either way.
+   */
+  persist: boolean;
 };
 
 /**
@@ -61,6 +68,7 @@ const buildAndLogAuditEvent = async ({
   eventId,
   apiUrl,
   timestamp,
+  persist,
 }: TBuildAuditEventInput) => {
   try {
     let changes;
@@ -88,7 +96,7 @@ const buildAndLogAuditEvent = async ({
       ...(status === "failure" && eventId ? { eventId } : {}),
     };
 
-    await logAuditEvent(auditEvent);
+    await logAuditEvent(auditEvent, { persist });
   } catch (logError) {
     logger.error(logError, "Failed to create audit log event");
   }
@@ -99,7 +107,7 @@ const logRequestAuditEvent = async (input: TAuditEventInput, timestamp: string) 
   try {
     if (!(await getIsAuditLogsEnabled())) return;
     const requestMetadata = input.requestMetadata ?? (await getAuditRequestMetadata());
-    await buildAndLogAuditEvent({ ...input, requestMetadata, timestamp });
+    await buildAndLogAuditEvent({ ...input, requestMetadata, timestamp, persist: true });
   } catch (err) {
     const { action, targetType, targetId, eventId } = input;
     logger.error({ err, action, targetType, targetId, eventId }, "Failed to queue audit event");
@@ -132,6 +140,7 @@ export const queueAuditEventWithoutRequest = async (input: TAuditEventInput): Pr
     ...input,
     requestMetadata: input.requestMetadata ?? UNKNOWN_AUDIT_REQUEST_METADATA,
     timestamp,
+    persist: true,
   });
 };
 
@@ -297,6 +306,10 @@ export const withAuditLogging = <
           },
           status,
           timestamp,
+          // Only an organization the action set itself, after authorizing the caller, is stored under.
+          // The `parsedInput` and workspace fallbacks above are whatever the caller sent, so a failed
+          // attempt against someone else's organization would otherwise land in that organization's trail.
+          persist: Boolean(auditLoggingCtx.organizationId),
           oldObject: auditLoggingCtx.oldObject,
           newObject: auditLoggingCtx.newObject,
           eventId: auditLoggingCtx.eventId,
