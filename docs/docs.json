@@ -109,7 +109,7 @@
             "pages": ["surveys/overview", "surveys/analysis/reading-results"]
           },
           {
-            "group": "Survey Features",
+            "group": "Surveys",
             "pages": [
               {
                 "group": "General Features",
