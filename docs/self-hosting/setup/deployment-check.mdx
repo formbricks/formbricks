@@ -23,7 +23,7 @@ Run it after the first install, after every upgrade, and after changing a proxy,
     workspace only. No organization-level access is needed.
   </Step>
   <Step title="Run the image">
-    Pass the workspace id when the key has no organization access, which is the recommended setup.
+    Pass the id of the workspace the key can write to.
 
     ```bash
     docker run --rm \
@@ -57,7 +57,7 @@ Use the image tag that matches your Formbricks version, for example `ghcr.io/for
 | `FORMBRICKS_URL`          | Yes      |                    | The `WEBAPP_URL` of your instance.                                                                                               |
 | `FORMBRICKS_PUBLIC_URL`   | No       | `FORMBRICKS_URL`   | The `PUBLIC_URL`, when surveys are served from a different domain.                                                               |
 | `FORMBRICKS_API_KEY`      | Yes      |                    | API key with write access to one workspace.                                                                                      |
-| `FORMBRICKS_WORKSPACE_ID` | No       | Resolved from key  | Required when the key has no organization access, or can write to more than one workspace.                                       |
+| `FORMBRICKS_WORKSPACE_ID` | Yes      |                    | The workspace the key can write to. The check creates and removes its test survey there.                                         |
 | `CHECK_STORAGE`           | No       | `auto`             | `auto` skips the storage check when file storage is not configured, `true` fails instead, `false` always skips it.                |
 | `CHECK_TIMEOUT_MS`        | No       | `30000`            | Timeout for each network request.                                                                                                |
 
