@@ -13,6 +13,7 @@ import {
   ZV3CreateCreativeBody,
   ZV3CreativeStatsQuery,
   ZV3PatchCreativeBody,
+  ZV3PauseCreativesBody,
 } from "@/app/api/v3/creatives/lib/schemas";
 import { lengthBoundedArray } from "@/app/api/v3/lib/bounded-array";
 
@@ -188,3 +189,9 @@ export const ZMcpGetCreativeStatsInput = ZV3CreativeStatsQuery.extend({
   ),
 });
 export type TMcpGetCreativeStatsInput = z.infer<typeof ZMcpGetCreativeStatsInput>;
+
+export const ZMcpPauseCreativesInput = ZV3PauseCreativesBody.extend({
+  workspaceId: idField("Workspace ID the survey belongs to."),
+  surveyId: idField("Survey ID whose In progress creatives should all be paused."),
+});
+export type TMcpPauseCreativesInput = z.infer<typeof ZMcpPauseCreativesInput>;

@@ -1,0 +1,68 @@
+type: object
+description: One topic-generation run for a scope of a feedback dataset.
+required:
+  - id
+  - tenant_id
+  - source_type
+  - source_id
+  - field_id
+  - status
+  - record_count
+  - embedding_count
+  - cluster_count
+  - node_count
+  - created_at
+  - updated_at
+properties:
+  id:
+    type: string
+    format: uuid
+  scope_type:
+    type: string
+    enum: [field, directory]
+  tenant_id:
+    type: string
+    description: The feedback dataset (directory) id.
+  source_type:
+    type: string
+  source_id:
+    type: string
+    description: Empty string for feedback with no attributed source.
+  field_id:
+    type: string
+  field_label:
+    type: string
+  status:
+    type: string
+    enum: [pending, running, succeeded, failed, canceled]
+  params:
+    type: object
+    additionalProperties: true
+  metrics:
+    type: object
+    additionalProperties: true
+  record_count:
+    type: integer
+  embedding_count:
+    type: integer
+  cluster_count:
+    type: integer
+  node_count:
+    type: integer
+  error:
+    type: string
+  error_code:
+    type: string
+    enum: [insufficient_data, service_unavailable, generation_failed, invalid_output, internal_error]
+  started_at:
+    type: string
+    format: date-time
+  finished_at:
+    type: string
+    format: date-time
+  created_at:
+    type: string
+    format: date-time
+  updated_at:
+    type: string
+    format: date-time

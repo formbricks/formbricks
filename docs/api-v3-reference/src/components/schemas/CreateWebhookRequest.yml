@@ -1,0 +1,44 @@
+type: object
+additionalProperties: false
+required:
+  - workspaceId
+  - url
+  - triggers
+properties:
+  workspaceId:
+    type: string
+    format: cuid2
+    description: Workspace the webhook is created in.
+  name:
+    type: string
+    minLength: 1
+    maxLength: 255
+    description: Optional label. Trimmed; must not be empty.
+  url:
+    type: string
+    format: uri
+    maxLength: 2048
+    description: >-
+      Endpoint events are POSTed to. `http` or `https` only. Private, loopback, link-local and cloud
+      metadata addresses are refused with **422**, as are hostnames that resolve to one; the same policy
+      applies at every delivery.
+  source:
+    $ref: ./WebhookSource.yml
+    default: user
+  triggers:
+    type: array
+    minItems: 1
+    maxItems: 3
+    items:
+      $ref: ./WebhookTrigger.yml
+  surveyIds:
+    type: array
+    maxItems: 200
+    default: []
+    items:
+      type: string
+      format: cuid2
+    description: >-
+      Surveys whose responses are sent. Each must be a survey of `workspaceId` that is visible to the whole
+      workspace, else **422**. An empty array (the default) sends every survey in the workspace, including
+      surveys created later.

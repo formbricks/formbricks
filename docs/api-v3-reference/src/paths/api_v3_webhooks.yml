@@ -1,0 +1,144 @@
+get:
+  operationId: listWebhooksV3
+  summary: List webhooks
+  description: |
+    Returns a workspace's webhooks, ordered by id. Signing secrets are never returned.
+
+    Requires read access to the workspace. Session cookie, `x-api-key`, or a Bearer token.
+  tags:
+    - V3 Webhooks
+  parameters:
+    - in: query
+      name: workspaceId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: |
+        Workspace identifier. This is the canonical container ID for v3 APIs.
+    - in: query
+      name: limit
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 250
+        default: 50
+      description: Page size (max 250).
+    - $ref: ../components/parameters/CursorQuery.yml
+  responses:
+    "200":
+      description: Webhooks retrieved successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: ../components/schemas/WebhookResource.yml
+              meta:
+                $ref: ../components/schemas/CursorPaginationMeta.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []
+post:
+  operationId: createWebhookV3
+  summary: Create a webhook
+  description: |
+    Creates a webhook that receives response events. Formbricks generates the signing secret and returns
+    it **once**, in this response; no other operation returns it, so store it now.
+
+    Requires write access to the workspace; for an API key, write or manage access. Session cookie,
+    `x-api-key`, or a Bearer token.
+
+    The URL is checked with the same SSRF policy deliveries use: `http` or `https`, no private, loopback,
+    link-local or cloud-metadata address, and a hostname must resolve to public addresses only. A URL that
+    fails answers **422** with `invalid_params` naming `url`. Each entry of `surveyIds` must be a survey of
+    the workspace that is visible to the whole workspace, else **422**; a survey of another workspace and
+    one that does not exist are indistinguishable.
+
+    An empty `surveyIds` sends every survey in the workspace, including surveys created later.
+  tags:
+    - V3 Webhooks
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/CreateWebhookRequest.yml
+        examples:
+          finishedResponses:
+            summary: Send finished responses of one survey
+            value:
+              workspaceId: clws1234567890123456789012
+              name: Slack bridge
+              url: https://hooks.example.com/formbricks
+              triggers:
+                - responseFinished
+              surveyIds:
+                - clsv1234567890123456789012
+  responses:
+    "201":
+      description: Webhook created
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Location:
+          schema:
+            type: string
+          description: URL of the new webhook.
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/WebhookCreatedResource.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "422":
+      $ref: ../components/responses/V3UnprocessableContent.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

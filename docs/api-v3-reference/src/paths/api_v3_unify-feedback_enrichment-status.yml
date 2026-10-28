@@ -1,0 +1,71 @@
+get:
+  operationId: getEnrichmentStatusV3
+  summary: Get enrichment status
+  description: |
+    Returns how far translation, sentiment and emotion enrichment has got across the feedback datasets
+    assigned to a workspace: records eligible, done, permanently failed and still pending, per enrichment.
+    Only enrichments enabled for at least one of the datasets are listed.
+
+    `unavailable: true` means the feedback service did not answer; it is not the same as nothing being enabled.
+
+    Requires read access to the workspace and an Enterprise license that includes Unify Feedback (otherwise **403**). Session cookie, `x-api-key`, or a Bearer token.
+  tags:
+    - V3 Taxonomy
+  parameters:
+    - $ref: ../components/parameters/WorkspaceIdQuery.yml
+  responses:
+    "200":
+      description: Status returned
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                type: object
+                required:
+                  - enrichments
+                  - unavailable
+                properties:
+                  enrichments:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - kind
+                        - eligible
+                        - done
+                        - failedTerminal
+                        - pending
+                      properties:
+                        kind:
+                          type: string
+                          enum: [translation, sentiment, emotions]
+                        eligible:
+                          type: integer
+                        done:
+                          type: integer
+                        failedTerminal:
+                          type: integer
+                          description: Records whose enrichment permanently gave up.
+                        pending:
+                          type: integer
+                          description: Eligible records neither done nor permanently failed.
+                  unavailable:
+                    type: boolean
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

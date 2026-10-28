@@ -1,0 +1,7 @@
+in: path
+name: webhookId
+required: true
+schema:
+  type: string
+  format: cuid2
+description: Webhook identifier.

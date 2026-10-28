@@ -11,9 +11,14 @@ import {
   V3_SURVEY_MAX_VARIABLES,
 } from "@/app/api/v3/surveys/schemas";
 import { CREATIVE_TEXTS, type TCreativeTextSpec } from "@/modules/ee/creatives/lib/creative-texts";
+import * as auditEventSchemas from "./audit-event-schemas";
 import * as creativeSchemas from "./creative-schemas";
+import * as feedbackQuerySchemas from "./feedback-query-schemas";
+import * as lifecycleSchemas from "./lifecycle-schemas";
 import * as surveyAndFeedbackSchemas from "./schemas";
 import * as tagSchemas from "./tag-schemas";
+import * as taxonomySchemas from "./taxonomy-schemas";
+import * as webhookSchemas from "./webhook-schemas";
 import * as workflowSchemas from "./workflow-schemas";
 
 vi.mock("server-only", () => ({}));
@@ -136,6 +141,11 @@ const allExports: [string, unknown][] = Object.entries({
   ...workflowSchemas,
   ...creativeSchemas,
   ...tagSchemas,
+  ...auditEventSchemas,
+  ...feedbackQuerySchemas,
+  ...taxonomySchemas,
+  ...webhookSchemas,
+  ...lifecycleSchemas,
 });
 
 const allSchemas = allExports.filter((entry): entry is [string, z.ZodType] => entry[1] instanceof z.ZodType);

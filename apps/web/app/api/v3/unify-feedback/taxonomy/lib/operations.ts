@@ -6,7 +6,7 @@ import {
   successListResponse,
   successResponse,
 } from "@/app/api/v3/lib/response";
-import type { TV3Authentication } from "@/app/api/v3/lib/types";
+import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import {
   createTaxonomyRun,
   getActiveTaxonomyTree,
@@ -19,7 +19,11 @@ import {
   renameTaxonomyNode,
 } from "@/modules/hub/service";
 import type { TaxonomyScopeInput, TaxonomyScopeType } from "@/modules/hub/types";
-import { getSessionUserId, requireUnifyDirectoryAccess, requireUnifyDirectoryMutationAccess } from "./access";
+import {
+  getTaxonomyActorId,
+  requireUnifyDirectoryAccess,
+  requireUnifyDirectoryMutationAccess,
+} from "./access";
 
 type TBaseParams = {
   authentication: TV3Authentication;
@@ -28,6 +32,20 @@ type TBaseParams = {
   requestId: string;
   instance: string;
 };
+
+/**
+ * What a taxonomy change is audited as: a change to the feedback directory whose tree it edits, so the
+ * target is the directory, and the node or run it touched travels in the event's `newObject`/`oldObject`.
+ */
+function stampTaxonomyAudit(
+  auditLog: TV3AuditLog | undefined,
+  access: { organizationId: string },
+  directoryId: string
+): void {
+  if (!auditLog) return;
+  auditLog.organizationId = access.organizationId;
+  auditLog.targetId = directoryId;
+}
 
 /**
  * Build the Hub scope for a request. Directory scope sends only `scope_type` (covers all text feedback
@@ -207,6 +225,7 @@ export async function triggerV3TaxonomyRun(
     sourceId?: string;
     fieldId?: string;
     fieldLabel?: string;
+    auditLog?: TV3AuditLog;
   }
 ): Promise<Response> {
   const {
@@ -218,6 +237,7 @@ export async function triggerV3TaxonomyRun(
     sourceId,
     fieldId,
     fieldLabel,
+    auditLog,
     requestId,
     instance,
   } = params;
@@ -231,8 +251,10 @@ export async function triggerV3TaxonomyRun(
   );
   if (access instanceof Response) return access;
 
-  const actorId = getSessionUserId(authentication);
-  if (!actorId) return problemUnauthorized(requestId, "Session required", instance);
+  const actorId = getTaxonomyActorId(authentication);
+  if (!actorId) return problemUnauthorized(requestId, "Not authenticated", instance);
+
+  stampTaxonomyAudit(auditLog, access, directoryId);
 
   const result = await createTaxonomyRun({
     ...buildTaxonomyScope(directoryId, scopeType, sourceType, sourceId, fieldId),
@@ -247,6 +269,9 @@ export async function triggerV3TaxonomyRun(
       serviceUnavailableDetail: TAXONOMY_UNAVAILABLE_DETAIL,
     });
   }
+
+  if (auditLog)
+    auditLog.newObject = { runId: result.data.run.id, scopeType, inProgress: result.data.in_progress };
 
   return successResponse({ run: result.data.run, inProgress: result.data.in_progress }, { requestId });
 }
@@ -279,9 +304,9 @@ export async function getV3TaxonomyNodeRecords(
 }
 
 export async function renameV3TaxonomyNode(
-  params: TBaseParams & { nodeId: string; label: string }
+  params: TBaseParams & { nodeId: string; label: string; auditLog?: TV3AuditLog }
 ): Promise<Response> {
-  const { authentication, workspaceId, directoryId, nodeId, label, requestId, instance } = params;
+  const { authentication, workspaceId, directoryId, nodeId, label, auditLog, requestId, instance } = params;
 
   const access = await requireUnifyDirectoryMutationAccess(
     authentication,
@@ -292,8 +317,10 @@ export async function renameV3TaxonomyNode(
   );
   if (access instanceof Response) return access;
 
-  const actorId = getSessionUserId(authentication);
-  if (!actorId) return problemUnauthorized(requestId, "Session required", instance);
+  const actorId = getTaxonomyActorId(authentication);
+  if (!actorId) return problemUnauthorized(requestId, "Not authenticated", instance);
+
+  stampTaxonomyAudit(auditLog, access, directoryId);
 
   const result = await renameTaxonomyNode(nodeId, {
     tenant_id: directoryId,
@@ -308,11 +335,15 @@ export async function renameV3TaxonomyNode(
     });
   }
 
+  if (auditLog) auditLog.newObject = { nodeId, label };
+
   return successResponse(result.data, { requestId });
 }
 
-export async function removeV3TaxonomyNode(params: TBaseParams & { nodeId: string }): Promise<Response> {
-  const { authentication, workspaceId, directoryId, nodeId, requestId, instance } = params;
+export async function removeV3TaxonomyNode(
+  params: TBaseParams & { nodeId: string; auditLog?: TV3AuditLog }
+): Promise<Response> {
+  const { authentication, workspaceId, directoryId, nodeId, auditLog, requestId, instance } = params;
 
   const access = await requireUnifyDirectoryMutationAccess(
     authentication,
@@ -323,8 +354,10 @@ export async function removeV3TaxonomyNode(params: TBaseParams & { nodeId: strin
   );
   if (access instanceof Response) return access;
 
-  const actorId = getSessionUserId(authentication);
-  if (!actorId) return problemUnauthorized(requestId, "Session required", instance);
+  const actorId = getTaxonomyActorId(authentication);
+  if (!actorId) return problemUnauthorized(requestId, "Not authenticated", instance);
+
+  stampTaxonomyAudit(auditLog, access, directoryId);
 
   const result = await removeTaxonomyNode(nodeId, { tenant_id: directoryId, actor_id: actorId });
   if (result.error || !result.data) {
@@ -334,6 +367,8 @@ export async function removeV3TaxonomyNode(params: TBaseParams & { nodeId: strin
       notFound: { resourceType: "Taxonomy node", resourceId: nodeId },
     });
   }
+
+  if (auditLog) auditLog.oldObject = { nodeId, label: result.data.label };
 
   return noContentResponse({ requestId });
 }

@@ -1,0 +1,126 @@
+patch:
+  operationId: renameTaxonomyNodeV3
+  summary: Rename a taxonomy node
+  description: |
+    Renames a topic or subtopic. The change is recorded against the caller; an API key is recorded as
+    `apiKey:<id>`.
+
+    Changing a dataset's topics is limited to organization owners and managers for a person, and for an
+    API key to one with write access to a workspace that is the dataset's only owner: a dataset shared by
+    several workspaces answers **403** to an API key, because its topics belong to the dataset, not to a
+    workspace. Requires an Enterprise license that includes Unify Feedback. Session cookie, `x-api-key`, or a
+    Bearer token.
+
+    Answers **404** for a node that does not exist in the given dataset.
+  tags:
+    - V3 Taxonomy
+  parameters:
+    - in: path
+      name: nodeId
+      required: true
+      schema:
+        type: string
+        format: uuid
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          additionalProperties: false
+          required:
+            - workspaceId
+            - directoryId
+            - label
+          properties:
+            workspaceId:
+              type: string
+              format: cuid2
+            directoryId:
+              type: string
+              format: cuid2
+            label:
+              type: string
+              minLength: 1
+              maxLength: 1000
+              description: New label. Trimmed; must not be empty.
+  responses:
+    "200":
+      description: Node renamed
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/TaxonomyNode.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "404":
+      $ref: ../components/responses/V3NotFound.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+    "502":
+      $ref: ../components/responses/V3BadGateway.yml
+    "503":
+      $ref: ../components/responses/V3ServiceUnavailable.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []
+delete:
+  operationId: removeTaxonomyNodeV3
+  summary: Remove a taxonomy node
+  description: |
+    Removes a topic or subtopic from the tree. The node is retained for audit but excluded from tree
+    responses; there is no operation to restore it.
+
+    Changing a dataset's topics is limited to organization owners and managers for a person, and for an
+    API key to one with write access to a workspace that is the dataset's only owner: a dataset shared by
+    several workspaces answers **403** to an API key, because its topics belong to the dataset, not to a
+    workspace. Requires an Enterprise license that includes Unify Feedback. Session cookie, `x-api-key`, or a
+    Bearer token.
+
+    Answers **404** for a node that does not exist in the given dataset.
+  tags:
+    - V3 Taxonomy
+  parameters:
+    - in: path
+      name: nodeId
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - $ref: ../components/parameters/WorkspaceIdQuery.yml
+    - $ref: ../components/parameters/TaxonomyDirectoryIdQuery.yml
+  responses:
+    "204":
+      description: Node removed
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "404":
+      $ref: ../components/responses/V3NotFound.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+    "502":
+      $ref: ../components/responses/V3BadGateway.yml
+    "503":
+      $ref: ../components/responses/V3ServiceUnavailable.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

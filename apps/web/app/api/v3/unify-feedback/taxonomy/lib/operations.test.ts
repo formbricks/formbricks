@@ -13,7 +13,11 @@ import {
 } from "@/modules/hub/service";
 import type { FeedbackRecordData, TaxonomyNode, TaxonomyRun } from "@/modules/hub/types";
 import { NO_CONFIG_ERROR } from "@/modules/hub/utils";
-import { getSessionUserId, requireUnifyDirectoryAccess, requireUnifyDirectoryMutationAccess } from "./access";
+import {
+  getTaxonomyActorId,
+  requireUnifyDirectoryAccess,
+  requireUnifyDirectoryMutationAccess,
+} from "./access";
 import {
   getV3TaxonomyNodeRecordCounts,
   getV3TaxonomyNodeRecords,
@@ -30,7 +34,7 @@ vi.mock("server-only", () => ({}));
 vi.mock("./access", () => ({
   requireUnifyDirectoryAccess: vi.fn(),
   requireUnifyDirectoryMutationAccess: vi.fn(),
-  getSessionUserId: vi.fn(),
+  getTaxonomyActorId: vi.fn(),
 }));
 
 vi.mock("@/modules/hub/service", () => ({
@@ -119,7 +123,38 @@ beforeEach(() => {
   vi.resetAllMocks();
   vi.mocked(requireUnifyDirectoryAccess).mockResolvedValue(context);
   vi.mocked(requireUnifyDirectoryMutationAccess).mockResolvedValue(context);
-  vi.mocked(getSessionUserId).mockReturnValue("user_1");
+  vi.mocked(getTaxonomyActorId).mockReturnValue("user_1");
+});
+
+describe("audit stamping on taxonomy changes", () => {
+  test("a run stamps the organization and the directory it changes, and what it started", async () => {
+    vi.mocked(createTaxonomyRun).mockResolvedValue({
+      data: { run, in_progress: false },
+      error: null,
+    });
+    const auditLog = {} as NonNullable<Parameters<typeof triggerV3TaxonomyRun>[0]["auditLog"]>;
+
+    await triggerV3TaxonomyRun({ ...base, scopeType: "directory", auditLog });
+
+    expect(auditLog).toMatchObject({
+      organizationId: "org_1",
+      targetId: directoryId,
+      newObject: { runId: run.id, scopeType: "directory", inProgress: false },
+    });
+  });
+
+  test("a removal records the node and label it took out", async () => {
+    vi.mocked(removeTaxonomyNode).mockResolvedValue({ data: node, error: null });
+    const auditLog = {} as NonNullable<Parameters<typeof removeV3TaxonomyNode>[0]["auditLog"]>;
+
+    await removeV3TaxonomyNode({ ...base, nodeId: node.id, auditLog });
+
+    expect(auditLog).toMatchObject({
+      organizationId: "org_1",
+      targetId: directoryId,
+      oldObject: { nodeId: node.id, label: node.label },
+    });
+  });
 });
 
 describe("listV3TaxonomyFields", () => {
@@ -397,8 +432,8 @@ describe("triggerV3TaxonomyRun", () => {
     expect(arg).not.toHaveProperty("field_id");
   });
 
-  test("returns 401 when there is no session user", async () => {
-    vi.mocked(getSessionUserId).mockReturnValue(null);
+  test("returns 401 when there is no actor to record", async () => {
+    vi.mocked(getTaxonomyActorId).mockReturnValue(null);
 
     const response = await triggerV3TaxonomyRun(runParams);
 

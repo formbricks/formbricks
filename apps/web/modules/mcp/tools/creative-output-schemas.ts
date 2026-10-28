@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { zCreativeListMeta, zCreativeResource, zCreativeStats } from "@formbricks/api-v3-schemas";
+import {
+  zCreativeListMeta,
+  zCreativeResource,
+  zCreativeStats,
+  zPausedCreatives,
+} from "@formbricks/api-v3-schemas";
 import { mcpToolOutput } from "./output-schemas";
 
 /**
@@ -20,6 +25,8 @@ export const ZMcpCreativeListOutput = mcpToolOutput(z.array(zCreativeResource)).
 });
 
 export const ZMcpCreativeStatsOutput = mcpToolOutput(zCreativeStats);
+
+export const ZMcpPausedCreativesOutput = mcpToolOutput(zPausedCreatives);
 
 /** A delete answers 204: no `data`, just the request id. */
 export { ZMcpAcknowledgement as ZMcpCreativeDeleteOutput } from "./output-schemas";

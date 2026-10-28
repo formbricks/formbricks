@@ -1,0 +1,17 @@
+description: >-
+  Service Unavailable — a part of the feedback service topic analysis depends on (the taxonomy service or
+  an embedding model) is not configured on this deployment (`code: service_unavailable`). No retry helps;
+  a self-hosting administrator has to configure it.
+headers:
+  X-Request-Id:
+    schema:
+      type: string
+    description: Request correlation ID
+  Cache-Control:
+    schema:
+      type: string
+    example: private, no-store
+content:
+  application/problem+json:
+    schema:
+      $ref: ../schemas/Problem.yml

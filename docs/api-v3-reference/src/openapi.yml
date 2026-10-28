@@ -412,6 +412,12 @@ paths:
     $ref: paths/api_v3_tags_{tagId}.yml
   /api/v3/tags/{tagId}/merge:
     $ref: paths/api_v3_tags_{tagId}_merge.yml
+  /api/v3/webhooks:
+    $ref: paths/api_v3_webhooks.yml
+  /api/v3/webhooks/{webhookId}:
+    $ref: paths/api_v3_webhooks_{webhookId}.yml
+  /api/v3/webhooks/{webhookId}/test:
+    $ref: paths/api_v3_webhooks_{webhookId}_test.yml
   /api/v3/workspaces/{workspaceId}/custom-css:
     $ref: paths/api_v3_workspaces_{workspaceId}_custom-css.yml
   /api/v3/feedbackRecords:
@@ -422,6 +428,22 @@ paths:
     $ref: paths/api_v3_feedbackRecords_{id}.yml
   /api/v3/feedbackRecords/{id}/similar:
     $ref: paths/api_v3_feedbackRecords_{id}_similar.yml
+  /api/v3/unify-feedback/taxonomy/fields:
+    $ref: paths/api_v3_unify-feedback_taxonomy_fields.yml
+  /api/v3/unify-feedback/taxonomy/state:
+    $ref: paths/api_v3_unify-feedback_taxonomy_state.yml
+  /api/v3/unify-feedback/taxonomy/runs:
+    $ref: paths/api_v3_unify-feedback_taxonomy_runs.yml
+  /api/v3/unify-feedback/taxonomy/runs/{runId}:
+    $ref: paths/api_v3_unify-feedback_taxonomy_runs_{runId}.yml
+  /api/v3/unify-feedback/taxonomy/runs/{runId}/record-counts:
+    $ref: paths/api_v3_unify-feedback_taxonomy_runs_{runId}_record-counts.yml
+  /api/v3/unify-feedback/taxonomy/nodes/{nodeId}:
+    $ref: paths/api_v3_unify-feedback_taxonomy_nodes_{nodeId}.yml
+  /api/v3/unify-feedback/taxonomy/nodes/{nodeId}/records:
+    $ref: paths/api_v3_unify-feedback_taxonomy_nodes_{nodeId}_records.yml
+  /api/v3/unify-feedback/enrichment-status:
+    $ref: paths/api_v3_unify-feedback_enrichment-status.yml
 components:
   securitySchemes:
     sessionAuth:

@@ -1,0 +1,8 @@
+type: string
+enum:
+  - user
+  - zapier
+  - make
+  - n8n
+  - activepieces
+description: Who set the webhook up. Informational only; it does not change how events are delivered.

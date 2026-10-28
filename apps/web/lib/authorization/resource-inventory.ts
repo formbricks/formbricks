@@ -24,6 +24,9 @@ export const PRISMA_AUTHORIZATION_RESOURCE_INVENTORY = {
   ActionClass: "workspace_inherited_resource",
   ApiKey: "relationship_or_grant_source",
   ApiKeyWorkspace: "relationship_or_grant_source",
+  // Persisted audit events (ADR 0015) are read through their organization (owner or manager, or an API key
+  // with `manage` on one of its workspaces), never as an ACL of their own.
+  AuditEvent: "parent_derived_or_data_integrity",
   AuthzedProjectionOutbox: "authentication_or_application",
   AuthzedProjectionScopeState: "authentication_or_application",
   Chart: "workspace_inherited_resource",

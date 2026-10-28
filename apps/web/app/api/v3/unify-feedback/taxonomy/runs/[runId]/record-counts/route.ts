@@ -1,14 +1,14 @@
 /**
  * GET /api/v3/unify-feedback/taxonomy/runs/{runId}/record-counts — per-node distinct feedback-record
- * counts (subtree totals) for a taxonomy run. One entry per visible node; feeds the tree/records
- * count badges. Session-only.
+ * counts (subtree totals) for a taxonomy run. One entry per visible node.
+ * Session cookie, API key or OAuth token.
  */
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
 import { getV3TaxonomyNodeRecordCounts } from "../../../lib/operations";
 import { ZRunIdParams, ZWorkspaceDirectoryQuery } from "../../../lib/schemas";
 
 export const GET = withV3ApiWrapper({
-  auth: "session",
+  auth: "both",
   schemas: {
     query: ZWorkspaceDirectoryQuery,
     params: ZRunIdParams,

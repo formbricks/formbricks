@@ -1,0 +1,69 @@
+get:
+  operationId: getTaxonomyRecordCountsV3
+  summary: Get taxonomy record counts
+  description: |
+    Returns the distinct feedback-record count for every visible node of a run, subtree totals included
+    (a node's count covers the node and its visible descendants). One entry per node.
+
+    Requires read access to the workspace and an Enterprise license that includes Unify Feedback (otherwise **403**). Session cookie, `x-api-key`, or a Bearer token.
+
+    Answers **404** for a run that does not exist in the given dataset.
+  tags:
+    - V3 Taxonomy
+  parameters:
+    - in: path
+      name: runId
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - $ref: ../components/parameters/WorkspaceIdQuery.yml
+    - $ref: ../components/parameters/TaxonomyDirectoryIdQuery.yml
+  responses:
+    "200":
+      description: Counts returned
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                type: object
+                required:
+                  - counts
+                properties:
+                  counts:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - node_id
+                        - record_count
+                      properties:
+                        node_id:
+                          type: string
+                          format: uuid
+                        record_count:
+                          type: integer
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "404":
+      $ref: ../components/responses/V3NotFound.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+    "502":
+      $ref: ../components/responses/V3BadGateway.yml
+    "503":
+      $ref: ../components/responses/V3ServiceUnavailable.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

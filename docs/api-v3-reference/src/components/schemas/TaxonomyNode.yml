@@ -1,0 +1,57 @@
+type: object
+description: >-
+  A node of a taxonomy tree. The root has no parent; branches are topics and leaves are subtopics.
+  `children` is present on trees returned whole and lists only visible (not removed) nodes.
+required:
+  - id
+  - run_id
+  - node_type
+  - label
+  - level
+  - sort_order
+  - created_at
+  - updated_at
+properties:
+  id:
+    type: string
+    format: uuid
+  run_id:
+    type: string
+    format: uuid
+  parent_id:
+    type: string
+    format: uuid
+  cluster_id:
+    type: string
+    format: uuid
+  node_type:
+    type: string
+    enum: [root, branch, leaf]
+  label:
+    type: string
+  original_label:
+    type: string
+  description:
+    type: string
+  level:
+    type: integer
+  sort_order:
+    type: integer
+  metadata:
+    type: object
+    additionalProperties: true
+  removed_at:
+    type: string
+    format: date-time
+  removed_by:
+    type: string
+  created_at:
+    type: string
+    format: date-time
+  updated_at:
+    type: string
+    format: date-time
+  children:
+    type: array
+    items:
+      $ref: ./TaxonomyNode.yml

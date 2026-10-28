@@ -1,0 +1,50 @@
+type: object
+description: >-
+  A webhook: an endpoint Formbricks POSTs response events to. The signing secret is never part of this
+  shape; it is returned once, by the create operation.
+required:
+  - id
+  - workspaceId
+  - name
+  - url
+  - source
+  - triggers
+  - surveyIds
+  - createdAt
+  - updatedAt
+properties:
+  id:
+    type: string
+    format: cuid2
+  workspaceId:
+    type: string
+    format: cuid2
+  name:
+    type:
+      - string
+      - "null"
+  url:
+    type: string
+    format: uri
+    description: The endpoint events are POSTed to.
+  source:
+    $ref: ./WebhookSource.yml
+  triggers:
+    type: array
+    items:
+      $ref: ./WebhookTrigger.yml
+  surveyIds:
+    type: array
+    items:
+      type: string
+      format: cuid2
+    description: >-
+      Surveys whose responses are sent. An empty array means every survey in the workspace, including
+      surveys created later.
+  createdAt:
+    type: string
+    format: date-time
+  updatedAt:
+    type: string
+    format: date-time
+additionalProperties: false

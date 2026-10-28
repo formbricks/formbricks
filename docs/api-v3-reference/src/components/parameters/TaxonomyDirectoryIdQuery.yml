@@ -1,0 +1,9 @@
+in: query
+name: directoryId
+required: true
+schema:
+  type: string
+  format: cuid2
+description: >-
+  Feedback dataset (directory) to read or change. It must be assigned to `workspaceId`; an unassigned or
+  unknown id answers **403**. Over MCP, `list_feedback_datasets` returns the ids.

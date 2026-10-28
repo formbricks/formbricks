@@ -1,0 +1,51 @@
+get:
+  operationId: listTaxonomyFieldsV3
+  summary: List taxonomy fields
+  description: |
+    Lists the feedback fields topics can be generated for in a feedback dataset, with record and embedding
+    counts per field. Use it to choose the scope of a run and to check there is enough embedded text.
+
+    `unavailable: true` means the feedback service did not answer; it is not the same as an empty list.
+
+    Requires read access to the workspace and an Enterprise license that includes Unify Feedback (otherwise **403**). Session cookie, `x-api-key`, or a Bearer token.
+  tags:
+    - V3 Taxonomy
+  parameters:
+    - $ref: ../components/parameters/WorkspaceIdQuery.yml
+    - $ref: ../components/parameters/TaxonomyDirectoryIdQuery.yml
+  responses:
+    "200":
+      description: Fields listed
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                type: object
+                required:
+                  - fields
+                  - unavailable
+                properties:
+                  fields:
+                    type: array
+                    items:
+                      $ref: ../components/schemas/TaxonomyField.yml
+                  unavailable:
+                    type: boolean
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

@@ -1,0 +1,160 @@
+get:
+  operationId: getWebhookV3
+  summary: Get a webhook
+  description: |
+    Returns one webhook. The signing secret is never returned.
+
+    The workspace is resolved from the webhook itself, so the caller cannot choose which scope it is
+    authorized against. An unknown `webhookId` answers `403`, not `404`, so ids cannot be probed for
+    existence. Session cookie, `x-api-key`, or a Bearer token.
+  tags:
+    - V3 Webhooks
+  parameters:
+    - $ref: ../components/parameters/WebhookIdPath.yml
+  responses:
+    "200":
+      description: Webhook retrieved successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/WebhookResource.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []
+patch:
+  operationId: patchWebhookV3
+  summary: Update a webhook
+  description: |
+    Changes a webhook's name, URL, triggers or surveys. Only the fields sent change; `triggers` and
+    `surveyIds` replace the whole list. The secret and the workspace never change. A body with no field is
+    **400**.
+
+    A new `url` is held to the same SSRF policy as on create, and surveys newly added to `surveyIds` must
+    belong to the webhook's workspace and be visible to the whole workspace, else **422**. A survey already
+    on the webhook that was restricted later stays on it (deliveries skip it), so an unrelated edit does
+    not fail. An empty `surveyIds` sends every survey in the workspace.
+
+    Requires write access to the webhook's workspace. Same resolution and `403` rule as the read.
+  tags:
+    - V3 Webhooks
+  parameters:
+    - $ref: ../components/parameters/WebhookIdPath.yml
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/PatchWebhookRequest.yml
+  responses:
+    "200":
+      description: Webhook updated successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/WebhookResource.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "422":
+      $ref: ../components/responses/V3UnprocessableContent.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []
+delete:
+  operationId: deleteWebhookV3
+  summary: Delete a webhook
+  description: |
+    Deletes a webhook. Events stop being sent to its URL. Same authorization as update.
+  tags:
+    - V3 Webhooks
+  parameters:
+    - $ref: ../components/parameters/WebhookIdPath.yml
+  responses:
+    "200":
+      description: Webhook deleted successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                type: object
+                required:
+                  - id
+                properties:
+                  id:
+                    type: string
+                    format: cuid2
+                additionalProperties: false
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

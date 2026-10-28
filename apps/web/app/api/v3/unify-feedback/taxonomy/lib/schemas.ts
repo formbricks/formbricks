@@ -21,7 +21,7 @@ const scopeType = z.enum(["field", "directory"]).default("field");
  * Field scope needs source_type + field_id; directory scope (all text feedback in the directory) takes
  * neither. Enforce that here so the Hub never receives a half-specified field scope.
  */
-const requireFieldScopeParams = (
+export const requireFieldScopeParams = (
   val: { scopeType: "field" | "directory"; sourceType?: string; fieldId?: string },
   ctx: z.RefinementCtx
 ): void => {
@@ -57,10 +57,9 @@ export const ZNodeRecordsQuery = z
   .object({
     workspaceId,
     directoryId,
-    // Stays at 100 while the rest of v3 moved to 250. This route is not in the OpenAPI bundle, so
-    // it is outside the contract job, and its operation forwards `limit` to the Hub and echoes the
-    // Hub's *applied* cap back as `meta.limit` — a silent clamp, which the documented v3 rule
-    // forbids. Raising it here would have widened an undocumented surface into a clamp nobody sees.
+    // Stays at 100 while the rest of v3 moved to 250: the operation forwards `limit` to the Hub and echoes
+    // the Hub's *applied* cap back as `meta.limit`, so a value above what the Hub honors would be a
+    // silent clamp, which the documented v3 rule forbids. The MCP tool pages smaller still.
     limit: z.coerce.number().int().min(1).max(100).default(100),
   })
   .strict();

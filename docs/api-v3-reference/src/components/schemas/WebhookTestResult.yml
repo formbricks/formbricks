@@ -1,0 +1,21 @@
+type: object
+description: The outcome of one test delivery.
+required:
+  - delivered
+  - statusCode
+  - error
+properties:
+  delivered:
+    type: boolean
+    description: "`true` when the endpoint answered with a 2xx status."
+  statusCode:
+    type:
+      - integer
+      - "null"
+    description: The HTTP status the endpoint answered, or `null` when no exchange completed.
+  error:
+    type:
+      - string
+      - "null"
+    description: Why the delivery failed. `null` on success.
+additionalProperties: false

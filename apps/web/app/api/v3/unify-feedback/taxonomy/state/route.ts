@@ -1,13 +1,13 @@
 /**
- * GET /api/v3/unify-feedback/taxonomy/state — the active taxonomy tree + recent runs for a field scope.
- * Session-only.
+ * GET /api/v3/unify-feedback/taxonomy/state — the active taxonomy tree + recent runs for a scope.
+ * Session cookie, API key or OAuth token.
  */
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
 import { getV3TaxonomyState } from "../lib/operations";
 import { ZTaxonomyStateQuery } from "../lib/schemas";
 
 export const GET = withV3ApiWrapper({
-  auth: "session",
+  auth: "both",
   schemas: {
     query: ZTaxonomyStateQuery,
   },

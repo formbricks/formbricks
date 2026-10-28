@@ -10,6 +10,7 @@ import {
   getV3CreativeStats,
   listV3Creatives,
   patchV3Creative,
+  pauseV3SurveyCreatives,
   restoreV3Creative,
 } from "@/app/api/v3/creatives/lib/operations";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
@@ -33,6 +34,7 @@ vi.mock("@/app/api/v3/creatives/lib/operations", () => ({
   getV3CreativeStats: vi.fn(),
   listV3Creatives: vi.fn(),
   patchV3Creative: vi.fn(),
+  pauseV3SurveyCreatives: vi.fn(),
   restoreV3Creative: vi.fn(),
 }));
 
@@ -56,6 +58,7 @@ const ABSOLUTE_MCP_AUDIT_URL = expect.stringMatching(/^https?:\/\/[^/]+\/api\/mc
 
 const workspaceId = "clxx1234567890123456789012";
 const creativeId = "clcr1234567890123456789012";
+const surveyId = "clsv1234567890123456789012";
 
 const apiKeyAuth = {
   type: "apiKey" as const,
@@ -125,6 +128,7 @@ const WRITE_TOOLS = [
   "duplicate_creative",
   "archive_creative",
   "restore_creative",
+  "pause_creatives",
 ] as const;
 
 const feedbackButtonContent = { label: { "en-US": "Feedback" }, icon: null };
@@ -148,6 +152,7 @@ const inputs: Record<string, Record<string, unknown>> = {
   duplicate_creative: { creativeId },
   archive_creative: { creativeId },
   restore_creative: { creativeId },
+  pause_creatives: { workspaceId, surveyId },
 };
 
 const operations = {
@@ -160,6 +165,7 @@ const operations = {
   duplicate_creative: duplicateV3Creative,
   archive_creative: archiveV3Creative,
   restore_creative: restoreV3Creative,
+  pause_creatives: pauseV3SurveyCreatives,
 } as const;
 
 describe("buildListCreativesSearchParams", () => {
@@ -202,10 +208,10 @@ describe("registerCreativeTools", () => {
     vi.mocked(queueV3AuditLog).mockResolvedValue(undefined);
   });
 
-  test("registers exactly the nine creative tools, and no validate_creative", () => {
+  test("registers exactly the ten creative tools, and no validate_creative", () => {
     const { server, tools } = createToolServer();
 
-    expect(server.registerTool).toHaveBeenCalledTimes(9);
+    expect(server.registerTool).toHaveBeenCalledTimes(10);
     expect([...tools.keys()].toSorted()).toEqual([...READ_TOOLS, ...WRITE_TOOLS].toSorted());
   });
 
@@ -237,6 +243,12 @@ describe("registerCreativeTools", () => {
     expect(annotationsOf("archive_creative")).toMatchObject({
       readOnlyHint: false,
       destructiveHint: true,
+      idempotentHint: true,
+    });
+    // Pausing is reversible with patch_creative and a repeat finds nothing left to pause.
+    expect(annotationsOf("pause_creatives")).toMatchObject({
+      readOnlyHint: false,
+      destructiveHint: false,
       idempotentHint: true,
     });
     // Restoring brings it back as a Draft, which shows nowhere until it is published.
@@ -310,6 +322,7 @@ describe("registerCreativeTools", () => {
       ["duplicate_creative", "created", undefined],
       ["archive_creative", "archived", creativeId],
       ["restore_creative", "restored", creativeId],
+      ["pause_creatives", "updated", undefined],
     ] as const)("a refused %s is audited as a failed %s attempt", async (name, action, targetId) => {
       const { tools } = createToolServer();
       const auditLog = { status: "failure" } as { status: string; targetId?: string };
@@ -484,6 +497,47 @@ describe("registerCreativeTools", () => {
         expect(result.structuredContent).toEqual({ data: { id: creativeId }, requestId: "req_tool" });
       }
     );
+  });
+
+  describe("pause_creatives", () => {
+    test("passes the workspace and survey on and relays the ids it paused", async () => {
+      const { tools } = createToolServer();
+      const auditLog = { status: "failure" };
+      vi.mocked(buildV3AuditLog).mockReturnValue(auditLog as unknown as TV3AuditLog);
+      vi.mocked(pauseV3SurveyCreatives).mockResolvedValue(
+        successResponse({ paused: 1, creativeIds: [creativeId] }, { requestId: "req_tool" })
+      );
+
+      const result = await tools
+        .get("pause_creatives")!
+        .handler({ workspaceId, surveyId }, { http: { authInfo } });
+
+      expect(pauseV3SurveyCreatives).toHaveBeenCalledWith({
+        body: { workspaceId, surveyId },
+        authentication: apiKeyAuth,
+        requestId: "req_tool",
+        instance: "/api/mcp",
+        auditLog,
+      });
+      expect(result.structuredContent).toEqual({
+        data: { paused: 1, creativeIds: [creativeId] },
+        requestId: "req_tool",
+      });
+    });
+
+    test("relays the same 403 for a survey outside the workspace", async () => {
+      const { tools } = createToolServer();
+      vi.mocked(pauseV3SurveyCreatives).mockResolvedValue(
+        problemForbidden("req_forbidden", "You are not authorized to access this resource", "/api/mcp")
+      );
+
+      const result = await tools
+        .get("pause_creatives")!
+        .handler({ workspaceId, surveyId }, { http: { authInfo } });
+
+      expect(result.isError).toBe(true);
+      expect(result.structuredContent.error).toMatchObject({ status: 403, code: "forbidden" });
+    });
   });
 
   describe("errors", () => {

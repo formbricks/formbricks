@@ -1,0 +1,33 @@
+type: object
+additionalProperties: false
+minProperties: 1
+description: Fields to change. A field that is absent keeps its stored value.
+properties:
+  name:
+    type:
+      - string
+      - "null"
+    minLength: 1
+    maxLength: 255
+    description: New label, or `null` to clear it.
+  url:
+    type: string
+    format: uri
+    maxLength: 2048
+    description: New endpoint. Held to the same SSRF policy as on create.
+  triggers:
+    type: array
+    minItems: 1
+    maxItems: 3
+    items:
+      $ref: ./WebhookTrigger.yml
+    description: Replaces the whole trigger list.
+  surveyIds:
+    type: array
+    maxItems: 200
+    items:
+      type: string
+      format: cuid2
+    description: >-
+      Replaces the whole survey list. Surveys newly added must belong to the webhook's workspace and be
+      visible to the whole workspace, else **422**. An empty array means every survey in the workspace.

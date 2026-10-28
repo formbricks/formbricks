@@ -1,0 +1,97 @@
+get:
+  operationId: getTaxonomyStateV3
+  summary: Get taxonomy state
+  description: |
+    Returns the active topic tree for a scope together with its five most recent runs. The tree carries the
+    node ids the other taxonomy operations take.
+
+    `activeTree` is `null` when no taxonomy has been generated for the scope yet. `unavailable: true` means
+    the feedback service did not answer.
+
+    Requires read access to the workspace and an Enterprise license that includes Unify Feedback (otherwise **403**). Session cookie, `x-api-key`, or a Bearer token.
+  tags:
+    - V3 Taxonomy
+  parameters:
+    - $ref: ../components/parameters/WorkspaceIdQuery.yml
+    - $ref: ../components/parameters/TaxonomyDirectoryIdQuery.yml
+    - in: query
+      name: scopeType
+      schema:
+        type: string
+        enum: [field, directory]
+        default: field
+      description: >-
+        `field` covers one feedback field and requires `sourceType` and `fieldId`; `directory` covers all
+        text feedback in the dataset and accepts neither.
+    - in: query
+      name: sourceType
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 255
+      description: Field scope only. Required when `scopeType` is `field`.
+    - in: query
+      name: sourceId
+      schema:
+        type: string
+        maxLength: 255
+      description: >-
+        Field scope only. May be the empty string, which addresses feedback with no attributed source.
+    - in: query
+      name: fieldId
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 255
+      description: Field scope only. Required when `scopeType` is `field`.
+  responses:
+    "200":
+      description: State returned
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                type: object
+                required:
+                  - activeTree
+                  - runs
+                  - unavailable
+                properties:
+                  activeTree:
+                    oneOf:
+                      - type: object
+                        required:
+                          - run
+                          - root
+                        properties:
+                          run:
+                            $ref: ../components/schemas/TaxonomyRun.yml
+                          root:
+                            oneOf:
+                              - $ref: ../components/schemas/TaxonomyNode.yml
+                              - type: "null"
+                      - type: "null"
+                  runs:
+                    type: array
+                    items:
+                      $ref: ../components/schemas/TaxonomyRun.yml
+                  unavailable:
+                    type: boolean
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

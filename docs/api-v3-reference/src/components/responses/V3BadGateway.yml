@@ -1,0 +1,16 @@
+description: >-
+  Bad Gateway — the feedback service (Hub) did not answer or answered with an error (`code: bad_gateway`).
+  The detail is fixed text; correlate on `requestId`.
+headers:
+  X-Request-Id:
+    schema:
+      type: string
+    description: Request correlation ID
+  Cache-Control:
+    schema:
+      type: string
+    example: private, no-store
+content:
+  application/problem+json:
+    schema:
+      $ref: ../schemas/Problem.yml

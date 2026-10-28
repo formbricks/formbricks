@@ -1,0 +1,16 @@
+description: >-
+  Not Found — the run or node does not exist in this feedback dataset (`code: not_found`). The dataset
+  itself was already authorized, so this does not leak existence across tenants.
+headers:
+  X-Request-Id:
+    schema:
+      type: string
+    description: Request correlation ID
+  Cache-Control:
+    schema:
+      type: string
+    example: private, no-store
+content:
+  application/problem+json:
+    schema:
+      $ref: ../schemas/Problem.yml

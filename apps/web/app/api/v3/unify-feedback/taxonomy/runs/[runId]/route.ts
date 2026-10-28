@@ -1,12 +1,12 @@
 /**
- * GET /api/v3/unify-feedback/taxonomy/runs/{runId} — poll a taxonomy run's status. Session-only.
+ * GET /api/v3/unify-feedback/taxonomy/runs/{runId} — read a taxonomy run's status. Session cookie, API key or OAuth token.
  */
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
 import { getV3TaxonomyRun } from "../../lib/operations";
 import { ZRunIdParams, ZWorkspaceDirectoryQuery } from "../../lib/schemas";
 
 export const GET = withV3ApiWrapper({
-  auth: "session",
+  auth: "both",
   schemas: {
     query: ZWorkspaceDirectoryQuery,
     params: ZRunIdParams,

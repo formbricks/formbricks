@@ -8,6 +8,7 @@ import {
   getV3CreativeStats,
   listV3Creatives,
   patchV3Creative,
+  pauseV3SurveyCreatives,
   restoreV3Creative,
 } from "@/app/api/v3/creatives/lib/operations";
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
@@ -18,6 +19,7 @@ import {
   ZMcpCreativeListOutput,
   ZMcpCreativeOutput,
   ZMcpCreativeStatsOutput,
+  ZMcpPausedCreativesOutput,
 } from "./creative-output-schemas";
 import {
   type TMcpCreateCreativeInput,
@@ -25,19 +27,21 @@ import {
   type TMcpGetCreativeStatsInput,
   type TMcpListCreativesInput,
   type TMcpPatchCreativeInput,
+  type TMcpPauseCreativesInput,
   ZMcpCreateCreativeInput,
   ZMcpCreativeIdInput,
   ZMcpGetCreativeStatsInput,
   ZMcpListCreativesInput,
   ZMcpPatchCreativeInput,
+  ZMcpPauseCreativesInput,
 } from "./creative-schemas";
 import { registerScopedTool } from "./guard-scopes";
 import { runMcpMutation } from "./run-mcp-mutation";
 
 /**
- * MCP tools over the v3 Creatives API (ENG-4004) — one per documented operation but
- * `POST /api/v3/creatives/pause`, which lets the survey screens keep any number of creatives paused
- * within the API's rate limit; an agent pauses one with `patch_creative`.
+ * MCP tools over the v3 Creatives API (ENG-4004) — one per documented operation. `pause_creatives` is the
+ * bulk form of `patch_creative` (status paused): one call pauses every In progress creative a survey opens,
+ * where `patch_creative` would take a list plus one call per creative.
  *
  * Every tool is a thin adapter: it maps its input onto the operation and relays the answer, so what an
  * agent can do here is exactly what an API key can do over HTTP, and validation, status rules and
@@ -360,6 +364,40 @@ export function registerCreativeTools(server: McpServer): void {
         ({ authentication, requestId, auditLog }) =>
           restoreV3Creative({
             creativeId: input.creativeId,
+            authentication,
+            requestId,
+            instance: MCP_API_ROUTE,
+            auditLog,
+          })
+      )
+  );
+
+  registerScopedTool(
+    server,
+    "pause_creatives",
+    {
+      title: "Pause survey creatives",
+      description: `Pause every In progress creative that opens a survey, in one call; returns the ids paused. To pause a single creative use patch_creative. ${LAST_OPENER_NOTE}`,
+      inputSchema: ZMcpPauseCreativesInput,
+      outputSchema: ZMcpPausedCreativesOutput,
+      // One audit event per paused creative is written by the operation; this one only records a refusal.
+      audit: { action: "updated", targetType: "creative" },
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        // Pausing what is already paused changes nothing: a repeat answers `paused: 0`.
+        idempotentHint: true,
+        openWorldHint: true,
+      },
+    },
+    ["surveys:write"],
+    async (input: TMcpPauseCreativesInput, ctx) =>
+      runMcpMutation(
+        ctx,
+        { action: "updated", resource: "creative", logContext: { surveyId: input.surveyId } },
+        ({ authentication, requestId, auditLog }) =>
+          pauseV3SurveyCreatives({
+            body: input,
             authentication,
             requestId,
             instance: MCP_API_ROUTE,

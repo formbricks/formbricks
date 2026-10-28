@@ -1,0 +1,50 @@
+post:
+  operationId: testWebhookV3
+  summary: Send a test delivery
+  description: |
+    Sends one signed test event (`{"event":"testEndpoint"}`) to the webhook's **stored** URL, through the
+    same transport as real deliveries: SSRF validation, DNS pinning, signing with the webhook's secret,
+    no redirects, and the delivery timeout. The request cannot name a URL, so the server is never asked to
+    call an address that was not accepted as a webhook target.
+
+    A delivery that fails is a result, not an error: the response is **200** with `delivered: false` and
+    the reason. Requires write access to the webhook's workspace. Not audited, as nothing changes.
+  tags:
+    - V3 Webhooks
+  parameters:
+    - $ref: ../components/parameters/WebhookIdPath.yml
+  responses:
+    "200":
+      description: The test delivery was attempted
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/WebhookTestResult.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

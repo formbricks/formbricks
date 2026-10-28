@@ -1,0 +1,31 @@
+type: object
+description: A feedback field topics can be generated for, with how much input it has.
+required:
+  - tenant_id
+  - source_type
+  - source_id
+  - field_id
+  - record_count
+  - embedding_count
+properties:
+  tenant_id:
+    type: string
+  source_type:
+    type: string
+  source_id:
+    type: string
+    description: Empty string for feedback with no attributed source.
+  source_name:
+    type: string
+  field_id:
+    type: string
+  field_label:
+    type: string
+  record_count:
+    type: integer
+  embedding_count:
+    type: integer
+  embedding_failed_count:
+    type: integer
+  embedding_failed_terminal_count:
+    type: integer

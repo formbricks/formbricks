@@ -2,17 +2,8 @@ import type { TChartQuery } from "@formbricks/types/analysis";
 import { getResponseBaseMeasureId } from "@/modules/ee/analysis/lib/schema-definition";
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
 
-/**
- * The query with its response base count added, so one Cube round trip returns both the chart's
- * measures and how many answers they rest on. Returns the same query when the chart has no single
- * base (see getResponseBaseMeasureId) or already selects it.
- */
-export const withResponseBaseMeasure = (query: TChartQuery): TChartQuery => {
-  const measures = query.measures ?? [];
-  const base = getResponseBaseMeasureId(measures);
-  if (!base || measures.includes(base)) return query;
-  return { ...query, measures: [...measures, base] };
-};
+// Moved to `lib/` so the Cube client does not depend on chart code; re-exported for the chart callers.
+export { withResponseBaseMeasure } from "@/modules/ee/analysis/lib/response-base-measure";
 
 /**
  * Total answers behind a chart: the base count summed over its rows. Every record lands in exactly

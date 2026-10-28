@@ -1,0 +1,45 @@
+/// One persisted audit event (agent-first experiment, ADR 0015): what `logAuditEvent` also writes to the
+/// application logger, so an organization owner or an agent holding `audit:read` can read it back.
+///
+/// Scoped by `organizationId`, and deleted with the organization like every other tenant table. Events
+/// whose organization is unknown are logged but never stored (they cannot be read by anyone).
+///
+/// `action`, `actorType`, `targetType` and `status` are plain text rather than database enums: the audit
+/// vocabulary (`ZAuditAction`, `ZAuditTarget`) grows with every feature, and an enum migration per new
+/// value is not worth it for a column nothing joins on. The API validates the filter values instead.
+///
+/// `changes` is the already-redacted diff (`redactPII`), capped by the writer; nothing here is raw
+/// request or response content. `ipAddress` and `userAgent` are stored as captured (the writer already
+/// replaces the address with a sentinel when `AUDIT_LOG_GET_USER_IP` is off) and are never returned by
+/// the API.
+///
+/// `timestamp` is when the audited action happened, taken by the entry point; the write itself is deferred,
+/// so insertion order is not timestamp order. Readers page on `(timestamp, id)`, a total order.
+///
+/// There is deliberately no retention job here: rows stay until the organization is deleted.
+model AuditEvent {
+  id             String       @id @default(cuid(2))
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  timestamp      DateTime
+  actorId        String
+  actorType      String
+  action         String
+  targetType     String
+  targetId       String?
+  status         String
+  /// The request id of a failed attempt; absent on successes.
+  eventId        String?
+  apiUrl         String?
+  ipAddress      String
+  userAgent      String
+  /// The redacted diff, or `{ "truncated": true }` when it exceeded the writer's size cap.
+  changes        Json?
+
+  /// The default listing, newest first, and its time-range filter.
+  @@index([organizationId, timestamp, id])
+  /// "What happened to this resource".
+  @@index([organizationId, targetType, targetId, timestamp, id])
+  /// "What did this actor do".
+  @@index([organizationId, actorId, timestamp, id])
+}

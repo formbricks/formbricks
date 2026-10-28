@@ -1,0 +1,52 @@
+type: object
+description: >-
+  A newly created webhook, with the secret Formbricks signs its deliveries with. This is the only response
+  that ever carries the secret; store it now.
+required:
+  - id
+  - workspaceId
+  - name
+  - url
+  - source
+  - triggers
+  - surveyIds
+  - createdAt
+  - updatedAt
+  - secret
+properties:
+  id:
+    type: string
+    format: cuid2
+  workspaceId:
+    type: string
+    format: cuid2
+  name:
+    type:
+      - string
+      - "null"
+  url:
+    type: string
+    format: uri
+  source:
+    $ref: ./WebhookSource.yml
+  triggers:
+    type: array
+    items:
+      $ref: ./WebhookTrigger.yml
+  surveyIds:
+    type: array
+    items:
+      type: string
+      format: cuid2
+  createdAt:
+    type: string
+    format: date-time
+  updatedAt:
+    type: string
+    format: date-time
+  secret:
+    type: string
+    description: >-
+      Standard Webhooks signing secret (`whsec_` followed by base64). Deliveries carry `webhook-id`,
+      `webhook-timestamp` and `webhook-signature` headers computed with it. It cannot be read again.
+additionalProperties: false

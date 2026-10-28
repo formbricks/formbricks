@@ -1,0 +1,6 @@
+type: string
+enum:
+  - responseCreated
+  - responseUpdated
+  - responseFinished
+description: The response event that fires a webhook.

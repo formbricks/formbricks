@@ -763,6 +763,7 @@ model Organization {
   retentionExemptions   RetentionExemption[]
   retentionRuns         RetentionRun[]
   retentionNotices      RetentionNotice[]
+  auditEvents           AuditEvent[]
 }
 
 /// Stores billing and Stripe synchronization data for an organization.

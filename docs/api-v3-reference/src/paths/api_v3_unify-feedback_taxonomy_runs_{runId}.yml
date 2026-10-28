@@ -1,0 +1,52 @@
+get:
+  operationId: getTaxonomyRunV3
+  summary: Get a taxonomy run
+  description: |
+    Returns one taxonomy run's status. Poll it after starting a run; `error_code` says why a run failed.
+
+    Requires read access to the workspace and an Enterprise license that includes Unify Feedback (otherwise **403**). Session cookie, `x-api-key`, or a Bearer token.
+
+    Answers **404** for a run that does not exist in the given dataset.
+  tags:
+    - V3 Taxonomy
+  parameters:
+    - in: path
+      name: runId
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - $ref: ../components/parameters/WorkspaceIdQuery.yml
+    - $ref: ../components/parameters/TaxonomyDirectoryIdQuery.yml
+  responses:
+    "200":
+      description: Run returned
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/TaxonomyRun.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "404":
+      $ref: ../components/responses/V3NotFound.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+    "502":
+      $ref: ../components/responses/V3BadGateway.yml
+    "503":
+      $ref: ../components/responses/V3ServiceUnavailable.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

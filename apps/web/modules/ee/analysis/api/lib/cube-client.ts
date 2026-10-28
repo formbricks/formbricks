@@ -6,10 +6,9 @@ import type { TChartQuery } from "@formbricks/types/analysis";
 import { AUDIT_LOG_ENABLED } from "@/lib/constants";
 import { getReportingTimeZone } from "@/lib/date-ranges";
 import { getOrganization } from "@/lib/organization/service";
-import { withResponseBaseMeasure } from "@/modules/ee/analysis/charts/lib/response-base";
 import { expandPresetDateRanges } from "@/modules/ee/analysis/lib/date-presets";
+import { withResponseBaseMeasure } from "@/modules/ee/analysis/lib/response-base-measure";
 import { isRatioMeasure } from "@/modules/ee/analysis/lib/schema-definition";
-import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
 import {
   UNKNOWN_AUDIT_REQUEST_METADATA,
@@ -18,17 +17,38 @@ import {
 import type { TAuditRequestMetadata } from "@/modules/ee/audit-logs/types/request-metadata";
 import { type TCubeQuerySource, getCubeApiConfig } from "./cube-config";
 import { applyValueBandNullGuard, getCubeQueryAuditSummary, validateCubeQueryMembers } from "./cube-query";
+import type { TCubeDataRow } from "./cube-types";
 
 const CUBE_QUERY_ERROR_MESSAGE =
   "Cube query failed. Verify CUBEJS_API_URL and CUBEJS_API_SECRET, and ensure the Cube service is running.";
+
+/**
+ * Cube did not answer the query. Typed so a caller that must not relay the message (it names deployment
+ * settings) can tell this apart from the validation and configuration errors thrown before Cube is reached.
+ */
+export class CubeQueryError extends Error {
+  constructor() {
+    super(CUBE_QUERY_ERROR_MESSAGE);
+    this.name = "CubeQueryError";
+  }
+}
 
 type TScopedCubeQueryInput = {
   query: TChartQuery;
   feedbackDirectoryId: string;
   workspaceId: string;
   organizationId: string;
+  /** The caller's id: the user id, or the API key id when `actorType` is `"api"`. */
   userId: string;
+  /** Who `userId` names, for the audit event. Defaults to a person. */
+  actorType?: "user" | "api";
   source: TCubeQuerySource;
+  /**
+   * Whether to add the response base count to the measures (see `withResponseBaseMeasure`). Defaults to
+   * true, which is what charts want; a caller that returns rows as asked turns it off, so the result holds
+   * exactly the columns it selected.
+   */
+  includeResponseBase?: boolean;
 };
 
 const queueCubeQueryAuditEvent = ({
@@ -50,7 +70,7 @@ const queueCubeQueryAuditEvent = ({
     action: "queried",
     targetType: "cubeQuery",
     userId: input.userId,
-    userType: "user",
+    userType: input.actorType ?? "user",
     targetId: requestId,
     organizationId: input.organizationId,
     status,
@@ -90,14 +110,14 @@ const queueCubeQueryAuditEvent = ({
 const NULL_FILL_SENTINEL = "__formbricks_null__";
 
 const restoreNullMeasures = (
-  rows: TChartDataRow[],
+  rows: TCubeDataRow[],
   measureKeys: string[],
   /**
    * Rows this rejects were invented by the pivot to fill an empty date bucket, so their filled
    * count cells are a measured zero rather than a NULL. Defaults to treating every row as real.
    */
-  isRealRow: (row: TChartDataRow) => boolean = () => true
-): TChartDataRow[] => {
+  isRealRow: (row: TCubeDataRow) => boolean = () => true
+): TCubeDataRow[] => {
   // Only measure cells are ever filled, so only those may be turned back into null. A dimension
   // can legitimately hold any string a respondent typed — including this sentinel — and rewriting
   // that to null would silently drop their answer from the chart.
@@ -184,7 +204,9 @@ export async function executeTenantScopedQuery(input: TScopedCubeQueryInput) {
     // dropped. The audit event and the granular time dimension still come from `input.query`,
     // which is the chart as saved.
     const plainQuery = applyValueBandNullGuard(input.query);
-    let executedQuery = applyValueBandNullGuard(withResponseBaseMeasure(input.query));
+    let executedQuery = applyValueBandNullGuard(
+      input.includeResponseBase === false ? input.query : withResponseBaseMeasure(input.query)
+    );
     // Cube 1.7 serializes every numeric result as a JSON string, dimensions included (an average
     // arrives as "7.333333333333333", a Value (Number) of 3 as "3"), and strings skip the number
     // formatting charts and tables apply. castNumerics turns back into numbers exactly the members
@@ -213,7 +235,7 @@ export async function executeTenantScopedQuery(input: TScopedCubeQueryInput) {
 
     // The pivot only invents rows for empty buckets when there is exactly one granular time
     // dimension (see NULL_FILL_SENTINEL); with none, or several, every row it returns is real.
-    let result: TChartDataRow[];
+    let result: TCubeDataRow[];
     if (granular.length === 1) {
       const bucketKey = `${granular[0].dimension}.${granular[0].granularity}`;
       const realBuckets = new Set(
@@ -231,6 +253,6 @@ export async function executeTenantScopedQuery(input: TScopedCubeQueryInput) {
     queueCubeQueryAuditEvent({ error, input, requestMetadata, requestId, status: "failure" });
     logger.error(error, "Cube query failed");
 
-    throw new Error(CUBE_QUERY_ERROR_MESSAGE);
+    throw new CubeQueryError();
   }
 }
