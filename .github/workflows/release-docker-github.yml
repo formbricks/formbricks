@@ -29,6 +29,9 @@ on:
 permissions:
   contents: read
 
+env:
+  REGISTRY: ghcr.io
+
 jobs:
   resolve-version:
     runs-on: ubuntu-latest

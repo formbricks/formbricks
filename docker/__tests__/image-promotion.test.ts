@@ -146,6 +146,39 @@ const composite = (name: string) =>
   };
 
 describe("release promotion boundary", () => {
+  test("logs in and tags the deployment-check image in GHCR using the declared environment", () => {
+    const release = workflow("release-docker-github");
+    const job = release.jobs["deployment-check"];
+    const tags = job.steps.find((step) => step.id === "tags")!;
+    const login = job.steps.find((step) => step.uses?.startsWith("docker/login-action@"))!;
+    const context = {
+      github: { repository_owner: "Formbricks" },
+      needs: { build: { outputs: { IMAGE_TAG: "6.1.2" } } },
+      inputs: { MAKE_LATEST: true, IS_PRERELEASE: false },
+    };
+    const evaluate = (value: string, env: Record<string, string>) =>
+      value.startsWith("${{") ? String(runInNewContext(value.slice(3, -2), { ...context, env })) : value;
+    const inheritedEnv = { ...release.env, ...job.env };
+    const tagEnv = Object.fromEntries(
+      Object.entries(tags.env ?? {}).map(([key, value]) => [key, evaluate(value, inheritedEnv)])
+    );
+    const directory = mkdtempSync(join(tmpdir(), "deployment-check-tags-"));
+    const output = join(directory, "output");
+    try {
+      const result = spawnSync("/bin/bash", ["-c", tags.run!], {
+        encoding: "utf8",
+        env: { PATH: process.env.PATH, ...inheritedEnv, ...tagEnv, GITHUB_OUTPUT: output },
+      });
+      expect(result.status, result.stderr).toBe(0);
+      expect(readFileSync(output, "utf8")).toBe(
+        "tags<<EOF\nghcr.io/formbricks/deployment-check:6.1.2\nghcr.io/formbricks/deployment-check:latest\nEOF\n"
+      );
+      expect(evaluate(login.with!.registry, { ...inheritedEnv, ...login.env })).toBe("ghcr.io");
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
   test("keeps the Blacksmith trial opt-in and outside the publishing path", () => {
     const experimental = workflow("release-docker-github-experimental");
     expect(experimental.on?.workflow_dispatch?.inputs?.blacksmith_trial.default).toBe(false);
