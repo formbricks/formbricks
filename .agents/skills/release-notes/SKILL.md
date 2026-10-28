@@ -154,11 +154,8 @@ jq -r 'select((.body//"") | test("(?i)- \\[x\\][ \t]*This PR contains breaking c
 
 Each labeled PR carries a **Breaking changes** table in its body — that table is the source text,
 never written from scratch. But **do not paste the tables into the notes.** House style since 6.0
-(Matti, Sep 2026) is an *index*: one line per change, linking its PR, with the procedure left to
-the migration guide.
-
-> "Don't we have a migration guide for this that we can link? I think this makes more sense than
-> stating everything (again) in the release notes."
+is an *index*: one line per change, linking its PR, with the procedure left to the migration
+guide, which already carries it.
 
 So: condense each table row to a single sentence, group the bullets by audience — **self-hosted
 deployment**, **API and SDK contract**, **changed defaults and limits** — and link
