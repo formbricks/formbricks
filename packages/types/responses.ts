@@ -88,12 +88,13 @@ const maxKeys = (max: number, what: string) => (record: Record<string, unknown>)
   Object.keys(record).length > max ? `A response may carry at most ${max} ${what}` : undefined;
 
 const checkResponseDataSize = (data: Record<string, unknown>): string | undefined => {
-  const values = Object.values(data);
-  if (values.length > MAX_RESPONSE_DATA_KEYS) {
+  // Keys first: `Object.values` costs twice as much, so it only runs on a map already under the cap.
+  const keyCount = Object.keys(data).length;
+  if (keyCount > MAX_RESPONSE_DATA_KEYS) {
     return `A response may answer at most ${MAX_RESPONSE_DATA_KEYS} fields`;
   }
-  let entries = values.length;
-  for (const value of values) {
+  let entries = keyCount;
+  for (const value of Object.values(data)) {
     if (Array.isArray(value)) {
       entries += value.length;
     } else if (isPlainRecord(value)) {
