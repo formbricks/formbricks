@@ -96,17 +96,11 @@ export const POST = withV1ApiWrapper({
       };
     }
 
-    // A survey that is no longer collecting answers must not hand out upload URLs either. The response
-    // API already refuses its writes (ENG-872), so anything stored here lands in the workspace's bucket
-    // under a survey prefix no response can reference — an orphan that counts against storage, and one
-    // an anonymous caller can keep producing for a survey closed precisely to stop abuse (ENG-4044).
-    // Answer the way the response API answers a closed survey, so the two surfaces cannot be told apart.
-    //
-    // `archivedAt` is read too, because the two fields are not interchangeable: archiving only forces
-    // `paused` on a survey that was `inProgress` (modules/survey/lib/surveys.ts), so a survey can carry
-    // `archivedAt` under any status, and a publish racing an archive can leave it `inProgress` and
-    // archived at once. Today that second read is defensive — it costs no query, since `selectSurvey`
-    // already loads both — and it is what keeps the gate from depending on an archive invariant.
+    // A survey that is not collecting responses gets no upload URL (ENG-4044): the response API refuses
+    // its writes (ENG-872), so the file would be an orphan an anonymous caller could keep adding to the
+    // bucket. Same answer as the response API. `archivedAt` is checked too, so the gate does not rely on
+    // archiving having paused the survey. This runs before the workspace upload quota, so a refused
+    // request does not spend it.
     if (survey.status !== "inProgress" || survey.archivedAt) {
       return {
         response: responses.forbiddenResponse("Survey is not accepting submissions", true, {

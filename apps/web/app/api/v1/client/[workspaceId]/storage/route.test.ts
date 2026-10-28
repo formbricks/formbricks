@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { POST } from "./route";
 
 /**
@@ -89,6 +90,24 @@ const postUpload = async () => {
   });
 };
 
+const expectRefusedBeforeSigning = async (result: { response: Response }) => {
+  expect(result.response.status).toBe(403);
+  await expect(result.response.json()).resolves.toEqual({
+    code: "forbidden",
+    message: "Survey is not accepting submissions",
+    details: { surveyId },
+  });
+  // No URL is signed and no licence lookup runs: the refusal has to land before either.
+  expect(mocks.getSignedUrlForUpload).not.toHaveBeenCalled();
+  expect(mocks.getBiggerUploadFileSizePermission).not.toHaveBeenCalled();
+  // A refused request does not spend the workspace's upload quota, so a closed survey cannot be used
+  // to drain the budget its workspace's open surveys rely on.
+  expect(mocks.applyRateLimit).not.toHaveBeenCalled();
+  // The element and file-type checks are skipped rather than answered, so a closed survey cannot be
+  // probed for which elements it carries.
+  expect(mocks.validateSurveyAllowsFileUpload).not.toHaveBeenCalled();
+};
+
 describe("POST /api/v1/client/[workspaceId]/storage — survey lifecycle gates (ENG-4044)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -111,20 +130,7 @@ describe("POST /api/v1/client/[workspaceId]/storage — survey lifecycle gates (
     async (status) => {
       mocks.getSurvey.mockResolvedValue(getSurveyWith({ status }));
 
-      const result = await postUpload();
-
-      expect(result.response.status).toBe(403);
-      await expect(result.response.json()).resolves.toEqual({
-        code: "forbidden",
-        message: "Survey is not accepting submissions",
-        details: { surveyId },
-      });
-      // No URL is signed and no licence lookup runs: the refusal has to land before either.
-      expect(mocks.getSignedUrlForUpload).not.toHaveBeenCalled();
-      expect(mocks.getBiggerUploadFileSizePermission).not.toHaveBeenCalled();
-      // The element and file-type checks are skipped rather than answered, so a closed survey
-      // cannot be probed for which elements it carries.
-      expect(mocks.validateSurveyAllowsFileUpload).not.toHaveBeenCalled();
+      await expectRefusedBeforeSigning(await postUpload());
     }
   );
 
@@ -137,15 +143,7 @@ describe("POST /api/v1/client/[workspaceId]/storage — survey lifecycle gates (
   test("refuses an upload URL for an archived survey that still reads as in progress", async () => {
     mocks.getSurvey.mockResolvedValue(getSurveyWith({ status: "inProgress", archivedAt: new Date() }));
 
-    const result = await postUpload();
-
-    expect(result.response.status).toBe(403);
-    await expect(result.response.json()).resolves.toEqual({
-      code: "forbidden",
-      message: "Survey is not accepting submissions",
-      details: { surveyId },
-    });
-    expect(mocks.getSignedUrlForUpload).not.toHaveBeenCalled();
+    await expectRefusedBeforeSigning(await postUpload());
   });
 
   test("still issues an upload URL for an open survey, scoped to its element", async () => {
@@ -157,6 +155,10 @@ describe("POST /api/v1/client/[workspaceId]/storage — survey lifecycle gates (
     await expect(result.response.json()).resolves.toEqual({
       data: { signedUrl: "https://s3.test/signed", fileUrl: "/storage/survey/private/file.png" },
     });
+    expect(mocks.applyRateLimit).toHaveBeenCalledWith(
+      rateLimitConfigs.storage.uploadPerWorkspace,
+      workspaceId
+    );
     expect(mocks.validateSurveyAllowsFileUpload).toHaveBeenCalledWith({
       fileName: uploadBody.fileName,
       elementId,
