@@ -1,6 +1,7 @@
 import { expect } from "@playwright/test";
 import http from "http";
 import { type AddressInfo } from "net";
+import type {} from "@formbricks/js";
 import { test } from "./lib/fixtures";
 import { seedAppSurvey } from "./utils/app-survey";
 

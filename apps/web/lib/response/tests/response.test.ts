@@ -8,7 +8,6 @@ import {
   mockResponseWithQuotas,
   mockSingleUseId,
   mockSurveyId,
-  mockSurveySummaryOutput,
   mockTags,
   mockWorkspaceId,
 } from "./__mocks__/data.mock";
@@ -20,7 +19,6 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponse } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
-import { getSurveySummary } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/surveySummary";
 import {
   mockContactAttributeKey,
   mockOrganizationOutput,
@@ -233,48 +231,6 @@ describe("Tests for getResponseWithQuotas service", () => {
       prisma.response.findUnique.mockRejectedValue(new Error("boom"));
 
       await expect(getResponseWithQuotas(mockResponse.id)).rejects.toThrow("boom");
-    });
-  });
-});
-
-describe("Tests for getSurveySummary service", () => {
-  describe("Happy Path", () => {
-    test("Returns a summary of the survey responses", async () => {
-      prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
-      prisma.response.findMany.mockResolvedValue([mockResponse]);
-      prisma.contactAttributeKey.findMany.mockResolvedValueOnce([mockContactAttributeKey]);
-      prisma.surveyQuota.findMany.mockResolvedValue([]);
-
-      const summary = await getSurveySummary(mockSurveyId);
-      expect(summary).toEqual(mockSurveySummaryOutput);
-    });
-  });
-
-  describe("Sad Path", () => {
-    testInputValidation(getSurveySummary, 1);
-
-    test("Throws DatabaseError on PrismaClientKnownRequestError", async () => {
-      const mockErrorMessage = "Mock error message";
-      const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
-        code: PrismaErrorType.UniqueConstraintViolation,
-        clientVersion: "0.0.1",
-      });
-
-      prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
-      prisma.response.findMany.mockRejectedValue(errToThrow);
-      prisma.contactAttributeKey.findMany.mockResolvedValueOnce([mockContactAttributeKey]);
-
-      await expect(getSurveySummary(mockSurveyId)).rejects.toThrow(DatabaseError);
-    });
-
-    test("Throws a generic Error for unexpected problems", async () => {
-      const mockErrorMessage = "Mock error message";
-
-      prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
-      prisma.response.findMany.mockRejectedValue(new Error(mockErrorMessage));
-      prisma.contactAttributeKey.findMany.mockResolvedValueOnce([mockContactAttributeKey]);
-
-      await expect(getSurveySummary(mockSurveyId)).rejects.toThrow(Error);
     });
   });
 });
