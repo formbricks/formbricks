@@ -15,27 +15,17 @@ that is not listed here.
 
 **Advance** — Moving from the current block to the next card, as decided by block flow. Back navigation is separate: it follows `history`, not logic.
 
-## Dashboards
+## Feedback queries
 
-**Feedback Dataset** — The set of Feedback Records a chart reads from. A chart reads exactly one, fixed when the chart is created. _Avoid_: feedback directory, tenant (internal names only).
+**Feedback Dataset** — The set of Feedback Records a query reads from. A query reads exactly one. _Avoid_: feedback directory, tenant (internal names only).
 
-**Chart** — One saved visualisation of one Feedback Dataset: a chart type, a query and display settings. It belongs to a workspace and can sit on any number of dashboards.
+**Feedback query** — What an agent asks of a Feedback Dataset: its measures, dimensions, time dimensions, filters, order and limit, written over the dataset's fields. Read-only. _Avoid_: chart query, chart spec.
 
-**Chart query** — What a chart computes: its measures, dimensions, time dimensions, filters, order and limit over its Feedback Dataset's fields. Kept apart from the chart's display settings. _Avoid_: chart spec, definition (when only the query is meant).
+**Field** — A measure or dimension a feedback query can use, named after its data source (`FeedbackRecords.npsScore`). The fields callers may use are the ones the field catalog lists. _Avoid_: member, column.
 
-**Field** — A measure or dimension a chart query can use, named after its data source (`FeedbackRecords.npsScore`). The fields callers may use are the ones the field catalog lists. _Avoid_: member, column.
+**Field catalog** — The published list of fields a feedback query may use, with each field's kind, type, label and filter options. It is the contract: a field not in the catalog is refused.
 
-**Field catalog** — The published list of fields a chart query may use, with each field's kind, type, label and filter options. It is the contract: a field not in the catalog is refused.
-
-**Date range** — The window of `collectedAt` a chart shows: a named preset (`last 7 days`), all time, or a pair of calendar dates, always read in the organization's display time zone. A date range given when reading a chart's data replaces the one saved on the chart.
-
-**Dashboard** — A named grid of widgets in a workspace. Its charts can come from different Feedback Datasets.
-
-**Widget** — One chart's placement on one dashboard: its position and size on the dashboard's 12-column grid, and its order. A chart sits on a dashboard at most once; removing a widget keeps the chart. User-facing copy says "chart". _Avoid_: placement, tile, panel.
-
-**Layout** — The positions and sizes of a dashboard's widgets. Widgets may not overlap; gaps close upward when the dashboard is drawn.
-
-**In use** — A chart is in use while it sits on at least one dashboard. A chart in use cannot be deleted; the refusal names the dashboards holding it.
+**Date range** — The window of `collectedAt` a feedback query covers: a named preset (`last 7 days`), all time, or a pair of calendar dates, always read in the organization's display time zone.
 
 ## Creatives
 
@@ -52,3 +42,19 @@ that is not listed here.
 **Click** — One press on a creative that opened its Destination. Dismissing a Banner is not a Click. _Avoid_: conversion, interaction.
 
 **Wind-down** — The Creatives access level of a self-hosted workspace that still has creatives after the Enterprise license stops including Creatives: they stop showing on sites and turn read-only, and authors can still pause, close and delete them.
+
+## Agent platform
+
+**Agent** — An AI client such as Claude, Codex or Cursor that acts on a person's behalf through the MCP server or the v3 API. _Avoid_: bot, assistant, integration.
+
+**Agent connection** — One grant by which an agent acts in a workspace: an OAuth consent or an API key, limited to the scopes it was given. _Avoid_: token, app, client.
+
+**Scope** — A read or write permission over one resource family that an agent connection holds.
+
+**Document** — The canonical JSON form of a survey, creative or workflow that an agent can pull, edit and push back. _Avoid_: export, config, spec.
+
+**Pull** — An agent reading a resource as a Document.
+
+**Push** — An agent writing a Document onto a live resource. It applies directly, is refused if the resource changed since the Document was pulled, and is recorded in the audit log. _Avoid_: import, sync, deploy.
+
+**Account shell** — The few human screens left: sign-up and login, organization management, connecting an agent, creating agent connections, and OAuth consent. Everything else is done by an agent. _Avoid_: dashboard, app.

@@ -1,3 +1,7 @@
+---
+status: superseded by ADR-0016
+---
+
 # The app uses the public dashboard and chart API
 
 The app's dashboards and charts call the same public `/api/v3` operations that agents and API keys use, not a parallel set of `/api/internal` routes, even though first-party UI otherwise defaults to `/api/internal` (formbricks#9670). Charts and dashboards have external callers by design (P-ENG-85), and the project's promise is one path for the app and agents: when the app goes through the exact contract agents get, every bug the UI hits is one an agent would hit, and the contract tests cover both. Only endpoints with no external caller go internal: AI chart generation (no MCP tool, by decision) and the matrix-question picker.
