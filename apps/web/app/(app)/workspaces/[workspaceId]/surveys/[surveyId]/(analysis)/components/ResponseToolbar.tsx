@@ -37,9 +37,16 @@ export const ResponseToolbar = ({
       properties: filterState.properties,
       filters: filterState.filters,
       onFiltersChange: filterState.setFilters,
+      onOpen: filterState.requestFilterData,
     }}
     matchCount={{ count: matchCount }}
-    actions={<ResponseDownloadMenu survey={survey} getFilters={filterState.resolveFreshCriteria} />}
+    actions={
+      <ResponseDownloadMenu
+        survey={survey}
+        getFilters={filterState.resolveFreshCriteria}
+        disabled={!filterState.isReady}
+      />
+    }
     isLoading={isLoading}
     settings={settings}
     selectionContent={selectionContent}

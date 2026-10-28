@@ -638,9 +638,14 @@ const processMatrixFilter = (
     filterType.filterComboBoxValue &&
     typeof filterType.filterComboBoxValue === "string"
   ) {
+    // Rules on several rows of one matrix share its condition, each row a key of its own.
+    const existing = filters.data![elementId];
     filters.data![elementId] = {
       op: "matrix",
-      value: { [filterType.filterValue]: filterType.filterComboBoxValue },
+      value: {
+        ...(existing?.op === "matrix" ? existing.value : {}),
+        [filterType.filterValue]: filterType.filterComboBoxValue,
+      },
     };
   }
 };

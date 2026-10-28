@@ -7,6 +7,7 @@ import { type ReactNode, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import type { TSurvey } from "@formbricks/types/surveys/types";
+import { getSurveyFilterDataAction } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/actions";
 import { OptionsType } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/response-filter-options";
 import { useResponseTableFilters } from "./use-response-table-filters";
 
@@ -99,7 +100,7 @@ describe("useResponseTableFilters", () => {
     setUrl("filter%5Bstatus%5D%5Bin%5D=complete&filter%5Bquestion.plan%5D%5BincludesOneOf%5D=Pro");
     const { result } = render();
 
-    await waitFor(() => expect(result.current.isFilterDataLoading).toBe(false));
+    await waitFor(() => expect(result.current.isReady).toBe(true));
     expect(result.current.selectedFilter.responseStatus).toBe("complete");
     expect(result.current.selectedFilter.filter).toEqual([
       expect.objectContaining({
@@ -112,7 +113,7 @@ describe("useResponseTableFilters", () => {
   test("keeps the same state while the filter is unchanged, even when the survey object is new", async () => {
     setUrl("filter%5Bquestion.plan%5D%5BincludesOneOf%5D=Pro");
     const { result, rerender } = render();
-    await waitFor(() => expect(result.current.isFilterDataLoading).toBe(false));
+    await waitFor(() => expect(result.current.isReady).toBe(true));
     const { selectedFilter, dateRange } = result.current;
 
     // A route refresh hands down a freshly deserialized survey with the same content.
@@ -125,7 +126,7 @@ describe("useResponseTableFilters", () => {
   test("a Summary click replaces the rules that question already had", async () => {
     setUrl("filter%5Bquestion.plan%5D%5BincludesOneOf%5D=Free&filter%5Bstatus%5D%5Bin%5D=partial");
     const { result } = render();
-    await waitFor(() => expect(result.current.isFilterDataLoading).toBe(false));
+    await waitFor(() => expect(result.current.isReady).toBe(true));
 
     act(() =>
       result.current.applyQuestionFilter({
@@ -150,7 +151,7 @@ describe("useResponseTableFilters", () => {
     setUrl("filter%5Battribute.plan%5D%5Bequals%5D=Pro");
     const { result } = render();
 
-    expect(result.current.isFilterDataLoading).toBe(true);
+    expect(result.current.isReady).toBe(false);
     act(() =>
       result.current.setFilters([
         ...result.current.filters,
@@ -162,5 +163,25 @@ describe("useResponseTableFilters", () => {
       ["filter[attribute.plan][equals]", "Pro"],
       ["filter[status][in]", "complete"],
     ]);
+  });
+
+  test("reads the survey's responses for filter data only once the filter is opened", async () => {
+    setUrl("filter%5Bstatus%5D%5Bin%5D=complete");
+    const { result } = render();
+
+    expect(result.current.isReady).toBe(true);
+    expect(getSurveyFilterDataAction).not.toHaveBeenCalled();
+
+    act(() => result.current.requestFilterData());
+    await waitFor(() => expect(getSurveyFilterDataAction).toHaveBeenCalledOnce());
+  });
+
+  test("an attribute rule in the URL holds the list until the filter data resolves it", async () => {
+    setUrl("filter%5Battribute.plan%5D%5Bequals%5D=Pro");
+    const { result } = render();
+
+    expect(result.current.isReady).toBe(false);
+    await waitFor(() => expect(result.current.isReady).toBe(true));
+    expect(result.current.selectedFilter.filter).toHaveLength(1);
   });
 });

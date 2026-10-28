@@ -30,7 +30,13 @@ enum FilterDownload {
 export const ResponseDownloadMenu = ({
   survey,
   getFilters,
-}: Readonly<{ survey: TSurvey; getFilters: () => TResponseFilterCriteria }>) => {
+  disabled = false,
+}: Readonly<{
+  survey: TSurvey;
+  getFilters: () => TResponseFilterCriteria;
+  /** While the filter cannot be resolved yet, so a download would export the unfiltered survey. */
+  disabled?: boolean;
+}>) => {
   const { t } = useTranslation();
   const [isDownloadDropDownOpen, setIsDownloadDropDownOpen] = useState<boolean>(false);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
@@ -51,11 +57,11 @@ export const ResponseDownloadMenu = ({
    * for the counts first, toast anything the user needs to know, and only then navigate.
    */
   const handleDownloadAttachments = async (filter: FilterDownload) => {
+    // Resolved once, so the pre-flight and the download ask about the same window.
+    const filters = filter === FilterDownload.FILTER ? JSON.stringify(getFilters()) : null;
     const buildUrl = (extra?: Record<string, string>) => {
       const params = new URLSearchParams(extra);
-      if (filter === FilterDownload.FILTER) {
-        params.set("filters", JSON.stringify(getFilters()));
-      }
+      if (filters) params.set("filters", filters);
       return `/api/surveys/${survey.id}/attachments?${params.toString()}`;
     };
 
@@ -139,7 +145,7 @@ export const ResponseDownloadMenu = ({
         <Button
           size="sm"
           variant="secondary"
-          disabled={isDownloading}
+          disabled={isDownloading || disabled}
           aria-expanded={isDownloadDropDownOpen}
           data-testid="fb__custom-filter-download">
           {isDownloading ? <Loader2 className="size-4 animate-spin" /> : <DownloadIcon className="size-4" />}

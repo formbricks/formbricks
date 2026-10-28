@@ -148,6 +148,7 @@ export const SummaryPage = ({
   }, [filterState.resolveFreshCriteria, surveyId]);
 
   const refreshSummary = useCallback(async () => {
+    if (!filterState.isReady) return;
     setIsLoading(true);
 
     try {
@@ -155,7 +156,7 @@ export const SummaryPage = ({
     } finally {
       setIsLoading(false);
     }
-  }, [fetchSummary, loadInitialDisplays, tab]);
+  }, [fetchSummary, filterState.isReady, loadInitialDisplays, tab]);
 
   useEffect(() => {
     return registerAnalysisRefreshHandler(refreshSummary);
@@ -176,6 +177,13 @@ export const SummaryPage = ({
       (selectedFilter?.filter?.length ?? 0) > 0 ||
       (!!selectedFilter?.responseStatus && selectedFilter.responseStatus !== "all") ||
       Boolean(dateRange?.from);
+
+    // A rule in the URL still waiting for the filter data: the summary would answer for every response.
+    if (!filterState.isReady) {
+      lastFetchedFiltersKeyRef.current = null;
+      setIsLoading(true);
+      return;
+    }
 
     // If we have server-provided initial data and no active filters, use it instead of refetching.
     // (Also covers clearing filters: fall back to the unfiltered initial summary without a fetch.)
@@ -213,7 +221,7 @@ export const SummaryPage = ({
     };
 
     fetchFilteredSummary();
-  }, [selectedFilter, dateRange, initialSurveySummary, fetchSummary, survey, t]);
+  }, [selectedFilter, dateRange, initialSurveySummary, fetchSummary, filterState.isReady, survey, t]);
 
   const surveyMemoized = useMemo(() => {
     return replaceHeadlineRecall(survey, "default");

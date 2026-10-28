@@ -77,6 +77,8 @@ export type TTableToolbarProps = {
     properties: readonly TFilterProperty[];
     filters: readonly TTableFilter[];
     onFiltersChange: (filters: TTableFilter[]) => void;
+    /** Called when the Filter menu or the Advanced filter first opens, for tables that load options late. */
+    onOpen?: () => void;
   };
   /** Rows matching the filters, not rows loaded. Null while unknown. */
   matchCount?: { count: number | null; isCapped?: boolean };
@@ -107,6 +109,10 @@ export const TableToolbar = ({
   const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+  const onFilterOpen = filter?.onOpen;
+  useEffect(() => {
+    if (isFilterMenuOpen || isAdvancedOpen) onFilterOpen?.();
+  }, [isFilterMenuOpen, isAdvancedOpen, onFilterOpen]);
   const hasRuleProperties = Boolean(
     filter?.properties.some((property) => !property.hidden && (property.ruleOperators?.length ?? 0) > 0)
   );

@@ -6,6 +6,7 @@ import { OptionsType } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surve
 import { generateElementAndFilterOptions, getFormattedFilters } from "@/app/lib/surveys/surveys";
 import type { TTableFilter } from "@/modules/ui/components/table-toolbar/lib/types";
 import {
+  applicableResponseFilters,
   buildResponseFilterModel,
   filterValueToTableFilter,
   isQuestionFilter,
@@ -330,5 +331,24 @@ describe("normalizeSummaryFilterRow", () => {
       filterType: { filterValue: "Includes all", filterComboBoxValue: ["Bild 2"] },
     };
     expect(normalizeSummaryFilterRow(row, german).filterType.filterComboBoxValue).toEqual(["Picture 2"]);
+  });
+});
+
+describe("applicableResponseFilters", () => {
+  test("a second rule on one question replaces the first, so the chips show what applies", () => {
+    const filters: TTableFilter[] = [
+      { property: "question.rating", operator: "greaterThan", values: ["3"] },
+      { property: "status", operator: "in", values: ["complete"] },
+      { property: "question.rating", operator: "lessThan", values: ["2"] },
+    ];
+    expect(applicableResponseFilters(filters)).toEqual([filters[1], filters[2]]);
+  });
+
+  test("tag rules stack", () => {
+    const filters: TTableFilter[] = [
+      { property: "tag", operator: "in", values: ["vip"] },
+      { property: "tag", operator: "equals", values: ["churn"] },
+    ];
+    expect(applicableResponseFilters(filters)).toEqual(filters);
   });
 });

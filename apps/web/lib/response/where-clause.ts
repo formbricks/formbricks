@@ -879,13 +879,11 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
           });
           break;
         case "matrix": {
-          const rowLabel = Object.keys(val.value)[0];
-          data.push({
-            data: {
-              path: [key, rowLabel],
-              equals: val.value[rowLabel],
-            },
-          });
+          const rows = Object.entries(val.value);
+          spend(rows.length);
+          for (const [rowLabel, column] of rows) {
+            data.push({ data: { path: [key, rowLabel], equals: column } });
+          }
           break;
         }
         // Text ops for string-typed ingested Embedded Data fields (ENG-1848).

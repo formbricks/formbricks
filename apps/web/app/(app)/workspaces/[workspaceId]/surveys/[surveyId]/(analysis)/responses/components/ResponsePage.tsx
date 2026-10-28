@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurveyQuota } from "@formbricks/types/quota";
@@ -72,17 +72,27 @@ export const ResponsePage = ({
   // analysis refresh handler and would collapse the infinite-scroll list back to page 1.
   // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on the filter value, not its identity
   const filters = useMemo(() => computedFilters, [filtersKey]);
+  const { isReady } = filterState;
+
+  // The criteria the loaded list was fetched with. A refresh resolves relative dates afresh, so the
+  // pages after it and the count must ask about the same window as its first page.
+  const listCriteriaRef = useRef(filters);
+  // Bumped by every first-page fetch; an answer that arrives after a newer one started is dropped, so
+  // fast ticking cannot land an older filter's rows under newer chips.
+  const firstPageRequestRef = useRef(0);
 
   // Rows matching the filters, for the toolbar. Refetched with the list, so a delete or a refresh
   // keeps it honest.
   const matchCountQuery = useQuery({
     queryKey: ["surveys", surveyId, "response-count", filtersKey],
-    queryFn: async () => (await getResponseCountAction({ surveyId, filterCriteria: filters }))?.data ?? null,
+    queryFn: async () =>
+      (await getResponseCountAction({ surveyId, filterCriteria: listCriteriaRef.current }))?.data ?? null,
+    enabled: isReady,
   });
   const { refetch: refetchMatchCount } = matchCountQuery;
 
   const fetchNextPage = useCallback(async () => {
-    if (page === null) return;
+    if (page === null || !isReady) return;
     const newPage = page + 1;
 
     let newResponses: TResponseWithQuotas[] = [];
@@ -91,7 +101,7 @@ export const ResponsePage = ({
       surveyId,
       limit: responsesPerPage,
       offset: (newPage - 1) * responsesPerPage,
-      filterCriteria: filters,
+      filterCriteria: listCriteriaRef.current,
     });
     newResponses = getResponsesActionResponse?.data || [];
 
@@ -100,7 +110,7 @@ export const ResponsePage = ({
     }
     setResponses([...responses, ...newResponses]);
     setPage(newPage);
-  }, [filters, page, responses, responsesPerPage, surveyId]);
+  }, [isReady, page, responses, responsesPerPage, surveyId]);
 
   const updateResponseList = (responseIds: string[]) => {
     setResponses((prev) => prev.filter((r) => !responseIds.includes(r.id)));
@@ -112,16 +122,21 @@ export const ResponsePage = ({
   };
 
   const refetchResponses = useCallback(async () => {
+    if (!isReady) return;
     setIsFetchingFirstPage(true);
+    const requestId = ++firstPageRequestRef.current;
 
     try {
+      // A refresh asks about now: a relative date window may have moved on since the filter was set.
+      const criteria = filterState.resolveFreshCriteria();
       const getResponsesActionResponse = await getResponsesAction({
         surveyId,
         limit: responsesPerPage,
         offset: 0,
-        // A refresh asks about now: a relative date window may have moved on since the filter was set.
-        filterCriteria: filterState.resolveFreshCriteria(),
+        filterCriteria: criteria,
       });
+      if (requestId !== firstPageRequestRef.current) return;
+      listCriteriaRef.current = criteria;
 
       if (getResponsesActionResponse?.serverError) {
         toast.error(getFormattedErrorMessage(getResponsesActionResponse) ?? t("common.something_went_wrong"));
@@ -135,7 +150,7 @@ export const ResponsePage = ({
     } finally {
       setIsFetchingFirstPage(false);
     }
-  }, [filterState.resolveFreshCriteria, refetchMatchCount, responsesPerPage, surveyId, t]);
+  }, [filterState.resolveFreshCriteria, isReady, refetchMatchCount, responsesPerPage, surveyId, t]);
 
   useEffect(() => {
     return registerAnalysisRefreshHandler(refetchResponses);
@@ -149,40 +164,40 @@ export const ResponsePage = ({
 
   useEffect(() => {
     const fetchFilteredResponses = async () => {
-      try {
-        // skip call for initial mount
-        if (page === null && !hasFilters) {
-          setPage(1);
-          return;
-        }
+      // skip call for initial mount
+      if (page === null && !hasFilters) {
         setPage(1);
-        setIsFetchingFirstPage(true);
-        let responses: TResponseWithQuotas[] = [];
+        return;
+      }
+      setPage(1);
+      setIsFetchingFirstPage(true);
+      const requestId = ++firstPageRequestRef.current;
+      // The server rendered the unfiltered list; it stays behind the loading state until the rules in
+      // the URL can be resolved.
+      if (!isReady) return;
 
+      try {
         const getResponsesActionResponse = await getResponsesAction({
           surveyId,
           limit: responsesPerPage,
           offset: 0,
           filterCriteria: filters,
         });
+        if (requestId !== firstPageRequestRef.current) return;
+        listCriteriaRef.current = filters;
 
-        responses = getResponsesActionResponse?.data || [];
-
-        if (responses.length < responsesPerPage) {
-          setHasMore(false);
-        } else {
-          setHasMore(true);
-        }
+        const responses = getResponsesActionResponse?.data || [];
+        setHasMore(responses.length >= responsesPerPage);
         setResponses(responses);
       } finally {
-        setIsFetchingFirstPage(false);
+        if (requestId === firstPageRequestRef.current) setIsFetchingFirstPage(false);
       }
     };
     fetchFilteredResponses();
     // page is intentionally omitted to avoid refetching after the initial page setup.
     // hasFilters is derived from selectedFilter/dateRange which are already deps.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- effect must run only when the filter value changes, not on page updates it sets internally
-  }, [filtersKey, responsesPerPage, selectedFilter, dateRange, surveyId]);
+  }, [filtersKey, isReady, responsesPerPage, selectedFilter, dateRange, surveyId]);
 
   return (
     <ResponseDataView

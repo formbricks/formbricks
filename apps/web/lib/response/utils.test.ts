@@ -423,6 +423,28 @@ describe("Response Utils", () => {
       ]);
     });
 
+    test("matrix rules on several rows all apply", () => {
+      const res = buildWhereClause(
+        {
+          id: "s4",
+          blocks: [],
+          questions: [],
+          hiddenFields: { enabled: false, fieldIds: [] },
+        } as unknown as TSurvey,
+        {
+          data: { qM: { op: "matrix", value: { R1: "foo", R2: "bar" } } },
+        }
+      );
+      expect(res.AND).toEqual([
+        {
+          AND: [
+            { data: { path: ["qM", "R1"], equals: "foo" } },
+            { data: { path: ["qM", "R2"], equals: "bar" } },
+          ],
+        },
+      ]);
+    });
+
     test("includesOne: multiple choice multi with other choice selected", () => {
       const choiceSurvey: Partial<TSurvey> = {
         id: "s4",

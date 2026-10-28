@@ -473,6 +473,20 @@ const toDateRange = (filters: readonly TTableFilter[], timeZone: string, now: Da
 };
 
 /**
+ * The filters the response pipeline can apply. It holds one condition per question, attribute, hidden
+ * field and so on, so a second rule on the same property would replace the first there while both
+ * chips still showed: the last rule on a property wins here too, and only it is shown. Tags stack, so
+ * every tag rule stays.
+ */
+export const applicableResponseFilters = (filters: readonly TTableFilter[]): TTableFilter[] => {
+  const lastIndex = new Map<string, number>();
+  filters.forEach((filter, index) => lastIndex.set(filter.property, index));
+  return filters.filter(
+    (filter, index) => filter.property === TAG_PROPERTY || lastIndex.get(filter.property) === index
+  );
+};
+
+/**
  * The table filters as the response pipeline's filter state. A rule whose property is unknown (a
  * question since deleted) or whose operator the field cannot take is left out rather than sent.
  */
