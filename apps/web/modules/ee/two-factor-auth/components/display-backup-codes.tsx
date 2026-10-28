@@ -10,7 +10,7 @@ interface DisplayBackupCodesProps {
   setOpen: (open: boolean) => void;
 }
 
-export const DisplayBackupCodes = ({ backupCodes, setOpen }: DisplayBackupCodesProps) => {
+export const DisplayBackupCodes = ({ backupCodes, setOpen }: Readonly<DisplayBackupCodesProps>) => {
   const { t } = useTranslation();
   const formatBackupCode = (code: string) => `${code.slice(0, 5)}-${code.slice(5, 10)}`;
 
@@ -28,38 +28,28 @@ export const DisplayBackupCodes = ({ backupCodes, setOpen }: DisplayBackupCodesP
   };
 
   return (
-    <div>
-      <div className="p-6">
-        <h1 className="text-lg font-semibold" data-testid="backup-codes-title">
-          {t("workspace.settings.profile.enable_two_factor_authentication")}
-        </h1>
-        <h3 className="text-sm text-slate-700" data-testid="backup-codes-description">
-          {t("workspace.settings.profile.save_the_following_backup_codes_in_a_safe_place")}
-        </h3>
-      </div>
-
+    <div className="flex flex-col gap-5">
       <div
-        className="mx-auto mb-6 grid max-w-[60%] grid-cols-2 gap-1 text-center"
+        className="mx-auto grid w-full max-w-72 grid-cols-2 gap-x-6 gap-y-2 rounded-lg border border-slate-200 bg-slate-50 p-4 text-center"
         data-testid="backup-codes-grid">
         {backupCodes.map((code) => (
-          <p key={code} className="text-sm font-medium text-slate-700" data-testid={`backup-code-${code}`}>
+          <p
+            key={code}
+            className="font-mono text-sm font-medium text-slate-800"
+            data-testid={`backup-code-${code}`}>
             {formatBackupCode(code)}
           </p>
         ))}
       </div>
 
-      <div className="flex w-full items-center justify-end gap-x-4 border-t border-slate-300 p-4">
-        <Button
-          variant="secondary"
-          type="button"
-          size="sm"
-          onClick={() => setOpen(false)}
-          data-testid="close-button">
+      <div className="flex w-full flex-wrap items-center justify-end gap-2">
+        <Button variant="outline" type="button" onClick={() => setOpen(false)} data-testid="close-button">
           {t("common.close")}
         </Button>
 
         <Button
-          size="sm"
+          variant="outline"
+          type="button"
           onClick={async () => {
             if (await copyToClipboard(backupCodes.map((code) => formatBackupCode(code)).join("\n"))) {
               toast.success(t("common.copied_to_clipboard"));
@@ -72,7 +62,7 @@ export const DisplayBackupCodes = ({ backupCodes, setOpen }: DisplayBackupCodesP
         </Button>
 
         <Button
-          size="sm"
+          type="button"
           onClick={() => {
             handleDownloadBackupCode();
           }}

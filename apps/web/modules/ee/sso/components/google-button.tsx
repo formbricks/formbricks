@@ -5,19 +5,19 @@ import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@/lib/localStorage";
 import { authClient } from "@/modules/auth/lib/auth-client";
 import { getSsoReturnToUrl } from "@/modules/ee/sso/lib/utils";
 import { Button } from "@/modules/ui/components/button";
-import { GoogleIcon } from "@/modules/ui/components/icons";
+import { GoogleIcon } from "./provider-icons";
 
 interface GoogleButtonProps {
   returnToUrl?: string;
   lastUsed?: boolean;
-  variant?: "default" | "secondary";
+  variant?: "default" | "outline";
   source: "signin" | "signup";
 }
 
 export const GoogleButton = ({
   returnToUrl,
   lastUsed,
-  variant = "secondary",
+  variant = "outline",
   source,
 }: Readonly<GoogleButtonProps>) => {
   const { t } = useTranslation();

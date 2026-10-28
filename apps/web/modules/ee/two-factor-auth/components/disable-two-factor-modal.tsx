@@ -3,12 +3,14 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
+import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { ZUserPassword } from "@formbricks/types/user";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { AuthField } from "@/modules/auth/components/auth-field";
+import { OTPInput } from "@/modules/auth/components/otp-input";
 import { disableTwoFactorAuthAction } from "@/modules/ee/two-factor-auth/actions";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -20,9 +22,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
-import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
-import { OTPInput } from "@/modules/ui/components/otp-input";
 import { PasswordInput } from "@/modules/ui/components/password-input";
 
 const ZDisableTwoFactorFormState = z
@@ -43,7 +43,7 @@ interface DisableTwoFactorModalProps {
   setOpen: (open: boolean) => void;
 }
 
-export const DisableTwoFactorModal = ({ open, setOpen }: DisableTwoFactorModalProps) => {
+export const DisableTwoFactorModal = ({ open, setOpen }: Readonly<DisableTwoFactorModalProps>) => {
   const router = useRouter();
   const form = useForm<TDisableTwoFactorFormState>({
     defaultValues: {
@@ -70,6 +70,8 @@ export const DisableTwoFactorModal = ({ open, setOpen }: DisableTwoFactorModalPr
     }
   };
 
+  const { errors } = form.formState;
+
   return (
     <Dialog
       open={open}
@@ -79,7 +81,7 @@ export const DisableTwoFactorModal = ({ open, setOpen }: DisableTwoFactorModalPr
         }
         setOpen(open);
       }}>
-      <DialogContent>
+      <DialogContent width="narrow">
         <DialogHeader>
           <DialogTitle>{t("workspace.settings.profile.disable_two_factor_authentication")}</DialogTitle>
           <DialogDescription>
@@ -87,121 +89,82 @@ export const DisableTwoFactorModal = ({ open, setOpen }: DisableTwoFactorModalPr
           </DialogDescription>
         </DialogHeader>
 
-        <FormProvider {...form}>
-          <form className="flex flex-col gap-y-6" onSubmit={form.handleSubmit(onSubmit)}>
-            <DialogBody className="space-y-6">
-              <div className="flex flex-col gap-2">
-                <label htmlFor="password" className="text-sm font-medium text-slate-700">
-                  {t("common.password")}
-                </label>
-                <FormField
+        <form className="flex flex-col gap-5" onSubmit={form.handleSubmit(onSubmit)}>
+          <DialogBody className="flex flex-col gap-5 px-1">
+            <AuthField
+              id="disable-two-factor-password"
+              label={t("common.password")}
+              error={errors.password?.message}>
+              <PasswordInput
+                id="disable-two-factor-password"
+                autoComplete="current-password"
+                required
+                {...form.register("password")}
+              />
+            </AuthField>
+
+            <AuthField
+              id={backupCodeInputVisible ? "disable-two-factor-backup-code" : "disable-two-factor-code"}
+              label={
+                backupCodeInputVisible
+                  ? t("workspace.settings.profile.backup_code")
+                  : t("workspace.settings.profile.two_factor_code")
+              }
+              hint={
+                backupCodeInputVisible
+                  ? t(
+                      "workspace.settings.profile.each_backup_code_can_be_used_exactly_once_to_grant_access_without_your_authenticator"
+                    )
+                  : t(
+                      "workspace.settings.profile.two_factor_authentication_enabled_please_enter_the_six_digit_code_from_your_authenticator_app"
+                    )
+              }
+              error={errors.code?.message}>
+              {backupCodeInputVisible ? (
+                <Input
+                  id="disable-two-factor-backup-code"
+                  autoComplete="off"
+                  placeholder="XXXXX-XXXXX"
+                  {...form.register("backupCode")}
+                />
+              ) : (
+                <Controller
                   control={form.control}
-                  name="password"
-                  render={({ field, fieldState: { error } }) => (
-                    <FormItem className="w-full">
-                      <FormControl>
-                        <FormItem>
-                          <PasswordInput
-                            id="password"
-                            autoComplete="current-password"
-                            placeholder="*******"
-                            aria-placeholder="password"
-                            required
-                            onChange={(password) => field.onChange(password)}
-                            value={field.value}
-                            className="block w-full rounded-md border-slate-300 shadow-xs focus:border-brand-dark focus:ring-brand-dark sm:text-sm"
-                          />
-                          {error?.message && <FormError className="text-left">{error.message}</FormError>}
-                        </FormItem>
-                      </FormControl>
-                    </FormItem>
+                  name="code"
+                  render={({ field }) => (
+                    <OTPInput
+                      value={field.value ?? ""}
+                      valueLength={6}
+                      onChange={field.onChange}
+                      containerClassName="justify-start"
+                    />
                   )}
                 />
-              </div>
+              )}
+            </AuthField>
+          </DialogBody>
 
-              <div>
-                <div className="flex flex-col gap-2">
-                  <label htmlFor="code" className="text-sm font-medium text-slate-700">
-                    {backupCodeInputVisible
-                      ? t("workspace.settings.profile.backup_code")
-                      : t("workspace.settings.profile.two_factor_code")}
-                  </label>
+          <DialogFooter className="items-center sm:justify-between">
+            <Button variant="ghost" type="button" onClick={() => setBackupCodeInputVisible((prev) => !prev)}>
+              {backupCodeInputVisible ? t("common.go_back") : t("workspace.settings.profile.lost_access")}
+            </Button>
+            <div className="flex flex-col-reverse gap-2 sm:flex-row">
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => {
+                  form.reset();
+                  setOpen(false);
+                }}>
+                {t("common.cancel")}
+              </Button>
 
-                  <p className="text-sm text-slate-700">
-                    {backupCodeInputVisible
-                      ? t(
-                          "workspace.settings.profile.each_backup_code_can_be_used_exactly_once_to_grant_access_without_your_authenticator"
-                        )
-                      : t(
-                          "workspace.settings.profile.two_factor_authentication_enabled_please_enter_the_six_digit_code_from_your_authenticator_app"
-                        )}
-                  </p>
-                </div>
-
-                {backupCodeInputVisible ? (
-                  <FormField
-                    control={form.control}
-                    name="backupCode"
-                    render={({ field, fieldState: { error } }) => (
-                      <FormItem className="w-full">
-                        <FormControl>
-                          <FormItem>
-                            <Input {...field} placeholder="XXXXX-XXXXX" className="mt-2" />
-                            {error?.message && <FormError className="text-left">{error.message}</FormError>}
-                          </FormItem>
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                ) : (
-                  <FormField
-                    control={form.control}
-                    name="code"
-                    render={({ field, fieldState: { error } }) => (
-                      <FormItem className="w-full">
-                        <FormControl>
-                          <FormItem>
-                            <OTPInput
-                              value={field.value || ""}
-                              valueLength={6}
-                              onChange={field.onChange}
-                              containerClassName="justify-start mt-4"
-                            />
-                            {error?.message && <FormError className="text-left">{error.message}</FormError>}
-                          </FormItem>
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                )}
-              </div>
-            </DialogBody>
-
-            <DialogFooter className="flex w-full items-center justify-between">
-              <div>
-                <Button
-                  variant="ghost"
-                  type="button"
-                  onClick={() => setBackupCodeInputVisible((prev) => !prev)}>
-                  {backupCodeInputVisible ? t("common.go_back") : t("workspace.settings.profile.lost_access")}
-                </Button>
-              </div>
-              <div className="flex items-center gap-x-4">
-                <Button
-                  variant="secondary"
-                  type="button"
-                  onClick={() => {
-                    form.reset();
-                    setOpen(false);
-                  }}>
-                  {t("common.cancel")}
-                </Button>
-
-                <Button loading={form.formState.isSubmitting}>{t("common.disable")}</Button>
-              </div>
-            </DialogFooter>
-          </form>
-        </FormProvider>
+              <Button variant="destructive" loading={form.formState.isSubmitting}>
+                {t("common.disable")}
+              </Button>
+            </div>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

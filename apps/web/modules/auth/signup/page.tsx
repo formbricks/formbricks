@@ -1,23 +1,13 @@
 import { notFound } from "next/navigation";
-import {
-  EMAIL_AUTH_ENABLED,
-  EMAIL_VERIFICATION_DISABLED,
-  IS_FORMBRICKS_CLOUD,
-  IS_TURNSTILE_CONFIGURED,
-  OIDC_DISPLAY_NAME,
-  PRIVACY_URL,
-  SIGNUP_ENABLED,
-  TERMS_URL,
-  TURNSTILE_SITE_KEY,
-  WEBAPP_URL,
-} from "@/lib/constants";
+import { SIGNUP_ENABLED, WEBAPP_URL } from "@/lib/constants";
 import { verifyInviteToken } from "@/lib/jwt";
-import { findMatchingLocale } from "@/lib/utils/locale";
-import { FormWrapper } from "@/modules/auth/components/form-wrapper";
+import { getTranslate } from "@/lingodotdev/server";
+import { AuthHeading } from "@/modules/auth/components/auth-heading";
+import { AuthCard, AuthPage } from "@/modules/auth/components/form-wrapper";
+import { SignupFooter } from "@/modules/auth/signup/components/signup-footer";
+import { SignupFormLoader } from "@/modules/auth/signup/components/signup-form-loader";
 import { getIsValidInviteToken } from "@/modules/auth/signup/lib/invite";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
-import { getSsoAvailability, toSsoFormProps } from "@/modules/ee/sso/lib/sso-availability";
-import { SignupForm } from "./components/signup-form";
 
 export const SignupPage = async ({
   searchParams: searchParamsProps,
@@ -26,11 +16,7 @@ export const SignupPage = async ({
 }) => {
   const searchParams = await searchParamsProps;
   const inviteToken = searchParams["inviteToken"] ?? null;
-  const [isMultOrgEnabled, ssoAvailability] = await Promise.all([
-    getIsMultiOrgEnabled(),
-    getSsoAvailability(),
-  ]);
-  const locale = await findMatchingLocale();
+  const [isMultOrgEnabled, t] = await Promise.all([getIsMultiOrgEnabled(), getTranslate()]);
   if (!SIGNUP_ENABLED || !isMultOrgEnabled) {
     if (!inviteToken) notFound();
 
@@ -44,24 +30,13 @@ export const SignupPage = async ({
     }
   }
 
-  const emailFromSearchParams = searchParams["email"];
-
   return (
-    <FormWrapper>
-      <SignupForm
-        webAppUrl={WEBAPP_URL}
-        termsUrl={TERMS_URL}
-        privacyUrl={PRIVACY_URL}
-        emailVerificationDisabled={EMAIL_VERIFICATION_DISABLED}
-        emailAuthEnabled={EMAIL_AUTH_ENABLED}
-        {...toSsoFormProps(ssoAvailability)}
-        oidcDisplayName={OIDC_DISPLAY_NAME}
-        userLocale={locale}
-        emailFromSearchParams={emailFromSearchParams}
-        isTurnstileConfigured={IS_TURNSTILE_CONFIGURED}
-        turnstileSiteKey={TURNSTILE_SITE_KEY}
-        isFormbricksCloud={IS_FORMBRICKS_CLOUD}
-      />
-    </FormWrapper>
+    <AuthPage>
+      <AuthCard>
+        <AuthHeading title={t("shell.auth.signup.title")} description={t("shell.auth.signup.description")} />
+        <SignupFormLoader emailFromSearchParams={searchParams["email"]} />
+      </AuthCard>
+      <SignupFooter webAppUrl={WEBAPP_URL} />
+    </AuthPage>
   );
 };

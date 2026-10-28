@@ -6,7 +6,7 @@ import {
   SIGNUP_ENABLED,
   WEBAPP_URL,
 } from "@/lib/constants";
-import { FormWrapper } from "@/modules/auth/components/form-wrapper";
+import { AuthPage } from "@/modules/auth/components/form-wrapper";
 import {
   getInviteTokenFromCallbackUrl,
   getRelativeCallbackUrl,
@@ -43,7 +43,7 @@ export const LoginPage = async ({
   const inviteToken = getInviteTokenFromCallbackUrl(resolvedCallbackUrl, WEBAPP_URL);
 
   return (
-    <FormWrapper>
+    <AuthPage>
       <LoginForm
         emailAuthEnabled={EMAIL_AUTH_ENABLED}
         publicSignUpEnabled={SIGNUP_ENABLED}
@@ -61,6 +61,6 @@ export const LoginPage = async ({
         resolvedCallbackPath={resolvedCallbackPath}
         resolvedCallbackUrl={resolvedCallbackUrl}
       />
-    </FormWrapper>
+    </AuthPage>
   );
 };

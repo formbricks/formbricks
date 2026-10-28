@@ -66,6 +66,7 @@ describe("invite", () => {
         organizationId: "org-id",
         role: "member",
         teamIds: ["team-1"],
+        organization: { name: "Acme Inc." },
         creator: {
           name: "Test User",
           email: "test@example.com",
@@ -80,6 +81,7 @@ describe("invite", () => {
       const result = await getInvite("test-id");
 
       expect(result).toEqual(mockInvite);
+      expect(result?.organization.name).toBe("Acme Inc.");
       expect(prisma.invite.findUnique).toHaveBeenCalledWith({
         where: { id: "test-id" },
         select: {
@@ -88,6 +90,11 @@ describe("invite", () => {
           organizationId: true,
           role: true,
           teamIds: true,
+          organization: {
+            select: {
+              name: true,
+            },
+          },
           creator: {
             select: {
               name: true,

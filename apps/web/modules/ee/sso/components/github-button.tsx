@@ -5,19 +5,19 @@ import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@/lib/localStorage";
 import { authClient } from "@/modules/auth/lib/auth-client";
 import { getSsoReturnToUrl } from "@/modules/ee/sso/lib/utils";
 import { Button } from "@/modules/ui/components/button";
-import { GithubIcon } from "@/modules/ui/components/icons";
+import { GithubIcon } from "./provider-icons";
 
 interface GithubButtonProps {
   returnToUrl?: string;
   lastUsed?: boolean;
-  variant?: "default" | "secondary";
+  variant?: "default" | "outline";
   source: "signin" | "signup";
 }
 
 export const GithubButton = ({
   returnToUrl,
   lastUsed,
-  variant = "secondary",
+  variant = "outline",
   source,
 }: Readonly<GithubButtonProps>) => {
   const { t } = useTranslation();

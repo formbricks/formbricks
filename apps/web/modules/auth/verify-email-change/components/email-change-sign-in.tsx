@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
+import { AuthHeading } from "@/modules/auth/components/auth-heading";
 import { authClient } from "@/modules/auth/lib/auth-client";
 import { verifyEmailChangeAction } from "@/modules/auth/verify-email-change/actions";
 
@@ -73,13 +74,5 @@ export const EmailChangeSignIn = ({ token }: EmailChangeSignInProps) => {
     },
   };
 
-  return (
-    <>
-      <h1 className={`mb-4 text-center leading-2 font-bold ${status === "error" ? "text-red-600" : ""}`}>
-        {text.heading[status]}
-      </h1>
-      <p className="text-center text-sm">{text.description[status]}</p>
-      <hr className="my-4" />
-    </>
-  );
+  return <AuthHeading title={text.heading[status]} description={text.description[status]} />;
 };

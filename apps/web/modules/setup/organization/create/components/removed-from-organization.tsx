@@ -21,13 +21,14 @@ export const RemovedFromOrganization = ({
   const { t } = useTranslation();
   const [isModalOpen, setIsModalOpen] = useState(false);
   return (
-    <div className="space-y-4">
+    <>
       <Alert variant="warning" role="status">
         <AlertTitle>{t("setup.organization.create.no_membership_found")}</AlertTitle>
         <AlertDescription>{t("setup.organization.create.no_membership_found_description")}</AlertDescription>
       </Alert>
-      <hr className="my-4 border-slate-200" />
-      <p className="text-sm">{t("setup.organization.create.delete_account_description")}</p>
+      <p className="border-t border-slate-200 pt-5 text-slate-600">
+        {t("setup.organization.create.delete_account_description")}
+      </p>
       <DeleteAccountModal
         requiresPasswordConfirmation={requiresPasswordConfirmation}
         open={isModalOpen}
@@ -37,11 +38,13 @@ export const RemovedFromOrganization = ({
         organizationsWithSingleOwner={[]}
       />
       <Button
+        variant="destructive"
+        className="h-11 w-full sm:h-9"
         onClick={() => {
           setIsModalOpen(true);
         }}>
         {t("setup.organization.create.delete_account")}
       </Button>
-    </div>
+    </>
   );
 };

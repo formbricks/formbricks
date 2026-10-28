@@ -5,8 +5,10 @@ import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getHasNoOrganizations } from "@/lib/instance/service";
 import { getOrganizationsByUserId } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
+import { DEFAULT_WORKSPACE_NAME } from "@/lib/workspace/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { requiresPasswordConfirmationForAccountDeletion } from "@/modules/account/lib/account-deletion-auth";
+import { AuthCard } from "@/modules/auth/components/form-wrapper";
 import { getSession } from "@/modules/auth/lib/session";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { RemovedFromOrganization } from "@/modules/setup/organization/create/components/removed-from-organization";
@@ -34,16 +36,18 @@ export const CreateOrganizationPage = async () => {
   const userOrganizations = await getOrganizationsByUserId(session.user.id);
 
   if (hasNoOrganizations || isMultiOrgEnabled) {
-    return <CreateOrganization />;
+    return <CreateOrganization defaultWorkspaceName={DEFAULT_WORKSPACE_NAME} />;
   }
 
   if (userOrganizations.length === 0) {
     return (
-      <RemovedFromOrganization
-        user={user}
-        isFormbricksCloud={IS_FORMBRICKS_CLOUD}
-        requiresPasswordConfirmation={requiresPasswordConfirmationForAccountDeletion(user)}
-      />
+      <AuthCard width="wide">
+        <RemovedFromOrganization
+          user={user}
+          isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+          requiresPasswordConfirmation={requiresPasswordConfirmationForAccountDeletion(user)}
+        />
+      </AuthCard>
     );
   }
 

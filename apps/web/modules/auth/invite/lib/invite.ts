@@ -42,6 +42,14 @@ export const getInvite = reactCache(async (inviteId: string): Promise<InviteWith
         organizationId: true,
         role: true,
         teamIds: true,
+        // The organization's name rides along in the same query so the invite screen can say what the
+        // visitor is joining. The invite already names its organization, so this reads nothing the token
+        // holder was not already pointed at.
+        organization: {
+          select: {
+            name: true,
+          },
+        },
         creator: {
           select: {
             name: true,

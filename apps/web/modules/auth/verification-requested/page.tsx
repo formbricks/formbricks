@@ -4,12 +4,13 @@
    function has returned its element tree, so only an error boundary can catch it) holds for client
    components and does not apply here. Scoped to the file because ESLint cannot tell a server
    component from a client one (ENG-2366). */
-import Link from "next/link";
 import { logger } from "@formbricks/logger";
 import { ZUserEmail } from "@formbricks/types/user";
 import { IS_SMTP_CONFIGURED, WEBAPP_URL } from "@/lib/constants";
 import { getEmailFromEmailToken } from "@/lib/jwt";
 import { getTranslate } from "@/lingodotdev/server";
+import { AuthHeading } from "@/modules/auth/components/auth-heading";
+import { AuthLink } from "@/modules/auth/components/auth-link";
 import { FormWrapper } from "@/modules/auth/components/form-wrapper";
 import { resolveAuthCallbackUrl } from "@/modules/auth/lib/callback-url";
 import { RequestVerificationEmail } from "@/modules/auth/verification-requested/components/request-verification-email";
@@ -52,59 +53,50 @@ export const VerificationRequestedPage = async ({
     const parsedEmail = ZUserEmail.safeParse(email);
     if (parsedEmail.success) {
       return (
-        <FormWrapper>
-          <>
-            <h1 className="mb-4 text-center text-lg leading-2 font-semibold text-slate-900">
-              {t("auth.verification-requested.please_confirm_your_email_address")}
-            </h1>
-            {mailerNotConfigured ? (
-              <Alert variant="warning" className="text-left" role="status">
-                <AlertTitle>{t("auth.verification-requested.email_not_configured_title")}</AlertTitle>
-                <AlertDescription>
-                  <p>{t("auth.verification-requested.email_not_configured_description")}</p>
-                </AlertDescription>
-              </Alert>
-            ) : (
-              <VerificationMessage email={email} />
-            )}
-            <hr className="my-4" />
-            {/*
-              Hidden when there is no mailer: resending cannot work, so offering it would contradict the
-              message above telling the visitor to contact their administrator. Gated on server config,
-              which is the same for every visitor, so this does not reintroduce a differential (ENG-2099).
-            */}
-            {!mailerNotConfigured && (
-              <>
-                <p className="text-center text-xs text-slate-500">
-                  {t("auth.verification-requested.you_didnt_receive_an_email_or_your_link_expired")}
-                </p>
-                <div className="mt-5">
-                  <RequestVerificationEmail email={email.toLowerCase()} callbackUrl={resolvedCallbackUrl} />
-                </div>
-              </>
-            )}
-            {/*
-              Every visitor sees this, including one whose address already has an account — for them no
-              email is coming and the resend button above no-ops, so this link is the way out. It is
-              deliberately unconditional: making it depend on whether the account exists would turn this
-              page into an account-existence lookup (ENG-2099). Neither case is told anything untrue,
-              because both messages above are careful not to assert that an account was created — the
-              usual one is conditional ("if there is an account associated with …") and the no-mailer one
-              only talks about the instance.
-            */}
-            <p className="mt-4 text-center text-xs text-slate-500">
-              {t("auth.signup.have_an_account")}{" "}
-              <Link href={loginHref} className="font-semibold text-slate-600 underline">
-                {t("auth.signup.log_in")}
-              </Link>
-            </p>
-          </>
+        <FormWrapper
+          footer={
+            // Every visitor sees this, including one whose address already has an account — for them no
+            // email is coming and the resend button above no-ops, so this link is the way out. It is
+            // deliberately unconditional: making it depend on whether the account exists would turn this
+            // page into an account-existence lookup (ENG-2099). Neither case is told anything untrue,
+            // because both messages above are careful not to assert that an account was created — the
+            // usual one is conditional ("if there is an account associated with …") and the no-mailer one
+            // only talks about the instance.
+            <>
+              {t("shell.auth.signup.have_account")}{" "}
+              <AuthLink href={loginHref}>{t("auth.signup.log_in")}</AuthLink>
+            </>
+          }>
+          <AuthHeading title={t("auth.verification-requested.please_confirm_your_email_address")} />
+          {mailerNotConfigured ? (
+            <Alert variant="warning" role="status">
+              <AlertTitle>{t("auth.verification-requested.email_not_configured_title")}</AlertTitle>
+              <AlertDescription>
+                <p>{t("auth.verification-requested.email_not_configured_description")}</p>
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <VerificationMessage email={email} />
+          )}
+          {/*
+            Hidden when there is no mailer: resending cannot work, so offering it would contradict the
+            message above telling the visitor to contact their administrator. Gated on server config,
+            which is the same for every visitor, so this does not reintroduce a differential (ENG-2099).
+          */}
+          {!mailerNotConfigured && (
+            <div className="flex flex-col gap-3 border-t border-slate-200 pt-5">
+              <p className="text-[13px] leading-[18px] text-slate-500">
+                {t("auth.verification-requested.you_didnt_receive_an_email_or_your_link_expired")}
+              </p>
+              <RequestVerificationEmail email={email.toLowerCase()} callbackUrl={resolvedCallbackUrl} />
+            </div>
+          )}
         </FormWrapper>
       );
     } else {
       return (
         <FormWrapper>
-          <p className="text-center">{t("auth.verification-requested.invalid_email_address")}</p>
+          <AuthHeading title={t("auth.verification-requested.invalid_email_address")} />
         </FormWrapper>
       );
     }
@@ -112,7 +104,7 @@ export const VerificationRequestedPage = async ({
     logger.error(error, "Invalid token");
     return (
       <FormWrapper>
-        <p className="text-center">{t("auth.verification-requested.invalid_token")}</p>
+        <AuthHeading title={t("auth.verification-requested.invalid_token")} />
       </FormWrapper>
     );
   }

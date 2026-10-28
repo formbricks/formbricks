@@ -51,7 +51,7 @@ export const RequestVerificationEmail = ({ email, callbackUrl }: RequestVerifica
 
   return (
     <>
-      <Button variant="secondary" onClick={requestVerificationEmail} className="w-full justify-center">
+      <Button variant="outline" onClick={requestVerificationEmail} className="w-full justify-center">
         {t("auth.verification-requested.resend_verification_email")}
       </Button>
     </>

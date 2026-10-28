@@ -2,93 +2,117 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { ZOrganization } from "@formbricks/types/organizations";
+import { ZWorkspace } from "@formbricks/types/workspace";
 import { createOrganizationAction } from "@/app/setup/organization/create/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { AuthField } from "@/modules/auth/components/auth-field";
+import { AuthHeading } from "@/modules/auth/components/auth-heading";
+import { AuthCard } from "@/modules/auth/components/form-wrapper";
 import { Button } from "@/modules/ui/components/button";
-import { FormControl, FormError, FormField, FormItem, FormProvider } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
 
-const ZCreateOrganizationFormSchema = ZOrganization.pick({ name: true });
+const ZCreateOrganizationFormSchema = z.object({
+  name: ZOrganization.shape.name,
+  workspaceName: ZWorkspace.shape.name,
+});
 type TCreateOrganizationForm = z.infer<typeof ZCreateOrganizationFormSchema>;
 
-export const CreateOrganization = () => {
+interface CreateOrganizationProps {
+  defaultWorkspaceName: string;
+}
+
+/** Step 1 of 2 of onboarding. Step 2, connecting an agent, is the organization's start page. */
+export const CreateOrganization = ({ defaultWorkspaceName }: Readonly<CreateOrganizationProps>) => {
   const { t } = useTranslation();
   const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<TCreateOrganizationForm>({
     defaultValues: {
       name: "",
+      workspaceName: defaultWorkspaceName,
     },
     mode: "onChange",
     resolver: zodResolver(ZCreateOrganizationFormSchema),
   });
 
-  const organizationName = form.watch("name");
+  const { errors, isSubmitting, isValid } = form.formState;
 
-  const onSubmit: SubmitHandler<TCreateOrganizationForm> = async () => {
+  const onSubmit: SubmitHandler<TCreateOrganizationForm> = async (data) => {
     try {
-      setIsSubmitting(true);
-      const createOrganizationResponse = await createOrganizationAction({ organizationName });
+      const createOrganizationResponse = await createOrganizationAction({
+        organizationName: data.name,
+        workspaceName: data.workspaceName,
+      });
       if (createOrganizationResponse?.serverError) {
         toast.error(getFormattedErrorMessage(createOrganizationResponse));
-        setIsSubmitting(false);
         return;
       }
       if (createOrganizationResponse?.data) {
-        router.push(`/setup/organization/${createOrganizationResponse.data.id}/invite`);
+        router.push(`/organizations/${createOrganizationResponse.data.id}`);
       }
-    } catch (error) {
+    } catch {
       toast.error(t("common.something_went_wrong"));
-      setIsSubmitting(false);
     }
   };
 
   return (
-    <FormProvider {...form}>
-      <form
-        className="w-full"
-        onSubmit={(e) => {
-          e.preventDefault();
-          void form.handleSubmit(onSubmit)(e);
-        }}>
-        <div className="flex flex-col items-center gap-y-4">
-          <h2 className="text-2xl font-medium">{t("setup.organization.create.title")}</h2>
-          <p>{t("setup.organization.create.description")}</p>
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem className="w-full max-w-80">
-                <FormControl>
-                  <Input
-                    {...field}
-                    isInvalid={Boolean(form.formState.errors.name)}
-                    placeholder="e.g., Acme Inc"
-                    className="w-full"
-                    required
-                  />
-                </FormControl>
+    <>
+      <p
+        className="flex items-center gap-2 text-[13px] text-slate-500"
+        aria-label={t("shell.auth.onboarding.step_label")}>
+        <b className="font-medium text-slate-800">{t("shell.auth.onboarding.step_organization")}</b>
+        <span aria-hidden="true">/</span>
+        <span>{t("shell.auth.onboarding.step_agent")}</span>
+      </p>
 
-                <FormError />
-              </FormItem>
-            )}
-          />
+      <AuthCard width="wide">
+        <AuthHeading
+          title={t("shell.auth.onboarding.title")}
+          description={t("shell.auth.onboarding.description")}
+        />
+        <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
+          <AuthField
+            id="onboarding-organization"
+            label={t("shell.auth.onboarding.organization_label")}
+            error={errors.name?.message}>
+            <Input
+              id="onboarding-organization"
+              autoComplete="organization"
+              placeholder="Acme Inc."
+              required
+              isInvalid={Boolean(errors.name)}
+              {...form.register("name")}
+            />
+          </AuthField>
+          <AuthField
+            id="onboarding-workspace"
+            label={t("shell.auth.onboarding.workspace_label")}
+            hint={t("shell.auth.onboarding.workspace_hint")}
+            error={errors.workspaceName?.message}>
+            <Input
+              id="onboarding-workspace"
+              required
+              isInvalid={Boolean(errors.workspaceName)}
+              aria-describedby="onboarding-workspace-hint"
+              {...form.register("workspaceName")}
+            />
+          </AuthField>
           <Button
             type="submit"
-            className="flex w-full max-w-80 justify-center"
+            className="h-11 w-full justify-center sm:h-9"
             loading={isSubmitting}
-            disabled={isSubmitting || organizationName.trim() === ""}>
-            {t("setup.organization.create.continue")}
+            disabled={isSubmitting || !isValid}>
+            {t("shell.auth.onboarding.submit")}
           </Button>
-        </div>
-      </form>
-    </FormProvider>
+        </form>
+      </AuthCard>
+
+      <p className="max-w-[44ch] text-center text-slate-500">{t("shell.auth.onboarding.footnote")}</p>
+    </>
   );
 };

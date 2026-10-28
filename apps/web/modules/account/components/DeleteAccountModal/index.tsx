@@ -12,8 +12,18 @@ import { getPostAccountDeletionRedirectUrl } from "@/modules/account/lib/post-ac
 import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
 import { authClient } from "@/modules/auth/lib/auth-client";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
-import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
+import { Button } from "@/modules/ui/components/button";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/modules/ui/components/dialog";
 import { Input } from "@/modules/ui/components/input";
+import { Label } from "@/modules/ui/components/label";
 import { PasswordInput } from "@/modules/ui/components/password-input";
 import { requestSsoAccountDeletionEmailAction } from "./actions";
 
@@ -133,92 +143,107 @@ export const DeleteAccountModal = ({
   };
 
   return (
-    <DeleteDialog
-      open={open}
-      setOpen={handleOpenChange}
-      deleteWhat={t("common.account")}
-      onDelete={() => deleteAccount()}
-      text={t("workspace.settings.profile.account_deletion_consequences_warning")}
-      isDeleting={deleting}
-      disabled={isDeleteDisabled}>
-      <div className="py-5">
-        {ssoEmailSent ? (
-          <Alert variant="info">
-            <AlertTitle>{t("common.account")}</AlertTitle>
-            <AlertDescription>
-              {t("workspace.settings.profile.account_deletion_email_sent", { email: user.email })}
-            </AlertDescription>
-          </Alert>
-        ) : (
-          <>
-            <ul className="list-disc pb-6 pl-6">
-              <li>
-                {t(
-                  "workspace.settings.profile.permanent_removal_of_all_of_your_personal_information_and_data"
-                )}
-              </li>
-              {organizationsWithSingleOwner.length > 0 && (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent width="narrow" disableCloseOnOutsideClick={deleting}>
+        <DialogHeader>
+          <DialogTitle>{t("shell.account.delete.title")}</DialogTitle>
+          <DialogDescription>
+            {t("workspace.settings.profile.account_deletion_consequences_warning")}
+          </DialogDescription>
+        </DialogHeader>
+
+        <DialogBody>
+          {ssoEmailSent ? (
+            <Alert variant="info">
+              <AlertTitle>{t("common.account")}</AlertTitle>
+              <AlertDescription>
+                {t("workspace.settings.profile.account_deletion_email_sent", { email: user.email })}
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <>
+              <ul className="list-disc pb-6 pl-6">
                 <li>
-                  <Trans
-                    i18nKey="workspace.settings.profile.organizations_delete_message"
-                    components={{ b: <b /> }}
-                  />
+                  {t(
+                    "workspace.settings.profile.permanent_removal_of_all_of_your_personal_information_and_data"
+                  )}
                 </li>
-              )}
-              {organizationsWithSingleOwner.length > 0 && (
-                <ul className="ml-4" style={{ listStyleType: "circle" }}>
-                  {organizationsWithSingleOwner.map((organization) => {
-                    if (organization.name) {
-                      return <li key={organization.name}>{organization.name}</li>;
-                    }
-                  })}
-                </ul>
-              )}
-              <li>{t("workspace.settings.profile.warning_cannot_undo")}</li>
-            </ul>
-            <form
-              data-testid="deleteAccountForm"
-              onSubmit={async (e) => {
-                e.preventDefault();
-                await deleteAccount();
-              }}>
-              <label htmlFor="deleteAccountConfirmation">
-                {t("workspace.settings.profile.please_enter_email_to_confirm_account_deletion", {
-                  email: user.email,
-                })}
-              </label>
-              <Input
-                data-testid="deleteAccountConfirmation"
-                value={inputValue}
-                onChange={handleInputChange}
-                placeholder={user.email}
-                className="mt-2"
-                type="text"
-                id="deleteAccountConfirmation"
-                name="deleteAccountConfirmation"
-              />
-              {requiresPasswordConfirmation && (
-                <>
-                  <label htmlFor="deleteAccountPassword" className="mt-4 block">
-                    {t("common.password")}
-                  </label>
-                  <PasswordInput
-                    data-testid="deleteAccountPassword"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    autoComplete="current-password"
-                    className="pr-10"
-                    containerClassName="mt-2"
-                    id="deleteAccountPassword"
-                    name="deleteAccountPassword"
-                    required
+                {organizationsWithSingleOwner.length > 0 && (
+                  <li>
+                    <Trans
+                      i18nKey="workspace.settings.profile.organizations_delete_message"
+                      components={{ b: <b /> }}
+                    />
+                  </li>
+                )}
+                {organizationsWithSingleOwner.length > 0 && (
+                  <ul className="ml-4" style={{ listStyleType: "circle" }}>
+                    {organizationsWithSingleOwner.map((organization) => {
+                      if (organization.name) {
+                        return <li key={organization.name}>{organization.name}</li>;
+                      }
+                    })}
+                  </ul>
+                )}
+                <li>{t("workspace.settings.profile.warning_cannot_undo")}</li>
+              </ul>
+              <form
+                id="deleteAccountForm"
+                data-testid="deleteAccountForm"
+                className="flex flex-col gap-4"
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  await deleteAccount();
+                }}>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="deleteAccountConfirmation" className="leading-5">
+                    {t("workspace.settings.profile.please_enter_email_to_confirm_account_deletion", {
+                      email: user.email,
+                    })}
+                  </Label>
+                  <Input
+                    data-testid="deleteAccountConfirmation"
+                    value={inputValue}
+                    onChange={handleInputChange}
+                    placeholder={user.email}
+                    type="text"
+                    id="deleteAccountConfirmation"
+                    name="deleteAccountConfirmation"
+                    autoComplete="off"
                   />
-                </>
-              )}
-            </form>
-          </>
-        )}
-      </div>
-    </DeleteDialog>
+                </div>
+                {requiresPasswordConfirmation && (
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="deleteAccountPassword">{t("common.password")}</Label>
+                    <PasswordInput
+                      data-testid="deleteAccountPassword"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      autoComplete="current-password"
+                      id="deleteAccountPassword"
+                      name="deleteAccountPassword"
+                      required
+                    />
+                  </div>
+                )}
+              </form>
+            </>
+          )}
+        </DialogBody>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={deleting}>
+            {t("common.cancel")}
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={() => deleteAccount()}
+            loading={deleting}
+            disabled={isDeleteDisabled || deleting}>
+            {t("shell.account.delete.action")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };

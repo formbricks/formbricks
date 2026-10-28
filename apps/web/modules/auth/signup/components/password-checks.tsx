@@ -1,70 +1,45 @@
 "use client";
 
 import { CheckIcon } from "lucide-react";
-import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { getPasswordRules } from "@/modules/auth/signup/lib/password-rules";
 
 interface PasswordChecksProps {
   password: string | null;
 }
 
-const PASSWORD_REGEX = {
-  UPPER_AND_LOWER: /^(?=.*[A-Z])(?=.*[a-z])/,
-  NUMBER: /\d/,
-};
-
-const ValidationIcon = ({ state }: { state: boolean }) =>
+const ValidationIcon = ({ state }: Readonly<{ state: boolean }>) =>
   state ? (
-    <CheckIcon className="size-5 shrink-0" aria-hidden="true" />
+    <CheckIcon className="size-4 shrink-0 text-slate-800" aria-hidden="true" />
   ) : (
-    <span className="flex size-5 shrink-0 items-center justify-center" aria-hidden="true">
-      <i className="inline-block size-2 rounded-full bg-slate-700" />
+    <span className="flex size-4 shrink-0 items-center justify-center" aria-hidden="true">
+      <i className="inline-block size-1.5 rounded-full bg-slate-400" />
     </span>
   );
 
-export const PasswordChecks = ({ password }: PasswordChecksProps) => {
+/** What a new password has to contain, ticked off as the user types. Mirrors `ZUserPassword`. */
+export const PasswordChecks = ({ password }: Readonly<PasswordChecksProps>) => {
   const { t } = useTranslation();
+  const rules = getPasswordRules(password ?? "");
 
-  const DEFAULT_VALIDATIONS = useMemo(
-    () => [
-      { label: t("auth.signup.password_validation_uppercase_and_lowercase"), state: false },
-      { label: t("auth.signup.password_validation_minimum_8_and_maximum_128_characters"), state: false },
-      { label: t("auth.signup.password_validation_contain_at_least_1_number"), state: false },
-    ],
-    [t]
-  );
-
-  const validations = useMemo(() => {
-    if (password === null) return DEFAULT_VALIDATIONS;
-
-    return [
-      {
-        label: t("auth.signup.password_validation_uppercase_and_lowercase"),
-        state: PASSWORD_REGEX.UPPER_AND_LOWER.test(password),
-      },
-      {
-        label: t("auth.signup.password_validation_minimum_8_and_maximum_128_characters"),
-        state: password.length >= 8 && password.length <= 128,
-      },
-      {
-        label: t("auth.signup.password_validation_contain_at_least_1_number"),
-        state: PASSWORD_REGEX.NUMBER.test(password),
-      },
-    ];
-  }, [password, DEFAULT_VALIDATIONS, t]);
+  const checks = [
+    { label: t("shell.auth.password_rule_length"), state: rules.length },
+    { label: t("shell.auth.password_rule_uppercase"), state: rules.uppercase },
+    { label: t("shell.auth.password_rule_number"), state: rules.number },
+  ];
 
   return (
-    // text-sm unconditionally: with only `sm:text-sm` the list rendered *larger* on a phone
-    // than on desktop. aria-live announces a rule flipping as the user types (SC 4.1.3).
-    <div className="my-2 text-left text-sm text-slate-700">
-      <ul aria-label={t("auth.signup.password_requirements")} aria-live="polite">
-        {validations.map((validation) => (
-          <li key={validation.label} className="flex items-start gap-2">
-            <ValidationIcon state={validation.state} />
-            <span>{validation.label}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
+    // aria-live announces a rule flipping as the user types (SC 4.1.3).
+    <ul
+      className="flex flex-col gap-1 text-[13px] leading-[18px] text-slate-600"
+      aria-label={t("auth.signup.password_requirements")}
+      aria-live="polite">
+      {checks.map((check) => (
+        <li key={check.label} className="flex items-center gap-2">
+          <ValidationIcon state={check.state} />
+          <span>{check.label}</span>
+        </li>
+      ))}
+    </ul>
   );
 };

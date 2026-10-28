@@ -5,6 +5,9 @@ export interface InviteWithCreator extends Pick<
   Invite,
   "id" | "expiresAt" | "organizationId" | "role" | "teamIds"
 > {
+  organization: {
+    name: string;
+  };
   creator: {
     name: string | null;
     email: string;

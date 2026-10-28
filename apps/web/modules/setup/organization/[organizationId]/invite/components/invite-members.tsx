@@ -8,6 +8,8 @@ import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { AuthField } from "@/modules/auth/components/auth-field";
+import { AuthHeading } from "@/modules/auth/components/auth-heading";
 import { inviteOrganizationMemberAction } from "@/modules/setup/organization/[organizationId]/invite/actions";
 import {
   type TInviteMembersFormSchema,
@@ -15,7 +17,6 @@ import {
 } from "@/modules/setup/organization/[organizationId]/invite/types/invites";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
-import { FormControl, FormError, FormField, FormItem, FormProvider } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
 
 // Bounds the onboarding invite form so a single submit cannot fan out an unlimited number of
@@ -27,7 +28,7 @@ interface InviteMembersProps {
   organizationId: string;
 }
 
-export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: InviteMembersProps) => {
+export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: Readonly<InviteMembersProps>) => {
   const { t } = useTranslation();
   const [membersCount, setMembersCount] = useState(1);
   const router = useRouter();
@@ -66,7 +67,11 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: InviteMemb
   };
 
   return (
-    <FormProvider {...form}>
+    <>
+      <AuthHeading
+        title={t("setup.invite.invite_your_organization_members")}
+        description={t("setup.invite.life_s_no_fun_alone")}
+      />
       {!IS_SMTP_CONFIGURED && (
         <Alert variant="warning" role="status">
           <AlertTitle>{t("setup.invite.smtp_not_configured")}</AlertTitle>
@@ -78,85 +83,58 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: InviteMemb
           e.preventDefault();
           void form.handleSubmit(inviteTeamMembers)(e);
         }}
-        className="w-full space-y-4">
-        <div className="flex flex-col items-center gap-y-4">
-          <h2 className="text-2xl font-medium">{t("setup.invite.invite_your_organization_members")}</h2>
-          <p>{t("setup.invite.life_s_no_fun_alone")}</p>
-
-          {Array.from({ length: membersCount }).map((_, index) => (
-            <div key={`member-${index.toString()}`} className="w-full max-w-80 space-y-2">
-              <FormField
-                control={form.control}
-                name={`member-${index.toString()}.email`}
-                render={({ field, fieldState: { error } }) => (
-                  <FormItem>
-                    <FormControl>
-                      <div>
-                        <div className="relative">
-                          <Input
-                            {...field}
-                            placeholder={`user@example.com`}
-                            className="w-full"
-                            isInvalid={Boolean(error?.message)}
-                          />
-                        </div>
-                        {error?.message && <FormError className="text-left">{error.message}</FormError>}
-                      </div>
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name={`member-${index.toString()}.name`}
-                render={({ field, fieldState: { error } }) => (
-                  <FormItem>
-                    <FormControl>
-                      <div>
-                        <div className="relative">
-                          <Input
-                            {...field}
-                            placeholder={t("common.full_name")}
-                            className="w-full"
-                            isInvalid={Boolean(error?.message)}
-                          />
-                        </div>
-                        {error?.message && <FormError className="text-left">{error.message}</FormError>}
-                      </div>
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
+        className="flex flex-col gap-4">
+        {Array.from({ length: membersCount }).map((_, index) => {
+          const key = `member-${index.toString()}`;
+          const memberErrors = form.formState.errors[key];
+          return (
+            <div key={key} className="flex flex-col gap-3 rounded-lg border border-slate-200 p-4">
+              <AuthField id={`${key}-email`} label={t("common.email")} error={memberErrors?.email?.message}>
+                <Input
+                  id={`${key}-email`}
+                  type="email"
+                  autoComplete="off"
+                  placeholder="user@example.com"
+                  isInvalid={Boolean(memberErrors?.email)}
+                  {...form.register(`${key}.email`)}
+                />
+              </AuthField>
+              <AuthField id={`${key}-name`} label={t("common.full_name")} error={memberErrors?.name?.message}>
+                <Input
+                  id={`${key}-name`}
+                  autoComplete="off"
+                  isInvalid={Boolean(memberErrors?.name)}
+                  {...form.register(`${key}.name`)}
+                />
+              </AuthField>
             </div>
-          ))}
+          );
+        })}
 
-          <Button
-            variant="ghost"
-            onClick={() => {
-              setMembersCount((count) => Math.min(count + 1, MAX_INVITE_MEMBERS));
-            }}
-            type="button"
-            disabled={membersCount >= MAX_INVITE_MEMBERS}>
-            <PlusIcon />
-            {t("setup.invite.add_another_member")}
+        <Button
+          variant="outline"
+          onClick={() => {
+            setMembersCount((count) => Math.min(count + 1, MAX_INVITE_MEMBERS));
+          }}
+          type="button"
+          disabled={membersCount >= MAX_INVITE_MEMBERS}>
+          <PlusIcon />
+          {t("setup.invite.add_another_member")}
+        </Button>
+
+        <div className="flex flex-col gap-2 border-t border-slate-200 pt-5">
+          <Button className="h-11 w-full justify-center sm:h-9" type="submit" loading={isSubmitting}>
+            {t("setup.invite.continue")}
           </Button>
-
-          <hr className="my-6 w-full border-slate-200" />
-
-          <div className="w-full max-w-80 space-y-2">
-            <Button
-              className="flex w-full justify-center"
-              type="submit"
-              loading={isSubmitting}
-              disabled={isSubmitting}>
-              {t("setup.invite.continue")}
-            </Button>
-            <Button type="button" variant="ghost" className="flex w-full justify-center" onClick={handleSkip}>
-              {t("setup.invite.skip")}
-            </Button>
-          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            className="h-11 w-full justify-center sm:h-9"
+            onClick={handleSkip}>
+            {t("setup.invite.skip")}
+          </Button>
         </div>
       </form>
-    </FormProvider>
+    </>
   );
 };

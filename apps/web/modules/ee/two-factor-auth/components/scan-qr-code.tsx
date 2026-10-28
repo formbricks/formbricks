@@ -15,29 +15,22 @@ interface ScanQRCodeProps {
   setOpen: (open: boolean) => void;
 }
 
-export const ScanQRCode = ({ dataUri, secret, setCurrentStep, setOpen }: ScanQRCodeProps) => {
+export const ScanQRCode = ({ dataUri, secret, setCurrentStep, setOpen }: Readonly<ScanQRCodeProps>) => {
   const { t } = useTranslation();
   return (
-    <div>
-      <div className="p-6">
-        <h1 className="text-lg font-semibold">
-          {t("workspace.settings.profile.enable_two_factor_authentication")}
-        </h1>
-        <h3 className="text-sm text-slate-700">
-          {t("workspace.settings.profile.scan_the_qr_code_below_with_your_authenticator_app")}
-        </h3>
-      </div>
-
-      <div className="mb-4 flex flex-col items-center justify-center gap-y-4">
+    <div className="flex flex-col gap-5">
+      <div className="flex flex-col items-center justify-center gap-3">
         <Image src={dataUri} alt="QR code" width={200} height={200} />
-        <p className="text-sm text-slate-700">
+        <p className="text-slate-600">
           {t("workspace.settings.profile.or_enter_the_following_code_manually")}
         </p>
-        <div className="flex items-center gap-x-2">
-          <p className="text-sm font-medium text-slate-700">{secret}</p>
+        <div className="flex max-w-full items-center gap-2">
+          <p className="min-w-0 font-medium break-all text-slate-800">{secret}</p>
           <Button
-            variant="secondary"
-            size="sm"
+            variant="outline"
+            size="icon"
+            type="button"
+            aria-label={t("common.copy")}
             onClick={async () => {
               if (await copyToClipboard(secret)) {
                 toast.success(t("common.copied_to_clipboard"));
@@ -45,19 +38,17 @@ export const ScanQRCode = ({ dataUri, secret, setCurrentStep, setOpen }: ScanQRC
                 toast.error(t("common.failed_to_copy_to_clipboard"));
               }
             }}>
-            <CopyIcon className="size-4" />
+            <CopyIcon />
           </Button>
         </div>
       </div>
 
-      <div className="flex w-full items-center justify-end gap-x-4">
-        <Button variant="secondary" size="sm" type="button" onClick={() => setOpen(false)}>
+      <div className="flex w-full items-center justify-end gap-2">
+        <Button variant="outline" type="button" onClick={() => setOpen(false)}>
           {t("common.cancel")}
         </Button>
 
-        <Button size="sm" onClick={() => setCurrentStep("enterCode")}>
-          {t("common.next")}
-        </Button>
+        <Button onClick={() => setCurrentStep("enterCode")}>{t("common.next")}</Button>
       </div>
     </div>
   );

@@ -72,3 +72,38 @@ describe("setup createOrganizationAction rate limit", () => {
     expect(mocks.createWorkspace).not.toHaveBeenCalled();
   });
 });
+
+describe("setup createOrganizationAction first workspace", () => {
+  const ctx = { user: { id: "user-1", email: "owner@acme.com" }, auditLoggingCtx: {} };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.getHasNoOrganizations.mockResolvedValue(false);
+    mocks.getIsMultiOrgEnabled.mockResolvedValue(true);
+    mocks.createOrganization.mockResolvedValue({ id: "org-1", name: "Acme" });
+    mocks.createWorkspace.mockResolvedValue({ id: "workspace-1", name: "Production" });
+  });
+
+  test("names the first workspace after the submitted workspace name", async () => {
+    await createOrganizationAction({
+      ctx,
+      parsedInput: { organizationName: "Acme", workspaceName: "Production" },
+    } as never);
+
+    expect(mocks.createWorkspace).toHaveBeenCalledWith(
+      "org-1",
+      { name: "Production" },
+      { workspaceLimit: null }
+    );
+  });
+
+  test("falls back to the default workspace name when none is submitted", async () => {
+    await createOrganizationAction({ ctx, parsedInput: { organizationName: "Acme" } } as never);
+
+    expect(mocks.createWorkspace).toHaveBeenCalledWith(
+      "org-1",
+      { name: "My Workspace" },
+      { workspaceLimit: null }
+    );
+  });
+});

@@ -12,10 +12,10 @@ import {
 } from "@formbricks/types/errors";
 import { ZUserPassword } from "@formbricks/types/user";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { AuthField } from "@/modules/auth/components/auth-field";
 import { resetPasswordAction } from "@/modules/auth/forgot-password/reset/actions";
 import { PasswordChecks } from "@/modules/auth/signup/components/password-checks";
 import { Button } from "@/modules/ui/components/button";
-import { FormField } from "@/modules/ui/components/form";
 import { PasswordInput } from "@/modules/ui/components/password-input";
 
 const ZPasswordResetForm = z.object({
@@ -24,13 +24,6 @@ const ZPasswordResetForm = z.object({
 });
 
 type TPasswordResetForm = z.infer<typeof ZPasswordResetForm>;
-
-const passwordInputProps = {
-  autoComplete: "new-password",
-  placeholder: "*******",
-  required: true,
-  className: "focus:border-brand-dark focus:ring-brand-dark mt-2 block w-full rounded-md shadow-xs",
-};
 
 export const ResetPasswordForm = () => {
   const { t } = useTranslation();
@@ -72,42 +65,40 @@ export const ResetPasswordForm = () => {
     }
   };
 
+  const { errors } = form.formState;
+
   return (
-    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-      <div className="space-y-4">
-        <div>
-          <label htmlFor="password" className="block text-sm font-medium text-slate-800">
-            {t("auth.forgot-password.reset.new_password")}
-          </label>
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => <PasswordInput {...passwordInputProps} {...field} id="password" />}
-          />
-        </div>
-        <div>
-          <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-800">
-            {t("auth.forgot-password.reset.confirm_password")}
-          </label>
-          <FormField
-            control={form.control}
-            name="confirmPassword"
-            render={({ field }) => <PasswordInput {...passwordInputProps} {...field} id="confirmPassword" />}
-          />
-        </div>
-
+    <form onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-col gap-4">
+      <AuthField
+        id="reset-password"
+        label={t("auth.forgot-password.reset.new_password")}
+        error={errors.password?.message}>
+        <PasswordInput
+          id="reset-password"
+          autoComplete="new-password"
+          required
+          {...form.register("password")}
+        />
         <PasswordChecks password={form.watch("password")} />
-      </div>
-
-      <div>
-        <Button
-          type="submit"
-          disabled={!form.formState.isValid}
-          className="h-11 w-full justify-center sm:h-9"
-          loading={form.formState.isSubmitting}>
-          {t("auth.forgot-password.reset_password")}
-        </Button>
-      </div>
+      </AuthField>
+      <AuthField
+        id="reset-confirm-password"
+        label={t("auth.forgot-password.reset.confirm_password")}
+        error={errors.confirmPassword?.message}>
+        <PasswordInput
+          id="reset-confirm-password"
+          autoComplete="new-password"
+          required
+          {...form.register("confirmPassword")}
+        />
+      </AuthField>
+      <Button
+        type="submit"
+        disabled={!form.formState.isValid}
+        className="h-11 w-full justify-center sm:h-9"
+        loading={form.formState.isSubmitting}>
+        {t("shell.auth.reset_password.submit")}
+      </Button>
     </form>
   );
 };

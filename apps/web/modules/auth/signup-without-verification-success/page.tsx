@@ -2,6 +2,7 @@ import { logger } from "@formbricks/logger";
 import { WEBAPP_URL } from "@/lib/constants";
 import { getEmailFromEmailToken } from "@/lib/jwt";
 import { getTranslate } from "@/lingodotdev/server";
+import { AuthHeading } from "@/modules/auth/components/auth-heading";
 import { BackToLoginButton } from "@/modules/auth/components/back-to-login-button";
 import { FormWrapper } from "@/modules/auth/components/form-wrapper";
 import { resolveAuthCallbackUrl } from "@/modules/auth/lib/callback-url";
@@ -33,8 +34,7 @@ export const SignupWithoutVerificationSuccessPage = async ({
     logger.error(error, "Invalid signup success token");
     return (
       <FormWrapper>
-        <p className="text-center">{t("auth.verification-requested.invalid_token")}</p>
-        <hr className="my-4" />
+        <AuthHeading title={t("auth.verification-requested.invalid_token")} />
         <BackToLoginButton callbackUrl={resolvedCallbackUrl} />
       </FormWrapper>
     );
@@ -42,13 +42,10 @@ export const SignupWithoutVerificationSuccessPage = async ({
 
   return (
     <FormWrapper>
-      <h1 className="mb-4 text-center leading-2 font-bold">
-        {t("auth.signup_without_verification_success.user_successfully_created")}
-      </h1>
-      <p className="text-center text-sm">
-        <span>{t("auth.signup_without_verification_success.user_successfully_created_info", { email })}</span>
-      </p>
-      <hr className="my-4" />
+      <AuthHeading
+        title={t("auth.signup_without_verification_success.user_successfully_created")}
+        description={t("auth.signup_without_verification_success.user_successfully_created_info", { email })}
+      />
       <BackToLoginButton callbackUrl={resolvedCallbackUrl} />
     </FormWrapper>
   );

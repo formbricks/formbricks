@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
+import { ZWorkspaceUpdateInput } from "@formbricks/types/workspace";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getHasNoOrganizations } from "@/lib/instance/service";
 import { createMembership } from "@/lib/membership/service";
@@ -19,6 +20,8 @@ import { createWorkspace } from "@/modules/workspaces/settings/lib/workspace";
 
 const ZCreateOrganizationAction = z.object({
   organizationName: z.string(),
+  // The first workspace's name. Left out, the organization gets the default one, as it always did.
+  workspaceName: ZWorkspaceUpdateInput.shape.name,
 });
 
 export const createOrganizationAction = authenticatedActionClient
@@ -56,7 +59,7 @@ export const createOrganizationAction = authenticatedActionClient
       // The organization was created just above and owns no workspaces, so there is no cap to enforce.
       const newWorkspace = await createWorkspace(
         newOrganization.id,
-        { name: DEFAULT_WORKSPACE_NAME },
+        { name: parsedInput.workspaceName ?? DEFAULT_WORKSPACE_NAME },
         { workspaceLimit: null }
       );
 

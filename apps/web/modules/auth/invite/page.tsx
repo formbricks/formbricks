@@ -6,22 +6,44 @@
    component from a client one (ENG-2366). */
 import Link from "next/link";
 import { after } from "next/server";
+import { Toaster } from "react-hot-toast";
 import { logger } from "@formbricks/logger";
 import { WEBAPP_URL } from "@/lib/constants";
 import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
 import { getUser, updateUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
+import { AuthHeading } from "@/modules/auth/components/auth-heading";
+import { AuthLink } from "@/modules/auth/components/auth-link";
+import { AuthCard, AuthFooter, AuthPage } from "@/modules/auth/components/form-wrapper";
 import { deleteInvite, getInvite } from "@/modules/auth/invite/lib/invite";
 import { createTeamMembership } from "@/modules/auth/invite/lib/team";
 import { getSession } from "@/modules/auth/lib/session";
+import { SignupFormLoader } from "@/modules/auth/signup/components/signup-form-loader";
 import { sendInviteAcceptedEmail } from "@/modules/email";
 import { Button } from "@/modules/ui/components/button";
 import { ContentLayout } from "./components/content-layout";
+import { InviteSummary } from "./components/invite-summary";
 
 interface InvitePageProps {
   searchParams: Promise<{ token: string }>;
 }
+
+type TranslateFn = Awaited<ReturnType<typeof getTranslate>>;
+
+// Written out per role because `scan-translations` only recognizes literal keys.
+const getRoleLabel = (t: TranslateFn, role: string): string => {
+  switch (role) {
+    case "owner":
+      return t("shell.auth.invite.role_owner");
+    case "manager":
+      return t("shell.auth.invite.role_manager");
+    case "billing":
+      return t("shell.auth.invite.role_billing");
+    default:
+      return t("shell.auth.invite.role_member");
+  }
+};
 
 export const InvitePage = async (props: InvitePageProps) => {
   const searchParams = await props.searchParams;
@@ -37,7 +59,7 @@ export const InvitePage = async (props: InvitePageProps) => {
     if (!invite) {
       return (
         <ContentLayout
-          headline={t("auth.invite.invite_not_found")}
+          headline={t("shell.auth.invite.not_found_title")}
           description={t("auth.invite.invite_not_found_description")}
         />
       );
@@ -48,7 +70,7 @@ export const InvitePage = async (props: InvitePageProps) => {
     if (isInviteExpired) {
       return (
         <ContentLayout
-          headline={t("auth.invite.invite_expired")}
+          headline={t("shell.auth.invite.expired_title")}
           description={t("auth.invite.invite_expired_description")}
         />
       );
@@ -57,31 +79,45 @@ export const InvitePage = async (props: InvitePageProps) => {
     if (!session) {
       const redirectUrl = WEBAPP_URL + "/invite?token=" + searchParams.token;
       const encodedEmail = encodeURIComponent(email);
+      const inviterName = invite.creator.name?.trim();
+      const roleLabel = getRoleLabel(t, invite.role);
       return (
-        <ContentLayout
-          headline={t("auth.invite.happy_to_have_you")}
-          description={t("auth.invite.happy_to_have_you_description")}>
-          <Button variant="secondary" asChild>
-            <Link href={`/auth/signup?inviteToken=${searchParams.token}&email=${encodedEmail}`}>
-              {t("auth.invite.create_account")}
-            </Link>
-          </Button>
-          <Button asChild>
-            <Link href={`/auth/login?callbackUrl=${redirectUrl}&email=${encodedEmail}`}>
-              {t("auth.invite.login")}
-            </Link>
-          </Button>
-        </ContentLayout>
+        <>
+          <Toaster />
+          <AuthPage>
+            <AuthCard>
+              <AuthHeading
+                title={t("shell.auth.invite.join_title", { organization: invite.organization.name })}
+                description={
+                  inviterName
+                    ? t("shell.auth.invite.join_description", { inviter: inviterName, role: roleLabel })
+                    : t("shell.auth.invite.join_description_no_inviter", { role: roleLabel })
+                }
+              />
+              <InviteSummary
+                organizationName={invite.organization.name}
+                roleLabel={t("shell.auth.invite.role", { role: roleLabel })}
+              />
+              <SignupFormLoader inviteToken={searchParams.token} emailFromSearchParams={email} emailLocked />
+            </AuthCard>
+            <AuthFooter>
+              {t("shell.auth.signup.have_account")}{" "}
+              <AuthLink href={`/auth/login?callbackUrl=${redirectUrl}&email=${encodedEmail}`}>
+                {t("shell.auth.invite.log_in_to_accept")}
+              </AuthLink>
+            </AuthFooter>
+          </AuthPage>
+        </>
       );
     }
 
     if (user?.email?.toLowerCase() !== email?.toLowerCase()) {
       return (
         <ContentLayout
-          headline={t("auth.invite.email_does_not_match")}
+          headline={t("shell.auth.invite.email_mismatch_title")}
           description={t("auth.invite.email_does_not_match_description")}>
-          <Button asChild>
-            <Link href="/">{t("auth.invite.go_to_app")}</Link>
+          <Button asChild className="h-11 w-full sm:h-9">
+            <Link href="/">{t("shell.auth.invite.go_to_organization")}</Link>
           </Button>
         </ContentLayout>
       );
@@ -139,10 +175,14 @@ export const InvitePage = async (props: InvitePageProps) => {
 
     return (
       <ContentLayout
-        headline={t("auth.invite.welcome_to_organization")}
+        headline={t("shell.auth.invite.joined_title", { organization: invite.organization.name })}
         description={t("auth.invite.welcome_to_organization_description")}>
-        <Button asChild>
-          <Link href="/">{t("auth.invite.go_to_app")}</Link>
+        <Button asChild className="h-11 w-full sm:h-9">
+          {/* The membership is created in `after()` above, which has long finished by the time a
+              person clicks, so the link can go straight to the organization they just joined. */}
+          <Link href={`/organizations/${invite.organizationId}`}>
+            {t("shell.auth.invite.go_to_organization")}
+          </Link>
         </Button>
       </ContentLayout>
     );
@@ -150,7 +190,7 @@ export const InvitePage = async (props: InvitePageProps) => {
     logger.error(e, "Error in InvitePage");
     return (
       <ContentLayout
-        headline={t("auth.invite.invite_not_found")}
+        headline={t("shell.auth.invite.not_found_title")}
         description={t("auth.invite.invite_not_found_description")}
       />
     );

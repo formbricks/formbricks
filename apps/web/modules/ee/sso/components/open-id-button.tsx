@@ -10,7 +10,7 @@ import { Button } from "@/modules/ui/components/button";
 interface OpenIdButtonProps {
   returnToUrl?: string;
   lastUsed?: boolean;
-  variant?: "default" | "secondary";
+  variant?: "default" | "outline";
   directRedirect?: boolean;
   text?: string;
   source: "signin" | "signup";
@@ -19,7 +19,7 @@ interface OpenIdButtonProps {
 export const OpenIdButton = ({
   returnToUrl,
   lastUsed,
-  variant = "secondary",
+  variant = "outline",
   directRedirect = false,
   text,
   source,

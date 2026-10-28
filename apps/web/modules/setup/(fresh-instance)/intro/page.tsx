@@ -1,6 +1,8 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { getTranslate } from "@/lingodotdev/server";
+import { AuthHeading } from "@/modules/auth/components/auth-heading";
+import { AuthCard } from "@/modules/auth/components/form-wrapper";
 import { Button } from "@/modules/ui/components/button";
 
 export const metadata: Metadata = {
@@ -11,18 +13,16 @@ export const metadata: Metadata = {
 export const IntroPage = async () => {
   const t = await getTranslate();
   return (
-    <div className="flex flex-col items-center">
-      <h2 className="mb-6 text-xl font-medium">{t("setup.intro.welcome_to_formbricks")}</h2>
-      <div className="mx-auto max-w-sm space-y-4 text-sm leading-6 text-slate-600">
+    <AuthCard width="wide">
+      <AuthHeading title={t("setup.intro.welcome_to_formbricks")} />
+      <div className="flex flex-col gap-3 text-slate-600">
         <p dangerouslySetInnerHTML={{ __html: t("setup.intro.paragraph_1") }} />
         <p dangerouslySetInnerHTML={{ __html: t("setup.intro.paragraph_2") }} />
         <p dangerouslySetInnerHTML={{ __html: t("setup.intro.paragraph_3") }} />
       </div>
-      <Button className="mt-6" asChild>
+      <Button className="h-11 w-full sm:h-9" asChild>
         <Link href="/setup/signup">{t("setup.intro.get_started")}</Link>
       </Button>
-
-      <p className="pt-6 text-xs text-slate-400">{t("setup.intro.made_with_love_in_kiel")}</p>
-    </div>
+    </AuthCard>
   );
 };

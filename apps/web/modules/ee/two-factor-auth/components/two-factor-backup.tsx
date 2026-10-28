@@ -1,47 +1,30 @@
 "use client";
 
-import { UseFormReturn } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { FormControl, FormField, FormItem } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
+import { Label } from "@/modules/ui/components/label";
 
 interface TwoFactorBackupProps {
-  form: UseFormReturn<
-    {
-      email: string;
-      password: string;
-      totpCode?: string | undefined;
-      backupCode?: string | undefined;
-    },
-    any
-  >;
+  value: string;
+  onChange: (value: string) => void;
 }
 
-export const TwoFactorBackup = ({ form }: TwoFactorBackupProps) => {
+/** The backup-code step of the login form, for someone without their authenticator app. */
+export const TwoFactorBackup = ({ value, onChange }: Readonly<TwoFactorBackupProps>) => {
   const { t } = useTranslation();
 
   return (
-    <div className="mb-2 transition-all duration-500 ease-in-out">
-      <label htmlFor="totpBackup" className="sr-only">
+    <div className="flex flex-col gap-2">
+      <Label htmlFor="totpBackup" className="sr-only">
         {t("auth.login.backup_code")}
-      </label>
-      <FormField
-        control={form.control}
-        name="backupCode"
-        render={({ field }) => (
-          <FormItem className="w-full">
-            <FormControl>
-              <Input
-                id="totpBackup"
-                required
-                placeholder="XXXXX-XXXXX"
-                className="block w-full rounded-md border-slate-300 shadow-xs focus:border-brand-dark focus:ring-brand-dark sm:text-sm"
-                value={field.value}
-                onChange={(e) => field.onChange(e.target.value)}
-              />
-            </FormControl>
-          </FormItem>
-        )}
+      </Label>
+      <Input
+        id="totpBackup"
+        required
+        autoComplete="off"
+        placeholder="XXXXX-XXXXX"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
       />
     </div>
   );

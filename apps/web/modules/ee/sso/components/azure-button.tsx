@@ -6,13 +6,13 @@ import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@/lib/localStorage";
 import { authClient } from "@/modules/auth/lib/auth-client";
 import { getSsoReturnToUrl } from "@/modules/ee/sso/lib/utils";
 import { Button } from "@/modules/ui/components/button";
-import { MicrosoftIcon } from "@/modules/ui/components/icons";
+import { MicrosoftIcon } from "./provider-icons";
 
 interface AzureButtonProps {
   returnToUrl?: string;
   directRedirect?: boolean;
   lastUsed?: boolean;
-  variant?: "default" | "secondary";
+  variant?: "default" | "outline";
   source: "signin" | "signup";
 }
 
@@ -20,7 +20,7 @@ export const AzureButton = ({
   returnToUrl,
   directRedirect = false,
   lastUsed,
-  variant = "secondary",
+  variant = "outline",
   source,
 }: Readonly<AzureButtonProps>) => {
   const { t } = useTranslation();

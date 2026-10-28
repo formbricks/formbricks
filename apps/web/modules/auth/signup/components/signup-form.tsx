@@ -1,10 +1,9 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FormProvider, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import Turnstile, { useTurnstile } from "react-turnstile";
@@ -16,7 +15,8 @@ import {
 } from "@formbricks/types/errors";
 import { TUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import { buildAttributionQuerySuffix } from "@/modules/auth/lib/attribution";
+import { AuthDivider } from "@/modules/auth/components/auth-divider";
+import { AuthField } from "@/modules/auth/components/auth-field";
 import {
   buildSignupWithoutVerificationSuccessPath,
   buildVerificationRequestedPath,
@@ -26,8 +26,8 @@ import { TermsPrivacyLinks } from "@/modules/auth/signup/components/terms-privac
 import { SSOOptions } from "@/modules/ee/sso/components/sso-options";
 import { Button } from "@/modules/ui/components/button";
 import { Checkbox } from "@/modules/ui/components/checkbox";
-import { FormControl, FormError, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
+import { Label } from "@/modules/ui/components/label";
 import { PasswordInput } from "@/modules/ui/components/password-input";
 import { createEmailTokenAction } from "../../../auth/actions";
 import { PasswordChecks } from "./password-checks";
@@ -58,6 +58,10 @@ interface SignupFormProps {
   isTurnstileConfigured: boolean;
   turnstileSiteKey?: string;
   isFormbricksCloud: boolean;
+  /** Set when the form is embedded in the invite page, where the token is not in the query string. */
+  inviteToken?: string | null;
+  /** The invited address is fixed: the server rejects a sign-up under any other one. */
+  emailLocked?: boolean;
 }
 
 export const SignupForm = ({
@@ -78,11 +82,12 @@ export const SignupForm = ({
   isTurnstileConfigured,
   turnstileSiteKey,
   isFormbricksCloud,
+  inviteToken: inviteTokenProp,
+  emailLocked = false,
 }: Readonly<SignupFormProps>) => {
-  const [showLogin, setShowLogin] = useState(false);
   const searchParams = useSearchParams();
   const { t } = useTranslation();
-  const inviteToken = searchParams?.get("inviteToken");
+  const inviteToken = inviteTokenProp ?? searchParams?.get("inviteToken");
   const router = useRouter();
   const [turnstileToken, setTurnstileToken] = useState<string>();
   const [subscribeToSecurityUpdates, setSubscribeToSecurityUpdates] = useState(false);
@@ -110,13 +115,6 @@ export const SignupForm = ({
       return webAppUrl;
     }
   }, [inviteToken, webAppUrl]);
-
-  const loginHref = useMemo(() => {
-    const base = inviteToken ? `/auth/login?callbackUrl=${returnToUrl}` : "/auth/login";
-    const attributionSuffix = buildAttributionQuerySuffix(searchParams);
-    if (!attributionSuffix) return base;
-    return `${base}${base.includes("?") ? "&" : "?"}${attributionSuffix}`;
-  }, [inviteToken, returnToUrl, searchParams]);
 
   const form = useForm<TSignupInput>({
     defaultValues: {
@@ -210,199 +208,146 @@ export const SignupForm = ({
         : buildVerificationRequestedPath({ token, callbackUrl });
 
       router.push(url);
-    } catch (e: any) {
-      toast.error(e.message);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("common.something_went_wrong"));
     }
   };
 
+  const { errors } = form.formState;
+  const registerName = form.register("name");
+  const registerEmail = form.register("email");
+  const registerPassword = form.register("password");
+
+  const updatesCheckbox = isFormbricksCloud
+    ? {
+        id: "product-updates",
+        checked: subscribeToProductUpdates,
+        onChange: setSubscribeToProductUpdates,
+        title: t("auth.signup.product_updates_title"),
+        description: t("auth.signup.product_updates_description"),
+      }
+    : {
+        id: "security-updates",
+        checked: subscribeToSecurityUpdates,
+        onChange: setSubscribeToSecurityUpdates,
+        title: t("auth.signup.security_updates_title"),
+        description: t("auth.signup.security_updates_description"),
+      };
+
   return (
-    <div className="text-center">
-      <h1 className="mb-4 text-xl font-semibold text-balance text-slate-800">{t("auth.signup.title")}</h1>
+    <>
       {emailAuthEnabled && (
-        <FormProvider {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="mb-2">
-            {showLogin && (
-              <div>
-                <div className="space-y-2">
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem className="w-full text-left">
-                        <FormLabel>{t("common.full_name")}</FormLabel>
-                        <FormControl>
-                          <Input
-                            data-testid="signup-name"
-                            value={field.value}
-                            name="name"
-                            autoComplete="name"
-                            autoFocus
-                            onBlur={field.onBlur}
-                            onChange={(e) => field.onChange(e.target.value)}
-                            placeholder="Full name"
-                            className="bg-white"
-                          />
-                        </FormControl>
-                        <FormError role="alert" />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem className="w-full text-left">
-                        <FormLabel>{t("common.email")}</FormLabel>
-                        <FormControl>
-                          <Input
-                            data-testid="signup-email"
-                            type="email"
-                            value={field.value}
-                            name="email"
-                            autoComplete="email"
-                            inputMode="email"
-                            autoCapitalize="none"
-                            autoCorrect="off"
-                            spellCheck={false}
-                            onBlur={field.onBlur}
-                            onChange={(e) => field.onChange(e.target.value)}
-                            placeholder="work@email.com"
-                            className="bg-white"
-                          />
-                        </FormControl>
-                        <FormError role="alert" />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem className="w-full text-left">
-                        <FormLabel>{t("common.password")}</FormLabel>
-                        <FormControl>
-                          <PasswordInput
-                            data-testid="signup-password"
-                            name="password"
-                            value={field.value}
-                            onBlur={field.onBlur}
-                            onChange={(e) => field.onChange(e.target.value)}
-                            // This form creates the account, so a password manager should be
-                            // offering to generate and store — not autofill the current one.
-                            autoComplete="new-password"
-                            placeholder="*******"
-                            required
-                            className="bg-white"
-                          />
-                        </FormControl>
-                        <FormError role="alert" />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <PasswordChecks password={form.watch("password")} />
-              </div>
-            )}
-            {isTurnstileConfigured && showLogin && turnstileSiteKey && (
-              // The widget is a fixed 300px-wide iframe, wider than the card's content box on a
-              // small phone. "flexible" lets it use the container where there is room; below xs
-              // it is scaled to fit, and the clipping wrapper keeps its 300px layout box from
-              // widening the page (the scaled content is narrower than the wrapper, so nothing
-              // is actually cut off).
-              <div data-testid="turnstile-fit" className="mt-4 w-full overflow-hidden">
-                <div className="origin-top-left scale-80 xs:origin-top xs:scale-100">
-                  <Turnstile
-                    sitekey={turnstileSiteKey}
-                    size="flexible"
-                    onSuccess={(token) => {
-                      setTurnstileToken(token);
-                    }}
-                    onError={() => {
-                      setTurnstileToken(undefined);
-                      toast.error(t("auth.signup.captcha_failed"));
-                    }}
-                  />
-                </div>
-              </div>
-            )}
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-col gap-4">
+          <AuthField id="signup-name" label={t("common.full_name")} error={errors.name?.message}>
+            <Input
+              id="signup-name"
+              data-testid="signup-name"
+              autoComplete="name"
+              autoFocus={!emailLocked}
+              placeholder={t("shell.auth.signup.name_placeholder")}
+              isInvalid={Boolean(errors.name)}
+              {...registerName}
+            />
+          </AuthField>
+          <AuthField
+            id="signup-email"
+            label={t("common.email")}
+            hint={emailLocked ? t("shell.auth.invite.email_hint") : undefined}
+            error={errors.email?.message}>
+            <Input
+              id="signup-email"
+              data-testid="signup-email"
+              type="email"
+              autoComplete="email"
+              inputMode="email"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              readOnly={emailLocked}
+              placeholder="you@company.com"
+              className={emailLocked ? "bg-slate-50 text-slate-600" : undefined}
+              isInvalid={Boolean(errors.email)}
+              aria-describedby={emailLocked ? "signup-email-hint" : undefined}
+              {...registerEmail}
+            />
+          </AuthField>
+          <AuthField id="signup-password" label={t("common.password")} error={errors.password?.message}>
+            <PasswordInput
+              id="signup-password"
+              data-testid="signup-password"
+              // This form creates the account, so a password manager should be offering to generate
+              // and store — not autofill the current one.
+              autoComplete="new-password"
+              required
+              {...registerPassword}
+            />
+            <PasswordChecks password={form.watch("password")} />
+          </AuthField>
 
-            {showLogin &&
-              (isFormbricksCloud ? (
-                <label
-                  htmlFor="product-updates"
-                  className="my-4 flex cursor-pointer items-start gap-x-3 rounded-md border border-slate-200 bg-slate-100 p-3 text-left">
-                  <Checkbox
-                    id="product-updates"
-                    checked={subscribeToProductUpdates}
-                    onCheckedChange={(checked) => setSubscribeToProductUpdates(checked === true)}
-                    className="mt-0.5 size-4 shrink-0"
-                  />
-                  <div>
-                    <span className="text-sm font-medium text-slate-700">
-                      {t("auth.signup.product_updates_title")}
-                    </span>
-                    <p className="text-xs text-slate-600">{t("auth.signup.product_updates_description")}</p>
-                  </div>
-                </label>
-              ) : (
-                <label
-                  htmlFor="security-updates"
-                  className="my-4 flex cursor-pointer items-start gap-x-3 rounded-md border border-slate-200 bg-slate-100 p-3 text-left">
-                  <Checkbox
-                    id="security-updates"
-                    checked={subscribeToSecurityUpdates}
-                    onCheckedChange={(checked) => setSubscribeToSecurityUpdates(checked === true)}
-                    className="mt-0.5 size-4 shrink-0"
-                  />
-                  <div>
-                    <span className="text-sm font-medium text-slate-700">
-                      {t("auth.signup.security_updates_title")}
-                    </span>
-                    <p className="text-xs text-slate-600">{t("auth.signup.security_updates_description")}</p>
-                  </div>
-                </label>
-              ))}
+          {isTurnstileConfigured && turnstileSiteKey && (
+            // The widget is a fixed 300px-wide iframe, wider than the card's content box on a
+            // small phone. "flexible" lets it use the container where there is room; below xs
+            // it is scaled to fit, and the clipping wrapper keeps its 300px layout box from
+            // widening the page (the scaled content is narrower than the wrapper, so nothing
+            // is actually cut off).
+            <div data-testid="turnstile-fit" className="w-full overflow-hidden">
+              <div className="origin-top-left scale-80 xs:origin-top xs:scale-100">
+                <Turnstile
+                  sitekey={turnstileSiteKey}
+                  size="flexible"
+                  onSuccess={(token) => {
+                    setTurnstileToken(token);
+                  }}
+                  onError={() => {
+                    setTurnstileToken(undefined);
+                    toast.error(t("auth.signup.captcha_failed"));
+                  }}
+                />
+              </div>
+            </div>
+          )}
 
-            <Button
-              data-testid={showLogin ? "signup-submit" : "signup-show-login"}
-              type={showLogin ? "submit" : "button"}
-              onClick={
-                showLogin
-                  ? undefined
-                  : () => {
-                      setShowLogin(true);
-                    }
-              }
-              disabled={showLogin && !form.formState.isValid}
-              className="h-11 w-full justify-center sm:h-10"
-              loading={showLogin && form.formState.isSubmitting}>
-              {t("auth.continue_with_email")}
-            </Button>
-          </form>
-        </FormProvider>
+          <div className="flex items-start gap-2.5">
+            <Checkbox
+              id={updatesCheckbox.id}
+              checked={updatesCheckbox.checked}
+              onCheckedChange={(checked) => updatesCheckbox.onChange(checked === true)}
+              className="mt-0.5"
+            />
+            <Label htmlFor={updatesCheckbox.id} className="flex cursor-pointer flex-col gap-1 leading-5">
+              <span>{updatesCheckbox.title}</span>
+              <span className="text-[13px] leading-[18px] font-normal text-slate-500">
+                {updatesCheckbox.description}
+              </span>
+            </Label>
+          </div>
+
+          <Button
+            data-testid="signup-submit"
+            type="submit"
+            disabled={!form.formState.isValid}
+            className="h-11 w-full justify-center sm:h-9"
+            loading={form.formState.isSubmitting}>
+            {t("shell.auth.signup.submit")}
+          </Button>
+        </form>
       )}
       {isSsoEnabled && (
-        <SSOOptions
-          googleOAuthEnabled={googleOAuthEnabled}
-          githubOAuthEnabled={githubOAuthEnabled}
-          azureOAuthEnabled={azureOAuthEnabled}
-          oidcOAuthEnabled={oidcOAuthEnabled}
-          oidcDisplayName={oidcDisplayName}
-          samlSsoEnabled={samlSsoEnabled}
-          returnToUrl={returnToUrl}
-          source="signup"
-        />
+        <>
+          {emailAuthEnabled && <AuthDivider label={t("common.or")} />}
+          <SSOOptions
+            googleOAuthEnabled={googleOAuthEnabled}
+            githubOAuthEnabled={githubOAuthEnabled}
+            azureOAuthEnabled={azureOAuthEnabled}
+            oidcOAuthEnabled={oidcOAuthEnabled}
+            oidcDisplayName={oidcDisplayName}
+            samlSsoEnabled={samlSsoEnabled}
+            returnToUrl={returnToUrl}
+            source="signup"
+          />
+        </>
       )}
       <TermsPrivacyLinks termsUrl={termsUrl} privacyUrl={privacyUrl} />
-      <div className="mt-9 text-center text-xs">
-        <span className="leading-5 text-slate-500">{t("auth.signup.have_an_account")}</span>
-        <br />
-        <Link
-          href={loginHref}
-          className="inline-flex min-h-6 items-center justify-center rounded-sm py-1 font-semibold text-slate-600 underline hover:text-slate-700 focus-visible:ring-2 focus-visible:ring-brand-dark focus-visible:outline-hidden">
-          {t("auth.signup.log_in")}
-        </Link>
-      </div>
-    </div>
+    </>
   );
 };

@@ -5,9 +5,10 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { OTPInput } from "@/modules/auth/components/otp-input";
 import { enableTwoFactorAuthAction } from "@/modules/ee/two-factor-auth/actions";
 import { Button } from "@/modules/ui/components/button";
-import { OTPInput } from "@/modules/ui/components/otp-input";
+import { Label } from "@/modules/ui/components/label";
 import { EnableTwoFactorModalStep } from "./enable-two-factor-modal";
 
 interface EnterCodeProps {
@@ -22,7 +23,7 @@ const ZEnterCodeFormState = z.object({
 
 type TEnterCodeFormState = z.infer<typeof ZEnterCodeFormState>;
 
-export const EnterCode = ({ setCurrentStep, setOpen, refreshData }: EnterCodeProps) => {
+export const EnterCode = ({ setCurrentStep, setOpen, refreshData }: Readonly<EnterCodeProps>) => {
   const { t } = useTranslation();
   const { control, handleSubmit, formState } = useForm<TEnterCodeFormState>({
     defaultValues: {
@@ -44,58 +45,35 @@ export const EnterCode = ({ setCurrentStep, setOpen, refreshData }: EnterCodePro
         toast.error(errorMessage);
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Unknown error occurred");
+      toast.error(err instanceof Error ? err.message : t("common.something_went_wrong"));
     }
   };
 
   return (
-    <div>
-      <div className="p-6">
-        <h1 className="text-lg font-semibold">
-          {t("workspace.settings.profile.enable_two_factor_authentication")}
-        </h1>
-        <h3 className="text-sm text-slate-700">
-          {t("workspace.settings.profile.enter_the_code_from_your_authenticator_app_below")}
-        </h3>
+    <form className="flex flex-col gap-5" onSubmit={handleSubmit(onSubmit)}>
+      <div className="flex flex-col gap-2">
+        <Label>{t("common.code")}</Label>
+        <Controller
+          name="code"
+          control={control}
+          render={({ field }) => (
+            <OTPInput
+              value={field.value}
+              onChange={field.onChange}
+              valueLength={6}
+              containerClassName="justify-start"
+            />
+          )}
+        />
       </div>
 
-      <form className="flex flex-col gap-y-10" onSubmit={handleSubmit(onSubmit)}>
-        <div className="flex flex-col gap-2 px-6">
-          <label htmlFor="code" className="text-sm font-medium text-slate-700">
-            {t("common.code")}
-          </label>
-          <Controller
-            name="code"
-            control={control}
-            render={({ field, formState: { errors } }) => (
-              <>
-                <OTPInput
-                  value={field.value}
-                  onChange={field.onChange}
-                  valueLength={6}
-                  containerClassName="justify-start"
-                />
+      <div className="flex w-full items-center justify-end gap-2">
+        <Button variant="outline" type="button" onClick={() => setOpen(false)}>
+          {t("common.cancel")}
+        </Button>
 
-                {errors.code && (
-                  <p className="mt-2 text-sm text-red-600" id="code-error">
-                    {errors.code.message}
-                  </p>
-                )}
-              </>
-            )}
-          />
-        </div>
-
-        <div className="flex w-full items-center justify-end gap-x-4">
-          <Button variant="secondary" size="sm" type="button" onClick={() => setOpen(false)}>
-            {t("common.cancel")}
-          </Button>
-
-          <Button size="sm" loading={formState.isSubmitting}>
-            {t("common.confirm")}
-          </Button>
-        </div>
-      </form>
-    </div>
+        <Button loading={formState.isSubmitting}>{t("common.confirm")}</Button>
+      </div>
+    </form>
   );
 };

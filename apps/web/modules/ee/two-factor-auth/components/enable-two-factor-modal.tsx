@@ -23,7 +23,7 @@ interface EnableTwoFactorModalProps {
   setOpen: (open: boolean) => void;
 }
 
-export const EnableTwoFactorModal = ({ open, setOpen }: EnableTwoFactorModalProps) => {
+export const EnableTwoFactorModal = ({ open, setOpen }: Readonly<EnableTwoFactorModalProps>) => {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState<EnableTwoFactorModalStep>("confirmPassword");
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
@@ -44,14 +44,32 @@ export const EnableTwoFactorModal = ({ open, setOpen }: EnableTwoFactorModalProp
     setOpen(false);
   };
 
+  // Written out per step because `scan-translations` only recognizes literal keys.
+  const copy = {
+    confirmPassword: {
+      title: t("workspace.settings.profile.two_factor_authentication"),
+      description: t("workspace.settings.profile.confirm_your_current_password_to_get_started"),
+    },
+    scanQRCode: {
+      title: t("workspace.settings.profile.enable_two_factor_authentication"),
+      description: t("workspace.settings.profile.scan_the_qr_code_below_with_your_authenticator_app"),
+    },
+    enterCode: {
+      title: t("workspace.settings.profile.enable_two_factor_authentication"),
+      description: t("workspace.settings.profile.enter_the_code_from_your_authenticator_app_below"),
+    },
+    backupCodes: {
+      title: t("workspace.settings.profile.enable_two_factor_authentication"),
+      description: t("workspace.settings.profile.save_the_following_backup_codes_in_a_safe_place"),
+    },
+  }[currentStep];
+
   return (
     <Dialog open={open} onOpenChange={() => resetState()}>
-      <DialogContent>
+      <DialogContent width="narrow">
         <DialogHeader>
-          <DialogTitle>{t("workspace.settings.profile.two_factor_authentication")}</DialogTitle>
-          <DialogDescription>
-            {t("workspace.settings.profile.confirm_your_current_password_to_get_started")}
-          </DialogDescription>
+          <DialogTitle data-testid="backup-codes-title">{copy.title}</DialogTitle>
+          <DialogDescription data-testid="backup-codes-description">{copy.description}</DialogDescription>
         </DialogHeader>
         <DialogBody>
           {currentStep === "confirmPassword" && (

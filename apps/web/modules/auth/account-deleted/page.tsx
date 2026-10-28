@@ -2,6 +2,7 @@ import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { getPostAccountDeletionRedirectUrl } from "@/modules/account/lib/post-account-deletion-redirect";
 import { AccountDeletedRedirect } from "@/modules/auth/account-deleted/components/account-deleted-redirect";
+import { AuthHeading } from "@/modules/auth/components/auth-heading";
 import { BackToLoginButton } from "@/modules/auth/components/back-to-login-button";
 import { FormWrapper } from "@/modules/auth/components/form-wrapper";
 
@@ -20,9 +21,10 @@ export const AccountDeletedPage = async () => {
   return (
     <FormWrapper>
       <AccountDeletedRedirect redirectUrl={getPostAccountDeletionRedirectUrl(IS_FORMBRICKS_CLOUD)} />
-      <h1 className="mb-4 text-center leading-2 font-bold">{t("auth.account_deleted.heading")}</h1>
-      <p className="text-center text-sm">{t("auth.account_deleted.description")}</p>
-      <hr className="my-4" />
+      <AuthHeading
+        title={t("auth.account_deleted.heading")}
+        description={t("auth.account_deleted.description")}
+      />
       <BackToLoginButton />
     </FormWrapper>
   );
