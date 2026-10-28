@@ -1,0 +1,207 @@
+/* Change review. Colours come from the shared theme variables, so light and dark follow the host. */
+.dr-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.dr-name-quoted {
+  font-weight: 500;
+}
+
+.dr-id {
+  overflow-wrap: anywhere;
+}
+
+.dr-changes {
+  max-height: 440px;
+  overflow: auto;
+  border: 1px solid var(--fb-border);
+  border-radius: var(--fb-radius);
+  background: var(--fb-bg-subtle);
+  padding: 4px 12px 12px;
+}
+
+.dr-group-title {
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 600;
+  margin: 12px 0 6px;
+}
+
+.dr-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dr-change {
+  background: var(--fb-bg);
+  border: 1px solid var(--fb-border);
+  border-radius: var(--fb-radius);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.dr-change-destructive {
+  border-color: var(--fb-warning);
+  border-left-width: 4px;
+  background: var(--fb-warning-bg);
+}
+
+.dr-path {
+  font-family: var(--fb-mono);
+  font-size: 12px;
+  overflow-wrap: break-word;
+  min-width: 0;
+}
+
+.dr-reason {
+  color: var(--fb-warning);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.dr-values {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 8px;
+}
+
+.dr-value {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dr-value-label {
+  color: var(--fb-text-faint);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+}
+
+.dr-pre {
+  margin: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--fb-border);
+  border-radius: var(--fb-radius-sm);
+  background: var(--fb-bg-muted);
+  font-family: var(--fb-mono);
+  font-size: 12px;
+  line-height: 16px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.dr-pre-collapsed {
+  max-height: 64px;
+  overflow: hidden;
+}
+
+.dr-link {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--fb-info);
+  font-size: 12px;
+  line-height: 16px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.dr-omitted {
+  margin-top: 12px;
+}
+
+.dr-alert {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--fb-bg-subtle);
+  color: var(--fb-text);
+}
+
+.dr-alert-title {
+  font-weight: 600;
+}
+
+.dr-alert-warning {
+  border-color: var(--fb-warning);
+  background: var(--fb-warning-bg);
+}
+
+.dr-alert-warning .dr-alert-title {
+  color: var(--fb-warning);
+}
+
+.dr-alert-danger {
+  border-color: var(--fb-danger);
+  background: var(--fb-danger-bg);
+}
+
+.dr-alert-danger .dr-alert-title {
+  color: var(--fb-danger);
+}
+
+.dr-alert-success {
+  border-color: var(--fb-success);
+  background: var(--fb-success-bg);
+}
+
+.dr-alert-success .dr-alert-title {
+  color: var(--fb-success);
+}
+
+.dr-issues {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dr-confirm {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding-top: 6px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.dr-confirm input {
+  margin: 2px 0 0;
+  width: 16px;
+  height: 16px;
+  flex: none;
+  accent-color: var(--fb-warning);
+}
+
+.dr-spinner {
+  width: 14px;
+  height: 14px;
+  border-color: var(--fb-primary-text);
+  border-top-color: transparent;
+}
+
+.dr-error {
+  color: var(--fb-danger);
+}
+
+@media (max-width: 420px) {
+  .dr-changes {
+    padding: 0 8px 8px;
+  }
+}
+
+.dr-change-destructive .fb-badge {
+  border: 1px solid currentColor;
+}

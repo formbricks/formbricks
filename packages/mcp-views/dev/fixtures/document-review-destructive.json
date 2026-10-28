@@ -1,0 +1,239 @@
+{
+  "toolName": "review_document_change",
+  "input": {
+    "kind": "survey",
+    "id": "kj4a98xxat96iws9zmbrgj3a",
+    "schemaVersion": 1,
+    "expectedUpdatedAt": "2026-10-28T12:00:00.000Z",
+    "document": {
+      "name": "Customer onboarding survey",
+      "welcomeCard": {
+        "enabled": true,
+        "headline": {
+          "default": "Welcome aboard"
+        },
+        "buttonLabel": {
+          "default": "Start"
+        }
+      },
+      "blocks": [
+        {
+          "id": "b_role",
+          "name": "Role",
+          "elements": [
+            {
+              "id": "e_role",
+              "type": "openText",
+              "headline": {
+                "default": "What is your role?"
+              },
+              "required": true,
+              "inputType": "text"
+            }
+          ]
+        }
+      ],
+      "endings": [
+        {
+          "id": "end_1",
+          "type": "endScreen",
+          "headline": {
+            "default": "Thanks!"
+          }
+        },
+        {
+          "id": "end_2",
+          "type": "redirectToUrl",
+          "url": "https://example.com/done",
+          "label": "Done"
+        }
+      ],
+      "hiddenFields": {
+        "enabled": true,
+        "fieldIds": [
+          "userId"
+        ]
+      }
+    }
+  },
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Review of survey \"Customer onboarding survey\": 2 changes (0 added, 2 removed, 0 changed), 2 destructive. Changes: removed blocks[b_goal] (destructive); removed blocks[b_team] (destructive). The push removes data: 2 question blocks and 2 questions. The user must tick the confirmation in the view before it can be applied. Nothing was written. The user decides in the review view; do not call push_document until they approve there. If you cannot see the view, list these changes to the user and ask before pushing."
+      }
+    ],
+    "structuredContent": {
+      "data": {
+        "kind": "survey",
+        "id": "kj4a98xxat96iws9zmbrgj3a",
+        "name": "Customer onboarding survey",
+        "workspaceId": "ws_demo",
+        "status": "destructive",
+        "updatedAt": "2026-10-28T12:00:00.000Z",
+        "expectedUpdatedAt": "2026-10-28T12:00:00.000Z",
+        "summary": {
+          "total": 2,
+          "added": 0,
+          "removed": 2,
+          "changed": 0,
+          "destructive": 2
+        },
+        "changes": [
+          {
+            "path": "blocks[b_goal]",
+            "kind": "removed",
+            "before": {
+              "id": "b_goal",
+              "name": "Goal",
+              "elements": [
+                {
+                  "id": "e_goal",
+                  "type": "openText",
+                  "headline": {
+                    "default": "What do you want to achieve with Formbricks in your first month?"
+                  },
+                  "required": false,
+                  "inputType": "text"
+                }
+              ]
+            },
+            "destructive": true,
+            "reason": "Removes a question block that may have responses."
+          },
+          {
+            "path": "blocks[b_team]",
+            "kind": "removed",
+            "before": {
+              "id": "b_team",
+              "name": "Team",
+              "elements": [
+                {
+                  "id": "e_team",
+                  "type": "openText",
+                  "headline": {
+                    "default": "How large is your team?"
+                  },
+                  "required": false,
+                  "inputType": "text"
+                }
+              ]
+            },
+            "destructive": true,
+            "reason": "Removes a question block that may have responses."
+          }
+        ],
+        "omittedChanges": 0,
+        "destructive": [
+          {
+            "type": "blocks_removed",
+            "ids": [
+              "b_goal",
+              "b_team"
+            ],
+            "responseCount": 128,
+            "removes": "2 question blocks",
+            "detail": "The survey has 128 responses. Their answers stay stored but no longer show in any result view."
+          },
+          {
+            "type": "elements_removed",
+            "ids": [
+              "e_goal",
+              "e_team"
+            ],
+            "responseCount": 128,
+            "removes": "2 questions",
+            "detail": "Their answers stay stored but no longer show in any result view."
+          }
+        ],
+        "issues": []
+      },
+      "requestId": "req_review"
+    }
+  },
+  "tools": {
+    "push_document": [
+      {
+        "content": [
+          {
+            "type": "text",
+            "text": "Applied."
+          }
+        ],
+        "structuredContent": {
+          "data": {
+            "envelope": {
+              "kind": "survey",
+              "schemaVersion": 1,
+              "id": "kj4a98xxat96iws9zmbrgj3a",
+              "workspaceId": "ws_demo",
+              "updatedAt": "2026-10-28T12:07:31.000Z",
+              "document": {
+                "name": "Customer onboarding survey",
+                "welcomeCard": {
+                  "enabled": true,
+                  "headline": {
+                    "default": "Welcome aboard"
+                  },
+                  "buttonLabel": {
+                    "default": "Start"
+                  }
+                },
+                "blocks": [
+                  {
+                    "id": "b_role",
+                    "name": "Role",
+                    "elements": [
+                      {
+                        "id": "e_role",
+                        "type": "openText",
+                        "headline": {
+                          "default": "What is your role?"
+                        },
+                        "required": true,
+                        "inputType": "text"
+                      }
+                    ]
+                  }
+                ],
+                "endings": [
+                  {
+                    "id": "end_1",
+                    "type": "endScreen",
+                    "headline": {
+                      "default": "Thanks!"
+                    }
+                  },
+                  {
+                    "id": "end_2",
+                    "type": "redirectToUrl",
+                    "url": "https://example.com/done",
+                    "label": "Done"
+                  }
+                ],
+                "hiddenFields": {
+                  "enabled": true,
+                  "fieldIds": [
+                    "userId"
+                  ]
+                }
+              }
+            },
+            "dryRun": false,
+            "changes": [
+              {
+                "path": "p0",
+                "change": "changed"
+              },
+              {
+                "path": "p1",
+                "change": "changed"
+              }
+            ]
+          },
+          "requestId": "req_push"
+        }
+      }
+    ]
+  }
+}

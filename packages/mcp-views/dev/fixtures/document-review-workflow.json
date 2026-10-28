@@ -1,0 +1,182 @@
+{
+  "toolName": "review_document_change",
+  "input": {
+    "kind": "workflow",
+    "id": "kj4a98xxat96iws9zmbrgj3a",
+    "schemaVersion": 1,
+    "expectedUpdatedAt": "2026-10-28T12:00:00.000Z",
+    "document": {
+      "name": "Route negative NPS",
+      "description": "Alerts CX when a promoter turns detractor",
+      "definition": {
+        "nodes": [
+          {
+            "id": "n1",
+            "type": "trigger",
+            "config": {
+              "event": "responseCreated"
+            }
+          },
+          {
+            "id": "n2",
+            "type": "condition",
+            "config": {
+              "field": "nps",
+              "op": "lte",
+              "value": 5
+            }
+          },
+          {
+            "id": "n3",
+            "type": "slack",
+            "config": {
+              "channel": "#cx-alerts"
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "x1",
+            "from": "n1",
+            "to": "n2"
+          },
+          {
+            "id": "x2",
+            "from": "n2",
+            "to": "n3"
+          }
+        ]
+      }
+    }
+  },
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Review of workflow \"Route negative NPS\": 3 changes (0 added, 0 removed, 3 changed), 0 destructive. Changes: changed definition.nodes[n2].config.value; changed definition.nodes[n3].config.channel; changed description. Nothing was written. The user decides in the review view; do not call push_document until they approve there. If you cannot see the view, list these changes to the user and ask before pushing."
+      }
+    ],
+    "structuredContent": {
+      "data": {
+        "kind": "workflow",
+        "id": "kj4a98xxat96iws9zmbrgj3a",
+        "name": "Route negative NPS",
+        "workspaceId": "ws_demo",
+        "status": "valid",
+        "updatedAt": "2026-10-28T12:00:00.000Z",
+        "expectedUpdatedAt": "2026-10-28T12:00:00.000Z",
+        "summary": {
+          "total": 3,
+          "added": 0,
+          "removed": 0,
+          "changed": 3,
+          "destructive": 0
+        },
+        "changes": [
+          {
+            "path": "definition.nodes[n2].config.value",
+            "kind": "changed",
+            "before": 6,
+            "after": 5
+          },
+          {
+            "path": "definition.nodes[n3].config.channel",
+            "kind": "changed",
+            "before": "#cx",
+            "after": "#cx-alerts"
+          },
+          {
+            "path": "description",
+            "kind": "changed",
+            "before": null,
+            "after": "Alerts CX when a promoter turns detractor"
+          }
+        ],
+        "omittedChanges": 0,
+        "destructive": [],
+        "issues": []
+      },
+      "requestId": "req_review"
+    }
+  },
+  "tools": {
+    "push_document": {
+      "content": [
+        {
+          "type": "text",
+          "text": "Applied."
+        }
+      ],
+      "structuredContent": {
+        "data": {
+          "envelope": {
+            "kind": "workflow",
+            "schemaVersion": 1,
+            "id": "kj4a98xxat96iws9zmbrgj3a",
+            "workspaceId": "ws_demo",
+            "updatedAt": "2026-10-28T12:07:31.000Z",
+            "document": {
+              "name": "Route negative NPS",
+              "description": "Alerts CX when a promoter turns detractor",
+              "definition": {
+                "nodes": [
+                  {
+                    "id": "n1",
+                    "type": "trigger",
+                    "config": {
+                      "event": "responseCreated"
+                    }
+                  },
+                  {
+                    "id": "n2",
+                    "type": "condition",
+                    "config": {
+                      "field": "nps",
+                      "op": "lte",
+                      "value": 5
+                    }
+                  },
+                  {
+                    "id": "n3",
+                    "type": "slack",
+                    "config": {
+                      "channel": "#cx-alerts"
+                    }
+                  }
+                ],
+                "edges": [
+                  {
+                    "id": "x1",
+                    "from": "n1",
+                    "to": "n2"
+                  },
+                  {
+                    "id": "x2",
+                    "from": "n2",
+                    "to": "n3"
+                  }
+                ]
+              }
+            }
+          },
+          "dryRun": false,
+          "changes": [
+            {
+              "path": "p0",
+              "change": "changed"
+            },
+            {
+              "path": "p1",
+              "change": "changed"
+            },
+            {
+              "path": "p2",
+              "change": "changed"
+            }
+          ]
+        },
+        "requestId": "req_push"
+      }
+    }
+  }
+}

@@ -1,0 +1,155 @@
+{
+  "input": {
+    "creativeId": "clc0000000000000000000005"
+  },
+  "result": {
+    "_meta": {
+      "formbricks": {
+        "style": {
+          "button": null,
+          "customCss": {
+            "light": "@layer fb-survey{.fb-creative-banner{letter-spacing:.01em !important}}"
+          },
+          "element": {
+            "borderRadius": 0,
+            "dark": {
+              "backgroundColor": "#451a03",
+              "borderColor": "#b45309",
+              "textColor": "#fde68a"
+            },
+            "desktop": {
+              "fontSize": 15,
+              "paddingX": 16,
+              "paddingY": 12
+            },
+            "fontWeight": 500,
+            "light": {
+              "backgroundColor": "#fef3c7",
+              "borderColor": "#f59e0b",
+              "textColor": "#78350f"
+            },
+            "phone": {
+              "fontSize": 14,
+              "paddingX": 12,
+              "paddingY": 12
+            }
+          },
+          "pageFont": false
+        },
+        "styleIsExact": true,
+        "triggerNames": null
+      }
+    },
+    "content": [
+      {
+        "text": "Creative \"Maintenance window notice\" (banner), Closed: its end time passed on 12 Oct 2026. Nothing to open.",
+        "type": "text"
+      }
+    ],
+    "structuredContent": {
+      "data": {
+        "archivedAt": null,
+        "content": {
+          "accessibleName": null,
+          "button": null,
+          "dismissible": false,
+          "message": {
+            "en-US": [
+              {
+                "text": "Scheduled maintenance on Saturday 10 October between 08:00 and 10:00 UTC: some features will be briefly unavailable. Details at https://status.example.com/maintenance/2026-10-10"
+              }
+            ]
+          }
+        },
+        "createdAt": "2026-09-01T09:00:00.000Z",
+        "creator": {
+          "name": "Dana"
+        },
+        "defaultLanguage": "en-US",
+        "destination": null,
+        "displayStatus": "closed",
+        "displayStatusReason": "scheduleEnded",
+        "distribution": {
+          "conditions": null,
+          "displayPercentage": null,
+          "showOn": "pageView",
+          "triggers": []
+        },
+        "id": "clc0000000000000000000005",
+        "languages": [
+          {
+            "code": "en-US",
+            "default": true,
+            "enabled": true
+          }
+        ],
+        "name": "Maintenance window notice with a rather long internal name that has to wrap",
+        "publishedAt": "2026-09-02T08:00:00.000Z",
+        "schedule": {
+          "endAt": "2026-10-12T08:00:00.000Z",
+          "startAt": "2026-10-10T08:00:00.000Z"
+        },
+        "status": "inProgress",
+        "styling": {
+          "position": {
+            "desktop": {
+              "layout": "overlay",
+              "placement": "top"
+            },
+            "phone": null
+          },
+          "theme": {
+            "backgroundColor": null,
+            "borderColor": null,
+            "customStyles": true,
+            "fontSize": {
+              "desktop": null,
+              "phone": null
+            },
+            "fontWeight": null,
+            "paddingX": {
+              "desktop": null,
+              "phone": null
+            },
+            "paddingY": {
+              "desktop": null,
+              "phone": null
+            },
+            "textColor": null
+          }
+        },
+        "type": "banner",
+        "updatedAt": "2026-10-20T14:30:00.000Z",
+        "warnings": [],
+        "workspaceId": "clw0000000000000000000001"
+      },
+      "requestId": "req_1"
+    }
+  },
+  "toolName": "show_creative",
+  "tools": {
+    "get_creative_stats": {
+      "content": [
+        {
+          "text": "{\"data\":{\"creativeId\":\"x\",\"from\":\"2026-09-29\",\"to\":\"2026-10-28\",\"groupBy\":null,\"totals\":{\"impressions\":12840,\"clicks\":391,\"clickRate\":0.0305},\"days\":[]},\"requestId\":\"req_stats\"}",
+          "type": "text"
+        }
+      ],
+      "structuredContent": {
+        "data": {
+          "creativeId": "x",
+          "days": [],
+          "from": "2026-09-29",
+          "groupBy": null,
+          "to": "2026-10-28",
+          "totals": {
+            "clickRate": 0.0305,
+            "clicks": 391,
+            "impressions": 12840
+          }
+        },
+        "requestId": "req_stats"
+      }
+    }
+  }
+}

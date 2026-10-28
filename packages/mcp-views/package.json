@@ -27,6 +27,7 @@
     "screenshot": "node dev/screenshot.mjs"
   },
   "dependencies": {
+    "@formbricks/creatives": "workspace:*",
     "@modelcontextprotocol/ext-apps": "2.0.3",
     "react": "catalog:",
     "react-dom": "catalog:"

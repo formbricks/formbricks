@@ -1,0 +1,121 @@
+{
+  "toolName": "review_document_change",
+  "input": {
+    "kind": "survey",
+    "id": "kj4a98xxat96iws9zmbrgj3a",
+    "schemaVersion": 1,
+    "expectedUpdatedAt": "2026-10-28T12:00:00.000Z",
+    "document": {
+      "name": "Customer onboarding survey",
+      "welcomeCard": {
+        "enabled": true,
+        "headline": {
+          "default": "Welcome aboard"
+        },
+        "buttonLabel": {
+          "default": "Start"
+        }
+      },
+      "blocks": [
+        {
+          "id": "b_role",
+          "name": "Role",
+          "elements": [
+            {
+              "id": "e_role",
+              "type": "openText",
+              "headline": {
+                "default": "What is your role?"
+              },
+              "required": true,
+              "inputType": "text"
+            }
+          ]
+        },
+        {
+          "id": "b_goal",
+          "name": "Goal",
+          "elements": [
+            {
+              "id": "e_goal",
+              "type": "openText",
+              "headline": {
+                "default": "What do you want to achieve with Formbricks in your first month?"
+              },
+              "required": false,
+              "inputType": "text"
+            }
+          ]
+        },
+        {
+          "id": "b_team",
+          "name": "Team",
+          "elements": [
+            {
+              "id": "e_team",
+              "type": "openText",
+              "headline": {
+                "default": "How large is your team?"
+              },
+              "required": false,
+              "inputType": "text"
+            }
+          ]
+        }
+      ],
+      "endings": [
+        {
+          "id": "end_1",
+          "type": "endScreen",
+          "headline": {
+            "default": "Thanks!"
+          }
+        },
+        {
+          "id": "end_2",
+          "type": "redirectToUrl",
+          "url": "https://example.com/done",
+          "label": "Done"
+        }
+      ],
+      "hiddenFields": {
+        "enabled": true,
+        "fieldIds": [
+          "userId"
+        ]
+      }
+    }
+  },
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Review of survey \"Customer onboarding survey\": the document equals the stored one, so there is nothing to approve or push. Nothing was written."
+      }
+    ],
+    "structuredContent": {
+      "data": {
+        "kind": "survey",
+        "id": "kj4a98xxat96iws9zmbrgj3a",
+        "name": "Customer onboarding survey",
+        "workspaceId": "ws_demo",
+        "status": "valid",
+        "updatedAt": "2026-10-28T12:00:00.000Z",
+        "expectedUpdatedAt": "2026-10-28T12:00:00.000Z",
+        "summary": {
+          "total": 0,
+          "added": 0,
+          "removed": 0,
+          "changed": 0,
+          "destructive": 0
+        },
+        "changes": [],
+        "omittedChanges": 0,
+        "destructive": [],
+        "issues": []
+      },
+      "requestId": "req_review"
+    }
+  },
+  "tools": {}
+}

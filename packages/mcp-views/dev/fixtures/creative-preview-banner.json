@@ -1,0 +1,193 @@
+{
+  "input": {
+    "creativeId": "clc0000000000000000000002"
+  },
+  "result": {
+    "_meta": {
+      "formbricks": {
+        "style": {
+          "button": {
+            "borderRadius": 8,
+            "dark": {
+              "backgroundColor": "#1e40af",
+              "borderColor": null,
+              "textColor": "#ffffff"
+            },
+            "desktop": {
+              "fontSize": 16,
+              "paddingX": 16,
+              "paddingY": 12
+            },
+            "fontWeight": 500,
+            "light": {
+              "backgroundColor": "#1e40af",
+              "borderColor": null,
+              "textColor": "#ffffff"
+            },
+            "phone": {
+              "fontSize": 14,
+              "paddingX": 12,
+              "paddingY": 10
+            }
+          },
+          "customCss": null,
+          "element": {
+            "borderRadius": 0,
+            "dark": {
+              "backgroundColor": "#1e293b",
+              "borderColor": "#334155",
+              "textColor": "#f8fafc"
+            },
+            "desktop": {
+              "fontSize": 15,
+              "paddingX": 16,
+              "paddingY": 12
+            },
+            "fontWeight": 500,
+            "light": {
+              "backgroundColor": "#ffffff",
+              "borderColor": "#e2e8f0",
+              "textColor": "#0f172a"
+            },
+            "phone": {
+              "fontSize": 14,
+              "paddingX": 12,
+              "paddingY": 12
+            }
+          },
+          "pageFont": false
+        },
+        "styleIsExact": true,
+        "triggerNames": null
+      }
+    },
+    "content": [
+      {
+        "text": "Creative \"Autumn launch banner\" (banner), Active. Shows on every page view from 1 Oct 2026 to 15 Nov 2026. Its button opens https://example.com/autumn-launch?utm_source=banner in a new tab.",
+        "type": "text"
+      }
+    ],
+    "structuredContent": {
+      "data": {
+        "archivedAt": null,
+        "content": {
+          "accessibleName": null,
+          "button": {
+            "label": {
+              "en-US": "Claim the offer"
+            }
+          },
+          "dismissible": true,
+          "message": {
+            "en-US": [
+              {
+                "bold": true,
+                "text": "Autumn launch: "
+              },
+              {
+                "text": "every plan is 20% off until 15 November. "
+              },
+              {
+                "href": "https://example.com/terms",
+                "text": "See the terms",
+                "underline": true
+              }
+            ]
+          }
+        },
+        "createdAt": "2026-09-01T09:00:00.000Z",
+        "creator": {
+          "name": "Dana"
+        },
+        "defaultLanguage": "en-US",
+        "destination": {
+          "opensAs": "newTab",
+          "type": "link",
+          "url": "https://example.com/autumn-launch?utm_source=banner"
+        },
+        "displayStatus": "active",
+        "displayStatusReason": null,
+        "distribution": {
+          "conditions": null,
+          "displayPercentage": null,
+          "showOn": "pageView",
+          "triggers": []
+        },
+        "id": "clc0000000000000000000002",
+        "languages": [
+          {
+            "code": "en-US",
+            "default": true,
+            "enabled": true
+          }
+        ],
+        "name": "Autumn launch banner",
+        "publishedAt": "2026-09-02T08:00:00.000Z",
+        "schedule": {
+          "endAt": "2026-11-15T22:59:00.000Z",
+          "startAt": "2026-10-01T00:00:00.000Z"
+        },
+        "status": "inProgress",
+        "styling": {
+          "position": {
+            "desktop": {
+              "layout": "inPage",
+              "placement": "top"
+            },
+            "phone": null
+          },
+          "theme": {
+            "backgroundColor": null,
+            "borderColor": null,
+            "customStyles": false,
+            "fontSize": {
+              "desktop": null,
+              "phone": null
+            },
+            "fontWeight": null,
+            "paddingX": {
+              "desktop": null,
+              "phone": null
+            },
+            "paddingY": {
+              "desktop": null,
+              "phone": null
+            },
+            "textColor": null
+          }
+        },
+        "type": "banner",
+        "updatedAt": "2026-10-20T14:30:00.000Z",
+        "warnings": [],
+        "workspaceId": "clw0000000000000000000001"
+      },
+      "requestId": "req_1"
+    }
+  },
+  "toolName": "show_creative",
+  "tools": {
+    "get_creative_stats": {
+      "content": [
+        {
+          "text": "{\"data\":{\"creativeId\":\"x\",\"from\":\"2026-09-29\",\"to\":\"2026-10-28\",\"groupBy\":null,\"totals\":{\"impressions\":12840,\"clicks\":391,\"clickRate\":0.0305},\"days\":[]},\"requestId\":\"req_stats\"}",
+          "type": "text"
+        }
+      ],
+      "structuredContent": {
+        "data": {
+          "creativeId": "x",
+          "days": [],
+          "from": "2026-09-29",
+          "groupBy": null,
+          "to": "2026-10-28",
+          "totals": {
+            "clickRate": 0.0305,
+            "clicks": 391,
+            "impressions": 12840
+          }
+        },
+        "requestId": "req_stats"
+      }
+    }
+  }
+}

@@ -1,0 +1,364 @@
+/* Creative preview: the panel uses the host theme (--fb-*); the mock page keeps its own neutral palette,
+   because it stands in for the customer's site, not for the chat. */
+
+.cp {
+  max-width: 880px;
+  margin: 0 auto;
+}
+
+.cp-head {
+  gap: 6px;
+}
+
+.cp-name {
+  overflow-wrap: anywhere;
+}
+
+.cp-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  align-items: flex-end;
+}
+
+.cp-choice {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.cp-choice-legend,
+.cp-label {
+  padding: 0;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  color: var(--fb-text-muted);
+}
+
+.cp-segments {
+  display: inline-flex;
+  padding: 2px;
+  gap: 2px;
+  border: 1px solid var(--fb-border-strong);
+  border-radius: var(--fb-radius);
+  background: var(--fb-bg-subtle);
+}
+
+.cp-segment {
+  position: relative;
+  display: inline-flex;
+  cursor: pointer;
+}
+
+.cp-segment span {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 12px;
+  border-radius: calc(var(--fb-radius) - 2px);
+  color: var(--fb-text-muted);
+  font-weight: 500;
+}
+
+.cp-segment:hover span {
+  color: var(--fb-text);
+}
+
+.cp-segment input:checked + span {
+  background: var(--fb-bg);
+  color: var(--fb-text);
+  box-shadow:
+    0 0 0 1px var(--fb-border-strong),
+    0 1px 2px rgb(0 0 0 / 12%);
+}
+
+.cp-segment input:focus-visible + span {
+  outline: 2px solid var(--fb-ring);
+  outline-offset: 1px;
+}
+
+.cp-select,
+.cp-textarea {
+  font: inherit;
+  color: var(--fb-text);
+  background: var(--fb-bg);
+  border: 1px solid var(--fb-border-strong);
+  border-radius: var(--fb-radius);
+}
+
+.cp-select {
+  height: 32px;
+  padding: 0 8px;
+}
+
+.cp-textarea {
+  width: 100%;
+  padding: 8px 10px;
+  resize: vertical;
+}
+
+/* The stage ------------------------------------------------------------------------------------ */
+
+.cp-stage {
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--fb-border-strong);
+  border-radius: var(--fb-radius-lg);
+  background: var(--fb-bg-muted);
+}
+
+.cp-chrome {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border-bottom: 1px solid var(--fb-border);
+  background: var(--fb-bg-subtle);
+}
+
+.cp-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--fb-border-strong);
+}
+
+.cp-url {
+  margin-left: 8px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--fb-bg-muted);
+  color: var(--fb-text-faint);
+  font-size: 11px;
+  line-height: 18px;
+}
+
+.cp-viewport {
+  position: relative;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+.cp-page {
+  --cp-page-bg: #ffffff;
+  --cp-bar: #e2e8f0;
+  --cp-bar-strong: #cbd5e1;
+  --cp-card: #f1f5f9;
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform-origin: top left;
+  background: var(--cp-page-bg);
+}
+
+.cp-page[data-appearance="dark"] {
+  --cp-page-bg: #0f172a;
+  --cp-bar: #1e293b;
+  --cp-bar-strong: #334155;
+  --cp-card: #1e293b;
+}
+
+.cp-slot {
+  flex: none;
+}
+
+.cp-body {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  padding: 20px 32px;
+}
+
+.cp-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cp-nav-links {
+  display: flex;
+  gap: 16px;
+}
+
+.cp-bar {
+  display: block;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--cp-bar);
+}
+
+.cp-nav-links .cp-bar {
+  width: 56px;
+}
+
+.cp-logo {
+  width: 96px;
+  height: 16px;
+  background: var(--cp-bar-strong);
+}
+
+.cp-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cp-h1 {
+  width: 60%;
+  height: 22px;
+  background: var(--cp-bar-strong);
+}
+
+.cp-h1-short {
+  width: 40%;
+}
+
+.cp-line {
+  width: 75%;
+}
+
+.cp-line-short {
+  width: 55%;
+}
+
+.cp-cta {
+  width: 120px;
+  height: 32px;
+  margin-top: 8px;
+  border-radius: 8px;
+  background: var(--cp-bar-strong);
+}
+
+.cp-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.cp-card {
+  display: block;
+  height: 120px;
+  border-radius: 12px;
+  background: var(--cp-card);
+}
+
+.cp-page[data-device="phone"] .cp-body {
+  gap: 20px;
+  padding: 16px;
+}
+
+.cp-page[data-device="phone"] .cp-nav-links {
+  display: none;
+}
+
+.cp-page[data-device="phone"] .cp-h1,
+.cp-page[data-device="phone"] .cp-line {
+  width: 90%;
+}
+
+.cp-page[data-device="phone"] .cp-cards {
+  grid-template-columns: 1fr;
+}
+
+/* Panel ---------------------------------------------------------------------------------------- */
+
+.cp-caption {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Reserves the line so pressing the creative does not move the panel below. */
+.cp-note {
+  min-height: 20px;
+}
+
+.cp-callout {
+  border: 1px solid var(--fb-border);
+  border-radius: var(--fb-radius);
+  padding: 10px 12px;
+  background: var(--fb-bg-subtle);
+}
+
+.cp-callout-warning {
+  border-color: var(--fb-warning);
+  background: var(--fb-warning-bg);
+  color: var(--fb-warning);
+}
+
+.cp-error {
+  color: var(--fb-danger);
+}
+
+.cp-section {
+  margin-bottom: 8px;
+}
+
+.cp-facts {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+
+.cp-fact {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 4px 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--fb-border);
+}
+
+.cp-fact:first-child {
+  border-top: 0;
+}
+
+.cp-fact dt {
+  color: var(--fb-text-muted);
+}
+
+.cp-fact dd {
+  margin: 0;
+  min-width: 0;
+}
+
+.cp-block {
+  display: block;
+  margin-top: 4px;
+}
+
+.cp-wrap {
+  overflow-wrap: anywhere;
+  font-weight: 500;
+}
+
+.cp-list {
+  margin: 4px 0 0;
+  padding-left: 18px;
+}
+
+.cp-list li {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 440px) {
+  .cp-fact {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .cp-segment span {
+    transition:
+      background-color 120ms ease,
+      color 120ms ease;
+  }
+}

@@ -19,25 +19,41 @@ export const getResultText = (result: ToolResult | null | undefined): string | u
   result?.content?.find((block) => block.type === "text")?.text;
 
 /**
- * What went wrong, when the call failed. A tool can fail two ways: a protocol-level `isError` result,
- * or the error branch of its structured output (`mcpToolOutput` in apps/web describes it). Both read
- * as a message the view can show next to a retry, never as a thrown error.
+ * What went wrong, when the call failed. A failed Formbricks tool answers `isError` with the problem in
+ * `structuredContent.error` (`{status, title, detail, requestId, code?, invalid_params?}`, the error
+ * branch `mcpToolOutput` describes in apps/web). It reads as a message the view can show next to a
+ * retry, never as a thrown error.
  */
-export const getToolError = (result: ToolResult | null | undefined): string | undefined => {
+export interface ToolFailure {
+  status?: number;
+  title?: string;
+  detail: string;
+  code?: string;
+}
+
+export const getToolFailure = (result: ToolResult | null | undefined): ToolFailure | undefined => {
   if (!result) return undefined;
-  const structured = result.structuredContent;
-  const detail =
-    structured &&
-    typeof structured === "object" &&
-    "detail" in structured &&
-    typeof structured.detail === "string"
-      ? structured.detail
-      : undefined;
+  const error = result.structuredContent?.error;
+  if (error && typeof error === "object") {
+    const record = error as Record<string, unknown>;
+    const detail = typeof record.detail === "string" ? record.detail : undefined;
+    const title = typeof record.title === "string" ? record.title : undefined;
+    return {
+      status: typeof record.status === "number" ? record.status : undefined,
+      title,
+      detail: detail ?? title ?? getResultText(result) ?? "The request failed.",
+      code: typeof record.code === "string" ? record.code : undefined,
+    };
+  }
   if (result.isError) {
-    return detail ?? getResultText(result) ?? "The request failed.";
+    return { detail: getResultText(result) ?? "The request failed." };
   }
   return undefined;
 };
+
+/** The failure as a single sentence, for views that only need to show it. */
+export const getToolError = (result: ToolResult | null | undefined): string | undefined =>
+  getToolFailure(result)?.detail;
 
 /** Narrow `structuredContent` to the shape a view expects, or `undefined` when it does not fit. */
 export const readStructured = <T>(

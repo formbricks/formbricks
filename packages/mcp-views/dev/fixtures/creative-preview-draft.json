@@ -1,0 +1,153 @@
+{
+  "input": {
+    "creativeId": "clc0000000000000000000004"
+  },
+  "result": {
+    "_meta": {
+      "formbricks": {
+        "style": {
+          "button": null,
+          "customCss": null,
+          "element": {
+            "borderRadius": 12,
+            "dark": {
+              "backgroundColor": "#fdba74",
+              "borderColor": null,
+              "textColor": "#431407"
+            },
+            "desktop": {
+              "fontSize": 15,
+              "paddingX": 14,
+              "paddingY": 10
+            },
+            "fontWeight": 700,
+            "light": {
+              "backgroundColor": "#c2410c",
+              "borderColor": null,
+              "textColor": "#ffffff"
+            },
+            "phone": {
+              "fontSize": 14,
+              "paddingX": 12,
+              "paddingY": 10
+            }
+          },
+          "pageFont": false
+        },
+        "styleIsExact": true,
+        "triggerNames": null
+      }
+    },
+    "content": [
+      {
+        "text": "Creative \"Beta feedback\" (feedback button), Draft: not published yet. It has no destination.",
+        "type": "text"
+      }
+    ],
+    "structuredContent": {
+      "data": {
+        "archivedAt": null,
+        "content": {
+          "icon": "sparkles",
+          "label": {
+            "en-US": "Tell us what you think"
+          }
+        },
+        "createdAt": "2026-09-01T09:00:00.000Z",
+        "creator": {
+          "name": "Dana"
+        },
+        "defaultLanguage": "en-US",
+        "destination": null,
+        "displayStatus": "draft",
+        "displayStatusReason": null,
+        "distribution": {
+          "conditions": null,
+          "displayPercentage": null,
+          "showOn": "pageView",
+          "triggers": []
+        },
+        "id": "clc0000000000000000000004",
+        "languages": [
+          {
+            "code": "en-US",
+            "default": true,
+            "enabled": true
+          }
+        ],
+        "name": "Beta feedback",
+        "publishedAt": null,
+        "schedule": {
+          "endAt": null,
+          "startAt": null
+        },
+        "status": "draft",
+        "styling": {
+          "position": {
+            "desktop": {
+              "edge": "bottom",
+              "offset": 90
+            },
+            "phone": null
+          },
+          "theme": {
+            "backgroundColor": null,
+            "borderColor": null,
+            "borderRadius": 12,
+            "customStyles": true,
+            "fontSize": {
+              "desktop": null,
+              "phone": null
+            },
+            "fontWeight": null,
+            "paddingX": {
+              "desktop": null,
+              "phone": null
+            },
+            "paddingY": {
+              "desktop": null,
+              "phone": null
+            },
+            "textColor": null
+          }
+        },
+        "type": "feedbackButton",
+        "updatedAt": "2026-10-20T14:30:00.000Z",
+        "warnings": [
+          {
+            "code": "destinationMissing",
+            "message": "It needs a Destination: choose the survey or link it opens."
+          }
+        ],
+        "workspaceId": "clw0000000000000000000001"
+      },
+      "requestId": "req_1"
+    }
+  },
+  "toolName": "show_creative",
+  "tools": {
+    "get_creative_stats": {
+      "content": [
+        {
+          "text": "{\"data\":{\"creativeId\":\"x\",\"from\":\"2026-09-29\",\"to\":\"2026-10-28\",\"groupBy\":null,\"totals\":{\"impressions\":12840,\"clicks\":391,\"clickRate\":0.0305},\"days\":[]},\"requestId\":\"req_stats\"}",
+          "type": "text"
+        }
+      ],
+      "structuredContent": {
+        "data": {
+          "creativeId": "x",
+          "days": [],
+          "from": "2026-09-29",
+          "groupBy": null,
+          "to": "2026-10-28",
+          "totals": {
+            "clickRate": 0.0305,
+            "clicks": 391,
+            "impressions": 12840
+          }
+        },
+        "requestId": "req_stats"
+      }
+    }
+  }
+}

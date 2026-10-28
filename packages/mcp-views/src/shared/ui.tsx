@@ -40,7 +40,7 @@ export const Notice = ({
   children,
 }: Readonly<{ tone?: "neutral" | "warning" | "danger"; children: ReactNode }>) => (
   <div
-    className={`fb-notice${tone === "danger" ? "fb-notice-danger" : tone === "warning" ? "fb-notice-warning" : ""}`}
+    className={`fb-notice${tone === "danger" ? " fb-notice-danger" : tone === "warning" ? " fb-notice-warning" : ""}`}
     role={tone === "neutral" ? "status" : "alert"}>
     {children}
   </div>

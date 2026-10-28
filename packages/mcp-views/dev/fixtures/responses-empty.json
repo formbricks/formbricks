@@ -1,0 +1,54 @@
+{
+  "toolName": "show_responses",
+  "input": {
+    "workspaceId": "clws000000000000000000001",
+    "surveyId": "clsv000000000000000000001"
+  },
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "No responses match for survey clsv000000000000000000001. The person is looking at an empty table with filters they can change."
+      }
+    ],
+    "structuredContent": {
+      "survey": {
+        "id": "clsv000000000000000000001"
+      },
+      "query": {
+        "workspaceId": "clws000000000000000000001",
+        "surveyId": "clsv000000000000000000001",
+        "limit": 10,
+        "sortBy": "-createdAt"
+      },
+      "columns": [],
+      "rows": [],
+      "nextCursor": null,
+      "total": {
+        "count": 0,
+        "relation": "eq"
+      },
+      "requestId": "req_dev_1"
+    }
+  },
+  "tools": {
+    "list_responses": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"data\":\"(omitted in fixture)\"}"
+        }
+      ],
+      "structuredContent": {
+        "data": [],
+        "meta": {
+          "limit": 10,
+          "nextCursor": null,
+          "totalCount": 0,
+          "totalCountRelation": "eq"
+        },
+        "requestId": "req_dev_2"
+      }
+    }
+  }
+}

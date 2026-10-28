@@ -1352,6 +1352,9 @@ importers:
 
   packages/mcp-views:
     dependencies:
+      '@formbricks/creatives':
+        specifier: workspace:*
+        version: link:../creatives
       '@modelcontextprotocol/ext-apps':
         specifier: 2.0.3
         version: 2.0.3(@modelcontextprotocol/client@2.4.0)(@modelcontextprotocol/core@2.3.0)(@modelcontextprotocol/server@2.3.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(zod@4.3.6)

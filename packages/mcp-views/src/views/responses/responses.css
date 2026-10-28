@@ -1,0 +1,280 @@
+/* Responses view. Builds on the shared `.fb-*` primitives; every colour is a theme variable. */
+
+.rv-root {
+  min-width: 0;
+}
+
+.rv-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px 12px;
+}
+
+.rv-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.rv-field-label {
+  color: var(--fb-text-muted);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+}
+
+.rv-input {
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--fb-border-strong);
+  border-radius: var(--fb-radius);
+  background: var(--fb-bg);
+  color: var(--fb-text);
+  font: inherit;
+  min-width: 0;
+}
+
+.rv-problem {
+  flex-basis: 100%;
+  color: var(--fb-danger);
+  font-size: 12px;
+}
+
+.rv-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+/* Master and detail: side by side when the chat column is wide, one at a time when it is not. */
+.rv-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.rv-list {
+  min-width: 0;
+}
+
+.rv-has-detail .rv-list {
+  display: none;
+}
+
+@media (min-width: 760px) {
+  .rv-has-detail {
+    grid-template-columns: minmax(0, 1fr) 320px;
+  }
+
+  .rv-has-detail .rv-list {
+    display: flex;
+  }
+}
+
+/* Opaque, so the sticky column matches the other cells whatever surface the host draws behind us. */
+.rv-scroll {
+  max-width: 100%;
+  background: var(--fb-bg);
+}
+
+.rv-scroll[data-busy="true"] {
+  opacity: 0.55;
+}
+
+.rv-table {
+  width: max-content;
+  min-width: 100%;
+}
+
+.rv-table th,
+.rv-table td {
+  vertical-align: top;
+}
+
+.rv-table tbody tr {
+  cursor: pointer;
+}
+
+.rv-table tbody tr:hover td,
+.rv-table tbody tr:hover th {
+  background: var(--fb-bg-subtle);
+}
+
+.rv-table tbody tr.rv-selected td,
+.rv-table tbody tr.rv-selected th {
+  background: var(--fb-info-bg);
+}
+
+.rv-table tbody th {
+  background: var(--fb-bg);
+  color: var(--fb-text);
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.rv-table tbody tr:last-child th {
+  border-bottom: 0;
+}
+
+/* In a narrow chat column the date wraps, so the pinned column leaves room for the answers. */
+@media (max-width: 520px) {
+  .rv-table tbody th,
+  .rv-sticky-head {
+    white-space: normal;
+    min-width: 96px;
+    max-width: 96px;
+  }
+}
+
+/* The first column stays put while the questions scroll sideways. */
+.rv-sticky {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  box-shadow: 1px 0 0 var(--fb-border);
+}
+
+.rv-sticky-head {
+  z-index: 2;
+}
+
+.rv-question-head {
+  min-width: 160px;
+  max-width: 260px;
+  white-space: normal;
+}
+
+.rv-question-label {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  color: var(--fb-text);
+  font-weight: 500;
+}
+
+.rv-question-type {
+  display: block;
+  margin-top: 2px;
+  color: var(--fb-text-faint);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+}
+
+.rv-answer {
+  min-width: 160px;
+  max-width: 260px;
+}
+
+.rv-cell {
+  display: inline;
+}
+
+.rv-cell-text {
+  overflow-wrap: anywhere;
+}
+
+.rv-more {
+  margin-left: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--fb-info);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.rv-open {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--fb-text);
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rv-open:hover {
+  text-decoration: underline;
+}
+
+.rv-detail {
+  min-width: 0;
+  border: 1px solid var(--fb-border);
+  border-radius: var(--fb-radius-lg);
+  background: var(--fb-bg);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (min-width: 760px) {
+  .rv-detail {
+    position: sticky;
+    top: 12px;
+    max-height: 640px;
+    overflow-y: auto;
+  }
+}
+
+.rv-detail-head h2:focus-visible {
+  outline-offset: 4px;
+}
+
+.rv-facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.rv-contact {
+  flex-basis: 100%;
+  overflow-wrap: anywhere;
+}
+
+.rv-section {
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.rv-answers {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+}
+
+.rv-answer-item dt {
+  color: var(--fb-text-muted);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.rv-answer-item dd {
+  margin: 4px 0 0;
+}
+
+.rv-line {
+  display: block;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.rv-empty {
+  align-items: center;
+  text-align: center;
+  padding: 24px 16px;
+}

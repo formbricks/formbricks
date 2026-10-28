@@ -1,0 +1,25 @@
+{
+  "toolName": "show_responses",
+  "input": {
+    "workspaceId": "clws000000000000000000001",
+    "surveyId": "clsv000000000000000000001"
+  },
+  "result": {
+    "isError": true,
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"error\":{\"status\":403,\"title\":\"Forbidden\",\"detail\":\"You do not have access to this survey's responses.\"}}"
+      }
+    ],
+    "structuredContent": {
+      "error": {
+        "status": 403,
+        "title": "Forbidden",
+        "detail": "You do not have access to this survey's responses.",
+        "requestId": "req_dev_err"
+      }
+    }
+  },
+  "tools": {}
+}

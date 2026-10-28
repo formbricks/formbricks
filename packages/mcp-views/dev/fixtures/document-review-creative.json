@@ -1,0 +1,135 @@
+{
+  "toolName": "review_document_change",
+  "input": {
+    "kind": "creative",
+    "id": "kj4a98xxat96iws9zmbrgj3a",
+    "schemaVersion": 1,
+    "expectedUpdatedAt": "2026-10-28T12:00:00.000Z",
+    "document": {
+      "type": "banner",
+      "name": "Spring promo banner",
+      "content": {
+        "message": {
+          "default": "Tell us how we are doing"
+        }
+      },
+      "destination": {
+        "type": "url",
+        "url": "https://example.com/feedback"
+      },
+      "schedule": {
+        "startAt": null,
+        "endAt": null
+      }
+    }
+  },
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Review of creative \"Spring promo banner\": 1 change (0 added, 0 removed, 1 changed), 1 destructive. Changes: changed destination (destructive). The push removes data: the destination this live creative currently opens and the only way people can open a live in-app survey. The user must tick the confirmation in the view before it can be applied. Nothing was written. The user decides in the review view; do not call push_document until they approve there. If you cannot see the view, list these changes to the user and ask before pushing."
+      }
+    ],
+    "structuredContent": {
+      "data": {
+        "kind": "creative",
+        "id": "kj4a98xxat96iws9zmbrgj3a",
+        "name": "Spring promo banner",
+        "workspaceId": "ws_demo",
+        "status": "destructive",
+        "updatedAt": "2026-10-28T12:00:00.000Z",
+        "expectedUpdatedAt": "2026-10-28T12:00:00.000Z",
+        "summary": {
+          "total": 1,
+          "added": 0,
+          "removed": 0,
+          "changed": 1,
+          "destructive": 1
+        },
+        "changes": [
+          {
+            "path": "destination",
+            "kind": "changed",
+            "before": {
+              "type": "survey",
+              "surveyId": "svy_nps_2026"
+            },
+            "after": {
+              "type": "url",
+              "url": "https://example.com/feedback"
+            },
+            "destructive": true,
+            "reason": "Changes what this live creative opens. Leaves a live in-app survey with nothing to open it."
+          }
+        ],
+        "omittedChanges": 0,
+        "destructive": [
+          {
+            "type": "destination_changed",
+            "ids": [
+              "svy_nps_2026"
+            ],
+            "removes": "the destination this live creative currently opens",
+            "detail": "The creative is live, so people see the new destination right away."
+          },
+          {
+            "type": "survey_left_unopened",
+            "ids": [
+              "svy_nps_2026"
+            ],
+            "removes": "the only way people can open a live in-app survey",
+            "detail": "The survey has no trigger of its own and this creative was what opened it."
+          }
+        ],
+        "issues": []
+      },
+      "requestId": "req_review"
+    }
+  },
+  "tools": {
+    "push_document": {
+      "content": [
+        {
+          "type": "text",
+          "text": "Applied."
+        }
+      ],
+      "structuredContent": {
+        "data": {
+          "envelope": {
+            "kind": "creative",
+            "schemaVersion": 1,
+            "id": "kj4a98xxat96iws9zmbrgj3a",
+            "workspaceId": "ws_demo",
+            "updatedAt": "2026-10-28T12:07:31.000Z",
+            "document": {
+              "type": "banner",
+              "name": "Spring promo banner",
+              "content": {
+                "message": {
+                  "default": "Tell us how we are doing"
+                }
+              },
+              "destination": {
+                "type": "url",
+                "url": "https://example.com/feedback"
+              },
+              "schedule": {
+                "startAt": null,
+                "endAt": null
+              }
+            }
+          },
+          "dryRun": false,
+          "changes": [
+            {
+              "path": "p0",
+              "change": "changed"
+            }
+          ]
+        },
+        "requestId": "req_push"
+      }
+    }
+  }
+}

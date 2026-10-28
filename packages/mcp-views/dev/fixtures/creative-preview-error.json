@@ -1,0 +1,24 @@
+{
+  "input": {
+    "creativeId": "clc0000000000000000000009"
+  },
+  "result": {
+    "content": [
+      {
+        "text": "{\"error\":{\"status\":403}}",
+        "type": "text"
+      }
+    ],
+    "isError": true,
+    "structuredContent": {
+      "error": {
+        "detail": "You are not authorized to access this resource",
+        "requestId": "req_err",
+        "status": 403,
+        "title": "Forbidden"
+      }
+    }
+  },
+  "toolName": "show_creative",
+  "tools": {}
+}

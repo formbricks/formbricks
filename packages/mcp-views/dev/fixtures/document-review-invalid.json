@@ -1,0 +1,145 @@
+{
+  "toolName": "review_document_change",
+  "input": {
+    "kind": "survey",
+    "id": "kj4a98xxat96iws9zmbrgj3a",
+    "schemaVersion": 1,
+    "expectedUpdatedAt": "2026-10-28T12:00:00.000Z",
+    "document": {
+      "name": "Customer onboarding survey v2",
+      "welcomeCard": {
+        "enabled": true,
+        "headline": {
+          "default": "Welcome to Formbricks"
+        },
+        "buttonLabel": {
+          "default": "Start"
+        }
+      },
+      "blocks": [
+        {
+          "id": "b_role",
+          "name": "Role",
+          "elements": [
+            {
+              "id": "e_role",
+              "type": "openText",
+              "headline": {
+                "default": "What is your role?"
+              },
+              "required": true,
+              "inputType": "text"
+            }
+          ]
+        },
+        {
+          "id": "b_goal",
+          "name": "Goal",
+          "elements": [
+            {
+              "id": "e_goal",
+              "type": "openText",
+              "headline": {
+                "default": "Tell us in a few sentences what you want to achieve with Formbricks during your first month, which tools it replaces for you today, and who else on your team will rely on the results. The more context you give, the better the agent can set up your first survey."
+              },
+              "required": true,
+              "inputType": "text"
+            }
+          ]
+        },
+        {
+          "id": "b_budget",
+          "name": "Budget",
+          "elements": [
+            {
+              "id": "e_budget",
+              "type": "openText",
+              "headline": {
+                "default": "What is your monthly research budget?"
+              },
+              "required": false,
+              "inputType": "text"
+            }
+          ]
+        },
+        {
+          "id": "b_team",
+          "name": "Team",
+          "elements": [
+            {
+              "id": "e_team",
+              "type": "openText",
+              "headline": {
+                "default": "How large is your team?"
+              },
+              "required": false,
+              "inputType": "text"
+            }
+          ]
+        }
+      ],
+      "endings": [
+        {
+          "id": "end_1",
+          "type": "endScreen",
+          "headline": {
+            "default": "Thanks!"
+          }
+        }
+      ],
+      "hiddenFields": {
+        "enabled": true,
+        "fieldIds": [
+          "userId",
+          "plan"
+        ]
+      }
+    }
+  },
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Review of survey \"Customer onboarding survey\": the push would be refused. Survey document failed validation Problems: blocks.2.elements.0.type: Unknown element type \"openTxt\"; blocks.1.elements.0.headline: Missing translation for \"de\"; endings.0.url: Must be an https URL. Fix the document and review again. Nothing was written."
+      }
+    ],
+    "structuredContent": {
+      "data": {
+        "kind": "survey",
+        "id": "kj4a98xxat96iws9zmbrgj3a",
+        "name": "Customer onboarding survey",
+        "workspaceId": "ws_demo",
+        "status": "invalid",
+        "updatedAt": "2026-10-28T12:00:00.000Z",
+        "expectedUpdatedAt": "2026-10-28T12:00:00.000Z",
+        "detail": "Survey document failed validation",
+        "summary": {
+          "total": 0,
+          "added": 0,
+          "removed": 0,
+          "changed": 0,
+          "destructive": 0
+        },
+        "changes": [],
+        "omittedChanges": 0,
+        "destructive": [],
+        "issues": [
+          {
+            "name": "blocks.2.elements.0.type",
+            "reason": "Unknown element type \"openTxt\""
+          },
+          {
+            "name": "blocks.1.elements.0.headline",
+            "reason": "Missing translation for \"de\""
+          },
+          {
+            "name": "endings.0.url",
+            "reason": "Must be an https URL"
+          }
+        ]
+      },
+      "requestId": "req_review"
+    }
+  },
+  "tools": {}
+}

@@ -1,8 +1,844 @@
 {
-  "input": { "workflowId": "wf_1" },
-  "result": {
-    "content": [{ "text": "Workflow wf_1", "type": "text" }],
-    "structuredContent": {}
+  "toolName": "show_workflow",
+  "input": {
+    "workflowId": "cm9zr4wf0000608l8k2m3n4p5q"
   },
-  "toolName": "show_workflow"
+  "locale": "en-GB",
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Workflow \"Thank respondents and alert accounts\" is enabled, runs when a survey response is completed, 4 steps, last run running at 2026-06-09T11:59:00.000Z."
+      }
+    ],
+    "structuredContent": {
+      "workflow": {
+        "id": "cm9zr4wf0000608l8k2m3n4p5q",
+        "workspaceId": "cm9zr4wsp000508l8y6nh9r2v",
+        "name": "Thank respondents and alert accounts",
+        "description": "Sends a thank-you to every respondent and tells the account team about qualified ones.",
+        "status": "enabled",
+        "triggerType": "response.completed",
+        "surveyId": "cm9zr4mps000008l8btfy1vtz",
+        "createdBy": null,
+        "creator": {
+          "name": "Ada Lovelace"
+        },
+        "createdAt": "2026-05-20T12:00:00.000Z",
+        "updatedAt": "2026-06-09T07:00:00.000Z",
+        "lastRun": {
+          "id": "cm9run000001",
+          "workflowId": "cm9zr4wf0000608l8k2m3n4p5q",
+          "workspaceId": "cm9zr4wsp000508l8y6nh9r2v",
+          "workflowVersionId": "cm9zr4ver000708l8abcdefghi",
+          "status": "running",
+          "isDryRun": false,
+          "triggerType": "response.completed",
+          "surveyId": "cm9zr4mps000008l8btfy1vtz",
+          "responseId": "k3j9x0v2m8q1w7e5r4t6y2u1",
+          "error": null,
+          "attempt": 0,
+          "createdAt": "2026-06-09T11:59:00.000Z",
+          "updatedAt": "2026-06-09T11:59:00.000Z",
+          "startedAt": "2026-06-09T11:59:00.000Z",
+          "finishedAt": null,
+          "workflowName": "Thank respondents and alert accounts"
+        },
+        "runCount": 128,
+        "definition": {
+          "schemaVersion": 1,
+          "trigger": {
+            "id": "trigger",
+            "type": "trigger",
+            "triggerType": "response.completed",
+            "label": "Survey response completed",
+            "config": {
+              "surveyId": "cm9zr4mps000008l8btfy1vtz",
+              "endingCardIds": [
+                "cm9zr4q7i000108l84gozfggr"
+              ]
+            },
+            "ui": {
+              "position": {
+                "x": 0,
+                "y": 0
+              }
+            }
+          },
+          "nodes": [
+            {
+              "id": "send-email",
+              "type": "action",
+              "actionType": "send_email",
+              "label": "Send thank you email",
+              "config": {
+                "to": "cm9zr4mps000008l8email",
+                "from": "noreply@example.com",
+                "replyTo": [
+                  "support@example.com"
+                ],
+                "subject": "Thanks for your response",
+                "body": "<p class=\"fb-editor-paragraph\" dir=\"ltr\">Hi #recall:cm9zr4mps000008l8name/fallback:there#, we received your response &amp; will follow up.</p>",
+                "attachResponseData": true,
+                "includeHiddenFields": true,
+                "includeVariables": false
+              }
+            },
+            {
+              "id": "condition",
+              "type": "if_else",
+              "label": "Qualified response",
+              "config": {
+                "condition": {
+                  "id": "root",
+                  "connector": "and",
+                  "conditions": [
+                    {
+                      "id": "c1",
+                      "left": {
+                        "path": "response.email"
+                      },
+                      "operator": "exists"
+                    },
+                    {
+                      "id": "g1",
+                      "connector": "or",
+                      "conditions": [
+                        {
+                          "id": "c2",
+                          "left": {
+                            "path": "response.score"
+                          },
+                          "operator": "greaterThan",
+                          "right": 8
+                        },
+                        {
+                          "id": "c3",
+                          "left": {
+                            "path": "response.plan"
+                          },
+                          "operator": "equals",
+                          "right": {
+                            "path": "contact.plan",
+                            "fallback": "free"
+                          }
+                        },
+                        {
+                          "id": "c4",
+                          "left": {
+                            "path": "response.email"
+                          },
+                          "operator": "notContains",
+                          "right": "@example.org"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "id": "then-email",
+              "type": "action",
+              "actionType": "send_email",
+              "label": "Notify the account team",
+              "config": {
+                "to": "accounts@example.com",
+                "from": "noreply@example.com",
+                "replyTo": [
+                  "support@example.com"
+                ],
+                "subject": "Qualified response received",
+                "body": "<p>A qualified response just came in.</p>",
+                "attachResponseData": true,
+                "includeHiddenFields": false,
+                "includeVariables": false
+              }
+            },
+            {
+              "id": "else-email",
+              "type": "action",
+              "actionType": "send_email",
+              "label": "Send fallback email",
+              "config": {
+                "to": "cm9zr4mps000008l8email",
+                "from": "noreply@example.com",
+                "replyTo": [
+                  "support@example.com"
+                ],
+                "subject": "Thanks",
+                "body": "<p>Thanks for your response.</p>",
+                "attachResponseData": false,
+                "includeHiddenFields": false,
+                "includeVariables": false
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "source": "trigger",
+              "target": "send-email"
+            },
+            {
+              "id": "e2",
+              "source": "send-email",
+              "target": "condition"
+            },
+            {
+              "id": "e3",
+              "source": "condition",
+              "sourceHandle": "then",
+              "target": "then-email"
+            },
+            {
+              "id": "e4",
+              "source": "condition",
+              "sourceHandle": "else",
+              "target": "else-email"
+            }
+          ],
+          "entryNodeId": "trigger"
+        }
+      },
+      "recentRuns": [
+        {
+          "id": "cm9run000001",
+          "workflowId": "cm9zr4wf0000608l8k2m3n4p5q",
+          "workspaceId": "cm9zr4wsp000508l8y6nh9r2v",
+          "workflowVersionId": "cm9zr4ver000708l8abcdefghi",
+          "status": "running",
+          "isDryRun": false,
+          "triggerType": "response.completed",
+          "surveyId": "cm9zr4mps000008l8btfy1vtz",
+          "responseId": "k3j9x0v2m8q1w7e5r4t6y2u1",
+          "error": null,
+          "attempt": 0,
+          "createdAt": "2026-06-09T11:59:00.000Z",
+          "updatedAt": "2026-06-09T11:59:00.000Z",
+          "startedAt": "2026-06-09T11:59:00.000Z",
+          "finishedAt": null,
+          "workflowName": "Thank respondents and alert accounts"
+        },
+        {
+          "id": "cm9run000002",
+          "workflowId": "cm9zr4wf0000608l8k2m3n4p5q",
+          "workspaceId": "cm9zr4wsp000508l8y6nh9r2v",
+          "workflowVersionId": "cm9zr4ver000708l8abcdefghi",
+          "status": "queued",
+          "isDryRun": false,
+          "triggerType": "response.completed",
+          "surveyId": "cm9zr4mps000008l8btfy1vtz",
+          "responseId": "p0o9i8u7y6t5r4e3w2q1a9s8",
+          "error": null,
+          "attempt": 0,
+          "createdAt": "2026-06-09T11:58:00.000Z",
+          "updatedAt": "2026-06-09T11:58:00.000Z",
+          "startedAt": null,
+          "finishedAt": null,
+          "workflowName": "Thank respondents and alert accounts"
+        },
+        {
+          "id": "cm9run000003",
+          "workflowId": "cm9zr4wf0000608l8k2m3n4p5q",
+          "workspaceId": "cm9zr4wsp000508l8y6nh9r2v",
+          "workflowVersionId": "cm9zr4ver000708l8abcdefghi",
+          "status": "failed",
+          "isDryRun": false,
+          "triggerType": "response.completed",
+          "surveyId": "cm9zr4mps000008l8btfy1vtz",
+          "responseId": "z8x7c6v5b4n3m2l1k9j8h7g6",
+          "error": "SMTP provider rejected the message: 550 mailbox unavailable for jane@example.com",
+          "attempt": 2,
+          "createdAt": "2026-06-09T11:22:00.000Z",
+          "updatedAt": "2026-06-09T11:22:00.000Z",
+          "startedAt": "2026-06-09T11:22:00.000Z",
+          "finishedAt": "2026-06-09T11:22:03.200Z",
+          "workflowName": "Thank respondents and alert accounts"
+        },
+        {
+          "id": "cm9run000004",
+          "workflowId": "cm9zr4wf0000608l8k2m3n4p5q",
+          "workspaceId": "cm9zr4wsp000508l8y6nh9r2v",
+          "workflowVersionId": "cm9zr4ver000708l8abcdefghi",
+          "status": "completed",
+          "isDryRun": false,
+          "triggerType": "response.completed",
+          "surveyId": "cm9zr4mps000008l8btfy1vtz",
+          "responseId": "f5d4s3a2q1w9e8r7t6y5u4i3",
+          "error": null,
+          "attempt": 0,
+          "createdAt": "2026-06-09T10:25:00.000Z",
+          "updatedAt": "2026-06-09T10:25:00.000Z",
+          "startedAt": "2026-06-09T10:25:00.000Z",
+          "finishedAt": "2026-06-09T10:25:00.840Z",
+          "workflowName": "Thank respondents and alert accounts"
+        },
+        {
+          "id": "cm9run000005",
+          "workflowId": "cm9zr4wf0000608l8k2m3n4p5q",
+          "workspaceId": "cm9zr4wsp000508l8y6nh9r2v",
+          "workflowVersionId": "cm9zr4ver000708l8abcdefghi",
+          "status": "completed",
+          "isDryRun": false,
+          "triggerType": "response.completed",
+          "surveyId": "cm9zr4mps000008l8btfy1vtz",
+          "responseId": "h2g1f9d8s7a6q5w4e3r2t1y0",
+          "error": null,
+          "attempt": 0,
+          "createdAt": "2026-06-08T10:00:00.000Z",
+          "updatedAt": "2026-06-08T10:00:00.000Z",
+          "startedAt": "2026-06-08T10:00:00.000Z",
+          "finishedAt": "2026-06-08T10:01:01.000Z",
+          "workflowName": "Thank respondents and alert accounts"
+        },
+        {
+          "id": "cm9run000006",
+          "workflowId": "cm9zr4wf0000608l8k2m3n4p5q",
+          "workspaceId": "cm9zr4wsp000508l8y6nh9r2v",
+          "workflowVersionId": "cm9zr4ver000708l8abcdefghi",
+          "status": "completed",
+          "isDryRun": true,
+          "triggerType": "response.completed",
+          "surveyId": "cm9zr4mps000008l8btfy1vtz",
+          "responseId": null,
+          "error": null,
+          "attempt": 0,
+          "createdAt": "2026-06-08T06:00:00.000Z",
+          "updatedAt": "2026-06-08T06:00:00.000Z",
+          "startedAt": "2026-06-08T06:00:00.000Z",
+          "finishedAt": "2026-06-08T06:00:01.400Z",
+          "workflowName": "Thank respondents and alert accounts"
+        },
+        {
+          "id": "cm9run000007",
+          "workflowId": "cm9zr4wf0000608l8k2m3n4p5q",
+          "workspaceId": "cm9zr4wsp000508l8y6nh9r2v",
+          "workflowVersionId": "cm9zr4ver000708l8abcdefghi",
+          "status": "canceled",
+          "isDryRun": false,
+          "triggerType": "response.completed",
+          "surveyId": "cm9zr4mps000008l8btfy1vtz",
+          "responseId": "u7i6o5p4a3s2d1f0g9h8j7k6",
+          "error": null,
+          "attempt": 0,
+          "createdAt": "2026-06-07T08:00:00.000Z",
+          "updatedAt": "2026-06-07T08:00:00.000Z",
+          "startedAt": "2026-06-07T08:00:00.000Z",
+          "finishedAt": null,
+          "workflowName": "Thank respondents and alert accounts"
+        }
+      ],
+      "requestId": "req_main"
+    }
+  },
+  "tools": {
+    "get_workflow_run": [
+      {
+        "content": [
+          {
+            "type": "text",
+            "text": "run"
+          }
+        ],
+        "structuredContent": {
+          "data": {
+            "id": "cm9run000003",
+            "workflowId": "cm9zr4wf0000608l8k2m3n4p5q",
+            "workspaceId": "cm9zr4wsp000508l8y6nh9r2v",
+            "workflowVersionId": "cm9zr4ver000708l8abcdefghi",
+            "status": "failed",
+            "isDryRun": false,
+            "triggerType": "response.completed",
+            "surveyId": "cm9zr4mps000008l8btfy1vtz",
+            "responseId": "z8x7c6v5b4n3m2l1k9j8h7g6",
+            "error": "SMTP provider rejected the message: 550 mailbox unavailable for jane@example.com",
+            "attempt": 2,
+            "createdAt": "2026-06-09T11:22:00.000Z",
+            "updatedAt": "2026-06-09T11:22:00.000Z",
+            "startedAt": "2026-06-09T11:22:00.000Z",
+            "finishedAt": "2026-06-09T11:22:03.200Z",
+            "workflowName": "Thank respondents and alert accounts",
+            "triggerPayload": {
+              "type": "response.completed",
+              "workspaceId": "cm9zr4wsp000508l8y6nh9r2v",
+              "surveyId": "cm9zr4mps000008l8btfy1vtz",
+              "responseId": "z8x7c6v5b4n3m2l1k9j8h7g6",
+              "endingCardId": "cm9zr4q7i000108l84gozfggr",
+              "triggeredAt": "2026-06-09T11:22:00.000Z",
+              "data": {
+                "response": {
+                  "email": "jane@example.com",
+                  "score": 9,
+                  "plan": "pro"
+                },
+                "contact": {
+                  "plan": "pro"
+                }
+              }
+            },
+            "data": {
+              "steps": []
+            },
+            "logs": [
+              {
+                "id": "cm9run000003log0",
+                "runId": "cm9run000003",
+                "sequence": 0,
+                "stepId": "trigger",
+                "stepType": "trigger",
+                "status": "succeeded",
+                "input": {},
+                "output": {
+                  "responseId": "z8x7c6v5b4n3m2l1k9j8h7g6"
+                },
+                "error": null,
+                "startedAt": "2026-06-09T11:22:00.000Z",
+                "finishedAt": "2026-06-09T11:22:00.010Z"
+              },
+              {
+                "id": "cm9run000003log1",
+                "runId": "cm9run000003",
+                "sequence": 1,
+                "stepId": "send-email",
+                "stepType": "send_email",
+                "status": "succeeded",
+                "input": {
+                  "to": "jane@example.com",
+                  "subject": "Thanks for your response"
+                },
+                "output": {
+                  "messageId": "<a1b2@example.com>",
+                  "provider": "smtp"
+                },
+                "error": null,
+                "startedAt": "2026-06-09T11:22:00.100Z",
+                "finishedAt": "2026-06-09T11:22:01.200Z"
+              },
+              {
+                "id": "cm9run000003log2",
+                "runId": "cm9run000003",
+                "sequence": 2,
+                "stepId": "condition",
+                "stepType": "if_else",
+                "status": "succeeded",
+                "input": {},
+                "output": {
+                  "branch": "then"
+                },
+                "error": null,
+                "startedAt": "2026-06-09T11:22:01.300Z",
+                "finishedAt": "2026-06-09T11:22:01.320Z"
+              },
+              {
+                "id": "cm9run000003log3",
+                "runId": "cm9run000003",
+                "sequence": 3,
+                "stepId": "then-email",
+                "stepType": "send_email",
+                "status": "failed",
+                "input": {
+                  "to": "accounts@example.com",
+                  "subject": "Qualified response received",
+                  "body": "<p>A qualified response just came in.</p>",
+                  "attachResponseData": true,
+                  "replyTo": [
+                    "support@example.com"
+                  ],
+                  "from": "noreply@example.com",
+                  "extra": {
+                    "nested": true
+                  }
+                },
+                "output": {},
+                "error": "SMTP provider rejected the message: 550 mailbox unavailable",
+                "startedAt": "2026-06-09T11:22:01.400Z",
+                "finishedAt": "2026-06-09T11:22:03.200Z"
+              },
+              {
+                "id": "cm9run000003log4",
+                "runId": "cm9run000003",
+                "sequence": 4,
+                "stepId": "else-email",
+                "stepType": "send_email",
+                "status": "skipped",
+                "input": {},
+                "output": {},
+                "error": null,
+                "startedAt": "2026-06-09T11:22:03.200Z",
+                "finishedAt": "2026-06-09T11:22:03.200Z"
+              }
+            ],
+            "idempotencyKey": "cm9run000003-key",
+            "nextAttemptAt": null,
+            "lastErrorAt": null
+          },
+          "requestId": "r"
+        }
+      },
+      {
+        "content": [
+          {
+            "type": "text",
+            "text": "run"
+          }
+        ],
+        "structuredContent": {
+          "data": {
+            "id": "cm9run000004",
+            "workflowId": "cm9zr4wf0000608l8k2m3n4p5q",
+            "workspaceId": "cm9zr4wsp000508l8y6nh9r2v",
+            "workflowVersionId": "cm9zr4ver000708l8abcdefghi",
+            "status": "completed",
+            "isDryRun": false,
+            "triggerType": "response.completed",
+            "surveyId": "cm9zr4mps000008l8btfy1vtz",
+            "responseId": "f5d4s3a2q1w9e8r7t6y5u4i3",
+            "error": null,
+            "attempt": 0,
+            "createdAt": "2026-06-09T10:25:00.000Z",
+            "updatedAt": "2026-06-09T10:25:00.000Z",
+            "startedAt": "2026-06-09T10:25:00.000Z",
+            "finishedAt": "2026-06-09T10:25:00.840Z",
+            "workflowName": "Thank respondents and alert accounts",
+            "triggerPayload": {
+              "type": "response.completed",
+              "workspaceId": "cm9zr4wsp000508l8y6nh9r2v",
+              "surveyId": "cm9zr4mps000008l8btfy1vtz",
+              "responseId": "f5d4s3a2q1w9e8r7t6y5u4i3",
+              "endingCardId": "cm9zr4q7i000108l84gozfggr",
+              "triggeredAt": "2026-06-09T10:25:00.000Z",
+              "data": {
+                "response": {
+                  "email": "jane@example.com",
+                  "score": 9,
+                  "plan": "pro"
+                },
+                "contact": {
+                  "plan": "pro"
+                }
+              }
+            },
+            "data": {
+              "steps": []
+            },
+            "logs": [
+              {
+                "id": "cm9run000004log0",
+                "runId": "cm9run000004",
+                "sequence": 0,
+                "stepId": "trigger",
+                "stepType": "trigger",
+                "status": "succeeded",
+                "input": {},
+                "output": {},
+                "error": null,
+                "startedAt": "2026-06-09T10:25:00.000Z",
+                "finishedAt": "2026-06-09T10:25:00.010Z"
+              },
+              {
+                "id": "cm9run000004log1",
+                "runId": "cm9run000004",
+                "sequence": 1,
+                "stepId": "send-email",
+                "stepType": "send_email",
+                "status": "succeeded",
+                "input": {
+                  "to": "jane@example.com",
+                  "subject": "Thanks for your response"
+                },
+                "output": {
+                  "messageId": "<c3d4@example.com>"
+                },
+                "error": null,
+                "startedAt": "2026-06-09T10:25:00.050Z",
+                "finishedAt": "2026-06-09T10:25:00.550Z"
+              },
+              {
+                "id": "cm9run000004log2",
+                "runId": "cm9run000004",
+                "sequence": 2,
+                "stepId": "condition",
+                "stepType": "if_else",
+                "status": "succeeded",
+                "input": {},
+                "output": {
+                  "branch": "else"
+                },
+                "error": null,
+                "startedAt": "2026-06-09T10:25:00.600Z",
+                "finishedAt": "2026-06-09T10:25:00.620Z"
+              },
+              {
+                "id": "cm9run000004log3",
+                "runId": "cm9run000004",
+                "sequence": 3,
+                "stepId": "else-email",
+                "stepType": "send_email",
+                "status": "succeeded",
+                "input": {
+                  "to": "jane@example.com",
+                  "subject": "Thanks"
+                },
+                "output": {
+                  "messageId": "<e5f6@example.com>"
+                },
+                "error": null,
+                "startedAt": "2026-06-09T10:25:00.650Z",
+                "finishedAt": "2026-06-09T10:25:00.840Z"
+              }
+            ],
+            "idempotencyKey": "cm9run000004-key",
+            "nextAttemptAt": null,
+            "lastErrorAt": null
+          },
+          "requestId": "r"
+        }
+      },
+      {
+        "content": [
+          {
+            "type": "text",
+            "text": "run"
+          }
+        ],
+        "structuredContent": {
+          "data": {
+            "id": "cm9run000001",
+            "workflowId": "cm9zr4wf0000608l8k2m3n4p5q",
+            "workspaceId": "cm9zr4wsp000508l8y6nh9r2v",
+            "workflowVersionId": "cm9zr4ver000708l8abcdefghi",
+            "status": "running",
+            "isDryRun": false,
+            "triggerType": "response.completed",
+            "surveyId": "cm9zr4mps000008l8btfy1vtz",
+            "responseId": "k3j9x0v2m8q1w7e5r4t6y2u1",
+            "error": null,
+            "attempt": 0,
+            "createdAt": "2026-06-09T11:59:00.000Z",
+            "updatedAt": "2026-06-09T11:59:00.000Z",
+            "startedAt": "2026-06-09T11:59:00.000Z",
+            "finishedAt": null,
+            "workflowName": "Thank respondents and alert accounts",
+            "triggerPayload": {
+              "type": "response.completed",
+              "workspaceId": "cm9zr4wsp000508l8y6nh9r2v",
+              "surveyId": "cm9zr4mps000008l8btfy1vtz",
+              "responseId": "k3j9x0v2m8q1w7e5r4t6y2u1",
+              "endingCardId": "cm9zr4q7i000108l84gozfggr",
+              "triggeredAt": "2026-06-09T11:59:00.000Z",
+              "data": {
+                "response": {
+                  "email": "jane@example.com",
+                  "score": 9,
+                  "plan": "pro"
+                },
+                "contact": {
+                  "plan": "pro"
+                }
+              }
+            },
+            "data": {
+              "steps": []
+            },
+            "logs": [
+              {
+                "id": "cm9run000001log0",
+                "runId": "cm9run000001",
+                "sequence": 0,
+                "stepId": "trigger",
+                "stepType": "trigger",
+                "status": "succeeded",
+                "input": {},
+                "output": {},
+                "error": null,
+                "startedAt": "2026-06-09T11:59:00.000Z",
+                "finishedAt": "2026-06-09T11:59:00.010Z"
+              },
+              {
+                "id": "cm9run000001log1",
+                "runId": "cm9run000001",
+                "sequence": 1,
+                "stepId": "send-email",
+                "stepType": "send_email",
+                "status": "running",
+                "input": {},
+                "output": {},
+                "error": null,
+                "startedAt": "2026-06-09T11:59:00.100Z",
+                "finishedAt": null
+              }
+            ],
+            "idempotencyKey": "cm9run000001-key",
+            "nextAttemptAt": null,
+            "lastErrorAt": null
+          },
+          "requestId": "r"
+        }
+      }
+    ],
+    "list_workflow_runs": {
+      "content": [
+        {
+          "type": "text",
+          "text": "runs"
+        }
+      ],
+      "structuredContent": {
+        "data": [
+          {
+            "id": "cm9run000008",
+            "workflowId": "cm9zr4wf0000608l8k2m3n4p5q",
+            "workspaceId": "cm9zr4wsp000508l8y6nh9r2v",
+            "workflowVersionId": "cm9zr4ver000708l8abcdefghi",
+            "status": "completed",
+            "isDryRun": false,
+            "triggerType": "response.completed",
+            "surveyId": "cm9zr4mps000008l8btfy1vtz",
+            "responseId": "cm9zr4rsp000708l8bqccpfrx",
+            "error": null,
+            "attempt": 0,
+            "createdAt": "2026-06-09T12:00:00.000Z",
+            "updatedAt": "2026-06-09T12:00:00.000Z",
+            "startedAt": "2026-06-09T12:00:00.000Z",
+            "finishedAt": "2026-06-09T12:00:00.900Z",
+            "workflowName": "Thank respondents and alert accounts"
+          },
+          {
+            "id": "cm9run000001",
+            "workflowId": "cm9zr4wf0000608l8k2m3n4p5q",
+            "workspaceId": "cm9zr4wsp000508l8y6nh9r2v",
+            "workflowVersionId": "cm9zr4ver000708l8abcdefghi",
+            "status": "running",
+            "isDryRun": false,
+            "triggerType": "response.completed",
+            "surveyId": "cm9zr4mps000008l8btfy1vtz",
+            "responseId": "k3j9x0v2m8q1w7e5r4t6y2u1",
+            "error": null,
+            "attempt": 0,
+            "createdAt": "2026-06-09T11:59:00.000Z",
+            "updatedAt": "2026-06-09T11:59:00.000Z",
+            "startedAt": "2026-06-09T11:59:00.000Z",
+            "finishedAt": null,
+            "workflowName": "Thank respondents and alert accounts"
+          },
+          {
+            "id": "cm9run000002",
+            "workflowId": "cm9zr4wf0000608l8k2m3n4p5q",
+            "workspaceId": "cm9zr4wsp000508l8y6nh9r2v",
+            "workflowVersionId": "cm9zr4ver000708l8abcdefghi",
+            "status": "queued",
+            "isDryRun": false,
+            "triggerType": "response.completed",
+            "surveyId": "cm9zr4mps000008l8btfy1vtz",
+            "responseId": "p0o9i8u7y6t5r4e3w2q1a9s8",
+            "error": null,
+            "attempt": 0,
+            "createdAt": "2026-06-09T11:58:00.000Z",
+            "updatedAt": "2026-06-09T11:58:00.000Z",
+            "startedAt": null,
+            "finishedAt": null,
+            "workflowName": "Thank respondents and alert accounts"
+          },
+          {
+            "id": "cm9run000003",
+            "workflowId": "cm9zr4wf0000608l8k2m3n4p5q",
+            "workspaceId": "cm9zr4wsp000508l8y6nh9r2v",
+            "workflowVersionId": "cm9zr4ver000708l8abcdefghi",
+            "status": "failed",
+            "isDryRun": false,
+            "triggerType": "response.completed",
+            "surveyId": "cm9zr4mps000008l8btfy1vtz",
+            "responseId": "z8x7c6v5b4n3m2l1k9j8h7g6",
+            "error": "SMTP provider rejected the message: 550 mailbox unavailable for jane@example.com",
+            "attempt": 2,
+            "createdAt": "2026-06-09T11:22:00.000Z",
+            "updatedAt": "2026-06-09T11:22:00.000Z",
+            "startedAt": "2026-06-09T11:22:00.000Z",
+            "finishedAt": "2026-06-09T11:22:03.200Z",
+            "workflowName": "Thank respondents and alert accounts"
+          },
+          {
+            "id": "cm9run000004",
+            "workflowId": "cm9zr4wf0000608l8k2m3n4p5q",
+            "workspaceId": "cm9zr4wsp000508l8y6nh9r2v",
+            "workflowVersionId": "cm9zr4ver000708l8abcdefghi",
+            "status": "completed",
+            "isDryRun": false,
+            "triggerType": "response.completed",
+            "surveyId": "cm9zr4mps000008l8btfy1vtz",
+            "responseId": "f5d4s3a2q1w9e8r7t6y5u4i3",
+            "error": null,
+            "attempt": 0,
+            "createdAt": "2026-06-09T10:25:00.000Z",
+            "updatedAt": "2026-06-09T10:25:00.000Z",
+            "startedAt": "2026-06-09T10:25:00.000Z",
+            "finishedAt": "2026-06-09T10:25:00.840Z",
+            "workflowName": "Thank respondents and alert accounts"
+          },
+          {
+            "id": "cm9run000005",
+            "workflowId": "cm9zr4wf0000608l8k2m3n4p5q",
+            "workspaceId": "cm9zr4wsp000508l8y6nh9r2v",
+            "workflowVersionId": "cm9zr4ver000708l8abcdefghi",
+            "status": "completed",
+            "isDryRun": false,
+            "triggerType": "response.completed",
+            "surveyId": "cm9zr4mps000008l8btfy1vtz",
+            "responseId": "h2g1f9d8s7a6q5w4e3r2t1y0",
+            "error": null,
+            "attempt": 0,
+            "createdAt": "2026-06-08T10:00:00.000Z",
+            "updatedAt": "2026-06-08T10:00:00.000Z",
+            "startedAt": "2026-06-08T10:00:00.000Z",
+            "finishedAt": "2026-06-08T10:01:01.000Z",
+            "workflowName": "Thank respondents and alert accounts"
+          },
+          {
+            "id": "cm9run000006",
+            "workflowId": "cm9zr4wf0000608l8k2m3n4p5q",
+            "workspaceId": "cm9zr4wsp000508l8y6nh9r2v",
+            "workflowVersionId": "cm9zr4ver000708l8abcdefghi",
+            "status": "completed",
+            "isDryRun": true,
+            "triggerType": "response.completed",
+            "surveyId": "cm9zr4mps000008l8btfy1vtz",
+            "responseId": null,
+            "error": null,
+            "attempt": 0,
+            "createdAt": "2026-06-08T06:00:00.000Z",
+            "updatedAt": "2026-06-08T06:00:00.000Z",
+            "startedAt": "2026-06-08T06:00:00.000Z",
+            "finishedAt": "2026-06-08T06:00:01.400Z",
+            "workflowName": "Thank respondents and alert accounts"
+          },
+          {
+            "id": "cm9run000007",
+            "workflowId": "cm9zr4wf0000608l8k2m3n4p5q",
+            "workspaceId": "cm9zr4wsp000508l8y6nh9r2v",
+            "workflowVersionId": "cm9zr4ver000708l8abcdefghi",
+            "status": "canceled",
+            "isDryRun": false,
+            "triggerType": "response.completed",
+            "surveyId": "cm9zr4mps000008l8btfy1vtz",
+            "responseId": "u7i6o5p4a3s2d1f0g9h8j7k6",
+            "error": null,
+            "attempt": 0,
+            "createdAt": "2026-06-07T08:00:00.000Z",
+            "updatedAt": "2026-06-07T08:00:00.000Z",
+            "startedAt": "2026-06-07T08:00:00.000Z",
+            "finishedAt": null,
+            "workflowName": "Thank respondents and alert accounts"
+          }
+        ],
+        "meta": {
+          "limit": 10,
+          "nextCursor": null,
+          "totalCount": null,
+          "totalCountRelation": null
+        },
+        "requestId": "r"
+      }
+    }
+  }
 }

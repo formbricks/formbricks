@@ -1,0 +1,225 @@
+{
+  "input": {
+    "creativeId": "clc0000000000000000000001"
+  },
+  "result": {
+    "_meta": {
+      "formbricks": {
+        "style": {
+          "button": null,
+          "customCss": null,
+          "element": {
+            "borderRadius": 8,
+            "dark": {
+              "backgroundColor": "#1e40af",
+              "borderColor": null,
+              "textColor": "#ffffff"
+            },
+            "desktop": {
+              "fontSize": 16,
+              "paddingX": 16,
+              "paddingY": 12
+            },
+            "fontWeight": 500,
+            "light": {
+              "backgroundColor": "#1e40af",
+              "borderColor": null,
+              "textColor": "#ffffff"
+            },
+            "phone": {
+              "fontSize": 14,
+              "paddingX": 12,
+              "paddingY": 10
+            }
+          },
+          "pageFont": false
+        },
+        "styleIsExact": true,
+        "triggerNames": null
+      }
+    },
+    "content": [
+      {
+        "text": "Creative \"Pricing feedback tab\" (feedback button), Active. Shows on every page view to 25% of visitors, when its conditions hold. Opens the survey \"Pricing page feedback\" as a popup.",
+        "type": "text"
+      }
+    ],
+    "structuredContent": {
+      "data": {
+        "archivedAt": null,
+        "content": {
+          "icon": "messageSquare",
+          "label": {
+            "de-DE": "Rückmeldung",
+            "en-US": "Feedback"
+          }
+        },
+        "createdAt": "2026-09-01T09:00:00.000Z",
+        "creator": {
+          "name": "Dana"
+        },
+        "defaultLanguage": "en-US",
+        "destination": {
+          "opensAs": "popup",
+          "surveyId": "cls0000000000000000000001",
+          "surveyName": "Pricing page feedback",
+          "type": "survey"
+        },
+        "displayStatus": "active",
+        "displayStatusReason": null,
+        "distribution": {
+          "conditions": {
+            "conditions": [
+              {
+                "id": "c1",
+                "leftOperand": {
+                  "type": "page",
+                  "value": "currentUrl"
+                },
+                "operator": "pathIsAnyOf",
+                "rightOperand": {
+                  "type": "static",
+                  "value": ["/pricing", "/plans", "/enterprise"]
+                }
+              },
+              {
+                "id": "c2",
+                "leftOperand": {
+                  "type": "visit",
+                  "value": "pagesViewed"
+                },
+                "operator": "isGreaterThanOrEqual",
+                "rightOperand": {
+                  "type": "static",
+                  "value": 2
+                }
+              },
+              {
+                "conditions": [
+                  {
+                    "id": "c3",
+                    "leftOperand": {
+                      "type": "device",
+                      "value": "deviceType"
+                    },
+                    "operator": "equals",
+                    "rightOperand": {
+                      "type": "static",
+                      "value": "desktop"
+                    }
+                  },
+                  {
+                    "id": "c4",
+                    "leftOperand": {
+                      "meta": {
+                        "key": "utm_source"
+                      },
+                      "type": "page",
+                      "value": "queryParam"
+                    },
+                    "operator": "isSet"
+                  }
+                ],
+                "connector": "or",
+                "id": "g2"
+              }
+            ],
+            "connector": "and",
+            "id": "g1"
+          },
+          "displayPercentage": 25,
+          "showOn": "pageView",
+          "triggers": []
+        },
+        "id": "clc0000000000000000000001",
+        "languages": [
+          {
+            "code": "en-US",
+            "default": true,
+            "enabled": true
+          },
+          {
+            "code": "de-DE",
+            "default": false,
+            "enabled": true
+          },
+          {
+            "code": "fr-FR",
+            "default": false,
+            "enabled": false
+          }
+        ],
+        "name": "Pricing feedback tab",
+        "publishedAt": "2026-09-02T08:00:00.000Z",
+        "schedule": {
+          "endAt": null,
+          "startAt": null
+        },
+        "status": "inProgress",
+        "styling": {
+          "position": {
+            "desktop": {
+              "edge": "right",
+              "offset": 55
+            },
+            "phone": {
+              "edge": "bottom",
+              "offset": 50
+            }
+          },
+          "theme": {
+            "backgroundColor": null,
+            "borderColor": null,
+            "borderRadius": null,
+            "customStyles": false,
+            "fontSize": {
+              "desktop": null,
+              "phone": null
+            },
+            "fontWeight": null,
+            "paddingX": {
+              "desktop": null,
+              "phone": null
+            },
+            "paddingY": {
+              "desktop": null,
+              "phone": null
+            },
+            "textColor": null
+          }
+        },
+        "type": "feedbackButton",
+        "updatedAt": "2026-10-20T14:30:00.000Z",
+        "warnings": [],
+        "workspaceId": "clw0000000000000000000001"
+      },
+      "requestId": "req_1"
+    }
+  },
+  "toolName": "show_creative",
+  "tools": {
+    "get_creative_stats": {
+      "content": [
+        {
+          "text": "{\"data\":{\"creativeId\":\"x\",\"from\":\"2026-09-29\",\"to\":\"2026-10-28\",\"groupBy\":null,\"totals\":{\"impressions\":12840,\"clicks\":391,\"clickRate\":0.0305},\"days\":[]},\"requestId\":\"req_stats\"}",
+          "type": "text"
+        }
+      ],
+      "structuredContent": {
+        "data": {
+          "creativeId": "x",
+          "days": [],
+          "from": "2026-09-29",
+          "groupBy": null,
+          "to": "2026-10-28",
+          "totals": {
+            "clickRate": 0.0305,
+            "clicks": 391,
+            "impressions": 12840
+          }
+        },
+        "requestId": "req_stats"
+      }
+    }
+  }
+}

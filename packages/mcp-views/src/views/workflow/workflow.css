@@ -1,0 +1,284 @@
+/* Workflow view. Everything here reads the shared --fb-* tokens, so light, dark and host styles follow. */
+.wf-root {
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.wf-name,
+.wf-description,
+.wf-step-title,
+.wf-detail dd,
+.wf-condition,
+.wf-failure,
+.wf-outcome-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.wf-name {
+  flex: 1 1 12rem;
+}
+
+.wf-section-title {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+}
+
+.wf-subsection-title {
+  margin: 0;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+  color: var(--fb-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* The flow: one card per step with a short rail between them. */
+.wf-flow {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.wf-step {
+  position: relative;
+}
+
+.wf-step + .wf-step {
+  padding-top: 20px;
+}
+
+.wf-step + .wf-step::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 20px;
+  height: 20px;
+  border-left: 2px solid var(--fb-border-strong);
+}
+
+.wf-card {
+  border: 1px solid var(--fb-border);
+  border-radius: var(--fb-radius);
+  background: var(--fb-bg-subtle);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.wf-card-trigger {
+  border-left: 3px solid var(--fb-info);
+}
+
+.wf-card-condition {
+  border-left: 3px solid var(--fb-warning);
+}
+
+.wf-card-action {
+  border-left: 3px solid var(--fb-success);
+}
+
+.wf-card-reference {
+  border-style: dashed;
+  background: transparent;
+}
+
+.wf-step-head {
+  gap: 8px;
+}
+
+.wf-kind {
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--fb-text-faint);
+}
+
+.wf-step-title {
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+}
+
+.wf-step-summary {
+  color: var(--fb-text);
+  overflow-wrap: anywhere;
+}
+
+.wf-details {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.wf-detail {
+  display: grid;
+  grid-template-columns: minmax(5rem, 9rem) minmax(0, 1fr);
+  gap: 8px;
+}
+
+.wf-detail dt {
+  color: var(--fb-text-faint);
+  overflow-wrap: anywhere;
+}
+
+.wf-detail dd {
+  margin: 0;
+  color: var(--fb-text-muted);
+}
+
+@media (max-width: 420px) {
+  .wf-detail {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}
+
+.wf-conditions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.wf-conditions .wf-conditions {
+  margin-top: 4px;
+  padding-left: 12px;
+  border-left: 2px solid var(--fb-border-strong);
+}
+
+.wf-condition {
+  font-family: var(--fb-mono);
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--fb-text-muted);
+}
+
+/* The two outcomes of a condition, indented under it. */
+.wf-branches {
+  list-style: none;
+  margin: 8px 0 0 20px;
+  padding: 0 0 0 12px;
+  border-left: 2px solid var(--fb-border-strong);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.wf-branch {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wf-branch-label {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+  color: var(--fb-text-muted);
+}
+
+/* Runs. */
+.wf-runs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--fb-border);
+  border-radius: var(--fb-radius);
+  overflow: hidden;
+}
+
+.wf-run + .wf-run {
+  border-top: 1px solid var(--fb-border);
+}
+
+.wf-run-head {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 0;
+  background: var(--fb-bg);
+  text-align: left;
+  cursor: pointer;
+}
+
+.wf-run-head:hover {
+  background: var(--fb-bg-subtle);
+}
+
+.wf-run-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.wf-run-time {
+  font-weight: 500;
+}
+
+.wf-failure {
+  color: var(--fb-danger);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.wf-chevron {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin: 6px 4px 0 0;
+  border-right: 2px solid var(--fb-text-faint);
+  border-bottom: 2px solid var(--fb-text-faint);
+  transform: rotate(-45deg);
+}
+
+.wf-run-head[aria-expanded="true"] .wf-chevron {
+  transform: rotate(45deg);
+}
+
+.wf-run-panel {
+  padding: 12px;
+  border-top: 1px solid var(--fb-border);
+  background: var(--fb-bg-subtle);
+}
+
+.wf-outcomes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wf-outcome {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  border: 1px solid var(--fb-border);
+  border-radius: var(--fb-radius-sm);
+  background: var(--fb-bg);
+}
+
+.wf-outcome-name {
+  font-weight: 600;
+}

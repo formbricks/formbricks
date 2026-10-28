@@ -8,13 +8,20 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const port = Number(process.argv[2] ?? 4173);
 const distDir = process.argv.find((item) => item.startsWith("--dist="))?.slice("--dist=".length) ?? "dist";
-const TYPES = { ".html": "text/html", ".js": "text/javascript", ".json": "application/json" };
+const TYPES = {
+  ".html": "text/html",
+  ".js": "text/javascript",
+  ".cjs": "text/javascript",
+  ".json": "application/json",
+};
 
 const resolveFile = (url) => {
   if (url === "/" || url === "/host.html") return path.join(root, "dev", "host.html");
   if (url === "/host.js") return path.join(root, "dev", "host.js");
   if (url.startsWith("/views/")) return path.join(root, distDir, url);
   if (url.startsWith("/fixtures/")) return path.join(root, "dev", url);
+  // The survey renderer and its locale bundles, as the instance serves them (survey-preview view).
+  if (url.startsWith("/js/")) return path.join(root, "..", "..", "apps", "web", "public", url);
   return null;
 };
 

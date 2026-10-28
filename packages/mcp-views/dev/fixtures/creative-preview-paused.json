@@ -1,0 +1,199 @@
+{
+  "input": {
+    "creativeId": "clc0000000000000000000003"
+  },
+  "result": {
+    "_meta": {
+      "formbricks": {
+        "style": {
+          "button": {
+            "borderRadius": 999,
+            "dark": {
+              "backgroundColor": "#047857",
+              "borderColor": null,
+              "textColor": "#ffffff"
+            },
+            "desktop": {
+              "fontSize": 15,
+              "paddingX": 14,
+              "paddingY": 10
+            },
+            "fontWeight": 600,
+            "light": {
+              "backgroundColor": "#047857",
+              "borderColor": null,
+              "textColor": "#ffffff"
+            },
+            "phone": {
+              "fontSize": 14,
+              "paddingX": 12,
+              "paddingY": 10
+            }
+          },
+          "customCss": null,
+          "element": {
+            "borderRadius": 0,
+            "dark": {
+              "backgroundColor": "#1e293b",
+              "borderColor": "#334155",
+              "textColor": "#f8fafc"
+            },
+            "desktop": {
+              "fontSize": 15,
+              "paddingX": 16,
+              "paddingY": 12
+            },
+            "fontWeight": 500,
+            "light": {
+              "backgroundColor": "#ffffff",
+              "borderColor": "#e2e8f0",
+              "textColor": "#0f172a"
+            },
+            "phone": {
+              "fontSize": 14,
+              "paddingX": 12,
+              "paddingY": 12
+            }
+          },
+          "pageFont": true
+        },
+        "styleIsExact": false,
+        "triggerNames": ["Exit intent", "Cart abandoned"]
+      }
+    },
+    "content": [
+      {
+        "text": "Creative \"Exit-intent survey nudge\" (banner), Paused: paused with its survey. Shows when one of these actions fires: Exit intent, Cart abandoned. Opens the survey \"Pricing page feedback\" as a popup.",
+        "type": "text"
+      }
+    ],
+    "structuredContent": {
+      "data": {
+        "archivedAt": null,
+        "content": {
+          "accessibleName": {
+            "en-US": "Survey invitation"
+          },
+          "button": {
+            "label": {
+              "en-US": "Take the survey"
+            }
+          },
+          "dismissible": true,
+          "message": {
+            "en-US": [
+              {
+                "text": "Got two minutes? Tell us what almost stopped you from signing up."
+              }
+            ]
+          }
+        },
+        "createdAt": "2026-09-01T09:00:00.000Z",
+        "creator": {
+          "name": "Dana"
+        },
+        "defaultLanguage": "en-US",
+        "destination": {
+          "opensAs": "popup",
+          "surveyId": "cls0000000000000000000001",
+          "surveyName": "Pricing page feedback",
+          "type": "survey"
+        },
+        "displayStatus": "paused",
+        "displayStatusReason": "surveyNotActive",
+        "distribution": {
+          "conditions": null,
+          "displayPercentage": 50,
+          "showOn": "action",
+          "triggers": [
+            {
+              "actionClassId": "cla0000000000000000000001"
+            },
+            {
+              "actionClassId": "cla0000000000000000000002"
+            }
+          ]
+        },
+        "id": "clc0000000000000000000003",
+        "languages": [
+          {
+            "code": "en-US",
+            "default": true,
+            "enabled": true
+          }
+        ],
+        "name": "Exit-intent survey nudge",
+        "publishedAt": "2026-09-02T08:00:00.000Z",
+        "schedule": {
+          "endAt": null,
+          "startAt": null
+        },
+        "status": "inProgress",
+        "styling": {
+          "position": {
+            "desktop": {
+              "layout": "overlay",
+              "placement": "bottom"
+            },
+            "phone": null
+          },
+          "theme": {
+            "backgroundColor": null,
+            "borderColor": null,
+            "customStyles": true,
+            "fontSize": {
+              "desktop": null,
+              "phone": null
+            },
+            "fontWeight": null,
+            "paddingX": {
+              "desktop": null,
+              "phone": null
+            },
+            "paddingY": {
+              "desktop": null,
+              "phone": null
+            },
+            "textColor": null
+          }
+        },
+        "type": "banner",
+        "updatedAt": "2026-10-20T14:30:00.000Z",
+        "warnings": [
+          {
+            "code": "destinationNotAllowed",
+            "message": "Its survey can no longer be a Destination. Choose another survey or a link."
+          }
+        ],
+        "workspaceId": "clw0000000000000000000001"
+      },
+      "requestId": "req_1"
+    }
+  },
+  "toolName": "show_creative",
+  "tools": {
+    "get_creative_stats": {
+      "content": [
+        {
+          "text": "{\"data\":{\"creativeId\":\"x\",\"from\":\"2026-09-29\",\"to\":\"2026-10-28\",\"groupBy\":null,\"totals\":{\"impressions\":12840,\"clicks\":391,\"clickRate\":0.0305},\"days\":[]},\"requestId\":\"req_stats\"}",
+          "type": "text"
+        }
+      ],
+      "structuredContent": {
+        "data": {
+          "creativeId": "x",
+          "days": [],
+          "from": "2026-09-29",
+          "groupBy": null,
+          "to": "2026-10-28",
+          "totals": {
+            "clickRate": 0.0305,
+            "clicks": 391,
+            "impressions": 12840
+          }
+        },
+        "requestId": "req_stats"
+      }
+    }
+  }
+}
