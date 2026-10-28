@@ -10,7 +10,7 @@ import {
   Loader2Icon,
   PaperclipIcon,
 } from "lucide-react";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TResponseFilterCriteria } from "@formbricks/types/responses";
 import {
@@ -563,14 +563,24 @@ const ExportModalBody = ({
  * to the export manager, which carries the export on in the survey layout: the modal shows its progress
  * while it is open, and closing it does not cancel it.
  */
-export const ExportModal = ({ open, onOpenChange, ...rest }: Readonly<TExportModalProps>) => (
-  <Dialog open={open} onOpenChange={onOpenChange}>
-    <DialogContent
-      width="narrow"
-      hideCloseButton
-      className="rounded-xl sm:w-[700px]"
-      onOpenAutoFocus={(event) => event.preventDefault()}>
-      <ExportModalBody {...rest} onClose={() => onOpenChange(false)} />
-    </DialogContent>
-  </Dialog>
-);
+export const ExportModal = ({ open, onOpenChange, ...rest }: Readonly<TExportModalProps>) => {
+  const { isExporting } = useExportManager();
+  const wasExporting = useRef(false);
+  // The progress view gives way to the toast when the file is done (or has failed).
+  useEffect(() => {
+    if (wasExporting.current && !isExporting) onOpenChange(false);
+    wasExporting.current = isExporting;
+  }, [isExporting, onOpenChange]);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        width="narrow"
+        hideCloseButton
+        className="rounded-xl sm:w-[700px]"
+        onOpenAutoFocus={(event) => event.preventDefault()}>
+        <ExportModalBody {...rest} onClose={() => onOpenChange(false)} />
+      </DialogContent>
+    </Dialog>
+  );
+};
