@@ -1,6 +1,6 @@
 import { ESLint } from "eslint";
 import { fileURLToPath } from "node:url";
-import { describe, expect, test } from "vitest";
+import { beforeAll, describe, expect, test } from "vitest";
 
 const eslint = new ESLint({ cwd: fileURLToPath(new URL("../apps/web/", import.meta.url)) });
 
@@ -11,6 +11,12 @@ const importErrors = async (source: string, filePath = "lib/cache-convention.ts"
 };
 
 describe("Next cache import convention in the web ESLint config", () => {
+  beforeAll(async () => {
+    // ESLint loads the full web config and plugins lazily. Give that one-time setup its own
+    // budget when Turbo runs this suite alongside workspace builds on a cold CI runner.
+    await eslint.lintText("", { filePath: "lib/cache-convention.ts" });
+  }, 30_000);
+
   test.each([
     'import { unstable_cache } from "next/cache";',
     'import { unstable_cache as cached } from "next/cache";',
