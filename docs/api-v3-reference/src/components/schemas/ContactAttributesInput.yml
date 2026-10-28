@@ -1,0 +1,15 @@
+type: object
+description: >-
+  Contact attributes as `{ key: value }`. Values are strings (at most 500 characters), numbers or
+  booleans; a boolean is stored as text. At most 150 keys per call. A key the workspace does not have
+  yet is created, typed from its first value (a JSON number is `number`, an ISO 8601 string is `date`,
+  anything else is `string`); a key that does exist enforces its own type. `email` must be a valid
+  address and unique in the workspace.
+maxProperties: 150
+additionalProperties:
+  oneOf:
+    - type: string
+      minLength: 1
+      maxLength: 500
+    - type: number
+    - type: boolean

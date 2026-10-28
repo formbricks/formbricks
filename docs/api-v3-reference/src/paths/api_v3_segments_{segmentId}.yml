@@ -1,0 +1,202 @@
+get:
+  operationId: getSegmentV3
+  summary: Get a segment
+  description: |
+    Returns one reusable segment with its filter tree and the surveys using it, limited to surveys the
+    caller may see. The workspace is resolved from the segment. A survey's private targeting segment is
+    not reachable here. An unknown id answers `403`, not `404`, so ids cannot be probed.
+
+    Requires read access to the segment's workspace.
+    Needs the Enterprise contacts feature: an organization without it answers `403`, like a caller
+    without access to the workspace. Session cookie, `x-api-key`, or a Bearer token.
+  tags:
+    - V3 Segments
+  parameters:
+    - in: path
+      name: segmentId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Segment identifier.
+  responses:
+    "200":
+      description: Segment retrieved successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/SegmentResource.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []
+patch:
+  operationId: updateSegmentV3
+  summary: Update a segment
+  description: |
+    Changes a segment's title, description or filters; `filters` replaces the whole tree. Surveys already
+    using the segment pick up the change. Same filter validation as create (`422`), and a segment cannot
+    reference itself, directly or through another segment. A title held by another segment answers `409`.
+    An unknown id answers `403`, not `404`, so ids cannot be probed.
+
+    Requires write access to the segment's workspace.
+    Needs the Enterprise contacts feature: an organization without it answers `403`, like a caller
+    without access to the workspace. Session cookie, `x-api-key`, or a Bearer token.
+  tags:
+    - V3 Segments
+  parameters:
+    - in: path
+      name: segmentId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Segment identifier.
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/PatchSegmentRequest.yml
+  responses:
+    "200":
+      description: Segment updated
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/SegmentResource.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "409":
+      description: >-
+        A segment with this title already exists in the workspace.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "422":
+      description: >-
+        A filter references something that does not exist in the workspace, or the segment references itself.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []
+delete:
+  operationId: deleteSegmentV3
+  summary: Delete a segment
+  description: |
+    Deletes a segment. Refused with `409` while any survey uses it, with the surveys the caller can see in
+    `details.surveys`. An unknown id answers `403`, not `404`, so ids cannot be probed.
+
+    Requires write access to the segment's workspace.
+    Needs the Enterprise contacts feature: an organization without it answers `403`, like a caller
+    without access to the workspace. Session cookie, `x-api-key`, or a Bearer token.
+  tags:
+    - V3 Segments
+  parameters:
+    - in: path
+      name: segmentId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Segment identifier.
+  responses:
+    "200":
+      description: Segment deleted
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                type: object
+                required:
+                  - id
+                properties:
+                  id:
+                    type: string
+                    format: cuid2
+                additionalProperties: false
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "409":
+      description: >-
+        A survey uses the segment. Detach it from the surveys first; they are listed in `details.surveys`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

@@ -1,0 +1,138 @@
+patch:
+  operationId: updateContactAttributeKeyV3
+  summary: Update a contact attribute key
+  description: |
+    Changes a custom key's display name or description. The key itself and its data type cannot change.
+    The built-in keys (`userId`, `email`, `firstName`, `lastName`, `language`) answer `422`.
+    The workspace is resolved from the key. An unknown id answers `403`, not `404`, so ids cannot be probed.
+
+    Requires write access to the key's workspace.
+    Needs the Enterprise contacts feature: an organization without it answers `403`, like a caller
+    without access to the workspace. Session cookie, `x-api-key`, or a Bearer token.
+  tags:
+    - V3 Contacts
+  parameters:
+    - in: path
+      name: attributeKeyId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Contact attribute key identifier.
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/PatchContactAttributeKeyRequest.yml
+  responses:
+    "200":
+      description: Attribute key updated
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/ContactAttributeKeyResource.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "422":
+      description: >-
+        The key is a built-in attribute key, which cannot be changed.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []
+delete:
+  operationId: deleteContactAttributeKeyV3
+  summary: Delete a contact attribute key
+  description: |
+    Deletes a custom key **and every contact's value for it**. Segment filters that use the key stop
+    matching. This cannot be undone. The built-in keys answer `422`. An unknown id answers `403`, not `404`, so ids cannot be probed.
+
+    Requires write access to the key's workspace.
+    Needs the Enterprise contacts feature: an organization without it answers `403`, like a caller
+    without access to the workspace. Session cookie, `x-api-key`, or a Bearer token.
+  tags:
+    - V3 Contacts
+  parameters:
+    - in: path
+      name: attributeKeyId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Contact attribute key identifier.
+  responses:
+    "200":
+      description: Attribute key deleted
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                type: object
+                required:
+                  - id
+                properties:
+                  id:
+                    type: string
+                    format: cuid2
+                additionalProperties: false
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "422":
+      description: >-
+        The key is a built-in attribute key, which cannot be deleted.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

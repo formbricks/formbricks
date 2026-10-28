@@ -1,4 +1,5 @@
 import "server-only";
+import type { z } from "zod";
 import { logger } from "@formbricks/logger";
 import { InvalidInputError } from "@formbricks/types/errors";
 import type { TBaseFilters } from "@formbricks/types/segment";
@@ -348,34 +349,24 @@ export function deleteV3Segment(params: TMutationParams & { segmentId: string })
  * schema types `filters` loosely (the tree is recursive and too large to advertise). The same schema the
  * route uses decides here, so both surfaces accept and refuse exactly the same segments.
  */
-const parseBody = <TSchema extends typeof ZV3CreateSegmentBody | typeof ZV3PatchSegmentBody>(
-  schema: TSchema,
-  body: unknown,
-  { requestId, instance }: TBaseParams
-) => {
-  const parsed = schema.safeParse(body);
-  if (parsed.success) return { body: parsed.data as ReturnType<TSchema["parse"]> };
-
-  return {
-    response: problemBadRequest(requestId, "Invalid request body", {
-      instance,
-      invalid_params: formatZodIssues(parsed.error, "body"),
-    }),
-  };
-};
+const invalidBody = (error: z.ZodError, { requestId, instance }: TBaseParams) =>
+  problemBadRequest(requestId, "Invalid request body", {
+    instance,
+    invalid_params: formatZodIssues(error, "body"),
+  });
 
 export function createV3SegmentFromRawInput(params: TMutationParams & { body: unknown }): Promise<Response> {
-  const parsed = parseBody(ZV3CreateSegmentBody, params.body, params);
-  if ("response" in parsed) return Promise.resolve(parsed.response);
+  const parsed = ZV3CreateSegmentBody.safeParse(params.body);
+  if (!parsed.success) return Promise.resolve(invalidBody(parsed.error, params));
 
-  return createV3Segment({ ...params, body: parsed.body });
+  return createV3Segment({ ...params, body: parsed.data });
 }
 
 export function updateV3SegmentFromRawInput(
   params: TMutationParams & { segmentId: string; body: unknown }
 ): Promise<Response> {
-  const parsed = parseBody(ZV3PatchSegmentBody, params.body, params);
-  if ("response" in parsed) return Promise.resolve(parsed.response);
+  const parsed = ZV3PatchSegmentBody.safeParse(params.body);
+  if (!parsed.success) return Promise.resolve(invalidBody(parsed.error, params));
 
-  return updateV3Segment({ ...params, body: parsed.body });
+  return updateV3Segment({ ...params, body: parsed.data });
 }

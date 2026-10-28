@@ -1,0 +1,32 @@
+type: object
+required:
+  - workspaceId
+  - key
+properties:
+  workspaceId:
+    type: string
+    format: cuid2
+  key:
+    type: string
+    maxLength: 100
+    pattern: "^[a-z][a-z0-9_]*$"
+    description: >-
+      Lowercase letters, digits and underscores, starting with a letter. The keys `user_id`, `first_name`
+      and `last_name` are reserved.
+  name:
+    type: string
+    minLength: 1
+    maxLength: 255
+    description: Display name. Defaults to the title-cased key.
+  description:
+    type: string
+    maxLength: 1000
+  dataType:
+    type: string
+    enum:
+      - string
+      - number
+      - date
+    default: string
+    description: Decides which segment-filter operators apply to the attribute.
+additionalProperties: false

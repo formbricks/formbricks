@@ -93,7 +93,7 @@ const attributeFilterIsComplete = ({ attributeKey, attributeValue }: TContactFil
 export const ATTRIBUTE_FILTER_PAIR_CHECK = {
   check: attributeFilterIsComplete,
   params: { error: "attributeKey and attributeValue must be given together", path: ["attributeValue"] },
-} as const;
+};
 
 export const ZV3ContactListQueryBase = z
   .object({
@@ -137,7 +137,7 @@ export const UPSERT_CONTACT_CHECK = {
     error: "Set the userId with the top-level userId field, not inside attributes",
     path: ["attributes", "userId"],
   },
-} as const;
+};
 
 export const ZV3UpsertContactBody = ZV3UpsertContactBodyBase.refine(
   UPSERT_CONTACT_CHECK.check,

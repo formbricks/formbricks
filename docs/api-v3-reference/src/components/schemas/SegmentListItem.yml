@@ -1,0 +1,30 @@
+type: object
+description: >-
+  A reusable segment as listed, the handle and the text without the filter tree.
+required:
+  - id
+  - workspaceId
+  - title
+  - description
+  - createdAt
+  - updatedAt
+properties:
+  id:
+    type: string
+    format: cuid2
+  workspaceId:
+    type: string
+    format: cuid2
+  title:
+    type: string
+  description:
+    type:
+      - string
+      - "null"
+  createdAt:
+    type: string
+    format: date-time
+  updatedAt:
+    type: string
+    format: date-time
+additionalProperties: false

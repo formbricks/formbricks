@@ -1,0 +1,74 @@
+post:
+  operationId: createContactAttributeKeyV3
+  summary: Create a contact attribute key
+  description: |
+    Defines a custom contact attribute key with an optional data type. Setting an attribute on a contact
+    also creates its key, typed from the first value; use this to fix the type up front. The type decides
+    which segment-filter operators apply. Reading keys is `GET /api/v3/contact-attribute-keys`.
+
+    A key that already exists answers `409`, and a workspace holds at most 150 keys (`422`).
+
+    Requires write access to the workspace.
+    Needs the Enterprise contacts feature: an organization without it answers `403`, like a caller
+    without access to the workspace. Session cookie, `x-api-key`, or a Bearer token.
+  tags:
+    - V3 Contacts
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/CreateContactAttributeKeyRequest.yml
+  responses:
+    "201":
+      description: Attribute key created
+      headers:
+        Location:
+          schema:
+            type: string
+          description: Relative URL of the created attribute key.
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/ContactAttributeKeyResource.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "409":
+      description: >-
+        An attribute key with this name already exists in the workspace.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "422":
+      description: >-
+        The workspace is at its attribute key ceiling.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

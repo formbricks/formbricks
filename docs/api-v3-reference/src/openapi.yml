@@ -406,6 +406,20 @@ paths:
     $ref: paths/api_v3_action-classes.yml
   /api/v3/contact-attribute-keys:
     $ref: paths/api_v3_contact-attribute-keys.yml
+  /api/v3/contacts:
+    $ref: paths/api_v3_contacts.yml
+  /api/v3/contacts/count:
+    $ref: paths/api_v3_contacts_count.yml
+  /api/v3/contacts/{contactId}:
+    $ref: paths/api_v3_contacts_{contactId}.yml
+  /api/v3/contacts/attribute-keys:
+    $ref: paths/api_v3_contacts_attribute-keys.yml
+  /api/v3/contacts/attribute-keys/{attributeKeyId}:
+    $ref: paths/api_v3_contacts_attribute-keys_{attributeKeyId}.yml
+  /api/v3/segments:
+    $ref: paths/api_v3_segments.yml
+  /api/v3/segments/{segmentId}:
+    $ref: paths/api_v3_segments_{segmentId}.yml
   /api/v3/tags:
     $ref: paths/api_v3_tags.yml
   /api/v3/tags/{tagId}:

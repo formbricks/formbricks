@@ -1,0 +1,29 @@
+type: object
+description: >-
+  A contact: a respondent known to a workspace, with all its attributes. Attribute values are read back
+  as text, whatever their type.
+required:
+  - id
+  - workspaceId
+  - createdAt
+  - updatedAt
+  - attributes
+properties:
+  id:
+    type: string
+    format: cuid2
+  workspaceId:
+    type: string
+    format: cuid2
+  createdAt:
+    type: string
+    format: date-time
+  updatedAt:
+    type: string
+    format: date-time
+  attributes:
+    type: object
+    description: Attribute key to value, for every attribute the contact has.
+    additionalProperties:
+      type: string
+additionalProperties: false

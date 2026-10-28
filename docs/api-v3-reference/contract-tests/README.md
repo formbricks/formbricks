@@ -63,18 +63,21 @@ Three things to know before reading the result:
   (`/api/v3/creatives/pause`, on a fixture survey of its own), and create, other patches, archive,
   restore and duplicate answer the documented 403 `creatives_not_entitled`. No fixture change is needed
   either way.
-- **The four `/tags` operations are session-only** (`auth: "session"`, and the spec declares only
-  `sessionAuth`), so an API key gets a documented 401 before any handler runs. They are checked
-  against that 401, which is a real assertion that they stay session-only — but no tag fixtures
-  exist, because nothing an API key sends can reach them.
+- **The four `/tags` operations accept API keys and OAuth like the rest of v3**, but no tag fixtures
+  exist yet, so the harness reaches only their documented 400/403/404/422 paths against random ids.
+  Seed a tag in `seed-contract-fixtures.ts` to exercise their 200 shapes.
+- **The agent-platform resources (contacts, segments, webhooks, audit events, feedback queries and
+  the unify-feedback taxonomy) are also not seeded.** Contacts and segments sit behind the contacts
+  entitlement, audit events behind the audit-log entitlement and feedback queries behind the analytics
+  entitlement, and the taxonomy needs a feedback dataset, so the run mostly checks their documented
+  403 and validation answers. Add fixtures to `seed-contract-fixtures.ts` to reach their success paths.
 - **The eight `/feedbackRecords` operations are not exercised.** They are served by the API gateway
   (Envoy in Cloud, Traefik in the Docker install) straight to the Hub; the Next.js route under
   `/api/v3/feedbackRecords` is a local-dev proxy that needs a running Hub and answers 404 in
   production builds. CI has no Hub, so `schemathesis.toml` disables the `V3 Feedback Records` tag
   rather than test a proxy without an upstream. Their contract is checked by the Hub's own suite and
   the live smoke recorded in ENG-1259. The bundle therefore documents 36 operations and this job
-  exercises 28 — the four `/tags` operations carry `x-excluded` (no docs page, ENG-2533) but are
-  still tested.
+  exercises 28 plus the operations added for agents (the count above predates them).
 - **The two survey visibility operations answer 403 to every API key** (ENG-3282, K-4), and this
   harness authenticates with one, so `GET`/`POST /api/v3/surveys/{surveyId}/visibility` are checked
   against their documented 403 on a real, readable fixture survey. Their 200/409/422/503 shapes are

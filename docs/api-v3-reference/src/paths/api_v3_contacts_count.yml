@@ -1,0 +1,76 @@
+get:
+  operationId: countContactsV3
+  summary: Count contacts
+  description: |
+    Returns how many contacts match the same filters as `GET /api/v3/contacts`, without fetching them.
+
+    Requires read access to the workspace.
+    Needs the Enterprise contacts feature: an organization without it answers `403`, like a caller
+    without access to the workspace. Session cookie, `x-api-key`, or a Bearer token.
+  tags:
+    - V3 Contacts
+  parameters:
+    - $ref: ../components/parameters/WorkspaceIdQuery.yml
+    - in: query
+      name: userId
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 500
+      description: Only the contact with this `userId`.
+    - in: query
+      name: attributeKey
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 100
+      description: With `attributeValue`, only contacts whose attribute with this key equals that value. Give both or neither.
+    - in: query
+      name: attributeValue
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 500
+      description: The exact value `attributeKey` must have, compared as stored text.
+  responses:
+    "200":
+      description: Count retrieved successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                type: object
+                required:
+                  - count
+                properties:
+                  count:
+                    type: integer
+                    minimum: 0
+                additionalProperties: false
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

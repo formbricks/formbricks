@@ -1,0 +1,26 @@
+type: object
+required:
+  - workspaceId
+  - title
+  - filters
+properties:
+  workspaceId:
+    type: string
+    format: cuid2
+  title:
+    type: string
+    minLength: 1
+    maxLength: 255
+    description: Unique within the workspace.
+  description:
+    type: string
+    maxLength: 1000
+  filters:
+    allOf:
+      - $ref: ./SegmentFilters.yml
+    minItems: 1
+    description: >-
+      The filter tree, at least one node. Attribute keys, segments and surveys it references must exist
+      in the workspace; otherwise the request answers 422 naming the node. Node and filter ids may be any
+      unique lowercase alphanumeric string.
+additionalProperties: false

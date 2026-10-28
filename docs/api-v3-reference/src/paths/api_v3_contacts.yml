@@ -1,0 +1,181 @@
+get:
+  operationId: listContactsV3
+  summary: List contacts
+  description: |
+    Returns a workspace's contacts with all their attributes, newest first, optionally filtered by
+    `userId` or by one exact attribute value. Contacts are respondent personal data, so every contact
+    returned belongs to the workspace you are authorized for and to nothing else.
+
+    A page ends where `meta.nextCursor` is `null`. A cursor is valid only for the filters it was issued
+    for; changing them mid-walk answers `400`. For "how many", use `GET /api/v3/contacts/count`.
+
+    Requires read access to the workspace.
+    Needs the Enterprise contacts feature: an organization without it answers `403`, like a caller
+    without access to the workspace. Session cookie, `x-api-key`, or a Bearer token.
+  tags:
+    - V3 Contacts
+  parameters:
+    - $ref: ../components/parameters/WorkspaceIdQuery.yml
+    - in: query
+      name: userId
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 500
+      description: Only the contact with this `userId`.
+    - in: query
+      name: attributeKey
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 100
+      description: With `attributeValue`, only contacts whose attribute with this key equals that value. Give both or neither.
+    - in: query
+      name: attributeValue
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 500
+      description: The exact value `attributeKey` must have, compared as stored text.
+    - in: query
+      name: limit
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      description: Page size. A value above the maximum is rejected with 400.
+    - $ref: ../components/parameters/CursorQuery.yml
+  responses:
+    "200":
+      description: Contacts retrieved successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: ../components/schemas/ContactResource.yml
+              meta:
+                $ref: ../components/schemas/CursorPaginationMeta.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []
+post:
+  operationId: upsertContactV3
+  summary: Create or update a contact
+  description: |
+    Creates the contact for `userId`, or updates it when the workspace already has one, and sets the
+    given attributes. This is the identify the SDK performs, available to agents and servers.
+
+    Attributes are merged into what the contact has. Whatever the server could not apply (an email that
+    belongs to another contact, a value of the wrong type for an existing key, a key that is not a safe
+    identifier) is listed in `warnings` and the rest is still applied, so check them. Answers `201` with a
+    `Location` header when the contact was created and `200` when it existed.
+
+    Requires write access to the workspace.
+    Needs the Enterprise contacts feature: an organization without it answers `403`, like a caller
+    without access to the workspace. Session cookie, `x-api-key`, or a Bearer token.
+  tags:
+    - V3 Contacts
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/UpsertContactRequest.yml
+  responses:
+    "201":
+      description: Contact created
+      headers:
+        Location:
+          schema:
+            type: string
+          description: Relative URL of the created contact.
+          example: /api/v3/contacts/clco1234567890123456789012
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/ContactResource.yml
+              warnings:
+                type: array
+                description: What the server skipped or did on its own, for example a duplicate email that was not applied or an attribute key it created.
+                items:
+                  type: string
+    "200":
+      description: Contact updated
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/ContactResource.yml
+              warnings:
+                type: array
+                description: What the server skipped or did on its own, for example a duplicate email that was not applied or an attribute key it created.
+                items:
+                  type: string
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

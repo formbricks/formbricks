@@ -1,0 +1,11 @@
+type: object
+description: At least one of `name` and `description`. The key and its data type cannot change.
+properties:
+  name:
+    type: string
+    minLength: 1
+    maxLength: 255
+  description:
+    type: string
+    maxLength: 1000
+additionalProperties: false

@@ -29,7 +29,7 @@ export async function listSegmentRows(params: {
   fingerprint: string;
 }) {
   const { workspaceId, limit, cursor, fingerprint } = params;
-  const base: Prisma.SegmentWhereInput = { workspaceId, isPrivate: false };
+  const base = { workspaceId, isPrivate: false };
   const createdAt = cursor ? new Date(cursor.value) : null;
 
   const rows = await prisma.segment.findMany({

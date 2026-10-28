@@ -1,0 +1,19 @@
+type: object
+description: At least one field. Linking a segment to surveys is done through the survey, not here.
+properties:
+  title:
+    type: string
+    minLength: 1
+    maxLength: 255
+  description:
+    type:
+      - string
+      - "null"
+    maxLength: 1000
+    description: "`null` clears it."
+  filters:
+    allOf:
+      - $ref: ./SegmentFilters.yml
+    minItems: 1
+    description: Replaces the whole filter tree. A segment cannot reference itself, directly or through another segment.
+additionalProperties: false

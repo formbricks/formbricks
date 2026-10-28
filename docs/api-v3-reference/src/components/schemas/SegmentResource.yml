@@ -1,0 +1,42 @@
+type: object
+description: >-
+  A reusable contact segment: a title and a filter tree. A survey's own targeting is not a segment
+  resource; it is the survey's `targeting`.
+required:
+  - id
+  - workspaceId
+  - title
+  - description
+  - createdAt
+  - updatedAt
+  - filters
+  - surveys
+properties:
+  id:
+    type: string
+    format: cuid2
+  workspaceId:
+    type: string
+    format: cuid2
+  title:
+    type: string
+  description:
+    type:
+      - string
+      - "null"
+  createdAt:
+    type: string
+    format: date-time
+  updatedAt:
+    type: string
+    format: date-time
+  filters:
+    $ref: ./SegmentFilters.yml
+  surveys:
+    type: array
+    description: >-
+      The surveys using this segment that the caller may see. A survey the caller cannot see still blocks
+      deleting the segment.
+    items:
+      $ref: ./SegmentSurveyRef.yml
+additionalProperties: false

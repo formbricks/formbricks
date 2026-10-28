@@ -4864,6 +4864,999 @@ paths:
         - sessionAuth: []
         - apiKeyAuth: []
         - bearerAuth: []
+  /api/v3/contacts:
+    get:
+      operationId: listContactsV3
+      summary: List contacts
+      description: |
+        Returns a workspace's contacts with all their attributes, newest first, optionally filtered by
+        `userId` or by one exact attribute value. Contacts are respondent personal data, so every contact
+        returned belongs to the workspace you are authorized for and to nothing else.
+
+        A page ends where `meta.nextCursor` is `null`. A cursor is valid only for the filters it was issued
+        for; changing them mid-walk answers `400`. For "how many", use `GET /api/v3/contacts/count`.
+
+        Requires read access to the workspace.
+        Needs the Enterprise contacts feature: an organization without it answers `403`, like a caller
+        without access to the workspace. Session cookie, `x-api-key`, or a Bearer token.
+      tags:
+        - V3 Contacts
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdQuery'
+        - in: query
+          name: userId
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 500
+          description: Only the contact with this `userId`.
+        - in: query
+          name: attributeKey
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+          description: With `attributeValue`, only contacts whose attribute with this key equals that value. Give both or neither.
+        - in: query
+          name: attributeValue
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 500
+          description: The exact value `attributeKey` must have, compared as stored text.
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Page size. A value above the maximum is rejected with 400.
+        - $ref: '#/components/parameters/CursorQuery'
+      responses:
+        '200':
+          description: Contacts retrieved successfully
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ContactResource'
+                  meta:
+                    $ref: '#/components/schemas/CursorPaginationMeta'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+    post:
+      operationId: upsertContactV3
+      summary: Create or update a contact
+      description: |
+        Creates the contact for `userId`, or updates it when the workspace already has one, and sets the
+        given attributes. This is the identify the SDK performs, available to agents and servers.
+
+        Attributes are merged into what the contact has. Whatever the server could not apply (an email that
+        belongs to another contact, a value of the wrong type for an existing key, a key that is not a safe
+        identifier) is listed in `warnings` and the rest is still applied, so check them. Answers `201` with a
+        `Location` header when the contact was created and `200` when it existed.
+
+        Requires write access to the workspace.
+        Needs the Enterprise contacts feature: an organization without it answers `403`, like a caller
+        without access to the workspace. Session cookie, `x-api-key`, or a Bearer token.
+      tags:
+        - V3 Contacts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertContactRequest'
+      responses:
+        '200':
+          description: Contact updated
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ContactResource'
+                  warnings:
+                    type: array
+                    description: What the server skipped or did on its own, for example a duplicate email that was not applied or an attribute key it created.
+                    items:
+                      type: string
+        '201':
+          description: Contact created
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Relative URL of the created contact.
+              example: /api/v3/contacts/clco1234567890123456789012
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ContactResource'
+                  warnings:
+                    type: array
+                    description: What the server skipped or did on its own, for example a duplicate email that was not applied or an attribute key it created.
+                    items:
+                      type: string
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/contacts/count:
+    get:
+      operationId: countContactsV3
+      summary: Count contacts
+      description: |
+        Returns how many contacts match the same filters as `GET /api/v3/contacts`, without fetching them.
+
+        Requires read access to the workspace.
+        Needs the Enterprise contacts feature: an organization without it answers `403`, like a caller
+        without access to the workspace. Session cookie, `x-api-key`, or a Bearer token.
+      tags:
+        - V3 Contacts
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdQuery'
+        - in: query
+          name: userId
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 500
+          description: Only the contact with this `userId`.
+        - in: query
+          name: attributeKey
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+          description: With `attributeValue`, only contacts whose attribute with this key equals that value. Give both or neither.
+        - in: query
+          name: attributeValue
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 500
+          description: The exact value `attributeKey` must have, compared as stored text.
+      responses:
+        '200':
+          description: Count retrieved successfully
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: object
+                    required:
+                      - count
+                    properties:
+                      count:
+                        type: integer
+                        minimum: 0
+                    additionalProperties: false
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/contacts/{contactId}:
+    get:
+      operationId: getContactV3
+      summary: Get a contact
+      description: |
+        Returns one contact with all its attributes. The workspace is resolved from the contact itself, so the
+        caller cannot choose the scope it is authorized against. An unknown id answers `403`, not `404`, so ids cannot be probed.
+
+        Requires read access to the contact's workspace.
+        Needs the Enterprise contacts feature: an organization without it answers `403`, like a caller
+        without access to the workspace. Session cookie, `x-api-key`, or a Bearer token.
+      tags:
+        - V3 Contacts
+      parameters:
+        - in: path
+          name: contactId
+          required: true
+          schema:
+            type: string
+            format: cuid2
+          description: Contact identifier.
+      responses:
+        '200':
+          description: Contact retrieved successfully
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ContactResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+    patch:
+      operationId: updateContactV3
+      summary: Update a contact's attributes
+      description: |
+        Sets attributes (merged into what the contact has) and/or removes attribute keys. Use it for a contact
+        that has no `userId`; otherwise `POST /api/v3/contacts` does the same by `userId`.
+
+        Whatever the server could not apply is listed in `warnings`, as on `POST /api/v3/contacts`.
+        The default attributes `userId`, `email`, `firstName` and `lastName` cannot be removed.
+        An unknown id answers `403`, not `404`, so ids cannot be probed.
+
+        Requires write access to the contact's workspace.
+        Needs the Enterprise contacts feature: an organization without it answers `403`, like a caller
+        without access to the workspace. Session cookie, `x-api-key`, or a Bearer token.
+      tags:
+        - V3 Contacts
+      parameters:
+        - in: path
+          name: contactId
+          required: true
+          schema:
+            type: string
+            format: cuid2
+          description: Contact identifier.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchContactRequest'
+      responses:
+        '200':
+          description: Contact updated
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ContactResource'
+                  warnings:
+                    type: array
+                    description: What the server skipped or did on its own, for example a duplicate email that was not applied or an attribute key it created.
+                    items:
+                      type: string
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+    delete:
+      operationId: deleteContactV3
+      summary: Delete a contact
+      description: |
+        Permanently deletes a contact **together with their responses and displays**. This cannot be undone.
+        An unknown id answers `403`, not `404`, so ids cannot be probed.
+
+        Requires write access to the contact's workspace.
+        Needs the Enterprise contacts feature: an organization without it answers `403`, like a caller
+        without access to the workspace. Session cookie, `x-api-key`, or a Bearer token.
+      tags:
+        - V3 Contacts
+      parameters:
+        - in: path
+          name: contactId
+          required: true
+          schema:
+            type: string
+            format: cuid2
+          description: Contact identifier.
+      responses:
+        '200':
+          description: Contact deleted
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: object
+                    required:
+                      - id
+                    properties:
+                      id:
+                        type: string
+                        format: cuid2
+                    additionalProperties: false
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/contacts/attribute-keys:
+    post:
+      operationId: createContactAttributeKeyV3
+      summary: Create a contact attribute key
+      description: |
+        Defines a custom contact attribute key with an optional data type. Setting an attribute on a contact
+        also creates its key, typed from the first value; use this to fix the type up front. The type decides
+        which segment-filter operators apply. Reading keys is `GET /api/v3/contact-attribute-keys`.
+
+        A key that already exists answers `409`, and a workspace holds at most 150 keys (`422`).
+
+        Requires write access to the workspace.
+        Needs the Enterprise contacts feature: an organization without it answers `403`, like a caller
+        without access to the workspace. Session cookie, `x-api-key`, or a Bearer token.
+      tags:
+        - V3 Contacts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateContactAttributeKeyRequest'
+      responses:
+        '201':
+          description: Attribute key created
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Relative URL of the created attribute key.
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ContactAttributeKeyResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '409':
+          description: An attribute key with this name already exists in the workspace.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: The workspace is at its attribute key ceiling.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/contacts/attribute-keys/{attributeKeyId}:
+    patch:
+      operationId: updateContactAttributeKeyV3
+      summary: Update a contact attribute key
+      description: |
+        Changes a custom key's display name or description. The key itself and its data type cannot change.
+        The built-in keys (`userId`, `email`, `firstName`, `lastName`, `language`) answer `422`.
+        The workspace is resolved from the key. An unknown id answers `403`, not `404`, so ids cannot be probed.
+
+        Requires write access to the key's workspace.
+        Needs the Enterprise contacts feature: an organization without it answers `403`, like a caller
+        without access to the workspace. Session cookie, `x-api-key`, or a Bearer token.
+      tags:
+        - V3 Contacts
+      parameters:
+        - in: path
+          name: attributeKeyId
+          required: true
+          schema:
+            type: string
+            format: cuid2
+          description: Contact attribute key identifier.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchContactAttributeKeyRequest'
+      responses:
+        '200':
+          description: Attribute key updated
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ContactAttributeKeyResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '422':
+          description: The key is a built-in attribute key, which cannot be changed.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+    delete:
+      operationId: deleteContactAttributeKeyV3
+      summary: Delete a contact attribute key
+      description: |
+        Deletes a custom key **and every contact's value for it**. Segment filters that use the key stop
+        matching. This cannot be undone. The built-in keys answer `422`. An unknown id answers `403`, not `404`, so ids cannot be probed.
+
+        Requires write access to the key's workspace.
+        Needs the Enterprise contacts feature: an organization without it answers `403`, like a caller
+        without access to the workspace. Session cookie, `x-api-key`, or a Bearer token.
+      tags:
+        - V3 Contacts
+      parameters:
+        - in: path
+          name: attributeKeyId
+          required: true
+          schema:
+            type: string
+            format: cuid2
+          description: Contact attribute key identifier.
+      responses:
+        '200':
+          description: Attribute key deleted
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: object
+                    required:
+                      - id
+                    properties:
+                      id:
+                        type: string
+                        format: cuid2
+                    additionalProperties: false
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '422':
+          description: The key is a built-in attribute key, which cannot be deleted.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/segments:
+    get:
+      operationId: listSegmentsV3
+      summary: List segments
+      description: |
+        Returns a workspace's reusable contact segments, newest first, as id, title and description. Read one
+        with `GET /api/v3/segments/{segmentId}` for its filters and the surveys using it. A survey's own
+        targeting is not listed; it is the survey's `targeting`.
+
+        Requires read access to the workspace.
+        Needs the Enterprise contacts feature: an organization without it answers `403`, like a caller
+        without access to the workspace. Session cookie, `x-api-key`, or a Bearer token.
+      tags:
+        - V3 Segments
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdQuery'
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Page size. A value above the maximum is rejected with 400.
+        - $ref: '#/components/parameters/CursorQuery'
+      responses:
+        '200':
+          description: Segments retrieved successfully
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SegmentListItem'
+                  meta:
+                    $ref: '#/components/schemas/CursorPaginationMeta'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+    post:
+      operationId: createSegmentV3
+      summary: Create a segment
+      description: |
+        Creates a reusable contact segment from a filter tree. The segment is not attached to any survey.
+
+        Filters that point at an attribute key, segment or survey that does not exist in the workspace answer
+        `422` with the offending node in `invalid_params`. A title already used in the workspace answers `409`.
+
+        Requires write access to the workspace.
+        Needs the Enterprise contacts feature: an organization without it answers `403`, like a caller
+        without access to the workspace. Session cookie, `x-api-key`, or a Bearer token.
+      tags:
+        - V3 Segments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSegmentRequest'
+      responses:
+        '201':
+          description: Segment created
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Relative URL of the created segment.
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SegmentResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '409':
+          description: A segment with this title already exists in the workspace.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: A filter references an attribute key, segment or survey that does not exist in the workspace.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/segments/{segmentId}:
+    get:
+      operationId: getSegmentV3
+      summary: Get a segment
+      description: |
+        Returns one reusable segment with its filter tree and the surveys using it, limited to surveys the
+        caller may see. The workspace is resolved from the segment. A survey's private targeting segment is
+        not reachable here. An unknown id answers `403`, not `404`, so ids cannot be probed.
+
+        Requires read access to the segment's workspace.
+        Needs the Enterprise contacts feature: an organization without it answers `403`, like a caller
+        without access to the workspace. Session cookie, `x-api-key`, or a Bearer token.
+      tags:
+        - V3 Segments
+      parameters:
+        - in: path
+          name: segmentId
+          required: true
+          schema:
+            type: string
+            format: cuid2
+          description: Segment identifier.
+      responses:
+        '200':
+          description: Segment retrieved successfully
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SegmentResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+    patch:
+      operationId: updateSegmentV3
+      summary: Update a segment
+      description: |
+        Changes a segment's title, description or filters; `filters` replaces the whole tree. Surveys already
+        using the segment pick up the change. Same filter validation as create (`422`), and a segment cannot
+        reference itself, directly or through another segment. A title held by another segment answers `409`.
+        An unknown id answers `403`, not `404`, so ids cannot be probed.
+
+        Requires write access to the segment's workspace.
+        Needs the Enterprise contacts feature: an organization without it answers `403`, like a caller
+        without access to the workspace. Session cookie, `x-api-key`, or a Bearer token.
+      tags:
+        - V3 Segments
+      parameters:
+        - in: path
+          name: segmentId
+          required: true
+          schema:
+            type: string
+            format: cuid2
+          description: Segment identifier.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchSegmentRequest'
+      responses:
+        '200':
+          description: Segment updated
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SegmentResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '409':
+          description: A segment with this title already exists in the workspace.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: A filter references something that does not exist in the workspace, or the segment references itself.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+    delete:
+      operationId: deleteSegmentV3
+      summary: Delete a segment
+      description: |
+        Deletes a segment. Refused with `409` while any survey uses it, with the surveys the caller can see in
+        `details.surveys`. An unknown id answers `403`, not `404`, so ids cannot be probed.
+
+        Requires write access to the segment's workspace.
+        Needs the Enterprise contacts feature: an organization without it answers `403`, like a caller
+        without access to the workspace. Session cookie, `x-api-key`, or a Bearer token.
+      tags:
+        - V3 Segments
+      parameters:
+        - in: path
+          name: segmentId
+          required: true
+          schema:
+            type: string
+            format: cuid2
+          description: Segment identifier.
+      responses:
+        '200':
+          description: Segment deleted
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: object
+                    required:
+                      - id
+                    properties:
+                      id:
+                        type: string
+                        format: cuid2
+                    additionalProperties: false
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '409':
+          description: A survey uses the segment. Detach it from the surveys first; they are listed in `details.surveys`.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/tags:
     get:
       operationId: listTagsV3
@@ -5085,6 +6078,493 @@ paths:
                         type: string
                         format: cuid2
                         description: The surviving tag's id.
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/webhooks:
+    get:
+      operationId: listWebhooksV3
+      summary: List webhooks
+      description: |
+        Returns a workspace's webhooks, ordered by id. Signing secrets are never returned.
+
+        Requires read access to the workspace. Session cookie, `x-api-key`, or a Bearer token.
+      tags:
+        - V3 Webhooks
+      parameters:
+        - in: query
+          name: workspaceId
+          required: true
+          schema:
+            type: string
+            format: cuid2
+          description: |
+            Workspace identifier. This is the canonical container ID for v3 APIs.
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 250
+            default: 50
+          description: Page size (max 250).
+        - $ref: '#/components/parameters/CursorQuery'
+      responses:
+        '200':
+          description: Webhooks retrieved successfully
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WebhookResource'
+                  meta:
+                    $ref: '#/components/schemas/CursorPaginationMeta'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+    post:
+      operationId: createWebhookV3
+      summary: Create a webhook
+      description: |
+        Creates a webhook that receives response events. Formbricks generates the signing secret and returns
+        it **once**, in this response; no other operation returns it, so store it now.
+
+        Requires write access to the workspace; for an API key, write or manage access. Session cookie,
+        `x-api-key`, or a Bearer token.
+
+        The URL is checked with the same SSRF policy deliveries use: `http` or `https`, no private, loopback,
+        link-local or cloud-metadata address, and a hostname must resolve to public addresses only. A URL that
+        fails answers **422** with `invalid_params` naming `url`. Each entry of `surveyIds` must be a survey of
+        the workspace that is visible to the whole workspace, else **422**; a survey of another workspace and
+        one that does not exist are indistinguishable.
+
+        An empty `surveyIds` sends every survey in the workspace, including surveys created later.
+      tags:
+        - V3 Webhooks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWebhookRequest'
+            examples:
+              finishedResponses:
+                summary: Send finished responses of one survey
+                value:
+                  workspaceId: clws1234567890123456789012
+                  name: Slack bridge
+                  url: https://hooks.example.com/formbricks
+                  triggers:
+                    - responseFinished
+                  surveyIds:
+                    - clsv1234567890123456789012
+      responses:
+        '201':
+          description: Webhook created
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Location:
+              schema:
+                type: string
+              description: URL of the new webhook.
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/WebhookCreatedResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/webhooks/{webhookId}:
+    get:
+      operationId: getWebhookV3
+      summary: Get a webhook
+      description: |
+        Returns one webhook. The signing secret is never returned.
+
+        The workspace is resolved from the webhook itself, so the caller cannot choose which scope it is
+        authorized against. An unknown `webhookId` answers `403`, not `404`, so ids cannot be probed for
+        existence. Session cookie, `x-api-key`, or a Bearer token.
+      tags:
+        - V3 Webhooks
+      parameters:
+        - $ref: '#/components/parameters/WebhookIdPath'
+      responses:
+        '200':
+          description: Webhook retrieved successfully
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/WebhookResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+    patch:
+      operationId: patchWebhookV3
+      summary: Update a webhook
+      description: |
+        Changes a webhook's name, URL, triggers or surveys. Only the fields sent change; `triggers` and
+        `surveyIds` replace the whole list. The secret and the workspace never change. A body with no field is
+        **400**.
+
+        A new `url` is held to the same SSRF policy as on create, and surveys newly added to `surveyIds` must
+        belong to the webhook's workspace and be visible to the whole workspace, else **422**. A survey already
+        on the webhook that was restricted later stays on it (deliveries skip it), so an unrelated edit does
+        not fail. An empty `surveyIds` sends every survey in the workspace.
+
+        Requires write access to the webhook's workspace. Same resolution and `403` rule as the read.
+      tags:
+        - V3 Webhooks
+      parameters:
+        - $ref: '#/components/parameters/WebhookIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchWebhookRequest'
+      responses:
+        '200':
+          description: Webhook updated successfully
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/WebhookResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+    delete:
+      operationId: deleteWebhookV3
+      summary: Delete a webhook
+      description: |
+        Deletes a webhook. Events stop being sent to its URL. Same authorization as update.
+      tags:
+        - V3 Webhooks
+      parameters:
+        - $ref: '#/components/parameters/WebhookIdPath'
+      responses:
+        '200':
+          description: Webhook deleted successfully
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: object
+                    required:
+                      - id
+                    properties:
+                      id:
+                        type: string
+                        format: cuid2
+                    additionalProperties: false
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/webhooks/{webhookId}/test:
+    post:
+      operationId: testWebhookV3
+      summary: Send a test delivery
+      description: |
+        Sends one signed test event (`{"event":"testEndpoint"}`) to the webhook's **stored** URL, through the
+        same transport as real deliveries: SSRF validation, DNS pinning, signing with the webhook's secret,
+        no redirects, and the delivery timeout. The request cannot name a URL, so the server is never asked to
+        call an address that was not accepted as a webhook target.
+
+        A delivery that fails is a result, not an error: the response is **200** with `delivered: false` and
+        the reason. Requires write access to the webhook's workspace. Not audited, as nothing changes.
+      tags:
+        - V3 Webhooks
+      parameters:
+        - $ref: '#/components/parameters/WebhookIdPath'
+      responses:
+        '200':
+          description: The test delivery was attempted
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/WebhookTestResult'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/audit-events:
+    get:
+      operationId: listAuditEventsV3
+      summary: List audit events
+      description: |
+        Returns an organization's audit events, newest first (`timestamp` descending, ties broken by `id`).
+        Narrow by actor, action, target, status or a time range, and page with `meta.nextCursor`.
+
+        Requires an organization owner or manager (session cookie or Bearer token), or an API key with
+        `manage` access to a workspace of that organization. A key is limited to its own organization.
+        Anyone else, and an unknown organization, answers `403`. Audit logging must be enabled on the
+        instance (`AUDIT_LOG_ENABLED` and an Enterprise license); otherwise this answers `403` too.
+
+        Only events written while audit logging was enabled exist, and events are kept until their
+        organization is deleted. Events are summaries: changed values are not returned.
+
+        A cursor is only valid with the filters it was issued for; changing `organizationId` or any filter
+        mid-walk is a `400`. Changing `limit` is allowed. Reading audit events is not itself audited.
+      tags:
+        - V3 Audit Events
+      parameters:
+        - in: query
+          name: organizationId
+          required: true
+          schema:
+            type: string
+            format: cuid2
+          description: The organization whose events to read. Each workspace returned by `list_workspaces` carries its `organizationId`.
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Page size. A value above the maximum is rejected with **400** rather than silently reduced to it. The server may return fewer items than requested, so treat `meta.nextCursor` as the only end-of-collection signal.
+        - $ref: '#/components/parameters/CursorQuery'
+        - in: query
+          name: actorId
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 255
+          description: Only events caused by this actor (a user id, an API key id, or `system`).
+        - in: query
+          name: actorType
+          schema:
+            type: string
+            enum:
+              - user
+              - api
+              - system
+          description: Only events caused by this kind of actor.
+        - in: query
+          name: action
+          schema:
+            type: string
+          description: Only events with this action, e.g. `deleted`. An action this API does not know is a **400**.
+        - in: query
+          name: targetType
+          schema:
+            type: string
+          description: Only events about this kind of resource, e.g. `survey`. A type this API does not know is a **400**. Required when `targetId` is set.
+        - in: query
+          name: targetId
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 255
+          description: Only events about this one resource. Requires `targetType`.
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum:
+              - success
+              - failure
+          description: Only events that succeeded, or only attempts that failed.
+        - in: query
+          name: from
+          schema:
+            type: string
+            format: date-time
+          description: Only events at or after this instant (**inclusive**).
+        - in: query
+          name: to
+          schema:
+            type: string
+            format: date-time
+          description: Only events before this instant (**exclusive**). Must be later than `from`.
+      responses:
+        '200':
+          description: Audit events retrieved successfully
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditEvent'
+                  meta:
+                    $ref: '#/components/schemas/CursorPaginationMeta'
         '400':
           $ref: '#/components/responses/V3BadRequest'
         '401':
@@ -6084,6 +7564,801 @@ paths:
           $ref: '#/components/responses/FeedbackRecordsServiceUnavailable'
       security:
         - apiKeyAuth: []
+  /api/v3/feedback-queries:
+    post:
+      operationId: queryFeedbackV3
+      summary: Query feedback
+      description: |
+        Runs a read-only aggregate query over a workspace's Feedback Dataset and returns the rows. Nothing is
+        written; it is a `POST` only because the query is a structured body.
+
+        The query is in the Cube.js query format (ADR 0001): measures such as `FeedbackRecords.npsScore`,
+        dimensions to group by, one time axis, filters, order and limit. Fields come from the field catalog,
+        `GET /api/v3/feedback-queries/field-catalog`; anything outside it, and every Cube option the product
+        does not use, is rejected with **400** naming the offending key. Filters, groups, `limit` and the
+        number of members are bounded. To read individual records rather than aggregates, use
+        `GET /api/v3/feedbackRecords`.
+
+        **Tenancy.** The Feedback Dataset is resolved from `workspaceId` (and `datasetId` when the workspace has
+        several) after checking the caller's read access to both; the server filters Cube to it and the query
+        cannot name or widen it.
+
+        **Licence and limits.** Needs the analytics entitlement and the feedback datasets entitlement,
+        otherwise **403**. Callers are limited to 30 queries per minute, on top of the default v3 limit
+        (**429** with `Retry-After`).
+
+        Session cookie, `x-api-key`, or a Bearer token.
+      tags:
+        - V3 Feedback Queries
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackQueryRequest'
+            examples:
+              npsBySentiment:
+                summary: NPS by sentiment over the last 30 days
+                value:
+                  workspaceId: tz4a98xxat96iws9zmbrgj3a
+                  query:
+                    measures:
+                      - FeedbackRecords.npsScore
+                      - FeedbackRecords.count
+                    dimensions:
+                      - FeedbackRecords.sentiment
+                    timeDimensions:
+                      - dimension: FeedbackRecords.collectedAt
+                        dateRange: last 30 days
+                    filters:
+                      - member: FeedbackRecords.fieldType
+                        operator: equals
+                        values:
+                          - nps
+                    order:
+                      - - FeedbackRecords.count
+                        - desc
+      responses:
+        '200':
+          description: The query ran.
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/FeedbackQueryResult'
+                additionalProperties: false
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+        '502':
+          description: 'Bad Gateway — the analytics service did not answer the query (`code: bad_gateway`). The detail is fixed text; correlate on `requestId`.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/feedback-queries/field-catalog:
+    get:
+      operationId: getFeedbackFieldCatalogV3
+      summary: Get the feedback field catalog
+      description: |
+        Returns the measures, dimensions, filter operators, time granularities, date presets and limits a
+        feedback query may use. It is the list `POST /api/v3/feedback-queries` validates against, built from the
+        same source, so a member advertised here is accepted there.
+
+        The catalog is the same for every workspace; it is read per workspace so that it answers behind the same
+        access and licence checks as a query, and a caller without the analytics entitlement learns that here.
+
+        Requires read access to the workspace. Session cookie, `x-api-key`, or a Bearer token.
+      tags:
+        - V3 Feedback Queries
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdQuery'
+      responses:
+        '200':
+          description: Catalog retrieved successfully
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/FeedbackFieldCatalog'
+                additionalProperties: false
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/unify-feedback/taxonomy/fields:
+    get:
+      operationId: listTaxonomyFieldsV3
+      summary: List taxonomy fields
+      description: |
+        Lists the feedback fields topics can be generated for in a feedback dataset, with record and embedding
+        counts per field. Use it to choose the scope of a run and to check there is enough embedded text.
+
+        `unavailable: true` means the feedback service did not answer; it is not the same as an empty list.
+
+        Requires read access to the workspace and an Enterprise license that includes Unify Feedback (otherwise **403**). Session cookie, `x-api-key`, or a Bearer token.
+      tags:
+        - V3 Taxonomy
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdQuery'
+        - $ref: '#/components/parameters/TaxonomyDirectoryIdQuery'
+      responses:
+        '200':
+          description: Fields listed
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: object
+                    required:
+                      - fields
+                      - unavailable
+                    properties:
+                      fields:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/TaxonomyField'
+                      unavailable:
+                        type: boolean
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/unify-feedback/taxonomy/state:
+    get:
+      operationId: getTaxonomyStateV3
+      summary: Get taxonomy state
+      description: |
+        Returns the active topic tree for a scope together with its five most recent runs. The tree carries the
+        node ids the other taxonomy operations take.
+
+        `activeTree` is `null` when no taxonomy has been generated for the scope yet. `unavailable: true` means
+        the feedback service did not answer.
+
+        Requires read access to the workspace and an Enterprise license that includes Unify Feedback (otherwise **403**). Session cookie, `x-api-key`, or a Bearer token.
+      tags:
+        - V3 Taxonomy
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdQuery'
+        - $ref: '#/components/parameters/TaxonomyDirectoryIdQuery'
+        - in: query
+          name: scopeType
+          schema:
+            type: string
+            enum:
+              - field
+              - directory
+            default: field
+          description: '`field` covers one feedback field and requires `sourceType` and `fieldId`; `directory` covers all text feedback in the dataset and accepts neither.'
+        - in: query
+          name: sourceType
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 255
+          description: Field scope only. Required when `scopeType` is `field`.
+        - in: query
+          name: sourceId
+          schema:
+            type: string
+            maxLength: 255
+          description: Field scope only. May be the empty string, which addresses feedback with no attributed source.
+        - in: query
+          name: fieldId
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 255
+          description: Field scope only. Required when `scopeType` is `field`.
+      responses:
+        '200':
+          description: State returned
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: object
+                    required:
+                      - activeTree
+                      - runs
+                      - unavailable
+                    properties:
+                      activeTree:
+                        oneOf:
+                          - type: object
+                            required:
+                              - run
+                              - root
+                            properties:
+                              run:
+                                $ref: '#/components/schemas/TaxonomyRun'
+                              root:
+                                oneOf:
+                                  - $ref: '#/components/schemas/TaxonomyNode'
+                                  - type: 'null'
+                          - type: 'null'
+                      runs:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/TaxonomyRun'
+                      unavailable:
+                        type: boolean
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/unify-feedback/taxonomy/runs:
+    post:
+      operationId: startTaxonomyRunV3
+      summary: Start a taxonomy run
+      description: |
+        Starts, or resumes, topic generation for a scope. Idempotent per scope: when a run is already going,
+        `inProgress` is `true` and that run is returned. Poll `GET /api/v3/unify-feedback/taxonomy/runs/{runId}`
+        until `status` is `succeeded`, `failed` or `canceled`, then read the tree from
+        `GET /api/v3/unify-feedback/taxonomy/state`.
+
+        Changing a dataset's topics is limited to organization owners and managers for a person, and for an
+        API key to one with write access to a workspace that is the dataset's only owner: a dataset shared by
+        several workspaces answers **403** to an API key, because its topics belong to the dataset, not to a
+        workspace. Requires an Enterprise license that includes Unify Feedback. Session cookie, `x-api-key`, or a
+        Bearer token.
+
+        Answers **503** when the taxonomy service or an embedding model is not configured on the deployment.
+      tags:
+        - V3 Taxonomy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - workspaceId
+                - directoryId
+              properties:
+                workspaceId:
+                  type: string
+                  format: cuid2
+                directoryId:
+                  type: string
+                  format: cuid2
+                  description: Feedback dataset (directory) assigned to `workspaceId`.
+                scopeType:
+                  type: string
+                  enum:
+                    - field
+                    - directory
+                  default: field
+                  description: '`field` requires `sourceType` and `fieldId`; `directory` covers all text feedback in the dataset and accepts neither.'
+                sourceType:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                sourceId:
+                  type: string
+                  maxLength: 255
+                  description: May be the empty string, which addresses feedback with no attributed source.
+                fieldId:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                fieldLabel:
+                  type: string
+                  maxLength: 1000
+                  description: Field scope only. Display label for the field.
+      responses:
+        '200':
+          description: Run started or already in progress
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: object
+                    required:
+                      - run
+                      - inProgress
+                    properties:
+                      run:
+                        $ref: '#/components/schemas/TaxonomyRun'
+                      inProgress:
+                        type: boolean
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+        '502':
+          $ref: '#/components/responses/V3BadGateway'
+        '503':
+          $ref: '#/components/responses/V3ServiceUnavailable'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/unify-feedback/taxonomy/runs/{runId}:
+    get:
+      operationId: getTaxonomyRunV3
+      summary: Get a taxonomy run
+      description: |
+        Returns one taxonomy run's status. Poll it after starting a run; `error_code` says why a run failed.
+
+        Requires read access to the workspace and an Enterprise license that includes Unify Feedback (otherwise **403**). Session cookie, `x-api-key`, or a Bearer token.
+
+        Answers **404** for a run that does not exist in the given dataset.
+      tags:
+        - V3 Taxonomy
+      parameters:
+        - in: path
+          name: runId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/WorkspaceIdQuery'
+        - $ref: '#/components/parameters/TaxonomyDirectoryIdQuery'
+      responses:
+        '200':
+          description: Run returned
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TaxonomyRun'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '404':
+          $ref: '#/components/responses/V3NotFound'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+        '502':
+          $ref: '#/components/responses/V3BadGateway'
+        '503':
+          $ref: '#/components/responses/V3ServiceUnavailable'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/unify-feedback/taxonomy/runs/{runId}/record-counts:
+    get:
+      operationId: getTaxonomyRecordCountsV3
+      summary: Get taxonomy record counts
+      description: |
+        Returns the distinct feedback-record count for every visible node of a run, subtree totals included
+        (a node's count covers the node and its visible descendants). One entry per node.
+
+        Requires read access to the workspace and an Enterprise license that includes Unify Feedback (otherwise **403**). Session cookie, `x-api-key`, or a Bearer token.
+
+        Answers **404** for a run that does not exist in the given dataset.
+      tags:
+        - V3 Taxonomy
+      parameters:
+        - in: path
+          name: runId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/WorkspaceIdQuery'
+        - $ref: '#/components/parameters/TaxonomyDirectoryIdQuery'
+      responses:
+        '200':
+          description: Counts returned
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: object
+                    required:
+                      - counts
+                    properties:
+                      counts:
+                        type: array
+                        items:
+                          type: object
+                          required:
+                            - node_id
+                            - record_count
+                          properties:
+                            node_id:
+                              type: string
+                              format: uuid
+                            record_count:
+                              type: integer
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '404':
+          $ref: '#/components/responses/V3NotFound'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+        '502':
+          $ref: '#/components/responses/V3BadGateway'
+        '503':
+          $ref: '#/components/responses/V3ServiceUnavailable'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/unify-feedback/taxonomy/nodes/{nodeId}:
+    patch:
+      operationId: renameTaxonomyNodeV3
+      summary: Rename a taxonomy node
+      description: |
+        Renames a topic or subtopic. The change is recorded against the caller; an API key is recorded as
+        `apiKey:<id>`.
+
+        Changing a dataset's topics is limited to organization owners and managers for a person, and for an
+        API key to one with write access to a workspace that is the dataset's only owner: a dataset shared by
+        several workspaces answers **403** to an API key, because its topics belong to the dataset, not to a
+        workspace. Requires an Enterprise license that includes Unify Feedback. Session cookie, `x-api-key`, or a
+        Bearer token.
+
+        Answers **404** for a node that does not exist in the given dataset.
+      tags:
+        - V3 Taxonomy
+      parameters:
+        - in: path
+          name: nodeId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - workspaceId
+                - directoryId
+                - label
+              properties:
+                workspaceId:
+                  type: string
+                  format: cuid2
+                directoryId:
+                  type: string
+                  format: cuid2
+                label:
+                  type: string
+                  minLength: 1
+                  maxLength: 1000
+                  description: New label. Trimmed; must not be empty.
+      responses:
+        '200':
+          description: Node renamed
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TaxonomyNode'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '404':
+          $ref: '#/components/responses/V3NotFound'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+        '502':
+          $ref: '#/components/responses/V3BadGateway'
+        '503':
+          $ref: '#/components/responses/V3ServiceUnavailable'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+    delete:
+      operationId: removeTaxonomyNodeV3
+      summary: Remove a taxonomy node
+      description: |
+        Removes a topic or subtopic from the tree. The node is retained for audit but excluded from tree
+        responses; there is no operation to restore it.
+
+        Changing a dataset's topics is limited to organization owners and managers for a person, and for an
+        API key to one with write access to a workspace that is the dataset's only owner: a dataset shared by
+        several workspaces answers **403** to an API key, because its topics belong to the dataset, not to a
+        workspace. Requires an Enterprise license that includes Unify Feedback. Session cookie, `x-api-key`, or a
+        Bearer token.
+
+        Answers **404** for a node that does not exist in the given dataset.
+      tags:
+        - V3 Taxonomy
+      parameters:
+        - in: path
+          name: nodeId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/WorkspaceIdQuery'
+        - $ref: '#/components/parameters/TaxonomyDirectoryIdQuery'
+      responses:
+        '204':
+          description: Node removed
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '404':
+          $ref: '#/components/responses/V3NotFound'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+        '502':
+          $ref: '#/components/responses/V3BadGateway'
+        '503':
+          $ref: '#/components/responses/V3ServiceUnavailable'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/unify-feedback/taxonomy/nodes/{nodeId}/records:
+    get:
+      operationId: listTaxonomyNodeRecordsV3
+      summary: List a taxonomy node's records
+      description: |
+        Returns a capped sample of the feedback records classified under a node and its visible descendants.
+        There is no cursor and no total: use the record-counts operation for how many there are.
+
+        Requires read access to the workspace and an Enterprise license that includes Unify Feedback (otherwise **403**). Session cookie, `x-api-key`, or a Bearer token.
+
+        Answers **404** for a node that does not exist in the given dataset.
+      tags:
+        - V3 Taxonomy
+      parameters:
+        - in: path
+          name: nodeId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/WorkspaceIdQuery'
+        - $ref: '#/components/parameters/TaxonomyDirectoryIdQuery'
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 100
+          description: Size of the sample. A value above the maximum is rejected with **400**; `meta.limit` reports the cap the feedback service applied.
+      responses:
+        '200':
+          description: Records sampled
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FeedbackRecord'
+                  meta:
+                    type: object
+                    required:
+                      - limit
+                    properties:
+                      limit:
+                        type: integer
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '404':
+          $ref: '#/components/responses/V3NotFound'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+        '502':
+          $ref: '#/components/responses/V3BadGateway'
+        '503':
+          $ref: '#/components/responses/V3ServiceUnavailable'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/unify-feedback/enrichment-status:
+    get:
+      operationId: getEnrichmentStatusV3
+      summary: Get enrichment status
+      description: |
+        Returns how far translation, sentiment and emotion enrichment has got across the feedback datasets
+        assigned to a workspace: records eligible, done, permanently failed and still pending, per enrichment.
+        Only enrichments enabled for at least one of the datasets are listed.
+
+        `unavailable: true` means the feedback service did not answer; it is not the same as nothing being enabled.
+
+        Requires read access to the workspace and an Enterprise license that includes Unify Feedback (otherwise **403**). Session cookie, `x-api-key`, or a Bearer token.
+      tags:
+        - V3 Taxonomy
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdQuery'
+      responses:
+        '200':
+          description: Status returned
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: object
+                    required:
+                      - enrichments
+                      - unavailable
+                    properties:
+                      enrichments:
+                        type: array
+                        items:
+                          type: object
+                          required:
+                            - kind
+                            - eligible
+                            - done
+                            - failedTerminal
+                            - pending
+                          properties:
+                            kind:
+                              type: string
+                              enum:
+                                - translation
+                                - sentiment
+                                - emotions
+                            eligible:
+                              type: integer
+                            done:
+                              type: integer
+                            failedTerminal:
+                              type: integer
+                              description: Records whose enrichment permanently gave up.
+                            pending:
+                              type: integer
+                              description: Eligible records neither done nor permanently failed.
+                      unavailable:
+                        type: boolean
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
 components:
   securitySchemes:
     sessionAuth:
@@ -12649,6 +14924,254 @@ components:
             - number
             - date
       additionalProperties: false
+    ContactResource:
+      type: object
+      description: 'A contact: a respondent known to a workspace, with all its attributes. Attribute values are read back as text, whatever their type.'
+      required:
+        - id
+        - workspaceId
+        - createdAt
+        - updatedAt
+        - attributes
+      properties:
+        id:
+          type: string
+          format: cuid2
+        workspaceId:
+          type: string
+          format: cuid2
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        attributes:
+          type: object
+          description: Attribute key to value, for every attribute the contact has.
+          additionalProperties:
+            type: string
+      additionalProperties: false
+    ContactAttributesInput:
+      type: object
+      description: 'Contact attributes as `{ key: value }`. Values are strings (at most 500 characters), numbers or booleans; a boolean is stored as text. At most 150 keys per call. A key the workspace does not have yet is created, typed from its first value (a JSON number is `number`, an ISO 8601 string is `date`, anything else is `string`); a key that does exist enforces its own type. `email` must be a valid address and unique in the workspace.'
+      maxProperties: 150
+      additionalProperties:
+        oneOf:
+          - type: string
+            minLength: 1
+            maxLength: 500
+          - type: number
+          - type: boolean
+    UpsertContactRequest:
+      type: object
+      required:
+        - workspaceId
+        - userId
+      properties:
+        workspaceId:
+          type: string
+          format: cuid2
+        userId:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: The contact's identity. The workspace's contact with this `userId` is updated; when there is none, one is created.
+        attributes:
+          allOf:
+            - $ref: '#/components/schemas/ContactAttributesInput'
+          description: Attributes to set, merged into what the contact already has. It cannot contain `userId`; that is the field above.
+      additionalProperties: false
+    PatchContactRequest:
+      type: object
+      description: At least one of `attributes` and `removeAttributeKeys`.
+      properties:
+        attributes:
+          allOf:
+            - $ref: '#/components/schemas/ContactAttributesInput'
+          description: Attributes to set, merged into what the contact already has; omitted attributes stay.
+        removeAttributeKeys:
+          type: array
+          minItems: 1
+          maxItems: 150
+          items:
+            type: string
+            minLength: 1
+            maxLength: 100
+          description: Attribute keys to remove from this contact. `userId`, `email`, `firstName` and `lastName` cannot be removed, and a key cannot also appear in `attributes`.
+      additionalProperties: false
+    CreateContactAttributeKeyRequest:
+      type: object
+      required:
+        - workspaceId
+        - key
+      properties:
+        workspaceId:
+          type: string
+          format: cuid2
+        key:
+          type: string
+          maxLength: 100
+          pattern: ^[a-z][a-z0-9_]*$
+          description: Lowercase letters, digits and underscores, starting with a letter. The keys `user_id`, `first_name` and `last_name` are reserved.
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Display name. Defaults to the title-cased key.
+        description:
+          type: string
+          maxLength: 1000
+        dataType:
+          type: string
+          enum:
+            - string
+            - number
+            - date
+          default: string
+          description: Decides which segment-filter operators apply to the attribute.
+      additionalProperties: false
+    PatchContactAttributeKeyRequest:
+      type: object
+      description: At least one of `name` and `description`. The key and its data type cannot change.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+          maxLength: 1000
+      additionalProperties: false
+    SegmentListItem:
+      type: object
+      description: A reusable segment as listed, the handle and the text without the filter tree.
+      required:
+        - id
+        - workspaceId
+        - title
+        - description
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: cuid2
+        workspaceId:
+          type: string
+          format: cuid2
+        title:
+          type: string
+        description:
+          type:
+            - string
+            - 'null'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    CreateSegmentRequest:
+      type: object
+      required:
+        - workspaceId
+        - title
+        - filters
+      properties:
+        workspaceId:
+          type: string
+          format: cuid2
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Unique within the workspace.
+        description:
+          type: string
+          maxLength: 1000
+        filters:
+          allOf:
+            - $ref: '#/components/schemas/SegmentFilters'
+          minItems: 1
+          description: The filter tree, at least one node. Attribute keys, segments and surveys it references must exist in the workspace; otherwise the request answers 422 naming the node. Node and filter ids may be any unique lowercase alphanumeric string.
+      additionalProperties: false
+    SegmentSurveyRef:
+      type: object
+      description: A survey that uses a segment.
+      required:
+        - id
+        - name
+        - status
+      properties:
+        id:
+          type: string
+          format: cuid2
+        name:
+          type: string
+        status:
+          type: string
+      additionalProperties: false
+    SegmentResource:
+      type: object
+      description: 'A reusable contact segment: a title and a filter tree. A survey''s own targeting is not a segment resource; it is the survey''s `targeting`.'
+      required:
+        - id
+        - workspaceId
+        - title
+        - description
+        - createdAt
+        - updatedAt
+        - filters
+        - surveys
+      properties:
+        id:
+          type: string
+          format: cuid2
+        workspaceId:
+          type: string
+          format: cuid2
+        title:
+          type: string
+        description:
+          type:
+            - string
+            - 'null'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        filters:
+          $ref: '#/components/schemas/SegmentFilters'
+        surveys:
+          type: array
+          description: The surveys using this segment that the caller may see. A survey the caller cannot see still blocks deleting the segment.
+          items:
+            $ref: '#/components/schemas/SegmentSurveyRef'
+      additionalProperties: false
+    PatchSegmentRequest:
+      type: object
+      description: At least one field. Linking a segment to surveys is done through the survey, not here.
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type:
+            - string
+            - 'null'
+          maxLength: 1000
+          description: '`null` clears it.'
+        filters:
+          allOf:
+            - $ref: '#/components/schemas/SegmentFilters'
+          minItems: 1
+          description: Replaces the whole filter tree. A segment cannot reference itself, directly or through another segment.
+      additionalProperties: false
     TagResource:
       type: object
       required:
@@ -12678,6 +15201,287 @@ components:
           type: integer
           minimum: 0
           description: Responses currently carrying this tag. `0` when the tag exists but has never been applied.
+    WebhookSource:
+      type: string
+      enum:
+        - user
+        - zapier
+        - make
+        - n8n
+        - activepieces
+      description: Who set the webhook up. Informational only; it does not change how events are delivered.
+    WebhookTrigger:
+      type: string
+      enum:
+        - responseCreated
+        - responseUpdated
+        - responseFinished
+      description: The response event that fires a webhook.
+    WebhookResource:
+      type: object
+      description: 'A webhook: an endpoint Formbricks POSTs response events to. The signing secret is never part of this shape; it is returned once, by the create operation.'
+      required:
+        - id
+        - workspaceId
+        - name
+        - url
+        - source
+        - triggers
+        - surveyIds
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: cuid2
+        workspaceId:
+          type: string
+          format: cuid2
+        name:
+          type:
+            - string
+            - 'null'
+        url:
+          type: string
+          format: uri
+          description: The endpoint events are POSTed to.
+        source:
+          $ref: '#/components/schemas/WebhookSource'
+        triggers:
+          type: array
+          items:
+            $ref: '#/components/schemas/WebhookTrigger'
+        surveyIds:
+          type: array
+          items:
+            type: string
+            format: cuid2
+          description: Surveys whose responses are sent. An empty array means every survey in the workspace, including surveys created later.
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    CreateWebhookRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - workspaceId
+        - url
+        - triggers
+      properties:
+        workspaceId:
+          type: string
+          format: cuid2
+          description: Workspace the webhook is created in.
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Optional label. Trimmed; must not be empty.
+        url:
+          type: string
+          format: uri
+          maxLength: 2048
+          description: Endpoint events are POSTed to. `http` or `https` only. Private, loopback, link-local and cloud metadata addresses are refused with **422**, as are hostnames that resolve to one; the same policy applies at every delivery.
+        source:
+          $ref: '#/components/schemas/WebhookSource'
+          default: user
+        triggers:
+          type: array
+          minItems: 1
+          maxItems: 3
+          items:
+            $ref: '#/components/schemas/WebhookTrigger'
+        surveyIds:
+          type: array
+          maxItems: 200
+          default: []
+          items:
+            type: string
+            format: cuid2
+          description: Surveys whose responses are sent. Each must be a survey of `workspaceId` that is visible to the whole workspace, else **422**. An empty array (the default) sends every survey in the workspace, including surveys created later.
+    WebhookCreatedResource:
+      type: object
+      description: A newly created webhook, with the secret Formbricks signs its deliveries with. This is the only response that ever carries the secret; store it now.
+      required:
+        - id
+        - workspaceId
+        - name
+        - url
+        - source
+        - triggers
+        - surveyIds
+        - createdAt
+        - updatedAt
+        - secret
+      properties:
+        id:
+          type: string
+          format: cuid2
+        workspaceId:
+          type: string
+          format: cuid2
+        name:
+          type:
+            - string
+            - 'null'
+        url:
+          type: string
+          format: uri
+        source:
+          $ref: '#/components/schemas/WebhookSource'
+        triggers:
+          type: array
+          items:
+            $ref: '#/components/schemas/WebhookTrigger'
+        surveyIds:
+          type: array
+          items:
+            type: string
+            format: cuid2
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        secret:
+          type: string
+          description: Standard Webhooks signing secret (`whsec_` followed by base64). Deliveries carry `webhook-id`, `webhook-timestamp` and `webhook-signature` headers computed with it. It cannot be read again.
+      additionalProperties: false
+    PatchWebhookRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      description: Fields to change. A field that is absent keeps its stored value.
+      properties:
+        name:
+          type:
+            - string
+            - 'null'
+          minLength: 1
+          maxLength: 255
+          description: New label, or `null` to clear it.
+        url:
+          type: string
+          format: uri
+          maxLength: 2048
+          description: New endpoint. Held to the same SSRF policy as on create.
+        triggers:
+          type: array
+          minItems: 1
+          maxItems: 3
+          items:
+            $ref: '#/components/schemas/WebhookTrigger'
+          description: Replaces the whole trigger list.
+        surveyIds:
+          type: array
+          maxItems: 200
+          items:
+            type: string
+            format: cuid2
+          description: Replaces the whole survey list. Surveys newly added must belong to the webhook's workspace and be visible to the whole workspace, else **422**. An empty array means every survey in the workspace.
+    WebhookTestResult:
+      type: object
+      description: The outcome of one test delivery.
+      required:
+        - delivered
+        - statusCode
+        - error
+      properties:
+        delivered:
+          type: boolean
+          description: '`true` when the endpoint answered with a 2xx status.'
+        statusCode:
+          type:
+            - integer
+            - 'null'
+          description: The HTTP status the endpoint answered, or `null` when no exchange completed.
+        error:
+          type:
+            - string
+            - 'null'
+          description: Why the delivery failed. `null` on success.
+      additionalProperties: false
+    AuditEvent:
+      type: object
+      description: 'One audit event: who did what to which resource, when, and how it ended. A summary: the changed values (stored, redacted) and the requester''s address and user agent are not returned.'
+      required:
+        - id
+        - timestamp
+        - actor
+        - action
+        - target
+        - status
+        - eventId
+        - apiUrl
+      properties:
+        id:
+          type: string
+          format: cuid2
+          description: Identifier of the stored event.
+        timestamp:
+          type: string
+          format: date-time
+          description: When the audited action happened.
+        actor:
+          type: object
+          description: Who caused the event.
+          required:
+            - id
+            - type
+          properties:
+            id:
+              type: string
+              description: A user id, an API key id, or `system`/`unknown` for events raised inside the app.
+            type:
+              type: string
+              enum:
+                - user
+                - api
+                - system
+              description: '`user` for a person or an OAuth client acting for one, `api` for an API key, `system` for the app itself.'
+          additionalProperties: false
+        action:
+          type: string
+          description: What was done, e.g. `created`, `updated`, `deleted`, `merged`.
+        target:
+          type: object
+          description: The resource the action was about.
+          required:
+            - type
+            - id
+          properties:
+            type:
+              type: string
+              description: The kind of resource, e.g. `survey`, `response`, `tag`, `apiKey`.
+            id:
+              type:
+                - string
+                - 'null'
+              description: Identifier of the resource. Null when the action had no single target.
+          additionalProperties: false
+        status:
+          type: string
+          enum:
+            - success
+            - failure
+          description: '`failure` is an attempt that did not complete, including one refused for lack of permission or scope.'
+        eventId:
+          type:
+            - string
+            - 'null'
+          description: The request id of a failed attempt, for correlating it with logs. Null on a success.
+        apiUrl:
+          type:
+            - string
+            - 'null'
+          format: uri
+          description: The API route or MCP resource the action went through. Null for events raised inside the app.
+      additionalProperties: false
     WorkspaceCustomCssResource:
       type: object
       description: 'A workspace''s shared survey CSS (ENG-3641): editable source for authorized readers, never compiled output. It applies to every survey in the workspace, beneath each survey''s own CSS.'
@@ -13236,6 +16040,440 @@ components:
             - 'null'
           additionalProperties: {}
           description: '**Replaces** the stored metadata wholesale — it is not merged, so send every key you want to keep. Same value rules and **400** rejections as on create.'
+    FeedbackQueryFilter:
+      description: One condition on a dimension, or an `and` / `or` group of them. Groups nest at most 3 levels deep, and a query holds at most 20 conditions and groups in total. A condition's operator must suit the field's `type` in the field catalog (`filterOperators`); `set` and `notSet` take no `values`, every other operator needs at least one, and every value is a string that reads as the field's type.
+      oneOf:
+        - type: object
+          required:
+            - member
+            - operator
+          properties:
+            member:
+              type: string
+              description: A dimension id from the field catalog. Measures cannot be filtered.
+              example: FeedbackRecords.fieldType
+            operator:
+              type: string
+              enum:
+                - equals
+                - notEquals
+                - contains
+                - notContains
+                - set
+                - notSet
+                - gt
+                - gte
+                - lt
+                - lte
+            values:
+              type: array
+              maxItems: 50
+              items:
+                type: string
+                maxLength: 256
+          additionalProperties: false
+        - type: object
+          required:
+            - and
+          properties:
+            and:
+              type: array
+              maxItems: 20
+              items:
+                $ref: '#/components/schemas/FeedbackQueryFilter'
+          additionalProperties: false
+        - type: object
+          required:
+            - or
+          properties:
+            or:
+              type: array
+              maxItems: 20
+              items:
+                $ref: '#/components/schemas/FeedbackQueryFilter'
+          additionalProperties: false
+    FeedbackQuery:
+      type: object
+      description: 'A read-only Cube.js query over the `FeedbackRecords` model (ADR 0001), tightened for API callers. Every member must come from the field catalog (`GET /api/v3/feedback-queries/field-catalog`); Cube options the product does not use (`segments`, `offset`, `total`, `ungrouped`, `renewQuery`, `joinHints`, `timezone`, `compareDateRange`) and the legacy `dimension` alias for a filter `member` are rejected with **400**. There is no way to name a tenant: the Feedback Dataset is resolved from the workspace, and the server filters to it. Select at least one measure or dimension.'
+      properties:
+        measures:
+          type: array
+          maxItems: 10
+          items:
+            type: string
+          description: What to compute per group, for example `FeedbackRecords.npsScore` or `FeedbackRecords.count`.
+          example:
+            - FeedbackRecords.npsScore
+        dimensions:
+          type: array
+          maxItems: 5
+          items:
+            type: string
+          description: What to group by, for example `FeedbackRecords.fieldLabel`. Query a dimension with `FeedbackRecords.count` to see the values it holds.
+          example:
+            - FeedbackRecords.sentiment
+        timeDimensions:
+          type: array
+          maxItems: 1
+          description: One time axis. Calendar days are read in the organization's reporting time zone, the same zone the survey summary filters use.
+          items:
+            type: object
+            required:
+              - dimension
+            properties:
+              dimension:
+                type: string
+                description: A time dimension from the field catalog, such as `FeedbackRecords.collectedAt`.
+              granularity:
+                type: string
+                enum:
+                  - hour
+                  - day
+                  - week
+                  - month
+                  - quarter
+                  - year
+              dateRange:
+                description: A preset name (`dateRangePresets` in the field catalog, for example `last 30 days`; ranges include today) or a `[start, end]` pair of `YYYY-MM-DD` dates or ISO 8601 UTC timestamps.
+                oneOf:
+                  - type: string
+                  - type: array
+                    minItems: 2
+                    maxItems: 2
+                    items:
+                      type: string
+            additionalProperties: false
+        filters:
+          type: array
+          maxItems: 20
+          description: Conditions that must all hold. Wrap alternatives in an `or` group.
+          items:
+            $ref: '#/components/schemas/FeedbackQueryFilter'
+        order:
+          type: array
+          maxItems: 5
+          description: '`[member, direction]` pairs in priority order. Each member must be one of the query''s measures, dimensions or time dimensions.'
+          items:
+            type: array
+            minItems: 2
+            maxItems: 2
+            prefixItems:
+              - type: string
+              - type: string
+                enum:
+                  - asc
+                  - desc
+          example:
+            - - FeedbackRecords.count
+              - desc
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          description: Maximum rows. 100 when omitted. There is no paging; narrow the query instead.
+      additionalProperties: false
+    FeedbackQueryRequest:
+      type: object
+      required:
+        - workspaceId
+        - query
+      properties:
+        workspaceId:
+          type: string
+          format: cuid2
+          description: Workspace whose Feedback Dataset is queried. The caller needs read access to it.
+        datasetId:
+          type: string
+          format: cuid2
+          description: The Feedback Dataset to query. Optional when the workspace has exactly one; required (**400** otherwise) when it has more than one. A dataset the workspace does not hold answers **403**.
+        query:
+          $ref: '#/components/schemas/FeedbackQuery'
+      additionalProperties: false
+    FeedbackQueryResult:
+      type: object
+      required:
+        - datasetId
+        - datasetName
+        - query
+        - rows
+      properties:
+        datasetId:
+          type: string
+          description: The Feedback Dataset the rows were computed from, so an empty result says where it looked.
+        datasetName:
+          type: string
+        query:
+          $ref: '#/components/schemas/FeedbackQuery'
+          description: The query that ran, which is the one sent with the default `limit` filled in.
+        rows:
+          type: array
+          description: One object per group, keyed by member id (`FeedbackRecords.npsScore`; a time bucket is keyed `FeedbackRecords.collectedAt.<granularity>`). Numeric members are numbers. A score or average over a group with nothing to score is `null`, not `0`. A time axis with a granularity includes the empty buckets in its range, with counts of `0`.
+          items:
+            type: object
+            additionalProperties:
+              type:
+                - string
+                - number
+                - boolean
+                - 'null'
+    FeedbackFieldCatalog:
+      type: object
+      required:
+        - measures
+        - dimensions
+        - filterOperators
+        - granularities
+        - dateRangePresets
+        - limits
+      properties:
+        measures:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - label
+              - type
+              - group
+            properties:
+              id:
+                type: string
+                example: FeedbackRecords.npsScore
+              label:
+                type: string
+              type:
+                type: string
+                enum:
+                  - count
+                  - number
+              group:
+                type: string
+                enum:
+                  - count
+                  - average
+                  - score
+                  - other
+              description:
+                type: string
+            additionalProperties: false
+        dimensions:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - label
+              - type
+            properties:
+              id:
+                type: string
+                example: FeedbackRecords.fieldLabel
+              label:
+                type: string
+              type:
+                type: string
+                enum:
+                  - string
+                  - number
+                  - time
+                  - boolean
+                description: Decides which filter operators apply and how a filter value is read.
+              description:
+                type: string
+            additionalProperties: false
+        filterOperators:
+          type: object
+          description: Filter operators by dimension `type`.
+          additionalProperties:
+            type: array
+            items:
+              type: string
+        granularities:
+          type: array
+          items:
+            type: string
+        dateRangePresets:
+          type: array
+          items:
+            type: string
+        limits:
+          type: object
+          description: The bounds the query validation enforces.
+          additionalProperties:
+            type: integer
+      additionalProperties: false
+    TaxonomyField:
+      type: object
+      description: A feedback field topics can be generated for, with how much input it has.
+      required:
+        - tenant_id
+        - source_type
+        - source_id
+        - field_id
+        - record_count
+        - embedding_count
+      properties:
+        tenant_id:
+          type: string
+        source_type:
+          type: string
+        source_id:
+          type: string
+          description: Empty string for feedback with no attributed source.
+        source_name:
+          type: string
+        field_id:
+          type: string
+        field_label:
+          type: string
+        record_count:
+          type: integer
+        embedding_count:
+          type: integer
+        embedding_failed_count:
+          type: integer
+        embedding_failed_terminal_count:
+          type: integer
+    TaxonomyRun:
+      type: object
+      description: One topic-generation run for a scope of a feedback dataset.
+      required:
+        - id
+        - tenant_id
+        - source_type
+        - source_id
+        - field_id
+        - status
+        - record_count
+        - embedding_count
+        - cluster_count
+        - node_count
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        scope_type:
+          type: string
+          enum:
+            - field
+            - directory
+        tenant_id:
+          type: string
+          description: The feedback dataset (directory) id.
+        source_type:
+          type: string
+        source_id:
+          type: string
+          description: Empty string for feedback with no attributed source.
+        field_id:
+          type: string
+        field_label:
+          type: string
+        status:
+          type: string
+          enum:
+            - pending
+            - running
+            - succeeded
+            - failed
+            - canceled
+        params:
+          type: object
+          additionalProperties: true
+        metrics:
+          type: object
+          additionalProperties: true
+        record_count:
+          type: integer
+        embedding_count:
+          type: integer
+        cluster_count:
+          type: integer
+        node_count:
+          type: integer
+        error:
+          type: string
+        error_code:
+          type: string
+          enum:
+            - insufficient_data
+            - service_unavailable
+            - generation_failed
+            - invalid_output
+            - internal_error
+        started_at:
+          type: string
+          format: date-time
+        finished_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    TaxonomyNode:
+      type: object
+      description: A node of a taxonomy tree. The root has no parent; branches are topics and leaves are subtopics. `children` is present on trees returned whole and lists only visible (not removed) nodes.
+      required:
+        - id
+        - run_id
+        - node_type
+        - label
+        - level
+        - sort_order
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        run_id:
+          type: string
+          format: uuid
+        parent_id:
+          type: string
+          format: uuid
+        cluster_id:
+          type: string
+          format: uuid
+        node_type:
+          type: string
+          enum:
+            - root
+            - branch
+            - leaf
+        label:
+          type: string
+        original_label:
+          type: string
+        description:
+          type: string
+        level:
+          type: integer
+        sort_order:
+          type: integer
+        metadata:
+          type: object
+          additionalProperties: true
+        removed_at:
+          type: string
+          format: date-time
+        removed_by:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxonomyNode'
   responses:
     V3BadRequest:
       description: Bad Request — malformed JSON, invalid query/body/params, duplicate name, or unsupported field.
@@ -13630,6 +16868,51 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/HubProblem'
+    V3BadGateway:
+      description: 'Bad Gateway — the feedback service (Hub) did not answer or answered with an error (`code: bad_gateway`). The detail is fixed text; correlate on `requestId`.'
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    V3ServiceUnavailable:
+      description: 'Service Unavailable — a part of the feedback service topic analysis depends on (the taxonomy service or an embedding model) is not configured on this deployment (`code: service_unavailable`). No retry helps; a self-hosting administrator has to configure it.'
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    V3NotFound:
+      description: 'Not Found — the run or node does not exist in this feedback dataset (`code: not_found`). The dataset itself was already authorized, so this does not leak existence across tenants.'
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
   parameters:
     WorkspaceIdQuery:
       in: query
@@ -13714,6 +16997,14 @@ components:
         type: string
         format: cuid2
       description: Creative identifier.
+    WebhookIdPath:
+      in: path
+      name: webhookId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Webhook identifier.
     WorkspaceIdPath:
       in: path
       name: workspaceId
@@ -13759,3 +17050,11 @@ components:
         type: string
         format: uuid
       description: Feedback record id (UUID). The dataset is resolved from the record itself, so the caller cannot choose which dataset it is authorized against. An id that is not a UUID answers **400**, and an id whose dataset the API key cannot reach answers **403** rather than 404, so ids cannot be probed. The gateway caches the record→dataset lookup for 60 seconds, so for up to a minute after a delete the id is still authorized and the store answers **404**; after that the same id answers **403**.
+    TaxonomyDirectoryIdQuery:
+      in: query
+      name: directoryId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Feedback dataset (directory) to read or change. It must be assigned to `workspaceId`; an unassigned or unknown id answers **403**. Over MCP, `list_feedback_datasets` returns the ids.

@@ -107,14 +107,19 @@ Supported scopes:
 
 | Scope | Use |
 | --- | --- |
-| `surveys:read` | `list_surveys`, `get_survey`, `validate_survey`, `get_workspace_custom_css`, `list_creatives`, `get_creative`, `get_creative_stats`, `list_tags` |
-| `surveys:write` | `create_survey`, `patch_survey`, `edit_survey_blocks`, `set_survey_block_order`, `delete_survey`, `patch_workspace_custom_css`, `create_creative`, `patch_creative`, `delete_creative`, `duplicate_creative`, `archive_creative`, `restore_creative`, `rename_tag`, `delete_tag`, `merge_tags` |
+| `surveys:read` | `list_surveys`, `get_survey`, `validate_survey`, `get_workspace_custom_css`, `list_creatives`, `get_creative`, `get_creative_stats`, `list_tags`, `list_action_classes`, `list_contact_attribute_keys`, `get_survey_visibility` |
+| `surveys:write` | `create_survey`, `patch_survey`, `edit_survey_blocks`, `set_survey_block_order`, `delete_survey`, `patch_workspace_custom_css`, `create_creative`, `patch_creative`, `delete_creative`, `duplicate_creative`, `archive_creative`, `restore_creative`, `rename_tag`, `delete_tag`, `merge_tags`, `archive_survey`, `restore_survey`, `set_survey_visibility`, `generate_survey`, `pause_creatives` |
 | `workflows:read` | `list_workflows`, `get_workflow`, `list_workflow_runs`, `get_workflow_run`, `test_workflow` |
 | `workflows:write` | `create_workflow`, `patch_workflow`, `duplicate_workflow`, `delete_workflow`, and the enable/disable/archive/unarchive mutations |
-| `feedbackRecords:read` | `list_feedback_datasets`, `list_feedback_records`, `count_feedback_records`, `get_feedback_record`, `search_feedback_records`, `find_similar_feedback_records` |
-| `feedbackRecords:write` | `create_feedback_record`, `create_feedback_records`, `update_feedback_record`, `delete_feedback_record` |
+| `feedbackRecords:read` | `list_feedback_datasets`, `list_feedback_records`, `count_feedback_records`, `get_feedback_record`, `search_feedback_records`, `find_similar_feedback_records`, `get_feedback_field_catalog`, `query_feedback`, `list_taxonomy_fields`, `get_taxonomy_state`, `get_taxonomy_run`, `get_taxonomy_record_counts`, `list_taxonomy_node_records`, `get_enrichment_status` |
+| `feedbackRecords:write` | `create_feedback_record`, `create_feedback_records`, `update_feedback_record`, `delete_feedback_record`, `start_taxonomy_run`, `rename_taxonomy_node`, `remove_taxonomy_node` |
 | `responses:read` | `list_responses`, `count_responses`, `get_response` |
 | `responses:write` | `validate_response`, `create_response`, `update_response`, `delete_response`, `batch_delete_responses` |
+| `contacts:read` | `list_contacts`, `count_contacts`, `get_contact`, `list_segments`, `get_segment` |
+| `contacts:write` | `upsert_contact`, `update_contact`, `delete_contact`, `create_contact_attribute_key`, `update_contact_attribute_key`, `delete_contact_attribute_key`, `create_segment`, `update_segment`, `delete_segment` |
+| `webhooks:read` | `list_webhooks`, `get_webhook` |
+| `webhooks:write` | `create_webhook`, `update_webhook`, `delete_webhook`, `test_webhook` |
+| `audit:read` | `list_audit_events` |
 | `openid` | OpenID Connect subject interoperability |
 | `profile` | User profile claims |
 | `email` | User email claim |
@@ -162,7 +167,8 @@ own memberships and key grants, so admitting any read scope exposes nothing extr
 The authorization server supports all of the above, but the MCP protected-resource metadata
 (`/.well-known/oauth-protected-resource/api/mcp`) advertises only the resource scopes an MCP client
 needs — `surveys:read`, `surveys:write`, `workflows:read`, `workflows:write`, `feedbackRecords:read`,
-`feedbackRecords:write`, `responses:read`, `responses:write`, and `offline_access`. Clients derive their Dynamic Client Registration scopes
+`feedbackRecords:write`, `responses:read`, `responses:write`, `contacts:read`, `contacts:write`,
+`webhooks:read`, `webhooks:write`, `audit:read`, and `offline_access`. Clients derive their Dynamic Client Registration scopes
 from that list, so `offline_access` must be advertised there for clients to be issued refresh tokens
 (`openid`/`profile`/`email` are OIDC scopes the MCP resource does not require).
 
@@ -261,6 +267,46 @@ API key permissions are enforced through the same workspace access checks as the
 | `create_feedback_records` | `write` or `manage` |
 | `update_feedback_record` | `write` or `manage` |
 | `delete_feedback_record` | `manage` |
+| `list_action_classes` | read on the workspace |
+| `list_contact_attribute_keys` | read on the workspace |
+| `archive_survey` | readWrite on the survey's workspace |
+| `restore_survey` | readWrite on the survey's workspace |
+| `get_survey_visibility` | OAuth sign-in only (an API key always gets 403); survey owner or organization owner/manager, visibility feature enabled |
+| `set_survey_visibility` | same as `get_survey_visibility`; 10 calls a minute per actor |
+| `generate_survey` | readWrite on the workspace; organization needs AI smart tools enabled and the instance an AI provider; 10 calls a minute per actor |
+| `pause_creatives` | the creative "pause" permission on the workspace (same as `patch_creative` with `status`) |
+| `list_taxonomy_fields` | `read` |
+| `get_taxonomy_state` | `read` |
+| `get_taxonomy_run` | `read` |
+| `get_taxonomy_record_counts` | `read` |
+| `list_taxonomy_node_records` | `read` |
+| `get_enrichment_status` | `read` |
+| `start_taxonomy_run` | An OAuth user must be an organization owner or manager; an API key needs `write` or `manage` on the workspace, and the dataset must be assigned to that workspace alone |
+| `rename_taxonomy_node` | Same as `start_taxonomy_run` |
+| `remove_taxonomy_node` | Same as `start_taxonomy_run` |
+| `list_audit_events` | Organization-level, not workspace-level: organization owner or manager (OAuth / session), or an API key with `manage` on a workspace of the named organization. Audit logging must be enabled on the instance. |
+| `list_webhooks` | `read` |
+| `get_webhook` | `read` — resolved from the webhook's workspace |
+| `create_webhook` | `write` or `manage` |
+| `update_webhook` | `write` or `manage` — resolved from the webhook's workspace |
+| `delete_webhook` | `write` or `manage` — resolved from the webhook's workspace |
+| `test_webhook` | `write` or `manage` — resolved from the webhook's workspace |
+| `list_contacts` | `read` |
+| `count_contacts` | `read` |
+| `get_contact` | `read` — resolved from the contact's workspace |
+| `upsert_contact` | `write` or `manage` |
+| `update_contact` | `write` or `manage` — resolved from the contact's workspace |
+| `delete_contact` | `write` or `manage` |
+| `create_contact_attribute_key` | `write` or `manage` |
+| `update_contact_attribute_key` | `write` or `manage` — resolved from the key's workspace |
+| `delete_contact_attribute_key` | `write` or `manage` |
+| `list_segments` | `read` |
+| `get_segment` | `read` — resolved from the segment's workspace |
+| `create_segment` | `write` or `manage` |
+| `update_segment` | `write` or `manage` — resolved from the segment's workspace |
+| `delete_segment` | `write` or `manage` |
+| `get_feedback_field_catalog` | Read (also needs the feedback datasets and analytics entitlements) |
+| `query_feedback` | Read, plus read assignment on the Feedback Dataset |
 
 Synthesized MCP scopes for an API key: `surveys:read` + `workflows:read` + `feedbackRecords:read`
 always; the matching `:write` scopes when the key has `write` or `manage` on any workspace. The scope
@@ -1922,6 +1968,139 @@ passed straight through: the Hub silently coerces out-of-range values to its own
 return something other than what was asked for. The default `minScore` of 0.5 is Formbricks' own — the Hub
 defaults to 0.7, which is strict enough that a fair paraphrase often falls just below it.
 
+### Survey lifecycle and reference tools
+
+These tools sit in `modules/mcp/tools/lifecycle.ts` (inputs in `lifecycle-schemas.ts`, outputs in `lifecycle-output-schemas.ts`) and
+ride on the survey scopes. `pause_creatives` is in `creatives.ts`.
+
+- `list_action_classes` and `list_contact_attribute_keys` return the ids and keys an app survey's `distribution.triggers[].actionClassId` and
+  `targeting.filters[].root.contactAttributeKey` refer to. Cursor-paginated, 50 per page by default.
+- `archive_survey` stops collecting (an In progress survey becomes Paused) and leaves the survey to the retention job's purge;
+  `restore_survey` brings it back with the status it had, never republished. Both are idempotent and answer `{ id, status, archivedAt }`.
+- `get_survey_visibility` / `set_survey_visibility` map one tool to each of the route's GET and POST. Both need an OAuth sign-in:
+  the operation refuses every API key (K-4), so an API-key MCP connection sees 403. The route's 10-per-minute limit is applied inside
+  the tool, since an MCP call never passes the route wrapper.
+- `generate_survey` drafts a create payload with the organization's AI provider and stores nothing; pass `payload` to `create_survey`.
+  It spends AI quota (403/503 when the plan, the smart-tools switch or the instance provider is missing, 429 on provider or Formbricks
+  quota) and is rate-limited to 10 per minute per actor, applied inside the tool. It needs no UI-only context.
+- `pause_creatives` pauses every In progress creative a survey opens in one call and returns the ids; for one creative use `patch_creative`.
+
+### Taxonomy tools
+
+Nine tools over the v3 Unify Feedback taxonomy API manage the Topics & Subtopics tree built over a feedback
+dataset, and report enrichment progress. They ride on the feedback-record scopes: `feedbackRecords:read` for
+the six reads, `feedbackRecords:write` for `start_taxonomy_run`, `rename_taxonomy_node` and
+`remove_taxonomy_node`. Every tool takes a `workspaceId` and, except `get_enrichment_status`, a `directoryId`
+(the dataset id from `list_feedback_datasets`); the Hub tenant is never an argument.
+
+The usual loop: `list_taxonomy_fields` to pick a scope, `start_taxonomy_run`, poll `get_taxonomy_run` until
+`succeeded`, then read the tree and its node ids with `get_taxonomy_state`, size the topics with
+`get_taxonomy_record_counts`, and sample a topic with `list_taxonomy_node_records` (default 20, max 50, no
+cursor). A scope is `scopeType: "field"` (needs `sourceType` and `fieldId`; `sourceId: ""` is the no-source
+bucket) or `"directory"` (all text feedback, takes neither).
+
+The feature stays gated by the `feedbackDirectories` entitlement: without it every tool answers 403 with the
+"Unify Feedback is not enabled" message. Changing the tree is limited, because a dataset and its tree are shared
+by every workspace it is assigned to: an OAuth user must be an organization owner or manager, and an API key
+must have write access to a workspace that is the dataset's only owner (the same rule as changing feedback
+records, ENG-2189). Removal is soft and there is no restore tool. Changes are recorded in the audit log as
+changes to the feedback dataset (`feedbackDirectory`), with the Hub `actor_id` being the user id, or
+`apiKey:<id>` for an API key.
+
+### Audit event tools
+
+`list_audit_events` reads an organization's audit trail: who (actor) did what (action) to which resource (target), when, and whether it succeeded or failed. It is a thin adapter over `GET /api/v3/audit-events` (`listV3AuditEventsFromInput`), so the REST route and the tool share one query schema, one authorization check and one 400 behaviour.
+
+- **Storage.** Until this change audit events were only written to the application logger. `logAuditEvent` (`modules/ee/audit-logs/lib/service.ts`) still calls `logger.audit` exactly as before and then also inserts the validated event into the `AuditEvent` table. The insert runs inside the same off-request contexts the log line already ran in (`after()`, `setImmediate`, workers), so it adds no request latency; a failed insert is logged as an error and never thrown. The existing gate (`getIsAuditLogsEnabled`, i.e. `AUDIT_LOG_ENABLED` plus the Enterprise licence) decides whether an entry point writes at all, and is unchanged. Events whose organization is `unknown` are logged but not stored.
+- **What is stored.** The event as built by the entry point: `changes` has already been through `redactPII`, and is replaced by `{ "truncated": true }` above 16 KiB. `ipAddress` and `userAgent` are stored as captured (the address is already the sentinel when `AUDIT_LOG_GET_USER_IP` is off).
+- **What is returned.** A summary only: `id`, `timestamp`, `actor { id, type }`, `action`, `target { type, id }`, `status`, `eventId` (the request id of a failed attempt), `apiUrl`. Never the `changes` diff, the address or the user agent.
+- **Authorization.** Always organization-scoped. `organizationId` is required, and the tool gets it from `list_workspaces` (each workspace carries its `organizationId`). A user must be an owner or manager of that organization; an API key must belong to it and hold `manage` on one of its workspaces (re-checked against the live authorization graph). Everything else, including an unknown organization, is the same 403. A caller who is authorized but whose instance has audit logging off also gets a 403 saying so; an unauthorized caller never learns that.
+- **Bounds.** Keyset pagination on `(timestamp, id)` over `AuditEvent(organizationId, timestamp, id)`; never offset. `limit` defaults to 20, maximum 100 (above that is a 400, not a silent clamp). The cursor is bound to the organization and the filter set, so changing a filter mid-walk is a 400. Filters: `actorId`, `actorType`, `action`, `targetType`, `targetId` (requires `targetType`), `status`, `from` (inclusive), `to` (exclusive). Action and target values are validated against the audit vocabulary, so a misspelling is a 400 rather than an empty page.
+- **Retention.** There is no cleanup job: rows are kept until the organization is deleted (cascade). Whether and how long to keep them belongs with the `data-retention` module and is not decided here.
+
+### Webhooks tools
+
+Six tools over the v3 Webhooks API: `list_webhooks`, `get_webhook`, `create_webhook`, `update_webhook`,
+`delete_webhook` and `test_webhook`. A webhook is a workspace endpoint Formbricks POSTs response events to
+(`responseCreated`, `responseUpdated`, `responseFinished`), optionally limited to some surveys. Webhooks
+send responses outside the product, so they have their own scope pair, `webhooks:read` and
+`webhooks:write`.
+
+- **The secret is shown once.** `create_webhook` generates the Standard Webhooks signing secret and returns
+  it in its result only. No read, list or update returns it, and the audit event omits it. A caller cannot
+  choose the secret.
+- **Same SSRF policy as deliveries.** `create_webhook` and `update_webhook` run the URL through
+  `validateWebhookUrl`: `http` or `https` only, no private, loopback, link-local or cloud-metadata address,
+  and a hostname must resolve to public addresses only. A refusal is a `422` with `invalid_params` naming
+  `url`. Discord webhook URLs are refused too, as in the app.
+- **Surveys are checked.** Every id in `surveyIds` must be a survey of the webhook's workspace, and a survey
+  newly attached must be visible to the whole workspace (`422`, code `survey_not_workspace_visible`
+  otherwise). A survey of another workspace and one that does not exist look the same. **An empty
+  `surveyIds` sends every survey in the workspace, including surveys created later.**
+- **Updates are partial.** `update_webhook` changes only the fields sent; `triggers` and `surveyIds`
+  replace the whole list. The workspace, source and secret never change.
+- **`test_webhook` takes only a webhook id.** It sends one signed `{"event":"testEndpoint"}` to the stored
+  URL through the delivery transport and reports `{ delivered, statusCode, error }`. A failed delivery is
+  `delivered: false`, not an error result. It cannot be pointed at a URL that was never accepted as a
+  target, and it is not audited because nothing changes.
+- **Workspace is resolved from the webhook.** Every tool but `list_webhooks` and `create_webhook` takes only
+  a `webhookId`; an unknown id answers `403`, like one in a workspace the caller cannot reach.
+
+### Contact tools
+
+Fourteen tools over the v3 Contacts and Segments APIs, on `contacts:read` and `contacts:write`. Contacts are
+respondent personal data, so every operation derives the workspace from an authorization the caller holds
+(the `workspaceId` they were granted, or the workspace the contact, attribute key or segment row belongs
+to) and never from a value it only checks afterwards. An id from another workspace and an unknown id both
+answer `403`. The Enterprise contacts feature is a second gate, answered after the workspace permission with
+the same `403` text as `GET /api/v3/contact-attribute-keys`: `The contacts feature is not enabled for this
+organization.`
+
+- **`list_contacts` / `count_contacts`** take the same filters: `userId`, or `attributeKey` with
+  `attributeValue` (an exact match on the stored text, both or neither). Pages are newest first, default 20,
+  at most 50 (REST: 100), with a cursor that is bound to the filters it was issued for. `count_contacts` is
+  the cheap way to ask "how many".
+- **`upsert_contact`** is the SDK's identify: the contact with that `userId` is updated, or created. The other
+  attributes are merged. Whatever could not be applied (an email that belongs to another contact, a wrong
+  type for an existing key) comes back in `warnings` while the rest is applied. **`update_contact`** does the
+  same by contact id, for contacts without a `userId`, and can remove attribute keys (never `userId`, `email`,
+  `firstName` or `lastName`).
+- **`delete_contact`** also deletes the contact's responses and displays. **`delete_contact_attribute_key`**
+  deletes every contact's value for the key. Both require `confirm: true`, which the model should set only
+  after the user agreed.
+- **Attribute keys**: reading is `list_contact_attribute_keys` (`surveys:read`); creating, describing and
+  deleting custom keys is here. Built-in keys are refused with `422`.
+- **Segments** are reusable ones only; a survey's own targeting is the survey's `targeting`. `list_segments`
+  returns id and title, `get_segment` the filter tree and the surveys using it (only those the caller may see).
+  Filters are validated like survey targeting: an unknown attribute key, segment or survey is a `422` naming the
+  node. `delete_segment` is refused with `409` while a survey uses it. The `filters` argument is free-form in
+  the tool schema (the tree is recursive); its description carries the grammar and the operation validates it.
+
+Not covered: bulk CSV import, personal survey links, linking a segment to a survey, and previewing how many
+contacts a segment matches.
+
+### Feedback query tools
+
+Two read-only tools expose the Cube query layer that used to feed charts (ADR 0001, ADR 0016). They need
+`feedbackRecords:read`, and the organization needs the feedback datasets entitlement and the analytics
+entitlement (still the `dashboards` licence feature).
+
+- `get_feedback_field_catalog` returns the measures (`FeedbackRecords.npsScore`, `.count`, ...), dimensions, the
+  filter operators per field type, time granularities, date presets and the query limits. Call it first: a
+  query naming a field outside the catalog is refused.
+- `query_feedback` takes `workspaceId`, an optional `datasetId` (required when the workspace has several Feedback
+  Datasets) and a `query` in the Cube query format: `measures`, `dimensions`, one entry in `timeDimensions`,
+  `filters`, `order` and `limit`. It returns `{ datasetId, datasetName, query, rows }`, where `query` is what ran
+  (default `limit` 100 filled in, at most 1000) and each row is keyed by field id. Scores are `null`, not `0`,
+  for a group with nothing to score.
+
+The query is bounded: at most 10 measures, 5 dimensions, 1 time axis, 5 order entries; filters on dimensions
+only, at most 20 conditions and groups nested at most 3 deep, 50 values each. Cube options the product never
+used (`segments`, `offset`, `total`, `ungrouped`, `renewQuery`, `joinHints`, `timezone`, `compareDateRange`)
+are refused. There is no tenant field anywhere: the dataset comes from the workspace, and the server hands it to
+Cube as signed security context; Cube appends the filter. Calls are limited to 30 per minute per caller.
+HTTP: `POST /api/v3/feedback-queries` and `GET /api/v3/feedback-queries/field-catalog?workspaceId=`.
+
 ## Relationship to V3 Workflows API
 
 Like the survey tools, workflow tools run no custom database queries — each calls the shared,
@@ -2094,6 +2273,12 @@ query, like `create_feedback_record`.
 - `apps/web/modules/mcp/tools/workflow-schemas.ts`
 - `apps/web/modules/mcp/tools/creatives.ts`
 - `apps/web/modules/mcp/tools/tags.ts` and `tag-schemas.ts`
+- `apps/web/modules/mcp/tools/lifecycle.ts`, `lifecycle-schemas.ts` and `lifecycle-output-schemas.ts`
+- `apps/web/modules/mcp/tools/taxonomy.ts` and `taxonomy-schemas.ts`
+- `apps/web/modules/mcp/tools/audit-events.ts` and `audit-event-schemas.ts`
+- `apps/web/modules/mcp/tools/webhooks.ts` and `webhook-schemas.ts`
+- `apps/web/modules/mcp/tools/contacts.ts` and `contact-schemas.ts`
+- `apps/web/modules/mcp/tools/feedback-queries.ts` and `feedback-query-schemas.ts`
 - `apps/web/modules/mcp/tools/creative-schemas.ts` and `creative-output-schemas.ts`
 - `apps/web/app/api/v3/creatives/lib/operations.ts`
 - `apps/web/app/api/v3/surveys/lib/operations.ts`

@@ -1,0 +1,137 @@
+get:
+  operationId: listSegmentsV3
+  summary: List segments
+  description: |
+    Returns a workspace's reusable contact segments, newest first, as id, title and description. Read one
+    with `GET /api/v3/segments/{segmentId}` for its filters and the surveys using it. A survey's own
+    targeting is not listed; it is the survey's `targeting`.
+
+    Requires read access to the workspace.
+    Needs the Enterprise contacts feature: an organization without it answers `403`, like a caller
+    without access to the workspace. Session cookie, `x-api-key`, or a Bearer token.
+  tags:
+    - V3 Segments
+  parameters:
+    - $ref: ../components/parameters/WorkspaceIdQuery.yml
+    - in: query
+      name: limit
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      description: Page size. A value above the maximum is rejected with 400.
+    - $ref: ../components/parameters/CursorQuery.yml
+  responses:
+    "200":
+      description: Segments retrieved successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: ../components/schemas/SegmentListItem.yml
+              meta:
+                $ref: ../components/schemas/CursorPaginationMeta.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []
+post:
+  operationId: createSegmentV3
+  summary: Create a segment
+  description: |
+    Creates a reusable contact segment from a filter tree. The segment is not attached to any survey.
+
+    Filters that point at an attribute key, segment or survey that does not exist in the workspace answer
+    `422` with the offending node in `invalid_params`. A title already used in the workspace answers `409`.
+
+    Requires write access to the workspace.
+    Needs the Enterprise contacts feature: an organization without it answers `403`, like a caller
+    without access to the workspace. Session cookie, `x-api-key`, or a Bearer token.
+  tags:
+    - V3 Segments
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/CreateSegmentRequest.yml
+  responses:
+    "201":
+      description: Segment created
+      headers:
+        Location:
+          schema:
+            type: string
+          description: Relative URL of the created segment.
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/SegmentResource.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "409":
+      description: >-
+        A segment with this title already exists in the workspace.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "422":
+      description: >-
+        A filter references an attribute key, segment or survey that does not exist in the workspace.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

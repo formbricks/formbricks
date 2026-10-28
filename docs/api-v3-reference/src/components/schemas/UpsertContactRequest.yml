@@ -1,0 +1,22 @@
+type: object
+required:
+  - workspaceId
+  - userId
+properties:
+  workspaceId:
+    type: string
+    format: cuid2
+  userId:
+    type: string
+    minLength: 1
+    maxLength: 500
+    description: >-
+      The contact's identity. The workspace's contact with this `userId` is updated; when there is none,
+      one is created.
+  attributes:
+    allOf:
+      - $ref: ./ContactAttributesInput.yml
+    description: >-
+      Attributes to set, merged into what the contact already has. It cannot contain `userId`; that is the
+      field above.
+additionalProperties: false

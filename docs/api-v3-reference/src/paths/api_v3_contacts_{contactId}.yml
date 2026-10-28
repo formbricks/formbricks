@@ -1,0 +1,187 @@
+get:
+  operationId: getContactV3
+  summary: Get a contact
+  description: |
+    Returns one contact with all its attributes. The workspace is resolved from the contact itself, so the
+    caller cannot choose the scope it is authorized against. An unknown id answers `403`, not `404`, so ids cannot be probed.
+
+    Requires read access to the contact's workspace.
+    Needs the Enterprise contacts feature: an organization without it answers `403`, like a caller
+    without access to the workspace. Session cookie, `x-api-key`, or a Bearer token.
+  tags:
+    - V3 Contacts
+  parameters:
+    - in: path
+      name: contactId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Contact identifier.
+  responses:
+    "200":
+      description: Contact retrieved successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/ContactResource.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []
+patch:
+  operationId: updateContactV3
+  summary: Update a contact's attributes
+  description: |
+    Sets attributes (merged into what the contact has) and/or removes attribute keys. Use it for a contact
+    that has no `userId`; otherwise `POST /api/v3/contacts` does the same by `userId`.
+
+    Whatever the server could not apply is listed in `warnings`, as on `POST /api/v3/contacts`.
+    The default attributes `userId`, `email`, `firstName` and `lastName` cannot be removed.
+    An unknown id answers `403`, not `404`, so ids cannot be probed.
+
+    Requires write access to the contact's workspace.
+    Needs the Enterprise contacts feature: an organization without it answers `403`, like a caller
+    without access to the workspace. Session cookie, `x-api-key`, or a Bearer token.
+  tags:
+    - V3 Contacts
+  parameters:
+    - in: path
+      name: contactId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Contact identifier.
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/PatchContactRequest.yml
+  responses:
+    "200":
+      description: Contact updated
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/ContactResource.yml
+              warnings:
+                type: array
+                description: What the server skipped or did on its own, for example a duplicate email that was not applied or an attribute key it created.
+                items:
+                  type: string
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []
+delete:
+  operationId: deleteContactV3
+  summary: Delete a contact
+  description: |
+    Permanently deletes a contact **together with their responses and displays**. This cannot be undone.
+    An unknown id answers `403`, not `404`, so ids cannot be probed.
+
+    Requires write access to the contact's workspace.
+    Needs the Enterprise contacts feature: an organization without it answers `403`, like a caller
+    without access to the workspace. Session cookie, `x-api-key`, or a Bearer token.
+  tags:
+    - V3 Contacts
+  parameters:
+    - in: path
+      name: contactId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Contact identifier.
+  responses:
+    "200":
+      description: Contact deleted
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                type: object
+                required:
+                  - id
+                properties:
+                  id:
+                    type: string
+                    format: cuid2
+                additionalProperties: false
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []
