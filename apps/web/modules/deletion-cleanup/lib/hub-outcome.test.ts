@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/__mocks__/database";
-import { FakeHub } from "@/modules/hub/__mocks__/fake-hub";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { CLEANUP_SETTLE_MS } from "./constants";
 import { type TOutcomeCleanupRow, reconcileResponseOutcomes } from "./hub-outcome";
@@ -8,7 +7,7 @@ vi.mock("server-only", () => ({}));
 vi.mock("@formbricks/logger", () => ({
   logger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
-vi.mock("@/lib/env", () => ({ env: { HUB_API_KEY: "fake-hub-key", HUB_API_URL: "http://hub.test" } }));
+vi.mock("@/lib/env", () => ({ env: { HUB_API_KEY: "hub-key", HUB_API_URL: "http://hub.test" } }));
 vi.mock("@/lib/survey/service", () => ({ getSurvey: vi.fn() }));
 // The select and the row-to-response mapping are the response service's; the rows below are already responses.
 vi.mock("@/lib/response/service", () => ({
@@ -19,17 +18,25 @@ vi.mock("@/lib/feedback-source/service", () => ({
   getFeedbackSourcesBySurveyId: vi.fn(),
   updateFeedbackSource: vi.fn(),
 }));
+// The Hub boundary: every call the job makes to the Hub goes through these four.
+vi.mock("@/modules/hub/service", () => ({
+  createFeedbackRecordsBatch: vi.fn(),
+  listFeedbackRecords: vi.fn(),
+  updateFeedbackRecord: vi.fn(),
+  deleteFeedbackRecord: vi.fn(),
+}));
 
 const { getSurvey } = await import("@/lib/survey/service");
 const { getFeedbackSourcesBySurveyId } = await import("@/lib/feedback-source/service");
-const { reconcileFeedbackRecords } = await import("@/lib/feedback-source/reconcile");
-const { transformResponseToFeedbackRecords } = await import("@/lib/feedback-source/transform");
+const { logger } = await import("@formbricks/logger");
+const { createFeedbackRecordsBatch, listFeedbackRecords, updateFeedbackRecord, deleteFeedbackRecord } =
+  await import("@/modules/hub/service");
 
 /**
- * The reconcile job against a fake Hub (`modules/hub/__mocks__/fake-hub.ts`) reached through the real
- * `@formbricks/hub` client and `modules/hub/service.ts`; only the database reads are faked. What this
- * proves is the job's decisions and the Hub traffic they produce. It does not prove the SQL of the queue
- * (see the integration test) or the behaviour of the real Hub service.
+ * The reconcile job with the Hub replaced by call-recording mocks at `modules/hub/service.ts`; only the
+ * database reads are faked besides. What this proves is the job's decisions and the Hub calls they produce
+ * (which calls, with what arguments, in which order). It does not prove the SQL of the queue (see the
+ * integration test) or the behaviour of the real Hub service.
  */
 
 const TENANT = "dir-1";
@@ -44,7 +51,6 @@ type TRow = {
   data: Record<string, unknown>;
 };
 
-const hub = new FakeHub("fake-hub-key");
 let responses: Map<string, TRow>;
 
 const survey = (overrides: Record<string, unknown> = {}) => ({
@@ -119,25 +125,49 @@ const outcomeRow = (responseId: string, overrides: Partial<TOutcomeCleanupRow> =
 
 const budget = (remaining = 100_000) => ({ remaining, deadline: Date.now() + 60_000 });
 
-/** What the live pipeline does on responseFinished: the records Hub holds for a response. */
-const publish = async (id: string) => {
-  const row = responses.get(id);
-  if (!row) throw new Error("unknown response");
-  const records = transformResponseToFeedbackRecords(
-    dbRow(row) as never,
-    survey() as never,
-    source().formbricksMappings as never,
-    TENANT
-  );
-  await reconcileFeedbackRecords(records, TENANT);
-};
+const hubOk = (data: unknown) => ({ data, error: null }) as never;
+const hubError = (status: number, code?: string) =>
+  ({ data: null, error: { status, message: `hub ${status}`, detail: "", code } }) as never;
 
-/** Values a record carries, without what Hub assigns (id and timestamps). */
-const content = (submissionId?: string) =>
-  hub
-    .records({ submissionId })
-    .map(({ id: _id, created_at: _c, updated_at: _u, collected_at: _a, ...rest }) => rest)
-    .sort((a, b) => `${a.submission_id}${a.field_id}`.localeCompare(`${b.submission_id}${b.field_id}`));
+/** A record as the Hub lists it. */
+const hubRecord = (id: string, submissionId: string, fieldId = "el-text") => ({
+  id,
+  tenant_id: TENANT,
+  source_type: "formbricks_survey",
+  source_id: SURVEY,
+  submission_id: submissionId,
+  field_id: fieldId,
+});
+
+/** The next listings the Hub answers with, one page per call; an empty page once they run out. */
+let listPages: unknown[];
+const listsNext = (...pages: unknown[][]) => listPages.push(...pages);
+
+/** Every Hub call so far, in the order they were made, e.g. `list`, `delete:h1`, `create:2`. */
+const hubCalls = (): string[] =>
+  (
+    [
+      ["list", listFeedbackRecords, () => ""],
+      ["delete", deleteFeedbackRecord, (args: unknown[]) => `:${args[0]}`],
+      ["update", updateFeedbackRecord, (args: unknown[]) => `:${args[0]}`],
+      ["create", createFeedbackRecordsBatch, (args: unknown[]) => `:${(args[0] as unknown[]).length}`],
+    ] as const
+  )
+    .flatMap(([label, fn, detail]) =>
+      vi.mocked(fn).mock.calls.map((args, i) => ({
+        order: vi.mocked(fn).mock.invocationCallOrder[i],
+        text: `${label}${detail(args as unknown[])}`,
+      }))
+    )
+    .sort((a, b) => a.order - b.order)
+    .map(({ text }) => text);
+
+/** Every record the job asked the Hub to create, across all calls. */
+const createdRecords = () => vi.mocked(createFeedbackRecordsBatch).mock.calls.flatMap(([records]) => records);
+
+const setOutcome = (id: string, outcome: TRow["outcome"]) => {
+  (responses.get(id) as TRow).outcome = outcome;
+};
 
 const run = async (...rows: TOutcomeCleanupRow[]) => reconcileResponseOutcomes(rows, budget());
 const resultOf = (results: Awaited<ReturnType<typeof run>>, row: TOutcomeCleanupRow) => results.get(row.id);
@@ -145,14 +175,16 @@ const resultOf = (results: Awaited<ReturnType<typeof run>>, row: TOutcomeCleanup
 describe("reconcileResponseOutcomes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.stubGlobal("fetch", (request: Request) => hub.handle(request));
-    (globalThis as unknown as { formbricksHubHeyApiClient: unknown }).formbricksHubHeyApiClient = undefined;
-    hub.outage = null;
-    hub.onRequest = undefined;
-    hub.clear();
-    hub.clearRequests();
     responses = new Map();
+    listPages = [];
 
+    vi.mocked(listFeedbackRecords).mockImplementation((async () =>
+      hubOk({ data: listPages.shift() ?? [] })) as never);
+    vi.mocked(deleteFeedbackRecord).mockResolvedValue(hubOk({ deleted: true }));
+    vi.mocked(updateFeedbackRecord).mockResolvedValue(hubOk({ id: "existing" }));
+    vi.mocked(createFeedbackRecordsBatch).mockImplementation((async (inputs: unknown[]) => ({
+      results: inputs.map(() => hubOk({ id: "created" })),
+    })) as never);
     vi.mocked(getSurvey).mockImplementation(async () => survey() as never);
     vi.mocked(getFeedbackSourcesBySurveyId).mockImplementation(async () => [source()] as never);
     vi.mocked(prisma.response.findMany).mockImplementation((async (args: {
@@ -164,91 +196,128 @@ describe("reconcileResponseOutcomes", () => {
   });
 
   afterEach(() => {
-    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
   describe("marking Low quality", () => {
-    test("removes that response's records and nothing else", async () => {
-      addResponse("r1");
-      addResponse("r2");
-      await publish("r1");
-      await publish("r2");
-      hub.seed({
-        tenant_id: TENANT,
-        source_type: "formbricks_survey",
-        source_id: "another-survey",
-        submission_id: "r1",
-        field_id: "el-text",
-        field_type: "text",
-      });
-      responses.get("r1")!.outcome = "lowQuality";
+    test("lists only that response's records of the survey, deletes them until a listing is empty, and looks again after the settle time", async () => {
+      addResponse("r1", { outcome: "lowQuality" });
+      listsNext([hubRecord("h1", "r1"), hubRecord("h2", "r1", "el-nps")]);
 
       const results = await run(outcomeRow("r1"));
 
-      expect(hub.records({ submissionId: "r1" }).map((r) => r.source_id)).toEqual(["another-survey"]);
-      expect(hub.records({ submissionId: "r2" })).toHaveLength(2);
-      // Looked at once more after the settle time, for a record still on its way to the Hub.
+      expect(hubCalls()).toEqual(["list", "delete:h1", "delete:h2", "list"]);
+      expect(vi.mocked(listFeedbackRecords).mock.calls[0]?.[0]).toEqual({
+        tenant_id: TENANT,
+        source_type: ["formbricks_survey"],
+        source_id: [SURVEY],
+        submission_id: ["r1"],
+        limit: 100,
+      });
+      expect(createdRecords()).toHaveLength(0);
       expect(resultOf(results, outcomeRow("r1"))).toEqual({ status: "again", delayMs: CLEANUP_SETTLE_MS });
     });
 
-    test("is idempotent: a second pass finds nothing left and is done", async () => {
+    test("a listing that finds nothing is done, and deletes nothing", async () => {
       addResponse("r1", { outcome: "lowQuality" });
-      await publish("r1");
-
-      await run(outcomeRow("r1"));
-      hub.clearRequests();
-      const second = await run(outcomeRow("r1"));
-
-      expect(hub.records({ submissionId: "r1" })).toHaveLength(0);
-      expect(resultOf(second, outcomeRow("r1"))).toEqual({ status: "done" });
-      expect(hub.count("DELETE")).toBe(0);
-    });
-
-    test("a response that was never published costs one listing and is done", async () => {
-      addResponse("r1", { outcome: "lowQuality", finished: false });
 
       const results = await run(outcomeRow("r1"));
 
+      expect(hubCalls()).toEqual(["list"]);
       expect(resultOf(results, outcomeRow("r1"))).toEqual({ status: "done" });
-      expect(hub.requests.map((r) => r.method)).toEqual(["GET"]);
+    });
+
+    test("a record the Hub no longer has (404 on delete) counts as already gone, not as a failure", async () => {
+      addResponse("r1", { outcome: "lowQuality" });
+      listsNext([hubRecord("h1", "r1")]);
+      vi.mocked(deleteFeedbackRecord).mockResolvedValue(hubError(404));
+
+      const results = await run(outcomeRow("r1"));
+
+      expect(resultOf(results, outcomeRow("r1"))).toEqual({ status: "again", delayMs: CLEANUP_SETTLE_MS });
+    });
+
+    test("a delete the Hub refuses is a failure to retry", async () => {
+      addResponse("r1", { outcome: "lowQuality" });
+      listsNext([hubRecord("h1", "r1")]);
+      vi.mocked(deleteFeedbackRecord).mockResolvedValue(hubError(500));
+
+      const results = await run(outcomeRow("r1"));
+
+      expect(resultOf(results, outcomeRow("r1"))).toEqual({ status: "failed", error: "hubDelete:500" });
     });
 
     test("a response deleted in the meantime is left to its own deletion cleanup", async () => {
       const results = await run(outcomeRow("gone"));
 
       expect(resultOf(results, outcomeRow("gone"))).toEqual({ status: "done" });
-      expect(hub.requests).toHaveLength(0);
+      expect(hubCalls()).toEqual([]);
     });
   });
 
   describe("restoring", () => {
-    test("rebuilds the records with the same values", async () => {
+    test("creates the records of every mapped element, and the same ones as the first time", async () => {
       addResponse("r1");
-      await publish("r1");
-      const before = content("r1");
-      expect(before).toHaveLength(2);
+      const first = await run(outcomeRow("r1"));
+      const published = createdRecords();
+      expect(published).toHaveLength(2);
+      expect(published).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            tenant_id: TENANT,
+            source_type: "formbricks_survey",
+            source_id: SURVEY,
+            submission_id: "r1",
+            field_id: "el-text",
+            value_text: "answer of r1",
+          }),
+          expect.objectContaining({ submission_id: "r1", field_id: "el-nps", value_number: 9 }),
+        ])
+      );
 
-      responses.get("r1")!.outcome = "lowQuality";
+      // Marked, then restored: the records come back with the values they had.
+      setOutcome("r1", "lowQuality");
+      listsNext([hubRecord("h1", "r1"), hubRecord("h2", "r1", "el-nps")]);
       await run(outcomeRow("r1"));
-      expect(hub.records({ submissionId: "r1" })).toHaveLength(0);
+      vi.mocked(createFeedbackRecordsBatch).mockClear();
+      setOutcome("r1", null);
+      const restored = await run(outcomeRow("r1"));
 
-      responses.get("r1")!.outcome = null;
+      expect(createdRecords()).toEqual(published);
+      expect(first).toEqual(restored);
+      expect(resultOf(restored, outcomeRow("r1"))).toEqual({ status: "done" });
+    });
+
+    test("a record that is still there (a cleanup that had not run) is corrected in place, in order: create, look up, update", async () => {
+      addResponse("r1");
+      vi.mocked(createFeedbackRecordsBatch).mockImplementation((async (inputs: unknown[]) => ({
+        results: inputs.map(() => hubError(409, "conflict")),
+      })) as never);
+      vi.mocked(listFeedbackRecords).mockImplementation((async () =>
+        hubOk({ data: [{ id: "existing" }] })) as never);
+
       const results = await run(outcomeRow("r1"));
 
-      expect(content("r1")).toEqual(before);
+      expect(hubCalls()).toEqual(["create:2", "list", "list", "update:existing", "update:existing"]);
+      expect(vi.mocked(listFeedbackRecords).mock.calls.map(([params]) => params)).toEqual([
+        { tenant_id: TENANT, submission_id: ["r1"], field_id: ["el-text"], limit: 1 },
+        { tenant_id: TENANT, submission_id: ["r1"], field_id: ["el-nps"], limit: 1 },
+      ]);
       expect(resultOf(results, outcomeRow("r1"))).toEqual({ status: "done" });
     });
 
-    test("is idempotent: running it again changes nothing", async () => {
+    test("a create refused with tenant_write_conflict (a purge is running) is a retryable failure, not a duplicate and not an error", async () => {
       addResponse("r1");
-      await run(outcomeRow("r1"));
-      const once = content("r1");
-      expect(once).toHaveLength(2);
+      vi.mocked(createFeedbackRecordsBatch).mockImplementation((async (inputs: unknown[]) => ({
+        results: inputs.map(() => hubError(409, "tenant_write_conflict")),
+      })) as never);
 
-      const again = await run(outcomeRow("r1"));
+      const results = await run(outcomeRow("r1"));
 
-      expect(content("r1")).toEqual(once);
-      expect(resultOf(again, outcomeRow("r1"))).toEqual({ status: "done" });
+      expect(resultOf(results, outcomeRow("r1"))).toEqual({ status: "failed", error: "hubReconcile:409" });
+      // Nothing was looked up or patched as if the record existed.
+      expect(hubCalls()).toEqual(["create:2"]);
+      expect(logger.error).not.toHaveBeenCalled();
     });
 
     test.each([
@@ -272,134 +341,126 @@ describe("reconcileResponseOutcomes", () => {
 
       const results = await run(outcomeRow("r1"));
 
-      expect(hub.records()).toHaveLength(0);
-      expect(hub.count("POST")).toBe(0);
+      expect(hubCalls()).toEqual([]);
       expect(resultOf(results, outcomeRow("r1"))).toEqual({ status: "done" });
     });
   });
 
   describe("a quick sequence of changes", () => {
-    test("mark, restore, mark ends with no records, whichever rows ran", async () => {
-      addResponse("r1");
-      await publish("r1");
-
-      responses.get("r1")!.outcome = "lowQuality";
+    test("mark, restore, mark: each run does what the outcome is at that moment, and the last one removes", async () => {
+      addResponse("r1", { outcome: "lowQuality" });
+      listsNext([hubRecord("h1", "r1")]);
       await run(outcomeRow("r1")); // the first mark's row
-      responses.get("r1")!.outcome = null;
+      expect(hubCalls()).toEqual(["list", "delete:h1", "list"]);
+      vi.clearAllMocks();
+
+      setOutcome("r1", null);
       await run(outcomeRow("r1")); // the restore's row (the mark's pending row was cancelled)
-      expect(hub.records({ submissionId: "r1" })).toHaveLength(2);
-      responses.get("r1")!.outcome = "lowQuality";
+      expect(hubCalls()).toEqual(["create:2"]);
+      vi.clearAllMocks();
+
+      setOutcome("r1", "lowQuality");
+      listsNext([hubRecord("h3", "r1")]);
       await run(outcomeRow("r1")); // the second mark's row
 
-      expect(hub.records({ submissionId: "r1" })).toHaveLength(0);
+      expect(hubCalls()).toEqual(["list", "delete:h3", "list"]);
     });
 
-    test("a stale row follows the CURRENT outcome: a mark row run after a restore rebuilds", async () => {
-      addResponse("r1");
-      await publish("r1");
-      responses.get("r1")!.outcome = "lowQuality";
+    test("a stale mark row run after a restore follows the CURRENT outcome: it rebuilds and deletes nothing", async () => {
+      addResponse("r1"); // restored already; the mark's pending row is still there (or runs late)
+
       await run(outcomeRow("r1"));
 
-      // Restored inside the settle window; the mark's pending row was not cancelled (or runs late).
-      responses.get("r1")!.outcome = null;
-      await run(outcomeRow("r1"));
-
-      expect(hub.records({ submissionId: "r1" })).toHaveLength(2);
+      expect(hubCalls()).toEqual(["create:2"]);
     });
 
-    test("a restore that lands while the records are being deleted still ends with them rebuilt", async () => {
+    test("a restore that lands while the records are being deleted ends with them rebuilt", async () => {
       addResponse("r1", { outcome: "lowQuality" });
-      await publish("r1");
+      listsNext([hubRecord("h1", "r1")]);
       // The first Hub delete is where the reviewer restores.
-      let restored = false;
-      hub.onRequest = (request) => {
-        if (request.method === "DELETE" && !restored) {
-          restored = true;
-          responses.get("r1")!.outcome = null;
-        }
-      };
+      vi.mocked(deleteFeedbackRecord).mockImplementationOnce((async () => {
+        setOutcome("r1", null);
+        return hubOk({ deleted: true });
+      }) as never);
 
       const results = await run(outcomeRow("r1"));
 
-      expect(restored).toBe(true);
-      expect(hub.records({ submissionId: "r1" })).toHaveLength(2);
-      expect(resultOf(results, outcomeRow("r1"))?.status).not.toBe("failed");
+      // Re-read after its Hub calls, the job saw the new outcome and rebuilt within the same run.
+      expect(hubCalls()).toEqual(["list", "delete:h1", "list", "create:2"]);
+      expect(resultOf(results, outcomeRow("r1"))).toEqual({ status: "done" });
     });
 
-    test("a mark that lands while the records are being rebuilt still ends with none", async () => {
+    test("a mark that lands while the records are being rebuilt ends with them removed", async () => {
       addResponse("r1");
-      let marked = false;
-      hub.onRequest = (request) => {
-        if (request.method === "POST" && !marked) {
-          marked = true;
-          responses.get("r1")!.outcome = "lowQuality";
-        }
-      };
+      vi.mocked(createFeedbackRecordsBatch).mockImplementationOnce((async (inputs: unknown[]) => {
+        setOutcome("r1", "lowQuality");
+        return { results: inputs.map(() => hubOk({ id: "created" })) };
+      }) as never);
+      listsNext([hubRecord("h1", "r1"), hubRecord("h2", "r1", "el-nps")]);
 
       await run(outcomeRow("r1"));
 
-      expect(marked).toBe(true);
-      expect(hub.records({ submissionId: "r1" })).toHaveLength(0);
+      expect(hubCalls()).toEqual(["create:2", "list", "delete:h1", "delete:h2", "list"]);
     });
 
     test("an outcome that keeps flipping is left to the next run, not looped on", async () => {
       addResponse("r1", { outcome: "lowQuality" });
-      await publish("r1");
-      // Flips once after every database read: the reviewer is faster than every pass.
-      let armed = false;
-      const read = vi.mocked(prisma.response.findMany).getMockImplementation() as (args: never) => unknown;
-      vi.mocked(prisma.response.findMany).mockImplementation(((args: never) => {
-        armed = true;
-        return read(args);
+      // The reviewer is faster than every pass: each Hub call flips the outcome.
+      const flip = () => setOutcome("r1", responses.get("r1")?.outcome ? null : "lowQuality");
+      vi.mocked(listFeedbackRecords).mockImplementation((async () => {
+        flip();
+        return hubOk({ data: [] });
       }) as never);
-      hub.onRequest = () => {
-        if (!armed) return;
-        armed = false;
-        const row = responses.get("r1")!;
-        row.outcome = row.outcome ? null : "lowQuality";
-      };
+      vi.mocked(createFeedbackRecordsBatch).mockImplementation((async (inputs: unknown[]) => {
+        flip();
+        return { results: inputs.map(() => hubOk({ id: "created" })) };
+      }) as never);
 
       const results = await run(outcomeRow("r1"));
 
       expect(resultOf(results, outcomeRow("r1"))).toEqual({ status: "again", delayMs: 0 });
+      expect(hubCalls().length).toBeLessThanOrEqual(3);
     });
   });
 
   describe("the Hub is down", () => {
-    test("a mark's cleanup fails softly, keeps the records, and a later run finishes it", async () => {
+    test("a mark's cleanup fails softly, deletes nothing, and a later run finishes it", async () => {
       addResponse("r1", { outcome: "lowQuality" });
-      await publish("r1");
-      hub.outage = "down";
+      vi.mocked(listFeedbackRecords).mockResolvedValueOnce(hubError(503));
 
       const down = await run(outcomeRow("r1"));
 
       expect(resultOf(down, outcomeRow("r1"))).toEqual({ status: "failed", error: "hubList:503" });
-      hub.outage = null;
-      expect(hub.records({ submissionId: "r1" })).toHaveLength(2);
+      expect(deleteFeedbackRecord).not.toHaveBeenCalled();
 
-      await run(outcomeRow("r1"));
-      expect(hub.records({ submissionId: "r1" })).toHaveLength(0);
+      listsNext([hubRecord("h1", "r1")]);
+      const later = await run(outcomeRow("r1"));
+
+      expect(deleteFeedbackRecord).toHaveBeenCalledWith("h1");
+      expect(resultOf(later, outcomeRow("r1"))?.status).toBe("again");
     });
 
-    test("an unreachable Hub reads as a failure too, never an exception", async () => {
+    test("an unreachable Hub (no status) reads as a failure too, never an exception", async () => {
       addResponse("r1", { outcome: "lowQuality" });
-      hub.outage = "unreachable";
+      vi.mocked(listFeedbackRecords).mockResolvedValueOnce(hubError(0));
 
       const results = await run(outcomeRow("r1"));
 
-      expect(resultOf(results, outcomeRow("r1"))?.status).toBe("failed");
+      expect(resultOf(results, outcomeRow("r1"))).toEqual({ status: "failed", error: "hubList:0" });
     });
 
     test("a restore's rebuild fails softly and a later run completes it", async () => {
       addResponse("r1");
-      hub.outage = "down";
+      vi.mocked(createFeedbackRecordsBatch).mockImplementationOnce((async (inputs: unknown[]) => ({
+        results: inputs.map(() => hubError(503)),
+      })) as never);
 
       const down = await run(outcomeRow("r1"));
 
-      expect(resultOf(down, outcomeRow("r1"))?.status).toBe("failed");
-      hub.outage = null;
-      await run(outcomeRow("r1"));
-      expect(hub.records({ submissionId: "r1" })).toHaveLength(2);
+      expect(resultOf(down, outcomeRow("r1"))).toEqual({ status: "failed", error: "hubReconcile:503" });
+      const later = await run(outcomeRow("r1"));
+      expect(resultOf(later, outcomeRow("r1"))).toEqual({ status: "done" });
+      expect(createdRecords()).toHaveLength(4);
     });
   });
 
@@ -408,28 +469,34 @@ describe("reconcileResponseOutcomes", () => {
 
     test("100 marks cost a constant number of database reads and a handful of Hub listings", async () => {
       for (const id of ids) addResponse(id, { outcome: "lowQuality" });
-      for (const id of ids) {
-        responses.get(id)!.outcome = null;
-        await publish(id);
-        responses.get(id)!.outcome = "lowQuality";
-      }
-      expect(hub.records()).toHaveLength(200);
-      vi.mocked(prisma.response.findMany).mockClear();
-      vi.mocked(getSurvey).mockClear();
-      vi.mocked(getFeedbackSourcesBySurveyId).mockClear();
-      hub.clearRequests();
+      // The Hub's side of 200 records, which the job pages through: 100, 100, then nothing.
+      const held = ids.flatMap((id) => [hubRecord(`${id}-a`, id), hubRecord(`${id}-b`, id, "el-nps")]);
+      vi.mocked(listFeedbackRecords).mockImplementation((async () =>
+        hubOk({ data: held.slice(0, 100) })) as never);
+      vi.mocked(deleteFeedbackRecord).mockImplementation((async (id: string) => {
+        held.splice(
+          held.findIndex((record) => record.id === id),
+          1
+        );
+        return hubOk({ deleted: true });
+      }) as never);
 
-      const rows = ids.map((id) => outcomeRow(id));
-      const results = await reconcileResponseOutcomes(rows, budget());
+      const results = await reconcileResponseOutcomes(
+        ids.map((id) => outcomeRow(id)),
+        budget()
+      );
 
-      expect(hub.records()).toHaveLength(0);
       expect(results.size).toBe(100);
+      expect(held).toHaveLength(0);
+      expect(vi.mocked(deleteFeedbackRecord)).toHaveBeenCalledTimes(200);
       // One read for the responses and one to confirm none changed: not one per response.
       expect(vi.mocked(prisma.response.findMany).mock.calls.length).toBeLessThanOrEqual(3);
       // Removing records needs neither the survey nor its sources.
       expect(vi.mocked(getSurvey)).not.toHaveBeenCalled();
-      // 100 responses x 2 records: a page of 100 listed, deleted, then re-listed: nowhere near one listing each.
-      expect(hub.count("GET")).toBeLessThanOrEqual(5);
+      // 100 responses x 2 records: pages of 100 listed, deleted, then re-listed: nowhere near one listing each.
+      expect(vi.mocked(listFeedbackRecords).mock.calls.length).toBeLessThanOrEqual(5);
+      // One listing names every response of the batch.
+      expect(vi.mocked(listFeedbackRecords).mock.calls[0]?.[0].submission_id).toEqual(ids);
     });
 
     test("100 restores read the survey and the sources once", async () => {
@@ -440,7 +507,7 @@ describe("reconcileResponseOutcomes", () => {
         budget()
       );
 
-      expect(hub.records()).toHaveLength(200);
+      expect(createdRecords()).toHaveLength(200);
       expect([...results.values()].every((r) => r.status === "done")).toBe(true);
       expect(vi.mocked(getSurvey)).toHaveBeenCalledTimes(1);
       expect(vi.mocked(getFeedbackSourcesBySurveyId)).toHaveBeenCalledTimes(1);
@@ -456,7 +523,7 @@ describe("reconcileResponseOutcomes", () => {
       );
 
       expect([...results.values()]).toEqual(Array(3).fill({ status: "again", delayMs: 0 }));
-      expect(hub.requests).toHaveLength(0);
+      expect(hubCalls()).toEqual([]);
     });
   });
 });
