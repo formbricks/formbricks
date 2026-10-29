@@ -310,7 +310,9 @@ export const CustomFilter = ({ survey }: Readonly<CustomFilterProps>) => {
           }}
           className="flex cursor-pointer items-center gap-2 rounded-md border border-slate-300 bg-white p-2 text-sm text-slate-700 hover:border-slate-400">
           <DownloadIcon className="size-4" strokeWidth={1.5} />
-          {t("workspace.surveys.export.button")}
+          {Object.keys(filters ?? {}).length > 0
+            ? t("workspace.surveys.export.export_filtered")
+            : t("workspace.surveys.export.button")}
         </button>
       </div>
       <ExportModal

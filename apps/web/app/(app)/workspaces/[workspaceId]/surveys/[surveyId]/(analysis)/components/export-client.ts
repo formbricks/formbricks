@@ -90,6 +90,8 @@ export const requestExport = async ({
 export type TExportCounts = {
   included: number;
   lowQualityLeftOut: number;
+  /** The Low quality responses the filter reaches, in the file or not: the checkbox's "(N)". */
+  lowQualityInScope: number;
   /** Every response of the survey, filter or not. */
   total: number;
   /** The Include columns list for this export. */

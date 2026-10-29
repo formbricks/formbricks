@@ -91,6 +91,11 @@ export const ZExportRequest = z
      * Standard defaults leave none off, which is today's file with every column.
      */
     excludedColumns: z.array(z.string().min(1).max(300)).max(2000).default([]),
+    /**
+     * Whether Low quality responses are in the file. Left out, the export decides: the Standard export keeps
+     * them (today's file), an Analysis export leaves them out (ADR 0017).
+     */
+    includeLowQuality: z.boolean().optional(),
     /** The Responses filter, or `{ responseIds }` for a selection of rows. */
     filter: z.preprocess(reviveFilterDates, ZResponseFilterCriteria.optional()),
   })
@@ -128,6 +133,12 @@ export const ZExportRequest = z
   });
 
 export type TExportRequest = z.infer<typeof ZExportRequest>;
+
+/** Whether the file holds Low quality responses: the request's choice, else the default of its kind. */
+export const resolveIncludeLowQuality = (
+  request: Pick<TExportRequest, "includeLowQuality">,
+  plan: Pick<TExportPlan, "kind">
+): boolean => request.includeLowQuality ?? plan.kind === "standard";
 
 export type TExportOutput = "csv" | "zip" | "xlsx";
 

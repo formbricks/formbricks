@@ -71,17 +71,12 @@ const ExportManager = ({ children }: Readonly<{ children: ReactNode }>) => {
     onSuccess: ({ blob, fileName }, job) => {
       saveBlob(blob, fileName ?? "export");
       toast.success(
-        <span className="flex flex-col">
-          <span className="font-semibold">{t("workspace.surveys.export.export_ready")}</span>
-          <span className="text-slate-500">
-            {job.included === undefined
-              ? t("workspace.surveys.export.export_ready_file", { fileName: fileName ?? "export" })
-              : t("workspace.surveys.export.export_ready_file_count", {
-                  fileName: fileName ?? "export",
-                  count: job.included,
-                })}
-          </span>
-        </span>,
+        job.included === undefined
+          ? t("workspace.surveys.export.export_ready_file", { fileName: fileName ?? "export" })
+          : t("workspace.surveys.export.export_ready_file_count", {
+              fileName: fileName ?? "export",
+              count: job.included,
+            }),
         { id: EXPORT_TOAST_ID, duration: 6000 }
       );
     },

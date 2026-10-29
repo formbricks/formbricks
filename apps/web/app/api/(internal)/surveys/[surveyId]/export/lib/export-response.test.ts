@@ -126,6 +126,37 @@ describe("countExportResponses", () => {
     });
   });
 
+  test("includeLowQuality counts them in and leaves none out; the Low quality in scope is counted either way", async () => {
+    mocks.count.mockImplementation(async ({ where }: { where: unknown }) => {
+      const text = JSON.stringify(where);
+      if (text.includes('"outcome":"lowQuality"')) return 3;
+      return text.includes('"outcome":null') ? 8 : 11;
+    });
+    const plan = analysisPlan("codes", "csv");
+    expect(await countExportResponses({ survey: withId as never, plan })).toMatchObject({
+      included: 8,
+      lowQualityLeftOut: 3,
+      lowQualityInScope: 3,
+    });
+    expect(
+      await countExportResponses({ survey: withId as never, plan, includeLowQuality: true })
+    ).toMatchObject({ included: 11, lowQualityLeftOut: 0, lowQualityInScope: 3 });
+  });
+
+  test("the Standard export can leave Low quality out too, and says how many", async () => {
+    mocks.count.mockImplementation(async ({ where }: { where: unknown }) =>
+      JSON.stringify(where).includes('"outcome":"lowQuality"') ? 2 : 10
+    );
+    const plan = { kind: "standard", format: "csv" } as const;
+    expect(await countExportResponses({ survey: withId as never, plan })).toMatchObject({
+      lowQualityLeftOut: 0,
+      lowQualityInScope: 2,
+    });
+    expect(
+      await countExportResponses({ survey: withId as never, plan, includeLowQuality: false })
+    ).toMatchObject({ lowQualityLeftOut: 2, lowQualityInScope: 2 });
+  });
+
   test("a filter that selects Low quality leaves nothing out", async () => {
     mocks.count.mockResolvedValue(4);
     const plan = {
@@ -193,6 +224,26 @@ describe("buildExportResponse", () => {
     expect(mocks.openAnalysisExport).not.toHaveBeenCalled();
     expect(result.response.headers.get("Content-Disposition")).toBe(
       'attachment; filename="export-my-survey-2026-10-27-00-00-00.csv"'
+    );
+  });
+
+  test("the Standard export leaves Low quality out only when asked, and the Analysis export includes it only when asked", async () => {
+    mocks.getResponseDownloadFile.mockResolvedValue({ fileContents: "x", fileName: "x.csv" });
+    const standard = { kind: "standard", format: "csv" } as const;
+    await buildExportResponse({ ...baseArgs, plan: standard });
+    expect(mocks.getResponseDownloadFile).toHaveBeenLastCalledWith(withId.id, "csv", undefined, []);
+    await buildExportResponse({ ...baseArgs, plan: standard, includeLowQuality: false });
+    expect(mocks.getResponseDownloadFile).toHaveBeenLastCalledWith(
+      withId.id,
+      "csv",
+      { excludeLowQuality: true },
+      []
+    );
+
+    mocks.openAnalysisExport.mockResolvedValue(buildSampleExport("codes"));
+    await buildExportResponse({ ...baseArgs, plan: analysisPlan("codes", "csv"), includeLowQuality: true });
+    expect(mocks.openAnalysisExport).toHaveBeenLastCalledWith(
+      expect.objectContaining({ includeLowQuality: true })
     );
   });
 

@@ -33,23 +33,33 @@ const MAX_BATCH_SIZE = 5000;
 
 /**
  * The response filter with Low quality handled the way the Analysis export wants it (ADR 0017): left
- * out unless the filter selects Low quality. Done here, not in `buildWhereClause`, because that
- * builder also feeds Summary, where Low quality responses keep counting.
+ * out unless the filter selects Low quality or the export asks for them (`includeLowQuality`, the
+ * dialog's checkbox). Done here, not in `buildWhereClause`, because that builder also feeds Summary,
+ * where Low quality responses keep counting.
  *
  * `included` is every response the export writes. `lowQualityLeftOut` is the same filter restricted
- * to Low quality, or `null` when nothing is left out (the filter itself selects Low quality).
+ * to Low quality, or `null` when nothing is left out (they are included).
  */
 export const buildAnalysisWhere = (
   survey: TSurvey,
-  filter?: TResponseFilterCriteria
+  filter?: TResponseFilterCriteria,
+  includeLowQuality = false
 ): { included: Prisma.ResponseWhereInput; lowQualityLeftOut: Prisma.ResponseWhereInput | null } => {
   const base: Prisma.ResponseWhereInput = { surveyId: survey.id, ...buildWhereClause(survey, filter) };
-  if (filter?.outcome) return { included: base, lowQualityLeftOut: null };
+  if (filter?.outcome || includeLowQuality) return { included: base, lowQualityLeftOut: null };
   return {
     included: { AND: [base, { outcome: null }] },
     lowQualityLeftOut: { AND: [base, { outcome: "lowQuality" }] },
   };
 };
+
+/** The Low quality responses the filter reaches, whether or not the export includes them: the dialog's "(N)". */
+export const buildLowQualityScopeWhere = (
+  survey: TSurvey,
+  filter?: TResponseFilterCriteria
+): Prisma.ResponseWhereInput => ({
+  AND: [{ surveyId: survey.id, ...buildWhereClause(survey, filter) }, { outcome: "lowQuality" }],
+});
 
 /** Selects only what the chosen fields need: the lean shape the ticket asks for in place of `getResponses`. */
 export const buildAnalysisSelect = (fields: TAnalysisResponseFields, isQuotasAllowed: boolean) =>
@@ -140,7 +150,7 @@ export const openAnalysisExport = async (input: TAnalysisExportInput): Promise<T
     const survey = await getSurvey(input.surveyId);
     if (!survey) throw new ResourceNotFoundError("Survey", input.surveyId);
 
-    const where = buildAnalysisWhere(survey, input.filter);
+    const where = buildAnalysisWhere(survey, input.filter, input.includeLowQuality);
     const [included, lowQualityLeftOut, contactAttributeKeys] = await Promise.all([
       prisma.response.count({ where: where.included }),
       where.lowQualityLeftOut ? prisma.response.count({ where: where.lowQualityLeftOut }) : 0,

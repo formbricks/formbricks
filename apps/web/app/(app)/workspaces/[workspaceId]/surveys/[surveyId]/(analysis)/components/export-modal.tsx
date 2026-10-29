@@ -49,6 +49,7 @@ import {
   isExcelBlocked,
   isExcelTooLarge,
   isExportReady,
+  isLowQualityIncluded,
   isSpssAvailable,
   isTextOnlyAvailable,
   isZipAvailable,
@@ -317,7 +318,6 @@ const ExportProgress = ({
       <DialogFooter className="items-center gap-4">
         <Button
           variant="secondary"
-          size="sm"
           data-testid="export-cancel"
           onClick={() => {
             cancelExport();
@@ -325,7 +325,7 @@ const ExportProgress = ({
           }}>
           {t("workspace.surveys.export.cancel_export")}
         </Button>
-        <Button size="sm" disabled>
+        <Button disabled>
           <Loader2Icon className="animate-spin" />
           {t("workspace.surveys.export.exporting")}
         </Button>
@@ -422,6 +422,11 @@ const ExportModalBody = ({
 
       <DialogBody className="flex flex-col gap-4 px-0.5 pb-0.5" data-testid="export-modal">
         <CountBox>
+          {counts.isPending && (
+            <span className="animate-pulse text-slate-500" data-testid="export-count-loading">
+              {t("workspace.surveys.export.count_loading")}
+            </span>
+          )}
           {counts.isError && (
             <span className="flex items-center gap-3 text-red-800" role="alert">
               {t("common.something_went_wrong_please_try_again")}
@@ -531,6 +536,19 @@ const ExportModalBody = ({
           onChange={(excluded) => setOptions((current) => setExcludedColumns(current, excluded))}
         />
 
+        {(counts.data?.lowQualityInScope ?? 0) > 0 && (
+          <OptionRow
+            id="export-low-quality"
+            checked={isLowQualityIncluded(options)}
+            onCheckedChange={(checked) =>
+              setOptions((current) => ({ ...current, includeLowQuality: checked }))
+            }
+            label={t("workspace.surveys.export.include_low_quality", {
+              count: counts.data?.lowQualityInScope ?? 0,
+            })}
+          />
+        )}
+
         <div className="flex flex-col gap-4 border-t border-slate-200 pt-4">
           <button
             type="button"
@@ -597,11 +615,10 @@ const ExportModalBody = ({
       </DialogBody>
 
       <DialogFooter className="items-center gap-4">
-        <Button variant="secondary" size="sm" onClick={onClose}>
+        <Button variant="secondary" onClick={onClose}>
           {t("common.cancel")}
         </Button>
         <Button
-          size="sm"
           data-testid="export-submit"
           disabled={!countsReady || excelBlocked || noColumns}
           onClick={() => startExport({ surveyId, request, included: counts.data?.included })}>

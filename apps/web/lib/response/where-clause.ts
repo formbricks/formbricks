@@ -422,6 +422,14 @@ type TDataFilter = NonNullable<TResponseFilterCriteria["data"]>;
 type TChoiceElement = Extract<TSurveyElement, { type: "multipleChoiceMulti" | "multipleChoiceSingle" }>;
 type TClauseSpend = (count: number) => void;
 
+/** The outcome the filter selects, or (for the export) only responses without one. */
+const buildOutcomeCondition = (
+  filterCriteria: TResponseFilterCriteria | undefined
+): Prisma.ResponseWhereInput | null => {
+  if (filterCriteria?.outcome) return { outcome: filterCriteria.outcome };
+  return filterCriteria?.excludeLowQuality ? { outcome: null } : null;
+};
+
 const buildCreatedAtCondition = (range: NonNullable<TResponseFilterCriteria["createdAt"]>) => {
   const createdAt: { lte?: Date; gte?: Date } = {};
   if (range.max) {
@@ -971,8 +979,9 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
     });
   }
 
-  if (filterCriteria?.outcome) {
-    whereClause.push({ outcome: filterCriteria.outcome });
+  const outcomeCondition = buildOutcomeCondition(filterCriteria);
+  if (outcomeCondition) {
+    whereClause.push(outcomeCondition);
   }
 
   if (filterCriteria?.createdAt) {

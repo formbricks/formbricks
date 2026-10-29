@@ -3,7 +3,7 @@ import { Readable } from "node:stream";
 import { prisma } from "@formbricks/database";
 import type { TResponseFilterCriteria } from "@formbricks/types/responses";
 import type { TSurvey } from "@formbricks/types/surveys/types";
-import { buildAnalysisWhere, openAnalysisExport } from "@/lib/analysis-export";
+import { buildAnalysisWhere, buildLowQualityScopeWhere, openAnalysisExport } from "@/lib/analysis-export";
 import { rowCells } from "@/lib/analysis-export/analysis-workbook";
 import {
   analysisColumnGroups,
@@ -74,6 +74,8 @@ export const buildExportFileName = (surveyName: string, plan: TExportPlan): stri
 export type TExportCounts = {
   included: number;
   lowQualityLeftOut: number;
+  /** The Low quality responses the filter reaches, in or out of the file: the dialog's "Include Low quality responses (N)". */
+  lowQualityInScope: number;
   /** Every response of the survey, filter or not: the count line's "N responses total". */
   total: number;
   /** The Include columns list for this export. Standard and Analysis name their columns differently. */
@@ -93,6 +95,13 @@ const standardGroupsOf = (survey: TSurvey, isQuotasAllowed: boolean) =>
     ({ id, label }) => ({ id, label })
   );
 
+/** The Standard export's filter: every response, or (the dialog's checkbox off) only those without an outcome. */
+const standardFilter = (
+  filter: TResponseFilterCriteria | undefined,
+  includeLowQuality: boolean
+): TResponseFilterCriteria | undefined =>
+  includeLowQuality ? filter : { ...filter, excludeLowQuality: true };
+
 /**
  * The modal's count line: what the export writes, and the Low quality responses it leaves out. For an
  * Analysis export also the Excel size: the columns come from the survey alone, so no response is read.
@@ -101,34 +110,45 @@ export const countExportResponses = async ({
   survey,
   plan,
   filter,
+  includeLowQuality = plan.kind === "standard",
   isQuotasAllowed = false,
   timeZone,
 }: {
   survey: TSurvey;
   plan: TExportPlan;
   filter?: TResponseFilterCriteria;
+  /** Whether the file holds the Low quality responses. Default: the Standard export does, an Analysis export does not. */
+  includeLowQuality?: boolean;
   isQuotasAllowed?: boolean;
   timeZone?: string;
 }): Promise<TExportCounts> => {
   if (plan.kind === "standard") {
-    // Today's file keeps Low quality responses, so nothing is left out.
-    const [included, total] = await Promise.all([
-      prisma.response.count({ where: { surveyId: survey.id, ...buildWhereClause(survey, filter) } }),
+    // Today's file keeps Low quality responses; the dialog's checkbox can leave them out.
+    const [included, lowQualityInScope, total] = await Promise.all([
+      prisma.response.count({
+        where: {
+          surveyId: survey.id,
+          ...buildWhereClause(survey, standardFilter(filter, includeLowQuality)),
+        },
+      }),
+      prisma.response.count({ where: buildLowQualityScopeWhere(survey, filter) }),
       prisma.response.count({ where: { surveyId: survey.id } }),
     ]);
     return {
       included,
-      lowQualityLeftOut: 0,
+      lowQualityLeftOut: includeLowQuality ? 0 : lowQualityInScope,
+      lowQualityInScope,
       total,
       columnGroups: standardGroupsOf(survey, isQuotasAllowed),
       excel: null,
       excelSizing: null,
     };
   }
-  const where = buildAnalysisWhere(survey, filter);
-  const [included, lowQualityLeftOut, total, contactAttributeKeys] = await Promise.all([
+  const where = buildAnalysisWhere(survey, filter, includeLowQuality);
+  const [included, lowQualityLeftOut, lowQualityInScope, total, contactAttributeKeys] = await Promise.all([
     prisma.response.count({ where: where.included }),
     where.lowQualityLeftOut ? prisma.response.count({ where: where.lowQualityLeftOut }) : 0,
+    prisma.response.count({ where: buildLowQualityScopeWhere(survey, filter) }),
     prisma.response.count({ where: { surveyId: survey.id } }),
     getContactAttributeKeys(survey.workspaceId),
   ]);
@@ -148,6 +168,7 @@ export const countExportResponses = async ({
   return {
     included,
     lowQualityLeftOut,
+    lowQualityInScope,
     total,
     columnGroups: analysisColumnGroups(columns),
     excel: excelSizeVerdict(cells, EXCEL_EXPORT_MAX_CELLS),
@@ -221,12 +242,14 @@ const buildStandardResponse = async ({
   survey,
   plan,
   filter,
+  includeLowQuality,
   excludedColumns,
   isQuotasAllowed,
 }: {
   survey: TSurvey;
   plan: Extract<TExportPlan, { kind: "standard" }>;
   filter?: TResponseFilterCriteria;
+  includeLowQuality: boolean;
   excludedColumns: readonly string[];
   isQuotasAllowed: boolean;
 }): Promise<TExportResult> => {
@@ -235,7 +258,7 @@ const buildStandardResponse = async ({
   const { fileContents, fileName } = await getResponseDownloadFile(
     survey.id,
     plan.format,
-    filter,
+    standardFilter(filter, includeLowQuality),
     excludedColumns
   );
   if (plan.zip) {
@@ -260,6 +283,7 @@ export const buildExportResponse = async ({
   survey,
   plan,
   filter,
+  includeLowQuality = plan.kind === "standard",
   excludedColumns = [],
   isQuotasAllowed,
   timeZone,
@@ -268,6 +292,7 @@ export const buildExportResponse = async ({
   survey: TSurvey;
   plan: TExportPlan;
   filter?: TResponseFilterCriteria;
+  includeLowQuality?: boolean;
   /** Include columns groups switched off. */
   excludedColumns?: readonly string[];
   isQuotasAllowed: boolean;
@@ -275,7 +300,14 @@ export const buildExportResponse = async ({
   signal: AbortSignal;
 }): Promise<TExportResult> => {
   if (plan.kind === "standard") {
-    return buildStandardResponse({ survey, plan, filter, excludedColumns, isQuotasAllowed });
+    return buildStandardResponse({
+      survey,
+      plan,
+      filter,
+      includeLowQuality,
+      excludedColumns,
+      isQuotasAllowed,
+    });
   }
 
   const exported = withoutColumnGroups(
@@ -283,6 +315,7 @@ export const buildExportResponse = async ({
       await openAnalysisExport({
         surveyId: survey.id,
         filter,
+        includeLowQuality,
         answers: plan.display,
         fields: ANALYSIS_EXPORT_FIELDS,
         isQuotasAllowed,

@@ -9,6 +9,7 @@ import {
   isExcelBlocked,
   isExcelTooLarge,
   isExportReady,
+  isLowQualityIncluded,
   isSpssAvailable,
   isTextOnlyAvailable,
   isZipAvailable,
@@ -228,5 +229,27 @@ describe("isExportReady", () => {
     expect(isExportReady({ isSuccess: false, isPlaceholderData: false })).toBe(false);
     // The previous counts are on screen while the new ones load: the column list may be out of date.
     expect(isExportReady({ isSuccess: true, isPlaceholderData: true })).toBe(false);
+  });
+});
+
+describe("the Low quality checkbox", () => {
+  test("follows the export until it is touched: ticked for Standard, unticked once an Analysis option is on", () => {
+    expect(isLowQualityIncluded(DEFAULT_EXPORT_OPTIONS)).toBe(true);
+    expect(isLowQualityIncluded(setDisplay(DEFAULT_EXPORT_OPTIONS, "codes"))).toBe(false);
+    expect(isLowQualityIncluded(setFormat(setDisplay(DEFAULT_EXPORT_OPTIONS, "both"), "xlsx"))).toBe(false);
+  });
+
+  test("a choice sticks across option changes, and only a made choice travels in the request", () => {
+    const untouched = setDisplay(DEFAULT_EXPORT_OPTIONS, "codes");
+    expect(toExportRequest(untouched)).not.toHaveProperty("includeLowQuality");
+
+    const ticked = { ...untouched, includeLowQuality: true };
+    expect(isLowQualityIncluded(ticked)).toBe(true);
+    expect(toExportRequest(ticked).includeLowQuality).toBe(true);
+    expect(isLowQualityIncluded(setDisplay(ticked, "both"))).toBe(true);
+
+    const unticked = { ...DEFAULT_EXPORT_OPTIONS, includeLowQuality: false };
+    expect(isLowQualityIncluded(unticked)).toBe(false);
+    expect(toExportRequest(unticked).includeLowQuality).toBe(false);
   });
 });

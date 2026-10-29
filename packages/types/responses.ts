@@ -311,6 +311,11 @@ const ZResponseFilterCriteriaFields = z.object({
   finished: z.boolean().optional(),
   /** Only responses carrying this outcome. Absent means no constraint, not "without an outcome". */
   outcome: ZResponseOutcome.optional(),
+  /**
+   * Only responses without an outcome: the export's "leave Low quality out". Ignored when `outcome` selects
+   * one. Set by the export route, never by the Responses filter.
+   */
+  excludeLowQuality: z.boolean().optional(),
   responseIds: z.array(ZId).optional(),
   createdAt: z
     .object({

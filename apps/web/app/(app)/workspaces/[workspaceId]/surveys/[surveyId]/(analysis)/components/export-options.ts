@@ -29,6 +29,11 @@ export type TExportOptions = {
   advanced: TExportAdvancedOptionId[];
   /** Include columns: the groups switched OFF, so the defaults (everything on) send nothing. */
   excludedColumns: string[];
+  /**
+   * The Low quality checkbox once the person has touched it. Until then it follows the export: ticked for
+   * the Standard export (today's file), unticked once any Analysis option is on.
+   */
+  includeLowQuality?: boolean;
 };
 
 /** The Standard export: today's CSV. The modal always opens with these and remembers nothing. */
@@ -41,6 +46,10 @@ export const DEFAULT_EXPORT_OPTIONS: TExportOptions = {
   advanced: [],
   excludedColumns: [],
 };
+
+/** Whether the file will hold Low quality responses: the person's choice, else the default of its kind. */
+export const isLowQualityIncluded = (options: TExportOptions): boolean =>
+  options.includeLowQuality ?? planExport(toExportRequest(options)).kind === "standard";
 
 /** The SPSS syntax file needs codes, so Text only is off the table while it is ticked. */
 export const isTextOnlyAvailable = (options: TExportOptions): boolean => !options.spss;
@@ -211,6 +220,7 @@ export const toExportRequest = (
     excludedColumns: scope.columnGroups
       ? excludedForRequest(scope.columnGroups, options.excludedColumns)
       : [],
+    ...(options.includeLowQuality === undefined ? {} : { includeLowQuality: options.includeLowQuality }),
     ...(filter ? { filter } : {}),
   };
 };

@@ -11,7 +11,11 @@ import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { getAuthorizedV3Survey } from "@/app/api/v3/surveys/authorization";
 import { getSessionUserId } from "@/app/api/v3/surveys/lib/operations";
 import { ConcurrencyLimiter, type TAcquireResult } from "@/app/lib/api/concurrency-limiter";
-import { type TExportRequest, planExport } from "@/lib/analysis-export/export-request";
+import {
+  type TExportRequest,
+  planExport,
+  resolveIncludeLowQuality,
+} from "@/lib/analysis-export/export-request";
 import { can } from "@/lib/authorization";
 import { getOrganization } from "@/lib/organization/service";
 import { capturePostHogEvent } from "@/lib/posthog";
@@ -159,6 +163,7 @@ export const handleExportRequest = async ({
   }
 
   const plan = planExport(body);
+  const includeLowQuality = resolveIncludeLowQuality(body, plan);
 
   if (dryRun) {
     // A pre-flight reads counts and writes no file, so it is recorded as a query, not an export.
@@ -172,6 +177,7 @@ export const handleExportRequest = async ({
       survey,
       plan,
       filter: body.filter,
+      includeLowQuality,
       isQuotasAllowed: await getIsQuotasEnabled(authResult.organizationId),
     });
     return successResponse({ ...counts, kind: plan.kind }, { requestId });
@@ -201,6 +207,7 @@ export const handleExportRequest = async ({
         survey,
         plan,
         filter: body.filter,
+        includeLowQuality,
         excludedColumns: body.excludedColumns,
         isQuotasAllowed,
         timeZone: organization?.displayTimeZone ?? "UTC",

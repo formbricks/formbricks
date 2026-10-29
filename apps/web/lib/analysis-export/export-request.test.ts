@@ -5,6 +5,7 @@ import {
   ZExportRequest,
   exportFileType,
   planExport,
+  resolveIncludeLowQuality,
 } from "./export-request";
 
 const parse = (input: unknown) => ZExportRequest.safeParse(input);
@@ -172,5 +173,27 @@ describe("Display questions", () => {
   test("rejects the SPSS syntax file with Text only questions", () => {
     expect(parse({ format: "csv", display: "codes", questions: "text", spss: true }).success).toBe(false);
     expect(parse({ format: "csv", display: "codes", questions: "both", spss: true }).success).toBe(true);
+  });
+});
+
+describe("Low quality responses", () => {
+  test("the request may carry the choice, and leaving it out keeps the kind's default", () => {
+    expect(parse({ format: "csv", includeLowQuality: false }).data?.includeLowQuality).toBe(false);
+    expect(parse({ format: "csv" }).data?.includeLowQuality).toBeUndefined();
+    expect(parse({ format: "csv", includeLowQuality: "yes" }).success).toBe(false);
+  });
+
+  test("the Standard export keeps them by default and an Analysis export leaves them out", () => {
+    const standard = planExport(ZExportRequest.parse({ format: "csv" }));
+    const analysis = planExport(ZExportRequest.parse({ format: "csv", display: "codes" }));
+    expect(resolveIncludeLowQuality({}, standard)).toBe(true);
+    expect(resolveIncludeLowQuality({}, analysis)).toBe(false);
+  });
+
+  test("an explicit choice wins on either kind", () => {
+    const standard = planExport(ZExportRequest.parse({ format: "csv" }));
+    const analysis = planExport(ZExportRequest.parse({ format: "csv", display: "codes" }));
+    expect(resolveIncludeLowQuality({ includeLowQuality: false }, standard)).toBe(false);
+    expect(resolveIncludeLowQuality({ includeLowQuality: true }, analysis)).toBe(true);
   });
 });

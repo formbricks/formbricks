@@ -1,7 +1,12 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { getSurvey } from "../survey/service";
-import { buildAnalysisSelect, buildAnalysisWhere, openAnalysisExport } from "./index";
+import {
+  buildAnalysisSelect,
+  buildAnalysisWhere,
+  buildLowQualityScopeWhere,
+  openAnalysisExport,
+} from "./index";
 
 vi.mock("server-only", () => ({}));
 vi.mock("@formbricks/database", () => ({
@@ -57,6 +62,18 @@ describe("buildAnalysisWhere", () => {
       AND: [expect.objectContaining({ surveyId: survey.id }), { outcome: null }],
     });
     expect(where.lowQualityLeftOut).toEqual({
+      AND: [expect.objectContaining({ surveyId: survey.id }), { outcome: "lowQuality" }],
+    });
+  });
+
+  test("includeLowQuality writes them too and leaves nothing out", () => {
+    const where = buildAnalysisWhere(survey as never, undefined, true);
+    expect(JSON.stringify(where.included)).not.toContain('"outcome":null');
+    expect(where.lowQualityLeftOut).toBeNull();
+  });
+
+  test("the Low quality in scope is counted whether or not they are included", () => {
+    expect(buildLowQualityScopeWhere(survey as never, undefined)).toEqual({
       AND: [expect.objectContaining({ surveyId: survey.id }), { outcome: "lowQuality" }],
     });
   });
