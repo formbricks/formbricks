@@ -4,13 +4,15 @@ description: >-
   Draft the GitHub release notes for a Formbricks release from the diff between the previous stable
   tag and the release branch — in the exact "What's Changed" format past releases already use
   (grouped by conventional-commit type, one bullet per PR carrying its verbatim title, author handle
-  and full PR URL), with an Overview, a Breaking changes index that links the migration guide, and a
-  Security credits section carrying opted-in reporter credits. Replaces the plain GitHub
+  and full PR URL), with an Overview and a Breaking changes index for minors, a Before upgrading
+  section for patches, and a Security section listing each vulnerability fix with its severity and
+  any reporter credit. Replaces the plain GitHub
   "auto-generate release notes" button, which dumps a flat list, double-lists every backport, and
   handles neither breaking changes nor credits. Use for "/release-notes", "generate release notes",
-  "draft the release notes for x.y", or Release QA Step 11 (Ship the stable release).
+  "draft the release notes for x.y", Release QA Step 11 (Ship the stable release), or a security
+  patch round.
 compatibility: Requires a git checkout of formbricks/formbricks, an authenticated gh CLI, and the
-  Linear MCP for security-credit cross-checks (skippable if no security fixes shipped this release).
+  Linear MCP for the Security section (skippable if no security fixes shipped this release).
 metadata:
   owner: Dhru
   argument-hint: "[previous-version] [new-version]"
@@ -21,7 +23,7 @@ metadata:
 # Draft the GitHub release notes
 
 Takes two versions, scopes the diff, groups every merged PR, compiles breaking changes into an
-index that links the migration guide, carries in opted-in security-reporter credits, and creates a
+index that links the migration guide, lists the vulnerability fixes with their credits, and creates a
 **draft** GitHub release — never published, so a human always makes the final call.
 
 ## Inputs
@@ -35,6 +37,12 @@ Ask for both before doing anything else, even if `$ARGUMENTS` looks complete:
 
 Derive `RELEASE_BRANCH` from the new version (`6.0.0` → `release/6.0`) and **confirm it exists**
 (`git ls-remote --heads origin`). If it does not, ask — some releases are cut from `main`.
+
+**Minor or patch.** `X.Y.0` gets the full minor shape below. `X.Y.Z` with Z above 0 is a patch,
+usually a security round. A patch keeps the flat `## What's Changed` list past patches use (6.1.2),
+drops the Overview and the Breaking changes index, and carries `## Before upgrading` instead, only
+when a PR in range has an upgrade step (6.1.1's Redis TLS verification is the example). The
+`security-update-mail` skill and Hazel's draft check both read that heading, so keep it verbatim.
 
 Then, before scoping anything, re-check the tag list. Release state moves between sessions:
 
@@ -123,8 +131,8 @@ Look at a recent stable release before composing (`gh release view 5.4.0 --json 
 The format below is what the team already publishes; the point is to keep that shape while adding
 what the auto-generate button cannot do.
 
-Group by the conventional-commit prefix on the PR title. One section per type, in this order, and
-only for types with at least one PR:
+Group by the conventional-commit prefix on the PR title (minors only; a patch is one flat list in
+merge order). One section per type, in this order, and only for types with at least one PR:
 
 `🚀 Features` → `🐛 Fixes` → `🔧 Refactors` → `⚡ Performance` → `📚 Docs` → `⚙️ CI` → `🧹 Chores`
 
@@ -132,9 +140,10 @@ A `ci` **scope** goes to CI, not to its prefix's section: `fix(ci):` and `chore(
 under `⚙️ CI` in past releases. Entries are the PR title **verbatim** — keep the scope, the
 `[ENG-…]` id, and a backport's `(backport #N to release/X)` suffix. Never rewrite or merge titles.
 
-There is **no separate Security section** for the fixes themselves — a security fix keeps its
-normal grouping and reads like any other entry (`fix(security): bind email-change tokens …`).
-Credits are separate; see below.
+A security fix keeps its normal grouping and its quiet title (`fix(security): bind email-change
+tokens …`). It is **also** listed in the `### 🔒 Security` section below: Medium and Low fixes get no
+Security Updates mail, so these notes are their only disclosure, and SOC 2 Step 7 requires a security
+fix to be identifiable as one here.
 
 Every bullet cites the real author and the **full** PR URL. A bare `#1234` only auto-links inside
 the same repository, so it renders as dead text anywhere else the notes get pasted.
@@ -167,6 +176,11 @@ a removed Management API field has no upgrade step to document there.
 If there are none, state **"No breaking changes"** explicitly — Release QA's definition-of-done
 requires it stated, not silently omitted.
 
+**Patches** get no index. Write `## Before upgrading` instead: one short step per labelled PR in
+range, taken from its Breaking changes table and worded for a self-hoster (what to set or do before
+switching the image). Leave the section out when no PR in range is labelled; a patch never says "No
+breaking changes", because the missing section already says it.
+
 Two backstops:
 
 - Scan for unlabeled contract changes (public API routes, SDK shapes, webhook payloads, changed
@@ -177,9 +191,24 @@ Two backstops:
   Check with `git cat-file -e origin/$RELEASE_BRANCH:docs/PATH` and offer a backport if missing —
   this is exactly what happened to the release-and-maintenance-policy page for 6.0.
 
-### Security credits
+### Security
 
-#### Finding them
+The section lists every vulnerability fix in the release, with its severity, one line of impact,
+and the reporter's credit where there is one.
+
+#### Which fixes
+
+1. Extract every `ENG-\d+` from the in-range PR titles and bodies.
+2. List Linear issues labeled `vulnerability` — **that is the operative label**; `security` is the
+   retired duplicate (ENG-2383) still carried by older issues, so check both and union them.
+3. Intersect with the PR-referenced ids. Keep dependency tickets (`[Dependabot …]`): a vulnerable
+   dependency we ship is a fix the reader needs to know about. Drop tickets whose `Severity` label is
+   `Not shipped`.
+4. From each ticket's `## Security assessment`, take the `Severity` label and the impact (the
+   Exposed line). A ticket with no assessment or no `Severity` label is a question for the human,
+   never a guess.
+
+#### Credits
 
 The source of truth is the **Linear ticket**, not the PR. Since 2026-10-28, every externally
 reported vulnerability carries one `Credit:` line per reporter in its `## Security assessment`
@@ -195,15 +224,12 @@ Credit: asked <date>, no answer yet
 Credit stays out of PR descriptions on purpose: `formbricks/formbricks` is public, and a credit line
 in a fix PR announces a vulnerability fix before the patch ships.
 
-1. Extract every `ENG-\d+` from the in-range PR titles and bodies.
-2. List Linear issues labeled `vulnerability` — **that is the operative label**; `security` is the
-   retired duplicate (ENG-2383) still carried by older issues, so check both and union them.
-3. Intersect with the PR-referenced ids, then drop every `[Dependabot …]` title — in 6.0 that was
+1. Take the tickets from "Which fixes" and drop every `[Dependabot …]` title — in 6.0 that was
    37 of 57. Dependency bumps get no researcher credit.
-4. Read the `Credit:` lines on what survives. Credit every `Credit: <name>` line, in the order
+2. Read the `Credit:` lines on what survives. Credit every `Credit: <name>` line, in the order
    listed (earliest report first). Skip `anonymous` and `not requested`. A ticket with `asked …,
    no answer yet` is a question for the human before publishing, never a guess.
-5. **Older tickets** (before 2026-10-28) have no `Credit:` line. For those, fall back to the old
+3. **Older tickets** (before 2026-10-28) have no `Credit:` line. For those, fall back to the old
    scan: a "Reported by" / "Reporter:" / "Plain thread T-nn" line in the ticket description, then
    the PR body —
 
@@ -217,18 +243,23 @@ in a fix PR announces a vulnerability fix before the patch ships.
 
 #### Placement
 
-A **`### 🔒 Security credits` section after the last type-section**, not an inline "reported by"
-suffix on the bullet. This is the 5.3.0 and 5.4.0 precedent:
+A **`### 🔒 Security` section after the last type-section** (after the flat list in a patch), not
+an inline suffix on the change bullet. It replaces the credits-only section of 5.3.0 to 6.1.2. One
+bullet per ticket, highest severity first:
 
 ```markdown
-### 🔒 Security credits
+### 🔒 Security
 
-Thanks to the following researchers, who reported issues fixed in this release through
-responsible disclosure:
+Fixes for vulnerabilities reported to us or found internally. Thanks to the researchers named below,
+who reported them through responsible disclosure.
 
-* [handle](https://github.com/handle) — one-line description of the issue (#PR)
-* Name (Org) — one-line description of the issue (#PR)
+* **High** — one sentence of impact ([#PR](https://github.com/formbricks/formbricks/pull/PR)). Reported by [handle](https://github.com/handle).
+* **Medium** — `package` updated to X.Y.Z: one sentence of impact ([#PR](https://github.com/formbricks/formbricks/pull/PR)).
 ```
+
+Drop the thanks sentence when nobody is credited. The impact sentence is written at the level of the
+Security Updates mail: what an attacker could reach, never how — no payload, parameter or request
+detail beyond what the PR title already says.
 
 Credit belongs to the **first release that carries the fix**. Before crediting, confirm the fix did
 not already ship on the older line (`git log --oneline $PREVIOUS_TAG --grep="#PR-NUMBER"`); if it
@@ -236,8 +267,8 @@ did, the credit belonged in that release's notes.
 
 Honour what the reporter asked for, exactly as the `Credit:` line (or, for older tickets, the PR or issue) words it — some ask for a GitHub
 handle, some for a real name, some for an employer to be named too ("credit is owed to Google and
-Ada Logics"), some explicitly decline. Never invent or infer a name, never credit someone not
-explicitly named, and never describe the vulnerability beyond what the PR already made public.
+Ada Logics"), some explicitly decline. Never invent or infer a name, and never credit someone not
+explicitly named.
 
 ### Overview and the maintenance line
 
@@ -287,14 +318,30 @@ Link the migration guide and upgrade page, then the grouped one-line bullets.
 ### 🧹 Chores
 ...
 
-### 🔒 Security credits
+### 🔒 Security
 
-Only when someone opted in.
+Only when a vulnerability fix is in range.
 
 **Full Changelog**: https://github.com/formbricks/formbricks/compare/PREVIOUS_TAG...NEW_TAG
 ```
 
 Omit any type-section with zero PRs — an empty header is worse than no header.
+
+A patch composes as:
+
+```markdown
+## Before upgrading
+
+Only when a PR in range has an upgrade step.
+
+## What's Changed
+
+* verbatim PR title by @author in https://github.com/formbricks/formbricks/pull/1234
+
+### 🔒 Security
+
+**Full Changelog**: https://github.com/formbricks/formbricks/compare/PREVIOUS_TAG...NEW_TAG
+```
 
 **Nothing else goes in this block.** No meta-commentary, no "here's a gap I found", no confidence
 notes, no testing narrative — this text is meant to be publishable as-is. Everything you want to
@@ -308,7 +355,9 @@ gh release create $NEW_TAG --target $RELEASE_BRANCH --draft --title $NEW_TAG --n
 ```
 
 Always `--draft`. Publishing is one-way and externally visible: it triggers the Docker/Helm/ECR
-release pipeline and moves the `stable` tag. Hand the draft URL over; the user clicks Publish.
+release pipeline and moves the `stable` tag. Hand the draft URL over; the user clicks Publish. For a
+patch round, also post the draft URL on the round ticket: Hazel checks each draft against it
+(credits, "Before upgrading", no exploit detail in a title) before it is published.
 Never pass `--latest`, never omit `--draft`.
 
 RCs are different — they keep GitHub's raw auto-generated notes (flat `## What's Changed`, no emoji
@@ -319,7 +368,8 @@ sections). Only stable releases get this treatment.
 - A **draft** GitHub release exists for the new tag, targeting the release branch, never published.
 - Its notes follow the Compose shape: no empty type-section, "No breaking changes" stated when there are none, every PR title verbatim with its author and full URL.
 - Every docs page the notes link exists on the release branch.
-- Security credits match the tickets' `Credit:` lines: every named reporter, in that order, worded as they asked; none left as an unanswered request.
+- The Security section lists every in-range `vulnerability` ticket except `Not shipped`, with its severity and one line of impact, and its credits match the tickets' `Credit:` lines: every named reporter, in that order, worded as they asked; none left as an unanswered request.
+- A patch has the flat list, `## Before upgrading` when a PR in range has an upgrade step, and no Overview.
 - Everything for the human (an unlabelled contract change, the tested upgrade pair, the support-end date) is in the reply, not in the notes.
 
 ## Guardrails
@@ -331,7 +381,8 @@ sections). Only stable releases get this treatment.
 - Omit empty type-sections; state "No breaking changes" explicitly when there are none.
 - Breaking changes are an index that links the migration guide, not restated tables.
 - Check that every docs page the notes link exists on the release branch; offer a backport if not.
-- Security credits go in their own `### 🔒 Security credits` section, never inline on the bullet.
+- Security fixes and their credits go in the `### 🔒 Security` section, never inline on the change
+  bullet. Impact says what an attacker could reach, never how.
 - Credits come from the ticket's `Credit:` lines. An unanswered credit request is a question for
   the human, never a guess.
 - Never fabricate a reporter's name or credit someone not explicitly named. Honour the exact
