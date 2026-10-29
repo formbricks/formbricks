@@ -9,6 +9,7 @@ import {
 import { logger } from "@formbricks/logger";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { isDatabasePoolExhaustionError } from "@/lib/jobs/pool-exhaustion";
+import { buildDataByQuestionCode } from "@/lib/response/data-by-question-code";
 import { isSurveyOutboundAllowed, surveyOutboundVisibilitySelect } from "@/lib/survey/visibility/outbound";
 import { WebhookDnsResolutionError } from "@/lib/utils/validate-webhook-url";
 import {
@@ -18,24 +19,6 @@ import {
 } from "@/modules/integrations/webhooks/lib/send-signed-webhook";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { type TWebhookDeliveryOutcome, recordWebhookDeliveryOutcome } from "./webhook-delivery-metrics";
-
-/**
- * Same values as `data`, keyed by question code instead of Question ID (ADR 0016), so a receiver that
- * can only read the response object's root (Make) still gets the public names. Every coded question is
- * listed, `null` when nothing is stored; a question without a code has no entry and hidden fields stay in
- * `data` only. Null-prototype because a code may be `constructor` or `toString`. Built here, from the
- * `{ elementId: code }` map the pipeline job captured, so a job queued before the map existed still parses.
- */
-const buildDataByQuestionCode = (
-  resolvedData: Record<string, unknown>,
-  questionCodes: Record<string, string>
-): Record<string, unknown> => {
-  const byCode: Record<string, unknown> = Object.create(null);
-  for (const [elementId, code] of Object.entries(questionCodes)) {
-    byCode[code] = resolvedData[elementId] ?? null;
-  }
-  return byCode;
-};
 
 /**
  * The wire body. What the pipeline job sent before deliveries were fanned out, plus additive keys only:
