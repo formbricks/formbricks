@@ -54,6 +54,14 @@ describe("describeCodeIssue for a question code", () => {
     );
   });
 
+  test("a code that would repeat an export column of another question names that question", () => {
+    const multi = { ...element("a", "q2", ["1"]), type: "multipleChoiceMulti" };
+    const issues = issuesOf([multi, element("b", "q2_1")]);
+    expect(describeCodeIssue(issues[0], "question", t, "Pick some in Block 1")).toBe(
+      "q2_1 is already used by Pick some in Block 1"
+    );
+  });
+
   test("a code equal to an Embedded Data field names the field", () => {
     const issues = issuesOf([element("a", "region")], ["region"]);
     expect(describeCodeIssue(issues[0], "question", t)).toBe(

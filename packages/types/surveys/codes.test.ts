@@ -193,6 +193,70 @@ describe("validateSurveyCodes", () => {
     ]);
   });
 
+  describe("export column names derived from a code", () => {
+    const multi = (id: string, code: string, choices: unknown[]) =>
+      element(id, { code, type: "multipleChoiceMulti", choices });
+
+    test("a multi-select's `<code>_<answer>` column clashing with another question's code is refused", () => {
+      const issues = validateSurveyCodes({
+        blocks: [
+          block(multi("a", "q2", [choice("c1", "1"), choice("c2", "2")])),
+          block(element("b", { code: "q2_1" })),
+        ],
+      });
+      expect(issues).toEqual([
+        expect.objectContaining({
+          kind: "clashes_export_column",
+          path: ["blocks", 1, "elements", 0, "code"],
+          value: "q2_1",
+          clashesWith: "a",
+        }),
+      ]);
+    });
+
+    test("it is reported on the later question whichever order they come in", () => {
+      const issues = validateSurveyCodes({
+        blocks: [block(element("b", { code: "q2_1" })), block(multi("a", "q2", [choice("c1", "1")]))],
+      });
+      expect(issues).toEqual([
+        expect.objectContaining({
+          kind: "clashes_export_column",
+          path: ["blocks", 1, "elements", 0, "code"],
+          clashesWith: "b",
+        }),
+      ]);
+    });
+
+    test("the Other text column (`<code>_text`) and a matrix row column (`<code>_<row>`) count too", () => {
+      const single = element("a", {
+        code: "q1",
+        type: "multipleChoiceSingle",
+        choices: [choice("x", "1"), choice("other", "99")],
+      });
+      const matrix = element("m", { code: "grid", type: "matrix", rows: [choice("r1", "a")], columns: [] });
+      expect(
+        validateSurveyCodes({ blocks: [block(single, element("t", { code: "q1_text" }))] }).map((i) => i.kind)
+      ).toEqual(["clashes_export_column"]);
+      expect(
+        validateSurveyCodes({ blocks: [block(matrix, element("t", { code: "grid_a" }))] }).map((i) => i.kind)
+      ).toEqual(["clashes_export_column"]);
+    });
+
+    test("distinct names, and a single-select without an Other option, stay valid", () => {
+      const issues = validateSurveyCodes({
+        blocks: [
+          block(
+            element("a", { code: "q1", type: "multipleChoiceSingle", choices: [choice("x", "1")] }),
+            element("b", { code: "q1_text" }),
+            multi("c", "q3", [choice("c1", "1")]),
+            element("d", { code: "q3_2" })
+          ),
+        ],
+      });
+      expect(issues).toEqual([]);
+    });
+  });
+
   test("a question's own Question ID may be its code", () => {
     expect(validateSurveyCodes({ blocks: [block(element("q1", { code: "q1" }))] })).toEqual([]);
     expect(validateSurveyCodes({ blocks: [block(element("Q1", { code: "q1" }))] })).toEqual([]);

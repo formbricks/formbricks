@@ -21,6 +21,8 @@ export const describeCodeIssue = (
   switch (issue.kind) {
     case "duplicate_question_code":
     case "duplicate_answer_code":
+    // The export column this code would make is one the named question already has.
+    case "clashes_export_column":
       return t("workspace.surveys.edit.code_error_used_by", { code, name: clashLabel ?? issue.clashesWith });
     case "clashes_embedded_data":
       return t("workspace.surveys.edit.code_error_used_by_embedded_data", { code, name: issue.clashesWith });
@@ -58,7 +60,7 @@ export const getCodeClashLabel = (survey: TSurvey, issue: TCodeIssue, t: TFuncti
   if (!issue.clashesWith) return undefined;
   const [, blockIdx, , elementIdx, listKey] = issue.path;
 
-  if (issue.kind === "duplicate_question_code") {
+  if (issue.kind === "duplicate_question_code" || issue.kind === "clashes_export_column") {
     for (const block of survey.blocks) {
       const element = block.elements.find((candidate) => candidate.id === issue.clashesWith);
       if (!element) continue;

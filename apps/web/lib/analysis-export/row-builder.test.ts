@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { validateSurveyCodes } from "@formbricks/types/surveys/codes";
 import { type TAnalysisResponse, type TAnalysisSurvey, createAnalysisRowBuilder } from "./row-builder";
 import type { TAnalysisColumn, TAnalysisResponseFields } from "./types";
 
@@ -415,5 +416,46 @@ describe("Embedded Data", () => {
     const byName = Object.fromEntries(builder.columns.map((c, i) => [c.name, row.codes?.[i]]));
     expect(byName).toMatchObject({ ed_outcome: "x", visits: 7, vip: "true", score: 12, outcome: null });
     expect(builder.columns.find((c) => c.name === "visits")?.embedded).toMatchObject({ type: "number" });
+  });
+});
+
+describe("column names", () => {
+  test("every column of a survey the code validator accepts has its own name", () => {
+    const hobbies = element({
+      id: "e2",
+      code: "q2",
+      type: "multipleChoiceMulti",
+      choices: [choice("h1", "1", "Reading"), choice("h2", "2", "Chess"), choice("other", "98", "Other")],
+    });
+    const grid = element({
+      id: "e3",
+      code: "grid",
+      type: "matrix",
+      rows: [choice("r1", "a", "Row A"), choice("r2", "b", "Row B")],
+      columns: [choice("k1", "1", "Yes"), choice("k2", "2", "No")],
+    });
+    const elements = [colorsWithOther, hobbies, grid, element({ id: "e4", code: "q2_3", type: "openText" })];
+
+    const { issues, names } = {
+      issues: validateSurveyCodes({ blocks: [{ id: "b1", elements }] }),
+      names: run(elements, [response({})], { fields: { embeddedData: true } }).names,
+    };
+
+    expect(issues).toEqual([]);
+    expect(new Set(names).size).toBe(names.length);
+  });
+
+  test("the clash the validator refuses (`q2_1` as an option column and as a code) is the one that duplicates", () => {
+    const hobbies = element({
+      id: "e2",
+      code: "q2",
+      type: "multipleChoiceMulti",
+      choices: [choice("h1", "1", "Reading")],
+    });
+    const elements = [hobbies, element({ id: "e4", code: "q2_1", type: "openText" })];
+
+    expect(validateSurveyCodes({ blocks: [{ id: "b1", elements }] }).map((issue) => issue.kind)).toEqual([
+      "clashes_export_column",
+    ]);
   });
 });

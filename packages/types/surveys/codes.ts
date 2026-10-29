@@ -120,6 +120,7 @@ export type TCodeIssueKind =
   | "duplicate_question_code"
   | "clashes_embedded_data"
   | "clashes_question_id"
+  | "clashes_export_column"
   | "duplicate_answer_code";
 
 export type TCodeIssue = {
@@ -131,7 +132,10 @@ export type TCodeIssue = {
   message: string;
   /** Only for `invalid_format`. */
   reason?: TCodeFormatReason;
-  /** The element id, option id or Embedded Data name the code collides with (the clash kinds). */
+  /**
+   * The element id, option id or Embedded Data name the code collides with (the clash kinds). For
+   * `clashes_export_column`, the element whose export column has the same name.
+   */
   clashesWith?: string;
 };
 
@@ -224,12 +228,92 @@ const validateAnswerCodes = (element: TCodedElement): TCodeIssue[] => {
   return issues;
 };
 
+const OTHER_OPTION_ID = "other";
+
+const optionCodeOf = (option: unknown): string | undefined => {
+  if (!isRecord(option)) return undefined;
+  if (typeof option.code === "string") return option.code;
+  return typeof option.id === "string" ? option.id : undefined;
+};
+
+const optionCodes = (raw: Record<string, unknown>, key: string): { code: string; isOther: boolean }[] => {
+  const options = raw[key];
+  if (!Array.isArray(options)) return [];
+  return options.flatMap((option: unknown) => {
+    const code = optionCodeOf(option);
+    return code === undefined ? [] : [{ code, isOther: isRecord(option) && option.id === OTHER_OPTION_ID }];
+  });
+};
+
+/**
+ * The column names the export derives from a question's code, besides the code itself: one per option of a
+ * multi-select, ranking or multi picture question (`<code>_<answer>`), the Other text (`<code>_text`, or
+ * `<code>_<answer>_text` where options have their own column) and one per matrix row (`<code>_<row>`). Kept
+ * in step with the per-type plans in `apps/web/lib/analysis-export/row-builder.ts`.
+ */
+const derivedColumnNames = (element: TCodedElement, code: string): string[] => {
+  const { raw } = element;
+  switch (raw.type) {
+    case "multipleChoiceSingle":
+      return optionCodes(raw, "choices").some((choice) => choice.isOther) ? [`${code}_text`] : [];
+    case "multipleChoiceMulti":
+    case "ranking":
+      return optionCodes(raw, "choices").flatMap((choice) => [
+        `${code}_${choice.code}`,
+        ...(choice.isOther ? [`${code}_${choice.code}_text`] : []),
+      ]);
+    case "pictureSelection":
+      return raw.allowMulti === true
+        ? optionCodes(raw, "choices").map((choice) => `${code}_${choice.code}`)
+        : [];
+    case "matrix":
+      return optionCodes(raw, "rows").map((row) => `${code}_${row.code}`);
+    default:
+      return [];
+  }
+};
+
+/**
+ * Two questions whose export columns share a name: `q2` multi-select with option `1` next to a question
+ * coded `q2_1` would put two `q2_1` columns in the file. Reported on the later question's code.
+ */
+const validateDerivedColumnNames = (elements: TCodedElement[]): TCodeIssue[] => {
+  const issues: TCodeIssue[] = [];
+  // The element that owns a column name, and whether the name is its plain code (those clashes are the
+  // duplicate-code rule's to report).
+  const owners = new Map<string, { element: TCodedElement; isCode: boolean }>();
+  for (const element of elements) {
+    if (element.raw.type === "cta") continue;
+    const code = element.code ?? element.id;
+    let clash: { name: string; owner: TCodedElement } | undefined;
+    for (const name of [code, ...derivedColumnNames(element, code)]) {
+      const isCode = name === code;
+      const owner = owners.get(name);
+      if (!owner) owners.set(name, { element, isCode });
+      else if (owner.element !== element && !(isCode && owner.isCode)) {
+        clash ??= { name, owner: owner.element };
+      }
+    }
+    if (!clash || element.code === undefined) continue;
+    issues.push({
+      kind: "clashes_export_column",
+      path: ["blocks", element.blockIndex, "elements", element.elementIndex, "code"],
+      value: element.code,
+      clashesWith: clash.owner.id,
+      message: `Question code "${element.code}" of question "${element.id}" would give the export a column "${clash.name}", which question "${clash.owner.id}" already has.`,
+    });
+  }
+  return issues;
+};
+
 /**
  * Every code problem in a survey, in document order: format, then uniqueness.
  *
  * - Question codes are unique among themselves, against Embedded Data names and against *other*
  *   questions' Question IDs, ignoring case. A question's own ID may equal its own code.
  * - Answer codes are unique within their question; a matrix's rows and columns are separate lists.
+ * - The export column names derived from a code (`<code>_<answer>`, `<code>_text`, `<code>_<row>`) do not
+ *   clash with another question's code or derived names.
  * - CTA elements have no code, so one is ignored rather than validated.
  */
 export const validateSurveyCodes = ({ blocks, embeddedDataNames = [] }: TSurveyCodesInput): TCodeIssue[] => {
@@ -301,5 +385,6 @@ export const validateSurveyCodes = ({ blocks, embeddedDataNames = [] }: TSurveyC
     issues.push(...validateAnswerCodes(element));
   });
 
+  issues.push(...validateDerivedColumnNames(elements));
   return issues;
 };
