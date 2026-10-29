@@ -72,7 +72,8 @@ const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
  *
  * A record has no `.max()`, and a refinement only runs once Zod has parsed every key and array item —
  * reporting each bad item on its own. Checking the size first rejects an oversized map with one issue,
- * whatever its size. `z.preprocess` keeps `schema` as the published shape, input and output alike.
+ * whatever its size. `z.preprocess` keeps `schema`'s output type and its OpenAPI shape; only the
+ * inferred input type widens to `unknown`.
  */
 const withSizeCheck = <TSchema extends z.ZodType>(
   schema: TSchema,
@@ -88,7 +89,8 @@ const maxKeys = (max: number, what: string) => (record: Record<string, unknown>)
   Object.keys(record).length > max ? `A response may carry at most ${max} ${what}` : undefined;
 
 const checkResponseDataSize = (data: Record<string, unknown>): string | undefined => {
-  // Keys first: `Object.values` costs twice as much, so it only runs on a map already under the cap.
+  // Keys first: on a large map `Object.values` costs about twice `Object.keys`, so it only runs once
+  // the map is under the cap.
   const keyCount = Object.keys(data).length;
   if (keyCount > MAX_RESPONSE_DATA_KEYS) {
     return `A response may answer at most ${MAX_RESPONSE_DATA_KEYS} fields`;

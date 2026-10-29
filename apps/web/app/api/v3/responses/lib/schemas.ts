@@ -66,8 +66,8 @@ export const ZV3BatchDeleteResponsesBody = zBatchDeleteResponsesRequest.extend({
 export type TV3BatchDeleteResponsesBody = z.infer<typeof ZV3BatchDeleteResponsesBody>;
 
 /**
- * The answer caps are the ones every response write path shares (`@formbricks/types/responses`), per
- * the ENG-1652 input policy. Here they also guard later readers: without them a single request could
+ * The answer caps are shared with the v1/v2 client and v1 management writes
+ * (`@formbricks/types/responses`), per the ENG-1652 input policy. Here they also guard later readers: without them a single request could
  * store an array of tens of thousands of entries, and every reader pays for it per entry — the
  * serializer's per-answer mapping, export columns, and the positional probe the "Other" response
  * filter emits (ENG-3161), whose window is sized from the survey's choice count rather than from the
