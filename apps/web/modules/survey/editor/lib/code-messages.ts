@@ -1,8 +1,13 @@
 import { TFunction } from "i18next";
 import { TCodeIssue } from "@formbricks/types/surveys/codes";
+import {
+  TPublishedLockViolation,
+  TPublishedLockViolationKind,
+} from "@formbricks/types/surveys/published-lock";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
+import { type TOptionListKey, getElementCodeIssues, optionIssueKey } from "./element-codes";
 
 /**
  * The text under a code field that fails the check. One message per way a code can be wrong, chosen
@@ -82,4 +87,73 @@ export const getCodeClashLabel = (survey: TSurvey, issue: TCodeIssue, t: TFuncti
     return label ? getLocalizedValue(label, "default") || undefined : undefined;
   }
   return undefined;
+};
+
+/**
+ * The message of the code issue a schema error points at, in the editor's own words: `path` is the Zod issue's
+ * path (`blocks.<b>.elements.<e>.code`, or `...<list>.<i>.code` for an answer code). `undefined` when the path
+ * is not a code or no issue is found there.
+ */
+export const describeCodeIssueAtPath = (
+  survey: TSurvey,
+  path: readonly (string | number)[],
+  t: TFunction
+): string | undefined => {
+  if (path[0] !== "blocks" || path[2] !== "elements" || path.at(-1) !== "code") return undefined;
+  const element = survey.blocks[path[1] as number]?.elements[path[3] as number];
+  const entry = element ? getElementCodeIssues(survey).get(element.id) : undefined;
+  if (!element || !entry) return undefined;
+
+  const isAnswerCode = path.length === 7;
+  const listKey = path[4] as TOptionListKey;
+  const option = isAnswerCode
+    ? (element as unknown as Record<string, { id: string }[] | undefined>)[listKey]?.[path[5] as number]
+    : undefined;
+  const issue = isAnswerCode
+    ? option && entry.options.get(optionIssueKey(listKey, option.id))
+    : entry.question;
+  if (!issue) return undefined;
+  return describeCodeIssue(
+    issue,
+    isAnswerCode ? "answer" : "question",
+    t,
+    getCodeClashLabel(survey, issue, t)
+  );
+};
+
+/**
+ * The published lock's refusal, in the editor's words: what the lock keeps, grouped by kind and naming the
+ * questions it was about (headline, else code, else id), instead of the server's English sentence with its
+ * internal IDs. Literal `t()` calls, so the translation scanner sees every key.
+ */
+export const describeLockRefusal = (
+  violations: readonly TPublishedLockViolation[],
+  survey: TSurvey,
+  t: TFunction
+): string => {
+  const explanation: Record<TPublishedLockViolationKind, string> = {
+    question_code_changed: t("workspace.surveys.edit.lock_explanation_code"),
+    answer_code_changed: t("workspace.surveys.edit.lock_explanation_code"),
+    question_type_changed: t("workspace.surveys.edit.lock_explanation_type"),
+    option_text_changed: t("workspace.surveys.edit.lock_explanation_option_text"),
+    option_deleted: t("workspace.surveys.edit.lock_explanation_option_delete"),
+  };
+  const questionName = (elementId: string): string => {
+    for (const block of survey.blocks) {
+      const element = block.elements.find((candidate) => candidate.id === elementId);
+      if (!element) continue;
+      const code = "code" in element ? element.code : undefined;
+      return getTextContent(getLocalizedValue(element.headline, "default")) || code || element.id;
+    }
+    return elementId;
+  };
+
+  const namesByExplanation = new Map<string, Set<string>>();
+  for (const violation of violations) {
+    const text = explanation[violation.kind];
+    const names = namesByExplanation.get(text) ?? new Set<string>();
+    names.add(questionName(violation.elementId));
+    namesByExplanation.set(text, names);
+  }
+  return [...namesByExplanation].map(([text, names]) => `${[...names].join(", ")}: ${text}`).join(" ");
 };

@@ -1,8 +1,14 @@
 import { describe, expect, test } from "vitest";
 import { TCodeIssue, validateSurveyCodes } from "@formbricks/types/surveys/codes";
+import { getPublishedLockViolations } from "@formbricks/types/surveys/published-lock";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import en from "@/locales/en-US.json";
-import { describeCodeIssue, getCodeClashLabel } from "./code-messages";
+import {
+  describeCodeIssue,
+  describeCodeIssueAtPath,
+  describeLockRefusal,
+  getCodeClashLabel,
+} from "./code-messages";
 
 /** A `t` backed by the real en-US strings, so a test reads what the editor shows. */
 const t = ((key: string, values?: Record<string, string | number>) => {
@@ -129,5 +135,45 @@ describe("getCodeClashLabel", () => {
   test("names the answer by its label", () => {
     const issue = issues.find((candidate) => candidate.kind === "duplicate_answer_code")!;
     expect(getCodeClashLabel(survey, issue, t)).toBe("Yes");
+  });
+});
+
+const surveyOf = (elements: Record<string, unknown>[], status = "inProgress") =>
+  ({ status, blocks: [{ id: "b1", name: "Block 1", elements }] }) as unknown as TSurvey;
+
+describe("describeCodeIssueAtPath", () => {
+  test("says what the code error is at the path the schema reported, with the question it clashes with", () => {
+    const survey = surveyOf([
+      { ...element("a", "q1"), headline: { default: "How are you?" } },
+      element("b", "q1"),
+    ]);
+    expect(describeCodeIssueAtPath(survey, ["blocks", 0, "elements", 1, "code"], t)).toBe(
+      "q1 is already used by How are you? in Block 1"
+    );
+  });
+
+  test("reads an answer code at its option, and nothing for a path that is not a code", () => {
+    const survey = surveyOf([element("a", "q1", ["1", "1"])]);
+    expect(describeCodeIssueAtPath(survey, ["blocks", 0, "elements", 0, "choices", 1, "code"], t)).toContain(
+      "is already used by"
+    );
+    expect(describeCodeIssueAtPath(survey, ["blocks", 0, "elements", 0, "headline"], t)).toBeUndefined();
+  });
+});
+
+describe("describeLockRefusal", () => {
+  test("names the questions by headline and groups them under the translated explanation", () => {
+    const stored = surveyOf([
+      { ...element("a", "q1", ["1"]), headline: { default: "How are you?" } },
+      { ...element("b", "q2"), headline: { default: "Why?" } },
+    ]);
+    const next = surveyOf([
+      { ...element("a", "q9", ["1"]), headline: { default: "How are you?" } },
+      { ...element("b", "q8"), headline: { default: "Why?" } },
+    ]);
+    const message = describeLockRefusal(getPublishedLockViolations(stored, next), next, t);
+    expect(message).toBe(`How are you?, Why?: ${en.workspace.surveys.edit.lock_explanation_code}`);
+    // No internal IDs reach the author.
+    expect(message).not.toContain("blocks");
   });
 });

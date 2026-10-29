@@ -9,7 +9,10 @@ import { getLanguageLabel } from "@formbricks/i18n-utils/utils";
 import formbricks from "@formbricks/js";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
-import { parsePublishedLockErrorMessage } from "@formbricks/types/surveys/published-lock";
+import {
+  getPublishedLockViolations,
+  parsePublishedLockErrorMessage,
+} from "@formbricks/types/surveys/published-lock";
 import {
   TSurvey,
   TSurveyEditorTabs,
@@ -26,6 +29,7 @@ import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import type { TCustomCssValidationStatus } from "@/modules/custom-css/components/lib/validation";
 import { type TWorkspaceWithoutCustomCss } from "@/modules/custom-css/lib/types";
 import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
+import { describeCodeIssueAtPath, describeLockRefusal } from "@/modules/survey/editor/lib/code-messages";
 import {
   getSurveyToAutosave,
   isCustomCssBlockingManualSave,
@@ -463,6 +467,13 @@ export const SurveyMenuBar = ({
         return false;
       }
 
+      const codeMessage = describeCodeIssueAtPath(localSurvey, firstError.path, t);
+      if (codeMessage) {
+        toast.error(codeMessage, { className: "w-fit max-w-md!" });
+        setActiveId("questions");
+        return false;
+      }
+
       if (firstError.code === "custom") {
         const params = firstError.params ?? ({} as { invalidLanguageCodes: string[] });
         if (params.invalidLanguageCodes && params.invalidLanguageCodes.length) {
@@ -628,10 +639,17 @@ export const SurveyMenuBar = ({
   // ENG-6783: the server refused an edit to a locked field; say why, with its details.
   const toastSaveRefusal = (errorMessage: string) => {
     const lockDetails = parsePublishedLockErrorMessage(errorMessage);
+    if (lockDetails === null) {
+      toast.error(errorMessage);
+      return;
+    }
+    // The same comparison the server made, rendered with the editor's translated explanations; the server's
+    // own sentence (English, with internal IDs) is the fallback when this one finds nothing.
+    const violations = getPublishedLockViolations(survey, localSurvey);
     toast.error(
-      lockDetails === null
-        ? errorMessage
-        : t("workspace.surveys.edit.published_survey_locked", { details: lockDetails })
+      t("workspace.surveys.edit.published_survey_locked", {
+        details: violations.length > 0 ? describeLockRefusal(violations, localSurvey, t) : lockDetails,
+      })
     );
   };
 
