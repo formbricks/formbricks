@@ -111,13 +111,19 @@ export const extractChoiceIdsFromResponse = (
 
 export const getChoiceIdByValue = (
   value: string,
-  element: TSurveyMultipleChoiceElement | TSurveyRankingElement | TSurveyPictureSelectionElement
+  element: TSurveyMultipleChoiceElement | TSurveyRankingElement | TSurveyPictureSelectionElement,
+  language: string = "default"
 ) => {
   if (element.type === "pictureSelection") {
     return element.choices.find((choice) => choice.imageUrl === value)?.id ?? "other";
   }
 
-  return element.choices.find((choice) => choice.label.default === value)?.id ?? "other";
+  // Same lookup as extractChoiceIdsFromResponse: response language first, then any translation
+  const match =
+    element.choices.find((choice) => choice.label[language] === value) ??
+    element.choices.find((choice) => Object.values(choice.label).includes(value));
+
+  return match?.id ?? "other";
 };
 
 export const calculateTtcTotal = (ttc: TResponseTtc) => {

@@ -15,6 +15,7 @@ import {
   calculateTtcTotal,
   extractChoiceIdsFromResponse,
   extractSurveyDetails,
+  getChoiceIdByValue,
   getReservedFilterEntries,
   getResponseContactAttributes,
   getResponseHiddenFields,
@@ -59,6 +60,34 @@ describe("Response Utils", () => {
       const ttc = {};
       const result = calculateTtcTotal(ttc);
       expect(result._total).toBe(0);
+    });
+  });
+
+  describe("getChoiceIdByValue", () => {
+    const element = {
+      id: "q1",
+      type: "multipleChoiceSingle",
+      choices: [
+        { id: "alpha", label: { default: "Alpha", de: "Alpha-DE" } },
+        { id: "no", label: { default: "No", de: "Nein" } },
+        { id: "other", label: { default: "Other", de: "Andere" } },
+      ],
+    } as any;
+
+    test("matches the default label", () => {
+      expect(getChoiceIdByValue("No", element)).toBe("no");
+    });
+
+    test("matches a translated label for the response language", () => {
+      expect(getChoiceIdByValue("Alpha-DE", element, "de")).toBe("alpha");
+    });
+
+    test("matches a translated label without a language", () => {
+      expect(getChoiceIdByValue("Nein", element)).toBe("no");
+    });
+
+    test("falls back to other for free text", () => {
+      expect(getChoiceIdByValue("something else", element, "de")).toBe("other");
     });
   });
 
