@@ -144,7 +144,10 @@ export const EndScreenForm = ({
                 updateSurvey({ buttonLabel: undefined, buttonLink: undefined });
               } else {
                 updateSurvey({
-                  buttonLabel: { default: t("workspace.surveys.edit.create_your_own_survey") },
+                  buttonLabel: createI18nString(
+                    t("workspace.surveys.edit.create_your_own_survey"),
+                    surveyLanguageCodes
+                  ),
                   buttonLink: DEFAULT_ENDING_CARD_BUTTON_LINK,
                 });
               }
