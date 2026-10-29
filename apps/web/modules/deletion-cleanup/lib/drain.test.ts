@@ -310,6 +310,34 @@ describe("drainDeletionCleanups", () => {
       );
     });
 
+    test("a reconcile that overruns the run's time still finishes the rows it settled; only the rest is handed back", async () => {
+      queue(outcomeRow("c1", "r1"), outcomeRow("c2", "r2"), row("c3", "storageSurveyFolder"));
+      vi.mocked(reconcileResponseOutcomes).mockImplementation(async () => {
+        vi.advanceTimersByTime(DELETION_CLEANUP_RUN_BUDGET_MS);
+        return new Map([
+          ["c1", { status: "done" }],
+          ["c2", { status: "failed", error: "hubList:503" }],
+        ]);
+      });
+
+      await expect(drainDeletionCleanups()).resolves.toEqual({ done: 1, again: 0, failed: 1 });
+
+      const after = new Date(NOW.getTime() + DELETION_CLEANUP_RUN_BUDGET_MS);
+      expect(prisma.deletionCleanup.deleteMany).toHaveBeenCalledWith({ where: leased("c1") });
+      expect(updates()).toEqual([
+        {
+          where: leased("c2"),
+          data: {
+            attempts: 3,
+            lastError: "hubList:503",
+            nextAttemptAt: new Date(after.getTime() + getDeletionCleanupRetryDelayMs(3)),
+          },
+        },
+        { where: { OR: [leased("c3")] }, data: { nextAttemptAt: after } },
+      ]);
+      expect(deleteSurveyUploadFolder).not.toHaveBeenCalled();
+    });
+
     test("wait for the next run, untouched, when the Hub call budget is already spent", async () => {
       // The first claim spends the budget; the second holds the outcome row.
       vi.mocked(prisma.$queryRaw)
