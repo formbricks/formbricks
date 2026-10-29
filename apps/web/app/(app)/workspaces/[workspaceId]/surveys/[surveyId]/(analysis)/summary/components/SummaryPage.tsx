@@ -1,6 +1,5 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -11,11 +10,12 @@ import {
   getDisplaysWithContactAction,
   getSurveySummaryAction,
 } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/actions";
+import { ResponseToolbar } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/ResponseToolbar";
 import { useResponseFilter } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
+import { useResponseTableFilters } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/hooks/use-response-table-filters";
 import ScrollToTop from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/ScrollToTop";
 import { SummaryDropOffs } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/SummaryDropOffs";
 import { SummaryImpressions } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/SummaryImpressions";
-import { CustomFilter } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/CustomFilter";
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
@@ -61,7 +61,6 @@ export const SummaryPage = ({
   isReadOnly,
 }: Readonly<SummaryPageProps>) => {
   const { t } = useTranslation();
-  const searchParams = useSearchParams();
 
   const [surveySummary, setSurveySummary] = useState<TSurveySummary>(
     initialSurveySummary || defaultSurveySummary
@@ -70,7 +69,9 @@ export const SummaryPage = ({
   const [tab, setTab] = useState<"dropOffs" | "quotas" | "impressions" | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(!initialSurveySummary);
 
-  const { selectedFilter, dateRange, resetState, registerAnalysisRefreshHandler } = useResponseFilter();
+  const { registerAnalysisRefreshHandler } = useResponseFilter();
+  const filterState = useResponseTableFilters(survey);
+  const { selectedFilter, dateRange } = filterState;
 
   const [displays, setDisplays] = useState<TDisplayWithContact[]>([]);
   const [isDisplaysLoading, setIsDisplaysLoading] = useState(false);
@@ -132,7 +133,8 @@ export const SummaryPage = ({
   }, [tab, loadInitialDisplays]);
 
   const fetchSummary = useCallback(async () => {
-    const currentFilters = getFormattedFilters(survey, selectedFilter, dateRange);
+    // Asked about now: a refresh after midnight must not reuse yesterday's relative date window.
+    const currentFilters = filterState.resolveFreshCriteria();
     const updatedSurveySummary = await getSurveySummaryAction({
       surveyId,
       filterCriteria: currentFilters,
@@ -143,9 +145,10 @@ export const SummaryPage = ({
     }
 
     setSurveySummary(updatedSurveySummary?.data ?? defaultSurveySummary);
-  }, [dateRange, selectedFilter, survey, surveyId]);
+  }, [filterState.resolveFreshCriteria, surveyId]);
 
   const refreshSummary = useCallback(async () => {
+    if (!filterState.isReady) return;
     setIsLoading(true);
 
     try {
@@ -153,7 +156,7 @@ export const SummaryPage = ({
     } finally {
       setIsLoading(false);
     }
-  }, [fetchSummary, loadInitialDisplays, tab]);
+  }, [fetchSummary, filterState.isReady, loadInitialDisplays, tab]);
 
   useEffect(() => {
     return registerAnalysisRefreshHandler(refreshSummary);
@@ -174,6 +177,13 @@ export const SummaryPage = ({
       (selectedFilter?.filter?.length ?? 0) > 0 ||
       (!!selectedFilter?.responseStatus && selectedFilter.responseStatus !== "all") ||
       Boolean(dateRange?.from);
+
+    // A rule in the URL still waiting for the filter data: the summary would answer for every response.
+    if (!filterState.isReady) {
+      lastFetchedFiltersKeyRef.current = null;
+      setIsLoading(true);
+      return;
+    }
 
     // If we have server-provided initial data and no active filters, use it instead of refetching.
     // (Also covers clearing filters: fall back to the unfiltered initial summary without a fetch.)
@@ -211,17 +221,11 @@ export const SummaryPage = ({
     };
 
     fetchFilteredSummary();
-  }, [selectedFilter, dateRange, initialSurveySummary, fetchSummary, survey, t]);
+  }, [selectedFilter, dateRange, initialSurveySummary, fetchSummary, filterState.isReady, survey, t]);
 
   const surveyMemoized = useMemo(() => {
     return replaceHeadlineRecall(survey, "default");
   }, [survey]);
-
-  useEffect(() => {
-    if (!searchParams?.get("referer")) {
-      resetState();
-    }
-  }, [searchParams, resetState]);
 
   return (
     <>
@@ -246,9 +250,11 @@ export const SummaryPage = ({
       )}
       {tab === "dropOffs" && <SummaryDropOffs dropOff={surveySummary.dropOff} survey={surveyMemoized} />}
       {isQuotasAllowed && tab === "quotas" && <QuotasSummary quotas={surveySummary.quotas} />}
-      <div className="flex gap-1.5">
-        <CustomFilter survey={surveyMemoized} />
-      </div>
+      <ResponseToolbar
+        survey={surveyMemoized}
+        filterState={filterState}
+        matchCount={isLoading ? null : surveySummary.meta.totalResponses}
+      />
       <ScrollToTop containerId="mainContent" />
       <SummaryList
         summary={surveySummary.summary}

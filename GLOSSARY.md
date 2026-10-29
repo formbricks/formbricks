@@ -37,6 +37,20 @@ that is not listed here.
 
 **In use** — A chart is in use while it sits on at least one dashboard. A chart in use cannot be deleted; the refusal names the dashboards holding it.
 
+## Tables and filtering
+
+**Table toolbar** — The one control bar every list table shares: settings gear (sort, columns, show archived), search, the Filter button, filter chips, and the match count.
+
+**Filter property** — Something a table can be filtered by, such as Status, Source or one contact attribute. Each table publishes its own filter properties; a property not published there cannot be filtered on. _Avoid_: field (a chart-query term), filter attribute, filter key, column.
+
+**Quick filter** — A filter made by ticking values of one filter property from a list. A row matches when it has any of the ticked values.
+
+**Filter rule** — One Advanced filter row: a filter property, an operator and a value, such as `Number value > 8`.
+
+**Filter chip** — The visible token for one active quick filter or one filter rule. A row has to match every chip; there is no OR between chips.
+
+**Match count** — How many rows match the active filters and search in total, not how many are loaded. Large counts may stop at a cap and read as "at least" (`10,000+`). _Avoid_: result count, loaded rows.
+
 ## Creatives
 
 **Creative** — A page element Formbricks shows on a customer's site next to surveys (a Feedback button or a Banner), with its own content, look, display rules and schedule. It is separate from the survey it may open. _Avoid_: widget, prompt, intercept, launcher.

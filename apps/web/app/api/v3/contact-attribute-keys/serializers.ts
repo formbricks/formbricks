@@ -3,8 +3,9 @@ import type { TContactAttributeKey } from "@formbricks/types/contact-attribute-k
 /**
  * Public v3 contact-attribute-key shape. Exposes what an agent needs to author targeting filters:
  * the `key` (used as `targeting.filters[].root.contactAttributeKey`) and the `dataType` (which hints
- * the valid operators — number/date attributes support arithmetic/date operators). Internal fields
- * (`isUnique`, `workspaceId`, timestamps) stay out of the contract.
+ * the valid operators — number/date attributes support arithmetic/date operators) — plus what the
+ * Attributes table renders (`createdAt`, `updatedAt`) and `isUnique`. `workspaceId` stays out of the
+ * contract: it is the request's own scope.
  */
 export type TV3ContactAttributeKeyResource = {
   id: string;
@@ -13,6 +14,9 @@ export type TV3ContactAttributeKeyResource = {
   description: string | null;
   type: TContactAttributeKey["type"];
   dataType: TContactAttributeKey["dataType"];
+  isUnique: boolean;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export function serializeV3ContactAttributeKey(
@@ -25,5 +29,8 @@ export function serializeV3ContactAttributeKey(
     description: attributeKey.description,
     type: attributeKey.type,
     dataType: attributeKey.dataType,
+    isUnique: attributeKey.isUnique,
+    createdAt: attributeKey.createdAt.toISOString(),
+    updatedAt: attributeKey.updatedAt.toISOString(),
   };
 }

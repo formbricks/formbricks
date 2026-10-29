@@ -120,6 +120,8 @@ const buildListWhere = (
 export interface WorkflowListPage {
   workflows: WorkflowRowWithLastRun[];
   nextCursor: string | null;
+  /** Workflows matching the filters across all pages; null unless `includeTotalCount` was requested. */
+  totalCount: number | null;
 }
 
 /** Eager-load shape for a run's step logs, ordered by sequence; mirrors the injected delegate. */
@@ -200,12 +202,18 @@ export const createWorkflowsService = ({ prisma }: { prisma: WorkflowsDb }): Wor
   async listWorkflows(input) {
     const cursor = input.cursor ? decodeWorkflowListCursor(input.cursor, input.sortBy) : null;
 
-    const rows = await prisma.workflow.findMany({
-      where: buildListWhere(input, cursor),
-      orderBy: getOrderBy(input.sortBy),
-      take: input.limit + 1,
-      include: LAST_RUN_INCLUDE,
-    });
+    // The count runs beside the page, over the same filters minus the cursor (never a skip).
+    const [rows, totalCount] = await Promise.all([
+      prisma.workflow.findMany({
+        where: buildListWhere(input, cursor),
+        orderBy: getOrderBy(input.sortBy),
+        take: input.limit + 1,
+        include: LAST_RUN_INCLUDE,
+      }),
+      input.includeTotalCount
+        ? prisma.workflow.count({ where: buildListWhere(input, null) })
+        : Promise.resolve(null),
+    ]);
 
     const hasMore = rows.length > input.limit;
     const workflows = hasMore ? rows.slice(0, input.limit) : rows;
@@ -213,6 +221,7 @@ export const createWorkflowsService = ({ prisma }: { prisma: WorkflowsDb }): Wor
 
     return {
       workflows,
+      totalCount,
       nextCursor:
         hasMore && lastRow
           ? encodeWorkflowListCursor(buildNextWorkflowListCursor(lastRow, input.sortBy))

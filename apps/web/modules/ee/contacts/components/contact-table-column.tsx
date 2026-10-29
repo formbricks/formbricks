@@ -2,6 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { TFunction } from "i18next";
+import type { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TUserLocale } from "@formbricks/types/user";
 import { formatAttributeValue } from "@/modules/ee/contacts/lib/format-attribute-value";
 import { getSelectionColumn } from "@/modules/ui/components/data-table";
@@ -11,7 +12,7 @@ import { TContactTableData } from "../types/contact";
 
 export const generateContactTableColumns = (
   searchValue: string,
-  data: TContactTableData[],
+  attributeKeys: readonly Pick<TContactAttributeKey, "key" | "name">[],
   isReadOnly: boolean,
   locale: TUserLocale,
   t: TFunction
@@ -32,6 +33,8 @@ export const generateContactTableColumns = (
     header: t("common.user_id"),
     cell: ({ row }) => {
       const userId = row.original.userId;
+      // A contact without a user ID has nothing to copy, so it shows a dash rather than an empty badge.
+      if (!userId) return <span className="text-slate-400">—</span>;
       return <IdBadge id={userId} />;
     },
   };
@@ -68,8 +71,8 @@ export const generateContactTableColumns = (
     },
   };
 
-  const restCols = data[0]?.attributes
-    ? data[0].attributes.map((attr) => {
+  const restCols = attributeKeys.length
+    ? attributeKeys.map((attr) => {
         return {
           id: attr.key,
           accessorKey: attr.key,

@@ -185,7 +185,6 @@ checksums:
     common/app_updated_description: b6dfb214363f2fe89848aa8662f6e28a
     common/app_updated_title: be282622c7354e4fbcdf32fc1869a5d0
     common/appearance: cdd8c41c5fb859234e8a603544fce631
-    common/apply_filters: 6543c1e80038b3da0f4a42848d08d4d1
     common/archive: fa813ab3074103e5daad07462af25789
     common/archived: cf5127ecfd7e43a35466a1ba5fe16450
     common/are_you_sure: 6d5cd13628a7887711fd0c29f1123652
@@ -219,7 +218,6 @@ checksums:
     common/closed: 180560eb657a20f3d4edc44d5f7e7c2a
     common/code: 343bc5386149b97cece2b093c39034b2
     common/collaborate: a78e3928c6d5067094f72891c01f0064
-    common/collapse_rows: 24988527f9180f37aa55d2aa183ccb21
     common/column_n: b98315f0e504fad7e784d77f153a7d9d
     common/completed: 0e4bbce9985f25eb673d9a054c8d5334
     common/confirm: 90930b51154032f119fa75c1bd422d8b
@@ -285,7 +283,6 @@ checksums:
     common/enabled: 20236664b7e62df0e767921b4450205f
     common/ending_card: 16d30d3a36472159da8c2dbd374dfe22
     common/enter_a_time_like: 1e2c35a2d8dc9896c73d32b858c238cc
-    common/enter_url: 468c2276d0f2cb971ff5a47a20fa4b97
     common/enterprise_license: e81bf506f47968870c7bd07245648a0d
     common/error: 3c95bcb32c2104b99a46f5b3dd015248
     common/error_boundary_description: 448de84952be0ad940baf0a84e21b733
@@ -321,7 +318,6 @@ checksums:
     common/hidden: fa290c6ada5869d744ed35e9cca64699
     common/hidden_field: 3ed5c58d0ed359e558cdf7bd33606d2d
     common/hidden_fields: 3de6cfd308293a826cb8679fd1d49972
-    common/hide_column: 23ce94db148f2d8e4a0923defead6cf1
     common/hide_password: dd9813264cfc4a7ae515cd5644943c1b
     common/html: f750870203043349d570d8f5865ca0f8
     common/id: c8886d38aeea2ed5f785aba4fc96784b
@@ -386,7 +382,6 @@ checksums:
     common/no_files_uploaded: c97be829e195a41b2f6b6717b87a232b
     common/no_overlay: 03cde9e91f08e4dd539d788e1e01407f
     common/no_quotas_found: 19dea6bcc39b579351073b3974990cb6
-    common/no_result_found: fedddbc0149972ea072a9e063198a16d
     common/no_results: 0e9b73265c6542240f5a3bf6b43e9280
     common/no_sign_in_recorded: 4c8ca261bc58fdd1a4d05f8b6750f110
     common/no_surveys_found: 7b74706fe4f4aacd7d858e19e444fe85
@@ -458,7 +453,6 @@ checksums:
     common/remove_from_team: 69bcc7a1001c3017f9de578ee22cffd6
     common/remove_item: 5e882910b55d90dfe0b2d96acb411602
     common/rename: 6f9413e4606e8d83a010685008fb2931
-    common/reorder_and_hide_columns: a5e3d7c0c7ef879211d05a37be1c5069
     common/replace: 98b2268975b1a737b2e4ad837df96703
     common/report_survey: 147dd05db52e35f5d1f837460fb720f5
     common/request_lite_license: 5bf4ddd64c056c5cf00ecd254f3e1390
@@ -492,7 +486,6 @@ checksums:
     common/segments: 271db72d5b973fbc5fadab216177eaae
     common/select: 5ac04c47a98deb85906bc02e0de91ab0
     common/select_all: eedc7cdb02de467c15dc418a066a77f2
-    common/select_filter: c50082c3981f1161022f9787a19aed71
     common/select_language: d75cf5fbce8a4c7a9055e2210af74480
     common/select_survey: bac52e59c7847417bef6fe7b7096b475
     common/select_teams: ae5d451929846ae6367562bc671a1af9
@@ -514,7 +507,6 @@ checksums:
     common/something_went_wrong: a3cd2f01c073f1f5ff436d4b132d39cf
     common/something_went_wrong_please_try_again: c62a7718d9a1e9c4ffb707807550f836
     common/sort_by: 8adf3dbc5668379558957662f0c43563
-    common/sort_by_value: 3a1cd12ad5811afe085f5751cae9ec6c
     common/started_at: 16d19d3011b3045aadc90809d09eb820
     common/status: 4e1fcce15854d824919b4a582c697c90
     common/steps: 12d58a289584cb648103d66b327ae833
@@ -536,6 +528,58 @@ checksums:
     common/surveys: 33f68ad4111b32a6361beb9d5c184533
     common/table_items_deleted_successfully: 46f29d20b26ecfbaf34d4e7291e88b05
     common/table_settings: 5dddbe3e421fca83b26b014635e06dc1
+    common/table_toolbar/active_filters: 5e8ba09b9ea1f87584d4f4ec6206ec7f
+    common/table_toolbar/add_filter: ed5d8e9bfcb05cd1e10e4c403befbae6
+    common/table_toolbar/advanced_filter: a69640af094411739c3a917326d38aff
+    common/table_toolbar/advanced_filter_description: c6a2c8c27d4e49331f629c9fd2af75d2
+    common/table_toolbar/attribute_type: f04471a7ddac844b9ad145eb9911ef75
+    common/table_toolbar/chip_accessible_name: 03f7598b04f28ce97b4b5e191d409823
+    common/table_toolbar/clear_search: 0ee4a80abe134b7edd90c74f03638877
+    common/table_toolbar/custom_range: 85fc7f7b69d6c20aa230e89f56c2c981
+    common/table_toolbar/data_type: a155980d032f6441f0713d7ebaf776ce
+    common/table_toolbar/display_columns: b4b7903049ee6daeff81d6fe11c66213
+    common/table_toolbar/edit_filter: 992ba873f2f15f36a51606847ec00b91
+    common/table_toolbar/filter_with_count: 210e541e2e044ebd36aedb186e26c2be
+    common/table_toolbar/finish_or_remove_rules: f84dbcd60539b8d1efad414e9f490394
+    common/table_toolbar/no_rows_match: 92a34935a19ebc5db86786160b3fc3f6
+    common/table_toolbar/operator_contains: 06dd606c0a8f81f9a03b414e9ae89440
+    common/table_toolbar/operator_does_not_contain: 854da2bdf10613ce62fb454bab16c58b
+    common/table_toolbar/operator_does_not_end_with: 06ffdaa7b01a2786bcb934d838698038
+    common/table_toolbar/operator_does_not_start_with: 546f7950abfae95af54796391c946a5b
+    common/table_toolbar/operator_ends_with: 2bd866369766c6a2ef74bb9fa74b1d7e
+    common/table_toolbar/operator_equals: 6e18221b26a14df86537e89f50dcec16
+    common/table_toolbar/operator_greater_equal: 128c2c123b28c3c8f056fee02dea3d0b
+    common/table_toolbar/operator_greater_than: 314e7a053f9094fb4df21e1379d7f4f9
+    common/table_toolbar/operator_includes_all_of: 61818b9419ec38c29eb23e49f6dbacda
+    common/table_toolbar/operator_includes_one_of: 2ccf004e7658b97d703386cbc1e1d94f
+    common/table_toolbar/operator_is_after: f9d9296eb9a5a7d168cc4e65a4095a87
+    common/table_toolbar/operator_is_any_of: 692ceecb91b61066de37aa869014e7b6
+    common/table_toolbar/operator_is_before: 2462480cf4e8d2832b64004fbd463e55
+    common/table_toolbar/operator_is_not_set: 906801489132487ef457652af4835142
+    common/table_toolbar/operator_is_set: 9850468156356f95884bbaf56b6687aa
+    common/table_toolbar/operator_less_equal: f2ccfd65a5fadd733c6d1111425f969b
+    common/table_toolbar/operator_less_than: 5d497aca78681c793f32afd82fa85311
+    common/table_toolbar/operator_not_equals: a59746bb7a7590c4dc5e57092a5fc138
+    common/table_toolbar/operator_starts_with: 37e55e9080c84a1855956161e7885c21
+    common/table_toolbar/owner: 9c0b3aeca046c3ebd3bdc352edc83e88
+    common/table_toolbar/owner_me: e0cdc99c6c88fe486dbd78d9d366b788
+    common/table_toolbar/owner_others: 39160224ce0e35eb4eb252c997edf4d8
+    common/table_toolbar/properties: d9d4b7cdfa9324272f895ed8687f607b
+    common/table_toolbar/remove_filter: 086d53e6da9f98509b240125588fe942
+    common/table_toolbar/reorder_column: 3cf041d5a9cc252f99c48fddb87d2fad
+    common/table_toolbar/result_count: eeaaef6044758a554987b92d5d30283b
+    common/table_toolbar/result_count_capped: 5c9eb1f333275e866da1de778af5f455
+    common/table_toolbar/search_values: 1a8eedfc49ce6ab17b2d066c8406c5c8
+    common/table_toolbar/select_row: 0ddeed6e6dc5533929bdb8d93260f1d9
+    common/table_toolbar/show_archived: c4c1c3bbddc1bb1540c079b589a2d3de
+    common/table_toolbar/sort_name: 9368b5a047572b6051f334af5aa76819
+    common/table_toolbar/sort_newest_first: 45b15eb6adfe5031299914312e4cebfc
+    common/table_toolbar/sort_oldest_first: 4857d15eca6c84613b5c61ff92f3aac6
+    common/table_toolbar/sort_recently_created: e6d1835cf843398c425d671cb80d99ba
+    common/table_toolbar/sort_recently_updated: acd4458ffb8e72dcaa64f1af58fe8c0b
+    common/table_toolbar/type_custom: b7b89901f46267f532600a23cfc54ae2
+    common/table_toolbar/type_default: d9c6dc5c412fe94143dfd1d332ec81d4
+    common/table_toolbar/values_failed: df7c7e700f7171b811fa61ebd1de0b97
     common/tabs: 15b9844c44a512de01a064bac53d184a
     common/tags: 97813c8ae67d69575fd04e35a88aed0c
     common/targeting: 23d529a37e2d616593988919d6caf2ca
@@ -2372,7 +2416,6 @@ checksums:
     workspace/creatives/last_opener_warning: 6be136a9321a78d230c9821868845cd3
     workspace/creatives/new_creative: 521ae6db698154ad7a4d61225babd2c3
     workspace/creatives/new_creative_description: 4be14ae4c574b31a1c325600fc4ef564
-    workspace/creatives/no_matches: 42d4d9a9c931109047ef1bec745d0513
     workspace/creatives/restore: 91b4fad20d5f2d8e17cb62999942d2b7
     workspace/creatives/search_placeholder: 8e5f50c8baf42d48e1a4d9e6c99322e7
     workspace/creatives/status_action_close: 2c2e22f8424a1031de89063bd0022e16
@@ -2992,6 +3035,7 @@ checksums:
     workspace/segments/reset_all_filters: 0de0d7962a1179fac358cb1cf9546df3
     workspace/segments/save_as_new_segment: d9d42bdeabf936d4ec97325dbdca0012
     workspace/segments/save_your_filters_as_a_segment_to_use_it_in_other_surveys: cc40e9b2a5ab59684f075bcb2f55f18d
+    workspace/segments/search_segments: 2d59e7e5e11d8ed41047eb62e3b7f534
     workspace/segments/segment_created_successfully: 7dfaf11a929000b387c0d5f6dc18e81a
     workspace/segments/segment_deleted_successfully: 931c41216210ffaa5c08c874a0751da3
     workspace/segments/segment_id: 875b44f7289197810baf2e1c03de5c77
@@ -4432,7 +4476,6 @@ checksums:
     workspace/surveys/featured_templates/nps_title: 94ef35c2e6ed7061f8a533c9e61b155b
     workspace/surveys/featured_templates/see_all_templates: 33e04d0dca427418ed386bb9b38a6443
     workspace/surveys/featured_templates/templates_for: 9eb1a1e51222f809c980910dfe7424ef
-    workspace/surveys/filter/complete_and_partial_responses: 3c272e4b148421da0027c35562b969db
     workspace/surveys/filter/complete_responses: cd495765bf63f5bfdb341eadc4f60ac7
     workspace/surveys/filter/partial_responses: cc88893d0defaf64f46f17a1cb8c886d
     workspace/surveys/import/ai_note: 7e32121cfe936efca7e2678512365e74
@@ -4740,7 +4783,6 @@ checksums:
     workspace/surveys/summary/all_responses_attachments: 53dbd2141c090d16a32ea6d0f0d83d5a
     workspace/surveys/summary/all_responses_csv: 16c0c211853f0839a79f1127ec679ca2
     workspace/surveys/summary/all_responses_excel: 8bf18916ab127f16bfcf9f38956710b0
-    workspace/surveys/summary/all_time: 62258944e7c2e83f3ebf69074b2c2156
     workspace/surveys/summary/almost_there: 91df07547c2ed0f56c35b0d6e6d74eed
     workspace/surveys/summary/average: 8ebb872222898ed8785e5a9d77c5a2c3
     workspace/surveys/summary/completed: 0e4bbce9985f25eb673d9a054c8d5334
@@ -4840,13 +4882,10 @@ checksums:
     workspace/surveys/summary/response_filters/screened_in: 44fed11e7afb4cf611d7e3fc47411d76
     workspace/surveys/summary/response_filters/screened_out: eb7bbd4168587cb3ffd85513e5405b97
     workspace/surveys/summary/response_filters/submitted: 3af81b50bee720e6cf9a6ddbb5f10ce7
-    workspace/surveys/summary/select_first_date: 1b10e5ee3f7fb106a02ee11f514cce51
-    workspace/surveys/summary/select_last_date: 3da08777980fdaf037ef395727a0ccfd
     workspace/surveys/summary/selected_responses_csv: 9cef3faccd54d4f24647791e6359db90
     workspace/surveys/summary/selected_responses_excel: a0ade8b2658e887a4a3f2ad3bdb0c686
     workspace/surveys/summary/setup_integrations: 602adcc10eeca23d162d4d2100ff5b58
     workspace/surveys/summary/share_survey: 0b702c85b5d4069d8367cb461c2ee0b1
-    workspace/surveys/summary/show_all_responses_that_match: c199f03983d7fcdd5972cc2759558c68
     workspace/surveys/summary/starts: 3153990a4ade414f501a7e63ab771362
     workspace/surveys/summary/starts_tooltip: 0a7dd01320490dbbea923053fa1ccad6
     workspace/surveys/summary/survey_reset_successfully: f53db36a28980ef4766215cf13f01e51
@@ -4985,6 +5024,7 @@ checksums:
     workspace/unify/csv_unmapped_columns: b94a8b5c3cf9df8859e5ac484a14969c
     workspace/unify/csv_unmapped_columns_explainer: f404bd53d7746e83da166d0d84ad77a2
     workspace/unify/data_origin: 9a62ac5378411b0b7735c01dbeeb454f
+    workspace/unify/date_value: 56bcdc20d902472dab13e355ebc8ed5e
     workspace/unify/default_source_name_csv: ef4060fef24c4fec064987b9d2a9fa4b
     workspace/unify/default_source_name_formbricks: 9088b01e1085b1cf42412597ebeea051
     workspace/unify/delete_feedback_record: 86d7262c000cfb1f91ea373036cd3616
@@ -5055,6 +5095,7 @@ checksums:
     workspace/unify/import_responses: 4c27a83aca120f5c6a57a1ad002f3ad1
     workspace/unify/import_rows: d2963498a7d2766264c4d67db677e8ff
     workspace/unify/import_via_source_name: 917c0988151b11b4d2ec099ea87c5383
+    workspace/unify/imported_at: fea635dafaa32dbfa05fbc27689c2a96
     workspace/unify/importing_data: 458bf6e9a47a4b00e2ccd9994ebabbd9
     workspace/unify/importing_historical_data: 4c339f30e9cb3465df524b251238b827
     workspace/unify/invalid_enum_values: e6ca8740dab72f64e8dc5780b5cffcc6
@@ -5072,6 +5113,7 @@ checksums:
     workspace/unify/no_formbricks_surveys_available_description: 2218334806910168bdfb6f283f31b963
     workspace/unify/no_sources_connected: 0e8a5612530bfc82091091f40f95012f
     workspace/unify/not_enriched: a120747f948eea14c99c0ff98720e0b9
+    workspace/unify/number_value: 9113aa166eeb0a59aaf0db9c87223ac2
     workspace/unify/or_drag_and_drop: 6c7d6b05d39dcbfc710d35fcab25cb8c
     workspace/unify/original_text: 7e55782bdf7cb49f5616b326c003c278
     workspace/unify/question_type_not_supported: 8d9f7554e3b509dfd5307d8d1fef08d7
@@ -5094,10 +5136,14 @@ checksums:
     workspace/unify/select_survey_and_questions: 53914988a2f48caecea23f3b3b868b9f
     workspace/unify/select_survey_questions_description: 3386ed56085eabebefa3cc453269fc5b
     workspace/unify/sentiment: 9ba5719c80c0136c2d0644217619aff6
+    workspace/unify/sentiment_score: 3c8ee79177d637cd3d57c5929e8a0a18
     workspace/unify/set_value: b8a86f8da957ebd599ece4b1b1936a78
     workspace/unify/setup_connection: 2b15b163e60a2112904d8fa505206a22
-    workspace/unify/showing_count_loaded: efb18bdf77b3fbfa824c734dfcbd8695
     workspace/unify/showing_rows: e851514ed6c4d2e453d0098af2d773bd
+    workspace/unify/sort_newest_collected: 0c01a6cf26a17b2f5cdc0898d409a720
+    workspace/unify/sort_newest_imported: 382b9139bbfeb9cbd8d595846fbd6bbe
+    workspace/unify/sort_oldest_collected: 05aab3aeadf849b17c253c3c1a8ba3bf
+    workspace/unify/sort_oldest_imported: d90e6e3d768527f8c66e594f3177cef6
     workspace/unify/source: 45309626f464f4bda161ee783a4c8c80
     workspace/unify/source_connect_csv_description: 8db7e23acbfa89920694d61ac9585b44
     workspace/unify/source_connect_feedback_record_mcp_description: 9558338c0757b4b5b9aba8c0c85dc097

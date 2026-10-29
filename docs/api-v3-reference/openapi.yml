@@ -50,14 +50,14 @@ info:
     **Spec location:** source of truth is the multi-file tree at `docs/api-v3-reference/src/` (root `openapi.yml` plus one file per path and component); `docs/api-v3-reference/openapi.yml` is the generated single-file bundle (alongside v2 at `docs/api-v2-reference/openapi.yml`).
 
     **workspaceId**
-    `workspaceId` is the canonical container identifier for this API. It is a **required query parameter on collection read endpoints** (`GET /api/v3/surveys`, `GET /api/v3/action-classes`, `GET /api/v3/contact-attribute-keys`) because those operate within a workspace. **`POST /api/v3/surveys` instead requires `workspaceId` in the request body**, not as a query parameter. Single-resource endpoints (`GET`/`PATCH`/`DELETE /api/v3/surveys/{surveyId}`) locate the resource by its globally-unique id and resolve the workspace from it, so they do **not** accept a `workspaceId` query parameter — sending one returns **400** with an `invalid_params` entry naming the key itself (`name: "workspaceId"`, `reason: "Unsupported field 'workspaceId'"`), rather than one naming the body.
+    `workspaceId` is the canonical container identifier for this API. It is a **required query parameter on collection read endpoints** (`GET /api/v3/surveys`, `GET /api/v3/action-classes`, `GET /api/v3/contact-attribute-keys`, `GET /api/v3/contacts`, `GET /api/v3/segments`) because those operate within a workspace. **`POST /api/v3/surveys` instead requires `workspaceId` in the request body**, not as a query parameter. Single-resource endpoints (`GET`/`PATCH`/`DELETE /api/v3/surveys/{surveyId}`) locate the resource by its globally-unique id and resolve the workspace from it, so they do **not** accept a `workspaceId` query parameter — sending one returns **400** with an `invalid_params` entry naming the key itself (`name: "workspaceId"`, `reason: "Unsupported field 'workspaceId'"`), rather than one naming the body.
 
     **Auth**
     Authenticate with either a session cookie or **`x-api-key`**. In dual-auth mode, V3 checks the API key first when the header is present, otherwise it uses the session path. Unauthenticated callers get **401** before query validation.
 
     **Pagination**
-    Cursor-based pagination with **limit** + opaque **cursor** token. Responses return `meta.nextCursor`; pass that value back as `cursor` to fetch the next page. Survey list responses also include `meta.totalCount`, the total number of surveys matching the current filters across all pages. Workflow list responses do not require total counts in Scope 1. There is no `offset` in this contract.
-    The page-size **maximum is 250** for responses, surveys, action classes and contact attribute keys; only the *default* varies by resource (20 for surveys, 50 for the workspace reference lists). **The workflows and workflow-run lists remain at 100** — their bound lives in the `packages/workflows` contracts and moves with that package, so each documents the value it actually enforces. A `limit` above an endpoint's maximum is rejected with **400** rather than silently reduced, consistent with v3 rejecting unrecognized query parameters instead of ignoring them. Callers should not infer the end of a collection from a page shorter than `limit`; `meta.nextCursor` of `null` is the only end-of-collection signal. Note that array-valued *input* bounds are a separate concern and stay at 100 — `filter[id][in]` and the batch-delete id list are bounded by write and payload risk, not by page cost.
+    Cursor-based pagination with **limit** + opaque **cursor** token. Responses return `meta.nextCursor`; pass that value back as `cursor` to fetch the next page. Survey, contact and segment list responses also include `meta.totalCount`, the total number of items matching the current filters across all pages (`null` when `includeTotalCount=false`). The contact-attribute-key and workflow lists report it only when asked with `includeTotalCount=true`. There is no `offset` in this contract.
+    The page-size **maximum is 250** for responses, surveys, action classes, contact attribute keys, contacts and segments; only the *default* varies by resource (20 for surveys, 50 for the workspace reference lists). **The workflows and workflow-run lists remain at 100** — their bound lives in the `packages/workflows` contracts and moves with that package, so each documents the value it actually enforces. A `limit` above an endpoint's maximum is rejected with **400** rather than silently reduced, consistent with v3 rejecting unrecognized query parameters instead of ignoring them. Callers should not infer the end of a collection from a page shorter than `limit`; `meta.nextCursor` of `null` is the only end-of-collection signal. Note that array-valued *input* bounds are a separate concern and stay at 100 — `filter[id][in]` and the batch-delete id list are bounded by write and payload risk, not by page cost.
 
     **Strictness**
     A query parameter that an operation does not declare returns **400**, with the offending key reported in `invalid_params[].name` — including on operations that declare no query parameters at all. Unknown parameters are rejected rather than ignored on purpose: a silently-dropped filter returns *more* data than the caller believes they asked for, and a typo in a filter name is indistinguishable from no filter at all. The same applies to request bodies, where unsupported fields are rejected instead of stripped.
@@ -3119,6 +3119,12 @@ paths:
               - updatedAt
               - name
           description: Sort order. Defaults to `updatedAt` (newest first). The `cursor` token is bound to the selected sort order.
+        - in: query
+          name: includeTotalCount
+          schema:
+            type: boolean
+            default: false
+          description: When `true`, `meta.totalCount` is the number of workflows matching the same filters across all pages; otherwise it is `null`. Values other than `true`/`false` → **400**.
       responses:
         '200':
           description: Workflows retrieved successfully
@@ -3144,7 +3150,7 @@ paths:
                     items:
                       $ref: '#/components/schemas/WorkflowListItem'
                   meta:
-                    $ref: '#/components/schemas/CursorPaginationMeta'
+                    $ref: '#/components/schemas/CountedListMeta'
         '400':
           $ref: '#/components/responses/V3BadRequest'
         '401':
@@ -6056,8 +6062,14 @@ paths:
       description: |
         Returns the contact attribute keys for a workspace. Use the returned `key` values as
         `targeting.filters[].root.contactAttributeKey` when targeting app surveys; `dataType` hints which
-        operators apply. Session cookie, `x-api-key`, or a Bearer token. (Applying targeting filters requires the Contacts
-        entitlement; this discovery endpoint does not.)
+        operators apply. Requires the Contacts entitlement (**403** without it). Session cookie,
+        `x-api-key`, or a Bearer token.
+
+        Optional `search`, `filter[dataType][in]`, `filter[type][in]`, `sortBy` and `includeTotalCount`
+        narrow, order and count the list on the server. Without them the endpoint behaves as before:
+        ordered by `id`, `meta.totalCount` is `null`. The cursor is bound to `sortBy` and the
+        search/filter set; changing any of them while paging → **400** naming `cursor`. Unknown query
+        parameters → **400**.
       tags:
         - V3 Contact Attribute Keys
       parameters:
@@ -6083,6 +6095,58 @@ paths:
             type: string
           description: |
             Opaque cursor returned as `meta.nextCursor` from the previous page. Omit on the first request.
+        - in: query
+          name: includeTotalCount
+          schema:
+            type: boolean
+            default: false
+          description: |
+            When `true`, `meta.totalCount` is the number of keys matching the search and filters across all pages; otherwise it is `null`.
+        - in: query
+          name: search
+          schema:
+            type: string
+            maxLength: 512
+          description: Case-insensitive substring match over `key`, `name` and `description`.
+        - in: query
+          name: filter[dataType][in]
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - string
+                - number
+                - date
+          style: form
+          explode: true
+          description: |
+            Keep only keys with one of these data types. Repeat the parameter or send comma-separated values. Unknown values → **400**.
+        - in: query
+          name: filter[type][in]
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - default
+                - custom
+          style: form
+          explode: true
+          description: |
+            Keep only built-in (`default`) or workspace-defined (`custom`) keys. Repeat or comma-separate.
+        - in: query
+          name: sortBy
+          schema:
+            type: string
+            enum:
+              - createdAt
+              - '-createdAt'
+              - name
+              - updatedAt
+              - '-updatedAt'
+          description: |
+            Sort order. `name` sorts by the display name (falling back to `key`), case-insensitively. A leading `-` sorts newest first. Omit for the original order (by `id`).
       responses:
         '200':
           description: Contact attribute keys retrieved successfully
@@ -6108,7 +6172,334 @@ paths:
                     items:
                       $ref: '#/components/schemas/ContactAttributeKeyResource'
                   meta:
-                    $ref: '#/components/schemas/CursorPaginationMeta'
+                    $ref: '#/components/schemas/CountedListMeta'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/contacts:
+    get:
+      operationId: listContactsV3
+      summary: List contacts
+      description: |
+        Returns a workspace's contacts, filtered, searched, sorted and counted on the server. Requires the
+        Contacts entitlement (**403** without it). Session cookie, `x-api-key`, or a Bearer token.
+
+        **Attribute filters** use `filter[attribute.<key>][<operator>]=<value>`, where `<key>` is a
+        `ContactAttributeKeyResource.key` of the workspace (an unknown key → **400**). The operators depend
+        on the key's `dataType`; an operator the type does not support → **400**:
+
+        | dataType | operators |
+        | -------- | --------- |
+        | `string` | `in`, `eq`, `ne`, `contains`, `notContains`, `startsWith`, `endsWith`, `isSet`, `isNotSet` |
+        | `number` | `in`, `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, `isSet`, `isNotSet` |
+        | `date`   | `gte`, `lte` (ISO 8601 date-time with offset, inclusive), `isSet`, `isNotSet` |
+
+        Text comparisons are case-insensitive. `in` matches any of its values: repeat the key once per
+        value (`filter[attribute.plan][in]=Pro&filter[attribute.plan][in]=Team`). String values are taken
+        verbatim — never split on commas, since a value can contain one; a `number` `in` also accepts
+        comma-separated values. `ne`, `contains`, `notContains`, `startsWith` and `endsWith` may
+        also be repeated, and then every value must hold (AND). Every other operator takes exactly one
+        value (repeating it → **400**).
+        `isSet` / `isNotSet` ignore their value (send `true`). A value is *set* when the attribute row
+        exists and carries a value (non-empty text, or a non-null number/date). `ne` and
+        `notContains` match only contacts whose value is set and differs — use `isNotSet` for contacts
+        without one. All filters combine with AND. At most 50 distinct filter parameters per request and
+        at most 100 values per `in`.
+
+        The cursor is bound to `sortBy` and to the search and filter set; changing any of them while
+        paging → **400** naming `cursor`. Unknown query parameters → **400**.
+      tags:
+        - V3 Contacts
+      parameters:
+        - in: query
+          name: workspaceId
+          required: true
+          schema:
+            type: string
+            format: cuid2
+          description: Workspace identifier.
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 250
+            default: 50
+          description: Page size (max 250).
+        - in: query
+          name: cursor
+          schema:
+            type: string
+          description: Opaque cursor returned as `meta.nextCursor` from the previous page.
+        - in: query
+          name: includeTotalCount
+          schema:
+            type: boolean
+            default: false
+          description: |
+            Whether to calculate `meta.totalCount`. Send `true` on the first page to get the count; when omitted or `false` the count query is skipped and `meta.totalCount` is `null`.
+        - in: query
+          name: search
+          schema:
+            type: string
+            maxLength: 512
+          description: |
+            Case-insensitive substring match over any attribute value of the contact, or its id.
+        - in: query
+          name: sortBy
+          schema:
+            type: string
+            enum:
+              - '-createdAt'
+              - createdAt
+            default: '-createdAt'
+          description: '`-createdAt` (newest first, default) or `createdAt` (oldest first).'
+        - in: query
+          name: filter[createdAt][gte]
+          schema:
+            type: string
+            format: date-time
+          description: Only contacts created at or after this instant (ISO 8601 with offset).
+        - in: query
+          name: filter[createdAt][lte]
+          schema:
+            type: string
+            format: date-time
+          description: Only contacts created at or before this instant (ISO 8601 with offset).
+      responses:
+        '200':
+          description: Contacts retrieved successfully
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ContactResource'
+                  meta:
+                    $ref: '#/components/schemas/CountedListMeta'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/contacts/attribute-values:
+    get:
+      operationId: listContactAttributeValuesV3
+      summary: List distinct values of a contact attribute
+      description: |
+        Returns the distinct, non-empty values one contact attribute takes in a workspace, in ascending
+        order and bounded by `limit` — for quick-filter value pickers. Not paginated: `meta.truncated` says
+        whether more values match than were returned, so a picker can ask the user to narrow the search. Number and date attributes return
+        their stored text `value`. Requires the Contacts entitlement (**403** without it). An unknown
+        `key` → **400**. Session cookie, `x-api-key`, or a Bearer token.
+      tags:
+        - V3 Contacts
+      parameters:
+        - in: query
+          name: workspaceId
+          required: true
+          schema:
+            type: string
+            format: cuid2
+          description: Workspace identifier.
+        - in: query
+          name: key
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 255
+          description: The attribute key (`ContactAttributeKeyResource.key`).
+        - in: query
+          name: filter[value][contains]
+          schema:
+            type: string
+            maxLength: 512
+          description: Case-insensitive substring match on the value.
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Maximum number of values returned (max 100). Not paginated.
+      responses:
+        '200':
+          description: Values retrieved successfully
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  meta:
+                    type: object
+                    required:
+                      - limit
+                      - truncated
+                    properties:
+                      limit:
+                        type: integer
+                        minimum: 1
+                        description: The limit actually applied.
+                      truncated:
+                        type: boolean
+                        description: True when more values match than `limit` returned.
+                    additionalProperties: false
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - value
+                      properties:
+                        value:
+                          type: string
+                      additionalProperties: false
+                additionalProperties: false
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/segments:
+    get:
+      operationId: listSegmentsV3
+      summary: List segments
+      description: |
+        Returns a workspace's segments, searched, sorted and counted on the server. Private segments
+        (survey-local targeting drafts) are never listed. A segment's survey references — including the
+        `surveyIds` of its survey-interaction filters — only name surveys the caller may see. Requires the Contacts entitlement (**403** without it). The cursor is bound to
+        `sortBy` and `filter[title][contains]`; changing either while paging → **400** naming `cursor`. Unknown query
+        parameters → **400**. Session cookie, `x-api-key`, or a Bearer token.
+      tags:
+        - V3 Segments
+      parameters:
+        - in: query
+          name: workspaceId
+          required: true
+          schema:
+            type: string
+            format: cuid2
+          description: Workspace identifier.
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 250
+            default: 50
+          description: Page size (max 250).
+        - in: query
+          name: cursor
+          schema:
+            type: string
+          description: Opaque cursor returned as `meta.nextCursor` from the previous page.
+        - in: query
+          name: includeTotalCount
+          schema:
+            type: boolean
+            default: false
+          description: |
+            Whether to calculate `meta.totalCount`. Send `true` on the first page to get the count; when omitted or `false` the count query is skipped and `meta.totalCount` is `null`.
+        - in: query
+          name: filter[title][contains]
+          schema:
+            type: string
+            maxLength: 512
+          description: Case-insensitive substring match on the segment title.
+        - in: query
+          name: sortBy
+          schema:
+            type: string
+            enum:
+              - '-updatedAt'
+              - '-createdAt'
+              - title
+            default: '-updatedAt'
+          description: '`-updatedAt` (default), `-createdAt` (both newest first) or `title` (A–Z).'
+      responses:
+        '200':
+          description: Segments retrieved successfully
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SegmentResource'
+                  meta:
+                    $ref: '#/components/schemas/CountedListMeta'
         '400':
           $ref: '#/components/responses/V3BadRequest'
         '401':
@@ -9087,7 +9478,7 @@ components:
           maxItems: 2
     SegmentFilter:
       description: |
-        A single targeting condition. `root.type` selects the subject and determines the valid `qualifier.operator` set: `attribute` (a workspace contact-attribute key), `person` (a built-in person identifier such as `userId`/`email`), `segment` (membership in another segment), or `device`. Each variant is one member of this union; the matching member is chosen by `root.type`.
+        A single targeting condition. `root.type` selects the subject and determines the valid `qualifier.operator` set: `attribute` (a workspace contact-attribute key), `person` (a built-in person identifier such as `userId`/`email`), `segment` (membership in another segment), `device`, or `surveyInteraction` (how the contact interacted with surveys). Each variant is one member of this union; the matching member is chosen by `root.type`.
       oneOf:
         - title: AttributeFilter
           description: Matches on a workspace contact-attribute value.
@@ -9270,6 +9661,80 @@ components:
               additionalProperties: false
             value:
               $ref: '#/components/schemas/SegmentFilterValue'
+          additionalProperties: false
+        - title: SurveyInteractionFilter
+          description: Matches on how the contact interacted with surveys within a time window. `surveyIds` only names surveys the caller may see; ids of other surveys the segment targets are left out.
+          type: object
+          required:
+            - id
+            - root
+            - qualifier
+            - value
+          properties:
+            id:
+              type: string
+              format: cuid2
+            root:
+              type: object
+              required:
+                - type
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - surveyInteraction
+              additionalProperties: false
+            qualifier:
+              type: object
+              required:
+                - operator
+              properties:
+                operator:
+                  type: string
+                  enum:
+                    - haveCompleted
+                    - haveNotCompleted
+                    - haveSeen
+                    - haveNotSeen
+                    - haveStartedRespondingTo
+              additionalProperties: false
+            value:
+              type: object
+              required:
+                - surveyScope
+                - surveyIds
+                - within
+              properties:
+                surveyScope:
+                  type: string
+                  enum:
+                    - any
+                    - specific
+                  description: '`any` matches every survey in the workspace; `specific` only `surveyIds`.'
+                surveyIds:
+                  type: array
+                  maxItems: 100
+                  items:
+                    type: string
+                    format: cuid2
+                within:
+                  type: object
+                  required:
+                    - amount
+                    - unit
+                  properties:
+                    amount:
+                      type: integer
+                      minimum: 1
+                      maximum: 999
+                    unit:
+                      type: string
+                      enum:
+                        - days
+                        - weeks
+                        - months
+                  additionalProperties: false
+              additionalProperties: false
           additionalProperties: false
     SegmentFilters:
       type: array
@@ -11968,14 +12433,21 @@ components:
           type: integer
           minimum: 0
           description: Total number of runs (dry runs included) for this workflow.
-    CursorPaginationMeta:
+    CountedListMeta:
       allOf:
         - $ref: '#/components/schemas/ListPaginationMeta'
+        - type: object
+          required:
+            - totalCount
+          properties:
+            totalCount:
+              type:
+                - integer
+                - 'null'
+              minimum: 0
+              description: Total number of items matching the current filters (and search) across all pages. `null` when the request did not ask for it — see the operation's `includeTotalCount` parameter, whose default differs per collection.
       unevaluatedProperties: false
-      description: |-
-        A list `meta` carrying pagination and nothing else — the shape for collections that do not report a total and have no domain context to echo.
-
-        Adds nothing to `ListPaginationMeta`; the `allOf` wrapper is what closes it. Each composing operation bounds its own requests through its `limit` query parameter, which is why this shape states no cap of its own.
+      description: A list `meta` carrying pagination and the filtered total. `totalCount` is `required` but nullable, gated on the operation's `includeTotalCount` parameter.
     WorkflowNodeUi:
       type: object
       description: Builder-only UI metadata that does not affect workflow execution. Additional keys are preserved.
@@ -12247,6 +12719,14 @@ components:
             workflowName:
               type: string
               description: Name of the workflow this run belongs to, joined for the runs-list display.
+    CursorPaginationMeta:
+      allOf:
+        - $ref: '#/components/schemas/ListPaginationMeta'
+      unevaluatedProperties: false
+      description: |-
+        A list `meta` carrying pagination and nothing else — the shape for collections that do not report a total and have no domain context to echo.
+
+        Adds nothing to `ListPaginationMeta`; the `allOf` wrapper is what closes it. Each composing operation bounds its own requests through its `limit` query parameter, which is why this shape states no cap of its own.
     WorkflowTriggerPayload:
       type: object
       description: |
@@ -14666,6 +15146,9 @@ components:
         - description
         - type
         - dataType
+        - isUnique
+        - createdAt
+        - updatedAt
       properties:
         id:
           type: string
@@ -14694,6 +15177,153 @@ components:
             - string
             - number
             - date
+        isUnique:
+          type: boolean
+          description: Whether each value of this attribute identifies at most one contact.
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    ContactResource:
+      type: object
+      description: |
+        A workspace contact as the Contacts table renders it. `userId`, `email`, `firstName` and `lastName` are lifted out of `attributes` for convenience and are `null` when the contact has no value for them. `attributes` lists every attribute the contact has a value row for, ordered by `key`; a key the contact has no row for is absent.
+      required:
+        - id
+        - createdAt
+        - updatedAt
+        - userId
+        - email
+        - firstName
+        - lastName
+        - attributes
+      properties:
+        id:
+          type: string
+          format: cuid2
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        userId:
+          type:
+            - string
+            - 'null'
+        email:
+          type:
+            - string
+            - 'null'
+        firstName:
+          type:
+            - string
+            - 'null'
+        lastName:
+          type:
+            - string
+            - 'null'
+        attributes:
+          type: array
+          items:
+            type: object
+            required:
+              - key
+              - name
+              - dataType
+              - value
+            properties:
+              key:
+                type: string
+                description: The attribute key (`ContactAttributeKeyResource.key`).
+              name:
+                type:
+                  - string
+                  - 'null'
+                description: The key's display name.
+              dataType:
+                type: string
+                enum:
+                  - string
+                  - number
+                  - date
+              value:
+                type: string
+                description: 'The value as text: a number attribute as its decimal string, a date attribute as an ISO 8601 date-time.'
+            additionalProperties: false
+      additionalProperties: false
+    SegmentSurveyReference:
+      type: object
+      description: A survey a segment is attached to.
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          format: cuid2
+        name:
+          type: string
+      additionalProperties: false
+    SegmentResource:
+      type: object
+      description: |
+        A workspace segment (a saved, reusable contact filter). Private segments — survey-local targeting drafts — are never listed. `surveys`, `activeSurveys` and `inactiveSurveys` only name surveys the caller is allowed to see.
+      required:
+        - id
+        - title
+        - description
+        - isPrivate
+        - filters
+        - workspaceId
+        - surveys
+        - activeSurveys
+        - inactiveSurveys
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: cuid2
+        title:
+          type: string
+        description:
+          type:
+            - string
+            - 'null'
+        isPrivate:
+          type: boolean
+          description: Always `false` in list results.
+        filters:
+          $ref: '#/components/schemas/SegmentFilters'
+        workspaceId:
+          type: string
+          format: cuid2
+        surveys:
+          type: array
+          description: Ids of the visible surveys this segment is attached to.
+          items:
+            type: string
+            format: cuid2
+        activeSurveys:
+          type: array
+          description: Visible attached surveys that are in progress.
+          items:
+            $ref: '#/components/schemas/SegmentSurveyReference'
+        inactiveSurveys:
+          type: array
+          description: Visible attached surveys in any other status.
+          items:
+            $ref: '#/components/schemas/SegmentSurveyReference'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
       additionalProperties: false
     TagResource:
       type: object

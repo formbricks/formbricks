@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { logger } from "@formbricks/logger";
 import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getFeedbackSourcesWithMappings } from "@/lib/feedback-source/service";
 import { getTranslate } from "@/lingodotdev/server";
@@ -7,15 +6,13 @@ import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/
 import { FeedbackDataEmptyState } from "@/modules/ee/unify-feedback/components/feedback-data-empty-state";
 import { UnifyConfigNavigation } from "@/modules/ee/unify-feedback/components/unify-config-navigation";
 import { getAuthorizedWorkspaceFeedbackDirectories } from "@/modules/ee/unify-feedback/lib/access";
-import { getContactIdsByUserIds } from "@/modules/ee/unify-feedback/lib/contacts";
-import { listFeedbackRecords } from "@/modules/hub/service";
+import { getConnectedSurveyIds, getRecordSourceNames } from "@/modules/ee/unify-feedback/lib/source-names";
+import { getWorkspaceSurveyNames } from "@/modules/ee/unify-feedback/lib/survey-names";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { FeedbackRecordsPageClient } from "./components/feedback-records-page-client";
-
-const INITIAL_PAGE_SIZE = 50;
 
 export default async function UnifyFeedbackRecordsPage(
   props: Readonly<{ params: Promise<{ workspaceId: string }> }>
@@ -90,26 +87,6 @@ export default async function UnifyFeedbackRecordsPage(
     );
   }
 
-  const results = await Promise.all(
-    frds.map((frd) => listFeedbackRecords({ tenant_id: frd.id, limit: INITIAL_PAGE_SIZE }))
-  );
-
-  // Don't crash if Hub is unreachable — show empty state
-  const successfulResults = results.filter((r) => !r.error);
-
-  const merged = successfulResults
-    .flatMap((r) => r.data?.data ?? [])
-    .toSorted((a, b) => (a.collected_at < b.collected_at ? 1 : -1));
-
-  // Build per-FRD cursor map so the client can paginate
-  const initialCursors: Record<string, string> = {};
-  for (let i = 0; i < frds.length; i++) {
-    const cursor = results[i]?.data?.next_cursor;
-    if (cursor) {
-      initialCursors[frds[i].id] = cursor;
-    }
-  }
-
   const frdMap = Object.fromEntries(frds.map((f) => [f.id, f.name]));
   const csvSources = feedbackSources
     .filter((feedbackSource) => feedbackSource.type === "csv")
@@ -119,28 +96,20 @@ export default async function UnifyFeedbackRecordsPage(
       fieldMappings: feedbackSource.fieldMappings,
     }));
 
-  // Resolve the initial page's user_ids to contact ids in one batched query so records can
-  // deep-link to the matching contact (in this workspace) without a per-record lookup. Contact
-  // links are a non-critical enhancement, so a transient DB failure falls back to no links
-  // rather than taking down the whole Feedback Data page.
-  let initialContactIdByUserId: Record<string, string> = {};
-  try {
-    initialContactIdByUserId = await getContactIdsByUserIds(
-      params.workspaceId,
-      merged.map((record) => record.user_id).filter((id): id is string => Boolean(id))
-    );
-  } catch (error) {
-    logger.error({ error, workspaceId: params.workspaceId }, "Failed to resolve feedback record contacts");
-  }
+  // Records are read by the table itself, through the v3 list with the filters in the page URL. The
+  // Source filter offers the `source_name` values records carry — a survey connector's survey names.
+  const surveyNamesById = await getWorkspaceSurveyNames(
+    params.workspaceId,
+    getConnectedSurveyIds(feedbackSources)
+  );
+  const sourceNames = getRecordSourceNames(feedbackSources, surveyNamesById);
 
   return (
     <FeedbackRecordsPageClient
       workspaceId={params.workspaceId}
-      initialRecords={merged}
-      initialCursors={initialCursors}
-      initialContactIdByUserId={initialContactIdByUserId}
       frdMap={frdMap}
       csvSources={csvSources}
+      sourceNames={sourceNames}
       canWrite={canWrite}
       canDeleteRecords={canDeleteRecords}
     />

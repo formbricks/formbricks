@@ -9,10 +9,8 @@ import { getTextContent } from "@formbricks/types/surveys/validation";
 import { TUserLocale } from "@formbricks/types/user";
 import { useWorkspaceContext } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { EmptyAppSurveys } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/EmptyInAppSurveys";
-import {
-  SelectedFilterValue,
-  useResponseFilter,
-} from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
+import { useResponseTableFilters } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/hooks/use-response-table-filters";
+import { isQuestionFilter } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/lib/response-table-filters";
 import { CESSummary } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/CESSummary";
 import { CSATSummary } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/CSATSummary";
 import { CTASummary } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/CTASummary";
@@ -30,7 +28,7 @@ import { PictureChoiceSummary } from "@/app/(app)/workspaces/[workspaceId]/surve
 import { RankingSummary } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/RankingSummary";
 import { RatingSummary } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/RatingSummary";
 import { constructToastMessage } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
-import { OptionsType } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/ElementsComboBox";
+import { OptionsType } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/response-filter-options";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { EmptyState } from "@/modules/ui/components/empty-state";
 import { SkeletonLoader } from "@/modules/ui/components/skeleton-loader";
@@ -52,8 +50,9 @@ export const SummaryList = ({
   isReadOnly,
 }: Readonly<SummaryListProps>) => {
   const { workspace } = useWorkspaceContext();
-  const { setSelectedFilter, selectedFilter } = useResponseFilter();
+  const { filters, applyQuestionFilter } = useResponseTableFilters(survey);
   const { t } = useTranslation();
+  // "Filter by this answer" writes a rule to the shared toolbar filter, replacing the question's own.
   const setFilter = (
     elementId: string,
     label: TI18nString,
@@ -61,53 +60,28 @@ export const SummaryList = ({
     filterValue: string,
     filterComboBoxValue?: string | string[]
   ) => {
-    const filterObject: SelectedFilterValue = { ...selectedFilter };
-    const value = {
-      id: elementId,
-      label: getTextContent(getLocalizedValue(label, "default")),
-      elementType,
-      type: OptionsType.ELEMENTS,
-    };
-
-    // Find the index of the existing filter with the same elementId
-    const existingFilterIndex = filterObject.filter.findIndex(
-      (filter) => filter.elementType.id === elementId
-    );
-
-    if (existingFilterIndex !== -1) {
-      // Replace the existing filter
-      filterObject.filter[existingFilterIndex] = {
-        elementType: value,
-        filterType: {
-          filterComboBoxValue: filterComboBoxValue,
-          filterValue: filterValue,
-        },
-      };
-      toast.success(t("workspace.surveys.summary.filter_updated_successfully"), { duration: 5000 });
-    } else {
-      // Add new filter
-      filterObject.filter.push({
-        elementType: value,
-        filterType: {
-          filterComboBoxValue: filterComboBoxValue,
-          filterValue: filterValue,
-        },
-      });
-      toast.success(
-        constructToastMessage(elementType, filterValue, survey, elementId, t, filterComboBoxValue) ??
-          t("workspace.surveys.summary.filter_added_successfully"),
-        { duration: 5000 }
-      );
-    }
-
-    setSelectedFilter({
-      filter: [...filterObject.filter],
-      responseStatus: filterObject.responseStatus,
+    const hasFilter = filters.some((filter) => isQuestionFilter(filter, elementId));
+    const isApplied = applyQuestionFilter({
+      elementType: {
+        id: elementId,
+        label: getTextContent(getLocalizedValue(label, "default")),
+        elementType,
+        type: OptionsType.ELEMENTS,
+      },
+      filterType: { filterComboBoxValue, filterValue },
     });
+    if (!isApplied) return;
+    toast.success(
+      hasFilter
+        ? t("workspace.surveys.summary.filter_updated_successfully")
+        : (constructToastMessage(elementType, filterValue, survey, elementId, t, filterComboBoxValue) ??
+            t("workspace.surveys.summary.filter_added_successfully")),
+      { duration: 5000 }
+    );
   };
 
   return (
-    <div className="mt-10 space-y-8">
+    <div className="mt-4 space-y-8">
       {survey.type === "app" && responseCount === 0 && !workspace.appSetupCompleted ? (
         <EmptyAppSurveys />
       ) : summary.length === 0 ? (
