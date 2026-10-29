@@ -156,6 +156,7 @@ export const FileUploadElementForm = ({
                       autoFocus
                       type="number"
                       id="fileSizeLimit"
+                      min={1}
                       value={element.maxSizeInMB}
                       onChange={(e) => {
                         const parsedValue = Number.parseInt(e.target.value, 10);
@@ -171,7 +172,10 @@ export const FileUploadElementForm = ({
                           return;
                         }
 
-                        updateElement(elementIdx, { maxSizeInMB: Number.parseInt(e.target.value, 10) });
+                        // A file size limit below 1 MB is meaningless, so clamp zero and negative values.
+                        updateElement(elementIdx, {
+                          maxSizeInMB: parsedValue < 1 ? 1 : parsedValue,
+                        });
                       }}
                       className="mr-2 ml-2 inline w-20 bg-white text-center text-sm"
                     />
