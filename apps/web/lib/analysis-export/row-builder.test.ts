@@ -459,3 +459,28 @@ describe("column names", () => {
     ]);
   });
 });
+
+describe("recall in a headline", () => {
+  test("is resolved with its fallback, like the Standard export, not written out as a token", () => {
+    const greeting = element({
+      id: "e5",
+      code: "q5",
+      type: "openText",
+      headline: i18n("Hi #recall:name/fallback:friend#, how are you?"),
+    });
+    const { builder } = run([greeting], [response({})], {
+      survey: {
+        embeddedFields: [
+          {
+            field: { name: "name", dataType: "string", source: "ingested", key: null, locked: false },
+            link: { storageKey: "name" },
+          },
+        ] as never,
+      },
+    });
+    const headline = builder.columns.find((c) => c.name === "q5")?.question?.headline;
+    expect(headline).toBeDefined();
+    expect(headline).not.toContain("#recall:");
+    expect(headline).toContain("how are you?");
+  });
+});

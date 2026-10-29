@@ -23,6 +23,7 @@ import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLanguageCode } from "@/lib/i18n/utils";
 import { getReservedExportEntries } from "@/lib/response/utils";
 import { getFormattedDateTimeString } from "@/lib/utils/datetime";
+import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { OTHER_OPTION_ID, type TMatchableOption, resolveAnswerOption } from "./option-matcher";
 import {
@@ -641,10 +642,17 @@ export const createAnalysisRowBuilder = ({
   contactAttributeKeys?: readonly string[];
 }) => {
   const embeddedFields = getSurveyEmbeddedFields(inputSurvey);
-  const blocks: TSurveyBlock[] = fillMissingCodes(
-    inputSurvey.blocks,
-    embeddedFields.map(({ field }) => field.name)
-  );
+  // Recall is resolved like the Standard export does, so a headline reads `Hi @name`, not the raw token.
+  const blocks: TSurveyBlock[] = replaceHeadlineRecall(
+    {
+      ...inputSurvey,
+      blocks: fillMissingCodes(
+        inputSurvey.blocks,
+        embeddedFields.map(({ field }) => field.name)
+      ),
+    } as unknown as TSurvey,
+    "default"
+  ).blocks;
   const elements = getElementsFromBlocks(blocks);
   const languages = inputSurvey.languages ?? [];
   const defaultLanguageCode = languages.find((language) => language.default)?.language.code ?? null;
