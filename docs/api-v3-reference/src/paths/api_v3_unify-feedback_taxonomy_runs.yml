@@ -38,6 +38,7 @@ post:
               type: string
               enum: [field, directory]
               default: field
+              example: field
               description: >-
                 `field` requires `sourceType` and `fieldId`; `directory` covers all text feedback in the
                 dataset and accepts neither.
@@ -45,14 +46,17 @@ post:
               type: string
               minLength: 1
               maxLength: 255
+              example: formbricks
             sourceId:
               type: string
               maxLength: 255
               description: May be the empty string, which addresses feedback with no attributed source.
+              example: tz4a98xxat96iws9zmbrgj3a
             fieldId:
               type: string
               minLength: 1
               maxLength: 255
+              example: satisfaction
             fieldLabel:
               type: string
               maxLength: 1000

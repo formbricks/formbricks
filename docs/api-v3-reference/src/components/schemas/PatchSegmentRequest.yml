@@ -16,4 +16,5 @@ properties:
       - $ref: ./SegmentFilters.yml
     minItems: 1
     description: Replaces the whole filter tree. A segment cannot reference itself, directly or through another segment.
+minProperties: 1
 additionalProperties: false

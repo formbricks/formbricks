@@ -8,4 +8,5 @@ properties:
   description:
     type: string
     maxLength: 1000
+minProperties: 1
 additionalProperties: false

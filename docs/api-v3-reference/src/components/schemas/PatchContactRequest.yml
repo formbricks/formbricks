@@ -16,4 +16,5 @@ properties:
     description: >-
       Attribute keys to remove from this contact. `userId`, `email`, `firstName` and `lastName` cannot be
       removed, and a key cannot also appear in `attributes`.
+minProperties: 1
 additionalProperties: false

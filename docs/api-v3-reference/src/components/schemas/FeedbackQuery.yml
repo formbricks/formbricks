@@ -15,6 +15,7 @@ properties:
     description: What to compute per group, for example `FeedbackRecords.npsScore` or `FeedbackRecords.count`.
     example:
       - FeedbackRecords.npsScore
+      - FeedbackRecords.count
   dimensions:
     type: array
     maxItems: 5

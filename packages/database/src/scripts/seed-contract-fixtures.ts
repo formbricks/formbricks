@@ -39,6 +39,7 @@ const CONTRACT_IDS = {
   SURVEY_ARCHIVE: "clctsurveyarchive0000001",
   SURVEY_BLOCKS_EDIT: "clctsurveyblocksedit0001",
   SURVEY_BLOCKS_ORDER: "clctsurveyblocksorder001",
+  SURVEY_DOCUMENT_PUSH: "clctsurveydocumentpush001",
   SURVEY_RESTORE: "clctsurveyrestore0000001",
   SURVEY_VISIBILITY: "clctsurveyvisibility0001",
   SURVEY_VISIBILITY_PRIVATE: "clctsurveyvisibilityp001",
@@ -102,8 +103,13 @@ function getOutPath(): string {
  * documented 400 for a language the survey does not configure, so without these the whole operation
  * only ever exercises its error path and the survey resource schema — the largest in the contract —
  * is never validated.
+ *
+ * `zh-Hans` and `zh-Hans-CN` are not both seeded: the survey document contract treats them as one
+ * language (`duplicate_locale`), so a survey configuring both is a stored survey the v3 write path
+ * refuses with 422 `stored_survey_invalid` — which is all `PUT /api/v3/surveys/{surveyId}/document`
+ * ever answered against this fixture. The `lang=zh-Hans-CN` example still resolves, to `zh-Hans`.
  */
-const READ_SURVEY_LANGUAGES = ["en-US", "de-DE", "pt-PT", "zh-Hans", "zh-Hans-CN"] as const;
+const READ_SURVEY_LANGUAGES = ["en-US", "de-DE", "pt-PT", "zh-Hans"] as const;
 
 async function seedSurveyLanguages(surveyId: string, codes: readonly string[]): Promise<void> {
   for (const [index, code] of codes.entries()) {
@@ -414,6 +420,16 @@ async function main(): Promise<void> {
     BLOCK_EDIT_EXAMPLE_BLOCKS
   );
   await seedSurvey(CONTRACT_IDS.SURVEY_BLOCKS_ORDER, "Contract fixture — block order", false, 2);
+  // The document push examples replace the survey with the one block of BLOCK_EDIT_EXAMPLE_BLOCKS. The
+  // read survey has a response on a different block, so there the push is a documented 409
+  // `destructive_change` every time; a survey with no responses and the example's block takes it.
+  await seedSurvey(
+    CONTRACT_IDS.SURVEY_DOCUMENT_PUSH,
+    "Contract fixture — document push",
+    false,
+    1,
+    BLOCK_EDIT_EXAMPLE_BLOCKS
+  );
   // Restore only has something to do on an already-archived survey.
   await seedSurvey(CONTRACT_IDS.SURVEY_RESTORE, "Contract fixture — restore", true);
   // ENG-3282: one workspace-visible and one restricted survey, both owned by the seed admin, so the
@@ -620,6 +636,11 @@ async function main(): Promise<void> {
           expectedUpdatedAt: CONTRACT_FIXTURE_UPDATED_AT.toISOString(),
         },
       },
+      // Pinned like the block operations: the push examples carry a fixed `expectedUpdatedAt`.
+      pushSurveyDocumentV3: {
+        path: { surveyId: CONTRACT_IDS.SURVEY_DOCUMENT_PUSH },
+        body: { expectedUpdatedAt: CONTRACT_FIXTURE_UPDATED_AT.toISOString() },
+      },
       restoreSurveyV3: { path: { surveyId: CONTRACT_IDS.SURVEY_RESTORE } },
       // API keys never manage visibility (K-4), and this harness authenticates with one, so both
       // operations are checked against their documented 403 — on a real, readable survey, not an
@@ -640,6 +661,9 @@ async function main(): Promise<void> {
       restoreCreativeV3: { path: { creativeId: CONTRACT_IDS.CREATIVE_RESTORE } },
       duplicateCreativeV3: { path: { creativeId: CONTRACT_IDS.CREATIVE_DUPLICATE } },
       pauseCreativesV3: { body: { surveyId: CONTRACT_IDS.SURVEY_PAUSE_CREATIVES } },
+      // The documented example names a survey that exists in no database, which is the 422
+      // `dangling_reference` by design; point it at the readable fixture so the create is exercised.
+      createWebhookV3: { body: { surveyIds: [CONTRACT_IDS.SURVEY_READ] } },
       // Their own workspace, so the rename and the brand colour do not land on the one the rest reads.
       updateWorkspaceV3: { path: { workspaceId: CONTRACT_IDS.WORKSPACE_SETUP } },
       setWorkspaceBrandingV3: { path: { workspaceId: CONTRACT_IDS.WORKSPACE_SETUP } },
