@@ -118,7 +118,7 @@ export const SingleResponseCardHeader = ({
             !isReadOnly &&
             (canResponseBeDeleted ? (
               <Button
-                variant="ghost"
+                variant="outline"
                 size="icon"
                 onClick={() => setDeleteDialogOpen(true)}
                 aria-label="Delete response">
@@ -129,7 +129,7 @@ export const SingleResponseCardHeader = ({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="icon"
                       disabled
                       className="text-slate-400"

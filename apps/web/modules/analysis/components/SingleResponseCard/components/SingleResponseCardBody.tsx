@@ -111,7 +111,6 @@ export const SingleResponseCardBody = ({
               {isValidValue(response.data[question.id]) ? (
                 <div>
                   <p className="mb-1 flex items-center gap-2 text-sm font-semibold text-slate-600">
-                    {question.type !== "cta" && question.code && <IdBadge id={question.code} />}
                     {formatTextWithSlashes(
                       getTextContent(
                         parseRecallInfo(
@@ -124,6 +123,7 @@ export const SingleResponseCardBody = ({
                         )
                       )
                     )}
+                    {question.type !== "cta" && question.code && <IdBadge id={question.code} />}
                   </p>
                   <div dir="auto">
                     <RenderResponse
@@ -168,7 +168,7 @@ export const SingleResponseCardBody = ({
         <div className="mt-4 flex items-center">
           <CheckCircle2Icon className="size-6 text-slate-400" />
           <p className="mx-2 rounded-lg bg-slate-100 px-2 text-sm font-medium text-slate-700">
-            {t("common.completed")}
+            {t("workspace.surveys.responses.response_complete")}
           </p>
         </div>
       )}

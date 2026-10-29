@@ -26,6 +26,7 @@ import { displayEmbeddedValue } from "@/modules/embedded-data/lib/value-display"
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { formatCodedLabel, getChoiceBadgeText } from "@/modules/survey/lib/element-code-label";
 import { VARIABLES_ICON_MAP, getElementIconMap } from "@/modules/survey/lib/elements";
+import { Badge } from "@/modules/ui/components/badge";
 import { getSelectionColumn } from "@/modules/ui/components/data-table";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { ResponseBadges } from "@/modules/ui/components/response-badges";
@@ -373,9 +374,9 @@ export const generateResponseTableColumns = (
       const status = responseStatus(row.original.status, row.original.outcome);
       if (status === "lowQuality") return <OutcomeBadge outcome="lowQuality" />;
       return status === "notCompleted" ? (
-        <span className="text-slate-500">{t("workspace.surveys.responses.status_not_completed")}</span>
+        <Badge type="gray" size="normal" text={t("workspace.surveys.responses.status_not_completed")} />
       ) : (
-        <span>{t("workspace.surveys.responses.status_complete")}</span>
+        <Badge type="success" size="normal" text={t("workspace.surveys.responses.status_complete")} />
       );
     },
   };

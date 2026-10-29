@@ -4845,6 +4845,7 @@
         "phone": "Phone",
         "preparing_attachments_download": "Preparing your attachments…",
         "respondent_skipped_questions": "Respondent skipped these questions.",
+        "response_complete": "Response complete",
         "response_deleted_successfully": "Response deleted successfully",
         "restore_as_complete": "Restore as complete",
         "restored_as_complete": "{count, plural, one {{count} response restored} other {{count} responses restored}}",

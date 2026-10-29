@@ -28,7 +28,6 @@ export const ResponseOutcomeButton = ({
   return (
     <Button
       variant="outline"
-      size="sm"
       loading={isPending}
       onClick={() =>
         run([responseId], isLowQuality ? null : "lowQuality", { [responseId]: outcome ?? null })
