@@ -52,8 +52,8 @@ export type TResponseVariables = z.infer<typeof ZResponseVariables>;
 
 /**
  * Cardinality caps on a submitted response, per the ENG-1652 input policy. They bound the create and
- * update inputs only: the stored schemas (`ZResponseData`, `ZResponseVariables`, `ZResponseTtc`) stay
- * unbounded, so rows written before the caps still parse.
+ * update inputs, one request at a time: the stored schemas (`ZResponseData`, `ZResponseVariables`,
+ * `ZResponseTtc`) stay unbounded, so rows written before the caps still parse.
  *
  * All are far past any real survey: a response holds at most one entry per element, a multi-select
  * answer at most one entry per choice, and a matrix answer one entry per row. The entry budget counts
