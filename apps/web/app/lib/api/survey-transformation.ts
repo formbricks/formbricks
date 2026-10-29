@@ -358,13 +358,13 @@ const reverseLogicFallback = (
 };
 
 /**
- * @param takenNames Embedded Data names of the survey, which a default question code must not take
- *   (ENG-6782). The converted blocks come back with every missing question and answer code filled.
+ * The conversion alone: codes the legacy questions carry are kept, the rest stay missing. For a write that
+ * goes through `updateSurveyInternal` (the v1 PUT), which carries stored codes over by id before it fills
+ * what is left; a positional fill here would hand it codes that were never sent (ENG-6782).
  */
-export const transformQuestionsToBlocks = (
+export const transformQuestionsToBlocksWithoutCodeFill = (
   questions: TSurveyQuestion[],
-  endings: TSurveyEnding[] = [],
-  takenNames: readonly string[] = []
+  endings: TSurveyEnding[] = []
 ): TSurveyBlock[] => {
   if (questions.length === 0) {
     return [];
@@ -422,8 +422,19 @@ export const transformQuestionsToBlocks = (
     }
   }
 
-  return fillMissingCodes(blocks as TSurveyBlock[], takenNames);
+  return blocks as TSurveyBlock[];
 };
+
+/**
+ * @param takenNames Embedded Data names of the survey, which a default question code must not take
+ *   (ENG-6782). The converted blocks come back with every missing question and answer code filled.
+ */
+export const transformQuestionsToBlocks = (
+  questions: TSurveyQuestion[],
+  endings: TSurveyEnding[] = [],
+  takenNames: readonly string[] = []
+): TSurveyBlock[] =>
+  fillMissingCodes(transformQuestionsToBlocksWithoutCodeFill(questions, endings), takenNames);
 
 const transformBlockLogicToQuestionLogic = (
   blockLogic: TSurveyBlockLogic[],
