@@ -54,6 +54,22 @@ describe("getElementCodeIssues", () => {
     expect(getElementCodeIssues(survey).get("a")?.question?.kind).toBe("clashes_embedded_data");
   });
 
+  test("Embedded Data names come from the working copy's rows, not the legacy keys forwarded from mount", () => {
+    const ingested = (name: string) =>
+      ({
+        field: { name, dataType: "string", source: "ingested", key: null, locked: false },
+        link: { storageKey: name },
+      }) as never;
+    // A field added in the card is only in `embeddedFields`; one deleted there is still in `hiddenFields`.
+    const survey = makeSurvey([[mc("a", "q1"), mc("b", "region")]], {
+      embeddedFields: [ingested("q1")],
+      hiddenFields: { enabled: true, fieldIds: ["region"] },
+    });
+    const issues = getElementCodeIssues(survey);
+    expect(issues.get("a")?.question?.kind).toBe("clashes_embedded_data");
+    expect(issues.has("b")).toBe(false);
+  });
+
   test("answer code issues are keyed by list and option id", () => {
     const survey = makeSurvey([[mc("a", "q1", ["1", "1", "Bad"])]]);
     const issues = getElementCodeIssues(survey).get("a");

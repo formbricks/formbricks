@@ -1,5 +1,6 @@
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TCodeIssue, validateSurveyCodes } from "@formbricks/types/surveys/codes";
+import { collectDeclaredFieldNames } from "@formbricks/types/surveys/declared-field-guard";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
@@ -42,11 +43,6 @@ export const getOptionCodeLists = (
 /** Whether the element has a question code at all: every answerable element, not CTA. */
 export const hasQuestionCode = (element: TSurveyElement): boolean => element.type !== "cta";
 
-const embeddedDataNamesOf = (survey: TSurvey): string[] => [
-  ...(survey.hiddenFields?.fieldIds ?? []),
-  ...(survey.variables ?? []).map((variable) => variable.name),
-];
-
 const issueCache = new WeakMap<object, ReadonlyMap<string, TElementCodeIssues>>();
 
 /**
@@ -60,7 +56,9 @@ export const getElementCodeIssues = (survey: TSurvey): ReadonlyMap<string, TElem
   const result = new Map<string, TElementCodeIssues>();
   for (const issue of validateSurveyCodes({
     blocks: survey.blocks,
-    embeddedDataNames: embeddedDataNamesOf(survey),
+    // The working copy's rows, as the server reads them: the legacy keys are forwarded untouched from mount
+    // and lag behind an Embedded Data card edit, so a new clash would only fail the autosave.
+    embeddedDataNames: collectDeclaredFieldNames(survey),
   })) {
     const [, blockIdx, , elementIdx, listKey, optionIdx] = issue.path;
     const element = survey.blocks[blockIdx as number]?.elements[elementIdx as number];
