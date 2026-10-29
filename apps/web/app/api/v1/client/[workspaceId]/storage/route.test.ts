@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { generateSurveySingleUseSignature } from "@/lib/utils/single-use-surveys";
 import { POST } from "./route";
 
 const mocks = vi.hoisted(() => ({
@@ -9,16 +10,19 @@ const mocks = vi.hoisted(() => ({
   getSignedUrlForUpload: vi.fn(),
   getSurvey: vi.fn(),
   resolveClientApiIds: vi.fn(),
-  validateSingleUseResponseInput: vi.fn(),
   verifyLinkSurveyPinToken: vi.fn(),
 }));
 
 vi.mock("@/app/lib/api/with-api-logging", () => ({
   withV1ApiWrapper: ({ handler }: { handler: unknown }) => handler,
 }));
-vi.mock("@/app/api/client/[workspaceId]/responses/lib/single-use", () => ({
-  validateSingleUseResponseInput: mocks.validateSingleUseResponseInput,
+// The real single-use validator runs here, so a refusal below is the production decision and not a
+// stub's. Its signing key is mocked in both places it is read.
+vi.mock("@/lib/constants", async (importOriginal: () => Promise<typeof import("@/lib/constants")>) => ({
+  ...(await importOriginal()),
+  ENCRYPTION_KEY: "test-key",
 }));
+vi.mock("@/lib/env", () => ({ env: { ENCRYPTION_KEY: "test-key" } }));
 vi.mock("@/modules/survey/link/lib/pin-token", () => ({
   verifyLinkSurveyPinToken: mocks.verifyLinkSurveyPinToken,
 }));
@@ -40,6 +44,16 @@ vi.mock("@/modules/storage/utils", () => ({
 
 const WORKSPACE_ID = "cm0wwwwwwwwwwwwwwwwwwwww1";
 const SURVEY_ID = "cm0aaaaaaaaaaaaaaaaaaaaa1";
+const SINGLE_USE_ID = "cm0suaaaaaaaaaaaaaaaaaaa1";
+
+const singleUseSurvey = {
+  id: SURVEY_ID,
+  workspaceId: WORKSPACE_ID,
+  type: "link",
+  singleUse: { enabled: true, isEncrypted: false },
+};
+
+const validSingleUseLink = `https://x.test/s/${SURVEY_ID}?suId=${SINGLE_USE_ID}&suToken=${generateSurveySingleUseSignature(SURVEY_ID, SINGLE_USE_ID)}`;
 
 const callPost = (extra: Record<string, unknown> = {}) =>
   (POST as unknown as (args: unknown) => Promise<{ response: Response }>)({
@@ -65,7 +79,6 @@ describe("POST /api/v1/client/[workspaceId]/storage", () => {
     mocks.getSurvey.mockResolvedValue({ id: SURVEY_ID, workspaceId: WORKSPACE_ID, type: "link" });
     mocks.applyRateLimit.mockResolvedValue(undefined);
     mocks.getBiggerUploadFileSizePermission.mockResolvedValue(false);
-    mocks.validateSingleUseResponseInput.mockReturnValue(null);
     mocks.verifyLinkSurveyPinToken.mockReturnValue(true);
     mocks.getSignedUrlForUpload.mockResolvedValue({
       ok: true,
@@ -103,25 +116,31 @@ describe("POST /api/v1/client/[workspaceId]/storage", () => {
     expect(mocks.getSignedUrlForUpload).toHaveBeenCalledOnce();
   });
 
-  test("refuses a single-use survey when the single-use link is rejected", async () => {
-    const rejection = new Response("Invalid single use id", { status: 400 });
-    mocks.validateSingleUseResponseInput.mockReturnValue({ response: rejection });
+  test("refuses a single-use survey when the request carries no single-use id", async () => {
+    mocks.getSurvey.mockResolvedValue(singleUseSurvey);
 
-    const { response } = await callPost({ singleUseId: "su", url: "https://x.test/s/a?suId=su" });
+    const { response } = await callPost();
 
-    expect(response).toBe(rejection);
-    expect(mocks.validateSingleUseResponseInput).toHaveBeenCalledWith(
-      expect.objectContaining({ id: SURVEY_ID }),
-      WORKSPACE_ID,
-      { singleUseId: "su", meta: { url: "https://x.test/s/a?suId=su" } }
-    );
+    expect(response.status).toBe(400);
     expect(mocks.getSignedUrlForUpload).not.toHaveBeenCalled();
   });
 
-  test("issues an upload URL for a single-use survey with an accepted link", async () => {
-    mocks.validateSingleUseResponseInput.mockReturnValue({ singleUseId: "su" });
+  test("refuses a single-use survey when the link signature does not match the survey", async () => {
+    mocks.getSurvey.mockResolvedValue(singleUseSurvey);
 
-    const { response } = await callPost({ singleUseId: "su", url: "https://x.test/s/a?suId=su" });
+    const { response } = await callPost({
+      singleUseId: SINGLE_USE_ID,
+      url: `https://x.test/s/${SURVEY_ID}?suId=${SINGLE_USE_ID}&suToken=forged`,
+    });
+
+    expect(response.status).toBe(400);
+    expect(mocks.getSignedUrlForUpload).not.toHaveBeenCalled();
+  });
+
+  test("issues an upload URL for a single-use survey with a validly signed link", async () => {
+    mocks.getSurvey.mockResolvedValue(singleUseSurvey);
+
+    const { response } = await callPost({ singleUseId: SINGLE_USE_ID, url: validSingleUseLink });
 
     expect(response.status).toBe(200);
     expect(mocks.getSignedUrlForUpload).toHaveBeenCalledOnce();
