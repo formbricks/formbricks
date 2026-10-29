@@ -332,7 +332,7 @@ export const updateTeamDetails = async (teamId: string, data: TTeamSettingsFormS
         },
       });
       if (orgUsersCount !== userIds.length) {
-        throw new Error("Some specified users do not belong to the organization's membership.");
+        throw new InvalidInputError("Some specified users do not belong to the organization's membership.");
       }
     }
 
@@ -346,7 +346,7 @@ export const updateTeamDetails = async (teamId: string, data: TTeamSettingsFormS
         },
       });
       if (orgWorkspacesCount !== workspaceIds.length) {
-        throw new Error("Some specified workspaces do not belong to the organization.");
+        throw new InvalidInputError("Some specified workspaces do not belong to the organization.");
       }
     }
 

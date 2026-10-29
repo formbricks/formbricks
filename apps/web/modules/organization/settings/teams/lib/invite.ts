@@ -1,5 +1,3 @@
-import { cache as reactCache } from "react";
-import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { Invite, Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
@@ -9,10 +7,8 @@ import {
   ResourceNotFoundError,
   ValidationError,
 } from "@formbricks/types/errors";
-import { ITEMS_PER_PAGE } from "@/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
-import { validateInputs } from "@/lib/utils/validate";
-import { type InviteWithCreator, type TInvite, type TInvitee } from "../types/invites";
+import { type TInvitee } from "../types/invites";
 
 export const refreshInviteExpiration = async (inviteId: string): Promise<Invite> => {
   try {
@@ -35,46 +31,6 @@ export const refreshInviteExpiration = async (inviteId: string): Promise<Invite>
     throw error;
   }
 };
-
-export const resendInvite = async (inviteId: string): Promise<Pick<Invite, "email" | "name">> => {
-  // Refresh expiration and return the updated invite (single query)
-  const updatedInvite = await refreshInviteExpiration(inviteId);
-
-  return {
-    email: updatedInvite.email,
-    name: updatedInvite.name,
-  };
-};
-
-export const getInvitesByOrganizationId = reactCache(
-  async (organizationId: string, page?: number): Promise<TInvite[]> => {
-    validateInputs([organizationId, z.string()], [page, z.number().optional()]);
-
-    try {
-      const invites = await prisma.invite.findMany({
-        where: { organizationId },
-        select: {
-          expiresAt: true,
-          role: true,
-          email: true,
-          name: true,
-          id: true,
-          createdAt: true,
-        },
-        take: page ? ITEMS_PER_PAGE : undefined,
-        skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
-      });
-
-      return invites;
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError(error.message);
-      }
-
-      throw error;
-    }
-  }
-);
 
 /**
  * The preconditions every invite faces: no invite for this address exists yet and its owner is not already
@@ -192,29 +148,3 @@ export const deleteInvite = async (inviteId: string): Promise<boolean> => {
     throw error;
   }
 };
-
-export const getInvite = reactCache(async (inviteId: string): Promise<InviteWithCreator | null> => {
-  try {
-    const invite = await prisma.invite.findUnique({
-      where: {
-        id: inviteId,
-      },
-      select: {
-        email: true,
-        creator: {
-          select: {
-            name: true,
-          },
-        },
-      },
-    });
-
-    return invite;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-
-    throw error;
-  }
-});

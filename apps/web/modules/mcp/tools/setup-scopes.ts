@@ -10,4 +10,5 @@
 export const ACCOUNT_READ_SCOPES: [string, ...string[]] = ["account:read"];
 export const WORKSPACE_WRITE_SCOPES: [string, ...string[]] = ["workspaces:write"];
 export const ORGANIZATION_WRITE_SCOPES: [string, ...string[]] = ["organizations:write"];
+export const MEMBER_READ_SCOPES: [string, ...string[]] = ["members:read"];
 export const MEMBER_WRITE_SCOPES: [string, ...string[]] = ["members:write"];

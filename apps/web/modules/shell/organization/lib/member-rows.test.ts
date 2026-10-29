@@ -4,9 +4,7 @@ import {
   type TMemberRow,
   type TMembershipInput,
   buildMemberRows,
-  getAssignableRoles,
-  getMemberRowAccess,
-  hasMoreThanOneActiveOwner,
+  getMemberRowActions,
 } from "./member-rows";
 
 const NOW = new Date("2026-06-10T12:00:00Z");
@@ -102,120 +100,44 @@ describe("buildMemberRows", () => {
   });
 });
 
-describe("hasMoreThanOneActiveOwner", () => {
-  test("ignores deactivated owners and owner invites", () => {
-    const rows = rowsFor(
-      [membership("a", "owner"), membership("b", "owner", { isActive: false })],
-      [invite("c", { role: "owner" })]
-    );
-
-    expect(hasMoreThanOneActiveOwner(rows)).toBe(false);
-    expect(hasMoreThanOneActiveOwner(rowsFor([membership("a", "owner"), membership("b", "owner")]))).toBe(
-      true
-    );
-  });
-});
-
-describe("getAssignableRoles", () => {
-  test("owners hand out every role, billing on Cloud only; managers only member", () => {
-    expect(getAssignableRoles({ currentRole: "owner", isFormbricksCloud: false })).toEqual([
-      "member",
-      "manager",
-      "owner",
-    ]);
-    expect(getAssignableRoles({ currentRole: "owner", isFormbricksCloud: true })).toContain("billing");
-    expect(getAssignableRoles({ currentRole: "manager", isFormbricksCloud: true })).toEqual(["member"]);
-    expect(getAssignableRoles({ currentRole: "member", isFormbricksCloud: true })).toEqual([]);
-  });
-});
-
-describe("getMemberRowAccess", () => {
+describe("getMemberRowActions", () => {
   const base = {
     currentUserId: "me",
     currentRole: "owner" as const,
     canManageUsers: true,
-    canEditRoles: true,
-    isFormbricksCloud: false,
     isMultiOrgEnabled: true,
     hasOtherOrganizations: true,
-    doesOrgHaveMoreThanOneOwner: true,
   };
-  const rows = rowsFor(
-    [
-      membership("me", "owner"),
-      membership("peer", "owner"),
-      membership("amy", "member"),
-      membership("gone", "member", { isActive: false }),
-    ],
-    [invite("leo")]
-  );
+  const rows = rowsFor([membership("me", "owner"), membership("amy", "member")], [invite("leo")]);
 
-  test("an owner may change, remove and reactivate others", () => {
-    expect(getMemberRowAccess({ ...base, row: byId(rows, "amy") })).toMatchObject({
-      canRemove: true,
-      assignableRoles: ["member", "manager", "owner"],
-      canReactivate: false,
-    });
-    expect(getMemberRowAccess({ ...base, row: byId(rows, "gone") }).canReactivate).toBe(true);
+  test("a user manager may copy an invite link, and only an invite's", () => {
+    expect(getMemberRowActions({ ...base, row: byId(rows, "leo") }).canShareLink).toBe(true);
+    expect(getMemberRowActions({ ...base, row: byId(rows, "amy") }).canShareLink).toBe(false);
+    expect(getMemberRowActions({ ...base, canManageUsers: false, row: byId(rows, "leo") }).canShareLink).toBe(
+      false
+    );
   });
 
-  test("nobody removes themselves, and an owner's own row offers nothing to an owner", () => {
-    const access = getMemberRowAccess({ ...base, row: byId(rows, "me") });
-
-    expect(access).toMatchObject({ canRemove: false, assignableRoles: [], canLeave: false });
-  });
-
-  test("the last active owner cannot be removed or demoted", () => {
-    const access = getMemberRowAccess({
-      ...base,
-      row: byId(rows, "peer"),
-      doesOrgHaveMoreThanOneOwner: false,
-    });
-
-    expect(access.canRemove).toBe(false);
-    expect(access.assignableRoles).toEqual([]);
-  });
-
-  test("a manager never touches an owner and only hands out the member role", () => {
-    const manager = { ...base, currentRole: "manager" as const };
-
-    expect(getMemberRowAccess({ ...manager, row: byId(rows, "peer") })).toMatchObject({
-      canRemove: false,
-      assignableRoles: [],
-    });
-    expect(getMemberRowAccess({ ...manager, row: byId(rows, "amy") }).assignableRoles).toEqual(["member"]);
-  });
-
-  test("changing a role needs the access-control licence, removing does not", () => {
-    const access = getMemberRowAccess({ ...base, canEditRoles: false, row: byId(rows, "amy") });
-
-    expect(access.assignableRoles).toEqual([]);
-    expect(access.canRemove).toBe(true);
-  });
-
-  test("invites can be resent, shared and deleted by user managers only", () => {
-    expect(getMemberRowAccess({ ...base, row: byId(rows, "leo") })).toMatchObject({
-      canResend: true,
-      canShareLink: true,
-      canRemove: true,
-    });
-    expect(getMemberRowAccess({ ...base, canManageUsers: false, row: byId(rows, "leo") })).toMatchObject({
-      canResend: false,
-      canShareLink: false,
-      canRemove: false,
-    });
+  test("an owner never leaves, whatever the instance allows", () => {
+    expect(getMemberRowActions({ ...base, row: byId(rows, "me") }).canLeave).toBe(false);
   });
 
   test("a non-owner may leave their own row only with multi-organization on and another organization", () => {
     const self = { ...base, currentUserId: "amy", currentRole: "member" as const, canManageUsers: false };
 
-    expect(getMemberRowAccess({ ...self, row: byId(rows, "amy") }).canLeave).toBe(true);
-    expect(getMemberRowAccess({ ...self, isMultiOrgEnabled: false, row: byId(rows, "amy") }).canLeave).toBe(
+    expect(getMemberRowActions({ ...self, row: byId(rows, "amy") }).canLeave).toBe(true);
+    expect(getMemberRowActions({ ...self, isMultiOrgEnabled: false, row: byId(rows, "amy") }).canLeave).toBe(
       false
     );
     expect(
-      getMemberRowAccess({ ...self, hasOtherOrganizations: false, row: byId(rows, "amy") }).canLeave
+      getMemberRowActions({ ...self, hasOtherOrganizations: false, row: byId(rows, "amy") }).canLeave
     ).toBe(false);
+  });
+
+  test("nobody leaves on someone else's row", () => {
+    expect(getMemberRowActions({ ...base, currentRole: "manager", row: byId(rows, "amy") }).canLeave).toBe(
+      false
+    );
   });
 });
 

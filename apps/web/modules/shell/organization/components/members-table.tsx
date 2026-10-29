@@ -4,8 +4,8 @@ import { formatDateForDisplay } from "@/lib/utils/datetime";
 import { getTranslate } from "@/lingodotdev/server";
 import { Badge } from "@/modules/ui/components/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
-import { type TMemberRow, type TMemberRowAccess } from "../lib/member-rows";
-import { MemberManageDialog } from "./member-manage-dialog";
+import { type TMemberRow, type TMemberRowActions } from "../lib/member-rows";
+import { MemberRowActions } from "./member-row-actions";
 import { TABLE_HEAD_CLASS, TableFrame } from "./section-heading";
 
 interface MembersTableProps {
@@ -17,7 +17,7 @@ interface MembersTableProps {
   showTeams: boolean;
   /** Two-factor state is only loaded for owners and managers; the column is hidden otherwise. */
   showTwoFactor: boolean;
-  rows: { row: TMemberRow; access: TMemberRowAccess }[];
+  rows: { row: TMemberRow; actions: TMemberRowActions }[];
 }
 
 const HIDE_BELOW_MD = "hidden md:table-cell";
@@ -86,15 +86,9 @@ export const MembersTable = async ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {rows.map(({ row, access }) => {
+          {rows.map(({ row, actions }) => {
             const isSelf = row.kind === "member" && row.id === currentUserId;
-            const hasActions =
-              access.assignableRoles.length > 0 ||
-              access.canRemove ||
-              access.canReactivate ||
-              access.canResend ||
-              access.canShareLink ||
-              access.canLeave;
+            const hasActions = actions.canShareLink || actions.canLeave;
 
             return (
               <TableRow key={`${row.kind}-${row.id}`}>
@@ -129,16 +123,10 @@ export const MembersTable = async ({
                 {showTwoFactor && <TableCell className={HIDE_BELOW_MD}>{renderTwoFactor(row)}</TableCell>}
                 <TableCell className="text-right">
                   {hasActions && (
-                    <MemberManageDialog
+                    <MemberRowActions
                       organizationId={organizationId}
-                      member={{
-                        kind: row.kind,
-                        id: row.id,
-                        name: row.name,
-                        email: row.email,
-                        role: row.role,
-                      }}
-                      access={access}
+                      member={{ kind: row.kind, id: row.id, name: row.name, email: row.email }}
+                      actions={actions}
                     />
                   )}
                 </TableCell>

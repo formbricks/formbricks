@@ -1,0 +1,17 @@
+type: object
+additionalProperties: false
+required:
+  - role
+properties:
+  role:
+    type: string
+    enum:
+      - member
+      - manager
+    description: >-
+      New organization role. Only an owner may grant `manager`. `owner` and `billing` cannot be granted here.
+  confirm:
+    type: boolean
+    description: >-
+      Must be `true` to change the role. Without it nothing is written and the call answers with
+      `status: preview`. Set it only after the person has approved this exact change.

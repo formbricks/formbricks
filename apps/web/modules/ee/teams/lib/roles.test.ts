@@ -4,7 +4,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, UnknownError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
-import { getTeamRoleByTeamIdUserId, getTeamsWhereUserIsAdmin, getWorkspacePermissionByUserId } from "./roles";
+import { getTeamsWhereUserIsAdmin, getWorkspacePermissionByUserId } from "./roles";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -18,7 +18,6 @@ vi.mock("@/lib/utils/validate", () => ({ validateInputs: vi.fn() }));
 
 const mockUserId = "user-1";
 const mockWorkspaceId = "workspace-1";
-const mockTeamId = "team-1";
 const mockOrganizationId = "org-1";
 
 describe("roles lib", () => {
@@ -78,39 +77,6 @@ describe("roles lib", () => {
       const error = new Error("fail");
       vi.mocked(prisma.workspaceTeam.findMany).mockRejectedValueOnce(error);
       await expect(getWorkspacePermissionByUserId(mockUserId, mockWorkspaceId)).rejects.toThrow(UnknownError);
-    });
-  });
-
-  describe("getTeamRoleByTeamIdUserId", () => {
-    test("returns null if no teamUser", async () => {
-      vi.mocked(prisma.teamUser.findUnique).mockResolvedValueOnce(null);
-      const result = await getTeamRoleByTeamIdUserId(mockTeamId, mockUserId);
-      expect(result).toBeNull();
-      expect(validateInputs).toHaveBeenCalledWith(
-        [mockTeamId, expect.anything()],
-        [mockUserId, expect.anything()]
-      );
-    });
-
-    test("returns role if teamUser exists", async () => {
-      vi.mocked(prisma.teamUser.findUnique).mockResolvedValueOnce({ role: "member" } as unknown as any);
-      const result = await getTeamRoleByTeamIdUserId(mockTeamId, mockUserId);
-      expect(result).toBe("member");
-    });
-
-    test("throws DatabaseError on PrismaClientKnownRequestError", async () => {
-      const error = new Prisma.PrismaClientKnownRequestError("fail", {
-        code: "P2002",
-        clientVersion: "1.0.0",
-      });
-      vi.mocked(prisma.teamUser.findUnique).mockRejectedValueOnce(error);
-      await expect(getTeamRoleByTeamIdUserId(mockTeamId, mockUserId)).rejects.toThrow(DatabaseError);
-    });
-
-    test("throws error on generic error", async () => {
-      const error = new Error("fail");
-      vi.mocked(prisma.teamUser.findUnique).mockRejectedValueOnce(error);
-      await expect(getTeamRoleByTeamIdUserId(mockTeamId, mockUserId)).rejects.toThrow(error);
     });
   });
 

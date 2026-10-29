@@ -1,0 +1,223 @@
+patch:
+  operationId: updateOrganizationMemberRoleV3
+  summary: Change a member's role
+  description: |
+    Changes a member's organization role to **member** or **manager**.
+
+    **Nothing changes unless the body carries `confirm: true`.** Without it the call runs every check and
+    answers **200** with `status: preview`, saying who would change from which role to which and whether
+    that `lowersAccess`. Nothing is written, so a caller cannot re-role anyone on its own say-so: show the
+    preview to the person, and send the call again with `confirm: true` only after they approve that exact
+    change. Asking for the role the member already has answers `status: unchanged` and writes nothing.
+
+    Requires an **organization owner or manager**, signed in as themselves, with user management allowed
+    for their role. Session cookie only: a request with only an API key is **401**. The old members
+    table's rules apply: nobody changes their own role, a manager assigns only `member` and never touches
+    an owner, the last owner cannot be demoted, and the organization's plan must include role management
+    (otherwise **403**). `owner` and `billing` cannot be granted here. A member who is not in the
+    organization answers the same **403** as an unauthorized caller.
+  tags:
+    - V3 Organizations
+  parameters:
+    - $ref: ../components/parameters/OrganizationIdPath.yml
+    - $ref: ../components/parameters/MemberUserIdPath.yml
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/MemberRoleUpdateRequest.yml
+        examples:
+          preview:
+            summary: Preview a role change, changing nothing
+            value:
+              role: manager
+          confirmed:
+            summary: Apply the change the person approved
+            value:
+              role: manager
+              confirm: true
+  responses:
+    "200":
+      description: >-
+        The role change preview (`status: preview`, nothing changed), the applied change (`updated`), or a no-op
+        (`unchanged`).
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/MemberRoleUpdateResource.yml
+          examples:
+            preview:
+              summary: Preview, nothing changed
+              value:
+                data:
+                  status: preview
+                  organizationId: clor1234567890123456789012
+                  userId: clusr1234567890123456789012
+                  previousRole: member
+                  role: manager
+                  lowersAccess: false
+                  message: >-
+                    Not changed. This would change the member's role from member to manager. Call again with
+                    confirm: true after the person approves.
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3UnauthorizedSession.yml
+    "403":
+      description: >-
+        Forbidden — the caller is not an owner or manager of the organization, may not manage users, or cannot see it; the target is not a member of the organization; a manager tried to assign `manager` or to change an owner; the caller tried to change their own role; or the organization's plan does not include role management (`code: forbidden`).
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "409":
+      description: >-
+        Conflict — the member is the last owner and cannot be demoted, or two owner demotions raced (`code: conflict`). A preview answers the last-owner case too, so it never promises a change the confirmed call would refuse.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+delete:
+  operationId: removeOrganizationMemberV3
+  summary: Remove a member
+  description: |
+    Removes a member from the organization, together with their team memberships.
+
+    **Nothing is removed unless the query carries `confirm=true`.** Without it the call runs every check
+    and answers **200** with `status: preview`. Show the preview to the person, and send the call again
+    with `confirm=true` only after they approve.
+
+    Requires an **organization owner or manager**, signed in as themselves, with user management allowed
+    for their role. Session cookie only: a request with only an API key is **401**. Nobody removes
+    themselves (leaving an organization is the person's own action in the app), a manager never removes
+    an owner, and the last owner stays. A member who is not in the organization answers the same **403**
+    as an unauthorized caller.
+  tags:
+    - V3 Organizations
+  parameters:
+    - $ref: ../components/parameters/OrganizationIdPath.yml
+    - $ref: ../components/parameters/MemberUserIdPath.yml
+    - in: query
+      name: confirm
+      schema:
+        type: string
+        enum:
+          - "true"
+          - "false"
+      description: >-
+        `true` to remove the member. Anything else, or omitted, answers a preview and removes nothing.
+  responses:
+    "200":
+      description: >-
+        The removal preview (`status: preview`, nothing removed) or the completed removal.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/MemberRemoveResource.yml
+          examples:
+            preview:
+              summary: Preview, nothing removed
+              value:
+                data:
+                  status: preview
+                  organizationId: clor1234567890123456789012
+                  userId: clusr1234567890123456789012
+                  role: member
+                  message: >-
+                    Not removed. This would remove a member with the role member and their team memberships
+                    from the organization. Call again with confirm: true after the person approves.
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3UnauthorizedSession.yml
+    "403":
+      description: >-
+        Forbidden — the caller is not an owner or manager of the organization, may not manage users, or cannot see it; the target is not a member of the organization; the caller tried to remove themselves; or a manager tried to remove an owner (`code: forbidden`).
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "409":
+      description: >-
+        Conflict — the member is the last owner and cannot be removed (`code: conflict`). A preview answers it too.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []

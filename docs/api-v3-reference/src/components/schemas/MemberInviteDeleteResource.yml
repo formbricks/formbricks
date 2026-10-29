@@ -1,0 +1,31 @@
+type: object
+description: >-
+  The outcome of an invite deletion. `status: preview` means every check passed and nothing was deleted.
+required:
+  - status
+  - organizationId
+  - inviteId
+  - role
+  - message
+properties:
+  status:
+    type: string
+    enum:
+      - preview
+      - deleted
+  organizationId:
+    type: string
+    format: cuid2
+  inviteId:
+    type: string
+    format: uuid
+  role:
+    type: string
+    enum:
+      - owner
+      - manager
+      - member
+      - billing
+    description: The role the invite carried.
+  message:
+    type: string

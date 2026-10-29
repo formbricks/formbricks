@@ -1,0 +1,23 @@
+type: object
+description: >-
+  The outcome of an update. `preview`: the change takes access away and `confirm` was not `true`, so
+  nothing was written (`team` is the team as it is now). `updated`: written (`team` is the result).
+  `unchanged`: the request matched what is stored and nothing was written.
+required:
+  - status
+  - changes
+  - team
+  - message
+properties:
+  status:
+    type: string
+    enum:
+      - preview
+      - updated
+      - unchanged
+  changes:
+    $ref: ./TeamChanges.yml
+  team:
+    $ref: ./Team.yml
+  message:
+    type: string

@@ -1,0 +1,30 @@
+type: object
+description: >-
+  The outcome of a member removal. `status: preview` means every check passed and nothing was removed.
+required:
+  - status
+  - organizationId
+  - userId
+  - role
+  - message
+properties:
+  status:
+    type: string
+    enum:
+      - preview
+      - removed
+  organizationId:
+    type: string
+    format: cuid2
+  userId:
+    type: string
+  role:
+    type: string
+    enum:
+      - owner
+      - manager
+      - member
+      - billing
+    description: The role the removed member had.
+  message:
+    type: string

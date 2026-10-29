@@ -1,0 +1,88 @@
+delete:
+  operationId: deleteOrganizationInviteV3
+  summary: Delete an invite
+  description: |
+    Deletes a pending invite, so the link in the invitee's email stops working.
+
+    **Nothing is deleted unless the query carries `confirm=true`.** Without it the call runs every check
+    and answers **200** with `status: preview`. Show the preview to the person, and send the call again
+    with `confirm=true` only after they approve.
+
+    Requires an **organization owner or manager**, signed in as themselves, with user management allowed
+    for their role. Session cookie only: a request with only an API key is **401**. A manager cannot
+    delete an invite for the owner role. An invite that does not exist, or belongs to another
+    organization, answers the same **403** as an unauthorized caller.
+  tags:
+    - V3 Organizations
+  parameters:
+    - $ref: ../components/parameters/OrganizationIdPath.yml
+    - $ref: ../components/parameters/InviteIdPath.yml
+    - in: query
+      name: confirm
+      schema:
+        type: string
+        enum:
+          - "true"
+          - "false"
+      description: >-
+        `true` to delete the invite. Anything else, or omitted, answers a preview and deletes nothing.
+  responses:
+    "200":
+      description: >-
+        The deletion preview (`status: preview`, nothing deleted) or the completed deletion.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/MemberInviteDeleteResource.yml
+          examples:
+            preview:
+              summary: Preview, nothing deleted
+              value:
+                data:
+                  status: preview
+                  organizationId: clor1234567890123456789012
+                  inviteId: 0b2a5a6e-3c1f-4d52-9a39-6f7e5c1d2a10
+                  role: member
+                  message: >-
+                    Not deleted. This would delete a pending invite with the role member; its link stops
+                    working. Call again with confirm: true after the person approves.
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3UnauthorizedSession.yml
+    "403":
+      description: >-
+        Forbidden — the caller is not an owner or manager of the organization, may not manage users, or cannot see it; the invite does not exist in this organization; or a manager tried to delete an invite for the owner role (`code: forbidden`).
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []

@@ -1,0 +1,65 @@
+type: object
+additionalProperties: false
+description: >-
+  At least one of `name`, `members` and `workspaces` is required. `members` and `workspaces` are the
+  COMPLETE new lists, like the form this replaced: anyone or any workspace left out is removed, and each
+  may appear once.
+properties:
+  name:
+    type: string
+    minLength: 1
+    maxLength: 255
+    description: New team name. Surrounding whitespace is trimmed.
+  members:
+    type: array
+    maxItems: 1000
+    description: >-
+      The team's complete member list. Omit to leave the members as they are; an empty list removes
+      everyone.
+    items:
+      type: object
+      additionalProperties: false
+      required:
+        - userId
+      properties:
+        userId:
+          type: string
+          format: cuid2
+          description: A member of the organization.
+        role:
+          type: string
+          enum:
+            - admin
+            - contributor
+          description: >-
+            Role in the team. Defaults to the role the person has now; for someone who is not in the team
+            yet, `admin` for an organization owner or manager and `contributor` for anyone else. An owner
+            or manager cannot be a `contributor` (**422**).
+  workspaces:
+    type: array
+    maxItems: 1000
+    description: >-
+      The team's complete workspace access. Omit to leave it as it is; an empty list removes all of it.
+      Only organization owners and managers may change it.
+    items:
+      type: object
+      additionalProperties: false
+      required:
+        - workspaceId
+        - permission
+      properties:
+        workspaceId:
+          type: string
+          format: cuid2
+          description: A workspace of the organization.
+        permission:
+          type: string
+          enum:
+            - read
+            - readWrite
+            - manage
+  confirm:
+    type: boolean
+    description: >-
+      Must be `true` to apply a change that takes access away. Without it nothing is changed and the
+      answer is a `preview`. Set it only after the person has approved this exact change.

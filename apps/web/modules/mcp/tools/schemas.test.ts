@@ -19,10 +19,12 @@ import * as documentSchemas from "./document-schemas";
 import * as feedbackQuerySchemas from "./feedback-query-schemas";
 import * as inviteSchemas from "./invites-schemas";
 import * as lifecycleSchemas from "./lifecycle-schemas";
+import * as memberSchemas from "./members-schemas";
 import * as organizationSchemas from "./organizations-schemas";
 import * as surveyAndFeedbackSchemas from "./schemas";
 import * as tagSchemas from "./tag-schemas";
 import * as taxonomySchemas from "./taxonomy-schemas";
+import * as teamSchemas from "./teams-schemas";
 import * as webhookSchemas from "./webhook-schemas";
 import * as workflowSchemas from "./workflow-schemas";
 import * as workspaceSchemas from "./workspaces-schemas";
@@ -156,8 +158,10 @@ const allExports: [string, unknown][] = Object.entries({
   ...contactSchemas,
   ...accountSchemas,
   ...inviteSchemas,
+  ...memberSchemas,
   ...organizationSchemas,
   ...workspaceSchemas,
+  ...teamSchemas,
 });
 
 const allSchemas = allExports.filter((entry): entry is [string, z.ZodType] => entry[1] instanceof z.ZodType);

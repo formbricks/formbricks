@@ -152,6 +152,10 @@ test.describe("Account shell journey", () => {
       const ownerRow = members.getByRole("row", { name: new RegExp(email) });
       await expect(ownerRow).toContainText("(you)");
       await expect(ownerRow).toContainText("Owner");
+      // Read-only: roles, removal and invites are the agent's (ADR 0017), so the owner's own row carries no
+      // button (an owner cannot leave) and the page points at the agent instead.
+      await expect(ownerRow.getByRole("button")).toHaveCount(0);
+      await expect(page.getByRole("heading", { name: "Ask your agent" }).first()).toBeVisible();
     });
 
     await test.step("the account page loads with the profile", async () => {

@@ -18,7 +18,7 @@ import {
   reserveInviteRateLimit,
   settleInviteRateLimit,
 } from "@/modules/organization/settings/teams/lib/invite-rate-limit";
-import { problemHiddenResource, requireV3OrganizationManager } from "./access";
+import { problemHiddenResource, requireV3OrganizationManager, requireV3UserManagement } from "./access";
 import {
   type TV3InviteMemberResource,
   type TV3OrganizationResource,
@@ -137,7 +137,7 @@ export async function inviteV3OrganizationMember({
       return problemForbidden(requestId, INVITES_DISABLED_MESSAGE, instance);
     }
 
-    const access = await requireV3OrganizationManager(authentication, organizationId, requestId, instance);
+    const access = await requireV3UserManagement(authentication, organizationId, requestId, instance);
     if (access instanceof Response) {
       log.warn({ statusCode: 403 }, "Invite refused for this principal");
       return access;

@@ -1,0 +1,41 @@
+type: object
+description: >-
+  The outcome of a role change. `status: preview` means every check passed and nothing was changed;
+  `updated` means the role was written; `unchanged` means the member already had the requested role.
+required:
+  - status
+  - organizationId
+  - userId
+  - previousRole
+  - role
+  - lowersAccess
+  - message
+properties:
+  status:
+    type: string
+    enum:
+      - preview
+      - updated
+      - unchanged
+  organizationId:
+    type: string
+    format: cuid2
+  userId:
+    type: string
+  previousRole:
+    type: string
+    enum:
+      - owner
+      - manager
+      - member
+      - billing
+  role:
+    type: string
+    enum:
+      - member
+      - manager
+  lowersAccess:
+    type: boolean
+    description: "`true` when the new role has less access than the previous one (`owner` > `manager` > `member` > `billing`)."
+  message:
+    type: string

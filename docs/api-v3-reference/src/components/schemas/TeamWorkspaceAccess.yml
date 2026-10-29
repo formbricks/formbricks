@@ -1,0 +1,18 @@
+type: object
+required:
+  - workspaceId
+  - workspaceName
+  - permission
+properties:
+  workspaceId:
+    type: string
+    format: cuid2
+  workspaceName:
+    type: string
+  permission:
+    type: string
+    enum:
+      - read
+      - readWrite
+      - manage
+    description: What the team may do in the workspace.

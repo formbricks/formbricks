@@ -61,6 +61,23 @@ info:
     also accept an API key with `manage` on that workspace.
 
 
+    **Members**: **GET /api/v3/organizations/{organizationId}/members** lists an organization's people
+    and pending invites; **PATCH** and **DELETE
+    /api/v3/organizations/{organizationId}/members/{userId}** change a member's role or remove them;
+    **POST /api/v3/organizations/{organizationId}/invites/{inviteId}/resend** and **DELETE
+    /api/v3/organizations/{organizationId}/invites/{inviteId}** resend or delete an invite. All are
+    session cookie only. The role change, the removal and the invite deletion change nothing unless
+    they carry `confirm: true` (`confirm=true` in the query for DELETE) and answer a `preview` otherwise.
+
+
+    **Teams** (Enterprise): **GET** and **POST /api/v3/organizations/{organizationId}/teams** list an
+    organization's teams and create one; **GET**, **PATCH** and **DELETE /api/v3/teams/{teamId}** read a
+    team with its members, change its name, members and workspace access, and delete it. All are session
+    cookie only, and without the teams licence every one answers **403**, never an empty success. A
+    change that takes access away and every delete do nothing unless they carry `confirm: true`
+    (`confirm=true` in the query for DELETE) and answer a `preview` otherwise.
+
+
     **Workflows extension**: **GET /api/v3/workflows**, **POST
     /api/v3/workflows**, **GET /api/v3/workflows/{workflowId}**, **PATCH
     /api/v3/workflows/{workflowId}**, **DELETE /api/v3/workflows/{workflowId}**,
@@ -493,12 +510,24 @@ paths:
     $ref: paths/api_v3_organizations_{organizationId}.yml
   /api/v3/organizations/{organizationId}/invites:
     $ref: paths/api_v3_organizations_{organizationId}_invites.yml
+  /api/v3/organizations/{organizationId}/invites/{inviteId}:
+    $ref: paths/api_v3_organizations_{organizationId}_invites_{inviteId}.yml
+  /api/v3/organizations/{organizationId}/invites/{inviteId}/resend:
+    $ref: paths/api_v3_organizations_{organizationId}_invites_{inviteId}_resend.yml
+  /api/v3/organizations/{organizationId}/members:
+    $ref: paths/api_v3_organizations_{organizationId}_members.yml
+  /api/v3/organizations/{organizationId}/members/{userId}:
+    $ref: paths/api_v3_organizations_{organizationId}_members_{userId}.yml
   /api/v3/workspaces:
     $ref: paths/api_v3_workspaces.yml
   /api/v3/workspaces/{workspaceId}:
     $ref: paths/api_v3_workspaces_{workspaceId}.yml
   /api/v3/workspaces/{workspaceId}/branding:
     $ref: paths/api_v3_workspaces_{workspaceId}_branding.yml
+  /api/v3/organizations/{organizationId}/teams:
+    $ref: paths/api_v3_organizations_{organizationId}_teams.yml
+  /api/v3/teams/{teamId}:
+    $ref: paths/api_v3_teams_{teamId}.yml
 components:
   securitySchemes:
     sessionAuth:

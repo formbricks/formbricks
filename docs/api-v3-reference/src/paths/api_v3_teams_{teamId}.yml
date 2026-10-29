@@ -1,0 +1,317 @@
+get:
+  operationId: getTeamV3
+  summary: Get a team
+  description: |
+    Reads one team with its members and the workspaces it can use. This is the state `PATCH
+    /api/v3/teams/{teamId}` starts from, since its `members` and `workspaces` replace the stored lists.
+
+    Requires an **organization owner or manager**, or an admin of this team, signed in as themselves, and
+    the **Enterprise** teams licence. Session cookie only: a request with only an API key is **401**.
+    Anyone else, and a team that does not exist, gets the same **403**.
+  tags:
+    - V3 Teams
+  parameters:
+    - $ref: ../components/parameters/TeamIdPath.yml
+  responses:
+    "200":
+      description: The team
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/Team.yml
+          example:
+            data:
+              id: clte1234567890123456789012
+              name: Support
+              organizationId: clor1234567890123456789012
+              members:
+                - userId: clus1234567890123456789012
+                  name: Ada Lovelace
+                  role: admin
+              workspaces:
+                - workspaceId: clws1234567890123456789012
+                  workspaceName: Acme Feedback
+                  permission: readWrite
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3UnauthorizedSession.yml
+    "403":
+      description: >-
+        Forbidden — the caller cannot manage the team, or it does not exist (`code: forbidden`; 404 is not used, to avoid an existence leak); or the organization's plan does not include teams (they are an Enterprise feature, so the answer is never an
+        empty success; `code: forbidden`, and the `detail` names the licence).
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+patch:
+  operationId: updateTeamV3
+  summary: Update a team
+  description: |
+    Changes a team's name, members and workspace access. `members` and `workspaces` are the **complete new
+    lists**: anyone or any workspace left out is removed, so read the team first with `GET
+    /api/v3/teams/{teamId}`. At least one of `name`, `members` and `workspaces` is required.
+
+    **A change that takes access away is not applied unless the body carries `confirm: true`.** That means a
+    member removed or demoted from admin, or a workspace removed from the team or its permission lowered.
+    Without `confirm` the call runs every check and answers **200** with `status: preview` and the
+    `changes`, writing nothing, so a caller cannot cut anyone off on its own say-so: show the preview to the
+    person, and send the call again with `confirm: true` only after they approve that exact change. Adding
+    people, widening access and renaming apply at once (`status: updated`); a request that matches what is
+    stored answers `status: unchanged`.
+
+    Requires an **organization owner or manager**, or an admin of this team, signed in as themselves, and the
+    **Enterprise** teams licence. Session cookie only: a request with only an API key is **401**. A team
+    admin who is not an owner or manager may change the name and the members, but not the workspace access
+    (**403**), and may not remove themselves or change their own team role (**403**). Organization owners
+    and managers are always team admins; asking for `contributor` is **422**, as is a person who is not a
+    member of the organization or a workspace of another organization. A name already used by another team
+    is **409**.
+  tags:
+    - V3 Teams
+  parameters:
+    - $ref: ../components/parameters/TeamIdPath.yml
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/UpdateTeamRequest.yml
+        examples:
+          rename:
+            summary: Rename the team
+            value:
+              name: Customer Success
+          add-member:
+            summary: Replace the member list (everyone not listed is removed)
+            value:
+              members:
+                - userId: clus1234567890123456789012
+                  role: admin
+                - userId: clus2234567890123456789012
+          grant-workspace:
+            summary: Replace the workspace access
+            value:
+              workspaces:
+                - workspaceId: clws1234567890123456789012
+                  permission: readWrite
+          confirmed:
+            summary: Apply a removal the person approved
+            value:
+              members:
+                - userId: clus1234567890123456789012
+              confirm: true
+  responses:
+    "200":
+      description: >-
+        The preview (`status: preview`, nothing written), the updated team, or the unchanged team.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/TeamUpdateResource.yml
+          examples:
+            preview:
+              summary: A removal, nothing written
+              value:
+                data:
+                  status: preview
+                  changes:
+                    name: null
+                    membersAdded: []
+                    membersRemoved:
+                      - clus2234567890123456789012
+                    memberRolesChanged: []
+                    workspacesAdded: []
+                    workspacesRemoved: []
+                    workspacePermissionsChanged: []
+                  team:
+                    id: clte1234567890123456789012
+                    name: Support
+                    organizationId: clor1234567890123456789012
+                    members:
+                      - userId: clus1234567890123456789012
+                        name: Ada Lovelace
+                        role: admin
+                      - userId: clus2234567890123456789012
+                        name: Grace Hopper
+                        role: contributor
+                    workspaces: []
+                  message: >-
+                    Not changed. This takes access away from people or workspaces. Call again with confirm: true
+                    after the person approves.
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3UnauthorizedSession.yml
+    "403":
+      description: >-
+        Forbidden — the caller cannot manage the team, or it does not exist (`code: forbidden`); a team admin tried to change the workspace access or their own membership; or the organization's plan does not include teams (they are an Enterprise feature, so the answer is never an
+        empty success; `code: forbidden`, and the `detail` names the licence).
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "409":
+      description: >-
+        Conflict — another team in the organization already has this name (`code: conflict`).
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "422":
+      $ref: ../components/responses/V3UnprocessableContent.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+delete:
+  operationId: deleteTeamV3
+  summary: Delete a team
+  description: |
+    Deletes a team. Its members stay in the organization but lose the workspace access the team gave them.
+
+    **Nothing is deleted unless the query carries `confirm=true`.** Without it the call runs every check and
+    answers **200** with `status: preview` and the member and workspace counts, so a caller cannot delete a
+    team on its own say-so: show the preview to the person, and send the call again with `confirm=true` only
+    after they approve. A confirmed delete answers **200** with `status: deleted`.
+
+    Requires an **organization owner or manager**, signed in as themselves, and the **Enterprise** teams
+    licence. Session cookie only: a request with only an API key is **401**. A team admin who is not an
+    owner or manager, and a team that does not exist, get the same **403**.
+  tags:
+    - V3 Teams
+  parameters:
+    - $ref: ../components/parameters/TeamIdPath.yml
+    - in: query
+      name: confirm
+      required: false
+      schema:
+        type: string
+        enum:
+          - "true"
+          - "false"
+      description: Pass `true` to actually delete. Anything else, or nothing, only previews.
+  responses:
+    "200":
+      description: >-
+        The preview (`status: preview`, nothing deleted) or the deleted team (`status: deleted`).
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/TeamDeleteResource.yml
+          examples:
+            preview:
+              summary: Preview, nothing deleted
+              value:
+                data:
+                  status: preview
+                  id: clte1234567890123456789012
+                  organizationId: clor1234567890123456789012
+                  name: Support
+                  memberCount: 4
+                  workspaceCount: 1
+                  message: >-
+                    Not deleted. Its members lose the workspace access this team gave them. Call again with
+                    confirm: true after the person approves.
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3UnauthorizedSession.yml
+    "403":
+      description: >-
+        Forbidden — the caller is not an owner or manager, or the team does not exist (`code: forbidden`); or the organization's plan does not include teams (they are an Enterprise feature, so the answer is never an
+        empty success; `code: forbidden`, and the `detail` names the licence).
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []

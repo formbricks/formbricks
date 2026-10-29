@@ -1,0 +1,25 @@
+type: object
+description: A team with its members and the workspaces it can use.
+required:
+  - id
+  - name
+  - organizationId
+  - members
+  - workspaces
+properties:
+  id:
+    type: string
+    format: cuid2
+  name:
+    type: string
+  organizationId:
+    type: string
+    format: cuid2
+  members:
+    type: array
+    items:
+      $ref: ./TeamMember.yml
+  workspaces:
+    type: array
+    items:
+      $ref: ./TeamWorkspaceAccess.yml

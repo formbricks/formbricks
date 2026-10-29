@@ -1,5 +1,4 @@
 import type { TOrganizationRole } from "@formbricks/types/memberships";
-import { isRoleEditDisabled } from "@/modules/ee/role-management/lib/role-edit-rules";
 
 export type TMemberStatus = "active" | "inactive" | "pending" | "expired";
 
@@ -89,94 +88,42 @@ export const buildMemberRows = ({
   return [...members, ...pending];
 };
 
-/**
- * Mirrors the server's last-owner guard: only memberships whose user can still sign in count, and a
- * pending owner invite is not a membership.
- */
-export const hasMoreThanOneActiveOwner = (rows: readonly TMemberRow[]): boolean =>
-  rows.filter((row) => row.kind === "member" && row.role === "owner" && row.status === "active").length > 1;
-
-export interface TMemberRowAccess {
-  /** Roles the viewer may move this row to; empty when the role cannot be changed. */
-  assignableRoles: TOrganizationRole[];
-  canRemove: boolean;
-  canReactivate: boolean;
-  canResend: boolean;
+export interface TMemberRowActions {
+  /** A pending invite the viewer manages: they can copy its link (a credential, so never the agent). */
   canShareLink: boolean;
+  /** The viewer's own row, when leaving is allowed: not the owner, with more than one organization. */
   canLeave: boolean;
 }
 
-export const getAssignableRoles = ({
-  currentRole,
-  isFormbricksCloud,
-}: {
-  currentRole: TOrganizationRole;
-  isFormbricksCloud: boolean;
-}): TOrganizationRole[] => {
-  if (currentRole === "owner") {
-    return isFormbricksCloud ? ["member", "manager", "owner", "billing"] : ["member", "manager", "owner"];
-  }
-  // Managers hand out the member role only; the actions refuse anything else.
-  return currentRole === "manager" ? ["member"] : [];
-};
-
 /**
- * What the viewer may do to one row. The rules are the ones the old members table applied, so the buttons
- * a person sees are the ones the server actions will accept:
+ * What the viewer may still do to one row by hand. Everything else about members (roles, removal, resending
+ * and deleting invites) is an agent tool now, so the rules that used to live here are the operations' own.
+ * The rules for the two that remain are the old ones, and match what their server actions accept:
  *
- * - `canManageUsers` is owner or manager under `USER_MANAGEMENT_MINIMUM_ROLE`; everything except leaving is
- *   user management.
- * - changing a role also needs the access-control licence (`canEditRoles`), because the action demands it.
- * - nobody removes themselves (they leave), a manager never touches an owner, and the last active owner
- *   stays.
+ * - copying an invite link is user management (`canManageUsers`), for invites only;
+ * - leaving is for the viewer's own row, never for an owner (an owner deletes the organization instead),
+ *   and only when they belong to another organization and the instance allows more than one.
  */
-export const getMemberRowAccess = ({
+export const getMemberRowActions = ({
   row,
   currentUserId,
   currentRole,
   canManageUsers,
-  canEditRoles,
-  isFormbricksCloud,
   isMultiOrgEnabled,
   hasOtherOrganizations,
-  doesOrgHaveMoreThanOneOwner,
 }: {
   row: TMemberRow;
   currentUserId: string;
   currentRole: TOrganizationRole;
   canManageUsers: boolean;
-  canEditRoles: boolean;
-  isFormbricksCloud: boolean;
   isMultiOrgEnabled: boolean;
   hasOtherOrganizations: boolean;
-  doesOrgHaveMoreThanOneOwner: boolean;
-}): TMemberRowAccess => {
-  const isInvite = row.kind === "invite";
-  const isSelf = !isInvite && row.id === currentUserId;
-  const isManagerActingOnOwner = currentRole === "manager" && row.role === "owner";
-
-  const roleEditDisabled = isRoleEditDisabled({
-    isUserManagementDisabledFromUi: !canManageUsers,
-    currentUserRole: currentRole,
-    memberRole: row.role,
-    memberId: isInvite ? "" : row.id,
-    userId: currentUserId,
-    memberAccepted: isInvite ? undefined : true,
-    doesOrgHaveMoreThanOneOwner,
-  });
-
-  let canRemove = canManageUsers && !isSelf && !isManagerActingOnOwner;
-  if (!isInvite && row.role === "owner") {
-    canRemove = canRemove && doesOrgHaveMoreThanOneOwner;
-  }
-
-  return {
-    assignableRoles:
-      canEditRoles && !roleEditDisabled ? getAssignableRoles({ currentRole, isFormbricksCloud }) : [],
-    canRemove,
-    canReactivate: !isInvite && row.status === "inactive" && canManageUsers && !isManagerActingOnOwner,
-    canResend: isInvite && canManageUsers,
-    canShareLink: isInvite && canManageUsers,
-    canLeave: isSelf && currentRole !== "owner" && isMultiOrgEnabled && hasOtherOrganizations,
-  };
-};
+}): TMemberRowActions => ({
+  canShareLink: row.kind === "invite" && canManageUsers,
+  canLeave:
+    row.kind === "member" &&
+    row.id === currentUserId &&
+    currentRole !== "owner" &&
+    isMultiOrgEnabled &&
+    hasOtherOrganizations,
+});

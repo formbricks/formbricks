@@ -1,11 +1,19 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import { problemConflict, problemForbidden, successResponse } from "@/app/api/v3/lib/response";
+import {
+  deleteV3OrganizationInvite,
+  resendV3OrganizationInvite,
+} from "@/app/api/v3/organizations/lib/invite-management";
 import { inviteV3OrganizationMember } from "@/app/api/v3/organizations/lib/operations";
 import { registerInviteTools } from "./invites";
-import { ZMcpInviteMemberInput } from "./invites-schemas";
+import { ZMcpDeleteInviteInput, ZMcpInviteMemberInput, ZMcpResendInviteInput } from "./invites-schemas";
 
 vi.mock("@/app/api/v3/organizations/lib/operations", () => ({ inviteV3OrganizationMember: vi.fn() }));
+vi.mock("@/app/api/v3/organizations/lib/invite-management", () => ({
+  deleteV3OrganizationInvite: vi.fn(),
+  resendV3OrganizationInvite: vi.fn(),
+}));
 vi.mock("@/app/api/v3/lib/audit", () => ({
   buildV3AuditLog: vi.fn(),
   queueV3AuditLog: vi.fn().mockResolvedValue(undefined),
@@ -77,10 +85,10 @@ describe("invite_member", () => {
     vi.mocked(buildV3AuditLog).mockReturnValue({} as never);
   });
 
-  test("registers exactly invite_member, a write that is not read-only, idempotent or destructive", () => {
+  test("registers invite_member, a write that is not read-only, idempotent or destructive", () => {
     const { tools } = createToolServer();
 
-    expect([...tools.keys()]).toEqual(["invite_member"]);
+    expect([...tools.keys()]).toEqual(["invite_member", "resend_invite", "delete_invite"]);
     const { config } = tools.get("invite_member")!;
     expect(config.outputSchema).toBeDefined();
     expect(config.annotations).toMatchObject({
@@ -203,5 +211,113 @@ describe("invite_member", () => {
         expect(ZMcpInviteMemberInput.safeParse({ ...base, role }).success).toBe(false);
       }
     });
+  });
+});
+
+const inviteId = "b4f1c0de-0000-4000-8000-000000000001";
+
+describe("resend_invite", () => {
+  const resent = {
+    status: "resent",
+    organizationId,
+    inviteId,
+    role: "member",
+    expiresAt: "2026-06-08T00:00:00.000Z",
+    emailSent: false,
+    message: SECRET_NAME,
+  };
+
+  test("is refused without members:write and audited as a failed invite update", async () => {
+    const { tools } = createToolServer();
+    const auditLog: { targetId?: string } = {};
+    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog as never);
+
+    const result = await call(tools.get("resend_invite")!.handler, { organizationId, inviteId }, [
+      "members:read",
+    ]);
+
+    expect(result.isError).toBe(true);
+    expect(resendV3OrganizationInvite).not.toHaveBeenCalled();
+    expect(buildV3AuditLog).toHaveBeenCalledWith(session, "updated", "invite", expect.any(String));
+    expect(auditLog.targetId).toBe(inviteId);
+  });
+
+  test("calls the operation with the ids and says whether the email went out, with no free text", async () => {
+    const { tools } = createToolServer();
+    vi.mocked(resendV3OrganizationInvite).mockResolvedValue(
+      successResponse(resent, { requestId: "req_tool" })
+    );
+
+    const result = await call(tools.get("resend_invite")!.handler, { organizationId, inviteId }, [
+      "members:write",
+    ]);
+
+    const [params] = vi.mocked(resendV3OrganizationInvite).mock.calls[0];
+    expect(params).toMatchObject({ organizationId, inviteId, authentication: session, instance: "/api/mcp" });
+    expect(result.content[0].text).toBe(
+      `Invite ${inviteId} resent (expires 2026-06-08T00:00:00.000Z); email not sent.`
+    );
+  });
+
+  test("input takes a UUID invite id and nothing else", () => {
+    expect(ZMcpResendInviteInput.safeParse({ organizationId, inviteId }).success).toBe(true);
+    expect(ZMcpResendInviteInput.safeParse({ organizationId, inviteId: "invite_1" }).success).toBe(false);
+    expect(ZMcpResendInviteInput.safeParse({ organizationId, inviteId, extra: 1 }).success).toBe(false);
+  });
+});
+
+describe("delete_invite", () => {
+  test("is a destructive write that is refused without members:write", async () => {
+    const { tools } = createToolServer();
+
+    expect(tools.get("delete_invite")!.config.annotations).toMatchObject({ destructiveHint: true });
+    const result = await call(tools.get("delete_invite")!.handler, { organizationId, inviteId }, [
+      "members:read",
+    ]);
+
+    expect(result.isError).toBe(true);
+    expect(deleteV3OrganizationInvite).not.toHaveBeenCalled();
+  });
+
+  test("passes confirm as given and reports a preview as not deleted", async () => {
+    const { tools } = createToolServer();
+    vi.mocked(deleteV3OrganizationInvite).mockResolvedValue(
+      successResponse(
+        { status: "preview", organizationId, inviteId, role: "member", message: "Not deleted." },
+        { requestId: "req_tool" }
+      )
+    );
+
+    const result = await call(tools.get("delete_invite")!.handler, { organizationId, inviteId }, [
+      "members:write",
+    ]);
+
+    const [params] = vi.mocked(deleteV3OrganizationInvite).mock.calls[0];
+    expect(params).toMatchObject({ organizationId, inviteId, authentication: session });
+    expect(params.confirm).toBeUndefined();
+    expect(result.content[0].text).toMatch(/^Not deleted/);
+  });
+
+  test("a confirmed deletion is reported by id", async () => {
+    const { tools } = createToolServer();
+    vi.mocked(deleteV3OrganizationInvite).mockResolvedValue(
+      successResponse(
+        { status: "deleted", organizationId, inviteId, role: "member", message: SECRET_NAME },
+        { requestId: "req_tool" }
+      )
+    );
+
+    const result = await call(
+      tools.get("delete_invite")!.handler,
+      { organizationId, inviteId, confirm: true },
+      ["members:write"]
+    );
+
+    expect(result.content[0].text).toBe(`Invite ${inviteId} deleted.`);
+  });
+
+  test("input is strict", () => {
+    expect(ZMcpDeleteInviteInput.safeParse({ organizationId, inviteId, confirm: true }).success).toBe(true);
+    expect(ZMcpDeleteInviteInput.safeParse({ organizationId, inviteId, extra: 1 }).success).toBe(false);
   });
 });

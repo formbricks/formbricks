@@ -1,0 +1,83 @@
+type: object
+description: What an update changes, as ids. Names are in the team itself.
+required:
+  - name
+  - membersAdded
+  - membersRemoved
+  - memberRolesChanged
+  - workspacesAdded
+  - workspacesRemoved
+  - workspacePermissionsChanged
+properties:
+  name:
+    type:
+      - object
+      - "null"
+    required:
+      - from
+      - to
+    properties:
+      from:
+        type: string
+      to:
+        type: string
+  membersAdded:
+    type: array
+    items:
+      type: string
+  membersRemoved:
+    type: array
+    items:
+      type: string
+  memberRolesChanged:
+    type: array
+    items:
+      type: object
+      required:
+        - userId
+        - from
+        - to
+      properties:
+        userId:
+          type: string
+        from:
+          type: string
+          enum:
+            - admin
+            - contributor
+        to:
+          type: string
+          enum:
+            - admin
+            - contributor
+  workspacesAdded:
+    type: array
+    items:
+      type: string
+  workspacesRemoved:
+    type: array
+    items:
+      type: string
+  workspacePermissionsChanged:
+    type: array
+    items:
+      type: object
+      required:
+        - workspaceId
+        - from
+        - to
+      properties:
+        workspaceId:
+          type: string
+        from:
+          type: string
+          enum:
+            - read
+            - readWrite
+            - manage
+        to:
+          type: string
+          enum:
+            - read
+            - readWrite
+            - manage

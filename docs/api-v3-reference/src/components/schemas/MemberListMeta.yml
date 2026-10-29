@@ -1,0 +1,23 @@
+allOf:
+  - $ref: ./ListPaginationMeta.yml
+  - type: object
+    required:
+      - totalCount
+      - totalCountRelation
+    properties:
+      totalCount:
+        type: integer
+        minimum: 0
+        description: >-
+          Rows matching the `kind` filter across all pages, so "how many members" never needs paging.
+          Exact up to the directory's own cap of 500 members and 500 invites.
+      totalCountRelation:
+        type: string
+        enum:
+          - eq
+          - gte
+        description: >-
+          `eq` when `totalCount` is exact, `gte` when the directory was cut at its cap and it is a lower bound.
+unevaluatedProperties: false
+description: >-
+  The list `meta` for organization members: pagination plus the number of matching rows.

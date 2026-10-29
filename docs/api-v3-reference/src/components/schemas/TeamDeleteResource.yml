@@ -1,0 +1,35 @@
+type: object
+description: >-
+  The outcome of a delete. `preview`: nothing was deleted because `confirm` was not `true`; the counts say
+  what deleting would take away. `deleted`: the team is gone.
+required:
+  - status
+  - id
+  - organizationId
+  - name
+  - memberCount
+  - workspaceCount
+  - message
+properties:
+  status:
+    type: string
+    enum:
+      - preview
+      - deleted
+  id:
+    type: string
+    format: cuid2
+  organizationId:
+    type: string
+    format: cuid2
+  name:
+    type: string
+  memberCount:
+    type: integer
+    minimum: 0
+  workspaceCount:
+    type: integer
+    minimum: 0
+    description: Workspaces the team could use.
+  message:
+    type: string

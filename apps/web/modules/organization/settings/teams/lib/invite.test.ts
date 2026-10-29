@@ -9,14 +9,7 @@ import {
 } from "@formbricks/types/errors";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { TInvitee } from "../types/invites";
-import {
-  deleteInvite,
-  getInvite,
-  getInvitesByOrganizationId,
-  inviteUser,
-  refreshInviteExpiration,
-  resendInvite,
-} from "./invite";
+import { deleteInvite, inviteUser, refreshInviteExpiration } from "./invite";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -119,90 +112,6 @@ describe("refreshInviteExpiration", () => {
   });
 });
 
-describe("resendInvite", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  test("returns email and name after updating expiration", async () => {
-    const updatedInvite = {
-      ...mockInvite,
-      expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
-    };
-    vi.mocked(prisma.invite.update).mockResolvedValue(updatedInvite);
-
-    const result = await resendInvite("invite-1");
-
-    expect(result).toEqual({ email: mockInvite.email, name: mockInvite.name });
-    expect(prisma.invite.update).toHaveBeenCalledWith({
-      where: { id: "invite-1" },
-      data: {
-        expiresAt: expect.any(Date),
-      },
-    });
-  });
-
-  test("calls refreshInviteExpiration helper", async () => {
-    const updatedInvite = {
-      ...mockInvite,
-      expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
-    };
-    vi.mocked(prisma.invite.update).mockResolvedValue(updatedInvite);
-
-    await resendInvite("invite-1");
-
-    expect(prisma.invite.update).toHaveBeenCalledTimes(1);
-  });
-
-  test("throws ResourceNotFoundError if invite not found", async () => {
-    const prismaError = new Prisma.PrismaClientKnownRequestError("Record not found", {
-      code: "P2025",
-      clientVersion: "1.0.0",
-    });
-    vi.mocked(prisma.invite.update).mockRejectedValue(prismaError);
-    await expect(resendInvite("invite-1")).rejects.toThrow(ResourceNotFoundError);
-  });
-
-  test("throws DatabaseError on other prisma errors", async () => {
-    const prismaError = new Prisma.PrismaClientKnownRequestError("db", {
-      code: "P2002",
-      clientVersion: "1.0.0",
-    });
-    vi.mocked(prisma.invite.update).mockRejectedValue(prismaError);
-    await expect(resendInvite("invite-1")).rejects.toThrow(DatabaseError);
-  });
-
-  test("throws error if non-prisma error", async () => {
-    const error = new Error("db");
-    vi.mocked(prisma.invite.update).mockRejectedValue(error);
-    await expect(resendInvite("invite-1")).rejects.toThrow("db");
-  });
-});
-
-describe("getInvitesByOrganizationId", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-  test("returns invites", async () => {
-    vi.mocked(prisma.invite.findMany).mockResolvedValue([mockInvite]);
-    const result = await getInvitesByOrganizationId("org-1", 1);
-    expect(result[0].id).toBe("invite-1");
-  });
-  test("throws DatabaseError on prisma error", async () => {
-    const prismaError = new Prisma.PrismaClientKnownRequestError("db", {
-      code: "P2002",
-      clientVersion: "1.0.0",
-    });
-    vi.mocked(prisma.invite.findMany).mockRejectedValue(prismaError);
-    await expect(getInvitesByOrganizationId("org-1", 1)).rejects.toThrow(DatabaseError);
-  });
-  test("throws error if prisma error", async () => {
-    const error = new Error("db");
-    vi.mocked(prisma.invite.findMany).mockRejectedValue(error);
-    await expect(getInvitesByOrganizationId("org-1", 1)).rejects.toThrow("db");
-  });
-});
-
 describe("inviteUser", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -298,35 +207,5 @@ describe("deleteInvite", () => {
     const error = new Error("db");
     vi.mocked(prisma.invite.delete).mockRejectedValue(error);
     await expect(deleteInvite("invite-1")).rejects.toThrow("db");
-  });
-});
-
-describe("getInvite", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-  test("returns invite with creator if found", async () => {
-    vi.mocked(prisma.invite.findUnique).mockResolvedValue({
-      email: "test@example.com",
-      creator: { name: "Test" },
-    } as unknown as Awaited<ReturnType<typeof prisma.invite.findUnique>>);
-    const result = await getInvite("invite-1");
-    expect(result).toEqual({ email: "test@example.com", creator: { name: "Test" } });
-  });
-  test("returns null if not found", async () => {
-    vi.mocked(prisma.invite.findUnique).mockResolvedValue(null);
-    const result = await getInvite("invite-1");
-    expect(result).toBeNull();
-  });
-  test("throws DatabaseError on prisma error", async () => {
-    const error = new Prisma.PrismaClientKnownRequestError("db", { code: "P2002", clientVersion: "1.0.0" });
-    vi.mocked(prisma.invite.findUnique).mockRejectedValue(error);
-    await expect(getInvite("invite-1")).rejects.toThrow(DatabaseError);
-  });
-
-  test("throws error if prisma error", async () => {
-    const error = new Error("db");
-    vi.mocked(prisma.invite.findUnique).mockRejectedValue(error);
-    await expect(getInvite("invite-1")).rejects.toThrow("db");
   });
 });

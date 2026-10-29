@@ -1,0 +1,79 @@
+post:
+  operationId: resendOrganizationInviteV3
+  summary: Resend an invite
+  description: |
+    Resends a pending or expired invite: its expiry moves seven days out and the invite email is sent
+    again, to the address the person already approved when the invite was created. Because of that it
+    carries no `confirm`. Delivery is best-effort: `emailSent: false` means the invite was refreshed but the
+    email could not be sent.
+
+    Requires an **organization owner or manager**, signed in as themselves, with user management allowed
+    for their role, on an instance with invites enabled (otherwise **403**). Session cookie only: a
+    request with only an API key is **401**. A manager cannot resend an invite for the owner role. An
+    invite that does not exist, or belongs to another organization, answers the same **403** as an
+    unauthorized caller. Resends share the organization and per-person invite rate limits with new invites;
+    beyond them the answer is **429** with `Retry-After`.
+  tags:
+    - V3 Organizations
+  parameters:
+    - $ref: ../components/parameters/OrganizationIdPath.yml
+    - $ref: ../components/parameters/InviteIdPath.yml
+  responses:
+    "200":
+      description: The invite was refreshed and an email was attempted.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/MemberInviteResendResource.yml
+          examples:
+            resent:
+              summary: Resent and emailed
+              value:
+                data:
+                  status: resent
+                  organizationId: clor1234567890123456789012
+                  inviteId: 0b2a5a6e-3c1f-4d52-9a39-6f7e5c1d2a10
+                  role: member
+                  expiresAt: "2026-06-15T12:00:00.000Z"
+                  emailSent: true
+                  message: Invite resent.
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3UnauthorizedSession.yml
+    "403":
+      description: >-
+        Forbidden — the caller is not an owner or manager of the organization, may not manage users, or cannot see it; the invite does not exist in this organization; a manager tried to resend an invite for the owner role; or invites are disabled on this instance (`code: forbidden`).
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []

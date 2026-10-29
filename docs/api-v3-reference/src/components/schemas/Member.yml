@@ -1,0 +1,64 @@
+type: object
+description: >-
+  One line of an organization's people list: an accepted member or a pending invite.
+required:
+  - kind
+  - id
+  - name
+  - email
+  - role
+  - status
+  - twoFactorEnabled
+  - teamNames
+  - invitedAt
+properties:
+  kind:
+    type: string
+    enum:
+      - member
+      - invite
+  id:
+    type: string
+    description: The user id for a `member`, the invite id for an `invite`.
+  name:
+    type: string
+  email:
+    type: string
+  role:
+    type: string
+    enum:
+      - owner
+      - manager
+      - member
+      - billing
+  status:
+    type: string
+    enum:
+      - active
+      - inactive
+      - pending
+      - expired
+    description: >-
+      `active` or `inactive` (the account was deactivated) for a member; `pending` or `expired` for an invite.
+  twoFactorEnabled:
+    type:
+      - boolean
+      - "null"
+    description: >-
+      `null` for an invite, and for a viewer who is not an owner or manager of the organization.
+  teamNames:
+    type:
+      - array
+      - "null"
+    items:
+      type: string
+    description: >-
+      `null` for a viewer who is not an owner or manager of the organization. Owners and managers belong to
+      every team, so their list is not the whole picture.
+  invitedAt:
+    type:
+      - string
+      - "null"
+    format: date-time
+    description: >-
+      Invites only: when the invite was sent.

@@ -1,4 +1,4 @@
-import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD, USER_MANAGEMENT_MINIMUM_ROLE } from "@/lib/constants";
+import { USER_MANAGEMENT_MINIMUM_ROLE } from "@/lib/constants";
 import { getReportingTimeZone } from "@/lib/date-ranges";
 import { getUserManagementAccess } from "@/lib/membership/utils";
 import { getLocale } from "@/lingodotdev/language";
@@ -11,7 +11,7 @@ import { ShellPage } from "@/modules/shell/components/shell-page";
 import { MembersTable } from "@/modules/shell/organization/components/members-table";
 import { SectionHeading } from "@/modules/shell/organization/components/section-heading";
 import { getMemberDirectory } from "@/modules/shell/organization/lib/member-directory";
-import { getMemberRowAccess, hasMoreThanOneActiveOwner } from "@/modules/shell/organization/lib/member-rows";
+import { getMemberRowActions } from "@/modules/shell/organization/lib/member-rows";
 import { requireNonBillingRole } from "@/modules/shell/organization/lib/restricted-section";
 
 const MembersPage = async ({ params }: Readonly<{ params: Promise<{ organizationId: string }> }>) => {
@@ -32,22 +32,19 @@ const MembersPage = async ({ params }: Readonly<{ params: Promise<{ organization
 
   // Owner or manager, as far as USER_MANAGEMENT_MINIMUM_ROLE lets them manage people.
   const canManageUsers = getUserManagementAccess(currentRole, USER_MANAGEMENT_MINIMUM_ROLE);
-  // Inviting is the agent's job now, and the agent invites as owner or manager only.
-  const canAskAgentToInvite = !INVITE_DISABLED && canManageUsers && isOwnerOrManager;
+  // Members are the agent's job now (list, invite, change roles, remove, resend and delete invites), and the
+  // agent acts as owner or manager only. What stays here is copying an invite link and leaving.
+  const canAskAgentToManage = canManageUsers && isOwnerOrManager;
 
-  const doesOrgHaveMoreThanOneOwner = hasMoreThanOneActiveOwner(directory.rows);
   const rows = directory.rows.map((row) => ({
     row,
-    access: getMemberRowAccess({
+    actions: getMemberRowActions({
       row,
       currentUserId,
       currentRole,
       canManageUsers,
-      canEditRoles: isAccessControlAllowed,
-      isFormbricksCloud: IS_FORMBRICKS_CLOUD,
       isMultiOrgEnabled,
       hasOtherOrganizations: userMemberships.length > 1,
-      doesOrgHaveMoreThanOneOwner,
     }),
   }));
 
@@ -65,10 +62,10 @@ const MembersPage = async ({ params }: Readonly<{ params: Promise<{ organization
         description={t("shell.organization.members.summary", { members: memberCount, invites: inviteCount })}
       />
 
-      {canAskAgentToInvite && (
+      {canAskAgentToManage && (
         <AskYourAgent
-          description={t("shell.organization.members.ask_agent_invite")}
-          prompt={t("shell.organization.members.ask_agent_invite_prompt")}
+          description={t("shell.organization.members.ask_agent_manage")}
+          prompt={t("shell.organization.members.ask_agent_manage_prompt")}
         />
       )}
 

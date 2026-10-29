@@ -1,0 +1,8 @@
+in: path
+name: userId
+required: true
+schema:
+  type: string
+  format: cuid2
+description: >-
+  User id of the member. Take it from the `id` of a `kind: member` row of `GET /api/v3/organizations/{organizationId}/members`.

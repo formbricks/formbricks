@@ -60,28 +60,24 @@ export const ZOrganizationMember = z.object({
 
 export type TOrganizationMember = z.infer<typeof ZOrganizationMember>;
 
+/**
+ * What `updateTeamDetails` stores: the team's name and its complete member and workspace-access lists. Both
+ * lists may be empty, because a team is created empty and an agent may take every member or grant away.
+ */
 export const ZTeamSettingsFormSchema = z.object({
   name: z.string().trim().min(1, "Team name is required"),
-  members: z
-    .array(
-      z.object({
-        userId: z.string().trim().min(1, "Please select a member"),
-        role: ZTeamRole,
-      })
-    )
-    .min(1, {
-      error: "Please add at least one member",
-    }),
-  workspaces: z
-    .array(
-      z.object({
-        workspaceId: z.string().trim().min(1, "Please select a workspace"),
-        permission: ZTeamPermission,
-      })
-    )
-    .min(1, {
-      error: "Please add at least one workspace",
-    }),
+  members: z.array(
+    z.object({
+      userId: z.string().trim().min(1, "Please select a member"),
+      role: ZTeamRole,
+    })
+  ),
+  workspaces: z.array(
+    z.object({
+      workspaceId: z.string().trim().min(1, "Please select a workspace"),
+      permission: ZTeamPermission,
+    })
+  ),
 });
 
 export type TTeamSettingsFormSchema = z.infer<typeof ZTeamSettingsFormSchema>;

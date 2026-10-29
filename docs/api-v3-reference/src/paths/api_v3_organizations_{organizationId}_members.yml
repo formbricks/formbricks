@@ -1,0 +1,114 @@
+get:
+  operationId: listOrganizationMembersV3
+  summary: List members and invites
+  description: |
+    Returns the people of an organization and its pending invites in one list, each row marked
+    `kind: member` or `kind: invite`, ordered by id. `kind` filters to one of them. `meta.totalCount`
+    counts the matching rows so "how many members" never needs paging.
+
+    Requires a signed-in member of the organization who is **not on the billing role**. Session cookie
+    only: it returns personal data and an API key carries no person, so a request with only an API key
+    is **401**. Two-factor state and team names are security-relevant and come back for **owners and
+    managers** only; for everyone else they are `null`. Someone who is not a member, or has the billing
+    role, gets **403**.
+  tags:
+    - V3 Organizations
+  parameters:
+    - $ref: ../components/parameters/OrganizationIdPath.yml
+    - in: query
+      name: kind
+      schema:
+        type: string
+        enum:
+          - member
+          - invite
+      description: Only accepted members, or only pending invites. Omit for both.
+    - in: query
+      name: limit
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 250
+        default: 50
+      description: Page size (max 250). A larger value is rejected with **400**.
+    - $ref: ../components/parameters/CursorQuery.yml
+  responses:
+    "200":
+      description: Members and invites retrieved successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: ../components/schemas/Member.yml
+              meta:
+                $ref: ../components/schemas/MemberListMeta.yml
+          examples:
+            ownerView:
+              summary: An owner's view, one member and one pending invite
+              value:
+                data:
+                  - kind: invite
+                    id: 0b2a5a6e-3c1f-4d52-9a39-6f7e5c1d2a10
+                    name: Grace Hopper
+                    email: grace@example.com
+                    role: member
+                    status: pending
+                    twoFactorEnabled: null
+                    teamNames: []
+                    invitedAt: "2026-06-08T12:00:00.000Z"
+                  - kind: member
+                    id: clusr1234567890123456789012
+                    name: Ada Lovelace
+                    email: ada@example.com
+                    role: owner
+                    status: active
+                    twoFactorEnabled: true
+                    teamNames: []
+                    invitedAt: null
+                meta:
+                  limit: 50
+                  nextCursor: null
+                  totalCount: 2
+                  totalCountRelation: eq
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3UnauthorizedSession.yml
+    "403":
+      description: >-
+        Forbidden — the caller is not a member of the organization, holds the billing role, or cannot see it (`code: forbidden`; 404 is not used, to avoid an existence leak).
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []

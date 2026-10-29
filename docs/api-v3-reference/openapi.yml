@@ -18,6 +18,10 @@ info:
 
     **Agent-led setup**: **GET /api/v3/account/context** reads what an agent can learn about the person it works for (who they are, their role in each organization, the organizations and workspaces they can reach, derived setup facts). **POST /api/v3/organizations** creates an organization the signed-in person owns, with no workspace; **PATCH /api/v3/organizations/{organizationId}** renames one; **POST /api/v3/organizations/{organizationId}/invites** invites a member or manager and sends nothing unless the body carries `confirm: true`. **POST /api/v3/workspaces** creates a workspace, **PATCH /api/v3/workspaces/{workspaceId}** renames it and sets its channel or industry, and **PUT /api/v3/workspaces/{workspaceId}/branding** sets its brand colour and logo. Organization-level operations are for signed-in organization owners and managers (session cookie only), and so is **creating** a workspace: an API key cannot create one (REST answers 401 for a request that carries only a key, and the MCP `create_workspace` tool answers 403). Updating a workspace and its branding also accept an API key with `manage` on that workspace.
 
+    **Members**: **GET /api/v3/organizations/{organizationId}/members** lists an organization's people and pending invites; **PATCH** and **DELETE /api/v3/organizations/{organizationId}/members/{userId}** change a member's role or remove them; **POST /api/v3/organizations/{organizationId}/invites/{inviteId}/resend** and **DELETE /api/v3/organizations/{organizationId}/invites/{inviteId}** resend or delete an invite. All are session cookie only. The role change, the removal and the invite deletion change nothing unless they carry `confirm: true` (`confirm=true` in the query for DELETE) and answer a `preview` otherwise.
+
+    **Teams** (Enterprise): **GET** and **POST /api/v3/organizations/{organizationId}/teams** list an organization's teams and create one; **GET**, **PATCH** and **DELETE /api/v3/teams/{teamId}** read a team with its members, change its name, members and workspace access, and delete it. All are session cookie only, and without the teams licence every one answers **403**, never an empty success. A change that takes access away and every delete do nothing unless they carry `confirm: true` (`confirm=true` in the query for DELETE) and answer a `preview` otherwise.
+
     **Workflows extension**: **GET /api/v3/workflows**, **POST /api/v3/workflows**, **GET /api/v3/workflows/{workflowId}**, **PATCH /api/v3/workflows/{workflowId}**, **DELETE /api/v3/workflows/{workflowId}**, **POST /api/v3/workflows/{workflowId}/duplicate**, **POST /api/v3/workflows/{workflowId}/enable**, **POST /api/v3/workflows/{workflowId}/disable**, **POST /api/v3/workflows/{workflowId}/archive**, **POST /api/v3/workflows/{workflowId}/unarchive**, **POST /api/v3/workflows/{workflowId}/test**, **GET /api/v3/workflows/runs**, and **GET /api/v3/workflows/runs/{runId}**.
 
     Authenticate all management endpoints with **session cookie** or **`x-api-key`** (management key with access to the workspace).
@@ -9282,6 +9286,495 @@ paths:
           $ref: '#/components/responses/V3InternalServerError'
       security:
         - sessionAuth: []
+  /api/v3/organizations/{organizationId}/invites/{inviteId}:
+    delete:
+      operationId: deleteOrganizationInviteV3
+      summary: Delete an invite
+      description: |
+        Deletes a pending invite, so the link in the invitee's email stops working.
+
+        **Nothing is deleted unless the query carries `confirm=true`.** Without it the call runs every check
+        and answers **200** with `status: preview`. Show the preview to the person, and send the call again
+        with `confirm=true` only after they approve.
+
+        Requires an **organization owner or manager**, signed in as themselves, with user management allowed
+        for their role. Session cookie only: a request with only an API key is **401**. A manager cannot
+        delete an invite for the owner role. An invite that does not exist, or belongs to another
+        organization, answers the same **403** as an unauthorized caller.
+      tags:
+        - V3 Organizations
+      parameters:
+        - $ref: '#/components/parameters/OrganizationIdPath'
+        - $ref: '#/components/parameters/InviteIdPath'
+        - in: query
+          name: confirm
+          schema:
+            type: string
+            enum:
+              - 'true'
+              - 'false'
+          description: '`true` to delete the invite. Anything else, or omitted, answers a preview and deletes nothing.'
+      responses:
+        '200':
+          description: 'The deletion preview (`status: preview`, nothing deleted) or the completed deletion.'
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MemberInviteDeleteResource'
+              examples:
+                preview:
+                  summary: Preview, nothing deleted
+                  value:
+                    data:
+                      status: preview
+                      organizationId: clor1234567890123456789012
+                      inviteId: 0b2a5a6e-3c1f-4d52-9a39-6f7e5c1d2a10
+                      role: member
+                      message: 'Not deleted. This would delete a pending invite with the role member; its link stops working. Call again with confirm: true after the person approves.'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3UnauthorizedSession'
+        '403':
+          description: 'Forbidden — the caller is not an owner or manager of the organization, may not manage users, or cannot see it; the invite does not exist in this organization; or a manager tried to delete an invite for the owner role (`code: forbidden`).'
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+  /api/v3/organizations/{organizationId}/invites/{inviteId}/resend:
+    post:
+      operationId: resendOrganizationInviteV3
+      summary: Resend an invite
+      description: |
+        Resends a pending or expired invite: its expiry moves seven days out and the invite email is sent
+        again, to the address the person already approved when the invite was created. Because of that it
+        carries no `confirm`. Delivery is best-effort: `emailSent: false` means the invite was refreshed but the
+        email could not be sent.
+
+        Requires an **organization owner or manager**, signed in as themselves, with user management allowed
+        for their role, on an instance with invites enabled (otherwise **403**). Session cookie only: a
+        request with only an API key is **401**. A manager cannot resend an invite for the owner role. An
+        invite that does not exist, or belongs to another organization, answers the same **403** as an
+        unauthorized caller. Resends share the organization and per-person invite rate limits with new invites;
+        beyond them the answer is **429** with `Retry-After`.
+      tags:
+        - V3 Organizations
+      parameters:
+        - $ref: '#/components/parameters/OrganizationIdPath'
+        - $ref: '#/components/parameters/InviteIdPath'
+      responses:
+        '200':
+          description: The invite was refreshed and an email was attempted.
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MemberInviteResendResource'
+              examples:
+                resent:
+                  summary: Resent and emailed
+                  value:
+                    data:
+                      status: resent
+                      organizationId: clor1234567890123456789012
+                      inviteId: 0b2a5a6e-3c1f-4d52-9a39-6f7e5c1d2a10
+                      role: member
+                      expiresAt: '2026-06-15T12:00:00.000Z'
+                      emailSent: true
+                      message: Invite resent.
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3UnauthorizedSession'
+        '403':
+          description: 'Forbidden — the caller is not an owner or manager of the organization, may not manage users, or cannot see it; the invite does not exist in this organization; a manager tried to resend an invite for the owner role; or invites are disabled on this instance (`code: forbidden`).'
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+  /api/v3/organizations/{organizationId}/members:
+    get:
+      operationId: listOrganizationMembersV3
+      summary: List members and invites
+      description: |
+        Returns the people of an organization and its pending invites in one list, each row marked
+        `kind: member` or `kind: invite`, ordered by id. `kind` filters to one of them. `meta.totalCount`
+        counts the matching rows so "how many members" never needs paging.
+
+        Requires a signed-in member of the organization who is **not on the billing role**. Session cookie
+        only: it returns personal data and an API key carries no person, so a request with only an API key
+        is **401**. Two-factor state and team names are security-relevant and come back for **owners and
+        managers** only; for everyone else they are `null`. Someone who is not a member, or has the billing
+        role, gets **403**.
+      tags:
+        - V3 Organizations
+      parameters:
+        - $ref: '#/components/parameters/OrganizationIdPath'
+        - in: query
+          name: kind
+          schema:
+            type: string
+            enum:
+              - member
+              - invite
+          description: Only accepted members, or only pending invites. Omit for both.
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 250
+            default: 50
+          description: Page size (max 250). A larger value is rejected with **400**.
+        - $ref: '#/components/parameters/CursorQuery'
+      responses:
+        '200':
+          description: Members and invites retrieved successfully
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Member'
+                  meta:
+                    $ref: '#/components/schemas/MemberListMeta'
+              examples:
+                ownerView:
+                  summary: An owner's view, one member and one pending invite
+                  value:
+                    data:
+                      - kind: invite
+                        id: 0b2a5a6e-3c1f-4d52-9a39-6f7e5c1d2a10
+                        name: Grace Hopper
+                        email: grace@example.com
+                        role: member
+                        status: pending
+                        twoFactorEnabled: null
+                        teamNames: []
+                        invitedAt: '2026-06-08T12:00:00.000Z'
+                      - kind: member
+                        id: clusr1234567890123456789012
+                        name: Ada Lovelace
+                        email: ada@example.com
+                        role: owner
+                        status: active
+                        twoFactorEnabled: true
+                        teamNames: []
+                        invitedAt: null
+                    meta:
+                      limit: 50
+                      nextCursor: null
+                      totalCount: 2
+                      totalCountRelation: eq
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3UnauthorizedSession'
+        '403':
+          description: 'Forbidden — the caller is not a member of the organization, holds the billing role, or cannot see it (`code: forbidden`; 404 is not used, to avoid an existence leak).'
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+  /api/v3/organizations/{organizationId}/members/{userId}:
+    patch:
+      operationId: updateOrganizationMemberRoleV3
+      summary: Change a member's role
+      description: |
+        Changes a member's organization role to **member** or **manager**.
+
+        **Nothing changes unless the body carries `confirm: true`.** Without it the call runs every check and
+        answers **200** with `status: preview`, saying who would change from which role to which and whether
+        that `lowersAccess`. Nothing is written, so a caller cannot re-role anyone on its own say-so: show the
+        preview to the person, and send the call again with `confirm: true` only after they approve that exact
+        change. Asking for the role the member already has answers `status: unchanged` and writes nothing.
+
+        Requires an **organization owner or manager**, signed in as themselves, with user management allowed
+        for their role. Session cookie only: a request with only an API key is **401**. The old members
+        table's rules apply: nobody changes their own role, a manager assigns only `member` and never touches
+        an owner, the last owner cannot be demoted, and the organization's plan must include role management
+        (otherwise **403**). `owner` and `billing` cannot be granted here. A member who is not in the
+        organization answers the same **403** as an unauthorized caller.
+      tags:
+        - V3 Organizations
+      parameters:
+        - $ref: '#/components/parameters/OrganizationIdPath'
+        - $ref: '#/components/parameters/MemberUserIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemberRoleUpdateRequest'
+            examples:
+              preview:
+                summary: Preview a role change, changing nothing
+                value:
+                  role: manager
+              confirmed:
+                summary: Apply the change the person approved
+                value:
+                  role: manager
+                  confirm: true
+      responses:
+        '200':
+          description: 'The role change preview (`status: preview`, nothing changed), the applied change (`updated`), or a no-op (`unchanged`).'
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MemberRoleUpdateResource'
+              examples:
+                preview:
+                  summary: Preview, nothing changed
+                  value:
+                    data:
+                      status: preview
+                      organizationId: clor1234567890123456789012
+                      userId: clusr1234567890123456789012
+                      previousRole: member
+                      role: manager
+                      lowersAccess: false
+                      message: 'Not changed. This would change the member''s role from member to manager. Call again with confirm: true after the person approves.'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3UnauthorizedSession'
+        '403':
+          description: 'Forbidden — the caller is not an owner or manager of the organization, may not manage users, or cannot see it; the target is not a member of the organization; a manager tried to assign `manager` or to change an owner; the caller tried to change their own role; or the organization''s plan does not include role management (`code: forbidden`).'
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: 'Conflict — the member is the last owner and cannot be demoted, or two owner demotions raced (`code: conflict`). A preview answers the last-owner case too, so it never promises a change the confirmed call would refuse.'
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+    delete:
+      operationId: removeOrganizationMemberV3
+      summary: Remove a member
+      description: |
+        Removes a member from the organization, together with their team memberships.
+
+        **Nothing is removed unless the query carries `confirm=true`.** Without it the call runs every check
+        and answers **200** with `status: preview`. Show the preview to the person, and send the call again
+        with `confirm=true` only after they approve.
+
+        Requires an **organization owner or manager**, signed in as themselves, with user management allowed
+        for their role. Session cookie only: a request with only an API key is **401**. Nobody removes
+        themselves (leaving an organization is the person's own action in the app), a manager never removes
+        an owner, and the last owner stays. A member who is not in the organization answers the same **403**
+        as an unauthorized caller.
+      tags:
+        - V3 Organizations
+      parameters:
+        - $ref: '#/components/parameters/OrganizationIdPath'
+        - $ref: '#/components/parameters/MemberUserIdPath'
+        - in: query
+          name: confirm
+          schema:
+            type: string
+            enum:
+              - 'true'
+              - 'false'
+          description: '`true` to remove the member. Anything else, or omitted, answers a preview and removes nothing.'
+      responses:
+        '200':
+          description: 'The removal preview (`status: preview`, nothing removed) or the completed removal.'
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MemberRemoveResource'
+              examples:
+                preview:
+                  summary: Preview, nothing removed
+                  value:
+                    data:
+                      status: preview
+                      organizationId: clor1234567890123456789012
+                      userId: clusr1234567890123456789012
+                      role: member
+                      message: 'Not removed. This would remove a member with the role member and their team memberships from the organization. Call again with confirm: true after the person approves.'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3UnauthorizedSession'
+        '403':
+          description: 'Forbidden — the caller is not an owner or manager of the organization, may not manage users, or cannot see it; the target is not a member of the organization; the caller tried to remove themselves; or a manager tried to remove an owner (`code: forbidden`).'
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: 'Conflict — the member is the last owner and cannot be removed (`code: conflict`). A preview answers it too.'
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
   /api/v3/workspaces:
     post:
       operationId: createWorkspaceV3
@@ -9636,6 +10129,490 @@ paths:
         - sessionAuth: []
         - apiKeyAuth: []
         - bearerAuth: []
+  /api/v3/organizations/{organizationId}/teams:
+    get:
+      operationId: listTeamsV3
+      summary: List an organization's teams
+      description: |
+        Lists the organization's teams with their member counts and the caller's own role in each. Organization
+        owners and managers also see which workspaces each team can use (`workspaces`); everyone else gets
+        `null` there. At most 200 teams are returned, and `meta.totalCount` says when more exist. For one team
+        with its members, use `GET /api/v3/teams/{teamId}`.
+
+        Requires an organization member who is not on the billing role, signed in as themselves. Session cookie
+        only: a request with only an API key is **401** (the MCP `list_teams` tool answers **403**). Teams are
+        an **Enterprise** feature: without the licence the answer is **403**, never an empty list.
+      tags:
+        - V3 Teams
+      parameters:
+        - $ref: '#/components/parameters/OrganizationIdPath'
+      responses:
+        '200':
+          description: The organization's teams
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TeamListItem'
+                  meta:
+                    $ref: '#/components/schemas/TeamListMeta'
+              example:
+                data:
+                  - id: clte1234567890123456789012
+                    name: Support
+                    memberCount: 4
+                    viewerRole: null
+                    workspaces:
+                      - workspaceId: clws1234567890123456789012
+                        workspaceName: Acme Feedback
+                        permission: readWrite
+                meta:
+                  limit: 200
+                  nextCursor: null
+                  totalCount: 1
+                  totalCountRelation: eq
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3UnauthorizedSession'
+        '403':
+          description: 'Forbidden — the caller is not a member of the organization (or is on the billing role), or cannot see it; or the organization''s plan does not include teams (they are an Enterprise feature, so the answer is never an empty success; `code: forbidden`, and the `detail` names the licence).'
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+    post:
+      operationId: createTeamV3
+      summary: Create a team
+      description: |
+        Creates an empty team: it has no members and no workspace access until `PATCH /api/v3/teams/{teamId}`
+        adds them.
+
+        Requires an **organization owner or manager**, signed in as themselves, and the **Enterprise** teams
+        licence. Session cookie only: a request with only an API key is **401**. Someone who is not an owner or
+        manager of the organization, or who cannot see it, gets the same **403**, so the answer does not reveal
+        whether the organization exists. A name already used by another team in the organization is **409**.
+      tags:
+        - V3 Teams
+      parameters:
+        - $ref: '#/components/parameters/OrganizationIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTeamRequest'
+            examples:
+              basic:
+                summary: Create a team
+                value:
+                  name: Support
+      responses:
+        '201':
+          description: Team created
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Location:
+              schema:
+                type: string
+              description: Path of the new team, `/api/v3/teams/{teamId}`. The resource accepts `GET`, `PATCH` and `DELETE`.
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Team'
+              example:
+                data:
+                  id: clte1234567890123456789012
+                  name: Support
+                  organizationId: clor1234567890123456789012
+                  members: []
+                  workspaces: []
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3UnauthorizedSession'
+        '403':
+          description: 'Forbidden — the caller is not an owner or manager of the organization, or cannot see it; or the organization''s plan does not include teams (they are an Enterprise feature, so the answer is never an empty success; `code: forbidden`, and the `detail` names the licence).'
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: 'Conflict — a team with this name already exists in the organization (`code: conflict`).'
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+  /api/v3/teams/{teamId}:
+    get:
+      operationId: getTeamV3
+      summary: Get a team
+      description: |
+        Reads one team with its members and the workspaces it can use. This is the state `PATCH
+        /api/v3/teams/{teamId}` starts from, since its `members` and `workspaces` replace the stored lists.
+
+        Requires an **organization owner or manager**, or an admin of this team, signed in as themselves, and
+        the **Enterprise** teams licence. Session cookie only: a request with only an API key is **401**.
+        Anyone else, and a team that does not exist, gets the same **403**.
+      tags:
+        - V3 Teams
+      parameters:
+        - $ref: '#/components/parameters/TeamIdPath'
+      responses:
+        '200':
+          description: The team
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Team'
+              example:
+                data:
+                  id: clte1234567890123456789012
+                  name: Support
+                  organizationId: clor1234567890123456789012
+                  members:
+                    - userId: clus1234567890123456789012
+                      name: Ada Lovelace
+                      role: admin
+                  workspaces:
+                    - workspaceId: clws1234567890123456789012
+                      workspaceName: Acme Feedback
+                      permission: readWrite
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3UnauthorizedSession'
+        '403':
+          description: 'Forbidden — the caller cannot manage the team, or it does not exist (`code: forbidden`; 404 is not used, to avoid an existence leak); or the organization''s plan does not include teams (they are an Enterprise feature, so the answer is never an empty success; `code: forbidden`, and the `detail` names the licence).'
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+    patch:
+      operationId: updateTeamV3
+      summary: Update a team
+      description: |
+        Changes a team's name, members and workspace access. `members` and `workspaces` are the **complete new
+        lists**: anyone or any workspace left out is removed, so read the team first with `GET
+        /api/v3/teams/{teamId}`. At least one of `name`, `members` and `workspaces` is required.
+
+        **A change that takes access away is not applied unless the body carries `confirm: true`.** That means a
+        member removed or demoted from admin, or a workspace removed from the team or its permission lowered.
+        Without `confirm` the call runs every check and answers **200** with `status: preview` and the
+        `changes`, writing nothing, so a caller cannot cut anyone off on its own say-so: show the preview to the
+        person, and send the call again with `confirm: true` only after they approve that exact change. Adding
+        people, widening access and renaming apply at once (`status: updated`); a request that matches what is
+        stored answers `status: unchanged`.
+
+        Requires an **organization owner or manager**, or an admin of this team, signed in as themselves, and the
+        **Enterprise** teams licence. Session cookie only: a request with only an API key is **401**. A team
+        admin who is not an owner or manager may change the name and the members, but not the workspace access
+        (**403**), and may not remove themselves or change their own team role (**403**). Organization owners
+        and managers are always team admins; asking for `contributor` is **422**, as is a person who is not a
+        member of the organization or a workspace of another organization. A name already used by another team
+        is **409**.
+      tags:
+        - V3 Teams
+      parameters:
+        - $ref: '#/components/parameters/TeamIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTeamRequest'
+            examples:
+              rename:
+                summary: Rename the team
+                value:
+                  name: Customer Success
+              add-member:
+                summary: Replace the member list (everyone not listed is removed)
+                value:
+                  members:
+                    - userId: clus1234567890123456789012
+                      role: admin
+                    - userId: clus2234567890123456789012
+              grant-workspace:
+                summary: Replace the workspace access
+                value:
+                  workspaces:
+                    - workspaceId: clws1234567890123456789012
+                      permission: readWrite
+              confirmed:
+                summary: Apply a removal the person approved
+                value:
+                  members:
+                    - userId: clus1234567890123456789012
+                  confirm: true
+      responses:
+        '200':
+          description: 'The preview (`status: preview`, nothing written), the updated team, or the unchanged team.'
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TeamUpdateResource'
+              examples:
+                preview:
+                  summary: A removal, nothing written
+                  value:
+                    data:
+                      status: preview
+                      changes:
+                        name: null
+                        membersAdded: []
+                        membersRemoved:
+                          - clus2234567890123456789012
+                        memberRolesChanged: []
+                        workspacesAdded: []
+                        workspacesRemoved: []
+                        workspacePermissionsChanged: []
+                      team:
+                        id: clte1234567890123456789012
+                        name: Support
+                        organizationId: clor1234567890123456789012
+                        members:
+                          - userId: clus1234567890123456789012
+                            name: Ada Lovelace
+                            role: admin
+                          - userId: clus2234567890123456789012
+                            name: Grace Hopper
+                            role: contributor
+                        workspaces: []
+                      message: 'Not changed. This takes access away from people or workspaces. Call again with confirm: true after the person approves.'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3UnauthorizedSession'
+        '403':
+          description: 'Forbidden — the caller cannot manage the team, or it does not exist (`code: forbidden`); a team admin tried to change the workspace access or their own membership; or the organization''s plan does not include teams (they are an Enterprise feature, so the answer is never an empty success; `code: forbidden`, and the `detail` names the licence).'
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: 'Conflict — another team in the organization already has this name (`code: conflict`).'
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+    delete:
+      operationId: deleteTeamV3
+      summary: Delete a team
+      description: |
+        Deletes a team. Its members stay in the organization but lose the workspace access the team gave them.
+
+        **Nothing is deleted unless the query carries `confirm=true`.** Without it the call runs every check and
+        answers **200** with `status: preview` and the member and workspace counts, so a caller cannot delete a
+        team on its own say-so: show the preview to the person, and send the call again with `confirm=true` only
+        after they approve. A confirmed delete answers **200** with `status: deleted`.
+
+        Requires an **organization owner or manager**, signed in as themselves, and the **Enterprise** teams
+        licence. Session cookie only: a request with only an API key is **401**. A team admin who is not an
+        owner or manager, and a team that does not exist, get the same **403**.
+      tags:
+        - V3 Teams
+      parameters:
+        - $ref: '#/components/parameters/TeamIdPath'
+        - in: query
+          name: confirm
+          required: false
+          schema:
+            type: string
+            enum:
+              - 'true'
+              - 'false'
+          description: Pass `true` to actually delete. Anything else, or nothing, only previews.
+      responses:
+        '200':
+          description: 'The preview (`status: preview`, nothing deleted) or the deleted team (`status: deleted`).'
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TeamDeleteResource'
+              examples:
+                preview:
+                  summary: Preview, nothing deleted
+                  value:
+                    data:
+                      status: preview
+                      id: clte1234567890123456789012
+                      organizationId: clor1234567890123456789012
+                      name: Support
+                      memberCount: 4
+                      workspaceCount: 1
+                      message: 'Not deleted. Its members lose the workspace access this team gave them. Call again with confirm: true after the person approves.'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3UnauthorizedSession'
+        '403':
+          description: 'Forbidden — the caller is not an owner or manager, or the team does not exist (`code: forbidden`); or the organization''s plan does not include teams (they are an Enterprise feature, so the answer is never an empty success; `code: forbidden`, and the `detail` names the licence).'
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
 components:
   securitySchemes:
     sessionAuth:
@@ -18461,6 +19438,239 @@ components:
           description: Present only when `status` is `invited`. `false` means the invite exists but the email could not be sent; do not retry the call, the invite can be resent.
         message:
           type: string
+    MemberInviteDeleteResource:
+      type: object
+      description: 'The outcome of an invite deletion. `status: preview` means every check passed and nothing was deleted.'
+      required:
+        - status
+        - organizationId
+        - inviteId
+        - role
+        - message
+      properties:
+        status:
+          type: string
+          enum:
+            - preview
+            - deleted
+        organizationId:
+          type: string
+          format: cuid2
+        inviteId:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum:
+            - owner
+            - manager
+            - member
+            - billing
+          description: The role the invite carried.
+        message:
+          type: string
+    MemberInviteResendResource:
+      type: object
+      description: 'The outcome of an invite resend: the invite''s expiry moved and the email was attempted again.'
+      required:
+        - status
+        - organizationId
+        - inviteId
+        - role
+        - expiresAt
+        - emailSent
+        - message
+      properties:
+        status:
+          type: string
+          enum:
+            - resent
+        organizationId:
+          type: string
+          format: cuid2
+        inviteId:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum:
+            - owner
+            - manager
+            - member
+            - billing
+        expiresAt:
+          type: string
+          format: date-time
+          description: The new expiry, seven days after the resend.
+        emailSent:
+          type: boolean
+          description: '`false` means the invite was refreshed but the email could not be sent; do not retry the call in a loop.'
+        message:
+          type: string
+    Member:
+      type: object
+      description: 'One line of an organization''s people list: an accepted member or a pending invite.'
+      required:
+        - kind
+        - id
+        - name
+        - email
+        - role
+        - status
+        - twoFactorEnabled
+        - teamNames
+        - invitedAt
+      properties:
+        kind:
+          type: string
+          enum:
+            - member
+            - invite
+        id:
+          type: string
+          description: The user id for a `member`, the invite id for an `invite`.
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum:
+            - owner
+            - manager
+            - member
+            - billing
+        status:
+          type: string
+          enum:
+            - active
+            - inactive
+            - pending
+            - expired
+          description: '`active` or `inactive` (the account was deactivated) for a member; `pending` or `expired` for an invite.'
+        twoFactorEnabled:
+          type:
+            - boolean
+            - 'null'
+          description: '`null` for an invite, and for a viewer who is not an owner or manager of the organization.'
+        teamNames:
+          type:
+            - array
+            - 'null'
+          items:
+            type: string
+          description: '`null` for a viewer who is not an owner or manager of the organization. Owners and managers belong to every team, so their list is not the whole picture.'
+        invitedAt:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          description: 'Invites only: when the invite was sent.'
+    MemberListMeta:
+      allOf:
+        - $ref: '#/components/schemas/ListPaginationMeta'
+        - type: object
+          required:
+            - totalCount
+            - totalCountRelation
+          properties:
+            totalCount:
+              type: integer
+              minimum: 0
+              description: Rows matching the `kind` filter across all pages, so "how many members" never needs paging. Exact up to the directory's own cap of 500 members and 500 invites.
+            totalCountRelation:
+              type: string
+              enum:
+                - eq
+                - gte
+              description: '`eq` when `totalCount` is exact, `gte` when the directory was cut at its cap and it is a lower bound.'
+      unevaluatedProperties: false
+      description: 'The list `meta` for organization members: pagination plus the number of matching rows.'
+    MemberRemoveResource:
+      type: object
+      description: 'The outcome of a member removal. `status: preview` means every check passed and nothing was removed.'
+      required:
+        - status
+        - organizationId
+        - userId
+        - role
+        - message
+      properties:
+        status:
+          type: string
+          enum:
+            - preview
+            - removed
+        organizationId:
+          type: string
+          format: cuid2
+        userId:
+          type: string
+        role:
+          type: string
+          enum:
+            - owner
+            - manager
+            - member
+            - billing
+          description: The role the removed member had.
+        message:
+          type: string
+    MemberRoleUpdateRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - role
+      properties:
+        role:
+          type: string
+          enum:
+            - member
+            - manager
+          description: New organization role. Only an owner may grant `manager`. `owner` and `billing` cannot be granted here.
+        confirm:
+          type: boolean
+          description: 'Must be `true` to change the role. Without it nothing is written and the call answers with `status: preview`. Set it only after the person has approved this exact change.'
+    MemberRoleUpdateResource:
+      type: object
+      description: 'The outcome of a role change. `status: preview` means every check passed and nothing was changed; `updated` means the role was written; `unchanged` means the member already had the requested role.'
+      required:
+        - status
+        - organizationId
+        - userId
+        - previousRole
+        - role
+        - lowersAccess
+        - message
+      properties:
+        status:
+          type: string
+          enum:
+            - preview
+            - updated
+            - unchanged
+        organizationId:
+          type: string
+          format: cuid2
+        userId:
+          type: string
+        previousRole:
+          type: string
+          enum:
+            - owner
+            - manager
+            - member
+            - billing
+        role:
+          type: string
+          enum:
+            - member
+            - manager
+        lowersAccess:
+          type: boolean
+          description: '`true` when the new role has less access than the previous one (`owner` > `manager` > `member` > `billing`).'
+        message:
+          type: string
     CreateWorkspaceRequest:
       type: object
       additionalProperties: false
@@ -18619,6 +19829,325 @@ components:
         updatedAt:
           type: string
           format: date-time
+    TeamWorkspaceAccess:
+      type: object
+      required:
+        - workspaceId
+        - workspaceName
+        - permission
+      properties:
+        workspaceId:
+          type: string
+          format: cuid2
+        workspaceName:
+          type: string
+        permission:
+          type: string
+          enum:
+            - read
+            - readWrite
+            - manage
+          description: What the team may do in the workspace.
+    TeamListItem:
+      type: object
+      required:
+        - id
+        - name
+        - memberCount
+        - viewerRole
+        - workspaces
+      properties:
+        id:
+          type: string
+          format: cuid2
+        name:
+          type: string
+        memberCount:
+          type: integer
+          minimum: 0
+        viewerRole:
+          type:
+            - string
+            - 'null'
+          enum:
+            - admin
+            - contributor
+            - null
+          description: The caller's own role in the team, `null` when they are not in it.
+        workspaces:
+          type:
+            - array
+            - 'null'
+          items:
+            $ref: '#/components/schemas/TeamWorkspaceAccess'
+          description: The workspaces the team can use. `null` for a caller who is not an organization owner or manager, who may not see it.
+    TeamListMeta:
+      allOf:
+        - $ref: '#/components/schemas/ListPaginationMeta'
+        - type: object
+          required:
+            - totalCount
+            - totalCountRelation
+          properties:
+            totalCount:
+              type: integer
+              minimum: 0
+              description: Teams in the organization. When it is larger than `limit`, the list was cut at the cap of 200 teams and the rest are not returned.
+            totalCountRelation:
+              type: string
+              enum:
+                - eq
+              description: '`totalCount` is always exact.'
+      unevaluatedProperties: false
+      description: 'The list `meta` for teams: pagination (there is only ever one page, so `nextCursor` is always `null`) plus the number of teams.'
+    CreateTeamRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Name of the new team, unique in the organization. Surrounding whitespace is trimmed.
+    TeamMember:
+      type: object
+      required:
+        - userId
+        - name
+        - role
+      properties:
+        userId:
+          type: string
+          format: cuid2
+        name:
+          type: string
+        role:
+          type: string
+          enum:
+            - admin
+            - contributor
+          description: The person's role in this team. Organization owners and managers are always `admin`.
+    Team:
+      type: object
+      description: A team with its members and the workspaces it can use.
+      required:
+        - id
+        - name
+        - organizationId
+        - members
+        - workspaces
+      properties:
+        id:
+          type: string
+          format: cuid2
+        name:
+          type: string
+        organizationId:
+          type: string
+          format: cuid2
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/TeamMember'
+        workspaces:
+          type: array
+          items:
+            $ref: '#/components/schemas/TeamWorkspaceAccess'
+    TeamDeleteResource:
+      type: object
+      description: 'The outcome of a delete. `preview`: nothing was deleted because `confirm` was not `true`; the counts say what deleting would take away. `deleted`: the team is gone.'
+      required:
+        - status
+        - id
+        - organizationId
+        - name
+        - memberCount
+        - workspaceCount
+        - message
+      properties:
+        status:
+          type: string
+          enum:
+            - preview
+            - deleted
+        id:
+          type: string
+          format: cuid2
+        organizationId:
+          type: string
+          format: cuid2
+        name:
+          type: string
+        memberCount:
+          type: integer
+          minimum: 0
+        workspaceCount:
+          type: integer
+          minimum: 0
+          description: Workspaces the team could use.
+        message:
+          type: string
+    UpdateTeamRequest:
+      type: object
+      additionalProperties: false
+      description: 'At least one of `name`, `members` and `workspaces` is required. `members` and `workspaces` are the COMPLETE new lists, like the form this replaced: anyone or any workspace left out is removed, and each may appear once.'
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: New team name. Surrounding whitespace is trimmed.
+        members:
+          type: array
+          maxItems: 1000
+          description: The team's complete member list. Omit to leave the members as they are; an empty list removes everyone.
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - userId
+            properties:
+              userId:
+                type: string
+                format: cuid2
+                description: A member of the organization.
+              role:
+                type: string
+                enum:
+                  - admin
+                  - contributor
+                description: Role in the team. Defaults to the role the person has now; for someone who is not in the team yet, `admin` for an organization owner or manager and `contributor` for anyone else. An owner or manager cannot be a `contributor` (**422**).
+        workspaces:
+          type: array
+          maxItems: 1000
+          description: The team's complete workspace access. Omit to leave it as it is; an empty list removes all of it. Only organization owners and managers may change it.
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - workspaceId
+              - permission
+            properties:
+              workspaceId:
+                type: string
+                format: cuid2
+                description: A workspace of the organization.
+              permission:
+                type: string
+                enum:
+                  - read
+                  - readWrite
+                  - manage
+        confirm:
+          type: boolean
+          description: Must be `true` to apply a change that takes access away. Without it nothing is changed and the answer is a `preview`. Set it only after the person has approved this exact change.
+    TeamChanges:
+      type: object
+      description: What an update changes, as ids. Names are in the team itself.
+      required:
+        - name
+        - membersAdded
+        - membersRemoved
+        - memberRolesChanged
+        - workspacesAdded
+        - workspacesRemoved
+        - workspacePermissionsChanged
+      properties:
+        name:
+          type:
+            - object
+            - 'null'
+          required:
+            - from
+            - to
+          properties:
+            from:
+              type: string
+            to:
+              type: string
+        membersAdded:
+          type: array
+          items:
+            type: string
+        membersRemoved:
+          type: array
+          items:
+            type: string
+        memberRolesChanged:
+          type: array
+          items:
+            type: object
+            required:
+              - userId
+              - from
+              - to
+            properties:
+              userId:
+                type: string
+              from:
+                type: string
+                enum:
+                  - admin
+                  - contributor
+              to:
+                type: string
+                enum:
+                  - admin
+                  - contributor
+        workspacesAdded:
+          type: array
+          items:
+            type: string
+        workspacesRemoved:
+          type: array
+          items:
+            type: string
+        workspacePermissionsChanged:
+          type: array
+          items:
+            type: object
+            required:
+              - workspaceId
+              - from
+              - to
+            properties:
+              workspaceId:
+                type: string
+              from:
+                type: string
+                enum:
+                  - read
+                  - readWrite
+                  - manage
+              to:
+                type: string
+                enum:
+                  - read
+                  - readWrite
+                  - manage
+    TeamUpdateResource:
+      type: object
+      description: 'The outcome of an update. `preview`: the change takes access away and `confirm` was not `true`, so nothing was written (`team` is the team as it is now). `updated`: written (`team` is the result). `unchanged`: the request matched what is stored and nothing was written.'
+      required:
+        - status
+        - changes
+        - team
+        - message
+      properties:
+        status:
+          type: string
+          enum:
+            - preview
+            - updated
+            - unchanged
+        changes:
+          $ref: '#/components/schemas/TeamChanges'
+        team:
+          $ref: '#/components/schemas/Team'
+        message:
+          type: string
   responses:
     V3BadRequest:
       description: Bad Request — malformed JSON, invalid query/body/params, duplicate name, or unsupported field.
@@ -19226,3 +20755,27 @@ components:
         type: string
         format: cuid2
       description: Organization identifier. Take it from `GET /api/v3/account/context`.
+    InviteIdPath:
+      in: path
+      name: inviteId
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 'Invite id. Take it from the `id` of a `kind: invite` row of `GET /api/v3/organizations/{organizationId}/members`.'
+    MemberUserIdPath:
+      in: path
+      name: userId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: 'User id of the member. Take it from the `id` of a `kind: member` row of `GET /api/v3/organizations/{organizationId}/members`.'
+    TeamIdPath:
+      in: path
+      name: teamId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Team identifier. Take it from `GET /api/v3/organizations/{organizationId}/teams`.

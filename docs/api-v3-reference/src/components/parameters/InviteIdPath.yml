@@ -1,0 +1,8 @@
+in: path
+name: inviteId
+required: true
+schema:
+  type: string
+  format: uuid
+description: >-
+  Invite id. Take it from the `id` of a `kind: invite` row of `GET /api/v3/organizations/{organizationId}/members`.

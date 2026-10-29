@@ -1,0 +1,34 @@
+type: object
+required:
+  - id
+  - name
+  - memberCount
+  - viewerRole
+  - workspaces
+properties:
+  id:
+    type: string
+    format: cuid2
+  name:
+    type: string
+  memberCount:
+    type: integer
+    minimum: 0
+  viewerRole:
+    type:
+      - string
+      - "null"
+    enum:
+      - admin
+      - contributor
+      - null
+    description: The caller's own role in the team, `null` when they are not in it.
+  workspaces:
+    type:
+      - array
+      - "null"
+    items:
+      $ref: ./TeamWorkspaceAccess.yml
+    description: >-
+      The workspaces the team can use. `null` for a caller who is not an organization owner or manager,
+      who may not see it.

@@ -78,7 +78,9 @@ Three things to know before reading the result:
   `PATCH /api/v3/workspaces/{workspaceId}` and `PUT .../branding` accept a `manage` key and really write,
   so `db:seed:contract` gives them a workspace of their own (`WORKSPACE_SETUP`) and grants the seed key
   `manage` on it. The branding examples send `https://cdn.example.com/acme-logo.png`, a host that does
-  not resolve, so the run documents the 422 without fetching anything.
+  not resolve, so the run documents the 422 without fetching anything. The member, invite-management
+  and team routes (`.../members`, `.../invites/{inviteId}`, `.../teams`, `/api/v3/teams/{teamId}`) are
+  session-only too, so the key gets their documented 401 and they need no fixtures.
 - **The eight `/feedbackRecords` operations are not exercised.** They are served by the API gateway
   (Envoy in Cloud, Traefik in the Docker install) straight to the Hub; the Next.js route under
   `/api/v3/feedbackRecords` is a local-dev proxy that needs a running Hub and answers 404 in

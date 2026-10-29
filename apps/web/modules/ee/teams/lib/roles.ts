@@ -6,7 +6,6 @@ import { logger } from "@formbricks/logger";
 import { ZId, ZString } from "@formbricks/types/common";
 import { DatabaseError, UnknownError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
-import { TTeamRole } from "@/modules/ee/teams/team-list/types/team";
 import { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 
 export const getWorkspacePermissionByUserId = reactCache(
@@ -52,34 +51,6 @@ export const getWorkspacePermissionByUserId = reactCache(
       }
 
       throw new UnknownError("Error while fetching membership");
-    }
-  }
-);
-
-export const getTeamRoleByTeamIdUserId = reactCache(
-  async (teamId: string, userId: string): Promise<TTeamRole | null> => {
-    validateInputs([teamId, ZId], [userId, ZId]);
-    try {
-      const teamUser = await prisma.teamUser.findUnique({
-        where: {
-          teamId_userId: {
-            teamId,
-            userId,
-          },
-        },
-      });
-
-      if (!teamUser) {
-        return null;
-      }
-
-      return teamUser.role;
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError(error.message);
-      }
-
-      throw error;
     }
   }
 );

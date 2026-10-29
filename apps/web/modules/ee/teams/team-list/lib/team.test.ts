@@ -342,7 +342,7 @@ describe("updateTeamDetails", () => {
       workspaceTeams: [],
     } as any);
     vi.mocked(prisma.membership.count).mockResolvedValueOnce(0);
-    await expect(updateTeamDetails("t1", data)).rejects.toThrow();
+    await expect(updateTeamDetails("t1", data)).rejects.toThrow(InvalidInputError);
   });
   test("throws error if workspace not in org", async () => {
     vi.mocked(prisma.team.findUnique).mockResolvedValueOnce({
@@ -369,7 +369,23 @@ describe("updateTeamDetails", () => {
         members: [],
         workspaces: [{ workspaceId: "p1", permission: "manage" }],
       })
-    ).rejects.toThrow();
+    ).rejects.toThrow(InvalidInputError);
+  });
+  test("accepts empty member and workspace lists: a team may have neither, and an update may remove both", async () => {
+    vi.mocked(prisma.team.findUnique).mockResolvedValueOnce({
+      id: "t1",
+      organizationId: "org1",
+      name: "Team 1",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    vi.mocked(prisma.team.findUnique).mockResolvedValueOnce(mockTeamDetails);
+    vi.mocked(prisma.team.update).mockResolvedValueOnce({} as never);
+
+    await expect(updateTeamDetails("t1", { name: "Team 1", members: [], workspaces: [] })).resolves.toBe(
+      true
+    );
+    expect(prisma.team.update).toHaveBeenCalledOnce();
   });
   test("throws DatabaseError on Prisma error", async () => {
     vi.mocked(prisma.team.findUnique).mockRejectedValueOnce(

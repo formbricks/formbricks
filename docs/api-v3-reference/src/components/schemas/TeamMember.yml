@@ -1,0 +1,17 @@
+type: object
+required:
+  - userId
+  - name
+  - role
+properties:
+  userId:
+    type: string
+    format: cuid2
+  name:
+    type: string
+  role:
+    type: string
+    enum:
+      - admin
+      - contributor
+    description: The person's role in this team. Organization owners and managers are always `admin`.

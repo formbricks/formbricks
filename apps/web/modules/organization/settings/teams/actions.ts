@@ -5,7 +5,6 @@ import { prisma } from "@formbricks/database";
 import { ZId, ZUuid } from "@formbricks/types/common";
 import { AuthenticationError, OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
 import { assertCan } from "@/lib/authorization";
-import { INVITE_DISABLED } from "@/lib/constants";
 import { createInviteToken } from "@/lib/jwt";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
@@ -15,34 +14,11 @@ import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
-import { sendInviteMemberEmail } from "@/modules/email";
 import {
   deleteMembership,
   getMembershipsByUserId,
-  getOrganizationOwnerCount,
 } from "@/modules/organization/settings/teams/lib/membership";
-import { deleteInvite, getInvite, refreshInviteExpiration, resendInvite } from "./lib/invite";
-import { reserveInviteRateLimit, settleInviteRateLimit } from "./lib/invite-rate-limit";
-
-const ZDeleteInviteAction = z.object({
-  inviteId: ZUuid,
-});
-
-export const deleteInviteAction = authenticatedActionClient.inputSchema(ZDeleteInviteAction).action(
-  withAuditLogging("deleted", "invite", async ({ ctx, parsedInput }) => {
-    const organizationId = await getOrganizationIdFromInviteId(parsedInput.inviteId);
-
-    await assertCan({ type: "user", id: ctx.user.id }, "organization.manage", {
-      type: "organization",
-      id: organizationId,
-    });
-    await applyRateLimit(rateLimitConfigs.actions.stateMutation, organizationId);
-    ctx.auditLoggingCtx.organizationId = organizationId;
-    ctx.auditLoggingCtx.inviteId = parsedInput.inviteId;
-    ctx.auditLoggingCtx.oldObject = { ...(await getInvite(parsedInput.inviteId)) };
-    return await deleteInvite(parsedInput.inviteId);
-  })
-);
+import { refreshInviteExpiration } from "./lib/invite";
 
 const ZCreateInviteTokenAction = z.object({
   inviteId: ZUuid,
@@ -82,113 +58,6 @@ export const createInviteTokenAction = authenticatedActionClient.inputSchema(ZCr
     });
 
     return { inviteToken: encodeURIComponent(inviteToken) };
-  })
-);
-
-const ZDeleteMembershipAction = z.object({
-  userId: ZId,
-  organizationId: ZId,
-});
-
-export const deleteMembershipAction = authenticatedActionClient.inputSchema(ZDeleteMembershipAction).action(
-  withAuditLogging("deleted", "membership", async ({ ctx, parsedInput }) => {
-    await assertCan({ type: "user", id: ctx.user.id }, "organization.manage", {
-      type: "organization",
-      id: parsedInput.organizationId,
-    });
-    await applyRateLimit(rateLimitConfigs.actions.stateMutation, parsedInput.organizationId);
-
-    if (parsedInput.userId === ctx.user.id) {
-      throw new OperationNotAllowedError("You cannot delete yourself from the organization");
-    }
-
-    const currentMembership = await getMembershipByUserIdOrganizationId(
-      ctx.user.id,
-      parsedInput.organizationId
-    );
-
-    if (!currentMembership) {
-      throw new AuthenticationError("Not a member of this organization");
-    }
-
-    const membership = await getMembershipByUserIdOrganizationId(
-      parsedInput.userId,
-      parsedInput.organizationId
-    );
-
-    if (!membership) {
-      throw new AuthenticationError("Not a member of this organization");
-    }
-
-    const isOwner = membership.role === "owner";
-
-    if (currentMembership.role === "manager" && isOwner) {
-      throw new OperationNotAllowedError("You cannot delete the owner of the organization");
-    }
-
-    if (isOwner) {
-      const ownerCount = await getOrganizationOwnerCount(parsedInput.organizationId);
-
-      if (ownerCount <= 1) {
-        throw new ValidationError("You cannot delete the last owner of the organization");
-      }
-    }
-
-    ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
-    ctx.auditLoggingCtx.membershipId = `${parsedInput.userId}-${parsedInput.organizationId}`;
-    ctx.auditLoggingCtx.oldObject = membership;
-    return await deleteMembership(parsedInput.userId, parsedInput.organizationId);
-  })
-);
-
-const ZResendInviteAction = z.object({
-  inviteId: ZUuid,
-  organizationId: ZId,
-});
-
-export const resendInviteAction = authenticatedActionClient.inputSchema(ZResendInviteAction).action(
-  withAuditLogging("updated", "invite", async ({ ctx, parsedInput }) => {
-    if (INVITE_DISABLED) {
-      throw new OperationNotAllowedError("Invite are disabled");
-    }
-
-    const inviteOrganizationId = await getOrganizationIdFromInviteId(parsedInput.inviteId);
-
-    if (inviteOrganizationId !== parsedInput.organizationId) {
-      throw new ValidationError("Invite does not belong to the organization");
-    }
-
-    await assertCan({ type: "user", id: ctx.user.id }, "organization.manage", {
-      type: "organization",
-      id: parsedInput.organizationId,
-    });
-    await applyRateLimit(rateLimitConfigs.actions.stateMutation, parsedInput.organizationId);
-    const rateLimitReservation = await reserveInviteRateLimit(parsedInput.organizationId, ctx.user.id);
-
-    let invite: Awaited<ReturnType<typeof getInvite>>;
-    let updatedInvite: Awaited<ReturnType<typeof resendInvite>>;
-    try {
-      invite = await getInvite(parsedInput.inviteId);
-      updatedInvite = await resendInvite(parsedInput.inviteId);
-    } catch (error) {
-      await settleInviteRateLimit(rateLimitReservation, 0);
-      throw error;
-    }
-    await settleInviteRateLimit(rateLimitReservation, 1);
-
-    ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
-    ctx.auditLoggingCtx.inviteId = parsedInput.inviteId;
-    ctx.auditLoggingCtx.oldObject = { ...invite };
-    ctx.auditLoggingCtx.newObject = updatedInvite;
-    await sendInviteMemberEmail(
-      parsedInput.inviteId,
-      updatedInvite.email,
-      invite?.creator?.name ?? "",
-      updatedInvite.name ?? "",
-      parsedInput.organizationId
-    );
-
-    return updatedInvite;
   })
 );
 

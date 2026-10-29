@@ -1,0 +1,22 @@
+allOf:
+  - $ref: ./ListPaginationMeta.yml
+  - type: object
+    required:
+      - totalCount
+      - totalCountRelation
+    properties:
+      totalCount:
+        type: integer
+        minimum: 0
+        description: >-
+          Teams in the organization. When it is larger than `limit`, the list was cut at the cap of 200
+          teams and the rest are not returned.
+      totalCountRelation:
+        type: string
+        enum:
+          - eq
+        description: '`totalCount` is always exact.'
+unevaluatedProperties: false
+description: >-
+  The list `meta` for teams: pagination (there is only ever one page, so `nextCursor` is always `null`)
+  plus the number of teams.

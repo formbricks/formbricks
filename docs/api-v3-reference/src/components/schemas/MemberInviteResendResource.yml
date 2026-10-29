@@ -1,0 +1,39 @@
+type: object
+description: >-
+  The outcome of an invite resend: the invite's expiry moved and the email was attempted again.
+required:
+  - status
+  - organizationId
+  - inviteId
+  - role
+  - expiresAt
+  - emailSent
+  - message
+properties:
+  status:
+    type: string
+    enum:
+      - resent
+  organizationId:
+    type: string
+    format: cuid2
+  inviteId:
+    type: string
+    format: uuid
+  role:
+    type: string
+    enum:
+      - owner
+      - manager
+      - member
+      - billing
+  expiresAt:
+    type: string
+    format: date-time
+    description: The new expiry, seven days after the resend.
+  emailSent:
+    type: boolean
+    description: >-
+      `false` means the invite was refreshed but the email could not be sent; do not retry the call in a loop.
+  message:
+    type: string

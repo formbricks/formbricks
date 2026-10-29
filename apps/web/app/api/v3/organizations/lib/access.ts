@@ -65,3 +65,28 @@ export async function requireV3OrganizationManager(
 
   return { userId, role };
 }
+
+const USER_MANAGEMENT_DENIED_MESSAGE = "User management is not allowed for your role.";
+
+/**
+ * Whether the viewer may manage people, as a signed-in owner or manager: `requireV3OrganizationManager`
+ * plus `organization.manage_access`, the decision `USER_MANAGEMENT_MINIMUM_ROLE` feeds, which the old
+ * members table applied before it showed any of its buttons. Shared by the member, invite and invite-management operations.
+ */
+export async function requireV3UserManagement(
+  authentication: TV3Authentication,
+  organizationId: string,
+  requestId: string,
+  instance: string
+): Promise<Response | { userId: string; role: TOrganizationRole }> {
+  const access = await requireV3OrganizationManager(authentication, organizationId, requestId, instance);
+  if (access instanceof Response) return access;
+
+  const allowed = await can({ type: "user", id: access.userId }, "organization.manage_access", {
+    type: "organization",
+    id: organizationId,
+  });
+  if (!allowed) return problemForbidden(requestId, USER_MANAGEMENT_DENIED_MESSAGE, instance);
+
+  return access;
+}

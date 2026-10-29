@@ -1,0 +1,183 @@
+get:
+  operationId: listTeamsV3
+  summary: List an organization's teams
+  description: |
+    Lists the organization's teams with their member counts and the caller's own role in each. Organization
+    owners and managers also see which workspaces each team can use (`workspaces`); everyone else gets
+    `null` there. At most 200 teams are returned, and `meta.totalCount` says when more exist. For one team
+    with its members, use `GET /api/v3/teams/{teamId}`.
+
+    Requires an organization member who is not on the billing role, signed in as themselves. Session cookie
+    only: a request with only an API key is **401** (the MCP `list_teams` tool answers **403**). Teams are
+    an **Enterprise** feature: without the licence the answer is **403**, never an empty list.
+  tags:
+    - V3 Teams
+  parameters:
+    - $ref: ../components/parameters/OrganizationIdPath.yml
+  responses:
+    "200":
+      description: The organization's teams
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: ../components/schemas/TeamListItem.yml
+              meta:
+                $ref: ../components/schemas/TeamListMeta.yml
+          example:
+            data:
+              - id: clte1234567890123456789012
+                name: Support
+                memberCount: 4
+                viewerRole: null
+                workspaces:
+                  - workspaceId: clws1234567890123456789012
+                    workspaceName: Acme Feedback
+                    permission: readWrite
+            meta:
+              limit: 200
+              nextCursor: null
+              totalCount: 1
+              totalCountRelation: eq
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3UnauthorizedSession.yml
+    "403":
+      description: >-
+        Forbidden — the caller is not a member of the organization (or is on the billing role), or cannot see it; or the organization's plan does not include teams (they are an Enterprise feature, so the answer is never an
+        empty success; `code: forbidden`, and the `detail` names the licence).
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+post:
+  operationId: createTeamV3
+  summary: Create a team
+  description: |
+    Creates an empty team: it has no members and no workspace access until `PATCH /api/v3/teams/{teamId}`
+    adds them.
+
+    Requires an **organization owner or manager**, signed in as themselves, and the **Enterprise** teams
+    licence. Session cookie only: a request with only an API key is **401**. Someone who is not an owner or
+    manager of the organization, or who cannot see it, gets the same **403**, so the answer does not reveal
+    whether the organization exists. A name already used by another team in the organization is **409**.
+  tags:
+    - V3 Teams
+  parameters:
+    - $ref: ../components/parameters/OrganizationIdPath.yml
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/CreateTeamRequest.yml
+        examples:
+          basic:
+            summary: Create a team
+            value:
+              name: Support
+  responses:
+    "201":
+      description: Team created
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Location:
+          schema:
+            type: string
+          description: Path of the new team, `/api/v3/teams/{teamId}`. The resource accepts `GET`, `PATCH` and `DELETE`.
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/Team.yml
+          example:
+            data:
+              id: clte1234567890123456789012
+              name: Support
+              organizationId: clor1234567890123456789012
+              members: []
+              workspaces: []
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3UnauthorizedSession.yml
+    "403":
+      description: >-
+        Forbidden — the caller is not an owner or manager of the organization, or cannot see it; or the organization's plan does not include teams (they are an Enterprise feature, so the answer is never an
+        empty success; `code: forbidden`, and the `detail` names the licence).
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "409":
+      description: >-
+        Conflict — a team with this name already exists in the organization (`code: conflict`).
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
