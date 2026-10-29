@@ -6,11 +6,6 @@ type TRequest = { url: string; init: RequestInit & { body: string } };
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
 
-export const buildSetOutcomeRequest = (responseId: string, outcome: TResponseOutcome | null): TRequest => ({
-  url: `/api/v3/responses/${encodeURIComponent(responseId)}`,
-  init: { method: "PATCH", headers: JSON_HEADERS, body: JSON.stringify({ outcome }) },
-});
-
 export const buildBatchOutcomeRequest = (
   workspaceId: string,
   ids: string[],
@@ -24,13 +19,6 @@ const send = async ({ url, init }: TRequest): Promise<Response> => {
   const response = await fetch(url, init);
   if (!response.ok) throw await parseV3ApiError(response);
   return response;
-};
-
-export const setResponseOutcome = async (
-  responseId: string,
-  outcome: TResponseOutcome | null
-): Promise<void> => {
-  await send(buildSetOutcomeRequest(responseId, outcome));
 };
 
 export const setResponsesOutcomeBatch = async (

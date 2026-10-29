@@ -2,12 +2,7 @@
 
 import { useMutation } from "@tanstack/react-query";
 import type { TResponseOutcome } from "@formbricks/types/responses";
-import {
-  OutcomeBatchError,
-  setOutcomeInBatches,
-  setResponseOutcome,
-  setResponsesOutcomeBatch,
-} from "../lib/client";
+import { OutcomeBatchError, setOutcomeInBatches, setResponsesOutcomeBatch } from "../lib/client";
 import type { TOutcomeChanges } from "../lib/outcome";
 
 type TVariables = {
@@ -19,8 +14,9 @@ type TVariables = {
 
 /**
  * Marks or restores responses. The list shows the new outcome at once (`applyOutcomes` patches the page's
- * own list); a refusal puts back what was not saved. One response is a PATCH, anything more goes through
- * the batch route in calls of up to 100.
+ * own list); a refusal puts back what was not saved. Every mark goes through the batch route, in calls of
+ * up to 100, one response included: the single-response PATCH is the full update, which re-runs quotas and
+ * can finish an abandoned response.
  */
 export const useSetResponsesOutcome = ({
   workspaceId,
@@ -39,10 +35,6 @@ export const useSetResponsesOutcome = ({
 }) =>
   useMutation({
     mutationFn: async ({ ids, outcome }: TVariables) => {
-      if (ids.length === 1) {
-        await setResponseOutcome(ids[0], outcome);
-        return { updated: 1 };
-      }
       const { updated } = await setOutcomeInBatches(ids, (chunk) =>
         setResponsesOutcomeBatch(workspaceId, chunk, outcome)
       );

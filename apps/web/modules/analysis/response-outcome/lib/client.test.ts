@@ -1,23 +1,8 @@
 import { describe, expect, test, vi } from "vitest";
 import { V3ApiError } from "@/modules/api/lib/v3-client";
-import { buildBatchOutcomeRequest, buildSetOutcomeRequest, setOutcomeInBatches } from "./client";
+import { buildBatchOutcomeRequest, setOutcomeInBatches } from "./client";
 
 describe("request building", () => {
-  test("a single mark is a PATCH of the outcome alone", () => {
-    expect(buildSetOutcomeRequest("resp1", "lowQuality")).toEqual({
-      url: "/api/v3/responses/resp1",
-      init: {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ outcome: "lowQuality" }),
-      },
-    });
-  });
-
-  test("a restore sends an explicit null, not an absent key", () => {
-    expect(JSON.parse(buildSetOutcomeRequest("r", null).init.body as string)).toEqual({ outcome: null });
-  });
-
   test("a batch is scoped by workspace in the query and carries ids and outcome in the body", () => {
     const { url, init } = buildBatchOutcomeRequest("ws 1", ["a", "b"], null);
     expect(url).toBe("/api/v3/responses/batch-outcome?workspaceId=ws+1");

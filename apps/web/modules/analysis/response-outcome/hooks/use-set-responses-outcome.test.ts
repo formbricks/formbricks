@@ -9,7 +9,6 @@ import { OutcomeBatchError } from "../lib/client";
 import { useSetResponsesOutcome } from "./use-set-responses-outcome";
 
 const client = vi.hoisted(() => ({
-  setResponseOutcome: vi.fn(),
   setResponsesOutcomeBatch: vi.fn(),
 }));
 
@@ -32,9 +31,9 @@ describe("useSetResponsesOutcome", () => {
     vi.clearAllMocks();
   });
 
-  test("one response is one PATCH, applied to the list before the server answers", async () => {
-    let resolve: () => void = () => undefined;
-    client.setResponseOutcome.mockReturnValue(new Promise<void>((done) => (resolve = done)));
+  test("one response goes through the batch route, applied to the list before the server answers", async () => {
+    let resolve: (value: { updated: number }) => void = () => undefined;
+    client.setResponsesOutcomeBatch.mockReturnValue(new Promise((done) => (resolve = done)));
     const { result } = renderHook(() => useSetResponsesOutcome({ workspaceId: "ws", applyOutcomes }), {
       wrapper,
     });
@@ -42,15 +41,14 @@ describe("useSetResponsesOutcome", () => {
     act(() => result.current.mutate({ ids: ["r1"], outcome: "lowQuality", previous: { r1: null } }));
 
     await waitFor(() => expect(applyOutcomes).toHaveBeenCalledWith({ r1: "lowQuality" }));
-    expect(client.setResponseOutcome).toHaveBeenCalledWith("r1", "lowQuality");
-    expect(client.setResponsesOutcomeBatch).not.toHaveBeenCalled();
-    resolve();
+    expect(client.setResponsesOutcomeBatch).toHaveBeenCalledWith("ws", ["r1"], "lowQuality");
+    resolve({ updated: 1 });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(applyOutcomes).toHaveBeenCalledTimes(1);
   });
 
   test("a refused single mark puts the previous outcome back", async () => {
-    client.setResponseOutcome.mockRejectedValue(new Error("Forbidden"));
+    client.setResponsesOutcomeBatch.mockRejectedValue(new Error("Forbidden"));
     const { result } = renderHook(() => useSetResponsesOutcome({ workspaceId: "ws", applyOutcomes }), {
       wrapper,
     });
@@ -74,7 +72,6 @@ describe("useSetResponsesOutcome", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(client.setResponsesOutcomeBatch.mock.calls.map(([, chunk]) => chunk.length)).toEqual([100, 50]);
-    expect(client.setResponseOutcome).not.toHaveBeenCalled();
     expect(result.current.data).toEqual({ updated: 150 });
   });
 
@@ -99,7 +96,9 @@ describe("useSetResponsesOutcome", () => {
   test("reports the result and the failure through the hook-level callbacks", async () => {
     const onSaved = vi.fn();
     const onFailed = vi.fn();
-    client.setResponseOutcome.mockResolvedValueOnce(undefined).mockRejectedValueOnce(new Error("nope"));
+    client.setResponsesOutcomeBatch
+      .mockResolvedValueOnce({ updated: 1 })
+      .mockRejectedValueOnce(new Error("nope"));
     const { result } = renderHook(
       () => useSetResponsesOutcome({ workspaceId: "ws", applyOutcomes, onSaved, onFailed }),
       { wrapper }
