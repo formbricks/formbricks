@@ -35,6 +35,7 @@ import {
 import { computeResponseBase } from "@/modules/ee/analysis/charts/lib/response-base";
 import { formatTimeBucket, getTimeGranularityFromKey } from "@/modules/ee/analysis/charts/lib/time-axis";
 import { computeYAxis } from "@/modules/ee/analysis/charts/lib/y-axis-scale";
+import { isEmbeddedFieldMember } from "@/modules/ee/analysis/lib/embedded-data-fields";
 import {
   FEEDBACK_MEASURE_IDS,
   type TResponseBaseFamily,
@@ -474,6 +475,11 @@ function SeriesChart({
       return optionLabels[value] ?? value;
     }
     if (timeGranularity) return formatTimeBucket(value, timeGranularity, locale);
+    // Records without the field — written before Embedded Data reached the Hub, or from a survey that
+    // does not declare it — group under NULL, which would otherwise be an unlabelled bar.
+    if (isEmbeddedFieldMember(xAxisKey) && (value === null || value === undefined || value === "")) {
+      return t("workspace.analysis.charts.embedded_data_no_value");
+    }
     return getTranslatedDimensionValueLabel(xAxisKey, value, t) ?? formatXAxisTick(value);
   };
 

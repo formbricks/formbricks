@@ -1819,6 +1819,8 @@
         "distribution_value_share": "{value} ({percent})",
         "edit_chart_description": "Vezi și editează configurația graficului tău.",
         "edit_chart_title": "Editează graficul",
+        "embedded_data_field_description": "Date încorporate din {surveys}",
+        "embedded_data_no_value": "Nicio valoare",
         "emotion_value_anger": "Furie",
         "emotion_value_disgust": "Dezgust",
         "emotion_value_fear": "Frică",

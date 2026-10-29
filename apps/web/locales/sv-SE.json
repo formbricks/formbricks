@@ -1819,6 +1819,8 @@
         "distribution_value_share": "{value} ({percent})",
         "edit_chart_description": "Visa och redigera din diagramkonfiguration.",
         "edit_chart_title": "Redigera diagram",
+        "embedded_data_field_description": "Inbäddad data från {surveys}",
+        "embedded_data_no_value": "Inget värde",
         "emotion_value_anger": "Ilska",
         "emotion_value_disgust": "Avsky",
         "emotion_value_fear": "Rädsla",

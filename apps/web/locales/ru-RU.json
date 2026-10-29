@@ -1819,6 +1819,8 @@
         "distribution_value_share": "{value} ({percent})",
         "edit_chart_description": "Просмотри и измени настройки своего графика.",
         "edit_chart_title": "Редактировать диаграмму",
+        "embedded_data_field_description": "Встроенные данные из {surveys}",
+        "embedded_data_no_value": "Нет значения",
         "emotion_value_anger": "Гнев",
         "emotion_value_disgust": "Отвращение",
         "emotion_value_fear": "Страх",

@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import type { TChartQuery } from "@formbricks/types/analysis";
 import { formatCellValue } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { isInjectedResponseBaseColumn } from "@/modules/ee/analysis/charts/lib/response-base";
+import { isEmbeddedFieldMember } from "@/modules/ee/analysis/lib/embedded-data-fields";
 import {
   formatCubeColumnHeader,
   getTranslatedDimensionValueLabel,
@@ -57,6 +58,9 @@ export function DataViewer({
     // A matrix row's field_id (`<elementId>__<rowId>`) reads as its statement, like the grid does.
     if (key === "FeedbackRecords.fieldId" && fieldLabels && typeof value === "string") {
       return fieldLabels[value] ?? value;
+    }
+    if (isEmbeddedFieldMember(key) && (value === null || value === undefined || value === "")) {
+      return t("workspace.analysis.charts.embedded_data_no_value");
     }
     return (getTranslatedDimensionValueLabel(key, value, t) ?? formatCellValue(value)) as string;
   };

@@ -74,7 +74,8 @@ const unknownEmbeddedField = ({ requestId, instance }: TV3ChartOperationContext)
       invalid_params: [
         {
           name: "query",
-          reason: "Names an Embedded Data field the dataset no longer has; it was renamed or removed.",
+          reason:
+            "This chart uses an Embedded Data field that no survey in this dataset has anymore — it was renamed or removed. Edit the chart to pick another field.",
           code: "invalid_reference",
         },
       ],
