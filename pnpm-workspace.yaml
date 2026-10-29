@@ -103,7 +103,7 @@ catalog:
   i18next-icu: 2.4.3
   react-i18next: 16.5.8
   # --- server runtime ---
-  zod: 4.3.6
+  zod: 4.6.6
   zod-openapi: 5.4.6
   "@prisma/client": 7.10.0
   # redis 5.x. apps/web was on 4.7.1 while @formbricks/cache was on 5.11.0, and because
