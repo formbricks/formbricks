@@ -24,30 +24,7 @@ const expectTestKey = (value: string | undefined) => {
 };
 
 describe("Docker validation without repository secrets", () => {
-  test.each([
-    { token: "", forceLocal: "", expected: "false" },
-    { token: "test-depot-token", forceLocal: "false", expected: "true" },
-    { token: "test-depot-token", forceLocal: "true", expected: "false" },
-  ])("selects depot=$expected with forced local builder=$forceLocal", ({ token, forceLocal, expected }) => {
-    const step = job.steps.find((step) => step.name === "Select Docker builder")!;
-    const directory = mkdtempSync(join(tmpdir(), "docker-builder-test-"));
-    const output = join(directory, "output");
-    try {
-      execFileSync("bash", ["-e", "-c", step.run!], {
-        env: {
-          PATH: process.env.PATH,
-          DEPOT_PROJECT_TOKEN: token,
-          FORCE_LOCAL_BUILDER: forceLocal,
-          GITHUB_OUTPUT: output,
-        },
-      });
-      expect(readFileSync(output, "utf8").trim()).toBe(`depot=${expected}`);
-    } finally {
-      rmSync(directory, { recursive: true, force: true });
-    }
-  });
-
-  test.each(["Build Docker Image", "Build Docker Image without Depot credentials"])(
+  test.each(["Build Docker Image", "Build Docker Image on isolated GitHub runner"])(
     "%s receives isolated build fixtures",
     (name) => {
       const step = job.steps.find((step) => step.name === name)!;
