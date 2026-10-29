@@ -2,29 +2,18 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { ZActionClassInput } from "@formbricks/types/action-classes";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey, TSurveyVariable, ZSurvey } from "@formbricks/types/surveys/types";
 import { assertCan } from "@/lib/authorization";
-import {
-  IS_FORMBRICKS_SURVEYS_CONFIGURED,
-  POSTHOG_KEY,
-  UNSPLASH_ACCESS_KEY,
-  UNSPLASH_ALLOWED_DOMAINS,
-} from "@/lib/constants";
+import { IS_FORMBRICKS_SURVEYS_CONFIGURED, POSTHOG_KEY } from "@/lib/constants";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { resolveSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import {
-  getOrganizationIdFromSurveyId,
-  getOrganizationIdFromWorkspaceId,
-  getWorkspaceIdFromSurveyId,
-} from "@/lib/utils/helper";
+import { getOrganizationIdFromSurveyId, getWorkspaceIdFromSurveyId } from "@/lib/utils/helper";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
-import { createActionClass } from "@/modules/survey/editor/lib/action-class";
 import { checkExternalUrlsPermission } from "@/modules/survey/editor/lib/check-external-urls-permission";
 import { updateSurvey, updateSurveyDraft } from "@/modules/survey/editor/lib/survey";
 import { ZSurveyDraft } from "@/modules/survey/editor/types/survey";
@@ -369,138 +358,3 @@ export const getWorkspaceLanguagesAction = authenticatedActionClient
 
     return await getWorkspaceLanguages(parsedInput.workspaceId);
   });
-
-const ZGetImagesFromUnsplashAction = z.object({
-  searchQuery: z.string(),
-  page: z.number().optional(),
-});
-
-// Authenticated: these spend the instance's UNSPLASH_ACCESS_KEY quota on the caller's behalf, and
-// plain `actionClient` left them reachable by anyone on the internet. Both are only ever called
-// from the survey editor, which already requires a session.
-export const getImagesFromUnsplashAction = authenticatedActionClient
-  .inputSchema(ZGetImagesFromUnsplashAction)
-  .action(async ({ parsedInput, ctx }) => {
-    // Per-user: neither action carries a workspace or survey id, so a session is the only thing to
-    // scope against, and the quota being spent belongs to the whole instance.
-    await applyRateLimit(rateLimitConfigs.actions.unsplash, ctx.user.id);
-
-    if (!UNSPLASH_ACCESS_KEY) {
-      throw new Error("Unsplash access key is not set");
-    }
-    const baseUrl = "https://api.unsplash.com/search/photos";
-    const params = new URLSearchParams({
-      query: parsedInput.searchQuery,
-      client_id: UNSPLASH_ACCESS_KEY,
-      orientation: "landscape",
-      per_page: "9",
-      page: (parsedInput.page || 1).toString(),
-    });
-
-    const response = await fetch(`${baseUrl}?${params}`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Failed to fetch images from Unsplash");
-    }
-
-    const { results } = await response.json();
-    return results.map(
-      (result: {
-        id: string;
-        alt_description: string;
-        user: { first_name: string; last_name: string; links: { html: string } };
-        urls: { regular: string };
-        links: { download_location: string };
-      }) => {
-        const authorName = encodeURIComponent(result.user.first_name + " " + result.user.last_name);
-        const authorLink = encodeURIComponent(result.user.links.html);
-
-        return {
-          id: result.id,
-          alt_description: result.alt_description,
-          urls: {
-            regularWithAttribution: `${result.urls.regular}&dpr=2&authorLink=${authorLink}&authorName=${authorName}&utm_source=formbricks&utm_medium=referral`,
-            download: result.links.download_location,
-          },
-        };
-      }
-    );
-  });
-
-const isValidUnsplashUrl = (url: string): boolean => {
-  try {
-    const parsedUrl = new URL(url);
-    return parsedUrl.protocol === "https:" && UNSPLASH_ALLOWED_DOMAINS.includes(parsedUrl.hostname);
-  } catch {
-    return false;
-  }
-};
-
-const ZTriggerDownloadUnsplashImageAction = z.object({
-  downloadUrl: z.url(),
-});
-
-// Authenticated: these spend the instance's UNSPLASH_ACCESS_KEY quota on the caller's behalf, and
-// plain `actionClient` left them reachable by anyone on the internet. Both are only ever called
-// from the survey editor, which already requires a session.
-export const triggerDownloadUnsplashImageAction = authenticatedActionClient
-  .inputSchema(ZTriggerDownloadUnsplashImageAction)
-  .action(async ({ parsedInput, ctx }) => {
-    await applyRateLimit(rateLimitConfigs.actions.unsplash, ctx.user.id);
-
-    if (!isValidUnsplashUrl(parsedInput.downloadUrl)) {
-      throw new Error("Invalid Unsplash URL");
-    }
-
-    const response = await fetch(`${parsedInput.downloadUrl}/?client_id=${UNSPLASH_ACCESS_KEY}`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Failed to download image from Unsplash");
-    }
-  });
-
-const ZCreateActionClassAction = z.object({
-  action: ZActionClassInput,
-});
-
-export const createActionClassAction = authenticatedActionClient.inputSchema(ZCreateActionClassAction).action(
-  withAuditLogging("created", "actionClass", async ({ ctx, parsedInput }) => {
-    const workspaceId = parsedInput.action.workspaceId;
-    const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
-    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
-      type: "workspace",
-      id: workspaceId,
-    });
-    await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
-
-    ctx.auditLoggingCtx.organizationId = organizationId;
-    const result = await createActionClass(workspaceId, parsedInput.action);
-    ctx.auditLoggingCtx.actionClassId = result.id;
-    ctx.auditLoggingCtx.newObject = result;
-
-    const triggerType =
-      parsedInput.action.type === "code" ? "codeAction" : (parsedInput.action.noCodeConfig?.type ?? "noCode");
-
-    capturePostHogEvent(
-      ctx.user.id,
-      "action_class_created",
-      {
-        organization_id: organizationId,
-        workspace_id: workspaceId,
-        type: parsedInput.action.type,
-        trigger_type: triggerType,
-      },
-      { organizationId, workspaceId }
-    );
-
-    return result;
-  })
-);

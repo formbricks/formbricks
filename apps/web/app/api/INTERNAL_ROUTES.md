@@ -8,6 +8,7 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | Path | Methods | Auth | Audience | Location | File |
 | --- | --- | --- | --- | --- | --- |
 | `/api/envoy-auth/{...path}` | GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS | custom | gateway | `(internal)` group | `app/api/(internal)/envoy-auth/[...path]/route.ts` |
+| `/api/internal/action-classes` | POST | session | dashboard | `/api/internal` | `app/api/internal/action-classes/route.ts` |
 | `/api/internal/action-classes/{actionClassId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/action-classes/[actionClassId]/route.ts` |
 | `/api/internal/action-classes/{actionClassId}/surveys` | GET | session | dashboard | `/api/internal` | `app/api/internal/action-classes/[actionClassId]/surveys/route.ts` |
 | `/api/internal/ai-translations` | POST | session | dashboard | `/api/internal` | `app/api/internal/ai-translations/route.ts` |
@@ -61,6 +62,8 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/internal/surveys/import/stream` | POST | session | dashboard | `/api/internal` | `app/api/internal/surveys/import/stream/route.ts` |
 | `/api/internal/teams` | GET, POST | session | dashboard | `/api/internal` | `app/api/internal/teams/route.ts` |
 | `/api/internal/teams/{teamId}` | GET, PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/teams/[teamId]/route.ts` |
+| `/api/internal/unsplash-photos` | GET | session | dashboard | `/api/internal` | `app/api/internal/unsplash-photos/route.ts` |
+| `/api/internal/unsplash-photos/downloads` | POST | session | dashboard | `/api/internal` | `app/api/internal/unsplash-photos/downloads/route.ts` |
 | `/api/internal/users/me` | PATCH | session | dashboard | `/api/internal` | `app/api/internal/users/me/route.ts` |
 | `/api/internal/users/me/deletion-requests` | POST | session | dashboard | `/api/internal` | `app/api/internal/users/me/deletion-requests/route.ts` |
 | `/api/internal/users/me/notification-settings` | GET, PATCH | session | dashboard | `/api/internal` | `app/api/internal/users/me/notification-settings/route.ts` |
