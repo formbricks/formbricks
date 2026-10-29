@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
 import { resetDb } from "@/integration/reset-db";
-import { MCP_OAUTH_SCOPES } from "@/modules/auth/lib/oauth-urls";
 // The data migration under test (auto-discovered by the migration runner at deploy).
 import { eng2862GrantResponsesScopes } from "../../../packages/database/migration/20260915120000_eng_2862_grant_responses_scopes/migration";
 
@@ -57,16 +56,19 @@ describe("ENG-2862 responses scope grant", () => {
     expect(await scopesOf(identifier)).toEqual([...PRE_ENG2862_SCOPES, "responses:read", "responses:write"]);
   });
 
-  test("leaves the row able to grant every scope the app advertises", async () => {
+  test("leaves the row able to grant every scope the app advertised when this migration shipped", async () => {
     // The property that actually matters, stated independently of ordering: after the migration no
-    // scope the app can grant is intersected away.
+    // scope the app could grant at the time is intersected away. The list is frozen: scopes added by
+    // later migrations are held to the same property by their own integration tests, which seed the row
+    // as it stood before them and run the migration chain forward.
     const identifier = "https://app.example.com/api/mcp";
     await seedResource(identifier, PRE_ENG2862_SCOPES);
 
     await runGrant();
 
     const allowed = new Set(await scopesOf(identifier));
-    expect(MCP_OAUTH_SCOPES.filter((scope) => !allowed.has(scope))).toEqual([]);
+    const advertisedAtTheTime = [...PRE_ENG2862_SCOPES, "responses:read", "responses:write"];
+    expect(advertisedAtTheTime.filter((scope) => !allowed.has(scope))).toEqual([]);
   });
 
   test("is idempotent — a second run changes nothing", async () => {

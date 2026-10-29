@@ -119,9 +119,10 @@ const lookupWorkspaceLimits = async (organizationIds: string[]): Promise<Map<str
   );
 
 /** Each organization with its capped workspace list and the real count of workspaces the caller reaches. */
-const loadOrganizationWorkspaces = async (
+export const loadOrganizationWorkspaces = async (
   organizationIds: string[],
-  workspaceIds: string[]
+  workspaceIds: string[],
+  perOrganizationCap: number = MAX_WORKSPACES_PER_ORGANIZATION
 ): Promise<Map<string, TOrganizationRow>> => {
   if (workspaceIds.length === 0) return new Map();
 
@@ -136,7 +137,7 @@ const loadOrganizationWorkspaces = async (
         where: authorized,
         select: { id: true, name: true, appSetupCompleted: true, logo: true, styling: true },
         orderBy: [{ name: "asc" }, { id: "asc" }],
-        take: MAX_WORKSPACES_PER_ORGANIZATION,
+        take: perOrganizationCap,
       },
     },
   });

@@ -38,24 +38,28 @@ export const ZMcpToolError = z
 /**
  * The `meta` a v3 collection answers with, as the list tools pass it through.
  *
- * These four keys are the envelope `successListResponse` emits for a keyset-paged collection, and
- * they are the four the contract marks required (`api_v3_responses.yml`, the list `meta` block).
- * Naming anything else here is worse than naming nothing: `outputSchema` is what a client types
- * itself against off `tools/list`, so a key this schema invents is a key that client reads as
- * `undefined` forever. An earlier version declared `hasMore` and `total`, neither of which exists
- * anywhere in `app/api/v3` — the same drift as the `precision`/`relation` defect, minus the loud
- * failure, because `nullish` plus `loose` let the SDK validate the wrong shape clean.
+ * Every key is optional because the collections do not answer one envelope: `successListResponse`
+ * emits whatever the operation hands it. Keyset-paged lists (webhooks, tags, segments, contacts, audit
+ * events, creatives) answer `{ limit, nextCursor }`; surveys add `totalCount` and `workspaceSurveyCount`;
+ * responses, teams and members add `totalCount` with `totalCountRelation`; feedback datasets answer
+ * `{ nextCursor, totalCount }`; taxonomy node records only `{ limit }`; feedback record searches add
+ * `datasetId`, `datasetName` and `minScore`. An earlier version required all four keys, which no
+ * operation but the responses list satisfies, so the SDK, which validates every successful result
+ * against the advertised `outputSchema`, rejected every call to the others.
  *
- * Required rather than optional for that reason: a missing key now fails validation where it used to
- * pass silently. `totalCount` and `totalCountRelation` are present-but-`null` unless the caller asks
- * for `includeTotalCount`, which is why they are nullable rather than absent.
+ * The four keys named here are the ones several collections share, and each is typed as the
+ * operations emit it (`totalCount` and `totalCountRelation` are `null` when the caller did not ask for a
+ * total). Nothing is named that no operation emits: `outputSchema` is what a client types itself against
+ * off `tools/list`, so an invented key is a key that client reads as `undefined` forever (an earlier
+ * version declared `hasMore` and `total`, which exist nowhere in `app/api/v3`). Keys that belong to one
+ * collection only pass through `loose`.
  */
 export const ZMcpListMeta = z
   .object({
-    limit: z.number().int(),
-    nextCursor: z.string().nullable(),
-    totalCount: z.number().int().nullable(),
-    totalCountRelation: z.enum(["eq", "gte"]).nullable(),
+    limit: z.number().int().optional(),
+    nextCursor: z.string().nullable().optional(),
+    totalCount: z.number().int().nullable().optional(),
+    totalCountRelation: z.enum(["eq", "gte"]).nullable().optional(),
   })
   .loose();
 
