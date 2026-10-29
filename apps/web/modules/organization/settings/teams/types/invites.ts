@@ -23,5 +23,3 @@ export const ZInvitee = ZInvite.pick({
 });
 
 export type TInvitee = z.infer<typeof ZInvitee>;
-
-export const ZInvitees = z.array(ZInvitee);
