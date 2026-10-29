@@ -272,8 +272,8 @@ const processClaim = async (
 export const drainDeletionCleanups = async ({
   ids,
 }: { ids?: readonly string[] } = {}): Promise<TDeletionCleanupDrainSummary> => {
+  if (ids?.length === 0) return { done: 0, again: 0, failed: 0 };
   const summary: TDeletionCleanupDrainSummary = { done: 0, again: 0, failed: 0 };
-  if (ids?.length === 0) return summary;
 
   const deadline = Date.now() + DELETION_CLEANUP_RUN_BUDGET_MS;
   const hubBudget: THubCallBudget = { remaining: DELETION_CLEANUP_HUB_CALL_BUDGET, deadline };
