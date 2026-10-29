@@ -56,6 +56,14 @@ export const isExcelBlocked = (
   counts: { excel: { tooLarge: boolean } | null } | undefined
 ): boolean => options.format === "xlsx" && isExcelTooLarge(counts);
 
+/**
+ * Whether the counts of the current options are in. The request is only built from them: the column list
+ * decides which columns the file drops and the Excel size decides whether it may be built, so a count still
+ * on its way (or the previous one, shown while it loads) is no basis to start.
+ */
+export const isExportReady = (counts: { isSuccess: boolean; isPlaceholderData: boolean }): boolean =>
+  counts.isSuccess && !counts.isPlaceholderData;
+
 /** What switching the same choices to CSV downloads: a zip of CSV files, or one CSV file. */
 export const excelAlternative = (options: TExportOptions): "csv" | "zip" => {
   const plan = planExport(toExportRequest(setFormat(options, "csv")));

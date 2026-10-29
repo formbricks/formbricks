@@ -1,7 +1,7 @@
 "use client";
 
 import * as SelectPrimitive from "@radix-ui/react-select";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
   CheckIcon,
   ChevronDownIcon,
@@ -47,6 +47,7 @@ import {
   exportFileExtension,
   isExcelBlocked,
   isExcelTooLarge,
+  isExportReady,
   isSpssAvailable,
   isTextOnlyAvailable,
   isZipAvailable,
@@ -352,7 +353,11 @@ const ExportModalBody = ({
       fetchExportCounts({ surveyId, request: toExportRequest(options, scope), signal }),
     staleTime: 0,
     retry: false,
+    // Toggling an option fetches the counts again; the column list stays while they load, and the export
+    // button waits for them (`isExportReady`).
+    placeholderData: keepPreviousData,
   });
+  const countsReady = isExportReady(counts);
 
   if (isExporting) return <ExportProgress included={progress?.included ?? null} onClose={onClose} />;
 
@@ -415,6 +420,18 @@ const ExportModalBody = ({
 
       <DialogBody className="flex flex-col gap-4 px-0.5 pb-0.5" data-testid="export-modal">
         <CountBox>
+          {counts.isError && (
+            <span className="flex items-center gap-3 text-red-800" role="alert">
+              {t("common.something_went_wrong_please_try_again")}
+              <Button
+                variant="secondary"
+                size="sm"
+                data-testid="export-counts-retry"
+                onClick={() => void counts.refetch()}>
+                {t("common.try_again")}
+              </Button>
+            </span>
+          )}
           {counts.data && (
             <>
               <span className="font-medium text-slate-900">
@@ -581,7 +598,7 @@ const ExportModalBody = ({
         <Button
           size="sm"
           data-testid="export-submit"
-          disabled={excelBlocked || noColumns}
+          disabled={!countsReady || excelBlocked || noColumns}
           onClick={() => startExport({ surveyId, request, included: counts.data?.included })}>
           {t("workspace.surveys.export.button_with_type", { extension })}
         </Button>

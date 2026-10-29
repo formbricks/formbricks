@@ -7,6 +7,7 @@ import {
   exportFileExtension,
   isExcelBlocked,
   isExcelTooLarge,
+  isExportReady,
   isSpssAvailable,
   isTextOnlyAvailable,
   isZipAvailable,
@@ -187,5 +188,15 @@ describe("countLineParts", () => {
     expect(countLineParts({ scope: { responseIds: ["a"] }, lowQualityLeftOut: 0, total: 9 })[0]).toEqual({
       key: "selection",
     });
+  });
+});
+
+describe("isExportReady", () => {
+  test("the export waits for the counts of the current options", () => {
+    expect(isExportReady({ isSuccess: true, isPlaceholderData: false })).toBe(true);
+    // Loading for the first time, or failed: no counts.
+    expect(isExportReady({ isSuccess: false, isPlaceholderData: false })).toBe(false);
+    // The previous counts are on screen while the new ones load: the column list may be out of date.
+    expect(isExportReady({ isSuccess: true, isPlaceholderData: true })).toBe(false);
   });
 });

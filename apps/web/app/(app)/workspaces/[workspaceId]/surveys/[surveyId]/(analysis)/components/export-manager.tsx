@@ -1,7 +1,7 @@
 "use client";
 
 import * as Sentry from "@sentry/nextjs";
-import { QueryClient, QueryClientProvider, useMutation } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import {
   type ReactNode,
   createContext,
@@ -15,6 +15,7 @@ import {
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TExportRequest } from "@/lib/analysis-export/export-request";
+import { useBeforeUnloadPrompt } from "@/modules/ui/hooks/use-before-unload-prompt";
 import { ExportRequestError, formatBytes, requestExport, saveBlob } from "./export-client";
 import { rowProgressOutput } from "./export-options";
 
@@ -116,6 +117,9 @@ const ExportManager = ({ children }: Readonly<{ children: ReactNode }>) => {
 
   const { isPending, mutate } = mutation;
 
+  // A reload or a closed tab drops a running export, which can take minutes: ask first.
+  useBeforeUnloadPrompt(() => isPending);
+
   const startExport = useCallback(
     (args: TStartExport) => {
       if (isPending) {
@@ -163,8 +167,9 @@ const ExportManager = ({ children }: Readonly<{ children: ReactNode }>) => {
     startRef.current = startExport;
   }, [startExport]);
 
-  // The export runs in the app: leaving the survey (or the site) cancels it, and the server stops
-  // reading when the request is aborted. Moving between Summary and Responses keeps this mounted.
+  // The export runs in the app: leaving the surveys area (or the site) cancels it, and the server stops
+  // reading when the request is aborted. Moving between a survey's pages, the editor and the list keeps this
+  // mounted.
   useEffect(() => {
     return () => {
       controllerRef.current?.abort();
@@ -183,15 +188,10 @@ const ExportManager = ({ children }: Readonly<{ children: ReactNode }>) => {
 };
 
 /**
- * Owns the survey's export for as long as the survey layout is mounted, so closing the Export modal or
- * moving between Summary and Responses does not cancel it. Wraps its own QueryClient, which also serves
- * the modal's count line.
+ * Owns the export for as long as the surveys layout is mounted, so closing the Export modal or moving
+ * between Summary, Responses and the editor does not cancel it. Runs on the surveys area's QueryClient,
+ * which also serves the modal's count line.
  */
-export const ExportManagerProvider = ({ children }: Readonly<{ children: ReactNode }>) => {
-  const [queryClient] = useState(() => new QueryClient({ defaultOptions: { mutations: { retry: false } } }));
-  return (
-    <QueryClientProvider client={queryClient}>
-      <ExportManager>{children}</ExportManager>
-    </QueryClientProvider>
-  );
-};
+export const ExportManagerProvider = ({ children }: Readonly<{ children: ReactNode }>) => (
+  <ExportManager>{children}</ExportManager>
+);
