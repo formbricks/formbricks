@@ -93,7 +93,7 @@ export const ElementOptionChoice = ({
   const normalChoice = element.choices?.filter((c) => c.id !== "other" && c.id !== "none") || [];
 
   return (
-    <div className="flex w-full gap-2" ref={setNodeRef} style={style}>
+    <div className="flex w-full items-center gap-2" ref={setNodeRef} style={style}>
       {/* drag handle */}
       <div className={cn(isSpecialChoice && "invisible")} {...listeners} {...attributes}>
         <GripVerticalIcon className="size-4 cursor-move text-slate-400" />
