@@ -4,10 +4,10 @@ Every question gets a question code that is distinct from its Question ID. Respo
 
 ## Considered Options
 
-- **Capitals allowed, up to 64 characters** (ENG-4023): keeps NielsenIQ's `ADM01` style, rejected because it needs a second validator and puts capitals into column names built as `<question>_<answer>`.
+- **Capitals allowed, up to 64 characters** (ENG-4023): keeps the capitalised `ADM01` style a market-research customer uses, rejected because it needs a second validator and puts capitals into column names built as `<question>_<answer>`.
 - **The Question ID is the code, editable before launch**: rejected because existing surveys hold random IDs, and responses are stored under the ID.
 
 ## Consequences
 
-- NielsenIQ's `ADM01` becomes `adm01`, and defaults are `q1`, `q2`, so the docs, the UI mock and ENG-3596 (what a question's default variable name is) say `Q<n>` where the build says `q<n>`.
+- A capitalised code such as `ADM01` becomes `adm01`, and defaults are `q1`, `q2`, so the docs, the UI mock and ENG-3596 (what a question's default variable name is) say `Q<n>` where the build says `q<n>`.
 - The limits are short on purpose: derived names such as `<question>_<answer>_text` must fit SPSS's 64 bytes. Because codes lock at publish, a limit can be loosened later but not tightened.

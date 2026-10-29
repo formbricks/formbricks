@@ -9,7 +9,7 @@
 #   NUMBER(...) + DELETE VARIABLES, which reads the same text the same way. The "Cannot parse" errors it
 #   prints for UNMAPPED cells are the warnings SPSS gives for the same cells.
 # - It cannot check how real SPSS treats the byte order mark or its warning limit (SET MXWARNS).
-#   Ask NielsenIQ to run a staging export in real SPSS before the event.
+#   Ask a customer who analyses in SPSS to run a staging export in real SPSS before launch.
 set -euo pipefail
 
 if [[ $# -lt 1 || ! -f "$1/labels.sps" ]]; then
