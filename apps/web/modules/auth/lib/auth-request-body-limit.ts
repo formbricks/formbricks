@@ -1,7 +1,7 @@
 import "server-only";
 import { NextRequest } from "next/server";
 import { RequestBodyTooLargeError, readRequestBytesWithLimit } from "@/app/lib/api/request-body";
-import { AUTH_REQUEST_MAX_JSON_ENTRIES, exceedsAuthJsonBounds } from "./auth-request-json-bounds";
+import { AUTH_REQUEST_MAX_ENTRIES, exceedsAuthRequestBounds } from "./auth-request-bounds";
 
 /**
  * Largest request body any `/api/auth/*` route will read (ENG-3846, ENG-3248).
@@ -46,13 +46,17 @@ const bodyTooLargeResponse = (limitBytes: number): Response =>
     `Request body must not exceed ${limitBytes} bytes`
   );
 
-// `VALIDATION_ERROR` is the code Better Auth itself answers a body that fails its schema with.
-const tooManyJsonEntriesResponse = (): Response =>
+// `VALIDATION_ERROR` is the code Better Auth itself answers a body that fails its schema with. A dynamic
+// client registration gets the error RFC 7591 §3.2.2 defines for bad metadata; anything else the generic
+// OAuth one (RFC 6749 §5.2).
+const tooManyEntriesResponse = (request: Request): Response =>
   errorResponse(
     400,
-    "invalid_request",
+    new URL(request.url).pathname.endsWith("/oauth2/register")
+      ? "invalid_client_metadata"
+      : "invalid_request",
     "VALIDATION_ERROR",
-    `Request body arrays and objects must not hold more than ${AUTH_REQUEST_MAX_JSON_ENTRIES} entries`
+    `Request lists, objects and repeated parameters must not hold more than ${AUTH_REQUEST_MAX_ENTRIES} entries`
   );
 
 /**
@@ -87,10 +91,10 @@ const isClientAbort = (request: Request, error: unknown): boolean =>
  *
  * The handler receives the same bytes as a fresh request, so the limit costs nothing that the handler's
  * own read did not already cost, and nothing downstream (the DCR preprocessing, Better Auth, `formData()`)
- * can buffer more than {@link AUTH_REQUEST_BODY_LIMIT_BYTES}. A JSON body whose arrays or objects hold more
- * than {@link AUTH_REQUEST_MAX_JSON_ENTRIES} entries is answered `400` from the same read, before any schema
- * sees it (auth-request-json-bounds.ts). A request with no body — every GET — is
- * handed over untouched, identity included. Anything over the limit is answered `413` and the stream is
+ * can buffer more than {@link AUTH_REQUEST_BODY_LIMIT_BYTES}. A query string or body holding a collection over
+ * {@link AUTH_REQUEST_MAX_ENTRIES} entries is answered `400` before any schema sees it
+ * (auth-request-bounds.ts); the body is checked from the same read. A request with no body — every GET — has
+ * only its query checked, and is otherwise handed over untouched, identity included. Anything over the limit is answered `413` and the stream is
  * cancelled, whether it declared its size, understated it, or carried no `Content-Length` at all. A client
  * that disconnects mid-upload gets a bare `400` nobody reads, rather than a route error for every abandoned
  * anonymous request.
@@ -99,7 +103,10 @@ export const withAuthRequestBodyLimit = <Args extends unknown[], R extends Reque
   handler: (request: R, ...args: Args) => Response | Promise<Response>
 ) => {
   const limited = async (request: R, ...args: Args): Promise<Response> => {
-    if (!request.body) return handler(request, ...args);
+    if (!request.body) {
+      if (exceedsAuthRequestBounds(request.url, null, undefined)) return tooManyEntriesResponse(request);
+      return handler(request, ...args);
+    }
 
     let body: Uint8Array;
     try {
@@ -110,7 +117,9 @@ export const withAuthRequestBodyLimit = <Args extends unknown[], R extends Reque
       throw error;
     }
 
-    if (exceedsAuthJsonBounds(request.headers.get("content-type"), body)) return tooManyJsonEntriesResponse();
+    if (exceedsAuthRequestBounds(request.url, request.headers.get("content-type"), body)) {
+      return tooManyEntriesResponse(request);
+    }
 
     return handler(withBody(request, body), ...args);
   };

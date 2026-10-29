@@ -5,7 +5,7 @@ import {
   AUTH_REQUEST_BODY_LIMIT_BYTES,
   isAuthRequestBodyLimited,
 } from "@/modules/auth/lib/auth-request-body-limit";
-import { AUTH_REQUEST_MAX_JSON_ENTRIES } from "@/modules/auth/lib/auth-request-json-bounds";
+import { AUTH_REQUEST_MAX_ENTRIES } from "@/modules/auth/lib/auth-request-bounds";
 
 // The handlers behind the routes are mocked out: what is under test is that the route FILES put the body
 // guard in front of them, and the guard answers before any of these is reached. If a route lost its
@@ -126,7 +126,7 @@ describe("/api/auth route surface", () => {
         new Request(url, {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ contacts: Array(AUTH_REQUEST_MAX_JSON_ENTRIES + 1).fill(1) }),
+          body: JSON.stringify({ contacts: Array(AUTH_REQUEST_MAX_ENTRIES + 1).fill(1) }),
         })
       );
 

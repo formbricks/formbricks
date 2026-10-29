@@ -7,7 +7,7 @@ import {
   isAuthRequestBodyLimited,
   withAuthRequestBodyLimit,
 } from "./auth-request-body-limit";
-import { AUTH_REQUEST_MAX_JSON_ENTRIES } from "./auth-request-json-bounds";
+import { AUTH_REQUEST_MAX_ENTRIES } from "./auth-request-bounds";
 
 const LIMIT = AUTH_REQUEST_BODY_LIMIT_BYTES;
 
@@ -110,7 +110,7 @@ describe("withAuthRequestBodyLimit", () => {
     const request = new Request("http://localhost/api/auth/sign-in/social", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ provider: "google", scopes: Array(AUTH_REQUEST_MAX_JSON_ENTRIES + 1).fill(1) }),
+      body: JSON.stringify({ provider: "google", scopes: Array(AUTH_REQUEST_MAX_ENTRIES + 1).fill(1) }),
     });
 
     const response = await withAuthRequestBodyLimit(handler)(request);
@@ -119,16 +119,46 @@ describe("withAuthRequestBodyLimit", () => {
     expect(response.headers.get("cache-control")).toBe("no-store");
     expect(await response.json()).toEqual({
       error: "invalid_request",
-      error_description: `Request body arrays and objects must not hold more than ${AUTH_REQUEST_MAX_JSON_ENTRIES} entries`,
+      error_description: `Request lists, objects and repeated parameters must not hold more than ${AUTH_REQUEST_MAX_ENTRIES} entries`,
       code: "VALIDATION_ERROR",
-      message: `Request body arrays and objects must not hold more than ${AUTH_REQUEST_MAX_JSON_ENTRIES} entries`,
+      message: `Request lists, objects and repeated parameters must not hold more than ${AUTH_REQUEST_MAX_ENTRIES} entries`,
     });
     expect(handler).not.toHaveBeenCalled();
   });
 
+  test("answers a dynamic client registration with RFC 7591's error code", async () => {
+    const handler = vi.fn(ok);
+    const request = new Request("http://localhost/api/auth/oauth2/register", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ contacts: Array(AUTH_REQUEST_MAX_ENTRIES + 1).fill("a@example.com") }),
+    });
+
+    const response = await withAuthRequestBodyLimit(handler)(request);
+
+    expect(response.status).toBe(400);
+    expect((await response.json()).error).toBe("invalid_client_metadata");
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  test("checks the query of a request with no body, and passes it through otherwise", async () => {
+    const handler = vi.fn(ok);
+    const resource = (count: number) =>
+      Array.from({ length: count }, (_, index) => `resource=https%3A%2F%2Fr${index}.example`).join("&");
+    const get = (count: number) =>
+      new Request(`http://localhost/api/auth/oauth2/authorize?${resource(count)}`, { method: "GET" });
+
+    expect((await withAuthRequestBodyLimit(handler)(get(AUTH_REQUEST_MAX_ENTRIES + 1))).status).toBe(400);
+    expect(handler).not.toHaveBeenCalled();
+
+    const request = get(AUTH_REQUEST_MAX_ENTRIES);
+    expect((await withAuthRequestBodyLimit(handler)(request)).status).toBe(200);
+    expect(handler.mock.calls[0][0]).toBe(request);
+  });
+
   test("hands a JSON body at the entry cap to the handler unchanged", async () => {
     const body = JSON.stringify({
-      redirect_uris: Array(AUTH_REQUEST_MAX_JSON_ENTRIES).fill("http://127.0.0.1/cb"),
+      redirect_uris: Array(AUTH_REQUEST_MAX_ENTRIES).fill("http://127.0.0.1/cb"),
     });
     const seen = vi.fn(async (request: Request) => new Response(await request.text()));
     const request = new Request("http://localhost/api/auth/oauth2/register", {
