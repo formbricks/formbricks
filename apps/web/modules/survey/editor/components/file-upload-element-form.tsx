@@ -173,9 +173,7 @@ export const FileUploadElementForm = ({
                         }
 
                         // A file size limit below 1 MB is meaningless, so clamp zero and negative values.
-                        updateElement(elementIdx, {
-                          maxSizeInMB: parsedValue < 1 ? 1 : parsedValue,
-                        });
+                        updateElement(elementIdx, { maxSizeInMB: Math.max(1, parsedValue) });
                       }}
                       className="mr-2 ml-2 inline w-20 bg-white text-center text-sm"
                     />
