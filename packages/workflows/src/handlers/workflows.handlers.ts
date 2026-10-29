@@ -15,6 +15,7 @@ import {
   ZWorkflowRunResource,
   ZWorkflowTestResult,
   zCursorPage,
+  zWorkflowListPage,
 } from "../contracts";
 import {
   WorkflowForbiddenError,
@@ -53,7 +54,7 @@ import {
 // Matches the v3 API's default request-body limit (apps/web `request-body.ts`) for consistency.
 const MAX_REQUEST_BODY_BYTES = 2 * 1024 * 1024;
 
-const ZWorkflowListPage = zCursorPage(ZWorkflowListItem);
+const ZWorkflowListPage = zWorkflowListPage(ZWorkflowListItem);
 const ZWorkflowRunListPage = zCursorPage(ZWorkflowRunListItem);
 
 const readJsonBody = async (req: Request, options?: { allowEmpty?: boolean }): Promise<unknown> => {
@@ -311,7 +312,11 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
 
       const page = validateOutput(ZWorkflowListPage, {
         data: workflowPage.workflows.map(toWorkflowListItem),
-        meta: { limit: input.limit, nextCursor: workflowPage.nextCursor },
+        meta: {
+          limit: input.limit,
+          nextCursor: workflowPage.nextCursor,
+          totalCount: workflowPage.totalCount,
+        },
       });
 
       return listResponse(page.data, page.meta, ctx.requestId);

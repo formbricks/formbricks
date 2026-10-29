@@ -5,14 +5,11 @@ import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { TChartQuery } from "@formbricks/types/analysis";
 
-const mockExecuteQueryAction = vi.fn();
+const mockPreviewChart = vi.fn();
 
-vi.mock("@/modules/ee/analysis/charts/actions", () => ({
-  executeQueryAction: (...args: unknown[]) => mockExecuteQueryAction(...args),
-}));
-
-vi.mock("@/lib/utils/error-message", () => ({
-  getFormattedErrorMessage: (result: { serverError?: string }) => result?.serverError ?? "formatted-error",
+vi.mock("@/modules/ee/analysis/lib/api-client", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/ee/analysis/lib/api-client")>()),
+  previewChart: (...args: unknown[]) => mockPreviewChart(...args),
 }));
 
 vi.mock("react-i18next", () => ({
@@ -20,6 +17,14 @@ vi.mock("react-i18next", () => ({
 }));
 
 const { useChartQuery } = await import("./use-chart-query");
+const { V3ApiError } = await import("@/modules/api/lib/v3-client");
+
+/** A preview answer as the API client returns it: the query as it ran, and empty label maps. */
+const previewOf = (
+  rows: unknown[],
+  query: TChartQuery = sampleQuery,
+  labels: { optionLabels?: Record<string, string>; fieldLabels?: Record<string, string> } = {}
+) => ({ rows, query, ...labels });
 
 const WORKSPACE_ID = "ws-123";
 const DIRECTORY_ID = "frd-1";
@@ -54,28 +59,30 @@ describe("useChartQuery", () => {
 
     let response: Awaited<ReturnType<typeof result.current.runQuery>> = null;
     await act(async () => {
-      response = await result.current.runQuery(sampleQuery);
+      response = await result.current.runQuery(sampleQuery, "bar");
     });
 
     expect(response).toBeNull();
     expect(result.current.error).toBe("workspace.analysis.charts.select_data_source_first");
-    expect(mockExecuteQueryAction).not.toHaveBeenCalled();
+    expect(mockPreviewChart).not.toHaveBeenCalled();
   });
 
   test("returns query result and updates state on success", async () => {
-    mockExecuteQueryAction.mockResolvedValue({ data: { rows: sampleData } });
+    mockPreviewChart.mockResolvedValue(previewOf(sampleData));
 
     const { result } = renderHook(() => useChartQuery(WORKSPACE_ID, DIRECTORY_ID));
 
     let response: Awaited<ReturnType<typeof result.current.runQuery>> = null;
     await act(async () => {
-      response = await result.current.runQuery(sampleQuery);
+      response = await result.current.runQuery(sampleQuery, "bar");
     });
 
-    expect(mockExecuteQueryAction).toHaveBeenCalledWith({
+    expect(mockPreviewChart).toHaveBeenCalledWith({
       workspaceId: WORKSPACE_ID,
+      datasetId: DIRECTORY_ID,
+      type: "bar",
       query: sampleQuery,
-      feedbackDirectoryId: DIRECTORY_ID,
+      signal: expect.any(AbortSignal),
     });
     expect(response).toEqual({ query: sampleQuery, data: sampleData });
     expect(result.current.chartData).toEqual(sampleData);
@@ -84,29 +91,35 @@ describe("useChartQuery", () => {
     expect(result.current.isLoading).toBe(false);
   });
 
-  test("sets formatted error when server returns an error", async () => {
-    mockExecuteQueryAction.mockResolvedValue({ serverError: "query-failed" });
+  test("shows the refusal's detail and the first problem it names", async () => {
+    mockPreviewChart.mockRejectedValue(
+      new V3ApiError({
+        status: 422,
+        detail: "The chart query is not valid",
+        invalid_params: [{ name: "query.measures[0]", reason: "Not a field in the field catalog." }],
+      })
+    );
 
     const { result } = renderHook(() => useChartQuery(WORKSPACE_ID, DIRECTORY_ID));
 
     let response: Awaited<ReturnType<typeof result.current.runQuery>> = null;
     await act(async () => {
-      response = await result.current.runQuery(sampleQuery);
+      response = await result.current.runQuery(sampleQuery, "bar");
     });
 
     expect(response).toBeNull();
-    expect(result.current.error).toBe("query-failed");
+    expect(result.current.error).toBe("The chart query is not valid Not a field in the field catalog.");
     expect(result.current.isLoading).toBe(false);
   });
 
   test("treats empty data as success so chart can still be saved", async () => {
-    mockExecuteQueryAction.mockResolvedValue({ data: { rows: [] } });
+    mockPreviewChart.mockResolvedValue(previewOf([]));
 
     const { result } = renderHook(() => useChartQuery(WORKSPACE_ID, DIRECTORY_ID));
 
     let response: Awaited<ReturnType<typeof result.current.runQuery>> = null;
     await act(async () => {
-      response = await result.current.runQuery(sampleQuery);
+      response = await result.current.runQuery(sampleQuery, "bar");
     });
 
     expect(response).toEqual({ query: sampleQuery, data: [] });
@@ -115,14 +128,14 @@ describe("useChartQuery", () => {
     expect(result.current.error).toBeNull();
   });
 
-  test("sets error message when executeQueryAction throws an Error", async () => {
-    mockExecuteQueryAction.mockRejectedValue(new Error("network down"));
+  test("sets error message when the request throws an Error", async () => {
+    mockPreviewChart.mockRejectedValue(new Error("network down"));
 
     const { result } = renderHook(() => useChartQuery(WORKSPACE_ID, DIRECTORY_ID));
 
     let response: Awaited<ReturnType<typeof result.current.runQuery>> = null;
     await act(async () => {
-      response = await result.current.runQuery(sampleQuery);
+      response = await result.current.runQuery(sampleQuery, "bar");
     });
 
     expect(response).toBeNull();
@@ -130,14 +143,14 @@ describe("useChartQuery", () => {
     expect(result.current.isLoading).toBe(false);
   });
 
-  test("sets fallback error when executeQueryAction throws a non-Error", async () => {
-    mockExecuteQueryAction.mockRejectedValue("boom");
+  test("sets fallback error when the request throws a non-Error", async () => {
+    mockPreviewChart.mockRejectedValue("boom");
 
     const { result } = renderHook(() => useChartQuery(WORKSPACE_ID, DIRECTORY_ID));
 
     let response: Awaited<ReturnType<typeof result.current.runQuery>> = null;
     await act(async () => {
-      response = await result.current.runQuery(sampleQuery);
+      response = await result.current.runQuery(sampleQuery, "bar");
     });
 
     expect(response).toBeNull();
@@ -146,13 +159,13 @@ describe("useChartQuery", () => {
 
   test("threads optionLabels through QueryResult when the server returns them", async () => {
     const optionLabels = { "c-male": "Male", "c-female": "Female" };
-    mockExecuteQueryAction.mockResolvedValue({ data: { rows: sampleData, optionLabels } });
+    mockPreviewChart.mockResolvedValue(previewOf(sampleData, sampleQuery, { optionLabels }));
 
     const { result } = renderHook(() => useChartQuery(WORKSPACE_ID, DIRECTORY_ID));
 
     let response: Awaited<ReturnType<typeof result.current.runQuery>> = null;
     await act(async () => {
-      response = await result.current.runQuery(sampleQuery);
+      response = await result.current.runQuery(sampleQuery, "bar");
     });
 
     expect(response).toEqual({ query: sampleQuery, data: sampleData, optionLabels });
@@ -165,9 +178,7 @@ describe("useChartQuery", () => {
       dimensions: ["FeedbackRecords.valueId"],
     };
     const optionLabels = { opt1: "Option A", opt2: "Option B" };
-    mockExecuteQueryAction.mockResolvedValue({
-      data: { rows: sampleData, optionLabels, effectiveQuery },
-    });
+    mockPreviewChart.mockResolvedValue(previewOf(sampleData, effectiveQuery, { optionLabels }));
 
     const clientQuery: TChartQuery = {
       measures: ["FeedbackRecords.count"],
@@ -178,7 +189,7 @@ describe("useChartQuery", () => {
 
     let response: Awaited<ReturnType<typeof result.current.runQuery>> = null;
     await act(async () => {
-      response = await result.current.runQuery(clientQuery);
+      response = await result.current.runQuery(clientQuery, "bar");
     });
 
     // The returned QueryResult.query must be the server-rewritten effectiveQuery, not the
@@ -187,31 +198,17 @@ describe("useChartQuery", () => {
     expect(result.current.query).toEqual(effectiveQuery);
   });
 
-  test("falls back to client query when server does not return effectiveQuery", async () => {
-    // Server returns no effectiveQuery (e.g. no value dimension rewrite needed).
-    mockExecuteQueryAction.mockResolvedValue({ data: { rows: sampleData } });
-
-    const { result } = renderHook(() => useChartQuery(WORKSPACE_ID, DIRECTORY_ID));
-
-    let response: Awaited<ReturnType<typeof result.current.runQuery>> = null;
-    await act(async () => {
-      response = await result.current.runQuery(sampleQuery);
-    });
-
-    expect(response).toEqual({ query: sampleQuery, data: sampleData });
-    expect(result.current.query).toEqual(sampleQuery);
-  });
-
   test("ignores stale responses when a newer query supersedes an older one", async () => {
-    let resolveFirst: ((value: { data: { rows: typeof sampleData } }) => void) | undefined;
-    const firstPromise = new Promise<{ data: { rows: typeof sampleData } }>((resolve) => {
+    let resolveFirst: ((value: ReturnType<typeof previewOf>) => void) | undefined;
+    const firstPromise = new Promise<ReturnType<typeof previewOf>>((resolve) => {
       resolveFirst = resolve;
     });
     const secondData = [{ "FeedbackRecords.count": 9, "FeedbackRecords.sourceType": "link" }];
+    const secondQuery = { ...sampleQuery, dimensions: ["FeedbackRecords.status"] };
 
-    mockExecuteQueryAction
+    mockPreviewChart
       .mockReturnValueOnce(firstPromise)
-      .mockResolvedValueOnce({ data: { rows: secondData } });
+      .mockResolvedValueOnce(previewOf(secondData, secondQuery));
 
     const { result } = renderHook(() => useChartQuery(WORKSPACE_ID, DIRECTORY_ID));
 
@@ -219,17 +216,19 @@ describe("useChartQuery", () => {
     let secondResponse: Awaited<ReturnType<typeof result.current.runQuery>> = null;
 
     await act(async () => {
-      const firstRun = result.current.runQuery(sampleQuery);
-      const secondRun = result.current.runQuery({
-        ...sampleQuery,
-        dimensions: ["FeedbackRecords.status"],
-      });
+      const firstRun = result.current.runQuery(sampleQuery, "bar");
+      const secondRun = result.current.runQuery(
+        { ...sampleQuery, dimensions: ["FeedbackRecords.status"] },
+        "bar"
+      );
       secondResponse = await secondRun;
-      resolveFirst?.({ data: { rows: sampleData } });
+      resolveFirst?.(previewOf(sampleData));
       firstResponse = await firstRun;
     });
 
     expect(firstResponse).toBeNull();
+    // The superseded request is aborted, not left to finish in the background.
+    expect((mockPreviewChart.mock.calls[0][0] as { signal: AbortSignal }).signal.aborted).toBe(true);
     expect(secondResponse).toEqual({
       query: { ...sampleQuery, dimensions: ["FeedbackRecords.status"] },
       data: secondData,
@@ -239,16 +238,14 @@ describe("useChartQuery", () => {
   });
 
   test("ignores stale responses when scope changes during an in-flight request", async () => {
-    let resolveFirst: ((value: { data: { rows: typeof sampleData } }) => void) | undefined;
-    const firstPromise = new Promise<{ data: { rows: typeof sampleData } }>((resolve) => {
+    let resolveFirst: ((value: ReturnType<typeof previewOf>) => void) | undefined;
+    const firstPromise = new Promise<ReturnType<typeof previewOf>>((resolve) => {
       resolveFirst = resolve;
     });
     const NEW_DIRECTORY_ID = "frd-2";
     const secondData = [{ "FeedbackRecords.count": 9, "FeedbackRecords.sourceType": "link" }];
 
-    mockExecuteQueryAction
-      .mockReturnValueOnce(firstPromise)
-      .mockResolvedValueOnce({ data: { rows: secondData } });
+    mockPreviewChart.mockReturnValueOnce(firstPromise).mockResolvedValueOnce(previewOf(secondData));
 
     const { result, rerender } = renderHook(
       ({ feedbackDirectoryId }: { feedbackDirectoryId: string | null }) =>
@@ -257,13 +254,13 @@ describe("useChartQuery", () => {
     );
 
     await act(async () => {
-      void result.current.runQuery(sampleQuery);
+      void result.current.runQuery(sampleQuery, "bar");
     });
 
     rerender({ feedbackDirectoryId: NEW_DIRECTORY_ID });
 
     await act(async () => {
-      resolveFirst?.({ data: { rows: sampleData } });
+      resolveFirst?.(previewOf(sampleData));
       await Promise.resolve();
     });
 
@@ -271,15 +268,13 @@ describe("useChartQuery", () => {
 
     let response: Awaited<ReturnType<typeof result.current.runQuery>> = null;
     await act(async () => {
-      response = await result.current.runQuery(sampleQuery);
+      response = await result.current.runQuery(sampleQuery, "bar");
     });
 
     expect(response).toEqual({ query: sampleQuery, data: secondData });
     expect(result.current.chartData).toEqual(secondData);
-    expect(mockExecuteQueryAction).toHaveBeenLastCalledWith({
-      workspaceId: WORKSPACE_ID,
-      query: sampleQuery,
-      feedbackDirectoryId: NEW_DIRECTORY_ID,
-    });
+    expect(mockPreviewChart).toHaveBeenLastCalledWith(
+      expect.objectContaining({ workspaceId: WORKSPACE_ID, datasetId: NEW_DIRECTORY_ID, query: sampleQuery })
+    );
   });
 });

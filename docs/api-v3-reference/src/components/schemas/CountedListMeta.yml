@@ -1,0 +1,19 @@
+allOf:
+  - $ref: ./ListPaginationMeta.yml
+  - type: object
+    required:
+      - totalCount
+    properties:
+      totalCount:
+        type:
+          - integer
+          - "null"
+        minimum: 0
+        description: >-
+          Total number of items matching the current filters (and search) across all pages. `null`
+          when the request did not ask for it — see the operation's `includeTotalCount` parameter,
+          whose default differs per collection.
+unevaluatedProperties: false
+description: >-
+  A list `meta` carrying pagination and the filtered total. `totalCount` is `required` but nullable,
+  gated on the operation's `includeTotalCount` parameter.

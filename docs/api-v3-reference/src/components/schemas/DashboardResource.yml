@@ -1,0 +1,39 @@
+type: object
+description: >-
+  A dashboard: a named grid of widgets in a workspace. Its charts can come from different Feedback
+  Datasets. Each widget's data is read separately, from `GET /api/v3/charts/{chartId}/data`.
+required:
+  - id
+  - workspaceId
+  - name
+  - creator
+  - widgets
+  - createdAt
+  - updatedAt
+properties:
+  id:
+    type: string
+    format: cuid2
+  workspaceId:
+    type: string
+    format: cuid2
+  name:
+    type: string
+    description: Unique within the workspace.
+  creator:
+    $ref: ./DashboardCreator.yml
+  widgets:
+    type: array
+    description: In display order.
+    items:
+      $ref: ./DashboardWidget.yml
+  createdAt:
+    type: string
+    format: date-time
+  updatedAt:
+    type: string
+    format: date-time
+    description: >-
+      Changes on every rename, save and widget change. Send it back on a full update to be told if
+      the dashboard changed in between.
+additionalProperties: false

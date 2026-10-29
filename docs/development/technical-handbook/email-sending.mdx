@@ -88,7 +88,8 @@ anyone's.
   </Step>
   <Step title="Send what the server knows, not what the client sent">
     Read names and other display values from the database. Bound free text that appears in the email, and do not
-    let identity fields (names, survey names) carry links. `toInviteDisplayName` does both for a name.
+    let identity fields (names, survey names) carry links. `toEmailDisplayText` does both, for invite names and the
+    verify-email survey name alike.
   </Step>
   <Step title="Handle a refused send">
     In an interactive action, let `TooManyRequestsError` reach the user, unless the response must look the same

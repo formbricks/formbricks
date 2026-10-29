@@ -1,7 +1,7 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurveyQuota } from "@formbricks/types/quota";
@@ -9,13 +9,16 @@ import { TResponseWithQuotas } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
-import { getResponsesAction } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/actions";
+import {
+  getResponseCountAction,
+  getResponsesAction,
+} from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/actions";
 import { useResponseFilter } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
+import { useResponseTableFilters } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/hooks/use-response-table-filters";
 import { ResponseDataView } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/responses/components/ResponseDataView";
-import { CustomFilter } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/CustomFilter";
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import { replaceHeadlineRecall } from "@/lib/utils/recall";
+import { Button } from "@/modules/ui/components/button";
 
 interface ResponsePageProps {
   survey: TSurvey;
@@ -49,8 +52,11 @@ export const ResponsePage = ({
   const [page, setPage] = useState<number | null>(null);
   const [hasMore, setHasMore] = useState<boolean>(initialResponses.length >= responsesPerPage);
   const [isFetchingFirstPage, setIsFetchingFirstPage] = useState<boolean>(false);
-  const { selectedFilter, dateRange, resetState, registerAnalysisRefreshHandler } = useResponseFilter();
+  const { registerAnalysisRefreshHandler } = useResponseFilter();
+  const filterState = useResponseTableFilters(survey);
+  const { selectedFilter, dateRange } = filterState;
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const computedFilters = useMemo(
     () => getFormattedFilters(survey, selectedFilter, dateRange),
 
@@ -68,11 +74,27 @@ export const ResponsePage = ({
   // analysis refresh handler and would collapse the infinite-scroll list back to page 1.
   // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on the filter value, not its identity
   const filters = useMemo(() => computedFilters, [filtersKey]);
+  const { isReady } = filterState;
 
-  const searchParams = useSearchParams();
+  // The criteria the loaded list was fetched with. A refresh resolves relative dates afresh, so the
+  // pages after it and the count must ask about the same window as its first page.
+  const listCriteriaRef = useRef(filters);
+  // Bumped by every first-page fetch; an answer that arrives after a newer one started is dropped, so
+  // fast ticking cannot land an older filter's rows under newer chips.
+  const firstPageRequestRef = useRef(0);
+
+  // Rows matching the filters, for the toolbar. Refetched with the list, so a delete or a refresh
+  // keeps it honest.
+  const matchCountKey = ["surveys", surveyId, "response-count", filtersKey];
+  const matchCountQuery = useQuery({
+    queryKey: matchCountKey,
+    queryFn: async () => (await getResponseCountAction({ surveyId, filterCriteria: filters }))?.data ?? null,
+    enabled: isReady,
+  });
+  const { refetch: refetchMatchCount } = matchCountQuery;
 
   const fetchNextPage = useCallback(async () => {
-    if (page === null) return;
+    if (page === null || !isReady) return;
     const newPage = page + 1;
 
     let newResponses: TResponseWithQuotas[] = [];
@@ -81,7 +103,7 @@ export const ResponsePage = ({
       surveyId,
       limit: responsesPerPage,
       offset: (newPage - 1) * responsesPerPage,
-      filterCriteria: filters,
+      filterCriteria: listCriteriaRef.current,
     });
     newResponses = getResponsesActionResponse?.data || [];
 
@@ -90,10 +112,11 @@ export const ResponsePage = ({
     }
     setResponses([...responses, ...newResponses]);
     setPage(newPage);
-  }, [filters, page, responses, responsesPerPage, surveyId]);
+  }, [isReady, page, responses, responsesPerPage, surveyId]);
 
   const updateResponseList = (responseIds: string[]) => {
     setResponses((prev) => prev.filter((r) => !responseIds.includes(r.id)));
+    void refetchMatchCount();
   };
 
   const updateResponse = (responseId: string, updatedResponse: TResponseWithQuotas) => {
@@ -101,15 +124,25 @@ export const ResponsePage = ({
   };
 
   const refetchResponses = useCallback(async () => {
+    if (!isReady) return;
     setIsFetchingFirstPage(true);
+    const requestId = ++firstPageRequestRef.current;
 
     try {
+      // A refresh asks about now: a relative date window may have moved on since the filter was set.
+      const criteria = filterState.resolveFreshCriteria();
       const getResponsesActionResponse = await getResponsesAction({
         surveyId,
         limit: responsesPerPage,
         offset: 0,
-        filterCriteria: filters,
+        filterCriteria: criteria,
       });
+      if (requestId !== firstPageRequestRef.current) return;
+      listCriteriaRef.current = criteria;
+      // The count answers for the same window as the refreshed page.
+      void getResponseCountAction({ surveyId, filterCriteria: criteria }).then((count) =>
+        queryClient.setQueryData(matchCountKey, count?.data ?? null)
+      );
 
       if (getResponsesActionResponse?.serverError) {
         toast.error(getFormattedErrorMessage(getResponsesActionResponse) ?? t("common.something_went_wrong"));
@@ -122,21 +155,12 @@ export const ResponsePage = ({
     } finally {
       setIsFetchingFirstPage(false);
     }
-  }, [filters, responsesPerPage, surveyId, t]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `matchCountKey` is rebuilt from `filtersKey`
+  }, [filterState.resolveFreshCriteria, filtersKey, isReady, queryClient, responsesPerPage, surveyId, t]);
 
   useEffect(() => {
     return registerAnalysisRefreshHandler(refetchResponses);
   }, [refetchResponses, registerAnalysisRefreshHandler]);
-
-  const surveyMemoized = useMemo(() => {
-    return replaceHeadlineRecall(survey, "default");
-  }, [survey]);
-
-  useEffect(() => {
-    if (!searchParams?.get("referer")) {
-      resetState();
-    }
-  }, [searchParams, resetState]);
 
   // Only fetch if filters are applied (not on initial mount with no filters)
   const hasFilters =
@@ -146,46 +170,59 @@ export const ResponsePage = ({
 
   useEffect(() => {
     const fetchFilteredResponses = async () => {
-      try {
-        // skip call for initial mount
-        if (page === null && !hasFilters) {
-          setPage(1);
-          return;
-        }
-        setPage(1);
+      // The server rendered the unfiltered list; it stays behind the loading state until the rules in
+      // the URL can be resolved. Checked first: an unresolved rule is not in `hasFilters` yet.
+      if (!isReady) {
+        firstPageRequestRef.current += 1;
         setIsFetchingFirstPage(true);
-        let responses: TResponseWithQuotas[] = [];
+        return;
+      }
+      // skip call for initial mount
+      if (page === null && !hasFilters) {
+        setPage(1);
+        setIsFetchingFirstPage(false);
+        return;
+      }
+      setPage(1);
+      setIsFetchingFirstPage(true);
+      const requestId = ++firstPageRequestRef.current;
 
+      try {
         const getResponsesActionResponse = await getResponsesAction({
           surveyId,
           limit: responsesPerPage,
           offset: 0,
           filterCriteria: filters,
         });
+        if (requestId !== firstPageRequestRef.current) return;
+        listCriteriaRef.current = filters;
 
-        responses = getResponsesActionResponse?.data || [];
-
-        if (responses.length < responsesPerPage) {
-          setHasMore(false);
-        } else {
-          setHasMore(true);
-        }
+        const responses = getResponsesActionResponse?.data || [];
+        setHasMore(responses.length >= responsesPerPage);
         setResponses(responses);
       } finally {
-        setIsFetchingFirstPage(false);
+        if (requestId === firstPageRequestRef.current) setIsFetchingFirstPage(false);
       }
     };
     fetchFilteredResponses();
     // page is intentionally omitted to avoid refetching after the initial page setup.
     // hasFilters is derived from selectedFilter/dateRange which are already deps.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- effect must run only when the filter value changes, not on page updates it sets internally
-  }, [filtersKey, responsesPerPage, selectedFilter, dateRange, surveyId]);
+  }, [filtersKey, isReady, responsesPerPage, selectedFilter, dateRange, surveyId]);
 
   return (
     <>
-      <div className="flex h-9 gap-1.5">
-        <CustomFilter survey={surveyMemoized} />
-      </div>
+      {filterState.isFilterDataError && (
+        // The rules in the URL could not be resolved, so the list stays hidden rather than unfiltered.
+        <div
+          role="alert"
+          className="mb-3 flex items-center justify-between gap-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          <span>{t("common.something_went_wrong_please_try_again")}</span>
+          <Button size="sm" variant="secondary" onClick={() => void filterState.retryFilterData()}>
+            {t("common.try_again")}
+          </Button>
+        </div>
+      )}
       <ResponseDataView
         survey={survey}
         responses={responses}
@@ -201,6 +238,7 @@ export const ResponsePage = ({
         isQuotasAllowed={isQuotasAllowed}
         quotas={quotas}
         isOpenedByCreatives={isOpenedByCreatives}
+        toolbar={{ filterState, matchCount: matchCountQuery.data ?? null }}
       />
     </>
   );

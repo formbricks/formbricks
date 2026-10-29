@@ -63,9 +63,11 @@ export const V3_PROBLEM_CODES = [
   "ai_smart_tools_disabled",
   "bad_gateway",
   "bad_request",
+  "chart_in_use",
   "conflict",
   "creatives_not_entitled",
   "custom_css_plan_required",
+  "dashboards_plan_required",
   "forbidden",
   "internal_server_error",
   "invalid_workflow_state",
@@ -131,6 +133,7 @@ export const INVALID_PARAM_CODES = [
   "immutable_identifier",
   "invalid_locale",
   "invalid_reference",
+  "limit_exceeded",
   "misordered_reference",
   "missing_required_field",
   "missing_translation",
@@ -314,6 +317,21 @@ export function problemCustomCssPlanRequired(requestId: string, detail: string, 
 }
 
 /**
+ * ENG-6584: charts and dashboards need the Dashboards add-on on Formbricks Cloud or a license that
+ * includes it. Checked after authorization, so it reveals nothing to a caller without access, and
+ * independent of any one resource.
+ */
+export function problemDashboardsPlanRequired(requestId: string, instance?: string): Response {
+  return problemResponse(
+    403,
+    "Forbidden",
+    "Dashboards are not enabled for this organization. They require the Dashboards add-on or an Enterprise license that includes it — an organization owner can enable them from the organization's billing or license settings.",
+    requestId,
+    { code: "dashboards_plan_required", instance }
+  );
+}
+
+/**
  * ENG-6602: the instance's license doesn't include Creatives. In wind-down (the workspace still has
  * creatives) only reading them and taking them down stay allowed, and the detail says so; otherwise
  * every creatives operation answers this. Only ever answered after the caller's own access to the
@@ -451,6 +469,25 @@ export function problemWorkspaceSurveyLimit(
       details: { count, limit },
       instance,
     }
+  );
+}
+
+/**
+ * ENG-6590: a chart still on a dashboard cannot be deleted — deleting it would break every dashboard that
+ * shows it. `details.dashboards` names them, so the caller can take the chart off first. There is no force
+ * option.
+ */
+export function problemChartInUse(
+  requestId: string,
+  dashboards: { id: string; name: string }[],
+  instance?: string
+): Response {
+  return problemResponse(
+    409,
+    "Conflict",
+    `This chart is on ${dashboards.length} dashboard(s), so it was not deleted. Remove it from them first.`,
+    requestId,
+    { code: "chart_in_use", instance, details: { dashboards } }
   );
 }
 
@@ -602,7 +639,7 @@ export function successListResponse<T, TMeta extends Record<string, unknown>>(
  * custom CSS writes use it for `warnings` (ENG-3641), which describe the request rather than the
  * resource, so they stay out of `data` and a PATCH that round-trips `data` never sends them back.
  */
-type TSuccessExtensions = { warnings?: unknown[] };
+type TSuccessExtensions = { warnings?: unknown[]; meta?: Record<string, unknown> };
 
 export function successResponse<T>(
   data: T,

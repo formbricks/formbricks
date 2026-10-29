@@ -104,6 +104,12 @@ describe("@formbricks/cache cacheKeys", () => {
         expect(loginKey).toBe("fb:rate_limit:auth:login:user-456:1640995300");
       });
 
+      test("should create an in-flight key apart from every window's key", () => {
+        expect(createCacheKey.rateLimit.inFlight("api:v3:charts:in-flight", "key-abc")).toBe(
+          "fb:rate_limit:api:v3:charts:in-flight:key-abc:in_flight"
+        );
+      });
+
       test("should convert window start number to string", () => {
         const key = createCacheKey.rateLimit.core("webhook", "endpoint-789", 0);
         expect(key).toBe("fb:rate_limit:webhook:endpoint-789:0");

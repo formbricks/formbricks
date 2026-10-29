@@ -6,6 +6,7 @@ import { TResponseInput, TResponseUpdateInput } from "@formbricks/types/response
 import {
   STORAGE_CONFIGURATION_ERROR_CODES,
   type TStorageApiErrorDetails,
+  type TUploadFileAccess,
   type TUploadFileConfig,
   type TUploadFileResponse,
 } from "@formbricks/types/storage";
@@ -118,7 +119,14 @@ export class ApiClient {
       name: string;
       base64: string;
     },
-    { allowedFileExtensions, surveyId, elementId }: TUploadFileConfig | undefined = {}
+    {
+      allowedFileExtensions,
+      surveyId,
+      elementId,
+      pinAuthToken,
+      singleUseId,
+      url,
+    }: (TUploadFileConfig & TUploadFileAccess) | undefined = {}
   ): Promise<string> {
     if (!file.name || !file.type || !file.base64) {
       throw new Error(`Invalid file object`);
@@ -130,6 +138,9 @@ export class ApiClient {
       allowedFileExtensions,
       surveyId,
       elementId,
+      pinAuthToken,
+      singleUseId,
+      url,
     };
 
     const response = await fetch(`${this.appUrl}/api/v1/client/${this.workspaceId}/storage`, {

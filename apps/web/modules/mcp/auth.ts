@@ -22,7 +22,9 @@ import { authenticateApiKeyFromHeaders, getBearerTokenFromHeaders } from "@/modu
 import { auth } from "@/modules/auth/lib/auth";
 import {
   MCP_CHALLENGE_SCOPE,
+  MCP_READ_SCOPES,
   MCP_RESOURCE_SCOPES,
+  MCP_WRITE_SCOPES,
   getAuthIssuerUrl,
   getMcpOAuthJwksUrl,
   getMcpOrigin,
@@ -153,29 +155,22 @@ function isOriginAllowed(request: NextRequest): boolean {
 }
 
 /**
- * Scopes for the API-key path, derived from the key's workspace permissions.
+ * Scopes for the API-key path, derived from the key's workspace permissions: every read scope always,
+ * and every write scope once the key holds `write` or `manage` on any workspace.
  *
- * `responses:*` is granted here alongside the others (ENG-2862) because it widens nothing: an API key
- * with `read` on a workspace can already read that workspace's responses through v1/v2 management, so
- * withholding the scope would only make the MCP surface narrower than the REST surface the same
- * credential already has. The PII argument that gives responses their own scope is about the **OAuth**
- * path, where a user grants scopes at consent and a token minted for surveys must not silently carry
- * respondent answers — that is handled by the scope being separately grantable, not by omitting it here.
+ * Every family is granted, `responses:*` (ENG-2862) and `dashboards:*` (ENG-6581) included, because it
+ * widens nothing: the scope only opens the tool, and the operation behind it still checks the key's
+ * permission on the workspace it names — exactly what the same key gets over REST. The PII argument
+ * that gives responses their own scope is about the **OAuth** path, where a user grants scopes at
+ * consent and a token minted for surveys must not silently carry respondent answers — that is handled
+ * by the scope being separately grantable, not by omitting it here.
  */
 function getMcpScopes(authentication: TAuthenticationApiKey): string[] {
-  const scopes = new Set(["surveys:read", "workflows:read", "feedbackRecords:read", "responses:read"]);
-  if (
-    authentication.workspacePermissions.some(
-      (permission) => permission.permission === "write" || permission.permission === "manage"
-    )
-  ) {
-    scopes.add("surveys:write");
-    scopes.add("workflows:write");
-    scopes.add("feedbackRecords:write");
-    scopes.add("responses:write");
-  }
+  const canWrite = authentication.workspacePermissions.some(
+    (permission) => permission.permission === "write" || permission.permission === "manage"
+  );
 
-  return Array.from(scopes);
+  return canWrite ? [...MCP_READ_SCOPES, ...MCP_WRITE_SCOPES] : [...MCP_READ_SCOPES];
 }
 
 function createApiKeyMcpAuthInfo(authentication: TAuthenticationApiKey, requestId: string): TMcpAuthInfo {

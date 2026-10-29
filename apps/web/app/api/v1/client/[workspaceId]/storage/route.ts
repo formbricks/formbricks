@@ -1,5 +1,6 @@
 import { logger } from "@formbricks/logger";
 import { ZUploadPrivateFileRequest } from "@formbricks/types/storage";
+import { validateSingleUseResponseInput } from "@/app/api/client/[workspaceId]/responses/lib/single-use";
 import { parseAndValidateJsonBody } from "@/app/lib/api/parse-and-validate-json-body";
 import { responses } from "@/app/lib/api/response";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
@@ -13,6 +14,7 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getBiggerUploadFileSizePermission } from "@/modules/ee/license-check/lib/utils";
 import { getSignedUrlForUpload } from "@/modules/storage/service";
 import { getErrorResponseFromStorageError, validateSurveyAllowsFileUpload } from "@/modules/storage/utils";
+import { verifyLinkSurveyPinToken } from "@/modules/survey/link/lib/pin-token";
 
 export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse(
@@ -66,7 +68,8 @@ export const POST = withV1ApiWrapper({
       };
     }
 
-    const { fileName, fileType, surveyId, elementId } = parsedInputResult.data;
+    const { fileName, fileType, surveyId, elementId, pinAuthToken, singleUseId, url } =
+      parsedInputResult.data;
 
     const [survey, organizationId] = await Promise.all([
       getSurvey(surveyId),
@@ -107,6 +110,23 @@ export const POST = withV1ApiWrapper({
           surveyId: survey.id,
         }),
       };
+    }
+
+    // Same gates the client response APIs apply: an upload URL is only useful to someone who could
+    // go on to submit, so a caller without the PIN token or a valid single-use link gets neither.
+    if (survey.pin && !verifyLinkSurveyPinToken(pinAuthToken, survey.id)) {
+      return {
+        response: responses.forbiddenResponse("Survey is protected by a PIN", true, { surveyId: survey.id }),
+      };
+    }
+
+    const singleUseValidation = validateSingleUseResponseInput(survey, workspaceId, {
+      singleUseId: singleUseId ?? undefined,
+      meta: { url: url ?? undefined },
+    });
+
+    if (singleUseValidation && "response" in singleUseValidation) {
+      return { response: singleUseValidation.response };
     }
 
     try {

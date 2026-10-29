@@ -1,6 +1,5 @@
 "use client";
 
-import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { ChevronDownIcon, LayoutTemplateIcon, PlusCircleIcon, UploadIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type ComponentProps, useCallback, useEffect, useMemo, useState } from "react";
@@ -11,7 +10,7 @@ import type { TUserLocale } from "@formbricks/types/user";
 import type { TWorkspaceConfigChannel } from "@formbricks/types/workspace";
 import { CUSTOM_SURVEY_TEMPLATE_ID } from "@/app/lib/templates";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
-import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@/lib/localStorage";
+import { removeStaleFilterStorage } from "@/lib/stale-filter-storage";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { SurveyDeleteBlockedDialog } from "@/modules/ee/creatives/components/survey-side/survey-delete-blocked-dialog";
 import { CreateWithAIDialog } from "@/modules/survey/components/template-list/components/create-with-ai-dialog";
@@ -25,11 +24,16 @@ import { useSurveys } from "@/modules/survey/list/hooks/use-surveys";
 import { useUpdateSurveyStatus } from "@/modules/survey/list/hooks/use-update-survey-status";
 import { initialFilters } from "@/modules/survey/list/lib/constants";
 import {
-  normalizeSurveyFilters,
-  parseStoredSurveyFilters,
-  serializeStoredSurveyFilters,
-} from "@/modules/survey/list/lib/utils";
-import { TSurveyOverviewFilters } from "@/modules/survey/list/types/survey-overview";
+  DEFAULT_SURVEY_SORT,
+  SURVEY_SORT_VALUES,
+  getSurveyFilterProperties,
+  getSurveySortOptions,
+  isShowingArchived,
+  setShowArchived,
+  toSurveyListFilters,
+} from "@/modules/survey/list/lib/table-filters";
+import { normalizeSurveyFilters } from "@/modules/survey/list/lib/utils";
+import type { TSurveyListItem } from "@/modules/survey/list/types/survey-overview";
 import { TemplateContainerWithPreview } from "@/modules/survey/templates/components/template-container";
 import { useUpdateSurveyVisibility } from "@/modules/survey/visibility/hooks/use-update-survey-visibility";
 import {
@@ -48,10 +52,16 @@ import {
 import { EmptyState } from "@/modules/ui/components/empty-state";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { TableToolbar } from "@/modules/ui/components/table-toolbar";
+import { useTableColumnState } from "@/modules/ui/components/table-toolbar/hooks/use-table-column-state";
+import { useTableUrlState } from "@/modules/ui/components/table-toolbar/hooks/use-table-url-state";
+import { buildColumnSettings } from "@/modules/ui/components/table-toolbar/lib/column-settings";
 import { FeaturedTemplates } from "./featured-templates";
-import { SurveyCard } from "./survey-card";
-import { SurveyFilters } from "./survey-filters";
 import { SurveyLoading } from "./survey-loading";
+import { SURVEY_TABLE_COLUMN_IDS, SurveysTable, getSurveyColumnLabels } from "./surveys-table";
+
+// One shared empty list, so filters that match nothing do not hand the table a new array each render.
+const NO_SURVEYS: TSurveyListItem[] = [];
 
 interface SurveysListProps {
   workspace: ComponentProps<typeof TemplateContainerWithPreview>["workspace"];
@@ -188,7 +198,6 @@ export const SurveysList = ({
   surveyVisibilityGate,
 }: Readonly<SurveysListProps>) => {
   const { t } = useTranslation();
-  const [surveyFilters, setSurveyFilters] = useState<TSurveyOverviewFilters>(initialFilters);
   // Set when a visibility request answers `visibility_not_enabled`: changing visibility was switched off
   // after this page rendered, so every visibility control goes away until the next load. The markers
   // stay: what is enforced is not decided by that answer.
@@ -196,46 +205,35 @@ export const SurveysList = ({
   const visibilityGate = isVisibilityTurnedOff
     ? withoutVisibilityControls(surveyVisibilityGate)
     : surveyVisibilityGate;
-  const [isFilterInitialized, setIsFilterInitialized] = useState(false);
-  const [parent] = useAutoAnimate();
   // A refused delete (409: creatives open the survey) is shown here, not in the row: the optimistic
   // removal has unmounted the row by the time the answer arrives.
   const [isDeleteBlockedDialogOpen, setDeleteBlockedDialogOpen] = useState(false);
   const [deleteBlockers, setDeleteBlockers] = useState<TSurveyVisibilityBlocker[]>([]);
 
-  useEffect(() => {
-    if (typeof globalThis.window === "undefined") {
-      return;
-    }
+  useEffect(() => removeStaleFilterStorage(globalThis.window?.localStorage), []);
 
-    const storedFilters = globalThis.window.localStorage.getItem(FORMBRICKS_SURVEYS_FILTERS_KEY_LS);
-    const parsedFilters = parseStoredSurveyFilters(storedFilters, currentWorkspaceChannel);
-
-    if (storedFilters && !parsedFilters) {
-      globalThis.window.localStorage.removeItem(FORMBRICKS_SURVEYS_FILTERS_KEY_LS);
-      setSurveyFilters(initialFilters);
-    } else if (parsedFilters) {
-      setSurveyFilters(parsedFilters);
-    }
-
-    setIsFilterInitialized(true);
-  }, [currentWorkspaceChannel]);
-
+  const filterProperties = getSurveyFilterProperties(t, {
+    channel: currentWorkspaceChannel,
+    isVisibilityEnabled: visibilityGate.enforced,
+  });
+  const sortOptions = getSurveySortOptions(t);
+  const tableState = useTableUrlState({
+    properties: filterProperties,
+    sortOptions: SURVEY_SORT_VALUES,
+    defaultSortBy: DEFAULT_SURVEY_SORT,
+  });
+  const listFilters = toSurveyListFilters(tableState.filters, tableState.search, tableState.sortBy);
+  const listFiltersKey = JSON.stringify(listFilters);
   const normalizedFilters = useMemo(
-    () => normalizeSurveyFilters(surveyFilters, currentWorkspaceChannel),
-    [currentWorkspaceChannel, surveyFilters]
+    () => normalizeSurveyFilters(listFilters ?? initialFilters, currentWorkspaceChannel),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on the serialized filters, rebuilt every render
+    [listFiltersKey, currentWorkspaceChannel]
   );
-
-  useEffect(() => {
-    if (!isFilterInitialized || typeof globalThis.window === "undefined") {
-      return;
-    }
-
-    globalThis.window.localStorage.setItem(
-      FORMBRICKS_SURVEYS_FILTERS_KEY_LS,
-      serializeStoredSurveyFilters(normalizedFilters)
-    );
-  }, [normalizedFilters, isFilterInitialized]);
+  const hasFilters = tableState.filters.length > 0 || tableState.search.trim().length > 0;
+  const columnState = useTableColumnState({
+    storagePrefix: `${workspace.id}-surveys`,
+    columnIds: SURVEY_TABLE_COLUMN_IDS,
+  });
 
   const {
     error,
@@ -248,11 +246,13 @@ export const SurveysList = ({
     refetch,
     surveys,
     workspaceSurveyCount,
+    totalCount,
   } = useSurveys({
     workspaceId: workspace.id,
     limit: surveysPerPage,
     filters: normalizedFilters,
-    enabled: isFilterInitialized,
+    // Filters that exclude every value cannot match anything; there is nothing to ask the API.
+    enabled: listFilters !== null,
   });
 
   const deleteSurveyMutation = useDeleteSurvey({ queryKey });
@@ -263,12 +263,17 @@ export const SurveysList = ({
   const updateSurveyVisibilityMutation = useUpdateSurveyVisibility({ listQueryKey: queryKey });
 
   // Stable: the Collaborate modal runs it from an effect.
+  const { filters: activeFilters, setFilters } = tableState;
   const handleVisibilityNotEnabled = useCallback(() => {
     setIsVisibilityTurnedOff(true);
-    setSurveyFilters((prev) => (prev.visibility.length > 0 ? { ...prev, visibility: [] } : prev));
-  }, []);
+    if (activeFilters.some((filter) => filter.property === "visibility")) {
+      setFilters(activeFilters.filter((filter) => filter.property !== "visibility"));
+    }
+  }, [activeFilters, setFilters]);
 
-  const showInitialLoading = !isFilterInitialized || (isLoading && surveys.length === 0);
+  // The first load keeps the page skeleton; later loads (a filter change) keep the toolbar on screen.
+  const showInitialLoading =
+    isLoading && surveys.length === 0 && workspaceSurveyCount === null && !hasFilters;
   // Only a workspace without a single survey gets the onboarding empty states. Every other empty
   // list keeps the toolbar, so the filter that emptied it stays reachable.
   const isWorkspaceEmpty = !isError && workspaceSurveyCount === 0;
@@ -313,25 +318,15 @@ export const SurveysList = ({
       aiUnavailableReason={aiUnavailableReason}
     />
   );
+  const headerCta = isReadOnly ? <></> : createSurveyButton;
 
   if (showInitialLoading) {
     return (
       <PageContentWrapper>
         {/* The CTA depends on nothing the query fetches, so it stays live while the list loads —
             someone who came to create a survey should not wait for a list they did not ask for
-            (ENG-2579). Same expression as the loaded state below, so the header does not shift. */}
-        <PageHeader pageTitle={t("common.surveys")} cta={isReadOnly ? <></> : createSurveyButton} />
-        <div className="flex items-center justify-between">
-          <div className="flex h-9 animate-pulse gap-2">
-            <div className="w-48 rounded-md bg-slate-300"></div>
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="w-24 rounded-md bg-slate-300"></div>
-            ))}
-          </div>
-          <div className="flex h-9 animate-pulse gap-2">
-            <div className="w-36 rounded-md bg-slate-300"></div>
-          </div>
-        </div>
+            (ENG-2579). Same CTA as the loaded state below, so the header does not shift. */}
+        <PageHeader pageTitle={t("common.surveys")} cta={headerCta} />
         <SurveyLoading />
       </PageContentWrapper>
     );
@@ -360,79 +355,50 @@ export const SurveysList = ({
     );
   }
 
-  let surveyContent = (
-    <div className="flex h-full w-full">
-      <div className="flex w-full flex-col items-center justify-center text-slate-600">
-        <span className="size-24 p-4 text-center text-5xl">🕵️</span>
-        {t("common.no_surveys_found")}
-      </div>
-    </div>
-  );
+  const matchCount = listFilters === null ? 0 : totalCount;
 
-  if (isError && surveys.length === 0) {
-    surveyContent = (
+  const surveyContent =
+    isError && surveys.length === 0 ? (
       <div className="flex w-full flex-col items-center justify-center gap-4 py-16 text-slate-600">
         <p>{getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again"))}</p>
         <Button variant="secondary" size="sm" onClick={() => refetch()}>
           {t("common.try_again")}
         </Button>
       </div>
+    ) : (
+      <SurveysTable
+        surveys={listFilters === null ? NO_SURVEYS : surveys}
+        isLoading={listFilters !== null && isLoading && surveys.length === 0}
+        hasFilters={hasFilters}
+        onClearFilters={tableState.clearFilters}
+        hasNextPage={listFilters !== null && Boolean(hasNextPage)}
+        isFetchingNextPage={isFetchingNextPage}
+        onLoadMore={() => void fetchNextPage()}
+        columnOrder={columnState.columnOrder}
+        columnVisibility={columnState.columnVisibility}
+        columnSizing={columnState.columnSizing}
+        sizingOptions={columnState.sizingOptions}
+        workspaceBasePath={`/workspaces/${workspace.id}`}
+        workspaceName={workspace.name}
+        publicDomain={publicDomain}
+        isReadOnly={isReadOnly}
+        locale={locale}
+        surveyVisibilityGate={visibilityGate}
+        listQueryKey={queryKey}
+        deleteSurvey={handleDeleteSurvey}
+        updateSurveyStatus={handleUpdateSurveyStatus}
+        archiveSurvey={handleArchiveSurvey}
+        restoreSurvey={handleRestoreSurvey}
+        renameSurvey={handleRenameSurvey}
+        updateSurveyVisibility={handleUpdateSurveyVisibility}
+        onVisibilityNotEnabled={handleVisibilityNotEnabled}
+        onDeleteBlocked={handleDeleteBlocked}
+      />
     );
-  } else if (surveys.length > 0) {
-    surveyContent = (
-      <div>
-        <div className="flex-col space-y-3" ref={parent}>
-          <div
-            className="mt-6 grid w-full grid-cols-8 place-items-center gap-3 px-6 pr-14 text-sm text-slate-800"
-            data-testid="survey-list-header">
-            <div className="col-span-2 place-self-start">{t("common.name")}</div>
-            <div className="col-span-1">{t("common.status")}</div>
-            <div className="col-span-1">{t("workspace.surveys.completed_responses")}</div>
-            <div className="col-span-1">{t("common.type")}</div>
-            <div className="col-span-1">{t("common.created_at")}</div>
-            <div className="col-span-1">{t("common.updated_at")}</div>
-            <div className="col-span-1">{t("common.created_by")}</div>
-          </div>
-          {surveys.map((survey) => (
-            <SurveyCard
-              key={survey.id}
-              survey={survey}
-              isReadOnly={isReadOnly}
-              deleteSurvey={handleDeleteSurvey}
-              updateSurveyStatus={handleUpdateSurveyStatus}
-              archiveSurvey={handleArchiveSurvey}
-              restoreSurvey={handleRestoreSurvey}
-              renameSurvey={handleRenameSurvey}
-              publicDomain={publicDomain}
-              locale={locale}
-              surveyVisibilityGate={visibilityGate}
-              workspaceName={workspace.name}
-              listQueryKey={queryKey}
-              updateSurveyVisibility={handleUpdateSurveyVisibility}
-              onVisibilityNotEnabled={handleVisibilityNotEnabled}
-              onDeleteBlocked={handleDeleteBlocked}
-            />
-          ))}
-        </div>
-
-        {hasNextPage && (
-          <div className="flex justify-center py-5">
-            <Button
-              onClick={() => fetchNextPage()}
-              variant="secondary"
-              size="sm"
-              loading={isFetchingNextPage}>
-              {t("common.load_more")}
-            </Button>
-          </div>
-        )}
-      </div>
-    );
-  }
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.surveys")} cta={isReadOnly ? <></> : createSurveyButton} />
+      <PageHeader pageTitle={t("common.surveys")} cta={headerCta} />
       <div className="space-y-6">
         {!isReadOnly && showFeaturedTemplates && (
           <FeaturedTemplates
@@ -442,13 +408,45 @@ export const SurveysList = ({
             aiUnavailableReason={aiUnavailableReason}
           />
         )}
-        <SurveyFilters
-          surveyFilters={normalizedFilters}
-          setSurveyFilters={setSurveyFilters}
-          currentWorkspaceChannel={currentWorkspaceChannel}
-          surveyVisibilityEnabled={visibilityGate.enforced}
-        />
-        {surveyContent}
+        <div className="space-y-3">
+          <TableToolbar
+            settings={{
+              sort: { options: sortOptions, value: tableState.sortBy, onChange: tableState.setSortBy },
+              toggles: [
+                {
+                  id: "show-archived",
+                  label: t("common.table_toolbar.show_archived"),
+                  checked: isShowingArchived(tableState.filters),
+                  onCheckedChange: (checked) => setFilters(setShowArchived(tableState.filters, checked)),
+                },
+              ],
+              columns: {
+                items: buildColumnSettings(
+                  getSurveyColumnLabels(t),
+                  columnState.columnOrder,
+                  columnState.columnVisibility,
+                  ["name"]
+                ),
+                onVisibilityChange: (id, visible) =>
+                  columnState.setColumnVisibility((current) => ({ ...current, [id]: visible })),
+                onMove: columnState.moveColumn,
+              },
+            }}
+            search={{
+              value: tableState.search,
+              onChange: tableState.setSearch,
+              placeholder: t("workspace.surveys.search_by_survey_name"),
+            }}
+            filter={{
+              properties: filterProperties,
+              filters: tableState.filters,
+              onFiltersChange: setFilters,
+            }}
+            matchCount={{ count: matchCount }}
+            isLoading={isLoading}
+          />
+          {surveyContent}
+        </div>
       </div>
       <SurveyDeleteBlockedDialog
         open={isDeleteBlockedDialogOpen}

@@ -1,9 +1,6 @@
 import "server-only";
-import { logger } from "@formbricks/logger";
-import { TooManyRequestsError } from "@formbricks/types/errors";
-import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
-import { problemTooManyRequests } from "./response";
+import { applyV3OperationRateLimit } from "./operation-rate-limit";
 import type { TV3Authentication } from "./types";
 
 /**
@@ -11,11 +8,7 @@ import type { TV3Authentication } from "./types";
  * workspace writes pass it to the custom CSS service, which charges the same budget when the write
  * actually processes.
  */
-export const getV3CustomCssPrincipal = (authentication: TV3Authentication): string | null => {
-  if (authentication && "user" in authentication && authentication.user?.id) return authentication.user.id;
-  if (authentication && "apiKeyId" in authentication) return authentication.apiKeyId;
-  return null;
-};
+export { getV3RateLimitPrincipal as getV3CustomCssPrincipal } from "./operation-rate-limit";
 
 /**
  * Whether a survey validation request runs the custom CSS processor: the CSS-only variant, or a create or
@@ -38,7 +31,7 @@ export const isCustomCssValidationRequest = (body: { operation: string; data?: u
  *
  * Returns the standard 429 problem when the budget is spent, or `null` to proceed.
  */
-export const applyV3CustomCssRateLimit = async ({
+export const applyV3CustomCssRateLimit = ({
   authentication,
   requestId,
   instance,
@@ -46,20 +39,10 @@ export const applyV3CustomCssRateLimit = async ({
   authentication: TV3Authentication;
   requestId: string;
   instance: string;
-}): Promise<Response | null> => {
-  const principal = getV3CustomCssPrincipal(authentication);
-  if (!principal) return null;
-
-  try {
-    await applyRateLimit(rateLimitConfigs.api.v3CustomCss, principal);
-    return null;
-  } catch (error) {
-    logger.withContext({ requestId }).warn({ statusCode: 429 }, "Custom CSS processing rate limit exceeded");
-    return problemTooManyRequests(
-      requestId,
-      error instanceof Error ? error.message : "Rate limit exceeded",
-      error instanceof TooManyRequestsError ? error.retryAfter : undefined,
-      instance
-    );
-  }
-};
+}): Promise<Response | null> =>
+  applyV3OperationRateLimit({
+    config: rateLimitConfigs.api.v3CustomCss,
+    authentication,
+    requestId,
+    instance,
+  });

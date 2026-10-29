@@ -1,0 +1,100 @@
+get:
+  operationId: listContactAttributeValuesV3
+  summary: List distinct values of a contact attribute
+  description: |
+    Returns the distinct, non-empty values one contact attribute takes in a workspace, in ascending
+    order and bounded by `limit` — for quick-filter value pickers. Not paginated: `meta.truncated` says
+    whether more values match than were returned, so a picker can ask the user to narrow the search. Number and date attributes return
+    their stored text `value`. Requires the Contacts entitlement (**403** without it). An unknown
+    `key` → **400**. Session cookie, `x-api-key`, or a Bearer token.
+  tags:
+    - V3 Contacts
+  parameters:
+    - in: query
+      name: workspaceId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Workspace identifier.
+    - in: query
+      name: key
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 255
+      description: The attribute key (`ContactAttributeKeyResource.key`).
+    - in: query
+      name: filter[value][contains]
+      schema:
+        type: string
+        maxLength: 512
+      description: Case-insensitive substring match on the value.
+    - in: query
+      name: limit
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+      description: Maximum number of values returned (max 100). Not paginated.
+  responses:
+    "200":
+      description: Values retrieved successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              meta:
+                type: object
+                required:
+                  - limit
+                  - truncated
+                properties:
+                  limit:
+                    type: integer
+                    minimum: 1
+                    description: The limit actually applied.
+                  truncated:
+                    type: boolean
+                    description: True when more values match than `limit` returned.
+                additionalProperties: false
+              data:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - value
+                  properties:
+                    value:
+                      type: string
+                  additionalProperties: false
+            additionalProperties: false
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []
