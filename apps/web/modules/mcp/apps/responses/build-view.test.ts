@@ -263,6 +263,48 @@ describe("buildShowResponsesViewMeta", () => {
   });
 });
 
+describe("buildShowResponsesStructuredContent", () => {
+  const rows = [item("clrs000000000000000000001", [text("x")])];
+
+  test("a fully populated meta reports the cursor and the total", () => {
+    const content = buildShowResponsesStructuredContent(input, rows, {
+      limit: 20,
+      nextCursor: "next",
+      totalCount: 134,
+      totalCountRelation: "eq",
+    });
+    expect(content).toMatchObject({
+      rowCount: 1,
+      columnCount: 1,
+      nextCursor: "next",
+      total: { count: 134, relation: "eq" },
+    });
+  });
+
+  test("keeps a lower-bound total as gte", () => {
+    const content = buildShowResponsesStructuredContent(input, rows, {
+      nextCursor: null,
+      totalCount: 1000,
+      totalCountRelation: "gte",
+    });
+    expect(content.total).toEqual({ count: 1000, relation: "gte" });
+    expect(content.nextCursor).toBeNull();
+  });
+
+  test.each([
+    ["a keyset meta of limit and nextCursor only", { limit: 20, nextCursor: "next" }, "next"],
+    ["a meta of limit only", { limit: 20 }, null],
+    ["an empty meta", {}, null],
+    ["explicit nulls", { nextCursor: null, totalCount: null, totalCountRelation: null }, null],
+    ["a count without its relation", { totalCount: 5 }, null],
+  ])("%s reports no total and no undefined", (_name, meta, nextCursor) => {
+    const content = buildShowResponsesStructuredContent(input, rows, meta);
+    expect(content).not.toHaveProperty("total");
+    expect(content.nextCursor).toBe(nextCursor);
+    expect(JSON.stringify(content)).not.toContain("undefined");
+  });
+});
+
 describe("buildShowResponsesText", () => {
   const meta = { nextCursor: "next", totalCount: 134, totalCountRelation: "eq" as const };
 
@@ -294,10 +336,27 @@ describe("buildShowResponsesText", () => {
     expect(summary).toContain("That is every matching response.");
   });
 
+  test.each([
+    ["a keyset meta", { limit: 20, nextCursor: "next" }, true],
+    ["a meta of limit only", { limit: 20 }, false],
+    ["an empty meta", {}, false],
+    ["explicit nulls", { nextCursor: null, totalCount: null, totalCountRelation: null }, false],
+  ])("%s shows no total and never says undefined", (_name, meta, more) => {
+    const summary = buildShowResponsesText(
+      input,
+      [item("clrs000000000000000000001", [text("x")]), item("clrs000000000000000000002", [text("y")])],
+      meta
+    );
+    expect(summary).toContain("Showing 2 responses to");
+    expect(summary).not.toMatch(/undefined|null| of \d/);
+    expect(summary).toContain(more ? "More are available" : "That is every matching response.");
+  });
+
   test("says so when nothing matches", () => {
     expect(
       buildShowResponsesText(input, [], { nextCursor: null, totalCount: 0, totalCountRelation: "eq" })
     ).toContain("No responses match");
+    expect(buildShowResponsesText(input, [], {})).toContain("No responses match");
   });
 
   test("names the survey by id only: a hostile name never reaches the text", () => {

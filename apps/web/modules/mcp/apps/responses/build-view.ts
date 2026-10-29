@@ -1,4 +1,6 @@
+import type { z } from "zod";
 import type { TV3ResponseAnswer, TV3ResponseListItem } from "@/app/api/v3/responses/lib/resources";
+import type { ZMcpListMeta } from "../../tools/output-schemas";
 import type { TMcpShowResponsesInput } from "./schemas";
 
 /** Longest cell text sent to the view. The full answer is one `get_response` call away. */
@@ -118,11 +120,19 @@ export const toRow = (item: TV3ResponseListItem) => {
   };
 };
 
-type TListMeta = {
-  nextCursor: string | null;
-  totalCount: number | null;
-  totalCountRelation: "eq" | "gte" | null;
-};
+/**
+ * What `list_responses` returns under `meta`, taken from the schema that validates it so the two cannot
+ * drift. Every key is optional: an absent `nextCursor` means no next page and an absent (or `null`)
+ * `totalCount` / `totalCountRelation` means no total was reported. `limit` is not read here; the page
+ * size shown is the number of rows, and the requested limit is in the query.
+ */
+type TListMeta = z.infer<typeof ZMcpListMeta>;
+
+/** The total, only when the operation reported both its count and whether it is exact. */
+const readTotal = (meta: TListMeta) =>
+  typeof meta.totalCount === "number" && meta.totalCountRelation
+    ? { count: meta.totalCount, relation: meta.totalCountRelation }
+    : undefined;
 
 /** The arguments the view re-sends to `list_responses` on every follow-up page and filter change. */
 const toQuery = (input: TMcpShowResponsesInput) => ({
@@ -147,16 +157,17 @@ export const buildShowResponsesStructuredContent = (
   input: TMcpShowResponsesInput,
   items: readonly TV3ResponseListItem[],
   meta: TListMeta
-) => ({
-  survey: { id: input.surveyId },
-  query: toQuery(input),
-  rowCount: items.length,
-  columnCount: deriveColumns(items).length,
-  nextCursor: meta.nextCursor,
-  ...(meta.totalCount !== null && meta.totalCountRelation !== null
-    ? { total: { count: meta.totalCount, relation: meta.totalCountRelation } }
-    : {}),
-});
+) => {
+  const total = readTotal(meta);
+  return {
+    survey: { id: input.surveyId },
+    query: toQuery(input),
+    rowCount: items.length,
+    columnCount: deriveColumns(items).length,
+    nextCursor: meta.nextCursor ?? null,
+    ...(total ? { total } : {}),
+  };
+};
 
 /**
  * `_meta.formbricks` of `show_responses`: what the table renders. ChatGPT hides `_meta` from the model
@@ -189,9 +200,9 @@ export const buildShowResponsesText = (
   }
 
   const total =
-    meta.totalCount === null
-      ? ""
-      : ` of ${meta.totalCountRelation === "gte" ? "at least " : ""}${meta.totalCount}`;
+    typeof meta.totalCount === "number"
+      ? ` of ${meta.totalCountRelation === "gte" ? "at least " : ""}${meta.totalCount}`
+      : "";
   const finished = items.filter((item) => item.finished).length;
   const days = items.map((item) => dayOf(item.createdAt)).toSorted((a, b) => a.localeCompare(b));
   const range = days[0] === days.at(-1) ? `on ${days[0]}` : `from ${days[0]} to ${days.at(-1)}`;

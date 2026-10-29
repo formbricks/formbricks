@@ -269,6 +269,21 @@ describe("show_responses handler", () => {
     expect(ZMcpShowResponsesViewMeta.safeParse(viewMeta).success).toBe(true);
   });
 
+  test("a meta without a total or limit still answers a valid result with no total", async () => {
+    vi.mocked(listV3Responses).mockResolvedValue(
+      successListResponse([listItem("clrs000000000000000000001")], { nextCursor: "next-page" })
+    );
+
+    const result = await call(input);
+
+    expect(result.isError).toBeUndefined();
+    expect(result.content[0]!.text).toContain("Showing 1 responses");
+    expect(result.content[0]!.text).not.toMatch(/undefined|null/);
+    expect(result.structuredContent).toMatchObject({ rowCount: 1, nextCursor: "next-page" });
+    expect(result.structuredContent).not.toHaveProperty("total");
+    expect(ZMcpShowResponsesOutput.safeParse(result.structuredContent).success).toBe(true);
+  });
+
   test("an empty survey still answers a valid result", async () => {
     vi.mocked(listV3Responses).mockResolvedValue(
       successListResponse([], { limit: 20, nextCursor: null, totalCount: 0, totalCountRelation: "eq" })
