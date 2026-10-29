@@ -30,22 +30,22 @@ The Standard export is the file Formbricks has always produced, so pipelines tha
     Set the filter and time range on the Summary or Responses tab first. The export contains the responses the filter matches. To export only some responses, tick their rows in the Responses table and select **Download** in the selection bar: it opens the same modal for the selection.
   </Step>
   <Step title="Open the Export modal">
-    Select **Export**. The modal is titled **Export responses** and opens with the settings of the Standard export. At the bottom, a count line tells you how many responses are included and, for an Analysis export, how many Low quality responses are left out, for example "Include 1,240 responses. · 3 Low quality left out".
+    Select **Export**. The **Export options** modal opens with the settings of the Standard export. A count line at the top tells you how many responses are included and, for an Analysis export, how many Low quality responses are left out, for example "Include 1,240 responses · 3 Low quality left out". The **Export** button waits until the count has loaded.
   </Step>
   <Step title="Pick the options">
-    - **Format**: **CSV** or **Excel**.
-    - **Add SPSS syntax file**: CSV only. It adds a syntax file that reads the CSV into SPSS. It needs answer codes, so it switches **Text only** off.
-    - **Display questions and answers**: **Text only**, **Code only** or **Text and code**.
-    - **Include columns**: shows a ticked **Select all** that you cannot change yet. An Analysis export always has all response columns, such as timestamp, tags and Embedded Data. Picking columns is not available yet.
-    - **Advanced options**: **Add datamap** and **Add unmapped values**, both for CSV and Excel. On CSV, each one adds a file, so the download becomes a zip.
+    - **Format**: **.csv** or **.xlsx**.
+    - **Add SPSS syntax file (.sps)**: CSV only. It adds a syntax file that reads the CSV into SPSS. It needs answer codes, so it switches **Text only** off.
+    - **Display questions** and **Display answers**: **Text only**, **Code only** or **Text and code**, one choice for the column headers and one for the cells.
+    - **Include columns**: tick the columns the file keeps, or **Select all**. A multi-select question lists its options and its Other text under it, so you can leave one out without the rest.
+    - **Advanced options**: **Add datamap** and **Add unmapped values**, both for CSV and Excel. On CSV, each one adds a file, so the download becomes a zip. **Compress into .zip** downloads a single CSV as a zip.
   </Step>
   <Step title="Export">
-    Select **Export**. The modal closes, a toast shows "Preparing your export…" and then the size received so far, and the file downloads. If it fails, the toast offers **Try again**.
+    Select **Export**. The modal shows the progress, for example "Exporting… 600 of 1,240 responses", and you can close it: the download starts when the file is ready. A toast confirms it. If it fails, the toast offers **Try again**.
   </Step>
 </Steps>
 
 <Note>
-  The export runs in the app and streams the file as it is built. You can move between Summary and Responses while it runs. If you leave the survey, close the tab or reload the page, the export stops and you have to start it again. Only one export runs at a time.
+  The export runs in the app and streams the file as it is built. You can move between Summary, Responses and the survey editor while it runs. If you reload or close the tab, the browser asks you to confirm first, and the export stops if you do. Only one export runs at a time in your browser, and an Excel file is built by one export at a time on the server, so a second Excel export can be asked to try again in a moment.
 </Note>
 
 ### Attachments
@@ -168,7 +168,7 @@ Mark a response as **Low quality** when it should not count, for example a speed
 What changes for a Low quality response:
 
 - It is left out of the Analysis export by default, and the count line says how many were left out. This also holds when you export ticked rows. If your filter selects Low quality responses, the export contains them.
-- The Responses table has an **Outcome** column, and a response card shows a **Low quality** badge. The Analysis export has an `outcome` column that reads `lowQuality`.
+- The **Status** column of the Responses table and the response card show a **Low quality** badge. The Analysis export has an `outcome` column that reads `lowQuality`.
 - Its Feedback Records are removed, so it drops out of [Dashboards](/unify-feedback/dashboards-charts). Restoring the response creates them again.
 
 What does not change: the Summary, response counts, API lists, webhooks and integrations keep counting Low quality responses. Webhooks and API responses carry `outcome`, so you can filter on it yourself. The Standard export includes Low quality responses too.

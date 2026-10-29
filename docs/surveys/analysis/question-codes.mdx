@@ -16,6 +16,7 @@ A question code:
 - has no two `_` in a row and does not end with `_`
 - is at most 30 characters long
 - is unique in the survey, ignoring case. It cannot match another question code, a [hidden field or variable](/surveys/general-features/hidden-fields) name, or the Question ID of another question
+- does not give the export a column another question already has. A multi-select question coded `q2` with the option code `1` makes a column `q2_1`, so another question cannot be coded `q2_1`. The same goes for the Other text column (`q2_text`) and for the rows of a matrix question
 - is not one of the words SPSS reserves (`all`, `and`, `by`, `eq`, `ge`, `gt`, `le`, `lt`, `ne`, `not`, `or`, `to`, `with`), and not the name of a column the export writes itself, such as `response_id`, `language`, `outcome`, `timestamp` or `finished`
 
 <Note>
@@ -66,7 +67,7 @@ A survey is **published** once it has left draft: active, paused or completed. A
 From then on:
 
 - question codes and answer codes cannot be changed
-- the question type cannot be changed, for example from Single-select to Multi-select, because it changes the columns of an export
+- the question type cannot be changed, for example from Single-select to Multi-select, because it changes the columns of an export. For a Picture selection, the single or multiple selection setting is locked too
 - the text of an option cannot be changed, in any language
 - an option that existed when the survey was published cannot be deleted. Add a new option instead
 
