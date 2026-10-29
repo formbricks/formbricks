@@ -20,6 +20,12 @@ interface QueueConfig {
   retryAttempts: number;
   persistOffline?: boolean;
   surveyId?: string;
+  /**
+   * One per mounted survey display. The shared queue is keyed by it, so an answer that was never sent in an
+   * earlier display of the same survey (`displayMultiple`) is not replayed into the next one. Queues built
+   * for one display (a rebuild on a changed host callback) pass the same id and keep sharing.
+   */
+  displayKey?: string;
   onResponseCreated?: (responseId: string) => void;
   onResponseSendingFailed?: (responseUpdate: TResponseUpdate, errorCode?: TResponseErrorCodesEnum) => void;
   onResponseSendingFinished?: () => void;
@@ -39,12 +45,13 @@ export const delay = (ms: number): Promise<void> => {
 const syncingBySurvey = new Map<string, boolean>();
 const requestInProgressBySurvey = new Map<string, boolean>();
 const processedDbIdsPendingRemovalBySurvey = new Map<string, Set<number>>();
-// The answers waiting to be sent, and their IndexedDB ids, are shared the same way. The survey component
+// The answers waiting to be sent, and their IndexedDB ids, are shared the same way, but per display of the
+// survey: a display that ends with an unsent answer must not hand it to the next one. The survey component
 // rebuilds its queue when a host callback changes identity, so an answer can be added to a newer instance
 // while an older one holds the send lock. If each instance kept its own list, the older one would finish
 // with nothing left to send and the newer one would never be woken.
-const queueBySurvey = new Map<string, TResponseUpdate[]>();
-const pendingDbIdsBySurvey = new Map<string, Map<TResponseUpdate, number>>();
+const queueByDisplay = new Map<string, TResponseUpdate[]>();
+const pendingDbIdsByDisplay = new Map<string, Map<TResponseUpdate, number>>();
 
 const sharedFor = <T>(registry: Map<string, T>, surveyId: string | undefined, create: () => T, own: T): T => {
   if (!surveyId) return own;
@@ -62,8 +69,8 @@ export const _syncLocks = {
     syncingBySurvey.clear();
     requestInProgressBySurvey.clear();
     processedDbIdsPendingRemovalBySurvey.clear();
-    queueBySurvey.clear();
-    pendingDbIdsBySurvey.clear();
+    queueByDisplay.clear();
+    pendingDbIdsByDisplay.clear();
   },
   set: (surveyId: string, value: boolean) => syncingBySurvey.set(surveyId, value),
   get: (surveyId: string) => syncingBySurvey.get(surveyId) ?? false,
@@ -88,13 +95,18 @@ export class ResponseQueue {
     });
   }
 
+  private get displayRegistryKey(): string | undefined {
+    const { surveyId, displayKey } = this.config;
+    return surveyId && displayKey ? `${surveyId}:${displayKey}` : surveyId;
+  }
+
   get queue(): TResponseUpdate[] {
-    return sharedFor(queueBySurvey, this.config.surveyId, () => [], this.ownQueue);
+    return sharedFor(queueByDisplay, this.displayRegistryKey, () => [], this.ownQueue);
   }
 
   /** Maps queued response objects to their IndexedDB ids for cleanup after successful sends. */
   private get pendingDbIds(): Map<TResponseUpdate, number> {
-    return sharedFor(pendingDbIdsBySurvey, this.config.surveyId, () => new Map(), this.ownPendingDbIds);
+    return sharedFor(pendingDbIdsByDisplay, this.displayRegistryKey, () => new Map(), this.ownPendingDbIds);
   }
 
   private get isSyncing(): boolean {

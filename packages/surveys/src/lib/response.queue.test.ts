@@ -116,6 +116,24 @@ describe("ResponseQueue across instances of one survey", () => {
   });
 });
 
+describe("ResponseQueue across displays of one survey", () => {
+  // `displayMultiple` shows the same survey again on one page. An answer the first display never managed to
+  // send (a failed final submit) must not be sent first by the second, whose own answers would then hit
+  // "already finished" and be lost.
+  test("a new display starts with an empty queue, the one it was built for keeps sharing", () => {
+    _syncLocks.clear();
+    const state = new SurveyState("s1", null, null, "display1", null);
+    const first = new ResponseQueue(getConfig({ surveyId: "s1", displayKey: "1" }), state);
+    const rebuilt = new ResponseQueue(getConfig({ surveyId: "s1", displayKey: "1" }), state);
+    const next = new ResponseQueue(getConfig({ surveyId: "s1", displayKey: "2" }), state);
+
+    first.queue.push({ data: { q1: "unsent" }, hiddenFields: {}, finished: true });
+
+    expect(rebuilt.queue).toHaveLength(1);
+    expect(next.queue).toHaveLength(0);
+  });
+});
+
 describe("ResponseQueue", () => {
   let surveyState: SurveyState;
   let config: ReturnType<typeof getConfig>;
