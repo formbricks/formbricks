@@ -13025,6 +13025,11 @@ components:
           description: Matrix row field ids (`<elementId>__<rowId>`) to their statements, in survey order. Filled when the rows group by `FeedbackRecords.fieldId` over matrix questions; empty otherwise.
           additionalProperties:
             type: string
+        memberLabels:
+          type: object
+          description: Embedded Data fields the query used (`FeedbackRecords.ed_<hash>`) to the field names they stand for. Present only when the query uses one; the member is a hash of the name, so this is how the columns and filters get their labels.
+          additionalProperties:
+            type: string
         query:
           type: object
           description: 'The query as it ran: after the requested date range replaced the saved one, and after a `valueText` grouping on a single-choice question was rewritten to `valueId`. The row keys follow this query.'

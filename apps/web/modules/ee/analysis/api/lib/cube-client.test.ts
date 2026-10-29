@@ -58,6 +58,11 @@ vi.mock("@/lib/organization/service", () => ({
   getOrganization: mockGetOrganization,
 }));
 
+const { mockGetEmbeddedChartFields } = vi.hoisted(() => ({ mockGetEmbeddedChartFields: vi.fn() }));
+vi.mock("@/modules/ee/analysis/lib/embedded-data-fields.server", () => ({
+  getEmbeddedChartFields: mockGetEmbeddedChartFields,
+}));
+
 const scopedInput = {
   query: { measures: ["FeedbackRecords.count"] },
   feedbackDirectoryId: "frd-1",
@@ -149,6 +154,64 @@ describe("executeTenantScopedQuery", () => {
       source: "v3.charts.data",
     });
     expect(typeof payload.jti).toBe("string");
+    // No Embedded Data in the query: no lookup, and the token compiles to the fixed schema.
+    expect(payload.embeddedFields).toBeUndefined();
+    expect(mockGetEmbeddedChartFields).not.toHaveBeenCalled();
+  });
+
+  describe("Embedded Data fields (ENG-2848)", () => {
+    const brand = {
+      id: "FeedbackRecords.ed_0123456789abcdef",
+      name: "brand",
+      type: "string" as const,
+      surveyNames: ["Onboarding"],
+    };
+    const plan = {
+      id: "FeedbackRecords.ed_fedcba9876543210",
+      name: "plan",
+      type: "number" as const,
+      surveyNames: ["Onboarding"],
+    };
+
+    const decodeToken = async () => {
+      const cubejs = await getCubeJsMock();
+      return jwt.verify(cubejs.mock.calls[0][0], "cube-secret", {
+        audience: "formbricks-cube-test",
+        issuer: "formbricks-web-test",
+      }) as jwt.JwtPayload;
+    };
+
+    test("signs every field of the dataset into the token when the query uses one", async () => {
+      mockGetEmbeddedChartFields.mockResolvedValue([brand, plan]);
+      const { executeTenantScopedQuery } = await import("./cube-client");
+
+      await executeTenantScopedQuery({
+        ...scopedInput,
+        query: { measures: ["FeedbackRecords.count"], filters: [{ member: brand.id, operator: "set" }] },
+      });
+
+      expect(mockGetEmbeddedChartFields).toHaveBeenCalledWith("workspace-1", "frd-1");
+      expect((await decodeToken()).embeddedFields).toEqual([
+        { id: "ed_0123456789abcdef", hex: "6272616e64", type: "string" },
+        { id: "ed_fedcba9876543210", hex: "706c616e", type: "number" },
+      ]);
+    });
+
+    test("refuses a query naming a field the dataset no longer declares, before reaching Cube", async () => {
+      mockGetEmbeddedChartFields.mockResolvedValue([plan]);
+      const { executeTenantScopedQuery, UnknownEmbeddedFieldError } = await import("./cube-client");
+
+      await expect(
+        executeTenantScopedQuery({
+          ...scopedInput,
+          query: { measures: ["FeedbackRecords.count"], dimensions: [brand.id] },
+        })
+      ).rejects.toBeInstanceOf(UnknownEmbeddedFieldError);
+      expect(mockLoad).not.toHaveBeenCalled();
+      expect(mockQueueAuditEventWithoutRequest).toHaveBeenCalledWith(
+        expect.objectContaining({ status: "failure" })
+      );
+    });
   });
 
   test("drops the NULL value band from the query sent to Cube, not from the caller's query", async () => {

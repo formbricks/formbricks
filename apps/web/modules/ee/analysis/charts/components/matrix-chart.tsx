@@ -4,6 +4,7 @@ import { CheckCircle2Icon, CircleIcon, Grid3x3Icon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { TChartConfig, TChartQuery } from "@formbricks/types/analysis";
 import { cn } from "@/lib/cn";
+import { useColumnHeader } from "@/modules/ee/analysis/charts/components/member-labels";
 import { formatCellValue } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import {
   MATRIX_COLUMN_DIMENSION_ID,
@@ -20,11 +21,7 @@ import {
   resolveMatrixDisplay,
   toMatrixGrid,
 } from "@/modules/ee/analysis/charts/lib/matrix-pivot";
-import {
-  formatCubeColumnHeader,
-  getTranslatedDimensionValueLabel,
-  getTranslatedFieldLabel,
-} from "@/modules/ee/analysis/lib/schema-definition";
+import { getTranslatedDimensionValueLabel } from "@/modules/ee/analysis/lib/schema-definition";
 import type { TChartDataRow, TChartLabelMaps } from "@/modules/ee/analysis/types/analysis";
 
 /** Shown instead of a number when a row has no answers at all (an en dash, not a zero). */
@@ -97,6 +94,7 @@ function MatrixSetupChecklist({ issues }: Readonly<{ issues: TMatrixQueryIssue[]
  */
 export function MatrixChart({ data, query, config, optionLabels, fieldLabels }: Readonly<MatrixChartProps>) {
   const { t, i18n } = useTranslation();
+  const columnHeader = useColumnHeader();
   const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
 
   const issues = getMatrixQueryIssues(query);
@@ -182,7 +180,7 @@ export function MatrixChart({ data, query, config, optionLabels, fieldLabels }: 
       return t("workspace.analysis.charts.matrix_statement");
     if (dimension === MATRIX_COLUMN_DIMENSION_ID && optionLabels)
       return t("workspace.analysis.charts.matrix_answer");
-    return getTranslatedFieldLabel(dimension, t);
+    return columnHeader(dimension);
   };
   const rowDimensionLabel = describeDimension(display.transpose ? columnKey : rowKey);
 
@@ -192,7 +190,7 @@ export function MatrixChart({ data, query, config, optionLabels, fieldLabels }: 
         <table className="w-full border-collapse text-sm">
           <caption className="sr-only">
             {t("workspace.analysis.charts.matrix_caption", {
-              measure: formatCubeColumnHeader(measureKey, t),
+              measure: columnHeader(measureKey),
             })}
           </caption>
           <thead className="sticky top-0 z-10 bg-slate-50">

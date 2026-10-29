@@ -69,6 +69,7 @@ export function useChartQuery(
         data: result.rows,
         ...(result.optionLabels ? { optionLabels: result.optionLabels } : {}),
         ...(result.fieldLabels ? { fieldLabels: result.fieldLabels } : {}),
+        ...(result.memberLabels ? { memberLabels: result.memberLabels } : {}),
       };
     } catch (err: unknown) {
       if (seq !== runSeqRef.current) return null;

@@ -1,4 +1,5 @@
 import { DATE_RANGE_PRESETS } from "@/lib/date-ranges";
+import { isEmbeddedFieldMember } from "./embedded-data-fields";
 import {
   FEEDBACK_FIELDS,
   FILTER_OPERATORS,
@@ -79,4 +80,24 @@ export const CHART_FIELD_CATALOG: readonly TChartField[] = buildCatalog();
 
 const CATALOG_BY_NAME = new Map(CHART_FIELD_CATALOG.map((field) => [field.name, field]));
 
-export const getChartField = (name: string): TChartField | undefined => CATALOG_BY_NAME.get(name);
+/**
+ * An Embedded Data field (ENG-2848). Which ones exist depends on the dataset, so the catalog cannot list
+ * them; any well-formed member is accepted here, and the query run refuses one the dataset does not
+ * declare. Its operators are every operator a field of its possible types takes — Cube rejects a
+ * comparison its compiled type does not support.
+ */
+const toEmbeddedDataChartField = (name: string): TChartField => ({
+  name,
+  kind: "dimension",
+  type: "string",
+  label: name,
+  description: null,
+  filterOperators: [
+    ...new Set([...FILTER_OPERATORS.string, ...FILTER_OPERATORS.number, ...FILTER_OPERATORS.boolean]),
+  ],
+  granularities: [],
+  valueLookup: true,
+});
+
+export const getChartField = (name: string): TChartField | undefined =>
+  CATALOG_BY_NAME.get(name) ?? (isEmbeddedFieldMember(name) ? toEmbeddedDataChartField(name) : undefined);

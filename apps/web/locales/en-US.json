@@ -1819,6 +1819,7 @@
         "distribution_value_share": "{value} ({percent})",
         "edit_chart_description": "View and edit your chart configuration.",
         "edit_chart_title": "Edit chart",
+        "embedded_data_field_description": "Embedded Data from {{surveys}}",
         "emotion_value_anger": "Anger",
         "emotion_value_disgust": "Disgust",
         "emotion_value_fear": "Fear",
