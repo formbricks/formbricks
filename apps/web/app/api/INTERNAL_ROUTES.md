@@ -42,7 +42,7 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/internal/members/{userId}` | PATCH | session | dashboard | `/api/internal` | `app/api/internal/members/[userId]/route.ts` |
 | `/api/internal/members/{userId}/reactivate` | POST | session | dashboard | `/api/internal` | `app/api/internal/members/[userId]/reactivate/route.ts` |
 | `/api/internal/onboarding-invites` | POST | session | dashboard | `/api/internal` | `app/api/internal/onboarding-invites/route.ts` |
-| `/api/internal/organizations` | POST | session | dashboard | `/api/internal` | `app/api/internal/organizations/route.ts` |
+| `/api/internal/organizations` | GET, POST | session | dashboard | `/api/internal` | `app/api/internal/organizations/route.ts` |
 | `/api/internal/organizations/{organizationId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/organizations/[organizationId]/route.ts` |
 | `/api/internal/organizations/{organizationId}/billing` | GET | session | dashboard | `/api/internal` | `app/api/internal/organizations/[organizationId]/billing/route.ts` |
 | `/api/internal/password-resets` | POST | none | dashboard | `/api/internal` | `app/api/internal/password-resets/route.ts` |
@@ -64,6 +64,7 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/internal/users/me/deletion-requests` | POST | session | dashboard | `/api/internal` | `app/api/internal/users/me/deletion-requests/route.ts` |
 | `/api/internal/users/me/notification-settings` | GET, PATCH | session | dashboard | `/api/internal` | `app/api/internal/users/me/notification-settings/route.ts` |
 | `/api/internal/users/me/password-resets` | POST | session | dashboard | `/api/internal` | `app/api/internal/users/me/password-resets/route.ts` |
+| `/api/internal/workspaces` | GET, POST | session | dashboard | `/api/internal` | `app/api/internal/workspaces/route.ts` |
 | `/api/internal/workspaces/{workspaceId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/workspaces/[workspaceId]/route.ts` |
 | `/api/internal/workspaces/{workspaceId}/branding` | PATCH | session | dashboard | `/api/internal` | `app/api/internal/workspaces/[workspaceId]/branding/route.ts` |
 | `/api/organizations/{organizationId}/usage` | GET | session | dashboard | `(internal)` group | `app/api/(internal)/organizations/[organizationId]/usage/route.ts` |
