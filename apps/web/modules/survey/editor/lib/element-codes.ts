@@ -54,7 +54,7 @@ const markEarlierSide = (
 ): void => {
   const isQuestionClash = issue.kind === "duplicate_question_code" || issue.kind === "clashes_export_column";
   if (!isQuestionClash || !issue.clashesWith) return;
-  const earlier = result.get(issue.clashesWith) ?? { options: new Map() };
+  const earlier: TElementCodeIssues = result.get(issue.clashesWith) ?? { options: new Map() };
   earlier.question ??= { ...issue, clashesWith: laterElementId };
   result.set(issue.clashesWith, earlier);
 };

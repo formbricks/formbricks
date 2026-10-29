@@ -467,10 +467,14 @@ export const SurveyMenuBar = ({
         return false;
       }
 
-      const codeMessage = describeCodeIssueAtPath(localSurvey, firstError.path, t);
+      const codeMessage = describeCodeIssueAtPath(
+        localSurvey,
+        firstError.path.filter((part): part is string | number => typeof part !== "symbol"),
+        t
+      );
       if (codeMessage) {
         toast.error(codeMessage, { className: "w-fit max-w-md!" });
-        setActiveId("questions");
+        setActiveId("elements");
         return false;
       }
 

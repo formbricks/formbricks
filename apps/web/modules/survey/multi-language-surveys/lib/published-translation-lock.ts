@@ -25,7 +25,7 @@ export const isTranslationPathLocked = (
 
   const [, blockIndex, elementIndex, list, optionIndex] = match;
   const element = localSurvey.blocks[Number(blockIndex)]?.elements[Number(elementIndex)];
-  const option = (element as unknown as Record<string, { id: string }[] | undefined> | undefined)?.[list][
+  const option = (element as unknown as Record<string, { id: string }[] | undefined> | undefined)?.[list]?.[
     Number(optionIndex)
   ];
   if (!element || !option) return false;

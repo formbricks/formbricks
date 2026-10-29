@@ -3,11 +3,10 @@ import type { TSurvey } from "@formbricks/types/surveys/types";
 import { resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
 import { can } from "@/lib/authorization";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
-import { createSurveyInput, updateSurveyInput } from "@/lib/survey/__mock__/survey.mock";
+import { updateSurveyInput } from "@/lib/survey/__mock__/survey.mock";
 import { createSurvey, getSurvey, updateSurvey } from "@/lib/survey/service";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import { PUT } from "./[surveyId]/route";
-import { POST } from "./route";
 
 /**
  * `withV1ApiWrapper` is reduced to its handler: authentication, rate limiting and audit logging are
@@ -50,13 +49,8 @@ vi.mock("@/lib/survey/visibility/creation", () => ({
 
 const workspaceId = "clxworkspace00000000000001";
 const apiKey = { apiKeyId: "key_1", workspacePermissions: [], organizationId: "org_1" };
-const script = "<script>analytics()</script>";
 
 const storedSurvey = { ...updateSurveyInput, workspaceId } as TSurvey;
-
-// A key with `write` on the workspace: `workspace.write` passes, `workspace.manage` does not.
-const actAsWriteKey = () =>
-  vi.mocked(can).mockImplementation(async (_actor, action) => action !== "workspace.manage");
 
 const put = (body: Record<string, unknown>) =>
   (PUT as unknown as (args: object) => Promise<{ response: Response }>)({
@@ -65,15 +59,6 @@ const put = (body: Record<string, unknown>) =>
       body: JSON.stringify(body),
     }),
     props: { params: Promise.resolve({ surveyId: storedSurvey.id }) },
-    authentication: apiKey,
-  });
-
-const post = (body: Record<string, unknown>) =>
-  (POST as unknown as (args: object) => Promise<{ response: Response }>)({
-    req: new Request("http://localhost/api/v1/management/surveys", {
-      method: "POST",
-      body: JSON.stringify(body),
-    }),
     authentication: apiKey,
   });
 
@@ -112,7 +97,9 @@ describe("PUT /api/v1/management/surveys/[surveyId] question codes", () => {
 
     expect(response.status).toBe(200);
     const sent = vi.mocked(updateSurvey).mock.calls[0][0];
-    const codes = sent.blocks.flatMap((block) => block.elements.map((element) => element.code));
+    const codes = sent.blocks.flatMap((block) =>
+      block.elements.map((element) => ("code" in element ? element.code : undefined))
+    );
     // Not `q1`, `q2` by position: `a` stored `q1` and `c` stored `q3`, and the service decides.
     expect(codes).toEqual([undefined, undefined]);
   });
@@ -126,9 +113,10 @@ describe("PUT /api/v1/management/surveys/[surveyId] question codes", () => {
 
     expect(response.status).toBe(200);
     const sent = vi.mocked(updateSurvey).mock.calls[0][0];
-    expect(sent.blocks.flatMap((block) => block.elements.map((element) => element.code))).toEqual([
-      "age",
-      undefined,
-    ]);
+    expect(
+      sent.blocks.flatMap((block) =>
+        block.elements.map((element) => ("code" in element ? element.code : undefined))
+      )
+    ).toEqual(["age", undefined]);
   });
 });

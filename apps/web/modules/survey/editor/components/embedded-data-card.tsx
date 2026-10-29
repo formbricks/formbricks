@@ -250,7 +250,7 @@ export const EmbeddedDataCard = ({
   const elements = getElementsFromBlocks(localSurvey.blocks);
   const takenIds = [
     ...elements.map((element) => element.id),
-    ...elements.flatMap((element) => (element.code ? [element.code] : [])),
+    ...elements.flatMap((element) => ("code" in element && element.code ? [element.code] : [])),
     ...localSurvey.endings.map((ending) => ending.id),
   ];
 
