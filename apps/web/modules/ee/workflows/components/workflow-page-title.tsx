@@ -131,11 +131,16 @@ export const WorkflowPageTitle = ({ workflowId, isReadOnly }: Readonly<WorkflowP
             rows={1}
             value={workflowName}
             // A name is one line: Enter commits (handleKeyDown), and pasted line breaks become spaces.
-            onChange={(event) => setWorkflowName(event.target.value.replaceAll(/[\r\n]+/g, " "))}
+            // The length cap is applied after that, not via maxLength, which would cut a multi-line
+            // paste before its line breaks collapse.
+            onChange={(event) =>
+              setWorkflowName(
+                event.target.value.replaceAll(/[\r\n]+/g, " ").slice(0, WORKFLOW_NAME_MAX_LENGTH)
+              )
+            }
             onKeyDown={handleKeyDown}
             aria-label={t("common.workflow_name")}
             placeholder={t("common.workflow_name")}
-            maxLength={WORKFLOW_NAME_MAX_LENGTH}
             aria-invalid={showNameError || undefined}
             aria-describedby={showNameError ? nameErrorId : undefined}
             // Approximates content width where field-sizing is unsupported (Firefox).
