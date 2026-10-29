@@ -31,6 +31,7 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { Switch } from "@/modules/ui/components/switch";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import type { TSortOption } from "../lib/types";
 
 export type TTableColumnSetting = {
@@ -104,6 +105,8 @@ const SortableColumnRow = ({
           id={checkboxId}
           checked={column.visible}
           disabled={column.locked}
+          // A column that always shows reads as fixed: greyed, not merely unclickable.
+          className={column.locked ? "border-slate-200 bg-slate-100 disabled:opacity-100" : undefined}
           onCheckedChange={(checked) => onVisibilityChange(column.id, checked === true)}
         />
         <span className="truncate text-sm text-slate-700" title={column.label}>
@@ -134,15 +137,17 @@ export const TableSettingsPopover = ({ sort, toggles, columns }: Readonly<TTable
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          size="icon"
-          className="size-8 shrink-0 bg-white"
-          aria-label={t("common.table_settings")}>
-          <SettingsIcon />
-        </Button>
-      </PopoverTrigger>
+      <TooltipRenderer tooltipContent={t("common.table_settings")} triggerClass="flex">
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            size="icon"
+            className="size-8 shrink-0 bg-white"
+            aria-label={t("common.table_settings")}>
+            <SettingsIcon />
+          </Button>
+        </PopoverTrigger>
+      </TooltipRenderer>
       <PopoverContent
         align="start"
         className="w-80 p-2"

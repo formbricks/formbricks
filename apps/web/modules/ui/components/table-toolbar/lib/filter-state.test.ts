@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { getFixedValues, getRules, removeFilterAt, toggleQuickFilterValue } from "./filter-state";
+import { getRules, removeFilterAt, toggleQuickFilterValue } from "./filter-state";
 import type { TTableFilter } from "./types";
 
 const quick: TTableFilter = { property: "status", operator: "in", values: ["draft"] };
@@ -35,40 +35,12 @@ describe("getRules", () => {
   });
 });
 
-describe("ticking every value of a fixed list", () => {
-  const statuses = ["draft", "inProgress", "paused", "completed"];
-
-  test("removes the filter, so 'any status' pages like no filter", () => {
+describe("ticking every value of a list", () => {
+  test("keeps the filter, so one tick too many is undone with one untick", () => {
+    const statuses = ["draft", "inProgress", "paused", "completed"];
     const filters: TTableFilter[] = [{ property: "status", operator: "in", values: statuses.slice(0, 3) }];
-    expect(toggleQuickFilterValue(filters, "status", "completed", statuses)).toEqual([]);
-  });
-
-  test("keeps a partial selection, and lists loaded on demand never count as complete", () => {
-    expect(toggleQuickFilterValue([], "status", "draft", statuses)).toEqual([
-      { property: "status", operator: "in", values: ["draft"] },
-    ]);
-    expect(toggleQuickFilterValue([], "source", "csv", undefined)).toEqual([
-      { property: "source", operator: "in", values: ["csv"] },
-    ]);
-  });
-
-  test("leaves hidden switches and one-value lists alone", () => {
-    expect(
-      getFixedValues({
-        id: "archived",
-        label: "Archived",
-        valueType: "enum",
-        hidden: true,
-        options: [{ value: "true", label: "x" }],
-      })
-    ).toBeUndefined();
-    expect(
-      getFixedValues({
-        id: "flag",
-        label: "Flag",
-        valueType: "enum",
-        options: [{ value: "on", label: "On" }],
-      })
-    ).toBeUndefined();
+    const all = toggleQuickFilterValue(filters, "status", "completed");
+    expect(all).toEqual([{ property: "status", operator: "in", values: statuses }]);
+    expect(toggleQuickFilterValue(all, "status", "completed")).toEqual(filters);
   });
 });

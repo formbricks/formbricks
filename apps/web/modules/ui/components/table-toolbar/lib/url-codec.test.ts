@@ -251,15 +251,9 @@ describe("every operator round-trips through the URL", () => {
 });
 
 describe("a link that ticks every value", () => {
-  test("reads as no filter, while a partial list and the hidden switch still apply", () => {
+  test("keeps it as ticked, like the menu does", () => {
     expect(parse("filter[status][in]=draft&filter[status][in]=inProgress&filter[status][in]=paused")).toEqual(
-      []
+      [{ property: "status", operator: "in", values: ["draft", "inProgress", "paused"] }]
     );
-    expect(parse("filter[status][in]=draft")).toEqual([
-      { property: "status", operator: "in", values: ["draft"] },
-    ]);
-    expect(parse("filter[archived][in]=true")).toEqual([
-      { property: "archived", operator: "in", values: ["true"] },
-    ]);
   });
 });
