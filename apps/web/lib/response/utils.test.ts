@@ -15,6 +15,7 @@ import {
   calculateTtcTotal,
   extractChoiceIdsFromResponse,
   extractSurveyDetails,
+  getChoiceIdByValue,
   getReservedFilterEntries,
   getResponseContactAttributes,
   getResponseHiddenFields,
@@ -59,6 +60,50 @@ describe("Response Utils", () => {
       const ttc = {};
       const result = calculateTtcTotal(ttc);
       expect(result._total).toBe(0);
+    });
+  });
+
+  describe("getChoiceIdByValue", () => {
+    const element = {
+      id: "q1",
+      type: "multipleChoiceSingle",
+      choices: [
+        { id: "alpha", label: { default: "Alpha", de: "Alpha-DE" } },
+        { id: "no", label: { default: "No", de: "Nein" } },
+        { id: "other", label: { default: "Other", de: "Andere" } },
+      ],
+    } as any;
+
+    test("matches the default label", () => {
+      expect(getChoiceIdByValue("No", element)).toBe("no");
+    });
+
+    test("matches a translated label for the response language", () => {
+      expect(getChoiceIdByValue("Alpha-DE", element, "de")).toBe("alpha");
+    });
+
+    test("prefers the response-language label over an earlier choice's default label", () => {
+      const clash = {
+        ...element,
+        choices: [
+          { id: "first", label: { default: "Nein", de: "Erste" } },
+          { id: "second", label: { default: "Second", de: "Nein" } },
+        ],
+      };
+      expect(getChoiceIdByValue("Nein", clash, "de")).toBe("second");
+    });
+
+    test("falls back to the default label when the choice has no translation", () => {
+      const untranslated = { ...element, choices: [{ id: "c", label: { default: "Maybe" } }] };
+      expect(getChoiceIdByValue("Maybe", untranslated, "de")).toBe("c");
+    });
+
+    test("does not match other languages' labels as free text", () => {
+      expect(getChoiceIdByValue("Nein", element)).toBe("other");
+    });
+
+    test("falls back to other for free text", () => {
+      expect(getChoiceIdByValue("something else", element, "de")).toBe("other");
     });
   });
 

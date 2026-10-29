@@ -99,7 +99,7 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
   };
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex shrink-0 items-center gap-3">
       {/* The definition is the workflow's real content: while it can't change (enabled, archived,
           or a read-only member) the editor is effectively read-only, so say that instead of
           advertising an autosave that has nothing to act on. An outstanding save failure still wins,

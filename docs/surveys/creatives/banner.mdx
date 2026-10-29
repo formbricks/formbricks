@@ -1,0 +1,105 @@
+---
+title: "Banner"
+description: "A bar across the top or bottom of your website with a formatted message, an optional button that opens a survey or a link, and an optional close control. Schedule it to the minute."
+icon: "window-maximize"
+---
+
+A banner is a bar across the top or the bottom of the page. Use it to announce something and invite feedback ("We redesigned online banking. Tell us what you think"), or as a plain notice with no button at all ("Online banking is down for maintenance on Saturday from 02:00 to 04:00"). Your team writes, schedules and removes banners in Formbricks, without a developer and without a deploy.
+
+<Note>
+  Banners are a [Creatives](/surveys/creatives/overview) feature, part of the Formbricks [Enterprise
+  Edition](/self-hosting/advanced/license) on self-hosted instances. They are not available on Formbricks
+  Cloud.
+</Note>
+
+![A banner in the editor, with a message, a button and the desktop preview](/images/surveys/creatives/banner/content.webp)
+
+## Content
+
+On the **Content** tab:
+
+- **Text:** the banner message. Use **bold**, *italic*, underline and links. Line breaks are kept. A link can point to an `https://` or `http://` address, a `mailto:` or `tel:` link, or a page on your own site such as `/maintenance`. Links in the text open in the same tab and don't count as clicks.
+- **Visitors can close it** (on by default): adds a close (×) control at the end of the bar. Turn it off for notices that must stay.
+- **Accessible name** (optional): what screen readers announce the banner as, for example "Maintenance notice". Left empty, it is announced as "Site notice".
+- **Add a button** (off by default): adds a button next to the message, labeled "Learn more" until you change it, and an **On click** section for what it opens. Without a button, the banner is a notice only.
+
+### On click
+
+The button opens a survey or a link, exactly like a [feedback button](/surveys/creatives/feedback-button#on-click):
+
+- **Open a survey:** an app survey opens as a popup on the page, every time; a link survey opens in a new tab.
+- **Open a link:** a full `https://` or `http://` address, opened in a new tab.
+
+If visitors can close the banner, pressing its button also closes it for the rest of the visit, once the survey or link has opened.
+
+## Styling
+
+By default, a banner looks like the survey card in your workspace [Look & Feel](/platform/features/styling-theme), with your survey button inside. Change those settings and your banners follow.
+
+Turn on **Add custom styles** to give the banner its own look:
+
+| Card | Fields |
+| --- | --- |
+| **Colors** | **Background**, **Text** and **Border** of the bar, for light mode and for dark mode. A dark color can only be set once its light color is set; left empty, it follows the workspace's dark colors. |
+| **Shape & size** | **Font** (the workspace setting, **Page font** or **Survey font**), **Font weight**, **Font size** (8–72 px), **Padding X** and **Padding Y** (0–64 px). Font size and padding can be different on phones (below 768 px wide). |
+| **Custom CSS** | CSS for this banner only. Its element is `.fb-creative-banner`; **Base CSS** applies in light and dark mode, **Dark CSS** adds rules for dark mode. Your workspace Custom CSS doesn't apply, and nothing can be loaded from another site. Up to 20 KB. |
+
+The banner's button always uses your workspace survey button style. To change it, use Custom CSS.
+
+If the text on the bar's background drops below a 4.5 : 1 contrast ratio, in light or in dark mode, the editor warns you.
+
+Banners show their dark colors when your site asks for dark mode through the SDK's `setAppearance`. See [Dark mode](/surveys/creatives/feedback-button#dark-mode).
+
+### Position
+
+**Position** applies whether or not custom styles are on:
+
+- **Edge:** **Top** (the default) or **Bottom**.
+- **Layout** (top banners only):
+  - **In page** (the default): at the very top of the page, pushing the content down and scrolling away with it.
+  - **Overlay:** fixed on screen over the content, always visible.
+
+  A bottom banner is always an Overlay.
+
+Switch the card to **Phone** to give phones their own edge and layout. **Use the desktop position on phones** brings them back to the desktop values.
+
+![The Position card of a banner set to the top edge, In page](/images/surveys/creatives/banner/position.webp)
+
+### Choose where an In page banner appears
+
+An In page banner is placed at the very top of the page, and the page shifts down by its height when it appears. To place it somewhere else, such as below your site header, or to reserve its space so nothing shifts, add an empty element with this attribute where it should go:
+
+```html
+<div data-formbricks-slot="banner-top"></div>
+```
+
+Formbricks then puts In page banners inside that element. To keep the page from shifting, give the element a minimum height that matches your banner; that space stays empty on pages where no banner shows.
+
+## On your website
+
+- **Closing a banner** keeps it closed for the rest of the visit in that browser tab, across pages and reloads. A new tab shows it again. Formbricks doesn't remember a close across tabs, devices or days.
+- **Several banners on the same edge** stack, the newest closest to the edge. Feedback buttons move aside so Overlay banners don't cover them, and an open survey always sits on top of banners.
+- **Long messages** wrap onto more lines on narrow screens. An Overlay banner is never taller than a third of the screen; a longer one scrolls inside.
+- **For screen readers**, a banner is a named region of the page. It never takes the visitor's focus, and it doesn't animate.
+- **Your page's CSS** doesn't change a banner: it is drawn in its own isolated layer (a Shadow DOM). With **Page font**, it uses your page's font. If your site uses a Content Security Policy with nonces, pass the nonce with [`formbricks.setNonce()`](/surveys/website-app-surveys/framework-guides#passing-a-nonce-for-survey-styles).
+
+## Example: a maintenance notice
+
+<Steps>
+  <Step title="Write the notice">
+    Create a **Banner**. As **Text**, write "Online banking is down for maintenance on Saturday from 02:00 to 04:00. Read more", and link "Read more" to `/maintenance`, your status page. Turn off **Visitors can close it** and leave **Add a button** off.
+  </Step>
+  <Step title="Keep it on screen">
+    On the **Styling** tab, set **Layout** to **Overlay** so it stays visible while visitors scroll.
+  </Step>
+  <Step title="Schedule it">
+    On the **Settings** tab, under **Schedule**, set **Starts** to Friday 18:00 and **Ends** to Saturday 04:00. See [Schedule](/surveys/creatives/when-it-shows#schedule).
+  </Step>
+  <Step title="Publish">
+    Click **Publish** a day or more ahead. The banner reads **Scheduled** until Friday 18:00, then appears and goes away at 04:00, to the minute, for every visitor whose browser has picked it up by then. Returning visitors pick it up within an hour; see [When changes reach your site](/surveys/creatives/when-it-shows#when-changes-reach-your-site).
+  </Step>
+</Steps>
+
+---
+
+Still have questions? [Join us in GitHub Discussions](https://github.com/formbricks/formbricks/discussions) and we'll be glad to help.

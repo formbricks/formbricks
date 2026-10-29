@@ -456,7 +456,12 @@ export function Survey({
         name: file.name,
         base64: file.base64,
       },
-      params
+      {
+        ...params,
+        pinAuthToken: surveyState?.pinAuthToken,
+        singleUseId: surveyState?.singleUseId,
+        url: getWebSurveyMeta().url,
+      }
     );
 
     return response;
