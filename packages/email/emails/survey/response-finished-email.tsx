@@ -153,14 +153,14 @@ export function ResponseFinishedEmail({
               <Text className="mb-0">
                 <Link
                   className="text-sm text-black underline"
-                  href={`${WEBAPP_URL}/workspaces/${workspaceId}/settings/notifications?type=alert&elementId=${survey.id}`}>
+                  href={`${WEBAPP_URL}/account/settings/notifications?type=alert&elementId=${survey.id}`}>
                   {t("emails.survey_response_finished_email_turn_off_notifications_for_this_form")}
                 </Link>
               </Text>
               <Text className="mt-0">
                 <Link
                   className="text-sm text-black underline"
-                  href={`${WEBAPP_URL}/workspaces/${workspaceId}/settings/notifications?type=unsubscribedOrganizationIds&elementId=${organization.id}`}>
+                  href={`${WEBAPP_URL}/account/settings/notifications?type=unsubscribedOrganizationIds&elementId=${organization.id}`}>
                   {t("emails.survey_response_finished_email_turn_off_notifications_for_all_new_forms")}
                 </Link>
               </Text>
