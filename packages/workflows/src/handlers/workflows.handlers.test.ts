@@ -243,7 +243,7 @@ describe("list", () => {
   const listRequest = (query: string): Request => new Request(`http://localhost/api/v3/workflows?${query}`);
 
   test("returns 200 with a cursor-paginated envelope", async () => {
-    service.listWorkflows.mockResolvedValue({ workflows: [makeRow()], nextCursor: null });
+    service.listWorkflows.mockResolvedValue({ workflows: [makeRow()], nextCursor: null, totalCount: null });
 
     const res = await handlers.list({
       req: listRequest(`workspaceId=${workspaceId}&sortBy=name`),
@@ -251,10 +251,38 @@ describe("list", () => {
     });
 
     expect(res.status).toBe(200);
-    const body = await readJson<{ data: unknown[]; meta: { limit: number; nextCursor: string | null } }>(res);
+    const body = await readJson<{
+      data: unknown[];
+      meta: { limit: number; nextCursor: string | null; totalCount: number | null };
+    }>(res);
     expect(body.data).toHaveLength(1);
     expect(body.meta.limit).toBe(20);
     expect(body.meta.nextCursor).toBeNull();
+    expect(body.meta.totalCount).toBeNull();
+    expect(service.listWorkflows).toHaveBeenCalledWith(expect.objectContaining({ includeTotalCount: false }));
+  });
+
+  test("passes includeTotalCount through and echoes the total in meta", async () => {
+    service.listWorkflows.mockResolvedValue({ workflows: [makeRow()], nextCursor: null, totalCount: 7 });
+
+    const res = await handlers.list({
+      req: listRequest(`workspaceId=${workspaceId}&includeTotalCount=true`),
+      ctx: makeCtx(),
+    });
+
+    expect(res.status).toBe(200);
+    const body = await readJson<{ meta: { totalCount: number | null } }>(res);
+    expect(body.meta.totalCount).toBe(7);
+    expect(service.listWorkflows).toHaveBeenCalledWith(expect.objectContaining({ includeTotalCount: true }));
+  });
+
+  test("rejects a non-boolean includeTotalCount with 400", async () => {
+    const res = await handlers.list({
+      req: listRequest(`workspaceId=${workspaceId}&includeTotalCount=yes`),
+      ctx: makeCtx(),
+    });
+    expect(res.status).toBe(400);
+    expect(service.listWorkflows).not.toHaveBeenCalled();
   });
 
   test("rejects an out-of-range limit with 400", async () => {

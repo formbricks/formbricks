@@ -644,7 +644,7 @@ export function successListResponse<T, TMeta extends Record<string, unknown>>(
  * custom CSS writes use it for `warnings` (ENG-3641), which describe the request rather than the
  * resource, so they stay out of `data` and a PATCH that round-trips `data` never sends them back.
  */
-type TSuccessExtensions = { warnings?: unknown[] };
+type TSuccessExtensions = { warnings?: unknown[]; meta?: Record<string, unknown> };
 
 export function successResponse<T>(
   data: T,

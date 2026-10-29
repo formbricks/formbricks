@@ -165,6 +165,20 @@ describe("Response Utils", () => {
       expect(result.AND).toHaveLength(1);
     });
 
+    test("tagged with any of: one clause that matches either tag, beside the must-have ones", () => {
+      const result = buildWhereClause(mockSurvey as TSurvey, {
+        tags: { applied: ["beta"], appliedAny: ["vip", "churn risk"] },
+      });
+      expect(result.AND).toEqual([
+        {
+          AND: [
+            { tags: { some: { tag: { name: "beta" } } } },
+            { tags: { some: { tag: { name: { in: ["vip", "churn risk"] } } } } },
+          ],
+        },
+      ]);
+    });
+
     test("should build where clause with contact attributes", () => {
       const filterCriteria = {
         contactAttributes: {
@@ -464,6 +478,28 @@ describe("Response Utils", () => {
       ]);
     });
 
+    test("matrix rules on several rows all apply", () => {
+      const res = buildWhereClause(
+        {
+          id: "s4",
+          blocks: [],
+          questions: [],
+          hiddenFields: { enabled: false, fieldIds: [] },
+        } as unknown as TSurvey,
+        {
+          data: { qM: { op: "matrix", value: { R1: "foo", R2: "bar" } } },
+        }
+      );
+      expect(res.AND).toEqual([
+        {
+          AND: [
+            { data: { path: ["qM", "R1"], equals: "foo" } },
+            { data: { path: ["qM", "R2"], equals: "bar" } },
+          ],
+        },
+      ]);
+    });
+
     test("includesOne: multiple choice multi with other choice selected", () => {
       const choiceSurvey: Partial<TSurvey> = {
         id: "s4",
@@ -605,6 +641,71 @@ describe("Response Utils", () => {
         expect(ZResponseFilterCriteria.safeParse(withKeys(field, 500)).success).toBe(true);
         expect(ZResponseFilterCriteria.safeParse(withKeys(field, 501)).success).toBe(false);
       });
+    });
+
+    test("dataAnd conditions apply alongside data on the same key", () => {
+      const survey = {
+        id: "s6",
+        blocks: [],
+        questions: [],
+        hiddenFields: { enabled: false, fieldIds: [] },
+      } as unknown as TSurvey;
+      const result = buildWhereClause(survey, {
+        data: { qRating: { op: "lessThan", value: 5 } },
+        dataAnd: [{ key: "qRating", condition: { op: "greaterThan", value: 1 } }],
+      });
+      expect(result.AND).toEqual([
+        {
+          AND: [{ data: { path: ["qRating"], lt: 5 } }, { data: { path: ["qRating"], gt: 1 } }],
+        },
+      ]);
+    });
+
+    test("includesAll with Other needs the picked choices and a write-in", () => {
+      const survey = {
+        id: "s5",
+        blocks: [
+          {
+            id: "b1",
+            name: "Block 1",
+            elements: [
+              {
+                id: "qMulti",
+                type: TSurveyElementTypeEnum.MultipleChoiceMulti,
+                headline: { default: "Pick many" },
+                required: false,
+                choices: [
+                  { id: "a", label: { default: "A" } },
+                  { id: "other", label: { default: "Other" } },
+                ],
+                shuffleOption: "none",
+              },
+            ],
+          },
+        ],
+        questions: [],
+        hiddenFields: { enabled: false, fieldIds: [] },
+      } as unknown as TSurvey;
+
+      const result = buildWhereClause(survey, {
+        data: { qMulti: { op: "includesAll", value: ["A", "Other"] } },
+      });
+
+      expect(result.AND).toEqual([
+        {
+          AND: [
+            { data: { path: ["qMulti"], array_contains: ["A"] } },
+            {
+              OR: Array.from({ length: 10 }, (_unused, index) => ({
+                AND: [
+                  { data: { path: ["qMulti", String(index)], not: Prisma.DbNull } },
+                  { data: { path: ["qMulti", String(index)], not: "A" } },
+                ],
+              })),
+            },
+          ],
+        },
+      ]);
     });
 
     describe("includesOne: 'Other' clause budget (ENG-3161)", () => {

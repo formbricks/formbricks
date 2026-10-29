@@ -55,4 +55,9 @@ export interface TConditionsEditorConfig<T extends TGenericCondition = TGenericC
    * Omitted means always, as long as `onCreateGroup` is given; a caller with a depth limit says no here.
    */
   canCreateGroup?: (depth: number) => boolean;
+  /**
+   * Whether a lone first condition reads "When". Survey logic says it (when this holds, do that); a
+   * table filter has nothing to trigger, so it leaves the slot empty. Omitted means shown.
+   */
+  showWhenLabel?: boolean;
 }

@@ -3,11 +3,10 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
-import { ZId, ZOptionalNumber, ZOptionalString } from "@formbricks/types/common";
+import { ZId } from "@formbricks/types/common";
 import { TContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import { formatSnakeCaseToTitleCase, isSafeIdentifier } from "@formbricks/types/safe-identifier";
-import { ITEMS_PER_PAGE } from "@/lib/constants";
 import { getSurvey } from "@/lib/survey/service";
 import { validateInputs } from "@/lib/utils/validate";
 import {
@@ -22,12 +21,10 @@ import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/f
 import { getSegment } from "@/modules/ee/contacts/segments/lib/segments";
 import {
   TContact,
-  TContactWithAttributes,
   ZContactCSVAttributeMap,
   ZContactCSVDuplicateAction,
   ZContactCSVUploadResponse,
 } from "../types/contact";
-import { transformPrismaContact } from "./utils";
 
 export const getContactsInSegment = reactCache(async (segmentId: string) => {
   try {
@@ -146,32 +143,6 @@ export const buildContactWhereClause = (workspaceId: string, search?: string): P
 
   return whereClause;
 };
-
-export const getContacts = reactCache(
-  async (workspaceId: string, offset?: number, searchValue?: string): Promise<TContactWithAttributes[]> => {
-    validateInputs([workspaceId, ZId], [offset, ZOptionalNumber], [searchValue, ZOptionalString]);
-
-    try {
-      const contacts = await prisma.contact.findMany({
-        where: buildContactWhereClause(workspaceId, searchValue),
-        select: selectContact,
-        take: ITEMS_PER_PAGE,
-        skip: offset,
-        orderBy: {
-          createdAt: "desc",
-        },
-      });
-
-      return contacts.map((contact) => transformPrismaContact(contact));
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError(error.message);
-      }
-
-      throw error;
-    }
-  }
-);
 
 export const getContact = reactCache(async (contactId: string): Promise<TContact | null> => {
   validateInputs([contactId, ZId]);

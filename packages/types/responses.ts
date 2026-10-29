@@ -307,6 +307,42 @@ const ZQuotasFilterCriteriaScreenedOutNotInQuota = z.object({
 export const ZResponseOutcome = z.enum(["lowQuality"]);
 export type TResponseOutcome = z.infer<typeof ZResponseOutcome>;
 
+/** One condition on a `data` key: a question, or an ingested field under its storage key. */
+const ZResponseFilterCriteriaDataCondition = z.union([
+  ZResponseFilterCriteriaDataLessThan,
+  ZResponseFilterCriteriaDataLessEqual,
+  ZResponseFilterCriteriaDataGreaterEqual,
+  ZResponseFilterCriteriaDataGreaterThan,
+  // An ingested date field filters through `data` under its storage key, so the day window a
+  // date-only filter value means has to be expressible here too (ENG-3232).
+  ZResponseFilterCriteriaDataInRange,
+  ZResponseFilterCriteriaDataNotInRange,
+  ZResponseFilterCriteriaDataIncludesOne,
+  ZResponseFilterCriteriaDataIncludesAll,
+  ZResponseFilterCriteriaDataEquals,
+  ZResponseFilterCriteriaDataNotEquals,
+  ZResponseFilterCriteriaDataAccepted,
+  ZResponseFilterCriteriaDataClicked,
+  ZResponseFilterCriteriaDataSubmitted,
+  ZResponseFilterCriteriaDataSkipped,
+  ZResponseFilterCriteriaDataUploaded,
+  ZResponseFilterCriteriaDataNotUploaded,
+  ZResponseFilterCriteriaDataBooked,
+  ZResponseFilterCriteriaMatrix,
+  ZResponseFilterCriteriaIsEmpty,
+  ZResponseFilterCriteriaIsNotEmpty,
+  ZResponseFilterCriteriaIsAnyOf,
+  ZResponseFilterCriteriaFilledOut,
+  // Text ops for string-typed ingested Embedded Data fields, which filter through `data`
+  // under their storage key (ENG-1848).
+  ZResponseFilterCriteriaContains,
+  ZResponseFilterCriteriaDoesNotContain,
+  ZResponseFilterCriteriaStartsWith,
+  ZResponseFilterCriteriaDoesNotStartWith,
+  ZResponseFilterCriteriaEndsWith,
+  ZResponseFilterCriteriaDoesNotEndWith,
+]);
+
 const ZResponseFilterCriteriaFields = z.object({
   finished: z.boolean().optional(),
   /** Only responses carrying this outcome. Absent means no constraint, not "without an outcome". */
@@ -334,44 +370,15 @@ const ZResponseFilterCriteriaFields = z.object({
     )
     .optional(),
 
-  data: z
-    .record(
-      z.string(),
-      z.union([
-        ZResponseFilterCriteriaDataLessThan,
-        ZResponseFilterCriteriaDataLessEqual,
-        ZResponseFilterCriteriaDataGreaterEqual,
-        ZResponseFilterCriteriaDataGreaterThan,
-        // An ingested date field filters through `data` under its storage key, so the day window a
-        // date-only filter value means has to be expressible here too (ENG-3232).
-        ZResponseFilterCriteriaDataInRange,
-        ZResponseFilterCriteriaDataNotInRange,
-        ZResponseFilterCriteriaDataIncludesOne,
-        ZResponseFilterCriteriaDataIncludesAll,
-        ZResponseFilterCriteriaDataEquals,
-        ZResponseFilterCriteriaDataNotEquals,
-        ZResponseFilterCriteriaDataAccepted,
-        ZResponseFilterCriteriaDataClicked,
-        ZResponseFilterCriteriaDataSubmitted,
-        ZResponseFilterCriteriaDataSkipped,
-        ZResponseFilterCriteriaDataUploaded,
-        ZResponseFilterCriteriaDataNotUploaded,
-        ZResponseFilterCriteriaDataBooked,
-        ZResponseFilterCriteriaMatrix,
-        ZResponseFilterCriteriaIsEmpty,
-        ZResponseFilterCriteriaIsNotEmpty,
-        ZResponseFilterCriteriaIsAnyOf,
-        ZResponseFilterCriteriaFilledOut,
-        // Text ops for string-typed ingested Embedded Data fields, which filter through `data`
-        // under their storage key (ENG-1848).
-        ZResponseFilterCriteriaContains,
-        ZResponseFilterCriteriaDoesNotContain,
-        ZResponseFilterCriteriaStartsWith,
-        ZResponseFilterCriteriaDoesNotStartWith,
-        ZResponseFilterCriteriaEndsWith,
-        ZResponseFilterCriteriaDoesNotEndWith,
-      ])
-    )
+  data: z.record(z.string(), ZResponseFilterCriteriaDataCondition).optional(),
+
+  /**
+   * Further conditions on keys `data` already holds, all ANDed with it: a range on one question is
+   * two rules ("> 1" and "< 5"), and `data` keeps one condition per key.
+   */
+  dataAnd: z
+    .array(z.object({ key: z.string(), condition: ZResponseFilterCriteriaDataCondition }))
+    .max(MAX_FILTER_KEYS)
     .optional(),
 
   /**
@@ -390,16 +397,22 @@ const ZResponseFilterCriteriaFields = z.object({
       // same clause-expansion risk as the data filters above.
       applied: z.array(z.string()).max(MAX_FILTER_VALUES).optional(),
       notApplied: z.array(z.string()).max(MAX_FILTER_VALUES).optional(),
+      // "Tagged with any of": the Responses quick filter ticks several tags and means either.
+      appliedAny: z.array(z.string()).max(MAX_FILTER_VALUES).optional(),
     })
     .optional(),
 
   others: z
     .record(
       z.string(),
-      z.object({
-        op: z.enum(["equals", "notEquals"]),
-        value: z.union([z.string(), z.number()]),
-      })
+      z.union([
+        z.object({
+          op: z.enum(["equals", "notEquals"]),
+          value: z.union([z.string(), z.number()]),
+        }),
+        // "Language is any of": the Responses quick filter ticks several languages at once.
+        z.object({ op: z.literal("in"), value: z.array(z.string()).min(1).max(MAX_FILTER_VALUES) }),
+      ])
     )
     .optional(),
 

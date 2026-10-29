@@ -1,0 +1,58 @@
+type: object
+description: >
+  A workspace segment (a saved, reusable contact filter). Private segments — survey-local targeting
+  drafts — are never listed. `surveys`, `activeSurveys` and `inactiveSurveys` only name surveys the
+  caller is allowed to see.
+required:
+  - id
+  - title
+  - description
+  - isPrivate
+  - filters
+  - workspaceId
+  - surveys
+  - activeSurveys
+  - inactiveSurveys
+  - createdAt
+  - updatedAt
+properties:
+  id:
+    type: string
+    format: cuid2
+  title:
+    type: string
+  description:
+    type:
+      - string
+      - "null"
+  isPrivate:
+    type: boolean
+    description: Always `false` in list results.
+  filters:
+    $ref: ./SegmentFilters.yml
+  workspaceId:
+    type: string
+    format: cuid2
+  surveys:
+    type: array
+    description: Ids of the visible surveys this segment is attached to.
+    items:
+      type: string
+      format: cuid2
+  activeSurveys:
+    type: array
+    description: Visible attached surveys that are in progress.
+    items:
+      $ref: ./SegmentSurveyReference.yml
+  inactiveSurveys:
+    type: array
+    description: Visible attached surveys in any other status.
+    items:
+      $ref: ./SegmentSurveyReference.yml
+  createdAt:
+    type: string
+    format: date-time
+  updatedAt:
+    type: string
+    format: date-time
+additionalProperties: false

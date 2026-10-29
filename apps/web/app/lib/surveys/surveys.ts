@@ -22,11 +22,11 @@ import {
   SelectedFilterValue,
 } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
 import {
+  ElementFilterOptions,
   ElementOption,
   ElementOptions,
   OptionsType,
-} from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/ElementsComboBox";
-import { ElementFilterOptions } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/ResponseFilter";
+} from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/response-filter-options";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { getReservedFilterEntries } from "@/lib/response/utils";
 import { recallToHeadline } from "@/lib/utils/recall";
@@ -81,15 +81,12 @@ const getElementFilterOption = (
   };
 
   switch (element.type) {
+    // Other included: "Includes either/all … Other" match answers with a write-in.
     case TSurveyElementTypeEnum.MultipleChoiceSingle:
-      return {
-        ...baseOption,
-        filterComboBoxOptions: element.choices?.map((c) => c.label) ?? [""],
-      };
     case TSurveyElementTypeEnum.MultipleChoiceMulti:
       return {
         ...baseOption,
-        filterComboBoxOptions: element.choices?.filter((c) => c.id !== "other").map((c) => c.label) ?? [""],
+        filterComboBoxOptions: element.choices?.map((c) => c.label) ?? [""],
       };
     case TSurveyElementTypeEnum.PictureSelection:
       return {
@@ -638,9 +635,14 @@ const processMatrixFilter = (
     filterType.filterComboBoxValue &&
     typeof filterType.filterComboBoxValue === "string"
   ) {
+    // Rules on several rows of one matrix share its condition, each row a key of its own.
+    const existing = filters.data![elementId];
     filters.data![elementId] = {
       op: "matrix",
-      value: { [filterType.filterValue]: filterType.filterComboBoxValue },
+      value: {
+        ...(existing?.op === "matrix" ? existing.value : {}),
+        [filterType.filterValue]: filterType.filterComboBoxValue,
+      },
     };
   }
 };
@@ -659,6 +661,9 @@ const processElementFilters = (
   elements.forEach(({ filterType, elementType }) => {
     const elementId = elementType.id ?? "";
     const element = surveyElements.find((q) => q.id === elementId);
+    // A second rule on the same question (a range: "> 1" and "< 5") must not replace the first, so the
+    // first moves to `dataAnd` and both apply. Matrix rows already share one condition.
+    const previous = filters.data?.[elementId];
 
     switch (elementType.elementType) {
       case TSurveyElementTypeEnum.OpenText:
@@ -692,6 +697,10 @@ const processElementFilters = (
         processMatrixFilter(filterType, elementId, filters);
         break;
     }
+    const current = filters.data?.[elementId];
+    if (previous && current && current !== previous && current.op !== "matrix") {
+      filters.dataAnd = [...(filters.dataAnd ?? []), { key: elementId, condition: previous }];
+    }
   });
 };
 
@@ -719,7 +728,9 @@ const processEqualsNotEqualsFilter = (
     }
   } else if (targetKey === "others") {
     filters.others = filters.others || {};
-    if (filterType.filterValue === "Equals") {
+    if (filterType.filterValue === "Is any of" && Array.isArray(filterType.filterComboBoxValue)) {
+      filters.others[label ?? ""] = { op: "in", value: filterType.filterComboBoxValue };
+    } else if (filterType.filterValue === "Equals") {
       filters.others[label ?? ""] = { op: "equals", value: filterType.filterComboBoxValue as string };
     } else if (filterType.filterValue === "Not equals") {
       filters.others[label ?? ""] = { op: "notEquals", value: filterType.filterComboBoxValue as string };
@@ -884,7 +895,9 @@ export const getFormattedFilters = (
       notApplied: [],
     };
     tags.forEach((tag) => {
-      if (tag.filterType.filterComboBoxValue === "Applied") {
+      if (tag.filterType.filterValue === "Is any of" && Array.isArray(tag.filterType.filterComboBoxValue)) {
+        filters.tags!.appliedAny = [...tag.filterType.filterComboBoxValue];
+      } else if (tag.filterType.filterComboBoxValue === "Applied") {
         filters.tags?.applied?.push(tag.elementType.label ?? "");
       } else {
         filters.tags?.notApplied?.push(tag.elementType.label ?? "");

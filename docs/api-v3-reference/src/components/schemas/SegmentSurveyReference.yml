@@ -1,0 +1,12 @@
+type: object
+description: A survey a segment is attached to.
+required:
+  - id
+  - name
+properties:
+  id:
+    type: string
+    format: cuid2
+  name:
+    type: string
+additionalProperties: false

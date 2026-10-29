@@ -13,7 +13,7 @@ import {
   DateRange,
   SelectedFilterValue,
 } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
-import { OptionsType } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/ElementsComboBox";
+import { OptionsType } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/response-filter-options";
 import {
   buildDateFieldCondition,
   generateElementAndFilterOptions,
@@ -954,6 +954,31 @@ describe("surveys", () => {
       const result = getFormattedFilters(survey, selectedFilter, {} as any);
 
       expect(result.data?.matrixQ).toEqual({ op: "matrix", value: { "Row 1": "Column 1" } });
+    });
+
+    test("rules on two rows of one matrix share its condition", () => {
+      const row = (filterValue: string, filterComboBoxValue: string) => ({
+        elementType: {
+          type: "Elements",
+          label: "Matrix",
+          id: "matrixQ",
+          elementType: TSurveyElementTypeEnum.Matrix,
+        },
+        filterType: { filterValue, filterComboBoxValue },
+      });
+      const result = getFormattedFilters(
+        survey,
+        {
+          responseStatus: "all",
+          filter: [row("Row 1", "Column 1"), row("Row 2", "Column 2")],
+        } as SelectedFilterValue,
+        {} as DateRange
+      );
+
+      expect(result.data?.matrixQ).toEqual({
+        op: "matrix",
+        value: { "Row 1": "Column 1", "Row 2": "Column 2" },
+      });
     });
 
     test("should filter by hidden fields", () => {

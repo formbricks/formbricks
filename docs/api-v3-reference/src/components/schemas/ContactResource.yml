@@ -1,0 +1,72 @@
+type: object
+description: >
+  A workspace contact as the Contacts table renders it. `userId`, `email`, `firstName` and `lastName`
+  are lifted out of `attributes` for convenience and are `null` when the contact has no value for
+  them. `attributes` lists every attribute the contact has a value row for, ordered by `key`; a key
+  the contact has no row for is absent.
+required:
+  - id
+  - createdAt
+  - updatedAt
+  - userId
+  - email
+  - firstName
+  - lastName
+  - attributes
+properties:
+  id:
+    type: string
+    format: cuid2
+  createdAt:
+    type: string
+    format: date-time
+  updatedAt:
+    type: string
+    format: date-time
+  userId:
+    type:
+      - string
+      - "null"
+  email:
+    type:
+      - string
+      - "null"
+  firstName:
+    type:
+      - string
+      - "null"
+  lastName:
+    type:
+      - string
+      - "null"
+  attributes:
+    type: array
+    items:
+      type: object
+      required:
+        - key
+        - name
+        - dataType
+        - value
+      properties:
+        key:
+          type: string
+          description: The attribute key (`ContactAttributeKeyResource.key`).
+        name:
+          type:
+            - string
+            - "null"
+          description: The key's display name.
+        dataType:
+          type: string
+          enum:
+            - string
+            - number
+            - date
+        value:
+          type: string
+          description: >-
+            The value as text: a number attribute as its decimal string, a date attribute as an ISO
+            8601 date-time.
+      additionalProperties: false
+additionalProperties: false

@@ -116,7 +116,7 @@ catalog:
   uuid: 14.0.0
   "@paralleldrive/cuid2": 2.3.1
   ai: 6.0.177
-  undici: 7.29.1
+  undici: 7.30.1
 
 # Security overrides for transitive dependencies that still fail audit without a pin.
 # Remove each override once its upstream dependency chain adopts a patched version.
@@ -239,7 +239,9 @@ overrides:
   # GHSA-55q2-fjhq-7xh7: DOMPurify <=3.4.12 can be bypassed with crafted HTML; patched in 3.4.13.
   # load-bearing: isomorphic-dompurify, posthog-js and redoc resolve vulnerable 3.x versions.
   # GHSA-p98j-92pf-mc4p / GHSA-6688-9rhm-gjv2: IN_PLACE sanitization leaves executable removed roots.
-  dompurify: 3.4.16
+  # ENG-6676 / GHSA-cg2g-xh64-v4q7, GHSA-mrv2-3pqr-j5jr and GHSA-c6gr-qvv4-5v3f: SAFE_FOR_TEMPLATES,
+  # IN_PLACE-hook and XHTML-mode findings (none reachable with our configs); patched in 3.4.17.
+  dompurify: 3.4.17
   # GHSA-gh4j-gqv2-49f6 + GHSA-jp2q-39xq-3w4g are patched in 5.7.0, but 5.7.0 and 5.7.1 reject
   # entity names starting with "#", and @aws-sdk/xml-builder registers "#xD"/"#10" on its parser —
   # which threw on every XML-parsed S3 response and silently disabled storage prefix cleanup
@@ -254,8 +256,9 @@ overrides:
   # fe80::/10. Both are patched in 10.5.1.
   # GHSA-h3mg-xc3c-68pw and GHSA-j6r3-76f7-8jcv: further ip-address findings, affecting <=10.7.0 and patched
   # in 10.7.1, which is the lowest version that closes every advisory (raises the pin from 10.3.1).
+  # ENG-6679 / GHSA-rxp7-6hxx-x8q5: Address6 matches a zone identifier in quadratic time; patched in 10.7.4.
   # load-bearing: socks and express-rate-limit resolve vulnerable 10.x versions.
-  ip-address@10: 10.7.1
+  ip-address@10: 10.7.5
   # ENG-2403 / GHSA-2v37-7h3g-55p8 (CVE-2026-67213): nanoid <3.3.18 customAlphabet/customRandom loop
   # indefinitely when called with size 0 (DoS). Raises the 3.x pin from 3.3.17 to 3.3.18 (still <4).
   # load-bearing: postcss resolves 3.3.17.
@@ -313,13 +316,16 @@ overrides:
   # GHSA-4cwx-7wf7-3272, GHSA-8xcm-r25x-g524, GHSA-jr45-8vmc-qm54,
   # GHSA-m8rv-5g2x-5cg5 and GHSA-v3r7-h72x-cjcm: undici request handling findings are patched
   # in 6.28.0 and 7.29.0 respectively.
+  # ENG-6717 / GHSA-xjj6-f33q-929c, GHSA-2m5v-pch6-74hx, GHSA-qrxm-fqhp-jwvm, GHSA-9fm3-97px-rjf6 and
+  # GHSA-4w7w-5xrc-9h26: content-encoding, TLS-option, renegotiation, WebSocket PONG and cross-origin
+  # redirect cache findings; patched in 6.29.1 and 7.30.1.
   # ENG-3440 / ENG-3441 / GHSA-3wwx-pv8p-q78v (CVE-2026-85024): undici >=7.28.0 <7.29.1 crashes the process
   # on a malformed permessage-deflate WebSocket message after the size limit is crossed; patched in 7.29.1
   # (7.x). The same advisory also covers 6.x from 6.25.0, together with GHSA-rfgv-xxqx-mfg5 and
   # GHSA-r53p-7pc4-xj5r (<6.28.1), so the 6.x pin rises from 6.28.0 to 6.28.1.
   # load-bearing: @redocly resolves the vulnerable 6.x line; apps/web uses the 7.x line directly.
-  undici@6: 6.28.1
-  undici@7: 7.29.1
+  undici@6: 6.29.1
+  undici@7: 7.30.1
   # === Dependabot security batch (ENG-1988..ENG-1999) ===
   # ENG-1999 / ENG-1989 / GHSA-f88m-g3jw-g9cj: sharp <0.35.0 inherits libvips vulnerabilities
   # (CVE-2026-33327/33328/35590/35591). apps/web pins 0.35.0 directly; this override also coerces the
@@ -365,7 +371,9 @@ overrides:
   # non-digit port can inject authority delimiters. Both patched in 3.1.7.
   # GHSA-hrr3-gc8f-f4qj: a further fast-uri finding (>=3.0.0 <3.1.8) patched in 3.1.8, the lowest version
   # that closes every advisory (raises the pin from 3.1.6).
-  fast-uri@3: 3.1.8
+  # ENG-6723 / GHSA-w74x-v6f9-j3xg, GHSA-xhq7-xmqj-769h, GHSA-wjr9-j795-jxcr and GHSA-333x-w4r6-6crp:
+  # scheme, path and host canonicalization findings, all patched in 3.1.9.
+  fast-uri@3: 3.1.9
   # ENG-2433 / ENG-2430 / GHSA-ggr8-5vv4-36mx (CVE-2026-40345): deepmerge-ts <8.0.0 has no cycle
   # detection in its recursive record-merge routine, so two recursive object graphs sharing a
   # property path exhaust the call stack (DoS); patched in 8.0.0. Pinned to 8.0.1 (lowest patched
@@ -411,9 +419,11 @@ overrides:
   # `obj.constructor.isBuffer(obj)` without checking it is callable; an object produced by
   # `qs.parse(untrusted, { plainObjects: true })` can carry a non-function `constructor.isBuffer`, so
   # the parse -> stringify round-trip throws an uncaught `TypeError`. Both patched in 6.16.0.
+  # ENG-6831 / GHSA-6pq8-jhm2-2vcw: `stringify` with `arrayFormat: "comma"` throws on an element whose own
+  # `toString` isn't callable; patched in 6.16.1.
   # load-bearing: no direct dependency — express (via body-parser, runtime, pulled in by @posthog/mcp)
   # and googleapis-common (runtime, @boxyhq/saml-jackson's admin API + googleapis) resolve 6.15.2.
-  qs: 6.16.0
+  qs: 6.16.1
   # ENG-2821 / ENG-2822 / GHSA-g8qq-57p8-ggw5 (CVE-2026-84371): when SVG animation is allowed,
   # `attributeName="href"` gives the sibling `values` attribute SMIL URI-list semantics that
   # sanitize-html's scheme check doesn't recognize, so a list starting with a safe fragment

@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { Calendar1Icon, HashIcon, PlusIcon, TagIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -16,6 +17,7 @@ import {
   RESERVED_FUTURE_DEFAULT_ATTRIBUTE_SAFE_IDENTIFIER_KEYS_TEXT,
   isReservedFutureDefaultAttributeKey,
 } from "@/modules/ee/contacts/lib/attribute-key-policy";
+import { contactQueryKeys } from "@/modules/ee/contacts/lib/query-keys";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -43,6 +45,7 @@ interface CreateAttributeModalProps {
 export function CreateAttributeModal({ workspaceId }: Readonly<CreateAttributeModalProps>) {
   const { t } = useTranslation();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState({
@@ -143,6 +146,8 @@ export function CreateAttributeModal({ workspaceId }: Readonly<CreateAttributeMo
       toast.success(t("workspace.contacts.attribute_created_successfully"));
       handleResetState();
       router.refresh();
+      // The lists read through TanStack Query, which a router refresh does not reach.
+      void queryClient.invalidateQueries({ queryKey: contactQueryKeys.all });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : t("common.something_went_wrong");
       toast.error(errorMessage);

@@ -1,9 +1,5 @@
 import { z } from "zod";
-import {
-  TContactAttributeDataType,
-  TContactAttributeKey,
-  ZContactAttributeDataType,
-} from "@formbricks/types/contact-attribute-key";
+import { TContactAttributeKey, ZContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
 
 export const ZContact = z.object({
   id: z.cuid2(),
@@ -37,23 +33,6 @@ export type TContactWithAttributes = z.infer<typeof ZContactWithAttributes>;
 export type TContactTableData = z.infer<typeof ZContactTableData>;
 
 export type TContact = z.infer<typeof ZContact>;
-
-export type TTransformPersonInput = {
-  id: string;
-  workspaceId: string;
-  attributes: {
-    value: string;
-    valueNumber: number | null;
-    valueDate: Date | null;
-    attributeKey: {
-      key: string;
-      name: string | null;
-      dataType: TContactAttributeDataType;
-    };
-  }[];
-  createdAt: Date;
-  updatedAt: Date;
-};
 
 // types related to the csv upload:
 export const ZContactCSVDuplicateAction = z.enum(["skip", "update", "overwrite"]);

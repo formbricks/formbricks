@@ -10,7 +10,6 @@ import {
 } from "@formbricks/types/embedded-data-resolver";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TResponseFilterCriteria } from "@formbricks/types/responses";
-import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 
@@ -345,6 +344,10 @@ const createFilterTags = (tags: TResponseFilterCriteria["tags"]) => {
     filterTags.push(appliedTags);
   }
 
+  if (tags?.appliedAny?.length) {
+    filterTags.push({ tags: { some: { tag: { name: { in: tags.appliedAny } } } } });
+  }
+
   if (tags?.notApplied) {
     const notAppliedTags = {
       tags: {
@@ -415,12 +418,58 @@ const createClauseBudget = (): ((count: number) => void) => {
   };
 };
 
-type TContactAttributesFilter = NonNullable<TResponseFilterCriteria["contactAttributes"]>;
-type TMetaFilter = NonNullable<TResponseFilterCriteria["meta"]>;
-type TOthersFilter = NonNullable<TResponseFilterCriteria["others"]>;
-type TDataFilter = NonNullable<TResponseFilterCriteria["data"]>;
-type TChoiceElement = Extract<TSurveyElement, { type: "multipleChoiceMulti" | "multipleChoiceSingle" }>;
-type TClauseSpend = (count: number) => void;
+/**
+ * "At least one entry of this multi answer is not one of `predefinedLabels`": the Other write-in, which
+ * is stored as the typed text. Prisma's JSON filters have no subset operator, so each array position
+ * is probed by numeric path segment (see the includesOne branch for why the probe has slack).
+ */
+const writeInEntryClause = (
+  key: string,
+  choiceCount: number,
+  predefinedLabels: readonly string[],
+  spend: (count: number) => void
+): Prisma.ResponseWhereInput => {
+  const positions = choiceCount + OTHER_WRITE_IN_PROBE_SLACK;
+  spend(positions * (predefinedLabels.length + 1));
+  return {
+    OR: Array.from({ length: positions }, (_unused, index) => ({
+      AND: [
+        { data: { path: [key, String(index)], not: Prisma.DbNull } },
+        ...predefinedLabels.map((label) => ({ data: { path: [key, String(index)], not: label } })),
+      ],
+    })),
+  };
+};
+
+/**
+ * "Includes all" of a multi answer. Other is never stored as such: the answer holds the typed text
+ * instead, so Other among the values means "has a write-in", next to the predefined values it must
+ * contain.
+ */
+const includesAllClauses = (
+  key: string,
+  element: ReturnType<typeof getElementsFromBlocks>[number] | undefined,
+  values: (string | number)[],
+  spend: (count: number) => void
+): Prisma.ResponseWhereInput[] => {
+  if (element?.type !== "multipleChoiceMulti") return [{ data: { path: [key], array_contains: values } }];
+  const otherChoice = element.choices.find((choice) => choice.id === "other");
+  const otherLabels = new Set(otherChoice ? Object.values(otherChoice.label) : []);
+  const predefined = values.filter((value) => !otherLabels.has(String(value)));
+  if (predefined.length === values.length) return [{ data: { path: [key], array_contains: values } }];
+
+  const predefinedLabels = [
+    ...new Set(
+      element.choices
+        .filter((choice) => choice.id !== "other")
+        .flatMap((choice) => Object.values(choice.label))
+    ),
+  ];
+  return [
+    ...(predefined.length > 0 ? [{ data: { path: [key], array_contains: predefined } }] : []),
+    writeInEntryClause(key, element.choices.length, predefinedLabels, spend),
+  ];
+};
 
 /** The outcome the filter selects, or (for the export) only responses without one. */
 const buildOutcomeCondition = (
@@ -430,544 +479,6 @@ const buildOutcomeCondition = (
   return filterCriteria?.excludeLowQuality ? { outcome: null } : null;
 };
 
-const buildCreatedAtCondition = (range: NonNullable<TResponseFilterCriteria["createdAt"]>) => {
-  const createdAt: { lte?: Date; gte?: Date } = {};
-  if (range.max) {
-    createdAt.lte = range.max;
-  }
-  if (range.min) {
-    createdAt.gte = range.min;
-  }
-  return { createdAt };
-};
-
-const buildContactAttributeConditions = (filter: TContactAttributesFilter) => {
-  const contactAttributes: Prisma.ResponseWhereInput[] = [];
-
-  Object.entries(filter).forEach(([key, val]) => {
-    switch (val.op) {
-      case "equals":
-        contactAttributes.push({
-          contactAttributes: {
-            path: [key],
-            equals: val.value,
-          },
-        });
-        break;
-      case "notEquals":
-        contactAttributes.push({
-          contactAttributes: {
-            path: [key],
-            not: val.value,
-          },
-        });
-        break;
-    }
-  });
-
-  return contactAttributes;
-};
-
-const buildMetaConditions = (filter: TMetaFilter) => {
-  const meta: Prisma.ResponseWhereInput[] = [];
-
-  Object.entries(filter).forEach(([key, val]) => {
-    let updatedKey: string[] = [];
-    if (["browser", "os", "device"].includes(key)) {
-      updatedKey = ["userAgent", key];
-    } else {
-      updatedKey = [key];
-    }
-
-    switch (val.op) {
-      case "equals":
-        meta.push({
-          meta: {
-            path: updatedKey,
-            equals: val.value,
-          },
-        });
-        break;
-      case "notEquals":
-        meta.push({
-          meta: {
-            path: updatedKey,
-            not: val.value,
-          },
-        });
-        break;
-      case "contains":
-        meta.push({
-          meta: {
-            path: updatedKey,
-            string_contains: val.value,
-          },
-        });
-        break;
-      case "doesNotContain":
-        meta.push({
-          NOT: {
-            meta: {
-              path: updatedKey,
-              string_contains: val.value,
-            },
-          },
-        });
-        break;
-      case "startsWith":
-        meta.push({
-          meta: {
-            path: updatedKey,
-            string_starts_with: val.value,
-          },
-        });
-        break;
-      case "doesNotStartWith":
-        meta.push({
-          NOT: {
-            meta: {
-              path: updatedKey,
-              string_starts_with: val.value,
-            },
-          },
-        });
-        break;
-      case "endsWith":
-        meta.push({
-          meta: {
-            path: updatedKey,
-            string_ends_with: val.value,
-          },
-        });
-        break;
-      case "doesNotEndWith":
-        meta.push({
-          NOT: {
-            meta: {
-              path: updatedKey,
-              string_ends_with: val.value,
-            },
-          },
-        });
-        break;
-    }
-  });
-
-  return meta;
-};
-
-const buildOtherConditions = (filter: TOthersFilter) => {
-  const others: Prisma.ResponseWhereInput[] = [];
-
-  Object.entries(filter).forEach(([key, val]) => {
-    switch (val.op) {
-      case "equals":
-        others.push({
-          [key.toLocaleLowerCase()]: val.value,
-        });
-        break;
-      case "notEquals":
-        others.push({
-          [key.toLocaleLowerCase()]: {
-            not: val.value,
-          },
-        });
-        break;
-    }
-  });
-
-  return others;
-};
-
-/**
- * "Other" was chosen in a multi or single choice element: the answer is the raw write-in text, so the
- * clause is "some answer entry is not a predefined label".
- */
-const buildOtherWriteInCondition = (
-  element: TChoiceElement,
-  key: string,
-  values: ReadonlySet<string>,
-  spend: TClauseSpend
-): Prisma.ResponseWhereInput => {
-  // Deduplicated: a choice left untranslated carries the same text under every language
-  // key, and `{ not: label }` twice is the same clause twice. Charging it once per language
-  // spent the budget on nothing (ENG-3161 review).
-  const predefinedLabelSet = new Set<string>();
-
-  element.choices.forEach((choice) => {
-    Object.values(choice.label).forEach((label) => {
-      if (!values.has(label)) {
-        predefinedLabelSet.add(label);
-      }
-    });
-  });
-
-  const predefinedLabels = [...predefinedLabelSet];
-
-  if (element.type === "multipleChoiceMulti") {
-    // A multi answer is a string[] of the chosen labels, with the "Other" write-in stored
-    // as the raw typed text. "Other was chosen" therefore means: at least one entry is
-    // not a predefined label. Prisma's JSON filters have no subset operator, so each
-    // array position is probed by numeric path segment; positions past the end extract to
-    // SQL NULL, so unanswered and empty ([]) responses correctly do not match.
-    //
-    // A well-formed answer holds at most one entry per choice, so `choices.length` would
-    // cover it. Stored answers are not guaranteed well-formed, and both ways past that end
-    // with the write-in at an unprobed index — silently narrowing what the pre-ENG-3161
-    // predicate matched:
-    //
-    //   - nothing enforces uniqueness (`ZResponseDataValue` is `z.array(z.string())` with
-    //     no cap), so `["A0","A0","A0","A0","write-in"]` is accepted on a 3-choice element;
-    //   - deleting choices from a running survey shrinks `choices.length` while the already
-    //     collected answers keep their original length.
-    //
-    // The slack covers both at realistic sizes. It cannot close the class — an array with
-    // more than SLACK duplicates still escapes — because a positional probe cannot bound an
-    // unbounded array. Bounding the stored array on write is the real fix and its own ticket.
-    const positions = element.choices.length + OTHER_WRITE_IN_PROBE_SLACK;
-    spend(positions * (predefinedLabels.length + 1));
-
-    return {
-      OR: Array.from({ length: positions }, (_unused, index) => ({
-        AND: [
-          { data: { path: [key, String(index)], not: Prisma.DbNull } },
-          ...predefinedLabels.map((label) => ({
-            data: { path: [key, String(index)], not: label },
-          })),
-        ],
-      })),
-    };
-  }
-
-  // A single answer is a scalar string, so "not any predefined label" is directly
-  // expressible and stays linear in the label count.
-  spend(predefinedLabels.length);
-
-  return {
-    AND: predefinedLabels.map((label) => ({
-      NOT: {
-        data: {
-          path: [key],
-          equals: label,
-        },
-      },
-    })),
-  };
-};
-
-const buildIncludesOneCondition = (
-  element: TSurveyElement | undefined,
-  key: string,
-  value: (string | number)[],
-  spend: TClauseSpend
-): Prisma.ResponseWhereInput => {
-  const values = new Set(value.map((v) => v.toString()));
-  const choiceElement =
-    element?.type === "multipleChoiceMulti" || element?.type === "multipleChoiceSingle" ? element : null;
-  const otherChoice = choiceElement?.choices.find((choice) => choice.id === "other");
-
-  if (choiceElement && otherChoice && values.has(otherChoice.label.default)) {
-    return buildOtherWriteInCondition(choiceElement, key, values, spend);
-  }
-
-  // Two clauses per selected value: the array shape and the scalar shape.
-  spend(value.length * 2);
-
-  return {
-    OR: value.map((v) => ({
-      OR: [
-        {
-          data: {
-            path: [key],
-            array_contains: [v],
-          },
-        },
-        {
-          data: {
-            path: [key],
-            equals: v,
-          },
-        },
-      ],
-    })),
-  };
-};
-
-type TDataConditionContext = {
-  element: TSurveyElement | undefined;
-  rangeableIngestedKeys: ReadonlySet<string>;
-  spend: TClauseSpend;
-};
-
-const buildDataConditions = (
-  key: string,
-  val: TDataFilter[string],
-  { element, rangeableIngestedKeys, spend }: TDataConditionContext
-): Prisma.ResponseWhereInput[] => {
-  const data: Prisma.ResponseWhereInput[] = [];
-
-  switch (val.op) {
-    case "submitted":
-      data.push({
-        data: {
-          path: [key],
-          not: Prisma.DbNull,
-        },
-      });
-      break;
-    case "filledOut":
-      data.push({
-        data: {
-          path: [key],
-          not: [],
-        },
-      });
-      break;
-    case "skipped":
-      data.push({
-        OR: [
-          {
-            data: {
-              path: [key],
-              equals: Prisma.DbNull,
-            },
-          },
-          {
-            data: {
-              path: [key],
-              equals: "",
-            },
-          },
-          {
-            data: {
-              path: [key],
-              equals: [],
-            },
-          },
-        ],
-      });
-      break;
-    case "equals":
-      data.push({
-        data: {
-          path: [key],
-          equals: val.value,
-        },
-      });
-      break;
-    case "notEquals":
-      data.push({
-        OR: [
-          {
-            data: {
-              path: [key],
-              not: val.value,
-            },
-          },
-          {
-            data: {
-              path: [key],
-              equals: Prisma.DbNull,
-            },
-          },
-        ],
-      });
-      break;
-    case "lessThan":
-      data.push({
-        data: {
-          path: [key],
-          lt: val.value,
-        },
-      });
-      break;
-    case "lessEqual":
-      data.push({
-        data: {
-          path: [key],
-          lte: val.value,
-        },
-      });
-      break;
-    case "greaterThan":
-      data.push({
-        data: {
-          path: [key],
-          gt: val.value,
-        },
-      });
-      break;
-    case "greaterEqual":
-      data.push({
-        data: {
-          path: [key],
-          gte: val.value,
-        },
-      });
-      break;
-    case "inRange":
-    case "notInRange":
-      data.push(...buildDataRangeConditions(key, val, rangeableIngestedKeys));
-      break;
-    case "includesAll":
-      data.push({
-        data: {
-          path: [key],
-          array_contains: val.value,
-        },
-      });
-      break;
-    case "includesOne":
-      data.push(buildIncludesOneCondition(element, key, val.value, spend));
-      break;
-    case "uploaded":
-      data.push({
-        data: {
-          path: [key],
-          not: "skipped",
-        },
-      });
-      break;
-    case "notUploaded":
-      data.push({
-        OR: [
-          {
-            data: {
-              path: [key],
-              equals: "skipped",
-            },
-          },
-          {
-            data: {
-              path: [key],
-              equals: Prisma.DbNull,
-            },
-          },
-        ],
-      });
-      break;
-    case "clicked":
-      data.push({
-        data: {
-          path: [key],
-          equals: "clicked",
-        },
-      });
-      break;
-    case "accepted":
-      data.push({
-        data: {
-          path: [key],
-          equals: "accepted",
-        },
-      });
-      break;
-    case "booked":
-      data.push({
-        data: {
-          path: [key],
-          equals: "booked",
-        },
-      });
-      break;
-    case "matrix": {
-      const rowLabel = Object.keys(val.value)[0];
-      data.push({
-        data: {
-          path: [key, rowLabel],
-          equals: val.value[rowLabel],
-        },
-      });
-      break;
-    }
-    // Text ops for string-typed ingested Embedded Data fields (ENG-1848).
-    case "contains":
-      data.push({
-        data: {
-          path: [key],
-          string_contains: val.value,
-        },
-      });
-      break;
-    case "doesNotContain":
-      data.push({
-        NOT: {
-          data: {
-            path: [key],
-            string_contains: val.value,
-          },
-        },
-      });
-      break;
-    case "startsWith":
-      data.push({
-        data: {
-          path: [key],
-          string_starts_with: val.value,
-        },
-      });
-      break;
-    case "doesNotStartWith":
-      data.push({
-        NOT: {
-          data: {
-            path: [key],
-            string_starts_with: val.value,
-          },
-        },
-      });
-      break;
-    case "endsWith":
-      data.push({
-        data: {
-          path: [key],
-          string_ends_with: val.value,
-        },
-      });
-      break;
-    case "doesNotEndWith":
-      data.push({
-        NOT: {
-          data: {
-            path: [key],
-            string_ends_with: val.value,
-          },
-        },
-      });
-      break;
-  }
-
-  return data;
-};
-
-const buildQuotaConditions = (quotas: NonNullable<TResponseFilterCriteria["quotas"]>) => {
-  const quotaFilters: Prisma.ResponseWhereInput[] = [];
-
-  Object.entries(quotas).forEach(([quotaId, { op }]) => {
-    if (op === "screenedOutNotInQuota") {
-      quotaFilters.push({
-        NOT: {
-          quotaLinks: {
-            some: {
-              quotaId,
-            },
-          },
-        },
-      });
-    } else {
-      quotaFilters.push({
-        quotaLinks: {
-          some: {
-            quotaId,
-            status: op,
-          },
-        },
-      });
-    }
-  });
-
-  return quotaFilters;
-};
 export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilterCriteria) => {
   const whereClause: Prisma.ResponseWhereInput["AND"] = [];
 
@@ -985,7 +496,17 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
   }
 
   if (filterCriteria?.createdAt) {
-    whereClause.push(buildCreatedAtCondition(filterCriteria.createdAt));
+    const createdAt: { lte?: Date; gte?: Date } = {};
+    if (filterCriteria?.createdAt?.max) {
+      createdAt.lte = filterCriteria?.createdAt?.max;
+    }
+    if (filterCriteria?.createdAt?.min) {
+      createdAt.gte = filterCriteria?.createdAt?.min;
+    }
+
+    whereClause.push({
+      createdAt,
+    });
   }
 
   if (filterCriteria?.tags) {
@@ -999,29 +520,483 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
   }
 
   if (filterCriteria?.contactAttributes) {
-    whereClause.push({ AND: buildContactAttributeConditions(filterCriteria.contactAttributes) });
+    const contactAttributes: Prisma.ResponseWhereInput[] = [];
+
+    Object.entries(filterCriteria.contactAttributes).forEach(([key, val]) => {
+      switch (val.op) {
+        case "equals":
+          contactAttributes.push({
+            contactAttributes: {
+              path: [key],
+              equals: val.value,
+            },
+          });
+          break;
+        case "notEquals":
+          contactAttributes.push({
+            contactAttributes: {
+              path: [key],
+              not: val.value,
+            },
+          });
+          break;
+      }
+    });
+
+    whereClause.push({
+      AND: contactAttributes,
+    });
   }
 
   if (filterCriteria?.meta) {
-    whereClause.push({ AND: buildMetaConditions(filterCriteria.meta) });
+    const meta: Prisma.ResponseWhereInput[] = [];
+
+    Object.entries(filterCriteria.meta).forEach(([key, val]) => {
+      let updatedKey: string[] = [];
+      if (["browser", "os", "device"].includes(key)) {
+        updatedKey = ["userAgent", key];
+      } else {
+        updatedKey = [key];
+      }
+
+      switch (val.op) {
+        case "equals":
+          meta.push({
+            meta: {
+              path: updatedKey,
+              equals: val.value,
+            },
+          });
+          break;
+        case "notEquals":
+          meta.push({
+            meta: {
+              path: updatedKey,
+              not: val.value,
+            },
+          });
+          break;
+        case "contains":
+          meta.push({
+            meta: {
+              path: updatedKey,
+              string_contains: val.value,
+            },
+          });
+          break;
+        case "doesNotContain":
+          meta.push({
+            NOT: {
+              meta: {
+                path: updatedKey,
+                string_contains: val.value,
+              },
+            },
+          });
+          break;
+        case "startsWith":
+          meta.push({
+            meta: {
+              path: updatedKey,
+              string_starts_with: val.value,
+            },
+          });
+          break;
+        case "doesNotStartWith":
+          meta.push({
+            NOT: {
+              meta: {
+                path: updatedKey,
+                string_starts_with: val.value,
+              },
+            },
+          });
+          break;
+        case "endsWith":
+          meta.push({
+            meta: {
+              path: updatedKey,
+              string_ends_with: val.value,
+            },
+          });
+          break;
+        case "doesNotEndWith":
+          meta.push({
+            NOT: {
+              meta: {
+                path: updatedKey,
+                string_ends_with: val.value,
+              },
+            },
+          });
+          break;
+      }
+    });
+
+    whereClause.push({
+      AND: meta,
+    });
   }
 
   if (filterCriteria?.others) {
-    whereClause.push({ AND: buildOtherConditions(filterCriteria.others) });
+    const others: Prisma.ResponseWhereInput[] = [];
+
+    Object.entries(filterCriteria.others).forEach(([key, val]) => {
+      switch (val.op) {
+        case "equals":
+          others.push({
+            [key.toLocaleLowerCase()]: val.value,
+          });
+          break;
+        case "notEquals":
+          others.push({
+            [key.toLocaleLowerCase()]: {
+              not: val.value,
+            },
+          });
+          break;
+        case "in":
+          others.push({
+            [key.toLocaleLowerCase()]: {
+              in: val.value,
+            },
+          });
+          break;
+      }
+    });
+    whereClause.push({
+      AND: others,
+    });
   }
 
   whereClause.push(...buildEmbeddedDataFilterClauses(survey, filterCriteria));
 
-  if (filterCriteria?.data) {
+  // `dataAnd` carries further conditions on keys `data` already holds; every one of them must hold.
+  const dataEntries = [
+    ...Object.entries(filterCriteria?.data ?? {}),
+    ...(filterCriteria?.dataAnd ?? []).map(({ key, condition }) => [key, condition] as const),
+  ];
+  if (dataEntries.length > 0) {
+    const data: Prisma.ResponseWhereInput[] = [];
     const rangeableIngestedKeys = rangeableIngestedDataKeys(survey);
-    const elements = getElementsFromBlocks(survey.blocks);
-    const data = Object.entries(filterCriteria.data).flatMap(([key, val]) =>
-      buildDataConditions(key, val, {
-        element: elements.find((element) => element.id === key),
-        rangeableIngestedKeys,
-        spend,
-      })
-    );
+
+    dataEntries.forEach(([key, val]) => {
+      const elements = getElementsFromBlocks(survey.blocks);
+      const element = elements.find((element) => element.id === key);
+
+      switch (val.op) {
+        case "submitted":
+          data.push({
+            data: {
+              path: [key],
+              not: Prisma.DbNull,
+            },
+          });
+          break;
+        case "filledOut":
+          data.push({
+            data: {
+              path: [key],
+              not: [],
+            },
+          });
+          break;
+        case "skipped":
+          data.push({
+            OR: [
+              {
+                data: {
+                  path: [key],
+                  equals: Prisma.DbNull,
+                },
+              },
+              {
+                data: {
+                  path: [key],
+                  equals: "",
+                },
+              },
+              {
+                data: {
+                  path: [key],
+                  equals: [],
+                },
+              },
+            ],
+          });
+          break;
+        case "equals":
+          data.push({
+            data: {
+              path: [key],
+              equals: val.value,
+            },
+          });
+          break;
+        case "notEquals":
+          data.push({
+            OR: [
+              {
+                data: {
+                  path: [key],
+                  not: val.value,
+                },
+              },
+              {
+                data: {
+                  path: [key],
+                  equals: Prisma.DbNull,
+                },
+              },
+            ],
+          });
+          break;
+        case "lessThan":
+          data.push({
+            data: {
+              path: [key],
+              lt: val.value,
+            },
+          });
+          break;
+        case "lessEqual":
+          data.push({
+            data: {
+              path: [key],
+              lte: val.value,
+            },
+          });
+          break;
+        case "greaterThan":
+          data.push({
+            data: {
+              path: [key],
+              gt: val.value,
+            },
+          });
+          break;
+        case "greaterEqual":
+          data.push({
+            data: {
+              path: [key],
+              gte: val.value,
+            },
+          });
+          break;
+        case "inRange":
+        case "notInRange":
+          data.push(...buildDataRangeConditions(key, val, rangeableIngestedKeys));
+          break;
+        case "includesAll":
+          data.push(...includesAllClauses(key, element, val.value, spend));
+          break;
+        case "includesOne": {
+          const values = new Set(val.value.map((v) => v.toString()));
+          const otherChoice =
+            element && (element.type === "multipleChoiceMulti" || element.type === "multipleChoiceSingle")
+              ? element.choices.find((choice) => choice.id === "other")
+              : null;
+
+          if (
+            element &&
+            (element.type === "multipleChoiceMulti" || element.type === "multipleChoiceSingle") &&
+            element.choices.map((choice) => choice.id).includes("other") &&
+            otherChoice &&
+            values.has(otherChoice.label.default)
+          ) {
+            // Deduplicated: a choice left untranslated carries the same text under every language
+            // key, and `{ not: label }` twice is the same clause twice. Charging it once per language
+            // spent the budget on nothing (ENG-3161 review).
+            const predefinedLabelSet = new Set<string>();
+
+            element.choices.forEach((choice) => {
+              Object.values(choice.label).forEach((label) => {
+                if (!values.has(label)) {
+                  predefinedLabelSet.add(label);
+                }
+              });
+            });
+
+            const predefinedLabels = [...predefinedLabelSet];
+
+            if (element.type === "multipleChoiceMulti") {
+              // A multi answer is a string[] of the chosen labels, with the "Other" write-in stored
+              // as the raw typed text. "Other was chosen" therefore means: at least one entry is
+              // not a predefined label. Prisma's JSON filters have no subset operator, so each
+              // array position is probed by numeric path segment; positions past the end extract to
+              // SQL NULL, so unanswered and empty ([]) responses correctly do not match.
+              //
+              // A well-formed answer holds at most one entry per choice, so `choices.length` would
+              // cover it. Stored answers are not guaranteed well-formed, and both ways past that end
+              // with the write-in at an unprobed index — silently narrowing what the pre-ENG-3161
+              // predicate matched:
+              //
+              //   - nothing enforces uniqueness (`ZResponseDataValue` is `z.array(z.string())` with
+              //     no cap), so `["A0","A0","A0","A0","write-in"]` is accepted on a 3-choice element;
+              //   - deleting choices from a running survey shrinks `choices.length` while the already
+              //     collected answers keep their original length.
+              //
+              // The slack covers both at realistic sizes. It cannot close the class — an array with
+              // more than SLACK duplicates still escapes — because a positional probe cannot bound an
+              // unbounded array. Bounding the stored array on write is the real fix and its own ticket.
+              data.push(writeInEntryClause(key, element.choices.length, predefinedLabels, spend));
+            } else {
+              // A single answer is a scalar string, so "not any predefined label" is directly
+              // expressible and stays linear in the label count.
+              spend(predefinedLabels.length);
+
+              data.push({
+                AND: predefinedLabels.map((label) => ({
+                  NOT: {
+                    data: {
+                      path: [key],
+                      equals: label,
+                    },
+                  },
+                })),
+              });
+            }
+          } else {
+            // Two clauses per selected value: the array shape and the scalar shape.
+            spend(val.value.length * 2);
+
+            data.push({
+              OR: val.value.map((value: string | number) => ({
+                OR: [
+                  {
+                    data: {
+                      path: [key],
+                      array_contains: [value],
+                    },
+                  },
+                  {
+                    data: {
+                      path: [key],
+                      equals: value,
+                    },
+                  },
+                ],
+              })),
+            });
+          }
+
+          break;
+        }
+        case "uploaded":
+          data.push({
+            data: {
+              path: [key],
+              not: "skipped",
+            },
+          });
+          break;
+        case "notUploaded":
+          data.push({
+            OR: [
+              {
+                data: {
+                  path: [key],
+                  equals: "skipped",
+                },
+              },
+              {
+                data: {
+                  path: [key],
+                  equals: Prisma.DbNull,
+                },
+              },
+            ],
+          });
+          break;
+        case "clicked":
+          data.push({
+            data: {
+              path: [key],
+              equals: "clicked",
+            },
+          });
+          break;
+        case "accepted":
+          data.push({
+            data: {
+              path: [key],
+              equals: "accepted",
+            },
+          });
+          break;
+        case "booked":
+          data.push({
+            data: {
+              path: [key],
+              equals: "booked",
+            },
+          });
+          break;
+        case "matrix": {
+          const rows = Object.entries(val.value);
+          spend(rows.length);
+          for (const [rowLabel, column] of rows) {
+            data.push({ data: { path: [key, rowLabel], equals: column } });
+          }
+          break;
+        }
+        // Text ops for string-typed ingested Embedded Data fields (ENG-1848).
+        case "contains":
+          data.push({
+            data: {
+              path: [key],
+              string_contains: val.value,
+            },
+          });
+          break;
+        case "doesNotContain":
+          data.push({
+            NOT: {
+              data: {
+                path: [key],
+                string_contains: val.value,
+              },
+            },
+          });
+          break;
+        case "startsWith":
+          data.push({
+            data: {
+              path: [key],
+              string_starts_with: val.value,
+            },
+          });
+          break;
+        case "doesNotStartWith":
+          data.push({
+            NOT: {
+              data: {
+                path: [key],
+                string_starts_with: val.value,
+              },
+            },
+          });
+          break;
+        case "endsWith":
+          data.push({
+            data: {
+              path: [key],
+              string_ends_with: val.value,
+            },
+          });
+          break;
+        case "doesNotEndWith":
+          data.push({
+            NOT: {
+              data: {
+                path: [key],
+                string_ends_with: val.value,
+              },
+            },
+          });
+          break;
+      }
+    });
 
     whereClause.push({
       AND: data,
@@ -1035,7 +1010,30 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
   }
 
   if (filterCriteria?.quotas) {
-    const quotaFilters = buildQuotaConditions(filterCriteria.quotas);
+    const quotaFilters: Prisma.ResponseWhereInput[] = [];
+
+    Object.entries(filterCriteria.quotas).forEach(([quotaId, { op }]) => {
+      if (op === "screenedOutNotInQuota") {
+        quotaFilters.push({
+          NOT: {
+            quotaLinks: {
+              some: {
+                quotaId,
+              },
+            },
+          },
+        });
+      } else {
+        quotaFilters.push({
+          quotaLinks: {
+            some: {
+              quotaId,
+              status: op,
+            },
+          },
+        });
+      }
+    });
 
     if (quotaFilters.length > 0) {
       whereClause.push({
