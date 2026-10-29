@@ -41,6 +41,47 @@ const rateLimitedResponse = async (
   return null;
 };
 
+type TBuiltExport = Awaited<ReturnType<typeof buildExportResponse>>;
+
+/**
+ * Runs the build under the Excel limit: a workbook takes the process's one slot for as long as it is built
+ * (a second one is a 429), and a client that went away is a 499. Anything else it throws is the caller's.
+ */
+const buildWithinLimits = async ({
+  format,
+  requestId,
+  surveyId,
+  build,
+}: {
+  format: TExportRequest["format"];
+  requestId: string;
+  surveyId: string;
+  build: () => Promise<TBuiltExport>;
+}): Promise<TBuiltExport | Response> => {
+  const excelSlot = format === "xlsx" ? excelBuildLimiter.tryAcquire() : null;
+  if (excelSlot && !excelSlot.ok) {
+    return problemTooManyRequests(
+      requestId,
+      "Another Excel export is being built. Try again in a moment, or export as CSV.",
+      EXCEL_BUSY_RETRY_SECONDS
+    );
+  }
+
+  try {
+    return await build();
+  } catch (error) {
+    if (error instanceof ExportCancelledError) {
+      logger.info({ surveyId, requestId }, "Export cancelled: the client disconnected");
+      // 499 is nginx's "client closed request". Nobody is listening, and it is not a server error.
+      return new Response(null, { status: 499 });
+    }
+    throw error;
+  } finally {
+    // The workbook is whole once the build returns; sending it holds no build memory.
+    if (excelSlot?.ok) excelSlot.release();
+  }
+};
+
 /**
  * What `POST /api/surveys/{surveyId}/export` does once the wrapper has parsed the request.
  *
@@ -117,37 +158,23 @@ export const handleExportRequest = async ({
     getIsQuotasEnabled(authResult.organizationId),
   ]);
 
-  const excelSlot = body.format === "xlsx" ? excelBuildLimiter.tryAcquire() : null;
-  if (excelSlot && !excelSlot.ok) {
-    return problemTooManyRequests(
-      requestId,
-      "Another Excel export is being built. Try again in a moment, or export as CSV.",
-      EXCEL_BUSY_RETRY_SECONDS
-    );
-  }
-
-  let result;
-  try {
-    result = await buildExportResponse({
-      survey,
-      plan,
-      filter: body.filter,
-      excludedColumns: body.excludedColumns,
-      isQuotasAllowed,
-      timeZone: organization?.displayTimeZone ?? "UTC",
-      signal,
-    });
-  } catch (error) {
-    if (error instanceof ExportCancelledError) {
-      logger.info({ surveyId: survey.id, requestId }, "Export cancelled: the client disconnected");
-      // 499 is nginx's "client closed request". Nobody is listening, and it is not a server error.
-      return new Response(null, { status: 499 });
-    }
-    throw error;
-  } finally {
-    // The workbook is whole once `buildExportResponse` returns; sending it holds no build memory.
-    if (excelSlot?.ok) excelSlot.release();
-  }
+  const built = await buildWithinLimits({
+    format: body.format,
+    requestId,
+    surveyId: survey.id,
+    build: () =>
+      buildExportResponse({
+        survey,
+        plan,
+        filter: body.filter,
+        excludedColumns: body.excludedColumns,
+        isQuotasAllowed,
+        timeZone: organization?.displayTimeZone ?? "UTC",
+        signal,
+      }),
+  });
+  if (built instanceof Response) return built;
+  const result = built;
 
   if (!result.ok) {
     return problemUnprocessableContent(requestId, result.message, { instance });

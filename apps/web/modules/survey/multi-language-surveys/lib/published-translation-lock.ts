@@ -37,30 +37,32 @@ export const isTranslationPathLocked = (
   );
 };
 
+type TLabelledOption = { label?: Record<string, unknown> };
+
+/** Every option, row and column of the survey's questions. */
+const allOptions = (survey: TSurvey): TLabelledOption[] =>
+  survey.blocks
+    .flatMap((block) => block.elements)
+    .flatMap((element) =>
+      OPTION_LISTS.flatMap(
+        (list) => (element as unknown as Record<string, TLabelledOption[] | undefined>)[list] ?? []
+      )
+    );
+
+const hasTextIn = (option: TLabelledOption, languageCode: string | undefined): boolean =>
+  Object.entries(option.label ?? {}).some(
+    ([code, text]) =>
+      code !== "default" &&
+      (languageCode === undefined || code === languageCode) &&
+      typeof text === "string" &&
+      text.trim() !== ""
+  );
+
 /**
  * Whether the stored survey holds locked option text in `languageCode`, or in any language but the default
  * when none is given. Removing the language, or changing the default (which removes every translation),
  * would drop that text, so the save would be refused.
  */
-export const hasLockedTranslations = (persistedSurvey: TSurvey, languageCode?: string): boolean => {
-  if (persistedSurvey.status === "draft") return false;
-
-  return persistedSurvey.blocks.some((block) =>
-    block.elements.some((element) =>
-      OPTION_LISTS.some((list) =>
-        (
-          (element as unknown as Record<string, { label?: Record<string, unknown> }[] | undefined>)[list] ??
-          []
-        ).some((option) =>
-          Object.entries(option.label ?? {}).some(
-            ([code, text]) =>
-              code !== "default" &&
-              (languageCode === undefined || code === languageCode) &&
-              typeof text === "string" &&
-              text.trim() !== ""
-          )
-        )
-      )
-    )
-  );
-};
+export const hasLockedTranslations = (persistedSurvey: TSurvey, languageCode?: string): boolean =>
+  persistedSurvey.status !== "draft" &&
+  allOptions(persistedSurvey).some((option) => hasTextIn(option, languageCode));

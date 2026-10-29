@@ -215,6 +215,55 @@ const releaseCleanups = async (rows: readonly TClaimedCleanup[], now: Date): Pro
   });
 };
 
+const processOutcomeOrCleanup = async (
+  row: TClaimedCleanup,
+  reconciled: TOutcomeCleanupResult | undefined,
+  hubBudget: THubCallBudget
+): Promise<TCleanupOutcome> => {
+  try {
+    return row.kind === "hubResponseOutcome"
+      ? (reconciled ?? { status: "again", delayMs: 0 })
+      : await processCleanup(row, hubBudget);
+  } catch (error) {
+    logger.error({ err: error, cleanupId: row.id, kind: row.kind }, "Deletion cleanup threw");
+    return { status: "failed", error: "error" };
+  }
+};
+
+/**
+ * One claim's rows, in order. Returns `true` when time or the Hub call budget ran out and the rest of the
+ * claim was handed back for the next run.
+ */
+const processClaim = async (
+  rows: readonly TClaimedCleanup[],
+  hubBudget: THubCallBudget,
+  summary: TDeletionCleanupDrainSummary
+): Promise<boolean> => {
+  const outcomes = await reconcileOutcomeRows(rows, hubBudget);
+
+  const unstarted: TClaimedCleanup[] = [];
+  for (const row of rows) {
+    // An outcome row the reconcile already settled is finished whatever the clock says: its result is
+    // paid for, and dropping it would redo the Hub work and skip the row's backoff.
+    const reconciled = row.kind === "hubResponseOutcome" ? outcomes.get(row.id) : undefined;
+
+    // Out of time, or out of Hub calls (a row that hit the budget is due again at once, so claiming on
+    // would only spin): leave the rest to the next run.
+    if (!reconciled && (Date.now() >= hubBudget.deadline || isHubCallBudgetSpent(hubBudget))) {
+      unstarted.push(row);
+      continue;
+    }
+
+    const outcome = await processOutcomeOrCleanup(row, reconciled, hubBudget);
+    await finishCleanup(row, outcome, new Date());
+    summary[outcome.status] += 1;
+  }
+
+  if (unstarted.length === 0) return false;
+  await releaseCleanups(unstarted, new Date());
+  return true;
+};
+
 /**
  * Work through due `DeletionCleanup` rows until none are left, the run's time budget is spent, or its Hub
  * call budget is. `ids` limits it to those rows, for the drain a delete runs straight after its commit.
@@ -232,40 +281,7 @@ export const drainDeletionCleanups = async ({
   while (Date.now() < deadline) {
     const rows = await claimDueCleanups(new Date(), ids);
     if (rows.length === 0) break;
-
-    const outcomes = await reconcileOutcomeRows(rows, hubBudget);
-
-    const unstarted: TClaimedCleanup[] = [];
-    for (const row of rows) {
-      // An outcome row the reconcile already settled is finished whatever the clock says: its result is
-      // paid for, and dropping it would redo the Hub work and skip the row's backoff.
-      const reconciled = row.kind === "hubResponseOutcome" ? outcomes.get(row.id) : undefined;
-
-      // Out of time, or out of Hub calls (a row that hit the budget is due again at once, so claiming on
-      // would only spin): leave the rest to the next run.
-      if (!reconciled && (Date.now() >= deadline || isHubCallBudgetSpent(hubBudget))) {
-        unstarted.push(row);
-        continue;
-      }
-
-      let outcome: TCleanupOutcome;
-      try {
-        outcome =
-          row.kind === "hubResponseOutcome"
-            ? (reconciled ?? { status: "again", delayMs: 0 })
-            : await processCleanup(row, hubBudget);
-      } catch (error) {
-        logger.error({ err: error, cleanupId: row.id, kind: row.kind }, "Deletion cleanup threw");
-        outcome = { status: "failed", error: "error" };
-      }
-      await finishCleanup(row, outcome, new Date());
-      summary[outcome.status] += 1;
-    }
-
-    if (unstarted.length > 0) {
-      await releaseCleanups(unstarted, new Date());
-      return summary;
-    }
+    if (await processClaim(rows, hubBudget, summary)) break;
   }
 
   return summary;

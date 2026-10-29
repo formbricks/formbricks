@@ -430,7 +430,7 @@ export const transformQuestionsToBlocksWithoutCodeFill = (
  *   (ENG-6782). The converted blocks come back with every missing question and answer code filled.
  */
 export const transformQuestionsToBlocks = (
-  questions: TSurveyQuestion[],
+  questions: Parameters<typeof transformQuestionsToBlocksWithoutCodeFill>[0],
   endings: TSurveyEnding[] = [],
   takenNames: readonly string[] = []
 ): TSurveyBlock[] =>
