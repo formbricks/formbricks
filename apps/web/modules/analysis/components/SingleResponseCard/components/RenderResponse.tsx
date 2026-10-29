@@ -156,7 +156,11 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
     case TSurveyElementTypeEnum.MultipleChoiceSingle:
     case TSurveyElementTypeEnum.Ranking:
       if (typeof responseData === "string" || typeof responseData === "number") {
-        const choiceId = getChoiceIdByValue(responseData.toString(), element);
+        const choiceId = getChoiceIdByValue(
+          responseData.toString(),
+          element,
+          getLanguageCode(survey.languages, language)
+        );
         return (
           <ResponseBadges
             items={[{ value: responseData.toString(), id: choiceId }]}
@@ -168,7 +172,7 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
         const itemsArray = responseData
           .filter((choice) => choice !== "")
           .map((choice) => {
-            const choiceId = getChoiceIdByValue(choice, element);
+            const choiceId = getChoiceIdByValue(choice, element, getLanguageCode(survey.languages, language));
             return { value: choice, id: choiceId };
           });
         return (

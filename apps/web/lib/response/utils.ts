@@ -111,13 +111,20 @@ export const extractChoiceIdsFromResponse = (
 
 export const getChoiceIdByValue = (
   value: string,
-  element: TSurveyMultipleChoiceElement | TSurveyRankingElement | TSurveyPictureSelectionElement
+  element: TSurveyMultipleChoiceElement | TSurveyRankingElement | TSurveyPictureSelectionElement,
+  language: string = "default"
 ) => {
   if (element.type === "pictureSelection") {
     return element.choices.find((choice) => choice.imageUrl === value)?.id ?? "other";
   }
 
-  return element.choices.find((choice) => choice.label.default === value)?.id ?? "other";
+  // Response language first, then the default label (stored when a choice has no translation).
+  // No cross-language fallback: free text that happens to equal another language's label stays "other".
+  const match =
+    element.choices.find((choice) => choice.label[language] === value) ??
+    element.choices.find((choice) => choice.label.default === value);
+
+  return match?.id ?? "other";
 };
 
 export const calculateTtcTotal = (ttc: TResponseTtc) => {
