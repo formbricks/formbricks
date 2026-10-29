@@ -7,6 +7,7 @@ import {
   isAuthRequestBodyLimited,
   withAuthRequestBodyLimit,
 } from "./auth-request-body-limit";
+import { AUTH_REQUEST_MAX_JSON_ENTRIES } from "./auth-request-json-bounds";
 
 const LIMIT = AUTH_REQUEST_BODY_LIMIT_BYTES;
 
@@ -102,6 +103,44 @@ describe("withAuthRequestBodyLimit", () => {
     expect(forwarded.url).toBe("http://localhost/api/auth/oauth2/register");
     expect(forwarded.method).toBe("POST");
     expect(forwarded.headers.get("x-trace")).toBe("keep-me");
+  });
+
+  test("answers 400 to a JSON body with an over-wide array, before the handler parses it", async () => {
+    const handler = vi.fn(ok);
+    const request = new Request("http://localhost/api/auth/sign-in/social", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ provider: "google", scopes: Array(AUTH_REQUEST_MAX_JSON_ENTRIES + 1).fill(1) }),
+    });
+
+    const response = await withAuthRequestBodyLimit(handler)(request);
+
+    expect(response.status).toBe(400);
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(await response.json()).toEqual({
+      error: "invalid_request",
+      error_description: `Request body arrays and objects must not hold more than ${AUTH_REQUEST_MAX_JSON_ENTRIES} entries`,
+      code: "VALIDATION_ERROR",
+      message: `Request body arrays and objects must not hold more than ${AUTH_REQUEST_MAX_JSON_ENTRIES} entries`,
+    });
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  test("hands a JSON body at the entry cap to the handler unchanged", async () => {
+    const body = JSON.stringify({
+      redirect_uris: Array(AUTH_REQUEST_MAX_JSON_ENTRIES).fill("http://127.0.0.1/cb"),
+    });
+    const seen = vi.fn(async (request: Request) => new Response(await request.text()));
+    const request = new Request("http://localhost/api/auth/oauth2/register", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body,
+    });
+
+    const response = await withAuthRequestBodyLimit(seen)(request);
+
+    expect(response.status).toBe(200);
+    expect(await response.text()).toBe(body);
   });
 
   test("accepts a body of exactly the limit that arrives in several chunks", async () => {
