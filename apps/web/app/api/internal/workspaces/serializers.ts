@@ -45,3 +45,14 @@ export const serializeWorkspaceSettings = (workspace: TWorkspace): TWorkspaceSet
 
 /** What deleting a workspace answers: where the dashboard goes next, resolved after the deletion. */
 export type TWorkspaceDeletionResource = { destination: TPostWorkspaceDeletionDestination };
+
+/** A workspace as a switcher or a picker lists it, and as creating one answers it: its id and name. */
+export type TWorkspaceOptionResource = { id: string; name: string };
+
+export const serializeWorkspaceOption = (workspace: {
+  id: string;
+  name: string;
+}): TWorkspaceOptionResource => ({
+  id: workspace.id,
+  name: workspace.name,
+});

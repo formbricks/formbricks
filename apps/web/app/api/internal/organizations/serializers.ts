@@ -11,6 +11,14 @@ export type TOrganizationSettingsResource = {
 /** A newly created organization: enough to go on to its next setup step. */
 export type TCreatedOrganizationResource = { id: string; name: string };
 
+/** An organization as the organization switcher lists it: its id and name. */
+export type TOrganizationOptionResource = { id: string; name: string };
+
+export const serializeOrganizationOption = (organization: {
+  id: string;
+  name: string;
+}): TOrganizationOptionResource => ({ id: organization.id, name: organization.name });
+
 export const serializeCreatedOrganization = (organization: TOrganization): TCreatedOrganizationResource => ({
   id: organization.id,
   name: organization.name,

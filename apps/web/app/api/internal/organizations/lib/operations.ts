@@ -1,5 +1,6 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
+import { getOrganizationsByUserId } from "@/app/(app)/workspaces/[workspaceId]/lib/organization";
 import { type TOrgAction, requireOrgActionAccess } from "@/app/api/internal/lib/organization-access";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import { applyRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
@@ -30,7 +31,11 @@ import { ensureCloudStripeSetupForOrganization } from "@/modules/ee/billing/lib/
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createWorkspace } from "@/modules/workspaces/settings/lib/workspace";
 import type { TOrganizationCreateBody, TOrganizationPatchBody } from "../schemas";
-import { serializeCreatedOrganization, serializeOrganizationSettings } from "../serializers";
+import {
+  serializeCreatedOrganization,
+  serializeOrganizationOption,
+  serializeOrganizationSettings,
+} from "../serializers";
 
 type TRequestContext = {
   authentication: TV3Authentication;
@@ -201,4 +206,21 @@ export async function createOrganizationOperation({
     location: `/api/internal/organizations/${organization.id}`,
     requestId,
   });
+}
+
+/**
+ * `GET /api/internal/organizations`: the organizations the caller belongs to, as id and name, for the
+ * organization switcher. The list is the caller's own authorization lookup, so it is scoped by
+ * construction and takes no parameters.
+ */
+export async function listOrganizationsOperation({
+  authentication,
+  requestId,
+  instance,
+}: Pick<TRequestContext, "authentication" | "requestId" | "instance">): Promise<Response> {
+  const actor = getV3AuthorizationActor(authentication);
+  if (actor?.type !== "user") return problemUnauthorized(requestId, "Session required", instance);
+
+  const organizations = await getOrganizationsByUserId(actor.id);
+  return successResponse(organizations.map(serializeOrganizationOption), { requestId });
 }

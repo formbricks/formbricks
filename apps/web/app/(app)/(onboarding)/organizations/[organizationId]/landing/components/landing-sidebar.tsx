@@ -7,7 +7,6 @@ import { useEffect, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
-import { getOrganizationsForSwitcherAction } from "@/app/(app)/workspaces/[workspaceId]/actions";
 import FBLogo from "@/images/formbricks-wordmark.svg";
 import { cn } from "@/lib/cn";
 import {
@@ -15,7 +14,7 @@ import {
   SwitcherDropdownBody,
 } from "@/modules/settings/components/switcher-dropdown-body";
 import { UserDropdown } from "@/modules/settings/components/user-dropdown";
-import { useSwitcherData } from "@/modules/settings/hooks/use-switcher-data";
+import { useOrganizationSwitcherData } from "@/modules/settings/hooks/use-switcher-data";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,18 +38,16 @@ export const LandingSidebar = ({
 
   const { t } = useTranslation();
 
-  const organizationSwitcher = useSwitcherData(
-    () => getOrganizationsForSwitcherAction({ organizationId: organization.id }),
-    t("common.failed_to_load_organizations"),
-    undefined,
-    organization.name
-  );
+  const organizationSwitcher = useOrganizationSwitcherData({
+    fallbackError: t("common.failed_to_load_organizations"),
+    reloadKey: organization.name,
+  });
   const { load: loadOrganizations } = organizationSwitcher;
 
   useEffect(() => {
-    // The hook guards against duplicate/looping loads internally.
+    // Loading is idempotent: the first open enables the query, later ones read the cache.
     if (isOrgDropdownOpen) {
-      void loadOrganizations();
+      loadOrganizations();
     }
   }, [isOrgDropdownOpen, loadOrganizations]);
 

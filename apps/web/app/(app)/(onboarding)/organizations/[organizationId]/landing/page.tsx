@@ -7,6 +7,7 @@ import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
+import { ApiQueryClientProvider } from "@/modules/api/components/api-query-client-provider";
 import { getAccessControlPermission, getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import { Header } from "@/modules/ui/components/header";
@@ -32,45 +33,48 @@ const Page = async (props: { params: Promise<{ organizationId: string }> }) => {
   const isOwnerOrManager = isOwner || isManager;
   const isAccessControlAllowed = isOwnerOrManager ? await getAccessControlPermission(organization.id) : false;
 
+  // The switchers and the create-workspace dialog read and write through the dashboard API, on one cache.
   return (
-    <div className="flex min-h-full min-w-full flex-row">
-      <LandingSidebar
-        user={user}
-        organization={organization}
-        isFormbricksSurveysConfigured={IS_FORMBRICKS_SURVEYS_CONFIGURED}
-      />
-      <div className="flex-1">
-        <div className="flex h-full flex-col">
-          <div className="p-6">
-            {/* we only need to render organization breadcrumb on this page, organizations/workspaces are lazy-loaded */}
-            <WorkspaceAndOrgSwitch
-              currentOrganizationId={organization.id}
-              currentOrganizationName={organization.name}
-              isMultiOrgEnabled={isMultiOrgEnabled}
-              organizationWorkspacesLimit={0}
-              isFormbricksCloud={IS_FORMBRICKS_CLOUD}
-              isLicenseActive={false}
-              isNoLicense={false}
-              isOwnerOrManager={false}
-              isAccessControlAllowed={false}
-              isMembershipPending={isMembershipPending}
-            />
-          </div>
-          <div className="flex h-full flex-col items-center justify-center gap-y-12">
-            <Header
-              title={t("organizations.landing.no_workspaces_warning_title")}
-              subtitle={t("organizations.landing.no_workspaces_warning_subtitle")}
-            />
-            {isOwnerOrManager && (
-              <CreateFirstWorkspaceButton
-                organizationId={organization.id}
-                isAccessControlAllowed={isAccessControlAllowed}
+    <ApiQueryClientProvider>
+      <div className="flex min-h-full min-w-full flex-row">
+        <LandingSidebar
+          user={user}
+          organization={organization}
+          isFormbricksSurveysConfigured={IS_FORMBRICKS_SURVEYS_CONFIGURED}
+        />
+        <div className="flex-1">
+          <div className="flex h-full flex-col">
+            <div className="p-6">
+              {/* we only need to render organization breadcrumb on this page, organizations/workspaces are lazy-loaded */}
+              <WorkspaceAndOrgSwitch
+                currentOrganizationId={organization.id}
+                currentOrganizationName={organization.name}
+                isMultiOrgEnabled={isMultiOrgEnabled}
+                organizationWorkspacesLimit={0}
+                isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+                isLicenseActive={false}
+                isNoLicense={false}
+                isOwnerOrManager={false}
+                isAccessControlAllowed={false}
+                isMembershipPending={isMembershipPending}
               />
-            )}
+            </div>
+            <div className="flex h-full flex-col items-center justify-center gap-y-12">
+              <Header
+                title={t("organizations.landing.no_workspaces_warning_title")}
+                subtitle={t("organizations.landing.no_workspaces_warning_subtitle")}
+              />
+              {isOwnerOrManager && (
+                <CreateFirstWorkspaceButton
+                  organizationId={organization.id}
+                  isAccessControlAllowed={isAccessControlAllowed}
+                />
+              )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </ApiQueryClientProvider>
   );
 };
 
