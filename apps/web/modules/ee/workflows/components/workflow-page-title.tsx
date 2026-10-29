@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAtomValue, useSetAtom } from "jotai";
 import { usePathname, useRouter, useSearchParams, useSelectedLayoutSegment } from "next/navigation";
-import { type KeyboardEvent, useEffect, useId, useLayoutEffect, useRef } from "react";
+import { type ClipboardEvent, type KeyboardEvent, useEffect, useId, useLayoutEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { WorkflowStatusPill } from "@/modules/ee/workflows/components/workflow-status-pill";
@@ -113,6 +113,23 @@ export const WorkflowPageTitle = ({ workflowId, isReadOnly }: Readonly<WorkflowP
     void save();
   };
 
+  // maxLength would cut a multi-line paste before its line breaks collapse, so collapse them first
+  // and fit the result into the room left around the selection. The rest of the name is untouched,
+  // and a cut never splits a surrogate pair (an emoji) in half.
+  const handlePaste = (event: ClipboardEvent<HTMLTextAreaElement>) => {
+    event.preventDefault();
+    const field = event.currentTarget;
+    const { selectionStart, selectionEnd, value } = field;
+    const room = WORKFLOW_NAME_MAX_LENGTH - (value.length - (selectionEnd - selectionStart));
+    let text = event.clipboardData
+      .getData("text/plain")
+      .replaceAll(/[\r\n]+/g, " ")
+      .slice(0, Math.max(room, 0));
+    if (/[\uD800-\uDBFF]$/.test(text)) text = text.slice(0, -1);
+    field.setRangeText(text, selectionStart, selectionEnd, "end");
+    setWorkflowName(field.value);
+  };
+
   const resolved = workflow ?? data;
   if (!resolved) return <WorkflowPageTitleSkeleton />;
 
@@ -130,17 +147,14 @@ export const WorkflowPageTitle = ({ workflowId, isReadOnly }: Readonly<WorkflowP
             ref={inputRef}
             rows={1}
             value={workflowName}
-            // A name is one line: Enter commits (handleKeyDown), and pasted line breaks become spaces.
-            // The length cap is applied after that, not via maxLength, which would cut a multi-line
-            // paste before its line breaks collapse.
-            onChange={(event) =>
-              setWorkflowName(
-                event.target.value.replaceAll(/[\r\n]+/g, " ").slice(0, WORKFLOW_NAME_MAX_LENGTH)
-              )
-            }
+            // A name is one line: Enter commits (handleKeyDown), pastes are normalized before they are
+            // fitted (handlePaste), and any other line break (e.g. a drop) becomes a space.
+            onChange={(event) => setWorkflowName(event.target.value.replaceAll(/[\r\n]+/g, " "))}
+            onPaste={handlePaste}
             onKeyDown={handleKeyDown}
             aria-label={t("common.workflow_name")}
             placeholder={t("common.workflow_name")}
+            maxLength={WORKFLOW_NAME_MAX_LENGTH}
             aria-invalid={showNameError || undefined}
             aria-describedby={showNameError ? nameErrorId : undefined}
             // Approximates content width where field-sizing is unsupported (Firefox).
