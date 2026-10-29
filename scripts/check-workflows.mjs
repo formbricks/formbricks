@@ -7,7 +7,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const isMap = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
 
 // Dynamic runners and least-privilege choices still need review. This check covers the
-// mechanical rules: explicit permission maps and hardening first on literal ubuntu-latest jobs.
+// mechanical rules: explicit permission maps and hardening first on literal ubuntu-* jobs.
 export function checkWorkflow(source) {
   const workflow = yaml.load(source);
   if (!isMap(workflow) || !isMap(workflow.jobs)) {
@@ -28,7 +28,7 @@ export function checkWorkflow(source) {
     }
     const labels = isMap(job["runs-on"]) ? job["runs-on"].labels : job["runs-on"];
     const runners = Array.isArray(labels) ? labels : [labels];
-    if (!runners.includes("ubuntu-latest")) continue;
+    if (!runners.some((runner) => typeof runner === "string" && /^ubuntu-/.test(runner))) continue;
     const first = job.steps?.[0];
     if (
       typeof first?.uses !== "string" ||
@@ -62,6 +62,6 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
     console.error(errors.join("\n"));
     process.exitCode = 1;
   } else {
-    console.log("Workflow permission maps and ubuntu-latest runner hardening checks passed.");
+    console.log("Workflow permission maps and ubuntu-* runner hardening checks passed.");
   }
 }

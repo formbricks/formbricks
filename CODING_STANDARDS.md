@@ -12,8 +12,9 @@ generated API drift. `packages/config-eslint/` and `apps/web/eslint.config.mjs` 
 exceptions. A warning is still actionable when CI does not block it.
 
 Static `unstable_cache` imports from `next/cache` are lint errors. `pnpm workflow:check` enforces explicit
-permission maps and runner hardening first for literal `ubuntu-latest` jobs. Reviewers still judge
-whether requested token permissions are minimal and whether dynamic runner choices need hardening.
+permission maps and runner hardening first for literal `ubuntu-*` runner labels, including version and
+architecture pins. Reviewers still judge whether requested token permissions are minimal and whether
+runner choices outside this check need hardening.
 
 ## Conventions Awaiting Automated Enforcement
 
@@ -23,11 +24,10 @@ These remain review checks until their enforcement handles the repository's exis
 - Cache keys use `createCacheKey.*` utilities.
 - Mock boundaries live in `__mocks__` so their imports register before the module under test.
 
-Prefer `PascalCase` for React components and folders under `modules/`, `camelCase` for functions and
-variables, and `SCREAMING_SNAKE_CASE` for constants.
-
 ## Quality Checklist
 
+- Prefer `PascalCase` for React components and folders under `modules/`, `camelCase` for functions and
+  variables, and `SCREAMING_SNAKE_CASE` for constants.
 - Keep responsibilities focused; consolidate duplicated behavior when it has one reason to change.
 - Follow React hooks rules, keep effects focused, and avoid unnecessary `useMemo`/`useCallback`.
 - Prefer type inference and shared types from `@formbricks/types`; new `any`s are still findings where
@@ -194,4 +194,5 @@ The following conventions apply to published `.mdx` pages. Internal Markdown ref
 ## GitHub Actions
 
 - Always set minimal `permissions` for `GITHUB_TOKEN`.
-- For dynamic runner selection, verify that each `ubuntu-latest` job hardens the runner before other steps.
+- For runners selected by expressions or labels outside `ubuntu-*`, review the resolved runner choices
+  and ensure GitHub-hosted Ubuntu jobs harden the runner before other steps.

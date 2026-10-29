@@ -37,6 +37,14 @@ describe("workflow conventions", () => {
     expect(checkWorkflow(workflow)).toEqual([expect.stringContaining("first step")]);
   });
 
+  test.each(["ubuntu-24.04", "ubuntu-24.04-arm"])("requires hardening on pinned runners: %s", (runner) => {
+    const workflow = hardenedJob.replace("ubuntu-latest", runner);
+    expect(checkWorkflow(workflow)).toEqual([]);
+    expect(
+      checkWorkflow(workflow.replace("      - uses: step-security/harden-runner@pinned-sha\n", ""))
+    ).toEqual([expect.stringContaining("first step")]);
+  });
+
   test.each(["if: false", "continue-on-error: true"])("rejects bypassed hardening: %s", (bypass) => {
     const workflow = hardenedJob.replace(
       "      - run: pnpm lint",
