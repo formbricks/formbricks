@@ -137,7 +137,10 @@ const BlockCardComponent = ({
   const { t } = useTranslation();
   const ELEMENTS_ICON_MAP = getElementIconMap(t);
 
-  const hasMultipleElements = block.elements.length > 1;
+  // The question codes of the block, in order: the names an export and a webhook know its questions by.
+  const blockCodes = block.elements
+    .flatMap((element) => ("code" in element && element.code ? [element.code] : []))
+    .join(", ");
   const blockLogic = block.logic ?? [];
 
   // Check if any element in this block is currently active
@@ -256,12 +259,6 @@ const BlockCardComponent = ({
       additionalProps.lastElement = lastElement;
     }
 
-    // FileUpload needs extra props
-    if (element.type === TSurveyElementTypeEnum.FileUpload) {
-      additionalProps.workspace = workspace;
-      additionalProps.isFormbricksCloud = isFormbricksCloud;
-    }
-
     // @ts-expect-error - These props should cover everything
     return <FormComponent {...commonProps} {...additionalProps} />;
   };
@@ -363,7 +360,9 @@ const BlockCardComponent = ({
                       className="pointer-events-none absolute top-1 right-2 size-3.5 text-slate-400 opacity-0 transition-opacity group-focus-within/name:opacity-0 group-hover/name:opacity-100"
                     />
                     <p className="text-xs text-slate-500">
-                      {t("common.count_questions", { count: block.elements.length })}
+                      {[t("common.count_questions", { count: block.elements.length }), blockCodes]
+                        .filter(Boolean)
+                        .join(" · ")}
                     </p>
                   </div>
                 </div>
@@ -437,13 +436,6 @@ const BlockCardComponent = ({
                                     {ELEMENTS_ICON_MAP[element.type]}
                                   </div>
                                   <div className="flex grow flex-col justify-center">
-                                    {hasMultipleElements && (
-                                      <p className="mb-1 text-xs font-medium text-slate-500">
-                                        {t("workspace.surveys.edit.question_number", {
-                                          number: elementIndex + 1,
-                                        })}
-                                      </p>
-                                    )}
                                     <h3 className="flex items-center gap-2 text-sm font-semibold">
                                       {getElementHeadline(element, selectedLanguageCode)}
                                       {codeIssues.has(element.id) && (
@@ -458,11 +450,16 @@ const BlockCardComponent = ({
                                         </>
                                       )}
                                     </h3>
-                                    {!isOpen && element.type !== TSurveyElementTypeEnum.CTA && (
+                                    {element.type !== TSurveyElementTypeEnum.CTA && (
                                       <p className="mt-1 truncate text-xs text-slate-500">
-                                        {element?.required
-                                          ? t("workspace.surveys.edit.required")
-                                          : t("workspace.surveys.edit.optional")}
+                                        {[
+                                          element?.required
+                                            ? t("workspace.surveys.edit.required")
+                                            : t("workspace.surveys.edit.optional"),
+                                          "code" in element ? element.code : undefined,
+                                        ]
+                                          .filter(Boolean)
+                                          .join(" · ")}
                                       </p>
                                     )}
                                   </div>
@@ -520,6 +517,8 @@ const BlockCardComponent = ({
                                   updateElement={updateElement}
                                   updateBlockLogic={updateBlockLogic}
                                   updateBlockLogicFallback={updateBlockLogicFallback}
+                                  workspace={workspace}
+                                  isFormbricksCloud={isFormbricksCloud}
                                 />
                               }
                             />

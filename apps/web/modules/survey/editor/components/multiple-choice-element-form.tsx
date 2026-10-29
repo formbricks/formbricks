@@ -294,7 +294,7 @@ export const MultipleChoiceElementForm = ({
               updateElement(elementIdx, { choices: newChoices });
             }}>
             <SortableContext items={element.choices} strategy={verticalListSortingStrategy}>
-              <div className="flex max-h-[25dvh] flex-col gap-2 overflow-y-auto py-1 pr-1" ref={parent}>
+              <div className="flex max-h-[34dvh] flex-col gap-2 overflow-y-auto py-1 pr-1" ref={parent}>
                 {element.choices?.map((choice, choiceIdx) => (
                   <ElementOptionChoice
                     key={choice.id}
@@ -323,6 +323,10 @@ export const MultipleChoiceElementForm = ({
         <div className="mt-2">
           <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
             <div className="flex flex-wrap gap-2">
+              <Button size="sm" variant="secondary" type="button" onClick={() => addChoice()}>
+                {t("workspace.surveys.edit.add_option")}
+                <PlusIcon />
+              </Button>
               {specialChoices.map((specialChoice) => {
                 if (element.choices.some((c) => c.id === specialChoice.id)) return null;
                 return (

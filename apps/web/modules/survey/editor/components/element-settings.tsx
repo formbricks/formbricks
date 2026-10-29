@@ -7,6 +7,12 @@ import {
   TSurveyElement,
   TSurveyElementTypeEnum,
 } from "@formbricks/types/surveys/elements";
+import { type TWorkspaceWithoutCustomCss } from "@/modules/custom-css/lib/types";
+import {
+  ColorCodingToggle,
+  FileUploadSettings,
+  LongAnswerToggle,
+} from "@/modules/survey/editor/components/element-toggle-settings";
 import { ValidationRulesEditor } from "@/modules/survey/editor/components/validation-rules-editor";
 import { Label } from "@/modules/ui/components/label";
 import { OptionsSwitch } from "@/modules/ui/components/options-switch";
@@ -16,7 +22,36 @@ interface ElementSettingsProps {
   element: TSurveyElement;
   elementIdx: number;
   updateElement: (elementIdx: number, updatedAttributes: Record<string, unknown>) => void;
+  /** Only the file upload question reads these: its size limit depends on the plan. */
+  workspace?: TWorkspaceWithoutCustomCss;
+  isFormbricksCloud?: boolean;
 }
+
+const OptionOrder = ({
+  element,
+  elementIdx,
+  updateElement,
+}: Readonly<{
+  element: TSurveyElement;
+  elementIdx: number;
+  updateElement: ElementSettingsProps["updateElement"];
+}>) => {
+  const { t } = useTranslation();
+  if (!("shuffleOption" in element)) return null;
+  return (
+    <div>
+      <Label>{t("workspace.surveys.edit.option_order")}</Label>
+      <div className="mt-2">
+        <ShuffleOptionSelect
+          elementIdx={elementIdx}
+          shuffleOption={element.shuffleOption}
+          updateElement={updateElement}
+          shuffleOptionsTypes={getShuffleOptionsTypes(element, t)}
+        />
+      </div>
+    </div>
+  );
+};
 
 const getShuffleOptionsTypes = (element: TSurveyElement, t: TFunction) => {
   const choices = "choices" in element ? element.choices : [];
@@ -60,7 +95,13 @@ const getShuffleOptionsTypes = (element: TSurveyElement, t: TFunction) => {
  * options and validation rules. They are the first part of a question's Settings tab; the Recode
  * section follows.
  */
-export const ElementSettings = ({ element, elementIdx, updateElement }: Readonly<ElementSettingsProps>) => {
+export const ElementSettings = ({
+  element,
+  elementIdx,
+  updateElement,
+  workspace,
+  isFormbricksCloud = false,
+}: Readonly<ElementSettingsProps>) => {
   const { t } = useTranslation();
 
   const updateValidation = (validation: unknown) => updateElement(elementIdx, { validation });
@@ -70,12 +111,7 @@ export const ElementSettings = ({ element, elementIdx, updateElement }: Readonly
     case TSurveyElementTypeEnum.MultipleChoiceMulti:
       return (
         <div className="flex flex-col gap-4">
-          <ShuffleOptionSelect
-            elementIdx={elementIdx}
-            shuffleOption={element.shuffleOption}
-            updateElement={updateElement}
-            shuffleOptionsTypes={getShuffleOptionsTypes(element, t)}
-          />
+          <OptionOrder element={element} elementIdx={elementIdx} updateElement={updateElement} />
           <div>
             <Label>{t("workspace.surveys.edit.display_type")}</Label>
             <div className="mt-2">
@@ -106,12 +142,7 @@ export const ElementSettings = ({ element, elementIdx, updateElement }: Readonly
     case TSurveyElementTypeEnum.Matrix:
       return (
         <div className="flex flex-col gap-4">
-          <ShuffleOptionSelect
-            elementIdx={elementIdx}
-            shuffleOption={element.shuffleOption}
-            updateElement={updateElement}
-            shuffleOptionsTypes={getShuffleOptionsTypes(element, t)}
-          />
+          <OptionOrder element={element} elementIdx={elementIdx} updateElement={updateElement} />
           <ValidationRulesEditor
             elementType={element.type}
             validation={element.validation}
@@ -133,19 +164,48 @@ export const ElementSettings = ({ element, elementIdx, updateElement }: Readonly
 
     case TSurveyElementTypeEnum.OpenText:
       return (
-        <ValidationRulesEditor
-          elementType={element.type}
-          validation={element.validation}
-          onUpdateValidation={updateValidation}
-          inputType={element.inputType ?? "text"}
-          onUpdateInputType={(newInputType) =>
-            updateElement(elementIdx, { inputType: newInputType, longAnswer: newInputType === "text" })
-          }
-        />
+        <div className="flex flex-col gap-4">
+          <LongAnswerToggle element={element} elementIdx={elementIdx} updateElement={updateElement} />
+          <ValidationRulesEditor
+            elementType={element.type}
+            validation={element.validation}
+            onUpdateValidation={updateValidation}
+            inputType={element.inputType ?? "text"}
+            onUpdateInputType={(newInputType) =>
+              updateElement(elementIdx, { inputType: newInputType, longAnswer: newInputType === "text" })
+            }
+          />
+        </div>
+      );
+
+    case TSurveyElementTypeEnum.NPS:
+    case TSurveyElementTypeEnum.Rating:
+    case TSurveyElementTypeEnum.CSAT:
+    case TSurveyElementTypeEnum.CES:
+      return <ColorCodingToggle element={element} elementIdx={elementIdx} updateElement={updateElement} />;
+
+    case TSurveyElementTypeEnum.FileUpload:
+      return (
+        <div className="flex flex-col gap-4">
+          {workspace && (
+            <FileUploadSettings
+              element={element}
+              elementIdx={elementIdx}
+              updateElement={updateElement}
+              workspace={workspace}
+              isFormbricksCloud={isFormbricksCloud}
+            />
+          )}
+          <ValidationRulesEditor
+            elementType={element.type}
+            validation={element.validation}
+            onUpdateValidation={updateValidation}
+            element={element}
+          />
+        </div>
       );
 
     case TSurveyElementTypeEnum.Address:
-    case TSurveyElementTypeEnum.FileUpload:
       return (
         <ValidationRulesEditor
           elementType={element.type}

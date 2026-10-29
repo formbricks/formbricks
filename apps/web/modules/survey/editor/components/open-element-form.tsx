@@ -13,7 +13,6 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
-import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
 
 interface OpenElementFormProps {
@@ -112,24 +111,6 @@ export const OpenElementForm = ({
           locale={locale}
           isStorageConfigured={isStorageConfigured}
         />
-      </div>
-
-      <div className="mt-6 space-y-6">
-        <div className="mt-4">
-          <AdvancedOptionToggle
-            isChecked={element.longAnswer !== false}
-            onToggle={(checked: boolean) => {
-              updateElement(elementIdx, {
-                longAnswer: checked,
-              });
-            }}
-            htmlId={`longAnswer-${element.id}`}
-            title={t("workspace.surveys.edit.long_answer")}
-            description={t("workspace.surveys.edit.long_answer_toggle_description")}
-            disabled={element.inputType !== "text"}
-            customContainerClass="p-0"
-          />
-        </div>
       </div>
     </form>
   );

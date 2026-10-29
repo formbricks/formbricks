@@ -27,7 +27,7 @@ export const PublishedLockNotice = ({ kind, className }: Readonly<PublishedLockN
   }[kind];
 
   return (
-    <TooltipProvider delayDuration={0}>
+    <TooltipProvider delayDuration={500}>
       <Tooltip>
         <TooltipTrigger asChild>
           <button

@@ -422,22 +422,24 @@ export const ElementFormInput = ({
   if (useRichTextEditor) {
     return (
       <div className="w-full">
-        {id === "headline" && currentElement && updateElement && (
-          <div className="flex items-center gap-2">
-            <Switch
-              id="required-toggle"
-              checked={currentElement.required}
-              disabled={getIsRequiredToggleDisabled()}
-              onCheckedChange={(checked) => {
-                updateElement(elementIdx, { required: checked });
-              }}
-            />
-            <Label htmlFor="required-toggle">{t("workspace.surveys.edit.required")}</Label>
-          </div>
-        )}
         {label && (
           <div className={cn("mt-3 mb-2 flex items-center justify-between", labelClassName)}>
             <Label htmlFor={id}>{label}</Label>
+            {id === "headline" && currentElement && updateElement && (
+              <div className="flex items-center gap-x-2">
+                <Label htmlFor="required-toggle" className="text-sm">
+                  {t("workspace.surveys.edit.required")}
+                </Label>
+                <Switch
+                  id="required-toggle"
+                  checked={currentElement.required}
+                  disabled={getIsRequiredToggleDisabled()}
+                  onCheckedChange={(checked) => {
+                    updateElement(elementIdx, { required: checked });
+                  }}
+                />
+              </div>
+            )}
           </div>
         )}
         <div className="flex flex-col gap-4" ref={animationParent}>

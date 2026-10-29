@@ -166,6 +166,8 @@ export const ElementOptionChoice = ({
       </div>
       <div className="flex items-center gap-2">
         {isTextLocked && <PublishedLockNotice kind="optionText" />}
+        {/* An option added since launch has no lock; keep its row in line with the locked ones. */}
+        {lock.isActive && !isTextLocked && <span aria-hidden="true" className="size-6 shrink-0" />}
         <CopyIdButton id={choice.id} label={t("workspace.surveys.edit.copy_option_id")} />
         {(normalChoice.length > 1 || isSpecialChoice) && (
           <TooltipRenderer

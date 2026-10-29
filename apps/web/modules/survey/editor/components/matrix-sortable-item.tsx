@@ -84,6 +84,7 @@ export const MatrixSortableItem = ({
           disabled={isTextLocked}
         />
         {isTextLocked && <PublishedLockNotice kind="optionText" className="ml-2" />}
+        {lock.isActive && !isTextLocked && <span aria-hidden="true" className="ml-2 size-6 shrink-0" />}
         {canDelete && (
           <TooltipRenderer
             data-testid="tooltip-renderer"

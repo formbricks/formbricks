@@ -1,15 +1,7 @@
 "use client";
 
 import { createId } from "@paralleldrive/cuid2";
-import {
-  ArrowDownIcon,
-  ArrowRightIcon,
-  ArrowUpIcon,
-  CopyIcon,
-  EllipsisIcon,
-  LockIcon,
-  TrashIcon,
-} from "lucide-react";
+import { ArrowDownIcon, ArrowUpIcon, CopyIcon, EllipsisIcon, LockIcon, TrashIcon } from "lucide-react";
 import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TI18nString } from "@formbricks/types/i18n";
@@ -227,19 +219,25 @@ export const EditorCardMenu = ({
         <DropdownMenuContent className="w-56">
           <div className="flex flex-col">
             {cardType === "element" && isTypeLocked && (
-              <DropdownMenuItem
-                disabled
-                className="h-auto min-h-8 items-start"
-                data-testid="change-question-type-locked"
-                title={t("workspace.surveys.edit.lock_explanation_type")}
-                icon={<LockIcon className="size-4" />}>
-                <span className="flex flex-col">
-                  <span>{t("workspace.surveys.edit.change_question_type")}</span>
-                  <span className="text-xs text-slate-500">
-                    {t("workspace.surveys.edit.locked_after_publishing")}
-                  </span>
-                </span>
-              </DropdownMenuItem>
+              <TooltipRenderer
+                delayDuration={500}
+                triggerClass="block"
+                className="max-w-xs text-xs leading-relaxed"
+                tooltipContent={
+                  <>
+                    <p className="mb-1 font-semibold">
+                      {t("workspace.surveys.edit.locked_after_publishing")}
+                    </p>
+                    <p>{t("workspace.surveys.edit.lock_explanation_type")}</p>
+                  </>
+                }>
+                <DropdownMenuItem
+                  disabled
+                  data-testid="change-question-type-locked"
+                  icon={<LockIcon className="size-4" />}>
+                  {t("workspace.surveys.edit.change_question_type")}
+                </DropdownMenuItem>
+              </TooltipRenderer>
             )}
             {cardType === "element" && !isTypeLocked && (
               <DropdownMenuSub>
@@ -357,9 +355,8 @@ export const EditorCardMenu = ({
                         onClick={(e) => {
                           e.stopPropagation();
                           moveElementToBlock(card.id, block.id);
-                        }}
-                        icon={<ArrowRightIcon className="size-4" />}>
-                        <span className="ml-2">{blockName}</span>
+                        }}>
+                        {blockName}
                       </DropdownMenuItem>
                     );
                   })}

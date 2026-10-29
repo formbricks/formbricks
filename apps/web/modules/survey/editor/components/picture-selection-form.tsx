@@ -238,10 +238,10 @@ export const PictureSelectionForm = ({
         />
         <Label htmlFor="multi-select-toggle" className="cursor-pointer">
           <div className="ml-2">
-            <h3 className="text-sm font-semibold text-slate-700">
+            <h3 className="flex items-center gap-1 text-sm font-semibold text-slate-700">
               {t("workspace.surveys.edit.allow_multi_select")}
+              {lock.isTypeLocked && <PublishedLockNotice kind="type" />}
             </h3>
-            {lock.isTypeLocked && <PublishedLockNotice kind="type" />}
             <p className="text-xs font-normal text-slate-500">
               {t("workspace.surveys.edit.allow_users_to_select_more_than_one_image")}
             </p>

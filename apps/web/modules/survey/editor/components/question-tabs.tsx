@@ -41,7 +41,9 @@ export const QuestionTabs = ({
           )}
         </TabsTrigger>
       </TabsList>
-      <TabsContent value="content">{content}</TabsContent>
+      <TabsContent value="content" className="[&_form]:space-y-1.5">
+        {content}
+      </TabsContent>
       <TabsContent value="settings">{settings}</TabsContent>
     </Tabs>
   );
