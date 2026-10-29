@@ -281,7 +281,7 @@ const assignSsoUserToOrganization = async ({
  */
 const provisionOwnOrganization = async (user: { id: string; name: string; email: string }): Promise<void> => {
   try {
-    await createOwnedOrganization(user);
+    await createOwnedOrganization(user, { isFirstOrganization: true, unsubscribeFromNotifications: true });
   } catch (error) {
     logger.error(error, "SSO provisioning: failed to create an organization for the new SSO user");
   }

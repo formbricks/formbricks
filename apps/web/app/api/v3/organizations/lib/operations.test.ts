@@ -6,7 +6,7 @@ import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getOrganization, updateOrganization } from "@/lib/organization/service";
 import { checkRoleManagementPermission } from "@/modules/ee/role-management/lib/permission";
 import { sendInviteMemberEmail } from "@/modules/email";
-import { inviteUser } from "@/modules/organization/settings/teams/lib/invite";
+import { assertInviteIsNew, inviteUser } from "@/modules/organization/settings/teams/lib/invite";
 import {
   reserveInviteRateLimit,
   settleInviteRateLimit,
@@ -33,7 +33,10 @@ vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: vi.fn() }));
 vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyRateLimit: vi.fn() }));
 vi.mock("@/modules/ee/role-management/lib/permission", () => ({ checkRoleManagementPermission: vi.fn() }));
 vi.mock("@/modules/email", () => ({ sendInviteMemberEmail: vi.fn() }));
-vi.mock("@/modules/organization/settings/teams/lib/invite", () => ({ inviteUser: vi.fn() }));
+vi.mock("@/modules/organization/settings/teams/lib/invite", () => ({
+  inviteUser: vi.fn(),
+  assertInviteIsNew: vi.fn(),
+}));
 vi.mock("@/modules/organization/settings/teams/lib/invite-rate-limit", () => ({
   reserveInviteRateLimit: vi.fn(),
   settleInviteRateLimit: vi.fn(),
@@ -59,6 +62,7 @@ describe("updateV3Organization", () => {
     vi.resetAllMocks();
     constants.INVITE_DISABLED = false;
     vi.mocked(can).mockResolvedValue(true);
+    vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue({ role: "owner" } as never);
   });
 
   const previous = { id: organizationId, name: "Acme", updatedAt: new Date("2026-01-01T00:00:00Z") };
@@ -104,6 +108,24 @@ describe("updateV3Organization", () => {
     expect(skipV3AuditLog).toHaveBeenCalledWith(auditLog);
   });
 
+  test("a role that is not owner or manager is refused even if the graph said yes", async () => {
+    vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue({ role: "member" } as never);
+
+    const response = await updateV3Organization(params({ name: "Acme Inc" }));
+
+    expect(response.status).toBe(403);
+    expect(updateOrganization).not.toHaveBeenCalled();
+  });
+
+  test("an organization that vanished answers the same 403 as an unauthorized caller", async () => {
+    vi.mocked(getOrganization).mockResolvedValue(null);
+
+    const response = await updateV3Organization(params({ name: "Acme Inc" }));
+
+    expect(response.status).toBe(403);
+    expect((await response.json()).detail).toBe("You are not authorized to access this resource");
+  });
+
   test("a user who is not an owner or manager gets 403 and nothing is written", async () => {
     vi.mocked(can).mockResolvedValue(false);
     const auditLog: Record<string, unknown> = {};
@@ -130,12 +152,10 @@ describe("updateV3Organization", () => {
     expect(response.status).toBe(401);
   });
 
-  test("rejects an empty name, an unknown key and a malformed organization id with 400", async () => {
+  test("rejects an empty name and an unknown key with 400", async () => {
     for (const body of [{ name: "  " }, { name: "Acme", role: "owner" }, {}]) {
       expect((await updateV3Organization(params(body))).status).toBe(400);
     }
-    const badId = await updateV3Organization({ ...params({ name: "Acme" }), organizationId: "not an id" });
-    expect(badId.status).toBe(400);
     expect(updateOrganization).not.toHaveBeenCalled();
   });
 
@@ -155,6 +175,7 @@ describe("inviteV3OrganizationMember", () => {
     constants.INVITE_DISABLED = false;
     vi.mocked(can).mockResolvedValue(true);
     vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue({ role: "owner" } as never);
+    vi.mocked(assertInviteIsNew).mockResolvedValue(null);
     vi.mocked(checkRoleManagementPermission).mockResolvedValue(undefined);
     vi.mocked(reserveInviteRateLimit).mockResolvedValue({} as never);
     vi.mocked(inviteUser).mockResolvedValue("invite_1");
@@ -178,6 +199,37 @@ describe("inviteV3OrganizationMember", () => {
     expect(sendInviteMemberEmail).not.toHaveBeenCalled();
     expect(reserveInviteRateLimit).not.toHaveBeenCalled();
     expect(skipV3AuditLog).toHaveBeenCalledWith(auditLog);
+    // It ran the same precondition the confirmed call does.
+    expect(assertInviteIsNew).toHaveBeenCalledExactlyOnceWith({ email: "new@example.com", organizationId });
+  });
+
+  test.each(["Invite already exists", "User is already a member of this organization"])(
+    "the preview answers the same 409 the confirmed call would (%s), without writing, mailing or spending budget",
+    async (message) => {
+      vi.mocked(assertInviteIsNew).mockRejectedValue(new InvalidInputError(message));
+      const auditLog = {};
+
+      const response = await inviteV3OrganizationMember(params(body, owner, auditLog));
+
+      expect(response.status).toBe(409);
+      expect((await response.json()).detail).toBe(message);
+      expect(inviteUser).not.toHaveBeenCalled();
+      expect(sendInviteMemberEmail).not.toHaveBeenCalled();
+      expect(reserveInviteRateLimit).not.toHaveBeenCalled();
+      expect(skipV3AuditLog).toHaveBeenCalledWith(auditLog);
+    }
+  );
+
+  test("a preview failing for another reason is not turned into a conflict", async () => {
+    vi.mocked(assertInviteIsNew).mockRejectedValue(new Error("database down"));
+
+    expect((await inviteV3OrganizationMember(params(body))).status).toBe(500);
+  });
+
+  test("the confirmed call leaves the already-a-member check to inviteUser (no second lookup)", async () => {
+    await inviteV3OrganizationMember(params({ ...body, confirm: true }));
+
+    expect(assertInviteIsNew).not.toHaveBeenCalled();
   });
 
   test("confirm: false is still a preview", async () => {

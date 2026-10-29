@@ -1,16 +1,24 @@
 import type { McpServer } from "@modelcontextprotocol/server";
 import { createV3Organization } from "@/app/api/v3/organizations/lib/create";
+import { updateV3Organization } from "@/app/api/v3/organizations/lib/operations";
 import {
   type TV3OrganizationCreatedResource,
   ZV3OrganizationCreatedResource,
+  ZV3OrganizationResource,
 } from "@/app/api/v3/organizations/lib/schemas";
-import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import { registerScopedTool } from "./guard-scopes";
-import { type TMcpCreateOrganizationInput, ZMcpCreateOrganizationInput } from "./organizations-schemas";
+import { runIdSummaryMutation } from "./id-summary-mutation";
+import {
+  type TMcpCreateOrganizationInput,
+  type TMcpUpdateOrganizationInput,
+  ZMcpCreateOrganizationInput,
+  ZMcpUpdateOrganizationInput,
+} from "./organizations-schemas";
 import { mcpToolOutput } from "./output-schemas";
-import { runMcpMutation } from "./run-mcp-mutation";
+import { ORGANIZATION_WRITE_SCOPES } from "./setup-scopes";
 
 const ZMcpOrganizationCreatedOutput = mcpToolOutput(ZV3OrganizationCreatedResource);
+const ZMcpOrganizationOutput = mcpToolOutput(ZV3OrganizationResource);
 
 /**
  * What the model reads after a create: the id, fixed words and the guide URL the instance itself built.
@@ -39,31 +47,42 @@ export function registerOrganizationTools(server: McpServer): void {
         openWorldHint: false,
       },
     },
-    ["organizations:write"],
-    async (input: TMcpCreateOrganizationInput, ctx) => {
-      const result = await runMcpMutation(
+    ORGANIZATION_WRITE_SCOPES,
+    (input: TMcpCreateOrganizationInput, ctx) =>
+      runIdSummaryMutation(
         ctx,
         { action: "created", resource: "organization" },
-        ({ authentication, requestId, auditLog }) =>
-          createV3Organization({
-            body: input,
-            authentication,
-            requestId,
-            instance: MCP_API_ROUTE,
-            auditLog,
-          })
-      );
-      if (result.isError) return result;
+        (args) => createV3Organization({ body: input, ...args }),
+        ZV3OrganizationCreatedResource,
+        summarizeCreatedOrganization
+      )
+  );
 
-      const parsed = ZV3OrganizationCreatedResource.safeParse(
-        (result.structuredContent as { data?: unknown } | undefined)?.data
-      );
-      // A body that is not the expected shape gets a fixed line, never the raw JSON: the default text half
-      // of a result is the whole body, name included.
-      const text = parsed.success
-        ? summarizeCreatedOrganization(parsed.data)
-        : "Organization created. Details are in structuredContent.";
-      return { ...result, content: [{ type: "text", text }] };
-    }
+  registerScopedTool(
+    server,
+    "update_organization",
+    {
+      title: "Rename organization",
+      description:
+        "Rename an organization. Needs an organization owner or manager (as a signed-in person, not an API key). Only the name can be changed.",
+      inputSchema: ZMcpUpdateOrganizationInput,
+      outputSchema: ZMcpOrganizationOutput,
+      audit: { action: "updated", targetType: "organization", targetIdArg: "organizationId" },
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+    },
+    ORGANIZATION_WRITE_SCOPES,
+    ({ organizationId, ...body }: TMcpUpdateOrganizationInput, ctx) =>
+      runIdSummaryMutation(
+        ctx,
+        { action: "updated", resource: "organization", logContext: { organizationId } },
+        (args) => updateV3Organization({ organizationId, body, ...args }),
+        ZV3OrganizationResource,
+        (organization) => `Organization ${organization.id} saved.`
+      )
   );
 }

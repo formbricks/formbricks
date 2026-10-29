@@ -6,81 +6,170 @@ import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import { problemUnauthorized, successResponse } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
+import { isOrganizationManagerRole } from "@/app/api/v3/organizations/lib/access";
 import { getOrganizationCreationPolicy } from "@/app/api/v3/organizations/lib/creation-policy";
 import { type TAuthorizationActor } from "@/lib/authorization";
 import {
   lookupAuthorizedOrganizationIds,
   lookupAuthorizedWorkspaceIds,
 } from "@/lib/authorization/resource-list";
-import { resolveSurveyActorContext } from "@/lib/survey/visibility/actor-context";
-import { buildVisibleSurveyWhere } from "@/lib/survey/visibility/predicate";
+import type { TSurveyActorContext } from "@/lib/survey/visibility/actor-context";
+import { andVisibleSurveys, buildVisibleSurveyWhere } from "@/lib/survey/visibility/predicate";
 import { getOrganizationWorkspacesLimit } from "@/modules/ee/license-check/lib/utils";
 import type { TV3AccountContext, TV3AccountOrganization } from "./schemas";
 
-/** An organization's workspaces are bounded by its plan; this only stops a pathological one pulling a table. */
-const MAX_WORKSPACES = 500;
+/**
+ * An organization's workspaces are bounded by its plan; this only stops a pathological one pulling a table.
+ * It caps EACH organization's list, so one large organization cannot starve another. Counts are never taken
+ * from the capped list: they come from their own queries, and `workspacesTruncated` says when a list is cut.
+ */
+const MAX_WORKSPACES_PER_ORGANIZATION = 500;
 
 type TOrganizationSeed = { id: string; name: string; role: TOrganizationRole | null };
 
 type TWorkspaceRow = {
   id: string;
   name: string;
-  organizationId: string;
   appSetupCompleted: boolean;
   logo: { url?: string | null } | null;
   styling: { brandColor?: { light?: string | null } | null } | null;
 };
 
-const isManager = (role: TOrganizationRole | null): boolean => role === "owner" || role === "manager";
+type TOrganizationRow = {
+  id: string;
+  /** Workspaces the caller may reach, counted in the database, not from the capped list below. */
+  _count: { workspaces: number };
+  workspaces: TWorkspaceRow[];
+};
 
-/** Surveys per workspace, through the same visibility predicate every survey list applies. */
+/**
+ * Who is asking, in the terms the visibility predicate needs, from the role already read. An organization
+ * owner or manager is exactly who `organization.manage` admits (the account context's own `canManage`), so
+ * this spares one authorization check per organization that `resolveSurveyActorContext` would make.
+ */
+const surveyActorContextFor = (
+  actor: TAuthorizationActor,
+  role: TOrganizationRole | null
+): TSurveyActorContext =>
+  actor.type === "apiKey"
+    ? { enforced: true, kind: "apiKey" }
+    : {
+        enforced: true,
+        kind: "user",
+        userId: actor.id,
+        isOrganizationAdmin: isOrganizationManagerRole(role),
+      };
+
+/**
+ * Surveys per workspace for ALL of the caller's workspaces in one `groupBy`, through the same visibility
+ * predicate every survey list applies. Organizations that share a predicate (every one the person manages,
+ * every one they only belong to) share one clause, so the query stays a single round trip however many
+ * organizations there are.
+ */
 const countVisibleSurveys = async (
   actor: TAuthorizationActor,
-  organizationId: string,
+  seeds: TOrganizationSeed[],
   workspaceIds: string[]
 ): Promise<Map<string, number>> => {
-  if (workspaceIds.length === 0) return new Map();
+  if (workspaceIds.length === 0 || seeds.length === 0) return new Map();
 
-  const visible = buildVisibleSurveyWhere(await resolveSurveyActorContext(actor, organizationId));
+  const clauses = new Map<string, { context: TSurveyActorContext; organizationIds: string[] }>();
+  for (const seed of seeds) {
+    const context = surveyActorContextFor(actor, seed.role);
+    const key = context.kind === "user" && context.isOrganizationAdmin ? "admin" : "shared";
+    const clause = clauses.get(key) ?? { context, organizationIds: [] };
+    clause.organizationIds.push(seed.id);
+    clauses.set(key, clause);
+  }
+
   const groups = await prisma.survey.groupBy({
     by: ["workspaceId"],
-    where: { workspaceId: { in: workspaceIds }, ...visible },
+    where: {
+      workspaceId: { in: workspaceIds },
+      OR: [...clauses.values()].map(({ context, organizationIds }) => ({
+        workspace: { organizationId: { in: organizationIds } },
+        ...andVisibleSurveys(buildVisibleSurveyWhere(context)),
+      })),
+    },
     _count: { _all: true },
   });
 
   return new Map(groups.map((group) => [group.workspaceId, group._count._all]));
 };
 
-const buildOrganization = async (
-  actor: TAuthorizationActor,
+/** Pending invites per organization, only for the organizations the caller manages. One grouped query. */
+const countPendingInvites = async (organizationIds: string[]): Promise<Map<string, number>> => {
+  if (organizationIds.length === 0) return new Map();
+
+  const groups = await prisma.invite.groupBy({
+    by: ["organizationId"],
+    where: { organizationId: { in: organizationIds }, expiresAt: { gt: new Date() } },
+    _count: { _all: true },
+  });
+
+  return new Map(groups.map((group) => [group.organizationId, group._count._all]));
+};
+
+/** The plan's workspace limit once per distinct organization the caller manages, never per workspace. */
+const lookupWorkspaceLimits = async (organizationIds: string[]): Promise<Map<string, number>> =>
+  new Map(
+    await Promise.all(
+      organizationIds.map(async (id) => [id, await getOrganizationWorkspacesLimit(id)] as const)
+    )
+  );
+
+/** Each organization with its capped workspace list and the real count of workspaces the caller reaches. */
+const loadOrganizationWorkspaces = async (
+  organizationIds: string[],
+  workspaceIds: string[]
+): Promise<Map<string, TOrganizationRow>> => {
+  if (workspaceIds.length === 0) return new Map();
+
+  const authorized = { id: { in: workspaceIds } };
+  const rows: TOrganizationRow[] = await prisma.organization.findMany({
+    where: { id: { in: organizationIds } },
+    select: {
+      id: true,
+      _count: { select: { workspaces: { where: authorized } } },
+      // `take` on a nested relation is applied per organization.
+      workspaces: {
+        where: authorized,
+        select: { id: true, name: true, appSetupCompleted: true, logo: true, styling: true },
+        orderBy: [{ name: "asc" }, { id: "asc" }],
+        take: MAX_WORKSPACES_PER_ORGANIZATION,
+      },
+    },
+  });
+
+  return new Map(rows.map((row) => [row.id, row]));
+};
+
+const buildOrganization = (
   seed: TOrganizationSeed,
-  workspaces: TWorkspaceRow[]
-): Promise<TV3AccountOrganization> => {
-  const manager = isManager(seed.role);
-  const [surveyCounts, pendingInviteCount, workspaceLimit] = await Promise.all([
-    countVisibleSurveys(
-      actor,
-      seed.id,
-      workspaces.map((workspace) => workspace.id)
-    ),
-    manager
-      ? prisma.invite.count({ where: { organizationId: seed.id, expiresAt: { gt: new Date() } } })
-      : Promise.resolve(null),
-    manager ? getOrganizationWorkspacesLimit(seed.id) : Promise.resolve(0),
-  ]);
+  row: TOrganizationRow | undefined,
+  facts: {
+    surveyCounts: Map<string, number>;
+    pendingInvites: Map<string, number>;
+    workspaceLimits: Map<string, number>;
+  }
+): TV3AccountOrganization => {
+  const manager = isOrganizationManagerRole(seed.role);
+  const workspaces = row?.workspaces ?? [];
+  const workspaceCount = row?._count.workspaces ?? 0;
 
   return {
     id: seed.id,
     name: seed.name,
     role: seed.role,
-    joinedAs: seed.role === null ? null : seed.role === "owner" ? "owner" : "invited",
     canManage: manager,
-    canCreateWorkspace: manager && workspaces.length < workspaceLimit,
-    pendingInviteCount,
+    canCreateWorkspace: manager && workspaceCount < (facts.workspaceLimits.get(seed.id) ?? 0),
+    pendingInviteCount: manager ? (facts.pendingInvites.get(seed.id) ?? 0) : null,
+    workspaceCount,
+    workspacesTruncated: workspaceCount > workspaces.length,
     workspaces: workspaces.map((workspace) => ({
       id: workspace.id,
       name: workspace.name,
-      surveyCount: surveyCounts.get(workspace.id) ?? 0,
+      surveyCount: facts.surveyCounts.get(workspace.id) ?? 0,
       appSetupCompleted: workspace.appSetupCompleted,
       branding: {
         logoSet: Boolean(workspace.logo?.url),
@@ -152,40 +241,29 @@ export async function getV3AccountContext({
   try {
     const { seeds, user } = await resolveOrganizationSeeds(authentication, actor);
     const organizationIds = seeds.map((seed) => seed.id);
+    const managedIds = seeds.filter((seed) => isOrganizationManagerRole(seed.role)).map((seed) => seed.id);
 
     const workspaceIds = organizationIds.length === 0 ? [] : [...(await lookupAuthorizedWorkspaceIds(actor))];
-    const workspaces: TWorkspaceRow[] =
-      workspaceIds.length === 0
-        ? []
-        : await prisma.workspace.findMany({
-            where: { id: { in: workspaceIds }, organizationId: { in: organizationIds } },
-            select: {
-              id: true,
-              name: true,
-              organizationId: true,
-              appSetupCompleted: true,
-              logo: true,
-              styling: true,
-            },
-            orderBy: [{ name: "asc" }, { id: "asc" }],
-            take: MAX_WORKSPACES,
-          });
 
-    const [organizations, canCreateOrganization] = await Promise.all([
-      Promise.all(
-        seeds.map((seed) =>
-          buildOrganization(
-            actor,
-            seed,
-            workspaces.filter((workspace) => workspace.organizationId === seed.id)
-          )
-        )
-      ),
-      // Only a signed-in person can create an organization; an API key is never offered it.
-      actor.type === "user" ? getOrganizationCreationPolicy().then((policy) => policy.allowed) : false,
-    ]);
+    // Every fact below is one query for the whole account, however many organizations it has.
+    const [organizationRows, surveyCounts, pendingInvites, workspaceLimits, canCreateOrganization] =
+      await Promise.all([
+        loadOrganizationWorkspaces(organizationIds, workspaceIds),
+        countVisibleSurveys(actor, seeds, workspaceIds),
+        countPendingInvites(managedIds),
+        lookupWorkspaceLimits(managedIds),
+        // Only a signed-in person can create an organization; an API key is never offered it.
+        actor.type === "user" ? getOrganizationCreationPolicy().then((policy) => policy.allowed) : false,
+      ]);
 
-    const allWorkspaces = organizations.flatMap((organization) => organization.workspaces);
+    const organizations = seeds.map((seed) =>
+      buildOrganization(seed, organizationRows.get(seed.id), {
+        surveyCounts,
+        pendingInvites,
+        workspaceLimits,
+      })
+    );
+
     const context: TV3AccountContext = {
       principal: actor.type,
       canCreateOrganization,
@@ -193,11 +271,9 @@ export async function getV3AccountContext({
       organizations,
       setup: {
         organizationCount: organizations.length,
-        workspaceCount: allWorkspaces.length,
-        surveyCount: allWorkspaces.reduce((total, workspace) => total + workspace.surveyCount, 0),
-        brandingSet: allWorkspaces.some(
-          (workspace) => workspace.branding.logoSet || workspace.branding.brandColor !== null
-        ),
+        workspaceCount: organizations.reduce((total, organization) => total + organization.workspaceCount, 0),
+        // Every visible survey in every reachable workspace, not just the listed ones.
+        surveyCount: [...surveyCounts.values()].reduce((total, count) => total + count, 0),
       },
     };
 

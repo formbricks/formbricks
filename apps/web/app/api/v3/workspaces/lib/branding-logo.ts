@@ -90,7 +90,7 @@ const readCappedBody = async (response: Response): Promise<Uint8Array> => {
  *
  * The same SSRF regime webhooks use: the URL is resolved and refused when any address is private or
  * internal, and the connection is pinned to the validated address so DNS cannot change between check
- * and connect. Redirects are not followed (a redirect target would skip the check), the body is read
+ * and connect. A host the validator would leave unpinned is refused, never fetched. Redirects are not followed (a redirect target would skip the check), the body is read
  * through a hard size cap, and the bytes are sniffed so a mislabelled `Content-Type` cannot smuggle in
  * anything but png, jpeg or webp.
  */
@@ -115,7 +115,14 @@ export async function downloadLogoImage(url: string): Promise<TLogoImage> {
     throw error;
   }
 
-  const dispatcher = address ? createPinnedDispatcher(address) : undefined;
+  // `null` means the operator allowed internal webhook hosts and this one is such a name, which the
+  // validator leaves unresolved so /etc/hosts works. Fetching it would be unpinned, and a logo URL is
+  // chosen by an agent, not an operator: refuse rather than fetch without the DNS pin.
+  if (!address) {
+    throw new LogoImageError("The logo URL must be a public address that can be resolved.");
+  }
+
+  const dispatcher = createPinnedDispatcher(address);
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), LOGO_FETCH_TIMEOUT_MS);
 
@@ -162,7 +169,7 @@ export async function downloadLogoImage(url: string): Promise<TLogoImage> {
   } finally {
     clearTimeout(timeout);
     try {
-      await dispatcher?.destroy();
+      await dispatcher.destroy();
     } catch (cleanupError) {
       logger.warn({ error: cleanupError }, "Failed to close the logo download connection");
     }

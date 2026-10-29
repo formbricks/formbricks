@@ -357,7 +357,10 @@ describe("createUserAction — signup verification email callbackURL", () => {
 
       await createUserAction({ ctx, parsedInput: baseInput } as never);
 
-      expect(createOwnedOrganization).toHaveBeenCalledWith(expect.objectContaining({ id: "user-1" }));
+      expect(createOwnedOrganization).toHaveBeenCalledWith(expect.objectContaining({ id: "user-1" }), {
+        isFirstOrganization: true,
+        unsubscribeFromNotifications: true,
+      });
       expect(ctx.auditLoggingCtx.organizationId).toBe("org-new");
     });
 

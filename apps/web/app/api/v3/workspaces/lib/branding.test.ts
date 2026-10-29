@@ -5,7 +5,7 @@ import { can } from "@/lib/authorization";
 import { buildStylingFromBrandColor } from "@/lib/styling/constants";
 import { getWorkspace } from "@/lib/workspace/service";
 import { updateWorkspace } from "@/modules/workspaces/settings/lib/workspace";
-import { applyBrandColorToStyling, setV3WorkspaceBranding } from "./branding";
+import { applyBrandColorToStyling, serializeBranding, setV3WorkspaceBranding } from "./branding";
 import {
   LogoImageError,
   LogoStorageError,
@@ -27,6 +27,7 @@ vi.mock("@/app/api/v3/lib/auth", () => ({
   requireV3WorkspaceAccess: vi.fn(),
 }));
 vi.mock("@/lib/authorization", () => ({ can: vi.fn() }));
+vi.mock("@/lib/membership/service", () => ({ getMembershipByUserIdOrganizationId: vi.fn() }));
 vi.mock("@/lib/workspace/service", () => ({ getWorkspace: vi.fn() }));
 vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyRateLimit: vi.fn() }));
 vi.mock("@/modules/workspaces/settings/lib/workspace", () => ({ updateWorkspace: vi.fn() }));
@@ -203,9 +204,40 @@ describe("setV3WorkspaceBranding", () => {
     expect(updateWorkspace).not.toHaveBeenCalled();
   });
 
-  test("validation: empty body, non-https logo, bad colour, unknown key are 400", async () => {
+  test("an empty body is a 400 that names the three fields, while null (remove the logo) is not empty", async () => {
+    const empty = await run({});
+
+    expect(empty.status).toBe(400);
+    expect((await empty.json()).detail).toBe(
+      "Provide at least one of brandColor, logoUrl or logoBackgroundColor"
+    );
+    expect((await run({ logoUrl: null })).status).toBe(200);
+  });
+
+  test("a workspace that vanished after the access check answers the same bare 403", async () => {
+    vi.mocked(getWorkspace).mockResolvedValue(null);
+
+    const response = await run({ brandColor: "#ff0000" });
+
+    expect(response.status).toBe(403);
+    expect((await response.json()).detail).toBe("You are not authorized to access this resource");
+    expect(downloadLogoImage).not.toHaveBeenCalled();
+  });
+
+  test("serializeBranding is the answer shape: the stored colour and logo, null when unset", () => {
+    expect(serializeBranding(stored() as never)).toMatchObject({
+      workspaceId,
+      updatedAt: updatedAt.toISOString(),
+    });
+    expect(serializeBranding({ ...stored(), styling: null, logo: null, updatedAt } as never)).toMatchObject({
+      brandColor: null,
+      logoUrl: null,
+      logoBackgroundColor: null,
+    });
+  });
+
+  test("validation: non-https logo, bad colour, unknown key are 400", async () => {
     for (const bad of [
-      {},
       { logoUrl: "http://example.com/logo.png" },
       { logoUrl: "https://example.com/" + "a".repeat(2100) },
       { brandColor: "red" },

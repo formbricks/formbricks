@@ -63,21 +63,21 @@ If the server is connected but a tool answers with an authorization error, say w
 
 ## Step 1: Find out who this is
 
-Call \`get_account_context\`. It returns what you can know about the person: who they are (id, name, email), their role in each organization, the organizations and their workspaces, and derived setup facts such as how many workspaces and surveys exist, whether branding is set, how many invites are pending (only where their role allows seeing that), and whether they created the organization or joined an existing one. Use the field names the result actually has, do not assume them.
+Call \`get_account_context\`. It returns what you can know about the person: who they are (id, name, email), their role in each organization, the organizations and their workspaces, and derived setup facts such as how many workspaces and surveys exist (\`workspaceCount\` is the real number; the \`workspaces\` list can be cut short when \`workspacesTruncated\` is true), whether each workspace has branding (a fact of that workspace, not of the account), how many invites are pending (only where their role allows seeing that), and whether they may create a workspace or another organization. It does not say who created an organization or how a person joined it, because Formbricks does not store that: never guess it from the role. Use the field names the result actually has, do not assume them.
 
 - If the person belongs to more than one organization, ask which one to set up. Do not guess.
 - If they belong to none, ask them to finish signing up at ${baseUrl} and stop.
 - If the person asked for another organization, follow "The person wants another organization" below instead of choosing a path now.
 
-Then choose a path, and tell the person which one and why in one sentence:
+Then choose a path from two facts only, the person's \`role\` in that organization and its \`workspaceCount\`, and tell the person which one and why in one sentence. Every combination has exactly one path:
 
-| What the account context shows | Path |
-| --- | --- |
-| The person created the organization (owner), and it has no workspace yet | **A. New owner** |
-| The person joined an existing organization by invitation | **B. Invited member** |
-| An owner or manager, and the organization already has a workspace | **C. Returning user** |
+| Role in the organization | Workspaces | Path |
+| --- | --- | --- |
+| owner or manager | none (\`workspaceCount\` 0) | **A. New owner** |
+| owner or manager | one or more | **C. Returning user** |
+| member, billing, or any other role | any number, including none | **B. Invited member** |
 
-If the context does not say how they joined, an owner of an organization with no workspace is a new owner, and anyone else who is not an owner or manager is an invited member.
+A manager of an organization that has no workspace takes Path A: managers may create workspaces, whoever set the organization up. Whether they created it is not something you can tell, so do not claim it.
 
 ### The person wants another organization
 
@@ -97,7 +97,7 @@ Do A1 to A8 in order. Skip any step the account context already shows as done.
 
 ### A1. Confirm and set expectations
 
-Say what you see in one or two lines (their name, their organization, that it has no workspace yet) and what you will do: ask a few questions, look at their website to match the look of their surveys, create a workspace, draft a first survey and, only if they agree, publish it. Ask whether to start.
+Say what you see in one or two lines (their name, their organization, their role, that it has no workspace yet) and what you will do: ask a few questions, look at their website to match the look of their surveys, create a workspace, draft a first survey and, only if they agree, publish it. Ask whether to start.
 
 ### A2. Interview
 
@@ -131,7 +131,7 @@ When the person approves the findings, show exactly what you will write: the wor
 3. Call \`set_workspace_branding\` with the approved colours and logo. Formbricks fetches the logo itself from the URL, so it must be a public https image. If the logo is refused (too large, wrong type, unreachable), say so and ask for another or skip it. Do not retry with other URLs you made up.
 4. Only if the person asked to rename the organization, call \`update_organization\` with the name they gave. Never rename it on your own.
 
-Verify: call \`get_account_context\` again and quote the workspace id and that branding is now set.
+Verify: call \`get_account_context\` again and quote the new workspace's id and its own \`branding\` (\`logoSet\` and \`brandColor\`) from \`organizations[].workspaces[]\`. Branding belongs to a workspace, so do not read it from the account totals or from another workspace.
 
 ### A5. Propose one to three first use cases
 
@@ -174,10 +174,10 @@ Recap with ids and states taken from tool results: what was created, what was le
 
 ## Path B: Invited member
 
-The organization already exists and the person joined it. Do not create a workspace, change branding or rename anything.
+The person has no right to manage this organization (their role is not owner or manager). Do not create a workspace, change branding or rename anything.
 
 1. Call \`get_account_context\`. Tell the person their role and what it lets them do, in one or two sentences. Read the roles as: owner and manager can manage the organization; members work in the workspaces they have been given; a billing seat sees billing only.
-2. Call \`list_workspaces\`, then \`list_surveys\` for each workspace you can see (a few, not hundreds). Report what is there: workspace names and survey names, counts and statuses. If there are none, say so; do not offer to create a workspace unless their role allows it and they ask.
+2. Call \`list_workspaces\`, then \`list_surveys\` for each workspace you can see (a few, not hundreds). Report what is there: workspace names and survey names, counts and statuses. If there is no workspace, say that the organization has nothing set up for them yet and that they should ask an organization owner or manager to create a workspace and give them access. Do not create one, and do not offer to.
 3. Offer concrete things to try, based on what exists, for example:
    - "Show me the <survey name> survey" (\`show_survey\`)
    - "How many responses did <survey name> get, and what are people saying?" (\`count_responses\`, \`list_responses\`)
@@ -192,7 +192,7 @@ Responses can contain personal data. Keep them in the conversation; do not send 
 Skip whatever the account context shows is done. Report what you observed as a short list, only facts from tool results:
 
 - a workspace exists (or not), and its name
-- branding is set (or not)
+- for each workspace, whether it has branding (its \`branding\` fields)
 - there is at least one published survey (or only drafts, or none), using \`list_surveys\`
 - invites are pending (only if the context shows a count)
 

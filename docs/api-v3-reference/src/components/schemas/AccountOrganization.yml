@@ -3,10 +3,11 @@ required:
   - id
   - name
   - role
-  - joinedAs
   - canManage
   - canCreateWorkspace
   - pendingInviteCount
+  - workspaceCount
+  - workspacesTruncated
   - workspaces
 properties:
   id:
@@ -24,17 +25,6 @@ properties:
       - billing
       - null
     description: The caller's organization role. `null` for an API key, which has grants but no role.
-  joinedAs:
-    type:
-      - string
-      - "null"
-    enum:
-      - owner
-      - invited
-      - null
-    description: >-
-      Derived from the role alone: an owner set the organization up, everyone else was invited into it.
-      `null` for an API key.
   canManage:
     type: boolean
     description: The caller is an owner or manager of this organization.
@@ -47,6 +37,17 @@ properties:
       - "null"
     minimum: 0
     description: Pending invites. Only counted for an owner or manager, `null` otherwise.
+  workspaceCount:
+    type: integer
+    minimum: 0
+    description: >-
+      How many workspaces the caller can reach in this organization. The real count, counted separately from
+      the list, so it stays correct when `workspaces` is cut short.
+  workspacesTruncated:
+    type: boolean
+    description: >-
+      `true` when `workspaces` holds fewer entries than `workspaceCount` because the list is capped per
+      organization. Only a pathologically large organization is ever cut.
   workspaces:
     type: array
     items:

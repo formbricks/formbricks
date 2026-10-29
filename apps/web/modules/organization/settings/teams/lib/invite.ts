@@ -76,6 +76,40 @@ export const getInvitesByOrganizationId = reactCache(
   }
 );
 
+/**
+ * The preconditions every invite faces: no invite for this address exists yet and its owner is not already
+ * a member. Throws `InvalidInputError` with a fixed message otherwise. Returns the existing user for the
+ * address, if any, so the invite can be tied to them.
+ *
+ * `inviteUser` runs it, and so does the agent invite preview, which must answer the same refusal the
+ * confirmed call would without writing anything.
+ */
+export const assertInviteIsNew = async ({
+  email,
+  organizationId,
+}: {
+  email: string;
+  organizationId: string;
+}) => {
+  const existingInvite = await prisma.invite.findFirst({ where: { email, organizationId } });
+
+  if (existingInvite) {
+    throw new InvalidInputError("Invite already exists");
+  }
+
+  const user = await prisma.user.findUnique({ where: { email } });
+
+  if (user) {
+    const member = await getMembershipByUserIdOrganizationId(user.id, organizationId);
+
+    if (member) {
+      throw new InvalidInputError("User is already a member of this organization");
+    }
+  }
+
+  return user;
+};
+
 export const inviteUser = async ({
   invitee,
   organizationId,
@@ -88,21 +122,7 @@ export const inviteUser = async ({
   try {
     const { name, email, role, teamIds } = invitee;
 
-    const existingInvite = await prisma.invite.findFirst({ where: { email, organizationId } });
-
-    if (existingInvite) {
-      throw new InvalidInputError("Invite already exists");
-    }
-
-    const user = await prisma.user.findUnique({ where: { email } });
-
-    if (user) {
-      const member = await getMembershipByUserIdOrganizationId(user.id, organizationId);
-
-      if (member) {
-        throw new InvalidInputError("User is already a member of this organization");
-      }
-    }
+    const user = await assertInviteIsNew({ email, organizationId });
 
     const teamIdsSet = new Set(teamIds);
 

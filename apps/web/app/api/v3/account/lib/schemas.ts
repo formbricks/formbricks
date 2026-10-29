@@ -18,13 +18,15 @@ export const ZV3AccountOrganization = z.object({
   name: z.string(),
   /** The caller's organization role. `null` for an API key, which has grants but no role. */
   role: ZRole.nullable(),
-  /** Derived from the role alone: an owner set the organization up, everyone else was invited into it. */
-  joinedAs: z.enum(["owner", "invited"]).nullable(),
   canManage: z.boolean(),
   /** Owner or manager, and the plan's workspace limit is not yet reached. */
   canCreateWorkspace: z.boolean(),
   /** Pending invites; only counted for an owner or manager, `null` otherwise. */
   pendingInviteCount: z.number().int().nullable(),
+  /** How many workspaces the caller can reach in this organization. The real count, never the list length. */
+  workspaceCount: z.number().int(),
+  /** `workspaces` is cut at a safety cap per organization: `workspaceCount` is larger than the list. */
+  workspacesTruncated: z.boolean(),
   workspaces: z.array(ZV3AccountWorkspace),
 });
 
@@ -38,12 +40,11 @@ export const ZV3AccountContext = z.object({
   canCreateOrganization: z.boolean(),
   user: z.object({ id: z.string(), name: z.string().nullable(), email: z.string().nullable() }).nullable(),
   organizations: z.array(ZV3AccountOrganization),
+  /** Totals across the organizations above. Branding is a per-workspace fact (`workspaces[].branding`). */
   setup: z.object({
     organizationCount: z.number().int(),
     workspaceCount: z.number().int(),
     surveyCount: z.number().int(),
-    /** Some workspace has a logo or a brand colour. */
-    brandingSet: z.boolean(),
   }),
 });
 export type TV3AccountContext = z.infer<typeof ZV3AccountContext>;

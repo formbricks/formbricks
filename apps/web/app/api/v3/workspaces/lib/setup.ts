@@ -1,21 +1,19 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
-import { ZId } from "@formbricks/types/common";
 import { InvalidInputError, OperationNotAllowedError } from "@formbricks/types/errors";
 import type { TWorkspace } from "@formbricks/types/workspace";
-import { formatZodIssues } from "@/app/api/v3/lib/api-wrapper";
 import { skipV3AuditLog } from "@/app/api/v3/lib/audit";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
+import { parseV3Body } from "@/app/api/v3/lib/parse-body";
 import {
   createdResponse,
-  problemBadRequest,
   problemConflict,
   problemForbidden,
   successResponse,
 } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
-import { requireV3OrganizationManager } from "@/app/api/v3/organizations/lib/access";
+import { problemHiddenResource, requireV3OrganizationManager } from "@/app/api/v3/organizations/lib/access";
 import { getOrganization } from "@/lib/organization/service";
 import { capturePostHogEvent, groupIdentifyPostHog } from "@/lib/posthog";
 import { getOrganizationWorkspacesCount, getWorkspace } from "@/lib/workspace/service";
@@ -24,6 +22,7 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getOrganizationWorkspacesLimit } from "@/modules/ee/license-check/lib/utils";
 import { createWorkspace, updateWorkspace } from "@/modules/workspaces/settings/lib/workspace";
 import { requireV3WorkspaceSetupAccess } from "./setup-access";
+import { rejectEmptyChange } from "./setup-input";
 import {
   type TV3WorkspaceSetupResource,
   ZV3WorkspaceCreateBody,
@@ -66,13 +65,8 @@ export async function createV3Workspace({
   const log = logger.withContext({ requestId });
 
   try {
-    const parsed = ZV3WorkspaceCreateBody.safeParse(body);
-    if (!parsed.success) {
-      return problemBadRequest(requestId, "Invalid request body", {
-        invalid_params: formatZodIssues(parsed.error, "body"),
-        instance,
-      });
-    }
+    const parsed = parseV3Body(ZV3WorkspaceCreateBody, body, requestId, instance);
+    if (!parsed.ok) return parsed.response;
     const { organizationId, name, channel, industry } = parsed.data;
 
     const access = await requireV3OrganizationManager(authentication, organizationId, requestId, instance);
@@ -90,7 +84,7 @@ export async function createV3Workspace({
 
     const organization = await getOrganization(organizationId);
     if (!organization) {
-      return problemForbidden(requestId, undefined, instance);
+      return problemHiddenResource(requestId, instance);
     }
 
     const [workspaceLimit, workspaceCount] = await Promise.all([
@@ -157,27 +151,11 @@ export async function updateV3Workspace({
   const log = logger.withContext({ requestId, workspaceId });
 
   try {
-    if (!ZId.safeParse(workspaceId).success) {
-      return problemBadRequest(requestId, "Invalid workspace id", {
-        invalid_params: [{ name: "workspaceId", reason: "Must be a valid workspace id" }],
-        instance,
-      });
-    }
-
-    const parsed = ZV3WorkspaceUpdateBody.safeParse(body);
-    if (!parsed.success) {
-      return problemBadRequest(requestId, "Invalid request body", {
-        invalid_params: formatZodIssues(parsed.error, "body"),
-        instance,
-      });
-    }
+    const parsed = parseV3Body(ZV3WorkspaceUpdateBody, body, requestId, instance);
+    if (!parsed.ok) return parsed.response;
     const { name, channel, industry } = parsed.data;
-    if (name === undefined && channel === undefined && industry === undefined) {
-      return problemBadRequest(requestId, "Provide at least one of name, channel or industry", {
-        invalid_params: [{ name: "body", reason: "Provide at least one field to change" }],
-        instance,
-      });
-    }
+    const empty = rejectEmptyChange({ name, channel, industry }, requestId, instance);
+    if (empty) return empty;
 
     const context = await requireV3WorkspaceSetupAccess(authentication, workspaceId, requestId, instance);
     if (context instanceof Response) {
@@ -193,7 +171,7 @@ export async function updateV3Workspace({
 
     const previous = await getWorkspace(context.workspaceId);
     if (!previous) {
-      return problemForbidden(requestId, undefined, instance);
+      return problemHiddenResource(requestId, instance);
     }
 
     if (name !== undefined && name !== previous.name) {

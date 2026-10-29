@@ -1,20 +1,18 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
 import { normalizeHex } from "@formbricks/types/colors";
-import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
 import type { TWorkspace, TWorkspaceStyling } from "@formbricks/types/workspace";
-import { formatZodIssues } from "@/app/api/v3/lib/api-wrapper";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
+import { parseV3Body } from "@/app/api/v3/lib/parse-body";
 import {
-  problemBadRequest,
   problemConflict,
-  problemForbidden,
   problemServiceUnavailable,
   problemUnprocessableContent,
   successResponse,
 } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
+import { problemHiddenResource } from "@/app/api/v3/organizations/lib/access";
 import { buildStylingFromBrandColor } from "@/lib/styling/constants";
 import { getWorkspace } from "@/lib/workspace/service";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
@@ -28,6 +26,7 @@ import {
   storeLogoImage,
 } from "./branding-logo";
 import { requireV3WorkspaceSetupAccess } from "./setup-access";
+import { rejectEmptyChange } from "./setup-input";
 import { type TV3WorkspaceBrandingResource, ZV3WorkspaceBrandingBody } from "./setup-schemas";
 
 /**
@@ -68,7 +67,8 @@ export const applyBrandColorToStyling = (
   return next;
 };
 
-const serializeBranding = (workspace: TWorkspace): TV3WorkspaceBrandingResource => ({
+/** The minimal DTO a branding write answers with. */
+export const serializeBranding = (workspace: TWorkspace): TV3WorkspaceBrandingResource => ({
   workspaceId: workspace.id,
   brandColor: workspace.styling?.brandColor?.light ?? null,
   logoUrl: workspace.logo?.url ?? null,
@@ -104,31 +104,11 @@ export async function setV3WorkspaceBranding({
   let attached = false;
 
   try {
-    if (!ZId.safeParse(workspaceId).success) {
-      return problemBadRequest(requestId, "Invalid workspace id", {
-        invalid_params: [{ name: "workspaceId", reason: "Must be a valid workspace id" }],
-        instance,
-      });
-    }
-
-    const parsed = ZV3WorkspaceBrandingBody.safeParse(body);
-    if (!parsed.success) {
-      return problemBadRequest(requestId, "Invalid request body", {
-        invalid_params: formatZodIssues(parsed.error, "body"),
-        instance,
-      });
-    }
+    const parsed = parseV3Body(ZV3WorkspaceBrandingBody, body, requestId, instance);
+    if (!parsed.ok) return parsed.response;
     const { brandColor, logoUrl, logoBackgroundColor } = parsed.data;
-    if (brandColor === undefined && logoUrl === undefined && logoBackgroundColor === undefined) {
-      return problemBadRequest(
-        requestId,
-        "Provide at least one of brandColor, logoUrl or logoBackgroundColor",
-        {
-          invalid_params: [{ name: "body", reason: "Provide at least one field to change" }],
-          instance,
-        }
-      );
-    }
+    const empty = rejectEmptyChange({ brandColor, logoUrl, logoBackgroundColor }, requestId, instance);
+    if (empty) return empty;
 
     const context = await requireV3WorkspaceSetupAccess(authentication, workspaceId, requestId, instance);
     if (context instanceof Response) {
@@ -144,7 +124,7 @@ export async function setV3WorkspaceBranding({
 
     const previous = await getWorkspace(context.workspaceId);
     if (!previous) {
-      return problemForbidden(requestId, undefined, instance);
+      return problemHiddenResource(requestId, instance);
     }
 
     const normalizedBrandColor = brandColor === undefined ? undefined : normalizeHex(brandColor);

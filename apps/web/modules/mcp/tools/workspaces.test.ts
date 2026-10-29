@@ -10,6 +10,12 @@ vi.mock("@/app/api/v3/workspaces/lib/operations", () => ({
   listV3Workspaces: vi.fn(),
 }));
 
+vi.mock("@/app/api/v3/workspaces/lib/branding", () => ({ setV3WorkspaceBranding: vi.fn() }));
+vi.mock("@/app/api/v3/workspaces/lib/setup", () => ({
+  createV3Workspace: vi.fn(),
+  updateV3Workspace: vi.fn(),
+}));
+
 vi.mock("@/app/api/v3/workspaces/lib/custom-css", () => ({
   getV3WorkspaceCustomCss: vi.fn(),
   patchV3WorkspaceCustomCss: vi.fn(),
@@ -174,13 +180,16 @@ describe("workspace custom CSS tools (ENG-3641)", () => {
     vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as never);
   });
 
-  test("registers the narrow custom CSS tools beside workspace discovery", () => {
+  test("registers the narrow custom CSS tools beside workspace discovery and the setup writes", () => {
     const { tools } = createToolServer();
 
     expect([...tools.keys()]).toEqual([
       "list_workspaces",
       "get_workspace_custom_css",
       "patch_workspace_custom_css",
+      "create_workspace",
+      "update_workspace",
+      "set_workspace_branding",
     ]);
     expect(tools.get("get_workspace_custom_css")!.config.annotations).toMatchObject({ readOnlyHint: true });
     expect(tools.get("patch_workspace_custom_css")!.config.annotations).toMatchObject({

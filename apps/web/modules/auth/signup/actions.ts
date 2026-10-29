@@ -260,7 +260,10 @@ async function handleOrganizationCreation(
 ): Promise<void> {
   if (!isBootstrapAdmin && !(await getIsMultiOrgEnabled())) return;
 
-  const organization = await createOwnedOrganization(user);
+  const organization = await createOwnedOrganization(user, {
+    isFirstOrganization: true,
+    unsubscribeFromNotifications: true,
+  });
   ctx.auditLoggingCtx.organizationId = organization.id;
 }
 

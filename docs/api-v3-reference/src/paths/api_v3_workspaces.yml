@@ -7,7 +7,7 @@ post:
 
     Requires an **organization owner or manager**, signed in as themselves. Session cookie only: creating
     a workspace is an organization-level change, and an API key is bound to workspace grants rather than
-    to a person with an organization role, so a request with only an API key is **401**. Someone who is
+    to a person with an organization role, so a request with only an API key is **401** (the MCP `create_workspace` tool, which has no route wrapper to refuse a key first, answers **403** for the same reason). An API key can update a workspace and its branding, but never create one. Someone who is
     not an owner or manager of the organization, or who cannot see it, gets the same **403**.
 
     The plan's workspace limit is enforced exactly as in the app: an organization at its limit answers

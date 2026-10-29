@@ -457,11 +457,10 @@ describe("provisionSsoUserMemberships", () => {
 
   test("gives the user an organization of their own, and no assignment, on a fresh instance or multi-org", async () => {
     await provisionSsoUserMemberships({ ...baseArgs, organizationId: null, name: "Ada" });
-    expect(createOwnedOrganization).toHaveBeenCalledWith({
-      id: "u1",
-      name: "Ada",
-      email: "new@example.com",
-    });
+    expect(createOwnedOrganization).toHaveBeenCalledWith(
+      { id: "u1", name: "Ada", email: "new@example.com" },
+      { isFirstOrganization: true, unsubscribeFromNotifications: true }
+    );
     expect(createMembership).not.toHaveBeenCalled();
     expect(createBrevoCustomer).toHaveBeenCalledWith({ id: "u1", email: "new@example.com" });
     expect(capturePostHogEvent).toHaveBeenCalledWith(

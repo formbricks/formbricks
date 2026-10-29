@@ -4,7 +4,7 @@ get:
   description: |
     Returns what an agent can learn about the person it works for: who they are, their role in each
     organization, the organizations and workspaces they can reach, and the setup facts derived from
-    them (workspace and survey counts, whether branding is set, pending invites where the caller may
+    them (workspace and survey counts, per-workspace branding, pending invites where the caller may
     see them). It is the first call of the Setup guide.
 
     Nothing is stored for setup progress: every field is read from existing data on each call, so a
@@ -51,10 +51,11 @@ get:
                 - id: clor1234567890123456789012
                   name: Acme
                   role: owner
-                  joinedAs: owner
                   canManage: true
                   canCreateWorkspace: true
                   pendingInviteCount: 0
+                  workspaceCount: 1
+                  workspacesTruncated: false
                   workspaces:
                     - id: clws1234567890123456789012
                       name: Acme Feedback
@@ -67,7 +68,6 @@ get:
                 organizationCount: 1
                 workspaceCount: 1
                 surveyCount: 2
-                brandingSet: true
     "400":
       $ref: ../components/responses/V3BadRequest.yml
     "401":

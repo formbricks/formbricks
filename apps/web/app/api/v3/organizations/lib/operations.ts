@@ -1,32 +1,24 @@
 import "server-only";
-import { OrganizationRole } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
-import { ZId } from "@formbricks/types/common";
 import { InvalidInputError, OperationNotAllowedError } from "@formbricks/types/errors";
-import { formatZodIssues } from "@/app/api/v3/lib/api-wrapper";
 import { skipV3AuditLog } from "@/app/api/v3/lib/audit";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
-import {
-  problemBadRequest,
-  problemConflict,
-  problemForbidden,
-  successResponse,
-} from "@/app/api/v3/lib/response";
+import { parseV3Body } from "@/app/api/v3/lib/parse-body";
+import { problemConflict, problemForbidden, successResponse } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { INVITE_DISABLED } from "@/lib/constants";
-import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getOrganization, updateOrganization } from "@/lib/organization/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { checkRoleManagementPermission } from "@/modules/ee/role-management/lib/permission";
 import { sendInviteMemberEmail } from "@/modules/email";
-import { inviteUser } from "@/modules/organization/settings/teams/lib/invite";
+import { assertInviteIsNew, inviteUser } from "@/modules/organization/settings/teams/lib/invite";
 import {
   reserveInviteRateLimit,
   settleInviteRateLimit,
 } from "@/modules/organization/settings/teams/lib/invite-rate-limit";
-import { requireV3OrganizationManager } from "./access";
+import { problemHiddenResource, requireV3OrganizationManager } from "./access";
 import {
   type TV3InviteMemberResource,
   type TV3OrganizationResource,
@@ -48,11 +40,18 @@ const MANAGER_INVITE_MESSAGE = "Only an organization owner can invite someone as
 const ROLE_MANAGEMENT_UNAVAILABLE_MESSAGE =
   "Inviting a member with a role is not available on this organization's plan.";
 
-const badOrganizationId = (requestId: string, instance: string): Response =>
-  problemBadRequest(requestId, "Invalid organization id", {
-    invalid_params: [{ name: "organizationId", reason: "Must be a valid organization id" }],
-    instance,
-  });
+/** The minimal DTO a rename answers with, shared by the changed and the unchanged answer. */
+export const serializeV3Organization = (
+  organization: Readonly<{ id: string; name: string; updatedAt: Date }>
+): TV3OrganizationResource => ({
+  id: organization.id,
+  name: organization.name,
+  updatedAt: organization.updatedAt.toISOString(),
+});
+
+/** `inviteUser`'s own fixed strings (the invite or membership already exists) answer 409. */
+const conflictFromInvite = (error: unknown, requestId: string, instance: string): Response | null =>
+  error instanceof InvalidInputError ? problemConflict(requestId, error.message, instance) : null;
 
 /**
  * Rename an organization. Owner or manager, as a signed-in user. Authorization is enforced here, not by a
@@ -69,17 +68,8 @@ export async function updateV3Organization({
   const log = logger.withContext({ requestId, organizationId });
 
   try {
-    if (!ZId.safeParse(organizationId).success) {
-      return badOrganizationId(requestId, instance);
-    }
-
-    const parsed = ZV3OrganizationUpdateBody.safeParse(body);
-    if (!parsed.success) {
-      return problemBadRequest(requestId, "Invalid request body", {
-        invalid_params: formatZodIssues(parsed.error, "body"),
-        instance,
-      });
-    }
+    const parsed = parseV3Body(ZV3OrganizationUpdateBody, body, requestId, instance);
+    if (!parsed.ok) return parsed.response;
 
     const access = await requireV3OrganizationManager(authentication, organizationId, requestId, instance);
     if (access instanceof Response) {
@@ -97,17 +87,12 @@ export async function updateV3Organization({
 
     const previous = await getOrganization(organizationId);
     if (!previous) {
-      return problemForbidden(requestId, undefined, instance);
+      return problemHiddenResource(requestId, instance);
     }
 
     if (previous.name === parsed.data.name) {
       skipV3AuditLog(auditLog);
-      const unchanged: TV3OrganizationResource = {
-        id: previous.id,
-        name: previous.name,
-        updatedAt: previous.updatedAt.toISOString(),
-      };
-      return successResponse(unchanged, { requestId, cache: "private, no-store" });
+      return successResponse(serializeV3Organization(previous), { requestId, cache: "private, no-store" });
     }
 
     const updated = await updateOrganization(organizationId, { name: parsed.data.name });
@@ -117,13 +102,8 @@ export async function updateV3Organization({
       auditLog.newObject = { name: updated.name };
     }
 
-    const resource: TV3OrganizationResource = {
-      id: updated.id,
-      name: updated.name,
-      updatedAt: updated.updatedAt.toISOString(),
-    };
     log.info({ statusCode: 200 }, "Organization renamed");
-    return successResponse(resource, { requestId, cache: "private, no-store" });
+    return successResponse(serializeV3Organization(updated), { requestId, cache: "private, no-store" });
   } catch (error) {
     return mapV3ThrownError(error, { log, requestId, instance, operation: "organizations.update" });
   }
@@ -149,17 +129,8 @@ export async function inviteV3OrganizationMember({
   const log = logger.withContext({ requestId, organizationId });
 
   try {
-    if (!ZId.safeParse(organizationId).success) {
-      return badOrganizationId(requestId, instance);
-    }
-
-    const parsed = ZV3InviteMemberBody.safeParse(body);
-    if (!parsed.success) {
-      return problemBadRequest(requestId, "Invalid request body", {
-        invalid_params: formatZodIssues(parsed.error, "body"),
-        instance,
-      });
-    }
+    const parsed = parseV3Body(ZV3InviteMemberBody, body, requestId, instance);
+    if (!parsed.ok) return parsed.response;
     const { confirm, ...invitee } = parsed.data;
 
     if (INVITE_DISABLED) {
@@ -176,8 +147,7 @@ export async function inviteV3OrganizationMember({
       auditLog.organizationId = organizationId;
     }
 
-    const inviterMembership = await getMembershipByUserIdOrganizationId(access.userId, organizationId);
-    if (inviterMembership?.role === OrganizationRole.manager && invitee.role !== "member") {
+    if (access.role === "manager" && invitee.role !== "member") {
       return problemForbidden(requestId, MANAGER_INVITE_MESSAGE, instance);
     }
 
@@ -193,6 +163,17 @@ export async function inviteV3OrganizationMember({
     if (confirm !== true) {
       // A preview changes nothing, so there is nothing to audit.
       skipV3AuditLog(auditLog);
+
+      // The same preconditions the confirmed call hits (`inviteUser` runs the same function), so a preview
+      // never promises an invite that would answer 409. Nothing is reserved, written or mailed.
+      try {
+        await assertInviteIsNew({ email: invitee.email, organizationId });
+      } catch (error) {
+        const conflict = conflictFromInvite(error, requestId, instance);
+        if (conflict) return conflict;
+        throw error;
+      }
+
       const preview: TV3InviteMemberResource = {
         status: "preview",
         organizationId,
@@ -214,10 +195,9 @@ export async function inviteV3OrganizationMember({
       });
     } catch (error) {
       await settleInviteRateLimit(reservation, 0);
-      if (error instanceof InvalidInputError) {
-        // `inviteUser`'s own fixed strings: the invite or membership already exists.
-        return problemConflict(requestId, error.message, instance);
-      }
+      // The same preconditions as the preview, answered as 409 (a concurrent invite can also win the race).
+      const conflict = conflictFromInvite(error, requestId, instance);
+      if (conflict) return conflict;
       throw error;
     }
     await settleInviteRateLimit(reservation, 1);

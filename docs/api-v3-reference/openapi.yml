@@ -16,7 +16,7 @@ info:
 
     Creatives needs a self-hosted license that includes it; Formbricks Cloud does not offer it. With one, every operation is available. Without one, a workspace that still has creatives is in **wind-down**: its creatives are no longer shown on sites, and they can only be listed, read (stats included), paused (a PATCH that sets nothing but `status`, or **POST /api/v3/creatives/pause**), closed (the same PATCH) or deleted. A workspace with no creatives has no access at all. Anything not allowed answers **403** `creatives_not_entitled`.
 
-    **Agent-led setup**: **GET /api/v3/account/context** reads what an agent can learn about the person it works for (who they are, their role in each organization, the organizations and workspaces they can reach, derived setup facts). **POST /api/v3/organizations** creates an organization the signed-in person owns, with no workspace; **PATCH /api/v3/organizations/{organizationId}** renames one; **POST /api/v3/organizations/{organizationId}/invites** invites a member or manager and sends nothing unless the body carries `confirm: true`. **POST /api/v3/workspaces** creates a workspace, **PATCH /api/v3/workspaces/{workspaceId}** renames it and sets its channel or industry, and **PUT /api/v3/workspaces/{workspaceId}/branding** sets its brand colour and logo. Organization-level operations are for signed-in organization owners and managers (session cookie only); workspace setup also accepts an API key with `manage` on the workspace.
+    **Agent-led setup**: **GET /api/v3/account/context** reads what an agent can learn about the person it works for (who they are, their role in each organization, the organizations and workspaces they can reach, derived setup facts). **POST /api/v3/organizations** creates an organization the signed-in person owns, with no workspace; **PATCH /api/v3/organizations/{organizationId}** renames one; **POST /api/v3/organizations/{organizationId}/invites** invites a member or manager and sends nothing unless the body carries `confirm: true`. **POST /api/v3/workspaces** creates a workspace, **PATCH /api/v3/workspaces/{workspaceId}** renames it and sets its channel or industry, and **PUT /api/v3/workspaces/{workspaceId}/branding** sets its brand colour and logo. Organization-level operations are for signed-in organization owners and managers (session cookie only), and so is **creating** a workspace: an API key cannot create one (REST answers 401 for a request that carries only a key, and the MCP `create_workspace` tool answers 403). Updating a workspace and its branding also accept an API key with `manage` on that workspace.
 
     **Workflows extension**: **GET /api/v3/workflows**, **POST /api/v3/workflows**, **GET /api/v3/workflows/{workflowId}**, **PATCH /api/v3/workflows/{workflowId}**, **DELETE /api/v3/workflows/{workflowId}**, **POST /api/v3/workflows/{workflowId}/duplicate**, **POST /api/v3/workflows/{workflowId}/enable**, **POST /api/v3/workflows/{workflowId}/disable**, **POST /api/v3/workflows/{workflowId}/archive**, **POST /api/v3/workflows/{workflowId}/unarchive**, **POST /api/v3/workflows/{workflowId}/test**, **GET /api/v3/workflows/runs**, and **GET /api/v3/workflows/runs/{runId}**.
 
@@ -8911,7 +8911,7 @@ paths:
       description: |
         Returns what an agent can learn about the person it works for: who they are, their role in each
         organization, the organizations and workspaces they can reach, and the setup facts derived from
-        them (workspace and survey counts, whether branding is set, pending invites where the caller may
+        them (workspace and survey counts, per-workspace branding, pending invites where the caller may
         see them). It is the first call of the Setup guide.
 
         Nothing is stored for setup progress: every field is read from existing data on each call, so a
@@ -8958,10 +8958,11 @@ paths:
                     - id: clor1234567890123456789012
                       name: Acme
                       role: owner
-                      joinedAs: owner
                       canManage: true
                       canCreateWorkspace: true
                       pendingInviteCount: 0
+                      workspaceCount: 1
+                      workspacesTruncated: false
                       workspaces:
                         - id: clws1234567890123456789012
                           name: Acme Feedback
@@ -8974,7 +8975,6 @@ paths:
                     organizationCount: 1
                     workspaceCount: 1
                     surveyCount: 2
-                    brandingSet: true
         '400':
           $ref: '#/components/responses/V3BadRequest'
         '401':
@@ -9172,7 +9172,7 @@ paths:
         with only an API key is **401**. An owner may invite a member or a manager; a manager only a member
         (otherwise **403**). `owner` and `billing` cannot be granted here. Organization plans that do not
         include role management, and instances with invites disabled, answer **403**. An invite or
-        membership that already exists for the email is **409**. Confirmed invites are rate limited per
+        membership that already exists for the email is **409**, for a preview as well as a confirmed call. Confirmed invites are rate limited per
         organization and per person; beyond the limit the answer is **429** with `Retry-After`.
       tags:
         - V3 Organizations
@@ -9262,7 +9262,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
         '409':
-          description: 'Conflict — an invite for this email is already pending, or the person is already a member of the organization (`code: conflict`). Only a confirmed call can answer this.'
+          description: 'Conflict — an invite for this email is already pending, or the person is already a member of the organization (`code: conflict`). A preview answers it too, so it never promises an invite the confirmed call would refuse.'
           headers:
             X-Request-Id:
               schema:
@@ -9292,7 +9292,7 @@ paths:
 
         Requires an **organization owner or manager**, signed in as themselves. Session cookie only: creating
         a workspace is an organization-level change, and an API key is bound to workspace grants rather than
-        to a person with an organization role, so a request with only an API key is **401**. Someone who is
+        to a person with an organization role, so a request with only an API key is **401** (the MCP `create_workspace` tool, which has no route wrapper to refuse a key first, answers **403** for the same reason). An API key can update a workspace and its branding, but never create one. Someone who is
         not an owner or manager of the organization, or who cannot see it, gets the same **403**.
 
         The plan's workspace limit is enforced exactly as in the app: an organization at its limit answers
@@ -18222,10 +18222,11 @@ components:
         - id
         - name
         - role
-        - joinedAs
         - canManage
         - canCreateWorkspace
         - pendingInviteCount
+        - workspaceCount
+        - workspacesTruncated
         - workspaces
       properties:
         id:
@@ -18243,15 +18244,6 @@ components:
             - billing
             - null
           description: The caller's organization role. `null` for an API key, which has grants but no role.
-        joinedAs:
-          type:
-            - string
-            - 'null'
-          enum:
-            - owner
-            - invited
-            - null
-          description: 'Derived from the role alone: an owner set the organization up, everyone else was invited into it. `null` for an API key.'
         canManage:
           type: boolean
           description: The caller is an owner or manager of this organization.
@@ -18264,6 +18256,13 @@ components:
             - 'null'
           minimum: 0
           description: Pending invites. Only counted for an owner or manager, `null` otherwise.
+        workspaceCount:
+          type: integer
+          minimum: 0
+          description: How many workspaces the caller can reach in this organization. The real count, counted separately from the list, so it stays correct when `workspaces` is cut short.
+        workspacesTruncated:
+          type: boolean
+          description: '`true` when `workspaces` holds fewer entries than `workspaceCount` because the list is capped per organization. Only a pathologically large organization is ever cut.'
         workspaces:
           type: array
           items:
@@ -18314,12 +18313,11 @@ components:
             $ref: '#/components/schemas/AccountOrganization'
         setup:
           type: object
-          description: Setup facts derived from the organizations above.
+          description: 'Totals across the organizations above. Branding is a per-workspace fact: read `organizations[].workspaces[].branding`.'
           required:
             - organizationCount
             - workspaceCount
             - surveyCount
-            - brandingSet
           properties:
             organizationCount:
               type: integer
@@ -18330,10 +18328,7 @@ components:
             surveyCount:
               type: integer
               minimum: 0
-              description: Surveys across all workspaces, counted through the same visibility rules every survey list applies.
-            brandingSet:
-              type: boolean
-              description: Some workspace has a logo or a brand colour.
+              description: Surveys across all reachable workspaces (not only the listed ones), counted through the same visibility rules every survey list applies.
     CreateOrganizationRequest:
       type: object
       additionalProperties: false

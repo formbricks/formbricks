@@ -16,7 +16,7 @@ post:
     with only an API key is **401**. An owner may invite a member or a manager; a manager only a member
     (otherwise **403**). `owner` and `billing` cannot be granted here. Organization plans that do not
     include role management, and instances with invites disabled, answer **403**. An invite or
-    membership that already exists for the email is **409**. Confirmed invites are rate limited per
+    membership that already exists for the email is **409**, for a preview as well as a confirmed call. Confirmed invites are rate limited per
     organization and per person; beyond the limit the answer is **429** with `Retry-After`.
   tags:
     - V3 Organizations
@@ -115,7 +115,7 @@ post:
     "409":
       description: >-
         Conflict — an invite for this email is already pending, or the person is already a member of the
-        organization (`code: conflict`). Only a confirmed call can answer this.
+        organization (`code: conflict`). A preview answers it too, so it never promises an invite the confirmed call would refuse.
       headers:
         X-Request-Id:
           schema:

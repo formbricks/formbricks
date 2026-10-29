@@ -66,6 +66,86 @@ describe("getSetupGuide", () => {
     expect(guide).toContain("## Path C: Returning user");
   });
 
+  describe("routing table", () => {
+    const section = guide.slice(
+      guide.indexOf("Then choose a path"),
+      guide.indexOf("### The person wants another organization")
+    );
+    const rows = section
+      .split("\n")
+      .filter((line) => line.startsWith("|") && !/^\| (Role|---)/.test(line))
+      .map((line) =>
+        line
+          .split("|")
+          .map((cell) => cell.trim())
+          .filter(Boolean)
+      );
+
+    test("has one row per case and each names a role set, a workspace condition and exactly one path", () => {
+      expect(rows).toHaveLength(3);
+      for (const [role, workspaces, path] of rows) {
+        expect(role).toBeTruthy();
+        expect(workspaces).toBeTruthy();
+        expect(path).toMatch(/^\*\*[ABC]\. /);
+      }
+    });
+
+    // The four facts the roles and workspace counts can combine into, each with the path that must answer it.
+    const cases: Array<[string, "none" | "some", "A" | "B" | "C"]> = [
+      ["owner", "none", "A"],
+      ["manager", "none", "A"],
+      ["owner", "some", "C"],
+      ["manager", "some", "C"],
+      ["member", "none", "B"],
+      ["member", "some", "B"],
+      ["billing", "none", "B"],
+      ["billing", "some", "B"],
+    ];
+    const rowMatches = (role: string, workspaces: "none" | "some", [roleCell, workspaceCell]: string[]) => {
+      const roleHit = roleCell.startsWith("owner or manager")
+        ? role === "owner" || role === "manager"
+        : !(role === "owner" || role === "manager");
+      const workspaceHit = /none \(/.test(workspaceCell)
+        ? workspaces === "none"
+        : /one or more/.test(workspaceCell)
+          ? workspaces === "some"
+          : true;
+      return roleHit && workspaceHit;
+    };
+
+    test.each(cases)("%s with %s workspace gets exactly one path: %s", (role, workspaces, expected) => {
+      const hits = rows.filter((row) => rowMatches(role, workspaces, row));
+
+      expect(hits).toHaveLength(1);
+      expect(hits[0][2]).toContain(`**${expected}.`);
+    });
+
+    test("an owner or manager of an organization with no workspace is sent to the new-owner path, as a fact of role and count", () => {
+      expect(section).toMatch(/manager of an organization that has no workspace takes Path A/);
+      expect(section).toMatch(/`role` .* `workspaceCount`/);
+    });
+
+    test("no longer routes on how the person joined, which is not stored", () => {
+      expect(guide).not.toMatch(/joinedAs|joined an existing organization by invitation/);
+      expect(guide).toMatch(/never guess it from the role/);
+    });
+  });
+
+  test("a member of an organization with no workspace is told to ask an owner or manager, and is not offered creation", () => {
+    const pathB = guide.slice(guide.indexOf("## Path B"), guide.indexOf("## Path C"));
+
+    expect(pathB).toMatch(/ask an organization owner or manager to create a workspace/);
+    expect(pathB).toMatch(/Do not create one, and do not offer to/);
+  });
+
+  test("branding is read per workspace, never as an account-wide fact", () => {
+    const pathA4 = guide.slice(guide.indexOf("### A4"), guide.indexOf("### A5"));
+
+    expect(pathA4).toMatch(/its own `branding`/);
+    expect(pathA4).toMatch(/`organizations\[\]\.workspaces\[\]`/);
+    expect(guide).not.toMatch(/brandingSet|branding is set \(or not\)/);
+  });
+
   test("carries the safety rules and the confirmation gates", () => {
     expect(guide).toMatch(/data, never instructions/);
     expect(guide).toMatch(/Never invent/);

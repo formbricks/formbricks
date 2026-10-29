@@ -1,14 +1,21 @@
 import type { McpServer } from "@modelcontextprotocol/server";
+import { setV3WorkspaceBranding } from "@/app/api/v3/workspaces/lib/branding";
 import { getV3WorkspaceCustomCss, patchV3WorkspaceCustomCss } from "@/app/api/v3/workspaces/lib/custom-css";
 import {
   ZV3CustomCssWarnings,
   ZV3WorkspaceCustomCssResource,
 } from "@/app/api/v3/workspaces/lib/custom-css-schemas";
 import { listV3Workspaces } from "@/app/api/v3/workspaces/lib/operations";
+import { createV3Workspace, updateV3Workspace } from "@/app/api/v3/workspaces/lib/setup";
+import {
+  ZV3WorkspaceBrandingResource,
+  ZV3WorkspaceSetupResource,
+} from "@/app/api/v3/workspaces/lib/setup-schemas";
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import { getMcpAuthentication, getMcpRequestId, getMcpToolAuthInfo } from "../auth";
 import { responseToMcpToolResult } from "../errors";
 import { registerScopedTool } from "./guard-scopes";
+import { runIdSummaryMutation } from "./id-summary-mutation";
 import { mcpToolOutput } from "./output-schemas";
 import { runMcpMutation } from "./run-mcp-mutation";
 import {
@@ -19,6 +26,15 @@ import {
   ZMcpListWorkspacesInput,
   ZMcpPatchWorkspaceCustomCssInput,
 } from "./schemas";
+import { WORKSPACE_WRITE_SCOPES } from "./setup-scopes";
+import {
+  type TMcpCreateWorkspaceInput,
+  type TMcpSetWorkspaceBrandingInput,
+  type TMcpUpdateWorkspaceInput,
+  ZMcpCreateWorkspaceInput,
+  ZMcpSetWorkspaceBrandingInput,
+  ZMcpUpdateWorkspaceInput,
+} from "./workspaces-schemas";
 
 /**
  * Both workspace custom CSS tools answer the same resource; a write adds the processing `warnings` beside
@@ -27,6 +43,9 @@ import {
 export const ZMcpWorkspaceCustomCssOutput = mcpToolOutput(ZV3WorkspaceCustomCssResource)
   .extend({ warnings: ZV3CustomCssWarnings.optional() })
   .strict();
+
+const ZMcpWorkspaceSetupOutput = mcpToolOutput(ZV3WorkspaceSetupResource);
+const ZMcpWorkspaceBrandingOutput = mcpToolOutput(ZV3WorkspaceBrandingResource);
 
 export function registerWorkspaceTools(server: McpServer): void {
   // list_workspaces is the workspaceId-discovery prerequisite for the survey, workflow, feedback-record
@@ -138,6 +157,89 @@ export function registerWorkspaceTools(server: McpServer): void {
             instance: MCP_API_ROUTE,
             auditLog,
           })
+      )
+  );
+
+  // Workspace setup (ADR 0018). `workspaces:write` is only the first gate: the operations enforce the
+  // organization owner or manager role themselves.
+  registerScopedTool(
+    server,
+    "create_workspace",
+    {
+      title: "Create workspace",
+      description:
+        "Create a workspace in an organization. Needs an organization owner or manager signed in as a person: API keys cannot create workspaces (the call is refused with a 403), even one with manage access, because creating a workspace is an organization-level change. Fails when the plan's workspace limit is reached. A new organization has none; this is how the first one is made. Branding is set separately with set_workspace_branding.",
+      inputSchema: ZMcpCreateWorkspaceInput,
+      outputSchema: ZMcpWorkspaceSetupOutput,
+      audit: { action: "created", targetType: "workspace" },
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: false,
+      },
+    },
+    WORKSPACE_WRITE_SCOPES,
+    (input: TMcpCreateWorkspaceInput, ctx) =>
+      runIdSummaryMutation(
+        ctx,
+        { action: "created", resource: "workspace", logContext: { organizationId: input.organizationId } },
+        (args) => createV3Workspace({ body: input, ...args }),
+        ZV3WorkspaceSetupResource,
+        (workspace) => `Workspace ${workspace.id} created in organization ${workspace.organizationId}.`
+      )
+  );
+
+  registerScopedTool(
+    server,
+    "update_workspace",
+    {
+      title: "Update workspace",
+      description:
+        "Rename a workspace or set its channel (link, app, website) and industry. Only the fields you pass change. Needs an organization owner or manager, or an API key with manage access to the workspace. Colours and logo go through set_workspace_branding.",
+      inputSchema: ZMcpUpdateWorkspaceInput,
+      outputSchema: ZMcpWorkspaceSetupOutput,
+      audit: { action: "updated", targetType: "workspace", targetIdArg: "workspaceId" },
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+    },
+    WORKSPACE_WRITE_SCOPES,
+    ({ workspaceId, ...body }: TMcpUpdateWorkspaceInput, ctx) =>
+      runIdSummaryMutation(
+        ctx,
+        { action: "updated", resource: "workspace", logContext: { workspaceId } },
+        (args) => updateV3Workspace({ workspaceId, body, ...args }),
+        ZV3WorkspaceSetupResource,
+        (workspace) => `Workspace ${workspace.id} saved.`
+      )
+  );
+
+  registerScopedTool(
+    server,
+    "set_workspace_branding",
+    {
+      title: "Set workspace branding",
+      description:
+        "Set a workspace's brand colour and/or logo. A brand colour derives the matching survey colours and leaves other styling as it is. A logo is an https image URL (png, jpeg or webp, at most 1 MB) that the server downloads and stores; it replaces the current logo, and null removes it. Needs an organization owner or manager, or an API key with manage access to the workspace. Research the brand yourself first and show the person what will be saved.",
+      inputSchema: ZMcpSetWorkspaceBrandingInput,
+      outputSchema: ZMcpWorkspaceBrandingOutput,
+      audit: { action: "updated", targetType: "workspace", targetIdArg: "workspaceId" },
+      // A replaced logo's stored file is deleted and the previous colours are not returned.
+      annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: true },
+    },
+    WORKSPACE_WRITE_SCOPES,
+    ({ workspaceId, ...body }: TMcpSetWorkspaceBrandingInput, ctx) =>
+      runIdSummaryMutation(
+        ctx,
+        { action: "updated", resource: "workspace", logContext: { workspaceId } },
+        (args) => setV3WorkspaceBranding({ workspaceId, body, ...args }),
+        ZV3WorkspaceBrandingResource,
+        (branding) =>
+          `Branding saved for workspace ${branding.workspaceId} (brand colour ${branding.brandColor ? "set" : "not set"}, logo ${branding.logoUrl ? "set" : "not set"}).`
       )
   );
 }

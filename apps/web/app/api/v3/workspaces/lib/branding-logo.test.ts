@@ -56,6 +56,15 @@ describe("downloadLogoImage", () => {
     expect(destroy).toHaveBeenCalled();
   });
 
+  test("fails closed when the validator returns no pinned address (an internal host the operator allowed): no fetch, no dispatcher", async () => {
+    vi.mocked(validateAndResolveWebhookUrl).mockResolvedValue(null);
+
+    await expect(downloadLogoImage("https://localhost/logo.png")).rejects.toThrow(LogoImageError);
+    await expect(downloadLogoImage("https://localhost/logo.png")).rejects.toThrow(/public address/);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(createPinnedDispatcher).not.toHaveBeenCalled();
+  });
+
   test("accepts jpeg and webp by their real bytes", async () => {
     fetchMock.mockResolvedValueOnce(imageResponse(JPEG, { "content-type": "image/jpeg; charset=binary" }));
     expect(await downloadLogoImage("https://example.com/a")).toMatchObject({
@@ -128,15 +137,6 @@ describe("downloadLogoImage", () => {
 
     fetchMock.mockRejectedValueOnce(new Error("ECONNRESET"));
     await expect(downloadLogoImage("https://example.com/logo.png")).rejects.toThrow(LogoImageError);
-  });
-
-  test("an operator-allowed internal host that needs no pinning still downloads", async () => {
-    vi.mocked(validateAndResolveWebhookUrl).mockResolvedValue(null);
-    fetchMock.mockResolvedValue(imageResponse(PNG));
-
-    await downloadLogoImage("https://localhost/logo.png");
-
-    expect(createPinnedDispatcher).not.toHaveBeenCalled();
   });
 });
 

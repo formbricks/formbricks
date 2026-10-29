@@ -55,8 +55,10 @@ info:
     unless the body carries `confirm: true`. **POST /api/v3/workspaces** creates a workspace, **PATCH
     /api/v3/workspaces/{workspaceId}** renames it and sets its channel or industry, and **PUT
     /api/v3/workspaces/{workspaceId}/branding** sets its brand colour and logo. Organization-level
-    operations are for signed-in organization owners and managers (session cookie only); workspace
-    setup also accepts an API key with `manage` on the workspace.
+    operations are for signed-in organization owners and managers (session cookie only), and so is
+    **creating** a workspace: an API key cannot create one (REST answers 401 for a request that carries
+    only a key, and the MCP `create_workspace` tool answers 403). Updating a workspace and its branding
+    also accept an API key with `manage` on that workspace.
 
 
     **Workflows extension**: **GET /api/v3/workflows**, **POST

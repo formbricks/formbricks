@@ -4,6 +4,7 @@ import { InvalidInputError, OperationNotAllowedError } from "@formbricks/types/e
 import { skipV3AuditLog } from "@/app/api/v3/lib/audit";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { can } from "@/lib/authorization";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getOrganization } from "@/lib/organization/service";
 import { getOrganizationWorkspacesCount, getWorkspace } from "@/lib/workspace/service";
 import { getOrganizationWorkspacesLimit } from "@/modules/ee/license-check/lib/utils";
@@ -25,6 +26,7 @@ vi.mock("@/app/api/v3/lib/auth", () => ({
   requireV3WorkspaceAccess: vi.fn(),
 }));
 vi.mock("@/lib/authorization", () => ({ can: vi.fn() }));
+vi.mock("@/lib/membership/service", () => ({ getMembershipByUserIdOrganizationId: vi.fn() }));
 vi.mock("@/lib/organization/service", () => ({ getOrganization: vi.fn() }));
 vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: vi.fn(), groupIdentifyPostHog: vi.fn() }));
 vi.mock("@/lib/workspace/service", () => ({
@@ -68,6 +70,7 @@ describe("createV3Workspace", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     vi.mocked(can).mockResolvedValue(true);
+    vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue({ role: "owner" } as never);
     vi.mocked(getOrganization).mockResolvedValue({ id: organizationId } as never);
     vi.mocked(getOrganizationWorkspacesLimit).mockResolvedValue(3);
     vi.mocked(getOrganizationWorkspacesCount).mockResolvedValue(0);
@@ -220,17 +223,27 @@ describe("updateV3Workspace", () => {
     expect(updateWorkspace).not.toHaveBeenCalled();
   });
 
-  test("an empty update, unknown keys and a malformed id are 400", async () => {
-    for (const bad of [{}, { name: "" }, { styling: {} }]) {
+  test("an empty update and unknown keys are 400, and the empty one names the fields to choose from", async () => {
+    for (const bad of [{ name: "" }, { styling: {} }]) {
       expect((await run(bad)).status).toBe(400);
     }
-    const badId = await updateV3Workspace({
-      workspaceId: "not an id",
-      body: { name: "x" },
-      authentication: owner,
-      requestId,
-      instance,
-    });
-    expect(badId.status).toBe(400);
+    const empty = await run({});
+    expect(empty.status).toBe(400);
+    expect((await empty.json()).detail).toBe("Provide at least one of name, channel or industry");
+    expect(updateWorkspace).not.toHaveBeenCalled();
+  });
+
+  test("clearing a field with null is a change, not an empty update", async () => {
+    expect((await run({ channel: null })).status).toBe(200);
+    expect(updateWorkspace).toHaveBeenCalledOnce();
+  });
+
+  test("a workspace that vanished after the access check answers the same bare 403", async () => {
+    vi.mocked(getWorkspace).mockResolvedValue(null);
+
+    const response = await run({ name: "Acme Inc" });
+
+    expect(response.status).toBe(403);
+    expect((await response.json()).detail).toBe("You are not authorized to access this resource");
   });
 });

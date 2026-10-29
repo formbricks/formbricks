@@ -2,10 +2,12 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import { problemForbidden, problemTooManyRequests, successResponse } from "@/app/api/v3/lib/response";
 import { createV3Organization } from "@/app/api/v3/organizations/lib/create";
+import { updateV3Organization } from "@/app/api/v3/organizations/lib/operations";
 import { registerOrganizationTools, summarizeCreatedOrganization } from "./organizations";
-import { ZMcpCreateOrganizationInput } from "./organizations-schemas";
+import { ZMcpCreateOrganizationInput, ZMcpUpdateOrganizationInput } from "./organizations-schemas";
 
 vi.mock("@/app/api/v3/organizations/lib/create", () => ({ createV3Organization: vi.fn() }));
+vi.mock("@/app/api/v3/organizations/lib/operations", () => ({ updateV3Organization: vi.fn() }));
 vi.mock("@/app/api/v3/lib/audit", () => ({
   buildV3AuditLog: vi.fn(),
   queueV3AuditLog: vi.fn().mockResolvedValue(undefined),
@@ -63,10 +65,10 @@ describe("create_organization", () => {
     vi.mocked(queueV3AuditLog).mockResolvedValue(undefined);
   });
 
-  test("registers exactly create_organization, a write that is not idempotent or destructive", () => {
+  test("registers the two organization writes; create is not idempotent or destructive", () => {
     const { tools } = createToolServer();
 
-    expect([...tools.keys()]).toEqual(["create_organization"]);
+    expect([...tools.keys()]).toEqual(["create_organization", "update_organization"]);
     const config = tools.get("create_organization")!.config;
     expect(config.outputSchema).toBeDefined();
     expect(config.annotations).toMatchObject({
@@ -172,5 +174,87 @@ describe("create_organization", () => {
       expect(ZMcpCreateOrganizationInput.safeParse({ name: "Acme", ...extra }).success).toBe(false);
     }
     expect(ZMcpCreateOrganizationInput.safeParse({ name: "  " }).success).toBe(false);
+  });
+});
+
+describe("update_organization", () => {
+  const data = { id: organizationId, name: SECRET_NAME, updatedAt: "2026-01-01T00:00:00.000Z" };
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    vi.mocked(queueV3AuditLog).mockResolvedValue(undefined);
+    vi.mocked(buildV3AuditLog).mockReturnValue({} as never);
+  });
+
+  test("is an idempotent, non-destructive write", () => {
+    const { tools } = createToolServer();
+
+    expect(tools.get("update_organization")!.config.annotations).toMatchObject({
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: true,
+    });
+  });
+
+  test("is refused without organizations:write, naming the organization in the audited refusal", async () => {
+    const { tools } = createToolServer();
+    const auditLog: { targetId?: string } = {};
+    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog as never);
+
+    const result = await call(tools.get("update_organization")!.handler, { organizationId, name: "Acme" }, [
+      "surveys:write",
+      "workspaces:write",
+      "members:write",
+    ]);
+
+    expect(result.isError).toBe(true);
+    expect(result.structuredContent.error).toMatchObject({ status: 403 });
+    expect(updateV3Organization).not.toHaveBeenCalled();
+    expect(buildV3AuditLog).toHaveBeenCalledWith(session, "updated", "organization", expect.any(String));
+    expect(auditLog.targetId).toBe(organizationId);
+    expect(queueV3AuditLog).toHaveBeenCalledOnce();
+  });
+
+  test("splits the id from the body, relays the result, and keeps the name out of the text", async () => {
+    const { tools } = createToolServer();
+    vi.mocked(updateV3Organization).mockResolvedValue(successResponse(data, { requestId: "req_tool" }));
+
+    const result = await call(
+      tools.get("update_organization")!.handler,
+      { organizationId, name: SECRET_NAME },
+      ["organizations:write"]
+    );
+
+    expect(result.structuredContent).toEqual({ data, requestId: "req_tool" });
+    expect(vi.mocked(updateV3Organization).mock.calls[0][0]).toMatchObject({
+      organizationId,
+      body: { name: SECRET_NAME },
+      authentication: session,
+      instance: "/api/mcp",
+    });
+    expect(result.content[0].text).toBe(`Organization ${organizationId} saved.`);
+  });
+
+  test("an operation refusal is relayed and still audited", async () => {
+    const { tools } = createToolServer();
+    vi.mocked(updateV3Organization).mockResolvedValue(
+      problemForbidden("req_tool", "Only owners.", "/api/mcp")
+    );
+
+    const result = await call(tools.get("update_organization")!.handler, { organizationId, name: "Acme" }, [
+      "organizations:write",
+    ]);
+
+    expect(result.isError).toBe(true);
+    expect(result.structuredContent.error).toMatchObject({ status: 403, detail: "Only owners." });
+    expect(queueV3AuditLog).toHaveBeenCalledOnce();
+  });
+
+  test("the input is strict", () => {
+    expect(ZMcpUpdateOrganizationInput.safeParse({ organizationId, name: "Acme" }).success).toBe(true);
+    expect(
+      ZMcpUpdateOrganizationInput.safeParse({ organizationId, name: "Acme", ownerId: "x" }).success
+    ).toBe(false);
+    expect(ZMcpUpdateOrganizationInput.safeParse({ name: "Acme" }).success).toBe(false);
   });
 });
