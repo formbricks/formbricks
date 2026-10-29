@@ -114,18 +114,22 @@ export const WorkflowPageTitle = ({ workflowId, isReadOnly }: Readonly<WorkflowP
   };
 
   // maxLength would cut a multi-line paste before its line breaks collapse, so collapse them first
-  // and fit the result into the room left around the selection. The rest of the name is untouched,
-  // and a cut never splits a surrogate pair (an emoji) in half.
+  // and fit the result into the room left around the selection. A single-line paste that fits is
+  // left to the browser, which keeps it on the undo stack. Otherwise the rest of the name is
+  // untouched, a cut never splits a surrogate pair (an emoji), and a paste where nothing fits
+  // does nothing rather than deleting the selection.
   const handlePaste = (event: ClipboardEvent<HTMLTextAreaElement>) => {
-    event.preventDefault();
     const field = event.currentTarget;
     const { selectionStart, selectionEnd, value } = field;
     const room = WORKFLOW_NAME_MAX_LENGTH - (value.length - (selectionEnd - selectionStart));
-    let text = event.clipboardData
-      .getData("text/plain")
-      .replaceAll(/[\r\n]+/g, " ")
-      .slice(0, Math.max(room, 0));
+    const pasted = event.clipboardData.getData("text/plain");
+    const normalized = pasted.replaceAll(/[\r\n]+/g, " ");
+    if (normalized === pasted && pasted.length <= room) return;
+
+    event.preventDefault();
+    let text = normalized.slice(0, Math.max(room, 0));
     if (/[\uD800-\uDBFF]$/.test(text)) text = text.slice(0, -1);
+    if (!text) return;
     field.setRangeText(text, selectionStart, selectionEnd, "end");
     setWorkflowName(field.value);
   };
