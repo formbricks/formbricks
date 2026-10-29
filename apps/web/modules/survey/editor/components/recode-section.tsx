@@ -18,6 +18,7 @@ import {
   getElementCodeIssues,
   getOptionCodeLists,
   hasQuestionCode,
+  normalizeCode,
   optionIssueKey,
   resetElementCodes,
   setElementCode,
@@ -40,12 +41,16 @@ interface CodeFieldProps {
   locked?: boolean;
   onChange: (value: string) => void;
   ariaLabel?: string;
-  className?: string;
+  /** Sizes the input only: a message under it runs the full width of the row instead of wrapping. */
+  inputClassName?: string;
 }
 
 /**
- * One code input. A problem shows above the field, in the same words the publish check uses, and
- * the field gets a red ring. A locked field keeps its value, greyed, with the lock inside it.
+ * One code input. What is typed is tidied as it goes (lowercase, `_` for spaces, invalid characters
+ * dropped), with a yellow note saying what it became. A problem that cannot be tidied shows under the
+ * field in red, in the same words the publish check uses. A locked field keeps its value, greyed, with
+ * the lock inside it. The root is `display: contents`: the input and its message are cells of whatever
+ * row or column holds the field, and the message spans it.
  */
 export const CodeField = ({
   id,
@@ -56,21 +61,16 @@ export const CodeField = ({
   locked = false,
   onChange,
   ariaLabel,
-  className,
+  inputClassName,
 }: Readonly<CodeFieldProps>) => {
   const { t } = useTranslation();
   // An empty field is not committed while it has focus: the editor gives an uncoded question or
   // option its default code at once, which would refill the field under the cursor mid-edit.
   const [draft, setDraft] = useState<string | null>(null);
+  const [note, setNote] = useState<string | null>(null);
   return (
-    <div className={cn("flex flex-col gap-2", className)}>
-      {issue && (
-        <p id={`${id}-error`} className="flex items-center gap-1 text-sm font-medium text-red-800">
-          <CircleAlertIcon className="size-4 shrink-0" aria-hidden="true" />
-          {describeCodeIssue(issue, kind, t, clashLabel)}
-        </p>
-      )}
-      <div className="relative">
+    <div className="contents">
+      <div className={cn("relative", inputClassName)}>
         <Input
           id={id}
           disabled={locked}
@@ -83,17 +83,33 @@ export const CodeField = ({
           autoComplete="off"
           spellCheck={false}
           onChange={(event) => {
-            setDraft(event.target.value);
-            if (event.target.value !== "") onChange(event.target.value);
+            const { value: normalized, changed } = normalizeCode(event.target.value, kind);
+            setDraft(normalized);
+            setNote(changed && normalized !== "" ? normalized : null);
+            if (normalized !== "") onChange(normalized);
           }}
           onBlur={() => {
             if (draft === "") onChange("");
             setDraft(null);
+            setNote(null);
           }}
           className={cn("h-9", locked && "pr-9", issue && "ring-1 ring-red-600")}
         />
         {locked && <PublishedLockNotice kind="code" className="absolute top-1.5 right-2" />}
       </div>
+      {issue && (
+        <p
+          id={`${id}-error`}
+          className="col-span-full flex items-center gap-1 text-sm font-medium text-red-800">
+          <CircleAlertIcon className="size-4 shrink-0" aria-hidden="true" />
+          {describeCodeIssue(issue, kind, t, clashLabel)}
+        </p>
+      )}
+      {note && !issue && (
+        <p role="status" className="col-span-full text-sm text-amber-800">
+          {t("workspace.surveys.edit.code_changed_to", { code: note })}
+        </p>
+      )}
     </div>
   );
 };
@@ -159,11 +175,12 @@ export const RecodeSection = ({
         </Button>
       </div>
 
-      <div className="flex max-w-[300px] flex-col gap-2">
+      <div className="flex flex-col gap-2">
         <Label htmlFor={`code-${element.id}`}>{t("workspace.surveys.edit.question_code")}</Label>
         <CodeField
           id={`code-${element.id}`}
           kind="question"
+          inputClassName="max-w-[300px]"
           locked={lock.isCodeLocked}
           value={"code" in element ? element.code : undefined}
           issue={issues?.question}
@@ -173,9 +190,7 @@ export const RecodeSection = ({
       </div>
 
       {lists.map(({ key, options }) => (
-        <div
-          key={key}
-          className={cn("flex flex-col gap-2", key === "choices" ? "max-w-[400px]" : "max-w-[300px]")}>
+        <div key={key} className="flex flex-col gap-2">
           <Label>{optionListTitle(key, t)}</Label>
           <div className="flex flex-col gap-2">
             {options.map((option, optionIdx) => {
@@ -184,7 +199,15 @@ export const RecodeSection = ({
               const fieldId = `code-${element.id}-${key}-${option.id}`;
               const issue = issues?.options.get(optionIssueKey(key, option.id));
               return (
-                <div key={option.id} className="flex items-end gap-2">
+                <div
+                  key={option.id}
+                  className={cn(
+                    "grid items-center gap-x-2 gap-y-1",
+                    option.imageUrl
+                      ? "grid-cols-[80px_minmax(0,1fr)_108px_auto]"
+                      : "grid-cols-[minmax(0,1fr)_204px_auto]",
+                    key === "choices" ? "max-w-[400px]" : "max-w-[300px]"
+                  )}>
                   {option.imageUrl && (
                     <Image
                       src={option.imageUrl}
@@ -203,7 +226,6 @@ export const RecodeSection = ({
                   <CodeField
                     id={fieldId}
                     kind="answer"
-                    className={option.imageUrl ? "w-[108px]" : "w-[204px]"}
                     locked={lock.isAnswerCodeLocked(key, option.id)}
                     ariaLabel={shownLabel}
                     value={option.code}

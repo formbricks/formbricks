@@ -1,5 +1,10 @@
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
-import { TCodeIssue, validateSurveyCodes } from "@formbricks/types/surveys/codes";
+import {
+  ANSWER_CODE_MAX_LENGTH,
+  QUESTION_CODE_MAX_LENGTH,
+  TCodeIssue,
+  validateSurveyCodes,
+} from "@formbricks/types/surveys/codes";
 import { collectDeclaredFieldNames } from "@formbricks/types/surveys/declared-field-guard";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -120,6 +125,24 @@ export const getBlockCodeIssueKey = (survey: TSurvey, block: TSurveyBlock): stri
       ];
     })
     .join(";");
+};
+
+/**
+ * What typing in a code field turns into: lowercase, spaces to `_`, anything but letters, digits and `_`
+ * dropped, cut to the length limit. What this cannot settle (a duplicate, a reserved word, a leading digit,
+ * `__`) is left for the validator's red error. `changed` says whether the text differs from what was typed.
+ */
+export const normalizeCode = (
+  raw: string,
+  kind: "question" | "answer"
+): { value: string; changed: boolean } => {
+  const maxLength = kind === "question" ? QUESTION_CODE_MAX_LENGTH : ANSWER_CODE_MAX_LENGTH;
+  const value = raw
+    .toLowerCase()
+    .replaceAll(/\s+/g, "_")
+    .replaceAll(/[^a-z0-9_]/g, "")
+    .slice(0, maxLength);
+  return { value, changed: value !== raw };
 };
 
 /**

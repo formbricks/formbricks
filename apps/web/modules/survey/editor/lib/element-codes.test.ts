@@ -5,6 +5,7 @@ import {
   getElementCodeIssues,
   getInvalidCodeElementIds,
   getOptionCodeLists,
+  normalizeCode,
   resetElementCodes,
   setElementCode,
   setOptionCode,
@@ -128,5 +129,30 @@ describe("code updates", () => {
     expect(update.code).toBeUndefined();
     expect(update.choices).toHaveLength(2);
     expect(update.choices?.every((c) => c.code === undefined)).toBe(true);
+  });
+});
+
+describe("normalizeCode", () => {
+  test("lowercases, turns spaces into underscores and drops what a code cannot hold", () => {
+    expect(normalizeCode("Age Group", "question")).toEqual({ value: "age_group", changed: true });
+    expect(normalizeCode("q-1.a!", "question")).toEqual({ value: "q1a", changed: true });
+    expect(normalizeCode("a  b", "answer")).toEqual({ value: "a_b", changed: true });
+  });
+
+  test("leaves a valid code alone and says nothing changed", () => {
+    expect(normalizeCode("q1_a", "question")).toEqual({ value: "q1_a", changed: false });
+    expect(normalizeCode("", "answer")).toEqual({ value: "", changed: false });
+  });
+
+  test("cuts to the length limit of its kind: 30 for a question, 20 for an answer", () => {
+    expect(normalizeCode("a".repeat(40), "question").value).toHaveLength(30);
+    expect(normalizeCode("a".repeat(40), "answer").value).toHaveLength(20);
+    expect(normalizeCode("a".repeat(31), "question").changed).toBe(true);
+  });
+
+  test("what it cannot settle stays for the validator: duplicates, reserved words, a leading digit, `__`", () => {
+    expect(normalizeCode("1st", "question").value).toBe("1st");
+    expect(normalizeCode("a__b", "question").value).toBe("a__b");
+    expect(normalizeCode("all", "question").value).toBe("all");
   });
 });

@@ -4010,6 +4010,7 @@
         "close_survey_on_response_limit": "Close survey on response limit",
         "code": "Code",
         "code_auto_placeholder": "Automatic",
+        "code_changed_to": "Changed to {code}",
         "code_clash_question_in_block": "{question} in {block}",
         "code_error_characters": "Use only lowercase letters, digits and underscores",
         "code_error_double_underscore": "Can't contain two underscores in a row",
