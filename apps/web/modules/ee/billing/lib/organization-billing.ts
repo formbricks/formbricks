@@ -17,7 +17,7 @@ import { cache } from "@/lib/cache";
 import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@/lib/constants";
 import { capturePostHogEvent, groupIdentifyPostHog } from "@/lib/posthog";
 import { getPostHogFeatureFlag } from "@/lib/posthog/get-feature-flag";
-import { buildFreeTrialEndParams, getFreeTrialEndUnix } from "./free-trial-end";
+import { buildFreeTrialEndParams, getFreeTrialEndUnix, hasFreeTrialFallback } from "./free-trial-end";
 import {
   type TStandardCloudPlan,
   getCatalogItemForPlan,
@@ -2205,6 +2205,7 @@ export const syncOrganizationBillingFromStripe = async (
       trialEnd: subscription?.trial_end
         ? new Date(subscription.trial_end * 1000).toISOString()
         : (existingStripeSnapshot?.trialEnd ?? null),
+      trialEndsOnHobby: hasFreeTrialFallback(subscription),
     },
   };
 

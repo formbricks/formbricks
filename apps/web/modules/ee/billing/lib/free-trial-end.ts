@@ -32,3 +32,15 @@ export const buildFreeTrialEndParams = (trialEndUnix: number) =>
     Stripe.SubscriptionCreateParams,
     "trial_end" | "cancel_at" | "proration_behavior" | "trial_settings"
   >;
+
+/**
+ * Whether this subscription is a trial that Stripe itself will end on Hobby: it cancels at the exact
+ * second the trial ends. Trials created before ENG-4035, or by hand in the Stripe Dashboard, can lack it
+ * and still bill a saved card at trial end, so copy promising "no charge" is shown only when this holds.
+ */
+export const hasFreeTrialFallback = (
+  subscription: Pick<Stripe.Subscription, "status" | "cancel_at" | "trial_end"> | null | undefined
+): boolean =>
+  subscription?.status === "trialing" &&
+  subscription.cancel_at != null &&
+  subscription.cancel_at === subscription.trial_end;

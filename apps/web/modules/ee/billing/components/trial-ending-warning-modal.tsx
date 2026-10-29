@@ -13,9 +13,15 @@ const COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 days — long enough to outlive th
 interface TrialEndingWarningModalProps {
   daysRemaining: number;
   billingHref: string;
+  /** The trial ends on Hobby on Stripe's side; only then may the copy promise no charge. */
+  endsOnHobby: boolean;
 }
 
-export const TrialEndingWarningModal = ({ daysRemaining, billingHref }: TrialEndingWarningModalProps) => {
+export const TrialEndingWarningModal = ({
+  daysRemaining,
+  billingHref,
+  endsOnHobby,
+}: Readonly<TrialEndingWarningModalProps>) => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
 
@@ -52,7 +58,9 @@ export const TrialEndingWarningModal = ({ daysRemaining, billingHref }: TrialEnd
                 {t("workspace.settings.billing.trial_ending_title", { count: daysRemaining })}
               </DialogTitle>
               <DialogDescription>
-                {t("workspace.settings.billing.trial_ending_description")}
+                {endsOnHobby
+                  ? t("workspace.settings.billing.trial_ending_description")
+                  : t("workspace.settings.billing.trial_ending_description_upgrade")}
               </DialogDescription>
             </div>
           </div>

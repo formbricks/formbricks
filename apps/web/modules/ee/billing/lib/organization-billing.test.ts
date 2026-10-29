@@ -528,6 +528,65 @@ describe("organization-billing", () => {
     expect(mocks.subscriptionsList).not.toHaveBeenCalled();
   });
 
+  // ENG-4035: copy promising "no charge" at trial end is gated on this flag, so it must mirror Stripe.
+  test.each([
+    { cancelAt: 1742515200, expected: true, label: "cancels at the exact trial end" },
+    { cancelAt: null, expected: false, label: "has no cancellation (created before ENG-4035)" },
+    { cancelAt: 1742601600, expected: false, label: "cancels after the trial end, leaving a billable gap" },
+  ])(
+    "syncOrganizationBillingFromStripe records trialEndsOnHobby=$expected when the trial $label",
+    async ({ cancelAt, expected }) => {
+      mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+        stripeCustomerId: "cus_1",
+        limits: { workspaces: 3, monthly: { responses: 1500 } },
+        usageCycleAnchor: new Date(),
+        stripe: { lastSyncedEventId: null },
+      });
+      mocks.subscriptionsList.mockResolvedValue({
+        data: [
+          {
+            id: "sub_trial",
+            status: "trialing",
+            billing_cycle_anchor: 1739923200,
+            cancel_at_period_end: false,
+            cancel_at: cancelAt,
+            trial_end: 1742515200,
+            schedule: null,
+            items: {
+              data: [
+                {
+                  id: "si_pro_base",
+                  current_period_end: 1742515200,
+                  price: {
+                    id: "price_pro_monthly",
+                    metadata: {
+                      formbricks_plan: "pro",
+                      formbricks_price_kind: "base",
+                      formbricks_interval: "monthly",
+                    },
+                    product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                    recurring: { usage_type: "licensed", interval: "month" },
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      });
+      mocks.entitlementsList.mockResolvedValue({ data: [], has_more: false });
+
+      await syncOrganizationBillingFromStripe("org_1");
+
+      expect(mocks.prismaOrganizationBillingUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            stripe: expect.objectContaining({ subscriptionStatus: "trialing", trialEndsOnHobby: expected }),
+          }),
+        })
+      );
+    }
+  );
+
   test("syncOrganizationBillingFromStripe stores hobby plan when customer has no active subscription", async () => {
     mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
       stripeCustomerId: "cus_1",

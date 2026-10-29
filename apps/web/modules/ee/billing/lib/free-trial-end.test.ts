@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { buildFreeTrialEndParams, getFreeTrialEndUnix } from "./free-trial-end";
+import { buildFreeTrialEndParams, getFreeTrialEndUnix, hasFreeTrialFallback } from "./free-trial-end";
 
 describe("getFreeTrialEndUnix", () => {
   test("adds whole days in seconds to the current time, without rounding to midnight", () => {
@@ -24,5 +24,15 @@ describe("buildFreeTrialEndParams", () => {
       proration_behavior: "none",
       trial_settings: { end_behavior: { missing_payment_method: "cancel" } },
     });
+  });
+});
+
+describe("hasFreeTrialFallback", () => {
+  test("is true only for a trial that cancels at the exact second it ends", () => {
+    expect(hasFreeTrialFallback({ status: "trialing", cancel_at: 100, trial_end: 100 })).toBe(true);
+    expect(hasFreeTrialFallback({ status: "trialing", cancel_at: null, trial_end: 100 })).toBe(false);
+    expect(hasFreeTrialFallback({ status: "trialing", cancel_at: 130, trial_end: 100 })).toBe(false);
+    expect(hasFreeTrialFallback({ status: "active", cancel_at: 100, trial_end: 100 })).toBe(false);
+    expect(hasFreeTrialFallback(null)).toBe(false);
   });
 });
