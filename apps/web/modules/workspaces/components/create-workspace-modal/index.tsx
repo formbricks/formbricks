@@ -8,6 +8,7 @@ import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { ZWorkspace } from "@formbricks/types/workspace";
+import { WORKSPACE_NAME_MAX } from "@/app/api/internal/workspaces/schemas";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -33,7 +34,7 @@ import { useCreateWorkspace } from "./hooks/use-create-workspace";
 import { useOrganizationTeams } from "./hooks/use-organization-teams";
 
 const ZCreateWorkspaceForm = z.object({
-  name: ZWorkspace.shape.name,
+  name: ZWorkspace.shape.name.max(WORKSPACE_NAME_MAX),
   teamIds: z.array(z.string()).optional(),
 });
 

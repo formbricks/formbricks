@@ -1,7 +1,7 @@
 /** One search result as the editor's image picker shows it. */
 export type TUnsplashPhotoResource = {
   id: string;
-  alt_description: string;
+  alt_description: string | null;
   urls: {
     /** The photo, with the author's name and profile link on it for the attribution the picker shows. */
     regularWithAttribution: string;
@@ -20,12 +20,14 @@ export type TUnsplashSearchResult = {
 };
 
 export const serializeUnsplashPhoto = (result: TUnsplashSearchResult): TUnsplashPhotoResource => {
-  const authorName = encodeURIComponent(`${result.user.first_name} ${result.user.last_name}`);
+  const authorName = encodeURIComponent(
+    [result.user.first_name, result.user.last_name].filter((part) => part?.trim()).join(" ")
+  );
   const authorLink = encodeURIComponent(result.user.links.html);
 
   return {
     id: result.id,
-    alt_description: result.alt_description as string,
+    alt_description: result.alt_description,
     urls: {
       regularWithAttribution: `${result.urls.regular}&dpr=2&authorLink=${authorLink}&authorName=${authorName}&utm_source=formbricks&utm_medium=referral`,
       download: result.links.download_location,

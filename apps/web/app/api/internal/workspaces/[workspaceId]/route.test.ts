@@ -297,6 +297,7 @@ describe("PATCH /api/internal/workspaces/{workspaceId}", () => {
     ["no field", {}],
     ["only the baseline", { expectedUpdatedAt: "2026-10-01T10:00:00.000Z" }],
     ["a blank name", { name: "   " }],
+    ["a name over 255 characters", { name: "x".repeat(256) }],
     ["a logo without the baseline", { logo: { url: "https://example.com/logo.png" } }],
     [
       "organizationId, the tenant anchor (ENG-1919)",

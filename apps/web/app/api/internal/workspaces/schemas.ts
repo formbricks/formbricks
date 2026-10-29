@@ -50,6 +50,7 @@ export type TWorkspaceCreateBody = z.infer<typeof ZWorkspaceCreateBody>;
  * languages needs the workspace, so the operation checks that half (ENG-2816).
  */
 export const ZWorkspacePatchBody = ZWorkspaceUpdateInput.omit({ organizationId: true, teamIds: true })
+  .extend({ name: ZWorkspaceUpdateInput.shape.name.unwrap().max(WORKSPACE_NAME_MAX).optional() })
   .strict()
   .refine(
     (body) =>

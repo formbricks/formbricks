@@ -25,7 +25,13 @@ const UNSPLASH_TIMEOUT_MS = 10_000;
 
 type TRequestContext = { requestId: string; instance: string };
 
-const NOT_CONFIGURED = "Unsplash is not configured on this instance. Set UNSPLASH_ACCESS_KEY to enable it.";
+// The caller learns only that the picker is off; the variable to set goes to the server log.
+const NOT_CONFIGURED = "Unsplash is not configured on this instance.";
+
+const notConfigured = ({ requestId, instance }: TRequestContext): Response => {
+  logger.withContext({ requestId }).warn("Unsplash request refused: UNSPLASH_ACCESS_KEY is not set");
+  return problemServiceUnavailable(requestId, NOT_CONFIGURED, instance);
+};
 
 const ZUnsplashSearchResponse = z.object({
   results: z.array(
@@ -66,8 +72,7 @@ export async function searchUnsplashPhotosOperation({
   query: TUnsplashPhotoSearchQuery;
   context: TRequestContext;
 }): Promise<Response> {
-  if (!UNSPLASH_ACCESS_KEY)
-    return problemServiceUnavailable(context.requestId, NOT_CONFIGURED, context.instance);
+  if (!UNSPLASH_ACCESS_KEY) return notConfigured(context);
 
   const params = new URLSearchParams({
     query: query.query,
@@ -107,8 +112,7 @@ export async function triggerUnsplashPhotoDownloadOperation({
   body: TUnsplashPhotoDownloadBody;
   context: TRequestContext;
 }): Promise<Response> {
-  if (!UNSPLASH_ACCESS_KEY)
-    return problemServiceUnavailable(context.requestId, NOT_CONFIGURED, context.instance);
+  if (!UNSPLASH_ACCESS_KEY) return notConfigured(context);
 
   let response: Response;
   try {

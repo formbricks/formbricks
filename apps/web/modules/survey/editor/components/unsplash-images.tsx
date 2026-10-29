@@ -20,7 +20,7 @@ interface ImageFromUnsplashSurveyBgProps {
 
 interface UnsplashImage {
   id: string;
-  alt_description: string;
+  alt_description: string | null;
   urls: {
     regularWithAttribution: string;
     download?: string;
@@ -202,7 +202,7 @@ export const ImageFromUnsplashSurveyBg = ({ handleBgChange }: ImageFromUnsplashS
                 width={300}
                 height={200}
                 src={image.urls.regularWithAttribution}
-                alt={image.alt_description}
+                alt={image.alt_description ?? ""}
                 onClick={() => handleImageSelected(image.urls.regularWithAttribution, image.urls.download)}
                 className="h-full cursor-pointer rounded-lg object-cover"
                 unoptimized={isExternalImageSrc(image.urls.regularWithAttribution)}

@@ -141,8 +141,31 @@ describe("GET /api/internal/unsplash-photos", () => {
   test("answers 503 when the instance has no access key, without calling Unsplash", async () => {
     mocks.accessKey = undefined;
 
-    expect((await search("query=mountain")).status).toBe(503);
+    const response = await search("query=mountain");
+
+    expect(response.status).toBe(503);
+    // Which variable to set is the operator's business, not the caller's.
+    expect(await response.text()).not.toContain("UNSPLASH_ACCESS_KEY");
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  test("credits an author with one name only, without a literal null, and keeps a missing alt text null", async () => {
+    fetchMock.mockResolvedValue(
+      upstream({
+        results: [
+          {
+            ...unsplashResult,
+            alt_description: null,
+            user: { ...unsplashResult.user, last_name: null },
+          },
+        ],
+      })
+    );
+
+    const [photo] = (await (await search("query=mountain")).json()).data;
+
+    expect(photo.alt_description).toBeNull();
+    expect(photo.urls.regularWithAttribution).toContain("authorName=Ada&");
   });
 
   test.each([

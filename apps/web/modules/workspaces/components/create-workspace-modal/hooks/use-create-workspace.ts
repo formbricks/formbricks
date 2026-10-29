@@ -8,8 +8,9 @@ import {
 } from "@/modules/workspaces/lib/workspaces-query";
 
 /**
- * Create a workspace in the organization. On success every list of that organization's workspaces is
- * stale — the switchers' and the copy-survey picker's alike — so they are invalidated.
+ * Create a workspace in the organization. On success the switchers' lists of that organization's
+ * workspaces are stale, so they are invalidated. (The copy-survey picker lives under the surveys page's own
+ * query client and refetches on every open.)
  */
 export const useCreateWorkspace = (organizationId: string) => {
   const queryClient = useQueryClient();
