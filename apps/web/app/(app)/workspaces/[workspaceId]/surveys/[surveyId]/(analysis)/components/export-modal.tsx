@@ -477,21 +477,24 @@ const ExportModalBody = ({
             </div>
           )}
         </div>
-        {excelBlocked && (
+        {/* Shown whenever Excel is off, not only while it is chosen: the option is disabled, so it cannot be chosen to read why. */}
+        {excelTooLarge && (
           <div
-            role="alert"
+            role={excelBlocked ? "alert" : "status"}
             data-testid="export-excel-too-large"
             className="flex flex-col items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
             <p>{excelTooLargeMessage}</p>
-            <Button
-              variant="secondary"
-              size="sm"
-              data-testid="export-excel-switch"
-              onClick={() => setOptions((current) => setFormat(current, "csv"))}>
-              {alternative === "zip"
-                ? t("workspace.surveys.export.excel_too_large_zip_switch")
-                : t("workspace.surveys.export.excel_too_large_csv_switch")}
-            </Button>
+            {excelBlocked && (
+              <Button
+                variant="secondary"
+                size="sm"
+                data-testid="export-excel-switch"
+                onClick={() => setOptions((current) => setFormat(current, "csv"))}>
+                {alternative === "zip"
+                  ? t("workspace.surveys.export.excel_too_large_zip_switch")
+                  : t("workspace.surveys.export.excel_too_large_csv_switch")}
+              </Button>
+            )}
           </div>
         )}
 
