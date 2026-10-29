@@ -3,8 +3,9 @@
  *
  * Once a survey has left draft (active, paused or completed; a scheduled survey is paused until its
  * publish date, so it counts) its question codes, answer codes, question types and option text are
- * locked, and an option that existed at launch cannot be deleted. Responses store the label text, not
- * an option ID, so the export finds an answer's option by matching text; the lock keeps that match valid.
+ * locked (for a picture question, with its single or multiple selection), and an option that existed at launch
+ * cannot be deleted. Responses store the label text, not an option ID, so the export finds an answer's option
+ * by matching text; the lock keeps that match valid.
  *
  * A pure module over loosely typed input, like `./codes`, so the same function runs on the server in
  * every write path (`updateSurveyInternal`, v3 PATCH, block routes, MCP) and in the editor.
@@ -220,6 +221,20 @@ export const getPublishedLockViolations = (
         message: `The type of question "${nextElement.id}" cannot be changed after the survey is published.`,
       });
       continue;
+    }
+
+    // A picture question's selection mode is part of its type: multi to single makes the export keep the
+    // first pick only, single to multi turns one column into one per image.
+    if (
+      storedElement.raw.type === "pictureSelection" &&
+      (storedElement.raw.allowMulti === true) !== (nextElement.raw.allowMulti === true)
+    ) {
+      violations.push({
+        kind: "question_type_changed",
+        path: [...elementPath, "allowMulti"],
+        elementId: nextElement.id,
+        message: `The selection mode (single or multiple) of question "${nextElement.id}" cannot be changed after the survey is published.`,
+      });
     }
 
     const storedCode = codeOf(storedElement.raw.code);

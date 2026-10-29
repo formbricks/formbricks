@@ -134,6 +134,29 @@ describe("getPublishedLockViolations: rejected edits", () => {
     expect(kinds(stored, next)).toEqual(["question_type_changed"]);
   });
 
+  test("switching a picture question between single and multiple selection", () => {
+    const picture = (allowMulti?: boolean): TestElement => ({
+      id: "p1",
+      type: "pictureSelection",
+      headline: { default: "Pick pictures" },
+      required: false,
+      code: "p1",
+      ...(allowMulti === undefined ? {} : { allowMulti }),
+      choices: [apple, banana],
+    });
+    const storedPicture = survey("inProgress", picture(true));
+    const violations = getPublishedLockViolations(storedPicture, survey("inProgress", picture(false)));
+    expect(violations.map((v) => [v.kind, v.path])).toEqual([
+      ["question_type_changed", ["blocks", 0, "elements", 0, "allowMulti"]],
+    ]);
+    // Single to multiple counts too; a missing flag is single.
+    expect(kinds(survey("inProgress", picture()), survey("inProgress", picture(true)))).toEqual([
+      "question_type_changed",
+    ]);
+    expect(kinds(survey("inProgress", picture(false)), survey("inProgress", picture()))).toEqual([]);
+    expect(kinds(storedPicture, survey("inProgress", picture(true)))).toEqual([]);
+  });
+
   test("changing option text in the default language", () => {
     const next = survey(
       "inProgress",

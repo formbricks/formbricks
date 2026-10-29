@@ -15,6 +15,7 @@ import { ElementFormInput } from "@/modules/survey/components/element-form-input
 import { ImageAltTextButton } from "@/modules/survey/components/element-form-input/components/image-alt-text-button";
 import { isValueIncomplete } from "@/modules/survey/components/element-form-input/utils";
 import { useCopyId } from "@/modules/survey/editor/components/copy-id-button";
+import { PublishedLockNotice } from "@/modules/survey/editor/components/published-lock-notice";
 import { NO_ELEMENT_LOCK, TElementLock } from "@/modules/survey/editor/lib/published-lock";
 import { Button } from "@/modules/ui/components/button";
 import { FileInput } from "@/modules/ui/components/file-input";
@@ -216,6 +217,8 @@ export const PictureSelectionForm = ({
         <Switch
           id="multi-select-toggle"
           checked={element.allowMulti}
+          // Single and multiple selection store different answers: a published question keeps its mode.
+          disabled={lock.isTypeLocked}
           onClick={(e) => {
             e.stopPropagation();
             const newAllowMulti = !element.allowMulti;
@@ -238,6 +241,7 @@ export const PictureSelectionForm = ({
             <h3 className="text-sm font-semibold text-slate-700">
               {t("workspace.surveys.edit.allow_multi_select")}
             </h3>
+            {lock.isTypeLocked && <PublishedLockNotice kind="type" />}
             <p className="text-xs font-normal text-slate-500">
               {t("workspace.surveys.edit.allow_users_to_select_more_than_one_image")}
             </p>
