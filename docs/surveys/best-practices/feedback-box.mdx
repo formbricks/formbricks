@@ -1,6 +1,6 @@
 ---
 title: "Feedback Box"
-description: "A step-by-step guide to creating a feedback box using Formbricks."
+description: "A step-by-step guide to an always-available feedback button that opens a short survey on every click."
 icon: "box"
 ---
 
@@ -12,10 +12,13 @@ A low-friction channel catches the small frustrations that never make it into a 
 
 ## What you will build
 
-A survey that opens whenever someone clicks your Feedback button, and that keeps working every time they click it — not once per person. Two settings get you there, and both are needed: the recontact option, and an exemption from the workspace cooldown.
+A survey that opens whenever someone clicks a Feedback button on your website or web app, and that keeps working every time they click it — not once per person. There are two ways to build it:
+
+- **[With Creatives](#with-creatives)** (self-hosted, Enterprise license that includes Creatives): Formbricks draws the button for you. Your team sets its label, look, position and pages in Formbricks, with no code beyond the snippet, and sees how often it was shown and clicked.
+- **[Without Creatives](#without-creatives)** (Formbricks Cloud, Community Edition): you add a button to your own site and wire it to the survey with a click action.
 
 <Note>
-  This is an app survey, so it needs the Formbricks widget running in your product. If you have not
+  Either way this is an app survey, so it needs the Formbricks widget running in your product. If you have not
   installed it yet, follow [the quickstart](/surveys/website-app-surveys/quickstart) first.
 </Note>
 
@@ -33,9 +36,52 @@ Edit the questions on the **Questions** tab. The wording matters more than it lo
 
 Keep it short. Every extra question costs you responses, and the value of a feedback box is that answering it is nearly free.
 
-## 3. Trigger it on your Feedback button
+## With Creatives
 
-Open the **Settings** tab and find **Survey Trigger**. Click **Add action**, then **Capture new action**.
+<Note>
+  Creatives are part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license), on self-hosted
+  instances whose license includes Creatives. They are not available on Formbricks Cloud.
+</Note>
+
+A [feedback button](/surveys/creatives/feedback-button) opens its survey on every click by design (unless the survey is already on screen), so there is no trigger to set up and no recontact or cooldown setting to change.
+
+### 3. Create the feedback button
+
+Open **Creatives**, under **Ask**, click **New creative**, choose **Feedback button** and click **Continue**. On the **Content** tab:
+
+- keep the label **Feedback**, or write your own, such as "Give feedback";
+- pick an icon, or **None**;
+- under **On click**, choose **Open a survey** and pick your Feedback Box survey. It reads **App survey · opens as a popup**.
+
+If the survey is listed but can't be picked, it is **Restricted**: on self-hosted instances with [survey visibility](/surveys/general-features/visibility) turned on, new surveys start that way. Open **Collaborate** from the survey's row menu or editor and make it visible to the workspace; only its author and organization owners or managers can change this.
+
+![A feedback button in the editor, opening the Feedback Box survey](/images/surveys/creatives/feedback-button/content.webp)
+
+### 4. Place it
+
+On the **Styling** tab, under **Position**, choose the edge and how far along it the button sits. The right edge, halfway down, is the default. On phones, the bottom edge often covers less content: switch **Position** to **Phone** and pick it there.
+
+Leave **Add custom styles** off and the button matches the survey button in your [Look & Feel](/platform/features/styling-theme). Turn it on to set its own colors, font and size.
+
+### 5. Choose where it shows
+
+By default the button shows on every page that runs the snippet. To keep it off some pages, such as your checkout, open the **Settings** tab and add a **Show when** condition, for example **Current URL contains none of `/checkout`**. See [When It Shows](/surveys/creatives/when-it-shows).
+
+### 6. Publish both
+
+Publish the survey: it needs no trigger of its own, because the button opens it. Its **Survey Trigger** card lists the button under **Opened by**, and its **Display & Recontact** settings are disabled, since a click opens it unless it is already on screen.
+
+Then click **Publish** on the feedback button. Returning visitors may take up to an hour to see it; new visitors see it within a few minutes.
+
+On the button's summary page you can now follow its impressions, clicks and click rate, and every response records it as **Opened by creative**. See [Measure Performance](/surveys/creatives/measure-performance).
+
+## Without Creatives
+
+On Formbricks Cloud and the Community Edition, the button is part of your own site, and the survey opens on a click action.
+
+### 3. Trigger it on your Feedback button
+
+Add a button to your site, for example `<button id="feedback-button">Feedback</button>`. In the survey, open the **Settings** tab and find **Survey Trigger**. Click **Add action**, then **Capture new action**.
 
 ![The Add action dialog, on its Capture new action tab](/images/surveys/best-practices/feedback-box/action.webp)
 
@@ -55,7 +101,7 @@ Once created, the action appears under the trigger:
   you do not have to define the same click twice.
 </Tip>
 
-## 4. Let it open every time
+### 4. Let it open every time
 
 By default a survey is shown to each person once. That is wrong for a feedback box — someone who reports a bug on Monday should still be able to request a feature on Tuesday.
 
@@ -73,7 +119,7 @@ This second setting is not optional if you want the box to open on every click. 
   workspace budget.
 </Note>
 
-## 5. Activate
+### 5. Activate
 
 **Activate** starts it. The widget picks up the change within a minute.
 
