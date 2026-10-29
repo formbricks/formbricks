@@ -34,6 +34,17 @@ const CHOICE_ELEMENT_TYPES: ReadonlySet<string> = new Set([
 const QUESTION_CODE_PATTERN = /^q(\d+)$/i;
 const NUMERIC_CODE_PATTERN = /^\d+$/;
 
+/**
+ * The counters follow existing numbers only up to a billion. A hand-typed `99999999999999999` still sits
+ * in the used set, so nothing collides with it, but it must not drag a counter past 2^53: there `n + 1`
+ * is `n` again, the "next unused" loop never ends, and smaller overflows print as `q1e+29`.
+ */
+const MAX_COUNTED_NUMBER = 1_000_000_000;
+const countedNumber = (digits: string): number => {
+  const value = Number(digits);
+  return value <= MAX_COUNTED_NUMBER ? value : 0;
+};
+
 const forEachElement = (blocks: readonly unknown[], visit: (element: TRecord) => void): void => {
   for (const block of blocks) {
     if (!isRecord(block) || !Array.isArray(block.elements)) continue;
@@ -65,7 +76,7 @@ const fillOptionCodes = (options: unknown): unknown => {
   for (const option of list) {
     if (!isRecord(option) || typeof option.code !== "string") continue;
     used.add(option.code.toLowerCase());
-    if (NUMERIC_CODE_PATTERN.test(option.code)) highest = Math.max(highest, Number(option.code));
+    if (NUMERIC_CODE_PATTERN.test(option.code)) highest = Math.max(highest, countedNumber(option.code));
   }
 
   const filled = list.map((option) => {
@@ -114,7 +125,7 @@ export const fillMissingCodes = <TBlock>(
     if (typeof element.code !== "string") return;
     takenCodes.add(element.code.toLowerCase());
     const match = QUESTION_CODE_PATTERN.exec(element.code);
-    if (match) highest = Math.max(highest, Number(match[1]));
+    if (match) highest = Math.max(highest, countedNumber(match[1]));
   });
 
   const nextQuestionCode = (ownId: unknown): string => {

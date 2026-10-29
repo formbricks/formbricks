@@ -284,6 +284,25 @@ describe("takenNamesOf and name clashes", () => {
   });
 });
 
+describe("numbers too large to count from", () => {
+  // Past 2^53, n + 1 is n again: before the fix these never returned, so a regression hangs the run.
+  test("an answer code past 2^53 stays as it is and does not move the counter", () => {
+    const [filled] = fillMissingCodes(
+      [block("b1", single("a", [opt("x", "99999999999999999"), opt("y"), opt("z")]))],
+      []
+    ) as { elements: { choices: { code: string }[] }[] }[];
+    expect(filled.elements[0].choices.map((choice) => choice.code)).toEqual(["99999999999999999", "1", "2"]);
+  });
+
+  test("a question code past 2^53 stays as it is and the next questions start from q1", () => {
+    const [filled] = fillMissingCodes(
+      [block("b1", open("a", { code: "q99999999999999999" }), open("b"), open("c"))],
+      []
+    ) as { elements: { code: string }[] }[];
+    expect(filled.elements.map((element) => element.code)).toEqual(["q99999999999999999", "q1", "q2"]);
+  });
+});
+
 describe("the migration's own rules stay in sync with fillMissingCodes in @formbricks/types", () => {
   const fixtures: { name: string; blocks: unknown[]; taken: string[] }[] = [
     { name: "uncoded", blocks: [block("b1", open("a"), open("b")), block("b2", open("c"))], taken: [] },
@@ -322,6 +341,18 @@ describe("the migration's own rules stay in sync with fillMissingCodes in @formb
     {
       name: "duplicated question ids and duplicate codes",
       blocks: [block("b1", open("a", { code: "dup" }), open("b", { code: "DUP" }), open("a"))],
+      taken: [],
+    },
+    {
+      name: "numbers too large to count from",
+      blocks: [
+        block(
+          "b1",
+          open("a", { code: "q99999999999999999" }),
+          open("b"),
+          single("c", [opt("x", "99999999999999999"), opt("y"), opt("z")])
+        ),
+      ],
       taken: [],
     },
     { name: "empty", blocks: [], taken: ["q1"] },

@@ -165,6 +165,43 @@ describe("fillMissingCodes: answer codes", () => {
   });
 });
 
+describe("fillMissingCodes: numbers too large to count from", () => {
+  // Past 2^53, n + 1 is n again: before the fix these never returned, so a regression hangs the run.
+  test("an answer code past 2^53 stays as it is and does not move the counter", () => {
+    const result = fillMissingCodes(
+      [block("b1", single("a", [choice("x", "99999999999999999"), choice("y"), choice("z")]))],
+      []
+    );
+    expect(optionCodes(result[0].elements[0])).toEqual(["99999999999999999", "1", "2"]);
+  });
+
+  test("the counter follows a code of a billion, and stops following one beyond it", () => {
+    const at = fillMissingCodes(
+      [block("b1", single("a", [choice("x", "1000000000"), choice("y"), choice("z")]))],
+      []
+    );
+    expect(optionCodes(at[0].elements[0])).toEqual(["1000000000", "1000000001", "1000000002"]);
+    const beyond = fillMissingCodes(
+      [block("b1", single("a", [choice("x", "1000000001"), choice("y"), choice("z")]))],
+      []
+    );
+    expect(optionCodes(beyond[0].elements[0])).toEqual(["1000000001", "1", "2"]);
+  });
+
+  test("a question code past 2^53 stays as it is and the next questions start from q1", () => {
+    const result = fillMissingCodes(
+      [block("b1", open("a", { code: "q99999999999999999" }), open("b"), open("c"))],
+      []
+    );
+    expect(codesOf(result)).toEqual(["q99999999999999999", "q1", "q2"]);
+  });
+
+  test("a huge question number never prints in exponent form", () => {
+    const result = fillMissingCodes([block("b1", open("a", { code: `q1${"0".repeat(29)}` }), open("b"))], []);
+    expect(codesOf(result)).toEqual([`q1${"0".repeat(29)}`, "q1"]);
+  });
+});
+
 describe("carryOverCodes", () => {
   test("copies stored codes onto a replaced element and its options by id", () => {
     const stored = [block("b1", single("a", [choice("x", "1"), choice("y", "2")], { code: "age" }))];
