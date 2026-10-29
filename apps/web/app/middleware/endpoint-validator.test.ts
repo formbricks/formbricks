@@ -180,8 +180,6 @@ describe("endpoint-validator", () => {
 
   describe("isAuthProtectedRoute", () => {
     test("should return true for protected routes", () => {
-      expect(isAuthProtectedRoute("/setup/organization")).toBe(true);
-      expect(isAuthProtectedRoute("/setup/organization/create")).toBe(true);
       expect(isAuthProtectedRoute("/organizations")).toBe(true);
       expect(isAuthProtectedRoute("/organizations/something")).toBe(true);
       expect(isAuthProtectedRoute("/organizations/123/settings")).toBe(true);
@@ -462,7 +460,6 @@ describe("endpoint-validator", () => {
       test("should handle deeply nested admin routes", () => {
         expect(isAuthProtectedRoute("/organizations/123/connections/456/settings")).toBe(true);
         expect(isAuthProtectedRoute("/organizations/789/members/123/roles")).toBe(true);
-        expect(isAuthProtectedRoute("/setup/organization/team/invites")).toBe(true);
       });
     });
 
