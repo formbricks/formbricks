@@ -8,7 +8,7 @@ import { useTranslation } from "react-i18next";
 import { ActionClass } from "@formbricks/database/prisma-browser";
 import { TActionClassInput } from "@formbricks/types/action-classes";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { ActionNameDescriptionFields } from "@/modules/ui/components/action-name-description-fields";
 import { Button } from "@/modules/ui/components/button";
 import { CodeActionForm } from "@/modules/ui/components/code-action-form";
@@ -16,9 +16,9 @@ import { FormField } from "@/modules/ui/components/form";
 import { Label } from "@/modules/ui/components/label";
 import { NoCodeActionForm } from "@/modules/ui/components/no-code-action-form";
 import { TabToggle } from "@/modules/ui/components/tab-toggle";
-import { createActionClassAction } from "../actions";
 import { buildActionObject } from "../lib/action-builder";
 import { createActionClassZodResolver, useActionClassKeys, validatePermissions } from "../lib/action-utils";
+import { createActionClass } from "../lib/api-client";
 
 interface CreateNewActionTabProps {
   actionClasses: ActionClass[];
@@ -79,18 +79,13 @@ export const CreateNewActionTab = ({
   };
 
   const createAndHandleAction = async (updatedAction: TActionClassInput) => {
-    const createActionClassResposne = await createActionClassAction({
-      action: updatedAction,
-    });
-
-    if (createActionClassResposne?.serverError) {
-      toast.error(getFormattedErrorMessage(createActionClassResposne));
+    let newActionClass: ActionClass;
+    try {
+      newActionClass = await createActionClass(workspaceId, updatedAction);
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
       return;
     }
-
-    if (!createActionClassResposne?.data) return;
-
-    const newActionClass = createActionClassResposne.data;
 
     if (setActionClasses) {
       setActionClasses((prevActionClasses: ActionClass[]) => [...prevActionClasses, newActionClass]);
