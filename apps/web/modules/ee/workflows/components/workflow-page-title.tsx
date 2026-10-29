@@ -125,8 +125,9 @@ export const WorkflowPageTitle = ({ workflowId, isReadOnly }: Readonly<WorkflowP
             className={cn(
               "-mx-2 -my-1 min-w-0 rounded-md bg-transparent px-2 py-1",
               "text-3xl font-bold text-slate-800 placeholder:text-slate-400",
-              // Sizes to its content where supported; the max keeps long names from pushing the CTA out.
-              "[field-sizing:content] max-w-[28rem]",
+              // Sizes to its content where supported, up to the full width the header row leaves beside
+              // the CTA; a longer name scrolls inside the field instead of pushing the CTA out.
+              "[field-sizing:content] max-w-full",
               // Dashed hover/focus box, matching the dashboard's editable title
               // (see dashboard-page-header.tsx): slate while hovered, brand while editing.
               "border border-dashed border-transparent transition-colors",
