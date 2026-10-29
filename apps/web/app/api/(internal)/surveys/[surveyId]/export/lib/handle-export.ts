@@ -10,6 +10,7 @@ import {
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { getAuthorizedV3Survey } from "@/app/api/v3/surveys/authorization";
 import { getSessionUserId } from "@/app/api/v3/surveys/lib/operations";
+import { ConcurrencyLimiter } from "@/app/lib/api/concurrency-limiter";
 import { type TExportRequest, planExport } from "@/lib/analysis-export/export-request";
 import { can } from "@/lib/authorization";
 import { getOrganization } from "@/lib/organization/service";
@@ -18,6 +19,14 @@ import { checkRateLimit } from "@/modules/core/rate-limit/rate-limit";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { ExportCancelledError, buildExportResponse, countExportResponses } from "./export-response";
+
+/**
+ * An Excel workbook is built whole in memory, about 0.5 GB at the cell cap (`export-limits.ts`), so one build
+ * runs per process; a second answers 429 and the modal's retry picks it up. CSV and the zip stream and are
+ * bounded by the route's own limiter instead. Exported for the tests.
+ */
+export const excelBuildLimiter = new ConcurrencyLimiter(1);
+const EXCEL_BUSY_RETRY_SECONDS = 15;
 
 /** Charged on the download path only, so the modal's count requests do not spend an export's allowance. */
 const rateLimitedResponse = async (
@@ -108,6 +117,15 @@ export const handleExportRequest = async ({
     getIsQuotasEnabled(authResult.organizationId),
   ]);
 
+  const excelSlot = body.format === "xlsx" ? excelBuildLimiter.tryAcquire() : null;
+  if (excelSlot && !excelSlot.ok) {
+    return problemTooManyRequests(
+      requestId,
+      "Another Excel export is being built. Try again in a moment, or export as CSV.",
+      EXCEL_BUSY_RETRY_SECONDS
+    );
+  }
+
   let result;
   try {
     result = await buildExportResponse({
@@ -126,6 +144,9 @@ export const handleExportRequest = async ({
       return new Response(null, { status: 499 });
     }
     throw error;
+  } finally {
+    // The workbook is whole once `buildExportResponse` returns; sending it holds no build memory.
+    if (excelSlot?.ok) excelSlot.release();
   }
 
   if (!result.ok) {

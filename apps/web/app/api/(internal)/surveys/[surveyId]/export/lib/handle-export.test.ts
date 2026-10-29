@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { TExportRequest } from "@/lib/analysis-export/export-request";
-import { handleExportRequest } from "./handle-export";
+import { excelBuildLimiter, handleExportRequest } from "./handle-export";
 
 vi.mock("server-only", () => ({}));
 
@@ -146,6 +146,28 @@ describe("handleExportRequest outcomes", () => {
     const response = await run({ body: { ...defaults, format: "xlsx", display: "codes" } });
     expect(response.status).toBe(422);
     expect(await response.text()).toContain("too big");
+  });
+
+  test("only one Excel build runs per process: a second is a 429, CSV is not held back, the slot comes back", async () => {
+    let finishBuild: (value: unknown) => void = () => {};
+    mocks.buildExportResponse.mockImplementationOnce(() => new Promise((resolve) => (finishBuild = resolve)));
+    const xlsx = { ...defaults, format: "xlsx" as const, display: "codes" as const };
+    const first = run({ body: xlsx });
+    await vi.waitFor(() => expect(excelBuildLimiter.inFlight).toBe(1));
+
+    expect((await run({ body: xlsx })).status).toBe(429);
+    expect((await run()).status).toBe(200);
+
+    finishBuild({ ok: true, response: new Response("file") });
+    expect((await first).status).toBe(200);
+    expect(excelBuildLimiter.inFlight).toBe(0);
+    expect((await run({ body: xlsx })).status).toBe(200);
+  });
+
+  test("a failed Excel build gives its slot back", async () => {
+    mocks.buildExportResponse.mockRejectedValueOnce(new Error("boom"));
+    await expect(run({ body: { ...defaults, format: "xlsx", display: "codes" } })).rejects.toThrow("boom");
+    expect(excelBuildLimiter.inFlight).toBe(0);
   });
 
   test("a download the client abandoned is a 499, not a server error", async () => {

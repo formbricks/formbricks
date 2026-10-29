@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
  * of rows travels as a list of ids, which a query string cannot carry. `?dryRun=true` returns the counts
  * for the modal's "Include X responses" line instead of a file.
  *
- * The export runs in the request. The CSV and the zip stream; Excel is built whole. A client that goes
+ * The export runs in the request. The CSV and the zip stream; Excel is built whole, one build per process. A client that goes
  * away aborts `req.signal`, which stops the reading, so leaving the page cancels the export.
  */
 
