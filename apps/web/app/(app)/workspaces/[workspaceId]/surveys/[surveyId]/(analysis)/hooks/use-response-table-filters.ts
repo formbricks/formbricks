@@ -12,7 +12,7 @@ import type {
   FilterValue,
   SelectedFilterValue,
 } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
-import { getSurveyFilterDataAction } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/actions";
+import { getResponseFilterOptions } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/lib/api-client";
 import { generateElementAndFilterOptions, getFormattedFilters } from "@/app/lib/surveys/surveys";
 import { getReportingTimeZone } from "@/lib/date-ranges";
 import { useTableUrlState } from "@/modules/ui/components/table-toolbar/hooks/use-table-url-state";
@@ -79,11 +79,7 @@ export const useResponseTableFilters = (survey: TSurvey) => {
   const [isFilterDataRequested, setIsFilterDataRequested] = useState(false);
   const filterData = useQuery({
     queryKey: surveyFilterDataKey(survey.id),
-    queryFn: async () => {
-      const result = await getSurveyFilterDataAction({ surveyId: survey.id });
-      if (!result?.data) throw new Error(result?.serverError ?? "filter data unavailable");
-      return result.data;
-    },
+    queryFn: ({ signal }) => getResponseFilterOptions(survey.id, { signal }),
     enabled: needsFilterData || isFilterDataRequested,
     staleTime: 60_000,
     refetchOnWindowFocus: false,
@@ -100,7 +96,7 @@ export const useResponseTableFilters = (survey: TSurvey) => {
     const data = filterData.data;
     const { elementOptions, elementFilterOptions } = generateElementAndFilterOptions({
       survey,
-      environmentTags: data?.environmentTags ?? [],
+      environmentTags: data?.tags ?? [],
       attributes: data?.attributes ?? {},
       reservedValues: data?.reservedValues ?? {},
       hiddenFields: data?.hiddenFields ?? {},
@@ -112,7 +108,7 @@ export const useResponseTableFilters = (survey: TSurvey) => {
       survey,
       elementOptions,
       elementFilterOptions,
-      tagNames: (data?.environmentTags ?? []).map((tag) => tag.name),
+      tagNames: (data?.tags ?? []).map((tag) => tag.name),
       t,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `surveyKey` stands in for `survey`
