@@ -82,7 +82,7 @@ services:
         condition: service_healthy
 
   spicedb-migrate:
-    image: ${SPICEDB_IMAGE_REF:-authzed/spicedb:v1.52.0}
+    image: ${SPICEDB_IMAGE_REF:-authzed/spicedb:v1.56.2}
     restart: "no"
     command: datastore migrate head
     environment:
@@ -93,7 +93,7 @@ services:
         condition: service_completed_successfully
 
   spicedb:
-    image: ${SPICEDB_IMAGE_REF:-authzed/spicedb:v1.52.0}
+    image: ${SPICEDB_IMAGE_REF:-authzed/spicedb:v1.56.2}
     restart: unless-stopped
     command: serve
     mem_limit: 512m
@@ -117,7 +117,7 @@ services:
       start_period: 10s
 
   authzed-cli:
-    image: ${ZED_IMAGE_REF:-authzed/zed:v1.1.1}
+    image: ${ZED_IMAGE_REF:-authzed/zed:v1.14.0}
     profiles: ["authzed-tools"]
     entrypoint: ["zed"]
     volumes:
@@ -148,7 +148,7 @@ services:
       - 1025:1025
 
   valkey:
-    image: valkey/valkey@sha256:e0eb7c480958d32bdc4357a74bdd70653ae15f2f9b4c93c4a5a9fad1dc471c84
+    image: valkey/valkey@sha256:418652cfb58ef879d4978c33553735d7147016032d5aefaa14c828e611eb9dfd
     command: "valkey-server --maxmemory-policy noeviction"
     ports:
       - 6379:6379
@@ -156,7 +156,7 @@ services:
       - valkey-data:/data
 
   rustfs-perms:
-    image: busybox:1.36.1
+    image: busybox:1.38.0
     user: "0:0"
     command: ["sh", "-c", "mkdir -p /data && chown -R 10001:10001 /data"]
     volumes:
@@ -347,7 +347,7 @@ services:
 
   # Optional bundled Qwen/vLLM OpenAI-compatible runtime. Enable with COMPOSE_PROFILES=qwen.
   vllm:
-    image: ${QWEN_VLLM_IMAGE:-vllm/vllm-openai:v0.14.0}
+    image: ${QWEN_VLLM_IMAGE:-vllm/vllm-openai:v0.32.0}
     profiles: ["qwen"]
     deploy:
       resources:
@@ -402,7 +402,7 @@ services:
   # Playground) runs its refresh keys on an embedded Cube Store, which ghcr.io/formbricks/cube leaves
   # out. cube.js refuses to start without CUBEJS_API_SECRET.
   cube:
-    image: cubejs/cube:v1.7.50
+    image: cubejs/cube:v1.8.8
     env_file:
       - path: apps/web/.env
         required: false

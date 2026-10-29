@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { AuthenticationError } from "@formbricks/types/errors";
 import { ZUserEmail, ZUserName } from "@formbricks/types/user";
@@ -54,7 +55,19 @@ export const inviteOrganizationMemberAction = authenticatedActionClient
       }
       await settleInviteRateLimit(rateLimitReservation, 1);
 
-      await sendInviteMemberEmail(invitedUserId, parsedInput.email, ctx.user.name, "");
+      // Best-effort, like the other invite actions: the invite already exists and can be shared by link,
+      // so a failed or rate-limited email must not strand it behind "Invite already exists" on a retry.
+      try {
+        await sendInviteMemberEmail(
+          invitedUserId,
+          parsedInput.email,
+          ctx.user.name,
+          "",
+          parsedInput.organizationId
+        );
+      } catch (error) {
+        logger.error({ err: error }, "Failed to send onboarding invite email");
+      }
 
       ctx.auditLoggingCtx.inviteId = invitedUserId;
       ctx.auditLoggingCtx.newObject = {

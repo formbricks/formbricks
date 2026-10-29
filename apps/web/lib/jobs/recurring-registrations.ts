@@ -21,6 +21,10 @@ import { processUsageTelemetryJob } from "@/lib/telemetry/process-usage-telemetr
 import { DELETION_CLEANUP_DRAIN_INTERVAL_MS } from "@/modules/deletion-cleanup/lib/constants";
 import { processDeletionCleanupDrainJob } from "@/modules/deletion-cleanup/lib/process-deletion-cleanup-drain-job";
 import {
+  CREATIVE_STATS_FLUSH_INTERVAL_MS,
+  processCreativeStatsFlushJob,
+} from "@/modules/ee/creatives/lib/process-creative-stats-flush-job";
+import {
   DATA_RETENTION_SWEEP_DAILY_CRON_PATTERN,
   DATA_RETENTION_SWEEP_TIME_ZONE,
 } from "@/modules/ee/data-retention/sweep/constants";
@@ -101,6 +105,17 @@ export const RECURRING_JOB_REGISTRATIONS_BY_KEY: Record<TRecurringJobKey, Recurr
     job: recurringJobs.authzedSurveyAudit,
     schedule: {
       everyMs: 24 * 60 * 60 * 1_000,
+      kind: "every",
+    },
+  },
+  // ENG-4000: new in this release, so scheduled only once the release is activated (older replicas
+  // have no handler). Idempotent, so an overlapping or retried run is harmless.
+  creativeStatsFlush: {
+    requiresReleaseActivation: true,
+    handler: processCreativeStatsFlushJob,
+    job: recurringJobs.creativeStatsFlush,
+    schedule: {
+      everyMs: CREATIVE_STATS_FLUSH_INTERVAL_MS,
       kind: "every",
     },
   },

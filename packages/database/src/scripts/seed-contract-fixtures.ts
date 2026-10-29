@@ -42,6 +42,7 @@ const CONTRACT_IDS = {
   SURVEY_RESTORE: "clctsurveyrestore0000001",
   SURVEY_VISIBILITY: "clctsurveyvisibility0001",
   SURVEY_VISIBILITY_PRIVATE: "clctsurveyvisibilityp001",
+  SURVEY_PAUSE_CREATIVES: "clctsurveypausecreatives",
   WORKFLOW_PATCH: "clctworkflowpatch0000001",
   WORKFLOW_DELETE: "clctworkflowdelete000001",
   WORKFLOW_DUPLICATE: "clctworkflowduplicate001",
@@ -52,6 +53,30 @@ const CONTRACT_IDS = {
   WORKFLOW_TEST: "clctworkflowtest00000001",
   ACTION_CLASS_READ: "clctactionclassread00001",
   RESPONSE_READ: "clctresponseread00000001",
+  DATASET: "clctdataset0000000000001",
+  CHART_READ: "clctchartread00000000001",
+  CHART_PATCH: "clctchartpatch0000000001",
+  CHART_DELETE: "clctchartdelete000000001",
+  CHART_DUPLICATE: "clctchartduplicate000001",
+  CHART_WIDGET_ADD: "clctchartwidgetadd000001",
+  CHART_REPOINT: "clctchartrepoint00000001",
+  DASHBOARD_READ: "clctdashboardread0000001",
+  DASHBOARD_RENAME: "clctdashboardrename00001",
+  DASHBOARD_DELETE: "clctdashboarddelete00001",
+  DASHBOARD_DUPLICATE: "clctdashboarddupl0000001",
+  DASHBOARD_REPLACE: "clctdashboardreplace0001",
+  DASHBOARD_WIDGETS: "clctdashboardwidgets0001",
+  WIDGET_READ: "clctwidgetread0000000001",
+  WIDGET_REPLACE: "clctwidgetreplace0000001",
+  WIDGET_PATCH: "clctwidgetpatch000000001",
+  WIDGET_DELETE: "clctwidgetdelete00000001",
+  CREATIVE_READ: "clctcreativeread00000001",
+  CREATIVE_PATCH: "clctcreativepatch0000001",
+  CREATIVE_DELETE: "clctcreativedelete000001",
+  CREATIVE_ARCHIVE: "clctcreativearchive00001",
+  CREATIVE_RESTORE: "clctcreativerestore00001",
+  CREATIVE_DUPLICATE: "clctcreativeduplicate001",
+  CREATIVE_PAUSE: "clctcreativepause0000001",
 } as const;
 
 /**
@@ -296,6 +321,178 @@ async function seedWorkflow(
   await prisma.workflow.upsert({ where: { id }, update: fields, create: { id, ...fields } });
 }
 
+/**
+ * ENG-6596: a Feedback Dataset the seed workspace uses, with charts and dashboards on it, so the chart
+ * and dashboard operations answer from real rows instead of their documented 403. The backfill the job
+ * runs after seeding projects the dataset assignment into SpiceDB, which is what lets the seed API key
+ * reach the dataset. Every mutating operation gets its own victim, as with surveys.
+ *
+ * The data and preview operations still answer 502: the job runs no Cube, so they are checked against
+ * that documented response. And all of them answer `dashboards_plan_required` where the instance's
+ * license does not grant Dashboards.
+ */
+async function seedDashboards(organizationId: string): Promise<void> {
+  await prisma.feedbackDirectory.upsert({
+    where: { id: CONTRACT_IDS.DATASET },
+    update: {},
+    create: {
+      id: CONTRACT_IDS.DATASET,
+      name: "Contract fixture — dataset",
+      organizationId,
+      workspaces: { create: { workspaceId: SEED_IDS.WORKSPACE } },
+    },
+  });
+
+  const charts = [
+    [CONTRACT_IDS.CHART_READ, "Contract fixture — chart read"],
+    [CONTRACT_IDS.CHART_PATCH, "Contract fixture — chart patch"],
+    [CONTRACT_IDS.CHART_DELETE, "Contract fixture — chart delete"],
+    [CONTRACT_IDS.CHART_DUPLICATE, "Contract fixture — chart duplicate"],
+    [CONTRACT_IDS.CHART_WIDGET_ADD, "Contract fixture — chart widget add"],
+    [CONTRACT_IDS.CHART_REPOINT, "Contract fixture — chart repoint"],
+  ] as const;
+  for (const [id, name] of charts) {
+    const fields = {
+      name,
+      type: "bar" as const,
+      query: { measures: ["FeedbackRecords.count"], dimensions: ["FeedbackRecords.sourceType"] },
+      config: {},
+      workspaceId: SEED_IDS.WORKSPACE,
+      feedbackDirectoryId: CONTRACT_IDS.DATASET,
+      createdBy: SEED_IDS.USER_ADMIN,
+    };
+    await prisma.chart.upsert({ where: { id }, update: fields, create: { id, ...fields } });
+  }
+
+  const dashboards: [string, string, [string, string][]][] = [
+    [
+      CONTRACT_IDS.DASHBOARD_READ,
+      "Contract fixture — dashboard read",
+      [[CONTRACT_IDS.WIDGET_READ, CONTRACT_IDS.CHART_READ]],
+    ],
+    [CONTRACT_IDS.DASHBOARD_RENAME, "Contract fixture — dashboard rename", []],
+    [CONTRACT_IDS.DASHBOARD_DELETE, "Contract fixture — dashboard delete", []],
+    [CONTRACT_IDS.DASHBOARD_DUPLICATE, "Contract fixture — dashboard duplicate", []],
+    [
+      CONTRACT_IDS.DASHBOARD_REPLACE,
+      "Contract fixture — dashboard replace",
+      [[CONTRACT_IDS.WIDGET_REPLACE, CONTRACT_IDS.CHART_READ]],
+    ],
+    [
+      CONTRACT_IDS.DASHBOARD_WIDGETS,
+      "Contract fixture — dashboard widgets",
+      [
+        [CONTRACT_IDS.WIDGET_PATCH, CONTRACT_IDS.CHART_READ],
+        [CONTRACT_IDS.WIDGET_DELETE, CONTRACT_IDS.CHART_PATCH],
+      ],
+    ],
+  ];
+  for (const [id, name, widgets] of dashboards) {
+    // Re-seeding resets the widgets too, so a second run starts from the same layout as the first.
+    await prisma.dashboardWidget.deleteMany({ where: { dashboardId: id } });
+    const fields = {
+      name,
+      workspaceId: SEED_IDS.WORKSPACE,
+      createdBy: SEED_IDS.USER_ADMIN,
+      updatedAt: CONTRACT_FIXTURE_UPDATED_AT,
+    };
+    await prisma.dashboard.upsert({ where: { id }, update: fields, create: { id, ...fields } });
+    for (const [order, [widgetId, chartId]] of widgets.entries()) {
+      await prisma.dashboardWidget.create({
+        data: { id: widgetId, dashboardId: id, chartId, layout: { x: order * 4, y: 0, w: 4, h: 4 }, order },
+      });
+    }
+    // Adding the widgets moved nothing, but pin it again so the replace precondition below holds.
+    await prisma.dashboard.update({ where: { id }, data: { updatedAt: CONTRACT_FIXTURE_UPDATED_AT } });
+  }
+}
+
+const NO_THEME_OVERRIDES = {
+  customStyles: false,
+  backgroundColor: null,
+  textColor: null,
+  borderColor: null,
+  fontWeight: null,
+  fontSize: { desktop: null, phone: null },
+  paddingX: { desktop: null, phone: null },
+  paddingY: { desktop: null, phone: null },
+};
+
+/**
+ * One creative per mutating operation, for the reason this file's header gives (ENG-3993). The read
+ * fixture is a published feedback button opening the read survey, with a second language, so the list and
+ * the detail read validate a populated `destination` and `languages`; the others are the cheapest shape
+ * their operation answers 200 for. Content and styling are the stored JSON, which is the API's own shape.
+ */
+async function seedCreative(
+  id: string,
+  {
+    name,
+    type,
+    status,
+    archived = false,
+    surveyId = null,
+    linkUrl = null,
+  }: {
+    name: string;
+    type: "feedbackButton" | "banner";
+    status: "draft" | "inProgress";
+    archived?: boolean;
+    surveyId?: string | null;
+    linkUrl?: string | null;
+  }
+): Promise<void> {
+  const fields =
+    type === "feedbackButton"
+      ? {
+          content: { label: { "en-US": "Feedback", "de-DE": "Feedback geben" }, icon: "messageSquare" },
+          styling: {
+            position: { desktop: { edge: "right", offset: 50 }, phone: null },
+            theme: { ...NO_THEME_OVERRIDES, borderRadius: null },
+          },
+        }
+      : {
+          content: {
+            message: {
+              "en-US": [{ text: "Contract fixture notice. " }, { text: "Details", href: "/details" }],
+            },
+            button: null,
+            dismissible: true,
+            accessibleName: null,
+          },
+          styling: {
+            position: { desktop: { placement: "top", layout: "inPage" }, phone: null },
+            theme: NO_THEME_OVERRIDES,
+          },
+        };
+  const data = {
+    name,
+    type,
+    status,
+    publishedAt: status === "draft" ? null : CONTRACT_FIXTURE_UPDATED_AT,
+    archivedAt: archived ? CONTRACT_FIXTURE_UPDATED_AT : null,
+    workspaceId: SEED_IDS.WORKSPACE,
+    surveyId,
+    linkUrl,
+    ...fields,
+  };
+  await prisma.creative.upsert({ where: { id }, update: data, create: { id, ...data } });
+
+  const languages = await prisma.language.findMany({
+    where: { workspaceId: SEED_IDS.WORKSPACE, code: { in: ["en-US", "de-DE"] } },
+    select: { id: true, code: true },
+  });
+  for (const language of languages) {
+    if (type === "banner" && language.code !== "en-US") continue;
+    const isDefault = language.code === "en-US";
+    await prisma.creativeLanguage.upsert({
+      where: { languageId_creativeId: { languageId: language.id, creativeId: id } },
+      update: { default: isDefault, enabled: true },
+      create: { languageId: language.id, creativeId: id, default: isDefault, enabled: true },
+    });
+  }
+}
+
 async function main(): Promise<void> {
   const outPath = getOutPath();
 
@@ -366,6 +563,93 @@ async function main(): Promise<void> {
     },
   });
 
+  await seedDashboards(workspace.organizationId);
+
+  // After the read survey's languages, which seed the workspace's en-US and de-DE. The read creative opens
+  // the read survey, which `read.surveyId` also points the list's `surveyId` filter at.
+  await seedCreative(CONTRACT_IDS.CREATIVE_READ, {
+    name: "Contract fixture — read",
+    type: "feedbackButton",
+    status: "inProgress",
+    surveyId: CONTRACT_IDS.SURVEY_READ,
+  });
+  // Counts for today (UTC), inside the stats operation's default range, so its response carries days,
+  // pages and devices with numbers rather than only zeros.
+  const today = new Date(new Date().toISOString().slice(0, 10));
+  await prisma.creativeDailyStat.upsert({
+    where: {
+      creativeId_date_deviceType: {
+        creativeId: CONTRACT_IDS.CREATIVE_READ,
+        date: today,
+        deviceType: "phone",
+      },
+    },
+    update: {},
+    create: {
+      creativeId: CONTRACT_IDS.CREATIVE_READ,
+      date: today,
+      deviceType: "phone",
+      impressions: 40,
+      clicks: 2,
+    },
+  });
+  await prisma.creativeDailyPageStat.upsert({
+    where: {
+      creativeId_date_page: {
+        creativeId: CONTRACT_IDS.CREATIVE_READ,
+        date: today,
+        page: "example.com/pricing",
+      },
+    },
+    update: {},
+    create: {
+      creativeId: CONTRACT_IDS.CREATIVE_READ,
+      date: today,
+      page: "example.com/pricing",
+      impressions: 40,
+      clicks: 2,
+    },
+  });
+  // A notice-only banner: the patch examples (pause, reschedule) answer 200 without a Destination.
+  await seedCreative(CONTRACT_IDS.CREATIVE_PATCH, {
+    name: "Contract fixture — patch",
+    type: "banner",
+    status: "draft",
+  });
+  await seedCreative(CONTRACT_IDS.CREATIVE_DELETE, {
+    name: "Contract fixture — delete",
+    type: "feedbackButton",
+    status: "draft",
+    linkUrl: "https://example.com/feedback",
+  });
+  await seedCreative(CONTRACT_IDS.CREATIVE_ARCHIVE, {
+    name: "Contract fixture — archive",
+    type: "feedbackButton",
+    status: "inProgress",
+    linkUrl: "https://example.com/feedback",
+  });
+  // Restore only has something to do on an archived creative.
+  await seedCreative(CONTRACT_IDS.CREATIVE_RESTORE, {
+    name: "Contract fixture — restore",
+    type: "feedbackButton",
+    status: "inProgress",
+    archived: true,
+    linkUrl: "https://example.com/feedback",
+  });
+  await seedCreative(CONTRACT_IDS.CREATIVE_DUPLICATE, {
+    name: "Contract fixture — duplicate",
+    type: "banner",
+    status: "inProgress",
+  });
+  // A survey of its own for `POST /api/v3/creatives/pause`, so pausing it never touches the read creative.
+  await seedSurvey(CONTRACT_IDS.SURVEY_PAUSE_CREATIVES, "Contract fixture — pause creatives", false);
+  await seedCreative(CONTRACT_IDS.CREATIVE_PAUSE, {
+    name: "Contract fixture — pause",
+    type: "feedbackButton",
+    status: "inProgress",
+    surveyId: CONTRACT_IDS.SURVEY_PAUSE_CREATIVES,
+  });
+
   // No tag fixtures: every /api/v3/tags operation is `auth: "session"`, so an API key is rejected
   // with a documented 401 before a handler ever looks for a row. Seeding them would read as coverage
   // that does not exist. Add them here if tags ever accept an API key.
@@ -386,7 +670,12 @@ async function main(): Promise<void> {
     read: {
       surveyId: CONTRACT_IDS.SURVEY_READ,
       workflowId: SEED_IDS.WORKFLOW_RESPONSE_FOLLOW_UP,
+      creativeId: CONTRACT_IDS.CREATIVE_READ,
       ...(workflowRun ? { runId: workflowRun.id } : {}),
+      datasetId: CONTRACT_IDS.DATASET,
+      chartId: CONTRACT_IDS.CHART_READ,
+      dashboardId: CONTRACT_IDS.DASHBOARD_READ,
+      widgetId: CONTRACT_IDS.WIDGET_READ,
     },
     operations: {
       getResponseV3: { path: { responseId: CONTRACT_IDS.RESPONSE_READ } },
@@ -426,6 +715,44 @@ async function main(): Promise<void> {
       archiveWorkflowV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_ARCHIVE } },
       unarchiveWorkflowV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_UNARCHIVE } },
       testWorkflowV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_TEST } },
+      // Charts and dashboards (ENG-6596). Layouts are pinned to free grid cells: a generated one is as
+      // likely to overlap a seeded widget, which only ever exercises the documented 422.
+      updateChartV3: { path: { chartId: CONTRACT_IDS.CHART_PATCH } },
+      deleteChartV3: { path: { chartId: CONTRACT_IDS.CHART_DELETE } },
+      duplicateChartV3: {
+        path: { chartId: CONTRACT_IDS.CHART_DUPLICATE },
+        body: { dashboardId: CONTRACT_IDS.DASHBOARD_DUPLICATE, layout: { x: 0, y: 20, w: 4, h: 4 } },
+      },
+      renameDashboardV3: { path: { dashboardId: CONTRACT_IDS.DASHBOARD_RENAME } },
+      deleteDashboardV3: { path: { dashboardId: CONTRACT_IDS.DASHBOARD_DELETE } },
+      duplicateDashboardV3: { path: { dashboardId: CONTRACT_IDS.DASHBOARD_DUPLICATE } },
+      // The whole dashboard, so the save answers its 200: the precondition is the pinned `updatedAt`,
+      // and the widget list names the one widget the dashboard holds.
+      replaceDashboardV3: {
+        path: { dashboardId: CONTRACT_IDS.DASHBOARD_REPLACE },
+        body: {
+          name: "Contract fixture — dashboard replaced",
+          expectedUpdatedAt: CONTRACT_FIXTURE_UPDATED_AT.toISOString(),
+          widgets: [{ widgetId: CONTRACT_IDS.WIDGET_REPLACE, layout: { x: 0, y: 0, w: 6, h: 4 }, order: 0 }],
+        },
+      },
+      addDashboardWidgetV3: {
+        path: { dashboardId: CONTRACT_IDS.DASHBOARD_WIDGETS },
+        body: { chartId: CONTRACT_IDS.CHART_WIDGET_ADD, layout: { x: 0, y: 20, w: 4, h: 4 } },
+      },
+      updateDashboardWidgetV3: {
+        path: { dashboardId: CONTRACT_IDS.DASHBOARD_WIDGETS, widgetId: CONTRACT_IDS.WIDGET_PATCH },
+        body: { chartId: CONTRACT_IDS.CHART_REPOINT, layout: { x: 0, y: 30, w: 4, h: 4 } },
+      },
+      removeDashboardWidgetV3: {
+        path: { dashboardId: CONTRACT_IDS.DASHBOARD_WIDGETS, widgetId: CONTRACT_IDS.WIDGET_DELETE },
+      },
+      patchCreativeV3: { path: { creativeId: CONTRACT_IDS.CREATIVE_PATCH } },
+      deleteCreativeV3: { path: { creativeId: CONTRACT_IDS.CREATIVE_DELETE } },
+      archiveCreativeV3: { path: { creativeId: CONTRACT_IDS.CREATIVE_ARCHIVE } },
+      restoreCreativeV3: { path: { creativeId: CONTRACT_IDS.CREATIVE_RESTORE } },
+      duplicateCreativeV3: { path: { creativeId: CONTRACT_IDS.CREATIVE_DUPLICATE } },
+      pauseCreativesV3: { body: { surveyId: CONTRACT_IDS.SURVEY_PAUSE_CREATIVES } },
     },
   };
 

@@ -1,0 +1,74 @@
+type: object
+description: >-
+  One field a chart query may use. Use `name` exactly as given, data-source prefix included
+  (`FeedbackRecords.npsScore`); a field that is not in the catalog is refused.
+required:
+  - name
+  - kind
+  - type
+  - label
+  - description
+  - filterOperators
+  - granularities
+  - valueLookup
+properties:
+  name:
+    type: string
+    example: FeedbackRecords.npsScore
+  kind:
+    type: string
+    enum:
+      - measure
+      - dimension
+      - timeDimension
+    description: >-
+      Where the field may appear: a `measure` in `measures`, a `dimension` in `dimensions`, a
+      `timeDimension` in `timeDimensions` (or `dimensions`). Any kind may be filtered.
+  type:
+    type: string
+    enum:
+      - number
+      - string
+      - time
+      - boolean
+  label:
+    type: string
+    example: "NPS: Score"
+  description:
+    type:
+      - string
+      - "null"
+  filterOperators:
+    type: array
+    description: The operators a filter on this field may use.
+    items:
+      type: string
+      enum:
+        - equals
+        - notEquals
+        - contains
+        - notContains
+        - set
+        - notSet
+        - gt
+        - gte
+        - lt
+        - lte
+  granularities:
+    type: array
+    description: The granularities a time dimension may be grouped by; empty for other kinds.
+    items:
+      type: string
+      enum:
+        - hour
+        - day
+        - week
+        - month
+        - quarter
+        - year
+  valueLookup:
+    type: boolean
+    description: >-
+      Whether `GET /api/v3/charts/fields/{field}/values` lists this field's stored values, for
+      filters that need an exact value.
+additionalProperties: false

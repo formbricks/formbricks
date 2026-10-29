@@ -3,6 +3,7 @@ import { Config } from "@/lib/common/config";
 import { checkSetup } from "@/lib/common/status";
 import { TimeoutStack } from "@/lib/common/timeout-stack";
 import { handleUrlFilters } from "@/lib/common/utils";
+import { reconcileCreatives } from "@/lib/creatives/creatives";
 import { trackNoCodeAction } from "@/lib/survey/action";
 import {
   addClickEventListener,
@@ -68,6 +69,10 @@ vi.mock("@/lib/survey/widget", () => ({
 
 vi.mock("@/lib/common/status", () => ({
   checkSetup: vi.fn(),
+}));
+
+vi.mock("@/lib/creatives/creatives", () => ({
+  reconcileCreatives: vi.fn(),
 }));
 
 describe("createTrackNoCodeActionWithContext", () => {
@@ -595,6 +600,17 @@ describe("checkPageUrl additional cases", () => {
     await checkPageUrl();
     expect(handleUrlFilters).not.toHaveBeenCalled();
     expect(trackNoCodeAction).not.toHaveBeenCalled();
+  });
+
+  test("checkPageUrl decides the page's creatives on every page view, even with no page-view action", async () => {
+    getInstanceConfigMock.mockReturnValue({
+      get: vi.fn().mockReturnValue({ workspace: { data: { actionClasses: [] } } }),
+    } as unknown as Config);
+    vi.stubGlobal("window", { location: { href: "/pricing" } });
+
+    await checkPageUrl();
+
+    expect(reconcileCreatives).toHaveBeenCalledTimes(1);
   });
 
   test("checkPageUrl does not remove timeout if not scheduled", async () => {

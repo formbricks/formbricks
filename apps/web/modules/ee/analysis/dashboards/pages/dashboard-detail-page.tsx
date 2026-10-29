@@ -1,108 +1,41 @@
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
-import { logger } from "@formbricks/logger";
-import type { TChartQuery } from "@formbricks/types/analysis";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { getDashboardWorkspaceRow } from "@/app/api/v3/dashboards/lib/service";
 import { getAISmartToolsUnavailableReason, getOrganizationAIConfig } from "@/lib/ai/service";
 import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
-import { executeTenantScopedQuery } from "@/modules/ee/analysis/api/lib/cube-client";
-import { prepareQueryForChartType } from "@/modules/ee/analysis/charts/lib/big-number";
-import { resolveChartType } from "@/modules/ee/analysis/charts/lib/chart-utils";
-import {
-  dropEmptyMeasureRows,
-  withOptionIdFilter,
-} from "@/modules/ee/analysis/charts/lib/empty-measure-rows";
-import { pruneChartLabels, resolveOptionGrouping } from "@/modules/ee/analysis/charts/lib/option-grouping";
 import { AnalysisPageLayout } from "@/modules/ee/analysis/components/analysis-page-layout";
-import { checkFeedbackDirectoryAccess } from "@/modules/ee/analysis/lib/access";
-import type { TChartDataRow, TChartLabelMaps } from "@/modules/ee/analysis/types/analysis";
 import { getIsDashboardsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getAuthorizedWorkspaceFeedbackDirectories } from "@/modules/ee/unify-feedback/lib/access";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { DashboardDetailClient } from "../components/dashboard-detail-client";
-import {
-  applyDashboardDateFilter,
-  getDateFilterCookieName,
-  parseDashboardDateFilter,
-  readStoredDateFilterFromCookie,
-} from "../lib/dashboard-date-filter";
-import { getDashboard } from "../lib/dashboards";
-import { DASHBOARD_WIDGET_LOAD_ERROR, type TDashboardWidgetError } from "../lib/widget-errors";
-
-type TDashboardDetail = Awaited<ReturnType<typeof getDashboard>>;
-type TDashboardWidget = TDashboardDetail["widgets"][number];
-type TDashboardWidgetWithChart = TDashboardWidget & { chart: NonNullable<TDashboardWidget["chart"]> };
-
-interface WidgetQueryResult extends TChartLabelMaps {
-  data: TChartDataRow[];
-  query: TChartQuery;
-}
-
-async function executeWidgetQuery(
-  query: TChartQuery,
-  feedbackDirectoryId: string,
-  workspaceId: string,
-  organizationId: string,
-  userId: string
-): Promise<WidgetQueryResult | { error: TDashboardWidgetError }> {
-  try {
-    const tenant = await checkFeedbackDirectoryAccess({
-      feedbackDirectoryId,
-      workspaceId,
-      userId,
-      minPermission: "read",
-      source: "dashboards.widget",
-    });
-
-    // Mirror the chart builder (executeQueryAction): resolve option labels so value_id slices
-    // display human-readable option names. Without this the dashboard renders raw value_ids.
-    const grouping = await resolveOptionGrouping(query, workspaceId, tenant.feedbackDirectoryId);
-    const { rewrittenQuery } = grouping;
-
-    const data = await executeTenantScopedQuery({
-      query: withOptionIdFilter(rewrittenQuery),
-      feedbackDirectoryId: tenant.feedbackDirectoryId,
-      workspaceId,
-      organizationId,
-      userId,
-      source: "dashboards.widget",
-    });
-
-    // Mirror the chart builder again: groups that no selected measure can answer for are dropped
-    // rather than rendered as blank bars and empty Chart Data rows (ENG-3150).
-    const rows = dropEmptyMeasureRows(Array.isArray(data) ? data : [], rewrittenQuery);
-    return { data: rows, query: rewrittenQuery, ...pruneChartLabels(grouping, rows) };
-  } catch (error) {
-    logger.error(error, "Failed to load dashboard widget data");
-    return { error: DASHBOARD_WIDGET_LOAD_ERROR };
-  }
-}
-
-type WidgetQueryPromiseResult = Promise<WidgetQueryResult | { error: TDashboardWidgetError }>;
+import { getDateFilterCookieName, readStoredDateFilterFromCookie } from "../lib/dashboard-date-filter";
 
 export async function DashboardDetailPage({
   params,
-  searchParams,
 }: Readonly<{
   params: Promise<{ workspaceId: string; dashboardId: string }>;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }>) {
   const t = await getTranslate();
   const { workspaceId, dashboardId } = await params;
-  // A pinned URL param (shared link, in-app navigation) always wins; otherwise fall back to the
-  // per-dashboard persisted filter from the cookie so a revisit renders filtered on the first pass
-  // rather than after a client round trip.
-  const urlDateFilter = parseDashboardDateFilter(await searchParams);
+  // The per-dashboard filter persisted in a cookie seeds the first fetch, so a revisit renders its
+  // widgets filtered on the first pass instead of unfiltered and then again. A date filter pinned in the
+  // URL (a shared link) still wins; the client reads that one itself.
   const cookieStore = await cookies();
-  const dateFilter =
-    urlDateFilter ??
-    readStoredDateFilterFromCookie(cookieStore.get(getDateFilterCookieName(dashboardId))?.value);
+  const storedDateFilter = readStoredDateFilterFromCookie(
+    cookieStore.get(getDateFilterCookieName(dashboardId))?.value
+  );
 
   const { isReadOnly, organization, session } = await getWorkspaceAuth(workspaceId);
 
-  const isDashboardsAllowed = await getIsDashboardsEnabled(organization.id);
+  const [isDashboardsAllowed, dashboardRow] = await Promise.all([
+    getIsDashboardsEnabled(organization.id),
+    getDashboardWorkspaceRow(dashboardId),
+  ]);
+  // The page belongs to the workspace in its URL: its role, chart list and "create chart" all come from
+  // there, so a dashboard of another workspace is not found here, as one that does not exist.
+  if (dashboardRow?.workspaceId !== workspaceId) notFound();
   if (!isDashboardsAllowed) {
     return (
       <AnalysisPageLayout pageTitle={t("common.analysis")} workspaceId={workspaceId}>
@@ -136,44 +69,11 @@ export async function DashboardDetailPage({
   const aiUnavailableReason = getAISmartToolsUnavailableReason(aiConfig);
   const isAIAvailable = !aiUnavailableReason;
 
-  let dashboard;
-  try {
-    dashboard = await getDashboard(dashboardId, workspaceId);
-  } catch (error) {
-    if (error instanceof ResourceNotFoundError) {
-      return notFound();
-    }
-    throw error;
-  }
-
-  const widgetDataPromises = new Map<string, WidgetQueryPromiseResult>();
-  const widgetsWithCharts = dashboard.widgets.filter(
-    (widget: TDashboardWidget): widget is TDashboardWidgetWithChart => !!widget.chart
-  );
-  for (const widget of widgetsWithCharts) {
-    widgetDataPromises.set(
-      widget.id,
-      executeWidgetQuery(
-        // A big number's query is normalized here too, not only in the builder: widgets saved
-        // before that existed still carry a grouping the single value cannot come from.
-        prepareQueryForChartType(
-          applyDashboardDateFilter(widget.chart.query, dateFilter),
-          resolveChartType(widget.chart.type)
-        ),
-        widget.chart.feedbackDirectoryId,
-        workspaceId,
-        organization.id,
-        session.user.id
-      )
-    );
-  }
-
   return (
     <DashboardDetailClient
       workspaceId={workspaceId}
-      dashboard={dashboard}
-      widgetDataPromises={widgetDataPromises}
-      dateFilter={dateFilter}
+      dashboardId={dashboardId}
+      storedDateFilter={storedDateFilter}
       directories={directories}
       isReadOnly={isReadOnly}
       isAIAvailable={isAIAvailable}

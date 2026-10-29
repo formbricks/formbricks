@@ -108,7 +108,7 @@ describe("shipped bundles", () => {
   });
 
   test("survey strings resolve once a shipped bundle is loaded", () => {
-    for (const code of ["id-ID", "km-KH", "ms-MY", "ne-NP", "ur-PK", "vi-VN", "zh-Hant-TW"]) {
+    for (const code of ["id-ID", "km-KH", "ko-KR", "ms-MY", "ne-NP", "ur-PK", "vi-VN", "zh-Hant-TW"]) {
       const bundle = JSON.parse(
         readFileSync(new URL(`../../locales/${code}.json`, import.meta.url), "utf-8")
       ) as Record<string, unknown>;

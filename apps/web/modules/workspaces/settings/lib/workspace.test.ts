@@ -506,6 +506,30 @@ describe("workspace lib", () => {
       expectNoFrdSideEffects();
     });
 
+    // ENG-3864: new workspaces start with Page font on; existing ones (no flag) keep the survey font.
+    test("starts a new workspace with Page font on, unless the caller's styling says otherwise", async () => {
+      vi.mocked(prisma.workspace.create).mockResolvedValue(baseWorkspace);
+
+      await createWorkspace("org1", { name: "New" }, NEW_ORGANIZATION);
+      await createWorkspace(
+        "org1",
+        { name: "Branded", styling: { allowStyleOverwrite: false, brandColor: { light: "#0b5394" } } },
+        NEW_ORGANIZATION
+      );
+      await createWorkspace(
+        "org1",
+        { name: "Survey font", styling: { allowStyleOverwrite: true, pageFont: false } },
+        NEW_ORGANIZATION
+      );
+
+      const stylings = vi.mocked(prisma.workspace.create).mock.calls.map(([args]) => args.data.styling);
+      expect(stylings).toEqual([
+        { allowStyleOverwrite: true, pageFont: true },
+        { allowStyleOverwrite: false, brandColor: { light: "#0b5394" }, pageFont: true },
+        { allowStyleOverwrite: true, pageFont: false },
+      ]);
+    });
+
     // ENG-1922: a caller must not link a team from another organization to their workspace.
     test("rejects teamIds that belong to another organization", async () => {
       // Foreign team: the org-scoped lookup returns nothing.

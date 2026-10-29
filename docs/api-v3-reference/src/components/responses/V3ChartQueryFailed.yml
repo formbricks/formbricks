@@ -1,0 +1,18 @@
+description: >-
+  Bad Gateway (`code: bad_gateway`) — the chart query could not be run: the analytics engine was
+  unreachable, refused it, or it ran longer than the one-minute limit and was stopped. The engine's
+  own error is never returned. Retrying later is safe; a query that timed out needs a narrower date
+  range or grouping.
+headers:
+  X-Request-Id:
+    schema:
+      type: string
+    description: Request correlation ID
+  Cache-Control:
+    schema:
+      type: string
+    example: private, no-store
+content:
+  application/problem+json:
+    schema:
+      $ref: ../schemas/Problem.yml

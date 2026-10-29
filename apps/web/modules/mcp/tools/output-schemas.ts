@@ -60,6 +60,18 @@ export const ZMcpListMeta = z
   .loose();
 
 /**
+ * The `meta` of a keyset-paged collection that reports no total (`CursorPaginationMeta` in the contract):
+ * `limit` and `nextCursor`, nothing else. Chart and dashboard lists answer this shape, and holding them to
+ * `ZMcpListMeta` fails every call on the two total keys they never send.
+ */
+export const ZMcpCursorListMeta = z
+  .object({
+    limit: z.number().int(),
+    nextCursor: z.string().nullable(),
+  })
+  .loose();
+
+/**
  * Wrap a resource schema into the envelope a tool actually returns.
  *
  * **One object root, with every branch optional, is deliberate.** A tool answers either the success
@@ -75,11 +87,14 @@ export const ZMcpListMeta = z
  * `responseToMcpToolResult` rather than tidying it, because the schema's job is to describe what the
  * tool sends, not what would have been neater to send.
  */
-export const mcpToolOutput = <TData extends z.ZodType>(data: TData) =>
+export const mcpToolOutput = <TData extends z.ZodType>(
+  data: TData,
+  meta: typeof ZMcpListMeta | typeof ZMcpCursorListMeta = ZMcpListMeta
+) =>
   z
     .object({
       data: data.optional(),
-      meta: ZMcpListMeta.optional(),
+      meta: meta.optional(),
       requestId: z.string().optional(),
       error: ZMcpToolError.optional(),
     })

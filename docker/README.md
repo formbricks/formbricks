@@ -6,7 +6,7 @@ Follow this guide to get your Formbricks instance up and running with a Postgres
 
 Before you proceed, make sure you have the following:
 
-- A Linux Ubuntu Virtual Machine deployed with SSH access.
+- A Debian 12/13 or Ubuntu server with SSH access, `curl`, and a user with `sudo` privileges.
 
 - An A record set up to connect a custom domain to your instance. Formbricks will automatically create an SSL certificate for your domain using Let's Encrypt.
 
@@ -15,16 +15,16 @@ Before you proceed, make sure you have the following:
 Copy and paste the following command into your terminal:
 
 ```bash
-/bin/sh -c "$(curl -fsSL https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/formbricks.sh)"
+curl -fsSL https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/formbricks.sh -o formbricks.sh && chmod +x formbricks.sh && ./formbricks.sh install
 ```
 
 The script will prompt you for the following information:
 
-1. **Overwriting Docker GPG Keys**: If Docker GPG keys already exist, the script will ask if you want to overwrite them.
+1. **Legacy Docker packages**: If Docker is absent, choose whether to remove conflicting packages.
 
-2. **Email Address**: Provide your email address for SSL certificate registration with Let's Encrypt.
+2. **Domain Name**: Enter the domain Traefik will use to route requests to Formbricks.
 
-3. **Domain Name**: Enter the domain name that Traefik will use to create the SSL certificate and forward requests to Formbricks.
+3. **HTTPS and Email Address**: Choose HTTPS and provide an email address for Let's Encrypt if enabled.
 
 That's it! After running the command and providing the required information, visit the domain name you entered, and you should see the Formbricks home wizard!
 
@@ -35,7 +35,7 @@ The stack includes the [Formbricks Hub](https://github.com/formbricks/hub) API a
 default, and all three services start as part of the baseline `docker compose up`.
 
 - **Migrations**: A `formbricks-migrate` service runs Formbricks Prisma migrations before `hub-migrate` writes Hub tables to the shared database. `hub-migrate` then runs Hub's database migrations (goose + river) before the Hub API and `hub-worker` start. Both migration services run on every `docker compose up` and are idempotent. The worker consumes PostgreSQL-backed asynchronous jobs such as webhook delivery and configured enrichments.
-- **Production** (`docker/docker-compose.yml`): Set `POSTGRES_PASSWORD` to a unique random value and set
+- **Production with bundled PostgreSQL** (`docker/docker-compose.yml`): Set `POSTGRES_PASSWORD` to a unique random value and set
   non-empty `HUB_API_KEY`, `CUBEJS_API_SECRET`, `AUTHZED_TOKEN`, and `AUTHZED_DATABASE_PASSWORD` values in
   `.env` before starting the stack. Keep
   `POSTGRES_PASSWORD` unchanged after the database volume has been initialized. The installer also writes a
@@ -69,12 +69,18 @@ default, and all three services start as part of the baseline `docker compose up
 For v5 to v6, use the [maintenance upgrade guide](../docs/self-hosting/advanced/v6-maintenance-upgrade.mdx).
 The update command verifies an already-prepared graph; it does not migrate a live v5 installation online.
 
-The production and development Compose stacks include one SpiceDB v1.52.0 service backed by a dedicated
+The production and development Compose stacks include one SpiceDB v1.56.2 service backed by a dedicated
 `spicedb` database and login in the bundled PostgreSQL server. `authzed-db-bootstrap` creates or updates the
 database credentials, `spicedb-migrate` applies datastore migrations, and only then does `spicedb` start. Both
 one-shot services are idempotent.
 
-For production Docker, generate `AUTHZED_TOKEN` and `AUTHZED_DATABASE_PASSWORD` with
+For a pre-provisioned external PostgreSQL database, use the release-matched
+`docker-compose.spicedb-external.yml` override and set `SPICEDB_DATASTORE_CONN_URI` to the database-scoped
+connection URI. The override removes bootstrap, while SpiceDB still waits for its migration. Keep it active for
+every Compose command; the [manual Docker guide](../docs/self-hosting/setup/docker.mdx#external-postgresql-for-spicedb)
+covers TLS, privileges, installation, and upgrades. The one-click installer continues to use bundled PostgreSQL.
+
+For bundled production Docker, generate `AUTHZED_TOKEN` and `AUTHZED_DATABASE_PASSWORD` with
 `openssl rand -hex 32` and keep them in the mode-`0600` `.env` file. SpiceDB remains internal at
 `spicedb:50051`; it is not published through Traefik. The one-click installer generates both values and
 downloads `authzed-postgres-bootstrap.sh` automatically.

@@ -33,6 +33,7 @@ export const JOB_NAMES = {
   authzedProjectionDelivery: "authzed-projection.deliver",
   authzedReconciliationAudit: "authzed-reconciliation.audit",
   authzedSurveyAudit: "authzed-survey.audit",
+  creativeStatsFlush: "creative-stats.flush",
   dataRetentionSweep: "data-retention.sweep",
   deletionCleanupDrain: "deletion-cleanup.drain",
   testLog: "system.test-log",

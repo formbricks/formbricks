@@ -1,0 +1,7 @@
+in: path
+name: dashboardId
+required: true
+schema:
+  type: string
+  format: cuid2
+description: Dashboard identifier.

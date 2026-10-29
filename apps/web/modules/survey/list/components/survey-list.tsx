@@ -13,6 +13,7 @@ import { CUSTOM_SURVEY_TEMPLATE_ID } from "@/app/lib/templates";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@/lib/localStorage";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { SurveyDeleteBlockedDialog } from "@/modules/ee/creatives/components/survey-side/survey-delete-blocked-dialog";
 import { CreateWithAIDialog } from "@/modules/survey/components/template-list/components/create-with-ai-dialog";
 import { useCreateSurveyFromTemplate } from "@/modules/survey/components/template-list/hooks/use-create-survey-from-template";
 import { ImportSurveyDialog } from "@/modules/survey/import/components/import-survey-dialog";
@@ -35,6 +36,7 @@ import {
   type TSurveyVisibilityUiGate,
   withoutVisibilityControls,
 } from "@/modules/survey/visibility/lib/state";
+import type { TSurveyVisibilityBlocker } from "@/modules/survey/visibility/types";
 import { AiIcon } from "@/modules/ui/components/ai";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -196,6 +198,10 @@ export const SurveysList = ({
     : surveyVisibilityGate;
   const [isFilterInitialized, setIsFilterInitialized] = useState(false);
   const [parent] = useAutoAnimate();
+  // A refused delete (409: creatives open the survey) is shown here, not in the row: the optimistic
+  // removal has unmounted the row by the time the answer arrives.
+  const [isDeleteBlockedDialogOpen, setDeleteBlockedDialogOpen] = useState(false);
+  const [deleteBlockers, setDeleteBlockers] = useState<TSurveyVisibilityBlocker[]>([]);
 
   useEffect(() => {
     if (typeof globalThis.window === "undefined") {
@@ -271,6 +277,11 @@ export const SurveysList = ({
 
   const handleDeleteSurvey = async (surveyId: string) => {
     await deleteSurveyMutation.mutateAsync({ surveyId });
+  };
+
+  const handleDeleteBlocked = (blockers: TSurveyVisibilityBlocker[]) => {
+    setDeleteBlockers(blockers);
+    setDeleteBlockedDialogOpen(true);
   };
 
   const handleUpdateSurveyStatus = async (surveyId: string, status: TSurveyStatus) => {
@@ -399,6 +410,7 @@ export const SurveysList = ({
               listQueryKey={queryKey}
               updateSurveyVisibility={handleUpdateSurveyVisibility}
               onVisibilityNotEnabled={handleVisibilityNotEnabled}
+              onDeleteBlocked={handleDeleteBlocked}
             />
           ))}
         </div>
@@ -438,6 +450,12 @@ export const SurveysList = ({
         />
         {surveyContent}
       </div>
+      <SurveyDeleteBlockedDialog
+        open={isDeleteBlockedDialogOpen}
+        setOpen={setDeleteBlockedDialogOpen}
+        workspaceId={workspace.id}
+        blockers={deleteBlockers}
+      />
     </PageContentWrapper>
   );
 };

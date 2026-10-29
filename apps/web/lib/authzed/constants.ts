@@ -62,6 +62,20 @@ export const AUTHZED_MAX_OBSERVED_RELATIONSHIPS_PER_UNIT = 20_000;
 export const AUTHZED_BACKFILL_ORGANIZATION_PAGE_SIZE = 100;
 
 /**
+ * Organizations of one page processed at once by the full sweep (ENG-4038).
+ *
+ * The sweep is latency-bound, not CPU-bound: on EU Cloud a one-at-a-time audit of ~51k organizations took
+ * about 7 minutes with job and SpiceDB CPU near idle, nearly all of it spent waiting on round trips. A small
+ * bound recovers most of that while keeping the fan-out modest — at most this many times
+ * `AUTHZED_MAX_PARALLEL_RELATIONSHIP_DELETES` relationship reads for the largest organizations, and this
+ * many times eight millisecond-scale source queries against the `pg` pool.
+ *
+ * Not higher, because the six-hourly audit runs online beside the outbox writer, on the request-path
+ * client and its one-second deadline.
+ */
+export const AUTHZED_BACKFILL_ORGANIZATION_CONCURRENCY = 8;
+
+/**
  * Surveys per page of the `survey` backfill scope (ENG-3282). Each survey is observed and reconciled on
  * its own, so this bounds the ids held in memory and the resume granularity, not a single query.
  */

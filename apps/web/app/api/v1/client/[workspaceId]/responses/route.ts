@@ -23,6 +23,7 @@ import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { resolveClientApiIds } from "@/lib/utils/resolve-client-id";
 import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
 import { verifyResponseRecaptcha } from "@/modules/api/lib/verify-response-recaptcha";
+import { getOpenedByCreativeMeta } from "@/modules/ee/creatives/lib/attribution";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
 import { validateClientFileUploads } from "@/modules/storage/utils";
@@ -259,6 +260,14 @@ export const POST = withV1ApiWrapper({
         },
         country: country,
         action: responseInputData?.meta?.action,
+        // Only the creative's id comes from the client; the server checks it and stamps the name.
+        ...(responseInputData.meta?.openedByCreativeId
+          ? await getOpenedByCreativeMeta({
+              creativeId: responseInputData.meta.openedByCreativeId,
+              workspaceId,
+              surveyId: survey.id,
+            })
+          : {}),
       };
 
       // Capture IP address if the survey has IP capture enabled

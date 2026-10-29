@@ -397,6 +397,22 @@ describe("createOAuthFetch", () => {
     return { source: createOAuthTokenSource(baseConfig, { fetch: tokenFetch }), tokenFetch };
   };
 
+  test("uses the injected model transport for both attempts without changing token fetches", async () => {
+    const { source, tokenFetch } = createSource();
+    const transport = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response(null, { status: 401 }))
+      .mockResolvedValueOnce(new Response("ok"));
+    const signal = new AbortController().signal;
+    await createOAuthFetch(source, transport)(MODEL_URL, { signal });
+    expect(transport).toHaveBeenCalledTimes(2);
+    expect(tokenFetch).toHaveBeenCalledTimes(2);
+    expect(modelFetch).not.toHaveBeenCalled();
+    expect(transport.mock.calls.every(([, init]) => init?.signal === signal)).toBe(true);
+    expect(getInit(tokenFetch).signal).not.toBe(signal);
+    expect(getInit(tokenFetch).signal?.aborted).toBe(false);
+  });
+
   test("adds the bearer token and keeps the caller's headers and signal", async () => {
     const { source } = createSource();
     modelFetch.mockResolvedValue(new Response("ok"));

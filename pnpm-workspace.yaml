@@ -44,8 +44,8 @@ catalog:
   # (and `@vitest/eslint-plugin`'s optional `vitest` peer, and packages/types' vitest) resolved
   # their vite peer to the newest 8.x instead of this catalog's 7.3.5.
   vite: 7.3.7
-  vitest: 4.1.11
-  "@vitest/coverage-v8": 4.1.11
+  vitest: 4.1.12
+  "@vitest/coverage-v8": 4.1.12
   vite-plugin-dts: 4.5.4
   vite-tsconfig-paths: 6.1.1
   "@vitejs/plugin-react": 5.1.4
@@ -76,9 +76,9 @@ catalog:
   "@types/react": 19.2.14
   "@types/react-dom": 19.2.3
   # --- storybook ---
-  storybook: 10.3.6
-  "@storybook/react": 10.3.6
-  "@storybook/react-vite": 10.3.6
+  storybook: 10.6.2
+  "@storybook/react": 10.6.2
+  "@storybook/react-vite": 10.6.2
   # --- ui runtime shared by apps/web, survey-ui, surveys and email ---
   react: 19.2.6
   react-dom: 19.2.6
@@ -116,6 +116,7 @@ catalog:
   uuid: 14.0.0
   "@paralleldrive/cuid2": 2.3.1
   ai: 6.0.177
+  undici: 7.29.1
 
 # Security overrides for transitive dependencies that still fail audit without a pin.
 # Remove each override once its upstream dependency chain adopts a patched version.
@@ -192,9 +193,21 @@ overrides:
   # ENG-2846 / GHSA-6gmq-8vp8-gcm6 (CVE-2026-83610): an EntityReference created via
   # createEntityReference(name) with a name containing `; <tag/> &` breaks out of the `&name;` form when
   # serialized with `requireWellFormed: true`, injecting attacker-controlled XML markup; patched in 0.9.12.
-  # load-bearing: xml-crypto/xml-encryption resolve 0.8.13 and @boxyhq/saml20 resolves 0.9.8, both still
-  # vulnerable to the original chain (GHSA-2v35-w6hq-6mfw + 4 more).
+  # load-bearing for @boxyhq/saml20, which resolves 0.9.8 without it and is still vulnerable to the original chain
+  # (GHSA-2v35-w6hq-6mfw + 4 more). xml-crypto and xml-encryption are pinned to the patched 0.8.15 by the scoped
+  # overrides below, so this one covers saml20's own parse and any other 0.9 consumer.
   "@xmldom/xmldom": 0.9.12
+  # ENG-4045: xml-crypto stays on the 0.8 line it declares (`^0.8`, still so in 6.4.0). It calls
+  # `parseFromString(xml)` without a mimeType, which every 0.9 release throws on, so on 0.9 jackson can neither
+  # sign an AuthnRequest nor check a response's signature: SAML sign-in fails outright. xml-encryption makes the
+  # same call but is only ever handed a node by saml20; it is kept on its declared `^0.8` as well, as upstream
+  # saml20 1.22 ships it. 0.8.15 is the patched 0.8 release; `pnpm audit` reports no xmldom advisory against it.
+  # saml20 parses on 0.9.12 and hands its nodes to both, which works
+  # (modules/ee/auth/saml/api/sp-initiated-sign-in.test.ts). With `nodeLinker: hoisted` either version can land at
+  # the root, so any workspace that imports @xmldom/xmldom must declare it (apps/web does). Scoped to the current
+  # majors, so a new major that adopts 0.9 drops out of the pin on its own.
+  "xml-crypto@6>@xmldom/xmldom": 0.8.15
+  "xml-encryption@3>@xmldom/xmldom": 0.8.15
   # 1.20.0 also fixes HTTP adapter DoS, redirect-control bypass and prototype-pollution gadgets.
   # load-bearing: @boxyhq/saml-jackson pins 1.13.5.
   axios: 1.20.0
@@ -526,7 +539,7 @@ patchedDependencies:
   # anonymous caller can pin 16 MB per connection on any path. proxy.ts never reads the body, so the patch
   # stops handing it one and the route reads the unread stream itself; a rewrite now streams the request to
   # its target. Re-check on every Next upgrade; drop it if Next makes the clone lazy or opt-out.
-  "next@16.3.8": patches/next@16.3.8.patch
+  "next@16.4.1": patches/next@16.4.1.patch
   # ENG-2780 / node-postgres#3543: pg-pool can retain a connection that finishes establishing after
   # connectionTimeoutMillis, leaking capacity and poisoning the pool. Remove this version-pinned patch
   # once node-postgres#3711 is released in pg-pool and the dependency is upgraded to that version.

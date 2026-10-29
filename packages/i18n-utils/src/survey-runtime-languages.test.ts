@@ -101,6 +101,11 @@ describe("isSurveyRuntimeLanguage", () => {
     expect(isSurveyRuntimeLanguage("ms")).toBe(true);
   });
 
+  test("Korean ships a bundle of its own, so a bare `ko` resolves to it (ENG-3882)", () => {
+    expect(resolveSurveyRuntimeBundle("ko")).toBe("ko-KR");
+    expect(resolveSurveyRuntimeBundle("ko-KR")).toBe("ko-KR");
+  });
+
   test("is false for a language with no strings at all", () => {
     expect(isSurveyRuntimeLanguage("fa-IR")).toBe(false);
     expect(isSurveyRuntimeLanguage(null)).toBe(false);

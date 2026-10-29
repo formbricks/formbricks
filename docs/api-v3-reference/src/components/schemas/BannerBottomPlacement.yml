@@ -1,0 +1,15 @@
+type: object
+description: A banner at the bottom of the page, which is always `overlay`.
+required:
+  - placement
+  - layout
+properties:
+  placement:
+    type: string
+    enum:
+      - bottom
+  layout:
+    type: string
+    enum:
+      - overlay
+additionalProperties: false

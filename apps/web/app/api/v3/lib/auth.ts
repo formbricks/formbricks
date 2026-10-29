@@ -23,6 +23,10 @@ export const getV3AuthorizationActor = (authentication: TV3Authentication): TAut
   return null;
 };
 
+/** The signed-in user behind a session request, or `null` for an API key: who a write records as creator. */
+export const getV3SessionUserId = (authentication: TV3Authentication): string | null =>
+  authentication && "user" in authentication && authentication.user?.id ? authentication.user.id : null;
+
 /**
  * Require session and workspace access. workspaceId is resolved via the V3 workspace-context layer.
  * Returns a Response (401 or 403) on failure, or the resolved workspace context on success so callers
