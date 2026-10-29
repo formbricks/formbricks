@@ -6,6 +6,7 @@ import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import { problemUnauthorized, successResponse } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
+import { getOrganizationCreationPolicy } from "@/app/api/v3/organizations/lib/creation-policy";
 import { type TAuthorizationActor } from "@/lib/authorization";
 import {
   lookupAuthorizedOrganizationIds,
@@ -170,19 +171,24 @@ export async function getV3AccountContext({
             take: MAX_WORKSPACES,
           });
 
-    const organizations = await Promise.all(
-      seeds.map((seed) =>
-        buildOrganization(
-          actor,
-          seed,
-          workspaces.filter((workspace) => workspace.organizationId === seed.id)
+    const [organizations, canCreateOrganization] = await Promise.all([
+      Promise.all(
+        seeds.map((seed) =>
+          buildOrganization(
+            actor,
+            seed,
+            workspaces.filter((workspace) => workspace.organizationId === seed.id)
+          )
         )
-      )
-    );
+      ),
+      // Only a signed-in person can create an organization; an API key is never offered it.
+      actor.type === "user" ? getOrganizationCreationPolicy().then((policy) => policy.allowed) : false,
+    ]);
 
     const allWorkspaces = organizations.flatMap((organization) => organization.workspaces);
     const context: TV3AccountContext = {
       principal: actor.type,
+      canCreateOrganization,
       user: user ? { id: user.id, name: user.name, email: user.email } : null,
       organizations,
       setup: {

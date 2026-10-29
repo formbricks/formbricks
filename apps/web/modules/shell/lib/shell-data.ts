@@ -1,6 +1,7 @@
 import "server-only";
 import { notFound, redirect } from "next/navigation";
 import { cache as reactCache } from "react";
+import { getOrganizationCreationPolicy } from "@/app/api/v3/organizations/lib/creation-policy";
 import { getOrganizationsByUserId } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
 import { getSession } from "@/modules/auth/lib/session";
@@ -17,10 +18,11 @@ export const getShellData = reactCache(async (organizationId: string) => {
     return redirect("/auth/login");
   }
 
-  const [auth, user, organizations] = await Promise.all([
+  const [auth, user, organizations, creationPolicy] = await Promise.all([
     getOrganizationAuth(organizationId),
     getUser(session.user.id),
     getOrganizationsByUserId(session.user.id),
+    getOrganizationCreationPolicy(),
   ]);
 
   if (!user) {
@@ -31,6 +33,8 @@ export const getShellData = reactCache(async (organizationId: string) => {
     user: { id: user.id, name: user.name, email: user.email },
     organization: auth.organization,
     organizations: organizations.map(({ id, name }) => ({ id, name })),
+    // The rule `create_organization` enforces, so the switcher never offers what the server would refuse.
+    canCreateOrganization: creationPolicy.allowed,
     membership: auth.currentUserMembership,
     isOwner: auth.isOwner,
     isManager: auth.isManager,

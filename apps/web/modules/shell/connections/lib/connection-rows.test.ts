@@ -36,6 +36,20 @@ describe("getApiKeyScopes", () => {
     }
   });
 
+  test("workspace setup needs a manage grant, and organization or member scopes are never derived", () => {
+    expect(getApiKeyScopes({ workspacePermissions: [{ permission: "write" }] })).not.toContain(
+      "workspaces:write"
+    );
+    const manage = getApiKeyScopes({
+      workspacePermissions: [{ permission: "manage" }],
+      organizationAccess: { accessControl: { read: true, write: true } },
+    });
+    expect(manage).toContain("workspaces:write");
+    expect(manage).toContain("account:read");
+    expect(manage).not.toContain("organizations:write");
+    expect(manage).not.toContain("members:write");
+  });
+
   test("the audit log needs the organization-level read grant, never a workspace grant", () => {
     expect(getApiKeyScopes({ workspacePermissions: [{ permission: "manage" }] })).not.toContain("audit:read");
     expect(
@@ -59,7 +73,16 @@ describe("mapApiKeyToRow organization access", () => {
     );
     expect(row.access).toEqual({
       write: [],
-      readOnly: ["surveys", "workflows", "feedbackRecords", "responses", "contacts", "webhooks", "audit"],
+      readOnly: [
+        "surveys",
+        "workflows",
+        "feedbackRecords",
+        "responses",
+        "contacts",
+        "webhooks",
+        "audit",
+        "account",
+      ],
       manageMembers: true,
     });
   });
@@ -114,8 +137,9 @@ describe("mapApiKeyToRow", () => {
       "responses",
       "contacts",
       "webhooks",
+      "workspaces",
     ]);
-    expect(row.access.readOnly).toEqual([]);
+    expect(row.access.readOnly).toEqual(["account"]);
   });
 
   test("a key that never authenticated is 'neverUsed', one that did is 'active'", () => {

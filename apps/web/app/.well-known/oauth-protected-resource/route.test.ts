@@ -60,6 +60,11 @@ describe("OAuth protected resource metadata", () => {
         "webhooks:read",
         "webhooks:write",
         "audit:read",
+        // Agent-led setup (ADR 0018): dedicated scopes, granted to existing clients by their migration.
+        "account:read",
+        "workspaces:write",
+        "organizations:write",
+        "members:write",
         "offline_access",
       ],
       bearer_methods_supported: ["header"],

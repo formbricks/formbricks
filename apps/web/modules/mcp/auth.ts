@@ -170,6 +170,8 @@ function getMcpScopes(authentication: TAuthenticationApiKey): string[] {
     "responses:read",
     "contacts:read",
     "webhooks:read",
+    // The account context describes the key's own grants, so every key may read it (ADR 0018).
+    "account:read",
   ]);
   if (
     authentication.workspacePermissions.some(
@@ -182,6 +184,13 @@ function getMcpScopes(authentication: TAuthenticationApiKey): string[] {
     scopes.add("responses:write");
     scopes.add("contacts:write");
     scopes.add("webhooks:write");
+  }
+  // Workspace setup (name, channel, branding) is narrower than writing a survey: the operations need a
+  // `manage` grant on the workspace for an API key, so only such a key gets the scope. `organizations:write`
+  // and `members:write` are never derived here: creating an organization, renaming one and inviting people
+  // are for a signed-in person, which no API key is.
+  if (authentication.workspacePermissions.some((permission) => permission.permission === "manage")) {
+    scopes.add("workspaces:write");
   }
   // The audit trail is an organization-wide record, so a workspace grant, even `manage`, is not enough:
   // it needs the key's organization-level access-control read grant.

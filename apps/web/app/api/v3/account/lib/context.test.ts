@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { getOrganizationCreationPolicy } from "@/app/api/v3/organizations/lib/creation-policy";
 import {
   lookupAuthorizedOrganizationIds,
   lookupAuthorizedWorkspaceIds,
@@ -21,6 +22,9 @@ vi.mock("@formbricks/database", () => ({
     survey: { groupBy: vi.fn() },
     invite: { count: vi.fn() },
   },
+}));
+vi.mock("@/app/api/v3/organizations/lib/creation-policy", () => ({
+  getOrganizationCreationPolicy: vi.fn(),
 }));
 vi.mock("@/lib/authorization/resource-list", () => ({
   lookupAuthorizedOrganizationIds: vi.fn(),
@@ -61,6 +65,11 @@ describe("getV3AccountContext", () => {
     vi.mocked(prisma.invite.count).mockResolvedValue(2);
     vi.mocked(resolveSurveyActorContext).mockResolvedValue({ enforced: true, kind: "apiKey" });
     vi.mocked(getOrganizationWorkspacesLimit).mockResolvedValue(3);
+    vi.mocked(getOrganizationCreationPolicy).mockResolvedValue({
+      allowed: true,
+      hasNoOrganizations: false,
+      isMultiOrgEnabled: true,
+    });
   });
 
   test("an organization with no workspace is listed with an empty workspace list and can create one", async () => {
@@ -69,6 +78,7 @@ describe("getV3AccountContext", () => {
     expect(response.status).toBe(200);
     expect(body.data).toEqual({
       principal: "user",
+      canCreateOrganization: true,
       user: { id: "user_1", name: "Ada", email: "ada@example.com" },
       organizations: [
         {
@@ -227,6 +237,27 @@ describe("getV3AccountContext", () => {
     });
     expect(lookupAuthorizedOrganizationIds).not.toHaveBeenCalled();
     expect(prisma.membership.findMany).not.toHaveBeenCalled();
+  });
+
+  test("canCreateOrganization follows the creation policy for a signed-in person", async () => {
+    for (const allowed of [true, false]) {
+      vi.mocked(getOrganizationCreationPolicy).mockResolvedValue({
+        allowed,
+        hasNoOrganizations: false,
+        isMultiOrgEnabled: allowed,
+      });
+
+      expect((await run()).body.data.canCreateOrganization).toBe(allowed);
+    }
+  });
+
+  test("an API key never can create an organization, and the policy is not even read", async () => {
+    vi.mocked(prisma.organization.findUnique).mockResolvedValue({ id: "org_1", name: "Acme" } as never);
+
+    const { body } = await run(apiKey);
+
+    expect(body.data.canCreateOrganization).toBe(false);
+    expect(getOrganizationCreationPolicy).not.toHaveBeenCalled();
   });
 
   test("no authentication is 401", async () => {

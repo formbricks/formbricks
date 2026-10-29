@@ -59,6 +59,12 @@ describe("OAuth client metadata helpers", () => {
     );
     expect(getOAuthScopeLabel("responses:read", t)).toBe("translated:auth.oauth.scopes.responses_read");
     expect(getOAuthScopeLabel("responses:write", t)).toBe("translated:auth.oauth.scopes.responses_write");
+    expect(getOAuthScopeLabel("account:read", t)).toBe("translated:auth.oauth.scopes.account_read");
+    expect(getOAuthScopeLabel("workspaces:write", t)).toBe("translated:auth.oauth.scopes.workspaces_write");
+    expect(getOAuthScopeLabel("organizations:write", t)).toBe(
+      "translated:auth.oauth.scopes.organizations_write"
+    );
+    expect(getOAuthScopeLabel("members:write", t)).toBe("translated:auth.oauth.scopes.members_write");
   });
 
   test("keeps unknown OAuth scopes readable", () => {

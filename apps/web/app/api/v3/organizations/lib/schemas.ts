@@ -49,3 +49,25 @@ export const ZV3InviteMemberResource = z.object({
   message: z.string(),
 });
 export type TV3InviteMemberResource = z.infer<typeof ZV3InviteMemberResource>;
+
+/** `create_organization` body. The caller becomes the owner; no workspace is created. */
+export const ZV3OrganizationCreateBody = z
+  .object({
+    name: z.string().trim().min(1).max(MAX_NAME_LENGTH).describe("Name of the new organization."),
+  })
+  .strict();
+export type TV3OrganizationCreateBody = z.infer<typeof ZV3OrganizationCreateBody>;
+
+export const ZV3OrganizationCreatedResource = z.object({
+  id: z.string(),
+  name: z.string(),
+  role: z.literal("owner"),
+  workspaceCount: z.literal(0),
+  setupGuideUrl: z
+    .string()
+    .describe("Public URL of the Setup guide. Follow its new-owner path for this organization next."),
+  nextStep: z
+    .string()
+    .describe("What to do next: run the Setup guide's new-owner path for this organization."),
+});
+export type TV3OrganizationCreatedResource = z.infer<typeof ZV3OrganizationCreatedResource>;

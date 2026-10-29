@@ -24,6 +24,10 @@ const MCP_REQUEST = [
   "webhooks:read",
   "webhooks:write",
   "audit:read",
+  "account:read",
+  "workspaces:write",
+  "organizations:write",
+  "members:write",
   "offline_access",
 ];
 
@@ -42,7 +46,20 @@ describe("buildConsentGroups", () => {
       ["feedback", ["feedbackRecords:read", "feedbackRecords:write"]],
       ["respondent_data", ["responses:read", "responses:write", "contacts:read", "contacts:write"]],
       ["integrations_audit", ["webhooks:read", "webhooks:write", "audit:read"]],
+      ["account_setup", ["account:read", "workspaces:write", "organizations:write", "members:write"]],
     ]);
+  });
+
+  test("setup scopes are not respondent data", () => {
+    const group = buildConsentGroups(["account:read", "members:write"]).find(
+      ({ id }) => id === "account_setup"
+    );
+
+    expect(group).toEqual({
+      id: "account_setup",
+      personalData: false,
+      scopes: ["account:read", "members:write"],
+    });
   });
 
   test("offers only requested scopes and flags respondent data", () => {
@@ -53,12 +70,14 @@ describe("buildConsentGroups", () => {
 });
 
 describe("getDefaultSelection", () => {
-  test("starts with configuration ticked and respondent data, webhooks and audit unticked", () => {
+  test("starts with configuration and setup ticked; respondent data, webhooks, audit, organizations and invites unticked", () => {
     expect(getDefaultSelection(MCP_REQUEST)).toEqual([
       "surveys:read",
       "surveys:write",
       "workflows:read",
       "feedbackRecords:read",
+      "account:read",
+      "workspaces:write",
     ]);
   });
 
@@ -83,6 +102,20 @@ describe("toggleScope", () => {
         requested: MCP_REQUEST,
       })
     ).toEqual(["workflows:read"]);
+  });
+
+  test("a write-only setup scope ticks nothing besides itself and unticks on its own", () => {
+    const ticked = toggleScope({
+      selected: [],
+      scope: "members:write",
+      checked: true,
+      requested: MCP_REQUEST,
+    });
+
+    expect(ticked).toEqual(["members:write"]);
+    expect(
+      toggleScope({ selected: ticked, scope: "members:write", checked: false, requested: MCP_REQUEST })
+    ).toEqual([]);
   });
 
   test("does not add a read the client never asked for, nor a scope it did not request", () => {

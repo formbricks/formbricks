@@ -42,7 +42,7 @@ Follow these at every step. They matter more than the step order.
 5. **Idempotent and rerunnable.** This guide can be run again at any time. Before you create anything, check what exists (\`get_account_context\`, \`list_workspaces\`, \`list_surveys\`) and update it instead of duplicating it. Skip every step the account already shows as done.
 6. **Opt-ins are separate asks.** Installing an SDK, inviting teammates and connecting more agents are offered at the end, one at a time. Never start one unprompted.
 7. **Verify with tool results.** After each write, read back what you wrote (the tool result, or \`get_account_context\`, \`list_workspaces\`, \`get_survey\`) and quote ids and states from it. If a call fails, say so and what the error was. Never say something worked without a result that shows it.
-8. **Stay inside what you are allowed.** You cannot create organizations, delete workspaces or change anyone's role. A permission error (403) means the person's role or this connection's permissions do not allow the action. Say that, name the role if you know it, and suggest who can do it. Do not look for a way around it.
+8. **Stay inside what you are allowed.** You can create an organization only when the person asks for one (Step 1). You cannot delete organizations or workspaces or change anyone's role. A permission error (403) means the person's role or this connection's permissions do not allow the action. Say that, name the role if you know it, and suggest who can do it. Do not look for a way around it.
 9. **Be brief and ask little.** One or two questions at a time. Short messages. The person's time is the scarce thing.
 10. **Do not put secrets in the chat.** Nobody needs to paste a password, token or API key to set up an account.
 
@@ -57,7 +57,7 @@ If you do not have it, the server is not connected to this agent (or it was adde
 - Codex: \`codex mcp add formbricks --url ${mcpUrl} --oauth-resource ${mcpUrl}\`, then \`codex mcp login formbricks\`.
 - Cursor: add \`{"mcpServers": {"formbricks": {"url": "${mcpUrl}"}}}\` to the MCP settings.
 
-Their browser opens so they can approve what you may do. Writing needs the permission to edit surveys; reading responses is a separate permission that they may keep off. Ask them to come back and say "done", then start this guide again. Their organization's Connect page at ${baseUrl} shows the same steps.
+Their browser opens so they can approve what you may do. Setting up needs the "Account and setup" permissions (read the account, create workspaces); creating another organization and inviting people are separate permissions they may leave off, and reading responses is a separate permission too. Ask them to come back and say "done", then start this guide again. Their organization's Connect page at ${baseUrl} shows the same steps.
 
 If the server is connected but a tool answers with an authorization error, say which permission is missing and ask the person to reconnect and allow it.
 
@@ -67,6 +67,7 @@ Call \`get_account_context\`. It returns what you can know about the person: who
 
 - If the person belongs to more than one organization, ask which one to set up. Do not guess.
 - If they belong to none, ask them to finish signing up at ${baseUrl} and stop.
+- If the person asked for another organization, follow "The person wants another organization" below instead of choosing a path now.
 
 Then choose a path, and tell the person which one and why in one sentence:
 
@@ -77,6 +78,18 @@ Then choose a path, and tell the person which one and why in one sentence:
 | An owner or manager, and the organization already has a workspace | **C. Returning user** |
 
 If the context does not say how they joined, an owner of an organization with no workspace is a new owner, and anyone else who is not an owner or manager is an invited member.
+
+### The person wants another organization
+
+Use this when they say they want a new or second organization (a different company, client or team that should not share members, workspaces or billing with the one they have). Do not use it to answer "set up my account": for that, choose a path above.
+
+1. Look at \`canCreateOrganization\` in the account context. If it is false, say that this instance does not allow more organizations (it needs the multi-organization licence) and that nothing was changed. Do not look for a way around it. Offer a new workspace in their existing organization instead, if that is what they need.
+2. Ask for the name of the organization. Never invent one and do not reuse an existing name by accident. Show it and wait for a yes (Rule 3).
+3. Call \`create_organization\` with that name. The person becomes its owner. No workspace is created. A 403 means this instance does not allow it or the connection is not signed in as a person; a 429 means they have created too many organizations today. Say which and stop.
+4. Read the result: the new organization id, and the Setup guide pointer. Call \`get_account_context\` and check that the organization is listed with the owner role and no workspace. Quote its id.
+5. Continue with **Path A: New owner** for this new organization, from A1. Do not ask which organization to set up: it is the one you just created. Use only the new organization's id in every later call, and check that no tool call touches the old one.
+
+If the person only wanted the empty organization and does not want to continue, stop after step 4 and tell them the guide can be run again to finish it.
 
 ## Path A: New owner
 
@@ -195,11 +208,11 @@ Then offer the first thing that is missing, or ask what they want to do. If ever
 
 ## What you can and cannot call
 
-Account and workspace: \`get_account_context\`, \`list_workspaces\`, \`create_workspace\`, \`update_workspace\`, \`set_workspace_branding\`, \`update_organization\`, \`invite_member\`.
+Account and workspace: \`get_account_context\`, \`list_workspaces\`, \`create_organization\`, \`create_workspace\`, \`update_workspace\`, \`set_workspace_branding\`, \`update_organization\`, \`invite_member\`.
 Surveys: \`list_surveys\`, \`get_survey\`, \`show_survey\`, \`validate_survey\`, \`create_survey\`, \`patch_survey\`, \`edit_survey_blocks\`, \`set_survey_block_order\`, \`generate_survey\`.
 Responses: \`count_responses\`, \`list_responses\`.
 
-You cannot create organizations, delete workspaces, change roles, or approve access for yourself. Those stay with the person in the web app at ${baseUrl}.
+You can create an organization (\`create_organization\`), but only when the person asks and only where the instance allows it. You cannot delete organizations or workspaces, change roles, or approve access for yourself. Those stay with the person in the web app at ${baseUrl}.
 
 ## Done
 

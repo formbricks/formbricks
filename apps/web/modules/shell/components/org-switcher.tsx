@@ -2,18 +2,24 @@
 
 import { ChevronsUpDownIcon } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 import { cn } from "@/lib/cn";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
+import { CreateOrganizationDialog } from "../organization/components/create-organization-dialog";
 
 interface OrgSwitcherProps {
   organization: { id: string; name: string };
   organizations: { id: string; name: string }[];
   switchLabel: string;
+  /** Shown only when the server says this person may create one (licence or fresh instance). */
+  canCreateOrganization: boolean;
+  createLabel: string;
 }
 
 const OrgInitial = ({ name }: Readonly<{ name: string }>) => (
@@ -24,8 +30,15 @@ const OrgInitial = ({ name }: Readonly<{ name: string }>) => (
   </span>
 );
 
-export const OrgSwitcher = ({ organization, organizations, switchLabel }: Readonly<OrgSwitcherProps>) => {
-  const canSwitch = organizations.length > 1;
+export const OrgSwitcher = ({
+  organization,
+  organizations,
+  switchLabel,
+  canCreateOrganization,
+  createLabel,
+}: Readonly<OrgSwitcherProps>) => {
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const canSwitch = organizations.length > 1 || canCreateOrganization;
 
   const trigger = (
     <button
@@ -45,20 +58,31 @@ export const OrgSwitcher = ({ organization, organizations, switchLabel }: Readon
   if (!canSwitch) return trigger;
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-56">
-        {organizations.map((org) => (
-          <DropdownMenuItem key={org.id} asChild>
-            <Link
-              href={`/organizations/${org.id}`}
-              aria-current={org.id === organization.id ? "true" : undefined}>
-              <OrgInitial name={org.name} />
-              <span className="ml-2 truncate">{org.name}</span>
-            </Link>
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="w-56">
+          {organizations.map((org) => (
+            <DropdownMenuItem key={org.id} asChild>
+              <Link
+                href={`/organizations/${org.id}`}
+                aria-current={org.id === organization.id ? "true" : undefined}>
+                <OrgInitial name={org.name} />
+                <span className="ml-2 truncate">{org.name}</span>
+              </Link>
+            </DropdownMenuItem>
+          ))}
+          {canCreateOrganization && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={() => setIsCreateOpen(true)}>{createLabel}</DropdownMenuItem>
+            </>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+      {canCreateOrganization && (
+        <CreateOrganizationDialog open={isCreateOpen} onOpenChange={setIsCreateOpen} />
+      )}
+    </>
   );
 };

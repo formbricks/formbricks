@@ -72,6 +72,7 @@ const call = (tool: TToolHandler, input: Record<string, unknown>, scopes: string
 
 const WRITE_TOOLS = {
   update_organization: {
+    scope: "organizations:write",
     input: { organizationId, name: SECRET_NAME },
     operation: updateV3Organization,
     resource: "organization",
@@ -80,6 +81,7 @@ const WRITE_TOOLS = {
     data: { id: organizationId, name: SECRET_NAME, updatedAt: "2026-01-01T00:00:00.000Z" },
   },
   create_workspace: {
+    scope: "workspaces:write",
     input: { organizationId, name: SECRET_NAME },
     operation: createV3Workspace,
     resource: "workspace",
@@ -95,6 +97,7 @@ const WRITE_TOOLS = {
     },
   },
   update_workspace: {
+    scope: "workspaces:write",
     input: { workspaceId, name: SECRET_NAME },
     operation: updateV3Workspace,
     resource: "workspace",
@@ -110,6 +113,7 @@ const WRITE_TOOLS = {
     },
   },
   set_workspace_branding: {
+    scope: "workspaces:write",
     input: { workspaceId, brandColor: "#112233" },
     operation: setV3WorkspaceBranding,
     resource: "workspace",
@@ -124,6 +128,7 @@ const WRITE_TOOLS = {
     },
   },
   invite_member: {
+    scope: "members:write",
     input: { organizationId, email: "new@example.com", name: SECRET_NAME, role: "member", confirm: true },
     operation: inviteV3OrganizationMember,
     resource: "invite",
@@ -141,6 +146,8 @@ const WRITE_TOOLS = {
     },
   },
 } as const;
+
+const SETUP_SCOPES = ["account:read", "workspaces:write", "organizations:write", "members:write"] as const;
 
 const accountContext = {
   principal: "user",
@@ -166,6 +173,7 @@ const accountContext = {
     },
   ],
   setup: { organizationCount: 1, workspaceCount: 1, surveyCount: 2, brandingSet: false },
+  canCreateOrganization: true,
 };
 
 describe("registerSetupTools", () => {
@@ -181,12 +189,12 @@ describe("registerSetupTools", () => {
     );
   });
 
-  test("no tool can delete a workspace, change a role or create an organization", () => {
+  test("no tool can delete a workspace or change a role", () => {
     const { tools } = createToolServer();
-    expect([...tools.keys()].filter((name) => /delete|role|create_organization/.test(name))).toEqual([]);
+    expect([...tools.keys()].filter((name) => /delete|role/.test(name))).toEqual([]);
   });
 
-  test("every tool declares an output schema; only the read is read-only, and only it is open to any read scope", () => {
+  test("every tool declares an output schema; only the read is read-only", () => {
     const { tools } = createToolServer();
     for (const [name, { config }] of tools) {
       expect(config.outputSchema, name).toBeDefined();
@@ -196,22 +204,29 @@ describe("registerSetupTools", () => {
   });
 
   describe("get_account_context", () => {
-    test("any resource read scope reaches it, a write-only token does not", async () => {
+    test("account:read reaches it; no other scope does, including every other setup scope and every read", async () => {
       const { tools } = createToolServer();
       vi.mocked(getV3AccountContext).mockResolvedValue(
         successResponse(accountContext, { requestId: "req_tool" })
       );
       const handler = tools.get("get_account_context")!.handler;
 
-      for (const scope of ["surveys:read", "workflows:read", "responses:read", "audit:read"]) {
-        const result = await call(handler, {}, [scope]);
-        expect(result.isError, scope).toBeUndefined();
-      }
+      const allowed = await call(handler, {}, ["account:read"]);
+      expect(allowed.isError).toBeUndefined();
 
-      const refused = await call(handler, {}, ["surveys:write"]);
+      const refused = await call(handler, {}, [
+        "surveys:read",
+        "workflows:read",
+        "responses:read",
+        "audit:read",
+        "surveys:write",
+        "workspaces:write",
+        "organizations:write",
+        "members:write",
+      ]);
       expect(refused.isError).toBe(true);
       expect(refused.structuredContent.error).toMatchObject({ status: 403 });
-      expect(getV3AccountContext).toHaveBeenCalledTimes(4);
+      expect(getV3AccountContext).toHaveBeenCalledTimes(1);
     });
 
     test("structuredContent carries the full context; the text the model reads carries ids and counts only", async () => {
@@ -220,7 +235,7 @@ describe("registerSetupTools", () => {
         successResponse(accountContext, { requestId: "req_tool" })
       );
 
-      const result = await call(tools.get("get_account_context")!.handler, {}, ["surveys:read"]);
+      const result = await call(tools.get("get_account_context")!.handler, {}, ["account:read"]);
 
       expect(result.structuredContent).toEqual({ data: accountContext, requestId: "req_tool" });
       const text = result.content[0].text;
@@ -249,7 +264,7 @@ describe("registerSetupTools", () => {
       const { tools } = createToolServer();
       vi.mocked(getV3AccountContext).mockResolvedValue(problemForbidden("req_tool", "no", "/api/mcp"));
 
-      const result = await call(tools.get("get_account_context")!.handler, {}, ["surveys:read"]);
+      const result = await call(tools.get("get_account_context")!.handler, {}, ["account:read"]);
 
       expect(result.isError).toBe(true);
       expect(result.structuredContent.error).toMatchObject({ status: 403, detail: "no" });
@@ -257,12 +272,19 @@ describe("registerSetupTools", () => {
   });
 
   describe.each(Object.entries(WRITE_TOOLS))("%s", (name, spec) => {
-    test("is refused without surveys:write, before the operation, and the refusal is audited", async () => {
+    test("is refused without its own scope, before the operation, and the refusal is audited", async () => {
       const { tools } = createToolServer();
       const auditLog: { targetId?: string; eventId?: string } = {};
       vi.mocked(buildV3AuditLog).mockReturnValue(auditLog as never);
 
-      const result = await call(tools.get(name)!.handler, { ...spec.input }, ["surveys:read"]);
+      // Everything a setup connection could hold except this tool's own scope, `surveys:write` included:
+      // the round-one gate no longer opens any of them.
+      const others = SETUP_SCOPES.filter((scope) => scope !== spec.scope);
+      const result = await call(tools.get(name)!.handler, { ...spec.input }, [
+        "surveys:read",
+        "surveys:write",
+        ...others,
+      ]);
 
       expect(result.isError).toBe(true);
       expect(result.structuredContent.error).toMatchObject({ status: 403 });
@@ -283,7 +305,7 @@ describe("registerSetupTools", () => {
         successResponse(spec.data, { requestId: "req_tool" })
       );
 
-      const result = await call(tools.get(name)!.handler, { ...spec.input }, ["surveys:write"]);
+      const result = await call(tools.get(name)!.handler, { ...spec.input }, [spec.scope]);
 
       expect(result.isError).toBeUndefined();
       expect(result.structuredContent).toEqual({ data: spec.data, requestId: "req_tool" });
@@ -305,7 +327,7 @@ describe("registerSetupTools", () => {
         successResponse(spec.data, { requestId: "req_tool" })
       );
 
-      const result = await call(tools.get(name)!.handler, { ...spec.input }, ["surveys:write"]);
+      const result = await call(tools.get(name)!.handler, { ...spec.input }, [spec.scope]);
 
       const text = result.content[0].text;
       expect(text).not.toContain(SECRET_NAME);
@@ -321,7 +343,7 @@ describe("registerSetupTools", () => {
         problemForbidden("req_tool", "Only organization owners and managers can do this.", "/api/mcp")
       );
 
-      const result = await call(tools.get(name)!.handler, { ...spec.input }, ["surveys:write"]);
+      const result = await call(tools.get(name)!.handler, { ...spec.input }, [spec.scope]);
 
       expect(result.isError).toBe(true);
       expect(result.structuredContent.error).toMatchObject({
@@ -352,7 +374,7 @@ describe("registerSetupTools", () => {
     const result = await call(
       tools.get("invite_member")!.handler,
       { organizationId, email: "new@example.com", name: "Nora", role: "member" },
-      ["surveys:write"]
+      ["members:write"]
     );
 
     expect(vi.mocked(inviteV3OrganizationMember).mock.calls[0][0].body).toEqual({

@@ -66,6 +66,14 @@ export const getOAuthScopeLabel = (scope: string, t: (key: string) => string): s
       return t("auth.oauth.scopes.webhooks_write");
     case "audit:read":
       return t("auth.oauth.scopes.audit_read");
+    case "account:read":
+      return t("auth.oauth.scopes.account_read");
+    case "workspaces:write":
+      return t("auth.oauth.scopes.workspaces_write");
+    case "organizations:write":
+      return t("auth.oauth.scopes.organizations_write");
+    case "members:write":
+      return t("auth.oauth.scopes.members_write");
     default:
       return scope;
   }

@@ -74,8 +74,15 @@ export const getApiKeyScopes = ({
       "feedbackRecords:read",
       "responses:read",
       "contacts:read",
-      "webhooks:read"
+      "webhooks:read",
+      "account:read"
     );
+
+    // Workspace setup needs `manage`, matching `getMcpScopes`; organization and member scopes are never
+    // derived for a key, because those acts belong to a signed-in person.
+    if (workspacePermissions.some(({ permission }) => permission === "manage")) {
+      scopes.push("workspaces:write");
+    }
 
     if (workspacePermissions.some(({ permission }) => permission === "write" || permission === "manage")) {
       scopes.push(

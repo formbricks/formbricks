@@ -4,7 +4,12 @@ import { type TMcpScopeFamily, parseResourceScope } from "@/modules/shell/connec
 const IDENTITY_SCOPES: readonly string[] = ["openid", "profile", "email"];
 export const OFFLINE_ACCESS_SCOPE = "offline_access";
 
-export type TConsentGroupId = "surveys_workflows" | "feedback" | "respondent_data" | "integrations_audit";
+export type TConsentGroupId =
+  | "surveys_workflows"
+  | "feedback"
+  | "respondent_data"
+  | "integrations_audit"
+  | "account_setup";
 
 interface TConsentGroupDefinition {
   id: TConsentGroupId;
@@ -18,17 +23,27 @@ const CONSENT_GROUPS: readonly TConsentGroupDefinition[] = [
   { id: "feedback", families: ["feedbackRecords"], personalData: false },
   { id: "respondent_data", families: ["responses", "contacts"], personalData: true },
   { id: "integrations_audit", families: ["webhooks", "audit"], personalData: false },
+  // Agent-led setup (ADR 0018): who the person is and the administrative acts of setting an account up.
+  {
+    id: "account_setup",
+    families: ["account", "workspaces", "organizations", "members"],
+    personalData: false,
+  },
 ];
 
 /**
  * What is ticked when the screen opens: configuration the agent builds with, read-only where it holds
- * data. Respondent data, webhooks and the audit log start unticked so each is a deliberate choice.
+ * data, plus what the Setup guide needs to start (the account context and creating or branding a
+ * workspace). Respondent data, webhooks, the audit log, creating or renaming an organization and
+ * inviting people start unticked so each is a deliberate choice.
  */
 const DEFAULT_SCOPES: readonly string[] = [
   "surveys:read",
   "surveys:write",
   "workflows:read",
   "feedbackRecords:read",
+  "account:read",
+  "workspaces:write",
 ];
 
 export interface TConsentGroup {

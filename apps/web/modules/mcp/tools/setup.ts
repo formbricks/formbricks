@@ -38,36 +38,24 @@ const ZMcpWorkspaceBrandingOutput = mcpToolOutput(ZV3WorkspaceBrandingResource);
 const ZMcpInviteMemberOutput = mcpToolOutput(ZV3InviteMemberResource);
 
 /**
- * The account context is the first call of the setup guide, made before the caller knows a workspace, so
- * like `list_workspaces` it admits any resource read scope. It is derived from the caller's own
- * memberships and key grants, so admitting any of them exposes nothing extra.
+ * Setup has dedicated scopes (ADR 0018), each a separate consent choice: `account:read` for the context,
+ * `workspaces:write`, `organizations:write` and `members:write` for the writes. A scope is only the first
+ * gate. Every operation enforces the real role check itself, so a connection holding `organizations:write`
+ * still cannot rename an organization unless its person is an owner or manager.
  */
-const ACCOUNT_CONTEXT_SCOPES: { anyOf: [string, ...string[]] } = {
-  anyOf: [
-    "surveys:read",
-    "workflows:read",
-    "feedbackRecords:read",
-    "responses:read",
-    "contacts:read",
-    "webhooks:read",
-    "audit:read",
-  ],
-};
-
-/**
- * No new OAuth scope (ADR 0018): the writes reuse `surveys:write`, which is only the first gate. Every
- * operation enforces the real role check itself, so a connection that may edit surveys still cannot
- * rename an organization, create a workspace or invite anyone unless its person is an owner or manager.
- */
-const SETUP_WRITE_SCOPES: [string, ...string[]] = ["surveys:write"];
+const ACCOUNT_CONTEXT_SCOPES: [string, ...string[]] = ["account:read"];
+const WORKSPACE_WRITE_SCOPES: [string, ...string[]] = ["workspaces:write"];
+const ORGANIZATION_WRITE_SCOPES: [string, ...string[]] = ["organizations:write"];
+const MEMBER_WRITE_SCOPES: [string, ...string[]] = ["members:write"];
 
 /**
  * Replace the text a client shows the model with one built from ids, counts and fixed words.
  *
  * `structuredContent` keeps the full result, names included, because a name is data the agent was asked to
  * read. The text half goes into the model's context as if the person had said it, and workspace and
- * organization names are written by other people (ADR 0017), so it carries none. An error result, or a
- * body that does not match the shape, is returned untouched.
+ * organization names are written by other people (ADR 0017), so it carries none. An error result is
+ * returned untouched. A body that does not match the shape gets a fixed sentence, never the raw JSON,
+ * which would put those names in front of the model.
  */
 function withIdSummary<TData>(
   result: CallToolResult,
@@ -77,7 +65,9 @@ function withIdSummary<TData>(
   if (result.isError) return result;
   const body = result.structuredContent as { data?: unknown } | undefined;
   const parsed = schema.safeParse(body?.data);
-  if (!parsed.success) return result;
+  if (!parsed.success) {
+    return { ...result, content: [{ type: "text", text: "Done. The result is in structuredContent." }] };
+  }
 
   return { ...result, content: [{ type: "text", text: summarize(parsed.data) }] };
 }
@@ -152,7 +142,7 @@ export function registerSetupTools(server: McpServer): void {
         openWorldHint: false,
       },
     },
-    SETUP_WRITE_SCOPES,
+    ORGANIZATION_WRITE_SCOPES,
     async ({ organizationId, ...body }: TMcpUpdateOrganizationInput, ctx) =>
       withIdSummary(
         await runMcpMutation(
@@ -190,7 +180,7 @@ export function registerSetupTools(server: McpServer): void {
         openWorldHint: false,
       },
     },
-    SETUP_WRITE_SCOPES,
+    WORKSPACE_WRITE_SCOPES,
     async (input: TMcpCreateWorkspaceInput, ctx) =>
       withIdSummary(
         await runMcpMutation(
@@ -227,7 +217,7 @@ export function registerSetupTools(server: McpServer): void {
         openWorldHint: false,
       },
     },
-    SETUP_WRITE_SCOPES,
+    WORKSPACE_WRITE_SCOPES,
     async ({ workspaceId, ...body }: TMcpUpdateWorkspaceInput, ctx) =>
       withIdSummary(
         await runMcpMutation(
@@ -261,7 +251,7 @@ export function registerSetupTools(server: McpServer): void {
       // A replaced logo's stored file is deleted and the previous colours are not returned.
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: true },
     },
-    SETUP_WRITE_SCOPES,
+    WORKSPACE_WRITE_SCOPES,
     async ({ workspaceId, ...body }: TMcpSetWorkspaceBrandingInput, ctx) =>
       withIdSummary(
         await runMcpMutation(
@@ -300,7 +290,7 @@ export function registerSetupTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    SETUP_WRITE_SCOPES,
+    MEMBER_WRITE_SCOPES,
     async ({ organizationId, ...body }: TMcpInviteMemberInput, ctx) =>
       withIdSummary(
         await runMcpMutation(

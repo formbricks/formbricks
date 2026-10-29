@@ -17,6 +17,7 @@ import { registerDocumentTools } from "./tools/documents";
 import { registerFeedbackQueryTools } from "./tools/feedback-queries";
 import { registerFeedbackRecordTools } from "./tools/feedback-records";
 import { registerLifecycleTools } from "./tools/lifecycle";
+import { registerOrganizationTools } from "./tools/organizations";
 import { registerResponseTools } from "./tools/responses";
 import { registerSetupTools } from "./tools/setup";
 import { registerSurveyTools } from "./tools/surveys";
@@ -135,6 +136,7 @@ export const mcpHandler = createMcpHandler((server) => {
   registerWorkflowTools(server);
   registerWorkspaceTools(server);
   registerSetupTools(server);
+  registerOrganizationTools(server);
   registerFeedbackRecordTools(server);
   registerFeedbackQueryTools(server);
   registerResponseTools(server);

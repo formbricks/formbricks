@@ -128,6 +128,14 @@ export const MCP_OAUTH_SCOPES = [
   "webhooks:read",
   "webhooks:write",
   "audit:read",
+  // Agent-led setup (ADR 0018). Account context is read on its own, and each setup write has its own
+  // scope rather than riding on `surveys:write`: creating workspaces, renaming or creating organizations
+  // and inviting people are administrative acts, not survey authoring. Same two-migration rule as the
+  // families above (resource row, then registered clients).
+  "account:read",
+  "workspaces:write",
+  "organizations:write",
+  "members:write",
 ] as const;
 
 /**
@@ -160,6 +168,10 @@ export const MCP_RESOURCE_SCOPES = [
   "webhooks:read",
   "webhooks:write",
   "audit:read",
+  "account:read",
+  "workspaces:write",
+  "organizations:write",
+  "members:write",
 ] as const;
 
 // Scopes advertised in the RFC 9728 protected-resource metadata. MCP clients derive their

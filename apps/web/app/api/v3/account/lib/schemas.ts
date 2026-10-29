@@ -31,6 +31,11 @@ export const ZV3AccountOrganization = z.object({
 /** What an agent can learn about the person it works for. Derived on every call; no stored setup state. */
 export const ZV3AccountContext = z.object({
   principal: z.enum(["user", "apiKey"]),
+  /**
+   * A signed-in person may create another organization here: the multi-organization licence is on, or the
+   * instance has none yet. Always false for an API key. The rule `create_organization` enforces.
+   */
+  canCreateOrganization: z.boolean(),
   user: z.object({ id: z.string(), name: z.string().nullable(), email: z.string().nullable() }).nullable(),
   organizations: z.array(ZV3AccountOrganization),
   setup: z.object({

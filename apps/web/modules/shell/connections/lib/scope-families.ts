@@ -1,6 +1,8 @@
 /**
  * The resource families the MCP server grants access to, in the order every summary lists them.
- * A scope is `<family>:<level>` (`surveys:read`); `audit` only has a read level.
+ * A scope is `<family>:<level>` (`surveys:read`). Not every family has both levels: `audit` and `account`
+ * are read-only, and the setup families (`workspaces`, `organizations`, `members`, ADR 0018) are
+ * write-only, because each is one administrative act rather than a body of data to read.
  */
 export const MCP_SCOPE_FAMILIES = [
   "surveys",
@@ -10,6 +12,10 @@ export const MCP_SCOPE_FAMILIES = [
   "contacts",
   "webhooks",
   "audit",
+  "account",
+  "workspaces",
+  "organizations",
+  "members",
 ] as const;
 
 export type TMcpScopeFamily = (typeof MCP_SCOPE_FAMILIES)[number];
@@ -20,6 +26,15 @@ export interface TParsedResourceScope {
   level: TMcpScopeLevel;
 }
 
+/** The only level a family has, when it has just one. */
+const SINGLE_LEVEL_FAMILIES: Partial<Record<TMcpScopeFamily, TMcpScopeLevel>> = {
+  audit: "read",
+  account: "read",
+  workspaces: "write",
+  organizations: "write",
+  members: "write",
+};
+
 const isFamily = (value: string): value is TMcpScopeFamily =>
   (MCP_SCOPE_FAMILIES as readonly string[]).includes(value);
 
@@ -29,7 +44,8 @@ export const parseResourceScope = (scope: string): TParsedResourceScope | null =
   if (rest.length > 0 || !isFamily(family) || (level !== "read" && level !== "write")) {
     return null;
   }
-  if (family === "audit" && level === "write") {
+  const onlyLevel = SINGLE_LEVEL_FAMILIES[family];
+  if (onlyLevel && onlyLevel !== level) {
     return null;
   }
   return { family, level };
@@ -76,5 +92,13 @@ export const getScopeFamilyLabel = (family: TMcpScopeFamily, t: (key: string) =>
       return t("shell.connections.families.webhooks");
     case "audit":
       return t("shell.connections.families.audit");
+    case "account":
+      return t("shell.connections.families.account");
+    case "workspaces":
+      return t("shell.connections.families.workspaces");
+    case "organizations":
+      return t("shell.connections.families.organizations");
+    case "members":
+      return t("shell.connections.families.members");
   }
 };

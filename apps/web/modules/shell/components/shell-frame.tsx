@@ -30,6 +30,7 @@ export const ShellFrame = async ({
     openMenu: t("shell.nav.open_menu"),
     navigation: t("shell.nav.sections"),
     switchOrganization: t("shell.nav.switch_organization"),
+    createOrganization: t("shell.nav.create_organization"),
   };
 
   return (
@@ -41,6 +42,8 @@ export const ShellFrame = async ({
           organization={{ id: shell.organization.id, name: shell.organization.name }}
           organizations={shell.organizations}
           switchLabel={labels.switchOrganization}
+          canCreateOrganization={shell.canCreateOrganization}
+          createLabel={labels.createOrganization}
         />
         <ShellNavLinks items={items} organizationId={organizationId} ariaLabel={labels.navigation} />
         <div className="mt-auto flex flex-col border-t border-slate-200 pt-2.5 text-sm">
@@ -57,6 +60,7 @@ export const ShellFrame = async ({
           items={items}
           organization={{ id: shell.organization.id, name: shell.organization.name }}
           organizations={shell.organizations}
+          canCreateOrganization={shell.canCreateOrganization}
           user={shell.user}
           labels={labels}
         />

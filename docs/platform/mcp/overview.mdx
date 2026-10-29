@@ -55,6 +55,10 @@ delete require the `:write` scope. Everything below is offered on the consent sc
 | `webhooks:read` | `list_webhooks`, `get_webhook` | Read webhooks: URL, triggers and covered surveys. Signing secrets are never returned |
 | `webhooks:write` | `create_webhook`³, `update_webhook`³, `delete_webhook`, `test_webhook` | Create, change and delete webhooks that send responses to other systems, and send a test delivery |
 | `audit:read` | `list_audit_events` | Read the organization audit trail; organization owners and managers only. An API key needs the organization-level access-control read grant |
+| `account:read` | `get_account_context` | Read who you are, your role in each organization, the organizations and workspaces you can reach, and setup facts such as workspace and survey counts. Also lets the agent list your workspaces |
+| `workspaces:write` | `create_workspace`⁶, `update_workspace`⁶, `set_workspace_branding`⁶ | Create a workspace and change its name, channel, industry, brand colour and logo |
+| `organizations:write` | `create_organization`⁶, `update_organization`⁶ | Create an organization and rename one you manage |
+| `members:write` | `invite_member`⁶ | Invite a person to your organization by email, as a member or manager |
 
 ¹ `test_workflow` is a dry-run (no changes are saved), so it only needs the `workflows:read` scope — but because it evaluates the live workflow definition, it requires **write or manage** permission on the workspace. A read-only member will get a 403 even though the scope matches.
 
@@ -66,14 +70,18 @@ delete require the `:write` scope. Everything below is offered on the consent sc
 
 ⁵ These tools show an interactive view in clients that support MCP Apps (see [Interactive views](#interactive-views)). Everywhere else they return their usual text and JSON. `review_document_change` needs the write scope of the document's kind and its read scope, and never writes anything itself.
 
+⁶ Setup tools. They let an agent set up an account for you, and each needs its own scope, so approving `surveys:write` does not let an agent create workspaces or send invitations. A scope is only the first gate: the call also needs the right role. Creating or changing a workspace, renaming an organization and inviting people need an **organization owner or manager** signed in with OAuth (only an owner may invite a manager); an API key with `manage` on a workspace can change that workspace's name and branding. Creating an organization needs a signed-in person on an instance that allows more than one organization. `invite_member` sends nothing until you have confirmed a preview.
+
 A response is someone's submitted answers, so grant `responses:read` deliberately — it is respondent
 data, which `surveys:read` never exposes. An integration you connected before these scopes existed
 keeps working with the access it already has. If it requests the scopes the server advertises, as MCP
 clients like Claude Code do, it asks you to approve the response scopes the next time it signs in.
 
 Scope groups are independent — a client can be granted feedback-record access without survey access, or
-the other way around. `list_workspaces` is available to any read scope, since every other tool needs a
-workspace id.
+the other way around. `list_workspaces` is available to any read scope and to `account:read`, since every
+other tool needs a workspace id. On the consent screen `account:read` and `workspaces:write` start ticked;
+`organizations:write` and `members:write` start unticked, so creating organizations and sending invitations is
+always a deliberate choice.
 
 <Note>
   The feedback-record tools work with **Unify Feedback** data and need the Enterprise Edition

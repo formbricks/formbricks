@@ -28,6 +28,26 @@ describe("parseResourceScope", () => {
   });
 });
 
+describe("the setup families (ADR 0018)", () => {
+  test("account is read-only and workspaces, organizations and members are write-only", () => {
+    expect(parseResourceScope("account:read")).toEqual({ family: "account", level: "read" });
+    expect(parseResourceScope("account:write")).toBeNull();
+    for (const family of ["workspaces", "organizations", "members"]) {
+      expect(parseResourceScope(`${family}:write`)).toEqual({ family, level: "write" });
+      expect(parseResourceScope(`${family}:read`)).toBeNull();
+    }
+  });
+
+  test("they summarize as read access for the account and change access for the rest", () => {
+    expect(
+      summarizeScopes(["account:read", "workspaces:write", "members:write", "organizations:write"])
+    ).toEqual({
+      write: ["workspaces", "organizations", "members"],
+      readOnly: ["account"],
+    });
+  });
+});
+
 describe("summarizeScopes", () => {
   test("write wins over read and families come back in display order", () => {
     expect(

@@ -79,14 +79,17 @@
       "redirect_host": "Redirect host",
       "revoke": "Revoke",
       "scopes": {
+        "account_read": "Read your account details, your role in each organization and your setup status",
         "audit_read": "Read the organization audit log",
         "contacts_read": "Read contacts and segments, including their attributes",
         "contacts_write": "Create, update, and delete contacts and segments",
         "email": "View your email address",
         "feedback_records_read": "Read feedback records",
         "feedback_records_write": "Create, update, and delete feedback records",
+        "members_write": "Invite people to your organization by email",
         "offline_access": "Keep access with refresh tokens",
         "openid": "Identify you with OpenID Connect",
+        "organizations_write": "Create organizations and rename the ones you manage",
         "profile": "View your profile",
         "responses_read": "Read survey responses, including respondents' answers",
         "responses_write": "Create, update, and delete survey responses",
@@ -95,7 +98,8 @@
         "webhooks_read": "Read webhooks",
         "webhooks_write": "Create, update, and delete webhooks",
         "workflows_read": "Read workflows",
-        "workflows_write": "Create, update, and delete workflows"
+        "workflows_write": "Create, update, and delete workflows",
+        "workspaces_write": "Create workspaces and change their name, channel and branding"
       },
       "unknown_client": "Unknown client"
     },
@@ -446,6 +450,8 @@
       "cursor_hint": "Cursor opens your browser so you can approve access.",
       "cursor_label": "Add this to your Cursor MCP settings",
       "lead": "Formbricks has no survey editor. Your agent builds surveys, reads responses and runs analysis through the Formbricks MCP server. You choose what it may do, and you can revoke it at any time.",
+      "new_organization_description": "Paste the setup prompt below into your agent. It creates the first workspace and walks you through a first survey.",
+      "new_organization_title": "Your new organization has no workspace yet",
       "none_description": "Add the server to your agent, then approve access in your browser. It takes about a minute.",
       "none_title": "No agent connected yet",
       "part_connect_more_title": "Connect another agent",
@@ -507,13 +513,17 @@
       "empty_description": "Connect an agent to see it here, or create an API key for a script.",
       "empty_title": "No agents connected",
       "families": {
+        "account": "Account details",
         "audit": "Audit log",
         "contacts": "Contacts",
         "feedback_records": "Feedback records",
+        "members": "Member invites",
+        "organizations": "Organizations",
         "responses": "Responses",
         "surveys": "Surveys",
         "webhooks": "Webhooks",
-        "workflows": "Workflows"
+        "workflows": "Workflows",
+        "workspaces": "Workspaces"
       },
       "info_description": "An OAuth connection can never do more than the person who approved it. An API key can never do more than the workspaces and permissions you gave it.",
       "info_title": "Agents act within what you grant",
@@ -543,6 +553,7 @@
       "choose_title": "Choose what it may do",
       "footer": "You can revoke this access at any time under Agent connections.",
       "groups": {
+        "account_setup": "Account and setup",
         "feedback": "Feedback",
         "integrations_audit": "Integrations and audit",
         "respondent_data": "Respondent data",
@@ -556,9 +567,16 @@
       "title": "Allow {clientName} to access Formbricks?",
       "write_expiry": "Access with write permissions expires after 15 minutes."
     },
+    "create_organization": {
+      "description": "An organization keeps its own members, workspaces and billing. You become its owner. Your agent then sets it up with you.",
+      "error_fallback": "The organization could not be created. Try again.",
+      "name": "Organization name",
+      "title": "Create organization"
+    },
     "nav": {
       "connect": "Connect your agent",
       "connections": "Agent connections",
+      "create_organization": "Create organization",
       "open_menu": "Open menu",
       "primary": "Primary",
       "sections": "Sections",

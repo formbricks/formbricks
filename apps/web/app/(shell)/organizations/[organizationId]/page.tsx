@@ -7,10 +7,12 @@ import { getMcpResourceUrl } from "@/modules/auth/lib/oauth-urls";
 import { ShellPage, ShellPageHeader } from "@/modules/shell/components/shell-page";
 import { AgentConnectTabs } from "@/modules/shell/connect/components/agent-connect-tabs";
 import {
+  type TConnectNotice,
   type TConnectSection,
   type TConnectSectionId,
   getConnectLayout,
 } from "@/modules/shell/connect/lib/connect-layout";
+import { countOrganizationWorkspaces } from "@/modules/shell/connect/lib/organization-workspace-count";
 import { canManageApiKeys, countAgentConnections } from "@/modules/shell/connections/lib/load-connections";
 import { getShellData } from "@/modules/shell/lib/shell-data";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
@@ -36,15 +38,16 @@ const ConnectAgentPage = async ({ params }: Readonly<{ params: Promise<{ organiz
     return redirect(`/organizations/${organizationId}/billing`);
   }
 
-  const [t, connectionCount, mayCreateApiKey] = await Promise.all([
+  const [t, connectionCount, workspaceCount, mayCreateApiKey] = await Promise.all([
     getTranslate(),
     countAgentConnections(organizationId, shell.user.id),
+    countOrganizationWorkspaces(organizationId),
     canManageApiKeys(shell.user.id, organizationId),
   ]);
   const serverUrl = getMcpResourceUrl();
   const setupPrompt = t("shell.connect.setup_prompt", { url: getSetupGuideUrl() });
   const connectionsHref = `/organizations/${organizationId}/connections`;
-  const layout = getConnectLayout(connectionCount);
+  const layout = getConnectLayout(connectionCount, workspaceCount);
 
   const stepPrefix = (step: number | null) => (step ? `${step}. ` : "");
 
@@ -103,24 +106,35 @@ const ConnectAgentPage = async ({ params }: Readonly<{ params: Promise<{ organiz
     ),
   };
 
+  const notices: Record<TConnectNotice, React.ReactNode> = {
+    new_organization: (
+      <Alert variant="info" role="status">
+        <AlertTitle>{t("shell.connect.new_organization_title")}</AlertTitle>
+        <AlertDescription>{t("shell.connect.new_organization_description")}</AlertDescription>
+      </Alert>
+    ),
+    agent_connected: (
+      <Alert variant="default" role="status">
+        <AlertTitle>{t("shell.connect.some_title")}</AlertTitle>
+        <AlertDescription>{t("shell.connect.some_description")}</AlertDescription>
+        <AlertButton asChild>
+          <Link href={connectionsHref}>{t("shell.connect.some_cta")}</Link>
+        </AlertButton>
+      </Alert>
+    ),
+    no_agent: (
+      <Alert variant="info" role="status">
+        <AlertTitle>{t("shell.connect.none_title")}</AlertTitle>
+        <AlertDescription>{t("shell.connect.none_description")}</AlertDescription>
+      </Alert>
+    ),
+  };
+
   return (
     <ShellPage>
       <ShellPageHeader title={t("shell.connect.title")} lead={t("shell.connect.lead")} />
 
-      {layout.hasAgent ? (
-        <Alert variant="default" role="status">
-          <AlertTitle>{t("shell.connect.some_title")}</AlertTitle>
-          <AlertDescription>{t("shell.connect.some_description")}</AlertDescription>
-          <AlertButton asChild>
-            <Link href={connectionsHref}>{t("shell.connect.some_cta")}</Link>
-          </AlertButton>
-        </Alert>
-      ) : (
-        <Alert variant="info" role="status">
-          <AlertTitle>{t("shell.connect.none_title")}</AlertTitle>
-          <AlertDescription>{t("shell.connect.none_description")}</AlertDescription>
-        </Alert>
-      )}
+      {notices[layout.notice]}
 
       {layout.sections.map((section) => sections[section.id](section))}
 

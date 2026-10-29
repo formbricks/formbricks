@@ -9,6 +9,7 @@ const urls = { baseUrl: "https://app.example.com", mcpUrl: "https://app.example.
 /** The tools ADR 0018 adds. The registry test below fails if the guide names one the server does not register. */
 const SETUP_TOOLS = [
   "get_account_context",
+  "create_organization",
   "update_organization",
   "create_workspace",
   "update_workspace",
@@ -84,7 +85,26 @@ describe("getSetupGuide", () => {
     }
   });
 
-  test("names the six setup tools", () => {
+  test("has a route for a person who wants another organization, ending in the new-owner path", () => {
+    const section = guide.slice(
+      guide.indexOf("### The person wants another organization"),
+      guide.indexOf("## Path A")
+    );
+
+    expect(section).toContain("create_organization");
+    expect(section).toContain("canCreateOrganization");
+    expect(section).toMatch(/Path A: New owner/);
+    expect(section.indexOf("create_organization")).toBeLessThan(section.indexOf("Path A: New owner"));
+    // Step 1 points at it before any path is chosen.
+    expect(guide.indexOf("## Step 1")).toBeLessThan(guide.indexOf("wants another organization"));
+  });
+
+  test("no longer says organizations cannot be created", () => {
+    expect(guide).not.toMatch(/cannot create organizations/);
+    expect(guide).toMatch(/only when the person asks/);
+  });
+
+  test("names the seven setup tools", () => {
     const named = new Set(toolNamesIn(guide));
     for (const tool of SETUP_TOOLS) expect(named.has(tool), tool).toBe(true);
   });

@@ -37,6 +37,8 @@ const getGroupTitle = (id: TConsentGroupId, t: (key: string) => string): string 
       return t("shell.consent.groups.respondent_data");
     case "integrations_audit":
       return t("shell.consent.groups.integrations_audit");
+    case "account_setup":
+      return t("shell.consent.groups.account_setup");
   }
 };
 

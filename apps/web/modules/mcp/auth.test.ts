@@ -288,6 +288,7 @@ describe("authenticateMcpRequest", () => {
           "contacts:write",
           "webhooks:read",
           "webhooks:write",
+          "account:read",
           // The fixture key carries organization access-control read access.
           "audit:read",
         ].sort()
@@ -320,11 +321,33 @@ describe("authenticateMcpRequest", () => {
           "responses:read",
           "contacts:read",
           "webhooks:read",
+          "account:read",
           // The fixture key carries organization access-control read access.
           "audit:read",
         ].sort()
       );
     }
+  });
+
+  test("grants workspaces:write only to an API key with manage access, and never the organization or member scopes", async () => {
+    const scopesFor = async (permission: ApiKeyPermission) => {
+      vi.mocked(authenticateApiKeyFromHeaders).mockResolvedValue({
+        ...apiKeyAuth,
+        workspacePermissions: [{ workspaceId: "workspace_1", workspaceName: "Workspace", permission }],
+      });
+      const result = await authenticateMcpRequest(
+        createRequest("http://localhost/api/mcp", { "x-api-key": "fbk_test" })
+      );
+      return result.ok ? result.authInfo.scopes : [];
+    };
+
+    expect(await scopesFor(ApiKeyPermission.read)).not.toContain("workspaces:write");
+    expect(await scopesFor(ApiKeyPermission.write)).not.toContain("workspaces:write");
+    const manage = await scopesFor(ApiKeyPermission.manage);
+    expect(manage).toContain("workspaces:write");
+    expect(manage).toContain("account:read");
+    expect(manage).not.toContain("organizations:write");
+    expect(manage).not.toContain("members:write");
   });
 
   test("grants audit:read only to an API key with organization access-control read access", async () => {
@@ -481,7 +504,7 @@ describe("authenticateMcpRequest", () => {
       // added, the baseline auth gate has been widened and MCP is accepting a token that grants no
       // resource access.
       expect(result.response.headers.get("WWW-Authenticate")).toContain(
-        'scope="surveys:read surveys:write workflows:read workflows:write feedbackRecords:read feedbackRecords:write responses:read responses:write contacts:read contacts:write webhooks:read webhooks:write audit:read"'
+        'scope="surveys:read surveys:write workflows:read workflows:write feedbackRecords:read feedbackRecords:write responses:read responses:write contacts:read contacts:write webhooks:read webhooks:write audit:read account:read workspaces:write organizations:write members:write"'
       );
     }
     expect(applyRateLimit).not.toHaveBeenCalled();
