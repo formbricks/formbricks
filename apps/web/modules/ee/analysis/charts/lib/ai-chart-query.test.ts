@@ -51,6 +51,10 @@ describe("generateAIChartQuery", () => {
     mocks.getEmbeddedChartFields.mockResolvedValue([]);
   });
 
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   describe("Embedded Data fields (ENG-2848)", () => {
     const brand = {
       id: "FeedbackRecords.ed_0123456789abcdef",
@@ -107,10 +111,6 @@ describe("generateAIChartQuery", () => {
 
       await expect(generateAIChartQuery(input)).resolves.toMatchObject({ chartType: "big_number" });
     });
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
   });
 
   test.each([1, 3])("generates a chart with timeout multiplier %i", async (multiplier) => {
