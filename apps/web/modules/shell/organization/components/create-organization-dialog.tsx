@@ -1,5 +1,6 @@
 "use client";
 
+import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -34,30 +35,29 @@ export const CreateOrganizationDialog = ({ open, onOpenChange }: Readonly<Create
   const { t } = useTranslation();
   const router = useRouter();
   const [name, setName] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const mutation = useMutation({
+    mutationFn: createOrganization,
+    // The mutation stays pending until the new page replaces this one, so the form cannot be resubmitted.
+    onSuccess: (organization) => router.push(getNewOrganizationPath(organization.id)),
+  });
+  const isSubmitting = mutation.isPending || mutation.isSuccess;
+  const error = mutation.isError
+    ? getCreateOrganizationErrorMessage(mutation.error, t("shell.create_organization.error_fallback"))
+    : null;
 
   const handleOpenChange = (next: boolean) => {
     if (isSubmitting) return;
     onOpenChange(next);
     if (!next) {
       setName("");
-      setError(null);
+      mutation.reset();
     }
   };
 
-  const handleSubmit = async (event: React.FormEvent) => {
+  const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    setError(null);
-    setIsSubmitting(true);
-    try {
-      const organization = await createOrganization(name);
-      // Stay in the loading state until the new page replaces this one.
-      router.push(getNewOrganizationPath(organization.id));
-    } catch (caught) {
-      setError(getCreateOrganizationErrorMessage(caught, t("shell.create_organization.error_fallback")));
-      setIsSubmitting(false);
-    }
+    mutation.mutate(name);
   };
 
   return (

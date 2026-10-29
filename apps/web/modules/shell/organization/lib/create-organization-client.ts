@@ -6,9 +6,8 @@ import { V3ApiError, getV3ApiErrorMessage, parseV3ApiError } from "@/modules/api
  * same operation the `create_organization` tool runs, so the licence, rate limit and owner rules are the
  * server's and nothing here repeats them. The v3 routes accept the browser session cookie.
  *
- * The page keeps its own pending state around this call: TanStack Query is not a dependency of this app
- * yet, and this is its only caller. It is written as a plain `mutationFn` (a name in, an organization or a
- * thrown `V3ApiError` out), so wrapping it in `useMutation` later is a call-site change.
+ * It is the `mutationFn` of the dialog's `useMutation` (a name in, an organization or a thrown `V3ApiError`
+ * out), so pending and error state come from the query cache, not from component state.
  */
 
 const ZCreatedOrganization = z.object({ data: z.object({ id: z.string().min(1), name: z.string() }) });

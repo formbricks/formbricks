@@ -1,5 +1,6 @@
 import { getUser } from "@/lib/user/service";
 import { getSession } from "@/modules/auth/lib/session";
+import { ShellQueryProvider } from "@/modules/shell/components/shell-query-provider";
 import { ClientLogout } from "@/modules/ui/components/client-logout";
 import { ToasterClient } from "@/modules/ui/components/toaster-client";
 
@@ -15,10 +16,10 @@ const ShellRootLayout = async ({ children }: Readonly<{ children: React.ReactNod
   }
 
   return (
-    <>
+    <ShellQueryProvider>
       <ToasterClient />
       {children}
-    </>
+    </ShellQueryProvider>
   );
 };
 
