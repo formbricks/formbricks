@@ -64,7 +64,7 @@ const ZFilterOperator = z.enum([
 ]);
 const VALUELESS_FILTER_OPERATORS = new Set<z.infer<typeof ZFilterOperator>>(["set", "notSet"]);
 
-const buildFilterSchema = (ZFilterMemberId: z.ZodEnum) =>
+const buildFilterSchema = (ZFilterMemberId: z.ZodType<string>) =>
   z
     .object({
       member: ZFilterMemberId,

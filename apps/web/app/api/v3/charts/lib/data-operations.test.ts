@@ -8,7 +8,7 @@ import { problemForbidden } from "@/app/api/v3/lib/response";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { acquireInFlightSlot, releaseInFlightSlot } from "@/modules/core/rate-limit/in-flight";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
-import { CubeQueryError } from "@/modules/ee/analysis/api/lib/cube-client";
+import { CubeQueryError, UnknownEmbeddedFieldError } from "@/modules/ee/analysis/api/lib/cube-client";
 import { REQUESTED_DATE_RANGE_REASON } from "@/modules/ee/analysis/lib/chart-query-validator";
 import { runChartQuery } from "@/modules/ee/analysis/lib/run-chart-query";
 import { loadAuthorizedChart } from "./access";
@@ -171,6 +171,36 @@ describe("chart queries within budget", () => {
         expect.objectContaining({ name: "query.timeDimensions[0].dateRange", code: "limit_exceeded" }),
       ]);
       expect(runChartQuery).not.toHaveBeenCalled();
+    });
+
+    test("returns the Embedded Data labels the run attached (ENG-2848)", async () => {
+      const member = "FeedbackRecords.ed_0123456789abcdef";
+      vi.mocked(runChartQuery).mockImplementationOnce(async ({ query }) => ({
+        rows: [{ [member]: "Nordic", "FeedbackRecords.count": 3 }],
+        memberLabels: { [member]: "brand" },
+        effectiveQuery: query,
+      }));
+
+      const response = await preview({
+        query: { measures: ["FeedbackRecords.count"], dimensions: [member] },
+      });
+
+      expect(response.status).toBe(200);
+      const { data } = (await response.json()) as { data: unknown };
+      expect(ZV3ChartData.parse(data).memberLabels).toEqual({ [member]: "brand" });
+    });
+
+    test("answers 422 naming the query when it uses an Embedded Data field the dataset dropped (ENG-2848)", async () => {
+      vi.mocked(runChartQuery).mockRejectedValueOnce(new UnknownEmbeddedFieldError());
+
+      const response = await preview({
+        query: { measures: ["FeedbackRecords.count"], dimensions: ["FeedbackRecords.ed_0123456789abcdef"] },
+      });
+
+      expect(response.status).toBe(422);
+      expect((await problemOf(response)).invalid_params).toEqual([
+        expect.objectContaining({ name: "query", code: "invalid_reference" }),
+      ]);
     });
 
     test("holds no slot for a query the validator refuses", async () => {
