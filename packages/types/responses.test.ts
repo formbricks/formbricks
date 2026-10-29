@@ -229,8 +229,24 @@ describe("response input caps", () => {
     expect(issues[0].path).toEqual(path);
   });
 
-  test.each(["variables", "ttc"])("rejects %s past the key cap in a single issue", (field) => {
-    const issues = issuesOf(create({ [field]: keyed(100_000, () => "not a number or string") }));
+  test("rejects data one entry past the budget, with every key and array within its own cap", () => {
+    const perKey = (MAX_RESPONSE_DATA_ENTRIES - MAX_RESPONSE_DATA_KEYS) / MAX_RESPONSE_DATA_KEYS;
+    const data: Record<string, unknown> = keyed(MAX_RESPONSE_DATA_KEYS, () => strings(perKey));
+    (data.k0 as string[]).push("one-too-many");
+
+    const issues = issuesOf(create({ data }));
+
+    expect(issues).toHaveLength(1);
+    expect(issues[0].path).toEqual(["data"]);
+  });
+
+  test.each([
+    ["variables", MAX_RESPONSE_DATA_KEYS + 1],
+    ["variables", 100_000],
+    ["ttc", MAX_RESPONSE_DATA_KEYS + 1],
+    ["ttc", 100_000],
+  ])("rejects %s with %i keys in a single issue", (field, count) => {
+    const issues = issuesOf(create({ [field]: keyed(count, () => "not a number or string") }));
 
     expect(issues).toHaveLength(1);
     expect(issues[0].path).toEqual([field]);
