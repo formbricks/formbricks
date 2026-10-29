@@ -118,10 +118,11 @@ export const getChoiceIdByValue = (
     return element.choices.find((choice) => choice.imageUrl === value)?.id ?? "other";
   }
 
-  // Same lookup as extractChoiceIdsFromResponse: response language first, then any translation
+  // Response language first, then the default label (stored when a choice has no translation).
+  // No cross-language fallback: free text that happens to equal another language's label stays "other".
   const match =
     element.choices.find((choice) => choice.label[language] === value) ??
-    element.choices.find((choice) => Object.values(choice.label).includes(value));
+    element.choices.find((choice) => choice.label.default === value);
 
   return match?.id ?? "other";
 };

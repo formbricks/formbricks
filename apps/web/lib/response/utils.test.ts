@@ -82,8 +82,24 @@ describe("Response Utils", () => {
       expect(getChoiceIdByValue("Alpha-DE", element, "de")).toBe("alpha");
     });
 
-    test("matches a translated label without a language", () => {
-      expect(getChoiceIdByValue("Nein", element)).toBe("no");
+    test("prefers the response-language label over an earlier choice's default label", () => {
+      const clash = {
+        ...element,
+        choices: [
+          { id: "first", label: { default: "Nein", de: "Erste" } },
+          { id: "second", label: { default: "Second", de: "Nein" } },
+        ],
+      };
+      expect(getChoiceIdByValue("Nein", clash, "de")).toBe("second");
+    });
+
+    test("falls back to the default label when the choice has no translation", () => {
+      const untranslated = { ...element, choices: [{ id: "c", label: { default: "Maybe" } }] };
+      expect(getChoiceIdByValue("Maybe", untranslated, "de")).toBe("c");
+    });
+
+    test("does not match other languages' labels as free text", () => {
+      expect(getChoiceIdByValue("Nein", element)).toBe("other");
     });
 
     test("falls back to other for free text", () => {
