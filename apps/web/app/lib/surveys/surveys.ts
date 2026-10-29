@@ -310,12 +310,13 @@ export const generateElementAndFilterOptions = ({
   t,
 }: {
   survey: TSurvey;
-  environmentTags: TTag[] | undefined;
+  /** Only the id (what a rule names) and the name (what it shows) are read. */
+  environmentTags: Pick<TTag, "id" | "name">[] | undefined;
   attributes: TSurveyContactAttributes;
   reservedValues: TSurveyMetaFieldFilter;
   hiddenFields: TResponseHiddenFieldsFilter;
   variableValues: TSurveyMetaFieldFilter;
-  quotas: TSurveyQuota[];
+  quotas: Pick<TSurveyQuota, "id" | "name">[];
   t: TFunction;
 }): {
   elementOptions: ElementOptions[];
