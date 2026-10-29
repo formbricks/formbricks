@@ -1,0 +1,30 @@
+type: object
+additionalProperties: false
+minProperties: 1
+description: A partial update. At least one field is required; omitted fields are left as they are.
+properties:
+  name:
+    type: string
+    minLength: 1
+    maxLength: 255
+    description: New workspace name, unique within the organization. Surrounding whitespace is trimmed.
+  channel:
+    type:
+      - string
+      - "null"
+    enum:
+      - link
+      - app
+      - website
+      - null
+    description: Main way the workspace collects feedback. `null` clears it.
+  industry:
+    type:
+      - string
+      - "null"
+    enum:
+      - eCommerce
+      - saas
+      - other
+      - null
+    description: Kind of product. `null` clears it.

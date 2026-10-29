@@ -1,0 +1,14 @@
+type: object
+required:
+  - id
+  - name
+  - updatedAt
+properties:
+  id:
+    type: string
+    format: cuid2
+  name:
+    type: string
+  updatedAt:
+    type: string
+    format: date-time

@@ -1,0 +1,93 @@
+post:
+  operationId: createOrganizationV3
+  summary: Create an organization
+  description: |
+    Creates an organization the signed-in person owns. **No workspace is created**: the response carries
+    `setupGuideUrl` and `nextStep`, which point an agent at the Setup guide's new-owner path for this
+    organization, where the first workspace is created.
+
+    Session cookie only. An organization belongs to a person, and an API key has no one to make the
+    owner, so a request with only an API key is **401**.
+
+    A fresh instance (no organization yet) may always create the first one. After that, creating
+    another needs the multi-organization licence; without it the answer is **403**. `GET
+    /api/v3/account/context` reports the same rule as `canCreateOrganization`. Creating is rate limited
+    per person, because every organization starts with fresh per-organization budgets; beyond the
+    limit the answer is **429** with `Retry-After`.
+  tags:
+    - V3 Organizations
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/CreateOrganizationRequest.yml
+        examples:
+          basic:
+            summary: Create an organization
+            value:
+              name: Acme
+  responses:
+    "201":
+      description: Organization created
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Location:
+          schema:
+            type: string
+          description: >-
+            Path of the new organization, `/api/v3/organizations/{organizationId}`. The resource accepts
+            `PATCH`; there is no `GET` for it, read it through `GET /api/v3/account/context`.
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/OrganizationCreatedResource.yml
+          example:
+            data:
+              id: clor1234567890123456789012
+              name: Acme
+              role: owner
+              workspaceCount: 0
+              setupGuideUrl: https://app.formbricks.com/agents/setup.md
+              nextStep: >-
+                The organization has no workspace yet. Follow the Setup guide's new-owner path (Path A) for
+                this organization: interview the person, then create the first workspace.
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3UnauthorizedSession.yml
+    "403":
+      description: >-
+        Forbidden — the instance is limited to one organization and already has it, because the
+        multi-organization licence is not enabled (`code: forbidden`).
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []

@@ -1,0 +1,53 @@
+type: object
+required:
+  - id
+  - name
+  - role
+  - joinedAs
+  - canManage
+  - canCreateWorkspace
+  - pendingInviteCount
+  - workspaces
+properties:
+  id:
+    type: string
+  name:
+    type: string
+  role:
+    type:
+      - string
+      - "null"
+    enum:
+      - owner
+      - manager
+      - member
+      - billing
+      - null
+    description: The caller's organization role. `null` for an API key, which has grants but no role.
+  joinedAs:
+    type:
+      - string
+      - "null"
+    enum:
+      - owner
+      - invited
+      - null
+    description: >-
+      Derived from the role alone: an owner set the organization up, everyone else was invited into it.
+      `null` for an API key.
+  canManage:
+    type: boolean
+    description: The caller is an owner or manager of this organization.
+  canCreateWorkspace:
+    type: boolean
+    description: The caller is an owner or manager and the plan's workspace limit is not yet reached.
+  pendingInviteCount:
+    type:
+      - integer
+      - "null"
+    minimum: 0
+    description: Pending invites. Only counted for an owner or manager, `null` otherwise.
+  workspaces:
+    type: array
+    items:
+      $ref: AccountWorkspace.yml

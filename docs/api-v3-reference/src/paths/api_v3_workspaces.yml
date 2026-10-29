@@ -1,0 +1,108 @@
+post:
+  operationId: createWorkspaceV3
+  summary: Create a workspace
+  description: |
+    Creates a workspace in an organization the caller owns or manages, optionally with its channel and
+    industry. Branding has its own operation, `PUT /api/v3/workspaces/{workspaceId}/branding`.
+
+    Requires an **organization owner or manager**, signed in as themselves. Session cookie only: creating
+    a workspace is an organization-level change, and an API key is bound to workspace grants rather than
+    to a person with an organization role, so a request with only an API key is **401**. Someone who is
+    not an owner or manager of the organization, or who cannot see it, gets the same **403**.
+
+    The plan's workspace limit is enforced exactly as in the app: an organization at its limit answers
+    **403** (the limit is checked again under a lock, so a burst of parallel creates cannot exceed it).
+    A name already used by another workspace in the organization is **409**.
+  tags:
+    - V3 Workspaces
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/CreateWorkspaceRequest.yml
+        examples:
+          basic:
+            summary: Create a workspace for link surveys
+            value:
+              organizationId: clor1234567890123456789012
+              name: Acme Feedback
+              channel: link
+              industry: saas
+  responses:
+    "201":
+      description: Workspace created
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Location:
+          schema:
+            type: string
+          description: Path of the new workspace, `/api/v3/workspaces/{workspaceId}`. The resource accepts `PATCH`.
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/WorkspaceSetupResource.yml
+          example:
+            data:
+              id: clws1234567890123456789012
+              name: Acme Feedback
+              organizationId: clor1234567890123456789012
+              channel: link
+              industry: saas
+              updatedAt: "2026-10-29T09:30:00.000Z"
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3UnauthorizedSession.yml
+    "403":
+      description: >-
+        Forbidden — the caller is not an owner or manager of the organization, or cannot see it, or the
+        organization has reached the workspace limit of its plan (`code: forbidden`; 404 is not used, to
+        avoid an existence leak).
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "409":
+      description: >-
+        Conflict — a workspace with this name already exists in the organization (`code: conflict`).
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []

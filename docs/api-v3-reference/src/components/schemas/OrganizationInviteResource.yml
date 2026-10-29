@@ -1,0 +1,39 @@
+type: object
+description: >-
+  The outcome of an invite request. `status: preview` means every check passed and nothing was sent;
+  `status: invited` means the invite was stored (`inviteId`) and an email was attempted (`emailSent`).
+required:
+  - status
+  - organizationId
+  - email
+  - name
+  - role
+  - message
+properties:
+  status:
+    type: string
+    enum:
+      - preview
+      - invited
+  organizationId:
+    type: string
+    format: cuid2
+  email:
+    type: string
+  name:
+    type: string
+  role:
+    type: string
+    enum:
+      - member
+      - manager
+  inviteId:
+    type: string
+    description: Present only when `status` is `invited`.
+  emailSent:
+    type: boolean
+    description: >-
+      Present only when `status` is `invited`. `false` means the invite exists but the email could not be
+      sent; do not retry the call, the invite can be resent.
+  message:
+    type: string

@@ -1,0 +1,79 @@
+patch:
+  operationId: updateOrganizationV3
+  summary: Rename an organization
+  description: |
+    Renames an organization. The display name is the only thing this changes. Sending the current name
+    is a successful no-op: nothing is written and nothing is audited.
+
+    Requires an **organization owner or manager**, signed in as themselves. Session cookie only: an API
+    key has workspace grants, not an organization role, so a request with only an API key is **401**.
+    Someone who is not an owner or manager of the organization, or who cannot see it, gets the same
+    **403**, so the answer does not reveal whether the organization exists.
+  tags:
+    - V3 Organizations
+  parameters:
+    - $ref: ../components/parameters/OrganizationIdPath.yml
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/UpdateOrganizationRequest.yml
+        examples:
+          rename:
+            summary: Rename the organization
+            value:
+              name: Acme Inc.
+  responses:
+    "200":
+      description: Organization renamed (or unchanged)
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/OrganizationResource.yml
+          example:
+            data:
+              id: clor1234567890123456789012
+              name: Acme Inc.
+              updatedAt: "2026-10-29T09:30:00.000Z"
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3UnauthorizedSession.yml
+    "403":
+      description: >-
+        Forbidden — the caller is not an owner or manager of the organization, or cannot see it
+        (`code: forbidden`; 404 is not used, to avoid an existence leak).
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []

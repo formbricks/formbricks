@@ -1,0 +1,109 @@
+patch:
+  operationId: updateWorkspaceV3
+  summary: Update a workspace
+  description: |
+    Renames a workspace and sets its channel or industry. A partial update: only the fields sent are
+    written, at least one is required, and `null` clears a channel or industry. Sending values the
+    workspace already has is a successful no-op that writes and audits nothing. Branding has its own
+    operation, `PUT /api/v3/workspaces/{workspaceId}/branding`.
+
+    Workspace setup shapes every survey in the workspace, so it is narrower than writing a survey:
+    **organization owners and managers** for signed-in users, and a **`manage`** grant on this workspace
+    for API keys; a Read & write grant is refused with **403**. Session cookie or `x-api-key`. A
+    workspace the caller cannot reach answers **403**, like every other workspace-scoped operation.
+    A name already used by another workspace in the organization is **409**.
+  tags:
+    - V3 Workspaces
+  parameters:
+    - $ref: ../components/parameters/WorkspaceIdPath.yml
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/UpdateWorkspaceRequest.yml
+        examples:
+          channel:
+            summary: Set the channel and industry
+            value:
+              channel: link
+              industry: saas
+          rename:
+            summary: Rename the workspace
+            value:
+              name: Acme Product Feedback
+  responses:
+    "200":
+      description: Workspace updated (or unchanged)
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/WorkspaceSetupResource.yml
+          example:
+            data:
+              id: clws1234567890123456789012
+              name: Acme Feedback
+              organizationId: clor1234567890123456789012
+              channel: link
+              industry: saas
+              updatedAt: "2026-10-29T09:30:00.000Z"
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      description: >-
+        Forbidden — no access to the workspace, or the caller may not change workspace setup: not an
+        organization owner or manager, or an API key without `manage` on this workspace (`code:
+        forbidden`; 404 is not used, to avoid an existence leak).
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "409":
+      description: >-
+        Conflict — another workspace in the organization already has this name (`code: conflict`).
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

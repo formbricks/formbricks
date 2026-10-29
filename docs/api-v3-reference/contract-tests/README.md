@@ -71,6 +71,14 @@ Three things to know before reading the result:
   entitlement, audit events behind the audit-log entitlement and feedback queries behind the analytics
   entitlement, and the taxonomy needs a feedback dataset, so the run mostly checks their documented
   403 and validation answers. Add fixtures to `seed-contract-fixtures.ts` to reach their success paths.
+- **The agent-setup operations** (`GET /api/v3/account/context`, the organization create, rename and
+  invite operations, workspace create and update, and workspace branding) answer this harness as follows.
+  The context read is a real 200 for the API key (no `user`, `null` roles). The four organization-level
+  operations and `POST /api/v3/workspaces` are session-only, so the key gets their documented 401.
+  `PATCH /api/v3/workspaces/{workspaceId}` and `PUT .../branding` accept a `manage` key and really write,
+  so `db:seed:contract` gives them a workspace of their own (`WORKSPACE_SETUP`) and grants the seed key
+  `manage` on it. The branding examples send `https://cdn.example.com/acme-logo.png`, a host that does
+  not resolve, so the run documents the 422 without fetching anything.
 - **The eight `/feedbackRecords` operations are not exercised.** They are served by the API gateway
   (Envoy in Cloud, Traefik in the Docker install) straight to the Hub; the Next.js route under
   `/api/v3/feedbackRecords` is a local-dev proxy that needs a running Hub and answers 404 in

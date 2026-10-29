@@ -1,0 +1,7 @@
+in: path
+name: organizationId
+required: true
+schema:
+  type: string
+  format: cuid2
+description: Organization identifier. Take it from `GET /api/v3/account/context`.

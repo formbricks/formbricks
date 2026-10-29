@@ -1,0 +1,31 @@
+type: object
+required:
+  - id
+  - name
+  - surveyCount
+  - appSetupCompleted
+  - branding
+properties:
+  id:
+    type: string
+  name:
+    type: string
+  surveyCount:
+    type: integer
+    minimum: 0
+    description: Surveys in the workspace that the caller may see.
+  appSetupCompleted:
+    type: boolean
+  branding:
+    type: object
+    required:
+      - logoSet
+      - brandColor
+    properties:
+      logoSet:
+        type: boolean
+      brandColor:
+        type:
+          - string
+          - "null"
+        description: The light-mode brand colour, if one is set.

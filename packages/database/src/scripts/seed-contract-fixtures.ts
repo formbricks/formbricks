@@ -60,6 +60,7 @@ const CONTRACT_IDS = {
   CREATIVE_RESTORE: "clctcreativerestore00001",
   CREATIVE_DUPLICATE: "clctcreativeduplicate001",
   CREATIVE_PAUSE: "clctcreativepause0000001",
+  WORKSPACE_SETUP: "clctworkspacesetup000001",
 } as const;
 
 /**
@@ -545,6 +546,33 @@ async function main(): Promise<void> {
     surveyId: CONTRACT_IDS.SURVEY_PAUSE_CREATIVES,
   });
 
+  // `PATCH /api/v3/workspaces/{workspaceId}` and `PUT .../branding` accept an API key with `manage`, so the
+  // harness key really writes through them. They get a workspace of their own, with the grant the seed key
+  // gets on the main one, rather than renaming and restyling the workspace every other operation reads.
+  // Without `SEED_API_KEY` there is no key and no grant, and both answer their documented 403.
+  await prisma.workspace.upsert({
+    where: { id: CONTRACT_IDS.WORKSPACE_SETUP },
+    update: { name: "Contract fixture — workspace setup" },
+    create: {
+      id: CONTRACT_IDS.WORKSPACE_SETUP,
+      name: "Contract fixture — workspace setup",
+      organizationId: workspace.organizationId,
+    },
+  });
+  const seedApiKey = await prisma.apiKey.findUnique({
+    where: { id: SEED_IDS.API_KEY },
+    select: { id: true },
+  });
+  if (seedApiKey) {
+    await prisma.apiKeyWorkspace.upsert({
+      where: {
+        apiKeyId_workspaceId: { apiKeyId: seedApiKey.id, workspaceId: CONTRACT_IDS.WORKSPACE_SETUP },
+      },
+      update: { permission: "manage" },
+      create: { apiKeyId: seedApiKey.id, workspaceId: CONTRACT_IDS.WORKSPACE_SETUP, permission: "manage" },
+    });
+  }
+
   // No tag fixtures: every /api/v3/tags operation is `auth: "session"`, so an API key is rejected
   // with a documented 401 before a handler ever looks for a row. Seeding them would read as coverage
   // that does not exist. Add them here if tags ever accept an API key.
@@ -612,6 +640,9 @@ async function main(): Promise<void> {
       restoreCreativeV3: { path: { creativeId: CONTRACT_IDS.CREATIVE_RESTORE } },
       duplicateCreativeV3: { path: { creativeId: CONTRACT_IDS.CREATIVE_DUPLICATE } },
       pauseCreativesV3: { body: { surveyId: CONTRACT_IDS.SURVEY_PAUSE_CREATIVES } },
+      // Their own workspace, so the rename and the brand colour do not land on the one the rest reads.
+      updateWorkspaceV3: { path: { workspaceId: CONTRACT_IDS.WORKSPACE_SETUP } },
+      setWorkspaceBrandingV3: { path: { workspaceId: CONTRACT_IDS.WORKSPACE_SETUP } },
     },
   };
 

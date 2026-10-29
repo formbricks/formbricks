@@ -1,0 +1,25 @@
+type: object
+additionalProperties: false
+minProperties: 1
+description: At least one field is required; omitted fields are left as they are.
+properties:
+  brandColor:
+    type: string
+    pattern: "^#(?:[A-Fa-f0-9]{3}|[A-Fa-f0-9]{4}|[A-Fa-f0-9]{6}|[A-Fa-f0-9]{8})$"
+    description: >-
+      Brand colour as a hex value such as `#1e40af`. The matching survey colours (buttons, inputs, cards,
+      progress bar, page background) are derived from it; every other styling choice is left as stored.
+  logoUrl:
+    type:
+      - string
+      - "null"
+    format: uri
+    maxLength: 2048
+    pattern: "^https://"
+    description: >-
+      `https` URL of the logo image: png, jpeg or webp, at most 1 MB, no redirects. The server downloads it
+      from a public address and stores its own copy. `null` removes the current logo.
+  logoBackgroundColor:
+    type: string
+    pattern: "^#(?:[A-Fa-f0-9]{3}|[A-Fa-f0-9]{4}|[A-Fa-f0-9]{6}|[A-Fa-f0-9]{8})$"
+    description: Background colour shown behind the logo, as a hex value.

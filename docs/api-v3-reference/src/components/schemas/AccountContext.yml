@@ -1,0 +1,71 @@
+type: object
+description: >-
+  What an agent can learn about the person it works for. Derived from existing data on every call: there is
+  no stored setup state, so a client that reads this is safe to rerun. An organization with no workspace is
+  an empty `workspaces` list.
+required:
+  - principal
+  - canCreateOrganization
+  - user
+  - organizations
+  - setup
+properties:
+  principal:
+    type: string
+    enum:
+      - user
+      - apiKey
+    description: Who is asking. An API key has grants but no person behind it.
+  canCreateOrganization:
+    type: boolean
+    description: >-
+      A signed-in person may create another organization: the multi-organization licence is on, or the
+      instance has no organization yet. Always `false` for an API key. The rule `POST /api/v3/organizations`
+      enforces.
+  user:
+    type:
+      - object
+      - "null"
+    description: The signed-in person. `null` for an API key.
+    required:
+      - id
+      - name
+      - email
+    properties:
+      id:
+        type: string
+      name:
+        type:
+          - string
+          - "null"
+      email:
+        type:
+          - string
+          - "null"
+  organizations:
+    type: array
+    description: The organizations the caller belongs to or holds grants in, ordered by name.
+    items:
+      $ref: AccountOrganization.yml
+  setup:
+    type: object
+    description: Setup facts derived from the organizations above.
+    required:
+      - organizationCount
+      - workspaceCount
+      - surveyCount
+      - brandingSet
+    properties:
+      organizationCount:
+        type: integer
+        minimum: 0
+      workspaceCount:
+        type: integer
+        minimum: 0
+      surveyCount:
+        type: integer
+        minimum: 0
+        description: Surveys across all workspaces, counted through the same visibility rules every survey list applies.
+      brandingSet:
+        type: boolean
+        description: Some workspace has a logo or a brand colour.

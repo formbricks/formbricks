@@ -1,0 +1,34 @@
+type: object
+description: >-
+  A newly created organization. It has no workspace yet; `setupGuideUrl` and `nextStep` point an agent at
+  the Setup guide's new-owner path, which creates the first one.
+required:
+  - id
+  - name
+  - role
+  - workspaceCount
+  - setupGuideUrl
+  - nextStep
+properties:
+  id:
+    type: string
+    format: cuid2
+  name:
+    type: string
+  role:
+    type: string
+    enum:
+      - owner
+    description: The caller's role in the new organization.
+  workspaceCount:
+    type: integer
+    enum:
+      - 0
+    description: >-
+      Always `0`, because creating an organization creates no workspace.
+  setupGuideUrl:
+    type: string
+    description: Public URL of the Setup guide. Follow its new-owner path for this organization next.
+  nextStep:
+    type: string
+    description: What to do next, in words an agent can act on.

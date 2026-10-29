@@ -1,0 +1,28 @@
+type: object
+required:
+  - workspaceId
+  - brandColor
+  - logoUrl
+  - logoBackgroundColor
+  - updatedAt
+properties:
+  workspaceId:
+    type: string
+    format: cuid2
+  brandColor:
+    type:
+      - string
+      - "null"
+    description: The light-mode brand colour, if one is set.
+  logoUrl:
+    type:
+      - string
+      - "null"
+    description: URL of the stored copy of the logo, if one is set. Not the URL it was fetched from.
+  logoBackgroundColor:
+    type:
+      - string
+      - "null"
+  updatedAt:
+    type: string
+    format: date-time

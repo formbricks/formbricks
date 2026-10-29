@@ -1,0 +1,41 @@
+type: object
+description: >-
+  The workspace as setup writes answer with it: name, owning organization, channel and industry. Never the
+  full workspace entity.
+required:
+  - id
+  - name
+  - organizationId
+  - channel
+  - industry
+  - updatedAt
+properties:
+  id:
+    type: string
+    format: cuid2
+  name:
+    type: string
+  organizationId:
+    type: string
+    format: cuid2
+  channel:
+    type:
+      - string
+      - "null"
+    enum:
+      - link
+      - app
+      - website
+      - null
+  industry:
+    type:
+      - string
+      - "null"
+    enum:
+      - eCommerce
+      - saas
+      - other
+      - null
+  updatedAt:
+    type: string
+    format: date-time

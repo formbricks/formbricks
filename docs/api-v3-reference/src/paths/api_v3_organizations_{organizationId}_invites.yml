@@ -1,0 +1,137 @@
+post:
+  operationId: inviteOrganizationMemberV3
+  summary: Invite a member
+  description: |
+    Invites a person to an organization as a **member** or **manager**.
+
+    **Nothing is sent unless the body carries `confirm: true`.** Without it the call runs every check an
+    invite would face and answers **200** with `status: preview` and a `message` saying who would be
+    invited with which role. Nothing is written, mailed or audited, so a caller cannot invite anyone on
+    its own say-so: show the preview to the person, and send the call again with `confirm: true` only
+    after they approve that exact invite. A confirmed invite answers **200** with `status: invited`,
+    the `inviteId`, and `emailSent`. Delivery is best-effort: `emailSent: false` means the invite is
+    stored and can be resent, so do not retry the call.
+
+    Requires an **organization owner or manager**, signed in as themselves. Session cookie only: a request
+    with only an API key is **401**. An owner may invite a member or a manager; a manager only a member
+    (otherwise **403**). `owner` and `billing` cannot be granted here. Organization plans that do not
+    include role management, and instances with invites disabled, answer **403**. An invite or
+    membership that already exists for the email is **409**. Confirmed invites are rate limited per
+    organization and per person; beyond the limit the answer is **429** with `Retry-After`.
+  tags:
+    - V3 Organizations
+  parameters:
+    - $ref: ../components/parameters/OrganizationIdPath.yml
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/InviteOrganizationMemberRequest.yml
+        examples:
+          preview:
+            summary: Preview an invite, sending nothing
+            value:
+              email: grace@example.com
+              name: Grace Hopper
+              role: member
+          confirmed:
+            summary: Send the invite the person approved
+            value:
+              email: grace@example.com
+              name: Grace Hopper
+              role: member
+              confirm: true
+  responses:
+    "200":
+      description: >-
+        The invite preview (`status: preview`, nothing sent) or the stored invite (`status: invited`).
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/OrganizationInviteResource.yml
+          examples:
+            preview:
+              summary: Preview, nothing sent
+              value:
+                data:
+                  status: preview
+                  organizationId: clor1234567890123456789012
+                  email: grace@example.com
+                  name: Grace Hopper
+                  role: member
+                  message: >-
+                    Not sent. This would invite grace@example.com as member. Call again with confirm: true
+                    after the person approves.
+            invited:
+              summary: Invite stored and emailed
+              value:
+                data:
+                  status: invited
+                  organizationId: clor1234567890123456789012
+                  email: grace@example.com
+                  name: Grace Hopper
+                  role: member
+                  inviteId: clin1234567890123456789012
+                  emailSent: true
+                  message: Invite sent.
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3UnauthorizedSession.yml
+    "403":
+      description: >-
+        Forbidden — the caller is not an owner or manager of the organization, or cannot see it; a
+        manager tried to invite a manager; the organization's plan does not include role management; or
+        invites are disabled on this instance (`code: forbidden`; 404 is not used, to avoid an existence
+        leak).
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "409":
+      description: >-
+        Conflict — an invite for this email is already pending, or the person is already a member of the
+        organization (`code: conflict`). Only a confirmed call can answer this.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []

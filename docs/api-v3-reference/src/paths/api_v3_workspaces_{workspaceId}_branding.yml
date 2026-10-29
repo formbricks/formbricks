@@ -1,0 +1,152 @@
+put:
+  operationId: setWorkspaceBrandingV3
+  summary: Set workspace branding
+  description: |
+    Sets the workspace's brand colour and/or logo. Researching a brand is the caller's job; this only
+    writes what it is given. Only the fields sent are written, at least one is required, and every
+    other styling choice is left as stored.
+
+    A **`brandColor`** derives the matching survey colours (buttons, inputs, cards, progress bar and page
+    background) from it; fonts, radii, sizes and anything tuned by hand are not touched.
+
+    A **`logoUrl`** is an `https` URL, not an upload. The server resolves it and refuses a private or
+    internal address (the same guard webhook URLs face), does not follow redirects, reads at most 1 MB,
+    accepts only png, jpeg and webp (judged by the bytes, not the `Content-Type`; SVG is refused), and
+    stores its own copy, replacing and deleting any previous logo. A URL that cannot be used is **422**
+    with `invalid_params` naming `logoUrl`; `null` removes the logo. If the bucket cannot take the logo
+    the answer is **503**.
+
+    Requires the same access as `PATCH /api/v3/workspaces/{workspaceId}`: **organization owners and
+    managers** for signed-in users, a **`manage`** grant on this workspace for API keys. Session cookie
+    or `x-api-key`. A save that races another save of the same workspace is **409**; read the
+    workspace again and retry.
+  tags:
+    - V3 Workspaces
+  parameters:
+    - $ref: ../components/parameters/WorkspaceIdPath.yml
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/SetWorkspaceBrandingRequest.yml
+        examples:
+          color:
+            summary: Set the brand colour
+            value:
+              brandColor: "#1e40af"
+          logo:
+            summary: Set the logo and its background
+            value:
+              logoUrl: https://cdn.example.com/acme-logo.png
+              logoBackgroundColor: "#ffffff"
+  responses:
+    "200":
+      description: Branding saved
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/WorkspaceBrandingResource.yml
+          example:
+            data:
+              workspaceId: clws1234567890123456789012
+              brandColor: "#1e40af"
+              logoUrl: https://files.example.com/storage/clws1234567890123456789012/public/logo.png
+              logoBackgroundColor: "#ffffff"
+              updatedAt: "2026-10-29T09:30:00.000Z"
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      description: >-
+        Forbidden — no access to the workspace, or the caller may not change workspace setup: not an
+        organization owner or manager, or an API key without `manage` on this workspace (`code:
+        forbidden`; 404 is not used, to avoid an existence leak).
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "409":
+      description: >-
+        Conflict — the workspace changed while saving (`code: conflict`). Read it again and retry.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "422":
+      description: >-
+        Unprocessable Content — the logo URL cannot be used: not a public address that resolves, it
+        redirects, it answers with an error status, it is larger than 1 MB, or it is not a png, jpeg or
+        webp image (`code: unprocessable_content`). `invalid_params` names `logoUrl`. Nothing was saved.
+        A colour that is not a hex value is a **400** naming the field.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+    "503":
+      description: >-
+        Service Unavailable — the logo was fine but file storage could not take it right now (`code:
+        service_unavailable`). Retry later.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

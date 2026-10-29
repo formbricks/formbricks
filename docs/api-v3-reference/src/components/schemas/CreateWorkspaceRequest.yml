@@ -1,0 +1,35 @@
+type: object
+additionalProperties: false
+required:
+  - organizationId
+  - name
+properties:
+  organizationId:
+    type: string
+    format: cuid2
+    description: Organization to create the workspace in. Take it from `GET /api/v3/account/context`.
+  name:
+    type: string
+    minLength: 1
+    maxLength: 255
+    description: Workspace name, unique within the organization. Surrounding whitespace is trimmed.
+  channel:
+    type:
+      - string
+      - "null"
+    enum:
+      - link
+      - app
+      - website
+      - null
+    description: Main way the workspace collects feedback. `null` or omitted leaves it unset.
+  industry:
+    type:
+      - string
+      - "null"
+    enum:
+      - eCommerce
+      - saas
+      - other
+      - null
+    description: Kind of product. `null` or omitted leaves it unset.

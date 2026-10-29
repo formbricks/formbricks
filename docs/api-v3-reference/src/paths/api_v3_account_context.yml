@@ -1,0 +1,82 @@
+get:
+  operationId: getAccountContextV3
+  summary: Read the account context
+  description: |
+    Returns what an agent can learn about the person it works for: who they are, their role in each
+    organization, the organizations and workspaces they can reach, and the setup facts derived from
+    them (workspace and survey counts, whether branding is set, pending invites where the caller may
+    see them). It is the first call of the Setup guide.
+
+    Nothing is stored for setup progress: every field is read from existing data on each call, so a
+    caller that reads it again after changing something sees the change, and it is safe to rerun. An
+    organization with no workspace is an empty `workspaces` list. Survey counts go through the same
+    visibility rules every survey list applies, so a restricted survey is not counted for someone who
+    cannot see it.
+
+    Session cookie or `x-api-key`. An API key has grants but no person behind it: `principal` is
+    `apiKey`, `user` is `null`, every `role` is `null`, and `canCreateOrganization` is `false`. The
+    result is never cached.
+  tags:
+    - V3 Account
+  responses:
+    "200":
+      description: Account context
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/AccountContext.yml
+          example:
+            data:
+              principal: user
+              canCreateOrganization: true
+              user:
+                id: clus1234567890123456789012
+                name: Ada Lovelace
+                email: ada@example.com
+              organizations:
+                - id: clor1234567890123456789012
+                  name: Acme
+                  role: owner
+                  joinedAs: owner
+                  canManage: true
+                  canCreateWorkspace: true
+                  pendingInviteCount: 0
+                  workspaces:
+                    - id: clws1234567890123456789012
+                      name: Acme Feedback
+                      surveyCount: 2
+                      appSetupCompleted: false
+                      branding:
+                        logoSet: true
+                        brandColor: "#1e40af"
+              setup:
+                organizationCount: 1
+                workspaceCount: 1
+                surveyCount: 2
+                brandingSet: true
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

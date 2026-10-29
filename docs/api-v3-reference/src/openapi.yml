@@ -46,6 +46,19 @@ info:
     `creatives_not_entitled`.
 
 
+    **Agent-led setup**: **GET /api/v3/account/context** reads what an agent can learn about the
+    person it works for (who they are, their role in each organization, the organizations and
+    workspaces they can reach, derived setup facts). **POST /api/v3/organizations** creates an
+    organization the signed-in person owns, with no workspace; **PATCH
+    /api/v3/organizations/{organizationId}** renames one; **POST
+    /api/v3/organizations/{organizationId}/invites** invites a member or manager and sends nothing
+    unless the body carries `confirm: true`. **POST /api/v3/workspaces** creates a workspace, **PATCH
+    /api/v3/workspaces/{workspaceId}** renames it and sets its channel or industry, and **PUT
+    /api/v3/workspaces/{workspaceId}/branding** sets its brand colour and logo. Organization-level
+    operations are for signed-in organization owners and managers (session cookie only); workspace
+    setup also accepts an API key with `manage` on the workspace.
+
+
     **Workflows extension**: **GET /api/v3/workflows**, **POST
     /api/v3/workflows**, **GET /api/v3/workflows/{workflowId}**, **PATCH
     /api/v3/workflows/{workflowId}**, **DELETE /api/v3/workflows/{workflowId}**,
@@ -470,6 +483,20 @@ paths:
     $ref: paths/api_v3_unify-feedback_taxonomy_nodes_{nodeId}_records.yml
   /api/v3/unify-feedback/enrichment-status:
     $ref: paths/api_v3_unify-feedback_enrichment-status.yml
+  /api/v3/account/context:
+    $ref: paths/api_v3_account_context.yml
+  /api/v3/organizations:
+    $ref: paths/api_v3_organizations.yml
+  /api/v3/organizations/{organizationId}:
+    $ref: paths/api_v3_organizations_{organizationId}.yml
+  /api/v3/organizations/{organizationId}/invites:
+    $ref: paths/api_v3_organizations_{organizationId}_invites.yml
+  /api/v3/workspaces:
+    $ref: paths/api_v3_workspaces.yml
+  /api/v3/workspaces/{workspaceId}:
+    $ref: paths/api_v3_workspaces_{workspaceId}.yml
+  /api/v3/workspaces/{workspaceId}/branding:
+    $ref: paths/api_v3_workspaces_{workspaceId}_branding.yml
 components:
   securitySchemes:
     sessionAuth:

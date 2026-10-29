@@ -16,6 +16,8 @@ info:
 
     Creatives needs a self-hosted license that includes it; Formbricks Cloud does not offer it. With one, every operation is available. Without one, a workspace that still has creatives is in **wind-down**: its creatives are no longer shown on sites, and they can only be listed, read (stats included), paused (a PATCH that sets nothing but `status`, or **POST /api/v3/creatives/pause**), closed (the same PATCH) or deleted. A workspace with no creatives has no access at all. Anything not allowed answers **403** `creatives_not_entitled`.
 
+    **Agent-led setup**: **GET /api/v3/account/context** reads what an agent can learn about the person it works for (who they are, their role in each organization, the organizations and workspaces they can reach, derived setup facts). **POST /api/v3/organizations** creates an organization the signed-in person owns, with no workspace; **PATCH /api/v3/organizations/{organizationId}** renames one; **POST /api/v3/organizations/{organizationId}/invites** invites a member or manager and sends nothing unless the body carries `confirm: true`. **POST /api/v3/workspaces** creates a workspace, **PATCH /api/v3/workspaces/{workspaceId}** renames it and sets its channel or industry, and **PUT /api/v3/workspaces/{workspaceId}/branding** sets its brand colour and logo. Organization-level operations are for signed-in organization owners and managers (session cookie only); workspace setup also accepts an API key with `manage` on the workspace.
+
     **Workflows extension**: **GET /api/v3/workflows**, **POST /api/v3/workflows**, **GET /api/v3/workflows/{workflowId}**, **PATCH /api/v3/workflows/{workflowId}**, **DELETE /api/v3/workflows/{workflowId}**, **POST /api/v3/workflows/{workflowId}/duplicate**, **POST /api/v3/workflows/{workflowId}/enable**, **POST /api/v3/workflows/{workflowId}/disable**, **POST /api/v3/workflows/{workflowId}/archive**, **POST /api/v3/workflows/{workflowId}/unarchive**, **POST /api/v3/workflows/{workflowId}/test**, **GET /api/v3/workflows/runs**, and **GET /api/v3/workflows/runs/{runId}**.
 
     Authenticate all management endpoints with **session cookie** or **`x-api-key`** (management key with access to the workspace).
@@ -8902,6 +8904,738 @@ paths:
         - sessionAuth: []
         - apiKeyAuth: []
         - bearerAuth: []
+  /api/v3/account/context:
+    get:
+      operationId: getAccountContextV3
+      summary: Read the account context
+      description: |
+        Returns what an agent can learn about the person it works for: who they are, their role in each
+        organization, the organizations and workspaces they can reach, and the setup facts derived from
+        them (workspace and survey counts, whether branding is set, pending invites where the caller may
+        see them). It is the first call of the Setup guide.
+
+        Nothing is stored for setup progress: every field is read from existing data on each call, so a
+        caller that reads it again after changing something sees the change, and it is safe to rerun. An
+        organization with no workspace is an empty `workspaces` list. Survey counts go through the same
+        visibility rules every survey list applies, so a restricted survey is not counted for someone who
+        cannot see it.
+
+        Session cookie or `x-api-key`. An API key has grants but no person behind it: `principal` is
+        `apiKey`, `user` is `null`, every `role` is `null`, and `canCreateOrganization` is `false`. The
+        result is never cached.
+      tags:
+        - V3 Account
+      responses:
+        '200':
+          description: Account context
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AccountContext'
+              example:
+                data:
+                  principal: user
+                  canCreateOrganization: true
+                  user:
+                    id: clus1234567890123456789012
+                    name: Ada Lovelace
+                    email: ada@example.com
+                  organizations:
+                    - id: clor1234567890123456789012
+                      name: Acme
+                      role: owner
+                      joinedAs: owner
+                      canManage: true
+                      canCreateWorkspace: true
+                      pendingInviteCount: 0
+                      workspaces:
+                        - id: clws1234567890123456789012
+                          name: Acme Feedback
+                          surveyCount: 2
+                          appSetupCompleted: false
+                          branding:
+                            logoSet: true
+                            brandColor: '#1e40af'
+                  setup:
+                    organizationCount: 1
+                    workspaceCount: 1
+                    surveyCount: 2
+                    brandingSet: true
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/organizations:
+    post:
+      operationId: createOrganizationV3
+      summary: Create an organization
+      description: |
+        Creates an organization the signed-in person owns. **No workspace is created**: the response carries
+        `setupGuideUrl` and `nextStep`, which point an agent at the Setup guide's new-owner path for this
+        organization, where the first workspace is created.
+
+        Session cookie only. An organization belongs to a person, and an API key has no one to make the
+        owner, so a request with only an API key is **401**.
+
+        A fresh instance (no organization yet) may always create the first one. After that, creating
+        another needs the multi-organization licence; without it the answer is **403**. `GET
+        /api/v3/account/context` reports the same rule as `canCreateOrganization`. Creating is rate limited
+        per person, because every organization starts with fresh per-organization budgets; beyond the
+        limit the answer is **429** with `Retry-After`.
+      tags:
+        - V3 Organizations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrganizationRequest'
+            examples:
+              basic:
+                summary: Create an organization
+                value:
+                  name: Acme
+      responses:
+        '201':
+          description: Organization created
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Location:
+              schema:
+                type: string
+              description: Path of the new organization, `/api/v3/organizations/{organizationId}`. The resource accepts `PATCH`; there is no `GET` for it, read it through `GET /api/v3/account/context`.
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/OrganizationCreatedResource'
+              example:
+                data:
+                  id: clor1234567890123456789012
+                  name: Acme
+                  role: owner
+                  workspaceCount: 0
+                  setupGuideUrl: https://app.formbricks.com/agents/setup.md
+                  nextStep: 'The organization has no workspace yet. Follow the Setup guide''s new-owner path (Path A) for this organization: interview the person, then create the first workspace.'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3UnauthorizedSession'
+        '403':
+          description: 'Forbidden — the instance is limited to one organization and already has it, because the multi-organization licence is not enabled (`code: forbidden`).'
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+  /api/v3/organizations/{organizationId}:
+    patch:
+      operationId: updateOrganizationV3
+      summary: Rename an organization
+      description: |
+        Renames an organization. The display name is the only thing this changes. Sending the current name
+        is a successful no-op: nothing is written and nothing is audited.
+
+        Requires an **organization owner or manager**, signed in as themselves. Session cookie only: an API
+        key has workspace grants, not an organization role, so a request with only an API key is **401**.
+        Someone who is not an owner or manager of the organization, or who cannot see it, gets the same
+        **403**, so the answer does not reveal whether the organization exists.
+      tags:
+        - V3 Organizations
+      parameters:
+        - $ref: '#/components/parameters/OrganizationIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateOrganizationRequest'
+            examples:
+              rename:
+                summary: Rename the organization
+                value:
+                  name: Acme Inc.
+      responses:
+        '200':
+          description: Organization renamed (or unchanged)
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/OrganizationResource'
+              example:
+                data:
+                  id: clor1234567890123456789012
+                  name: Acme Inc.
+                  updatedAt: '2026-10-29T09:30:00.000Z'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3UnauthorizedSession'
+        '403':
+          description: 'Forbidden — the caller is not an owner or manager of the organization, or cannot see it (`code: forbidden`; 404 is not used, to avoid an existence leak).'
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+  /api/v3/organizations/{organizationId}/invites:
+    post:
+      operationId: inviteOrganizationMemberV3
+      summary: Invite a member
+      description: |
+        Invites a person to an organization as a **member** or **manager**.
+
+        **Nothing is sent unless the body carries `confirm: true`.** Without it the call runs every check an
+        invite would face and answers **200** with `status: preview` and a `message` saying who would be
+        invited with which role. Nothing is written, mailed or audited, so a caller cannot invite anyone on
+        its own say-so: show the preview to the person, and send the call again with `confirm: true` only
+        after they approve that exact invite. A confirmed invite answers **200** with `status: invited`,
+        the `inviteId`, and `emailSent`. Delivery is best-effort: `emailSent: false` means the invite is
+        stored and can be resent, so do not retry the call.
+
+        Requires an **organization owner or manager**, signed in as themselves. Session cookie only: a request
+        with only an API key is **401**. An owner may invite a member or a manager; a manager only a member
+        (otherwise **403**). `owner` and `billing` cannot be granted here. Organization plans that do not
+        include role management, and instances with invites disabled, answer **403**. An invite or
+        membership that already exists for the email is **409**. Confirmed invites are rate limited per
+        organization and per person; beyond the limit the answer is **429** with `Retry-After`.
+      tags:
+        - V3 Organizations
+      parameters:
+        - $ref: '#/components/parameters/OrganizationIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InviteOrganizationMemberRequest'
+            examples:
+              preview:
+                summary: Preview an invite, sending nothing
+                value:
+                  email: grace@example.com
+                  name: Grace Hopper
+                  role: member
+              confirmed:
+                summary: Send the invite the person approved
+                value:
+                  email: grace@example.com
+                  name: Grace Hopper
+                  role: member
+                  confirm: true
+      responses:
+        '200':
+          description: 'The invite preview (`status: preview`, nothing sent) or the stored invite (`status: invited`).'
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/OrganizationInviteResource'
+              examples:
+                preview:
+                  summary: Preview, nothing sent
+                  value:
+                    data:
+                      status: preview
+                      organizationId: clor1234567890123456789012
+                      email: grace@example.com
+                      name: Grace Hopper
+                      role: member
+                      message: 'Not sent. This would invite grace@example.com as member. Call again with confirm: true after the person approves.'
+                invited:
+                  summary: Invite stored and emailed
+                  value:
+                    data:
+                      status: invited
+                      organizationId: clor1234567890123456789012
+                      email: grace@example.com
+                      name: Grace Hopper
+                      role: member
+                      inviteId: clin1234567890123456789012
+                      emailSent: true
+                      message: Invite sent.
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3UnauthorizedSession'
+        '403':
+          description: 'Forbidden — the caller is not an owner or manager of the organization, or cannot see it; a manager tried to invite a manager; the organization''s plan does not include role management; or invites are disabled on this instance (`code: forbidden`; 404 is not used, to avoid an existence leak).'
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: 'Conflict — an invite for this email is already pending, or the person is already a member of the organization (`code: conflict`). Only a confirmed call can answer this.'
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+  /api/v3/workspaces:
+    post:
+      operationId: createWorkspaceV3
+      summary: Create a workspace
+      description: |
+        Creates a workspace in an organization the caller owns or manages, optionally with its channel and
+        industry. Branding has its own operation, `PUT /api/v3/workspaces/{workspaceId}/branding`.
+
+        Requires an **organization owner or manager**, signed in as themselves. Session cookie only: creating
+        a workspace is an organization-level change, and an API key is bound to workspace grants rather than
+        to a person with an organization role, so a request with only an API key is **401**. Someone who is
+        not an owner or manager of the organization, or who cannot see it, gets the same **403**.
+
+        The plan's workspace limit is enforced exactly as in the app: an organization at its limit answers
+        **403** (the limit is checked again under a lock, so a burst of parallel creates cannot exceed it).
+        A name already used by another workspace in the organization is **409**.
+      tags:
+        - V3 Workspaces
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorkspaceRequest'
+            examples:
+              basic:
+                summary: Create a workspace for link surveys
+                value:
+                  organizationId: clor1234567890123456789012
+                  name: Acme Feedback
+                  channel: link
+                  industry: saas
+      responses:
+        '201':
+          description: Workspace created
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Location:
+              schema:
+                type: string
+              description: Path of the new workspace, `/api/v3/workspaces/{workspaceId}`. The resource accepts `PATCH`.
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/WorkspaceSetupResource'
+              example:
+                data:
+                  id: clws1234567890123456789012
+                  name: Acme Feedback
+                  organizationId: clor1234567890123456789012
+                  channel: link
+                  industry: saas
+                  updatedAt: '2026-10-29T09:30:00.000Z'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3UnauthorizedSession'
+        '403':
+          description: 'Forbidden — the caller is not an owner or manager of the organization, or cannot see it, or the organization has reached the workspace limit of its plan (`code: forbidden`; 404 is not used, to avoid an existence leak).'
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: 'Conflict — a workspace with this name already exists in the organization (`code: conflict`).'
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+  /api/v3/workspaces/{workspaceId}:
+    patch:
+      operationId: updateWorkspaceV3
+      summary: Update a workspace
+      description: |
+        Renames a workspace and sets its channel or industry. A partial update: only the fields sent are
+        written, at least one is required, and `null` clears a channel or industry. Sending values the
+        workspace already has is a successful no-op that writes and audits nothing. Branding has its own
+        operation, `PUT /api/v3/workspaces/{workspaceId}/branding`.
+
+        Workspace setup shapes every survey in the workspace, so it is narrower than writing a survey:
+        **organization owners and managers** for signed-in users, and a **`manage`** grant on this workspace
+        for API keys; a Read & write grant is refused with **403**. Session cookie or `x-api-key`. A
+        workspace the caller cannot reach answers **403**, like every other workspace-scoped operation.
+        A name already used by another workspace in the organization is **409**.
+      tags:
+        - V3 Workspaces
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateWorkspaceRequest'
+            examples:
+              channel:
+                summary: Set the channel and industry
+                value:
+                  channel: link
+                  industry: saas
+              rename:
+                summary: Rename the workspace
+                value:
+                  name: Acme Product Feedback
+      responses:
+        '200':
+          description: Workspace updated (or unchanged)
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/WorkspaceSetupResource'
+              example:
+                data:
+                  id: clws1234567890123456789012
+                  name: Acme Feedback
+                  organizationId: clor1234567890123456789012
+                  channel: link
+                  industry: saas
+                  updatedAt: '2026-10-29T09:30:00.000Z'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          description: 'Forbidden — no access to the workspace, or the caller may not change workspace setup: not an organization owner or manager, or an API key without `manage` on this workspace (`code: forbidden`; 404 is not used, to avoid an existence leak).'
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: 'Conflict — another workspace in the organization already has this name (`code: conflict`).'
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/workspaces/{workspaceId}/branding:
+    put:
+      operationId: setWorkspaceBrandingV3
+      summary: Set workspace branding
+      description: |
+        Sets the workspace's brand colour and/or logo. Researching a brand is the caller's job; this only
+        writes what it is given. Only the fields sent are written, at least one is required, and every
+        other styling choice is left as stored.
+
+        A **`brandColor`** derives the matching survey colours (buttons, inputs, cards, progress bar and page
+        background) from it; fonts, radii, sizes and anything tuned by hand are not touched.
+
+        A **`logoUrl`** is an `https` URL, not an upload. The server resolves it and refuses a private or
+        internal address (the same guard webhook URLs face), does not follow redirects, reads at most 1 MB,
+        accepts only png, jpeg and webp (judged by the bytes, not the `Content-Type`; SVG is refused), and
+        stores its own copy, replacing and deleting any previous logo. A URL that cannot be used is **422**
+        with `invalid_params` naming `logoUrl`; `null` removes the logo. If the bucket cannot take the logo
+        the answer is **503**.
+
+        Requires the same access as `PATCH /api/v3/workspaces/{workspaceId}`: **organization owners and
+        managers** for signed-in users, a **`manage`** grant on this workspace for API keys. Session cookie
+        or `x-api-key`. A save that races another save of the same workspace is **409**; read the
+        workspace again and retry.
+      tags:
+        - V3 Workspaces
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetWorkspaceBrandingRequest'
+            examples:
+              color:
+                summary: Set the brand colour
+                value:
+                  brandColor: '#1e40af'
+              logo:
+                summary: Set the logo and its background
+                value:
+                  logoUrl: https://cdn.example.com/acme-logo.png
+                  logoBackgroundColor: '#ffffff'
+      responses:
+        '200':
+          description: Branding saved
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/WorkspaceBrandingResource'
+              example:
+                data:
+                  workspaceId: clws1234567890123456789012
+                  brandColor: '#1e40af'
+                  logoUrl: https://files.example.com/storage/clws1234567890123456789012/public/logo.png
+                  logoBackgroundColor: '#ffffff'
+                  updatedAt: '2026-10-29T09:30:00.000Z'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          description: 'Forbidden — no access to the workspace, or the caller may not change workspace setup: not an organization owner or manager, or an API key without `manage` on this workspace (`code: forbidden`; 404 is not used, to avoid an existence leak).'
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: 'Conflict — the workspace changed while saving (`code: conflict`). Read it again and retry.'
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: 'Unprocessable Content — the logo URL cannot be used: not a public address that resolves, it redirects, it answers with an error status, it is larger than 1 MB, or it is not a png, jpeg or webp image (`code: unprocessable_content`). `invalid_params` names `logoUrl`. Nothing was saved. A colour that is not a hex value is a **400** naming the field.'
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+        '503':
+          description: 'Service Unavailable — the logo was fine but file storage could not take it right now (`code: service_unavailable`). Retry later.'
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
 components:
   securitySchemes:
     sessionAuth:
@@ -17450,6 +18184,446 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/TaxonomyNode'
+    AccountWorkspace:
+      type: object
+      required:
+        - id
+        - name
+        - surveyCount
+        - appSetupCompleted
+        - branding
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        surveyCount:
+          type: integer
+          minimum: 0
+          description: Surveys in the workspace that the caller may see.
+        appSetupCompleted:
+          type: boolean
+        branding:
+          type: object
+          required:
+            - logoSet
+            - brandColor
+          properties:
+            logoSet:
+              type: boolean
+            brandColor:
+              type:
+                - string
+                - 'null'
+              description: The light-mode brand colour, if one is set.
+    AccountOrganization:
+      type: object
+      required:
+        - id
+        - name
+        - role
+        - joinedAs
+        - canManage
+        - canCreateWorkspace
+        - pendingInviteCount
+        - workspaces
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        role:
+          type:
+            - string
+            - 'null'
+          enum:
+            - owner
+            - manager
+            - member
+            - billing
+            - null
+          description: The caller's organization role. `null` for an API key, which has grants but no role.
+        joinedAs:
+          type:
+            - string
+            - 'null'
+          enum:
+            - owner
+            - invited
+            - null
+          description: 'Derived from the role alone: an owner set the organization up, everyone else was invited into it. `null` for an API key.'
+        canManage:
+          type: boolean
+          description: The caller is an owner or manager of this organization.
+        canCreateWorkspace:
+          type: boolean
+          description: The caller is an owner or manager and the plan's workspace limit is not yet reached.
+        pendingInviteCount:
+          type:
+            - integer
+            - 'null'
+          minimum: 0
+          description: Pending invites. Only counted for an owner or manager, `null` otherwise.
+        workspaces:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountWorkspace'
+    AccountContext:
+      type: object
+      description: 'What an agent can learn about the person it works for. Derived from existing data on every call: there is no stored setup state, so a client that reads this is safe to rerun. An organization with no workspace is an empty `workspaces` list.'
+      required:
+        - principal
+        - canCreateOrganization
+        - user
+        - organizations
+        - setup
+      properties:
+        principal:
+          type: string
+          enum:
+            - user
+            - apiKey
+          description: Who is asking. An API key has grants but no person behind it.
+        canCreateOrganization:
+          type: boolean
+          description: 'A signed-in person may create another organization: the multi-organization licence is on, or the instance has no organization yet. Always `false` for an API key. The rule `POST /api/v3/organizations` enforces.'
+        user:
+          type:
+            - object
+            - 'null'
+          description: The signed-in person. `null` for an API key.
+          required:
+            - id
+            - name
+            - email
+          properties:
+            id:
+              type: string
+            name:
+              type:
+                - string
+                - 'null'
+            email:
+              type:
+                - string
+                - 'null'
+        organizations:
+          type: array
+          description: The organizations the caller belongs to or holds grants in, ordered by name.
+          items:
+            $ref: '#/components/schemas/AccountOrganization'
+        setup:
+          type: object
+          description: Setup facts derived from the organizations above.
+          required:
+            - organizationCount
+            - workspaceCount
+            - surveyCount
+            - brandingSet
+          properties:
+            organizationCount:
+              type: integer
+              minimum: 0
+            workspaceCount:
+              type: integer
+              minimum: 0
+            surveyCount:
+              type: integer
+              minimum: 0
+              description: Surveys across all workspaces, counted through the same visibility rules every survey list applies.
+            brandingSet:
+              type: boolean
+              description: Some workspace has a logo or a brand colour.
+    CreateOrganizationRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Name of the new organization. Surrounding whitespace is trimmed.
+    OrganizationCreatedResource:
+      type: object
+      description: A newly created organization. It has no workspace yet; `setupGuideUrl` and `nextStep` point an agent at the Setup guide's new-owner path, which creates the first one.
+      required:
+        - id
+        - name
+        - role
+        - workspaceCount
+        - setupGuideUrl
+        - nextStep
+      properties:
+        id:
+          type: string
+          format: cuid2
+        name:
+          type: string
+        role:
+          type: string
+          enum:
+            - owner
+          description: The caller's role in the new organization.
+        workspaceCount:
+          type: integer
+          enum:
+            - 0
+          description: Always `0`, because creating an organization creates no workspace.
+        setupGuideUrl:
+          type: string
+          description: Public URL of the Setup guide. Follow its new-owner path for this organization next.
+        nextStep:
+          type: string
+          description: What to do next, in words an agent can act on.
+    UpdateOrganizationRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: New organization name. Surrounding whitespace is trimmed.
+    OrganizationResource:
+      type: object
+      required:
+        - id
+        - name
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: cuid2
+        name:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+    InviteOrganizationMemberRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - email
+        - name
+        - role
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          description: Email address to invite.
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Name of the person being invited.
+        role:
+          type: string
+          enum:
+            - member
+            - manager
+          description: Organization role to grant. Only an owner may invite a manager. `owner` and `billing` cannot be granted here.
+        confirm:
+          type: boolean
+          description: 'Must be `true` to send the invite. Without it nothing is written or mailed and the call answers with `status: preview`. Set it only after the person has approved this exact invite.'
+    OrganizationInviteResource:
+      type: object
+      description: 'The outcome of an invite request. `status: preview` means every check passed and nothing was sent; `status: invited` means the invite was stored (`inviteId`) and an email was attempted (`emailSent`).'
+      required:
+        - status
+        - organizationId
+        - email
+        - name
+        - role
+        - message
+      properties:
+        status:
+          type: string
+          enum:
+            - preview
+            - invited
+        organizationId:
+          type: string
+          format: cuid2
+        email:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+          enum:
+            - member
+            - manager
+        inviteId:
+          type: string
+          description: Present only when `status` is `invited`.
+        emailSent:
+          type: boolean
+          description: Present only when `status` is `invited`. `false` means the invite exists but the email could not be sent; do not retry the call, the invite can be resent.
+        message:
+          type: string
+    CreateWorkspaceRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - organizationId
+        - name
+      properties:
+        organizationId:
+          type: string
+          format: cuid2
+          description: Organization to create the workspace in. Take it from `GET /api/v3/account/context`.
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Workspace name, unique within the organization. Surrounding whitespace is trimmed.
+        channel:
+          type:
+            - string
+            - 'null'
+          enum:
+            - link
+            - app
+            - website
+            - null
+          description: Main way the workspace collects feedback. `null` or omitted leaves it unset.
+        industry:
+          type:
+            - string
+            - 'null'
+          enum:
+            - eCommerce
+            - saas
+            - other
+            - null
+          description: Kind of product. `null` or omitted leaves it unset.
+    WorkspaceSetupResource:
+      type: object
+      description: 'The workspace as setup writes answer with it: name, owning organization, channel and industry. Never the full workspace entity.'
+      required:
+        - id
+        - name
+        - organizationId
+        - channel
+        - industry
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: cuid2
+        name:
+          type: string
+        organizationId:
+          type: string
+          format: cuid2
+        channel:
+          type:
+            - string
+            - 'null'
+          enum:
+            - link
+            - app
+            - website
+            - null
+        industry:
+          type:
+            - string
+            - 'null'
+          enum:
+            - eCommerce
+            - saas
+            - other
+            - null
+        updatedAt:
+          type: string
+          format: date-time
+    UpdateWorkspaceRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      description: A partial update. At least one field is required; omitted fields are left as they are.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: New workspace name, unique within the organization. Surrounding whitespace is trimmed.
+        channel:
+          type:
+            - string
+            - 'null'
+          enum:
+            - link
+            - app
+            - website
+            - null
+          description: Main way the workspace collects feedback. `null` clears it.
+        industry:
+          type:
+            - string
+            - 'null'
+          enum:
+            - eCommerce
+            - saas
+            - other
+            - null
+          description: Kind of product. `null` clears it.
+    SetWorkspaceBrandingRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      description: At least one field is required; omitted fields are left as they are.
+      properties:
+        brandColor:
+          type: string
+          pattern: ^#(?:[A-Fa-f0-9]{3}|[A-Fa-f0-9]{4}|[A-Fa-f0-9]{6}|[A-Fa-f0-9]{8})$
+          description: Brand colour as a hex value such as `#1e40af`. The matching survey colours (buttons, inputs, cards, progress bar, page background) are derived from it; every other styling choice is left as stored.
+        logoUrl:
+          type:
+            - string
+            - 'null'
+          format: uri
+          maxLength: 2048
+          pattern: ^https://
+          description: '`https` URL of the logo image: png, jpeg or webp, at most 1 MB, no redirects. The server downloads it from a public address and stores its own copy. `null` removes the current logo.'
+        logoBackgroundColor:
+          type: string
+          pattern: ^#(?:[A-Fa-f0-9]{3}|[A-Fa-f0-9]{4}|[A-Fa-f0-9]{6}|[A-Fa-f0-9]{8})$
+          description: Background colour shown behind the logo, as a hex value.
+    WorkspaceBrandingResource:
+      type: object
+      required:
+        - workspaceId
+        - brandColor
+        - logoUrl
+        - logoBackgroundColor
+        - updatedAt
+      properties:
+        workspaceId:
+          type: string
+          format: cuid2
+        brandColor:
+          type:
+            - string
+            - 'null'
+          description: The light-mode brand colour, if one is set.
+        logoUrl:
+          type:
+            - string
+            - 'null'
+          description: URL of the stored copy of the logo, if one is set. Not the URL it was fetched from.
+        logoBackgroundColor:
+          type:
+            - string
+            - 'null'
+        updatedAt:
+          type: string
+          format: date-time
   responses:
     V3BadRequest:
       description: Bad Request — malformed JSON, invalid query/body/params, duplicate name, or unsupported field.
@@ -17889,6 +19063,21 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
+    V3UnauthorizedSession:
+      description: Not authenticated (no valid session).
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
   parameters:
     WorkspaceIdQuery:
       in: query
@@ -18034,3 +19223,11 @@ components:
         type: string
         format: cuid2
       description: Feedback dataset (directory) to read or change. It must be assigned to `workspaceId`; an unassigned or unknown id answers **403**. Over MCP, `list_feedback_datasets` returns the ids.
+    OrganizationIdPath:
+      in: path
+      name: organizationId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Organization identifier. Take it from `GET /api/v3/account/context`.

@@ -1,0 +1,30 @@
+type: object
+additionalProperties: false
+required:
+  - email
+  - name
+  - role
+properties:
+  email:
+    type: string
+    format: email
+    maxLength: 255
+    description: Email address to invite.
+  name:
+    type: string
+    minLength: 1
+    maxLength: 255
+    description: Name of the person being invited.
+  role:
+    type: string
+    enum:
+      - member
+      - manager
+    description: >-
+      Organization role to grant. Only an owner may invite a manager. `owner` and `billing` cannot be
+      granted here.
+  confirm:
+    type: boolean
+    description: >-
+      Must be `true` to send the invite. Without it nothing is written or mailed and the call answers
+      with `status: preview`. Set it only after the person has approved this exact invite.
