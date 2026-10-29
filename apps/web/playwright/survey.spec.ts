@@ -994,7 +994,7 @@ test.describe("Testing Survey with advanced logic", async () => {
       const updatedUrl = currentUrl.replace(/summary(?:\?.*)?$/, "responses");
 
       await page.goto(updatedUrl);
-      const responseTable = page.locator("table#response-table");
+      const responseTable = page.getByTestId("response-table").locator("table");
       await expect(responseTable).toBeVisible();
       await expect(responseTable.getByRole("columnheader", { name: /^score$/i })).toBeVisible({
         timeout: 15000,

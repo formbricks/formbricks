@@ -1,6 +1,7 @@
 import { expect } from "@playwright/test";
 import { prisma } from "@formbricks/database";
 import { test } from "./lib/fixtures";
+import { setTableToggle, tableRow } from "./utils/table-toolbar";
 
 const getUserIdForEmail = async (email: string) => {
   const user = await prisma.user.findUnique({ where: { email }, select: { id: true } });
@@ -56,15 +57,6 @@ test.describe("Survey archive @slow", () => {
     await page.reload();
     await expect(page.getByText(surveyName, { exact: true })).toBeVisible({ timeout: 10000 });
 
-    // With nothing archived yet, "Archived" is still offered and behaves like any other status:
-    // the selection sticks and the list is empty, rather than silently unticking itself.
-    await page.locator(".surveyFilterDropdown").filter({ hasText: "Status" }).click();
-    await page.getByRole("menuitem", { name: "Archived" }).click();
-    await page.keyboard.press("Escape");
-    await expect(page.getByText(surveyName, { exact: true })).toBeHidden();
-    await page.getByRole("button", { name: "Clear filters" }).click();
-    await expect(page.getByText(surveyName, { exact: true })).toBeVisible();
-
     // Archive an in-progress survey → hard warning with "Stop and archive".
     await page.locator("[data-testid='survey-dropdown-trigger']").click();
     await page.getByTestId("archive-survey").click();
@@ -75,10 +67,9 @@ test.describe("Survey archive @slow", () => {
     // toolbar has to stay put instead of falling back to the "create your first survey" onboarding.
     await expect(page.getByText(surveyName, { exact: true })).toBeHidden();
 
-    // "Archived" is always offered in the Status filter; selecting it reveals the survey.
-    await page.locator(".surveyFilterDropdown").filter({ hasText: "Status" }).click();
-    await page.getByRole("menuitem", { name: "Archived" }).click();
-    await page.keyboard.press("Escape");
+    // Show archived, in the gear, brings archived surveys back next to the live ones.
+    await setTableToggle(page, "Show archived", true);
+    await expect(page).toHaveURL(/filter%5Barchived%5D%5Bin%5D=true/);
     await expect(page.getByText(surveyName, { exact: true })).toBeVisible();
 
     // Archived card exposes only Restore and Delete.
@@ -88,13 +79,10 @@ test.describe("Survey archive @slow", () => {
     await expect(page.getByTestId("archive-survey")).toHaveCount(0);
     await expect(page.getByTestId("duplicate-survey")).toHaveCount(0);
 
-    // Restore → the survey stops matching the archived filter and leaves the view, exactly like a
-    // survey that leaves any other status filter. Clearing the filter brings it back.
+    // Restore → the survey is live again, so it stays in the list once Show archived is off.
     await page.getByTestId("restore-survey").click();
     await expect(page.getByText("Survey restored", { exact: true })).toBeVisible();
-    await expect(page.getByText(surveyName, { exact: true })).toBeHidden();
-
-    await page.getByRole("button", { name: "Clear filters" }).click();
+    await setTableToggle(page, "Show archived", false);
     await expect(page.getByText(surveyName, { exact: true })).toBeVisible();
 
     // Archive again, then permanently delete it from the archived view.
@@ -105,10 +93,10 @@ test.describe("Survey archive @slow", () => {
     await page.getByRole("dialog").getByRole("button", { name: "Archive", exact: true }).click();
     await expect(page.getByText("Survey archived", { exact: true })).toBeVisible();
 
-    await page.locator(".surveyFilterDropdown").filter({ hasText: "Status" }).click();
-    await page.getByRole("menuitem", { name: "Archived" }).click();
-    await page.keyboard.press("Escape");
-    await expect(page.getByText(surveyName, { exact: true })).toBeVisible();
+    await expect(page.getByText(surveyName, { exact: true })).toBeHidden();
+    await setTableToggle(page, "Show archived", true);
+    // Wait for the refetched row, so the menu opens on the row that stays rather than one replaced.
+    await expect(tableRow(page, "survey-list-table", surveyName).getByText("Archived")).toBeVisible();
 
     await page.locator("[data-testid='survey-dropdown-trigger']").click();
     await page.getByTestId("delete-survey-forever").click();

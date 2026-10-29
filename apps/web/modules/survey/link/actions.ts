@@ -109,10 +109,17 @@ export const sendLinkSurveyEmailAction = actionClient
         unmatchedExplicitLanguage: "fallback",
       }) ?? "default";
 
+    // The name and logo come from the stored survey and its organization, never the request: a caller
+    // could otherwise put text of their choosing into an email sent from this instance (ENG-4043). The
+    // single-use link values ride along only for a survey that uses them, where the gate above checked them.
+    const isSingleUse = survey.singleUse?.enabled === true;
     await sendLinkSurveyToVerifiedEmail(
       {
         ...parsedInput,
+        suId: isSingleUse ? parsedInput.suId : undefined,
+        suToken: isSingleUse ? parsedInput.suToken : undefined,
         surveyLanguageCode,
+        surveyName: survey.name,
         logoUrl: organizationLogoUrl || "",
       },
       // The visitor is anonymous, so the survey's organization and owner carry the limits: a fresh

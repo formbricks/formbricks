@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAtomValue, useSetAtom } from "jotai";
 import { usePathname, useRouter, useSearchParams, useSelectedLayoutSegment } from "next/navigation";
-import { type KeyboardEvent, useEffect, useId, useRef } from "react";
+import { type ClipboardEvent, type KeyboardEvent, useEffect, useId, useLayoutEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { WorkflowStatusPill } from "@/modules/ee/workflows/components/workflow-status-pill";
@@ -49,7 +49,7 @@ export const WorkflowPageTitle = ({ workflowId, isReadOnly }: Readonly<WorkflowP
   const workflow = useAtomValue(workflowAtom);
   const workflowName = useAtomValue(workflowNameAtom);
   const setWorkflowName = useSetAtom(setWorkflowNameAtom);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const hasAutoFocusedRef = useRef(false);
   const nameErrorId = useId();
   const isNew = searchParams.get("new") === "1";
@@ -85,7 +85,23 @@ export const WorkflowPageTitle = ({ workflowId, isReadOnly }: Readonly<WorkflowP
   // Enter commits the rename instead of doing nothing: the field blurs so the title reads as
   // settled, and the draft is flushed right away rather than waiting out the autosave debounce,
   // which turns the header's "All changes saved" pill into the confirmation.
-  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+  // A textarea rather than an input so a long name wraps onto more lines instead of being cut off.
+  // field-sizing grows it with the text; where that's unsupported (Firefox), fit the height to the
+  // wrapped content by hand, re-measuring when the header width changes.
+  useLayoutEffect(() => {
+    const field = inputRef.current;
+    if (!field || CSS.supports("field-sizing", "content")) return;
+    const fitHeight = () => {
+      field.style.height = "auto";
+      field.style.height = `${field.scrollHeight}px`;
+    };
+    fitHeight();
+    const observer = new ResizeObserver(fitHeight);
+    observer.observe(field);
+    return () => observer.disconnect();
+  }, [workflowName, isEditable]);
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     // An IME (Japanese/Chinese/Korean) uses Enter to accept the highlighted candidate, so
     // committing there would blur mid-composition and persist a half-typed name. The synthetic
     // event doesn't carry isComposing; the native one does.
@@ -95,6 +111,27 @@ export const WorkflowPageTitle = ({ workflowId, isReadOnly }: Readonly<WorkflowP
     // save() is still called either way because it owns both the error and the success feedback.
     if (workflowName.trim()) inputRef.current?.blur();
     void save();
+  };
+
+  // maxLength would cut a multi-line paste before its line breaks collapse, so collapse them first
+  // and fit the result into the room left around the selection. A single-line paste that fits is
+  // left to the browser, which keeps it on the undo stack. Otherwise the rest of the name is
+  // untouched, a cut never splits a surrogate pair (an emoji), and a paste where nothing fits
+  // does nothing rather than deleting the selection.
+  const handlePaste = (event: ClipboardEvent<HTMLTextAreaElement>) => {
+    const field = event.currentTarget;
+    const { selectionStart, selectionEnd, value } = field;
+    const room = WORKFLOW_NAME_MAX_LENGTH - (value.length - (selectionEnd - selectionStart));
+    const pasted = event.clipboardData.getData("text/plain");
+    const normalized = pasted.replaceAll(/[\r\n]+/g, " ");
+    if (normalized === pasted && pasted.length <= room) return;
+
+    event.preventDefault();
+    let text = normalized.slice(0, Math.max(room, 0));
+    if (/[\uD800-\uDBFF]$/.test(text)) text = text.slice(0, -1);
+    if (!text) return;
+    field.setRangeText(text, selectionStart, selectionEnd, "end");
+    setWorkflowName(field.value);
   };
 
   const resolved = workflow ?? data;
@@ -110,23 +147,28 @@ export const WorkflowPageTitle = ({ workflowId, isReadOnly }: Readonly<WorkflowP
       {/* flex-wrap keeps the badge inline next to the name and pushes it below on narrow widths. */}
       <span className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
         {isEditable ? (
-          <input
+          <textarea
             ref={inputRef}
+            rows={1}
             value={workflowName}
-            onChange={(event) => setWorkflowName(event.target.value)}
+            // A name is one line: Enter commits (handleKeyDown), pastes are normalized before they are
+            // fitted (handlePaste), and any other line break (e.g. a drop) becomes a space.
+            onChange={(event) => setWorkflowName(event.target.value.replaceAll(/[\r\n]+/g, " "))}
+            onPaste={handlePaste}
             onKeyDown={handleKeyDown}
             aria-label={t("common.workflow_name")}
             placeholder={t("common.workflow_name")}
             maxLength={WORKFLOW_NAME_MAX_LENGTH}
             aria-invalid={showNameError || undefined}
             aria-describedby={showNameError ? nameErrorId : undefined}
-            // Approximates content sizing where field-sizing is unsupported (Firefox/Safari).
-            size={Math.max(workflowName.length, 12)}
+            // Approximates content width where field-sizing is unsupported (Firefox).
+            cols={Math.max(workflowName.length, 12)}
             className={cn(
               "-mx-2 -my-1 min-w-0 rounded-md bg-transparent px-2 py-1",
               "text-3xl font-bold text-slate-800 placeholder:text-slate-400",
-              // Sizes to its content where supported; the max keeps long names from pushing the CTA out.
-              "[field-sizing:content] max-w-[28rem]",
+              // Sizes to its content where supported, up to the full width the header row leaves beside
+              // the CTA; a longer name wraps onto the next line instead of pushing the CTA out.
+              "[field-sizing:content] max-w-full resize-none overflow-hidden break-words",
               // Dashed hover/focus box, matching the dashboard's editable title
               // (see dashboard-page-header.tsx): slate while hovered, brand while editing.
               "border border-dashed border-transparent transition-colors",

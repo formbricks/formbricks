@@ -222,6 +222,41 @@ describe("ApiClient", () => {
       });
     });
 
+    test("forwards the PIN token, single-use id and page url in the signing request", async () => {
+      vi.mocked(global.fetch)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            data: {
+              signedUrl: "https://fake-s3-url.com",
+              fileUrl: "/storage/ws-test/private/x.jpg",
+              presignedFields: { policy: "test" },
+              signingData: null,
+              updatedFileName: "test.jpg",
+            },
+          }),
+        } as unknown as Response)
+        .mockResolvedValueOnce({ ok: true } as unknown as Response);
+
+      await client.uploadFile(
+        { base64: "data:image/jpeg;base64,abcd", name: "test.jpg", type: "image/jpeg" },
+        {
+          surveyId: "survey123",
+          elementId: "element123",
+          pinAuthToken: "pin-token",
+          singleUseId: "su-1",
+          url: "https://example.com/s/survey123?suId=su-1",
+        }
+      );
+
+      const requestInit = vi.mocked(global.fetch).mock.calls[0][1] as RequestInit;
+      expect(JSON.parse(requestInit.body as string)).toMatchObject({
+        pinAuthToken: "pin-token",
+        singleUseId: "su-1",
+        url: "https://example.com/s/survey123?suId=su-1",
+      });
+    });
+
     test("throws an error if file is invalid", async () => {
       await expect(() => client.uploadFile({ base64: "", name: "", type: "" } as any)).rejects.toThrow(
         "Invalid file object"

@@ -22,6 +22,33 @@ export const ZCursorPaginationMeta = z
   .describe("Cursor pagination metadata returned by list operations.");
 export type TCursorPaginationMeta = z.infer<typeof ZCursorPaginationMeta>;
 
+/**
+ * The workflow list's `meta`: the cursor pagination above plus `totalCount`, which is `null` unless the
+ * caller sent `includeTotalCount=true`. Required-but-nullable, like every other counted v3 list, so a
+ * client never has to tell "not asked for" from "missing".
+ */
+export const ZWorkflowListPaginationMeta = ZCursorPaginationMeta.extend({
+  totalCount: z
+    .number()
+    .int()
+    .min(0)
+    .nullable()
+    .describe("Workflows matching the current filters across all pages. Null unless includeTotalCount=true."),
+}).describe("Pagination metadata for the workflow list.");
+export type TWorkflowListPaginationMeta = z.infer<typeof ZWorkflowListPaginationMeta>;
+
+export const zWorkflowListPage = <TItem extends z.ZodType>(
+  item: TItem
+): z.ZodObject<{ data: z.ZodArray<TItem>; meta: typeof ZWorkflowListPaginationMeta }> =>
+  z.object({
+    data: z.array(item),
+    meta: ZWorkflowListPaginationMeta,
+  });
+export interface TWorkflowListPage<TItem> {
+  data: TItem[];
+  meta: TWorkflowListPaginationMeta;
+}
+
 export const zCursorPage = <TItem extends z.ZodType>(
   item: TItem
 ): z.ZodObject<{ data: z.ZodArray<TItem>; meta: typeof ZCursorPaginationMeta }> =>

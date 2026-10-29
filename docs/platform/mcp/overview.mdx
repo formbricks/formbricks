@@ -4,7 +4,7 @@ description: "Let AI assistants like Claude and Codex read and manage your Formb
 icon: "robot"
 ---
 
-Formbricks ships a **Model Context Protocol (MCP) server** that lets AI assistants — Claude Code, the Claude apps, Codex, and other MCP-capable clients — work with your workspace: list and read surveys, create link surveys, update or delete them, and read or add Unify Feedback records. The agent goes through the same APIs and permission checks you use in the app, so it always respects your permissions.
+Formbricks ships a **Model Context Protocol (MCP) server** that lets AI assistants — Claude Code, the Claude apps, Codex, and other MCP-capable clients — work with your workspace: list and read surveys, create link surveys, update or delete them, manage feedback buttons and banners, and read or add Unify Feedback records. The agent goes through the same APIs and permission checks you use in the app, so it always respects your permissions.
 
 You connect a client **with your own Formbricks login over OAuth 2.1** — there are no API keys to generate, copy, or paste. You approve the connection once on a consent screen, and you can revoke it at any time.
 
@@ -82,6 +82,15 @@ workspace id.
   dashboards, so `update_chart` changes it on all of them; to change it on one, `duplicate_chart` and point that
   dashboard's widget at the copy with `update_widget`. `duplicate_dashboard` shares the original's charts rather
   than copying them, and `remove_chart_from_dashboard` keeps the chart.
+</Note>
+
+<Note>
+  The creative tools manage [Creatives](/surveys/creatives/overview), the feedback buttons and banners on your
+  website. They need a self-hosted instance whose Enterprise license includes Creatives; elsewhere they answer
+  `creatives_not_entitled`. If the license stops including Creatives, the tools can still list and read
+  creatives and pause, close or delete them. A creative is created as a draft unless `create_creative` sets
+  `status`, `patch_creative` replaces each group it sends as a whole, and `restore_creative` always brings a
+  creative back as a draft.
 </Note>
 
 <Warning>

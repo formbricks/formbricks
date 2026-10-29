@@ -1,12 +1,12 @@
 name: Test release image
 description: Exercise one candidate architecture on its native runner
 inputs:
-  depot_build_id:
-    description: "Saved build ID"
-    required: true
-  depot_token:
-    description: "Depot project credential"
-    required: true
+  aws_role_arn:
+    description: "AWS role (ECR only)"
+    required: false
+  ecr_region:
+    description: "AWS region (ECR only)"
+    required: false
   image_ref:
     description: "Immutable candidate image digest"
     required: true
@@ -22,10 +22,11 @@ inputs:
 runs:
   using: composite
   steps:
-    - uses: ./.github/actions/depot-registry-login
+    - uses: ./.github/actions/image-registry-login
       with:
-        depot_build_id: ${{ inputs.depot_build_id }}
-        depot_token: ${{ inputs.depot_token }}
+        registry_type: ${{ inputs.registry_type }}
+        aws_role_arn: ${{ inputs.aws_role_arn }}
+        ecr_region: ${{ inputs.ecr_region }}
     - uses: ./.github/actions/setup-image-smoke
     - name: Test exact candidate digest natively
       shell: bash

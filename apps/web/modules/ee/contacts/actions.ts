@@ -17,35 +17,13 @@ import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { ensureContactsEnabled } from "@/modules/ee/contacts/lib/contacts-entitlement";
-import { createContactsFromCSV, deleteContact, getContact, getContacts } from "./lib/contacts";
+import { createContactsFromCSV, deleteContact, getContact } from "./lib/contacts";
 import { updateContactAttributes } from "./lib/update-contact-attributes";
 import {
   ZContactCSVAttributeMap,
   ZContactCSVDuplicateAction,
   ZContactCSVUploadResponse,
 } from "./types/contact";
-
-const ZGetContactsAction = z.object({
-  workspaceId: ZId,
-  offset: z.int().nonnegative(),
-  searchValue: z.string().optional(),
-});
-
-export const getContactsAction = authenticatedActionClient
-  .inputSchema(ZGetContactsAction)
-  .action(async ({ ctx, parsedInput }) => {
-    const workspaceId = parsedInput.workspaceId;
-    const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
-
-    await assertCan({ type: "user", id: ctx.user.id }, "workspace.read", {
-      type: "workspace",
-      id: workspaceId,
-    });
-
-    await ensureContactsEnabled(organizationId);
-
-    return getContacts(workspaceId, parsedInput.offset, parsedInput.searchValue);
-  });
 
 const ZContactDeleteAction = z.object({
   contactId: ZId,
