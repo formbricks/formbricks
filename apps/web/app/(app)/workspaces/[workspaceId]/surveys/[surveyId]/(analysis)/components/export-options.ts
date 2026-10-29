@@ -1,6 +1,11 @@
 import type { TResponseFilterCriteria } from "@formbricks/types/responses";
 import type { TExportColumnGroup } from "@/lib/analysis-export/column-selection";
-import { excludedForRequest } from "@/lib/analysis-export/column-selection";
+import { excludedForRequest, selectedGroups } from "@/lib/analysis-export/column-selection";
+import {
+  type TExcelSizeVerdict,
+  type TExcelSizing,
+  excelVerdictForEntries,
+} from "@/lib/analysis-export/excel-size";
 import {
   EXPORT_ADVANCED_OPTIONS,
   type TExportAdvancedOptionId,
@@ -55,6 +60,25 @@ export const isExcelBlocked = (
   options: TExportOptions,
   counts: { excel: { tooLarge: boolean } | null } | undefined
 ): boolean => options.format === "xlsx" && isExcelTooLarge(counts);
+
+/**
+ * The Excel verdict for the columns that are ticked. The server sizes the workbook with every column; the
+ * modal narrows it as columns are switched off, so Excel comes back once the selection fits the cap.
+ */
+export const excelVerdictForSelection = (
+  counts:
+    | {
+        columnGroups: TExportColumnGroup[];
+        excel: TExcelSizeVerdict | null;
+        excelSizing: TExcelSizing | null;
+      }
+    | undefined,
+  excludedColumns: readonly string[]
+): TExcelSizeVerdict | null => {
+  if (!counts?.excel || !counts.excelSizing) return counts?.excel ?? null;
+  const kept = selectedGroups(counts.columnGroups, excludedColumns).map((group) => group.id);
+  return excelVerdictForEntries(counts.excel, counts.excelSizing, kept);
+};
 
 /**
  * Whether the counts of the current options are in. The request is only built from them: the column list

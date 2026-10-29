@@ -5,13 +5,18 @@ import type { TResponseFilterCriteria } from "@formbricks/types/responses";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { buildAnalysisWhere, openAnalysisExport } from "@/lib/analysis-export";
 import { rowCells } from "@/lib/analysis-export/analysis-workbook";
-import { analysisColumnGroups, withoutColumnGroups } from "@/lib/analysis-export/column-groups";
+import {
+  analysisColumnGroups,
+  columnsByEntry,
+  withoutColumnGroups,
+} from "@/lib/analysis-export/column-groups";
 import type { TExportColumnGroup } from "@/lib/analysis-export/column-selection";
 import { getContactAttributeKeys } from "@/lib/analysis-export/contact-attribute-keys";
 import { CSV_BOM, analysisCsvLine } from "@/lib/analysis-export/csv-file";
 import { dataHeaderCells, dataParts } from "@/lib/analysis-export/data-files";
 import {
   type TExcelSizeVerdict,
+  type TExcelSizing,
   analysisWorkbookCells,
   excelSizeVerdict,
 } from "@/lib/analysis-export/excel-size";
@@ -78,6 +83,8 @@ export type TExportCounts = {
    * before anyone waits for a refusal. `null` for the Standard export, which the cap does not cover.
    */
   excel: TExcelSizeVerdict | null;
+  /** What the modal sizes the workbook from when columns are switched off; `null` with `excel`. */
+  excelSizing: TExcelSizing | null;
 };
 
 /** The Standard export's Include columns list: from the survey alone, so no response is read for it. */
@@ -115,6 +122,7 @@ export const countExportResponses = async ({
       total,
       columnGroups: standardGroupsOf(survey, isQuotasAllowed),
       excel: null,
+      excelSizing: null,
     };
   }
   const where = buildAnalysisWhere(survey, filter);
@@ -143,6 +151,11 @@ export const countExportResponses = async ({
     total,
     columnGroups: analysisColumnGroups(columns),
     excel: excelSizeVerdict(cells, EXCEL_EXPORT_MAX_CELLS),
+    excelSizing: {
+      parts: dataParts(plan.display).length,
+      responses: included,
+      columnsByEntry: columnsByEntry(columns),
+    },
   };
 };
 

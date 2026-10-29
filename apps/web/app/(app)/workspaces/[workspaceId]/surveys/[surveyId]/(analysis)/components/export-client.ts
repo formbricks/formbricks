@@ -1,5 +1,5 @@
 import type { TExportColumnGroup } from "@/lib/analysis-export/column-selection";
-import type { TExcelSizeVerdict } from "@/lib/analysis-export/excel-size";
+import type { TExcelSizeVerdict, TExcelSizing } from "@/lib/analysis-export/excel-size";
 import type { TExportRequest } from "@/lib/analysis-export/export-request";
 import { createRowCounter } from "./export-row-counter";
 
@@ -97,6 +97,8 @@ export type TExportCounts = {
   kind: "standard" | "analysis";
   /** Excel's size for this selection against the cap. `null` for the Standard export. */
   excel: TExcelSizeVerdict | null;
+  /** What the modal narrows the verdict with when columns are switched off. `null` with `excel`. */
+  excelSizing: TExcelSizing | null;
 };
 
 /** The numbers behind the modal's "Include X responses" line. */

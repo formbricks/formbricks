@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { TExportRequest } from "@/lib/analysis-export/export-request";
-import { excelBuildLimiter, handleExportRequest } from "./handle-export";
+import { EXCEL_MAX_WAITERS, EXCEL_WAIT_MS, excelBuildLimiter, handleExportRequest } from "./handle-export";
 
 vi.mock("server-only", () => ({}));
 
@@ -148,20 +148,70 @@ describe("handleExportRequest outcomes", () => {
     expect(await response.text()).toContain("too big");
   });
 
-  test("only one Excel build runs per process: a second is a 429, CSV is not held back, the slot comes back", async () => {
-    let finishBuild: (value: unknown) => void = () => {};
-    mocks.buildExportResponse.mockImplementationOnce(() => new Promise((resolve) => (finishBuild = resolve)));
-    const xlsx = { ...defaults, format: "xlsx" as const, display: "codes" as const };
-    const first = run({ body: xlsx });
-    await vi.waitFor(() => expect(excelBuildLimiter.inFlight).toBe(1));
+  test("only one Excel build runs per process: a second waits for the slot, CSV is not held back", async () => {
+    vi.useFakeTimers();
+    try {
+      let finishBuild: (value: unknown) => void = () => {};
+      mocks.buildExportResponse.mockImplementationOnce(
+        () => new Promise((resolve) => (finishBuild = resolve))
+      );
+      const xlsx = { ...defaults, format: "xlsx" as const, display: "codes" as const };
+      const first = run({ body: xlsx });
+      await vi.advanceTimersByTimeAsync(0);
+      expect(excelBuildLimiter.inFlight).toBe(1);
 
-    expect((await run({ body: xlsx })).status).toBe(429);
-    expect((await run()).status).toBe(200);
+      const second = run({ body: xlsx });
+      expect((await run()).status).toBe(200);
+      await vi.advanceTimersByTimeAsync(500);
+      expect(mocks.buildExportResponse).toHaveBeenCalledTimes(2); // the first, and the CSV
 
-    finishBuild({ ok: true, response: new Response("file") });
-    expect((await first).status).toBe(200);
-    expect(excelBuildLimiter.inFlight).toBe(0);
-    expect((await run({ body: xlsx })).status).toBe(200);
+      finishBuild({ ok: true, response: new Response("file") });
+      expect((await first).status).toBe(200);
+      await vi.advanceTimersByTimeAsync(500);
+      expect((await second).status).toBe(200);
+      expect(excelBuildLimiter.inFlight).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test("an Excel export that waits too long, or finds the queue full, is a 429", async () => {
+    vi.useFakeTimers();
+    try {
+      const held = excelBuildLimiter.tryAcquire();
+      const xlsx = { ...defaults, format: "xlsx" as const, display: "codes" as const };
+
+      const waiting = run({ body: xlsx });
+      await vi.advanceTimersByTimeAsync(EXCEL_WAIT_MS + 1_000);
+      expect((await waiting).status).toBe(429);
+
+      const queued = Array.from({ length: EXCEL_MAX_WAITERS }, () => run({ body: xlsx }));
+      await vi.advanceTimersByTimeAsync(0);
+      expect((await run({ body: xlsx })).status).toBe(429);
+      await vi.advanceTimersByTimeAsync(EXCEL_WAIT_MS + 1_000);
+      expect((await Promise.all(queued)).map((response) => response.status)).toEqual(queued.map(() => 429));
+      if (held.ok) held.release();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test("a client that leaves while waiting for the slot is a 499 and frees its place", async () => {
+    vi.useFakeTimers();
+    try {
+      const held = excelBuildLimiter.tryAcquire();
+      const controller = new AbortController();
+      const xlsx = { ...defaults, format: "xlsx" as const, display: "codes" as const };
+      const waiting = run({ body: xlsx, signal: controller.signal });
+      await vi.advanceTimersByTimeAsync(300);
+      controller.abort();
+      await vi.advanceTimersByTimeAsync(300);
+      expect((await waiting).status).toBe(499);
+      expect(mocks.buildExportResponse).not.toHaveBeenCalled();
+      if (held.ok) held.release();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   test("a failed Excel build gives its slot back", async () => {

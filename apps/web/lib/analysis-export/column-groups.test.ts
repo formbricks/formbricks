@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { buildSampleExport } from "./__fixtures__/sample-export";
-import { analysisColumnGroups, withoutColumnGroups } from "./column-groups";
+import { analysisColumnGroups, columnsByEntry, withoutColumnGroups } from "./column-groups";
+import { selectedGroups } from "./column-selection";
 import { createColumnStats } from "./column-stats";
 import { buildDatamap } from "./datamap";
 import { buildSpssSyntax } from "./spss-syntax";
@@ -105,5 +106,21 @@ describe("one option of a multi-select switched off", () => {
       });
     expect(syntax(exported.columns)).toContain(dropped.name);
     expect(syntax(kept.columns)).not.toContain(dropped.name);
+  });
+});
+
+describe("columnsByEntry", () => {
+  const exported = buildSampleExport("both");
+  const groups = analysisColumnGroups(exported.columns);
+
+  test("the entries the picker keeps add up to the columns the export keeps", () => {
+    const sizes = columnsByEntry(exported.columns);
+    const kept = (excluded: string[]) =>
+      selectedGroups(groups, excluded).reduce((sum, group) => sum + (sizes[group.id] ?? 0), 0);
+
+    expect(kept([])).toBe(exported.columns.length);
+    for (const group of groups) {
+      expect(kept([group.id])).toBe(withoutColumnGroups(exported, [group.id]).columns.length);
+    }
   });
 });

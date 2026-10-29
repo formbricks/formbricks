@@ -4,6 +4,7 @@ import {
   DEFAULT_EXPORT_OPTIONS,
   countLineParts,
   excelAlternative,
+  excelVerdictForSelection,
   exportFileExtension,
   isExcelBlocked,
   isExcelTooLarge,
@@ -85,6 +86,35 @@ describe("Excel against the size cap", () => {
     expect(isExcelBlocked(xlsx, over)).toBe(true);
     expect(isExcelBlocked(setFormat(xlsx, "csv"), over)).toBe(false);
     expect(isExcelBlocked(xlsx, under)).toBe(false);
+  });
+
+  test("switching columns off narrows the verdict, so Excel comes back once the selection fits", () => {
+    // 40,000 responses; q1 is one column, q2 a multi-select whose options hold the rest.
+    const counts = {
+      columnGroups: [
+        { id: "q:q1", label: "q1" },
+        { id: "q:q2", label: "q2" },
+        { id: "c:q2_1", label: "q2_1", parentId: "q:q2" },
+        { id: "c:q2_2", label: "q2_2", parentId: "q:q2" },
+      ],
+      excel: { cells: 120_003, maxCells: 100_000, tooLarge: true },
+      excelSizing: { parts: 1, responses: 40_000, columnsByEntry: { "q:q1": 1, "c:q2_1": 1, "c:q2_2": 1 } },
+    };
+    expect(excelVerdictForSelection(counts, [])).toMatchObject({ cells: 120_003, tooLarge: true });
+    expect(excelVerdictForSelection(counts, ["q:q2"])).toEqual({
+      cells: 40_001,
+      maxCells: 100_000,
+      tooLarge: false,
+    });
+    // One option of the multi-select off.
+    expect(excelVerdictForSelection(counts, ["c:q2_2"])).toMatchObject({ cells: 80_002, tooLarge: false });
+  });
+
+  test("the verdict is the server's when there is nothing to narrow it with", () => {
+    expect(excelVerdictForSelection(undefined, [])).toBeNull();
+    expect(
+      excelVerdictForSelection({ columnGroups: [], excel: null, excelSizing: null }, ["q:q1"])
+    ).toBeNull();
   });
 
   test("the alternative is a zip of CSV files when the same choices make a zip, else one CSV", () => {

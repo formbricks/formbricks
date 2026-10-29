@@ -44,6 +44,7 @@ import {
   type TExportOptions,
   countLineParts,
   excelAlternative,
+  excelVerdictForSelection,
   exportFileExtension,
   isExcelBlocked,
   isExcelTooLarge,
@@ -366,10 +367,11 @@ const ExportModalBody = ({
   const noColumns = hasNoColumnSelected(columnGroups, options.excludedColumns);
 
   // Excel is built whole in memory, so a selection past the cap is switched off and CSV recommended.
-  const excelTooLarge = isExcelTooLarge(counts.data);
-  const excelBlocked = isExcelBlocked(options, counts.data);
+  const excelCounts = { excel: excelVerdictForSelection(counts.data, options.excludedColumns) };
+  const excelTooLarge = isExcelTooLarge(excelCounts);
+  const excelBlocked = isExcelBlocked(options, excelCounts);
   const alternative = excelAlternative(options);
-  const excelSize = { cells: counts.data?.excel?.cells ?? 0, max: counts.data?.excel?.maxCells ?? 0 };
+  const excelSize = { cells: excelCounts.excel?.cells ?? 0, max: excelCounts.excel?.maxCells ?? 0 };
   const excelTooLargeMessage =
     alternative === "zip"
       ? t("workspace.surveys.export.excel_too_large_zip", excelSize)

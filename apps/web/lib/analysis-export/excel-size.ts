@@ -32,3 +32,25 @@ export const excelSizeVerdict = (cells: number, maxCells: number | undefined): T
   maxCells: maxCells ?? null,
   tooLarge: maxCells !== undefined && cells > maxCells,
 });
+
+/**
+ * What the modal needs to size the workbook of a column selection without asking again: the sheets, the
+ * responses, and how many columns each Include columns entry holds (the options of a multi-select, a whole
+ * question otherwise). The server sends it with the all-columns verdict.
+ */
+export type TExcelSizing = {
+  parts: number;
+  responses: number;
+  columnsByEntry: Record<string, number>;
+};
+
+/** The verdict once only the entries in `keptEntryIds` are left: the same count `analysisWorkbookCells` makes. */
+export const excelVerdictForEntries = (
+  excel: TExcelSizeVerdict,
+  sizing: TExcelSizing,
+  keptEntryIds: readonly string[]
+): TExcelSizeVerdict => {
+  const columns = keptEntryIds.reduce((sum, id) => sum + (sizing.columnsByEntry[id] ?? 0), 0);
+  const cells = sizing.parts * columns * (sizing.responses + 1);
+  return { cells, maxCells: excel.maxCells, tooLarge: excel.maxCells !== null && cells > excel.maxCells };
+};

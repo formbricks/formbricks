@@ -20,6 +20,20 @@ export const analysisColumnGroupId = (column: TAnalysisColumn): string => {
 const analysisColumnOptionId = (column: TAnalysisColumn): string | null =>
   column.source === "question" && column.question?.type === "multipleChoiceMulti" ? `c:${column.name}` : null;
 
+/** The entry of the Include columns list that holds this column: its option when it has one, else its group. */
+export const analysisColumnEntryId = (column: TAnalysisColumn): string =>
+  analysisColumnOptionId(column) ?? analysisColumnGroupId(column);
+
+/** How many columns each entry holds, for sizing a workbook after some entries are switched off. */
+export const columnsByEntry = (columns: readonly TAnalysisColumn[]): Record<string, number> => {
+  const counts: Record<string, number> = {};
+  for (const column of columns) {
+    const id = analysisColumnEntryId(column);
+    counts[id] = (counts[id] ?? 0) + 1;
+  }
+  return counts;
+};
+
 const optionLabel = (column: TAnalysisColumn): string => {
   const label = column.option?.label ?? column.name;
   const shown = column.kind === "other_text" ? `${label} (text)` : label;
