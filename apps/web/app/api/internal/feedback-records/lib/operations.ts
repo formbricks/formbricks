@@ -8,8 +8,6 @@ import {
 } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { assertCan } from "@/lib/authorization";
-import { assertFeedbackSourceDirectoryAccess } from "@/lib/feedback-source/access";
-import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import {
   assertFeedbackDirectoryAssignmentAccess,
   assertRecordBelongsToWorkspace,
@@ -18,10 +16,8 @@ import {
   getWorkspaceDirectoryIds,
 } from "@/modules/ee/unify-feedback/lib/access";
 import { getContactIdsByUserIds } from "@/modules/ee/unify-feedback/lib/contacts";
-import { deleteFeedbackRecord, listFeedbackRecords, retrieveFeedbackRecord } from "@/modules/hub/service";
-import type { FeedbackRecordListParams } from "@/modules/hub/types";
+import { deleteFeedbackRecord, retrieveFeedbackRecord } from "@/modules/hub/service";
 import { type HubError, isHubNotConfigured } from "@/modules/hub/utils";
-import type { TFeedbackRecordListQuery } from "../schemas";
 
 /**
  * Feedback records live in the Hub, one tenant per dataset. They are reached through a workspace: a
@@ -61,35 +57,6 @@ const hubFailure = (
 
 /** The Hub answered about the record itself (absent, malformed id), rather than failing to answer. */
 const isAnswerAboutRecord = (error: HubError): boolean => error.status >= 400 && error.status < 500;
-
-/** `GET /api/internal/feedback-records?workspaceId=&datasetId=`: one page of one dataset's records. */
-export async function listFeedbackRecordsOperation({
-  query,
-  ...context
-}: Omit<TRequestContext, "workspaceId"> & { query: TFeedbackRecordListQuery }): Promise<Response> {
-  const { authentication, requestId, instance } = context;
-  const { workspaceId, datasetId } = query;
-  const userId = sessionUserId(authentication);
-  if (!userId) return problemForbidden(requestId, FORBIDDEN, instance);
-
-  await assertCan({ type: "user", id: userId }, "workspace.read", { type: "workspace", id: workspaceId });
-  // The dataset must be one of this workspace's: a dataset id alone is not a claim to its records.
-  const datasets = await getFeedbackDirectoriesByWorkspaceId(workspaceId);
-  if (!datasets.some(({ id }) => id === datasetId)) return problemForbidden(requestId, FORBIDDEN, instance);
-  await assertFeedbackSourceDirectoryAccess(userId, datasetId, workspaceId, "read");
-
-  const params: FeedbackRecordListParams = { tenant_id: datasetId, limit: query.limit ?? 50 };
-  if (query.cursor) params.cursor = query.cursor;
-  // One-element OR lists: Hub 0.8.4 made these filters repeatable, this caller stays single-valued.
-  if (query.sourceType) params.source_type = [query.sourceType];
-  if (query.fieldType) params.field_type = [query.fieldType];
-  if (query.since) params.since = query.since;
-  if (query.until) params.until = query.until;
-
-  const result = await listFeedbackRecords(params);
-  if (result.error || !result.data) return hubFailure(result.error, context, "loaded");
-  return successResponse(result.data, { requestId });
-}
 
 /**
  * The record, once it is known to be reachable from the workspace and its dataset assignment is

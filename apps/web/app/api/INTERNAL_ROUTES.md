@@ -23,7 +23,6 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/internal/feedback-datasets` | POST | session | dashboard | `/api/internal` | `app/api/internal/feedback-datasets/route.ts` |
 | `/api/internal/feedback-datasets/{datasetId}` | GET, PATCH | session | dashboard | `/api/internal` | `app/api/internal/feedback-datasets/[datasetId]/route.ts` |
 | `/api/internal/feedback-datasets/{datasetId}/purge` | POST | session | dashboard | `/api/internal` | `app/api/internal/feedback-datasets/[datasetId]/purge/route.ts` |
-| `/api/internal/feedback-records` | GET | session | dashboard | `/api/internal` | `app/api/internal/feedback-records/route.ts` |
 | `/api/internal/feedback-records/{recordId}` | GET, DELETE | session | dashboard | `/api/internal` | `app/api/internal/feedback-records/[recordId]/route.ts` |
 | `/api/internal/feedback-records/contact-lookups` | POST | session | dashboard | `/api/internal` | `app/api/internal/feedback-records/contact-lookups/route.ts` |
 | `/api/internal/feedback-sources` | POST | session | dashboard | `/api/internal` | `app/api/internal/feedback-sources/route.ts` |

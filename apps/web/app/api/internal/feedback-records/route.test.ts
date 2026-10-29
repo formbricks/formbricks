@@ -6,7 +6,6 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { NO_CONFIG_ERROR } from "@/modules/hub/utils";
 import { DELETE, GET as RETRIEVE } from "./[recordId]/route";
 import { POST as LOOKUP_CONTACTS } from "./contact-lookups/route";
-import { GET as LIST } from "./route";
 
 const mocks = vi.hoisted(() => ({
   assertCan: vi.fn(),
@@ -14,7 +13,6 @@ const mocks = vi.hoisted(() => ({
   getOrganizationIdFromWorkspaceId: vi.fn(),
   isEnabled: vi.fn(),
   getDatasets: vi.fn(),
-  listFeedbackRecords: vi.fn(),
   retrieveFeedbackRecord: vi.fn(),
   deleteFeedbackRecord: vi.fn(),
   getContactIdsByUserIds: vi.fn(),
@@ -31,7 +29,6 @@ vi.mock("@/modules/ee/feedback-directory/lib/feedback-directory", () => ({
   getFeedbackDirectoriesByWorkspaceId: mocks.getDatasets,
 }));
 vi.mock("@/modules/hub/service", () => ({
-  listFeedbackRecords: mocks.listFeedbackRecords,
   retrieveFeedbackRecord: mocks.retrieveFeedbackRecord,
   deleteFeedbackRecord: mocks.deleteFeedbackRecord,
 }));
@@ -91,8 +88,6 @@ const base = "http://localhost/api/internal/feedback-records";
 const noParams = { params: Promise.resolve({}) } as never;
 const recordProps = { params: Promise.resolve({ recordId: RECORD_ID }) } as never;
 
-const list = (query = `workspaceId=${WORKSPACE_ID}&datasetId=${DATASET_ID}`) =>
-  LIST(send("GET", `${base}?${query}`), noParams);
 const retrieve = () => RETRIEVE(send("GET", `${base}/${RECORD_ID}?workspaceId=${WORKSPACE_ID}`), recordProps);
 const remove = (options?: TOptions) =>
   DELETE(send("DELETE", `${base}/${RECORD_ID}?workspaceId=${WORKSPACE_ID}`, undefined, options), recordProps);
@@ -116,66 +111,10 @@ beforeEach(() => {
   mocks.getOrganizationIdFromWorkspaceId.mockResolvedValue(ORG_ID);
   mocks.isEnabled.mockResolvedValue(true);
   mocks.getDatasets.mockResolvedValue([{ id: DATASET_ID, name: "Support" }]);
-  mocks.listFeedbackRecords.mockResolvedValue({ data: { data: [record()], next_cursor: "c2" }, error: null });
   mocks.retrieveFeedbackRecord.mockResolvedValue({ data: record(), error: null });
   mocks.deleteFeedbackRecord.mockResolvedValue({ data: { id: RECORD_ID }, error: null });
   mocks.getContactIdsByUserIds.mockResolvedValue({ "user-a": "clcont1111111111111111111" });
   mocks.applyRateLimit.mockResolvedValue(undefined);
-});
-
-describe("GET /api/internal/feedback-records", () => {
-  test("lists a page of one of the workspace's datasets, passing the filters to the Hub", async () => {
-    const response = await list(
-      `workspaceId=${WORKSPACE_ID}&datasetId=${DATASET_ID}&limit=25&cursor=c1&fieldType=nps&sourceType=formbricks`
-    );
-
-    expect(response.status).toBe(200);
-    expect((await response.json()).data).toEqual({ data: [record()], next_cursor: "c2" });
-    expect(mocks.listFeedbackRecords).toHaveBeenCalledWith({
-      tenant_id: DATASET_ID,
-      limit: 25,
-      cursor: "c1",
-      field_type: ["nps"],
-      source_type: ["formbricks"],
-    });
-    expect(mocks.assertCan).toHaveBeenCalledWith(actor, "feedbackDirectoryAssignment.read", {
-      type: "feedbackDirectoryAssignment",
-      feedbackDirectoryId: DATASET_ID,
-      workspaceId: WORKSPACE_ID,
-    });
-  });
-
-  test("refuses a dataset that isn't assigned to the workspace, without asking the Hub", async () => {
-    expect((await list(`workspaceId=${WORKSPACE_ID}&datasetId=${OTHER_DATASET_ID}`)).status).toBe(403);
-    expect(mocks.listFeedbackRecords).not.toHaveBeenCalled();
-  });
-
-  test("refuses a caller who can't read the workspace", async () => {
-    refuse("workspace.read");
-    expect((await list()).status).toBe(403);
-    expect(mocks.listFeedbackRecords).not.toHaveBeenCalled();
-  });
-
-  test("answers 503 when the Hub isn't configured, and 502 when it fails, never with its own text", async () => {
-    mocks.listFeedbackRecords.mockResolvedValueOnce({ data: null, error: NOT_CONFIGURED });
-    expect((await list()).status).toBe(503);
-
-    mocks.listFeedbackRecords.mockResolvedValueOnce({
-      data: null,
-      error: { status: 500, message: "connect ECONNREFUSED http://hub.internal:8080" },
-    });
-    const failed = await list();
-    expect(failed.status).toBe(502);
-    expect(JSON.stringify(await failed.json())).not.toContain("hub.internal");
-  });
-
-  test.each([
-    ["a limit over 1000", `workspaceId=${WORKSPACE_ID}&datasetId=${DATASET_ID}&limit=5000`],
-    ["an unknown field type", `workspaceId=${WORKSPACE_ID}&datasetId=${DATASET_ID}&fieldType=essay`],
-    ["no dataset", `workspaceId=${WORKSPACE_ID}`],
-  ])("answers 400 for %s", async (_label, query) => {
-    expect((await list(query)).status).toBe(400);
-  });
 });
 
 describe("GET /api/internal/feedback-records/{recordId}", () => {
