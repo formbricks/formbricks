@@ -40,11 +40,11 @@ describe("getElementCodeIssues", () => {
     expect(issues.has("b")).toBe(false);
   });
 
-  test("of two questions sharing a code only the later one is reported", () => {
+  test("of two questions sharing a code both are marked, each pointing at the other", () => {
     const survey = makeSurvey([[mc("a", "q1")], [mc("b", "q1")]]);
     const issues = getElementCodeIssues(survey);
-    expect(issues.has("a")).toBe(false);
     expect(issues.get("b")?.question).toMatchObject({ kind: "duplicate_question_code", clashesWith: "a" });
+    expect(issues.get("a")?.question).toMatchObject({ kind: "duplicate_question_code", clashesWith: "b" });
   });
 
   test("a code equal to an Embedded Data name is flagged", () => {

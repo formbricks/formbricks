@@ -43,6 +43,22 @@ export const getOptionCodeLists = (
 /** Whether the element has a question code at all: every answerable element, not CTA. */
 export const hasQuestionCode = (element: TSurveyElement): boolean => element.type !== "cta";
 
+/**
+ * A clash between two questions is reported on the later one only. The earlier one is marked too, with the
+ * clash pointing back, so the author sees both sides and the block of either one reads as needing attention.
+ */
+const markEarlierSide = (
+  result: Map<string, TElementCodeIssues>,
+  issue: TCodeIssue,
+  laterElementId: string
+): void => {
+  const isQuestionClash = issue.kind === "duplicate_question_code" || issue.kind === "clashes_export_column";
+  if (!isQuestionClash || !issue.clashesWith) return;
+  const earlier = result.get(issue.clashesWith) ?? { options: new Map() };
+  earlier.question ??= { ...issue, clashesWith: laterElementId };
+  result.set(issue.clashesWith, earlier);
+};
+
 const issueCache = new WeakMap<object, ReadonlyMap<string, TElementCodeIssues>>();
 
 /**
@@ -67,6 +83,7 @@ export const getElementCodeIssues = (survey: TSurvey): ReadonlyMap<string, TElem
     const entry: TElementCodeIssues = result.get(element.id) ?? { options: new Map() };
     if (listKey === "code" || listKey === undefined) {
       entry.question = issue;
+      markEarlierSide(result, issue, element.id);
     } else {
       const option = getOptionCodeLists(element).find((list) => list.key === listKey)?.options[
         optionIdx as number

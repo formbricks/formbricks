@@ -35,7 +35,7 @@ export const QuestionTabs = ({
           {t("common.settings")}
           {hasSettingsIssue && (
             <>
-              <span aria-hidden="true" className="ml-1.5 size-2 rounded-full bg-red-500" />
+              <span aria-hidden="true" className="ml-1.5 inline-block size-2 rounded-full bg-red-500" />
               <span className="sr-only">{t("workspace.surveys.edit.code_needs_attention")}</span>
             </>
           )}
