@@ -74,6 +74,12 @@ export const getOAuthScopeLabel = (scope: string, t: (key: string) => string): s
       return t("auth.oauth.scopes.organizations_write");
     case "members:write":
       return t("auth.oauth.scopes.members_write");
+    case "members:read":
+      return t("auth.oauth.scopes.members_read");
+    case "teams:read":
+      return t("auth.oauth.scopes.teams_read");
+    case "teams:write":
+      return t("auth.oauth.scopes.teams_write");
     default:
       return scope;
   }

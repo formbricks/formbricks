@@ -1,8 +1,9 @@
 /**
  * The resource families the MCP server grants access to, in the order every summary lists them.
  * A scope is `<family>:<level>` (`surveys:read`). Not every family has both levels: `audit` and `account`
- * are read-only, and the setup families (`workspaces`, `organizations`, `members`, ADR 0018) are
- * write-only, because each is one administrative act rather than a body of data to read.
+ * are read-only, and `workspaces` and `organizations` (ADR 0018) are write-only, because each is one
+ * administrative act rather than a body of data to read. `members` and `teams` have both: listing the
+ * people and teams of an organization is a read of its own, separate from changing them.
  */
 export const MCP_SCOPE_FAMILIES = [
   "surveys",
@@ -16,6 +17,7 @@ export const MCP_SCOPE_FAMILIES = [
   "workspaces",
   "organizations",
   "members",
+  "teams",
 ] as const;
 
 export type TMcpScopeFamily = (typeof MCP_SCOPE_FAMILIES)[number];
@@ -32,7 +34,6 @@ const SINGLE_LEVEL_FAMILIES: Partial<Record<TMcpScopeFamily, TMcpScopeLevel>> = 
   account: "read",
   workspaces: "write",
   organizations: "write",
-  members: "write",
 };
 
 const isFamily = (value: string): value is TMcpScopeFamily =>
@@ -100,5 +101,7 @@ export const getScopeFamilyLabel = (family: TMcpScopeFamily, t: (key: string) =>
       return t("shell.connections.families.organizations");
     case "members":
       return t("shell.connections.families.members");
+    case "teams":
+      return t("shell.connections.families.teams");
   }
 };

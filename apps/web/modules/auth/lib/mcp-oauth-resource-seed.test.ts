@@ -78,6 +78,10 @@ const REPAIR_MIGRATIONS = [
     path: "../../packages/database/migration/20261029100000_grant_agent_setup_scopes/migration.ts",
     declaration: /const AGENT_SETUP_SCOPES = \[([^\]]*)\]/,
   },
+  {
+    path: "../../packages/database/migration/20261029110000_grant_members_teams_scopes/migration.ts",
+    declaration: /const MEMBERS_TEAMS_SCOPES = \[([^\]]*)\]/,
+  },
 ];
 
 const readScopeLiteral = (path: string, declaration: RegExp): string[] => {

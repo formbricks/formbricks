@@ -48,6 +48,9 @@ describe("getApiKeyScopes", () => {
     expect(manage).toContain("account:read");
     expect(manage).not.toContain("organizations:write");
     expect(manage).not.toContain("members:write");
+    for (const scope of ["members:read", "teams:read", "teams:write"]) {
+      expect(manage).not.toContain(scope);
+    }
   });
 
   test("the audit log needs the organization-level read grant, never a workspace grant", () => {

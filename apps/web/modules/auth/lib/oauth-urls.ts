@@ -136,6 +136,15 @@ export const MCP_OAUTH_SCOPES = [
   "workspaces:write",
   "organizations:write",
   "members:write",
+  // Round 3 of agent-led setup (ADR 0018): the people side of an organization. Listing members reads
+  // their emails and roles, and teams are the Enterprise access model, so each is its own choice and
+  // all three start UNTICKED on the consent screen. `members:read` -> `list_members`; `members:write`
+  // additionally -> `update_member_role`, `remove_member`, `resend_invite`, `delete_invite` besides
+  // `invite_member`; `teams:read` -> `list_teams`; `teams:write` -> `create_team`, `update_team`,
+  // `delete_team`. Same two-migration rule: 20261029110000 (resource row), 20261029110100 (clients).
+  "members:read",
+  "teams:read",
+  "teams:write",
 ] as const;
 
 /**
@@ -172,6 +181,9 @@ export const MCP_RESOURCE_SCOPES = [
   "workspaces:write",
   "organizations:write",
   "members:write",
+  "members:read",
+  "teams:read",
+  "teams:write",
 ] as const;
 
 // Scopes advertised in the RFC 9728 protected-resource metadata. MCP clients derive their

@@ -350,6 +350,29 @@ describe("authenticateMcpRequest", () => {
     expect(manage).not.toContain("members:write");
   });
 
+  test("never grants members:read, teams:read or teams:write to an API key, whatever its grants", async () => {
+    // Members and teams are organization-level, and an API key has workspace permissions plus optional
+    // organization access-control flags but no organization role, so the operations behind these scopes
+    // (owner or manager role checks) have nothing to check it against.
+    vi.mocked(authenticateApiKeyFromHeaders).mockResolvedValue({
+      ...apiKeyAuth,
+      workspacePermissions: [
+        { workspaceId: "workspace_1", workspaceName: "Workspace", permission: ApiKeyPermission.manage },
+      ],
+      organizationAccess: { accessControl: { read: true, write: true } },
+    });
+    const result = await authenticateMcpRequest(
+      createRequest("http://localhost/api/mcp", { "x-api-key": "fbk_test" })
+    );
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      for (const scope of ["members:read", "members:write", "teams:read", "teams:write"]) {
+        expect(result.authInfo.scopes).not.toContain(scope);
+      }
+    }
+  });
+
   test("grants audit:read only to an API key with organization access-control read access", async () => {
     const withAccess = async (
       accessControl: { read: boolean; write: boolean },
@@ -504,7 +527,7 @@ describe("authenticateMcpRequest", () => {
       // added, the baseline auth gate has been widened and MCP is accepting a token that grants no
       // resource access.
       expect(result.response.headers.get("WWW-Authenticate")).toContain(
-        'scope="surveys:read surveys:write workflows:read workflows:write feedbackRecords:read feedbackRecords:write responses:read responses:write contacts:read contacts:write webhooks:read webhooks:write audit:read account:read workspaces:write organizations:write members:write"'
+        'scope="surveys:read surveys:write workflows:read workflows:write feedbackRecords:read feedbackRecords:write responses:read responses:write contacts:read contacts:write webhooks:read webhooks:write audit:read account:read workspaces:write organizations:write members:write members:read teams:read teams:write"'
       );
     }
     expect(applyRateLimit).not.toHaveBeenCalled();

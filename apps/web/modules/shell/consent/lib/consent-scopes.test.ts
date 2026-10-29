@@ -28,6 +28,9 @@ const MCP_REQUEST = [
   "workspaces:write",
   "organizations:write",
   "members:write",
+  "members:read",
+  "teams:read",
+  "teams:write",
   "offline_access",
 ];
 
@@ -46,19 +49,28 @@ describe("buildConsentGroups", () => {
       ["feedback", ["feedbackRecords:read", "feedbackRecords:write"]],
       ["respondent_data", ["responses:read", "responses:write", "contacts:read", "contacts:write"]],
       ["integrations_audit", ["webhooks:read", "webhooks:write", "audit:read"]],
-      ["account_setup", ["account:read", "workspaces:write", "organizations:write", "members:write"]],
+      ["account_setup", ["account:read", "workspaces:write", "organizations:write"]],
+      ["people_teams", ["members:read", "members:write", "teams:read", "teams:write"]],
     ]);
   });
 
   test("setup scopes are not respondent data", () => {
-    const group = buildConsentGroups(["account:read", "members:write"]).find(
+    const group = buildConsentGroups(["account:read", "organizations:write"]).find(
       ({ id }) => id === "account_setup"
     );
 
     expect(group).toEqual({
       id: "account_setup",
       personalData: false,
-      scopes: ["account:read", "members:write"],
+      scopes: ["account:read", "organizations:write"],
+    });
+  });
+
+  test("members and teams form their own group, flagged as personal data because it lists emails", () => {
+    expect(buildConsentGroups(["members:read", "teams:write", "surveys:read"]).at(-1)).toEqual({
+      id: "people_teams",
+      personalData: true,
+      scopes: ["members:read", "teams:write"],
     });
   });
 
@@ -70,7 +82,7 @@ describe("buildConsentGroups", () => {
 });
 
 describe("getDefaultSelection", () => {
-  test("starts with configuration and setup ticked; respondent data, webhooks, audit, organizations and invites unticked", () => {
+  test("starts with configuration and setup ticked; respondent data, webhooks, audit, organizations, members and teams unticked", () => {
     expect(getDefaultSelection(MCP_REQUEST)).toEqual([
       "surveys:read",
       "surveys:write",
@@ -107,15 +119,30 @@ describe("toggleScope", () => {
   test("a write-only setup scope ticks nothing besides itself and unticks on its own", () => {
     const ticked = toggleScope({
       selected: [],
-      scope: "members:write",
+      scope: "organizations:write",
       checked: true,
       requested: MCP_REQUEST,
     });
 
-    expect(ticked).toEqual(["members:write"]);
+    expect(ticked).toEqual(["organizations:write"]);
     expect(
-      toggleScope({ selected: ticked, scope: "members:write", checked: false, requested: MCP_REQUEST })
+      toggleScope({ selected: ticked, scope: "organizations:write", checked: false, requested: MCP_REQUEST })
     ).toEqual([]);
+  });
+
+  test("members and teams follow the read/write pairing like any other family", () => {
+    for (const family of ["members", "teams"]) {
+      const ticked = toggleScope({
+        selected: [],
+        scope: `${family}:write`,
+        checked: true,
+        requested: MCP_REQUEST,
+      }).sort();
+      expect(ticked).toEqual([`${family}:read`, `${family}:write`]);
+      expect(
+        toggleScope({ selected: ticked, scope: `${family}:read`, checked: false, requested: MCP_REQUEST })
+      ).toEqual([]);
+    }
   });
 
   test("does not add a read the client never asked for, nor a scope it did not request", () => {

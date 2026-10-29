@@ -123,7 +123,10 @@ Supported scopes:
 | `account:read` | `get_account_context`; also admits `list_workspaces` (ADR 0018) |
 | `workspaces:write` | `create_workspace`, `update_workspace`, `set_workspace_branding` |
 | `organizations:write` | `create_organization`, `update_organization` |
-| `members:write` | `invite_member` |
+| `members:read` | `list_members` |
+| `members:write` | `invite_member`, `update_member_role`, `remove_member`, `resend_invite`, `delete_invite` |
+| `teams:read` | `list_teams` |
+| `teams:write` | `create_team`, `update_team`, `delete_team` |
 | `pull_document` | `read` on the resource's workspace, plus the kind's read scope |
 | `push_document` | `write` or `manage` on the resource's workspace (the same as the resource's own update), plus the kind's write scope; a dry run needs it too |
 | `openid` | OpenID Connect subject interoperability |
@@ -176,7 +179,8 @@ The authorization server supports all of the above, but the MCP protected-resour
 needs — `surveys:read`, `surveys:write`, `workflows:read`, `workflows:write`, `feedbackRecords:read`,
 `feedbackRecords:write`, `responses:read`, `responses:write`, `contacts:read`, `contacts:write`,
 `webhooks:read`, `webhooks:write`, `audit:read`, the setup scopes `account:read`, `workspaces:write`,
-`organizations:write` and `members:write`, and `offline_access`. Clients derive their Dynamic Client Registration scopes
+`organizations:write` and `members:write`, the people scopes `members:read`, `teams:read` and `teams:write`, and
+`offline_access`. Clients derive their Dynamic Client Registration scopes
 from that list, so `offline_access` must be advertised there for clients to be issued refresh tokens
 (`openid`/`profile`/`email` are OIDC scopes the MCP resource does not require).
 
@@ -200,11 +204,14 @@ Scope groups are **independent**: a token authenticates as long as it holds at l
 scope, so a `feedbackRecords:read`-only grant is valid and simply can't reach the survey tools.
 `list_workspaces` is the shared discovery tool and accepts any read scope, and `account:read`.
 
-The agent-led setup scopes (ADR 0018) are single-level: `account:read` has no write twin, and `workspaces:write`,
-`organizations:write` and `members:write` have no read twin, because each is one administrative act rather than a
-body of data. They are separate from `surveys:write` so that a person can let an agent author surveys without
-letting it create workspaces, create or rename organizations, or send invitations. A scope is only the first
-gate: every operation still checks the person's organization role (see the permission table below).
+The agent-led setup scopes (ADR 0018) are mostly single-level: `account:read` has no write twin, and
+`workspaces:write` and `organizations:write` have no read twin, because each is one administrative act rather than
+a body of data. `members` and `teams` are the exception and come as read and write pairs (`members:read` and
+`members:write`, `teams:read` and `teams:write`), because listing people reads their emails and roles and the
+consent screen has to let a person allow that without allowing removals. They are separate from `surveys:write`
+so that a person can let an agent author surveys without letting it create workspaces, create or rename
+organizations, or manage people and teams. A scope is only the first gate: every operation still checks the
+person's organization role (see the permission table below), and teams need the Enterprise teams licence.
 
 ### API-key fallback
 
@@ -333,7 +340,8 @@ Synthesized MCP scopes for an API key: `surveys:read` + `workflows:read` + `feed
 (and the other `:read` scopes, plus `account:read`) always; the matching `:write` scopes when the key has `write` or
 `manage` on any workspace; `workspaces:write` only when it has `manage` on one. `organizations:write` and
 `members:write` are never synthesized, because creating or renaming an organization and inviting people are for a
-signed-in person. The scope
+signed-in person; `members:read`, `teams:read` and `teams:write` are never synthesized either, because members
+and teams are organization-level and a key has workspace permissions but no organization role. The scope
 gate and the per-workspace access check above are independent — a `:write` tool requires **both** the
 `:write` scope on the token and write/manage on the target workspace.
 
@@ -796,6 +804,13 @@ step below with two migrations: `20261029100000_grant_agent_setup_scopes` (the r
 `:read` scope, the three writes to clients holding any MCP `:write` scope). Registration is only a ceiling, so a
 client that registered with a write scope can now be offered `organizations:write` and `members:write`, but the
 person still ticks each one on the consent screen, where those two start unticked.
+
+Round 3 added `members:read`, `teams:read` and `teams:write` the same way, with
+`20261029110000_grant_members_teams_scopes` (the resource row) and
+`20261029110100_grant_members_teams_scopes_to_clients` (registered clients: `members:read` and `teams:read` to clients
+holding any MCP `:read` scope, `teams:write` to clients holding any `:write` scope; `members:write` had already gone
+out with the first pair). The three start unticked on the consent screen, and the consent group "Members and teams"
+carries the personal-data badge because `members:read` lists emails.
 
 Reusing `<resource>:read` / `<resource>:write` needs nothing more. A new resource family also needs:
 

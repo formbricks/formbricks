@@ -186,9 +186,11 @@ function getMcpScopes(authentication: TAuthenticationApiKey): string[] {
     scopes.add("webhooks:write");
   }
   // Workspace setup (name, channel, branding) is narrower than writing a survey: the operations need a
-  // `manage` grant on the workspace for an API key, so only such a key gets the scope. `organizations:write`
-  // and `members:write` are never derived here: creating an organization, renaming one and inviting people
-  // are for a signed-in person, which no API key is.
+  // `manage` grant on the workspace for an API key, so only such a key gets the scope. `organizations:write`,
+  // `members:read`, `members:write`, `teams:read` and `teams:write` are never derived here: creating an
+  // organization, renaming one, and listing, inviting or removing people and managing teams are
+  // organization-level acts, and an API key has workspace permissions but no organization role for the
+  // owner/manager checks in those operations to hold against.
   if (authentication.workspacePermissions.some((permission) => permission.permission === "manage")) {
     scopes.add("workspaces:write");
   }

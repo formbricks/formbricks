@@ -65,6 +65,10 @@ describe("OAuth protected resource metadata", () => {
         "workspaces:write",
         "organizations:write",
         "members:write",
+        // Round 3 (ADR 0018): the people side of an organization, granted by 20261029110000 / 20261029110100.
+        "members:read",
+        "teams:read",
+        "teams:write",
         "offline_access",
       ],
       bearer_methods_supported: ["header"],

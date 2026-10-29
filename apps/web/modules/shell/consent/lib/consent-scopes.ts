@@ -9,7 +9,8 @@ export type TConsentGroupId =
   | "feedback"
   | "respondent_data"
   | "integrations_audit"
-  | "account_setup";
+  | "account_setup"
+  | "people_teams";
 
 interface TConsentGroupDefinition {
   id: TConsentGroupId;
@@ -24,18 +25,18 @@ const CONSENT_GROUPS: readonly TConsentGroupDefinition[] = [
   { id: "respondent_data", families: ["responses", "contacts"], personalData: true },
   { id: "integrations_audit", families: ["webhooks", "audit"], personalData: false },
   // Agent-led setup (ADR 0018): who the person is and the administrative acts of setting an account up.
-  {
-    id: "account_setup",
-    families: ["account", "workspaces", "organizations", "members"],
-    personalData: false,
-  },
+  { id: "account_setup", families: ["account", "workspaces", "organizations"], personalData: false },
+  // The people side of an organization. Listing members reads colleagues' emails and roles, hence the
+  // personal-data flag, and teams are an Enterprise access model. None of it is ticked by default.
+  { id: "people_teams", families: ["members", "teams"], personalData: true },
 ];
 
 /**
  * What is ticked when the screen opens: configuration the agent builds with, read-only where it holds
  * data, plus what the Setup guide needs to start (the account context and creating or branding a
- * workspace). Respondent data, webhooks, the audit log, creating or renaming an organization and
- * inviting people start unticked so each is a deliberate choice.
+ * workspace). Respondent data, webhooks, the audit log, creating or renaming an organization, and
+ * everything about members and teams (listing them, inviting, changing roles, removing) start unticked
+ * so each is a deliberate choice.
  */
 const DEFAULT_SCOPES: readonly string[] = [
   "surveys:read",

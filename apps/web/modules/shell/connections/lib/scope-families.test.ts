@@ -29,12 +29,16 @@ describe("parseResourceScope", () => {
 });
 
 describe("the setup families (ADR 0018)", () => {
-  test("account is read-only and workspaces, organizations and members are write-only", () => {
+  test("account is read-only, workspaces and organizations are write-only, members and teams have both", () => {
     expect(parseResourceScope("account:read")).toEqual({ family: "account", level: "read" });
     expect(parseResourceScope("account:write")).toBeNull();
-    for (const family of ["workspaces", "organizations", "members"]) {
+    for (const family of ["workspaces", "organizations"]) {
       expect(parseResourceScope(`${family}:write`)).toEqual({ family, level: "write" });
       expect(parseResourceScope(`${family}:read`)).toBeNull();
+    }
+    for (const family of ["members", "teams"]) {
+      expect(parseResourceScope(`${family}:read`)).toEqual({ family, level: "read" });
+      expect(parseResourceScope(`${family}:write`)).toEqual({ family, level: "write" });
     }
   });
 
@@ -44,6 +48,17 @@ describe("the setup families (ADR 0018)", () => {
     ).toEqual({
       write: ["workspaces", "organizations", "members"],
       readOnly: ["account"],
+    });
+  });
+
+  test("members and teams read alone is read-only, and write wins over read", () => {
+    expect(summarizeScopes(["members:read", "teams:read"])).toEqual({
+      write: [],
+      readOnly: ["members", "teams"],
+    });
+    expect(summarizeScopes(["members:read", "members:write", "teams:read"])).toEqual({
+      write: ["members"],
+      readOnly: ["teams"],
     });
   });
 });

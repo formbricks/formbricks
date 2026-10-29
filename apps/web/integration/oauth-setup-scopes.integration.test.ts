@@ -4,6 +4,7 @@ import { resetDb } from "@/integration/reset-db";
 import { MCP_OAUTH_SCOPES } from "@/modules/auth/lib/oauth-urls";
 // The data migration under test (auto-discovered by the migration runner at deploy).
 import { grantAgentSetupScopes } from "../../../packages/database/migration/20261029100000_grant_agent_setup_scopes/migration";
+import { grantMembersTeamsScopes } from "../../../packages/database/migration/20261029110000_grant_members_teams_scopes/migration";
 
 /**
  * Agent-led setup scopes (ADR 0018) against real Postgres, the resource-row half. The failure it guards is
@@ -70,7 +71,9 @@ describe("agent setup scope grant on the oauthResource row", () => {
     const identifier = "https://app.example.com/api/mcp";
     await seedResource(identifier, PRE_SETUP_SCOPES);
 
+    // Every repair after the platform migration has to have run for the row to cover the whole list.
     await runGrant();
+    await grantMembersTeamsScopes.run!({ prisma, tx: prisma as never });
 
     const allowed = new Set(await scopesOf(identifier));
     expect(MCP_OAUTH_SCOPES.filter((scope) => !allowed.has(scope))).toEqual([]);

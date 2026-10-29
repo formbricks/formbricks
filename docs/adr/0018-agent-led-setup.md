@@ -17,22 +17,27 @@ A new account is set up by the person's own agent. The person signs up, connects
 
 ## Decision: dedicated OAuth scopes
 
-Four new scopes, each a separate choice on the consent screen (group "Account and setup"):
+Seven new scopes, each a separate choice on the consent screen. The first four started the decision; round 3 added `members:read`, `teams:read` and `teams:write` for the people side of an organization. Account, workspace and organization scopes sit in the group "Account and setup", members and teams in "Members and teams":
 
-| Scope | Tools |
-| --- | --- |
-| `account:read` | `get_account_context`; also admits `list_workspaces` |
-| `workspaces:write` | `create_workspace`, `update_workspace`, `set_workspace_branding` |
-| `organizations:write` | `create_organization`, `update_organization` |
-| `members:write` | `invite_member` |
+| Scope                 | Tools                                                                                    |
+| --------------------- | ---------------------------------------------------------------------------------------- |
+| `account:read`        | `get_account_context`; also admits `list_workspaces`                                     |
+| `workspaces:write`    | `create_workspace`, `update_workspace`, `set_workspace_branding`                         |
+| `organizations:write` | `create_organization`, `update_organization`                                             |
+| `members:read`        | `list_members`                                                                           |
+| `members:write`       | `invite_member`, `update_member_role`, `remove_member`, `resend_invite`, `delete_invite` |
+| `teams:read`          | `list_teams`                                                                             |
+| `teams:write`         | `create_team`, `update_team`, `delete_team`                                              |
 
-They are single-level: `account:read` has no write twin and the three writes have no read twin. A scope is only the first gate; each operation still checks the person's organization role (owner or manager), so holding `members:write` lets an agent invite only when its person could. `account:read` and `workspaces:write` start ticked on the consent screen, because the Setup guide cannot start without them; `organizations:write` and `members:write` start unticked. An API key gets `account:read` always and `workspaces:write` when it has `manage` on a workspace; it never gets `organizations:write` or `members:write`.
+`account:read`, `workspaces:write` and `organizations:write` are single-level: `account:read` has no write twin and the two writes have no read twin. `members` and `teams` come as read and write pairs, because listing people exposes their email addresses and roles and a person must be able to allow that without allowing removals. Ticking a write ticks the read of the same family, as everywhere on the consent screen. A scope is only the first gate; each operation still checks the person's organization role (owner or manager), so holding `members:write` lets an agent invite or remove only when its person could, and teams additionally need the Enterprise teams licence. `account:read` and `workspaces:write` start ticked on the consent screen, because the Setup guide cannot start without them; `organizations:write`, `members:read`, `members:write`, `teams:read` and `teams:write` start unticked, so reading colleagues' emails, changing who is in the organization and managing teams are each a deliberate choice. An API key gets `account:read` always and `workspaces:write` when it has `manage` on a workspace; it never gets `organizations:write` or any members or teams scope, because those are organization-level and a key has no organization role for the operations' owner and manager checks to hold against.
 
 Two data migrations follow the rule in `oauth-urls.ts`: `20261029100000_grant_agent_setup_scopes` appends the four scopes to the `oauthResource` row, and `20261029100100_grant_agent_setup_scopes_to_clients` appends them to registered clients, mirroring what each already holds (`account:read` for any MCP `:read` scope, the three writes for any MCP `:write` scope, `skipConsent` clients skipped). Registration is only a ceiling, so existing write clients can now be offered `organizations:write` and `members:write`, but nothing is granted until the person ticks them.
 
+Round 3 adds two more, by the same rule: `20261029110000_grant_members_teams_scopes` appends `members:read`, `teams:read` and `teams:write` to the `oauthResource` row, and `20261029110100_grant_members_teams_scopes_to_clients` appends `members:read` and `teams:read` to clients holding any MCP `:read` scope and `teams:write` to clients holding any `:write` scope (`members:write` already went out with the first pair; `skipConsent` clients are skipped).
+
 ## Consequences
 
-- New tools: `get_account_context`, `update_organization`, `create_organization`, `create_workspace`, `update_workspace`, `set_workspace_branding` and `invite_member`. Agents still cannot delete workspaces or change roles. An invite changes nothing until the call is confirmed.
+- New tools: `get_account_context`, `update_organization`, `create_organization`, `create_workspace`, `update_workspace`, `set_workspace_branding` and `invite_member`. Round 3 adds `list_members`, `update_member_role`, `remove_member`, `resend_invite`, `delete_invite`, `list_teams`, `create_team`, `update_team` and `delete_team`. Agents still cannot delete workspaces. An invite changes nothing until the call is confirmed.
 - An agent connection that may edit surveys can no longer create workspaces, set branding or invite members unless the person also approved the matching scope. Existing connections keep what they were granted and are asked for the new scopes at their next sign-in.
 - A workspace can only be created by an agent. An organization can now have zero workspaces, and every screen and tool has to cope.
 - The setup guide, the MCP prompt and the server instructions come from one in-repo source with the instance's own URL filled in; a test fails if the guide names a tool that is not registered.

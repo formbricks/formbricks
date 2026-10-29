@@ -78,8 +78,8 @@ export const getApiKeyScopes = ({
       "account:read"
     );
 
-    // Workspace setup needs `manage`, matching `getMcpScopes`; organization and member scopes are never
-    // derived for a key, because those acts belong to a signed-in person.
+    // Workspace setup needs `manage`, matching `getMcpScopes`; organization, member and team scopes are
+    // never derived for a key, because those are organization-level acts and a key has no organization role.
     if (workspacePermissions.some(({ permission }) => permission === "manage")) {
       scopes.push("workspaces:write");
     }
