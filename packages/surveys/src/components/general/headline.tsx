@@ -40,6 +40,7 @@ export function Headline({
       )}
       <div
         className={`flex items-center ${alignTextCenter ? "justify-center" : "justify-between"}`}
+        data-fb-headline-centered={alignTextCenter || undefined}
         dir="auto">
         {/* No Tailwind size or weight utility here: those are `!important` inside a cascade layer,
             so they outranked the styling editor's headline size/weight on welcome, ending and Cal

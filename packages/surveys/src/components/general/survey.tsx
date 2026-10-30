@@ -38,6 +38,7 @@ import { Subheader } from "@/components/general/subheader";
 import {
   SURVEY_CLOSE_BUTTON_HEADLINE_CLEARANCE_CLASS_NAME,
   SURVEY_CLOSE_BUTTON_ROW_CLASS_NAME,
+  SURVEY_CLOSE_BUTTON_SCROLL_FADE_CLASS_NAME,
   SurveyCloseButton,
 } from "@/components/general/survey-close-button";
 import { WelcomeCard } from "@/components/general/welcome-card";
@@ -1442,7 +1443,8 @@ export function Survey({
               className={cn(
                 loadingElement ? "animate-pulse opacity-60" : "",
                 fullSizeCards ? "" : "my-auto",
-                isCloseButtonBesideContent && SURVEY_CLOSE_BUTTON_HEADLINE_CLEARANCE_CLASS_NAME
+                isCloseButtonBesideContent && SURVEY_CLOSE_BUTTON_HEADLINE_CLEARANCE_CLASS_NAME,
+                isCloseButtonBesideContent && SURVEY_CLOSE_BUTTON_SCROLL_FADE_CLASS_NAME
               )}>
               {content()}
             </div>
