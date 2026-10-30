@@ -145,7 +145,7 @@ describe("processPasswordResetRequest", () => {
       await process();
 
       expect(applyRateLimit).toHaveBeenCalledExactlyOnceWith(
-        { interval: 3600, allowedPerInterval: 3, namespace: "auth:forgot:account" },
+        { interval: 3600, allowedPerInterval: 3, namespace: "auth:forgot:account", failClosed: true },
         "user123"
       );
       expect(applyRateLimit).toHaveBeenCalledBefore(vi.mocked(auth.api.requestPasswordReset));

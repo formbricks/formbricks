@@ -12,8 +12,8 @@ FROM node:24-alpine3.24 AS base
 # NODE_OPTIONS value it survives a deployment that sets its own NODE_OPTIONS. Without it a CA-package fix,
 # such as the compromised eMudhra intermediates (ENG-4065), never reaches Node.
 FROM alpine:3.24 AS node-runtime-builder
-ARG NODE_VERSION=24.21.0
-ARG NODE_SOURCE_SHA256=a6f54defb6fd7c84f41dba13d61e78e9b4e0961712cf61f29715c05f5ced94fc
+ARG NODE_VERSION=24.22.2
+ARG NODE_SOURCE_SHA256=8fe2ec1723bb9f8d0b683907c82708debbeda64af21cb2aa214c4241eed0a061
 ARG NODE_BUILD_JOBS=4
 RUN apk add --no-cache curl g++ linux-headers make python3 xz \
     "openssl-dev>=3.5.9-r0" "zlib-dev>=1.3.2-r1"

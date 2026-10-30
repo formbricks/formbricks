@@ -1,20 +1,41 @@
+/**
+ * `failClosed: true` marks the abuse limits: email-sending, account and organization creation, and the
+ * brute-force guards. They refuse while Redis is unavailable instead of letting everything through; every
+ * other limit fails open so an outage does not take the app down with it
+ * (docs/adr/0015-abuse-limits-fail-closed.md).
+ */
 export const rateLimitConfigs = {
   // Authentication endpoints - stricter limits for security
   auth: {
     login: { interval: 900, allowedPerInterval: 10, namespace: "auth:login" }, // 10 per 15 minutes
-    signup: { interval: 3600, allowedPerInterval: 30, namespace: "auth:signup" }, // 30 per hour
-    forgotPassword: { interval: 3600, allowedPerInterval: 5, namespace: "auth:forgot" }, // 5 per hour
+    signup: { interval: 3600, allowedPerInterval: 30, namespace: "auth:signup", failClosed: true }, // 30 per hour
+    forgotPassword: { interval: 3600, allowedPerInterval: 5, namespace: "auth:forgot", failClosed: true }, // 5 per hour
     // Mail a single account can receive from forgot-password (reset link or SSO hint), keyed by user id, so
     // rotating IPs cannot flood one inbox (ENG-3640). Checked after the response, so hitting it is
     // invisible. Three covers a user who retries a couple of times while the 30-minute link is still live.
-    forgotPasswordPerAccount: { interval: 3600, allowedPerInterval: 3, namespace: "auth:forgot:account" }, // 3 per hour
+    forgotPasswordPerAccount: {
+      interval: 3600,
+      allowedPerInterval: 3,
+      namespace: "auth:forgot:account",
+      failClosed: true,
+    }, // 3 per hour
     // Keep redemption independent so requesting an email cannot exhaust the budget to use its token.
-    resetPassword: { interval: 3600, allowedPerInterval: 5, namespace: "auth:reset-password" }, // 5 per hour
-    verifyEmail: { interval: 3600, allowedPerInterval: 10, namespace: "auth:verify" }, // 10 per hour
+    resetPassword: {
+      interval: 3600,
+      allowedPerInterval: 5,
+      namespace: "auth:reset-password",
+      failClosed: true,
+    }, // 5 per hour
+    verifyEmail: { interval: 3600, allowedPerInterval: 10, namespace: "auth:verify", failClosed: true }, // 10 per hour
     // Verification email anyone can request for one account, keyed by user id. Below that email's
     // per-recipient cap of 5, so a signed-in resend always has room left (ENG-3823).
-    verifyEmailPerAccount: { interval: 3600, allowedPerInterval: 3, namespace: "auth:verify:account" }, // 3 per hour
-    emailToken: { interval: 3600, allowedPerInterval: 10, namespace: "auth:email-token" }, // 10 per hour — unauthenticated, tells the caller whether an email is registered
+    verifyEmailPerAccount: {
+      interval: 3600,
+      allowedPerInterval: 3,
+      namespace: "auth:verify:account",
+      failClosed: true,
+    }, // 3 per hour
+    emailToken: { interval: 3600, allowedPerInterval: 10, namespace: "auth:email-token", failClosed: true }, // 10 per hour — unauthenticated, tells the caller whether an email is registered
     // The SAML callback parses the posted XML before it can tell an IdP from a stranger (ENG-3973), so this caps
     // how often one IP can make it parse. Generous on purpose: every SAML sign-in at a company behind one NAT
     // address lands here, often in a burst at the start of the day. The markup budget is the real bound.
@@ -31,7 +52,7 @@ export const rateLimitConfigs = {
       allowedPerInterval: 120,
       namespace: "api:v3:state-mutation",
     }, // 120 per minute per principal — the API twin of `actions.stateMutation`, for batch writes that fan out to the response pipeline
-    mcpAuth: { interval: 60, allowedPerInterval: 30, namespace: "api:mcp:auth" }, // 30 per minute
+    mcpAuth: { interval: 60, allowedPerInterval: 30, namespace: "api:mcp:auth", failClosed: true }, // 30 per minute
     v3SurveyGenerate: {
       interval: 60,
       allowedPerInterval: 10,
@@ -93,29 +114,47 @@ export const rateLimitConfigs = {
 
   // Server actions - varies by action type
   actions: {
-    emailUpdate: { interval: 3600, allowedPerInterval: 3, namespace: "action:email" }, // 3 per hour
+    emailUpdate: { interval: 3600, allowedPerInterval: 3, namespace: "action:email", failClosed: true }, // 3 per hour
     // A signed-in user asking for a reset link to their own address. Its own budget rather than
     // forgot-password's per-account one, which strangers can spend for any address (ENG-3823).
     passwordResetRequest: {
       interval: 3600,
       allowedPerInterval: 3,
       namespace: "action:password-reset-request",
+      failClosed: true,
     }, // 3 per hour
-    accountDeletion: { interval: 3600, allowedPerInterval: 5, namespace: "action:account-delete" }, // 5 per hour
-    surveyFollowUp: { interval: 3600, allowedPerInterval: 50, namespace: "action:followup" }, // 50 per hour
+    accountDeletion: {
+      interval: 3600,
+      allowedPerInterval: 5,
+      namespace: "action:account-delete",
+      failClosed: true,
+    }, // 5 per hour
+    surveyFollowUp: {
+      interval: 3600,
+      allowedPerInterval: 50,
+      namespace: "action:followup",
+      failClosed: true,
+    }, // 50 per hour
     sendLinkSurveyEmail: {
       interval: 3600,
       allowedPerInterval: 10,
       namespace: "action:send-link-survey-email",
+      failClosed: true,
     }, // 10 per hour
     validateSurveyPin: {
       interval: 60,
       allowedPerInterval: 10,
       namespace: "action:validate-survey-pin",
+      failClosed: true,
     }, // 10 per minute — prevents brute-force PIN guessing
     licenseRecheck: { interval: 60, allowedPerInterval: 5, namespace: "action:license-recheck" }, // 5 per minute
     unsplash: { interval: 60, allowedPerInterval: 30, namespace: "action:unsplash" }, // 30 per minute per user — bounds one account exhausting the instance-wide UNSPLASH_ACCESS_KEY quota
-    inviteMember: { interval: 3600 * 24, allowedPerInterval: 50, namespace: "action:invite-member" }, // 50 recipients per day per org; trusted limits are resolved per organization
+    inviteMember: {
+      interval: 3600 * 24,
+      allowedPerInterval: 50,
+      namespace: "action:invite-member",
+      failClosed: true,
+    }, // 50 recipients per day per org; trusted limits are resolved per organization
     // The same recipient allowance, counted per inviting user across all their organizations. A
     // per-org budget alone is reset by creating another organization, so one account could mail
     // thousands of recipients through throwaway orgs.
@@ -123,6 +162,7 @@ export const rateLimitConfigs = {
       interval: 3600 * 24,
       allowedPerInterval: 50,
       namespace: "action:invite-member:user",
+      failClosed: true,
     },
     // Per user. Creating an organization is free and each one starts with fresh per-org budgets, so
     // an unbounded create-and-delete loop is a way around every per-org limit.
@@ -130,6 +170,7 @@ export const rateLimitConfigs = {
       interval: 3600 * 24,
       allowedPerInterval: 5,
       namespace: "action:create-organization",
+      failClosed: true,
     }, // 5 per day
     generateExampleResponses: {
       interval: 60,
