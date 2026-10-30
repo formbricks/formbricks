@@ -5,6 +5,7 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import type { TSurvey, TSurveyStatus } from "@formbricks/types/surveys/types";
 import { getV3CustomCssPrincipal } from "@/app/api/v3/lib/custom-css-rate-limit";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
+import { isPlainObject } from "@/app/api/v3/surveys/guards";
 import { getSessionUserId } from "@/app/api/v3/surveys/lib/operations";
 import { V3SurveyArchivedError, assertV3SurveyPrecondition, patchV3Survey } from "@/app/api/v3/surveys/patch";
 import { V3SurveyReferenceValidationError } from "@/app/api/v3/surveys/reference-validation";
@@ -68,9 +69,6 @@ export class SurveyImportUpdateActiveError extends Error {
     this.name = "SurveyImportUpdateActiveError";
   }
 }
-
-const isPlainObject = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
 
 /** The action class ids the draft's triggers name, in the file's ids. */
 const getDraftTriggerIds = (draft: Record<string, unknown>): string[] => {
@@ -284,18 +282,14 @@ export const updateSurveyFromFormbricksFile = async ({
     const actionClassIds = await applyFormbricksFileReferences(tx, workspaceId, plan);
 
     try {
-      const after = await patchV3Survey(
-        before,
-        toUpdatePatch(withTargetTriggers(content, actionClassIds)),
+      const after = await patchV3Survey(before, toUpdatePatch(withTargetTriggers(content, actionClassIds)), {
         requestId,
         organizationId,
         precondition,
-        undefined,
         visibleSurveyWhere,
-        undefined,
-        getV3CustomCssPrincipal(authentication),
-        transaction
-      );
+        customCssPrincipal: getV3CustomCssPrincipal(authentication),
+        transaction,
+      });
       return { before, after };
     } catch (error) {
       // The patch names fields from its own body, which is the reviewed survey: named from `survey`.

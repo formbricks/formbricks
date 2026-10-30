@@ -1,7 +1,6 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
-import { DEFAULT_LOCALE } from "@/lib/constants";
-import { getUserLocale } from "@/lib/user/service";
+import { getUserLocaleOrDefault } from "@/lib/user/locale";
 import { getTranslate } from "@/lingodotdev/server";
 import { getImportedName, stripImportedSuffix } from "./imported-name";
 
@@ -17,7 +16,7 @@ export type TImporterTranslate = Awaited<ReturnType<typeof getTranslate>>;
  * request, so the import runs the same wherever it is called from.
  */
 export const getImporterTranslate = async (userId: string | null): Promise<TImporterTranslate> =>
-  getTranslate((userId ? await getUserLocale(userId) : undefined) ?? DEFAULT_LOCALE);
+  getTranslate(await getUserLocaleOrDefault(userId));
 
 /** "<name> (imported)", or "(imported N)" with the lowest N no survey in the workspace has. */
 export const getImportedSurveyName = async (

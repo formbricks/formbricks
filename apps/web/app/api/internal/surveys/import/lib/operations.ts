@@ -8,21 +8,15 @@ import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import { loggableError } from "@/app/api/v3/lib/loggable-error";
 import { applyV3OperationRateLimit } from "@/app/api/v3/lib/operation-rate-limit";
-import {
-  problemInternalError,
-  problemPayloadTooLarge,
-  problemUnprocessableContent,
-  problemUnsupportedMediaType,
-} from "@/app/api/v3/lib/response";
+import { problemInternalError } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { getSessionUserId } from "@/app/api/v3/surveys/lib/operations";
 import { assertOrganizationAIConfigured } from "@/lib/ai/service";
 import { getAITimeoutMs } from "@/lib/ai/timeout";
 import {
   SurveyImportFileTooLargeError,
-  SurveyImportInputError,
   SurveyImportTimeoutError,
-  SurveyImportUnsupportedFileError,
+  toRefusalResponse,
 } from "@/modules/survey/import/core/errors";
 import type { TSurveyImportLane, TSurveyImportResult } from "@/modules/survey/import/core/lane";
 import { type TSurveyImportFile, sniffSurveyImportFile } from "@/modules/survey/import/core/sniff";
@@ -63,27 +57,6 @@ export interface TRunSurveyImportLaneParams<TInput, TPrepared> {
 }
 
 type TImportOutcome = "done" | "failed" | "timed_out" | "aborted";
-
-/** The problem response for a refused file, or `null` for an error that is not a refusal. */
-export const toRefusalResponse = (error: unknown, requestId: string, instance: string): Response | null => {
-  if (error instanceof SurveyImportFileTooLargeError) {
-    return problemPayloadTooLarge(requestId, error.message, instance, error.invalidParams);
-  }
-  if (error instanceof SurveyImportUnsupportedFileError) {
-    return problemUnsupportedMediaType(requestId, error.message, {
-      instance,
-      invalid_params: error.invalidParams,
-    });
-  }
-  if (error instanceof SurveyImportInputError) {
-    return problemUnprocessableContent(requestId, error.message, {
-      instance,
-      invalid_params: error.invalidParams,
-      ...(error.problemCode ? { code: error.problemCode } : {}),
-    });
-  }
-  return null;
-};
 
 /**
  * Read the upload and tell its type from its bytes, under the upload's limits: the file's size, then

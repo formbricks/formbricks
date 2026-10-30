@@ -3,6 +3,7 @@ import type { Prisma } from "@formbricks/database/prisma";
 import { embeddedFieldsFromLegacyInput } from "@formbricks/types/embedded-data-mapping";
 import type { TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import type { TSurveyHiddenFields, TSurveyVariable } from "@formbricks/types/surveys/types";
+import { isPlainObject } from "@/app/api/v3/surveys/guards";
 import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
 import { SurveyImportInputError } from "@/modules/survey/import/core/errors";
 import { getImportedName } from "@/modules/survey/import/core/imported-name";
@@ -55,9 +56,6 @@ export interface TFormbricksFileReferencePlan {
   /** One note per action class and attribute key the import creates. */
   issues: TSurveyImportPipelineIssue[];
 }
-
-const isPlainObject = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
 
 /** JSON with every object's keys sorted, so two no-code configurations compare by content alone. */
 const canonicalJson = (value: unknown): string =>

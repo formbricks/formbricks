@@ -1,6 +1,7 @@
 import type { z } from "zod";
 import { capInvalidParams } from "@/app/api/v3/lib/invalid-params";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
+import { isPlainObject } from "@/app/api/v3/surveys/guards";
 import { formatV3ZodInvalidParams } from "@/app/api/v3/surveys/schemas";
 import { collectV3TargetingAttributeKeys } from "@/app/api/v3/surveys/targeting";
 import { SurveyImportFileTooLargeError, SurveyImportInputError } from "@/modules/survey/import/core/errors";
@@ -61,9 +62,6 @@ export interface TFormbricksFileRead {
 export type TFormbricksFileUpgradeStep = (file: Record<string, unknown>) => Record<string, unknown>;
 
 export const FORMBRICKS_FILE_UPGRADE_STEPS: Readonly<Record<number, TFormbricksFileUpgradeStep>> = {};
-
-const isPlainObject = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
 
 const INVALID_MESSAGE = "The Formbricks file is not valid.";
 

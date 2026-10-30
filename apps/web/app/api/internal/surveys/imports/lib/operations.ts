@@ -1,6 +1,5 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
-import { toRefusalResponse } from "@/app/api/internal/surveys/import/lib/operations";
 import { skipV3AuditLog } from "@/app/api/v3/lib/audit";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import {
@@ -13,6 +12,7 @@ import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { getSessionUserId, mapV3SurveyCreateError } from "@/app/api/v3/surveys/lib/operations";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { createSurveyFromFormbricksFile } from "@/modules/survey/formbricks-file/import";
+import { toRefusalResponse } from "@/modules/survey/import/core/errors";
 import {
   SURVEY_IMPORT_IDEMPOTENCY_IN_FLIGHT_MS,
   SURVEY_IMPORT_IDEMPOTENCY_KEY_MAX_CHARS,

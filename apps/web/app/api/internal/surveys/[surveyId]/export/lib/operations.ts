@@ -1,13 +1,12 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
 import type { TSurvey } from "@formbricks/types/surveys/types";
-import type { TUserLocale } from "@formbricks/types/user";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { getAuthorizedV3Survey } from "@/app/api/v3/surveys/authorization";
+import { getSessionUserId } from "@/app/api/v3/surveys/lib/operations";
 import type { TV3SurveyResourceVisibility } from "@/app/api/v3/surveys/serializers";
-import { DEFAULT_LOCALE } from "@/lib/constants";
-import { getUserLocale } from "@/lib/user/service";
+import { getUserLocaleOrDefault } from "@/lib/user/locale";
 import { buildAttachmentContentDisposition, buildDownloadFileName } from "@/lib/utils/content-disposition";
 import { getTranslate } from "@/lingodotdev/server";
 import {
@@ -29,12 +28,6 @@ type TExportFile = {
   contentType: string;
   extension: string;
   fileFormat: number;
-};
-
-/** The exporting user's locale, which the Excel export's headers and Logic column are written in. */
-const getExportLocale = async (authentication: TV3Authentication): Promise<TUserLocale> => {
-  const userId = authentication && "user" in authentication ? authentication.user?.id : undefined;
-  return (userId ? await getUserLocale(userId) : undefined) ?? DEFAULT_LOCALE;
 };
 
 const buildExportFile = async ({
@@ -59,7 +52,8 @@ const buildExportFile = async ({
       };
     }
     case "xlsx": {
-      const locale = await getExportLocale(authentication);
+      // The exporting user's locale, which the headers and the Logic column are written in.
+      const locale = await getUserLocaleOrDefault(getSessionUserId(authentication));
       return {
         body: writeExcelExport({ survey, t: await getTranslate(locale), locale }),
         contentType: EXCEL_EXPORT_CONTENT_TYPE,

@@ -4,6 +4,7 @@ import type { TSurvey } from "@formbricks/types/surveys/types";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { createV3Survey } from "@/app/api/v3/surveys/create";
+import { isPlainObject } from "@/app/api/v3/surveys/guards";
 import { getSessionUserId } from "@/app/api/v3/surveys/lib/operations";
 import { ZV3CreateSurveyBody, formatV3ZodInvalidParams } from "@/app/api/v3/surveys/schemas";
 import { runInSurveyWriteTransaction } from "@/lib/survey/write-transaction";
@@ -40,9 +41,6 @@ import {
  * what the workspace cannot hold, name the draft, resolve its references — so the commit trusts nothing
  * the preview or the client resolved. No AI is involved.
  */
-
-const isPlainObject = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
 
 /** The report's note on what a Formbricks file leaves out on purpose. */
 const CONTENT_ONLY_NOTE: TSurveyImportPipelineIssue = { code: "content_only", severity: "info" };

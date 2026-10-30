@@ -568,24 +568,39 @@ async function resolveV3SurveyPatchCustomCss(
   return outcome;
 }
 
-export async function patchV3Survey(
-  currentSurvey: TSurvey,
-  input: unknown,
-  requestId?: string,
-  organizationId?: string,
-  precondition?: TV3SurveyWritePrecondition,
-  reportedVisibility?: TV3SurveyReportedVisibility,
-  visibleSurveyWhere: Prisma.SurveyWhereInput = NO_VISIBLE_SURVEYS,
+export interface TPatchV3SurveyOptions {
+  requestId?: string;
+  organizationId?: string;
+  /** The `updatedAt` the write is made against; without one, the body's round-tripped `updatedAt`. */
+  precondition?: TV3SurveyWritePrecondition;
+  reportedVisibility?: TV3SurveyReportedVisibility;
+  /** The surveys the caller may name in targeting (ENG-3282). None when omitted. */
+  visibleSurveyWhere?: Prisma.SurveyWhereInput;
   /** Filled with the custom CSS warnings when the patch changed the survey's custom CSS. */
-  report?: TV3SurveyWriteReport,
+  report?: TV3SurveyWriteReport;
   /** Who processing an added or edited `customCss` is charged to (`getV3CustomCssPrincipal`). */
-  customCssPrincipal?: string | null,
+  customCssPrincipal?: string | null;
   /**
    * A transaction the caller opened, so the patch lands with the caller's own writes or not at all
    * (ENG-6851: an Update from a Formbricks file writes the survey's references in it). See
    * `executeV3SurveyPatch`.
    */
-  transaction?: TSurveyWriteTransaction
+  transaction?: TSurveyWriteTransaction;
+}
+
+export async function patchV3Survey(
+  currentSurvey: TSurvey,
+  input: unknown,
+  {
+    requestId,
+    organizationId,
+    precondition,
+    reportedVisibility,
+    visibleSurveyWhere = NO_VISIBLE_SURVEYS,
+    report,
+    customCssPrincipal,
+    transaction,
+  }: TPatchV3SurveyOptions = {}
 ): Promise<TSurvey> {
   const preparation = prepareV3SurveyPatchInput(currentSurvey, input, { reportedVisibility });
   if (!preparation.ok) {

@@ -1,4 +1,9 @@
-import type { InvalidParam } from "@/app/api/v3/lib/response";
+import {
+  type InvalidParam,
+  problemPayloadTooLarge,
+  problemUnprocessableContent,
+  problemUnsupportedMediaType,
+} from "@/app/api/v3/lib/response";
 import type {
   TSurveyImportDocumentLimit,
   TSurveyImportFileLimit,
@@ -116,3 +121,27 @@ export const surveyImportFileUnreadable = (reason: string): SurveyImportInputErr
     [{ name: "file", reason, code: "file_unreadable" }],
     "The file could not be read."
   );
+
+/**
+ * The problem response for a refused import — a 413, 415 or 422 naming each field — or `null` for an
+ * error that is not a refusal. Shared by every route that reads or writes an import.
+ */
+export const toRefusalResponse = (error: unknown, requestId: string, instance: string): Response | null => {
+  if (error instanceof SurveyImportFileTooLargeError) {
+    return problemPayloadTooLarge(requestId, error.message, instance, error.invalidParams);
+  }
+  if (error instanceof SurveyImportUnsupportedFileError) {
+    return problemUnsupportedMediaType(requestId, error.message, {
+      instance,
+      invalid_params: error.invalidParams,
+    });
+  }
+  if (error instanceof SurveyImportInputError) {
+    return problemUnprocessableContent(requestId, error.message, {
+      instance,
+      invalid_params: error.invalidParams,
+      ...(error.problemCode ? { code: error.problemCode } : {}),
+    });
+  }
+  return null;
+};

@@ -1,4 +1,5 @@
 import { getTextContent } from "@formbricks/types/surveys/validation";
+import { isPlainObject } from "@/app/api/v3/surveys/guards";
 import type { TSurveyImportPipelineIssue } from "@/modules/survey/import/core/report";
 
 /**
@@ -13,9 +14,6 @@ import type { TSurveyImportPipelineIssue } from "@/modules/survey/import/core/re
  */
 
 const OPTION_LISTS = ["choices", "rows", "columns"] as const;
-
-const isPlainObject = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
 
 const arrayOf = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
 

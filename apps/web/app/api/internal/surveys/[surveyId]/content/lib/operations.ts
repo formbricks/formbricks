@@ -1,6 +1,5 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
-import { toRefusalResponse } from "@/app/api/internal/surveys/import/lib/operations";
 import { problemUnprocessableContent, successResponse } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { getAuthorizedV3Survey } from "@/app/api/v3/surveys/authorization";
@@ -11,6 +10,7 @@ import {
   SurveyImportUpdateActiveError,
   updateSurveyFromFormbricksFile,
 } from "@/modules/survey/formbricks-file/update";
+import { toRefusalResponse } from "@/modules/survey/import/core/errors";
 import type { TSurveyContentUpdateBody } from "./schemas";
 
 const OPERATION = "surveys.content.update";
@@ -59,21 +59,22 @@ export async function updateSurveyContent({
   auditLog?: TV3AuditLog;
 }): Promise<Response> {
   const log = logger.withContext({ requestId, surveyId, operation: OPERATION });
-
-  const { survey, authResult, response, visibility } = await getAuthorizedV3Survey({
-    surveyId,
-    authentication,
-    access: "readWrite",
-    requestId,
-    instance,
-  });
-  if (response) {
-    log.warn({ statusCode: response.status }, "Survey not found or not accessible");
-    return response;
-  }
-  const { workspaceId } = survey;
+  let workspaceId: string | undefined;
 
   try {
+    const { survey, authResult, response, visibility } = await getAuthorizedV3Survey({
+      surveyId,
+      authentication,
+      access: "readWrite",
+      requestId,
+      instance,
+    });
+    if (response) {
+      log.warn({ statusCode: response.status }, "Survey not found or not accessible");
+      return response;
+    }
+    workspaceId = survey.workspaceId;
+
     const { before, after } = await updateSurveyFromFormbricksFile({
       survey,
       body,

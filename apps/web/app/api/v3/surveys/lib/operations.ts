@@ -1096,17 +1096,15 @@ async function runV3SurveyDocumentMutation({
     const oldResource = getResource();
 
     const report: TV3SurveyWriteReport = {};
-    const updatedSurvey = await patchV3Survey(
-      survey,
-      built.input,
+    const updatedSurvey = await patchV3Survey(survey, built.input, {
       requestId,
-      authResult.organizationId,
-      effectivePrecondition,
-      oldResource,
-      buildVisibleSurveyWhere(visibility.actorContext),
+      organizationId: authResult.organizationId,
+      precondition: effectivePrecondition,
+      reportedVisibility: oldResource,
+      visibleSurveyWhere: buildVisibleSurveyWhere(visibility.actorContext),
       report,
-      getV3CustomCssPrincipal(authentication)
-    );
+      customCssPrincipal: getV3CustomCssPrincipal(authentication),
+    });
     // Visibility is unchanged by a document write (it is never writable through one), so the
     // request's context still describes the updated survey.
     const resource = serializeV3SurveyResource(updatedSurvey, visibility);

@@ -1,3 +1,4 @@
+import { isPlainObject } from "@/app/api/v3/surveys/guards";
 import { isDefaultEndingCardButtonLink } from "@/lib/survey/default-ending-card";
 import type { TDefaultEndingText } from "@/modules/survey/import/core/default-ending";
 import type { TSurveyImportPipelineIssue } from "@/modules/survey/import/core/report";
@@ -28,9 +29,6 @@ export interface TFormbricksFileFitContext {
    */
   defaultEndingTexts: Readonly<Record<string, TDefaultEndingText | null>>;
 }
-
-const isPlainObject = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
 
 const arrayOf = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
 

@@ -950,20 +950,18 @@ describe("patchV3SurveyResponse", () => {
       instance,
     });
     // No `updatedAt` in the body → no precondition, last-write-wins as documented.
-    expect(vi.mocked(patchV3Survey)).toHaveBeenCalledWith(
-      survey,
-      patchBody,
+    expect(vi.mocked(patchV3Survey)).toHaveBeenCalledWith(survey, patchBody, {
       requestId,
-      "org_1",
-      undefined,
-      serializedSurvey,
+      organizationId: "org_1",
+      precondition: undefined,
+      reportedVisibility: serializedSurvey,
       // ENG-3282: the caller's visible-survey clause, for targeting references.
-      expect.any(Object),
+      visibleSurveyWhere: expect.any(Object),
       // ENG-3641: the write report the custom CSS warnings come back through.
-      {},
+      report: {},
       // The custom CSS budget's principal: this fixture's authentication names no user or key.
-      null
-    );
+      customCssPrincipal: null,
+    });
     expect(auditLog).toMatchObject({
       organizationId: "org_1",
       targetId: "survey_1",
@@ -1012,20 +1010,18 @@ describe("patchV3SurveyResponse", () => {
 
     await patchV3SurveyResponse({ surveyId: "survey_1", body, authentication, requestId, instance });
 
-    expect(vi.mocked(patchV3Survey)).toHaveBeenCalledWith(
-      survey,
-      body,
+    expect(vi.mocked(patchV3Survey)).toHaveBeenCalledWith(survey, body, {
       requestId,
-      "org_1",
-      { expectedUpdatedAt: new Date("2026-01-01T00:00:00.000Z") },
-      expect.anything(),
+      organizationId: "org_1",
+      precondition: { expectedUpdatedAt: new Date("2026-01-01T00:00:00.000Z") },
+      reportedVisibility: expect.anything(),
       // ENG-3282: the caller's visible-survey clause, for targeting references.
-      expect.any(Object),
+      visibleSurveyWhere: expect.any(Object),
       // ENG-3641: the write report the custom CSS warnings come back through.
-      {},
+      report: {},
       // The custom CSS budget's principal: this fixture's authentication names no user or key.
-      null
-    );
+      customCssPrincipal: null,
+    });
   });
 
   test("charges custom CSS processing to the caller and answers a spent budget with 429", async () => {
@@ -1041,7 +1037,7 @@ describe("patchV3SurveyResponse", () => {
       instance,
     });
 
-    expect(vi.mocked(patchV3Survey).mock.lastCall?.[8]).toBe("user_1");
+    expect(vi.mocked(patchV3Survey).mock.lastCall?.[2]?.customCssPrincipal).toBe("user_1");
     expect(response.status).toBe(429);
     expect(response.headers.get("Retry-After")).toBe("30");
   });
@@ -1486,16 +1482,18 @@ describe("editV3SurveyBlocksResponse", () => {
     expect(vi.mocked(patchV3Survey)).toHaveBeenCalledWith(
       survey,
       { blocks: [replacement, blockB] },
-      requestId,
-      "org_1",
-      { expectedUpdatedAt: survey.updatedAt },
-      expect.anything(),
-      // ENG-3282: the caller's visible-survey clause, for targeting references.
-      expect.any(Object),
-      // ENG-3641: the write report the custom CSS warnings come back through.
-      {},
-      // The custom CSS budget's principal: this fixture's authentication names no user or key.
-      null
+      {
+        requestId,
+        organizationId: "org_1",
+        precondition: { expectedUpdatedAt: survey.updatedAt },
+        reportedVisibility: expect.anything(),
+        // ENG-3282: the caller's visible-survey clause, for targeting references.
+        visibleSurveyWhere: expect.any(Object),
+        // ENG-3641: the write report the custom CSS warnings come back through.
+        report: {},
+        // The custom CSS budget's principal: this fixture's authentication names no user or key.
+        customCssPrincipal: null,
+      }
     );
     expect(auditLog).toMatchObject({
       organizationId: "org_1",
@@ -1544,16 +1542,18 @@ describe("editV3SurveyBlocksResponse", () => {
     expect(vi.mocked(patchV3Survey)).toHaveBeenCalledWith(
       survey,
       { blocks: [blockA] },
-      requestId,
-      "org_1",
-      { expectedUpdatedAt: new Date("2026-01-01T00:00:00.000Z") },
-      expect.anything(),
-      // ENG-3282: the caller's visible-survey clause, for targeting references.
-      expect.any(Object),
-      // ENG-3641: the write report the custom CSS warnings come back through.
-      {},
-      // The custom CSS budget's principal: this fixture's authentication names no user or key.
-      null
+      {
+        requestId,
+        organizationId: "org_1",
+        precondition: { expectedUpdatedAt: new Date("2026-01-01T00:00:00.000Z") },
+        reportedVisibility: expect.anything(),
+        // ENG-3282: the caller's visible-survey clause, for targeting references.
+        visibleSurveyWhere: expect.any(Object),
+        // ENG-3641: the write report the custom CSS warnings come back through.
+        report: {},
+        // The custom CSS budget's principal: this fixture's authentication names no user or key.
+        customCssPrincipal: null,
+      }
     );
   });
 
@@ -1773,16 +1773,18 @@ describe("setV3SurveyBlockOrderResponse", () => {
     expect(vi.mocked(patchV3Survey)).toHaveBeenCalledWith(
       survey,
       { blocks: [blockB, blockA] },
-      requestId,
-      "org_1",
-      { expectedUpdatedAt: survey.updatedAt },
-      expect.anything(),
-      // ENG-3282: the caller's visible-survey clause, for targeting references.
-      expect.any(Object),
-      // ENG-3641: the write report the custom CSS warnings come back through.
-      {},
-      // The custom CSS budget's principal: this fixture's authentication names no user or key.
-      null
+      {
+        requestId,
+        organizationId: "org_1",
+        precondition: { expectedUpdatedAt: survey.updatedAt },
+        reportedVisibility: expect.anything(),
+        // ENG-3282: the caller's visible-survey clause, for targeting references.
+        visibleSurveyWhere: expect.any(Object),
+        // ENG-3641: the write report the custom CSS warnings come back through.
+        report: {},
+        // The custom CSS budget's principal: this fixture's authentication names no user or key.
+        customCssPrincipal: null,
+      }
     );
   });
 
@@ -2342,7 +2344,7 @@ describe("custom CSS (ENG-3641)", () => {
     test("patch returns the warnings beside data, and maps a plan refusal to 403", async () => {
       vi.mocked(serializeV3SurveyResource).mockReturnValue(serializedSurvey as never);
       vi.mocked(patchV3Survey).mockImplementation(async (...args: unknown[]) => {
-        (args[7] as { customCssWarnings?: unknown[] }).customCssWarnings = [cssWarning];
+        (args[2] as { report: { customCssWarnings?: unknown[] } }).report.customCssWarnings = [cssWarning];
         return updatedSurvey as never;
       });
 

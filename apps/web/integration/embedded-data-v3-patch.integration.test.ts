@@ -124,7 +124,7 @@ describe("v3 survey patch keeps the Embedded Data rows in step (real Postgres)",
     await patchV3Survey(
       survey,
       { variables: [{ id: VARIABLE_ID, name: "score", type: "number", value: 7 }] },
-      "req_v3_patch_add_variable"
+      { requestId: "req_v3_patch_add_variable" }
     );
 
     expect(await readRows(survey.id)).toEqual([
@@ -148,7 +148,7 @@ describe("v3 survey patch keeps the Embedded Data rows in step (real Postgres)",
     await patchV3Survey(
       survey,
       { hiddenFields: { enabled: true, fieldIds: ["utm_source"] } },
-      "req_v3_patch_add_hidden_field"
+      { requestId: "req_v3_patch_add_hidden_field" }
     );
 
     expect(await readRows(survey.id)).toEqual([
@@ -173,7 +173,7 @@ describe("v3 survey patch keeps the Embedded Data rows in step (real Postgres)",
     await patchV3Survey(
       survey,
       { variables: [{ id: VARIABLE_ID, name: "renamed_score", type: "number", value: 9 }] },
-      "req_v3_patch_rename_variable"
+      { requestId: "req_v3_patch_rename_variable" }
     );
 
     expect(await readRows(survey.id)).toEqual([
@@ -204,7 +204,7 @@ describe("v3 survey patch keeps the Embedded Data rows in step (real Postgres)",
         variables: [{ id: VARIABLE_ID, name: "renamed_score", type: "number", value: 9 }],
         hiddenFields: { enabled: true, fieldIds: ["utm_source"] },
       },
-      "req_v3_patch_returns_patched"
+      { requestId: "req_v3_patch_returns_patched" }
     );
 
     expect(patched.variables).toEqual([{ id: VARIABLE_ID, name: "renamed_score", type: "number", value: 9 }]);
@@ -220,7 +220,7 @@ describe("v3 survey patch keeps the Embedded Data rows in step (real Postgres)",
     await patchV3Survey(
       survey,
       { hiddenFields: { enabled: true, fieldIds: ["plan"] } },
-      "req_v3_patch_remove_hidden_field"
+      { requestId: "req_v3_patch_remove_hidden_field" }
     );
 
     expect((await readRows(survey.id)).map(({ storageKey }) => storageKey)).toEqual([VARIABLE_ID, "plan"]);
@@ -236,7 +236,7 @@ describe("v3 survey patch keeps the Embedded Data rows in step (real Postgres)",
     });
     const before = await readRows(survey.id);
 
-    await patchV3Survey(survey, { name: "Renamed survey" }, "req_v3_patch_name_only");
+    await patchV3Survey(survey, { name: "Renamed survey" }, { requestId: "req_v3_patch_name_only" });
 
     expect(await readRows(survey.id)).toEqual(before);
     await expectRowsAgreeWithServedShape(survey.id);
@@ -271,7 +271,7 @@ describe("v3 survey patch keeps the Embedded Data rows in step (real Postgres)",
         hiddenFields: { enabled: true, fieldIds: ["renamed_source"] },
         variables: [{ id: VARIABLE_ID, name: "renamed_score", type: "number", value: 7 }],
       },
-      "req_v3_patch_no_response_write"
+      { requestId: "req_v3_patch_no_response_write" }
     );
 
     // The definitions moved...
