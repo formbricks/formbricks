@@ -13,8 +13,16 @@ import {
 } from "@/app/api/v3/surveys/schemas";
 import {
   FORMBRICKS_FILE_MAX_ACTION_CLASSES,
+  FORMBRICKS_FILE_MAX_APP_VERSION_CHARS,
   FORMBRICKS_FILE_MAX_ATTRIBUTE_KEYS,
+  FORMBRICKS_FILE_MAX_DEFAULT_VALUE_CHARS,
+  FORMBRICKS_FILE_MAX_DESCRIPTION_CHARS,
   FORMBRICKS_FILE_MAX_EMBEDDED_FIELDS,
+  FORMBRICKS_FILE_MAX_KEY_CHARS,
+  FORMBRICKS_FILE_MAX_LANGUAGE_CODE_CHARS,
+  FORMBRICKS_FILE_MAX_NAME_CHARS,
+  FORMBRICKS_FILE_MAX_NO_CODE_CONFIG_CHARS,
+  FORMBRICKS_FILE_MAX_SCHEMA_URL_CHARS,
 } from "./limits";
 
 /**
@@ -39,6 +47,11 @@ export const FORMBRICKS_FILE_EXTENSION = ".formbricks.json";
  */
 export const FORMBRICKS_FILE_V1_SCHEMA_URL = "https://formbricks.com/docs/schemas/formbricks-file/v1.json";
 
+/** A key the file names: an action class's, an attribute key's, a shared field's. */
+const ZFormbricksFileKey = z.string().min(1).max(FORMBRICKS_FILE_MAX_KEY_CHARS);
+const ZFormbricksFileName = z.string().min(1).max(FORMBRICKS_FILE_MAX_NAME_CHARS);
+const ZFormbricksFileDescription = z.string().max(FORMBRICKS_FILE_MAX_DESCRIPTION_CHARS);
+
 /**
  * Where the file came from. The survey id is what a later import matches on; the source instance's URL
  * is left out on purpose, since it adds nothing to the match and leaks internal hostnames.
@@ -57,7 +70,11 @@ const ZFormbricksFileMetaV1 = z
   .object({
     format: z.literal(1).describe("The file format. Formbricks refuses a format newer than its own."),
     exportedAt: z.iso.datetime(),
-    appVersion: z.string().min(1).describe("The Formbricks version that wrote the file."),
+    appVersion: z
+      .string()
+      .min(1)
+      .max(FORMBRICKS_FILE_MAX_APP_VERSION_CHARS)
+      .describe("The Formbricks version that wrote the file."),
     source: ZFormbricksFileSource,
   })
   .strict()
@@ -70,20 +87,29 @@ const ZFormbricksFileMetaV1 = z
  */
 export const ZFormbricksFileActionClass = ZActionClass.pick({
   id: true,
-  name: true,
-  description: true,
   type: true,
-  key: true,
-  noCodeConfig: true,
-}).strict();
+})
+  .extend({
+    // The action class's own rules, each string capped.
+    name: ZFormbricksFileName.trim(),
+    description: ZFormbricksFileDescription.nullable(),
+    key: ZFormbricksFileKey.trim().nullable(),
+    noCodeConfig: ZActionClass.shape.noCodeConfig.refine(
+      (config) =>
+        config === null || JSON.stringify(config).length <= FORMBRICKS_FILE_MAX_NO_CODE_CONFIG_CHARS,
+      `Must not exceed ${FORMBRICKS_FILE_MAX_NO_CODE_CONFIG_CHARS} characters as JSON`
+    ),
+  })
+  .strict();
 
 /** A contact attribute key the survey's targeting filters name. Matched by `key`, else created. */
-export const ZFormbricksFileAttributeKey = ZContactAttributeKey.pick({
-  key: true,
-  name: true,
-  description: true,
-  dataType: true,
-}).strict();
+export const ZFormbricksFileAttributeKey = ZContactAttributeKey.pick({ dataType: true })
+  .extend({
+    key: ZFormbricksFileKey,
+    name: ZFormbricksFileName.nullable(),
+    description: ZFormbricksFileDescription.nullable(),
+  })
+  .strict();
 
 /**
  * A shared embedded-data field (a hidden field or variable from the workspace library) the survey
@@ -92,12 +118,15 @@ export const ZFormbricksFileAttributeKey = ZContactAttributeKey.pick({
  */
 export const ZFormbricksFileEmbeddedField = z
   .object({
-    storageKey: z.string().min(1),
-    key: z.string().min(1),
-    name: z.string().min(1),
+    storageKey: ZFormbricksFileKey,
+    key: ZFormbricksFileKey,
+    name: ZFormbricksFileName,
     source: ZEmbeddedDataSource,
     dataType: ZEmbeddedDataType,
-    defaultValue: ZEmbeddedDataDefaultValue,
+    defaultValue: ZEmbeddedDataDefaultValue.refine(
+      (value) => typeof value !== "string" || value.length <= FORMBRICKS_FILE_MAX_DEFAULT_VALUE_CHARS,
+      `Must not exceed ${FORMBRICKS_FILE_MAX_DEFAULT_VALUE_CHARS} characters`
+    ),
     locked: z.boolean(),
   })
   .strict();
@@ -109,8 +138,8 @@ export const ZFormbricksFileEmbeddedField = z
  */
 export const ZFormbricksFileLanguage = z
   .object({
-    code: z.string().min(1),
-    alias: z.string().min(1),
+    code: z.string().min(1).max(FORMBRICKS_FILE_MAX_LANGUAGE_CODE_CHARS),
+    alias: ZFormbricksFileName,
   })
   .strict();
 
@@ -131,7 +160,7 @@ const ZFormbricksFileReferences = z
 /** Format 1. `survey` is the v3 create body without `workspaceId`, element, block, ending and choice ids kept. */
 export const ZFormbricksFileV1 = z
   .object({
-    $schema: z.string().optional(),
+    $schema: z.string().max(FORMBRICKS_FILE_MAX_SCHEMA_URL_CHARS).optional(),
     formbricks: ZFormbricksFileMetaV1,
     survey: ZV3CreateSurveyDocument.meta({ id: "FormbricksFileSurvey" }),
     references: ZFormbricksFileReferences,

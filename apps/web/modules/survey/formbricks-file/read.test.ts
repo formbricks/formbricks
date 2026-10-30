@@ -5,9 +5,17 @@ import { SurveyImportFileTooLargeError } from "@/modules/survey/import/core/erro
 import { FORMBRICKS_FILE_V1_SCHEMA_URL } from "./envelope";
 import {
   FORMBRICKS_FILE_MAX_ACTION_CLASSES,
+  FORMBRICKS_FILE_MAX_APP_VERSION_CHARS,
   FORMBRICKS_FILE_MAX_ATTRIBUTE_KEYS,
+  FORMBRICKS_FILE_MAX_DEFAULT_VALUE_CHARS,
+  FORMBRICKS_FILE_MAX_DESCRIPTION_CHARS,
   FORMBRICKS_FILE_MAX_EMBEDDED_FIELDS,
+  FORMBRICKS_FILE_MAX_KEY_CHARS,
+  FORMBRICKS_FILE_MAX_LANGUAGE_CODE_CHARS,
+  FORMBRICKS_FILE_MAX_NAME_CHARS,
+  FORMBRICKS_FILE_MAX_NO_CODE_CONFIG_CHARS,
   FORMBRICKS_FILE_MAX_REPORTED_DROPPED_KEYS,
+  FORMBRICKS_FILE_MAX_SCHEMA_URL_CHARS,
   FORMBRICKS_FILE_MAX_SURVEY_BYTES,
 } from "./limits";
 import { readFormbricksFile, readFormbricksFileContent, upgradeFormbricksFile } from "./read";
@@ -69,6 +77,153 @@ const refusalOf = (read: () => unknown): SurveyImportInputError => {
   }
   throw new Error("Expected the read to refuse the file");
 };
+
+describe("each string a Formbricks file's envelope and references carry", () => {
+  /** A text of `length` characters. */
+  const text = (length: number) => "x".repeat(length);
+  /** A no-code configuration whose JSON is exactly `chars` characters. */
+  const noCodeConfigOf = (chars: number) => {
+    const empty = { type: "pageView", urlFilters: [{ rule: "contains", value: "" }] };
+    const padding = chars - JSON.stringify(empty).length;
+    return { type: "pageView", urlFilters: [{ rule: "contains", value: `/${text(padding - 1)}` }] };
+  };
+  const actionClass = (overrides: Record<string, unknown> = {}) => ({
+    id: ACTION_CLASS_ID,
+    name: "Checkout",
+    description: null,
+    type: "code",
+    key: "checkout",
+    noCodeConfig: null,
+    ...overrides,
+  });
+  const attributeKey = (overrides: Record<string, unknown> = {}) => ({
+    key: "plan",
+    name: "Plan",
+    description: null,
+    dataType: "string",
+    ...overrides,
+  });
+  const embeddedField = (overrides: Record<string, unknown> = {}) => ({
+    storageKey: "plan_tier",
+    key: "plan_tier",
+    name: "Plan tier",
+    source: "ingested",
+    dataType: "string",
+    defaultValue: null,
+    locked: false,
+    ...overrides,
+  });
+  const withReferences = (overrides: Record<string, unknown>) =>
+    file({ references: { ...references(), ...overrides } });
+  const withMeta = (overrides: Record<string, unknown>) =>
+    file({ formbricks: { ...file().formbricks, ...overrides } });
+
+  // Each case: the field the refusal names, its cap, and the file with that field at a given length.
+  const cases: [string, number, (length: number) => Record<string, unknown>][] = [
+    ["file.$schema", FORMBRICKS_FILE_MAX_SCHEMA_URL_CHARS, (length) => file({ $schema: text(length) })],
+    [
+      "file.formbricks.appVersion",
+      FORMBRICKS_FILE_MAX_APP_VERSION_CHARS,
+      (length) => withMeta({ appVersion: text(length) }),
+    ],
+    [
+      "file.references.actionClasses.0.name",
+      FORMBRICKS_FILE_MAX_NAME_CHARS,
+      (length) => withReferences({ actionClasses: [actionClass({ name: text(length) })] }),
+    ],
+    [
+      "file.references.actionClasses.0.description",
+      FORMBRICKS_FILE_MAX_DESCRIPTION_CHARS,
+      (length) => withReferences({ actionClasses: [actionClass({ description: text(length) })] }),
+    ],
+    [
+      "file.references.actionClasses.0.key",
+      FORMBRICKS_FILE_MAX_KEY_CHARS,
+      (length) => withReferences({ actionClasses: [actionClass({ key: text(length) })] }),
+    ],
+    [
+      "file.references.actionClasses.0.noCodeConfig",
+      FORMBRICKS_FILE_MAX_NO_CODE_CONFIG_CHARS,
+      (length) =>
+        withReferences({
+          actionClasses: [actionClass({ type: "noCode", key: null, noCodeConfig: noCodeConfigOf(length) })],
+        }),
+    ],
+    [
+      "file.references.attributeKeys.0.key",
+      FORMBRICKS_FILE_MAX_KEY_CHARS,
+      (length) => withReferences({ attributeKeys: [attributeKey({ key: text(length) })] }),
+    ],
+    [
+      "file.references.attributeKeys.0.name",
+      FORMBRICKS_FILE_MAX_NAME_CHARS,
+      (length) => withReferences({ attributeKeys: [attributeKey({ name: text(length) })] }),
+    ],
+    [
+      "file.references.attributeKeys.0.description",
+      FORMBRICKS_FILE_MAX_DESCRIPTION_CHARS,
+      (length) => withReferences({ attributeKeys: [attributeKey({ description: text(length) })] }),
+    ],
+    [
+      "file.references.embeddedFields.0.storageKey",
+      FORMBRICKS_FILE_MAX_KEY_CHARS,
+      (length) => withReferences({ embeddedFields: [embeddedField({ storageKey: text(length) })] }),
+    ],
+    [
+      "file.references.embeddedFields.0.key",
+      FORMBRICKS_FILE_MAX_KEY_CHARS,
+      (length) => withReferences({ embeddedFields: [embeddedField({ key: text(length) })] }),
+    ],
+    [
+      "file.references.embeddedFields.0.name",
+      FORMBRICKS_FILE_MAX_NAME_CHARS,
+      (length) => withReferences({ embeddedFields: [embeddedField({ name: text(length) })] }),
+    ],
+    [
+      "file.references.embeddedFields.0.defaultValue",
+      FORMBRICKS_FILE_MAX_DEFAULT_VALUE_CHARS,
+      (length) => withReferences({ embeddedFields: [embeddedField({ defaultValue: text(length) })] }),
+    ],
+    [
+      "file.references.languages.0.code",
+      FORMBRICKS_FILE_MAX_LANGUAGE_CODE_CHARS,
+      (length) => withReferences({ languages: [{ code: text(length), alias: "German" }] }),
+    ],
+    [
+      "file.references.languages.0.alias",
+      FORMBRICKS_FILE_MAX_NAME_CHARS,
+      (length) => withReferences({ languages: [{ code: "de-DE", alias: text(length) }] }),
+    ],
+  ];
+
+  test.each(cases)(
+    "%s is read at its cap, and refused one past it with a 422 naming it",
+    (name, cap, fileWith) => {
+      expect(() => readFormbricksFile(fileWith(cap))).not.toThrow();
+
+      const refusal = refusalOf(() => readFormbricksFile(fileWith(cap + 1)));
+
+      expect(refusal.problemCode).toBe("formbricks_file_invalid");
+      expect(refusal.invalidParams).toEqual([expect.objectContaining({ name })]);
+    }
+  );
+
+  test("the reviewed content sent back is held to the same caps, named from the request body", () => {
+    const body = {
+      survey: survey(),
+      references: {
+        ...references(),
+        attributeKeys: [attributeKey({ key: text(FORMBRICKS_FILE_MAX_KEY_CHARS + 1) })],
+      },
+    };
+
+    const refusal = refusalOf(() => readFormbricksFileContent(body));
+
+    expect(refusal.invalidParams).toEqual([
+      expect.objectContaining({ name: "references.attributeKeys.0.key" }),
+    ]);
+  });
+});
 
 describe("readFormbricksFile", () => {
   test("reads a format 1 file: the survey as its create body, its references, no report lines", () => {
