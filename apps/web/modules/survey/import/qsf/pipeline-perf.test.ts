@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { cpuMsSince } from "../core/__fixtures__/cpu-time";
 import { SurveyImportInputError } from "../core/errors";
+import { checkImportDraft } from "../core/final-gate";
 import { measureDraftBytes } from "../core/fit-draft";
 import { SURVEY_IMPORT_MAX_DRAFT_BYTES, SURVEY_IMPORT_MAX_TEXT_CHARS } from "../limits";
 import { loadQsfFixture } from "./__fixtures__/load-fixture";
@@ -17,7 +18,6 @@ import {
 } from "./__fixtures__/qsf-builders";
 import { loadRecordedPlan, recordedGenerate, refsInPrompt } from "./__fixtures__/recorded-plans";
 import type { TQsfPlanGenerate } from "./ai-plan";
-import { checkQsfDraft } from "./final-gate";
 import { fitQsfSurveyToCreateLimit } from "./fit-draft";
 import { normalizeQualtricsLanguageCode } from "./language-codes";
 import { QSF_RECALL_FALLBACK } from "./piped-text";
@@ -538,7 +538,7 @@ describe("a draft too large for the create's request body", () => {
       expect(result.report.summary.languages).toHaveLength(50 - cut.length);
       expect(result.report.summary.languages[0]).toBe("en-US");
       expect(cut.map((issue) => issue.params?.code)).not.toContain("en-US");
-      expect(checkQsfDraft(result.payload)).toEqual([]);
+      expect(checkImportDraft(result.payload)).toEqual([]);
     }
   );
 
@@ -566,7 +566,7 @@ describe("a draft too large for the create's request body", () => {
       expect(result.payload.blocks.flatMap((block) => block.elements).at(-1)?.id).toBe(
         `Q${200 - cut.length}`
       );
-      expect(checkQsfDraft(result.payload)).toEqual([]);
+      expect(checkImportDraft(result.payload)).toEqual([]);
     }
   );
 
@@ -637,7 +637,7 @@ describe("a draft too large for the create's request body", () => {
           { code: "piped_text_removed", severity: "warning", questionTag: "Q70", params: { count: 1 } },
         ])
       );
-      expect(checkQsfDraft(result.payload)).toEqual([]);
+      expect(checkImportDraft(result.payload)).toEqual([]);
     }
   );
 });

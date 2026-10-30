@@ -6,13 +6,13 @@ import { describe, expect, test } from "vitest";
 import { DEFAULT_REQUEST_BODY_LIMIT_BYTES } from "@/app/lib/api/request-body";
 import type { TSurveyImportDraftElement } from "../core/draft";
 import type { TSurveyImportAssembly } from "../core/draft";
+import { checkImportDraft } from "../core/final-gate";
 import { measureDraftBytes } from "../core/fit-draft";
 import type { TSurveyImportPipelineIssue } from "../core/report";
 import { SURVEY_IMPORT_MAX_DRAFT_BYTES } from "../limits";
 import { refsInPrompt } from "./__fixtures__/recorded-plans";
 import { type TQsfPlanGenerate, planQsfImport } from "./ai-plan";
 import { assembleQsfDraft } from "./assemble";
-import { checkQsfDraft } from "./final-gate";
 import { DEFAULT_ENDING_TEXT_BYTES, fitQsfDraftToCreateLimit, fitQsfSurveyToCreateLimit } from "./fit-draft";
 import type { TQsfQuestion, TQsfSurvey } from "./qsf-model";
 import { readQsf } from "./read-qsf";
@@ -262,7 +262,7 @@ describe("fitQsfDraftToCreateLimit", () => {
         },
       ])
     );
-    expect(checkQsfDraft(document)).toEqual([]);
+    expect(checkImportDraft(document)).toEqual([]);
   });
 });
 
@@ -456,7 +456,7 @@ describe("fitQsfSurveyToCreateLimit", () => {
     expect(survey.pages.every((page) => page.questionRefs.length > 0)).toBe(true);
     expect(survey.pages.flatMap((page) => page.questionRefs)).toHaveLength(30 - cut.length);
     expect(measureDraftBytes(assembly.document)).toBeLessThanOrEqual(maxBytes);
-    expect(checkQsfDraft(assembly.document)).toEqual([]);
+    expect(checkImportDraft(assembly.document)).toEqual([]);
   });
 
   test("neither weighs nor cuts a question the import skips for its type, which keeps its own line", async () => {
@@ -482,7 +482,7 @@ describe("fitQsfSurveyToCreateLimit", () => {
       params: { cause: "unsupported_type", qualtricsType: "Timing" },
     });
     expect(measureDraftBytes(withTiming.assembly.document)).toBeLessThanOrEqual(maxBytes);
-    expect(checkQsfDraft(withTiming.assembly.document)).toEqual([]);
+    expect(checkImportDraft(withTiming.assembly.document)).toEqual([]);
   });
 
   test("leaves no logic line behind for a page it cut whole", async () => {

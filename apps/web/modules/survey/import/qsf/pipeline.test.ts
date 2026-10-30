@@ -3,6 +3,7 @@ import { AIOutputTokenLimitError } from "@formbricks/ai";
 import { prepareV3SurveyCreateInput } from "@/app/api/v3/surveys/prepare";
 import type { TSurveyImportDraft } from "../core/draft";
 import { SurveyImportFailedError, SurveyImportInputError, SurveyImportTimeoutError } from "../core/errors";
+import { checkImportDraft } from "../core/final-gate";
 import { isObjectMemberName } from "../core/id-registry";
 import type { TSurveyImportReport } from "../types";
 import {
@@ -12,14 +13,13 @@ import {
 } from "./__fixtures__/load-fixture";
 import { loadRecordedPlan, recordedGenerate, timedGenerate } from "./__fixtures__/recorded-plans";
 import type { TQsfPlanGenerate } from "./ai-plan";
-import { checkQsfDraft } from "./final-gate";
 import { type TRunQsfImportParams, prepareQsfImport, runQsfImport } from "./pipeline";
 
 const mocks = vi.hoisted(() => ({
   generateOrganizationAIObject: vi.fn(),
   getExternalUrlsPermission: vi.fn(),
-  checkQsfDraft: vi.fn(),
-  realCheckQsfDraft: undefined as unknown as typeof import("./final-gate").checkQsfDraft,
+  checkImportDraft: vi.fn(),
+  realCheckImportDraft: undefined as unknown as typeof import("../core/final-gate").checkImportDraft,
 }));
 
 const aiTimeoutEnv = vi.hoisted(() => ({ multiplier: 1 }));
@@ -42,15 +42,15 @@ vi.mock("@/lib/ai/service", () => ({ generateOrganizationAIObject: mocks.generat
 vi.mock("@/modules/survey/lib/permission", () => ({
   getExternalUrlsPermission: mocks.getExternalUrlsPermission,
 }));
-vi.mock("./final-gate", async (importOriginal) => {
-  const original = await importOriginal<typeof import("./final-gate")>();
-  mocks.realCheckQsfDraft = original.checkQsfDraft;
+vi.mock("../core/final-gate", async (importOriginal) => {
+  const original = await importOriginal<typeof import("../core/final-gate")>();
+  mocks.realCheckImportDraft = original.checkImportDraft;
   return {
     ...original,
-    checkQsfDraft: mocks.checkQsfDraft,
+    checkImportDraft: mocks.checkImportDraft,
     // The pipeline's own way in: through the same mock, so a test can make the gate fail.
-    checkQsfDraftInSlices: async (document: Parameters<typeof original.checkQsfDraft>[0]) =>
-      mocks.checkQsfDraft(document),
+    checkImportDraftInSlices: async (document: Parameters<typeof original.checkImportDraft>[0]) =>
+      mocks.checkImportDraft(document),
   };
 });
 
@@ -177,7 +177,7 @@ beforeEach(() => {
   aiTimeoutEnv.multiplier = 1;
   vi.resetAllMocks();
   mocks.getExternalUrlsPermission.mockResolvedValue(true);
-  mocks.checkQsfDraft.mockImplementation(mocks.realCheckQsfDraft);
+  mocks.checkImportDraft.mockImplementation(mocks.realCheckImportDraft);
 });
 
 describe("prepareQsfImport", () => {
@@ -229,7 +229,7 @@ describe("runQsfImport on recorded plans", () => {
       const result = await run(fixture, { onProgress });
 
       // The shared create check: v3 validation (recall order enforced) and the survey service's schema.
-      expect(checkQsfDraft(result.payload)).toEqual([]);
+      expect(checkImportDraft(result.payload)).toEqual([]);
       // And exactly what POST /api/v3/surveys runs first, on the body the dialog sends.
       expect(prepareV3SurveyCreateInput(JSON.parse(JSON.stringify(result.payload))).ok).toBe(true);
       // A survey with no ending can be published, and respondents would finish on nothing.
@@ -270,7 +270,7 @@ describe("runQsfImport on recorded plans", () => {
       showLanguageSwitch: true,
       autoSelectLanguage: true,
     });
-    expect(mocks.realCheckQsfDraft(multi.payload)).toEqual([]);
+    expect(mocks.realCheckImportDraft(multi.payload)).toEqual([]);
   });
 
   test("reports what was removed from the end message only when the survey shows it", async () => {
@@ -442,7 +442,7 @@ describe("runQsfImport on recorded plans", () => {
 
   test("drops an element the create would refuse, reports it and assembles again", async () => {
     answerFrom("simple.qsf");
-    mocks.checkQsfDraft.mockReturnValueOnce([
+    mocks.checkImportDraft.mockReturnValueOnce([
       { name: "blocks.0.elements.1.headline", reason: "The question is missing" },
     ]);
 
@@ -470,7 +470,7 @@ describe("runQsfImport on recorded plans", () => {
     ],
   ])("fails the import when the create would refuse the draft %s", async (_case, failures) => {
     answerFrom("simple.qsf");
-    for (const failure of failures) mocks.checkQsfDraft.mockReturnValueOnce(failure);
+    for (const failure of failures) mocks.checkImportDraft.mockReturnValueOnce(failure);
 
     const error = await run("simple.qsf").catch((caught: unknown) => caught);
 
@@ -547,7 +547,7 @@ describe("runQsfImport on recorded plans", () => {
       const result = await settled;
 
       expect(result.report.summary.questions).toBe(150);
-      expect(mocks.realCheckQsfDraft(result.payload)).toEqual([]);
+      expect(mocks.realCheckImportDraft(result.payload)).toEqual([]);
       expect(mocks.generateOrganizationAIObject).toHaveBeenCalledTimes(10);
     });
   });

@@ -8,7 +8,7 @@ import {
 import { deriveV3SurveyLanguageRequests } from "@/app/api/v3/surveys/languages";
 import { ZV3CreateSurveyBody, formatV3ZodInvalidParams } from "@/app/api/v3/surveys/schemas";
 import { validateV3SurveyDocument } from "@/app/api/v3/surveys/validation";
-import type { TSurveyImportDraft } from "../core/draft";
+import type { TSurveyImportDraft } from "./draft";
 
 /**
  * The final gate on an import draft: everything `POST /api/v3/surveys` will check without a database,
@@ -23,7 +23,7 @@ import type { TSurveyImportDraft } from "../core/draft";
  * Returns the problems, empty when there are none. Their names are paths (`blocks.2.elements.0.…`), so
  * the pipeline can drop the element at fault.
  */
-export function checkQsfDraft(document: TSurveyImportDraft): InvalidParam[] {
+export function checkImportDraft(document: TSurveyImportDraft): InvalidParam[] {
   const parsed = parseDraft(document);
   if (!parsed.ok) return parsed.invalidParams;
   const invalidReferences = validateDraft(parsed.data);
@@ -31,11 +31,11 @@ export function checkQsfDraft(document: TSurveyImportDraft): InvalidParam[] {
 }
 
 /**
- * `checkQsfDraft`, yielding to the event loop between its three checks with `between`. Each is
+ * `checkImportDraft`, yielding to the event loop between its three checks with `between`. Each is
  * synchronous, the request schema's the costliest (~1 s on a 2 MB draft), so this is what keeps the
  * longest block to one check rather than all three.
  */
-export async function checkQsfDraftInSlices(
+export async function checkImportDraftInSlices(
   document: TSurveyImportDraft,
   between: () => Promise<void>
 ): Promise<InvalidParam[]> {

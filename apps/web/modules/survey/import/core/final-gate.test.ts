@@ -1,7 +1,7 @@
 import { describe, expect, test, vi } from "vitest";
 import { prepareV3SurveyCreateInput } from "@/app/api/v3/surveys/prepare";
-import type { TSurveyImportDraft } from "../core/draft";
-import { checkQsfDraft, checkQsfDraftInSlices, elementsAtFault } from "./final-gate";
+import type { TSurveyImportDraft } from "./draft";
+import { checkImportDraft, checkImportDraftInSlices, elementsAtFault } from "./final-gate";
 
 const draft = (elements: unknown[], extra: Partial<TSurveyImportDraft> = {}): TSurveyImportDraft =>
   ({
@@ -28,9 +28,9 @@ const openText = (id: string, headline: string) => ({
   charLimit: { enabled: false },
 });
 
-describe("checkQsfDraft", () => {
+describe("checkImportDraft", () => {
   test("accepts a draft the create accepts", () => {
-    expect(checkQsfDraft(draft([openText("q1", "Hello")]))).toEqual([]);
+    expect(checkImportDraft(draft([openText("q1", "Hello")]))).toEqual([]);
   });
 
   test("refuses duplicate choice labels, which the create's preparation alone lets through", () => {
@@ -52,14 +52,14 @@ describe("checkQsfDraft", () => {
 
     // What the create runs first passes; its later write-schema check would answer 422.
     expect(prepareV3SurveyCreateInput(document).ok).toBe(true);
-    expect(checkQsfDraft(document).map((param) => param.name)).toEqual(["blocks.0.elements.0.choices"]);
+    expect(checkImportDraft(document).map((param) => param.name)).toEqual(["blocks.0.elements.0.choices"]);
   });
 
   test("refuses a forward recall, which the create checks in skip mode", () => {
     const document = draft([openText("q1", "You said #recall:q2/fallback:...#"), openText("q2", "Second")]);
 
     expect(prepareV3SurveyCreateInput(document).ok).toBe(true);
-    expect(checkQsfDraft(document)).toEqual([
+    expect(checkImportDraft(document)).toEqual([
       expect.objectContaining({
         name: expect.stringMatching(/^blocks\.0\.elements\.0\./),
         code: "misordered_reference",
@@ -68,7 +68,7 @@ describe("checkQsfDraft", () => {
   });
 
   test("refuses an empty headline, as the survey service does", () => {
-    expect(checkQsfDraft(draft([openText("q1", " ")])).length).toBeGreaterThan(0);
+    expect(checkImportDraft(draft([openText("q1", " ")])).length).toBeGreaterThan(0);
   });
 });
 
@@ -96,14 +96,16 @@ describe("elementsAtFault", () => {
   });
 });
 
-describe("checkQsfDraftInSlices", () => {
+describe("checkImportDraftInSlices", () => {
   test("runs the same three checks, yielding between them", async () => {
     const between = vi.fn(async () => undefined);
     const document = draft([openText("q1", "Hello #recall:q2/fallback:...#"), openText("q2", "Later")]);
 
-    expect(await checkQsfDraftInSlices(draft([openText("q1", "Hello")]), between)).toEqual([]);
+    expect(await checkImportDraftInSlices(draft([openText("q1", "Hello")]), between)).toEqual([]);
     expect(between).toHaveBeenCalledTimes(2);
-    expect(await checkQsfDraftInSlices(document, async () => undefined)).toEqual(checkQsfDraft(document));
-    expect(checkQsfDraft(document)).not.toEqual([]);
+    expect(await checkImportDraftInSlices(document, async () => undefined)).toEqual(
+      checkImportDraft(document)
+    );
+    expect(checkImportDraft(document)).not.toEqual([]);
   });
 });

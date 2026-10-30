@@ -8,6 +8,7 @@ import type { TSurveyImportDraft } from "../core/draft";
 import type { TSurveyImportAssembly } from "../core/draft";
 import { SurveyImportFailedError } from "../core/errors";
 import { yieldToOthers } from "../core/event-loop";
+import { checkImportDraftInSlices, elementsAtFault } from "../core/final-gate";
 import type { TSurveyImportPipelineIssue } from "../core/report";
 import { buildSurveyImportReport } from "../core/report";
 import { SURVEY_IMPORT_AI_CALL_TIMEOUT_MS, SURVEY_IMPORT_AI_MAX_SOURCE_CHARS } from "../limits";
@@ -15,7 +16,6 @@ import type { TSurveyImportReport, TSurveyImportStage } from "../types";
 import { type TQsfPlanGenerate, type TQsfPlanUsage, planQsfImport } from "./ai-plan";
 import { assembleQsfDraft } from "./assemble";
 import { qsfLimitExceeded } from "./errors";
-import { checkQsfDraftInSlices, elementsAtFault } from "./final-gate";
 import { fitQsfDraftToCreateLimit, fitQsfSurveyToCreateLimit } from "./fit-draft";
 import { estimateQsfMinimumPromptChars } from "./prompt";
 import type { TQsfSurvey } from "./qsf-model";
@@ -118,7 +118,7 @@ async function assembleCheckedDraft(
 
   const first = await build(new Set());
   await pause();
-  const problems = await checkQsfDraftInSlices(first.document, pause);
+  const problems = await checkImportDraftInSlices(first.document, pause);
   if (problems.length === 0) return { assembly: first, dropped: [] };
 
   const names = problems.slice(0, 20).map((problem) => problem.name);
@@ -136,7 +136,7 @@ async function assembleCheckedDraft(
   await pause();
   const second = await build(excluded);
   await pause();
-  if ((await checkQsfDraftInSlices(second.document, pause)).length > 0) {
+  if ((await checkImportDraftInSlices(second.document, pause)).length > 0) {
     throw new SurveyImportFailedError("draft_invalid");
   }
 
@@ -210,7 +210,7 @@ export async function runQsfImport(params: TRunQsfImportParams): Promise<TQsfImp
   if (countElements(assembly.document) === 0) throw new SurveyImportFailedError("no_questions");
   if (fitted.dropped.length > 0) {
     await yieldToOthers(signal);
-    const problems = await checkQsfDraftInSlices(assembly.document, () => yieldToOthers(signal));
+    const problems = await checkImportDraftInSlices(assembly.document, () => yieldToOthers(signal));
     if (problems.length > 0) throw new SurveyImportFailedError("draft_invalid");
   }
 
