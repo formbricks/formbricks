@@ -87,7 +87,8 @@ export interface TSurveyImportDraftBlock {
 
 /**
  * The create document the import builds: what the stream's `done` event carries, and what the dialog
- * sends to `POST /api/v3/surveys` unchanged. It is the request body before parsing — locale-keyed
+ * sends back to `POST /api/internal/surveys/imports` (without its `workspaceId`), which creates it with
+ * the v3 create. It is the request body before parsing — locale-keyed
  * texts, no defaults filled in — so not the parsed `TV3CreateSurveyBody`; and typed here because the
  * schema's own input type, `TV3CreateSurveyRequestBody`, is `unknown`.
  */

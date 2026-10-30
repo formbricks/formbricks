@@ -171,9 +171,9 @@ export const SURVEY_IMPORT_MAX_LANGUAGE_CODE_CHARS = 64;
 export const SURVEY_IMPORT_MAX_NOTE_CHARS = 300;
 
 /**
- * The most a draft may weigh. The dialog creates it with `POST /api/v3/surveys`, whose body is capped at
- * `DEFAULT_REQUEST_BODY_LIMIT_BYTES`; 64 KiB less, so a draft the user renames or otherwise touches in
- * the dialog before creating it still fits.
+ * The most a draft may weigh: the v3 survey write's body cap, `DEFAULT_REQUEST_BODY_LIMIT_BYTES`, which
+ * the survey is saved under once created; 64 KiB less, so a draft the user renames or otherwise
+ * touches in the dialog before creating it still fits.
  */
 export const SURVEY_IMPORT_MAX_DRAFT_BYTES = DEFAULT_REQUEST_BODY_LIMIT_BYTES - 64 * 1024;
 

@@ -179,7 +179,7 @@ export async function runQsfImport(
     survey,
     signal
   );
-  // The dialog creates the draft through POST /api/v3/surveys, whose body has a size limit. The survey
+  // The draft the dialog sends back to be created has a size limit (`fitDraftToCreateLimit`). The survey
   // was cut to an upper bound of it before planning; past it still, languages and then trailing
   // questions are cut, and only then is the cut draft checked again.
   await yieldToOthers(signal);

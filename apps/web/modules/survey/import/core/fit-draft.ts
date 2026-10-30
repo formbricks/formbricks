@@ -4,10 +4,10 @@ import { withLanguageSettings } from "./language-settings";
 import type { TSurveyImportPipelineIssue } from "./report";
 
 /**
- * Fit the draft to the create's body limit (ENG-3654). The dialog sends the draft to
- * `POST /api/v3/surveys` as `JSON.stringify(payload)` (`createV3Survey`), and that route reads at most
- * `DEFAULT_REQUEST_BODY_LIMIT_BYTES`: an import that ends `done` with a larger draft would only fail
- * when the user creates it. So, strip and warn (ENG-3411): languages go first, last declared first,
+ * Fit the draft to the create's body limit (ENG-3654). The dialog sends the draft back to be created
+ * as `JSON.stringify(payload)`, and the survey it becomes is written under the v3 survey body cap,
+ * `DEFAULT_REQUEST_BODY_LIMIT_BYTES` (`SURVEY_IMPORT_MAX_DRAFT_BYTES`): an import that ends `done` with
+ * a larger draft would only fail when the user creates or saves it. So, strip and warn (ENG-3411): languages go first, last declared first,
  * then trailing questions — later questions are the safe ones to cut, since recall only points back.
  */
 

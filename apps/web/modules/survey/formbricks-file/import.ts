@@ -11,7 +11,7 @@ import { runInSurveyWriteTransaction } from "@/lib/survey/write-transaction";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getDefaultEndingTexts } from "@/modules/survey/import/core/default-ending";
 import type { TSurveyImportFileDraft } from "@/modules/survey/import/core/draft";
-import { SurveyImportInputError } from "@/modules/survey/import/core/errors";
+import { SurveyImportInputError, nameFromSurvey } from "@/modules/survey/import/core/errors";
 import { checkImportDraft } from "@/modules/survey/import/core/final-gate";
 import {
   type TImporterTranslate,
@@ -71,15 +71,6 @@ const getFitContext = async (
     allowTargeting,
     defaultEndingTexts: Object.fromEntries(codes.map((code, index) => [code, texts[index] ?? null])),
   };
-};
-
-/** Problems the create's checks found, named from where the survey sits: `file.survey…` or `survey…`. */
-export const nameFromSurvey = (params: InvalidParam[], fieldPrefix: string | null): InvalidParam[] => {
-  const root = fieldPrefix ? `${fieldPrefix}.survey` : "survey";
-  return params.map((param) => ({
-    ...param,
-    name: ["data", "body", ""].includes(param.name) ? root : `${root}.${param.name}`,
-  }));
 };
 
 export const refuseDraft = (invalidParams: InvalidParam[]): SurveyImportInputError =>

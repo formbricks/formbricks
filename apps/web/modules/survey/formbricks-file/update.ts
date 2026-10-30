@@ -20,6 +20,7 @@ import { transformPrismaSurvey } from "@/lib/survey/utils";
 import { runInSurveyWriteTransaction } from "@/lib/survey/write-transaction";
 import { isAppSurveyBlockedFromPublishing } from "@/modules/ee/creatives/lib/survey-publish";
 import type { TSurveyImportFileDraft } from "@/modules/survey/import/core/draft";
+import { nameFromSurvey } from "@/modules/survey/import/core/errors";
 import { getImporterTranslate } from "@/modules/survey/import/core/imported-survey-name";
 import type {
   TSurveyImportMatch,
@@ -27,7 +28,7 @@ import type {
   TSurveyImportTriggersState,
 } from "@/modules/survey/import/types";
 import type { TFormbricksFileReferences, TFormbricksFileSource } from "./envelope";
-import { nameFromSurvey, prepareFormbricksFileDraft, refuseDraft, withTargetTriggers } from "./import";
+import { prepareFormbricksFileDraft, refuseDraft, withTargetTriggers } from "./import";
 import { readFormbricksFileContent } from "./read";
 import {
   type TFormbricksFileReferencePlan,

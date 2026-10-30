@@ -5,7 +5,7 @@ import { parseV3ApiError } from "@/modules/api/lib/v3-client";
 export const SURVEY_IMPORTS_ENDPOINT = "/api/internal/surveys/imports";
 
 /**
- * Create the survey a reviewed Formbricks file import became, with the references it carries
+ * Create the survey a reviewed import became, a Formbricks file's with the references it carries
  * (`POST /api/internal/surveys/imports`, ENG-6850). `idempotencyKey` is the review's: sending the same
  * review twice creates one survey, and the server answers the repeat with the same id.
  *

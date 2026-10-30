@@ -180,7 +180,7 @@ const commit = ({
 }: {
   workspaceId: string;
   payload: Record<string, unknown>;
-  references: Record<string, unknown>;
+  references?: Record<string, unknown>;
   idempotencyKey?: string;
   auditLog?: TV3AuditLog;
 }) => {
@@ -191,7 +191,7 @@ const commit = ({
       headers: { "Idempotency-Key": `"${idempotencyKey}"` },
     }),
     authentication: owner(),
-    body: { workspaceId, survey, references },
+    body: { workspaceId, survey, ...(references ? { references } : {}) },
     requestId: "req_commit",
     instance: "/api/internal/surveys/imports",
     auditLog,
@@ -627,6 +627,85 @@ describe("the action classes a Formbricks file brings", () => {
 
     expect(done.report.issues.map((issue) => issue.code)).not.toContain("action_class_created");
     expect(names).toEqual(["Pricing visit"]);
+  });
+});
+
+describe("a reviewed draft that carries no references (Qualtrics, Word, Excel, CSV)", () => {
+  /** A draft as a document lane's preview returns it, named "(imported)" when it was previewed. */
+  const documentDraft = (workspaceId: string) => ({
+    workspaceId,
+    name: "Visit survey (imported)",
+    status: "inProgress",
+    defaultLanguage: "en-US",
+    blocks: [
+      {
+        id: createId(),
+        name: "Block 1",
+        elements: [
+          {
+            id: "visit_day",
+            type: "openText",
+            headline: { "en-US": "Which day did you visit?" },
+            required: true,
+            inputType: "text",
+            charLimit: { enabled: false },
+          },
+        ],
+      },
+    ],
+  });
+
+  test("is created through the import, named against the workspace as it is now, as a draft", async () => {
+    const target = fixture.otherWorkspaceId;
+    // Another import took the previewed name in the meantime.
+    await prisma.survey.create({
+      data: { name: "Visit survey (imported)", type: "link", workspaceId: target, blocks: [] },
+    });
+    const auditLog = auditLogStub();
+
+    const response = await commit({ workspaceId: target, payload: documentDraft(target), auditLog });
+
+    expect(response.status).toBe(201);
+    const created = await prisma.survey.findUniqueOrThrow({
+      where: { id: surveyIdOf(response) },
+      select: { name: true, status: true, workspaceId: true, blocks: true },
+    });
+    expect(created).toMatchObject({
+      name: "Visit survey (imported 2)",
+      status: "draft",
+      workspaceId: target,
+    });
+    expect(auditLog).toMatchObject({ targetId: surveyIdOf(response) });
+  });
+
+  test("is idempotent per Idempotency-Key, like a Formbricks file's", async () => {
+    const target = fixture.otherWorkspaceId;
+    const idempotencyKey = createId();
+    const payload = documentDraft(target);
+    const before = await prisma.survey.count({ where: { workspaceId: target } });
+
+    const first = await commit({ workspaceId: target, payload, idempotencyKey });
+    const repeat = await commit({ workspaceId: target, payload, idempotencyKey });
+
+    expect(first.status).toBe(201);
+    expect(repeat.headers.get("Location")).toBe(first.headers.get("Location"));
+    expect(await prisma.survey.count({ where: { workspaceId: target } })).toBe(before + 1);
+  });
+
+  test("refuses a draft the create would refuse, naming the field, and creates nothing", async () => {
+    const target = fixture.otherWorkspaceId;
+    const before = await prisma.survey.count({ where: { workspaceId: target } });
+    const payload = documentDraft(target);
+    payload.blocks[0].elements[0].headline = {} as never;
+
+    const response = await commit({ workspaceId: target, payload });
+
+    expect(response.status).toBe(422);
+    const problem = (await response.json()) as { invalid_params: { name: string }[] };
+    expect(problem.invalid_params.map((param) => param.name)).toContain(
+      "survey.blocks.0.elements.0.headline"
+    );
+    expect(await prisma.survey.count({ where: { workspaceId: target } })).toBe(before);
   });
 });
 

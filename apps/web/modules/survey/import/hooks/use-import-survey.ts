@@ -26,7 +26,6 @@ import type {
   TSurveyImportStage,
   TSurveyImportTriggersChoice,
 } from "@/modules/survey/import/types";
-import { createV3Survey } from "@/modules/survey/list/lib/v3-surveys-client";
 
 type TSurveyImportInput = { file: File };
 
@@ -39,10 +38,10 @@ type UseImportSurveyProps = {
 };
 
 /**
- * How a reviewed draft is created when its file carried references (a Formbricks file): sent back with
- * them, under the review's own `Idempotency-Key`, so creating it twice makes one survey.
+ * How a reviewed draft is created: sent back to the import's create under the review's own
+ * `Idempotency-Key`, so creating it twice makes one survey, with the references a Formbricks file has.
  */
-type TImportCommit = { references: TFormbricksFileReferences; idempotencyKey: string };
+type TImportCommit = { references?: TFormbricksFileReferences; idempotencyKey: string };
 
 /** On a Match (ENG-6851): replace the matched survey's content, or save the file as a new survey. */
 export type TSurveyImportChoice = "update" | "create";
@@ -92,8 +91,8 @@ const FIELD_REFUSAL_CODES = new Set(["formbricks_file_invalid", "formbricks_file
  * stages, and its pre-stream refusals, which it turns into `error` events so they reach the same error
  * state. The file is uploaded as it is; the server reads it and says what is wrong with its content.
  *
- * A Formbricks file needs no AI (ENG-6850): it imports without it, and its draft is created with the
- * references it carries through `POST /api/internal/surveys/imports` rather than the v3 create.
+ * A Formbricks file needs no AI (ENG-6850): it imports without it. Every draft is created through
+ * `POST /api/internal/surveys/imports`, a Formbricks file's with the references it carries.
  */
 export const useImportSurvey = ({ workspaceId, isAIAvailable, onSuccess }: UseImportSurveyProps) => {
   const [file, setFile] = useState<{ name: string; size: number } | null>(null);
@@ -142,9 +141,10 @@ export const useImportSurvey = ({ workspaceId, isAIAvailable, onSuccess }: UseIm
                   break;
                 case "done":
                   // One key per review: a new file, or the same file again, is a new review.
-                  commitRef.current = event.references
-                    ? { references: event.references, idempotencyKey: crypto.randomUUID() }
-                    : null;
+                  commitRef.current = {
+                    idempotencyKey: crypto.randomUUID(),
+                    ...(event.references ? { references: event.references } : {}),
+                  };
                   resetMatch(event.match ?? null);
                   // No partials on this stream: the review list is drawn once, from the finished payload.
                   handlers.onEvent({ type: "partial", draft: payloadToDraftSnapshot(event.payload) });
@@ -217,13 +217,14 @@ export const useImportSurvey = ({ workspaceId, isAIAvailable, onSuccess }: UseIm
   const create = useCallback(
     (payload: TSurveyImportPayload) => {
       const commit = commitRef.current;
-      if (!commit) return createV3Survey(payload, "import");
+      // The review sets it with its draft, and the create is reachable only from a review.
+      if (!commit) throw new Error("No review to create the survey from");
       const { workspaceId: _workspaceId, ...survey } = payload;
-      if (match && choice === "update") {
+      if (match && choice === "update" && commit.references) {
         return updateMatch(match, { survey, references: commit.references });
       }
       return createSurveyFromImport(
-        { workspaceId, survey, references: commit.references },
+        { workspaceId, survey, ...(commit.references ? { references: commit.references } : {}) },
         commit.idempotencyKey
       );
     },

@@ -12,7 +12,8 @@
  * its bytes and holds it to the rest of the upload's limits before its lane reads it.
  *
  * Nothing is persisted here, so there is no audit entry: the survey is created, and audited, by
- * `POST /api/v3/surveys?createdFrom=import`. Every upload is charged to the default v3 bucket here; a lane
+ * `POST /api/internal/surveys/imports`, or a matched one updated by
+ * `PUT /api/internal/surveys/{surveyId}/content`. Every upload is charged to the default v3 bucket here; a lane
  * that spends AI tokens is charged Create with AI's bucket on top, once the operation knows the type.
  */
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";

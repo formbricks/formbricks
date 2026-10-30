@@ -122,6 +122,15 @@ export const surveyImportFileUnreadable = (reason: string): SurveyImportInputErr
     "The file could not be read."
   );
 
+/** Problems the create's checks found, named from where the survey sits: `file.survey…` or `survey…`. */
+export const nameFromSurvey = (params: InvalidParam[], fieldPrefix: string | null): InvalidParam[] => {
+  const root = fieldPrefix ? `${fieldPrefix}.survey` : "survey";
+  return params.map((param) => ({
+    ...param,
+    name: ["data", "body", ""].includes(param.name) ? root : `${root}.${param.name}`,
+  }));
+};
+
 /**
  * The problem response for a refused import — a 413, 415 or 422 naming each field — or `null` for an
  * error that is not a refusal. Shared by every route that reads or writes an import.

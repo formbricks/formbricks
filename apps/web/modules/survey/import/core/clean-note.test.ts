@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { cpuMsSince } from "./__fixtures__/cpu-time";
 import { SURVEY_IMPORT_MAX_NOTE_CHARS } from "../limits";
+import { cpuMsSince } from "./__fixtures__/cpu-time";
 import { SURVEY_IMPORT_NOTE_URL_PATTERN, cleanNote } from "./clean-note";
 
 describe("cleanNote", () => {

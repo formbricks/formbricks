@@ -237,7 +237,8 @@ describe("useImportSurvey", () => {
     expect(result.current.retryAfterSeconds).toBe(30);
   });
 
-  test("saves the reviewed draft as an import, as it came", async () => {
+  test("saves a reviewed draft without references through the import's create, under the review's key", async () => {
+    vi.mocked(createSurveyFromImport).mockClear();
     streamWith([{ type: "done", payload, report }] as TSurveyImportStreamEvent[]);
     const { result } = renderImport();
 
@@ -245,7 +246,10 @@ describe("useImportSurvey", () => {
     await waitFor(() => expect(result.current.status).toBe("review"));
     act(() => result.current.handleOpenInEditor());
 
-    await waitFor(() => expect(createV3Survey).toHaveBeenCalledWith(payload, "import"));
+    await waitFor(() => expect(createSurveyFromImport).toHaveBeenCalledTimes(1));
+    const { workspaceId: _workspaceId, ...survey } = payload;
+    expect(createSurveyFromImport).toHaveBeenCalledWith({ workspaceId: "w1", survey }, expect.any(String));
+    expect(createV3Survey).not.toHaveBeenCalled();
   });
 
   test("creates a Formbricks file's draft with its references, under one Idempotency-Key per review", async () => {

@@ -33,9 +33,8 @@ export type TSurveyImportStreamEvent =
   | { type: "progress"; stage: TSurveyImportStage }
   /**
    * The draft to review, as the create request body takes it — locale-keyed, before parsing — and its
-   * report. Without `references` the dialog creates it with `POST /api/v3/surveys?createdFrom=import`;
-   * with them (a Formbricks file) it sends both to `POST /api/internal/surveys/imports`, which resolves
-   * the references again and creates them with the survey.
+   * report. The dialog sends it back to `POST /api/internal/surveys/imports`, with the `references` a
+   * Formbricks file has, which the create resolves again and creates with the survey.
    */
   | {
       type: "done";

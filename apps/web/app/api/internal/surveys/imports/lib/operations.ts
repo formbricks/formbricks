@@ -12,6 +12,7 @@ import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { getSessionUserId, mapV3SurveyCreateError } from "@/app/api/v3/surveys/lib/operations";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { createSurveyFromFormbricksFile } from "@/modules/survey/formbricks-file/import";
+import { createSurveyFromImportDraft } from "@/modules/survey/import/core/create-draft";
 import { toRefusalResponse } from "@/modules/survey/import/core/errors";
 import {
   SURVEY_IMPORT_IDEMPOTENCY_IN_FLIGHT_MS,
@@ -44,10 +45,10 @@ const created = (surveyId: string, requestId: string): Response =>
   createdResponse({ id: surveyId }, { requestId, location: surveyLocation(surveyId) });
 
 /**
- * `POST /api/internal/surveys/imports` (ENG-6850): create the survey a reviewed Formbricks file import
- * became, with the references it needs, in one transaction. The body is what the preview returned —
- * the draft and the file's references — and is read, checked and resolved again: nothing the client
- * resolved is trusted.
+ * `POST /api/internal/surveys/imports` (ENG-6850): create the survey a reviewed import became, for every
+ * kind of file. A Formbricks file's draft comes with its references, created with the survey in one
+ * transaction; any other import's draft comes alone. The body is what the preview returned and is
+ * read, checked, named and resolved again: nothing the client resolved is trusted.
  *
  * Idempotent per `Idempotency-Key` (see `idempotency.ts`): a repeat of a finished request gets the
  * same 201 and creates nothing; the same key with another body is a 422, and with one still running a
@@ -120,13 +121,22 @@ export async function createSurveyImport({
 
   let surveyId: string;
   try {
-    const survey = await createSurveyFromFormbricksFile({
-      body,
-      workspaceId,
-      organizationId,
-      authentication,
-      requestId,
-    });
+    const { references } = body;
+    const survey = references
+      ? await createSurveyFromFormbricksFile({
+          body: { survey: body.survey, references },
+          workspaceId,
+          organizationId,
+          authentication,
+          requestId,
+        })
+      : await createSurveyFromImportDraft({
+          survey: body.survey,
+          workspaceId,
+          organizationId,
+          authentication,
+          requestId,
+        });
     surveyId = survey.id;
   } catch (error) {
     if (claim.kind === "claimed") {

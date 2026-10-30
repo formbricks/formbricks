@@ -1,7 +1,8 @@
 /**
- * POST /api/internal/surveys/imports — create the survey a reviewed import became (ENG-6850): today a
- * Formbricks file's draft with the references it carries, which are matched in the workspace or created
- * with the survey in one transaction. 201 with a `Location` header naming the survey.
+ * POST /api/internal/surveys/imports — create the survey a reviewed import became (ENG-6850), for every
+ * kind of file: a Qualtrics export's or a questionnaire's draft, or a Formbricks file's draft with the
+ * references it carries, which are matched in the workspace or created with the survey in one
+ * transaction. 201 with a `Location` header naming the survey.
  *
  * Internal surface under the Internal API RFC (ENG-1668): session-only, no OpenAPI entry and no
  * stability promise, with every other v3 convention applied — the origin check, the default v3 rate

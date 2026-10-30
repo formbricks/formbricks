@@ -81,9 +81,10 @@ const readUpload = async (file: File): Promise<TSurveyImportFile> => {
  * and the file goes to its type's lane: a Formbricks file, a Qualtrics export, or a questionnaire from
  * Excel, CSV (ENG-6852) or Word (ENG-6853).
  *
- * Nothing is written: the dialog shows the draft for review and creates it with
- * `POST /api/v3/surveys?createdFrom=import`, or a Formbricks file with its references through
- * `POST /api/internal/surveys/imports` (ENG-6850); that write is what the audit log records.
+ * Nothing is written: the dialog shows the draft for review and creates it through
+ * `POST /api/internal/surveys/imports` (ENG-6850), a Formbricks file with its references, or updates a
+ * matched survey through `PUT /api/internal/surveys/{surveyId}/content`; that write is what the audit
+ * log records.
  */
 export async function streamSurveyImport({
   req,
