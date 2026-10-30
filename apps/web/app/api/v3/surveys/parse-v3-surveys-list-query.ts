@@ -129,6 +129,15 @@ function getUnsupportedQueryParams(searchParams: URLSearchParams): InvalidParam[
   }));
 }
 
+/** ENG-6861: `view=full` pages are capped below the summary limit; above it is a 400, not a silent clamp. */
+function getFullViewLimitIssue(q: TV3SurveysListQuery): InvalidParam | null {
+  if (q.view !== "full" || q.limit <= V3_SURVEYS_FULL_VIEW_MAX_LIMIT) return null;
+  return {
+    name: "limit",
+    reason: `With view=full, limit must be at most ${V3_SURVEYS_FULL_VIEW_MAX_LIMIT}.`,
+  };
+}
+
 function buildFilterCriteria(q: TV3SurveysListQuery): TSurveyFilterCriteria | undefined {
   const f: TSurveyFilterCriteria = {};
   if (q[FILTER_NAME_CONTAINS_QUERY_PARAM]) f.name = q[FILTER_NAME_CONTAINS_QUERY_PARAM];
@@ -191,13 +200,9 @@ export function parseV3SurveysListQuery(searchParams: URLSearchParams): TV3Surve
   }
 
   const q = result.data;
-  if (q.view === "full" && q.limit > V3_SURVEYS_FULL_VIEW_MAX_LIMIT) {
-    return {
-      ok: false,
-      invalid_params: [
-        { name: "limit", reason: `With view=full, limit must be at most ${V3_SURVEYS_FULL_VIEW_MAX_LIMIT}.` },
-      ],
-    };
+  const fullViewLimitIssue = getFullViewLimitIssue(q);
+  if (fullViewLimitIssue) {
+    return { ok: false, invalid_params: [fullViewLimitIssue] };
   }
 
   const sortBy = normalizeSurveyListSort(q.sortBy);
