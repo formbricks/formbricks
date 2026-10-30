@@ -5,6 +5,7 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import type { TSurvey, TSurveyStatus } from "@formbricks/types/surveys/types";
 import { getV3CustomCssPrincipal } from "@/app/api/v3/lib/custom-css-rate-limit";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
+import { surveyToV3Distribution } from "@/app/api/v3/surveys/distribution";
 import { isPlainObject } from "@/app/api/v3/surveys/guards";
 import { getSessionUserId } from "@/app/api/v3/surveys/lib/operations";
 import { V3SurveyArchivedError, assertV3SurveyPrecondition, patchV3Survey } from "@/app/api/v3/surveys/patch";
@@ -45,8 +46,8 @@ import { getFormbricksFileRemovals } from "./update-diff";
  * What an Update writes: the content a Formbricks file carries. Never `name`, `status`, `metadata` (the
  * link survey's share settings) or `customCss` (styling). `type` and `defaultLanguage` are sent as the
  * v3 patch takes them — checked against the survey, so a file of another type or default language is
- * refused naming the field rather than half-applied. `distribution` (the triggers and display settings)
- * goes only when the user chose the file's triggers.
+ * refused naming the field rather than half-applied. The file's triggers go only when the user chose
+ * them, and never its display settings: those are the survey's settings (see `toUpdatePatch`).
  */
 const UPDATE_CONTENT_KEYS = [
   "type",
@@ -193,13 +194,22 @@ const withoutDistribution = (draft: TSurveyImportFileDraft): TSurveyImportFileDr
 };
 
 /**
- * What the v3 patch receives: the file's content keys, and its `distribution` when it still has one —
- * which it does only when the user chose the file's triggers.
+ * What the v3 patch receives: the file's content keys and, when the draft still has a `distribution` —
+ * which it does only when the user chose the file's triggers — its triggers alone. The v3 patch replaces
+ * `distribution` whole, so it is sent with the survey's own display settings (how often and when it
+ * shows, its auto-close and response limit, its show conditions) and the file's triggers. As with any
+ * patch that sends `distribution`, a draft's unfinished show-condition rows are not kept.
  */
-const toUpdatePatch = (draft: Record<string, unknown>): Record<string, unknown> =>
-  Object.fromEntries(
-    [...UPDATE_CONTENT_KEYS, "distribution"].filter((key) => key in draft).map((key) => [key, draft[key]])
+const toUpdatePatch = (draft: Record<string, unknown>, survey: TSurvey): Record<string, unknown> => {
+  const patch = Object.fromEntries(
+    UPDATE_CONTENT_KEYS.filter((key) => key in draft).map((key) => [key, draft[key]])
   );
+  if (!isPlainObject(draft.distribution)) return patch;
+  return {
+    ...patch,
+    distribution: { ...surveyToV3Distribution(survey), triggers: draft.distribution.triggers },
+  };
+};
 
 export interface TFormbricksFileUpdateBody {
   /** The reviewed survey and the file's references, as the preview returned them. */
@@ -282,14 +292,18 @@ export const updateSurveyFromFormbricksFile = async ({
     const actionClassIds = await applyFormbricksFileReferences(tx, workspaceId, plan);
 
     try {
-      const after = await patchV3Survey(before, toUpdatePatch(withTargetTriggers(content, actionClassIds)), {
-        requestId,
-        organizationId,
-        precondition,
-        visibleSurveyWhere,
-        customCssPrincipal: getV3CustomCssPrincipal(authentication),
-        transaction,
-      });
+      const after = await patchV3Survey(
+        before,
+        toUpdatePatch(withTargetTriggers(content, actionClassIds), before),
+        {
+          requestId,
+          organizationId,
+          precondition,
+          visibleSurveyWhere,
+          customCssPrincipal: getV3CustomCssPrincipal(authentication),
+          transaction,
+        }
+      );
       return { before, after };
     } catch (error) {
       // The patch names fields from its own body, which is the reviewed survey: named from `survey`.

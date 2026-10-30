@@ -493,6 +493,53 @@ describe("triggers", () => {
     expect((await storedSurvey(surveyId)).triggers).toEqual([{ actionClassId: pricingId }]);
   });
 
+  test("'Use the file's' takes only the file's triggers, and keeps the survey's display settings", async () => {
+    const surveyId = await seedSurvey({ status: "paused", type: "app", triggerIds: [checkoutId] });
+    const displaySettings = {
+      displayOption: "displayMultiple",
+      displayPercentage: 50,
+      recontactDays: 14,
+      autoClose: 30,
+      autoComplete: 100,
+      delay: 5,
+    } as const;
+    await prisma.survey.update({ where: { id: surveyId }, data: displaySettings });
+    const file = withTrigger(await exportFile(surveyId), "clfileaction000000000002", "pricing");
+    // The file's own display settings differ from the survey's.
+    file.survey.distribution = {
+      ...(file.survey.distribution as Record<string, unknown>),
+      displayOption: "displayOnce",
+      displayPercentage: null,
+      recontactDays: null,
+      autoClose: null,
+      autoComplete: null,
+      delay: 0,
+    };
+
+    const done = await preview(file);
+    expect(done.match?.triggers).toBe("differ");
+    const response = await update(surveyId, done, { updatedAt: done.match!.updatedAt, triggers: "file" });
+
+    expect(response.status).toBe(200);
+    const after = await prisma.survey.findUniqueOrThrow({
+      where: { id: surveyId },
+      select: {
+        displayOption: true,
+        displayPercentage: true,
+        recontactDays: true,
+        autoClose: true,
+        autoComplete: true,
+        delay: true,
+        triggers: { select: { actionClassId: true } },
+      },
+    });
+    // A decimal column, read back as a Decimal.
+    expect({ ...after, displayPercentage: Number(after.displayPercentage) }).toEqual({
+      ...displaySettings,
+      triggers: [{ actionClassId: pricingId }],
+    });
+  });
+
   test("'Keep current' creates none of the actions the file's triggers would need", async () => {
     const surveyId = await seedSurvey({ status: "paused", type: "app", triggerIds: [checkoutId] });
     const done = await preview(

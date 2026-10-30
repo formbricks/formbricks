@@ -286,7 +286,7 @@ export interface TSurveyImportReport {
 
 /**
  * How an Update treats the survey's triggers (ENG-6851): replace them with the file's, or keep the
- * survey's own. `keep` sends no `distribution`, so the display settings stay as they are too.
+ * survey's own. Either way the survey keeps its display settings, which are not content.
  */
 export type TSurveyImportTriggersChoice = "file" | "keep";
 
