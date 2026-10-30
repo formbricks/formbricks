@@ -3067,6 +3067,9 @@
         },
         "embeddedFields": {
           "$ref": "#/$defs/__schema106"
+        },
+        "languages": {
+          "$ref": "#/$defs/__schema108"
         }
       },
       "required": [
@@ -3403,6 +3406,31 @@
         "dataType",
         "defaultValue",
         "locked"
+      ],
+      "additionalProperties": false
+    },
+    "__schema108": {
+      "maxItems": 50,
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/__schema109"
+      }
+    },
+    "__schema109": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "minLength": 1
+        },
+        "alias": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "code",
+        "alias"
       ],
       "additionalProperties": false
     }

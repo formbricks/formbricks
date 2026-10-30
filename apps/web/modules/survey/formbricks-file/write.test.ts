@@ -280,6 +280,17 @@ describe("writeFormbricksFile", () => {
     expect(ZFormbricksFileV1.safeParse(file).error?.issues).toBeUndefined();
   });
 
+  test("carries each language's workspace alias in references, since the create body refuses one in the survey", () => {
+    const file = write(buildSurvey());
+
+    expect(file.references.languages).toEqual([{ code: "de-DE", alias: "de" }]);
+    expect(file.survey.languages).toEqual([
+      { code: "en-US", default: true, enabled: true },
+      { code: "de-DE", default: false, enabled: true },
+    ]);
+    expect(ZFormbricksFileV1.safeParse(file).error?.issues).toBeUndefined();
+  });
+
   test("embeds no action classes for a link survey, whose triggers are not part of the file", () => {
     const linkSurveyWithStaleTriggers = buildSurvey({ triggers: [{ actionClass: ACTION_CLASS }] });
     expect(write(linkSurveyWithStaleTriggers).references.actionClasses).toEqual([]);

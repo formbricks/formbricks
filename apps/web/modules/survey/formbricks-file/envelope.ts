@@ -6,7 +6,7 @@ import {
   ZEmbeddedDataSource,
   ZEmbeddedDataType,
 } from "@formbricks/types/embedded-data";
-import { ZV3CreateSurveyDocument } from "@/app/api/v3/surveys/schemas";
+import { V3_SURVEY_MAX_LANGUAGES, ZV3CreateSurveyDocument } from "@/app/api/v3/surveys/schemas";
 import {
   FORMBRICKS_FILE_MAX_ACTION_CLASSES,
   FORMBRICKS_FILE_MAX_ATTRIBUTE_KEYS,
@@ -98,11 +98,25 @@ export const ZFormbricksFileEmbeddedField = z
   })
   .strict();
 
+/**
+ * A survey language's alias: the workspace's own name for it, which the v3 create body refuses in
+ * `survey.languages`. An import matches the language by `code` and gives a language it creates this
+ * alias; a language the workspace already has keeps its own.
+ */
+export const ZFormbricksFileLanguage = z
+  .object({
+    code: z.string().min(1),
+    alias: z.string().min(1),
+  })
+  .strict();
+
 const ZFormbricksFileReferences = z
   .object({
     actionClasses: z.array(ZFormbricksFileActionClass).max(FORMBRICKS_FILE_MAX_ACTION_CLASSES),
     attributeKeys: z.array(ZFormbricksFileAttributeKey).max(FORMBRICKS_FILE_MAX_ATTRIBUTE_KEYS),
     embeddedFields: z.array(ZFormbricksFileEmbeddedField).max(FORMBRICKS_FILE_MAX_EMBEDDED_FIELDS),
+    // Optional: only the languages with an alias are listed, and a file may have none.
+    languages: z.array(ZFormbricksFileLanguage).max(V3_SURVEY_MAX_LANGUAGES).optional(),
   })
   .strict()
   .meta({
@@ -130,6 +144,7 @@ export type TFormbricksFileReferences = z.infer<typeof ZFormbricksFileReferences
 export type TFormbricksFileActionClass = z.infer<typeof ZFormbricksFileActionClass>;
 export type TFormbricksFileAttributeKey = z.infer<typeof ZFormbricksFileAttributeKey>;
 export type TFormbricksFileEmbeddedField = z.infer<typeof ZFormbricksFileEmbeddedField>;
+export type TFormbricksFileLanguage = z.infer<typeof ZFormbricksFileLanguage>;
 
 /**
  * The format's JSON Schema, as published with the docs (`docs/schemas/formbricks-file/v1.json`) and

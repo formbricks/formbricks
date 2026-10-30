@@ -201,6 +201,7 @@ describe("GET /api/internal/surveys/{surveyId}/export", () => {
       ],
       attributeKeys: [{ key: "plan", name: "Plan", description: "Billing plan", dataType: "string" }],
       embeddedFields: [],
+      languages: [],
     });
   });
 

@@ -15,6 +15,7 @@ import {
   type TFormbricksFileActionClass,
   type TFormbricksFileAttributeKey,
   type TFormbricksFileEmbeddedField,
+  type TFormbricksFileLanguage,
   type TFormbricksFileMetaV1,
 } from "./envelope";
 
@@ -45,6 +46,7 @@ export type TFormbricksFile = {
     actionClasses: TFormbricksFileActionClass[];
     attributeKeys: TFormbricksFileAttributeKey[];
     embeddedFields: TFormbricksFileEmbeddedField[];
+    languages: TFormbricksFileLanguage[];
   };
 };
 
@@ -69,7 +71,8 @@ const toFileSurvey = (resource: TV3SurveyResource): TFormbricksFileSurvey => {
     ...document
   } = resource;
 
-  // An alias is the workspace's name for a language, not part of the survey: the create body refuses it.
+  // An alias is the workspace's name for a language, not part of the survey: the create body refuses it,
+  // so the file carries it in `references.languages` instead.
   return {
     ...document,
     languages: languages.map(({ code, default: isDefault, enabled }) => ({
@@ -124,6 +127,12 @@ const collectSharedEmbeddedFields = (survey: TSurvey): TFormbricksFileEmbeddedFi
         ]
   );
 
+/** The aliases the survey's languages have in its workspace, which the survey part cannot carry. */
+const collectLanguageAliases = (survey: TSurvey): TFormbricksFileLanguage[] =>
+  survey.languages.flatMap(({ language }) =>
+    language.alias ? [{ code: language.code, alias: language.alias }] : []
+  );
+
 /**
  * Write a survey as a Formbricks file in the current format (ADR 0016).
  *
@@ -173,6 +182,7 @@ export const writeFormbricksFile = ({
       actionClasses: collectActionClasses(survey, document),
       attributeKeys,
       embeddedFields: collectSharedEmbeddedFields(survey),
+      languages: collectLanguageAliases(survey),
     },
   };
 };
