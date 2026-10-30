@@ -1,8 +1,10 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
 import { getUserLocaleOrDefault } from "@/lib/user/locale";
+import { escapeLikePattern } from "@/lib/utils/like-pattern";
 import { getTranslate } from "@/lingodotdev/server";
-import { getImportedName, stripImportedSuffix } from "./imported-name";
+import { SURVEY_IMPORT_MAX_TAKEN_NAMES } from "../limits";
+import { type TTranslate, getImportedName, importedNamePrefix } from "./imported-name";
 
 /**
  * Naming a survey an import creates (ENG-6816, ENG-6850), for every lane: "<name> (imported)", or
@@ -22,11 +24,12 @@ export const getImporterTranslate = async (userId: string | null): Promise<TImpo
 export const getImportedSurveyName = async (
   workspaceId: string,
   name: string,
-  t: TImporterTranslate
+  t: TTranslate
 ): Promise<string> => {
   const taken = await prisma.survey.findMany({
-    where: { workspaceId, name: { startsWith: stripImportedSuffix(name, t) } },
+    where: { workspaceId, name: { startsWith: escapeLikePattern(importedNamePrefix(name, t)) } },
     select: { name: true },
+    take: SURVEY_IMPORT_MAX_TAKEN_NAMES,
   });
   const takenNames = new Set(taken.map((survey) => survey.name));
   return getImportedName(name, (candidate) => takenNames.has(candidate), t);

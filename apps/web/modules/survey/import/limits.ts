@@ -154,6 +154,14 @@ export const SURVEY_IMPORT_MAX_TEXT_TAGS = 500;
 export const SURVEY_IMPORT_MAX_NAME_CHARS = 200;
 
 /**
+ * Names read to number what an import creates ("<name> (imported N)"): the workspace's names that start
+ * like a candidate, for a survey or for the action classes of one file. Past this many, the lowest free
+ * number is chosen among the names read, which only a workspace with over a thousand copies of one
+ * import can get wrong.
+ */
+export const SURVEY_IMPORT_MAX_TAKEN_NAMES = 1_000;
+
+/**
  * A language code as a file or an AI plan writes it, before it is trimmed: longer than any code the
  * import's pattern admits (30) with room for spaces (`core/language-codes.ts`).
  */

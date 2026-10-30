@@ -517,6 +517,119 @@ describe("a Formbricks file imported into another organization", () => {
   });
 });
 
+describe("the action classes a Formbricks file brings", () => {
+  /** A fresh workspace in the foreign organization, holding these action classes. */
+  const workspaceWith = async (
+    actionClasses: { name: string; type: "code" | "noCode"; key?: string; noCodeConfig?: object }[]
+  ) => {
+    const { organizationId } = await prisma.workspace.findUniqueOrThrow({
+      where: { id: fixture.foreignWorkspaceId },
+      select: { organizationId: true },
+    });
+    const workspace = await prisma.workspace.create({
+      data: { name: createId(), organizationId },
+      select: { id: true },
+    });
+    await prisma.actionClass.createMany({
+      data: actionClasses.map((actionClass) => ({ ...actionClass, workspaceId: workspace.id })),
+    });
+    await synchronizeAuthzedIntegrationFixture();
+    return workspace.id;
+  };
+
+  /** The exported file with its triggers replaced by one on each of these actions. */
+  const withActions = (actionClasses: Record<string, unknown>[]) => {
+    const file = structuredClone(exportedFile) as {
+      survey: { distribution: Record<string, unknown> };
+      references: Record<string, unknown>;
+    };
+    file.references.actionClasses = actionClasses;
+    file.survey.distribution.triggers = actionClasses.map(({ id }) => ({ actionClassId: id }));
+    return file;
+  };
+
+  const codeAction = (name: string, key: string) => ({
+    id: createId(),
+    name,
+    description: null,
+    type: "code",
+    key,
+    noCodeConfig: null,
+  });
+
+  /** Preview and create, returning the names of the action classes the created survey's triggers use. */
+  const importTriggers = async (workspaceId: string, file: unknown) => {
+    const done = await previewDone(workspaceId, file);
+    const response = await commit({ workspaceId, payload: done.payload, references: done.references });
+    expect(response.status).toBe(201);
+    const created = await prisma.survey.findUniqueOrThrow({
+      where: { id: surveyIdOf(response) },
+      select: { triggers: { select: { actionClass: { select: { name: true } } } } },
+    });
+    return { done, names: created.triggers.map(({ actionClass }) => actionClass.name) };
+  };
+
+  test("an action named like an import gets the next free number, not a name the workspace has", async () => {
+    const workspaceId = await workspaceWith([
+      { name: "Signup (imported)", type: "code", key: "signup-a" },
+      { name: "Signup (imported 2)", type: "code", key: "signup-b" },
+    ]);
+
+    const { done, names } = await importTriggers(
+      workspaceId,
+      withActions([codeAction("Signup (imported)", "signup-c")])
+    );
+
+    expect(done.report.issues).toContainEqual({
+      code: "action_class_created",
+      severity: "info",
+      params: { name: "Signup (imported 3)" },
+    });
+    expect(names).toEqual(["Signup (imported 3)"]);
+  });
+
+  test("a name with LIKE wildcards in it is looked up as written", async () => {
+    const workspaceId = await workspaceWith([
+      { name: "50%_off", type: "code", key: "sale-a" },
+      { name: "50%_off (imported)", type: "code", key: "sale-b" },
+      // Would match the name read as a pattern, and is a different name.
+      { name: "50X off (imported 2)", type: "code", key: "sale-c" },
+    ]);
+
+    const { names } = await importTriggers(workspaceId, withActions([codeAction("50%_off", "sale-d")]));
+
+    expect(names).toEqual(["50%_off (imported 2)"]);
+  });
+
+  test("a no-code action is matched by its configuration whatever the order of its keys", async () => {
+    const workspaceId = await workspaceWith([
+      {
+        name: "Pricing visit",
+        type: "noCode",
+        noCodeConfig: { urlFilters: [{ value: "/pricing", rule: "contains" }], type: "pageView" },
+      },
+      { name: "Other visit", type: "noCode", noCodeConfig: { type: "pageView", urlFilters: [] } },
+    ]);
+
+    const { done, names } = await importTriggers(
+      workspaceId,
+      withActions([
+        {
+          id: createId(),
+          name: "Pricing page",
+          description: null,
+          type: "noCode",
+          key: null,
+          noCodeConfig: PRICING_CONFIG,
+        },
+      ])
+    );
+
+    expect(done.report.issues.map((issue) => issue.code)).not.toContain("action_class_created");
+    expect(names).toEqual(["Pricing visit"]);
+  });
+});
+
 describe("POST /api/internal/surveys/imports is idempotent per Idempotency-Key", () => {
   test("a repeat gets the same 201 and creates one survey; the same key with another body is a 422", async () => {
     const target = fixture.otherWorkspaceId;

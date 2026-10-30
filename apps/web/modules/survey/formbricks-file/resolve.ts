@@ -1,13 +1,15 @@
 import "server-only";
-import type { Prisma } from "@formbricks/database/prisma";
+import { Prisma } from "@formbricks/database/prisma";
 import { embeddedFieldsFromLegacyInput } from "@formbricks/types/embedded-data-mapping";
 import type { TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import type { TSurveyHiddenFields, TSurveyVariable } from "@formbricks/types/surveys/types";
 import { isPlainObject } from "@/app/api/v3/surveys/guards";
 import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
+import { escapeLikePattern } from "@/lib/utils/like-pattern";
 import { SurveyImportInputError } from "@/modules/survey/import/core/errors";
-import { getImportedName } from "@/modules/survey/import/core/imported-name";
+import { getImportedName, importedNamePrefix } from "@/modules/survey/import/core/imported-name";
 import type { TSurveyImportPipelineIssue } from "@/modules/survey/import/core/report";
+import { SURVEY_IMPORT_MAX_TAKEN_NAMES } from "@/modules/survey/import/limits";
 import type {
   TFormbricksFileActionClass,
   TFormbricksFileAttributeKey,
@@ -28,7 +30,7 @@ import type {
  * - **Shared embedded-data fields**: linked when the workspace's library has one with the same key,
  *   source and data type; otherwise the field stays the survey's own, as Copy-to does.
  *
- * Each kind is looked up in one query, never one per item, and the plan is computed again inside the
+ * Each kind is looked up in one bounded query, never one per item, and the plan is computed again inside the
  * commit's transaction, so the ids it writes are the ones the target has, never ids a client resolved.
  * The preview runs the same plan read-only, to say in the report what the import will create.
  */
@@ -38,7 +40,7 @@ type TTranslate = (key: string, options?: Record<string, unknown>) => string;
 /** A client the resolver reads through: the shared one for a preview, the transaction for a commit. */
 type TReader = Pick<
   Prisma.TransactionClient,
-  "actionClass" | "contactAttributeKey" | "language" | "embeddedData"
+  "actionClass" | "contactAttributeKey" | "language" | "embeddedData" | "$queryRaw"
 >;
 
 type TActionClassCreate = Pick<
@@ -98,6 +100,25 @@ const getTargetingAttributeKeys = (filters: unknown, keys = new Set<string>()): 
   return keys;
 };
 
+/** The workspace's no-code actions with one of these configurations, the oldest per configuration. */
+const findNoCodeActionClasses = async (
+  db: TReader,
+  workspaceId: string,
+  configs: readonly unknown[]
+): Promise<{ id: string; noCodeConfig: unknown }[]> => {
+  if (configs.length === 0) return [];
+  // jsonb equality ignores key order, so the configurations are compared in the database. DISTINCT ON
+  // keeps one row per configuration, which bounds the read by what the file asks for.
+  return db.$queryRaw<{ id: string; noCodeConfig: unknown }[]>`
+    SELECT DISTINCT ON ("noCodeConfig") id, "noCodeConfig"
+    FROM "ActionClass"
+    WHERE "workspaceId" = ${workspaceId}
+      AND type = 'noCode'
+      AND "noCodeConfig" IN (${Prisma.join(configs.map((config) => Prisma.sql`${JSON.stringify(config)}::jsonb`))})
+    ORDER BY "noCodeConfig", created_at ASC, id ASC
+    LIMIT ${configs.length}`;
+};
+
 const planActionClasses = async (
   db: TReader,
   workspaceId: string,
@@ -108,32 +129,46 @@ const planActionClasses = async (
   const issues: TSurveyImportPipelineIssue[] = [];
   if (wanted.length === 0) return { actionClasses, issues };
 
-  const codeKeys = wanted.flatMap((actionClass) =>
-    actionClass.type === "code" && actionClass.key ? [actionClass.key] : []
+  const codeKeys = [
+    ...new Set(
+      wanted.flatMap((actionClass) =>
+        actionClass.type === "code" && actionClass.key ? [actionClass.key] : []
+      )
+    ),
+  ];
+  const noCodeConfigs = wanted.flatMap((actionClass) =>
+    actionClass.type === "noCode" && actionClass.noCodeConfig ? [actionClass.noCodeConfig] : []
   );
-  // One query: the code actions by key, every no-code action (their configurations are compared here),
-  // and every name a created action could clash with.
-  const existing = await db.actionClass.findMany({
-    where: {
-      workspaceId,
-      OR: [
-        { key: { in: codeKeys } },
-        { type: "noCode" },
-        ...wanted.map((actionClass) => ({ name: { startsWith: actionClass.name } })),
-      ],
-    },
-    select: { id: true, name: true, type: true, key: true, noCodeConfig: true },
-  });
+  // One query per kind, each bounded: the code actions by key (unique in a workspace), the no-code
+  // actions by configuration, and the names a created action could clash with — its own, and every
+  // "(imported N)" of it.
+  const [byKeyRows, byConfigRows, takenRows] = await Promise.all([
+    codeKeys.length > 0
+      ? db.actionClass.findMany({
+          where: { workspaceId, key: { in: codeKeys } },
+          select: { id: true, key: true },
+          take: codeKeys.length,
+        })
+      : Promise.resolve([]),
+    findNoCodeActionClasses(db, workspaceId, noCodeConfigs),
+    db.actionClass.findMany({
+      where: {
+        workspaceId,
+        OR: wanted.flatMap((actionClass) => [
+          { name: actionClass.name },
+          { name: { startsWith: escapeLikePattern(importedNamePrefix(actionClass.name, t)) } },
+        ]),
+      },
+      select: { name: true },
+      take: SURVEY_IMPORT_MAX_TAKEN_NAMES,
+    }),
+  ]);
 
-  const takenNames = new Set(existing.map((actionClass) => actionClass.name));
+  const takenNames = new Set(takenRows.map((actionClass) => actionClass.name));
   const byKey = new Map(
-    existing.flatMap((actionClass) => (actionClass.key ? [[actionClass.key, actionClass.id]] : []))
+    byKeyRows.flatMap((actionClass) => (actionClass.key ? [[actionClass.key, actionClass.id]] : []))
   );
-  const byConfig = new Map(
-    existing
-      .filter((actionClass) => actionClass.type === "noCode" && actionClass.noCodeConfig !== null)
-      .map((actionClass) => [canonicalJson(actionClass.noCodeConfig), actionClass.id])
-  );
+  const byConfig = new Map(byConfigRows.map((row) => [canonicalJson(row.noCodeConfig), row.id]));
 
   // What the file's own actions already planned, so two that are the same action (one key, or one
   // configuration) become one, and both triggers point at it.

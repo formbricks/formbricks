@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import enUS from "@/locales/en-US.json";
-import { getImportedName, stripImportedSuffix } from "./imported-name";
+import { getImportedName, importedNamePrefix, stripImportedSuffix } from "./imported-name";
 
 /** `t` over a locale's two suffix strings, interpolating `{number}` as ICU does for a plain argument. */
 const translator =
@@ -58,5 +58,34 @@ describe("stripImportedSuffix", () => {
   test("leaves a name that is only a suffix, or has one in the middle, as it is", () => {
     expect(stripImportedSuffix("(imported)", t)).toBe("(imported)");
     expect(stripImportedSuffix("A (imported) survey", t)).toBe("A (imported) survey");
+  });
+});
+
+describe("importedNamePrefix", () => {
+  /** The names `getImportedName` tries for `name` before it finds a free one, `count` of them. */
+  const candidatesOf = (name: string, translate: typeof t, count: number): string[] => {
+    const tried: string[] = [];
+    getImportedName(name, (candidate) => tried.push(candidate) < count, translate);
+    return tried;
+  };
+
+  test("is what every numbered candidate starts with, from the name without its suffix", () => {
+    expect(importedNamePrefix("Signup (imported 2)", t)).toBe("Signup (imported");
+    for (const name of ["Signup", "Signup (imported)", "Signup (imported 7)", "50%_off"]) {
+      const prefix = importedNamePrefix(name, t);
+      expect(candidatesOf(name, t, 12).every((candidate) => candidate.startsWith(prefix))).toBe(true);
+    }
+  });
+
+  test("stops where the plain and the numbered suffix differ, in any language", () => {
+    const other = translator({
+      imported_suffix: "[import]",
+      imported_suffix_number: "[import nr. {number}]",
+    });
+
+    expect(importedNamePrefix("Umfrage", other)).toBe("Umfrage [import");
+    expect(
+      candidatesOf("Umfrage", other, 5).every((candidate) => candidate.startsWith("Umfrage [import"))
+    ).toBe(true);
   });
 });

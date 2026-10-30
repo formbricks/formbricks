@@ -8,7 +8,8 @@
  * caller passes its `t`. Pure: the caller reads the names already taken.
  */
 
-type TTranslate = (key: string, options?: Record<string, unknown>) => string;
+/** The part of `t` the suffix needs, so a caller can pass any translator. */
+export type TTranslate = (key: string, options?: Record<string, unknown>) => string;
 
 /** Stands in for the number while the numbered suffix is turned into a pattern. */
 const NUMBER_MARK = "\u0000";
@@ -25,6 +26,24 @@ const trailingSuffixPattern = (t: TTranslate): RegExp => {
     .split(NUMBER_MARK)
     .map(escapeRegExp);
   return new RegExp(String.raw`\s*(?:${plain}|${before}\d+${after})$`, "u");
+};
+
+/** The longest start `a` and `b` share. */
+const sharedStart = (a: string, b: string): string => {
+  let length = 0;
+  while (length < a.length && length < b.length && a[length] === b[length]) length++;
+  return a.slice(0, length);
+};
+
+/**
+ * What every numbered candidate {@link getImportedName} tries for `name` starts with: the name without
+ * its suffix, then the start the two suffixes share ("<name> (imported"). It narrows the lookup of the
+ * names taken; escape it for a `LIKE` pattern first (`escapeLikePattern`). With `keepPlainName`, the
+ * name as it is is a candidate too, which the lookup has to match exactly.
+ */
+export const importedNamePrefix = (name: string, t: TTranslate): string => {
+  const [beforeNumber = ""] = t("common.imported_suffix_number", { number: NUMBER_MARK }).split(NUMBER_MARK);
+  return `${stripImportedSuffix(name, t)} ${sharedStart(t("common.imported_suffix"), beforeNumber)}`;
 };
 
 /** The name without a trailing "(imported N)", so suffixes never stack. */
