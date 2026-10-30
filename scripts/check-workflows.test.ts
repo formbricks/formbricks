@@ -29,6 +29,44 @@ describe("workflow conventions", () => {
     ).toContain("Workflow permissions must be an explicit map; enumerate required scopes.");
   });
 
+  test.each(["workflow_call", "[workflow_call]", "\n  workflow_call:"])(
+    "allows caller permissions for a workflow with only the workflow_call trigger: %s",
+    (trigger) => {
+      const workflow = `on: ${trigger}\n${hardenedJob.replace("permissions:\n  contents: read\n", "")}`;
+      expect(checkWorkflow(workflow)).toEqual([]);
+    }
+  );
+
+  test.each(["[workflow_call, push]", "\n  workflow_call:\n  workflow_dispatch:"])(
+    "requires explicit permissions when a reusable workflow has another trigger: %s",
+    (trigger) => {
+      const workflow = `on: ${trigger}\n${hardenedJob.replace("permissions:\n  contents: read\n", "")}`;
+      expect(checkWorkflow(workflow)).toEqual([
+        expect.stringContaining("declare an explicit permissions map"),
+      ]);
+    }
+  );
+
+  test("still requires runner hardening in workflows that inherit caller permissions", () => {
+    const workflow = `on: workflow_call\n${hardenedJob
+      .replace("permissions:\n  contents: read\n", "")
+      .replace("      - uses: step-security/harden-runner@pinned-sha\n", "")}`;
+    expect(checkWorkflow(workflow)).toEqual([expect.stringContaining("first step")]);
+  });
+
+  test.each(["permissions: write-all\n", "jobs:\n  check:\n    permissions: write-all\n"])(
+    "rejects explicit broad permissions in reusable workflows: %s",
+    (permissions) => {
+      const workflow = hardenedJob.replace("permissions:\n  contents: read\n", "");
+      const source = permissions.startsWith("jobs:")
+        ? workflow.replace("jobs:\n  check:\n", permissions)
+        : permissions + workflow;
+      expect(checkWorkflow(`on: workflow_call\n${source}`)).toContainEqual(
+        expect.stringContaining("explicit permissions map")
+      );
+    }
+  );
+
   test("rejects hardening after code execution", () => {
     const workflow = hardenedJob.replace(
       "      - uses: step-security/harden-runner@pinned-sha",

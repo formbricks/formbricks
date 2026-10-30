@@ -12,9 +12,10 @@ generated API drift. `packages/config-eslint/` and `apps/web/eslint.config.mjs` 
 exceptions. A warning is still actionable when CI does not block it.
 
 Static `unstable_cache` imports from `next/cache` are lint errors. `pnpm workflow:check` enforces explicit
-permission maps and runner hardening first for literal `ubuntu-*` runner labels, including version and
-architecture pins. Reviewers still judge whether requested token permissions are minimal and whether
-runner choices outside this check need hardening.
+permission maps (or caller inheritance for workflows triggered only by `workflow_call`) and runner
+hardening first for literal `ubuntu-*` runner labels, including version and architecture pins. Reviewers
+still judge whether requested token permissions are minimal and whether runner choices outside this
+check need hardening.
 
 ## Conventions Awaiting Automated Enforcement
 
@@ -193,6 +194,7 @@ The following conventions apply to published `.mdx` pages. Internal Markdown ref
 
 ## GitHub Actions
 
-- Always set minimal `permissions` for `GITHUB_TOKEN`.
+- Set minimal `permissions` for `GITHUB_TOKEN`. Workflows triggered only by `workflow_call` may inherit
+  the caller's scoped permissions; review each caller's map.
 - For runners selected by expressions or labels outside `ubuntu-*`, review the resolved runner choices
   and ensure GitHub-hosted Ubuntu jobs harden the runner before other steps.

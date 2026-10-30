@@ -15,6 +15,13 @@ export function checkWorkflow(source) {
   }
 
   const errors = [];
+  const triggers = isMap(workflow.on)
+    ? Object.keys(workflow.on)
+    : Array.isArray(workflow.on)
+      ? workflow.on
+      : [workflow.on];
+  // Workflows that can only be called inherit the caller's permission ceiling.
+  const onlyWorkflowCall = triggers.length === 1 && triggers[0] === "workflow_call";
   if (workflow.permissions !== undefined && !isMap(workflow.permissions)) {
     errors.push("Workflow permissions must be an explicit map; enumerate required scopes.");
   }
@@ -23,7 +30,9 @@ export function checkWorkflow(source) {
       errors.push(`${name}: expected a job map.`);
       continue;
     }
-    if (!isMap(job.permissions ?? workflow.permissions)) {
+    const inheritsCallerPermissions =
+      onlyWorkflowCall && job.permissions === undefined && workflow.permissions === undefined;
+    if (!inheritsCallerPermissions && !isMap(job.permissions ?? workflow.permissions)) {
       errors.push(`${name}: declare an explicit permissions map on the job or workflow.`);
     }
     const labels = isMap(job["runs-on"]) ? job["runs-on"].labels : job["runs-on"];
