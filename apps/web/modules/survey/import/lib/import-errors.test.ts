@@ -1,6 +1,11 @@
 import { describe, expect, test } from "vitest";
+import enUS from "@/locales/en-US.json";
 import { V3ApiError } from "@/modules/api/lib/v3-client";
-import { getSurveyImportErrorMessage, getSurveyImportRequestErrorCode } from "./import-errors";
+import {
+  getSurveyImportErrorMessage,
+  getSurveyImportFieldProblemHeadline,
+  getSurveyImportRequestErrorCode,
+} from "./import-errors";
 
 const refusal = (status: number, code?: string, invalidParamNames: string[] = []) =>
   new V3ApiError({
@@ -222,5 +227,39 @@ describe("getSurveyImportErrorMessage", () => {
     ["something_new", "common.something_went_wrong_please_try_again"],
   ])("words %s", (code, message) => {
     expect(getSurveyImportErrorMessage(code, t)).toBe(message);
+  });
+});
+
+describe("getSurveyImportFieldProblemHeadline", () => {
+  /** The en-US text of a key, as the dialog shows it; the key itself when en-US has none. */
+  const english = (key: string): string => {
+    const text = key
+      .split(".")
+      .reduce<unknown>((node, part) => (node as Record<string, unknown> | undefined)?.[part], enUS);
+    return typeof text === "string" ? text : key;
+  };
+
+  test.each([
+    ["missing_required_field", "This field is missing"],
+    ["unsupported_field", "This field isn’t part of a survey"],
+    ["dangling_reference", "This points at something the file doesn’t include"],
+    ["invalid_reference", "This points at something that doesn’t exist"],
+    ["misordered_reference", "This refers to a question that comes after it"],
+    ["immutable_identifier", "This ID can’t change anymore: the survey is no longer a draft"],
+    ["read_only_field", "This can’t be changed by an import"],
+    ["duplicate_identifier", "This ID is used twice"],
+    ["forbidden_identifier", "This name is reserved"],
+    ["missing_translation", "A translation is missing"],
+    ["invalid_locale", "This language code isn’t valid"],
+    ["unsupported_locale", "This language code isn’t valid"],
+    ["duplicate_locale", "This language is listed twice"],
+    ["limit_exceeded", "This is over the limit"],
+  ])("says what is wrong with a field coded %s, in the user's language", (code, headline) => {
+    expect(getSurveyImportFieldProblemHeadline(code, english)).toBe(headline);
+  });
+
+  test("says a field without a code, or with one it does not know, is not valid", () => {
+    expect(getSurveyImportFieldProblemHeadline(undefined, english)).toBe("This field isn’t valid");
+    expect(getSurveyImportFieldProblemHeadline("something_new", english)).toBe("This field isn’t valid");
   });
 });

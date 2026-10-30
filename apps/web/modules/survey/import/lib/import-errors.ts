@@ -1,4 +1,4 @@
-import type { V3ApiError } from "@/modules/api/lib/v3-client";
+import type { TV3InvalidParam, V3ApiError } from "@/modules/api/lib/v3-client";
 import { getAiErrorMessage } from "@/modules/survey/components/template-list/lib/ai-error-messages";
 
 type TTranslate = (key: string, options?: Record<string, unknown>) => string;
@@ -67,6 +67,45 @@ const getDocumentLimitMessage = (limit: string, t: TTranslate): string => {
       return t("workspace.surveys.import.errors.document_limits.source_size");
     default:
       return t("workspace.surveys.import.errors.document_limits.other");
+  }
+};
+
+/**
+ * What is wrong with one field a refusal names, in the user's language, by the code the server gave
+ * it; a field without a known code is "not valid". The dialog shows it above the field's path, with the
+ * server's reason verbatim underneath as the technical detail a user can paste to an AI assistant.
+ */
+export const getSurveyImportFieldProblemHeadline = (code: TV3InvalidParam["code"], t: TTranslate): string => {
+  switch (code) {
+    case "missing_required_field":
+      return t("workspace.surveys.import.errors.field_problems.missing_required_field");
+    case "unsupported_field":
+      return t("workspace.surveys.import.errors.field_problems.unsupported_field");
+    case "dangling_reference":
+      return t("workspace.surveys.import.errors.field_problems.dangling_reference");
+    case "invalid_reference":
+      return t("workspace.surveys.import.errors.field_problems.invalid_reference");
+    case "misordered_reference":
+      return t("workspace.surveys.import.errors.field_problems.misordered_reference");
+    case "immutable_identifier":
+      return t("workspace.surveys.import.errors.field_problems.immutable_identifier");
+    case "read_only_field":
+      return t("workspace.surveys.import.errors.field_problems.read_only_field");
+    case "duplicate_identifier":
+      return t("workspace.surveys.import.errors.field_problems.duplicate_identifier");
+    case "forbidden_identifier":
+      return t("workspace.surveys.import.errors.field_problems.forbidden_identifier");
+    case "missing_translation":
+      return t("workspace.surveys.import.errors.field_problems.missing_translation");
+    case "invalid_locale":
+    case "unsupported_locale":
+      return t("workspace.surveys.import.errors.field_problems.invalid_locale");
+    case "duplicate_locale":
+      return t("workspace.surveys.import.errors.field_problems.duplicate_locale");
+    case "limit_exceeded":
+      return t("workspace.surveys.import.errors.field_problems.limit_exceeded");
+    default:
+      return t("workspace.surveys.import.errors.field_problems.invalid");
   }
 };
 
