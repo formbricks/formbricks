@@ -18,7 +18,7 @@ import { checkImportDraft } from "@/modules/survey/import/core/final-gate";
 import { getImportedName, stripImportedSuffix } from "@/modules/survey/import/core/imported-name";
 import type { TSurveyImportPipelineIssue } from "@/modules/survey/import/core/report";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
-import type { TFormbricksFileReferences } from "./envelope";
+import type { TFormbricksFileReferences, TFormbricksFileSource } from "./envelope";
 import {
   type TFormbricksFileFitContext,
   fitFormbricksFileSurvey,
@@ -27,6 +27,7 @@ import {
 } from "./fit";
 import { type TFormbricksFileRead, readFormbricksFile, readFormbricksFileContent } from "./read";
 import {
+  type TFormbricksFileReferencePlan,
   applyFormbricksFileReferences,
   linkFormbricksFileSharedFields,
   planFormbricksFileReferences,
@@ -148,6 +149,10 @@ export interface TFormbricksFileImportPreview {
   /** The file's references, which the dialog sends back with the draft to create it. */
   references: TFormbricksFileReferences;
   issues: TSurveyImportPipelineIssue[];
+  /** The survey the file was exported from, for finding a Match (ENG-6851). */
+  source: TFormbricksFileSource | null;
+  /** How the references resolve in the workspace, which a Match compares the survey's triggers with. */
+  plan: TFormbricksFileReferencePlan;
 }
 
 /**
@@ -189,6 +194,8 @@ export const previewFormbricksFileImport = async ({
     draft,
     references: read.content.references,
     issues: [...issues, ...plan.issues, CONTENT_ONLY_NOTE],
+    source: read.source,
+    plan,
   };
 };
 

@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import { getAIUnavailableReasonForErrorCode } from "@/lib/ai/availability";
-import type { TV3InvalidParam } from "@/modules/api/lib/v3-client";
+import { type TV3InvalidParam, V3ApiError } from "@/modules/api/lib/v3-client";
 import {
   type TDraftStreamHandlers,
   useDraftCreation,
@@ -16,8 +16,16 @@ import {
   streamSurveyImportFile,
 } from "@/modules/survey/import/lib/import-stream-client";
 import { payloadToDraftSnapshot } from "@/modules/survey/import/lib/payload-to-draft";
-import { createSurveyFromImport } from "@/modules/survey/import/lib/survey-imports-client";
-import type { TSurveyImportReport, TSurveyImportStage } from "@/modules/survey/import/types";
+import {
+  createSurveyFromImport,
+  updateSurveyFromImport,
+} from "@/modules/survey/import/lib/survey-imports-client";
+import type {
+  TSurveyImportMatch,
+  TSurveyImportReport,
+  TSurveyImportStage,
+  TSurveyImportTriggersChoice,
+} from "@/modules/survey/import/types";
 import { createV3Survey } from "@/modules/survey/list/lib/v3-surveys-client";
 
 type TSurveyImportInput = { file: File };
@@ -35,6 +43,37 @@ type UseImportSurveyProps = {
  * them, under the review's own `Idempotency-Key`, so creating it twice makes one survey.
  */
 type TImportCommit = { references: TFormbricksFileReferences; idempotencyKey: string };
+
+/** On a Match (ENG-6851): replace the matched survey's content, or save the file as a new survey. */
+export type TSurveyImportChoice = "update" | "create";
+
+/**
+ * Why the Update a Match offered is no longer the plain one: the survey changed after the file was
+ * exported (`stale`, the dialog offers "Update anyway"), or it is live (`active`, Create new only).
+ */
+export type TSurveyImportMatchConflict = "stale" | "active";
+
+/**
+ * The dialog's code for a first 409 on Update: the dialog shows the "changed since you exported" choice
+ * for it, not an error. A 409 on "Update anyway" means the survey changed again after the review.
+ */
+export const SURVEY_CHANGED_CODE = "survey_changed";
+const SURVEY_CHANGED_AGAIN_CODE = "survey_changed_again";
+
+/** A refusal with the dialog's own code, keeping everything else the server said. */
+const withCode = (error: V3ApiError, code: string): V3ApiError =>
+  new V3ApiError({
+    status: error.status,
+    detail: error.message,
+    code,
+    requestId: error.requestId,
+    invalid_params: error.invalid_params,
+    details: error.details,
+  });
+
+/** The choice a Match opens with: Update, unless the survey is live. */
+const initialChoice = (match: TSurveyImportMatch | null): TSurveyImportChoice =>
+  match && match.status !== "inProgress" ? "update" : "create";
 
 /** The refusals whose `invalid_params` name the file's fields, which the dialog lists. */
 const FIELD_REFUSAL_CODES = new Set(["formbricks_file_invalid", "formbricks_file_too_new"]);
@@ -57,6 +96,19 @@ export const useImportSurvey = ({ workspaceId, isAIAvailable, onSuccess }: UseIm
   const commitRef = useRef<TImportCommit | null>(null);
   const [stage, setStage] = useState<TSurveyImportStage | null>(null);
   const [retryAfterSeconds, setRetryAfterSeconds] = useState<number | null>(null);
+  /** The survey the file was exported from, when the user may update it (ENG-6851). */
+  const [match, setMatch] = useState<TSurveyImportMatch | null>(null);
+  const [choice, setChoice] = useState<TSurveyImportChoice>("create");
+  const [triggersChoice, setTriggersChoice] = useState<TSurveyImportTriggersChoice>("file");
+  const [conflict, setConflict] = useState<TSurveyImportMatchConflict | null>(null);
+
+  /** A new review, or none: what a Match offered goes with the review it came with. */
+  const resetMatch = useCallback((next: TSurveyImportMatch | null) => {
+    setMatch(next);
+    setChoice(initialChoice(next));
+    setTriggersChoice(next?.triggers === "keep_only" ? "keep" : "file");
+    setConflict(next?.status === "inProgress" ? "active" : null);
+  }, []);
 
   const stream = useCallback(
     async (
@@ -67,6 +119,7 @@ export const useImportSurvey = ({ workspaceId, isAIAvailable, onSuccess }: UseIm
       setRetryAfterSeconds(null);
       setInvalidParams(null);
       commitRef.current = null;
+      resetMatch(null);
 
       try {
         await streamSurveyImportFile(
@@ -84,6 +137,7 @@ export const useImportSurvey = ({ workspaceId, isAIAvailable, onSuccess }: UseIm
                   commitRef.current = event.references
                     ? { references: event.references, idempotencyKey: crypto.randomUUID() }
                     : null;
+                  resetMatch(event.match ?? null);
                   // No partials on this stream: the review list is drawn once, from the finished payload.
                   handlers.onEvent({ type: "partial", draft: payloadToDraftSnapshot(event.payload) });
                   handlers.onEvent({
@@ -112,7 +166,44 @@ export const useImportSurvey = ({ workspaceId, isAIAvailable, onSuccess }: UseIm
         handlers.onEvent({ type: "error", code });
       }
     },
-    [workspaceId]
+    [workspaceId, resetMatch]
+  );
+
+  /**
+   * Update the matched survey (ENG-6851). First against the file's export time; once the server said
+   * the survey changed since, "Update anyway" goes against the time the review read it, so a survey that
+   * changed again — or went live — after the review is still refused. Either refusal moves the choice to
+   * Create new.
+   */
+  const updateMatch = useCallback(
+    async (
+      matched: TSurveyImportMatch,
+      body: Omit<Parameters<typeof updateSurveyFromImport>[1], "updatedAt" | "triggers">
+    ): Promise<{ id: string }> => {
+      const isUpdateAnyway = conflict === "stale";
+      try {
+        await updateSurveyFromImport(matched.surveyId, {
+          ...body,
+          updatedAt: isUpdateAnyway ? matched.updatedAt : matched.exportedUpdatedAt,
+          triggers: matched.triggers === "keep_only" ? "keep" : triggersChoice,
+        });
+        return { id: matched.surveyId };
+      } catch (error) {
+        if (!(error instanceof V3ApiError)) throw error;
+        if (error.status === 409) {
+          setChoice("create");
+          if (isUpdateAnyway) throw withCode(error, SURVEY_CHANGED_AGAIN_CODE);
+          setConflict("stale");
+          throw withCode(error, SURVEY_CHANGED_CODE);
+        }
+        if (error.code === "survey_active") {
+          setChoice("create");
+          setConflict("active");
+        }
+        throw error;
+      }
+    },
+    [conflict, triggersChoice]
   );
 
   const create = useCallback(
@@ -120,12 +211,15 @@ export const useImportSurvey = ({ workspaceId, isAIAvailable, onSuccess }: UseIm
       const commit = commitRef.current;
       if (!commit) return createV3Survey(payload, "import");
       const { workspaceId: _workspaceId, ...survey } = payload;
+      if (match && choice === "update") {
+        return updateMatch(match, { survey, references: commit.references });
+      }
       return createSurveyFromImport(
         { workspaceId, survey, references: commit.references },
         commit.idempotencyKey
       );
     },
-    [workspaceId]
+    [workspaceId, match, choice, updateMatch]
   );
 
   const draft = useDraftCreation<TSurveyImportInput, TSurveyImportReport, TSurveyImportPayload>({
@@ -162,9 +256,18 @@ export const useImportSurvey = ({ workspaceId, isAIAvailable, onSuccess }: UseIm
     setInvalidParams(null);
     setStage(null);
     commitRef.current = null;
+    resetMatch(null);
   };
 
-  const errorCode = fileError ?? draft.state.errorCode;
+  // The first 409 on Update is not an error to show: the dialog offers its choice instead.
+  const errorCode =
+    fileError ?? (draft.state.errorCode === SURVEY_CHANGED_CODE ? null : draft.state.errorCode);
+
+  /** The choice changes what the commit does, so a message about the last attempt no longer applies. */
+  const selectChoice = (next: TSurveyImportChoice) => {
+    draft.clearError();
+    setChoice(next);
+  };
 
   return {
     file,
@@ -189,5 +292,17 @@ export const useImportSurvey = ({ workspaceId, isAIAvailable, onSuccess }: UseIm
       draft.clearError();
     },
     hasUnsavedWork: draft.hasUnsavedWork,
+    /** The survey the file was exported from, when the user may update it; `null` when there is none. */
+    match,
+    /** What Create new names the survey: the reviewed draft's "<name> (imported)". */
+    newSurveyName: draft.payload?.name ?? "",
+    /** On a Match: Update or Create new. `create` when there is no Match. */
+    choice,
+    selectChoice,
+    /** On an Update whose triggers differ: the file's or the survey's own. */
+    triggersChoice,
+    selectTriggersChoice: setTriggersChoice,
+    /** Why the plain Update is off the table: the survey changed since the export, or is live. */
+    conflict,
   };
 };

@@ -230,6 +230,32 @@ describe("every report code", () => {
     ).toBe('targeting_filter_removed {"count":2}');
   });
 
+  test("names what an Update removes under the question it is about", () => {
+    expect(
+      getQsfImportIssueLine(
+        {
+          code: "question_removed",
+          severity: "warning",
+          questionTag: "feedback",
+          params: { headline: "Anything else?" },
+        },
+        t
+      )
+    ).toBe('feedback: question_removed {"headline":"Anything else?"}');
+    expect(
+      getQsfImportIssueLine(
+        { code: "question_removed", severity: "warning", questionTag: "feedback", params: { headline: "" } },
+        t
+      )
+    ).toBe("feedback: question_removed_no_headline");
+    expect(
+      getQsfImportIssueLine(
+        { code: "option_removed", severity: "warning", questionTag: "color", params: { option: "Green" } },
+        t
+      )
+    ).toBe('color: option_removed {"option":"Green"}');
+  });
+
   test("names every Qualtrics type the import skips, each differently", () => {
     const types = ["CS", "SBS", "HeatMap", "HotSpot", "DD", "PGR", "Highlight", "Signature", "Draw", "GAP"];
     const lines = [...types, "Timing", "Meta", "Captcha"].map((qualtricsType) =>

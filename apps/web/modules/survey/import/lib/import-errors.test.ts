@@ -127,6 +127,8 @@ describe("getSurveyImportErrorMessage for each refusal and stream error", () => 
     ["formbricks_file_invalid", "formbricks_file_invalid"],
     ["formbricks_file_too_new", "formbricks_file_too_new"],
     ["idempotency_key_in_use", "still_creating"],
+    ["survey_active", "survey_active"],
+    ["survey_changed_again", "survey_changed_again"],
     ["file_too_complex", "too_complex"],
     ["file_unreadable", "unreadable"],
     ["not_authenticated", "session_expired"],

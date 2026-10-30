@@ -113,6 +113,7 @@ export const INTERNAL_PROBLEM_CODES = [
   "retention_exemption_exists",
   "retention_exemption_not_active",
   "retention_export_too_large",
+  "survey_active",
   "unsupported_media_type",
 ] as const;
 

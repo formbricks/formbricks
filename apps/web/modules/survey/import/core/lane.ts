@@ -1,6 +1,11 @@
 import type { TRateLimitConfig } from "@/modules/core/rate-limit/types/rate-limit";
 import type { TFormbricksFileReferences } from "@/modules/survey/formbricks-file/envelope";
-import type { TSurveyImportReport, TSurveyImportSourceKind, TSurveyImportStage } from "../types";
+import type {
+  TSurveyImportMatch,
+  TSurveyImportReport,
+  TSurveyImportSourceKind,
+  TSurveyImportStage,
+} from "../types";
 import type { TSurveyImportPayload } from "./draft";
 
 /**
@@ -66,6 +71,11 @@ export interface TSurveyImportResult<TPayload extends TSurveyImportPayload = TSu
    * dialog sends it back with the draft to `POST /api/internal/surveys/imports`, which resolves it again.
    */
   references?: TFormbricksFileReferences;
+  /**
+   * The survey the file was exported from, when the user may update it (ENG-6851): `null` when the
+   * file has none in this workspace the user can edit, absent for a lane whose files have no source.
+   */
+  match?: TSurveyImportMatch | null;
   /** Tokens the AI calls used, for the route's log line. Absent when no AI call ran. */
   usage?: { inputTokens: number; outputTokens: number };
 }

@@ -161,6 +161,7 @@ export const ZFormbricksFileContentV1Input = ZFormbricksFileContentV1.extend({
 
 export type TFormbricksFileSurveyInput = z.output<typeof ZV3CreateSurveyDocument>;
 export type TFormbricksFileMetaV1 = z.infer<typeof ZFormbricksFileMetaV1>;
+export type TFormbricksFileSource = z.infer<typeof ZFormbricksFileSource>;
 export type TFormbricksFileReferences = z.infer<typeof ZFormbricksFileReferences>;
 export type TFormbricksFileActionClass = z.infer<typeof ZFormbricksFileActionClass>;
 export type TFormbricksFileAttributeKey = z.infer<typeof ZFormbricksFileAttributeKey>;

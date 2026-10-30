@@ -12,7 +12,11 @@ import {
   SurveyImportRequestError,
   streamSurveyImportFile,
 } from "@/modules/survey/import/lib/import-stream-client";
-import { createSurveyFromImport } from "@/modules/survey/import/lib/survey-imports-client";
+import {
+  createSurveyFromImport,
+  updateSurveyFromImport,
+} from "@/modules/survey/import/lib/survey-imports-client";
+import type { TSurveyImportMatch } from "@/modules/survey/import/types";
 import { createV3Survey } from "@/modules/survey/list/lib/v3-surveys-client";
 import { useImportSurvey } from "./use-import-survey";
 
@@ -31,6 +35,7 @@ vi.mock("@/modules/survey/list/lib/v3-surveys-client", () => ({
 
 vi.mock("@/modules/survey/import/lib/survey-imports-client", () => ({
   createSurveyFromImport: vi.fn(async () => ({ id: "survey2" })),
+  updateSurveyFromImport: vi.fn(async () => ({ id: "matched1", updatedAt: "2026-10-30T12:00:00.000Z" })),
 }));
 
 const report = {
@@ -64,8 +69,11 @@ const streamWith = (events: TSurveyImportStreamEvent[], refusal?: Error) => {
 const wrapper = ({ children }: { children: ReactNode }) =>
   createElement(QueryClientProvider, { client: new QueryClient() }, children);
 
-const renderImport = ({ isAIAvailable = true }: { isAIAvailable?: boolean } = {}) =>
-  renderHook(() => useImportSurvey({ workspaceId: "w1", isAIAvailable, onSuccess: vi.fn() }), {
+const renderImport = ({
+  isAIAvailable = true,
+  onSuccess = vi.fn(),
+}: { isAIAvailable?: boolean; onSuccess?: (surveyId: string) => void } = {}) =>
+  renderHook(() => useImportSurvey({ workspaceId: "w1", isAIAvailable, onSuccess }), {
     wrapper,
   });
 
@@ -326,5 +334,131 @@ describe("useImportSurvey", () => {
     expect(result.current.report).toBeNull();
     // Nothing is kept behind the drop zone, so closing the dialog now discards nothing.
     expect(result.current.hasUnsavedWork).toBe(false);
+  });
+});
+
+describe("useImportSurvey on a Match", () => {
+  const match: TSurveyImportMatch = {
+    surveyId: "matched1",
+    name: "Onboarding",
+    status: "paused",
+    updatedAt: "2026-10-30T11:00:00.000Z",
+    exportedUpdatedAt: "2026-10-29T09:00:00.000Z",
+    triggers: "differ",
+    issues: [
+      { code: "question_removed", severity: "warning", questionTag: "q2", params: { headline: "Why?" } },
+    ],
+  };
+  const { workspaceId: _workspaceId, ...survey } = payload;
+  const conflict = () => new V3ApiError({ status: 409, detail: "changed", code: "conflict" });
+
+  /** Review a Formbricks file whose survey is a Match. */
+  const reviewMatch = async (offered: TSurveyImportMatch = match, onSuccess = vi.fn()) => {
+    streamWith([{ type: "done", payload, report, references, match: offered }] as TSurveyImportStreamEvent[]);
+    const rendered = renderImport({ onSuccess });
+    await act(async () => rendered.result.current.selectFile(formbricksFile()));
+    await waitFor(() => expect(rendered.result.current.status).toBe("review"));
+    return rendered;
+  };
+
+  beforeEach(() => {
+    vi.mocked(updateSurveyFromImport).mockReset();
+    vi.mocked(updateSurveyFromImport).mockResolvedValue({ id: "matched1", updatedAt: match.updatedAt });
+    vi.mocked(createSurveyFromImport).mockClear();
+  });
+
+  test("offers Update first, and updates the survey against the file's export time with the triggers chosen", async () => {
+    const onSuccess = vi.fn();
+    const { result } = await reviewMatch(match, onSuccess);
+
+    expect(result.current.match).toEqual(match);
+    expect(result.current.choice).toBe("update");
+    expect(result.current.conflict).toBeNull();
+    act(() => result.current.selectTriggersChoice("keep"));
+    act(() => result.current.handleOpenInEditor());
+
+    await waitFor(() => expect(onSuccess).toHaveBeenCalledWith("matched1"));
+    expect(updateSurveyFromImport).toHaveBeenCalledWith("matched1", {
+      survey,
+      references,
+      updatedAt: match.exportedUpdatedAt,
+      triggers: "keep",
+    });
+    expect(createSurveyFromImport).not.toHaveBeenCalled();
+  });
+
+  test("keeps the survey's triggers when the file's are locked out", async () => {
+    const { result } = await reviewMatch({ ...match, triggers: "keep_only" });
+
+    expect(result.current.triggersChoice).toBe("keep");
+    act(() => result.current.handleOpenInEditor());
+
+    await waitFor(() => expect(updateSurveyFromImport).toHaveBeenCalled());
+    expect(vi.mocked(updateSurveyFromImport).mock.calls[0][1].triggers).toBe("keep");
+  });
+
+  test("on a stale file moves to Create new without an error, and 'Update anyway' sends the review's time", async () => {
+    vi.mocked(updateSurveyFromImport).mockRejectedValueOnce(conflict());
+    const { result } = await reviewMatch();
+
+    act(() => result.current.handleOpenInEditor());
+    await waitFor(() => expect(result.current.conflict).toBe("stale"));
+    await waitFor(() => expect(result.current.status).toBe("review"));
+    expect(result.current.choice).toBe("create");
+    expect(result.current.errorCode).toBeNull();
+
+    act(() => result.current.selectChoice("update"));
+    act(() => result.current.handleOpenInEditor());
+
+    await waitFor(() => expect(updateSurveyFromImport).toHaveBeenCalledTimes(2));
+    expect(vi.mocked(updateSurveyFromImport).mock.calls[1][1].updatedAt).toBe(match.updatedAt);
+  });
+
+  test("says so when the survey changed again after the review", async () => {
+    vi.mocked(updateSurveyFromImport).mockRejectedValueOnce(conflict()).mockRejectedValueOnce(conflict());
+    const { result } = await reviewMatch();
+
+    act(() => result.current.handleOpenInEditor());
+    await waitFor(() => expect(result.current.conflict).toBe("stale"));
+    act(() => result.current.selectChoice("update"));
+    act(() => result.current.handleOpenInEditor());
+
+    await waitFor(() => expect(result.current.errorCode).toBe("survey_changed_again"));
+    expect(result.current.choice).toBe("create");
+  });
+
+  test("Create new saves the file as a new survey, never touching the matched one", async () => {
+    const { result } = await reviewMatch();
+
+    act(() => result.current.selectChoice("create"));
+    act(() => result.current.handleOpenInEditor());
+
+    await waitFor(() => expect(createSurveyFromImport).toHaveBeenCalledTimes(1));
+    expect(updateSurveyFromImport).not.toHaveBeenCalled();
+  });
+
+  test("locks an active survey's Match on Create new, and one that went live since the review", async () => {
+    const active = await reviewMatch({ ...match, status: "inProgress" });
+    expect(active.result.current.choice).toBe("create");
+    expect(active.result.current.conflict).toBe("active");
+
+    vi.mocked(updateSurveyFromImport).mockRejectedValueOnce(
+      new V3ApiError({ status: 422, detail: "active", code: "survey_active" })
+    );
+    const { result } = await reviewMatch();
+    act(() => result.current.handleOpenInEditor());
+
+    await waitFor(() => expect(result.current.errorCode).toBe("survey_active"));
+    expect(result.current.conflict).toBe("active");
+    expect(result.current.choice).toBe("create");
+  });
+
+  test("forgets the Match with the review", async () => {
+    const { result } = await reviewMatch();
+
+    act(() => result.current.pickAnotherFile());
+
+    expect(result.current.match).toBeNull();
+    expect(result.current.choice).toBe("create");
   });
 });

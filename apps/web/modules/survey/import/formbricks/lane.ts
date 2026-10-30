@@ -1,22 +1,35 @@
 import "server-only";
+import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
+import type { TV3Authentication } from "@/app/api/v3/lib/types";
+import { getSessionUserId } from "@/app/api/v3/surveys/lib/operations";
+import type { TFormbricksFileReferences } from "@/modules/survey/formbricks-file/envelope";
 import { getFormbricksFileSurveyLanguageCodes } from "@/modules/survey/formbricks-file/fit";
-import {
-  type TFormbricksFileImportPreview,
-  previewFormbricksFileImport,
-} from "@/modules/survey/formbricks-file/import";
+import { previewFormbricksFileImport } from "@/modules/survey/formbricks-file/import";
+import { findFormbricksFileMatch } from "@/modules/survey/formbricks-file/update";
+import type { TSurveyImportFileDraft } from "@/modules/survey/import/core/draft";
+import type { TSurveyImportPipelineIssue } from "@/modules/survey/import/core/report";
+import type { TSurveyImportMatch } from "@/modules/survey/import/types";
 import type { TSurveyImportLane } from "../core/lane";
 import { buildSurveyImportReport } from "../core/report";
 
-/** What the stream route hands the Formbricks file lane: the parsed file, its name, and where it goes. */
+/**
+ * What the stream route hands the Formbricks file lane: the parsed file, its name, where it goes, and
+ * who imports it — whose language names the draft, and whose rights decide whether the file's survey
+ * is offered as a Match.
+ */
 export interface TFormbricksFileImportInput {
   file: Record<string, unknown>;
   fileName: string;
   workspaceId: string;
   organizationId: string;
-  userId: string | null;
+  authentication: TV3Authentication;
 }
 
-interface TPreparedFormbricksFileImport extends TFormbricksFileImportPreview {
+interface TPreparedFormbricksFileImport {
+  draft: TSurveyImportFileDraft;
+  references: TFormbricksFileReferences;
+  issues: TSurveyImportPipelineIssue[];
+  match: TSurveyImportMatch | null;
   fileName: string;
 }
 
@@ -44,16 +57,29 @@ export const formbricksFileImportLane: TSurveyImportLane<
   kind: "formbricks",
   usesAI: false,
   rateLimit: null,
-  prepare: async ({ file, fileName, workspaceId, organizationId, userId }) => ({
-    ...(await previewFormbricksFileImport({ file, workspaceId, organizationId, userId })),
-    fileName,
-  }),
+  prepare: async ({ file, fileName, workspaceId, organizationId, authentication }) => {
+    const { draft, references, issues, source, plan } = await previewFormbricksFileImport({
+      file,
+      workspaceId,
+      organizationId,
+      userId: getSessionUserId(authentication),
+    });
+    const match = await findFormbricksFileMatch({
+      source,
+      workspaceId,
+      actor: getV3AuthorizationActor(authentication),
+      draft,
+      plan,
+    });
+    return { draft, references, issues, match, fileName };
+  },
   run: async ({ prepared, onProgress }) => {
     onProgress("assembling");
-    const { draft, references, issues, fileName } = prepared;
+    const { draft, references, issues, match, fileName } = prepared;
     return {
       payload: draft,
       references,
+      match,
       report: buildSurveyImportReport({
         source: { kind: "formbricks", fileName },
         document: {

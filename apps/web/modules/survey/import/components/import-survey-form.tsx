@@ -7,6 +7,7 @@ import { cn } from "@/lib/cn";
 import { DraftReviewPanel } from "@/modules/survey/components/template-list/components/draft-review-panel";
 import { SourceChip } from "@/modules/survey/components/template-list/components/source-chip";
 import { ImportFacts } from "@/modules/survey/import/components/import-facts";
+import { ImportMatchChoice } from "@/modules/survey/import/components/import-match-choice";
 import { ImportReport } from "@/modules/survey/import/components/import-report";
 import { useImportSurvey } from "@/modules/survey/import/hooks/use-import-survey";
 import { getSurveyImportErrorMessage } from "@/modules/survey/import/lib/import-errors";
@@ -87,8 +88,18 @@ export const ImportSurveyForm = ({
 
   const isImporting = importer.status === "generating";
   const isReviewing = importer.status === "review" || importer.status === "creating";
-  // The finished import's report, while the review shows it.
-  const reviewReport = isReviewing ? importer.report : null;
+  const isUpdating = importer.match !== null && importer.choice === "update";
+  // The finished import's report, while the review shows it. An Update adds what it removes from a
+  // survey with responses.
+  const reviewReport =
+    isReviewing && importer.report
+      ? {
+          ...importer.report,
+          issues: isUpdating
+            ? [...(importer.match?.issues ?? []), ...importer.report.issues]
+            : importer.report.issues,
+        }
+      : null;
 
   // The drop zone unmounts when the import starts; Stop is the only action left, so focus goes there.
   useEffect(() => {
@@ -141,6 +152,19 @@ export const ImportSurveyForm = ({
     />
   ) : null;
 
+  // On a Match the primary button says what it does: Update, "Update anyway" once the survey turned out
+  // to have changed since the export, or the usual Save and continue for a new survey.
+  const getPrimaryLabel = () => {
+    if (!isUpdating) return t("workspace.surveys.ai_create.open_in_editor");
+    return importer.conflict === "stale"
+      ? t("workspace.surveys.import.match.update_anyway")
+      : t("workspace.surveys.import.match.update_survey");
+  };
+  const getPrimaryTestId = () => {
+    if (!isUpdating) return "survey-import-save";
+    return importer.conflict === "stale" ? "survey-import-update-anyway" : "survey-import-update";
+  };
+
   const buildFooter = () => {
     if (isImporting) {
       return (
@@ -166,8 +190,9 @@ export const ImportSurveyForm = ({
           <Button
             type="button"
             loading={importer.isCreatingSurvey || isHostNavigating}
-            onClick={importer.handleOpenInEditor}>
-            {t("workspace.surveys.ai_create.open_in_editor")}
+            onClick={importer.handleOpenInEditor}
+            data-testid={getPrimaryTestId()}>
+            {getPrimaryLabel()}
           </Button>
         </>
       );
@@ -217,12 +242,28 @@ export const ImportSurveyForm = ({
         // list keeps two rows instead of shrinking to nothing, while the warning and the footer stay
         // in view. -m-1/p-1 leave room for focus rings the scroll box would otherwise clip.
         <div className="-m-1 flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-1">
+          {isReviewing && importer.match ? (
+            <ImportMatchChoice
+              match={importer.match}
+              newSurveyName={importer.newSurveyName}
+              choice={importer.choice}
+              onChoiceChange={importer.selectChoice}
+              triggersChoice={importer.triggersChoice}
+              onTriggersChoiceChange={importer.selectTriggersChoice}
+              conflict={importer.conflict}
+            />
+          ) : null}
           <DraftReviewPanel
             draft={importer.draft}
             isGenerating={isImporting}
             source={sourceChip}
             facts={reviewReport ? <ImportFacts summary={reviewReport.summary} /> : undefined}
-            report={reviewReport ? <ImportReport report={reviewReport} /> : undefined}
+            report={
+              reviewReport ? (
+                // Remounted with the choice, so it opens by itself when an Update adds a warning.
+                <ImportReport key={isUpdating ? "update" : "create"} report={reviewReport} />
+              ) : undefined
+            }
             status={
               isImporting ? (
                 <AiStatusLine isActive messages={progressMessages} activeIndex={stageIndex} />

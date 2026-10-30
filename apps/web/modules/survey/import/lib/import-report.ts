@@ -182,6 +182,14 @@ export const getQsfImportIssueMessage = (issue: TSurveyImportIssue, t: TTranslat
       return t("workspace.surveys.import.issues.attribute_key_created", { key: param(issue, "key") });
     case "content_only":
       return t("workspace.surveys.import.issues.content_only");
+    case "question_removed": {
+      const headline = param(issue, "headline");
+      return headline
+        ? t("workspace.surveys.import.issues.question_removed", { headline })
+        : t("workspace.surveys.import.issues.question_removed_no_headline");
+    }
+    case "option_removed":
+      return t("workspace.surveys.import.issues.option_removed", { option: param(issue, "option") });
     default:
       // A server newer than this client can still send a code it does not know.
       return getUnknownIssueMessage(issue.code, t);

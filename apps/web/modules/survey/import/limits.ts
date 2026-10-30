@@ -158,7 +158,7 @@ export const SURVEY_IMPORT_AI_CALL_TIMEOUT_MS = AI_DEFAULT_TIMEOUT_MS;
  */
 
 /**
- * The largest create request: the draft, which `SURVEY_IMPORT_MAX_DRAFT_BYTES` bounds, and the
+ * The largest create or Update request (ENG-6850, ENG-6851): the draft, which `SURVEY_IMPORT_MAX_DRAFT_BYTES` bounds, and the
  * references it carries back — at most 50 action classes, 200 attribute keys, 300 shared fields and 50
  * languages, a few hundred KiB at their largest.
  */

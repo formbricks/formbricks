@@ -8,6 +8,7 @@ import type { TSurveyImportPipelineIssue } from "@/modules/survey/import/core/re
 import {
   FORMBRICKS_FILE_FORMAT,
   type TFormbricksFileReferences,
+  type TFormbricksFileSource,
   type TFormbricksFileSurveyInput,
   ZFormbricksFileContentV1Input,
   ZFormbricksFileV1Input,
@@ -44,6 +45,11 @@ export interface TFormbricksFileContent {
 
 export interface TFormbricksFileRead {
   content: TFormbricksFileContent;
+  /**
+   * Where an uploaded file came from: the survey it was exported from, which a later import matches
+   * (ENG-6851). `null` for a reviewed survey sent back to be written, which carries no envelope.
+   */
+  source: TFormbricksFileSource | null;
   /** One `unknown_key_dropped` warning per key dropped. */
   issues: TSurveyImportPipelineIssue[];
 }
@@ -266,6 +272,7 @@ const readContent = (
 
   return {
     content: { survey: isPlainObject(value.survey) ? value.survey : {}, references },
+    source: "formbricks" in result.data ? result.data.formbricks.source : null,
     issues: droppedKeyIssues(dropped),
   };
 };

@@ -172,7 +172,7 @@ export async function streamSurveyImport({
           fileName,
           workspaceId,
           organizationId,
-          userId: getSessionUserId(authentication),
+          authentication,
         },
       });
     default:
@@ -278,6 +278,7 @@ export async function runSurveyImportLane<TInput, TPrepared>({
         payload: result.payload,
         report: result.report,
         ...(result.references ? { references: result.references } : {}),
+        ...(result.match ? { match: result.match } : {}),
       });
       outcome = "done";
     },

@@ -27,6 +27,7 @@ const mocks = vi.hoisted(() => ({
   runQsfImport: vi.fn(),
   prepareQsfImport: vi.fn(),
   previewFormbricksFileImport: vi.fn(),
+  findFormbricksFileMatch: vi.fn(),
   realPrepareQsfImport:
     undefined as unknown as typeof import("@/modules/survey/import/qsf/pipeline").prepareQsfImport,
   log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
@@ -47,7 +48,11 @@ vi.mock("@/lib/env", async (importOriginal) => {
     },
   };
 });
-vi.mock("@/app/api/v3/lib/auth", () => ({ requireV3WorkspaceAccess: mocks.requireV3WorkspaceAccess }));
+vi.mock("@/app/api/v3/lib/auth", () => ({
+  requireV3WorkspaceAccess: mocks.requireV3WorkspaceAccess,
+  getV3AuthorizationActor: (authentication: { user?: { id?: string } }) =>
+    authentication?.user?.id ? { type: "user", id: authentication.user.id } : null,
+}));
 vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyRateLimit: mocks.applyRateLimit }));
 vi.mock("@/app/api/v3/surveys/lib/operations", () => ({
   getSessionUserId: (authentication: { user?: { id?: string } }) => authentication?.user?.id ?? null,
@@ -65,6 +70,9 @@ vi.mock("@/modules/survey/import/qsf/pipeline", async (importOriginal) => {
 // The Formbricks file lane's preview reads the database; its seam is the integration suite.
 vi.mock("@/modules/survey/formbricks-file/import", () => ({
   previewFormbricksFileImport: mocks.previewFormbricksFileImport,
+}));
+vi.mock("@/modules/survey/formbricks-file/update", () => ({
+  findFormbricksFileMatch: mocks.findFormbricksFileMatch,
 }));
 vi.mock("@formbricks/logger", () => ({
   logger: { withContext: vi.fn(() => mocks.log), error: vi.fn(), warn: vi.fn() },
@@ -314,11 +322,29 @@ describe("streamSurveyImport", () => {
         blocks: [{ id: "b1", name: "Block 1", elements: [{ id: "q1" }] }],
       };
       const references = { actionClasses: [], attributeKeys: [], embeddedFields: [] };
+      const source = {
+        surveyId: "clsurvey0000000000000001",
+        workspaceId: body.workspaceId,
+        updatedAt: "2026-10-29T09:00:00.000Z",
+      };
+      const plan = { actionClasses: new Map(), attributeKeysToCreate: [], languagesToCreate: [], issues: [] };
       mocks.previewFormbricksFileImport.mockResolvedValue({
         draft,
         references,
         issues: [{ code: "content_only", severity: "info" }],
+        source,
+        plan,
       });
+      const match = {
+        surveyId: source.surveyId,
+        name: "Onboarding",
+        status: "paused",
+        updatedAt: "2026-10-30T09:00:00.000Z",
+        exportedUpdatedAt: source.updatedAt,
+        triggers: "same",
+        issues: [],
+      };
+      mocks.findFormbricksFileMatch.mockResolvedValue(match);
       const file = { formbricks: { format: 1 }, survey: { name: "Onboarding" } };
 
       const response = await importFile(upload(JSON.stringify(file), "Onboarding.formbricks.json"));
@@ -329,6 +355,7 @@ describe("streamSurveyImport", () => {
       expect(events.at(-1)).toMatchObject({
         payload: draft,
         references,
+        match,
         report: {
           source: { kind: "formbricks", fileName: "Onboarding.formbricks.json" },
           summary: { blocks: 1, questions: 1, languages: ["en-US"] },
@@ -340,6 +367,14 @@ describe("streamSurveyImport", () => {
         workspaceId: body.workspaceId,
         organizationId: "org_1",
         userId: "user_1",
+      });
+      // The Match is the file's survey as the importing user may see it.
+      expect(mocks.findFormbricksFileMatch).toHaveBeenCalledWith({
+        source,
+        workspaceId: body.workspaceId,
+        actor: { type: "user", id: "user_1" },
+        draft,
+        plan,
       });
       expect(mocks.assertOrganizationAIConfigured).not.toHaveBeenCalled();
       expect(mocks.applyRateLimit).not.toHaveBeenCalled();
@@ -519,12 +554,16 @@ describe("streamSurveyImport", () => {
     });
 
     describe("holds a Formbricks file to the JSON budget, at each limit and one past it", () => {
-      const previewOk = () =>
+      const previewOk = () => {
         mocks.previewFormbricksFileImport.mockResolvedValue({
           draft: { workspaceId: body.workspaceId, name: "x", status: "draft", blocks: [] },
           references: { actionClasses: [], attributeKeys: [], embeddedFields: [] },
           issues: [],
+          source: null,
+          plan: { actionClasses: new Map(), attributeKeysToCreate: [], languagesToCreate: [], issues: [] },
         });
+        mocks.findFormbricksFileMatch.mockResolvedValue(null);
+      };
       const formbricksFileWith = (survey: Record<string, unknown>) =>
         upload(JSON.stringify({ formbricks: { format: 1 }, survey }), "survey.formbricks.json");
       /** `count` arrays, one inside the next. Under the file's root and its survey, `count + 2` deep. */

@@ -77,6 +77,13 @@ export type TSurveyImportStage = "reading" | "ai" | "assembling";
  *   names, the workspace did not have and the import creates (`params.name`, `params.key`)
  * - `content_only` — the note that styling, settings, follow-ups and quotas are not part of the file
  *
+ * An Update's own (ENG-6851), in `TSurveyImportMatch.issues`, for a matched survey that has responses:
+ *
+ * - `question_removed` — a question the survey has and the file does not; its answers stop showing in
+ *   the summary (`questionTag` is its id, `params.headline` its default-language text)
+ * - `option_removed` — an option, matrix row or column a question keeps but the file does not
+ *   (`questionTag` is the question's id, `params.option` the option's default-language label)
+ *
  * `question_skipped` carries `params.cause`, a fixed code (`unsupported_type` with the Qualtrics
  * `params.qualtricsType`, `ai_skipped`, `plan_invalid`, `ai_budget`, `ai_timeout`, `not_in_flow`,
  * `invalid_id`, `validation_failed`, `draft_too_large` for a trailing question cut so the draft fits
@@ -195,7 +202,9 @@ export type TSurveyImportIssueCode =
   | "targeting_filter_removed"
   | "action_class_created"
   | "attribute_key_created"
-  | "content_only";
+  | "content_only"
+  | "question_removed"
+  | "option_removed";
 
 export interface TSurveyImportIssue {
   code: TSurveyImportIssueCode;
@@ -223,5 +232,44 @@ export interface TSurveyImportReport {
     logicRules: number;
     hiddenFields: number;
   };
+  issues: TSurveyImportIssue[];
+}
+
+/**
+ * How an Update treats the survey's triggers (ENG-6851): replace them with the file's, or keep the
+ * survey's own. `keep` sends no `distribution`, so the display settings stay as they are too.
+ */
+export type TSurveyImportTriggersChoice = "file" | "keep";
+
+/**
+ * What the review offers about the survey's triggers on an Update:
+ *
+ * - `same` — the file's triggers, resolved in this workspace, are the survey's: no choice to make;
+ * - `differ` — they differ, and the user picks the file's or the current ones;
+ * - `keep_only` — they differ, but the file's would leave a live app survey with no trigger and no
+ *   creative to show it, which the publish rule forbids: only the current ones can be kept.
+ */
+export type TSurveyImportTriggersState = "same" | "differ" | "keep_only";
+
+/**
+ * A Match (ENG-6851): the survey a Formbricks file was exported from, found in the workspace the file is
+ * imported into, and one the importing user can edit. Anything else — another workspace, a survey the
+ * user cannot edit, an archived or deleted one — is no match, with nothing said about why, so an import
+ * never tells a user a survey exists.
+ */
+export interface TSurveyImportMatch {
+  surveyId: string;
+  name: string;
+  /** `inProgress` locks the choice on Create new: an active survey is never updated. */
+  status: "draft" | "inProgress" | "paused" | "completed";
+  /**
+   * When the survey last changed, read during this review. "Update anyway" sends it, so a survey that
+   * changes again after the review, going live included, is still refused.
+   */
+  updatedAt: string;
+  /** When the survey last changed before the export, from the file: what an Update sends first. */
+  exportedUpdatedAt: string;
+  triggers: TSurveyImportTriggersState;
+  /** The report lines only an Update adds: what it removes from a survey that has responses. */
   issues: TSurveyImportIssue[];
 }

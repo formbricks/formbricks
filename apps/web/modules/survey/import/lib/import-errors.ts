@@ -110,6 +110,10 @@ export const getSurveyImportErrorMessage = (
       return t("workspace.surveys.import.errors.formbricks_file_too_new");
     case "idempotency_key_in_use":
       return t("workspace.surveys.import.errors.still_creating");
+    case "survey_active":
+      return t("workspace.surveys.import.errors.survey_active");
+    case "survey_changed_again":
+      return t("workspace.surveys.import.errors.survey_changed_again");
     case "file_empty":
       return t("workspace.surveys.import.errors.empty_file");
     case "file_too_large":

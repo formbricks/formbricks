@@ -1,7 +1,11 @@
 import { AI_STREAM_FAILURE_CODES } from "@/app/api/internal/lib/ai-stream-errors";
 import type { TFormbricksFileReferences } from "@/modules/survey/formbricks-file/envelope";
 import type { TSurveyImportPayload } from "@/modules/survey/import/core/draft";
-import type { TSurveyImportReport, TSurveyImportStage } from "@/modules/survey/import/types";
+import type {
+  TSurveyImportMatch,
+  TSurveyImportReport,
+  TSurveyImportStage,
+} from "@/modules/survey/import/types";
 
 /** Codes that can only be raised after the stream opened. Everything else is a pre-stream problem+json. */
 export const SURVEY_IMPORT_STREAM_ERROR_CODES = {
@@ -36,5 +40,10 @@ export type TSurveyImportStreamEvent =
       payload: TSurveyImportPayload;
       report: TSurveyImportReport;
       references?: TFormbricksFileReferences;
+      /**
+       * The survey the file was exported from, in this workspace and editable by the user (ENG-6851):
+       * the dialog offers Update or Create new. Absent when there is none.
+       */
+      match?: TSurveyImportMatch;
     }
   | { type: "error"; code: TSurveyImportStreamErrorCode; detail: string; retryAfter?: number };

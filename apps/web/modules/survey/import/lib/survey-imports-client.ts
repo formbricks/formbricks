@@ -1,3 +1,4 @@
+import type { TSurveyContentUpdateBody } from "@/app/api/internal/surveys/[surveyId]/content/lib/schemas";
 import type { TSurveyImportCreateBody } from "@/app/api/internal/surveys/imports/lib/schemas";
 import { parseV3ApiError } from "@/modules/api/lib/v3-client";
 
@@ -30,5 +31,33 @@ export async function createSurveyFromImport(
   }
 
   const { data } = (await response.json()) as { data: { id: string } };
+  return data;
+}
+
+/**
+ * Update the matched survey with a reviewed Formbricks file import
+ * (`PUT /api/internal/surveys/{surveyId}/content`, ENG-6851). `body.updatedAt` is the precondition: the
+ * file's export time, or for "Update anyway" the time the review read. A repeat finds the survey changed
+ * and is refused, so it needs no Idempotency-Key.
+ *
+ * Throws a `V3ApiError` for a refusal: a 409 when the survey changed, a 422 `survey_active` when it is
+ * live.
+ */
+export async function updateSurveyFromImport(
+  surveyId: string,
+  body: TSurveyContentUpdateBody
+): Promise<{ id: string; updatedAt: string }> {
+  const response = await fetch(`/api/internal/surveys/${encodeURIComponent(surveyId)}/content`, {
+    method: "PUT",
+    cache: "no-store",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    throw await parseV3ApiError(response);
+  }
+
+  const { data } = (await response.json()) as { data: { id: string; updatedAt: string } };
   return data;
 }
