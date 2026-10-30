@@ -43,6 +43,7 @@ import {
   ZSurveyPictureSelectionElement,
   ZSurveyRankingElement,
   ZSurveyRatingElement,
+  ZSurveySignatureElement,
 } from "./elements";
 import { validateElementLabels } from "./elements-validation";
 import { ZSurveyFollowUp } from "./follow-up";
@@ -4497,6 +4498,30 @@ export const ZSurveyElementSummaryFileUpload = z.object({
 
 export type TSurveyElementSummaryFileUpload = z.infer<typeof ZSurveyElementSummaryFileUpload>;
 
+export const ZSurveyElementSummarySignature = z.object({
+  type: z.literal(TSurveyElementTypeEnum.Signature),
+  element: ZSurveySignatureElement,
+  responseCount: z.number(),
+  signedCount: z.number(),
+  skippedCount: z.number(),
+  signatures: z.array(
+    z.object({
+      id: z.string(),
+      updatedAt: z.date(),
+      value: z.string(),
+      contact: z
+        .object({
+          id: ZId,
+          userId: z.string().optional(),
+        })
+        .nullable(),
+      contactAttributes: ZContactAttributes.nullable(),
+    })
+  ),
+});
+
+export type TSurveyElementSummarySignature = z.infer<typeof ZSurveyElementSummarySignature>;
+
 export const ZSurveyElementSummaryCal = z.object({
   type: z.literal(TSurveyElementTypeEnum.Cal),
   element: ZSurveyCalElement,
@@ -4639,6 +4664,7 @@ export const ZSurveyElementSummary = z.union([
   ZSurveyElementSummaryConsent,
   ZSurveyElementSummaryDate,
   ZSurveyElementSummaryFileUpload,
+  ZSurveyElementSummarySignature,
   ZSurveyElementSummaryCal,
   ZSurveyElementSummaryMatrix,
   ZSurveyElementSummaryAddress,

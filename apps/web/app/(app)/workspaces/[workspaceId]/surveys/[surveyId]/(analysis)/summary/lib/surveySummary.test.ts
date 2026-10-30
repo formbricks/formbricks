@@ -4590,6 +4590,54 @@ describe("FileUpload question type tests", () => {
   });
 });
 
+describe("Signature question type tests", () => {
+  test("getElementSummary counts signed and skipped answers and lists the signed ones", async () => {
+    const element = {
+      id: "sig-q1",
+      type: TSurveyElementTypeEnum.Signature,
+      headline: { default: "Sign here" },
+      required: false,
+      allowTypedSignature: true,
+    };
+    const survey = {
+      id: "survey-1",
+      blocks: [{ id: "block1", name: "Block 1", elements: [element] }],
+      questions: [],
+      languages: [],
+      welcomeCard: { enabled: false },
+    } as unknown as TSurvey;
+    const url = "/storage/ws/private/surveys/survey-1/elements/sig-q1/signature--fid--abc.png";
+    const base = {
+      updatedAt: new Date(),
+      contact: null,
+      contactAttributes: {},
+      language: null,
+      finished: true,
+    };
+    const responses = [
+      { ...base, id: "r1", data: { "sig-q1": url }, ttc: {} },
+      { ...base, id: "r2", data: { "sig-q1": "" }, ttc: {} },
+      { ...base, id: "r3", data: {}, ttc: {} },
+    ];
+
+    const summary: any = await getElementSummary(
+      survey,
+      getElementsFromBlocks(survey.blocks),
+      responses,
+      [] as unknown as TSurveySummary["dropOff"]
+    );
+
+    expect(summary).toHaveLength(1);
+    expect(summary[0]).toMatchObject({
+      type: TSurveyElementTypeEnum.Signature,
+      signedCount: 1,
+      skippedCount: 1,
+      responseCount: 2,
+    });
+    expect(summary[0].signatures).toEqual([expect.objectContaining({ id: "r1", value: url })]);
+  });
+});
+
 describe("Cal question type tests", () => {
   test("getQuestionSummary correctly processes Cal with valid responses", async () => {
     const question = {

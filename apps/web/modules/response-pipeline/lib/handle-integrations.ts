@@ -492,6 +492,18 @@ const buildNotionPayloadProperties = (
       .map((choice) => resolveStorageUrlAuto(choice.imageUrl));
   });
 
+  // A Signature answer is one stored URL string (ADR 0016). Notion rejects a relative URL, so it goes out
+  // absolute like every other integration's.
+  mapping.forEach((map) => {
+    const answer = normalizedResponses[map.element.id];
+    if (
+      surveyElementsById.get(map.element.id)?.type === TSurveyElementTypeEnum.Signature &&
+      typeof answer === "string"
+    ) {
+      normalizedResponses[map.element.id] = resolveStorageUrlAuto(answer);
+    }
+  });
+
   mapping.forEach((map) => {
     if (map.element.id === "metadata") {
       properties[map.column.name] = {

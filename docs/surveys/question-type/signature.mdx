@@ -1,0 +1,82 @@
+---
+title: "Signature"
+description: "The Signature question type lets respondents sign by drawing with a finger, stylus or mouse, or by typing their name. You receive the signature as one PNG image with the response."
+icon: "signature"
+---
+
+<Note>
+  **Self-Hosting Requirements**: This question type stores the signature as an image, so it requires file
+  upload storage to be configured. If you're self-hosting Formbricks, make sure to [configure file
+  uploads](/self-hosting/configuration/file-uploads) before using this feature.
+</Note>
+
+Use a Signature question to collect a signature as part of a survey, for example a confirmation on a form, a consent on site or a sign-off on a tablet. It is available on every plan.
+
+## Elements
+
+### Title
+
+Add a clear title that tells the respondent what they are signing.
+
+### Description
+
+Provide an optional description, for example the text or terms the signature applies to.
+
+### Required
+
+A Signature question is required by default. A required question that is left empty blocks the respondent on **Next** with the usual required message. Turn the setting off and the respondent can skip it.
+
+### Allow typed signature
+
+On by default. The respondent sees a **Draw** and **Type** switch above the signature pad. In **Type**, they enter their name with the keyboard, up to 60 characters, and it is shown in a cursive script that fits the pad. Switching between the two keeps what was entered until the respondent selects **Clear**.
+
+Turn the setting off to hide the switch, so respondents can only draw.
+
+<Warning>
+  Keep typed signatures on unless you have another way for people to answer. Drawing needs a pointing device or
+  a touch screen, so respondents who use a keyboard or a screen reader cannot complete a drawn-only required
+  Signature question. When the setting is off and the question is required, the editor warns you about this.
+</Warning>
+
+## How respondents sign
+
+On a phone or tablet, the respondent draws with a finger or a stylus. The pad does not scroll the page while they draw. On a computer, they draw with the mouse. They can select **Clear** at any time and sign again, and the signature is kept if they rotate the device or go back to the question.
+
+A signature counts as signed once the respondent has drawn a stroke of minimum length or typed a name. A single tap or a blank name does not count, so it does not satisfy a required question.
+
+The image is saved when the respondent selects **Next**, not while they draw. If saving fails, they see an error and stay on the question.
+
+## Logic
+
+Use a Signature question in [logic](/surveys/general-features/conditional-logic) with these conditions:
+
+- **Is signed**: the respondent drew or typed a signature.
+- **Is not signed**: the respondent skipped the question.
+
+## What is stored
+
+Each signature is stored as one PNG image, always 900 by 300 pixels, with an opaque white background and near-black ink, whichever way the respondent signed and on whichever device. Formbricks does not store whether the signature was drawn or typed, and it does not store the typed name as text.
+
+Typed names use the Dancing Script font. It covers Latin and Latin Extended characters. A name in another script, such as Cyrillic or Chinese, is shown in the browser's own cursive font, so how it looks depends on the respondent's device.
+
+<Note>
+  A signature is an image plus the response timestamp. Formbricks does not add an audit trail or tamper
+  evidence, and a Signature question does not make a survey a legally binding electronic signature. Check what
+  your use case requires before relying on it.
+</Note>
+
+## Where to find signatures
+
+- **Responses**: the response card shows the signature image with a **Download PNG** button. In the responses table, the signature column shows a small thumbnail that opens the full image in a new tab.
+- **Summary**: the question shows how many respondents signed and how many skipped it, and thumbnails of the latest 10 signatures. Select a thumbnail to open its response.
+- **CSV and Excel export**: the column named after the question holds the full image URL, or nothing for a skipped question.
+- **Attachments**: **All attachments (ZIP)** in the download menu includes the signature images next to any file uploads, as `signature.png` inside a folder per response and question.
+- **API and webhooks**: the answer is the image URL as a string. In the v3 API a signature answer has the shape `{ "elementType": "signature", "imageUrl": "..." }`. Webhooks and integrations such as Google Sheets, Airtable, Slack and Notion receive the URL as well.
+
+## Privacy and retention
+
+Signature images are private. Opening an image URL requires you to be logged in to Formbricks with access to the workspace, or to send an API key. Sharing a URL with someone who has no access does not give them the image.
+
+For this reason the links are not included in email notifications or in email follow-ups. The email notes that the link is not included for data privacy reasons.
+
+The image follows the response. When a response is deleted, including when a data retention policy removes it or when you delete or reset the survey, its signature image is deleted too and the URL stops working. Download the images you need to keep before then.

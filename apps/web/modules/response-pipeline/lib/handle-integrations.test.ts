@@ -520,6 +520,45 @@ describe("handleIntegrations", () => {
       expect(pipelineInput.response.data[questionId3]).toEqual(["picChoice1"]);
     });
 
+    test("writes a Signature answer to a Notion url column as one absolute URL", async () => {
+      vi.mocked(writeNotionData).mockResolvedValue(undefined);
+      const signatureSurvey = {
+        ...mockSurvey,
+        blocks: [
+          {
+            id: "block2",
+            name: "Block 2",
+            elements: [
+              {
+                id: "sig1",
+                type: TSurveyElementTypeEnum.Signature,
+                headline: { default: "Sign here" },
+                required: false,
+                allowTypedSignature: true,
+              },
+            ],
+          },
+        ],
+      } as unknown as TSurvey;
+      const pipelineInput = structuredClone(mockPipelineInput) as TIntegrationPipelineInput;
+      const relativeUrl = "/storage/env1/private/surveys/survey1/elements/sig1/signature--fid--abc.png";
+      (pipelineInput.response.data as Record<string, unknown>).sig1 = relativeUrl;
+      const notionIntegration = structuredClone(mockNotionIntegration);
+      notionIntegration.config.data[0].mapping = [
+        {
+          element: { id: "sig1", name: "Sign here", type: TSurveyElementTypeEnum.Signature },
+          column: { id: "col_sig", name: "Signature", type: "url" },
+        },
+      ] as TIntegrationNotionConfigData["mapping"];
+
+      await handleIntegrations([notionIntegration], pipelineInput, signatureSurvey);
+
+      const properties = vi.mocked(writeNotionData).mock.calls[0][1] as Record<string, { url: string }>;
+      expect(properties.Signature.url).toMatch(/^https?:\/\/.+\/storage\/env1\/private\//);
+      expect(properties.Signature.url).toContain(relativeUrl);
+      expect(pipelineInput.response.data.sig1).toBe(relativeUrl);
+    });
+
     test("coerces non-string Notion text values and avoids invalid multi-url payloads", async () => {
       vi.mocked(writeNotionData).mockResolvedValue(undefined);
       const pipelineInput = structuredClone(mockPipelineInput) as TIntegrationPipelineInput;

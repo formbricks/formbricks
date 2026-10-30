@@ -16,6 +16,7 @@ import { PictureSelectionResponse } from "@/modules/ui/components/picture-select
 import { RankingResponse } from "@/modules/ui/components/ranking-response";
 import { RatingResponse } from "@/modules/ui/components/rating-response";
 import { ResponseBadges } from "@/modules/ui/components/response-badges";
+import { SignatureResponse } from "@/modules/ui/components/signature-response";
 
 interface RenderResponseProps {
   responseData: TResponseDataValue;
@@ -89,6 +90,12 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
     case TSurveyElementTypeEnum.FileUpload:
       if (Array.isArray(responseData)) {
         return <FileUploadResponse selected={responseData} />;
+      }
+      break;
+    case TSurveyElementTypeEnum.Signature:
+      if (typeof responseData === "string") {
+        // `showId` is true only on the single response card, which gets the large image and the download.
+        return <SignatureResponse value={responseData} variant={showId ? "full" : "thumbnail"} />;
       }
       break;
     case TSurveyElementTypeEnum.Matrix:

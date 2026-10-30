@@ -178,7 +178,8 @@ export function SignatureElement({
       type: t("signature.type"),
       typeYourName: t("signature.type_your_name"),
       method: t("signature.method"),
-      padLabel: t(element.allowTypedSignature ? "signature.pad_label_with_type" : "signature.pad_label"),
+      // Both keys are literal `t()` calls so the translation scanner sees them as used.
+      padLabel: element.allowTypedSignature ? t("signature.pad_label_with_type") : t("signature.pad_label"),
       signHere: t("signature.sign_here"),
       signed: t("signature.signed"),
       notSigned: t("signature.not_signed"),

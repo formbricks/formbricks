@@ -195,6 +195,35 @@ describe("translation threading", () => {
   });
 });
 
+describe("Signature response", () => {
+  const signatureUrl = "/storage/ws1/private/surveys/s1/elements/e1/signature--fid--abc.png";
+  const elements = [
+    { element: "Please sign", response: signatureUrl, type: TSurveyElementTypeEnum.Signature },
+  ];
+
+  test("the response notification names the signature without carrying its link", async () => {
+    const html = await renderResponseFinishedEmail({
+      ...exampleData.responseFinishedEmail,
+      elements,
+      t,
+    });
+
+    expect(html).toContain("Link to the signature is not included for data privacy reasons");
+    expect(html).not.toContain("signature--fid--abc");
+  });
+
+  test("the follow-up email does not carry the link either", async () => {
+    const html = await renderFollowUpEmail({
+      ...exampleData.followUpEmail,
+      responseData: elements,
+      t,
+    });
+
+    expect(html).toContain("Link to the signature is not included for data privacy reasons");
+    expect(html).not.toContain("signature--fid--abc");
+  });
+});
+
 describe("survey retention notice", () => {
   const notice = exampleData.surveyRetentionNoticeEmail;
 
