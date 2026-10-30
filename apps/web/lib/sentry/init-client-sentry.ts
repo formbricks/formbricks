@@ -7,6 +7,34 @@ import { isStaleServerActionError } from "@/lib/utils/stale-server-action";
 
 let hasInitialized = false;
 
+// Upper bound on how long a busy page can hold Replay back before it loads anyway.
+const REPLAY_IDLE_TIMEOUT_MS = 5000;
+
+const loadReplay = async () => {
+  const { replayIntegration } = await import("@/lib/sentry/replay-integration");
+  Sentry.addIntegration(replayIntegration({ maskAllText: true, blockAllMedia: true }));
+};
+
+/**
+ * Adds Session Replay after the page goes idle rather than at init, keeping it out of first-load JS.
+ * The replay sample rates stay on `Sentry.init`: the integration reads them from the client options
+ * when it is added. Errors thrown before it loads are still captured, only without a replay.
+ */
+const scheduleReplay = () => {
+  const load = () => {
+    // A replay chunk that fails to load (offline, a deploy in between) must not surface as an error
+    // of its own: the page simply runs without Replay.
+    loadReplay().catch(() => undefined);
+  };
+
+  if (typeof window.requestIdleCallback === "function") {
+    window.requestIdleCallback(load, { timeout: REPLAY_IDLE_TIMEOUT_MS });
+  } else {
+    // Safari has no requestIdleCallback.
+    setTimeout(load, 0);
+  }
+};
+
 const initSentry = (config: TSentryClientRuntimeConfig) => {
   if (hasInitialized || !config.dsn) {
     return;
@@ -35,15 +63,6 @@ const initSentry = (config: TSentryClientRuntimeConfig) => {
     // in development and sample at a lower rate in production
     replaysSessionSampleRate: 0.1,
 
-    // You can remove this option if you're not planning to use the Sentry Session Replay feature:
-    integrations: [
-      Sentry.replayIntegration({
-        // Additional Replay configuration goes in here, for example:
-        maskAllText: true,
-        blockAllMedia: true,
-      }),
-    ],
-
     beforeSend(event, hint) {
       const error = hint.originalException as Error;
 
@@ -63,6 +82,8 @@ const initSentry = (config: TSentryClientRuntimeConfig) => {
       return event;
     },
   });
+
+  scheduleReplay();
 };
 
 /**
