@@ -41,6 +41,31 @@ export interface TDocumentModel {
   encoding: TSurveyImportTextEncoding | null;
 }
 
+/** The model of `lines`, read in order: every cell's text by key, and their characters together. */
+export const buildDocumentModel = (
+  kind: TDocumentKind,
+  lines: TDocumentLine[],
+  {
+    title = null,
+    skippedParts = [],
+    encoding = null,
+  }: {
+    title?: string | null;
+    skippedParts?: string[];
+    encoding?: TSurveyImportTextEncoding | null;
+  } = {}
+): TDocumentModel => {
+  const cells = new Map<string, string>();
+  let sourceChars = 0;
+  for (const line of lines) {
+    for (const cell of line.cells) {
+      cells.set(cell.key, cell.text);
+      sourceChars += cell.text.length;
+    }
+  }
+  return { kind, title, skippedParts, lines, cells, sourceChars, encoding };
+};
+
 /** `A` for column 0, `Z`, `AA`, … as Excel names columns. */
 export const columnName = (index: number): string => {
   let name = "";
@@ -71,20 +96,15 @@ export const buildGridModel = (
   } = {}
 ): TDocumentModel => {
   const lines: TDocumentLine[] = [];
-  const cells = new Map<string, string>();
-  let sourceChars = 0;
 
   rows.forEach((row, rowIndex) => {
     const lineCells: TDocumentCell[] = [];
     row.forEach((text, columnIndex) => {
       if (text.trim() === "") return;
-      const key = `${columnName(origin.column + columnIndex)}${origin.row + rowIndex + 1}`;
-      lineCells.push({ key, text });
-      cells.set(key, text);
-      sourceChars += text.length;
+      lineCells.push({ key: `${columnName(origin.column + columnIndex)}${origin.row + rowIndex + 1}`, text });
     });
     if (lineCells.length > 0) lines.push({ key: `R${origin.row + rowIndex + 1}`, cells: lineCells });
   });
 
-  return { kind, title, skippedParts, lines, cells, sourceChars, encoding };
+  return buildDocumentModel(kind, lines, { title, skippedParts, encoding });
 };
