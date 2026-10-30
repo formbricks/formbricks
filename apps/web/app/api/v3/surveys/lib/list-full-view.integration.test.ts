@@ -89,8 +89,8 @@ beforeAll(async () => {
     const survey = await prisma.survey.create({
       data: {
         name: `Survey ${i}`,
-        type: "link",
-        status: "inProgress",
+        type: i === 4 ? "app" : "link",
+        status: i % 2 === 0 ? "inProgress" : "paused",
         workspaceId: workspace.id,
         createdAt: new Date(Date.UTC(2026, 0, 1, 0, i)),
         blocks: blocks(String(i)),
@@ -166,14 +166,42 @@ describe("GET /api/v3/surveys?view=full against a real database", () => {
     expect(withCss?.customCss).toEqual({ light: ".x { color: red; }", dark: null });
   });
 
-  test("keeps the full-view page size bound", async () => {
+  test("every filter and sort order selects the same surveys, in the same order, in both views", async () => {
+    const filters: Record<string, string>[] = [
+      {},
+      { "filter[status][in]": "paused" },
+      { "filter[name][contains]": "survey 1" },
+      { "filter[type][in]": "app" },
+    ];
+    for (const sortBy of ["createdAt", "updatedAt", "name", "relevance"]) {
+      for (const filter of filters) {
+        const query = { ...filter, sortBy, limit: "2" };
+        const summary = (await listAll(query)).flatMap((page) => page.data.map(({ id }) => id));
+        const full = (await listAll({ ...query, view: "full" })).flatMap((page) =>
+          page.data.map(({ id }) => id)
+        );
+
+        expect(full, JSON.stringify(query)).toEqual(summary.filter((id) => id !== legacySurveyId));
+      }
+    }
+  });
+
+  test("an app survey carries the detail endpoint's distribution and targeting", async () => {
+    const page = await listPage({ view: "full", "filter[type][in]": "app" });
+
+    expect(page.data).toHaveLength(1);
+    expect(page.data[0]).toHaveProperty("distribution");
+    expect(page.data[0]).toHaveProperty("targeting");
+  });
+
+  test("refuses a workspace the caller cannot read, whatever the view", async () => {
     const response = await listV3Surveys({
       authentication: apiKeyAuthentication(),
       instance,
       requestId: "req",
-      searchParams: new URLSearchParams({ workspaceId: ids.workspace, view: "full", limit: "51" }),
+      searchParams: new URLSearchParams({ workspaceId: ids.otherWorkspace, view: "full" }),
     });
 
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(403);
   });
 });

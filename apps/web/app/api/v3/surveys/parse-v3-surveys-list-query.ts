@@ -23,10 +23,10 @@ import {
 const V3_SURVEYS_DEFAULT_LIMIT = 20;
 const V3_SURVEYS_MAX_LIMIT = 250;
 /**
- * ENG-6861: a full survey document (blocks in every language, plus up to ~40 KB of custom CSS) can run to
- * hundreds of KB, so `view=full` pages are capped far below the summary limit to bound the response.
+ * ENG-6861: a full survey document (blocks in every language, plus up to 20 KB of custom CSS source) can
+ * run to hundreds of KB, so `view=full` pages are capped far below the summary limit to bound the response.
  */
-export const V3_SURVEYS_FULL_VIEW_MAX_LIMIT = 50;
+const V3_SURVEYS_FULL_VIEW_MAX_LIMIT = 50;
 
 const FILTER_NAME_CONTAINS_QUERY_PARAM = "filter[name][contains]" as const;
 const FILTER_STATUS_IN_QUERY_PARAM = "filter[status][in]" as const;

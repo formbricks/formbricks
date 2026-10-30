@@ -1,10 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { encodeSurveyListPageCursor } from "@/modules/survey/list/lib/survey-page";
-import {
-  V3_SURVEYS_FULL_VIEW_MAX_LIMIT,
-  collectMultiValueQueryParam,
-  parseV3SurveysListQuery,
-} from "./parse-v3-surveys-list-query";
+import { collectMultiValueQueryParam, parseV3SurveysListQuery } from "./parse-v3-surveys-list-query";
 
 const wid = "clxx1234567890123456789012";
 
@@ -95,8 +91,6 @@ describe("parseV3SurveysListQuery", () => {
     });
 
     test("caps limit at the full-view maximum, and only for view=full", () => {
-      expect(V3_SURVEYS_FULL_VIEW_MAX_LIMIT).toBe(50);
-
       const atCap = parseV3SurveysListQuery(params(`workspaceId=${wid}&view=full&limit=50`));
       expect(atCap.ok && atCap.limit).toBe(50);
 
@@ -108,6 +102,12 @@ describe("parseV3SurveysListQuery", () => {
 
       const summary = parseV3SurveysListQuery(params(`workspaceId=${wid}&view=summary&limit=51`));
       expect(summary.ok && summary.limit).toBe(51);
+    });
+
+    test("rejects lang: the list returns every configured language", () => {
+      const r = parseV3SurveysListQuery(params(`workspaceId=${wid}&view=full&lang=de-DE`));
+      expect(r.ok).toBe(false);
+      if (!r.ok) expect(r.invalid_params[0].name).toBe("lang");
     });
 
     test("keeps the default limit for view=full", () => {

@@ -327,22 +327,28 @@ export const getSurveyWithCustomCss = reactCache(
 
 /**
  * {@link getSurveyWithCustomCss} for a page of one workspace's surveys, in one query (API v3 list,
- * `view=full`). The caller bounds `surveyIds` by its page size. Ids outside the workspace, or deleted
- * since the caller listed them, are simply absent; the result is in no particular order.
+ * `view=full`), each with its owner's display name read in the same snapshot. The caller bounds
+ * `surveyIds` by its page size and passes its visibility clause, so a survey restricted since it was
+ * listed is not read. Ids outside the workspace or that clause, or deleted since, are simply absent; the
+ * result is in no particular order.
  */
-export const getSurveysWithCustomCss = async (
+export const getSurveysWithCustomCssAndOwnerName = async (
   workspaceId: string,
-  surveyIds: string[]
-): Promise<TSurvey[]> => {
+  surveyIds: string[],
+  visibleSurveyWhere: Prisma.SurveyWhereInput
+): Promise<Array<{ survey: TSurvey; ownerName: string | null }>> => {
   validateInputs([workspaceId, ZId], [surveyIds, ZId.array()]);
   if (surveyIds.length === 0) return [];
 
   try {
     const surveysPrisma = await prisma.survey.findMany({
-      where: { id: { in: surveyIds }, workspaceId },
-      select: selectSurveyWithCustomCss,
+      where: { id: { in: surveyIds }, workspaceId, ...andVisibleSurveys(visibleSurveyWhere) },
+      select: { ...selectSurveyWithCustomCss, owner: { select: { name: true } } },
     });
-    return surveysPrisma.map((surveyPrisma) => transformPrismaSurvey<TSurvey>(surveyPrisma));
+    return surveysPrisma.map(({ owner, ...surveyPrisma }) => ({
+      survey: transformPrismaSurvey<TSurvey>(surveyPrisma),
+      ownerName: owner?.name ?? null,
+    }));
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       logger.error(error, "Error getting surveys by id");

@@ -773,7 +773,11 @@ describe("serializeV3SurveyFullListItem (ENG-6861)", () => {
   const document = { ...baseSurvey, ownerId: "user_owner" } as TSurvey;
 
   test("is the summary item plus the single-survey resource, the document winning on shared fields", () => {
-    const item = serializeV3SurveyFullListItem(listRecord, document, visibilityContext);
+    const item = serializeV3SurveyFullListItem(
+      listRecord,
+      { survey: document, ownerName: "Grace" },
+      visibilityContext
+    );
     const resource = serializeV3SurveyResource(document, { ...visibilityContext, ownerName: "Grace" });
 
     expect(item).toEqual({
@@ -793,10 +797,20 @@ describe("serializeV3SurveyFullListItem (ENG-6861)", () => {
     });
   });
 
+  test("takes the owner's name from the document read, not the page", () => {
+    const item = serializeV3SurveyFullListItem(
+      listRecord,
+      { survey: { ...document, ownerId: "user_new" } as TSurvey, ownerName: "Linus" },
+      visibilityContext
+    );
+
+    expect(item.owner).toEqual({ name: "Linus" });
+  });
+
   test("refuses a legacy question-based survey like the single-survey read does", () => {
     const legacy = { ...document, questions: [{ id: "q1" }] } as unknown as TSurvey;
-    expect(() => serializeV3SurveyFullListItem(listRecord, legacy, visibilityContext)).toThrow(
-      V3SurveyUnsupportedShapeError
-    );
+    expect(() =>
+      serializeV3SurveyFullListItem(listRecord, { survey: legacy, ownerName: null }, visibilityContext)
+    ).toThrow(V3SurveyUnsupportedShapeError);
   });
 });

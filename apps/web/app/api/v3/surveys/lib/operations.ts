@@ -19,6 +19,7 @@ import {
   isCustomCssValidationRequest,
 } from "@/app/api/v3/lib/custom-css-rate-limit";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
+import { applyV3OperationRateLimit } from "@/app/api/v3/lib/operation-rate-limit";
 import {
   type InvalidParam,
   createdResponse,
@@ -37,10 +38,11 @@ import type { V3WorkspaceContext } from "@/app/api/v3/lib/workspace-context";
 import { recordSurveyListPredicateMismatch } from "@/lib/authorization/metrics";
 import { filterReadableSurveyIds } from "@/lib/authorization/resource-list";
 import { capturePostHogEvent } from "@/lib/posthog";
-import { getSurveysWithCustomCss } from "@/lib/survey/service";
+import { getSurveysWithCustomCssAndOwnerName } from "@/lib/survey/service";
 import { WorkspaceSurveyLimitError } from "@/lib/survey/visibility/limit";
 import { isAwaitingProjection } from "@/lib/survey/visibility/policy";
 import { buildVisibleSurveyWhere } from "@/lib/survey/visibility/predicate";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { type TCustomCssPreview, previewCustomCss } from "@/modules/custom-css/lib/service";
 import { getCreativeCssRoot } from "@/modules/ee/creatives/lib/custom-css";
 import {
@@ -323,6 +325,17 @@ export async function listV3Surveys({
 
     const { workspaceId } = authResult;
 
+    if (parsed.view === "full") {
+      // ENG-6861: a full page carries up to 50 documents, so it draws on its own budget too.
+      const rateLimited = await applyV3OperationRateLimit({
+        config: rateLimitConfigs.api.v3SurveysFullList,
+        authentication,
+        requestId,
+        instance,
+      });
+      if (rateLimited) return rateLimited;
+    }
+
     // ENG-3282: resolved once and shared by the page, both counts and every item's `access`.
     const visibilityContext = await resolveV3SurveyVisibilityContext(
       authentication,
@@ -424,8 +437,8 @@ export async function listV3Surveys({
 /**
  * ENG-6861: `view=full` reads the page's documents in one query, once the page query and the graph check
  * have settled which rows it holds, and serializes each one as the single-survey resource plus the summary
- * fields. The page is not a snapshot: a survey deleted between the two reads is dropped, as the next page
- * would drop it. A legacy question-based survey, which GET /surveys/{id} refuses, is reported by id in
+ * fields. The page is not a snapshot: a survey deleted or restricted between the two reads is dropped, as
+ * the next page would drop it. A legacy question-based survey, which GET /surveys/{id} refuses, is reported by id in
  * `meta.unsupportedSurveyIds` rather than failing a page the cursor could never get past.
  */
 async function serializeV3SurveyFullListPage(
@@ -434,11 +447,14 @@ async function serializeV3SurveyFullListPage(
   visibilityContext: TV3SurveyVisibilityContext,
   log: ReturnType<typeof logger.withContext>
 ) {
-  const documents = await getSurveysWithCustomCss(
+  // The visibility clause again, so a survey restricted since the page was read is dropped like a
+  // deleted one rather than served whole to a caller who just lost it.
+  const documents = await getSurveysWithCustomCssAndOwnerName(
     workspaceId,
-    surveys.map(({ id }) => id)
+    surveys.map(({ id }) => id),
+    buildVisibleSurveyWhere(visibilityContext.actorContext)
   );
-  const documentsById = new Map(documents.map((document) => [document.id, document]));
+  const documentsById = new Map(documents.map((document) => [document.survey.id, document]));
 
   const items: ReturnType<typeof serializeV3SurveyFullListItem>[] = [];
   const unsupportedSurveyIds: string[] = [];

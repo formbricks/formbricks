@@ -13,7 +13,9 @@ import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { recordSurveyListPredicateMismatch } from "@/lib/authorization/metrics";
 import { filterReadableSurveyIds } from "@/lib/authorization/resource-list";
 import { capturePostHogEvent } from "@/lib/posthog";
-import { getSurveysWithCustomCss } from "@/lib/survey/service";
+import { getSurveysWithCustomCssAndOwnerName } from "@/lib/survey/service";
+import type { TSurveyActorContext } from "@/lib/survey/visibility/actor-context";
+import { buildVisibleSurveyWhere } from "@/lib/survey/visibility/predicate";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { previewCustomCss } from "@/modules/custom-css/lib/service";
@@ -108,7 +110,7 @@ vi.mock("@/modules/survey/list/lib/survey-page", () => ({
 }));
 
 vi.mock("@/lib/survey/service", () => ({
-  getSurveysWithCustomCss: vi.fn(),
+  getSurveysWithCustomCssAndOwnerName: vi.fn(),
 }));
 
 vi.mock("../authorization", () => ({
@@ -447,7 +449,7 @@ describe("listV3Surveys view=full (ENG-6861)", () => {
     vi.mocked(getSurveyCount).mockResolvedValue(3);
     vi.mocked(getWorkspaceSurveyCount).mockResolvedValue(3);
     vi.mocked(serializeV3SurveyFullListItem).mockImplementation(
-      (row, document) => ({ id: row.id, documentName: document.name }) as any
+      (row, document) => ({ id: row.id, documentName: document.survey.name }) as any
     );
   });
 
@@ -460,16 +462,20 @@ describe("listV3Surveys view=full (ENG-6861)", () => {
       surveys: [{ id: "survey_b" }, { id: "survey_a" }],
       nextCursor: "cursor_next",
     } as any);
-    vi.mocked(getSurveysWithCustomCss).mockResolvedValue([
-      { id: "survey_a", name: "A", questions: [] },
-      { id: "survey_b", name: "B", questions: [] },
+    vi.mocked(getSurveysWithCustomCssAndOwnerName).mockResolvedValue([
+      { survey: { id: "survey_a", name: "A", questions: [] }, ownerName: null },
+      { survey: { id: "survey_b", name: "B", questions: [] }, ownerName: null },
     ] as any);
 
     const response = await list();
 
     expect(response.status).toBe(200);
-    expect(getSurveysWithCustomCss).toHaveBeenCalledTimes(1);
-    expect(getSurveysWithCustomCss).toHaveBeenCalledWith(workspaceId, ["survey_b", "survey_a"]);
+    expect(getSurveysWithCustomCssAndOwnerName).toHaveBeenCalledTimes(1);
+    expect(getSurveysWithCustomCssAndOwnerName).toHaveBeenCalledWith(
+      workspaceId,
+      ["survey_b", "survey_a"],
+      buildVisibleSurveyWhere(VISIBILITY_CONTEXT.actorContext as TSurveyActorContext)
+    );
     expect(serializeV3SurveyListItem).not.toHaveBeenCalled();
     expect(await readJson(response)).toEqual({
       data: [
@@ -496,11 +502,19 @@ describe("listV3Surveys view=full (ENG-6861)", () => {
       nextCursor: null,
     } as any);
     vi.mocked(filterReadableSurveyIds).mockResolvedValue(new Set(["survey_ok"]));
-    vi.mocked(getSurveysWithCustomCss).mockResolvedValue([{ id: "survey_ok", name: "OK" }] as any);
+    vi.mocked(getSurveysWithCustomCssAndOwnerName).mockResolvedValue([
+      { survey: { id: "survey_ok", name: "OK" }, ownerName: null },
+    ] as any);
 
     const response = await list();
 
-    expect(getSurveysWithCustomCss).toHaveBeenCalledWith(workspaceId, ["survey_ok"]);
+    // The visibility clause is applied again to the document read, so a survey restricted since the
+    // page was read is not served whole.
+    expect(getSurveysWithCustomCssAndOwnerName).toHaveBeenCalledWith(
+      workspaceId,
+      ["survey_ok"],
+      buildVisibleSurveyWhere(enforcedMember.actorContext as TSurveyActorContext)
+    );
     expect((await readJson(response)).data).toEqual([{ id: "survey_ok", documentName: "OK" }]);
   });
 
@@ -509,7 +523,9 @@ describe("listV3Surveys view=full (ENG-6861)", () => {
       surveys: [{ id: "survey_kept" }, { id: "survey_gone" }],
       nextCursor: null,
     } as any);
-    vi.mocked(getSurveysWithCustomCss).mockResolvedValue([{ id: "survey_kept", name: "Kept" }] as any);
+    vi.mocked(getSurveysWithCustomCssAndOwnerName).mockResolvedValue([
+      { survey: { id: "survey_kept", name: "Kept" }, ownerName: null },
+    ] as any);
 
     const body = await readJson(await list());
 
@@ -522,13 +538,13 @@ describe("listV3Surveys view=full (ENG-6861)", () => {
       surveys: [{ id: "survey_legacy" }, { id: "survey_blocks" }],
       nextCursor: "cursor_next",
     } as any);
-    vi.mocked(getSurveysWithCustomCss).mockResolvedValue([
-      { id: "survey_legacy", name: "Legacy" },
-      { id: "survey_blocks", name: "Blocks" },
+    vi.mocked(getSurveysWithCustomCssAndOwnerName).mockResolvedValue([
+      { survey: { id: "survey_legacy", name: "Legacy" }, ownerName: null },
+      { survey: { id: "survey_blocks", name: "Blocks" }, ownerName: null },
     ] as any);
     vi.mocked(serializeV3SurveyFullListItem).mockImplementation((row, document) => {
       if (row.id === "survey_legacy") throw new V3SurveyUnsupportedShapeError("legacy");
-      return { id: row.id, documentName: document.name } as any;
+      return { id: row.id, documentName: document.survey.name } as any;
     });
 
     const response = await list();
@@ -544,7 +560,9 @@ describe("listV3Surveys view=full (ENG-6861)", () => {
       surveys: [{ id: "survey_1" }],
       nextCursor: null,
     } as any);
-    vi.mocked(getSurveysWithCustomCss).mockResolvedValue([{ id: "survey_1", name: "One" }] as any);
+    vi.mocked(getSurveysWithCustomCssAndOwnerName).mockResolvedValue([
+      { survey: { id: "survey_1", name: "One" }, ownerName: null },
+    ] as any);
     vi.mocked(serializeV3SurveyFullListItem).mockImplementation(() => {
       throw new Error("boom");
     });
@@ -554,12 +572,27 @@ describe("listV3Surveys view=full (ENG-6861)", () => {
 
   test("an empty page answers an empty full page", async () => {
     vi.mocked(getSurveyListPage).mockResolvedValue({ surveys: [], nextCursor: null } as any);
-    vi.mocked(getSurveysWithCustomCss).mockResolvedValue([]);
+    vi.mocked(getSurveysWithCustomCssAndOwnerName).mockResolvedValue([]);
 
     const body = await readJson(await list());
 
     expect(body.data).toEqual([]);
     expect(body.meta.unsupportedSurveyIds).toEqual([]);
+  });
+
+  test("draws a full page from its own rate limit as well", async () => {
+    vi.mocked(getSurveyListPage).mockResolvedValue({ surveys: [], nextCursor: null } as any);
+    vi.mocked(getSurveysWithCustomCssAndOwnerName).mockResolvedValue([]);
+
+    expect((await list()).status).toBe(200);
+    expect(applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.api.v3SurveysFullList, "user_1");
+
+    vi.mocked(applyRateLimit).mockRejectedValueOnce(new TooManyRequestsError("Slow down", 30));
+    const limited = await list();
+
+    expect(limited.status).toBe(429);
+    expect(limited.headers.get("Retry-After")).toBe("30");
+    expect(getSurveyListPage).toHaveBeenCalledTimes(1);
   });
 
   test("the summary view reads no documents and adds nothing to meta", async () => {
@@ -572,7 +605,11 @@ describe("listV3Surveys view=full (ENG-6861)", () => {
 
     const body = await readJson(await list());
 
-    expect(getSurveysWithCustomCss).not.toHaveBeenCalled();
+    expect(getSurveysWithCustomCssAndOwnerName).not.toHaveBeenCalled();
+    expect(applyRateLimit).not.toHaveBeenCalledWith(
+      rateLimitConfigs.api.v3SurveysFullList,
+      expect.anything()
+    );
     expect(body.meta).not.toHaveProperty("unsupportedSurveyIds");
   });
 });
