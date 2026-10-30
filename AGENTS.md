@@ -15,7 +15,6 @@ is missing from the running app or a direct test command fails after switching b
 
 ## Architecture & Patterns
 
-- Next.js app router lives in `apps/web/app` with route groups like `(app)` and `(auth)`. Services live in `apps/web/lib`, feature modules in `apps/web/modules`.
 - Server actions are legacy — do not add new ones; they are being moved off (ENG-1668). A first-party endpoint goes under `/api/internal/<resource>` (session only, no OpenAPI entry); one for external callers under `/api/v3`. When unsure, default to internal; the `api-routes` skill has the test. Consume both with TanStack Query and `modules/api/lib/internal-api-client.ts`, keeping server data in the query cache. `scripts/api-boundary/api-boundary.test.ts` only lets the server-action count go down and keeps `apps/web/app/api/INTERNAL_ROUTES.md` in sync. Existing actions return `{ data }` or `{ error }`; keep that contract when changing them.
 - MCP tools (`apps/web/modules/mcp`) are thin adapters over v3 operations, registered only through `registerScopedTool`. Before adding a tool or a scope, read "Adding a tool" in `docs/development/technical-handbook/mcp-server.mdx`.
 
