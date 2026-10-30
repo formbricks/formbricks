@@ -1865,6 +1865,8 @@
         "distribution_value_share": "{value}({percent})",
         "edit_chart_description": "查看并编辑你的图表配置。",
         "edit_chart_title": "编辑图表",
+        "embedded_data_field_description": "来自 {surveys} 的嵌入数据",
+        "embedded_data_no_value": "无值",
         "emotion_value_anger": "愤怒",
         "emotion_value_disgust": "厌恶",
         "emotion_value_fear": "恐惧",

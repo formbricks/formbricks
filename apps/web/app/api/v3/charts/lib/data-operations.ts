@@ -11,11 +11,12 @@ import {
   type InvalidParam,
   problemBadGateway,
   problemUnauthorized,
+  problemUnprocessableContent,
   successResponse,
 } from "@/app/api/v3/lib/response";
 import type { V3WorkspaceContext } from "@/app/api/v3/lib/workspace-context";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
-import { CubeQueryError } from "@/modules/ee/analysis/api/lib/cube-client";
+import { CubeQueryError, UnknownEmbeddedFieldError } from "@/modules/ee/analysis/api/lib/cube-client";
 import type { TCubeQuerySource } from "@/modules/ee/analysis/api/lib/cube-config";
 import { prepareQueryForChartType } from "@/modules/ee/analysis/charts/lib/big-number";
 import {
@@ -61,6 +62,24 @@ const cubeFailure = (error: CubeQueryError, { requestId, instance }: TV3ChartOpe
       ? "The chart query took too long and was stopped. Narrow the date range or the grouping and try again."
       : "The chart query could not be run. Try again shortly.",
     instance
+  );
+
+/** A stored or previewed query naming an Embedded Data field the dataset no longer declares. */
+const unknownEmbeddedField = ({ requestId, instance }: TV3ChartOperationContext): Response =>
+  problemUnprocessableContent(
+    requestId,
+    "This chart uses an Embedded Data field that no surveys in this dataset declare anymore. Edit the chart to remove it.",
+    {
+      instance,
+      invalid_params: [
+        {
+          name: "query",
+          reason:
+            "This chart uses an Embedded Data field that no survey in this dataset has anymore — it was renamed or removed. Edit the chart to pick another field.",
+          code: "invalid_reference",
+        },
+      ],
+    }
   );
 
 /**
@@ -132,11 +151,13 @@ export async function runV3ChartQuery({
         rows: run.rows as TV3ChartData["rows"],
         optionLabels: run.optionLabels ?? {},
         fieldLabels: run.fieldLabels ?? {},
+        ...(run.memberLabels ? { memberLabels: run.memberLabels } : {}),
         query: run.effectiveQuery as TV3ChartData["query"],
       };
       return successResponse(data, { requestId: context.requestId });
     } catch (error) {
       if (error instanceof CubeQueryError) return cubeFailure(error, context);
+      if (error instanceof UnknownEmbeddedFieldError) return unknownEmbeddedField(context);
       throw error;
     }
   });

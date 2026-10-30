@@ -352,3 +352,16 @@ export const applyValueBandNullGuard = (query: TChartQuery): TChartQuery => {
     filters: [...(query.filters ?? []), { member: VALUE_BAND_DIMENSION_ID, operator: "set" }],
   };
 };
+
+/** Every member a query names, in any position. */
+export const getCubeQueryMembers = (query: TChartQuery): string[] => {
+  const summary = getCubeQueryAuditSummary(query);
+  return uniqueSorted([
+    ...summary.measures,
+    ...summary.dimensions,
+    ...summary.segments,
+    ...summary.timeDimensions,
+    ...summary.filterMembers,
+    ...summary.orderMembers,
+  ]);
+};

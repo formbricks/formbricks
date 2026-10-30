@@ -3,6 +3,7 @@
  * shared `ConditionsEditor`, so chart filters are drawn and edited exactly like survey logic.
  */
 import type { TFunction } from "i18next";
+import type { TEmbeddedChartField } from "@/modules/ee/analysis/lib/embedded-data-fields";
 import { type FilterNode, type FilterRow, isFilterGroup } from "@/modules/ee/analysis/lib/query-builder";
 import {
   EMOTIONS_DIMENSION_ID,
@@ -23,7 +24,15 @@ export const CHART_FILTER_ROOT_ID = "root";
 
 type TFilterFieldType = "string" | "number" | "time" | "boolean";
 
-export function getFilterFieldType(fieldId: string): TFilterFieldType {
+/**
+ * The dataset's Embedded Data fields (ENG-2848). They are not in `FEEDBACK_FIELDS`, so every helper
+ * that resolves a field takes them alongside; an empty list means "fixed fields only".
+ */
+type TEmbeddedFields = readonly TEmbeddedChartField[];
+
+export function getFilterFieldType(fieldId: string, embeddedFields: TEmbeddedFields = []): TFilterFieldType {
+  const embedded = embeddedFields.find((field) => field.id === fieldId);
+  if (embedded) return embedded.type;
   const type = getFieldById(fieldId)?.type;
   // Count measures are never offered as filters, so a lookup miss and a count both fall back to text.
   return type === undefined || type === "count" ? "string" : type;
@@ -33,9 +42,9 @@ export function getFilterFieldType(fieldId: string): TFilterFieldType {
  * Emotions is multi-label: default to `contains` so a single picked emotion matches records tagged
  * with it (equals would require an exact whole-set match).
  */
-export function getDefaultFilterOperator(fieldId: string): string {
+export function getDefaultFilterOperator(fieldId: string, embeddedFields: TEmbeddedFields = []): string {
   if (fieldId === EMOTIONS_DIMENSION_ID) return "contains";
-  return getFilterOperatorsForType(getFilterFieldType(fieldId))[0] ?? "equals";
+  return getFilterOperatorsForType(getFilterFieldType(fieldId, embeddedFields))[0] ?? "equals";
 }
 
 export function createDefaultFilterRow(): FilterRow {
@@ -43,7 +52,10 @@ export function createDefaultFilterRow(): FilterRow {
   return { id: crypto.randomUUID(), field, operator: getDefaultFilterOperator(field), values: null };
 }
 
-export function getFilterFieldOptions(t: TFunction): TComboboxGroupedOption[] {
+export function getFilterFieldOptions(
+  t: TFunction,
+  embeddedFields: TEmbeddedFields = []
+): TComboboxGroupedOption[] {
   return [
     {
       label: t("workspace.analysis.charts.dimensions"),
@@ -65,6 +77,16 @@ export function getFilterFieldOptions(t: TFunction): TComboboxGroupedOption[] {
         .filter((m) => m.group === "score" || m.group === "average")
         .map((m) => ({ value: m.id, label: getTranslatedFieldLabel(m.id, t) })),
     },
+    // Last, so the fixed fields keep their place and the default filter field (ENG-1673).
+    ...(embeddedFields.length > 0
+      ? [
+          {
+            label: t("common.embedded_data"),
+            value: "embeddedData",
+            options: embeddedFields.map((field) => ({ value: field.id, label: field.name })),
+          },
+        ]
+      : []),
   ];
 }
 
@@ -119,10 +141,13 @@ export function toConditionGroup(filters: FilterNode[], filterLogic: "and" | "or
  * reset operator and value, and an operator change together with a reset value, so the first
  * matching branch owns the whole update.
  */
-export function toFilterRowUpdates(updates: Partial<TGenericCondition>): Partial<FilterRow> {
+export function toFilterRowUpdates(
+  updates: Partial<TGenericCondition>,
+  embeddedFields: TEmbeddedFields = []
+): Partial<FilterRow> {
   if (updates.leftOperand) {
     const field = updates.leftOperand.value;
-    return { field, operator: getDefaultFilterOperator(field), values: null };
+    return { field, operator: getDefaultFilterOperator(field, embeddedFields), values: null };
   }
 
   if (updates.operator !== undefined) {
