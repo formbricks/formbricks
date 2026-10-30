@@ -3,7 +3,7 @@ import { SURVEY_IMPORT_MAX_TEXT_CHARS } from "../limits";
 /**
  * Whether the sanitizer has to parse a text: one with a `<` or an `&` goes through DOMPurify, one
  * without only has its whitespace collapsed. Shared by the sanitizer's fast path and the reader, which
- * counts these texts against `QSF_MAX_MARKUP_TEXTS` while the file is read.
+ * counts these texts against its own limit while the file is read (`QSF_MAX_MARKUP_TEXTS`).
  */
 export const hasMarkup = (text: string): boolean => text.includes("<") || text.includes("&");
 

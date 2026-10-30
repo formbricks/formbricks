@@ -16,15 +16,15 @@ import type {
   TSurveyImportDraftEnding,
   TSurveyImportLocaleText,
 } from "../core/draft";
+import { createSlicer } from "../core/event-loop";
 import { SurveyImportIdRegistry, findFreeSuffixedName, isObjectMemberName } from "../core/id-registry";
 import type { TSurveyImportPipelineIssue } from "../core/report";
+import { type TSanitizedTexts, sanitizeName } from "../core/sanitize-text";
 import { getDefaultEndingTexts } from "./default-ending";
-import { createSlicer } from "./event-loop";
 import { type TPipedTextContext, replacePipedText } from "./piped-text";
 import { type TQsfCheckedPlan, type TQsfPlannedQuestion, sliderPoints } from "./plan-checks";
 import type { TQsfPlanContactField } from "./plan-schema";
 import type { TQsfQuestion, TQsfSurvey, TQsfTextKey } from "./qsf-model";
-import { type TSanitizedTexts, sanitizeName } from "./sanitize-text";
 
 /**
  * The assembly (ENG-3654): the checked plan and the sanitized texts become the draft the dialog sends

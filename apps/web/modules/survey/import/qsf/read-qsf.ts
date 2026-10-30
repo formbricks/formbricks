@@ -1,7 +1,9 @@
 import { z } from "zod";
 import { DEFAULT_V3_SURVEY_LANGUAGE } from "@/app/api/v3/surveys/schemas";
 import { isObjectMemberName } from "../core/id-registry";
+import { needsParsing } from "../core/markup";
 import type { TSurveyImportPipelineIssue } from "../core/report";
+import type { TSurveyImportText, TSurveyImportTextFormat } from "../core/sanitize-text";
 import {
   SURVEY_IMPORT_MAX_NAME_CHARS,
   SURVEY_IMPORT_MAX_OPTIONS_PER_QUESTION,
@@ -28,7 +30,6 @@ import {
   QSF_MAX_MARKUP_TEXTS,
   QSF_MAX_TEXTS,
 } from "./limits";
-import { needsParsing } from "./markup";
 import { collectEmbeddedDataReferences } from "./piped-text";
 import type {
   TQsfLogicCondition,
@@ -38,8 +39,6 @@ import type {
   TQsfQuestion,
   TQsfSlider,
   TQsfSurvey,
-  TQsfText,
-  TQsfTextFormat,
   TQsfTextKey,
 } from "./qsf-model";
 
@@ -279,7 +278,7 @@ interface TFlowResult {
 
 class QsfReader {
   private readonly issues: TSurveyImportPipelineIssue[] = [];
-  private readonly texts = new Map<TQsfTextKey, TQsfText>();
+  private readonly texts = new Map<TQsfTextKey, TSurveyImportText>();
   private readonly counters = { t: 0, c: 0, a: 0, b: 0, s: 0 };
   private readonly languageByRaw = new Map<string, string | null>();
   private readonly reportedLanguages = new Set<string>();
@@ -1128,7 +1127,7 @@ class QsfReader {
 
   private addText(
     prefix: keyof QsfReader["counters"],
-    format: TQsfTextFormat,
+    format: TSurveyImportTextFormat,
     questionRef: string | null,
     defaultText: string
   ): TQsfTextKey {

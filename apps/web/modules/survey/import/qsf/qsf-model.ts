@@ -1,4 +1,5 @@
 import type { TSurveyImportPipelineIssue } from "../core/report";
+import type { TSurveyImportText } from "../core/sanitize-text";
 
 /**
  * What the reader recovers from a Qualtrics export (ENG-3654): only what the import uses, in shapes
@@ -17,20 +18,6 @@ import type { TSurveyImportPipelineIssue } from "../core/report";
  * survey text.
  */
 export type TQsfTextKey = string;
-
-/**
- * How a text is sanitized. `rich` keeps the follow-up email allowlist (headlines and the ending
- * message, ENG-3607); `plain` keeps the text only (choices, answers, names).
- */
-export type TQsfTextFormat = "rich" | "plain";
-
-export interface TQsfText {
-  format: TQsfTextFormat;
-  /** The question it belongs to, for report lines. */
-  questionRef: string | null;
-  /** Raw text by normalized language code. The default language is always present (maybe empty). */
-  byLanguage: Map<string, string>;
-}
 
 export interface TQsfOption {
   key: TQsfTextKey;
@@ -116,7 +103,7 @@ export interface TQsfSurvey {
   /** Questions in flow order. */
   questions: Map<string, TQsfQuestion>;
   pages: TQsfPage[];
-  texts: Map<TQsfTextKey, TQsfText>;
+  texts: Map<TQsfTextKey, TSurveyImportText>;
   /** Embedded data names from the flow and from `${e://Field/…}` references, first seen first. */
   embeddedDataNames: string[];
   endMessageKey: TQsfTextKey | null;
