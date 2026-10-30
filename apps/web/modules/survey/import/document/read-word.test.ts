@@ -56,6 +56,14 @@ describe("readWordDocument: paragraphs and tracked changes", () => {
     expect(textOf(docx({ body }))).toEqual(["P1: Rate the venue"]);
   });
 
+  test("drops deleted text whether its runs hold deleted text or plain text", () => {
+    const body = p(
+      `${r("Rate ")}<w:del w:id="1" w:author="a"><w:r><w:t>the old </w:t></w:r><w:r><w:delText>old </w:delText></w:r></w:del>${r("venue")}`
+    );
+
+    expect(textOf(docx({ body }))).toEqual(["P1: Rate venue"]);
+  });
+
   test("joins a paragraph whose mark was deleted to the next one, as Word shows the accepted text", () => {
     const body = [
       p(r("How old"), { pPr: `<w:rPr><w:del w:id="1" w:author="a"/></w:rPr>` }),
@@ -162,6 +170,7 @@ describe("readWordDocument: list numbering", () => {
       5: [
         ["upperRoman", "%1."],
         ["upperLetter", "%2."],
+        ["decimal", "%1.%3", "<w:isLgl/>"],
       ],
     },
     {
@@ -184,6 +193,7 @@ describe("readWordDocument: list numbering", () => {
       p("Part", { num: [4, 1] }),
       p("Roman", { num: [5, 0] }),
       p("Lettered", { num: [5, 1] }),
+      p("Legal", { num: [5, 2] }),
     ].join("");
 
     expect(textOf(docx({ body, numbering: lists }))).toEqual([
@@ -200,6 +210,8 @@ describe("readWordDocument: list numbering", () => {
       "P11: 1.1. Part",
       "P12: I. Roman",
       "P13: A. Lettered",
+      // Legal numbering writes the roman level above it as a decimal.
+      "P14: 1.1 Legal",
     ]);
   });
 

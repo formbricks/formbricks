@@ -43,6 +43,16 @@ describe("parseDocumentXml", () => {
     });
   });
 
+  test("reads a `>` or `/>` inside an attribute's value as text, not as the end of the tag", () => {
+    // Each level's attribute looks like it closes the tag: read so, no level would count.
+    const levels = (depth: number) => `${'<a v="/>">'.repeat(depth)}${"</a>".repeat(depth)}`;
+
+    expect(parse(levels(SURVEY_IMPORT_XML_MAX_DEPTH)).getAttribute("v")).toBe("/>");
+    expect(refusal(() => parse(levels(SURVEY_IMPORT_XML_MAX_DEPTH + 1)))).toMatchObject({
+      identifier: "xml_depth",
+    });
+  });
+
   test("takes exactly the element limit and refuses one element more", () => {
     expect(parse(flat(SURVEY_IMPORT_XML_MAX_ELEMENTS)).childNodes).toHaveLength(
       SURVEY_IMPORT_XML_MAX_ELEMENTS - 1
@@ -56,7 +66,8 @@ describe("parseDocumentXml", () => {
   test("does not count comments, CDATA or processing instructions as elements or levels", () => {
     // At the nesting limit already: markup-looking text inside them would push the part past it.
     const levels = SURVEY_IMPORT_XML_MAX_DEPTH;
-    const text = `${"<a>".repeat(levels)}<!-- <a><a> --><![CDATA[<a><a>]]><?pi <a>?>${"</a>".repeat(levels)}`;
+    const markup = "<a> <a> <a>";
+    const text = `${"<a>".repeat(levels)}<!-- ${markup} --><![CDATA[ ${markup} ]]><?pi ${markup} ?>${"</a>".repeat(levels)}`;
 
     expect(parse(text).localName).toBe("a");
   });
