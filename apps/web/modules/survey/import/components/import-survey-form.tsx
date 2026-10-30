@@ -23,8 +23,11 @@ const MAX_LISTED_PROBLEMS = 10;
 
 const IMPORT_STAGES: readonly TSurveyImportStage[] = ["reading", "ai", "assembling"];
 
-/** Where the "Very large survey?" hint points: importing through MCP with an AI assistant. */
-const MCP_DOCS_URL = "https://formbricks.com/docs/platform/mcp/overview";
+/**
+ * Where the "Very large survey?" hint points: the import docs' section on importing through MCP with an
+ * AI assistant, which says when a document is too large and links on to connecting the assistant.
+ */
+const MCP_DOCS_URL = "https://formbricks.com/docs/surveys/import-export/overview#very-large-surveys";
 
 type ImportSurveyFormProps = {
   workspaceId: string;
