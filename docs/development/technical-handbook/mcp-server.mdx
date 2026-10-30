@@ -1,12 +1,12 @@
 ---
 title: "MCP Server"
-description: "Configure and use the Formbricks v3 Surveys and Workflows MCP server"
+description: "Configure and use the Formbricks v3 Surveys, Creatives and Workflows MCP server"
 icon: "robot"
 ---
 
 ## Overview
 
-The Formbricks MCP server exposes v3 Surveys and Workflows tool surfaces for AI agents. It runs inside
+The Formbricks MCP server exposes v3 Surveys, Creatives and Workflows tool surfaces for AI agents. It runs inside
 the Formbricks web app at `/api/mcp` and reuses the same v3 API authentication, authorization,
 rate limiting, response handling, and audit logging paths as the REST routes.
 
@@ -2034,7 +2034,10 @@ query, like `create_feedback_record`.
 - OAuth access tokens must be JWTs audience-bound to `/api/mcp`; opaque MCP access token introspection is not
   accepted by the MCP route.
 - API-key authentication remains supported for compatibility and fallback use.
-- The MCP server exposes only the survey, workflow, response, feedback-record, chart and dashboard operations listed on this page.
+- The MCP server exposes only the survey, creative, workflow, response, feedback-record, chart and dashboard operations listed on this page.
+- Creative tools require a self-hosted Enterprise license that includes Creatives; elsewhere they answer
+  403 `creatives_not_entitled`. In wind-down (the license lost Creatives) only reads, pause, close and delete
+  are allowed. `POST /api/v3/creatives/pause` has no tool.
 - Survey and workflow tool coverage depends on the current v3 Surveys and Workflows REST endpoint
   coverage; feedback-record tool coverage depends on the Hub feedback-records API.
 - `enable_workflow` makes a workflow live and can trigger email sending; treat it as a high-impact

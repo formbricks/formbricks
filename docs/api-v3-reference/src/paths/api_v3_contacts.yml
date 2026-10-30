@@ -1,0 +1,130 @@
+get:
+  operationId: listContactsV3
+  summary: List contacts
+  description: |
+    Returns a workspace's contacts, filtered, searched, sorted and counted on the server. Requires the
+    Contacts entitlement (**403** without it). Session cookie, `x-api-key`, or a Bearer token.
+
+    **Attribute filters** use `filter[attribute.<key>][<operator>]=<value>`, where `<key>` is a
+    `ContactAttributeKeyResource.key` of the workspace (an unknown key → **400**). The operators depend
+    on the key's `dataType`; an operator the type does not support → **400**:
+
+    | dataType | operators |
+    | -------- | --------- |
+    | `string` | `in`, `eq`, `ne`, `contains`, `notContains`, `startsWith`, `endsWith`, `isSet`, `isNotSet` |
+    | `number` | `in`, `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, `isSet`, `isNotSet` |
+    | `date`   | `gte`, `lte` (ISO 8601 date-time with offset, inclusive), `isSet`, `isNotSet` |
+
+    Text comparisons are case-insensitive. `in` matches any of its values: repeat the key once per
+    value (`filter[attribute.plan][in]=Pro&filter[attribute.plan][in]=Team`). String values are taken
+    verbatim — never split on commas, since a value can contain one; a `number` `in` also accepts
+    comma-separated values. `ne`, `contains`, `notContains`, `startsWith` and `endsWith` may
+    also be repeated, and then every value must hold (AND). Every other operator takes exactly one
+    value (repeating it → **400**).
+    `isSet` / `isNotSet` ignore their value (send `true`). A value is *set* when the attribute row
+    exists and carries a value (non-empty text, or a non-null number/date). `ne` and
+    `notContains` match only contacts whose value is set and differs — use `isNotSet` for contacts
+    without one. All filters combine with AND. At most 50 distinct filter parameters per request and
+    at most 100 values per `in`.
+
+    The cursor is bound to `sortBy` and to the search and filter set; changing any of them while
+    paging → **400** naming `cursor`. Unknown query parameters → **400**.
+  tags:
+    - V3 Contacts
+  parameters:
+    - in: query
+      name: workspaceId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Workspace identifier.
+    - in: query
+      name: limit
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 250
+        default: 50
+      description: Page size (max 250).
+    - in: query
+      name: cursor
+      schema:
+        type: string
+      description: Opaque cursor returned as `meta.nextCursor` from the previous page.
+    - in: query
+      name: includeTotalCount
+      schema:
+        type: boolean
+        default: false
+      description: >
+        Whether to calculate `meta.totalCount`. Send `true` on the first page to get the count; when
+        omitted or `false` the count query is skipped and `meta.totalCount` is `null`.
+    - in: query
+      name: search
+      schema:
+        type: string
+        maxLength: 512
+      description: >
+        Case-insensitive substring match over any attribute value of the contact, or its id.
+    - in: query
+      name: sortBy
+      schema:
+        type: string
+        enum:
+          - -createdAt
+          - createdAt
+        default: -createdAt
+      description: "`-createdAt` (newest first, default) or `createdAt` (oldest first)."
+    - in: query
+      name: filter[createdAt][gte]
+      schema:
+        type: string
+        format: date-time
+      description: Only contacts created at or after this instant (ISO 8601 with offset).
+    - in: query
+      name: filter[createdAt][lte]
+      schema:
+        type: string
+        format: date-time
+      description: Only contacts created at or before this instant (ISO 8601 with offset).
+  responses:
+    "200":
+      description: Contacts retrieved successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: ../components/schemas/ContactResource.yml
+              meta:
+                $ref: ../components/schemas/CountedListMeta.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

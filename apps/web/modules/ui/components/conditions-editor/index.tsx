@@ -37,6 +37,8 @@ interface ConditionsEditorProps {
   depth?: number;
   quotaErrors?: FieldErrors<TSurveyQuotaInput>;
   isSubmitted?: boolean;
+  /** Hides the all/any picker: every condition combines with the group's fixed connector. */
+  isConnectorLocked?: boolean;
 }
 
 export function ConditionsEditor({
@@ -46,6 +48,7 @@ export function ConditionsEditor({
   depth = 0,
   quotaErrors,
   isSubmitted = false,
+  isConnectorLocked = false,
 }: Readonly<ConditionsEditorProps>) {
   const { t } = useTranslation();
   const [parent] = useAutoAnimate();
@@ -162,7 +165,9 @@ export function ConditionsEditor({
 
     const getConnector = () => {
       if (index > 0) return <div>{connector}</div>;
-      if (parentConditionGroup.conditions.length === 1) return <div>{t("workspace.surveys.edit.when")}</div>;
+      if (parentConditionGroup.conditions.length === 1 && config.showWhenLabel !== false) {
+        return <div>{t("workspace.surveys.edit.when")}</div>;
+      }
       return <div />;
     };
 
@@ -194,12 +199,17 @@ export function ConditionsEditor({
       );
     }
 
+    // Without "When", a lone rule has no connector to show: drop the slot instead of leaving a gap.
+    const showsConnectorSlot = config.showWhenLabel !== false || parentConditionGroup.conditions.length > 1;
+
     return (
       <div key={condition.id} className="flex flex-col gap-x-2">
         <div className="flex items-start gap-x-2">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-end text-sm font-medium text-slate-900">
-            {getConnector()}
-          </div>
+          {showsConnectorSlot && (
+            <div className="flex h-10 w-10 shrink-0 items-center justify-end text-sm font-medium text-slate-900">
+              {getConnector()}
+            </div>
+          )}
 
           {/* The three operands sit side by side when the editor has room (the survey logic card) and
               stack when it does not (a chart builder rail): a container query on the editor's own
@@ -281,7 +291,7 @@ export function ConditionsEditor({
   return (
     <div ref={parent} className="@container flex flex-col gap-y-4">
       {/* Dropdown for changing the connector */}
-      {conditions.conditions.length > 1 && (
+      {conditions.conditions.length > 1 && !isConnectorLocked && (
         <div className="flex items-center gap-x-2 text-sm">
           <p className="flex w-10 shrink-0 items-center justify-end font-medium text-slate-900">
             {t("workspace.surveys.edit.when")}

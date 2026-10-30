@@ -109,7 +109,7 @@
             "pages": ["surveys/overview", "surveys/analysis/reading-results"]
           },
           {
-            "group": "Survey Features",
+            "group": "Surveys",
             "pages": [
               {
                 "group": "General Features",
@@ -225,6 +225,16 @@
                   "surveys/question-type/thank-you-card"
                 ]
               }
+            ]
+          },
+          {
+            "group": "Creatives",
+            "pages": [
+              "surveys/creatives/overview",
+              "surveys/creatives/feedback-button",
+              "surveys/creatives/banner",
+              "surveys/creatives/when-it-shows",
+              "surveys/creatives/measure-performance"
             ]
           },
           {
@@ -395,7 +405,8 @@
                   "self-hosting/advanced/enterprise-features/unify-feedback",
                   "self-hosting/advanced/enterprise-features/dashboards",
                   "self-hosting/advanced/enterprise-features/ai-features",
-                  "self-hosting/advanced/enterprise-features/workflows"
+                  "self-hosting/advanced/enterprise-features/workflows",
+                  "self-hosting/advanced/enterprise-features/creatives"
                 ]
               }
             ]
@@ -415,6 +426,7 @@
               "development/technical-handbook/overview",
               "development/technical-handbook/api-gateway",
               "development/technical-handbook/api-v3-schema-generation",
+              "development/technical-handbook/creatives",
               "development/technical-handbook/mcp-server",
               "development/technical-handbook/cube-tenant-isolation",
               "development/technical-handbook/custom-css-rollout",

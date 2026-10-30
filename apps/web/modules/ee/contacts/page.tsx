@@ -3,7 +3,6 @@ import { getTranslate } from "@/lingodotdev/server";
 import { ContactsPageLayout } from "@/modules/ee/contacts/components/contacts-page-layout";
 import { UploadContactsCSVButton } from "@/modules/ee/contacts/components/upload-contacts-button";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
-import { getContacts } from "@/modules/ee/contacts/lib/contacts";
 import { getIsContactsEnabled, getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { ContactDataView } from "./components/contact-data-view";
@@ -20,7 +19,6 @@ export const ContactsPage = async ({ params: paramsProps }: { params: Promise<{ 
   const isQuotasAllowed = await getIsQuotasEnabled(organization.id);
 
   const contactAttributeKeys = isContactsEnabled ? await getContactAttributeKeys(workspace.id) : [];
-  const initialContacts = isContactsEnabled ? await getContacts(workspace.id, 0) : [];
 
   const AddContactsButton = (
     <UploadContactsCSVButton workspaceId={workspace.id} contactAttributeKeys={contactAttributeKeys} />
@@ -40,8 +38,6 @@ export const ContactsPage = async ({ params: paramsProps }: { params: Promise<{ 
         itemsPerPage={ITEMS_PER_PAGE}
         contactAttributeKeys={contactAttributeKeys}
         isReadOnly={isReadOnly}
-        initialContacts={initialContacts}
-        hasMore={initialContacts.length >= ITEMS_PER_PAGE}
         isQuotasAllowed={isQuotasAllowed}
       />
     </ContactsPageLayout>

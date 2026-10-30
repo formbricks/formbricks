@@ -19,7 +19,10 @@ const PROJECTION_BUDGET_MS = 60_000;
 const markedName = (surveyName: string, marker: string): RegExp => new RegExp(`${surveyName}\\s*, ${marker}`);
 
 const surveyRow = (page: Page, surveyName: string): Locator =>
-  page.locator("div.relative.block", { has: page.getByText(surveyName, { exact: true }) });
+  page
+    .getByTestId("survey-list-table")
+    .getByRole("row")
+    .filter({ has: page.getByText(surveyName, { exact: true }) });
 
 // A second member of the owner's organization who reaches the workspace through a readWrite team
 // grant — the role that sees every workspace-visible survey and no restricted one (setup as in

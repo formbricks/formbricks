@@ -103,6 +103,7 @@ authzed/*.perf.jsonl
 !.claude/skills/implement-spec
 !.claude/skills/retro
 !.claude/skills/tdd
+!.claude/skills/release-notes
 !.claude/skills/to-spec
 !.claude/skills/to-tickets
 !.claude/skills/writing-for-agents

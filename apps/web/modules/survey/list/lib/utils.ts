@@ -3,6 +3,7 @@ import { TWorkspaceConfigChannel } from "@formbricks/types/workspace";
 import { initialFilters } from "@/modules/survey/list/lib/constants";
 import {
   TSurveyOverviewFilters,
+  TSurveyOverviewOwner,
   TSurveyOverviewSort,
   TSurveyOverviewType,
 } from "@/modules/survey/list/types/survey-overview";
@@ -11,6 +12,7 @@ const allowedStatus = new Set(["draft", "inProgress", "paused", "completed", "ar
 const allowedType = new Set(["app", "link"] as const);
 const allowedSort = new Set(["createdAt", "updatedAt", "name", "relevance"] as const);
 const allowedVisibility = new Set(["restricted", "workspace"] as const);
+const allowedOwner = new Set(["me", "others"] as const);
 const compareNormalizedFilterValues = (left: string, right: string) => left.localeCompare(right);
 
 function getNormalizedStatus(value: unknown): TSurveyOverviewFilters["status"] {
@@ -54,6 +56,16 @@ export function getNormalizedVisibility(value: unknown): TSurveyVisibility[] {
   ].sort(compareNormalizedFilterValues);
 }
 
+function getNormalizedOwner(value: unknown): TSurveyOverviewOwner[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return [
+    ...new Set(value.filter((owner): owner is TSurveyOverviewOwner => allowedOwner.has(owner as never))),
+  ].sort(compareNormalizedFilterValues);
+}
+
 function getNormalizedSort(value: unknown): TSurveyOverviewSort {
   return allowedSort.has(value as never) ? (value as TSurveyOverviewSort) : initialFilters.sortBy;
 }
@@ -67,32 +79,7 @@ export function normalizeSurveyFilters(
     status: getNormalizedStatus(filters?.status),
     type: getNormalizedType(filters?.type, currentWorkspaceChannel),
     visibility: getNormalizedVisibility(filters?.visibility),
+    owner: getNormalizedOwner(filters?.owner),
     sortBy: getNormalizedSort(filters?.sortBy),
   };
-}
-
-/** Read the remembered filters; a stored `visibility` is dropped (see `serializeStoredSurveyFilters`). */
-export function parseStoredSurveyFilters(
-  storedValue: string | null,
-  currentWorkspaceChannel?: TWorkspaceConfigChannel
-): TSurveyOverviewFilters | null {
-  if (!storedValue) {
-    return null;
-  }
-
-  try {
-    const { visibility: _visibility, ...stored } = JSON.parse(storedValue) as Partial<TSurveyOverviewFilters>;
-    return normalizeSurveyFilters(stored, currentWorkspaceChannel);
-  } catch {
-    return null;
-  }
-}
-
-/**
- * The remembered filters. `visibility` is left out: it is not remembered between visits (ENG-3395), so a
- * filter set on one visit can never hide colleagues' surveys on the next one without being on screen.
- */
-export function serializeStoredSurveyFilters(filters: TSurveyOverviewFilters): string {
-  const { visibility: _visibility, ...remembered } = filters;
-  return JSON.stringify(remembered);
 }

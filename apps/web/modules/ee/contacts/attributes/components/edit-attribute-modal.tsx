@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { Calendar1Icon, HashIcon, TagIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -7,6 +8,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { contactQueryKeys } from "@/modules/ee/contacts/lib/query-keys";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -42,6 +44,7 @@ interface EditAttributeModalProps {
 export function EditAttributeModal({ attribute, open, setOpen }: Readonly<EditAttributeModalProps>) {
   const { t } = useTranslation();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [isUpdating, setIsUpdating] = useState(false);
   const [formData, setFormData] = useState({
     name: attribute.name ?? "",
@@ -67,6 +70,8 @@ export function EditAttributeModal({ attribute, open, setOpen }: Readonly<EditAt
       toast.success(t("workspace.contacts.attribute_updated_successfully"));
       setOpen(false);
       router.refresh();
+      // The lists read through TanStack Query, which a router refresh does not reach.
+      void queryClient.invalidateQueries({ queryKey: contactQueryKeys.all });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : t("common.something_went_wrong");
       toast.error(errorMessage);

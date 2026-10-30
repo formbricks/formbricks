@@ -1,10 +1,5 @@
 import { describe, expect, test } from "vitest";
-import {
-  getNormalizedVisibility,
-  normalizeSurveyFilters,
-  parseStoredSurveyFilters,
-  serializeStoredSurveyFilters,
-} from "./utils";
+import { getNormalizedVisibility, normalizeSurveyFilters } from "./utils";
 
 describe("normalizeSurveyFilters", () => {
   test("returns the normalized default filters when input is empty", () => {
@@ -13,6 +8,7 @@ describe("normalizeSurveyFilters", () => {
       status: [],
       type: [],
       visibility: [],
+      owner: [],
       sortBy: "relevance",
     });
   });
@@ -25,6 +21,7 @@ describe("normalizeSurveyFilters", () => {
         status: ["paused", "draft", "paused"],
         type: ["link", "app", "link"],
         visibility: ["workspace", "private", "restricted", "workspace"],
+        owner: [],
         sortBy: "name",
       } as any)
     ).toEqual({
@@ -32,6 +29,7 @@ describe("normalizeSurveyFilters", () => {
       status: ["draft", "paused"],
       type: ["app", "link"],
       visibility: ["restricted", "workspace"],
+      owner: [],
       sortBy: "name",
     });
   });
@@ -44,6 +42,7 @@ describe("normalizeSurveyFilters", () => {
           status: [],
           type: ["app", "link"],
           visibility: [],
+          owner: [],
           sortBy: "updatedAt",
         },
         "link"
@@ -53,59 +52,9 @@ describe("normalizeSurveyFilters", () => {
       status: [],
       type: [],
       visibility: [],
+      owner: [],
       sortBy: "updatedAt",
     });
-  });
-});
-
-describe("parseStoredSurveyFilters", () => {
-  test("returns null for invalid JSON", () => {
-    expect(parseStoredSurveyFilters("{")).toBeNull();
-  });
-
-  test("sanitizes legacy stored filters", () => {
-    expect(
-      parseStoredSurveyFilters(
-        JSON.stringify({
-          name: "  NPS  ",
-          createdBy: ["you"],
-          status: ["completed", "draft"],
-          type: ["link"],
-          sortBy: "createdAt",
-        })
-      )
-    ).toEqual({
-      name: "NPS",
-      status: ["completed", "draft"],
-      type: ["link"],
-      visibility: [],
-      sortBy: "createdAt",
-    });
-  });
-
-  test("drops a stored visibility filter: it is not remembered between visits", () => {
-    expect(
-      parseStoredSurveyFilters(
-        JSON.stringify({ name: "", status: [], type: [], visibility: ["restricted"], sortBy: "name" })
-      )
-    ).toEqual({ name: "", status: [], type: [], visibility: [], sortBy: "name" });
-  });
-});
-
-describe("serializeStoredSurveyFilters", () => {
-  test("omits visibility and round-trips everything else", () => {
-    const filters = {
-      name: "NPS",
-      status: ["draft" as const],
-      type: ["link" as const],
-      visibility: ["workspace" as const],
-      sortBy: "name" as const,
-    };
-
-    const serialized = serializeStoredSurveyFilters(filters);
-
-    expect(JSON.parse(serialized)).not.toHaveProperty("visibility");
-    expect(parseStoredSurveyFilters(serialized)).toEqual({ ...filters, visibility: [] });
   });
 });
 

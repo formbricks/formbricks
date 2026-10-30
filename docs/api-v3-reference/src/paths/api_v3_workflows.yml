@@ -75,6 +75,15 @@ get:
       description: >-
         Sort order. Defaults to `updatedAt` (newest first). The `cursor` token
         is bound to the selected sort order.
+    - in: query
+      name: includeTotalCount
+      schema:
+        type: boolean
+        default: false
+      description: >-
+        When `true`, `meta.totalCount` is the number of workflows matching the
+        same filters across all pages; otherwise it is `null`. Values other than
+        `true`/`false` → **400**.
   responses:
     "200":
       description: Workflows retrieved successfully
@@ -100,7 +109,7 @@ get:
                 items:
                   $ref: ../components/schemas/WorkflowListItem.yml
               meta:
-                $ref: ../components/schemas/CursorPaginationMeta.yml
+                $ref: ../components/schemas/CountedListMeta.yml
     "400":
       $ref: ../components/responses/V3BadRequest.yml
     "401":
