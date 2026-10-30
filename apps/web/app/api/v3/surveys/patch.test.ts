@@ -506,6 +506,48 @@ describe("patchV3Survey", () => {
     expect(currentSurvey.blocks.length).toBeGreaterThan(0);
   });
 
+  // ENG-6845: inside a caller's transaction nothing is committed when the patch returns, so the
+  // feedback-source reconciliation would diff mappings against blocks that may yet roll back.
+  test("under a caller's transaction, writes through it and reconciles feedback sources only after it commits", async () => {
+    const afterCommitEffects: Array<() => Promise<unknown>> = [];
+
+    await executeV3SurveyPatch({
+      currentSurvey,
+      document: {
+        name: "Renamed in the caller's transaction",
+        status: currentSurvey.status,
+        metadata: currentSurvey.metadata,
+        defaultLanguage: "en-US",
+        languages: [{ code: "en-US", enabled: true }],
+        showLanguageSwitch: null,
+        autoSelectLanguage: null,
+        welcomeCard: currentSurvey.welcomeCard,
+        blocks: currentSurvey.blocks,
+        endings: currentSurvey.endings,
+        hiddenFields: currentSurvey.hiddenFields,
+        variables: currentSurvey.variables,
+      },
+      languageRequests: [{ code: "en-US", default: true, enabled: true }],
+      requestId: "req_outer_tx",
+      transaction: {
+        tx: prisma as unknown as Prisma.TransactionClient,
+        afterCommit: (effect) => afterCommitEffects.push(effect),
+      },
+    });
+
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(prisma.survey.update).toHaveBeenCalledTimes(1);
+    expect(scheduleFeedbackSourceReconciliation).not.toHaveBeenCalled();
+
+    expect(afterCommitEffects).toHaveLength(1);
+    await afterCommitEffects[0]();
+    expect(scheduleFeedbackSourceReconciliation).toHaveBeenCalledWith(
+      currentSurvey.id,
+      currentSurvey.workspaceId,
+      currentSurvey.blocks
+    );
+  });
+
   test("patches metadata and hidden fields through v3 persistence", async () => {
     await patchV3Survey(
       currentSurvey,

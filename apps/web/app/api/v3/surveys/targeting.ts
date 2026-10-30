@@ -231,11 +231,15 @@ function collectV3TargetingFilterReferences(
  * identifiers are rejected, and device values must be a known device. Mirrors trigger action-class
  * validation (see resolveV3SurveyTriggers): each problem becomes a structured `invalid_reference` param
  * the v3 layer maps to a 422. Workspace lookups are skipped when no filter needs them.
+ *
+ * `tx`, when the write runs inside a caller's transaction (ENG-6845), is where the attribute keys are
+ * read from: an import creates the keys its targeting names in that transaction, before this check.
  */
 export async function assertV3SurveyTargetingFilterReferences(
   workspaceId: string,
   filters: TV3SurveyFilters,
-  visibleSurveyWhere: Prisma.SurveyWhereInput
+  visibleSurveyWhere: Prisma.SurveyWhereInput,
+  tx?: Prisma.TransactionClient
 ): Promise<void> {
   const references = collectV3TargetingFilterReferences(filters, "targeting.filters");
 
@@ -265,7 +269,9 @@ export async function assertV3SurveyTargetingFilterReferences(
 
   const attributeKeyRefs = references.filter((ref) => ref.kind === "attributeKey");
   if (attributeKeyRefs.length > 0) {
-    const attributeKeys = await getContactAttributeKeys(workspaceId);
+    const attributeKeys = tx
+      ? await tx.contactAttributeKey.findMany({ where: { workspaceId }, select: { key: true } })
+      : await getContactAttributeKeys(workspaceId);
     const knownKeys = new Set(attributeKeys.map((attributeKey) => attributeKey.key));
     for (const reference of attributeKeyRefs.filter((ref) => !knownKeys.has(ref.value))) {
       invalidParams.push({
