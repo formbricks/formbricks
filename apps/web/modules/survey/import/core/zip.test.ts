@@ -189,22 +189,30 @@ describe("openZipArchive, reading an entry", () => {
     expect(deflated.read("word/missing.xml")).toBeNull();
   });
 
-  test("counts the inflated bytes: a part takes 10 MiB and is refused one byte past it, whatever it declares", () => {
-    const read = (bytes: number) => {
-      const archive = setDeclaredSizes(
-        zipOf({ "word/document.xml": hexText(bytes) }, 1),
-        "word/document.xml",
-        {
-          // The directory understates the part, so only counting what comes out can catch it.
-          uncompressedSize: 1024,
-        }
-      );
-      return () => openZipArchive(archive).read("word/document.xml");
-    };
+  // Deflates and inflates two 10 MiB parts: well under a second alone, several under a full parallel run.
+  test(
+    "counts the inflated bytes: a part takes 10 MiB and is refused one byte past it, whatever it declares",
+    {
+      timeout: 30_000,
+    },
+    () => {
+      const text = hexText(SURVEY_IMPORT_ZIP_MAX_PART_BYTES + 1);
+      const read = (bytes: number) => {
+        const archive = setDeclaredSizes(
+          zipOf({ "word/document.xml": text.subarray(0, bytes) }, 1),
+          "word/document.xml",
+          {
+            // The directory understates the part, so only counting what comes out can catch it.
+            uncompressedSize: 1024,
+          }
+        );
+        return () => openZipArchive(archive).read("word/document.xml");
+      };
 
-    expectUnreadable(read(SURVEY_IMPORT_ZIP_MAX_PART_BYTES));
-    expectTooLarge(read(SURVEY_IMPORT_ZIP_MAX_PART_BYTES + 1), "zip_part_size");
-  });
+      expectUnreadable(read(SURVEY_IMPORT_ZIP_MAX_PART_BYTES));
+      expectTooLarge(read(SURVEY_IMPORT_ZIP_MAX_PART_BYTES + 1), "zip_part_size");
+    }
+  );
 
   test("counts the inflated bytes against the compression ratio, whatever the directory declares", () => {
     const archive = setDeclaredSizes(
