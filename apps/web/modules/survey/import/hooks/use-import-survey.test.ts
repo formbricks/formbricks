@@ -426,6 +426,24 @@ describe("useImportSurvey on a Match", () => {
     expect(vi.mocked(updateSurveyFromImport).mock.calls[1][1].updatedAt).toBe(match.updatedAt);
   });
 
+  test("stays on 'Update anyway' when that attempt fails for another reason", async () => {
+    vi.mocked(updateSurveyFromImport)
+      .mockRejectedValueOnce(conflict())
+      .mockRejectedValueOnce(new V3ApiError({ status: 503, detail: "busy", code: "service_unavailable" }));
+    const { result } = await reviewMatch();
+
+    act(() => result.current.handleOpenInEditor());
+    await waitFor(() => expect(result.current.conflict).toBe("stale"));
+    act(() => result.current.selectChoice("update"));
+    act(() => result.current.handleOpenInEditor());
+    await waitFor(() => expect(result.current.errorCode).toBe("service_unavailable"));
+
+    expect(result.current.conflict).toBe("stale");
+    act(() => result.current.handleOpenInEditor());
+    await waitFor(() => expect(updateSurveyFromImport).toHaveBeenCalledTimes(3));
+    expect(vi.mocked(updateSurveyFromImport).mock.calls[2][1].updatedAt).toBe(match.updatedAt);
+  });
+
   test("says so when the survey changed again after the review", async () => {
     vi.mocked(updateSurveyFromImport).mockRejectedValueOnce(conflict()).mockRejectedValueOnce(conflict());
     const { result } = await reviewMatch();
