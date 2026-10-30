@@ -60,6 +60,21 @@ const getQualtricsTypeName = (type: string, t: TTranslate): string => {
   }
 };
 
+/** The name of the encoding a text file was read as; an unknown one as sent. */
+const getEncodingName = (encoding: string, t: TTranslate): string => {
+  switch (encoding) {
+    case "utf-8":
+      return t("workspace.surveys.import.encodings.utf_8");
+    case "utf-16le":
+    case "utf-16be":
+      return t("workspace.surveys.import.encodings.utf_16");
+    case "windows-1252":
+      return t("workspace.surveys.import.encodings.windows_1252");
+    default:
+      return encoding;
+  }
+};
+
 /** Why a question was left out, from the server's `params.cause`. */
 const getSkippedQuestionMessage = (issue: TSurveyImportIssue, t: TTranslate): string => {
   switch (param(issue, "cause")) {
@@ -190,6 +205,10 @@ export const getQsfImportIssueMessage = (issue: TSurveyImportIssue, t: TTranslat
     }
     case "text_not_split":
       return t("workspace.surveys.import.issues.text_not_split", { cell: param(issue, "cell") });
+    case "file_encoding":
+      return t("workspace.surveys.import.issues.file_encoding", {
+        encoding: getEncodingName(param(issue, "encoding"), t),
+      });
     case "sheets_skipped":
       return t("workspace.surveys.import.issues.sheets_skipped", { sheets: param(issue, "sheets") });
     case "question_removed": {

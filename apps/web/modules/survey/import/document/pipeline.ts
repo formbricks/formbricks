@@ -218,10 +218,15 @@ export async function runDocumentImport(
           },
         ]
       : [];
-  const issues = [...skippedSheets, ...planned.issues, ...dropped, ...assembly.issues].map((issue) =>
-    issue.questionRef !== undefined && issue.questionTag === issue.questionRef
-      ? { ...issue, questionTag: labelOf(issue.questionRef) }
-      : issue
+  // A text file says how it was read: a list saved as Windows-1252 shows its accents only if read so.
+  const encodingNote: TSurveyImportPipelineIssue[] = prepared.model.encoding
+    ? [{ code: "file_encoding", severity: "info", params: { encoding: prepared.model.encoding } }]
+    : [];
+  const issues = [...encodingNote, ...skippedSheets, ...planned.issues, ...dropped, ...assembly.issues].map(
+    (issue) =>
+      issue.questionRef !== undefined && issue.questionTag === issue.questionRef
+        ? { ...issue, questionTag: labelOf(issue.questionRef) }
+        : issue
   );
 
   return {

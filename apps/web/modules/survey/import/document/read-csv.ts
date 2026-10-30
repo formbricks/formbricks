@@ -1,5 +1,6 @@
 import { CsvError, parse } from "csv-parse/sync";
 import { surveyImportFileUnreadable } from "../core/errors";
+import type { TSurveyImportTextEncoding } from "../core/sniff";
 import {
   SURVEY_IMPORT_SHEET_MAX_CELL_CHARS,
   SURVEY_IMPORT_SHEET_MAX_COLUMNS,
@@ -116,11 +117,14 @@ const checkRecords = (records: TCsvRecords): void => {
 };
 
 /**
- * Read a CSV question list (decoded UTF-8 text) into the document model. Throws
+ * Read a CSV question list (text, and the encoding the upload was decoded as) into the document model. Throws
  * `SurveyImportInputError` — a 422 — for a list past the sheet limits (`document_limit_exceeded`), one
  * csv-parse cannot read, or one with no text (`file_unreadable`).
  */
-export const readCsvDocument = (text: string): TDocumentModel => {
+export const readCsvDocument = (
+  text: string,
+  encoding: TSurveyImportTextEncoding = "utf-8"
+): TDocumentModel => {
   const delimiter = sniffCsvDelimiter(text);
 
   let records: TCsvRecords;
@@ -150,7 +154,7 @@ export const readCsvDocument = (text: string): TDocumentModel => {
   }
   checkRecords(records);
 
-  const model = buildGridModel("csv", records);
+  const model = buildGridModel("csv", records, { encoding });
   if (model.lines.length === 0) throw surveyImportFileUnreadable("The CSV file has no text");
   return model;
 };

@@ -4723,6 +4723,11 @@
         "dropzone_help": "Formbricks file (.json), Qualtrics export (.qsf), Excel (.xlsx) or CSV (.csv), up to 15 MB",
         "dropzone_help_json_only": "Formbricks file (.json), up to 15 MB",
         "dropzone_primary": "Drop a file here or click to choose one",
+        "encodings": {
+          "utf_16": "UTF-16",
+          "utf_8": "UTF-8",
+          "windows_1252": "Windows-1252 (Western European)"
+        },
         "errors": {
           "ai_busy": "The AI provider is busy. Try again in {seconds, plural, one {# second} other {# seconds}}.",
           "already_importing": "You already have an import running. Wait for it to finish, then try again.",
@@ -4791,6 +4796,7 @@
           "external_url_removed": "A link was removed because your plan does not allow external links.",
           "field_dropped": "{count, plural, one {# embedded data field was} other {# embedded data fields were}} left out: the survey cannot hold more.",
           "field_renamed": "Embedded data field \"{from}\" was renamed to \"{to}\".",
+          "file_encoding": "The file was read as {encoding} text. If letters with accents look wrong, save it as CSV UTF-8 and import it again.",
           "formatting_dropped": "Text colors and other formatting were removed.",
           "headline_fallback": "The question had no text, so its export tag is used instead.",
           "image_dropped": "An image was removed from the text.",

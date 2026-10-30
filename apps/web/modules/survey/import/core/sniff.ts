@@ -21,7 +21,13 @@ export type TSurveyImportFile =
   | { type: "qsf"; json: Record<string, unknown> }
   | { type: "docx"; archive: TZipArchive }
   | { type: "xlsx"; archive: TZipArchive; bytes: Uint8Array }
-  | { type: "csv"; text: string };
+  | { type: "csv"; text: string; encoding: TSurveyImportTextEncoding };
+
+/**
+ * How a text file was decoded (ENG-6852): UTF-8 (a byte-order mark dropped), UTF-16 when a byte-order
+ * mark says so, else Windows-1252, which is what Excel on Windows saves a CSV as.
+ */
+export type TSurveyImportTextEncoding = "utf-8" | "utf-16le" | "utf-16be" | "windows-1252";
 
 /** A local file header, or the end record of an empty archive. */
 const ZIP_SIGNATURES = [
@@ -102,10 +108,44 @@ const sniffJson = (text: string): TSurveyImportFile => {
 /** Decodes UTF-8, dropping a byte-order mark, and refuses anything that is not valid UTF-8. */
 const utf8 = new TextDecoder("utf-8", { fatal: true });
 
+/** C0 control characters other than tab, line feed and carriage return: never in a text file. */
+// eslint-disable-next-line no-control-regex -- matching control characters is the point
+const BINARY_CONTROL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/;
+
+/**
+ * Bytes as text, and the encoding they were read as: UTF-16 behind its byte-order mark, UTF-8 when the
+ * bytes are valid UTF-8, else Windows-1252 (German or French Excel's CSV), which decodes any byte.
+ * `null` for bytes that are no text: past UTF-8, a decoding that yields a control character other than
+ * tab or a line break is binary, not a legacy text file.
+ */
+const decodeText = (bytes: Uint8Array): { text: string; encoding: TSurveyImportTextEncoding } | null => {
+  const bom16 = startsWith(bytes, [0xff, 0xfe])
+    ? "utf-16le"
+    : startsWith(bytes, [0xfe, 0xff])
+      ? "utf-16be"
+      : null;
+  if (bom16) {
+    try {
+      const text = new TextDecoder(bom16, { fatal: true }).decode(bytes);
+      return BINARY_CONTROL.test(text) ? null : { text, encoding: bom16 };
+    } catch {
+      return null;
+    }
+  }
+  try {
+    const text = utf8.decode(bytes);
+    // Text never holds a NUL; binary formats nearly always do.
+    return text.includes("\u0000") ? null : { text, encoding: "utf-8" };
+  } catch {
+    const text = new TextDecoder("windows-1252").decode(bytes);
+    return BINARY_CONTROL.test(text) ? null : { text, encoding: "windows-1252" };
+  }
+};
+
 /**
  * Tell an uploaded file's type from its bytes, never from the name or the `Content-Type` the browser
  * sent (CODING_STANDARDS.md "File Uploads and Downloads"): the zip and Compound File signatures first,
- * then, for text, the JSON shape; any other text is a CSV.
+ * then, for text, the JSON shape; any other text is a CSV, decoded as `decodeText` tells.
  *
  * Throws `SurveyImportUnsupportedFileError` (415) for a kind of file the import does not read — a `.doc`
  * or `.xls` asked to be saved as `.docx` or `.xlsx` — `SurveyImportFileTooLargeError` (413) for an
@@ -121,16 +161,11 @@ export const sniffSurveyImportFile = (bytes: Uint8Array): TSurveyImportFile => {
     throw new SurveyImportUnsupportedFileError("Save the file as .docx or .xlsx", "legacy_office");
   }
 
-  let text: string;
-  try {
-    text = utf8.decode(bytes);
-  } catch {
-    throw unsupported();
-  }
-  // Text never holds a NUL; binary formats nearly always do.
-  if (text.includes("\u0000")) throw unsupported();
+  const decoded = decodeText(bytes);
+  if (!decoded) throw unsupported();
+  const { text, encoding } = decoded;
 
   const first = text.trimStart()[0];
   if (first === "{" || first === "[") return sniffJson(text);
-  return { type: "csv", text };
+  return { type: "csv", text, encoding };
 };

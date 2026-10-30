@@ -7,6 +7,7 @@
  * A reader of another kind of document (a Word file's paragraphs and table rows) builds the same model,
  * and the rest of the lane reads it unchanged.
  */
+import type { TSurveyImportTextEncoding } from "../core/sniff";
 
 export type TDocumentKind = "xlsx" | "csv";
 
@@ -36,6 +37,8 @@ export interface TDocumentModel {
   cells: ReadonlyMap<string, string>;
   /** Characters of every cell together: what the AI would read. */
   sourceChars: number;
+  /** How a text file was decoded, for the report; `null` for a file that is not text (a workbook). */
+  encoding: TSurveyImportTextEncoding | null;
 }
 
 /** `A` for column 0, `Z`, `AA`, … as Excel names columns. */
@@ -59,7 +62,13 @@ export const buildGridModel = (
     title = null,
     skippedParts = [],
     origin = { row: 0, column: 0 },
-  }: { title?: string | null; skippedParts?: string[]; origin?: { row: number; column: number } } = {}
+    encoding = null,
+  }: {
+    title?: string | null;
+    skippedParts?: string[];
+    origin?: { row: number; column: number };
+    encoding?: TSurveyImportTextEncoding | null;
+  } = {}
 ): TDocumentModel => {
   const lines: TDocumentLine[] = [];
   const cells = new Map<string, string>();
@@ -77,5 +86,5 @@ export const buildGridModel = (
     if (lineCells.length > 0) lines.push({ key: `R${origin.row + rowIndex + 1}`, cells: lineCells });
   });
 
-  return { kind, title, skippedParts, lines, cells, sourceChars };
+  return { kind, title, skippedParts, lines, cells, sourceChars, encoding };
 };

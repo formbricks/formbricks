@@ -160,6 +160,18 @@ describe("getQsfImportIssueLine", () => {
     ).toBe('sheets_skipped {"sheets":"Notes, Archive"}');
   });
 
+  test("says which encoding a text file was read as", () => {
+    expect(
+      getQsfImportIssueLine(
+        { code: "file_encoding", severity: "info", params: { encoding: "windows-1252" } },
+        t
+      )
+    ).toBe('file_encoding {"encoding":"windows_1252"}');
+    expect(
+      getQsfImportIssueLine({ code: "file_encoding", severity: "info", params: { encoding: "utf-16le" } }, t)
+    ).toBe('file_encoding {"encoding":"utf_16"}');
+  });
+
   test("names the languages whose ending shows a stand-in", () => {
     expect(
       getQsfImportIssueLine(

@@ -588,6 +588,46 @@ describe("the AI ceiling", () => {
   });
 });
 
+describe("a CSV's encoding", () => {
+  test("a list Excel saved as Windows-1252 imports with its umlauts and euro signs, and says how it was read", async () => {
+    ai.generate = recordedDocumentGenerate({
+      defaultLanguage: "de-DE",
+      languages: ["de-DE"],
+      titleCell: null,
+      questions: [
+        {
+          ...openTextEntry("R2", "B2"),
+          kind: "multipleChoiceSingle",
+          inputType: null,
+          headline: [{ language: "de-DE", cell: "B2", text: null }],
+          options: ["Unter 100 €", "Über 100 €"].map((text) => ({
+            code: null,
+            isOther: false,
+            texts: [{ language: "de-DE", cell: "C2", text }],
+          })),
+        },
+        { ...openTextEntry("R4", "B4"), headline: [{ language: "de-DE", cell: "B4", text: null }] },
+      ],
+      skipped: [],
+    });
+
+    const { payload, report } = await previewDone(loadDocumentFixture("budget-cp1252.csv"), "budget.csv");
+
+    const [budget, liked] = payload.blocks.flatMap((block) => block.elements);
+    expect(budget.headline).toEqual({ "de-DE": "Wie groß ist Ihr Budget in €?" });
+    expect((budget.choices as { label: Record<string, string> }[]).map((choice) => choice.label)).toEqual([
+      { "de-DE": "Unter 100 €" },
+      { "de-DE": "Über 100 €" },
+    ]);
+    expect(liked.headline).toEqual({ "de-DE": "Was hat Ihnen gefallen? (Größe, Lage, Öffnungszeiten)" });
+    expect(report.issues).toContainEqual({
+      code: "file_encoding",
+      severity: "info",
+      params: { encoding: "windows-1252" },
+    });
+  });
+});
+
 describe("the Excel export (ENG-6849)", () => {
   test("imports back as a new survey, word for word in both languages, with its logic", async () => {
     const bytes = writeExcelExport({

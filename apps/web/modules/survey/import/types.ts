@@ -87,6 +87,8 @@ export type TSurveyImportStage = "reading" | "ai" | "assembling";
  * - `text_not_split` — a cell whose question and options could not be told apart word for word, imported
  *   whole as the question's text (`params.cell`)
  * - `sheets_skipped` — the workbook's other sheets, which an import never reads (`params.sheets`)
+ * - `file_encoding` — how a text file was decoded (`params.encoding`: `utf-8`, `utf-16le`, `utf-16be`
+ *   or `windows-1252`)
  *
  * An Update's own (ENG-6851), in `TSurveyImportMatch.issues`, for a matched survey that has responses:
  *
@@ -230,6 +232,7 @@ export type TSurveyImportIssueCode =
   | "logic_imported"
   | "text_not_split"
   | "sheets_skipped"
+  | "file_encoding"
   | "question_removed"
   | "option_removed";
 

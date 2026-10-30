@@ -18,6 +18,7 @@ import {
 import { sniffSurveyImportFile } from "./sniff";
 
 const QSF_FIXTURE = join(dirname(fileURLToPath(import.meta.url)), "../qsf/__fixtures__/simple.qsf");
+const DOCUMENT_FIXTURES = join(dirname(fileURLToPath(import.meta.url)), "../document/__fixtures__");
 
 const encode = (text: string) => new TextEncoder().encode(text);
 const json = (value: unknown) => encode(JSON.stringify(value));
@@ -114,7 +115,11 @@ describe("sniffSurveyImportFile: the type comes from the content", () => {
   test("reads text that is neither JSON nor binary as a CSV, whatever its delimiter", () => {
     const file = sniffSurveyImportFile(encode("Frage;Typ\nWie zufrieden sind Sie?;Bewertung\n"));
 
-    expect(file).toEqual({ type: "csv", text: "Frage;Typ\nWie zufrieden sind Sie?;Bewertung\n" });
+    expect(file).toEqual({
+      type: "csv",
+      text: "Frage;Typ\nWie zufrieden sind Sie?;Bewertung\n",
+      encoding: "utf-8",
+    });
   });
 
   test("refuses a .doc or .xls with a 415 that says to save it as .docx or .xlsx", () => {
@@ -151,6 +156,54 @@ describe("sniffSurveyImportFile: the type comes from the content", () => {
 
     const error = refusal(() => sniffSurveyImportFile(zipOf(entries)));
     expect(error).toBeInstanceOf(SurveyImportFileTooLargeError);
+  });
+});
+
+describe("sniffSurveyImportFile: a text file's encoding", () => {
+  const fixture = (name: string) => new Uint8Array(readFileSync(join(DOCUMENT_FIXTURES, name)));
+
+  test("reads a CSV Excel saved as Windows-1252, umlauts and the euro sign included", () => {
+    const file = sniffSurveyImportFile(fixture("budget-cp1252.csv"));
+
+    expect(file).toMatchObject({ type: "csv", encoding: "windows-1252" });
+    expect(file.type === "csv" && file.text.split("\r\n")[1]).toBe(
+      "1;Wie groß ist Ihr Budget in €?;Unter 100 € / Über 100 €"
+    );
+  });
+
+  test("reads UTF-16 behind its byte-order mark, little- and big-endian, the mark dropped", () => {
+    const little = sniffSurveyImportFile(fixture("visit-utf16le-bom.csv"));
+    expect(little).toMatchObject({ type: "csv", encoding: "utf-16le" });
+    expect(little.type === "csv" && little.text.startsWith("No,Question,Options\n1,Café")).toBe(true);
+
+    const text = "No,Question\n1,¿Qué tal?\n";
+    const big = new Uint8Array(2 + text.length * 2);
+    big.set([0xfe, 0xff]);
+    [...text].forEach((character, index) => {
+      big[2 + index * 2] = character.charCodeAt(0) >> 8;
+      big[3 + index * 2] = character.charCodeAt(0) & 0xff;
+    });
+    expect(sniffSurveyImportFile(big)).toEqual({ type: "csv", text, encoding: "utf-16be" });
+  });
+
+  test("reads UTF-8 with or without a byte-order mark as UTF-8, the mark dropped", () => {
+    const withMark = new Uint8Array([0xef, 0xbb, 0xbf, ...encode("Größe;Preis\n")]);
+
+    expect(sniffSurveyImportFile(withMark)).toEqual({
+      type: "csv",
+      text: "Größe;Preis\n",
+      encoding: "utf-8",
+    });
+  });
+
+  test("refuses bytes that decode only to control characters as no text file, with a 415", () => {
+    // Not UTF-8 (0xff), and a SOH byte, which no Windows-1252 text holds.
+    expectUnsupported(new Uint8Array([0x61, 0x3b, 0xff, 0x01, 0x0a]));
+    // Tab, carriage return and line feed are text.
+    expect(sniffSurveyImportFile(new Uint8Array([0x61, 0x09, 0xe4, 0x0d, 0x0a]))).toMatchObject({
+      encoding: "windows-1252",
+      text: "a\tä\r\n",
+    });
   });
 });
 

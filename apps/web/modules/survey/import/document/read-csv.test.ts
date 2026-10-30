@@ -5,7 +5,7 @@ import {
   SURVEY_IMPORT_SHEET_MAX_COLUMNS,
   SURVEY_IMPORT_SHEET_MAX_ROWS,
 } from "../limits";
-import { loadDocumentFixtureText } from "./__fixtures__/load-fixture";
+import { loadDocumentFixture, loadDocumentFixtureText } from "./__fixtures__/load-fixture";
 import { readCsvDocument } from "./read-csv";
 
 const refusal = (run: () => unknown) => {
@@ -39,6 +39,18 @@ describe("readCsvDocument", () => {
     expect(model.cells.get("B7")).toBe("Rating (star, 1-5)");
     expect(model.cells.get("D3")).toBe("Option A; Option B; Option C");
     expect(model.title).toBeNull();
+  });
+
+  test("reads a Windows-1252 list's cells as the file writes them, and says how it was read", () => {
+    const model = readCsvDocument(
+      new TextDecoder("windows-1252").decode(loadDocumentFixture("budget-cp1252.csv")),
+      "windows-1252"
+    );
+
+    expect(model.encoding).toBe("windows-1252");
+    expect(model.cells.get("B2")).toBe("Wie groß ist Ihr Budget in €?");
+    expect(model.cells.get("C2")).toBe("Unter 100 € / Über 100 €");
+    expect(model.cells.get("B4")).toBe("Was hat Ihnen gefallen? (Größe, Lage, Öffnungszeiten)");
   });
 
   test.each([

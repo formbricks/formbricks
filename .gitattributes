@@ -16,3 +16,7 @@ packages/api-v3-schemas/src/generated/** linguist-generated=true eol=lf
 apps/web/modules/survey/import/qsf/__fixtures__/*.qsf linguist-generated=true
 apps/web/modules/survey/import/qsf/__fixtures__/*.json linguist-generated=true
 apps/web/modules/survey/import/qsf/__fixtures__/plans/** linguist-generated=true
+
+# The document import's CSV fixtures test decoding byte for byte (Windows-1252, UTF-16, CRLF): never
+# converted on checkout.
+apps/web/modules/survey/import/document/__fixtures__/*.csv -text

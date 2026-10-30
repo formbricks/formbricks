@@ -187,7 +187,7 @@ export async function streamSurveyImport({
       return runSurveyImportLane({
         ...lane,
         lane: csvImportLane,
-        input: { type: "csv", text: upload.text, fileName },
+        input: { type: "csv", text: upload.text, encoding: upload.encoding, fileName },
       });
     default:
       return problemUnsupportedMediaType(requestId, "This kind of file cannot be imported yet", {
