@@ -12,19 +12,18 @@ import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { getSessionUserId } from "@/app/api/v3/surveys/lib/operations";
 import { assertOrganizationAIConfigured } from "@/lib/ai/service";
 import { getAITimeoutMs } from "@/lib/ai/timeout";
+import { SurveyImportInputError, SurveyImportTimeoutError } from "@/modules/survey/import/core/errors";
 import { SURVEY_IMPORT_DEADLINE_MS } from "@/modules/survey/import/limits";
 import {
-  QsfImportInputError,
-  QsfImportTimeoutError,
   type TPreparedQsfImport,
   type TQsfImportResult,
   prepareQsfImport,
   runQsfImport,
 } from "@/modules/survey/import/qsf/pipeline";
 import type { TSurveyImportStage } from "@/modules/survey/import/types";
-import { QSF_IMPORT_HEARTBEAT_MS } from "./constants";
-import { importTimedOutEvent, toQsfImportStreamErrorEvent } from "./error-events";
-import type { TQsfImportStreamEvent } from "./events";
+import { SURVEY_IMPORT_HEARTBEAT_MS } from "./constants";
+import { importTimedOutEvent, toSurveyImportStreamErrorEvent } from "./error-events";
+import type { TSurveyImportStreamEvent } from "./events";
 import type { TQsfImportStreamBody } from "./schemas";
 
 const OPERATION = "surveys.import";
@@ -93,7 +92,7 @@ export async function streamQsfImport({
   try {
     prepared = prepareQsfImport(body.qsf, body.fileName);
   } catch (error) {
-    if (error instanceof QsfImportInputError) {
+    if (error instanceof SurveyImportInputError) {
       return problemUnprocessableContent(requestId, error.message, {
         instance,
         invalid_params: error.invalidParams,
@@ -117,8 +116,8 @@ export async function streamQsfImport({
   let errorCode: string | undefined;
   let result: TQsfImportResult | undefined;
 
-  return createNdjsonResponse<TQsfImportStreamEvent>({
-    heartbeat: { intervalMs: QSF_IMPORT_HEARTBEAT_MS, event: () => ({ type: "progress", stage }) },
+  return createNdjsonResponse<TSurveyImportStreamEvent>({
+    heartbeat: { intervalMs: SURVEY_IMPORT_HEARTBEAT_MS, event: () => ({ type: "progress", stage }) },
     produce: async (emit) => {
       const reportStage = (next: TSurveyImportStage) => {
         stage = next;
@@ -145,7 +144,7 @@ export async function streamQsfImport({
       // Before the client-abort check: the deadline aborts the same signal, and a timeout is something
       // to tell the user, not a quiet exit. An import whose AI calls all ran out of time before any
       // question was planned is the same to them; one slow call alone never ends the import.
-      const planTimedOut = error instanceof QsfImportTimeoutError;
+      const planTimedOut = error instanceof SurveyImportTimeoutError;
       if (importAbort.deadlineExceeded() || planTimedOut) {
         outcome = "timed_out";
         const event = importTimedOutEvent();
@@ -160,7 +159,7 @@ export async function streamQsfImport({
         return null;
       }
 
-      const event = toQsfImportStreamErrorEvent(error);
+      const event = toSurveyImportStreamErrorEvent(error);
       errorCode = event.code;
       log.error(loggableAIError(error), "QSF import failed");
       return event;

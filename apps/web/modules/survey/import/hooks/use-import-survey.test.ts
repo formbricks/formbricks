@@ -5,10 +5,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { type ReactNode, createElement } from "react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import type { TQsfImportStreamEvent } from "@/app/api/internal/surveys/import/lib/events";
+import type { TSurveyImportStreamEvent } from "@/app/api/internal/surveys/import/lib/events";
 import { V3ApiError } from "@/modules/api/lib/v3-client";
 import type { TSurveyImportDraft } from "@/modules/survey/import/core/draft";
-import { QsfImportRequestError, streamQsfImport } from "@/modules/survey/import/lib/import-stream-client";
+import { SurveyImportRequestError, streamQsfImport } from "@/modules/survey/import/lib/import-stream-client";
 import { createV3Survey } from "@/modules/survey/list/lib/v3-surveys-client";
 import { useImportSurvey } from "./use-import-survey";
 
@@ -46,7 +46,7 @@ const qsfFile = (
 ) => new File([content], name);
 
 /** Scripts the import stream: events go to `onEvent` in order; a thrown error is a pre-stream refusal. */
-const streamWith = (events: TQsfImportStreamEvent[], refusal?: Error) => {
+const streamWith = (events: TSurveyImportStreamEvent[], refusal?: Error) => {
   vi.mocked(streamQsfImport).mockImplementation(async (_body, { onEvent }) => {
     if (refusal) throw refusal;
     events.forEach(onEvent);
@@ -79,7 +79,7 @@ describe("useImportSurvey", () => {
       { type: "progress", stage: "ai" },
       { type: "progress", stage: "ai" },
       { type: "done", payload, report },
-    ] as TQsfImportStreamEvent[]);
+    ] as TSurveyImportStreamEvent[]);
     const { result } = renderImport();
 
     await act(async () => result.current.selectFile(qsfFile()));
@@ -108,7 +108,7 @@ describe("useImportSurvey", () => {
   test("turns a refusal into the dialog's code and keeps its Retry-After", async () => {
     streamWith(
       [],
-      new QsfImportRequestError(
+      new SurveyImportRequestError(
         new V3ApiError({ status: 429, detail: "wait", code: "too_many_requests" }),
         42
       )
@@ -125,7 +125,7 @@ describe("useImportSurvey", () => {
   test("splits a 400 for the file outgrowing the budget from other 400s", async () => {
     streamWith(
       [],
-      new QsfImportRequestError(
+      new SurveyImportRequestError(
         new V3ApiError({
           status: 400,
           detail: "Invalid request body",
@@ -139,13 +139,13 @@ describe("useImportSurvey", () => {
 
     await act(async () => result.current.selectFile(qsfFile()));
 
-    await waitFor(() => expect(result.current.errorCode).toBe("qsf_too_complex"));
+    await waitFor(() => expect(result.current.errorCode).toBe("file_too_complex"));
   });
 
   test("reports AI switched off since the page loaded, so the dialog shows the shared alert", async () => {
     streamWith(
       [],
-      new QsfImportRequestError(
+      new SurveyImportRequestError(
         new V3ApiError({ status: 403, detail: "off", code: "ai_smart_tools_disabled" }),
         null
       )
@@ -161,7 +161,7 @@ describe("useImportSurvey", () => {
     streamWith([
       { type: "start", requestId: "r1" },
       { type: "error", code: "ai_quota_exceeded", detail: "quota", retryAfter: 30 },
-    ] as TQsfImportStreamEvent[]);
+    ] as TSurveyImportStreamEvent[]);
     const { result } = renderImport();
 
     await act(async () => result.current.selectFile(qsfFile()));
@@ -171,7 +171,7 @@ describe("useImportSurvey", () => {
   });
 
   test("saves the reviewed draft as an import, as it came", async () => {
-    streamWith([{ type: "done", payload, report }] as TQsfImportStreamEvent[]);
+    streamWith([{ type: "done", payload, report }] as TSurveyImportStreamEvent[]);
     const { result } = renderImport();
 
     await act(async () => result.current.selectFile(qsfFile()));
@@ -199,7 +199,7 @@ describe("useImportSurvey", () => {
   });
 
   test("picking another file goes back to the drop zone", async () => {
-    streamWith([{ type: "done", payload, report }] as TQsfImportStreamEvent[]);
+    streamWith([{ type: "done", payload, report }] as TSurveyImportStreamEvent[]);
     const { result } = renderImport();
 
     await act(async () => result.current.selectFile(qsfFile()));

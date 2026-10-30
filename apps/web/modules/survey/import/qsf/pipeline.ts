@@ -5,13 +5,14 @@ import { getAITimeoutMs } from "@/lib/ai/timeout";
 import { AI_TRACING_FEATURE } from "@/lib/posthog/ai-tracing-feature";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import type { TSurveyImportDraft } from "../core/draft";
+import { SurveyImportFailedError } from "../core/errors";
 import type { TSurveyImportPipelineIssue } from "../core/report";
 import { buildSurveyImportReport } from "../core/report";
 import { SURVEY_IMPORT_AI_CALL_TIMEOUT_MS, SURVEY_IMPORT_AI_MAX_SOURCE_CHARS } from "../limits";
 import type { TSurveyImportReport, TSurveyImportStage } from "../types";
 import { type TQsfPlanGenerate, type TQsfPlanUsage, planQsfImport } from "./ai-plan";
 import { type TQsfAssembly, assembleQsfDraft } from "./assemble";
-import { QsfImportFailedError, qsfLimitExceeded } from "./errors";
+import { qsfLimitExceeded } from "./errors";
 import { yieldToOthers } from "./event-loop";
 import { checkQsfDraftInSlices, elementsAtFault } from "./final-gate";
 import { fitQsfDraftToCreateLimit, fitQsfSurveyToCreateLimit } from "./fit-draft";
@@ -19,8 +20,6 @@ import { estimateQsfMinimumPromptChars } from "./prompt";
 import type { TQsfSurvey } from "./qsf-model";
 import { readQsf } from "./read-qsf";
 import { sanitizeQsfTexts } from "./sanitize-text";
-
-export { QsfImportFailedError, QsfImportInputError, QsfImportTimeoutError } from "./errors";
 
 /**
  * The Qualtrics import pipeline (ENG-3654): a parsed QSF in, a v3 create document and the import
@@ -31,7 +30,7 @@ export { QsfImportFailedError, QsfImportInputError, QsfImportTimeoutError } from
  * opens:
  *
  * - `prepareQsfImport` is the reader and its limits: synchronous and cheap (≤ ~50 ms on the largest
- *   file), throwing `QsfImportInputError` for a 422;
+ *   file), throwing `SurveyImportInputError` for a 422;
  * - `runQsfImport` does the rest while the stream reports progress: sanitize the texts (yielding to
  *   the event loop), ask the AI for a plan and check it (`ai`), assemble the draft and gate it with
  *   the create's own checks (`assembling`).
@@ -75,7 +74,7 @@ export interface TRunQsfImportParams {
   generate?: TQsfPlanGenerate;
 }
 
-/** Read and check the file, before any AI call. Throws `QsfImportInputError` for a file it cannot read. */
+/** Read and check the file, before any AI call. Throws `SurveyImportInputError` for a file it cannot read. */
 export function prepareQsfImport(qsf: Record<string, unknown>, fileName: string): TPreparedQsfImport {
   const survey = readQsf(qsf);
   // Every part of the prompt is bounded, so only a hostile file gets here; refuse it before the stream.
@@ -125,7 +124,7 @@ async function assembleCheckedDraft(
   const atFault = elementsAtFault(problems);
   if (!atFault) {
     logger.error({ invalidParamNames: names }, "QSF import draft failed the create check outside an element");
-    throw new QsfImportFailedError("draft_invalid");
+    throw new SurveyImportFailedError("draft_invalid");
   }
 
   const excluded = new Set(atFault.flatMap(([block, element]) => first.elementRefs[block]?.[element] ?? []));
@@ -137,7 +136,7 @@ async function assembleCheckedDraft(
   const second = await build(excluded);
   await pause();
   if ((await checkQsfDraftInSlices(second.document, pause)).length > 0) {
-    throw new QsfImportFailedError("draft_invalid");
+    throw new SurveyImportFailedError("draft_invalid");
   }
 
   return {
@@ -181,7 +180,7 @@ export async function runQsfImport(params: TRunQsfImportParams): Promise<TQsfImp
 
   signal.throwIfAborted();
   onProgress("assembling");
-  if (planned.plan.questions.size === 0) throw new QsfImportFailedError("no_questions");
+  if (planned.plan.questions.size === 0) throw new SurveyImportFailedError("no_questions");
 
   // Only asked when there is a redirect to keep: on Cloud it is a billing lookup.
   const allowExternalUrls = survey.endRedirectUrl ? await getExternalUrlsPermission(organizationId) : false;
@@ -207,11 +206,11 @@ export async function runQsfImport(params: TRunQsfImportParams): Promise<TQsfImp
   // questions are cut, and only then is the cut draft checked again.
   await yieldToOthers(signal);
   const fitted = fitQsfDraftToCreateLimit(assembly, survey);
-  if (countElements(assembly.document) === 0) throw new QsfImportFailedError("no_questions");
+  if (countElements(assembly.document) === 0) throw new SurveyImportFailedError("no_questions");
   if (fitted.dropped.length > 0) {
     await yieldToOthers(signal);
     const problems = await checkQsfDraftInSlices(assembly.document, () => yieldToOthers(signal));
-    if (problems.length > 0) throw new QsfImportFailedError("draft_invalid");
+    if (problems.length > 0) throw new SurveyImportFailedError("draft_invalid");
   }
 
   // A redirect replaces the end message, as in Qualtrics, so what sanitizing removed from it is moot.

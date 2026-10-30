@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
+import { SurveyImportInputError } from "../core/errors";
 import { SURVEY_IMPORT_MAX_OPTIONS_PER_QUESTION, SURVEY_IMPORT_MAX_TEXT_CHARS } from "../limits";
 import { loadQsfFixture } from "./__fixtures__/load-fixture";
-import { QsfImportInputError } from "./errors";
 import { OBJECT_MEMBER_NAMES } from "./id-registry";
 import { normalizeQualtricsLanguageCode } from "./language-codes";
 import {
@@ -14,11 +14,11 @@ import {
 } from "./limits";
 import { readQsf } from "./read-qsf";
 
-const readError = (qsf: Record<string, unknown>): QsfImportInputError => {
+const readError = (qsf: Record<string, unknown>): SurveyImportInputError => {
   try {
     readQsf(qsf);
   } catch (error) {
-    if (error instanceof QsfImportInputError) return error;
+    if (error instanceof SurveyImportInputError) return error;
     throw error;
   }
   throw new Error("readQsf did not refuse the file");

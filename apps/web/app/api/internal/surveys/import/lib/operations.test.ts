@@ -2,13 +2,10 @@ import { APICallError } from "ai";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { OperationNotAllowedError, TooManyRequestsError } from "@formbricks/types/errors";
 import { problemForbidden } from "@/app/api/v3/lib/response";
+import { SurveyImportTimeoutError } from "@/modules/survey/import/core/errors";
 import { SURVEY_IMPORT_DEADLINE_MS } from "@/modules/survey/import/limits";
-import {
-  QsfImportTimeoutError,
-  type TQsfImportResult,
-  type TRunQsfImportParams,
-} from "@/modules/survey/import/qsf/pipeline";
-import { QSF_IMPORT_HEARTBEAT_MS } from "./constants";
+import { type TQsfImportResult, type TRunQsfImportParams } from "@/modules/survey/import/qsf/pipeline";
+import { SURVEY_IMPORT_HEARTBEAT_MS } from "./constants";
 import { streamQsfImport } from "./operations";
 import type { TQsfImportStreamBody } from "./schemas";
 
@@ -290,7 +287,7 @@ describe("streamQsfImport", () => {
 
       const response = await call();
       const events = readEvents(response);
-      await vi.advanceTimersByTimeAsync(QSF_IMPORT_HEARTBEAT_MS * 2);
+      await vi.advanceTimersByTimeAsync(SURVEY_IMPORT_HEARTBEAT_MS * 2);
       finish?.(importResult);
       await vi.advanceTimersByTimeAsync(0);
 
@@ -357,7 +354,7 @@ describe("streamQsfImport", () => {
     });
 
     test("reports a plan that ran out of time before any question was planned as a timeout", async () => {
-      mocks.runQsfImport.mockRejectedValue(new QsfImportTimeoutError());
+      mocks.runQsfImport.mockRejectedValue(new SurveyImportTimeoutError());
 
       const events = await readEvents(await call());
 

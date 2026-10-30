@@ -4,12 +4,12 @@ export const QSF_FILE_EXTENSION = ".qsf";
 
 /** Why the browser refused a file before uploading it. */
 export type TQsfFileError =
-  | "qsf_wrong_extension"
-  | "qsf_empty"
-  | "qsf_too_large"
+  | "file_wrong_extension"
+  | "file_empty"
+  | "file_too_large"
   | "qsf_not_json"
   | "qsf_not_object"
-  | "qsf_unreadable";
+  | "file_unreadable";
 
 export type TQsfFileReadResult =
   | { ok: true; fileName: string; qsf: Record<string, unknown> }
@@ -17,9 +17,9 @@ export type TQsfFileReadResult =
 
 /** What can be refused from the file's name and size alone, before reading it. */
 export const checkQsfFile = (file: { name: string; size: number }): TQsfFileError | null => {
-  if (!file.name.toLowerCase().endsWith(QSF_FILE_EXTENSION)) return "qsf_wrong_extension";
-  if (file.size === 0) return "qsf_empty";
-  if (file.size > SURVEY_IMPORT_MAX_FILE_BYTES) return "qsf_too_large";
+  if (!file.name.toLowerCase().endsWith(QSF_FILE_EXTENSION)) return "file_wrong_extension";
+  if (file.size === 0) return "file_empty";
+  if (file.size > SURVEY_IMPORT_MAX_FILE_BYTES) return "file_too_large";
   return null;
 };
 
@@ -39,7 +39,7 @@ export const readQsfFile = async (file: File): Promise<TQsfFileReadResult> => {
   try {
     text = await file.text();
   } catch {
-    return { ok: false, error: "qsf_unreadable" };
+    return { ok: false, error: "file_unreadable" };
   }
   // `File.text()` decodes as UTF-8 and drops a leading BOM; the slice covers a file read some other way.
   const json = text.startsWith("﻿") ? text.slice(1) : text;

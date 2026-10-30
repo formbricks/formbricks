@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { SurveyImportInputError } from "../core/errors";
 import { SURVEY_IMPORT_MAX_DRAFT_BYTES, SURVEY_IMPORT_MAX_TEXT_CHARS } from "../limits";
 import { cpuMsSince } from "./__fixtures__/cpu-time";
 import { loadQsfFixture } from "./__fixtures__/load-fixture";
@@ -19,7 +20,7 @@ import { checkQsfDraft } from "./final-gate";
 import { fitQsfSurveyToCreateLimit, measureQsfDraftBytes } from "./fit-draft";
 import { normalizeQualtricsLanguageCode } from "./language-codes";
 import { QSF_RECALL_FALLBACK } from "./piped-text";
-import { QsfImportInputError, prepareQsfImport, runQsfImport } from "./pipeline";
+import { prepareQsfImport, runQsfImport } from "./pipeline";
 import type { TQsfSurvey } from "./qsf-model";
 
 /**
@@ -318,7 +319,7 @@ describe("event loop", () => {
     });
 
     // Structural: refused on the count of keys.
-    expect((refused as QsfImportInputError).invalidParams[0].name).toBe(
+    expect((refused as SurveyImportInputError).invalidParams[0].name).toBe(
       "qsf.SurveyElements.0.Payload.Language"
     );
     // The survey's own default language is the one code looked up; no `Language` key is.
@@ -339,7 +340,7 @@ describe("event loop", () => {
       }
     });
 
-    expect(refused).toBeInstanceOf(QsfImportInputError);
+    expect(refused).toBeInstanceOf(SurveyImportInputError);
     // The survey's own default language is the one code looked up; no `Language` key is.
     expect(seen.languageCodeLookups).toBe(1);
     // V8 enumerating 390,000 keys once (~80 ms here); the route's JSON.parse of that body takes longer.

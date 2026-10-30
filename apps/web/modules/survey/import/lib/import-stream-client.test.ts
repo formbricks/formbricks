@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import {
-  QSF_IMPORT_STREAM_ENDPOINT,
-  QsfImportRequestError,
+  SURVEY_IMPORT_STREAM_ENDPOINT,
+  SurveyImportRequestError,
   parseRetryAfterSeconds,
   streamQsfImport,
 } from "./import-stream-client";
@@ -50,7 +50,7 @@ describe("streamQsfImport", () => {
       { type: "done", payload: {}, report: {} },
     ]);
     expect(fetchMock).toHaveBeenCalledWith(
-      QSF_IMPORT_STREAM_ENDPOINT,
+      SURVEY_IMPORT_STREAM_ENDPOINT,
       expect.objectContaining({ method: "POST", body: JSON.stringify(body) })
     );
   });
@@ -69,7 +69,7 @@ describe("streamQsfImport", () => {
 
     const error = await collect().catch((thrown: unknown) => thrown);
 
-    expect(error).toBeInstanceOf(QsfImportRequestError);
+    expect(error).toBeInstanceOf(SurveyImportRequestError);
     expect(error).toMatchObject({ status: 429, code: "concurrency_limit_reached", retryAfterSeconds: 15 });
   });
 

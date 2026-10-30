@@ -1,5 +1,6 @@
 import { NoObjectGeneratedError, NoOutputGeneratedError, TypeValidationError } from "ai";
 import { AIOutputTokenLimitError } from "@formbricks/ai";
+import { SurveyImportFailedError, SurveyImportTimeoutError } from "../core/errors";
 import type { TSurveyImportPipelineIssue } from "../core/report";
 import {
   SURVEY_IMPORT_AI_CALL_TIMEOUT_MS,
@@ -9,7 +10,6 @@ import {
   SURVEY_IMPORT_MAX_QUESTIONS,
 } from "../limits";
 import { decideQsfRetry, waitForRetry } from "./call-retry";
-import { QsfImportFailedError, QsfImportTimeoutError } from "./errors";
 import {
   type TQsfCheckedPlan,
   type TQsfPlanFailure,
@@ -54,7 +54,7 @@ import { unsupportedTypeSeverity } from "./unsupported-types";
  * Only the import's own signal ends the import: Stop, a disconnect, or the route's deadline. Each call's
  * timeout is sized to what is left before that deadline, less the assembly reserve, so the calls left
  * when time runs out are dropped and the questions planned so far are still assembled. Only when time
- * ran out before any question was planned is it `QsfImportTimeoutError`, the route's timeout event.
+ * ran out before any question was planned is it `SurveyImportTimeoutError`, the route's timeout event.
  *
  * Every call counts against a call cap and an output-token budget — chunks, splits and the retry
  * round together, failed calls included — sized from the import's own chunks and never above
@@ -511,7 +511,7 @@ export async function planQsfImport(params: {
   const { refs, issues } = preSkip(survey);
   // Refused before any AI call when no limits fit the survey into the prompt budget.
   const limits = chooseQsfPromptLimits(survey, refs, texts);
-  if (!limits) throw new QsfImportFailedError("prompt_budget");
+  if (!limits) throw new SurveyImportFailedError("prompt_budget");
 
   const abort = new AbortController();
   const context: TPlanContext = {
@@ -581,7 +581,7 @@ export async function planQsfImport(params: {
     plan.questions.size === 0 &&
     (context.ranOutOfTime || [...plan.failures.values()].some((reasons) => reasons.includes("ai_timeout")))
   ) {
-    throw new QsfImportTimeoutError();
+    throw new SurveyImportTimeoutError();
   }
 
   return { plan, issues, usage: context.usage, calls: context.calls };

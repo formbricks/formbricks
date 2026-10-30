@@ -2,6 +2,7 @@ import { APICallError, NoObjectGeneratedError } from "ai";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { AIOutputTokenLimitError } from "@formbricks/ai";
 import { TooManyRequestsError } from "@formbricks/types/errors";
+import { SurveyImportTimeoutError } from "../core/errors";
 import {
   SURVEY_IMPORT_AI_CALL_TIMEOUT_MS,
   SURVEY_IMPORT_AI_CHUNK_OUTPUT_TOKENS,
@@ -25,7 +26,6 @@ import {
   chunkQuestions,
   planQsfImport,
 } from "./ai-plan";
-import { QsfImportTimeoutError } from "./errors";
 import {
   QSF_PROMPT_MAX_CALL_CHARS,
   QSF_PROMPT_MAX_TOTAL_CHARS,
@@ -499,7 +499,7 @@ describe("planQsfImport", () => {
       throw new DOMException("The operation timed out.", "TimeoutError");
     });
 
-    await expect(plan("simple.qsf", generate)).rejects.toBeInstanceOf(QsfImportTimeoutError);
+    await expect(plan("simple.qsf", generate)).rejects.toBeInstanceOf(SurveyImportTimeoutError);
     // The chunk, then its two halves: a timed-out call is split like one that ran out of tokens.
     expect(generate).toHaveBeenCalledTimes(3);
   });
@@ -545,7 +545,7 @@ describe("planQsfImport", () => {
     // 9.9 s to the deadline, 5 s kept for assembly: 4.9 s for the call, under the minimum. Nothing
     // was planned because time ran out, so to the user the import took too long.
     await expect(plan("simple.qsf", generate, { deadlineInMs: 9_900 })).rejects.toBeInstanceOf(
-      QsfImportTimeoutError
+      SurveyImportTimeoutError
     );
     expect(generate).not.toHaveBeenCalled();
   });
@@ -754,7 +754,7 @@ describe("planQsfImport with a model that takes time", () => {
     const { result, error, elapsed, requests } = await planTimed(() => Infinity);
 
     expect(result).toBeNull();
-    expect(error).toBeInstanceOf(QsfImportTimeoutError);
+    expect(error).toBeInstanceOf(SurveyImportTimeoutError);
     expect(elapsed).toBeLessThanOrEqual(120_000 - QSF_ASSEMBLY_RESERVE_MS);
     for (const request of requests) {
       expect(request.at + request.timeout).toBeLessThanOrEqual(120_000 - QSF_ASSEMBLY_RESERVE_MS);

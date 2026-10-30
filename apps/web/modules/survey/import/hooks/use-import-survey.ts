@@ -7,8 +7,8 @@ import {
   useDraftCreation,
 } from "@/modules/survey/components/template-list/hooks/use-draft-creation";
 import type { TSurveyImportDraft } from "@/modules/survey/import/core/draft";
-import { getQsfImportRequestErrorCode } from "@/modules/survey/import/lib/import-errors";
-import { QsfImportRequestError, streamQsfImport } from "@/modules/survey/import/lib/import-stream-client";
+import { getSurveyImportRequestErrorCode } from "@/modules/survey/import/lib/import-errors";
+import { SurveyImportRequestError, streamQsfImport } from "@/modules/survey/import/lib/import-stream-client";
 import { payloadToDraftSnapshot } from "@/modules/survey/import/lib/payload-to-draft";
 import { type TQsfFileError, readQsfFile } from "@/modules/survey/import/lib/qsf-file";
 import type { TSurveyImportReport, TSurveyImportStage } from "@/modules/survey/import/types";
@@ -76,10 +76,10 @@ export const useImportSurvey = ({ workspaceId, isAIAvailable, onSuccess }: UseIm
         );
       } catch (error) {
         // Stop aborts the fetch, and the shared hook already ignores that; only refusals map here.
-        if (!(error instanceof QsfImportRequestError)) throw error;
+        if (!(error instanceof SurveyImportRequestError)) throw error;
 
         setRetryAfterSeconds(error.retryAfterSeconds);
-        handlers.onEvent({ type: "error", code: getQsfImportRequestErrorCode(error) });
+        handlers.onEvent({ type: "error", code: getSurveyImportRequestErrorCode(error) });
       }
     },
     [workspaceId]

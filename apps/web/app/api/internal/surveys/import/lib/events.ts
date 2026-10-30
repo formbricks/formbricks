@@ -3,20 +3,20 @@ import type { TSurveyImportDraft } from "@/modules/survey/import/core/draft";
 import type { TSurveyImportReport, TSurveyImportStage } from "@/modules/survey/import/types";
 
 /** Codes that can only be raised after the stream opened. Everything else is a pre-stream problem+json. */
-export const QSF_IMPORT_STREAM_ERROR_CODES = {
+export const SURVEY_IMPORT_STREAM_ERROR_CODES = {
   ...AI_STREAM_FAILURE_CODES,
   TIMED_OUT: "import_timed_out",
   FAILED: "import_failed",
 } as const;
 
-export type TQsfImportStreamErrorCode =
-  (typeof QSF_IMPORT_STREAM_ERROR_CODES)[keyof typeof QSF_IMPORT_STREAM_ERROR_CODES];
+export type TSurveyImportStreamErrorCode =
+  (typeof SURVEY_IMPORT_STREAM_ERROR_CODES)[keyof typeof SURVEY_IMPORT_STREAM_ERROR_CODES];
 
 /**
  * The NDJSON events of `POST /api/internal/surveys/import/stream`, in order: start, progress…, done or
  * error.
  */
-export type TQsfImportStreamEvent =
+export type TSurveyImportStreamEvent =
   /**
    * Written before any work starts. Next only flushes response headers on the first chunk, so without
    * it the client's `fetch()` would not resolve until the import had produced something.
@@ -29,4 +29,4 @@ export type TQsfImportStreamEvent =
    * is — the request body, locale-keyed, before parsing — and its report.
    */
   | { type: "done"; payload: TSurveyImportDraft; report: TSurveyImportReport }
-  | { type: "error"; code: TQsfImportStreamErrorCode; detail: string; retryAfter?: number };
+  | { type: "error"; code: TSurveyImportStreamErrorCode; detail: string; retryAfter?: number };

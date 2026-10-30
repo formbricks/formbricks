@@ -4,4 +4,4 @@
  */
 
 /** Longest silence on the stream. Well under nginx's 60 s default read timeout. */
-export const QSF_IMPORT_HEARTBEAT_MS = 10_000;
+export const SURVEY_IMPORT_HEARTBEAT_MS = 10_000;

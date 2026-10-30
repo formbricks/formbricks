@@ -6,10 +6,10 @@ const qsfFile = (content: string, name = "survey.qsf") => new File([content], na
 
 describe("checkQsfFile", () => {
   test.each([
-    ["survey.json", 10, "qsf_wrong_extension"],
-    ["survey.qsf.txt", 10, "qsf_wrong_extension"],
-    ["survey.qsf", 0, "qsf_empty"],
-    ["survey.qsf", SURVEY_IMPORT_MAX_FILE_BYTES + 1, "qsf_too_large"],
+    ["survey.json", 10, "file_wrong_extension"],
+    ["survey.qsf.txt", 10, "file_wrong_extension"],
+    ["survey.qsf", 0, "file_empty"],
+    ["survey.qsf", SURVEY_IMPORT_MAX_FILE_BYTES + 1, "file_too_large"],
   ])("refuses %s of %i bytes as %s", (name, size, error) => {
     expect(checkQsfFile({ name, size })).toBe(error);
   });
@@ -50,13 +50,13 @@ describe("readQsfFile", () => {
     const file = qsfFile("{}");
     file.text = () => Promise.reject(new DOMException("Gone", "NotReadableError"));
 
-    expect(await readQsfFile(file)).toEqual({ ok: false, error: "qsf_unreadable" });
+    expect(await readQsfFile(file)).toEqual({ ok: false, error: "file_unreadable" });
   });
 
   test("refuses by name and size before reading the content", async () => {
     expect(await readQsfFile(qsfFile("{}", "survey.json"))).toEqual({
       ok: false,
-      error: "qsf_wrong_extension",
+      error: "file_wrong_extension",
     });
   });
 });

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { AIOutputTokenLimitError } from "@formbricks/ai";
 import { prepareV3SurveyCreateInput } from "@/app/api/v3/surveys/prepare";
 import type { TSurveyImportDraft } from "../core/draft";
+import { SurveyImportFailedError, SurveyImportInputError, SurveyImportTimeoutError } from "../core/errors";
 import type { TSurveyImportReport } from "../types";
 import {
   IMPORTABLE_QSF_FIXTURES,
@@ -12,14 +13,7 @@ import { loadRecordedPlan, recordedGenerate, timedGenerate } from "./__fixtures_
 import type { TQsfPlanGenerate } from "./ai-plan";
 import { checkQsfDraft } from "./final-gate";
 import { isObjectMemberName } from "./id-registry";
-import {
-  QsfImportFailedError,
-  QsfImportInputError,
-  QsfImportTimeoutError,
-  type TRunQsfImportParams,
-  prepareQsfImport,
-  runQsfImport,
-} from "./pipeline";
+import { type TRunQsfImportParams, prepareQsfImport, runQsfImport } from "./pipeline";
 
 const mocks = vi.hoisted(() => ({
   generateOrganizationAIObject: vi.fn(),
@@ -211,8 +205,8 @@ describe("prepareQsfImport", () => {
     ["any other JSON file", "not-a-qsf.json"],
     ["a flow nested past the cap", "deep-flow.qsf"],
     ["a survey past the question limit", "over-limit.qsf"],
-  ])("refuses %s with QsfImportInputError, before any AI", (_case, fixture) => {
-    expect(() => prepareQsfImport(loadQsfFixture(fixture), fixture)).toThrow(QsfImportInputError);
+  ])("refuses %s with SurveyImportInputError, before any AI", (_case, fixture) => {
+    expect(() => prepareQsfImport(loadQsfFixture(fixture), fixture)).toThrow(SurveyImportInputError);
   });
 });
 
@@ -416,7 +410,7 @@ describe("runQsfImport on recorded plans", () => {
     // 9.9 s for the whole import: 4.9 s for a call once assembly is reserved, under the 5 s minimum.
     const error = await run("simple.qsf", { deadlineMs: 9_900 }).catch((caught: unknown) => caught);
 
-    expect(error).toBeInstanceOf(QsfImportTimeoutError);
+    expect(error).toBeInstanceOf(SurveyImportTimeoutError);
     expect(mocks.generateOrganizationAIObject).not.toHaveBeenCalled();
   });
 
@@ -427,8 +421,8 @@ describe("runQsfImport on recorded plans", () => {
 
     const error = await run("simple.qsf").catch((caught: unknown) => caught);
 
-    expect(error).toBeInstanceOf(QsfImportFailedError);
-    expect((error as QsfImportFailedError).reason).toBe("no_questions");
+    expect(error).toBeInstanceOf(SurveyImportFailedError);
+    expect((error as SurveyImportFailedError).reason).toBe("no_questions");
   });
 
   test("fails the import when no question survives", async () => {
@@ -442,8 +436,8 @@ describe("runQsfImport on recorded plans", () => {
 
     const error = await run("simple.qsf").catch((caught: unknown) => caught);
 
-    expect(error).toBeInstanceOf(QsfImportFailedError);
-    expect((error as QsfImportFailedError).reason).toBe("no_questions");
+    expect(error).toBeInstanceOf(SurveyImportFailedError);
+    expect((error as SurveyImportFailedError).reason).toBe("no_questions");
   });
 
   test("drops an element the create would refuse, reports it and assembles again", async () => {
@@ -480,8 +474,8 @@ describe("runQsfImport on recorded plans", () => {
 
     const error = await run("simple.qsf").catch((caught: unknown) => caught);
 
-    expect(error).toBeInstanceOf(QsfImportFailedError);
-    expect((error as QsfImportFailedError).reason).toBe("draft_invalid");
+    expect(error).toBeInstanceOf(SurveyImportFailedError);
+    expect((error as SurveyImportFailedError).reason).toBe("draft_invalid");
   });
 
   test("asks about external URLs only for a survey with a redirect, and drops the redirect without them", async () => {

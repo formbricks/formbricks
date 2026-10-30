@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { V3ApiError } from "@/modules/api/lib/v3-client";
-import { getQsfImportErrorMessage, getQsfImportRequestErrorCode } from "./import-errors";
+import { getSurveyImportErrorMessage, getSurveyImportRequestErrorCode } from "./import-errors";
 
 const refusal = (status: number, code?: string, invalidParamNames: string[] = []) =>
   new V3ApiError({
@@ -13,17 +13,17 @@ const refusal = (status: number, code?: string, invalidParamNames: string[] = []
 const t = (key: string, options?: Record<string, unknown>) =>
   options ? `${key} ${JSON.stringify(options)}` : key;
 
-describe("getQsfImportRequestErrorCode", () => {
+describe("getSurveyImportRequestErrorCode", () => {
   test.each([
     [
       "an array past the budget",
       refusal(400, "bad_request", ["qsf.SurveyElements.0.Payload.ChoiceOrder"]),
-      "qsf_too_complex",
+      "file_too_complex",
     ],
-    ["nesting past the cap", refusal(400, "bad_request", ["qsf.SurveyElements.3"]), "qsf_too_complex"],
-    ["a body the dialog sent wrong", refusal(400, "bad_request", ["fileName"]), "qsf_unreadable"],
+    ["nesting past the cap", refusal(400, "bad_request", ["qsf.SurveyElements.3"]), "file_too_complex"],
+    ["a body the dialog sent wrong", refusal(400, "bad_request", ["fileName"]), "file_unreadable"],
     ["a missing session", refusal(401, "not_authenticated"), "not_authenticated"],
-    ["a body over the route's limit", refusal(413, "payload_too_large"), "qsf_too_large"],
+    ["a body over the route's limit", refusal(413, "payload_too_large"), "file_too_large"],
     [
       "valid JSON that is not a QSF",
       refusal(422, "unprocessable_content", ["qsf.SurveyEntry"]),
@@ -34,7 +34,7 @@ describe("getQsfImportRequestErrorCode", () => {
     ["a full pod", refusal(503, "capacity_reached"), "capacity_reached"],
     ["a refusal without a code", refusal(500), "ai_unknown"],
   ])("maps %s", (_case, error, code) => {
-    expect(getQsfImportRequestErrorCode(error)).toBe(code);
+    expect(getSurveyImportRequestErrorCode(error)).toBe(code);
   });
   test("names the limit a Qualtrics export is past", () => {
     const error = new V3ApiError({
@@ -51,11 +51,11 @@ describe("getQsfImportRequestErrorCode", () => {
       ],
     });
 
-    expect(getQsfImportRequestErrorCode(error)).toBe("qsf_limit_exceeded:questions");
+    expect(getSurveyImportRequestErrorCode(error)).toBe("qsf_limit_exceeded:questions");
   });
 });
 
-describe("getQsfImportErrorMessage for a file past a limit", () => {
+describe("getSurveyImportErrorMessage for a file past a limit", () => {
   test.each([
     "questions",
     "options",
@@ -70,28 +70,28 @@ describe("getQsfImportErrorMessage for a file past a limit", () => {
     "formatted_texts",
     "prompt_size",
   ])("says which limit for %s", (limit) => {
-    expect(getQsfImportErrorMessage(`qsf_limit_exceeded:${limit}`, t)).toBe(
+    expect(getSurveyImportErrorMessage(`qsf_limit_exceeded:${limit}`, t)).toBe(
       `workspace.surveys.import.errors.limits.${limit}`
     );
   });
 
   test("falls back to a general line for a limit this client does not know yet", () => {
-    expect(getQsfImportErrorMessage("qsf_limit_exceeded:something_new", t)).toBe(
+    expect(getSurveyImportErrorMessage("qsf_limit_exceeded:something_new", t)).toBe(
       "workspace.surveys.import.errors.limits.other"
     );
   });
 });
 
-describe("getQsfImportErrorMessage for each refusal and stream error", () => {
+describe("getSurveyImportErrorMessage for each refusal and stream error", () => {
   test.each([
-    ["qsf_wrong_extension", "wrong_extension"],
-    ["qsf_empty", "empty_file"],
-    ["qsf_too_large", "file_too_large"],
+    ["file_wrong_extension", "wrong_extension"],
+    ["file_empty", "empty_file"],
+    ["file_too_large", "file_too_large"],
     ["qsf_not_json", "not_a_qsf"],
     ["qsf_not_object", "not_a_qsf"],
     ["qsf_not_recognized", "not_a_qsf"],
-    ["qsf_too_complex", "too_complex"],
-    ["qsf_unreadable", "unreadable"],
+    ["file_too_complex", "too_complex"],
+    ["file_unreadable", "unreadable"],
     ["not_authenticated", "session_expired"],
     ["forbidden", "not_allowed"],
     ["concurrency_limit_reached", "already_importing"],
@@ -99,25 +99,25 @@ describe("getQsfImportErrorMessage for each refusal and stream error", () => {
     ["import_timed_out", "timed_out"],
     ["import_failed", "failed"],
   ])("%s", (code, key) => {
-    expect(getQsfImportErrorMessage(code, t)).toBe(`workspace.surveys.import.errors.${key}`);
+    expect(getSurveyImportErrorMessage(code, t)).toBe(`workspace.surveys.import.errors.${key}`);
   });
 });
 
-describe("getQsfImportErrorMessage", () => {
+describe("getSurveyImportErrorMessage", () => {
   test("says when to retry a rate-limited import", () => {
-    expect(getQsfImportErrorMessage("too_many_requests", t, 42)).toBe(
+    expect(getSurveyImportErrorMessage("too_many_requests", t, 42)).toBe(
       'workspace.surveys.import.errors.rate_limited {"seconds":42}'
     );
   });
 
   test("falls back to Create with AI's wording without a Retry-After", () => {
-    expect(getQsfImportErrorMessage("too_many_requests", t)).toBe(
+    expect(getSurveyImportErrorMessage("too_many_requests", t)).toBe(
       "workspace.surveys.ai_create.too_many_requests"
     );
   });
 
   test("says when to retry once the AI provider's quota frees up", () => {
-    expect(getQsfImportErrorMessage("ai_quota_exceeded", t, 30)).toBe(
+    expect(getSurveyImportErrorMessage("ai_quota_exceeded", t, 30)).toBe(
       'workspace.surveys.import.errors.ai_busy {"seconds":30}'
     );
   });
@@ -126,11 +126,11 @@ describe("getQsfImportErrorMessage", () => {
     ["ai_output_too_long", "workspace.surveys.import.errors.too_complex"],
     ["bad_request", "workspace.surveys.import.errors.failed"],
   ])("words %s for a file, not a prompt", (code, message) => {
-    expect(getQsfImportErrorMessage(code, t)).toBe(message);
+    expect(getSurveyImportErrorMessage(code, t)).toBe(message);
   });
 
   test("tells an import already running apart from the rate limit", () => {
-    expect(getQsfImportErrorMessage("concurrency_limit_reached", t, 15)).toBe(
+    expect(getSurveyImportErrorMessage("concurrency_limit_reached", t, 15)).toBe(
       "workspace.surveys.import.errors.already_importing"
     );
   });
@@ -143,6 +143,6 @@ describe("getQsfImportErrorMessage", () => {
     ["ai_quota_exceeded", "workspace.surveys.ai_create.ai_rate_limited"],
     ["something_new", "common.something_went_wrong_please_try_again"],
   ])("words %s", (code, message) => {
-    expect(getQsfImportErrorMessage(code, t)).toBe(message);
+    expect(getSurveyImportErrorMessage(code, t)).toBe(message);
   });
 });

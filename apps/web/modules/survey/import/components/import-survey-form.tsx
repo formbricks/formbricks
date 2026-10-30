@@ -11,7 +11,7 @@ import { SourceChip } from "@/modules/survey/components/template-list/components
 import { ImportFacts } from "@/modules/survey/import/components/import-facts";
 import { ImportReport } from "@/modules/survey/import/components/import-report";
 import { useImportSurvey } from "@/modules/survey/import/hooks/use-import-survey";
-import { getQsfImportErrorMessage } from "@/modules/survey/import/lib/import-errors";
+import { getSurveyImportErrorMessage } from "@/modules/survey/import/lib/import-errors";
 import { getSwitchedOffLanguages } from "@/modules/survey/import/lib/import-report";
 import { QSF_FILE_EXTENSION } from "@/modules/survey/import/lib/qsf-file";
 import type { TSurveyImportReport, TSurveyImportStage } from "@/modules/survey/import/types";
@@ -120,7 +120,7 @@ export const ImportSurveyForm = ({
   }
 
   const errorMessage = importer.errorCode
-    ? getQsfImportErrorMessage(importer.errorCode, t, importer.retryAfterSeconds)
+    ? getSurveyImportErrorMessage(importer.errorCode, t, importer.retryAfterSeconds)
     : null;
 
   const progressMessages = [

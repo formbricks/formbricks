@@ -7,7 +7,7 @@ import {
   SURVEY_IMPORT_MAX_QUESTIONS,
   SURVEY_IMPORT_MAX_TEXT_CHARS,
 } from "../limits";
-import { QsfImportInputError, qsfLimitExceeded, qsfNotRecognized } from "./errors";
+import { qsfLimitExceeded, qsfNotRecognized, qsfRefused } from "./errors";
 import { isObjectMemberName } from "./id-registry";
 import {
   isReportableLanguageCode,
@@ -304,7 +304,7 @@ class QsfReader {
   read(qsf: TRecord): TQsfSurvey {
     const envelope = ZQsfEnvelope.safeParse(qsf);
     if (!envelope.success) {
-      throw new QsfImportInputError(
+      throw qsfRefused(
         envelope.error.issues.map((issue) => ({
           name: ["qsf", ...issue.path.map(String)].join("."),
           reason: issue.message,
@@ -1150,7 +1150,7 @@ class QsfReader {
 }
 
 /**
- * Read a parsed Qualtrics export. Throws `QsfImportInputError` for a file it cannot read or one past a
+ * Read a parsed Qualtrics export. Throws `SurveyImportInputError` for a file it cannot read or one past a
  * reader limit; everything else that is wrong with the file becomes a report line.
  */
 export function readQsf(qsf: Record<string, unknown>): TQsfSurvey {
