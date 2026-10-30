@@ -311,6 +311,33 @@ To stop new visibility mutations and use PostgreSQL policy while repairing the s
 formbricks-authzed backfill --scope=survey --clear-ready
 ```
 
+### Question codes and the published lock (action required for some API and MCP clients)
+
+Every question and every answer option now has a **code**, and the codes feed the new Analysis export, webhooks and prefill links. Two things change when you upgrade:
+
+- **Every existing survey gets codes once.** A data migration (`backfill_question_codes`) gives each question the next unused `q1`, `q2`, ... and each answer option, matrix row and matrix column a code `1`, `2`, ... from today's order. It leaves `updated_at` unchanged, never renames a Question ID, and runs with the other [data migrations](#data-migrations) during the upgrade. Nothing is deleted or reordered, and stored responses are not touched.
+- **A published survey is locked.** Once a survey has left draft (active, paused, completed, or scheduled), the server refuses any save that changes a question code, an answer code, a question type or the text of an option in any language, or that deletes an option that existed at launch. Adding questions and options stays allowed.
+
+<Warning>
+  **Breaking for API and MCP clients.** A client that renames option text, changes codes or changes a question type on a published survey now gets an error instead of a saved change. This covers the survey editor, `PUT /api/v1/management/surveys/{surveyId}`, `PATCH /api/v3/surveys/{surveyId}`, the v3 block routes and the MCP survey tools. Clients that only read surveys, send unchanged values, or edit draft surveys are not affected.
+</Warning>
+
+How the refusal looks:
+
+| Path | Response |
+| --- | --- |
+| `PATCH /api/v3/surveys/{surveyId}` and the MCP tools | `422` with `invalid_params`. Each entry has the code `immutable_question_code`, `immutable_answer_code`, `immutable_question_type`, `immutable_option_text` or `immutable_option_deletion`, the path of the field, and the id of the question or option. |
+| `PUT /api/v1/management/surveys/{surveyId}` and the editor | `400` with a message that starts with `published_survey_locked:` followed by one sentence per change. |
+
+What to do:
+
+1. Fix typos and translations **before** you activate a survey. There is no unlock in the editor.
+2. To change the wording of an option on a live survey, add a new option with the new text instead.
+3. If a script has to change a locked field, revert the survey to `draft` first, make the change, and publish again. The lock protects the meaning of exported data and is not a security control, so it does not stop a client that is allowed to edit the survey from doing this. Do this with care: responses already collected keep the old text, and the Analysis export lists any answer that no longer matches an option as an unmapped value.
+4. If your client sends the whole survey back on every save, make sure it sends the stored text and codes unchanged. A code you leave out is not treated as a change.
+
+Webhook payloads also gain two keys, `dataByQuestionCode` and `outcome`. They are additive and existing keys stay, but a receiver that validates the payload against a strict schema must allow unknown keys. See [Webhooks](/platform/features/integrations/webhooks#reading-answers-by-question-code).
+
 ### Bundled TEI log level
 
 The Helm chart now defaults `hub.embeddings.env.RUST_LOG` to `warn` because TEI 1.9 includes its API key in

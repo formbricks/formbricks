@@ -16,7 +16,7 @@ import {
 import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
 import { responses } from "@/app/lib/api/response";
 import {
-  transformQuestionsToBlocks,
+  transformQuestionsToBlocksWithoutCodeFill,
   validateSurveyInput,
   withDerivedQuestions,
   withoutInternalSurveyProjections,
@@ -32,8 +32,8 @@ import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 
 type TSurveyUpdateBody = Record<string, unknown> & {
   blocks?: Parameters<typeof validateSurveyInput>[0]["blocks"];
-  endings?: Parameters<typeof transformQuestionsToBlocks>[1];
-  questions?: Parameters<typeof transformQuestionsToBlocks>[0];
+  endings?: Parameters<typeof transformQuestionsToBlocksWithoutCodeFill>[1];
+  questions?: Parameters<typeof transformQuestionsToBlocksWithoutCodeFill>[0];
 };
 
 const fetchAndAuthorizeSurvey = async (
@@ -212,7 +212,9 @@ export const PUT = withV1ApiWrapper({
       const { hasQuestions } = validateResult.data;
 
       if (hasQuestions) {
-        surveyUpdate.blocks = transformQuestionsToBlocks(
+        // Codes are left to `updateSurveyInternal`: it keeps the stored code of an element by id before it
+        // fills what is still missing, which a positional fill here would defeat.
+        surveyUpdate.blocks = transformQuestionsToBlocksWithoutCodeFill(
           surveyUpdate.questions ?? [],
           surveyUpdate.endings || result.survey.endings
         );

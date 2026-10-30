@@ -30,7 +30,7 @@ import {
 } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
-import { getLocalizedValue } from "@/lib/i18n/utils";
+import { getLanguageCode, getLocalizedValue } from "@/lib/i18n/utils";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { displayEmbeddedValue } from "@/modules/embedded-data/lib/value-display";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
@@ -433,19 +433,19 @@ export const getResponsesJson = (
       const answer = response.data[element.id];
 
       if (element.type === "matrix") {
-        // For matrix elements, we need to handle each row separately
+        // For matrix elements, we need to handle each row separately. The answer is keyed by the row
+        // label in the respondent's language (as the summary reads it); the default-language label is
+        // the fallback, which is what answers given in the default language are stored under.
+        const responseLanguageCode = getLanguageCode(survey.languages, response.language);
         elementHeadline.forEach((headline, index) => {
           if (answer) {
             const row = element.rows[index];
-            if (
-              row &&
-              row.label.default &&
-              (answer as Record<string, string>)[row.label.default] !== undefined
-            ) {
-              jsonData[idx][headline] = (answer as Record<string, string>)[row.label.default];
-            } else {
-              jsonData[idx][headline] = "";
-            }
+            const rowAnswers = answer as Record<string, string>;
+            const rowKeys = row
+              ? [getLocalizedValue(row.label, responseLanguageCode), row.label.default]
+              : [];
+            const rowKey = rowKeys.find((key) => key && rowAnswers[key] !== undefined);
+            jsonData[idx][headline] = rowKey ? rowAnswers[rowKey] : "";
           }
         });
       } else if (

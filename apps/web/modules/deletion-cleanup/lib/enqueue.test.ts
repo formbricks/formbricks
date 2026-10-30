@@ -1,6 +1,10 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { CLEANUP_SETTLE_MS, STORAGE_CLEANUP_CHUNK_SIZE } from "./constants";
-import { enqueueResponsesDeletionCleanups, enqueueSurveyDeletionCleanups } from "./enqueue";
+import {
+  enqueueResponseOutcomeCleanups,
+  enqueueResponsesDeletionCleanups,
+  enqueueSurveyDeletionCleanups,
+} from "./enqueue";
 
 vi.mock("server-only", () => ({}));
 const storage = vi.hoisted(() => ({ configured: true }));
@@ -27,6 +31,7 @@ const makeTx = (tenantIds: string[]) => {
         data.map(() => ({ id: `cln-${++next}` }))
       ),
       createMany: vi.fn(),
+      deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
     },
   };
 };
@@ -205,5 +210,94 @@ describe("enqueueResponsesDeletionCleanups", () => {
     ).resolves.toEqual({ drainNowIds: [] });
     expect(tx.deletionCleanup.createManyAndReturn).not.toHaveBeenCalled();
     expect(tx.deletionCleanup.createMany).not.toHaveBeenCalled();
+  });
+});
+
+describe("enqueueResponseOutcomeCleanups", () => {
+  const changes = [
+    { id: "r1", surveyId: "s1" },
+    { id: "r2", surveyId: "s2" },
+  ];
+
+  test("queues one row per changed response, due now, and returns them to drain straight after commit", async () => {
+    const tx = makeTx(["dir-a", "dir-b"]);
+
+    await expect(
+      enqueueResponseOutcomeCleanups(tx as never, { organizationId: "clorg", workspaceId: "clwsp", changes })
+    ).resolves.toEqual({ drainNowIds: ["cln-1", "cln-2"] });
+
+    // The whole batch costs one directory read and one insert, not one of each per response.
+    expect(tx.feedbackDirectory.findMany).toHaveBeenCalledTimes(1);
+    expect(tx.deletionCleanup.createManyAndReturn).toHaveBeenCalledTimes(1);
+    expect(tx.deletionCleanup.createManyAndReturn).toHaveBeenCalledWith({
+      data: [
+        {
+          organizationId: "clorg",
+          workspaceId: "clwsp",
+          surveyId: "s1",
+          kind: "hubResponseOutcome",
+          tenantIds: ["dir-a", "dir-b"],
+          responseIds: ["r1"],
+        },
+        {
+          organizationId: "clorg",
+          workspaceId: "clwsp",
+          surveyId: "s2",
+          kind: "hubResponseOutcome",
+          tenantIds: ["dir-a", "dir-b"],
+          responseIds: ["r2"],
+        },
+      ],
+      select: { id: true },
+    });
+  });
+
+  test("cancels what is still pending for those responses first, so a restore cannot be undone by an older row", async () => {
+    const tx = makeTx(["dir-a"]);
+    const order: string[] = [];
+    tx.deletionCleanup.deleteMany.mockImplementation(async () => {
+      order.push("cancel");
+      return { count: 1 };
+    });
+    tx.deletionCleanup.createManyAndReturn.mockImplementation(async () => {
+      order.push("insert");
+      return [{ id: "cln-1" }, { id: "cln-2" }];
+    });
+
+    await enqueueResponseOutcomeCleanups(tx as never, {
+      organizationId: "clorg",
+      workspaceId: "clwsp",
+      changes,
+    });
+
+    expect(tx.deletionCleanup.deleteMany).toHaveBeenCalledTimes(1);
+    expect(tx.deletionCleanup.deleteMany).toHaveBeenCalledWith({
+      where: { kind: "hubResponseOutcome", workspaceId: "clwsp", responseIds: { hasSome: ["r1", "r2"] } },
+    });
+    expect(order).toEqual(["cancel", "insert"]);
+  });
+
+  test("queues nothing for an organisation without a feedback directory: no record can exist", async () => {
+    const tx = makeTx([]);
+
+    await expect(
+      enqueueResponseOutcomeCleanups(tx as never, { organizationId: "clorg", workspaceId: "clwsp", changes })
+    ).resolves.toEqual({ drainNowIds: [] });
+
+    expect(tx.deletionCleanup.createManyAndReturn).not.toHaveBeenCalled();
+  });
+
+  test("does nothing for no changes", async () => {
+    const tx = makeTx(["dir-a"]);
+
+    await expect(
+      enqueueResponseOutcomeCleanups(tx as never, {
+        organizationId: "clorg",
+        workspaceId: "clwsp",
+        changes: [],
+      })
+    ).resolves.toEqual({ drainNowIds: [] });
+
+    expect(tx.feedbackDirectory.findMany).not.toHaveBeenCalled();
   });
 });

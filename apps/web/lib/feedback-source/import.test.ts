@@ -107,6 +107,42 @@ describe("importHistoricalResponses", () => {
     expect(result.skipped).toBe(1);
   });
 
+  // Low quality responses have no Feedback Records (ENG-4026), whichever import mode asks for them.
+  test.each(["completedOnly", "all"] as const)(
+    "skips Low quality responses and publishes the rest (%s)",
+    async (importMode) => {
+      getResponses.mockResolvedValueOnce([
+        { id: "r1", outcome: null },
+        { id: "r2", outcome: "lowQuality" },
+        { id: "r3", outcome: null },
+      ] as never);
+      transformResponseToFeedbackRecords.mockReturnValue([{ field: "record" }] as never);
+      reconcileFeedbackRecords.mockResolvedValue({ created: 2, reconciled: 0, superseded: 0, failures: [] });
+
+      const result = await importHistoricalResponses({ ...mockFeedbackSource, importMode }, mockSurvey);
+
+      expect(transformResponseToFeedbackRecords.mock.calls.map(([response]) => response.id)).toEqual([
+        "r1",
+        "r3",
+      ]);
+      // Two responses, one mapping each: nothing "skipped" that was meant to publish.
+      expect(result).toEqual({ successes: 2, failures: 0, skipped: 0 });
+    }
+  );
+
+  test("pages on past a page of nothing but Low quality responses", async () => {
+    const lowQualityPage = Array.from({ length: 50 }, (_, i) => ({ id: `l${i}`, outcome: "lowQuality" }));
+    getResponses.mockResolvedValueOnce(lowQualityPage as never);
+    getResponses.mockResolvedValueOnce([{ id: "r1", outcome: null }] as never);
+    transformResponseToFeedbackRecords.mockReturnValue([{ field: "record" }] as never);
+    reconcileFeedbackRecords.mockResolvedValue({ created: 1, reconciled: 0, superseded: 0, failures: [] });
+
+    const result = await importHistoricalResponses(mockFeedbackSource, mockSurvey);
+
+    expect(getResponses).toHaveBeenCalledTimes(2);
+    expect(result.successes).toBe(1);
+  });
+
   /**
    * An import can hold a page of responses for a long time, so it passes the moment it read them and
    * lets reconcile skip records the live pipeline has corrected since. Without this argument the

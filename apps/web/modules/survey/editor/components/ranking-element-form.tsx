@@ -17,7 +17,7 @@ import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
 import { ElementOptionChoice } from "@/modules/survey/editor/components/element-option-choice";
-import { ValidationRulesEditor } from "@/modules/survey/editor/components/validation-rules-editor";
+import { NO_ELEMENT_LOCK, TElementLock } from "@/modules/survey/editor/lib/published-lock";
 import {
   ensureSpecialChoicesOrder,
   getShuffleOptionAfterAddingSpecialChoice,
@@ -25,7 +25,6 @@ import {
 } from "@/modules/survey/editor/lib/special-choices";
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
-import { ShuffleOptionSelect } from "@/modules/ui/components/shuffle-option-select";
 
 interface RankingElementFormProps {
   localSurvey: TSurvey;
@@ -37,6 +36,7 @@ interface RankingElementFormProps {
   locale: TUserLocale;
   isStorageConfigured: boolean;
   isExternalUrlsAllowed?: boolean;
+  lock?: TElementLock;
 }
 
 export const RankingElementForm = ({
@@ -49,6 +49,7 @@ export const RankingElementForm = ({
   locale,
   isStorageConfigured = true,
   isExternalUrlsAllowed,
+  lock = NO_ELEMENT_LOCK,
 }: RankingElementFormProps): JSX.Element => {
   const { t } = useTranslation();
   const lastChoiceRef = useRef<HTMLInputElement>(null);
@@ -124,6 +125,7 @@ export const RankingElementForm = ({
   };
 
   const deleteChoice = (choiceIdx: number) => {
+    if (lock.isOptionLocked("choices", element.choices[choiceIdx].id)) return;
     const newChoices = element.choices.filter((_, idx) => idx !== choiceIdx);
     const choiceValue = element.choices[choiceIdx].label[selectedLanguageCode];
 
@@ -137,35 +139,6 @@ export const RankingElementForm = ({
       choices: newChoices,
       ...(nextShuffleOption && { shuffleOption: nextShuffleOption }),
     });
-  };
-
-  const shuffleOptionsTypes = {
-    none: {
-      id: "none",
-      label: t("workspace.surveys.edit.keep_current_order"),
-      show: true,
-    },
-    all: {
-      id: "all",
-      label: t("workspace.surveys.edit.randomize_all"),
-      // "Other" stays last, so a shuffle that can move the last choice is not offered alongside it.
-      show: element.choices.length > 0 && !hasOtherChoice,
-    },
-    exceptLast: {
-      id: "exceptLast",
-      label: t("workspace.surveys.edit.randomize_all_except_last"),
-      show: true,
-    },
-    reverseOrderOccasionally: {
-      id: "reverseOrderOccasionally",
-      label: t("workspace.surveys.edit.reverse_order_occasionally"),
-      show: !hasOtherChoice,
-    },
-    reverseOrderExceptLast: {
-      id: "reverseOrderExceptLast",
-      label: t("workspace.surveys.edit.reverse_order_occasionally_except_last"),
-      show: true,
-    },
   };
 
   useEffect(() => {
@@ -270,6 +243,7 @@ export const RankingElementForm = ({
                     surveyLanguageCodes={surveyLanguageCodes}
                     locale={locale}
                     isStorageConfigured={isStorageConfigured}
+                    lock={lock}
                   />
                 ))}
               </div>
@@ -298,26 +272,9 @@ export const RankingElementForm = ({
                 </Button>
               )}
             </div>
-            <ShuffleOptionSelect
-              shuffleOptionsTypes={shuffleOptionsTypes}
-              updateElement={updateElement}
-              shuffleOption={element.shuffleOption}
-              elementIdx={elementIdx}
-            />
           </div>
         </div>
       </div>
-
-      <ValidationRulesEditor
-        elementType={element.type}
-        validation={element.validation}
-        onUpdateValidation={(validation) => {
-          updateElement(elementIdx, {
-            validation,
-          });
-        }}
-        element={element}
-      />
     </form>
   );
 };

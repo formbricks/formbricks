@@ -3,13 +3,31 @@ import { TFunction } from "i18next";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
+import { collectDeclaredFieldNames } from "@formbricks/types/surveys/declared-field-guard";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
+import { fillMissingCodes } from "@formbricks/types/surveys/fill-missing-codes";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { createI18nString } from "@/lib/i18n/utils";
 
 // ============================================
 // UTILITY FUNCTIONS
 // ============================================
+
+/**
+ * Codes every question and answer option that has none yet (ENG-6782), so a survey in the editor is
+ * never coded halfway. Existing codes are never touched: adding, moving or deleting a question does
+ * not renumber the others.
+ */
+export const withFilledCodes = (survey: TSurvey): TSurvey => ({
+  ...survey,
+  blocks: fillMissingCodes(survey.blocks, collectDeclaredFieldNames(survey)),
+});
+
+/** A copy of an element with its question code dropped, so the next fill gives the copy its own. */
+const withoutQuestionCode = (element: TSurveyElement): TSurveyElement => {
+  const { code: _code, ...rest } = element as TSurveyElement & { code?: string };
+  return rest as TSurveyElement;
+};
 
 /**
  * Checks if an element ID is unique across all blocks
@@ -145,7 +163,7 @@ export const addBlock = (
   }
 
   updatedSurvey.blocks = renumberAutoNamedBlocks(blocks);
-  return ok(updatedSurvey);
+  return ok(withFilledCodes(updatedSurvey));
 };
 
 /**
@@ -234,8 +252,9 @@ export const duplicateBlock = (survey: TSurvey, blockId: string): Result<TSurvey
   // copy, and an auto-generated one resolves to the duplicate's own position when displayed.
 
   // Generate new element IDs to avoid conflicts
+  // The copies drop their question code so each takes the next unused one; answer codes stay.
   duplicatedBlock.elements = duplicatedBlock.elements.map((element) => ({
-    ...element,
+    ...withoutQuestionCode(element),
     id: createId(),
     isDraft: true,
   }));
@@ -248,10 +267,7 @@ export const duplicateBlock = (survey: TSurvey, blockId: string): Result<TSurvey
   const updatedBlocks = [...blocks];
   updatedBlocks.splice(blockIndex + 1, 0, duplicatedBlock);
 
-  return ok({
-    ...survey,
-    blocks: renumberAutoNamedBlocks(updatedBlocks),
-  });
+  return ok(withFilledCodes({ ...survey, blocks: renumberAutoNamedBlocks(updatedBlocks) }));
 };
 
 /**
@@ -341,10 +357,7 @@ export const addElementToBlock = (
   block.elements = elements;
   blocks[blockIndex] = block;
 
-  return ok({
-    ...survey,
-    blocks,
-  });
+  return ok(withFilledCodes({ ...survey, blocks }));
 };
 
 /**
@@ -361,6 +374,11 @@ export const updateElementInBlock = (
   elementId: string,
   updatedAttributes: Partial<TSurveyElement>
 ): Result<TSurvey, Error> => {
+  // Question IDs are read-only (ENG-3885): responses are stored under them, and links and the API use them.
+  if (updatedAttributes.id !== undefined && updatedAttributes.id !== elementId) {
+    return err(new Error("Element ID cannot be updated"));
+  }
+
   const blocks = [...(survey.blocks || [])];
   const blockIndex = blocks.findIndex((b) => b.id === blockId);
 
@@ -376,13 +394,6 @@ export const updateElementInBlock = (
     return err(new Error(`Element with ID "${elementId}" not found in block "${blockId}"`));
   }
 
-  // If changing the element ID, validate the new ID is unique across all blocks
-  if (updatedAttributes.id && updatedAttributes.id !== elementId) {
-    if (!isElementIdUnique(updatedAttributes.id, blocks)) {
-      return err(new Error(`Element ID "${updatedAttributes.id}" already exists`));
-    }
-  }
-
   elements[elementIndex] = {
     ...elements[elementIndex],
     ...updatedAttributes,
@@ -391,10 +402,7 @@ export const updateElementInBlock = (
   block.elements = elements;
   blocks[blockIndex] = block;
 
-  return ok({
-    ...survey,
-    blocks,
-  });
+  return ok(withFilledCodes({ ...survey, blocks }));
 };
 
 /**
@@ -464,7 +472,7 @@ export const duplicateElementInBlock = (
   const elementToDuplicate = elements[elementIndex];
 
   // Deep clone the element to avoid any reference issues
-  const duplicatedElement: TSurveyElement = structuredClone(elementToDuplicate);
+  const duplicatedElement: TSurveyElement = withoutQuestionCode(structuredClone(elementToDuplicate));
   duplicatedElement.id = createId();
   duplicatedElement.isDraft = true;
 
@@ -472,10 +480,7 @@ export const duplicateElementInBlock = (
   block.elements = elements;
   blocks[blockIndex] = block;
 
-  return ok({
-    ...survey,
-    blocks,
-  });
+  return ok(withFilledCodes({ ...survey, blocks }));
 };
 
 /**

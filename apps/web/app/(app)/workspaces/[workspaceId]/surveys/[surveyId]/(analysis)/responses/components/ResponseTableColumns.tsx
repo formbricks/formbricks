@@ -21,9 +21,13 @@ import { getContactIdentifier } from "@/lib/utils/contact";
 import { formatDateTimeForDisplay } from "@/lib/utils/datetime";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { RenderResponse } from "@/modules/analysis/components/SingleResponseCard/components/RenderResponse";
+import { OutcomeBadge } from "@/modules/analysis/response-outcome/components/outcome-badge";
+import { responseStatus } from "@/modules/analysis/response-outcome/lib/outcome";
 import { displayEmbeddedValue } from "@/modules/embedded-data/lib/value-display";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
+import { formatCodedLabel, getChoiceBadgeText } from "@/modules/survey/lib/element-code-label";
 import { VARIABLES_ICON_MAP, getElementIconMap } from "@/modules/survey/lib/elements";
+import { Badge } from "@/modules/ui/components/badge";
 import { getSelectionColumn } from "@/modules/ui/components/data-table";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { ResponseBadges } from "@/modules/ui/components/response-badges";
@@ -72,12 +76,13 @@ const getElementColumnsData = (
   t: TFunction
 ): ColumnDef<TResponseTableData>[] => {
   const ELEMENTS_ICON_MAP = getElementIconMap(t);
+  const elementCode = "code" in element ? element.code : undefined;
   const addressFields = ["addressLine1", "addressLine2", "city", "state", "zip", "country"];
   const contactInfoFields = ["firstName", "lastName", "email", "phone", "company"];
 
   // Helper function to create consistent column headers
   const createElementHeader = (elementType: TSurveyElementTypeEnum, headline: string, suffix?: string) => {
-    const title = suffix ? `${headline} - ${suffix}` : headline;
+    const title = formatCodedLabel(elementCode, suffix ? `${headline} - ${suffix}` : headline);
     const ElementHeader = () => (
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-x-2 overflow-hidden">
@@ -104,7 +109,7 @@ const getElementColumnsData = (
     return (
       <div className={containerClasses}>
         {choiceIds.map((choiceId, index) => (
-          <IdBadge key={`${choiceId}-${index}`} id={choiceId} />
+          <IdBadge key={`${choiceId}-${index}`} id={getChoiceBadgeText(element, choiceId)} />
         ))}
       </div>
     );
@@ -124,9 +129,12 @@ const getElementColumnsData = (
                 <div className="flex items-center gap-x-2 overflow-hidden">
                   <span className="size-4">{ELEMENTS_ICON_MAP["matrix"]}</span>
                   <span className="truncate">
-                    {getTextContent(getLocalizedValue(element.headline, "default")) +
-                      " - " +
-                      getLocalizedValue(matrixRow.label, "default")}
+                    {formatCodedLabel(
+                      elementCode,
+                      getTextContent(getLocalizedValue(element.headline, "default")) +
+                        " - " +
+                        getLocalizedValue(matrixRow.label, "default")
+                    )}
                   </span>
                 </div>
               </div>
@@ -218,8 +226,8 @@ const getElementColumnsData = (
         },
         {
           accessorKey: "ELEMENT_" + element.id + "optionIds",
-          meta: { label: `${t("common.option_id")}: ${elementHeadline}` },
-          header: createElementHeader(element.type, elementHeadline, t("common.option_id")),
+          meta: { label: `${t("common.answer_code")}: ${elementHeadline}` },
+          header: createElementHeader(element.type, elementHeadline, t("common.answer_code")),
           cell: ({ row }) => {
             const responseValue = row.original.responseData[element.id];
             // Type guard to ensure responseValue is the correct type
@@ -251,8 +259,14 @@ const getElementColumnsData = (
               <div className="flex items-center gap-x-2 overflow-hidden">
                 <span className="size-4">{ELEMENTS_ICON_MAP[element.type]}</span>
                 <span className="truncate">
-                  {getTextContent(
-                    getLocalizedValue(recallToHeadline(element.headline, survey, false, "default"), "default")
+                  {formatCodedLabel(
+                    elementCode,
+                    getTextContent(
+                      getLocalizedValue(
+                        recallToHeadline(element.headline, survey, false, "default"),
+                        "default"
+                      )
+                    )
                   )}
                 </span>
               </div>
@@ -410,8 +424,13 @@ export const generateResponseTableColumns = (
     size: 200,
     header: () => <div className="gap-x-1.5">{t("common.status")}</div>,
     cell: ({ row }) => {
-      const status = row.original.status;
-      return <ResponseBadges items={[{ value: status }]} showId={false} />;
+      const status = responseStatus(row.original.status, row.original.outcome);
+      if (status === "lowQuality") return <OutcomeBadge outcome="lowQuality" />;
+      return status === "notCompleted" ? (
+        <Badge type="gray" size="normal" text={t("workspace.surveys.responses.status_not_completed")} />
+      ) : (
+        <Badge type="success" size="normal" text={t("workspace.surveys.responses.status_complete")} />
+      );
     },
   };
 

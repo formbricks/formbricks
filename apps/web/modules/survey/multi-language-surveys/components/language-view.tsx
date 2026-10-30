@@ -3,6 +3,7 @@
 import { ArrowUpRight, EllipsisVerticalIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { Language } from "@formbricks/database/prisma-browser";
 import { getLanguageLabel } from "@formbricks/i18n-utils/utils";
@@ -32,6 +33,7 @@ import {
 } from "@/modules/ui/components/select";
 import { Switch } from "@/modules/ui/components/switch";
 import { applyAutoSelectLanguageRule } from "../lib/auto-select-language";
+import { hasLockedTranslations } from "../lib/published-translation-lock";
 import {
   computeTranslationProgress,
   extractTranslatableStrings,
@@ -45,6 +47,8 @@ import { ManageTranslationsModal } from "./manage-translations-modal";
 
 interface LanguageViewProps {
   localSurvey: TSurvey;
+  /** The survey as stored: what the published lock compares the translations against. */
+  persistedSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
   workspaceLanguages: Language[];
   locale: TUserLocale;
@@ -62,6 +66,7 @@ interface ConfirmationModalInfo {
 
 export const LanguageView = ({
   localSurvey,
+  persistedSurvey,
   setLocalSurvey,
   workspaceLanguages,
   locale,
@@ -160,9 +165,18 @@ export const LanguageView = ({
     updateLocalSurvey(updatedSurvey as TSurvey);
   };
 
+  // Answers are stored as the option text, so a published survey keeps the translations it already has:
+  // removing a language, or changing the default (which removes them all), would be refused on save.
+  const isRemovalLocked = (languageCode?: string): boolean => {
+    if (!hasLockedTranslations(persistedSurvey, languageCode)) return false;
+    toast.error(t("workspace.surveys.edit.lock_explanation_option_text"));
+    return true;
+  };
+
   const handleActivationSwitch = () => {
     if (isMultiLanguageActivated) {
       if (localSurvey.languages.length > 0) {
+        if (isRemovalLocked()) return;
         setConfirmationModalInfo({
           open: true,
           title: t("workspace.surveys.edit.remove_translations"),
@@ -251,6 +265,7 @@ export const LanguageView = ({
   };
 
   const handleRemoveTranslations = (code: string) => {
+    if (isRemovalLocked(code)) return;
     const label = getLanguageLabel(code, locale) ?? code;
     const progress = computeTranslationProgress(translatableStrings, code);
     const hasTranslations = progress.translated > 0;
@@ -291,6 +306,7 @@ export const LanguageView = ({
   };
 
   const handleChangeDefault = () => {
+    if (isRemovalLocked()) return;
     openChangeDefaultConfirmation(() => {
       // Actually strip every non-default language's keys from the survey object. Using
       // updateSurveyTranslations([]) here only re-seeds keys and leaves stale empty code keys
@@ -304,7 +320,7 @@ export const LanguageView = ({
     const language =
       workspaceLanguages.find((l) => l.code === code) ??
       localSurvey.languages.find((sl) => sl.language.code === code)?.language;
-    if (!language) return;
+    if (!language || isRemovalLocked()) return;
     openChangeDefaultConfirmation(() => updateLocalSurvey(makeLanguageSoleDefault(localSurvey, language)));
   };
 
@@ -592,6 +608,7 @@ export const LanguageView = ({
         defaultLanguageName={
           defaultLanguage ? (getLanguageLabel(defaultLanguage.code, locale) ?? defaultLanguage.code) : ""
         }
+        persistedSurvey={persistedSurvey}
         workspaceId={workspaceId}
         isAIAvailable={isAIAvailable}
         aiUnavailableReason={aiUnavailableReason}

@@ -2,13 +2,16 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZResponse } from "@formbricks/types/responses";
 import {
+  INLINE_DRAIN_WAIT_MS,
   type TV3CreateResponsePersist,
   type TV3WriteReadbackRow,
   type TV3WriteSurveyRow,
   createScopedResponse,
   dispatchV3ResponsePipeline,
   getSurveyForV3Write,
+  listScopedResponseSurveyRefs,
   readbackV3Response,
+  setScopedResponsesOutcome,
   toV3PipelineResponse,
   updateScopedResponse,
 } from "./write-service";
@@ -21,22 +24,28 @@ const {
   mockEvaluateQuotas,
   mockLoggerError,
   mockResponseFindFirst,
+  mockResponseFindMany,
   mockSurveyFindUnique,
   mockLoadQuotaContext,
+  mockEnqueueOutcomeCleanups,
+  mockDrainCleanups,
 } = vi.hoisted(() => ({
   mockTransaction: vi.fn(),
   mockSendToPipeline: vi.fn(),
   mockEvaluateQuotas: vi.fn(),
   mockLoggerError: vi.fn(),
   mockResponseFindFirst: vi.fn(),
+  mockResponseFindMany: vi.fn(),
   mockSurveyFindUnique: vi.fn(),
   mockLoadQuotaContext: vi.fn(),
+  mockEnqueueOutcomeCleanups: vi.fn(),
+  mockDrainCleanups: vi.fn(),
 }));
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
     $transaction: mockTransaction,
-    response: { findFirst: mockResponseFindFirst },
+    response: { findFirst: mockResponseFindFirst, findMany: mockResponseFindMany },
     survey: { findUnique: mockSurveyFindUnique },
   },
 }));
@@ -56,6 +65,10 @@ vi.mock("@formbricks/database/prisma", () => ({
 }));
 vi.mock("@formbricks/logger", () => ({ logger: { error: mockLoggerError, warn: vi.fn() } }));
 vi.mock("@/app/lib/pipelines", () => ({ sendToPipeline: mockSendToPipeline }));
+vi.mock("@/modules/deletion-cleanup/lib/enqueue", () => ({
+  enqueueResponseOutcomeCleanups: mockEnqueueOutcomeCleanups,
+}));
+vi.mock("@/modules/deletion-cleanup/lib/drain", () => ({ drainDeletionCleanups: mockDrainCleanups }));
 vi.mock("@/modules/ee/quotas/lib/evaluation-service", () => ({
   evaluateResponseQuotas: mockEvaluateQuotas,
   loadQuotaEvaluationContext: mockLoadQuotaContext,
@@ -117,6 +130,7 @@ const readbackRow = (over: Record<string, unknown> = {}): TV3WriteReadbackRow =>
     meta: { source: "smoke" },
     displayId: null,
     singleUseId: null,
+    outcome: null,
     contactAttributes: { userId: "user-42" },
     contact: { id: "clct000000000000000000001", attributes: [{ value: "user-42" }] },
     tags: [
@@ -142,6 +156,7 @@ const txStub = (over: Record<string, unknown> = {}) => ({
   contact: { findFirst: vi.fn().mockResolvedValue({ id: "clct000000000000000000001", attributes: [] }) },
   display: { findFirst: vi.fn().mockResolvedValue({ id: "cldp1", response: null }) },
   tag: { findMany: vi.fn().mockResolvedValue([]) },
+  workspace: { findUniqueOrThrow: vi.fn().mockResolvedValue({ organizationId: "clorg" }) },
   response: {
     findFirst: vi.fn().mockResolvedValue(null),
     create: vi.fn().mockResolvedValue({ id: "clrs1", finished: false, data: {}, variables: {} }),
@@ -178,6 +193,8 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockEvaluateQuotas.mockResolvedValue({ shouldEndSurvey: false });
   mockLoadQuotaContext.mockResolvedValue(null);
+  mockEnqueueOutcomeCleanups.mockResolvedValue({ drainNowIds: [] });
+  mockDrainCleanups.mockResolvedValue({ done: 0, again: 0, failed: 0 });
 });
 
 describe("unique-constraint races", () => {
@@ -388,6 +405,13 @@ describe("toV3PipelineResponse", () => {
 
     expect(parsed.error?.issues).toBeUndefined();
     expect(parsed.success).toBe(true);
+  });
+
+  test.each([null, "lowQuality"] as const)("the outcome %s is carried, never dropped", (outcome) => {
+    const payload = toV3PipelineResponse(readbackRow({ outcome }));
+
+    expect(payload.outcome).toBe(outcome);
+    expect(ZResponse.parse(payload).outcome).toBe(outcome);
   });
 
   test("join rows are flattened to the tag itself", () => {
@@ -659,6 +683,19 @@ describe("updateScopedResponse — what actually reaches Prisma", () => {
     expect(tx.response.update.mock.calls[0][0].data).toEqual({ endingId: null });
   });
 
+  test.each(["lowQuality", null] as const)("outcome %s reaches the update", async (outcome) => {
+    const tx = runTx(txStub());
+
+    await updateScopedResponse({
+      responseId: "clrs1",
+      workspaceId: survey.workspaceId,
+      survey,
+      patch: { outcome },
+    });
+
+    expect(tx.response.update.mock.calls[0][0].data).toEqual({ outcome });
+  });
+
   /** `tags` is the complete set, so the join rows are cleared and rewritten rather than added to. */
   test("patching tags replaces the set", async () => {
     const tx = runTx(txStub({ tag: { findMany: vi.fn().mockResolvedValue([{ id: "cltg1" }]) } }));
@@ -716,5 +753,238 @@ describe("scoped reads", () => {
       id: "clrs1",
       survey: { workspaceId: survey.workspaceId },
     });
+  });
+});
+
+describe("the batch outcome write", () => {
+  const WORKSPACE_ID = survey.workspaceId;
+  const IDS = ["clrs000000000000000000001", "clrs000000000000000000002", "clrs000000000000000000003"];
+  const batchTx = (rows: { id: string; surveyId: string; outcome: string | null }[]) => {
+    const tx = {
+      response: { findMany: vi.fn().mockResolvedValue(rows), updateMany: vi.fn() },
+      workspace: { findUniqueOrThrow: vi.fn().mockResolvedValue({ organizationId: "clorg" }) },
+    };
+    mockTransaction.mockImplementationOnce(async (fn: (client: unknown) => Promise<unknown>) => fn(tx));
+    return tx;
+  };
+
+  test("the ids in scope are listed with their survey, filtered by workspace and visibility", async () => {
+    mockResponseFindMany.mockResolvedValueOnce([{ id: IDS[0], surveyId: survey.id }]);
+
+    const refs = await listScopedResponseSurveyRefs(IDS, {
+      workspaceId: WORKSPACE_ID,
+      visibleSurveyWhere: { id: "visible" },
+    });
+
+    expect(refs).toEqual([{ id: IDS[0], surveyId: survey.id }]);
+    expect(mockResponseFindMany.mock.calls[0][0].where).toEqual({
+      id: { in: IDS },
+      survey: { workspaceId: WORKSPACE_ID, AND: [{ id: "visible" }] },
+    });
+  });
+
+  test("only the responses whose outcome differs are written, scoped by workspace", async () => {
+    const tx = batchTx([
+      { id: IDS[0], surveyId: survey.id, outcome: null },
+      { id: IDS[1], surveyId: survey.id, outcome: "lowQuality" },
+    ]);
+    mockResponseFindMany.mockResolvedValueOnce([readbackRow({ id: IDS[0] })]);
+
+    const result = await setScopedResponsesOutcome(IDS, "lowQuality", { workspaceId: WORKSPACE_ID });
+
+    expect(tx.response.updateMany).toHaveBeenCalledTimes(1);
+    const { where, data } = tx.response.updateMany.mock.calls[0][0];
+    expect(data).toEqual({ outcome: "lowQuality" });
+    expect(where.id).toEqual({ in: [IDS[0]] });
+    expect(JSON.stringify(where.survey)).toContain(WORKSPACE_ID);
+    // Matched counts everything in scope, including what already carried the outcome: a retry of the
+    // same batch reports the same number.
+    expect(result.matched).toBe(2);
+    expect(result.changes).toEqual([{ id: IDS[0], surveyId: survey.id, previous: null }]);
+    expect(result.rows).toHaveLength(1);
+  });
+
+  test("a restore clears the outcome and remembers what it was", async () => {
+    const tx = batchTx([{ id: IDS[0], surveyId: survey.id, outcome: "lowQuality" }]);
+    mockResponseFindMany.mockResolvedValueOnce([readbackRow({ id: IDS[0] })]);
+
+    const result = await setScopedResponsesOutcome(IDS, null, { workspaceId: WORKSPACE_ID });
+
+    expect(tx.response.updateMany.mock.calls[0][0].data).toEqual({ outcome: null });
+    expect(result.changes).toEqual([{ id: IDS[0], surveyId: survey.id, previous: "lowQuality" }]);
+  });
+
+  test("nothing in scope, or nothing to change, writes and reads back nothing", async () => {
+    const tx = batchTx([{ id: IDS[0], surveyId: survey.id, outcome: "lowQuality" }]);
+
+    const result = await setScopedResponsesOutcome(IDS, "lowQuality", { workspaceId: WORKSPACE_ID });
+
+    expect(tx.response.updateMany).not.toHaveBeenCalled();
+    expect(mockResponseFindMany).not.toHaveBeenCalled();
+    expect(result).toEqual({ matched: 1, changes: [], rows: [] });
+  });
+  describe("the Feedback Record cleanup (ENG-6785)", () => {
+    test("is queued in the same transaction, for the changed responses only, and drained after commit", async () => {
+      const tx = batchTx([
+        { id: IDS[0], surveyId: survey.id, outcome: null },
+        { id: IDS[1], surveyId: survey.id, outcome: "lowQuality" },
+      ]);
+      mockResponseFindMany.mockResolvedValueOnce([readbackRow({ id: IDS[0] })]);
+      mockEnqueueOutcomeCleanups.mockResolvedValueOnce({ drainNowIds: ["cln-1"] });
+
+      await setScopedResponsesOutcome(IDS, "lowQuality", { workspaceId: WORKSPACE_ID });
+
+      expect(mockEnqueueOutcomeCleanups).toHaveBeenCalledTimes(1);
+      expect(mockEnqueueOutcomeCleanups).toHaveBeenCalledWith(tx, {
+        organizationId: "clorg",
+        workspaceId: WORKSPACE_ID,
+        changes: [{ id: IDS[0], surveyId: survey.id }],
+      });
+      expect(tx.response.updateMany.mock.invocationCallOrder[0]).toBeLessThan(
+        mockEnqueueOutcomeCleanups.mock.invocationCallOrder[0]
+      );
+      // After the transaction callback returned, i.e. after the commit.
+      expect(mockDrainCleanups).toHaveBeenCalledWith({ ids: ["cln-1"] });
+      expect(mockDrainCleanups.mock.invocationCallOrder[0]).toBeGreaterThan(
+        mockTransaction.mock.invocationCallOrder[0]
+      );
+    });
+
+    test("a restore queues it the same way", async () => {
+      batchTx([{ id: IDS[0], surveyId: survey.id, outcome: "lowQuality" }]);
+      mockResponseFindMany.mockResolvedValueOnce([readbackRow({ id: IDS[0] })]);
+
+      await setScopedResponsesOutcome(IDS, null, { workspaceId: WORKSPACE_ID });
+
+      expect(mockEnqueueOutcomeCleanups).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ changes: [{ id: IDS[0], surveyId: survey.id }] })
+      );
+    });
+
+    test("nothing to change queues and drains nothing", async () => {
+      batchTx([{ id: IDS[0], surveyId: survey.id, outcome: "lowQuality" }]);
+
+      await setScopedResponsesOutcome(IDS, "lowQuality", { workspaceId: WORKSPACE_ID });
+
+      expect(mockEnqueueOutcomeCleanups).not.toHaveBeenCalled();
+      expect(mockDrainCleanups).not.toHaveBeenCalled();
+    });
+
+    test("a Hub outage only delays the cleanup: a drain that throws never fails the marking", async () => {
+      batchTx([{ id: IDS[0], surveyId: survey.id, outcome: null }]);
+      mockResponseFindMany.mockResolvedValueOnce([readbackRow({ id: IDS[0] })]);
+      mockEnqueueOutcomeCleanups.mockResolvedValueOnce({ drainNowIds: ["cln-1"] });
+      mockDrainCleanups.mockRejectedValueOnce(new Error("hub down"));
+
+      const result = await setScopedResponsesOutcome(IDS, "lowQuality", { workspaceId: WORKSPACE_ID });
+
+      expect(result.changes).toHaveLength(1);
+      expect(mockLoggerError).toHaveBeenCalledWith(
+        expect.objectContaining({ workspaceId: WORKSPACE_ID }),
+        expect.stringContaining("drain job")
+      );
+    });
+
+    test("a transaction that rolls back queues nothing to drain", async () => {
+      mockTransaction.mockImplementationOnce(async () => {
+        throw new Error("rolled back");
+      });
+
+      await expect(
+        setScopedResponsesOutcome(IDS, "lowQuality", { workspaceId: WORKSPACE_ID })
+      ).rejects.toThrow();
+
+      expect(mockDrainCleanups).not.toHaveBeenCalled();
+    });
+  });
+});
+
+describe("updateScopedResponse — the Feedback Record cleanup on an outcome change (ENG-6785)", () => {
+  const patchOutcome = (outcome: "lowQuality" | null) =>
+    updateScopedResponse({
+      responseId: "clrs1",
+      workspaceId: survey.workspaceId,
+      survey,
+      patch: { outcome },
+    });
+  const outcomeTx = (previous: "lowQuality" | null) => {
+    const tx = txStub({
+      workspace: { findUniqueOrThrow: vi.fn().mockResolvedValue({ organizationId: "clorg" }) },
+    });
+    tx.response.findFirst.mockResolvedValue({ outcome: previous } as never);
+    return runTx(tx);
+  };
+
+  test.each([
+    ["marking", null, "lowQuality"],
+    ["restoring", "lowQuality", null],
+  ] as const)("%s queues it in the transaction and drains it after commit", async (_name, previous, next) => {
+    const tx = outcomeTx(previous);
+    mockEnqueueOutcomeCleanups.mockResolvedValueOnce({ drainNowIds: ["cln-1"] });
+
+    await patchOutcome(next);
+
+    expect(tx.response.findFirst.mock.calls[0][0].where).toEqual({
+      id: "clrs1",
+      survey: { workspaceId: survey.workspaceId },
+    });
+    expect(mockEnqueueOutcomeCleanups).toHaveBeenCalledWith(tx, {
+      organizationId: "clorg",
+      workspaceId: survey.workspaceId,
+      changes: [{ id: "clrs1", surveyId: survey.id }],
+    });
+    expect(mockDrainCleanups).toHaveBeenCalledWith({ ids: ["cln-1"] });
+  });
+
+  test("an outcome the response already has queues nothing", async () => {
+    outcomeTx("lowQuality");
+
+    await patchOutcome("lowQuality");
+
+    expect(mockEnqueueOutcomeCleanups).not.toHaveBeenCalled();
+    expect(mockDrainCleanups).not.toHaveBeenCalled();
+  });
+
+  test("a patch that does not carry the outcome neither reads nor queues anything", async () => {
+    const tx = runTx(txStub());
+
+    await updateScopedResponse({
+      responseId: "clrs1",
+      workspaceId: survey.workspaceId,
+      survey,
+      patch: { finished: true },
+    });
+
+    expect(tx.response.findFirst).not.toHaveBeenCalled();
+    expect(mockEnqueueOutcomeCleanups).not.toHaveBeenCalled();
+  });
+
+  test("a drain that throws never fails the patch", async () => {
+    outcomeTx(null);
+    mockEnqueueOutcomeCleanups.mockResolvedValueOnce({ drainNowIds: ["cln-1"] });
+    mockDrainCleanups.mockRejectedValueOnce(new Error("hub down"));
+
+    await expect(patchOutcome("lowQuality")).resolves.toEqual({ ok: true, responseId: "clrs1" });
+  });
+
+  // Against the real Hub: a Hub that accepts the connection and never answers held the request for the
+  // SDK's 60 s attempt timeout, although the outcome was long committed.
+  test("a Hub that never answers does not hold the patch past the inline drain's wait", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      outcomeTx(null);
+      mockEnqueueOutcomeCleanups.mockResolvedValueOnce({ drainNowIds: ["cln-1"] });
+      mockDrainCleanups.mockReturnValueOnce(new Promise(() => {}));
+
+      const settled = vi.fn();
+      const pending = patchOutcome("lowQuality").then(settled);
+      await vi.advanceTimersByTimeAsync(INLINE_DRAIN_WAIT_MS);
+      await pending;
+
+      expect(settled).toHaveBeenCalledWith({ ok: true, responseId: "clrs1" });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

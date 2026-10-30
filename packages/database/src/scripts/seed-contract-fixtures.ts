@@ -54,6 +54,7 @@ const CONTRACT_IDS = {
   WORKFLOW_TEST: "clctworkflowtest00000001",
   ACTION_CLASS_READ: "clctactionclassread00001",
   RESPONSE_READ: "clctresponseread00000001",
+  RESPONSE_OUTCOME: "clctresponseoutcome00001",
   ATTRIBUTE_KEY_PLAN: "clctattributekeyplan0001",
   CONTACT_READ: "clctcontactread000000001",
   SEGMENT_READ: "clctsegmentread000000001",
@@ -593,6 +594,8 @@ async function main(): Promise<void> {
   await seedSurvey(CONTRACT_IDS.SURVEY_READ, "Contract fixture — read", false);
   await seedSurveyLanguages(CONTRACT_IDS.SURVEY_READ, READ_SURVEY_LANGUAGES);
   await seedResponse(CONTRACT_IDS.RESPONSE_READ, CONTRACT_IDS.SURVEY_READ);
+  // Its own response, so marking and restoring cannot change what the read operations return.
+  await seedResponse(CONTRACT_IDS.RESPONSE_OUTCOME, CONTRACT_IDS.SURVEY_READ);
   await seedCustomCss(CONTRACT_IDS.SURVEY_READ);
   await seedSurvey(CONTRACT_IDS.SURVEY_PATCH, "Contract fixture — patch", false);
   await seedSurvey(CONTRACT_IDS.SURVEY_DELETE, "Contract fixture — delete", false);
@@ -769,6 +772,9 @@ async function main(): Promise<void> {
     },
     operations: {
       getResponseV3: { path: { responseId: CONTRACT_IDS.RESPONSE_READ } },
+      // Real data, so the 200 `{ updated }` body is checked and not only the empty scope-filtered one.
+      // The call is idempotent, so the generated `lowQuality` / `null` alternate without drifting.
+      batchSetResponsesOutcomeV3: { body: { ids: [CONTRACT_IDS.RESPONSE_OUTCOME] } },
       patchSurveyV3: { path: { surveyId: CONTRACT_IDS.SURVEY_PATCH } },
       deleteSurveyV3: { path: { surveyId: CONTRACT_IDS.SURVEY_DELETE } },
       archiveSurveyV3: { path: { surveyId: CONTRACT_IDS.SURVEY_ARCHIVE } },

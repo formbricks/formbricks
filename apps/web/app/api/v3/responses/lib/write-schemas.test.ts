@@ -17,6 +17,8 @@ import {
   MAX_RESPONSE_DATA_VALUES,
   ZV3BatchDeleteResponsesBody,
   ZV3BatchDeleteResponsesQuery,
+  ZV3BatchSetResponsesOutcomeBody,
+  ZV3BatchSetResponsesOutcomeQuery,
   ZV3CreateResponseBody,
   ZV3PatchResponseBody,
   ZV3ResponseIdParams,
@@ -186,11 +188,61 @@ describe("ZV3PatchResponseBody", () => {
     }
   );
 
+  describe("outcome", () => {
+    test.each(["lowQuality", null])("%s is a valid patch on its own — null restores", (outcome) => {
+      expect(ZV3PatchResponseBody.safeParse({ outcome }).success).toBe(true);
+    });
+
+    test.each(["spam", "", "LowQuality", 1, true])("%j is not an outcome", (outcome) => {
+      expect(ZV3PatchResponseBody.safeParse({ outcome }).success).toBe(false);
+    });
+  });
+
   /** Unlike create: a patch applies tags as a set, so a repeat is redundant rather than ambiguous. */
   test("repeated tag ids are accepted on patch", () => {
     const dup = "cltg000000000000000000001";
 
     expect(ZV3PatchResponseBody.safeParse({ tags: [dup, dup] }).success).toBe(true);
+  });
+});
+
+describe("ZV3BatchSetResponsesOutcomeBody", () => {
+  const ID_A = "clrsaaaaaaaaaaaaaaaaaaaa";
+  const parse = (body: unknown) => ZV3BatchSetResponsesOutcomeBody.safeParse(body);
+
+  test.each(["lowQuality", null])("accepts ids with outcome %s", (outcome) => {
+    expect(parse({ ids: [ID_A], outcome }).success).toBe(true);
+  });
+
+  test("outcome is required: omitting it must not read as a restore", () => {
+    expect(parse({ ids: [ID_A] }).success).toBe(false);
+  });
+
+  test.each([
+    ["an empty ids array", { ids: [], outcome: null }],
+    [
+      "more than 100 ids",
+      {
+        ids: Array.from({ length: 101 }, (_unused, i) => `clrs${String(i).padStart(20, "a")}`),
+        outcome: null,
+      },
+    ],
+    ["duplicate ids", { ids: [ID_A, ID_A], outcome: "lowQuality" }],
+    ["an unknown outcome", { ids: [ID_A], outcome: "spam" }],
+    ["an unsupported field", { ids: [ID_A], outcome: null, finished: true }],
+  ])("rejects %s", (_label, body) => {
+    expect(parse(body).success).toBe(false);
+  });
+
+  test("the scope is a required workspaceId query, closed", () => {
+    expect(ZV3BatchSetResponsesOutcomeQuery.safeParse({}).success).toBe(false);
+    expect(
+      ZV3BatchSetResponsesOutcomeQuery.safeParse({ workspaceId: "clsww11111111111111111111", extra: "x" })
+        .success
+    ).toBe(false);
+    expect(
+      ZV3BatchSetResponsesOutcomeQuery.safeParse({ workspaceId: "clsww11111111111111111111" }).success
+    ).toBe(true);
   });
 });
 
@@ -330,6 +382,13 @@ describe("every constraint the generator cannot express is enforced here", () =>
     "BatchDeleteResponsesRequest $.ids uniqueItems": [
       { schema: ZV3BatchDeleteResponsesBody, input: { ids: [ID, ID] }, path: ["ids"] },
     ],
+    "BatchSetResponsesOutcomeRequest $.ids uniqueItems": [
+      {
+        schema: ZV3BatchSetResponsesOutcomeBody,
+        input: { ids: [ID, ID], outcome: "lowQuality" },
+        path: ["ids"],
+      },
+    ],
     "CreateResponseRequest $.data maxProperties": [createData(keys(MAX_RESPONSE_DATA_KEYS + 1, "a"))],
     "CreateResponseRequest $.data{} conditional": [
       { ...createData({ q: tooManyValues }), path: ["data", "q"] },
@@ -445,6 +504,7 @@ describe("the route schemas match the contract", () => {
     ["CreateResponseRequest", ZV3CreateResponseBody],
     ["PatchResponseRequest", ZV3PatchResponseBody],
     ["BatchDeleteResponsesRequest", ZV3BatchDeleteResponsesBody],
+    ["BatchSetResponsesOutcomeRequest", ZV3BatchSetResponsesOutcomeBody],
     ["ValidateResponseRequest", ZV3ResponseValidationRequestBody],
     // The envelope is a union, which the runtime required-key check does not enter; each arm is
     // compared on its own so the `data` presence rule is proven per variant.
@@ -462,6 +522,7 @@ describe("the route schemas match the contract", () => {
   test.each([
     ["getResponseV3", "path", ZV3ResponseIdParams],
     ["batchDeleteResponsesV3", "query", ZV3BatchDeleteResponsesQuery],
+    ["batchSetResponsesOutcomeV3", "query", ZV3BatchSetResponsesOutcomeQuery],
   ] as const)("%s %s parameters match the contract, closed", (operationId, location, schema) => {
     const spec = parametersAsObjectSchema(bundle, operationId, location);
     expect(spec).toBeDefined();
@@ -478,11 +539,18 @@ describe("the route schemas match the contract", () => {
     ["CreateResponseRequest", ZV3CreateResponseBody],
     ["PatchResponseRequest", ZV3PatchResponseBody],
     ["BatchDeleteResponsesRequest", ZV3BatchDeleteResponsesBody],
+    ["BatchSetResponsesOutcomeRequest", ZV3BatchSetResponsesOutcomeBody],
     ["ValidateResponseRequest", ZV3ResponseValidationRequestBody],
   ]);
   const requestExamples = collectOperationExamples(
     bundle,
-    new Set(["createResponseV3", "updateResponseV3", "batchDeleteResponsesV3", "validateResponseV3"])
+    new Set([
+      "createResponseV3",
+      "updateResponseV3",
+      "batchDeleteResponsesV3",
+      "batchSetResponsesOutcomeV3",
+      "validateResponseV3",
+    ])
   ).filter((example) => example.label.includes(" request "));
 
   test.each(requestExamples.map((example) => [example.label, example] as const))(

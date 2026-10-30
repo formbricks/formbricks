@@ -15,7 +15,7 @@ export interface FilterValue {
   };
 }
 
-export type TResponseStatus = "all" | "complete" | "partial";
+export type TResponseStatus = "all" | "complete" | "partial" | "lowQuality";
 
 export interface SelectedFilterValue {
   filter: FilterValue[];

@@ -117,6 +117,7 @@ describe("rateLimitConfigs", () => {
         "v1",
         "v2",
         "v3",
+        "v3StateMutation",
         "mcpAuth",
         "v3SurveyGenerate",
         "v3SurveyVisibility",
@@ -130,6 +131,12 @@ describe("rateLimitConfigs", () => {
         "clientEnvironment",
         "clientCreativeEvents",
       ]);
+      // The API twin of `actions.stateMutation`, per principal, for writes that fan out to the pipeline.
+      expect(rateLimitConfigs.api.v3StateMutation).toEqual({
+        interval: 60,
+        allowedPerInterval: 120,
+        namespace: "api:v3:state-mutation",
+      });
       // Chart data, preview and field values share one bucket sized for dashboards (ENG-6586).
       // One LLM-backed chart generation per user per minute bounds AI spend; looser is a cost regression.
       expect(rateLimitConfigs.api.internalChartGeneration).toEqual({
@@ -226,7 +233,13 @@ describe("rateLimitConfigs", () => {
 
     test("should have all storage configurations", () => {
       const storageConfigs = Object.keys(rateLimitConfigs.storage);
-      expect(storageConfigs).toEqual(["upload", "uploadPerWorkspace", "delete", "attachmentsExport"]);
+      expect(storageConfigs).toEqual([
+        "upload",
+        "uploadPerWorkspace",
+        "delete",
+        "attachmentsExport",
+        "responsesExport",
+      ]);
     });
   });
 

@@ -107,6 +107,21 @@ describe("getConditionValueOptions", () => {
     ]);
   });
 
+  test("a question reads 'q1 · question text' in the picker once it has a code (ENG-6790)", () => {
+    const coded = structuredClone(mixed);
+    const [first, second] = coded.blocks[0].elements;
+    (first as { code?: string }).code = "name";
+    (second as { code?: string }).code = "seats";
+
+    const questions = groupNamed(getConditionValueOptions(coded, t), "common.questions");
+
+    expect(questions?.options.map((option) => option.label)).toEqual([
+      "name · Your name?",
+      "seats · How many seats?",
+      "When?",
+    ]);
+  });
+
   test("the Embedded Data group holds both sources, in the definitions' order, keyed by storage key", () => {
     const embedded = groupNamed(getConditionValueOptions(mixed, t), "common.embedded_data");
 

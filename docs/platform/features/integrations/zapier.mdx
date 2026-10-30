@@ -8,19 +8,16 @@ icon: "bolt"
   Nail down your survey first? Any changes in the survey cause additional work in the Zap. It makes sense to first settle on the survey you want to run and then get to setting up Zapier.
 </Note>
 
-## Step 1: Setup your survey incl. `questionId` for every question
+## Step 1: Check your question codes
 
-When setting up the Zap your life will be easier when you change the `questionId`s of your survey questions. You can only do so **before** you activate your survey.
-
-![Update Question ID](/images/platform/features/integrations/zapier/update-question-id.webp)
-
-*The Question ID is the first field behind **Show Question settings** at the foot of a question card. Update it so you will recognise the response tied to this question.*
+Every question has a **question code**, such as `q1` or `nps`, and the `dataByQuestionCode` group of the test data shows your answers under these codes. You can read and change the code in the **Settings** tab of a question, under **Recode**, **before** you activate the survey. Once the survey is active, codes are locked, so the Zap you build on them keeps working.
 
 <Note>
-  Already activated? Duplicate survey You can only update the questionId
-  when the survey was not yet activated. Already activated it? Just **duplicate
-  it** to update the questionIds.
-  ![Duplicate Survey](/images/platform/features/integrations/zapier/duplicate-survey.webp)
+  Question codes start with a lowercase letter and use lowercase letters, digits and `_`. Pick short, readable names such as `nps` or `visit_reason`. Learn more in [Question codes and answer codes](/surveys/analysis/question-codes).
+</Note>
+
+<Note>
+  The Question ID of a question is generated and cannot be changed. If you need it, choose **Copy question ID** in the question's **⋯** menu.
 </Note>
 
 ## Step 2: Send a test response
@@ -65,7 +62,9 @@ Once you hit “Test” you will see the three most recent submissions for this 
 
 ![Test Submission](/images/platform/features/integrations/zapier/test-submission.webp)
 
-*Now you're happy that you updated the questionId's*
+<Note>
+  Zapier remembers the sample it showed you. If you set up your Zap before question codes existed, or you added questions since, re-test the trigger to load the new fields, including `dataByQuestionCode`.
+</Note>
 
 ## Step 7: Set up your Zap
 

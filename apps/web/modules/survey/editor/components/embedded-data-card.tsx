@@ -246,9 +246,11 @@ export const EmbeddedDataCard = ({
       .filter((field) => field.link.storageKey !== entry?.link.storageKey)
       .map(({ link }) => link.storageKey);
 
-  /** Ids a new name would collide with, beside the survey's other fields. */
+  /** Ids a new name would collide with, beside the survey's other fields: Question IDs, question codes and ending ids. */
+  const elements = getElementsFromBlocks(localSurvey.blocks);
   const takenIds = [
-    ...getElementsFromBlocks(localSurvey.blocks).map((element) => element.id),
+    ...elements.map((element) => element.id),
+    ...elements.flatMap((element) => ("code" in element && element.code ? [element.code] : [])),
     ...localSurvey.endings.map((ending) => ending.id),
   ];
 

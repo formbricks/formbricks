@@ -1,4 +1,5 @@
 import type { TSurveyBlock } from "@formbricks/types/surveys/blocks";
+import { type TCodeIssue, validateSurveyCodes } from "@formbricks/types/surveys/codes";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { checkForInvalidMediaInBlocks } from "@/lib/survey/utils";
 import { isInternalI18nString, isPlainObject } from "./guards";
@@ -321,6 +322,35 @@ function getV3SurveyCyclicLogicInvalidParams(
     }));
 }
 
+/**
+ * ENG-6778: question and answer code rules, for the write paths that skip `surveyRefinement` (PATCH,
+ * block routes, MCP). The clashes are `duplicate_identifier`; a malformed code has no code of its
+ * own and is reported by its reason, like the other value checks here.
+ */
+export function getV3SurveyCodeInvalidParams(document: TV3SurveyDocument): InvalidParam[] {
+  const embeddedDataNames = [
+    ...(document.hiddenFields?.fieldIds ?? []),
+    ...(document.variables ?? []).map((variable) => variable.name),
+  ];
+
+  return validateSurveyCodes({ blocks: document.blocks, embeddedDataNames }).map(toCodeInvalidParam);
+}
+
+function toCodeInvalidParam(issue: TCodeIssue): InvalidParam {
+  const name = issue.path.join(".");
+  if (issue.kind === "invalid_format") {
+    return { name, reason: issue.message };
+  }
+
+  return {
+    name,
+    reason: issue.message,
+    code: "duplicate_identifier",
+    identifier: issue.value,
+    referenceType: "element",
+  };
+}
+
 function toReferenceInput(document: TV3SurveyDocument) {
   return {
     blocks: document.blocks,
@@ -358,7 +388,10 @@ export function validateV3SurveyDocument(
     );
   }
 
-  invalidParams.push(...getV3SurveyCyclicLogicInvalidParams(document.blocks, precedence));
+  invalidParams.push(
+    ...getV3SurveyCyclicLogicInvalidParams(document.blocks, precedence),
+    ...getV3SurveyCodeInvalidParams(document)
+  );
 
   if (invalidParams.length > 0) {
     return {

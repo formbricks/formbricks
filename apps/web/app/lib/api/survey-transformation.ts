@@ -6,6 +6,7 @@ import {
   type TSurveyBlockLogic,
   type TSurveyBlockLogicAction,
 } from "@formbricks/types/surveys/blocks";
+import { fillMissingCodes } from "@formbricks/types/surveys/fill-missing-codes";
 import { type TConditionGroup, type TSingleCondition } from "@formbricks/types/surveys/logic";
 import {
   type TSurveyEnding,
@@ -356,7 +357,12 @@ const reverseLogicFallback = (
   return undefined;
 };
 
-export const transformQuestionsToBlocks = (
+/**
+ * The conversion alone: codes the legacy questions carry are kept, the rest stay missing. For a write that
+ * goes through `updateSurveyInternal` (the v1 PUT), which carries stored codes over by id before it fills
+ * what is left; a positional fill here would hand it codes that were never sent (ENG-6782).
+ */
+export const transformQuestionsToBlocksWithoutCodeFill = (
   questions: TSurveyQuestion[],
   endings: TSurveyEnding[] = []
 ): TSurveyBlock[] => {
@@ -418,6 +424,17 @@ export const transformQuestionsToBlocks = (
 
   return blocks as TSurveyBlock[];
 };
+
+/**
+ * @param takenNames Embedded Data names of the survey, which a default question code must not take
+ *   (ENG-6782). The converted blocks come back with every missing question and answer code filled.
+ */
+export const transformQuestionsToBlocks = (
+  questions: Parameters<typeof transformQuestionsToBlocksWithoutCodeFill>[0],
+  endings: TSurveyEnding[] = [],
+  takenNames: readonly string[] = []
+): TSurveyBlock[] =>
+  fillMissingCodes(transformQuestionsToBlocksWithoutCodeFill(questions, endings), takenNames);
 
 const transformBlockLogicToQuestionLogic = (
   blockLogic: TSurveyBlockLogic[],

@@ -98,6 +98,9 @@ interface VariableStackEntry {
 const getHoverColor = (styling: SurveyContainerProps["styling"]) =>
   `var(--fb-hover-bg-color, ${styling.inputBgColor?.light ?? "#f8fafc"})`;
 
+// Counts the displays mounted in this page, see `displayKey` in the response queue config.
+let displayCounter = 0;
+
 export function Survey({
   appUrl,
   workspaceId: workspaceIdProp,
@@ -219,6 +222,11 @@ export function Survey({
     [onResponseCreated]
   );
 
+  // One per mounted display, so the queue shared by this display's ResponseQueue instances is not the
+  // one an earlier display of the same survey left behind.
+  const displayKeyRef = useRef<string | null>(null);
+  displayKeyRef.current ??= String(++displayCounter);
+
   const responseQueue = useMemo(() => {
     if (appUrl && workspaceId && surveyState) {
       return new ResponseQueue(
@@ -228,6 +236,7 @@ export function Survey({
           retryAttempts: 4,
           persistOffline: offlinePersistEnabled,
           surveyId: survey.id,
+          displayKey: displayKeyRef.current ?? undefined,
           onResponseSendingFailed: (_, errorCode?: TResponseErrorCodesEnum) => {
             setShowError(true);
             setErrorType(errorCode);

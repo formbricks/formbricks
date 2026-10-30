@@ -1,8 +1,6 @@
 "use client";
 
-import { TFunction } from "i18next";
 import React from "react";
-import { useTranslation } from "react-i18next";
 import { getComputedEmbeddedFields, getIngestedStorageKeys } from "@formbricks/types/embedded-data-resolver";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TResponseDataValue, TResponseTableData, TResponseWithQuotas } from "@formbricks/types/responses";
@@ -12,6 +10,7 @@ import { TUser, TUserLocale } from "@formbricks/types/user";
 import type { TResponseToolbarState } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/ResponseToolbar";
 import { ResponseTable } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTable";
 import { getReservedColumnValues } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/responses/lib/utils";
+import type { TOutcomeActions } from "@/modules/analysis/response-outcome/lib/outcome";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 
 interface ResponseDataViewProps {
@@ -31,6 +30,7 @@ interface ResponseDataViewProps {
   toolbar: TResponseToolbarState;
   /** Creatives open this survey: its table then shows "Opened by creative" by default. */
   isOpenedByCreatives: boolean;
+  outcomeActions: TOutcomeActions;
 }
 
 // Helper function to format array values to record with specified keys
@@ -89,15 +89,12 @@ const extractResponseData = (response: TResponseWithQuotas, survey: TSurvey): Re
 const mapResponsesToTableData = (
   responses: TResponseWithQuotas[],
   survey: TSurvey,
-  t: TFunction,
   locale: TUserLocale
 ): TResponseTableData[] => {
   return responses.map((response) => ({
     responseData: extractResponseData(response, survey),
     createdAt: response.createdAt,
-    status: response.finished
-      ? t("workspace.surveys.responses.completed")
-      : t("workspace.surveys.responses.not_completed"),
+    status: response.finished ? "complete" : "notCompleted",
     responseId: response.id,
     singleUseId: response.singleUseId,
     tags: response.tags,
@@ -116,6 +113,7 @@ const mapResponsesToTableData = (
     // Resolved here, where the whole response is in hand, so the cells stay dumb lookups.
     reservedValues: getReservedColumnValues(response, locale),
     quotas: response.quotas?.map((quota) => quota.name),
+    outcome: response.outcome ?? null,
   }));
 };
 
@@ -135,13 +133,13 @@ export const ResponseDataView: React.FC<Readonly<ResponseDataViewProps>> = ({
   quotas,
   toolbar,
   isOpenedByCreatives,
+  outcomeActions,
 }) => {
-  const { t } = useTranslation();
   const [selectedResponseId, setSelectedResponseId] = React.useState<string | null>(null);
   const setSelectedResponseIdTransition = React.useCallback((id: string | null) => {
     React.startTransition(() => setSelectedResponseId(id));
   }, []);
-  const data = mapResponsesToTableData(responses, survey, t, locale);
+  const data = mapResponsesToTableData(responses, survey, locale);
 
   return (
     <div className="w-full">
@@ -164,6 +162,7 @@ export const ResponseDataView: React.FC<Readonly<ResponseDataViewProps>> = ({
         selectedResponseId={selectedResponseId}
         setSelectedResponseId={setSelectedResponseIdTransition}
         isOpenedByCreatives={isOpenedByCreatives}
+        outcomeActions={outcomeActions}
       />
     </div>
   );

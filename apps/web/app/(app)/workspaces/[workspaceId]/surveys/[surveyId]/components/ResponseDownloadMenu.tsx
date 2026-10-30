@@ -1,45 +1,35 @@
 "use client";
 
 import * as Sentry from "@sentry/nextjs";
-import { DownloadIcon, Loader2 } from "lucide-react";
+import { DownloadIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TResponseFilterCriteria } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { getResponsesDownloadUrlAction } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/actions";
-import { downloadResponsesFile } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/utils";
+import { ExportModal } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/export-modal";
 import { getSurveyFileUploadConfigs } from "@/modules/storage/survey-file-upload-elements";
 import { Button } from "@/modules/ui/components/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/modules/ui/components/dropdown-menu";
-
-enum FilterDownload {
-  ALL = "common.all",
-  FILTER = "common.filter",
-}
 
 /**
- * Download, as a table toolbar action on Responses and Summary: every response, or the ones the
- * toolbar's filters match, as CSV, Excel or (when the survey collects files) the attachments.
+ * Export, as a table toolbar action on Responses and Summary: opens the Export modal for every response,
+ * or for the ones the toolbar's filters match.
  */
 export const ResponseDownloadMenu = ({
   survey,
   getFilters,
+  hasFilters,
   disabled = false,
 }: Readonly<{
   survey: TSurvey;
   getFilters: () => TResponseFilterCriteria;
-  /** While the filter cannot be resolved yet, so a download would export the unfiltered survey. */
+  hasFilters: boolean;
+  /** While the filter cannot be resolved yet, so an export would cover the unfiltered survey. */
   disabled?: boolean;
 }>) => {
   const { t } = useTranslation();
-  const [isDownloadDropDownOpen, setIsDownloadDropDownOpen] = useState<boolean>(false);
-  const [isDownloading, setIsDownloading] = useState<boolean>(false);
+  // Resolved when the modal opens, so a relative date window means "now" and stays fixed while it is open.
+  const [exportFilter, setExportFilter] = useState<TResponseFilterCriteria | null>(null);
 
   // The attachment items only make sense when the survey actually collects files. Hidden rather than
   // disabled: a survey with no file-upload element has nothing to explain.
@@ -56,12 +46,12 @@ export const ResponseDownloadMenu = ({
    * answer with an error, and a problem document rendered into the tab would replace this page. So ask
    * for the counts first, toast anything the user needs to know, and only then navigate.
    */
-  const handleDownloadAttachments = async (filter: FilterDownload) => {
+  const handleDownloadAttachments = async () => {
     // Resolved once, so the pre-flight and the download ask about the same window.
-    const filters = filter === FilterDownload.FILTER ? JSON.stringify(getFilters()) : null;
+    const filters = JSON.stringify(exportFilter ?? {});
     const buildUrl = (extra?: Record<string, string>) => {
       const params = new URLSearchParams(extra);
-      if (filters) params.set("filters", filters);
+      params.set("filters", filters);
       return `/api/surveys/${survey.id}/attachments?${params.toString()}`;
     };
 
@@ -71,8 +61,6 @@ export const ResponseDownloadMenu = ({
     const toastId = toast.loading(t("workspace.surveys.responses.preparing_attachments_download"));
 
     try {
-      setIsDownloading(true);
-
       const preflight = await fetch(buildUrl({ dryRun: "true" }));
       if (!preflight.ok) {
         toast.error(t("workspace.surveys.responses.error_downloading_attachments"), { id: toastId });
@@ -106,103 +94,29 @@ export const ResponseDownloadMenu = ({
     } catch (err) {
       Sentry.captureException(err);
       toast.error(t("workspace.surveys.responses.error_downloading_attachments"), { id: toastId });
-    } finally {
-      setIsDownloading(false);
-    }
-  };
-
-  const handleDownloadResponses = async (filter: FilterDownload, fileType: "csv" | "xlsx") => {
-    try {
-      const responseFilters = filter === FilterDownload.ALL ? {} : getFilters();
-      setIsDownloading(true);
-
-      const responsesDownloadUrlResponse = await getResponsesDownloadUrlAction({
-        surveyId: survey.id,
-        format: fileType,
-        filterCriteria: responseFilters,
-      });
-
-      if (responsesDownloadUrlResponse?.data) {
-        downloadResponsesFile(
-          responsesDownloadUrlResponse.data.fileName,
-          responsesDownloadUrlResponse.data.fileContents,
-          fileType
-        );
-      } else {
-        toast.error(t("workspace.surveys.responses.error_downloading_responses"));
-      }
-    } catch (err) {
-      Sentry.captureException(err);
-      toast.error(t("workspace.surveys.responses.error_downloading_responses"));
-    } finally {
-      setIsDownloading(false);
     }
   };
 
   return (
-    <DropdownMenu onOpenChange={setIsDownloadDropDownOpen}>
-      <DropdownMenuTrigger asChild>
-        <Button
-          size="sm"
-          variant="secondary"
-          disabled={isDownloading || disabled}
-          aria-expanded={isDownloadDropDownOpen}
-          data-testid="fb__custom-filter-download">
-          {isDownloading ? <Loader2 className="size-4 animate-spin" /> : <DownloadIcon className="size-4" />}
-          {t("common.download")}
-        </Button>
-      </DropdownMenuTrigger>
-
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem
-          data-testid="fb__custom-filter-download-all-csv"
-          onClick={async () => {
-            await handleDownloadResponses(FilterDownload.ALL, "csv");
-          }}>
-          <p className="text-slate-700">{t("workspace.surveys.summary.all_responses_csv")}</p>
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          data-testid="fb__custom-filter-download-all-xlsx"
-          onClick={async () => {
-            await handleDownloadResponses(FilterDownload.ALL, "xlsx");
-          }}>
-          <p className="text-slate-700">{t("workspace.surveys.summary.all_responses_excel")}</p>
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          data-testid="fb__custom-filter-download-filtered-csv"
-          onClick={async () => {
-            await handleDownloadResponses(FilterDownload.FILTER, "csv");
-          }}>
-          <p className="text-slate-700">{t("workspace.surveys.summary.filtered_responses_csv")}</p>
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          data-testid="fb__custom-filter-download-filtered-xlsx"
-          onClick={async () => {
-            await handleDownloadResponses(FilterDownload.FILTER, "xlsx");
-          }}>
-          <p className="text-slate-700">{t("workspace.surveys.summary.filtered_responses_excel")}</p>
-        </DropdownMenuItem>
-        {hasFileUploadElements && (
-          <>
-            <DropdownMenuItem
-              data-testid="fb__custom-filter-download-all-attachments"
-              onClick={async () => {
-                await handleDownloadAttachments(FilterDownload.ALL);
-              }}>
-              <p className="text-slate-700">{t("workspace.surveys.summary.all_responses_attachments")}</p>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              data-testid="fb__custom-filter-download-filtered-attachments"
-              onClick={async () => {
-                await handleDownloadAttachments(FilterDownload.FILTER);
-              }}>
-              <p className="text-slate-700">
-                {t("workspace.surveys.summary.filtered_responses_attachments")}
-              </p>
-            </DropdownMenuItem>
-          </>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <>
+      <Button
+        size="sm"
+        variant="secondary"
+        disabled={disabled}
+        data-testid="fb__custom-filter-export"
+        onClick={() => setExportFilter(getFilters())}>
+        <DownloadIcon className="size-4" />
+        {hasFilters ? t("workspace.surveys.export.export_filtered") : t("workspace.surveys.export.button")}
+      </Button>
+      <ExportModal
+        open={exportFilter !== null}
+        onOpenChange={(open) => {
+          if (!open) setExportFilter(null);
+        }}
+        surveyId={survey.id}
+        scope={{ filter: exportFilter ?? {} }}
+        onDownloadAttachments={hasFileUploadElements ? handleDownloadAttachments : undefined}
+      />
+    </>
   );
 };

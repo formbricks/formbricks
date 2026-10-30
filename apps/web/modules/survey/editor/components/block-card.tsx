@@ -4,7 +4,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { ChevronDownIcon, ChevronRightIcon, GripIcon } from "lucide-react";
+import { GripIcon, PencilIcon } from "lucide-react";
 import { type Dispatch, type KeyboardEvent, type SetStateAction, memo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TI18nString } from "@formbricks/types/i18n";
@@ -36,17 +36,23 @@ import { MultipleChoiceElementForm } from "@/modules/survey/editor/components/mu
 import { NPSElementForm } from "@/modules/survey/editor/components/nps-element-form";
 import { OpenElementForm } from "@/modules/survey/editor/components/open-element-form";
 import { PictureSelectionForm } from "@/modules/survey/editor/components/picture-selection-form";
+import { QuestionTabs } from "@/modules/survey/editor/components/question-tabs";
 import { RankingElementForm } from "@/modules/survey/editor/components/ranking-element-form";
 import { RatingElementForm } from "@/modules/survey/editor/components/rating-element-form";
 import { areBlockCardPropsEqual } from "@/modules/survey/editor/lib/block-card-memo";
 import { BLOCK_NAME_MAX_LENGTH } from "@/modules/survey/editor/lib/blocks";
+import { getElementCodeIssues } from "@/modules/survey/editor/lib/element-codes";
+import { getElementLock } from "@/modules/survey/editor/lib/published-lock";
 import { formatTextWithSlashes } from "@/modules/survey/editor/lib/utils";
 import { getElementIconMap, getTSurveyElementTypeEnumName } from "@/modules/survey/lib/elements";
 import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
 import { Input } from "@/modules/ui/components/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/modules/ui/components/tabs";
 
 interface BlockCardProps {
   localSurvey: TSurvey;
+  /** The survey as last saved. The published lock is read from it, not from the working copy. */
+  persistedSurvey: TSurvey;
   workspace: TWorkspaceWithoutCustomCss;
   block: TSurveyBlock;
   blockIdx: number;
@@ -89,6 +95,7 @@ interface BlockCardProps {
 
 const BlockCardComponent = ({
   localSurvey,
+  persistedSurvey,
   workspace,
   block,
   blockIdx,
@@ -130,20 +137,27 @@ const BlockCardComponent = ({
   const { t } = useTranslation();
   const ELEMENTS_ICON_MAP = getElementIconMap(t);
 
-  const hasMultipleElements = block.elements.length > 1;
+  // The question codes of the block, in order: the names an export and a webhook know its questions by.
+  const blockCodes = block.elements
+    .flatMap((element) => ("code" in element && element.code ? [element.code] : []))
+    .join(", ");
   const blockLogic = block.logic ?? [];
 
   // Check if any element in this block is currently active
   const isBlockOpen = block.elements.some((element) => element.id === activeElementId);
 
-  const hasInvalidElement = block.elements.some((element) => invalidElements?.includes(element.id));
+  // Code problems come from the live survey, so a duplicate shows before the next save or publish.
+  const codeIssues = getElementCodeIssues(localSurvey);
+  const hasInvalidElement = block.elements.some(
+    (element) => invalidElements?.includes(element.id) || codeIssues.has(element.id)
+  );
   const hasInvalidLogic = blockLogic.some((logicItem) => invalidElements?.includes(logicItem.id));
   // The block's own id is only ever flagged for an empty name (elements and logic rules use theirs).
   const hasInvalidName = invalidElements?.includes(block.id) ?? false;
   const isBlockInvalid = hasInvalidElement || hasInvalidLogic || hasInvalidName;
 
   const [isBlockCollapsed, setIsBlockCollapsed] = useState(false);
-  const [openAdvanced, setOpenAdvanced] = useState(blockLogic.length > 0);
+  const [blockTab, setBlockTab] = useState("questions");
 
   const nameInputRef = useRef<HTMLInputElement>(null);
 
@@ -200,6 +214,7 @@ const BlockCardComponent = ({
     locale,
     isStorageConfigured,
     isExternalUrlsAllowed,
+    lock: getElementLock(persistedSurvey, element.id),
   });
 
   // Element form components mapped by type
@@ -242,12 +257,6 @@ const BlockCardComponent = ({
     const additionalProps: Record<string, unknown> = {};
     if (elementsWithLastElement.has(element.type)) {
       additionalProps.lastElement = lastElement;
-    }
-
-    // FileUpload needs extra props
-    if (element.type === TSurveyElementTypeEnum.FileUpload) {
-      additionalProps.workspace = workspace;
-      additionalProps.isFormbricksCloud = isFormbricksCloud;
     }
 
     // @ts-expect-error - These props should cover everything
@@ -313,7 +322,7 @@ const BlockCardComponent = ({
                 className="flex h-full items-center justify-between px-4 py-2"
                 data-testid="block-card-header">
                 <div className="flex min-w-0 items-center gap-2">
-                  <div className="min-w-0">
+                  <div className="group/name relative min-w-0">
                     <Input
                       ref={nameInputRef}
                       // Controlled: an auto-generated name is resequenced in place by a reorder,
@@ -332,7 +341,7 @@ const BlockCardComponent = ({
                         "-mx-2 h-6 w-full rounded-md border-transparent bg-transparent px-2 py-0",
                         // The placeholder is muted on purpose: a cleared name is an invalid state
                         // that must not look like a block still called something.
-                        "text-sm font-medium text-slate-700 placeholder:font-normal placeholder:text-slate-400",
+                        "text-sm font-semibold text-slate-900 placeholder:font-normal placeholder:text-slate-400",
                         // Wide enough to type a real title into without the box clipping the text,
                         // and capped so a long one can't crowd out the block menu.
                         "max-w-[34rem] min-w-[20rem]",
@@ -346,8 +355,14 @@ const BlockCardComponent = ({
                         "focus:ring-0 focus:ring-offset-0 focus:outline-none"
                       )}
                     />
+                    <PencilIcon
+                      aria-hidden="true"
+                      className="pointer-events-none absolute top-1 right-2 size-3.5 text-slate-400 opacity-0 transition-opacity group-focus-within/name:opacity-0 group-hover/name:opacity-100"
+                    />
                     <p className="text-xs text-slate-500">
-                      {t("common.count_questions", { count: block.elements.length })}
+                      {[t("common.count_questions", { count: block.elements.length }), blockCodes]
+                        .filter(Boolean)
+                        .join(" · ")}
                     </p>
                   </div>
                 </div>
@@ -367,191 +382,199 @@ const BlockCardComponent = ({
           </Collapsible.CollapsibleTrigger>
 
           <Collapsible.CollapsibleContent>
-            {/* Render each element in the block */}
-            <div ref={elementsParent}>
-              {block.elements.map((element, elementIndex) => {
-                // Calculate the actual element index in the flattened elements array
-                let elementIdx = 0;
-                for (let i = 0; i < blockIdx; i++) {
-                  elementIdx += localSurvey.blocks[i].elements.length;
-                }
-                elementIdx += elementIndex;
+            <Tabs value={blockTab} onValueChange={setBlockTab} className="gap-0">
+              <TabsList variant="underline" className="mx-4 mb-4 w-auto">
+                <TabsTrigger value="questions" variant="underline" className="py-2">
+                  {t("common.questions")}
+                </TabsTrigger>
+                <TabsTrigger value="settings" variant="underline" className="py-2">
+                  {t("common.settings")}
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="questions">
+                {/* Render each element in the block */}
+                <div ref={elementsParent} className="flex flex-col gap-4 pb-4">
+                  {block.elements.map((element, elementIndex) => {
+                    // Calculate the actual element index in the flattened elements array
+                    let elementIdx = 0;
+                    for (let i = 0; i < blockIdx; i++) {
+                      elementIdx += localSurvey.blocks[i].elements.length;
+                    }
+                    elementIdx += elementIndex;
 
-                const isOpen = activeElementId === element.id;
+                    const isOpen = activeElementId === element.id;
 
-                return (
-                  <div
-                    key={element.id}
-                    id={element.id}
-                    className={cn("scroll-mt-16", elementIndex > 0 && "border-t border-slate-200")}>
-                    <Collapsible.Root
-                      open={isOpen}
-                      onOpenChange={() => {
-                        if (activeElementId !== element.id) {
-                          setActiveElementId(element.id);
-                        } else {
-                          setActiveElementId(null);
-                        }
-                      }}
-                      className="w-full">
-                      <Collapsible.CollapsibleTrigger
-                        asChild
+                    return (
+                      <div
+                        key={element.id}
+                        id={element.id}
                         className={cn(
-                          isOpen ? "bg-slate-50" : "",
-                          "flex w-full cursor-pointer justify-between gap-4 p-4 hover:bg-slate-50"
-                        )}
-                        aria-label="Toggle question details">
-                        <div>
-                          <div className="flex grow">
-                            <div className="flex grow items-center gap-3" dir="auto">
-                              <div className="flex items-center text-slate-600">
-                                {ELEMENTS_ICON_MAP[element.type]}
+                          "mx-4 scroll-mt-16 rounded-lg border",
+                          isOpen ? "border-slate-400" : "border-slate-200"
+                        )}>
+                        <Collapsible.Root
+                          open={isOpen}
+                          onOpenChange={() => {
+                            if (activeElementId !== element.id) {
+                              setActiveElementId(element.id);
+                            } else {
+                              setActiveElementId(null);
+                            }
+                          }}
+                          className="w-full">
+                          <Collapsible.CollapsibleTrigger
+                            asChild
+                            className={cn(
+                              isOpen ? "rounded-t-lg bg-slate-50" : "rounded-lg",
+                              "flex w-full cursor-pointer justify-between gap-4 p-4 hover:bg-slate-50"
+                            )}
+                            aria-label="Toggle question details">
+                            <div>
+                              <div className="flex grow">
+                                <div className="flex grow items-center gap-3" dir="auto">
+                                  <div className="flex items-center text-slate-600">
+                                    {ELEMENTS_ICON_MAP[element.type]}
+                                  </div>
+                                  <div className="flex grow flex-col justify-center">
+                                    <h3 className="flex items-center gap-2 text-sm font-semibold">
+                                      {getElementHeadline(element, selectedLanguageCode)}
+                                      {codeIssues.has(element.id) && (
+                                        <>
+                                          <span
+                                            aria-hidden="true"
+                                            className="size-2 shrink-0 rounded-full bg-red-500"
+                                          />
+                                          <span className="sr-only">
+                                            {t("workspace.surveys.edit.code_needs_attention")}
+                                          </span>
+                                        </>
+                                      )}
+                                    </h3>
+                                    {element.type !== TSurveyElementTypeEnum.CTA && (
+                                      <p className="mt-1 truncate text-xs text-slate-500">
+                                        {[
+                                          element?.required
+                                            ? t("workspace.surveys.edit.required")
+                                            : t("workspace.surveys.edit.optional"),
+                                          "code" in element ? element.code : undefined,
+                                        ]
+                                          .filter(Boolean)
+                                          .join(" · ")}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
                               </div>
-                              <div className="flex grow flex-col justify-center">
-                                {hasMultipleElements && (
-                                  <p className="mb-1 text-xs font-medium text-slate-500">
-                                    {t("workspace.surveys.edit.question_number", {
-                                      number: elementIndex + 1,
-                                    })}
-                                  </p>
-                                )}
-                                <h3 className="text-sm font-semibold">
-                                  {getElementHeadline(element, selectedLanguageCode)}
-                                </h3>
-                                {!isOpen && element.type !== TSurveyElementTypeEnum.CTA && (
-                                  <p className="mt-1 truncate text-xs text-slate-500">
-                                    {element?.required
-                                      ? t("workspace.surveys.edit.required")
-                                      : t("workspace.surveys.edit.optional")}
-                                  </p>
-                                )}
+
+                              <div className="flex items-center gap-x-2">
+                                <EditorCardMenu
+                                  survey={localSurvey}
+                                  isTypeLocked={getElementLock(persistedSurvey, element.id).isTypeLocked}
+                                  cardIdx={elementIdx}
+                                  lastCard={lastElement && elementIndex === lastElementIndex}
+                                  blockId={block.id}
+                                  elementIdx={elementIndex}
+                                  duplicateCard={duplicateElement}
+                                  deleteCard={deleteElement}
+                                  moveCard={moveElement}
+                                  card={{
+                                    ...element,
+                                    logic: block.logic,
+                                    buttonLabel: block.buttonLabel,
+                                    backButtonLabel: block.backButtonLabel,
+                                  }}
+                                  workspace={workspace}
+                                  updateCard={updateElement}
+                                  addCard={addElement}
+                                  addCardToBlock={addElementToBlock}
+                                  moveElementToBlock={moveElementToBlock}
+                                  cardType="element"
+                                  isCxMode={isCxMode}
+                                />
                               </div>
                             </div>
-                          </div>
-
-                          <div className="flex items-center gap-x-2">
-                            <EditorCardMenu
-                              survey={localSurvey}
-                              cardIdx={elementIdx}
-                              lastCard={lastElement && elementIndex === lastElementIndex}
-                              blockId={block.id}
-                              elementIdx={elementIndex}
-                              duplicateCard={duplicateElement}
-                              deleteCard={deleteElement}
-                              moveCard={moveElement}
-                              card={{
-                                ...element,
-                                logic: block.logic,
-                                buttonLabel: block.buttonLabel,
-                                backButtonLabel: block.backButtonLabel,
-                              }}
-                              workspace={workspace}
-                              updateCard={updateElement}
-                              addCard={addElement}
-                              addCardToBlock={addElementToBlock}
-                              moveElementToBlock={moveElementToBlock}
-                              cardType="element"
-                              isCxMode={isCxMode}
+                          </Collapsible.CollapsibleTrigger>
+                          <Collapsible.CollapsibleContent
+                            className={`flex flex-col px-4 ${isOpen && "pb-4"}`}>
+                            {shouldShowCautionAlert(element.type) && (
+                              <Alert variant="warning" size="small" className="w-fill mt-2" role="status">
+                                <AlertTitle>{t("workspace.surveys.edit.caution_text")}</AlertTitle>
+                                <AlertButton onClick={() => onAlertTrigger()}>
+                                  {t("common.learn_more")}
+                                </AlertButton>
+                              </Alert>
+                            )}
+                            <QuestionTabs
+                              content={renderElementForm(element, elementIdx)}
+                              hasSettingsIssue={codeIssues.has(element.id)}
+                              settings={
+                                <AdvancedSettings
+                                  // TODO -- We should remove this when we can confirm that everything works fine with the survey editor, not changing this right now in this file because it would require changing the element type to the respective element type in all the element forms.
+                                  element={element}
+                                  elementIdx={elementIdx}
+                                  localSurvey={localSurvey}
+                                  lock={getElementLock(persistedSurvey, element.id)}
+                                  updateElement={updateElement}
+                                  updateBlockLogic={updateBlockLogic}
+                                  updateBlockLogicFallback={updateBlockLogicFallback}
+                                  workspace={workspace}
+                                  isFormbricksCloud={isFormbricksCloud}
+                                />
+                              }
                             />
-                          </div>
-                        </div>
-                      </Collapsible.CollapsibleTrigger>
-                      <Collapsible.CollapsibleContent className={`flex flex-col px-4 ${isOpen && "pb-4"}`}>
-                        {shouldShowCautionAlert(element.type) && (
-                          <Alert variant="warning" size="small" className="w-fill mt-2" role="status">
-                            <AlertTitle>{t("workspace.surveys.edit.caution_text")}</AlertTitle>
-                            <AlertButton onClick={() => onAlertTrigger()}>
-                              {t("common.learn_more")}
-                            </AlertButton>
-                          </Alert>
-                        )}
-                        {renderElementForm(element, elementIdx)}
-                        <div className="mt-4">
-                          <Collapsible.Root
-                            open={openAdvanced}
-                            onOpenChange={setOpenAdvanced}
-                            className="mt-5">
-                            <Collapsible.CollapsibleTrigger
-                              className="flex items-center text-sm text-slate-700"
-                              aria-label="Toggle advanced settings">
-                              {openAdvanced ? (
-                                <ChevronDownIcon className="mr-1 h-4 w-3" />
-                              ) : (
-                                <ChevronRightIcon className="mr-2 h-4 w-3" />
-                              )}
-                              {openAdvanced
-                                ? t("workspace.surveys.edit.hide_question_settings")
-                                : t("workspace.surveys.edit.show_question_settings")}
-                            </Collapsible.CollapsibleTrigger>
+                          </Collapsible.CollapsibleContent>
+                        </Collapsible.Root>
+                      </div>
+                    );
+                  })}
+                </div>
+                <hr className="mb-4 border-dashed border-slate-200" />
+                {/* Add Element to Block button */}
 
-                            <Collapsible.CollapsibleContent className="flex flex-col gap-4 overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
-                              {element.type !== TSurveyElementTypeEnum.NPS &&
-                              element.type !== TSurveyElementTypeEnum.Rating &&
-                              element.type !== TSurveyElementTypeEnum.CTA ? (
-                                <div className="mt-2 flex gap-x-2"></div>
-                              ) : null}
-                              <AdvancedSettings
-                                // TODO -- We should remove this when we can confirm that everything works fine with the survey editor, not changing this right now in this file because it would require changing the element type to the respective element type in all the element forms.
-                                element={element}
-                                elementIdx={elementIdx}
-                                localSurvey={localSurvey}
-                                updateElement={updateElement}
-                                updateBlockLogic={updateBlockLogic}
-                                updateBlockLogicFallback={updateBlockLogicFallback}
-                              />
-                            </Collapsible.CollapsibleContent>
-                          </Collapsible.Root>
-                        </div>
-                      </Collapsible.CollapsibleContent>
-                    </Collapsible.Root>
+                <div className="p-4 pt-0">
+                  <AddElementToBlockButton
+                    localSurvey={localSurvey}
+                    setLocalSurvey={setLocalSurvey}
+                    setActiveElementId={setActiveElementId}
+                    block={block}
+                    workspace={workspace}
+                    isCxMode={isCxMode}
+                  />
+                </div>
+
+                <hr className="border-dashed border-slate-200" />
+
+                {/* Conditional Logic */}
+                {block.elements[0] && (
+                  <div className="px-4 pb-4">
+                    <ConditionalLogic
+                      localSurvey={localSurvey}
+                      block={block}
+                      blockIdx={blockIdx}
+                      updateBlockLogic={updateBlockLogic}
+                      updateBlockLogicFallback={updateBlockLogicFallback}
+                      invalidElements={invalidElements}
+                    />
                   </div>
-                );
-              })}
-            </div>
-            <hr className="mb-4 border-dashed border-slate-200" />
-            {/* Add Element to Block button */}
-
-            <div className="p-4 pt-0">
-              <AddElementToBlockButton
-                localSurvey={localSurvey}
-                setLocalSurvey={setLocalSurvey}
-                setActiveElementId={setActiveElementId}
-                block={block}
-                workspace={workspace}
-                isCxMode={isCxMode}
-              />
-            </div>
-
-            <hr className="border-dashed border-slate-200" />
-
-            {/* Conditional Logic */}
-            {block.elements[0] && (
-              <div className="p-4 pb-0">
-                <ConditionalLogic
-                  localSurvey={localSurvey}
-                  block={block}
-                  blockIdx={blockIdx}
-                  updateBlockLogic={updateBlockLogic}
-                  updateBlockLogicFallback={updateBlockLogicFallback}
-                  invalidElements={invalidElements}
-                />
-              </div>
-            )}
-
-            {/* Block Settings */}
-            <div className="p-4">
-              <BlockSettings
-                localSurvey={localSurvey}
-                block={block}
-                blockIndex={blockIdx}
-                selectedLanguageCode={selectedLanguageCode}
-                updateBlockButtonLabel={updateBlockButtonLabel}
-                locale={locale}
-                isStorageConfigured={isStorageConfigured}
-                isLastBlock={blockIdx === totalBlocks - 1}
-                setLocalSurvey={setLocalSurvey}
-              />
-            </div>
+                )}
+              </TabsContent>
+              <TabsContent value="settings">
+                {/* Block Settings */}
+                <div className="px-4 pb-4">
+                  <BlockSettings
+                    localSurvey={localSurvey}
+                    block={block}
+                    blockIndex={blockIdx}
+                    selectedLanguageCode={selectedLanguageCode}
+                    updateBlockButtonLabel={updateBlockButtonLabel}
+                    locale={locale}
+                    isStorageConfigured={isStorageConfigured}
+                    isLastBlock={blockIdx === totalBlocks - 1}
+                    setLocalSurvey={setLocalSurvey}
+                  />
+                </div>
+              </TabsContent>
+            </Tabs>
           </Collapsible.CollapsibleContent>
         </Collapsible.Root>
       </div>

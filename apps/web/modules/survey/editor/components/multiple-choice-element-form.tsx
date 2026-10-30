@@ -10,19 +10,19 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getLanguageLabel } from "@formbricks/i18n-utils/utils";
 import {
-  TMultipleChoiceOptionDisplayType,
   TSurveyElement,
   TSurveyElementChoice,
   TSurveyElementTypeEnum,
   TSurveyMultipleChoiceElement,
 } from "@formbricks/types/surveys/elements";
-import { TShuffleOption, TSurvey } from "@formbricks/types/surveys/types";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
 import { BulkEditOptionsModal } from "@/modules/survey/editor/components/bulk-edit-options-modal";
 import { ElementOptionChoice } from "@/modules/survey/editor/components/element-option-choice";
-import { ValidationRulesEditor } from "@/modules/survey/editor/components/validation-rules-editor";
+import { PublishedLockNotice } from "@/modules/survey/editor/components/published-lock-notice";
+import { NO_ELEMENT_LOCK, TElementLock } from "@/modules/survey/editor/lib/published-lock";
 import {
   ensureSpecialChoicesOrder,
   getShuffleOptionAfterAddingSpecialChoice,
@@ -31,8 +31,7 @@ import {
 import { findOptionUsedInLogic } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
-import { OptionsSwitch } from "@/modules/ui/components/options-switch";
-import { ShuffleOptionSelect } from "@/modules/ui/components/shuffle-option-select";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 interface MultipleChoiceElementFormProps {
   localSurvey: TSurvey;
@@ -44,6 +43,7 @@ interface MultipleChoiceElementFormProps {
   locale: TUserLocale;
   isStorageConfigured: boolean;
   isExternalUrlsAllowed?: boolean;
+  lock?: TElementLock;
 }
 
 export const MultipleChoiceElementForm = ({
@@ -56,6 +56,7 @@ export const MultipleChoiceElementForm = ({
   locale,
   isStorageConfigured = true,
   isExternalUrlsAllowed,
+  lock = NO_ELEMENT_LOCK,
 }: MultipleChoiceElementFormProps): JSX.Element => {
   const { t } = useTranslation();
   const lastChoiceRef = useRef<HTMLInputElement>(null);
@@ -66,38 +67,6 @@ export const MultipleChoiceElementForm = ({
   const elementRef = useRef<HTMLInputElement>(null);
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
   const surveyLanguages = localSurvey.languages ?? [];
-  const shuffleOptionsTypes: Record<TShuffleOption, { id: TShuffleOption; label: string; show: boolean }> = {
-    none: {
-      id: "none",
-      label: t("workspace.surveys.edit.keep_current_order"),
-      show: true,
-    },
-    all: {
-      id: "all",
-      label: t("workspace.surveys.edit.randomize_all"),
-      show: element.choices.every((c) => c.id !== "other" && c.id !== "none"),
-    },
-    exceptLast: {
-      id: "exceptLast",
-      label: t("workspace.surveys.edit.randomize_all_except_last"),
-      show: true,
-    },
-    reverseOrderOccasionally: {
-      id: "reverseOrderOccasionally",
-      label: t("workspace.surveys.edit.reverse_order_occasionally"),
-      show: element.choices.every((c) => c.id !== "other" && c.id !== "none"),
-    },
-    reverseOrderExceptLast: {
-      id: "reverseOrderExceptLast",
-      label: t("workspace.surveys.edit.reverse_order_occasionally_except_last"),
-      show: true,
-    },
-  };
-
-  const multipleChoiceOptionDisplayTypeOptions = [
-    { value: "list", label: t("workspace.surveys.edit.list") },
-    { value: "dropdown", label: t("workspace.surveys.edit.dropdown") },
-  ];
 
   const updateChoice = (choiceIdx: number, updatedAttributes: Partial<TSurveyElementChoice>) => {
     let newChoices: any[] = [];
@@ -181,6 +150,7 @@ export const MultipleChoiceElementForm = ({
 
   const deleteChoice = (choiceIdx: number) => {
     const choiceToDelete = element.choices[choiceIdx].id;
+    if (lock.isOptionLocked("choices", choiceToDelete)) return;
 
     if (choiceToDelete !== "other" && choiceToDelete !== "none") {
       const idx = findOptionUsedInLogic(localSurvey, element.id, choiceToDelete);
@@ -324,7 +294,7 @@ export const MultipleChoiceElementForm = ({
               updateElement(elementIdx, { choices: newChoices });
             }}>
             <SortableContext items={element.choices} strategy={verticalListSortingStrategy}>
-              <div className="flex max-h-[25dvh] flex-col gap-2 overflow-y-auto py-1 pr-1" ref={parent}>
+              <div className="flex max-h-[34dvh] flex-col gap-2 overflow-y-auto py-1 pr-1" ref={parent}>
                 {element.choices?.map((choice, choiceIdx) => (
                   <ElementOptionChoice
                     key={choice.id}
@@ -342,6 +312,7 @@ export const MultipleChoiceElementForm = ({
                     surveyLanguageCodes={surveyLanguageCodes}
                     locale={locale}
                     isStorageConfigured={isStorageConfigured}
+                    lock={lock}
                   />
                 ))}
               </div>
@@ -352,6 +323,10 @@ export const MultipleChoiceElementForm = ({
         <div className="mt-2">
           <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
             <div className="flex flex-wrap gap-2">
+              <Button size="sm" variant="secondary" type="button" onClick={() => addChoice()}>
+                {t("workspace.surveys.edit.add_option")}
+                <PlusIcon />
+              </Button>
               {specialChoices.map((specialChoice) => {
                 if (element.choices.some((c) => c.id === specialChoice.id)) return null;
                 return (
@@ -365,49 +340,41 @@ export const MultipleChoiceElementForm = ({
                   </Button>
                 );
               })}
-              <Button size="sm" variant="secondary" type="button" onClick={() => setIsBulkEditOpen(true)}>
-                {bulkEditButtonLabel}
+              <TooltipRenderer
+                shouldRender={lock.isTypeLocked}
+                tooltipContent={t("workspace.surveys.edit.lock_explanation_option_text")}
+                className="max-w-xs text-xs">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  type="button"
+                  disabled={lock.isTypeLocked}
+                  onClick={() => setIsBulkEditOpen(true)}>
+                  {bulkEditButtonLabel}
+                </Button>
+              </TooltipRenderer>
+            </div>
+            <div className="flex items-center gap-1">
+              {lock.isTypeLocked && <PublishedLockNotice kind="type" />}
+              <Button
+                size="sm"
+                variant="secondary"
+                type="button"
+                disabled={lock.isTypeLocked}
+                onClick={() => {
+                  updateElement(elementIdx, {
+                    type:
+                      element.type === TSurveyElementTypeEnum.MultipleChoiceMulti
+                        ? TSurveyElementTypeEnum.MultipleChoiceSingle
+                        : TSurveyElementTypeEnum.MultipleChoiceMulti,
+                  });
+                }}>
+                {element.type === TSurveyElementTypeEnum.MultipleChoiceSingle
+                  ? t("workspace.surveys.edit.convert_to_multiple_choice")
+                  : t("workspace.surveys.edit.convert_to_single_choice")}
               </Button>
             </div>
-            <Button
-              size="sm"
-              variant="secondary"
-              type="button"
-              onClick={() => {
-                updateElement(elementIdx, {
-                  type:
-                    element.type === TSurveyElementTypeEnum.MultipleChoiceMulti
-                      ? TSurveyElementTypeEnum.MultipleChoiceSingle
-                      : TSurveyElementTypeEnum.MultipleChoiceMulti,
-                });
-              }}>
-              {element.type === TSurveyElementTypeEnum.MultipleChoiceSingle
-                ? t("workspace.surveys.edit.convert_to_multiple_choice")
-                : t("workspace.surveys.edit.convert_to_single_choice")}
-            </Button>
-
-            <div className="flex flex-1 items-center justify-end gap-2">
-              <ShuffleOptionSelect
-                elementIdx={elementIdx}
-                shuffleOption={element.shuffleOption}
-                updateElement={updateElement}
-                shuffleOptionsTypes={shuffleOptionsTypes}
-              />
-            </div>
           </div>
-        </div>
-      </div>
-
-      <div className="mt-3">
-        <Label>{t("workspace.surveys.edit.display_type")}</Label>
-        <div className="mt-2">
-          <OptionsSwitch
-            options={multipleChoiceOptionDisplayTypeOptions}
-            currentOption={element.displayType ?? "list"}
-            handleOptionChange={(value: string) =>
-              updateElement(elementIdx, { displayType: value as TMultipleChoiceOptionDisplayType })
-            }
-          />
         </div>
       </div>
 
@@ -427,19 +394,6 @@ export const MultipleChoiceElementForm = ({
         surveyLanguageCodes={surveyLanguageCodes}
         locale={locale}
       />
-
-      {element.type === TSurveyElementTypeEnum.MultipleChoiceMulti && (
-        <ValidationRulesEditor
-          elementType={element.type}
-          validation={element.validation}
-          onUpdateValidation={(validation) => {
-            updateElement(elementIdx, {
-              validation,
-            });
-          }}
-          element={element}
-        />
-      )}
     </form>
   );
 };

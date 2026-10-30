@@ -55,14 +55,12 @@ To create a Legacy Private App:
 ## Method 1: Using Make.com (Recommended for No-Code)
 
 <Note>
-  Before starting, ensure your survey has clear `questionId` values set. You can only update these before activating the survey. If your survey is already activated, duplicate it and update the question IDs in the copy.
+  Before starting, check that your survey has clear question codes. You can change a question code in the **Settings** tab of the question before you activate the survey; after that it is locked. See [Question codes and answer codes](/surveys/analysis/question-codes).
 </Note>
 
 <Steps>
-  <Step title="Set Up Your Survey">
-    Make sure your survey has meaningful `questionId` values for each question. This makes mapping responses to HubSpot fields easier.
-
-    ![Update Question ID](/images/platform/features/integrations/make/update-question-id.webp)
+  <Step title="Check Your Question Codes">
+    Make sure each question you want to map has a meaningful question code, such as `email`. Responses arrive keyed by these codes in `dataByQuestionCode`, which makes mapping them to HubSpot fields easier.
   </Step>
   <Step title="Create a New Make.com Scenario">
     Go to [Make.com](https://make.com) and create a new scenario. Search for **Formbricks** and select the **Watch Response Finished** trigger, not **Watch Response Created**, which fires as soon as the first question is answered and may run before the email field is filled in.
@@ -82,12 +80,14 @@ To create a Legacy Private App:
 
     | HubSpot Field | Formbricks Field |
     | ------------- | ---------------- |
-    | Email | `data.email` (your email question ID) |
-    | First Name | `data.firstName` (if collected) |
-    | Last Name | `data.lastName` (if collected) |
-    | Custom Property | Any other `data.*` field |
+    | Email | `dataByQuestionCode.email` (your email question code) |
+    | First Name | `dataByQuestionCode.first_name` (if collected) |
+    | Last Name | `dataByQuestionCode.last_name` (if collected) |
+    | Custom Property | Any other `dataByQuestionCode.*` field |
 
     You can also map metadata: `meta.country`, `meta.userAgent.browser`, `survey.title`.
+
+    If you set up the scenario before question codes existed, re-test the trigger so the new `dataByQuestionCode` fields show up.
   </Step>
   <Step title="Test and Activate">
     Submit a test response to your Formbricks survey, verify the contact appears in HubSpot, and turn on your Make scenario.
@@ -115,10 +115,12 @@ To create a Legacy Private App:
     In the HubSpot node, map the fields:
 
     ```
-    Email: {{ $json.data.email }}
-    First Name: {{ $json.data.firstName }}
-    Last Name: {{ $json.data.lastName }}
+    Email: {{ $json.data.dataByQuestionCode.email }}
+    First Name: {{ $json.data.dataByQuestionCode.first_name }}
+    Last Name: {{ $json.data.dataByQuestionCode.last_name }}
     ```
+
+    The Formbricks node passes the whole webhook body, so the response sits under `data` and its answers under `data.dataByQuestionCode`. If you use a **Webhook** node as the trigger instead, the request is nested under `body`: use `$json.body.data.dataByQuestionCode.*`. Re-test the trigger after changing the survey so n8n shows the new fields.
 
     For custom HubSpot properties, use the **Additional Fields** section to add mappings like `survey_source`, `response_id`, and `submission_date`.
   </Step>
@@ -146,7 +148,7 @@ For maximum flexibility, you can use Formbricks webhooks with a custom endpoint 
   <Step title="Build Your Webhook Handler">
     Your webhook handler needs to:
     - **Receive the Formbricks webhook** - Accept POST requests with the survey response payload
-    - **Extract contact data** - Parse the email and other fields from `data.data` (keyed by your `questionId` values)
+    - **Extract contact data** - Parse the email and other fields from `data.dataByQuestionCode` (keyed by your question codes; `data.data` holds the same answers keyed by Question ID)
     - **Call the HubSpot API** - Use the [HubSpot Contacts API](https://developers.hubspot.com/docs/api/crm/contacts) to create or update contacts
     - **Handle duplicates** - HubSpot returns a 409 error if a contact with that email exists; search and update instead
 
@@ -163,7 +165,7 @@ For maximum flexibility, you can use Formbricks webhooks with a custom endpoint 
 
 ### Contact Not Created in HubSpot
 
-1. **Check the email field**: Ensure your survey has an email question and you're mapping the correct `questionId`
+1. **Check the email field**: Ensure your survey has an email question and you're mapping the correct question code
 2. **Verify API token**: Make sure your HubSpot access token has the required scopes (`crm.objects.contacts.write` and `crm.objects.contacts.read`)
 3. **Check for duplicates**: HubSpot returns a 409 error if a contact with that email already exists
 

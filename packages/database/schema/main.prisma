@@ -180,6 +180,10 @@ model Response {
   /// and surfacing that in the UI (v2) would have nothing to read.
   /// [ResponseIngestFlags]
   ingestFlags       Json?               @map(name: "ingest_flags")
+  /// A reviewer's verdict on the response; null means none. `lowQuality` hides it from the Analysis
+  /// export by default and from Feedback Records, and nothing else: it is never deleted and every
+  /// count, list, webhook and integration still includes it (ENG-6780).
+  outcome           ResponseOutcome?
   tags              TagsOnResponses[]
   quotaLinks        ResponseQuotaLink[]
   /// [ResponseContactAttributes]
@@ -207,6 +211,11 @@ model Response {
   @@index([contactId, createdAt]) // superseded; also the monthly identified users (persons)
   @@index([contactId, createdAt, id])
   @@index([surveyId, finished]) // survey list's (surveyId, finished) count aggregation — keeps it an index-only scan
+}
+
+/// What a reviewer decided about a response. One value today; null on `Response.outcome` means none.
+enum ResponseOutcome {
+  lowQuality
 }
 
 /// Represents a label that can be applied to survey responses.
@@ -1713,6 +1722,9 @@ enum DeletionCleanupKind {
   storageFiles
   /// A deleted survey's whole upload folder, `{workspaceId}/private/surveys/{surveyId}/`.
   storageSurveyFolder
+  /// One live response whose Low quality outcome changed: its Hub records are removed or rebuilt to match
+  /// the response's outcome as the drain reads it (ENG-6785). The only kind whose response still exists.
+  hubResponseOutcome
 }
 
 /// Work left over after a delete commits (ENG-3612, ENG-3614: deleted means deleted): Hub records and
@@ -1730,7 +1742,7 @@ model DeletionCleanup {
   surveyId       String
   /// Hub kinds: the organisation's feedback directories, read inside the delete's transaction.
   tenantIds      String[]            @default([])
-  /// `hubResponses`: the deleted responses whose records go.
+  /// `hubResponses`: the deleted responses whose records go. `hubResponseOutcome`: exactly one live response.
   responseIds    String[]            @default([])
   /// `storageFiles`: the object keys or URLs to delete.
   fileKeys       String[]            @default([])

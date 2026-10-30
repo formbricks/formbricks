@@ -6,6 +6,7 @@ import { Workspace } from "@formbricks/database/prisma-browser";
 import type { TRendererCustomCss } from "@formbricks/types/custom-css";
 import { getIngestedStorageKeys } from "@formbricks/types/embedded-data-resolver";
 import { TResponseData } from "@formbricks/types/responses";
+import { findElementByIdOrCode } from "@formbricks/types/surveys/element-lookup";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { toJsWorkspaceStateSurvey } from "@/lib/survey/client-utils";
@@ -103,12 +104,18 @@ export const SurveyClientWrapper = ({
   // Extract survey properties outside useMemo to create stable references
   const welcomeCardEnabled = survey.welcomeCard.enabled;
 
+  // `startAt` is a Question ID or a question code; the survey runtime is handed the resolved Question ID.
+  const startAtElementId = useMemo(
+    () => (startAt ? findElementByIdOrCode(elements, startAt)?.id : undefined),
+    [elements, startAt]
+  );
+
   // Validate startAt parameter against survey elements
   const isStartAtValid = useMemo(() => {
     if (!startAt) return false;
     if (welcomeCardEnabled && startAt === "start") return true;
 
-    const isValid = elements.some((element) => element.id === startAt);
+    const isValid = startAtElementId !== undefined;
 
     // Clean up invalid startAt from URL to prevent confusion
     if (!isValid && globalThis.window !== undefined) {
@@ -118,7 +125,7 @@ export const SurveyClientWrapper = ({
     }
 
     return isValid;
-  }, [welcomeCardEnabled, elements, startAt]);
+  }, [welcomeCardEnabled, startAtElementId, startAt]);
 
   const prefillValue = getPrefillValue(survey, searchParams, languageCode);
   const [autoFocus, setAutoFocus] = useState(false);
@@ -295,7 +302,7 @@ export const SurveyClientWrapper = ({
           getSetResponseData={(f: (value: TResponseData) => void) => {
             setResponseData = f;
           }}
-          startAtQuestionId={startAt && isStartAtValid ? startAt : undefined}
+          startAtQuestionId={startAt && isStartAtValid ? (startAtElementId ?? startAt) : undefined}
           fullSizeCards={isEmbed}
           hiddenFieldsRecord={{
             ...hiddenFieldsRecord,

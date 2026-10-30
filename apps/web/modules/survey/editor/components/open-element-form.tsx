@@ -13,8 +13,6 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
-import { ValidationRulesEditor } from "@/modules/survey/editor/components/validation-rules-editor";
-import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
 
 interface OpenElementFormProps {
@@ -112,41 +110,6 @@ export const OpenElementForm = ({
           label={t("common.placeholder")}
           locale={locale}
           isStorageConfigured={isStorageConfigured}
-        />
-      </div>
-
-      <div className="mt-6 space-y-6">
-        <div className="mt-4">
-          <AdvancedOptionToggle
-            isChecked={element.longAnswer !== false}
-            onToggle={(checked: boolean) => {
-              updateElement(elementIdx, {
-                longAnswer: checked,
-              });
-            }}
-            htmlId={`longAnswer-${element.id}`}
-            title={t("workspace.surveys.edit.long_answer")}
-            description={t("workspace.surveys.edit.long_answer_toggle_description")}
-            disabled={element.inputType !== "text"}
-            customContainerClass="p-0"
-          />
-        </div>
-
-        <ValidationRulesEditor
-          elementType={element.type}
-          validation={element.validation}
-          onUpdateValidation={(validation) => {
-            updateElement(elementIdx, {
-              validation,
-            });
-          }}
-          inputType={element.inputType ?? "text"}
-          onUpdateInputType={(newInputType) => {
-            updateElement(elementIdx, {
-              inputType: newInputType,
-              longAnswer: newInputType === "text",
-            });
-          }}
         />
       </div>
     </form>

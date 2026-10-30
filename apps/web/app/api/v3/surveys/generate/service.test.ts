@@ -555,6 +555,46 @@ describe("generateV3SurveyCreatePayloadFromPrompt", () => {
     ]);
   });
 
+  test("codes every generated question and answer option (ENG-6782)", async () => {
+    vi.mocked(generateOrganizationAIObject).mockResolvedValueOnce({
+      object: {
+        language: "en-US",
+        name: "Coded Survey",
+        description: null,
+        welcomeCard: null,
+        blocks: [
+          {
+            name: "Feedback",
+            questions: [
+              generatedElement({ type: "openText", headline: "What should we improve?", longAnswer: true }),
+              generatedElement({
+                type: "multipleChoiceSingle",
+                headline: "Which plan are you on?",
+                choices: ["Free", "Pro", "Enterprise"],
+              }),
+            ],
+          },
+        ],
+        ending: null,
+      },
+    } as Awaited<ReturnType<typeof generateOrganizationAIObject>>);
+
+    const result = await generateV3SurveyCreatePayloadFromPrompt({
+      organizationId: "org_1",
+      workspaceId,
+      input: generateInput,
+    });
+
+    const [open, single] = result.payload.blocks[0].elements as unknown as {
+      code: string;
+      choices?: { code: string }[];
+    }[];
+    expect(open.code).toBe("q1");
+    expect(single.code).toBe("q2");
+    expect(single.choices?.map((choice) => choice.code)).toEqual(["1", "2", "3"]);
+    expect(prepareV3SurveyCreateInput(result.payload).ok).toBe(true);
+  });
+
   test("maps supported generated question types to v3 create elements", async () => {
     vi.mocked(generateOrganizationAIObject).mockResolvedValueOnce({
       object: {

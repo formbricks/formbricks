@@ -1,10 +1,8 @@
 "use client";
 
 import { arrayMove } from "@dnd-kit/sortable";
-import * as Sentry from "@sentry/nextjs";
 import { VisibilityState, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { useEffect, useMemo, useState } from "react";
-import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TResponseTableData, TResponseWithQuotas } from "@formbricks/types/responses";
@@ -15,12 +13,13 @@ import {
   ResponseToolbar,
   type TResponseToolbarState,
 } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/ResponseToolbar";
+import { ExportModal } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/export-modal";
 import { ResponseCardModal } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/responses/components/ResponseCardModal";
 import { generateResponseTableColumns } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableColumns";
-import { getResponsesDownloadUrlAction } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/actions";
-import { downloadResponsesFile } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { deleteResponseAction } from "@/modules/analysis/components/SingleResponseCard/actions";
+import { BulkOutcomeActions } from "@/modules/analysis/response-outcome/components/bulk-outcome-actions";
+import type { TOutcomeActions } from "@/modules/analysis/response-outcome/lib/outcome";
 import { SelectedRowSettings } from "@/modules/ui/components/data-table/components/selected-row-settings";
 import { ListTable } from "@/modules/ui/components/table-toolbar";
 import { useColumnSizing } from "@/modules/ui/components/table-toolbar/hooks/use-table-column-state";
@@ -48,6 +47,8 @@ interface ResponseTableProps {
   selectedResponseId: string | null;
   setSelectedResponseId: (id: string | null) => void;
   toolbar: TResponseToolbarState;
+  /** Marking and restoring Low quality, wired to the page's list. */
+  outcomeActions: TOutcomeActions;
   /** Creatives open this survey: its table then shows "Opened by creative" by default. */
   isOpenedByCreatives: boolean;
 }
@@ -77,6 +78,7 @@ export const ResponseTable = ({
   selectedResponseId,
   setSelectedResponseId,
   toolbar,
+  outcomeActions,
 
   isOpenedByCreatives,
 }: Readonly<ResponseTableProps>) => {
@@ -85,6 +87,8 @@ export const ResponseTable = ({
   const [rowSelection, setRowSelection] = useState({});
   const selectedResponse = responses?.find((response) => response.id === selectedResponseId) ?? null;
   const [isExpanded, setIsExpanded] = useState<boolean | null>(null);
+  // Set while the Export modal is open for a selection of rows.
+  const [exportResponseIds, setExportResponseIds] = useState<string[] | null>(null);
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
 
   const showQuotasColumn = isQuotasAllowed && quotas.length > 0;
@@ -168,25 +172,8 @@ export const ResponseTable = ({
     }
   };
 
-  // Handle downloading selected responses
-  const downloadSelectedRows = async (responseIds: string[], format: "xlsx" | "csv") => {
-    try {
-      const downloadResponse = await getResponsesDownloadUrlAction({
-        surveyId: survey.id,
-        format,
-        filterCriteria: { responseIds },
-      });
-
-      if (downloadResponse?.data) {
-        downloadResponsesFile(downloadResponse.data.fileName, downloadResponse.data.fileContents, format);
-      } else {
-        toast.error(t("workspace.surveys.responses.error_downloading_responses"));
-      }
-    } catch (error) {
-      Sentry.captureException(error);
-      toast.error(t("workspace.surveys.responses.error_downloading_responses"));
-    }
-  };
+  // The selected-rows Download opens the Export modal scoped to the selection.
+  const openExportForSelection = (responseIds: string[]) => setExportResponseIds(responseIds);
 
   return (
     <div>
@@ -228,8 +215,17 @@ export const ResponseTable = ({
               updateRowList={updateResponseList}
               type="response"
               deleteAction={deleteResponse}
-              downloadRowsAction={downloadSelectedRows}
+              downloadRowsAction={openExportForSelection}
               isQuotasAllowed={isQuotasAllowed}
+              renderExtraActions={(selectionTable) =>
+                isReadOnly ? null : (
+                  <BulkOutcomeActions
+                    table={selectionTable}
+                    workspaceId={survey.workspaceId}
+                    actions={outcomeActions}
+                  />
+                )
+              }
             />
           ) : undefined
         }
@@ -255,6 +251,7 @@ export const ResponseTable = ({
           user={user}
           environmentTags={environmentTags}
           isReadOnly={isReadOnly}
+          outcomeActions={outcomeActions}
           updateResponse={updateResponse}
           updateResponseList={updateResponseList}
           setSelectedResponseId={setSelectedResponseId}
@@ -268,6 +265,14 @@ export const ResponseTable = ({
           }}
         />
       )}
+      <ExportModal
+        open={exportResponseIds !== null}
+        onOpenChange={(open) => {
+          if (!open) setExportResponseIds(null);
+        }}
+        surveyId={survey.id}
+        scope={{ responseIds: exportResponseIds ?? [] }}
+      />
     </div>
   );
 };
