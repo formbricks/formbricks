@@ -11,6 +11,11 @@ vi.mock("@/lib/user/service", () => ({
   getUserByEmail: vi.fn(),
 }));
 
+// The email-token limit fails closed without Redis, which this test does not run.
+vi.mock("@/modules/core/rate-limit/helpers", () => ({
+  applyIPRateLimit: vi.fn(),
+}));
+
 vi.mock("@/lib/utils/action-client", () => ({
   actionClient: {
     inputSchema: vi.fn().mockReturnThis(),
