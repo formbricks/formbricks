@@ -4,12 +4,9 @@ import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { getAuthorizedV3Survey } from "@/app/api/v3/surveys/authorization";
 import { buildAttachmentContentDisposition, buildDownloadFileName } from "@/lib/utils/content-disposition";
+import type { TSurveyExportFormat } from "@/modules/survey/export/lib/formats";
 import { FORMBRICKS_FILE_EXTENSION, FORMBRICKS_FILE_FORMAT } from "@/modules/survey/formbricks-file/envelope";
 import { exportFormbricksFile } from "@/modules/survey/formbricks-file/export";
-
-/** The formats `?format=` takes. ENG-6849 adds `xlsx`. */
-export const SURVEY_EXPORT_FORMATS = ["json"] as const;
-export type TSurveyExportFormat = (typeof SURVEY_EXPORT_FORMATS)[number];
 
 /** The name a file gets when the survey's own name leaves nothing usable. */
 const FALLBACK_FILE_NAME = "survey";

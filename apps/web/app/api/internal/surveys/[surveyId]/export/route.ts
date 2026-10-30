@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
-import { SURVEY_EXPORT_FORMATS, exportSurveyOperation } from "./lib/operations";
+import { SURVEY_EXPORT_FORMATS } from "@/modules/survey/export/lib/formats";
+import { exportSurveyOperation } from "./lib/operations";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

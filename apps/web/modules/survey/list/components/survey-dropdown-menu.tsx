@@ -33,6 +33,8 @@ import {
 } from "@/modules/ee/creatives/hooks/use-survey-linked-creatives";
 import { getLinkedCreativesBlockers, joinCreativeNames } from "@/modules/ee/creatives/lib/survey-side";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
+import { useExportSurvey } from "@/modules/survey/export/hooks/use-export-survey";
+import type { TSurveyExportFormat } from "@/modules/survey/export/lib/formats";
 import { copySurveyToOtherWorkspaceAction } from "@/modules/survey/list/actions";
 import { CopySurveyModal } from "@/modules/survey/list/components/copy-survey-modal";
 import { RenameSurveyModal } from "@/modules/survey/list/components/rename-survey-modal";
@@ -62,7 +64,6 @@ import { SurveyStatusIndicator } from "@/modules/ui/components/survey-status-ind
 interface SurveyDropDownMenuProps {
   survey: TSurveyListItem;
   publicDomain: string;
-  disabled?: boolean;
   isSurveyCreationDeletionDisabled?: boolean;
   isReadOnly: boolean;
   deleteSurvey: (surveyId: string) => Promise<void>;
@@ -88,7 +89,6 @@ const CHANGEABLE_STATUSES: TSurveyStatus[] = ["inProgress", "paused", "completed
 export const SurveyDropDownMenu = ({
   survey,
   publicDomain,
-  disabled,
   isSurveyCreationDeletionDisabled,
   isReadOnly,
   deleteSurvey,
@@ -129,9 +129,9 @@ export const SurveyDropDownMenu = ({
   const canChangeStatus = !isArchived && !isReadOnly && survey.status !== "draft";
   const isInProgress = survey.status === "inProgress";
   const canCollaborate = showVisibilityControls(surveyVisibilityGate, survey.access);
-  const hasVisibleActions =
-    canCollaborate ||
-    (isArchived ? canManageSurvey : canManageSurvey || canPreviewOrCopyLink || canChangeStatus);
+  // Export needs nothing beyond seeing the survey, read-only members and drafts included, so the menu
+  // always has at least that one action.
+  const exportSurvey = useExportSurvey();
 
   const getStatusLabel = (t: TFunction, status: TSurveyStatus): string => {
     switch (status) {
@@ -241,6 +241,17 @@ export const SurveyDropDownMenu = ({
     setIsCautionDialogOpen(true);
   };
 
+  const handleExport = async (format: TSurveyExportFormat) => {
+    setIsDropDownOpen(false);
+    try {
+      await exportSurvey.mutateAsync({ surveyId: survey.id, format });
+    } catch (error) {
+      // Aborted because the row went away or another download started: nothing to tell the user.
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      toast.error(getV3ApiErrorMessage(error, t("workspace.surveys.export.failed")));
+    }
+  };
+
   const handleDuplicateSurvey = async () => {
     if (!workspace?.id) return;
     setIsDuplicating(true);
@@ -266,24 +277,34 @@ export const SurveyDropDownMenu = ({
     }
   };
 
-  if (!hasVisibleActions) {
-    return null;
-  }
+  // Export sits just above Delete: after Restore for an archived survey, after Copy link otherwise.
+  const exportMenu = (
+    <DropdownMenuSub>
+      <DropdownMenuSubTrigger data-testid="survey-export-submenu" chevronSide="left">
+        {t("workspace.surveys.export.menu")}
+      </DropdownMenuSubTrigger>
+      <DropdownMenuSubContent sideOffset={8}>
+        <DropdownMenuItem
+          data-testid="export-formbricks-file"
+          disabled={exportSurvey.isPending}
+          onSelect={() => void handleExport("json")}>
+          {t("workspace.surveys.export.formbricks_file")}
+        </DropdownMenuItem>
+      </DropdownMenuSubContent>
+    </DropdownMenuSub>
+  );
 
   return (
     <div
       id={`${survey.name.toLowerCase().split(" ").join("-")}-survey-actions`}
       data-testid="survey-dropdown-menu">
       <DropdownMenu open={isDropDownOpen} onOpenChange={setIsDropDownOpen}>
-        <DropdownMenuTrigger className="z-10" asChild disabled={disabled}>
+        <DropdownMenuTrigger className="z-10" asChild>
           <button
             type="button"
             data-testid="survey-dropdown-trigger"
             aria-label={t("workspace.surveys.open_options")}
-            className={cn(
-              "rounded-lg border bg-white p-2",
-              disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:bg-slate-50"
-            )}>
+            className="cursor-pointer rounded-lg border bg-white p-2 hover:bg-slate-50">
             <span className="sr-only">{t("workspace.surveys.open_options")}</span>
             <MoreVertical className="size-4" aria-hidden="true" />
           </button>
@@ -301,6 +322,7 @@ export const SurveyDropDownMenu = ({
                 {t("workspace.surveys.restore")}
               </DropdownMenuItem>
             )}
+            {isArchived && exportMenu}
             {isArchived && canManageSurvey && (
               <DropdownMenuItem
                 data-testid="delete-survey-forever"
@@ -335,6 +357,27 @@ export const SurveyDropDownMenu = ({
                   setIsRenameModalOpen(true);
                 }}>
                 {t("common.rename")}
+              </DropdownMenuItem>
+            )}
+            {canPreviewOrCopyLink && (
+              <DropdownMenuItem>
+                <button
+                  type="button"
+                  className={cn(
+                    "flex w-full items-center",
+                    isSingleUseEnabled && "cursor-not-allowed opacity-50"
+                  )}
+                  disabled={isSingleUseEnabled}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setIsDropDownOpen(false);
+                    const previewUrl = new URL(surveyLink);
+                    previewUrl.searchParams.set("preview", "true");
+                    globalThis.window.open(previewUrl.toString(), "_blank");
+                  }}>
+                  <EyeIcon className="mr-2 size-4" />
+                  {t("common.preview")}
+                </button>
               </DropdownMenuItem>
             )}
             {canCollaborate && (
@@ -413,27 +456,6 @@ export const SurveyDropDownMenu = ({
               <DropdownMenuItem>
                 <button
                   type="button"
-                  className={cn(
-                    "flex w-full items-center",
-                    isSingleUseEnabled && "cursor-not-allowed opacity-50"
-                  )}
-                  disabled={isSingleUseEnabled}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setIsDropDownOpen(false);
-                    const previewUrl = new URL(surveyLink);
-                    previewUrl.searchParams.set("preview", "true");
-                    globalThis.window.open(previewUrl.toString(), "_blank");
-                  }}>
-                  <EyeIcon className="mr-2 size-4" />
-                  {t("common.preview")}
-                </button>
-              </DropdownMenuItem>
-            )}
-            {canPreviewOrCopyLink && (
-              <DropdownMenuItem>
-                <button
-                  type="button"
                   data-testid="copy-link"
                   className={cn(
                     "flex w-full items-center",
@@ -446,6 +468,7 @@ export const SurveyDropDownMenu = ({
                 </button>
               </DropdownMenuItem>
             )}
+            {!isArchived && exportMenu}
             {!isArchived && canManageSurvey && (
               <DropdownMenuItem>
                 <button
