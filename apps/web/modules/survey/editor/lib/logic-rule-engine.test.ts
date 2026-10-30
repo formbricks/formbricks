@@ -175,6 +175,16 @@ describe("getLogicRules", () => {
       expect(rules.options).toEqual([...SUBMISSION]);
     });
 
+    test("Signature words the pair as signed / not signed, on the same operators as File upload", () => {
+      const rules = elementRules[TSurveyQuestionTypeEnum.Signature];
+      expect(rules.options).toEqual([OPT("is_signed", "isSubmitted"), OPT("is_not_signed", "isSkipped")]);
+      // Same operators as File upload, only the words differ; File upload keeps submitted / skipped.
+      expect(rules.options.map((option) => option.value)).toEqual(
+        elementRules[TSurveyQuestionTypeEnum.FileUpload].options.map((option) => option.value)
+      );
+      expect(elementRules[TSurveyQuestionTypeEnum.FileUpload].options).toEqual(SUBMISSION);
+    });
+
     test("Ranking", () => {
       const rules = elementRules[TSurveyQuestionTypeEnum.Ranking];
       expect(rules).toBeDefined();

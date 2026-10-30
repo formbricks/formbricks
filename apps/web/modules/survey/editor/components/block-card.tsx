@@ -38,6 +38,7 @@ import { OpenElementForm } from "@/modules/survey/editor/components/open-element
 import { PictureSelectionForm } from "@/modules/survey/editor/components/picture-selection-form";
 import { RankingElementForm } from "@/modules/survey/editor/components/ranking-element-form";
 import { RatingElementForm } from "@/modules/survey/editor/components/rating-element-form";
+import { SignatureElementForm } from "@/modules/survey/editor/components/signature-element-form";
 import { areBlockCardPropsEqual } from "@/modules/survey/editor/lib/block-card-memo";
 import { BLOCK_NAME_MAX_LENGTH } from "@/modules/survey/editor/lib/blocks";
 import { formatTextWithSlashes } from "@/modules/survey/editor/lib/utils";
@@ -216,6 +217,7 @@ const BlockCardComponent = ({
     [TSurveyElementTypeEnum.Date]: DateElementForm,
     [TSurveyElementTypeEnum.PictureSelection]: PictureSelectionForm,
     [TSurveyElementTypeEnum.FileUpload]: FileUploadElementForm,
+    [TSurveyElementTypeEnum.Signature]: SignatureElementForm,
     [TSurveyElementTypeEnum.Cal]: CalElementForm,
     [TSurveyElementTypeEnum.Matrix]: MatrixElementForm,
     [TSurveyElementTypeEnum.Address]: AddressElementForm,
@@ -233,8 +235,7 @@ const BlockCardComponent = ({
   ]);
 
   const renderElementForm = (element: TSurveyElement, elementIdx: number) => {
-    // Signature has no editor form yet, so `type` is wider than the map's keys and the lookup can miss.
-    const FormComponent = elementFormMap[element.type as keyof typeof elementFormMap];
+    const FormComponent = elementFormMap[element.type];
     if (!FormComponent) return null;
 
     const commonProps = getCommonFormProps(element, elementIdx);

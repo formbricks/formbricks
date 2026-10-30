@@ -580,6 +580,9 @@ class QsfAssembler {
         return { ...base, type: "date", format: planned.format ?? "M-d-y" };
       case "fileUpload":
         return { ...base, type: "fileUpload", allowMultipleFiles: false };
+      case "signature":
+        // Qualtrics' Signature question lets the respondent sign or type, as ours does.
+        return { ...base, type: "signature", allowTypedSignature: true };
       case "contactInfo": {
         const keyByField = new Map(planned.contactFields.map((field) => [field.field, field.key]));
         const fields = Object.fromEntries(

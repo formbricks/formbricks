@@ -458,6 +458,24 @@ describe("assembleQsfDraft", () => {
   });
 });
 
+describe("assembleQsfDraft: Signature", () => {
+  test("builds a Signature element that allows typing, required as Qualtrics forced it", async () => {
+    const { document, issues } = await assembleFixture("signature.qsf");
+
+    expect(element(document, "Q1")).toEqual({
+      id: "Q1",
+      type: "signature",
+      headline: { "en-US": "Sign to confirm you accept the terms" },
+      required: true,
+      isDraft: true,
+      allowTypedSignature: true,
+    });
+    expect(element(document, "Q2")).toMatchObject({ type: "signature", required: false });
+    expect(issues.filter((issue) => issue.code === "question_skipped")).toEqual([]);
+    expect(checkQsfDraft(document)).toEqual([]);
+  });
+});
+
 describe("buildHiddenFields", () => {
   const isSafeFieldId = (id: string) => /^[a-z][a-z0-9_]{0,63}$/.test(id);
 

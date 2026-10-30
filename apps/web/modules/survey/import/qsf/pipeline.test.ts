@@ -110,6 +110,11 @@ const EXPECTED_REPORTS: Record<TImportableQsfFixture, TExpectedReport> = {
     { blocks: 3, questions: 3, languages: ["en-US"], logicRules: 1, hiddenFields: 0 },
     ["ending_added", "logic_not_imported", "question_skipped:not_in_flow"],
   ],
+  "signature.qsf": [
+    { blocks: 1, questions: 2, languages: ["en-US"], logicRules: 0, hiddenFields: 0 },
+    // No `question_skipped:unsupported_type`: Signature used to be skipped for its type.
+    ["ending_added"],
+  ],
   "embedded-data.qsf": [
     { blocks: 2, questions: 2, languages: ["en-US"], logicRules: 0, hiddenFields: 4 },
     ["ending_added", ...Array(4).fill("field_renamed"), "piped_text_removed"],
@@ -255,6 +260,26 @@ describe("runQsfImport on recorded plans", () => {
     },
     30_000
   );
+
+  test("imports a Qualtrics Signature question as a Signature element, required as Qualtrics forced it", async () => {
+    answerFrom("signature.qsf");
+
+    const result = await run("signature.qsf");
+
+    expect(elementsOf(result.payload).map((element) => [element.id, element.type, element.required])).toEqual(
+      [
+        ["Q1", "signature", true],
+        ["Q2", "signature", false],
+      ]
+    );
+    expect(elementsOf(result.payload)).toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: "signature", allowTypedSignature: true })])
+    );
+    expect(result.report.issues.map((issue) => issue.params?.cause)).not.toContain("unsupported_type");
+    // The create accepts the element and keeps the setting.
+    const parsed = prepareV3SurveyCreateInput(JSON.parse(JSON.stringify(result.payload)));
+    expect(parsed.ok).toBe(true);
+  });
 
   test("turns on the language switch and browser-language selection for a draft in several enabled languages", async () => {
     answerFrom("labels-and-languages.qsf");
