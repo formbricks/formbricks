@@ -423,3 +423,8 @@ No triage labels: the five roles map onto Linear workflow states. See `docs/agen
 ### Domain docs
 
 Single-context: `GLOSSARY.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+
+### Coding standards
+
+Read `CODING_STANDARDS.md` before planning or reviewing a change: existing patterns, API shape, file uploads and
+downloads, input limits.
