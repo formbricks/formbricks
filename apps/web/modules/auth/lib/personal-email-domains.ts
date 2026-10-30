@@ -48,6 +48,10 @@ export const PERSONAL_EMAIL_DOMAINS: readonly string[] = [
   "anonaddy.com", // addy.io alias service
   "8alias.com", // SimpleLogin alias domain
   "keemail.me", // Tutanota
+  "tuta.io", // Tuta (formerly Tutanota)
+  "tuta.com", // Tuta
+  "tutanota.de", // Tuta
+  "tutamail.com", // Tuta
   "ik.me", // Infomaniak
   "murena.io", // /e/ OS (Murena)
   "firemail.cc", // same operator as cock.li
