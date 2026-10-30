@@ -443,7 +443,7 @@ test.describe("Survey overview", () => {
     await expect(page.getByText("Delete failed", { exact: true })).toBeVisible();
   });
 
-  test("shows preview and copy link for published link surveys and hides the dropdown when no actions are available", async ({
+  test("shows preview and copy link for published link surveys and only Export for a read-only app survey", async ({
     page,
     users,
   }) => {
