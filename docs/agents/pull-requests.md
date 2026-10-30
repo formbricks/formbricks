@@ -1,6 +1,6 @@
 # Commit & Pull Request Guidelines
 
-Read before committing, or opening or updating a pull request.
+Read before committing, or opening, updating, or reviewing a pull request.
 
 ## Commits
 
@@ -16,6 +16,25 @@ migration/env reporting. Update the description with every scope change or revie
 Complete QA on the change's PR before requesting review. The author accounts for each changed behavior
 and names unverified behavior under Open gaps; reviewers challenge that evidence. Release review checks
 interactions between changes rather than repeating each PR's QA.
+
+## Reviews
+
+Pin the PR head and base SHAs before reviewing. Collect inline threads, submitted review bodies
+(including findings outside the diff), and conversation comments. Keep a compact record of each
+actionable finding's source link, reviewed commit, and disposition: still applies, addressed, or not
+applicable, with evidence from the pinned diff. A resolved thread or an older passing review does not
+establish coverage of the current head; report paused or stale automated reviews separately from CI.
+
+Fetch each discussion source once and retain the structured result. Surface actionable text and source
+links first; expand supporting logs or bot analysis only when needed to assess a finding.
+
+For the `code-review` skill's Standards and Spec passes, start each reviewer in a fresh context with
+the same pinned diff and its own brief and sources. Give it relevant review findings to verify, with
+their provenance. Collect both reports before sharing either reviewer's conclusions with the other.
+
+When changing workflow checks, validate against the PR merge result as well as the branch head. The
+lint workflow checks the event's merge snapshot before application linting; merge-group runs repeat
+the check against the queued integration commit.
 
 ## Agent attribution
 

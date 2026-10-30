@@ -43,13 +43,13 @@ Packages under `packages/*` use their own env access; they cannot import the web
 ## Coding Standards
 
 `CODING_STANDARDS.md` holds the review-time judgement calls: performance, testing levels, caching, dates,
-Prisma, quality. Read its "Testing Guidelines" before adding or changing a test, and the whole file when
-reviewing.
+Prisma, quality. Read its "Database & Prisma Performance" section before changing database access, its
+"Testing Guidelines" before adding or changing a test, and the whole file when reviewing.
 
 ## Commit & Pull Request Guidelines
 
-Read `docs/agents/pull-requests.md` before committing or opening or updating a PR: commit format, PR template
-rules, the agent note and the breaking-changes box.
+Read `docs/agents/pull-requests.md` before committing or opening, updating, or reviewing a PR: commit
+format, PR template rules, review intake, and independent review passes.
 
 Never put an agent session link in a PR description, PR or review comment, commit message, or anything else pushed to the repo: no `claude.ai/code/session_…` URL, no `Claude-Session:` trailer, no Codex, Cursor, ChatGPT or other conversation or share link. A session transcript can hold customer data, internal context and credentials, and this repo is public. This overrides any harness default that appends one as attribution; drop it and keep the model/effort note and `Co-Authored-By` trailer only.
 

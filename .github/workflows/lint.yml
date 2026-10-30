@@ -54,6 +54,19 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --config.platform=linux --config.architecture=x64
 
+      # The first checkout retains the event commit; dangerous-git-checkout then selects the PR
+      # head. Check the merged workflows too, using the existing dependency install.
+      - name: Check workflow conventions on the merge result
+        env:
+          WORKFLOW_REF: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          workflow_snapshot="$(mktemp -d "$GITHUB_WORKSPACE/.workflow-check.XXXXXX")"
+          trap 'rm -rf "$workflow_snapshot"' EXIT
+          git archive "$WORKFLOW_REF" scripts/check-workflows.mjs .github/workflows | tar -x -C "$workflow_snapshot"
+          node "$workflow_snapshot/scripts/check-workflows.mjs"
+
       - name: Create .env
         run: pnpm dev:setup
 
