@@ -45,7 +45,7 @@ type TTranslate = Awaited<ReturnType<typeof getTranslate>>;
  * The importing user's translations, for the "(imported)" suffix: read by the user's id rather than the
  * request, so the import runs the same wherever it is called from.
  */
-const getImporterTranslate = async (userId: string | null): Promise<TTranslate> =>
+export const getImporterTranslate = async (userId: string | null): Promise<TTranslate> =>
   getTranslate((userId ? await getUserLocale(userId) : undefined) ?? DEFAULT_LOCALE);
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
@@ -93,7 +93,7 @@ const getFitContext = async (
 };
 
 /** Problems the create's checks found, named from where the survey sits: `file.survey…` or `survey…`. */
-const nameFromSurvey = (params: InvalidParam[], fieldPrefix: string | null): InvalidParam[] => {
+export const nameFromSurvey = (params: InvalidParam[], fieldPrefix: string | null): InvalidParam[] => {
   const root = fieldPrefix ? `${fieldPrefix}.survey` : "survey";
   return params.map((param) => ({
     ...param,
@@ -101,14 +101,16 @@ const nameFromSurvey = (params: InvalidParam[], fieldPrefix: string | null): Inv
   }));
 };
 
-const refuseDraft = (invalidParams: InvalidParam[]): SurveyImportInputError =>
+export const refuseDraft = (invalidParams: InvalidParam[]): SurveyImportInputError =>
   new SurveyImportInputError(invalidParams, "The Formbricks file is not valid.", "formbricks_file_invalid");
 
 /**
- * The draft a read file becomes in a workspace: fitted to what the workspace can hold, named, a draft,
- * and held to every check the create runs without a database — logic and recall references included.
+ * The draft a read file becomes in a workspace: fitted to what the workspace can hold, a draft, and held
+ * to every check the create runs without a database — logic and recall references included. Given a
+ * `t`, it is named as a new survey ("<name> (imported)"); without one it keeps the file's name, which
+ * an Update never writes.
  */
-const prepareDraft = async ({
+export const prepareFormbricksFileDraft = async ({
   read,
   workspaceId,
   organizationId,
@@ -119,7 +121,7 @@ const prepareDraft = async ({
   workspaceId: string;
   organizationId: string;
   fieldPrefix: string | null;
-  t: TTranslate;
+  t: TTranslate | null;
 }): Promise<{ draft: TSurveyImportFileDraft; issues: TSurveyImportPipelineIssue[] }> => {
   const fitted = fitFormbricksFileSurvey(
     read.content.survey,
@@ -129,7 +131,7 @@ const prepareDraft = async ({
   const draft: TSurveyImportFileDraft = {
     ...fitted.survey,
     workspaceId,
-    name: await getImportedSurveyName(workspaceId, sourceName, t),
+    name: t ? await getImportedSurveyName(workspaceId, sourceName, t) : sourceName,
     status: "draft",
     blocks: Array.isArray(fitted.survey.blocks) ? fitted.survey.blocks : [],
   };
@@ -168,7 +170,13 @@ export const previewFormbricksFileImport = async ({
 }): Promise<TFormbricksFileImportPreview> => {
   const read = readFormbricksFile(file);
   const t = await getImporterTranslate(userId);
-  const { draft, issues } = await prepareDraft({ read, workspaceId, organizationId, fieldPrefix: "file", t });
+  const { draft, issues } = await prepareFormbricksFileDraft({
+    read,
+    workspaceId,
+    organizationId,
+    fieldPrefix: "file",
+    t,
+  });
   const plan = await planFormbricksFileReferences(prisma, {
     workspaceId,
     survey: draft,
@@ -185,7 +193,7 @@ export const previewFormbricksFileImport = async ({
 };
 
 /** The draft with each trigger pointing at the target's action class instead of the file's. */
-const withTargetTriggers = (
+export const withTargetTriggers = (
   draft: TSurveyImportFileDraft,
   actionClassIds: ReadonlyMap<string, string>
 ): TSurveyImportFileDraft => {
@@ -227,7 +235,13 @@ export const createSurveyFromFormbricksFile = async ({
 }): Promise<TSurvey> => {
   const read = readFormbricksFileContent(body);
   const t = await getImporterTranslate(getSessionUserId(authentication));
-  const { draft } = await prepareDraft({ read, workspaceId, organizationId, fieldPrefix: null, t });
+  const { draft } = await prepareFormbricksFileDraft({
+    read,
+    workspaceId,
+    organizationId,
+    fieldPrefix: null,
+    t,
+  });
 
   return await runInSurveyWriteTransaction(async (transaction) => {
     const plan = await planFormbricksFileReferences(transaction.tx, {

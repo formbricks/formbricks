@@ -808,7 +808,7 @@ function problemSurveyArchived(requestId: string, instance: string): Response {
  * Map an error thrown during survey patch to its problem+json Response. Extracted from
  * patchV3SurveyResponse to keep that handler's cognitive complexity within bounds.
  */
-function mapV3SurveyPatchError(
+export function mapV3SurveyPatchError(
   err: unknown,
   {
     log,

@@ -579,7 +579,13 @@ export async function patchV3Survey(
   /** Filled with the custom CSS warnings when the patch changed the survey's custom CSS. */
   report?: TV3SurveyWriteReport,
   /** Who processing an added or edited `customCss` is charged to (`getV3CustomCssPrincipal`). */
-  customCssPrincipal?: string | null
+  customCssPrincipal?: string | null,
+  /**
+   * A transaction the caller opened, so the patch lands with the caller's own writes or not at all
+   * (ENG-6851: an Update from a Formbricks file writes the survey's references in it). See
+   * `executeV3SurveyPatch`.
+   */
+  transaction?: TSurveyWriteTransaction
 ): Promise<TSurvey> {
   const preparation = prepareV3SurveyPatchInput(currentSurvey, input, { reportedVisibility });
   if (!preparation.ok) {
@@ -626,6 +632,7 @@ export async function patchV3Survey(
     visibleSurveyWhere,
     ...(customCss.changed ? { customCss: { stored: customCss.stored } } : {}),
     replacesDistribution: typeof input === "object" && input !== null && "distribution" in input,
+    transaction,
   });
 
   if (report && customCss.changed) {
