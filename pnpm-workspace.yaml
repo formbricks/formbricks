@@ -440,9 +440,10 @@ overrides:
   # malformed ZIP archive whose central-directory entry declares the ZIP64 sentinel
   # (compressed_size=0xFFFFFFFF) but omits the required ZIP64 extra field; the out-of-bounds read that
   # should supply the real size returns undefined, which coerces to 0 and keeps the loop condition true
-  # forever (DoS). Affects the 0.4.x line from 0.4.5; patched in 0.4.9.
+  # forever (DoS). Affects the 0.4.x line from 0.4.5; patched in 0.4.9. Scoped to 0.4 so it does not
+  # pull apps/web's direct fflate (0.8.3, already past the same bug on the 0.8 line) down to 0.4.
   # load-bearing: posthog-js (browser, apps/web) resolves 0.4.8.
-  fflate: 0.4.9
+  fflate@0.4: 0.4.9
   # === Dependabot security batch (ENG-3091..ENG-3110) ===
   # ENG-3100 / GHSA-w5vr-8v7q-w6rv (CVE-2026-45819): baseline-browser-mapping <2.11.0 calls
   # `process.exit()` when it can't parse browserslist-stats.json, taking down the whole process instead

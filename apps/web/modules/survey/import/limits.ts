@@ -32,6 +32,35 @@ export const SURVEY_IMPORT_MAX_FILE_BYTES = 15 * 1024 * 1024;
  */
 export const SURVEY_IMPORT_MAX_BODY_BYTES = 15.5 * 1024 * 1024;
 
+/*
+ * The zip archives a `.docx` or `.xlsx` is (ENG-6848). Its central directory is checked against the
+ * first three before anything is inflated, from the sizes it declares; the inflated bytes are then
+ * counted against the last three as they come out, since a directory can lie. Past any of them the file
+ * is refused with a 413: each is a size limit.
+ */
+
+/** Entries one archive may list. A questionnaire is a few dozen parts; a workbook a few hundred at most. */
+export const SURVEY_IMPORT_ZIP_MAX_ENTRIES = 1_000;
+
+/**
+ * Inflated bytes in one archive, all entries together: what its directory declares, and what reading its
+ * parts actually inflates. Far above any questionnaire (a 15 MiB `.docx` of text inflates to well under
+ * 100 MiB), low enough that three imports in flight stay inside the pod's memory.
+ */
+export const SURVEY_IMPORT_ZIP_MAX_INFLATED_BYTES = 200 * 1024 * 1024;
+
+/**
+ * Inflated bytes of one XML part (`.xml`, `.rels`), before it is parsed. The DOM of an XML document
+ * weighs several times its text, so this is what bounds the parse.
+ */
+export const SURVEY_IMPORT_ZIP_MAX_PART_BYTES = 10 * 1024 * 1024;
+
+/**
+ * Inflated bytes per compressed byte, per entry. Office XML compresses about 10:1; DEFLATE's own ceiling
+ * is about 1,032:1, which is what a zip bomb uses.
+ */
+export const SURVEY_IMPORT_ZIP_MAX_COMPRESSION_RATIO = 100;
+
 /**
  * Imports one server process runs at once. The request budget is checked on the raw text before it is
  * parsed, so nesting and long arrays never reach `JSON.parse` (15.5 MiB of `[[[…]]]` would retain about

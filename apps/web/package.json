@@ -122,6 +122,7 @@
     "date-fns": "catalog:",
     "disposable-email-domains": "1.0.62",
     "dompurify": "3.4.17",
+    "fflate": "0.8.3",
     "framer-motion": "12.35.2",
     "googleapis": "171.4.0",
     "heic-convert": "2.1.0",

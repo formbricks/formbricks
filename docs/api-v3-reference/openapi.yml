@@ -7946,6 +7946,9 @@ components:
             - dangling_reference
             - duplicate_identifier
             - duplicate_locale
+            - file_limit_exceeded
+            - file_type_unsupported
+            - file_unreadable
             - forbidden_identifier
             - immutable_identifier
             - invalid_locale
@@ -7967,6 +7970,8 @@ components:
             `limit_exceeded`: the field is well formed but past a limit the operation states, which `reason` names together with what to change. Chart queries use it for a date range that spans more time buckets than its granularity allows.
 
             `qsf_not_recognized` and `qsf_limit_exceeded` come from the Qualtrics import (an internal, session-only route sharing this shape): the file is not a Qualtrics export it can read, or it is one past an import limit, which `identifier` names.
+
+            `file_type_unsupported`, `file_limit_exceeded` and `file_unreadable` come from the survey import too, about the uploaded file whatever its type: the import does not read this kind of file (`identifier` names what it recognized, if anything), the file is past an upload limit, which `identifier` names, or it is broken.
         identifier:
           type: string
           description: Identifier involved in the validation failure, when available. For language errors, this can be the normalized language code.
