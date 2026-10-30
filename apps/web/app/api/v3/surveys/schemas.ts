@@ -1332,17 +1332,40 @@ export function createZV3SurveyDocumentBaseSchema(options?: TV3SurveyDocumentSch
 
 export const ZV3SurveyDocumentBase = createZV3SurveyDocumentBaseSchema();
 
+const V3_CREATE_SURVEY_DOCUMENT_SHAPE = {
+  type: ZSurveyType.prefault("link"),
+  ...V3_SURVEY_DOCUMENT_SHAPE,
+};
+
+const ZV3CreateSurveyDocumentObject = z.object(V3_CREATE_SURVEY_DOCUMENT_SHAPE).strict();
+
+const normalizeV3CreateSurveyDocument = createV3SurveyDocumentNormalizer({
+  applyDefaultLanguage: true,
+  generateMissingCreateIds: true,
+});
+
+function addCreateSurveyIssues(body: z.output<typeof ZV3CreateSurveyDocumentObject>, ctx: z.RefinementCtx) {
+  addLanguageIssues(body, ctx);
+  addAppDistributionIssues(body, body.type, ctx);
+}
+
 const ZV3CreateSurveyBodyBase = z.preprocess(
-  createV3SurveyDocumentNormalizer({ applyDefaultLanguage: true, generateMissingCreateIds: true }),
+  normalizeV3CreateSurveyDocument,
   z
-    .object({
-      workspaceId: z.cuid2(),
-      type: ZSurveyType.prefault("link"),
-      ...V3_SURVEY_DOCUMENT_SHAPE,
-    })
+    .object({ workspaceId: z.cuid2(), ...V3_CREATE_SURVEY_DOCUMENT_SHAPE })
     .strict()
-    .superRefine(addLanguageIssues)
-    .superRefine((body, ctx) => addAppDistributionIssues(body, body.type, ctx))
+    .superRefine(addCreateSurveyIssues)
+);
+
+/**
+ * The create body without the workspace it is created in: a survey as a Formbricks file carries it
+ * (ADR 0016), so the file holds no server-owned field and imports into whichever workspace the
+ * importer picks. Same rules as the create body, and strict, so its JSON Schema tells an AI assistant
+ * editing a file which keys exist.
+ */
+export const ZV3CreateSurveyDocument = z.preprocess(
+  normalizeV3CreateSurveyDocument,
+  ZV3CreateSurveyDocumentObject.superRefine(addCreateSurveyIssues)
 );
 
 export const ZV3CreateSurveyBody = z

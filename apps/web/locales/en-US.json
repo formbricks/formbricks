@@ -4617,6 +4617,11 @@
       "error_renaming_survey": "Error renaming survey",
       "error_restoring_survey": "Could not restore survey, try again",
       "error_updating_status": "An error occurred while updating survey status",
+      "export": {
+        "failed": "The survey could not be exported. Please try again.",
+        "formbricks_file": "Formbricks file (.json)",
+        "menu": "Export"
+      },
       "featured_templates": {
         "churn_description": "Find out why people cancel their subscriptions.",
         "churn_title": "Churn Survey",
