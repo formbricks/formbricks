@@ -7,6 +7,10 @@ that is not listed here.
 
 **Block** — One card of a survey holding one or more elements. Logic rules and a `logicFallback` hang off a block.
 
+**Signature element** — An element where the respondent draws their signature; the owner gets it as an image with the response. UI copy says "Signature". _Avoid_: signature question, signature field, e-signature (it carries no legal-signature claim).
+
+**Signed** — A Signature element holds a signature once the respondent has drawn a stroke of minimum length; a bare tap does not count. Clearing the pad makes it not signed again. Logic conditions read "is signed" / "is not signed".
+
 **Card pointer (`blockId`)** — The renderer's position in a survey: the `"start"` sentinel (welcome card), a block id while answering, an ending id once finished, or the `"end"` sentinel for a survey with no endings. Only a block id resolves against `survey.blocks`.
 
 **Ending** — A card shown when the survey finishes. A response records the ending it finished on as `endingId`.
