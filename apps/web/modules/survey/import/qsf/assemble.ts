@@ -22,7 +22,7 @@ import { SurveyImportIdRegistry, findFreeSuffixedName, isObjectMemberName } from
 import { languageSettingsFor } from "../core/language-settings";
 import type { TSurveyImportPipelineIssue } from "../core/report";
 import { type TSanitizedTexts, sanitizeName } from "../core/sanitize-text";
-import { getDefaultEndingTexts } from "./default-ending";
+import { getDefaultEndingTexts } from "../core/default-ending";
 import { type TPipedTextContext, replacePipedText } from "./piped-text";
 import { type TQsfCheckedPlan, type TQsfPlannedQuestion, sliderPoints } from "./plan-checks";
 import type { TQsfPlanContactField } from "./plan-schema";
