@@ -11,6 +11,7 @@ import {
   zValidateResponseCreateRequest,
   zValidateResponsePatchRequest,
 } from "@formbricks/api-v3-schemas";
+import { MAX_RESPONSE_DATA_KEYS, MAX_RESPONSE_DATA_VALUES } from "@formbricks/types/responses";
 import { declareReference } from "./reference-manifest";
 
 /**
@@ -65,21 +66,13 @@ export const ZV3BatchDeleteResponsesBody = zBatchDeleteResponsesRequest.extend({
 export type TV3BatchDeleteResponsesBody = z.infer<typeof ZV3BatchDeleteResponsesBody>;
 
 /**
- * Cardinality caps on a stored answer, per the ENG-1652 input policy — the same reason `tags` and the
- * batch-delete body are capped.
- *
- * Both are far past any real survey: a multi-select answer holds at most one entry per choice, and a
- * response holds at most one entry per element. Without them a single request inside the 2 MB body
- * limit can store an array of tens of thousands of entries, and every later reader pays for it per
- * entry — the serializer's per-answer mapping, export columns, and the positional probe the "Other"
- * response filter emits (ENG-3161), whose window is sized from the survey's choice count rather than
- * from the stored array.
- *
- * v3-only, and additive: the same unbounded shape reaches `ZResponseData` through the v1 and v2 write
- * paths, where capping it would reject payloads that work today.
+ * The answer caps are shared with the v1/v2 client and v1 management writes
+ * (`@formbricks/types/responses`), per the ENG-1652 input policy. Here they also guard later readers: without them a single request could
+ * store an array of tens of thousands of entries, and every reader pays for it per entry — the
+ * serializer's per-answer mapping, export columns, and the positional probe the "Other" response
+ * filter emits (ENG-3161), whose window is sized from the survey's choice count rather than from the
+ * stored array.
  */
-export const MAX_RESPONSE_DATA_VALUES = 1_000;
-export const MAX_RESPONSE_DATA_KEYS = 500;
 
 /**
  * `ResponseDataMapInput`: the stored answer map with the write-side bounds.

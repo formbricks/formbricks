@@ -1,4 +1,5 @@
 import "server-only";
+import { isJsonContentType } from "./auth-request-bounds";
 import {
   findDisallowedRedirectUri,
   getAllowedDcrRedirectUris,
@@ -85,7 +86,9 @@ export const withInferredApplicationType = (body: string): string => {
  * is single-use, so it cannot be inspected and then reused.
  */
 export const prepareDcrRequest = async (request: Request): Promise<Request | Response> => {
-  if (!isDcrRegistration(request)) return request;
+  // better-call refuses any other content type with 415, so a non-JSON body is never worth parsing here;
+  // the JSON one has already passed the entry cap in withAuthRequestBodyLimit.
+  if (!isDcrRegistration(request) || !isJsonContentType(request.headers.get("content-type"))) return request;
 
   const raw = await request.text();
   const disallowed = findDisallowedRedirectUri(raw, getAllowedDcrRedirectUris());

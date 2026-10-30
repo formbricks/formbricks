@@ -1,9 +1,13 @@
 import { describe, expect, test } from "vitest";
 import {
+  MAX_RESPONSE_DATA_ENTRIES,
+  MAX_RESPONSE_DATA_KEYS,
+  MAX_RESPONSE_DATA_VALUES,
   ZResponseFilterCriteria,
   ZResponseInput,
   ZResponseMeta,
   ZResponseUpdate,
+  ZResponseUpdateInput,
   pickAutoCapturedResponseMeta,
 } from "./responses";
 
@@ -168,5 +172,98 @@ describe("ZResponseFilterCriteria.data", () => {
   test.each(["equals", "notEquals"] as const)("rejects a jsonb boolean under %s", (op) => {
     expect(parse({ op, value: true }).success).toBe(false);
     expect(parse({ op, value: "true" }).success).toBe(true);
+  });
+});
+
+describe("response input caps", () => {
+  const keyed = <T>(count: number, value: (index: number) => T): Record<string, T> =>
+    Object.fromEntries(Array.from({ length: count }, (_, index) => [`k${index}`, value(index)]));
+  const strings = (count: number) => Array.from({ length: count }, (_, index) => `choice-${index}`);
+  const create = (over: Record<string, unknown>) =>
+    ZResponseInput.safeParse({
+      workspaceId: "clx0000000000000000000w1",
+      surveyId: "clx0000000000000000000s2",
+      finished: true,
+      data: {},
+      ...over,
+    });
+  const issuesOf = (result: ReturnType<typeof create>) => (result.success ? [] : result.error.issues);
+
+  test("accepts a response at every cap at once", () => {
+    // 500 answers: a multi-select with every one of 1,000 choices ticked, a 1,000-row matrix, and
+    // enough 15-item arrays to land exactly on the entry budget.
+    const fillerKeys = MAX_RESPONSE_DATA_KEYS - 2;
+    const fillerItems = MAX_RESPONSE_DATA_ENTRIES - MAX_RESPONSE_DATA_KEYS - 2 * MAX_RESPONSE_DATA_VALUES;
+    const data: Record<string, unknown> = keyed(fillerKeys, (index) =>
+      strings(Math.floor(fillerItems / fillerKeys) + (index < fillerItems % fillerKeys ? 1 : 0))
+    );
+    data.multi = strings(MAX_RESPONSE_DATA_VALUES);
+    data.matrix = keyed(MAX_RESPONSE_DATA_VALUES, () => "column");
+
+    const result = create({
+      data,
+      variables: keyed(MAX_RESPONSE_DATA_KEYS, (index) => index),
+      ttc: keyed(MAX_RESPONSE_DATA_KEYS, () => 1200),
+    });
+
+    expect(issuesOf(result)).toEqual([]);
+  });
+
+  // The path says which check caught it: `.max()` on the array itself, or the size check on the map.
+  test.each([
+    ["an array one past its cap", { q: strings(MAX_RESPONSE_DATA_VALUES + 1) }, ["data", "q"]],
+    ["an array of a million invalid items", { q: Array.from({ length: 1_000_000 }, () => 1) }, ["data"]],
+    ["a matrix one row past its cap", { q: keyed(MAX_RESPONSE_DATA_VALUES + 1, () => "column") }, ["data"]],
+    ["one key past the cap", keyed(MAX_RESPONSE_DATA_KEYS + 1, () => "answer"), ["data"]],
+    ["a hundred thousand keys", keyed(100_000, () => true), ["data"]],
+    // Each array is within its own cap; the whole map is not.
+    [
+      "every key at its array cap, every item invalid",
+      keyed(MAX_RESPONSE_DATA_KEYS, () => Array.from({ length: MAX_RESPONSE_DATA_VALUES }, () => 1)),
+      ["data"],
+    ],
+  ])("rejects data with %s in a single issue", (_, data, path) => {
+    const issues = issuesOf(create({ data }));
+
+    expect(issues).toHaveLength(1);
+    expect(issues[0].path).toEqual(path);
+  });
+
+  test("rejects data one entry past the budget, with every key and array within its own cap", () => {
+    const perKey = (MAX_RESPONSE_DATA_ENTRIES - MAX_RESPONSE_DATA_KEYS) / MAX_RESPONSE_DATA_KEYS;
+    const data: Record<string, unknown> = keyed(MAX_RESPONSE_DATA_KEYS, () => strings(perKey));
+    (data.k0 as string[]).push("one-too-many");
+
+    const issues = issuesOf(create({ data }));
+
+    expect(issues).toHaveLength(1);
+    expect(issues[0].path).toEqual(["data"]);
+  });
+
+  test.each([
+    ["variables", MAX_RESPONSE_DATA_KEYS + 1],
+    ["variables", 100_000],
+    ["ttc", MAX_RESPONSE_DATA_KEYS + 1],
+    ["ttc", 100_000],
+  ])("rejects %s with %i keys in a single issue", (field, count) => {
+    const issues = issuesOf(create({ [field]: keyed(count, () => "not a number or string") }));
+
+    expect(issues).toHaveLength(1);
+    expect(issues[0].path).toEqual([field]);
+  });
+
+  test("bounds the update input the same way", () => {
+    const update = (data: unknown) => ZResponseUpdateInput.safeParse({ data });
+
+    expect(update({ q: strings(MAX_RESPONSE_DATA_VALUES) }).success).toBe(true);
+    const over = update({ q: Array.from({ length: 1_000_000 }, () => 1) });
+    expect(over.success ? [] : over.error.issues).toHaveLength(1);
+  });
+
+  test("still reports a data value of the wrong shape where it is", () => {
+    const issues = issuesOf(create({ data: { q: true } }));
+
+    expect(issues).toHaveLength(1);
+    expect(issues[0].path).toEqual(["data", "q"]);
   });
 });

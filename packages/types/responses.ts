@@ -4,9 +4,10 @@ import { ZSurveyQuota } from "./quota";
 import { ZSurvey } from "./surveys/types";
 import { ZTag } from "./tags";
 
-export const ZResponseDataValue = z
-  .union([z.string(), z.number(), z.array(z.string()), z.record(z.string(), z.string())])
-  .optional();
+const buildResponseDataValue = <TArray extends z.ZodType>(array: TArray) =>
+  z.union([z.string(), z.number(), array, z.record(z.string(), z.string())]).optional();
+
+export const ZResponseDataValue = buildResponseDataValue(z.array(z.string()));
 
 export const ZResponseFilterCondition = z.enum([
   "accepted",
@@ -49,6 +50,79 @@ export const ZResponseVariables = z.record(z.string(), z.union([z.string(), z.nu
 
 export type TResponseVariables = z.infer<typeof ZResponseVariables>;
 
+/**
+ * Cardinality caps on a submitted response, per the ENG-1652 input policy. They bound the create and
+ * update inputs, one request at a time: the stored schemas (`ZResponseData`, `ZResponseVariables`,
+ * `ZResponseTtc`) stay unbounded, so rows written before the caps still parse.
+ *
+ * All are far past any real survey: a response holds at most one entry per element, a multi-select
+ * answer at most one entry per choice, and a matrix answer one entry per row. The entry budget counts
+ * the whole `data` map — its keys plus every array item and matrix row — and allows an average of 20
+ * per key: a survey of 500 multi-selects with 20 choices each, every choice ticked.
+ */
+export const MAX_RESPONSE_DATA_KEYS = 500;
+export const MAX_RESPONSE_DATA_VALUES = 1_000;
+export const MAX_RESPONSE_DATA_ENTRIES = 10_000;
+
+const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+/**
+ * Runs `check` on the raw input before `schema` parses it, and stops there when it fails.
+ *
+ * A record has no `.max()`, and a refinement only runs once Zod has parsed every key and array item —
+ * reporting each bad item on its own. Checking the size first rejects an oversized map with one issue,
+ * whatever its size. `z.preprocess` keeps `schema`'s output type and its OpenAPI shape; only the
+ * inferred input type widens to `unknown`.
+ */
+const withSizeCheck = <TSchema extends z.ZodType>(
+  schema: TSchema,
+  check: (record: Record<string, unknown>) => string | undefined
+) =>
+  z.preprocess((value, ctx) => {
+    const message = isPlainRecord(value) ? check(value) : undefined;
+    if (message) ctx.addIssue({ code: "custom", message });
+    return value;
+  }, schema);
+
+const maxKeys = (max: number, what: string) => (record: Record<string, unknown>) =>
+  Object.keys(record).length > max ? `A response may carry at most ${max} ${what}` : undefined;
+
+const checkResponseDataSize = (data: Record<string, unknown>): string | undefined => {
+  // Keys first: on a large map `Object.values` costs about twice `Object.keys`, so it only runs once
+  // the map is under the cap.
+  const keyCount = Object.keys(data).length;
+  if (keyCount > MAX_RESPONSE_DATA_KEYS) {
+    return `A response may answer at most ${MAX_RESPONSE_DATA_KEYS} fields`;
+  }
+  let entries = keyCount;
+  for (const value of Object.values(data)) {
+    if (Array.isArray(value)) {
+      entries += value.length;
+    } else if (isPlainRecord(value)) {
+      const rows = Object.keys(value).length;
+      if (rows > MAX_RESPONSE_DATA_VALUES) {
+        return `A matrix answer may hold at most ${MAX_RESPONSE_DATA_VALUES} rows`;
+      }
+      entries += rows;
+    }
+  }
+  return entries > MAX_RESPONSE_DATA_ENTRIES
+    ? `A response may hold at most ${MAX_RESPONSE_DATA_ENTRIES} values`
+    : undefined;
+};
+
+/** `ZResponseData` with the caps above, for the create and update inputs. */
+export const ZResponseDataInput = withSizeCheck(
+  z.record(z.string(), buildResponseDataValue(z.array(z.string()).max(MAX_RESPONSE_DATA_VALUES))),
+  checkResponseDataSize
+);
+
+export const ZResponseVariablesInput = withSizeCheck(
+  ZResponseVariables,
+  maxKeys(MAX_RESPONSE_DATA_KEYS, "variables")
+);
+
 export const ZResponseTtc = z.record(z.string(), z.number());
 
 export type TResponseTtc = z.infer<typeof ZResponseTtc>;
@@ -60,12 +134,16 @@ export type TResponseTtc = z.infer<typeof ZResponseTtc>;
 // `_total`. Clamping rather than rejecting means a real submission is never dropped over a
 // noisy timing value — a question is only briefly "active", so anything past a day is
 // meaningless rather than a reason to reject the response. Stored/returned responses keep the
-// unbounded ZResponseTtc so historical data still parses.
+// unbounded ZResponseTtc so historical data still parses. One entry per element, so it shares the
+// response's key cap.
 export const MAX_RESPONSE_TTC = 1000 * 60 * 60 * 24; // 24 hours per element
 
-export const ZResponseTtcInput = z.record(
-  z.string(),
-  z.number().transform((value) => Math.min(Math.max(value, 0), MAX_RESPONSE_TTC))
+export const ZResponseTtcInput = withSizeCheck(
+  z.record(
+    z.string(),
+    z.number().transform((value) => Math.min(Math.max(value, 0), MAX_RESPONSE_TTC))
+  ),
+  maxKeys(MAX_RESPONSE_DATA_KEYS, "timing entries")
 );
 
 export type TResponseTtcInput = z.infer<typeof ZResponseTtcInput>;
@@ -593,8 +671,8 @@ export const ZResponseInput = z.object({
   finished: z.boolean(),
   endingId: z.string().nullish(),
   language: z.string().optional(),
-  data: ZResponseData,
-  variables: ZResponseVariables.optional(),
+  data: ZResponseDataInput,
+  variables: ZResponseVariablesInput.optional(),
   ttc: ZResponseTtcInput.optional(),
   // The same shape as the stored `ZResponseMeta`, and now literally it: this used to be a hand-copied
   // duplicate, which is how a field added to one could pass review and still fail to parse on the way
@@ -608,8 +686,8 @@ export type TResponseInput = z.infer<typeof ZResponseInput>;
 export const ZResponseUpdateInput = z.object({
   finished: z.boolean().optional(),
   endingId: z.string().nullish(),
-  data: ZResponseData.optional(),
-  variables: ZResponseVariables.optional(),
+  data: ZResponseDataInput.optional(),
+  variables: ZResponseVariablesInput.optional(),
   ttc: ZResponseTtcInput.optional(),
   language: z.string().optional(),
   pinAuthToken: z.string().nullish(),

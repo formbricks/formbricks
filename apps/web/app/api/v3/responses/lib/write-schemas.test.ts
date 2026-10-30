@@ -12,9 +12,8 @@ import {
   unenforcedKey,
   validatorFor,
 } from "@formbricks/api-v3-schemas/testing";
+import { MAX_RESPONSE_DATA_KEYS, MAX_RESPONSE_DATA_VALUES } from "@formbricks/types/responses";
 import {
-  MAX_RESPONSE_DATA_KEYS,
-  MAX_RESPONSE_DATA_VALUES,
   ZV3BatchDeleteResponsesBody,
   ZV3BatchDeleteResponsesQuery,
   ZV3CreateResponseBody,
