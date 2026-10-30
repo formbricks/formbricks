@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { cpuMsSince } from "../core/__fixtures__/cpu-time";
 import { SurveyImportInputError } from "../core/errors";
+import { measureDraftBytes } from "../core/fit-draft";
 import { SURVEY_IMPORT_MAX_DRAFT_BYTES, SURVEY_IMPORT_MAX_TEXT_CHARS } from "../limits";
 import { loadQsfFixture } from "./__fixtures__/load-fixture";
 import {
@@ -17,7 +18,7 @@ import {
 import { loadRecordedPlan, recordedGenerate, refsInPrompt } from "./__fixtures__/recorded-plans";
 import type { TQsfPlanGenerate } from "./ai-plan";
 import { checkQsfDraft } from "./final-gate";
-import { fitQsfSurveyToCreateLimit, measureQsfDraftBytes } from "./fit-draft";
+import { fitQsfSurveyToCreateLimit } from "./fit-draft";
 import { normalizeQualtricsLanguageCode } from "./language-codes";
 import { QSF_RECALL_FALLBACK } from "./piped-text";
 import { prepareQsfImport, runQsfImport } from "./pipeline";
@@ -528,7 +529,7 @@ describe("a draft too large for the create's request body", () => {
       // Coarse: the longest stretch left is the create's own request schema on that ~2 MB draft, ~1.3 s;
       // uncut, the 4.3 MB draft's took about 4.5 s.
       expect(result.stretchMs).toBeLessThan(3_000);
-      expect(measureQsfDraftBytes(result.payload)).toBeLessThanOrEqual(SURVEY_IMPORT_MAX_DRAFT_BYTES);
+      expect(measureDraftBytes(result.payload)).toBeLessThanOrEqual(SURVEY_IMPORT_MAX_DRAFT_BYTES);
       expect(result.report.summary.questions).toBe(200);
       const cut = result.report.issues.filter(
         (issue) => issue.code === "language_skipped" && issue.params?.cause === "draft_too_large"
@@ -552,7 +553,7 @@ describe("a draft too large for the create's request body", () => {
       expect(seen.stages.every((stage) => stage.fits)).toBe(true);
       // Coarse: few, long texts are cheap to check, and sliced everywhere else. ~60 ms.
       expect(result.stretchMs).toBeLessThan(300);
-      expect(measureQsfDraftBytes(result.payload)).toBeLessThanOrEqual(SURVEY_IMPORT_MAX_DRAFT_BYTES);
+      expect(measureDraftBytes(result.payload)).toBeLessThanOrEqual(SURVEY_IMPORT_MAX_DRAFT_BYTES);
       const cut = result.report.issues.filter(
         (issue) => issue.code === "question_skipped" && issue.params?.cause === "draft_too_large"
       );

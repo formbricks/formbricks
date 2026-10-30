@@ -3,6 +3,7 @@ import type {
   TSurveyOpenTextElementInputType,
   TSurveyRatingElement,
 } from "@formbricks/types/surveys/elements";
+import type { TSurveyImportPipelineIssue } from "./report";
 
 /*
  * The draft document every import lane builds (ENG-3654, ENG-6846), as types only: the stream's event
@@ -91,4 +92,15 @@ export interface TSurveyImportDraft {
    */
   showLanguageSwitch?: true;
   autoSelectLanguage?: true;
+}
+
+/** A lane's assembled draft, with the report lines assembly wrote. */
+export interface TSurveyImportAssembly {
+  document: TSurveyImportDraft;
+  issues: TSurveyImportPipelineIssue[];
+  /**
+   * The source question (the lane's own id) behind each element, by block and element index, to map a
+   * problem with an element back to the question.
+   */
+  elementRefs: string[][];
 }

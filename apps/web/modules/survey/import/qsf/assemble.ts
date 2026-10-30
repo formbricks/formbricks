@@ -11,6 +11,7 @@ import type {
   TDraftChoice,
   TDraftElementBase,
   TDraftToggleInput,
+  TSurveyImportAssembly,
   TSurveyImportDraft,
   TSurveyImportDraftElement,
   TSurveyImportDraftEnding,
@@ -18,6 +19,7 @@ import type {
 } from "../core/draft";
 import { createSlicer } from "../core/event-loop";
 import { SurveyImportIdRegistry, findFreeSuffixedName, isObjectMemberName } from "../core/id-registry";
+import { languageSettingsFor } from "../core/language-settings";
 import type { TSurveyImportPipelineIssue } from "../core/report";
 import { type TSanitizedTexts, sanitizeName } from "../core/sanitize-text";
 import { getDefaultEndingTexts } from "./default-ending";
@@ -43,13 +45,6 @@ import type { TQsfQuestion, TQsfSurvey, TQsfTextKey } from "./qsf-model";
  */
 const hasTextContent = (text: string): boolean =>
   text.includes("<") ? getTextContent(text).length > 0 : text.trim().length > 0;
-
-export interface TQsfAssembly {
-  document: TSurveyImportDraft;
-  issues: TSurveyImportPipelineIssue[];
-  /** The question ref behind each element, by block and element index, to map a gate issue back. */
-  elementRefs: string[][];
-}
 
 export interface TAssembleQsfDraftParams {
   survey: TQsfSurvey;
@@ -143,28 +138,6 @@ const choiceShuffle = (randomized: boolean, hasSpecial: boolean): "none" | "all"
   return hasSpecial ? "exceptLast" : "all";
 };
 
-/**
- * The respondent language settings for a draft with `languageCount` enabled languages: the switch and
- * browser-language selection on with more than one, nothing with one.
- */
-export const languageSettingsFor = (
-  languageCount: number
-): Pick<TSurveyImportDraft, "showLanguageSwitch" | "autoSelectLanguage"> =>
-  languageCount > 1 ? { showLanguageSwitch: true, autoSelectLanguage: true } : {};
-
-/**
- * The document with the language settings its enabled languages call for, after a fit dropped some: a
- * draft cut down to one enabled language loses them.
- */
-export function withLanguageSettings(document: TSurveyImportDraft): void {
-  delete document.showLanguageSwitch;
-  delete document.autoSelectLanguage;
-  Object.assign(
-    document,
-    languageSettingsFor(document.languages.filter((language) => language.enabled).length)
-  );
-}
-
 /** Disambiguate labels that repeat within a language: `N/A`, `N/A (2)`. Returns whether any changed. */
 export function disambiguateLabels(
   items: TDraftChoice[],
@@ -243,7 +216,7 @@ class QsfAssembler {
     }));
   }
 
-  async assemble(): Promise<TQsfAssembly> {
+  async assemble(): Promise<TSurveyImportAssembly> {
     const { survey, plan, excludedRefs } = this.params;
     const slice = createSlicer(this.params.signal);
 
@@ -746,6 +719,6 @@ function redirectHost(url: string): string | null {
   }
 }
 
-export function assembleQsfDraft(params: TAssembleQsfDraftParams): Promise<TQsfAssembly> {
+export function assembleQsfDraft(params: TAssembleQsfDraftParams): Promise<TSurveyImportAssembly> {
   return new QsfAssembler(params).assemble();
 }

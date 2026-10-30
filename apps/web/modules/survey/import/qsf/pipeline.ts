@@ -5,6 +5,7 @@ import { getAITimeoutMs } from "@/lib/ai/timeout";
 import { AI_TRACING_FEATURE } from "@/lib/posthog/ai-tracing-feature";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import type { TSurveyImportDraft } from "../core/draft";
+import type { TSurveyImportAssembly } from "../core/draft";
 import { SurveyImportFailedError } from "../core/errors";
 import { yieldToOthers } from "../core/event-loop";
 import type { TSurveyImportPipelineIssue } from "../core/report";
@@ -12,7 +13,7 @@ import { buildSurveyImportReport } from "../core/report";
 import { SURVEY_IMPORT_AI_CALL_TIMEOUT_MS, SURVEY_IMPORT_AI_MAX_SOURCE_CHARS } from "../limits";
 import type { TSurveyImportReport, TSurveyImportStage } from "../types";
 import { type TQsfPlanGenerate, type TQsfPlanUsage, planQsfImport } from "./ai-plan";
-import { type TQsfAssembly, assembleQsfDraft } from "./assemble";
+import { assembleQsfDraft } from "./assemble";
 import { qsfLimitExceeded } from "./errors";
 import { checkQsfDraftInSlices, elementsAtFault } from "./final-gate";
 import { fitQsfDraftToCreateLimit, fitQsfSurveyToCreateLimit } from "./fit-draft";
@@ -109,10 +110,10 @@ const countElements = (document: TSurveyImportDraft): number =>
  * for more than one of them.
  */
 async function assembleCheckedDraft(
-  build: (excludedRefs: ReadonlySet<string>) => Promise<TQsfAssembly>,
+  build: (excludedRefs: ReadonlySet<string>) => Promise<TSurveyImportAssembly>,
   survey: TQsfSurvey,
   signal: AbortSignal
-): Promise<{ assembly: TQsfAssembly; dropped: TSurveyImportPipelineIssue[] }> {
+): Promise<{ assembly: TSurveyImportAssembly; dropped: TSurveyImportPipelineIssue[] }> {
   const pause = () => yieldToOthers(signal);
 
   const first = await build(new Set());
