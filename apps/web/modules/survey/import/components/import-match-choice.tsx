@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
+import { ImportFieldProblems } from "@/modules/survey/import/components/import-field-problems";
 import type {
   TSurveyImportChoice,
   TSurveyImportMatchConflict,
@@ -22,7 +23,8 @@ type ImportMatchChoiceProps = {
 
 /**
  * The choice a Match offers (ENG-6851), laid out like the contacts upload's Duplicates choice: Update the
- * survey the file was exported from, or Create new. An active survey locks it on Create new. A survey
+ * survey the file was exported from, or Create new. An active survey locks it on Create new, and so
+ * does a file the Update would refuse, whose reasons are listed. A survey
  * that changed since the export says so, and its Update becomes "Update anyway". When the file's
  * triggers differ from the survey's, a second row picks which to keep, locked to the survey's own when
  * the file's would leave a live survey with nothing to show it.
@@ -39,10 +41,16 @@ export const ImportMatchChoice = ({
   conflict,
 }: Readonly<ImportMatchChoiceProps>) => {
   const { t } = useTranslation();
-  const isLocked = conflict === "active";
+  const isLocked = conflict === "active" || conflict === "refused";
   const triggersLocked = match.triggers === "keep_only";
 
   const choiceDescription = () => {
+    if (conflict === "refused") {
+      return t("workspace.surveys.import.match.refused_description", {
+        name: match.name,
+        newName: newSurveyName,
+      });
+    }
     if (isLocked) {
       return t("workspace.surveys.import.match.active_description", {
         name: match.name,
@@ -90,6 +98,9 @@ export const ImportMatchChoice = ({
           tabsContainerClassName="p-1 rounded-lg"
         />
         <p className="text-xs font-medium text-slate-500">{choiceDescription()}</p>
+        {conflict === "refused" ? (
+          <ImportFieldProblems problems={match.updateRefusal} testId="survey-import-update-refusal" />
+        ) : null}
       </div>
 
       {choice === "update" && match.triggers !== "same" ? (

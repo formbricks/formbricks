@@ -355,6 +355,7 @@ describe("useImportSurvey on a Match", () => {
     issues: [
       { code: "question_removed", severity: "warning", questionTag: "q2", params: { headline: "Why?" } },
     ],
+    updateRefusal: [],
   };
   const { workspaceId: _workspaceId, ...survey } = payload;
   const conflict = () => new V3ApiError({ status: 409, detail: "changed", code: "conflict" });
@@ -458,6 +459,26 @@ describe("useImportSurvey on a Match", () => {
     await waitFor(() => expect(result.current.errorCode).toBe("survey_active"));
     expect(result.current.conflict).toBe("active");
     expect(result.current.choice).toBe("create");
+  });
+
+  test("locks a Match the Update would refuse on Create new, saying why, and never tries the Update", async () => {
+    const updateRefusal = [
+      {
+        name: "survey.blocks.0.elements.0.id",
+        reason: "Element id 'q1' cannot be changed because the survey and element are no longer drafts",
+        code: "immutable_identifier" as const,
+      },
+    ];
+    const { result } = await reviewMatch({ ...match, updateRefusal });
+
+    expect(result.current.choice).toBe("create");
+    expect(result.current.conflict).toBe("refused");
+    expect(result.current.match?.updateRefusal).toEqual(updateRefusal);
+
+    act(() => result.current.handleOpenInEditor());
+
+    await waitFor(() => expect(createSurveyFromImport).toHaveBeenCalledTimes(1));
+    expect(updateSurveyFromImport).not.toHaveBeenCalled();
   });
 
   test("forgets the Match with the review", async () => {

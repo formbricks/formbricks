@@ -4852,6 +4852,7 @@
           "create_description": "This file is saved as a new draft named “{newName}”.",
           "create_new": "Create new",
           "question": "How should we import it?",
+          "refused_description": "This file can’t update “{name}”, for the reasons below. It is saved as a new draft named “{newName}”.",
           "stale_description": "Updating it now would overwrite those changes. Save the file as a new survey, or choose Update to overwrite them anyway.",
           "stale_title": "“{name}” changed after this file was exported",
           "title": "“{name}” has the same ID as this file",

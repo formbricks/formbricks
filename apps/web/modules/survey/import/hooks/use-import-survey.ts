@@ -49,9 +49,10 @@ export type TSurveyImportChoice = "update" | "create";
 
 /**
  * Why the Update a Match offered is no longer the plain one: the survey changed after the file was
- * exported (`stale`, the dialog offers "Update anyway"), or it is live (`active`, Create new only).
+ * exported (`stale`, the dialog offers "Update anyway"), it is live (`active`, Create new only), or the
+ * file cannot update it (`refused`, Create new only, with the review's reasons).
  */
-export type TSurveyImportMatchConflict = "stale" | "active";
+export type TSurveyImportMatchConflict = "stale" | "active" | "refused";
 
 /**
  * The dialog's code for a first 409 on Update: the dialog shows the "changed since you exported" choice
@@ -71,9 +72,16 @@ const withCode = (error: V3ApiError, code: string): V3ApiError =>
     details: error.details,
   });
 
-/** The choice a Match opens with: Update, unless the survey is live. */
+/** What rules the Update out from the start: the survey is live, or the file cannot update it. */
+const initialConflict = (match: TSurveyImportMatch | null): TSurveyImportMatchConflict | null => {
+  if (match?.status === "inProgress") return "active";
+  if (match && match.updateRefusal.length > 0) return "refused";
+  return null;
+};
+
+/** The choice a Match opens with: Update, unless something rules it out. */
 const initialChoice = (match: TSurveyImportMatch | null): TSurveyImportChoice =>
-  match && match.status !== "inProgress" ? "update" : "create";
+  match && initialConflict(match) === null ? "update" : "create";
 
 /** The refusals whose `invalid_params` name the file's fields, which the dialog lists. */
 const FIELD_REFUSAL_CODES = new Set(["formbricks_file_invalid", "formbricks_file_too_new"]);
@@ -107,7 +115,7 @@ export const useImportSurvey = ({ workspaceId, isAIAvailable, onSuccess }: UseIm
     setMatch(next);
     setChoice(initialChoice(next));
     setTriggersChoice(next?.triggers === "keep_only" ? "keep" : "file");
-    setConflict(next?.status === "inProgress" ? "active" : null);
+    setConflict(initialConflict(next));
   }, []);
 
   const stream = useCallback(

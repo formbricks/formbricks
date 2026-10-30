@@ -274,6 +274,7 @@ describe("a Formbricks file of a survey in this workspace", () => {
       exportedUpdatedAt: before.updatedAt.toISOString(),
       triggers: "same",
       issues: [],
+      updateRefusal: [],
     });
 
     const auditLog = auditLogStub();
@@ -352,6 +353,45 @@ describe("a Formbricks file of a survey in this workspace", () => {
       instance: "/api/internal/surveys/content",
     });
     expect(refused.status).toBe(403);
+  });
+});
+
+describe("a file an Update would refuse", () => {
+  test("is offered with the reasons in the preview, and the Update it describes is the 422 it predicts", async () => {
+    const surveyId = await seedSurvey({ status: "paused" });
+    // The first question's id changed, on a survey that is no longer a draft, and the type too.
+    const file = editFile(await exportFile(surveyId), (survey) => {
+      const blocks = survey.blocks as { elements: { id: string }[] }[];
+      blocks[0].elements[0].id = "colour";
+    });
+
+    const done = await preview(file);
+
+    expect(done.match).toMatchObject({ surveyId, triggers: "same" });
+    expect(done.match?.updateRefusal).toEqual([
+      expect.objectContaining({
+        name: "survey.blocks.0.elements.0.id",
+        code: "immutable_identifier",
+        reason: expect.stringContaining("color"),
+      }),
+    ]);
+
+    const response = await update(surveyId, done, { updatedAt: done.match!.exportedUpdatedAt });
+    expect(response.status).toBe(422);
+    expect((await response.json()).invalid_params).toEqual(done.match?.updateRefusal);
+  });
+
+  test("names a file of another survey type", async () => {
+    const surveyId = await seedSurvey({ status: "draft" });
+    const file = editFile(await exportFile(surveyId), (survey) => {
+      survey.type = "app";
+    });
+
+    const done = await preview(file);
+
+    expect(done.match?.updateRefusal).toEqual([
+      expect.objectContaining({ name: "survey.type", code: "read_only_field" }),
+    ]);
   });
 });
 

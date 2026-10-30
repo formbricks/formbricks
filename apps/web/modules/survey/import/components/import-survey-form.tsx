@@ -7,6 +7,7 @@ import { cn } from "@/lib/cn";
 import { DraftReviewPanel } from "@/modules/survey/components/template-list/components/draft-review-panel";
 import { SourceChip } from "@/modules/survey/components/template-list/components/source-chip";
 import { ImportFacts } from "@/modules/survey/import/components/import-facts";
+import { ImportFieldProblems } from "@/modules/survey/import/components/import-field-problems";
 import { ImportMatchChoice } from "@/modules/survey/import/components/import-match-choice";
 import { ImportReport } from "@/modules/survey/import/components/import-report";
 import { useImportSurvey } from "@/modules/survey/import/hooks/use-import-survey";
@@ -18,8 +19,6 @@ import { AiIcon, AiStatusLine } from "@/modules/ui/components/ai";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { FileDropZone } from "@/modules/ui/components/file-drop-zone";
-
-const MAX_LISTED_PROBLEMS = 10;
 
 const IMPORT_STAGES: readonly TSurveyImportStage[] = ["reading", "ai", "assembling"];
 
@@ -128,9 +127,6 @@ export const ImportSurveyForm = ({
   // loaded refuses the .qsf it was asked to read, with an error line like any other refusal.
   const canReadWithAI = isAIAvailable && !importer.aiUnavailableReason;
   const fileExtensions = getSurveyImportFileExtensions(canReadWithAI);
-  // At most this many field problems are listed; the rest are counted.
-  const shownInvalidParams = importer.invalidParams?.slice(0, MAX_LISTED_PROBLEMS) ?? [];
-  const unlistedProblemCount = (importer.invalidParams?.length ?? 0) - shownInvalidParams.length;
 
   const errorMessage = importer.errorCode
     ? getSurveyImportErrorMessage(importer.errorCode, t, importer.retryAfterSeconds)
@@ -221,21 +217,7 @@ export const ImportSurveyForm = ({
           <AlertTitle>{t("common.error")}</AlertTitle>
           <AlertDescription>
             {errorMessage}
-            {shownInvalidParams.length > 0 ? (
-              // Field paths and reasons come from the user's file: rendered as text only.
-              <ul className="mt-1 list-disc space-y-0.5 pl-4">
-                {shownInvalidParams.map((param, index) => (
-                  <li key={`${param.name}-${index}`} className="break-words">
-                    <code className="text-xs">{param.name}</code>: {param.reason}
-                  </li>
-                ))}
-                {unlistedProblemCount > 0 ? (
-                  <li>
-                    {t("workspace.surveys.import.errors.more_problems", { count: unlistedProblemCount })}
-                  </li>
-                ) : null}
-              </ul>
-            ) : null}
+            <ImportFieldProblems problems={importer.invalidParams ?? []} />
           </AlertDescription>
         </Alert>
       ) : null}

@@ -3,6 +3,7 @@
  * kind of file). Type-only on purpose, so the dialog (a client component) can import it without
  * pulling in server code.
  */
+import type { InvalidParam } from "@/app/api/v3/lib/response";
 
 /**
  * The kind of file an import read, one per lane: `qsf` is a Qualtrics export, `formbricks` a Formbricks
@@ -321,4 +322,10 @@ export interface TSurveyImportMatch {
   triggers: TSurveyImportTriggersState;
   /** The report lines only an Update adds: what it removes from a survey that has responses. */
   issues: TSurveyImportIssue[];
+  /**
+   * Why an Update of this survey with this file would be refused, field by field, as the Update would
+   * say it: a file of another survey type or default language, or a changed id of a question that is
+   * no longer a draft. Empty when the Update can go ahead; otherwise only Create new is offered.
+   */
+  updateRefusal: InvalidParam[];
 }

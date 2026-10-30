@@ -5,11 +5,13 @@ import type { TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resol
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import type { TSurvey, TSurveyStatus } from "@formbricks/types/surveys/types";
 import { getV3CustomCssPrincipal } from "@/app/api/v3/lib/custom-css-rate-limit";
+import type { InvalidParam } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { surveyToV3Distribution } from "@/app/api/v3/surveys/distribution";
 import { isPlainObject } from "@/app/api/v3/surveys/guards";
 import { getSessionUserId } from "@/app/api/v3/surveys/lib/operations";
 import { V3SurveyArchivedError, assertV3SurveyPrecondition, patchV3Survey } from "@/app/api/v3/surveys/patch";
+import { prepareV3SurveyPatchInput } from "@/app/api/v3/surveys/prepare";
 import { V3SurveyReferenceValidationError } from "@/app/api/v3/surveys/reference-validation";
 import { ZV3CreateSurveyBody, formatV3ZodInvalidParams } from "@/app/api/v3/surveys/schemas";
 import { type TAuthorizationActor, can } from "@/lib/authorization";
@@ -141,28 +143,21 @@ export const findFormbricksFileMatch = async ({
 }): Promise<TSurveyImportMatch | null> => {
   if (!source || !actor) return null;
 
-  const survey = await prisma.survey.findFirst({
+  // The survey as the Update reads it, so the preview runs the Update's own checks on it.
+  const row = await prisma.survey.findFirst({
     where: { id: source.surveyId, workspaceId, archivedAt: null },
-    select: {
-      id: true,
-      workspaceId: true,
-      name: true,
-      type: true,
-      status: true,
-      updatedAt: true,
-      blocks: true,
-      triggers: { select: { actionClassId: true } },
-      responses: { select: { id: true }, take: 1 },
-    },
+    select: { ...selectSurveyWithCustomCss, responses: { select: { id: true }, take: 1 } },
   });
-  if (!survey) return null;
-  if (!(await can(actor, "survey.write", { type: "survey", id: survey.id }))) return null;
+  if (!row) return null;
+  if (!(await can(actor, "survey.write", { type: "survey", id: row.id }))) return null;
+  const { responses, ...stored } = row;
+  const survey = transformPrismaSurvey<TSurvey>(stored);
 
   const triggers = await getTriggersState({
     survey,
     draft,
     plan,
-    currentActionClassIds: new Set(survey.triggers.map((trigger) => trigger.actionClassId)),
+    currentActionClassIds: new Set(survey.triggers.map(({ actionClass }) => actionClass.id)),
   });
 
   return {
@@ -172,8 +167,23 @@ export const findFormbricksFileMatch = async ({
     updatedAt: survey.updatedAt.toISOString(),
     exportedUpdatedAt: source.updatedAt,
     triggers,
-    issues: survey.responses.length > 0 ? getFormbricksFileRemovals(survey.blocks, draft.blocks) : [],
+    issues: responses.length > 0 ? getFormbricksFileRemovals(survey.blocks, draft.blocks) : [],
+    updateRefusal: getUpdateRefusal(survey, draft),
   };
+};
+
+/**
+ * What the v3 patch would refuse in an Update of `survey` with `draft`, checked without writing: a
+ * file of another survey type or default language, a changed id of a question that is no longer a
+ * draft, and the patch's other document rules. Named as the Update names them, so the preview shows
+ * the reasons the Update would give. The triggers are left out: they are resolved only on commit.
+ */
+const getUpdateRefusal = (survey: TSurvey, draft: TSurveyImportFileDraft): InvalidParam[] => {
+  const preparation = prepareV3SurveyPatchInput(survey, toUpdatePatch(withoutDistribution(draft), survey));
+  if (preparation.ok) return [];
+  const { invalidParams } = preparation.validation;
+  // A stored survey the patch cannot read is the survey's problem, named as it is stored.
+  return preparation.origin === "storedSurvey" ? invalidParams : nameFromSurvey(invalidParams, null);
 };
 
 /** The survey's row, held until the transaction ends: under read committed, later reads see it as locked. */
