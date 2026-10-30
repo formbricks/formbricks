@@ -19,7 +19,7 @@ const t = ((key: string) => key) as unknown as TFunction;
 /**
  * These are the words the page puts on a field's enum columns, and the privacy column is the one
  * where a wrong word is a wrong statement about what the product stores. Before this file the
- * mappers lived in a `.tsx`, where AGENTS.md's no-component-test rule and Sonar's `**‍/*.tsx`
+ * mappers lived in a `.tsx`, where CODING_STANDARDS.md's no-component-test rule and Sonar's `**‍/*.tsx`
  * coverage exclusion both applied — so swapping "Kept" and "Not stored" passed the whole suite.
  */
 describe("getPrivacyLabel", () => {
