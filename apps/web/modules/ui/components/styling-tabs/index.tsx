@@ -20,6 +20,8 @@ interface StylingTabsProps<T> {
   subLabel?: string;
   activeTabClassName?: string;
   inactiveTabClassName?: string;
+  /** Locks the selection: the options show, but none can be chosen. */
+  disabled?: boolean;
 }
 
 export const StylingTabs = <T extends string | number>({
@@ -33,6 +35,7 @@ export const StylingTabs = <T extends string | number>({
   subLabel,
   activeTabClassName,
   inactiveTabClassName,
+  disabled = false,
 }: StylingTabsProps<T>) => {
   const [selectedOption, setSelectedOption] = useState<T | undefined>(defaultSelected);
 
@@ -46,6 +49,7 @@ export const StylingTabs = <T extends string | number>({
     <div
       role="radiogroup"
       aria-labelledby={`${id}-toggle-label`}
+      aria-disabled={disabled || undefined}
       className={cn("flex flex-col gap-2", className)}>
       <>
         {label && <Label className="font-semibold">{label}</Label>}
@@ -59,8 +63,9 @@ export const StylingTabs = <T extends string | number>({
             key={option.value}
             htmlFor={option.value.toString()}
             className={cn(
-              "flex flex-1 cursor-pointer items-center justify-center gap-4 rounded-md py-2 text-center text-sm",
+              "flex flex-1 items-center justify-center gap-4 rounded-md py-2 text-center text-sm",
               selectedOption === option.value ? "bg-slate-100" : "bg-white",
+              disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer",
               "focus:ring-2 focus:ring-brand-dark/50 focus:outline-hidden",
               selectedOption === option.value ? activeTabClassName : inactiveTabClassName
             )}>
@@ -71,6 +76,7 @@ export const StylingTabs = <T extends string | number>({
               value={option.value.toString()}
               checked={selectedOption === option.value}
               onChange={handleChange}
+              disabled={disabled}
               className="sr-only"
             />
             <span className="text-slate-900">{option.label}</span>
