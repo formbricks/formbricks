@@ -12,13 +12,17 @@ import {
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { type TV3SurveyWriteReport, toV3CustomCssError } from "@/app/api/v3/lib/custom-css";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
-import { getActionClasses } from "@/lib/actionClass/service";
+import { getActionClasses, getActionClassesInTransaction } from "@/lib/actionClass/service";
 import { reconcileEmbeddedData } from "@/lib/embedded-data/reconcile";
 import { scheduleFeedbackSourceReconciliation } from "@/lib/feedback-source/mapping-reconciliation";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { APP_SURVEY_TRIGGER_REQUIRED_MESSAGE } from "@/lib/survey/publish-rule";
 import { selectSurveyWithCustomCss } from "@/lib/survey/service";
 import { stripIsDraftFromBlocks, transformPrismaSurvey } from "@/lib/survey/utils";
+import {
+  SURVEY_WRITE_TRANSACTION_OPTIONS,
+  type TSurveyWriteTransaction,
+} from "@/lib/survey/write-transaction";
 import { invalidateCustomCssCaches, resolveCustomCssWrite } from "@/modules/custom-css/lib/service";
 import { isAppSurveyBlockedFromPublishing } from "@/modules/ee/creatives/lib/survey-publish";
 import { handleTriggerUpdates } from "@/modules/survey/lib/trigger-updates";
@@ -147,14 +151,17 @@ async function buildV3AppSurveyPatchWrites(params: {
   data: Prisma.SurveyUpdateInput;
   visibleSurveyWhere: Prisma.SurveyWhereInput;
   replacesDistribution: boolean;
+  transaction: TSurveyWriteTransaction | undefined;
 }): Promise<TV3SegmentFilterWrite | null> {
-  const { currentSurvey, document, data, visibleSurveyWhere, replacesDistribution } = params;
+  const { currentSurvey, document, data, visibleSurveyWhere, replacesDistribution, transaction } = params;
   const distribution = document.distribution;
   if (!distribution) {
     return null;
   }
 
-  const actionClasses = await getActionClasses(currentSurvey.workspaceId);
+  const actionClasses = transaction
+    ? await getActionClassesInTransaction(transaction.tx, currentSurvey.workspaceId)
+    : await getActionClasses(currentSurvey.workspaceId);
   const resolvedTriggers = resolveV3SurveyTriggers(distribution.triggers, actionClasses);
 
   const { showConditions, ...scalars } = v3DistributionToScalars(distribution);
@@ -198,7 +205,12 @@ async function buildV3AppSurveyPatchWrites(params: {
   }
 
   // Validate attribute-key references on the changed filters before the write (mirrors trigger ids).
-  await assertV3SurveyTargetingFilterReferences(currentSurvey.workspaceId, nextFilters, visibleSurveyWhere);
+  await assertV3SurveyTargetingFilterReferences(
+    currentSurvey.workspaceId,
+    nextFilters,
+    visibleSurveyWhere,
+    transaction?.tx
+  );
 
   return { segmentId, filters: nextFilters };
 }
@@ -303,6 +315,13 @@ export async function executeV3SurveyPatch(params: {
   customCss?: { stored: TCustomCssStored | null };
   /** Whether the request sent `distribution`, which replaces the stored one whole. */
   replacesDistribution?: boolean;
+  /**
+   * ENG-6845: a transaction the caller opened, so the patch lands together with the caller's own writes
+   * or not at all. The languages it adds, the survey, its segment filters and Embedded Data rows are
+   * written through it, and the References the caller created in it are visible to the checks here.
+   * Omitted, the patch opens its own transaction, as it always has.
+   */
+  transaction?: TSurveyWriteTransaction;
 }): Promise<TSurvey> {
   const {
     currentSurvey,
@@ -313,6 +332,7 @@ export async function executeV3SurveyPatch(params: {
     visibleSurveyWhere = NO_VISIBLE_SURVEYS,
     customCss,
     replacesDistribution = false,
+    transaction,
   } = params;
   // Same rule as prepare's validation (ENG-3975): media the stored survey already had does not block a
   // patch that leaves it untouched.
@@ -358,7 +378,12 @@ export async function executeV3SurveyPatch(params: {
     );
   }
 
-  const languages = await ensureV3WorkspaceLanguages(currentSurvey.workspaceId, languageRequests, requestId);
+  const languages = await ensureV3WorkspaceLanguages(
+    currentSurvey.workspaceId,
+    languageRequests,
+    requestId,
+    transaction?.tx
+  );
   const normalizedScheduling = normalizeSurveyScheduling({
     currentStatus: currentSurvey.status,
     closeOn: currentSurvey.closeOn,
@@ -391,6 +416,7 @@ export async function executeV3SurveyPatch(params: {
           data,
           visibleSurveyWhere,
           replacesDistribution,
+          transaction,
         })
       : null;
 
@@ -415,67 +441,81 @@ export async function executeV3SurveyPatch(params: {
       select: { id: true },
     });
 
-  try {
-    // One transaction, always. Two writes have to land with the survey or not at all:
-    //
-    // - Segment filters live on a separate row, so a mid-write failure would leave targeting out of
-    //   step with the survey it belongs to.
-    // - The EmbeddedData rows are the only place `variables` / `hiddenFields` are stored (ENG-2404),
-    //   so a patch that moves them without reconciling the rows would not persist them at all.
-    //
-    // The reconcile therefore runs here rather than after the commit — matching `updateSurveyInternal`
-    // — which is what makes the unconditional transaction necessary: a same-statement fast path can
-    // no longer be correct.
-    const persistedSurvey = await prisma.$transaction(
-      async (tx) => {
-        if (segmentFilterWrite) {
-          await setV3SurveySegmentFilters(segmentFilterWrite.segmentId, segmentFilterWrite.filters, tx);
-        }
-
-        await runSurveyUpdate(tx);
-
-        // ENG-2412: from the patch document — the rows are the only place Embedded Data is stored
-        // (ENG-2404). Safe on a partial patch for two reasons: `prepareV3SurveyPatchInput` merges the
-        // body over the current survey first, so both keys arrive populated; and
-        // `resolveDesiredEmbeddedFields` carries a group's current rows over untouched if its key is
-        // absent anyway. `workspaceId` comes from the stored survey, never the client (ENG-1749).
-        await reconcileEmbeddedData(tx, {
-          surveyId: currentSurvey.id,
-          workspaceId: currentSurvey.workspaceId,
-          patch: { variables: document.variables, hiddenFields: document.hiddenFields },
-        });
-
-        // Re-read AFTER the reconcile. The response's `variables` / `hiddenFields` — and the audit
-        // log's — are derived from the rows at the read seam, so a survey selected before the
-        // reconcile would report the pre-patch fields back to the caller that just changed them.
-        return tx.survey.findUniqueOrThrow({
-          where: { id: currentSurvey.id, workspaceId: currentSurvey.workspaceId },
-          select: selectSurveyWithCustomCss,
-        });
-      },
-      // Matched to the other reconcile call sites: this transaction rewrites blocks and languages,
-      // adds an indexed read plus a write per changed field, then reads back through `selectSurvey`'s
-      // deep select — enough to approach Prisma's 5s default on a large survey.
-      { timeout: 20_000, maxWait: 10_000 }
-    );
-
-    // ENG-2064: this route writes blocks directly rather than going through updateSurveyInternal, so
-    // it needs the same feedback-source reconciliation — it is the surface an automation would use to
-    // change a survey's questions. Best-effort; failures log without failing the patch.
-    await scheduleFeedbackSourceReconciliation(
-      currentSurvey.id,
-      currentSurvey.workspaceId,
-      persistedSurvey.blocks
-    );
-
-    if (customCss) {
-      await invalidateCustomCssCaches(currentSurvey.workspaceId);
+  // One transaction, always. Two writes have to land with the survey or not at all:
+  //
+  // - Segment filters live on a separate row, so a mid-write failure would leave targeting out of
+  //   step with the survey it belongs to.
+  // - The EmbeddedData rows are the only place `variables` / `hiddenFields` are stored (ENG-2404),
+  //   so a patch that moves them without reconciling the rows would not persist them at all.
+  //
+  // The reconcile therefore runs here rather than after the commit — matching `updateSurveyInternal`
+  // — which is what makes the unconditional transaction necessary: a same-statement fast path can
+  // no longer be correct. Under a caller's transaction (ENG-6845) that transaction is this one.
+  const writeSurvey = async (tx: Prisma.TransactionClient) => {
+    if (segmentFilterWrite) {
+      await setV3SurveySegmentFilters(segmentFilterWrite.segmentId, segmentFilterWrite.filters, tx);
     }
 
-    return await reconcilePersistedV3SurveyPatch({
-      survey: transformPrismaSurvey<TSurvey>(persistedSurvey),
+    await runSurveyUpdate(tx);
+
+    // ENG-2412: from the patch document — the rows are the only place Embedded Data is stored
+    // (ENG-2404). Safe on a partial patch for two reasons: `prepareV3SurveyPatchInput` merges the
+    // body over the current survey first, so both keys arrive populated; and
+    // `resolveDesiredEmbeddedFields` carries a group's current rows over untouched if its key is
+    // absent anyway. `workspaceId` comes from the stored survey, never the client (ENG-1749).
+    await reconcileEmbeddedData(tx, {
+      surveyId: currentSurvey.id,
       workspaceId: currentSurvey.workspaceId,
+      patch: { variables: document.variables, hiddenFields: document.hiddenFields },
     });
+
+    // Re-read AFTER the reconcile. The response's `variables` / `hiddenFields` — and the audit
+    // log's — are derived from the rows at the read seam, so a survey selected before the
+    // reconcile would report the pre-patch fields back to the caller that just changed them.
+    return tx.survey.findUniqueOrThrow({
+      where: { id: currentSurvey.id, workspaceId: currentSurvey.workspaceId },
+      select: selectSurveyWithCustomCss,
+    });
+  };
+
+  try {
+    const persistedSurvey = transaction
+      ? await writeSurvey(transaction.tx)
+      : await prisma.$transaction(
+          writeSurvey,
+          // Matched to the other reconcile call sites: this transaction rewrites blocks and languages,
+          // adds an indexed read plus a write per changed field, then reads back through
+          // `selectSurvey`'s deep select — enough to approach Prisma's 5s default on a large survey.
+          SURVEY_WRITE_TRANSACTION_OPTIONS
+        );
+    const patchedSurvey = transformPrismaSurvey<TSurvey>(persistedSurvey);
+
+    const finishAfterCommit = async (): Promise<TSurvey> => {
+      // ENG-2064: this route writes blocks directly rather than going through updateSurveyInternal, so
+      // it needs the same feedback-source reconciliation — it is the surface an automation would use to
+      // change a survey's questions. Best-effort; failures log without failing the patch.
+      await scheduleFeedbackSourceReconciliation(
+        currentSurvey.id,
+        currentSurvey.workspaceId,
+        persistedSurvey.blocks
+      );
+
+      if (customCss) {
+        await invalidateCustomCssCaches(currentSurvey.workspaceId);
+      }
+
+      return await reconcilePersistedV3SurveyPatch({
+        survey: patchedSurvey,
+        workspaceId: currentSurvey.workspaceId,
+      });
+    };
+
+    if (transaction) {
+      transaction.afterCommit(finishAfterCommit);
+      return patchedSurvey;
+    }
+
+    return await finishAfterCommit();
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       // Only the survey UPDATE can raise a P2025 here: the segment write wraps its own, the
