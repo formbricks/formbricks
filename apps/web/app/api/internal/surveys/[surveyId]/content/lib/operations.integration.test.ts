@@ -299,6 +299,27 @@ describe("a Formbricks file of a survey in this workspace", () => {
     expect(auditLog).toMatchObject({ targetId: surveyId, organizationId: fixture.organizationId });
   });
 
+  test("Update never writes the share metadata, even from an older file that carries it", async () => {
+    const surveyId = await seedSurvey({ status: "paused" });
+    const file = editFile(await exportFile(surveyId), (survey) => {
+      survey.metadata = { title: { "en-US": "Title from the file" } };
+    });
+    expect((await exportFile(surveyId)).survey).not.toHaveProperty("metadata");
+
+    const done = await preview(reworded(file));
+    expect(done.report.issues).toContainEqual({
+      code: "unknown_key_dropped",
+      severity: "warning",
+      params: { field: "survey.metadata" },
+    });
+    expect(done.payload).not.toHaveProperty("metadata");
+
+    const response = await update(surveyId, done, { updatedAt: done.match!.exportedUpdatedAt });
+
+    expect(response.status).toBe(200);
+    expect((await storedSurvey(surveyId)).metadata).toEqual({ title: { default: "Share title" } });
+  });
+
   test("is no match for a user who cannot edit the survey, or in another workspace", async () => {
     const restrictedId = await seedSurvey({ status: "draft", visibility: "restricted" });
     const restrictedFile = await exportFile(restrictedId);

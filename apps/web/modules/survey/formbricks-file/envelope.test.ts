@@ -118,6 +118,8 @@ describe("getFormbricksFileV1JsonSchema", () => {
       required: ["name", "blocks"],
       additionalProperties: false,
     });
+    // A link survey's share metadata is a setting of the survey, not content a file carries.
+    expect(resolve(properties.survey).properties).not.toHaveProperty("metadata");
     expect(resolve(properties.references)).toMatchObject({
       required: ["actionClasses", "attributeKeys", "embeddedFields"],
       additionalProperties: false,

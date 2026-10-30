@@ -223,6 +223,14 @@ describe("writeFormbricksFile", () => {
     expect(survey.endings).toMatchObject([{ id: ENDING_ID }]);
   });
 
+  test("leaves out the link survey's share metadata, which belongs to the survey's settings, not its content", () => {
+    const { survey } = write(
+      buildSurvey({ metadata: { title: { default: "Share title" }, description: { default: "Shared" } } })
+    );
+
+    expect(survey).not.toHaveProperty("metadata");
+  });
+
   test("writes /storage media paths as absolute URLs, private ones against the app URL", () => {
     const { survey } = write(buildSurvey());
 

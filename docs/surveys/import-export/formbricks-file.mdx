@@ -77,7 +77,7 @@ Every file has four keys at the top:
 | `$schema`    | The address of the file's [JSON Schema](#the-json-schema). Optional.                                                                               |
 | `formbricks` | About the file: its `format`, when it was exported, the Formbricks version that wrote it, and its `source`.                                        |
 | `formbricks.source` | The survey and workspace it came from, and when the survey last changed before the export. An import uses these to offer **Update**.        |
-| `survey`     | The survey: the same document the [API v3](/api-v3-reference/introduction) creates a survey from, without `workspaceId`.                           |
+| `survey`     | The survey: the same document the [API v3](/api-v3-reference/introduction) creates a survey from, without `workspaceId` and `metadata` (the link's share preview, which stays with the survey). |
 | `references` | What the survey uses from its workspace: `actionClasses` its triggers use, `attributeKeys` its targeting names, shared `embeddedFields`, and `languages` with their names. |
 
 `format` is the file format's own version, separate from the Formbricks version. Formbricks reads every format up to its own and refuses newer ones.
@@ -106,7 +106,7 @@ Anything under `survey`. Some rules keep the file importable:
 
 Leave `formbricks` as it was exported. `source.surveyId` is how Formbricks finds the survey to update, and `source.updatedAt` is how it notices the survey changed after the export. With another `surveyId`, the file always becomes a new survey.
 
-Keys the format doesn't know are dropped with a warning each in the import report, so a key an assistant invents doesn't block the import.
+Keys the format doesn't know are dropped with a warning each in the import report, so a key an assistant invents doesn't block the import. A file exported before the share preview was left out still carries `survey.metadata`: it is dropped the same way, with one warning, and never written to a survey.
 
 ### Writing a file from scratch
 

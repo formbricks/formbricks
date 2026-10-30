@@ -294,6 +294,17 @@ describe("readFormbricksFile", () => {
     expect(read.issues.every((issue) => issue.severity === "warning")).toBe(true);
   });
 
+  test("drops the share metadata an older file carries, with one warning", () => {
+    const read = readFormbricksFile(
+      file({ survey: { ...survey(), metadata: { title: { "en-US": "Share title" }, ogImage: "https://x" } } })
+    );
+
+    expect(read.content.survey).toEqual(survey());
+    expect(read.issues).toEqual([
+      { code: "unknown_key_dropped", severity: "warning", params: { field: "survey.metadata" } },
+    ]);
+  });
+
   test("names the first fifty dropped keys and counts the rest in one line", () => {
     const extraKeys = Object.fromEntries(
       Array.from({ length: FORMBRICKS_FILE_MAX_REPORTED_DROPPED_KEYS + 7 }, (_, index) => [

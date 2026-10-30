@@ -408,8 +408,14 @@ const ROOT_KEYS = new Set([
   "distribution",
   "targeting",
 ]);
-/** The create body's root keys without the workspace: a survey document as a Formbricks file carries it. */
-const DOCUMENT_ROOT_KEYS = new Set([...ROOT_KEYS].filter((key) => key !== "workspaceId"));
+/**
+ * The create body's root keys a survey document has as a Formbricks file carries it: without the
+ * workspace, and without `metadata`, the link survey's share settings, which are the survey's own and
+ * not content to carry to another one.
+ */
+const DOCUMENT_ROOT_KEYS = new Set(
+  [...ROOT_KEYS].filter((key) => key !== "workspaceId" && key !== "metadata")
+);
 const PATCH_ROOT_KEYS = new Set([
   "customCss",
   "name",
@@ -1339,7 +1345,10 @@ const V3_CREATE_SURVEY_DOCUMENT_SHAPE = {
   ...V3_SURVEY_DOCUMENT_SHAPE,
 };
 
-const ZV3CreateSurveyDocumentObject = z.object(V3_CREATE_SURVEY_DOCUMENT_SHAPE).strict();
+const { metadata: _metadata, ...V3_FILE_SURVEY_DOCUMENT_SHAPE } = V3_CREATE_SURVEY_DOCUMENT_SHAPE;
+
+/** The create body as a Formbricks file's survey: see `DOCUMENT_ROOT_KEYS` for what it leaves out. */
+const ZV3CreateSurveyDocumentObject = z.object(V3_FILE_SURVEY_DOCUMENT_SHAPE).strict();
 
 const normalizeV3CreateSurveyDocument = createV3SurveyDocumentNormalizer({
   applyDefaultLanguage: true,
@@ -1360,9 +1369,9 @@ const ZV3CreateSurveyBodyBase = z.preprocess(
 );
 
 /**
- * The create body without the workspace it is created in: a survey as a Formbricks file carries it
- * (ADR 0016), so the file holds no server-owned field and imports into whichever workspace the
- * importer picks. Same rules as the create body, and strict, so its JSON Schema tells an AI assistant
+ * The create body without the workspace it is created in or the link survey's share `metadata`: a
+ * survey as a Formbricks file carries it (ADR 0016), so the file holds no server-owned field and
+ * imports into whichever workspace the importer picks. Same rules as the create body, and strict, so its JSON Schema tells an AI assistant
  * editing a file which keys exist.
  */
 export const ZV3CreateSurveyDocument = z.preprocess(
