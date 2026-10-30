@@ -4,16 +4,14 @@ import { generateOrganizationAIObject } from "@/lib/ai/service";
 import { getAITimeoutMs } from "@/lib/ai/timeout";
 import { AI_TRACING_FEATURE } from "@/lib/posthog/ai-tracing-feature";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
-import type { TSurveyImportDraft } from "../core/draft";
-import type { TSurveyImportAssembly } from "../core/draft";
+import type { TSurveyImportAssembly, TSurveyImportDraft } from "../core/draft";
 import { SurveyImportFailedError } from "../core/errors";
 import { yieldToOthers } from "../core/event-loop";
 import { checkImportDraftInSlices, elementsAtFault } from "../core/final-gate";
-import type { TSurveyImportPipelineIssue } from "../core/report";
-import { buildSurveyImportReport } from "../core/report";
+import type { TSurveyImportResult, TSurveyImportRunParams } from "../core/lane";
+import { type TSurveyImportPipelineIssue, buildSurveyImportReport } from "../core/report";
 import { SURVEY_IMPORT_AI_CALL_TIMEOUT_MS, SURVEY_IMPORT_AI_MAX_SOURCE_CHARS } from "../limits";
-import type { TSurveyImportReport, TSurveyImportStage } from "../types";
-import { type TQsfPlanGenerate, type TQsfPlanUsage, planQsfImport } from "./ai-plan";
+import { type TQsfPlanGenerate, planQsfImport } from "./ai-plan";
 import { assembleQsfDraft } from "./assemble";
 import { qsfLimitExceeded } from "./errors";
 import { fitQsfDraftToCreateLimit, fitQsfSurveyToCreateLimit } from "./fit-draft";
@@ -24,8 +22,8 @@ import { sanitizeQsfTexts } from "./sanitize-text";
 
 /**
  * The Qualtrics import pipeline (ENG-3654): a parsed QSF in, a v3 create document and the import
- * report out. The stream route (`/api/internal/surveys/import/stream`) is one caller; nothing here
- * knows about HTTP, so a later public route or a background job reuses it unchanged (ENG-3604).
+ * report out. It is the Qualtrics lane (`qsfImportLane`, `../core/lane.ts`); nothing here knows about
+ * HTTP, so a later public route or a background job reuses it unchanged (ENG-3604).
  *
  * Two phases, because the route has to answer a bad file with a problem response before its stream
  * opens:
@@ -46,31 +44,8 @@ export interface TPreparedQsfImport {
   survey: TQsfSurvey;
 }
 
-export interface TQsfImportResult {
-  /**
-   * The draft in the shape `POST /api/v3/surveys` takes — locale-keyed texts, not the internal `default`
-   * key — because the dialog sends it there unchanged.
-   */
-  payload: TSurveyImportDraft;
-  report: TSurveyImportReport;
-  /** Tokens the AI calls used, for the route's log line. Absent when no AI call ran. */
-  usage?: TQsfPlanUsage;
-}
-
-export interface TRunQsfImportParams {
-  prepared: TPreparedQsfImport;
-  workspaceId: string;
-  organizationId: string;
-  userId: string | null;
-  /**
-   * Aborts on Stop, client disconnect and the route's deadline. Passed to every AI call; the pipeline
-   * also stops between stages when it fires, since the route gives the import's concurrency slot back
-   * as soon as the client leaves.
-   */
-  signal: AbortSignal;
-  /** The route's deadline for the whole import. AI calls are sized to what is left of it. */
-  deadlineMs: number;
-  onProgress: (stage: TSurveyImportStage) => void;
+/** The Qualtrics lane's run, plus the model call the eval script swaps in. */
+export interface TRunQsfImportParams extends TSurveyImportRunParams<TPreparedQsfImport> {
   /** The model call. The organization's AI by default; the eval script passes its own. */
   generate?: TQsfPlanGenerate;
 }
@@ -153,7 +128,7 @@ async function assembleCheckedDraft(
 }
 
 /** Plan and assemble the survey. */
-export async function runQsfImport(params: TRunQsfImportParams): Promise<TQsfImportResult> {
+export async function runQsfImport(params: TRunQsfImportParams): Promise<TSurveyImportResult> {
   const { prepared, workspaceId, organizationId, signal, onProgress } = params;
   const { survey } = prepared;
   const deadline = performance.now() + params.deadlineMs;

@@ -13,25 +13,22 @@ import { getSessionUserId } from "@/app/api/v3/surveys/lib/operations";
 import { assertOrganizationAIConfigured } from "@/lib/ai/service";
 import { getAITimeoutMs } from "@/lib/ai/timeout";
 import { SurveyImportInputError, SurveyImportTimeoutError } from "@/modules/survey/import/core/errors";
+import type { TSurveyImportLane, TSurveyImportResult } from "@/modules/survey/import/core/lane";
 import { SURVEY_IMPORT_DEADLINE_MS } from "@/modules/survey/import/limits";
-import {
-  type TPreparedQsfImport,
-  type TQsfImportResult,
-  prepareQsfImport,
-  runQsfImport,
-} from "@/modules/survey/import/qsf/pipeline";
 import type { TSurveyImportStage } from "@/modules/survey/import/types";
 import { SURVEY_IMPORT_HEARTBEAT_MS } from "./constants";
 import { importTimedOutEvent, toSurveyImportStreamErrorEvent } from "./error-events";
 import type { TSurveyImportStreamEvent } from "./events";
-import type { TQsfImportStreamBody } from "./schemas";
 
 const OPERATION = "surveys.import";
 
-interface TStreamQsfImportParams {
+interface TStreamSurveyImportParams<TInput, TPrepared> {
   req: Request;
   authentication: TV3Authentication;
-  body: TQsfImportStreamBody;
+  workspaceId: string;
+  /** The lane for the file's kind, and what it reads. */
+  lane: TSurveyImportLane<TInput, TPrepared>;
+  input: TInput;
   requestId: string;
   instance: string;
 }
@@ -45,27 +42,29 @@ const parseContentLength = (value: string | null): number | null => {
 };
 
 /**
- * Import a Qualtrics survey export, streaming progress as NDJSON (ENG-3604, ENG-3653).
+ * Import a survey file through its lane, streaming progress as NDJSON (ENG-3604, ENG-3653, ENG-6846).
  *
  * The ordering is the design: **every check that can answer with a problem response runs before the
- * response body opens** — workspace write access, the AI gate, and the file read — because once a 200
- * has started there is no way back to RFC 9457. Authentication, rate limiting, the body limit and the
- * concurrency slot already ran in the wrapper. Only failures during the import itself become `error`
- * events.
+ * response body opens** — workspace write access, the AI gate (for a lane that uses AI), and the
+ * lane's file read — because once a 200 has started there is no way back to RFC 9457.
+ * Authentication, rate limiting, the body limit and the concurrency slot already ran in the wrapper.
+ * Only failures during the import itself become `error` events.
  *
  * Nothing is written: the dialog shows the draft for review and creates it with
  * `POST /api/v3/surveys?createdFrom=import`, which is what the audit log records.
  */
-export async function streamQsfImport({
+export async function streamSurveyImport<TInput, TPrepared>({
   req,
   authentication,
-  body,
+  workspaceId: requestedWorkspaceId,
+  lane,
+  input,
   requestId,
   instance,
-}: TStreamQsfImportParams): Promise<Response> {
+}: TStreamSurveyImportParams<TInput, TPrepared>): Promise<Response> {
   const workspaceAccess = await requireV3WorkspaceAccess(
     authentication,
-    body.workspaceId,
+    requestedWorkspaceId,
     "readWrite",
     requestId,
     instance
@@ -77,20 +76,22 @@ export async function streamQsfImport({
 
   const { organizationId, workspaceId } = workspaceAccess;
   const userId = getSessionUserId(authentication);
-  const log = logger.withContext({ requestId, workspaceId, organizationId });
+  const log = logger.withContext({ requestId, workspaceId, organizationId, sourceKind: lane.kind });
 
-  try {
-    await assertOrganizationAIConfigured(organizationId);
-  } catch (error) {
-    return (
-      mapV3AIError(error, { requestId, instance, workspaceId, organizationId, operation: OPERATION }) ??
-      mapV3ThrownError(error, { log, requestId, instance, operation: OPERATION })
-    );
+  if (lane.usesAI) {
+    try {
+      await assertOrganizationAIConfigured(organizationId);
+    } catch (error) {
+      return (
+        mapV3AIError(error, { requestId, instance, workspaceId, organizationId, operation: OPERATION }) ??
+        mapV3ThrownError(error, { log, requestId, instance, operation: OPERATION })
+      );
+    }
   }
 
-  let prepared: TPreparedQsfImport;
+  let prepared: TPrepared;
   try {
-    prepared = prepareQsfImport(body.qsf, body.fileName);
+    prepared = lane.prepare(input);
   } catch (error) {
     if (error instanceof SurveyImportInputError) {
       return problemUnprocessableContent(requestId, error.message, {
@@ -103,7 +104,7 @@ export async function streamQsfImport({
     // quote it in the message.
     log.error(
       { ...loggableError(error), operation: OPERATION, statusCode: 500 },
-      "QSF import could not read the file"
+      "Survey import could not read the file"
     );
     return problemInternalError(requestId, undefined, instance);
   }
@@ -114,7 +115,7 @@ export async function streamQsfImport({
   let stage: TSurveyImportStage = "reading";
   let outcome: TImportOutcome = "failed";
   let errorCode: string | undefined;
-  let result: TQsfImportResult | undefined;
+  let result: TSurveyImportResult | undefined;
 
   return createNdjsonResponse<TSurveyImportStreamEvent>({
     heartbeat: { intervalMs: SURVEY_IMPORT_HEARTBEAT_MS, event: () => ({ type: "progress", stage }) },
@@ -127,7 +128,7 @@ export async function streamQsfImport({
       emit({ type: "start", requestId });
       reportStage("reading");
 
-      result = await runQsfImport({
+      result = await lane.run({
         prepared,
         workspaceId,
         organizationId,
@@ -149,7 +150,7 @@ export async function streamQsfImport({
         outcome = "timed_out";
         const event = importTimedOutEvent();
         errorCode = event.code;
-        log.warn({ deadlineMs, planTimedOut }, "QSF import hit its deadline");
+        log.warn({ deadlineMs, planTimedOut }, "Survey import hit its deadline");
         return event;
       }
 
@@ -161,7 +162,7 @@ export async function streamQsfImport({
 
       const event = toSurveyImportStreamErrorEvent(error);
       errorCode = event.code;
-      log.error(loggableAIError(error), "QSF import failed");
+      log.error(loggableAIError(error), "Survey import failed");
       return event;
     },
     onCancel: importAbort.abort,
@@ -179,7 +180,7 @@ export async function streamQsfImport({
           inputTokens: result?.usage?.inputTokens,
           outputTokens: result?.usage?.outputTokens,
         },
-        "QSF import finished"
+        "Survey import finished"
       );
     },
   });

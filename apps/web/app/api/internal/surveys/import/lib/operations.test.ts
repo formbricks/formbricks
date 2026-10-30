@@ -3,10 +3,12 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { OperationNotAllowedError, TooManyRequestsError } from "@formbricks/types/errors";
 import { problemForbidden } from "@/app/api/v3/lib/response";
 import { SurveyImportTimeoutError } from "@/modules/survey/import/core/errors";
+import type { TSurveyImportLane, TSurveyImportResult } from "@/modules/survey/import/core/lane";
 import { SURVEY_IMPORT_DEADLINE_MS } from "@/modules/survey/import/limits";
-import { type TQsfImportResult, type TRunQsfImportParams } from "@/modules/survey/import/qsf/pipeline";
+import { qsfImportLane } from "@/modules/survey/import/qsf/lane";
+import type { TRunQsfImportParams } from "@/modules/survey/import/qsf/pipeline";
 import { SURVEY_IMPORT_HEARTBEAT_MS } from "./constants";
-import { streamQsfImport } from "./operations";
+import { streamSurveyImport } from "./operations";
 import type { TQsfImportStreamBody } from "./schemas";
 
 const mocks = vi.hoisted(() => ({
@@ -72,7 +74,7 @@ const body: TQsfImportStreamBody = {
   },
 };
 
-const importResult: TQsfImportResult = {
+const importResult: TSurveyImportResult = {
   payload: { workspaceId: body.workspaceId, name: "Onboarding (imported)" } as never,
   report: {
     source: { kind: "qsf", fileName: "onboarding.qsf" },
@@ -83,14 +85,16 @@ const importResult: TQsfImportResult = {
 };
 
 const call = (signal?: AbortSignal, qsf: Record<string, unknown> = body.qsf) =>
-  streamQsfImport({
+  streamSurveyImport({
     req: new Request("http://localhost/api/internal/surveys/import/stream", {
       method: "POST",
       signal,
       headers: { "content-length": "2048" },
     }),
     authentication: { user: { id: "user_1" } } as never,
-    body: { ...body, qsf },
+    workspaceId: body.workspaceId,
+    lane: qsfImportLane,
+    input: { qsf, fileName: body.fileName },
     requestId: "req_1",
     instance: "/api/internal/surveys/import/stream",
   });
@@ -115,7 +119,7 @@ const hangUntilAborted = () =>
       })
   );
 
-describe("streamQsfImport", () => {
+describe("streamSurveyImport", () => {
   beforeEach(() => {
     aiTimeoutEnv.multiplier = 1;
     vi.clearAllMocks();
@@ -188,6 +192,37 @@ describe("streamQsfImport", () => {
       expect(response.status).toBe(403);
     });
 
+    test("runs a lane that uses no AI with AI off, and never asks the AI gate", async () => {
+      mocks.assertOrganizationAIConfigured.mockRejectedValue(
+        new OperationNotAllowedError("ai_features_not_enabled")
+      );
+      const lane: TSurveyImportLane<string, string> = {
+        kind: "qsf",
+        usesAI: false,
+        prepare: (input) => input,
+        run: async ({ onProgress }) => {
+          onProgress("assembling");
+          return importResult;
+        },
+      };
+
+      const response = await streamSurveyImport({
+        req: new Request("http://localhost/api/internal/surveys/import/stream", { method: "POST" }),
+        authentication: { user: { id: "user_1" } } as never,
+        workspaceId: body.workspaceId,
+        lane,
+        input: "file",
+        requestId: "req_1",
+        instance: "/api/internal/surveys/import/stream",
+      });
+
+      expect(response.status).toBe(200);
+      const events = await readEvents(response);
+      expect(events.map((event) => event.type)).toEqual(["start", "progress", "progress", "done"]);
+      expect(events.at(-1)).toMatchObject({ report: importResult.report });
+      expect(mocks.assertOrganizationAIConfigured).not.toHaveBeenCalled();
+    });
+
     test("answers 500 when reading the file fails unexpectedly, and logs where, never what it said", async () => {
       // A reader that fails on the file can quote it, so the message stays out of the log.
       mocks.prepareQsfImport.mockImplementationOnce(() => {
@@ -200,7 +235,7 @@ describe("streamQsfImport", () => {
       expect(JSON.stringify(await response.json())).not.toContain(FILE_CONTENT_MARKER);
       expect(mocks.log.error).toHaveBeenCalledWith(
         expect.objectContaining({ errName: "SyntaxError", operation: "surveys.import", statusCode: 500 }),
-        "QSF import could not read the file"
+        "Survey import could not read the file"
       );
       expect(allLogged()).not.toContain(FILE_CONTENT_MARKER);
       expect(mocks.runQsfImport).not.toHaveBeenCalled();
@@ -269,17 +304,17 @@ describe("streamQsfImport", () => {
           outputTokens: 300,
           durationMs: expect.any(Number),
         }),
-        "QSF import finished"
+        "Survey import finished"
       );
       expect(allLogged()).not.toContain(FILE_CONTENT_MARKER);
     });
 
     test("repeats the current stage as a heartbeat while the AI call runs", async () => {
       vi.useFakeTimers();
-      let finish: ((result: TQsfImportResult) => void) | undefined;
+      let finish: ((result: TSurveyImportResult) => void) | undefined;
       mocks.runQsfImport.mockImplementation(
         ({ onProgress }: TRunQsfImportParams) =>
-          new Promise<TQsfImportResult>((resolve) => {
+          new Promise<TSurveyImportResult>((resolve) => {
             onProgress("ai");
             finish = resolve;
           })
@@ -317,7 +352,7 @@ describe("streamQsfImport", () => {
       expect(signal.aborted).toBe(true);
       expect(mocks.log.info).toHaveBeenCalledWith(
         expect.objectContaining({ outcome: "aborted" }),
-        "QSF import finished"
+        "Survey import finished"
       );
     });
 
@@ -349,7 +384,7 @@ describe("streamQsfImport", () => {
       expect((await events).at(-1)).toMatchObject({ type: "error", code: "import_timed_out" });
       expect(mocks.log.info).toHaveBeenCalledWith(
         expect.objectContaining({ outcome: "timed_out", errorCode: "import_timed_out" }),
-        "QSF import finished"
+        "Survey import finished"
       );
     });
 
@@ -361,7 +396,7 @@ describe("streamQsfImport", () => {
       expect(events.at(-1)).toMatchObject({ type: "error", code: "import_timed_out" });
       expect(mocks.log.info).toHaveBeenCalledWith(
         expect.objectContaining({ outcome: "timed_out", errorCode: "import_timed_out" }),
-        "QSF import finished"
+        "Survey import finished"
       );
     });
 
@@ -391,7 +426,7 @@ describe("streamQsfImport", () => {
           errName: "Error",
           errStack: expect.stringMatching(/^ +at \S.*(?:\n +at \S.*)*$/),
         }),
-        "QSF import failed"
+        "Survey import failed"
       );
       expect(allLogged()).not.toContain(FILE_CONTENT_MARKER);
       expect(allLogged()).not.toContain("second line");
@@ -407,7 +442,7 @@ describe("streamQsfImport", () => {
 
       expect(mocks.log.error).toHaveBeenCalledWith(
         expect.not.objectContaining({ errStack: expect.anything() }),
-        "QSF import failed"
+        "Survey import failed"
       );
       expect(allLogged()).not.toContain(FILE_CONTENT_MARKER);
     });
@@ -432,7 +467,7 @@ describe("streamQsfImport", () => {
           errName: "TypeError",
           errStack: expect.stringContaining("operations.ts:1:1"),
         }),
-        "QSF import failed"
+        "Survey import failed"
       );
     });
 
@@ -446,7 +481,7 @@ describe("streamQsfImport", () => {
       expect(events.at(-1)).toMatchObject({ type: "error", code: "import_failed" });
       expect(mocks.log.error).toHaveBeenCalledWith(
         expect.objectContaining({ errName: "Error" }),
-        "QSF import failed"
+        "Survey import failed"
       );
     });
 
@@ -464,7 +499,7 @@ describe("streamQsfImport", () => {
 
       expect(mocks.log.error).toHaveBeenCalledWith(
         expect.objectContaining({ errName: "AI_APICallError", providerStatusCode: 500 }),
-        "QSF import failed"
+        "Survey import failed"
       );
       expect(allLogged()).not.toContain(FILE_CONTENT_MARKER);
     });

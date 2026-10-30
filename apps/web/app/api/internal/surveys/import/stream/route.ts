@@ -28,7 +28,8 @@ import {
   SURVEY_IMPORT_MAX_IN_FLIGHT_PER_USER,
   SURVEY_IMPORT_RETRY_AFTER_SECONDS,
 } from "@/modules/survey/import/limits";
-import { streamQsfImport } from "../lib/operations";
+import { qsfImportLane } from "@/modules/survey/import/qsf/lane";
+import { streamSurveyImport } from "../lib/operations";
 import { ZQsfImportStreamBody } from "../lib/schemas";
 
 // @formbricks/ai pulls the provider SDKs and posthog-node, none of which are edge-compatible.
@@ -53,10 +54,12 @@ export const POST = withV3ApiWrapper({
     body: ZQsfImportStreamBody,
   },
   handler: async ({ req, authentication, parsedInput, requestId, instance }) =>
-    streamQsfImport({
+    streamSurveyImport({
       req,
       authentication,
-      body: parsedInput.body,
+      workspaceId: parsedInput.body.workspaceId,
+      lane: qsfImportLane,
+      input: { qsf: parsedInput.body.qsf, fileName: parsedInput.body.fileName },
       requestId,
       instance,
     }),

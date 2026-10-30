@@ -13,7 +13,7 @@ const mocks = vi.hoisted(() => ({
   getSession: vi.fn(),
   authenticateRequest: vi.fn(),
   applyRateLimit: vi.fn(),
-  streamQsfImport: vi.fn(),
+  streamSurveyImport: vi.fn(),
 }));
 
 vi.mock("server-only", () => ({}));
@@ -21,7 +21,7 @@ vi.mock("@/modules/auth/lib/session", () => ({ getSession: mocks.getSession }));
 vi.mock("@/app/api/v1/auth", () => ({ authenticateRequest: mocks.authenticateRequest }));
 vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyRateLimit: mocks.applyRateLimit }));
 vi.mock("@/app/lib/api/api-error-reporter", () => ({ reportApiError: vi.fn() }));
-vi.mock("../lib/operations", () => ({ streamQsfImport: mocks.streamQsfImport }));
+vi.mock("../lib/operations", () => ({ streamSurveyImport: mocks.streamSurveyImport }));
 vi.mock("@formbricks/logger", () => ({
   logger: { withContext: vi.fn(() => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() })) },
 }));
@@ -61,7 +61,7 @@ describe("POST /api/internal/surveys/import/stream", () => {
     mocks.getSession.mockResolvedValue({ user: { id: "user_1" }, expires: "2099-01-01" });
     mocks.authenticateRequest.mockResolvedValue({ apiKeyId: "key_1" });
     mocks.applyRateLimit.mockResolvedValue(undefined);
-    mocks.streamQsfImport.mockImplementation(async () => new Response("{}\n"));
+    mocks.streamSurveyImport.mockImplementation(async () => new Response("{}\n"));
   });
 
   test("answers 401 without a session", async () => {
@@ -70,7 +70,7 @@ describe("POST /api/internal/surveys/import/stream", () => {
     const response = await post();
 
     expect(response.status).toBe(401);
-    expect(mocks.streamQsfImport).not.toHaveBeenCalled();
+    expect(mocks.streamSurveyImport).not.toHaveBeenCalled();
   });
 
   test("is session-only: an API key does not get in", async () => {
@@ -93,8 +93,13 @@ describe("POST /api/internal/surveys/import/stream", () => {
   test("hands the validated body to the import", async () => {
     await (await post()).text();
 
-    expect(mocks.streamQsfImport).toHaveBeenCalledWith(
-      expect.objectContaining({ body, requestId: expect.any(String) })
+    expect(mocks.streamSurveyImport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: body.workspaceId,
+        lane: expect.objectContaining({ kind: "qsf" }),
+        input: { qsf: body.qsf, fileName: body.fileName },
+        requestId: expect.any(String),
+      })
     );
   });
 
@@ -102,7 +107,7 @@ describe("POST /api/internal/surveys/import/stream", () => {
     const response = await post({ ...body, extra: true });
 
     expect(response.status).toBe(400);
-    expect(mocks.streamQsfImport).not.toHaveBeenCalled();
+    expect(mocks.streamSurveyImport).not.toHaveBeenCalled();
   });
 
   test("holds a QSF to the v3 array budget before any AI is spent, naming the array", async () => {
@@ -115,7 +120,7 @@ describe("POST /api/internal/surveys/import/stream", () => {
     await expect(response.json()).resolves.toMatchObject({
       invalid_params: [{ name: "qsf.SurveyElements" }],
     });
-    expect(mocks.streamQsfImport).not.toHaveBeenCalled();
+    expect(mocks.streamSurveyImport).not.toHaveBeenCalled();
   });
 
   test("reads a file past the 2 MB default, since the import sets its own limit", async () => {
@@ -125,7 +130,7 @@ describe("POST /api/internal/surveys/import/stream", () => {
     const response = await post({ ...body, qsf: { ...body.qsf, Padding: threeMegabytes } });
 
     expect(response.status).toBe(200);
-    expect(mocks.streamQsfImport).toHaveBeenCalledTimes(1);
+    expect(mocks.streamSurveyImport).toHaveBeenCalledTimes(1);
     await response.text();
   });
 
@@ -133,12 +138,12 @@ describe("POST /api/internal/surveys/import/stream", () => {
     const response = await post(body, { "Content-Length": String(SURVEY_IMPORT_MAX_BODY_BYTES + 1) });
 
     expect(response.status).toBe(413);
-    expect(mocks.streamQsfImport).not.toHaveBeenCalled();
+    expect(mocks.streamSurveyImport).not.toHaveBeenCalled();
   });
 
   test("answers 429 when the same user starts a second import while one is running", async () => {
     const running = openStream();
-    mocks.streamQsfImport.mockImplementationOnce(async () => running.response);
+    mocks.streamSurveyImport.mockImplementationOnce(async () => running.response);
 
     const first = await post();
     const second = await post();
@@ -154,7 +159,7 @@ describe("POST /api/internal/surveys/import/stream", () => {
   });
 
   test("lets the user start again once they stop the import", async () => {
-    mocks.streamQsfImport.mockImplementationOnce(async () => openStream().response);
+    mocks.streamSurveyImport.mockImplementationOnce(async () => openStream().response);
 
     const stopped = await post();
     await stopped.body?.cancel();
@@ -167,7 +172,7 @@ describe("POST /api/internal/surveys/import/stream", () => {
 
   test("lets the user start again once they disconnect, though nothing reads or cancels the body", async () => {
     // What Next does when the client has already gone: it aborts the request and leaves the body be.
-    mocks.streamQsfImport.mockImplementationOnce(async () => openStream().response);
+    mocks.streamSurveyImport.mockImplementationOnce(async () => openStream().response);
     const client = new AbortController();
 
     const gone = await POST(
@@ -190,7 +195,7 @@ describe("POST /api/internal/surveys/import/stream", () => {
   test("answers 503 with Retry-After once every import slot is busy, and admits again after one ends", async () => {
     const running = Array.from({ length: SURVEY_IMPORT_MAX_IN_FLIGHT }, openStream);
     for (const { response } of running) {
-      mocks.streamQsfImport.mockImplementationOnce(async () => response);
+      mocks.streamSurveyImport.mockImplementationOnce(async () => response);
     }
     const asUser = (id: string) => {
       mocks.getSession.mockResolvedValueOnce({ user: { id }, expires: "2099-01-01" });

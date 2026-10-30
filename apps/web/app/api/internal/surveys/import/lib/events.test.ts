@@ -1,6 +1,6 @@
 import { describe, expectTypeOf, test } from "vitest";
 import type { TSurveyImportDraft } from "@/modules/survey/import/core/draft";
-import type { TQsfImportResult } from "@/modules/survey/import/qsf/pipeline";
+import type { TSurveyImportResult } from "@/modules/survey/import/core/lane";
 import type { TSurveyImportStreamEvent } from "./events";
 
 type TDonePayload = Extract<TSurveyImportStreamEvent, { type: "done" }>["payload"];
@@ -10,6 +10,6 @@ describe("TSurveyImportStreamEvent", () => {
   test("types done's payload as the draft the pipeline builds", () => {
     expectTypeOf<TDonePayload>().not.toBeUnknown();
     expectTypeOf<TDonePayload>().toEqualTypeOf<TSurveyImportDraft>();
-    expectTypeOf<TDonePayload>().toEqualTypeOf<TQsfImportResult["payload"]>();
+    expectTypeOf<TDonePayload>().toEqualTypeOf<TSurveyImportResult["payload"]>();
   });
 });
