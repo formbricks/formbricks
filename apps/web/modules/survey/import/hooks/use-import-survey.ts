@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { getAIUnavailableReasonForErrorCode } from "@/lib/ai/availability";
 import {
   type TDraftStreamHandlers,
@@ -8,15 +8,18 @@ import {
 } from "@/modules/survey/components/template-list/hooks/use-draft-creation";
 import type { TSurveyImportDraft } from "@/modules/survey/import/core/draft";
 import { getSurveyImportRequestErrorCode } from "@/modules/survey/import/lib/import-errors";
-import { SurveyImportRequestError, streamQsfImport } from "@/modules/survey/import/lib/import-stream-client";
+import {
+  SurveyImportRequestError,
+  streamSurveyImportFile,
+} from "@/modules/survey/import/lib/import-stream-client";
 import { payloadToDraftSnapshot } from "@/modules/survey/import/lib/payload-to-draft";
-import { type TQsfFileError, readQsfFile } from "@/modules/survey/import/lib/qsf-file";
+import { type TQsfFileError, checkQsfFile } from "@/modules/survey/import/lib/qsf-file";
 import type { TSurveyImportReport, TSurveyImportStage } from "@/modules/survey/import/types";
 import { createV3Survey } from "@/modules/survey/list/lib/v3-surveys-client";
 
-type TQsfImportInput = { fileName: string; qsf: Record<string, unknown> };
+type TSurveyImportInput = { file: File };
 
-const getFileLabel = (input: TQsfImportInput) => input.fileName;
+const getFileLabel = (input: TSurveyImportInput) => input.file.name;
 
 type UseImportSurveyProps = {
   workspaceId: string;
@@ -26,27 +29,27 @@ type UseImportSurveyProps = {
 
 /**
  * Import survey: a .qsf in, a reviewed draft out, on the machine Create with AI uses. This hook adds
- * what is the file's own: reading it in the browser, the import route's progress stages, and its
- * pre-stream refusals, which it turns into `error` events so they reach the same error state.
+ * what is the file's own: the check on its name and size, the upload, the import route's progress
+ * stages, and its pre-stream refusals, which it turns into `error` events so they reach the same error
+ * state. The file is uploaded as it is; the server reads it and says what is wrong with its content.
  */
 export const useImportSurvey = ({ workspaceId, isAIAvailable, onSuccess }: UseImportSurveyProps) => {
   const [file, setFile] = useState<{ name: string; size: number } | null>(null);
   const [fileError, setFileError] = useState<TQsfFileError | null>(null);
-  const [isReadingFile, setIsReadingFile] = useState(false);
   const [stage, setStage] = useState<TSurveyImportStage | null>(null);
   const [retryAfterSeconds, setRetryAfterSeconds] = useState<number | null>(null);
 
   const stream = useCallback(
     async (
-      input: TQsfImportInput,
+      input: TSurveyImportInput,
       handlers: TDraftStreamHandlers<TSurveyImportReport, TSurveyImportDraft>
     ) => {
       setStage(null);
       setRetryAfterSeconds(null);
 
       try {
-        await streamQsfImport(
-          { workspaceId, fileName: input.fileName, qsf: input.qsf },
+        await streamSurveyImportFile(
+          { workspaceId, file: input.file },
           {
             signal: handlers.signal,
             onEvent: (event) => {
@@ -87,7 +90,7 @@ export const useImportSurvey = ({ workspaceId, isAIAvailable, onSuccess }: UseIm
 
   const create = useCallback((payload: TSurveyImportDraft) => createV3Survey(payload, "import"), []);
 
-  const draft = useDraftCreation<TQsfImportInput, TSurveyImportReport, TSurveyImportDraft>({
+  const draft = useDraftCreation<TSurveyImportInput, TSurveyImportReport, TSurveyImportDraft>({
     stream,
     create,
     // The file itself is checked in `selectFile`; a file that passes is submitted at once.
@@ -97,41 +100,22 @@ export const useImportSurvey = ({ workspaceId, isAIAvailable, onSuccess }: UseIm
     onSuccess,
   });
 
-  // The read a finished `readQsfFile` belongs to. Picking another file or closing the dialog moves it
-  // on, so a read that lands after starts nothing: closing mid-read once started an import nobody saw,
-  // and it held the user's one import slot.
-  const readId = useRef(0);
-  useEffect(
-    () => () => {
-      readId.current += 1;
-    },
-    []
-  );
-
-  /** Choosing a file is the submit: it is read and checked here, then sent if it passes. */
-  const selectFile = async (next: File) => {
-    readId.current += 1;
-    const read = readId.current;
+  /** Choosing a file is the submit: it is checked by name and size here, then uploaded if it passes. */
+  const selectFile = (next: File) => {
     draft.clearError();
     setFileError(null);
     setFile({ name: next.name, size: next.size });
-    setIsReadingFile(true);
 
-    const result = await readQsfFile(next);
-    if (read !== readId.current) return;
-    setIsReadingFile(false);
-
-    if (!result.ok) {
-      setFileError(result.error);
+    const refused = checkQsfFile(next);
+    if (refused) {
+      setFileError(refused);
       return;
     }
 
-    draft.submit({ fileName: result.fileName, qsf: result.qsf });
+    draft.submit({ file: next });
   };
 
   const pickAnotherFile = () => {
-    readId.current += 1;
-    setIsReadingFile(false);
     draft.reset();
     setFile(null);
     setFileError(null);
@@ -142,7 +126,6 @@ export const useImportSurvey = ({ workspaceId, isAIAvailable, onSuccess }: UseIm
 
   return {
     file,
-    isReadingFile,
     selectFile,
     pickAnotherFile,
     stage,

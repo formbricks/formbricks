@@ -42,23 +42,31 @@ const getImportLimitMessage = (limit: string, t: TTranslate): string => {
 };
 
 /**
- * The dialog's code for a request the route refused before streaming. The 400s are split by what the
- * `invalid_params` name: a path under `qsf.` is the file outgrowing the request budget (too many items
- * in an array, or nested too deep); anything else is a body the dialog sent wrong.
+ * The dialog's code for a request the route refused before streaming. The route codes each refusal of
+ * the file in its `invalid_params` (`TSurveyImportRefusalCode`), which splits the 422s; a 400 is a body
+ * the dialog sent wrong.
+ *
+ * The dialog takes Qualtrics exports only, so every 415 — a file that is not one, whatever it is — says
+ * so; the dialog that takes every type words each kind on its own.
  */
 export const getSurveyImportRequestErrorCode = (error: V3ApiError): string => {
+  const hasParam = (code: string) => error.invalid_params?.some((param) => param.code === code) ?? false;
+
   switch (error.status) {
     case 400:
-      return error.invalid_params?.some((param) => param.name.startsWith("qsf."))
-        ? "file_too_complex"
-        : "file_unreadable";
+      return "file_unreadable";
     case 401:
       return "not_authenticated";
     case 413:
       return "file_too_large";
+    case 415:
+      return "qsf_not_recognized";
     case 422: {
-      // A Qualtrics export past one of the import's limits names the limit; any other 422 is a file
-      // the import cannot read as a Qualtrics export.
+      // A file past the JSON budget is too complex; a broken one unreadable. A Qualtrics export past
+      // one of the import's limits names the limit; any other 422 is a file the import cannot read as a
+      // Qualtrics export.
+      if (hasParam("file_limit_exceeded")) return "file_too_complex";
+      if (hasParam("file_unreadable")) return "file_unreadable";
       const limit = error.invalid_params?.find((param) => param.code === "qsf_limit_exceeded")?.identifier;
       return limit ? `${SURVEY_IMPORT_LIMIT_CODE_PREFIX}${limit}` : "qsf_not_recognized";
     }
@@ -88,8 +96,6 @@ export const getSurveyImportErrorMessage = (
       return t("workspace.surveys.import.errors.empty_file");
     case "file_too_large":
       return t("workspace.surveys.import.errors.file_too_large");
-    case "qsf_not_json":
-    case "qsf_not_object":
     case "qsf_not_recognized":
       return t("workspace.surveys.import.errors.not_a_qsf");
     case "file_too_complex":

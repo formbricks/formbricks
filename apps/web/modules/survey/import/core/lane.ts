@@ -1,3 +1,4 @@
+import type { TRateLimitConfig } from "@/modules/core/rate-limit/types/rate-limit";
 import type { TSurveyImportReport, TSurveyImportSourceKind, TSurveyImportStage } from "../types";
 import type { TSurveyImportDraft } from "./draft";
 
@@ -13,11 +14,20 @@ import type { TSurveyImportDraft } from "./draft";
  * A lane that plans with AI (`usesAI`) is held to the organization's AI gate before `prepare`, and
  * reports the `ai` stage; one that does not goes from `reading` to `assembling`. Nothing in a lane
  * knows about HTTP, so a later public route or a background job reuses it unchanged.
+ *
+ * The route itself charges every upload to the default v3 bucket, before it knows the file's type; a
+ * lane with a costlier budget of its own names it in `rateLimit`, charged once the type is known and
+ * before the lane reads the file.
  */
 export interface TSurveyImportLane<TInput, TPrepared> {
   /** The kind of file the lane reads: the report's `source.kind`, and the route's log field. */
   kind: TSurveyImportSourceKind;
   usesAI: boolean;
+  /**
+   * The rate limit the lane is charged on top of the route's default v3 bucket: Create with AI's bucket
+   * for a lane that spends AI tokens, `null` for one the default bucket covers.
+   */
+  rateLimit: TRateLimitConfig | null;
   prepare: (input: TInput) => TPrepared;
   run: (params: TSurveyImportRunParams<TPrepared>) => Promise<TSurveyImportResult>;
 }

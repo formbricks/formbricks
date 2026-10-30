@@ -11,13 +11,17 @@ const END_SIGNATURE = 0x06054b50;
 const view = (bytes: Uint8Array) => new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
 
 /** An archive of `files`, deflated at `level` (0 stores them). */
-export const zipOf = (files: Record<string, Uint8Array | string>, level: 0 | 1 | 6 | 9 = 6): Uint8Array => {
+export const zipOf = (
+  files: Record<string, Uint8Array | string>,
+  level: 0 | 1 | 6 | 9 = 6
+): Uint8Array<ArrayBuffer> => {
   const input: Zippable = {};
   for (const [name, content] of Object.entries(files)) {
     const bytes = typeof content === "string" ? new TextEncoder().encode(content) : content;
     input[name] = [bytes, { level }];
   }
-  return zipSync(input);
+  // Copied into a plain ArrayBuffer, so the bytes go into a File or Blob as they are.
+  return new Uint8Array(zipSync(input));
 };
 
 /** `length` bytes of hexadecimal text: compresses about 2:1, well inside any ratio limit. */
@@ -70,7 +74,7 @@ export const setDeclaredSizes = (
   archive: Uint8Array,
   name: string,
   sizes: { compressedSize?: number; uncompressedSize?: number }
-): Uint8Array => {
+): Uint8Array<ArrayBuffer> => {
   const copy = new Uint8Array(archive);
   const { offset } = findCentralEntry(copy, name);
   if (sizes.compressedSize !== undefined) view(copy).setUint32(offset + 20, sizes.compressedSize, true);
@@ -79,7 +83,7 @@ export const setDeclaredSizes = (
 };
 
 /** A copy whose central directory sets these general-purpose flags on `name` (bit 0: encrypted). */
-export const setFlags = (archive: Uint8Array, name: string, flags: number): Uint8Array => {
+export const setFlags = (archive: Uint8Array, name: string, flags: number): Uint8Array<ArrayBuffer> => {
   const copy = new Uint8Array(archive);
   const { offset } = findCentralEntry(copy, name);
   view(copy).setUint16(offset + 8, flags, true);
@@ -87,7 +91,7 @@ export const setFlags = (archive: Uint8Array, name: string, flags: number): Uint
 };
 
 /** A copy whose end record declares `count` entries. */
-export const setDeclaredEntryCount = (archive: Uint8Array, count: number): Uint8Array => {
+export const setDeclaredEntryCount = (archive: Uint8Array, count: number): Uint8Array<ArrayBuffer> => {
   const copy = new Uint8Array(archive);
   const data = view(copy);
   for (let offset = copy.length - 22; offset >= 0; offset -= 1) {

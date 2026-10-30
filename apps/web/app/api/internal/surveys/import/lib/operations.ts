@@ -7,14 +7,27 @@ import { loggableAIError, mapV3AIError } from "@/app/api/v3/lib/ai-errors";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import { loggableError } from "@/app/api/v3/lib/loggable-error";
-import { problemInternalError, problemUnprocessableContent } from "@/app/api/v3/lib/response";
+import { applyV3OperationRateLimit } from "@/app/api/v3/lib/operation-rate-limit";
+import {
+  problemInternalError,
+  problemPayloadTooLarge,
+  problemUnprocessableContent,
+  problemUnsupportedMediaType,
+} from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { getSessionUserId } from "@/app/api/v3/surveys/lib/operations";
 import { assertOrganizationAIConfigured } from "@/lib/ai/service";
 import { getAITimeoutMs } from "@/lib/ai/timeout";
-import { SurveyImportInputError, SurveyImportTimeoutError } from "@/modules/survey/import/core/errors";
+import {
+  SurveyImportFileTooLargeError,
+  SurveyImportInputError,
+  SurveyImportTimeoutError,
+  SurveyImportUnsupportedFileError,
+} from "@/modules/survey/import/core/errors";
 import type { TSurveyImportLane, TSurveyImportResult } from "@/modules/survey/import/core/lane";
-import { SURVEY_IMPORT_DEADLINE_MS } from "@/modules/survey/import/limits";
+import { type TSurveyImportFile, sniffSurveyImportFile } from "@/modules/survey/import/core/sniff";
+import { SURVEY_IMPORT_DEADLINE_MS, SURVEY_IMPORT_MAX_FILE_BYTES } from "@/modules/survey/import/limits";
+import { qsfImportLane } from "@/modules/survey/import/qsf/lane";
 import type { TSurveyImportStage } from "@/modules/survey/import/types";
 import { SURVEY_IMPORT_HEARTBEAT_MS } from "./constants";
 import { importTimedOutEvent, toSurveyImportStreamErrorEvent } from "./error-events";
@@ -22,46 +35,86 @@ import type { TSurveyImportStreamEvent } from "./events";
 
 const OPERATION = "surveys.import";
 
-interface TStreamSurveyImportParams<TInput, TPrepared> {
+interface TStreamSurveyImportParams {
   req: Request;
   authentication: TV3Authentication;
   workspaceId: string;
-  /** The lane for the file's kind, and what it reads. */
+  /**
+   * The uploaded file. Its type comes from its bytes; its name is display text, carried into the
+   * report and nowhere else. Read in memory and dropped: nothing is stored.
+   */
+  file: File;
+  requestId: string;
+  instance: string;
+}
+
+export interface TRunSurveyImportLaneParams<TInput, TPrepared> {
+  req: Request;
+  authentication: TV3Authentication;
+  organizationId: string;
+  workspaceId: string;
   lane: TSurveyImportLane<TInput, TPrepared>;
   input: TInput;
+  fileBytes: number;
   requestId: string;
   instance: string;
 }
 
 type TImportOutcome = "done" | "failed" | "timed_out" | "aborted";
 
-const parseContentLength = (value: string | null): number | null => {
-  if (value === null) return null;
-  const parsed = Number(value);
-  return Number.isSafeInteger(parsed) && parsed >= 0 ? parsed : null;
+/** The problem response for a refused file, or `null` for an error that is not a refusal. */
+const toRefusalResponse = (error: unknown, requestId: string, instance: string): Response | null => {
+  if (error instanceof SurveyImportFileTooLargeError) {
+    return problemPayloadTooLarge(requestId, error.message, instance, error.invalidParams);
+  }
+  if (error instanceof SurveyImportUnsupportedFileError) {
+    return problemUnsupportedMediaType(requestId, error.message, {
+      instance,
+      invalid_params: error.invalidParams,
+    });
+  }
+  if (error instanceof SurveyImportInputError) {
+    return problemUnprocessableContent(requestId, error.message, {
+      instance,
+      invalid_params: error.invalidParams,
+    });
+  }
+  return null;
 };
 
 /**
- * Import a survey file through its lane, streaming progress as NDJSON (ENG-3604, ENG-3653, ENG-6846).
- *
- * The ordering is the design: **every check that can answer with a problem response runs before the
- * response body opens** — workspace write access, the AI gate (for a lane that uses AI), and the
- * lane's file read — because once a 200 has started there is no way back to RFC 9457.
- * Authentication, rate limiting, the body limit and the concurrency slot already ran in the wrapper.
- * Only failures during the import itself become `error` events.
+ * Read the upload and tell its type from its bytes, under the upload's limits: the file's size, then
+ * what `sniffSurveyImportFile` checks (the zip limits for a `.docx` or `.xlsx`, the JSON budget for a
+ * JSON file). Throws the refusals `toRefusalResponse` maps.
+ */
+const readUpload = async (file: File): Promise<TSurveyImportFile> => {
+  if (file.size > SURVEY_IMPORT_MAX_FILE_BYTES) {
+    throw new SurveyImportFileTooLargeError(
+      "file_size",
+      `The file must not exceed ${SURVEY_IMPORT_MAX_FILE_BYTES} bytes`
+    );
+  }
+  return sniffSurveyImportFile(new Uint8Array(await file.arrayBuffer()));
+};
+
+/**
+ * Import an uploaded survey file, streaming progress as NDJSON (ENG-3604, ENG-3653, ENG-6846,
+ * ENG-6848). Every file type comes in the same way: the route's wrapper has already authenticated,
+ * charged the default v3 bucket, taken a concurrency slot and read the multipart body within its byte
+ * limit. Here the workspace is checked first, then the file is read and its type told from its content,
+ * and the file goes to its type's lane. A type the import recognizes but has no lane for yet is a 415.
  *
  * Nothing is written: the dialog shows the draft for review and creates it with
  * `POST /api/v3/surveys?createdFrom=import`, which is what the audit log records.
  */
-export async function streamSurveyImport<TInput, TPrepared>({
+export async function streamSurveyImport({
   req,
   authentication,
   workspaceId: requestedWorkspaceId,
-  lane,
-  input,
+  file,
   requestId,
   instance,
-}: TStreamSurveyImportParams<TInput, TPrepared>): Promise<Response> {
+}: TStreamSurveyImportParams): Promise<Response> {
   const workspaceAccess = await requireV3WorkspaceAccess(
     authentication,
     requestedWorkspaceId,
@@ -75,8 +128,78 @@ export async function streamSurveyImport<TInput, TPrepared>({
   }
 
   const { organizationId, workspaceId } = workspaceAccess;
+
+  let upload: TSurveyImportFile;
+  try {
+    upload = await readUpload(file);
+  } catch (error) {
+    const refusal = toRefusalResponse(error, requestId, instance);
+    if (refusal) return refusal;
+
+    logger
+      .withContext({ requestId, workspaceId, organizationId })
+      .error(
+        { ...loggableError(error), operation: OPERATION, statusCode: 500 },
+        "Survey import could not read the upload"
+      );
+    return problemInternalError(requestId, undefined, instance);
+  }
+
+  const lane = {
+    req,
+    authentication,
+    organizationId,
+    workspaceId,
+    fileBytes: file.size,
+    requestId,
+    instance,
+  };
+  // The name the user's file had, for the report to show. Never a path, never stored.
+  const fileName = file.name.trim();
+
+  switch (upload.type) {
+    case "qsf":
+      return runSurveyImportLane({ ...lane, lane: qsfImportLane, input: { qsf: upload.json, fileName } });
+    default:
+      return problemUnsupportedMediaType(requestId, "This kind of file cannot be imported yet", {
+        instance,
+        invalid_params: new SurveyImportUnsupportedFileError(
+          "This kind of file cannot be imported yet",
+          upload.type
+        ).invalidParams,
+      });
+  }
+}
+
+/**
+ * Run one lane over its file. The ordering is the design: **every check that can answer with a problem
+ * response runs before the response body opens** — the lane's own rate limit, the AI gate (for a lane
+ * that uses AI), and the lane's file read — because once a 200 has started there is no way back to
+ * RFC 9457. Only failures during the import itself become `error` events.
+ */
+export async function runSurveyImportLane<TInput, TPrepared>({
+  req,
+  authentication,
+  organizationId,
+  workspaceId,
+  lane,
+  input,
+  fileBytes,
+  requestId,
+  instance,
+}: TRunSurveyImportLaneParams<TInput, TPrepared>): Promise<Response> {
   const userId = getSessionUserId(authentication);
   const log = logger.withContext({ requestId, workspaceId, organizationId, sourceKind: lane.kind });
+
+  if (lane.rateLimit) {
+    const rateLimited = await applyV3OperationRateLimit({
+      config: lane.rateLimit,
+      authentication,
+      requestId,
+      instance,
+    });
+    if (rateLimited) return rateLimited;
+  }
 
   if (lane.usesAI) {
     try {
@@ -93,12 +216,8 @@ export async function streamSurveyImport<TInput, TPrepared>({
   try {
     prepared = lane.prepare(input);
   } catch (error) {
-    if (error instanceof SurveyImportInputError) {
-      return problemUnprocessableContent(requestId, error.message, {
-        instance,
-        invalid_params: error.invalidParams,
-      });
-    }
+    const refusal = toRefusalResponse(error, requestId, instance);
+    if (refusal) return refusal;
 
     // Not through mapV3ThrownError, which logs the error whole: a reader that fails on the file can
     // quote it in the message.
@@ -175,7 +294,7 @@ export async function streamSurveyImport<TInput, TPrepared>({
           errorCode,
           stage,
           durationMs: Math.round(performance.now() - startedAt),
-          fileBytes: parseContentLength(req.headers.get("content-length")),
+          fileBytes,
           questionCount: result?.report.summary.questions,
           inputTokens: result?.usage?.inputTokens,
           outputTokens: result?.usage?.outputTokens,

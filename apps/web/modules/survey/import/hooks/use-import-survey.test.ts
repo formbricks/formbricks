@@ -8,7 +8,10 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { TSurveyImportStreamEvent } from "@/app/api/internal/surveys/import/lib/events";
 import { V3ApiError } from "@/modules/api/lib/v3-client";
 import type { TSurveyImportDraft } from "@/modules/survey/import/core/draft";
-import { SurveyImportRequestError, streamQsfImport } from "@/modules/survey/import/lib/import-stream-client";
+import {
+  SurveyImportRequestError,
+  streamSurveyImportFile,
+} from "@/modules/survey/import/lib/import-stream-client";
 import { createV3Survey } from "@/modules/survey/list/lib/v3-surveys-client";
 import { useImportSurvey } from "./use-import-survey";
 
@@ -18,7 +21,7 @@ vi.mock("react-i18next", () => ({
 
 vi.mock("@/modules/survey/import/lib/import-stream-client", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/modules/survey/import/lib/import-stream-client")>()),
-  streamQsfImport: vi.fn(),
+  streamSurveyImportFile: vi.fn(),
 }));
 
 vi.mock("@/modules/survey/list/lib/v3-surveys-client", () => ({
@@ -47,7 +50,7 @@ const qsfFile = (
 
 /** Scripts the import stream: events go to `onEvent` in order; a thrown error is a pre-stream refusal. */
 const streamWith = (events: TSurveyImportStreamEvent[], refusal?: Error) => {
-  vi.mocked(streamQsfImport).mockImplementation(async (_body, { onEvent }) => {
+  vi.mocked(streamSurveyImportFile).mockImplementation(async (_body, { onEvent }) => {
     if (refusal) throw refusal;
     events.forEach(onEvent);
   });
@@ -62,7 +65,7 @@ const renderImport = () =>
   });
 
 beforeEach(() => {
-  vi.mocked(streamQsfImport).mockReset();
+  vi.mocked(streamSurveyImportFile).mockReset();
   (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => {
     callback(0);
@@ -72,7 +75,7 @@ beforeEach(() => {
 });
 
 describe("useImportSurvey", () => {
-  test("sends the parsed file, follows the stages and reviews the finished draft", async () => {
+  test("uploads the chosen file as it is, follows the stages and reviews the finished draft", async () => {
     streamWith([
       { type: "start", requestId: "r1" },
       { type: "progress", stage: "reading" },
@@ -81,28 +84,57 @@ describe("useImportSurvey", () => {
       { type: "done", payload, report },
     ] as TSurveyImportStreamEvent[]);
     const { result } = renderImport();
+    const file = qsfFile();
 
-    await act(async () => result.current.selectFile(qsfFile()));
+    await act(async () => result.current.selectFile(file));
 
     await waitFor(() => expect(result.current.status).toBe("review"));
-    expect(vi.mocked(streamQsfImport).mock.calls[0][0]).toEqual({
-      workspaceId: "w1",
-      fileName: "survey.qsf",
-      qsf: { SurveyEntry: { SurveyName: "Survey" }, SurveyElements: [] },
-    });
+    expect(vi.mocked(streamSurveyImportFile).mock.calls[0][0]).toEqual({ workspaceId: "w1", file });
+    expect(vi.mocked(streamSurveyImportFile).mock.calls[0][0].file).toBe(file);
     expect(result.current.stage).toBe("ai");
     expect(result.current.draft.questions).toMatchObject([{ headline: "Hi", blockName: "Block 1" }]);
     expect(result.current.report).toEqual(report);
   });
 
-  test("refuses a file that is not a QSF without uploading it", async () => {
+  test("refuses a file by its name or size without uploading it", async () => {
     const { result } = renderImport();
 
-    await act(async () => result.current.selectFile(qsfFile("[1, 2]")));
+    await act(async () => result.current.selectFile(qsfFile("{}", "survey.json")));
+    expect(result.current.errorCode).toBe("file_wrong_extension");
 
-    expect(result.current.errorCode).toBe("qsf_not_object");
+    await act(async () => result.current.selectFile(qsfFile("", "survey.qsf")));
+    expect(result.current.errorCode).toBe("file_empty");
+
     expect(result.current.status).toBe("idle");
-    expect(streamQsfImport).not.toHaveBeenCalled();
+    expect(streamSurveyImportFile).not.toHaveBeenCalled();
+  });
+
+  test("leaves the content to the server: a .qsf that is not JSON is uploaded, and its 415 shown", async () => {
+    streamWith(
+      [],
+      new SurveyImportRequestError(
+        new V3ApiError({
+          status: 415,
+          detail: "This kind of file cannot be imported yet",
+          code: "unsupported_media_type",
+          invalid_params: [
+            {
+              name: "file",
+              reason: "This kind of file cannot be imported yet",
+              code: "file_type_unsupported",
+              identifier: "csv",
+            },
+          ],
+        }),
+        null
+      )
+    );
+    const { result } = renderImport();
+
+    await act(async () => result.current.selectFile(qsfFile("not json")));
+
+    await waitFor(() => expect(result.current.errorCode).toBe("qsf_not_recognized"));
+    expect(streamSurveyImportFile).toHaveBeenCalledTimes(1);
   });
 
   test("turns a refusal into the dialog's code and keeps its Retry-After", async () => {
@@ -122,15 +154,22 @@ describe("useImportSurvey", () => {
     expect(result.current.status).toBe("idle");
   });
 
-  test("splits a 400 for the file outgrowing the budget from other 400s", async () => {
+  test("tells a file outgrowing the JSON budget apart from other refusals", async () => {
     streamWith(
       [],
       new SurveyImportRequestError(
         new V3ApiError({
-          status: 400,
-          detail: "Invalid request body",
-          code: "bad_request",
-          invalid_params: [{ name: "qsf.SurveyElements.0.Payload.ChoiceOrder", reason: "Too big" }],
+          status: 422,
+          detail: "The file is past one of the import's limits.",
+          code: "unprocessable_content",
+          invalid_params: [
+            {
+              name: "file.SurveyElements.0.Payload.ChoiceOrder",
+              reason: "Too big",
+              code: "file_limit_exceeded",
+              identifier: "array_items",
+            },
+          ],
         }),
         null
       )
@@ -179,23 +218,6 @@ describe("useImportSurvey", () => {
     act(() => result.current.handleOpenInEditor());
 
     await waitFor(() => expect(createV3Survey).toHaveBeenCalledWith(payload, "import"));
-  });
-
-  test("starts nothing when the dialog closes while the file is still being read", async () => {
-    let finishRead: (text: string) => void = () => undefined;
-    const file = qsfFile();
-    file.text = () =>
-      new Promise<string>((resolve) => {
-        finishRead = resolve;
-      });
-    const { result, unmount } = renderImport();
-
-    const selecting = result.current.selectFile(file);
-    unmount();
-    finishRead('{"SurveyEntry":{"SurveyName":"Survey"},"SurveyElements":[]}');
-    await selecting;
-
-    expect(streamQsfImport).not.toHaveBeenCalled();
   });
 
   test("picking another file goes back to the drop zone", async () => {

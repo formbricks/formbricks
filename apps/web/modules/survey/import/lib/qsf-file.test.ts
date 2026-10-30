@@ -1,8 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { SURVEY_IMPORT_MAX_FILE_BYTES } from "@/modules/survey/import/limits";
-import { checkQsfFile, readQsfFile } from "./qsf-file";
-
-const qsfFile = (content: string, name = "survey.qsf") => new File([content], name);
+import { checkQsfFile } from "./qsf-file";
 
 describe("checkQsfFile", () => {
   test.each([
@@ -16,47 +14,5 @@ describe("checkQsfFile", () => {
 
   test("accepts a .qsf in any case, up to the size cap", () => {
     expect(checkQsfFile({ name: "Survey.QSF", size: SURVEY_IMPORT_MAX_FILE_BYTES })).toBeNull();
-  });
-});
-
-describe("readQsfFile", () => {
-  test("parses the file into the object the route expects", async () => {
-    const result = await readQsfFile(qsfFile('{"SurveyEntry":{"SurveyName":"A"},"SurveyElements":[]}'));
-
-    expect(result).toEqual({
-      ok: true,
-      fileName: "survey.qsf",
-      qsf: { SurveyEntry: { SurveyName: "A" }, SurveyElements: [] },
-    });
-  });
-
-  test("reads a file that starts with a byte-order mark", async () => {
-    const result = await readQsfFile(qsfFile('﻿{"SurveyEntry":{}}'));
-
-    expect(result).toMatchObject({ ok: true, qsf: { SurveyEntry: {} } });
-  });
-
-  test.each([
-    ["text that is not JSON", "not json", "qsf_not_json"],
-    ["a cut-off file", '{"SurveyEntry":{"SurveyName":"A"', "qsf_not_json"],
-    ["a JSON array", "[1, 2]", "qsf_not_object"],
-    ["a JSON string", '"survey"', "qsf_not_object"],
-    ["JSON null", "null", "qsf_not_object"],
-  ])("refuses %s before uploading it", async (_case, content, error) => {
-    expect(await readQsfFile(qsfFile(content))).toEqual({ ok: false, error });
-  });
-
-  test("says the file could not be read when reading it fails", async () => {
-    const file = qsfFile("{}");
-    file.text = () => Promise.reject(new DOMException("Gone", "NotReadableError"));
-
-    expect(await readQsfFile(file)).toEqual({ ok: false, error: "file_unreadable" });
-  });
-
-  test("refuses by name and size before reading the content", async () => {
-    expect(await readQsfFile(qsfFile("{}", "survey.json"))).toEqual({
-      ok: false,
-      error: "file_wrong_extension",
-    });
   });
 });

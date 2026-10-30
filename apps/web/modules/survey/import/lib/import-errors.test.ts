@@ -10,20 +10,38 @@ const refusal = (status: number, code?: string, invalidParamNames: string[] = []
     invalid_params: invalidParamNames.map((name) => ({ name, reason: "bad" })),
   });
 
+/** A refusal of the uploaded file, coded the way the import route codes it. */
+const fileRefusal = (status: number, paramCode: string, identifier?: string) =>
+  new V3ApiError({
+    status,
+    detail: "refused",
+    code: status === 415 ? "unsupported_media_type" : "unprocessable_content",
+    invalid_params: [{ name: "file", reason: "bad", code: paramCode, ...(identifier ? { identifier } : {}) }],
+  });
+
 const t = (key: string, options?: Record<string, unknown>) =>
   options ? `${key} ${JSON.stringify(options)}` : key;
 
 describe("getSurveyImportRequestErrorCode", () => {
   test.each([
     [
-      "an array past the budget",
-      refusal(400, "bad_request", ["qsf.SurveyElements.0.Payload.ChoiceOrder"]),
+      "an array past the JSON budget",
+      fileRefusal(422, "file_limit_exceeded", "array_items"),
       "file_too_complex",
     ],
-    ["nesting past the cap", refusal(400, "bad_request", ["qsf.SurveyElements.3"]), "file_too_complex"],
+    ["nesting past the cap", fileRefusal(422, "file_limit_exceeded", "nesting_depth"), "file_too_complex"],
+    ["a broken file", fileRefusal(422, "file_unreadable"), "file_unreadable"],
     ["a body the dialog sent wrong", refusal(400, "bad_request", ["fileName"]), "file_unreadable"],
+    ["a body that is not multipart", refusal(415, "unsupported_media_type"), "qsf_not_recognized"],
+    [
+      "a file that is no Qualtrics export",
+      fileRefusal(415, "file_type_unsupported", "csv"),
+      "qsf_not_recognized",
+    ],
+    ["a .doc or .xls", fileRefusal(415, "file_type_unsupported", "legacy_office"), "qsf_not_recognized"],
     ["a missing session", refusal(401, "not_authenticated"), "not_authenticated"],
     ["a body over the route's limit", refusal(413, "payload_too_large"), "file_too_large"],
+    ["an archive past a zip limit", fileRefusal(413, "file_limit_exceeded", "zip_entries"), "file_too_large"],
     [
       "valid JSON that is not a QSF",
       refusal(422, "unprocessable_content", ["qsf.SurveyEntry"]),
@@ -87,8 +105,6 @@ describe("getSurveyImportErrorMessage for each refusal and stream error", () => 
     ["file_wrong_extension", "wrong_extension"],
     ["file_empty", "empty_file"],
     ["file_too_large", "file_too_large"],
-    ["qsf_not_json", "not_a_qsf"],
-    ["qsf_not_object", "not_a_qsf"],
     ["qsf_not_recognized", "not_a_qsf"],
     ["file_too_complex", "too_complex"],
     ["file_unreadable", "unreadable"],
@@ -136,8 +152,6 @@ describe("getSurveyImportErrorMessage", () => {
   });
 
   test.each([
-    ["qsf_not_json", "workspace.surveys.import.errors.not_a_qsf"],
-    ["qsf_not_object", "workspace.surveys.import.errors.not_a_qsf"],
     ["qsf_not_recognized", "workspace.surveys.import.errors.not_a_qsf"],
     ["import_timed_out", "workspace.surveys.import.errors.timed_out"],
     ["ai_quota_exceeded", "workspace.surveys.ai_create.ai_rate_limited"],

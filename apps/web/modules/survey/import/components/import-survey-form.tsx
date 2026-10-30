@@ -222,7 +222,6 @@ export const ImportSurveyForm = ({
             id="import-survey-file"
             accept={QSF_FILE_EXTENSION}
             onFileSelect={importer.selectFile}
-            isLoading={importer.isReadingFile}
             primaryText={t("workspace.surveys.import.dropzone_primary")}
             helpText={t("workspace.surveys.import.dropzone_help")}
             loadingText={t("workspace.surveys.import.reading_file")}
