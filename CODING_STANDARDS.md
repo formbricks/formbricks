@@ -79,7 +79,9 @@ Downloads:
 - `Content-Disposition: attachment` carries an ASCII `filename` fallback plus `filename*=UTF-8''…`
   (RFC 6266, RFC 8187), built from a sanitized name.
 - Tenant data is sent with `X-Content-Type-Options: nosniff` and `Cache-Control: no-store`.
-- Spreadsheet cells pass through `sanitizeFormulaInjection` (`apps/web/lib/utils/file-conversion.ts`).
+- Spreadsheet cells can never evaluate as formulas. An xlsx cell is written as a typed text cell, never with a
+  leading `'`: xlsx keeps the apostrophe as literal text. CSV cells pass through `sanitizeFormulaInjection`
+  (`apps/web/lib/utils/file-conversion.ts`).
 
 ## Input Limits
 
