@@ -3744,6 +3744,7 @@
         "account_deletion_consequences_warning": "帐户 删除 后果",
         "account_deletion_email_sent": "请查收您的电子邮件以确认删除账户。我们已向 {email} 发送了一个链接——点击后，您的账户将被删除。",
         "backup_code": "备用代码",
+        "company_email_required": "请使用你的公司邮箱地址。",
         "confirm_delete_account": "删除您的账户以及所有个人信息和数据",
         "confirm_delete_my_account": "删除我的账户",
         "confirm_your_current_password_to_get_started": "确认 您 的 当前 密码 以 开始。",

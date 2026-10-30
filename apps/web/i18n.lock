@@ -3611,6 +3611,7 @@ checksums:
     workspace/settings/profile/account_deletion_consequences_warning: b87b9eebe0a373eb6debe52db73e5aba
     workspace/settings/profile/account_deletion_email_sent: cc52d5d4f64cc0bfe6a00a679769027d
     workspace/settings/profile/backup_code: 41b15061acd32f7f3512d5a27dcc34b9
+    workspace/settings/profile/company_email_required: e9723e21811faecbeac6234a1c59f3db
     workspace/settings/profile/confirm_delete_account: 9dfb6b4c94c3f4d91c965435c95be340
     workspace/settings/profile/confirm_delete_my_account: b8715ff52c7109ed6b6c31a00e44013d
     workspace/settings/profile/confirm_your_current_password_to_get_started: 7815146bd37e6648a6a6637bf9e0095f

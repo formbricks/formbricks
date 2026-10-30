@@ -3744,6 +3744,7 @@
         "account_deletion_consequences_warning": "Consequências da exclusão da conta",
         "account_deletion_email_sent": "Verifique seu e-mail para confirmar a exclusão da conta. Enviamos um link para {email} — sua conta será excluída assim que você clicar nele.",
         "backup_code": "Código de Backup",
+        "company_email_required": "Use o seu e-mail corporativo, por favor.",
         "confirm_delete_account": "Apague sua conta com todas as suas informações pessoais e dados",
         "confirm_delete_my_account": "Excluir Minha Conta",
         "confirm_your_current_password_to_get_started": "Confirme sua senha atual para começar.",

@@ -7,6 +7,7 @@ import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
+import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
 import { TUser, TUserUpdateInput, ZUser, ZUserEmail } from "@formbricks/types/user";
 import { PasswordConfirmationModal } from "@/app/(app)/workspaces/[workspaceId]/settings/account/profile/components/password-confirmation-modal";
 import { appLanguages, sortedAppLanguages } from "@/lib/i18n/utils";
@@ -102,7 +103,10 @@ export const EditProfileDetailsForm = ({
         return;
       }
     } else {
-      const errorMessage = getFormattedErrorMessage(updatedUserResult);
+      const errorMessage =
+        updatedUserResult?.serverError === SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE
+          ? t("workspace.settings.profile.company_email_required")
+          : getFormattedErrorMessage(updatedUserResult);
       toast.error(errorMessage);
       return;
     }

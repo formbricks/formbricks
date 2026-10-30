@@ -1,5 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { OperationNotAllowedError, TooManyRequestsError } from "@formbricks/types/errors";
+import {
+  AuthorizationError,
+  InvalidInputError,
+  OperationNotAllowedError,
+  SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE,
+  TooManyRequestsError,
+} from "@formbricks/types/errors";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { resetPasswordAction, updateUserAction } from "./actions";
 
@@ -13,6 +19,7 @@ const mocks = vi.hoisted(() => ({
   sendVerificationNewEmail: vi.fn(),
   requestPasswordReset: vi.fn(),
 }));
+const flags = vi.hoisted(() => ({ isFormbricksCloud: false }));
 
 vi.mock("@/lib/utils/action-client", () => ({
   authenticatedActionClient: {
@@ -44,6 +51,9 @@ vi.mock("@/lib/constants", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/constants")>()),
   PASSWORD_RESET_DISABLED: false,
   EMAIL_VERIFICATION_DISABLED: false,
+  get IS_FORMBRICKS_CLOUD() {
+    return flags.isFormbricksCloud;
+  },
 }));
 
 const ctxFor = (identityProvider: string, name = "Doe, Jane") => ({
@@ -53,6 +63,7 @@ const ctxFor = (identityProvider: string, name = "Doe, Jane") => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
+  flags.isFormbricksCloud = false;
   mocks.getUser.mockResolvedValue({ id: "user-1", name: "Doe, Jane" });
   mocks.updateUser.mockResolvedValue({ id: "user-1", name: "Doe, Jane" });
 });
@@ -152,5 +163,49 @@ describe("updateUserAction — a capped email-change email looks like a sent one
         parsedInput: { email: "free@corp.test", password: "secret" },
       })
     ).rejects.toThrow("smtp down");
+  });
+});
+
+// The real domain predicate runs here, not a mock: what matters is that a personal address is refused before
+// anything is sent or written, and only on Cloud.
+describe("updateUserAction — Cloud's email-domain policy covers email changes", () => {
+  const changeEmail = (email: string) =>
+    (updateUserAction as unknown as (a: unknown) => Promise<unknown>)({
+      ctx: ctxFor("email"),
+      parsedInput: { email, password: "secret" },
+    });
+
+  beforeEach(() => {
+    mocks.verifyUserPassword.mockResolvedValue(true);
+    mocks.getIsEmailUnique.mockResolvedValue(true);
+  });
+
+  test("refuses a move to a personal or disposable address on Cloud, before sending anything", async () => {
+    flags.isFormbricksCloud = true;
+    for (const email of ["jane@gmail.com", "jane@team.33mail.com"]) {
+      const result = changeEmail(email);
+      await expect(result).rejects.toThrow(InvalidInputError);
+      await expect(result).rejects.toThrow(SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE);
+    }
+    expect(mocks.getIsEmailUnique).not.toHaveBeenCalled();
+    expect(mocks.sendVerificationNewEmail).not.toHaveBeenCalled();
+    expect(mocks.updateUser).not.toHaveBeenCalled();
+  });
+
+  test("checks the password first, so the policy is only answered to the account's owner", async () => {
+    flags.isFormbricksCloud = true;
+    mocks.verifyUserPassword.mockResolvedValue(false);
+    await expect(changeEmail("jane@gmail.com")).rejects.toThrow(AuthorizationError);
+  });
+
+  test("lets a company address through on Cloud", async () => {
+    flags.isFormbricksCloud = true;
+    await expect(changeEmail("jane@new-corp.test")).resolves.toBeDefined();
+    expect(mocks.sendVerificationNewEmail).toHaveBeenCalledWith("user-1", "jane@new-corp.test", "en-US");
+  });
+
+  test("never applies on a self-hosted instance", async () => {
+    await expect(changeEmail("jane@gmail.com")).resolves.toBeDefined();
+    expect(mocks.sendVerificationNewEmail).toHaveBeenCalledWith("user-1", "jane@gmail.com", "en-US");
   });
 });

@@ -3744,6 +3744,7 @@
         "account_deletion_consequences_warning": "Gevolgen van accountverwijdering",
         "account_deletion_email_sent": "Controleer je e-mail om de accountverwijdering te bevestigen. We hebben een link naar {email} gestuurd — je account wordt verwijderd zodra je erop klikt.",
         "backup_code": "Back-upcode",
+        "company_email_required": "Gebruik je zakelijke e-mailadres.",
         "confirm_delete_account": "Verwijder uw account met al uw persoonlijke informatie en gegevens",
         "confirm_delete_my_account": "Verwijder mijn account",
         "confirm_your_current_password_to_get_started": "Bevestig uw huidige wachtwoord om aan de slag te gaan.",

@@ -3744,6 +3744,7 @@
         "account_deletion_consequences_warning": "Conséquences de la suppression de compte",
         "account_deletion_email_sent": "Consultez votre e-mail pour confirmer la suppression du compte. Nous avons envoyé un lien à {email} — votre compte sera supprimé dès que vous cliquerez dessus.",
         "backup_code": "Code de sauvegarde",
+        "company_email_required": "Merci d'utiliser ton adresse e-mail professionnelle.",
         "confirm_delete_account": "Vous pouvez supprimer votre compte, y compris toutes vos informations et données personnelles.",
         "confirm_delete_my_account": "Supprimer mon compte",
         "confirm_your_current_password_to_get_started": "Confirmez votre mot de passe actuel pour commencer.",

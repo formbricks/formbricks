@@ -3744,6 +3744,7 @@
         "account_deletion_consequences_warning": "帳戶刪除後果",
         "account_deletion_email_sent": "請查收您的電子郵件以確認刪除帳戶。我們已向 {email} 發送了一個連結——點擊後，您的帳戶將被刪除。",
         "backup_code": "備份碼",
+        "company_email_required": "請使用你的公司電子郵件地址。",
         "confirm_delete_account": "刪除您的帳戶以及您的所有個人資訊和資料",
         "confirm_delete_my_account": "刪除我的帳戶",
         "confirm_your_current_password_to_get_started": "確認您目前的密碼以開始使用。",

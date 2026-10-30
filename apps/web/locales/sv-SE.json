@@ -3744,6 +3744,7 @@
         "account_deletion_consequences_warning": "Konsekvenser av kontoborttagning",
         "account_deletion_email_sent": "Kontrollera din e-post för att bekräfta borttagningen av kontot. Vi skickade en länk till {email} – ditt konto tas bort när du klickar på den.",
         "backup_code": "Reservkod",
+        "company_email_required": "Använd din e-postadress på jobbet.",
         "confirm_delete_account": "Ta bort ditt konto med all din personliga information och data",
         "confirm_delete_my_account": "Ta bort mitt konto",
         "confirm_your_current_password_to_get_started": "Bekräfta ditt nuvarande lösenord för att komma igång.",

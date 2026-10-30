@@ -4,7 +4,9 @@ import { headers } from "next/headers";
 import {
   AuthenticationError,
   AuthorizationError,
+  InvalidInputError,
   OperationNotAllowedError,
+  SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE,
   TooManyRequestsError,
 } from "@formbricks/types/errors";
 import {
@@ -20,6 +22,7 @@ import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { auth } from "@/modules/auth/lib/auth";
 import { updateBrevoCustomer } from "@/modules/auth/lib/brevo";
+import { isSignupEmailDomainBlocked } from "@/modules/auth/lib/signup-email-domain";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
@@ -83,6 +86,12 @@ async function handleEmailUpdate({
   const isCorrectPassword = await verifyUserPassword(ctx.user.id, parsedInput.password);
   if (!isCorrectPassword) {
     throw new AuthorizationError("Incorrect credentials");
+  }
+  // Cloud's personal/disposable-domain policy applies to the address an account moves to, not only the one
+  // it signed up with, or signing up with a work address and switching would walk around it. No invite
+  // can exempt an email change.
+  if (await isSignupEmailDomainBlocked(inputEmail, async () => false)) {
+    throw new InvalidInputError(SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE);
   }
   const isEmailUnique = await getIsEmailUnique(inputEmail);
   if (!isEmailUnique) return payload;

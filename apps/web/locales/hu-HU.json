@@ -3744,6 +3744,7 @@
         "account_deletion_consequences_warning": "Fiók törlésének következményei",
         "account_deletion_email_sent": "Nézze meg az e-mailjeit a fiók törlésének megerősítéséhez. Elküldtünk egy hivatkozást a(z) {email} e-mail-címre – akkor lesz törölve a fiókja, ha rákattint a hivatkozásra.",
         "backup_code": "Visszaszerzési kód",
+        "company_email_required": "Kérjük, szíveskedjék a vállalati e-mail-címét megadni.",
         "confirm_delete_account": "A fiókja törlése az összes személyes információjával és adatával együtt",
         "confirm_delete_my_account": "Saját fiók törlése",
         "confirm_your_current_password_to_get_started": "Erősítse meg a jelenlegi jelszavát a kezdéshez.",

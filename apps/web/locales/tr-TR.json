@@ -3744,6 +3744,7 @@
         "account_deletion_consequences_warning": "Hesap silme sonuçları",
         "account_deletion_email_sent": "Hesap silme işlemini onaylamak için e-postanızı kontrol edin. {email} adresine bir bağlantı gönderdik — bağlantıya tıkladığınızda hesabınız silinir.",
         "backup_code": "Yedek Kod",
+        "company_email_required": "Lütfen şirket e-posta adresini kullan.",
         "confirm_delete_account": "Tüm kişisel bilgilerin ve verilerin ile birlikte hesabını sil",
         "confirm_delete_my_account": "Hesabımı Sil",
         "confirm_your_current_password_to_get_started": "Başlamak için mevcut şifreni onayla.",

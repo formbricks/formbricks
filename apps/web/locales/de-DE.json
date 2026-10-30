@@ -3744,6 +3744,7 @@
         "account_deletion_consequences_warning": "Folgen der Kontolöschung",
         "account_deletion_email_sent": "Überprüfe deine E-Mails, um die Kontolöschung zu bestätigen. Wir haben einen Link an {email} gesendet – dein Konto wird gelöscht, sobald du darauf klickst.",
         "backup_code": "Backup-Code",
+        "company_email_required": "Bitte verwende deine geschäftliche E-Mail-Adresse.",
         "confirm_delete_account": "Lösche dein Konto mit allen persönlichen Informationen und Daten",
         "confirm_delete_my_account": "Mein Konto löschen",
         "confirm_your_current_password_to_get_started": "Bestätige dein aktuelles Passwort, um zu beginnen.",
