@@ -282,7 +282,7 @@ describe("streamSurveyImport", () => {
 
       expect(response.status).toBe(422);
       const problem = (await response.json()) as { invalid_params: { name: string }[] };
-      expect(problem.invalid_params.map((param) => param.name)).toContain("qsf.SurveyEntry");
+      expect(problem.invalid_params.map((param) => param.name)).toContain("file.SurveyEntry");
       expect(mocks.runQsfImport).not.toHaveBeenCalled();
     });
   });

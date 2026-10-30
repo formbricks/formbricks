@@ -321,7 +321,7 @@ describe("event loop", () => {
 
     // Structural: refused on the count of keys.
     expect((refused as SurveyImportInputError).invalidParams[0].name).toBe(
-      "qsf.SurveyElements.0.Payload.Language"
+      "file.SurveyElements.0.Payload.Language"
     );
     // The survey's own default language is the one code looked up; no `Language` key is.
     expect(seen.languageCodeLookups).toBe(1);

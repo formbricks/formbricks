@@ -245,7 +245,7 @@ const readCompared = (expression: TRecord): Pick<TQsfLogicCondition, "value"> =>
 
 /** An element the file holds at most once, read; a second one is refused. */
 const readOnce = <T>(current: T | null, index: number, what: string, read: () => T): T => {
-  if (current !== null) throw qsfNotRecognized(`qsf.SurveyElements.${index}`, `The file has two ${what}`);
+  if (current !== null) throw qsfNotRecognized(`file.SurveyElements.${index}`, `The file has two ${what}`);
   return read();
 };
 
@@ -305,7 +305,7 @@ class QsfReader {
     if (!envelope.success) {
       throw qsfRefused(
         envelope.error.issues.map((issue) => ({
-          name: ["qsf", ...issue.path.map(String)].join("."),
+          name: ["file", ...issue.path.map(String)].join("."),
           reason: issue.message,
           code: "qsf_not_recognized" as const,
         }))
@@ -333,7 +333,7 @@ class QsfReader {
       }
     }
     if (questions.size === 0) {
-      throw qsfNotRecognized("qsf.SurveyElements", "The survey has no questions in its survey flow");
+      throw qsfNotRecognized("file.SurveyElements", "The survey has no questions in its survey flow");
     }
 
     // A second pass: a rule can read a question that appears later in the file.
@@ -474,7 +474,7 @@ class QsfReader {
     }
     if (questions.has(ref)) {
       throw qsfNotRecognized(
-        `qsf.SurveyElements.${index}`,
+        `file.SurveyElements.${index}`,
         "Two questions in the file share one question id"
       );
     }
@@ -492,7 +492,7 @@ class QsfReader {
     if (entries.length > QSF_MAX_BLOCKS) {
       throw qsfLimitExceeded(
         "blocks",
-        `qsf.SurveyElements.${index}.Payload`,
+        `file.SurveyElements.${index}.Payload`,
         `The survey has more than ${QSF_MAX_BLOCKS} blocks`
       );
     }
@@ -521,7 +521,7 @@ class QsfReader {
     if (this.blockElementCount > QSF_MAX_BLOCK_ELEMENTS) {
       throw qsfLimitExceeded(
         "block_entries",
-        `qsf.SurveyElements.${index}.Payload`,
+        `file.SurveyElements.${index}.Payload`,
         `The survey's blocks hold more than ${QSF_MAX_BLOCK_ELEMENTS} questions and page breaks`
       );
     }
@@ -564,7 +564,7 @@ class QsfReader {
       if (nodeCount > QSF_MAX_FLOW_NODES) {
         throw qsfLimitExceeded(
           "flow_nodes",
-          `qsf.SurveyElements.${flow.index}.Payload.Flow`,
+          `file.SurveyElements.${flow.index}.Payload.Flow`,
           `The survey flow has more than ${QSF_MAX_FLOW_NODES} elements`
         );
       }
@@ -627,7 +627,7 @@ class QsfReader {
     if (parent.depth + 1 > QSF_MAX_FLOW_DEPTH) {
       throw qsfLimitExceeded(
         "flow_depth",
-        `qsf.SurveyElements.${flowIndex}.Payload.Flow`,
+        `file.SurveyElements.${flowIndex}.Payload.Flow`,
         `The survey flow is nested deeper than ${QSF_MAX_FLOW_DEPTH} levels`
       );
     }
@@ -660,7 +660,7 @@ class QsfReader {
       if (placed.size > SURVEY_IMPORT_MAX_QUESTIONS) {
         throw qsfLimitExceeded(
           "questions",
-          "qsf.SurveyElements",
+          "file.SurveyElements",
           `The survey has more than ${SURVEY_IMPORT_MAX_QUESTIONS} questions; split it in Qualtrics and import each part`
         );
       }
@@ -807,7 +807,7 @@ class QsfReader {
     const ids = optionIds(records, own(payload, orderKey), () =>
       qsfLimitExceeded(
         "options",
-        `qsf.SurveyElements.${elementIndex}.Payload.${mapKey}`,
+        `file.SurveyElements.${elementIndex}.Payload.${mapKey}`,
         `A question has more than ${SURVEY_IMPORT_MAX_OPTIONS_PER_QUESTION} ${mapKey === "Choices" ? "choices" : "answers"}`
       )
     );
@@ -875,7 +875,7 @@ class QsfReader {
     if (rawCodes.length > QSF_MAX_LANGUAGE_KEYS_PER_QUESTION) {
       throw qsfLimitExceeded(
         "language_keys",
-        `qsf.SurveyElements.${elementIndex}.Payload.Language`,
+        `file.SurveyElements.${elementIndex}.Payload.Language`,
         `A question has more than ${QSF_MAX_LANGUAGE_KEYS_PER_QUESTION} translations`
       );
     }
@@ -883,7 +883,7 @@ class QsfReader {
     if (this.languageKeyCount > QSF_MAX_LANGUAGE_KEYS) {
       throw qsfLimitExceeded(
         "language_keys",
-        "qsf.SurveyElements",
+        "file.SurveyElements",
         `The survey has more than ${QSF_MAX_LANGUAGE_KEYS} translations`
       );
     }
@@ -897,7 +897,7 @@ class QsfReader {
     if (1 + this.translationLanguages.size + 1 > QSF_MAX_LANGUAGES) {
       throw qsfLimitExceeded(
         "languages",
-        "qsf.SurveyElements",
+        "file.SurveyElements",
         `The survey has more than ${QSF_MAX_LANGUAGES} languages, the most a Formbricks survey can have`
       );
     }
@@ -926,7 +926,7 @@ class QsfReader {
     if (this.embeddedDataFieldCount > QSF_MAX_EMBEDDED_DATA_FIELDS) {
       throw qsfLimitExceeded(
         "embedded_data",
-        "qsf.SurveyElements",
+        "file.SurveyElements",
         `The survey has more than ${QSF_MAX_EMBEDDED_DATA_FIELDS} embedded data fields`
       );
     }
@@ -1110,7 +1110,7 @@ class QsfReader {
     if (this.textCount > QSF_MAX_TEXTS) {
       throw qsfLimitExceeded(
         "texts",
-        "qsf.SurveyElements",
+        "file.SurveyElements",
         `The survey has more than ${QSF_MAX_TEXTS} texts across its languages`
       );
     }
@@ -1119,7 +1119,7 @@ class QsfReader {
     if (this.markupTextCount > QSF_MAX_MARKUP_TEXTS) {
       throw qsfLimitExceeded(
         "formatted_texts",
-        "qsf.SurveyElements",
+        "file.SurveyElements",
         `The survey has more than ${QSF_MAX_MARKUP_TEXTS} formatted texts across its languages`
       );
     }

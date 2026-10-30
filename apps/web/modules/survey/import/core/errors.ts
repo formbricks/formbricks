@@ -44,7 +44,7 @@ export class SurveyImportUnsupportedFileError extends Error {
  * The file is not one the lane can read, or it is past one of the lane's limits. Answered as a 422
  * before the stream opens, so no AI is spent on it.
  *
- * Each invalid param names where in the file (`qsf.SurveyElements.3`), a fixed reason — never text from
+ * Each invalid param names where in the file (`file.SurveyElements.3`), a fixed reason — never text from
  * the file — and a refusal `code`. The message is the problem's detail; each lane sets its own, fixed.
  */
 export class SurveyImportInputError extends Error {

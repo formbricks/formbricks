@@ -44,7 +44,7 @@ describe("getSurveyImportRequestErrorCode", () => {
     ["an archive past a zip limit", fileRefusal(413, "file_limit_exceeded", "zip_entries"), "file_too_large"],
     [
       "valid JSON that is not a QSF",
-      refusal(422, "unprocessable_content", ["qsf.SurveyEntry"]),
+      refusal(422, "unprocessable_content", ["file.SurveyEntry"]),
       "qsf_not_recognized",
     ],
     ["the AI gate", refusal(403, "ai_smart_tools_disabled"), "ai_smart_tools_disabled"],
@@ -61,7 +61,7 @@ describe("getSurveyImportRequestErrorCode", () => {
       code: "unprocessable_content",
       invalid_params: [
         {
-          name: "qsf.SurveyElements",
+          name: "file.SurveyElements",
           reason: "too many",
           code: "qsf_limit_exceeded",
           identifier: "questions",
