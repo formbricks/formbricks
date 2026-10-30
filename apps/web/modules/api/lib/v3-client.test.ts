@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   V3ApiError,
   getV3ApiErrorMessage,
+  getV3ApiErrorReason,
   parseV3ApiError,
   retryUnlessClientError,
   v3RetryDelay,
@@ -37,20 +38,41 @@ describe("parseV3ApiError", () => {
     expect(error.invalid_params).toEqual([{ name: "surveyId", reason: "Invalid id" }]);
   });
 
-  test("keeps the problem's details for callers that explain a refusal", async () => {
+  test("keeps a problem's details, the part a client acts on", async () => {
     const response = new Response(
       JSON.stringify({
+        title: "Conflict",
         status: 409,
-        detail: "Delete the creatives that open this survey before deleting it",
-        code: "survey_has_linked_creatives",
-        details: { creatives: [{ id: "creative_1", name: "Feedback tab" }] },
+        detail: "Embedded data key already exists",
+        code: "conflict",
+        requestId: "req_2",
+        details: { reason: "key_conflict", existingId: "clfield1111111111111111111" },
       }),
       { status: 409, headers: { "Content-Type": "application/problem+json" } }
     );
 
     const error = await parseV3ApiError(response);
 
-    expect(error.details).toEqual({ creatives: [{ id: "creative_1", name: "Feedback tab" }] });
+    expect(error.details).toEqual({ reason: "key_conflict", existingId: "clfield1111111111111111111" });
+  });
+
+  test("reads a refusal's reason code, falling back to its message", () => {
+    const refused = new V3ApiError({
+      status: 409,
+      detail: "DIRECTORY_NAME_DUPLICATE",
+      details: { reason: "DIRECTORY_NAME_DUPLICATE" },
+    });
+    expect(getV3ApiErrorReason(refused, "fallback")).toBe("DIRECTORY_NAME_DUPLICATE");
+    expect(getV3ApiErrorReason(new V3ApiError({ status: 403, detail: "Forbidden" }), "fallback")).toBe(
+      "Forbidden"
+    );
+    // Nothing a page can translate: its own message, never a browser's.
+    expect(getV3ApiErrorReason(new V3ApiError({ status: 0, detail: "" }), "fallback")).toBe("fallback");
+    expect(getV3ApiErrorReason(new Error("Failed to fetch"), "fallback")).toBe("fallback");
+  });
+
+  test("shows the fallback for a failure with no detail", () => {
+    expect(getV3ApiErrorMessage(new V3ApiError({ status: 0, detail: "" }), "fallback")).toBe("fallback");
   });
 
   test("reads a 429's Retry-After in seconds, and ignores a form v3 does not send", async () => {

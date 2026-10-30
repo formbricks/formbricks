@@ -154,6 +154,12 @@ export const AUTH_TRUSTED_ORIGINS = [
   ...new Set([env.BETTER_AUTH_URL, env.NEXTAUTH_URL].filter((url): url is string => Boolean(url?.trim()))),
 ];
 
+/** `BETTER_AUTH_TRUSTED_ORIGINS`, which Better Auth adds to the origins it trusts for sign-in. */
+export const BETTER_AUTH_ENV_TRUSTED_ORIGINS = (env.BETTER_AUTH_TRUSTED_ORIGINS ?? "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
 export const ITEMS_PER_PAGE = 30;
 export const SURVEYS_PER_PAGE = 12;
 export const RESPONSES_PER_PAGE = 25;

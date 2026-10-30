@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE } from "@formbricks/types/errors";
+import { completePasswordResetOperation } from "@/app/api/internal/password-resets/lib/operations";
 import { flushAfter } from "@/integration/after";
 import { resetDb } from "@/integration/reset-db";
 import { forgotPasswordAction } from "@/modules/auth/forgot-password/actions";
-import { resetPasswordAction } from "@/modules/auth/forgot-password/reset/actions";
 import { auth } from "@/modules/auth/lib/auth";
 import { sendPasswordResetLinkEmail } from "@/modules/email";
 
@@ -19,6 +19,7 @@ vi.mock("next/server", async (importOriginal) =>
   (await import("@/integration/after")).withAfterMock(await importOriginal<typeof import("next/server")>())
 );
 
+vi.mock("server-only", () => ({}));
 vi.mock("next/headers", () => ({
   cookies: vi.fn(async () => ({ get: () => undefined, delete: () => undefined })),
   headers: vi.fn(async () => new Headers()),
@@ -74,9 +75,12 @@ describe("credential row with a NULL issuer (real Postgres + Better Auth)", () =
   test("resets the password from a newly requested link, and the new password signs in", async () => {
     const token = await requestResetToken();
 
-    const result = await resetPasswordAction({ token, password: NEW_PASSWORD });
+    const response = await completePasswordResetOperation({
+      body: { token, password: NEW_PASSWORD },
+      requestId: "req_reset",
+    });
 
-    expect(result?.data).toEqual({ success: true });
+    expect(response.status).toBe(204);
     const signIn = await auth.api.signInEmail({ body: { email: EMAIL, password: NEW_PASSWORD } });
     expect(signIn.user.email).toBe(EMAIL);
   });
@@ -87,8 +91,12 @@ describe("credential row with a NULL issuer (real Postgres + Better Auth)", () =
     const token = await requestResetToken();
     await dropCredentialIssuer();
 
-    const result = await resetPasswordAction({ token, password: NEW_PASSWORD });
+    const response = await completePasswordResetOperation({
+      body: { token, password: NEW_PASSWORD },
+      requestId: "req_reset",
+    });
 
-    expect(result?.serverError).toBe(INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE);
+    expect(response.status).toBe(422);
+    expect((await response.json()).details).toEqual({ reason: INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE });
   });
 });

@@ -15,9 +15,8 @@ import {
 } from "@formbricks/types/integration/slack";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
-import { createOrUpdateIntegrationAction } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/actions";
+import { saveIntegration } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/lib/api-client";
 import SlackLogo from "@/images/slacklogo.png";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import {
@@ -157,14 +156,7 @@ export const AddChannelMappingModal = ({
         // create action
         slackIntegrationData.config.data.push(integrationData);
       }
-      const result = await createOrUpdateIntegrationAction({
-        workspaceId,
-        integrationData: slackIntegrationData,
-      });
-      if (result?.serverError) {
-        toast.error(getFormattedErrorMessage(result));
-        return;
-      }
+      await saveIntegration(workspaceId, slackIntegrationData.type, slackIntegrationData.config);
       if (selectedIntegration) {
         toast.success(t("workspace.integrations.integration_updated_successfully"));
       } else {
@@ -201,14 +193,7 @@ export const AddChannelMappingModal = ({
     slackIntegrationData.config.data.splice(selectedIntegration!.index, 1);
     try {
       setIsDeleting(true);
-      const result = await createOrUpdateIntegrationAction({
-        workspaceId,
-        integrationData: slackIntegrationData,
-      });
-      if (result?.serverError) {
-        toast.error(getFormattedErrorMessage(result));
-        return;
-      }
+      await saveIntegration(workspaceId, slackIntegrationData.type, slackIntegrationData.config);
       toast.success(t("workspace.integrations.integration_removed_successfully"));
       setOpen(false);
     } catch (error) {

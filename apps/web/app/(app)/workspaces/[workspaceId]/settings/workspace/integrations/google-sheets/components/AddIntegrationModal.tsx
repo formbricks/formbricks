@@ -12,21 +12,23 @@ import {
 } from "@formbricks/types/integration/google-sheet";
 import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
-import { createOrUpdateIntegrationAction } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/actions";
-import { getSpreadsheetNameByIdAction } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/google-sheets/actions";
 import {
   constructGoogleSheetsUrl,
   extractSpreadsheetIdFromUrl,
   isValidGoogleSheetsUrl,
 } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/google-sheets/lib/util";
+import {
+  getSpreadsheet,
+  saveIntegration,
+} from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/lib/api-client";
 import GoogleSheetLogo from "@/images/googleSheetsLogo.png";
 import {
   GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_PERMISSION,
   GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_SCOPES,
   GOOGLE_SHEET_INTEGRATION_INVALID_GRANT,
 } from "@/lib/googleSheet/constants";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { recallToHeadline } from "@/lib/utils/recall";
+import { getV3ApiErrorMessage, getV3ApiErrorReason } from "@/modules/api/lib/v3-client";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import {
   RestrictedSurveyHint,
@@ -134,16 +136,17 @@ export const AddIntegrationModal = ({
     resetForm();
   }, [selectedIntegration, surveys]);
 
-  const showErrorMessageToast = (response: Awaited<ReturnType<typeof getSpreadsheetNameByIdAction>>) => {
-    const errorMessage = getFormattedErrorMessage(response);
-    if (errorMessage === GOOGLE_SHEET_INTEGRATION_INVALID_GRANT) {
+  const showErrorMessageToast = (error: unknown) => {
+    const errorMessage = getV3ApiErrorReason(error, "");
+    // Disconnected in another tab, or the grant expired: either way the way out is to reconnect.
+    if (errorMessage === GOOGLE_SHEET_INTEGRATION_INVALID_GRANT || errorMessage === "not_connected") {
       toast.error(t("workspace.integrations.google_sheets.token_expired_error"));
     } else if (errorMessage === GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_PERMISSION) {
       toast.error(t("workspace.integrations.google_sheets.spreadsheet_permission_error"));
     } else if (errorMessage === GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_SCOPES) {
       toast.error(t("workspace.integrations.google_sheets.spreadsheet_scope_error"));
     } else {
-      toast.error(errorMessage);
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
   };
 
@@ -160,17 +163,14 @@ export const AddIntegrationModal = ({
       }
       setIsLinkingSheet(true);
       const spreadsheetId = extractSpreadsheetIdFromUrl(spreadsheetUrl);
-      const spreadsheetNameResponse = await getSpreadsheetNameByIdAction({
-        workspaceId,
-        spreadsheetId,
-      });
-
-      if (!spreadsheetNameResponse?.data) {
-        showErrorMessageToast(spreadsheetNameResponse);
+      let spreadsheetName: string;
+      try {
+        spreadsheetName = (await getSpreadsheet(workspaceId, spreadsheetId)).name;
+      } catch (error) {
+        showErrorMessageToast(error);
         return;
       }
 
-      const spreadsheetName = spreadsheetNameResponse.data;
       integrationData.spreadsheetId = spreadsheetId;
       integrationData.spreadsheetName = spreadsheetName;
       integrationData.surveyId = selectedSurvey.id;
@@ -193,14 +193,7 @@ export const AddIntegrationModal = ({
         // create action
         googleSheetIntegrationData.config.data.push(integrationData);
       }
-      const result = await createOrUpdateIntegrationAction({
-        workspaceId,
-        integrationData: googleSheetIntegrationData,
-      });
-      if (result?.serverError) {
-        toast.error(getFormattedErrorMessage(result));
-        return;
-      }
+      await saveIntegration(workspaceId, googleSheetIntegrationData.type, googleSheetIntegrationData.config);
       if (selectedIntegration) {
         toast.success(t("workspace.integrations.integration_updated_successfully"));
       } else {
@@ -240,14 +233,7 @@ export const AddIntegrationModal = ({
     googleSheetIntegrationData.config.data.splice(selectedIntegration!.index, 1);
     try {
       setIsDeleting(true);
-      const result = await createOrUpdateIntegrationAction({
-        workspaceId,
-        integrationData: googleSheetIntegrationData,
-      });
-      if (result?.serverError) {
-        toast.error(getFormattedErrorMessage(result));
-        return;
-      }
+      await saveIntegration(workspaceId, googleSheetIntegrationData.type, googleSheetIntegrationData.config);
       toast.success(t("workspace.integrations.integration_removed_successfully"));
       setOpen(false);
     } catch (error) {

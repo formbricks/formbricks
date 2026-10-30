@@ -7,11 +7,10 @@ import {
 } from "@formbricks/types/integration/google-sheet";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { validateGoogleSheetsConnectionAction } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/google-sheets/actions";
 import { ManageIntegration } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/google-sheets/components/ManageIntegration";
 import { authorize } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/google-sheets/lib/google";
+import { getGoogleSheetsConnection } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/lib/api-client";
 import googleSheetLogo from "@/images/googleSheetsLogo.png";
-import { GOOGLE_SHEET_INTEGRATION_INVALID_GRANT } from "@/lib/googleSheet/constants";
 import { ConnectIntegration } from "@/modules/ui/components/connect-integration";
 import { AddIntegrationModal } from "./AddIntegrationModal";
 
@@ -43,17 +42,18 @@ export const GoogleSheetWrapper = ({
     (TIntegrationGoogleSheetsConfigData & { index: number }) | null
   >(null);
 
-  // Depend only on stable values (workspaceId is a primitive; isConnected is local state). The
-  // server-derived `googleSheetIntegration` object must NOT be a dependency: every authenticated
-  // server action re-sets the Better Auth session cookie, which refreshes the route and hands this
-  // component a new `googleSheetIntegration` reference — depending on it would re-fire the action in
-  // an infinite loop. `isConnected` already implies an integration exists, and the action only needs
-  // `workspaceId`, so the object isn't needed here.
+  // Depend only on stable values (workspaceId is a primitive; isConnected is local state), never on the
+  // server-derived `googleSheetIntegration` object: a route refresh hands this component a new reference,
+  // and depending on it would re-run the check on every one. `isConnected` already implies an
+  // integration exists, and the check only needs `workspaceId`.
   const validateConnection = useCallback(async () => {
     if (!isConnected) return;
-    const response = await validateGoogleSheetsConnectionAction({ workspaceId });
-    if (response?.serverError === GOOGLE_SHEET_INTEGRATION_INVALID_GRANT) {
-      setShowReconnectButton(true);
+    try {
+      if ((await getGoogleSheetsConnection(workspaceId)) === "reauthorization_required") {
+        setShowReconnectButton(true);
+      }
+    } catch {
+      // Best effort: a failed check leaves the page as it is, as it always did.
     }
   }, [workspaceId, isConnected]);
 

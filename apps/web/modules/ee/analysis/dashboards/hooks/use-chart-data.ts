@@ -22,6 +22,6 @@ export const useChartData = ({
     // A failure here is one widget's; retrying it once is enough before its error shows, and a 4xx
     // (a chart query the validator refuses, a chart the caller may not read) is not retried at all —
     // except a brief 429, which waits for one of the caller's chart query slots to free up (the
-    // analysis query client's `v3RetryDelay` waits out its Retry-After).
+    // house query client's `v3RetryDelay` waits out its Retry-After).
     retry: retryUnlessClientError(1),
   });

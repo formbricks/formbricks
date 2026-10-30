@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { V3_REQUEST_ARRAY_MAX_ITEMS } from "@/app/api/v3/lib/array-budget";
+import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import {
   QSF_IMPORT_BODY_LIMIT_BYTES,
@@ -36,7 +37,7 @@ const post = (payload: unknown = body, headers: Record<string, string> = {}) =>
   POST(
     new NextRequest("http://localhost/api/internal/surveys/import/stream", {
       method: "POST",
-      headers: { "Content-Type": "application/json", ...headers },
+      headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": "application/json", ...headers },
       body: JSON.stringify(payload),
     }),
     {} as never
@@ -173,7 +174,7 @@ describe("POST /api/internal/surveys/import/stream", () => {
     const gone = await POST(
       new NextRequest("http://localhost/api/internal/surveys/import/stream", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": "application/json" },
         body: JSON.stringify(body),
         signal: client.signal,
       }),

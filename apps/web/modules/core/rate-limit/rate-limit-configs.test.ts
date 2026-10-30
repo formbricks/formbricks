@@ -115,6 +115,7 @@ describe("rateLimitConfigs", () => {
         "v3",
         "mcpAuth",
         "v3SurveyGenerate",
+        "internalAiTranslate",
         "v3SurveyVisibility",
         "v3CustomCss",
         "v3ChartQueries",
@@ -122,6 +123,7 @@ describe("rateLimitConfigs", () => {
         "internalChartGeneration",
         "internalDatasetPurge",
         "internalRetentionExport",
+        "internalHeicConversion",
         "client",
         "clientEnvironment",
         "clientCreativeEvents",
@@ -156,6 +158,12 @@ describe("rateLimitConfigs", () => {
         interval: 3600,
         allowedPerInterval: 10,
         namespace: "api:internal:retention-runs:export",
+      });
+      // Every conversion decodes a whole photo on the server, so a loosened quota is a CPU regression.
+      expect(rateLimitConfigs.api.internalHeicConversion).toEqual({
+        interval: 60,
+        allowedPerInterval: 20,
+        namespace: "api:internal:heic-conversions",
       });
     });
 

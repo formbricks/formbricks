@@ -21,14 +21,13 @@ import {
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
-import { createOrUpdateIntegrationAction } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/actions";
+import { saveIntegration } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/lib/api-client";
 import {
   MappingRow,
   TMapping,
   createEmptyMapping,
 } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/notion/components/MappingRow";
 import NotionLogo from "@/images/notion.png";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import {
@@ -258,14 +257,7 @@ export const AddIntegrationModal = ({
         notionIntegrationData.config.data.push(integrationData);
       }
 
-      const result = await createOrUpdateIntegrationAction({
-        workspaceId,
-        integrationData: notionIntegrationData,
-      });
-      if (result?.serverError) {
-        toast.error(getFormattedErrorMessage(result));
-        return;
-      }
+      await saveIntegration(workspaceId, notionIntegrationData.type, notionIntegrationData.config);
       if (selectedIntegration) {
         toast.success(t("workspace.integrations.integration_updated_successfully"));
       } else {
@@ -284,14 +276,7 @@ export const AddIntegrationModal = ({
     notionIntegrationData.config.data.splice(selectedIntegration!.index, 1);
     try {
       setIsDeleting(true);
-      const result = await createOrUpdateIntegrationAction({
-        workspaceId,
-        integrationData: notionIntegrationData,
-      });
-      if (result?.serverError) {
-        toast.error(getFormattedErrorMessage(result));
-        return;
-      }
+      await saveIntegration(workspaceId, notionIntegrationData.type, notionIntegrationData.config);
       toast.success(t("workspace.integrations.integration_removed_successfully"));
       setOpen(false);
     } catch (error) {

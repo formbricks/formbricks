@@ -13,6 +13,7 @@
     "start": "next start",
     "typecheck": "pnpm typegen && cross-env NODE_OPTIONS=--max-old-space-size=8192 tsc --noEmit --project tsconfig.typecheck.json",
     "typegen": "dotenv -e ../../.env -- tsx scripts/typegen.ts",
+    "api:internal:inventory": "tsx scripts/api-boundary/internal-route-inventory.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "dotenv -e ../../.env -- vitest run",

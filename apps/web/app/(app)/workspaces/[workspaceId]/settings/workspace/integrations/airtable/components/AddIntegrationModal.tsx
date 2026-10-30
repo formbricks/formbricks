@@ -17,11 +17,10 @@ import {
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
-import { createOrUpdateIntegrationAction } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/actions";
 import { BaseSelectDropdown } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/airtable/components/BaseSelectDropdown";
 import { fetchTables } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/airtable/lib/airtable";
+import { saveIntegration } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/lib/api-client";
 import AirtableLogo from "@/images/airtableLogo.svg";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import {
@@ -287,14 +286,7 @@ export const AddIntegrationModal = ({
         airtableIntegrationData.config?.data.push(integrationData);
       }
 
-      const result = await createOrUpdateIntegrationAction({
-        workspaceId,
-        integrationData: airtableIntegrationData,
-      });
-      if (result?.serverError) {
-        toast.error(getFormattedErrorMessage(result));
-        return;
-      }
+      await saveIntegration(workspaceId, airtableIntegrationData.type, airtableIntegrationData.config);
       if (isEditMode) {
         toast.success(t("workspace.integrations.integration_updated_successfully"));
       } else {
@@ -330,11 +322,7 @@ export const AddIntegrationModal = ({
       const integrationData = structuredClone(airtableIntegrationData);
       integrationData.config.data.splice(index, 1);
 
-      const result = await createOrUpdateIntegrationAction({ workspaceId, integrationData });
-      if (result?.serverError) {
-        toast.error(getFormattedErrorMessage(result));
-        return;
-      }
+      await saveIntegration(workspaceId, integrationData.type, integrationData.config);
       handleClose();
       router.refresh();
 

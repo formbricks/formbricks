@@ -3705,7 +3705,6 @@
         "only_org_owner_can_perform_action": "只有 组织 所有者 可以 访问 此 设置。",
         "organization_created_successfully": "组织 创建 成功",
         "organization_deleted_successfully": "组织 删除 成功",
-        "organization_deletion_disabled": "组织删除已禁用。",
         "organization_invite_link_ready": "您的组织邀请链接已准备好！",
         "organization_name": "组织 名称",
         "organization_name_description": "为您的组织 提供一个描述性的名称",

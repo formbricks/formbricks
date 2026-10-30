@@ -9,6 +9,7 @@ pnpm-lock.yaml
 docs/api-v3-reference/openapi.yml
 docs/api-v3-reference/.redocly.lint-ignore.yaml
 charts/**/README.md
+apps/web/app/api/INTERNAL_ROUTES.md
 charts/spicedb-operator/crds/authzed.com_spicedbclusters.yaml
 charts/spicedb-operator/files/update-graph.yaml
 

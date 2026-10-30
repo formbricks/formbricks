@@ -424,7 +424,7 @@ export const createWorkspace = async (
           // Built explicitly rather than spread from the caller: the default survey language has to be
           // one of the workspace's own languages, and a workspace being created has only the seeded
           // `DEFAULT_WORKSPACE_LANGUAGE`. It is configured afterwards from workspace settings, where
-          // `updateWorkspaceAction` can validate it against the languages that exist (ENG-2816).
+          // the workspace PATCH route can validate it against the languages that exist (ENG-2816).
           config: {
             channel: configInput?.channel ?? null,
             industry: configInput?.industry ?? null,

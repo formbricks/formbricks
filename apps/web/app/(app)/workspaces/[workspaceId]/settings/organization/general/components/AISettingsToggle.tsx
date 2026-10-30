@@ -6,10 +6,10 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
-import { updateOrganizationAISettingsAction } from "@/app/(app)/workspaces/[workspaceId]/settings/organization/general/actions";
+import { updateOrganizationSettings } from "@/app/(app)/workspaces/[workspaceId]/settings/organization/general/lib/api-client";
 import { getDisplayedOrganizationAISettingValue, getOrganizationAIEnablementState } from "@/lib/ai/utils";
 import { getAccessFlags } from "@/lib/membership/utils";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { V3ApiError, getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { organizationSettingsPath } from "@/modules/settings/lib/routes";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
@@ -58,19 +58,18 @@ export const AISettingsToggle = ({
 
     setLoadingField("isAISmartToolsEnabled");
     try {
-      const response = await updateOrganizationAISettingsAction({
-        organizationId: organization.id,
-        data: { isAISmartToolsEnabled: checked },
-      });
-
-      if (response?.data) {
-        toast.success(t("workspace.settings.general.ai_settings_updated_successfully"));
-        router.refresh();
-      } else {
-        toast.error(getFormattedErrorMessage(response));
-      }
+      await updateOrganizationSettings(organization.id, { isAISmartToolsEnabled: checked });
+      toast.success(t("workspace.settings.general.ai_settings_updated_successfully"));
+      router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t("common.something_went_wrong_please_try_again"));
+      // The instance lost its AI provider since this page rendered: say so in the user's language.
+      const isInstanceNotConfigured =
+        error instanceof V3ApiError && error.code === "ai_instance_not_configured";
+      toast.error(
+        isInstanceNotConfigured
+          ? aiEnablementBlockedMessage
+          : getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again"))
+      );
     } finally {
       setLoadingField(null);
     }

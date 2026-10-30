@@ -9,8 +9,8 @@ import { useTranslation } from "react-i18next";
 import { type TLinkedEmbeddedField, getSurveyEmbeddedFields } from "@formbricks/types/embedded-data-resolver";
 import { type TSurveyQuota } from "@formbricks/types/quota";
 import { type TSurvey } from "@formbricks/types/surveys/types";
+import type { TEmbeddedDataResource } from "@/app/api/internal/embedded-data/serializers";
 import { cn } from "@/lib/cn";
-import type { TSharedEmbeddedData } from "@/modules/embedded-data/types";
 import { AddEmbeddedFieldModal } from "@/modules/survey/editor/components/add-embedded-field-modal";
 import { EmbeddedDataCardRow } from "@/modules/survey/editor/components/embedded-data-card-row";
 import { EmbeddedFieldModal } from "@/modules/survey/editor/components/embedded-field-modal";
@@ -174,7 +174,7 @@ export const EmbeddedDataCard = ({
     setPromoting(entry);
   };
 
-  const handlePromoted = (field: TSharedEmbeddedData, entry: TLinkedEmbeddedField) => {
+  const handlePromoted = (field: TEmbeddedDataResource, entry: TLinkedEmbeddedField) => {
     // The row is shared from here on and the survey's link already points at it, so the entry is
     // replaced from what promote returned rather than patched — including the name and description
     // the library now owns.
@@ -362,6 +362,7 @@ export const EmbeddedDataCard = ({
         <PromoteEmbeddedFieldDialog
           key={promoting.link.storageKey}
           entry={promoting}
+          workspaceId={workspaceId}
           open={true}
           setOpen={(next) => {
             if (!next) setPromoting(null);

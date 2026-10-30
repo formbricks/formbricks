@@ -93,9 +93,14 @@ const { mockStartRead, mockReadDone, observations } = vi.hoisted(() => {
 });
 vi.mock("./metrics", () => ({ startV3ResponsesRead: mockStartRead }));
 // ENG-3282: the readiness marker is off in these tests — nothing is refused and the predicate is open.
-// Plain functions, so the suites' mock resets cannot clear them.
+// Plain functions, so the suites' mock resets cannot clear them; a test that needs a refusal sets
+// `visibility.refusal` and puts it back.
+const visibility = vi.hoisted(() => ({ refusal: null as Response | null, checks: [] as unknown[][] }));
 vi.mock("./visibility", () => ({
-  refuseUnlessV3SurveyVisible: async () => null,
+  refuseUnlessV3SurveyVisible: async (...args: unknown[]) => {
+    visibility.checks.push(args);
+    return visibility.refusal;
+  },
   resolveV3ResponsesActorContext: async () => ({ enforced: false, kind: "apiKey" }),
 }));
 
@@ -613,6 +618,32 @@ describe("countV3ResponsesOperation", () => {
     });
 
     expect(mockCount).toHaveBeenCalledWith(expect.objectContaining({ precision: "exact" }));
+  });
+
+  /** ENG-3282: the import estimate counts one survey's responses, so it must not see a restricted one. */
+  test("a survey the caller may not read is refused before anything is counted", async () => {
+    visibility.checks.length = 0;
+    visibility.refusal = new Response(null, { status: 403 });
+    try {
+      const res = await countV3ResponsesOperation({
+        ...read,
+        searchParams: query(`workspaceId=${WORKSPACE}&surveyId=${SURVEY.id}`),
+      });
+
+      expect(res.status).toBe(403);
+      expect(visibility.checks).toEqual([
+        [
+          read.authentication,
+          "survey.response_read",
+          { type: "survey", id: SURVEY.id },
+          read.requestId,
+          read.instance,
+        ],
+      ]);
+      expect(mockCount).not.toHaveBeenCalled();
+    } finally {
+      visibility.refusal = null;
+    }
   });
 
   /** The unbounded `count(*)` never reaches the database: refused at the query boundary. */

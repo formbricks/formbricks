@@ -3705,7 +3705,6 @@
         "only_org_owner_can_perform_action": "Somente o Dono pode deletar a organização.",
         "organization_created_successfully": "Organização criada com sucesso!",
         "organization_deleted_successfully": "Organização deletada com sucesso.",
-        "organization_deletion_disabled": "A exclusão de organizações está desativada.",
         "organization_invite_link_ready": "O link de convite da sua organização está pronto!",
         "organization_name": "Nome da Organização",
         "organization_name_description": "Dê um nome descritivo pra sua organização.",

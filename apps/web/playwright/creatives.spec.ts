@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import { test } from "./lib/fixtures";
 import { seedAppSurvey } from "./utils/app-survey";
 import { hasCreativesLicense } from "./utils/license";
+import { SAME_ORIGIN_HEADERS } from "./utils/same-origin";
 import {
   type SdkHostPage,
   collectCspViolations,
@@ -79,6 +80,7 @@ test.describe("Creatives", () => {
         .toBe(false);
 
       const response = await page.request.post("/api/v3/creatives", {
+        headers: SAME_ORIGIN_HEADERS,
         data: {
           workspaceId,
           name: CREATIVE_NAME,

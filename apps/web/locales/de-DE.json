@@ -3705,7 +3705,6 @@
         "only_org_owner_can_perform_action": "Nur Organisationsinhaber können auf diese Einstellung zugreifen.",
         "organization_created_successfully": "Organisation erfolgreich erstellt",
         "organization_deleted_successfully": "Organisation erfolgreich gelöscht",
-        "organization_deletion_disabled": "Das Löschen von Organisationen ist deaktiviert.",
         "organization_invite_link_ready": "Dein Einladungslink für die Organisation ist fertig!",
         "organization_name": "Organisationsname",
         "organization_name_description": "Gib deiner Organisation einen aussagekräftigen Namen.",

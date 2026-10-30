@@ -7,9 +7,9 @@ import { Trans, useTranslation } from "react-i18next";
 import { TIntegrationSlack, TIntegrationSlackConfigData } from "@formbricks/types/integration/slack";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { deleteIntegrationAction } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/actions";
+import { disconnectIntegration } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/lib/api-client";
 import { timeSince } from "@/lib/time";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { RestrictedSurveyHint } from "@/modules/survey/visibility/components/restricted-survey-hint";
 import { hasRestrictedAttachedSurvey } from "@/modules/survey/visibility/lib/outbound";
 import { Button } from "@/modules/ui/components/button";
@@ -54,16 +54,12 @@ export const ManageIntegration = ({
   const handleDeleteIntegration = async () => {
     setisDeleting(true);
 
-    const deleteIntegrationActionResult = await deleteIntegrationAction({
-      integrationId: slackIntegration.id,
-    });
-
-    if (deleteIntegrationActionResult?.data) {
+    try {
+      await disconnectIntegration(slackIntegration.workspaceId, slackIntegration.type);
       toast.success(t("workspace.integrations.integration_removed_successfully"));
       setIsConnected(false);
-    } else {
-      const errorMessage = getFormattedErrorMessage(deleteIntegrationActionResult);
-      toast.error(errorMessage);
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
 
     setisDeleting(false);

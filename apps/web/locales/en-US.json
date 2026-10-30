@@ -3705,7 +3705,6 @@
         "only_org_owner_can_perform_action": "Only organization owners can access this setting.",
         "organization_created_successfully": "Organization created successfully",
         "organization_deleted_successfully": "Organization deleted successfully",
-        "organization_deletion_disabled": "Organization deletion is disabled.",
         "organization_invite_link_ready": "Your organization invite link is ready!",
         "organization_name": "Organization Name",
         "organization_name_description": "Give your organization a descriptive name.",

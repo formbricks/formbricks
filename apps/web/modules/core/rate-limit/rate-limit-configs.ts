@@ -32,6 +32,11 @@ export const rateLimitConfigs = {
       allowedPerInterval: 10,
       namespace: "api:v3:surveys:generate",
     }, // 10 per minute (AI survey generation)
+    internalAiTranslate: {
+      interval: 60,
+      allowedPerInterval: 20,
+      namespace: "api:internal:ai-translations",
+    }, // 20 per minute per user — one call per target language, each up to 8192 output tokens
     v3SurveyVisibility: {
       interval: 60,
       allowedPerInterval: 10,
@@ -71,6 +76,12 @@ export const rateLimitConfigs = {
       allowedPerInterval: 10,
       namespace: "api:internal:retention-runs:export",
     }, // 10 per hour — each export streams an organisation's whole retention history (data retention)
+    internalHeicConversion: {
+      interval: 60,
+      allowedPerInterval: 20,
+      namespace: "api:internal:heic-conversions",
+    }, // 20 per minute per user, instead of v3 — each conversion decodes a whole photo in process; the
+    // dashboard converts one per HEIC file a user picks, so a person never comes near this
     client: { interval: 60, allowedPerInterval: 100, namespace: "api:client" }, // 100 per minute (Client API)
     clientEnvironment: {
       interval: 60,
