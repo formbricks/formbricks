@@ -73,11 +73,11 @@ An In page banner is placed at the very top of the page, and the page shifts dow
 <div data-formbricks-slot="banner-top"></div>
 ```
 
-Formbricks then puts In page banners inside that element. To keep the page from shifting, give the element a minimum height that matches your banner, for example `style="min-height: 48px"`. In page banners that show at the same time stack inside it, so match their combined height. That space stays empty on pages where no banner shows, and after a visitor closes the banner.
+Formbricks then puts In page banners inside that element. To keep the page from shifting, give the element a minimum height that matches your banner, for example `style="min-height: 48px"`. In page banners that show at the same time stack inside it, so match their combined height. That space stays empty on pages where no banner shows, and once a visitor has closed every banner in it.
 
 ## On your website
 
-- **Switching pages:** the SDK draws banners with JavaScript once it has loaded. On a site where every link loads a new page, the banner can appear a moment after the page, on every page. Reserve an In page banner's space with a [slot element](#choose-where-an-in-page-banner-appears) so the page doesn't jump, or use Overlay. In a single-page app, a banner that still shows on the new page stays on screen across a route change; one that shows on an action goes until the action fires again. Put the slot element in your layout, outside the content that changes with the route.
+- **Switching pages:** the SDK draws banners with JavaScript once it has loaded. On a site where every link loads a new page, the banner can appear a moment after the page, on every page. Reserve an In page banner's space with a [slot element](#choose-where-an-in-page-banner-appears) so the page doesn't jump, or use Overlay. In a single-page app, a banner that still shows on the new page stays on screen across a route change; one that shows on an action leaves on a route change and shows again only once the action fires on the new page. Put the slot element in your layout, outside the content that changes with the route.
 - **Closing a banner** keeps it closed for the rest of the visit in that browser tab, across pages and reloads. A new tab shows it again. Formbricks doesn't remember a close across tabs, devices or days.
 - **Several banners on the same edge** stack, the newest closest to the edge. Feedback buttons move aside so Overlay banners don't cover them, and an open survey always sits on top of banners.
 - **Long messages** wrap onto more lines on narrow screens. An Overlay banner is never taller than a third of the screen; a longer one scrolls inside.
