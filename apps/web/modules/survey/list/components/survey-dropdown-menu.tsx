@@ -290,6 +290,12 @@ export const SurveyDropDownMenu = ({
           onSelect={() => void handleExport("json")}>
           {t("workspace.surveys.export.formbricks_file")}
         </DropdownMenuItem>
+        <DropdownMenuItem
+          data-testid="export-excel-file"
+          disabled={exportSurvey.isPending}
+          onSelect={() => void handleExport("xlsx")}>
+          {t("workspace.surveys.export.excel_file")}
+        </DropdownMenuItem>
       </DropdownMenuSubContent>
     </DropdownMenuSub>
   );

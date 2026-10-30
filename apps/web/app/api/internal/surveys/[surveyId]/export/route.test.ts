@@ -7,6 +7,9 @@ const mocks = vi.hoisted(() => ({
   applyRateLimit: vi.fn(),
   getAuthorizedV3Survey: vi.fn(),
   exportFormbricksFile: vi.fn(),
+  writeExcelExport: vi.fn(),
+  getUserLocale: vi.fn(),
+  getTranslate: vi.fn(),
   queueAuditEvent: vi.fn(),
 }));
 
@@ -19,6 +22,12 @@ vi.mock("@/app/api/v3/surveys/authorization", () => ({ getAuthorizedV3Survey: mo
 vi.mock("@/modules/survey/formbricks-file/export", () => ({
   exportFormbricksFile: mocks.exportFormbricksFile,
 }));
+vi.mock("@/modules/survey/excel-export/write", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/survey/excel-export/write")>()),
+  writeExcelExport: mocks.writeExcelExport,
+}));
+vi.mock("@/lib/user/service", () => ({ getUserLocale: mocks.getUserLocale }));
+vi.mock("@/lingodotdev/server", () => ({ getTranslate: mocks.getTranslate }));
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({ queueAuditEvent: mocks.queueAuditEvent }));
 vi.mock("@/app/lib/api/with-api-logging", () => ({
   buildAuditLogBaseObject: vi.fn((action: string, targetType: string) => ({
@@ -39,6 +48,8 @@ const SURVEY_ID = "clsurvey0000000000000001";
 const ORGANIZATION_ID = "clorganization0000000001";
 const WORKSPACE_ID = "clworkspace0000000000001";
 const FILE = { $schema: "https://example.com/schema.json", survey: { name: "Kundenzufriedenheit Ü" } };
+const XLSX_BYTES = new Uint8Array([0x50, 0x4b, 0x03, 0x04, 1, 2, 3]);
+const translate = vi.fn((key: string) => key);
 
 const get = (query: string, surveyId = SURVEY_ID) =>
   GET(new NextRequest(`http://localhost/api/internal/surveys/${surveyId}/export${query}`), {
@@ -58,6 +69,9 @@ describe("GET /api/internal/surveys/{surveyId}/export", () => {
       visibility: {},
     });
     mocks.exportFormbricksFile.mockResolvedValue(FILE);
+    mocks.writeExcelExport.mockReturnValue(XLSX_BYTES);
+    mocks.getUserLocale.mockResolvedValue("de-DE");
+    mocks.getTranslate.mockResolvedValue(translate);
   });
 
   test("sends the file's bytes as an attachment, not cached, with its length, and audits the export", async () => {
@@ -90,8 +104,56 @@ describe("GET /api/internal/surveys/{surveyId}/export", () => {
     );
   });
 
+  test("sends an Excel export as <name>.xlsx with the spreadsheet type, written in the user's locale, and audits it", async () => {
+    const response = await get("?format=xlsx");
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Content-Type")).toBe(
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    expect(response.headers.get("Content-Disposition")).toBe(
+      `attachment; filename="Kundenzufriedenheit U.xlsx"; filename*=UTF-8''Kundenzufriedenheit%20%C3%9C.xlsx`
+    );
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
+    expect(response.headers.get("Content-Length")).toBe(String(XLSX_BYTES.byteLength));
+    expect(new Uint8Array(await response.arrayBuffer())).toEqual(XLSX_BYTES);
+
+    expect(mocks.getUserLocale).toHaveBeenCalledWith("user_1");
+    expect(mocks.getTranslate).toHaveBeenCalledWith("de-DE");
+    expect(mocks.writeExcelExport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        survey: expect.objectContaining({ id: SURVEY_ID }),
+        t: translate,
+        locale: "de-DE",
+      })
+    );
+    expect(mocks.exportFormbricksFile).not.toHaveBeenCalled();
+    expect(mocks.getAuthorizedV3Survey).toHaveBeenCalledWith(
+      expect.objectContaining({ surveyId: SURVEY_ID, access: "read" })
+    );
+    expect(mocks.queueAuditEvent).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({
+        action: "exported",
+        targetType: "survey",
+        targetId: SURVEY_ID,
+        organizationId: ORGANIZATION_ID,
+        status: "success",
+        newObject: { format: "xlsx", fileFormat: 1, workspaceId: WORKSPACE_ID },
+      })
+    );
+  });
+
+  test("writes the Excel export in English for a user without a locale", async () => {
+    mocks.getUserLocale.mockResolvedValue(undefined);
+
+    await get("?format=xlsx");
+
+    expect(mocks.getTranslate).toHaveBeenCalledWith("en-US");
+    expect(mocks.writeExcelExport).toHaveBeenCalledWith(expect.objectContaining({ locale: "en-US" }));
+  });
+
   test.each([
-    ["an unknown format", "?format=xlsx"],
+    ["an unknown format", "?format=pdf"],
     ["no format", ""],
     ["an unknown parameter", "?format=json&download=1"],
   ])("answers %s with 400 and exports nothing", async (_case, query) => {
@@ -101,10 +163,11 @@ describe("GET /api/internal/surveys/{surveyId}/export", () => {
     expect(response.headers.get("Content-Type")).toContain("application/problem+json");
     expect(mocks.getAuthorizedV3Survey).not.toHaveBeenCalled();
     expect(mocks.exportFormbricksFile).not.toHaveBeenCalled();
+    expect(mocks.writeExcelExport).not.toHaveBeenCalled();
   });
 
   test("names `format` in the 400 for an unknown format", async () => {
-    const body = await (await get("?format=xlsx")).json();
+    const body = await (await get("?format=pdf")).json();
     expect(body.invalid_params).toEqual([expect.objectContaining({ name: "format" })]);
   });
 

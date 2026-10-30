@@ -5,6 +5,7 @@ import type { TSurveyExportFormat } from "./formats";
 /** The name a download is saved under when the response doesn't name it. */
 const FALLBACK_FILE_NAMES: Record<TSurveyExportFormat, string> = {
   json: "survey.formbricks.json",
+  xlsx: "survey.xlsx",
 };
 
 /**

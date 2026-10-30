@@ -7,8 +7,9 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * `GET /api/internal/surveys/{surveyId}/export?format=json` — the survey as a Formbricks file
- * (`<name>.formbricks.json`, ADR 0016), from the survey card's Export menu.
+ * `GET /api/internal/surveys/{surveyId}/export?format=json|xlsx` — the survey as a Formbricks file
+ * (`<name>.formbricks.json`, ADR 0016) or an Excel export (`<name>.xlsx`, ADR 0017), from the survey
+ * card's Export menu.
  *
  * Internal (Internal API RFC, ENG-1668): session-only, no OpenAPI entry and no stability promise, with
  * every other v3 convention applied. The format is a query parameter, as in Google Drive's

@@ -1,10 +1,13 @@
 import { createId } from "@paralleldrive/cuid2";
 import { beforeAll, describe, expect, test } from "vitest";
+import * as XLSX from "xlsx";
 import { prisma } from "@formbricks/database";
 import type { TV3AuditLog } from "@/app/api/v3/lib/types";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { type TDashboardsFixture, seedDashboardsFixture, sessionOf } from "@/integration/dashboards-fixture";
 import { getContentDispositionFileName } from "@/lib/utils/file-download";
+import { EXCEL_EXPORT_META_SHEET } from "@/modules/survey/excel-export/write";
+import type { TSurveyExportFormat } from "@/modules/survey/export/lib/formats";
 import { ZFormbricksFileV1 } from "@/modules/survey/formbricks-file/envelope";
 import { exportSurveyOperation } from "./operations";
 
@@ -35,10 +38,15 @@ const BLOCKS = [
   },
 ];
 
-const exportAs = (userId: string, surveyId: string, auditLog?: TV3AuditLog) =>
+const exportAs = (
+  userId: string,
+  surveyId: string,
+  auditLog?: TV3AuditLog,
+  format: TSurveyExportFormat = "json"
+) =>
   exportSurveyOperation({
     surveyId,
-    format: "json",
+    format,
     authentication: sessionOf(userId),
     requestId: "req_export",
     instance: `/api/internal/surveys/${surveyId}/export`,
@@ -194,5 +202,67 @@ describe("GET /api/internal/surveys/{surveyId}/export", () => {
       attributeKeys: [{ key: "plan", name: "Plan", description: "Billing plan", dataType: "string" }],
       embeddedFields: [],
     });
+  });
+
+  test("a read-only member exports a draft as <name>.xlsx: one row per text, keyed, as typed text, audited", async () => {
+    const auditLog = auditLogStub();
+    const response = await exportAs(fixture.users.viewer, draftSurveyId, auditLog, "xlsx");
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Content-Type")).toBe(
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
+    expect(getContentDispositionFileName(response.headers.get("Content-Disposition"))).toBe(
+      "Größe NPS Q4.xlsx"
+    );
+
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    expect(response.headers.get("Content-Length")).toBe(String(bytes.byteLength));
+
+    const workbook = XLSX.read(bytes, { type: "array", cellFormula: true, cellNF: true });
+    const [sheetName, metaName] = workbook.SheetNames;
+    expect(metaName).toBe(EXCEL_EXPORT_META_SHEET);
+    expect(workbook.Workbook?.Sheets?.map((sheet) => sheet.Hidden)).toEqual([0, 2]);
+
+    const rows = XLSX.utils.sheet_to_json<string[]>(workbook.Sheets[sheetName], { header: 1, defval: "" });
+    expect(rows.map((row) => [row[0], row[1], row[3]])).toEqual([
+      ["key", expect.any(String), expect.any(String)],
+      ["element.satisfaction.headline", "satisfaction", "What should we improve?"],
+    ]);
+    for (const sheet of Object.values(workbook.Sheets)) {
+      for (const [address, cell] of Object.entries(sheet)) {
+        if (address.startsWith("!")) continue;
+        expect({ address, t: cell.t, z: cell.z, f: cell.f }).toEqual({
+          address,
+          t: "s",
+          z: "@",
+          f: undefined,
+        });
+      }
+    }
+
+    const { updatedAt } = await prisma.survey.findUniqueOrThrow({
+      where: { id: draftSurveyId },
+      select: { updatedAt: true },
+    });
+    expect(XLSX.utils.sheet_to_json<string[]>(workbook.Sheets[metaName], { header: 1 })).toEqual([
+      ["surveyId", draftSurveyId],
+      ["updatedAt", updatedAt.toISOString()],
+      ["format", "1"],
+    ]);
+
+    expect(auditLog).toMatchObject({
+      organizationId: fixture.organizationId,
+      targetId: draftSurveyId,
+      newObject: { format: "xlsx", fileFormat: 1, workspaceId: fixture.workspaceId },
+    });
+  });
+
+  test("refuses an Excel export to a caller who may not read the survey, without a file", async () => {
+    const response = await exportAs(fixture.users.outsider, draftSurveyId, undefined, "xlsx");
+
+    expect(response.status).toBe(403);
+    expect(response.headers.get("Content-Disposition")).toBeNull();
   });
 });
