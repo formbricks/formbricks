@@ -19,12 +19,18 @@ import freeProviderEmailDomains from "./email-domain-lists/free-provider-domains
  *
  * Server-only: ~56k domains that must never be pulled into the client bundle.
  */
+type TEmailDomainListEntry = { domain: string; reason: string };
+
+// Typed explicitly: TypeScript infers `never[]` for a JSON file holding an empty array.
+const blockedEntries: readonly TEmailDomainListEntry[] = blockedEmailDomainAdditions;
+const allowedEntries: readonly TEmailDomainListEntry[] = allowedEmailDomains;
+
 const blockedEmailDomains = new Set<string>([
   ...freeProviderEmailDomains,
   ...disposableEmailDomains,
-  ...blockedEmailDomainAdditions.map((entry) => entry.domain),
+  ...blockedEntries.map((entry) => entry.domain),
 ]);
-const allowedEmailDomainSet = new Set<string>(allowedEmailDomains.map((entry) => entry.domain));
+const allowedEmailDomainSet = new Set<string>(allowedEntries.map((entry) => entry.domain));
 
 /** Label count of the longest entry; no parent domain with more labels can match. */
 const MAX_ENTRY_LABELS = Math.max(
