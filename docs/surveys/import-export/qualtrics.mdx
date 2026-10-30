@@ -1,5 +1,5 @@
 ---
-title: "Migrate from Qualtrics"
+title: "Import from Qualtrics"
 description: "Import a Qualtrics survey export (.qsf) as a draft survey, with its questions, pages, languages and piped text. Logic is listed in a report for you to rebuild."
 icon: "file-import"
 ---
@@ -10,6 +10,8 @@ Formbricks turns the `.qsf` file Qualtrics exports into a draft survey. Formbric
   The Qualtrics import uses Formbricks AI, which is part of the [Enterprise
   Edition](/self-hosting/advanced/license). See [What the import needs](#what-the-import-needs).
 </Note>
+
+The same dialog imports Formbricks files and Word, Excel and CSV questionnaires. See [Import & Export](/surveys/import-export/overview).
 
 ## Before you export
 
@@ -28,10 +30,8 @@ Formbricks turns the `.qsf` file Qualtrics exports into a draft survey. Formbric
 
 <Steps>
   <Step title="Open the import dialog">
-    Go to **Surveys**, open the **New Survey** menu and choose **Import Qualtrics survey**. The templates page has
-    the same option as a card.
-
-    ![The New Survey menu with the Import Qualtrics survey option](/images/surveys/general-features/migrate-from-qualtrics/new-survey-menu.webp)
+    Go to **Surveys**, open the **New Survey** menu and choose **Import survey**. The templates page has the
+    same option as a card.
   </Step>
   <Step title="Drop the file">
     Drop the `.qsf` file into the dialog, or click to choose it. The import takes from a few seconds to about two
@@ -40,8 +40,6 @@ Formbricks turns the `.qsf` file Qualtrics exports into a draft survey. Formbric
   <Step title="Review the draft and the report">
     The review shows every imported question, a summary of the survey and the **Import report**. The report lists
     everything that was left out or changed. It opens by itself when it has warnings.
-
-    ![The review of an imported survey: the import report lists the questions it skipped, with a Download button](/images/surveys/general-features/migrate-from-qualtrics/review-and-report.webp)
   </Step>
   <Step title="Save and continue">
     Click **Save and continue**. The survey is created as a draft and opens in the editor. Nothing is published.
@@ -106,8 +104,6 @@ Each Qualtrics language becomes a survey language, with a region code: `EN` beco
 
 A language with missing texts is imported switched off. The review names it, and the missing texts stay empty, never filled with another language. Add them in the editor, then switch the language on under **Languages**.
 
-![The review warning that two languages are imported switched off](/images/surveys/general-features/migrate-from-qualtrics/languages-switched-off.webp)
-
 Qualtrics exports do not include translations of the end-of-survey message. In other languages, the ending shows the Formbricks thank-you message in that language, or the default language's text if Formbricks has none. The report names those languages.
 
 ## After the import
@@ -121,11 +117,9 @@ Qualtrics exports do not include translations of the end-of-survey message. In o
 
 ## What the import needs
 
-- **Your plan:** on Formbricks Cloud, a plan with AI. Self-hosted instances need an [Enterprise license](/self-hosting/advanced/license).
-- **The organization's AI switch:** **Settings → Organization → General → Smart functionality (AI)**. Only Owners and Managers can turn it on.
-- **An AI provider** on self-hosted instances. See [AI Features](/self-hosting/configuration/ai-features).
+The Qualtrics import needs what every AI import needs: a plan with AI on Formbricks Cloud or an [Enterprise license](/self-hosting/advanced/license) when self-hosting, the organization's AI switch turned on, and an AI provider on self-hosted instances. See [What AI imports need](/surveys/import-export/overview#what-ai-imports-need).
 
-Turning on the AI switch is your consent to send survey content to the AI provider. The import sends your question texts, options and logic, never your responses. See [AI Features](/platform/features/ai-features) for how AI is hosted.
+The import sends your question texts, options and logic to the AI provider, never your responses.
 
 ## Limits
 
@@ -136,11 +130,4 @@ Turning on the AI switch is your consent to send survey content to the AI provid
 
 ## Self-hosting: proxy body size
 
-The import uploads the whole file in one request, up to about 16 MB. If a reverse proxy sits in front of Formbricks, allow request bodies of at least 16 MB on `/api/internal/surveys/import/stream`. nginx allows 1 MB by default:
-
-```nginx
-location /api/internal/surveys/import/stream {
-    client_max_body_size 16m;
-    proxy_pass http://formbricks;
-}
-```
+If a reverse proxy sits in front of Formbricks, it must let the upload through. See [Self-hosting: proxy body size](/surveys/import-export/overview#self-hosting-proxy-body-size).

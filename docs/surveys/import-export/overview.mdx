@@ -1,0 +1,238 @@
+---
+title: "Import & Export"
+description: "Move a survey to another workspace, organization or instance as a Formbricks file, send it to reviewers as an Excel sheet, or turn a Word, Excel, CSV or Qualtrics questionnaire into a draft survey."
+icon: "arrow-right-arrow-left"
+---
+
+Any survey can leave Formbricks as a file, and come back in as one. Pick the path by what you have and where it needs to go:
+
+| You want to                                                       | Use                                                         | Needs AI |
+| ----------------------------------------------------------------- | ----------------------------------------------------------- | -------- |
+| Move a survey to another workspace, organization or instance      | [Formbricks file](#export-a-survey) (`.json`)               | No       |
+| Edit a survey outside Formbricks, by hand or with an AI assistant | [Formbricks file](/surveys/import-export/formbricks-file)   | No       |
+| Send a survey to reviewers or translators                         | [Excel export](#what-the-excel-export-holds) (`.xlsx`)      | No       |
+| Turn a questionnaire into a survey                                | [Document import](#import-a-document) (Word, Excel, CSV)    | Yes      |
+| Move a survey from Qualtrics                                      | [Qualtrics import](/surveys/import-export/qualtrics) (`.qsf`) | Yes      |
+
+<Note>
+  Formbricks files and the Excel export work on every plan, without AI. Document and Qualtrics imports use
+  Formbricks AI, which is part of the [Enterprise Edition](/self-hosting/advanced/license). See [What
+  AI imports need](#what-ai-imports-need).
+</Note>
+
+## Export a survey
+
+<Steps>
+  <Step title="Open the survey's menu">
+    Go to **Surveys** and click the **⋮** menu on the survey's card.
+  </Step>
+  <Step title="Choose a format">
+    Open **Export** and choose **Formbricks file (.json)** or **Excel file (.xlsx)**.
+  </Step>
+</Steps>
+
+The file is named after the survey: `Onboarding NPS.formbricks.json` or `Onboarding NPS.xlsx`.
+
+Anyone who can see a survey can export it, read-only members and drafts included. The file holds nothing the survey page does not already show. With [audit logging](/self-hosting/advanced/enterprise-features/audit-logging) on, every export, import and Update is recorded.
+
+### What a Formbricks file holds
+
+A Formbricks file is the survey's content, in a form any Formbricks workspace, organization or instance can import:
+
+- questions, blocks, endings and the welcome card;
+- languages and every translation;
+- hidden fields, variables, logic and recall;
+- for app surveys, triggers, display settings and targeting filters;
+- the IDs of the survey and of its blocks, questions, options and endings, so an import can find the survey again and its logic still points where it did;
+- the things the survey uses from its workspace: the actions its triggers use, the contact attributes its targeting names, shared hidden fields and variables, and the names of its languages. An import finds each of them in the target workspace, or creates it.
+
+Left out on purpose: **styling (custom CSS included), survey settings, follow-ups and quotas**. Responses and contacts never leave with the file.
+
+Images and videos are not copied into the file. It links to them on the instance you exported from, so they keep loading after a move only while that instance is up and reachable. Replace them in the editor if it is going away.
+
+To read or change the file, see [Editing a Formbricks file](/surveys/import-export/formbricks-file).
+
+### What the Excel export holds
+
+The Excel export is a sheet for people who don't use Formbricks: one row per text the survey shows, one column per language.
+
+| Column       | What it holds                                                                                        |
+| ------------ | ---------------------------------------------------------------------------------------------------- |
+| Question ID  | The question's ID, so a reviewer can point at it exactly                                             |
+| Type         | The question type, or which text of the question the row is: an option, a matrix row, a placeholder |
+| One per language | Headed with the language name and code, for example `German (de-DE)`. The default language comes first, marked "— default" |
+| Logic        | Each logic rule of the block, written out in words, on the block's first question                    |
+
+The cells hold the text respondents read: formatting is removed, and recalled answers show as `@` and the question or field they recall. Nothing in a cell ever runs as a formula. A text longer than Excel allows (32,767 characters) is cut and ends in "… [truncated]".
+
+The headers, question types and the Logic column are in your own Formbricks language. The texts are the survey's own.
+
+<Info>
+  The Excel export is for reading. Importing it back creates a new survey through the [document
+  import](#import-a-document); it never updates the survey it came from.
+</Info>
+
+## Import a survey
+
+Every import runs through one dialog. Go to **Surveys**, open the **New Survey** menu and choose **Import survey**. The templates page has the same option as a card.
+
+Drop a file into the dialog, or click to choose one, up to 15 MB. Formbricks reads the file and shows you a draft before anything is created:
+
+- the questions it found, with a summary of questions, blocks and languages;
+- the **Import report**, which lists everything left out, changed or worth checking. It opens by itself when there is a warning, and **Download** saves it as a text file.
+
+Click **Save and continue** to create the survey as a draft and open it in the editor. Nothing is published. **Pick another file** starts over.
+
+Formbricks tells the file type from its content, not its name. A file it can't read fails with the reason, and nothing is created.
+
+<Note>
+  Without Formbricks AI, the dialog takes Formbricks files only. The **Very large survey?** link still
+  shows; see [Very large surveys](#very-large-surveys).
+</Note>
+
+## Import a Formbricks file
+
+A Formbricks file imports without AI, on every plan, into any workspace, organization or instance. You need write access to the workspace you import into.
+
+The file becomes a new draft named after the survey with "(imported)" added: `Onboarding NPS (imported)`. If that name is taken in the workspace, it gets the next free number, `(imported 2)`, and so on. Importing an imported survey again never stacks the suffix.
+
+### What the import creates
+
+The survey and everything it needs are created together, or not at all. If any part fails, nothing is left behind.
+
+- **Actions** that triggers use are matched in the workspace: code actions by their key, no-code actions by their configuration. A missing one is created, with "(imported)" added if another action already has its name.
+- **Contact attributes** that targeting filters name are matched by key and created when missing.
+- **Shared hidden fields and variables** link to the workspace's library when it has one with the same key, source and data type. Otherwise the field stays local to the survey.
+- **Languages** are matched by code. A language the workspace doesn't have is added under the name it had where the file came from.
+
+The report lists each action and attribute the import creates.
+
+### What the import removes
+
+Some parts can't work in the target workspace. Formbricks removes them, with a warning in the report for each, instead of failing the import:
+
+- **Custom CSS.** Styling is not imported.
+- **External links**, when your plan doesn't allow them. A redirect ending becomes a regular ending, and buttons lose their external link.
+- **Targeting filters that point at another workspace:** segment filters, and filters on specific surveys. Attribute, device and other filters stay. If your plan has no contact targeting, all targeting is removed.
+
+The report also notes that styling, settings, follow-ups and quotas are not part of the file.
+
+### Files from other versions
+
+Files from older versions of Formbricks keep importing. A file from a newer version is refused: update Formbricks, then import it again.
+
+## Update a survey from a file
+
+When you import a Formbricks file into the workspace its survey came from, Formbricks offers to update that survey instead of creating a new one. This is a **Match**. It happens only when the survey:
+
+- has the ID in the file;
+- is in the workspace you import into, and not archived;
+- is one you can edit.
+
+Anything else creates a new survey. The dialog never hints that a survey exists if you can't edit it.
+
+On a Match, the review asks **How should we import it?**, with **Update** selected and **Create new** next to it. With Update selected, the button reads **Update survey**.
+
+### What Update replaces and keeps
+
+Update replaces the survey's questions, blocks, endings, welcome card, languages, hidden fields, variables, logic and targeting with the file's.
+
+It keeps the survey's ID, name, status, responses, settings and styling. Links, embeds and QR codes keep working.
+
+A file whose survey type (link or app) or default language differs from the survey's can't update it. Import it as a new survey instead.
+
+<Warning>
+  If the survey has responses, the report warns about each question and option the file removes. Their
+  answers stay in the database but stop showing in the summary.
+</Warning>
+
+### Active surveys are never updated
+
+If the survey is active (in progress), the choice is locked to **Create new** and the dialog says why. The same holds if the survey goes live between your review and your click: the Update fails, nothing is written, and the choice moves to **Create new**. Pause the survey first if you need to update it.
+
+### Changed since you exported
+
+Update first checks that nobody changed the survey after the file was exported. If someone did, nothing is written. The dialog shows **"Survey name" changed after this file was exported**, and the choice moves to **Create new**.
+
+You can save the file as a new survey, or choose **Update** again: the button now reads **Update anyway** and overwrites those changes. If the survey changes once more after this review, Update anyway fails too. Pick the file again to review it against the latest version.
+
+### Triggers
+
+For app surveys, when the file's triggers differ from the survey's, the review asks which to use:
+
+- **Use the file's:** the survey is shown by the file's triggers and display settings.
+- **Keep current:** the survey keeps its own triggers and display settings.
+
+If the file's triggers would leave a live survey with nothing that shows it, the choice is locked to **Keep current**. The question is hidden when the triggers are the same.
+
+## Import a document
+
+A **document import** turns a questionnaire in Word (`.docx`), Excel (`.xlsx`) or CSV (`.csv`) into a draft survey. Formbricks AI reads the layout and decides how to build the survey. The texts themselves come from your file.
+
+- **Word for word.** Every question and option is copied from the file, in every language it holds. The AI only decides the structure: which lines are questions, their types, how they group into blocks and which column holds which language. It never writes survey text.
+- **Routing becomes logic.** A rule written in the document, like "If No, skip to Q5", becomes survey logic. The report flags each rule so you can check it.
+- **Any layout.** A question list doesn't need a template. A cell that holds a question and its options in two languages is split in each language. If the AI can't split a cell word for word, the whole cell becomes the question and the report says so.
+- **Tables** in a Word file become matrix questions, flagged for you to check.
+- **Tracked changes** in Word are resolved as if accepted: insertions kept, deletions dropped. Comments, headers, footers and hidden text are not read.
+- **Images** are not imported. The report counts them so you know what to add.
+- **Excel:** only the first sheet is read. The report names the sheets it skipped. A formula cell gives its last calculated value.
+- **CSV:** the separator can be a comma, semicolon, tab or pipe. Files are read as UTF-8, as UTF-16 when the file starts with a byte-order mark, and otherwise as Windows-1252, which Excel on Windows uses. When a file isn't UTF-8, the report says which encoding was used. If accented letters look wrong, save the file as **CSV UTF-8** and import it again.
+- **Older Office files** (`.doc`, `.xls`) are not read. Save them as `.docx` or `.xlsx` first.
+
+The survey is named after the document's title, then its first heading or title row, then the file name, with "(imported)" added.
+
+A document import shows its progress, **Reading the file**, **Building questions with AI** and **Building the draft**, and you can stop it at any time.
+
+<Note>
+  Instructions hidden in a document, such as "ignore the questions above", are treated as text. They
+  don't change how the AI reads the file.
+</Note>
+
+### Very large surveys
+
+A document import builds up to **200 questions** from up to **240,000 characters** of text. A larger document is refused before any AI runs.
+
+Import it with Claude or ChatGPT instead. [Connect your assistant to Formbricks through MCP](/platform/mcp/overview), give it the document, and ask it to create the survey. Or split the document and import each part.
+
+### Document limits
+
+| Limit                              | Value                                                  |
+| ---------------------------------- | ------------------------------------------------------ |
+| File size                          | 15 MB                                                  |
+| Questions                          | 200, and 200 options per question                      |
+| Text sent to the AI                | 240,000 characters                                     |
+| Excel sheet or CSV                 | 5,000 rows, 100 columns, 32,767 characters per cell    |
+| Word document                      | 20,000 paragraphs, 500 tables, 50,000 table cells      |
+
+Each error names the limit the file is past.
+
+## Import from Qualtrics
+
+A Qualtrics export (`.qsf`) imports through the same dialog. See [Import from Qualtrics](/surveys/import-export/qualtrics) for what comes across.
+
+## What AI imports need
+
+Document and Qualtrics imports use Formbricks AI:
+
+- **Your plan:** on Formbricks Cloud, a plan with AI. Self-hosted instances need an [Enterprise license](/self-hosting/advanced/license).
+- **The organization's AI switch:** **Settings → Organization → General → Smart functionality (AI)**. Only Owners and Managers can turn it on.
+- **An AI provider** on self-hosted instances. See [AI Features](/self-hosting/configuration/ai-features).
+
+Turning on the AI switch is your consent to send survey content to the AI provider. An import sends the text of your file, never your responses. See [AI Features](/platform/features/ai-features) for how AI is hosted.
+
+## Limits for every import
+
+- One survey per file, up to 15 MB.
+- One import at a time per user. When Formbricks is busy with other imports, try again after a few seconds.
+- AI imports share a rate limit with Create with AI.
+
+## Self-hosting: proxy body size
+
+The import uploads the whole file in one request, up to about 16 MB, and saves the reviewed draft in a second request of up to 3 MB. If a reverse proxy sits in front of Formbricks, allow request bodies of at least 16 MB under `/api/internal/surveys/`. nginx allows 1 MB by default:
+
+```nginx
+location /api/internal/surveys/ {
+    client_max_body_size 16m;
+    proxy_pass http://formbricks;
+}
+```
