@@ -2,10 +2,10 @@
 
 import { useTranslation } from "react-i18next";
 import { getQsfImportFacts } from "@/modules/survey/import/lib/import-report";
-import type { TQsfImportReport } from "@/modules/survey/import/types";
+import type { TSurveyImportReport } from "@/modules/survey/import/types";
 
 /** The facts row above the review list: what the file turned into, at a glance. */
-export const ImportFacts = ({ summary }: Readonly<{ summary: TQsfImportReport["summary"] }>) => {
+export const ImportFacts = ({ summary }: Readonly<{ summary: TSurveyImportReport["summary"] }>) => {
   const { t } = useTranslation();
 
   return (

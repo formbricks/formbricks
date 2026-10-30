@@ -1,12 +1,12 @@
-import type { TQsfImportIssue, TQsfImportReport } from "@/modules/survey/import/types";
+import type { TSurveyImportIssue, TSurveyImportReport } from "@/modules/survey/import/types";
 
 type TTranslate = (key: string, options?: Record<string, unknown>) => string;
 
-const param = (issue: TQsfImportIssue, name: string): string => String(issue.params?.[name] ?? "");
-const count = (issue: TQsfImportIssue): number => Number(issue.params?.count ?? 0);
+const param = (issue: TSurveyImportIssue, name: string): string => String(issue.params?.[name] ?? "");
+const count = (issue: TSurveyImportIssue): number => Number(issue.params?.count ?? 0);
 
 /** A language left out: the survey's default one (with what stands in), a named one, or one with no usable code. */
-const getSkippedLanguageMessage = (issue: TQsfImportIssue, t: TTranslate): string => {
+const getSkippedLanguageMessage = (issue: TSurveyImportIssue, t: TTranslate): string => {
   const code = param(issue, "code");
   const fallback = param(issue, "fallback");
   switch (param(issue, "cause")) {
@@ -61,7 +61,7 @@ const getQualtricsTypeName = (type: string, t: TTranslate): string => {
 };
 
 /** Why a question was left out, from the server's `params.cause`. */
-const getSkippedQuestionMessage = (issue: TQsfImportIssue, t: TTranslate): string => {
+const getSkippedQuestionMessage = (issue: TSurveyImportIssue, t: TTranslate): string => {
   switch (param(issue, "cause")) {
     case "unsupported_type":
       return t("workspace.surveys.import.issues.question_skipped_unsupported_type", {
@@ -103,7 +103,7 @@ const getUnknownIssueMessage = (_code: never, t: TTranslate): string =>
  * One report line in the user's language. Literal `t()` calls per code, so the translation scanner
  * sees every key. `params` come from the file or the AI: callers render the result as text only.
  */
-export const getQsfImportIssueMessage = (issue: TQsfImportIssue, t: TTranslate): string => {
+export const getQsfImportIssueMessage = (issue: TSurveyImportIssue, t: TTranslate): string => {
   switch (issue.code) {
     case "logic_not_imported": {
       const description = param(issue, "description");
@@ -175,7 +175,7 @@ export const getQsfImportIssueMessage = (issue: TQsfImportIssue, t: TTranslate):
  * The line with what it is about, e.g. `Q12: Logic not imported: …`: the Qualtrics question, the end
  * message, or for a page's rule when none of its questions was imported, the page's block.
  */
-export const getQsfImportIssueLine = (issue: TQsfImportIssue, t: TTranslate): string => {
+export const getQsfImportIssueLine = (issue: TSurveyImportIssue, t: TTranslate): string => {
   const message = getQsfImportIssueMessage(issue, t);
   const subject =
     issue.questionTag ??
@@ -186,7 +186,7 @@ export const getQsfImportIssueLine = (issue: TQsfImportIssue, t: TTranslate): st
 };
 
 /** Warnings first, then notes, keeping the server's order inside each. */
-export const sortQsfImportIssues = (issues: readonly TQsfImportIssue[]): TQsfImportIssue[] => [
+export const sortQsfImportIssues = (issues: readonly TSurveyImportIssue[]): TSurveyImportIssue[] => [
   ...issues.filter((issue) => issue.severity === "warning"),
   ...issues.filter((issue) => issue.severity !== "warning"),
 ];
@@ -195,7 +195,7 @@ export const sortQsfImportIssues = (issues: readonly TQsfImportIssue[]): TQsfImp
  * The languages the draft imports switched off, because texts are missing in them: the review names
  * them above the save button, so nobody publishes without noticing.
  */
-export const getSwitchedOffLanguages = (report: TQsfImportReport): string[] => [
+export const getSwitchedOffLanguages = (report: TSurveyImportReport): string[] => [
   ...new Set(
     report.issues
       .filter((issue) => issue.code === "translation_missing")
@@ -203,11 +203,11 @@ export const getSwitchedOffLanguages = (report: TQsfImportReport): string[] => [
   ),
 ];
 
-export const hasQsfImportWarnings = (report: TQsfImportReport): boolean =>
+export const hasQsfImportWarnings = (report: TSurveyImportReport): boolean =>
   report.issues.some((issue) => issue.severity === "warning");
 
 /** What the file turned into, at a glance: the facts row above the review list and the report's header. */
-export const getQsfImportFacts = (summary: TQsfImportReport["summary"], t: TTranslate): string[] => {
+export const getQsfImportFacts = (summary: TSurveyImportReport["summary"], t: TTranslate): string[] => {
   const facts = [
     t("workspace.surveys.import.facts.questions", { count: summary.questions }),
     t("workspace.surveys.import.facts.blocks", { count: summary.blocks }),
@@ -223,7 +223,7 @@ export const getQsfImportFacts = (summary: TQsfImportReport["summary"], t: TTran
 };
 
 /** The report as plain text, for Download (ENG-3605). Same lines the dialog shows. */
-export const formatQsfImportReport = (report: TQsfImportReport, t: TTranslate): string => {
+export const formatQsfImportReport = (report: TSurveyImportReport, t: TTranslate): string => {
   const lines = [
     t("workspace.surveys.import.report.text_title", { fileName: report.source.fileName }),
     getQsfImportFacts(report.summary, t).join(" · "),

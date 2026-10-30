@@ -11,11 +11,11 @@ import {
   hasQsfImportWarnings,
   sortQsfImportIssues,
 } from "@/modules/survey/import/lib/import-report";
-import type { TQsfImportReport } from "@/modules/survey/import/types";
+import type { TSurveyImportReport } from "@/modules/survey/import/types";
 import { Button } from "@/modules/ui/components/button";
 
 type ImportReportProps = {
-  report: TQsfImportReport;
+  report: TSurveyImportReport;
   className?: string;
 };
 

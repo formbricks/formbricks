@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { AIOutputTokenLimitError } from "@formbricks/ai";
 import { prepareV3SurveyCreateInput } from "@/app/api/v3/surveys/prepare";
-import type { TQsfImportReport } from "../types";
+import type { TSurveyImportDraft } from "../core/draft";
+import type { TSurveyImportReport } from "../types";
 import {
   IMPORTABLE_QSF_FIXTURES,
   type TImportableQsfFixture,
@@ -9,7 +10,6 @@ import {
 } from "./__fixtures__/load-fixture";
 import { loadRecordedPlan, recordedGenerate, timedGenerate } from "./__fixtures__/recorded-plans";
 import type { TQsfPlanGenerate } from "./ai-plan";
-import type { TQsfDraftDocument } from "./assemble";
 import { checkQsfDraft } from "./final-gate";
 import { isObjectMemberName } from "./id-registry";
 import {
@@ -80,9 +80,9 @@ const answerFrom = (plan: string) => {
   mocks.generateOrganizationAIObject.mockImplementation(generate);
 };
 
-const elementsOf = (document: TQsfDraftDocument) => document.blocks.flatMap((block) => block.elements);
+const elementsOf = (document: TSurveyImportDraft) => document.blocks.flatMap((block) => block.elements);
 
-type TExpectedReport = [TQsfImportReport["summary"], string[]];
+type TExpectedReport = [TSurveyImportReport["summary"], string[]];
 
 /** What each fixture's import must report: the summary, and the issue codes (with causes), sorted. */
 const EXPECTED_REPORTS: Record<TImportableQsfFixture, TExpectedReport> = {

@@ -1,14 +1,16 @@
 import { describe, expect, test } from "vitest";
 import deDE from "@/locales/de-DE.json";
+import type { TSurveyImportDraftElement } from "../core/draft";
+import type { TSurveyImportPipelineIssue } from "../core/report";
 import { cpuMsSince } from "./__fixtures__/cpu-time";
 import { loadQsfFixture } from "./__fixtures__/load-fixture";
 import { loadRecordedPlan, recordedGenerate } from "./__fixtures__/recorded-plans";
 import { planQsfImport } from "./ai-plan";
-import { type TQsfDraftElement, assembleQsfDraft, buildHiddenFields, disambiguateLabels } from "./assemble";
+import { assembleQsfDraft, buildHiddenFields, disambiguateLabels } from "./assemble";
 import { checkQsfDraft } from "./final-gate";
 import { isObjectMemberName } from "./id-registry";
 import type { TQsfCheckedPlan } from "./plan-checks";
-import type { TQsfIssue, TQsfSurvey } from "./qsf-model";
+import type { TQsfSurvey } from "./qsf-model";
 import { readQsf } from "./read-qsf";
 import { sanitizeQsfTexts } from "./sanitize-text";
 
@@ -45,10 +47,10 @@ const assembleFixture = async (
   return { survey, ...assembly };
 };
 
-const elements = (document: { blocks: { elements: TQsfDraftElement[] }[] }) =>
+const elements = (document: { blocks: { elements: TSurveyImportDraftElement[] }[] }) =>
   document.blocks.flatMap((block) => block.elements);
 
-const element = (document: { blocks: { elements: TQsfDraftElement[] }[] }, id: string) => {
+const element = (document: { blocks: { elements: TSurveyImportDraftElement[] }[] }, id: string) => {
   const found = elements(document).find((candidate) => candidate.id === id);
   if (!found) throw new Error(`No element ${id}`);
   return found;
@@ -127,7 +129,7 @@ describe("assembleQsfDraft", () => {
   test("shows the default language's ending where Formbricks has no strings, and never counts it missing", async () => {
     const withLanguage = (code: string) =>
       assembleFixture("pages-and-blocks.qsf", { editSurvey: (survey) => survey.languages.push(code) });
-    const missingIn = (issues: TQsfIssue[]) =>
+    const missingIn = (issues: TSurveyImportPipelineIssue[]) =>
       Number(issues.find((issue) => issue.code === "translation_missing")?.params?.count);
     const norwegian = await withLanguage("nb-NO");
     const austrian = await withLanguage("de-AT");

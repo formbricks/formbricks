@@ -1,5 +1,5 @@
 import { describe, expectTypeOf, test } from "vitest";
-import type { TQsfDraftDocument } from "@/modules/survey/import/qsf/draft";
+import type { TSurveyImportDraft } from "@/modules/survey/import/core/draft";
 import type { TQsfImportResult } from "@/modules/survey/import/qsf/pipeline";
 import type { TQsfImportStreamEvent } from "./events";
 
@@ -9,7 +9,7 @@ describe("TQsfImportStreamEvent", () => {
   // Checked by the type checker: the dialog reads the draft off `done`, so it must not be `unknown`.
   test("types done's payload as the draft the pipeline builds", () => {
     expectTypeOf<TDonePayload>().not.toBeUnknown();
-    expectTypeOf<TDonePayload>().toEqualTypeOf<TQsfDraftDocument>();
+    expectTypeOf<TDonePayload>().toEqualTypeOf<TSurveyImportDraft>();
     expectTypeOf<TDonePayload>().toEqualTypeOf<TQsfImportResult["payload"]>();
   });
 });

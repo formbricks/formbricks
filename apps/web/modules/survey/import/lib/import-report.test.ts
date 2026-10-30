@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import type { TQsfImportReport } from "@/modules/survey/import/types";
+import type { TSurveyImportReport } from "@/modules/survey/import/types";
 import {
   formatQsfImportReport,
   getQsfImportFacts,
@@ -13,7 +13,7 @@ import {
 const t = (key: string, options?: Record<string, unknown>) =>
   options ? `${key.split(".").pop()} ${JSON.stringify(options)}` : (key.split(".").pop() ?? key);
 
-const report = (issues: TQsfImportReport["issues"]): TQsfImportReport => ({
+const report = (issues: TSurveyImportReport["issues"]): TSurveyImportReport => ({
   source: { kind: "qsf", fileName: "Customer survey.qsf" },
   summary: { blocks: 2, questions: 12, languages: ["en-US", "de-DE"], logicRules: 3, hiddenFields: 1 },
   issues,
@@ -169,7 +169,7 @@ describe("getQsfImportIssueLine", () => {
     const unknownIssue = {
       code: "something_new",
       severity: "info",
-    } as unknown as TQsfImportReport["issues"][number];
+    } as unknown as TSurveyImportReport["issues"][number];
 
     expect(getQsfImportIssueLine(unknownIssue, t)).toBe("unknown");
   });

@@ -1,6 +1,8 @@
+import type { TSurveyImportDraft } from "../core/draft";
+import type { TSurveyImportPipelineIssue } from "../core/report";
 import { SURVEY_IMPORT_MAX_DRAFT_BYTES } from "../limits";
-import { type TQsfAssembly, type TQsfDraftDocument, withLanguageSettings } from "./assemble";
-import type { TQsfIssue, TQsfPage, TQsfQuestion, TQsfSurvey, TQsfTextKey } from "./qsf-model";
+import { type TQsfAssembly, withLanguageSettings } from "./assemble";
+import type { TQsfPage, TQsfQuestion, TQsfSurvey, TQsfTextKey } from "./qsf-model";
 import { isUnsupportedType } from "./unsupported-types";
 
 /**
@@ -17,7 +19,7 @@ const byteLength = (text: string): number => encoder.encode(text).length;
 const jsonBytes = (value: unknown): number => byteLength(JSON.stringify(value));
 
 /** The bytes the create's request body takes for this draft. */
-export const measureQsfDraftBytes = (document: TQsfDraftDocument): number => jsonBytes(document);
+export const measureQsfDraftBytes = (document: TSurveyImportDraft): number => jsonBytes(document);
 
 type TLocaleText = Record<string, string>;
 
@@ -27,7 +29,7 @@ type TLocaleText = Record<string, string>;
  * default language, and no other part of the draft is keyed by language codes.
  */
 function collectLocaleTexts(
-  document: TQsfDraftDocument,
+  document: TSurveyImportDraft,
   roots: unknown[] = [document.blocks, document.endings]
 ): TLocaleText[] {
   const codes = new Set(document.languages.map((language) => language.code));
@@ -54,7 +56,11 @@ function collectLocaleTexts(
  * summed once — `,"code":"text"` in every text, and its entry in `languages` — so no step serializes
  * the draft again.
  */
-function dropLanguages(document: TQsfDraftDocument, overBy: number, issues: TQsfIssue[]): number {
+function dropLanguages(
+  document: TSurveyImportDraft,
+  overBy: number,
+  issues: TSurveyImportPipelineIssue[]
+): number {
   const droppable = document.languages.filter((language) => !language.default);
   if (droppable.length === 0) return overBy;
 
@@ -96,7 +102,7 @@ function dropTrailingQuestions(
   assembly: TQsfAssembly,
   survey: TQsfSurvey,
   overBy: number,
-  issues: TQsfIssue[]
+  issues: TSurveyImportPipelineIssue[]
 ): { refs: Set<string>; elementIds: Set<string> } {
   const { document, elementRefs } = assembly;
   /** The questions cut, by Qualtrics id: export tags can repeat. */
@@ -142,7 +148,7 @@ function replaceRecallsOf(
   assembly: TQsfAssembly,
   survey: TQsfSurvey,
   cutIds: ReadonlySet<string>,
-  issues: TQsfIssue[]
+  issues: TSurveyImportPipelineIssue[]
 ): void {
   const { document, elementRefs } = assembly;
   const replaceIn = (root: unknown): number => {
@@ -190,11 +196,11 @@ export function fitQsfDraftToCreateLimit(
   assembly: TQsfAssembly,
   survey: TQsfSurvey,
   maxBytes: number = SURVEY_IMPORT_MAX_DRAFT_BYTES
-): { dropped: TQsfIssue[]; keepIssue: (issue: TQsfIssue) => boolean } {
+): { dropped: TSurveyImportPipelineIssue[]; keepIssue: (issue: TSurveyImportPipelineIssue) => boolean } {
   let overBy = measureQsfDraftBytes(assembly.document) - maxBytes;
   if (overBy <= 0) return { dropped: [], keepIssue: () => true };
 
-  const dropped: TQsfIssue[] = [];
+  const dropped: TSurveyImportPipelineIssue[] = [];
   const languagesBefore = assembly.document.languages.map((language) => language.code);
   const droppedRefs = new Set<string>();
 
@@ -212,7 +218,7 @@ export function fitQsfDraftToCreateLimit(
 
   const kept = new Set(assembly.document.languages.map((language) => language.code));
   const droppedLanguages = new Set(languagesBefore.filter((code) => !kept.has(code)));
-  const keepIssue = (issue: TQsfIssue) =>
+  const keepIssue = (issue: TSurveyImportPipelineIssue) =>
     !(issue.code === "translation_missing" && droppedLanguages.has(String(issue.params?.language))) &&
     !(issue.questionRef !== undefined && droppedRefs.has(issue.questionRef));
   return { dropped, keepIssue };
@@ -273,7 +279,7 @@ const textBound = (text: string | undefined): number =>
     : jsonBytes(text) + RECALL_GROWTH_BYTES * countOf(text, "${") + countOf(text, "#recall:");
 
 export interface TQsfSurveyFit {
-  issues: TQsfIssue[];
+  issues: TSurveyImportPipelineIssue[];
   /** The questions cut, by Qualtrics id. */
   cutRefs: ReadonlySet<string>;
 }
@@ -387,7 +393,7 @@ export function fitQsfSurveyToCreateLimit(
     ) +
     questions.reduce((total, question) => total + questionWeight(question), 0);
 
-  const issues: TQsfIssue[] = [];
+  const issues: TSurveyImportPipelineIssue[] = [];
   let total = base;
   const weights = survey.languages.map((code) => ({ code, weight: languageWeight(code) }));
   total += weights.reduce((sum, language) => sum + language.weight, 0);

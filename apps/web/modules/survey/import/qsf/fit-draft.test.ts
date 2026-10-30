@@ -4,10 +4,12 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, test } from "vitest";
 import { DEFAULT_REQUEST_BODY_LIMIT_BYTES } from "@/app/lib/api/request-body";
+import type { TSurveyImportDraftElement } from "../core/draft";
+import type { TSurveyImportPipelineIssue } from "../core/report";
 import { SURVEY_IMPORT_MAX_DRAFT_BYTES } from "../limits";
 import { refsInPrompt } from "./__fixtures__/recorded-plans";
 import { type TQsfPlanGenerate, planQsfImport } from "./ai-plan";
-import type { TQsfAssembly, TQsfDraftElement } from "./assemble";
+import type { TQsfAssembly } from "./assemble";
 import { assembleQsfDraft } from "./assemble";
 import { checkQsfDraft } from "./final-gate";
 import {
@@ -16,7 +18,7 @@ import {
   fitQsfSurveyToCreateLimit,
   measureQsfDraftBytes,
 } from "./fit-draft";
-import type { TQsfIssue, TQsfQuestion, TQsfSurvey } from "./qsf-model";
+import type { TQsfQuestion, TQsfSurvey } from "./qsf-model";
 import { readQsf } from "./read-qsf";
 import { sanitizeQsfTexts } from "./sanitize-text";
 
@@ -32,7 +34,7 @@ const buildAssembly = (shape: {
   const elementRefs: string[][] = [];
   const blocks = Array.from({ length: shape.blocks }, (_, b) => {
     const refs: string[] = [];
-    const elements = Array.from({ length: shape.perBlock }, (_, e): TQsfDraftElement => {
+    const elements = Array.from({ length: shape.perBlock }, (_, e): TSurveyImportDraftElement => {
       const n = b * shape.perBlock + e + 1;
       refs.push(`QID${n}`);
       questions.set(`QID${n}`, { ref: `QID${n}`, exportTag: `Q${n}` } as TQsfQuestion);
@@ -209,7 +211,7 @@ describe("fitQsfDraftToCreateLimit", () => {
     const maxBytes = Math.floor(measureQsfDraftBytes(assembly.document) / 6);
 
     const { keepIssue } = fitQsfDraftToCreateLimit(assembly, survey, maxBytes);
-    const line = (issue: Partial<TQsfIssue>): TQsfIssue => ({
+    const line = (issue: Partial<TSurveyImportPipelineIssue>): TSurveyImportPipelineIssue => ({
       code: "logic_not_imported",
       severity: "warning",
       ...issue,

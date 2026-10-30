@@ -1,9 +1,9 @@
 import type { InvalidParam } from "@/app/api/v3/lib/response";
-import type { TQsfImportLimit } from "../types";
+import type { TSurveyImportLimit } from "../types";
 
-/** One problem with a refused file, coded for the dialog (see `TQsfImportRefusalCode`). */
+/** One problem with a refused file, coded for the dialog (see `TSurveyImportRefusalCode`). */
 export type TQsfInputInvalidParam = InvalidParam &
-  ({ code: "qsf_not_recognized" } | { code: "qsf_limit_exceeded"; identifier: TQsfImportLimit });
+  ({ code: "qsf_not_recognized" } | { code: "qsf_limit_exceeded"; identifier: TSurveyImportLimit });
 
 /**
  * The file is not a Qualtrics survey export the import can read, or it is past one of the reader's
@@ -27,7 +27,11 @@ export const qsfNotRecognized = (name: string, reason: string): QsfImportInputEr
   new QsfImportInputError([{ name, reason, code: "qsf_not_recognized" }]);
 
 /** The file is a Qualtrics export past one of the import's limits. */
-export const qsfLimitExceeded = (limit: TQsfImportLimit, name: string, reason: string): QsfImportInputError =>
+export const qsfLimitExceeded = (
+  limit: TSurveyImportLimit,
+  name: string,
+  reason: string
+): QsfImportInputError =>
   new QsfImportInputError([{ name, reason, code: "qsf_limit_exceeded", identifier: limit }]);
 
 /**

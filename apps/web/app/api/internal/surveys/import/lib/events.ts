@@ -1,6 +1,6 @@
 import { AI_STREAM_FAILURE_CODES } from "@/app/api/internal/lib/ai-stream-errors";
-import type { TQsfDraftDocument } from "@/modules/survey/import/qsf/draft";
-import type { TQsfImportReport, TQsfImportStage } from "@/modules/survey/import/types";
+import type { TSurveyImportDraft } from "@/modules/survey/import/core/draft";
+import type { TSurveyImportReport, TSurveyImportStage } from "@/modules/survey/import/types";
 
 /** Codes that can only be raised after the stream opened. Everything else is a pre-stream problem+json. */
 export const QSF_IMPORT_STREAM_ERROR_CODES = {
@@ -23,10 +23,10 @@ export type TQsfImportStreamEvent =
    */
   | { type: "start"; requestId: string }
   /** A new stage, or the current one repeated as a heartbeat while a stage runs long. */
-  | { type: "progress"; stage: TQsfImportStage }
+  | { type: "progress"; stage: TSurveyImportStage }
   /**
    * The draft to review and create with `POST /api/v3/surveys?createdFrom=import`, sent there as it
    * is — the request body, locale-keyed, before parsing — and its report.
    */
-  | { type: "done"; payload: TQsfDraftDocument; report: TQsfImportReport }
+  | { type: "done"; payload: TSurveyImportDraft; report: TSurveyImportReport }
   | { type: "error"; code: TQsfImportStreamErrorCode; detail: string; retryAfter?: number };

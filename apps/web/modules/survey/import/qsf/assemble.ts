@@ -7,22 +7,23 @@ import {
   getTextContent,
   validateId,
 } from "@formbricks/types/surveys/validation";
-import { getDefaultEndingTexts } from "./default-ending";
 import type {
   TDraftChoice,
   TDraftElementBase,
   TDraftToggleInput,
-  TQsfDraftDocument,
-  TQsfDraftElement,
-  TQsfDraftEnding,
-  TQsfLocaleText,
-} from "./draft";
+  TSurveyImportDraft,
+  TSurveyImportDraftElement,
+  TSurveyImportDraftEnding,
+  TSurveyImportLocaleText,
+} from "../core/draft";
+import type { TSurveyImportPipelineIssue } from "../core/report";
+import { getDefaultEndingTexts } from "./default-ending";
 import { createSlicer } from "./event-loop";
 import { QsfIdRegistry, findFreeSuffixedName, isObjectMemberName } from "./id-registry";
 import { type TPipedTextContext, replacePipedText } from "./piped-text";
 import { type TQsfCheckedPlan, type TQsfPlannedQuestion, sliderPoints } from "./plan-checks";
 import type { TQsfPlanContactField } from "./plan-schema";
-import type { TQsfIssue, TQsfQuestion, TQsfSurvey, TQsfTextKey } from "./qsf-model";
+import type { TQsfQuestion, TQsfSurvey, TQsfTextKey } from "./qsf-model";
 import { type TSanitizedTexts, sanitizeName } from "./sanitize-text";
 
 /**
@@ -43,11 +44,9 @@ import { type TSanitizedTexts, sanitizeName } from "./sanitize-text";
 const hasTextContent = (text: string): boolean =>
   text.includes("<") ? getTextContent(text).length > 0 : text.trim().length > 0;
 
-export type { TQsfDraftDocument, TQsfDraftElement, TQsfDraftEnding, TQsfLocaleText } from "./draft";
-
 export interface TQsfAssembly {
-  document: TQsfDraftDocument;
-  issues: TQsfIssue[];
+  document: TSurveyImportDraft;
+  issues: TSurveyImportPipelineIssue[];
   /** The question ref behind each element, by block and element index, to map a gate issue back. */
   elementRefs: string[][];
 }
@@ -93,12 +92,12 @@ const MAX_HIDDEN_FIELD_ID_LENGTH = 64;
 export function buildHiddenFields(names: string[]): {
   fieldIds: string[];
   idByName: Map<string, string>;
-  issues: TQsfIssue[];
+  issues: TSurveyImportPipelineIssue[];
 } {
   const fieldIds: string[] = [];
   const taken = new Set<string>();
   const idByName = new Map<string, string>();
-  const issues: TQsfIssue[] = [];
+  const issues: TSurveyImportPipelineIssue[] = [];
   // Duplicates are checked against `taken`, in O(1); `validateId` only checks the name itself.
   const isFree = (id: string) =>
     id.length > 0 &&
@@ -150,14 +149,14 @@ const choiceShuffle = (randomized: boolean, hasSpecial: boolean): "none" | "all"
  */
 export const languageSettingsFor = (
   languageCount: number
-): Pick<TQsfDraftDocument, "showLanguageSwitch" | "autoSelectLanguage"> =>
+): Pick<TSurveyImportDraft, "showLanguageSwitch" | "autoSelectLanguage"> =>
   languageCount > 1 ? { showLanguageSwitch: true, autoSelectLanguage: true } : {};
 
 /**
  * The document with the language settings its enabled languages call for, after a fit dropped some: a
  * draft cut down to one enabled language loses them.
  */
-export function withLanguageSettings(document: TQsfDraftDocument): void {
+export function withLanguageSettings(document: TSurveyImportDraft): void {
   delete document.showLanguageSwitch;
   delete document.autoSelectLanguage;
   Object.assign(
@@ -217,7 +216,7 @@ const MAX_NAMED_OPTIONS = 5;
 const MAX_OPTION_NAME_CHARS = 40;
 
 class QsfAssembler {
-  private readonly issues: TQsfIssue[] = [];
+  private readonly issues: TSurveyImportPipelineIssue[] = [];
   private readonly languageCodes: string[];
   private readonly surveyLanguages: TSurveyLanguage[];
   /** Texts each language is missing. A language missing any is imported turned off. */
@@ -273,10 +272,10 @@ class QsfAssembler {
       }
     });
 
-    const blocks: TQsfDraftDocument["blocks"] = [];
+    const blocks: TSurveyImportDraft["blocks"] = [];
     const elementRefs: string[][] = [];
     for (const [blockIndex, { page, refs: pageRefs }] of placedBlocks.entries()) {
-      const elements: TQsfDraftElement[] = [];
+      const elements: TSurveyImportDraftElement[] = [];
       const refs: string[] = [];
       for (const ref of pageRefs) {
         const question = survey.questions.get(ref);
@@ -344,7 +343,7 @@ class QsfAssembler {
     context: TPipedTextContext | null,
     piped: { removed: number },
     countMissing = true
-  ): TQsfLocaleText {
+  ): TSurveyImportLocaleText {
     const byLanguage = this.params.texts.byKey.get(key);
     const [defaultCode] = this.languageCodes;
     const convert = (text: string) => {
@@ -355,7 +354,7 @@ class QsfAssembler {
 
     const defaultText = convert(byLanguage?.get(defaultCode) ?? "");
     const defaultShows = hasTextContent(defaultText);
-    const localized: TQsfLocaleText = { [defaultCode]: defaultText };
+    const localized: TSurveyImportLocaleText = { [defaultCode]: defaultText };
     for (const code of this.languageCodes.slice(1)) {
       const translated = byLanguage?.get(code);
       const converted = translated === undefined ? "" : convert(translated);
@@ -377,7 +376,7 @@ class QsfAssembler {
   }
 
   /** The same fixed text in every language, for a label the file left empty. */
-  private uniform(text: string): TQsfLocaleText {
+  private uniform(text: string): TSurveyImportLocaleText {
     return Object.fromEntries(this.languageCodes.map((code) => [code, text]));
   }
 
@@ -386,9 +385,12 @@ class QsfAssembler {
    * the file left the text itself empty. A translation missing beside a default text stays empty: its
    * language is imported turned off (see `localize`).
    */
-  private filled(text: TQsfLocaleText, fallback: string): { text: TQsfLocaleText; filled: boolean } {
+  private filled(
+    text: TSurveyImportLocaleText,
+    fallback: string
+  ): { text: TSurveyImportLocaleText; filled: boolean } {
     let filled = false;
-    const result: TQsfLocaleText = {};
+    const result: TSurveyImportLocaleText = {};
     const [defaultCode] = this.languageCodes;
     const defaultShows = hasTextContent(text[defaultCode] ?? "");
     for (const code of this.languageCodes) {
@@ -436,7 +438,7 @@ class QsfAssembler {
     question: TQsfQuestion,
     planned: TQsfPlannedQuestion,
     blockIndex: number
-  ): TQsfDraftElement {
+  ): TSurveyImportDraftElement {
     const piped = { removed: 0 };
     const tag = question.exportTag;
     const headline = this.filled(
@@ -520,7 +522,7 @@ class QsfAssembler {
     base: TDraftElementBase,
     options: (keys: TQsfTextKey[]) => TDraftChoice[],
     piped: { removed: number }
-  ): TQsfDraftElement {
+  ): TSurveyImportDraftElement {
     switch (planned.type) {
       case "openText":
         return {
@@ -651,7 +653,7 @@ class QsfAssembler {
    * organization's plan allows external URLs — the create checks that too — and the URL is one an
    * ending may hold.
    */
-  private async buildEndings(): Promise<TQsfDraftEnding[]> {
+  private async buildEndings(): Promise<TSurveyImportDraftEnding[]> {
     const { survey, allowExternalUrls } = this.params;
     const url = survey.endRedirectUrl;
     if (url) {
@@ -712,13 +714,13 @@ class QsfAssembler {
    * of its own relied on Qualtrics' default one, and a survey with no ending should not be published.
    * A language Formbricks has no strings for shows the default language's, named in the report.
    */
-  private async defaultEnding(): Promise<TQsfDraftEnding> {
+  private async defaultEnding(): Promise<TSurveyImportDraftEnding> {
     this.issues.push({ code: "ending_added", severity: "info", params: { subject: "ending" } });
     const texts = await getDefaultEndingTexts(this.languageCodes);
     // The default language always has a text: its own, else English.
     const fallback = texts[0] ?? { headline: "", subheader: "" };
-    const headline: TQsfLocaleText = {};
-    const subheader: TQsfLocaleText = {};
+    const headline: TSurveyImportLocaleText = {};
+    const subheader: TSurveyImportLocaleText = {};
     const standIns: string[] = [];
     for (const [index, code] of this.languageCodes.entries()) {
       const text = texts[index] ?? fallback;

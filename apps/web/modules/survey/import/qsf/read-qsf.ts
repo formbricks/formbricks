@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { DEFAULT_V3_SURVEY_LANGUAGE } from "@/app/api/v3/surveys/schemas";
+import type { TSurveyImportPipelineIssue } from "../core/report";
 import {
   SURVEY_IMPORT_MAX_NAME_CHARS,
   SURVEY_IMPORT_MAX_OPTIONS_PER_QUESTION,
@@ -30,7 +31,6 @@ import {
 import { needsParsing } from "./markup";
 import { collectEmbeddedDataReferences } from "./piped-text";
 import type {
-  TQsfIssue,
   TQsfLogicCondition,
   TQsfLogicRule,
   TQsfOption,
@@ -278,7 +278,7 @@ interface TFlowResult {
 }
 
 class QsfReader {
-  private readonly issues: TQsfIssue[] = [];
+  private readonly issues: TSurveyImportPipelineIssue[] = [];
   private readonly texts = new Map<TQsfTextKey, TQsfText>();
   private readonly counters = { t: 0, c: 0, a: 0, b: 0, s: 0 };
   private readonly languageByRaw = new Map<string, string | null>();

@@ -1,37 +1,44 @@
-import type { TQsfPlannedQuestion } from "./plan-checks";
-import type { TQsfPlanContactField } from "./plan-schema";
+import type {
+  TSurveyDateElement,
+  TSurveyOpenTextElementInputType,
+  TSurveyRatingElement,
+} from "@formbricks/types/surveys/elements";
 
 /*
- * The Qualtrics import's draft document (ENG-3654), as types only: the stream's event types and the
- * dialog import them, so this module must hold no runtime code and import nothing but types.
+ * The draft document every import lane builds (ENG-3654, ENG-6846), as types only: the stream's event
+ * types and the dialog import them, so this module must hold no runtime code and import nothing but
+ * types.
  */
 
+/** The fields a contact info element asks for. */
+export type TSurveyImportContactField = "firstName" | "lastName" | "email" | "phone" | "company";
+
 /** Text keyed by language code, default language first. */
-export type TQsfLocaleText = Record<string, string>;
+export type TSurveyImportLocaleText = Record<string, string>;
 
 export interface TDraftElementBase {
   id: string;
-  headline: TQsfLocaleText;
+  headline: TSurveyImportLocaleText;
   required: boolean;
   isDraft: true;
 }
 
 export interface TDraftChoice {
   id: string;
-  label: TQsfLocaleText;
+  label: TSurveyImportLocaleText;
 }
 
 export interface TDraftToggleInput {
   show: boolean;
   required: boolean;
-  placeholder: TQsfLocaleText;
+  placeholder: TSurveyImportLocaleText;
 }
 
-export type TQsfDraftElement = TDraftElementBase &
+export type TSurveyImportDraftElement = TDraftElementBase &
   (
     | {
         type: "openText";
-        inputType: TQsfPlannedQuestion["inputType"];
+        inputType: TSurveyOpenTextElementInputType;
         longAnswer: boolean;
         charLimit: { enabled: false };
       }
@@ -46,19 +53,19 @@ export type TQsfDraftElement = TDraftElementBase &
     | { type: "nps"; isColorCodingEnabled: false }
     | {
         type: "rating" | "csat" | "ces";
-        scale: NonNullable<TQsfPlannedQuestion["scale"]>;
+        scale: TSurveyRatingElement["scale"];
         range: number;
         isColorCodingEnabled: false;
       }
-    | { type: "date"; format: NonNullable<TQsfPlannedQuestion["format"]> }
+    | { type: "date"; format: TSurveyDateElement["format"] }
     | { type: "fileUpload"; allowMultipleFiles: false }
-    | ({ type: "contactInfo" } & Record<TQsfPlanContactField, TDraftToggleInput>)
-    | { type: "consent"; label: TQsfLocaleText }
+    | ({ type: "contactInfo" } & Record<TSurveyImportContactField, TDraftToggleInput>)
+    | { type: "consent"; label: TSurveyImportLocaleText }
     | { type: "cta"; buttonExternal: false }
   );
 
-export type TQsfDraftEnding =
-  | { id: string; type: "endScreen"; headline: TQsfLocaleText; subheader?: TQsfLocaleText }
+export type TSurveyImportDraftEnding =
+  | { id: string; type: "endScreen"; headline: TSurveyImportLocaleText; subheader?: TSurveyImportLocaleText }
   | { id: string; type: "redirectToUrl"; url: string; label: string };
 
 /**
@@ -67,20 +74,20 @@ export type TQsfDraftEnding =
  * texts, no defaults filled in — so not the parsed `TV3CreateSurveyBody`; and typed here because the
  * schema's own input type, `TV3CreateSurveyRequestBody`, is `unknown`.
  */
-export interface TQsfDraftDocument {
+export interface TSurveyImportDraft {
   workspaceId: string;
   name: string;
   type: "link";
   status: "draft";
   defaultLanguage: string;
   languages: { code: string; default: boolean; enabled: boolean }[];
-  blocks: { id: string; name: string; elements: TQsfDraftElement[] }[];
-  endings: TQsfDraftEnding[];
+  blocks: { id: string; name: string; elements: TSurveyImportDraftElement[] }[];
+  endings: TSurveyImportDraftEnding[];
   hiddenFields: { enabled: boolean; fieldIds: string[] };
   /**
-   * Set, both true, on a draft in more than one language: Qualtrics shows its respondents a language
-   * menu and opens a survey in the browser's language, and imported surveys keep doing so (#9508's
-   * fields). Left out on a one-language draft, v3's default. See `withLanguageSettings`.
+   * Set, both true, on a draft in more than one language: an imported multi-language survey shows its
+   * respondents a language menu and opens in the browser's language, as a Qualtrics survey does
+   * (#9508's fields). Left out on a one-language draft, v3's default. See `withLanguageSettings`.
    */
   showLanguageSwitch?: true;
   autoSelectLanguage?: true;

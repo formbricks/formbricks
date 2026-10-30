@@ -1,9 +1,9 @@
 import { describe, expect, test, vi } from "vitest";
 import { prepareV3SurveyCreateInput } from "@/app/api/v3/surveys/prepare";
-import type { TQsfDraftDocument } from "./assemble";
+import type { TSurveyImportDraft } from "../core/draft";
 import { checkQsfDraft, checkQsfDraftInSlices, elementsAtFault } from "./final-gate";
 
-const draft = (elements: unknown[], extra: Partial<TQsfDraftDocument> = {}): TQsfDraftDocument =>
+const draft = (elements: unknown[], extra: Partial<TSurveyImportDraft> = {}): TSurveyImportDraft =>
   ({
     workspaceId: "clxx1234567890123456789012",
     name: "Draft",
@@ -15,7 +15,7 @@ const draft = (elements: unknown[], extra: Partial<TQsfDraftDocument> = {}): TQs
     endings: [],
     hiddenFields: { enabled: false, fieldIds: [] },
     ...extra,
-  }) as TQsfDraftDocument;
+  }) as TSurveyImportDraft;
 
 const openText = (id: string, headline: string) => ({
   id,

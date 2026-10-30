@@ -1,10 +1,11 @@
 import DOMPurify from "isomorphic-dompurify";
 import { FOLLOW_UP_BODY_SANITIZE_CONFIG } from "@/modules/survey/follow-ups/lib/sanitize-follow-up-body";
+import type { TSurveyImportPipelineIssue } from "../core/report";
 import { SURVEY_IMPORT_MAX_TEXT_CHARS, SURVEY_IMPORT_MAX_TEXT_TAGS } from "../limits";
-import type { TQsfImportIssueCode } from "../types";
+import type { TSurveyImportIssueCode } from "../types";
 import { createSlicer } from "./event-loop";
 import { hasMarkup } from "./markup";
-import type { TQsfIssue, TQsfSurvey, TQsfTextFormat, TQsfTextKey } from "./qsf-model";
+import type { TQsfSurvey, TQsfTextFormat, TQsfTextKey } from "./qsf-model";
 
 /**
  * Text sanitizing for the Qualtrics import (ENG-3607).
@@ -76,7 +77,10 @@ const ACTIVE_TAGS = new Set([
 const STYLE_ATTRIBUTES = new Set(["style", "color", "bgcolor", "face", "size", "align", "class"]);
 const ACTIVE_URL = /^\s*(?:javascript|vbscript|data):/i;
 
-type TDroppedCode = Extract<TQsfImportIssueCode, "image_dropped" | "script_dropped" | "formatting_dropped">;
+type TDroppedCode = Extract<
+  TSurveyImportIssueCode,
+  "image_dropped" | "script_dropped" | "formatting_dropped"
+>;
 
 interface TSanitizedText {
   text: string;
@@ -262,7 +266,7 @@ export interface TSanitizedTexts {
   byKey: Map<TQsfTextKey, Map<string, string>>;
   /** The default language's text without markup, by text key, for the prompt. */
   plainDefault: Map<TQsfTextKey, string>;
-  issues: TQsfIssue[];
+  issues: TSurveyImportPipelineIssue[];
 }
 
 /**
@@ -270,7 +274,7 @@ export interface TSanitizedTexts {
  * and code.
  */
 class SanitizeReporter {
-  readonly issues: TQsfIssue[] = [];
+  readonly issues: TSurveyImportPipelineIssue[] = [];
   private readonly reported = new Set<string>();
 
   constructor(private readonly survey: TQsfSurvey) {}
@@ -282,7 +286,7 @@ class SanitizeReporter {
     if (result.tooLong) this.report("text_too_long", questionRef, isEnding);
   }
 
-  private report(code: TQsfImportIssueCode, questionRef: string | null, isEnding: boolean): void {
+  private report(code: TSurveyImportIssueCode, questionRef: string | null, isEnding: boolean): void {
     const perSurvey = code === "formatting_dropped";
     // What the line is about, so each question, and the ending, gets one line per code.
     let subject = questionRef ?? "";

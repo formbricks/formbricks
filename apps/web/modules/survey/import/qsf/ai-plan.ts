@@ -1,5 +1,6 @@
 import { NoObjectGeneratedError, NoOutputGeneratedError, TypeValidationError } from "ai";
 import { AIOutputTokenLimitError } from "@formbricks/ai";
+import type { TSurveyImportPipelineIssue } from "../core/report";
 import {
   SURVEY_IMPORT_AI_CALL_TIMEOUT_MS,
   SURVEY_IMPORT_AI_CHUNK_OUTPUT_TOKENS,
@@ -29,7 +30,7 @@ import {
   describedQuestionChars,
   describedRuleCount,
 } from "./prompt";
-import type { TQsfIssue, TQsfSurvey } from "./qsf-model";
+import type { TQsfSurvey } from "./qsf-model";
 import { unsupportedTypeSeverity } from "./unsupported-types";
 
 /**
@@ -184,7 +185,7 @@ function usageOfFailure(error: unknown): TQsfCallUsage | undefined {
 
 export interface TQsfPlanResult {
   plan: TQsfCheckedPlan;
-  issues: TQsfIssue[];
+  issues: TSurveyImportPipelineIssue[];
   usage: TQsfPlanUsage;
   calls: number;
 }
@@ -472,9 +473,9 @@ const failureCause = (reasons: readonly TQsfPlanFailure[]): "ai_budget" | "ai_ti
   return "plan_invalid";
 };
 
-function preSkip(survey: TQsfSurvey): { refs: string[]; issues: TQsfIssue[] } {
+function preSkip(survey: TQsfSurvey): { refs: string[]; issues: TSurveyImportPipelineIssue[] } {
   const refs: string[] = [];
-  const issues: TQsfIssue[] = [];
+  const issues: TSurveyImportPipelineIssue[] = [];
   for (const question of survey.questions.values()) {
     const severity = unsupportedTypeSeverity(question);
     if (severity) {

@@ -7,8 +7,8 @@ import { type ReactNode, createElement } from "react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { TQsfImportStreamEvent } from "@/app/api/internal/surveys/import/lib/events";
 import { V3ApiError } from "@/modules/api/lib/v3-client";
+import type { TSurveyImportDraft } from "@/modules/survey/import/core/draft";
 import { QsfImportRequestError, streamQsfImport } from "@/modules/survey/import/lib/import-stream-client";
-import type { TQsfDraftDocument } from "@/modules/survey/import/qsf/draft";
 import { createV3Survey } from "@/modules/survey/list/lib/v3-surveys-client";
 import { useImportSurvey } from "./use-import-survey";
 
@@ -38,7 +38,7 @@ const payload = {
   blocks: [
     { name: "Block 1", elements: [{ id: "q1", type: "openText", headline: { "en-US": "<p>Hi</p>" } }] },
   ],
-} as unknown as TQsfDraftDocument;
+} as unknown as TSurveyImportDraft;
 
 const qsfFile = (
   content = '{"SurveyEntry":{"SurveyName":"Survey"},"SurveyElements":[]}',

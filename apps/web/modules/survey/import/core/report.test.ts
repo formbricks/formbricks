@@ -1,8 +1,8 @@
 import { describe, expect, test } from "vitest";
-import type { TQsfDraftDocument } from "./assemble";
-import { buildQsfImportReport } from "./report";
+import type { TSurveyImportDraft } from "./draft";
+import { buildSurveyImportReport } from "./report";
 
-describe("buildQsfImportReport", () => {
+describe("buildSurveyImportReport", () => {
   test("summarizes the draft, not the file", () => {
     const document = {
       languages: [
@@ -11,10 +11,10 @@ describe("buildQsfImportReport", () => {
       ],
       blocks: [{ elements: [{}, {}] }, { elements: [{}] }],
       hiddenFields: { enabled: true, fieldIds: ["a", "b"] },
-    } as unknown as TQsfDraftDocument;
+    } as unknown as TSurveyImportDraft;
 
-    const report = buildQsfImportReport({
-      fileName: "survey.qsf",
+    const report = buildSurveyImportReport({
+      source: { kind: "qsf", fileName: "survey.qsf" },
       document,
       issues: [
         { code: "logic_not_imported", severity: "warning" },
@@ -35,9 +35,13 @@ describe("buildQsfImportReport", () => {
   });
 
   test("leaves the import's own question ids out of the report", () => {
-    const report = buildQsfImportReport({
-      fileName: "survey.qsf",
-      document: { languages: [], blocks: [], hiddenFields: { fieldIds: [] } } as unknown as TQsfDraftDocument,
+    const report = buildSurveyImportReport({
+      source: { kind: "qsf", fileName: "survey.qsf" },
+      document: {
+        languages: [],
+        blocks: [],
+        hiddenFields: { fieldIds: [] },
+      } as unknown as TSurveyImportDraft,
       issues: [{ code: "headline_fallback", severity: "warning", questionTag: "Q1", questionRef: "QID1" }],
     });
 

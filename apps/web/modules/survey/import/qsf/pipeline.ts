@@ -4,18 +4,20 @@ import { generateOrganizationAIObject } from "@/lib/ai/service";
 import { getAITimeoutMs } from "@/lib/ai/timeout";
 import { AI_TRACING_FEATURE } from "@/lib/posthog/ai-tracing-feature";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
+import type { TSurveyImportDraft } from "../core/draft";
+import type { TSurveyImportPipelineIssue } from "../core/report";
+import { buildSurveyImportReport } from "../core/report";
 import { SURVEY_IMPORT_AI_CALL_TIMEOUT_MS, SURVEY_IMPORT_AI_MAX_SOURCE_CHARS } from "../limits";
-import type { TQsfImportReport, TQsfImportStage } from "../types";
+import type { TSurveyImportReport, TSurveyImportStage } from "../types";
 import { type TQsfPlanGenerate, type TQsfPlanUsage, planQsfImport } from "./ai-plan";
-import { type TQsfAssembly, type TQsfDraftDocument, assembleQsfDraft } from "./assemble";
+import { type TQsfAssembly, assembleQsfDraft } from "./assemble";
 import { QsfImportFailedError, qsfLimitExceeded } from "./errors";
 import { yieldToOthers } from "./event-loop";
 import { checkQsfDraftInSlices, elementsAtFault } from "./final-gate";
 import { fitQsfDraftToCreateLimit, fitQsfSurveyToCreateLimit } from "./fit-draft";
 import { estimateQsfMinimumPromptChars } from "./prompt";
-import type { TQsfIssue, TQsfSurvey } from "./qsf-model";
+import type { TQsfSurvey } from "./qsf-model";
 import { readQsf } from "./read-qsf";
-import { buildQsfImportReport } from "./report";
 import { sanitizeQsfTexts } from "./sanitize-text";
 
 export { QsfImportFailedError, QsfImportInputError, QsfImportTimeoutError } from "./errors";
@@ -49,8 +51,8 @@ export interface TQsfImportResult {
    * The draft in the shape `POST /api/v3/surveys` takes — locale-keyed texts, not the internal `default`
    * key — because the dialog sends it there unchanged.
    */
-  payload: TQsfDraftDocument;
-  report: TQsfImportReport;
+  payload: TSurveyImportDraft;
+  report: TSurveyImportReport;
   /** Tokens the AI calls used, for the route's log line. Absent when no AI call ran. */
   usage?: TQsfPlanUsage;
 }
@@ -68,7 +70,7 @@ export interface TRunQsfImportParams {
   signal: AbortSignal;
   /** The route's deadline for the whole import. AI calls are sized to what is left of it. */
   deadlineMs: number;
-  onProgress: (stage: TQsfImportStage) => void;
+  onProgress: (stage: TSurveyImportStage) => void;
   /** The model call. The organization's AI by default; the eval script passes its own. */
   generate?: TQsfPlanGenerate;
 }
@@ -95,7 +97,7 @@ function organizationGenerate(params: TRunQsfImportParams): TQsfPlanGenerate {
     generateOrganizationAIObject({ organizationId: params.organizationId, aiTracing, ...request });
 }
 
-const countElements = (document: TQsfDraftDocument): number =>
+const countElements = (document: TSurveyImportDraft): number =>
   document.blocks.reduce((count, block) => count + block.elements.length, 0);
 
 /**
@@ -111,7 +113,7 @@ async function assembleCheckedDraft(
   build: (excludedRefs: ReadonlySet<string>) => Promise<TQsfAssembly>,
   survey: TQsfSurvey,
   signal: AbortSignal
-): Promise<{ assembly: TQsfAssembly; dropped: TQsfIssue[] }> {
+): Promise<{ assembly: TQsfAssembly; dropped: TSurveyImportPipelineIssue[] }> {
   const pause = () => yieldToOthers(signal);
 
   const first = await build(new Set());
@@ -163,7 +165,7 @@ export async function runQsfImport(params: TRunQsfImportParams): Promise<TQsfImp
   // work after this is bounded by about one create body, and the AI is not paid for what goes.
   signal.throwIfAborted();
   const surveyFit = fitQsfSurveyToCreateLimit(survey, texts);
-  const keepForSurvey = (issue: TQsfIssue) =>
+  const keepForSurvey = (issue: TSurveyImportPipelineIssue) =>
     issue.questionRef === undefined || !surveyFit.cutRefs.has(issue.questionRef);
 
   signal.throwIfAborted();
@@ -226,8 +228,8 @@ export async function runQsfImport(params: TRunQsfImportParams): Promise<TQsfImp
   ];
   return {
     payload: assembly.document,
-    report: buildQsfImportReport({
-      fileName: prepared.fileName,
+    report: buildSurveyImportReport({
+      source: { kind: "qsf", fileName: prepared.fileName },
       document: assembly.document,
       issues: [...issues.filter(fitted.keepIssue), ...fitted.dropped],
     }),

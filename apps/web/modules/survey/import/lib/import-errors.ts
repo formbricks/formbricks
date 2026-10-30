@@ -6,7 +6,7 @@ type TTranslate = (key: string, options?: Record<string, unknown>) => string;
 /** The dialog's code for a file past one of the import's limits: this prefix, then the limit's name. */
 export const QSF_LIMIT_CODE_PREFIX = "qsf_limit_exceeded:";
 
-/** Which limit a file is past, by the name the route sends (`TQsfImportLimit`); an unknown one generically. */
+/** Which limit a file is past, by the name the route sends (`TSurveyImportLimit`); an unknown one generically. */
 const getQsfLimitMessage = (limit: string, t: TTranslate): string => {
   switch (limit) {
     case "questions":

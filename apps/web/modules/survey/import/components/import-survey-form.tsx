@@ -14,13 +14,13 @@ import { useImportSurvey } from "@/modules/survey/import/hooks/use-import-survey
 import { getQsfImportErrorMessage } from "@/modules/survey/import/lib/import-errors";
 import { getSwitchedOffLanguages } from "@/modules/survey/import/lib/import-report";
 import { QSF_FILE_EXTENSION } from "@/modules/survey/import/lib/qsf-file";
-import type { TQsfImportReport, TQsfImportStage } from "@/modules/survey/import/types";
+import type { TSurveyImportReport, TSurveyImportStage } from "@/modules/survey/import/types";
 import { AiIcon, AiStatusLine } from "@/modules/ui/components/ai";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { FileDropZone } from "@/modules/ui/components/file-drop-zone";
 
-const IMPORT_STAGES: readonly TQsfImportStage[] = ["reading", "ai", "assembling"];
+const IMPORT_STAGES: readonly TSurveyImportStage[] = ["reading", "ai", "assembling"];
 
 type ImportSurveyFormProps = {
   workspaceId: string;
@@ -42,7 +42,7 @@ type ImportSurveyFormProps = {
  * Languages with missing texts import switched off. Said above the save button, not only in the report:
  * the survey publishes without them and nothing else stops it.
  */
-const SwitchedOffLanguagesAlert = ({ report }: Readonly<{ report: TQsfImportReport }>) => {
+const SwitchedOffLanguagesAlert = ({ report }: Readonly<{ report: TSurveyImportReport }>) => {
   const { t } = useTranslation();
   const languages = getSwitchedOffLanguages(report);
   if (languages.length === 0) return null;

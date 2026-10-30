@@ -21,7 +21,7 @@ import {
   prepareQsfImport,
   runQsfImport,
 } from "@/modules/survey/import/qsf/pipeline";
-import type { TQsfImportStage } from "@/modules/survey/import/types";
+import type { TSurveyImportStage } from "@/modules/survey/import/types";
 import { QSF_IMPORT_HEARTBEAT_MS } from "./constants";
 import { importTimedOutEvent, toQsfImportStreamErrorEvent } from "./error-events";
 import type { TQsfImportStreamEvent } from "./events";
@@ -112,7 +112,7 @@ export async function streamQsfImport({
   const deadlineMs = getAITimeoutMs(SURVEY_IMPORT_DEADLINE_MS);
   const importAbort = createRequestAbort(req, { deadlineMs });
   const startedAt = performance.now();
-  let stage: TQsfImportStage = "reading";
+  let stage: TSurveyImportStage = "reading";
   let outcome: TImportOutcome = "failed";
   let errorCode: string | undefined;
   let result: TQsfImportResult | undefined;
@@ -120,7 +120,7 @@ export async function streamQsfImport({
   return createNdjsonResponse<TQsfImportStreamEvent>({
     heartbeat: { intervalMs: QSF_IMPORT_HEARTBEAT_MS, event: () => ({ type: "progress", stage }) },
     produce: async (emit) => {
-      const reportStage = (next: TQsfImportStage) => {
+      const reportStage = (next: TSurveyImportStage) => {
         stage = next;
         emit({ type: "progress", stage: next });
       };

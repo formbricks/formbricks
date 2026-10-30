@@ -1,17 +1,26 @@
 /**
- * The Qualtrics import's contract between the server and the import dialog. Type-only on purpose, so
- * the dialog (a client component) can import it without pulling in server code.
+ * The survey import's contract between the server and the import dialog, shared by every lane (one per
+ * kind of file). Type-only on purpose, so the dialog (a client component) can import it without
+ * pulling in server code.
  */
+
+/**
+ * The kind of file an import read, one per lane: `qsf` is a Qualtrics export. The report's `source`
+ * names it, so the dialog can say what was read.
+ */
+export type TSurveyImportSourceKind = "qsf";
 
 /**
  * What the import is doing, sent as a `progress` event. The dialog maps each to a line in its progress
- * steps; the server repeats the current one as a heartbeat while a stage runs long.
+ * steps; the server repeats the current one as a heartbeat while a stage runs long. A lane that uses no
+ * AI goes from `reading` to `assembling`.
  */
-export type TQsfImportStage = "reading" | "ai" | "assembling";
+export type TSurveyImportStage = "reading" | "ai" | "assembling";
 
 /**
- * Report lines the import can produce, one code per thing a user may have to act on. The dialog
- * renders and translates them by code, so the server never sends user-facing English.
+ * Report lines an import can produce, one code per thing a user may have to act on. The dialog
+ * renders and translates them by code, so the server never sends user-facing English. The Qualtrics
+ * lane writes every code below today; the ones that name Qualtrics are its own.
  *
  * - `logic_not_imported` — one per Qualtrics skip, display or branch rule; `params.description` is the
  *   rule in plain language, for the user to rebuild in the editor (ENG-3410). A rule of a page none
@@ -62,19 +71,19 @@ export type TQsfImportStage = "reading" | "ai" | "assembling";
  * never as rich text.
  */
 /**
- * The codes on the invalid params of the import's 422 (`QsfImportInputError`), from v3's
- * `InvalidParam.code`, so the dialog can tell the two refusals apart without reading the reason:
+ * The codes on the invalid params of an import's 422, from v3's `InvalidParam.code`, so the dialog can
+ * tell the refusals apart without reading the reason. The Qualtrics lane's:
  *
  * - `qsf_not_recognized` — the file is not a Qualtrics export the import can read: the envelope is
  *   missing, it has two survey flows, block lists or option sets, two questions share an id, or no
  *   question is in its flow;
  * - `qsf_limit_exceeded` — the file is a Qualtrics export past one of the import's limits, named in
- *   the param's `identifier` (`TQsfImportLimit`); `name` points at where in the file.
+ *   the param's `identifier` (`TSurveyImportLimit`); `name` points at where in the file.
  */
-export type TQsfImportRefusalCode = "qsf_not_recognized" | "qsf_limit_exceeded";
+export type TSurveyImportRefusalCode = "qsf_not_recognized" | "qsf_limit_exceeded";
 
 /** The limit a `qsf_limit_exceeded` param is about, in its `identifier`. */
-export type TQsfImportLimit =
+export type TSurveyImportLimit =
   | "questions"
   | "options"
   | "languages"
@@ -88,7 +97,7 @@ export type TQsfImportLimit =
   | "formatted_texts"
   | "prompt_size";
 
-export type TQsfImportIssueCode =
+export type TSurveyImportIssueCode =
   | "logic_not_imported"
   | "question_skipped"
   | "image_dropped"
@@ -111,11 +120,14 @@ export type TQsfImportIssueCode =
   | "scale_changed"
   | "ending_added";
 
-export interface TQsfImportIssue {
-  code: TQsfImportIssueCode;
+export interface TSurveyImportIssue {
+  code: TSurveyImportIssueCode;
   /** `warning` when something the user had is missing or changed; `info` for expected differences. */
   severity: "warning" | "info";
-  /** The Qualtrics question the line is about (its export tag, e.g. `Q12`), when there is one. */
+  /**
+   * The source question the line is about, by the label the file gives it (a Qualtrics export tag,
+   * e.g. `Q12`), when there is one.
+   */
   questionTag?: string;
   /**
    * Values the dialog interpolates into the translated line, e.g.
@@ -124,8 +136,8 @@ export interface TQsfImportIssue {
   params?: Record<string, string | number>;
 }
 
-export interface TQsfImportReport {
-  source: { kind: "qsf"; fileName: string };
+export interface TSurveyImportReport {
+  source: { kind: TSurveyImportSourceKind; fileName: string };
   summary: {
     blocks: number;
     questions: number;
@@ -134,5 +146,5 @@ export interface TQsfImportReport {
     logicRules: number;
     hiddenFields: number;
   };
-  issues: TQsfImportIssue[];
+  issues: TSurveyImportIssue[];
 }
