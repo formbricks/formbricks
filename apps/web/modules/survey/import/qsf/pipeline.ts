@@ -57,7 +57,7 @@ export function prepareQsfImport(qsf: Record<string, unknown>, fileName: string)
   if (estimateQsfMinimumPromptChars(survey) > SURVEY_IMPORT_AI_MAX_SOURCE_CHARS) {
     throw qsfLimitExceeded(
       "prompt_size",
-      "qsf.SurveyElements",
+      "file.SurveyElements",
       "The survey's questions and logic are too large to import"
     );
   }

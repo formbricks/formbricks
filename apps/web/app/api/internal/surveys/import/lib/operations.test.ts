@@ -1,18 +1,24 @@
 import { APICallError } from "ai";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { OperationNotAllowedError, TooManyRequestsError } from "@formbricks/types/errors";
+import { V3_REQUEST_ARRAY_MAX_ITEMS } from "@/app/api/v3/lib/array-budget";
 import { problemForbidden } from "@/app/api/v3/lib/response";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
+import { zipOf } from "@/modules/survey/import/core/__fixtures__/zip-builders";
 import { SurveyImportTimeoutError } from "@/modules/survey/import/core/errors";
 import type { TSurveyImportLane, TSurveyImportResult } from "@/modules/survey/import/core/lane";
-import { SURVEY_IMPORT_DEADLINE_MS } from "@/modules/survey/import/limits";
-import { qsfImportLane } from "@/modules/survey/import/qsf/lane";
+import {
+  SURVEY_IMPORT_DEADLINE_MS,
+  SURVEY_IMPORT_MAX_FILE_BYTES,
+  SURVEY_IMPORT_ZIP_MAX_ENTRIES,
+} from "@/modules/survey/import/limits";
 import type { TRunQsfImportParams } from "@/modules/survey/import/qsf/pipeline";
 import { SURVEY_IMPORT_HEARTBEAT_MS } from "./constants";
-import { streamSurveyImport } from "./operations";
-import type { TQsfImportStreamBody } from "./schemas";
+import { runSurveyImportLane, streamSurveyImport } from "./operations";
 
 const mocks = vi.hoisted(() => ({
   requireV3WorkspaceAccess: vi.fn(),
+  applyRateLimit: vi.fn(),
   assertOrganizationAIConfigured: vi.fn(),
   runQsfImport: vi.fn(),
   prepareQsfImport: vi.fn(),
@@ -37,6 +43,7 @@ vi.mock("@/lib/env", async (importOriginal) => {
   };
 });
 vi.mock("@/app/api/v3/lib/auth", () => ({ requireV3WorkspaceAccess: mocks.requireV3WorkspaceAccess }));
+vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyRateLimit: mocks.applyRateLimit }));
 vi.mock("@/app/api/v3/surveys/lib/operations", () => ({
   getSessionUserId: (authentication: { user?: { id?: string } }) => authentication?.user?.id ?? null,
 }));
@@ -54,10 +61,12 @@ vi.mock("@formbricks/logger", () => ({
   logger: { withContext: vi.fn(() => mocks.log), error: vi.fn(), warn: vi.fn() },
 }));
 
+const INSTANCE = "/api/internal/surveys/import/stream";
+
 /** A marker that must never reach a log line or an error event: it stands for the file's questions. */
 const FILE_CONTENT_MARKER = "Q1-secret-wording-from-the-file";
 
-const body: TQsfImportStreamBody = {
+const body = {
   workspaceId: "clxx1234567890123456789012",
   fileName: "onboarding.qsf",
   qsf: {
@@ -84,20 +93,22 @@ const importResult: TSurveyImportResult = {
   usage: { inputTokens: 1200, outputTokens: 300 },
 };
 
-const call = (signal?: AbortSignal, qsf: Record<string, unknown> = body.qsf) =>
+/** An uploaded file, as the route hands it over: a name and a part type the import never trusts. */
+const upload = (content: BlobPart, name = body.fileName, type = "application/octet-stream") =>
+  new File([content], name, { type });
+
+const importFile = (file: File, signal?: AbortSignal) =>
   streamSurveyImport({
-    req: new Request("http://localhost/api/internal/surveys/import/stream", {
-      method: "POST",
-      signal,
-      headers: { "content-length": "2048" },
-    }),
+    req: new Request("http://localhost/api/internal/surveys/import/stream", { method: "POST", signal }),
     authentication: { user: { id: "user_1" } } as never,
     workspaceId: body.workspaceId,
-    lane: qsfImportLane,
-    input: { qsf, fileName: body.fileName },
+    file,
     requestId: "req_1",
-    instance: "/api/internal/surveys/import/stream",
+    instance: INSTANCE,
   });
+
+const call = (signal?: AbortSignal, qsf: Record<string, unknown> = body.qsf) =>
+  importFile(upload(JSON.stringify(qsf)), signal);
 
 const readEvents = async (response: Response) =>
   (await response.text())
@@ -128,6 +139,7 @@ describe("streamSurveyImport", () => {
       workspaceId: body.workspaceId,
     });
     mocks.assertOrganizationAIConfigured.mockResolvedValue({ isInstanceConfigured: true });
+    mocks.applyRateLimit.mockResolvedValue(undefined);
     mocks.prepareQsfImport.mockImplementation(mocks.realPrepareQsfImport);
     mocks.runQsfImport.mockImplementation(async ({ onProgress }: TRunQsfImportParams) => {
       onProgress("ai");
@@ -152,7 +164,7 @@ describe("streamSurveyImport", () => {
         body.workspaceId,
         "readWrite",
         "req_1",
-        "/api/internal/surveys/import/stream"
+        INSTANCE
       );
       expect(mocks.assertOrganizationAIConfigured).not.toHaveBeenCalled();
       expect(mocks.runQsfImport).not.toHaveBeenCalled();
@@ -182,14 +194,16 @@ describe("streamSurveyImport", () => {
       expect(response.headers.get("Retry-After")).toBe("42");
     });
 
-    test("checks the AI gate before reading the file", async () => {
+    test("checks the AI gate before the Qualtrics reader reads the file", async () => {
       mocks.assertOrganizationAIConfigured.mockRejectedValue(
         new OperationNotAllowedError("ai_smart_tools_disabled")
       );
 
-      const response = await call(undefined, { not: "a qsf" });
+      // A Qualtrics export by its shape, which the reader would refuse for its missing SurveyEntry.
+      const response = await call(undefined, { SurveyElements: [] });
 
       expect(response.status).toBe(403);
+      expect(mocks.prepareQsfImport).not.toHaveBeenCalled();
     });
 
     test("runs a lane that uses no AI with AI off, and never asks the AI gate", async () => {
@@ -199,6 +213,7 @@ describe("streamSurveyImport", () => {
       const lane: TSurveyImportLane<string, string> = {
         kind: "qsf",
         usesAI: false,
+        rateLimit: null,
         prepare: (input) => input,
         run: async ({ onProgress }) => {
           onProgress("assembling");
@@ -206,14 +221,16 @@ describe("streamSurveyImport", () => {
         },
       };
 
-      const response = await streamSurveyImport({
+      const response = await runSurveyImportLane({
         req: new Request("http://localhost/api/internal/surveys/import/stream", { method: "POST" }),
         authentication: { user: { id: "user_1" } } as never,
+        organizationId: "org_1",
         workspaceId: body.workspaceId,
         lane,
         input: "file",
+        fileBytes: 4,
         requestId: "req_1",
-        instance: "/api/internal/surveys/import/stream",
+        instance: INSTANCE,
       });
 
       expect(response.status).toBe(200);
@@ -221,6 +238,8 @@ describe("streamSurveyImport", () => {
       expect(events.map((event) => event.type)).toEqual(["start", "progress", "progress", "done"]);
       expect(events.at(-1)).toMatchObject({ report: importResult.report });
       expect(mocks.assertOrganizationAIConfigured).not.toHaveBeenCalled();
+      // A lane the default v3 bucket covers is charged nothing more here.
+      expect(mocks.applyRateLimit).not.toHaveBeenCalled();
     });
 
     test("answers 500 when reading the file fails unexpectedly, and logs where, never what it said", async () => {
@@ -258,13 +277,155 @@ describe("streamSurveyImport", () => {
       expect(mocks.runQsfImport).not.toHaveBeenCalled();
     });
 
-    test("answers a file that is not a QSF with 422 and what is missing", async () => {
-      const response = await call(undefined, { name: "some other JSON" });
+    test("answers a Qualtrics export the reader cannot read with 422 and what is missing", async () => {
+      const response = await call(undefined, { SurveyElements: [] });
 
       expect(response.status).toBe(422);
       const problem = (await response.json()) as { invalid_params: { name: string }[] };
-      expect(problem.invalid_params.map((param) => param.name)).toContain("qsf.SurveyEntry");
+      expect(problem.invalid_params.map((param) => param.name)).toContain("file.SurveyEntry");
       expect(mocks.runQsfImport).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("the upload", () => {
+    type TProblem = { status: number; detail: string; invalid_params: Record<string, string>[] };
+    const problemOf = async (response: Response) => (await response.json()) as TProblem;
+
+    test("reads the type from the bytes, not from the file's name or part type", async () => {
+      const disguised = upload(
+        JSON.stringify(body.qsf),
+        "questionnaire.docx",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      );
+
+      const response = await importFile(disguised);
+
+      expect(response.status).toBe(200);
+      const events = await readEvents(response);
+      expect(events.at(-1)).toMatchObject({ type: "done" });
+      // The name is display text: it reaches the report as it came, and decides nothing.
+      expect(mocks.runQsfImport).toHaveBeenCalledWith(
+        expect.objectContaining({ prepared: expect.objectContaining({ fileName: "questionnaire.docx" }) })
+      );
+    });
+
+    test("charges a Qualtrics import to Create with AI's bucket, and stops at its 429 before any AI", async () => {
+      await (await call()).text();
+      expect(mocks.applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.api.v3SurveyGenerate, "user_1");
+
+      mocks.applyRateLimit.mockRejectedValueOnce(new TooManyRequestsError("Rate limit exceeded", 30));
+      const limited = await call();
+
+      expect(limited.status).toBe(429);
+      expect(limited.headers.get("Retry-After")).toBe("30");
+      expect(mocks.assertOrganizationAIConfigured).toHaveBeenCalledTimes(1);
+      expect(mocks.runQsfImport).toHaveBeenCalledTimes(1);
+    });
+
+    test("checks the workspace before reading the file", async () => {
+      mocks.requireV3WorkspaceAccess.mockResolvedValue(problemForbidden("req_1", "Forbidden"));
+
+      const response = await importFile(
+        upload(new Uint8Array([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]))
+      );
+
+      expect(response.status).toBe(403);
+    });
+
+    test(`takes a file of ${SURVEY_IMPORT_MAX_FILE_BYTES} bytes and refuses one more with a 413 naming the limit`, async () => {
+      // Text of exactly the limit passes the size check and reaches the type check (a CSV, no lane yet).
+      const atLimit = await importFile(upload("x".repeat(SURVEY_IMPORT_MAX_FILE_BYTES)));
+      const overLimit = await importFile(upload("x".repeat(SURVEY_IMPORT_MAX_FILE_BYTES + 1)));
+
+      expect(atLimit.status).toBe(415);
+      expect(overLimit.status).toBe(413);
+      const problem = await problemOf(overLimit);
+      expect(problem.detail).toBe(`The file must not exceed ${SURVEY_IMPORT_MAX_FILE_BYTES} bytes`);
+      expect(problem.invalid_params).toEqual([
+        expect.objectContaining({ name: "file", code: "file_limit_exceeded", identifier: "file_size" }),
+      ]);
+      expect(mocks.applyRateLimit).not.toHaveBeenCalled();
+    });
+
+    test("refuses a .doc or .xls with a 415 that says to save it as .docx or .xlsx, before any AI", async () => {
+      const legacy = new Uint8Array(512);
+      legacy.set([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]);
+
+      const response = await importFile(upload(legacy, "questionnaire.doc", "application/msword"));
+
+      expect(response.status).toBe(415);
+      expect(response.headers.get("Content-Type")).toContain("application/problem+json");
+      const problem = await problemOf(response);
+      expect(problem).toMatchObject({ detail: "Save the file as .docx or .xlsx" });
+      expect(problem.invalid_params).toEqual([
+        expect.objectContaining({ code: "file_type_unsupported", identifier: "legacy_office" }),
+      ]);
+      expect(mocks.applyRateLimit).not.toHaveBeenCalled();
+      expect(mocks.assertOrganizationAIConfigured).not.toHaveBeenCalled();
+    });
+
+    test.each([
+      ["a Formbricks file", () => JSON.stringify({ formbricks: { format: 1 }, survey: {} }), "formbricks"],
+      ["a .docx", () => zipOf({ "word/document.xml": "<w:document/>" }), "docx"],
+      ["a .xlsx", () => zipOf({ "xl/workbook.xml": "<workbook/>" }), "xlsx"],
+      ["a CSV", () => "Question,Type\nHow satisfied are you?,rating\n", "csv"],
+    ])("recognizes %s and says it cannot be imported yet, with a 415", async (_label, content, type) => {
+      const response = await importFile(upload(content()));
+
+      expect(response.status).toBe(415);
+      const problem = await problemOf(response);
+      expect(problem.detail).toBe("This kind of file cannot be imported yet");
+      expect(problem.invalid_params).toEqual([
+        expect.objectContaining({ name: "file", code: "file_type_unsupported", identifier: type }),
+      ]);
+      expect(mocks.runQsfImport).not.toHaveBeenCalled();
+    });
+
+    test("answers a .docx past the zip limits with a 413 naming the limit", async () => {
+      const entries = Object.fromEntries(
+        Array.from({ length: SURVEY_IMPORT_ZIP_MAX_ENTRIES + 1 }, (_, index) => [
+          `word/part-${index}.xml`,
+          "",
+        ])
+      );
+
+      const response = await importFile(upload(zipOf(entries), "questionnaire.docx"));
+
+      expect(response.status).toBe(413);
+      const problem = await problemOf(response);
+      expect(problem.detail).toBe(`The archive has more than ${SURVEY_IMPORT_ZIP_MAX_ENTRIES} entries`);
+      expect(problem.invalid_params).toEqual([
+        expect.objectContaining({ code: "file_limit_exceeded", identifier: "zip_entries" }),
+      ]);
+    });
+
+    test("answers a Qualtrics export past the JSON budget with a 422 naming the array, before any AI", async () => {
+      const elements = Array.from({ length: V3_REQUEST_ARRAY_MAX_ITEMS + 1 }, () => ({ Element: "SQ" }));
+
+      const response = await call(undefined, { ...body.qsf, SurveyElements: elements });
+
+      expect(response.status).toBe(422);
+      const problem = await problemOf(response);
+      expect(problem.invalid_params).toEqual([
+        expect.objectContaining({
+          name: "file.SurveyElements",
+          code: "file_limit_exceeded",
+          identifier: "array_items",
+        }),
+      ]);
+      expect(mocks.applyRateLimit).not.toHaveBeenCalled();
+    });
+
+    test("answers an empty file and a file of other content with a 422 and a 415", async () => {
+      const empty = await importFile(upload(""));
+      const pdf = await importFile(upload(new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d, 0xff, 0x00])));
+
+      expect(empty.status).toBe(422);
+      expect((await problemOf(empty)).invalid_params).toEqual([
+        expect.objectContaining({ code: "file_unreadable" }),
+      ]);
+      expect(pdf.status).toBe(415);
+      expect((await problemOf(pdf)).invalid_params[0].identifier).toBeUndefined();
     });
   });
 
@@ -298,7 +459,7 @@ describe("streamSurveyImport", () => {
       expect(mocks.log.info).toHaveBeenCalledWith(
         expect.objectContaining({
           outcome: "done",
-          fileBytes: 2048,
+          fileBytes: new TextEncoder().encode(JSON.stringify(body.qsf)).length,
           questionCount: 1,
           inputTokens: 1200,
           outputTokens: 300,

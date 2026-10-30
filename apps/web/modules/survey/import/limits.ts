@@ -9,20 +9,21 @@ import { DEFAULT_REQUEST_BODY_LIMIT_BYTES } from "@/app/lib/api/request-body";
  * The dialog imports this module too, so it must stay free of server code and of heavy imports. Caps
  * the import inherits rather than owns are enforced by their owners and are not repeated here:
  *
- * - the v3 request budget (1,000 items per array, 50,000 in all, 256 levels of nesting) that the
- *   route's wrapper applies to the body: `app/api/v3/lib/array-budget.ts`;
+ * - the v3 request budget (1,000 items per array, 50,000 in all, 256 levels of nesting), which a JSON
+ *   file is held to before it is parsed: `app/api/v3/lib/array-budget.ts`;
  * - the survey document's own caps (languages, blocks, endings, hidden fields, variables, triggers),
  *   which the draft is held to by the create's checks: `V3_SURVEY_MAX_*` in
  *   `app/api/v3/surveys/schemas.ts`;
- * - the rate limit, Create with AI's bucket: `rateLimitConfigs.api.v3SurveyGenerate`.
+ * - the rate limits: the default v3 bucket for every upload, and a lane's own on top (`rateLimit` in
+ *   `core/lane.ts`; Create with AI's bucket for a lane that spends AI tokens).
  */
 
-/** The largest file the dialog uploads. */
+/** The largest file the import takes: the dialog refuses a larger one, the route answers it with a 413. */
 export const SURVEY_IMPORT_MAX_FILE_BYTES = 15 * 1024 * 1024;
 
 /**
- * The largest request body the import route reads: 15.5 MiB, the 15 MiB file and the envelope around
- * it.
+ * The largest request body the import route reads: 15.5 MiB, the 15 MiB file and the multipart framing
+ * around it.
  *
  * Must stay below Next's `proxyClientMaxBodySize` (16 MB, `next.config.mjs`). The patched Next
  * (`patches/next@16.4.1.patch`) no longer clones bodies for the proxy, but without the patch Next truncates
@@ -31,6 +32,35 @@ export const SURVEY_IMPORT_MAX_FILE_BYTES = 15 * 1024 * 1024;
  * apart.
  */
 export const SURVEY_IMPORT_MAX_BODY_BYTES = 15.5 * 1024 * 1024;
+
+/*
+ * The zip archives a `.docx` or `.xlsx` is (ENG-6848). Its central directory is checked against all four
+ * before anything is inflated, from the counts and sizes it declares; the bytes a part inflates to are
+ * then counted against the last three as they come out, since a directory can lie. Past any of them the
+ * file is refused with a 413: each is a size limit.
+ */
+
+/** Entries one archive may list. A questionnaire is a few dozen parts; a workbook a few hundred at most. */
+export const SURVEY_IMPORT_ZIP_MAX_ENTRIES = 1_000;
+
+/**
+ * Inflated bytes in one archive, all entries together: what its directory declares, and what reading its
+ * parts actually inflates. Far above any questionnaire (a 15 MiB `.docx` of text inflates to well under
+ * 100 MiB), low enough that three imports in flight stay inside the pod's memory.
+ */
+export const SURVEY_IMPORT_ZIP_MAX_INFLATED_BYTES = 200 * 1024 * 1024;
+
+/**
+ * Inflated bytes of one XML part (`.xml`, `.rels`), before it is parsed. The DOM of an XML document
+ * weighs several times its text, so this is what bounds the parse.
+ */
+export const SURVEY_IMPORT_ZIP_MAX_PART_BYTES = 10 * 1024 * 1024;
+
+/**
+ * Inflated bytes per compressed byte, per entry. Office XML compresses about 10:1; DEFLATE's own ceiling
+ * is about 1,032:1, which is what a zip bomb uses.
+ */
+export const SURVEY_IMPORT_ZIP_MAX_COMPRESSION_RATIO = 100;
 
 /**
  * Imports one server process runs at once. The request budget is checked on the raw text before it is

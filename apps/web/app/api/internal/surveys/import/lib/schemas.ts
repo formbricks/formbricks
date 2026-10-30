@@ -1,23 +1,24 @@
 import { z } from "zod";
 
-const isPlainObject = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" &&
-  value !== null &&
-  !Array.isArray(value) &&
-  Object.getPrototypeOf(value) === Object.prototype;
+/** The longest file name the import shows; past it the upload is refused rather than cut. */
+const FILE_NAME_MAX_CHARS = 255;
 
 /**
- * `POST /api/internal/surveys/import/stream`. The browser parses the .qsf and sends it as an object,
- * not a string, so nothing is escaped twice (ENG-3604).
+ * `POST /api/internal/surveys/import/stream`, a `multipart/form-data` body (ENG-6848): the workspace to
+ * import into and exactly one file part. Every file type is sent the same way; the route tells them
+ * apart from the bytes, never from the part's `Content-Type` or the file name.
  *
- * `qsf` is checked only for being a JSON object here. A `z.record` would copy the whole body, key by
- * key, into a fresh object — for a 15 MB file, for nothing, and through ordinary assignment, which is
- * how a `__proto__` key turns into prototype pollution. The reader owns the file's structure.
+ * The name is display text only — it becomes the report's `source.fileName` — and nothing is stored.
  */
-export const ZQsfImportStreamBody = z.strictObject({
+export const ZSurveyImportStreamForm = z.strictObject({
   workspaceId: z.cuid2(),
-  fileName: z.string().trim().min(1).max(255),
-  qsf: z.custom<Record<string, unknown>>(isPlainObject, { message: "qsf must be a JSON object" }),
+  file: z.instanceof(File, { message: "Expected exactly one file" }).refine(
+    (file) => {
+      const name = file.name.trim();
+      return name.length > 0 && name.length <= FILE_NAME_MAX_CHARS;
+    },
+    { message: `The file name must be 1 to ${FILE_NAME_MAX_CHARS} characters` }
+  ),
 });
 
-export type TQsfImportStreamBody = z.infer<typeof ZQsfImportStreamBody>;
+export type TSurveyImportStreamForm = z.infer<typeof ZSurveyImportStreamForm>;

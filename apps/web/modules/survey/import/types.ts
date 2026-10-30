@@ -71,8 +71,26 @@ export type TSurveyImportStage = "reading" | "ai" | "assembling";
  * never as rich text.
  */
 /**
- * The codes on the invalid params of an import's 422, from v3's `InvalidParam.code`, so the dialog can
- * tell the refusals apart without reading the reason. The Qualtrics lane's:
+ * The kinds of file the import tells apart by their content (ENG-6848), never by the name or the
+ * `Content-Type` the browser sent: `formbricks` is a Formbricks file, `qsf` a Qualtrics export, the rest
+ * a document to import. Each kind is read by its lane once it has one.
+ */
+export type TSurveyImportFileType = "formbricks" | "qsf" | "docx" | "xlsx" | "csv";
+
+/**
+ * The codes on the invalid params of an import's refusal, from v3's `InvalidParam.code`, so the dialog
+ * can tell the refusals apart without reading the reason. Every lane's, about the uploaded file (`name`
+ * is `file`, or a path inside it):
+ *
+ * - `file_type_unsupported` (415) — the import does not read this kind of file. `identifier` names
+ *   what it is when the import recognized it: `legacy_office` for a `.doc` or `.xls`, which the reason
+ *   asks to save as `.docx` or `.xlsx`, or a `TSurveyImportFileType` whose lane is not built yet;
+ * - `file_limit_exceeded` — the file is past one of the upload's limits, named in `identifier`
+ *   (`TSurveyImportFileLimit`): 413 for a size, 422 for the JSON budget;
+ * - `file_unreadable` (422) — the file is the kind it looks like, but broken: an empty file, a damaged
+ *   or encrypted archive, JSON that does not parse.
+ *
+ * The Qualtrics lane's (422):
  *
  * - `qsf_not_recognized` — the file is not a Qualtrics export the import can read: the envelope is
  *   missing, it has two survey flows, block lists or option sets, two questions share an id, or no
@@ -80,7 +98,35 @@ export type TSurveyImportStage = "reading" | "ai" | "assembling";
  * - `qsf_limit_exceeded` — the file is a Qualtrics export past one of the import's limits, named in
  *   the param's `identifier` (`TSurveyImportLimit`); `name` points at where in the file.
  */
-export type TSurveyImportRefusalCode = "qsf_not_recognized" | "qsf_limit_exceeded";
+export type TSurveyImportRefusalCode =
+  | "file_type_unsupported"
+  | "file_limit_exceeded"
+  | "file_unreadable"
+  | "qsf_not_recognized"
+  | "qsf_limit_exceeded";
+
+/** What a `file_type_unsupported` param names in its `identifier`, when the import recognized the file. */
+export type TSurveyImportUnsupportedFile = TSurveyImportFileType | "legacy_office";
+
+/**
+ * The upload limit a `file_limit_exceeded` param is about, in its `identifier`. Each is a constant in
+ * `limits.ts` or the v3 array budget:
+ *
+ * - `file_size` — the file's bytes (413);
+ * - `zip_entries`, `zip_inflated_size`, `zip_part_size`, `zip_compression_ratio` — a `.docx` or `.xlsx`
+ *   archive's entries, its inflated bytes in total and per part, and one entry's compression ratio (413);
+ * - `array_items`, `array_elements`, `nesting_depth` — a JSON file's longest array, its array elements
+ *   in total, and its nesting (422).
+ */
+export type TSurveyImportFileLimit =
+  | "file_size"
+  | "zip_entries"
+  | "zip_inflated_size"
+  | "zip_part_size"
+  | "zip_compression_ratio"
+  | "array_items"
+  | "array_elements"
+  | "nesting_depth";
 
 /** The limit a `qsf_limit_exceeded` param is about, in its `identifier`. */
 export type TSurveyImportLimit =

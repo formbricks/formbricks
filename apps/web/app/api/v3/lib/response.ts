@@ -109,6 +109,7 @@ export const INTERNAL_PROBLEM_CODES = [
   "retention_exemption_exists",
   "retention_exemption_not_active",
   "retention_export_too_large",
+  "unsupported_media_type",
 ] as const;
 
 export type InternalProblemCode = (typeof INTERNAL_PROBLEM_CODES)[number];
@@ -129,6 +130,9 @@ export const INVALID_PARAM_CODES = [
   "dangling_reference",
   "duplicate_identifier",
   "duplicate_locale",
+  "file_limit_exceeded",
+  "file_type_unsupported",
+  "file_unreadable",
   "forbidden_identifier",
   "immutable_identifier",
   "invalid_locale",
@@ -237,11 +241,31 @@ export function problemBadRequest(
 export function problemPayloadTooLarge(
   requestId: string,
   detail: string = "Payload Too Large",
-  instance?: string
+  instance?: string,
+  invalidParams?: InvalidParam[]
 ): Response {
   return problemResponse(413, "Payload Too Large", detail, requestId, {
     code: "payload_too_large",
     instance,
+    invalid_params: invalidParams,
+  });
+}
+
+/**
+ * 415: the request body, or the file it carries, is a kind this route does not take. `acceptPost`
+ * names the media type the route does take, sent as `Accept-Post` (the Linked Data Platform header
+ * RFC 9110 §15.5.16 points to for saying which formats a POST accepts).
+ */
+export function problemUnsupportedMediaType(
+  requestId: string,
+  detail: string,
+  options?: { instance?: string; invalid_params?: InvalidParam[]; acceptPost?: string }
+): Response {
+  return problemResponse(415, "Unsupported Media Type", detail, requestId, {
+    code: "unsupported_media_type",
+    instance: options?.instance,
+    invalid_params: options?.invalid_params,
+    ...(options?.acceptPost ? { headers: { "Accept-Post": options.acceptPost } } : {}),
   });
 }
 

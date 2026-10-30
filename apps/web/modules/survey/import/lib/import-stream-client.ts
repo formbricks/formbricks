@@ -1,5 +1,5 @@
 import type { TSurveyImportStreamEvent } from "@/app/api/internal/surveys/import/lib/events";
-import type { TQsfImportStreamBody } from "@/app/api/internal/surveys/import/lib/schemas";
+import type { TSurveyImportStreamForm } from "@/app/api/internal/surveys/import/lib/schemas";
 import { V3ApiError, parseV3ApiError } from "@/modules/api/lib/v3-client";
 import { readSurveyDraftStream } from "@/modules/survey/components/template-list/lib/ai-generate-stream-client";
 
@@ -30,18 +30,24 @@ export const parseRetryAfterSeconds = (value: string | null): number | null => {
 };
 
 /**
- * Run an import, handing each NDJSON event to `onEvent`. A refusal before the stream opened throws a
- * `SurveyImportRequestError`; a failure after it arrives as an `error` event, like Create with AI's stream.
+ * Upload a file to import, handing each NDJSON event to `onEvent`. The file goes as it is, in a
+ * `multipart/form-data` body with the workspace (ENG-6848): the server reads it and tells its type from
+ * its bytes. A refusal before the stream opened throws a `SurveyImportRequestError`; a failure after it
+ * arrives as an `error` event, like Create with AI's stream.
  */
-export async function streamQsfImport(
-  body: TQsfImportStreamBody,
+export async function streamSurveyImportFile(
+  { workspaceId, file }: TSurveyImportStreamForm,
   { signal, onEvent }: { signal: AbortSignal; onEvent: (event: TSurveyImportStreamEvent) => void }
 ): Promise<void> {
+  const form = new FormData();
+  form.append("workspaceId", workspaceId);
+  form.append("file", file);
+
+  // No Content-Type of our own: the browser sets multipart/form-data with the boundary it chose.
   const response = await fetch(SURVEY_IMPORT_STREAM_ENDPOINT, {
     method: "POST",
     cache: "no-store",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    body: form,
     signal,
   });
 
