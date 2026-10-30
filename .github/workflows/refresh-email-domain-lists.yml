@@ -1,0 +1,114 @@
+name: Refresh email-domain lists
+
+# Rebuilds the Cloud sign-up email-domain lists (apps/web/modules/auth/lib/email-domain-lists) from their
+# upstream sources and opens a draft PR when anything changed. The guards live in
+# scripts/email-domain-lists/refresh.mjs: when one fails, this job fails and nothing is pushed.
+on:
+  schedule:
+    - cron: "17 6 * * 1" # Mondays 06:17 UTC; off the hour, when GitHub's schedule queue is shortest
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: refresh-email-domain-lists
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    name: Refresh email-domain lists
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: ".nvmrc"
+
+      - name: Rebuild the lists
+        id: refresh
+        env:
+          # Only raises the GitHub API rate limit for resolving each source's latest commit.
+          GITHUB_TOKEN: ${{ github.token }}
+          SUMMARY_FILE: ${{ runner.temp }}/email-domain-lists-summary.md
+        run: |
+          set -euo pipefail
+          node scripts/email-domain-lists/refresh.mjs --summary "$SUMMARY_FILE"
+          cat "$SUMMARY_FILE" >> "$GITHUB_STEP_SUMMARY"
+          if git diff --quiet -- apps/web/modules/auth/lib/email-domain-lists; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check refresh PR app configuration
+        if: steps.refresh.outputs.changed == 'true'
+        env:
+          APP_CLIENT_ID: ${{ vars.BLOCKLIST_REFRESH_APP_CLIENT_ID }}
+          APP_PRIVATE_KEY: ${{ secrets.BLOCKLIST_REFRESH_APP_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "$APP_CLIENT_ID" || -z "$APP_PRIVATE_KEY" ]]; then
+            echo "::error::Configure BLOCKLIST_REFRESH_APP_CLIENT_ID as a repository variable and BLOCKLIST_REFRESH_APP_PRIVATE_KEY as a repository secret."
+            exit 1
+          fi
+
+      # A PR opened with GITHUB_TOKEN would start no workflows, so its checks would never run.
+      - name: Create GitHub App token for the refresh PR
+        id: app-token
+        if: steps.refresh.outputs.changed == 'true'
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.BLOCKLIST_REFRESH_APP_CLIENT_ID }}
+          private-key: ${{ secrets.BLOCKLIST_REFRESH_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+
+      - name: Open or update the refresh PR
+        if: steps.refresh.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+          SUMMARY_FILE: ${{ runner.temp }}/email-domain-lists-summary.md
+        run: |
+          set -euo pipefail
+
+          branch="chore/refresh-email-domain-lists"
+          title="chore: refresh Cloud sign-up email-domain lists"
+          body_file="$(mktemp)"
+          app_user_id="$(gh api "/users/${APP_SLUG}[bot]" --jq .id)"
+
+          gh auth setup-git
+          git config user.name "${APP_SLUG}[bot]"
+          git config user.email "${app_user_id}+${APP_SLUG}[bot]@users.noreply.github.com"
+          git checkout -B "$branch"
+          git add apps/web/modules/auth/lib/email-domain-lists
+          git commit -m "$title"
+          git push --force origin "$branch"
+
+          {
+            echo "Automated weekly refresh from \`.github/workflows/refresh-email-domain-lists.yml\`. Review the"
+            echo "lists below, act on anything under **Act on**, then mark it ready. Each run replaces this branch"
+            echo "with a fresh build from \`main\`, so push follow-up edits to \`main\` in their own PR."
+            echo
+            cat "$SUMMARY_FILE"
+          } > "$body_file"
+
+          if gh pr view "$branch" --repo "$GITHUB_REPOSITORY" --json state --jq .state 2>/dev/null | grep -qx OPEN; then
+            gh pr edit "$branch" --repo "$GITHUB_REPOSITORY" --title "$title" --body-file "$body_file"
+          else
+            gh pr create --draft --repo "$GITHUB_REPOSITORY" --base main --head "$branch" --title "$title" --body-file "$body_file"
+          fi
