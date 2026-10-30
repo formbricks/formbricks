@@ -41,13 +41,16 @@ const getImportLimitMessage = (limit: string, t: TTranslate): string => {
   }
 };
 
+const hasParamIdentifier = (error: V3ApiError, identifier: string): boolean =>
+  error.invalid_params?.some((param) => param.identifier === identifier) ?? false;
+
 /**
  * The dialog's code for a request the route refused before streaming. The route codes each refusal of
  * the file in its `invalid_params` (`TSurveyImportRefusalCode`), which splits the 422s; a 400 is a body
  * the dialog sent wrong.
  *
- * The dialog takes Qualtrics exports only, so every 415 — a file that is not one, whatever it is — says
- * so; the dialog that takes every type words each kind on its own.
+ * A 415 is a kind of file the import does not read; a Formbricks file's own 422s carry their problem
+ * code, which says whether to fix the file or to update Formbricks (ENG-6850).
  */
 export const getSurveyImportRequestErrorCode = (error: V3ApiError): string => {
   const hasParam = (code: string) => error.invalid_params?.some((param) => param.code === code) ?? false;
@@ -58,10 +61,13 @@ export const getSurveyImportRequestErrorCode = (error: V3ApiError): string => {
     case 401:
       return "not_authenticated";
     case 413:
-      return "file_too_large";
+      return hasParamIdentifier(error, "survey_size") ? "survey_too_large" : "file_too_large";
     case 415:
-      return "qsf_not_recognized";
+      return "file_type_unsupported";
     case 422: {
+      if (error.code === "formbricks_file_invalid" || error.code === "formbricks_file_too_new") {
+        return error.code;
+      }
       // A file past the JSON budget is too complex; a broken one unreadable. A Qualtrics export past
       // one of the import's limits names the limit; any other 422 is a file the import cannot read as a
       // Qualtrics export.
@@ -92,6 +98,18 @@ export const getSurveyImportErrorMessage = (
   switch (code) {
     case "file_wrong_extension":
       return t("workspace.surveys.import.errors.wrong_extension");
+    case "file_needs_ai":
+      return t("workspace.surveys.import.errors.needs_ai");
+    case "file_type_unsupported":
+      return t("workspace.surveys.import.errors.file_type_unsupported");
+    case "survey_too_large":
+      return t("workspace.surveys.import.errors.survey_too_large");
+    case "formbricks_file_invalid":
+      return t("workspace.surveys.import.errors.formbricks_file_invalid");
+    case "formbricks_file_too_new":
+      return t("workspace.surveys.import.errors.formbricks_file_too_new");
+    case "idempotency_key_in_use":
+      return t("workspace.surveys.import.errors.still_creating");
     case "file_empty":
       return t("workspace.surveys.import.errors.empty_file");
     case "file_too_large":

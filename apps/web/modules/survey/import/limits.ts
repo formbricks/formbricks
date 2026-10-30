@@ -152,3 +152,27 @@ export const SURVEY_IMPORT_AI_MAX_PARALLEL_CALLS = 4;
 
 /** One call's time budget, before `AI_TIMEOUT_MULTIPLIER`. */
 export const SURVEY_IMPORT_AI_CALL_TIMEOUT_MS = AI_DEFAULT_TIMEOUT_MS;
+
+/*
+ * Creating a reviewed import (`POST /api/internal/surveys/imports`, ENG-6850).
+ */
+
+/**
+ * The largest create request: the draft, which `SURVEY_IMPORT_MAX_DRAFT_BYTES` bounds, and the
+ * references it carries back — at most 50 action classes, 200 attribute keys, 300 shared fields and 50
+ * languages, a few hundred KiB at their largest.
+ */
+export const SURVEY_IMPORT_MAX_CREATE_BODY_BYTES = DEFAULT_REQUEST_BODY_LIMIT_BYTES + 1024 * 1024;
+
+/** How long an `Idempotency-Key` answers repeats with the survey its request created. */
+export const SURVEY_IMPORT_IDEMPOTENCY_TTL_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * How long a key stays held while its request runs, so a request whose process died does not hold it
+ * for the full 24 hours. Past the survey write's transaction budget (10 s to start, 20 s to run) with
+ * room for the checks before it.
+ */
+export const SURVEY_IMPORT_IDEMPOTENCY_IN_FLIGHT_MS = 2 * 60 * 1000;
+
+/** The longest `Idempotency-Key` the create takes; the dialog sends a UUID. */
+export const SURVEY_IMPORT_IDEMPOTENCY_KEY_MAX_CHARS = 255;

@@ -187,6 +187,9 @@ describe("every report code", () => {
     "text_too_long",
     "markup_escaped",
     "matrix_single_answer",
+    "custom_css_removed",
+    "targeting_removed",
+    "content_only",
   ] as const)("%s has a line of its own", (code) => {
     expect(getQsfImportIssueLine({ code, severity: "info" }, t)).toBe(code);
   });
@@ -195,6 +198,36 @@ describe("every report code", () => {
     expect(getQsfImportIssueLine({ code, severity: "warning", params: { count: 3 } }, t)).toBe(
       `${code} {"count":3}`
     );
+  });
+
+  test("names a dropped key by its path in the file, and counts the ones past the first fifty", () => {
+    expect(
+      getQsfImportIssueLine(
+        { code: "unknown_key_dropped", severity: "warning", params: { field: "survey.theme" } },
+        t
+      )
+    ).toBe('unknown_key_dropped {"field":"survey.theme"}');
+    expect(
+      getQsfImportIssueLine({ code: "unknown_key_dropped", severity: "warning", params: { count: 7 } }, t)
+    ).toBe('unknown_keys_dropped {"count":7}');
+  });
+
+  test("names the action or attribute an import creates, and counts the filters it removes", () => {
+    expect(
+      getQsfImportIssueLine(
+        { code: "action_class_created", severity: "info", params: { name: "Checkout" } },
+        t
+      )
+    ).toBe('action_class_created {"name":"Checkout"}');
+    expect(
+      getQsfImportIssueLine({ code: "attribute_key_created", severity: "info", params: { key: "plan" } }, t)
+    ).toBe('attribute_key_created {"key":"plan"}');
+    expect(
+      getQsfImportIssueLine(
+        { code: "targeting_filter_removed", severity: "warning", params: { count: 2 } },
+        t
+      )
+    ).toBe('targeting_filter_removed {"count":2}');
   });
 
   test("names every Qualtrics type the import skips, each differently", () => {
@@ -304,6 +337,8 @@ describe("getQsfImportReportFileName", () => {
     ["Customer survey.qsf", "Customer survey-import-report.txt"],
     ["export.QSF", "export-import-report.txt"],
     [".qsf", "survey-import-report.txt"],
+    ["Onboarding NPS.formbricks.json", "Onboarding NPS-import-report.txt"],
+    ["edited.json", "edited-import-report.txt"],
   ])("names %s's report %s", (fileName, expected) => {
     expect(getQsfImportReportFileName(fileName)).toBe(expected);
   });

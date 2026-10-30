@@ -408,6 +408,8 @@ const ROOT_KEYS = new Set([
   "distribution",
   "targeting",
 ]);
+/** The create body's root keys without the workspace: a survey document as a Formbricks file carries it. */
+const DOCUMENT_ROOT_KEYS = new Set([...ROOT_KEYS].filter((key) => key !== "workspaceId"));
 const PATCH_ROOT_KEYS = new Set([
   "customCss",
   "name",
@@ -1367,6 +1369,21 @@ export const ZV3CreateSurveyDocument = z.preprocess(
   normalizeV3CreateSurveyDocument,
   ZV3CreateSurveyDocumentObject.superRefine(addCreateSurveyIssues)
 );
+
+/**
+ * {@link ZV3CreateSurveyDocument} as a reader of untrusted input: every key the document does not know,
+ * at any depth, is reported as an `unsupported_field` issue at that key, exactly as the create body
+ * reports it. A Formbricks file's survey is read with this (ENG-6850); the plain document schema stays
+ * what its JSON Schema is generated from, since a pipe from `unknown` has no input shape to publish.
+ */
+export const ZV3CreateSurveyDocumentInput = z
+  .unknown()
+  .superRefine((value, ctx) => {
+    for (const issue of getUnsupportedV3SurveyDocumentFields(value, DOCUMENT_ROOT_KEYS)) {
+      addInvalidParamZodIssue(ctx, issue);
+    }
+  })
+  .pipe(ZV3CreateSurveyDocument);
 
 export const ZV3CreateSurveyBody = z
   .unknown()

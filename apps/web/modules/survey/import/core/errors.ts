@@ -1,5 +1,10 @@
 import type { InvalidParam } from "@/app/api/v3/lib/response";
-import type { TSurveyImportFileLimit, TSurveyImportLimit, TSurveyImportUnsupportedFile } from "../types";
+import type {
+  TSurveyImportFileLimit,
+  TSurveyImportLimit,
+  TSurveyImportProblemCode,
+  TSurveyImportUnsupportedFile,
+} from "../types";
 
 /** One problem with a refused file, coded for the dialog (see `TSurveyImportRefusalCode`). */
 export type TSurveyImportInvalidParam = InvalidParam &
@@ -17,10 +22,11 @@ export type TSurveyImportInvalidParam = InvalidParam &
 export class SurveyImportFileTooLargeError extends Error {
   readonly invalidParams: TSurveyImportInvalidParam[];
 
-  constructor(limit: TSurveyImportFileLimit, reason: string) {
+  /** @param name Where the limit was passed: the file, or a part of it (`file.survey`). */
+  constructor(limit: TSurveyImportFileLimit, reason: string, name = "file") {
     super(reason);
     this.name = "SurveyImportFileTooLargeError";
-    this.invalidParams = [{ name: "file", reason, code: "file_limit_exceeded", identifier: limit }];
+    this.invalidParams = [{ name, reason, code: "file_limit_exceeded", identifier: limit }];
   }
 }
 
@@ -48,12 +54,23 @@ export class SurveyImportUnsupportedFileError extends Error {
  * the file — and a refusal `code`. The message is the problem's detail; each lane sets its own, fixed.
  */
 export class SurveyImportInputError extends Error {
-  readonly invalidParams: TSurveyImportInvalidParam[];
+  readonly invalidParams: (TSurveyImportInvalidParam | InvalidParam)[];
+  /**
+   * The problem's own code, when the lane says more than "unprocessable": a Formbricks file that is
+   * malformed (`formbricks_file_invalid`) or written by a newer Formbricks (`formbricks_file_too_new`),
+   * whose params are the file's fields rather than a refusal code.
+   */
+  readonly problemCode?: TSurveyImportProblemCode;
 
-  constructor(invalidParams: TSurveyImportInvalidParam[], message: string) {
+  constructor(
+    invalidParams: (TSurveyImportInvalidParam | InvalidParam)[],
+    message: string,
+    problemCode?: TSurveyImportProblemCode
+  ) {
     super(message);
     this.name = "SurveyImportInputError";
     this.invalidParams = invalidParams;
+    this.problemCode = problemCode;
   }
 }
 

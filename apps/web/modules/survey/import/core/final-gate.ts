@@ -8,7 +8,7 @@ import {
 import { deriveV3SurveyLanguageRequests } from "@/app/api/v3/surveys/languages";
 import { ZV3CreateSurveyBody, formatV3ZodInvalidParams } from "@/app/api/v3/surveys/schemas";
 import { validateV3SurveyDocument } from "@/app/api/v3/surveys/validation";
-import type { TSurveyImportDraft } from "./draft";
+import type { TSurveyImportPayload } from "./draft";
 
 /**
  * The final gate on an import draft: everything `POST /api/v3/surveys` will check without a database,
@@ -23,7 +23,7 @@ import type { TSurveyImportDraft } from "./draft";
  * Returns the problems, empty when there are none. Their names are paths (`blocks.2.elements.0.…`), so
  * the pipeline can drop the element at fault.
  */
-export function checkImportDraft(document: TSurveyImportDraft): InvalidParam[] {
+export function checkImportDraft(document: TSurveyImportPayload): InvalidParam[] {
   const parsed = parseDraft(document);
   if (!parsed.ok) return parsed.invalidParams;
   const invalidReferences = validateDraft(parsed.data);
@@ -36,7 +36,7 @@ export function checkImportDraft(document: TSurveyImportDraft): InvalidParam[] {
  * longest block to one check rather than all three.
  */
 export async function checkImportDraftInSlices(
-  document: TSurveyImportDraft,
+  document: TSurveyImportPayload,
   between: () => Promise<void>
 ): Promise<InvalidParam[]> {
   const parsed = parseDraft(document);
@@ -52,7 +52,7 @@ type TParsedDraft = ReturnType<typeof ZV3CreateSurveyBody.parse>;
 
 /** The v3 request schema, as the create parses the body. */
 function parseDraft(
-  document: TSurveyImportDraft
+  document: TSurveyImportPayload
 ): { ok: true; data: TParsedDraft } | { ok: false; invalidParams: InvalidParam[] } {
   const parsed = ZV3CreateSurveyBody.safeParse(document);
   return parsed.success
@@ -67,7 +67,7 @@ function validateDraft(data: TParsedDraft): InvalidParam[] {
 }
 
 /** The survey service's write schema, with placeholder language rows. */
-function checkCreateInput(document: TSurveyImportDraft, data: TParsedDraft): InvalidParam[] {
+function checkCreateInput(document: TSurveyImportPayload, data: TParsedDraft): InvalidParam[] {
   const now = new Date();
   const languages: TSurveyLanguage[] = deriveV3SurveyLanguageRequests(data).map((request) => ({
     language: {

@@ -1,11 +1,15 @@
 import { APICallError } from "ai";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { OperationNotAllowedError, TooManyRequestsError } from "@formbricks/types/errors";
-import { V3_REQUEST_ARRAY_MAX_ITEMS } from "@/app/api/v3/lib/array-budget";
+import {
+  V3_REQUEST_ARRAY_MAX_ITEMS,
+  V3_REQUEST_ARRAY_MAX_TOTAL_ELEMENTS,
+  V3_REQUEST_MAX_DEPTH,
+} from "@/app/api/v3/lib/array-budget";
 import { problemForbidden } from "@/app/api/v3/lib/response";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { zipOf } from "@/modules/survey/import/core/__fixtures__/zip-builders";
-import { SurveyImportTimeoutError } from "@/modules/survey/import/core/errors";
+import { SurveyImportInputError, SurveyImportTimeoutError } from "@/modules/survey/import/core/errors";
 import type { TSurveyImportLane, TSurveyImportResult } from "@/modules/survey/import/core/lane";
 import {
   SURVEY_IMPORT_DEADLINE_MS,
@@ -22,6 +26,7 @@ const mocks = vi.hoisted(() => ({
   assertOrganizationAIConfigured: vi.fn(),
   runQsfImport: vi.fn(),
   prepareQsfImport: vi.fn(),
+  previewFormbricksFileImport: vi.fn(),
   realPrepareQsfImport:
     undefined as unknown as typeof import("@/modules/survey/import/qsf/pipeline").prepareQsfImport,
   log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
@@ -57,6 +62,10 @@ vi.mock("@/modules/survey/import/qsf/pipeline", async (importOriginal) => {
   mocks.realPrepareQsfImport = original.prepareQsfImport;
   return { ...original, prepareQsfImport: mocks.prepareQsfImport, runQsfImport: mocks.runQsfImport };
 });
+// The Formbricks file lane's preview reads the database; its seam is the integration suite.
+vi.mock("@/modules/survey/formbricks-file/import", () => ({
+  previewFormbricksFileImport: mocks.previewFormbricksFileImport,
+}));
 vi.mock("@formbricks/logger", () => ({
   logger: { withContext: vi.fn(() => mocks.log), error: vi.fn(), warn: vi.fn() },
 }));
@@ -242,6 +251,100 @@ describe("streamSurveyImport", () => {
       expect(mocks.applyRateLimit).not.toHaveBeenCalled();
     });
 
+    test("gives a lane that uses no AI its deadline unscaled by AI_TIMEOUT_MULTIPLIER", async () => {
+      aiTimeoutEnv.multiplier = 3;
+      const run = vi.fn(async () => importResult);
+      const response = await runSurveyImportLane({
+        req: new Request("http://localhost/api/internal/surveys/import/stream", { method: "POST" }),
+        authentication: { user: { id: "user_1" } } as never,
+        organizationId: "org_1",
+        workspaceId: body.workspaceId,
+        lane: { kind: "formbricks", usesAI: false, rateLimit: null, prepare: (input: string) => input, run },
+        input: "file",
+        fileBytes: 4,
+        requestId: "req_1",
+        instance: INSTANCE,
+      });
+      await readEvents(response);
+
+      expect(run).toHaveBeenCalledWith(expect.objectContaining({ deadlineMs: SURVEY_IMPORT_DEADLINE_MS }));
+    });
+
+    test("answers a refusal from a lane that checks the file asynchronously before the stream opens", async () => {
+      const response = await runSurveyImportLane({
+        req: new Request("http://localhost/api/internal/surveys/import/stream", { method: "POST" }),
+        authentication: { user: { id: "user_1" } } as never,
+        organizationId: "org_1",
+        workspaceId: body.workspaceId,
+        lane: {
+          kind: "formbricks",
+          usesAI: false,
+          rateLimit: null,
+          prepare: async () => {
+            throw new SurveyImportInputError(
+              [{ name: "file.formbricks.format", reason: "Too new", identifier: "2" }],
+              "The Formbricks file was written by a newer version of Formbricks.",
+              "formbricks_file_too_new"
+            );
+          },
+          run: async () => importResult,
+        },
+        input: "file",
+        fileBytes: 4,
+        requestId: "req_1",
+        instance: INSTANCE,
+      });
+
+      expect(response.status).toBe(422);
+      expect(await response.json()).toMatchObject({
+        code: "formbricks_file_too_new",
+        invalid_params: [{ name: "file.formbricks.format", identifier: "2" }],
+      });
+    });
+
+    test("imports a Formbricks file without AI or the AI bucket, and sends its references with the draft", async () => {
+      mocks.assertOrganizationAIConfigured.mockRejectedValue(
+        new OperationNotAllowedError("ai_features_not_enabled")
+      );
+      const draft = {
+        workspaceId: body.workspaceId,
+        name: "Onboarding (imported)",
+        status: "draft",
+        defaultLanguage: "en-US",
+        blocks: [{ id: "b1", name: "Block 1", elements: [{ id: "q1" }] }],
+      };
+      const references = { actionClasses: [], attributeKeys: [], embeddedFields: [] };
+      mocks.previewFormbricksFileImport.mockResolvedValue({
+        draft,
+        references,
+        issues: [{ code: "content_only", severity: "info" }],
+      });
+      const file = { formbricks: { format: 1 }, survey: { name: "Onboarding" } };
+
+      const response = await importFile(upload(JSON.stringify(file), "Onboarding.formbricks.json"));
+
+      expect(response.status).toBe(200);
+      const events = await readEvents(response);
+      expect(events.map((event) => event.type)).toEqual(["start", "progress", "progress", "done"]);
+      expect(events.at(-1)).toMatchObject({
+        payload: draft,
+        references,
+        report: {
+          source: { kind: "formbricks", fileName: "Onboarding.formbricks.json" },
+          summary: { blocks: 1, questions: 1, languages: ["en-US"] },
+          issues: [{ code: "content_only", severity: "info" }],
+        },
+      });
+      expect(mocks.previewFormbricksFileImport).toHaveBeenCalledWith({
+        file,
+        workspaceId: body.workspaceId,
+        organizationId: "org_1",
+        userId: "user_1",
+      });
+      expect(mocks.assertOrganizationAIConfigured).not.toHaveBeenCalled();
+      expect(mocks.applyRateLimit).not.toHaveBeenCalled();
+    });
+
     test("answers 500 when reading the file fails unexpectedly, and logs where, never what it said", async () => {
       // A reader that fails on the file can quote it, so the message stays out of the log.
       mocks.prepareQsfImport.mockImplementationOnce(() => {
@@ -365,7 +468,6 @@ describe("streamSurveyImport", () => {
     });
 
     test.each([
-      ["a Formbricks file", () => JSON.stringify({ formbricks: { format: 1 }, survey: {} }), "formbricks"],
       ["a .docx", () => zipOf({ "word/document.xml": "<w:document/>" }), "docx"],
       ["a .xlsx", () => zipOf({ "xl/workbook.xml": "<workbook/>" }), "xlsx"],
       ["a CSV", () => "Question,Type\nHow satisfied are you?,rating\n", "csv"],
@@ -414,6 +516,53 @@ describe("streamSurveyImport", () => {
         }),
       ]);
       expect(mocks.applyRateLimit).not.toHaveBeenCalled();
+    });
+
+    describe("holds a Formbricks file to the JSON budget, at each limit and one past it", () => {
+      const previewOk = () =>
+        mocks.previewFormbricksFileImport.mockResolvedValue({
+          draft: { workspaceId: body.workspaceId, name: "x", status: "draft", blocks: [] },
+          references: { actionClasses: [], attributeKeys: [], embeddedFields: [] },
+          issues: [],
+        });
+      const formbricksFileWith = (survey: Record<string, unknown>) =>
+        upload(JSON.stringify({ formbricks: { format: 1 }, survey }), "survey.formbricks.json");
+      /** `count` arrays, one inside the next. Under the file's root and its survey, `count + 2` deep. */
+      const arraysDeep = (count: number): unknown =>
+        Array.from({ length: count - 1 }).reduce<unknown>((inner) => [inner], []);
+      const items = (count: number) => Array.from({ length: count }, () => 0);
+
+      test.each([
+        [
+          "an array",
+          { hiddenFields: { fieldIds: items(V3_REQUEST_ARRAY_MAX_ITEMS) } },
+          "array_items",
+          { hiddenFields: { fieldIds: items(V3_REQUEST_ARRAY_MAX_ITEMS + 1) } },
+        ],
+        [
+          "the arrays in all",
+          { lists: Array.from({ length: 50 }, () => items(V3_REQUEST_ARRAY_MAX_TOTAL_ELEMENTS / 50 - 1)) },
+          "array_elements",
+          { lists: Array.from({ length: 50 }, () => items(V3_REQUEST_ARRAY_MAX_TOTAL_ELEMENTS / 50)) },
+        ],
+        [
+          "the nesting",
+          { metadata: arraysDeep(V3_REQUEST_MAX_DEPTH - 2) },
+          "nesting_depth",
+          { metadata: arraysDeep(V3_REQUEST_MAX_DEPTH - 1) },
+        ],
+      ])("%s", async (_label, atLimit, limit, pastLimit) => {
+        previewOk();
+
+        const read = await importFile(formbricksFileWith(atLimit));
+        expect(read.status).toBe(200);
+
+        const refused = await importFile(formbricksFileWith(pastLimit));
+        expect(refused.status).toBe(422);
+        expect((await problemOf(refused)).invalid_params).toEqual([
+          expect.objectContaining({ code: "file_limit_exceeded", identifier: limit }),
+        ]);
+      });
     });
 
     test("answers an empty file and a file of other content with a 422 and a 415", async () => {

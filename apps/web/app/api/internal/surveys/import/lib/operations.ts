@@ -26,6 +26,7 @@ import {
 } from "@/modules/survey/import/core/errors";
 import type { TSurveyImportLane, TSurveyImportResult } from "@/modules/survey/import/core/lane";
 import { type TSurveyImportFile, sniffSurveyImportFile } from "@/modules/survey/import/core/sniff";
+import { formbricksFileImportLane } from "@/modules/survey/import/formbricks/lane";
 import { SURVEY_IMPORT_DEADLINE_MS, SURVEY_IMPORT_MAX_FILE_BYTES } from "@/modules/survey/import/limits";
 import { qsfImportLane } from "@/modules/survey/import/qsf/lane";
 import type { TSurveyImportStage } from "@/modules/survey/import/types";
@@ -63,7 +64,7 @@ export interface TRunSurveyImportLaneParams<TInput, TPrepared> {
 type TImportOutcome = "done" | "failed" | "timed_out" | "aborted";
 
 /** The problem response for a refused file, or `null` for an error that is not a refusal. */
-const toRefusalResponse = (error: unknown, requestId: string, instance: string): Response | null => {
+export const toRefusalResponse = (error: unknown, requestId: string, instance: string): Response | null => {
   if (error instanceof SurveyImportFileTooLargeError) {
     return problemPayloadTooLarge(requestId, error.message, instance, error.invalidParams);
   }
@@ -77,6 +78,7 @@ const toRefusalResponse = (error: unknown, requestId: string, instance: string):
     return problemUnprocessableContent(requestId, error.message, {
       instance,
       invalid_params: error.invalidParams,
+      ...(error.problemCode ? { code: error.problemCode } : {}),
     });
   }
   return null;
@@ -105,7 +107,8 @@ const readUpload = async (file: File): Promise<TSurveyImportFile> => {
  * and the file goes to its type's lane. A type the import recognizes but has no lane for yet is a 415.
  *
  * Nothing is written: the dialog shows the draft for review and creates it with
- * `POST /api/v3/surveys?createdFrom=import`, which is what the audit log records.
+ * `POST /api/v3/surveys?createdFrom=import`, or a Formbricks file with its references through
+ * `POST /api/internal/surveys/imports` (ENG-6850); that write is what the audit log records.
  */
 export async function streamSurveyImport({
   req,
@@ -160,6 +163,18 @@ export async function streamSurveyImport({
   switch (upload.type) {
     case "qsf":
       return runSurveyImportLane({ ...lane, lane: qsfImportLane, input: { qsf: upload.json, fileName } });
+    case "formbricks":
+      return runSurveyImportLane({
+        ...lane,
+        lane: formbricksFileImportLane,
+        input: {
+          file: upload.json,
+          fileName,
+          workspaceId,
+          organizationId,
+          userId: getSessionUserId(authentication),
+        },
+      });
     default:
       return problemUnsupportedMediaType(requestId, "This kind of file cannot be imported yet", {
         instance,
@@ -214,7 +229,7 @@ export async function runSurveyImportLane<TInput, TPrepared>({
 
   let prepared: TPrepared;
   try {
-    prepared = lane.prepare(input);
+    prepared = await lane.prepare(input);
   } catch (error) {
     const refusal = toRefusalResponse(error, requestId, instance);
     if (refusal) return refusal;
@@ -228,7 +243,8 @@ export async function runSurveyImportLane<TInput, TPrepared>({
     return problemInternalError(requestId, undefined, instance);
   }
 
-  const deadlineMs = getAITimeoutMs(SURVEY_IMPORT_DEADLINE_MS);
+  // AI_TIMEOUT_MULTIPLIER stretches what AI calls may take; a lane without them has none to stretch.
+  const deadlineMs = lane.usesAI ? getAITimeoutMs(SURVEY_IMPORT_DEADLINE_MS) : SURVEY_IMPORT_DEADLINE_MS;
   const importAbort = createRequestAbort(req, { deadlineMs });
   const startedAt = performance.now();
   let stage: TSurveyImportStage = "reading";
@@ -257,7 +273,12 @@ export async function runSurveyImportLane<TInput, TPrepared>({
         onProgress: reportStage,
       });
 
-      emit({ type: "done", payload: result.payload, report: result.report });
+      emit({
+        type: "done",
+        payload: result.payload,
+        report: result.report,
+        ...(result.references ? { references: result.references } : {}),
+      });
       outcome = "done";
     },
     onError: (error) => {

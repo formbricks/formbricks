@@ -8,7 +8,7 @@
  * The kind of file an import read, one per lane: `qsf` is a Qualtrics export. The report's `source`
  * names it, so the dialog can say what was read.
  */
-export type TSurveyImportSourceKind = "qsf";
+export type TSurveyImportSourceKind = "qsf" | "formbricks";
 
 /**
  * What the import is doing, sent as a `progress` event. The dialog maps each to a line in its progress
@@ -61,6 +61,22 @@ export type TSurveyImportStage = "reading" | "ai" | "assembling";
  * - `ending_added` — the file had no end message the survey can show, so the editor's default ending was
  *   added (`params.subject: "ending"`)
  *
+ *
+ * The Formbricks file lane's (ENG-6850):
+ *
+ * - `unknown_key_dropped` — a key the file format does not know, left out (`params.field`, its path in
+ *   the file); past the first fifty, one line counts the rest (`params.count`)
+ * - `custom_css_removed` — the survey's custom CSS, which an import never carries over
+ * - `external_url_removed` — as above, for an ending's redirect (replaced by the default ending), its
+ *   button link, or a call-to-action's external button
+ * - `targeting_removed` — the survey's targeting, because the organization's plan has no contact
+ *   targeting
+ * - `targeting_filter_removed` — a targeting filter naming a segment or a survey, which belong to the
+ *   workspace the file came from
+ * - `action_class_created`, `attribute_key_created` — a trigger's action, or an attribute key targeting
+ *   names, the workspace did not have and the import creates (`params.name`, `params.key`)
+ * - `content_only` — the note that styling, settings, follow-ups and quotas are not part of the file
+ *
  * `question_skipped` carries `params.cause`, a fixed code (`unsupported_type` with the Qualtrics
  * `params.qualtricsType`, `ai_skipped`, `plan_invalid`, `ai_budget`, `ai_timeout`, `not_in_flow`,
  * `invalid_id`, `validation_failed`, `draft_too_large` for a trailing question cut so the draft fits
@@ -105,6 +121,12 @@ export type TSurveyImportRefusalCode =
   | "qsf_not_recognized"
   | "qsf_limit_exceeded";
 
+/**
+ * The problem codes of an import's 422s that are not about the upload itself: a Formbricks file that is
+ * malformed — its `invalid_params` name each field — or written by a newer Formbricks than this one.
+ */
+export type TSurveyImportProblemCode = "formbricks_file_invalid" | "formbricks_file_too_new";
+
 /** What a `file_type_unsupported` param names in its `identifier`, when the import recognized the file. */
 export type TSurveyImportUnsupportedFile = TSurveyImportFileType | "legacy_office";
 
@@ -116,7 +138,8 @@ export type TSurveyImportUnsupportedFile = TSurveyImportFileType | "legacy_offic
  * - `zip_entries`, `zip_inflated_size`, `zip_part_size`, `zip_compression_ratio` — a `.docx` or `.xlsx`
  *   archive's entries, its inflated bytes in total and per part, and one entry's compression ratio (413);
  * - `array_items`, `array_elements`, `nesting_depth` — a JSON file's longest array, its array elements
- *   in total, and its nesting (422).
+ *   in total, and its nesting (422);
+ * - `survey_size` — a Formbricks file's survey, as JSON, past what one survey may weigh (413).
  */
 export type TSurveyImportFileLimit =
   | "file_size"
@@ -126,7 +149,8 @@ export type TSurveyImportFileLimit =
   | "zip_compression_ratio"
   | "array_items"
   | "array_elements"
-  | "nesting_depth";
+  | "nesting_depth"
+  | "survey_size";
 
 /** The limit a `qsf_limit_exceeded` param is about, in its `identifier`. */
 export type TSurveyImportLimit =
@@ -164,7 +188,14 @@ export type TSurveyImportIssueCode =
   | "ending_not_translated"
   | "options_left_out"
   | "scale_changed"
-  | "ending_added";
+  | "ending_added"
+  | "unknown_key_dropped"
+  | "custom_css_removed"
+  | "targeting_removed"
+  | "targeting_filter_removed"
+  | "action_class_created"
+  | "attribute_key_created"
+  | "content_only";
 
 export interface TSurveyImportIssue {
   code: TSurveyImportIssueCode;

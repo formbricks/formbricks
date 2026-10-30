@@ -6,7 +6,11 @@ import {
   ZEmbeddedDataSource,
   ZEmbeddedDataType,
 } from "@formbricks/types/embedded-data";
-import { V3_SURVEY_MAX_LANGUAGES, ZV3CreateSurveyDocument } from "@/app/api/v3/surveys/schemas";
+import {
+  V3_SURVEY_MAX_LANGUAGES,
+  ZV3CreateSurveyDocument,
+  ZV3CreateSurveyDocumentInput,
+} from "@/app/api/v3/surveys/schemas";
 import {
   FORMBRICKS_FILE_MAX_ACTION_CLASSES,
   FORMBRICKS_FILE_MAX_ATTRIBUTE_KEYS,
@@ -139,6 +143,23 @@ export const ZFormbricksFileV1 = z
       "A Formbricks survey exported as a file. Import it into any Formbricks workspace, organization or instance.",
   });
 
+/**
+ * What a Formbricks file holds besides its envelope metadata: the survey and its references. The
+ * dialog sends this back to be created after the review, and the commit reads it with the same rules.
+ */
+export const ZFormbricksFileContentV1 = ZFormbricksFileV1.pick({ survey: true, references: true });
+
+/**
+ * The schemas a file is read with: the published ones, with the survey checked as the create body
+ * checks it, so a key the survey document does not know is reported at any depth rather than only at
+ * the survey's root.
+ */
+export const ZFormbricksFileV1Input = ZFormbricksFileV1.extend({ survey: ZV3CreateSurveyDocumentInput });
+export const ZFormbricksFileContentV1Input = ZFormbricksFileContentV1.extend({
+  survey: ZV3CreateSurveyDocumentInput,
+});
+
+export type TFormbricksFileSurveyInput = z.output<typeof ZV3CreateSurveyDocument>;
 export type TFormbricksFileMetaV1 = z.infer<typeof ZFormbricksFileMetaV1>;
 export type TFormbricksFileReferences = z.infer<typeof ZFormbricksFileReferences>;
 export type TFormbricksFileActionClass = z.infer<typeof ZFormbricksFileActionClass>;

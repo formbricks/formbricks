@@ -2,28 +2,21 @@
 
 import { UploadIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { ImportSurveyDialog } from "@/modules/survey/import/components/import-survey-dialog";
 
 type ImportSurveyCardProps = {
   workspaceId: string;
   isAIAvailable: boolean;
-  aiUnavailableReason?: TAIUnavailableReason;
 };
 
 /** The "Import survey" card in the template grid, next to Create with AI and styled like it. */
-export const ImportSurveyCard = ({
-  workspaceId,
-  isAIAvailable,
-  aiUnavailableReason,
-}: Readonly<ImportSurveyCardProps>) => {
+export const ImportSurveyCard = ({ workspaceId, isAIAvailable }: Readonly<ImportSurveyCardProps>) => {
   const { t } = useTranslation();
 
   return (
     <ImportSurveyDialog
       workspaceId={workspaceId}
       isAIAvailable={isAIAvailable}
-      aiUnavailableReason={aiUnavailableReason}
       trigger={
         <button
           type="button"

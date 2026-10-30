@@ -1,14 +1,16 @@
 import type { TRateLimitConfig } from "@/modules/core/rate-limit/types/rate-limit";
+import type { TFormbricksFileReferences } from "@/modules/survey/formbricks-file/envelope";
 import type { TSurveyImportReport, TSurveyImportSourceKind, TSurveyImportStage } from "../types";
-import type { TSurveyImportDraft } from "./draft";
+import type { TSurveyImportPayload } from "./draft";
 
 /**
  * A lane: what the import does with one kind of file (ENG-6846). The stream route runs any lane the
  * same way, so a new file type adds a lane, not a route:
  *
- * - `prepare` reads and checks the file before the response opens — synchronous and cheap, throwing
+ * - `prepare` reads and checks the file before the response opens — cheap, throwing
  *   `SurveyImportInputError` for a 422 — because once a 200 has started there is no way back to a
- *   problem response;
+ *   problem response. A lane that needs the workspace to check the file (a Formbricks file's
+ *   references, its entitlements) does that here, asynchronously; one that does not stays synchronous;
  * - `run` does the rest while the stream reports progress, and returns the draft and its report.
  *
  * A lane that plans with AI (`usesAI`) is held to the organization's AI gate before `prepare`, and
@@ -28,7 +30,7 @@ export interface TSurveyImportLane<TInput, TPrepared> {
    * for a lane that spends AI tokens, `null` for one the default bucket covers.
    */
   rateLimit: TRateLimitConfig | null;
-  prepare: (input: TInput) => TPrepared;
+  prepare: (input: TInput) => TPrepared | Promise<TPrepared>;
   run: (params: TSurveyImportRunParams<TPrepared>) => Promise<TSurveyImportResult>;
 }
 
@@ -48,13 +50,22 @@ export interface TSurveyImportRunParams<TPrepared> {
   onProgress: (stage: TSurveyImportStage) => void;
 }
 
-export interface TSurveyImportResult {
+/**
+ * `TPayload` narrows the draft for a lane that knows its shape: the Qualtrics lane's is always an
+ * assembled `TSurveyImportDraft`.
+ */
+export interface TSurveyImportResult<TPayload extends TSurveyImportPayload = TSurveyImportPayload> {
   /**
    * The draft in the shape `POST /api/v3/surveys` takes — locale-keyed texts, not the internal `default`
    * key — because the dialog sends it there unchanged.
    */
-  payload: TSurveyImportDraft;
+  payload: TPayload;
   report: TSurveyImportReport;
+  /**
+   * What the draft points at outside itself, for a lane whose file carries it (a Formbricks file). The
+   * dialog sends it back with the draft to `POST /api/internal/surveys/imports`, which resolves it again.
+   */
+  references?: TFormbricksFileReferences;
   /** Tokens the AI calls used, for the route's log line. Absent when no AI call ran. */
   usage?: { inputTokens: number; outputTokens: number };
 }

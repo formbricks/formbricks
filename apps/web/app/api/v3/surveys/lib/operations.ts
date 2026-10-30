@@ -403,9 +403,10 @@ export async function listV3Surveys({
 
 /**
  * Map an error thrown during survey creation to its problem+json Response. Extracted from
- * createV3SurveyResponse to keep that handler's cognitive complexity within bounds.
+ * createV3SurveyResponse to keep that handler's cognitive complexity within bounds; the survey import's
+ * create (ENG-6850) maps the same errors the same way.
  */
-function mapV3SurveyCreateError(
+export function mapV3SurveyCreateError(
   err: unknown,
   {
     log,

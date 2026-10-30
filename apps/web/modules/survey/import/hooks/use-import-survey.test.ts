@@ -12,6 +12,7 @@ import {
   SurveyImportRequestError,
   streamSurveyImportFile,
 } from "@/modules/survey/import/lib/import-stream-client";
+import { createSurveyFromImport } from "@/modules/survey/import/lib/survey-imports-client";
 import { createV3Survey } from "@/modules/survey/list/lib/v3-surveys-client";
 import { useImportSurvey } from "./use-import-survey";
 
@@ -26,6 +27,10 @@ vi.mock("@/modules/survey/import/lib/import-stream-client", async (importOrigina
 
 vi.mock("@/modules/survey/list/lib/v3-surveys-client", () => ({
   createV3Survey: vi.fn(async () => ({ id: "survey1" })),
+}));
+
+vi.mock("@/modules/survey/import/lib/survey-imports-client", () => ({
+  createSurveyFromImport: vi.fn(async () => ({ id: "survey2" })),
 }));
 
 const report = {
@@ -59,10 +64,18 @@ const streamWith = (events: TSurveyImportStreamEvent[], refusal?: Error) => {
 const wrapper = ({ children }: { children: ReactNode }) =>
   createElement(QueryClientProvider, { client: new QueryClient() }, children);
 
-const renderImport = () =>
-  renderHook(() => useImportSurvey({ workspaceId: "w1", isAIAvailable: true, onSuccess: vi.fn() }), {
+const renderImport = ({ isAIAvailable = true }: { isAIAvailable?: boolean } = {}) =>
+  renderHook(() => useImportSurvey({ workspaceId: "w1", isAIAvailable, onSuccess: vi.fn() }), {
     wrapper,
   });
+
+const formbricksFile = (name = "Onboarding NPS.formbricks.json") => new File(['{"formbricks":{}}'], name);
+
+const references = {
+  actionClasses: [],
+  attributeKeys: [{ key: "plan", name: "Plan", description: null, dataType: "string" as const }],
+  embeddedFields: [],
+};
 
 beforeEach(() => {
   vi.mocked(streamSurveyImportFile).mockReset();
@@ -99,7 +112,7 @@ describe("useImportSurvey", () => {
   test("refuses a file by its name or size without uploading it", async () => {
     const { result } = renderImport();
 
-    await act(async () => result.current.selectFile(qsfFile("{}", "survey.json")));
+    await act(async () => result.current.selectFile(qsfFile("{}", "survey.docx")));
     expect(result.current.errorCode).toBe("file_wrong_extension");
 
     await act(async () => result.current.selectFile(qsfFile("", "survey.qsf")));
@@ -133,7 +146,7 @@ describe("useImportSurvey", () => {
 
     await act(async () => result.current.selectFile(qsfFile("not json")));
 
-    await waitFor(() => expect(result.current.errorCode).toBe("qsf_not_recognized"));
+    await waitFor(() => expect(result.current.errorCode).toBe("file_type_unsupported"));
     expect(streamSurveyImportFile).toHaveBeenCalledTimes(1);
   });
 
@@ -218,6 +231,86 @@ describe("useImportSurvey", () => {
     act(() => result.current.handleOpenInEditor());
 
     await waitFor(() => expect(createV3Survey).toHaveBeenCalledWith(payload, "import"));
+  });
+
+  test("creates a Formbricks file's draft with its references, under one Idempotency-Key per review", async () => {
+    vi.mocked(createSurveyFromImport)
+      .mockRejectedValueOnce(new V3ApiError({ status: 503, detail: "busy", code: "service_unavailable" }))
+      .mockResolvedValueOnce({ id: "survey2" });
+    streamWith([{ type: "done", payload, report, references }] as TSurveyImportStreamEvent[]);
+    const { result } = renderImport();
+
+    await act(async () => result.current.selectFile(formbricksFile()));
+    await waitFor(() => expect(result.current.status).toBe("review"));
+    act(() => result.current.handleOpenInEditor());
+    await waitFor(() => expect(createSurveyFromImport).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(result.current.status).toBe("review"));
+    act(() => result.current.handleOpenInEditor());
+    await waitFor(() => expect(createSurveyFromImport).toHaveBeenCalledTimes(2));
+
+    const [[firstBody, firstKey], [, secondKey]] = vi.mocked(createSurveyFromImport).mock.calls;
+    const { workspaceId: _workspaceId, ...survey } = payload;
+    expect(firstBody).toEqual({ workspaceId: "w1", survey, references });
+    expect(firstKey).toEqual(expect.any(String));
+    // A retry of the same review is the same request: the server answers it with the same survey.
+    expect(secondKey).toBe(firstKey);
+    expect(createV3Survey).not.toHaveBeenCalled();
+  });
+
+  test("gives a new review a new Idempotency-Key", async () => {
+    vi.mocked(createSurveyFromImport).mockClear();
+    streamWith([{ type: "done", payload, report, references }] as TSurveyImportStreamEvent[]);
+    const { result } = renderImport();
+
+    for (let review = 0; review < 2; review++) {
+      await act(async () => result.current.selectFile(formbricksFile()));
+      await waitFor(() => expect(result.current.status).toBe("review"));
+      act(() => result.current.handleOpenInEditor());
+      await waitFor(() => expect(createSurveyFromImport).toHaveBeenCalledTimes(review + 1));
+      act(() => result.current.pickAnotherFile());
+    }
+
+    const [[, firstKey], [, secondKey]] = vi.mocked(createSurveyFromImport).mock.calls;
+    expect(secondKey).not.toBe(firstKey);
+  });
+
+  test("without Formbricks AI, imports a Formbricks file and refuses a Qualtrics export before uploading it", async () => {
+    streamWith([{ type: "done", payload, report, references }] as TSurveyImportStreamEvent[]);
+    const { result } = renderImport({ isAIAvailable: false });
+
+    await act(async () => result.current.selectFile(qsfFile()));
+    expect(result.current.errorCode).toBe("file_needs_ai");
+    expect(streamSurveyImportFile).not.toHaveBeenCalled();
+
+    await act(async () => result.current.selectFile(formbricksFile()));
+    await waitFor(() => expect(result.current.status).toBe("review"));
+  });
+
+  test("keeps the fields a refused Formbricks file got wrong, for the dialog to list", async () => {
+    const invalidParams = [
+      { name: "file.survey.blocks.0.elements.0.headline", reason: "Missing required field 'headline'" },
+    ];
+    streamWith(
+      [],
+      new SurveyImportRequestError(
+        new V3ApiError({
+          status: 422,
+          detail: "The Formbricks file is not valid.",
+          code: "formbricks_file_invalid",
+          invalid_params: invalidParams,
+        }),
+        null
+      )
+    );
+    const { result } = renderImport();
+
+    await act(async () => result.current.selectFile(formbricksFile()));
+
+    await waitFor(() => expect(result.current.errorCode).toBe("formbricks_file_invalid"));
+    expect(result.current.invalidParams).toEqual(invalidParams);
+
+    act(() => result.current.pickAnotherFile());
+    expect(result.current.invalidParams).toBeNull();
   });
 
   test("picking another file goes back to the drop zone", async () => {

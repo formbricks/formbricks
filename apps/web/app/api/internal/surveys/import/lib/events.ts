@@ -1,5 +1,6 @@
 import { AI_STREAM_FAILURE_CODES } from "@/app/api/internal/lib/ai-stream-errors";
-import type { TSurveyImportDraft } from "@/modules/survey/import/core/draft";
+import type { TFormbricksFileReferences } from "@/modules/survey/formbricks-file/envelope";
+import type { TSurveyImportPayload } from "@/modules/survey/import/core/draft";
 import type { TSurveyImportReport, TSurveyImportStage } from "@/modules/survey/import/types";
 
 /** Codes that can only be raised after the stream opened. Everything else is a pre-stream problem+json. */
@@ -25,8 +26,15 @@ export type TSurveyImportStreamEvent =
   /** A new stage, or the current one repeated as a heartbeat while a stage runs long. */
   | { type: "progress"; stage: TSurveyImportStage }
   /**
-   * The draft to review and create with `POST /api/v3/surveys?createdFrom=import`, sent there as it
-   * is — the request body, locale-keyed, before parsing — and its report.
+   * The draft to review, as the create request body takes it — locale-keyed, before parsing — and its
+   * report. Without `references` the dialog creates it with `POST /api/v3/surveys?createdFrom=import`;
+   * with them (a Formbricks file) it sends both to `POST /api/internal/surveys/imports`, which resolves
+   * the references again and creates them with the survey.
    */
-  | { type: "done"; payload: TSurveyImportDraft; report: TSurveyImportReport }
+  | {
+      type: "done";
+      payload: TSurveyImportPayload;
+      report: TSurveyImportReport;
+      references?: TFormbricksFileReferences;
+    }
   | { type: "error"; code: TSurveyImportStreamErrorCode; detail: string; retryAfter?: number };

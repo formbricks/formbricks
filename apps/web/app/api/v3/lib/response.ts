@@ -105,6 +105,10 @@ export const INTERNAL_PROBLEM_CODES = [
   "attachment_export_too_large",
   "capacity_reached",
   "concurrency_limit_reached",
+  "formbricks_file_invalid",
+  "formbricks_file_too_new",
+  "idempotency_key_in_use",
+  "idempotency_key_reused",
   "member_in_other_organizations",
   "retention_exemption_exists",
   "retention_exemption_not_active",
@@ -529,6 +533,43 @@ export function problemConflict(
     instance,
     ...(options?.details && { details: options.details }),
   });
+}
+
+/**
+ * ENG-6850: a request repeated with an `Idempotency-Key` whose first request is still running (IETF
+ * Idempotency-Key draft §2.6). Internal routes only. `Retry-After` says when the first will have finished
+ * or given the key back.
+ */
+export function problemIdempotencyKeyInUse(
+  requestId: string,
+  instance: string | undefined,
+  retryAfterSeconds: number
+): Response {
+  return problemResponse(
+    409,
+    "Conflict",
+    "A request with this Idempotency-Key is still being processed",
+    requestId,
+    {
+      code: "idempotency_key_in_use",
+      instance,
+      headers: { "Retry-After": String(retryAfterSeconds) },
+    }
+  );
+}
+
+/**
+ * ENG-6850: an `Idempotency-Key` reused for a different request (IETF Idempotency-Key draft §2.6).
+ * Internal routes only.
+ */
+export function problemIdempotencyKeyReused(requestId: string, instance?: string): Response {
+  return problemResponse(
+    422,
+    "Unprocessable Content",
+    "This Idempotency-Key was used for a different request",
+    requestId,
+    { code: "idempotency_key_reused", instance }
+  );
 }
 
 export function problemBadGateway(

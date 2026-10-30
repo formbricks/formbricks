@@ -1,5 +1,12 @@
 import type { TSurveyImportIssue, TSurveyImportReport } from "../types";
-import type { TSurveyImportDraft } from "./draft";
+
+/** What the report's summary reads off a draft: an assembled one, or one a lane copied from its file. */
+export interface TSurveyImportReportDocument {
+  blocks: ReadonlyArray<{ elements: ReadonlyArray<unknown> }>;
+  /** Default language first. */
+  languages: ReadonlyArray<{ code: string }>;
+  hiddenFields: { fieldIds: ReadonlyArray<string> };
+}
 
 /**
  * A report line inside the import, with the source question (`questionRef`, the lane's own id for it)
@@ -17,7 +24,7 @@ export interface TSurveyImportPipelineIssue extends TSurveyImportIssue {
  */
 export function buildSurveyImportReport(params: {
   source: TSurveyImportReport["source"];
-  document: TSurveyImportDraft;
+  document: TSurveyImportReportDocument;
   issues: TSurveyImportPipelineIssue[];
 }): TSurveyImportReport {
   const { source, document, issues } = params;

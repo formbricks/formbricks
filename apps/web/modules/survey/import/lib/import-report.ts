@@ -165,6 +165,23 @@ export const getQsfImportIssueMessage = (issue: TSurveyImportIssue, t: TTranslat
       return t("workspace.surveys.import.issues.ending_not_translated", {
         languages: param(issue, "languages"),
       });
+    case "unknown_key_dropped":
+      // Past the first fifty, one line counts the rest instead of naming each.
+      return issue.params?.field === undefined
+        ? t("workspace.surveys.import.issues.unknown_keys_dropped", { count: count(issue) })
+        : t("workspace.surveys.import.issues.unknown_key_dropped", { field: param(issue, "field") });
+    case "custom_css_removed":
+      return t("workspace.surveys.import.issues.custom_css_removed");
+    case "targeting_removed":
+      return t("workspace.surveys.import.issues.targeting_removed");
+    case "targeting_filter_removed":
+      return t("workspace.surveys.import.issues.targeting_filter_removed", { count: count(issue) });
+    case "action_class_created":
+      return t("workspace.surveys.import.issues.action_class_created", { name: param(issue, "name") });
+    case "attribute_key_created":
+      return t("workspace.surveys.import.issues.attribute_key_created", { key: param(issue, "key") });
+    case "content_only":
+      return t("workspace.surveys.import.issues.content_only");
     default:
       // A server newer than this client can still send a code it does not know.
       return getUnknownIssueMessage(issue.code, t);
@@ -245,6 +262,6 @@ export const formatQsfImportReport = (report: TSurveyImportReport, t: TTranslate
   return `${lines.join("\n")}\n`;
 };
 
-/** `survey.qsf` → `survey-import-report.txt`. */
+/** `survey.qsf` or `survey.formbricks.json` → `survey-import-report.txt`. */
 export const getQsfImportReportFileName = (fileName: string): string =>
-  `${fileName.replace(/\.qsf$/i, "") || "survey"}-import-report.txt`;
+  `${fileName.replace(/(?:\.qsf|\.formbricks\.json|\.json)$/i, "") || "survey"}-import-report.txt`;

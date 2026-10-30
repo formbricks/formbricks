@@ -36,6 +36,12 @@ export type TV3SurveyCreateOptions = {
   surveyCreateInputOverrides?: Partial<TSurveyCreateInput>;
   /** Filled with the custom CSS warnings when the create processed custom CSS. */
   report?: TV3SurveyWriteReport;
+  /**
+   * ENG-6850: a transaction the caller opened, passed on to {@link executeV3SurveyCreate}, so an
+   * import's references and the survey land together or not at all. The checks before the write
+   * (permissions, custom CSS) read as they do without one.
+   */
+  transaction?: TSurveyWriteTransaction;
 };
 
 export class V3SurveyCreatePermissionError extends Error {
@@ -363,6 +369,7 @@ export async function createV3Survey(
     requestId,
     surveyCreateInputOverrides: options.surveyCreateInputOverrides,
     customCss: customCss.stored,
+    ...(options.transaction ? { transaction: options.transaction } : {}),
   });
 
   if (options.report && customCss.warnings) {

@@ -1,31 +1,34 @@
 "use client";
 
-import { FileIcon } from "lucide-react";
+import { ArrowUpRightIcon, FileIcon } from "lucide-react";
 import { type ReactNode, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { cn } from "@/lib/cn";
-import { AIUnavailableAlert } from "@/modules/ai/components/ai-unavailable-alert";
 import { DraftReviewPanel } from "@/modules/survey/components/template-list/components/draft-review-panel";
 import { SourceChip } from "@/modules/survey/components/template-list/components/source-chip";
 import { ImportFacts } from "@/modules/survey/import/components/import-facts";
 import { ImportReport } from "@/modules/survey/import/components/import-report";
 import { useImportSurvey } from "@/modules/survey/import/hooks/use-import-survey";
 import { getSurveyImportErrorMessage } from "@/modules/survey/import/lib/import-errors";
+import { getSurveyImportFileExtensions } from "@/modules/survey/import/lib/import-file";
 import { getSwitchedOffLanguages } from "@/modules/survey/import/lib/import-report";
-import { QSF_FILE_EXTENSION } from "@/modules/survey/import/lib/qsf-file";
 import type { TSurveyImportReport, TSurveyImportStage } from "@/modules/survey/import/types";
 import { AiIcon, AiStatusLine } from "@/modules/ui/components/ai";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { FileDropZone } from "@/modules/ui/components/file-drop-zone";
 
+const MAX_LISTED_PROBLEMS = 10;
+
 const IMPORT_STAGES: readonly TSurveyImportStage[] = ["reading", "ai", "assembling"];
+
+/** Where the "Very large survey?" hint points: importing through MCP with an AI assistant. */
+const MCP_DOCS_URL = "https://formbricks.com/docs/platform/mcp/overview";
 
 type ImportSurveyFormProps = {
   workspaceId: string;
+  /** Whether Formbricks AI can read a Qualtrics export here; a Formbricks file imports either way. */
   isAIAvailable: boolean;
-  aiUnavailableReason?: TAIUnavailableReason;
   onSuccess: (surveyId: string) => void;
   onCancel: () => void;
   /** The host supplies the footer shell (`<DialogFooter>`); the buttons are built here, per state. */
@@ -70,7 +73,6 @@ const SwitchedOffLanguagesAlert = ({ report }: Readonly<{ report: TSurveyImportR
 export const ImportSurveyForm = ({
   workspaceId,
   isAIAvailable,
-  aiUnavailableReason,
   onSuccess,
   onCancel,
   renderFooter,
@@ -107,17 +109,14 @@ export const ImportSurveyForm = ({
     onImportingChange?.(isImporting);
   }, [isImporting, onImportingChange]);
 
-  // Same gate as Create with AI (ENG-3603): the alert stands in for the drop zone. The route can also
-  // say AI went off after the page loaded, which lands here the same way.
-  if (!isAIAvailable || importer.aiUnavailableReason) {
-    return (
-      <AIUnavailableAlert
-        title={t("workspace.surveys.import.feature_name")}
-        reason={importer.aiUnavailableReason ?? aiUnavailableReason}
-        feature="survey_import"
-      />
-    );
-  }
+  // Without Formbricks AI the dialog still imports Formbricks files (ENG-6850), so there is no alert in
+  // place of the drop zone: it offers .json only and leaves the AI note out. AI going off after the page
+  // loaded refuses the .qsf it was asked to read, with an error line like any other refusal.
+  const canReadWithAI = isAIAvailable && !importer.aiUnavailableReason;
+  const fileExtensions = getSurveyImportFileExtensions(canReadWithAI);
+  // At most this many field problems are listed; the rest are counted.
+  const shownInvalidParams = importer.invalidParams?.slice(0, MAX_LISTED_PROBLEMS) ?? [];
+  const unlistedProblemCount = (importer.invalidParams?.length ?? 0) - shownInvalidParams.length;
 
   const errorMessage = importer.errorCode
     ? getSurveyImportErrorMessage(importer.errorCode, t, importer.retryAfterSeconds)
@@ -192,7 +191,24 @@ export const ImportSurveyForm = ({
       {errorMessage ? (
         <Alert variant="error">
           <AlertTitle>{t("common.error")}</AlertTitle>
-          <AlertDescription>{errorMessage}</AlertDescription>
+          <AlertDescription>
+            {errorMessage}
+            {shownInvalidParams.length > 0 ? (
+              // Field paths and reasons come from the user's file: rendered as text only.
+              <ul className="mt-1 list-disc space-y-0.5 pl-4">
+                {shownInvalidParams.map((param, index) => (
+                  <li key={`${param.name}-${index}`} className="break-words">
+                    <code className="text-xs">{param.name}</code>: {param.reason}
+                  </li>
+                ))}
+                {unlistedProblemCount > 0 ? (
+                  <li>
+                    {t("workspace.surveys.import.errors.more_problems", { count: unlistedProblemCount })}
+                  </li>
+                ) : null}
+              </ul>
+            ) : null}
+          </AlertDescription>
         </Alert>
       ) : null}
 
@@ -220,15 +236,32 @@ export const ImportSurveyForm = ({
         <div className="flex flex-col gap-2">
           <FileDropZone
             id="import-survey-file"
-            accept={QSF_FILE_EXTENSION}
+            accept={fileExtensions.join(",")}
             onFileSelect={importer.selectFile}
             primaryText={t("workspace.surveys.import.dropzone_primary")}
-            helpText={t("workspace.surveys.import.dropzone_help")}
+            helpText={
+              canReadWithAI
+                ? t("workspace.surveys.import.dropzone_help")
+                : t("workspace.surveys.import.dropzone_help_json_only")
+            }
             loadingText={t("workspace.surveys.import.reading_file")}
           />
-          <p className="flex items-center gap-1.5 text-xs text-slate-500">
-            <AiIcon className="size-3.5 shrink-0" aria-hidden="true" />
-            {t("workspace.surveys.import.ai_note")}
+          {canReadWithAI ? (
+            <p className="flex items-center gap-1.5 text-xs text-slate-500">
+              <AiIcon className="size-3.5 shrink-0" aria-hidden="true" />
+              {t("workspace.surveys.import.ai_note")}
+            </p>
+          ) : null}
+          <p className="text-xs text-slate-500">
+            {t("workspace.surveys.import.mcp_hint")}{" "}
+            <a
+              href={MCP_DOCS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-0.5 text-slate-600 underline underline-offset-4 hover:text-slate-800">
+              {t("workspace.surveys.import.mcp_hint_link")}
+              <ArrowUpRightIcon className="size-3" aria-hidden="true" />
+            </a>
           </p>
         </div>
       )}

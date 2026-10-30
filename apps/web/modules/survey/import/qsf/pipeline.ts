@@ -128,7 +128,9 @@ async function assembleCheckedDraft(
 }
 
 /** Plan and assemble the survey. */
-export async function runQsfImport(params: TRunQsfImportParams): Promise<TSurveyImportResult> {
+export async function runQsfImport(
+  params: TRunQsfImportParams
+): Promise<TSurveyImportResult<TSurveyImportDraft>> {
   const { prepared, workspaceId, organizationId, signal, onProgress } = params;
   const { survey } = prepared;
   const deadline = performance.now() + params.deadlineMs;

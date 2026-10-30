@@ -94,6 +94,22 @@ export interface TSurveyImportDraft {
   autoSelectLanguage?: true;
 }
 
+/**
+ * A draft a lane copies from the file rather than assembling it: a Formbricks file's survey (ENG-6850),
+ * as the create request body takes it — locale-keyed texts, any element type, app surveys with their
+ * triggers and targeting. Only what the import itself sets is typed; the rest is the file's, held to
+ * the create's own checks before the dialog sees it.
+ */
+export type TSurveyImportFileDraft = Record<string, unknown> & {
+  workspaceId: string;
+  name: string;
+  status: "draft";
+  blocks: ReadonlyArray<{ elements: ReadonlyArray<unknown> }>;
+};
+
+/** What an import lane hands the dialog to review and create: assembled, or copied from the file. */
+export type TSurveyImportPayload = TSurveyImportDraft | TSurveyImportFileDraft;
+
 /** A lane's assembled draft, with the report lines assembly wrote. */
 export interface TSurveyImportAssembly {
   document: TSurveyImportDraft;
