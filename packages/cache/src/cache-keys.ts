@@ -87,6 +87,14 @@ export const createCacheKey = {
       makeCacheKey("rate_limit", namespace, identifier, "in_flight"),
   },
 
+  // Survey import (ENG-6850): an `Idempotency-Key` the import dialog sent with a create, scoped to the
+  // user who sent it and hashed, mapped to the request it was first used for and the survey it created.
+  // Not a cache: it lives 24 hours and is never invalidated.
+  surveyImport: {
+    idempotency: (userId: string, keyHash: string): CacheKey =>
+      makeCacheKey("survey_import", userId, "idempotency", keyHash),
+  },
+
   // Custom keys with validation
   custom: (namespace: CustomCacheNamespace, identifier: string, subResource?: string): CacheKey => {
     return subResource !== undefined
