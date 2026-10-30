@@ -261,6 +261,13 @@ describe("endpoint-validator", () => {
       expect(isAuthProtectedRoute("/organizations/123/settings")).toBe(true);
     });
 
+    test("protects the ID-free marketing links so logged-out visitors log in first", () => {
+      expect(isAuthProtectedRoute("/billing")).toBe(true);
+      expect(isAuthProtectedRoute("/settings/teams")).toBe(true);
+      expect(isAuthProtectedRoute("/contacts/segments")).toBe(true);
+      expect(isAuthProtectedRoute("/billing-confirmation")).toBe(false);
+    });
+
     test("should return false for non-protected routes", () => {
       expect(isAuthProtectedRoute("/auth/login")).toBe(false);
       expect(isAuthProtectedRoute("/auth/signup")).toBe(false);
