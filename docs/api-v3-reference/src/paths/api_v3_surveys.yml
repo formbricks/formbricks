@@ -9,6 +9,11 @@ get:
     is applied in the query and the cursor, never after the fact: `limit` keeps its meaning and
     `meta.nextCursor` being `null` remains the only end-of-collection signal.
 
+    `view=full` returns each survey's whole document alongside its summary fields, so an export does not
+    need one `GET /api/v3/surveys/{surveyId}` per survey. Pages are not snapshots: a survey created or
+    deleted while you page may be missed or skipped, so a full extraction should page with
+    `sortBy=createdAt` and reconcile on a later run.
+
     Session cookie, `x-api-key`, or a Bearer token.
   tags:
     - V3 Surveys
@@ -28,7 +33,7 @@ get:
         minimum: 1
         maximum: 250
         default: 20
-      description: Page size (max 250)
+      description: Page size (max 250, or max 50 with `view=full`; above that → **400**)
     - in: query
       name: cursor
       schema:
@@ -143,6 +148,19 @@ get:
       description: >-
         Sort order. Defaults to `updatedAt`. The `cursor` token is bound to the
         selected sort order.
+    - in: query
+      name: view
+      schema:
+        type: string
+        enum:
+          - summary
+          - full
+        default: summary
+      description: >-
+        `summary` (default) returns `SurveyListItem`s. `full` returns `SurveyFullListItem`s: the
+        summary fields plus the survey document `GET /api/v3/surveys/{surveyId}` returns, in every
+        configured language. With `full`, `limit` is at most 50 and `meta.unsupportedSurveyIds` is
+        present. Pagination, filters, sorting and permissions are the same in both views.
   responses:
     "200":
       description: Surveys retrieved successfully
@@ -166,7 +184,11 @@ get:
               data:
                 type: array
                 items:
-                  $ref: ../components/schemas/SurveyListItem.yml
+                  anyOf:
+                    - $ref: ../components/schemas/SurveyFullListItem.yml
+                    - $ref: ../components/schemas/SurveyListItem.yml
+                description: >-
+                  `SurveyListItem`s, or `SurveyFullListItem`s with `view=full`.
               meta:
                 $ref: ../components/schemas/SurveyListMeta.yml
     "400":

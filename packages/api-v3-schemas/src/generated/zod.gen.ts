@@ -4,6 +4,16 @@
 import * as z from "zod";
 
 /**
+ * Custom CSS **source** as a caller writes it (ENG-3641). Both keys are required. `light` is base CSS that applies in both appearances; `dark` adds overrides on top of it when the survey renders dark. `null`, an empty string or whitespace means "no CSS" for that field. Source only: compiled output and the processor version are computed by the server on every write, and a request that supplies either is rejected. The combined source is limited to 100 000 UTF-8 bytes for a workspace and 20 000 for a survey; larger CSS is a **422** with error code `source_too_large`.
+ */
+export const zCustomCssInput = z.strictObject({
+  light: z.string().nullable(),
+  dark: z.string().nullable(),
+});
+
+export type CustomCssInputZodType = z.infer<typeof zCustomCssInput>;
+
+/**
  * The pagination half of a v3 list's `meta`, shared by every paginated collection.
  *
  * Deliberately open, and never an endpoint's `meta` by itself: an endpoint composes it with `allOf` and closes the result with `unevaluatedProperties: false`. A base that closed itself could not be extended — inside an `allOf`, `additionalProperties: false` sees a sibling branch's properties as additional and rejects them. An endpoint that adds nothing still wraps it, so no `meta` anywhere is open.
@@ -118,16 +128,6 @@ export type ProblemZodType = z.infer<typeof zProblem>;
 export const zLocaleCode = z.string().regex(/^[a-z]{2}(?:-[A-Z][a-z]{3})?-[A-Z]{2}$/);
 
 export type LocaleCodeZodType = z.infer<typeof zLocaleCode>;
-
-/**
- * Custom CSS **source** as a caller writes it (ENG-3641). Both keys are required. `light` is base CSS that applies in both appearances; `dark` adds overrides on top of it when the survey renders dark. `null`, an empty string or whitespace means "no CSS" for that field. Source only: compiled output and the processor version are computed by the server on every write, and a request that supplies either is rejected. The combined source is limited to 100 000 UTF-8 bytes for a workspace and 20 000 for a survey; larger CSS is a **422** with error code `source_too_large`.
- */
-export const zCustomCssInput = z.strictObject({
-  light: z.string().nullable(),
-  dark: z.string().nullable(),
-});
-
-export type CustomCssInputZodType = z.infer<typeof zCustomCssInput>;
 
 /**
  * Receipt describing how `answers[]` and `embeddedData[]` labels were produced. It exists so a consumer can tell whether the labels it is reading are the wording the respondent actually saw.
