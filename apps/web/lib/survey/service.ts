@@ -325,6 +325,33 @@ export const getSurveyWithCustomCss = reactCache(
     await findSurveyById(surveyId, selectSurveyWithCustomCss)
 );
 
+/**
+ * {@link getSurveyWithCustomCss} for a page of one workspace's surveys, in one query (API v3 list,
+ * `view=full`). The caller bounds `surveyIds` by its page size. Ids outside the workspace, or deleted
+ * since the caller listed them, are simply absent; the result is in no particular order.
+ */
+export const getSurveysWithCustomCss = async (
+  workspaceId: string,
+  surveyIds: string[]
+): Promise<TSurvey[]> => {
+  validateInputs([workspaceId, ZId], [surveyIds, ZId.array()]);
+  if (surveyIds.length === 0) return [];
+
+  try {
+    const surveysPrisma = await prisma.survey.findMany({
+      where: { id: { in: surveyIds }, workspaceId },
+      select: selectSurveyWithCustomCss,
+    });
+    return surveysPrisma.map((surveyPrisma) => transformPrismaSurvey<TSurvey>(surveyPrisma));
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      logger.error(error, "Error getting surveys by id");
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
+};
+
 export const getSurveysByActionClassId = reactCache(
   async (
     actionClassId: string,

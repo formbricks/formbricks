@@ -47,7 +47,9 @@ import {
   getSurveys,
   getSurveysByActionClassId,
   getSurveysBySegmentId,
+  getSurveysWithCustomCss,
   loadNewSegmentInSurvey,
+  selectSurveyWithCustomCss,
   updateSurvey,
   updateSurveyInternal,
 } from "./service";
@@ -354,6 +356,41 @@ describe("Tests for getSurveys", () => {
       prisma.survey.findMany.mockRejectedValue(new Error(mockErrorMessage));
       await expect(getSurveys(mockId, {})).rejects.toThrow(Error);
     });
+  });
+});
+
+describe("Tests for getSurveysWithCustomCss (ENG-6861)", () => {
+  test("reads the batch in one query scoped to the workspace, custom CSS included", async () => {
+    const surveyIds = [createId(), createId()];
+    prisma.survey.findMany.mockResolvedValueOnce([mockSurveyOutput]);
+
+    const surveys = await getSurveysWithCustomCss(mockId, surveyIds);
+
+    expect(surveys).toEqual([mockTransformedSurveyOutput]);
+    expect(prisma.survey.findMany).toHaveBeenCalledTimes(1);
+    expect(prisma.survey.findMany).toHaveBeenCalledWith({
+      where: { id: { in: surveyIds }, workspaceId: mockId },
+      select: selectSurveyWithCustomCss,
+    });
+  });
+
+  test("answers an empty batch without querying", async () => {
+    expect(await getSurveysWithCustomCss(mockId, [])).toEqual([]);
+    expect(prisma.survey.findMany).not.toHaveBeenCalled();
+  });
+
+  test("rejects a malformed survey id", async () => {
+    await expect(getSurveysWithCustomCss(mockId, ["123#"])).rejects.toThrow(ValidationError);
+  });
+
+  test("maps a known Prisma error to a DatabaseError", async () => {
+    prisma.survey.findMany.mockRejectedValueOnce(
+      new Prisma.PrismaClientKnownRequestError("Mock error message", {
+        code: PrismaErrorType.UniqueConstraintViolation,
+        clientVersion: "0.0.1",
+      })
+    );
+    await expect(getSurveysWithCustomCss(mockId, [createId()])).rejects.toThrow(DatabaseError);
   });
 });
 
