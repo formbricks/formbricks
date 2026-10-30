@@ -67,16 +67,17 @@ Switch the card to **Phone** to give phones their own edge and layout. **Use the
 
 ### Choose where an In page banner appears
 
-An In page banner is placed at the very top of the page, and the page shifts down by its height when it appears. To place it somewhere else, such as below your site header, or to reserve its space so nothing shifts, add an empty element with this attribute where it should go:
+An In page banner is placed at the very top of the page, and the page shifts down by its height when it appears. On a site where every link loads a new page, that happens on every page. To place it somewhere else, such as below your site header, or to reserve its space so nothing shifts, add an empty element with this attribute where it should go:
 
 ```html
 <div data-formbricks-slot="banner-top"></div>
 ```
 
-Formbricks then puts In page banners inside that element. To keep the page from shifting, give the element a minimum height that matches your banner; that space stays empty on pages where no banner shows.
+Formbricks then puts In page banners inside that element. To keep the page from shifting, give the element a minimum height that matches your banner, for example `style="min-height: 48px"`. That space stays empty on pages where no banner shows, and after a visitor closes the banner.
 
 ## On your website
 
+- **Switching pages:** the SDK draws banners with JavaScript once it has loaded. On a site where every link loads a new page, the page appears first and the banner a moment later, on every page. Reserve an In page banner's space with a [slot element](#choose-where-an-in-page-banner-appears) so the page doesn't jump, or use Overlay. A single-page app keeps the banner on screen across route changes; put the slot element in your layout, outside the content that changes with the route.
 - **Closing a banner** keeps it closed for the rest of the visit in that browser tab, across pages and reloads. A new tab shows it again. Formbricks doesn't remember a close across tabs, devices or days.
 - **Several banners on the same edge** stack, the newest closest to the edge. Feedback buttons move aside so Overlay banners don't cover them, and an open survey always sits on top of banners.
 - **Long messages** wrap onto more lines on narrow screens. An Overlay banner is never taller than a third of the screen; a longer one scrolls inside.
