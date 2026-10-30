@@ -87,18 +87,35 @@ describe("getSurveyImportRequestErrorCode", () => {
     expect(getSurveyImportRequestErrorCode(error)).toBe("qsf_limit_exceeded:questions");
   });
 
-  test.each(["rows", "columns", "cell_size", "source_size"])(
-    "names the limit a question list is past (%s)",
-    (limit) => {
-      expect(getSurveyImportRequestErrorCode(fileRefusal(422, "document_limit_exceeded", limit))).toBe(
-        `document_limit_exceeded:${limit}`
-      );
-    }
-  );
+  test.each([
+    "rows",
+    "columns",
+    "cell_size",
+    "xml_depth",
+    "xml_elements",
+    "paragraphs",
+    "tables",
+    "table_cells",
+    "source_size",
+  ])("names the limit a question list is past (%s)", (limit) => {
+    expect(getSurveyImportRequestErrorCode(fileRefusal(422, "document_limit_exceeded", limit))).toBe(
+      `document_limit_exceeded:${limit}`
+    );
+  });
 });
 
 describe("getSurveyImportErrorMessage for a question list past a limit", () => {
-  test.each(["rows", "columns", "cell_size", "source_size"])("says which limit for %s", (limit) => {
+  test.each([
+    "rows",
+    "columns",
+    "cell_size",
+    "xml_depth",
+    "xml_elements",
+    "paragraphs",
+    "tables",
+    "table_cells",
+    "source_size",
+  ])("says which limit for %s", (limit) => {
     expect(getSurveyImportErrorMessage(`document_limit_exceeded:${limit}`, t)).toBe(
       `workspace.surveys.import.errors.document_limits.${limit}`
     );

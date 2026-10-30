@@ -41,10 +41,10 @@ const getImportLimitMessage = (limit: string, t: TTranslate): string => {
   }
 };
 
-/** The dialog's code for a question list past one of the sheet's limits: this prefix, then the limit. */
+/** The dialog's code for a document past one of the import's limits: this prefix, then the limit. */
 export const SURVEY_IMPORT_DOCUMENT_LIMIT_CODE_PREFIX = "document_limit_exceeded:";
 
-/** Which sheet limit a question list is past (`TSurveyImportDocumentLimit`); an unknown one generically. */
+/** Which limit a document is past (`TSurveyImportDocumentLimit`); an unknown one generically. */
 const getDocumentLimitMessage = (limit: string, t: TTranslate): string => {
   switch (limit) {
     case "rows":
@@ -53,6 +53,16 @@ const getDocumentLimitMessage = (limit: string, t: TTranslate): string => {
       return t("workspace.surveys.import.errors.document_limits.columns");
     case "cell_size":
       return t("workspace.surveys.import.errors.document_limits.cell_size");
+    case "xml_depth":
+      return t("workspace.surveys.import.errors.document_limits.xml_depth");
+    case "xml_elements":
+      return t("workspace.surveys.import.errors.document_limits.xml_elements");
+    case "paragraphs":
+      return t("workspace.surveys.import.errors.document_limits.paragraphs");
+    case "tables":
+      return t("workspace.surveys.import.errors.document_limits.tables");
+    case "table_cells":
+      return t("workspace.surveys.import.errors.document_limits.table_cells");
     case "source_size":
       return t("workspace.surveys.import.errors.document_limits.source_size");
     default:

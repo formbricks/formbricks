@@ -127,7 +127,7 @@ describe("useImportSurvey", () => {
   test("refuses a file by its name or size without uploading it", async () => {
     const { result } = renderImport();
 
-    await act(async () => result.current.selectFile(qsfFile("{}", "survey.docx")));
+    await act(async () => result.current.selectFile(qsfFile("{}", "survey.pdf")));
     expect(result.current.errorCode).toBe("file_wrong_extension");
 
     await act(async () => result.current.selectFile(qsfFile("", "survey.qsf")));

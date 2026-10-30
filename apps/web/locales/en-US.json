@@ -4711,16 +4711,16 @@
         "partial_responses": "Partial responses"
       },
       "import": {
-        "ai_note": "Qualtrics, Excel and CSV files are read with Formbricks AI. Every text comes from the file word for word.",
-        "card_description": "Turn a Formbricks file, a Qualtrics export or an Excel or CSV question list into a draft survey.",
+        "ai_note": "Qualtrics, Word, Excel and CSV files are read with Formbricks AI. Every text comes from the file word for word.",
+        "card_description": "Turn a Formbricks file, a Qualtrics export or a questionnaire from Word, Excel or CSV into a draft survey.",
         "card_title": "Import survey",
-        "dialog_description": "Bring in a Formbricks file, a Qualtrics export or a question list from Excel or CSV. You review the draft before anything is created.",
+        "dialog_description": "Bring in a Formbricks file, a Qualtrics export or a questionnaire from Word, Excel or CSV. You review the draft before anything is created.",
         "dialog_title": "Import a survey",
         "discard_draft_body": "The imported draft has not been opened in the editor yet. Closing will discard it.",
         "discard_draft_title": "Discard this import?",
         "discard_import_body": "The file is still being imported. Closing will stop the import.",
         "discard_import_title": "Stop importing?",
-        "dropzone_help": "Formbricks file (.json), Qualtrics export (.qsf), Excel (.xlsx) or CSV (.csv), up to 15 MB",
+        "dropzone_help": "Formbricks file (.json), Qualtrics export (.qsf), Word (.docx), Excel (.xlsx) or CSV (.csv), up to 15 MB",
         "dropzone_help_json_only": "Formbricks file (.json), up to 15 MB",
         "dropzone_primary": "Drop a file here or click to choose one",
         "encodings": {
@@ -4736,13 +4736,18 @@
             "cell_size": "A cell in this file holds more text than the import can read.",
             "columns": "A row in this file has more than 100 columns. Remove the columns the survey does not need and import it again.",
             "other": "This file is past one of the import limits.",
+            "paragraphs": "This document has more than 20,000 paragraphs. Split it into smaller files and import each one.",
             "rows": "This file has more than 5,000 rows. Split it into smaller files and import each one.",
-            "source_size": "This file is too large for Formbricks AI to import in one go. Import it with Claude or ChatGPT through MCP instead."
+            "source_size": "This file is too large for Formbricks AI to import in one go. Import it with Claude or ChatGPT through MCP instead.",
+            "table_cells": "The tables in this document have more than 50,000 cells. Split it into smaller files and import each one.",
+            "tables": "This document has more than 500 tables. Split it into smaller files and import each one.",
+            "xml_depth": "This document is nested too deeply to read. Save it again in Word and import it once more.",
+            "xml_elements": "This document holds more content than the import can read. Split it into smaller files and import each one."
           },
           "empty_file": "This file is empty.",
           "failed": "The import failed. Try again.",
           "file_too_large": "This file is larger than 15 MB.",
-          "file_type_unsupported": "This kind of file cannot be imported. Choose a Formbricks file (.json), a Qualtrics export (.qsf), or an Excel (.xlsx) or CSV (.csv) question list.",
+          "file_type_unsupported": "This kind of file cannot be imported. Choose a Formbricks file (.json), a Qualtrics export (.qsf), or a Word (.docx), Excel (.xlsx) or CSV (.csv) questionnaire.",
           "formbricks_file_invalid": "This Formbricks file has problems. Fix them and import it again:",
           "formbricks_file_too_new": "This file was exported from a newer version of Formbricks. Update Formbricks, then import it again.",
           "limits": {
@@ -4761,7 +4766,7 @@
             "texts": "This survey has more texts than the import can read."
           },
           "more_problems": "{count, plural, one {# more problem} other {# more problems}}",
-          "needs_ai": "Qualtrics, Excel and CSV files are read with Formbricks AI, which your organization does not have. Choose a Formbricks file (.json).",
+          "needs_ai": "Qualtrics, Word, Excel and CSV files are read with Formbricks AI, which your organization does not have. Choose a Formbricks file (.json).",
           "not_a_qsf": "This is not a Qualtrics survey export. In Qualtrics, export the survey as a .qsf file and try again.",
           "not_allowed": "You do not have permission to import surveys into this workspace.",
           "rate_limited": "Too many requests. Try again in {seconds, plural, one {# second} other {# seconds}}.",
@@ -4774,7 +4779,7 @@
           "too_complex": "This file is too large or too complex to import. Split the survey into smaller ones and try again.",
           "too_many_questions": "This survey has more than 200 questions, more than one import can build. Import it with Claude or ChatGPT through MCP instead.",
           "unreadable": "This file could not be read. Export it again and try once more.",
-          "wrong_extension": "Choose a Formbricks file (.json), a Qualtrics export (.qsf), or an Excel (.xlsx) or CSV (.csv) question list."
+          "wrong_extension": "Choose a Formbricks file (.json), a Qualtrics export (.qsf), or a Word (.docx), Excel (.xlsx) or CSV (.csv) questionnaire."
         },
         "facts": {
           "blocks": "{count, plural, one {# block} other {# blocks}}",
