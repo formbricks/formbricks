@@ -5063,9 +5063,6 @@
         "ai_status_drafting_answers": "Erstelle realistische Antworten …",
         "ai_status_reading_survey": "Lese deine Fragen …",
         "ai_status_saving_responses": "Speichere die Antworten …",
-        "all_responses_attachments": "Alle Anhänge (ZIP)",
-        "all_responses_csv": "Alle Antworten (CSV)",
-        "all_responses_excel": "Alle Antworten (Excel)",
         "almost_there": "Fast geschafft! Richte das Widget ein, um Antworten zu erhalten.",
         "average": "Durchschnitt",
         "completed": "Abgeschlossen",
@@ -5166,8 +5163,6 @@
           "screened_out": "Ausgeschlossen (Kontingent erreicht)",
           "submitted": "Abgeschickt"
         },
-        "selected_responses_csv": "Ausgewählte Antworten (CSV)",
-        "selected_responses_excel": "Ausgewählte Antworten (Excel)",
         "setup_integrations": "Integrationen einrichten",
         "share_survey": "Verteilen",
         "starts": "Starts",

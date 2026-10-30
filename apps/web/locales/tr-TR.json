@@ -5063,9 +5063,6 @@
         "ai_status_drafting_answers": "Gerçekçi yanıtlar hazırlanıyor…",
         "ai_status_reading_survey": "Sorularınız okunuyor…",
         "ai_status_saving_responses": "Yanıtlar kaydediliyor…",
-        "all_responses_attachments": "Tüm ekler (ZIP)",
-        "all_responses_csv": "Tüm yanıtlar (CSV)",
-        "all_responses_excel": "Tüm yanıtlar (Excel)",
         "almost_there": "Neredeyse tamam! Yanıtları almaya başlamak için widget'ı kurun.",
         "average": "Ortalama",
         "completed": "Tamamlandı",
@@ -5166,8 +5163,6 @@
           "screened_out": "Elendi (kota aşımı)",
           "submitted": "Gönderildi"
         },
-        "selected_responses_csv": "Seçili yanıtlar (CSV)",
-        "selected_responses_excel": "Seçili yanıtlar (Excel)",
         "setup_integrations": "Entegrasyonları ayarla",
         "share_survey": "Dağıt",
         "starts": "Başlangıçlar",

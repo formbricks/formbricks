@@ -5063,9 +5063,6 @@
         "ai_status_drafting_answers": "Formulez răspunsuri realiste…",
         "ai_status_reading_survey": "Citesc întrebările tale…",
         "ai_status_saving_responses": "Salvez răspunsurile…",
-        "all_responses_attachments": "Toate atașamentele (ZIP)",
-        "all_responses_csv": "Toate răspunsurile (CSV)",
-        "all_responses_excel": "Toate răspunsurile (Excel)",
         "almost_there": "Aproape gata! Configurează widget-ul pentru a primi răspunsuri.",
         "average": "Medie",
         "completed": "Finalizat",
@@ -5166,8 +5163,6 @@
           "screened_out": "Descalificat (cotă depășită)",
           "submitted": "Trimis"
         },
-        "selected_responses_csv": "Răspunsuri selectate (CSV)",
-        "selected_responses_excel": "Răspunsuri selectate (Excel)",
         "setup_integrations": "Configurează integrările",
         "share_survey": "Distribuie",
         "starts": "Începuturi",

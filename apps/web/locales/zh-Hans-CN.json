@@ -5063,9 +5063,6 @@
         "ai_status_drafting_answers": "正在生成真实答案…",
         "ai_status_reading_survey": "正在阅读你的问题…",
         "ai_status_saving_responses": "正在保存回复…",
-        "all_responses_attachments": "所有附件（ZIP）",
-        "all_responses_csv": "所有 反馈 （CSV）",
-        "all_responses_excel": "所有 反馈 （Excel）",
         "almost_there": "快完成了!设置小部件即可开始接收回复。",
         "average": "平均",
         "completed": "完成",
@@ -5166,8 +5163,6 @@
           "screened_out": "已筛选排除(超出配额)",
           "submitted": "已提交"
         },
-        "selected_responses_csv": "选定 反馈 （CSV）",
-        "selected_responses_excel": "选定 反馈 （Excel）",
         "setup_integrations": "设置集成",
         "share_survey": "分发",
         "starts": "开始",

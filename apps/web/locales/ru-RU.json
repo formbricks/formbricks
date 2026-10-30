@@ -5063,9 +5063,6 @@
         "ai_status_drafting_answers": "Составляем реалистичные ответы…",
         "ai_status_reading_survey": "Читаем ваши вопросы…",
         "ai_status_saving_responses": "Сохраняем ответы…",
-        "all_responses_attachments": "Все вложения (ZIP)",
-        "all_responses_csv": "Все ответы (CSV)",
-        "all_responses_excel": "Все ответы (Excel)",
         "almost_there": "Почти готово! Настройте виджет, чтобы начать получать ответы.",
         "average": "Среднее",
         "completed": "Завершено",
@@ -5166,8 +5163,6 @@
           "screened_out": "Не прошло отбор (превышение квоты)",
           "submitted": "Отправлено"
         },
-        "selected_responses_csv": "Выбранные ответы (CSV)",
-        "selected_responses_excel": "Выбранные ответы (Excel)",
         "setup_integrations": "Настроить интеграции",
         "share_survey": "Распространить",
         "starts": "Запуски",

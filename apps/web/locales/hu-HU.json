@@ -5063,9 +5063,6 @@
         "ai_status_drafting_answers": "Valóságos válaszok megfogalmazása…",
         "ai_status_reading_survey": "Kérdések olvasása…",
         "ai_status_saving_responses": "Válaszok mentése…",
-        "all_responses_attachments": "Összes melléklet (ZIP)",
-        "all_responses_csv": "Összes válasz (CSV)",
-        "all_responses_excel": "Összes válasz (Excel)",
         "almost_there": "Már majdnem kész! Állítsa be a felületi elemet a válaszok fogadásának megkezdéséhez.",
         "average": "Átlag",
         "completed": "Befejezve",
@@ -5166,8 +5163,6 @@
           "screened_out": "Kizárva (túlkvótázott)",
           "submitted": "Beküldve"
         },
-        "selected_responses_csv": "Kijelölt válaszok (CSV)",
-        "selected_responses_excel": "Kijelölt válaszok (Excel)",
         "setup_integrations": "Integrációk beállítása",
         "share_survey": "Terjesztés",
         "starts": "Elkezdések",

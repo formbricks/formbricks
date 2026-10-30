@@ -5063,9 +5063,6 @@
         "ai_status_drafting_answers": "Redactando respuestas realistas…",
         "ai_status_reading_survey": "Leyendo tus preguntas…",
         "ai_status_saving_responses": "Guardando las respuestas…",
-        "all_responses_attachments": "Todos los adjuntos (ZIP)",
-        "all_responses_csv": "Todas las respuestas (CSV)",
-        "all_responses_excel": "Todas las respuestas (Excel)",
         "almost_there": "¡Casi listo! Configura el widget para empezar a recibir respuestas.",
         "average": "Promedio",
         "completed": "Completadas",
@@ -5166,8 +5163,6 @@
           "screened_out": "Excluido (cuota superada)",
           "submitted": "Enviado"
         },
-        "selected_responses_csv": "Respuestas seleccionadas (CSV)",
-        "selected_responses_excel": "Respuestas seleccionadas (Excel)",
         "setup_integrations": "Configurar integraciones",
         "share_survey": "Distribuir",
         "starts": "Inicios",

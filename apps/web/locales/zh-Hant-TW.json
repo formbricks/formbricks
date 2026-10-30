@@ -5063,9 +5063,6 @@
         "ai_status_drafting_answers": "正在撰寫擬真回答…",
         "ai_status_reading_survey": "正在閱讀你的問題…",
         "ai_status_saving_responses": "正在儲存回覆…",
-        "all_responses_attachments": "所有附件 (ZIP)",
-        "all_responses_csv": "所有回應 (CSV)",
-        "all_responses_excel": "所有回應 (Excel)",
         "almost_there": "快完成了!設定小工具以開始接收回覆。",
         "average": "平均",
         "completed": "已完成",
@@ -5166,8 +5163,6 @@
           "screened_out": "已篩選排除（超過配額）",
           "submitted": "已提交"
         },
-        "selected_responses_csv": "選擇的回應 (CSV)",
-        "selected_responses_excel": "選擇的回應 (Excel)",
         "setup_integrations": "設定整合",
         "share_survey": "分發",
         "starts": "開始次數",

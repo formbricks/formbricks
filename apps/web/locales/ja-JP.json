@@ -5063,9 +5063,6 @@
         "ai_status_drafting_answers": "リアルな回答を作成中…",
         "ai_status_reading_survey": "質問を読み取り中…",
         "ai_status_saving_responses": "回答を保存中…",
-        "all_responses_attachments": "すべての添付ファイル（ZIP）",
-        "all_responses_csv": "すべての回答 (CSV)",
-        "all_responses_excel": "すべての回答 (Excel)",
         "almost_there": "もう少しです!ウィジェットをセットアップして回答の受信を開始しましょう。",
         "average": "平均",
         "completed": "完了",
@@ -5166,8 +5163,6 @@
           "screened_out": "スクリーニング除外（割当超過）",
           "submitted": "送信済み"
         },
-        "selected_responses_csv": "選択した回答 (CSV)",
-        "selected_responses_excel": "選択した回答 (Excel)",
         "setup_integrations": "連携を設定",
         "share_survey": "配信",
         "starts": "開始",

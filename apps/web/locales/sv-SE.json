@@ -5063,9 +5063,6 @@
         "ai_status_drafting_answers": "Skriver realistiska svar…",
         "ai_status_reading_survey": "Läser dina frågor…",
         "ai_status_saving_responses": "Sparar svaren…",
-        "all_responses_attachments": "Alla bilagor (ZIP)",
-        "all_responses_csv": "Alla svar (CSV)",
-        "all_responses_excel": "Alla svar (Excel)",
         "almost_there": "Nästan klart! Konfigurera widgeten för att börja ta emot svar.",
         "average": "Genomsnitt",
         "completed": "Slutförd",
@@ -5166,8 +5163,6 @@
           "screened_out": "Screenad ut (överkvot)",
           "submitted": "Skickad"
         },
-        "selected_responses_csv": "Valda svar (CSV)",
-        "selected_responses_excel": "Valda svar (Excel)",
         "setup_integrations": "Konfigurera integrationer",
         "share_survey": "Distribuera",
         "starts": "Starter",

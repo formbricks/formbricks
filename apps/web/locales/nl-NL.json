@@ -5063,9 +5063,6 @@
         "ai_status_drafting_answers": "Realistische antwoorden aan het opstellen…",
         "ai_status_reading_survey": "Je vragen aan het lezen…",
         "ai_status_saving_responses": "De reacties aan het opslaan…",
-        "all_responses_attachments": "Alle bijlagen (ZIP)",
-        "all_responses_csv": "Alle reacties (CSV)",
-        "all_responses_excel": "Alle reacties (Excel)",
         "almost_there": "Bijna klaar! Stel de widget in om responses te ontvangen.",
         "average": "Gemiddeld",
         "completed": "Voltooid",
@@ -5166,8 +5163,6 @@
           "screened_out": "Afgewezen (quotum vol)",
           "submitted": "Ingediend"
         },
-        "selected_responses_csv": "Geselecteerde reacties (CSV)",
-        "selected_responses_excel": "Geselecteerde antwoorden (Excel)",
         "setup_integrations": "Integraties instellen",
         "share_survey": "Distribueren",
         "starts": "Begint",
