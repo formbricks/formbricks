@@ -377,6 +377,7 @@ export const APPLICABLE_RULES: Record<string, TValidationRuleType[]> = {
   matrix: [...MATRIX_RULES],
   ranking: [...RANKING_RULES],
   fileUpload: [...FILE_UPLOAD_RULES],
+  signature: [],
   pictureSelection: [...PICTURE_SELECTION_RULES],
   address: [...ADDRESS_RULES],
   contactInfo: [...CONTACT_INFO_RULES],

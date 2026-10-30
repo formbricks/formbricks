@@ -1,0 +1,23 @@
+allOf:
+  - $ref: ./ResponseAnswerBase.yml
+  - type: object
+    required:
+      - imageUrl
+    properties:
+      elementType:
+        type: string
+        enum:
+          - signature
+      imageUrl:
+        type: string
+        description: >
+          The signature image (a PNG), **as stored** — a workspace-relative path, not an absolute URL,
+          and neither resolved nor signed. A signature is one image, so this is a single string where
+          `fileUpload` has an array.
+
+
+          Not publicly fetchable: access follows the same authorization as the response, and deleting
+          the response deletes the image.
+unevaluatedProperties: false
+description: >-
+  Signature answer. A `signature` element the respondent skipped has no entry in `answers[]` at all.

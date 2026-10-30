@@ -423,6 +423,42 @@ describe("handleIntegrations", () => {
       );
     });
 
+    test("writes a Signature answer as one absolute URL", async () => {
+      vi.mocked(googleSheetWriteData).mockResolvedValue(undefined);
+      const signatureSurvey = {
+        ...mockSurvey,
+        blocks: [
+          {
+            id: "block2",
+            name: "Block 2",
+            elements: [
+              {
+                id: "sig1",
+                type: TSurveyElementTypeEnum.Signature,
+                headline: { default: "Sign here" },
+                required: false,
+                allowTypedSignature: true,
+              },
+            ],
+          },
+        ],
+      } as unknown as TSurvey;
+      const integration = structuredClone(mockGoogleSheetsIntegration);
+      integration.config.data[0].elementIds = ["sig1"];
+      const input = structuredClone(mockPipelineInput);
+      const relativeUrl = "/storage/env1/private/surveys/survey1/elements/sig1/signature--fid--abc.png";
+      (input.response.data as Record<string, unknown>).sig1 = relativeUrl;
+
+      await handleIntegrations([integration], input, signatureSurvey);
+
+      const [, , responses] = vi.mocked(googleSheetWriteData).mock.calls[0];
+      expect(responses).toHaveLength(1);
+      expect(responses[0]).toMatch(
+        /^https?:\/\/.+\/storage\/env1\/private\/surveys\/survey1\/elements\/sig1\//
+      );
+      expect(responses[0]).toContain(relativeUrl);
+    });
+
     test("should not call googleSheetWriteData if surveyId does not match", async () => {
       const differentSurveyInput = { ...mockPipelineInput, surveyId: "otherSurvey" };
       await handleIntegrations([mockGoogleSheetsIntegration], differentSurveyInput, mockSurvey);

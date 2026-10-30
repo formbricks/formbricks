@@ -665,7 +665,8 @@ async function fileUploadIssues(
   return [
     {
       name: "data",
-      reason: "A file-upload answer references a file that does not belong to this survey's upload element.",
+      reason:
+        "A file-upload or signature answer is malformed or references a file that does not belong to this survey's element.",
       code: "invalid_reference",
       referenceType: "element",
     },

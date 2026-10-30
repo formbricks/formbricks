@@ -2,6 +2,14 @@ import "server-only";
 import type { Prisma } from "@formbricks/database/prisma";
 import { collectResponseFileUrls, getSurveyFileUploadElementIds } from "@/modules/storage/utils";
 
+// A row whose survey was not read has no element ids, so only keys filed under its own survey and element
+// can be collected from it.
+const emptyUploadElementIds = {
+  fileUpload: new Set<string>(),
+  signature: new Set<string>(),
+  live: new Set<string>(),
+};
+
 /** One survey's share of a delete: what the deletion cleanup queue needs per survey. */
 export type TDeletedSurveyResponses = {
   surveyId: string;
@@ -57,7 +65,7 @@ export const deleteResponsesInTransaction = async (
     survey.fileUrls.push(
       ...collectResponseFileUrls(
         row.data,
-        uploadElementIds.get(row.surveyId) ?? new Set<string>(),
+        uploadElementIds.get(row.surveyId) ?? emptyUploadElementIds,
         row.surveyId
       )
     );

@@ -5,9 +5,11 @@ import {
   fileUploadElement,
   responseWithFiles,
   scanTimestamp,
+  signatureElement,
   storageUrl,
   surveyId,
   surveyWithFileUpload,
+  surveyWithSignature,
   surveyWithoutFileUpload,
   workspaceId,
 } from "./__mocks__/survey-reset.mock";
@@ -243,6 +245,56 @@ describe("Tests for deleteResponsesAndDisplaysForSurvey service", () => {
       await deleteResponsesAndDisplaysForSurvey(surveyId);
 
       expect(deleteResponseFileUrls).not.toHaveBeenCalled();
+    });
+
+    test("Deletes a Signature answer held as a single URL string", async () => {
+      const ownSignature = storageUrl(`surveys/${surveyId}/elements/${signatureElement.id}/signature.png`);
+      mockSurvey(surveyWithSignature);
+      mockResponsePages([
+        { id: "response-1", createdAt: scanTimestamp(0), data: { [signatureElement.id]: ownSignature } },
+        { id: "response-2", createdAt: scanTimestamp(1), data: { [signatureElement.id]: "" } },
+      ]);
+      vi.mocked(prisma.$transaction).mockResolvedValue([{ count: 2 }, { count: 0 }]);
+
+      await deleteResponsesAndDisplaysForSurvey(surveyId);
+
+      expect(deleteResponseFileUrls).toHaveBeenCalledTimes(1);
+      expect(deleteResponseFileUrls).toHaveBeenCalledWith([ownSignature], workspaceId);
+    });
+
+    test("Never deletes a Signature URL filed under another survey or element, but still deletes an array of own signatures", async () => {
+      const otherSurveyId = "clq5n7p1q0000m7z0h5p6g3r9";
+      const ownSignature = storageUrl(`surveys/${surveyId}/elements/${signatureElement.id}/signature.png`);
+      mockSurvey(surveyWithSignature);
+      mockResponsePages([
+        {
+          id: "response-1",
+          createdAt: scanTimestamp(0),
+          data: {
+            [signatureElement.id]: storageUrl(
+              `surveys/${otherSurveyId}/elements/${signatureElement.id}/other.png`
+            ),
+          },
+        },
+        {
+          id: "response-2",
+          createdAt: scanTimestamp(1),
+          data: { [signatureElement.id]: storageUrl(`surveys/${surveyId}/elements/other-element/x.png`) },
+        },
+        {
+          id: "response-3",
+          createdAt: scanTimestamp(2),
+          data: { [signatureElement.id]: [ownSignature] as unknown as string },
+        },
+        // A pasted copy of an own signature URL under another id names another element, so it is refused.
+        { id: "response-4", createdAt: scanTimestamp(3), data: { "free-text": ownSignature } },
+      ]);
+      vi.mocked(prisma.$transaction).mockResolvedValue([{ count: 4 }, { count: 0 }]);
+
+      await deleteResponsesAndDisplaysForSurvey(surveyId);
+
+      expect(deleteResponseFileUrls).toHaveBeenCalledTimes(1);
+      expect(deleteResponseFileUrls).toHaveBeenCalledWith([ownSignature], workspaceId);
     });
 
     test("Never deletes a file stored under another survey's folder", async () => {

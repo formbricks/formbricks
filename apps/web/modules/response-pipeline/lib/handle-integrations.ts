@@ -340,6 +340,11 @@ const processElementResponse = (
       .join("; ");
   }
 
+  // One stored URL string (ADR 0016), resolved to an absolute URL like a File upload's entries.
+  if (element.type === TSurveyElementTypeEnum.Signature && typeof responseValue === "string") {
+    return resolveStorageUrlAuto(responseValue);
+  }
+
   return processResponseData(responseValue);
 };
 

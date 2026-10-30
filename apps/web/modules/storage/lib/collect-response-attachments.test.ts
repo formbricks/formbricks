@@ -314,6 +314,79 @@ describe("collectResponseAttachments", () => {
     expect(result.exceedsMaxFiles).toBe(false);
   });
 
+  describe("Signature elements (one URL string, ADR 0016)", () => {
+    const SIGNATURE_ELEMENT_ID = "el-signature";
+    const signatureUrl = `/storage/${WORKSPACE_ID}/private/surveys/survey-1/elements/${SIGNATURE_ELEMENT_ID}/signature--fid--abc.png`;
+    const buildSignatureSurvey = (): TSurvey =>
+      ({
+        id: "survey-1",
+        workspaceId: WORKSPACE_ID,
+        questions: [],
+        blocks: [
+          {
+            id: "block-1",
+            name: "Block 1",
+            elements: [
+              { id: "el-text", type: "openText", headline: i18n("Your name") },
+              { id: SIGNATURE_ELEMENT_ID, type: "signature", headline: i18n("Sign here") },
+              { id: UPLOAD_ELEMENT_ID, type: "fileUpload", headline: i18n("Upload a photo") },
+            ],
+          },
+        ],
+      }) as unknown as TSurvey;
+
+    test("collects a Signature answer given as a single string, next to File upload arrays", async () => {
+      respondWithBatches([
+        response("res-1", {
+          [SIGNATURE_ELEMENT_ID]: signatureUrl,
+          [UPLOAD_ELEMENT_ID]: [`/storage/${WORKSPACE_ID}/private/photo.jpg`],
+        }),
+      ]);
+
+      const result = await collectResponseAttachments({ survey: buildSignatureSurvey(), maxFiles: 100 });
+
+      expect(result.fileCount).toBe(2);
+      expect(result.entries.map((entry) => entry.elementId).sort()).toEqual(
+        [SIGNATURE_ELEMENT_ID, UPLOAD_ELEMENT_ID].sort()
+      );
+      expect(result.entries.find((entry) => entry.elementId === SIGNATURE_ELEMENT_ID)).toMatchObject({
+        status: "ok",
+        elementLabel: "Sign here",
+        originalFileName: "signature.png",
+        storage: { storageId: WORKSPACE_ID, accessType: "private" },
+      });
+    });
+
+    test("drops a Signature URL stored outside the survey's workspace", async () => {
+      mockedResolveWorkspace.mockResolvedValue({ id: FOREIGN_WORKSPACE_ID, organizationId: "org-2" });
+      respondWithBatches([response("res-1", { [SIGNATURE_ELEMENT_ID]: signatureUrl })]);
+
+      const result = await collectResponseAttachments({ survey: buildSignatureSurvey(), maxFiles: 100 });
+
+      expect(result.fileCount).toBe(0);
+      expect(result.entries[0]).toMatchObject({ status: "skipped_foreign_workspace", zipPath: "" });
+    });
+
+    test("ignores a skipped Signature and an array under a Signature id", async () => {
+      respondWithBatches([
+        response("res-1", { [SIGNATURE_ELEMENT_ID]: "" }),
+        response("res-2", { [SIGNATURE_ELEMENT_ID]: [signatureUrl] }),
+      ]);
+
+      const result = await collectResponseAttachments({ survey: buildSignatureSurvey(), maxFiles: 100 });
+
+      expect(result.entries).toEqual([]);
+    });
+
+    test("does not read a bare string under a File upload id", async () => {
+      respondWithBatches([response("res-1", { [UPLOAD_ELEMENT_ID]: signatureUrl })]);
+
+      const result = await collectResponseAttachments({ survey: buildSignatureSurvey(), maxFiles: 100 });
+
+      expect(result.entries).toEqual([]);
+    });
+  });
+
   test("queries nothing when the survey has no file-upload element", async () => {
     const survey = {
       id: "survey-1",

@@ -233,7 +233,8 @@ const BlockCardComponent = ({
   ]);
 
   const renderElementForm = (element: TSurveyElement, elementIdx: number) => {
-    const FormComponent = elementFormMap[element.type];
+    // Signature has no editor form yet, so `type` is wider than the map's keys and the lookup can miss.
+    const FormComponent = elementFormMap[element.type as keyof typeof elementFormMap];
     if (!FormComponent) return null;
 
     const commonProps = getCommonFormProps(element, elementIdx);

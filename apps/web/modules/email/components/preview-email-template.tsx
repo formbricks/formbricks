@@ -719,6 +719,12 @@ export async function PreviewEmailTemplate({
           </Section>
         </PreviewQuestionCard>
       );
+    case TSurveyElementTypeEnum.Signature:
+      return (
+        <PreviewQuestionCard headline={headline} styleTokens={styleTokens} subheader={subheader} t={t}>
+          {null}
+        </PreviewQuestionCard>
+      );
   }
 }
 

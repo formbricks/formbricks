@@ -5,6 +5,7 @@ import { logger } from "@formbricks/logger";
 import type { TI18nString } from "@formbricks/types/i18n";
 import type { TResponseFilterCriteria } from "@formbricks/types/responses";
 import type { TAccessType } from "@formbricks/types/storage";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
@@ -17,9 +18,9 @@ import { getSurveyFileUploadConfigs, parseStorageFileUrl } from "@/modules/stora
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 
 /**
- * Collects the file-upload attachments of a survey's responses, ready to be streamed into a ZIP
- * (ENG-1256). Deliberately metadata-only: it never opens a storage stream, so the route can call it
- * first to pre-flight a count and decide whether to start the download at all.
+ * Collects the file-upload and signature attachments of a survey's responses, ready to be streamed into
+ * a ZIP (ENG-1256). Deliberately metadata-only: it never opens a storage stream, so the route can call
+ * it first to pre-flight a count and decide whether to start the download at all.
  *
  * ## Why this does not call `getResponses`
  *
@@ -107,10 +108,12 @@ interface LabelledElement {
   /** 1-based position in the survey, so ZIP folders sort in survey order. */
   index: number;
   label: string;
+  /** A Signature answer is one URL string; a File upload answer is an array of them. */
+  isSignature: boolean;
 }
 
 /**
- * Maps each file-upload element id to its survey position and display label.
+ * Maps each upload element (File upload or Signature) id to its survey position and display label.
  *
  * The label recipe matches `extractSurveyDetails`, so a ZIP folder and its CSV column read the same.
  * A survey holds its elements in `blocks` or in legacy `questions` — never both (`ZSurvey` rejects
@@ -125,21 +128,26 @@ const buildFileUploadElementLabels = (survey: TSurvey): Map<string, LabelledElem
     ? getElementsFromBlocks(surveyWithRecall.blocks)
     : (surveyWithRecall.questions ?? []);
 
-  const fileUploadIds = new Set(
+  const uploadElementTypes = new Map(
     getSurveyFileUploadConfigs({
       blocks: surveyWithRecall.blocks,
       questions: surveyWithRecall.questions,
-    }).map((config) => config.id)
+    }).map((config) => [config.id, config.type])
   );
 
   const labels = new Map<string, LabelledElement>();
 
   orderedElements.forEach((element, position) => {
-    if (!fileUploadIds.has(element.id)) return;
+    const type = uploadElementTypes.get(element.id);
+    if (!type) return;
 
     const headline = getTextContent(getLocalizedValue(element.headline, "default"));
 
-    labels.set(element.id, { index: position + 1, label: headline || element.id });
+    labels.set(element.id, {
+      index: position + 1,
+      label: headline || element.id,
+      isSignature: type === TSurveyElementTypeEnum.Signature,
+    });
   });
 
   return labels;
@@ -159,8 +167,15 @@ const createWorkspaceResolver = () => {
   };
 };
 
-const extractFileUrls = (value: unknown): string[] =>
-  Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === "string") : [];
+/**
+ * The URLs one answer holds. The element decides the accepted shape, not the value: a Signature answer
+ * is one string and a File upload answer an array, so a string under a File upload id (or an array under
+ * a Signature id) is malformed data and yields nothing.
+ */
+const extractFileUrls = (value: unknown, isSignature: boolean): string[] => {
+  if (isSignature) return typeof value === "string" && value !== "" ? [value] : [];
+  return Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === "string") : [];
+};
 
 /**
  * The URL carries the percent-encoded name; the object is stored under the decoded one. Returns null
@@ -189,7 +204,11 @@ const listAttachmentCandidates = (
   const answers = (data ?? {}) as Record<string, unknown>;
 
   return [...elementLabels].flatMap(([elementId, element]) =>
-    extractFileUrls(answers[elementId]).map((fileUrl) => ({ elementId, element, fileUrl }))
+    extractFileUrls(answers[elementId], element.isSignature).map((fileUrl) => ({
+      elementId,
+      element,
+      fileUrl,
+    }))
   );
 };
 

@@ -145,6 +145,9 @@ export const getLogicRules = (t: TFunction) => {
       [TSurveyElementTypeEnum.FileUpload]: {
         options: [...getSubmissionOptions(t)],
       },
+      [TSurveyElementTypeEnum.Signature]: {
+        options: [...getSubmissionOptions(t)],
+      },
       [TSurveyElementTypeEnum.Ranking]: {
         options: [...getSubmissionOptions(t)],
       },

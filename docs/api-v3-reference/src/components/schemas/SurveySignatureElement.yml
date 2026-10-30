@@ -1,0 +1,16 @@
+allOf:
+  - $ref: ./SurveyElementBase.yml
+  - type: object
+    properties:
+      type:
+        type: string
+        enum:
+          - signature
+      allowTypedSignature:
+        type: boolean
+        default: true
+        description: >-
+          Whether the respondent may type their name instead of drawing. The signature is stored as a
+          single PNG image either way.
+unevaluatedProperties: false
+description: Signature element. The respondent draws their signature, or types their name when `allowTypedSignature` is on.

@@ -165,6 +165,7 @@ export const zResponseAnswerBase = z.object({
     "address",
     "ranking",
     "contactInfo",
+    "signature",
   ]),
   elementLabel: z.string(),
   durationSeconds: z.number().gte(0).lte(86400).optional(),
@@ -298,6 +299,20 @@ export const zResponseAnswerFileUpload = z.strictObject({
 export type ResponseAnswerFileUploadZodType = z.infer<typeof zResponseAnswerFileUpload>;
 
 /**
+ * Signature answer. A `signature` element the respondent skipped has no entry in `answers[]` at all.
+ */
+export const zResponseAnswerSignature = z.strictObject({
+  position: z.int().gte(1),
+  elementId: z.string(),
+  elementType: z.enum(["signature"]),
+  elementLabel: z.string(),
+  durationSeconds: z.number().gte(0).lte(86400).optional(),
+  imageUrl: z.string(),
+});
+
+export type ResponseAnswerSignatureZodType = z.infer<typeof zResponseAnswerSignature>;
+
+/**
  * Scheduling answer for a `cal` element. Only the fact of the booking is recorded on the response; the meeting itself lives in the scheduling provider and is not proxied by this API.
  */
 export const zResponseAnswerBooking = z.strictObject({
@@ -374,7 +389,7 @@ export type ResponseAnswerCompositeZodType = z.infer<typeof zResponseAnswerCompo
  *
  * Answers are a **typed array**, not a map keyed by element id, because a consumer holding only a response would otherwise see bare ids and have to fetch the survey and join to learn what was asked — a join that is easy to get wrong and that agent clients cannot make cheaply. The array also separates answers from hidden fields and variables, which the stored representation mixes into one flat map. Non-answer data lives in `embeddedData[]`.
  *
- * Several element types share a value shape and therefore a schema — the four numeric scales, the four choice styles, the two composites. All seventeen element types are covered.
+ * Several element types share a value shape and therefore a schema — the four numeric scales, the four choice styles, the two composites. All eighteen element types are covered.
  *
  * Only elements the respondent actually reached appear here. Data whose element has since been deleted appears in `unresolved[]` instead.
  *
@@ -386,6 +401,7 @@ export const zResponseAnswer = z.union([
   zResponseAnswerSelection,
   zResponseAnswerDate,
   zResponseAnswerFileUpload,
+  zResponseAnswerSignature,
   zResponseAnswerBooking,
   zResponseAnswerMatrix,
   zResponseAnswerComposite,

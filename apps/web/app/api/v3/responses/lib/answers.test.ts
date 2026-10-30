@@ -131,6 +131,25 @@ describe("serializeAnswers — one branch per element type", () => {
       fileCount: 2,
     });
   });
+
+  test("signature reports the stored url as one imageUrl string, as stored", () => {
+    const el = element({ id: "q1", type: "signature", allowTypedSignature: true });
+    const url = "/storage/ws/private/surveys/s/elements/q1/signature--fid--abc.png";
+
+    expect(answer([el], { q1: url })).toEqual({
+      position: 1,
+      elementId: "q1",
+      elementLabel: expect.any(String),
+      elementType: "signature",
+      imageUrl: url,
+    });
+  });
+
+  test("a skipped signature stored as an empty string is not an answer and not unresolved", () => {
+    const el = element({ id: "q1", type: "signature", allowTypedSignature: true });
+
+    expect(only([el], { q1: "" })).toEqual({ answers: [], unresolved: [] });
+  });
 });
 
 describe("composite answers keep every slot", () => {
@@ -434,6 +453,8 @@ describe("unreadable values become unresolved rather than throwing or guessing",
     ["nps holding a string", { id: "q1", type: "nps" }, "9"],
     ["matrix holding a string", { id: "q1", type: "matrix", rows: [], columns: [] }, "Good"],
     ["fileUpload holding a string", { id: "q1", type: "fileUpload", allowMultipleFiles: false }, "/a.png"],
+    ["signature holding an array", { id: "q1", type: "signature", allowTypedSignature: true }, ["/a.png"]],
+    ["signature holding a number", { id: "q1", type: "signature", allowTypedSignature: true }, 5],
     ["address holding an object", { id: "q1", type: "address" }, { city: "Lisboa" }],
   ])("%s", (_label, el, raw) => {
     const { answers, unresolved } = only([element(el)], { q1: raw });

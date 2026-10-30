@@ -529,6 +529,12 @@ const serializeOne = (
       return { answer: { ...base, elementType: "fileUpload", fileUrls: raw, fileCount: raw.length } };
     }
 
+    case "signature": {
+      // One URL string, unlike `fileUpload`'s array (ADR 0016). Verbatim and relative, as stored.
+      if (typeof raw !== "string") return mismatch;
+      return { answer: { ...base, elementType: "signature", imageUrl: raw } };
+    }
+
     case "address":
     case "contactInfo":
       return serializeComposite(element, raw, base, lookupKey);
@@ -618,6 +624,10 @@ export const serializeAnswers = (
       });
       continue;
     }
+
+    // A skipped Signature may be stored as "". It is not an answer, and an `imageUrl` of "" would name
+    // no image, so it is left out like an element the respondent never reached.
+    if (element.type === "signature" && raw === "") continue;
 
     const result = serializeOne(
       element,

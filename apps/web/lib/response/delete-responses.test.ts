@@ -22,7 +22,11 @@ const makeTx = (rows: { id: string; displayId: string | null; data: unknown; sur
 
 describe("deleteResponsesInTransaction", () => {
   test("deletes the matched rows and their displays, returning their files per survey", async () => {
-    vi.mocked(getSurveyFileUploadElementIds).mockImplementation(() => new Set(["upload"]));
+    vi.mocked(getSurveyFileUploadElementIds).mockImplementation(() => ({
+      fileUpload: new Set(["upload"]),
+      signature: new Set(),
+      live: new Set(["upload"]),
+    }));
     vi.mocked(collectResponseFileUrls).mockImplementation((_data, _ids, surveyId) => [`file-of-${surveyId}`]);
     const tx = makeTx([
       { id: "r1", displayId: "d1", data: {}, surveyId: "s1" },
