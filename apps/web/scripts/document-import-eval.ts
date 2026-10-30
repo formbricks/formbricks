@@ -32,7 +32,7 @@ import { type TPreparedDocumentImport, runDocumentImport } from "@/modules/surve
  *
  * - `long-survey-150.docx`, the largest questionnaire the import is built for: it must finish inside
  *   the deadline with every question;
- * - `site-audit-checklist.xlsx`, a long checklist shaped like the Gulf Cup file (section rows, IDs,
+ * - `site-audit-checklist.xlsx`, a long checklist shaped like a real customer file (section rows, IDs,
  *   options inline, routing in a column);
  * - `synthetic-300.docx`, 300 questions laid out like Long_Survey_150: past the 200-question ceiling,
  *   it must end as `too_many_questions` without a draft;
