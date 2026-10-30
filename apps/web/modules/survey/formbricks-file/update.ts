@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
 import type { Prisma } from "@formbricks/database/prisma";
+import type { TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import type { TSurvey, TSurveyStatus } from "@formbricks/types/surveys/types";
 import { getV3CustomCssPrincipal } from "@/app/api/v3/lib/custom-css-rate-limit";
@@ -10,6 +11,7 @@ import { isPlainObject } from "@/app/api/v3/surveys/guards";
 import { getSessionUserId } from "@/app/api/v3/surveys/lib/operations";
 import { V3SurveyArchivedError, assertV3SurveyPrecondition, patchV3Survey } from "@/app/api/v3/surveys/patch";
 import { V3SurveyReferenceValidationError } from "@/app/api/v3/surveys/reference-validation";
+import { ZV3CreateSurveyBody, formatV3ZodInvalidParams } from "@/app/api/v3/surveys/schemas";
 import { type TAuthorizationActor, can } from "@/lib/authorization";
 import { selectSurveyWithCustomCss } from "@/lib/survey/service";
 import { transformPrismaSurvey } from "@/lib/survey/utils";
@@ -22,12 +24,13 @@ import type {
   TSurveyImportTriggersChoice,
   TSurveyImportTriggersState,
 } from "@/modules/survey/import/types";
-import type { TFormbricksFileSource } from "./envelope";
+import type { TFormbricksFileReferences, TFormbricksFileSource } from "./envelope";
 import { nameFromSurvey, prepareFormbricksFileDraft, refuseDraft, withTargetTriggers } from "./import";
 import { readFormbricksFileContent } from "./read";
 import {
   type TFormbricksFileReferencePlan,
   applyFormbricksFileReferences,
+  linkFormbricksFileSharedFields,
   planFormbricksFileReferences,
 } from "./resolve";
 import { getFormbricksFileRemovals } from "./update-diff";
@@ -211,6 +214,35 @@ const toUpdatePatch = (draft: Record<string, unknown>, survey: TSurvey): Record<
   };
 };
 
+/**
+ * The survey's hidden fields and variables with the shared ones the file brings linked to the
+ * workspace's library, as the create links them; `undefined` when none links, so the patch keeps every
+ * field the survey's own. The draft is read as the create body to type its fields.
+ */
+const linkSharedFields = async (
+  tx: Prisma.TransactionClient,
+  {
+    workspaceId,
+    draft,
+    sharedFields,
+  }: {
+    workspaceId: string;
+    draft: TSurveyImportFileDraft;
+    sharedFields: TFormbricksFileReferences["embeddedFields"];
+  }
+): Promise<TLinkedEmbeddedField[] | undefined> => {
+  if (sharedFields.length === 0) return undefined;
+  const parsed = ZV3CreateSurveyBody.safeParse(draft);
+  if (!parsed.success)
+    throw refuseDraft(nameFromSurvey(formatV3ZodInvalidParams(parsed.error, "data"), null));
+  return linkFormbricksFileSharedFields(tx, {
+    workspaceId,
+    variables: parsed.data.variables,
+    hiddenFields: parsed.data.hiddenFields,
+    sharedFields,
+  });
+};
+
 export interface TFormbricksFileUpdateBody {
   /** The reviewed survey and the file's references, as the preview returned them. */
   survey: Record<string, unknown>;
@@ -290,20 +322,23 @@ export const updateSurveyFromFormbricksFile = async ({
       fieldPrefix: null,
     });
     const actionClassIds = await applyFormbricksFileReferences(tx, workspaceId, plan);
+    const target = withTargetTriggers(content, actionClassIds);
+    const embeddedFields = await linkSharedFields(tx, {
+      workspaceId,
+      draft: target,
+      sharedFields: read.content.references.embeddedFields,
+    });
 
     try {
-      const after = await patchV3Survey(
-        before,
-        toUpdatePatch(withTargetTriggers(content, actionClassIds), before),
-        {
-          requestId,
-          organizationId,
-          precondition,
-          visibleSurveyWhere,
-          customCssPrincipal: getV3CustomCssPrincipal(authentication),
-          transaction,
-        }
-      );
+      const after = await patchV3Survey(before, toUpdatePatch(target, before), {
+        requestId,
+        organizationId,
+        precondition,
+        visibleSurveyWhere,
+        customCssPrincipal: getV3CustomCssPrincipal(authentication),
+        transaction,
+        embeddedFields,
+      });
       return { before, after };
     } catch (error) {
       // The patch names fields from its own body, which is the reviewed survey: named from `survey`.

@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import type { TCustomCssStored } from "@formbricks/types/custom-css";
+import type { TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { hasUnfinishedShowConditions } from "@formbricks/types/show-conditions";
 import {
@@ -315,6 +316,8 @@ export async function executeV3SurveyPatch(params: {
   customCss?: { stored: TCustomCssStored | null };
   /** Whether the request sent `distribution`, which replaces the stored one whole. */
   replacesDistribution?: boolean;
+  /** See {@link TPatchV3SurveyOptions.embeddedFields}. */
+  embeddedFields?: TLinkedEmbeddedField[];
   /**
    * ENG-6845: a transaction the caller opened, so the patch lands together with the caller's own writes
    * or not at all. The languages it adds, the survey, its segment filters and Embedded Data rows are
@@ -332,6 +335,7 @@ export async function executeV3SurveyPatch(params: {
     visibleSurveyWhere = NO_VISIBLE_SURVEYS,
     customCss,
     replacesDistribution = false,
+    embeddedFields,
     transaction,
   } = params;
   // Same rule as prepare's validation (ENG-3975): media the stored survey already had does not block a
@@ -466,7 +470,11 @@ export async function executeV3SurveyPatch(params: {
     await reconcileEmbeddedData(tx, {
       surveyId: currentSurvey.id,
       workspaceId: currentSurvey.workspaceId,
-      patch: { variables: document.variables, hiddenFields: document.hiddenFields },
+      patch: {
+        variables: document.variables,
+        hiddenFields: document.hiddenFields,
+        ...(embeddedFields ? { embeddedFields } : {}),
+      },
     });
 
     // Re-read AFTER the reconcile. The response's `variables` / `hiddenFields` — and the audit
@@ -586,6 +594,13 @@ export interface TPatchV3SurveyOptions {
    * `executeV3SurveyPatch`.
    */
   transaction?: TSurveyWriteTransaction;
+  /**
+   * The survey's hidden fields and variables with some linked to the workspace's library, in place of
+   * the local fields the patch's `variables` and `hiddenFields` would make of them: what an Update
+   * from a Formbricks file writes for the shared fields it brings, as its create does. Each linked
+   * field is checked against the library before anything is written.
+   */
+  embeddedFields?: TLinkedEmbeddedField[];
 }
 
 export async function patchV3Survey(
@@ -600,6 +615,7 @@ export async function patchV3Survey(
     report,
     customCssPrincipal,
     transaction,
+    embeddedFields,
   }: TPatchV3SurveyOptions = {}
 ): Promise<TSurvey> {
   const preparation = prepareV3SurveyPatchInput(currentSurvey, input, { reportedVisibility });
@@ -647,6 +663,7 @@ export async function patchV3Survey(
     visibleSurveyWhere,
     ...(customCss.changed ? { customCss: { stored: customCss.stored } } : {}),
     replacesDistribution: typeof input === "object" && input !== null && "distribution" in input,
+    embeddedFields,
     transaction,
   });
 

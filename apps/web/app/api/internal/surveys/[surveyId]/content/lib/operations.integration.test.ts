@@ -577,6 +577,56 @@ describe("triggers", () => {
   });
 });
 
+describe("shared hidden fields and variables", () => {
+  test("a shared field the file brings is linked to the workspace's library, as a create links it", async () => {
+    const surveyId = await seedSurvey({ status: "draft" });
+    const library = await prisma.embeddedData.create({
+      data: {
+        key: "plan_tier",
+        name: "Plan tier",
+        source: "ingested",
+        dataType: "string",
+        workspaceId: fixture.workspaceId,
+      },
+      select: { id: true },
+    });
+    const file = await exportFile(surveyId);
+    file.survey.hiddenFields = { enabled: true, fieldIds: ["plan_tier", "channel"] };
+    file.references = {
+      ...(file.references as Record<string, unknown>),
+      embeddedFields: [
+        {
+          storageKey: "plan_tier",
+          key: "plan_tier",
+          name: "Plan tier",
+          source: "ingested",
+          dataType: "string",
+          defaultValue: null,
+          locked: false,
+        },
+      ],
+    };
+
+    const done = await preview(file);
+    const response = await update(surveyId, done, { updatedAt: done.match!.exportedUpdatedAt });
+
+    expect(response.status).toBe(200);
+    const links = await prisma.surveyEmbeddedData.findMany({
+      where: { surveyId },
+      select: { storageKey: true, embeddedData: { select: { id: true, surveyId: true } } },
+    });
+    const byStorageKey = Object.fromEntries(
+      links.map(({ storageKey, embeddedData }) => [storageKey, embeddedData])
+    );
+    // The library's own row, not a copy local to the survey; a field the library lacks stays local.
+    expect(byStorageKey.plan_tier).toEqual({ id: library.id, surveyId: null });
+    expect(byStorageKey.channel).toEqual({ id: expect.any(String), surveyId });
+    expect(
+      await prisma.embeddedData.count({ where: { workspaceId: fixture.workspaceId, key: "plan_tier" } })
+    ).toBe(1);
+  });
+});
+
 describe("what an Update removes", () => {
   test("warns about each question and option it takes from a survey with responses", async () => {
     const surveyId = await seedSurvey({ status: "completed" });
