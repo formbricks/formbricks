@@ -159,8 +159,10 @@ get:
       description: >-
         `summary` (default) returns `SurveyListItem`s. `full` returns `SurveyFullListItem`s: the
         summary fields plus the survey document `GET /api/v3/surveys/{surveyId}` returns, in every
-        configured language. With `full`, `limit` is at most 50 and `meta.unsupportedSurveyIds` is
-        present. Pagination, filters, sorting and permissions are the same in both views.
+        configured language. With `full`, `limit` is at most 50, `meta.unsupportedSurveyIds` is
+        present, and each request also counts against a separate limit of 30 full pages per minute per
+        user or API key (**429** beyond it). Pagination, filters, sorting and permissions are the same in
+        both views.
   responses:
     "200":
       description: Surveys retrieved successfully
