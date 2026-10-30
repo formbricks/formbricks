@@ -278,9 +278,10 @@ const nextConfig = {
         ],
       },
       {
-        // Everything under /js EXCEPT the survey locale bundles, which are JSON and get their own rule
-        // below. One rule has to win outright: both would otherwise set Content-Type on the same path.
-        source: "/js/((?!locales/).*)",
+        // Everything under /js EXCEPT the survey locale bundles and the typed-signature font, which are
+        // JSON and a font and get their own rules below. One rule has to win outright: they would
+        // otherwise set Content-Type on the same path.
+        source: "/js/((?!locales/|fonts/).*)",
         headers: [
           {
             key: "Cache-Control",
@@ -323,6 +324,46 @@ const nextConfig = {
           {
             key: "Vary",
             value: "Accept-Encoding",
+          },
+        ],
+      },
+      {
+        // The typed-signature font (Signature element), fetched on demand by the survey runtime the first
+        // time a respondent opens the Type tab. Cached like the bundle: each request carries a `?v=`
+        // content hash of the font files. CORS is open because the font is requested from the host page's
+        // origin when the survey is embedded through the SDK, and font loads are always cross-origin checked.
+        source: "/js/fonts/(.*\\.woff2)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value:
+              "public, max-age=3600, s-maxage=2592000, stale-while-revalidate=3600, stale-if-error=86400",
+          },
+          {
+            key: "Content-Type",
+            value: "font/woff2",
+          },
+          {
+            key: "Access-Control-Allow-Origin",
+            value: "*",
+          },
+          {
+            key: "Vary",
+            value: "Accept-Encoding",
+          },
+        ],
+      },
+      {
+        // The font's license text, which ships beside it as the OFL requires.
+        source: "/js/fonts/(.*\\.txt)",
+        headers: [
+          {
+            key: "Content-Type",
+            value: "text/plain; charset=UTF-8",
+          },
+          {
+            key: "Access-Control-Allow-Origin",
+            value: "*",
           },
         ],
       },

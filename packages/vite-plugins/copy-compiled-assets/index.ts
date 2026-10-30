@@ -7,6 +7,7 @@ interface CopyCompiledAssetsPluginOptions {
   distDir: string;
   skipDirectoryCheck?: boolean; // New option to skip checking non-existent directories
   localesDir?: string; // Locale JSON to publish beside the bundle for on-demand loading
+  fontsDir?: string; // Font files (and their licenses) to publish beside the bundle for on-demand loading
 }
 
 const ensureDirectoryExists = async (dirPath: string): Promise<void> => {
@@ -106,6 +107,25 @@ export function copyCompiledAssetsPlugin(options: CopyCompiledAssetsPluginOption
           }
 
           console.log(`Copied ${String(localeFiles.length)} locale files to ${localesOutputDir}`);
+        }
+
+        // The survey runtime fetches the typed-signature font only when a respondent opens a Signature
+        // element's Type tab, so it stays out of the bundle and is copied beside it like the locales —
+        // and, for the same reason, replaced rather than copied over, and declared in turbo.json.
+        if (options.fontsDir) {
+          const fontsOutputDir = path.resolve(outputDir, "fonts");
+
+          await rm(fontsOutputDir, { recursive: true, force: true });
+          await ensureDirectoryExists(fontsOutputDir);
+
+          const fontFiles = (await readdir(options.fontsDir)).filter(
+            (file) => file.endsWith(".woff2") || file.endsWith(".txt")
+          );
+          for (const file of fontFiles) {
+            await copyFile(path.resolve(options.fontsDir, file), path.resolve(fontsOutputDir, file));
+          }
+
+          console.log(`Copied ${String(fontFiles.length)} font files to ${fontsOutputDir}`);
         }
       } catch (error) {
         if (options.skipDirectoryCheck) {

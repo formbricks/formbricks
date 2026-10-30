@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "preact/hooks";
+import { useCallback, useEffect, useRef, useState } from "preact/hooks";
 import { type TJsFileUploadParams } from "@formbricks/types/js";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import { type TUploadFileConfig } from "@formbricks/types/storage";
@@ -16,7 +16,9 @@ import {
   shouldHideSubmitButtonForAutoProgress,
   shouldTriggerAutoProgress,
 } from "@/lib/auto-progress";
+import { type SubmitContributor, answersForValidation, createBlockSubmitRunner } from "@/lib/block-submit";
 import { getLocalizedValue } from "@/lib/i18n";
+import { type SignatureDraftStore } from "@/lib/signature-answer";
 import { cn } from "@/lib/utils";
 import { getFirstErrorMessage, validateBlockResponses } from "@/lib/validation/evaluator";
 
@@ -90,6 +92,8 @@ interface BlockConditionalProps {
   fullSizeCards: boolean;
   isCardless?: boolean;
   surveyLanguages: TSurveyLanguage[];
+  /** The survey's in-memory Signature drawings, so a drawing survives leaving this card and coming back. */
+  signatureDrafts: SignatureDraftStore;
 }
 
 export function BlockConditional({
@@ -116,6 +120,7 @@ export function BlockConditional({
   fullSizeCards,
   isCardless = false,
   surveyLanguages,
+  signatureDrafts,
 }: Readonly<BlockConditionalProps>) {
   // Track the current element being filled (for TTC tracking)
   const [currentElementId, setCurrentElementId] = useState(block.elements[0]?.id);
@@ -130,6 +135,68 @@ export function BlockConditional({
   const ttcCollectorRef = useRef<TResponseTtc>({});
   const autoProgressingInFlightRef = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Elements that produce their answer on Next (the Signature uploads its image then), and the guard
+  // that keeps a second press from starting a second upload while the first is still running.
+  const submitContributorsRef = useRef(new Map<string, SubmitContributor>());
+  const registerSubmitContributor = useCallback(
+    (elementId: string, contributor: SubmitContributor | null) => {
+      if (contributor) submitContributorsRef.current.set(elementId, contributor);
+      else submitContributorsRef.current.delete(elementId);
+    },
+    []
+  );
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const isMountedRef = useRef(true);
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+  // The upload outlives the render that started it, so what runs after it reads these, not its closure.
+  const latestRef = useRef({ value, block, onSubmit });
+  useEffect(() => {
+    latestRef.current = { value, block, onSubmit };
+  });
+  const pendingTtcRef = useRef<TResponseTtc>({});
+  const refocusSubmitRef = useRef(false);
+  const [submitRunner] = useState(() =>
+    createBlockSubmitRunner({
+      getContributors: () => submitContributorsRef.current,
+      collectResponses: () => {
+        const { value: latestValue, block: latestBlock } = latestRef.current;
+        const answers: TResponseData = {};
+        for (const element of latestBlock.elements) {
+          if (latestValue[element.id] !== undefined) answers[element.id] = latestValue[element.id];
+        }
+        return answers;
+      },
+      onSubmit: (answers) => {
+        latestRef.current.onSubmit(answers, pendingTtcRef.current);
+      },
+      onFailure: (failedElementId) => {
+        // The Next button is locked while the upload runs; once it is free again it takes focus back,
+        // so a keyboard or screen-reader user is not left on <body>.
+        refocusSubmitRef.current = true;
+        const form = elementFormRefs.current.get(failedElementId);
+        const scrollTarget = form?.querySelector("[data-element-input]") ?? form;
+        scrollTarget?.scrollIntoView({ behavior: "smooth", block: "center" });
+      },
+      onBusyChange: setIsSubmitting,
+      isMounted: () => isMountedRef.current,
+      onError: (error) => {
+        console.error("[Formbricks] Submitting the card failed", error);
+      },
+    })
+  );
+  useEffect(() => {
+    if (isSubmitting || !refocusSubmitRef.current) return;
+    refocusSubmitRef.current = false;
+    containerRef.current
+      ?.querySelector<HTMLElement>('[data-fb-part="button-primary"]')
+      ?.focus({ preventScroll: true });
+  }, [isSubmitting]);
 
   // Screen-reader/keyboard users continue right where they act: when the card
   // appears after user navigation (or on an autofocus-allowed initial render),
@@ -292,8 +359,12 @@ export function BlockConditional({
   };
 
   // Validate a single element's form
-  const validateElementForm = (element: TSurveyElement, form: HTMLFormElement): boolean => {
-    const response = value[element.id];
+  const validateElementForm = (
+    element: TSurveyElement,
+    form: HTMLFormElement,
+    answers: TResponseData
+  ): boolean => {
+    const response = answers[element.id];
 
     if (element.type !== TSurveyElementTypeEnum.CTA && !form.checkValidity()) {
       form.requestSubmit();
@@ -334,12 +405,12 @@ export function BlockConditional({
   };
 
   // Find the first invalid form
-  const findFirstInvalidForm = (): HTMLFormElement | null => {
+  const findFirstInvalidForm = (answers: TResponseData): HTMLFormElement | null => {
     let firstInvalidForm: HTMLFormElement | null = null;
 
     for (const element of block.elements) {
       const form = elementFormRefs.current.get(element.id);
-      if (form && !validateElementForm(element, form)) {
+      if (form && !validateElementForm(element, form, answers)) {
         firstInvalidForm ??= form;
       }
     }
@@ -374,11 +445,11 @@ export function BlockConditional({
   };
 
   // Collect responses for all elements in this block
-  const collectBlockResponses = (): TResponseData => {
+  const collectBlockResponses = (answers: TResponseData = value): TResponseData => {
     const blockResponses: TResponseData = {};
     block.elements.forEach((element) => {
-      if (value[element.id] !== undefined) {
-        blockResponses[element.id] = value[element.id];
+      if (answers[element.id] !== undefined) {
+        blockResponses[element.id] = answers[element.id];
       }
     });
     return blockResponses;
@@ -388,9 +459,12 @@ export function BlockConditional({
     if (e) {
       e.preventDefault();
     }
+    // A Signature that is drawn but not uploaded yet counts as answered for validation, and one that was
+    // just cleared counts as empty.
+    const answers = answersForValidation(value, submitContributorsRef.current);
 
     // Run centralized validation for elements that support it
-    const errorMap = validateBlockResponses(block.elements, value, languageCode);
+    const errorMap = validateBlockResponses(block.elements, answers, languageCode);
 
     // Check if there are any validation errors from centralized validation
     const hasValidationErrors = Object.keys(errorMap).length > 0;
@@ -414,7 +488,7 @@ export function BlockConditional({
     }
 
     // Also run legacy validation for elements not yet migrated to centralized validation
-    const firstInvalidForm = findFirstInvalidForm();
+    const firstInvalidForm = findFirstInvalidForm(answers);
     if (firstInvalidForm) {
       const scrollTarget = firstInvalidForm.querySelector("[data-element-input]") ?? firstInvalidForm;
       scrollTarget.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -429,8 +503,19 @@ export function BlockConditional({
 
     // Collect TTC and responses, then submit
     const blockTtc = collectTtcValues();
-    const blockResponses = collectBlockResponses();
-    onSubmit(blockResponses, blockTtc);
+
+    if (submitContributorsRef.current.size === 0) {
+      onSubmit(collectBlockResponses(), blockTtc);
+      return;
+    }
+    // A press while an earlier one is still uploading does nothing (the runner guards it too).
+    if (isSubmitting) return;
+
+    // Upload on Next: elements that produce their answer now (the Signature renders and uploads its
+    // image) are awaited before the block advances. A failure leaves the card as it is, with the
+    // element's own error showing, and pressing Next again retries.
+    pendingTtcRef.current = blockTtc;
+    submitRunner.run();
   };
 
   return (
@@ -467,6 +552,8 @@ export function BlockConditional({
                   }}
                   onTtcCollect={handleTtcCollect}
                   errorMessage={getFirstErrorMessage(elementErrors, element.id)}
+                  signatureDrafts={signatureDrafts}
+                  registerSubmitContributor={registerSubmitContributor}
                 />
               );
             })}
@@ -488,6 +575,7 @@ export function BlockConditional({
                   }
                   isLastQuestion={isLastBlock}
                   onClick={handleBlockSubmit}
+                  disabled={isSubmitting}
                   tabIndex={0}
                 />
               )}
@@ -498,6 +586,7 @@ export function BlockConditional({
                   block.backButtonLabel ? getLocalizedValue(block.backButtonLabel, languageCode) : undefined
                 }
                 onClick={onBack}
+                disabled={isSubmitting}
                 tabIndex={0}
               />
             )}

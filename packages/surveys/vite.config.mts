@@ -40,6 +40,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const localesDir = resolve(__dirname, "locales");
+const fontsDir = resolve(__dirname, "assets/fonts");
 
 /**
  * Code-unit order, deliberately not `localeCompare`.
@@ -71,6 +72,21 @@ const computeLocalesHash = (): string => {
   return hash.digest("hex").slice(0, 12);
 };
 
+/**
+ * Content hash of the shipped font files, injected as `__FB_FONTS_HASH__` and appended to the on-demand
+ * font fetch as `?v=`, for the same reason as the locales hash: `/js/*` is cached for 30 days.
+ */
+const computeFontsHash = (): string => {
+  const hash = createHash("sha256");
+  const files = readdirSync(fontsDir).filter((name) => name.endsWith(".woff2"));
+  files.sort(byCodeUnit);
+  for (const file of files) {
+    hash.update(file);
+    hash.update(readFileSync(resolve(fontsDir, file)));
+  }
+  return hash.digest("hex").slice(0, 12);
+};
+
 const config = ({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
 
@@ -87,6 +103,7 @@ const config = ({ mode }) => {
     define: {
       "process.env.NODE_ENV": JSON.stringify(mode),
       __FB_LOCALES_HASH__: JSON.stringify(computeLocalesHash()),
+      __FB_FONTS_HASH__: JSON.stringify(computeFontsHash()),
     },
     plugins: [preact(), tsconfigPaths()],
   };
@@ -114,7 +131,12 @@ const config = ({ mode }) => {
       },
       plugins: [
         ...sharedConfig.plugins,
-        copyCompiledAssetsPlugin({ filename: "surveys", distDir: resolve(__dirname, "dist"), localesDir }),
+        copyCompiledAssetsPlugin({
+          filename: "surveys",
+          distDir: resolve(__dirname, "dist"),
+          localesDir,
+          fontsDir,
+        }),
       ],
     });
   }
@@ -181,7 +203,12 @@ const config = ({ mode }) => {
     plugins: [
       ...sharedConfig.plugins,
       stubSurveyUiStylesForVitest(),
-      copyCompiledAssetsPlugin({ filename: "surveys", distDir: resolve(__dirname, "dist"), localesDir }),
+      copyCompiledAssetsPlugin({
+        filename: "surveys",
+        distDir: resolve(__dirname, "dist"),
+        localesDir,
+        fontsDir,
+      }),
       process.env.ANALYZE === "true" &&
         visualizer({
           filename: resolve(__dirname, "stats.html"),

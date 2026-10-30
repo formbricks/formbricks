@@ -20,6 +20,9 @@ import { OpenTextElement } from "@/components/elements/open-text-element";
 import { PictureSelectionElement } from "@/components/elements/picture-selection-element";
 import { RankingElement } from "@/components/elements/ranking-element";
 import { RatingElement } from "@/components/elements/rating-element";
+import { SignatureElement } from "@/components/elements/signature-element";
+import { type SubmitContributor } from "@/lib/block-submit";
+import { type SignatureDraftStore } from "@/lib/signature-answer";
 
 interface ElementConditionalProps {
   element: TSurveyElement;
@@ -38,6 +41,8 @@ interface ElementConditionalProps {
   onTtcCollect?: (elementId: string, ttc: number) => void; // Callback to collect TTC synchronously
   errorMessage?: string; // Validation error message from centralized validation
   surveyLanguages: TSurveyLanguage[];
+  signatureDrafts: SignatureDraftStore; // The survey's in-memory Signature drawings
+  registerSubmitContributor: (elementId: string, contributor: SubmitContributor | null) => void; // Lets an element produce its answer on Next
 }
 
 export function ElementConditional({
@@ -57,6 +62,8 @@ export function ElementConditional({
   onTtcCollect,
   surveyLanguages,
   errorMessage,
+  signatureDrafts,
+  registerSubmitContributor,
 }: Readonly<ElementConditionalProps>) {
   // Ref to the container div, used to find and expose the form element inside
   const containerRef = useRef<HTMLDivElement>(null);
@@ -257,6 +264,25 @@ export function ElementConditional({
             autoFocusEnabled={autoFocusEnabled}
             currentElementId={currentElementId}
             errorMessage={errorMessage}
+          />
+        );
+      case TSurveyElementTypeEnum.Signature:
+        return (
+          <SignatureElement
+            key={element.id}
+            surveyId={surveyId}
+            element={element}
+            value={typeof value === "string" ? value : ""}
+            onChange={onChange}
+            onFileUpload={onFileUpload}
+            languageCode={languageCode}
+            ttc={ttc}
+            setTtc={wrappedSetTtc}
+            currentElementId={currentElementId}
+            errorMessage={errorMessage}
+            dir={dir}
+            signatureDrafts={signatureDrafts}
+            registerSubmitContributor={registerSubmitContributor}
           />
         );
       case TSurveyElementTypeEnum.Cal:
