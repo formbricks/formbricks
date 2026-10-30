@@ -59,6 +59,10 @@ export const PERSONAL_EMAIL_DOMAINS: readonly string[] = [
   "8shield.net", // SimpleLogin (Proton) alias domain
   "dralias.com", // SimpleLogin (Proton) alias domain
   "keemail.me", // Tutanota
+  "tuta.io", // Tuta (formerly Tutanota)
+  "tuta.com", // Tuta
+  "tutanota.de", // Tuta
+  "tutamail.com", // Tuta
   "ik.me", // Infomaniak
   "murena.io", // /e/ OS (Murena)
   "firemail.cc", // same operator as cock.li
