@@ -37,6 +37,7 @@ const mocks = vi.hoisted(() => {
   return {
     store,
     redis,
+    redisAvailable: true,
     constants: {
       ENCRYPTION_KEY: "a".repeat(64),
       EMAIL_RATE_LIMIT_MULTIPLIER: 1,
@@ -47,7 +48,9 @@ const mocks = vi.hoisted(() => {
 });
 
 vi.mock("@/lib/constants", () => mocks.constants);
-vi.mock("@/lib/cache", () => ({ cache: { getRedisClient: vi.fn(async () => mocks.redis) } }));
+vi.mock("@/lib/cache", () => ({
+  cache: { getRedisClient: vi.fn(async () => (mocks.redisAvailable ? mocks.redis : null)) },
+}));
 vi.mock("@formbricks/logger", () => ({ logger: { debug: vi.fn(), warn: vi.fn(), error: vi.fn() } }));
 
 const send = (emailType: TEmailType, to: string, context?: TEmailRateLimitContext) =>
@@ -128,10 +131,20 @@ describe("emailRateLimits", () => {
 describe("applyEmailRateLimits", () => {
   beforeEach(() => {
     mocks.store.clear();
+    mocks.redisAvailable = true;
     mocks.constants.EMAIL_RATE_LIMIT_MULTIPLIER = 1;
     mocks.constants.RATE_LIMITING_DISABLED = false;
     mocks.constants.ENCRYPTION_KEY = "a".repeat(64);
     vi.mocked(logger.warn).mockClear();
+  });
+
+  // INC-5 sent 13,000 invites; a Redis outage must not reopen that door by switching every cap off.
+  test("refuses every counted email while Redis is unavailable", async () => {
+    mocks.redisAvailable = false;
+
+    await refused(send("invite", "invitee@example.com", { organizationId: "org-1" }));
+    await refused(send("email_verification", "new-user@example.com"));
+    await refused(send("survey_follow_up", "respondent@example.com", external("org-1")));
   });
 
   describe("fresh resources do not reset a limit", () => {

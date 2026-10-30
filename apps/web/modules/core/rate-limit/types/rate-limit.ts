@@ -7,6 +7,11 @@ export const ZRateLimitConfig = z.object({
   allowedPerInterval: z.int().positive().describe("Maximum allowed requests per interval"),
   /** Namespace for grouping rate limit per feature */
   namespace: z.string().min(1).describe("Namespace for grouping rate limit per feature"),
+  /** Refuse instead of allow when the limiter cannot reach Redis (docs/adr/0015-abuse-limits-fail-closed.md) */
+  failClosed: z
+    .boolean()
+    .optional()
+    .describe("Refuse the request instead of allowing it when the limiter cannot reach Redis"),
 });
 
 export type TRateLimitConfig = z.infer<typeof ZRateLimitConfig>;

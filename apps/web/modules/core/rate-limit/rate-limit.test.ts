@@ -1,4 +1,5 @@
 // Import modules after mocking
+import * as Sentry from "@sentry/nextjs";
 import { afterAll, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 // Import after mocking
@@ -52,6 +53,13 @@ vi.mock("@formbricks/logger", () => ({
 vi.mock("@sentry/nextjs", () => ({
   addBreadcrumb: vi.fn(),
   captureException: vi.fn(),
+}));
+
+const { mockRecordRateLimiterUnavailable } = vi.hoisted(() => ({
+  mockRecordRateLimiterUnavailable: vi.fn(),
+}));
+vi.mock("./rate-limit-metrics", () => ({
+  recordRateLimiterUnavailable: mockRecordRateLimiterUnavailable,
 }));
 
 describe("checkRateLimit", () => {
@@ -615,5 +623,59 @@ describe("peekRateLimit", () => {
         }),
       })
     );
+  });
+});
+
+describe("when the limiter cannot reach Redis", () => {
+  const openConfig: TRateLimitConfig = { interval: 300, allowedPerInterval: 5, namespace: "test" };
+  const closedConfig: TRateLimitConfig = { ...openConfig, failClosed: true };
+  const checks = [
+    ["checkRateLimit", checkRateLimit],
+    ["reserveRateLimit", reserveRateLimit],
+    ["peekRateLimit", peekRateLimit],
+  ] as const;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockEval.mockReset();
+    mockGet.mockReset();
+    mockCache.getRedisClient.mockResolvedValue(mockRedisClient);
+  });
+
+  test.each(checks)("%s refuses a failClosed limit when there is no Redis client", async (_, check) => {
+    mockCache.getRedisClient.mockResolvedValue(null);
+
+    const result = await check(closedConfig, "test-user");
+
+    expect(result.ok).toBe(false);
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ namespace: "test", failClosed: true }),
+      "Redis unavailable"
+    );
+    expect(mockRecordRateLimiterUnavailable).toHaveBeenCalledWith({
+      failMode: "closed",
+      reason: "no_client",
+    });
+  });
+
+  test.each(checks)("%s refuses a failClosed limit when the Redis call throws", async (_, check) => {
+    const redisError = new Error("Redis connection failed");
+    mockEval.mockRejectedValue(redisError);
+    mockGet.mockRejectedValue(redisError);
+
+    const result = await check(closedConfig, "test-user");
+
+    expect(result.ok).toBe(false);
+    expect(Sentry.captureException).toHaveBeenCalledWith(redisError, expect.anything());
+    expect(mockRecordRateLimiterUnavailable).toHaveBeenCalledWith({ failMode: "closed", reason: "error" });
+  });
+
+  test.each(checks)("%s still lets a limit without failClosed through", async (_, check) => {
+    mockCache.getRedisClient.mockResolvedValue(null);
+
+    const result = await check(openConfig, "test-user");
+
+    expect(result).toEqual({ ok: true, data: { allowed: true } });
+    expect(mockRecordRateLimiterUnavailable).toHaveBeenCalledWith({ failMode: "open", reason: "no_client" });
   });
 });
