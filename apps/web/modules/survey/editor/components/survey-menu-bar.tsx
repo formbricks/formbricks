@@ -716,10 +716,11 @@ export const SurveyMenuBar = ({
         setLocalSurvey(updatedSurvey);
         lastSavedSurveyRef.current = structuredClone(updatedSurvey);
         toast.success(t("workspace.surveys.edit.changes_saved"));
-        // Set flag to prevent beforeunload warning during router.refresh()
+        // Set flag to prevent beforeunload warning while the route re-renders
         isSuccessfullySavedRef.current = true;
         if (saveAttemptOrder.settle(attempt)) setAutoSaveFailure(null);
-        router.refresh();
+        // No router.refresh(): `updateSurveyAction` revalidates the route, and its response already
+        // carries the re-rendered page. Refreshing too rendered the editor twice per save.
       } else {
         saveAttemptOrder.settle(attempt);
         const errorMessage = getFormattedErrorMessage(updatedSurveyResponse);
