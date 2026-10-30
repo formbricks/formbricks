@@ -20,9 +20,9 @@ wins.
   promise. Internal routes are v3 in everything but the contract, so they can change freely while the shape
   settles.
 - An endpoint is promoted to public `/api/v3` once an external caller (an API key, an integration, an MCP
-  tool that writes) needs it: it gains its OpenAPI contract and stability promise, and the app moves to the public
-  route rather than keeping an internal twin. A feature built for external callers from day one starts
-  public, as dashboards did ([ADR-0002](docs/adr/0002-the-app-uses-the-public-dashboard-api.md)).
+  tool that writes) needs it: it gains its OpenAPI contract and stability promise, and the app moves to the
+  public route rather than keeping an internal twin. A feature built for external callers from day one
+  starts public, as dashboards did ([ADR-0002](docs/adr/0002-the-app-uses-the-public-dashboard-api.md)).
 - The route framework and the client helpers are in `AGENTS.md` under "Architecture & Patterns".
 - Paths name resources, and each response uses the method and status code HTTP defines for the case. Writes
   that can race take the `updatedAt` compare-and-set (409 on mismatch); writes a retry could repeat are
