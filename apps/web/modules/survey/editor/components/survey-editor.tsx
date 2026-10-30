@@ -28,6 +28,7 @@ import { type TStylingAppearance } from "@/lib/styling/dark-mode";
 import type { TSurveyAccess } from "@/lib/survey/visibility/access";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { useDocumentVisibility } from "@/lib/useDocumentVisibility";
+import { isDeepEqual } from "@/lib/utils/object";
 import { useCustomCssValidation } from "@/modules/custom-css/components/hooks/use-custom-css-validation";
 import { useLiveWorkspaceCustomCss } from "@/modules/custom-css/components/hooks/use-live-workspace-custom-css";
 import { getCustomCssSource, toCustomCssDraft } from "@/modules/custom-css/components/lib/draft";
@@ -197,8 +198,8 @@ export const SurveyEditor = ({
     router.refresh();
   }, [router]);
 
-  // `isFollowUpsTabVisible` tracks the server `survey` prop, which a save refreshes
-  // (`survey-menu-bar` calls `router.refresh()`). Deleting the last follow-up therefore hides the
+  // `isFollowUpsTabVisible` tracks the server `survey` prop, which a manual save refreshes
+  // (`updateSurveyAction` revalidates the route; the draft save calls `router.refresh()`). Deleting the last follow-up therefore hides the
   // tab while `activeView` — client state — still points at it, leaving an empty main pane with no
   // tab selected. Fall back to the elements view so the deletion flow cannot dead-end.
   useEffect(() => {
@@ -260,12 +261,17 @@ export const SurveyEditor = ({
       getWorkspaceLanguagesAction({ workspaceId: localWorkspace.id }),
     ]);
 
-    if (refetchWorkspaceResponse?.data) {
-      setLocalWorkspace(refetchWorkspaceResponse.data);
+    // Kept by identity when nothing changed: a new object re-renders every block card and the preview.
+    const workspaceData = refetchWorkspaceResponse?.data;
+    if (workspaceData) {
+      setLocalWorkspace((current) => (isDeepEqual(current, workspaceData) ? current : workspaceData));
     }
 
-    if (refetchLanguagesResponse?.data) {
-      setLocalWorkspaceLanguages(refetchLanguagesResponse.data);
+    const languagesData = refetchLanguagesResponse?.data;
+    if (languagesData) {
+      setLocalWorkspaceLanguages((current) =>
+        isDeepEqual(current, languagesData) ? current : languagesData
+      );
     }
   }, [localWorkspace.id]);
 
@@ -285,24 +291,6 @@ export const SurveyEditor = ({
     // against `survey` key-for-key by the menu bar, so any reshaping has to apply to both or neither.
     setLocalSurvey((current) => current ?? structuredClone(survey));
   }, [survey]);
-
-  useEffect(() => {
-    const listener = () => {
-      if (document.visibilityState === "visible") {
-        const fetchLatestWorkspace = async () => {
-          const refetchWorkspaceResponse = await refetchWorkspaceAction({ workspaceId: localWorkspace.id });
-          if (refetchWorkspaceResponse?.data) {
-            setLocalWorkspace(refetchWorkspaceResponse.data);
-          }
-        };
-        fetchLatestWorkspace();
-      }
-    };
-    document.addEventListener("visibilitychange", listener);
-    return () => {
-      document.removeEventListener("visibilitychange", listener);
-    };
-  }, [localWorkspace.id]);
 
   // when the survey type changes, we need to reset the active element id to the first element
   useEffect(() => {

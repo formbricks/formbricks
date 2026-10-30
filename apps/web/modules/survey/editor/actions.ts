@@ -238,8 +238,9 @@ export const updateSurveyDraftAction = authenticatedActionClient.inputSchema(ZSu
       workspaceId: result.workspaceId,
     });
 
-    revalidatePath(`/workspaces/${result.workspaceId}/surveys/${result.id}`);
-
+    // No `revalidatePath` here: this is the autosave's path, and in Next 16 it re-renders the current
+    // route whatever path it is given — the whole editor page, every 10s. The manual draft save
+    // refreshes the route itself.
     return result;
   })
 );
