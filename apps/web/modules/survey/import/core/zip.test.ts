@@ -158,6 +158,15 @@ describe("openZipArchive, before anything is inflated", () => {
     expectUnreadable(() => openZipArchive(archive.subarray(0, archive.length - 30)));
   });
 
+  test("refuses an entry that says its size is in a ZIP64 field it does not have", () => {
+    // The malformed ZIP64 archive that hangs fflate before 0.8.3 (GHSA-px8p-9vwx-vf98).
+    const archive = setDeclaredSizes(zipOf({ "word/document.xml": "<w:document/>" }), "word/document.xml", {
+      compressedSize: 0xffffffff,
+    });
+
+    expectUnreadable(() => openZipArchive(archive));
+  });
+
   test("refuses two entries with the same name, which readers would resolve differently", () => {
     const archive = zipOf({ "word/document.xml": "<a/>", "word/documenX.xml": "<b/>" });
     const renamed = new Uint8Array(archive);

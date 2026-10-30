@@ -106,11 +106,17 @@ class ZipReader {
     return offset >= 0 && offset + length <= this.bytes.length;
   }
 
+  /**
+   * Reads are bounds-checked here, so a directory that points past the end of the file is refused as
+   * damaged instead of escaping as a `RangeError`.
+   */
   u16(offset: number): number {
+    if (!this.has(offset, 2)) throw unreadable("The archive's directory is damaged");
     return this.view.getUint16(offset, true);
   }
 
   u32(offset: number): number {
+    if (!this.has(offset, 4)) throw unreadable("The archive's directory is damaged");
     return this.view.getUint32(offset, true);
   }
 
@@ -187,6 +193,7 @@ const readZip64Extra = (
     if (reader.u16(position) !== ZIP64_EXTRA_ID) continue;
 
     const fieldEnd = position + 4 + reader.u16(position + 2);
+    if (fieldEnd > extraEnd) throw unreadable("The archive's directory is damaged");
     let cursor = position + 4;
     const next = (): number => {
       if (cursor + 8 > fieldEnd) throw unreadable("The archive's directory is damaged");
