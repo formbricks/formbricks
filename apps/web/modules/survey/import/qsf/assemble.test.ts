@@ -1,14 +1,14 @@
 import { describe, expect, test } from "vitest";
 import deDE from "@/locales/de-DE.json";
+import { cpuMsSince } from "../core/__fixtures__/cpu-time";
 import type { TSurveyImportDraftElement } from "../core/draft";
+import { isObjectMemberName } from "../core/id-registry";
 import type { TSurveyImportPipelineIssue } from "../core/report";
-import { cpuMsSince } from "./__fixtures__/cpu-time";
 import { loadQsfFixture } from "./__fixtures__/load-fixture";
 import { loadRecordedPlan, recordedGenerate } from "./__fixtures__/recorded-plans";
 import { planQsfImport } from "./ai-plan";
 import { assembleQsfDraft, buildHiddenFields, disambiguateLabels } from "./assemble";
 import { checkQsfDraft } from "./final-gate";
-import { isObjectMemberName } from "./id-registry";
 import type { TQsfCheckedPlan } from "./plan-checks";
 import type { TQsfSurvey } from "./qsf-model";
 import { readQsf } from "./read-qsf";

@@ -57,10 +57,11 @@ const trimUnderscores = (value: string): string => {
  * and variables (v3 reference validation), so the registry is seeded with the hidden field ids before
  * any element claims one, and with the reserved ids in every casing.
  *
- * An element gets its Qualtrics export tag (`Q12`) when it is clean and free, and its `QID` otherwise,
- * suffixed `_2`, `_3`, … when that is taken too.
+ * An element gets the label the file gives it (a Qualtrics export tag, `Q12`) when it is clean and
+ * free, and the lane's fallback (a Qualtrics `QID`) otherwise, suffixed `_2`, `_3`, … when that is
+ * taken too.
  */
-export class QsfIdRegistry {
+export class SurveyImportIdRegistry {
   private readonly taken = new Set<string>();
 
   constructor(reserved: readonly string[] = []) {
@@ -92,7 +93,7 @@ export class QsfIdRegistry {
       maxAttempts: this.taken.size + 1,
       isFree: (candidate) => this.isUsable(candidate),
     });
-    if (suffixed === null) throw new Error("QsfIdRegistry found no free element id");
+    if (suffixed === null) throw new Error("SurveyImportIdRegistry found no free element id");
     return this.take(suffixed);
   }
 

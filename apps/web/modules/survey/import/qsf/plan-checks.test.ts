@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { cpuMsSince } from "./__fixtures__/cpu-time";
+import { cpuMsSince } from "../core/__fixtures__/cpu-time";
 import { loadQsfFixture } from "./__fixtures__/load-fixture";
 import { loadRecordedPlan } from "./__fixtures__/recorded-plans";
 import {

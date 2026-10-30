@@ -16,10 +16,10 @@ import type {
   TSurveyImportDraftEnding,
   TSurveyImportLocaleText,
 } from "../core/draft";
+import { SurveyImportIdRegistry, findFreeSuffixedName, isObjectMemberName } from "../core/id-registry";
 import type { TSurveyImportPipelineIssue } from "../core/report";
 import { getDefaultEndingTexts } from "./default-ending";
 import { createSlicer } from "./event-loop";
-import { QsfIdRegistry, findFreeSuffixedName, isObjectMemberName } from "./id-registry";
 import { type TPipedTextContext, replacePipedText } from "./piped-text";
 import { type TQsfCheckedPlan, type TQsfPlannedQuestion, sliderPoints } from "./plan-checks";
 import type { TQsfPlanContactField } from "./plan-schema";
@@ -31,8 +31,8 @@ import { type TSanitizedTexts, sanitizeName } from "./sanitize-text";
  * to `POST /api/v3/surveys` — the locale-keyed request shape, not the internal `default` key.
  *
  * Every text is copied by key from the file; the plan only says where. Ids are the import's own:
- * element ids from export tags through `QsfIdRegistry`, every choice, row, column, block and ending id
- * from `createId()`. Nothing from the plan or the file becomes a URL except the end-of-survey redirect,
+ * element ids from export tags through `SurveyImportIdRegistry`, every choice, row, column, block and
+ * ending id from `createId()`. Nothing from the plan or the file becomes a URL except the end-of-survey redirect,
  * and only when the organization's plan allows external URLs.
  */
 
@@ -262,7 +262,7 @@ class QsfAssembler {
       .filter((block) => block.refs.length > 0);
 
     // First pass: every element's id and block — recall needs both up front.
-    const registry = new QsfIdRegistry(hidden.fieldIds);
+    const registry = new SurveyImportIdRegistry(hidden.fieldIds);
     placedBlocks.forEach((block, blockIndex) => {
       for (const ref of block.refs) {
         const question = survey.questions.get(ref);

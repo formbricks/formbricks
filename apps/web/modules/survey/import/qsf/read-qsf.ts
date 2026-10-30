@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { DEFAULT_V3_SURVEY_LANGUAGE } from "@/app/api/v3/surveys/schemas";
+import { isObjectMemberName } from "../core/id-registry";
 import type { TSurveyImportPipelineIssue } from "../core/report";
 import {
   SURVEY_IMPORT_MAX_NAME_CHARS,
@@ -8,7 +9,6 @@ import {
   SURVEY_IMPORT_MAX_TEXT_CHARS,
 } from "../limits";
 import { qsfLimitExceeded, qsfNotRecognized, qsfRefused } from "./errors";
-import { isObjectMemberName } from "./id-registry";
 import {
   isReportableLanguageCode,
   normalizeQualtricsLanguageCode,

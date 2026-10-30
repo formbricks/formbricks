@@ -1,8 +1,8 @@
 import { describe, expect, test } from "vitest";
 import { SurveyImportInputError } from "../core/errors";
+import { OBJECT_MEMBER_NAMES } from "../core/id-registry";
 import { SURVEY_IMPORT_MAX_OPTIONS_PER_QUESTION, SURVEY_IMPORT_MAX_TEXT_CHARS } from "../limits";
 import { loadQsfFixture } from "./__fixtures__/load-fixture";
-import { OBJECT_MEMBER_NAMES } from "./id-registry";
 import { normalizeQualtricsLanguageCode } from "./language-codes";
 import {
   QSF_MAX_BLOCKS,

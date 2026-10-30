@@ -3,6 +3,7 @@ import { AIOutputTokenLimitError } from "@formbricks/ai";
 import { prepareV3SurveyCreateInput } from "@/app/api/v3/surveys/prepare";
 import type { TSurveyImportDraft } from "../core/draft";
 import { SurveyImportFailedError, SurveyImportInputError, SurveyImportTimeoutError } from "../core/errors";
+import { isObjectMemberName } from "../core/id-registry";
 import type { TSurveyImportReport } from "../types";
 import {
   IMPORTABLE_QSF_FIXTURES,
@@ -12,7 +13,6 @@ import {
 import { loadRecordedPlan, recordedGenerate, timedGenerate } from "./__fixtures__/recorded-plans";
 import type { TQsfPlanGenerate } from "./ai-plan";
 import { checkQsfDraft } from "./final-gate";
-import { isObjectMemberName } from "./id-registry";
 import { type TRunQsfImportParams, prepareQsfImport, runQsfImport } from "./pipeline";
 
 const mocks = vi.hoisted(() => ({

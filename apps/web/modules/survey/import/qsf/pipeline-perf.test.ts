@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { cpuMsSince } from "../core/__fixtures__/cpu-time";
 import { SurveyImportInputError } from "../core/errors";
 import { SURVEY_IMPORT_MAX_DRAFT_BYTES, SURVEY_IMPORT_MAX_TEXT_CHARS } from "../limits";
-import { cpuMsSince } from "./__fixtures__/cpu-time";
 import { loadQsfFixture } from "./__fixtures__/load-fixture";
 import {
   PAGE_BREAK,

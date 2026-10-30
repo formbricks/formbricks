@@ -1,10 +1,10 @@
 import { describe, expect, test, vi } from "vitest";
 import { cpuMsSince } from "./__fixtures__/cpu-time";
-import { QsfIdRegistry, findFreeSuffixedName, isObjectMemberName } from "./id-registry";
+import { SurveyImportIdRegistry, findFreeSuffixedName, isObjectMemberName } from "./id-registry";
 
-describe("QsfIdRegistry", () => {
+describe("SurveyImportIdRegistry", () => {
   test("hands out the export tag when clean and free, case-insensitively", () => {
-    const registry = new QsfIdRegistry();
+    const registry = new SurveyImportIdRegistry();
 
     expect(registry.claim("Q1", "QID1")).toBe("Q1");
     expect(registry.claim("q1", "QID2")).toBe("QID2");
@@ -12,7 +12,7 @@ describe("QsfIdRegistry", () => {
   });
 
   test("cleans odd characters and falls back on reserved, seeded or empty tags", () => {
-    const registry = new QsfIdRegistry(["utm_source"]);
+    const registry = new SurveyImportIdRegistry(["utm_source"]);
 
     expect(registry.claim("Q 2 (final)", "QID2")).toBe("Q_2_final");
     expect(registry.claim("userId", "QID3")).toBe("QID3");
@@ -25,18 +25,18 @@ describe("QsfIdRegistry", () => {
   test.each(["constructor", "prototype", "toString", "HASOWNPROPERTY", "valueOf"])(
     "refuses the Object.prototype member name %s, which the id charset admits",
     (name) => {
-      const registry = new QsfIdRegistry();
+      const registry = new SurveyImportIdRegistry();
 
       expect(registry.claim(name, "QID7")).toBe("QID7");
     }
   );
 
   test("never hands out __proto__: cleaning trims its underscores", () => {
-    expect(new QsfIdRegistry().claim("__proto__", "QID7")).toBe("proto");
+    expect(new SurveyImportIdRegistry().claim("__proto__", "QID7")).toBe("proto");
   });
 
   test("suffixes the fallback when it is taken too", () => {
-    const registry = new QsfIdRegistry();
+    const registry = new SurveyImportIdRegistry();
 
     expect(registry.claim("QID1", "QID1")).toBe("QID1");
     expect(registry.claim("QID1", "QID1")).toBe("QID1_2");
@@ -44,11 +44,11 @@ describe("QsfIdRegistry", () => {
   });
 
   test("cuts a long tag to 64 characters", () => {
-    expect(new QsfIdRegistry().claim("a".repeat(500), "QID1")).toBe("a".repeat(64));
+    expect(new SurveyImportIdRegistry().claim("a".repeat(500), "QID1")).toBe("a".repeat(64));
   });
 
   test("cuts a fallback of the full length to fit each suffix, so it never runs out of ids", () => {
-    const registry = new QsfIdRegistry();
+    const registry = new SurveyImportIdRegistry();
     const fallback = "f".repeat(64);
 
     const ids = Array.from({ length: 12 }, () => registry.claim("", fallback));
@@ -60,7 +60,7 @@ describe("QsfIdRegistry", () => {
   });
 
   test("trims the underscores around a tag in linear time", () => {
-    const registry = new QsfIdRegistry();
+    const registry = new SurveyImportIdRegistry();
     const startedAt = process.cpuUsage();
 
     expect(registry.claim(`${"_".repeat(60)}Q1${"_".repeat(100_000)}`, "QID1")).toBe("Q1");

@@ -1,7 +1,7 @@
 import DOMPurify from "isomorphic-dompurify";
 import { monitorEventLoopDelay } from "node:perf_hooks";
 import { describe, expect, test, vi } from "vitest";
-import { cpuMsSince } from "./__fixtures__/cpu-time";
+import { cpuMsSince } from "../core/__fixtures__/cpu-time";
 import { loadQsfFixture } from "./__fixtures__/load-fixture";
 import { readQsf } from "./read-qsf";
 import { containsMarkup, sanitizeQsfTexts, sanitizeText } from "./sanitize-text";
