@@ -1,7 +1,7 @@
 import { APICallError } from "ai";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TooManyRequestsError } from "@formbricks/types/errors";
-import { QSF_MAX_CALL_RETRIES, decideQsfRetry, waitForRetry } from "./call-retry";
+import { SURVEY_IMPORT_MAX_CALL_RETRIES, decideImportCallRetry, waitForRetry } from "./call-retry";
 
 const providerError = (statusCode: number, headers: Record<string, string> = {}) =>
   new APICallError({
@@ -13,9 +13,9 @@ const providerError = (statusCode: number, headers: Record<string, string> = {})
   });
 
 const decide = (error: unknown, attempt = 0, remainingMs = 45_000) =>
-  decideQsfRetry({ error, attempt, remainingMs, minAttemptMs: 5_000, random: () => 1 });
+  decideImportCallRetry({ error, attempt, remainingMs, minAttemptMs: 5_000, random: () => 1 });
 
-describe("decideQsfRetry", () => {
+describe("decideImportCallRetry", () => {
   test("waits out a 429 whose Retry-After leaves time for another attempt", () => {
     expect(decide(new TooManyRequestsError("ai_quota_exceeded", 3))).toEqual({
       kind: "retry",
@@ -48,7 +48,7 @@ describe("decideQsfRetry", () => {
   test("backs a 5xx off exponentially, with jitter", () => {
     expect(decide(providerError(503), 0)).toEqual({ kind: "retry", delayMs: 2_000 });
     expect(decide(providerError(503), 1)).toEqual({ kind: "retry", delayMs: 4_000 });
-    const low = decideQsfRetry({
+    const low = decideImportCallRetry({
       error: providerError(503),
       attempt: 1,
       remainingMs: 45_000,
@@ -63,8 +63,8 @@ describe("decideQsfRetry", () => {
   });
 
   test("stops after the SDK's default number of retries", () => {
-    expect(decide(providerError(503), QSF_MAX_CALL_RETRIES)).toEqual({ kind: "propagate" });
-    expect(decide(new TooManyRequestsError("ai_quota_exceeded", 1), QSF_MAX_CALL_RETRIES)).toEqual({
+    expect(decide(providerError(503), SURVEY_IMPORT_MAX_CALL_RETRIES)).toEqual({ kind: "propagate" });
+    expect(decide(new TooManyRequestsError("ai_quota_exceeded", 1), SURVEY_IMPORT_MAX_CALL_RETRIES)).toEqual({
       kind: "propagate",
     });
   });

@@ -15,19 +15,19 @@ import { TooManyRequestsError } from "@formbricks/types/errors";
  *   left; once it has not, the call has timed out, and its chunk is split like any other that did;
  * - anything else is not retried.
  *
- * At most `QSF_MAX_CALL_RETRIES` retries a call, the SDK's own default, and every attempt counts
+ * At most `SURVEY_IMPORT_MAX_CALL_RETRIES` retries a call, the SDK's own default, and every attempt counts
  * against the import's call cap and budgets like a call of its own. A retry those leave no room for
  * ends the call like any other the import could not afford: its questions are dropped as `ai_budget`.
  */
 
 /** Retries per call after the first attempt: the AI SDK's default `maxRetries`. */
-export const QSF_MAX_CALL_RETRIES = 2;
+export const SURVEY_IMPORT_MAX_CALL_RETRIES = 2;
 /** The first retry's backoff, doubled for each one after: the AI SDK's own defaults. */
 const INITIAL_BACKOFF_MS = 2_000;
 const BACKOFF_FACTOR = 2;
 
 /** What to do after a failed attempt. */
-export type TQsfRetryDecision =
+export type TImportCallRetryDecision =
   /** Wait `delayMs`, then send the call again. */
   | { kind: "retry"; delayMs: number }
   /** A retryable failure with no time left in the call for another attempt: the call timed out. */
@@ -66,19 +66,19 @@ const retryDelayMs = (retryAfterSeconds: number | undefined, attempt: number, ra
  * What to do after attempt number `attempt` (0 for the first) failed with `error`, with `remainingMs`
  * left in the call and `minAttemptMs` the least time an attempt is worth sending with.
  */
-export function decideQsfRetry(params: {
+export function decideImportCallRetry(params: {
   error: unknown;
   attempt: number;
   remainingMs: number;
   minAttemptMs: number;
   random?: () => number;
-}): TQsfRetryDecision {
+}): TImportCallRetryDecision {
   const { error, attempt, remainingMs, minAttemptMs, random = Math.random } = params;
   const fits = (delayMs: number) => delayMs + minAttemptMs <= remainingMs;
 
   const quota = quotaOf(error);
   if (quota) {
-    if (attempt >= QSF_MAX_CALL_RETRIES) return { kind: "propagate" };
+    if (attempt >= SURVEY_IMPORT_MAX_CALL_RETRIES) return { kind: "propagate" };
     const delayMs = retryDelayMs(quota.retryAfterSeconds, attempt, random);
     // Past the call's time the user is told about the quota, not that the import took too long.
     return fits(delayMs) ? { kind: "retry", delayMs } : { kind: "propagate" };
@@ -86,7 +86,7 @@ export function decideQsfRetry(params: {
 
   const info = classifyAIProviderError(error);
   if (!info?.isRetryable || info.isAuthFailure) return { kind: "propagate" };
-  if (attempt >= QSF_MAX_CALL_RETRIES) return { kind: "propagate" };
+  if (attempt >= SURVEY_IMPORT_MAX_CALL_RETRIES) return { kind: "propagate" };
   const delayMs = retryDelayMs(info.retryAfterSeconds, attempt, random);
   return fits(delayMs) ? { kind: "retry", delayMs } : { kind: "timed_out" };
 }

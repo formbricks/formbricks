@@ -2,6 +2,7 @@ import { APICallError, NoObjectGeneratedError } from "ai";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { AIOutputTokenLimitError } from "@formbricks/ai";
 import { TooManyRequestsError } from "@formbricks/types/errors";
+import { SURVEY_IMPORT_ASSEMBLY_RESERVE_MS, SURVEY_IMPORT_MIN_CALL_TIMEOUT_MS } from "../core/ai-plan";
 import { SurveyImportTimeoutError } from "../core/errors";
 import {
   SURVEY_IMPORT_AI_CALL_TIMEOUT_MS,
@@ -17,10 +18,8 @@ import {
   timedGenerate,
 } from "./__fixtures__/recorded-plans";
 import {
-  QSF_ASSEMBLY_RESERVE_MS,
   QSF_MAX_AI_CALLS,
   QSF_MAX_OUTPUT_TOKENS,
-  QSF_MIN_CALL_TIMEOUT_MS,
   type TQsfPlanGenerate,
   type TQsfPlanRequest,
   chunkQuestions,
@@ -683,7 +682,7 @@ describe("planQsfImport with a model that takes time", () => {
     expect(error).toBeNull();
     expect(result?.plan.questions.size).toBe(150);
     expect(requests).toHaveLength(9);
-    expect(elapsed).toBeLessThanOrEqual(120_000 - QSF_ASSEMBLY_RESERVE_MS);
+    expect(elapsed).toBeLessThanOrEqual(120_000 - SURVEY_IMPORT_ASSEMBLY_RESERVE_MS);
   });
 
   test("splits a chunk whose call ran past its timeout and plans its halves, instead of failing", async () => {
@@ -733,7 +732,7 @@ describe("planQsfImport with a model that takes time", () => {
     const { result, error, requests, elapsed } = await planTimed((refs) =>
       refs.length === 20 ? Infinity : 20_000
     );
-    const lastMoment = 120_000 - QSF_ASSEMBLY_RESERVE_MS;
+    const lastMoment = 120_000 - SURVEY_IMPORT_ASSEMBLY_RESERVE_MS;
 
     expect(error).toBeNull();
     const planned = result?.plan.questions.size ?? 0;
@@ -745,7 +744,7 @@ describe("planQsfImport with a model that takes time", () => {
     ).toBe(true);
     expect(requests.some((request) => request.timeout < SURVEY_IMPORT_AI_CALL_TIMEOUT_MS)).toBe(true);
     // A call too short to come back with a plan is never sent; its questions are dropped instead.
-    expect(requests.every((request) => request.timeout >= QSF_MIN_CALL_TIMEOUT_MS)).toBe(true);
+    expect(requests.every((request) => request.timeout >= SURVEY_IMPORT_MIN_CALL_TIMEOUT_MS)).toBe(true);
     for (const request of requests) expect(request.at + request.timeout).toBeLessThanOrEqual(lastMoment);
     expect(elapsed).toBeLessThanOrEqual(lastMoment);
   });
@@ -755,9 +754,9 @@ describe("planQsfImport with a model that takes time", () => {
 
     expect(result).toBeNull();
     expect(error).toBeInstanceOf(SurveyImportTimeoutError);
-    expect(elapsed).toBeLessThanOrEqual(120_000 - QSF_ASSEMBLY_RESERVE_MS);
+    expect(elapsed).toBeLessThanOrEqual(120_000 - SURVEY_IMPORT_ASSEMBLY_RESERVE_MS);
     for (const request of requests) {
-      expect(request.at + request.timeout).toBeLessThanOrEqual(120_000 - QSF_ASSEMBLY_RESERVE_MS);
+      expect(request.at + request.timeout).toBeLessThanOrEqual(120_000 - SURVEY_IMPORT_ASSEMBLY_RESERVE_MS);
     }
   });
 });

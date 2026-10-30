@@ -1,19 +1,23 @@
-import { NoObjectGeneratedError, NoOutputGeneratedError, TypeValidationError } from "ai";
-import { AIOutputTokenLimitError } from "@formbricks/ai";
+import {
+  type TImportPlanGenerate,
+  type TImportPlanLane,
+  type TImportPlanRequest,
+  type TImportPlanUsage,
+  importCallCapFor,
+  importFailureCause,
+  importOutputBudgetFor,
+  runImportPlan,
+} from "../core/ai-plan";
 import { SurveyImportFailedError, SurveyImportTimeoutError } from "../core/errors";
 import type { TSurveyImportPipelineIssue } from "../core/report";
 import {
   SURVEY_IMPORT_AI_CALL_TIMEOUT_MS,
   SURVEY_IMPORT_AI_CHUNK_OUTPUT_TOKENS,
-  SURVEY_IMPORT_AI_MAX_OUTPUT_TOKENS_PER_CALL,
-  SURVEY_IMPORT_AI_MAX_PARALLEL_CALLS,
   SURVEY_IMPORT_MAX_QUESTIONS,
 } from "../limits";
-import { decideQsfRetry, waitForRetry } from "./call-retry";
 import {
   type TQsfCheckedPlan,
   type TQsfPlanFailure,
-  type TQsfPlanResponse,
   checkPlanResponses,
   mergeCheckedPlans,
 } from "./plan-checks";
@@ -34,47 +38,19 @@ import type { TQsfSurvey } from "./qsf-model";
 import { unsupportedTypeSeverity } from "./unsupported-types";
 
 /**
- * The AI half of the import (ENG-3479): ask for the plan, check it, retry what failed once.
+ * The AI half of the Qualtrics import (ENG-3479): the questions, chunked by the output they are
+ * expected to need, planned by the lane-neutral engine (`../core/ai-plan.ts`, which says how calls,
+ * splits, retries and budgets work), and checked by `plan-checks.ts`.
  *
- * The questions are split into chunks by the output they are expected to need — a fixed budget per
- * chunk, as many chunks as the survey needs — and at most four run at once. The provider's
- * tokens-per-minute is the real limit there, and nothing in the app holds it back. Per chunk:
- *
- * - a 429 or a 5xx is retried here, the SDK's own retries off (`call-retry.ts`): a 429 while its
- *   `Retry-After` fits in the call's time, a 5xx with backoff while the call has time left;
- * - a 429 that does not fit, provider auth and any other provider failure propagate unwrapped, and a
- *   shared abort cancels the sibling calls, so the route's classification keeps working;
- * - running out of output tokens, or out of the call's own time (the `timeout` its attempts share,
- *   which the AI SDK's abort check does not match, and a 5xx with no time left to retry it), is ours to
- *   fix: the chunk is split in two
- *   (once) and each half asked again, queued behind the other chunks. A half that fails the same way
- *   is dropped with a report line — never "split it in Qualtrics", and never the end of the import;
- * - output that fails the schema fails the chunk's questions, which go to the retry round.
- *
- * Only the import's own signal ends the import: Stop, a disconnect, or the route's deadline. Each call's
- * timeout is sized to what is left before that deadline, less the assembly reserve, so the calls left
- * when time runs out are dropped and the questions planned so far are still assembled. Only when time
- * ran out before any question was planned is it `SurveyImportTimeoutError`, the route's timeout event.
- *
- * Every call counts against a call cap and an output-token budget — chunks, splits and the retry
- * round together, failed calls included — sized from the import's own chunks and never above
+ * The call cap and output budget are sized from the import's own chunks and never above
  * `QSF_MAX_AI_CALLS` and `QSF_MAX_OUTPUT_TOKENS`, so a hostile file cannot cost more than the costliest
  * valid one. Past either, the prompt budget or the deadline, the questions left are dropped with a
- * report line; the import fails only when none survives (ENG-3411).
+ * report line — never "split it in Qualtrics" — and the import fails only when none survives
+ * (ENG-3411).
  */
 
 /** Data characters per chunk: one call's cap, less room for the system prompt and instructions. */
 const QSF_CHUNK_DATA_CHARS = QSF_PROMPT_MAX_CALL_CHARS - 20_000;
-/** Time kept back for assembly when a call is sized against the deadline. */
-export const QSF_ASSEMBLY_RESERVE_MS = 5_000;
-/**
- * The least time a call is sent with. Below it no plan can come back: the first token alone takes
- * 1–3 s, and even a 10-question half needs ~700 tokens and its thinking at 150–250 tokens a second.
- * Such a call would only time out after paying for its prompt, so its questions are left unplanned
- * (`ai_budget`, like any call the import has no time left for).
- */
-export const QSF_MIN_CALL_TIMEOUT_MS = 5_000;
-
 /**
  * Expected output tokens, measured on hand-authored plans: about 70 per question with every field
  * spelled out, 45 per logic note and 10 for a page's entry.
@@ -95,151 +71,33 @@ const QSF_MAX_CHUNKS = Math.ceil(
 );
 
 /**
- * Calls one import may make: each chunk once, each split into two halves, and two more for the retry
- * round — `3 × chunks + 2`, which a survey whose every chunk overflows or times out still fits.
- */
-const callCapFor = (chunks: number): number => 3 * chunks + 2;
-
-/**
- * Output tokens one import may spend, reasoning and failed calls included: every chunk's whole call
- * budget twice (an overflow, then its halves or its retry), and two more calls for the retry round —
- * `(2 × chunks + 2) × 8,192`. Checked before each call, so at most the calls already in flight run
- * past it.
- */
-const outputBudgetFor = (chunks: number): number =>
-  (2 * chunks + 2) * SURVEY_IMPORT_AI_MAX_OUTPUT_TOKENS_PER_CALL;
-
-/**
  * The ceilings, whatever the file: the costliest valid survey's own allowance, so a hostile file
  * cannot cost more than it. 152 calls (3 × 50 + 2) and 835,584 output tokens ((2 × 50 + 2) × 8,192) —
  * every call's whole budget, reasoning included, for a survey expected to need 70,000.
  */
-export const QSF_MAX_AI_CALLS = callCapFor(QSF_MAX_CHUNKS);
-export const QSF_MAX_OUTPUT_TOKENS = outputBudgetFor(QSF_MAX_CHUNKS);
+export const QSF_MAX_AI_CALLS = importCallCapFor(QSF_MAX_CHUNKS);
+export const QSF_MAX_OUTPUT_TOKENS = importOutputBudgetFor(QSF_MAX_CHUNKS);
 
-/** One structured-output call, as the plan needs it. */
-export interface TQsfPlanRequest {
-  system: string;
-  prompt: string;
-  schema: typeof ZQsfImportPlanForAI;
-  schemaName: string;
-  schemaDescription: string;
-  temperature: number;
-  maxOutputTokens: number;
-  /** This attempt's time: what is left of the call's. */
-  timeout: number;
-  /** Always 0: the import retries its calls itself (`call-retry.ts`), the SDK must not. */
-  maxRetries: 0;
-  abortSignal: AbortSignal;
-}
-
-export interface TQsfPlanUsage {
-  inputTokens: number;
-  outputTokens: number;
-}
-
-/**
- * The model call. The pipeline passes the organization's (`generateOrganizationAIObject`); the eval
- * script passes one built from the environment.
- */
-export type TQsfPlanGenerate = (
-  request: TQsfPlanRequest
-) => Promise<{ object: unknown; usage?: TQsfCallUsage }>;
-
-/** Usage as the AI SDK reports it. `outputTokens` is the total, reasoning included. */
-interface TQsfCallUsage {
-  inputTokens?: number;
-  outputTokens?: number;
-  outputTokenDetails?: { textTokens?: number; reasoningTokens?: number };
-}
-
-/**
- * The output tokens a call used, reasoning included: the reported total, or its parts when a provider
- * reports only those.
- */
-const outputTokensOf = (usage: TQsfCallUsage | undefined): number =>
-  usage?.outputTokens ??
-  (usage?.outputTokenDetails?.textTokens ?? 0) + (usage?.outputTokenDetails?.reasoningTokens ?? 0);
-
-/**
- * What a failed call used, read from the error's token counts only — never its text, which can echo
- * the prompt. A call that ran out of output tokens used its whole budget unless it says otherwise.
- */
-function usageOfFailure(error: unknown): TQsfCallUsage | undefined {
-  if (error instanceof AIOutputTokenLimitError) {
-    // Reasoning is part of the total, so a reported reasoning count alone says less than the limit hit.
-    const { outputTokens, maxOutputTokens } = error.details;
-    return { outputTokens: outputTokens ?? maxOutputTokens ?? SURVEY_IMPORT_AI_MAX_OUTPUT_TOKENS_PER_CALL };
-  }
-  if (NoObjectGeneratedError.isInstance(error)) {
-    return error.usage
-      ? {
-          inputTokens: error.usage.inputTokens,
-          outputTokens: error.usage.outputTokens,
-          outputTokenDetails: error.usage.outputTokenDetails,
-        }
-      : undefined;
-  }
-  return undefined;
-}
+/** The model call, as the Qualtrics plan sends it. */
+export type TQsfPlanRequest = TImportPlanRequest;
+export type TQsfPlanGenerate = TImportPlanGenerate;
 
 export interface TQsfPlanResult {
   plan: TQsfCheckedPlan;
   issues: TSurveyImportPipelineIssue[];
-  usage: TQsfPlanUsage;
+  usage: TImportPlanUsage;
   calls: number;
 }
 
-interface TPlanContext {
+/** What chunking reads: the survey, its texts and the prompt's limits. */
+interface TQsfChunkContext {
   survey: TQsfSurvey;
   texts: TQsfPromptTexts;
   limits: TQsfPromptLimits;
-  /** Prompt characters sent so far, system prompts included. */
-  promptChars: number;
-  generate: TQsfPlanGenerate;
-  signal: AbortSignal;
-  usage: TQsfPlanUsage;
-  calls: number;
-  callCap: number;
-  /** Output tokens this import may spend. */
-  outputBudget: number;
-  /** Whether a call was left unsent because the time before the deadline was too short for one. */
-  ranOutOfTime: boolean;
 }
 
-type TCallOutcome =
-  | { kind: "ok"; response: TQsfPlanResponse }
-  | { kind: "too_long" }
-  /** The call ran out of its own time; the import's signal had not fired. */
-  | { kind: "timed_out" }
-  | { kind: "invalid" }
-  /** Not sent: the import's call cap, prompt budget or time is spent. */
-  | { kind: "budget" };
-
-const CALL_TIMEOUT_ERROR_NAMES: ReadonlySet<string> = new Set(["TimeoutError", "AbortError"]);
-
-/**
- * Whether an attempt failed because its own `timeout` fired. Asked only once the import's own signal
- * is known not to have fired, so the attempt's timeout is the only abort left. The AI SDK reports it
- * as a `TimeoutError`, or as an `AbortError` carrying it (a backoff delay's "Delay was aborted", when
- * its own retries were on).
- */
-const isCallTimeout = (error: unknown): boolean =>
-  error instanceof Error &&
-  (CALL_TIMEOUT_ERROR_NAMES.has(error.name) ||
-    (error.cause instanceof Error && CALL_TIMEOUT_ERROR_NAMES.has(error.cause.name)));
-
-const isInvalidOutput = (error: unknown): boolean =>
-  NoObjectGeneratedError.isInstance(error) ||
-  NoOutputGeneratedError.isInstance(error) ||
-  TypeValidationError.isInstance(error);
-
 /** What a question adds to a chunk: expected output tokens and prompt characters. */
-function questionCost(
-  context: Pick<TPlanContext, "survey" | "texts" | "limits">,
-  ref: string,
-  pagesSeen: Set<string>
-) {
+function questionCost(context: TQsfChunkContext, ref: string, pagesSeen: Set<string>) {
   const question = context.survey.questions.get(ref);
   if (!question) return { tokens: 0, chars: 0 };
   let tokens = TOKENS_PER_QUESTION + TOKENS_PER_NOTE * describedRuleCount(question.logic, context.limits);
@@ -258,10 +116,7 @@ function questionCost(
  * `QSF_CHUNK_DATA_CHARS` of prompt data, in survey order, as many as it takes. A page bigger than a
  * chunk is split across chunks; the assembly still makes it one block.
  */
-export function chunkQuestions(
-  context: Pick<TPlanContext, "survey" | "texts" | "limits">,
-  refs: readonly string[]
-): string[][] {
+export function chunkQuestions(context: TQsfChunkContext, refs: readonly string[]): string[][] {
   const chunks: string[][] = [];
   let current: string[] = [];
   let tokens = 0;
@@ -292,186 +147,6 @@ export function chunkQuestions(
   if (current.length > 0) chunks.push(current);
   return chunks;
 }
-
-/** A unit of work for `runPool`. It may queue more with `enqueue`: the halves of a split chunk. */
-type TPoolTask = (enqueue: (task: TPoolTask) => void) => Promise<void>;
-
-/**
- * Run tasks `limit` at a time, including the ones they queue, until none is left. The first failure
- * aborts the rest — the queued ones never start — and is rethrown once the running ones settle.
- */
-async function runPool(tasks: TPoolTask[], limit: number, abort: AbortController): Promise<void> {
-  const queue = [...tasks];
-  const running = new Set<Promise<void>>();
-  const enqueue = (task: TPoolTask) => queue.push(task);
-  const state: { failure: { error: unknown } | null } = { failure: null };
-
-  while (running.size > 0 || (queue.length > 0 && state.failure === null)) {
-    while (state.failure === null && running.size < limit && queue.length > 0) {
-      const task = queue.shift();
-      if (!task) break;
-      const run: Promise<void> = task(enqueue)
-        .catch((error: unknown) => {
-          if (state.failure !== null) return;
-          state.failure = { error };
-          abort.abort();
-        })
-        .finally(() => running.delete(run));
-      running.add(run);
-    }
-    // A scheduler: it waits for one call to finish before it starts the next, by design.
-    await Promise.race(running); // NOSONAR(typescript:S9382) -- the pool's bound on calls in flight
-  }
-
-  if (state.failure !== null) throw state.failure.error;
-}
-
-function addUsage(context: TPlanContext, usage: TQsfCallUsage | undefined): void {
-  context.usage.inputTokens += usage?.inputTokens ?? 0;
-  context.usage.outputTokens += outputTokensOf(usage);
-}
-
-async function callOnce(
-  context: TPlanContext,
-  refs: string[],
-  timeout: number,
-  failures?: ReadonlyMap<string, readonly TQsfPlanFailure[]>
-): Promise<TCallOutcome> {
-  if (context.calls >= context.callCap || context.usage.outputTokens >= context.outputBudget) {
-    return { kind: "budget" };
-  }
-  if (timeout < QSF_MIN_CALL_TIMEOUT_MS) {
-    context.ranOutOfTime = true;
-    return { kind: "budget" };
-  }
-
-  const system = buildQsfPlanSystemPrompt();
-  const prompt = buildQsfPlanPrompt({
-    survey: context.survey,
-    refs,
-    texts: context.texts,
-    limits: context.limits,
-    failures,
-  });
-  // Never send an over-budget prompt: too big for one call means smaller calls; past the import's
-  // total, what is left goes unplanned.
-  const size = system.length + prompt.length;
-  if (size > QSF_PROMPT_MAX_CALL_CHARS) return { kind: "too_long" };
-  if (context.promptChars + size > QSF_PROMPT_MAX_TOTAL_CHARS) return { kind: "budget" };
-
-  // The call's time spans its retries: each attempt gets what is left of it.
-  const callEnd = performance.now() + timeout;
-  for (let attempt = 0; ; attempt += 1) {
-    context.promptChars += size;
-    context.calls += 1;
-    try {
-      const result = await context.generate({
-        system,
-        prompt,
-        schema: ZQsfImportPlanForAI,
-        schemaName: "QualtricsImportPlan",
-        schemaDescription: "How each question of a Qualtrics survey becomes a Formbricks question.",
-        temperature: 0,
-        maxOutputTokens: SURVEY_IMPORT_AI_MAX_OUTPUT_TOKENS_PER_CALL,
-        timeout: attempt === 0 ? timeout : Math.floor(callEnd - performance.now()),
-        maxRetries: 0,
-        abortSignal: context.signal,
-      });
-      addUsage(context, result.usage);
-      return { kind: "ok", response: { refs: new Set(refs), object: result.object } };
-    } catch (error) {
-      // A call that failed still spent tokens — one that ran out of them spent all 8,192.
-      addUsage(context, usageOfFailure(error));
-      // The import's own abort (Stop, disconnect, the route's deadline, a sibling's failure) is the
-      // route's to classify. Any other abort is this attempt's own timeout.
-      if (context.signal.aborted) throw error;
-      if (isCallTimeout(error)) return { kind: "timed_out" };
-      if (error instanceof AIOutputTokenLimitError) return { kind: "too_long" };
-      if (isInvalidOutput(error)) return { kind: "invalid" };
-
-      const decision = decideQsfRetry({
-        error,
-        attempt,
-        remainingMs: callEnd - performance.now(),
-        minAttemptMs: QSF_MIN_CALL_TIMEOUT_MS,
-      });
-      if (decision.kind === "timed_out") return { kind: "timed_out" };
-      // Not retryable, out of retries, or a quota wait that does not fit: the failure stands, as the
-      // SDK's own retries ending would have left it.
-      if (decision.kind === "propagate") throw error;
-      // Retryable, but past the import's call cap or budgets: like any call the import cannot afford,
-      // its questions are dropped as `ai_budget`, and the calls beside it carry on.
-      if (
-        context.calls >= context.callCap ||
-        context.usage.outputTokens >= context.outputBudget ||
-        context.promptChars + size > QSF_PROMPT_MAX_TOTAL_CHARS
-      ) {
-        return { kind: "budget" };
-      }
-      // Waited by design: the retry must not be sent before the provider said to. Abortable by the
-      // import's signal, whose reason then propagates.
-      await waitForRetry(decision.delayMs, context.signal); // NOSONAR(typescript:S9382) -- a backoff
-    }
-  }
-}
-
-const FAILURE_OF_OUTCOME: Record<Exclude<TCallOutcome["kind"], "ok">, TQsfPlanFailure> = {
-  budget: "ai_budget",
-  timed_out: "ai_timeout",
-  too_long: "invalid_output",
-  invalid: "invalid_output",
-};
-
-/**
- * One round of calls: every chunk asked, at most `SURVEY_IMPORT_AI_MAX_PARALLEL_CALLS` at once. A
- * chunk whose call ran out of output tokens or of time is split into halves once, queued behind the
- * rest; its halves are not split again.
- */
-async function planRound(
-  context: TPlanContext,
-  chunks: string[][],
-  timeout: () => number,
-  abort: AbortController,
-  failures?: ReadonlyMap<string, readonly TQsfPlanFailure[]>
-): Promise<TQsfCheckedPlan> {
-  const responses: TQsfPlanResponse[] = [];
-  const failed = new Map<string, TQsfPlanFailure[]>();
-
-  const ask =
-    (refs: string[], splittable: boolean): TPoolTask =>
-    async (enqueue) => {
-      // Sized when the call starts: a split's halves run later than the chunk did.
-      const outcome = await callOnce(context, refs, timeout(), failures);
-      if (outcome.kind === "ok") {
-        responses.push(outcome.response);
-        return;
-      }
-      if ((outcome.kind === "too_long" || outcome.kind === "timed_out") && splittable && refs.length > 1) {
-        const middle = Math.ceil(refs.length / 2);
-        enqueue(ask(refs.slice(0, middle), false));
-        enqueue(ask(refs.slice(middle), false));
-        return;
-      }
-      for (const ref of refs) failed.set(ref, [FAILURE_OF_OUTCOME[outcome.kind]]);
-    };
-
-  await runPool(
-    chunks.map((chunk) => ask(chunk, true)),
-    SURVEY_IMPORT_AI_MAX_PARALLEL_CALLS,
-    abort
-  );
-
-  const plan = checkPlanResponses(context.survey, responses);
-  for (const [ref, reasons] of failed) plan.failures.set(ref, reasons);
-  return plan;
-}
-
-/** The report's cause for a question the plan could not place. */
-const failureCause = (reasons: readonly TQsfPlanFailure[]): "ai_budget" | "ai_timeout" | "plan_invalid" => {
-  if (reasons.includes("ai_timeout")) return "ai_timeout";
-  if (reasons.includes("ai_budget")) return "ai_budget";
-  return "plan_invalid";
-};
 
 function preSkip(survey: TQsfSurvey): { refs: string[]; issues: TSurveyImportPipelineIssue[] } {
   const refs: string[] = [];
@@ -513,48 +188,25 @@ export async function planQsfImport(params: {
   const limits = chooseQsfPromptLimits(survey, refs, texts);
   if (!limits) throw new SurveyImportFailedError("prompt_budget");
 
-  const abort = new AbortController();
-  const context: TPlanContext = {
-    survey,
-    texts,
-    limits,
-    promptChars: 0,
-    generate,
-    signal: AbortSignal.any([params.signal, abort.signal]),
-    usage: { inputTokens: 0, outputTokens: 0 },
-    calls: 0,
-    callCap: 0,
-    outputBudget: 0,
-    ranOutOfTime: false,
+  const chunkContext: TQsfChunkContext = { survey, texts, limits };
+  const chunkCount = chunkQuestions(chunkContext, refs).length;
+  const lane: TImportPlanLane<TQsfPlanFailure, TQsfCheckedPlan> = {
+    chunk: (chunkRefs) => chunkQuestions(chunkContext, chunkRefs),
+    system: buildQsfPlanSystemPrompt(),
+    schema: ZQsfImportPlanForAI,
+    schemaName: "QualtricsImportPlan",
+    schemaDescription: "How each question of a Qualtrics survey becomes a Formbricks question.",
+    buildPrompt: (chunkRefs, failures) =>
+      buildQsfPlanPrompt({ survey, refs: chunkRefs, texts, limits, failures }),
+    check: (responses) => checkPlanResponses(survey, responses),
+    merge: mergeCheckedPlans,
+    maxCallChars: QSF_PROMPT_MAX_CALL_CHARS,
+    maxTotalChars: QSF_PROMPT_MAX_TOTAL_CHARS,
+    callCap: Math.min(importCallCapFor(chunkCount), QSF_MAX_AI_CALLS),
+    outputBudget: Math.min(importOutputBudgetFor(chunkCount), QSF_MAX_OUTPUT_TOKENS),
   };
-  const chunks = chunkQuestions(context, refs);
-  context.callCap = Math.min(callCapFor(chunks.length), QSF_MAX_AI_CALLS);
-  context.outputBudget = Math.min(outputBudgetFor(chunks.length), QSF_MAX_OUTPUT_TOKENS);
-
-  const callTimeout = () =>
-    Math.min(callTimeoutMs, Math.floor(deadline - performance.now() - QSF_ASSEMBLY_RESERVE_MS));
-
-  let plan = await planRound(context, chunks, callTimeout, abort);
-
-  // A question the budget left unplanned, or whose calls ran out of time even split, is not retried:
-  // there is no budget left to retry it with, or no reason to expect it to be faster.
-  const unplanned = new Map(
-    [...plan.failures].filter(
-      ([, reasons]) => reasons.includes("ai_budget") || reasons.includes("ai_timeout")
-    )
-  );
-  const failing = [...plan.failures.keys()].filter((ref) => !unplanned.has(ref));
-  if (failing.length > 0) {
-    const retry = await planRound(
-      context,
-      chunkQuestions(context, failing),
-      callTimeout,
-      abort,
-      plan.failures
-    );
-    plan = mergeCheckedPlans(plan, retry);
-    for (const [ref, reasons] of unplanned) plan.failures.set(ref, reasons);
-  }
+  const run = await runImportPlan({ lane, refs, generate, signal: params.signal, deadline, callTimeoutMs });
+  const { plan } = run;
 
   for (const [ref, description] of plan.skipped) {
     issues.push({
@@ -571,7 +223,7 @@ export async function planQsfImport(params: {
       severity: "warning",
       questionTag: survey.questions.get(ref)?.exportTag ?? ref,
       questionRef: ref,
-      params: { cause: failureCause(reasons) },
+      params: { cause: importFailureCause(reasons) },
     });
   }
 
@@ -579,10 +231,10 @@ export async function planQsfImport(params: {
   // time for: to the user, the import took too long. Out of calls or tokens, it failed.
   if (
     plan.questions.size === 0 &&
-    (context.ranOutOfTime || [...plan.failures.values()].some((reasons) => reasons.includes("ai_timeout")))
+    (run.ranOutOfTime || [...plan.failures.values()].some((reasons) => reasons.includes("ai_timeout")))
   ) {
     throw new SurveyImportTimeoutError();
   }
 
-  return { plan, issues, usage: context.usage, calls: context.calls };
+  return { plan, issues, usage: run.usage, calls: run.calls };
 }
