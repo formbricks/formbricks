@@ -226,6 +226,18 @@ function collectV3TargetingFilterReferences(
 }
 
 /**
+ * The contact attribute keys a targeting filter tree names, each once: attribute filters' keys, and
+ * `userId` for a person filter on it. What a Formbricks file embeds so the targeting still resolves in
+ * another workspace.
+ */
+export function collectV3TargetingAttributeKeys(filters: TV3SurveyFilters): string[] {
+  const keys = collectV3TargetingFilterReferences(filters, "targeting.filters")
+    .filter((reference) => reference.kind === "attributeKey")
+    .map((reference) => reference.value);
+  return [...new Set(keys)];
+}
+
+/**
  * Validate that every app-survey targeting filter can resolve — contact-attribute keys (incl. the
  * "userId" person identifier) and referenced segments must exist in the workspace, unsupported person
  * identifiers are rejected, and device values must be a known device. Mirrors trigger action-class

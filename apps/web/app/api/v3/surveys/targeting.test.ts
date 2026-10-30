@@ -12,6 +12,7 @@ import type { TV3SurveyTargeting } from "./schemas";
 import {
   areV3SurveyTargetingFiltersEqual,
   assertV3SurveyTargetingFilterReferences,
+  collectV3TargetingAttributeKeys,
   resolveV3ContactsEntitlement,
   setV3SurveySegmentFilters,
 } from "./targeting";
@@ -429,5 +430,28 @@ describe("assertV3SurveyTargetingFilterReferences", () => {
         },
       ],
     });
+  });
+});
+
+describe("collectV3TargetingAttributeKeys", () => {
+  test("names each attribute key once, nested groups and person filters on userId included", () => {
+    const filters = [
+      attributeFilterNode("a", "plan"),
+      {
+        id: "group",
+        connector: "and",
+        resource: [attributeFilterNode("b", "country"), attributeFilterNode("c", "plan")],
+      },
+      personFilterNode("d", "userId"),
+      segmentFilterNode("e", "segment_1"),
+      deviceFilterNode("f", "phone"),
+      surveyInteractionNode("g", "specific", ["survey_1"]),
+    ] as unknown as TFilterTree;
+
+    expect(collectV3TargetingAttributeKeys(filters)).toEqual(["plan", "country", "userId"]);
+  });
+
+  test("names none for a survey shown to everyone", () => {
+    expect(collectV3TargetingAttributeKeys(EMPTY_FILTERS)).toEqual([]);
   });
 });

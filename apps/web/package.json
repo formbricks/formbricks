@@ -17,6 +17,7 @@
     "lint:fix": "eslint . --fix",
     "test": "dotenv -e ../../.env -- vitest run",
     "test:coverage": "dotenv -e ../../.env -- vitest run --coverage",
+    "formbricks-file:schema": "vitest run --project unit modules/survey/formbricks-file/envelope.test.ts --update",
     "test:integration": "node integration/gen-boolean-client.mjs && dotenv -e ../../.env -- vitest run --config vitest.integration.config.mts",
     "generate-api-specs": "./scripts/openapi/generate.sh",
     "merge-client-endpoints": "tsx ./scripts/openapi/merge-client-endpoints.ts",
