@@ -76,6 +76,35 @@ export const SURVEY_IMPORT_SHEET_MAX_COLUMNS = 100;
 /** Characters of one cell or CSV field: Excel's own cap, so only a file not written by Excel is past it. */
 export const SURVEY_IMPORT_SHEET_MAX_CELL_CHARS = 32_767;
 
+/*
+ * The XML parts of a `.docx` (ENG-6853). Each part's inflated bytes are capped by the zip guard before
+ * it is read (`SURVEY_IMPORT_ZIP_MAX_PART_BYTES`); its shape is then checked against these on the raw
+ * text, before the DOM parser allocates a node. Past either, the file is refused with a 422.
+ */
+
+/** Levels of element nesting in one part. Word nests a few levels per table; real files stay under 40. */
+export const SURVEY_IMPORT_XML_MAX_DEPTH = 256;
+
+/**
+ * Elements in one part. A 150-question questionnaire's document is about 15,000; this bounds the DOM,
+ * which weighs a few hundred bytes a node, to around 200 MB at the most.
+ */
+export const SURVEY_IMPORT_XML_MAX_ELEMENTS = 500_000;
+
+/*
+ * A Word questionnaire's body (ENG-6853): its paragraphs, tables and table cells, counted as the reader
+ * walks the document, nested tables included. Past any, the file is refused with a 422 naming it.
+ */
+
+/** Paragraphs, in the body and in table cells, empty ones included. */
+export const SURVEY_IMPORT_WORD_MAX_PARAGRAPHS = 20_000;
+
+/** Tables, nested ones included. */
+export const SURVEY_IMPORT_WORD_MAX_TABLES = 500;
+
+/** Table cells, in every table together. */
+export const SURVEY_IMPORT_WORD_MAX_TABLE_CELLS = 50_000;
+
 /**
  * Imports one server process runs at once. The request budget is checked on the raw text before it is
  * parsed, so nesting and long arrays never reach `JSON.parse` (15.5 MiB of `[[[…]]]` would retain about

@@ -4,12 +4,13 @@
  * addressed as Excel does (`C12`); a CSV is read as one sheet. The AI plans over these keys and the
  * assembly copies every text from here by key, so nothing the AI writes becomes survey text.
  *
- * A reader of another kind of document (a Word file's paragraphs and table rows) builds the same model,
- * and the rest of the lane reads it unchanged.
+ * A Word file (ENG-6853) is read into the same model: a paragraph is a line of one cell, both keyed by
+ * its place among the body's paragraphs (`P12`); a table row is a line (`T2R3`) whose cells are keyed by
+ * their column (`T2R3C1`). The rest of the lane reads it unchanged.
  */
 import type { TSurveyImportTextEncoding } from "../core/sniff";
 
-export type TDocumentKind = "xlsx" | "csv";
+export type TDocumentKind = "xlsx" | "csv" | "docx";
 
 export interface TDocumentCell {
   /** Unique in the document: `C12`. */
@@ -23,6 +24,11 @@ export interface TDocumentLine {
   key: string;
   /** The line's cells with text, in reading order. */
   cells: TDocumentCell[];
+  /**
+   * The table the line is a row of (`T2`), in a document of flowing text: a Word file's table, which
+   * holds a question laid out as a grid, or a whole questionnaire. Absent for a sheet's rows.
+   */
+  table?: string;
 }
 
 export interface TDocumentModel {
@@ -39,6 +45,8 @@ export interface TDocumentModel {
   sourceChars: number;
   /** How a text file was decoded, for the report; `null` for a file that is not text (a workbook). */
   encoding: TSurveyImportTextEncoding | null;
+  /** Pictures, drawings and embedded objects in the file, which the import does not bring in. */
+  images: number;
 }
 
 /** The model of `lines`, read in order: every cell's text by key, and their characters together. */
@@ -49,10 +57,12 @@ export const buildDocumentModel = (
     title = null,
     skippedParts = [],
     encoding = null,
+    images = 0,
   }: {
     title?: string | null;
     skippedParts?: string[];
     encoding?: TSurveyImportTextEncoding | null;
+    images?: number;
   } = {}
 ): TDocumentModel => {
   const cells = new Map<string, string>();
@@ -63,7 +73,7 @@ export const buildDocumentModel = (
       sourceChars += cell.text.length;
     }
   }
-  return { kind, title, skippedParts, lines, cells, sourceChars, encoding };
+  return { kind, title, skippedParts, lines, cells, sourceChars, encoding, images };
 };
 
 /** `A` for column 0, `Z`, `AA`, … as Excel names columns. */

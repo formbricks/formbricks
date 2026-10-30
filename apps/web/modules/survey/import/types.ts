@@ -6,10 +6,10 @@
 
 /**
  * The kind of file an import read, one per lane: `qsf` is a Qualtrics export, `formbricks` a Formbricks
- * file, `xlsx` and `csv` a question list read as a document (ENG-6852). The report's `source` names it,
- * so the dialog can say what was read.
+ * file, `xlsx` and `csv` a question list read as a document (ENG-6852), `docx` a Word questionnaire
+ * (ENG-6853). The report's `source` names it, so the dialog can say what was read.
  */
-export type TSurveyImportSourceKind = "qsf" | "formbricks" | "xlsx" | "csv";
+export type TSurveyImportSourceKind = "qsf" | "formbricks" | "xlsx" | "csv" | "docx";
 
 /**
  * What the import is doing, sent as a `progress` event. The dialog maps each to a line in its progress
@@ -181,9 +181,19 @@ export type TSurveyImportFileLimit =
 
 /**
  * The limit a `document_limit_exceeded` param is about, in its `identifier`: the sheet's or CSV's rows,
- * columns and characters in one cell, and the text the AI would read, all cells together.
+ * columns and characters in one cell; a Word file's XML nesting and elements per part, its paragraphs,
+ * tables and table cells (ENG-6853); and the text the AI would read, all cells together.
  */
-export type TSurveyImportDocumentLimit = "rows" | "columns" | "cell_size" | "source_size";
+export type TSurveyImportDocumentLimit =
+  | "rows"
+  | "columns"
+  | "cell_size"
+  | "xml_depth"
+  | "xml_elements"
+  | "paragraphs"
+  | "tables"
+  | "table_cells"
+  | "source_size";
 
 /** The limit a `qsf_limit_exceeded` param is about, in its `identifier`. */
 export type TSurveyImportLimit =
