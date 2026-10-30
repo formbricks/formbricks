@@ -22,6 +22,11 @@ import {
 
 const V3_SURVEYS_DEFAULT_LIMIT = 20;
 const V3_SURVEYS_MAX_LIMIT = 250;
+/**
+ * ENG-6861: a full survey document (blocks in every language, plus up to ~40 KB of custom CSS) can run to
+ * hundreds of KB, so `view=full` pages are capped far below the summary limit to bound the response.
+ */
+export const V3_SURVEYS_FULL_VIEW_MAX_LIMIT = 50;
 
 const FILTER_NAME_CONTAINS_QUERY_PARAM = "filter[name][contains]" as const;
 const FILTER_STATUS_IN_QUERY_PARAM = "filter[status][in]" as const;
@@ -44,6 +49,7 @@ const SUPPORTED_QUERY_PARAMS = [
   FILTER_SINGLE_USE_EQ_QUERY_PARAM,
   FILTER_PIN_PROTECTED_EQ_QUERY_PARAM,
   "sortBy",
+  "view",
 ] as const;
 const SUPPORTED_QUERY_PARAM_SET = new Set<string>(SUPPORTED_QUERY_PARAMS);
 
@@ -66,6 +72,9 @@ const zQueryBoolean = z
   .enum(["true", "false"])
   .transform((value) => value === "true")
   .optional();
+
+const ZV3SurveysListView = z.enum(["summary", "full"]);
+export type TV3SurveysListView = z.infer<typeof ZV3SurveysListView>;
 
 const ZV3SurveysListQuery = z.object({
   workspaceId: ZId,
@@ -90,6 +99,7 @@ const ZV3SurveysListQuery = z.object({
   [FILTER_SINGLE_USE_EQ_QUERY_PARAM]: zQueryBoolean,
   [FILTER_PIN_PROTECTED_EQ_QUERY_PARAM]: zQueryBoolean,
   sortBy: ZSurveyFilters.shape.sortBy.optional(),
+  view: ZV3SurveysListView.default("summary"),
 });
 
 export type TV3SurveysListQuery = z.infer<typeof ZV3SurveysListQuery>;
@@ -102,6 +112,7 @@ export type TV3SurveysListQueryParseResult =
       cursor: TSurveyListPageCursor | null;
       includeTotalCount: boolean;
       sortBy: TSurveyListSort;
+      view: TV3SurveysListView;
       filterCriteria: TSurveyFilterCriteria | undefined;
       visibilityFilter: TSurveyVisibilityFilter;
     }
@@ -165,6 +176,7 @@ export function parseV3SurveysListQuery(searchParams: URLSearchParams): TV3Surve
     [FILTER_PIN_PROTECTED_EQ_QUERY_PARAM]:
       searchParams.get(FILTER_PIN_PROTECTED_EQ_QUERY_PARAM)?.trim() || undefined,
     sortBy: searchParams.get("sortBy")?.trim() || undefined,
+    view: searchParams.get("view")?.trim() || undefined,
   };
 
   const result = ZV3SurveysListQuery.safeParse(raw);
@@ -179,6 +191,15 @@ export function parseV3SurveysListQuery(searchParams: URLSearchParams): TV3Surve
   }
 
   const q = result.data;
+  if (q.view === "full" && q.limit > V3_SURVEYS_FULL_VIEW_MAX_LIMIT) {
+    return {
+      ok: false,
+      invalid_params: [
+        { name: "limit", reason: `With view=full, limit must be at most ${V3_SURVEYS_FULL_VIEW_MAX_LIMIT}.` },
+      ],
+    };
+  }
+
   const sortBy = normalizeSurveyListSort(q.sortBy);
   let cursor: TSurveyListPageCursor | null = null;
 
@@ -205,6 +226,7 @@ export function parseV3SurveysListQuery(searchParams: URLSearchParams): TV3Surve
     cursor,
     includeTotalCount: q.includeTotalCount,
     sortBy,
+    view: q.view,
     filterCriteria: buildFilterCriteria(q),
     visibilityFilter: {
       ...(q[FILTER_VISIBILITY_IN_QUERY_PARAM] && { visibility: q[FILTER_VISIBILITY_IN_QUERY_PARAM] }),

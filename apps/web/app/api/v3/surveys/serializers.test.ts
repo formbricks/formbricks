@@ -4,6 +4,7 @@ import type { TSurvey as TSurveyListRecord } from "@/modules/survey/list/types/s
 import {
   V3SurveyLanguageError,
   V3SurveyUnsupportedShapeError,
+  serializeV3SurveyFullListItem,
   serializeV3SurveyListItem,
   serializeV3SurveyResource,
 } from "./serializers";
@@ -744,5 +745,58 @@ describe("serializeV3SurveyListItem", () => {
 
     expect(serialized.responseCount).toBe(7);
     expect(serialized.completedResponseCount).toBe(4);
+  });
+});
+
+describe("serializeV3SurveyFullListItem (ENG-6861)", () => {
+  const listRecord = {
+    id: "survey_1",
+    name: "Product Feedback (listed)",
+    workspaceId: "workspace_1",
+    type: "link",
+    status: "draft",
+    publishOn: new Date("2026-05-01T00:00:00.000Z"),
+    archivedAt: null,
+    createdAt: new Date("2026-04-21T10:00:00.000Z"),
+    updatedAt: new Date("2026-04-21T10:30:00.000Z"),
+    responseCount: 7,
+    completedResponseCount: 4,
+    singleUse: null,
+    visibility: "workspace",
+    ownerId: "user_owner",
+    owner: { name: "Grace" },
+    visibilityVersion: 0,
+    visibilityProjectedVersion: 0,
+    creator: { name: "Ada" },
+  } as unknown as TSurveyListRecord;
+  const { ownerName: _ownerName, ...visibilityContext } = TEST_VISIBILITY;
+  const document = { ...baseSurvey, ownerId: "user_owner" } as TSurvey;
+
+  test("is the summary item plus the single-survey resource, the document winning on shared fields", () => {
+    const item = serializeV3SurveyFullListItem(listRecord, document, visibilityContext);
+    const resource = serializeV3SurveyResource(document, { ...visibilityContext, ownerName: "Grace" });
+
+    expect(item).toEqual({
+      ...serializeV3SurveyListItem(listRecord, visibilityContext),
+      ...resource,
+    });
+    // Summary-only fields survive, and the document is the GET /surveys/{id} one, owner included.
+    expect(item).toMatchObject({
+      responseCount: 7,
+      completedResponseCount: 4,
+      creator: { name: "Ada" },
+      publishOn: listRecord.publishOn,
+      owner: { name: "Grace" },
+      name: "Product Feedback",
+      updatedAt: "2026-04-21T11:00:00.000Z",
+      blocks: resource.blocks,
+    });
+  });
+
+  test("refuses a legacy question-based survey like the single-survey read does", () => {
+    const legacy = { ...document, questions: [{ id: "q1" }] } as unknown as TSurvey;
+    expect(() => serializeV3SurveyFullListItem(listRecord, legacy, visibilityContext)).toThrow(
+      V3SurveyUnsupportedShapeError
+    );
   });
 });

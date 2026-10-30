@@ -313,3 +313,19 @@ export function serializeV3SurveyResource(
     customCss: toCustomCssSource(survey.customCss),
   };
 }
+
+/**
+ * ENG-6861: one `view=full` list item, the summary item plus the whole {@link serializeV3SurveyResource}
+ * document, so switching views only ever adds fields. The document is read after the page, so where both
+ * carry a field the document wins: an item never pairs newer `blocks` with an older `updatedAt`.
+ */
+export function serializeV3SurveyFullListItem(
+  listRecord: TSurveyListRecord,
+  survey: TInternalSurvey,
+  visibilityContext: TV3SurveyVisibilityContext
+) {
+  return {
+    ...serializeV3SurveyListItem(listRecord, visibilityContext),
+    ...serializeV3SurveyResource(survey, { ...visibilityContext, ownerName: listRecord.owner?.name ?? null }),
+  };
+}

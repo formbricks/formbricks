@@ -13,6 +13,7 @@ import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { recordSurveyListPredicateMismatch } from "@/lib/authorization/metrics";
 import { filterReadableSurveyIds } from "@/lib/authorization/resource-list";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { getSurveysWithCustomCss } from "@/lib/survey/service";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { previewCustomCss } from "@/modules/custom-css/lib/service";
@@ -30,6 +31,7 @@ import { ZV3CreateSurveyBody } from "../schemas";
 import {
   V3SurveyLanguageError,
   V3SurveyUnsupportedShapeError,
+  serializeV3SurveyFullListItem,
   serializeV3SurveyListItem,
   serializeV3SurveyResource,
 } from "../serializers";
@@ -103,6 +105,10 @@ vi.mock("@/modules/survey/list/lib/survey", () => ({
 
 vi.mock("@/modules/survey/list/lib/survey-page", () => ({
   getSurveyListPage: vi.fn(),
+}));
+
+vi.mock("@/lib/survey/service", () => ({
+  getSurveysWithCustomCss: vi.fn(),
 }));
 
 vi.mock("../authorization", () => ({
@@ -191,6 +197,7 @@ vi.mock("../serializers", async () => {
   const actual = await vi.importActual<typeof import("../serializers")>("../serializers");
   return {
     ...actual,
+    serializeV3SurveyFullListItem: vi.fn(),
     serializeV3SurveyListItem: vi.fn(),
     serializeV3SurveyResource: vi.fn(),
   };
@@ -261,6 +268,7 @@ function mockListQuery(overrides: Record<string, unknown> = {}) {
     filterCriteria: {},
     visibilityFilter: {},
     includeTotalCount: true,
+    view: "summary",
     ...overrides,
   } as any);
 }
@@ -415,6 +423,157 @@ describe("listV3Surveys", () => {
       instance,
     });
     expect(internal.status).toBe(500);
+  });
+});
+
+describe("listV3Surveys view=full (ENG-6861)", () => {
+  const enforcedMember = {
+    actorContext: { enforced: true, isOrganizationAdmin: false, kind: "user", userId: "user_1" },
+    gates: { entitled: true, ready: true },
+  };
+  const settled = { visibilityProjectedVersion: 1, visibilityVersion: 1 };
+  const list = () =>
+    listV3Surveys({
+      searchParams: new URLSearchParams({ workspaceId, view: "full" }),
+      authentication: sessionAuthentication,
+      requestId,
+      instance,
+    });
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    mockListQuery({ view: "full" });
+    vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(authResult);
+    vi.mocked(getSurveyCount).mockResolvedValue(3);
+    vi.mocked(getWorkspaceSurveyCount).mockResolvedValue(3);
+    vi.mocked(serializeV3SurveyFullListItem).mockImplementation(
+      (row, document) => ({ id: row.id, documentName: document.name }) as any
+    );
+  });
+
+  afterEach(() => {
+    visibilityOverride.context = null;
+  });
+
+  test("reads the page's documents in one query and keeps the page order", async () => {
+    vi.mocked(getSurveyListPage).mockResolvedValue({
+      surveys: [{ id: "survey_b" }, { id: "survey_a" }],
+      nextCursor: "cursor_next",
+    } as any);
+    vi.mocked(getSurveysWithCustomCss).mockResolvedValue([
+      { id: "survey_a", name: "A", questions: [] },
+      { id: "survey_b", name: "B", questions: [] },
+    ] as any);
+
+    const response = await list();
+
+    expect(response.status).toBe(200);
+    expect(getSurveysWithCustomCss).toHaveBeenCalledTimes(1);
+    expect(getSurveysWithCustomCss).toHaveBeenCalledWith(workspaceId, ["survey_b", "survey_a"]);
+    expect(serializeV3SurveyListItem).not.toHaveBeenCalled();
+    expect(await readJson(response)).toEqual({
+      data: [
+        { id: "survey_b", documentName: "B" },
+        { id: "survey_a", documentName: "A" },
+      ],
+      meta: {
+        limit: 20,
+        nextCursor: "cursor_next",
+        totalCount: 3,
+        workspaceSurveyCount: 3,
+        unsupportedSurveyIds: [],
+      },
+    });
+  });
+
+  test("reads documents only for the rows the graph confirmed", async () => {
+    visibilityOverride.context = enforcedMember;
+    vi.mocked(getSurveyListPage).mockResolvedValue({
+      surveys: [
+        { id: "survey_ok", ...settled },
+        { id: "survey_leak", ...settled },
+      ],
+      nextCursor: null,
+    } as any);
+    vi.mocked(filterReadableSurveyIds).mockResolvedValue(new Set(["survey_ok"]));
+    vi.mocked(getSurveysWithCustomCss).mockResolvedValue([{ id: "survey_ok", name: "OK" }] as any);
+
+    const response = await list();
+
+    expect(getSurveysWithCustomCss).toHaveBeenCalledWith(workspaceId, ["survey_ok"]);
+    expect((await readJson(response)).data).toEqual([{ id: "survey_ok", documentName: "OK" }]);
+  });
+
+  test("drops a survey deleted between the page and the document read", async () => {
+    vi.mocked(getSurveyListPage).mockResolvedValue({
+      surveys: [{ id: "survey_kept" }, { id: "survey_gone" }],
+      nextCursor: null,
+    } as any);
+    vi.mocked(getSurveysWithCustomCss).mockResolvedValue([{ id: "survey_kept", name: "Kept" }] as any);
+
+    const body = await readJson(await list());
+
+    expect(body.data).toEqual([{ id: "survey_kept", documentName: "Kept" }]);
+    expect(body.meta.unsupportedSurveyIds).toEqual([]);
+  });
+
+  test("reports a legacy question-based survey in meta instead of failing the page", async () => {
+    vi.mocked(getSurveyListPage).mockResolvedValue({
+      surveys: [{ id: "survey_legacy" }, { id: "survey_blocks" }],
+      nextCursor: "cursor_next",
+    } as any);
+    vi.mocked(getSurveysWithCustomCss).mockResolvedValue([
+      { id: "survey_legacy", name: "Legacy" },
+      { id: "survey_blocks", name: "Blocks" },
+    ] as any);
+    vi.mocked(serializeV3SurveyFullListItem).mockImplementation((row, document) => {
+      if (row.id === "survey_legacy") throw new V3SurveyUnsupportedShapeError("legacy");
+      return { id: row.id, documentName: document.name } as any;
+    });
+
+    const response = await list();
+
+    expect(response.status).toBe(200);
+    const body = await readJson(response);
+    expect(body.data).toEqual([{ id: "survey_blocks", documentName: "Blocks" }]);
+    expect(body.meta).toMatchObject({ nextCursor: "cursor_next", unsupportedSurveyIds: ["survey_legacy"] });
+  });
+
+  test("does not swallow other serialization failures", async () => {
+    vi.mocked(getSurveyListPage).mockResolvedValue({
+      surveys: [{ id: "survey_1" }],
+      nextCursor: null,
+    } as any);
+    vi.mocked(getSurveysWithCustomCss).mockResolvedValue([{ id: "survey_1", name: "One" }] as any);
+    vi.mocked(serializeV3SurveyFullListItem).mockImplementation(() => {
+      throw new Error("boom");
+    });
+
+    expect((await list()).status).toBe(500);
+  });
+
+  test("an empty page answers an empty full page", async () => {
+    vi.mocked(getSurveyListPage).mockResolvedValue({ surveys: [], nextCursor: null } as any);
+    vi.mocked(getSurveysWithCustomCss).mockResolvedValue([]);
+
+    const body = await readJson(await list());
+
+    expect(body.data).toEqual([]);
+    expect(body.meta.unsupportedSurveyIds).toEqual([]);
+  });
+
+  test("the summary view reads no documents and adds nothing to meta", async () => {
+    mockListQuery({ view: "summary" });
+    vi.mocked(getSurveyListPage).mockResolvedValue({
+      surveys: [{ id: "survey_1" }],
+      nextCursor: null,
+    } as any);
+    vi.mocked(serializeV3SurveyListItem).mockImplementation((row) => ({ id: row.id }) as any);
+
+    const body = await readJson(await list());
+
+    expect(getSurveysWithCustomCss).not.toHaveBeenCalled();
+    expect(body.meta).not.toHaveProperty("unsupportedSurveyIds");
   });
 });
 
