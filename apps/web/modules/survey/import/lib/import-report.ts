@@ -211,6 +211,10 @@ export const getQsfImportIssueMessage = (issue: TSurveyImportIssue, t: TTranslat
       });
     case "sheets_skipped":
       return t("workspace.surveys.import.issues.sheets_skipped", { sheets: param(issue, "sheets") });
+    case "table_as_matrix":
+      return t("workspace.surveys.import.issues.table_as_matrix");
+    case "images_not_imported":
+      return t("workspace.surveys.import.issues.images_not_imported", { count: count(issue) });
     case "question_removed": {
       const headline = param(issue, "headline");
       return headline
@@ -302,6 +306,6 @@ export const formatQsfImportReport = (report: TSurveyImportReport, t: TTranslate
   return `${lines.join("\n")}\n`;
 };
 
-/** `survey.qsf`, `survey.formbricks.json` or `survey.xlsx` → `survey-import-report.txt`. */
+/** `survey.qsf`, `survey.formbricks.json` or `survey.docx` → `survey-import-report.txt`. */
 export const getQsfImportReportFileName = (fileName: string): string =>
-  `${fileName.replace(/(?:\.qsf|\.formbricks\.json|\.json|\.xlsx|\.csv)$/i, "") || "survey"}-import-report.txt`;
+  `${fileName.replace(/(?:\.qsf|\.formbricks\.json|\.json|\.docx|\.xlsx|\.csv)$/i, "") || "survey"}-import-report.txt`;

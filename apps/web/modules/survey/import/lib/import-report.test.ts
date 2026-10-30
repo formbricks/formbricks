@@ -160,6 +160,15 @@ describe("getQsfImportIssueLine", () => {
     ).toBe('sheets_skipped {"sheets":"Notes, Archive"}');
   });
 
+  test("names a question a Word table became a matrix of, and counts the images left out", () => {
+    expect(
+      getQsfImportIssueLine({ code: "table_as_matrix", severity: "warning", questionTag: "Q4" }, t)
+    ).toBe("Q4: table_as_matrix");
+    expect(
+      getQsfImportIssueLine({ code: "images_not_imported", severity: "warning", params: { count: 3 } }, t)
+    ).toBe('images_not_imported {"count":3}');
+  });
+
   test("says which encoding a text file was read as", () => {
     expect(
       getQsfImportIssueLine(
@@ -431,6 +440,7 @@ describe("getQsfImportReportFileName", () => {
     ["edited.json", "edited-import-report.txt"],
     ["Visitor Survey.xlsx", "Visitor Survey-import-report.txt"],
     ["list.CSV", "list-import-report.txt"],
+    ["Questionnaire v2.DOCX", "Questionnaire v2-import-report.txt"],
   ])("names %s's report %s", (fileName, expected) => {
     expect(getQsfImportReportFileName(fileName)).toBe(expected);
   });

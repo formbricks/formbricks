@@ -12,10 +12,12 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { zipOf } from "@/modules/survey/import/core/__fixtures__/zip-builders";
 import { SurveyImportInputError, SurveyImportTimeoutError } from "@/modules/survey/import/core/errors";
 import type { TSurveyImportLane, TSurveyImportResult } from "@/modules/survey/import/core/lane";
+import { docx, p } from "@/modules/survey/import/document/__fixtures__/docx-builders";
 import {
   SURVEY_IMPORT_DEADLINE_MS,
   SURVEY_IMPORT_MAX_FILE_BYTES,
   SURVEY_IMPORT_SHEET_MAX_COLUMNS,
+  SURVEY_IMPORT_WORD_MAX_TABLES,
   SURVEY_IMPORT_ZIP_MAX_ENTRIES,
 } from "@/modules/survey/import/limits";
 import type { TRunQsfImportParams } from "@/modules/survey/import/qsf/pipeline";
@@ -530,18 +532,42 @@ describe("streamSurveyImport", () => {
       expect(mocks.assertOrganizationAIConfigured).not.toHaveBeenCalled();
     });
 
-    test("recognizes a .docx and says it cannot be imported yet, with a 415", async () => {
-      const content = () => zipOf({ "word/document.xml": "<w:document/>" });
-      const type = "docx";
-      const response = await importFile(upload(content()));
+    test("reads a .docx into the Word lane, charged to Create with AI's bucket behind the AI gate", async () => {
+      mocks.runDocumentImport.mockResolvedValue({
+        ...importResult,
+        report: { ...importResult.report, source: { kind: "docx", fileName: "questionnaire.docx" } },
+        references: { actionClasses: [], attributeKeys: [], embeddedFields: [] },
+      });
 
-      expect(response.status).toBe(415);
-      const problem = await problemOf(response);
-      expect(problem.detail).toBe("This kind of file cannot be imported yet");
-      expect(problem.invalid_params).toEqual([
-        expect.objectContaining({ name: "file", code: "file_type_unsupported", identifier: type }),
+      const response = await importFile(
+        upload(docx({ body: p("Visitor survey") + p("1. How satisfied are you?") }), "questionnaire.docx")
+      );
+
+      expect(response.status).toBe(200);
+      expect((await readEvents(response)).at(-1)).toMatchObject({ type: "done" });
+      expect(mocks.applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.api.v3SurveyGenerate, "user_1");
+      expect(mocks.assertOrganizationAIConfigured).toHaveBeenCalledTimes(1);
+      const [{ prepared }] = mocks.runDocumentImport.mock.calls[0] as [
+        { prepared: { fileName: string; model: { kind: string; cells: Map<string, string> } } },
+      ];
+      expect(prepared.fileName).toBe("questionnaire.docx");
+      expect(prepared.model.kind).toBe("docx");
+      expect(prepared.model.cells.get("P2")).toBe("1. How satisfied are you?");
+    });
+
+    test("answers a .docx past the Word limits with a 422 naming the limit, before any AI", async () => {
+      const tables = "<w:tbl><w:tr><w:tc><w:p/></w:tc></w:tr></w:tbl>".repeat(
+        SURVEY_IMPORT_WORD_MAX_TABLES + 1
+      );
+
+      const response = await importFile(
+        upload(docx({ body: p("Q1") + tables, stored: true }), "questionnaire.docx")
+      );
+
+      expect(response.status).toBe(422);
+      expect((await problemOf(response)).invalid_params).toEqual([
+        expect.objectContaining({ code: "document_limit_exceeded", identifier: "tables" }),
       ]);
-      expect(mocks.runQsfImport).not.toHaveBeenCalled();
       expect(mocks.runDocumentImport).not.toHaveBeenCalled();
     });
 

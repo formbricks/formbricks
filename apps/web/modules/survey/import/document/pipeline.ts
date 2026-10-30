@@ -23,12 +23,17 @@ import { DOCUMENT_MAX_CHUNKS, countDocumentChunks, planDocumentImport } from "./
 import { assembleDocumentDraft } from "./assemble";
 import { documentLimitExceeded } from "./errors";
 import type { TDocumentModel } from "./model";
-import { type TDocumentPlannedEntry, collapseWhitespace, orderedEntries } from "./plan-checks";
+import {
+  type DocumentPlanContext,
+  type TDocumentPlannedEntry,
+  collapseWhitespace,
+  orderedEntries,
+} from "./plan-checks";
 
 /**
  * The document import pipeline (ENG-6852): a question list read into the keyed model in, a v3 create
- * document and the import report out. It is the Excel and CSV lane (`documentImportLane`); nothing here
- * knows about HTTP or about the kind of file, so a Word reader plugs in by building the same model.
+ * document and the import report out. It is the Excel, CSV and Word lane (`documentImportLane`);
+ * nothing here knows about HTTP or about the kind of file, only about the model each reader builds.
  *
  * - `prepareDocumentImport` holds the model to the AI ceiling before the stream opens: past 240k
  *   characters, or more chunks than the AI budget plans, the file is refused with a 422 and the dialog
@@ -106,6 +111,40 @@ const countQuestions = (entries: readonly TDocumentPlannedEntry[]): number =>
 
 const countElements = (document: TSurveyImportDraft): number =>
   document.blocks.reduce((count, block) => count + block.elements.length, 0);
+
+/**
+ * Whether a matrix was read off a table's grid (ENG-6853): its texts come from more than one row of a
+ * table in a document of flowing text, as a Word question laid out as a table does. A matrix whose
+ * texts all sit in one row — a questionnaire kept in a table, a row per question — is not.
+ */
+const isTableMatrix = (context: DocumentPlanContext, entry: TDocumentPlannedEntry): boolean => {
+  if (entry.kind !== "matrix") return false;
+  const rows = new Set<number>();
+  for (const cell of entry.cells) {
+    const index = context.cellLineAt(cell);
+    if (index !== undefined && context.model.lines[index]?.table !== undefined) rows.add(index);
+  }
+  return rows.size > 1;
+};
+
+/** What the file holds that the draft cannot: the pictures and drawings, and the tables made matrices. */
+const documentNotes = (
+  context: DocumentPlanContext,
+  entries: readonly TDocumentPlannedEntry[],
+  droppedRefs: ReadonlySet<string>
+): TSurveyImportPipelineIssue[] => {
+  const notes: TSurveyImportPipelineIssue[] = entries
+    .filter((entry) => !droppedRefs.has(entry.ref) && isTableMatrix(context, entry))
+    .map((entry) => ({
+      code: "table_as_matrix",
+      severity: "warning",
+      questionTag: entry.ref,
+      questionRef: entry.ref,
+    }));
+  const { images } = context.model;
+  if (images > 0) notes.push({ code: "images_not_imported", severity: "warning", params: { count: images } });
+  return notes;
+};
 
 /**
  * Assemble the draft and hold it to the create's checks. A problem with elements drops them (reported)
@@ -222,11 +261,22 @@ export async function runDocumentImport(
   const encodingNote: TSurveyImportPipelineIssue[] = prepared.model.encoding
     ? [{ code: "file_encoding", severity: "info", params: { encoding: prepared.model.encoding } }]
     : [];
-  const issues = [...encodingNote, ...skippedSheets, ...planned.issues, ...dropped, ...assembly.issues].map(
-    (issue) =>
-      issue.questionRef !== undefined && issue.questionTag === issue.questionRef
-        ? { ...issue, questionTag: labelOf(issue.questionRef) }
-        : issue
+  const notes = documentNotes(
+    planned.context,
+    entries,
+    new Set(dropped.flatMap((issue) => (issue.questionRef === undefined ? [] : [issue.questionRef])))
+  );
+  const issues = [
+    ...encodingNote,
+    ...skippedSheets,
+    ...notes,
+    ...planned.issues,
+    ...dropped,
+    ...assembly.issues,
+  ].map((issue) =>
+    issue.questionRef !== undefined && issue.questionTag === issue.questionRef
+      ? { ...issue, questionTag: labelOf(issue.questionRef) }
+      : issue
   );
 
   return {

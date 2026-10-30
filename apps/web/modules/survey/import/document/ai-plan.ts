@@ -133,7 +133,7 @@ export async function planDocumentImport(params: {
 
   const lane: TImportPlanLane<TDocumentPlanFailure, TDocumentCheckedPlan> = {
     chunk: (chunkRefs) => chunkDocumentLines(model, chunkRefs),
-    system: buildDocumentPlanSystemPrompt(),
+    system: buildDocumentPlanSystemPrompt(model.kind),
     schema: ZDocumentImportPlanForAI,
     schemaName: "DocumentImportPlan",
     schemaDescription: "Which lines of a questionnaire are questions, and which cells hold their texts.",

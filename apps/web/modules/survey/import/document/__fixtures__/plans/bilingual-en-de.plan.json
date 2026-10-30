@@ -1,0 +1,805 @@
+{
+  "plan": {
+    "defaultLanguage": "en-US",
+    "languages": ["en-US", "de-DE"],
+    "questions": [
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "T1R2C3",
+            "language": "en-US",
+            "text": null
+          },
+          {
+            "cell": "T1R2C4",
+            "language": "de-DE",
+            "text": null
+          }
+        ],
+        "idCell": "T1R2C1",
+        "inputType": "text",
+        "kind": "openText",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "T1R2",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "T1R3C3",
+            "language": "en-US",
+            "text": "Which ticket type did you have?"
+          },
+          {
+            "cell": "T1R3C4",
+            "language": "de-DE",
+            "text": "Welche Ticketart hatten Sie?"
+          }
+        ],
+        "idCell": "T1R3C1",
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "T1R3C3",
+                "language": "en-US",
+                "text": "Standard"
+              },
+              {
+                "cell": "T1R3C4",
+                "language": "de-DE",
+                "text": "Standard"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "T1R3C3",
+                "language": "en-US",
+                "text": "VIP"
+              },
+              {
+                "cell": "T1R3C4",
+                "language": "de-DE",
+                "text": "VIP"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "T1R3C3",
+                "language": "en-US",
+                "text": "Press"
+              },
+              {
+                "cell": "T1R3C4",
+                "language": "de-DE",
+                "text": "Presse"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "T1R3",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": true,
+        "format": null,
+        "headline": [
+          {
+            "cell": "T1R4C3",
+            "language": "en-US",
+            "text": "Which colour do you prefer?"
+          },
+          {
+            "cell": "T1R4C4",
+            "language": "de-DE",
+            "text": "Welche Farbe bevorzugen Sie?"
+          }
+        ],
+        "idCell": "T1R4C1",
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "T1R4C3",
+                "language": "en-US",
+                "text": "Red"
+              },
+              {
+                "cell": "T1R4C4",
+                "language": "de-DE",
+                "text": "Rot"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "T1R4C3",
+                "language": "en-US",
+                "text": "Green"
+              },
+              {
+                "cell": "T1R4C4",
+                "language": "de-DE",
+                "text": "Grün"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "T1R4C3",
+                "language": "en-US",
+                "text": "Blue"
+              },
+              {
+                "cell": "T1R4C4",
+                "language": "de-DE",
+                "text": "Blau"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "T1R4C3",
+                "language": "en-US",
+                "text": "Other"
+              },
+              {
+                "cell": "T1R4C4",
+                "language": "de-DE",
+                "text": "Andere"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "T1R4",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "T1R5C3",
+            "language": "en-US",
+            "text": "How would you like to be contacted? (select all)"
+          },
+          {
+            "cell": "T1R5C4",
+            "language": "de-DE",
+            "text": "Wie möchten Sie kontaktiert werden? (Mehrfachauswahl)"
+          }
+        ],
+        "idCell": "T1R5C1",
+        "inputType": null,
+        "kind": "multipleChoiceMulti",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "T1R5C3",
+                "language": "en-US",
+                "text": "Email"
+              },
+              {
+                "cell": "T1R5C4",
+                "language": "de-DE",
+                "text": "E-Mail"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "T1R5C3",
+                "language": "en-US",
+                "text": "SMS"
+              },
+              {
+                "cell": "T1R5C4",
+                "language": "de-DE",
+                "text": "SMS"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "T1R5C3",
+                "language": "en-US",
+                "text": "Phone"
+              },
+              {
+                "cell": "T1R5C4",
+                "language": "de-DE",
+                "text": "Telefon"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "T1R5C3",
+                "language": "en-US",
+                "text": "Post"
+              },
+              {
+                "cell": "T1R5C4",
+                "language": "de-DE",
+                "text": "Post"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "T1R5",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "T1R6C3",
+            "language": "en-US",
+            "text": "Rate your overall experience."
+          },
+          {
+            "cell": "T1R6C4",
+            "language": "de-DE",
+            "text": "Bewerten Sie Ihr Gesamterlebnis."
+          }
+        ],
+        "idCell": "T1R6C1",
+        "inputType": null,
+        "kind": "rating",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "T1R6C3",
+            "language": "en-US",
+            "text": "Poor"
+          },
+          {
+            "cell": "T1R6C4",
+            "language": "de-DE",
+            "text": "Schlecht"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "T1R6",
+        "required": false,
+        "rules": [],
+        "scale": "star",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "T1R6C3",
+            "language": "en-US",
+            "text": "Excellent"
+          },
+          {
+            "cell": "T1R6C4",
+            "language": "de-DE",
+            "text": "Ausgezeichnet"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "T1R7C3",
+            "language": "en-US",
+            "text": "How likely are you to recommend us?"
+          },
+          {
+            "cell": "T1R7C4",
+            "language": "de-DE",
+            "text": "Wie wahrscheinlich empfehlen Sie uns weiter?"
+          }
+        ],
+        "idCell": "T1R7C1",
+        "inputType": null,
+        "kind": "nps",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "T1R7",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "T1R8C3",
+            "language": "en-US",
+            "text": "How satisfied are you overall?"
+          },
+          {
+            "cell": "T1R8C4",
+            "language": "de-DE",
+            "text": "Wie zufrieden sind Sie insgesamt?"
+          }
+        ],
+        "idCell": "T1R8C1",
+        "inputType": null,
+        "kind": "csat",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "T1R8C3",
+            "language": "en-US",
+            "text": "Very dissatisfied"
+          },
+          {
+            "cell": "T1R8C4",
+            "language": "de-DE",
+            "text": "Sehr unzufrieden"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "T1R8",
+        "required": false,
+        "rules": [],
+        "scale": "smiley",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "T1R8C3",
+            "language": "en-US",
+            "text": "Very satisfied"
+          },
+          {
+            "cell": "T1R8C4",
+            "language": "de-DE",
+            "text": "Sehr zufrieden"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "T1R9C3",
+            "language": "en-US",
+            "text": "How easy was it to complete your task?"
+          },
+          {
+            "cell": "T1R9C4",
+            "language": "de-DE",
+            "text": "Wie einfach war es, Ihre Aufgabe zu erledigen?"
+          }
+        ],
+        "idCell": "T1R9C1",
+        "inputType": null,
+        "kind": "ces",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "T1R9C3",
+            "language": "en-US",
+            "text": "Very difficult"
+          },
+          {
+            "cell": "T1R9C4",
+            "language": "de-DE",
+            "text": "Sehr schwierig"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "T1R9",
+        "required": false,
+        "rules": [],
+        "scale": "number",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "T1R9C3",
+            "language": "en-US",
+            "text": "Very easy"
+          },
+          {
+            "cell": "T1R9C4",
+            "language": "de-DE",
+            "text": "Sehr einfach"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "T1R10C3",
+            "language": "en-US",
+            "text": "Rank these from most to least important."
+          },
+          {
+            "cell": "T1R10C4",
+            "language": "de-DE",
+            "text": "Ordnen Sie diese von wichtig zu unwichtig."
+          }
+        ],
+        "idCell": "T1R10C1",
+        "inputType": null,
+        "kind": "ranking",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "T1R10C3",
+                "language": "en-US",
+                "text": "Price"
+              },
+              {
+                "cell": "T1R10C4",
+                "language": "de-DE",
+                "text": "Preis"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "T1R10C3",
+                "language": "en-US",
+                "text": "Quality"
+              },
+              {
+                "cell": "T1R10C4",
+                "language": "de-DE",
+                "text": "Qualität"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "T1R10C3",
+                "language": "en-US",
+                "text": "Speed"
+              },
+              {
+                "cell": "T1R10C4",
+                "language": "de-DE",
+                "text": "Geschwindigkeit"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "T1R10C3",
+                "language": "en-US",
+                "text": "Support"
+              },
+              {
+                "cell": "T1R10C4",
+                "language": "de-DE",
+                "text": "Support"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "T1R10",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "T1R11C3",
+                "language": "en-US",
+                "text": "Poor"
+              },
+              {
+                "cell": "T1R11C4",
+                "language": "de-DE",
+                "text": "Schlecht"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "T1R11C3",
+                "language": "en-US",
+                "text": "OK"
+              },
+              {
+                "cell": "T1R11C4",
+                "language": "de-DE",
+                "text": "OK"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "T1R11C3",
+                "language": "en-US",
+                "text": "Good"
+              },
+              {
+                "cell": "T1R11C4",
+                "language": "de-DE",
+                "text": "Gut"
+              }
+            ]
+          }
+        ],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "T1R11C3",
+            "language": "en-US",
+            "text": "Rate each aspect (Staff, Facilities, Value)."
+          },
+          {
+            "cell": "T1R11C4",
+            "language": "de-DE",
+            "text": "Bewerten Sie jeden Aspekt (Personal, Einrichtungen, Preis-Leistung)."
+          }
+        ],
+        "idCell": "T1R11C1",
+        "inputType": null,
+        "kind": "matrix",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "T1R11C3",
+                "language": "en-US",
+                "text": "Staff"
+              },
+              {
+                "cell": "T1R11C4",
+                "language": "de-DE",
+                "text": "Personal"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "T1R11C3",
+                "language": "en-US",
+                "text": "Facilities"
+              },
+              {
+                "cell": "T1R11C4",
+                "language": "de-DE",
+                "text": "Einrichtungen"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "T1R11C3",
+                "language": "en-US",
+                "text": "Value"
+              },
+              {
+                "cell": "T1R11C4",
+                "language": "de-DE",
+                "text": "Preis-Leistung"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "T1R11",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": "M-d-y",
+        "headline": [
+          {
+            "cell": "T1R12C3",
+            "language": "en-US",
+            "text": "When did you visit?"
+          },
+          {
+            "cell": "T1R12C4",
+            "language": "de-DE",
+            "text": "Wann haben Sie uns besucht?"
+          }
+        ],
+        "idCell": "T1R12C1",
+        "inputType": null,
+        "kind": "date",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "T1R12",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "T1R13C3",
+            "language": "en-US",
+            "text": "Do you agree to the terms and conditions?"
+          },
+          {
+            "cell": "T1R13C4",
+            "language": "de-DE",
+            "text": "Stimmen Sie den Allgemeinen Geschäftsbedingungen zu?"
+          }
+        ],
+        "idCell": "T1R13C1",
+        "inputType": null,
+        "kind": "consent",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "T1R13",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [
+          {
+            "cell": "T1R13C3",
+            "language": "en-US",
+            "text": "I agree"
+          },
+          {
+            "cell": "T1R13C4",
+            "language": "de-DE",
+            "text": "Ich stimme zu"
+          }
+        ],
+        "upperLabel": []
+      }
+    ],
+    "skipped": [],
+    "titleCell": "P1"
+  },
+  "recording": {
+    "note": "What a model following the prompt returns for every line of the file.",
+    "source": "hand-authored"
+  }
+}

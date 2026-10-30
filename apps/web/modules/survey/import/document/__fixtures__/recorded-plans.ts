@@ -17,7 +17,9 @@ export interface TRecordedDocumentPlan {
 /** The recorded plan for a fixture (`library-visit.xlsx` → `plans/library-visit.plan.json`). */
 export const loadRecordedDocumentPlan = (name: string): TRecordedDocumentPlan =>
   (
-    JSON.parse(readFileSync(join(PLAN_DIR, `${name.replace(/\.(xlsx|csv)$/, "")}.plan.json`), "utf8")) as {
+    JSON.parse(
+      readFileSync(join(PLAN_DIR, `${name.replace(/\.(xlsx|csv|docx)$/, "")}.plan.json`), "utf8")
+    ) as {
       plan: TRecordedDocumentPlan;
     }
   ).plan;

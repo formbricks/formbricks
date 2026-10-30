@@ -89,6 +89,10 @@ export type TSurveyImportStage = "reading" | "ai" | "assembling";
  * - `sheets_skipped` — the workbook's other sheets, which an import never reads (`params.sheets`)
  * - `file_encoding` — how a text file was decoded (`params.encoding`: `utf-8`, `utf-16le`, `utf-16be`
  *   or `windows-1252`)
+ * - `table_as_matrix` — a question a Word file lays out as a table, its statements down the rows and its
+ *   scale across, imported as a matrix for the user to check (ENG-6853)
+ * - `images_not_imported` — the pictures, drawings and embedded objects a Word file holds, which an
+ *   import never brings in (`params.count`, ENG-6853)
  *
  * An Update's own (ENG-6851), in `TSurveyImportMatch.issues`, for a matched survey that has responses:
  *
@@ -243,6 +247,8 @@ export type TSurveyImportIssueCode =
   | "text_not_split"
   | "sheets_skipped"
   | "file_encoding"
+  | "table_as_matrix"
+  | "images_not_imported"
   | "question_removed"
   | "option_removed";
 
