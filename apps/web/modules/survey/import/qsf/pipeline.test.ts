@@ -295,7 +295,7 @@ describe("runQsfImport on recorded plans", () => {
     expect(mocks.generateOrganizationAIObject).toHaveBeenCalledWith(
       expect.objectContaining({
         organizationId: "org_1",
-        aiTracing: { distinctId: "user_1", feature: "ai_qsf_import", workspaceId: WORKSPACE_ID },
+        aiTracing: { distinctId: "user_1", feature: "ai_survey_import", workspaceId: WORKSPACE_ID },
         maxOutputTokens: 8192,
         abortSignal: expect.any(AbortSignal),
       })

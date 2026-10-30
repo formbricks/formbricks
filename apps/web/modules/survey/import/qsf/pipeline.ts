@@ -91,7 +91,7 @@ export function prepareQsfImport(qsf: Record<string, unknown>, fileName: string)
 
 function organizationGenerate(params: TRunQsfImportParams): TQsfPlanGenerate {
   const aiTracing = params.userId
-    ? { distinctId: params.userId, feature: AI_TRACING_FEATURE.QsfImport, workspaceId: params.workspaceId }
+    ? { distinctId: params.userId, feature: AI_TRACING_FEATURE.SurveyImport, workspaceId: params.workspaceId }
     : undefined;
   return (request) =>
     generateOrganizationAIObject({ organizationId: params.organizationId, aiTracing, ...request });
