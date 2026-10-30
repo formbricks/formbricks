@@ -2,7 +2,7 @@ import { matchDeclaredFieldName } from "@formbricks/types/safe-identifier";
 import {
   LINK_SURVEY_SYSTEM_PARAM_KEYS,
   RESERVED_DECLARED_FIELD_NAMES,
-} from "@formbricks/types/surveys/validation";
+} from "@formbricks/types/surveys/link-survey-params";
 
 type TSearchParamsWithKeys = Pick<URLSearchParams, "keys" | "get">;
 
