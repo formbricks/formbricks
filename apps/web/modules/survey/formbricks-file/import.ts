@@ -6,16 +6,17 @@ import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { createV3Survey } from "@/app/api/v3/surveys/create";
 import { getSessionUserId } from "@/app/api/v3/surveys/lib/operations";
 import { ZV3CreateSurveyBody, formatV3ZodInvalidParams } from "@/app/api/v3/surveys/schemas";
-import { DEFAULT_LOCALE } from "@/lib/constants";
 import { runInSurveyWriteTransaction } from "@/lib/survey/write-transaction";
-import { getUserLocale } from "@/lib/user/service";
-import { getTranslate } from "@/lingodotdev/server";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getDefaultEndingTexts } from "@/modules/survey/import/core/default-ending";
 import type { TSurveyImportFileDraft } from "@/modules/survey/import/core/draft";
 import { SurveyImportInputError } from "@/modules/survey/import/core/errors";
 import { checkImportDraft } from "@/modules/survey/import/core/final-gate";
-import { getImportedName, stripImportedSuffix } from "@/modules/survey/import/core/imported-name";
+import {
+  type TImporterTranslate,
+  getImportedSurveyName,
+  getImporterTranslate,
+} from "@/modules/survey/import/core/imported-survey-name";
 import type { TSurveyImportPipelineIssue } from "@/modules/survey/import/core/report";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import type { TFormbricksFileReferences, TFormbricksFileSource } from "./envelope";
@@ -40,30 +41,11 @@ import {
  * the preview or the client resolved. No AI is involved.
  */
 
-type TTranslate = Awaited<ReturnType<typeof getTranslate>>;
-
-/**
- * The importing user's translations, for the "(imported)" suffix: read by the user's id rather than the
- * request, so the import runs the same wherever it is called from.
- */
-export const getImporterTranslate = async (userId: string | null): Promise<TTranslate> =>
-  getTranslate((userId ? await getUserLocale(userId) : undefined) ?? DEFAULT_LOCALE);
-
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
 /** The report's note on what a Formbricks file leaves out on purpose. */
 const CONTENT_ONLY_NOTE: TSurveyImportPipelineIssue = { code: "content_only", severity: "info" };
-
-/** "<name> (imported)", or "(imported N)" with the lowest N no survey in the workspace has. */
-const getImportedSurveyName = async (workspaceId: string, name: string, t: TTranslate): Promise<string> => {
-  const taken = await prisma.survey.findMany({
-    where: { workspaceId, name: { startsWith: stripImportedSuffix(name, t) } },
-    select: { name: true },
-  });
-  const takenNames = new Set(taken.map((survey) => survey.name));
-  return getImportedName(name, (candidate) => takenNames.has(candidate), t);
-};
 
 const hasTargetingFilters = (survey: Record<string, unknown>): boolean =>
   survey.type === "app" &&
@@ -122,7 +104,7 @@ export const prepareFormbricksFileDraft = async ({
   workspaceId: string;
   organizationId: string;
   fieldPrefix: string | null;
-  t: TTranslate | null;
+  t: TImporterTranslate | null;
 }): Promise<{ draft: TSurveyImportFileDraft; issues: TSurveyImportPipelineIssue[] }> => {
   const fitted = fitFormbricksFileSurvey(
     read.content.survey,

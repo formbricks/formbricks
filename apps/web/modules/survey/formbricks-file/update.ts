@@ -14,19 +14,14 @@ import { transformPrismaSurvey } from "@/lib/survey/utils";
 import { runInSurveyWriteTransaction } from "@/lib/survey/write-transaction";
 import { isAppSurveyBlockedFromPublishing } from "@/modules/ee/creatives/lib/survey-publish";
 import type { TSurveyImportFileDraft } from "@/modules/survey/import/core/draft";
+import { getImporterTranslate } from "@/modules/survey/import/core/imported-survey-name";
 import type {
   TSurveyImportMatch,
   TSurveyImportTriggersChoice,
   TSurveyImportTriggersState,
 } from "@/modules/survey/import/types";
 import type { TFormbricksFileSource } from "./envelope";
-import {
-  getImporterTranslate,
-  nameFromSurvey,
-  prepareFormbricksFileDraft,
-  refuseDraft,
-  withTargetTriggers,
-} from "./import";
+import { nameFromSurvey, prepareFormbricksFileDraft, refuseDraft, withTargetTriggers } from "./import";
 import { readFormbricksFileContent } from "./read";
 import {
   type TFormbricksFileReferencePlan,
