@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { SURVEY_IMPORT_MAX_DRAFT_BYTES, SURVEY_IMPORT_MAX_TEXT_CHARS } from "../limits";
 import { cpuMsSince } from "./__fixtures__/cpu-time";
 import { loadQsfFixture } from "./__fixtures__/load-fixture";
 import {
@@ -15,9 +16,8 @@ import {
 import { loadRecordedPlan, recordedGenerate, refsInPrompt } from "./__fixtures__/recorded-plans";
 import type { TQsfPlanGenerate } from "./ai-plan";
 import { checkQsfDraft } from "./final-gate";
-import { QSF_DRAFT_MAX_BYTES, fitQsfSurveyToCreateLimit, measureQsfDraftBytes } from "./fit-draft";
+import { fitQsfSurveyToCreateLimit, measureQsfDraftBytes } from "./fit-draft";
 import { normalizeQualtricsLanguageCode } from "./language-codes";
-import { QSF_MAX_TEXT_CHARS } from "./limits";
 import { QSF_RECALL_FALLBACK } from "./piped-text";
 import { QsfImportInputError, prepareQsfImport, runQsfImport } from "./pipeline";
 import type { TQsfSurvey } from "./qsf-model";
@@ -222,14 +222,14 @@ describe("event loop", () => {
 
     // Structural: no text past the sanitizer's length is ever scanned for piped text.
     expect(cpuMs(() => prepareQsfImport(qsf, "long-text.qsf"))).toBeLessThanOrEqual(50);
-    expect(seen.longestPipedScan).toBeLessThanOrEqual(QSF_MAX_TEXT_CHARS);
+    expect(seen.longestPipedScan).toBeLessThanOrEqual(SURVEY_IMPORT_MAX_TEXT_CHARS);
   });
 
   test("prepareQsfImport scans piped text in time linear in the file, its noise spread over many texts", async () => {
     // 302 texts of `${e://` repeated up to the sanitizer's length, no closing brace, in two questions'
     // texts and choices: about 15 MB. Each text is within the cap, so each is scanned; a pipe body that
     // ran up to 200 characters on from every `${` cost about 0.8 s over the file.
-    const noise = "${e://".repeat(Math.floor(QSF_MAX_TEXT_CHARS / "${e://".length));
+    const noise = "${e://".repeat(Math.floor(SURVEY_IMPORT_MAX_TEXT_CHARS / "${e://".length));
     const questions = ["QID1", "QID2"].map((qid) => ({
       Element: "SQ",
       PrimaryAttribute: qid,
@@ -527,7 +527,7 @@ describe("a draft too large for the create's request body", () => {
       // Coarse: the longest stretch left is the create's own request schema on that ~2 MB draft, ~1.3 s;
       // uncut, the 4.3 MB draft's took about 4.5 s.
       expect(result.stretchMs).toBeLessThan(3_000);
-      expect(measureQsfDraftBytes(result.payload)).toBeLessThanOrEqual(QSF_DRAFT_MAX_BYTES);
+      expect(measureQsfDraftBytes(result.payload)).toBeLessThanOrEqual(SURVEY_IMPORT_MAX_DRAFT_BYTES);
       expect(result.report.summary.questions).toBe(200);
       const cut = result.report.issues.filter(
         (issue) => issue.code === "language_skipped" && issue.params?.cause === "draft_too_large"
@@ -551,7 +551,7 @@ describe("a draft too large for the create's request body", () => {
       expect(seen.stages.every((stage) => stage.fits)).toBe(true);
       // Coarse: few, long texts are cheap to check, and sliced everywhere else. ~60 ms.
       expect(result.stretchMs).toBeLessThan(300);
-      expect(measureQsfDraftBytes(result.payload)).toBeLessThanOrEqual(QSF_DRAFT_MAX_BYTES);
+      expect(measureQsfDraftBytes(result.payload)).toBeLessThanOrEqual(SURVEY_IMPORT_MAX_DRAFT_BYTES);
       const cut = result.report.issues.filter(
         (issue) => issue.code === "question_skipped" && issue.params?.cause === "draft_too_large"
       );

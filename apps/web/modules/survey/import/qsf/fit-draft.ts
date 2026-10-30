@@ -1,4 +1,4 @@
-import { DEFAULT_REQUEST_BODY_LIMIT_BYTES } from "@/app/lib/api/request-body";
+import { SURVEY_IMPORT_MAX_DRAFT_BYTES } from "../limits";
 import { type TQsfAssembly, type TQsfDraftDocument, withLanguageSettings } from "./assemble";
 import type { TQsfIssue, TQsfPage, TQsfQuestion, TQsfSurvey, TQsfTextKey } from "./qsf-model";
 import { isUnsupportedType } from "./unsupported-types";
@@ -10,12 +10,6 @@ import { isUnsupportedType } from "./unsupported-types";
  * when the user creates it. So, strip and warn (ENG-3411): languages go first, last declared first,
  * then trailing questions — later questions are the safe ones to cut, since recall only points back.
  */
-
-/**
- * The most the draft may weigh: the create's limit less 64 KiB, so a draft the user renames or
- * otherwise touches in the dialog before creating it still fits.
- */
-export const QSF_DRAFT_MAX_BYTES = DEFAULT_REQUEST_BODY_LIMIT_BYTES - 64 * 1024;
 
 const encoder = new TextEncoder();
 /** UTF-8 bytes, as the request body carries them. */
@@ -195,7 +189,7 @@ function replaceRecallsOf(
 export function fitQsfDraftToCreateLimit(
   assembly: TQsfAssembly,
   survey: TQsfSurvey,
-  maxBytes: number = QSF_DRAFT_MAX_BYTES
+  maxBytes: number = SURVEY_IMPORT_MAX_DRAFT_BYTES
 ): { dropped: TQsfIssue[]; keepIssue: (issue: TQsfIssue) => boolean } {
   let overBy = measureQsfDraftBytes(assembly.document) - maxBytes;
   if (overBy <= 0) return { dropped: [], keepIssue: () => true };
@@ -300,7 +294,7 @@ export interface TQsfSurveyFit {
 export function fitQsfSurveyToCreateLimit(
   survey: TQsfSurvey,
   texts: { byKey: ReadonlyMap<TQsfTextKey, ReadonlyMap<string, string>> },
-  maxBytes: number = QSF_DRAFT_MAX_BYTES
+  maxBytes: number = SURVEY_IMPORT_MAX_DRAFT_BYTES
 ): TQsfSurveyFit {
   const { defaultLanguage } = survey;
   const textIn = (key: TQsfTextKey | null, code: string) =>

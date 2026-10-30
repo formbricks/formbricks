@@ -1,5 +1,4 @@
-/** The dialog's own cap, under the route's 15.5 MiB body limit so the JSON envelope always fits. */
-export const QSF_IMPORT_MAX_FILE_BYTES = 15 * 1024 * 1024;
+import { SURVEY_IMPORT_MAX_FILE_BYTES } from "@/modules/survey/import/limits";
 
 export const QSF_FILE_EXTENSION = ".qsf";
 
@@ -20,7 +19,7 @@ export type TQsfFileReadResult =
 export const checkQsfFile = (file: { name: string; size: number }): TQsfFileError | null => {
   if (!file.name.toLowerCase().endsWith(QSF_FILE_EXTENSION)) return "qsf_wrong_extension";
   if (file.size === 0) return "qsf_empty";
-  if (file.size > QSF_IMPORT_MAX_FILE_BYTES) return "qsf_too_large";
+  if (file.size > SURVEY_IMPORT_MAX_FILE_BYTES) return "qsf_too_large";
   return null;
 };
 

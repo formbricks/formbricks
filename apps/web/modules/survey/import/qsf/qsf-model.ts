@@ -80,7 +80,10 @@ export interface TQsfSlider {
 export interface TQsfQuestion {
   /** The `QID`, checked against the reader's `QID<number>` pattern. */
   ref: string;
-  /** `DataExportTag`, cut to `QSF_MAX_NAME_CHARS`. File text: used for element ids and report lines. */
+  /**
+   * `DataExportTag`, cut to `SURVEY_IMPORT_MAX_NAME_CHARS`. File text: used for element ids and report
+   * lines.
+   */
   exportTag: string;
   /** Global position in flow order, which the assembly keeps. */
   position: number;

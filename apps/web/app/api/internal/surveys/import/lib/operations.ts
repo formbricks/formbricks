@@ -12,6 +12,7 @@ import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { getSessionUserId } from "@/app/api/v3/surveys/lib/operations";
 import { assertOrganizationAIConfigured } from "@/lib/ai/service";
 import { getAITimeoutMs } from "@/lib/ai/timeout";
+import { SURVEY_IMPORT_DEADLINE_MS } from "@/modules/survey/import/limits";
 import {
   QsfImportInputError,
   QsfImportTimeoutError,
@@ -21,7 +22,7 @@ import {
   runQsfImport,
 } from "@/modules/survey/import/qsf/pipeline";
 import type { TQsfImportStage } from "@/modules/survey/import/types";
-import { QSF_IMPORT_DEADLINE_MS, QSF_IMPORT_HEARTBEAT_MS } from "./constants";
+import { QSF_IMPORT_HEARTBEAT_MS } from "./constants";
 import { importTimedOutEvent, toQsfImportStreamErrorEvent } from "./error-events";
 import type { TQsfImportStreamEvent } from "./events";
 import type { TQsfImportStreamBody } from "./schemas";
@@ -108,7 +109,7 @@ export async function streamQsfImport({
     return problemInternalError(requestId, undefined, instance);
   }
 
-  const deadlineMs = getAITimeoutMs(QSF_IMPORT_DEADLINE_MS);
+  const deadlineMs = getAITimeoutMs(SURVEY_IMPORT_DEADLINE_MS);
   const importAbort = createRequestAbort(req, { deadlineMs });
   const startedAt = performance.now();
   let stage: TQsfImportStage = "reading";

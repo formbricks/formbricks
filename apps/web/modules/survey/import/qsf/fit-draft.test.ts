@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, test } from "vitest";
 import { DEFAULT_REQUEST_BODY_LIMIT_BYTES } from "@/app/lib/api/request-body";
+import { SURVEY_IMPORT_MAX_DRAFT_BYTES } from "../limits";
 import { refsInPrompt } from "./__fixtures__/recorded-plans";
 import { type TQsfPlanGenerate, planQsfImport } from "./ai-plan";
 import type { TQsfAssembly, TQsfDraftElement } from "./assemble";
@@ -11,7 +12,6 @@ import { assembleQsfDraft } from "./assemble";
 import { checkQsfDraft } from "./final-gate";
 import {
   DEFAULT_ENDING_TEXT_BYTES,
-  QSF_DRAFT_MAX_BYTES,
   fitQsfDraftToCreateLimit,
   fitQsfSurveyToCreateLimit,
   measureQsfDraftBytes,
@@ -80,8 +80,8 @@ const LANGUAGES = ["en-US", "de-DE", "fr-FR", "es-ES", "it-IT"];
 
 describe("fitQsfDraftToCreateLimit", () => {
   test("is sized from the create's own body limit, with a margin", () => {
-    expect(QSF_DRAFT_MAX_BYTES).toBeLessThan(DEFAULT_REQUEST_BODY_LIMIT_BYTES);
-    expect(QSF_DRAFT_MAX_BYTES).toBeGreaterThan(DEFAULT_REQUEST_BODY_LIMIT_BYTES * 0.9);
+    expect(SURVEY_IMPORT_MAX_DRAFT_BYTES).toBeLessThan(DEFAULT_REQUEST_BODY_LIMIT_BYTES);
+    expect(SURVEY_IMPORT_MAX_DRAFT_BYTES).toBeGreaterThan(DEFAULT_REQUEST_BODY_LIMIT_BYTES * 0.9);
   });
 
   test("leaves a draft that fits as it is", () => {
@@ -409,7 +409,7 @@ describe("fitQsfSurveyToCreateLimit", () => {
   test("leaves a survey that fits as it is", async () => {
     const { fit, survey, assembly } = await fitAndAssemble(
       buildQsf({ questions: 10, options: 4, languages: ["FR", "DE"], textChars: 20 }),
-      QSF_DRAFT_MAX_BYTES
+      SURVEY_IMPORT_MAX_DRAFT_BYTES
     );
 
     expect(fit.issues).toEqual([]);

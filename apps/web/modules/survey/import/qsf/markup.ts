@@ -1,4 +1,4 @@
-import { QSF_MAX_TEXT_CHARS } from "./limits";
+import { SURVEY_IMPORT_MAX_TEXT_CHARS } from "../limits";
 
 /**
  * Whether the sanitizer has to parse a text: one with a `<` or an `&` goes through DOMPurify, one
@@ -8,4 +8,5 @@ import { QSF_MAX_TEXT_CHARS } from "./limits";
 export const hasMarkup = (text: string): boolean => text.includes("<") || text.includes("&");
 
 /** Whether a raw text will cost a DOMPurify parse: markup, and within the length the sanitizer takes. */
-export const needsParsing = (text: string): boolean => text.length <= QSF_MAX_TEXT_CHARS && hasMarkup(text);
+export const needsParsing = (text: string): boolean =>
+  text.length <= SURVEY_IMPORT_MAX_TEXT_CHARS && hasMarkup(text);

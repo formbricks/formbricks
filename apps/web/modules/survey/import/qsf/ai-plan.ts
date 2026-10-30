@@ -1,9 +1,14 @@
 import { NoObjectGeneratedError, NoOutputGeneratedError, TypeValidationError } from "ai";
 import { AIOutputTokenLimitError } from "@formbricks/ai";
-import { AI_DEFAULT_TIMEOUT_MS } from "@formbricks/types/ai-timeout";
+import {
+  SURVEY_IMPORT_AI_CALL_TIMEOUT_MS,
+  SURVEY_IMPORT_AI_CHUNK_OUTPUT_TOKENS,
+  SURVEY_IMPORT_AI_MAX_OUTPUT_TOKENS_PER_CALL,
+  SURVEY_IMPORT_AI_MAX_PARALLEL_CALLS,
+  SURVEY_IMPORT_MAX_QUESTIONS,
+} from "../limits";
 import { decideQsfRetry, waitForRetry } from "./call-retry";
 import { QsfImportFailedError, QsfImportTimeoutError } from "./errors";
-import { QSF_MAX_QUESTIONS } from "./limits";
 import {
   type TQsfCheckedPlan,
   type TQsfPlanFailure,
@@ -57,29 +62,8 @@ import { unsupportedTypeSeverity } from "./unsupported-types";
  * report line; the import fails only when none survives (ENG-3411).
  */
 
-/** The model's output budget per call. Room for reasoning tokens as well as the plan. */
-export const QSF_PLAN_MAX_OUTPUT_TOKENS = 8192;
-/**
- * Output a chunk is sized to expect: about 20 questions without logic, or 8 with two rules each.
- *
- * Sized by time, not by the 8,192-token budget. Gemini 2.5 Flash, the default, writes about 150–250
- * tokens a second with its thinking included, and thinks up to about 3,000 tokens before a plan. At
- * the slow end a chunk then takes about 2 s + (3,000 + 1,400) / 150 ≈ 31 s, well inside the 45 s call
- * timeout; a 3,000-token chunk took about 42 s, and on a live run one timed out.
- */
-export const QSF_CHUNK_OUTPUT_TOKENS = 1_400;
 /** Data characters per chunk: one call's cap, less room for the system prompt and instructions. */
 const QSF_CHUNK_DATA_CHARS = QSF_PROMPT_MAX_CALL_CHARS - 20_000;
-/**
- * Calls in flight at once, per import. The 150-question survey the import is built for is 8 chunks
- * (about 10,500 expected tokens): two waves of at most ~31 s, then a retry wave, about 95 s — inside the
- * route's 120 s deadline less the assembly reserve. Three at a time would take three waves before the
- * retry, which would not fit. Bounded, because the provider's tokens-per-minute is the real limit: four
- * calls of at most ~30k prompt tokens each.
- */
-export const QSF_MAX_PARALLEL_CALLS = 4;
-/** One call's time budget. */
-export const QSF_AI_CALL_TIMEOUT_MS = AI_DEFAULT_TIMEOUT_MS;
 /** Time kept back for assembly when a call is sized against the deadline. */
 export const QSF_ASSEMBLY_RESERVE_MS = 5_000;
 /**
@@ -104,9 +88,9 @@ const TOKENS_PER_PAGE = 10;
  * 350 expected tokens a question, 70,000 in all, in 1,400-token chunks: 50.
  */
 const QSF_MAX_CHUNKS = Math.ceil(
-  (QSF_MAX_QUESTIONS *
+  (SURVEY_IMPORT_MAX_QUESTIONS *
     (TOKENS_PER_QUESTION + TOKENS_PER_PAGE + 2 * TOKENS_PER_NOTE * QSF_LOOSEST_PROMPT_LIMITS.rules)) /
-    QSF_CHUNK_OUTPUT_TOKENS
+    SURVEY_IMPORT_AI_CHUNK_OUTPUT_TOKENS
 );
 
 /**
@@ -121,7 +105,8 @@ const callCapFor = (chunks: number): number => 3 * chunks + 2;
  * `(2 × chunks + 2) × 8,192`. Checked before each call, so at most the calls already in flight run
  * past it.
  */
-const outputBudgetFor = (chunks: number): number => (2 * chunks + 2) * QSF_PLAN_MAX_OUTPUT_TOKENS;
+const outputBudgetFor = (chunks: number): number =>
+  (2 * chunks + 2) * SURVEY_IMPORT_AI_MAX_OUTPUT_TOKENS_PER_CALL;
 
 /**
  * The ceilings, whatever the file: the costliest valid survey's own allowance, so a hostile file
@@ -183,7 +168,7 @@ function usageOfFailure(error: unknown): TQsfCallUsage | undefined {
   if (error instanceof AIOutputTokenLimitError) {
     // Reasoning is part of the total, so a reported reasoning count alone says less than the limit hit.
     const { outputTokens, maxOutputTokens } = error.details;
-    return { outputTokens: outputTokens ?? maxOutputTokens ?? QSF_PLAN_MAX_OUTPUT_TOKENS };
+    return { outputTokens: outputTokens ?? maxOutputTokens ?? SURVEY_IMPORT_AI_MAX_OUTPUT_TOKENS_PER_CALL };
   }
   if (NoObjectGeneratedError.isInstance(error)) {
     return error.usage
@@ -268,7 +253,7 @@ function questionCost(
 }
 
 /**
- * Group questions into chunks of at most `QSF_CHUNK_OUTPUT_TOKENS` expected output and
+ * Group questions into chunks of at most `SURVEY_IMPORT_AI_CHUNK_OUTPUT_TOKENS` expected output and
  * `QSF_CHUNK_DATA_CHARS` of prompt data, in survey order, as many as it takes. A page bigger than a
  * chunk is split across chunks; the assembly still makes it one block.
  */
@@ -286,7 +271,8 @@ export function chunkQuestions(
     const cost = questionCost(context, ref, pagesSeen);
     if (
       current.length > 0 &&
-      (tokens + cost.tokens > QSF_CHUNK_OUTPUT_TOKENS || chars + cost.chars > QSF_CHUNK_DATA_CHARS)
+      (tokens + cost.tokens > SURVEY_IMPORT_AI_CHUNK_OUTPUT_TOKENS ||
+        chars + cost.chars > QSF_CHUNK_DATA_CHARS)
     ) {
       chunks.push(current);
       current = [];
@@ -385,7 +371,7 @@ async function callOnce(
         schemaName: "QualtricsImportPlan",
         schemaDescription: "How each question of a Qualtrics survey becomes a Formbricks question.",
         temperature: 0,
-        maxOutputTokens: QSF_PLAN_MAX_OUTPUT_TOKENS,
+        maxOutputTokens: SURVEY_IMPORT_AI_MAX_OUTPUT_TOKENS_PER_CALL,
         timeout: attempt === 0 ? timeout : Math.floor(callEnd - performance.now()),
         maxRetries: 0,
         abortSignal: context.signal,
@@ -436,9 +422,9 @@ const FAILURE_OF_OUTCOME: Record<Exclude<TCallOutcome["kind"], "ok">, TQsfPlanFa
 };
 
 /**
- * One round of calls: every chunk asked, at most `QSF_MAX_PARALLEL_CALLS` at once. A chunk whose call
- * ran out of output tokens or of time is split into halves once, queued behind the rest; its halves
- * are not split again.
+ * One round of calls: every chunk asked, at most `SURVEY_IMPORT_AI_MAX_PARALLEL_CALLS` at once. A
+ * chunk whose call ran out of output tokens or of time is split into halves once, queued behind the
+ * rest; its halves are not split again.
  */
 async function planRound(
   context: TPlanContext,
@@ -470,7 +456,7 @@ async function planRound(
 
   await runPool(
     chunks.map((chunk) => ask(chunk, true)),
-    QSF_MAX_PARALLEL_CALLS,
+    SURVEY_IMPORT_AI_MAX_PARALLEL_CALLS,
     abort
   );
 
@@ -520,7 +506,7 @@ export async function planQsfImport(params: {
   /** Resolved per-call budget, before clipping it to the import deadline. */
   callTimeoutMs?: number;
 }): Promise<TQsfPlanResult> {
-  const { survey, texts, generate, deadline, callTimeoutMs = QSF_AI_CALL_TIMEOUT_MS } = params;
+  const { survey, texts, generate, deadline, callTimeoutMs = SURVEY_IMPORT_AI_CALL_TIMEOUT_MS } = params;
   const { refs, issues } = preSkip(survey);
   // Refused before any AI call when no limits fit the survey into the prompt budget.
   const limits = chooseQsfPromptLimits(survey, refs, texts);

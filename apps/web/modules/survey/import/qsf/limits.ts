@@ -6,14 +6,9 @@ import { V3_SURVEY_MAX_LANGUAGES } from "@/app/api/v3/surveys/schemas";
  *
  * The route's request budget (1,000 items per array, 256 levels) already bounds the raw file; these
  * are the survey-level limits under it, sized from the largest surveys the import is built for (about
- * 150 questions) with headroom.
+ * 150 questions) with headroom. The caps every lane shares — questions, options, text size, names —
+ * live in `../limits.ts`; the ones here are about how a Qualtrics export is laid out.
  */
-
-/** Questions the survey flow may show. Trashed and unused questions do not count. */
-export const QSF_MAX_QUESTIONS = 200;
-
-/** Choices (`Choices`) and answers (`Answers`, a matrix's columns) of one question. */
-export const QSF_MAX_OPTIONS_PER_QUESTION = 200;
 
 /**
  * Languages, the default included, and embedded data fields kept as hidden fields (the rest are
@@ -57,16 +52,6 @@ export const QSF_MAX_FLOW_NODES = 2_000;
 export const QSF_MAX_LOGIC_TERMS = 20;
 
 /**
- * One text's size before it is sanitized. DOMPurify's cost grows with the markup it parses: about
- * 0.2 ms for a short question on jsdom, 58 ms for a 1 MB inline image and 436 ms for 20,000 spans.
- * A text past either bound is refused with a report line instead of being parsed. The tags count the
- * `<` written as character references (`&lt;`, `&#60;`, …) too: decoded, the next parse reads them as
- * tags.
- */
-export const QSF_MAX_TEXT_CHARS = 50_000;
-export const QSF_MAX_TEXT_TAGS = 500;
-
-/**
  * Texts with markup (a `<` or an `&`), in all their languages together. Only these cost the sanitizer
  * a DOMPurify parse, about 0.1 ms each; a plain text only has its whitespace collapsed. 50,000 bounds an
  * import's parsing at about 5 s, sliced so the event loop keeps running, against a 120 s deadline.
@@ -83,6 +68,3 @@ export const QSF_MAX_MARKUP_TEXTS = 50_000;
  * the per-collection limits alone admit 4 million (200 × 401 × 50).
  */
 export const QSF_MAX_TEXTS = 200_000;
-
-/** Export tags, block names and the survey name are cut to this before they are used. */
-export const QSF_MAX_NAME_CHARS = 200;

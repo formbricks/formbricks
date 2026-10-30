@@ -1,8 +1,8 @@
 import DOMPurify from "isomorphic-dompurify";
 import { FOLLOW_UP_BODY_SANITIZE_CONFIG } from "@/modules/survey/follow-ups/lib/sanitize-follow-up-body";
+import { SURVEY_IMPORT_MAX_TEXT_CHARS, SURVEY_IMPORT_MAX_TEXT_TAGS } from "../limits";
 import type { TQsfImportIssueCode } from "../types";
 import { createSlicer } from "./event-loop";
-import { QSF_MAX_TEXT_CHARS, QSF_MAX_TEXT_TAGS } from "./limits";
 import { hasMarkup } from "./markup";
 import type { TQsfIssue, TQsfSurvey, TQsfTextFormat, TQsfTextKey } from "./qsf-model";
 
@@ -168,7 +168,7 @@ const countTags = (text: string, limit: number): number => {
  */
 export function containsMarkup(text: string): boolean {
   if (!text.includes("<")) return false;
-  if (countLessThan(text, QSF_MAX_TEXT_TAGS) > QSF_MAX_TEXT_TAGS) return true;
+  if (countLessThan(text, SURVEY_IMPORT_MAX_TEXT_TAGS) > SURVEY_IMPORT_MAX_TEXT_TAGS) return true;
   DOMPurify.sanitize(text, PLAIN_CONFIG);
   return DOMPurify.removed.some(
     (entry) => "element" in entry && !["body", "html", "head", "remove"].includes(elementName(entry.element))
@@ -241,7 +241,10 @@ function wrapInlineRuns(fragment: DocumentFragment): void {
 /** Sanitize one text. Synchronous; callers that sanitize many texts yield between them. */
 export function sanitizeText(raw: string, format: TQsfTextFormat): TSanitizedText {
   const dropped = new Set<TDroppedCode>();
-  if (raw.length > QSF_MAX_TEXT_CHARS || countTags(raw, QSF_MAX_TEXT_TAGS) > QSF_MAX_TEXT_TAGS) {
+  if (
+    raw.length > SURVEY_IMPORT_MAX_TEXT_CHARS ||
+    countTags(raw, SURVEY_IMPORT_MAX_TEXT_TAGS) > SURVEY_IMPORT_MAX_TEXT_TAGS
+  ) {
     return { text: "", plain: "", dropped, escaped: false, tooLong: true };
   }
 

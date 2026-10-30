@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { SURVEY_IMPORT_MAX_OPTIONS_PER_QUESTION, SURVEY_IMPORT_MAX_TEXT_CHARS } from "../limits";
 import { loadQsfFixture } from "./__fixtures__/load-fixture";
 import { QsfImportInputError } from "./errors";
 import { OBJECT_MEMBER_NAMES } from "./id-registry";
@@ -9,9 +10,7 @@ import {
   QSF_MAX_LANGUAGE_KEYS,
   QSF_MAX_LANGUAGE_KEYS_PER_QUESTION,
   QSF_MAX_MARKUP_TEXTS,
-  QSF_MAX_OPTIONS_PER_QUESTION,
   QSF_MAX_TEXTS,
-  QSF_MAX_TEXT_CHARS,
 } from "./limits";
 import { readQsf } from "./read-qsf";
 
@@ -264,7 +263,10 @@ describe("readQsf", () => {
 
   test("reads a language once per question, however many keys spell it: the first one wins", () => {
     const choices = Object.fromEntries(
-      Array.from({ length: QSF_MAX_OPTIONS_PER_QUESTION }, (_, i) => [String(i + 1), { Display: `C${i}` }])
+      Array.from({ length: SURVEY_IMPORT_MAX_OPTIONS_PER_QUESTION }, (_, i) => [
+        String(i + 1),
+        { Display: `C${i}` },
+      ])
     );
     // At the per-question cap, every key a variant of German, each with every choice translated.
     const language = Object.fromEntries(
@@ -397,7 +399,7 @@ describe("readQsf", () => {
 
     test("more choices on one question than the import takes", () => {
       const choices = Object.fromEntries(
-        Array.from({ length: QSF_MAX_OPTIONS_PER_QUESTION + 1 }, (_, i) => [
+        Array.from({ length: SURVEY_IMPORT_MAX_OPTIONS_PER_QUESTION + 1 }, (_, i) => [
           String(i + 1),
           { Display: `C${i}` },
         ])
@@ -408,7 +410,7 @@ describe("readQsf", () => {
 
       expect(error.invalidParams[0]).toEqual({
         name: "qsf.SurveyElements.0.Payload.Choices",
-        reason: `A question has more than ${QSF_MAX_OPTIONS_PER_QUESTION} choices`,
+        reason: `A question has more than ${SURVEY_IMPORT_MAX_OPTIONS_PER_QUESTION} choices`,
         code: "qsf_limit_exceeded",
         identifier: "options",
       });
@@ -525,7 +527,7 @@ describe("readQsf", () => {
     });
 
     test("never scans a text past the length the sanitizer takes for piped text", () => {
-      const text = `\${e://Field/hidden_in_a_long_text} ${"x".repeat(QSF_MAX_TEXT_CHARS)}`;
+      const text = `\${e://Field/hidden_in_a_long_text} ${"x".repeat(SURVEY_IMPORT_MAX_TEXT_CHARS)}`;
 
       const survey = readQsf(minimalQsf([sq("QID1", { QuestionText: text }), bl(["QID1"]), fl()]));
 

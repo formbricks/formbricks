@@ -23,11 +23,11 @@ import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
 import { ConcurrencyLimiter } from "@/app/lib/api/concurrency-limiter";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import {
-  QSF_IMPORT_BODY_LIMIT_BYTES,
-  QSF_IMPORT_MAX_IN_FLIGHT,
-  QSF_IMPORT_MAX_IN_FLIGHT_PER_USER,
-  QSF_IMPORT_RETRY_AFTER_SECONDS,
-} from "../lib/constants";
+  SURVEY_IMPORT_MAX_BODY_BYTES,
+  SURVEY_IMPORT_MAX_IN_FLIGHT,
+  SURVEY_IMPORT_MAX_IN_FLIGHT_PER_USER,
+  SURVEY_IMPORT_RETRY_AFTER_SECONDS,
+} from "@/modules/survey/import/limits";
 import { streamQsfImport } from "../lib/operations";
 import { ZQsfImportStreamBody } from "../lib/schemas";
 
@@ -40,15 +40,15 @@ export const fetchCache = "force-no-store";
  * One per server process: the limit bounds what a pod spends on imports, and the per-user share keeps
  * one user from taking every slot.
  */
-const importConcurrency = new ConcurrencyLimiter(QSF_IMPORT_MAX_IN_FLIGHT, {
-  maxPerKey: QSF_IMPORT_MAX_IN_FLIGHT_PER_USER,
+const importConcurrency = new ConcurrencyLimiter(SURVEY_IMPORT_MAX_IN_FLIGHT, {
+  maxPerKey: SURVEY_IMPORT_MAX_IN_FLIGHT_PER_USER,
 });
 
 export const POST = withV3ApiWrapper({
   auth: "session",
   customRateLimitConfig: rateLimitConfigs.api.v3SurveyGenerate,
-  bodyLimitBytes: QSF_IMPORT_BODY_LIMIT_BYTES,
-  concurrency: { limiter: importConcurrency, retryAfterSeconds: QSF_IMPORT_RETRY_AFTER_SECONDS },
+  bodyLimitBytes: SURVEY_IMPORT_MAX_BODY_BYTES,
+  concurrency: { limiter: importConcurrency, retryAfterSeconds: SURVEY_IMPORT_RETRY_AFTER_SECONDS },
   schemas: {
     body: ZQsfImportStreamBody,
   },

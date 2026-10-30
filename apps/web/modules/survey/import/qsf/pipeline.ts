@@ -4,14 +4,15 @@ import { generateOrganizationAIObject } from "@/lib/ai/service";
 import { getAITimeoutMs } from "@/lib/ai/timeout";
 import { AI_TRACING_FEATURE } from "@/lib/posthog/ai-tracing-feature";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
+import { SURVEY_IMPORT_AI_CALL_TIMEOUT_MS, SURVEY_IMPORT_AI_MAX_SOURCE_CHARS } from "../limits";
 import type { TQsfImportReport, TQsfImportStage } from "../types";
-import { QSF_AI_CALL_TIMEOUT_MS, type TQsfPlanGenerate, type TQsfPlanUsage, planQsfImport } from "./ai-plan";
+import { type TQsfPlanGenerate, type TQsfPlanUsage, planQsfImport } from "./ai-plan";
 import { type TQsfAssembly, type TQsfDraftDocument, assembleQsfDraft } from "./assemble";
 import { QsfImportFailedError, qsfLimitExceeded } from "./errors";
 import { yieldToOthers } from "./event-loop";
 import { checkQsfDraftInSlices, elementsAtFault } from "./final-gate";
 import { fitQsfDraftToCreateLimit, fitQsfSurveyToCreateLimit } from "./fit-draft";
-import { QSF_PROMPT_BUDGET_CHARS, estimateQsfMinimumPromptChars } from "./prompt";
+import { estimateQsfMinimumPromptChars } from "./prompt";
 import type { TQsfIssue, TQsfSurvey } from "./qsf-model";
 import { readQsf } from "./read-qsf";
 import { buildQsfImportReport } from "./report";
@@ -76,7 +77,7 @@ export interface TRunQsfImportParams {
 export function prepareQsfImport(qsf: Record<string, unknown>, fileName: string): TPreparedQsfImport {
   const survey = readQsf(qsf);
   // Every part of the prompt is bounded, so only a hostile file gets here; refuse it before the stream.
-  if (estimateQsfMinimumPromptChars(survey) > QSF_PROMPT_BUDGET_CHARS) {
+  if (estimateQsfMinimumPromptChars(survey) > SURVEY_IMPORT_AI_MAX_SOURCE_CHARS) {
     throw qsfLimitExceeded(
       "prompt_size",
       "qsf.SurveyElements",
@@ -173,7 +174,7 @@ export async function runQsfImport(params: TRunQsfImportParams): Promise<TQsfImp
     generate: params.generate ?? organizationGenerate(params),
     signal,
     deadline,
-    callTimeoutMs: getAITimeoutMs(QSF_AI_CALL_TIMEOUT_MS),
+    callTimeoutMs: getAITimeoutMs(SURVEY_IMPORT_AI_CALL_TIMEOUT_MS),
   });
 
   signal.throwIfAborted();

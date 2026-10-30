@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { QSF_IMPORT_MAX_FILE_BYTES, checkQsfFile, readQsfFile } from "./qsf-file";
+import { SURVEY_IMPORT_MAX_FILE_BYTES } from "@/modules/survey/import/limits";
+import { checkQsfFile, readQsfFile } from "./qsf-file";
 
 const qsfFile = (content: string, name = "survey.qsf") => new File([content], name);
 
@@ -8,13 +9,13 @@ describe("checkQsfFile", () => {
     ["survey.json", 10, "qsf_wrong_extension"],
     ["survey.qsf.txt", 10, "qsf_wrong_extension"],
     ["survey.qsf", 0, "qsf_empty"],
-    ["survey.qsf", QSF_IMPORT_MAX_FILE_BYTES + 1, "qsf_too_large"],
+    ["survey.qsf", SURVEY_IMPORT_MAX_FILE_BYTES + 1, "qsf_too_large"],
   ])("refuses %s of %i bytes as %s", (name, size, error) => {
     expect(checkQsfFile({ name, size })).toBe(error);
   });
 
   test("accepts a .qsf in any case, up to the size cap", () => {
-    expect(checkQsfFile({ name: "Survey.QSF", size: QSF_IMPORT_MAX_FILE_BYTES })).toBeNull();
+    expect(checkQsfFile({ name: "Survey.QSF", size: SURVEY_IMPORT_MAX_FILE_BYTES })).toBeNull();
   });
 });
 

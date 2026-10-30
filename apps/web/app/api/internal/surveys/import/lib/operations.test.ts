@@ -2,12 +2,13 @@ import { APICallError } from "ai";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { OperationNotAllowedError, TooManyRequestsError } from "@formbricks/types/errors";
 import { problemForbidden } from "@/app/api/v3/lib/response";
+import { SURVEY_IMPORT_DEADLINE_MS } from "@/modules/survey/import/limits";
 import {
   QsfImportTimeoutError,
   type TQsfImportResult,
   type TRunQsfImportParams,
 } from "@/modules/survey/import/qsf/pipeline";
-import { QSF_IMPORT_DEADLINE_MS, QSF_IMPORT_HEARTBEAT_MS } from "./constants";
+import { QSF_IMPORT_HEARTBEAT_MS } from "./constants";
 import { streamQsfImport } from "./operations";
 import type { TQsfImportStreamBody } from "./schemas";
 
@@ -254,7 +255,7 @@ describe("streamQsfImport", () => {
           workspaceId: body.workspaceId,
           organizationId: "org_1",
           userId: "user_1",
-          deadlineMs: QSF_IMPORT_DEADLINE_MS,
+          deadlineMs: SURVEY_IMPORT_DEADLINE_MS,
         })
       );
     });
@@ -342,9 +343,9 @@ describe("streamQsfImport", () => {
       const response = await call();
       const events = readEvents(response);
       expect(mocks.runQsfImport).toHaveBeenCalledWith(
-        expect.objectContaining({ deadlineMs: QSF_IMPORT_DEADLINE_MS * multiplier })
+        expect.objectContaining({ deadlineMs: SURVEY_IMPORT_DEADLINE_MS * multiplier })
       );
-      await vi.advanceTimersByTimeAsync(QSF_IMPORT_DEADLINE_MS * multiplier - 1);
+      await vi.advanceTimersByTimeAsync(SURVEY_IMPORT_DEADLINE_MS * multiplier - 1);
       expect(mocks.runQsfImport.mock.calls[0][0].signal.aborted).toBe(false);
       await vi.advanceTimersByTimeAsync(1);
 

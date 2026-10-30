@@ -3,10 +3,10 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { V3_REQUEST_ARRAY_MAX_ITEMS } from "@/app/api/v3/lib/array-budget";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import {
-  QSF_IMPORT_BODY_LIMIT_BYTES,
-  QSF_IMPORT_MAX_IN_FLIGHT,
-  QSF_IMPORT_RETRY_AFTER_SECONDS,
-} from "../lib/constants";
+  SURVEY_IMPORT_MAX_BODY_BYTES,
+  SURVEY_IMPORT_MAX_IN_FLIGHT,
+  SURVEY_IMPORT_RETRY_AFTER_SECONDS,
+} from "@/modules/survey/import/limits";
 import { POST } from "./route";
 
 const mocks = vi.hoisted(() => ({
@@ -130,7 +130,7 @@ describe("POST /api/internal/surveys/import/stream", () => {
   });
 
   test("answers 413 over the import's body limit", async () => {
-    const response = await post(body, { "Content-Length": String(QSF_IMPORT_BODY_LIMIT_BYTES + 1) });
+    const response = await post(body, { "Content-Length": String(SURVEY_IMPORT_MAX_BODY_BYTES + 1) });
 
     expect(response.status).toBe(413);
     expect(mocks.streamQsfImport).not.toHaveBeenCalled();
@@ -145,7 +145,7 @@ describe("POST /api/internal/surveys/import/stream", () => {
 
     expect(first.status).toBe(200);
     expect(second.status).toBe(429);
-    expect(second.headers.get("Retry-After")).toBe(String(QSF_IMPORT_RETRY_AFTER_SECONDS));
+    expect(second.headers.get("Retry-After")).toBe(String(SURVEY_IMPORT_RETRY_AFTER_SECONDS));
     await expect(second.json()).resolves.toMatchObject({ code: "concurrency_limit_reached" });
 
     const done = first.text();
@@ -188,7 +188,7 @@ describe("POST /api/internal/surveys/import/stream", () => {
   });
 
   test("answers 503 with Retry-After once every import slot is busy, and admits again after one ends", async () => {
-    const running = Array.from({ length: QSF_IMPORT_MAX_IN_FLIGHT }, openStream);
+    const running = Array.from({ length: SURVEY_IMPORT_MAX_IN_FLIGHT }, openStream);
     for (const { response } of running) {
       mocks.streamQsfImport.mockImplementationOnce(async () => response);
     }
@@ -202,7 +202,7 @@ describe("POST /api/internal/surveys/import/stream", () => {
 
     expect(admitted.map((response) => response.status)).toEqual(running.map(() => 200));
     expect(refused.status).toBe(503);
-    expect(refused.headers.get("Retry-After")).toBe(String(QSF_IMPORT_RETRY_AFTER_SECONDS));
+    expect(refused.headers.get("Retry-After")).toBe(String(SURVEY_IMPORT_RETRY_AFTER_SECONDS));
     await expect(refused.json()).resolves.toMatchObject({ code: "capacity_reached" });
 
     const first = admitted[0].text();

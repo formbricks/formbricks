@@ -1,3 +1,4 @@
+import { SURVEY_IMPORT_AI_MAX_SOURCE_CHARS } from "../limits";
 import type { TQsfPlanFailure } from "./plan-checks";
 import { QSF_PLAN_ELEMENT_TYPES } from "./plan-schema";
 import type {
@@ -44,10 +45,10 @@ interface TPromptLimits {
 }
 
 /**
- * Tighter and tighter limits, tried in order until the whole import fits `QSF_PROMPT_BUDGET_CHARS`.
- * Fewer listed options costs the model little: roles map whole lists, so it only needs to see the
- * options it might single out (an "Other", a "None of these"). Every part of the data is bounded —
- * texts, options, rules, conditions, operands, context.
+ * Tighter and tighter limits, tried in order until the whole import fits
+ * `SURVEY_IMPORT_AI_MAX_SOURCE_CHARS`. Fewer listed options costs the model little: roles map whole
+ * lists, so it only needs to see the options it might single out (an "Other", a "None of these").
+ * Every part of the data is bounded — texts, options, rules, conditions, operands, context.
  *
  * The last tier degrades rather than refuses (ENG-3411): logic is only counted, with no conditions and
  * no notes asked for, no other questions are described, and option lists show four with a count of
@@ -79,8 +80,6 @@ const PROMPT_LIMITS: readonly TPromptLimits[] = [
   COARSEST_LIMITS,
 ];
 
-/** The question data of one import, all questions together, at the limits chosen (~60k tokens). */
-export const QSF_PROMPT_BUDGET_CHARS = 240_000;
 /** One call, system prompt and instructions included. Never sent above this. */
 export const QSF_PROMPT_MAX_CALL_CHARS = 120_000;
 /**
@@ -88,7 +87,7 @@ export const QSF_PROMPT_MAX_CALL_CHARS = 120_000;
  * the data budget. A survey at the budget whose every chunk overflows sends its data three times
  * (whole, then in halves), a retry round at most once more, and a system prompt with every call.
  */
-export const QSF_PROMPT_MAX_TOTAL_CHARS = 4 * QSF_PROMPT_BUDGET_CHARS;
+export const QSF_PROMPT_MAX_TOTAL_CHARS = 4 * SURVEY_IMPORT_AI_MAX_SOURCE_CHARS;
 
 const cut = (text: string, max: number): string => (text.length > max ? `${text.slice(0, max - 1)}…` : text);
 
@@ -267,8 +266,8 @@ export function describeQsfQuestions(
 
 /**
  * The limits every call of this import uses: the loosest ones under which the data of all questions
- * together — page logic and context included — fits `QSF_PROMPT_BUDGET_CHARS`. `null` when not even
- * the tightest do: such an import is refused before any AI call.
+ * together — page logic and context included — fits `SURVEY_IMPORT_AI_MAX_SOURCE_CHARS`. `null` when
+ * not even the tightest do: such an import is refused before any AI call.
  */
 export function chooseQsfPromptLimits(
   survey: TQsfSurvey,
@@ -276,7 +275,8 @@ export function chooseQsfPromptLimits(
   texts: TQsfPromptTexts
 ): TPromptLimits | null {
   for (const limits of PROMPT_LIMITS) {
-    if (describeQsfQuestions(survey, refs, texts, limits).length <= QSF_PROMPT_BUDGET_CHARS) return limits;
+    if (describeQsfQuestions(survey, refs, texts, limits).length <= SURVEY_IMPORT_AI_MAX_SOURCE_CHARS)
+      return limits;
   }
   return null;
 }
