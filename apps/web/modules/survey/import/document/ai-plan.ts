@@ -9,7 +9,13 @@ import {
 } from "../core/ai-plan";
 import { SurveyImportTimeoutError } from "../core/errors";
 import type { TSurveyImportPipelineIssue } from "../core/report";
-import { SURVEY_IMPORT_AI_CALL_TIMEOUT_MS, SURVEY_IMPORT_AI_CHUNK_OUTPUT_TOKENS } from "../limits";
+import {
+  SURVEY_IMPORT_AI_CALL_TIMEOUT_MS,
+  SURVEY_IMPORT_AI_CHUNK_OUTPUT_TOKENS,
+  SURVEY_IMPORT_DOCUMENT_MAX_CALL_CHARS,
+  SURVEY_IMPORT_DOCUMENT_MAX_CHUNKS,
+  SURVEY_IMPORT_DOCUMENT_MAX_TOTAL_CHARS,
+} from "../limits";
 import type { TDocumentModel } from "./model";
 import {
   DocumentPlanContext,
@@ -20,8 +26,6 @@ import {
 } from "./plan-checks";
 import { ZDocumentImportPlanForAI } from "./plan-schema";
 import {
-  DOCUMENT_PROMPT_MAX_CALL_CHARS,
-  DOCUMENT_PROMPT_MAX_TOTAL_CHARS,
   buildDocumentPlanPrompt,
   buildDocumentPlanSystemPrompt,
   describedLineChars,
@@ -47,15 +51,8 @@ const CHARS_PER_TOKEN = 4;
  * Data characters per chunk: half of one call's cap, leaving room for the system prompt and for the
  * lines shown around the chunk's own.
  */
-const DOCUMENT_CHUNK_DATA_CHARS = DOCUMENT_PROMPT_MAX_CALL_CHARS / 2;
+const DOCUMENT_CHUNK_DATA_CHARS = SURVEY_IMPORT_DOCUMENT_MAX_CALL_CHARS / 2;
 
-/**
- * Chunks one import may plan: the Qualtrics lane's ceiling (50 chunks, 152 calls, about 70,000 expected
- * output tokens), so a document costs at most what the costliest Qualtrics import does. It holds 240k
- * characters of text in lines of a few hundred characters or more; a file that needs more chunks than
- * this is past the AI ceiling like one past 240k characters, and is refused before any AI call.
- */
-export const DOCUMENT_MAX_CHUNKS = 50;
 
 const lineCost = (line: TDocumentModel["lines"][number]): { tokens: number; chars: number } => {
   const textChars = line.cells.reduce((sum, cell) => sum + cell.text.length, 0);
@@ -98,7 +95,7 @@ export function chunkDocumentLines(model: TDocumentModel, refs: readonly string[
   return chunks;
 }
 
-/** How many chunks the whole document plans in: what `prepare` holds to `DOCUMENT_MAX_CHUNKS`. */
+/** How many chunks the whole document plans in: what `prepare` holds to `SURVEY_IMPORT_DOCUMENT_MAX_CHUNKS`. */
 export const countDocumentChunks = (model: TDocumentModel): number =>
   chunkDocumentLines(
     model,
@@ -140,10 +137,10 @@ export async function planDocumentImport(params: {
     buildPrompt: (chunkRefs, failures) => buildDocumentPlanPrompt({ model, refs: chunkRefs, failures }),
     check: (responses, round) => checkDocumentPlanResponses(context, responses, round),
     merge: mergeDocumentPlans,
-    maxCallChars: DOCUMENT_PROMPT_MAX_CALL_CHARS,
-    maxTotalChars: DOCUMENT_PROMPT_MAX_TOTAL_CHARS,
-    callCap: Math.min(importCallCapFor(chunkCount), importCallCapFor(DOCUMENT_MAX_CHUNKS)),
-    outputBudget: Math.min(importOutputBudgetFor(chunkCount), importOutputBudgetFor(DOCUMENT_MAX_CHUNKS)),
+    maxCallChars: SURVEY_IMPORT_DOCUMENT_MAX_CALL_CHARS,
+    maxTotalChars: SURVEY_IMPORT_DOCUMENT_MAX_TOTAL_CHARS,
+    callCap: Math.min(importCallCapFor(chunkCount), importCallCapFor(SURVEY_IMPORT_DOCUMENT_MAX_CHUNKS)),
+    outputBudget: Math.min(importOutputBudgetFor(chunkCount), importOutputBudgetFor(SURVEY_IMPORT_DOCUMENT_MAX_CHUNKS)),
   };
   const run = await runImportPlan({ lane, refs, generate, signal: params.signal, deadline, callTimeoutMs });
   const { plan } = run;

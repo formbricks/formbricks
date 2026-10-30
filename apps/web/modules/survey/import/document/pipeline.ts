@@ -16,10 +16,11 @@ import { sanitizeName } from "../core/sanitize-text";
 import {
   SURVEY_IMPORT_AI_CALL_TIMEOUT_MS,
   SURVEY_IMPORT_AI_MAX_SOURCE_CHARS,
+  SURVEY_IMPORT_DOCUMENT_MAX_CHUNKS,
   SURVEY_IMPORT_MAX_NAME_CHARS,
   SURVEY_IMPORT_MAX_QUESTIONS,
 } from "../limits";
-import { DOCUMENT_MAX_CHUNKS, countDocumentChunks, planDocumentImport } from "./ai-plan";
+import { countDocumentChunks, planDocumentImport } from "./ai-plan";
 import { assembleDocumentDraft } from "./assemble";
 import { documentLimitExceeded } from "./errors";
 import type { TDocumentModel } from "./model";
@@ -64,7 +65,7 @@ export function prepareDocumentImport(model: TDocumentModel, fileName: string): 
       `The file's text must not exceed ${SURVEY_IMPORT_AI_MAX_SOURCE_CHARS} characters`
     );
   }
-  if (countDocumentChunks(model) > DOCUMENT_MAX_CHUNKS) {
+  if (countDocumentChunks(model) > SURVEY_IMPORT_DOCUMENT_MAX_CHUNKS) {
     throw documentLimitExceeded("source_size", "file", "The file has more lines than one import can plan");
   }
   return { fileName, model };

@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { cpuMsSince } from "./__fixtures__/cpu-time";
-import { SURVEY_IMPORT_MAX_NOTE_CHARS, SURVEY_IMPORT_NOTE_URL_PATTERN, cleanNote } from "./clean-note";
+import { SURVEY_IMPORT_MAX_NOTE_CHARS } from "../limits";
+import { SURVEY_IMPORT_NOTE_URL_PATTERN, cleanNote } from "./clean-note";
 
 describe("cleanNote", () => {
   test("replaces anything that looks like a link", () => {

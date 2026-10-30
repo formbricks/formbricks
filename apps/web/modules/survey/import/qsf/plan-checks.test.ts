@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { SURVEY_IMPORT_MAX_NOTE_CHARS } from "../core/clean-note";
+import { SURVEY_IMPORT_MAX_NOTE_CHARS } from "../limits";
 import { loadQsfFixture } from "./__fixtures__/load-fixture";
 import { loadRecordedPlan } from "./__fixtures__/recorded-plans";
 import {

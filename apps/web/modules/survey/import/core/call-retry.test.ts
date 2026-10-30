@@ -1,7 +1,8 @@
 import { APICallError } from "ai";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { TooManyRequestsError } from "@formbricks/types/errors";
-import { SURVEY_IMPORT_MAX_CALL_RETRIES, decideImportCallRetry, waitForRetry } from "./call-retry";
+import { SURVEY_IMPORT_MAX_CALL_RETRIES } from "../limits";
+import { decideImportCallRetry, waitForRetry } from "./call-retry";
 
 const providerError = (statusCode: number, headers: Record<string, string> = {}) =>
   new APICallError({

@@ -1,4 +1,3 @@
-import { SURVEY_IMPORT_AI_MAX_SOURCE_CHARS } from "../limits";
 import type { TDocumentKind, TDocumentModel } from "./model";
 import type { TDocumentPlanFailure } from "./plan-checks";
 import { DOCUMENT_PLAN_ELEMENT_TYPES, DOCUMENT_PLAN_OPERATORS } from "./plan-schema";
@@ -16,14 +15,6 @@ import { DOCUMENT_PLAN_ELEMENT_TYPES, DOCUMENT_PLAN_OPERATORS } from "./plan-sch
  */
 
 const DATA_TAG = "document_lines";
-
-/** One call, system prompt and instructions included. Never sent above this; as the Qualtrics lane's. */
-export const DOCUMENT_PROMPT_MAX_CALL_CHARS = 120_000;
-/**
- * All calls of one import together, system prompts, context and the retry round included: four times
- * the source budget, as the Qualtrics lane's.
- */
-export const DOCUMENT_PROMPT_MAX_TOTAL_CHARS = 4 * SURVEY_IMPORT_AI_MAX_SOURCE_CHARS;
 
 /** Lines shown after each line a call asks about, for a question whose options follow on lines of their own. */
 export const DOCUMENT_CONTEXT_LINES = 5;

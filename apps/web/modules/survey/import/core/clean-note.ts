@@ -3,9 +3,7 @@
  * report line, for every lane (ENG-3479). The dialog renders it as plain text as well; this is so a line
  * never carries a link at all.
  */
-
-/** Longest note or skip reason the report carries. */
-export const SURVEY_IMPORT_MAX_NOTE_CHARS = 300;
+import { SURVEY_IMPORT_MAX_NOTE_CHARS } from "../limits";
 
 // Control characters and the bidi overrides, which can make a report line read as something else.
 // eslint-disable-next-line no-control-regex -- matching control characters is the point

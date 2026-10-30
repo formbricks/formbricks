@@ -1,5 +1,6 @@
 import { normalizeLanguageCode } from "@formbricks/i18n-utils/canonical";
 import { normalizeV3SurveyWriteLanguageCode } from "@/app/api/v3/surveys/language";
+import { SURVEY_IMPORT_MAX_LANGUAGE_CODE_CHARS } from "../limits";
 
 /**
  * A language code from an imported file or an AI plan → the region-qualified BCP-47 tag the v3 survey
@@ -13,12 +14,10 @@ import { normalizeV3SurveyWriteLanguageCode } from "@/app/api/v3/surveys/languag
  * `normalizeLanguageCode` (whose own table is a plain object).
  */
 export const IMPORT_LANGUAGE_CODE_PATTERN = /^[A-Za-z]{2,3}(?:[-_][A-Za-z0-9]{1,8}){0,3}$/;
-/** Longer than any code the pattern admits (30) with room for spaces: refused before it is trimmed. */
-export const MAX_RAW_LANGUAGE_CODE_CHARS = 64;
 
 /** Whether a raw code can be a language code at all: bounded, and shaped like one. */
 export const isLanguageCodeShaped = (raw: string): boolean =>
-  raw.length <= MAX_RAW_LANGUAGE_CODE_CHARS && IMPORT_LANGUAGE_CODE_PATTERN.test(raw.trim());
+  raw.length <= SURVEY_IMPORT_MAX_LANGUAGE_CODE_CHARS && IMPORT_LANGUAGE_CODE_PATTERN.test(raw.trim());
 
 /**
  * The normalized code, or `null` when Formbricks has no equivalent for it. `override` maps a lane's own

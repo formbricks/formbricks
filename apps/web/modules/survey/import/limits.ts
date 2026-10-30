@@ -2,9 +2,9 @@ import { AI_DEFAULT_TIMEOUT_MS } from "@formbricks/types/ai-timeout";
 import { DEFAULT_REQUEST_BODY_LIMIT_BYTES } from "@/app/lib/api/request-body";
 
 /**
- * The survey import's caps, shared by every lane (ENG-6846). Each lane enforces the ones that apply to
- * it at its earliest boundary; caps only one file type has (the Qualtrics reader's flow and block
- * counts, say) stay in that lane's own limits module, such as `qsf/limits.ts`.
+ * The survey import's caps (ENG-6846), in one place: those every lane shares, and those of the document
+ * lanes, the AI plan and the report. Each lane enforces the ones that apply to it at its earliest
+ * boundary. The Qualtrics reader's own structure caps (its flow and block counts) stay in `qsf/limits.ts`.
  *
  * The dialog imports this module too, so it must stay free of server code and of heavy imports. Caps
  * the import inherits rather than owns are enforced by their owners and are not repeated here:
@@ -154,6 +154,15 @@ export const SURVEY_IMPORT_MAX_TEXT_TAGS = 500;
 export const SURVEY_IMPORT_MAX_NAME_CHARS = 200;
 
 /**
+ * A language code as a file or an AI plan writes it, before it is trimmed: longer than any code the
+ * import's pattern admits (30) with room for spaces (`core/language-codes.ts`).
+ */
+export const SURVEY_IMPORT_MAX_LANGUAGE_CODE_CHARS = 64;
+
+/** Longest note or skip reason from an AI plan the report carries (`core/clean-note.ts`). */
+export const SURVEY_IMPORT_MAX_NOTE_CHARS = 300;
+
+/**
  * The most a draft may weigh. The dialog creates it with `POST /api/v3/surveys`, whose body is capped at
  * `DEFAULT_REQUEST_BODY_LIMIT_BYTES`; 64 KiB less, so a draft the user renames or otherwise touches in
  * the dialog before creating it still fits.
@@ -195,6 +204,30 @@ export const SURVEY_IMPORT_AI_MAX_PARALLEL_CALLS = 4;
 
 /** One call's time budget, before `AI_TIMEOUT_MULTIPLIER`. */
 export const SURVEY_IMPORT_AI_CALL_TIMEOUT_MS = AI_DEFAULT_TIMEOUT_MS;
+
+/** Retries per call after the first attempt: the AI SDK's default `maxRetries` (`core/call-retry.ts`). */
+export const SURVEY_IMPORT_MAX_CALL_RETRIES = 2;
+
+/*
+ * A document import's AI plan (ENG-6852, ENG-6853), sized like the Qualtrics lane's.
+ */
+
+/** One call, system prompt and instructions included. Never sent above this. */
+export const SURVEY_IMPORT_DOCUMENT_MAX_CALL_CHARS = 120_000;
+
+/**
+ * All calls of one import together, system prompts, context and the retry round included: four times
+ * the source budget.
+ */
+export const SURVEY_IMPORT_DOCUMENT_MAX_TOTAL_CHARS = 4 * SURVEY_IMPORT_AI_MAX_SOURCE_CHARS;
+
+/**
+ * Chunks one import may plan: the Qualtrics lane's ceiling (50 chunks, 152 calls, about 70,000 expected
+ * output tokens), so a document costs at most what the costliest Qualtrics import does. It holds 240k
+ * characters of text in lines of a few hundred characters or more; a file that needs more chunks than
+ * this is past the AI ceiling like one past 240k characters, and is refused before any AI call.
+ */
+export const SURVEY_IMPORT_DOCUMENT_MAX_CHUNKS = 50;
 
 /*
  * Creating a reviewed import (`POST /api/internal/surveys/imports`, ENG-6850).

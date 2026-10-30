@@ -1,5 +1,6 @@
 import { classifyAIProviderError } from "@formbricks/ai";
 import { TooManyRequestsError } from "@formbricks/types/errors";
+import { SURVEY_IMPORT_MAX_CALL_RETRIES } from "../limits";
 
 /**
  * The retry policy of the import's plan calls (ENG-3654). The calls are sent with the AI SDK's own
@@ -20,8 +21,6 @@ import { TooManyRequestsError } from "@formbricks/types/errors";
  * ends the call like any other the import could not afford: its questions are dropped as `ai_budget`.
  */
 
-/** Retries per call after the first attempt: the AI SDK's default `maxRetries`. */
-export const SURVEY_IMPORT_MAX_CALL_RETRIES = 2;
 /** The first retry's backoff, doubled for each one after: the AI SDK's own defaults. */
 const INITIAL_BACKOFF_MS = 2_000;
 const BACKOFF_FACTOR = 2;
