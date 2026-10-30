@@ -58,6 +58,12 @@ export const rateLimitConfigs = {
       allowedPerInterval: 10,
       namespace: "api:v3:surveys:visibility",
     }, // 10 per minute per actor — a loop of workspace → restricted must not be able to arm the freshness guard (ENG-3282)
+    v3SurveysFullList: {
+      interval: 60,
+      allowedPerInterval: 30,
+      namespace: "api:v3:surveys:full-list",
+    }, // 30 per minute per principal, on top of v3 — one `view=full` page carries up to 50 whole survey
+    // documents, so 30 pages is 1,500 surveys a minute: ample for an export, far below 100 full pages
     v3CustomCss: {
       interval: 60,
       allowedPerInterval: 60,
