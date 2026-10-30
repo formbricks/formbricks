@@ -5,6 +5,12 @@ export const FORMBRICKS_FILE_INPUT_EXTENSION = ".json";
 
 export const QSF_FILE_EXTENSION = ".qsf";
 
+/**
+ * The files Formbricks AI reads: a Qualtrics export, and a question list from Excel or CSV (ENG-6852).
+ * Word joins them with its reader (ENG-6853).
+ */
+export const AI_FILE_EXTENSIONS: readonly string[] = [QSF_FILE_EXTENSION, ".xlsx", ".csv"];
+
 /** Why the browser refused a file before uploading it. */
 export type TSurveyImportFileError =
   | "file_wrong_extension"
@@ -13,23 +19,27 @@ export type TSurveyImportFileError =
   | "file_too_large";
 
 /**
- * The extensions the drop zone offers: a Formbricks file always, a Qualtrics export only with Formbricks
- * AI, which reads it (ENG-6850).
+ * The extensions the drop zone offers: a Formbricks file always, the files Formbricks AI reads only with
+ * it (ENG-6850).
  */
 export const getSurveyImportFileExtensions = (isAIAvailable: boolean): string[] =>
-  isAIAvailable ? [FORMBRICKS_FILE_INPUT_EXTENSION, QSF_FILE_EXTENSION] : [FORMBRICKS_FILE_INPUT_EXTENSION];
+  isAIAvailable
+    ? [FORMBRICKS_FILE_INPUT_EXTENSION, ...AI_FILE_EXTENSIONS]
+    : [FORMBRICKS_FILE_INPUT_EXTENSION];
 
 /**
  * What the dialog refuses from the file's name and size alone, before uploading it. The name is only a
  * hint for the user's sake: the server tells the type from the bytes and answers anything else itself.
- * Without Formbricks AI, a Qualtrics export is refused as one that needs it.
+ * Without Formbricks AI, a file it would read is refused as one that needs it.
  */
 export const checkSurveyImportFile = (
   file: { name: string; size: number },
   { isAIAvailable }: { isAIAvailable: boolean }
 ): TSurveyImportFileError | null => {
   const name = file.name.toLowerCase();
-  if (!isAIAvailable && name.endsWith(QSF_FILE_EXTENSION)) return "file_needs_ai";
+  if (!isAIAvailable && AI_FILE_EXTENSIONS.some((extension) => name.endsWith(extension))) {
+    return "file_needs_ai";
+  }
   if (!getSurveyImportFileExtensions(isAIAvailable).some((extension) => name.endsWith(extension))) {
     return "file_wrong_extension";
   }

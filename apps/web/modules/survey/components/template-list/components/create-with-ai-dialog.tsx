@@ -7,6 +7,7 @@ import type { TUserLocale } from "@formbricks/types/user";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { cn } from "@/lib/cn";
 import { CreateWithAIForm } from "@/modules/survey/components/template-list/components/create-with-ai-form";
+import { ImportSurveyDialog } from "@/modules/survey/import/components/import-survey-dialog";
 import { AiIcon } from "@/modules/ui/components/ai";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import {
@@ -46,6 +47,7 @@ export const CreateWithAIDialog = ({
   const [hasUnsavedWork, setHasUnsavedWork] = useState(false);
   const [isConfirmingDiscard, setIsConfirmingDiscard] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const promptInputRef = useRef<HTMLTextAreaElement>(null);
 
   const isControlled = open !== undefined;
@@ -79,6 +81,13 @@ export const CreateWithAIDialog = ({
     startEditorNavigationTransition(() => {
       router.push(`/workspaces/${workspaceId}/surveys/${surveyId}/edit`);
     });
+  };
+
+  // A questionnaire the user already has is imported, not described: the hint swaps this dialog for the
+  // Import one. Only offered before anything is generated, so it never discards a draft.
+  const openImportInstead = () => {
+    commitOpenChange(false);
+    setIsImportDialogOpen(true);
   };
 
   const handleOpenAutoFocus = (event: Event) => {
@@ -117,6 +126,17 @@ export const CreateWithAIDialog = ({
           <AiIcon aria-hidden="true" className="text-ai-dark!" />
           <DialogTitle>{t("workspace.surveys.ai_create.dialog_title")}</DialogTitle>
           <DialogDescription>{t("workspace.surveys.ai_create.dialog_description")}</DialogDescription>
+          {hasUnsavedWork ? null : (
+            <p className="text-xs text-slate-500">
+              {t("workspace.surveys.ai_create.import_hint")}{" "}
+              <button
+                type="button"
+                onClick={openImportInstead}
+                className="rounded-sm text-slate-600 underline underline-offset-4 hover:text-slate-800 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:outline-none">
+                {t("workspace.surveys.ai_create.import_hint_link")}
+              </button>
+            </p>
+          )}
         </DialogHeader>
 
         {/* Fixed height, not min-height: the modal reaches its final geometry on first paint and
@@ -149,6 +169,13 @@ export const CreateWithAIDialog = ({
           />
         </DialogBody>
       </DialogContent>
+
+      <ImportSurveyDialog
+        workspaceId={workspaceId}
+        isAIAvailable={isAIAvailable}
+        open={isImportDialogOpen}
+        onOpenChange={setIsImportDialogOpen}
+      />
 
       <ConfirmationModal
         open={isConfirmingDiscard}

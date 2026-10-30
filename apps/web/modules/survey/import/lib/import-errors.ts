@@ -41,6 +41,25 @@ const getImportLimitMessage = (limit: string, t: TTranslate): string => {
   }
 };
 
+/** The dialog's code for a question list past one of the sheet's limits: this prefix, then the limit. */
+export const SURVEY_IMPORT_DOCUMENT_LIMIT_CODE_PREFIX = "document_limit_exceeded:";
+
+/** Which sheet limit a question list is past (`TSurveyImportDocumentLimit`); an unknown one generically. */
+const getDocumentLimitMessage = (limit: string, t: TTranslate): string => {
+  switch (limit) {
+    case "rows":
+      return t("workspace.surveys.import.errors.document_limits.rows");
+    case "columns":
+      return t("workspace.surveys.import.errors.document_limits.columns");
+    case "cell_size":
+      return t("workspace.surveys.import.errors.document_limits.cell_size");
+    case "source_size":
+      return t("workspace.surveys.import.errors.document_limits.source_size");
+    default:
+      return t("workspace.surveys.import.errors.document_limits.other");
+  }
+};
+
 const hasParamIdentifier = (error: V3ApiError, identifier: string): boolean =>
   error.invalid_params?.some((param) => param.identifier === identifier) ?? false;
 
@@ -73,6 +92,11 @@ export const getSurveyImportRequestErrorCode = (error: V3ApiError): string => {
       // Qualtrics export.
       if (hasParam("file_limit_exceeded")) return "file_too_complex";
       if (hasParam("file_unreadable")) return "file_unreadable";
+      // A question list past the sheet's limits, or the AI's, names the limit.
+      const documentLimit = error.invalid_params?.find(
+        (param) => param.code === "document_limit_exceeded"
+      )?.identifier;
+      if (documentLimit) return `${SURVEY_IMPORT_DOCUMENT_LIMIT_CODE_PREFIX}${documentLimit}`;
       const limit = error.invalid_params?.find((param) => param.code === "qsf_limit_exceeded")?.identifier;
       return limit ? `${SURVEY_IMPORT_LIMIT_CODE_PREFIX}${limit}` : "qsf_not_recognized";
     }
@@ -93,6 +117,9 @@ export const getSurveyImportErrorMessage = (
 ): string => {
   if (code.startsWith(SURVEY_IMPORT_LIMIT_CODE_PREFIX)) {
     return getImportLimitMessage(code.slice(SURVEY_IMPORT_LIMIT_CODE_PREFIX.length), t);
+  }
+  if (code.startsWith(SURVEY_IMPORT_DOCUMENT_LIMIT_CODE_PREFIX)) {
+    return getDocumentLimitMessage(code.slice(SURVEY_IMPORT_DOCUMENT_LIMIT_CODE_PREFIX.length), t);
   }
 
   switch (code) {
@@ -136,6 +163,8 @@ export const getSurveyImportErrorMessage = (
       return t("workspace.surveys.import.errors.timed_out");
     case "import_failed":
       return t("workspace.surveys.import.errors.failed");
+    case "import_too_large":
+      return t("workspace.surveys.import.errors.too_many_questions");
     case "too_many_requests":
       return retryAfterSeconds === null
         ? getAiErrorMessage(code, t)

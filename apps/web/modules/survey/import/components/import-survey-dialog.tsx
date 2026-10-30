@@ -26,8 +26,9 @@ type ImportSurveyDialogProps = {
 };
 
 /**
- * Import survey: a Formbricks file, or a Qualtrics export with Formbricks AI. The dialog shell around
- * `ImportSurveyForm`, as Create with AI's; the New survey menu and the templates page open the same one.
+ * Import survey: a Formbricks file, or with Formbricks AI a Qualtrics export or an Excel or CSV question
+ * list (ENG-6852). The dialog shell around `ImportSurveyForm`, as Create with AI's; the New survey menu,
+ * the templates page and Create with AI's import hint open the same one.
  */
 export const ImportSurveyDialog = ({
   workspaceId,
