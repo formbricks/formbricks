@@ -521,7 +521,13 @@ test.describe("Survey overview", () => {
     await expect(page.getByRole("button", { name: "Preview", exact: true })).toBeVisible();
     await expect(page.getByTestId("copy-link")).toBeVisible();
 
+    await page.keyboard.press("Escape");
+
+    // Anyone who can see a survey can export it, so a read-only member's app survey row now has a menu
+    // holding only Export.
     const appRow = tableRow(page, "survey-list-table", appSurveyName);
-    await expect(appRow.locator("[data-testid='survey-dropdown-trigger']")).toHaveCount(0);
+    await appRow.locator("[data-testid='survey-dropdown-trigger']").click();
+    await expect(page.getByTestId("survey-export-submenu")).toBeVisible();
+    await expect(page.getByTestId("copy-link")).toHaveCount(0);
   });
 });
