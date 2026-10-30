@@ -80,17 +80,27 @@ type TExpectedReport = [TSurveyImportReport["summary"], string[]];
 
 /** What each fixture's import must report: the summary, and the issue codes (with causes), sorted. */
 const EXPECTED_REPORTS: Record<TImportableQsfFixture, TExpectedReport> = {
-  "simple.qsf": [{ blocks: 1, questions: 5, languages: ["en-US"], logicRules: 0, hiddenFields: 0 }, []],
+  "simple.qsf": [
+    { blocks: 1, questions: 5, languages: ["en-US"], logicRules: 0, importedLogicRules: 0, hiddenFields: 0 },
+    [],
+  ],
   "multilang-en-de.qsf": [
-    { blocks: 1, questions: 3, languages: ["en-US", "de-DE"], logicRules: 0, hiddenFields: 0 },
+    {
+      blocks: 1,
+      questions: 3,
+      languages: ["en-US", "de-DE"],
+      logicRules: 0,
+      importedLogicRules: 0,
+      hiddenFields: 0,
+    },
     ["ending_added"],
   ],
   "logic-skip-display-branch.qsf": [
-    { blocks: 4, questions: 6, languages: ["en-US"], logicRules: 6, hiddenFields: 1 },
+    { blocks: 4, questions: 6, languages: ["en-US"], logicRules: 6, importedLogicRules: 0, hiddenFields: 1 },
     ["ending_added", ...Array(6).fill("logic_not_imported")],
   ],
   "matrix-slider-ranking.qsf": [
-    { blocks: 3, questions: 8, languages: ["en-US"], logicRules: 0, hiddenFields: 0 },
+    { blocks: 3, questions: 8, languages: ["en-US"], logicRules: 0, importedLogicRules: 0, hiddenFields: 0 },
     [
       "matrix_single_answer",
       "question_skipped:ai_skipped",
@@ -101,24 +111,31 @@ const EXPECTED_REPORTS: Record<TImportableQsfFixture, TExpectedReport> = {
     ],
   ],
   "pages-and-blocks.qsf": [
-    { blocks: 3, questions: 3, languages: ["en-US"], logicRules: 1, hiddenFields: 0 },
+    { blocks: 3, questions: 3, languages: ["en-US"], logicRules: 1, importedLogicRules: 0, hiddenFields: 0 },
     ["ending_added", "logic_not_imported", "question_skipped:not_in_flow"],
   ],
   "embedded-data.qsf": [
-    { blocks: 2, questions: 2, languages: ["en-US"], logicRules: 0, hiddenFields: 4 },
+    { blocks: 2, questions: 2, languages: ["en-US"], logicRules: 0, importedLogicRules: 0, hiddenFields: 4 },
     ["ending_added", ...Array(4).fill("field_renamed"), "piped_text_removed"],
   ],
   "large-150.qsf": [
-    { blocks: 30, questions: 150, languages: ["en-US"], logicRules: 0, hiddenFields: 0 },
+    {
+      blocks: 30,
+      questions: 150,
+      languages: ["en-US"],
+      logicRules: 0,
+      importedLogicRules: 0,
+      hiddenFields: 0,
+    },
     // Fifteen 0–7 sliders: 8 points, which a rating has not, so each becomes a 10-point rating.
     ["ending_added", ...Array(15).fill("scale_changed")],
   ],
   "legacy-object-payload.qsf": [
-    { blocks: 1, questions: 2, languages: ["de-DE"], logicRules: 0, hiddenFields: 0 },
+    { blocks: 1, questions: 2, languages: ["de-DE"], logicRules: 0, importedLogicRules: 0, hiddenFields: 0 },
     ["ending_added"],
   ],
   "nps-and-numeric-scales.qsf": [
-    { blocks: 1, questions: 6, languages: ["en-US"], logicRules: 0, hiddenFields: 0 },
+    { blocks: 1, questions: 6, languages: ["en-US"], logicRules: 0, importedLogicRules: 0, hiddenFields: 0 },
     ["ending_added"],
   ],
   "labels-and-languages.qsf": [
@@ -127,6 +144,7 @@ const EXPECTED_REPORTS: Record<TImportableQsfFixture, TExpectedReport> = {
       questions: 3,
       languages: ["en-US", "de-DE", "zh-Hans-CN", "zh-Hant-TW"],
       logicRules: 0,
+      importedLogicRules: 0,
       hiddenFields: 0,
     },
     [
@@ -139,7 +157,7 @@ const EXPECTED_REPORTS: Record<TImportableQsfFixture, TExpectedReport> = {
     ],
   ],
   "rich-text.qsf": [
-    { blocks: 2, questions: 6, languages: ["en-US"], logicRules: 0, hiddenFields: 1 },
+    { blocks: 2, questions: 6, languages: ["en-US"], logicRules: 0, importedLogicRules: 0, hiddenFields: 1 },
     [
       "field_renamed",
       "formatting_dropped",
@@ -155,11 +173,18 @@ const EXPECTED_REPORTS: Record<TImportableQsfFixture, TExpectedReport> = {
     ],
   ],
   "prompt-injection.qsf": [
-    { blocks: 1, questions: 2, languages: ["en-US"], logicRules: 0, hiddenFields: 0 },
+    { blocks: 1, questions: 2, languages: ["en-US"], logicRules: 0, importedLogicRules: 0, hiddenFields: 0 },
     ["ending_added"],
   ],
   "pollution.qsf": [
-    { blocks: 2, questions: 4, languages: ["en-US", "de-DE"], logicRules: 0, hiddenFields: 6 },
+    {
+      blocks: 2,
+      questions: 4,
+      languages: ["en-US", "de-DE"],
+      logicRules: 0,
+      importedLogicRules: 0,
+      hiddenFields: 6,
+    },
     [
       "choice_dropped:invalid_id",
       "choice_dropped:invalid_id",

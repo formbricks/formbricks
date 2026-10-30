@@ -62,6 +62,20 @@ export const SURVEY_IMPORT_ZIP_MAX_PART_BYTES = 10 * 1024 * 1024;
  */
 export const SURVEY_IMPORT_ZIP_MAX_COMPRESSION_RATIO = 100;
 
+/*
+ * A document import's question list (ENG-6852): the first sheet of a `.xlsx`, or a `.csv`. Past any of
+ * these the file is refused with a 422 naming the limit, before any AI call.
+ */
+
+/** Rows of the sheet or the CSV, empty ones included up to the last one with text. */
+export const SURVEY_IMPORT_SHEET_MAX_ROWS = 5_000;
+
+/** Columns of the sheet or the CSV, up to the last one with text. */
+export const SURVEY_IMPORT_SHEET_MAX_COLUMNS = 100;
+
+/** Characters of one cell or CSV field: Excel's own cap, so only a file not written by Excel is past it. */
+export const SURVEY_IMPORT_SHEET_MAX_CELL_CHARS = 32_767;
+
 /**
  * Imports one server process runs at once. The request budget is checked on the raw text before it is
  * parsed, so nesting and long arrays never reach `JSON.parse` (15.5 MiB of `[[[…]]]` would retain about

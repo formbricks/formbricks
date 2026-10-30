@@ -20,7 +20,7 @@ export type TSurveyImportFile =
   | { type: "formbricks"; json: Record<string, unknown> }
   | { type: "qsf"; json: Record<string, unknown> }
   | { type: "docx"; archive: TZipArchive }
-  | { type: "xlsx"; archive: TZipArchive }
+  | { type: "xlsx"; archive: TZipArchive; bytes: Uint8Array }
   | { type: "csv"; text: string };
 
 /** A local file header, or the end record of an empty archive. */
@@ -47,7 +47,7 @@ const sniffArchive = (bytes: Uint8Array): TSurveyImportFile => {
   const isExcel = archive.names.some((name) => name.startsWith("xl/"));
 
   if (isWord && !isExcel) return { type: "docx", archive };
-  if (isExcel && !isWord) return { type: "xlsx", archive };
+  if (isExcel && !isWord) return { type: "xlsx", archive, bytes };
   throw unsupported();
 };
 

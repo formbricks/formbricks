@@ -1,5 +1,6 @@
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import type {
+  TSurveyImportDocumentLimit,
   TSurveyImportFileLimit,
   TSurveyImportLimit,
   TSurveyImportProblemCode,
@@ -13,6 +14,7 @@ export type TSurveyImportInvalidParam = InvalidParam &
     | { code: "file_type_unsupported"; identifier?: TSurveyImportUnsupportedFile }
     | { code: "file_limit_exceeded"; identifier: TSurveyImportFileLimit }
     | { code: "qsf_limit_exceeded"; identifier: TSurveyImportLimit }
+    | { code: "document_limit_exceeded"; identifier: TSurveyImportDocumentLimit }
   );
 
 /**
@@ -81,7 +83,11 @@ export class SurveyImportInputError extends Error {
  * and nothing here quotes the file.
  */
 export class SurveyImportFailedError extends Error {
-  readonly reason: "no_questions" | "prompt_budget" | "draft_invalid";
+  /**
+   * `too_many_questions`: a document's plan holds more questions than one import takes, the AI ceiling
+   * past which the file is imported through MCP instead.
+   */
+  readonly reason: "no_questions" | "prompt_budget" | "draft_invalid" | "too_many_questions";
 
   constructor(reason: SurveyImportFailedError["reason"]) {
     super(`The survey import failed: ${reason}`);

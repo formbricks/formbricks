@@ -26,6 +26,7 @@ import {
 } from "@/modules/survey/import/core/errors";
 import type { TSurveyImportLane, TSurveyImportResult } from "@/modules/survey/import/core/lane";
 import { type TSurveyImportFile, sniffSurveyImportFile } from "@/modules/survey/import/core/sniff";
+import { csvImportLane, excelImportLane } from "@/modules/survey/import/document/lane";
 import { formbricksFileImportLane } from "@/modules/survey/import/formbricks/lane";
 import { SURVEY_IMPORT_DEADLINE_MS, SURVEY_IMPORT_MAX_FILE_BYTES } from "@/modules/survey/import/limits";
 import { qsfImportLane } from "@/modules/survey/import/qsf/lane";
@@ -104,7 +105,8 @@ const readUpload = async (file: File): Promise<TSurveyImportFile> => {
  * ENG-6848). Every file type comes in the same way: the route's wrapper has already authenticated,
  * charged the default v3 bucket, taken a concurrency slot and read the multipart body within its byte
  * limit. Here the workspace is checked first, then the file is read and its type told from its content,
- * and the file goes to its type's lane. A type the import recognizes but has no lane for yet is a 415.
+ * and the file goes to its type's lane: a Formbricks file, a Qualtrics export, or a question list from
+ * Excel or CSV (ENG-6852). A type the import recognizes but has no lane for yet (Word) is a 415.
  *
  * Nothing is written: the dialog shows the draft for review and creates it with
  * `POST /api/v3/surveys?createdFrom=import`, or a Formbricks file with its references through
@@ -174,6 +176,18 @@ export async function streamSurveyImport({
           organizationId,
           authentication,
         },
+      });
+    case "xlsx":
+      return runSurveyImportLane({
+        ...lane,
+        lane: excelImportLane,
+        input: { type: "xlsx", bytes: upload.bytes, archive: upload.archive, fileName },
+      });
+    case "csv":
+      return runSurveyImportLane({
+        ...lane,
+        lane: csvImportLane,
+        input: { type: "csv", text: upload.text, fileName },
       });
     default:
       return problemUnsupportedMediaType(requestId, "This kind of file cannot be imported yet", {

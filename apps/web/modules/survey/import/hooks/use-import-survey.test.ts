@@ -40,7 +40,14 @@ vi.mock("@/modules/survey/import/lib/survey-imports-client", () => ({
 
 const report = {
   source: { kind: "qsf" as const, fileName: "survey.qsf" },
-  summary: { blocks: 1, questions: 1, languages: ["en-US"], logicRules: 0, hiddenFields: 0 },
+  summary: {
+    blocks: 1,
+    questions: 1,
+    languages: ["en-US"],
+    logicRules: 0,
+    importedLogicRules: 0,
+    hiddenFields: 0,
+  },
   issues: [],
 };
 

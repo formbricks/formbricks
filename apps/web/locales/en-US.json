@@ -3870,6 +3870,8 @@
         "edit_prompt": "Edit prompt",
         "generated_payload_invalid": "The survey draft could not be validated. Try adding more detail.",
         "generation_failed": "The draft could not be finished. Try again, or add a bit more detail.",
+        "import_hint": "Have a questionnaire in Word, Excel or CSV?",
+        "import_hint_link": "Import it instead.",
         "keep_editing": "Keep editing",
         "nothing_generated": "No questions came back. Try describing the survey in a bit more detail.",
         "open_in_editor": "Save and continue",
@@ -4709,26 +4711,33 @@
         "partial_responses": "Partial responses"
       },
       "import": {
-        "ai_note": "Qualtrics exports are read with Formbricks AI. Their logic is not imported; the report lists every rule.",
-        "card_description": "Turn a Formbricks file or a Qualtrics export into a draft survey.",
+        "ai_note": "Qualtrics, Excel and CSV files are read with Formbricks AI. Every text comes from the file word for word.",
+        "card_description": "Turn a Formbricks file, a Qualtrics export or an Excel or CSV question list into a draft survey.",
         "card_title": "Import survey",
-        "dialog_description": "Bring in a Formbricks file or a Qualtrics export. You review the draft before anything is created.",
+        "dialog_description": "Bring in a Formbricks file, a Qualtrics export or a question list from Excel or CSV. You review the draft before anything is created.",
         "dialog_title": "Import a survey",
         "discard_draft_body": "The imported draft has not been opened in the editor yet. Closing will discard it.",
         "discard_draft_title": "Discard this import?",
         "discard_import_body": "The file is still being imported. Closing will stop the import.",
         "discard_import_title": "Stop importing?",
-        "dropzone_help": "Formbricks file (.json) or Qualtrics export (.qsf), up to 15 MB",
+        "dropzone_help": "Formbricks file (.json), Qualtrics export (.qsf), Excel (.xlsx) or CSV (.csv), up to 15 MB",
         "dropzone_help_json_only": "Formbricks file (.json), up to 15 MB",
         "dropzone_primary": "Drop a file here or click to choose one",
         "errors": {
           "ai_busy": "The AI provider is busy. Try again in {seconds, plural, one {# second} other {# seconds}}.",
           "already_importing": "You already have an import running. Wait for it to finish, then try again.",
           "busy": "Formbricks is busy with other imports. Try again in a few seconds.",
+          "document_limits": {
+            "cell_size": "A cell in this file holds more text than the import can read.",
+            "columns": "A row in this file has more than 100 columns. Remove the columns the survey does not need and import it again.",
+            "other": "This file is past one of the import limits.",
+            "rows": "This file has more than 5,000 rows. Split it into smaller files and import each one.",
+            "source_size": "This file is too large for Formbricks AI to import in one go. Import it with Claude or ChatGPT through MCP instead."
+          },
           "empty_file": "This file is empty.",
           "failed": "The import failed. Try again.",
           "file_too_large": "This file is larger than 15 MB.",
-          "file_type_unsupported": "This kind of file cannot be imported. Choose a Formbricks file (.json) or a Qualtrics export (.qsf).",
+          "file_type_unsupported": "This kind of file cannot be imported. Choose a Formbricks file (.json), a Qualtrics export (.qsf), or an Excel (.xlsx) or CSV (.csv) question list.",
           "formbricks_file_invalid": "This Formbricks file has problems. Fix them and import it again:",
           "formbricks_file_too_new": "This file was exported from a newer version of Formbricks. Update Formbricks, then import it again.",
           "limits": {
@@ -4747,7 +4756,7 @@
             "texts": "This survey has more texts than the import can read."
           },
           "more_problems": "{count, plural, one {# more problem} other {# more problems}}",
-          "needs_ai": "Qualtrics exports are read with Formbricks AI, which your organization does not have. Choose a Formbricks file (.json).",
+          "needs_ai": "Qualtrics, Excel and CSV files are read with Formbricks AI, which your organization does not have. Choose a Formbricks file (.json).",
           "not_a_qsf": "This is not a Qualtrics survey export. In Qualtrics, export the survey as a .qsf file and try again.",
           "not_allowed": "You do not have permission to import surveys into this workspace.",
           "rate_limited": "Too many requests. Try again in {seconds, plural, one {# second} other {# seconds}}.",
@@ -4758,14 +4767,16 @@
           "survey_too_large": "The survey in this file is too large to import.",
           "timed_out": "The import took too long and was stopped. Try again, or split the survey into smaller ones.",
           "too_complex": "This file is too large or too complex to import. Split the survey into smaller ones and try again.",
+          "too_many_questions": "This survey has more than 200 questions, more than one import can build. Import it with Claude or ChatGPT through MCP instead.",
           "unreadable": "This file could not be read. Export it again and try once more.",
-          "wrong_extension": "Choose a Formbricks file (.json) or a Qualtrics export (.qsf)."
+          "wrong_extension": "Choose a Formbricks file (.json), a Qualtrics export (.qsf), or an Excel (.xlsx) or CSV (.csv) question list."
         },
         "facts": {
           "blocks": "{count, plural, one {# block} other {# blocks}}",
           "hidden_fields": "{count, plural, one {# hidden field} other {# hidden fields}}",
           "label": "Import summary",
           "logic_not_imported": "{count, plural, one {# logic rule not imported} other {# logic rules not imported}}",
+          "logic_to_check": "{count, plural, one {# logic rule to check} other {# logic rules to check}}",
           "questions": "{count, plural, one {# question} other {# questions}}"
         },
         "issues": {
@@ -4788,6 +4799,8 @@
           "language_skipped_duplicate": "Translations under \"{code}\" were left out: the file already has {language} under another code.",
           "language_skipped_too_large": "Language \"{code}\" was left out: the survey was too large to create with every language.",
           "language_skipped_unnamed": "A language with no Formbricks equivalent was left out.",
+          "logic_imported": "Logic imported from the file. Check it in the editor: {description}",
+          "logic_imported_no_description": "Logic imported from the file. Check it in the editor.",
           "logic_not_imported": "Logic not imported: {description}",
           "logic_not_imported_no_description": "Logic not imported.",
           "markup_escaped": "Text that would have shown as HTML is shown as typed.",
@@ -4809,8 +4822,10 @@
           "question_skipped_validation_failed": "Question skipped: the converted question did not pass the survey checks.",
           "scale_changed": "The scale changed from {from} to {to} points: a Formbricks rating has 3, 4, 5, 6, 7 or 10.",
           "script_dropped": "A script was removed from the text.",
+          "sheets_skipped": "Only the first sheet was read. Not read: {sheets}.",
           "targeting_filter_removed": "{count, plural, one {# targeting filter was} other {# targeting filters were}} removed: segments and surveys in filters belong to the workspace the file came from.",
           "targeting_removed": "Targeting was removed: contact targeting is not on your plan.",
+          "text_not_split": "The question and its options in cell {cell} could not be told apart word for word, so the whole cell is the question. Fix it in the editor.",
           "text_too_long": "A text was too long to import and was left out.",
           "translation_missing": "{count, plural, one {# text is} other {# texts are}} missing in {language}, so the language is turned off. Add the missing texts in the editor, then turn it on.",
           "unknown": "Something in this question was changed during the import.",
@@ -4844,7 +4859,7 @@
         "menu_item": "Import survey",
         "pick_another_file": "Pick another file",
         "progress": {
-          "ai": "Mapping questions with AI",
+          "ai": "Building questions with AI",
           "assembling": "Building the draft",
           "reading": "Reading the file"
         },

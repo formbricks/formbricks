@@ -182,6 +182,16 @@ export const getQsfImportIssueMessage = (issue: TSurveyImportIssue, t: TTranslat
       return t("workspace.surveys.import.issues.attribute_key_created", { key: param(issue, "key") });
     case "content_only":
       return t("workspace.surveys.import.issues.content_only");
+    case "logic_imported": {
+      const description = param(issue, "description");
+      return description
+        ? t("workspace.surveys.import.issues.logic_imported", { description })
+        : t("workspace.surveys.import.issues.logic_imported_no_description");
+    }
+    case "text_not_split":
+      return t("workspace.surveys.import.issues.text_not_split", { cell: param(issue, "cell") });
+    case "sheets_skipped":
+      return t("workspace.surveys.import.issues.sheets_skipped", { sheets: param(issue, "sheets") });
     case "question_removed": {
       const headline = param(issue, "headline");
       return headline
@@ -241,6 +251,9 @@ export const getQsfImportFacts = (summary: TSurveyImportReport["summary"], t: TT
   if (summary.hiddenFields > 0) {
     facts.push(t("workspace.surveys.import.facts.hidden_fields", { count: summary.hiddenFields }));
   }
+  if (summary.importedLogicRules > 0) {
+    facts.push(t("workspace.surveys.import.facts.logic_to_check", { count: summary.importedLogicRules }));
+  }
   if (summary.logicRules > 0) {
     facts.push(t("workspace.surveys.import.facts.logic_not_imported", { count: summary.logicRules }));
   }
@@ -270,6 +283,6 @@ export const formatQsfImportReport = (report: TSurveyImportReport, t: TTranslate
   return `${lines.join("\n")}\n`;
 };
 
-/** `survey.qsf` or `survey.formbricks.json` → `survey-import-report.txt`. */
+/** `survey.qsf`, `survey.formbricks.json` or `survey.xlsx` → `survey-import-report.txt`. */
 export const getQsfImportReportFileName = (fileName: string): string =>
-  `${fileName.replace(/(?:\.qsf|\.formbricks\.json|\.json)$/i, "") || "survey"}-import-report.txt`;
+  `${fileName.replace(/(?:\.qsf|\.formbricks\.json|\.json|\.xlsx|\.csv)$/i, "") || "survey"}-import-report.txt`;

@@ -15,7 +15,14 @@ const t = (key: string, options?: Record<string, unknown>) =>
 
 const report = (issues: TSurveyImportReport["issues"]): TSurveyImportReport => ({
   source: { kind: "qsf", fileName: "Customer survey.qsf" },
-  summary: { blocks: 2, questions: 12, languages: ["en-US", "de-DE"], logicRules: 3, hiddenFields: 1 },
+  summary: {
+    blocks: 2,
+    questions: 12,
+    languages: ["en-US", "de-DE"],
+    logicRules: 3,
+    importedLogicRules: 0,
+    hiddenFields: 1,
+  },
   issues,
 });
 
@@ -122,6 +129,35 @@ describe("getQsfImportIssueLine", () => {
     expect(
       getQsfImportIssueLine({ code: "logic_not_imported", severity: "warning", questionTag: "Q4" }, t)
     ).toBe("Q4: logic_not_imported_no_description");
+  });
+
+  test("flags each imported logic rule for checking, and names a cell imported whole and the sheets skipped", () => {
+    expect(
+      getQsfImportIssueLine(
+        {
+          code: "logic_imported",
+          severity: "warning",
+          questionTag: "10",
+          params: { description: "Skip to 18" },
+        },
+        t
+      )
+    ).toBe('10: logic_imported {"description":"Skip to 18"}');
+    expect(getQsfImportIssueLine({ code: "logic_imported", severity: "warning", questionTag: "10" }, t)).toBe(
+      "10: logic_imported_no_description"
+    );
+    expect(
+      getQsfImportIssueLine(
+        { code: "text_not_split", severity: "warning", questionTag: "01", params: { cell: "C3" } },
+        t
+      )
+    ).toBe('01: text_not_split {"cell":"C3"}');
+    expect(
+      getQsfImportIssueLine(
+        { code: "sheets_skipped", severity: "info", params: { sheets: "Notes, Archive", count: 2 } },
+        t
+      )
+    ).toBe('sheets_skipped {"sheets":"Notes, Archive"}');
   });
 
   test("names the languages whose ending shows a stand-in", () => {
@@ -308,8 +344,24 @@ describe("getQsfImportFacts", () => {
     ]);
   });
 
+  test("counts the logic rules imported, to check, before the ones left out", () => {
+    const summary = { ...report([]).summary, importedLogicRules: 5 };
+
+    expect(getQsfImportFacts(summary, t).slice(-2)).toEqual([
+      'logic_to_check {"count":5}',
+      'logic_not_imported {"count":3}',
+    ]);
+  });
+
   test("leaves out hidden fields and logic when there are none", () => {
-    const summary = { blocks: 1, questions: 1, languages: [], logicRules: 0, hiddenFields: 0 };
+    const summary = {
+      blocks: 1,
+      questions: 1,
+      languages: [],
+      logicRules: 0,
+      importedLogicRules: 0,
+      hiddenFields: 0,
+    };
 
     expect(getQsfImportFacts(summary, t)).toEqual(['questions {"count":1}', 'blocks {"count":1}']);
   });
@@ -365,6 +417,8 @@ describe("getQsfImportReportFileName", () => {
     [".qsf", "survey-import-report.txt"],
     ["Onboarding NPS.formbricks.json", "Onboarding NPS-import-report.txt"],
     ["edited.json", "edited-import-report.txt"],
+    ["Visitor Survey.xlsx", "Visitor Survey-import-report.txt"],
+    ["list.CSV", "list-import-report.txt"],
   ])("names %s's report %s", (fileName, expected) => {
     expect(getQsfImportReportFileName(fileName)).toBe(expected);
   });

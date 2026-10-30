@@ -1,5 +1,6 @@
 import { APICallError } from "ai";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import * as XLSX from "xlsx";
 import { OperationNotAllowedError, TooManyRequestsError } from "@formbricks/types/errors";
 import {
   V3_REQUEST_ARRAY_MAX_ITEMS,
@@ -14,6 +15,7 @@ import type { TSurveyImportLane, TSurveyImportResult } from "@/modules/survey/im
 import {
   SURVEY_IMPORT_DEADLINE_MS,
   SURVEY_IMPORT_MAX_FILE_BYTES,
+  SURVEY_IMPORT_SHEET_MAX_COLUMNS,
   SURVEY_IMPORT_ZIP_MAX_ENTRIES,
 } from "@/modules/survey/import/limits";
 import type { TRunQsfImportParams } from "@/modules/survey/import/qsf/pipeline";
@@ -27,6 +29,7 @@ const mocks = vi.hoisted(() => ({
   runQsfImport: vi.fn(),
   prepareQsfImport: vi.fn(),
   previewFormbricksFileImport: vi.fn(),
+  runDocumentImport: vi.fn(),
   findFormbricksFileMatch: vi.fn(),
   realPrepareQsfImport:
     undefined as unknown as typeof import("@/modules/survey/import/qsf/pipeline").prepareQsfImport,
@@ -67,6 +70,12 @@ vi.mock("@/modules/survey/import/qsf/pipeline", async (importOriginal) => {
   mocks.realPrepareQsfImport = original.prepareQsfImport;
   return { ...original, prepareQsfImport: mocks.prepareQsfImport, runQsfImport: mocks.runQsfImport };
 });
+// The document lanes' readers run; their AI-backed part, and its naming against the database, is the
+// integration suite's.
+vi.mock("@/modules/survey/import/document/pipeline", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/survey/import/document/pipeline")>()),
+  runDocumentImport: mocks.runDocumentImport,
+}));
 // The Formbricks file lane's preview reads the database; its seam is the integration suite.
 vi.mock("@/modules/survey/formbricks-file/import", () => ({
   previewFormbricksFileImport: mocks.previewFormbricksFileImport,
@@ -79,6 +88,13 @@ vi.mock("@formbricks/logger", () => ({
 }));
 
 const INSTANCE = "/api/internal/surveys/import/stream";
+
+/** A one-sheet workbook of text rows, as Excel would save it. */
+const xlsxOf = (rows: string[][]): Uint8Array<ArrayBuffer> => {
+  const book = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(book, XLSX.utils.aoa_to_sheet(rows), "Sheet1");
+  return new Uint8Array(XLSX.write(book, { type: "buffer", bookType: "xlsx" }) as Buffer);
+};
 
 /** A marker that must never reach a log line or an error event: it stands for the file's questions. */
 const FILE_CONTENT_MARKER = "Q1-secret-wording-from-the-file";
@@ -104,7 +120,14 @@ const importResult: TSurveyImportResult = {
   payload: { workspaceId: body.workspaceId, name: "Onboarding (imported)" } as never,
   report: {
     source: { kind: "qsf", fileName: "onboarding.qsf" },
-    summary: { blocks: 1, questions: 1, languages: ["en-US"], logicRules: 0, hiddenFields: 0 },
+    summary: {
+      blocks: 1,
+      questions: 1,
+      languages: ["en-US"],
+      logicRules: 0,
+      importedLogicRules: 0,
+      hiddenFields: 0,
+    },
     issues: [],
   },
   usage: { inputTokens: 1200, outputTokens: 300 },
@@ -471,18 +494,23 @@ describe("streamSurveyImport", () => {
     });
 
     test(`takes a file of ${SURVEY_IMPORT_MAX_FILE_BYTES} bytes and refuses one more with a 413 naming the limit`, async () => {
-      // Text of exactly the limit passes the size check and reaches the type check (a CSV, no lane yet).
-      const atLimit = await importFile(upload("x".repeat(SURVEY_IMPORT_MAX_FILE_BYTES)));
+      // Text of exactly the limit passes the size check and reaches the CSV reader, which refuses its one
+      // cell as past the sheet's own limit.
       const overLimit = await importFile(upload("x".repeat(SURVEY_IMPORT_MAX_FILE_BYTES + 1)));
+      // Refused before anything else: not even the upload's type, so no lane's budget is charged.
+      expect(mocks.applyRateLimit).not.toHaveBeenCalled();
+      const atLimit = await importFile(upload("x".repeat(SURVEY_IMPORT_MAX_FILE_BYTES)));
 
-      expect(atLimit.status).toBe(415);
+      expect(atLimit.status).toBe(422);
+      expect((await problemOf(atLimit)).invalid_params).toEqual([
+        expect.objectContaining({ code: "document_limit_exceeded", identifier: "cell_size" }),
+      ]);
       expect(overLimit.status).toBe(413);
       const problem = await problemOf(overLimit);
       expect(problem.detail).toBe(`The file must not exceed ${SURVEY_IMPORT_MAX_FILE_BYTES} bytes`);
       expect(problem.invalid_params).toEqual([
         expect.objectContaining({ name: "file", code: "file_limit_exceeded", identifier: "file_size" }),
       ]);
-      expect(mocks.applyRateLimit).not.toHaveBeenCalled();
     });
 
     test("refuses a .doc or .xls with a 415 that says to save it as .docx or .xlsx, before any AI", async () => {
@@ -502,11 +530,9 @@ describe("streamSurveyImport", () => {
       expect(mocks.assertOrganizationAIConfigured).not.toHaveBeenCalled();
     });
 
-    test.each([
-      ["a .docx", () => zipOf({ "word/document.xml": "<w:document/>" }), "docx"],
-      ["a .xlsx", () => zipOf({ "xl/workbook.xml": "<workbook/>" }), "xlsx"],
-      ["a CSV", () => "Question,Type\nHow satisfied are you?,rating\n", "csv"],
-    ])("recognizes %s and says it cannot be imported yet, with a 415", async (_label, content, type) => {
+    test("recognizes a .docx and says it cannot be imported yet, with a 415", async () => {
+      const content = () => zipOf({ "word/document.xml": "<w:document/>" });
+      const type = "docx";
       const response = await importFile(upload(content()));
 
       expect(response.status).toBe(415);
@@ -516,6 +542,55 @@ describe("streamSurveyImport", () => {
         expect.objectContaining({ name: "file", code: "file_type_unsupported", identifier: type }),
       ]);
       expect(mocks.runQsfImport).not.toHaveBeenCalled();
+      expect(mocks.runDocumentImport).not.toHaveBeenCalled();
+    });
+
+    test.each([
+      [
+        "a .xlsx",
+        () =>
+          xlsxOf([
+            ["ID", "Question"],
+            ["Q1", "How satisfied are you?"],
+          ]),
+        "xlsx",
+      ],
+      ["a CSV", () => "ID;Question\nQ1;How satisfied are you?\n", "csv"],
+    ])(
+      "reads %s into its document lane, charged to Create with AI's bucket behind the AI gate",
+      async (_label, content, kind) => {
+        mocks.runDocumentImport.mockResolvedValue({
+          ...importResult,
+          report: { ...importResult.report, source: { kind, fileName: "list" } },
+          references: { actionClasses: [], attributeKeys: [], embeddedFields: [] },
+        });
+
+        const response = await importFile(upload(content(), "list"));
+
+        expect(response.status).toBe(200);
+        expect((await readEvents(response)).at(-1)).toMatchObject({ type: "done" });
+        expect(mocks.applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.api.v3SurveyGenerate, "user_1");
+        expect(mocks.assertOrganizationAIConfigured).toHaveBeenCalledTimes(1);
+        const [{ prepared }] = mocks.runDocumentImport.mock.calls[0] as [
+          { prepared: { model: { kind: string; cells: Map<string, string> } } },
+        ];
+        expect(prepared.model.kind).toBe(kind);
+        expect(prepared.model.cells.get("B2")).toBe("How satisfied are you?");
+      }
+    );
+
+    test("answers a sheet past the sheet limits with a 422 naming the limit, before any AI", async () => {
+      const wide = xlsxOf([
+        Array.from({ length: SURVEY_IMPORT_SHEET_MAX_COLUMNS + 1 }, (_, index) => `c${index}`),
+      ]);
+
+      const response = await importFile(upload(wide, "wide.xlsx"));
+
+      expect(response.status).toBe(422);
+      expect((await problemOf(response)).invalid_params).toEqual([
+        expect.objectContaining({ code: "document_limit_exceeded", identifier: "columns" }),
+      ]);
+      expect(mocks.runDocumentImport).not.toHaveBeenCalled();
     });
 
     test("answers a .docx past the zip limits with a 413 naming the limit", async () => {

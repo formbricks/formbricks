@@ -11,6 +11,8 @@ import type {
 export const SURVEY_IMPORT_STREAM_ERROR_CODES = {
   ...AI_STREAM_FAILURE_CODES,
   TIMED_OUT: "import_timed_out",
+  /** A document whose plan holds more questions than one import takes: the dialog points at MCP. */
+  TOO_LARGE: "import_too_large",
   FAILED: "import_failed",
 } as const;
 

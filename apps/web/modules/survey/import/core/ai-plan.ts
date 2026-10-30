@@ -127,8 +127,11 @@ export interface TImportPlanLane<TFailure extends string, TPlan extends TImportC
     refs: readonly string[],
     failures?: ReadonlyMap<string, readonly (TFailure | TImportCallFailure)[]>
   ) => string;
-  /** One round of answers, checked: every unit asked about is placed, skipped or failed with why. */
-  check: (responses: TImportPlanResponse[]) => TPlan;
+  /**
+   * One round of answers, checked: every unit asked about is placed, skipped or failed with why.
+   * `retry` is set on the retry round, the last chance a unit gets.
+   */
+  check: (responses: TImportPlanResponse[], round: { retry: boolean }) => TPlan;
   /** The retry round's verdicts over the first round's. */
   merge: (first: TPlan, retry: TPlan) => TPlan;
   /** One call's characters, system prompt included. Never sent above this. */
@@ -381,7 +384,7 @@ async function planRound<TFailure extends string, TPlan extends TImportCheckedPl
     abort
   );
 
-  const plan = context.lane.check(responses);
+  const plan = context.lane.check(responses, { retry: failures !== undefined });
   for (const [ref, reasons] of failed) plan.failures.set(ref, reasons);
   return plan;
 }

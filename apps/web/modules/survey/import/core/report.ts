@@ -35,6 +35,7 @@ export function buildSurveyImportReport(params: {
       questions: document.blocks.reduce((count, block) => count + block.elements.length, 0),
       languages: document.languages.map((language) => language.code),
       logicRules: issues.filter((issue) => issue.code === "logic_not_imported").length,
+      importedLogicRules: issues.filter((issue) => issue.code === "logic_imported").length,
       hiddenFields: document.hiddenFields.fieldIds.length,
     },
     // The question ids are the import's own bookkeeping, not part of the report.

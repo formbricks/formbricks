@@ -1,3 +1,4 @@
+import type { TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import type {
   TSurveyDateElement,
   TSurveyOpenTextElementInputType,
@@ -57,6 +58,9 @@ export type TSurveyImportDraftElement = TDraftElementBase &
         scale: TSurveyRatingElement["scale"];
         range: number;
         isColorCodingEnabled: false;
+        /** The scale's end labels, when the file names them (a document import's). */
+        lowerLabel?: TSurveyImportLocaleText;
+        upperLabel?: TSurveyImportLocaleText;
       }
     | { type: "date"; format: TSurveyDateElement["format"] }
     | { type: "fileUpload"; allowMultipleFiles: false }
@@ -68,6 +72,18 @@ export type TSurveyImportDraftElement = TDraftElementBase &
 export type TSurveyImportDraftEnding =
   | { id: string; type: "endScreen"; headline: TSurveyImportLocaleText; subheader?: TSurveyImportLocaleText }
   | { id: string; type: "redirectToUrl"; url: string; label: string };
+
+/**
+ * A block of the draft. Only a document import writes logic (ENG-6852): its routing, turned into jumps
+ * whose conditions name elements and choices by the draft's own ids.
+ */
+export interface TSurveyImportDraftBlock {
+  id: string;
+  name: string;
+  elements: TSurveyImportDraftElement[];
+  logic?: TSurveyBlockLogic[];
+  logicFallback?: string;
+}
 
 /**
  * The create document the import builds: what the stream's `done` event carries, and what the dialog
@@ -82,8 +98,10 @@ export interface TSurveyImportDraft {
   status: "draft";
   defaultLanguage: string;
   languages: { code: string; default: boolean; enabled: boolean }[];
-  blocks: { id: string; name: string; elements: TSurveyImportDraftElement[] }[];
+  blocks: TSurveyImportDraftBlock[];
   endings: TSurveyImportDraftEnding[];
+  /** The welcome card, when the file has one (a document import's welcome text). */
+  welcomeCard?: { enabled: true; headline: TSurveyImportLocaleText; subheader?: TSurveyImportLocaleText };
   hiddenFields: { enabled: boolean; fieldIds: string[] };
   /**
    * Set, both true, on a draft in more than one language: an imported multi-language survey shows its

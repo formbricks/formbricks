@@ -19,6 +19,7 @@ describe("buildSurveyImportReport", () => {
       issues: [
         { code: "logic_not_imported", severity: "warning" },
         { code: "logic_not_imported", severity: "warning" },
+        { code: "logic_imported", severity: "info" },
         { code: "formatting_dropped", severity: "info" },
       ],
     });
@@ -29,9 +30,10 @@ describe("buildSurveyImportReport", () => {
       questions: 3,
       languages: ["en-US", "de-DE"],
       logicRules: 2,
+      importedLogicRules: 1,
       hiddenFields: 2,
     });
-    expect(report.issues).toHaveLength(3);
+    expect(report.issues).toHaveLength(4);
   });
 
   test("leaves the import's own question ids out of the report", () => {

@@ -5,10 +5,11 @@
  */
 
 /**
- * The kind of file an import read, one per lane: `qsf` is a Qualtrics export. The report's `source`
- * names it, so the dialog can say what was read.
+ * The kind of file an import read, one per lane: `qsf` is a Qualtrics export, `formbricks` a Formbricks
+ * file, `xlsx` and `csv` a question list read as a document (ENG-6852). The report's `source` names it,
+ * so the dialog can say what was read.
  */
-export type TSurveyImportSourceKind = "qsf" | "formbricks";
+export type TSurveyImportSourceKind = "qsf" | "formbricks" | "xlsx" | "csv";
 
 /**
  * What the import is doing, sent as a `progress` event. The dialog maps each to a line in its progress
@@ -77,6 +78,16 @@ export type TSurveyImportStage = "reading" | "ai" | "assembling";
  *   names, the workspace did not have and the import creates (`params.name`, `params.key`)
  * - `content_only` — the note that styling, settings, follow-ups and quotas are not part of the file
  *
+ * A document import's (ENG-6852):
+ *
+ * - `logic_imported` — one per rule the import turned into survey logic, for the user to check;
+ *   `params.description` is the AI's note on the rule, plain text, when it gave one
+ * - `logic_not_imported` — as above, for a routing rule the import could not turn into logic: it names a
+ *   question or an answer the draft does not have, or one Formbricks logic cannot test
+ * - `text_not_split` — a cell whose question and options could not be told apart word for word, imported
+ *   whole as the question's text (`params.cell`)
+ * - `sheets_skipped` — the workbook's other sheets, which an import never reads (`params.sheets`)
+ *
  * An Update's own (ENG-6851), in `TSurveyImportMatch.issues`, for a matched survey that has responses:
  *
  * - `question_removed` — a question the survey has and the file does not; its answers stop showing in
@@ -113,6 +124,12 @@ export type TSurveyImportFileType = "formbricks" | "qsf" | "docx" | "xlsx" | "cs
  * - `file_unreadable` (422) — the file is the kind it looks like, but broken: an empty file, a damaged
  *   or encrypted archive, JSON that does not parse.
  *
+ * A document import's (422, ENG-6852):
+ *
+ * - `document_limit_exceeded` — the sheet or CSV is past one of the import's limits, named in the
+ *   param's `identifier` (`TSurveyImportDocumentLimit`). `source_size` is the AI ceiling: such a file
+ *   is imported through MCP instead.
+ *
  * The Qualtrics lane's (422):
  *
  * - `qsf_not_recognized` — the file is not a Qualtrics export the import can read: the envelope is
@@ -126,7 +143,8 @@ export type TSurveyImportRefusalCode =
   | "file_limit_exceeded"
   | "file_unreadable"
   | "qsf_not_recognized"
-  | "qsf_limit_exceeded";
+  | "qsf_limit_exceeded"
+  | "document_limit_exceeded";
 
 /**
  * The problem codes of an import's 422s that are not about the upload itself: a Formbricks file that is
@@ -158,6 +176,12 @@ export type TSurveyImportFileLimit =
   | "array_elements"
   | "nesting_depth"
   | "survey_size";
+
+/**
+ * The limit a `document_limit_exceeded` param is about, in its `identifier`: the sheet's or CSV's rows,
+ * columns and characters in one cell, and the text the AI would read, all cells together.
+ */
+export type TSurveyImportDocumentLimit = "rows" | "columns" | "cell_size" | "source_size";
 
 /** The limit a `qsf_limit_exceeded` param is about, in its `identifier`. */
 export type TSurveyImportLimit =
@@ -203,6 +227,9 @@ export type TSurveyImportIssueCode =
   | "action_class_created"
   | "attribute_key_created"
   | "content_only"
+  | "logic_imported"
+  | "text_not_split"
+  | "sheets_skipped"
   | "question_removed"
   | "option_removed";
 
@@ -229,7 +256,10 @@ export interface TSurveyImportReport {
     questions: number;
     /** BCP-47 codes, default language first. */
     languages: string[];
+    /** Logic rules the file has and the import could not bring over. */
     logicRules: number;
+    /** Logic rules the import turned into survey logic, each listed in the report for checking. */
+    importedLogicRules: number;
     hiddenFields: number;
   };
   issues: TSurveyImportIssue[];
