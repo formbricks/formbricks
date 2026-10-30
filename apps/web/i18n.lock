@@ -4329,6 +4329,7 @@ checksums:
     workspace/surveys/edit/show_survey_to_users: d5e90fd17babfea978fce826e9df89b0
     workspace/surveys/edit/show_to_x_percentage_of_targeted_users: b745169011fa7e8ca475baa5500c5197
     workspace/surveys/edit/shrink_preview: 42567389520b226f211f94f052197ad8
+    workspace/surveys/edit/side_by_side: e365117ea19941e47bfde59a8b905036
     workspace/surveys/edit/simple: 65575bd903091299bc4a94b7517a6288
     workspace/surveys/edit/six_points: c6c09b3f07171dc388cb5a610ea79af7
     workspace/surveys/edit/smiley: e68e3b28fc3c04255e236c6a0feb662b
