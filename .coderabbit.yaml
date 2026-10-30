@@ -95,7 +95,7 @@ reviews:
   path_instructions:
     - path: "**/*.test.tsx"
       instructions: |
-        AGENTS.md forbids React component unit tests in this repo. If this file is newly added, say
+        CODING_STANDARDS.md forbids React component unit tests in this repo. If this file is newly added, say
         so and ask for the logic under test to move into a `.ts` module with a unit test. Do not ask
         for a Playwright spec instead: deleting a `.test.tsx` creates no E2E obligation, and a
         component is not an E2E subject. Do not raise this on edits to the handful of `.test.tsx`
@@ -103,7 +103,7 @@ reviews:
 
     - path: "**/*.tsx"
       instructions: |
-        - Never suggest adding unit tests for `.tsx` files — AGENTS.md forbids them, and their
+        - Never suggest adding unit tests for `.tsx` files — CODING_STANDARDS.md forbids them, and their
           absence is not a coverage gap to fill somewhere else. Ask for a Playwright spec only when
           the diff changes a feature's happy path or a journey across several surfaces, and then ask
           for it in that feature's existing spec — or, if the diff opens a feature area the suite does
@@ -130,7 +130,7 @@ reviews:
 
     - path: "**/*.test.ts"
       instructions: |
-        Judge tests by confidence, not coverage (AGENTS.md "Testing Guidelines"):
+        Judge tests by confidence, not coverage (CODING_STANDARDS.md "Testing Guidelines"):
         - Assert on inputs and outputs. Flag tests that lock implementation details, markup, or
           snapshots, and tests that cannot fail (no meaningful assertion, everything mocked).
         - Do not request extra tests purely to raise coverage, and do not request tests for `.tsx`.
@@ -140,7 +140,7 @@ reviews:
     - path: "apps/web/playwright/**/*.spec.ts"
       instructions: |
         This suite is the critical path of every PR and every test is paid on every PR forever, so
-        cost is a review dimension here rather than a nit (AGENTS.md "Testing Guidelines"):
+        cost is a review dimension here rather than a nit (CODING_STANDARDS.md "Testing Guidelines"):
         - A new spec file is a finding unless it opens a feature area the suite does not cover yet
           (the spec filenames in `apps/web/playwright/` are the inventory — check before claiming an
           area is uncovered); the default is assertions or a `test.step` added to that feature's
@@ -194,7 +194,7 @@ reviews:
 
     - path: "{apps/web,packages}/**/*.{ts,tsx}"
       instructions: |
-        Performance is an explicit review dimension in this repo (AGENTS.md "Performance in Review"):
+        Performance is an explicit review dimension in this repo (CODING_STANDARDS.md "Performance in Review"):
         the patterns below reach `main` when nobody looks for them. Raise one where the diff
         introduces it:
         - N+1 work: a query, AI call or cross-service fetch issued inside a `for`/`map`/`Promise.all`
@@ -210,7 +210,7 @@ reviews:
           depend on each other, or many calls fired from a loop where one batch request would do.
         - Render amplification: one state change or parent update re-rendering a large subtree that
           does not depend on it (a context value rebuilt every render, unstable props into a big list).
-          Name the measured cost, not a missing `useMemo`; AGENTS.md rules out memoization for its
+          Name the measured cost, not a missing `useMemo`; CODING_STANDARDS.md rules out memoization for its
           own sake.
         - Large lists rendered in full with no pagination or virtualization.
         Quantify the cost against the data ("one query per response, ~5k on a 5k-response survey").
@@ -656,7 +656,8 @@ knowledge_base:
     enabled: true
   code_guidelines:
     enabled: true
-    filePatterns: []
+    filePatterns:
+      - "**/CODING_STANDARDS.md"
   learnings:
     scope: auto
     # Not 0. A learning is a durable review rule, and at 0 it applies immediately —

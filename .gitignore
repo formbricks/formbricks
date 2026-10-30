@@ -86,7 +86,7 @@ authzed/*.perf.jsonl
 # next-agents-md
 .next-docs/
 
-# robots (installed agent assets - machine-local, do not commit)
+# Local agent assets (machine-local, do not commit)
 # .claude is machine-local except committed symlinks into .agents/skills.
 # Codex reads .agents/skills directly; Claude Code needs the symlink, so every
 # skill added to .agents/skills gets an exception here.
@@ -103,6 +103,7 @@ authzed/*.perf.jsonl
 !.claude/skills/implement-spec
 !.claude/skills/retro
 !.claude/skills/tdd
+!.claude/skills/release-notes
 !.claude/skills/to-spec
 !.claude/skills/to-tickets
 !.claude/skills/writing-for-agents

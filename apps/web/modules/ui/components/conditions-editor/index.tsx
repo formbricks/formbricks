@@ -199,12 +199,17 @@ export function ConditionsEditor({
       );
     }
 
+    // Without "When", a lone rule has no connector to show: drop the slot instead of leaving a gap.
+    const showsConnectorSlot = config.showWhenLabel !== false || parentConditionGroup.conditions.length > 1;
+
     return (
       <div key={condition.id} className="flex flex-col gap-x-2">
         <div className="flex items-start gap-x-2">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-end text-sm font-medium text-slate-900">
-            {getConnector()}
-          </div>
+          {showsConnectorSlot && (
+            <div className="flex h-10 w-10 shrink-0 items-center justify-end text-sm font-medium text-slate-900">
+              {getConnector()}
+            </div>
+          )}
 
           {/* The three operands sit side by side when the editor has room (the survey logic card) and
               stack when it does not (a chart builder rail): a container query on the editor's own
