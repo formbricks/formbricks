@@ -68,6 +68,14 @@ describe("Node.js version alignment", () => {
     expect(baseImage).toBe(nodeMajor);
   });
 
+  // The runtime is compiled from source at NODE_VERSION, so a Node security release is a manual edit of that
+  // pin and its checksum. Requiring the exact `.nvmrc` version keeps that edit and the dev/CI pin in one step.
+  test("the production image compiles the exact .nvmrc version", () => {
+    const compiled = /^ARG NODE_VERSION=(\S+)$/m.exec(read("apps", "web", "Dockerfile"))?.[1];
+
+    expect(compiled).toBe(nvmrcVersion.replace(/^v/, ""));
+  });
+
   test("the devcontainer image runs the .nvmrc major", () => {
     const { image } = readJsonc(".devcontainer", "devcontainer.json") as { image?: string };
     // mcr.microsoft.com/devcontainers/javascript-node:<image major>-<node major>-<distro>
