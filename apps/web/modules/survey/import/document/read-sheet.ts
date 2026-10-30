@@ -4,7 +4,7 @@ import {
   SurveyImportInputError,
   surveyImportFileUnreadable,
 } from "../core/errors";
-import type { TZipArchive } from "../core/zip";
+import { type TZipArchive, XML_PART } from "../core/zip";
 import {
   SURVEY_IMPORT_SHEET_MAX_CELL_CHARS,
   SURVEY_IMPORT_SHEET_MAX_COLUMNS,
@@ -12,6 +12,7 @@ import {
 } from "../limits";
 import { documentLimitExceeded } from "./errors";
 import { type TDocumentModel, buildGridModel, columnName } from "./model";
+import { checkDocumentXml } from "./xml";
 
 /**
  * The Excel reader of the document import (ENG-6852): the first sheet of a `.xlsx`, read with the
@@ -22,15 +23,22 @@ import { type TDocumentModel, buildGridModel, columnName } from "./model";
  * SheetJS inflates the archive with its own inflater, which counts nothing. So every entry is first read
  * through the upload's zip guard (`core/zip.ts`), which counts what each one actually inflates to against
  * the zip limits and checks it is the size the directory declares: once that passed, what SheetJS
- * inflates is known to be within them.
+ * inflates is known to be within them. Each XML part is held to the XML limits there too — its depth,
+ * its element count, no DTD — before SheetJS parses any.
  */
 
 /** A sheet hidden so the user cannot unhide it from Excel: a file's own bookkeeping, not a sheet to name. */
 const VERY_HIDDEN = 2;
 
-/** Read every entry once through the zip guard, so nothing inflates past the zip limits afterwards. */
-const checkArchiveInflation = (archive: TZipArchive): void => {
-  for (const name of archive.names) archive.read(name);
+/**
+ * Read every entry once through the zip guard, so nothing inflates past the zip limits afterwards, and
+ * hold every XML part to the XML limits (`xml.ts`): SheetJS parses them with none of its own.
+ */
+const checkArchive = (archive: TZipArchive): void => {
+  for (const name of archive.names) {
+    const bytes = archive.read(name);
+    if (bytes !== null && XML_PART.test(name)) checkDocumentXml(bytes, name);
+  }
 };
 
 const readWorkbook = (bytes: Uint8Array): XLSX.WorkBook => {
@@ -116,11 +124,11 @@ const titleOf = (book: XLSX.WorkBook): string | null => {
 /**
  * Read a `.xlsx` (its bytes, and the archive the sniffer opened over them) into the document model.
  * Throws `SurveyImportFileTooLargeError` (413) past the zip limits, and `SurveyImportInputError` (422)
- * past the sheet limits (`document_limit_exceeded`) or for a workbook that cannot be read or whose first
- * sheet has no text (`file_unreadable`).
+ * past the XML or sheet limits (`document_limit_exceeded`) or for a workbook that cannot be read,
+ * declares a DTD, or whose first sheet has no text (`file_unreadable`).
  */
 export const readSheetDocument = (bytes: Uint8Array, archive: TZipArchive): TDocumentModel => {
-  checkArchiveInflation(archive);
+  checkArchive(archive);
   const book = readWorkbook(bytes);
   const firstName = book.SheetNames[0];
   const sheet = firstName === undefined ? undefined : book.Sheets[firstName];

@@ -64,7 +64,8 @@ const METHOD_DEFLATED = 8;
  */
 const INFLATE_STEP_BYTES = 8 * 1024;
 
-const XML_PART = /\.(xml|rels)$/i;
+/** An Office file's XML part: what the part-size cap applies to, and what is parsed as XML. */
+export const XML_PART = /\.(xml|rels)$/i;
 
 const refuseTooLarge = (
   limit: "zip_entries" | "zip_inflated_size" | "zip_part_size" | "zip_compression_ratio"

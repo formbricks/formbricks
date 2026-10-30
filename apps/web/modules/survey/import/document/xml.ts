@@ -110,6 +110,15 @@ const failOnError = (level: "warning" | "error" | "fatalError"): void => {
 };
 
 /**
+ * Hold one XML part to the XML limits without parsing it: its nesting, its element count, no DTD. For a
+ * reader that parses the part itself, such as SheetJS, which applies none of them (`read-sheet.ts`).
+ * Throws what {@link parseDocumentXml} throws for the same part, short of a malformed one.
+ */
+export const checkDocumentXml = (bytes: Uint8Array, part: string): void => {
+  checkShape(decode(bytes), part);
+};
+
+/**
  * Parse one XML part (`part` is its name in the archive, for the refusal) into its root element. Throws
  * `SurveyImportInputError` (422): `document_limit_exceeded` past the XML limits, `file_unreadable` for a
  * part that is not well-formed XML or declares a DTD.

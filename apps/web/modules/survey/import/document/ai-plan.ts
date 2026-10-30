@@ -25,11 +25,7 @@ import {
   mergeDocumentPlans,
 } from "./plan-checks";
 import { ZDocumentImportPlanForAI } from "./plan-schema";
-import {
-  buildDocumentPlanPrompt,
-  buildDocumentPlanSystemPrompt,
-  describedLineChars,
-} from "./prompt";
+import { buildDocumentPlanPrompt, buildDocumentPlanSystemPrompt, describedLineChars } from "./prompt";
 
 /**
  * The AI half of a document import (ENG-6852): the file's lines, chunked by the output they are
@@ -52,7 +48,6 @@ const CHARS_PER_TOKEN = 4;
  * lines shown around the chunk's own.
  */
 const DOCUMENT_CHUNK_DATA_CHARS = SURVEY_IMPORT_DOCUMENT_MAX_CALL_CHARS / 2;
-
 
 const lineCost = (line: TDocumentModel["lines"][number]): { tokens: number; chars: number } => {
   const textChars = line.cells.reduce((sum, cell) => sum + cell.text.length, 0);
@@ -140,7 +135,10 @@ export async function planDocumentImport(params: {
     maxCallChars: SURVEY_IMPORT_DOCUMENT_MAX_CALL_CHARS,
     maxTotalChars: SURVEY_IMPORT_DOCUMENT_MAX_TOTAL_CHARS,
     callCap: Math.min(importCallCapFor(chunkCount), importCallCapFor(SURVEY_IMPORT_DOCUMENT_MAX_CHUNKS)),
-    outputBudget: Math.min(importOutputBudgetFor(chunkCount), importOutputBudgetFor(SURVEY_IMPORT_DOCUMENT_MAX_CHUNKS)),
+    outputBudget: Math.min(
+      importOutputBudgetFor(chunkCount),
+      importOutputBudgetFor(SURVEY_IMPORT_DOCUMENT_MAX_CHUNKS)
+    ),
   };
   const run = await runImportPlan({ lane, refs, generate, signal: params.signal, deadline, callTimeoutMs });
   const { plan } = run;

@@ -8,6 +8,7 @@ import {
   SURVEY_IMPORT_SHEET_MAX_CELL_CHARS,
   SURVEY_IMPORT_SHEET_MAX_COLUMNS,
   SURVEY_IMPORT_SHEET_MAX_ROWS,
+  SURVEY_IMPORT_XML_MAX_DEPTH,
 } from "../limits";
 import { loadDocumentFixture } from "./__fixtures__/load-fixture";
 import { readSheetDocument } from "./read-sheet";
@@ -195,6 +196,40 @@ describe("readSheetDocument", () => {
     const lying = setDeclaredSizes(bombed, "xl/media/image1.bin", { uncompressedSize: 1024 });
 
     expect(() => read(lying)).toThrow(SurveyImportFileTooLargeError);
+  });
+
+  describe("holds every XML part to the XML limits before SheetJS reads any", () => {
+    /** The workbook with one more part, which SheetJS itself never reads. */
+    const withPart = (name: string, text: string): Uint8Array =>
+      zipSync({ ...unzipSync(workbook({ Questions: [["How was your visit?"]] })), [name]: strToU8(text) });
+    /** A part nesting `depth` levels, its root included. */
+    const nested = (depth: number) =>
+      `<?xml version="1.0"?><root>${"<n>".repeat(depth - 1)}${"</n>".repeat(depth - 1)}</root>`;
+
+    test("takes a part at the depth limit and refuses one level more, naming the part", () => {
+      expect(read(withPart("customXml/item1.xml", nested(SURVEY_IMPORT_XML_MAX_DEPTH))).lines).toHaveLength(
+        1
+      );
+
+      expect(
+        refusal(() => read(withPart("customXml/item1.xml", nested(SURVEY_IMPORT_XML_MAX_DEPTH + 1))))
+      ).toEqual({
+        name: "file.customXml/item1.xml",
+        reason: expect.any(String),
+        code: "document_limit_exceeded",
+        identifier: "xml_depth",
+      });
+    });
+
+    test("refuses a part that declares a DTD as unreadable, so no entity is defined", () => {
+      const withDtd = patched(
+        workbook({ Questions: [["How was your visit?"]] }),
+        "<worksheet ",
+        '<!DOCTYPE worksheet [<!ENTITY a "aaaaaaaaaa">]><worksheet '
+      );
+
+      expect(refusal(() => read(withDtd))).toMatchObject({ code: "file_unreadable" });
+    });
   });
 
   test("refuses a workbook whose first sheet has no text as unreadable", () => {
