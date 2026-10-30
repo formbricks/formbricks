@@ -6,9 +6,8 @@ description: >-
   (grouped by conventional-commit type, one bullet per PR carrying its verbatim title, author handle
   and full PR URL), with an Overview and a Breaking changes index for minors, a Before upgrading
   section for patches, and a Security section listing each vulnerability fix with its severity and
-  any reporter credit. Replaces the plain GitHub
-  "auto-generate release notes" button, which dumps a flat list, double-lists every backport, and
-  handles neither breaking changes nor credits. Use for "/release-notes", "generate release notes",
+  any reporter credit. Replaces the plain GitHub "auto-generate release notes" button, which dumps a
+  flat list, double-lists every backport, and handles neither breaking changes nor credits. Use for "/release-notes", "generate release notes",
   "draft the release notes for x.y", Release QA Step 11 (Ship the stable release), or a security
   patch round.
 compatibility: Requires a git checkout of formbricks/formbricks, an authenticated gh CLI, and the
@@ -17,7 +16,7 @@ metadata:
   owner: Dhru
   argument-hint: "[previous-version] [new-version]"
   when-to-use: >-
-    "/release-notes", "generate release notes", "/release-notes 5.4.3 6.0.0", "draft the release notes", "what should go in the GitHub release", or when running Release QA Step 11 and it's time to create the stable GitHub release.
+    "/release-notes", "generate release notes", "/release-notes 5.4.3 6.0.0", "draft the release notes", "what should go in the GitHub release", when running Release QA Step 11 and it's time to create the stable GitHub release, or when a security patch round is ready to cut.
 ---
 
 # Draft the GitHub release notes
@@ -204,9 +203,13 @@ and the reporter's credit where there is one.
 3. Intersect with the PR-referenced ids. Keep dependency tickets (`[Dependabot …]`): a vulnerable
    dependency we ship is a fix the reader needs to know about. Drop tickets whose `Severity` label is
    `Not shipped`.
-4. From each ticket's `## Security assessment`, take the `Severity` label and the impact (the
-   Exposed line). A ticket with no assessment or no `Severity` label is a question for the human,
-   never a guess.
+4. From each ticket's `## Security assessment`, take the severity (the `Severity` label, or for
+   tickets rated before that label existed, the first line of the assessment, e.g. `Medium ·
+   CVSS-B v4.0: 6.9`) and the impact (its Exposed or Worst case line). A ticket with no assessment
+   is a question for the human, never a guess.
+5. Leave out a fix that already shipped in a patch of the older line (check it as in "Flag work
+   that already shipped on the older line"): that patch's notes listed it, and a minor diffed
+   against that patch would otherwise list it twice.
 
 #### Credits
 
@@ -265,8 +268,8 @@ Credit belongs to the **first release that carries the fix**. Before crediting, 
 not already ship on the older line (`git log --oneline $PREVIOUS_TAG --grep="#PR-NUMBER"`); if it
 did, the credit belonged in that release's notes.
 
-Honour what the reporter asked for, exactly as the `Credit:` line (or, for older tickets, the PR or issue) words it — some ask for a GitHub
-handle, some for a real name, some for an employer to be named too ("credit is owed to Google and
+Honour what the reporter asked for, exactly as the `Credit:` line (or, for older tickets, the PR or
+issue) words it — some ask for a GitHub handle, some for a real name, some for an employer to be named too ("credit is owed to Google and
 Ada Logics"), some explicitly decline. Never invent or infer a name, and never credit someone not
 explicitly named.
 
@@ -366,7 +369,7 @@ sections). Only stable releases get this treatment.
 ## Done when
 
 - A **draft** GitHub release exists for the new tag, targeting the release branch, never published.
-- Its notes follow the Compose shape: no empty type-section, "No breaking changes" stated when there are none, every PR title verbatim with its author and full URL.
+- Its notes follow the Compose shape: no empty type-section, "No breaking changes" stated in a minor when there are none, every PR title verbatim with its author and full URL.
 - Every docs page the notes link exists on the release branch.
 - The Security section lists every in-range `vulnerability` ticket except `Not shipped`, with its severity and one line of impact, and its credits match the tickets' `Credit:` lines: every named reporter, in that order, worded as they asked; none left as an unanswered request.
 - A patch has the flat list, `## Before upgrading` when a PR in range has an upgrade step, and no Overview.
@@ -378,7 +381,7 @@ sections). Only stable releases get this treatment.
 - Re-check `gh release list` and tags at the start of every run — the baseline moves between sessions.
 - Two-dot ranges only. Never `--no-merges`. Dedup backport pairs explicitly.
 - Verbatim PR titles, real authors, full PR URLs. Never a bare `#1234`, never a placeholder author.
-- Omit empty type-sections; state "No breaking changes" explicitly when there are none.
+- Omit empty type-sections; in a minor, state "No breaking changes" explicitly when there are none.
 - Breaking changes are an index that links the migration guide, not restated tables.
 - Check that every docs page the notes link exists on the release branch; offer a backport if not.
 - Security fixes and their credits go in the `### 🔒 Security` section, never inline on the change
