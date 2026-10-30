@@ -133,6 +133,7 @@ export function isV3ProblemCode(value: unknown): value is V3ProblemCode {
 
 export const INVALID_PARAM_CODES = [
   "dangling_reference",
+  "document_limit_exceeded",
   "duplicate_identifier",
   "duplicate_locale",
   "file_limit_exceeded",

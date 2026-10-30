@@ -7944,6 +7944,7 @@ components:
           type: string
           enum:
             - dangling_reference
+            - document_limit_exceeded
             - duplicate_identifier
             - duplicate_locale
             - file_limit_exceeded
@@ -7972,6 +7973,8 @@ components:
             `qsf_not_recognized` and `qsf_limit_exceeded` come from the Qualtrics import (an internal, session-only route sharing this shape): the file is not a Qualtrics export it can read, or it is one past an import limit, which `identifier` names.
 
             `file_type_unsupported`, `file_limit_exceeded` and `file_unreadable` come from the survey import too, about the uploaded file whatever its type: the import does not read this kind of file (`identifier` names what it recognized, if anything), the file is past an upload limit, which `identifier` names, or it is broken.
+
+            `document_limit_exceeded` comes from the survey import of a question list (Excel or CSV): the sheet is past one of the import's limits, which `identifier` names.
         identifier:
           type: string
           description: Identifier involved in the validation failure, when available. For language errors, this can be the normalized language code.
