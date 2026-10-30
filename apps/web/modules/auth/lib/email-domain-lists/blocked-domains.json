@@ -1,0 +1,14 @@
+[
+  {
+    "domain": "craigslist.org",
+    "reason": "Anonymous reply-relay addresses (x@reply.craigslist.org); blocked before ENG-3979 through the old package's wildcard list."
+  },
+  {
+    "domain": "gmail.cz",
+    "reason": "Lookalike of gmail.com: not Google's, and it has no MX."
+  },
+  {
+    "domain": "gmaill.com",
+    "reason": "Lookalike of gmail.com; upstream lists it only as disposable without working MX."
+  }
+]

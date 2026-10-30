@@ -11,6 +11,9 @@ docs/api-v3-reference/.redocly.lint-ignore.yaml
 charts/**/README.md
 charts/spicedb-operator/crds/authzed.com_spicedbclusters.yaml
 charts/spicedb-operator/files/update-graph.yaml
+apps/web/modules/auth/lib/email-domain-lists/disposable-domains.json
+apps/web/modules/auth/lib/email-domain-lists/free-provider-domains.json
+apps/web/modules/auth/lib/email-domain-lists/sources.json
 
 # Agent skills installed from upstream and pinned by hash in skills-lock.json.
 # The next `skills` update overwrites any local formatting, so leave them as

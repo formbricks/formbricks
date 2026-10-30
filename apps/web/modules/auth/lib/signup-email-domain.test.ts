@@ -107,15 +107,33 @@ describe("isBlockedEmailDomain", () => {
     }
   });
 
-  test("blocks any subdomain of a wildcard disposable provider", () => {
+  test("blocks any subdomain of a listed domain", () => {
     // 33mail and similar give each user their own subdomain, so the root alone is not enough.
     expect(isBlockedEmailDomain("jerry90@jerrygroup.33mail.com")).toBe(true);
     expect(isBlockedEmailDomain("a@deep.nested.33mail.com")).toBe(true);
     expect(isBlockedEmailDomain("A@JerryGroup.33Mail.com.")).toBe(true);
-    // Wildcard roots missing from the exact list are still blocked themselves.
-    expect(isBlockedEmailDomain("test@anonaddy.com")).toBe(true);
+    expect(isBlockedEmailDomain("user@x.mailinator.com")).toBe(true);
+    // ENG-3599: Sign in with Apple's newer relay domain, through its parent icloud.com.
+    expect(isBlockedEmailDomain("abc123@private.icloud.com")).toBe(true);
     // A lookalike that only ends in the same characters is not a subdomain.
     expect(isBlockedEmailDomain("test@not33mail.com")).toBe(false);
+    expect(isBlockedEmailDomain("user@mail.acme-corp.com")).toBe(false);
+  });
+
+  test("does not let a public suffix in an upstream list block a whole namespace", () => {
+    // domains_mx.txt carries dynamic-DNS suffixes such as ddns.net and cloudns.org; the refresh script
+    // drops them, so a company on one of those namespaces is not caught by subdomain matching.
+    expect(isBlockedEmailDomain("ops@acme.ddns.net")).toBe(false);
+    expect(isBlockedEmailDomain("ops@acme.cloudns.org")).toBe(false);
+    expect(isBlockedEmailDomain("dave@my-company.co.uk")).toBe(false);
+  });
+
+  test("maps Unicode lookalikes of a blocked domain to its ASCII form", () => {
+    expect(isBlockedEmailDomain("user@\uff47\uff4d\uff41\uff49\uff4c.com")).toBe(true); // full-width
+    expect(isBlockedEmailDomain("user@gmail\u3002com")).toBe(true); // ideographic full stop
+    expect(isBlockedEmailDomain("user@gm\u00adail.com")).toBe(true); // soft hyphen
+    expect(isBlockedEmailDomain("user@gmail.com\u200b")).toBe(true); // zero-width space
+    expect(isBlockedEmailDomain("user@b\u00fccher.de")).toBe(false);
   });
 
   test("does a bounded number of lookups for a domain with many labels", () => {
@@ -150,9 +168,8 @@ describe("isBlockedEmailDomain", () => {
   });
 
   test("matches on the domain after the last @", () => {
-    // Outside the wildcard providers, only an exact domain match counts: a subdomain is NOT blocked.
-    expect(isBlockedEmailDomain("user@mail.acme-corp.com")).toBe(false);
-    expect(isBlockedEmailDomain("user@sub.gmail.com")).toBe(false);
+    expect(isBlockedEmailDomain('"user@acme-corp.com"@gmail.com')).toBe(true);
+    expect(isBlockedEmailDomain('"user@gmail.com"@acme-corp.com')).toBe(false);
   });
 
   test("blocks plus-addressed and trailing-dot variants of a blocked domain", () => {
@@ -170,6 +187,29 @@ describe("isBlockedEmailDomain", () => {
     // email-format validation upstream before this predicate is reached.
     for (const email of ["", "notanemail", "@gmail.com", "test@", null, undefined]) {
       expect(isBlockedEmailDomain(email as unknown as string)).toBe(false);
+    }
+  });
+});
+
+describe("allowed-domains.json", () => {
+  test("overrides every list, for the domain and its subdomains, and nothing else", async () => {
+    vi.resetModules();
+    vi.doMock("./email-domain-lists/allowed-domains.json", () => ({
+      default: [
+        { domain: "gmail.com", reason: "test" },
+        { domain: "team.33mail.com", reason: "test" },
+      ],
+    }));
+    try {
+      const { isBlockedEmailDomain: isBlocked } = await import("./signup-email-domain");
+      expect(isBlocked("user@gmail.com")).toBe(false);
+      expect(isBlocked("user@sub.gmail.com")).toBe(false);
+      expect(isBlocked("user@team.33mail.com")).toBe(false);
+      expect(isBlocked("user@other.33mail.com")).toBe(true);
+      expect(isBlocked("user@yahoo.com")).toBe(true);
+    } finally {
+      vi.doUnmock("./email-domain-lists/allowed-domains.json");
+      vi.resetModules();
     }
   });
 });

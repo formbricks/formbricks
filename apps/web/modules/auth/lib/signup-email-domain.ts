@@ -1,55 +1,61 @@
 import "server-only";
-import disposableEmailDomains from "disposable-email-domains/index.json";
-import wildcardDisposableEmailDomains from "disposable-email-domains/wildcard.json";
+import { domainToASCII } from "node:url";
 import { IS_FORMBRICKS_CLOUD, SIGNUP_DOMAIN_CHECK_ON_INVITES } from "@/lib/constants";
-import { PERSONAL_EMAIL_DOMAINS } from "./personal-email-domains";
+import allowedEmailDomains from "./email-domain-lists/allowed-domains.json";
+import blockedEmailDomainAdditions from "./email-domain-lists/blocked-domains.json";
+import disposableEmailDomains from "./email-domain-lists/disposable-domains.json";
+import freeProviderEmailDomains from "./email-domain-lists/free-provider-domains.json";
 
 /**
- * Blocklist of personal / free / disposable email domains, built once at module load.
+ * Personal / free / disposable email domains, built once at module load from ./email-domain-lists
+ * (see its README):
+ *  - free-provider-domains.json and disposable-domains.json are generated from upstream lists by
+ *    scripts/email-domain-lists/refresh.mjs, which a weekly workflow runs and opens a PR from.
+ *  - blocked-domains.json adds what upstream misses; allowed-domains.json overrides everything.
  *
- * Union of two sources:
- *  - Free/personal providers (gmail, yahoo, outlook, …): a small curated list in
- *    ./personal-email-domains.ts that we expand as we go (its comment points at the full ~12.9k-domain
- *    `free-email-domains` list to vendor from if we ever want exhaustive coverage).
- *  - Disposable/burner providers (mailinator, 10minutemail, …): the `disposable-email-domains` npm
- *    package — kept comprehensive because burner domains are long-tail and churn constantly.
+ * Every entry also blocks its subdomains: providers hand out per-user subdomains (33mail:
+ * `alias@jerry.33mail.com`), and the disposable lists expect consumers to match them. The refresh
+ * script drops public suffixes so no entry widens to a whole namespace.
  *
- * Server-only: the disposable list alone is ~121k domains and must never be pulled into the client bundle.
+ * Server-only: ~56k domains that must never be pulled into the client bundle.
  */
-const normalizeDomains = (domains: readonly string[]) => domains.map((domain) => domain.trim().toLowerCase());
-
-/**
- * Providers that hand every user their own subdomain (33mail: `alias@jerry.33mail.com`), so the
- * domain itself and any subdomain of it are blocked. Kept separate from the exact-match set so only
- * these ~400 entries widen to subdomains — `user@sub.gmail.com` stays allowed.
- */
-const wildcardBlockedEmailDomains = new Set<string>(
-  normalizeDomains(wildcardDisposableEmailDomains as string[])
-);
-
 const blockedEmailDomains = new Set<string>([
-  ...normalizeDomains([...PERSONAL_EMAIL_DOMAINS, ...(disposableEmailDomains as string[])]),
-  ...wildcardBlockedEmailDomains,
+  ...freeProviderEmailDomains,
+  ...disposableEmailDomains,
+  ...blockedEmailDomainAdditions.map((entry) => entry.domain),
 ]);
+const allowedEmailDomainSet = new Set<string>(allowedEmailDomains.map((entry) => entry.domain));
 
-/** Label count of the longest wildcard entry; no parent domain with more labels can match. */
-const MAX_WILDCARD_LABELS = Math.max(
-  ...Array.from(wildcardBlockedEmailDomains, (domain) => domain.split(".").length)
+/** Label count of the longest entry; no parent domain with more labels can match. */
+const MAX_ENTRY_LABELS = Math.max(
+  ...Array.from([...blockedEmailDomains, ...allowedEmailDomainSet], (domain) => domain.split(".").length)
 );
 
 /**
- * True when a parent domain of `domain` (`a.b.33mail.com` → `33mail.com`, `b.33mail.com`) is a wildcard
- * entry. Walks from the right and stops after {@link MAX_WILDCARD_LABELS} labels, so the work stays
- * linear in the domain length: Better Auth's sign-up route and the SSO email claim don't cap it.
+ * True when `domain` or a parent of it (`a.b.33mail.com` → `33mail.com`) is in `domains`. Walks from
+ * the right and stops after {@link MAX_ENTRY_LABELS} labels, so the work stays linear in the domain
+ * length: Better Auth's sign-up route and the SSO email claim don't cap it.
  */
-const isSubdomainOfWildcardDomain = (domain: string): boolean => {
+const isDomainOrParentIn = (domain: string, domains: ReadonlySet<string>): boolean => {
+  if (domains.has(domain)) return true;
   let dotIndex = domain.length;
-  for (let labels = 1; labels <= MAX_WILDCARD_LABELS; labels++) {
+  for (let labels = 1; labels <= MAX_ENTRY_LABELS; labels++) {
     dotIndex = domain.lastIndexOf(".", dotIndex - 1);
     if (dotIndex === -1) return false;
-    if (wildcardBlockedEmailDomains.has(domain.slice(dotIndex + 1))) return true;
+    if (domains.has(domain.slice(dotIndex + 1))) return true;
   }
   return false;
+};
+
+/**
+ * Maps an internationalized domain to the ASCII form the lists use, so full-width or otherwise
+ * equivalent Unicode spellings (`ｇｍａｉｌ.com`) can't slip past them. Plain-ASCII input skips the
+ * conversion; if it fails, the lowercase input is checked as-is rather than allowed outright.
+ */
+const toAsciiDomain = (domain: string): string => {
+  // eslint-disable-next-line no-control-regex -- matching any non-ASCII code point is the point here
+  if (!/[^\x00-\x7f]/.test(domain)) return domain;
+  return domainToASCII(domain) || domain;
 };
 
 /**
@@ -66,13 +72,16 @@ export const isBlockedEmailDomain = (email: string): boolean => {
   const atIndex = normalized.lastIndexOf("@");
   // Reject empty local part ("@gmail.com"), missing domain ("test@") and no-`@` inputs.
   if (atIndex <= 0 || atIndex === normalized.length - 1) return false;
+  const asciiDomain = toAsciiDomain(normalized.slice(atIndex + 1));
   // Strip trailing FQDN dots ("gmail.com." → "gmail.com") so they can't slip past the Set. Done with a
   // linear scan, not /\.+$/: that pattern backtracks super-linearly on adversarial input, and the SSO
-  // email reaching this gate is not zod-validated.
-  let end = normalized.length;
-  while (end > atIndex + 1 && normalized[end - 1] === ".") end--;
-  const domain = normalized.slice(atIndex + 1, end);
-  return blockedEmailDomains.has(domain) || isSubdomainOfWildcardDomain(domain);
+  // email reaching this gate is not zod-validated. After the ASCII mapping, which turns "。" into ".".
+  let end = asciiDomain.length;
+  while (end > 0 && asciiDomain[end - 1] === ".") end--;
+  const domain = asciiDomain.slice(0, end);
+  // The allowlist wins, but it only matters for a domain that is blocked, so it is checked second.
+  if (!domain || !isDomainOrParentIn(domain, blockedEmailDomains)) return false;
+  return !isDomainOrParentIn(domain, allowedEmailDomainSet);
 };
 
 /**

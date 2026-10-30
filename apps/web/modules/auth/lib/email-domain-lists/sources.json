@@ -1,0 +1,74 @@
+{
+  "maxDomainLabels": 6,
+  "sources": [
+    {
+      "repo": "publicsuffix/list",
+      "path": "public_suffix_list.dat",
+      "commit": "8437e5262f13305f94087abe699b4fe2be1d1de8"
+    },
+    {
+      "repo": "disposable/disposable-email-domains",
+      "path": "domains_mx.txt",
+      "commit": "f0cfcc8aea24892c0adc88e6433f866477837d07",
+      "count": 51284
+    },
+    {
+      "repo": "disposable-email-domains/disposable-email-domains",
+      "path": "disposable_email_blocklist.conf",
+      "commit": "e2254bf7fc8dcf113f6028b21e263a352111490b",
+      "count": 10083
+    },
+    {
+      "repo": "disposable/static-disposable-lists",
+      "path": "mailservices.json",
+      "commit": "b2e076b66610f9db111a2404003a77bf28137f60",
+      "count": 2730
+    }
+  ],
+  "dropped": {
+    "publicSuffix": [
+      "3utilities.com",
+      "cloudns.asia",
+      "cloudns.cc",
+      "cloudns.cx",
+      "cloudns.org",
+      "ddns.net",
+      "ddnsfree.com",
+      "dns-cloud.net",
+      "dnsabr.com",
+      "dnsiskinky.com",
+      "dyn.ddnss.de",
+      "dyn.home-webserver.de",
+      "dyndns.ddnss.de",
+      "dyndns.org",
+      "dynu.net",
+      "edu.kz",
+      "f5.si",
+      "gleeze.com",
+      "hopto.org",
+      "iki.fi",
+      "it.com",
+      "kozow.com",
+      "msk.ru",
+      "no-ip.net",
+      "noip.me",
+      "onthewifi.com",
+      "pp.ua",
+      "servebeer.com",
+      "serveexchange.com",
+      "servegame.com",
+      "sytes.net",
+      "zone.id"
+    ],
+    "tooLong": [
+      "4.3.3.7.0.7.3.0.e.2.a.8.0.0.0.0.0.0.0.0.3.a.5.8.8.b.d.0.1.0.0.2.fake.ip6.arpa.please.believe.it.is.not.a.tempmail.service.do.u.know.other.service.i.know.gmail.com.and.so.on.if.you.want.a.real.email.address.you.can.use.https.www.163.com.fakemail.cc.cd",
+      "5.2.5.b.0.d.0.0.1.0.a.2.ip6.arpa",
+      "gmail.com.google.cume.temp.emvil.e.mail.ru.thumoi.com",
+      "google.gmail.com.www.dtac.co.th.thumoi.com",
+      "goole.gmail.com.www.dtac.co.th.thumoi.com",
+      "umail.com.google.cume.temp.emvil.e.mail.ru.thumoi.com",
+      "under.ucoz.net.youremailaddress.gmail.com.google.cume.temp.emvil.e.mail.ru.thumoi.com"
+    ],
+    "invalid": []
+  }
+}
