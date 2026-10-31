@@ -144,6 +144,6 @@ No new columns (ADR 0003). The one schema change is a new value in the PostgreSQ
 
 - **Freshness.** Creative writes don't clear the cached environment state: it expires after 60 s in Redis and at the CDN, and the SDK keeps its copy for up to an hour. Creating, editing or pausing a creative reaches returning visitors within about an hour.
 - **Schedules** run on SDK timers to the minute, for visitors whose state already holds the creative. The server's `serverTime` corrects device clocks that are behind by more than 2 minutes or ahead by more than 5; smaller skews are left alone.
-- **Layout shift.** An In page banner shifts the page down when it appears. A `[data-formbricks-slot="banner-top"]` element reserves its place.
+- **Layout shift.** An In page banner shifts the page down when it appears. On a multi-page site that can be every page load: the snippet loads js-core asynchronously, so the page can paint before the banner, however early the cached draw runs. A `[data-formbricks-slot="banner-top"]` element with a min-height reserves its place.
 - **Stale SDK after a deploy.** js-core is served from an unversioned URL, cached for an hour by browsers and up to 30 days by a CDN. Until visitors get the new file, they run the old SDK, which ignores `creatives`. Purge the CDN as in the [Custom CSS rollout](/development/technical-handbook/custom-css-rollout#deployment-order).
 - **Web only.** The mobile SDKs ignore `creatives`, and old SDKs never show the trigger-less surveys that only creatives open: those go out with `triggers: []`.
