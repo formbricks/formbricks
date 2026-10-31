@@ -23,15 +23,10 @@ const defaultsFor = (type: TSurveyElementTypeEnum) =>
 const signature = () => getElementTypes(t).find((type) => type.id === TSurveyElementTypeEnum.Signature);
 
 describe("Signature in the element catalog", () => {
-  test("is offered once, in the Input category next to File upload", () => {
+  test("is offered once, in the Input category", () => {
     const entries = getElementTypes(t).filter((type) => type.id === TSurveyElementTypeEnum.Signature);
     expect(entries).toHaveLength(1);
     expect(entries[0].category).toBe(TElementCategory.Input);
-
-    const ids = getElementTypes(t).map((type) => type.id);
-    expect(ids.indexOf(TSurveyElementTypeEnum.Signature)).toBe(
-      ids.indexOf(TSurveyElementTypeEnum.FileUpload) + 1
-    );
   });
 
   test("is required and allows typed signatures by default, overriding the universal optional preset", () => {

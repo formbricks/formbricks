@@ -7,7 +7,7 @@ import { TSurvey, TSurveyElementSummarySignature } from "@formbricks/types/surve
 import { TUserLocale } from "@formbricks/types/user";
 import { convertFloatToNDecimal } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
 import { timeSince } from "@/lib/time";
-import { getSignatureImageSrc } from "@/modules/storage/signature-image";
+import { getClientOrigin, getSignatureImageSrc } from "@/modules/storage/signature-image";
 import { EmptyState } from "@/modules/ui/components/empty-state";
 import { ProgressBar } from "@/modules/ui/components/progress-bar";
 import { ElementSummaryHeader } from "./ElementSummaryHeader";
@@ -28,7 +28,7 @@ export const SignatureSummary = ({
 }: Readonly<SignatureSummaryProps>) => {
   const { t } = useTranslation();
   const [selectedResponseId, setSelectedResponseId] = useState<string | null>(null);
-  const origin = typeof window === "undefined" ? undefined : window.location.origin;
+  const origin = getClientOrigin();
 
   const counts = [
     { label: t("common.signed"), count: elementSummary.signedCount },

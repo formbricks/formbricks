@@ -4,7 +4,7 @@ import { DownloadIcon } from "lucide-react";
 import Image from "next/image";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
-import { getSignatureResponseView } from "@/modules/storage/signature-image";
+import { getClientOrigin, getSignatureResponseView } from "@/modules/storage/signature-image";
 import { Button } from "@/modules/ui/components/button";
 
 interface SignatureResponseProps {
@@ -19,10 +19,7 @@ const FULL_SIZE = { width: 900, height: 300 };
 
 export const SignatureResponse = ({ value, variant }: Readonly<SignatureResponseProps>) => {
   const { t } = useTranslation();
-  const view = getSignatureResponseView(
-    value,
-    typeof window === "undefined" ? undefined : window.location.origin
-  );
+  const view = getSignatureResponseView(value, getClientOrigin());
 
   if (view.kind === "skipped") {
     return <div className="font-semibold text-slate-500">{t("common.skipped")}</div>;
@@ -56,7 +53,7 @@ export const SignatureResponse = ({ value, variant }: Readonly<SignatureResponse
         href={view.src}
         target="_blank"
         rel="noopener noreferrer"
-        className="my-1 inline-block shrink-0 rounded-md focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:outline-none"
+        className="inline-block shrink-0 rounded-md focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:outline-none"
         data-testid="signature-response-thumbnail">
         {image}
       </a>

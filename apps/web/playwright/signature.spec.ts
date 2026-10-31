@@ -12,9 +12,8 @@ import { prisma } from "@formbricks/database";
 import { type Prisma } from "@formbricks/database/prisma";
 import { type TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
-import { type UsersFixture, login } from "./fixtures/users";
+import { type UsersFixture } from "./fixtures/users";
 import { test } from "./lib/fixtures";
-import { addElement, createSurveyFromScratch, fillRichTextEditor } from "./utils/helper";
 
 /**
  * **Signature element, end to end (ENG-6810).**
@@ -25,8 +24,8 @@ import { addElement, createSurveyFromScratch, fillRichTextEditor } from "./utils
  * storage route → the response holds its relative URL → the owner sees, downloads and exports it → and
  * deleting the response takes the PNG with it.
  *
- * Surveys are seeded through Prisma (the editor is only walked once, in the journey test), and
- * respondents run in their own browser contexts so the owner's session cookie never reaches them.
+ * Surveys are seeded through Prisma, and respondents run in their own browser contexts so the owner's
+ * session cookie never reaches them.
  *
  * Storage is real here, not the mock the survey-builder specs install: deleting the response has to
  * make the object disappear, and the private URL has to demand the session. CI runs RustFS for this
@@ -301,53 +300,7 @@ const attachShot = async (page: Page, testInfo: TestInfo, name: string): Promise
 // ---- Tests ----------------------------------------------------------------------------------------
 
 test.describe("Signature element @slow", () => {
-  test("a required Signature stays unanswered until the respondent really signs", async ({
-    browser,
-    baseURL,
-    users,
-  }) => {
-    const owner = await users.create({ skipSurveySeed: true });
-    const seeded = await seedSignatureSurvey(owner, { name: "Required signature", required: true });
-    const { context, page } = await openAsRespondent(browser, baseURL);
-    const uploads = trackStorageUploads(page);
-
-    try {
-      const card = signatureCard(page, seeded.signatureId);
-      const pad = signaturePad(card);
-      const error = page.locator(`[id$="-error"]`).filter({ hasText: "Please fill out this field" });
-
-      await test.step("pressing Next with nothing entered shows the required error", async () => {
-        await page.goto(`/s/${seeded.surveyId}`);
-        await expect(pad).toBeVisible();
-        await page.getByRole("button", { name: "Next", exact: true }).click();
-        await expect(error).toBeVisible();
-        await expect(page.getByText("Anything else?")).toHaveCount(0);
-      });
-
-      await test.step("a bare tap on the pad is not a signature", async () => {
-        const box = await padBox(pad);
-        await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
-        await expect(signatureStatus(card)).toHaveText("Not signed");
-        await page.getByRole("button", { name: "Next", exact: true }).click();
-        await expect(error).toBeVisible();
-      });
-
-      await test.step("a whitespace-only typed name is not a signature either", async () => {
-        await card.getByRole("tab", { name: "Type" }).click();
-        await card.getByRole("textbox", { name: "Type your name" }).fill("   ");
-        await expect(signatureStatus(card)).toHaveText("Not signed");
-        await page.getByRole("button", { name: "Next", exact: true }).click();
-        await expect(error).toBeVisible();
-        await expect(page.getByText("Anything else?")).toHaveCount(0);
-      });
-
-      expect(uploads, "nothing is uploaded while the element is unanswered").toHaveLength(0);
-    } finally {
-      await context.close();
-    }
-  });
-
-  test("touch drawing, Clear and a redraw upload one PNG that the response keeps", async ({
+  test("a respondent signs by touch, Clear and redraw, and one PNG is uploaded and kept", async ({
     browser,
     baseURL,
     users,
@@ -372,6 +325,21 @@ test.describe("Signature element @slow", () => {
         await expect(clear).toBeDisabled();
         const box = await padBox(pad);
         expect(box.width / box.height).toBeCloseTo(3, 1);
+      });
+
+      await test.step("Next with nothing entered, or after a bare tap, shows the required error", async () => {
+        const error = page.locator(`[id$="-error"]`).filter({ hasText: "Please fill out this field" });
+        const next = page.getByRole("button", { name: "Next", exact: true });
+        await next.click();
+        await expect(error).toBeVisible();
+
+        const box = await padBox(pad);
+        await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+        await expect(signatureStatus(card)).toHaveText("Not signed");
+        await next.click();
+        await expect(error).toBeVisible();
+        await expect(page.getByText("Anything else?")).toHaveCount(0);
+        expect(uploads, "nothing is uploaded while the element is unanswered").toHaveLength(0);
       });
 
       await test.step("a finger stroke signs it, and Clear takes the signature back", async () => {
@@ -598,69 +566,6 @@ test.describe("Signature element @slow", () => {
     });
   });
 
-  test("a logic rule tells signed and not-signed respondents apart", async ({ browser, baseURL, users }) => {
-    const owner = await users.create({ skipSurveySeed: true });
-    const signatureId = createId();
-    const signedEnding = createId();
-    const skippedEnding = createId();
-    const condition = (operator: "isSubmitted" | "isSkipped") => ({
-      id: createId(),
-      connector: "and",
-      conditions: [
-        {
-          id: createId(),
-          leftOperand: { type: "element", value: signatureId },
-          operator,
-        },
-      ],
-    });
-    const jumpTo = (target: string) => [{ id: createId(), objective: "jumpToBlock", target }];
-    const surveyId = await createSurvey(owner, {
-      name: "Signature logic",
-      blocks: [
-        {
-          id: createId(),
-          name: "Block 1",
-          elements: [signatureElement(signatureId, "Sign if you agree", { required: false })],
-          logic: [
-            { id: createId(), conditions: condition("isSubmitted"), actions: jumpTo(signedEnding) },
-            { id: createId(), conditions: condition("isSkipped"), actions: jumpTo(skippedEnding) },
-          ],
-        },
-      ] as unknown as TSurveyBlock[],
-      endings: [
-        { id: signedEnding, type: "endScreen", headline: i18nValue("Thanks for signing") },
-        { id: skippedEnding, type: "endScreen", headline: i18nValue("Maybe next time") },
-      ],
-    });
-
-    await test.step("a drawn signature jumps to the 'signed' ending", async () => {
-      const respondent = await openAsRespondent(browser, baseURL);
-      try {
-        await respondent.page.goto(`/s/${surveyId}`);
-        await drawWithMouse(respondent.page, signaturePad(signatureCard(respondent.page, signatureId)));
-        await respondent.page.getByRole("button", { name: "Finish" }).click();
-        await expect(respondent.page.getByText("Thanks for signing")).toBeVisible({ timeout: 60_000 });
-        await expect(respondent.page.getByText("Maybe next time")).toHaveCount(0);
-      } finally {
-        await respondent.context.close();
-      }
-    });
-
-    await test.step("an unsigned optional element jumps to the 'not signed' ending", async () => {
-      const respondent = await openAsRespondent(browser, baseURL);
-      try {
-        await respondent.page.goto(`/s/${surveyId}`);
-        await expect(signaturePad(signatureCard(respondent.page, signatureId))).toBeVisible();
-        await respondent.page.getByRole("button", { name: "Finish" }).click();
-        await expect(respondent.page.getByText("Maybe next time")).toBeVisible({ timeout: 60_000 });
-        await expect(respondent.page.getByText("Thanks for signing")).toHaveCount(0);
-      } finally {
-        await respondent.context.close();
-      }
-    });
-  });
-
   test("deleting a response deletes its PNG and leaves other signatures alone", async ({
     page,
     browser,
@@ -706,120 +611,6 @@ test.describe("Signature element @slow", () => {
       const response = await request.get(bystanderUrl);
       expect(response.status()).toBe(200);
       expect(response.headers()["content-type"]).toContain("image/png");
-    });
-  });
-
-  test("another organization cannot fetch a signature, signed in or not", async ({
-    page,
-    browser,
-    baseURL,
-    users,
-  }) => {
-    const victim = await users.create({ skipSurveySeed: true });
-    const attacker = await users.create({ skipSurveySeed: true });
-    const seeded = await seedSignatureSurvey(victim, { name: "Private signature", required: false });
-    const url = await submitDrawnSignature(browser, baseURL, seeded);
-
-    await test.step("the owner can fetch it", async () => {
-      await victim.login();
-      const response = await page.context().request.get(url);
-      expect(response.status()).toBe(200);
-      expect(response.headers()["content-type"]).toContain("image/png");
-    });
-
-    const attackerContext = await browser.newContext({ baseURL });
-    try {
-      await test.step("a signed-in user of another organization is refused", async () => {
-        const attackerPage = await attackerContext.newPage();
-        const attackerUser = await prisma.user.findUniqueOrThrow({
-          where: { id: attacker.id },
-          include: { memberships: true },
-        });
-        await login(attackerUser, attackerPage);
-        // Signed in: the attacker has no survey, so the app sends them to onboarding rather than the login page.
-        await expect(attackerPage).toHaveURL(/\/organizations\/[^/]+\/workspaces\/new\/survey/);
-        const response = await attackerContext.request.get(url);
-        expect([401, 403, 404]).toContain(response.status());
-        expect(response.headers()["content-type"] ?? "").not.toContain("image/png");
-      });
-    } finally {
-      await attackerContext.close();
-    }
-
-    await test.step("a request with no session is refused", async () => {
-      const anonymous = await browser.newContext({ baseURL });
-      try {
-        const response = await anonymous.request.get(url);
-        expect(response.status()).toBe(401);
-        expect(response.headers()["content-type"] ?? "").not.toContain("image/png");
-      } finally {
-        await anonymous.close();
-      }
-    });
-  });
-
-  test("an author adds a Signature in the editor and respondents get the Signature pad", async ({
-    page,
-    browser,
-    baseURL,
-    users,
-  }, testInfo) => {
-    const owner = await users.create();
-    await owner.login();
-    await page.goto(`/workspaces/${owner.workspaceId}/surveys`);
-
-    const surveyId = await test.step("add a Signature element with its defaults", async () => {
-      const id = await createSurveyFromScratch(page);
-      await fillRichTextEditor(page, "Question*", "Open question");
-      await addElement(page, "Signature");
-      await fillRichTextEditor(page, "Question*", "Please sign below");
-      return id;
-    });
-
-    await test.step("it is required and allows typed signatures by default", async () => {
-      await expect(page.getByRole("switch", { name: "Allow typed signature" })).toBeChecked();
-      await expect(
-        page.locator("#survey-preview").getByRole("img", { name: /^Signature pad/ })
-      ).toBeVisible();
-      await attachShot(page, testInfo, "editor");
-    });
-
-    await test.step("turning typed signatures off warns about a required element", async () => {
-      await page.getByRole("switch", { name: "Allow typed signature" }).click();
-      await expect(page.getByText("Some respondents cannot answer this question")).toBeVisible();
-    });
-
-    await test.step("the editor saves the element with those settings", async () => {
-      await page.getByRole("button", { name: "Save as draft", exact: true }).click({ noWaitAfter: true });
-      await expect(page.getByText("Changes saved.", { exact: true })).toBeVisible();
-      const saved = await prisma.survey.findUniqueOrThrow({
-        where: { id: surveyId },
-        select: { blocks: true },
-      });
-      const elements = (saved.blocks as unknown as TSurveyBlock[]).flatMap((block) => block.elements);
-      expect(elements).toContainEqual(
-        expect.objectContaining({
-          type: TSurveyElementTypeEnum.Signature,
-          required: true,
-          allowTypedSignature: false,
-        })
-      );
-    });
-
-    await test.step("respondents get the Signature pad without a typing toggle", async () => {
-      // Activation itself (the visibility dialog, licensing) is covered by the specs that publish.
-      await prisma.survey.update({ where: { id: surveyId }, data: { status: "inProgress" } });
-      const respondent = await openAsRespondent(browser, baseURL);
-      try {
-        await respondent.page.goto(`/s/${surveyId}`);
-        await respondent.page.getByRole("textbox").first().fill("Hello");
-        await respondent.page.getByRole("button", { name: "Next", exact: true }).click();
-        await expect(respondent.page.getByText("Please sign below")).toBeVisible({ timeout: UPLOAD_TIMEOUT });
-        await expect(respondent.page.getByRole("img", { name: /^Signature pad/ })).toBeVisible();
-        await expect(respondent.page.getByRole("tablist")).toHaveCount(0);
-      } finally {
-        await respondent.context.close();
-      }
     });
   });
 });

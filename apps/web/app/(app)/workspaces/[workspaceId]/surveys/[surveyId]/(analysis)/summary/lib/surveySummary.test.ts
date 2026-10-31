@@ -6,7 +6,12 @@ import { embeddedFieldsFromLegacyInput } from "@formbricks/types/embedded-data-m
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponseFilterCriteria } from "@formbricks/types/responses";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
-import { TSurvey, TSurveyElementSummaryRanking, TSurveySummary } from "@formbricks/types/surveys/types";
+import {
+  TSurvey,
+  TSurveyElementSummaryRanking,
+  TSurveyElementSummarySignature,
+  TSurveySummary,
+} from "@formbricks/types/surveys/types";
 import { TLanguage } from "@formbricks/types/workspace";
 import { getQuotasSummary } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/survey";
 import { getDisplayCountBySurveyId } from "@/lib/display/service";
@@ -4620,12 +4625,12 @@ describe("Signature question type tests", () => {
       { ...base, id: "r3", data: {}, ttc: {} },
     ];
 
-    const summary: any = await getElementSummary(
+    const summary = (await getElementSummary(
       survey,
       getElementsFromBlocks(survey.blocks),
       responses,
       [] as unknown as TSurveySummary["dropOff"]
-    );
+    )) as TSurveyElementSummarySignature[];
 
     expect(summary).toHaveLength(1);
     expect(summary[0]).toMatchObject({

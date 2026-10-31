@@ -15,6 +15,10 @@ const DOT_SEGMENT = /^(\.|%2e){1,2}$/i;
 
 const FALLBACK_FILE_NAME = "signature.png";
 
+/** The browser's origin, or `undefined` while rendering on the server, where an absolute URL cannot be checked. */
+export const getClientOrigin = (): string | undefined =>
+  typeof window === "undefined" ? undefined : window.location.origin;
+
 export type TSignatureResponseView =
   | { kind: "skipped" }
   | { kind: "image"; src: string; fileName: string }

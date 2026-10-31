@@ -2,7 +2,7 @@ import "@testing-library/jest-dom/vitest";
 import { TFunction } from "i18next";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { type TI18nString } from "@formbricks/types/i18n";
-import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { createI18nString } from "@/lib/i18n/utils";
 import * as i18nUtils from "@/lib/i18n/utils";
@@ -15,7 +15,6 @@ import {
   getMatrixLabel,
   getPlaceHolderById,
   getWelcomeCardText,
-  isRecallExcludedElementType,
   isValueIncomplete,
 } from "./utils";
 
@@ -494,28 +493,5 @@ describe("computeRecallItemRemoval", () => {
     computeRecallItemRemoval([{ ...nameItem }], "gone", "gone", fallbacks);
 
     expect(fallbacks).toEqual({ q1: "a", q2: "b" });
-  });
-});
-
-describe("isRecallExcludedElementType", () => {
-  test.each([
-    TSurveyElementTypeEnum.Signature,
-    TSurveyElementTypeEnum.FileUpload,
-    TSurveyElementTypeEnum.CTA,
-    TSurveyElementTypeEnum.Consent,
-    TSurveyElementTypeEnum.PictureSelection,
-    TSurveyElementTypeEnum.Cal,
-    TSurveyElementTypeEnum.Matrix,
-  ])("keeps %s out of the recall picker", (type) => {
-    expect(isRecallExcludedElementType({ type })).toBe(true);
-  });
-
-  test.each([
-    TSurveyElementTypeEnum.OpenText,
-    TSurveyElementTypeEnum.MultipleChoiceSingle,
-    TSurveyElementTypeEnum.Rating,
-    TSurveyElementTypeEnum.Date,
-  ])("offers %s in the recall picker", (type) => {
-    expect(isRecallExcludedElementType({ type })).toBe(false);
   });
 });

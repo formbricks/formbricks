@@ -1,5 +1,6 @@
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import {
+  getClientOrigin,
   getSignatureDownloadFileName,
   getSignatureImageSrc,
   getSignatureResponseView,
@@ -68,5 +69,21 @@ describe("getSignatureResponseView", () => {
       kind: "text",
       text: "javascript:alert(1)",
     });
+  });
+});
+
+describe("getClientOrigin", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  test("is undefined where there is no window", () => {
+    vi.stubGlobal("window", undefined);
+    expect(getClientOrigin()).toBeUndefined();
+  });
+
+  test("is the window origin in the browser", () => {
+    vi.stubGlobal("window", { location: { origin: ORIGIN } });
+    expect(getClientOrigin()).toBe(ORIGIN);
   });
 });
