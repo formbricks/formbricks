@@ -378,7 +378,25 @@ describe("a Formbricks file imported into another organization", () => {
     const surveyId = surveyIdOf(response);
     expect(response.headers.get("Location")).toBe(`/api/v3/surveys/${surveyId}`);
     expect(await response.json()).toEqual({ data: { id: surveyId } });
-    expect(auditLog).toMatchObject({ organizationId: expect.any(String), targetId: surveyId });
+    // The survey as v3 create records it, and every reference the import created alongside it.
+    const createdKeys = done.report.issues.filter((issue) => issue.code === "attribute_key_created");
+    expect(auditLog).toMatchObject({
+      organizationId: expect.any(String),
+      targetId: surveyId,
+      newObject: {
+        id: surveyId,
+        name: "In-app survey (imported)",
+        createdFrom: "import",
+        createdReferences: {
+          actionClasses: [
+            { id: expect.any(String), name: "Checkout (imported)" },
+            { id: expect.any(String), name: "Pricing page" },
+          ],
+          attributeKeys: createdKeys.map((issue) => issue.params?.key),
+          languages: ["de-DE"],
+        },
+      },
+    });
 
     const created = await prisma.survey.findUniqueOrThrow({
       where: { id: surveyId },

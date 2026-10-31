@@ -31,6 +31,7 @@ import type { TFormbricksFileReferences, TFormbricksFileSource } from "./envelop
 import { prepareFormbricksFileDraft, refuseDraft, withTargetTriggers } from "./import";
 import { readFormbricksFileContent } from "./read";
 import {
+  type TFormbricksFileCreatedReferences,
   type TFormbricksFileReferencePlan,
   applyFormbricksFileReferences,
   linkFormbricksFileSharedFields,
@@ -294,7 +295,7 @@ export const updateSurveyFromFormbricksFile = async ({
   /** The surveys the user may name in targeting (ENG-3282). */
   visibleSurveyWhere: Prisma.SurveyWhereInput;
   requestId: string;
-}): Promise<{ before: TSurvey; after: TSurvey }> => {
+}): Promise<{ before: TSurvey; after: TSurvey; createdReferences: TFormbricksFileCreatedReferences }> => {
   const { id: surveyId, workspaceId } = authorizedSurvey;
   const read = readFormbricksFileContent({ survey: body.survey, references: body.references });
   const { draft } = await prepareFormbricksFileDraft({
@@ -332,7 +333,7 @@ export const updateSurveyFromFormbricksFile = async ({
       t,
       fieldPrefix: null,
     });
-    const actionClassIds = await applyFormbricksFileReferences(tx, workspaceId, plan);
+    const { actionClassIds, created } = await applyFormbricksFileReferences(tx, workspaceId, plan);
     const target = withTargetTriggers(content, actionClassIds);
     const embeddedFields = await linkSharedFields(tx, {
       workspaceId,
@@ -350,7 +351,7 @@ export const updateSurveyFromFormbricksFile = async ({
         transaction,
         embeddedFields,
       });
-      return { before, after };
+      return { before, after, createdReferences: created };
     } catch (error) {
       // The patch names fields from its own body, which is the reviewed survey: named from `survey`.
       if (error instanceof V3SurveyReferenceValidationError) {

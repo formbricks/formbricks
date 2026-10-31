@@ -297,7 +297,15 @@ describe("a Formbricks file of a survey in this workspace", () => {
         where: { workspaceId: fixture.workspaceId, name: { contains: "imported" } },
       })
     ).toBe(0);
-    expect(auditLog).toMatchObject({ targetId: surveyId, organizationId: fixture.organizationId });
+    expect(auditLog).toMatchObject({
+      targetId: surveyId,
+      organizationId: fixture.organizationId,
+      newObject: {
+        id: surveyId,
+        updatedFrom: "import",
+        createdReferences: { actionClasses: [], attributeKeys: [], languages: [] },
+      },
+    });
   });
 
   test("Update never writes the share metadata, even from an older file that carries it", async () => {

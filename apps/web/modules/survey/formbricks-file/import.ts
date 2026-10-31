@@ -29,6 +29,7 @@ import {
 } from "./fit";
 import { type TFormbricksFileRead, readFormbricksFile, readFormbricksFileContent } from "./read";
 import {
+  type TFormbricksFileCreatedReferences,
   type TFormbricksFileReferencePlan,
   applyFormbricksFileReferences,
   linkFormbricksFileSharedFields,
@@ -210,7 +211,7 @@ export const createSurveyFromFormbricksFile = async ({
   organizationId: string;
   authentication: TV3Authentication;
   requestId: string;
-}): Promise<TSurvey> => {
+}): Promise<{ survey: TSurvey; createdReferences: TFormbricksFileCreatedReferences }> => {
   const read = readFormbricksFileContent(body);
   const t = await getImporterTranslate(getSessionUserId(authentication));
   const { draft } = await prepareFormbricksFileDraft({
@@ -229,7 +230,11 @@ export const createSurveyFromFormbricksFile = async ({
       t,
       fieldPrefix: null,
     });
-    const actionClassIds = await applyFormbricksFileReferences(transaction.tx, workspaceId, plan);
+    const { actionClassIds, created } = await applyFormbricksFileReferences(
+      transaction.tx,
+      workspaceId,
+      plan
+    );
 
     const parsed = ZV3CreateSurveyBody.safeParse(withTargetTriggers(draft, actionClassIds));
     if (!parsed.success)
@@ -242,9 +247,10 @@ export const createSurveyFromFormbricksFile = async ({
       sharedFields: read.content.references.embeddedFields,
     });
 
-    return await createV3Survey(parsed.data, authentication, requestId, organizationId, {
+    const survey = await createV3Survey(parsed.data, authentication, requestId, organizationId, {
       transaction,
       ...(embeddedFields ? { surveyCreateInputOverrides: { embeddedFields } } : {}),
     });
+    return { survey, createdReferences: created };
   });
 };

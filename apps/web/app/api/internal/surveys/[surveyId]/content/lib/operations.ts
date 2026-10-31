@@ -75,7 +75,7 @@ export async function updateSurveyContent({
     }
     workspaceId = survey.workspaceId;
 
-    const { before, after } = await updateSurveyFromFormbricksFile({
+    const { before, after, createdReferences } = await updateSurveyFromFormbricksFile({
       survey,
       body,
       organizationId: authResult.organizationId,
@@ -88,7 +88,11 @@ export async function updateSurveyContent({
       auditLog.organizationId = authResult.organizationId;
       auditLog.targetId = after.id;
       auditLog.oldObject = serializeV3SurveyResource(before, visibility);
-      auditLog.newObject = { ...serializeV3SurveyResource(after, visibility), updatedFrom: "import" };
+      auditLog.newObject = {
+        ...serializeV3SurveyResource(after, visibility),
+        updatedFrom: "import",
+        createdReferences,
+      };
     }
     log.info({ statusCode: 200, workspaceId, triggers: body.triggers }, "Survey updated from a file");
 

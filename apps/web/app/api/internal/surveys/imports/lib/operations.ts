@@ -1,5 +1,6 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
+import type { TSurvey } from "@formbricks/types/surveys/types";
 import { skipV3AuditLog } from "@/app/api/v3/lib/audit";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import {
@@ -10,8 +11,11 @@ import {
 } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { getSessionUserId, mapV3SurveyCreateError } from "@/app/api/v3/surveys/lib/operations";
+import { serializeV3SurveyResource } from "@/app/api/v3/surveys/serializers";
+import { resolveV3SurveyResourceVisibility } from "@/app/api/v3/surveys/visibility-context";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { createSurveyFromFormbricksFile } from "@/modules/survey/formbricks-file/import";
+import type { TFormbricksFileCreatedReferences } from "@/modules/survey/formbricks-file/resolve";
 import { createSurveyFromImportDraft } from "@/modules/survey/import/core/create-draft";
 import { toRefusalResponse } from "@/modules/survey/import/core/errors";
 import {
@@ -119,10 +123,11 @@ export async function createSurveyImport({
       break;
   }
 
-  let surveyId: string;
+  let survey: TSurvey;
+  let createdReferences: TFormbricksFileCreatedReferences | null = null;
   try {
     const { references } = body;
-    const survey = references
+    const result = references
       ? await createSurveyFromFormbricksFile({
           body: { survey: body.survey, references },
           workspaceId,
@@ -130,14 +135,18 @@ export async function createSurveyImport({
           authentication,
           requestId,
         })
-      : await createSurveyFromImportDraft({
-          survey: body.survey,
-          workspaceId,
-          organizationId,
-          authentication,
-          requestId,
-        });
-    surveyId = survey.id;
+      : {
+          survey: await createSurveyFromImportDraft({
+            survey: body.survey,
+            workspaceId,
+            organizationId,
+            authentication,
+            requestId,
+          }),
+          createdReferences: null,
+        };
+    survey = result.survey;
+    createdReferences = result.createdReferences;
   } catch (error) {
     if (claim.kind === "claimed") {
       await claim.release().catch((releaseError: unknown) => {
@@ -150,6 +159,7 @@ export async function createSurveyImport({
     );
   }
 
+  const surveyId = survey.id;
   if (claim.kind === "claimed") {
     // The survey exists now: a failure here must not answer as if nothing was created.
     await claim.complete(surveyId).catch((completeError: unknown) => {
@@ -158,9 +168,18 @@ export async function createSurveyImport({
   }
 
   if (auditLog) {
+    // The survey as `POST /api/v3/surveys` records it, and whatever the import created alongside it,
+    // which no audit entry of its own records.
     auditLog.organizationId = organizationId;
     auditLog.targetId = surveyId;
-    auditLog.newObject = { id: surveyId, workspaceId, createdFrom: "import" };
+    auditLog.newObject = {
+      ...serializeV3SurveyResource(
+        survey,
+        await resolveV3SurveyResourceVisibility(survey, authentication, organizationId)
+      ),
+      createdFrom: "import",
+      ...(createdReferences ? { createdReferences } : {}),
+    };
   }
   capturePostHogEvent(
     userId,

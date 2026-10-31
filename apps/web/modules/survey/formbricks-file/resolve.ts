@@ -340,15 +340,23 @@ export const planFormbricksFileReferences = async (
   };
 };
 
+/** What an import created in the target besides the survey, for its audit entry. */
+export interface TFormbricksFileCreatedReferences {
+  actionClasses: { id: string; name: string }[];
+  attributeKeys: string[];
+  languages: string[];
+}
+
 /**
- * Create what the plan says is missing, in the caller's transaction, one query per kind, and return
- * the target id of every action class the survey's triggers name, by its id in the file.
+ * Create what the plan says is missing, in the caller's transaction, one query per kind. Returns the
+ * target id of every action class the survey's triggers name, by its id in the file, and what was
+ * created.
  */
 export const applyFormbricksFileReferences = async (
   tx: Prisma.TransactionClient,
   workspaceId: string,
   plan: TFormbricksFileReferencePlan
-): Promise<Map<string, string>> => {
+): Promise<{ actionClassIds: Map<string, string>; created: TFormbricksFileCreatedReferences }> => {
   const toCreate = new Map<TActionClassCreate, string[]>();
   const actionClassIds = new Map<string, string>();
   for (const [sourceId, target] of plan.actionClasses) {
@@ -393,7 +401,14 @@ export const applyFormbricksFileReferences = async (
     if (!id) throw new Error("An action class the import created was not returned");
     for (const sourceId of sourceIds) actionClassIds.set(sourceId, id);
   }
-  return actionClassIds;
+  return {
+    actionClassIds,
+    created: {
+      actionClasses: created,
+      attributeKeys: plan.attributeKeysToCreate.map(({ key }) => key),
+      languages: plan.languagesToCreate.map(({ code }) => code),
+    },
+  };
 };
 
 /**
