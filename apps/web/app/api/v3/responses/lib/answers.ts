@@ -4,7 +4,6 @@ import { MAX_RESPONSE_TTC } from "@formbricks/types/responses";
 import type { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { LINK_SURVEY_SYSTEM_PARAM_KEYS } from "@formbricks/types/surveys/validation";
-import { getUploadElementKind } from "@/modules/storage/survey-upload-elements";
 import { localizeSurveyString } from "./label-resolution";
 import {
   type TV3ResponseAnswer,
@@ -625,10 +624,6 @@ export const serializeAnswers = (
       });
       continue;
     }
-
-    // A skipped Signature may be stored as "". It is not an answer, and an `imageUrl` of "" would name
-    // no image, so it is left out like an element the respondent never reached.
-    if (raw === "" && getUploadElementKind(element.type)?.emptyStringIsSkipped) continue;
 
     const result = serializeOne(
       element,

@@ -299,7 +299,7 @@ export const zResponseAnswerFileUpload = z.strictObject({
 export type ResponseAnswerFileUploadZodType = z.infer<typeof zResponseAnswerFileUpload>;
 
 /**
- * Signature answer. A `signature` element the respondent skipped has no entry in `answers[]` at all.
+ * Signature answer. A `signature` element the respondent skipped is still returned, with an empty `imageUrl`, like an unchecked consent or an unfilled Other: `answers[]` carries every stored value, so a client can write it straight back.
  */
 export const zResponseAnswerSignature = z.strictObject({
   position: z.int().gte(1),

@@ -145,10 +145,21 @@ describe("serializeAnswers — one branch per element type", () => {
     });
   });
 
-  test("a skipped signature stored as an empty string is not an answer and not unresolved", () => {
+  test("a skipped signature stored as an empty string is still returned, with an empty imageUrl", () => {
     const el = element({ id: "q1", type: "signature", allowTypedSignature: true });
 
-    expect(only([el], { q1: "" })).toEqual({ answers: [], unresolved: [] });
+    expect(only([el], { q1: "" })).toEqual({
+      answers: [
+        {
+          position: 1,
+          elementId: "q1",
+          elementLabel: expect.any(String),
+          elementType: "signature",
+          imageUrl: "",
+        },
+      ],
+      unresolved: [],
+    });
   });
 });
 

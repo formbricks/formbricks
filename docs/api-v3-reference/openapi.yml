@@ -11409,7 +11409,7 @@ components:
 
                 Not publicly fetchable. The request must carry a signed-in session or an API key with read access to the workspace (and, for a restricted survey, to the survey), and deleting the response deletes the image.
       unevaluatedProperties: false
-      description: Signature answer. A `signature` element the respondent skipped has no entry in `answers[]` at all.
+      description: 'Signature answer. A `signature` element the respondent skipped is still returned, with an empty `imageUrl`, like an unchecked consent or an unfilled Other: `answers[]` carries every stored value, so a client can write it straight back.'
     ResponseAnswerBooking:
       allOf:
         - $ref: '#/components/schemas/ResponseAnswerBase'
