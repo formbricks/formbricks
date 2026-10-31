@@ -74,13 +74,11 @@
       "properties": {
         "surveyId": {
           "type": "string",
-          "format": "cuid2",
           "pattern": "^[0-9a-z]+$",
           "description": "The id of the survey this file was exported from."
         },
         "workspaceId": {
           "type": "string",
-          "format": "cuid2",
           "pattern": "^[0-9a-z]+$",
           "description": "The id of the workspace the survey belonged to."
         },
@@ -346,7 +344,6 @@
     },
     "__schema30": {
       "type": "string",
-      "format": "cuid2",
       "pattern": "^[0-9a-z]+$"
     },
     "__schema31": {
@@ -2447,7 +2444,6 @@
             "value": {
               "type": "string",
               "minLength": 1,
-              "format": "cuid2",
               "pattern": "^[0-9a-z]+$"
             }
           },
@@ -2624,7 +2620,6 @@
     },
     "__schema79": {
       "type": "string",
-      "format": "cuid2",
       "pattern": "^[0-9a-z]+$"
     },
     "__schema80": {
@@ -2676,7 +2671,6 @@
       "properties": {
         "id": {
           "type": "string",
-          "format": "cuid2",
           "pattern": "^[0-9a-z]+$"
         },
         "name": {
@@ -2702,7 +2696,6 @@
       "properties": {
         "id": {
           "type": "string",
-          "format": "cuid2",
           "pattern": "^[0-9a-z]+$"
         },
         "name": {
@@ -2987,7 +2980,6 @@
       "properties": {
         "actionClassId": {
           "type": "string",
-          "format": "cuid2",
           "pattern": "^[0-9a-z]+$"
         }
       },
@@ -3075,7 +3067,6 @@
       "properties": {
         "id": {
           "type": "string",
-          "format": "cuid2",
           "pattern": "^[0-9a-z]+$"
         },
         "type": {

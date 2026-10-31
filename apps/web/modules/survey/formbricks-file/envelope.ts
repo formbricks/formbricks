@@ -212,6 +212,11 @@ export const getFormbricksFileV1JsonSchema = () => {
     // Element types share most of their fields; defining each shared schema once keeps the file small
     // enough for an AI assistant to read.
     reused: "ref",
+    // Zod names its own `cuid2` format, which no JSON Schema validator knows and a strict one refuses to
+    // compile; the pattern beside it says the same in the standard vocabulary.
+    override: ({ jsonSchema }) => {
+      if (jsonSchema.format === "cuid2") delete jsonSchema.format;
+    },
   });
   return { $schema, $id: FORMBRICKS_FILE_V1_SCHEMA_URL, ...schema };
 };

@@ -126,6 +126,43 @@ describe("getFormbricksFileV1JsonSchema", () => {
     });
   });
 
+  test("names only formats every JSON Schema 2020-12 validator knows, so a strict one compiles it", () => {
+    // The format-annotation vocabulary's formats; a validator in strict mode refuses any other name.
+    const standardFormats = new Set([
+      "date-time",
+      "date",
+      "time",
+      "duration",
+      "email",
+      "idn-email",
+      "hostname",
+      "idn-hostname",
+      "ipv4",
+      "ipv6",
+      "uri",
+      "uri-reference",
+      "iri",
+      "iri-reference",
+      "uuid",
+      "uri-template",
+      "json-pointer",
+      "relative-json-pointer",
+      "regex",
+    ]);
+    const formats = new Set<string>();
+    const visit = (node: unknown): void => {
+      if (Array.isArray(node)) node.forEach(visit);
+      else if (node && typeof node === "object") {
+        const record = node as Record<string, unknown>;
+        if (typeof record.format === "string") formats.add(record.format);
+        Object.values(record).forEach(visit);
+      }
+    };
+    visit(getFormbricksFileV1JsonSchema());
+
+    expect([...formats].filter((format) => !standardFormats.has(format))).toEqual([]);
+  });
+
   test("matches the schema published with the docs", async () => {
     await expect(`${JSON.stringify(getFormbricksFileV1JsonSchema(), null, 2)}\n`).toMatchFileSnapshot(
       PUBLISHED_SCHEMA_PATH
