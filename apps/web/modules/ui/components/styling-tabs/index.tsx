@@ -12,6 +12,8 @@ interface StylingTabsProps<T> {
   id: string;
   options: Option<T>[];
   defaultSelected?: T;
+  /** The selection, when the parent owns it; the tabs then show this rather than their own state. */
+  value?: T;
   onChange: (value: T) => void;
   className?: string;
   tabsContainerClassName?: string;
@@ -28,6 +30,7 @@ export const StylingTabs = <T extends string | number>({
   id,
   options,
   defaultSelected,
+  value,
   onChange,
   className,
   tabsContainerClassName,
@@ -37,12 +40,13 @@ export const StylingTabs = <T extends string | number>({
   inactiveTabClassName,
   disabled = false,
 }: StylingTabsProps<T>) => {
-  const [selectedOption, setSelectedOption] = useState<T | undefined>(defaultSelected);
+  const [uncontrolledOption, setUncontrolledOption] = useState<T | undefined>(defaultSelected);
+  const selectedOption = value ?? uncontrolledOption;
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value as T;
-    setSelectedOption(value);
-    onChange(value);
+    const next = event.target.value as T;
+    setUncontrolledOption(next);
+    onChange(next);
   };
 
   return (

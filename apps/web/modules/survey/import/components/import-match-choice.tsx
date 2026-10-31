@@ -84,14 +84,12 @@ export const ImportMatchChoice = ({
         </h3>
         <p className="text-slate-500">{t("workspace.surveys.import.match.question")}</p>
         <StylingTabs<TSurveyImportChoice>
-          // Remounted when a refusal moves the choice: the tabs keep their own selection otherwise.
-          key={conflict ?? "none"}
           id="survey-import-match-choice"
           options={[
             { value: "update", label: t("workspace.surveys.import.match.update") },
             { value: "create", label: t("workspace.surveys.import.match.create_new") },
           ]}
-          defaultSelected={choice}
+          value={choice}
           onChange={onChoiceChange}
           disabled={isLocked}
           className="max-w-[400px]"
@@ -113,7 +111,7 @@ export const ImportMatchChoice = ({
               { value: "file", label: t("workspace.surveys.import.match.triggers_file") },
               { value: "keep", label: t("workspace.surveys.import.match.triggers_keep") },
             ]}
-            defaultSelected={triggersLocked ? "keep" : triggersChoice}
+            value={triggersLocked ? "keep" : triggersChoice}
             onChange={onTriggersChoiceChange}
             disabled={triggersLocked}
             className="max-w-[400px]"
