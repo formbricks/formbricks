@@ -108,12 +108,12 @@
     "draw": "Zeichnen",
     "method": "Unterschriftsmethode",
     "not_signed": "Nicht unterschrieben",
-    "pad_label": "Unterschriftenfeld. Zeichne Deine Unterschrift mit dem Finger, einem Stift oder einer Maus.",
-    "pad_label_with_type": "Unterschriftenfeld. Zeichne Deine Unterschrift mit dem Finger, einem Stift oder einer Maus, oder wechsle zu „Tippen“, um Deinen Namen mit der Tastatur einzugeben.",
-    "saved": "Deine Unterschrift ist gespeichert. Lösche sie, um erneut zu unterschreiben.",
+    "pad_label": "Unterschriftenfeld. Zeichnen Sie Ihre Unterschrift mit dem Finger, einem Stift oder einer Maus.",
+    "pad_label_with_type": "Unterschriftenfeld. Zeichnen Sie Ihre Unterschrift mit dem Finger, einem Stift oder einer Maus, oder wechseln Sie zu „Tippen“, um Ihren Namen mit der Tastatur einzugeben.",
+    "saved": "Ihre Unterschrift ist gespeichert. Löschen Sie sie, um erneut zu unterschreiben.",
     "sign_here": "Hier unterschreiben",
     "signed": "Unterschrieben",
     "type": "Tippen",
-    "type_your_name": "Gib Deinen Namen ein"
+    "type_your_name": "Geben Sie Ihren Namen ein"
   }
 }
