@@ -6,7 +6,7 @@ import { deleteResponseFileUrls } from "@/modules/storage/lib/delete-response-fi
 import {
   collectResponseFileUrls,
   getStorageUrlSurveyId,
-  getSurveyFileUploadElementIds,
+  getSurveyUploadElementIds,
 } from "@/modules/storage/utils";
 
 /**
@@ -70,7 +70,7 @@ export const collectSurveyResponseFileUrls = async (
     return { fileUrls: [], workspaceId: undefined };
   }
 
-  const uploadElementIds = getSurveyFileUploadElementIds(survey);
+  const uploadElementIds = getSurveyUploadElementIds(survey);
 
   // Only the flat-key scan may skip on an empty set: a flat key is matched by element id, so with no
   // current File upload element it has nothing to match (a Signature never has a flat key). The full

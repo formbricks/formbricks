@@ -645,7 +645,7 @@ function composeV3ResponseWrite({
  * 422 rather than v1/v2's 400, because the check needs the survey definition — the line this
  * contract draws between the two.
  */
-async function fileUploadIssues(
+async function uploadIssues(
   survey: TV3WriteSurveyRow,
   data: TResponseData | undefined
 ): Promise<InvalidParam[]> {
@@ -747,7 +747,7 @@ export async function planV3ResponseCreate({
       (issue): issue is InvalidParam => issue !== null
     ),
     ...answerValidationIssues(survey, composed.data, storedLanguage),
-    ...(await fileUploadIssues(survey, composed.data)),
+    ...(await uploadIssues(survey, composed.data)),
   ];
 
   if (issues.length > 0) return { ok: false, issues };
@@ -941,7 +941,7 @@ export async function planV3ResponsePatch({
     // so an `embeddedData`-only patch would otherwise re-run stored upload URLs through today's
     // `allowedFileExtensions`: narrow those after collection and every later patch 422s naming `data`,
     // a field the request never carried.
-    ...(body.data === undefined ? [] : await fileUploadIssues(survey, composed.data)),
+    ...(body.data === undefined ? [] : await uploadIssues(survey, composed.data)),
   ];
 
   if (issues.length > 0) return { ok: false, issues };

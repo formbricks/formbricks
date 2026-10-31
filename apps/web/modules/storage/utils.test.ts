@@ -8,7 +8,7 @@ import { TSurveyQuestion } from "@formbricks/types/surveys/types";
 import {
   collectResponseFileUrls,
   getStorageUrlSurveyId,
-  getSurveyFileUploadElementIds,
+  getSurveyUploadElementIds,
   isAllowedFileExtension,
   isValidImageFile,
   parseStorageFileUrl,
@@ -18,7 +18,7 @@ import {
   sanitizeFileName,
   validateClientFileUploads,
   validateSingleFile,
-  validateSurveyAllowsFileUpload,
+  validateSurveyAllowsUpload,
 } from "@/modules/storage/utils";
 
 // Mock the getOriginalFileNameFromUrl function
@@ -226,7 +226,7 @@ describe("storage utils", () => {
     });
   });
 
-  describe("validateSurveyAllowsFileUpload", () => {
+  describe("validateSurveyAllowsUpload", () => {
     test("should allow a matching extension from a modern file upload block element", () => {
       const blocks = [
         {
@@ -242,9 +242,7 @@ describe("storage utils", () => {
         },
       ] as unknown as TSurveyBlock[];
 
-      expect(
-        validateSurveyAllowsFileUpload({ fileName: "report.pdf", elementId: "element1", blocks })
-      ).toEqual({
+      expect(validateSurveyAllowsUpload({ fileName: "report.pdf", elementId: "element1", blocks })).toEqual({
         ok: true,
       });
     });
@@ -259,7 +257,7 @@ describe("storage utils", () => {
       ] as TSurveyQuestion[];
 
       expect(
-        validateSurveyAllowsFileUpload({ fileName: "image.png", elementId: "question1", questions })
+        validateSurveyAllowsUpload({ fileName: "image.png", elementId: "question1", questions })
       ).toEqual({ ok: true });
     });
 
@@ -277,9 +275,7 @@ describe("storage utils", () => {
         },
       ] as unknown as TSurveyBlock[];
 
-      expect(
-        validateSurveyAllowsFileUpload({ fileName: "report.pdf", elementId: "element1", blocks })
-      ).toEqual({
+      expect(validateSurveyAllowsUpload({ fileName: "report.pdf", elementId: "element1", blocks })).toEqual({
         ok: true,
       });
     });
@@ -305,7 +301,7 @@ describe("storage utils", () => {
       ] as TSurveyQuestion[];
 
       expect(
-        validateSurveyAllowsFileUpload({ fileName: "report.pdf", elementId: "question1", blocks, questions })
+        validateSurveyAllowsUpload({ fileName: "report.pdf", elementId: "question1", blocks, questions })
       ).toEqual({
         ok: false,
         reason: "no_file_upload_element",
@@ -332,9 +328,7 @@ describe("storage utils", () => {
         },
       ] as unknown as TSurveyBlock[];
 
-      expect(
-        validateSurveyAllowsFileUpload({ fileName: "report.pdf", elementId: "element2", blocks })
-      ).toEqual({
+      expect(validateSurveyAllowsUpload({ fileName: "report.pdf", elementId: "element2", blocks })).toEqual({
         ok: false,
         reason: "file_extension_not_allowed",
       });
@@ -360,9 +354,7 @@ describe("storage utils", () => {
         },
       ] as unknown as TSurveyBlock[];
 
-      expect(
-        validateSurveyAllowsFileUpload({ fileName: "report.pdf", elementId: "element2", blocks })
-      ).toEqual({
+      expect(validateSurveyAllowsUpload({ fileName: "report.pdf", elementId: "element2", blocks })).toEqual({
         ok: true,
       });
     });
@@ -375,14 +367,12 @@ describe("storage utils", () => {
         },
       ] as TSurveyQuestion[];
 
-      expect(
-        validateSurveyAllowsFileUpload({ fileName: "report", elementId: "question1", questions })
-      ).toEqual({
+      expect(validateSurveyAllowsUpload({ fileName: "report", elementId: "question1", questions })).toEqual({
         ok: false,
         reason: "file_extension_not_allowed",
       });
       expect(
-        validateSurveyAllowsFileUpload({ fileName: "malware.exe", elementId: "question1", questions })
+        validateSurveyAllowsUpload({ fileName: "malware.exe", elementId: "question1", questions })
       ).toEqual({
         ok: false,
         reason: "file_extension_not_allowed",
@@ -404,16 +394,14 @@ describe("storage utils", () => {
         },
       ] as unknown as TSurveyBlock[];
 
-      expect(
-        validateSurveyAllowsFileUpload({ fileName: "report.pdf", elementId: "element2", blocks })
-      ).toEqual({
+      expect(validateSurveyAllowsUpload({ fileName: "report.pdf", elementId: "element2", blocks })).toEqual({
         ok: false,
         reason: "file_upload_element_not_found",
       });
     });
   });
 
-  describe("validateSurveyAllowsFileUpload for a Signature element", () => {
+  describe("validateSurveyAllowsUpload for a Signature element", () => {
     const blocks = [
       {
         id: "block1",
@@ -426,18 +414,18 @@ describe("storage utils", () => {
     ] as unknown as TSurveyBlock[];
 
     test("should allow a png upload for the Signature element", () => {
-      expect(
-        validateSurveyAllowsFileUpload({ fileName: "signature.png", elementId: "sig1", blocks })
-      ).toEqual({ ok: true });
-      expect(
-        validateSurveyAllowsFileUpload({ fileName: "SIGNATURE.PNG", elementId: "sig1", blocks })
-      ).toEqual({ ok: true });
+      expect(validateSurveyAllowsUpload({ fileName: "signature.png", elementId: "sig1", blocks })).toEqual({
+        ok: true,
+      });
+      expect(validateSurveyAllowsUpload({ fileName: "SIGNATURE.PNG", elementId: "sig1", blocks })).toEqual({
+        ok: true,
+      });
     });
 
     test.each(["signature.pdf", "signature.jpg", "signature.svg", "signature.webp", "signature"])(
       "should refuse %s for the Signature element: png only",
       (fileName) => {
-        expect(validateSurveyAllowsFileUpload({ fileName, elementId: "sig1", blocks })).toEqual({
+        expect(validateSurveyAllowsUpload({ fileName, elementId: "sig1", blocks })).toEqual({
           ok: false,
           reason: "file_extension_not_allowed",
         });
@@ -445,7 +433,7 @@ describe("storage utils", () => {
     );
 
     test("should refuse an element that is not an upload element", () => {
-      expect(validateSurveyAllowsFileUpload({ fileName: "a.png", elementId: "text1", blocks })).toEqual({
+      expect(validateSurveyAllowsUpload({ fileName: "a.png", elementId: "text1", blocks })).toEqual({
         ok: false,
         reason: "file_upload_element_not_found",
       });
@@ -455,10 +443,10 @@ describe("storage utils", () => {
       const questions = [{ id: "legacy-sig", type: "signature" as const }] as unknown as TSurveyQuestion[];
 
       expect(
-        validateSurveyAllowsFileUpload({ fileName: "signature.png", elementId: "legacy-sig", questions })
+        validateSurveyAllowsUpload({ fileName: "signature.png", elementId: "legacy-sig", questions })
       ).toEqual({ ok: true });
       expect(
-        validateSurveyAllowsFileUpload({ fileName: "signature.pdf", elementId: "legacy-sig", questions })
+        validateSurveyAllowsUpload({ fileName: "signature.pdf", elementId: "legacy-sig", questions })
       ).toEqual({ ok: false, reason: "file_extension_not_allowed" });
     });
 
@@ -475,15 +463,16 @@ describe("storage utils", () => {
         },
       ] as unknown as TSurveyBlock[];
 
-      expect(
-        validateSurveyAllowsFileUpload({ fileName: "a.pdf", elementId: "file1", blocks: mixed })
-      ).toEqual({ ok: true });
-      expect(
-        validateSurveyAllowsFileUpload({ fileName: "a.png", elementId: "file1", blocks: mixed })
-      ).toEqual({ ok: false, reason: "file_extension_not_allowed" });
-      expect(
-        validateSurveyAllowsFileUpload({ fileName: "a.jpg", elementId: "file2", blocks: mixed })
-      ).toEqual({ ok: true });
+      expect(validateSurveyAllowsUpload({ fileName: "a.pdf", elementId: "file1", blocks: mixed })).toEqual({
+        ok: true,
+      });
+      expect(validateSurveyAllowsUpload({ fileName: "a.png", elementId: "file1", blocks: mixed })).toEqual({
+        ok: false,
+        reason: "file_extension_not_allowed",
+      });
+      expect(validateSurveyAllowsUpload({ fileName: "a.jpg", elementId: "file2", blocks: mixed })).toEqual({
+        ok: true,
+      });
     });
   });
 
@@ -493,7 +482,7 @@ describe("storage utils", () => {
     live: new Set<string>(),
   };
 
-  describe("getSurveyFileUploadElementIds", () => {
+  describe("getSurveyUploadElementIds", () => {
     test("should union the file-upload ids from blocks and questions", () => {
       const blocks = [
         {
@@ -510,7 +499,7 @@ describe("storage utils", () => {
         { id: "question-text", type: "openText" as const },
       ] as unknown as TSurveyQuestion[];
 
-      expect(getSurveyFileUploadElementIds({ blocks, questions })).toEqual({
+      expect(getSurveyUploadElementIds({ blocks, questions })).toEqual({
         fileUpload: new Set(["block-upload", "question-upload"]),
         signature: new Set(),
         live: new Set(["block-upload", "block-text", "question-upload", "question-text"]),
@@ -533,7 +522,7 @@ describe("storage utils", () => {
         { id: "question-signature", type: "signature" as const },
       ] as unknown as TSurveyQuestion[];
 
-      expect(getSurveyFileUploadElementIds({ blocks, questions })).toEqual({
+      expect(getSurveyUploadElementIds({ blocks, questions })).toEqual({
         fileUpload: new Set(["block-upload", "question-upload"]),
         signature: new Set(["block-signature", "question-signature"]),
         live: new Set(["block-upload", "block-signature", "question-upload", "question-signature"]),
@@ -541,8 +530,8 @@ describe("storage utils", () => {
     });
 
     test("should be empty for a survey with no upload element", () => {
-      expect(getSurveyFileUploadElementIds({ blocks: [], questions: [] })).toEqual(noUploadElementIds);
-      expect(getSurveyFileUploadElementIds({})).toEqual(noUploadElementIds);
+      expect(getSurveyUploadElementIds({ blocks: [], questions: [] })).toEqual(noUploadElementIds);
+      expect(getSurveyUploadElementIds({})).toEqual(noUploadElementIds);
     });
   });
 

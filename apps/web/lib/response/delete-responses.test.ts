@@ -1,9 +1,9 @@
 import { describe, expect, test, vi } from "vitest";
-import { collectResponseFileUrls, getSurveyFileUploadElementIds } from "@/modules/storage/utils";
+import { collectResponseFileUrls, getSurveyUploadElementIds } from "@/modules/storage/utils";
 import { deleteResponsesInTransaction } from "./delete-responses";
 
 vi.mock("@/modules/storage/utils", () => ({
-  getSurveyFileUploadElementIds: vi.fn(),
+  getSurveyUploadElementIds: vi.fn(),
   collectResponseFileUrls: vi.fn(),
 }));
 
@@ -22,7 +22,7 @@ const makeTx = (rows: { id: string; displayId: string | null; data: unknown; sur
 
 describe("deleteResponsesInTransaction", () => {
   test("deletes the matched rows and their displays, returning their files per survey", async () => {
-    vi.mocked(getSurveyFileUploadElementIds).mockImplementation(() => ({
+    vi.mocked(getSurveyUploadElementIds).mockImplementation(() => ({
       fileUpload: new Set(["upload"]),
       signature: new Set(),
       live: new Set(["upload"]),

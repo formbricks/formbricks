@@ -5,7 +5,6 @@ import { logger } from "@formbricks/logger";
 import type { TI18nString } from "@formbricks/types/i18n";
 import type { TResponseFilterCriteria } from "@formbricks/types/responses";
 import type { TAccessType } from "@formbricks/types/storage";
-import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
@@ -13,8 +12,9 @@ import { buildWhereClause } from "@/lib/response/where-clause";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { findWorkspaceByIdOrLegacyEnvId } from "@/lib/utils/resolve-client-id";
 import { buildAttachmentZipPath } from "@/modules/storage/lib/attachment-zip-paths";
+import { type TUploadElementKind, uploadElementKinds } from "@/modules/storage/survey-upload-elements";
 import { getOriginalFileNameFromUrl } from "@/modules/storage/url-helpers";
-import { getSurveyFileUploadConfigs, parseStorageFileUrl } from "@/modules/storage/utils";
+import { getSurveyUploadElementConfigs, parseStorageFileUrl } from "@/modules/storage/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 
 /**
@@ -108,8 +108,8 @@ interface LabelledElement {
   /** 1-based position in the survey, so ZIP folders sort in survey order. */
   index: number;
   label: string;
-  /** A Signature answer is one URL string; a File upload answer is an array of them. */
-  isSignature: boolean;
+  /** How this element type stores its answer: one URL string (Signature) or an array of them (File upload). */
+  kind: TUploadElementKind;
 }
 
 /**
@@ -117,36 +117,36 @@ interface LabelledElement {
  *
  * The label recipe matches `extractSurveyDetails`, so a ZIP folder and its CSV column read the same.
  * A survey holds its elements in `blocks` or in legacy `questions` — never both (`ZSurvey` rejects
- * that) — but `getSurveyFileUploadConfigs` covers both shapes, so this does too. `replaceHeadlineRecall`
+ * that) — but `getSurveyUploadElementConfigs` covers both shapes, so this does too. `replaceHeadlineRecall`
  * only rewrites block headlines; a legacy questions-only survey keeps its raw recall tokens in the
  * folder name, which is the same thing the CSV export does.
  */
-const buildFileUploadElementLabels = (survey: TSurvey): Map<string, LabelledElement> => {
+const buildUploadElementLabels = (survey: TSurvey): Map<string, LabelledElement> => {
   const surveyWithRecall = replaceHeadlineRecall(survey, "default");
 
   const orderedElements: { id: string; headline?: TI18nString }[] = surveyWithRecall.blocks?.length
     ? getElementsFromBlocks(surveyWithRecall.blocks)
     : (surveyWithRecall.questions ?? []);
 
-  const uploadElementTypes = new Map(
-    getSurveyFileUploadConfigs({
+  const uploadElementKindsById = new Map(
+    getSurveyUploadElementConfigs({
       blocks: surveyWithRecall.blocks,
       questions: surveyWithRecall.questions,
-    }).map((config) => [config.id, config.type])
+    }).map((config) => [config.id, uploadElementKinds[config.type]])
   );
 
   const labels = new Map<string, LabelledElement>();
 
   orderedElements.forEach((element, position) => {
-    const type = uploadElementTypes.get(element.id);
-    if (!type) return;
+    const kind = uploadElementKindsById.get(element.id);
+    if (!kind) return;
 
     const headline = getTextContent(getLocalizedValue(element.headline, "default"));
 
     labels.set(element.id, {
       index: position + 1,
       label: headline || element.id,
-      isSignature: type === TSurveyElementTypeEnum.Signature,
+      kind,
     });
   });
 
@@ -172,8 +172,10 @@ const createWorkspaceResolver = () => {
  * is one string and a File upload answer an array, so a string under a File upload id (or an array under
  * a Signature id) is malformed data and yields nothing.
  */
-const extractFileUrls = (value: unknown, isSignature: boolean): string[] => {
-  if (isSignature) return typeof value === "string" && value !== "" ? [value] : [];
+const extractFileUrls = (value: unknown, kind: TUploadElementKind): string[] => {
+  if (kind.answerShape === "string") {
+    return typeof value === "string" && !(kind.emptyStringIsSkipped && value === "") ? [value] : [];
+  }
   return Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === "string") : [];
 };
 
@@ -204,7 +206,7 @@ const listAttachmentCandidates = (
   const answers = (data ?? {}) as Record<string, unknown>;
 
   return [...elementLabels].flatMap(([elementId, element]) =>
-    extractFileUrls(answers[elementId], element.isSignature).map((fileUrl) => ({
+    extractFileUrls(answers[elementId], element.kind).map((fileUrl) => ({
       elementId,
       element,
       fileUrl,
@@ -356,7 +358,7 @@ export const collectResponseAttachments = async ({
   timeZone = "UTC",
   batchSize = DEFAULT_BATCH_SIZE,
 }: CollectResponseAttachmentsParams): Promise<CollectResponseAttachmentsResult> => {
-  const elementLabels = buildFileUploadElementLabels(survey);
+  const elementLabels = buildUploadElementLabels(survey);
 
   if (elementLabels.size === 0) {
     return { entries: [], fileCount: 0, responseCount: 0, exceedsMaxFiles: false };

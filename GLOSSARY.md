@@ -7,7 +7,7 @@ that is not listed here.
 
 **Block** — One card of a survey holding one or more elements. Logic rules and a `logicFallback` hang off a block.
 
-**Signature element** — An element where the respondent signs, by drawing or by typing their name, and the owner gets the signature as one image with the response. UI copy says "Signature". _Avoid_: signature question, signature field, e-signature (it carries no legal-signature claim).
+**Signature element** — An element where the respondent signs, by drawing or by typing their name, and the owner gets the signature as one image with the response. UI copy says "Signature". _Avoid_ (in code and domain talk): signature question, signature field, e-signature (it carries no legal-signature claim).
 
 **Signed** — A Signature element is signed once the respondent has drawn a stroke of minimum length or typed a name; a bare tap or blank name does not count. Clearing makes it not signed again. Logic conditions read "is signed" / "is not signed".
 

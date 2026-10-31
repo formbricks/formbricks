@@ -1,6 +1,6 @@
 import "server-only";
 import type { Prisma } from "@formbricks/database/prisma";
-import { collectResponseFileUrls, getSurveyFileUploadElementIds } from "@/modules/storage/utils";
+import { collectResponseFileUrls, getSurveyUploadElementIds } from "@/modules/storage/utils";
 
 // A row whose survey was not read has no element ids, so only keys filed under its own survey and element
 // can be collected from it.
@@ -55,7 +55,7 @@ export const deleteResponsesInTransaction = async (
   const uploadElementIds = new Map(
     surveys.map((survey) => [
       survey.id,
-      getSurveyFileUploadElementIds({ blocks: survey.blocks, questions: survey.questions }),
+      getSurveyUploadElementIds({ blocks: survey.blocks, questions: survey.questions }),
     ])
   );
   const bySurvey = new Map<string, TDeletedSurveyResponses>();

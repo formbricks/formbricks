@@ -71,7 +71,7 @@ vi.mock("@/modules/deletion-cleanup/lib/drain", () => ({ drainDeletionCleanups: 
 // only the element-id lookup is pinned, to keep the survey fixtures free of upload elements.
 vi.mock("@/modules/storage/utils", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/modules/storage/utils")>()),
-  getSurveyFileUploadElementIds: () => ({
+  getSurveyUploadElementIds: () => ({
     fileUpload: new Set(["screenshots"]),
     signature: new Set(["signature"]),
     live: new Set(["screenshots", "signature", "text"]),

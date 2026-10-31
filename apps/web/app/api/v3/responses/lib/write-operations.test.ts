@@ -565,7 +565,7 @@ describe("file-upload answers", () => {
    * The survey has to DECLARE the file-upload element, or these tests prove nothing.
    *
    * With the default fixture — one `openText` called `q1` — the key `upload` is not publishable, so
-   * `planAnswerDataWrite` raises `unsupported_field` and the 422 arrives before `fileUploadIssues`
+   * `planAnswerDataWrite` raises `unsupported_field` and the 422 arrives before `uploadIssues`
    * is ever consulted. Both refusal tests then pass with the storage check deleted, which is the one
    * check here that carries a security property.
    */
