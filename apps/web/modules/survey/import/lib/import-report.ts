@@ -109,7 +109,7 @@ const getSkippedQuestionMessage = (issue: TSurveyImportIssue, t: TTranslate): st
 
 /**
  * The generic line. Its code is typed `never`: every code the types know is handled in
- * `getQsfImportIssueMessage`, so a new code fails the build until it has a line of its own.
+ * `getSurveyImportIssueMessage`, so a new code fails the build until it has a line of its own.
  */
 const getUnknownIssueMessage = (_code: never, t: TTranslate): string =>
   t("workspace.surveys.import.issues.unknown");
@@ -118,7 +118,7 @@ const getUnknownIssueMessage = (_code: never, t: TTranslate): string =>
  * One report line in the user's language. Literal `t()` calls per code, so the translation scanner
  * sees every key. `params` come from the file or the AI: callers render the result as text only.
  */
-export const getQsfImportIssueMessage = (issue: TSurveyImportIssue, t: TTranslate): string => {
+export const getSurveyImportIssueMessage = (issue: TSurveyImportIssue, t: TTranslate): string => {
   switch (issue.code) {
     case "logic_not_imported": {
       const description = param(issue, "description");
@@ -233,8 +233,8 @@ export const getQsfImportIssueMessage = (issue: TSurveyImportIssue, t: TTranslat
  * The line with what it is about, e.g. `Q12: Logic not imported: …`: the Qualtrics question, the end
  * message, or for a page's rule when none of its questions was imported, the page's block.
  */
-export const getQsfImportIssueLine = (issue: TSurveyImportIssue, t: TTranslate): string => {
-  const message = getQsfImportIssueMessage(issue, t);
+export const getSurveyImportIssueLine = (issue: TSurveyImportIssue, t: TTranslate): string => {
+  const message = getSurveyImportIssueMessage(issue, t);
   const subject =
     issue.questionTag ??
     (param(issue, "subject") === "ending"
@@ -244,7 +244,7 @@ export const getQsfImportIssueLine = (issue: TSurveyImportIssue, t: TTranslate):
 };
 
 /** Warnings first, then notes, keeping the server's order inside each. */
-export const sortQsfImportIssues = (issues: readonly TSurveyImportIssue[]): TSurveyImportIssue[] => [
+export const sortSurveyImportIssues = (issues: readonly TSurveyImportIssue[]): TSurveyImportIssue[] => [
   ...issues.filter((issue) => issue.severity === "warning"),
   ...issues.filter((issue) => issue.severity !== "warning"),
 ];
@@ -261,11 +261,11 @@ export const getSwitchedOffLanguages = (report: TSurveyImportReport): string[] =
   ),
 ];
 
-export const hasQsfImportWarnings = (report: TSurveyImportReport): boolean =>
+export const hasSurveyImportWarnings = (report: TSurveyImportReport): boolean =>
   report.issues.some((issue) => issue.severity === "warning");
 
 /** What the file turned into, at a glance: the facts row above the review list and the report's header. */
-export const getQsfImportFacts = (summary: TSurveyImportReport["summary"], t: TTranslate): string[] => {
+export const getSurveyImportFacts = (summary: TSurveyImportReport["summary"], t: TTranslate): string[] => {
   const facts = [
     t("workspace.surveys.import.facts.questions", { count: summary.questions }),
     t("workspace.surveys.import.facts.blocks", { count: summary.blocks }),
@@ -284,10 +284,10 @@ export const getQsfImportFacts = (summary: TSurveyImportReport["summary"], t: TT
 };
 
 /** The report as plain text, for Download (ENG-3605). Same lines the dialog shows. */
-export const formatQsfImportReport = (report: TSurveyImportReport, t: TTranslate): string => {
+export const formatSurveyImportReport = (report: TSurveyImportReport, t: TTranslate): string => {
   const lines = [
     t("workspace.surveys.import.report.text_title", { fileName: report.source.fileName }),
-    getQsfImportFacts(report.summary, t).join(" · "),
+    getSurveyImportFacts(report.summary, t).join(" · "),
     "",
   ];
 
@@ -295,17 +295,17 @@ export const formatQsfImportReport = (report: TSurveyImportReport, t: TTranslate
     lines.push(t("workspace.surveys.import.report.empty"));
   }
 
-  for (const issue of sortQsfImportIssues(report.issues)) {
+  for (const issue of sortSurveyImportIssues(report.issues)) {
     const severity =
       issue.severity === "warning"
         ? t("workspace.surveys.import.report.warning")
         : t("workspace.surveys.import.report.note");
-    lines.push(`- ${severity}: ${getQsfImportIssueLine(issue, t)}`);
+    lines.push(`- ${severity}: ${getSurveyImportIssueLine(issue, t)}`);
   }
 
   return `${lines.join("\n")}\n`;
 };
 
 /** `survey.qsf`, `survey.formbricks.json` or `survey.docx` → `survey-import-report.txt`. */
-export const getQsfImportReportFileName = (fileName: string): string =>
+export const getSurveyImportReportFileName = (fileName: string): string =>
   `${fileName.replace(/(?:\.qsf|\.formbricks\.json|\.json|\.docx|\.xlsx|\.csv)$/i, "") || "survey"}-import-report.txt`;

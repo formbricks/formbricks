@@ -3,8 +3,8 @@ import { getAiErrorMessage } from "@/modules/survey/components/template-list/lib
 
 type TTranslate = (key: string, options?: Record<string, unknown>) => string;
 
-/** The dialog's code for a file past one of the import's limits: this prefix, then the limit's name. */
-export const SURVEY_IMPORT_LIMIT_CODE_PREFIX = "qsf_limit_exceeded:";
+/** The dialog's code for a Qualtrics export past one of the import's limits: this prefix, then the limit's name. */
+export const QSF_IMPORT_LIMIT_CODE_PREFIX = "qsf_limit_exceeded:";
 
 /**
  * Which limit a file is past, by the name the route sends (`TSurveyImportLimit`); an unknown one
@@ -147,7 +147,7 @@ export const getSurveyImportRequestErrorCode = (error: V3ApiError): string => {
       )?.identifier;
       if (documentLimit) return `${SURVEY_IMPORT_DOCUMENT_LIMIT_CODE_PREFIX}${documentLimit}`;
       const limit = error.invalid_params?.find((param) => param.code === "qsf_limit_exceeded")?.identifier;
-      return limit ? `${SURVEY_IMPORT_LIMIT_CODE_PREFIX}${limit}` : "qsf_not_recognized";
+      return limit ? `${QSF_IMPORT_LIMIT_CODE_PREFIX}${limit}` : "qsf_not_recognized";
     }
     default:
       return error.code ?? "ai_unknown";
@@ -164,8 +164,8 @@ export const getSurveyImportErrorMessage = (
   t: TTranslate,
   retryAfterSeconds: number | null = null
 ): string => {
-  if (code.startsWith(SURVEY_IMPORT_LIMIT_CODE_PREFIX)) {
-    return getImportLimitMessage(code.slice(SURVEY_IMPORT_LIMIT_CODE_PREFIX.length), t);
+  if (code.startsWith(QSF_IMPORT_LIMIT_CODE_PREFIX)) {
+    return getImportLimitMessage(code.slice(QSF_IMPORT_LIMIT_CODE_PREFIX.length), t);
   }
   if (code.startsWith(SURVEY_IMPORT_DOCUMENT_LIMIT_CODE_PREFIX)) {
     return getDocumentLimitMessage(code.slice(SURVEY_IMPORT_DOCUMENT_LIMIT_CODE_PREFIX.length), t);

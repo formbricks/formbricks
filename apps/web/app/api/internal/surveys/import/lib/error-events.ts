@@ -19,10 +19,10 @@ const STREAM_ERROR_DETAILS = {
   [SURVEY_IMPORT_STREAM_ERROR_CODES.FAILED]: "The file could not be imported. Try again.",
 } as const;
 
-type TQsfImportErrorEvent = Extract<TSurveyImportStreamEvent, { type: "error" }>;
+type TSurveyImportErrorEvent = Extract<TSurveyImportStreamEvent, { type: "error" }>;
 
 /** The in-band event for an import that hit its deadline. */
-export function importTimedOutEvent(): TQsfImportErrorEvent {
+export function importTimedOutEvent(): TSurveyImportErrorEvent {
   return {
     type: "error",
     code: SURVEY_IMPORT_STREAM_ERROR_CODES.TIMED_OUT,
@@ -34,7 +34,7 @@ export function importTimedOutEvent(): TQsfImportErrorEvent {
  * Map a failure after the stream opened to the event the dialog renders. Failures before it — access,
  * the AI gate, a file that is not a QSF — are problem responses, not events.
  */
-export function toSurveyImportStreamErrorEvent(error: unknown): TQsfImportErrorEvent {
+export function toSurveyImportStreamErrorEvent(error: unknown): TSurveyImportErrorEvent {
   if (error instanceof SurveyImportFailedError && error.reason === "too_many_questions") {
     return {
       type: "error",
