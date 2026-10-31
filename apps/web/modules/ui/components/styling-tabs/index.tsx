@@ -62,31 +62,35 @@ export const StylingTabs = <T extends string | number>({
 
       <div
         className={cn("flex overflow-hidden rounded-md border border-slate-300 p-2", tabsContainerClassName)}>
-        {options.map((option) => (
-          <label
-            key={option.value}
-            htmlFor={option.value.toString()}
-            className={cn(
-              "flex flex-1 items-center justify-center gap-4 rounded-md py-2 text-center text-sm",
-              selectedOption === option.value ? "bg-slate-100" : "bg-white",
-              disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer",
-              "focus:ring-2 focus:ring-brand-dark/50 focus:outline-hidden",
-              selectedOption === option.value ? activeTabClassName : inactiveTabClassName
-            )}>
-            <input
-              type="radio"
-              name={id}
-              id={option.value.toString()}
-              value={option.value.toString()}
-              checked={selectedOption === option.value}
-              onChange={handleChange}
-              disabled={disabled}
-              className="sr-only"
-            />
-            <span className="text-slate-900">{option.label}</span>
-            {option.icon && <div>{option.icon}</div>}
-          </label>
-        ))}
+        {options.map((option) => {
+          // Scoped to the group, so two tab groups on a page with the same option never share an id.
+          const optionId = `${id}-${option.value}`;
+          return (
+            <label
+              key={option.value}
+              htmlFor={optionId}
+              className={cn(
+                "flex flex-1 items-center justify-center gap-4 rounded-md py-2 text-center text-sm",
+                selectedOption === option.value ? "bg-slate-100" : "bg-white",
+                disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer",
+                "focus:ring-2 focus:ring-brand-dark/50 focus:outline-hidden",
+                selectedOption === option.value ? activeTabClassName : inactiveTabClassName
+              )}>
+              <input
+                type="radio"
+                name={id}
+                id={optionId}
+                value={option.value.toString()}
+                checked={selectedOption === option.value}
+                onChange={handleChange}
+                disabled={disabled}
+                className="sr-only"
+              />
+              <span className="text-slate-900">{option.label}</span>
+              {option.icon && <div>{option.icon}</div>}
+            </label>
+          );
+        })}
       </div>
     </div>
   );
