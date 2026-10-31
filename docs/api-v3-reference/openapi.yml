@@ -11403,9 +11403,11 @@ components:
             imageUrl:
               type: string
               description: |
-                The signature image (a PNG), **as stored** — a workspace-relative path, not an absolute URL, and neither resolved nor signed. A signature is one image, so this is a single string where `fileUpload` has an array.
+                The signature image (a PNG), **as stored** — a workspace-relative private storage path (`/storage/{workspaceId}/private/surveys/{surveyId}/elements/{elementId}/…`), not an absolute URL, and neither resolved nor signed. A signature is one image, so this is a single string where `fileUpload` has an array of `fileUrls`.
 
-                Not publicly fetchable: access follows the same authorization as the response, and deleting the response deletes the image.
+                A deliberate choice, the same as for `fileUpload`: `answers[]` promises verbatim values a client can write straight back, and an absolute URL is neither what is stored nor what a write accepts. The v1 and v2 management APIs, webhooks, CSV and Excel exports, and integrations resolve the stored path to an absolute URL instead; v3 does not. This field identifies the image, it does not serve it: prefix your Formbricks origin to fetch it.
+
+                Not publicly fetchable. The request must carry a signed-in session or an API key with read access to the workspace (and, for a restricted survey, to the survey), and deleting the response deletes the image.
       unevaluatedProperties: false
       description: Signature answer. A `signature` element the respondent skipped has no entry in `answers[]` at all.
     ResponseAnswerBooking:

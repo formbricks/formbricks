@@ -39,6 +39,15 @@ const getLoopbackOriginVariants = (value) => {
 
 const getUniqueValues = (values) => [...new Set(values.filter(Boolean))];
 
+// Shared by every cacheable `/js/*` rule below (the bundles, the locale JSON, the signature font), so a
+// change to how they are cached or shared cross-origin lands on all of them at once.
+const JS_ASSET_CACHE_CONTROL =
+  "public, max-age=3600, s-maxage=2592000, stale-while-revalidate=3600, stale-if-error=86400";
+const JS_ASSET_CORS_HEADERS = [
+  { key: "Access-Control-Allow-Origin", value: "*" },
+  { key: "Vary", value: "Accept-Encoding" },
+];
+
 // NOTE: every `process.env.*` read in this file shapes the build output and MUST be listed in the
 // `build.env` array of apps/web/turbo.json — the web build's own task config since ENG-1682, not the
 // root turbo.json — so Turborepo hashes it into the cache key. Adding a read here without updating
@@ -283,23 +292,9 @@ const nextConfig = {
         // otherwise set Content-Type on the same path.
         source: "/js/((?!locales/|fonts/).*)",
         headers: [
-          {
-            key: "Cache-Control",
-            value:
-              "public, max-age=3600, s-maxage=2592000, stale-while-revalidate=3600, stale-if-error=86400",
-          },
-          {
-            key: "Content-Type",
-            value: "application/javascript; charset=UTF-8",
-          },
-          {
-            key: "Access-Control-Allow-Origin",
-            value: "*",
-          },
-          {
-            key: "Vary",
-            value: "Accept-Encoding",
-          },
+          { key: "Cache-Control", value: JS_ASSET_CACHE_CONTROL },
+          { key: "Content-Type", value: "application/javascript; charset=UTF-8" },
+          ...JS_ASSET_CORS_HEADERS,
         ],
       },
       {
@@ -308,23 +303,9 @@ const nextConfig = {
         // the locale sources, so a translation change lands on a new URL rather than waiting out the CDN.
         source: "/js/locales/(.*)",
         headers: [
-          {
-            key: "Cache-Control",
-            value:
-              "public, max-age=3600, s-maxage=2592000, stale-while-revalidate=3600, stale-if-error=86400",
-          },
-          {
-            key: "Content-Type",
-            value: "application/json; charset=UTF-8",
-          },
-          {
-            key: "Access-Control-Allow-Origin",
-            value: "*",
-          },
-          {
-            key: "Vary",
-            value: "Accept-Encoding",
-          },
+          { key: "Cache-Control", value: JS_ASSET_CACHE_CONTROL },
+          { key: "Content-Type", value: "application/json; charset=UTF-8" },
+          ...JS_ASSET_CORS_HEADERS,
         ],
       },
       {
@@ -334,23 +315,9 @@ const nextConfig = {
         // origin when the survey is embedded through the SDK, and font loads are always cross-origin checked.
         source: "/js/fonts/(.*\\.woff2)",
         headers: [
-          {
-            key: "Cache-Control",
-            value:
-              "public, max-age=3600, s-maxage=2592000, stale-while-revalidate=3600, stale-if-error=86400",
-          },
-          {
-            key: "Content-Type",
-            value: "font/woff2",
-          },
-          {
-            key: "Access-Control-Allow-Origin",
-            value: "*",
-          },
-          {
-            key: "Vary",
-            value: "Accept-Encoding",
-          },
+          { key: "Cache-Control", value: JS_ASSET_CACHE_CONTROL },
+          { key: "Content-Type", value: "font/woff2" },
+          ...JS_ASSET_CORS_HEADERS,
         ],
       },
       {

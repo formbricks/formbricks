@@ -22,6 +22,30 @@ const ensureDirectoryExists = async (dirPath: string): Promise<void> => {
   }
 };
 
+/**
+ * Replace `destDir` with the files of `srcDir` that `include` accepts, returning how many were copied.
+ *
+ * Replaced rather than copied over. Turbo captures every file the directory's output glob matches after
+ * the task runs, whoever wrote it, so a file left behind by an older build (a renamed locale, a dropped
+ * font) would be captured into the cache entry and restored on every hit — outliving its source, and
+ * making the same cache key hold different bytes run to run.
+ */
+const replaceDirectory = async (
+  srcDir: string,
+  destDir: string,
+  include: (file: string) => boolean
+): Promise<number> => {
+  await rm(destDir, { recursive: true, force: true });
+  await ensureDirectoryExists(destDir);
+
+  const files = (await readdir(srcDir)).filter(include);
+  for (const file of files) {
+    await copyFile(path.resolve(srcDir, file), path.resolve(destDir, file));
+  }
+
+  return files.length;
+};
+
 export function copyCompiledAssetsPlugin(options: CopyCompiledAssetsPluginOptions): Plugin {
   let config: ResolvedConfig;
 
@@ -93,20 +117,11 @@ export function copyCompiledAssetsPlugin(options: CopyCompiledAssetsPluginOption
         // non-English survey would quietly render English.
         if (options.localesDir) {
           const localesOutputDir = path.resolve(outputDir, "locales");
+          const copied = await replaceDirectory(options.localesDir, localesOutputDir, (file) =>
+            file.endsWith(".json")
+          );
 
-          // Replace the directory rather than copy over it. Turbo captures every file this glob matches
-          // after the task runs, whoever wrote it, so a locale left behind by an older build (a renamed
-          // tag, a dropped language) would be captured into the cache entry and restored on every hit —
-          // outliving its source, and making the same cache key hold different bytes run to run.
-          await rm(localesOutputDir, { recursive: true, force: true });
-          await ensureDirectoryExists(localesOutputDir);
-
-          const localeFiles = (await readdir(options.localesDir)).filter((file) => file.endsWith(".json"));
-          for (const file of localeFiles) {
-            await copyFile(path.resolve(options.localesDir, file), path.resolve(localesOutputDir, file));
-          }
-
-          console.log(`Copied ${String(localeFiles.length)} locale files to ${localesOutputDir}`);
+          console.log(`Copied ${String(copied)} locale files to ${localesOutputDir}`);
         }
 
         // The survey runtime fetches the typed-signature font only when a respondent opens a Signature
@@ -114,18 +129,13 @@ export function copyCompiledAssetsPlugin(options: CopyCompiledAssetsPluginOption
         // and, for the same reason, replaced rather than copied over, and declared in turbo.json.
         if (options.fontsDir) {
           const fontsOutputDir = path.resolve(outputDir, "fonts");
-
-          await rm(fontsOutputDir, { recursive: true, force: true });
-          await ensureDirectoryExists(fontsOutputDir);
-
-          const fontFiles = (await readdir(options.fontsDir)).filter(
+          const copied = await replaceDirectory(
+            options.fontsDir,
+            fontsOutputDir,
             (file) => file.endsWith(".woff2") || file.endsWith(".txt")
           );
-          for (const file of fontFiles) {
-            await copyFile(path.resolve(options.fontsDir, file), path.resolve(fontsOutputDir, file));
-          }
 
-          console.log(`Copied ${String(fontFiles.length)} font files to ${fontsOutputDir}`);
+          console.log(`Copied ${String(copied)} font files to ${fontsOutputDir}`);
         }
       } catch (error) {
         if (options.skipDirectoryCheck) {

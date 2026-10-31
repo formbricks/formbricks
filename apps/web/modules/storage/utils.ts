@@ -9,16 +9,17 @@ import {
   ZAllowedFileExtension,
 } from "@formbricks/types/storage";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
-import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { responses } from "@/app/lib/api/response";
 import { WEBAPP_URL } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import {
   type TStringUploadElementKind,
+  type TSurveyUploadElementIds,
   type TUploadElementCandidate,
   type TUploadElementType,
   getSurveyUploadElementConfigs,
   getUploadElementAllowedExtensions,
+  mapUploadElementTypes,
   uploadElementKinds,
 } from "./survey-upload-elements";
 import { getOriginalFileNameFromUrl } from "./url-helpers";
@@ -129,19 +130,6 @@ const getAllowedFileExtensionFromFileName = (fileName: string): TAllowedFileExte
 };
 
 /**
- * The ids of the elements whose answers hold storage URLs, split by how the answer holds them: a File
- * upload answer is an array of URLs, a Signature answer is one URL string (ADR 0016).
- *
- * The split is what lets `collectResponseFileUrls` accept a string for a Signature id only. A single
- * flat set would force it to guess the shape from the value, and a plain text answer holding a pasted
- * storage URL would become a delete target. `live` is every element id the survey still has, of any
- * type: a string under an id outside it is what a deleted or retyped Signature leaves behind.
- */
-export type TSurveyUploadElementIds = Record<TUploadElementType, ReadonlySet<string>> & {
-  live: ReadonlySet<string>;
-};
-
-/**
  * The ids of the elements whose answers hold storage URLs.
  *
  * Every response-file delete path needs the id sets rather than the configs, and they must come from the
@@ -157,12 +145,11 @@ export const getSurveyUploadElementIds = (survey: {
   questions?: readonly TUploadElementCandidate[] | null;
 }): TSurveyUploadElementIds => {
   const configs = getSurveyUploadElementConfigs({ blocks: survey.blocks, questions: survey.questions });
-  const idsOfType = (type: TUploadElementType) =>
-    new Set(configs.filter((config) => config.type === type).map((config) => config.id));
 
   return {
-    fileUpload: idsOfType(TSurveyElementTypeEnum.FileUpload),
-    signature: idsOfType(TSurveyElementTypeEnum.Signature),
+    ...mapUploadElementTypes(
+      (type) => new Set(configs.filter((config) => config.type === type).map((config) => config.id))
+    ),
     live: new Set([
       ...(survey.blocks ?? []).flatMap((block) => block.elements.map((element) => element.id)),
       ...(survey.questions ?? []).map((question) => question.id),
@@ -191,12 +178,12 @@ export const getSurveyUploadElementIds = (survey: {
 const getResponseFileUrlOwner = ({
   fileUrl,
   elementId,
-  isUploadElementAnswer,
+  isFileUploadAnswer,
   surveyId,
 }: {
   fileUrl: string;
   elementId: string;
-  isUploadElementAnswer: boolean;
+  isFileUploadAnswer: boolean;
   surveyId: string;
 }): "own" | "refused" | "none" => {
   // `getStorageUrlSurveyId`'s reading, with the URL parsed once: a name that does not decode names no
@@ -204,7 +191,7 @@ const getResponseFileUrlOwner = ({
   const parsed = parseStorageFileUrl(fileUrl);
   const scope = parsed ? getStorageFileNameScope(parsed.fileName) : undefined;
 
-  if (!parsed || !scope?.decodable || scope.surveyId === null) return isUploadElementAnswer ? "own" : "none";
+  if (!parsed || !scope?.decodable || scope.surveyId === null) return isFileUploadAnswer ? "own" : "none";
   if (parsed.accessType !== "private") return "none";
   return scope.surveyId === surveyId && scope.elementId === elementId ? "own" : "refused";
 };
@@ -264,11 +251,11 @@ export const collectResponseFileUrls = (
       continue;
     }
 
-    const isUploadElementAnswer = elementIds.fileUpload.has(elementId);
+    const isFileUploadAnswer = elementIds.fileUpload.has(elementId);
     for (const fileUrl of answerUrls) {
       if (typeof fileUrl !== "string") continue;
 
-      const owner = getResponseFileUrlOwner({ fileUrl, elementId, isUploadElementAnswer, surveyId });
+      const owner = getResponseFileUrlOwner({ fileUrl, elementId, isFileUploadAnswer, surveyId });
       if (owner === "own") fileUrls.push(fileUrl);
       if (owner === "refused") refusedCount++;
     }

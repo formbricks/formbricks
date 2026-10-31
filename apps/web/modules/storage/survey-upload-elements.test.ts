@@ -2,9 +2,12 @@ import { describe, expect, test } from "vitest";
 import type { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import type { TSurveyFileUploadElement, TSurveySignatureElement } from "@formbricks/types/surveys/elements";
 import {
+  createEmptyUploadElementIds,
   getSurveyUploadElementConfigs,
   getUploadElementAllowedExtensions,
   getUploadElementKind,
+  mapUploadElementTypes,
+  uploadElementKinds,
 } from "./survey-upload-elements";
 
 describe("survey upload elements", () => {
@@ -70,6 +73,33 @@ describe("survey upload elements", () => {
       const fileUpload = { id: "file1", type: "fileUpload" } as TSurveyFileUploadElement;
 
       expect(getUploadElementAllowedExtensions(fileUpload)).toBeUndefined();
+    });
+  });
+
+  describe("mapUploadElementTypes", () => {
+    test("builds one value per upload element type, from the descriptor's keys", () => {
+      const built = mapUploadElementTypes((type) => `${type}!`);
+
+      expect(Object.keys(built).sort()).toEqual(Object.keys(uploadElementKinds).sort());
+      expect(built).toEqual({ fileUpload: "fileUpload!", signature: "signature!" });
+    });
+  });
+
+  describe("createEmptyUploadElementIds", () => {
+    test("has an empty set for every upload element type and for the live ids", () => {
+      expect(createEmptyUploadElementIds()).toEqual({
+        fileUpload: new Set(),
+        signature: new Set(),
+        live: new Set(),
+      });
+    });
+
+    test("hands out fresh sets on every call", () => {
+      const first = createEmptyUploadElementIds();
+      const second = createEmptyUploadElementIds();
+
+      expect(first.fileUpload).not.toBe(second.fileUpload);
+      expect(first.live).not.toBe(second.live);
     });
   });
 });
