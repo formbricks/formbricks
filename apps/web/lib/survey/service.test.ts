@@ -47,7 +47,9 @@ import {
   getSurveys,
   getSurveysByActionClassId,
   getSurveysBySegmentId,
+  getSurveysWithCustomCssAndOwnerName,
   loadNewSegmentInSurvey,
+  selectSurveyWithCustomCss,
   updateSurvey,
   updateSurveyInternal,
 } from "./service";
@@ -354,6 +356,62 @@ describe("Tests for getSurveys", () => {
       prisma.survey.findMany.mockRejectedValue(new Error(mockErrorMessage));
       await expect(getSurveys(mockId, {})).rejects.toThrow(Error);
     });
+  });
+});
+
+describe("Tests for getSurveysWithCustomCssAndOwnerName (ENG-6861)", () => {
+  const visibleWhere = { visibility: "workspace" as const };
+
+  test("reads the batch in one query scoped to the workspace and the caller's visibility", async () => {
+    const surveyIds = [createId(), createId()];
+    prisma.survey.findMany.mockResolvedValueOnce([
+      { ...mockSurveyOutput, owner: { name: "Grace" } },
+    ] as never);
+
+    const surveys = await getSurveysWithCustomCssAndOwnerName(mockId, surveyIds, visibleWhere);
+
+    expect(surveys).toEqual([{ survey: mockTransformedSurveyOutput, ownerName: "Grace" }]);
+    expect(prisma.survey.findMany).toHaveBeenCalledTimes(1);
+    expect(prisma.survey.findMany).toHaveBeenCalledWith({
+      where: { id: { in: surveyIds }, workspaceId: mockId, AND: [visibleWhere] },
+      select: { ...selectSurveyWithCustomCss, owner: { select: { name: true } } },
+    });
+  });
+
+  test("adds no visibility clause when enforcement contributes none, and reads a missing owner as null", async () => {
+    const surveyIds = [createId()];
+    prisma.survey.findMany.mockResolvedValueOnce([{ ...mockSurveyOutput, owner: null }] as never);
+
+    const surveys = await getSurveysWithCustomCssAndOwnerName(mockId, surveyIds, {});
+
+    expect(surveys).toEqual([{ survey: mockTransformedSurveyOutput, ownerName: null }]);
+    expect(vi.mocked(prisma.survey.findMany).mock.calls[0]?.[0]?.where).toEqual({
+      id: { in: surveyIds },
+      workspaceId: mockId,
+    });
+  });
+
+  test("answers an empty batch without querying", async () => {
+    expect(await getSurveysWithCustomCssAndOwnerName(mockId, [], visibleWhere)).toEqual([]);
+    expect(prisma.survey.findMany).not.toHaveBeenCalled();
+  });
+
+  test("rejects a malformed survey id", async () => {
+    await expect(getSurveysWithCustomCssAndOwnerName(mockId, ["123#"], visibleWhere)).rejects.toThrow(
+      ValidationError
+    );
+  });
+
+  test("maps a known Prisma error to a DatabaseError", async () => {
+    prisma.survey.findMany.mockRejectedValueOnce(
+      new Prisma.PrismaClientKnownRequestError("Mock error message", {
+        code: PrismaErrorType.UniqueConstraintViolation,
+        clientVersion: "0.0.1",
+      })
+    );
+    await expect(getSurveysWithCustomCssAndOwnerName(mockId, [createId()], visibleWhere)).rejects.toThrow(
+      DatabaseError
+    );
   });
 });
 

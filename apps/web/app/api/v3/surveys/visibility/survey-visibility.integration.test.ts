@@ -12,6 +12,9 @@ import {
 } from "@/lib/authzed/scope-readiness";
 import { lockSurveyVisibility } from "@/lib/authzed/survey";
 import { expectedSurveyRelationships } from "@/lib/authzed/survey-relationships";
+import { getSurveysWithCustomCssAndOwnerName } from "@/lib/survey/service";
+import { resolveSurveyActorContext } from "@/lib/survey/visibility/actor-context";
+import { buildVisibleSurveyWhere } from "@/lib/survey/visibility/predicate";
 import { listV3Surveys } from "../lib/operations";
 import { changeV3SurveyVisibility, getV3SurveyVisibility } from "./operations";
 
@@ -269,5 +272,63 @@ describe("GET /api/v3/surveys scoping", () => {
     // A pending grant is still restricted to everyone but its owner and the administrators.
     expect(await listedIds(session(ids.member))).toEqual({ ids: [visible], totalCount: 1 });
     expect(await listedIds(apiKeyAuthentication())).toEqual({ ids: [visible], totalCount: 1 });
+  });
+
+  test("view=full lists exactly what the summary view lists, described the same way (ENG-6861)", async () => {
+    const visible = await createSurvey("Visible");
+    const hidden = await createSurvey("Hidden", "restricted");
+    const pendingGrant = await createSurvey("Pending grant", "restricted");
+    await prisma.survey.update({
+      where: { id: pendingGrant },
+      data: { visibility: "workspace", visibilityVersion: { increment: 1 } },
+    });
+    await prisma.$executeRawUnsafe('TRUNCATE "AuthzedProjectionOutbox";');
+
+    const page = async (authentication: never, view: "summary" | "full") => {
+      const response = await listV3Surveys({
+        authentication,
+        instance,
+        requestId: "req",
+        searchParams: new URLSearchParams({ workspaceId: ids.workspace, view }),
+      });
+      expect(response.status).toBe(200);
+      const body = (await response.json()) as { data: Array<Record<string, unknown> & { id: string }> };
+      return body.data
+        .map(({ id, access, owner, visibility }) => ({ id, access, owner, visibility }))
+        .sort((a, b) => a.id.localeCompare(b.id));
+    };
+
+    const principals = [
+      session(ids.owner),
+      session(ids.manager),
+      session(ids.member),
+      apiKeyAuthentication(),
+    ] as never[];
+    for (const authentication of principals) {
+      expect(await page(authentication, "full")).toEqual(await page(authentication, "summary"));
+    }
+    expect((await page(session(ids.member), "full")).map(({ id }) => id)).toEqual([visible]);
+    expect((await page(apiKeyAuthentication(), "full")).map(({ id }) => id)).toEqual([visible]);
+    expect((await page(session(ids.owner), "full")).map(({ id }) => id)).toEqual(
+      [visible, hidden, pendingGrant].sort()
+    );
+  });
+
+  test("the full view's document read applies the caller's visibility itself (ENG-6861)", async () => {
+    const visible = await createSurvey("Visible");
+    const hidden = await createSurvey("Hidden", "restricted");
+    const readFor = async (userId: string) => {
+      const actorContext = await resolveSurveyActorContext({ type: "user", id: userId }, ids.organization);
+      const documents = await getSurveysWithCustomCssAndOwnerName(
+        ids.workspace,
+        [visible, hidden],
+        buildVisibleSurveyWhere(actorContext)
+      );
+      return documents.map(({ survey }) => survey.id).sort();
+    };
+
+    // As if `hidden` were restricted after the member's page was read: the document read alone drops it.
+    expect(await readFor(ids.member)).toEqual([visible]);
+    expect(await readFor(ids.owner)).toEqual([visible, hidden].sort());
   });
 });

@@ -138,6 +138,11 @@ paths:
         is applied in the query and the cursor, never after the fact: `limit` keeps its meaning and
         `meta.nextCursor` being `null` remains the only end-of-collection signal.
 
+        `view=full` returns each survey's whole document alongside its summary fields, so an export does not
+        need one `GET /api/v3/surveys/{surveyId}` per survey. Pages are not snapshots: a survey created or
+        deleted while you page may be missed or skipped, so a full extraction should page with
+        `sortBy=createdAt` and reconcile on a later run.
+
         Session cookie, `x-api-key`, or a Bearer token.
       tags:
         - V3 Surveys
@@ -157,7 +162,7 @@ paths:
             minimum: 1
             maximum: 250
             default: 20
-          description: Page size (max 250)
+          description: Page size (max 250, or max 50 with `view=full`; above that → **400**)
         - in: query
           name: cursor
           schema:
@@ -247,6 +252,15 @@ paths:
               - name
               - relevance
           description: Sort order. Defaults to `updatedAt`. The `cursor` token is bound to the selected sort order.
+        - in: query
+          name: view
+          schema:
+            type: string
+            enum:
+              - summary
+              - full
+            default: summary
+          description: '`summary` (default) returns `SurveyListItem`s. `full` returns `SurveyFullListItem`s: the summary fields plus the survey document `GET /api/v3/surveys/{surveyId}` returns, in every configured language. With `full`, `limit` is at most 50, `meta.unsupportedSurveyIds` is present, and each request also counts against a separate limit of 30 full pages per minute per user or API key (**429** beyond it). Pagination, filters, sorting and permissions are the same in both views.'
       responses:
         '200':
           description: Surveys retrieved successfully
@@ -270,7 +284,10 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/SurveyListItem'
+                      anyOf:
+                        - $ref: '#/components/schemas/SurveyFullListItem'
+                        - $ref: '#/components/schemas/SurveyListItem'
+                    description: '`SurveyListItem`s, or `SurveyFullListItem`s with `view=full`.'
                   meta:
                     $ref: '#/components/schemas/SurveyListMeta'
         '400':
@@ -7881,184 +7898,6 @@ components:
                   type: string
               additionalProperties: false
         - $ref: '#/components/schemas/SurveyVisibilityFields'
-    ListPaginationMeta:
-      type: object
-      description: |-
-        The pagination half of a v3 list's `meta`, shared by every paginated collection.
-
-        Deliberately open, and never an endpoint's `meta` by itself: an endpoint composes it with `allOf` and closes the result with `unevaluatedProperties: false`. A base that closed itself could not be extended — inside an `allOf`, `additionalProperties: false` sees a sibling branch's properties as additional and rejects them. An endpoint that adds nothing still wraps it, so no `meta` anywhere is open.
-
-        Every field here is `required`. A shared envelope that makes its fields optional is how v3's predecessor stopped honouring its own pagination contract without the schema gate noticing (ENG-2622): `meta: {}` — or no `meta` at all — validated cleanly while the endpoint returned nothing.
-      required:
-        - limit
-        - nextCursor
-      properties:
-        limit:
-          type: integer
-          minimum: 1
-          description: 'The page size actually applied. Carries no `maximum`: it echoes what the server used, it does not bound what may be asked for. The request-side bound is the `limit` query parameter on the operation itself and differs per collection — read it there. A shared description cannot state it without being wrong for some of the operations that compose this base.'
-        nextCursor:
-          type:
-            - string
-            - 'null'
-          description: 'Opaque cursor for the next page. `null` when there are no more results — the only reliable end-of-collection signal, since the server may return fewer items than `limit` without the collection being exhausted. Pass it back verbatim: the encoding is deliberately unspecified and may change without notice, so a client that decodes or constructs one is relying on something this contract does not promise.'
-    SurveyListMeta:
-      allOf:
-        - $ref: '#/components/schemas/ListPaginationMeta'
-        - type: object
-          required:
-            - totalCount
-            - workspaceSurveyCount
-          properties:
-            totalCount:
-              type:
-                - integer
-                - 'null'
-              minimum: 0
-              description: Total number of surveys matching the current filters across all pages. `null` when `includeTotalCount=false`.
-            workspaceSurveyCount:
-              type:
-                - integer
-                - 'null'
-              minimum: 0
-              description: Total number of surveys in the workspace, archived (soft-deleted) ones included and independent of the current filters. `null` when `includeTotalCount=false` (the same gate as `totalCount`). Replaces the boolean `hasArchived` field of earlier releases.
-      unevaluatedProperties: false
-      description: The list `meta` for surveys — pagination, the filtered total, and the workspace total. Both counting fields are `required` but nullable, gated on `includeTotalCount`.
-    InvalidParam:
-      type: object
-      description: |
-        Field-level validation error. `name` and `reason` are always intended for humans.
-        Optional machine-readable fields are included when the API can identify the semantic error,
-        especially for survey locale, identifier, and reference validation used by MCP and agent clients.
-      required:
-        - name
-        - reason
-      properties:
-        name:
-          type: string
-          description: Dot-path to the invalid request field.
-        reason:
-          type: string
-          description: Human-readable repair guidance.
-        code:
-          type: string
-          enum:
-            - dangling_reference
-            - duplicate_identifier
-            - duplicate_locale
-            - forbidden_identifier
-            - immutable_identifier
-            - invalid_locale
-            - invalid_reference
-            - limit_exceeded
-            - missing_required_field
-            - misordered_reference
-            - missing_translation
-            - qsf_limit_exceeded
-            - qsf_not_recognized
-            - read_only_field
-            - unsupported_field
-            - unsupported_locale
-          description: |
-            Machine-readable validation category, when available.
-
-            This is the shared error shape every v3 operation returns, so it lists what the API can emit today and nothing more — `INVALID_PARAM_CODES` in `app/api/v3/lib/response.ts` is the registry, and a code absent from it is dropped before the response is built. Categories for operations that do not exist yet are added with the code that emits them, not ahead of it.
-
-            `limit_exceeded`: the field is well formed but past a limit the operation states, which `reason` names together with what to change. Chart queries use it for a date range that spans more time buckets than its granularity allows.
-
-            `qsf_not_recognized` and `qsf_limit_exceeded` come from the Qualtrics import (an internal, session-only route sharing this shape): the file is not a Qualtrics export it can read, or it is one past an import limit, which `identifier` names.
-        identifier:
-          type: string
-          description: Identifier involved in the validation failure, when available. For language errors, this can be the normalized language code.
-        referenceType:
-          type: string
-          enum:
-            - block
-            - element
-            - ending
-            - hiddenField
-            - language
-            - variable
-            - variableName
-            - recall
-          description: 'Identifier namespace involved in the validation failure. Same rule as `code`: these are the namespaces the API emits today, and more arrive with the operations that emit them.'
-        missingId:
-          type: string
-          description: Referenced id that does not exist in the submitted survey document.
-        firstUsedAt:
-          type: string
-          description: Dot-path where a duplicate identifier was first used.
-        conflictsWith:
-          type: string
-          description: Dot-path to the existing identifier that conflicts with this field.
-      additionalProperties: false
-    Problem:
-      type: object
-      description: |-
-        RFC 9457 Problem Details for HTTP APIs (`application/problem+json`). Responses typically include a machine-readable `code` field alongside `title`, `status`, `detail`, and `requestId`.
-
-        Branch on `code`, not on `detail` or `title`: `code` is stable and locale-independent, whereas `detail` is prose that may be reworded. No problem sets `type`, so per RFC 9457 §4.2.1 `title` is always the HTTP reason phrase for `status` and carries no information of its own.
-
-        Member naming is frozen as published, mixed conventions included (`requestId` alongside `invalid_params` and `details.resource_type`): renaming any of them would break every client that reads them.
-      required:
-        - title
-        - status
-        - detail
-        - requestId
-      properties:
-        type:
-          type: string
-          format: uri
-        title:
-          type: string
-        status:
-          type: integer
-        detail:
-          type: string
-        instance:
-          type: string
-        code:
-          type: string
-          enum:
-            - ai_features_not_enabled
-            - ai_generated_payload_invalid
-            - ai_instance_not_configured
-            - ai_output_too_long
-            - ai_provider_auth_failed
-            - ai_smart_tools_disabled
-            - bad_gateway
-            - bad_request
-            - chart_in_use
-            - conflict
-            - creatives_not_entitled
-            - custom_css_plan_required
-            - dashboards_plan_required
-            - forbidden
-            - internal_server_error
-            - invalid_workflow_state
-            - not_authenticated
-            - not_found
-            - payload_too_large
-            - projection_pending
-            - service_unavailable
-            - stored_survey_invalid
-            - survey_has_linked_creatives
-            - survey_not_workspace_visible
-            - too_many_requests
-            - unprocessable_content
-            - visibility_blocked_by_connections
-            - visibility_change_not_allowed
-            - visibility_not_enabled
-            - workflow_not_executable
-            - workspace_survey_limit_reached
-        requestId:
-          type: string
-        details:
-          type: object
-        invalid_params:
-          type: array
-          items:
-            $ref: '#/components/schemas/InvalidParam'
     TranslatableTextMap:
       type: object
       description: Multilingual text map keyed by the emitted `languages[].code` values for this survey.
@@ -8089,27 +7928,33 @@ components:
         description:
           $ref: '#/components/schemas/TranslatableText'
       additionalProperties: true
-    LocaleCode:
-      type: string
-      pattern: ^[a-z]{2}(?:-[A-Z][a-z]{3})?-[A-Z]{2}$
-      description: Canonical locale code accepted by v3 survey APIs, for example `en-US`, `de-DE`, or `zh-Hans-CN`.
-      example: en-US
-    CreateSurveyLanguage:
+    SurveyLanguage:
       type: object
-      description: Language to connect to the created survey. `default`, if provided, must match `defaultLanguage`.
+      description: |
+        Language configured for this survey. GET responses expose the server-emitted code/tag used as the
+        translatable map key. Existing surveys can use region-qualified, language-only, or script-only codes.
+        Disabled languages can still be read by the management API so unfinished translations can be completed.
       required:
         - code
+        - default
+        - enabled
       properties:
         code:
-          $ref: '#/components/schemas/LocaleCode'
+          type: string
+          description: Server-emitted survey language code/tag used as the translatable map key.
+          example: en-US
+        alias:
+          type:
+            - string
+            - 'null'
+          description: Optional configured alias accepted by `?lang` for compatibility and agent discovery.
+          example: english
         default:
           type: boolean
-          description: Optional marker for readability; only the `defaultLanguage` entry may set this to true.
+          description: Whether this is the default authoring language.
         enabled:
           type: boolean
-          default: true
           description: Whether this language is enabled for respondent-facing delivery.
-      additionalProperties: false
     SurveyWelcomeCard:
       type: object
       description: Optional card shown before the first survey block.
@@ -9008,21 +8853,21 @@ components:
           items:
             $ref: '#/components/schemas/SurveyLogicAction'
       additionalProperties: false
-    CreateSurveyBlock:
+    SurveyBlock:
       type: object
       description: |
-        Block accepted by `POST /api/v3/surveys`. `id` may be omitted and will be generated by the
-        server. Provide an explicit cuid2 id when logic in the same request needs to jump to this block.
-        For normal sequential flow, omit `logic` and `logicFallback`. `logicFallback` is only valid
-        when this same block has at least one `logic` rule.
+        Block-based survey section. Block ids are stable public identifiers. Logic and fallbacks can
+        jump to block ids or ending ids, so clients and agents should preserve ids unless intentionally
+        creating/deleting a block.
       required:
+        - id
         - name
         - elements
       properties:
         id:
           type: string
           format: cuid2
-          description: Optional stable block id. Generated when omitted.
+          description: Stable block id.
         name:
           type: string
           minLength: 1
@@ -9142,9 +8987,13 @@ components:
             pattern: ^[a-zA-Z0-9_-]+$
           uniqueItems: true
       additionalProperties: false
-    CreateSurveyNumberVariable:
+    SurveyNumberVariable:
       type: object
+      description: |
+        Number variable. Used by `calculate` logic actions with numeric operators such as `add`,
+        `subtract`, `multiply`, `divide`, or `assign`.
       required:
+        - id
         - name
         - type
         - value
@@ -9152,12 +9001,16 @@ components:
         id:
           type: string
           format: cuid2
-          description: Optional stable variable id. Generated when omitted.
+          description: Stable variable id referenced from logic.
         name:
           type: string
-          pattern: ^[a-z][a-z0-9_]*$
+          pattern: ^[a-z0-9_]+$
           description: |
-            Unique variable name. Must start with a lowercase letter, then lowercase letters, numbers and underscores only — the same rule as new hidden-field ids (this schema is create-only, so no grandfathered name validates against it). Reserved names are refused: `userId`, `source`, `suid`, `end`, `start`, `welcomeCard`, `hidden`, `verifiedEmail`, `multiLanguage`, `embed`, `verify`, `suToken`, `lang`, `preview`, `startAt`, `skipPrefilled`, `offlineSupport`, and the auto-captured system field names `source`, `url`, `country`, `action`, `browser`, `os`, `deviceType`, `ipAddress`, `finished`, `language`, `locale`, `responseId`, `surveyId`, `durationSeconds`, `startedAt`, `finishedAt`, `pagePath`, `pageReferrer`, `utmSource`, `utmMedium`, `utmCampaign`, `utmTerm`, `utmContent`, `screenWidth`, `screenHeight`, `viewportWidth`, `viewportHeight`, `timezone`, `visitPagesViewed`, `visitUniquePagesViewed`, `visitTimeOnSite`, `visitEntryReferrer`, `visitUrls`, `openedByCreativeId`, `openedByCreativeName`.
+            Unique variable name. `pattern` is the charset of a *stored* name; a newly declared one is held to more than that, and the extra rules split into two groups that behave differently.
+
+            **400 `forbidden_identifier`, grandfathered.** A new name must match `^[a-z][a-z0-9_]*$` (no leading digit or underscore) and must not take a reserved name — the link-survey system params and internal ids (`userId`, `source`, `suid`, `end`, `start`, `welcomeCard`, `hidden`, `verifiedEmail`, `multiLanguage`, `embed`, `verify`, `suToken`, `lang`, `preview`, `startAt`, `skipPrefilled`, `offlineSupport`) or an auto-captured system field name (`country`, `browser`, `deviceType`, …; `SurveyHiddenFields` carries the full list, and the two sets are the same there). Names the survey already declares are grandfathered against these, so re-sending an existing document never trips them.
+
+            **400 `duplicate_identifier`, not grandfathered.** A variable name that collides case-insensitively with a hidden field id on the same survey. This is checked by reference validation over the whole merged document rather than against the incoming names, so a survey that already holds such a clash is refused on **every** patch — including one that touches neither collection — until one side is renamed.
         type:
           type: string
           enum:
@@ -9166,9 +9019,12 @@ components:
           type: number
           description: Default numeric value.
       additionalProperties: false
-    CreateSurveyTextVariable:
+    SurveyTextVariable:
       type: object
+      description: |
+        Text variable. Used by `calculate` logic actions with text operators such as `assign` or `concat`.
       required:
+        - id
         - name
         - type
         - value
@@ -9176,12 +9032,16 @@ components:
         id:
           type: string
           format: cuid2
-          description: Optional stable variable id. Generated when omitted.
+          description: Stable variable id referenced from logic.
         name:
           type: string
-          pattern: ^[a-z][a-z0-9_]*$
+          pattern: ^[a-z0-9_]+$
           description: |
-            Unique variable name. Must start with a lowercase letter, then lowercase letters, numbers and underscores only — the same rule as new hidden-field ids (this schema is create-only, so no grandfathered name validates against it). Reserved names are refused: `userId`, `source`, `suid`, `end`, `start`, `welcomeCard`, `hidden`, `verifiedEmail`, `multiLanguage`, `embed`, `verify`, `suToken`, `lang`, `preview`, `startAt`, `skipPrefilled`, `offlineSupport`, and the auto-captured system field names `source`, `url`, `country`, `action`, `browser`, `os`, `deviceType`, `ipAddress`, `finished`, `language`, `locale`, `responseId`, `surveyId`, `durationSeconds`, `startedAt`, `finishedAt`, `pagePath`, `pageReferrer`, `utmSource`, `utmMedium`, `utmCampaign`, `utmTerm`, `utmContent`, `screenWidth`, `screenHeight`, `viewportWidth`, `viewportHeight`, `timezone`, `visitPagesViewed`, `visitUniquePagesViewed`, `visitTimeOnSite`, `visitEntryReferrer`, `visitUrls`, `openedByCreativeId`, `openedByCreativeName`.
+            Unique variable name. `pattern` is the charset of a *stored* name; a newly declared one is held to more than that, and the extra rules split into two groups that behave differently.
+
+            **400 `forbidden_identifier`, grandfathered.** A new name must match `^[a-z][a-z0-9_]*$` (no leading digit or underscore) and must not take a reserved name — the link-survey system params and internal ids (`userId`, `source`, `suid`, `end`, `start`, `welcomeCard`, `hidden`, `verifiedEmail`, `multiLanguage`, `embed`, `verify`, `suToken`, `lang`, `preview`, `startAt`, `skipPrefilled`, `offlineSupport`) or an auto-captured system field name (`country`, `browser`, `deviceType`, …; `SurveyHiddenFields` carries the full list, and the two sets are the same there). Names the survey already declares are grandfathered against these, so re-sending an existing document never trips them.
+
+            **400 `duplicate_identifier`, not grandfathered.** A variable name that collides case-insensitively with a hidden field id on the same survey. This is checked by reference validation over the whole merged document rather than against the incoming names, so a survey that already holds such a clash is refused on **every** patch — including one that touches neither collection — until one side is renamed.
         type:
           type: string
           enum:
@@ -9190,14 +9050,13 @@ components:
           type: string
           description: Default text value.
       additionalProperties: false
-    CreateSurveyVariable:
+    SurveyVariable:
       oneOf:
-        - $ref: '#/components/schemas/CreateSurveyNumberVariable'
-        - $ref: '#/components/schemas/CreateSurveyTextVariable'
+        - $ref: '#/components/schemas/SurveyNumberVariable'
+        - $ref: '#/components/schemas/SurveyTextVariable'
       description: |
-        Survey variable accepted by `POST /api/v3/surveys`. `id` may be omitted and will be
-        generated by the server. Provide an explicit cuid2 id when logic in the same request needs
-        to reference this variable.
+        Survey variable. Variable ids are stable references used by logic and calculation actions.
+        Variable names are human-readable labels and must be unique within the survey.
     SurveyShowCondition:
       type: object
       description: |
@@ -9795,6 +9654,414 @@ components:
             - 'null'
           description: Additional CSS applied only in dark appearance.
       additionalProperties: false
+    SurveyResource:
+      allOf:
+        - type: object
+          required:
+            - id
+            - workspaceId
+            - createdAt
+            - updatedAt
+            - archivedAt
+            - name
+            - type
+            - status
+            - metadata
+            - defaultLanguage
+            - languages
+            - showLanguageSwitch
+            - autoSelectLanguage
+            - welcomeCard
+            - blocks
+            - endings
+            - hiddenFields
+            - variables
+            - customCss
+          properties:
+            id:
+              type: string
+            workspaceId:
+              type: string
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+            archivedAt:
+              type:
+                - string
+                - 'null'
+              format: date-time
+              description: Soft-delete/archive marker (ISO 8601); `null` when the survey is active.
+            name:
+              type: string
+            type:
+              type: string
+              enum:
+                - link
+                - app
+            status:
+              type: string
+              enum:
+                - draft
+                - inProgress
+                - paused
+                - completed
+            metadata:
+              anyOf:
+                - $ref: '#/components/schemas/SurveyMetadata'
+                - type: 'null'
+            defaultLanguage:
+              type: string
+              description: Emitted language code/tag for the survey default language. The internal `default` translation key is never exposed.
+            languages:
+              type: array
+              items:
+                $ref: '#/components/schemas/SurveyLanguage'
+            showLanguageSwitch:
+              type:
+                - boolean
+                - 'null'
+              description: Show respondents a language switch on multi-language surveys. `null` and `false` both mean off.
+            autoSelectLanguage:
+              type:
+                - boolean
+                - 'null'
+              description: Open link and app surveys in the respondent's browser language when it matches an enabled survey language; otherwise the default language is used. `null` and `false` both mean off.
+            welcomeCard:
+              $ref: '#/components/schemas/SurveyWelcomeCard'
+            blocks:
+              type: array
+              items:
+                $ref: '#/components/schemas/SurveyBlock'
+            endings:
+              type: array
+              items:
+                $ref: '#/components/schemas/SurveyEnding'
+            hiddenFields:
+              $ref: '#/components/schemas/SurveyHiddenFields'
+            variables:
+              type: array
+              items:
+                $ref: '#/components/schemas/SurveyVariable'
+            distribution:
+              allOf:
+                - $ref: '#/components/schemas/SurveyDistribution'
+              description: App-survey runtime/display settings. Present only for app surveys; omitted for link surveys.
+            targeting:
+              allOf:
+                - $ref: '#/components/schemas/SurveyTargeting'
+              description: App-survey contact targeting. Present only for app surveys; omitted for link surveys.
+            customCss:
+              anyOf:
+                - $ref: '#/components/schemas/CustomCssInput'
+                - type: 'null'
+              description: 'The survey''s custom CSS **source** (ENG-3641), `null` when it has none. Compiled output and the processor version are internal and never exposed here. The full resource may be sent back with PATCH: unchanged source is not reprocessed and needs no plan.'
+        - $ref: '#/components/schemas/SurveyVisibilityFields'
+    SurveyFullListItem:
+      allOf:
+        - $ref: '#/components/schemas/SurveyListItem'
+        - $ref: '#/components/schemas/SurveyResource'
+      description: 'Shape of each item returned by `GET /api/v3/surveys?view=full`: every `SurveyListItem` field plus the whole survey document that `GET /api/v3/surveys/{surveyId}` returns (without `lang`, so every configured language), so switching views only ever adds fields. The document is read after the page itself; where both carry a field, the document''s value is the one returned.'
+    ListPaginationMeta:
+      type: object
+      description: |-
+        The pagination half of a v3 list's `meta`, shared by every paginated collection.
+
+        Deliberately open, and never an endpoint's `meta` by itself: an endpoint composes it with `allOf` and closes the result with `unevaluatedProperties: false`. A base that closed itself could not be extended — inside an `allOf`, `additionalProperties: false` sees a sibling branch's properties as additional and rejects them. An endpoint that adds nothing still wraps it, so no `meta` anywhere is open.
+
+        Every field here is `required`. A shared envelope that makes its fields optional is how v3's predecessor stopped honouring its own pagination contract without the schema gate noticing (ENG-2622): `meta: {}` — or no `meta` at all — validated cleanly while the endpoint returned nothing.
+      required:
+        - limit
+        - nextCursor
+      properties:
+        limit:
+          type: integer
+          minimum: 1
+          description: 'The page size actually applied. Carries no `maximum`: it echoes what the server used, it does not bound what may be asked for. The request-side bound is the `limit` query parameter on the operation itself and differs per collection — read it there. A shared description cannot state it without being wrong for some of the operations that compose this base.'
+        nextCursor:
+          type:
+            - string
+            - 'null'
+          description: 'Opaque cursor for the next page. `null` when there are no more results — the only reliable end-of-collection signal, since the server may return fewer items than `limit` without the collection being exhausted. Pass it back verbatim: the encoding is deliberately unspecified and may change without notice, so a client that decodes or constructs one is relying on something this contract does not promise.'
+    SurveyListMeta:
+      allOf:
+        - $ref: '#/components/schemas/ListPaginationMeta'
+        - type: object
+          required:
+            - totalCount
+            - workspaceSurveyCount
+          properties:
+            totalCount:
+              type:
+                - integer
+                - 'null'
+              minimum: 0
+              description: Total number of surveys matching the current filters across all pages. `null` when `includeTotalCount=false`.
+            workspaceSurveyCount:
+              type:
+                - integer
+                - 'null'
+              minimum: 0
+              description: Total number of surveys in the workspace, archived (soft-deleted) ones included and independent of the current filters. `null` when `includeTotalCount=false` (the same gate as `totalCount`). Replaces the boolean `hasArchived` field of earlier releases.
+            unsupportedSurveyIds:
+              type: array
+              items:
+                type: string
+              description: Present with `view=full` only, and always then. Ids of surveys on this page that were left out of `data` because they use the legacy question-based shape, which `GET /api/v3/surveys/{surveyId}` also refuses. Empty when nothing was left out; the cursor moves past them either way.
+      unevaluatedProperties: false
+      description: The list `meta` for surveys — pagination, the filtered total, and the workspace total. Both counting fields are `required` but nullable, gated on `includeTotalCount`.
+    InvalidParam:
+      type: object
+      description: |
+        Field-level validation error. `name` and `reason` are always intended for humans.
+        Optional machine-readable fields are included when the API can identify the semantic error,
+        especially for survey locale, identifier, and reference validation used by MCP and agent clients.
+      required:
+        - name
+        - reason
+      properties:
+        name:
+          type: string
+          description: Dot-path to the invalid request field.
+        reason:
+          type: string
+          description: Human-readable repair guidance.
+        code:
+          type: string
+          enum:
+            - dangling_reference
+            - duplicate_identifier
+            - duplicate_locale
+            - forbidden_identifier
+            - immutable_identifier
+            - invalid_locale
+            - invalid_reference
+            - limit_exceeded
+            - missing_required_field
+            - misordered_reference
+            - missing_translation
+            - qsf_limit_exceeded
+            - qsf_not_recognized
+            - read_only_field
+            - unsupported_field
+            - unsupported_locale
+          description: |
+            Machine-readable validation category, when available.
+
+            This is the shared error shape every v3 operation returns, so it lists what the API can emit today and nothing more — `INVALID_PARAM_CODES` in `app/api/v3/lib/response.ts` is the registry, and a code absent from it is dropped before the response is built. Categories for operations that do not exist yet are added with the code that emits them, not ahead of it.
+
+            `limit_exceeded`: the field is well formed but past a limit the operation states, which `reason` names together with what to change. Chart queries use it for a date range that spans more time buckets than its granularity allows.
+
+            `qsf_not_recognized` and `qsf_limit_exceeded` come from the Qualtrics import (an internal, session-only route sharing this shape): the file is not a Qualtrics export it can read, or it is one past an import limit, which `identifier` names.
+        identifier:
+          type: string
+          description: Identifier involved in the validation failure, when available. For language errors, this can be the normalized language code.
+        referenceType:
+          type: string
+          enum:
+            - block
+            - element
+            - ending
+            - hiddenField
+            - language
+            - variable
+            - variableName
+            - recall
+          description: 'Identifier namespace involved in the validation failure. Same rule as `code`: these are the namespaces the API emits today, and more arrive with the operations that emit them.'
+        missingId:
+          type: string
+          description: Referenced id that does not exist in the submitted survey document.
+        firstUsedAt:
+          type: string
+          description: Dot-path where a duplicate identifier was first used.
+        conflictsWith:
+          type: string
+          description: Dot-path to the existing identifier that conflicts with this field.
+      additionalProperties: false
+    Problem:
+      type: object
+      description: |-
+        RFC 9457 Problem Details for HTTP APIs (`application/problem+json`). Responses typically include a machine-readable `code` field alongside `title`, `status`, `detail`, and `requestId`.
+
+        Branch on `code`, not on `detail` or `title`: `code` is stable and locale-independent, whereas `detail` is prose that may be reworded. No problem sets `type`, so per RFC 9457 §4.2.1 `title` is always the HTTP reason phrase for `status` and carries no information of its own.
+
+        Member naming is frozen as published, mixed conventions included (`requestId` alongside `invalid_params` and `details.resource_type`): renaming any of them would break every client that reads them.
+      required:
+        - title
+        - status
+        - detail
+        - requestId
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+        code:
+          type: string
+          enum:
+            - ai_features_not_enabled
+            - ai_generated_payload_invalid
+            - ai_instance_not_configured
+            - ai_output_too_long
+            - ai_provider_auth_failed
+            - ai_smart_tools_disabled
+            - bad_gateway
+            - bad_request
+            - chart_in_use
+            - conflict
+            - creatives_not_entitled
+            - custom_css_plan_required
+            - dashboards_plan_required
+            - forbidden
+            - internal_server_error
+            - invalid_workflow_state
+            - not_authenticated
+            - not_found
+            - payload_too_large
+            - projection_pending
+            - service_unavailable
+            - stored_survey_invalid
+            - survey_has_linked_creatives
+            - survey_not_workspace_visible
+            - too_many_requests
+            - unprocessable_content
+            - visibility_blocked_by_connections
+            - visibility_change_not_allowed
+            - visibility_not_enabled
+            - workflow_not_executable
+            - workspace_survey_limit_reached
+        requestId:
+          type: string
+        details:
+          type: object
+        invalid_params:
+          type: array
+          items:
+            $ref: '#/components/schemas/InvalidParam'
+    LocaleCode:
+      type: string
+      pattern: ^[a-z]{2}(?:-[A-Z][a-z]{3})?-[A-Z]{2}$
+      description: Canonical locale code accepted by v3 survey APIs, for example `en-US`, `de-DE`, or `zh-Hans-CN`.
+      example: en-US
+    CreateSurveyLanguage:
+      type: object
+      description: Language to connect to the created survey. `default`, if provided, must match `defaultLanguage`.
+      required:
+        - code
+      properties:
+        code:
+          $ref: '#/components/schemas/LocaleCode'
+        default:
+          type: boolean
+          description: Optional marker for readability; only the `defaultLanguage` entry may set this to true.
+        enabled:
+          type: boolean
+          default: true
+          description: Whether this language is enabled for respondent-facing delivery.
+      additionalProperties: false
+    CreateSurveyBlock:
+      type: object
+      description: |
+        Block accepted by `POST /api/v3/surveys`. `id` may be omitted and will be generated by the
+        server. Provide an explicit cuid2 id when logic in the same request needs to jump to this block.
+        For normal sequential flow, omit `logic` and `logicFallback`. `logicFallback` is only valid
+        when this same block has at least one `logic` rule.
+      required:
+        - name
+        - elements
+      properties:
+        id:
+          type: string
+          format: cuid2
+          description: Optional stable block id. Generated when omitted.
+        name:
+          type: string
+          minLength: 1
+        elements:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/SurveyElement'
+        logic:
+          type: array
+          items:
+            $ref: '#/components/schemas/SurveyBlockLogic'
+        logicFallback:
+          type: string
+          format: cuid2
+          description: |
+            Block or ending id used when no logic condition matches. Only valid when this same block
+            has at least one `logic` rule; omit it for normal sequential flow.
+        buttonLabel:
+          $ref: '#/components/schemas/TranslatableText'
+        backButtonLabel:
+          $ref: '#/components/schemas/TranslatableText'
+      additionalProperties: false
+    CreateSurveyNumberVariable:
+      type: object
+      required:
+        - name
+        - type
+        - value
+      properties:
+        id:
+          type: string
+          format: cuid2
+          description: Optional stable variable id. Generated when omitted.
+        name:
+          type: string
+          pattern: ^[a-z][a-z0-9_]*$
+          description: |
+            Unique variable name. Must start with a lowercase letter, then lowercase letters, numbers and underscores only — the same rule as new hidden-field ids (this schema is create-only, so no grandfathered name validates against it). Reserved names are refused: `userId`, `source`, `suid`, `end`, `start`, `welcomeCard`, `hidden`, `verifiedEmail`, `multiLanguage`, `embed`, `verify`, `suToken`, `lang`, `preview`, `startAt`, `skipPrefilled`, `offlineSupport`, and the auto-captured system field names `source`, `url`, `country`, `action`, `browser`, `os`, `deviceType`, `ipAddress`, `finished`, `language`, `locale`, `responseId`, `surveyId`, `durationSeconds`, `startedAt`, `finishedAt`, `pagePath`, `pageReferrer`, `utmSource`, `utmMedium`, `utmCampaign`, `utmTerm`, `utmContent`, `screenWidth`, `screenHeight`, `viewportWidth`, `viewportHeight`, `timezone`, `visitPagesViewed`, `visitUniquePagesViewed`, `visitTimeOnSite`, `visitEntryReferrer`, `visitUrls`, `openedByCreativeId`, `openedByCreativeName`.
+        type:
+          type: string
+          enum:
+            - number
+        value:
+          type: number
+          description: Default numeric value.
+      additionalProperties: false
+    CreateSurveyTextVariable:
+      type: object
+      required:
+        - name
+        - type
+        - value
+      properties:
+        id:
+          type: string
+          format: cuid2
+          description: Optional stable variable id. Generated when omitted.
+        name:
+          type: string
+          pattern: ^[a-z][a-z0-9_]*$
+          description: |
+            Unique variable name. Must start with a lowercase letter, then lowercase letters, numbers and underscores only — the same rule as new hidden-field ids (this schema is create-only, so no grandfathered name validates against it). Reserved names are refused: `userId`, `source`, `suid`, `end`, `start`, `welcomeCard`, `hidden`, `verifiedEmail`, `multiLanguage`, `embed`, `verify`, `suToken`, `lang`, `preview`, `startAt`, `skipPrefilled`, `offlineSupport`, and the auto-captured system field names `source`, `url`, `country`, `action`, `browser`, `os`, `deviceType`, `ipAddress`, `finished`, `language`, `locale`, `responseId`, `surveyId`, `durationSeconds`, `startedAt`, `finishedAt`, `pagePath`, `pageReferrer`, `utmSource`, `utmMedium`, `utmCampaign`, `utmTerm`, `utmContent`, `screenWidth`, `screenHeight`, `viewportWidth`, `viewportHeight`, `timezone`, `visitPagesViewed`, `visitUniquePagesViewed`, `visitTimeOnSite`, `visitEntryReferrer`, `visitUrls`, `openedByCreativeId`, `openedByCreativeName`.
+        type:
+          type: string
+          enum:
+            - text
+        value:
+          type: string
+          description: Default text value.
+      additionalProperties: false
+    CreateSurveyVariable:
+      oneOf:
+        - $ref: '#/components/schemas/CreateSurveyNumberVariable'
+        - $ref: '#/components/schemas/CreateSurveyTextVariable'
+      description: |
+        Survey variable accepted by `POST /api/v3/surveys`. `id` may be omitted and will be
+        generated by the server. Provide an explicit cuid2 id when logic in the same request needs
+        to reference this variable.
     CreateSurveyRequest:
       type: object
       description: |
@@ -9913,246 +10180,6 @@ components:
             - type: 'null'
           description: Optional survey custom CSS source. Processed by the server; constructs it removes come back as top-level `warnings` on the 201. Adding CSS needs the Scale plan on Formbricks Cloud (403 `custom_css_plan_required`); CSS that cannot be processed is a 422 with `details.errors`. Processing counts against the custom CSS budget of 60 per minute per user or API key, shared with custom CSS validation; beyond it the create is a 429 and nothing is written.
       additionalProperties: false
-    SurveyLanguage:
-      type: object
-      description: |
-        Language configured for this survey. GET responses expose the server-emitted code/tag used as the
-        translatable map key. Existing surveys can use region-qualified, language-only, or script-only codes.
-        Disabled languages can still be read by the management API so unfinished translations can be completed.
-      required:
-        - code
-        - default
-        - enabled
-      properties:
-        code:
-          type: string
-          description: Server-emitted survey language code/tag used as the translatable map key.
-          example: en-US
-        alias:
-          type:
-            - string
-            - 'null'
-          description: Optional configured alias accepted by `?lang` for compatibility and agent discovery.
-          example: english
-        default:
-          type: boolean
-          description: Whether this is the default authoring language.
-        enabled:
-          type: boolean
-          description: Whether this language is enabled for respondent-facing delivery.
-    SurveyBlock:
-      type: object
-      description: |
-        Block-based survey section. Block ids are stable public identifiers. Logic and fallbacks can
-        jump to block ids or ending ids, so clients and agents should preserve ids unless intentionally
-        creating/deleting a block.
-      required:
-        - id
-        - name
-        - elements
-      properties:
-        id:
-          type: string
-          format: cuid2
-          description: Stable block id.
-        name:
-          type: string
-          minLength: 1
-        elements:
-          type: array
-          minItems: 1
-          items:
-            $ref: '#/components/schemas/SurveyElement'
-        logic:
-          type: array
-          items:
-            $ref: '#/components/schemas/SurveyBlockLogic'
-        logicFallback:
-          type: string
-          format: cuid2
-          description: |
-            Block or ending id used when no logic condition matches. Only valid when this same block
-            has at least one `logic` rule; omit it for normal sequential flow.
-        buttonLabel:
-          $ref: '#/components/schemas/TranslatableText'
-        backButtonLabel:
-          $ref: '#/components/schemas/TranslatableText'
-      additionalProperties: false
-    SurveyNumberVariable:
-      type: object
-      description: |
-        Number variable. Used by `calculate` logic actions with numeric operators such as `add`,
-        `subtract`, `multiply`, `divide`, or `assign`.
-      required:
-        - id
-        - name
-        - type
-        - value
-      properties:
-        id:
-          type: string
-          format: cuid2
-          description: Stable variable id referenced from logic.
-        name:
-          type: string
-          pattern: ^[a-z0-9_]+$
-          description: |
-            Unique variable name. `pattern` is the charset of a *stored* name; a newly declared one is held to more than that, and the extra rules split into two groups that behave differently.
-
-            **400 `forbidden_identifier`, grandfathered.** A new name must match `^[a-z][a-z0-9_]*$` (no leading digit or underscore) and must not take a reserved name — the link-survey system params and internal ids (`userId`, `source`, `suid`, `end`, `start`, `welcomeCard`, `hidden`, `verifiedEmail`, `multiLanguage`, `embed`, `verify`, `suToken`, `lang`, `preview`, `startAt`, `skipPrefilled`, `offlineSupport`) or an auto-captured system field name (`country`, `browser`, `deviceType`, …; `SurveyHiddenFields` carries the full list, and the two sets are the same there). Names the survey already declares are grandfathered against these, so re-sending an existing document never trips them.
-
-            **400 `duplicate_identifier`, not grandfathered.** A variable name that collides case-insensitively with a hidden field id on the same survey. This is checked by reference validation over the whole merged document rather than against the incoming names, so a survey that already holds such a clash is refused on **every** patch — including one that touches neither collection — until one side is renamed.
-        type:
-          type: string
-          enum:
-            - number
-        value:
-          type: number
-          description: Default numeric value.
-      additionalProperties: false
-    SurveyTextVariable:
-      type: object
-      description: |
-        Text variable. Used by `calculate` logic actions with text operators such as `assign` or `concat`.
-      required:
-        - id
-        - name
-        - type
-        - value
-      properties:
-        id:
-          type: string
-          format: cuid2
-          description: Stable variable id referenced from logic.
-        name:
-          type: string
-          pattern: ^[a-z0-9_]+$
-          description: |
-            Unique variable name. `pattern` is the charset of a *stored* name; a newly declared one is held to more than that, and the extra rules split into two groups that behave differently.
-
-            **400 `forbidden_identifier`, grandfathered.** A new name must match `^[a-z][a-z0-9_]*$` (no leading digit or underscore) and must not take a reserved name — the link-survey system params and internal ids (`userId`, `source`, `suid`, `end`, `start`, `welcomeCard`, `hidden`, `verifiedEmail`, `multiLanguage`, `embed`, `verify`, `suToken`, `lang`, `preview`, `startAt`, `skipPrefilled`, `offlineSupport`) or an auto-captured system field name (`country`, `browser`, `deviceType`, …; `SurveyHiddenFields` carries the full list, and the two sets are the same there). Names the survey already declares are grandfathered against these, so re-sending an existing document never trips them.
-
-            **400 `duplicate_identifier`, not grandfathered.** A variable name that collides case-insensitively with a hidden field id on the same survey. This is checked by reference validation over the whole merged document rather than against the incoming names, so a survey that already holds such a clash is refused on **every** patch — including one that touches neither collection — until one side is renamed.
-        type:
-          type: string
-          enum:
-            - text
-        value:
-          type: string
-          description: Default text value.
-      additionalProperties: false
-    SurveyVariable:
-      oneOf:
-        - $ref: '#/components/schemas/SurveyNumberVariable'
-        - $ref: '#/components/schemas/SurveyTextVariable'
-      description: |
-        Survey variable. Variable ids are stable references used by logic and calculation actions.
-        Variable names are human-readable labels and must be unique within the survey.
-    SurveyResource:
-      allOf:
-        - type: object
-          required:
-            - id
-            - workspaceId
-            - createdAt
-            - updatedAt
-            - archivedAt
-            - name
-            - type
-            - status
-            - metadata
-            - defaultLanguage
-            - languages
-            - showLanguageSwitch
-            - autoSelectLanguage
-            - welcomeCard
-            - blocks
-            - endings
-            - hiddenFields
-            - variables
-            - customCss
-          properties:
-            id:
-              type: string
-            workspaceId:
-              type: string
-            createdAt:
-              type: string
-              format: date-time
-            updatedAt:
-              type: string
-              format: date-time
-            archivedAt:
-              type:
-                - string
-                - 'null'
-              format: date-time
-              description: Soft-delete/archive marker (ISO 8601); `null` when the survey is active.
-            name:
-              type: string
-            type:
-              type: string
-              enum:
-                - link
-                - app
-            status:
-              type: string
-              enum:
-                - draft
-                - inProgress
-                - paused
-                - completed
-            metadata:
-              anyOf:
-                - $ref: '#/components/schemas/SurveyMetadata'
-                - type: 'null'
-            defaultLanguage:
-              type: string
-              description: Emitted language code/tag for the survey default language. The internal `default` translation key is never exposed.
-            languages:
-              type: array
-              items:
-                $ref: '#/components/schemas/SurveyLanguage'
-            showLanguageSwitch:
-              type:
-                - boolean
-                - 'null'
-              description: Show respondents a language switch on multi-language surveys. `null` and `false` both mean off.
-            autoSelectLanguage:
-              type:
-                - boolean
-                - 'null'
-              description: Open link and app surveys in the respondent's browser language when it matches an enabled survey language; otherwise the default language is used. `null` and `false` both mean off.
-            welcomeCard:
-              $ref: '#/components/schemas/SurveyWelcomeCard'
-            blocks:
-              type: array
-              items:
-                $ref: '#/components/schemas/SurveyBlock'
-            endings:
-              type: array
-              items:
-                $ref: '#/components/schemas/SurveyEnding'
-            hiddenFields:
-              $ref: '#/components/schemas/SurveyHiddenFields'
-            variables:
-              type: array
-              items:
-                $ref: '#/components/schemas/SurveyVariable'
-            distribution:
-              allOf:
-                - $ref: '#/components/schemas/SurveyDistribution'
-              description: App-survey runtime/display settings. Present only for app surveys; omitted for link surveys.
-            targeting:
-              allOf:
-                - $ref: '#/components/schemas/SurveyTargeting'
-              description: App-survey contact targeting. Present only for app surveys; omitted for link surveys.
-            customCss:
-              anyOf:
-                - $ref: '#/components/schemas/CustomCssInput'
-                - type: 'null'
-              description: 'The survey''s custom CSS **source** (ENG-3641), `null` when it has none. Compiled output and the processor version are internal and never exposed here. The full resource may be sent back with PATCH: unchanged source is not reprocessed and needs no plan.'
-        - $ref: '#/components/schemas/SurveyVisibilityFields'
     CustomCssWarning:
       type: object
       description: 'A construct the custom CSS processor removed; the rest of the CSS still applies. `unknown_property` and `invalid_value` are notes instead: the declaration stays, but browsers ignore it. The `code` is stable — branch on it, not on `reason`, which never echoes customer source beyond a short construct name.'
