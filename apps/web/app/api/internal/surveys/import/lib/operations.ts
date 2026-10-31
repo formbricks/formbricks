@@ -76,8 +76,8 @@ const readUpload = async (file: File): Promise<TSurveyImportFile> => {
 /**
  * Import an uploaded survey file, streaming progress as NDJSON (ENG-3604, ENG-3653, ENG-6846,
  * ENG-6848). Every file type comes in the same way: the route's wrapper has already authenticated,
- * charged the default v3 bucket, taken a concurrency slot and read the multipart body within its byte
- * limit. Here the workspace is checked first, then the file is read and its type told from its content,
+ * charged the default v3 bucket, read the multipart body within its byte limit and then taken a
+ * concurrency slot. Here the workspace is checked first, then the file is read and its type told from its content,
  * and the file goes to its type's lane: a Formbricks file, a Qualtrics export, or a questionnaire from
  * Excel, CSV (ENG-6852) or Word (ENG-6853).
  *

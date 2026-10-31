@@ -240,6 +240,38 @@ describe("POST /api/internal/surveys/import/stream", () => {
     await done;
   });
 
+  test("holds no slot while an upload is still arriving, so a slow upload blocks no one", async () => {
+    // The headers and the first bytes of an upload, the rest never sent: a client trickling its body.
+    const { bytes, contentType } = await encodeForm(uploadForm());
+    let upload: ReadableStreamDefaultController<Uint8Array> | undefined;
+    const trickling = POST(
+      new NextRequest(URL_PATH, {
+        method: "POST",
+        headers: { "Content-Type": contentType },
+        body: new ReadableStream<Uint8Array>({
+          start(controller) {
+            upload = controller;
+            controller.enqueue(bytes.subarray(0, 16));
+          },
+        }),
+        duplex: "half",
+      } as ConstructorParameters<typeof NextRequest>[1]),
+      {} as never
+    );
+    // Let the first request get as far as reading its body.
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    const next = await post();
+
+    expect(next.status).toBe(200);
+    expect(mocks.streamSurveyImport).toHaveBeenCalledTimes(1);
+    await next.text();
+
+    // The client gives up: the request ends without ever having taken a slot.
+    upload?.error(new Error("The client went away"));
+    expect((await trickling).status).toBeGreaterThanOrEqual(400);
+  });
+
   test("lets the user start again once they stop the import", async () => {
     mocks.streamSurveyImport.mockImplementationOnce(async () => openStream().response);
 

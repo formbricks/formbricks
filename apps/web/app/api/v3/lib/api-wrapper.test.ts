@@ -1206,13 +1206,17 @@ describe("per-route concurrency limit", () => {
     mockGetSession.mockResolvedValue(sessionUser);
   });
 
-  test("answers 503 capacity_reached with Retry-After when every slot is taken, before reading the body", async () => {
+  test("answers 503 capacity_reached with Retry-After when every slot is taken, once the body is read", async () => {
     const limiter = new ConcurrencyLimiter(1);
     const held = limiter.tryAcquire("someone_else");
     const handler = vi.fn(async () => Response.json({ ok: true }));
 
-    // Not JSON: a 400 here would mean the body was read before admission.
-    const response = await limitedRoute(limiter, handler)(postJson("not json"), {} as never);
+    // The body is read before admission, so a slot bounds the work and never a client's upload: a
+    // malformed body is a 400 whatever the slots, and only a valid one meets the limit.
+    const malformed = await limitedRoute(limiter, handler)(postJson("not json"), {} as never);
+    expect(malformed.status).toBe(400);
+
+    const response = await limitedRoute(limiter, handler)(postJson('{"a":"x"}'), {} as never);
 
     expect(response.status).toBe(503);
     expect(response.headers.get("Retry-After")).toBe("7");

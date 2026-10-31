@@ -96,9 +96,10 @@ export type TWithV3ApiWrapperParams<S extends TV3Schemas | undefined, TProps = u
   bodyLimitBytes?: number;
   /**
    * Caps how many requests to this route one server process handles at once; the next one gets a 503
-   * `capacity_reached` with `Retry-After`. The slot is taken after authentication and rate limiting but
-   * **before the body is read**, so it also bounds the memory spent parsing large bodies, and it is held
-   * until the response body is fully sent or cancelled, so a streamed response keeps its slot for as
+   * `capacity_reached` with `Retry-After`. The slot is taken after authentication, rate limiting and
+   * **once the body has been read** within `bodyLimitBytes`: it bounds the work, not the transfer, so a
+   * client trickling its upload never holds one, and a body read meanwhile is capped like any other. It
+   * is held until the response body is fully sent or cancelled, so a streamed response keeps its slot for as
    * long as it runs, or until the client disconnects. Share one `ConcurrencyLimiter` per route, created at
    * module scope.
    *
@@ -781,16 +782,6 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
         return rateLimitResponse;
       }
 
-      if (concurrency) {
-        const slot = concurrency.limiter.tryAcquire(
-          getRateLimitIdentifier(authResult.authentication) ?? undefined
-        );
-        if (!slot.ok) {
-          return refuseOverConcurrency(slot.reason, concurrency, { requestId, instance, log });
-        }
-        releaseSlot = slot.release;
-      }
-
       const parsedInputResult = await parseV3Input(req, props, schemas, {
         requestId,
         instance,
@@ -809,6 +800,16 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
           "V3 API request validation failed"
         );
         return parsedInputResult.response;
+      }
+
+      if (concurrency) {
+        const slot = concurrency.limiter.tryAcquire(
+          getRateLimitIdentifier(authResult.authentication) ?? undefined
+        );
+        if (!slot.ok) {
+          return refuseOverConcurrency(slot.reason, concurrency, { requestId, instance, log });
+        }
+        releaseSlot = slot.release;
       }
 
       // Built after authentication, rate limiting and parsing on purpose (ENG-2872). A 401 has no actor
