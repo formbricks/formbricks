@@ -12,7 +12,7 @@ import { sniffSurveyImportFile } from "@/modules/survey/import/core/sniff";
 import { loadDocumentFixture } from "@/modules/survey/import/document/__fixtures__/load-fixture";
 import { longQuestionnaireDocx } from "@/modules/survey/import/document/__fixtures__/long-questionnaire";
 import { promptInjectionWithoutInjectedText } from "@/modules/survey/import/document/__fixtures__/prompt-injection";
-import { csvImportLane, excelImportLane, wordImportLane } from "@/modules/survey/import/document/lane";
+import { DOCUMENT_IMPORT_LANES, isDocumentUpload } from "@/modules/survey/import/document/lane";
 import { type TPreparedDocumentImport, runDocumentImport } from "@/modules/survey/import/document/pipeline";
 
 /**
@@ -124,21 +124,8 @@ const environmentGenerate =
 /** Read a file the way the import route does: its type from its bytes, then its lane's reader. */
 const prepare = async (bytes: Uint8Array, fileName: string): Promise<TPreparedDocumentImport> => {
   const upload = sniffSurveyImportFile(bytes);
-  switch (upload.type) {
-    case "docx":
-      return wordImportLane.prepare({ type: "docx", archive: upload.archive, fileName });
-    case "xlsx":
-      return excelImportLane.prepare({
-        type: "xlsx",
-        bytes: upload.bytes,
-        archive: upload.archive,
-        fileName,
-      });
-    case "csv":
-      return csvImportLane.prepare({ type: "csv", text: upload.text, encoding: upload.encoding, fileName });
-    default:
-      throw new Error(`Not a document: ${upload.type}`);
-  }
+  if (!isDocumentUpload(upload)) throw new Error(`Not a document: ${upload.type}`);
+  return DOCUMENT_IMPORT_LANES[upload.type].prepare({ ...upload, fileName });
 };
 
 interface TRecordedPlan {

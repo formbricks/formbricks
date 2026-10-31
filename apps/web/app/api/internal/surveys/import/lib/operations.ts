@@ -20,7 +20,7 @@ import {
 } from "@/modules/survey/import/core/errors";
 import type { TSurveyImportLane, TSurveyImportResult } from "@/modules/survey/import/core/lane";
 import { type TSurveyImportFile, sniffSurveyImportFile } from "@/modules/survey/import/core/sniff";
-import { csvImportLane, excelImportLane, wordImportLane } from "@/modules/survey/import/document/lane";
+import { DOCUMENT_IMPORT_LANES } from "@/modules/survey/import/document/lane";
 import { formbricksFileImportLane } from "@/modules/survey/import/formbricks/lane";
 import { SURVEY_IMPORT_DEADLINE_MS, SURVEY_IMPORT_MAX_FILE_BYTES } from "@/modules/survey/import/limits";
 import { qsfImportLane } from "@/modules/survey/import/qsf/lane";
@@ -152,22 +152,12 @@ export async function streamSurveyImport({
         },
       });
     case "xlsx":
-      return runSurveyImportLane({
-        ...lane,
-        lane: excelImportLane,
-        input: { type: "xlsx", bytes: upload.bytes, archive: upload.archive, fileName },
-      });
     case "csv":
-      return runSurveyImportLane({
-        ...lane,
-        lane: csvImportLane,
-        input: { type: "csv", text: upload.text, encoding: upload.encoding, fileName },
-      });
     case "docx":
       return runSurveyImportLane({
         ...lane,
-        lane: wordImportLane,
-        input: { type: "docx", archive: upload.archive, fileName },
+        lane: DOCUMENT_IMPORT_LANES[upload.type],
+        input: { ...upload, fileName },
       });
   }
 }
