@@ -116,9 +116,12 @@ export const SURVEY_IMPORT_WORD_MAX_TABLE_CELLS = 50_000;
  * Imports one server process runs at once. The request budget is checked on the raw text before it is
  * parsed, so nesting and long arrays never reach `JSON.parse` (15.5 MiB of `[[[…]]]` would retain about
  * 470 MB). Measured on the worst 15.5 MiB body that does: one object with 1.2M keys holding `{}` retains
- * about 150 MB, the walk over it about 20 MB more, and the raw text 16 MB. Under 200 MB an import, so
- * three in flight stay under 600 MB, inside the pod's memory. The per-user rate limit does not cover
- * many users importing at the same time; this does.
+ * about 150 MB, the walk over it about 20 MB more, and the raw text 16 MB. Its transient copies (the
+ * upload's bytes, the decoded text, the parse) come on top until collected: three such imports at once
+ * on a production build raised RSS from 220 MB to about 1.2 GB at the peak and left about 480 MB once
+ * collected (2026-10-31), inside the web pod's 2 GiB. Object keys are not budgeted, since a large
+ * multilingual Qualtrics export legitimately holds hundreds of thousands. The per-user rate limit does
+ * not cover many users importing at the same time; this does.
  */
 export const SURVEY_IMPORT_MAX_IN_FLIGHT = 3;
 
