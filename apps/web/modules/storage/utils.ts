@@ -14,8 +14,8 @@ import { responses } from "@/app/lib/api/response";
 import { WEBAPP_URL } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import {
+  type TStringUploadElementKind,
   type TUploadElementCandidate,
-  type TUploadElementKind,
   type TUploadElementType,
   getSurveyUploadElementConfigs,
   getUploadElementAllowedExtensions,
@@ -209,6 +209,11 @@ const getResponseFileUrlOwner = ({
   return scope.surveyId === surveyId && scope.elementId === elementId ? "own" : "refused";
 };
 
+/** The upload element types whose answer is one bare string, by their declared shape. */
+const BARE_STRING_ELEMENT_TYPES = (Object.keys(uploadElementKinds) as TUploadElementType[]).filter(
+  (type) => uploadElementKinds[type].answerShape === "string"
+);
+
 /**
  * Pulls the storage URLs one response of `surveyId` owns out of its answers, ready to hand to
  * `deleteResponseFileUrls`. Which URLs count is `getResponseFileUrlOwner`'s rule.
@@ -241,10 +246,6 @@ export const collectResponseFileUrls = (
 
   const fileUrls: string[] = [];
   let refusedCount = 0;
-  // The ids whose answer is one bare string, by the element type's declared shape.
-  const bareStringAnswerIds = (Object.keys(uploadElementKinds) as TUploadElementType[])
-    .filter((type) => uploadElementKinds[type].answerShape === "string")
-    .map((type) => elementIds[type]);
   // Typed rather than left as `Object.entries`' implicit `any` values, so the guards below are the only
   // thing that narrows an answer to a string.
   const answers: [string, unknown][] = Object.entries(data);
@@ -255,7 +256,8 @@ export const collectResponseFileUrls = (
       answerUrls = answer;
     } else if (
       typeof answer === "string" &&
-      (bareStringAnswerIds.some((ids) => ids.has(elementId)) || !elementIds.live.has(elementId))
+      (BARE_STRING_ELEMENT_TYPES.some((type) => elementIds[type].has(elementId)) ||
+        !elementIds.live.has(elementId))
     ) {
       answerUrls = [answer];
     } else {
@@ -533,7 +535,7 @@ const isValidBareStringAnswer = ({
   elementId,
 }: {
   answer: unknown;
-  kind: TUploadElementKind;
+  kind: TStringUploadElementKind;
   workspaceId: string;
   surveyId: string;
   elementId: string;

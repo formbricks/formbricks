@@ -174,7 +174,8 @@ const createWorkspaceResolver = () => {
  */
 const extractFileUrls = (value: unknown, kind: TUploadElementKind): string[] => {
   if (kind.answerShape === "string") {
-    return typeof value === "string" && !(kind.emptyStringIsSkipped && value === "") ? [value] : [];
+    // `""` is never a URL, whether or not the element type counts it as a skipped answer.
+    return typeof value === "string" && value !== "" ? [value] : [];
   }
   return Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === "string") : [];
 };

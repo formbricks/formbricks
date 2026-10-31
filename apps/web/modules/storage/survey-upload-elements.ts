@@ -28,18 +28,30 @@ export type TSurveyUploadElement = TSurveyFileUploadElement | TSurveySignatureEl
 /** The element types whose answer holds storage URLs. */
 export type TUploadElementType = TSurveyUploadElement["type"];
 
-/** How one upload element type stores and accepts its answer. */
-export type TUploadElementKind = {
-  /**
-   * How the answer holds its URLs: an `"array"` of them (File upload) or one `"string"` (Signature, see
-   * ADR 0016). The element's type decides which shape is accepted, never the value's.
-   */
-  answerShape: "array" | "string";
-  /**
-   * Extensions fixed by the element type, or `undefined` when the element's own config decides. The
-   * runtime always exports a Signature as a PNG, so anything else under one is not a signature.
-   */
-  fixedAllowedExtensions: readonly TAllowedFileExtension[] | undefined;
+/**
+ * How one upload element type stores and accepts its answer. The element's type decides which shape is
+ * accepted, never the value's.
+ *
+ * A discriminated union so a bare-string kind must name its extensions: a future string-shaped type
+ * cannot fail open to "any extension" by leaving them out. An array kind takes its extensions from the
+ * element's own config, so it may not fix any.
+ */
+export type TUploadElementKind = TArrayUploadElementKind | TStringUploadElementKind;
+
+/** An answer that is an array of URLs (File upload). */
+export type TArrayUploadElementKind = {
+  answerShape: "array";
+  fixedAllowedExtensions?: never;
+  emptyStringIsSkipped: boolean;
+};
+
+/**
+ * An answer that is one URL string (Signature, see ADR 0016). The extensions are fixed by the element
+ * type: the runtime always exports a Signature as a PNG, so anything else under one is not a signature.
+ */
+export type TStringUploadElementKind = {
+  answerShape: "string";
+  fixedAllowedExtensions: readonly [TAllowedFileExtension, ...TAllowedFileExtension[]];
   /** Whether `""` is a skipped answer rather than a URL (a skipped Signature may be stored as `""`). */
   emptyStringIsSkipped: boolean;
 };
@@ -51,7 +63,6 @@ export type TUploadElementKind = {
 export const uploadElementKinds = {
   [TSurveyElementTypeEnum.FileUpload]: {
     answerShape: "array",
-    fixedAllowedExtensions: undefined,
     emptyStringIsSkipped: false,
   },
   [TSurveyElementTypeEnum.Signature]: {
@@ -68,9 +79,14 @@ export const getUploadElementKind = (type: string): TUploadElementKind | undefin
 /** The extensions an upload element accepts: its type's fixed set, else its own config's. */
 export const getUploadElementAllowedExtensions = (
   element: TSurveyUploadElement
-): readonly TAllowedFileExtension[] | undefined =>
-  uploadElementKinds[element.type].fixedAllowedExtensions ??
-  (element.type === TSurveyElementTypeEnum.FileUpload ? element.allowedFileExtensions : undefined);
+): readonly TAllowedFileExtension[] | undefined => {
+  const kind: TUploadElementKind = uploadElementKinds[element.type];
+
+  return (
+    kind.fixedAllowedExtensions ??
+    (element.type === TSurveyElementTypeEnum.FileUpload ? element.allowedFileExtensions : undefined)
+  );
+};
 
 /**
  * Every upload element in a survey: File upload and Signature.
