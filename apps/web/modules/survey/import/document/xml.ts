@@ -38,9 +38,12 @@ const endOfStartTag = (text: string, start: number): number => {
   return -1;
 };
 
+const unclosed = () => surveyImportFileUnreadable("A part of the file is not well-formed XML");
+
 /**
  * Hold the part's raw text to the XML limits. Only markup is read: comments, CDATA sections and
- * processing instructions are skipped whole. Malformed markup is left for the parser to refuse.
+ * processing instructions are skipped whole. Markup that never closes is refused here, since a lenient
+ * reader would read on past it with nothing counted; other malformed markup is left for the parser.
  */
 const checkShape = (text: string, part: string): void => {
   let depth = 0;
@@ -88,7 +91,7 @@ const checkShape = (text: string, part: string): void => {
         }
       }
     }
-    if (end === -1) return;
+    if (end === -1) throw unclosed();
     position = text.indexOf("<", end + 1);
   }
 };

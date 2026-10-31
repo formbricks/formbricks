@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { SurveyImportInputError } from "../core/errors";
 import { SURVEY_IMPORT_XML_MAX_DEPTH, SURVEY_IMPORT_XML_MAX_ELEMENTS } from "../limits";
-import { parseDocumentXml } from "./xml";
+import { checkDocumentXml, parseDocumentXml } from "./xml";
 
 const encode = (text: string) => new TextEncoder().encode(text);
 
@@ -93,5 +93,31 @@ describe("parseDocumentXml", () => {
         parseDocumentXml(new Uint8Array([0x3c, 0x72, 0x3e, 0xff, 0x3c, 0x2f, 0x72, 0x3e]), "x.xml")
       )
     ).toMatchObject({ code: "file_unreadable" });
+  });
+});
+
+describe("checkDocumentXml", () => {
+  const check = (text: string) => checkDocumentXml(encode(text), "xl/sharedStrings.xml");
+
+  test("holds a part to the same limits as parseDocumentXml, without parsing it", () => {
+    expect(() => check(nested(SURVEY_IMPORT_XML_MAX_DEPTH))).not.toThrow();
+    expect(refusal(() => check(nested(SURVEY_IMPORT_XML_MAX_DEPTH + 1)))).toMatchObject({
+      name: "file.xl/sharedStrings.xml",
+      identifier: "xml_depth",
+    });
+    expect(refusal(() => check(flat(SURVEY_IMPORT_XML_MAX_ELEMENTS + 1)))).toMatchObject({
+      identifier: "xml_elements",
+    });
+  });
+
+  // A lenient reader such as SheetJS reads on past markup that never closes, so the limits must not
+  // stop being counted there: a part that never closes a tag, comment or instruction is unreadable.
+  test.each([
+    ["an attribute value", `<r a="${nested(SURVEY_IMPORT_XML_MAX_DEPTH + 1)}`],
+    ["a comment", `<r><!-- ${nested(SURVEY_IMPORT_XML_MAX_DEPTH + 1)}`],
+    ["a processing instruction", `<r><?pi ${nested(SURVEY_IMPORT_XML_MAX_DEPTH + 1)}`],
+    ["a CDATA section", `<r><![CDATA[ ${nested(SURVEY_IMPORT_XML_MAX_DEPTH + 1)}`],
+  ])("refuses a part where %s never closes as unreadable", (_what, text) => {
+    expect(refusal(() => check(text))).toMatchObject({ code: "file_unreadable" });
   });
 });
