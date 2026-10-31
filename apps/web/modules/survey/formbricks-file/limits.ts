@@ -3,6 +3,8 @@ import { V3_SURVEY_MAX_HIDDEN_FIELDS, V3_SURVEY_MAX_VARIABLES } from "@/app/api/
 import {
   SURVEY_IMPORT_MAX_DRAFT_BYTES,
   SURVEY_IMPORT_MAX_LANGUAGE_CODE_CHARS,
+  SURVEY_IMPORT_MAX_OPTIONS_PER_QUESTION,
+  SURVEY_IMPORT_MAX_TEXT_CHARS,
 } from "@/modules/survey/import/limits";
 
 /**
@@ -36,9 +38,20 @@ export const FORMBRICKS_FILE_MAX_REPORTED_DROPPED_KEYS = 50;
 export const FORMBRICKS_FILE_MAX_SURVEY_BYTES = SURVEY_IMPORT_MAX_DRAFT_BYTES;
 
 /*
+ * The survey's content, held to the caps every import lane holds a survey to. Past one, the file is
+ * refused with a 422 naming the list or the text.
+ */
+
+/** Options of one question: its choices, or a matrix's rows and columns each. */
+export const FORMBRICKS_FILE_MAX_OPTIONS_PER_QUESTION = SURVEY_IMPORT_MAX_OPTIONS_PER_QUESTION;
+
+/** One text of the survey, in any language: a headline, a choice's label, a variable's value… */
+export const FORMBRICKS_FILE_MAX_TEXT_CHARS = SURVEY_IMPORT_MAX_TEXT_CHARS;
+
+/*
  * The strings of a file's envelope and references, each capped, so a file cannot carry an unbounded
  * one into the import's lookups or into the rows it creates. Past one, the file is refused with a 422
- * naming the field. The survey's own strings are capped by the survey document's rules.
+ * naming the field.
  */
 
 /**

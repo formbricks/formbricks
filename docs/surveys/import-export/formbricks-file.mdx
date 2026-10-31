@@ -144,7 +144,7 @@ Behind the dialog, the import answers with an [RFC 9457](https://www.rfc-editor.
 | `duplicate_identifier`               | `Element id 'q1' is duplicated; first used at blocks.0.elements.0`                                     | Give each question, block, option, ending, hidden field and variable its own ID. |
 | `immutable_identifier`               | `Element id 'q1' cannot be changed because the survey and element are no longer drafts`                | An Update can't change the ID of a question that has been live. Keep the old ID, or import the file as a new survey. |
 | `read_only_field`                    | `Field 'type' is immutable after creation; …`                                                          | An Update can't change `type` or `defaultLanguage`. Keep them, or import the file as a new survey. |
-| `limit_exceeded`                     | `Importing this survey adds 12 attribute keys, past the 150 a workspace can have`                      | Remove unused contact attributes from the workspace, or the filters that need them. |
+| `limit_exceeded`                     | `A question takes at most 200 choices`, `A text must not exceed 50000 characters`, `Importing this survey adds 12 attribute keys, past the 150 a workspace can have` | A question can have up to 200 choices, or 200 matrix rows and 200 columns, and a text up to 50,000 characters in each language. Split the question or shorten the text. For attribute keys, remove unused contact attributes from the workspace, or the filters that need them. |
 
 Other messages the dialog shows for a Formbricks file:
 

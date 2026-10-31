@@ -14,9 +14,11 @@ import {
   FORMBRICKS_FILE_MAX_LANGUAGE_CODE_CHARS,
   FORMBRICKS_FILE_MAX_NAME_CHARS,
   FORMBRICKS_FILE_MAX_NO_CODE_CONFIG_CHARS,
+  FORMBRICKS_FILE_MAX_OPTIONS_PER_QUESTION,
   FORMBRICKS_FILE_MAX_REPORTED_DROPPED_KEYS,
   FORMBRICKS_FILE_MAX_SCHEMA_URL_CHARS,
   FORMBRICKS_FILE_MAX_SURVEY_BYTES,
+  FORMBRICKS_FILE_MAX_TEXT_CHARS,
 } from "./limits";
 import { readFormbricksFile, readFormbricksFileContent, upgradeFormbricksFile } from "./read";
 
@@ -425,16 +427,50 @@ describe("readFormbricksFile's limits", () => {
     expect(refusal.invalidParams).toEqual([expect.objectContaining({ name: `file.references.${kind}` })]);
   });
 
-  /** A survey whose JSON is exactly `bytes` long, padded in a text the survey keeps. */
+  /**
+   * A survey whose JSON is exactly `bytes` long, padded in the labels of a question's choices, none past
+   * the text cap.
+   */
   const surveyOfSize = (bytes: number) => {
-    const padded = (padding: string) => ({ ...survey(), name: `Onboarding NPS${padding}` });
-    return padded(" ".repeat(bytes - JSON.stringify(padded("")).length));
+    const choiceCount = 30;
+    const padded = (padding: number) => {
+      const labels = Array.from({ length: choiceCount * 2 }, (_, index) => {
+        const extra = Math.min(
+          Math.max(padding - index * (FORMBRICKS_FILE_MAX_TEXT_CHARS - 1), 0),
+          FORMBRICKS_FILE_MAX_TEXT_CHARS - 1
+        );
+        return `C${"x".repeat(extra)}`;
+      });
+      const base = survey();
+      return {
+        ...base,
+        blocks: [
+          {
+            ...base.blocks[0],
+            elements: [
+              ...base.blocks[0].elements,
+              {
+                id: "padded",
+                type: "multipleChoiceSingle",
+                headline: { "en-US": "Which one?", "de-DE": "Welche?" },
+                required: true,
+                choices: Array.from({ length: choiceCount }, (_, index) => ({
+                  id: `choice_${index}`,
+                  label: { "en-US": labels[index * 2], "de-DE": labels[index * 2 + 1] },
+                })),
+              },
+            ],
+          },
+        ],
+      };
+    };
+    return padded(bytes - JSON.stringify(padded(0)).length);
   };
 
   test("reads a survey of exactly the size one may weigh, and refuses a byte more with a 413 naming the survey", () => {
     const atLimit = surveyOfSize(FORMBRICKS_FILE_MAX_SURVEY_BYTES);
     expect(Buffer.byteLength(JSON.stringify(atLimit))).toBe(FORMBRICKS_FILE_MAX_SURVEY_BYTES);
-    expect(readFormbricksFile(file({ survey: atLimit })).content.survey.name).toBe(atLimit.name);
+    expect(readFormbricksFile(file({ survey: atLimit })).content.survey).toEqual(atLimit);
 
     const overLimit = file({ survey: surveyOfSize(FORMBRICKS_FILE_MAX_SURVEY_BYTES + 1) });
     expect(() => readFormbricksFile(overLimit)).toThrow(SurveyImportFileTooLargeError);
@@ -449,6 +485,103 @@ describe("readFormbricksFile's limits", () => {
         ],
       })
     );
+  });
+
+  const option = (index: number) => ({
+    id: `option_${index}`,
+    label: { "en-US": `Option ${index}`, "de-DE": `Option ${index}` },
+  });
+  const options = (count: number) => Array.from({ length: count }, (_, index) => option(index));
+  const surveyWith = (element: Record<string, unknown>) => {
+    const base = survey();
+    return { ...base, blocks: [{ ...base.blocks[0], elements: [element] }] };
+  };
+  const headline = { "en-US": "Which one?", "de-DE": "Welche?" };
+
+  test.each([
+    [
+      "choices",
+      (count: number) => ({
+        id: "pick",
+        type: "multipleChoiceSingle",
+        headline,
+        required: true,
+        choices: options(count),
+      }),
+    ],
+    [
+      "rows",
+      (count: number) => ({
+        id: "grid",
+        type: "matrix",
+        headline,
+        required: true,
+        rows: options(count),
+        columns: options(2),
+      }),
+    ],
+    [
+      "columns",
+      (count: number) => ({
+        id: "grid",
+        type: "matrix",
+        headline,
+        required: true,
+        rows: options(2),
+        columns: options(count),
+      }),
+    ],
+  ] as const)(
+    "reads a question's %s up to the option cap, and refuses one more naming the list",
+    (key, build) => {
+      const atLimit = file({ survey: surveyWith(build(FORMBRICKS_FILE_MAX_OPTIONS_PER_QUESTION)) });
+      expect(readFormbricksFile(atLimit).content.survey).toEqual(atLimit.survey);
+
+      const refusal = refusalOf(() =>
+        readFormbricksFile(file({ survey: surveyWith(build(FORMBRICKS_FILE_MAX_OPTIONS_PER_QUESTION + 1)) }))
+      );
+      expect(refusal.problemCode).toBe("formbricks_file_invalid");
+      expect(refusal.invalidParams).toEqual([
+        expect.objectContaining({ name: `file.survey.blocks.0.elements.0.${key}`, code: "limit_exceeded" }),
+      ]);
+    }
+  );
+
+  test("reads a text up to the text cap in any language, and refuses one character more naming the text", () => {
+    const withGermanHeadline = (text: string) =>
+      surveyWith({ ...survey().blocks[0].elements[0], headline: { "en-US": "How likely?", "de-DE": text } });
+
+    const atLimit = file({ survey: withGermanHeadline("x".repeat(FORMBRICKS_FILE_MAX_TEXT_CHARS)) });
+    expect(readFormbricksFile(atLimit).content.survey).toEqual(atLimit.survey);
+
+    const refusal = refusalOf(() =>
+      readFormbricksFile(file({ survey: withGermanHeadline("x".repeat(FORMBRICKS_FILE_MAX_TEXT_CHARS + 1)) }))
+    );
+    expect(refusal.problemCode).toBe("formbricks_file_invalid");
+    expect(refusal.invalidParams).toEqual([
+      expect.objectContaining({
+        name: "file.survey.blocks.0.elements.0.headline.de-DE",
+        code: "limit_exceeded",
+      }),
+    ]);
+  });
+
+  test("holds the reviewed content sent back to the same content caps, named from the request body", () => {
+    const refusal = refusalOf(() =>
+      readFormbricksFileContent({
+        survey: surveyWith({
+          id: "pick",
+          type: "multipleChoiceSingle",
+          headline,
+          required: true,
+          choices: options(FORMBRICKS_FILE_MAX_OPTIONS_PER_QUESTION + 1),
+        }),
+        references: references(),
+      })
+    );
+    expect(refusal.invalidParams).toEqual([
+      expect.objectContaining({ name: "survey.blocks.0.elements.0.choices", code: "limit_exceeded" }),
+    ]);
   });
 });
 
