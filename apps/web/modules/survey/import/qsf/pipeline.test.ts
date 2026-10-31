@@ -1,7 +1,11 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { AIOutputTokenLimitError } from "@formbricks/ai";
 import { prepareV3SurveyCreateInput } from "@/app/api/v3/surveys/prepare";
-import type { TQsfImportReport } from "../types";
+import type { TSurveyImportDraft } from "../core/draft";
+import { SurveyImportFailedError, SurveyImportInputError, SurveyImportTimeoutError } from "../core/errors";
+import { checkImportDraft } from "../core/final-gate";
+import { isObjectMemberName } from "../core/id-registry";
+import type { TSurveyImportReport } from "../types";
 import {
   IMPORTABLE_QSF_FIXTURES,
   type TImportableQsfFixture,
@@ -9,23 +13,14 @@ import {
 } from "./__fixtures__/load-fixture";
 import { loadRecordedPlan, recordedGenerate, timedGenerate } from "./__fixtures__/recorded-plans";
 import type { TQsfPlanGenerate } from "./ai-plan";
-import type { TQsfDraftDocument } from "./assemble";
-import { checkQsfDraft } from "./final-gate";
-import { isObjectMemberName } from "./id-registry";
-import {
-  QsfImportFailedError,
-  QsfImportInputError,
-  QsfImportTimeoutError,
-  type TRunQsfImportParams,
-  prepareQsfImport,
-  runQsfImport,
-} from "./pipeline";
+import { type TRunQsfImportParams, runQsfImport } from "./pipeline";
+import { prepareQsfImport } from "./prepare";
 
 const mocks = vi.hoisted(() => ({
   generateOrganizationAIObject: vi.fn(),
   getExternalUrlsPermission: vi.fn(),
-  checkQsfDraft: vi.fn(),
-  realCheckQsfDraft: undefined as unknown as typeof import("./final-gate").checkQsfDraft,
+  checkImportDraft: vi.fn(),
+  realCheckImportDraft: undefined as unknown as typeof import("../core/final-gate").checkImportDraft,
 }));
 
 const aiTimeoutEnv = vi.hoisted(() => ({ multiplier: 1 }));
@@ -48,15 +43,15 @@ vi.mock("@/lib/ai/service", () => ({ generateOrganizationAIObject: mocks.generat
 vi.mock("@/modules/survey/lib/permission", () => ({
   getExternalUrlsPermission: mocks.getExternalUrlsPermission,
 }));
-vi.mock("./final-gate", async (importOriginal) => {
-  const original = await importOriginal<typeof import("./final-gate")>();
-  mocks.realCheckQsfDraft = original.checkQsfDraft;
+vi.mock("../core/final-gate", async (importOriginal) => {
+  const original = await importOriginal<typeof import("../core/final-gate")>();
+  mocks.realCheckImportDraft = original.checkImportDraft;
   return {
     ...original,
-    checkQsfDraft: mocks.checkQsfDraft,
+    checkImportDraft: mocks.checkImportDraft,
     // The pipeline's own way in: through the same mock, so a test can make the gate fail.
-    checkQsfDraftInSlices: async (document: Parameters<typeof original.checkQsfDraft>[0]) =>
-      mocks.checkQsfDraft(document),
+    checkImportDraftInSlices: async (document: Parameters<typeof original.checkImportDraft>[0]) =>
+      mocks.checkImportDraft(document),
   };
 });
 
@@ -80,23 +75,33 @@ const answerFrom = (plan: string) => {
   mocks.generateOrganizationAIObject.mockImplementation(generate);
 };
 
-const elementsOf = (document: TQsfDraftDocument) => document.blocks.flatMap((block) => block.elements);
+const elementsOf = (document: TSurveyImportDraft) => document.blocks.flatMap((block) => block.elements);
 
-type TExpectedReport = [TQsfImportReport["summary"], string[]];
+type TExpectedReport = [TSurveyImportReport["summary"], string[]];
 
 /** What each fixture's import must report: the summary, and the issue codes (with causes), sorted. */
 const EXPECTED_REPORTS: Record<TImportableQsfFixture, TExpectedReport> = {
-  "simple.qsf": [{ blocks: 1, questions: 5, languages: ["en-US"], logicRules: 0, hiddenFields: 0 }, []],
+  "simple.qsf": [
+    { blocks: 1, questions: 5, languages: ["en-US"], logicRules: 0, importedLogicRules: 0, hiddenFields: 0 },
+    [],
+  ],
   "multilang-en-de.qsf": [
-    { blocks: 1, questions: 3, languages: ["en-US", "de-DE"], logicRules: 0, hiddenFields: 0 },
+    {
+      blocks: 1,
+      questions: 3,
+      languages: ["en-US", "de-DE"],
+      logicRules: 0,
+      importedLogicRules: 0,
+      hiddenFields: 0,
+    },
     ["ending_added"],
   ],
   "logic-skip-display-branch.qsf": [
-    { blocks: 4, questions: 6, languages: ["en-US"], logicRules: 6, hiddenFields: 1 },
+    { blocks: 4, questions: 6, languages: ["en-US"], logicRules: 6, importedLogicRules: 0, hiddenFields: 1 },
     ["ending_added", ...Array(6).fill("logic_not_imported")],
   ],
   "matrix-slider-ranking.qsf": [
-    { blocks: 3, questions: 8, languages: ["en-US"], logicRules: 0, hiddenFields: 0 },
+    { blocks: 3, questions: 8, languages: ["en-US"], logicRules: 0, importedLogicRules: 0, hiddenFields: 0 },
     [
       "matrix_single_answer",
       "question_skipped:ai_skipped",
@@ -107,24 +112,31 @@ const EXPECTED_REPORTS: Record<TImportableQsfFixture, TExpectedReport> = {
     ],
   ],
   "pages-and-blocks.qsf": [
-    { blocks: 3, questions: 3, languages: ["en-US"], logicRules: 1, hiddenFields: 0 },
+    { blocks: 3, questions: 3, languages: ["en-US"], logicRules: 1, importedLogicRules: 0, hiddenFields: 0 },
     ["ending_added", "logic_not_imported", "question_skipped:not_in_flow"],
   ],
   "embedded-data.qsf": [
-    { blocks: 2, questions: 2, languages: ["en-US"], logicRules: 0, hiddenFields: 4 },
+    { blocks: 2, questions: 2, languages: ["en-US"], logicRules: 0, importedLogicRules: 0, hiddenFields: 4 },
     ["ending_added", ...Array(4).fill("field_renamed"), "piped_text_removed"],
   ],
   "large-150.qsf": [
-    { blocks: 30, questions: 150, languages: ["en-US"], logicRules: 0, hiddenFields: 0 },
+    {
+      blocks: 30,
+      questions: 150,
+      languages: ["en-US"],
+      logicRules: 0,
+      importedLogicRules: 0,
+      hiddenFields: 0,
+    },
     // Fifteen 0–7 sliders: 8 points, which a rating has not, so each becomes a 10-point rating.
     ["ending_added", ...Array(15).fill("scale_changed")],
   ],
   "legacy-object-payload.qsf": [
-    { blocks: 1, questions: 2, languages: ["de-DE"], logicRules: 0, hiddenFields: 0 },
+    { blocks: 1, questions: 2, languages: ["de-DE"], logicRules: 0, importedLogicRules: 0, hiddenFields: 0 },
     ["ending_added"],
   ],
   "nps-and-numeric-scales.qsf": [
-    { blocks: 1, questions: 6, languages: ["en-US"], logicRules: 0, hiddenFields: 0 },
+    { blocks: 1, questions: 6, languages: ["en-US"], logicRules: 0, importedLogicRules: 0, hiddenFields: 0 },
     ["ending_added"],
   ],
   "labels-and-languages.qsf": [
@@ -133,6 +145,7 @@ const EXPECTED_REPORTS: Record<TImportableQsfFixture, TExpectedReport> = {
       questions: 3,
       languages: ["en-US", "de-DE", "zh-Hans-CN", "zh-Hant-TW"],
       logicRules: 0,
+      importedLogicRules: 0,
       hiddenFields: 0,
     },
     [
@@ -145,7 +158,7 @@ const EXPECTED_REPORTS: Record<TImportableQsfFixture, TExpectedReport> = {
     ],
   ],
   "rich-text.qsf": [
-    { blocks: 2, questions: 6, languages: ["en-US"], logicRules: 0, hiddenFields: 1 },
+    { blocks: 2, questions: 6, languages: ["en-US"], logicRules: 0, importedLogicRules: 0, hiddenFields: 1 },
     [
       "field_renamed",
       "formatting_dropped",
@@ -161,11 +174,18 @@ const EXPECTED_REPORTS: Record<TImportableQsfFixture, TExpectedReport> = {
     ],
   ],
   "prompt-injection.qsf": [
-    { blocks: 1, questions: 2, languages: ["en-US"], logicRules: 0, hiddenFields: 0 },
+    { blocks: 1, questions: 2, languages: ["en-US"], logicRules: 0, importedLogicRules: 0, hiddenFields: 0 },
     ["ending_added"],
   ],
   "pollution.qsf": [
-    { blocks: 2, questions: 4, languages: ["en-US", "de-DE"], logicRules: 0, hiddenFields: 6 },
+    {
+      blocks: 2,
+      questions: 4,
+      languages: ["en-US", "de-DE"],
+      logicRules: 0,
+      importedLogicRules: 0,
+      hiddenFields: 6,
+    },
     [
       "choice_dropped:invalid_id",
       "choice_dropped:invalid_id",
@@ -183,7 +203,7 @@ beforeEach(() => {
   aiTimeoutEnv.multiplier = 1;
   vi.resetAllMocks();
   mocks.getExternalUrlsPermission.mockResolvedValue(true);
-  mocks.checkQsfDraft.mockImplementation(mocks.realCheckQsfDraft);
+  mocks.checkImportDraft.mockImplementation(mocks.realCheckImportDraft);
 });
 
 describe("prepareQsfImport", () => {
@@ -211,8 +231,8 @@ describe("prepareQsfImport", () => {
     ["any other JSON file", "not-a-qsf.json"],
     ["a flow nested past the cap", "deep-flow.qsf"],
     ["a survey past the question limit", "over-limit.qsf"],
-  ])("refuses %s with QsfImportInputError, before any AI", (_case, fixture) => {
-    expect(() => prepareQsfImport(loadQsfFixture(fixture), fixture)).toThrow(QsfImportInputError);
+  ])("refuses %s with SurveyImportInputError, before any AI", (_case, fixture) => {
+    expect(() => prepareQsfImport(loadQsfFixture(fixture), fixture)).toThrow(SurveyImportInputError);
   });
 });
 
@@ -235,7 +255,7 @@ describe("runQsfImport on recorded plans", () => {
       const result = await run(fixture, { onProgress });
 
       // The shared create check: v3 validation (recall order enforced) and the survey service's schema.
-      expect(checkQsfDraft(result.payload)).toEqual([]);
+      expect(checkImportDraft(result.payload)).toEqual([]);
       // And exactly what POST /api/v3/surveys runs first, on the body the dialog sends.
       expect(prepareV3SurveyCreateInput(JSON.parse(JSON.stringify(result.payload))).ok).toBe(true);
       // A survey with no ending can be published, and respondents would finish on nothing.
@@ -276,7 +296,7 @@ describe("runQsfImport on recorded plans", () => {
       showLanguageSwitch: true,
       autoSelectLanguage: true,
     });
-    expect(mocks.realCheckQsfDraft(multi.payload)).toEqual([]);
+    expect(mocks.realCheckImportDraft(multi.payload)).toEqual([]);
   });
 
   test("reports what was removed from the end message only when the survey shows it", async () => {
@@ -301,7 +321,7 @@ describe("runQsfImport on recorded plans", () => {
     expect(mocks.generateOrganizationAIObject).toHaveBeenCalledWith(
       expect.objectContaining({
         organizationId: "org_1",
-        aiTracing: { distinctId: "user_1", feature: "ai_qsf_import", workspaceId: WORKSPACE_ID },
+        aiTracing: { distinctId: "user_1", feature: "ai_survey_import", workspaceId: WORKSPACE_ID },
         maxOutputTokens: 8192,
         abortSignal: expect.any(AbortSignal),
       })
@@ -416,7 +436,7 @@ describe("runQsfImport on recorded plans", () => {
     // 9.9 s for the whole import: 4.9 s for a call once assembly is reserved, under the 5 s minimum.
     const error = await run("simple.qsf", { deadlineMs: 9_900 }).catch((caught: unknown) => caught);
 
-    expect(error).toBeInstanceOf(QsfImportTimeoutError);
+    expect(error).toBeInstanceOf(SurveyImportTimeoutError);
     expect(mocks.generateOrganizationAIObject).not.toHaveBeenCalled();
   });
 
@@ -427,8 +447,8 @@ describe("runQsfImport on recorded plans", () => {
 
     const error = await run("simple.qsf").catch((caught: unknown) => caught);
 
-    expect(error).toBeInstanceOf(QsfImportFailedError);
-    expect((error as QsfImportFailedError).reason).toBe("no_questions");
+    expect(error).toBeInstanceOf(SurveyImportFailedError);
+    expect((error as SurveyImportFailedError).reason).toBe("no_questions");
   });
 
   test("fails the import when no question survives", async () => {
@@ -442,13 +462,13 @@ describe("runQsfImport on recorded plans", () => {
 
     const error = await run("simple.qsf").catch((caught: unknown) => caught);
 
-    expect(error).toBeInstanceOf(QsfImportFailedError);
-    expect((error as QsfImportFailedError).reason).toBe("no_questions");
+    expect(error).toBeInstanceOf(SurveyImportFailedError);
+    expect((error as SurveyImportFailedError).reason).toBe("no_questions");
   });
 
   test("drops an element the create would refuse, reports it and assembles again", async () => {
     answerFrom("simple.qsf");
-    mocks.checkQsfDraft.mockReturnValueOnce([
+    mocks.checkImportDraft.mockReturnValueOnce([
       { name: "blocks.0.elements.1.headline", reason: "The question is missing" },
     ]);
 
@@ -476,12 +496,12 @@ describe("runQsfImport on recorded plans", () => {
     ],
   ])("fails the import when the create would refuse the draft %s", async (_case, failures) => {
     answerFrom("simple.qsf");
-    for (const failure of failures) mocks.checkQsfDraft.mockReturnValueOnce(failure);
+    for (const failure of failures) mocks.checkImportDraft.mockReturnValueOnce(failure);
 
     const error = await run("simple.qsf").catch((caught: unknown) => caught);
 
-    expect(error).toBeInstanceOf(QsfImportFailedError);
-    expect((error as QsfImportFailedError).reason).toBe("draft_invalid");
+    expect(error).toBeInstanceOf(SurveyImportFailedError);
+    expect((error as SurveyImportFailedError).reason).toBe("draft_invalid");
   });
 
   test("asks about external URLs only for a survey with a redirect, and drops the redirect without them", async () => {
@@ -553,7 +573,7 @@ describe("runQsfImport on recorded plans", () => {
       const result = await settled;
 
       expect(result.report.summary.questions).toBe(150);
-      expect(mocks.realCheckQsfDraft(result.payload)).toEqual([]);
+      expect(mocks.realCheckImportDraft(result.payload)).toEqual([]);
       expect(mocks.generateOrganizationAIObject).toHaveBeenCalledTimes(10);
     });
   });

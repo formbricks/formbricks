@@ -1,27 +1,34 @@
 import { describe, expect, test } from "vitest";
-import type { TQsfImportReport } from "@/modules/survey/import/types";
+import type { TSurveyImportReport } from "@/modules/survey/import/types";
 import {
-  formatQsfImportReport,
-  getQsfImportFacts,
-  getQsfImportIssueLine,
-  getQsfImportReportFileName,
+  formatSurveyImportReport,
+  getSurveyImportFacts,
+  getSurveyImportIssueLine,
+  getSurveyImportReportFileName,
   getSwitchedOffLanguages,
-  hasQsfImportWarnings,
-  sortQsfImportIssues,
+  hasSurveyImportWarnings,
+  sortSurveyImportIssues,
 } from "./import-report";
 
 const t = (key: string, options?: Record<string, unknown>) =>
   options ? `${key.split(".").pop()} ${JSON.stringify(options)}` : (key.split(".").pop() ?? key);
 
-const report = (issues: TQsfImportReport["issues"]): TQsfImportReport => ({
+const report = (issues: TSurveyImportReport["issues"]): TSurveyImportReport => ({
   source: { kind: "qsf", fileName: "Customer survey.qsf" },
-  summary: { blocks: 2, questions: 12, languages: ["en-US", "de-DE"], logicRules: 3, hiddenFields: 1 },
+  summary: {
+    blocks: 2,
+    questions: 12,
+    languages: ["en-US", "de-DE"],
+    logicRules: 3,
+    importedLogicRules: 0,
+    hiddenFields: 1,
+  },
   issues,
 });
 
-describe("getQsfImportIssueLine", () => {
+describe("getSurveyImportIssueLine", () => {
   test("fills in the AI's rule and names the Qualtrics question", () => {
-    const line = getQsfImportIssueLine(
+    const line = getSurveyImportIssueLine(
       {
         code: "logic_not_imported",
         severity: "warning",
@@ -36,7 +43,7 @@ describe("getQsfImportIssueLine", () => {
 
   test("passes both names of a renamed field", () => {
     expect(
-      getQsfImportIssueLine(
+      getSurveyImportIssueLine(
         { code: "field_renamed", severity: "info", params: { from: "Customer ID", to: "customer_id" } },
         t
       )
@@ -66,7 +73,7 @@ describe("getQsfImportIssueLine", () => {
     [{ cause: "validation_failed" }, "question_skipped_validation_failed"],
     [{ cause: "something_new" }, "question_skipped"],
   ])("says why a question was skipped: %j", (params, expected) => {
-    expect(getQsfImportIssueLine({ code: "question_skipped", severity: "warning", params }, t)).toBe(
+    expect(getSurveyImportIssueLine({ code: "question_skipped", severity: "warning", params }, t)).toBe(
       expected
     );
   });
@@ -84,14 +91,14 @@ describe("getQsfImportIssueLine", () => {
     [{ code: "xx", fallback: "en-US" }, 'language_skipped_default {"code":"xx","fallback":"en-US"}'],
     [{}, "language_skipped_unnamed"],
   ])("names the language left out: %j", (params, expected) => {
-    expect(getQsfImportIssueLine({ code: "language_skipped", severity: "warning", params }, t)).toBe(
+    expect(getSurveyImportIssueLine({ code: "language_skipped", severity: "warning", params }, t)).toBe(
       expected
     );
   });
 
   test("passes the count and language of texts missing in a language", () => {
     expect(
-      getQsfImportIssueLine(
+      getSurveyImportIssueLine(
         { code: "translation_missing", severity: "info", params: { language: "de-DE", count: 12 } },
         t
       )
@@ -100,7 +107,7 @@ describe("getQsfImportIssueLine", () => {
 
   test("names the options left out, and a slider's old and new size", () => {
     expect(
-      getQsfImportIssueLine(
+      getSurveyImportIssueLine(
         {
           code: "options_left_out",
           severity: "warning",
@@ -111,7 +118,7 @@ describe("getQsfImportIssueLine", () => {
       )
     ).toBe('Q1: options_left_out {"count":2,"options":"N/A, N/A"}');
     expect(
-      getQsfImportIssueLine(
+      getSurveyImportIssueLine(
         { code: "scale_changed", severity: "warning", questionTag: "Q7", params: { from: 8, to: 10 } },
         t
       )
@@ -120,13 +127,66 @@ describe("getQsfImportIssueLine", () => {
 
   test("says a logic rule was not imported even without its description", () => {
     expect(
-      getQsfImportIssueLine({ code: "logic_not_imported", severity: "warning", questionTag: "Q4" }, t)
+      getSurveyImportIssueLine({ code: "logic_not_imported", severity: "warning", questionTag: "Q4" }, t)
     ).toBe("Q4: logic_not_imported_no_description");
+  });
+
+  test("flags each imported logic rule for checking, and names a cell imported whole and the sheets skipped", () => {
+    expect(
+      getSurveyImportIssueLine(
+        {
+          code: "logic_imported",
+          severity: "warning",
+          questionTag: "10",
+          params: { description: "Skip to 18" },
+        },
+        t
+      )
+    ).toBe('10: logic_imported {"description":"Skip to 18"}');
+    expect(
+      getSurveyImportIssueLine({ code: "logic_imported", severity: "warning", questionTag: "10" }, t)
+    ).toBe("10: logic_imported_no_description");
+    expect(
+      getSurveyImportIssueLine(
+        { code: "text_not_split", severity: "warning", questionTag: "01", params: { cell: "C3" } },
+        t
+      )
+    ).toBe('01: text_not_split {"cell":"C3"}');
+    expect(
+      getSurveyImportIssueLine(
+        { code: "sheets_skipped", severity: "info", params: { sheets: "Notes, Archive", count: 2 } },
+        t
+      )
+    ).toBe('sheets_skipped {"sheets":"Notes, Archive"}');
+  });
+
+  test("names a question a Word table became a matrix of, and counts the images left out", () => {
+    expect(
+      getSurveyImportIssueLine({ code: "table_as_matrix", severity: "warning", questionTag: "Q4" }, t)
+    ).toBe("Q4: table_as_matrix");
+    expect(
+      getSurveyImportIssueLine({ code: "images_not_imported", severity: "warning", params: { count: 3 } }, t)
+    ).toBe('images_not_imported {"count":3}');
+  });
+
+  test("says which encoding a text file was read as", () => {
+    expect(
+      getSurveyImportIssueLine(
+        { code: "file_encoding", severity: "info", params: { encoding: "windows-1252" } },
+        t
+      )
+    ).toBe('file_encoding {"encoding":"windows_1252"}');
+    expect(
+      getSurveyImportIssueLine(
+        { code: "file_encoding", severity: "info", params: { encoding: "utf-16le" } },
+        t
+      )
+    ).toBe('file_encoding {"encoding":"utf_16"}');
   });
 
   test("names the languages whose ending shows a stand-in", () => {
     expect(
-      getQsfImportIssueLine(
+      getSurveyImportIssueLine(
         {
           code: "ending_not_translated",
           severity: "warning",
@@ -139,13 +199,13 @@ describe("getQsfImportIssueLine", () => {
 
   test("names the end message for the default ending it added", () => {
     expect(
-      getQsfImportIssueLine({ code: "ending_added", severity: "info", params: { subject: "ending" } }, t)
+      getSurveyImportIssueLine({ code: "ending_added", severity: "info", params: { subject: "ending" } }, t)
     ).toBe("ending: ending_added");
   });
 
   test("names the end message for a piped text removed from it", () => {
     expect(
-      getQsfImportIssueLine(
+      getSurveyImportIssueLine(
         { code: "piped_text_removed", severity: "warning", params: { count: 2, subject: "ending" } },
         t
       )
@@ -154,7 +214,7 @@ describe("getQsfImportIssueLine", () => {
 
   test("names the block for a page rule with no imported question", () => {
     expect(
-      getQsfImportIssueLine(
+      getSurveyImportIssueLine(
         {
           code: "logic_not_imported",
           severity: "warning",
@@ -169,9 +229,9 @@ describe("getQsfImportIssueLine", () => {
     const unknownIssue = {
       code: "something_new",
       severity: "info",
-    } as unknown as TQsfImportReport["issues"][number];
+    } as unknown as TSurveyImportReport["issues"][number];
 
-    expect(getQsfImportIssueLine(unknownIssue, t)).toBe("unknown");
+    expect(getSurveyImportIssueLine(unknownIssue, t)).toBe("unknown");
   });
 });
 
@@ -187,20 +247,82 @@ describe("every report code", () => {
     "text_too_long",
     "markup_escaped",
     "matrix_single_answer",
+    "custom_css_removed",
+    "targeting_removed",
+    "content_only",
   ] as const)("%s has a line of its own", (code) => {
-    expect(getQsfImportIssueLine({ code, severity: "info" }, t)).toBe(code);
+    expect(getSurveyImportIssueLine({ code, severity: "info" }, t)).toBe(code);
   });
 
   test.each(["field_dropped", "piped_text_removed"] as const)("%s passes its count", (code) => {
-    expect(getQsfImportIssueLine({ code, severity: "warning", params: { count: 3 } }, t)).toBe(
+    expect(getSurveyImportIssueLine({ code, severity: "warning", params: { count: 3 } }, t)).toBe(
       `${code} {"count":3}`
     );
+  });
+
+  test("names a dropped key by its path in the file, and counts the ones past the first fifty", () => {
+    expect(
+      getSurveyImportIssueLine(
+        { code: "unknown_key_dropped", severity: "warning", params: { field: "survey.theme" } },
+        t
+      )
+    ).toBe('unknown_key_dropped {"field":"survey.theme"}');
+    expect(
+      getSurveyImportIssueLine({ code: "unknown_key_dropped", severity: "warning", params: { count: 7 } }, t)
+    ).toBe('unknown_keys_dropped {"count":7}');
+  });
+
+  test("names the action or attribute an import creates, and counts the filters it removes", () => {
+    expect(
+      getSurveyImportIssueLine(
+        { code: "action_class_created", severity: "info", params: { name: "Checkout" } },
+        t
+      )
+    ).toBe('action_class_created {"name":"Checkout"}');
+    expect(
+      getSurveyImportIssueLine(
+        { code: "attribute_key_created", severity: "info", params: { key: "plan" } },
+        t
+      )
+    ).toBe('attribute_key_created {"key":"plan"}');
+    expect(
+      getSurveyImportIssueLine(
+        { code: "targeting_filter_removed", severity: "warning", params: { count: 2 } },
+        t
+      )
+    ).toBe('targeting_filter_removed {"count":2}');
+  });
+
+  test("names what an Update removes under the question it is about", () => {
+    expect(
+      getSurveyImportIssueLine(
+        {
+          code: "question_removed",
+          severity: "warning",
+          questionTag: "feedback",
+          params: { headline: "Anything else?" },
+        },
+        t
+      )
+    ).toBe('feedback: question_removed {"headline":"Anything else?"}');
+    expect(
+      getSurveyImportIssueLine(
+        { code: "question_removed", severity: "warning", questionTag: "feedback", params: { headline: "" } },
+        t
+      )
+    ).toBe("feedback: question_removed_no_headline");
+    expect(
+      getSurveyImportIssueLine(
+        { code: "option_removed", severity: "warning", questionTag: "color", params: { option: "Green" } },
+        t
+      )
+    ).toBe('color: option_removed {"option":"Green"}');
   });
 
   test("names every Qualtrics type the import skips, each differently", () => {
     const types = ["CS", "SBS", "HeatMap", "HotSpot", "DD", "PGR", "Highlight", "Signature", "Draw", "GAP"];
     const lines = [...types, "Timing", "Meta", "Captcha"].map((qualtricsType) =>
-      getQsfImportIssueLine(
+      getSurveyImportIssueLine(
         {
           code: "question_skipped",
           severity: "warning",
@@ -231,16 +353,16 @@ describe("getSwitchedOffLanguages", () => {
   });
 });
 
-describe("hasQsfImportWarnings", () => {
+describe("hasSurveyImportWarnings", () => {
   test("is what opens the report by itself", () => {
-    expect(hasQsfImportWarnings(report([{ code: "image_dropped", severity: "warning" }]))).toBe(true);
-    expect(hasQsfImportWarnings(report([{ code: "field_renamed", severity: "info" }]))).toBe(false);
+    expect(hasSurveyImportWarnings(report([{ code: "image_dropped", severity: "warning" }]))).toBe(true);
+    expect(hasSurveyImportWarnings(report([{ code: "field_renamed", severity: "info" }]))).toBe(false);
   });
 });
 
-describe("getQsfImportFacts", () => {
+describe("getSurveyImportFacts", () => {
   test("lists questions, blocks, languages, hidden fields and the logic left out", () => {
-    expect(getQsfImportFacts(report([]).summary, t)).toEqual([
+    expect(getSurveyImportFacts(report([]).summary, t)).toEqual([
       'questions {"count":12}',
       'blocks {"count":2}',
       "en-US · de-DE",
@@ -249,16 +371,32 @@ describe("getQsfImportFacts", () => {
     ]);
   });
 
-  test("leaves out hidden fields and logic when there are none", () => {
-    const summary = { blocks: 1, questions: 1, languages: [], logicRules: 0, hiddenFields: 0 };
+  test("counts the logic rules imported, to check, before the ones left out", () => {
+    const summary = { ...report([]).summary, importedLogicRules: 5 };
 
-    expect(getQsfImportFacts(summary, t)).toEqual(['questions {"count":1}', 'blocks {"count":1}']);
+    expect(getSurveyImportFacts(summary, t).slice(-2)).toEqual([
+      'logic_to_check {"count":5}',
+      'logic_not_imported {"count":3}',
+    ]);
+  });
+
+  test("leaves out hidden fields and logic when there are none", () => {
+    const summary = {
+      blocks: 1,
+      questions: 1,
+      languages: [],
+      logicRules: 0,
+      importedLogicRules: 0,
+      hiddenFields: 0,
+    };
+
+    expect(getSurveyImportFacts(summary, t)).toEqual(['questions {"count":1}', 'blocks {"count":1}']);
   });
 });
 
-describe("sortQsfImportIssues", () => {
+describe("sortSurveyImportIssues", () => {
   test("puts warnings before notes, keeping the server's order inside each", () => {
-    const sorted = sortQsfImportIssues([
+    const sorted = sortSurveyImportIssues([
       { code: "field_renamed", severity: "info", params: { from: "a b", to: "a_b" } },
       { code: "image_dropped", severity: "warning", questionTag: "Q2" },
       { code: "markup_escaped", severity: "info", questionTag: "Q3" },
@@ -274,9 +412,9 @@ describe("sortQsfImportIssues", () => {
   });
 });
 
-describe("formatQsfImportReport", () => {
+describe("formatSurveyImportReport", () => {
   test("puts warnings before notes, each with its severity", () => {
-    const text = formatQsfImportReport(
+    const text = formatSurveyImportReport(
       report([
         { code: "field_renamed", severity: "info", params: { from: "a b", to: "a_b" } },
         { code: "image_dropped", severity: "warning", questionTag: "Q2" },
@@ -295,16 +433,21 @@ describe("formatQsfImportReport", () => {
   });
 
   test("says so when nothing was left out", () => {
-    expect(formatQsfImportReport(report([]), t)).toContain("\nempty\n");
+    expect(formatSurveyImportReport(report([]), t)).toContain("\nempty\n");
   });
 });
 
-describe("getQsfImportReportFileName", () => {
+describe("getSurveyImportReportFileName", () => {
   test.each([
     ["Customer survey.qsf", "Customer survey-import-report.txt"],
     ["export.QSF", "export-import-report.txt"],
     [".qsf", "survey-import-report.txt"],
+    ["Onboarding NPS.formbricks.json", "Onboarding NPS-import-report.txt"],
+    ["edited.json", "edited-import-report.txt"],
+    ["Visitor Survey.xlsx", "Visitor Survey-import-report.txt"],
+    ["list.CSV", "list-import-report.txt"],
+    ["Questionnaire v2.DOCX", "Questionnaire v2-import-report.txt"],
   ])("names %s's report %s", (fileName, expected) => {
-    expect(getQsfImportReportFileName(fileName)).toBe(expected);
+    expect(getSurveyImportReportFileName(fileName)).toBe(expected);
   });
 });

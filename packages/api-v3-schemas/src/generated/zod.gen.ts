@@ -29,8 +29,12 @@ export const zInvalidParam = z.strictObject({
   code: z
     .enum([
       "dangling_reference",
+      "document_limit_exceeded",
       "duplicate_identifier",
       "duplicate_locale",
+      "file_limit_exceeded",
+      "file_type_unsupported",
+      "file_unreadable",
       "forbidden_identifier",
       "immutable_identifier",
       "invalid_locale",

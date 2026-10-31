@@ -1,0 +1,261 @@
+{
+  "plan": {
+    "defaultLanguage": "en-US",
+    "languages": ["en-US"],
+    "questions": [
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P4",
+            "language": "en-US",
+            "text": "What did you think of the event overall?"
+          }
+        ],
+        "idCell": null,
+        "inputType": "text",
+        "kind": "openText",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P4",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P6",
+            "language": "en-US",
+            "text": "Which ticket type did you have?"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P7",
+                "language": "en-US",
+                "text": "Standard"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P8",
+                "language": "en-US",
+                "text": "VIP"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P9",
+                "language": "en-US",
+                "text": "Press"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P6",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P11",
+            "language": "en-US",
+            "text": "Which colour do you prefer?"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P11",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P18",
+            "language": "en-US",
+            "text": "How would you like to be contacted? (select all)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceMulti",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P19",
+                "language": "en-US",
+                "text": "Email"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P20",
+                "language": "en-US",
+                "text": "SMS"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P21",
+                "language": "en-US",
+                "text": "Phone"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P22",
+                "language": "en-US",
+                "text": "Post"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P18",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P24",
+            "language": "en-US",
+            "text": "Rate your overall experience."
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "rating",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "P25",
+            "language": "en-US",
+            "text": "Poor"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "P24",
+        "required": false,
+        "rules": [],
+        "scale": "star",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "P25",
+            "language": "en-US",
+            "text": "Excellent"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P27",
+            "language": "en-US",
+            "text": "How likely are you to recommend us?"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "nps",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P27",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      }
+    ],
+    "skipped": [],
+    "titleCell": "P1"
+  },
+  "recording": {
+    "note": "What a model following the prompt returns for every line of the file.",
+    "source": "hand-authored"
+  }
+}

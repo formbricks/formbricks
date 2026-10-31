@@ -1,3 +1,4 @@
+import { getContentDispositionFileName } from "@/lib/utils/file-download";
 import { parseV3ApiError } from "@/modules/api/lib/v3-client";
 import type {
   TCreateRetentionExemptionInput,
@@ -8,7 +9,6 @@ import type {
   TRetentionRun,
   TSurveyRetention,
 } from "../types";
-import { getContentDispositionFileName } from "./file-download";
 import type { TRetentionHealthIssue } from "./health";
 
 const BASE_PATH = "/api/internal/retention-runs";

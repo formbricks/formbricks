@@ -1,12 +1,12 @@
-import type { TQsfImportIssue, TQsfImportReport } from "@/modules/survey/import/types";
+import type { TSurveyImportIssue, TSurveyImportReport } from "@/modules/survey/import/types";
 
 type TTranslate = (key: string, options?: Record<string, unknown>) => string;
 
-const param = (issue: TQsfImportIssue, name: string): string => String(issue.params?.[name] ?? "");
-const count = (issue: TQsfImportIssue): number => Number(issue.params?.count ?? 0);
+const param = (issue: TSurveyImportIssue, name: string): string => String(issue.params?.[name] ?? "");
+const count = (issue: TSurveyImportIssue): number => Number(issue.params?.count ?? 0);
 
 /** A language left out: the survey's default one (with what stands in), a named one, or one with no usable code. */
-const getSkippedLanguageMessage = (issue: TQsfImportIssue, t: TTranslate): string => {
+const getSkippedLanguageMessage = (issue: TSurveyImportIssue, t: TTranslate): string => {
   const code = param(issue, "code");
   const fallback = param(issue, "fallback");
   switch (param(issue, "cause")) {
@@ -60,8 +60,23 @@ const getQualtricsTypeName = (type: string, t: TTranslate): string => {
   }
 };
 
+/** The name of the encoding a text file was read as; an unknown one as sent. */
+const getEncodingName = (encoding: string, t: TTranslate): string => {
+  switch (encoding) {
+    case "utf-8":
+      return t("workspace.surveys.import.encodings.utf_8");
+    case "utf-16le":
+    case "utf-16be":
+      return t("workspace.surveys.import.encodings.utf_16");
+    case "windows-1252":
+      return t("workspace.surveys.import.encodings.windows_1252");
+    default:
+      return encoding;
+  }
+};
+
 /** Why a question was left out, from the server's `params.cause`. */
-const getSkippedQuestionMessage = (issue: TQsfImportIssue, t: TTranslate): string => {
+const getSkippedQuestionMessage = (issue: TSurveyImportIssue, t: TTranslate): string => {
   switch (param(issue, "cause")) {
     case "unsupported_type":
       return t("workspace.surveys.import.issues.question_skipped_unsupported_type", {
@@ -94,7 +109,7 @@ const getSkippedQuestionMessage = (issue: TQsfImportIssue, t: TTranslate): strin
 
 /**
  * The generic line. Its code is typed `never`: every code the types know is handled in
- * `getQsfImportIssueMessage`, so a new code fails the build until it has a line of its own.
+ * `getSurveyImportIssueMessage`, so a new code fails the build until it has a line of its own.
  */
 const getUnknownIssueMessage = (_code: never, t: TTranslate): string =>
   t("workspace.surveys.import.issues.unknown");
@@ -103,7 +118,7 @@ const getUnknownIssueMessage = (_code: never, t: TTranslate): string =>
  * One report line in the user's language. Literal `t()` calls per code, so the translation scanner
  * sees every key. `params` come from the file or the AI: callers render the result as text only.
  */
-export const getQsfImportIssueMessage = (issue: TQsfImportIssue, t: TTranslate): string => {
+export const getSurveyImportIssueMessage = (issue: TSurveyImportIssue, t: TTranslate): string => {
   switch (issue.code) {
     case "logic_not_imported": {
       const description = param(issue, "description");
@@ -165,6 +180,49 @@ export const getQsfImportIssueMessage = (issue: TQsfImportIssue, t: TTranslate):
       return t("workspace.surveys.import.issues.ending_not_translated", {
         languages: param(issue, "languages"),
       });
+    case "unknown_key_dropped":
+      // Past the first fifty, one line counts the rest instead of naming each.
+      return issue.params?.field === undefined
+        ? t("workspace.surveys.import.issues.unknown_keys_dropped", { count: count(issue) })
+        : t("workspace.surveys.import.issues.unknown_key_dropped", { field: param(issue, "field") });
+    case "custom_css_removed":
+      return t("workspace.surveys.import.issues.custom_css_removed");
+    case "targeting_removed":
+      return t("workspace.surveys.import.issues.targeting_removed");
+    case "targeting_filter_removed":
+      return t("workspace.surveys.import.issues.targeting_filter_removed", { count: count(issue) });
+    case "action_class_created":
+      return t("workspace.surveys.import.issues.action_class_created", { name: param(issue, "name") });
+    case "attribute_key_created":
+      return t("workspace.surveys.import.issues.attribute_key_created", { key: param(issue, "key") });
+    case "content_only":
+      return t("workspace.surveys.import.issues.content_only");
+    case "logic_imported": {
+      const description = param(issue, "description");
+      return description
+        ? t("workspace.surveys.import.issues.logic_imported", { description })
+        : t("workspace.surveys.import.issues.logic_imported_no_description");
+    }
+    case "text_not_split":
+      return t("workspace.surveys.import.issues.text_not_split", { cell: param(issue, "cell") });
+    case "file_encoding":
+      return t("workspace.surveys.import.issues.file_encoding", {
+        encoding: getEncodingName(param(issue, "encoding"), t),
+      });
+    case "sheets_skipped":
+      return t("workspace.surveys.import.issues.sheets_skipped", { sheets: param(issue, "sheets") });
+    case "table_as_matrix":
+      return t("workspace.surveys.import.issues.table_as_matrix");
+    case "images_not_imported":
+      return t("workspace.surveys.import.issues.images_not_imported", { count: count(issue) });
+    case "question_removed": {
+      const headline = param(issue, "headline");
+      return headline
+        ? t("workspace.surveys.import.issues.question_removed", { headline })
+        : t("workspace.surveys.import.issues.question_removed_no_headline");
+    }
+    case "option_removed":
+      return t("workspace.surveys.import.issues.option_removed", { option: param(issue, "option") });
     default:
       // A server newer than this client can still send a code it does not know.
       return getUnknownIssueMessage(issue.code, t);
@@ -175,8 +233,8 @@ export const getQsfImportIssueMessage = (issue: TQsfImportIssue, t: TTranslate):
  * The line with what it is about, e.g. `Q12: Logic not imported: …`: the Qualtrics question, the end
  * message, or for a page's rule when none of its questions was imported, the page's block.
  */
-export const getQsfImportIssueLine = (issue: TQsfImportIssue, t: TTranslate): string => {
-  const message = getQsfImportIssueMessage(issue, t);
+export const getSurveyImportIssueLine = (issue: TSurveyImportIssue, t: TTranslate): string => {
+  const message = getSurveyImportIssueMessage(issue, t);
   const subject =
     issue.questionTag ??
     (param(issue, "subject") === "ending"
@@ -186,7 +244,7 @@ export const getQsfImportIssueLine = (issue: TQsfImportIssue, t: TTranslate): st
 };
 
 /** Warnings first, then notes, keeping the server's order inside each. */
-export const sortQsfImportIssues = (issues: readonly TQsfImportIssue[]): TQsfImportIssue[] => [
+export const sortSurveyImportIssues = (issues: readonly TSurveyImportIssue[]): TSurveyImportIssue[] => [
   ...issues.filter((issue) => issue.severity === "warning"),
   ...issues.filter((issue) => issue.severity !== "warning"),
 ];
@@ -195,7 +253,7 @@ export const sortQsfImportIssues = (issues: readonly TQsfImportIssue[]): TQsfImp
  * The languages the draft imports switched off, because texts are missing in them: the review names
  * them above the save button, so nobody publishes without noticing.
  */
-export const getSwitchedOffLanguages = (report: TQsfImportReport): string[] => [
+export const getSwitchedOffLanguages = (report: TSurveyImportReport): string[] => [
   ...new Set(
     report.issues
       .filter((issue) => issue.code === "translation_missing")
@@ -203,11 +261,11 @@ export const getSwitchedOffLanguages = (report: TQsfImportReport): string[] => [
   ),
 ];
 
-export const hasQsfImportWarnings = (report: TQsfImportReport): boolean =>
+export const hasSurveyImportWarnings = (report: TSurveyImportReport): boolean =>
   report.issues.some((issue) => issue.severity === "warning");
 
 /** What the file turned into, at a glance: the facts row above the review list and the report's header. */
-export const getQsfImportFacts = (summary: TQsfImportReport["summary"], t: TTranslate): string[] => {
+export const getSurveyImportFacts = (summary: TSurveyImportReport["summary"], t: TTranslate): string[] => {
   const facts = [
     t("workspace.surveys.import.facts.questions", { count: summary.questions }),
     t("workspace.surveys.import.facts.blocks", { count: summary.blocks }),
@@ -216,6 +274,9 @@ export const getQsfImportFacts = (summary: TQsfImportReport["summary"], t: TTran
   if (summary.hiddenFields > 0) {
     facts.push(t("workspace.surveys.import.facts.hidden_fields", { count: summary.hiddenFields }));
   }
+  if (summary.importedLogicRules > 0) {
+    facts.push(t("workspace.surveys.import.facts.logic_to_check", { count: summary.importedLogicRules }));
+  }
   if (summary.logicRules > 0) {
     facts.push(t("workspace.surveys.import.facts.logic_not_imported", { count: summary.logicRules }));
   }
@@ -223,10 +284,10 @@ export const getQsfImportFacts = (summary: TQsfImportReport["summary"], t: TTran
 };
 
 /** The report as plain text, for Download (ENG-3605). Same lines the dialog shows. */
-export const formatQsfImportReport = (report: TQsfImportReport, t: TTranslate): string => {
+export const formatSurveyImportReport = (report: TSurveyImportReport, t: TTranslate): string => {
   const lines = [
     t("workspace.surveys.import.report.text_title", { fileName: report.source.fileName }),
-    getQsfImportFacts(report.summary, t).join(" · "),
+    getSurveyImportFacts(report.summary, t).join(" · "),
     "",
   ];
 
@@ -234,17 +295,17 @@ export const formatQsfImportReport = (report: TQsfImportReport, t: TTranslate): 
     lines.push(t("workspace.surveys.import.report.empty"));
   }
 
-  for (const issue of sortQsfImportIssues(report.issues)) {
+  for (const issue of sortSurveyImportIssues(report.issues)) {
     const severity =
       issue.severity === "warning"
         ? t("workspace.surveys.import.report.warning")
         : t("workspace.surveys.import.report.note");
-    lines.push(`- ${severity}: ${getQsfImportIssueLine(issue, t)}`);
+    lines.push(`- ${severity}: ${getSurveyImportIssueLine(issue, t)}`);
   }
 
   return `${lines.join("\n")}\n`;
 };
 
-/** `survey.qsf` → `survey-import-report.txt`. */
-export const getQsfImportReportFileName = (fileName: string): string =>
-  `${fileName.replace(/\.qsf$/i, "") || "survey"}-import-report.txt`;
+/** `survey.qsf`, `survey.formbricks.json` or `survey.docx` → `survey-import-report.txt`. */
+export const getSurveyImportReportFileName = (fileName: string): string =>
+  `${fileName.replace(/(?:\.qsf|\.formbricks\.json|\.json|\.docx|\.xlsx|\.csv)$/i, "") || "survey"}-import-report.txt`;

@@ -1,13 +1,5 @@
-import type { TQsfImportIssue } from "../types";
-
-/**
- * A report line inside the import, with the Qualtrics question (`QID`) it is about. The id is how the
- * import finds the lines of a question it cuts, since export tags can repeat; `buildQsfImportReport`
- * leaves it out of the report the dialog gets.
- */
-export interface TQsfIssue extends TQsfImportIssue {
-  questionRef?: string;
-}
+import type { TSurveyImportPipelineIssue } from "../core/report";
+import type { TSurveyImportText } from "../core/sanitize-text";
 
 /**
  * What the reader recovers from a Qualtrics export (ENG-3654): only what the import uses, in shapes
@@ -26,20 +18,6 @@ export interface TQsfIssue extends TQsfImportIssue {
  * survey text.
  */
 export type TQsfTextKey = string;
-
-/**
- * How a text is sanitized. `rich` keeps the follow-up email allowlist (headlines and the ending
- * message, ENG-3607); `plain` keeps the text only (choices, answers, names).
- */
-export type TQsfTextFormat = "rich" | "plain";
-
-export interface TQsfText {
-  format: TQsfTextFormat;
-  /** The question it belongs to, for report lines. */
-  questionRef: string | null;
-  /** Raw text by normalized language code. The default language is always present (maybe empty). */
-  byLanguage: Map<string, string>;
-}
 
 export interface TQsfOption {
   key: TQsfTextKey;
@@ -80,7 +58,10 @@ export interface TQsfSlider {
 export interface TQsfQuestion {
   /** The `QID`, checked against the reader's `QID<number>` pattern. */
   ref: string;
-  /** `DataExportTag`, cut to `QSF_MAX_NAME_CHARS`. File text: used for element ids and report lines. */
+  /**
+   * `DataExportTag`, cut to `SURVEY_IMPORT_MAX_NAME_CHARS`. File text: used for element ids and report
+   * lines.
+   */
   exportTag: string;
   /** Global position in flow order, which the assembly keeps. */
   position: number;
@@ -122,11 +103,11 @@ export interface TQsfSurvey {
   /** Questions in flow order. */
   questions: Map<string, TQsfQuestion>;
   pages: TQsfPage[];
-  texts: Map<TQsfTextKey, TQsfText>;
+  texts: Map<TQsfTextKey, TSurveyImportText>;
   /** Embedded data names from the flow and from `${e://Field/…}` references, first seen first. */
   embeddedDataNames: string[];
   endMessageKey: TQsfTextKey | null;
   endRedirectUrl: string | null;
   /** Lines the reader already knows belong in the report (refused ids, skipped languages, …). */
-  issues: TQsfIssue[];
+  issues: TSurveyImportPipelineIssue[];
 }

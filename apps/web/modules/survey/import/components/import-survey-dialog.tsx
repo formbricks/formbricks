@@ -4,7 +4,6 @@ import { UploadIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useCallback, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
-import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { ImportSurveyForm } from "@/modules/survey/import/components/import-survey-form";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import {
@@ -21,17 +20,19 @@ import {
 type ImportSurveyDialogProps = {
   workspaceId: string;
   isAIAvailable: boolean;
-  aiUnavailableReason?: TAIUnavailableReason;
   trigger?: ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 };
 
-/** Import a Qualtrics survey (.qsf): the dialog shell around `ImportSurveyForm`, as Create with AI's. */
+/**
+ * Import survey: a Formbricks file, or with Formbricks AI a Qualtrics export or an Excel or CSV question
+ * list (ENG-6852). The dialog shell around `ImportSurveyForm`, as Create with AI's; the New survey menu,
+ * the templates page and Create with AI's import hint open the same one.
+ */
 export const ImportSurveyDialog = ({
   workspaceId,
   isAIAvailable,
-  aiUnavailableReason,
   trigger,
   open,
   onOpenChange,
@@ -98,7 +99,6 @@ export const ImportSurveyDialog = ({
           <ImportSurveyForm
             workspaceId={workspaceId}
             isAIAvailable={isAIAvailable}
-            aiUnavailableReason={aiUnavailableReason}
             onSuccess={handleSuccess}
             onCancel={() => setDialogOpen(false)}
             renderFooter={(footer) => <DialogFooter>{footer}</DialogFooter>}

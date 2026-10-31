@@ -403,9 +403,10 @@ export async function listV3Surveys({
 
 /**
  * Map an error thrown during survey creation to its problem+json Response. Extracted from
- * createV3SurveyResponse to keep that handler's cognitive complexity within bounds.
+ * createV3SurveyResponse to keep that handler's cognitive complexity within bounds; the survey import's
+ * create (ENG-6850) maps the same errors the same way.
  */
-function mapV3SurveyCreateError(
+export function mapV3SurveyCreateError(
   err: unknown,
   {
     log,
@@ -807,7 +808,7 @@ function problemSurveyArchived(requestId: string, instance: string): Response {
  * Map an error thrown during survey patch to its problem+json Response. Extracted from
  * patchV3SurveyResponse to keep that handler's cognitive complexity within bounds.
  */
-function mapV3SurveyPatchError(
+export function mapV3SurveyPatchError(
   err: unknown,
   {
     log,
@@ -1095,17 +1096,15 @@ async function runV3SurveyDocumentMutation({
     const oldResource = getResource();
 
     const report: TV3SurveyWriteReport = {};
-    const updatedSurvey = await patchV3Survey(
-      survey,
-      built.input,
+    const updatedSurvey = await patchV3Survey(survey, built.input, {
       requestId,
-      authResult.organizationId,
-      effectivePrecondition,
-      oldResource,
-      buildVisibleSurveyWhere(visibility.actorContext),
+      organizationId: authResult.organizationId,
+      precondition: effectivePrecondition,
+      reportedVisibility: oldResource,
+      visibleSurveyWhere: buildVisibleSurveyWhere(visibility.actorContext),
       report,
-      getV3CustomCssPrincipal(authentication)
-    );
+      customCssPrincipal: getV3CustomCssPrincipal(authentication),
+    });
     // Visibility is unchanged by a document write (it is never writable through one), so the
     // request's context still describes the updated survey.
     const resource = serializeV3SurveyResource(updatedSurvey, visibility);

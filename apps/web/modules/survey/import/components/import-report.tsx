@@ -5,17 +5,17 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import {
-  formatQsfImportReport,
-  getQsfImportIssueLine,
-  getQsfImportReportFileName,
-  hasQsfImportWarnings,
-  sortQsfImportIssues,
+  formatSurveyImportReport,
+  getSurveyImportIssueLine,
+  getSurveyImportReportFileName,
+  hasSurveyImportWarnings,
+  sortSurveyImportIssues,
 } from "@/modules/survey/import/lib/import-report";
-import type { TQsfImportReport } from "@/modules/survey/import/types";
+import type { TSurveyImportReport } from "@/modules/survey/import/types";
 import { Button } from "@/modules/ui/components/button";
 
 type ImportReportProps = {
-  report: TQsfImportReport;
+  report: TSurveyImportReport;
   className?: string;
 };
 
@@ -39,9 +39,9 @@ const downloadText = (text: string, fileName: string) => {
  */
 export const ImportReport = ({ report, className }: Readonly<ImportReportProps>) => {
   const { t } = useTranslation();
-  const [isOpen, setIsOpen] = useState(() => hasQsfImportWarnings(report));
+  const [isOpen, setIsOpen] = useState(() => hasSurveyImportWarnings(report));
 
-  const issues = sortQsfImportIssues(report.issues);
+  const issues = sortSurveyImportIssues(report.issues);
   const warningCount = issues.filter((issue) => issue.severity === "warning").length;
   const noteCount = issues.length - warningCount;
   const summary = [
@@ -52,7 +52,7 @@ export const ImportReport = ({ report, className }: Readonly<ImportReportProps>)
   const toggle = () => setIsOpen((open) => !open);
 
   const handleDownload = () => {
-    downloadText(formatQsfImportReport(report, t), getQsfImportReportFileName(report.source.fileName));
+    downloadText(formatSurveyImportReport(report, t), getSurveyImportReportFileName(report.source.fileName));
   };
 
   return (
@@ -101,7 +101,7 @@ export const ImportReport = ({ report, className }: Readonly<ImportReportProps>)
               ) : (
                 <InfoIcon className="size-4 shrink-0 text-slate-400" aria-hidden="true" />
               )}
-              <span className="min-w-0 flex-1">{getQsfImportIssueLine(issue, t)}</span>
+              <span className="min-w-0 flex-1">{getSurveyImportIssueLine(issue, t)}</span>
             </li>
           ))}
         </ul>

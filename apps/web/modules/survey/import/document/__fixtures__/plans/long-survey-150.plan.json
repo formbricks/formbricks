@@ -1,0 +1,7398 @@
+{
+  "plan": {
+    "defaultLanguage": "en-US",
+    "languages": ["en-US"],
+    "questions": [
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P4",
+            "language": "en-US",
+            "text": "What did you think of the event overall? (item 1)"
+          }
+        ],
+        "idCell": null,
+        "inputType": "text",
+        "kind": "openText",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P4",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P7",
+            "language": "en-US",
+            "text": "Which ticket type did you have? (item 2)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P9",
+                "language": "en-US",
+                "text": "Standard"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P10",
+                "language": "en-US",
+                "text": "VIP"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P11",
+                "language": "en-US",
+                "text": "Press"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P7",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": true,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P13",
+            "language": "en-US",
+            "text": "Which colour do you prefer? (item 3)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P15",
+                "language": "en-US",
+                "text": "Red"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P16",
+                "language": "en-US",
+                "text": "Green"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P17",
+                "language": "en-US",
+                "text": "Blue"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P18",
+                "language": "en-US",
+                "text": "Other"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P13",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P20",
+            "language": "en-US",
+            "text": "How would you like to be contacted? (select all) (item 4)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceMulti",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P22",
+                "language": "en-US",
+                "text": "Email"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P23",
+                "language": "en-US",
+                "text": "SMS"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P24",
+                "language": "en-US",
+                "text": "Phone"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P25",
+                "language": "en-US",
+                "text": "Post"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P20",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P27",
+            "language": "en-US",
+            "text": "Rate your overall experience. (item 5)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "rating",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "P29",
+            "language": "en-US",
+            "text": "Poor"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "P27",
+        "required": false,
+        "rules": [],
+        "scale": "star",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "P29",
+            "language": "en-US",
+            "text": "Excellent"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P31",
+            "language": "en-US",
+            "text": "How likely are you to recommend us? (item 6)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "nps",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P31",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P35",
+            "language": "en-US",
+            "text": "How satisfied are you overall? (item 7)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "csat",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "P37",
+            "language": "en-US",
+            "text": "Very dissatisfied"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "P35",
+        "required": false,
+        "rules": [],
+        "scale": "smiley",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "P37",
+            "language": "en-US",
+            "text": "Very satisfied"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P39",
+            "language": "en-US",
+            "text": "How easy was it to complete your task? (item 8)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "ces",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "P41",
+            "language": "en-US",
+            "text": "Very difficult"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "P39",
+        "required": false,
+        "rules": [],
+        "scale": "number",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "P41",
+            "language": "en-US",
+            "text": "Very easy"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P43",
+            "language": "en-US",
+            "text": "Rank these from most to least important. (item 9)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "ranking",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P45",
+                "language": "en-US",
+                "text": "Price"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P46",
+                "language": "en-US",
+                "text": "Quality"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P47",
+                "language": "en-US",
+                "text": "Speed"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P48",
+                "language": "en-US",
+                "text": "Support"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P43",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P52",
+                "language": "en-US",
+                "text": "Poor"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P53",
+                "language": "en-US",
+                "text": "OK"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P54",
+                "language": "en-US",
+                "text": "Good"
+              }
+            ]
+          }
+        ],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P50",
+            "language": "en-US",
+            "text": "Rate each aspect (Staff, Facilities, Value). (item 10)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "matrix",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P50",
+                "language": "en-US",
+                "text": "Staff"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P50",
+                "language": "en-US",
+                "text": "Facilities"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P50",
+                "language": "en-US",
+                "text": "Value"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P50",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": "M-d-y",
+        "headline": [
+          {
+            "cell": "P56",
+            "language": "en-US",
+            "text": "When did you visit? (item 11)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "date",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P56",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P60",
+            "language": "en-US",
+            "text": "Do you agree to the terms and conditions? (item 12)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "consent",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P60",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [
+          {
+            "cell": "P62",
+            "language": "en-US",
+            "text": "I agree"
+          }
+        ],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P64",
+            "language": "en-US",
+            "text": "What did you think of the event overall? (item 13)"
+          }
+        ],
+        "idCell": null,
+        "inputType": "text",
+        "kind": "openText",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P64",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P67",
+            "language": "en-US",
+            "text": "Which ticket type did you have? (item 14)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P69",
+                "language": "en-US",
+                "text": "Standard"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P70",
+                "language": "en-US",
+                "text": "VIP"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P71",
+                "language": "en-US",
+                "text": "Press"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P67",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": true,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P73",
+            "language": "en-US",
+            "text": "Which colour do you prefer? (item 15)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P75",
+                "language": "en-US",
+                "text": "Red"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P76",
+                "language": "en-US",
+                "text": "Green"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P77",
+                "language": "en-US",
+                "text": "Blue"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P78",
+                "language": "en-US",
+                "text": "Other"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P73",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P80",
+            "language": "en-US",
+            "text": "How would you like to be contacted? (select all) (item 16)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceMulti",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P82",
+                "language": "en-US",
+                "text": "Email"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P83",
+                "language": "en-US",
+                "text": "SMS"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P84",
+                "language": "en-US",
+                "text": "Phone"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P85",
+                "language": "en-US",
+                "text": "Post"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P80",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P87",
+            "language": "en-US",
+            "text": "Rate your overall experience. (item 17)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "rating",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "P89",
+            "language": "en-US",
+            "text": "Poor"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "P87",
+        "required": false,
+        "rules": [],
+        "scale": "star",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "P89",
+            "language": "en-US",
+            "text": "Excellent"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P91",
+            "language": "en-US",
+            "text": "How likely are you to recommend us? (item 18)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "nps",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P91",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P95",
+            "language": "en-US",
+            "text": "How satisfied are you overall? (item 19)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "csat",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "P97",
+            "language": "en-US",
+            "text": "Very dissatisfied"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "P95",
+        "required": false,
+        "rules": [],
+        "scale": "smiley",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "P97",
+            "language": "en-US",
+            "text": "Very satisfied"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P99",
+            "language": "en-US",
+            "text": "How easy was it to complete your task? (item 20)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "ces",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "P101",
+            "language": "en-US",
+            "text": "Very difficult"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "P99",
+        "required": false,
+        "rules": [],
+        "scale": "number",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "P101",
+            "language": "en-US",
+            "text": "Very easy"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P103",
+            "language": "en-US",
+            "text": "Rank these from most to least important. (item 21)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "ranking",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P105",
+                "language": "en-US",
+                "text": "Price"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P106",
+                "language": "en-US",
+                "text": "Quality"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P107",
+                "language": "en-US",
+                "text": "Speed"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P108",
+                "language": "en-US",
+                "text": "Support"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P103",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P112",
+                "language": "en-US",
+                "text": "Poor"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P113",
+                "language": "en-US",
+                "text": "OK"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P114",
+                "language": "en-US",
+                "text": "Good"
+              }
+            ]
+          }
+        ],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P110",
+            "language": "en-US",
+            "text": "Rate each aspect (Staff, Facilities, Value). (item 22)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "matrix",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P110",
+                "language": "en-US",
+                "text": "Staff"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P110",
+                "language": "en-US",
+                "text": "Facilities"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P110",
+                "language": "en-US",
+                "text": "Value"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P110",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": "M-d-y",
+        "headline": [
+          {
+            "cell": "P116",
+            "language": "en-US",
+            "text": "When did you visit? (item 23)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "date",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P116",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P120",
+            "language": "en-US",
+            "text": "Do you agree to the terms and conditions? (item 24)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "consent",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P120",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [
+          {
+            "cell": "P122",
+            "language": "en-US",
+            "text": "I agree"
+          }
+        ],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P124",
+            "language": "en-US",
+            "text": "What did you think of the event overall? (item 25)"
+          }
+        ],
+        "idCell": null,
+        "inputType": "text",
+        "kind": "openText",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P124",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P127",
+            "language": "en-US",
+            "text": "Which ticket type did you have? (item 26)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P129",
+                "language": "en-US",
+                "text": "Standard"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P130",
+                "language": "en-US",
+                "text": "VIP"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P131",
+                "language": "en-US",
+                "text": "Press"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P127",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": true,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P133",
+            "language": "en-US",
+            "text": "Which colour do you prefer? (item 27)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P135",
+                "language": "en-US",
+                "text": "Red"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P136",
+                "language": "en-US",
+                "text": "Green"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P137",
+                "language": "en-US",
+                "text": "Blue"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P138",
+                "language": "en-US",
+                "text": "Other"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P133",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P140",
+            "language": "en-US",
+            "text": "How would you like to be contacted? (select all) (item 28)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceMulti",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P142",
+                "language": "en-US",
+                "text": "Email"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P143",
+                "language": "en-US",
+                "text": "SMS"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P144",
+                "language": "en-US",
+                "text": "Phone"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P145",
+                "language": "en-US",
+                "text": "Post"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P140",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P147",
+            "language": "en-US",
+            "text": "Rate your overall experience. (item 29)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "rating",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "P149",
+            "language": "en-US",
+            "text": "Poor"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "P147",
+        "required": false,
+        "rules": [],
+        "scale": "star",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "P149",
+            "language": "en-US",
+            "text": "Excellent"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P151",
+            "language": "en-US",
+            "text": "How likely are you to recommend us? (item 30)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "nps",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P151",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P155",
+            "language": "en-US",
+            "text": "How satisfied are you overall? (item 31)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "csat",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "P157",
+            "language": "en-US",
+            "text": "Very dissatisfied"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "P155",
+        "required": false,
+        "rules": [],
+        "scale": "smiley",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "P157",
+            "language": "en-US",
+            "text": "Very satisfied"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P159",
+            "language": "en-US",
+            "text": "How easy was it to complete your task? (item 32)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "ces",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "P161",
+            "language": "en-US",
+            "text": "Very difficult"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "P159",
+        "required": false,
+        "rules": [],
+        "scale": "number",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "P161",
+            "language": "en-US",
+            "text": "Very easy"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P163",
+            "language": "en-US",
+            "text": "Rank these from most to least important. (item 33)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "ranking",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P165",
+                "language": "en-US",
+                "text": "Price"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P166",
+                "language": "en-US",
+                "text": "Quality"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P167",
+                "language": "en-US",
+                "text": "Speed"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P168",
+                "language": "en-US",
+                "text": "Support"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P163",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P172",
+                "language": "en-US",
+                "text": "Poor"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P173",
+                "language": "en-US",
+                "text": "OK"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P174",
+                "language": "en-US",
+                "text": "Good"
+              }
+            ]
+          }
+        ],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P170",
+            "language": "en-US",
+            "text": "Rate each aspect (Staff, Facilities, Value). (item 34)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "matrix",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P170",
+                "language": "en-US",
+                "text": "Staff"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P170",
+                "language": "en-US",
+                "text": "Facilities"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P170",
+                "language": "en-US",
+                "text": "Value"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P170",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": "M-d-y",
+        "headline": [
+          {
+            "cell": "P176",
+            "language": "en-US",
+            "text": "When did you visit? (item 35)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "date",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P176",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P180",
+            "language": "en-US",
+            "text": "Do you agree to the terms and conditions? (item 36)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "consent",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P180",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [
+          {
+            "cell": "P182",
+            "language": "en-US",
+            "text": "I agree"
+          }
+        ],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P184",
+            "language": "en-US",
+            "text": "What did you think of the event overall? (item 37)"
+          }
+        ],
+        "idCell": null,
+        "inputType": "text",
+        "kind": "openText",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P184",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P187",
+            "language": "en-US",
+            "text": "Which ticket type did you have? (item 38)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P189",
+                "language": "en-US",
+                "text": "Standard"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P190",
+                "language": "en-US",
+                "text": "VIP"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P191",
+                "language": "en-US",
+                "text": "Press"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P187",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": true,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P193",
+            "language": "en-US",
+            "text": "Which colour do you prefer? (item 39)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P195",
+                "language": "en-US",
+                "text": "Red"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P196",
+                "language": "en-US",
+                "text": "Green"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P197",
+                "language": "en-US",
+                "text": "Blue"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P198",
+                "language": "en-US",
+                "text": "Other"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P193",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P200",
+            "language": "en-US",
+            "text": "How would you like to be contacted? (select all) (item 40)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceMulti",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P202",
+                "language": "en-US",
+                "text": "Email"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P203",
+                "language": "en-US",
+                "text": "SMS"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P204",
+                "language": "en-US",
+                "text": "Phone"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P205",
+                "language": "en-US",
+                "text": "Post"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P200",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P207",
+            "language": "en-US",
+            "text": "Rate your overall experience. (item 41)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "rating",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "P209",
+            "language": "en-US",
+            "text": "Poor"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "P207",
+        "required": false,
+        "rules": [],
+        "scale": "star",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "P209",
+            "language": "en-US",
+            "text": "Excellent"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P211",
+            "language": "en-US",
+            "text": "How likely are you to recommend us? (item 42)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "nps",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P211",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P215",
+            "language": "en-US",
+            "text": "How satisfied are you overall? (item 43)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "csat",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "P217",
+            "language": "en-US",
+            "text": "Very dissatisfied"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "P215",
+        "required": false,
+        "rules": [],
+        "scale": "smiley",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "P217",
+            "language": "en-US",
+            "text": "Very satisfied"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P219",
+            "language": "en-US",
+            "text": "How easy was it to complete your task? (item 44)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "ces",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "P221",
+            "language": "en-US",
+            "text": "Very difficult"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "P219",
+        "required": false,
+        "rules": [],
+        "scale": "number",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "P221",
+            "language": "en-US",
+            "text": "Very easy"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P223",
+            "language": "en-US",
+            "text": "Rank these from most to least important. (item 45)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "ranking",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P225",
+                "language": "en-US",
+                "text": "Price"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P226",
+                "language": "en-US",
+                "text": "Quality"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P227",
+                "language": "en-US",
+                "text": "Speed"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P228",
+                "language": "en-US",
+                "text": "Support"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P223",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P232",
+                "language": "en-US",
+                "text": "Poor"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P233",
+                "language": "en-US",
+                "text": "OK"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P234",
+                "language": "en-US",
+                "text": "Good"
+              }
+            ]
+          }
+        ],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P230",
+            "language": "en-US",
+            "text": "Rate each aspect (Staff, Facilities, Value). (item 46)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "matrix",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P230",
+                "language": "en-US",
+                "text": "Staff"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P230",
+                "language": "en-US",
+                "text": "Facilities"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P230",
+                "language": "en-US",
+                "text": "Value"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P230",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": "M-d-y",
+        "headline": [
+          {
+            "cell": "P236",
+            "language": "en-US",
+            "text": "When did you visit? (item 47)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "date",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P236",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P240",
+            "language": "en-US",
+            "text": "Do you agree to the terms and conditions? (item 48)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "consent",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P240",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [
+          {
+            "cell": "P242",
+            "language": "en-US",
+            "text": "I agree"
+          }
+        ],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P244",
+            "language": "en-US",
+            "text": "What did you think of the event overall? (item 49)"
+          }
+        ],
+        "idCell": null,
+        "inputType": "text",
+        "kind": "openText",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P244",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P247",
+            "language": "en-US",
+            "text": "Which ticket type did you have? (item 50)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P249",
+                "language": "en-US",
+                "text": "Standard"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P250",
+                "language": "en-US",
+                "text": "VIP"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P251",
+                "language": "en-US",
+                "text": "Press"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P247",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": true,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P253",
+            "language": "en-US",
+            "text": "Which colour do you prefer? (item 51)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P255",
+                "language": "en-US",
+                "text": "Red"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P256",
+                "language": "en-US",
+                "text": "Green"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P257",
+                "language": "en-US",
+                "text": "Blue"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P258",
+                "language": "en-US",
+                "text": "Other"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P253",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P260",
+            "language": "en-US",
+            "text": "How would you like to be contacted? (select all) (item 52)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceMulti",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P262",
+                "language": "en-US",
+                "text": "Email"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P263",
+                "language": "en-US",
+                "text": "SMS"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P264",
+                "language": "en-US",
+                "text": "Phone"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P265",
+                "language": "en-US",
+                "text": "Post"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P260",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P267",
+            "language": "en-US",
+            "text": "Rate your overall experience. (item 53)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "rating",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "P269",
+            "language": "en-US",
+            "text": "Poor"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "P267",
+        "required": false,
+        "rules": [],
+        "scale": "star",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "P269",
+            "language": "en-US",
+            "text": "Excellent"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P271",
+            "language": "en-US",
+            "text": "How likely are you to recommend us? (item 54)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "nps",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P271",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P275",
+            "language": "en-US",
+            "text": "How satisfied are you overall? (item 55)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "csat",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "P277",
+            "language": "en-US",
+            "text": "Very dissatisfied"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "P275",
+        "required": false,
+        "rules": [],
+        "scale": "smiley",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "P277",
+            "language": "en-US",
+            "text": "Very satisfied"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P279",
+            "language": "en-US",
+            "text": "How easy was it to complete your task? (item 56)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "ces",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "P281",
+            "language": "en-US",
+            "text": "Very difficult"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "P279",
+        "required": false,
+        "rules": [],
+        "scale": "number",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "P281",
+            "language": "en-US",
+            "text": "Very easy"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P283",
+            "language": "en-US",
+            "text": "Rank these from most to least important. (item 57)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "ranking",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P285",
+                "language": "en-US",
+                "text": "Price"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P286",
+                "language": "en-US",
+                "text": "Quality"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P287",
+                "language": "en-US",
+                "text": "Speed"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P288",
+                "language": "en-US",
+                "text": "Support"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P283",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P292",
+                "language": "en-US",
+                "text": "Poor"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P293",
+                "language": "en-US",
+                "text": "OK"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P294",
+                "language": "en-US",
+                "text": "Good"
+              }
+            ]
+          }
+        ],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P290",
+            "language": "en-US",
+            "text": "Rate each aspect (Staff, Facilities, Value). (item 58)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "matrix",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P290",
+                "language": "en-US",
+                "text": "Staff"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P290",
+                "language": "en-US",
+                "text": "Facilities"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P290",
+                "language": "en-US",
+                "text": "Value"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P290",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": "M-d-y",
+        "headline": [
+          {
+            "cell": "P296",
+            "language": "en-US",
+            "text": "When did you visit? (item 59)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "date",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P296",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P300",
+            "language": "en-US",
+            "text": "Do you agree to the terms and conditions? (item 60)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "consent",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P300",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [
+          {
+            "cell": "P302",
+            "language": "en-US",
+            "text": "I agree"
+          }
+        ],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P304",
+            "language": "en-US",
+            "text": "What did you think of the event overall? (item 61)"
+          }
+        ],
+        "idCell": null,
+        "inputType": "text",
+        "kind": "openText",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P304",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P307",
+            "language": "en-US",
+            "text": "Which ticket type did you have? (item 62)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P309",
+                "language": "en-US",
+                "text": "Standard"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P310",
+                "language": "en-US",
+                "text": "VIP"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P311",
+                "language": "en-US",
+                "text": "Press"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P307",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": true,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P313",
+            "language": "en-US",
+            "text": "Which colour do you prefer? (item 63)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P315",
+                "language": "en-US",
+                "text": "Red"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P316",
+                "language": "en-US",
+                "text": "Green"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P317",
+                "language": "en-US",
+                "text": "Blue"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P318",
+                "language": "en-US",
+                "text": "Other"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P313",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P320",
+            "language": "en-US",
+            "text": "How would you like to be contacted? (select all) (item 64)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceMulti",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P322",
+                "language": "en-US",
+                "text": "Email"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P323",
+                "language": "en-US",
+                "text": "SMS"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P324",
+                "language": "en-US",
+                "text": "Phone"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P325",
+                "language": "en-US",
+                "text": "Post"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P320",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P327",
+            "language": "en-US",
+            "text": "Rate your overall experience. (item 65)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "rating",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "P329",
+            "language": "en-US",
+            "text": "Poor"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "P327",
+        "required": false,
+        "rules": [],
+        "scale": "star",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "P329",
+            "language": "en-US",
+            "text": "Excellent"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P331",
+            "language": "en-US",
+            "text": "How likely are you to recommend us? (item 66)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "nps",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P331",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P335",
+            "language": "en-US",
+            "text": "How satisfied are you overall? (item 67)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "csat",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "P337",
+            "language": "en-US",
+            "text": "Very dissatisfied"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "P335",
+        "required": false,
+        "rules": [],
+        "scale": "smiley",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "P337",
+            "language": "en-US",
+            "text": "Very satisfied"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P339",
+            "language": "en-US",
+            "text": "How easy was it to complete your task? (item 68)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "ces",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "P341",
+            "language": "en-US",
+            "text": "Very difficult"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "P339",
+        "required": false,
+        "rules": [],
+        "scale": "number",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "P341",
+            "language": "en-US",
+            "text": "Very easy"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P343",
+            "language": "en-US",
+            "text": "Rank these from most to least important. (item 69)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "ranking",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P345",
+                "language": "en-US",
+                "text": "Price"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P346",
+                "language": "en-US",
+                "text": "Quality"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P347",
+                "language": "en-US",
+                "text": "Speed"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P348",
+                "language": "en-US",
+                "text": "Support"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P343",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P352",
+                "language": "en-US",
+                "text": "Poor"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P353",
+                "language": "en-US",
+                "text": "OK"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P354",
+                "language": "en-US",
+                "text": "Good"
+              }
+            ]
+          }
+        ],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P350",
+            "language": "en-US",
+            "text": "Rate each aspect (Staff, Facilities, Value). (item 70)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "matrix",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P350",
+                "language": "en-US",
+                "text": "Staff"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P350",
+                "language": "en-US",
+                "text": "Facilities"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P350",
+                "language": "en-US",
+                "text": "Value"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P350",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": "M-d-y",
+        "headline": [
+          {
+            "cell": "P356",
+            "language": "en-US",
+            "text": "When did you visit? (item 71)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "date",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P356",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P360",
+            "language": "en-US",
+            "text": "Do you agree to the terms and conditions? (item 72)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "consent",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P360",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [
+          {
+            "cell": "P362",
+            "language": "en-US",
+            "text": "I agree"
+          }
+        ],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P364",
+            "language": "en-US",
+            "text": "What did you think of the event overall? (item 73)"
+          }
+        ],
+        "idCell": null,
+        "inputType": "text",
+        "kind": "openText",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P364",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P367",
+            "language": "en-US",
+            "text": "Which ticket type did you have? (item 74)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P369",
+                "language": "en-US",
+                "text": "Standard"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P370",
+                "language": "en-US",
+                "text": "VIP"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P371",
+                "language": "en-US",
+                "text": "Press"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P367",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": true,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P373",
+            "language": "en-US",
+            "text": "Which colour do you prefer? (item 75)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P375",
+                "language": "en-US",
+                "text": "Red"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P376",
+                "language": "en-US",
+                "text": "Green"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P377",
+                "language": "en-US",
+                "text": "Blue"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P378",
+                "language": "en-US",
+                "text": "Other"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P373",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P380",
+            "language": "en-US",
+            "text": "How would you like to be contacted? (select all) (item 76)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceMulti",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P382",
+                "language": "en-US",
+                "text": "Email"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P383",
+                "language": "en-US",
+                "text": "SMS"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P384",
+                "language": "en-US",
+                "text": "Phone"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P385",
+                "language": "en-US",
+                "text": "Post"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P380",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P387",
+            "language": "en-US",
+            "text": "Rate your overall experience. (item 77)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "rating",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "P389",
+            "language": "en-US",
+            "text": "Poor"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "P387",
+        "required": false,
+        "rules": [],
+        "scale": "star",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "P389",
+            "language": "en-US",
+            "text": "Excellent"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P391",
+            "language": "en-US",
+            "text": "How likely are you to recommend us? (item 78)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "nps",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P391",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P395",
+            "language": "en-US",
+            "text": "How satisfied are you overall? (item 79)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "csat",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "P397",
+            "language": "en-US",
+            "text": "Very dissatisfied"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "P395",
+        "required": false,
+        "rules": [],
+        "scale": "smiley",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "P397",
+            "language": "en-US",
+            "text": "Very satisfied"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P399",
+            "language": "en-US",
+            "text": "How easy was it to complete your task? (item 80)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "ces",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "P401",
+            "language": "en-US",
+            "text": "Very difficult"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "P399",
+        "required": false,
+        "rules": [],
+        "scale": "number",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "P401",
+            "language": "en-US",
+            "text": "Very easy"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P403",
+            "language": "en-US",
+            "text": "Rank these from most to least important. (item 81)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "ranking",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P405",
+                "language": "en-US",
+                "text": "Price"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P406",
+                "language": "en-US",
+                "text": "Quality"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P407",
+                "language": "en-US",
+                "text": "Speed"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P408",
+                "language": "en-US",
+                "text": "Support"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P403",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P412",
+                "language": "en-US",
+                "text": "Poor"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P413",
+                "language": "en-US",
+                "text": "OK"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P414",
+                "language": "en-US",
+                "text": "Good"
+              }
+            ]
+          }
+        ],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P410",
+            "language": "en-US",
+            "text": "Rate each aspect (Staff, Facilities, Value). (item 82)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "matrix",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P410",
+                "language": "en-US",
+                "text": "Staff"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P410",
+                "language": "en-US",
+                "text": "Facilities"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P410",
+                "language": "en-US",
+                "text": "Value"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P410",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": "M-d-y",
+        "headline": [
+          {
+            "cell": "P416",
+            "language": "en-US",
+            "text": "When did you visit? (item 83)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "date",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P416",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P420",
+            "language": "en-US",
+            "text": "Do you agree to the terms and conditions? (item 84)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "consent",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P420",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [
+          {
+            "cell": "P422",
+            "language": "en-US",
+            "text": "I agree"
+          }
+        ],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P424",
+            "language": "en-US",
+            "text": "What did you think of the event overall? (item 85)"
+          }
+        ],
+        "idCell": null,
+        "inputType": "text",
+        "kind": "openText",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P424",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P427",
+            "language": "en-US",
+            "text": "Which ticket type did you have? (item 86)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P429",
+                "language": "en-US",
+                "text": "Standard"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P430",
+                "language": "en-US",
+                "text": "VIP"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P431",
+                "language": "en-US",
+                "text": "Press"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P427",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": true,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P433",
+            "language": "en-US",
+            "text": "Which colour do you prefer? (item 87)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P435",
+                "language": "en-US",
+                "text": "Red"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P436",
+                "language": "en-US",
+                "text": "Green"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P437",
+                "language": "en-US",
+                "text": "Blue"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P438",
+                "language": "en-US",
+                "text": "Other"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P433",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P440",
+            "language": "en-US",
+            "text": "How would you like to be contacted? (select all) (item 88)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceMulti",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P442",
+                "language": "en-US",
+                "text": "Email"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P443",
+                "language": "en-US",
+                "text": "SMS"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P444",
+                "language": "en-US",
+                "text": "Phone"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P445",
+                "language": "en-US",
+                "text": "Post"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P440",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P447",
+            "language": "en-US",
+            "text": "Rate your overall experience. (item 89)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "rating",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "P449",
+            "language": "en-US",
+            "text": "Poor"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "P447",
+        "required": false,
+        "rules": [],
+        "scale": "star",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "P449",
+            "language": "en-US",
+            "text": "Excellent"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P451",
+            "language": "en-US",
+            "text": "How likely are you to recommend us? (item 90)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "nps",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P451",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P455",
+            "language": "en-US",
+            "text": "How satisfied are you overall? (item 91)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "csat",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "P457",
+            "language": "en-US",
+            "text": "Very dissatisfied"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "P455",
+        "required": false,
+        "rules": [],
+        "scale": "smiley",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "P457",
+            "language": "en-US",
+            "text": "Very satisfied"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P459",
+            "language": "en-US",
+            "text": "How easy was it to complete your task? (item 92)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "ces",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "P461",
+            "language": "en-US",
+            "text": "Very difficult"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "P459",
+        "required": false,
+        "rules": [],
+        "scale": "number",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "P461",
+            "language": "en-US",
+            "text": "Very easy"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P463",
+            "language": "en-US",
+            "text": "Rank these from most to least important. (item 93)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "ranking",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P465",
+                "language": "en-US",
+                "text": "Price"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P466",
+                "language": "en-US",
+                "text": "Quality"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P467",
+                "language": "en-US",
+                "text": "Speed"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P468",
+                "language": "en-US",
+                "text": "Support"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P463",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P472",
+                "language": "en-US",
+                "text": "Poor"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P473",
+                "language": "en-US",
+                "text": "OK"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P474",
+                "language": "en-US",
+                "text": "Good"
+              }
+            ]
+          }
+        ],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P470",
+            "language": "en-US",
+            "text": "Rate each aspect (Staff, Facilities, Value). (item 94)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "matrix",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P470",
+                "language": "en-US",
+                "text": "Staff"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P470",
+                "language": "en-US",
+                "text": "Facilities"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P470",
+                "language": "en-US",
+                "text": "Value"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P470",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": "M-d-y",
+        "headline": [
+          {
+            "cell": "P476",
+            "language": "en-US",
+            "text": "When did you visit? (item 95)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "date",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P476",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P480",
+            "language": "en-US",
+            "text": "Do you agree to the terms and conditions? (item 96)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "consent",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P480",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [
+          {
+            "cell": "P482",
+            "language": "en-US",
+            "text": "I agree"
+          }
+        ],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P484",
+            "language": "en-US",
+            "text": "What did you think of the event overall? (item 97)"
+          }
+        ],
+        "idCell": null,
+        "inputType": "text",
+        "kind": "openText",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P484",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P487",
+            "language": "en-US",
+            "text": "Which ticket type did you have? (item 98)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P489",
+                "language": "en-US",
+                "text": "Standard"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P490",
+                "language": "en-US",
+                "text": "VIP"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P491",
+                "language": "en-US",
+                "text": "Press"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P487",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": true,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P493",
+            "language": "en-US",
+            "text": "Which colour do you prefer? (item 99)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P495",
+                "language": "en-US",
+                "text": "Red"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P496",
+                "language": "en-US",
+                "text": "Green"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P497",
+                "language": "en-US",
+                "text": "Blue"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P498",
+                "language": "en-US",
+                "text": "Other"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P493",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P500",
+            "language": "en-US",
+            "text": "How would you like to be contacted? (select all) (item 100)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceMulti",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P502",
+                "language": "en-US",
+                "text": "Email"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P503",
+                "language": "en-US",
+                "text": "SMS"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P504",
+                "language": "en-US",
+                "text": "Phone"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P505",
+                "language": "en-US",
+                "text": "Post"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P500",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P507",
+            "language": "en-US",
+            "text": "Rate your overall experience. (item 101)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "rating",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "P509",
+            "language": "en-US",
+            "text": "Poor"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "P507",
+        "required": false,
+        "rules": [],
+        "scale": "star",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "P509",
+            "language": "en-US",
+            "text": "Excellent"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P511",
+            "language": "en-US",
+            "text": "How likely are you to recommend us? (item 102)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "nps",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P511",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P515",
+            "language": "en-US",
+            "text": "How satisfied are you overall? (item 103)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "csat",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "P517",
+            "language": "en-US",
+            "text": "Very dissatisfied"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "P515",
+        "required": false,
+        "rules": [],
+        "scale": "smiley",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "P517",
+            "language": "en-US",
+            "text": "Very satisfied"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P519",
+            "language": "en-US",
+            "text": "How easy was it to complete your task? (item 104)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "ces",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "P521",
+            "language": "en-US",
+            "text": "Very difficult"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "P519",
+        "required": false,
+        "rules": [],
+        "scale": "number",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "P521",
+            "language": "en-US",
+            "text": "Very easy"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P523",
+            "language": "en-US",
+            "text": "Rank these from most to least important. (item 105)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "ranking",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P525",
+                "language": "en-US",
+                "text": "Price"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P526",
+                "language": "en-US",
+                "text": "Quality"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P527",
+                "language": "en-US",
+                "text": "Speed"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P528",
+                "language": "en-US",
+                "text": "Support"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P523",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P532",
+                "language": "en-US",
+                "text": "Poor"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P533",
+                "language": "en-US",
+                "text": "OK"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P534",
+                "language": "en-US",
+                "text": "Good"
+              }
+            ]
+          }
+        ],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P530",
+            "language": "en-US",
+            "text": "Rate each aspect (Staff, Facilities, Value). (item 106)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "matrix",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P530",
+                "language": "en-US",
+                "text": "Staff"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P530",
+                "language": "en-US",
+                "text": "Facilities"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P530",
+                "language": "en-US",
+                "text": "Value"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P530",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": "M-d-y",
+        "headline": [
+          {
+            "cell": "P536",
+            "language": "en-US",
+            "text": "When did you visit? (item 107)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "date",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P536",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P540",
+            "language": "en-US",
+            "text": "Do you agree to the terms and conditions? (item 108)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "consent",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P540",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [
+          {
+            "cell": "P542",
+            "language": "en-US",
+            "text": "I agree"
+          }
+        ],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P544",
+            "language": "en-US",
+            "text": "What did you think of the event overall? (item 109)"
+          }
+        ],
+        "idCell": null,
+        "inputType": "text",
+        "kind": "openText",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P544",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P547",
+            "language": "en-US",
+            "text": "Which ticket type did you have? (item 110)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P549",
+                "language": "en-US",
+                "text": "Standard"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P550",
+                "language": "en-US",
+                "text": "VIP"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P551",
+                "language": "en-US",
+                "text": "Press"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P547",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": true,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P553",
+            "language": "en-US",
+            "text": "Which colour do you prefer? (item 111)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P555",
+                "language": "en-US",
+                "text": "Red"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P556",
+                "language": "en-US",
+                "text": "Green"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P557",
+                "language": "en-US",
+                "text": "Blue"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P558",
+                "language": "en-US",
+                "text": "Other"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P553",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P560",
+            "language": "en-US",
+            "text": "How would you like to be contacted? (select all) (item 112)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceMulti",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P562",
+                "language": "en-US",
+                "text": "Email"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P563",
+                "language": "en-US",
+                "text": "SMS"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P564",
+                "language": "en-US",
+                "text": "Phone"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P565",
+                "language": "en-US",
+                "text": "Post"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P560",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P567",
+            "language": "en-US",
+            "text": "Rate your overall experience. (item 113)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "rating",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "P569",
+            "language": "en-US",
+            "text": "Poor"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "P567",
+        "required": false,
+        "rules": [],
+        "scale": "star",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "P569",
+            "language": "en-US",
+            "text": "Excellent"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P571",
+            "language": "en-US",
+            "text": "How likely are you to recommend us? (item 114)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "nps",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P571",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P575",
+            "language": "en-US",
+            "text": "How satisfied are you overall? (item 115)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "csat",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "P577",
+            "language": "en-US",
+            "text": "Very dissatisfied"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "P575",
+        "required": false,
+        "rules": [],
+        "scale": "smiley",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "P577",
+            "language": "en-US",
+            "text": "Very satisfied"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P579",
+            "language": "en-US",
+            "text": "How easy was it to complete your task? (item 116)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "ces",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "P581",
+            "language": "en-US",
+            "text": "Very difficult"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "P579",
+        "required": false,
+        "rules": [],
+        "scale": "number",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "P581",
+            "language": "en-US",
+            "text": "Very easy"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P583",
+            "language": "en-US",
+            "text": "Rank these from most to least important. (item 117)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "ranking",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P585",
+                "language": "en-US",
+                "text": "Price"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P586",
+                "language": "en-US",
+                "text": "Quality"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P587",
+                "language": "en-US",
+                "text": "Speed"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P588",
+                "language": "en-US",
+                "text": "Support"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P583",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P592",
+                "language": "en-US",
+                "text": "Poor"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P593",
+                "language": "en-US",
+                "text": "OK"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P594",
+                "language": "en-US",
+                "text": "Good"
+              }
+            ]
+          }
+        ],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P590",
+            "language": "en-US",
+            "text": "Rate each aspect (Staff, Facilities, Value). (item 118)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "matrix",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P590",
+                "language": "en-US",
+                "text": "Staff"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P590",
+                "language": "en-US",
+                "text": "Facilities"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P590",
+                "language": "en-US",
+                "text": "Value"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P590",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": "M-d-y",
+        "headline": [
+          {
+            "cell": "P596",
+            "language": "en-US",
+            "text": "When did you visit? (item 119)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "date",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P596",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P600",
+            "language": "en-US",
+            "text": "Do you agree to the terms and conditions? (item 120)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "consent",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P600",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [
+          {
+            "cell": "P602",
+            "language": "en-US",
+            "text": "I agree"
+          }
+        ],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P604",
+            "language": "en-US",
+            "text": "What did you think of the event overall? (item 121)"
+          }
+        ],
+        "idCell": null,
+        "inputType": "text",
+        "kind": "openText",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P604",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P607",
+            "language": "en-US",
+            "text": "Which ticket type did you have? (item 122)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P609",
+                "language": "en-US",
+                "text": "Standard"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P610",
+                "language": "en-US",
+                "text": "VIP"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P611",
+                "language": "en-US",
+                "text": "Press"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P607",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": true,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P613",
+            "language": "en-US",
+            "text": "Which colour do you prefer? (item 123)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P615",
+                "language": "en-US",
+                "text": "Red"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P616",
+                "language": "en-US",
+                "text": "Green"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P617",
+                "language": "en-US",
+                "text": "Blue"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P618",
+                "language": "en-US",
+                "text": "Other"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P613",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P620",
+            "language": "en-US",
+            "text": "How would you like to be contacted? (select all) (item 124)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceMulti",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P622",
+                "language": "en-US",
+                "text": "Email"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P623",
+                "language": "en-US",
+                "text": "SMS"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P624",
+                "language": "en-US",
+                "text": "Phone"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P625",
+                "language": "en-US",
+                "text": "Post"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P620",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P627",
+            "language": "en-US",
+            "text": "Rate your overall experience. (item 125)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "rating",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "P629",
+            "language": "en-US",
+            "text": "Poor"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "P627",
+        "required": false,
+        "rules": [],
+        "scale": "star",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "P629",
+            "language": "en-US",
+            "text": "Excellent"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P631",
+            "language": "en-US",
+            "text": "How likely are you to recommend us? (item 126)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "nps",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P631",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P635",
+            "language": "en-US",
+            "text": "How satisfied are you overall? (item 127)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "csat",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "P637",
+            "language": "en-US",
+            "text": "Very dissatisfied"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "P635",
+        "required": false,
+        "rules": [],
+        "scale": "smiley",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "P637",
+            "language": "en-US",
+            "text": "Very satisfied"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P639",
+            "language": "en-US",
+            "text": "How easy was it to complete your task? (item 128)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "ces",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "P641",
+            "language": "en-US",
+            "text": "Very difficult"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "P639",
+        "required": false,
+        "rules": [],
+        "scale": "number",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "P641",
+            "language": "en-US",
+            "text": "Very easy"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P643",
+            "language": "en-US",
+            "text": "Rank these from most to least important. (item 129)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "ranking",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P645",
+                "language": "en-US",
+                "text": "Price"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P646",
+                "language": "en-US",
+                "text": "Quality"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P647",
+                "language": "en-US",
+                "text": "Speed"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P648",
+                "language": "en-US",
+                "text": "Support"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P643",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P652",
+                "language": "en-US",
+                "text": "Poor"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P653",
+                "language": "en-US",
+                "text": "OK"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P654",
+                "language": "en-US",
+                "text": "Good"
+              }
+            ]
+          }
+        ],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P650",
+            "language": "en-US",
+            "text": "Rate each aspect (Staff, Facilities, Value). (item 130)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "matrix",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P650",
+                "language": "en-US",
+                "text": "Staff"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P650",
+                "language": "en-US",
+                "text": "Facilities"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P650",
+                "language": "en-US",
+                "text": "Value"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P650",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": "M-d-y",
+        "headline": [
+          {
+            "cell": "P656",
+            "language": "en-US",
+            "text": "When did you visit? (item 131)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "date",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P656",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P660",
+            "language": "en-US",
+            "text": "Do you agree to the terms and conditions? (item 132)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "consent",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P660",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [
+          {
+            "cell": "P662",
+            "language": "en-US",
+            "text": "I agree"
+          }
+        ],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P664",
+            "language": "en-US",
+            "text": "What did you think of the event overall? (item 133)"
+          }
+        ],
+        "idCell": null,
+        "inputType": "text",
+        "kind": "openText",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P664",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P667",
+            "language": "en-US",
+            "text": "Which ticket type did you have? (item 134)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P669",
+                "language": "en-US",
+                "text": "Standard"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P670",
+                "language": "en-US",
+                "text": "VIP"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P671",
+                "language": "en-US",
+                "text": "Press"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P667",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": true,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P673",
+            "language": "en-US",
+            "text": "Which colour do you prefer? (item 135)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P675",
+                "language": "en-US",
+                "text": "Red"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P676",
+                "language": "en-US",
+                "text": "Green"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P677",
+                "language": "en-US",
+                "text": "Blue"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P678",
+                "language": "en-US",
+                "text": "Other"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P673",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P680",
+            "language": "en-US",
+            "text": "How would you like to be contacted? (select all) (item 136)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceMulti",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P682",
+                "language": "en-US",
+                "text": "Email"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P683",
+                "language": "en-US",
+                "text": "SMS"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P684",
+                "language": "en-US",
+                "text": "Phone"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P685",
+                "language": "en-US",
+                "text": "Post"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P680",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P687",
+            "language": "en-US",
+            "text": "Rate your overall experience. (item 137)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "rating",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "P689",
+            "language": "en-US",
+            "text": "Poor"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "P687",
+        "required": false,
+        "rules": [],
+        "scale": "star",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "P689",
+            "language": "en-US",
+            "text": "Excellent"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P691",
+            "language": "en-US",
+            "text": "How likely are you to recommend us? (item 138)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "nps",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P691",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P695",
+            "language": "en-US",
+            "text": "How satisfied are you overall? (item 139)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "csat",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "P697",
+            "language": "en-US",
+            "text": "Very dissatisfied"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "P695",
+        "required": false,
+        "rules": [],
+        "scale": "smiley",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "P697",
+            "language": "en-US",
+            "text": "Very satisfied"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P699",
+            "language": "en-US",
+            "text": "How easy was it to complete your task? (item 140)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "ces",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "P701",
+            "language": "en-US",
+            "text": "Very difficult"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "P699",
+        "required": false,
+        "rules": [],
+        "scale": "number",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "P701",
+            "language": "en-US",
+            "text": "Very easy"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P703",
+            "language": "en-US",
+            "text": "Rank these from most to least important. (item 141)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "ranking",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P705",
+                "language": "en-US",
+                "text": "Price"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P706",
+                "language": "en-US",
+                "text": "Quality"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P707",
+                "language": "en-US",
+                "text": "Speed"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P708",
+                "language": "en-US",
+                "text": "Support"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P703",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P712",
+                "language": "en-US",
+                "text": "Poor"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P713",
+                "language": "en-US",
+                "text": "OK"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P714",
+                "language": "en-US",
+                "text": "Good"
+              }
+            ]
+          }
+        ],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P710",
+            "language": "en-US",
+            "text": "Rate each aspect (Staff, Facilities, Value). (item 142)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "matrix",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P710",
+                "language": "en-US",
+                "text": "Staff"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P710",
+                "language": "en-US",
+                "text": "Facilities"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P710",
+                "language": "en-US",
+                "text": "Value"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P710",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": "M-d-y",
+        "headline": [
+          {
+            "cell": "P716",
+            "language": "en-US",
+            "text": "When did you visit? (item 143)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "date",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P716",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P720",
+            "language": "en-US",
+            "text": "Do you agree to the terms and conditions? (item 144)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "consent",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P720",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [
+          {
+            "cell": "P722",
+            "language": "en-US",
+            "text": "I agree"
+          }
+        ],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P724",
+            "language": "en-US",
+            "text": "What did you think of the event overall? (item 145)"
+          }
+        ],
+        "idCell": null,
+        "inputType": "text",
+        "kind": "openText",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P724",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P727",
+            "language": "en-US",
+            "text": "Which ticket type did you have? (item 146)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P729",
+                "language": "en-US",
+                "text": "Standard"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P730",
+                "language": "en-US",
+                "text": "VIP"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P731",
+                "language": "en-US",
+                "text": "Press"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P727",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": true,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P733",
+            "language": "en-US",
+            "text": "Which colour do you prefer? (item 147)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P735",
+                "language": "en-US",
+                "text": "Red"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P736",
+                "language": "en-US",
+                "text": "Green"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P737",
+                "language": "en-US",
+                "text": "Blue"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P738",
+                "language": "en-US",
+                "text": "Other"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P733",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P740",
+            "language": "en-US",
+            "text": "How would you like to be contacted? (select all) (item 148)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceMulti",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P742",
+                "language": "en-US",
+                "text": "Email"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P743",
+                "language": "en-US",
+                "text": "SMS"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P744",
+                "language": "en-US",
+                "text": "Phone"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P745",
+                "language": "en-US",
+                "text": "Post"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P740",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P747",
+            "language": "en-US",
+            "text": "Rate your overall experience. (item 149)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "rating",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "P749",
+            "language": "en-US",
+            "text": "Poor"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "P747",
+        "required": false,
+        "rules": [],
+        "scale": "star",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "P749",
+            "language": "en-US",
+            "text": "Excellent"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P751",
+            "language": "en-US",
+            "text": "How likely are you to recommend us? (item 150)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "nps",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P751",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      }
+    ],
+    "skipped": [],
+    "titleCell": "P1"
+  },
+  "recording": {
+    "note": "What a model following the prompt returns for every line of the file.",
+    "source": "hand-authored"
+  }
+}

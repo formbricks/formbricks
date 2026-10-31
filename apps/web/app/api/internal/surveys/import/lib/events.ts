@@ -1,32 +1,50 @@
 import { AI_STREAM_FAILURE_CODES } from "@/app/api/internal/lib/ai-stream-errors";
-import type { TQsfDraftDocument } from "@/modules/survey/import/qsf/draft";
-import type { TQsfImportReport, TQsfImportStage } from "@/modules/survey/import/types";
+import type { TFormbricksFileReferences } from "@/modules/survey/formbricks-file/envelope";
+import type { TSurveyImportPayload } from "@/modules/survey/import/core/draft";
+import type {
+  TSurveyImportMatch,
+  TSurveyImportReport,
+  TSurveyImportStage,
+} from "@/modules/survey/import/types";
 
 /** Codes that can only be raised after the stream opened. Everything else is a pre-stream problem+json. */
-export const QSF_IMPORT_STREAM_ERROR_CODES = {
+export const SURVEY_IMPORT_STREAM_ERROR_CODES = {
   ...AI_STREAM_FAILURE_CODES,
   TIMED_OUT: "import_timed_out",
+  /** A document whose plan holds more questions than one import takes: the dialog points at MCP. */
+  TOO_LARGE: "import_too_large",
   FAILED: "import_failed",
 } as const;
 
-export type TQsfImportStreamErrorCode =
-  (typeof QSF_IMPORT_STREAM_ERROR_CODES)[keyof typeof QSF_IMPORT_STREAM_ERROR_CODES];
+export type TSurveyImportStreamErrorCode =
+  (typeof SURVEY_IMPORT_STREAM_ERROR_CODES)[keyof typeof SURVEY_IMPORT_STREAM_ERROR_CODES];
 
 /**
  * The NDJSON events of `POST /api/internal/surveys/import/stream`, in order: start, progress…, done or
  * error.
  */
-export type TQsfImportStreamEvent =
+export type TSurveyImportStreamEvent =
   /**
    * Written before any work starts. Next only flushes response headers on the first chunk, so without
    * it the client's `fetch()` would not resolve until the import had produced something.
    */
   | { type: "start"; requestId: string }
   /** A new stage, or the current one repeated as a heartbeat while a stage runs long. */
-  | { type: "progress"; stage: TQsfImportStage }
+  | { type: "progress"; stage: TSurveyImportStage }
   /**
-   * The draft to review and create with `POST /api/v3/surveys?createdFrom=import`, sent there as it
-   * is — the request body, locale-keyed, before parsing — and its report.
+   * The draft to review, as the create request body takes it — locale-keyed, before parsing — and its
+   * report. The dialog sends it back to `POST /api/internal/surveys/imports`, with the `references` a
+   * Formbricks file has, which the create resolves again and creates with the survey.
    */
-  | { type: "done"; payload: TQsfDraftDocument; report: TQsfImportReport }
-  | { type: "error"; code: TQsfImportStreamErrorCode; detail: string; retryAfter?: number };
+  | {
+      type: "done";
+      payload: TSurveyImportPayload;
+      report: TSurveyImportReport;
+      references?: TFormbricksFileReferences;
+      /**
+       * The survey the file was exported from, in this workspace and editable by the user (ENG-6851):
+       * the dialog offers Update or Create new. Absent when there is none.
+       */
+      match?: TSurveyImportMatch;
+    }
+  | { type: "error"; code: TSurveyImportStreamErrorCode; detail: string; retryAfter?: number };

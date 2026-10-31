@@ -4,19 +4,17 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, test } from "vitest";
 import { DEFAULT_REQUEST_BODY_LIMIT_BYTES } from "@/app/lib/api/request-body";
+import type { TSurveyImportDraftElement } from "../core/draft";
+import type { TSurveyImportAssembly } from "../core/draft";
+import { checkImportDraft } from "../core/final-gate";
+import { measureDraftBytes } from "../core/fit-draft";
+import type { TSurveyImportPipelineIssue } from "../core/report";
+import { SURVEY_IMPORT_MAX_DRAFT_BYTES } from "../limits";
 import { refsInPrompt } from "./__fixtures__/recorded-plans";
 import { type TQsfPlanGenerate, planQsfImport } from "./ai-plan";
-import type { TQsfAssembly, TQsfDraftElement } from "./assemble";
 import { assembleQsfDraft } from "./assemble";
-import { checkQsfDraft } from "./final-gate";
-import {
-  DEFAULT_ENDING_TEXT_BYTES,
-  QSF_DRAFT_MAX_BYTES,
-  fitQsfDraftToCreateLimit,
-  fitQsfSurveyToCreateLimit,
-  measureQsfDraftBytes,
-} from "./fit-draft";
-import type { TQsfIssue, TQsfQuestion, TQsfSurvey } from "./qsf-model";
+import { DEFAULT_ENDING_TEXT_BYTES, fitQsfDraftToCreateLimit, fitQsfSurveyToCreateLimit } from "./fit-draft";
+import type { TQsfQuestion, TQsfSurvey } from "./qsf-model";
 import { readQsf } from "./read-qsf";
 import { sanitizeQsfTexts } from "./sanitize-text";
 
@@ -26,13 +24,13 @@ const buildAssembly = (shape: {
   blocks: number;
   perBlock: number;
   textChars: number;
-}): { assembly: TQsfAssembly; survey: TQsfSurvey } => {
+}): { assembly: TSurveyImportAssembly; survey: TQsfSurvey } => {
   const [defaultLanguage] = shape.languages;
   const questions = new Map<string, TQsfQuestion>();
   const elementRefs: string[][] = [];
   const blocks = Array.from({ length: shape.blocks }, (_, b) => {
     const refs: string[] = [];
-    const elements = Array.from({ length: shape.perBlock }, (_, e): TQsfDraftElement => {
+    const elements = Array.from({ length: shape.perBlock }, (_, e): TSurveyImportDraftElement => {
       const n = b * shape.perBlock + e + 1;
       refs.push(`QID${n}`);
       questions.set(`QID${n}`, { ref: `QID${n}`, exportTag: `Q${n}` } as TQsfQuestion);
@@ -52,7 +50,7 @@ const buildAssembly = (shape: {
     elementRefs.push(refs);
     return { id: `block${b}`, name: `Block ${b}`, elements };
   });
-  const assembly: TQsfAssembly = {
+  const assembly: TSurveyImportAssembly = {
     document: {
       workspaceId: "clxx1234567890123456789012",
       name: "Survey",
@@ -80,8 +78,8 @@ const LANGUAGES = ["en-US", "de-DE", "fr-FR", "es-ES", "it-IT"];
 
 describe("fitQsfDraftToCreateLimit", () => {
   test("is sized from the create's own body limit, with a margin", () => {
-    expect(QSF_DRAFT_MAX_BYTES).toBeLessThan(DEFAULT_REQUEST_BODY_LIMIT_BYTES);
-    expect(QSF_DRAFT_MAX_BYTES).toBeGreaterThan(DEFAULT_REQUEST_BODY_LIMIT_BYTES * 0.9);
+    expect(SURVEY_IMPORT_MAX_DRAFT_BYTES).toBeLessThan(DEFAULT_REQUEST_BODY_LIMIT_BYTES);
+    expect(SURVEY_IMPORT_MAX_DRAFT_BYTES).toBeGreaterThan(DEFAULT_REQUEST_BODY_LIMIT_BYTES * 0.9);
   });
 
   test("leaves a draft that fits as it is", () => {
@@ -110,7 +108,7 @@ describe("fitQsfDraftToCreateLimit", () => {
       textChars: 1_000,
     });
     // Room for about three of the five languages.
-    const maxBytes = Math.floor((measureQsfDraftBytes(assembly.document) * 3.2) / 5);
+    const maxBytes = Math.floor((measureDraftBytes(assembly.document) * 3.2) / 5);
 
     const { dropped } = fitQsfDraftToCreateLimit(assembly, survey, maxBytes);
 
@@ -134,7 +132,7 @@ describe("fitQsfDraftToCreateLimit", () => {
         assembly.document.endings[0].type === "endScreen" ? assembly.document.endings[0].headline : {}
       )
     ).toEqual(["en-US", "de-DE", "fr-FR"]);
-    expect(measureQsfDraftBytes(assembly.document)).toBeLessThanOrEqual(maxBytes);
+    expect(measureDraftBytes(assembly.document)).toBeLessThanOrEqual(maxBytes);
     expect(assembly.document.blocks.flatMap((block) => block.elements)).toHaveLength(10);
   });
 
@@ -144,7 +142,7 @@ describe("fitQsfDraftToCreateLimit", () => {
     fitQsfDraftToCreateLimit(
       several.assembly,
       several.survey,
-      Math.floor((measureQsfDraftBytes(several.assembly.document) * 3.2) / 5)
+      Math.floor((measureDraftBytes(several.assembly.document) * 3.2) / 5)
     );
     expect(several.assembly.document.languages.length).toBeGreaterThan(1);
     expect(several.assembly.document).toMatchObject({ showLanguageSwitch: true, autoSelectLanguage: true });
@@ -154,7 +152,7 @@ describe("fitQsfDraftToCreateLimit", () => {
     fitQsfDraftToCreateLimit(
       one.assembly,
       one.survey,
-      Math.floor(measureQsfDraftBytes(one.assembly.document) / 4.5)
+      Math.floor(measureDraftBytes(one.assembly.document) / 4.5)
     );
     expect(one.assembly.document.languages.map((language) => language.code)).toEqual(["en-US"]);
     expect(one.assembly.document.showLanguageSwitch).toBeUndefined();
@@ -169,7 +167,7 @@ describe("fitQsfDraftToCreateLimit", () => {
       textChars: 1_000,
     });
     // Room for about seven of the twelve questions: the third block and one question of the second go.
-    const maxBytes = Math.floor((measureQsfDraftBytes(assembly.document) * 7.5) / 12);
+    const maxBytes = Math.floor((measureDraftBytes(assembly.document) * 7.5) / 12);
 
     const { dropped } = fitQsfDraftToCreateLimit(assembly, survey, maxBytes);
 
@@ -183,7 +181,7 @@ describe("fitQsfDraftToCreateLimit", () => {
       ["QID1", "QID2", "QID3", "QID4"],
       ["QID5", "QID6", "QID7"],
     ]);
-    expect(measureQsfDraftBytes(assembly.document)).toBeLessThanOrEqual(maxBytes);
+    expect(measureDraftBytes(assembly.document)).toBeLessThanOrEqual(maxBytes);
   });
 
   test("keeps no question when even one does not fit, for the caller to fail the import", () => {
@@ -206,10 +204,10 @@ describe("fitQsfDraftToCreateLimit", () => {
       perBlock: 5,
       textChars: 1_000,
     });
-    const maxBytes = Math.floor(measureQsfDraftBytes(assembly.document) / 6);
+    const maxBytes = Math.floor(measureDraftBytes(assembly.document) / 6);
 
     const { keepIssue } = fitQsfDraftToCreateLimit(assembly, survey, maxBytes);
-    const line = (issue: Partial<TQsfIssue>): TQsfIssue => ({
+    const line = (issue: Partial<TSurveyImportPipelineIssue>): TSurveyImportPipelineIssue => ({
       code: "logic_not_imported",
       severity: "warning",
       ...issue,
@@ -243,7 +241,7 @@ describe("fitQsfDraftToCreateLimit", () => {
     // Not something the import writes — a recall points back — but a cut question's recall anywhere goes.
     const q2 = document.blocks[0].elements[1];
     q2.headline = { "en-US": "About #recall:Q11/fallback:...#" };
-    const maxBytes = Math.floor((measureQsfDraftBytes(document) * 7.5) / 12);
+    const maxBytes = Math.floor((measureDraftBytes(document) * 7.5) / 12);
 
     const { dropped } = fitQsfDraftToCreateLimit(assembly, survey, maxBytes);
 
@@ -264,7 +262,7 @@ describe("fitQsfDraftToCreateLimit", () => {
         },
       ])
     );
-    expect(checkQsfDraft(document)).toEqual([]);
+    expect(checkImportDraft(document)).toEqual([]);
   });
 });
 
@@ -409,7 +407,7 @@ describe("fitQsfSurveyToCreateLimit", () => {
   test("leaves a survey that fits as it is", async () => {
     const { fit, survey, assembly } = await fitAndAssemble(
       buildQsf({ questions: 10, options: 4, languages: ["FR", "DE"], textChars: 20 }),
-      QSF_DRAFT_MAX_BYTES
+      SURVEY_IMPORT_MAX_DRAFT_BYTES
     );
 
     expect(fit.issues).toEqual([]);
@@ -421,7 +419,7 @@ describe("fitQsfSurveyToCreateLimit", () => {
     const qsf = buildQsf({ questions: 20, options: 6, languages: ["FR", "DE", "AR"], textChars: 200 });
     const full = await fitAndAssemble(qsf, Number.MAX_SAFE_INTEGER);
     // Room for the default language and one more, with a little to spare: each is about a quarter.
-    const maxBytes = Math.floor(measureQsfDraftBytes(full.assembly.document) * 0.6);
+    const maxBytes = Math.floor(measureDraftBytes(full.assembly.document) * 0.6);
 
     const { fit, survey, assembly } = await fitAndAssemble(qsf, maxBytes);
 
@@ -439,13 +437,13 @@ describe("fitQsfSurveyToCreateLimit", () => {
       },
     ]);
     expect(survey.languages).toEqual(["fr-FR"]);
-    expect(measureQsfDraftBytes(assembly.document)).toBeLessThanOrEqual(maxBytes);
+    expect(measureDraftBytes(assembly.document)).toBeLessThanOrEqual(maxBytes);
   });
 
   test("cuts trailing questions and the pages they empty before planning, and what is left fits", async () => {
     const qsf = buildQsf({ questions: 30, options: 4, languages: [], textChars: 1_000 });
     const full = await fitAndAssemble(qsf, Number.MAX_SAFE_INTEGER);
-    const maxBytes = Math.floor(measureQsfDraftBytes(full.assembly.document) * 0.4);
+    const maxBytes = Math.floor(measureDraftBytes(full.assembly.document) * 0.4);
 
     const { fit, survey, assembly } = await fitAndAssemble(qsf, maxBytes);
 
@@ -457,8 +455,8 @@ describe("fitQsfSurveyToCreateLimit", () => {
     expect([...fit.cutRefs]).toEqual(cut);
     expect(survey.pages.every((page) => page.questionRefs.length > 0)).toBe(true);
     expect(survey.pages.flatMap((page) => page.questionRefs)).toHaveLength(30 - cut.length);
-    expect(measureQsfDraftBytes(assembly.document)).toBeLessThanOrEqual(maxBytes);
-    expect(checkQsfDraft(assembly.document)).toEqual([]);
+    expect(measureDraftBytes(assembly.document)).toBeLessThanOrEqual(maxBytes);
+    expect(checkImportDraft(assembly.document)).toEqual([]);
   });
 
   test("neither weighs nor cuts a question the import skips for its type, which keeps its own line", async () => {
@@ -466,7 +464,7 @@ describe("fitQsfSurveyToCreateLimit", () => {
     // question the draft does hold out of it.
     const shape = { questions: 30, options: 4, languages: [], textChars: 1_000 };
     const full = await fitAndAssemble(buildQsf(shape), Number.MAX_SAFE_INTEGER);
-    const maxBytes = Math.floor(measureQsfDraftBytes(full.assembly.document) * 0.4);
+    const maxBytes = Math.floor(measureDraftBytes(full.assembly.document) * 0.4);
 
     const without = await fitAndAssemble(buildQsf(shape), maxBytes);
     const withTiming = await fitAndAssemble(buildQsf({ ...shape, timingChars: 40_000 }), maxBytes);
@@ -483,14 +481,14 @@ describe("fitQsfSurveyToCreateLimit", () => {
       questionRef: "QID31",
       params: { cause: "unsupported_type", qualtricsType: "Timing" },
     });
-    expect(measureQsfDraftBytes(withTiming.assembly.document)).toBeLessThanOrEqual(maxBytes);
-    expect(checkQsfDraft(withTiming.assembly.document)).toEqual([]);
+    expect(measureDraftBytes(withTiming.assembly.document)).toBeLessThanOrEqual(maxBytes);
+    expect(checkImportDraft(withTiming.assembly.document)).toEqual([]);
   });
 
   test("leaves no logic line behind for a page it cut whole", async () => {
     const qsf = buildQsf({ questions: 30, options: 4, languages: [], textChars: 1_000, branches: true });
     const full = await fitAndAssemble(qsf, Number.MAX_SAFE_INTEGER);
-    const maxBytes = Math.floor(measureQsfDraftBytes(full.assembly.document) * 0.4);
+    const maxBytes = Math.floor(measureDraftBytes(full.assembly.document) * 0.4);
 
     const { assembly } = await fitAndAssemble(qsf, maxBytes);
 

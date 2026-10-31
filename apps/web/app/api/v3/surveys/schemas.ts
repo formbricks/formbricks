@@ -408,6 +408,14 @@ const ROOT_KEYS = new Set([
   "distribution",
   "targeting",
 ]);
+/**
+ * The create body's root keys a survey document has as a Formbricks file carries it: without the
+ * workspace, and without `metadata`, the link survey's share settings, which are the survey's own and
+ * not content to carry to another one.
+ */
+const DOCUMENT_ROOT_KEYS = new Set(
+  [...ROOT_KEYS].filter((key) => key !== "workspaceId" && key !== "metadata")
+);
 const PATCH_ROOT_KEYS = new Set([
   "customCss",
   "name",
@@ -1332,18 +1340,59 @@ export function createZV3SurveyDocumentBaseSchema(options?: TV3SurveyDocumentSch
 
 export const ZV3SurveyDocumentBase = createZV3SurveyDocumentBaseSchema();
 
+const V3_CREATE_SURVEY_DOCUMENT_SHAPE = {
+  type: ZSurveyType.prefault("link"),
+  ...V3_SURVEY_DOCUMENT_SHAPE,
+};
+
+const { metadata: _metadata, ...V3_FILE_SURVEY_DOCUMENT_SHAPE } = V3_CREATE_SURVEY_DOCUMENT_SHAPE;
+
+/** The create body as a Formbricks file's survey: see `DOCUMENT_ROOT_KEYS` for what it leaves out. */
+const ZV3CreateSurveyDocumentObject = z.object(V3_FILE_SURVEY_DOCUMENT_SHAPE).strict();
+
+const normalizeV3CreateSurveyDocument = createV3SurveyDocumentNormalizer({
+  applyDefaultLanguage: true,
+  generateMissingCreateIds: true,
+});
+
+function addCreateSurveyIssues(body: z.output<typeof ZV3CreateSurveyDocumentObject>, ctx: z.RefinementCtx) {
+  addLanguageIssues(body, ctx);
+  addAppDistributionIssues(body, body.type, ctx);
+}
+
 const ZV3CreateSurveyBodyBase = z.preprocess(
-  createV3SurveyDocumentNormalizer({ applyDefaultLanguage: true, generateMissingCreateIds: true }),
+  normalizeV3CreateSurveyDocument,
   z
-    .object({
-      workspaceId: z.cuid2(),
-      type: ZSurveyType.prefault("link"),
-      ...V3_SURVEY_DOCUMENT_SHAPE,
-    })
+    .object({ workspaceId: z.cuid2(), ...V3_CREATE_SURVEY_DOCUMENT_SHAPE })
     .strict()
-    .superRefine(addLanguageIssues)
-    .superRefine((body, ctx) => addAppDistributionIssues(body, body.type, ctx))
+    .superRefine(addCreateSurveyIssues)
 );
+
+/**
+ * The create body without the workspace it is created in or the link survey's share `metadata`: a
+ * survey as a Formbricks file carries it (ADR 0016), so the file holds no server-owned field and
+ * imports into whichever workspace the importer picks. Same rules as the create body, and strict, so its JSON Schema tells an AI assistant
+ * editing a file which keys exist.
+ */
+export const ZV3CreateSurveyDocument = z.preprocess(
+  normalizeV3CreateSurveyDocument,
+  ZV3CreateSurveyDocumentObject.superRefine(addCreateSurveyIssues)
+);
+
+/**
+ * {@link ZV3CreateSurveyDocument} as a reader of untrusted input: every key the document does not know,
+ * at any depth, is reported as an `unsupported_field` issue at that key, exactly as the create body
+ * reports it. A Formbricks file's survey is read with this (ENG-6850); the plain document schema stays
+ * what its JSON Schema is generated from, since a pipe from `unknown` has no input shape to publish.
+ */
+export const ZV3CreateSurveyDocumentInput = z
+  .unknown()
+  .superRefine((value, ctx) => {
+    for (const issue of getUnsupportedV3SurveyDocumentFields(value, DOCUMENT_ROOT_KEYS)) {
+      addInvalidParamZodIssue(ctx, issue);
+    }
+  })
+  .pipe(ZV3CreateSurveyDocument);
 
 export const ZV3CreateSurveyBody = z
   .unknown()

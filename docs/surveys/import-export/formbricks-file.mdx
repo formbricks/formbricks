@@ -1,0 +1,160 @@
+---
+title: "Editing a Formbricks File"
+description: "The Formbricks file format for people and AI assistants: its envelope, its JSON Schema, what you can change, what an Update replaces, and what each import error means."
+icon: "file-code"
+---
+
+A Formbricks file (`.formbricks.json`) is a survey written as JSON. You can edit it in any text editor, or hand it to an AI assistant such as ChatGPT or Claude, then import it back. It's the way to iterate on a survey with an assistant that isn't connected to Formbricks.
+
+<Steps>
+  <Step title="Export the survey">
+    On the survey's card, open **⋮ → Export → Formbricks file (.json)**. See [Import & Export](/surveys/import-export/overview#export-a-survey).
+  </Step>
+  <Step title="Edit the file">
+    Change it by hand, or give it to your assistant along with this page and the [JSON Schema](#the-json-schema).
+  </Step>
+  <Step title="Import it">
+    Go to **Surveys → New Survey → Import survey** and drop the file. In the workspace the survey came from,
+    choose **Update** to change it in place, or **Create new** for a copy.
+  </Step>
+</Steps>
+
+An invalid file creates nothing, so you can fix it and try again as often as you need. A file you have already used for an Update keeps working: the dialog tells you the survey changed since the export and offers **Update anyway**.
+
+## The envelope
+
+Every file has four keys at the top:
+
+```json
+{
+  "$schema": "https://formbricks.com/docs/schemas/formbricks-file/v1.json",
+  "formbricks": {
+    "format": 1,
+    "exportedAt": "2026-10-30T12:00:00.000Z",
+    "appVersion": "6.2.0",
+    "source": {
+      "surveyId": "clsurvey0000000000000001",
+      "workspaceId": "clworkspace0000000000001",
+      "updatedAt": "2026-10-29T11:30:00.000Z"
+    }
+  },
+  "survey": {
+    "name": "Onboarding NPS",
+    "type": "link",
+    "defaultLanguage": "en-US",
+    "languages": [
+      { "code": "en-US", "default": true, "enabled": true },
+      { "code": "de-DE", "default": false, "enabled": true }
+    ],
+    "blocks": [
+      {
+        "id": "clblock00000000000000001",
+        "name": "Block 1",
+        "elements": [
+          {
+            "id": "nps",
+            "type": "nps",
+            "headline": {
+              "en-US": "How likely are you to recommend us?",
+              "de-DE": "Wie wahrscheinlich ist es, dass Sie uns weiterempfehlen?"
+            },
+            "required": true
+          }
+        ]
+      }
+    ]
+  },
+  "references": {
+    "actionClasses": [],
+    "attributeKeys": [],
+    "embeddedFields": []
+  }
+}
+```
+
+| Key          | What it is                                                                                                                                         |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `$schema`    | The address of the file's [JSON Schema](#the-json-schema). Optional.                                                                               |
+| `formbricks` | About the file: its `format`, when it was exported, the Formbricks version that wrote it, and its `source`.                                        |
+| `formbricks.source` | The survey and workspace it came from, and when the survey last changed before the export. An import uses these to offer **Update**.        |
+| `survey`     | The survey: the same document the [API v3](/api-v3-reference/introduction) creates a survey from, without `workspaceId` and `metadata` (the link's share preview, which stays with the survey). |
+| `references` | What the survey uses from its workspace: `actionClasses` its triggers use, `attributeKeys` its targeting names, shared `embeddedFields`, and `languages` with their names. |
+
+`format` is the file format's own version, separate from the Formbricks version. Formbricks reads every format up to its own and refuses newer ones.
+
+## The JSON Schema
+
+Every file names its JSON Schema in `$schema`:
+
+[`https://formbricks.com/docs/schemas/formbricks-file/v1.json`](https://formbricks.com/docs/schemas/formbricks-file/v1.json)
+
+It describes every key the format allows, every question type and the fields each one needs. Editors such as VS Code use it to check the file as you type. Give the address to an AI assistant and it can check its own output before you import.
+
+The schema can't express every rule. The import also checks that logic and recall point at questions, variables and hidden fields that exist, that every text is in every language the survey declares, and that IDs are unique. Each problem it finds names the field, so you know where to look.
+
+## What you can edit
+
+Anything under `survey`. Some rules keep the file importable:
+
+- **Texts** are objects keyed by language code: `{ "en-US": "…", "de-DE": "…" }`. Give each text in every language listed in `languages`, and use no other codes.
+- **IDs.** Keep the IDs of what you don't change: logic, recall and existing responses point at them. A new question needs its own ID, unique in the survey, made of letters, numbers, `-` and `_`. A new block needs an ID of lowercase letters and numbers.
+- **Logic and recall** point at questions by ID. Logic can only check a question in the same or an earlier block, and recall can only use a question shown before it.
+- **Triggers** (app surveys) point at an action by its ID in `references.actionClasses`. Add the action there when you add a trigger.
+- **Targeting filters** that name a contact attribute need that attribute in `references.attributeKeys`.
+- **`name`** is used for a new survey, with "(imported)" added. An Update keeps the survey's own name.
+- **`status`** is ignored. An import always creates a draft, and an Update keeps the survey's status.
+
+Leave `formbricks` as it was exported. `source.surveyId` is how Formbricks finds the survey to update, and `source.updatedAt` is how it notices the survey changed after the export. With another `surveyId`, the file always becomes a new survey.
+
+Keys the format doesn't know are dropped with a warning each in the import report, so a key an assistant invents doesn't block the import. A file exported before the share preview was left out still carries `survey.metadata`: it is dropped the same way, with one warning, and never written to a survey.
+
+### Writing a file from scratch
+
+You can write a file without exporting one first. It needs the whole `formbricks` part, with `format` set to `1` and a `source` whose IDs are made of lowercase letters and numbers. Use made-up IDs: a `surveyId` that matches no survey in the workspace makes the import create a new survey. The quickest start is to export any survey and replace its content.
+
+## What Update replaces
+
+Update replaces the survey's:
+
+- questions, blocks and endings, and the welcome card;
+- languages and translations, and the language switch settings;
+- hidden fields and variables;
+- logic and targeting;
+- triggers, only when you choose **Use the file's** triggers.
+
+It keeps the survey's ID, name, status, responses, display and link settings, styling and other settings. It never updates an active survey. See [Update a survey from a file](/surveys/import-export/overview#update-a-survey-from-a-file) for the choices the dialog offers.
+
+Two parts of the file must match the survey: its `type` (link or app) and its `defaultLanguage`. To change either, import the file as a new survey.
+
+## Common errors
+
+When a file has problems, the dialog says **This Formbricks file has problems. Fix them and import it again:** and lists up to ten of them, each as the field and the reason. Fields are named from the top of the file: `file.survey.blocks.0.elements.1.headline` is the headline of the second question in the first block. Nothing is created until every problem is fixed.
+
+Behind the dialog, the import answers with an [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457) problem whose `code` is `formbricks_file_invalid`. Each entry of its `invalid_params` has the field's `name`, the `reason`, and often a `code`:
+
+| Code                                 | Example reason                                                                                         | What to do                                                                       |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
+| (none)                               | `Invalid input: expected string, received number`                                                      | The value has the wrong type, or isn't one the field allows. Check it against the [JSON Schema](#the-json-schema). |
+| `missing_required_field`             | `Missing required field 'choices' for …`                                                               | Add the field.                                                                   |
+| `missing_translation`                | `Translatable field is missing configured language 'de-DE'`                                            | Add the text in that language, or remove the language from `languages`.          |
+| `unsupported_locale`                 | `Language 'fr-FR' must be declared in languages before it can be used in translatable content`         | Add the language to `languages`, or remove the text in that code.                |
+| `invalid_locale`, `duplicate_locale` | `Language key 'xx' is not a valid locale code`                                                         | Use one valid code per language, like `de-DE`.                                   |
+| `dangling_reference`                 | `Element id 'q9' is not defined in blocks`, `The action class this trigger uses is not in references.actionClasses` | Logic, recall, a trigger or a targeting filter points at something the file doesn't have. Add it, or fix the ID. |
+| `misordered_reference`               | `Condition references element 'q5' in a later block …`                                                 | Logic checks a later block, or recall uses a question shown after it. Move the question, or point at an earlier one. |
+| `duplicate_identifier`               | `Element id 'q1' is duplicated; first used at blocks.0.elements.0`                                     | Give each question, block, option, ending, hidden field and variable its own ID. |
+| `immutable_identifier`               | `Element id 'q1' cannot be changed because the survey and element are no longer drafts`                | An Update can't change the ID of a question that has been live. Keep the old ID, or import the file as a new survey. |
+| `read_only_field`                    | `Field 'type' is immutable after creation; …`                                                          | An Update can't change `type` or `defaultLanguage`. Keep them, or import the file as a new survey. |
+| `limit_exceeded`                     | `A question takes at most 200 choices`, `A text must not exceed 50000 characters`, `Importing this survey adds 12 attribute keys, past the 150 a workspace can have` | A question can have up to 200 choices, or 200 matrix rows and 200 columns, and a text up to 50,000 characters in each language. Split the question or shorten the text. For attribute keys, remove unused contact attributes from the workspace, or the filters that need them. |
+
+Other messages the dialog shows for a Formbricks file:
+
+| Message                                                            | What it means                                                                                                                                                     |
+| ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| This kind of file cannot be imported.                              | The file isn't JSON with a `formbricks` part at the top, so Formbricks doesn't see a Formbricks file.                                                             |
+| This file could not be read.                                       | The JSON is broken, for example a missing comma or quote.                                                                                                         |
+| This file was exported from a newer version of Formbricks.         | `formbricks.format` is newer than this instance reads. Update Formbricks, or export the survey again from an instance on the same version.                        |
+| This file is too large or too complex to import.                   | The JSON nests deeper than 256 levels, has an array of more than 1,000 items, or more than 50,000 items in all, or takes Formbricks more than 30 seconds to read. |
+| The survey in this file is too large to import.                    | `survey` is larger than about 2 MB as JSON.                                                                                                                     |
+| This file is larger than 15 MB.                                    | The whole file is past the upload limit.                                                                                                                          |
+| The survey went live after this review…                            | You chose Update, and the survey became active before you clicked. Save the file as a new survey instead.                                                        |
+| The survey changed again after this review.                        | You chose **Update anyway**, and someone changed the survey once more. Pick the file again to review it against the latest version.                              |

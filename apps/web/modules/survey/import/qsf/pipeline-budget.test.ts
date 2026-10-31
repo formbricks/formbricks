@@ -1,9 +1,11 @@
 import { describe, expect, test, vi } from "vitest";
+import { SurveyImportFailedError, SurveyImportInputError } from "../core/errors";
 import { loadQsfFixture } from "./__fixtures__/load-fixture";
 import { buildMatrixHeavyQsf } from "./__fixtures__/matrix-heavy";
 import { loadRecordedPlan, recordedGenerate, refsInPrompt } from "./__fixtures__/recorded-plans";
 import type { TQsfPlanGenerate } from "./ai-plan";
-import { QsfImportFailedError, QsfImportInputError, prepareQsfImport, runQsfImport } from "./pipeline";
+import { runQsfImport } from "./pipeline";
+import { prepareQsfImport } from "./prepare";
 
 const budget = vi.hoisted(() => ({
   estimate: null as number | null,
@@ -49,9 +51,9 @@ describe("a survey too large for the prompt budget", () => {
     }
     budget.estimate = null;
 
-    expect(error).toBeInstanceOf(QsfImportInputError);
+    expect(error).toBeInstanceOf(SurveyImportInputError);
     // A Qualtrics export past a limit — the prompt's — not an unreadable file.
-    expect((error as QsfImportInputError).invalidParams).toEqual([
+    expect((error as SurveyImportInputError).invalidParams).toEqual([
       expect.objectContaining({ code: "qsf_limit_exceeded", identifier: "prompt_size" }),
     ]);
   });
@@ -73,8 +75,8 @@ describe("a survey too large for the prompt budget", () => {
     }).catch((caught: unknown) => caught);
     budget.noLimits = false;
 
-    expect(error).toBeInstanceOf(QsfImportFailedError);
-    expect((error as QsfImportFailedError).reason).toBe("prompt_budget");
+    expect(error).toBeInstanceOf(SurveyImportFailedError);
+    expect((error as SurveyImportFailedError).reason).toBe("prompt_budget");
     expect(generate).not.toHaveBeenCalled();
   });
 });
@@ -101,7 +103,7 @@ describe("the prompt guards on each call", () => {
     budget.maxCallChars = null;
 
     expect(generate).not.toHaveBeenCalled();
-    expect((error as QsfImportFailedError).reason).toBe("no_questions");
+    expect((error as SurveyImportFailedError).reason).toBe("no_questions");
   });
 
   test("stop sending once the import's total is spent, dropping what is left as ai_budget", async () => {

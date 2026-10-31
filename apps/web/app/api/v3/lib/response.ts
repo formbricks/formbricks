@@ -105,10 +105,16 @@ export const INTERNAL_PROBLEM_CODES = [
   "attachment_export_too_large",
   "capacity_reached",
   "concurrency_limit_reached",
+  "formbricks_file_invalid",
+  "formbricks_file_too_new",
+  "idempotency_key_in_use",
+  "idempotency_key_reused",
   "member_in_other_organizations",
   "retention_exemption_exists",
   "retention_exemption_not_active",
   "retention_export_too_large",
+  "survey_active",
+  "unsupported_media_type",
 ] as const;
 
 export type InternalProblemCode = (typeof INTERNAL_PROBLEM_CODES)[number];
@@ -127,8 +133,12 @@ export function isV3ProblemCode(value: unknown): value is V3ProblemCode {
 
 export const INVALID_PARAM_CODES = [
   "dangling_reference",
+  "document_limit_exceeded",
   "duplicate_identifier",
   "duplicate_locale",
+  "file_limit_exceeded",
+  "file_type_unsupported",
+  "file_unreadable",
   "forbidden_identifier",
   "immutable_identifier",
   "invalid_locale",
@@ -237,11 +247,31 @@ export function problemBadRequest(
 export function problemPayloadTooLarge(
   requestId: string,
   detail: string = "Payload Too Large",
-  instance?: string
+  instance?: string,
+  invalidParams?: InvalidParam[]
 ): Response {
   return problemResponse(413, "Payload Too Large", detail, requestId, {
     code: "payload_too_large",
     instance,
+    invalid_params: invalidParams,
+  });
+}
+
+/**
+ * 415: the request body, or the file it carries, is a kind this route does not take. `acceptPost`
+ * names the media type the route does take, sent as `Accept-Post` (the Linked Data Platform header
+ * RFC 9110 §15.5.16 points to for saying which formats a POST accepts).
+ */
+export function problemUnsupportedMediaType(
+  requestId: string,
+  detail: string,
+  options?: { instance?: string; invalid_params?: InvalidParam[]; acceptPost?: string }
+): Response {
+  return problemResponse(415, "Unsupported Media Type", detail, requestId, {
+    code: "unsupported_media_type",
+    instance: options?.instance,
+    invalid_params: options?.invalid_params,
+    ...(options?.acceptPost ? { headers: { "Accept-Post": options.acceptPost } } : {}),
   });
 }
 
@@ -505,6 +535,43 @@ export function problemConflict(
     instance,
     ...(options?.details && { details: options.details }),
   });
+}
+
+/**
+ * ENG-6850: a request repeated with an `Idempotency-Key` whose first request is still running (IETF
+ * Idempotency-Key draft §2.6). Internal routes only. `Retry-After` says when the first will have finished
+ * or given the key back.
+ */
+export function problemIdempotencyKeyInUse(
+  requestId: string,
+  instance: string | undefined,
+  retryAfterSeconds: number
+): Response {
+  return problemResponse(
+    409,
+    "Conflict",
+    "A request with this Idempotency-Key is still being processed",
+    requestId,
+    {
+      code: "idempotency_key_in_use",
+      instance,
+      headers: { "Retry-After": String(retryAfterSeconds) },
+    }
+  );
+}
+
+/**
+ * ENG-6850: an `Idempotency-Key` reused for a different request (IETF Idempotency-Key draft §2.6).
+ * Internal routes only.
+ */
+export function problemIdempotencyKeyReused(requestId: string, instance?: string): Response {
+  return problemResponse(
+    422,
+    "Unprocessable Content",
+    "This Idempotency-Key was used for a different request",
+    requestId,
+    { code: "idempotency_key_reused", instance }
+  );
 }
 
 export function problemBadGateway(

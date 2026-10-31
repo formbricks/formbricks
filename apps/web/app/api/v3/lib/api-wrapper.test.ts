@@ -1206,13 +1206,17 @@ describe("per-route concurrency limit", () => {
     mockGetSession.mockResolvedValue(sessionUser);
   });
 
-  test("answers 503 capacity_reached with Retry-After when every slot is taken, before reading the body", async () => {
+  test("answers 503 capacity_reached with Retry-After when every slot is taken, once the body is read", async () => {
     const limiter = new ConcurrencyLimiter(1);
     const held = limiter.tryAcquire("someone_else");
     const handler = vi.fn(async () => Response.json({ ok: true }));
 
-    // Not JSON: a 400 here would mean the body was read before admission.
-    const response = await limitedRoute(limiter, handler)(postJson("not json"), {} as never);
+    // The body is read before admission, so a slot bounds the work and never a client's upload: a
+    // malformed body is a 400 whatever the slots, and only a valid one meets the limit.
+    const malformed = await limitedRoute(limiter, handler)(postJson("not json"), {} as never);
+    expect(malformed.status).toBe(400);
+
+    const response = await limitedRoute(limiter, handler)(postJson('{"a":"x"}'), {} as never);
 
     expect(response.status).toBe(503);
     expect(response.headers.get("Retry-After")).toBe("7");
@@ -1447,5 +1451,203 @@ describe("per-route concurrency limit", () => {
         handler: async () => new Response(null),
       })
     ).toThrow(/retryAfterSeconds must be a positive integer/);
+  });
+});
+
+describe("multipart form bodies (schemas.formData)", () => {
+  const ROUTE_LIMIT = 64 * 1024;
+  const URL_PATH = "http://localhost/api/internal/surveys/import/stream";
+
+  const ZUpload = z.strictObject({ workspaceId: z.string().min(1), file: z.instanceof(File) });
+
+  const uploadRoute = (handler: Parameters<typeof withV3ApiWrapper>[0]["handler"]) =>
+    withV3ApiWrapper({ auth: "none", bodyLimitBytes: ROUTE_LIMIT, schemas: { formData: ZUpload }, handler });
+
+  /** The bytes and `Content-Type` (with its boundary) a browser sends for `form`. */
+  const encodeForm = async (form: FormData) => {
+    const request = new Request(URL_PATH, { method: "POST", body: form });
+    return {
+      bytes: new Uint8Array(await request.arrayBuffer()),
+      contentType: request.headers.get("content-type") as string,
+    };
+  };
+
+  /** No Content-Length, like a chunked upload: any limit has to hold while the body streams in. */
+  const streamedPost = (bytes: Uint8Array, headers: Record<string, string>) =>
+    new NextRequest(URL_PATH, {
+      method: "POST",
+      headers,
+      body: new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(bytes);
+          controller.close();
+        },
+      }),
+      duplex: "half",
+    } as ConstructorParameters<typeof NextRequest>[1]);
+
+  const form = (fields: [string, string | File][]) => {
+    const data = new FormData();
+    for (const [name, value] of fields) data.append(name, value);
+    return data;
+  };
+
+  const file = (content: string, name = "survey.qsf") => new File([content], name, { type: "text/plain" });
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  test("parses a multipart body with one file and hands its fields to the handler", async () => {
+    const handler = vi.fn(async ({ parsedInput }) =>
+      Response.json({
+        workspaceId: parsedInput.formData.workspaceId,
+        name: parsedInput.formData.file.name,
+        content: await parsedInput.formData.file.text(),
+      })
+    );
+    const { bytes, contentType } = await encodeForm(
+      form([
+        ["workspaceId", "ws_1"],
+        ["file", file('{"SurveyEntry":{}}')],
+      ])
+    );
+
+    // Streamed without a Content-Length: the route never asks for one (no 411).
+    const response = await uploadRoute(handler)(
+      streamedPost(bytes, { "Content-Type": contentType }),
+      {} as never
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      workspaceId: "ws_1",
+      name: "survey.qsf",
+      content: '{"SurveyEntry":{}}',
+    });
+  });
+
+  test.each([
+    ["a JSON body", "application/json"],
+    ["a urlencoded form", "application/x-www-form-urlencoded"],
+    ["no Content-Type", null],
+  ])("answers 415 for %s, saying what it takes", async (_label, contentType) => {
+    const handler = vi.fn(async () => Response.json({ ok: true }));
+
+    const response = await uploadRoute(handler)(
+      new NextRequest(URL_PATH, {
+        method: "POST",
+        body: '{"workspaceId":"ws_1"}',
+        headers: contentType ? { "Content-Type": contentType } : {},
+      }),
+      {} as never
+    );
+
+    expect(response.status).toBe(415);
+    expect(response.headers.get("Content-Type")).toBe("application/problem+json");
+    expect(response.headers.get("Accept-Post")).toBe("multipart/form-data");
+    await expect(response.json()).resolves.toMatchObject({ code: "unsupported_media_type" });
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  test.each<[string, [string, string | File][], string]>([
+    ["no file", [["workspaceId", "ws_1"]], "file"],
+    [
+      "two file parts",
+      [
+        ["workspaceId", "ws_1"],
+        ["file", file("a")],
+        ["file", file("b")],
+      ],
+      "file",
+    ],
+    [
+      "a field it does not take",
+      [
+        ["workspaceId", "ws_1"],
+        ["file", file("a")],
+        ["fileName", "other.qsf"],
+      ],
+      "fileName",
+    ],
+    [
+      "a file where text belongs",
+      [
+        ["workspaceId", file("ws_1")],
+        ["file", file("a")],
+      ],
+      "workspaceId",
+    ],
+  ])("answers 400 for %s, naming the field", async (_label, fields, name) => {
+    const handler = vi.fn(async () => Response.json({ ok: true }));
+    const { bytes, contentType } = await encodeForm(form(fields));
+
+    const response = await uploadRoute(handler)(
+      streamedPost(bytes, { "Content-Type": contentType }),
+      {} as never
+    );
+
+    expect(response.status).toBe(400);
+    expect(response.headers.get("Content-Type")).toBe("application/problem+json");
+    await expect(response.json()).resolves.toMatchObject({
+      invalid_params: [expect.objectContaining({ name })],
+    });
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  test("answers 400 for a multipart body that does not parse", async () => {
+    const handler = vi.fn(async () => Response.json({ ok: true }));
+
+    const response = await uploadRoute(handler)(
+      streamedPost(new TextEncoder().encode("--other\r\nnot a part\r\n"), {
+        "Content-Type": "multipart/form-data; boundary=expected",
+      }),
+      {} as never
+    );
+
+    expect(response.status).toBe(400);
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  test("refuses from Content-Length before reading, and while streaming past the limit without one", async () => {
+    const handler = vi.fn(async () => Response.json({ ok: true }));
+    const { bytes, contentType } = await encodeForm(
+      form([
+        ["workspaceId", "ws_1"],
+        ["file", file("x".repeat(ROUTE_LIMIT))],
+      ])
+    );
+
+    const declared = await uploadRoute(handler)(
+      new NextRequest(URL_PATH, {
+        method: "POST",
+        body: "--x--",
+        headers: { "Content-Type": contentType, "Content-Length": String(ROUTE_LIMIT + 1) },
+      }),
+      {} as never
+    );
+    const streamed = await uploadRoute(handler)(
+      streamedPost(bytes, { "Content-Type": contentType }),
+      {} as never
+    );
+
+    for (const response of [declared, streamed]) {
+      expect(response.status).toBe(413);
+      await expect(response.json()).resolves.toMatchObject({
+        code: "payload_too_large",
+        detail: `Request body must not exceed ${ROUTE_LIMIT} bytes`,
+      });
+    }
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  test("refuses to build a route that declares both a JSON body and a form", () => {
+    expect(() =>
+      withV3ApiWrapper({
+        auth: "none",
+        schemas: { body: z.object({}), formData: ZUpload },
+        handler: async () => new Response(null),
+      })
+    ).toThrow(/either a body or a formData schema/);
   });
 });

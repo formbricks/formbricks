@@ -1,35 +1,31 @@
 /**
- * POST /api/internal/surveys/import/stream — turn a Qualtrics survey export (.qsf) into a survey draft
- * for review, streaming progress as NDJSON (ENG-3604).
+ * POST /api/internal/surveys/import/stream — turn an uploaded survey file into a survey draft for review,
+ * streaming progress as NDJSON (ENG-3604, ENG-6848).
  *
  * Internal surface under the Internal API RFC (ENG-1668): session-only, no OpenAPI entry and no
- * stability promise, with every other v3 convention applied. It becomes public only when an outside
- * integration or agent needs to import QSF and we are ready to freeze the report's shape — then as a v3
- * route around the same pipeline function.
+ * stability promise, with every other v3 convention applied.
+ *
+ * The body is `multipart/form-data` with the workspace and exactly one file part, for every file type
+ * (CODING_STANDARDS.md "File Uploads and Downloads"). Anything else is a 415; wrong fields a 400. The
+ * body is capped at `SURVEY_IMPORT_MAX_BODY_BYTES` from `Content-Length` and again while it streams in,
+ * so a chunked upload needs no `Content-Length` (no 411). The operation then tells the file's type from
+ * its bytes and holds it to the rest of the upload's limits before its lane reads it.
  *
  * Nothing is persisted here, so there is no audit entry: the survey is created, and audited, by
- * `POST /api/v3/surveys?createdFrom=import`. The rate limit is Create with AI's bucket on purpose; both
- * spend AI tokens.
- *
- * The body keeps the v3 request budget: at most 1,000 items in any one array, 50,000 across the file,
- * and 256 levels of nesting. In a QSF that means about 1,000 questions (`SurveyElements` holds one
- * element per question, trashed ones included, plus a few survey-wide ones) and 1,000 choices per
- * question (`Payload.ChoiceOrder`). `POST /api/v3/surveys` applies the same budget to the survey the
- * import becomes, so a question with more choices than that could not be created anyway. Past a limit,
- * the 400 names the `qsf.` path, so a client can tell it from a malformed body, and no AI is spent. A
- * lower, question-level limit with its own message belongs to the reader (ENG-3654).
+ * `POST /api/internal/surveys/imports`, or a matched one updated by
+ * `PUT /api/internal/surveys/{surveyId}/content`. Every upload is charged to the default v3 bucket here; a lane
+ * that spends AI tokens is charged Create with AI's bucket on top, once the operation knows the type.
  */
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
 import { ConcurrencyLimiter } from "@/app/lib/api/concurrency-limiter";
-import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import {
-  QSF_IMPORT_BODY_LIMIT_BYTES,
-  QSF_IMPORT_MAX_IN_FLIGHT,
-  QSF_IMPORT_MAX_IN_FLIGHT_PER_USER,
-  QSF_IMPORT_RETRY_AFTER_SECONDS,
-} from "../lib/constants";
-import { streamQsfImport } from "../lib/operations";
-import { ZQsfImportStreamBody } from "../lib/schemas";
+  SURVEY_IMPORT_MAX_BODY_BYTES,
+  SURVEY_IMPORT_MAX_IN_FLIGHT,
+  SURVEY_IMPORT_MAX_IN_FLIGHT_PER_USER,
+  SURVEY_IMPORT_RETRY_AFTER_SECONDS,
+} from "@/modules/survey/import/limits";
+import { streamSurveyImport } from "../lib/operations";
+import { ZSurveyImportStreamForm } from "../lib/schemas";
 
 // @formbricks/ai pulls the provider SDKs and posthog-node, none of which are edge-compatible.
 export const runtime = "nodejs";
@@ -40,23 +36,23 @@ export const fetchCache = "force-no-store";
  * One per server process: the limit bounds what a pod spends on imports, and the per-user share keeps
  * one user from taking every slot.
  */
-const importConcurrency = new ConcurrencyLimiter(QSF_IMPORT_MAX_IN_FLIGHT, {
-  maxPerKey: QSF_IMPORT_MAX_IN_FLIGHT_PER_USER,
+const importConcurrency = new ConcurrencyLimiter(SURVEY_IMPORT_MAX_IN_FLIGHT, {
+  maxPerKey: SURVEY_IMPORT_MAX_IN_FLIGHT_PER_USER,
 });
 
 export const POST = withV3ApiWrapper({
   auth: "session",
-  customRateLimitConfig: rateLimitConfigs.api.v3SurveyGenerate,
-  bodyLimitBytes: QSF_IMPORT_BODY_LIMIT_BYTES,
-  concurrency: { limiter: importConcurrency, retryAfterSeconds: QSF_IMPORT_RETRY_AFTER_SECONDS },
+  bodyLimitBytes: SURVEY_IMPORT_MAX_BODY_BYTES,
+  concurrency: { limiter: importConcurrency, retryAfterSeconds: SURVEY_IMPORT_RETRY_AFTER_SECONDS },
   schemas: {
-    body: ZQsfImportStreamBody,
+    formData: ZSurveyImportStreamForm,
   },
   handler: async ({ req, authentication, parsedInput, requestId, instance }) =>
-    streamQsfImport({
+    streamSurveyImport({
       req,
       authentication,
-      body: parsedInput.body,
+      workspaceId: parsedInput.formData.workspaceId,
+      file: parsedInput.formData.file,
       requestId,
       instance,
     }),

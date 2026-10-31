@@ -21,27 +21,43 @@ const selectActionClass = {
   workspaceId: true,
 } satisfies Prisma.ActionClassSelect;
 
-export const getActionClasses = reactCache(
-  async (workspaceId: string, page?: number): Promise<TActionClass[]> => {
-    validateInputs([workspaceId, ZId], [page, ZOptionalNumber]);
+const findWorkspaceActionClasses = async (
+  client: Prisma.TransactionClient,
+  workspaceId: string,
+  page?: number
+): Promise<TActionClass[]> => {
+  validateInputs([workspaceId, ZId], [page, ZOptionalNumber]);
 
-    try {
-      return await prisma.actionClass.findMany({
-        where: {
-          workspaceId,
-        },
-        select: selectActionClass,
-        take: page ? ITEMS_PER_PAGE : undefined,
-        skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
-        orderBy: {
-          createdAt: "asc",
-        },
-      });
-    } catch (error) {
-      throw new DatabaseError(`Database error when fetching actions for workspace ${workspaceId}`);
-    }
+  try {
+    return await client.actionClass.findMany({
+      where: {
+        workspaceId,
+      },
+      select: selectActionClass,
+      take: page ? ITEMS_PER_PAGE : undefined,
+      skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+      orderBy: {
+        createdAt: "asc",
+      },
+    });
+  } catch (error) {
+    throw new DatabaseError(`Database error when fetching actions for workspace ${workspaceId}`);
   }
+};
+
+export const getActionClasses = reactCache(
+  async (workspaceId: string, page?: number): Promise<TActionClass[]> =>
+    findWorkspaceActionClasses(prisma, workspaceId, page)
 );
+
+/**
+ * {@link getActionClasses} through a caller's transaction, uncached, so it also sees the action classes
+ * that transaction created and has not committed yet (ENG-6845).
+ */
+export const getActionClassesInTransaction = async (
+  tx: Prisma.TransactionClient,
+  workspaceId: string
+): Promise<TActionClass[]> => findWorkspaceActionClasses(tx, workspaceId);
 
 // This function is used to get an action by its name and workspaceId(it can return private actions as well)
 export const getActionClassByWorkspaceIdAndName = reactCache(

@@ -66,3 +66,21 @@ that is not listed here.
 **Click** — One press on a creative that opened its Destination. Dismissing a Banner is not a Click. _Avoid_: conversion, interaction.
 
 **Wind-down** — The Creatives access level of a self-hosted workspace that still has creatives after the Enterprise license stops including Creatives: they stop showing on sites and turn read-only, and authors can still pause, close and delete them.
+
+## Survey import and export
+
+**Formbricks file** — A survey's content saved as a file (`.formbricks.json`) that imports into any workspace, organization or instance. It carries the questions, blocks, endings, welcome card, languages, hidden fields, variables, logic and triggers; styling, settings, follow-ups and quotas stay out. _Avoid_: JSON export, survey JSON.
+
+**Match** — A Formbricks file whose source survey is a survey in the current workspace that the importing user can edit. Only a match offers Update; anything else becomes a new survey.
+
+**Update** — Importing a matched Formbricks file over that survey's content. The survey keeps its ID, status, responses, settings and styling. An active survey is never updated. _Avoid_: re-import (which also covers creating a new survey), overwrite, import into existing.
+
+**Reference** — Something a survey points at that lives outside it in its workspace: an action class a trigger uses, a contact attribute key in targeting, a shared hidden field or variable, a media file. A Formbricks file carries enough of each to find or recreate it in another workspace.
+
+**Document import** — Importing a Word, Excel or CSV questionnaire, read with AI. Texts come across word for word; the AI decides structure, types and logic only. _Avoid_: AI import (Qualtrics import also uses AI).
+
+**Qualtrics import** — Importing a Qualtrics export (`.qsf`), read with AI.
+
+**Import report** — The warnings and notes an import shows before anything is created or updated: what was removed, changed or needs a check.
+
+**Excel export** — A survey written as a spreadsheet for reviewers and translators: one row per question and option, one column per language. It is not a Formbricks file and never matches.

@@ -1,0 +1,141 @@
+{
+  "plan": {
+    "defaultLanguage": "en-US",
+    "languages": ["en-US"],
+    "questions": [
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P2",
+            "language": "en-US",
+            "text": "How satisfied are you with the stadium?"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "csat",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": "5",
+        "ref": "P2",
+        "required": false,
+        "rules": [],
+        "scale": "smiley",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P3",
+            "language": "en-US",
+            "text": "Would you attend this event again?"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P3",
+                "language": "en-US",
+                "text": "Yes"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P3",
+                "language": "en-US",
+                "text": "No"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P3",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P4",
+            "language": "en-US",
+            "text": "Any additional comments?"
+          }
+        ],
+        "idCell": null,
+        "inputType": "text",
+        "kind": "openText",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P4",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P5",
+            "language": "en-US",
+            "text": "How likely are you to recommend us?"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "nps",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P5",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      }
+    ],
+    "skipped": [],
+    "titleCell": "P1"
+  },
+  "recording": {
+    "note": "What a model following the prompt returns for every line of the file.",
+    "source": "hand-authored"
+  }
+}

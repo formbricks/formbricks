@@ -25,6 +25,7 @@ import type { JSX } from "react";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { createI18nString } from "@/lib/i18n/utils";
 import { replaceElementPresetPlaceholders } from "@/lib/utils/templates";
+import { getElementTypeLabel } from "./element-type-labels";
 
 export enum TElementCategory {
   Input = "input",
@@ -57,7 +58,7 @@ export type TElement = {
 export const getElementTypes = (t: TFunction): TElement[] => [
   {
     id: TSurveyElementTypeEnum.OpenText,
-    label: t("templates.free_text"),
+    label: getElementTypeLabel(TSurveyElementTypeEnum.OpenText, t),
     description: t("templates.free_text_description"),
     icon: MessageSquareTextIcon,
     category: TElementCategory.Input,
@@ -70,7 +71,7 @@ export const getElementTypes = (t: TFunction): TElement[] => [
   },
   {
     id: TSurveyElementTypeEnum.MultipleChoiceSingle,
-    label: t("templates.single_select"),
+    label: getElementTypeLabel(TSurveyElementTypeEnum.MultipleChoiceSingle, t),
     description: t("templates.single_select_description"),
     icon: Rows3Icon,
     category: TElementCategory.Choice,
@@ -91,7 +92,7 @@ export const getElementTypes = (t: TFunction): TElement[] => [
   },
   {
     id: TSurveyElementTypeEnum.MultipleChoiceMulti,
-    label: t("templates.multi_select"),
+    label: getElementTypeLabel(TSurveyElementTypeEnum.MultipleChoiceMulti, t),
     description: t("templates.multi_select_description"),
     icon: ListIcon,
     category: TElementCategory.Choice,
@@ -116,7 +117,7 @@ export const getElementTypes = (t: TFunction): TElement[] => [
   },
   {
     id: TSurveyElementTypeEnum.PictureSelection,
-    label: t("templates.picture_selection"),
+    label: getElementTypeLabel(TSurveyElementTypeEnum.PictureSelection, t),
     description: t("templates.picture_selection_description"),
     icon: ImageIcon,
     category: TElementCategory.Choice,
@@ -128,7 +129,7 @@ export const getElementTypes = (t: TFunction): TElement[] => [
   },
   {
     id: TSurveyElementTypeEnum.Rating,
-    label: t("templates.rating"),
+    label: getElementTypeLabel(TSurveyElementTypeEnum.Rating, t),
     description: t("templates.rating_description"),
     icon: StarIcon,
     category: TElementCategory.Scoring,
@@ -142,7 +143,7 @@ export const getElementTypes = (t: TFunction): TElement[] => [
   },
   {
     id: TSurveyElementTypeEnum.NPS,
-    label: t("templates.nps"),
+    label: getElementTypeLabel(TSurveyElementTypeEnum.NPS, t),
     description: t("templates.nps_description"),
     icon: PresentationIcon,
     category: TElementCategory.Scoring,
@@ -154,7 +155,7 @@ export const getElementTypes = (t: TFunction): TElement[] => [
   },
   {
     id: TSurveyElementTypeEnum.CSAT,
-    label: t("templates.csat"),
+    label: getElementTypeLabel(TSurveyElementTypeEnum.CSAT, t),
     description: t("templates.csat_description"),
     icon: SmilePlusIcon,
     category: TElementCategory.Scoring,
@@ -168,7 +169,7 @@ export const getElementTypes = (t: TFunction): TElement[] => [
   },
   {
     id: TSurveyElementTypeEnum.CES,
-    label: t("templates.ces"),
+    label: getElementTypeLabel(TSurveyElementTypeEnum.CES, t),
     description: t("templates.ces_description"),
     icon: GaugeIcon,
     category: TElementCategory.Scoring,
@@ -182,7 +183,7 @@ export const getElementTypes = (t: TFunction): TElement[] => [
   },
   {
     id: TSurveyElementTypeEnum.Ranking,
-    label: t("templates.ranking"),
+    label: getElementTypeLabel(TSurveyElementTypeEnum.Ranking, t),
     description: t("templates.ranking_description"),
     icon: ListOrderedIcon,
     category: TElementCategory.Choice,
@@ -202,7 +203,7 @@ export const getElementTypes = (t: TFunction): TElement[] => [
   },
   {
     id: TSurveyElementTypeEnum.Matrix,
-    label: t("templates.matrix"),
+    label: getElementTypeLabel(TSurveyElementTypeEnum.Matrix, t),
     description: t("templates.matrix_description"),
     icon: Grid3X3Icon,
     category: TElementCategory.Choice,
@@ -221,7 +222,7 @@ export const getElementTypes = (t: TFunction): TElement[] => [
   },
   {
     id: TSurveyElementTypeEnum.CTA,
-    label: t("templates.statement_call_to_action"),
+    label: getElementTypeLabel(TSurveyElementTypeEnum.CTA, t),
     description: t("templates.cta_description"),
     icon: MousePointerClickIcon,
     category: TElementCategory.Content,
@@ -235,7 +236,7 @@ export const getElementTypes = (t: TFunction): TElement[] => [
   },
   {
     id: TSurveyElementTypeEnum.Consent,
-    label: t("templates.consent"),
+    label: getElementTypeLabel(TSurveyElementTypeEnum.Consent, t),
     description: t("templates.consent_description"),
     icon: CheckIcon,
     category: TElementCategory.Content,
@@ -246,7 +247,7 @@ export const getElementTypes = (t: TFunction): TElement[] => [
   },
   {
     id: TSurveyElementTypeEnum.FileUpload,
-    label: t("templates.file_upload"),
+    label: getElementTypeLabel(TSurveyElementTypeEnum.FileUpload, t),
     description: t("templates.file_upload_description"),
     icon: ArrowUpFromLineIcon,
     category: TElementCategory.Input,
@@ -257,7 +258,7 @@ export const getElementTypes = (t: TFunction): TElement[] => [
   },
   {
     id: TSurveyElementTypeEnum.Date,
-    label: t("templates.date"),
+    label: getElementTypeLabel(TSurveyElementTypeEnum.Date, t),
     description: t("templates.date_description"),
     icon: CalendarDaysIcon,
     category: TElementCategory.Input,
@@ -268,7 +269,7 @@ export const getElementTypes = (t: TFunction): TElement[] => [
   },
   {
     id: TSurveyElementTypeEnum.Cal,
-    label: t("templates.schedule_a_meeting"),
+    label: getElementTypeLabel(TSurveyElementTypeEnum.Cal, t),
     description: t("templates.schedule_a_meeting_description"),
     icon: PhoneIcon,
     category: TElementCategory.Contact,
@@ -279,7 +280,7 @@ export const getElementTypes = (t: TFunction): TElement[] => [
   },
   {
     id: TSurveyElementTypeEnum.Address,
-    label: t("templates.address"),
+    label: getElementTypeLabel(TSurveyElementTypeEnum.Address, t),
     description: t("templates.address_description"),
     icon: HomeIcon,
     category: TElementCategory.Contact,
@@ -295,7 +296,7 @@ export const getElementTypes = (t: TFunction): TElement[] => [
   },
   {
     id: TSurveyElementTypeEnum.ContactInfo,
-    label: t("templates.contact_info"),
+    label: getElementTypeLabel(TSurveyElementTypeEnum.ContactInfo, t),
     description: t("templates.contact_info_description"),
     icon: ContactIcon,
     category: TElementCategory.Contact,

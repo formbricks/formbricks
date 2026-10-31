@@ -1,7 +1,8 @@
 import { describe, expect, test } from "vitest";
+import { SurveyImportInputError } from "../core/errors";
+import { OBJECT_MEMBER_NAMES } from "../core/id-registry";
+import { SURVEY_IMPORT_MAX_OPTIONS_PER_QUESTION, SURVEY_IMPORT_MAX_TEXT_CHARS } from "../limits";
 import { loadQsfFixture } from "./__fixtures__/load-fixture";
-import { QsfImportInputError } from "./errors";
-import { OBJECT_MEMBER_NAMES } from "./id-registry";
 import { normalizeQualtricsLanguageCode } from "./language-codes";
 import {
   QSF_MAX_BLOCKS,
@@ -9,17 +10,15 @@ import {
   QSF_MAX_LANGUAGE_KEYS,
   QSF_MAX_LANGUAGE_KEYS_PER_QUESTION,
   QSF_MAX_MARKUP_TEXTS,
-  QSF_MAX_OPTIONS_PER_QUESTION,
   QSF_MAX_TEXTS,
-  QSF_MAX_TEXT_CHARS,
 } from "./limits";
 import { readQsf } from "./read-qsf";
 
-const readError = (qsf: Record<string, unknown>): QsfImportInputError => {
+const readError = (qsf: Record<string, unknown>): SurveyImportInputError => {
   try {
     readQsf(qsf);
   } catch (error) {
-    if (error instanceof QsfImportInputError) return error;
+    if (error instanceof SurveyImportInputError) return error;
     throw error;
   }
   throw new Error("readQsf did not refuse the file");
@@ -264,7 +263,10 @@ describe("readQsf", () => {
 
   test("reads a language once per question, however many keys spell it: the first one wins", () => {
     const choices = Object.fromEntries(
-      Array.from({ length: QSF_MAX_OPTIONS_PER_QUESTION }, (_, i) => [String(i + 1), { Display: `C${i}` }])
+      Array.from({ length: SURVEY_IMPORT_MAX_OPTIONS_PER_QUESTION }, (_, i) => [
+        String(i + 1),
+        { Display: `C${i}` },
+      ])
     );
     // At the per-question cap, every key a variant of German, each with every choice translated.
     const language = Object.fromEntries(
@@ -365,15 +367,15 @@ describe("readQsf", () => {
   describe("refuses a file it cannot read with a 422 naming where", () => {
     test("anything that is not a Qualtrics export", () => {
       expect(readError(loadQsfFixture("not-a-qsf.json")).invalidParams.map((param) => param.name)).toEqual([
-        "qsf.SurveyEntry",
-        "qsf.SurveyElements",
+        "file.SurveyEntry",
+        "file.SurveyElements",
       ]);
     });
 
     test("an export with no question in its flow", () => {
       expect(readError(minimalQsf([sq("QID1"), bl(["QID1"]), fl([])])).invalidParams).toEqual([
         {
-          name: "qsf.SurveyElements",
+          name: "file.SurveyElements",
           reason: "The survey has no questions in its survey flow",
           code: "qsf_not_recognized",
         },
@@ -382,7 +384,7 @@ describe("readQsf", () => {
 
     test("a flow nested deeper than 64 levels, without recursing into it", () => {
       expect(readError(loadQsfFixture("deep-flow.qsf")).invalidParams[0]).toEqual({
-        name: "qsf.SurveyElements.2.Payload.Flow",
+        name: "file.SurveyElements.2.Payload.Flow",
         reason: "The survey flow is nested deeper than 64 levels",
         code: "qsf_limit_exceeded",
         identifier: "flow_depth",
@@ -397,7 +399,7 @@ describe("readQsf", () => {
 
     test("more choices on one question than the import takes", () => {
       const choices = Object.fromEntries(
-        Array.from({ length: QSF_MAX_OPTIONS_PER_QUESTION + 1 }, (_, i) => [
+        Array.from({ length: SURVEY_IMPORT_MAX_OPTIONS_PER_QUESTION + 1 }, (_, i) => [
           String(i + 1),
           { Display: `C${i}` },
         ])
@@ -407,8 +409,8 @@ describe("readQsf", () => {
       );
 
       expect(error.invalidParams[0]).toEqual({
-        name: "qsf.SurveyElements.0.Payload.Choices",
-        reason: `A question has more than ${QSF_MAX_OPTIONS_PER_QUESTION} choices`,
+        name: "file.SurveyElements.0.Payload.Choices",
+        reason: `A question has more than ${SURVEY_IMPORT_MAX_OPTIONS_PER_QUESTION} choices`,
         code: "qsf_limit_exceeded",
         identifier: "options",
       });
@@ -437,7 +439,7 @@ describe("readQsf", () => {
         readError(minimalQsf([sq("QID1", { Language: language }), bl(["QID1"]), fl()])).invalidParams
       ).toEqual([
         {
-          name: "qsf.SurveyElements.0.Payload.Language",
+          name: "file.SurveyElements.0.Payload.Language",
           reason: `A question has more than ${QSF_MAX_LANGUAGE_KEYS_PER_QUESTION} translations`,
           code: "qsf_limit_exceeded",
           identifier: "language_keys",
@@ -458,7 +460,7 @@ describe("readQsf", () => {
       );
 
       expect(error.invalidParams[0]).toEqual({
-        name: "qsf.SurveyElements",
+        name: "file.SurveyElements",
         reason: `The survey has more than ${QSF_MAX_LANGUAGE_KEYS} translations`,
         code: "qsf_limit_exceeded",
         identifier: "language_keys",
@@ -476,7 +478,7 @@ describe("readQsf", () => {
       expect(
         readError(minimalQsf([sq("QID1"), { Element: "BL", Payload: blocks }, fl()])).invalidParams[0]
       ).toEqual({
-        name: "qsf.SurveyElements.1.Payload",
+        name: "file.SurveyElements.1.Payload",
         reason: `The survey has more than ${QSF_MAX_BLOCKS} blocks`,
         code: "qsf_limit_exceeded",
         identifier: "blocks",
@@ -503,7 +505,7 @@ describe("readQsf", () => {
       ];
 
       expect(readError(minimalQsf([sq("QID1"), bl(["QID1"]), fl(flow)])).invalidParams[0]).toEqual({
-        name: "qsf.SurveyElements",
+        name: "file.SurveyElements",
         reason: `The survey has more than ${QSF_MAX_EMBEDDED_DATA_FIELDS} embedded data fields`,
         code: "qsf_limit_exceeded",
         identifier: "embedded_data",
@@ -525,7 +527,7 @@ describe("readQsf", () => {
     });
 
     test("never scans a text past the length the sanitizer takes for piped text", () => {
-      const text = `\${e://Field/hidden_in_a_long_text} ${"x".repeat(QSF_MAX_TEXT_CHARS)}`;
+      const text = `\${e://Field/hidden_in_a_long_text} ${"x".repeat(SURVEY_IMPORT_MAX_TEXT_CHARS)}`;
 
       const survey = readQsf(minimalQsf([sq("QID1", { QuestionText: text }), bl(["QID1"]), fl()]));
 
@@ -594,7 +596,7 @@ describe("readQsf", () => {
         [...survey.texts.values()].reduce((count, text) => count + text.byLanguage.size, 0);
       const refused = (cap: number, kind: string) => [
         {
-          name: "qsf.SurveyElements",
+          name: "file.SurveyElements",
           reason: `The survey has more than ${cap} ${kind} across its languages`,
           code: "qsf_limit_exceeded",
           identifier: kind === "texts" ? "texts" : "formatted_texts",
@@ -654,9 +656,9 @@ describe("readQsf", () => {
     });
 
     test.each([
-      ["two block lists", [sq("QID1"), bl(["QID1"]), bl(["QID1"]), fl()], "qsf.SurveyElements.2"],
-      ["two flows", [sq("QID1"), bl(["QID1"]), fl(), fl()], "qsf.SurveyElements.3"],
-      ["two questions with one id", [sq("QID1"), sq("QID1"), bl(["QID1"]), fl()], "qsf.SurveyElements.1"],
+      ["two block lists", [sq("QID1"), bl(["QID1"]), bl(["QID1"]), fl()], "file.SurveyElements.2"],
+      ["two flows", [sq("QID1"), bl(["QID1"]), fl(), fl()], "file.SurveyElements.3"],
+      ["two questions with one id", [sq("QID1"), sq("QID1"), bl(["QID1"]), fl()], "file.SurveyElements.1"],
     ])("%s", (_case, elements, name) => {
       expect(readError(minimalQsf(elements)).invalidParams[0].name).toBe(name);
     });

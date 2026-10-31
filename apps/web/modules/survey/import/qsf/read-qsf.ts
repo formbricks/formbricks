@@ -1,7 +1,16 @@
 import { z } from "zod";
 import { DEFAULT_V3_SURVEY_LANGUAGE } from "@/app/api/v3/surveys/schemas";
-import { QsfImportInputError, qsfLimitExceeded, qsfNotRecognized } from "./errors";
-import { isObjectMemberName } from "./id-registry";
+import { isObjectMemberName } from "../core/id-registry";
+import { needsParsing } from "../core/markup";
+import type { TSurveyImportPipelineIssue } from "../core/report";
+import type { TSurveyImportText, TSurveyImportTextFormat } from "../core/sanitize-text";
+import {
+  SURVEY_IMPORT_MAX_NAME_CHARS,
+  SURVEY_IMPORT_MAX_OPTIONS_PER_QUESTION,
+  SURVEY_IMPORT_MAX_QUESTIONS,
+  SURVEY_IMPORT_MAX_TEXT_CHARS,
+} from "../limits";
+import { qsfLimitExceeded, qsfNotRecognized, qsfRefused } from "./errors";
 import {
   isReportableLanguageCode,
   normalizeQualtricsLanguageCode,
@@ -19,16 +28,10 @@ import {
   QSF_MAX_LANGUAGE_KEYS_PER_QUESTION,
   QSF_MAX_LOGIC_TERMS,
   QSF_MAX_MARKUP_TEXTS,
-  QSF_MAX_NAME_CHARS,
-  QSF_MAX_OPTIONS_PER_QUESTION,
-  QSF_MAX_QUESTIONS,
   QSF_MAX_TEXTS,
-  QSF_MAX_TEXT_CHARS,
 } from "./limits";
-import { needsParsing } from "./markup";
 import { collectEmbeddedDataReferences } from "./piped-text";
 import type {
-  TQsfIssue,
   TQsfLogicCondition,
   TQsfLogicRule,
   TQsfOption,
@@ -36,8 +39,6 @@ import type {
   TQsfQuestion,
   TQsfSlider,
   TQsfSurvey,
-  TQsfText,
-  TQsfTextFormat,
   TQsfTextKey,
 } from "./qsf-model";
 
@@ -61,7 +62,8 @@ import type {
  * - every collection is counted against its limit before its entries are worked on — blocks and their
  *   entries, embedded data, options, `Language` keys — so a file past one costs a count, not the work;
  * - no string from the file is scanned past its bound: a name is cut before it is trimmed, and a text
- *   longer than `QSF_MAX_TEXT_CHARS` (which the sanitizer refuses) is never searched for piped text.
+ *   longer than `SURVEY_IMPORT_MAX_TEXT_CHARS` (which the sanitizer refuses) is never searched for piped
+ *   text.
  */
 
 /** Qualtrics question ids are `QID` and a number. Anything else is refused, `__proto__` included. */
@@ -85,7 +87,9 @@ const ZQsfEnvelope = z.object({
   SurveyEntry: z.object({
     SurveyName: z
       .string()
-      .transform((name) => bounded(trimmedHead(name, 2 * QSF_MAX_NAME_CHARS), QSF_MAX_NAME_CHARS))
+      .transform((name) =>
+        bounded(trimmedHead(name, 2 * SURVEY_IMPORT_MAX_NAME_CHARS), SURVEY_IMPORT_MAX_NAME_CHARS)
+      )
       .pipe(z.string().min(1)),
   }),
   SurveyElements: z.array(z.unknown()),
@@ -139,7 +143,10 @@ const trimmedHead = (value: string, max: number): string => bounded(value, max).
 /** An export tag from the file, cut and trimmed, or `null` when there is none. */
 const exportTagOf = (payload: TRecord): string | null => {
   const raw = str(own(payload, "DataExportTag"));
-  const tag = raw === null ? "" : bounded(trimmedHead(raw, 2 * QSF_MAX_NAME_CHARS), QSF_MAX_NAME_CHARS);
+  const tag =
+    raw === null
+      ? ""
+      : bounded(trimmedHead(raw, 2 * SURVEY_IMPORT_MAX_NAME_CHARS), SURVEY_IMPORT_MAX_NAME_CHARS);
   return tag.length > 0 ? tag : null;
 };
 
@@ -215,7 +222,7 @@ function optionIds(records: TRecord, order: unknown, tooMany: () => Error): stri
     if (seen.has(id) || !Object.hasOwn(records, id)) return;
     seen.add(id);
     ids.push(id);
-    if (ids.length > QSF_MAX_OPTIONS_PER_QUESTION) throw tooMany();
+    if (ids.length > SURVEY_IMPORT_MAX_OPTIONS_PER_QUESTION) throw tooMany();
   };
   if (Array.isArray(order)) {
     for (const id of order) if (str(id) !== null) consider(String(id));
@@ -238,7 +245,7 @@ const readCompared = (expression: TRecord): Pick<TQsfLogicCondition, "value"> =>
 
 /** An element the file holds at most once, read; a second one is refused. */
 const readOnce = <T>(current: T | null, index: number, what: string, read: () => T): T => {
-  if (current !== null) throw qsfNotRecognized(`qsf.SurveyElements.${index}`, `The file has two ${what}`);
+  if (current !== null) throw qsfNotRecognized(`file.SurveyElements.${index}`, `The file has two ${what}`);
   return read();
 };
 
@@ -270,8 +277,8 @@ interface TFlowResult {
 }
 
 class QsfReader {
-  private readonly issues: TQsfIssue[] = [];
-  private readonly texts = new Map<TQsfTextKey, TQsfText>();
+  private readonly issues: TSurveyImportPipelineIssue[] = [];
+  private readonly texts = new Map<TQsfTextKey, TSurveyImportText>();
   private readonly counters = { t: 0, c: 0, a: 0, b: 0, s: 0 };
   private readonly languageByRaw = new Map<string, string | null>();
   private readonly reportedLanguages = new Set<string>();
@@ -296,9 +303,9 @@ class QsfReader {
   read(qsf: TRecord): TQsfSurvey {
     const envelope = ZQsfEnvelope.safeParse(qsf);
     if (!envelope.success) {
-      throw new QsfImportInputError(
+      throw qsfRefused(
         envelope.error.issues.map((issue) => ({
-          name: ["qsf", ...issue.path.map(String)].join("."),
+          name: ["file", ...issue.path.map(String)].join("."),
           reason: issue.message,
           code: "qsf_not_recognized" as const,
         }))
@@ -326,7 +333,7 @@ class QsfReader {
       }
     }
     if (questions.size === 0) {
-      throw qsfNotRecognized("qsf.SurveyElements", "The survey has no questions in its survey flow");
+      throw qsfNotRecognized("file.SurveyElements", "The survey has no questions in its survey flow");
     }
 
     // A second pass: a rule can read a question that appears later in the file.
@@ -342,7 +349,7 @@ class QsfReader {
     const { endMessageKey, endRedirectUrl } = this.readSurveyOptions(options);
 
     return {
-      name: bounded(envelope.data.SurveyEntry.SurveyName, QSF_MAX_NAME_CHARS),
+      name: bounded(envelope.data.SurveyEntry.SurveyName, SURVEY_IMPORT_MAX_NAME_CHARS),
       defaultLanguage: this.defaultLanguage,
       // In the order the file first declares them: a fit that has to drop languages drops the last.
       languages: [...this.translationLanguages],
@@ -467,7 +474,7 @@ class QsfReader {
     }
     if (questions.has(ref)) {
       throw qsfNotRecognized(
-        `qsf.SurveyElements.${index}`,
+        `file.SurveyElements.${index}`,
         "Two questions in the file share one question id"
       );
     }
@@ -485,7 +492,7 @@ class QsfReader {
     if (entries.length > QSF_MAX_BLOCKS) {
       throw qsfLimitExceeded(
         "blocks",
-        `qsf.SurveyElements.${index}.Payload`,
+        `file.SurveyElements.${index}.Payload`,
         `The survey has more than ${QSF_MAX_BLOCKS} blocks`
       );
     }
@@ -498,7 +505,7 @@ class QsfReader {
 
       blocks.set(id, {
         id,
-        name: bounded(str(own(entry, "Description")) ?? "", QSF_MAX_NAME_CHARS),
+        name: bounded(str(own(entry, "Description")) ?? "", SURVEY_IMPORT_MAX_NAME_CHARS),
         isTrash: own(entry, "Type") === "Trash",
         elements: this.readBlockElements(index, own(entry, "BlockElements")),
       });
@@ -514,7 +521,7 @@ class QsfReader {
     if (this.blockElementCount > QSF_MAX_BLOCK_ELEMENTS) {
       throw qsfLimitExceeded(
         "block_entries",
-        `qsf.SurveyElements.${index}.Payload`,
+        `file.SurveyElements.${index}.Payload`,
         `The survey's blocks hold more than ${QSF_MAX_BLOCK_ELEMENTS} questions and page breaks`
       );
     }
@@ -557,7 +564,7 @@ class QsfReader {
       if (nodeCount > QSF_MAX_FLOW_NODES) {
         throw qsfLimitExceeded(
           "flow_nodes",
-          `qsf.SurveyElements.${flow.index}.Payload.Flow`,
+          `file.SurveyElements.${flow.index}.Payload.Flow`,
           `The survey flow has more than ${QSF_MAX_FLOW_NODES} elements`
         );
       }
@@ -599,7 +606,7 @@ class QsfReader {
     for (const field of fields) {
       if (!isRecord(field)) continue;
       const name = str(own(field, "Field")) ?? str(own(field, "Description"));
-      if (name !== null && trimmedHead(name, 2 * QSF_MAX_NAME_CHARS).length > 0) {
+      if (name !== null && trimmedHead(name, 2 * SURVEY_IMPORT_MAX_NAME_CHARS).length > 0) {
         result.embeddedDataNames.push(name);
       }
     }
@@ -620,7 +627,7 @@ class QsfReader {
     if (parent.depth + 1 > QSF_MAX_FLOW_DEPTH) {
       throw qsfLimitExceeded(
         "flow_depth",
-        `qsf.SurveyElements.${flowIndex}.Payload.Flow`,
+        `file.SurveyElements.${flowIndex}.Payload.Flow`,
         `The survey flow is nested deeper than ${QSF_MAX_FLOW_DEPTH} levels`
       );
     }
@@ -650,11 +657,11 @@ class QsfReader {
       if (block && !block.isTrash) this.addBlockPages(block, visit, rawQuestions, placed, pages);
       lastPageOfVisit.push(pages.at(-1) ?? null);
 
-      if (placed.size > QSF_MAX_QUESTIONS) {
+      if (placed.size > SURVEY_IMPORT_MAX_QUESTIONS) {
         throw qsfLimitExceeded(
           "questions",
-          "qsf.SurveyElements",
-          `The survey has more than ${QSF_MAX_QUESTIONS} questions; split it in Qualtrics and import each part`
+          "file.SurveyElements",
+          `The survey has more than ${SURVEY_IMPORT_MAX_QUESTIONS} questions; split it in Qualtrics and import each part`
         );
       }
     }
@@ -800,8 +807,8 @@ class QsfReader {
     const ids = optionIds(records, own(payload, orderKey), () =>
       qsfLimitExceeded(
         "options",
-        `qsf.SurveyElements.${elementIndex}.Payload.${mapKey}`,
-        `A question has more than ${QSF_MAX_OPTIONS_PER_QUESTION} ${mapKey === "Choices" ? "choices" : "answers"}`
+        `file.SurveyElements.${elementIndex}.Payload.${mapKey}`,
+        `A question has more than ${SURVEY_IMPORT_MAX_OPTIONS_PER_QUESTION} ${mapKey === "Choices" ? "choices" : "answers"}`
       )
     );
     const options: TQsfOption[] = [];
@@ -868,7 +875,7 @@ class QsfReader {
     if (rawCodes.length > QSF_MAX_LANGUAGE_KEYS_PER_QUESTION) {
       throw qsfLimitExceeded(
         "language_keys",
-        `qsf.SurveyElements.${elementIndex}.Payload.Language`,
+        `file.SurveyElements.${elementIndex}.Payload.Language`,
         `A question has more than ${QSF_MAX_LANGUAGE_KEYS_PER_QUESTION} translations`
       );
     }
@@ -876,7 +883,7 @@ class QsfReader {
     if (this.languageKeyCount > QSF_MAX_LANGUAGE_KEYS) {
       throw qsfLimitExceeded(
         "language_keys",
-        "qsf.SurveyElements",
+        "file.SurveyElements",
         `The survey has more than ${QSF_MAX_LANGUAGE_KEYS} translations`
       );
     }
@@ -890,7 +897,7 @@ class QsfReader {
     if (1 + this.translationLanguages.size + 1 > QSF_MAX_LANGUAGES) {
       throw qsfLimitExceeded(
         "languages",
-        "qsf.SurveyElements",
+        "file.SurveyElements",
         `The survey has more than ${QSF_MAX_LANGUAGES} languages, the most a Formbricks survey can have`
       );
     }
@@ -919,7 +926,7 @@ class QsfReader {
     if (this.embeddedDataFieldCount > QSF_MAX_EMBEDDED_DATA_FIELDS) {
       throw qsfLimitExceeded(
         "embedded_data",
-        "qsf.SurveyElements",
+        "file.SurveyElements",
         `The survey has more than ${QSF_MAX_EMBEDDED_DATA_FIELDS} embedded data fields`
       );
     }
@@ -1028,7 +1035,10 @@ class QsfReader {
     const names: string[] = [];
     const seen = new Set<string>();
     const add = (name: string) => {
-      const value = bounded(trimmedHead(name, 2 * QSF_MAX_NAME_CHARS), QSF_MAX_NAME_CHARS);
+      const value = bounded(
+        trimmedHead(name, 2 * SURVEY_IMPORT_MAX_NAME_CHARS),
+        SURVEY_IMPORT_MAX_NAME_CHARS
+      );
       if (value.length === 0 || seen.has(value)) return;
       seen.add(value);
       names.push(value);
@@ -1044,7 +1054,7 @@ class QsfReader {
     for (const text of this.texts.values()) {
       for (const raw of text.byLanguage.values()) {
         // A text the sanitizer refuses for its length is left out of the survey, and never scanned.
-        if (raw.length <= QSF_MAX_TEXT_CHARS) collectEmbeddedDataReferences(raw).forEach(addPiped);
+        if (raw.length <= SURVEY_IMPORT_MAX_TEXT_CHARS) collectEmbeddedDataReferences(raw).forEach(addPiped);
       }
     }
 
@@ -1070,7 +1080,7 @@ class QsfReader {
     // `MS_…` is a message library reference, whose text is not in the export. A message past the
     // text limit is kept as it is, for the sanitizer to refuse and report.
     const rawMessage = str(own(options, "EOSMessage")) ?? "";
-    const message = rawMessage.length > QSF_MAX_TEXT_CHARS ? rawMessage : rawMessage.trim();
+    const message = rawMessage.length > SURVEY_IMPORT_MAX_TEXT_CHARS ? rawMessage : rawMessage.trim();
     const isMessageRef = message.length <= MAX_MESSAGE_REF_CHARS && MESSAGE_REF_PATTERN.test(message);
     const endMessageKey =
       message.length > 0 && !isMessageRef ? this.addText("s", "rich", null, message) : null;
@@ -1100,7 +1110,7 @@ class QsfReader {
     if (this.textCount > QSF_MAX_TEXTS) {
       throw qsfLimitExceeded(
         "texts",
-        "qsf.SurveyElements",
+        "file.SurveyElements",
         `The survey has more than ${QSF_MAX_TEXTS} texts across its languages`
       );
     }
@@ -1109,7 +1119,7 @@ class QsfReader {
     if (this.markupTextCount > QSF_MAX_MARKUP_TEXTS) {
       throw qsfLimitExceeded(
         "formatted_texts",
-        "qsf.SurveyElements",
+        "file.SurveyElements",
         `The survey has more than ${QSF_MAX_MARKUP_TEXTS} formatted texts across its languages`
       );
     }
@@ -1117,7 +1127,7 @@ class QsfReader {
 
   private addText(
     prefix: keyof QsfReader["counters"],
-    format: TQsfTextFormat,
+    format: TSurveyImportTextFormat,
     questionRef: string | null,
     defaultText: string
   ): TQsfTextKey {
@@ -1134,12 +1144,12 @@ class QsfReader {
 
   private questionTag(payload: TRecord, fallback?: string): { questionTag?: string } {
     const tag = exportTagOf(payload) ?? fallback;
-    return tag ? { questionTag: bounded(tag, QSF_MAX_NAME_CHARS) } : {};
+    return tag ? { questionTag: bounded(tag, SURVEY_IMPORT_MAX_NAME_CHARS) } : {};
   }
 }
 
 /**
- * Read a parsed Qualtrics export. Throws `QsfImportInputError` for a file it cannot read or one past a
+ * Read a parsed Qualtrics export. Throws `SurveyImportInputError` for a file it cannot read or one past a
  * reader limit; everything else that is wrong with the file becomes a report line.
  */
 export function readQsf(qsf: Record<string, unknown>): TQsfSurvey {

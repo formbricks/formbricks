@@ -1,4 +1,4 @@
-import type { TQsfImportIssue } from "../types";
+import type { TSurveyImportIssue } from "../types";
 import type { TQsfQuestion } from "./qsf-model";
 
 /**
@@ -6,7 +6,7 @@ import type { TQsfQuestion } from "./qsf-model";
  * fewer tokens, and the severity is ours to set — and the size fit before the plan does not weigh them,
  * since no draft ever holds one.
  */
-const UNSUPPORTED_TYPES: ReadonlyMap<string, TQsfImportIssue["severity"]> = new Map([
+const UNSUPPORTED_TYPES: ReadonlyMap<string, TSurveyImportIssue["severity"]> = new Map([
   ["CS", "warning"],
   ["SBS", "warning"],
   ["HeatMap", "warning"],
@@ -23,7 +23,7 @@ const UNSUPPORTED_TYPES: ReadonlyMap<string, TQsfImportIssue["severity"]> = new 
 ]);
 
 /** The report severity for a question the import skips for its type, or `null` for one it may keep. */
-export const unsupportedTypeSeverity = (question: TQsfQuestion): TQsfImportIssue["severity"] | null =>
+export const unsupportedTypeSeverity = (question: TQsfQuestion): TSurveyImportIssue["severity"] | null =>
   UNSUPPORTED_TYPES.get(question.qualtricsType) ?? null;
 
 /** Whether the import skips a question for its type, before planning. */

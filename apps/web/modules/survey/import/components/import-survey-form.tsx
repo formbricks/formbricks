@@ -1,31 +1,37 @@
 "use client";
 
-import { FileIcon } from "lucide-react";
+import { ArrowUpRightIcon, FileIcon } from "lucide-react";
 import { type ReactNode, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { cn } from "@/lib/cn";
-import { AIUnavailableAlert } from "@/modules/ai/components/ai-unavailable-alert";
 import { DraftReviewPanel } from "@/modules/survey/components/template-list/components/draft-review-panel";
 import { SourceChip } from "@/modules/survey/components/template-list/components/source-chip";
 import { ImportFacts } from "@/modules/survey/import/components/import-facts";
+import { ImportFieldProblems } from "@/modules/survey/import/components/import-field-problems";
+import { ImportMatchChoice } from "@/modules/survey/import/components/import-match-choice";
 import { ImportReport } from "@/modules/survey/import/components/import-report";
 import { useImportSurvey } from "@/modules/survey/import/hooks/use-import-survey";
-import { getQsfImportErrorMessage } from "@/modules/survey/import/lib/import-errors";
+import { getSurveyImportErrorMessage } from "@/modules/survey/import/lib/import-errors";
+import { getSurveyImportFileExtensions } from "@/modules/survey/import/lib/import-file";
 import { getSwitchedOffLanguages } from "@/modules/survey/import/lib/import-report";
-import { QSF_FILE_EXTENSION } from "@/modules/survey/import/lib/qsf-file";
-import type { TQsfImportReport, TQsfImportStage } from "@/modules/survey/import/types";
+import type { TSurveyImportReport, TSurveyImportStage } from "@/modules/survey/import/types";
 import { AiIcon, AiStatusLine } from "@/modules/ui/components/ai";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { FileDropZone } from "@/modules/ui/components/file-drop-zone";
 
-const IMPORT_STAGES: readonly TQsfImportStage[] = ["reading", "ai", "assembling"];
+const IMPORT_STAGES: readonly TSurveyImportStage[] = ["reading", "ai", "assembling"];
+
+/**
+ * Where the "Very large survey?" hint points: the import docs' section on importing through MCP with an
+ * AI assistant, which says when a document is too large and links on to connecting the assistant.
+ */
+const MCP_DOCS_URL = "https://formbricks.com/docs/surveys/import-export/overview#very-large-surveys";
 
 type ImportSurveyFormProps = {
   workspaceId: string;
+  /** Whether Formbricks AI can read a Qualtrics export here; a Formbricks file imports either way. */
   isAIAvailable: boolean;
-  aiUnavailableReason?: TAIUnavailableReason;
   onSuccess: (surveyId: string) => void;
   onCancel: () => void;
   /** The host supplies the footer shell (`<DialogFooter>`); the buttons are built here, per state. */
@@ -42,7 +48,7 @@ type ImportSurveyFormProps = {
  * Languages with missing texts import switched off. Said above the save button, not only in the report:
  * the survey publishes without them and nothing else stops it.
  */
-const SwitchedOffLanguagesAlert = ({ report }: Readonly<{ report: TQsfImportReport }>) => {
+const SwitchedOffLanguagesAlert = ({ report }: Readonly<{ report: TSurveyImportReport }>) => {
   const { t } = useTranslation();
   const languages = getSwitchedOffLanguages(report);
   if (languages.length === 0) return null;
@@ -70,7 +76,6 @@ const SwitchedOffLanguagesAlert = ({ report }: Readonly<{ report: TQsfImportRepo
 export const ImportSurveyForm = ({
   workspaceId,
   isAIAvailable,
-  aiUnavailableReason,
   onSuccess,
   onCancel,
   renderFooter,
@@ -85,8 +90,18 @@ export const ImportSurveyForm = ({
 
   const isImporting = importer.status === "generating";
   const isReviewing = importer.status === "review" || importer.status === "creating";
-  // The finished import's report, while the review shows it.
-  const reviewReport = isReviewing ? importer.report : null;
+  const isUpdating = importer.match !== null && importer.choice === "update";
+  // The finished import's report, while the review shows it. An Update adds what it removes from a
+  // survey with responses.
+  const reviewReport =
+    isReviewing && importer.report
+      ? {
+          ...importer.report,
+          issues: isUpdating
+            ? [...(importer.match?.issues ?? []), ...importer.report.issues]
+            : importer.report.issues,
+        }
+      : null;
 
   // The drop zone unmounts when the import starts; Stop is the only action left, so focus goes there.
   useEffect(() => {
@@ -107,20 +122,14 @@ export const ImportSurveyForm = ({
     onImportingChange?.(isImporting);
   }, [isImporting, onImportingChange]);
 
-  // Same gate as Create with AI (ENG-3603): the alert stands in for the drop zone. The route can also
-  // say AI went off after the page loaded, which lands here the same way.
-  if (!isAIAvailable || importer.aiUnavailableReason) {
-    return (
-      <AIUnavailableAlert
-        title={t("workspace.surveys.import.feature_name")}
-        reason={importer.aiUnavailableReason ?? aiUnavailableReason}
-        feature="qsf_survey_import"
-      />
-    );
-  }
+  // Without Formbricks AI the dialog still imports Formbricks files (ENG-6850), so there is no alert in
+  // place of the drop zone: it offers .json only and leaves the AI note out. AI going off after the page
+  // loaded refuses the .qsf it was asked to read, with an error line like any other refusal.
+  const canReadWithAI = isAIAvailable && !importer.aiUnavailableReason;
+  const fileExtensions = getSurveyImportFileExtensions(canReadWithAI);
 
   const errorMessage = importer.errorCode
-    ? getQsfImportErrorMessage(importer.errorCode, t, importer.retryAfterSeconds)
+    ? getSurveyImportErrorMessage(importer.errorCode, t, importer.retryAfterSeconds)
     : null;
 
   const progressMessages = [
@@ -141,6 +150,19 @@ export const ImportSurveyForm = ({
       onEdit={importer.pickAnotherFile}
     />
   ) : null;
+
+  // On a Match the primary button says what it does: Update, "Update anyway" once the survey turned out
+  // to have changed since the export, or the usual Save and continue for a new survey.
+  const getPrimaryLabel = () => {
+    if (!isUpdating) return t("workspace.surveys.ai_create.open_in_editor");
+    return importer.conflict === "stale"
+      ? t("workspace.surveys.import.match.update_anyway")
+      : t("workspace.surveys.import.match.update_survey");
+  };
+  const getPrimaryTestId = () => {
+    if (!isUpdating) return "survey-import-save";
+    return importer.conflict === "stale" ? "survey-import-update-anyway" : "survey-import-update";
+  };
 
   const buildFooter = () => {
     if (isImporting) {
@@ -167,8 +189,9 @@ export const ImportSurveyForm = ({
           <Button
             type="button"
             loading={importer.isCreatingSurvey || isHostNavigating}
-            onClick={importer.handleOpenInEditor}>
-            {t("workspace.surveys.ai_create.open_in_editor")}
+            onClick={importer.handleOpenInEditor}
+            data-testid={getPrimaryTestId()}>
+            {getPrimaryLabel()}
           </Button>
         </>
       );
@@ -192,7 +215,10 @@ export const ImportSurveyForm = ({
       {errorMessage ? (
         <Alert variant="error">
           <AlertTitle>{t("common.error")}</AlertTitle>
-          <AlertDescription>{errorMessage}</AlertDescription>
+          <AlertDescription>
+            {errorMessage}
+            <ImportFieldProblems problems={importer.invalidParams ?? []} />
+          </AlertDescription>
         </Alert>
       ) : null}
 
@@ -201,12 +227,28 @@ export const ImportSurveyForm = ({
         // list keeps two rows instead of shrinking to nothing, while the warning and the footer stay
         // in view. -m-1/p-1 leave room for focus rings the scroll box would otherwise clip.
         <div className="-m-1 flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-1">
+          {isReviewing && importer.match ? (
+            <ImportMatchChoice
+              match={importer.match}
+              newSurveyName={importer.newSurveyName}
+              choice={importer.choice}
+              onChoiceChange={importer.selectChoice}
+              triggersChoice={importer.triggersChoice}
+              onTriggersChoiceChange={importer.selectTriggersChoice}
+              conflict={importer.conflict}
+            />
+          ) : null}
           <DraftReviewPanel
             draft={importer.draft}
             isGenerating={isImporting}
             source={sourceChip}
             facts={reviewReport ? <ImportFacts summary={reviewReport.summary} /> : undefined}
-            report={reviewReport ? <ImportReport report={reviewReport} /> : undefined}
+            report={
+              reviewReport ? (
+                // Remounted with the choice, so it opens by itself when an Update adds a warning.
+                <ImportReport key={isUpdating ? "update" : "create"} report={reviewReport} />
+              ) : undefined
+            }
             status={
               isImporting ? (
                 <AiStatusLine isActive messages={progressMessages} activeIndex={stageIndex} />
@@ -220,16 +262,32 @@ export const ImportSurveyForm = ({
         <div className="flex flex-col gap-2">
           <FileDropZone
             id="import-survey-file"
-            accept={QSF_FILE_EXTENSION}
+            accept={fileExtensions.join(",")}
             onFileSelect={importer.selectFile}
-            isLoading={importer.isReadingFile}
             primaryText={t("workspace.surveys.import.dropzone_primary")}
-            helpText={t("workspace.surveys.import.dropzone_help")}
+            helpText={
+              canReadWithAI
+                ? t("workspace.surveys.import.dropzone_help")
+                : t("workspace.surveys.import.dropzone_help_json_only")
+            }
             loadingText={t("workspace.surveys.import.reading_file")}
           />
-          <p className="flex items-center gap-1.5 text-xs text-slate-500">
-            <AiIcon className="size-3.5 shrink-0" aria-hidden="true" />
-            {t("workspace.surveys.import.ai_note")}
+          {canReadWithAI ? (
+            <p className="flex items-center gap-1.5 text-xs text-slate-500">
+              <AiIcon className="size-3.5 shrink-0" aria-hidden="true" />
+              {t("workspace.surveys.import.ai_note")}
+            </p>
+          ) : null}
+          <p className="text-xs text-slate-500">
+            {t("workspace.surveys.import.mcp_hint")}{" "}
+            <a
+              href={MCP_DOCS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-0.5 text-slate-600 underline underline-offset-4 hover:text-slate-800">
+              {t("workspace.surveys.import.mcp_hint_link")}
+              <ArrowUpRightIcon className="size-3" aria-hidden="true" />
+            </a>
           </p>
         </div>
       )}

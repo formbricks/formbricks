@@ -4,13 +4,14 @@ import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { generateObject } from "@formbricks/ai";
 import { env } from "@/lib/env";
+import { checkImportDraft } from "@/modules/survey/import/core/final-gate";
 import {
   IMPORTABLE_QSF_FIXTURES,
   loadQsfFixture,
 } from "@/modules/survey/import/qsf/__fixtures__/load-fixture";
 import type { TQsfPlanGenerate } from "@/modules/survey/import/qsf/ai-plan";
-import { checkQsfDraft } from "@/modules/survey/import/qsf/final-gate";
-import { prepareQsfImport, runQsfImport } from "@/modules/survey/import/qsf/pipeline";
+import { runQsfImport } from "@/modules/survey/import/qsf/pipeline";
+import { prepareQsfImport } from "@/modules/survey/import/qsf/prepare";
 
 /**
  * ENG-3654 — the Qualtrics import against a real model. Not run in CI: CI uses the recorded plans in
@@ -149,7 +150,7 @@ const runOnce = async (name: string, qsf: Record<string, unknown>, recordDir: st
     inputTokens: result.usage?.inputTokens ?? 0,
     outputTokens,
     outputTokensPerQuestion: questions > 0 ? Math.round(outputTokens / questions) : null,
-    passesCreateCheck: checkQsfDraft(result.payload).length === 0,
+    passesCreateCheck: checkImportDraft(result.payload).length === 0,
     issues: result.report.issues.map((issue) => issue.code).sort((left, right) => left.localeCompare(right)),
   };
 };

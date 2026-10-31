@@ -12,6 +12,7 @@ import {
 import {
   DEFAULT_REQUEST_BODY_LIMIT_BYTES,
   RequestBodyTooLargeError,
+  parseFormDataWithLimit,
   readRequestBodyWithLimit,
 } from "@/app/lib/api/request-body";
 import { withAuthorizationSurface } from "@/lib/authorization/context";
@@ -38,6 +39,7 @@ import {
   problemPayloadTooLarge,
   problemTooManyRequests,
   problemUnauthorized,
+  problemUnsupportedMediaType,
   withBearerChallenge,
 } from "./response";
 import type { TV3AuditLog, TV3Authentication } from "./types";
@@ -48,7 +50,14 @@ type MaybePromise<T> = T | Promise<T>;
 export type TV3AuthMode = "none" | "session" | "apiKey" | "both";
 
 export type TV3Schemas = {
+  /** A JSON body. */
   body?: TV3Schema;
+  /**
+   * A `multipart/form-data` body instead of a JSON one, for a route that takes a file upload. The schema
+   * sees each field by name: a `string` or a `File`, or an array of them when the name repeats. Anything
+   * but `multipart/form-data` is a 415, a body that does not parse or fails the schema a 400.
+   */
+  formData?: TV3Schema;
   query?: TV3Schema;
   params?: TV3Schema;
 };
@@ -87,9 +96,10 @@ export type TWithV3ApiWrapperParams<S extends TV3Schemas | undefined, TProps = u
   bodyLimitBytes?: number;
   /**
    * Caps how many requests to this route one server process handles at once; the next one gets a 503
-   * `capacity_reached` with `Retry-After`. The slot is taken after authentication and rate limiting but
-   * **before the body is read**, so it also bounds the memory spent parsing large bodies, and it is held
-   * until the response body is fully sent or cancelled, so a streamed response keeps its slot for as
+   * `capacity_reached` with `Retry-After`. The slot is taken after authentication, rate limiting and
+   * **once the body has been read** within `bodyLimitBytes`: it bounds the work, not the transfer, so a
+   * client trickling its upload never holds one, and a body read meanwhile is capped like any other. It
+   * is held until the response body is fully sent or cancelled, so a streamed response keeps its slot for as
    * long as it runs, or until the client disconnects. Share one `ConcurrencyLimiter` per route, created at
    * module scope.
    *
@@ -431,6 +441,65 @@ async function preflightUndeclaredBody(
   return arrayBudgetFailure(read.data, context.requestId, context.instance);
 }
 
+const MULTIPART_FORM_DATA = "multipart/form-data";
+
+/** The media type of a `Content-Type` header, without its parameters (the multipart boundary). */
+const mediaTypeOf = (contentType: string | null): string =>
+  (contentType ?? "").split(";")[0].trim().toLowerCase();
+
+/**
+ * The form step of `parseV3Input`, for a route that takes `multipart/form-data`: the media type first
+ * (415), then the body read within the byte limit (413) and parsed (400), then the schema (400).
+ *
+ * The fields reach the schema by name, built with `Object.fromEntries` so a field called `__proto__`
+ * stays an ordinary key. A repeated name is an array, which a schema expecting one value refuses.
+ */
+async function parseV3FormData(
+  req: NextRequest,
+  schema: TV3Schema,
+  { requestId, instance, bodyLimitBytes }: TV3ParseContext
+): Promise<{ ok: true; formData: unknown } | TV3InputParseFailure> {
+  if (mediaTypeOf(req.headers.get("content-type")) !== MULTIPART_FORM_DATA) {
+    const detail = `The request body must be ${MULTIPART_FORM_DATA}`;
+    return {
+      ok: false,
+      detail,
+      invalidParams: [],
+      response: problemUnsupportedMediaType(requestId, detail, {
+        instance,
+        acceptPost: MULTIPART_FORM_DATA,
+      }),
+    };
+  }
+
+  let form: FormData;
+  try {
+    form = await parseFormDataWithLimit(req, bodyLimitBytes);
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) {
+      return bodyTooLargeFailure(error, requestId, instance);
+    }
+    return invalidBodyFailure(
+      [{ name: "body", reason: `Malformed ${MULTIPART_FORM_DATA} body` }],
+      requestId,
+      instance
+    );
+  }
+
+  const fields = Object.fromEntries(
+    [...new Set(form.keys())].map((name) => {
+      const values = form.getAll(name);
+      return [name, values.length === 1 ? values[0] : values];
+    })
+  );
+  const result = schema.safeParse(fields);
+  if (!result.success) {
+    return invalidBodyFailure(formatZodIssues(result.error, "body"), requestId, instance);
+  }
+
+  return { ok: true, formData: result.data };
+}
+
 async function parseV3Input<S extends TV3Schemas | undefined, TProps>(
   req: NextRequest,
   props: TProps,
@@ -440,7 +509,14 @@ async function parseV3Input<S extends TV3Schemas | undefined, TProps>(
   const { requestId, instance } = context;
   const parsedInput = {} as TV3ParsedInput<S>;
 
-  if (schemas?.body) {
+  if (schemas?.formData) {
+    const formResult = await parseV3FormData(req, schemas.formData, context);
+    if (!formResult.ok) {
+      return formResult;
+    }
+
+    parsedInput.formData = formResult.formData as TV3ParsedInput<S>["formData"];
+  } else if (schemas?.body) {
     const bodyResult = await parseV3Body(req, schemas.body, context);
     if (!bodyResult.ok) {
       return bodyResult;
@@ -659,6 +735,10 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
     throw new Error(`withV3ApiWrapper: bodyLimitBytes must be a positive integer, got ${bodyLimitBytes}`);
   }
 
+  if (schemas?.body && schemas.formData) {
+    throw new Error("withV3ApiWrapper: declare either a body or a formData schema, not both");
+  }
+
   if (
     concurrency &&
     (!Number.isSafeInteger(concurrency.retryAfterSeconds) || concurrency.retryAfterSeconds <= 0)
@@ -702,16 +782,6 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
         return rateLimitResponse;
       }
 
-      if (concurrency) {
-        const slot = concurrency.limiter.tryAcquire(
-          getRateLimitIdentifier(authResult.authentication) ?? undefined
-        );
-        if (!slot.ok) {
-          return refuseOverConcurrency(slot.reason, concurrency, { requestId, instance, log });
-        }
-        releaseSlot = slot.release;
-      }
-
       const parsedInputResult = await parseV3Input(req, props, schemas, {
         requestId,
         instance,
@@ -730,6 +800,16 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
           "V3 API request validation failed"
         );
         return parsedInputResult.response;
+      }
+
+      if (concurrency) {
+        const slot = concurrency.limiter.tryAcquire(
+          getRateLimitIdentifier(authResult.authentication) ?? undefined
+        );
+        if (!slot.ok) {
+          return refuseOverConcurrency(slot.reason, concurrency, { requestId, instance, log });
+        }
+        releaseSlot = slot.release;
       }
 
       // Built after authentication, rate limiting and parsing on purpose (ENG-2872). A 401 has no actor

@@ -1,293 +1,75 @@
 import { type TFunction } from "i18next";
-import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
-import type { TSurveyMultipleChoiceElement, TSurveyRankingElement } from "@formbricks/types/surveys/elements";
 import { TSurvey, TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
-import { isI18nObject } from "@/lib/i18n/utils";
+import {
+  type TSurveyText,
+  type TSurveyTextOwner,
+  getSurveyTextFieldLabel,
+  hasDefaultText,
+  walkSurveyTexts,
+} from "@/modules/survey/lib/survey-texts";
 import type { TranslatableString, TranslationProgress } from "./types";
 
-const RICH_TEXT_FIELDS = new Set(["headline", "subheader", "html"]);
-const OTHER_OPTION_PLACEHOLDER_FIELD = "otherOptionPlaceholder";
+const DISPLAY_ID_WELCOME_CARD = "W";
 
-const pushIfI18n = (
-  result: TranslatableString[],
-  obj: unknown,
-  field: string,
-  path: string,
-  displayId: string,
-  fieldLabel: string,
-  elementId: string
-) => {
-  const val = (obj as Record<string, unknown>)?.[field];
-  if (val && isI18nObject(val)) {
-    const defaultText = val.default ?? "";
-    const isRichText = RICH_TEXT_FIELDS.has(field);
-    const hasContent = isRichText ? getTextContent(defaultText).trim() !== "" : defaultText.trim() !== "";
-    if (!hasContent) return;
-
-    result.push({
-      path: `${path}.${field}`,
-      displayId,
-      fieldLabel,
-      value: val,
-      isRichText,
-      elementId,
-    });
+/** The short position the Manage translations modal shows: "W", "2" (a block), "2.1" (an element), "E1". */
+const getDisplayId = (owner: TSurveyTextOwner): string => {
+  switch (owner.kind) {
+    case "welcomeCard":
+      return DISPLAY_ID_WELCOME_CARD;
+    case "block":
+      return `${owner.blockIndex + 1}`;
+    case "element":
+      return `${owner.blockIndex + 1}.${owner.elementIndex + 1}`;
+    case "ending":
+      return `E${owner.endingIndex + 1}`;
   }
 };
 
-const pushOtherOptionPlaceholder = (
-  result: TranslatableString[],
-  element: TSurveyMultipleChoiceElement | TSurveyRankingElement,
-  path: string,
-  displayId: string,
-  fieldLabel: string,
-  elementId: string,
-  defaultPlaceholder: string
-) => {
-  const hasOtherChoice = element.choices?.some((choice) => choice.id === "other");
-  if (!hasOtherChoice) return;
-
-  const existingPlaceholder = element.otherOptionPlaceholder;
-  const defaultText = existingPlaceholder?.default?.trim() ? existingPlaceholder.default : defaultPlaceholder;
-
-  result.push({
-    path: `${path}.${OTHER_OPTION_PLACEHOLDER_FIELD}`,
-    displayId,
-    fieldLabel,
-    value: {
-      ...(isI18nObject(existingPlaceholder) ? existingPlaceholder : {}),
-      default: defaultText,
-    },
-    isRichText: false,
-    elementId,
-  });
+const getOwnerId = (owner: TSurveyTextOwner): string => {
+  switch (owner.kind) {
+    case "welcomeCard":
+      return "start";
+    case "block":
+      return owner.blockId;
+    case "element":
+      return owner.element.id;
+    case "ending":
+      return owner.endingId;
+  }
 };
 
-export const extractTranslatableStrings = (survey: TSurvey, t: TFunction): TranslatableString[] => {
-  const result: TranslatableString[] = [];
+const isOtherOptionPlaceholder = (text: TSurveyText): boolean =>
+  text.field.kind === "property" && text.field.property === "otherOptionPlaceholder";
 
-  // Welcome card
-  if (survey.welcomeCard.enabled) {
-    const base = "welcomeCard";
-    const did = "W";
-    const eid = "start";
-    pushIfI18n(result, survey.welcomeCard, "headline", base, did, t("common.headline"), eid);
-    pushIfI18n(result, survey.welcomeCard, "subheader", base, did, t("common.subheader"), eid);
-    pushIfI18n(
-      result,
-      survey.welcomeCard,
-      "buttonLabel",
-      base,
-      did,
-      t("workspace.surveys.edit.button_label"),
-      eid
-    );
-  }
-
-  // Blocks → elements
-  survey.blocks.forEach((block, blockIdx) => {
-    // Block-level fields
-    pushIfI18n(
-      result,
-      block,
-      "buttonLabel",
-      `blocks.${blockIdx}`,
-      `${blockIdx + 1}`,
-      t("workspace.surveys.edit.button_label"),
-      block.id
-    );
-    pushIfI18n(
-      result,
-      block,
-      "backButtonLabel",
-      `blocks.${blockIdx}`,
-      `${blockIdx + 1}`,
-      t("workspace.surveys.edit.back_button_label"),
-      block.id
-    );
-
-    block.elements.forEach((element, elementIdx) => {
-      const base = `blocks.${blockIdx}.elements.${elementIdx}`;
-      const did = `${blockIdx + 1}.${elementIdx + 1}`;
-      const eid = element.id;
-
-      // Common fields
-      pushIfI18n(result, element, "headline", base, did, t("common.headline"), eid);
-      pushIfI18n(result, element, "subheader", base, did, t("common.subheader"), eid);
-      pushIfI18n(result, element, "imageAltText", base, did, t("workspace.surveys.edit.image_alt_text"), eid);
-
-      // Type-specific fields
-      switch (element.type) {
-        case TSurveyElementTypeEnum.OpenText:
-          pushIfI18n(result, element, "placeholder", base, did, t("common.placeholder"), eid);
-          break;
-        case TSurveyElementTypeEnum.Consent:
-          pushIfI18n(result, element, "label", base, did, t("common.label"), eid);
-          break;
-        case TSurveyElementTypeEnum.MultipleChoiceSingle:
-        case TSurveyElementTypeEnum.MultipleChoiceMulti: {
-          element.choices?.forEach((choice, ci) => {
-            if (isI18nObject(choice.label) && (choice.label.default ?? "").trim()) {
-              result.push({
-                path: `${base}.choices.${ci}.label`,
-                displayId: did,
-                fieldLabel: t("common.choice_n", { n: ci + 1 }),
-                value: choice.label,
-                isRichText: false,
-                elementId: eid,
-              });
-            }
-          });
-          pushOtherOptionPlaceholder(
-            result,
-            element,
-            base,
-            did,
-            t("common.other_placeholder"),
-            eid,
-            t("workspace.surveys.edit.please_specify")
-          );
-          break;
-        }
-        case TSurveyElementTypeEnum.PictureSelection:
-          element.choices.forEach((choice, ci) => {
-            pushIfI18n(
-              result,
-              choice,
-              "imageAltText",
-              `${base}.choices.${ci}`,
-              did,
-              t("workspace.surveys.edit.image_alt_text_choice_n", { n: ci + 1 }),
-              eid
-            );
-          });
-          break;
-        case TSurveyElementTypeEnum.NPS:
-        case TSurveyElementTypeEnum.Rating:
-        case TSurveyElementTypeEnum.CSAT:
-        case TSurveyElementTypeEnum.CES:
-          pushIfI18n(result, element, "lowerLabel", base, did, t("workspace.surveys.edit.lower_label"), eid);
-          pushIfI18n(result, element, "upperLabel", base, did, t("workspace.surveys.edit.upper_label"), eid);
-          break;
-        case TSurveyElementTypeEnum.CTA:
-          pushIfI18n(
-            result,
-            element,
-            "ctaButtonLabel",
-            base,
-            did,
-            t("workspace.surveys.edit.cta_button_label"),
-            eid
-          );
-          break;
-        case TSurveyElementTypeEnum.Date:
-          pushIfI18n(result, element, "html", base, did, t("common.html"), eid);
-          break;
-        case TSurveyElementTypeEnum.Matrix: {
-          element.rows?.forEach((row, ri) => {
-            if (isI18nObject(row.label) && (row.label.default ?? "").trim()) {
-              result.push({
-                path: `${base}.rows.${ri}.label`,
-                displayId: did,
-                fieldLabel: t("common.row_n", { n: ri + 1 }),
-                value: row.label,
-                isRichText: false,
-                elementId: eid,
-              });
-            }
-          });
-          element.columns?.forEach((col, ci) => {
-            if (isI18nObject(col.label) && (col.label.default ?? "").trim()) {
-              result.push({
-                path: `${base}.columns.${ci}.label`,
-                displayId: did,
-                fieldLabel: t("common.column_n", { n: ci + 1 }),
-                value: col.label,
-                isRichText: false,
-                elementId: eid,
-              });
-            }
-          });
-          break;
-        }
-        case TSurveyElementTypeEnum.Address: {
-          const addrFields = ["addressLine1", "addressLine2", "city", "state", "zip", "country"] as const;
-          addrFields.forEach((f) => {
-            const sub = element[f];
-            if (sub?.placeholder && isI18nObject(sub.placeholder) && (sub.placeholder.default ?? "").trim()) {
-              result.push({
-                path: `${base}.${f}.placeholder`,
-                displayId: did,
-                fieldLabel: t("common.field_placeholder", { field: f }),
-                value: sub.placeholder,
-                isRichText: false,
-                elementId: eid,
-              });
-            }
-          });
-          break;
-        }
-        case TSurveyElementTypeEnum.ContactInfo: {
-          const contactFields = ["firstName", "lastName", "email", "phone", "company"] as const;
-          contactFields.forEach((f) => {
-            const sub = element[f];
-            if (sub?.placeholder && isI18nObject(sub.placeholder) && (sub.placeholder.default ?? "").trim()) {
-              result.push({
-                path: `${base}.${f}.placeholder`,
-                displayId: did,
-                fieldLabel: t("common.field_placeholder", { field: f }),
-                value: sub.placeholder,
-                isRichText: false,
-                elementId: eid,
-              });
-            }
-          });
-          break;
-        }
-        case TSurveyElementTypeEnum.Ranking: {
-          element.choices?.forEach((choice, ci) => {
-            if (isI18nObject(choice.label) && (choice.label.default ?? "").trim()) {
-              result.push({
-                path: `${base}.choices.${ci}.label`,
-                displayId: did,
-                fieldLabel: t("common.choice_n", { n: ci + 1 }),
-                isRichText: false,
-                value: choice.label,
-                elementId: eid,
-              });
-            }
-          });
-          pushOtherOptionPlaceholder(
-            result,
-            element,
-            base,
-            did,
-            t("common.other_placeholder"),
-            eid,
-            t("workspace.surveys.edit.please_specify")
-          );
-          break;
-        }
-      }
-    });
-  });
-
-  // Endings
-  survey.endings.forEach((ending, endingIdx) => {
-    if (ending.type === "endScreen") {
-      const base = `endings.${endingIdx}`;
-      const did = `E${endingIdx + 1}`;
-      const eid = ending.id;
-      pushIfI18n(result, ending, "headline", base, did, t("common.headline"), eid);
-      pushIfI18n(result, ending, "subheader", base, did, t("common.subheader"), eid);
-      pushIfI18n(result, ending, "imageAltText", base, did, t("workspace.surveys.edit.image_alt_text"), eid);
-      pushIfI18n(result, ending, "buttonLabel", base, did, t("workspace.surveys.edit.button_label"), eid);
+/**
+ * The texts the Manage translations modal lists: every text of {@link walkSurveyTexts} with a default to
+ * translate. An "Other" placeholder is always listed, falling back to the default respondents see when
+ * none is stored, so it can be translated before anyone sets one.
+ */
+export const extractTranslatableStrings = (survey: TSurvey, t: TFunction): TranslatableString[] =>
+  walkSurveyTexts(survey).flatMap((text) => {
+    let value = text.value;
+    if (isOtherOptionPlaceholder(text)) {
+      value = {
+        ...value,
+        default: value?.default?.trim() ? value.default : t("workspace.surveys.edit.please_specify"),
+      };
+    } else if (!value || !hasDefaultText(text)) {
+      return [];
     }
-  });
 
-  return result;
-};
+    return [
+      {
+        path: text.path,
+        displayId: getDisplayId(text.owner),
+        fieldLabel: getSurveyTextFieldLabel(text.field, t),
+        value,
+        isRichText: text.isRichText,
+        elementId: getOwnerId(text.owner),
+      },
+    ];
+  });
 
 export const computeTranslationProgress = (
   strings: TranslatableString[],

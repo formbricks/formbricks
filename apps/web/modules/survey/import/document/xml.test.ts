@@ -1,0 +1,157 @@
+import { describe, expect, test } from "vitest";
+import { SurveyImportInputError } from "../core/errors";
+import {
+  SURVEY_IMPORT_XML_MAX_ATTRIBUTES,
+  SURVEY_IMPORT_XML_MAX_DEPTH,
+  SURVEY_IMPORT_XML_MAX_ELEMENTS,
+} from "../limits";
+import { checkDocumentXml, parseDocumentXml } from "./xml";
+
+const encode = (text: string) => new TextEncoder().encode(text);
+
+const parse = (text: string) => parseDocumentXml(encode(text), "word/document.xml");
+
+const refusal = (run: () => unknown) => {
+  try {
+    run();
+  } catch (error) {
+    if (error instanceof SurveyImportInputError) return error.invalidParams[0];
+    throw error;
+  }
+  throw new Error("Expected the part to be refused");
+};
+
+/** A root element nesting `depth` levels in all, the root included. */
+const nested = (depth: number) => `${"<a>".repeat(depth)}${"</a>".repeat(depth)}`;
+
+/** A root element holding `count - 1` empty children: `count` elements in all. */
+const flat = (count: number) => `<r>${"<a/>".repeat(count - 1)}</r>`;
+
+describe("parseDocumentXml", () => {
+  test("parses a part into its root element, attributes with `>` in their values included", () => {
+    const root = parse(
+      `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:p xmlns:w="urn:w"><w:t a="x > y">Q1 &amp; Q2</w:t></w:p>`
+    );
+
+    expect(root.localName).toBe("p");
+    expect(root.textContent).toBe("Q1 & Q2");
+  });
+
+  test("takes exactly the nesting limit and refuses one level more, naming the part", () => {
+    expect(parse(nested(SURVEY_IMPORT_XML_MAX_DEPTH)).localName).toBe("a");
+    expect(refusal(() => parse(nested(SURVEY_IMPORT_XML_MAX_DEPTH + 1)))).toEqual({
+      name: "file.word/document.xml",
+      reason: `An XML part must not nest more than ${SURVEY_IMPORT_XML_MAX_DEPTH} levels`,
+      code: "document_limit_exceeded",
+      identifier: "xml_depth",
+    });
+  });
+
+  test("reads a `>` or `/>` inside an attribute's value as text, not as the end of the tag", () => {
+    // Each level's attribute looks like it closes the tag: read so, no level would count.
+    const levels = (depth: number) => `${'<a v="/>">'.repeat(depth)}${"</a>".repeat(depth)}`;
+
+    expect(parse(levels(SURVEY_IMPORT_XML_MAX_DEPTH)).getAttribute("v")).toBe("/>");
+    expect(refusal(() => parse(levels(SURVEY_IMPORT_XML_MAX_DEPTH + 1)))).toMatchObject({
+      identifier: "xml_depth",
+    });
+  });
+
+  test("takes exactly the element limit and refuses one element more", () => {
+    expect(parse(flat(SURVEY_IMPORT_XML_MAX_ELEMENTS)).childNodes).toHaveLength(
+      SURVEY_IMPORT_XML_MAX_ELEMENTS - 1
+    );
+    expect(refusal(() => parse(flat(SURVEY_IMPORT_XML_MAX_ELEMENTS + 1)))).toMatchObject({
+      code: "document_limit_exceeded",
+      identifier: "xml_elements",
+    });
+  });
+
+  test("does not count comments, CDATA or processing instructions as elements or levels", () => {
+    // At the nesting limit already: markup-looking text inside them would push the part past it.
+    const levels = SURVEY_IMPORT_XML_MAX_DEPTH;
+    const markup = "<a> <a> <a>";
+    const text = `${"<a>".repeat(levels)}<!-- ${markup} --><![CDATA[ ${markup} ]]><?pi ${markup} ?>${"</a>".repeat(levels)}`;
+
+    expect(parse(text).localName).toBe("a");
+  });
+
+  test("refuses a part that declares a DTD, so no entity is ever defined or expanded", () => {
+    const billionLaughs = `<?xml version="1.0"?><!DOCTYPE r [<!ENTITY a "aaaaaaaaaa"><!ENTITY b "&a;&a;&a;&a;">]><r>&b;</r>`;
+    const external = `<?xml version="1.0"?><!DOCTYPE r SYSTEM "file:///etc/passwd"><r/>`;
+
+    for (const text of [billionLaughs, external]) {
+      expect(refusal(() => parse(text))).toMatchObject({ code: "file_unreadable" });
+    }
+  });
+
+  test("refuses a part that is not well-formed XML as unreadable", () => {
+    for (const text of ["<r><a></r>", "", "not xml", "<r>&undefined;</r>"]) {
+      expect(refusal(() => parse(text))).toMatchObject({ code: "file_unreadable" });
+    }
+  });
+
+  test("refuses a part that is not UTF-8 as unreadable", () => {
+    expect(
+      refusal(() =>
+        parseDocumentXml(new Uint8Array([0x3c, 0x72, 0x3e, 0xff, 0x3c, 0x2f, 0x72, 0x3e]), "x.xml")
+      )
+    ).toMatchObject({ code: "file_unreadable" });
+  });
+});
+
+describe("checkDocumentXml", () => {
+  const check = (text: string) => checkDocumentXml(encode(text), "xl/sharedStrings.xml");
+
+  test("holds a part to the same limits as parseDocumentXml, without parsing it", () => {
+    expect(() => check(nested(SURVEY_IMPORT_XML_MAX_DEPTH))).not.toThrow();
+    expect(refusal(() => check(nested(SURVEY_IMPORT_XML_MAX_DEPTH + 1)))).toMatchObject({
+      name: "file.xl/sharedStrings.xml",
+      identifier: "xml_depth",
+    });
+    expect(refusal(() => check(flat(SURVEY_IMPORT_XML_MAX_ELEMENTS + 1)))).toMatchObject({
+      identifier: "xml_elements",
+    });
+  });
+
+  test("takes exactly the attribute limit and refuses one attribute more, in one element or across many", () => {
+    /** `count` attributes, `perElement` to an element, each `a="b"` with `>` and `=` inside some values. */
+    const attributes = (count: number, perElement: number) => {
+      const elements: string[] = [];
+      for (let left = count; left > 0; left -= perElement) {
+        const here = Math.min(perElement, left);
+        elements.push(
+          `<e ${Array.from({ length: here }, (_, index) => `a${index}="=>${index}"`).join(" ")}/>`
+        );
+      }
+      return `<r>${elements.join("")}</r>`;
+    };
+
+    expect(() => check(attributes(SURVEY_IMPORT_XML_MAX_ATTRIBUTES, 1_000))).not.toThrow();
+    for (const perElement of [SURVEY_IMPORT_XML_MAX_ATTRIBUTES + 1, 1_000]) {
+      expect(
+        refusal(() => check(attributes(SURVEY_IMPORT_XML_MAX_ATTRIBUTES + 1, perElement)))
+      ).toMatchObject({
+        code: "document_limit_exceeded",
+        identifier: "xml_attributes",
+      });
+    }
+    // Refused before the DOM parser allocates a node for any of them.
+    expect(
+      refusal(() =>
+        parseDocumentXml(encode(attributes(SURVEY_IMPORT_XML_MAX_ATTRIBUTES + 1, 1_000)), "word/document.xml")
+      )
+    ).toMatchObject({ identifier: "xml_attributes" });
+  });
+
+  // A lenient reader such as SheetJS reads on past markup that never closes, so the limits must not
+  // stop being counted there: a part that never closes a tag, comment or instruction is unreadable.
+  test.each([
+    ["an attribute value", `<r a="${nested(SURVEY_IMPORT_XML_MAX_DEPTH + 1)}`],
+    ["a comment", `<r><!-- ${nested(SURVEY_IMPORT_XML_MAX_DEPTH + 1)}`],
+    ["a processing instruction", `<r><?pi ${nested(SURVEY_IMPORT_XML_MAX_DEPTH + 1)}`],
+    ["a CDATA section", `<r><![CDATA[ ${nested(SURVEY_IMPORT_XML_MAX_DEPTH + 1)}`],
+  ])("refuses a part where %s never closes as unreadable", (_what, text) => {
+    expect(refusal(() => check(text))).toMatchObject({ code: "file_unreadable" });
+  });
+});
