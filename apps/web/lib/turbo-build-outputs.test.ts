@@ -89,6 +89,8 @@ const BUNDLE_OUTPUTS: Record<string, string[]> = {
     // are copied artifacts like the widget itself. Undeclared, a cache hit restores the widget without
     // them and every non-English survey renders English chrome.
     `${PUBLIC_JS_DIR}/locales/**`,
+    // The typed-signature font is fetched on demand too, and is a copied artifact for the same reason.
+    `${PUBLIC_JS_DIR}/fonts/**`,
   ],
 };
 

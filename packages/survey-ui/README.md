@@ -59,6 +59,7 @@ function Survey() {
 | `Ranking`       | Drag-and-drop ranking             |
 | `DateElement`   | Date picker                       |
 | `FileUpload`    | File upload with preview          |
+| `Signature`     | Drawn or typed signature pad      |
 | `PictureSelect` | Image-based selection             |
 | `Consent`       | Checkbox with label               |
 | `CTA`           | Call-to-action button             |

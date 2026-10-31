@@ -1373,6 +1373,78 @@ describe("round-trip transformation", () => {
   });
 });
 
+describe("signature questions", () => {
+  const signatureQuestion = {
+    id: "sig1",
+    type: TSurveyQuestionTypeEnum.Signature,
+    headline: { default: "Sign here" },
+    required: true,
+    allowTypedSignature: false,
+    buttonLabel: { default: "Next" },
+  } as unknown as TSurveyQuestion;
+
+  test("should carry a legacy signature question into a one-element block and back", () => {
+    const blocks = transformQuestionsToBlocks([signatureQuestion], []);
+
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0].elements[0]).toMatchObject({
+      id: "sig1",
+      type: "signature",
+      allowTypedSignature: false,
+    });
+    expect(blocks[0].buttonLabel).toEqual({ default: "Next" });
+
+    const [roundTripped] = transformBlocksToQuestions(blocks, []);
+    expect(roundTripped).toMatchObject({
+      id: "sig1",
+      type: TSurveyQuestionTypeEnum.Signature,
+      headline: { default: "Sign here" },
+      allowTypedSignature: false,
+      buttonLabel: { default: "Next" },
+    });
+  });
+
+  test("should keep an is-signed logic condition on a signature through the round trip", () => {
+    const questions = [
+      {
+        ...signatureQuestion,
+        logic: [
+          {
+            id: "rule1",
+            conditions: {
+              id: "group1",
+              connector: "and",
+              conditions: [
+                {
+                  id: "cond1",
+                  leftOperand: { type: "question", value: "sig1" },
+                  operator: "isSubmitted",
+                },
+              ],
+            },
+            actions: [{ id: "action1", objective: "jumpToQuestion", target: "q2" }],
+          },
+        ],
+      },
+      { id: "q2", type: "openText", headline: { default: "Thanks" }, required: false },
+    ] as unknown as TSurveyQuestion[];
+
+    const blocks = transformQuestionsToBlocks(questions, []);
+    expect(blocks[0].logic?.[0].conditions.conditions[0]).toMatchObject({
+      leftOperand: { type: "element", value: "sig1" },
+      operator: "isSubmitted",
+    });
+
+    const [first] = transformBlocksToQuestions(blocks, []) as unknown as {
+      logic: { conditions: { conditions: unknown[] } }[];
+    }[];
+    expect(first.logic[0].conditions.conditions[0]).toMatchObject({
+      leftOperand: { type: "question", value: "sig1" },
+      operator: "isSubmitted",
+    });
+  });
+});
+
 describe("withoutInternalSurveyProjections", () => {
   test("keeps stored custom CSS out of the legacy v1 contract (ENG-2949)", () => {
     const survey = {

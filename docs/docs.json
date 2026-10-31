@@ -221,6 +221,7 @@
                   "surveys/question-type/select-multiple",
                   "surveys/question-type/select-picture",
                   "surveys/question-type/select-single",
+                  "surveys/question-type/signature",
                   "surveys/question-type/statement-cta",
                   "surveys/question-type/thank-you-card"
                 ]

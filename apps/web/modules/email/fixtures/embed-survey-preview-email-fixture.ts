@@ -294,6 +294,14 @@ const createPreviewElementByType = (type: TSurveyElementTypeEnum): TSurveyElemen
         required: true,
         allowMultipleFiles: false,
       } as TSurveyElement;
+    case TSurveyElementTypeEnum.Signature:
+      return {
+        id: EMBED_SURVEY_PREVIEW_QUESTION_ID,
+        type,
+        headline: createI18nString(EMBED_SURVEY_PREVIEW_HEADLINE, []),
+        required: true,
+        allowTypedSignature: true,
+      } as TSurveyElement;
     default:
       throw new Error(`Unsupported preview element type: ${type as string}`);
   }

@@ -102,5 +102,18 @@
     "value_must_equal": "Il valore deve essere uguale a {value}",
     "value_must_not_contain": "Il valore non deve contenere {value}",
     "value_must_not_equal": "Il valore non deve essere uguale a {value}"
+  },
+  "signature": {
+    "clear": "Cancella",
+    "draw": "Disegna",
+    "method": "Metodo di firma",
+    "not_signed": "Non firmato",
+    "pad_label": "Area di firma. Disegna la tua firma con il dito, uno stilo o un mouse.",
+    "pad_label_with_type": "Area di firma. Disegna la tua firma con il dito, uno stilo o un mouse, oppure passa a Digita per inserire il tuo nome con la tastiera.",
+    "saved": "La tua firma è stata salvata. Cancellala per firmare di nuovo.",
+    "sign_here": "Firma qui",
+    "signed": "Firmato",
+    "type": "Digita",
+    "type_your_name": "Digita il tuo nome"
   }
 }

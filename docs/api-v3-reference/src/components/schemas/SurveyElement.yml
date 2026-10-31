@@ -16,6 +16,7 @@ oneOf:
   - $ref: ./SurveyContactInfoElement.yml
   - $ref: ./SurveyCsatElement.yml
   - $ref: ./SurveyCesElement.yml
+  - $ref: ./SurveySignatureElement.yml
 discriminator:
   propertyName: type
   mapping:
@@ -36,6 +37,7 @@ discriminator:
     contactInfo: ./SurveyContactInfoElement.yml
     csat: ./SurveyCsatElement.yml
     ces: ./SurveyCesElement.yml
+    signature: ./SurveySignatureElement.yml
 description: >
   Survey element/question inside a block. Element ids are stable public
   identifiers used by

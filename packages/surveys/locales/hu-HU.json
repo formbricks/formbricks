@@ -102,5 +102,18 @@
     "value_must_equal": "Az értéknek egyenlőnek kell lennie ezzel: {value}",
     "value_must_not_contain": "Az érték nem tartalmazhatja ezt: {value}",
     "value_must_not_equal": "Az érték nem lehet egyenlő ezzel: {value}"
+  },
+  "signature": {
+    "clear": "Törlés",
+    "draw": "Rajzolás",
+    "method": "Aláírás módja",
+    "not_signed": "Nincs aláírva",
+    "pad_label": "Aláírási felület. Kérjük, rajzolja meg aláírását ujjával, érintőceruzával vagy egérrel.",
+    "pad_label_with_type": "Aláírási felület. Kérjük, rajzolja meg aláírását ujjával, érintőceruzával vagy egérrel, vagy váltson a Beírás módra, hogy a billentyűzet segítségével adhassa meg nevét.",
+    "saved": "Az Ön aláírása mentésre került. Amennyiben újra alá kíván írni, kérjük, először törölje azt.",
+    "sign_here": "Kérjük, itt írja alá",
+    "signed": "Aláírva",
+    "type": "Beírás",
+    "type_your_name": "Kérjük, írja be nevét"
   }
 }

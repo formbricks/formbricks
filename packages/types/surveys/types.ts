@@ -43,6 +43,7 @@ import {
   ZSurveyPictureSelectionElement,
   ZSurveyRankingElement,
   ZSurveyRatingElement,
+  ZSurveySignatureElement,
 } from "./elements";
 import { validateElementLabels } from "./elements-validation";
 import { ZSurveyFollowUp } from "./follow-up";
@@ -127,6 +128,7 @@ export enum TSurveyQuestionTypeEnum {
   ContactInfo = "contactInfo",
   CSAT = "csat",
   CES = "ces",
+  Signature = "signature",
 }
 
 /**
@@ -664,6 +666,19 @@ export const ZSurveyFileUploadQuestion = ZSurveyQuestionBase.extend({
 export type TSurveyFileUploadQuestion = z.infer<typeof ZSurveyFileUploadQuestion>;
 
 /**
+ * @deprecated Use ZSurveySignatureElement instead. Kept for v1 API backward compatibility only.
+ */
+export const ZSurveySignatureQuestion = ZSurveyQuestionBase.extend({
+  type: z.literal(TSurveyQuestionTypeEnum.Signature),
+  allowTypedSignature: z.boolean().prefault(true),
+});
+
+/**
+ * @deprecated Use TSurveySignatureElement instead. Kept for v1 API backward compatibility only.
+ */
+export type TSurveySignatureQuestion = z.infer<typeof ZSurveySignatureQuestion>;
+
+/**
  * @deprecated Use ZSurveyCalElement instead. Kept for v1 API backward compatibility only.
  */
 export const ZSurveyCalQuestion = ZSurveyQuestionBase.extend({
@@ -820,6 +835,7 @@ export const ZSurveyQuestion = z.union([
   ZSurveyContactInfoQuestion,
   ZSurveyCsatQuestion,
   ZSurveyCesQuestion,
+  ZSurveySignatureQuestion,
 ]);
 
 /**
@@ -858,6 +874,7 @@ export const ZSurveyQuestionType = z.enum([
   TSurveyQuestionTypeEnum.ContactInfo,
   TSurveyQuestionTypeEnum.CSAT,
   TSurveyQuestionTypeEnum.CES,
+  TSurveyQuestionTypeEnum.Signature,
 ]);
 
 /**
@@ -2235,6 +2252,7 @@ const isInvalidOperatorsForQuestionType = (
       }
       break;
     case TSurveyQuestionTypeEnum.FileUpload:
+    case TSurveyQuestionTypeEnum.Signature:
     case TSurveyQuestionTypeEnum.Address:
     case TSurveyQuestionTypeEnum.Ranking:
       if (!["isSubmitted", "isSkipped"].includes(operator)) {
@@ -3299,6 +3317,7 @@ const isInvalidOperatorsForElementType = (
       }
       break;
     case TSurveyElementTypeEnum.FileUpload:
+    case TSurveyElementTypeEnum.Signature:
       if (!["isSubmitted", "isSkipped"].includes(operator)) {
         isInvalidOperator = true;
       }
@@ -4479,6 +4498,30 @@ export const ZSurveyElementSummaryFileUpload = z.object({
 
 export type TSurveyElementSummaryFileUpload = z.infer<typeof ZSurveyElementSummaryFileUpload>;
 
+export const ZSurveyElementSummarySignature = z.object({
+  type: z.literal(TSurveyElementTypeEnum.Signature),
+  element: ZSurveySignatureElement,
+  responseCount: z.number(),
+  signedCount: z.number(),
+  skippedCount: z.number(),
+  signatures: z.array(
+    z.object({
+      id: z.string(),
+      updatedAt: z.date(),
+      value: z.string(),
+      contact: z
+        .object({
+          id: ZId,
+          userId: z.string().optional(),
+        })
+        .nullable(),
+      contactAttributes: ZContactAttributes.nullable(),
+    })
+  ),
+});
+
+export type TSurveyElementSummarySignature = z.infer<typeof ZSurveyElementSummarySignature>;
+
 export const ZSurveyElementSummaryCal = z.object({
   type: z.literal(TSurveyElementTypeEnum.Cal),
   element: ZSurveyCalElement,
@@ -4621,6 +4664,7 @@ export const ZSurveyElementSummary = z.union([
   ZSurveyElementSummaryConsent,
   ZSurveyElementSummaryDate,
   ZSurveyElementSummaryFileUpload,
+  ZSurveyElementSummarySignature,
   ZSurveyElementSummaryCal,
   ZSurveyElementSummaryMatrix,
   ZSurveyElementSummaryAddress,

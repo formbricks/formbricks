@@ -21,8 +21,8 @@ get:
     are contractual:
 
 
-    `rawKey`, `rawValue`, `valueText`, `valueDate`, `fileUrls` and composite slot values are always
-    the stored bytes, never resolved or reformatted — the resolved forms live in the separate
+    `rawKey`, `rawValue`, `valueText`, `valueDate`, `fileUrls`, `imageUrl` and composite slot values
+    are always the stored bytes, never resolved or reformatted — the resolved forms live in the separate
     `elementLabel`, `optionId`, `optionLabel`, `rowId` and `columnId` fields. And **empty-but-present
     values are returned, not omitted**: the `""` of an unchecked consent, the `""` of a selected but
     unfilled Other, a blank composite slot. That second rule matters because `PATCH` replaces `data`
@@ -150,6 +150,11 @@ get:
                           columnLabel: Gut
                           rawValue: Gut
                           match: label
+                    - position: 7
+                      elementId: sign_off
+                      elementType: signature
+                      elementLabel: Bitte unterschreiben
+                      imageUrl: /storage/clws1234567890123456789012/private/surveys/clsv1234567890123456789012/elements/sign_off/signature--fid--3f2a9c1e-7b4d-4e0a-9c53-1d2e8f6a7b90.png
                   embeddedData:
                     - key: plan
                       kind: ingested
@@ -187,6 +192,7 @@ get:
                       - Preis
                     nps_matrix:
                       Support: Gut
+                    sign_off: /storage/clws1234567890123456789012/private/surveys/clsv1234567890123456789012/elements/sign_off/signature--fid--3f2a9c1e-7b4d-4e0a-9c53-1d2e8f6a7b90.png
             anonymous:
               summary: An anonymous, unfinished response
               value:

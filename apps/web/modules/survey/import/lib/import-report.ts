@@ -43,8 +43,6 @@ const getQualtricsTypeName = (type: string, t: TTranslate): string => {
       return t("workspace.surveys.import.qualtrics_types.pick_group_rank");
     case "Highlight":
       return t("workspace.surveys.import.qualtrics_types.highlight");
-    case "Signature":
-      return t("workspace.surveys.import.qualtrics_types.signature");
     case "Draw":
       return t("workspace.surveys.import.qualtrics_types.drawing");
     case "GAP":

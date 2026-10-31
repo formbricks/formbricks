@@ -102,5 +102,18 @@
     "value_must_equal": "Vrijednost mora biti jednaka {value}",
     "value_must_not_contain": "Vrijednost ne smije sadržavati {value}",
     "value_must_not_equal": "Vrijednost ne smije biti jednaka {value}"
+  },
+  "signature": {
+    "clear": "Obriši",
+    "draw": "Nacrtaj",
+    "method": "Način potpisivanja",
+    "not_signed": "Nije potpisano",
+    "pad_label": "Polje za potpis. Nacrtaj svoj potpis prstom, olovkom za zaslon ili mišem.",
+    "pad_label_with_type": "Polje za potpis. Nacrtaj svoj potpis prstom, olovkom za zaslon ili mišem, ili prijeđi na Upiši kako bi svoje ime unio/unijela tipkovnicom.",
+    "saved": "Tvoj potpis je spremljen. Obriši ga za novo potpisivanje.",
+    "sign_here": "Potpiši se ovdje",
+    "signed": "Potpisano",
+    "type": "Upiši",
+    "type_your_name": "Upiši svoje ime"
   }
 }

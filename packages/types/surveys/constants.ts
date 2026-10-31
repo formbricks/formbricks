@@ -17,4 +17,5 @@ export enum TSurveyElementTypeEnum {
   ContactInfo = "contactInfo",
   CSAT = "csat",
   CES = "ces",
+  Signature = "signature",
 }

@@ -491,6 +491,7 @@ const ELEMENT_BASE_KEYS = new Set([
 const ELEMENT_REQUIRED_KEYS = ["id", "type", "headline", "required"] as const;
 const ALL_ELEMENT_EXTRA_KEYS = new Set([
   "allowMulti",
+  "allowTypedSignature",
   "allowMultipleFiles",
   "allowedFileExtensions",
   "addressLine1",
@@ -597,6 +598,7 @@ const ELEMENT_KEYS_BY_TYPE = {
     "shuffleOption",
     "validation",
   ]),
+  signature: new Set([...ELEMENT_BASE_KEYS, "allowTypedSignature"]),
   rating: new Set([
     ...ELEMENT_BASE_KEYS,
     "scale",

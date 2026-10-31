@@ -184,6 +184,7 @@ export const UNSUPPORTED_FEEDBACK_SOURCE_ELEMENT_TYPES: readonly TSurveyElementT
   TSurveyElementTypeEnum.Cal,
   TSurveyElementTypeEnum.CTA,
   TSurveyElementTypeEnum.FileUpload,
+  TSurveyElementTypeEnum.Signature,
   TSurveyElementTypeEnum.Consent,
 ] as const;
 

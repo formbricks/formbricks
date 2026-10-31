@@ -102,5 +102,18 @@
     "value_must_equal": "Qiymat {value} ga teng bo‘lishi kerak",
     "value_must_not_contain": "Qiymatda {value} bo‘lmasligi kerak",
     "value_must_not_equal": "Qiymat {value} ga teng bo‘lmasligi kerak"
+  },
+  "signature": {
+    "clear": "Tozalash",
+    "draw": "Chizish",
+    "method": "Imzo usuli",
+    "not_signed": "Imzolanmagan",
+    "pad_label": "Imzo maydoni. Imzoingizni barmog‘ingiz, stilus yoki sichqoncha bilan chizing.",
+    "pad_label_with_type": "Imzo maydoni. Imzoingizni barmog‘ingiz, stilus yoki sichqoncha bilan chizing yoki ismingizni klaviatura orqali kiritish uchun «Yozish» rejimiga o‘ting.",
+    "saved": "Imzoingiz saqlandi. Qayta imzo qo‘yish uchun uni tozalang.",
+    "sign_here": "Bu yerga imzo qo‘ying",
+    "signed": "Imzolangan",
+    "type": "Yozish",
+    "type_your_name": "Ismingizni yozing"
   }
 }

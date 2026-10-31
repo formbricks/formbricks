@@ -102,5 +102,18 @@
     "value_must_equal": "Giá trị phải bằng {value}",
     "value_must_not_contain": "Giá trị không được chứa {value}",
     "value_must_not_equal": "Giá trị không được bằng {value}"
+  },
+  "signature": {
+    "clear": "Xóa",
+    "draw": "Vẽ",
+    "method": "Phương thức ký",
+    "not_signed": "Chưa ký",
+    "pad_label": "Bảng ký tên. Hãy vẽ chữ ký của bạn bằng ngón tay, bút cảm ứng hoặc chuột.",
+    "pad_label_with_type": "Bảng ký tên. Hãy vẽ chữ ký của bạn bằng ngón tay, bút cảm ứng hoặc chuột, hoặc chuyển sang Nhập để nhập tên bằng bàn phím.",
+    "saved": "Chữ ký của bạn đã được lưu. Hãy xóa chữ ký để ký lại.",
+    "sign_here": "Ký tại đây",
+    "signed": "Đã ký",
+    "type": "Nhập",
+    "type_your_name": "Nhập tên của bạn"
   }
 }

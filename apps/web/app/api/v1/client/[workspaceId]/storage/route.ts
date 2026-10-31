@@ -13,7 +13,7 @@ import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getBiggerUploadFileSizePermission } from "@/modules/ee/license-check/lib/utils";
 import { getSignedUrlForUpload } from "@/modules/storage/service";
-import { getErrorResponseFromStorageError, validateSurveyAllowsFileUpload } from "@/modules/storage/utils";
+import { getErrorResponseFromStorageError, validateSurveyAllowsUpload } from "@/modules/storage/utils";
 import { verifyLinkSurveyPinToken } from "@/modules/survey/link/lib/pin-token";
 
 export const OPTIONS = async (): Promise<Response> => {
@@ -127,18 +127,18 @@ export const POST = withV1ApiWrapper({
       };
     }
 
-    const fileUploadPermission = validateSurveyAllowsFileUpload({
+    const uploadPermission = validateSurveyAllowsUpload({
       fileName,
       elementId,
       blocks: survey.blocks,
       questions: survey.questions,
     });
 
-    if (!fileUploadPermission.ok) {
+    if (!uploadPermission.ok) {
       let responseString: string = "";
-      if (fileUploadPermission.reason === "no_file_upload_element") {
+      if (uploadPermission.reason === "no_file_upload_element") {
         responseString = "Survey does not allow file uploads";
-      } else if (fileUploadPermission.reason === "file_upload_element_not_found") {
+      } else if (uploadPermission.reason === "file_upload_element_not_found") {
         responseString = "Element does not allow file uploads";
       } else {
         responseString = "File extension is not allowed for this element";

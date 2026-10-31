@@ -102,5 +102,18 @@
     "value_must_equal": "Nilai harus sama dengan {value}",
     "value_must_not_contain": "Nilai tidak boleh mengandung {value}",
     "value_must_not_equal": "Nilai tidak boleh sama dengan {value}"
+  },
+  "signature": {
+    "clear": "Hapus",
+    "draw": "Gambar",
+    "method": "Metode tanda tangan",
+    "not_signed": "Belum ditandatangani",
+    "pad_label": "Panel tanda tangan. Gambar tanda tanganmu dengan jari, stylus, atau mouse.",
+    "pad_label_with_type": "Panel tanda tangan. Gambar tanda tanganmu dengan jari, stylus, atau mouse, atau beralih ke Ketik untuk memasukkan namamu menggunakan keyboard.",
+    "saved": "Tanda tanganmu sudah disimpan. Hapus untuk menandatangani lagi.",
+    "sign_here": "Tanda tangan di sini",
+    "signed": "Sudah ditandatangani",
+    "type": "Ketik",
+    "type_your_name": "Ketik namamu"
   }
 }

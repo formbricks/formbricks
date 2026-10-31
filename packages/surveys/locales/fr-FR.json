@@ -102,5 +102,18 @@
     "value_must_equal": "La valeur doit être égale à {value}",
     "value_must_not_contain": "La valeur ne doit pas contenir {value}",
     "value_must_not_equal": "La valeur ne doit pas être égale à {value}"
+  },
+  "signature": {
+    "clear": "Effacer",
+    "draw": "Dessiner",
+    "method": "Méthode de signature",
+    "not_signed": "Non signé",
+    "pad_label": "Zone de signature. Dessine ta signature avec ton doigt, un stylet ou une souris.",
+    "pad_label_with_type": "Zone de signature. Dessine ta signature avec ton doigt, un stylet ou une souris, ou passe à « Saisir » pour entrer ton nom avec le clavier.",
+    "saved": "Ta signature est enregistrée. Efface-la pour signer à nouveau.",
+    "sign_here": "Signe ici",
+    "signed": "Signé",
+    "type": "Saisir",
+    "type_your_name": "Saisis ton nom"
   }
 }

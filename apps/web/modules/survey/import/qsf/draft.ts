@@ -52,6 +52,7 @@ export type TQsfDraftElement = TDraftElementBase &
       }
     | { type: "date"; format: NonNullable<TQsfPlannedQuestion["format"]> }
     | { type: "fileUpload"; allowMultipleFiles: false }
+    | { type: "signature"; allowTypedSignature: true }
     | ({ type: "contactInfo" } & Record<TQsfPlanContactField, TDraftToggleInput>)
     | { type: "consent"; label: TQsfLocaleText }
     | { type: "cta"; buttonExternal: false }

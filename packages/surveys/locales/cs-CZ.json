@@ -102,5 +102,18 @@
     "value_must_equal": "Hodnota musí být rovna {value}",
     "value_must_not_contain": "Hodnota nesmí obsahovat {value}",
     "value_must_not_equal": "Hodnota nesmí být rovna {value}"
+  },
+  "signature": {
+    "clear": "Smazat",
+    "draw": "Nakreslit",
+    "method": "Způsob podpisu",
+    "not_signed": "Nepodepsáno",
+    "pad_label": "Podpisová plocha. Nakresli svůj podpis prstem, stylusem nebo myší.",
+    "pad_label_with_type": "Podpisová plocha. Nakresli svůj podpis prstem, stylusem nebo myší, nebo přepni na Napsat a zadej své jméno pomocí klávesnice.",
+    "saved": "Tvůj podpis je uložen. Chceš-li se podepsat znovu, smaž ho.",
+    "sign_here": "Podepiš se zde",
+    "signed": "Podepsáno",
+    "type": "Napsat",
+    "type_your_name": "Napiš své jméno"
   }
 }

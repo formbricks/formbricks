@@ -102,5 +102,18 @@
     "value_must_equal": "Arvon on oltava {value}",
     "value_must_not_contain": "Arvo ei saa sisältää {value}",
     "value_must_not_equal": "Arvo ei saa olla {value}"
+  },
+  "signature": {
+    "clear": "Tyhjennä",
+    "draw": "Piirrä",
+    "method": "Allekirjoitustapa",
+    "not_signed": "Ei allekirjoitettu",
+    "pad_label": "Allekirjoitusalusta. Piirrä allekirjoituksesi sormella, kynällä tai hiirellä.",
+    "pad_label_with_type": "Allekirjoitusalusta. Piirrä allekirjoituksesi sormella, kynällä tai hiirellä, tai vaihda Kirjoita-tilaan ja kirjoita nimesi näppäimistöllä.",
+    "saved": "Allekirjoituksesi on tallennettu. Tyhjennä se, jos haluat allekirjoittaa uudelleen.",
+    "sign_here": "Allekirjoita tähän",
+    "signed": "Allekirjoitettu",
+    "type": "Kirjoita",
+    "type_your_name": "Kirjoita nimesi"
   }
 }

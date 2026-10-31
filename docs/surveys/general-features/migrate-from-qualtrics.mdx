@@ -72,6 +72,7 @@ Formbricks turns the `.qsf` file Qualtrics exports into a draft survey. Formbric
 | Rank order, up to 25 options                                           | Ranking                                                                       |
 | Descriptive text                                                       | Statement (call to action)                                                    |
 | File upload                                                            | File upload                                                                   |
+| Signature                                                              | Signature                                                                     |
 | Pages                                                                  | Blocks, one per page                                                          |
 | Translations                                                           | Survey languages                                                              |
 | Embedded data fields                                                   | Hidden fields                                                                 |
@@ -94,7 +95,7 @@ A few things change on the way, and each change is in the report:
 Everything below is listed in the import report, next to the question it belongs to.
 
 - **Logic.** Skip logic, display logic, branches and randomizers are not imported. Each rule is described in a sentence, so you can rebuild it with [conditional logic](/surveys/general-features/conditional-logic).
-- **Question types Formbricks does not have.** Constant sum, side by side, heat map, hot spot, drill down, pick group and rank, highlight, signature, drawing and gap analysis. Timing, meta info and captcha questions are also skipped.
+- **Question types Formbricks does not have.** Constant sum, side by side, heat map, hot spot, drill down, pick group and rank, highlight, drawing and gap analysis. Timing, meta info and captcha questions are also skipped.
 - **Other piped text,** such as dates or loop and merge fields.
 - **Images, scripts and text colors** in question texts. Bold, italics and links are kept.
 - **End-of-survey messages from the Message Library.** The export only holds a reference to them, so the survey gets a default ending instead.

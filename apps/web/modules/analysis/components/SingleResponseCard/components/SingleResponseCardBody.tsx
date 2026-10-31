@@ -131,6 +131,7 @@ export const SingleResponseCardBody = ({
                       language={response.language}
                       locale={locale}
                       showId={true}
+                      signatureVariant="full"
                     />
                   </div>
                 </div>

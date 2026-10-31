@@ -183,6 +183,12 @@ const runtimeCoverageCases = [
     expectedTexts: ["Click or drag to upload files."],
     expectedHrefFragments: ["preview=true"],
   },
+  {
+    name: "signature",
+    type: TSurveyElementTypeEnum.Signature,
+    expectedTexts: ["Click to sign."],
+    expectedHrefFragments: ["preview=true"],
+  },
 ] as const;
 
 describe("renderEmbedSurveyPreviewEmail", () => {

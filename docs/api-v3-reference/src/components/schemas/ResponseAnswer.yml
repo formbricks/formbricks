@@ -5,6 +5,7 @@ oneOf:
   - $ref: ./ResponseAnswerSelection.yml
   - $ref: ./ResponseAnswerDate.yml
   - $ref: ./ResponseAnswerFileUpload.yml
+  - $ref: ./ResponseAnswerSignature.yml
   - $ref: ./ResponseAnswerBooking.yml
   - $ref: ./ResponseAnswerMatrix.yml
   - $ref: ./ResponseAnswerComposite.yml
@@ -24,6 +25,7 @@ discriminator:
     ranking: ./ResponseAnswerSelection.yml
     date: ./ResponseAnswerDate.yml
     fileUpload: ./ResponseAnswerFileUpload.yml
+    signature: ./ResponseAnswerSignature.yml
     cal: ./ResponseAnswerBooking.yml
     matrix: ./ResponseAnswerMatrix.yml
     address: ./ResponseAnswerComposite.yml
@@ -41,7 +43,7 @@ description: >
 
 
   Several element types share a value shape and therefore a schema — the four numeric scales, the
-  four choice styles, the two composites. All seventeen element types are covered.
+  four choice styles, the two composites. All eighteen element types are covered.
 
 
   Only elements the respondent actually reached appear here. Data whose element has since been

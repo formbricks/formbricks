@@ -102,5 +102,18 @@
     "value_must_equal": "Değer {value} olmalıdır",
     "value_must_not_contain": "Değer {value} içermemelidir",
     "value_must_not_equal": "Değer {value} olmamalıdır"
+  },
+  "signature": {
+    "clear": "Temizle",
+    "draw": "Çiz",
+    "method": "İmza yöntemi",
+    "not_signed": "İmzalanmadı",
+    "pad_label": "İmza alanı. İmzanı parmağınla, kalemle veya fareyle çiz.",
+    "pad_label_with_type": "İmza alanı. İmzanı parmağınla, kalemle veya fareyle çiz ya da adını klavyeyle girmek için Yaz seçeneğine geç.",
+    "saved": "İmzan kaydedildi. Yeniden imzalamak için imzanı temizle.",
+    "sign_here": "Buraya imzala",
+    "signed": "İmzalandı",
+    "type": "Yaz",
+    "type_your_name": "Adını yaz"
   }
 }

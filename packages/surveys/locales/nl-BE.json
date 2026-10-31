@@ -102,5 +102,18 @@
     "value_must_equal": "De waarde moet gelijk zijn aan {value}",
     "value_must_not_contain": "De waarde mag {value} niet bevatten",
     "value_must_not_equal": "De waarde mag niet gelijk zijn aan {value}"
+  },
+  "signature": {
+    "clear": "Wissen",
+    "draw": "Tekenen",
+    "method": "Handtekeningmethode",
+    "not_signed": "Niet ondertekend",
+    "pad_label": "Handtekeningveld. Teken je handtekening met je vinger, een stylus of een muis.",
+    "pad_label_with_type": "Handtekeningveld. Teken je handtekening met je vinger, een stylus of een muis, of schakel over naar Typen om je naam met het toetsenbord in te voeren.",
+    "saved": "Je handtekening is opgeslagen. Wis ze om opnieuw te ondertekenen.",
+    "sign_here": "Onderteken hier",
+    "signed": "Ondertekend",
+    "type": "Typen",
+    "type_your_name": "Typ je naam"
   }
 }

@@ -9,7 +9,7 @@ import type { TResponseFilterCriteria } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getResponsesDownloadUrlAction } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/actions";
 import { downloadResponsesFile } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/utils";
-import { getSurveyFileUploadConfigs } from "@/modules/storage/survey-file-upload-elements";
+import { getSurveyUploadElementConfigs } from "@/modules/storage/survey-upload-elements";
 import { Button } from "@/modules/ui/components/button";
 import {
   DropdownMenu,
@@ -44,7 +44,7 @@ export const ResponseDownloadMenu = ({
   // The attachment items only make sense when the survey actually collects files. Hidden rather than
   // disabled: a survey with no file-upload element has nothing to explain.
   const hasFileUploadElements = useMemo(
-    () => getSurveyFileUploadConfigs({ blocks: survey.blocks, questions: survey.questions }).length > 0,
+    () => getSurveyUploadElementConfigs({ blocks: survey.blocks, questions: survey.questions }).length > 0,
     [survey.blocks, survey.questions]
   );
 

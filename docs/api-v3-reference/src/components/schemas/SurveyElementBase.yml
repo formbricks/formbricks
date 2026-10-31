@@ -29,6 +29,7 @@ properties:
       - address
       - ranking
       - contactInfo
+      - signature
   headline:
     $ref: ./TranslatableText.yml
   subheader:

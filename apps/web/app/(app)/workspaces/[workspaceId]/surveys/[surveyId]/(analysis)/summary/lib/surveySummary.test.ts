@@ -6,7 +6,12 @@ import { embeddedFieldsFromLegacyInput } from "@formbricks/types/embedded-data-m
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponseFilterCriteria } from "@formbricks/types/responses";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
-import { TSurvey, TSurveyElementSummaryRanking, TSurveySummary } from "@formbricks/types/surveys/types";
+import {
+  TSurvey,
+  TSurveyElementSummaryRanking,
+  TSurveyElementSummarySignature,
+  TSurveySummary,
+} from "@formbricks/types/surveys/types";
 import { TLanguage } from "@formbricks/types/workspace";
 import { getQuotasSummary } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/survey";
 import { getDisplayCountBySurveyId } from "@/lib/display/service";
@@ -4587,6 +4592,54 @@ describe("FileUpload question type tests", () => {
     expect(summary[0].type).toBe(TSurveyElementTypeEnum.FileUpload);
     expect(summary[0].responseCount).toBe(0);
     expect(summary[0].files).toHaveLength(0);
+  });
+});
+
+describe("Signature question type tests", () => {
+  test("getElementSummary counts signed and skipped answers and lists the signed ones", async () => {
+    const element = {
+      id: "sig-q1",
+      type: TSurveyElementTypeEnum.Signature,
+      headline: { default: "Sign here" },
+      required: false,
+      allowTypedSignature: true,
+    };
+    const survey = {
+      id: "survey-1",
+      blocks: [{ id: "block1", name: "Block 1", elements: [element] }],
+      questions: [],
+      languages: [],
+      welcomeCard: { enabled: false },
+    } as unknown as TSurvey;
+    const url = "/storage/ws/private/surveys/survey-1/elements/sig-q1/signature--fid--abc.png";
+    const base = {
+      updatedAt: new Date(),
+      contact: null,
+      contactAttributes: {},
+      language: null,
+      finished: true,
+    };
+    const responses = [
+      { ...base, id: "r1", data: { "sig-q1": url }, ttc: {} },
+      { ...base, id: "r2", data: { "sig-q1": "" }, ttc: {} },
+      { ...base, id: "r3", data: {}, ttc: {} },
+    ];
+
+    const summary = (await getElementSummary(
+      survey,
+      getElementsFromBlocks(survey.blocks),
+      responses,
+      [] as unknown as TSurveySummary["dropOff"]
+    )) as TSurveyElementSummarySignature[];
+
+    expect(summary).toHaveLength(1);
+    expect(summary[0]).toMatchObject({
+      type: TSurveyElementTypeEnum.Signature,
+      signedCount: 1,
+      skippedCount: 1,
+      responseCount: 2,
+    });
+    expect(summary[0].signatures).toEqual([expect.objectContaining({ id: "r1", value: url })]);
   });
 });
 

@@ -2728,7 +2728,7 @@ paths:
 
         **Round-tripping.** This read returns `data` in the stored, write-shaped form, so the simplest correction is to take it, change one entry and `PATCH` it back. Embedded Data round-trips through `embeddedData[]` instead: the `key` you read is the `key` a write accepts. `answers[]` is the typed view of the same information, offered alongside. Independently of that, a client working from a *list* row — which omits the maps — can still rebuild the write-shaped payload: `answers[]`, `embeddedData[]` and `unresolved[]` together carry every stored key and value **verbatim**, with no need to refetch the survey. Two rules make that guarantee hold, and both are contractual:
 
-        `rawKey`, `rawValue`, `valueText`, `valueDate`, `fileUrls` and composite slot values are always the stored bytes, never resolved or reformatted — the resolved forms live in the separate `elementLabel`, `optionId`, `optionLabel`, `rowId` and `columnId` fields. And **empty-but-present values are returned, not omitted**: the `""` of an unchecked consent, the `""` of a selected but unfilled Other, a blank composite slot. That second rule matters because `PATCH` replaces `data` wholesale, so an omitted key is a deleted answer rather than an unchanged one.
+        `rawKey`, `rawValue`, `valueText`, `valueDate`, `fileUrls`, `imageUrl` and composite slot values are always the stored bytes, never resolved or reformatted — the resolved forms live in the separate `elementLabel`, `optionId`, `optionLabel`, `rowId` and `columnId` fields. And **empty-but-present values are returned, not omitted**: the `""` of an unchecked consent, the `""` of a selected but unfilled Other, a blank composite slot. That second rule matters because `PATCH` replaces `data` wholesale, so an omitted key is a deleted answer rather than an unchanged one.
       tags:
         - V3 Responses
       parameters:
@@ -2852,6 +2852,11 @@ paths:
                               columnLabel: Gut
                               rawValue: Gut
                               match: label
+                        - position: 7
+                          elementId: sign_off
+                          elementType: signature
+                          elementLabel: Bitte unterschreiben
+                          imageUrl: /storage/clws1234567890123456789012/private/surveys/clsv1234567890123456789012/elements/sign_off/signature--fid--3f2a9c1e-7b4d-4e0a-9c53-1d2e8f6a7b90.png
                       embeddedData:
                         - key: plan
                           kind: ingested
@@ -2889,6 +2894,7 @@ paths:
                           - Preis
                         nps_matrix:
                           Support: Gut
+                        sign_off: /storage/clws1234567890123456789012/private/surveys/clsv1234567890123456789012/elements/sign_off/signature--fid--3f2a9c1e-7b4d-4e0a-9c53-1d2e8f6a7b90.png
                 anonymous:
                   summary: An anonymous, unfinished response
                   value:
@@ -8165,6 +8171,7 @@ components:
             - address
             - ranking
             - contactInfo
+            - signature
         headline:
           $ref: '#/components/schemas/TranslatableText'
         subheader:
@@ -8749,6 +8756,21 @@ components:
               type: boolean
               default: false
       unevaluatedProperties: false
+    SurveySignatureElement:
+      allOf:
+        - $ref: '#/components/schemas/SurveyElementBase'
+        - type: object
+          properties:
+            type:
+              type: string
+              enum:
+                - signature
+            allowTypedSignature:
+              type: boolean
+              default: true
+              description: Whether the respondent may type their name instead of drawing. The signature is stored as a single PNG image either way.
+      unevaluatedProperties: false
+      description: Signature element. The respondent draws their signature, or types their name when `allowTypedSignature` is on.
     SurveyElement:
       oneOf:
         - $ref: '#/components/schemas/SurveyOpenTextElement'
@@ -8768,6 +8790,7 @@ components:
         - $ref: '#/components/schemas/SurveyContactInfoElement'
         - $ref: '#/components/schemas/SurveyCsatElement'
         - $ref: '#/components/schemas/SurveyCesElement'
+        - $ref: '#/components/schemas/SurveySignatureElement'
       discriminator:
         propertyName: type
         mapping:
@@ -8788,6 +8811,7 @@ components:
           contactInfo: '#/components/schemas/SurveyContactInfoElement'
           csat: '#/components/schemas/SurveyCsatElement'
           ces: '#/components/schemas/SurveyCesElement'
+          signature: '#/components/schemas/SurveySignatureElement'
       description: |
         Survey element/question inside a block. Element ids are stable public identifiers used by
         logic, recall strings, response data, quotas, integrations, and analysis. `type` selects the
@@ -11153,6 +11177,7 @@ components:
             - address
             - ranking
             - contactInfo
+            - signature
           description: The element's type in the current survey definition. Matches the `type` of the corresponding `SurveyElement`.
         elementLabel:
           type: string
@@ -11364,6 +11389,27 @@ components:
               description: Convenience count of `fileUrls`, so a list consumer need not materialize the array.
       unevaluatedProperties: false
       description: File-upload answer.
+    ResponseAnswerSignature:
+      allOf:
+        - $ref: '#/components/schemas/ResponseAnswerBase'
+        - type: object
+          required:
+            - imageUrl
+          properties:
+            elementType:
+              type: string
+              enum:
+                - signature
+            imageUrl:
+              type: string
+              description: |
+                The signature image (a PNG), **as stored** — a workspace-relative private storage path (`/storage/{workspaceId}/private/surveys/{surveyId}/elements/{elementId}/…`), not an absolute URL, and neither resolved nor signed. A signature is one image, so this is a single string where `fileUpload` has an array of `fileUrls`.
+
+                A deliberate choice, the same as for `fileUpload`: `answers[]` promises verbatim values a client can write straight back, and an absolute URL is neither what is stored nor what a write accepts. The v1 and v2 management APIs, webhooks, CSV and Excel exports, and integrations resolve the stored path to an absolute URL instead; v3 does not. This field identifies the image, it does not serve it: prefix your Formbricks origin to fetch it.
+
+                Not publicly fetchable. The request must carry a signed-in session or an API key with read access to the workspace (and, for a restricted survey, to the survey), and deleting the response deletes the image.
+      unevaluatedProperties: false
+      description: 'Signature answer. A `signature` element the respondent skipped is still returned, with an empty `imageUrl`, like an unchecked consent or an unfilled Other: `answers[]` carries every stored value, so a client can write it straight back.'
     ResponseAnswerBooking:
       allOf:
         - $ref: '#/components/schemas/ResponseAnswerBase'
@@ -11496,6 +11542,7 @@ components:
         - $ref: '#/components/schemas/ResponseAnswerSelection'
         - $ref: '#/components/schemas/ResponseAnswerDate'
         - $ref: '#/components/schemas/ResponseAnswerFileUpload'
+        - $ref: '#/components/schemas/ResponseAnswerSignature'
         - $ref: '#/components/schemas/ResponseAnswerBooking'
         - $ref: '#/components/schemas/ResponseAnswerMatrix'
         - $ref: '#/components/schemas/ResponseAnswerComposite'
@@ -11515,6 +11562,7 @@ components:
           ranking: '#/components/schemas/ResponseAnswerSelection'
           date: '#/components/schemas/ResponseAnswerDate'
           fileUpload: '#/components/schemas/ResponseAnswerFileUpload'
+          signature: '#/components/schemas/ResponseAnswerSignature'
           cal: '#/components/schemas/ResponseAnswerBooking'
           matrix: '#/components/schemas/ResponseAnswerMatrix'
           address: '#/components/schemas/ResponseAnswerComposite'
@@ -11524,7 +11572,7 @@ components:
 
         Answers are a **typed array**, not a map keyed by element id, because a consumer holding only a response would otherwise see bare ids and have to fetch the survey and join to learn what was asked — a join that is easy to get wrong and that agent clients cannot make cheaply. The array also separates answers from hidden fields and variables, which the stored representation mixes into one flat map. Non-answer data lives in `embeddedData[]`.
 
-        Several element types share a value shape and therefore a schema — the four numeric scales, the four choice styles, the two composites. All seventeen element types are covered.
+        Several element types share a value shape and therefore a schema — the four numeric scales, the four choice styles, the two composites. All eighteen element types are covered.
 
         Only elements the respondent actually reached appear here. Data whose element has since been deleted appears in `unresolved[]` instead.
     ResponseEmbeddedDatum:

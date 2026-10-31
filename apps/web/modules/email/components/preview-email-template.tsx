@@ -1,5 +1,11 @@
 import { TFunction } from "i18next";
-import { CalendarDaysIcon, type LucideIcon, SquareArrowOutUpRightIcon, UploadIcon } from "lucide-react";
+import {
+  CalendarDaysIcon,
+  type LucideIcon,
+  SignatureIcon,
+  SquareArrowOutUpRightIcon,
+  UploadIcon,
+} from "lucide-react";
 import React from "react";
 import {
   Column,
@@ -713,6 +719,23 @@ export async function PreviewEmailTemplate({
               isContentVerticallyCentered
               isDashed
               label={t("emails.click_or_drag_to_upload_files")}
+              minHeight="96px"
+              styleTokens={styleTokens}
+            />
+          </Section>
+        </PreviewQuestionCard>
+      );
+    case TSurveyElementTypeEnum.Signature:
+      return (
+        <PreviewQuestionCard headline={headline} styleTokens={styleTokens} subheader={subheader} t={t}>
+          <Section className="w-full">
+            <PreviewInputLink
+              href={previewSurveyUrl}
+              icon={SignatureIcon}
+              isAccent
+              isContentVerticallyCentered
+              isDashed
+              label={t("emails.click_to_sign")}
               minHeight="96px"
               styleTokens={styleTokens}
             />

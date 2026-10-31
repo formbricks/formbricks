@@ -39,7 +39,7 @@ vi.mock("@/modules/ee/license-check/lib/utils", () => ({
 vi.mock("@/modules/storage/service", () => ({ getSignedUrlForUpload: mocks.getSignedUrlForUpload }));
 vi.mock("@/modules/storage/utils", () => ({
   getErrorResponseFromStorageError: vi.fn(),
-  validateSurveyAllowsFileUpload: vi.fn(() => ({ ok: true })),
+  validateSurveyAllowsUpload: vi.fn(() => ({ ok: true })),
 }));
 
 const WORKSPACE_ID = "cm0wwwwwwwwwwwwwwwwwwwww1";

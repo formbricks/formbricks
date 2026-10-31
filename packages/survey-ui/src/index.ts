@@ -52,3 +52,25 @@ export { NPS, type NPSProps } from "@/components/elements/nps";
 export { Ranking, type RankingProps, type RankingOption } from "@/components/elements/ranking";
 export { CTA, type CTAProps } from "@/components/elements/cta";
 export { Consent, type ConsentProps } from "@/components/elements/consent";
+export {
+  Signature,
+  DEFAULT_SIGNATURE_LABELS,
+  type SignatureProps,
+  type SignatureLabels,
+} from "@/components/elements/signature";
+export {
+  EMPTY_SIGNATURE,
+  clearSignature,
+  isSignatureSigned,
+  signatureFingerprint,
+  type SignatureMode,
+  type SignaturePoint,
+  type SignatureStroke,
+  type SignatureValue,
+} from "@/lib/signature/signature-model";
+export {
+  SIGNATURE_PNG_FILE_NAME,
+  SIGNATURE_PNG_MIME_TYPE,
+  exportSignaturePng,
+} from "@/lib/signature/signature-export";
+export { loadSignatureFont } from "@/lib/signature/signature-font";

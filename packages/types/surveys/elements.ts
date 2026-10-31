@@ -302,6 +302,14 @@ export const ZSurveyFileUploadElement = ZSurveyElementBase.extend({
 
 export type TSurveyFileUploadElement = z.infer<typeof ZSurveyFileUploadElement>;
 
+// Signature Element
+export const ZSurveySignatureElement = ZSurveyElementBase.extend({
+  type: z.literal(TSurveyElementTypeEnum.Signature),
+  allowTypedSignature: z.boolean().prefault(true),
+});
+
+export type TSurveySignatureElement = z.infer<typeof ZSurveySignatureElement>;
+
 // Cal Element
 export const ZSurveyCalElement = ZSurveyElementBase.extend({
   type: z.literal(TSurveyElementTypeEnum.Cal),
@@ -431,6 +439,7 @@ export const ZSurveyElement = z.discriminatedUnion("type", [
   ZSurveyContactInfoElement,
   ZSurveyCsatElement,
   ZSurveyCesElement,
+  ZSurveySignatureElement,
 ]);
 
 export type TSurveyElement = z.infer<typeof ZSurveyElement>;

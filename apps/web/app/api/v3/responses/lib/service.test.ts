@@ -71,7 +71,11 @@ vi.mock("@/modules/deletion-cleanup/lib/drain", () => ({ drainDeletionCleanups: 
 // only the element-id lookup is pinned, to keep the survey fixtures free of upload elements.
 vi.mock("@/modules/storage/utils", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/modules/storage/utils")>()),
-  getSurveyFileUploadElementIds: () => new Set(["screenshots"]),
+  getSurveyUploadElementIds: () => ({
+    fileUpload: new Set(["screenshots"]),
+    signature: new Set(["signature"]),
+    live: new Set(["screenshots", "signature", "text"]),
+  }),
 }));
 
 const RESPONSE_ID = "clrsaaaaaaaaaaaaaaaaaaaa";
@@ -258,6 +262,40 @@ describe("deleteScopedResponse", () => {
     await deleteScopedResponse(RESPONSE_ID, SCOPE);
 
     expect(mockDeleteFiles).toHaveBeenCalledWith([ownFile], "ws_1");
+  });
+
+  // A Signature answer is one URL string (ADR 0016); the element id decides it is a delete target.
+  test("removes the signature image of the response's own survey and element", async () => {
+    const ownSignature = "/storage/ws_1/private/surveys/svy_1/elements/signature/s--fid--abc.png";
+    runTransaction(deletedRow({ data: { signature: ownSignature } }));
+
+    await deleteScopedResponse(RESPONSE_ID, SCOPE);
+
+    expect(mockDeleteFiles).toHaveBeenCalledWith([ownSignature], "ws_1");
+  });
+
+  test("removes the signature image left by an element since deleted from the survey", async () => {
+    const orphan = "/storage/ws_1/private/surveys/svy_1/elements/removed-signature/s--fid--abc.png";
+    runTransaction(deletedRow({ data: { "removed-signature": orphan } }));
+
+    await deleteScopedResponse(RESPONSE_ID, SCOPE);
+
+    expect(mockDeleteFiles).toHaveBeenCalledWith([orphan], "ws_1");
+  });
+
+  test("never removes a signature URL from another survey or element, or one pasted into a live text answer", async () => {
+    runTransaction(
+      deletedRow({
+        data: {
+          signature: "/storage/ws_1/private/surveys/svy_other/elements/signature/s--fid--abc.png",
+          text: "/storage/ws_1/private/surveys/svy_1/elements/text/s--fid--abc.png",
+        },
+      })
+    );
+
+    await deleteScopedResponse(RESPONSE_ID, SCOPE);
+
+    expect(mockDeleteFiles).not.toHaveBeenCalled();
   });
 
   test("does not call storage at all when the response held no files", async () => {

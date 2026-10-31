@@ -529,6 +529,12 @@ const serializeOne = (
       return { answer: { ...base, elementType: "fileUpload", fileUrls: raw, fileCount: raw.length } };
     }
 
+    case "signature": {
+      // One URL string, unlike `fileUpload`'s array (ADR 0016). Verbatim and relative, as stored.
+      if (typeof raw !== "string") return mismatch;
+      return { answer: { ...base, elementType: "signature", imageUrl: raw } };
+    }
+
     case "address":
     case "contactInfo":
       return serializeComposite(element, raw, base, lookupKey);

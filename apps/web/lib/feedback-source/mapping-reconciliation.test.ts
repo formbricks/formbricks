@@ -113,7 +113,7 @@ describe("reconcileMappingsAgainstSurvey", () => {
   // an unsupported type yields undefined. Treating that as "unchanged" left the row publishing under
   // a stale hubFieldType — for element types the product refuses to map at all (fileUpload holds
   // files, contactInfo/address hold PII).
-  test.each([["fileUpload"], ["contactInfo"], ["address"], ["consent"], ["cta"], ["cal"]])(
+  test.each([["fileUpload"], ["signature"], ["contactInfo"], ["address"], ["consent"], ["cta"], ["cal"]])(
     "deletes the mapping when an element is retyped to the unmappable type %s",
     (elementType) => {
       // A second, still-valid mapping keeps this out of the "would empty the survey" guard below,

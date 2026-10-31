@@ -851,7 +851,7 @@ not idempotent.
 A block is `{ name, elements[], id? }`; an element is `{ id, type, headline, ... }`. The element
 `type` is one of `fileUpload`, `openText`, `multipleChoiceSingle`, `multipleChoiceMulti`, `nps`,
 `cta`, `rating`, `consent`, `pictureSelection`, `cal`, `date`, `matrix`, `address`, `ranking`,
-`contactInfo`, `csat`, `ces`. Element ids are caller-supplied and become immutable once the survey
+`contactInfo`, `csat`, `ces`, `signature`. Element ids are caller-supplied and become immutable once the survey
 leaves draft; block ids are generated when omitted. Translatable fields are keyed by locale code and
 must carry every configured language — the internal `default` key is rejected.
 

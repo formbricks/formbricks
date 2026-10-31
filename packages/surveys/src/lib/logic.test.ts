@@ -1089,6 +1089,49 @@ describe("Survey Logic", () => {
       );
     });
 
+    describe("Signature element (a single URL string answer)", () => {
+      const signatureUrl = "/storage/ws1/private/surveys/survey1/elements/sig1/signature--fid--abc.png";
+      const surveyWithSignature: TJsWorkspaceStateSurvey = {
+        ...mockSurvey,
+        blocks: [
+          ...mockSurvey.blocks,
+          {
+            id: "signatureBlock",
+            name: "Signature block",
+            elements: [
+              {
+                id: "sig1",
+                type: TSurveyElementTypeEnum.Signature,
+                headline: { default: "Sign here" },
+                required: false,
+                allowTypedSignature: true,
+              },
+            ],
+          },
+        ],
+      };
+      const signatureCondition = (operator: "isSubmitted" | "isSkipped"): TConditionGroup => ({
+        id: "group",
+        connector: "and",
+        conditions: [{ id: "condition", operator, leftOperand: { type: "element", value: "sig1" } }],
+      });
+      const evaluate = (data: TResponseData, operator: "isSubmitted" | "isSkipped") =>
+        evaluateLogic(surveyWithSignature, data, mockVariablesData, signatureCondition(operator), "default");
+
+      test("is signed when the answer is a stored URL", () => {
+        expect(evaluate({ sig1: signatureUrl }, "isSubmitted")).toBe(true);
+        expect(evaluate({ sig1: signatureUrl }, "isSkipped")).toBe(false);
+      });
+
+      test.each([
+        ["an empty string", { sig1: "" }],
+        ["a missing answer", {}],
+      ])("is not signed for %s", (_label, data) => {
+        expect(evaluate(data, "isSubmitted")).toBe(false);
+        expect(evaluate(data, "isSkipped")).toBe(true);
+      });
+    });
+
     test("evaluates partially submitted matrix question", () => {
       const partialMatrixData: TResponseData = {
         q8: { "Row 1": "Column 1", "Row 2": "" },

@@ -47,7 +47,7 @@ type TMappingHubFieldType = { elementId: string; hubFieldType: THubFieldType };
  * and skips the row (transform.ts), so the row is inert. Keeping it publishes nothing.
  *
  * The element still EXISTS but was retyped to something with no Hub field (`unmappable`) —
- * contactInfo, address, cal, cta, fileUpload, consent. The id is preserved across a retype, so the
+ * contactInfo, address, cal, cta, fileUpload, signature, consent. The id is preserved across a retype, so the
  * publish path still finds the answer and ships it under the row's stale hubFieldType: a contactInfo
  * answer is an array, which lands in Hub as `value_text: value.join(", ")` — name, email and phone in
  * one string, for the element types the product refuses to map precisely because they hold that data.

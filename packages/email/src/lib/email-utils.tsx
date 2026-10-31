@@ -46,6 +46,17 @@ export const renderEmailResponseValue = (
         </Container>
       );
 
+    // A Signature answer is a private storage URL (ADR 0016) that needs a login to open, and a relative one
+    // an email client cannot resolve, so no email carries it.
+    case TSurveyElementTypeEnum.Signature:
+      return (
+        <Container>
+          <Text className="mt-0 text-sm break-words whitespace-pre-wrap italic">
+            {t("emails.render_email_response_value_signature_link_not_included")}
+          </Text>
+        </Container>
+      );
+
     case TSurveyElementTypeEnum.PictureSelection:
       return (
         <Container>
