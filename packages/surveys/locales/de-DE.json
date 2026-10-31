@@ -102,5 +102,18 @@
     "value_must_equal": "Wert muss {value} entsprechen",
     "value_must_not_contain": "Wert darf {value} nicht enthalten",
     "value_must_not_equal": "Wert darf nicht {value} entsprechen"
+  },
+  "signature": {
+    "clear": "Löschen",
+    "draw": "Zeichnen",
+    "method": "Unterschriftsmethode",
+    "not_signed": "Nicht unterschrieben",
+    "pad_label": "Unterschriftenfeld. Zeichne Deine Unterschrift mit dem Finger, einem Stift oder einer Maus.",
+    "pad_label_with_type": "Unterschriftenfeld. Zeichne Deine Unterschrift mit dem Finger, einem Stift oder einer Maus, oder wechsle zu „Tippen“, um Deinen Namen mit der Tastatur einzugeben.",
+    "saved": "Deine Unterschrift ist gespeichert. Lösche sie, um erneut zu unterschreiben.",
+    "sign_here": "Hier unterschreiben",
+    "signed": "Unterschrieben",
+    "type": "Tippen",
+    "type_your_name": "Gib Deinen Namen ein"
   }
 }

@@ -102,5 +102,18 @@
     "value_must_equal": "Vērtībai ir jābūt vienādai ar {value}",
     "value_must_not_contain": "Vērtībā nedrīkst būt {value}",
     "value_must_not_equal": "Vērtība nedrīkst būt vienāda ar {value}"
+  },
+  "signature": {
+    "clear": "Notīrīt",
+    "draw": "Zīmēt",
+    "method": "Parakstīšanas veids",
+    "not_signed": "Nav parakstīts",
+    "pad_label": "Paraksta lauks. Uzzīmē savu parakstu ar pirkstu, irbuli vai peli.",
+    "pad_label_with_type": "Paraksta lauks. Uzzīmē savu parakstu ar pirkstu, irbuli vai peli, vai pārslēdzies uz ievadi, lai ievadītu savu vārdu ar tastatūru.",
+    "saved": "Tavs paraksts ir saglabāts. Notīri to, lai parakstītos vēlreiz.",
+    "sign_here": "Parakstīties šeit",
+    "signed": "Parakstīts",
+    "type": "Rakstīt",
+    "type_your_name": "Ievadi savu vārdu"
   }
 }

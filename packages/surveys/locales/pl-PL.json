@@ -102,5 +102,18 @@
     "value_must_equal": "Wartość musi być równa {value}",
     "value_must_not_contain": "Wartość nie może zawierać {value}",
     "value_must_not_equal": "Wartość nie może być równa {value}"
+  },
+  "signature": {
+    "clear": "Wyczyść",
+    "draw": "Narysuj",
+    "method": "Metoda podpisu",
+    "not_signed": "Nie podpisano",
+    "pad_label": "Pole podpisu. Narysuj swój podpis palcem, rysikiem lub myszą.",
+    "pad_label_with_type": "Pole podpisu. Narysuj swój podpis palcem, rysikiem lub myszą albo przełącz na opcję Wpisz, aby wpisać swoje imię i nazwisko za pomocą klawiatury.",
+    "saved": "Twój podpis został zapisany. Wyczyść go, aby podpisać ponownie.",
+    "sign_here": "Podpisz tutaj",
+    "signed": "Podpisano",
+    "type": "Wpisz",
+    "type_your_name": "Wpisz swoje imię i nazwisko"
   }
 }
