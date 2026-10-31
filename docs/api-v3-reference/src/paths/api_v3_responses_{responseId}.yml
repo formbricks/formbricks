@@ -21,8 +21,8 @@ get:
     are contractual:
 
 
-    `rawKey`, `rawValue`, `valueText`, `valueDate`, `fileUrls` and composite slot values are always
-    the stored bytes, never resolved or reformatted — the resolved forms live in the separate
+    `rawKey`, `rawValue`, `valueText`, `valueDate`, `fileUrls`, `imageUrl` and composite slot values
+    are always the stored bytes, never resolved or reformatted — the resolved forms live in the separate
     `elementLabel`, `optionId`, `optionLabel`, `rowId` and `columnId` fields. And **empty-but-present
     values are returned, not omitted**: the `""` of an unchecked consent, the `""` of a selected but
     unfilled Other, a blank composite slot. That second rule matters because `PATCH` replaces `data`

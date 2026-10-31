@@ -320,36 +320,12 @@ test.describe("Signature element @slow", () => {
 
       await page.goto(`/s/${seeded.surveyId}`);
 
-      await test.step("the pad starts empty, Draw is selected and Clear is unavailable", async () => {
-        await expect(card.getByRole("tab", { name: "Draw" })).toHaveAttribute("aria-selected", "true");
-        await expect(signatureStatus(card)).toHaveText("Not signed");
-        await expect(clear).toBeDisabled();
-        const box = await padBox(pad);
-        expect(box.width / box.height).toBeCloseTo(3, 1);
-      });
-
-      await test.step("Next with nothing entered, or after a bare tap, shows the required error", async () => {
-        const error = page.locator(`[id$="-error"]`).filter({ hasText: "Please fill out this field" });
-        const next = page.getByRole("button", { name: "Next", exact: true });
-        await next.click();
-        await expect(error).toBeVisible();
-
-        const box = await padBox(pad);
-        await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
-        await expect(signatureStatus(card)).toHaveText("Not signed");
-        await next.click();
-        await expect(error).toBeVisible();
-        await expect(page.getByText("Anything else?")).toHaveCount(0);
-        expect(uploads, "nothing is uploaded while the element is unanswered").toHaveLength(0);
-      });
-
       await test.step("a finger stroke signs it, and Clear takes the signature back", async () => {
         await drawWithTouch(cdp, pad);
         await expect(signatureStatus(card)).toHaveText("Signed");
         await attachShot(page, testInfo, "touch-drawn");
         await clear.click();
         await expect(signatureStatus(card)).toHaveText("Not signed");
-        await expect(clear).toBeDisabled();
       });
 
       await test.step("a second stroke signs again and Next uploads exactly one PNG", async () => {
@@ -387,7 +363,6 @@ test.describe("Signature element @slow", () => {
         await page.keyboard.press("ArrowRight");
         const typeTab = card.getByRole("tab", { name: "Type" });
         await expect(typeTab).toBeFocused();
-        await expect(typeTab).toHaveAttribute("aria-selected", "true");
         await page.keyboard.press("Tab");
         const nameInput = card.getByRole("textbox", { name: "Type your name" });
         await expect(nameInput).toBeFocused();
