@@ -2,6 +2,7 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
+import type { ProblemCode } from "@/app/api/v3/lib/response";
 import { getAIUnavailableReasonForErrorCode } from "@/lib/ai/availability";
 import { type TV3InvalidParam, V3ApiError } from "@/modules/api/lib/v3-client";
 import {
@@ -87,7 +88,14 @@ const getMatchConflict = (match: TSurveyImportMatch): TSurveyImportMatchConflict
 };
 
 /** The refusals whose `invalid_params` name the file's fields, which the dialog lists. */
-const FIELD_REFUSAL_CODES = new Set(["formbricks_file_invalid", "formbricks_file_too_new"]);
+const FIELD_REFUSAL_CODES: ReadonlySet<string> = new Set<ProblemCode>([
+  "formbricks_file_invalid",
+  "formbricks_file_too_new",
+]);
+
+/** Whether the server refused with this problem code. */
+const isProblem = (error: unknown, code: ProblemCode): error is V3ApiError =>
+  error instanceof V3ApiError && error.code === code;
 
 type TUpdateVariables = {
   match: TSurveyImportMatch;
@@ -153,7 +161,7 @@ export const useImportSurvey = ({ workspaceId, isAIAvailable, onSuccess }: UseIm
       }
     },
     onError: (error) => {
-      if (error instanceof V3ApiError && (error.status === 409 || error.code === "survey_active")) {
+      if ((error instanceof V3ApiError && error.status === 409) || isProblem(error, "survey_active")) {
         setSelectedChoice("create");
       }
     },
@@ -253,7 +261,7 @@ export const useImportSurvey = ({ workspaceId, isAIAvailable, onSuccess }: UseIm
     const fromReview = getMatchConflict(match);
     if (fromReview) return fromReview;
     const { error, variables } = updateMutation;
-    if (error instanceof V3ApiError && error.code === "survey_active") return "active";
+    if (isProblem(error, "survey_active")) return "active";
     // Once the server said the survey changed, every later attempt in this review is "Update anyway".
     if (error instanceof V3ApiError && error.status === 409) return "stale";
     return variables?.isUpdateAnyway ? "stale" : null;
@@ -286,11 +294,16 @@ export const useImportSurvey = ({ workspaceId, isAIAvailable, onSuccess }: UseIm
     });
   };
 
+  /** What the last file was refused for: the browser's check, or the fields the server named. */
+  const clearFileProblems = () => {
+    setFileError(null);
+    setInvalidParams(null);
+  };
+
   /** Choosing a file is the submit: it is checked by name and size here, then uploaded if it passes. */
   const selectFile = (next: File) => {
     draft.clearError();
-    setFileError(null);
-    setInvalidParams(null);
+    clearFileProblems();
     setFile({ name: next.name, size: next.size });
 
     const refused = checkSurveyImportFile(next, { isAIAvailable });
@@ -305,8 +318,7 @@ export const useImportSurvey = ({ workspaceId, isAIAvailable, onSuccess }: UseIm
   const pickAnotherFile = () => {
     draft.reset();
     setFile(null);
-    setFileError(null);
-    setInvalidParams(null);
+    clearFileProblems();
     setStage(null);
     forgetReview();
   };
@@ -339,8 +351,7 @@ export const useImportSurvey = ({ workspaceId, isAIAvailable, onSuccess }: UseIm
     handleStop: draft.handleStop,
     handleOpenInEditor: draft.handleOpenInEditor,
     clearError: () => {
-      setFileError(null);
-      setInvalidParams(null);
+      clearFileProblems();
       draft.clearError();
     },
     hasUnsavedWork: draft.hasUnsavedWork,

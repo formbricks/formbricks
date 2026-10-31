@@ -11,6 +11,7 @@ import {
   ZV3CreateSurveyDocument,
   ZV3CreateSurveyDocumentInput,
 } from "@/app/api/v3/surveys/schemas";
+import { SURVEY_EXPORT_FILE_EXTENSIONS } from "@/modules/survey/export/lib/formats";
 import {
   FORMBRICKS_FILE_MAX_ACTION_CLASSES,
   FORMBRICKS_FILE_MAX_APP_VERSION_CHARS,
@@ -39,7 +40,7 @@ import {
 export const FORMBRICKS_FILE_FORMAT = 1;
 
 /** Every Formbricks file is saved as `<survey name>.formbricks.json`. */
-export const FORMBRICKS_FILE_EXTENSION = ".formbricks.json";
+export const FORMBRICKS_FILE_EXTENSION = SURVEY_EXPORT_FILE_EXTENSIONS.json;
 
 /**
  * Where the format's JSON Schema is published with the docs. Each file names it in `$schema`, so an AI

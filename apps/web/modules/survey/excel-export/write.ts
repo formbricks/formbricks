@@ -2,6 +2,7 @@ import type { TFunction } from "i18next";
 import * as XLSX from "xlsx";
 import { getLanguageLabel } from "@formbricks/i18n-utils/utils";
 import type { TSurvey } from "@formbricks/types/surveys/types";
+import { SURVEY_EXPORT_FILE_EXTENSIONS } from "@/modules/survey/export/lib/formats";
 import { getElementTypeLabel } from "@/modules/survey/lib/element-type-labels";
 import {
   type TSurveyText,
@@ -28,7 +29,7 @@ import { createLogicRenderer } from "./logic";
 
 /** The export's own version, written to the meta sheet; raised when its layout changes. */
 export const EXCEL_EXPORT_FORMAT = 1;
-export const EXCEL_EXPORT_EXTENSION = ".xlsx";
+export const EXCEL_EXPORT_EXTENSION = SURVEY_EXPORT_FILE_EXTENSIONS.xlsx;
 export const EXCEL_EXPORT_CONTENT_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
 /** The very hidden sheet's name, and the header of the hidden key column. Read by code, so never translated. */

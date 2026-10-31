@@ -129,8 +129,7 @@ export const SurveyDropDownMenu = ({
   const canChangeStatus = !isArchived && !isReadOnly && survey.status !== "draft";
   const isInProgress = survey.status === "inProgress";
   const canCollaborate = showVisibilityControls(surveyVisibilityGate, survey.access);
-  // Export needs nothing beyond seeing the survey, read-only members and drafts included, so the menu
-  // always has at least that one action.
+  // Anyone who sees the survey may export it, read-only members and drafts included: no gate below.
   const exportSurvey = useExportSurvey();
 
   const getStatusLabel = (t: TFunction, status: TSurveyStatus): string => {

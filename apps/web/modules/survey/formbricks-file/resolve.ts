@@ -7,7 +7,11 @@ import { isPlainObject } from "@/app/api/v3/surveys/guards";
 import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
 import { escapeLikePattern } from "@/lib/utils/like-pattern";
 import { SurveyImportInputError } from "@/modules/survey/import/core/errors";
-import { getImportedName, importedNamePrefix } from "@/modules/survey/import/core/imported-name";
+import {
+  type TTranslate,
+  getImportedName,
+  importedNamePrefix,
+} from "@/modules/survey/import/core/imported-name";
 import type { TSurveyImportPipelineIssue } from "@/modules/survey/import/core/report";
 import { SURVEY_IMPORT_MAX_TAKEN_NAMES } from "@/modules/survey/import/limits";
 import type {
@@ -34,8 +38,6 @@ import type {
  * commit's transaction, so the ids it writes are the ones the target has, never ids a client resolved.
  * The preview runs the same plan read-only, to say in the report what the import will create.
  */
-
-type TTranslate = (key: string, options?: Record<string, unknown>) => string;
 
 /** A client the resolver reads through: the shared one for a preview, the transaction for a commit. */
 type TReader = Pick<

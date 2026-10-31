@@ -1,12 +1,6 @@
 import { getContentDispositionFileName } from "@/lib/utils/file-download";
 import { parseV3ApiError } from "@/modules/api/lib/v3-client";
-import type { TSurveyExportFormat } from "./formats";
-
-/** The name a download is saved under when the response doesn't name it. */
-const FALLBACK_FILE_NAMES: Record<TSurveyExportFormat, string> = {
-  json: "survey.formbricks.json",
-  xlsx: "survey.xlsx",
-};
+import { SURVEY_EXPORT_FILE_EXTENSIONS, type TSurveyExportFormat } from "./formats";
 
 /**
  * A survey's export, fetched rather than linked: a refusal (a rate limit, a survey the caller can no
@@ -31,6 +25,7 @@ export async function fetchSurveyExport({
     blob: await response.blob(),
     fileName:
       getContentDispositionFileName(response.headers.get("Content-Disposition")) ??
-      FALLBACK_FILE_NAMES[format],
+      // The name a download is saved under when the response doesn't name it.
+      `survey${SURVEY_EXPORT_FILE_EXTENSIONS[format]}`,
   };
 }
