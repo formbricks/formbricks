@@ -1865,6 +1865,8 @@
         "distribution_value_share": "{value} ({percent})",
         "edit_chart_description": "Diagram beállításainak megtekintése és szerkesztése.",
         "edit_chart_title": "Diagram szerkesztése",
+        "embedded_data_field_description": "Beágyazott adatok a következőből: {surveys}",
+        "embedded_data_no_value": "Nincs érték",
         "emotion_value_anger": "Harag",
         "emotion_value_disgust": "Undor",
         "emotion_value_fear": "Félelem",

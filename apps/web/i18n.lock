@@ -1794,6 +1794,8 @@ checksums:
     workspace/analysis/charts/distribution_value_share: 954274ec06ca0aeafb52b68ef8a406f6
     workspace/analysis/charts/edit_chart_description: 822890e4b6068096e2fe8b7b78b4474f
     workspace/analysis/charts/edit_chart_title: d4d979e31c26af718cd0d000f6a34af0
+    workspace/analysis/charts/embedded_data_field_description: e433a1354c0b7fb6e5776e26985cf820
+    workspace/analysis/charts/embedded_data_no_value: 34bd274908990ceae51b41d655cac51c
     workspace/analysis/charts/emotion_value_anger: 4fd64fc804c247fc3fcbc7dc147b62fe
     workspace/analysis/charts/emotion_value_disgust: e5860fbfc609c8c8686db8a18cadf932
     workspace/analysis/charts/emotion_value_fear: b7621ac47c2543dff100f55f948df8cf

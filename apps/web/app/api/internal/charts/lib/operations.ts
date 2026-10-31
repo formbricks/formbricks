@@ -20,6 +20,7 @@ import { AI_CHART_PROMPT_ERROR_CODE } from "@/modules/ee/analysis/charts/lib/ai-
 import { generateAIChartQuery } from "@/modules/ee/analysis/charts/lib/ai-chart-query.server";
 import { getMatrixQuestions } from "@/modules/ee/analysis/charts/lib/matrix-questions";
 import { validateChartQuery } from "@/modules/ee/analysis/lib/chart-query-validator";
+import { getEmbeddedChartFields } from "@/modules/ee/analysis/lib/embedded-data-fields.server";
 import { runChartQuery } from "@/modules/ee/analysis/lib/run-chart-query";
 import type { TInternalChartGenerateBody, TInternalMatrixQuestionsQuery } from "./schemas";
 
@@ -116,6 +117,7 @@ export async function generateInternalChart({
         data: run.rows,
         ...(run.optionLabels ? { optionLabels: run.optionLabels } : {}),
         ...(run.fieldLabels ? { fieldLabels: run.fieldLabels } : {}),
+        ...(run.memberLabels ? { memberLabels: run.memberLabels } : {}),
         // Prefills the chart-name input (only when the user hasn't typed a name).
         ...(name ? { suggestedName: name } : {}),
       },
@@ -217,5 +219,43 @@ export async function listInternalMatrixQuestions({
     return successResponse(await getMatrixQuestions(access.workspaceId, query.datasetId), { requestId });
   } catch (error) {
     return mapV3ThrownError(error, { log, requestId, instance, operation: "charts.matrixQuestions" });
+  }
+}
+
+/**
+ * `GET /api/internal/embedded-data-fields` → 200 `{ data: TEmbeddedChartField[] }`: the Embedded Data
+ * fields a dataset's charts can group and filter by (ENG-2848). Read access to the dataset, like the
+ * matrix questions above — the list names fields, never values.
+ */
+export async function listInternalEmbeddedDataFields({
+  query,
+  ...context
+}: TV3ChartOperationContext & { query: TInternalMatrixQuestionsQuery }): Promise<Response> {
+  const { authentication, requestId, instance } = context;
+  const log = logger.withContext({ requestId, workspaceId: query.workspaceId });
+
+  try {
+    const access = await requireDashboardsAccess(
+      authentication,
+      query.workspaceId,
+      "read",
+      requestId,
+      instance
+    );
+    if (access instanceof Response) return access;
+
+    const refused = await refuseUnlessFeedbackDatasetAccess(
+      authentication,
+      access,
+      query.datasetId,
+      "read",
+      requestId,
+      instance
+    );
+    if (refused) return refused;
+
+    return successResponse(await getEmbeddedChartFields(access.workspaceId, query.datasetId), { requestId });
+  } catch (error) {
+    return mapV3ThrownError(error, { log, requestId, instance, operation: "charts.embeddedDataFields" });
   }
 }

@@ -96,6 +96,7 @@ export function ChartPreview({
               query={chartData.query}
               optionLabels={chartData.optionLabels}
               fieldLabels={chartData.fieldLabels}
+              memberLabels={chartData.memberLabels}
               config={config}
             />
           </ChartErrorBoundary>
@@ -106,6 +107,7 @@ export function ChartPreview({
             data={data}
             optionLabels={chartData.optionLabels}
             fieldLabels={chartData.fieldLabels}
+            memberLabels={chartData.memberLabels}
             query={chartData.query}
           />
         </TabsContent>

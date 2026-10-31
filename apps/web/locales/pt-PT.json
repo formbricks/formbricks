@@ -1865,6 +1865,8 @@
         "distribution_value_share": "{value} ({percent})",
         "edit_chart_description": "Visualize e edite a configuração do seu gráfico.",
         "edit_chart_title": "Editar gráfico",
+        "embedded_data_field_description": "Dados incorporados de {surveys}",
+        "embedded_data_no_value": "Sem valor",
         "emotion_value_anger": "Raiva",
         "emotion_value_disgust": "Repulsa",
         "emotion_value_fear": "Medo",
