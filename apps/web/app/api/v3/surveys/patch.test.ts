@@ -401,6 +401,44 @@ describe("patchV3Survey", () => {
    * recall, the logic engine, export columns and the response filters keep reading the pre-patch set.
    * v3 patch is the one write path that did not do this.
    */
+  // ENG-6783: PATCH, the block routes and the MCP tools all end in patchV3Survey, so one test here
+  // proves the lock stops the write for all of them (the cases live in prepare.test.ts).
+  describe("published lock (ENG-6783)", () => {
+    const publishedWithCode = {
+      ...currentSurvey,
+      status: "inProgress",
+      blocks: currentSurvey.blocks.map((block) => ({
+        ...block,
+        elements: block.elements.map((element) => ({ ...element, code: "feedback" })),
+      })),
+    } as unknown as TSurvey;
+
+    test("refuses to change a question code and does not write", async () => {
+      const input = {
+        blocks: [
+          {
+            id: publishedWithCode.blocks[0].id,
+            name: "Main Block",
+            elements: [
+              {
+                id: "satisfaction",
+                type: "openText",
+                headline: { "en-US": "What should we improve?" },
+                required: true,
+                code: "renamed",
+              },
+            ],
+          },
+        ],
+      };
+
+      await expect(patchV3Survey(publishedWithCode, input, "req_lock_1", "org_1")).rejects.toMatchObject({
+        invalidParams: [expect.objectContaining({ code: "immutable_question_code" })],
+      });
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+  });
+
   describe("Embedded Data reconcile", () => {
     test("writes a row and a link for a variable the patch adds", async () => {
       await patchV3Survey(
@@ -501,7 +539,8 @@ describe("patchV3Survey", () => {
     expect(scheduleFeedbackSourceReconciliation).toHaveBeenCalledWith(
       currentSurvey.id,
       currentSurvey.workspaceId,
-      currentSurvey.blocks
+      // ENG-6782: the stored blocks now arrive coded, which is what the write carried.
+      vi.mocked(prisma.survey.update).mock.calls.at(0)?.[0].data.blocks
     );
     expect(currentSurvey.blocks.length).toBeGreaterThan(0);
   });
@@ -654,6 +693,61 @@ describe("patchV3Survey", () => {
         }),
       })
     );
+  });
+
+  test("carries stored codes over a replaced block by id and codes what is new (ENG-6782)", async () => {
+    const storedElement = {
+      id: "q-single",
+      type: "multipleChoiceSingle",
+      code: "age",
+      headline: { default: "Age?" },
+      required: true,
+      choices: [
+        { id: "c1", code: "1", label: { default: "Young" } },
+        { id: "c2", code: "2", label: { default: "Old" } },
+      ],
+    };
+    const replacedElement = {
+      ...storedElement,
+      code: undefined,
+      choices: [
+        { id: "c1", label: { default: "Young" } },
+        { id: "c2", label: { default: "Old" } },
+        { id: "c3", label: { default: "Ancient" } },
+      ],
+    };
+    const newElement = { id: "q-new", type: "openText", headline: { default: "Why?" }, required: false };
+
+    await executeV3SurveyPatch({
+      currentSurvey: {
+        ...currentSurvey,
+        blocks: [{ id: "block-1", name: "Block 1", elements: [storedElement] }],
+      } as unknown as TSurvey,
+      document: {
+        name: currentSurvey.name,
+        status: currentSurvey.status,
+        metadata: currentSurvey.metadata,
+        defaultLanguage: "en-US",
+        languages: [{ code: "en-US", enabled: true }],
+        showLanguageSwitch: null,
+        autoSelectLanguage: null,
+        welcomeCard: currentSurvey.welcomeCard,
+        blocks: [{ id: "block-1", name: "Block 1", elements: [replacedElement, newElement] }],
+        endings: currentSurvey.endings,
+        hiddenFields: currentSurvey.hiddenFields,
+        variables: currentSurvey.variables,
+      } as unknown as Parameters<typeof executeV3SurveyPatch>[0]["document"],
+      languageRequests: [{ code: "en-US", default: true, enabled: true }],
+      requestId: "req_1",
+    });
+
+    const written = vi.mocked(prisma.survey.update).mock.calls.at(0)?.[0].data.blocks as {
+      elements: { id: string; code?: string; choices?: { code?: string }[] }[];
+    }[];
+    const [single, added] = written[0].elements;
+    expect(single.code).toBe("age");
+    expect(single.choices?.map((choice) => choice.code)).toEqual(["1", "2", "3"]);
+    expect(added.code).toBe("q1");
   });
 
   test("rejects setting a non-draft status on an app survey with no triggers", async () => {

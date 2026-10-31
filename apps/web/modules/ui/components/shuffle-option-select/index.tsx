@@ -53,7 +53,7 @@ export const ShuffleOptionSelect: React.FC<ShuffleOptionSelectProps> = ({
       onValueChange={(e: TShuffleOption) => {
         updateElement(elementIdx, { shuffleOption: e });
       }}>
-      <SelectTrigger className="w-fit space-x-2 overflow-hidden border-0 font-medium text-slate-600">
+      <SelectTrigger className="w-full max-w-xs overflow-hidden">
         <SelectValue placeholder={t("workspace.surveys.edit.select_ordering")} />
       </SelectTrigger>
       <SelectContent>

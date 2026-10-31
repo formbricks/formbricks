@@ -2,7 +2,7 @@ import type { TFunction } from "i18next";
 import { describe, expect, test } from "vitest";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { XM_TEMPLATE_IDS } from "@/app/lib/xm-template-ids";
-import { templates } from "./templates";
+import { customSurveyTemplate, templates } from "./templates";
 
 const mockTranslations: Record<string, string> = {
   "templates.nps_survey_name": "NPS Survey",
@@ -17,7 +17,30 @@ const mockTranslations: Record<string, string> = {
 
 const mockT = ((key: string): string => mockTranslations[key] ?? key) as unknown as TFunction;
 
+const optionLists = (element: Record<string, unknown>) =>
+  ["choices", "rows", "columns"].flatMap((key) => (Array.isArray(element[key]) ? [element[key]] : []));
+
 describe("templates", () => {
+  // ENG-6782: a survey created from a template, and the template preview, is never coded halfway.
+  test("codes every question and answer option of the catalog and the blank template", () => {
+    const all = [...templates(mockT), customSurveyTemplate(mockT)];
+    for (const template of all) {
+      const questions = template.preset.blocks
+        .flatMap((block) => block.elements)
+        .filter((element) => element.type !== TSurveyElementTypeEnum.CTA);
+      expect(questions.map((element) => (element as { code?: string }).code)).toEqual(
+        questions.map((_, index) => `q${index + 1}`)
+      );
+      for (const question of questions) {
+        for (const options of optionLists(question as unknown as Record<string, unknown>)) {
+          expect((options as { code?: string }[]).map((option) => option.code)).toEqual(
+            (options as unknown[]).map((_, index) => String(index + 1))
+          );
+        }
+      }
+    }
+  });
+
   test("uses unique ids across the full catalog", () => {
     const catalog = templates(mockT);
 

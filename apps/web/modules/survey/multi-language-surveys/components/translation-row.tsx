@@ -3,6 +3,7 @@
 import DOMPurify from "isomorphic-dompurify";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { PublishedLockNotice } from "@/modules/survey/editor/components/published-lock-notice";
 import { Input } from "@/modules/ui/components/input";
 import { type TranslatableString } from "../lib/types";
 import { RichTextTranslationInput } from "./rich-text-translation-input";
@@ -14,6 +15,8 @@ interface TranslationRowProps {
   localSurvey: TSurvey;
   languageCode: string;
   disabled?: boolean;
+  /** An option text the published survey already has in this language: shown, not editable. */
+  locked?: boolean;
 }
 
 const DefaultTextCell = ({
@@ -48,6 +51,7 @@ export const TranslationRow = ({
   localSurvey,
   languageCode,
   disabled,
+  locked,
 }: TranslationRowProps) => {
   const { t } = useTranslation();
 
@@ -69,26 +73,29 @@ export const TranslationRow = ({
         />
       </td>
       <td className="py-2 align-top">
-        {s.isRichText ? (
-          <RichTextTranslationInput
-            path={s.path}
-            value={value}
-            onChange={onChange}
-            localSurvey={localSurvey}
-            languageCode={languageCode}
-            elementId={s.elementId}
-            disabled={disabled}
-          />
-        ) : (
-          <Input
-            dir="auto"
-            className="text-sm"
-            value={value}
-            onChange={(e) => onChange(s.path, e.target.value)}
-            placeholder=""
-            disabled={disabled}
-          />
-        )}
+        <div className="flex items-start gap-1">
+          {s.isRichText ? (
+            <RichTextTranslationInput
+              path={s.path}
+              value={value}
+              onChange={onChange}
+              localSurvey={localSurvey}
+              languageCode={languageCode}
+              elementId={s.elementId}
+              disabled={disabled || locked}
+            />
+          ) : (
+            <Input
+              dir="auto"
+              className="text-sm"
+              value={value}
+              onChange={(e) => onChange(s.path, e.target.value)}
+              placeholder=""
+              disabled={disabled || locked}
+            />
+          )}
+          {locked && <PublishedLockNotice kind="optionText" className="mt-1" />}
+        </div>
       </td>
     </tr>
   );

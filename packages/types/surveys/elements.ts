@@ -72,11 +72,25 @@ export const ZSurveyElementBase = z.object({
   isDraft: z.boolean().optional(),
 });
 
+/**
+ * The code an exported file, webhook, prefill and start-at link use instead of the Question ID
+ * (ADR 0016). Optional on purpose: surveys stored before codes existed have none and must keep
+ * loading. The character rules live in `./codes` and run from `surveyRefinement`, not here, so a
+ * stored survey with a bad code is reported rather than made unreadable.
+ */
+export const ZElementCode = z.string().optional();
+
+// Every element that can be answered. CTA has no answer and therefore no code, so it extends
+// `ZSurveyElementBase` directly.
+export const ZSurveyQuestionElementBase = ZSurveyElementBase.extend({
+  code: ZElementCode,
+});
+
 // OpenText Element
 export const ZSurveyOpenTextElementInputType = z.enum(["text", "email", "url", "number", "phone"]);
 export type TSurveyOpenTextElementInputType = z.infer<typeof ZSurveyOpenTextElementInputType>;
 
-export const ZSurveyOpenTextElement = ZSurveyElementBase.extend({
+export const ZSurveyOpenTextElement = ZSurveyQuestionElementBase.extend({
   type: z.literal(TSurveyElementTypeEnum.OpenText),
   placeholder: ZI18nString.optional(),
   longAnswer: z.boolean().optional(),
@@ -123,7 +137,7 @@ export const ZSurveyOpenTextElement = ZSurveyElementBase.extend({
 export type TSurveyOpenTextElement = z.infer<typeof ZSurveyOpenTextElement>;
 
 // Consent Element
-export const ZSurveyConsentElement = ZSurveyElementBase.extend({
+export const ZSurveyConsentElement = ZSurveyQuestionElementBase.extend({
   type: z.literal(TSurveyElementTypeEnum.Consent),
   label: ZI18nString,
   validation: ZValidation.optional(),
@@ -135,6 +149,7 @@ export type TSurveyConsentElement = z.infer<typeof ZSurveyConsentElement>;
 export const ZSurveyElementChoice = z.object({
   id: z.string(),
   label: ZI18nString,
+  code: ZElementCode,
 });
 
 export type TSurveyElementChoice = z.infer<typeof ZSurveyElementChoice>;
@@ -170,7 +185,7 @@ export const ZMultipleChoiceOptionDisplayType = z.enum(["list", "dropdown"]);
 export type TMultipleChoiceOptionDisplayType = z.infer<typeof ZMultipleChoiceOptionDisplayType>;
 
 // Multiple Choice Single Element
-export const ZSurveyMultipleChoiceSingleElement = ZSurveyElementBase.extend({
+export const ZSurveyMultipleChoiceSingleElement = ZSurveyQuestionElementBase.extend({
   type: z.literal(TSurveyElementTypeEnum.MultipleChoiceSingle),
   choices: z.array(ZSurveyElementChoice).min(2, {
     error: "Multiple Choice Element must have at least two choices",
@@ -181,7 +196,7 @@ export const ZSurveyMultipleChoiceSingleElement = ZSurveyElementBase.extend({
 });
 
 // Multiple Choice Multi Element
-export const ZSurveyMultipleChoiceMultiElement = ZSurveyElementBase.extend({
+export const ZSurveyMultipleChoiceMultiElement = ZSurveyQuestionElementBase.extend({
   type: z.literal(TSurveyElementTypeEnum.MultipleChoiceMulti),
   choices: z.array(ZSurveyElementChoice).min(2, {
     error: "Multiple Choice Element must have at least two choices",
@@ -201,7 +216,7 @@ export const ZSurveyMultipleChoiceElement = z.union([
 export type TSurveyMultipleChoiceElement = z.infer<typeof ZSurveyMultipleChoiceElement>;
 
 // NPS Element
-export const ZSurveyNPSElement = ZSurveyElementBase.extend({
+export const ZSurveyNPSElement = ZSurveyQuestionElementBase.extend({
   type: z.literal(TSurveyElementTypeEnum.NPS),
   lowerLabel: ZI18nString.optional(),
   upperLabel: ZI18nString.optional(),
@@ -250,7 +265,7 @@ export const ZSurveyCTAElement = ZSurveyElementBase.extend({
 export type TSurveyCTAElement = z.infer<typeof ZSurveyCTAElement>;
 
 // Rating Element
-export const ZSurveyRatingElement = ZSurveyElementBase.extend({
+export const ZSurveyRatingElement = ZSurveyQuestionElementBase.extend({
   type: z.literal(TSurveyElementTypeEnum.Rating),
   scale: z.enum(["number", "smiley", "star"]),
   range: z.union([z.literal(5), z.literal(3), z.literal(4), z.literal(6), z.literal(7), z.literal(10)]),
@@ -264,13 +279,14 @@ export type TSurveyRatingElement = z.infer<typeof ZSurveyRatingElement>;
 // Picture Selection Element
 export const ZSurveyPictureChoice = z.object({
   id: z.string(),
+  code: ZElementCode,
   imageUrl: ZStorageUrl,
   imageAltText: ZI18nString.optional(),
 });
 
 export type TSurveyPictureChoice = z.infer<typeof ZSurveyPictureChoice>;
 
-export const ZSurveyPictureSelectionElement = ZSurveyElementBase.extend({
+export const ZSurveyPictureSelectionElement = ZSurveyQuestionElementBase.extend({
   type: z.literal(TSurveyElementTypeEnum.PictureSelection),
   allowMulti: z.boolean().prefault(false),
   choices: z.array(ZSurveyPictureChoice).min(2, {
@@ -282,7 +298,7 @@ export const ZSurveyPictureSelectionElement = ZSurveyElementBase.extend({
 export type TSurveyPictureSelectionElement = z.infer<typeof ZSurveyPictureSelectionElement>;
 
 // Date Element
-export const ZSurveyDateElement = ZSurveyElementBase.extend({
+export const ZSurveyDateElement = ZSurveyQuestionElementBase.extend({
   type: z.literal(TSurveyElementTypeEnum.Date),
   html: ZI18nString.optional(),
   format: z.enum(["M-d-y", "d-M-y", "y-M-d"]),
@@ -292,7 +308,7 @@ export const ZSurveyDateElement = ZSurveyElementBase.extend({
 export type TSurveyDateElement = z.infer<typeof ZSurveyDateElement>;
 
 // File Upload Element
-export const ZSurveyFileUploadElement = ZSurveyElementBase.extend({
+export const ZSurveyFileUploadElement = ZSurveyQuestionElementBase.extend({
   type: z.literal(TSurveyElementTypeEnum.FileUpload),
   allowMultipleFiles: z.boolean(),
   maxSizeInMB: z.number().optional(),
@@ -303,7 +319,7 @@ export const ZSurveyFileUploadElement = ZSurveyElementBase.extend({
 export type TSurveyFileUploadElement = z.infer<typeof ZSurveyFileUploadElement>;
 
 // Cal Element
-export const ZSurveyCalElement = ZSurveyElementBase.extend({
+export const ZSurveyCalElement = ZSurveyQuestionElementBase.extend({
   type: z.literal(TSurveyElementTypeEnum.Cal),
   calUserName: z.string().min(1, {
     error: "Cal user name is required",
@@ -317,11 +333,12 @@ export type TSurveyCalElement = z.infer<typeof ZSurveyCalElement>;
 export const ZSurveyMatrixElementChoice = z.object({
   id: z.string(),
   label: ZI18nString,
+  code: ZElementCode,
 });
 
 export type TSurveyMatrixElementChoice = z.infer<typeof ZSurveyMatrixElementChoice>;
 
-export const ZSurveyMatrixElement = ZSurveyElementBase.extend({
+export const ZSurveyMatrixElement = ZSurveyQuestionElementBase.extend({
   type: z.literal(TSurveyElementTypeEnum.Matrix),
   rows: z.array(ZSurveyMatrixElementChoice),
   columns: z.array(ZSurveyMatrixElementChoice),
@@ -340,7 +357,7 @@ const ZToggleInputConfig = z.object({
 
 export type TInputFieldConfig = z.infer<typeof ZToggleInputConfig>;
 
-export const ZSurveyAddressElement = ZSurveyElementBase.extend({
+export const ZSurveyAddressElement = ZSurveyQuestionElementBase.extend({
   type: z.literal(TSurveyElementTypeEnum.Address),
   addressLine1: ZToggleInputConfig,
   addressLine2: ZToggleInputConfig,
@@ -354,7 +371,7 @@ export const ZSurveyAddressElement = ZSurveyElementBase.extend({
 export type TSurveyAddressElement = z.infer<typeof ZSurveyAddressElement>;
 
 // Ranking Element
-export const ZSurveyRankingElement = ZSurveyElementBase.extend({
+export const ZSurveyRankingElement = ZSurveyQuestionElementBase.extend({
   type: z.literal(TSurveyElementTypeEnum.Ranking),
   choices: z
     .array(ZSurveyElementChoice)
@@ -372,7 +389,7 @@ export const ZSurveyRankingElement = ZSurveyElementBase.extend({
 export type TSurveyRankingElement = z.infer<typeof ZSurveyRankingElement>;
 
 // Contact Info Element
-export const ZSurveyContactInfoElement = ZSurveyElementBase.extend({
+export const ZSurveyContactInfoElement = ZSurveyQuestionElementBase.extend({
   type: z.literal(TSurveyElementTypeEnum.ContactInfo),
   firstName: ZToggleInputConfig,
   lastName: ZToggleInputConfig,
@@ -385,7 +402,7 @@ export const ZSurveyContactInfoElement = ZSurveyElementBase.extend({
 export type TSurveyContactInfoElement = z.infer<typeof ZSurveyContactInfoElement>;
 
 // CSAT Element
-export const ZSurveyCsatElement = ZSurveyElementBase.extend({
+export const ZSurveyCsatElement = ZSurveyQuestionElementBase.extend({
   type: z.literal(TSurveyElementTypeEnum.CSAT),
   scale: z.enum(["number", "smiley", "star"]),
   range: z.literal(5),
@@ -397,7 +414,7 @@ export const ZSurveyCsatElement = ZSurveyElementBase.extend({
 export type TSurveyCsatElement = z.infer<typeof ZSurveyCsatElement>;
 
 // CES Element
-export const ZSurveyCesElement = ZSurveyElementBase.extend({
+export const ZSurveyCesElement = ZSurveyQuestionElementBase.extend({
   type: z.literal(TSurveyElementTypeEnum.CES),
   scale: z.enum(["number", "smiley", "star"]),
   range: z.union([z.literal(5), z.literal(7)]),

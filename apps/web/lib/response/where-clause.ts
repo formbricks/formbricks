@@ -471,6 +471,14 @@ const includesAllClauses = (
   ];
 };
 
+/** The outcome the filter selects, or (for the export) only responses without one. */
+const buildOutcomeCondition = (
+  filterCriteria: TResponseFilterCriteria | undefined
+): Prisma.ResponseWhereInput | null => {
+  if (filterCriteria?.outcome) return { outcome: filterCriteria.outcome };
+  return filterCriteria?.excludeLowQuality ? { outcome: null } : null;
+};
+
 export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilterCriteria) => {
   const whereClause: Prisma.ResponseWhereInput["AND"] = [];
 
@@ -480,6 +488,11 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
     whereClause.push({
       finished: filterCriteria?.finished,
     });
+  }
+
+  const outcomeCondition = buildOutcomeCondition(filterCriteria);
+  if (outcomeCondition) {
+    whereClause.push(outcomeCondition);
   }
 
   if (filterCriteria?.createdAt) {

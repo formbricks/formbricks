@@ -2,7 +2,7 @@
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
-import { PlusIcon } from "lucide-react";
+import { CopyIcon, PlusIcon } from "lucide-react";
 import { type JSX } from "react";
 import { useTranslation } from "react-i18next";
 import { IMAGE_FILE_EXTENSIONS } from "@formbricks/types/storage";
@@ -14,7 +14,9 @@ import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
 import { ImageAltTextButton } from "@/modules/survey/components/element-form-input/components/image-alt-text-button";
 import { isValueIncomplete } from "@/modules/survey/components/element-form-input/utils";
-import { ValidationRulesEditor } from "@/modules/survey/editor/components/validation-rules-editor";
+import { useCopyId } from "@/modules/survey/editor/components/copy-id-button";
+import { PublishedLockNotice } from "@/modules/survey/editor/components/published-lock-notice";
+import { NO_ELEMENT_LOCK, TElementLock } from "@/modules/survey/editor/lib/published-lock";
 import { Button } from "@/modules/ui/components/button";
 import { FileInput } from "@/modules/ui/components/file-input";
 import { Label } from "@/modules/ui/components/label";
@@ -29,6 +31,7 @@ interface PictureSelectionFormProps {
   locale: TUserLocale;
   isStorageConfigured: boolean;
   isExternalUrlsAllowed?: boolean;
+  lock?: TElementLock;
 }
 
 export const PictureSelectionForm = ({
@@ -40,10 +43,12 @@ export const PictureSelectionForm = ({
   locale,
   isStorageConfigured = true,
   isExternalUrlsAllowed,
+  lock = NO_ELEMENT_LOCK,
 }: PictureSelectionFormProps): JSX.Element => {
   const workspaceId = localSurvey.workspaceId;
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
   const { t } = useTranslation();
+  const copyId = useCopyId();
   const handleChoiceDeletion = (choiceValue: string) => {
     // Filter out the deleted choice from the choices array
     const newChoices = element.choices?.filter((choice) => choice.id !== choiceValue) || [];
@@ -90,23 +95,38 @@ export const PictureSelectionForm = ({
     const choice = element.choices[choiceIdx];
     const label = t("workspace.surveys.edit.image_alt_text_choice_n", { n: choiceIdx + 1 });
     return (
-      <ImageAltTextButton
-        label={label}
-        hasAltText={Boolean(choice.imageAltText?.default?.trim())}
-        isInvalid={isValueIncomplete("imageAltText", isInvalid, surveyLanguageCodes, choice.imageAltText)}>
-        <ElementFormInput
-          id="imageAltText"
-          value={choice.imageAltText ?? createI18nString("", surveyLanguageCodes)}
+      <>
+        <button
+          type="button"
+          aria-label={t("workspace.surveys.edit.copy_option_id")}
+          title={`${t("workspace.surveys.edit.copy_option_id")}: ${choice.id}`}
+          data-testid="copy-option-id"
+          data-option-id={choice.id}
+          className="absolute right-2 bottom-2 flex cursor-pointer items-center rounded-md bg-slate-100 p-1 text-slate-700 opacity-60 transition-opacity hover:opacity-100 focus-visible:opacity-100"
+          onClick={(e) => {
+            e.preventDefault();
+            void copyId(choice.id);
+          }}>
+          <CopyIcon className="size-3.5" />
+        </button>
+        <ImageAltTextButton
           label={label}
-          placeholder={t("workspace.surveys.edit.image_alt_text_placeholder")}
-          localSurvey={localSurvey}
-          elementIdx={elementIdx}
-          isInvalid={isInvalid}
-          updateElement={updateChoiceAltText(choice.id)}
-          locale={locale}
-          isStorageConfigured={isStorageConfigured}
-        />
-      </ImageAltTextButton>
+          hasAltText={Boolean(choice.imageAltText?.default?.trim())}
+          isInvalid={isValueIncomplete("imageAltText", isInvalid, surveyLanguageCodes, choice.imageAltText)}>
+          <ElementFormInput
+            id="imageAltText"
+            value={choice.imageAltText ?? createI18nString("", surveyLanguageCodes)}
+            label={label}
+            placeholder={t("workspace.surveys.edit.image_alt_text_placeholder")}
+            localSurvey={localSurvey}
+            elementIdx={elementIdx}
+            isInvalid={isInvalid}
+            updateElement={updateChoiceAltText(choice.id)}
+            locale={locale}
+            isStorageConfigured={isStorageConfigured}
+          />
+        </ImageAltTextButton>
+      </>
     );
   };
 
@@ -183,6 +203,12 @@ export const PictureSelectionForm = ({
             maxSizeInMB={5}
             isStorageConfigured={isStorageConfigured}
             renderImageAction={renderChoiceAltTextButton}
+            getRemoveLockReason={(url) => {
+              const choice = element.choices.find((c) => c.imageUrl === url);
+              return choice && lock.isOptionLocked("choices", choice.id)
+                ? t("workspace.surveys.edit.lock_explanation_option_delete")
+                : undefined;
+            }}
           />
         </div>
       </div>
@@ -191,6 +217,8 @@ export const PictureSelectionForm = ({
         <Switch
           id="multi-select-toggle"
           checked={element.allowMulti}
+          // Single and multiple selection store different answers: a published question keeps its mode.
+          disabled={lock.isTypeLocked}
           onClick={(e) => {
             e.stopPropagation();
             const newAllowMulti = !element.allowMulti;
@@ -210,8 +238,9 @@ export const PictureSelectionForm = ({
         />
         <Label htmlFor="multi-select-toggle" className="cursor-pointer">
           <div className="ml-2">
-            <h3 className="text-sm font-semibold text-slate-700">
+            <h3 className="flex items-center gap-1 text-sm font-semibold text-slate-700">
               {t("workspace.surveys.edit.allow_multi_select")}
+              {lock.isTypeLocked && <PublishedLockNotice kind="type" />}
             </h3>
             <p className="text-xs font-normal text-slate-500">
               {t("workspace.surveys.edit.allow_users_to_select_more_than_one_image")}
@@ -219,18 +248,6 @@ export const PictureSelectionForm = ({
           </div>
         </Label>
       </div>
-      {element.allowMulti && (
-        <ValidationRulesEditor
-          elementType={element.type}
-          validation={element.validation}
-          onUpdateValidation={(validation) => {
-            updateElement(elementIdx, {
-              validation,
-            });
-          }}
-          element={element}
-        />
-      )}
     </form>
   );
 };

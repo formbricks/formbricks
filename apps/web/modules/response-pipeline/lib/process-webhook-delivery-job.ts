@@ -9,6 +9,7 @@ import {
 import { logger } from "@formbricks/logger";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { isDatabasePoolExhaustionError } from "@/lib/jobs/pool-exhaustion";
+import { buildDataByQuestionCode } from "@/lib/response/data-by-question-code";
 import { isSurveyOutboundAllowed, surveyOutboundVisibilitySelect } from "@/lib/survey/visibility/outbound";
 import { WebhookDnsResolutionError } from "@/lib/utils/validate-webhook-url";
 import {
@@ -20,17 +21,25 @@ import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { type TWebhookDeliveryOutcome, recordWebhookDeliveryOutcome } from "./webhook-delivery-metrics";
 
 /**
- * The wire body. Byte-for-byte what the pipeline job sent before deliveries were fanned out — receivers
- * and their signature checks must not notice the refactor — so this shape is pinned by a parity test and
- * is not the place for new fields.
+ * The wire body. What the pipeline job sent before deliveries were fanned out, plus additive keys only:
+ * receivers and their signature checks must not notice the refactor, so the existing keys are pinned by a
+ * parity test and a literal key-list test, and a new response column does not slip in unannounced. The
+ * additions are `outcome` (ENG-6780), always present and `null` when unset, including for a job queued
+ * before the column existed, and `dataByQuestionCode` (ENG-6784), absent only for a job queued before
+ * `survey.questionCodes` existed.
  */
-export const buildWebhookDeliveryBody = (data: TWebhookDeliveryJobData): string =>
-  JSON.stringify({
+export const buildWebhookDeliveryBody = (data: TWebhookDeliveryJobData): string => {
+  const resolvedData = resolveStorageUrlsInObject(data.response.data);
+  const questionCodes = data.survey.questionCodes;
+
+  return JSON.stringify({
     webhookId: data.webhookId,
     event: data.event,
     data: {
       ...data.response,
-      data: resolveStorageUrlsInObject(data.response.data),
+      outcome: data.response.outcome ?? null,
+      data: resolvedData,
+      ...(questionCodes ? { dataByQuestionCode: buildDataByQuestionCode(resolvedData, questionCodes) } : {}),
       survey: {
         title: data.survey.name,
         type: data.survey.type,
@@ -40,6 +49,7 @@ export const buildWebhookDeliveryBody = (data: TWebhookDeliveryJobData): string 
       },
     },
   });
+};
 
 /**
  * Receiver answered, but not with a success: worth another attempt only when the condition can change on

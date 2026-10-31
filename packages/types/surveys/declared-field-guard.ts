@@ -173,6 +173,17 @@ const elementIdsOf = (blocks: readonly unknown[]): string[] =>
     );
   });
 
+/** Every question code in `blocks`, skipping whatever is not shaped like a coded element. */
+const elementCodesOf = (blocks: readonly unknown[]): string[] =>
+  blocks.flatMap((block) => {
+    const elements = isRecord(block) ? block.elements : undefined;
+    if (!Array.isArray(elements)) return [];
+
+    return elements.flatMap((element: unknown) =>
+      isRecord(element) && typeof element.code === "string" ? [element.code] : []
+    );
+  });
+
 type TDeclaredNamespaces = { variables: TNamespaceNames; hiddenFields: TNamespaceNames };
 
 /** What a source declares, split into the two namespaces recall and logic address fields through. */
@@ -313,6 +324,46 @@ export const validateNewElementIdClashes = ({
 };
 
 /**
+ * Refuses a name that an Embedded Data field (hidden field or variable) and a question code would
+ * share after the write — unless the survey already holds that exact clash (ENG-6778, ADR 0016).
+ *
+ * Question codes are the public name of a question in exports, webhooks and prefill links, next to
+ * the Embedded Data names, so one name for both would be ambiguous. Grandfathered and per-save like
+ * {@link validateNewElementIdClashes}; blocks the payload does not carry (or an empty list) are the
+ * survey's current ones. Case-insensitive. The error names the Embedded Data field, so the editor can
+ * point at the field being added; `validateSurveyCodes` reports the same clash against the question
+ * when it is the code that is new.
+ */
+export const validateNewQuestionCodeClashes = ({
+  existing,
+  incoming,
+}: {
+  existing: TDeclaredFieldSource;
+  incoming: TDeclaredFieldSource;
+}): TValidateIdError[] => {
+  const current = namesByNamespace(existing);
+  const currentNames = new Set([...current.variables.keys(), ...current.hiddenFields.keys()]);
+  const currentCodes = new Set(elementCodesOf(existing.blocks ?? []).map((code) => code.toLowerCase()));
+  const nextCodes =
+    isDeclared(incoming.blocks) && incoming.blocks.length > 0
+      ? new Set(elementCodesOf(incoming.blocks).map((code) => code.toLowerCase()))
+      : currentCodes;
+  const next = namesAfterWrite(current, incoming);
+
+  const errors: TValidateIdError[] = [];
+  const seen = new Set<string>();
+  for (const [lowered, name] of [...next.variables, ...next.hiddenFields]) {
+    if (!nextCodes.has(lowered) || seen.has(lowered)) continue;
+    seen.add(lowered);
+    if (currentNames.has(lowered) && currentCodes.has(lowered)) continue;
+
+    errors.push({ code: TValidateIdErrorCode.Duplicate, field: name });
+  }
+
+  return errors;
+};
+
+/**
  * Everything a write's declared field names must satisfy, for the write seams that hold a whole
  * survey on both sides (`updateSurvey`, `createSurvey`): no new reserved name, and no new clash
  * between a variable and a hidden field, or a hidden field and an element. One error per bad name —
@@ -338,6 +389,7 @@ export const validateNewDeclaredFields = ({
   const clashes = [
     ...validateNewDeclaredFieldClashes({ existing, incoming }),
     ...validateNewElementIdClashes({ existing, incoming }),
+    ...validateNewQuestionCodeClashes({ existing, incoming }),
   ].filter((error) => {
     const lowered = error.field.toLowerCase();
     if (reported.has(lowered)) return false;

@@ -16,6 +16,7 @@ import { getContactByUserId } from "./contact";
 import {
   createResponse,
   createResponseWithQuotaEvaluation,
+  getQuestionCodesBySurveyId,
   getResponsesByWorkspaceIds,
   resolveCreateResponseContext,
 } from "./response";
@@ -126,6 +127,9 @@ vi.mock("@formbricks/database", () => ({
       create: vi.fn(),
       findMany: vi.fn(),
     },
+    survey: {
+      findMany: vi.fn(),
+    },
   },
 }));
 vi.mock("@formbricks/logger");
@@ -152,6 +156,26 @@ describe("Response Lib Tests", () => {
       },
     };
     prisma.$transaction = vi.fn(async (cb: any) => cb(mockTx));
+  });
+
+  describe("getQuestionCodesBySurveyId", () => {
+    test("reads the codes of all the surveys in one query", async () => {
+      vi.mocked(prisma.survey.findMany).mockResolvedValue([
+        { id: "s1", blocks: [{ id: "b1", elements: [{ id: "el1", type: "nps", code: "nps" }] }] },
+        { id: "s2", blocks: [] },
+      ] as never);
+
+      const codes = await getQuestionCodesBySurveyId(["s1", "s2"]);
+
+      expect(prisma.survey.findMany).toHaveBeenCalledTimes(1);
+      expect(codes.get("s1")).toEqual({ el1: "nps" });
+      expect(codes.get("s2")).toEqual({});
+    });
+
+    test("reads nothing for no surveys", async () => {
+      expect((await getQuestionCodesBySurveyId([])).size).toBe(0);
+      expect(prisma.survey.findMany).not.toHaveBeenCalled();
+    });
   });
 
   describe("createResponseWithQuotaEvaluation", () => {

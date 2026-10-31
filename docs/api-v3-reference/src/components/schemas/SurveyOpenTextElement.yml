@@ -2,6 +2,8 @@ allOf:
   - $ref: ./SurveyElementBase.yml
   - type: object
     properties:
+      code:
+        $ref: ./SurveyQuestionCode.yml
       type:
         type: string
         enum:

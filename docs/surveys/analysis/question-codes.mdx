@@ -1,0 +1,93 @@
+---
+title: "Question Codes and Answer Codes"
+description: "Give every question a short, readable name and every answer a code, so exports, webhooks and links use names you chose. Learn what is locked once a survey is published."
+icon: "tags"
+---
+
+Every question in a survey has a **question code**, a short name such as `q1` or `nps`. Every answer option has an **answer code**, such as `1` or `98`. Codes are the names used in the [Analysis export](/surveys/analysis/export-responses), in [webhooks](/platform/features/integrations/webhooks#reading-answers-by-question-code), and in [prefill](/surveys/link-surveys/data-prefilling) and [start-at](/surveys/link-surveys/start-at-block) links.
+
+## Question codes
+
+Formbricks sets a code for every question: the next unused `q1`, `q2` and so on. Moving or deleting questions never renumbers the others. You can change a code while the survey is a draft, for example to `nps`, `age_group` or `adm01`.
+
+A question code:
+
+- starts with a lowercase letter, followed by lowercase letters, digits and `_`
+- has no two `_` in a row and does not end with `_`
+- is at most 30 characters long
+- is unique in the survey, ignoring case. It cannot match another question code, a [hidden field or variable](/surveys/general-features/hidden-fields) name, or the Question ID of another question
+- does not give the export a column another question already has. A multi-select question coded `q2` with the option code `1` makes a column `q2_1`, so another question cannot be coded `q2_1`. The same goes for the Other text column (`q2_text`) and for the rows of a matrix question
+- is not one of the words SPSS reserves (`all`, `and`, `by`, `eq`, `ge`, `gt`, `le`, `lt`, `ne`, `not`, `or`, `to`, `with`), and not the name of a column the export writes itself, such as `response_id`, `language`, `outcome`, `timestamp` or `finished`
+
+<Note>
+  The rules are short and strict on purpose. Codes end up in SPSS variable names, URLs and webhook keys, where capitals, spaces and double underscores cause trouble. Call centre style names such as `ADM01` become `adm01`.
+</Note>
+
+Welcome cards and calls to action are not questions and have no code.
+
+## Answer codes
+
+Answer options, matrix rows and matrix columns have answer codes. They default to `1`, `2`, `3` and so on in the order the options were created, and you can change them while the survey is a draft, for example to `98` for "Don't know" or `99` for "Prefer not to say".
+
+An answer code:
+
+- uses lowercase letters, digits and `_`, and may start with a digit
+- is at most 20 characters long
+- is unique within its question
+- is never reused for another option in the same question
+
+Rating, NPS, CSAT and CES questions have no answer codes: the answer is the number the respondent picked.
+
+## Where to set codes
+
+<Steps>
+  <Step title="Open the question settings">
+    Open a question in the survey editor and go to its **Settings** tab.
+  </Step>
+  <Step title="Change the codes under Recode">
+    The **Recode** section holds the question code and the answer codes of the question. **Reset all** puts the codes of this one question back to the defaults. It is only available while the survey is a draft.
+  </Step>
+</Steps>
+
+Question codes show first wherever Formbricks used to show a Question ID: in Summary headers, in the response table, on response cards, in logic pickers and in the export column list.
+
+## Question IDs and option IDs
+
+Codes are separate from IDs. Every question also has a generated **Question ID**, and every option an **Option ID**. Responses are stored under these IDs, so they never change and cannot be edited.
+
+- To copy a Question ID, choose **Copy question ID** in the question's **⋯** menu.
+- To copy an Option ID, choose **Copy option ID** next to the option.
+
+Links and the API accept the Question ID next to the question code. Surveys that already existed keep their custom Question IDs. They are never renamed.
+
+## What locks when you publish
+
+A survey is **published** once it has left draft: active, paused or completed. A scheduled survey counts as published from the moment you schedule it.
+
+From then on:
+
+- question codes and answer codes cannot be changed
+- the question type cannot be changed, for example from Single-select to Multi-select, because it changes the columns of an export. For a Picture selection, the single or multiple selection setting is locked too
+- the text of an option cannot be changed, in any language
+- an option that existed when the survey was published cannot be deleted. Add a new option instead
+
+You can still add new questions and new options, edit headlines and other text, and delete questions. The code of a new option stays editable until you save the survey, and then it locks too.
+
+Locked fields show a lock icon, and its popover tells you why. The reason is that answers are stored as the text the respondent saw, not as an option ID. The Analysis export finds the code of an answer by matching that text with the options of your survey, so a renamed option would leave earlier answers without a code.
+
+<Warning>
+  Fix typos and translations **before** you activate a survey. Renaming an option on a live survey is not possible for anyone.
+</Warning>
+
+### Locks and the API
+
+The lock is enforced on the server, not only in the editor. An API or MCP client that changes a locked field of a published survey gets an error:
+
+- `PATCH /api/v3/surveys/{surveyId}` and the MCP tools answer `422` with an `invalid_params` entry coded `immutable_question_code`, `immutable_answer_code`, `immutable_question_type`, `immutable_option_text` or `immutable_option_deletion`.
+- `PUT /api/v1/management/surveys/{surveyId}` and the editor answer with a message that starts with `published_survey_locked:`. The editor shows it as "Your changes were not saved".
+
+Leaving a code out of a request is not a change. Creating a survey through the API or MCP can still set codes and custom IDs.
+
+## Existing surveys
+
+When you upgrade to a version with codes, every existing survey gets question codes and answer codes once, from the current order of its questions and options. Nothing else changes: IDs, responses and the order of questions stay as they were. A survey that was already published has its codes locked from the start. To change the codes of such a survey, duplicate it and edit the copy.

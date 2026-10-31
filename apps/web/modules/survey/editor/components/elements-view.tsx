@@ -16,15 +16,13 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyQuota } from "@formbricks/types/quota";
-import { TSurveyBlock, TSurveyBlockLogic, TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
+import { TSurveyBlock, TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
-import { type TConditionGroup, type TSingleCondition } from "@formbricks/types/surveys/logic";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { getDefaultEndingCard } from "@/app/lib/survey-builder";
 import { addMultiLanguageLabels, createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
-import { isConditionGroup } from "@/lib/surveyLogic/utils";
 import { checkForEmptyFallBackValue } from "@/lib/utils/recall";
 import { type TWorkspaceWithoutCustomCss } from "@/modules/custom-css/lib/types";
 import { AddElementButton } from "@/modules/survey/editor/components/add-element-button";
@@ -44,6 +42,7 @@ import {
   moveElementInBlock,
   renumberAutoNamedBlocks,
   updateElementInBlock,
+  withFilledCodes,
 } from "@/modules/survey/editor/lib/blocks";
 import {
   findBlockUsedInLogic,
@@ -129,91 +128,6 @@ export const ElementsView = ({
 
   const surveyLanguages = localSurvey.languages;
 
-  const handleElementLogicChange = (survey: TSurvey, compareId: string, updatedId: string): TSurvey => {
-    const updateConditions = (conditions: TConditionGroup): TConditionGroup => {
-      return {
-        ...conditions,
-        conditions: conditions?.conditions.map((condition) => {
-          if (isConditionGroup(condition)) {
-            return updateConditions(condition);
-          } else {
-            return updateSingleCondition(condition);
-          }
-        }),
-      };
-    };
-
-    const updateSingleCondition = (condition: TSingleCondition): TSingleCondition => {
-      let updatedCondition = { ...condition };
-
-      if (condition.leftOperand.value === compareId) {
-        updatedCondition.leftOperand = { ...condition.leftOperand, value: updatedId };
-      }
-
-      if (condition.rightOperand?.type === "element" && condition.rightOperand?.value === compareId) {
-        updatedCondition.rightOperand = { ...condition.rightOperand, value: updatedId };
-      }
-
-      return updatedCondition;
-    };
-
-    const updateActions = (actions: TSurveyBlockLogicAction[]): TSurveyBlockLogicAction[] => {
-      return actions.map((action) => {
-        let updatedAction = { ...action };
-
-        // Handle jumpToBlock actions (blocks model)
-        if (updatedAction.objective === "jumpToBlock" && updatedAction.target === compareId) {
-          updatedAction.target = updatedId;
-        }
-
-        if (updatedAction.objective === "requireAnswer" && updatedAction.target === compareId) {
-          updatedAction.target = updatedId;
-        }
-
-        return updatedAction;
-      });
-    };
-
-    const updatedBlocks = survey.blocks.map((block) => {
-      const updatedElements = block.elements.map((element) => {
-        let updatedElement = { ...element };
-
-        if (element.headline[selectedLanguageCode]?.includes(`recall:${compareId}`)) {
-          updatedElement.headline = {
-            ...element.headline,
-            [selectedLanguageCode]: element.headline[selectedLanguageCode].replaceAll(
-              `recall:${compareId}`,
-              `recall:${updatedId}`
-            ),
-          };
-        }
-
-        return updatedElement;
-      });
-
-      // Update block-level logic
-      let updatedLogic = block.logic;
-      if (block.logic) {
-        updatedLogic = block.logic.map((logicRule: TSurveyBlockLogic) => ({
-          ...logicRule,
-          conditions: updateConditions(logicRule.conditions),
-          actions: updateActions(logicRule.actions),
-        }));
-      }
-
-      return {
-        ...block,
-        elements: updatedElements,
-        logic: updatedLogic,
-      };
-    });
-
-    return {
-      ...survey,
-      blocks: updatedBlocks,
-    };
-  };
-
   const updateElement = (elementIdx: number, updatedAttributes: any) => {
     // Get element ID from current elements array (for validation)
     const element = elements[elementIdx];
@@ -221,9 +135,6 @@ export const ElementsView = ({
 
     // Store element ID for use in functional updater
     const elementId = element.id;
-
-    // Track side effects that need to happen after state update
-    let newActiveElementId: string | null = null;
 
     // Use functional update to ensure we work with the latest state
     setLocalSurvey((prevSurvey) => {
@@ -264,19 +175,6 @@ export const ElementsView = ({
         updatedSurvey = { ...updatedSurvey, blocks };
       }
 
-      // Handle element ID changes
-      if ("id" in elementLevelAttributes) {
-        const initialElementId = elementId;
-        updatedSurvey = handleElementLogicChange(updatedSurvey, initialElementId, elementLevelAttributes.id);
-
-        // Track new active element ID
-        newActiveElementId = elementLevelAttributes.id;
-
-        // Update internal element ID map
-        internalElementIdMap[elementLevelAttributes.id] = internalElementIdMap[elementId];
-        delete internalElementIdMap[elementId];
-      }
-
       // Update element-level attributes if any
       if (Object.keys(elementLevelAttributes).length > 0) {
         const attributesToCheck = ["upperLabel", "lowerLabel"];
@@ -308,11 +206,6 @@ export const ElementsView = ({
 
       return updatedSurvey;
     });
-
-    // Apply side effects after state update is queued
-    if (newActiveElementId) {
-      setActiveElementId(newActiveElementId);
-    }
   };
 
   // Update block logic (block-level property)
@@ -485,7 +378,9 @@ export const ElementsView = ({
 
     // Create a duplicate of the element with a new ID
     const newElementId = createId();
-    const duplicatedElement = { ...element, id: newElementId };
+    // The copy drops the question code so it takes the next unused one (answer codes stay).
+    const { code: _code, ...elementWithoutCode } = element as TSurveyElement & { code?: string };
+    const duplicatedElement = { ...elementWithoutCode, id: newElementId } as TSurveyElement;
 
     // Add the duplicated element to the same block
     const result = addElementToBlock(localSurvey, blockId, duplicatedElement);
@@ -518,10 +413,10 @@ export const ElementsView = ({
         backButtonLabel: createI18nString("", []),
       };
 
-      return {
+      return withFilledCodes({
         ...prevSurvey,
         blocks: [...prevSurvey.blocks, newBlock],
-      };
+      });
     });
 
     setActiveElementId(element.id);
@@ -909,6 +804,7 @@ export const ElementsView = ({
         collisionDetection={closestCorners}>
         <BlocksDroppable
           localSurvey={localSurvey}
+          persistedSurvey={persistedSurvey}
           setLocalSurvey={setLocalSurvey}
           workspace={workspace}
           moveElement={stableMoveElement}

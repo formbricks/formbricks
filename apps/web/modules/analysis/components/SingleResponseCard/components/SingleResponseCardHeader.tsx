@@ -9,6 +9,9 @@ import { TUser, TUserLocale } from "@formbricks/types/user";
 import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { timeSince } from "@/lib/time";
 import { getContactIdentifier } from "@/lib/utils/contact";
+import { OutcomeBadge } from "@/modules/analysis/response-outcome/components/outcome-badge";
+import { ResponseOutcomeButton } from "@/modules/analysis/response-outcome/components/response-outcome-button";
+import type { TOutcomeActions } from "@/modules/analysis/response-outcome/lib/outcome";
 import { PersonAvatar } from "@/modules/ui/components/avatars";
 import { Button } from "@/modules/ui/components/button";
 import { IdBadge } from "@/modules/ui/components/id-badge";
@@ -24,6 +27,7 @@ interface SingleResponseCardHeaderProps {
   isReadOnly: boolean;
   setDeleteDialogOpen: (deleteDialogOpen: boolean) => void;
   locale: TUserLocale;
+  outcomeActions?: TOutcomeActions;
 }
 
 export const SingleResponseCardHeader = ({
@@ -34,6 +38,7 @@ export const SingleResponseCardHeader = ({
   isReadOnly,
   setDeleteDialogOpen,
   locale,
+  outcomeActions,
 }: SingleResponseCardHeaderProps) => {
   const displayIdentifier = response.contact
     ? getContactIdentifier(response.contact, response.contactAttributes)
@@ -79,6 +84,7 @@ export const SingleResponseCardHeader = ({
                 </div>
               )}
               {response.contact?.userId && <IdBadge id={response.contact.userId} />}
+              <OutcomeBadge outcome={response.outcome} />
             </>
           )}
 
@@ -96,14 +102,23 @@ export const SingleResponseCardHeader = ({
         </div>
 
         <div className="flex items-center gap-x-2 text-sm">
+          {pageType !== "response" && <OutcomeBadge outcome={response.outcome} />}
           <time className="text-slate-500" dateTime={timeSince(response.createdAt.toISOString(), locale)}>
             {timeSince(response.createdAt.toISOString(), locale)}
           </time>
+          {user && !isReadOnly && outcomeActions && (
+            <ResponseOutcomeButton
+              responseId={response.id}
+              outcome={response.outcome}
+              workspaceId={survey.workspaceId}
+              actions={outcomeActions}
+            />
+          )}
           {user &&
             !isReadOnly &&
             (canResponseBeDeleted ? (
               <Button
-                variant="ghost"
+                variant="outline"
                 size="icon"
                 onClick={() => setDeleteDialogOpen(true)}
                 aria-label="Delete response">
@@ -114,7 +129,7 @@ export const SingleResponseCardHeader = ({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="icon"
                       disabled
                       className="text-slate-400"

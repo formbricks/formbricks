@@ -1,6 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
 import { ZEndingCardUrl } from "@formbricks/types/common";
 import { toSafeIdentifier } from "@formbricks/types/safe-identifier";
+import { fillMissingCodes } from "@formbricks/types/surveys/fill-missing-codes";
 import type { TSurveyLanguage } from "@formbricks/types/surveys/types";
 import {
   findLanguageCodesForDuplicateLabels,
@@ -323,7 +324,8 @@ class QsfAssembler {
         status: "draft",
         defaultLanguage: survey.defaultLanguage,
         languages,
-        blocks,
+        // ENG-6782: an imported survey is never coded halfway.
+        blocks: fillMissingCodes(blocks, hidden.fieldIds),
         endings,
         hiddenFields: { enabled: hidden.fieldIds.length > 0, fieldIds: hidden.fieldIds },
         ...languageSettingsFor(languages.filter((language) => language.enabled).length),

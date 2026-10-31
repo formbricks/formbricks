@@ -1,0 +1,178 @@
+---
+title: "Export Responses"
+description: "Export survey responses as CSV or Excel. Switch to an Analysis export to get question codes, answer codes, a datamap, a list of unmapped values and an SPSS syntax file."
+icon: "file-export"
+---
+
+The **Export** button on the Summary and Responses tabs opens one modal for every export. It always opens with the default settings and does not remember what you chose last time.
+
+There are two kinds of export:
+
+| | Standard export | Analysis export |
+| --- | --- | --- |
+| For | Reading and sharing responses | Statistics tools such as SPSS, Excel and Power BI |
+| Settings | The defaults of the modal | Anything else: codes for questions or answers, any analysis option, or the SPSS syntax file |
+| Columns | One column per question, named `1. Question text`, plus an `- Option ID` column for choice questions | One column per question, named by its [question code](/surveys/analysis/question-codes) (`q1`, `q5_1`) |
+| Answers | The text the respondent saw | Answer codes, text, or both |
+| Files | A CSV file, or an Excel file with one sheet named `Sheet1` | An Excel workbook with several sheets, or a zip of CSV files and an SPSS syntax file |
+| Low quality responses | Included | Left out by default |
+
+The Standard export is the file Formbricks has always produced, so pipelines that read it keep working. It is plain UTF-8 text without a byte-order mark and with `\n` line breaks.
+
+<Note>
+  Anyone who can read a survey can export it, including read-only seats.
+</Note>
+
+## Choose what to export
+
+<Steps>
+  <Step title="Filter the responses">
+    Set the filter and time range on the Summary or Responses tab first. The export contains the responses the filter matches. To export only some responses, tick their rows in the Responses table and select **Download** in the selection bar: it opens the same modal for the selection.
+  </Step>
+  <Step title="Open the Export modal">
+    Select **Export**. The **Export options** modal opens with the settings of the Standard export. A count line at the top tells you how many responses are included and, for an Analysis export, how many Low quality responses are left out, for example "Include 1,240 responses · 3 Low quality left out". The **Export** button waits until the count has loaded.
+  </Step>
+  <Step title="Pick the options">
+    - **Format**: **.csv** or **.xlsx**.
+    - **Add SPSS syntax file (.sps)**: CSV only. It adds a syntax file that reads the CSV into SPSS. It needs answer codes, so it switches **Text only** off.
+    - **Display questions** and **Display answers**: **Text only**, **Code only** or **Text and code**, one choice for the column headers and one for the cells.
+    - **Include columns**: tick the columns the file keeps, or **Select all**. A multi-select question lists its options and its Other text under it, so you can leave one out without the rest.
+    - **Advanced options**: **Add datamap** and **Add unmapped values**, both for CSV and Excel. On CSV, each one adds a file, so the download becomes a zip. **Compress into .zip** downloads a single CSV as a zip.
+  </Step>
+  <Step title="Export">
+    Select **Export**. The modal shows the progress, for example "Exporting… 600 of 1,240 responses", and you can close it: the download starts when the file is ready. A toast confirms it. If it fails, the toast offers **Try again**.
+  </Step>
+</Steps>
+
+<Note>
+  The export runs in the app and streams the file as it is built. You can move between Summary, Responses and the survey editor while it runs. If you reload or close the tab, the browser asks you to confirm first, and the export stops if you do. Only one export runs at a time in your browser, and an Excel file is built by one export at a time on the server, so a second Excel export waits its turn.
+</Note>
+
+### Attachments
+
+If the survey has a file upload question, the modal also has an **Attachments** section with a **Download attachments** button. It downloads the files respondents uploaded, in one zip, for the responses the current filter matches, then closes the modal. The attachments section is not offered when you open the modal for ticked rows.
+
+## Files in an Analysis export
+
+An export that has more than one file is always a zip.
+
+| Choice | Excel | CSV |
+| --- | --- | --- |
+| Text only, or Code only | One data sheet, `Labels` or `Codes` | `data.csv` |
+| Text and code | Two data sheets, `Labels` and `Codes` | `labels.csv` and `codes.csv` |
+| **Add datamap** | Sheet `Datamap` in the workbook | `datamap.csv` in the zip |
+| **Add unmapped values** | Sheet `Unmapped values` in the workbook | `unmapped-values.csv` in the zip |
+| **Add SPSS syntax file** | Not available | `labels.sps` in the zip |
+
+The datamap and the unmapped values list are only in the file when you tick them.
+
+### Size limit for Excel
+
+An Analysis export as Excel is built whole in memory, so there is a limit: **1,000,000 cells**, counted over the data sheets. A cell is one position in the sheet, so the count is the number of columns times the number of responses plus the header row, blank cells included. **Text and code** has two data sheets and doubles the count. The Standard export as Excel has no such limit.
+
+As a guide, with **Text only** or **Code only**:
+
+| Columns in the export | Responses that fit in Excel |
+| --- | --- |
+| 50 | about 20,000 |
+| 100 | about 10,000 |
+| 300 | about 3,300 |
+
+With **Text and code**, halve those numbers. The columns are one per question, one per option of a multi-select, one per matrix row, and the response columns such as timestamp, tags and metadata.
+
+When a selection is over the limit, the **Excel** option is greyed out, the modal says "Excel is off for this export: the file would hold N cells, more than the 1,000,000 an Excel file can", and **Export** stays off. A button switches the format for you. If your settings produce a zip, it reads **Export as a zip of CSV files**, which we recommend. Otherwise it reads **Export as CSV**. CSV and zip exports have no size limit. You can also narrow the filter until the selection fits.
+
+<Tip>
+  Every file of an Analysis export is UTF-8, so Arabic and other non-Latin text stays readable. CSV files start with a byte-order mark so that Excel and SPSS detect the encoding.
+</Tip>
+
+### What the columns hold
+
+- The first columns are `response_id`, `language` and `outcome`. The other response columns follow if you included them.
+- Each question has a column named by its question code. A matrix has one column per row, named `<code>_<row code>`.
+- A **single-select** or **picture selection** question has one cell with the answer code. If the question has an **Other** option, the text typed into it goes to `<code>_text`.
+- A **multi-select** question has one column per option, named `<code>_<answer code>`. A cell is `1` when the option was chosen, `0` when the question was answered without it, and blank when the question was not answered or not shown. Options added after the survey was published also get `0` for earlier responses that answered the question; the datamap notes this.
+- A **ranking** question has one column per option, holding the rank the respondent gave it (`1` is first), blank if the option was not ranked.
+- **Rating, NPS, CSAT and CES** questions hold the number. Number inputs are exported as numbers.
+- Address, contact info, file upload, date, consent and calendar questions hold the same cell as in the Standard export, under the question code.
+- Calls to action and welcome cards are left out of an Analysis export.
+- **Blank always means "not asked or not answered".** There are no user-missing values. If you need codes such as `98` or `99`, add them as ordinary answer options.
+- With **Text and code**, the header cell in the `Labels` data adds the question text: `q2; How satisfied are you?`. The column name stays `q2`.
+- In CSV files, a line break inside a cell becomes a space, because SPSS cannot read records that span lines. The Excel file keeps the line breaks.
+- Code cells are written as text in Excel, so codes such as `01` and `98` keep their form.
+
+## Datamap
+
+The datamap explains the export. Tick **Add datamap** to get it. It is in long format, with one row per column and per answer code, and one row for a column that has no codes. The headers are always in English, in this order:
+
+| Header | Content |
+| --- | --- |
+| Column | The column name in the data, such as `q1` or `q3_2` |
+| Question ID | The Question ID of the question behind the column |
+| Question text | The full question text in the default language, repeated on every row |
+| Type | The kind of question and its detail, such as `csat . 5-point`, `numeric . integer` or `embedded data . true/false` |
+| Code | The answer code, as text |
+| Value label | What the code stands for. Scales get one row per point. A picture option uses its alt text, or its option ID when it has none |
+| Notes | What blank means for the column, and other remarks, such as a column that holds unmapped values |
+
+Embedded Data and response information columns are listed with their types. A legacy Embedded Data field that is named like an export column gets an `ed_` prefix and a note.
+
+## Unmapped values
+
+Answers are stored as the text the respondent saw, so Formbricks finds the code of an answer by matching that text with the options of your survey, first in the language of the response and then in any language.
+
+Tick **Add unmapped values** to get the list. An answer that matches no option is an **unmapped value**. It is never guessed and never counted as Other. In the data, its code cell holds `UNMAPPED:` followed by the text as given. The cell is marked even when you do not add the list. The `Unmapped values` sheet, or `unmapped-values.csv`, lists each one:
+
+| Column | Content |
+| --- | --- |
+| Column | The column that would have held the value |
+| Question text | The question |
+| Unmapped value | The text as given |
+| Responses | How many responses gave it |
+| Languages | The languages of those responses |
+| Closest option, Closest code, Similarity | The most similar option and how similar it is |
+| Likely cause | "wording differs slightly from" the closest option when the similarity is 90% or more, otherwise "no similar option" |
+| Response IDs | The responses that gave it, up to a limit |
+| Question ID | The Question ID of the question |
+
+Typical causes are an option that was renamed or deleted before the survey was published and locked, or an answer sent through the API. If a question has an **Other** option, text that matches no other option reads as an Other answer and is not listed. A multi-select answer that matches no option has no cell, so it appears only in the unmapped values list.
+
+## SPSS syntax file
+
+With **Add SPSS syntax file** the zip contains `labels.sps`, UTF-8 with a byte-order mark. It reads the CSV of codes into SPSS (`data.csv`, or `codes.csv` with **Text and code**) and sets up the labels, so that you do not have to.
+
+Before you run it:
+
+- Open the file in SPSS. Near the top is a line `CD 'C:\path\to\the\unzipped\export'.` It is a placeholder: **set it to the folder where you unzipped the export**, then run all.
+
+What it does:
+
+- Reads the file as UTF-8 (`/ENCODING='UTF8'`), skipping the header row.
+- Reads the data with an explicit variable list, so SPSS never guesses a type from the first rows. A column is numeric only when every answer code is a plain integer. If an answer code is a letter, the column is a text variable, which SPSS can label but not compute with.
+- Sets variable labels (at most 256 bytes) and value labels (at most 120 bytes), cut on a character boundary. Quotes are doubled and line breaks become spaces.
+- Defines a multiple response set for each multi-select with at least two option columns.
+- Does not define user-missing values. Blank is system-missing.
+- Reads a column that holds `UNMAPPED:` cells as text, keeps the original in a `<column>_raw` variable, then converts the column with `ALTER TYPE`. SPSS reports a warning for every `UNMAPPED:` cell it cannot turn into a number, and the file raises the warning limit so the run does not stop early.
+- Reads the timestamp as text, for example `2025-05-06 14:30:00 UTC` in the display time zone of your organization, and adds a date-time variable `timestamp_dt` made from its first 19 characters.
+
+## Low quality responses
+
+Mark a response as **Low quality** when it should not count, for example a speeder, a duplicate or a test. Nothing is deleted, and you can restore the response at any time.
+
+- On a response card, use **Mark as low quality** in the header, and **Restore as complete** to undo it.
+- In the Responses table, tick several rows and use the bulk action in the selection bar.
+- The response status dropdown in the filter, under "Show all responses that match", has **Low quality responses**, so you can review them. The other choices do not hide them.
+- Read-only seats see the outcome of each response but do not get these buttons.
+- Through the API, set `outcome` to `lowQuality`, or to `null` to restore, with `PATCH /api/v3/responses/{responseId}`. `POST /api/v3/responses/batch-outcome` does it for up to 100 responses at once.
+
+What changes for a Low quality response:
+
+- It is left out of the Analysis export by default, and the count line says how many were left out. This also holds when you export ticked rows. If your filter selects Low quality responses, the export contains them.
+- The **Status** column of the Responses table and the response card show a **Low quality** badge. The Analysis export has an `outcome` column that reads `lowQuality`.
+- Its Feedback Records are removed, so it drops out of [Dashboards](/unify-feedback/dashboards-charts). Restoring the response creates them again.
+
+What does not change: the Summary, response counts, API lists, webhooks and integrations keep counting Low quality responses. Webhooks and API responses carry `outcome`, so you can filter on it yourself. The Standard export includes Low quality responses too.
+
+<Note>
+  Whoever marks responses needs edit rights on the survey.
+</Note>

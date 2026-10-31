@@ -27,6 +27,7 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
+import { isTranslationPathLocked } from "../lib/published-translation-lock";
 import { type TranslatableString } from "../lib/types";
 import {
   extractTranslatableStrings,
@@ -40,6 +41,8 @@ interface ManageTranslationsModalProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   localSurvey: TSurvey;
+  /** The survey as stored: an option text it already has in this language is locked once published. */
+  persistedSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
   languageCode: string;
   languageName: string;
@@ -53,6 +56,7 @@ export const ManageTranslationsModal = ({
   open,
   setOpen,
   localSurvey,
+  persistedSurvey,
   setLocalSurvey,
   languageCode,
   languageName,
@@ -315,6 +319,7 @@ export const ManageTranslationsModal = ({
                   localSurvey={mergedSurvey}
                   languageCode={languageCode}
                   disabled={translatingPaths.has(s.path)}
+                  locked={isTranslationPathLocked(localSurvey, persistedSurvey, s.path, languageCode)}
                 />
               ))}
             </tbody>

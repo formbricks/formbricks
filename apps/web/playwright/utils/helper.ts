@@ -1236,7 +1236,6 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   // Adding logic to blocks
   // Block 1 (Open Text Question)
   await editorElementHeading(page, params.openTextQuestion.question).click();
-  await page.getByText("Show Block settings").first().click();
   await page.getByRole("button", { name: "Add logic" }).first().click();
   await selectConditionLeftOperand(page, "condition-0-0-conditionValue", params.openTextQuestion.question);
   await page.locator("#condition-0-0-conditionOperator").first().click();
@@ -1270,7 +1269,6 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
 
   // Block 2 (Single Select Question)
   await editorElementHeading(page, params.singleSelectQuestion.question).click();
-  await page.getByText("Show Block settings").first().click();
   await page.getByRole("button", { name: "Add logic" }).first().click();
   await selectConditionLeftOperand(
     page,
@@ -1307,7 +1305,6 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
 
   // Block 3 (Multi Select Question)
   await editorElementHeading(page, params.multiSelectQuestion.question).click();
-  await page.getByText("Show Block settings").first().click();
   await page.getByRole("button", { name: "Add logic" }).first().click();
   await selectConditionLeftOperand(page, "condition-0-0-conditionValue", params.multiSelectQuestion.question);
   await page.locator("#condition-0-0-conditionOperator").click();
@@ -1356,7 +1353,6 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
 
   // Block 4 (Picture Select Question)
   await editorElementHeading(page, params.pictureSelectQuestion.question).click();
-  await page.getByText("Show Block settings").first().click();
   await page.getByRole("button", { name: "Add logic" }).first().click();
   await selectConditionLeftOperand(
     page,
@@ -1388,7 +1384,6 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
 
   // Block 5 (Rating Question)
   await editorElementHeading(page, params.ratingQuestion.question).click();
-  await page.getByText("Show Block settings").first().click();
   await page.getByRole("button", { name: "Add logic" }).first().click();
   await page.locator("#condition-0-0-conditionValue").click();
   await page.getByRole("option", { name: params.ratingQuestion.question }).click();
@@ -1419,7 +1414,6 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
 
   // Block 6 (NPS Question)
   await editorElementHeading(page, params.npsQuestion.question).click();
-  await page.getByText("Show Block settings").first().click();
   await page.getByRole("button", { name: "Add logic" }).first().click();
   await page.locator("#condition-0-0-conditionValue").click();
   await page.getByRole("option", { name: params.npsQuestion.question }).click();
@@ -1462,7 +1456,8 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#condition-1-1-conditionValue").click();
   await page
     .getByRole("option")
-    .filter({ hasText: new RegExp(`^${params.pictureSelectQuestion.question}$`) })
+    // The picker lists a question as "q4 · Picture Select Question": its code, then its headline.
+    .filter({ hasText: new RegExp(`(?:^|· )${params.pictureSelectQuestion.question}$`) })
     .click();
   await page.locator("#condition-1-1-conditionOperator").click();
   await page.getByRole("option", { name: "is submitted" }).click();
@@ -1489,7 +1484,6 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
 
   // Block 7 (Ranking Question)
   await editorElementHeading(page, params.ranking.question).click();
-  await page.getByText("Show Block settings").first().click();
   await page.getByRole("button", { name: "Add logic" }).first().click();
   await page.locator("#condition-0-0-conditionValue").click();
   await page.getByRole("option", { name: params.ranking.question }).click();
@@ -1518,7 +1512,6 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
 
   // Block 8 (Matrix Question)
   await editorElementHeading(page, params.matrix.question).click();
-  await page.getByText("Show Block settings").first().click();
   await page.getByRole("button", { name: "Add logic" }).first().click();
   await page.locator("#condition-0-0-conditionValue").first().click();
   await page.getByTestId("dropdown-menu-content").getByText(params.matrix.question).click();
@@ -1558,7 +1551,6 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
 
   // Block 9 (CTA Question)
   await editorElementHeading(page, params.ctaQuestion.question).click();
-  await page.getByText("Show Block settings").first().click();
   await page.getByRole("button", { name: "Add logic" }).first().click();
   await page.locator("#condition-0-0-conditionValue").click();
   await page.getByRole("option", { name: params.ctaQuestion.question }).click();
@@ -1593,7 +1585,6 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
 
   // Block 10 (Consent Question)
   await editorElementHeading(page, params.consentQuestion.question).click();
-  await page.getByText("Show Block settings").first().click();
   await page.getByRole("button", { name: "Add logic" }).first().click();
   await page.locator("#action-0-objective").first().click();
   await page.getByRole("option", { name: "Calculate" }).click();
@@ -1608,7 +1599,6 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
 
   // Block 11 (File Upload Question)
   await editorElementHeading(page, params.fileUploadQuestion.question).click();
-  await page.getByText("Show Block settings").first().click();
   await page.getByRole("button", { name: "Add logic" }).first().click();
   await page.locator("#action-0-objective").first().click();
   await page.getByRole("option", { name: "Calculate" }).click();
@@ -1627,7 +1617,6 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   const tomorrow = new Date(new Date().setDate(new Date().getDate() + 1));
 
   await page.getByRole("main").getByText(params.date.question).click();
-  await page.getByText("Show Block settings").first().click();
   await page.getByRole("button", { name: "Add logic" }).first().click();
 
   await page.locator("#condition-0-0-conditionValue").click();
@@ -1667,7 +1656,6 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
 
   // Block 13 (Cal Question)
   await editorElementHeading(page, params.cal.question).click();
-  await page.getByText("Show Block settings").first().click();
   await page.getByRole("button", { name: "Add logic" }).first().click();
   await page.locator("#condition-0-0-conditionValue").click();
   await page.getByRole("option", { name: params.cal.question }).click();
@@ -1686,7 +1674,6 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
 
   // Block 14 (Address Question)
   await editorElementHeading(page, params.address.question).click();
-  await page.getByText("Show Block settings").first().click();
   await page.getByRole("button", { name: "Add logic" }).first().click();
   await page.locator("#action-0-objective").first().click();
   await page.getByRole("option", { name: "Calculate" }).click();

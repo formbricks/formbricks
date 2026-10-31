@@ -10,13 +10,15 @@ import formbricks from "@formbricks/js";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import {
+  getPublishedLockViolations,
+  parsePublishedLockErrorMessage,
+} from "@formbricks/types/surveys/published-lock";
+import {
   TSurvey,
   TSurveyEditorTabs,
   TSurveyStatus,
   TSurveyVisibility,
   ZSurvey,
-  ZSurveyEndScreenCard,
-  ZSurveyRedirectUrlCard,
 } from "@formbricks/types/surveys/types";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import type { TSurveyAccess } from "@/lib/survey/visibility/access";
@@ -27,11 +29,16 @@ import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import type { TCustomCssValidationStatus } from "@/modules/custom-css/components/lib/validation";
 import { type TWorkspaceWithoutCustomCss } from "@/modules/custom-css/lib/types";
 import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
+import { describeCodeIssueAtPath, describeLockRefusal } from "@/modules/survey/editor/lib/code-messages";
 import {
   getSurveyToAutosave,
   isCustomCssBlockingManualSave,
 } from "@/modules/survey/editor/lib/custom-css-autosave";
 import { getLogicDestinationErrorMessage } from "@/modules/survey/editor/lib/logic-destination-error";
+import {
+  parseSurveyEndings,
+  removeDraftFlagsFromBlocks,
+} from "@/modules/survey/editor/lib/survey-save-payload";
 import { hasUnsavedSurveyChanges, isJustSavedBypassValid } from "@/modules/survey/editor/lib/unsaved-changes";
 import { scrollElementCardIntoView } from "@/modules/survey/editor/lib/utils";
 import { TSurveyDraft } from "@/modules/survey/editor/types/survey";
@@ -460,6 +467,17 @@ export const SurveyMenuBar = ({
         return false;
       }
 
+      const codeMessage = describeCodeIssueAtPath(
+        localSurvey,
+        firstError.path.filter((part): part is string | number => typeof part !== "symbol"),
+        t
+      );
+      if (codeMessage) {
+        toast.error(codeMessage, { className: "w-fit max-w-md!" });
+        setActiveId("elements");
+        return false;
+      }
+
       if (firstError.code === "custom") {
         const params = firstError.params ?? ({} as { invalidLanguageCodes: string[] });
         if (params.invalidLanguageCodes && params.invalidLanguageCodes.length) {
@@ -614,7 +632,31 @@ export const SurveyMenuBar = ({
     return () => clearInterval(intervalId);
   }, [localSurvey.publishOn, localSurvey.status, saveAttemptOrder, setLocalSurvey]);
 
-  // Add new handler after handleSurveySave
+  // The reload prompt already explains a stale-deployment failure, so don't also claim the save itself
+  // went wrong. Callers return `false` themselves: the save did not go through.
+  const reportSaveException = (e: unknown) => {
+    if (reportStaleServerActionError(e)) return;
+    console.error(e);
+    toast.error(t("workspace.surveys.edit.error_saving_changes"));
+  };
+
+  // ENG-6783: the server refused an edit to a locked field; say why, with its details.
+  const toastSaveRefusal = (errorMessage: string) => {
+    const lockDetails = parsePublishedLockErrorMessage(errorMessage);
+    if (lockDetails === null) {
+      toast.error(errorMessage);
+      return;
+    }
+    // The same comparison the server made, rendered with the editor's translated explanations; the server's
+    // own sentence (English, with internal IDs) is the fallback when this one finds nothing.
+    const violations = getPublishedLockViolations(survey, localSurvey);
+    toast.error(
+      t("workspace.surveys.edit.published_survey_locked", {
+        details: violations.length > 0 ? describeLockRefusal(violations, localSurvey, t) : lockDetails,
+      })
+    );
+  };
+
   const handleSurveySaveDraft = async (): Promise<boolean> => {
     if (blockOnInvalidCustomCss()) return false;
 
@@ -647,13 +689,7 @@ export const SurveyMenuBar = ({
     } catch (e) {
       setIsSurveySaving(false);
       saveAttemptOrder.settle(attempt);
-      // The reload prompt already explains a stale-deployment failure, so don't also claim the
-      // save itself went wrong.
-      if (reportStaleServerActionError(e)) {
-        return false;
-      }
-      console.error(e);
-      toast.error(t("workspace.surveys.edit.error_saving_changes"));
+      reportSaveException(e);
       return false;
     }
   };
@@ -683,25 +719,13 @@ export const SurveyMenuBar = ({
 
       // Clean up blocks by removing isDraft from elements
       if (localSurvey.blocks) {
-        localSurvey.blocks = localSurvey.blocks.map((block) => ({
-          ...block,
-          elements: block.elements.map((element) => {
-            const { isDraft, ...rest } = element;
-            return rest;
-          }),
-        }));
+        localSurvey.blocks = removeDraftFlagsFromBlocks(localSurvey.blocks);
       }
 
       // Set questions to empty array for blocks-based surveys
       localSurvey.questions = [];
 
-      localSurvey.endings = localSurvey.endings.map((ending) => {
-        if (ending.type === "redirectToUrl") {
-          return ZSurveyRedirectUrlCard.parse(ending);
-        } else {
-          return ZSurveyEndScreenCard.parse(ending);
-        }
-      });
+      localSurvey.endings = parseSurveyEndings(localSurvey.endings);
 
       attempt = saveAttemptOrder.begin();
       const segment = await handleSegmentUpdate();
@@ -722,8 +746,7 @@ export const SurveyMenuBar = ({
         router.refresh();
       } else {
         saveAttemptOrder.settle(attempt);
-        const errorMessage = getFormattedErrorMessage(updatedSurveyResponse);
-        toast.error(errorMessage);
+        toastSaveRefusal(getFormattedErrorMessage(updatedSurveyResponse));
         return false;
       }
 
@@ -731,11 +754,7 @@ export const SurveyMenuBar = ({
     } catch (e) {
       setIsSurveySaving(false);
       if (attempt !== undefined) saveAttemptOrder.settle(attempt);
-      if (reportStaleServerActionError(e)) {
-        return false;
-      }
-      console.error(e);
-      toast.error(t("workspace.surveys.edit.error_saving_changes"));
+      reportSaveException(e);
       return false;
     }
   };

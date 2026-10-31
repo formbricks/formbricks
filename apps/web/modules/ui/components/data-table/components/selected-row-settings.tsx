@@ -1,21 +1,14 @@
 "use client";
 
 import { Table } from "@tanstack/react-table";
-import { ArrowDownToLineIcon, Loader2Icon, Trash2Icon } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { ArrowDownToLineIcon, Trash2Icon } from "lucide-react";
+import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TResponseWithQuotas } from "@formbricks/types/responses";
 import { Button } from "@/modules/ui/components/button";
 import { DecrementQuotasCheckbox } from "@/modules/ui/components/decrement-quotas-checkbox";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/modules/ui/components/dropdown-menu";
-import { cn } from "@/modules/ui/lib/utils";
 
 const Separator = () => <div>|</div>;
 
@@ -24,8 +17,11 @@ interface SelectedRowSettingsProps<T> {
   updateRowList: (rowId: string[]) => void;
   type: "response" | "contact" | "attribute";
   deleteAction: (id: string, params?: Record<string, boolean>) => Promise<void>;
-  downloadRowsAction?: (rowIds: string[], format: "xlsx" | "csv") => Promise<void>;
+  /** Opens the download for the selected rows (the Export modal, for responses). */
+  downloadRowsAction?: (rowIds: string[]) => void;
   isQuotasAllowed: boolean;
+  /** Extra actions for the bar, given the table so they can read the selection when clicked. */
+  renderExtraActions?: (table: Table<T>) => ReactNode;
 }
 
 export const SelectedRowSettings = <T,>({
@@ -35,10 +31,10 @@ export const SelectedRowSettings = <T,>({
   deleteAction,
   downloadRowsAction,
   isQuotasAllowed,
+  renderExtraActions,
 }: SelectedRowSettingsProps<T>) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isDownloading, setIsDownloading] = useState(false);
   const { t } = useTranslation();
   const selectedRowCount = table.getFilteredSelectedRowModel().rows.length;
 
@@ -100,13 +96,11 @@ export const SelectedRowSettings = <T,>({
   };
 
   // Handle download selected rows
-  const handleDownloadSelectedRows = async (format: "xlsx" | "csv") => {
-    setIsDownloading(true);
+  const handleDownloadSelectedRows = () => {
     const rowsToDownload = table.getFilteredSelectedRowModel().rows.map((row) => row.id);
     if (downloadRowsAction && rowsToDownload.length > 0) {
-      await downloadRowsAction(rowsToDownload, format);
+      downloadRowsAction(rowsToDownload);
     }
-    setIsDownloading(false);
   };
 
   const quotasDialogText = isQuotasAllowed
@@ -163,32 +157,16 @@ export const SelectedRowSettings = <T,>({
         </Button>
         <Separator />
         {downloadRowsAction && (
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              asChild
-              className={cn(isDownloading && "cursor-not-allowed opacity-50")}
-              disabled={isDownloading}>
-              <Button variant="outline" size="sm" className="h-6 gap-1 border-none px-2">
-                {isDownloading ? <Loader2Icon className="size-4 animate-spin" /> : <ArrowDownToLineIcon />}
-                {t("common.download")}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem
-                onClick={() => {
-                  handleDownloadSelectedRows("csv");
-                }}>
-                <p className="text-slate-700">{t("workspace.surveys.summary.selected_responses_csv")}</p>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  handleDownloadSelectedRows("xlsx");
-                }}>
-                <p>{t("workspace.surveys.summary.selected_responses_excel")}</p>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-6 gap-1 border-none px-2"
+            onClick={handleDownloadSelectedRows}>
+            <ArrowDownToLineIcon />
+            {t("common.download")}
+          </Button>
         )}
+        {renderExtraActions?.(table)}
         <Button
           variant="secondary"
           size="sm"

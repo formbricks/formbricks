@@ -2,6 +2,7 @@ import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { extractIds } from "@/lib/utils/recall";
+import { getBlockCodeIssueKey } from "@/modules/survey/editor/lib/element-codes";
 
 /**
  * Decides whether a BlockCard can skip re-rendering (ENG-992).
@@ -18,6 +19,8 @@ import { extractIds } from "@/lib/utils/recall";
  *   host editing forms and open menus that read the whole survey, so they always get fresh data;
  * - the survey changed in something other than `blocks` (languages, endings, variables, ...);
  * - the block order, block names or element ids/order changed anywhere;
+ * - a code problem shown on one of the block's questions appeared, vanished or changed (a duplicate
+ *   code is caused by an edit in another block, which would otherwise leave this card stale);
  * - an element the card references changed: by id (logic operands, `requireAnswer` targets) or by
  *   recall token, followed transitively, and including elements recalled by ending cards.
  *
@@ -134,6 +137,7 @@ const isSurveyEquivalentForBlock = (prev: TSurvey, next: TSurvey, block: TSurvey
   const prevIndex = getBlocksIndex(prev);
   const nextIndex = getBlocksIndex(next);
   if (prevIndex.structureKey !== nextIndex.structureKey) return false;
+  if (getBlockCodeIssueKey(prev, block) !== getBlockCodeIssueKey(next, block)) return false;
 
   return getReferencedElementIds(next, block).every(
     (id) => prevIndex.elementsById.get(id) === nextIndex.elementsById.get(id)

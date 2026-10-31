@@ -1,0 +1,10 @@
+type: string
+maxLength: 30
+pattern: ^[a-z][a-z0-9_]*$
+description: >-
+  Question code, the name the question carries in exports, webhooks and links. Optional. Starts with a
+  lowercase letter, then lowercase letters, digits and `_`; no `__`, no trailing `_`, at most 30
+  characters. It must not be an SPSS reserved word (`all`, `and`, `by`, `eq`, `ge`, `gt`, `le`, `lt`,
+  `ne`, `not`, `or`, `to`, `with`) or an export column name (`response_id`, `language`, `outcome`, ...),
+  and must be unique among the survey's question codes, Embedded Data names and the Question IDs of
+  other questions, ignoring case. CTA elements have no code.

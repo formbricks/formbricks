@@ -15,11 +15,10 @@ import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
 import { MatrixSortableItem } from "@/modules/survey/editor/components/matrix-sortable-item";
-import { ValidationRulesEditor } from "@/modules/survey/editor/components/validation-rules-editor";
+import { NO_ELEMENT_LOCK, TElementLock } from "@/modules/survey/editor/lib/published-lock";
 import { findOptionUsedInLogic } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
-import { ShuffleOptionSelect } from "@/modules/ui/components/shuffle-option-select";
 import { isLabelValidForAllLanguages } from "../lib/validation";
 
 interface MatrixElementFormProps {
@@ -31,6 +30,7 @@ interface MatrixElementFormProps {
   locale: TUserLocale;
   isStorageConfigured: boolean;
   isExternalUrlsAllowed?: boolean;
+  lock?: TElementLock;
 }
 
 export const MatrixElementForm = ({
@@ -42,6 +42,7 @@ export const MatrixElementForm = ({
   locale,
   isStorageConfigured = true,
   isExternalUrlsAllowed,
+  lock = NO_ELEMENT_LOCK,
 }: MatrixElementFormProps): JSX.Element => {
   const languageCodes = extractLanguageCodes(localSurvey.languages);
   const { t } = useTranslation();
@@ -71,6 +72,7 @@ export const MatrixElementForm = ({
   const handleDeleteLabel = (type: "row" | "column", index: number) => {
     const labels = type === "row" ? element.rows : element.columns;
     if (labels.length <= 2) return; // Prevent deleting below minimum length
+    if (lock.isOptionLocked(type === "row" ? "rows" : "columns", labels[index].id)) return;
 
     // check if the label is used in logic
     if (type === "column") {
@@ -168,33 +170,6 @@ export const MatrixElementForm = ({
     [elementIdx, updateElement, element.rows, element.columns]
   );
 
-  const shuffleOptionsTypes = {
-    none: {
-      id: "none",
-      label: t("workspace.surveys.edit.keep_current_order"),
-      show: true,
-    },
-    all: {
-      id: "all",
-      label: t("workspace.surveys.edit.randomize_all"),
-      show: true,
-    },
-    exceptLast: {
-      id: "exceptLast",
-      label: t("workspace.surveys.edit.randomize_all_except_last"),
-      show: true,
-    },
-    reverseOrderOccasionally: {
-      id: "reverseOrderOccasionally",
-      label: t("workspace.surveys.edit.reverse_order_occasionally"),
-      show: true,
-    },
-    reverseOrderExceptLast: {
-      id: "reverseOrderExceptLast",
-      label: t("workspace.surveys.edit.reverse_order_occasionally_except_last"),
-      show: true,
-    },
-  };
   const [parent] = useAutoAnimate();
 
   return (
@@ -248,7 +223,7 @@ export const MatrixElementForm = ({
           </Button>
         )}
       </div>
-      <div className="mt-3 grid grid-cols-2 gap-4">
+      <div className="mt-3 flex flex-col gap-6">
         <div>
           {/* Rows section */}
           <Label htmlFor="rows">{t("workspace.surveys.edit.rows")}</Label>
@@ -275,6 +250,7 @@ export const MatrixElementForm = ({
                       }
                       locale={locale}
                       isStorageConfigured={isStorageConfigured}
+                      lock={lock}
                     />
                   ))}
                 </div>
@@ -319,6 +295,7 @@ export const MatrixElementForm = ({
                       }
                       locale={locale}
                       isStorageConfigured={isStorageConfigured}
+                      lock={lock}
                     />
                   ))}
                 </div>
@@ -336,26 +313,8 @@ export const MatrixElementForm = ({
               {t("workspace.surveys.edit.add_column")}
             </Button>
           </div>
-          <div className="mt-3 flex flex-1 items-center justify-end gap-2">
-            <ShuffleOptionSelect
-              shuffleOptionsTypes={shuffleOptionsTypes}
-              elementIdx={elementIdx}
-              updateElement={updateElement}
-              shuffleOption={element.shuffleOption}
-            />
-          </div>
         </div>
       </div>
-      <ValidationRulesEditor
-        elementType={element.type}
-        validation={element.validation}
-        onUpdateValidation={(validation) => {
-          updateElement(elementIdx, {
-            validation,
-          });
-        }}
-        element={element}
-      />
     </form>
   );
 };

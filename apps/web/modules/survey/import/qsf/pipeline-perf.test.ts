@@ -124,13 +124,18 @@ beforeEach(() => {
 });
 
 /**
- * CPU time a synchronous call takes, in milliseconds. Unlike wall time, other processes on the
- * machine do not stretch it, so it can hold a budget.
+ * What a synchronous call costs the thread that runs it, in milliseconds: the smaller of the process's
+ * CPU time and the wall time. Each alone is stretched by something the call did not do. `process.cpuUsage`
+ * sums every thread, so V8's parallel GC helpers, woken by a large allocation, add their time on top of
+ * the call's own (a 390,000-key file read 370-390 ms of CPU in 125-180 ms of wall on main); wall time is
+ * stretched by whatever else runs on a loaded machine. The thread's own time is at most each of them, so
+ * the smaller is the tighter upper bound, and a real regression (seconds) raises both.
  */
 const cpuMs = (work: () => unknown): number => {
+  const startedAt = performance.now();
   const start = process.cpuUsage();
   work();
-  return cpuMsSince(start);
+  return Math.min(cpuMsSince(start), performance.now() - startedAt);
 };
 
 /**

@@ -10,7 +10,7 @@ info:
 
     **Custom CSS**: survey CSS through `customCss` on **POST /api/v3/surveys**, **GET** and **PATCH /api/v3/surveys/{surveyId}**, workspace CSS through **GET** and **PATCH /api/v3/workspaces/{workspaceId}/custom-css**, and previews through `operation: customCss` on **POST /api/v3/surveys/validate**. Writes take and reads return source only; the server compiles it, returns removed constructs as top-level `warnings`, and never accepts compiled output.
 
-    **Responses**: **GET /api/v3/responses**, **GET /api/v3/responses/count**, **POST /api/v3/responses/validate**, **POST /api/v3/responses/batch-delete**, **GET /api/v3/responses/{responseId}**, **POST /api/v3/responses**, **PATCH /api/v3/responses/{responseId}**, and **DELETE /api/v3/responses/{responseId}**.
+    **Responses**: **GET /api/v3/responses**, **GET /api/v3/responses/count**, **POST /api/v3/responses/validate**, **POST /api/v3/responses/batch-delete**, **POST /api/v3/responses/batch-outcome**, **GET /api/v3/responses/{responseId}**, **POST /api/v3/responses**, **PATCH /api/v3/responses/{responseId}**, and **DELETE /api/v3/responses/{responseId}**.
 
     **Creatives**: **GET /api/v3/creatives**, **POST /api/v3/creatives**, **GET**, **PATCH** and **DELETE /api/v3/creatives/{creativeId}**, **POST /api/v3/creatives/{creativeId}/archive**, **/restore** and **/duplicate**, **GET /api/v3/creatives/{creativeId}/stats**, and **POST /api/v3/creatives/pause**, which pauses every creative that opens a survey. A creative is a feedback button or a banner the web SDK renders on the customer's site; pressing it opens its Destination, a survey or a link. Writes set the author's `status`; reads add the derived `displayStatus`; `stats` returns its daily Impressions and Clicks.
 
@@ -1267,7 +1267,7 @@ paths:
           description: |-
             Unprocessable Content — the request cannot be processed against stored state. Five cases:
             1. The target survey is archived (soft-deleted) and therefore read-only; restore it before editing. The `invalid_params` entry reports `name: archivedAt` with the reason `This survey is archived. Restore it before editing.`
-            2. The patched document passed schema validation but failed a cross-reference check that requires stored state to detect: an undeclared locale key used in content, a duplicate stable id, an immutable element-id change on a published survey, a dangling logic/jump reference, an invalid media URL, a `distribution.triggers[].actionClassId` referencing an action class that does not exist in the workspace (discover valid ids via `GET /api/v3/action-classes`), or a `targeting.filters` entry that cannot resolve in the workspace — an unknown contact-attribute key or segment, an unsupported person identifier, or an unknown device value. An app survey set to any status but `draft` needs a trigger of its own or a non-archived creative that opens it; with neither it is refused at `name: triggers`. The `invalid_params` array pinpoints each issue (e.g. `code: invalid_reference` with the offending `identifier`). A patch that newly *introduces* a forward reference — a recall of an answer not yet given, a logic condition reading a later block, or a `requireAnswer` target that is not in a later block — is refused with `code: misordered_reference`; a survey that already contains one stays patchable, only newly created violations are rejected. A patch that newly *introduces* a loop in the conditional logic — jumps, fallbacks and next blocks leading back on themselves, so a respondent could never reach an ending — is refused the same way, reported at the `logic` of each block a new looping step leaves ("Cyclic logic detected in block N"). A survey that already loops stays patchable, and blocks that only lead into a loop are fine.
+            2. The patched document passed schema validation but failed a cross-reference check that requires stored state to detect: an undeclared locale key used in content, a duplicate stable id, an immutable element-id change on a published survey, a change to a question code, answer code, question type or option text of a published survey, or the deletion of an option that existed at launch (`immutable_question_code`, `immutable_answer_code`, `immutable_question_type`, `immutable_option_text`, `immutable_option_deletion`; reverting the survey to `draft` lifts the lock), a dangling logic/jump reference, an invalid media URL, a `distribution.triggers[].actionClassId` referencing an action class that does not exist in the workspace (discover valid ids via `GET /api/v3/action-classes`), or a `targeting.filters` entry that cannot resolve in the workspace — an unknown contact-attribute key or segment, an unsupported person identifier, or an unknown device value. An app survey set to any status but `draft` needs a trigger of its own or a non-archived creative that opens it; with neither it is refused at `name: triggers`. The `invalid_params` array pinpoints each issue (e.g. `code: invalid_reference` with the offending `identifier`). A patch that newly *introduces* a forward reference — a recall of an answer not yet given, a logic condition reading a later block, or a `requireAnswer` target that is not in a later block — is refused with `code: misordered_reference`; a survey that already contains one stays patchable, only newly created violations are rejected. A patch that newly *introduces* a loop in the conditional logic — jumps, fallbacks and next blocks leading back on themselves, so a respondent could never reach an ending — is refused the same way, reported at the `logic` of each block a new looping step leaves ("Cyclic logic detected in block N"). A survey that already loops stays patchable, and blocks that only lead into a loop are fine.
 
             3. A server-owned field was echoed back with a different value — `code: read_only_field`, with the submitted value in `identifier`. Sending the value `GET` returned is always a no-op.
 
@@ -1469,7 +1469,7 @@ paths:
           description: |
             The request is well-formed but could not be applied. `invalid_params[].name` points at the operation that failed — `ops.<i>.…` — including for problems found while validating the resulting document. The one exception is a block the request did not touch: those are reported at `blocks.<i>`, where `<i>` is the block's index in the stored survey — the same index `GET` returns, even when an earlier operation inserted or removed blocks before it — because the problem is in the stored survey rather than in any operation. A `stored_survey_invalid` response uses stored-survey paths throughout for the same reason.
 
-            Common codes: `dangling_reference` (an id that is not on the survey), `duplicate_identifier` (inserting an id that already exists), `missing_required_field` (an inserted block whose `id` is present but empty — omitting `id` entirely is fine, the server generates one), `immutable_identifier` (`block.id` contradicting the op's `id`), and `stored_survey_invalid` when the stored survey itself fails the document contract. The edit is also refused when it newly *introduces* a loop in the conditional logic — jumps, fallbacks and next blocks leading back on themselves, so a respondent could never reach an ending — reported at the `logic` of each block a new looping step leaves. A survey that already loops stays editable.
+            Common codes: `dangling_reference` (an id that is not on the survey), `duplicate_identifier` (inserting an id that already exists), `missing_required_field` (an inserted block whose `id` is present but empty — omitting `id` entirely is fine, the server generates one), `immutable_identifier` (`block.id` contradicting the op's `id`), `immutable_question_code`, `immutable_answer_code`, `immutable_question_type`, `immutable_option_text` and `immutable_option_deletion` (an op that would change a code, a question type or option text of a published survey, or delete an option that existed at launch), and `stored_survey_invalid` when the stored survey itself fails the document contract. The edit is also refused when it newly *introduces* a loop in the conditional logic — jumps, fallbacks and next blocks leading back on themselves, so a respondent could never reach an ending — reported at the `logic` of each block a new looping step leaves. A survey that already loops stays editable.
           content:
             application/problem+json:
               schema:
@@ -2172,6 +2172,7 @@ paths:
                         finished: true
                         endingId: cmpthankyou00000000000000
                         language: de
+                        outcome: null
                         durationSeconds: 107.9
                         resolution:
                           labelPolicy: currentSurveyDefinition
@@ -2717,6 +2718,90 @@ paths:
         - sessionAuth: []
         - apiKeyAuth: []
         - bearerAuth: []
+  /api/v3/responses/batch-outcome:
+    post:
+      operationId: batchSetResponsesOutcomeV3
+      summary: Mark responses Low quality in bulk
+      description: |
+        Sets `outcome` on up to 100 responses in one transaction: `lowQuality` marks them, `null` restores them. Nothing is deleted. Requires read-write access to the workspace and write access to every survey the responses belong to.
+
+        **It scope-filters rather than rejecting**, exactly like `batch-delete`. Ids belonging to another workspace, ids that no longer exist, and responses of a survey the caller cannot see are ignored, and `updated` reports how many responses in the caller's scope now carry the requested outcome — including ones that already did, so a client can safely retry the same batch. If the batch reaches a survey the caller can see but may not write to, the whole call answers **403** and nothing is changed.
+
+        Each response whose outcome actually changed emits `responseUpdated`, so webhooks and integrations hear about a mark and a restore. A response that already carried the outcome is left untouched and emits nothing.
+
+        **`workspaceId` is the scope, and it is required**, for the reason `batch-delete` explains.
+      tags:
+        - V3 Responses
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdQuery'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchSetResponsesOutcomeRequest'
+            examples:
+              markThree:
+                summary: Mark three responses Low quality
+                value:
+                  ids:
+                    - clrs1234567890123456789012
+                    - clrs2234567890123456789012
+                    - clrs3234567890123456789012
+                  outcome: lowQuality
+              restoreOne:
+                summary: Clear the mark on one response
+                value:
+                  ids:
+                    - clrs1234567890123456789012
+                  outcome: null
+      responses:
+        '200':
+          description: Batch processed. `updated` counts the responses in scope that now carry the requested outcome, which may be fewer than the ids submitted.
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: object
+                    required:
+                      - updated
+                    properties:
+                      updated:
+                        type: integer
+                        minimum: 0
+                        description: How many responses in scope now carry the requested outcome. Lower than `ids.length` when some ids were gone, foreign or of a survey the caller cannot see.
+                    additionalProperties: false
+        '400':
+          description: Bad Request — malformed body, an empty `ids` array, more than 100 ids, duplicate ids, a missing or unknown `outcome`, or an unsupported field.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/responses/{responseId}:
     get:
       operationId: getResponseV3
@@ -2768,6 +2853,7 @@ paths:
                       finished: true
                       endingId: cmpthankyou00000000000000
                       language: de
+                      outcome: null
                       durationSeconds: 8.2
                       resolution:
                         labelPolicy: currentSurveyDefinition
@@ -2902,6 +2988,7 @@ paths:
                       finished: false
                       endingId: null
                       language: null
+                      outcome: null
                       resolution:
                         labelPolicy: currentSurveyDefinition
                         labelsLanguage: null
@@ -2944,6 +3031,8 @@ paths:
         `PATCH` is the only update verb — there is no `PUT`. Within it, `data` is replaced wholesale rather than deep-merged, so send the complete answer map; `embeddedData` merges by field name. Unknown top-level keys are rejected with **400** rather than ignored.
 
         Every patch emits `responseUpdated` and runs the response pipeline, including Hub ingestion. Transitioning `finished` to `true` additionally emits `responseFinished`; patching a response that is already finished does not re-emit it.
+
+        `outcome` marks a response **Low quality** (`"lowQuality"`) or clears the mark (`null`). Nothing is deleted: the response keeps counting in summaries, counts, lists, webhooks and integrations, and the mark only changes the Analysis export default, the Outcome column and filter, and Feedback Records. A mark or a restore emits `responseUpdated` like any other patch.
       tags:
         - V3 Responses
       parameters:
@@ -2968,6 +3057,14 @@ paths:
                   data:
                     nps_score: 8
                     what_could_be_better: Etwas schneller wäre gut.
+              markLowQuality:
+                summary: Mark a response Low quality
+                value:
+                  outcome: lowQuality
+              restoreOutcome:
+                summary: Clear the outcome again
+                value:
+                  outcome: null
               retagResponse:
                 summary: Replace the response's tags
                 value:
@@ -7947,7 +8044,12 @@ components:
             - duplicate_identifier
             - duplicate_locale
             - forbidden_identifier
+            - immutable_answer_code
             - immutable_identifier
+            - immutable_option_deletion
+            - immutable_option_text
+            - immutable_question_code
+            - immutable_question_type
             - invalid_locale
             - invalid_reference
             - limit_exceeded
@@ -7963,6 +8065,8 @@ components:
             Machine-readable validation category, when available.
 
             This is the shared error shape every v3 operation returns, so it lists what the API can emit today and nothing more — `INVALID_PARAM_CODES` in `app/api/v3/lib/response.ts` is the registry, and a code absent from it is dropped before the response is built. Categories for operations that do not exist yet are added with the code that emits them, not ahead of it.
+
+            `immutable_question_code`, `immutable_answer_code`, `immutable_question_type`, `immutable_option_text` and `immutable_option_deletion` come from the published-survey lock: once a survey has left `draft` (`inProgress`, `paused` or `completed`; a scheduled survey is `paused`), question codes, answer codes, question types and option text in every language are locked, and an option, matrix row or matrix column that existed when the survey was published cannot be deleted. `name` points at the offending field (at the option list for a deletion) and `identifier` is the option id, or the element id when the option is not the subject. Adding questions and options is still allowed.
 
             `limit_exceeded`: the field is well formed but past a limit the operation states, which `reason` names together with what to change. Chart queries use it for a date range that spans more time buckets than its granularity allows.
 
@@ -8182,6 +8286,11 @@ components:
         isDraft:
           type: boolean
           description: Draft marker used by the editor and future update rules.
+    SurveyQuestionCode:
+      type: string
+      maxLength: 30
+      pattern: ^[a-z][a-z0-9_]*$
+      description: Question code, the name the question carries in exports, webhooks and links. Optional. Starts with a lowercase letter, then lowercase letters, digits and `_`; no `__`, no trailing `_`, at most 30 characters. It must not be an SPSS reserved word (`all`, `and`, `by`, `eq`, `ge`, `gt`, `le`, `lt`, `ne`, `not`, `or`, `to`, `with`) or an export column name (`response_id`, `language`, `outcome`, ...), and must be unique among the survey's question codes, Embedded Data names and the Question IDs of other questions, ignoring case. CTA elements have no code.
     SurveyCharLimit:
       type: object
       description: Optional `openText` character limit configuration.
@@ -8272,6 +8381,8 @@ components:
         - $ref: '#/components/schemas/SurveyElementBase'
         - type: object
           properties:
+            code:
+              $ref: '#/components/schemas/SurveyQuestionCode'
             type:
               type: string
               enum:
@@ -8304,6 +8415,8 @@ components:
           required:
             - label
           properties:
+            code:
+              $ref: '#/components/schemas/SurveyQuestionCode'
             type:
               type: string
               enum:
@@ -8313,6 +8426,11 @@ components:
             validation:
               $ref: '#/components/schemas/SurveyValidation'
       unevaluatedProperties: false
+    SurveyAnswerCode:
+      type: string
+      maxLength: 20
+      pattern: ^[a-z0-9][a-z0-9_]*$
+      description: Answer code of an option, a matrix row or a matrix column. Optional. Lowercase letters, digits and `_`; it may start with a digit, but not with `_`; no `__`, no trailing `_`, at most 20 characters. It must not be an SPSS reserved word or an export column name, and must be unique within its question (a matrix's rows and columns are checked separately), ignoring case.
     SurveyChoice:
       type: object
       required:
@@ -8324,6 +8442,8 @@ components:
           description: Stable choice id.
         label:
           $ref: '#/components/schemas/TranslatableText'
+        code:
+          $ref: '#/components/schemas/SurveyAnswerCode'
       additionalProperties: false
     SurveyShuffleOption:
       type: string
@@ -8345,6 +8465,8 @@ components:
           required:
             - choices
           properties:
+            code:
+              $ref: '#/components/schemas/SurveyQuestionCode'
             type:
               type: string
               enum:
@@ -8368,6 +8490,8 @@ components:
           required:
             - choices
           properties:
+            code:
+              $ref: '#/components/schemas/SurveyQuestionCode'
             type:
               type: string
               enum:
@@ -8391,6 +8515,8 @@ components:
         - $ref: '#/components/schemas/SurveyElementBase'
         - type: object
           properties:
+            code:
+              $ref: '#/components/schemas/SurveyQuestionCode'
             type:
               type: string
               enum:
@@ -8439,6 +8565,8 @@ components:
             - scale
             - range
           properties:
+            code:
+              $ref: '#/components/schemas/SurveyQuestionCode'
             type:
               type: string
               enum:
@@ -8475,6 +8603,8 @@ components:
         id:
           type: string
           description: Stable picture choice id.
+        code:
+          $ref: '#/components/schemas/SurveyAnswerCode'
         imageUrl:
           type: string
         imageAltText:
@@ -8489,6 +8619,8 @@ components:
           required:
             - choices
           properties:
+            code:
+              $ref: '#/components/schemas/SurveyQuestionCode'
             type:
               type: string
               enum:
@@ -8511,6 +8643,8 @@ components:
           required:
             - format
           properties:
+            code:
+              $ref: '#/components/schemas/SurveyQuestionCode'
             type:
               type: string
               enum:
@@ -8533,6 +8667,8 @@ components:
           required:
             - allowMultipleFiles
           properties:
+            code:
+              $ref: '#/components/schemas/SurveyQuestionCode'
             type:
               type: string
               enum:
@@ -8555,6 +8691,8 @@ components:
           required:
             - calUserName
           properties:
+            code:
+              $ref: '#/components/schemas/SurveyQuestionCode'
             type:
               type: string
               enum:
@@ -8573,6 +8711,8 @@ components:
             - rows
             - columns
           properties:
+            code:
+              $ref: '#/components/schemas/SurveyQuestionCode'
             type:
               type: string
               enum:
@@ -8617,6 +8757,8 @@ components:
             - zip
             - country
           properties:
+            code:
+              $ref: '#/components/schemas/SurveyQuestionCode'
             type:
               type: string
               enum:
@@ -8643,6 +8785,8 @@ components:
           required:
             - choices
           properties:
+            code:
+              $ref: '#/components/schemas/SurveyQuestionCode'
             type:
               type: string
               enum:
@@ -8671,6 +8815,8 @@ components:
             - phone
             - company
           properties:
+            code:
+              $ref: '#/components/schemas/SurveyQuestionCode'
             type:
               type: string
               enum:
@@ -8696,6 +8842,8 @@ components:
             - scale
             - range
           properties:
+            code:
+              $ref: '#/components/schemas/SurveyQuestionCode'
             type:
               type: string
               enum:
@@ -8726,6 +8874,8 @@ components:
             - scale
             - range
           properties:
+            code:
+              $ref: '#/components/schemas/SurveyQuestionCode'
             type:
               type: string
               enum:
@@ -11686,6 +11836,7 @@ components:
         - finished
         - endingId
         - language
+        - outcome
         - resolution
         - answers
         - embeddedData
@@ -11734,6 +11885,14 @@ components:
             - string
             - 'null'
           description: The survey language this response was collected in, as a survey language code (not necessarily a BCP-47 locale — `default` is a legitimate value). `null` when the survey is single-language or no language was stamped.
+        outcome:
+          type:
+            - string
+            - 'null'
+          enum:
+            - lowQuality
+            - null
+          description: 'A reviewer''s verdict on the response; `null` when none. `lowQuality` hides the response from the Analysis export by default and from Feedback Records, and from nothing else: it is never deleted and every count, list, webhook and integration still includes it. Set through `PATCH /api/v3/responses/{responseId}` or `POST /api/v3/responses/batch-outcome`.'
         durationSeconds:
           readOnly: true
           type: number
@@ -12208,6 +12367,32 @@ components:
             type: string
             format: cuid2
       additionalProperties: false
+    BatchSetResponsesOutcomeRequest:
+      type: object
+      description: |
+        Responses to mark Low quality, or to restore. A POST custom method modelled on `batch-delete`, so one request is one transaction over at most 100 ids. `outcome` is required: leaving it out must not read as a restore.
+      required:
+        - ids
+        - outcome
+      properties:
+        ids:
+          type: array
+          minItems: 1
+          maxItems: 100
+          uniqueItems: true
+          description: Response ids to update, at most 100 per call.
+          items:
+            type: string
+            format: cuid2
+        outcome:
+          type:
+            - string
+            - 'null'
+          enum:
+            - lowQuality
+            - null
+          description: The outcome to set on every response. `lowQuality` marks, `null` clears the mark.
+      additionalProperties: false
     PatchResponseRequest:
       type: object
       description: |
@@ -12232,6 +12417,14 @@ components:
           type:
             - string
             - 'null'
+        outcome:
+          type:
+            - string
+            - 'null'
+          enum:
+            - lowQuality
+            - null
+          description: 'A reviewer''s verdict: `lowQuality` marks the response, `null` clears the mark. The response is never deleted — see `ResponseBase.outcome`.'
         data:
           $ref: '#/components/schemas/ResponseDataMapInput'
         embeddedData:

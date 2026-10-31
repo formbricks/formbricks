@@ -285,6 +285,7 @@ const leadingProperties = (t: TFunction): TFilterProperty[] => [
     options: [
       { value: "complete", label: t("workspace.surveys.filter.complete_responses") },
       { value: "partial", label: t("workspace.surveys.filter.partial_responses") },
+      { value: "lowQuality", label: t("workspace.surveys.filter.low_quality_responses") },
     ],
   },
   {
@@ -466,7 +467,8 @@ const toResponseStatus = (filters: readonly TTableFilter[]): TResponseStatus => 
   const status = filters.find((filter) => filter.property === STATUS_PROPERTY && filter.operator === "in");
   const values = new Set(status?.values ?? []);
   if (values.size !== 1) return "all";
-  return values.has("complete") ? "complete" : "partial";
+  if (values.has("complete")) return "complete";
+  return values.has("lowQuality") ? "lowQuality" : "partial";
 };
 
 const toDateRange = (filters: readonly TTableFilter[], timeZone: string, now: Date): DateRange => {
