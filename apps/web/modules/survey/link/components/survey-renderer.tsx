@@ -20,7 +20,7 @@ import { PinScreen } from "@/modules/survey/link/components/pin-screen";
 import { SurveyClientWrapper } from "@/modules/survey/link/components/survey-client-wrapper";
 import { SurveyCompletedMessage } from "@/modules/survey/link/components/survey-completed-message";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
-import { VerifyEmail } from "@/modules/survey/link/components/verify-email";
+import { VerifyEmail } from "@/modules/survey/link/components/verify-email-lazy";
 import type { TLinkSurvey } from "@/modules/survey/link/lib/data";
 import { getEmailVerificationDetails } from "@/modules/survey/link/lib/helper";
 import { isLinkSurveyServable } from "@/modules/survey/link/lib/public-access";
