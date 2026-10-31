@@ -1,6 +1,7 @@
 import "server-only";
 import { NextRequest } from "next/server";
 import { RequestBodyTooLargeError, readRequestBytesWithLimit } from "@/app/lib/api/request-body";
+import { AUTH_REQUEST_MAX_ENTRIES, exceedsAuthRequestBounds } from "./auth-request-bounds";
 
 /**
  * Largest request body any `/api/auth/*` route will read (ENG-3846, ENG-3248).
@@ -31,18 +32,32 @@ const LIMITED = Symbol.for("formbricks.authRequestBodyLimited");
 // `error` / `error_description` are what an OAuth client reads (RFC 6749 §5.2, RFC 7591 §3.2.2);
 // `message` / `code` are what Better Auth's own client reads. `no-store` because a token-endpoint response
 // must never be cached (RFC 6749 §5.1).
-const bodyTooLargeResponse = (limitBytes: number): Response => {
-  const description = `Request body must not exceed ${limitBytes} bytes`;
-  return Response.json(
-    {
-      error: "payload_too_large",
-      error_description: description,
-      code: "PAYLOAD_TOO_LARGE",
-      message: description,
-    },
-    { status: 413, headers: { "cache-control": "no-store" } }
+const errorResponse = (status: number, error: string, code: string, description: string): Response =>
+  Response.json(
+    { error, error_description: description, code, message: description },
+    { status, headers: { "cache-control": "no-store" } }
   );
-};
+
+const bodyTooLargeResponse = (limitBytes: number): Response =>
+  errorResponse(
+    413,
+    "payload_too_large",
+    "PAYLOAD_TOO_LARGE",
+    `Request body must not exceed ${limitBytes} bytes`
+  );
+
+// `VALIDATION_ERROR` is the code Better Auth itself answers a body that fails its schema with. A dynamic
+// client registration gets the error RFC 7591 §3.2.2 defines for bad metadata; anything else the generic
+// OAuth one (RFC 6749 §5.2).
+const tooManyEntriesResponse = (request: Request): Response =>
+  errorResponse(
+    400,
+    new URL(request.url).pathname.endsWith("/oauth2/register")
+      ? "invalid_client_metadata"
+      : "invalid_request",
+    "VALIDATION_ERROR",
+    `Request lists, objects and repeated parameters must not hold more than ${AUTH_REQUEST_MAX_ENTRIES} entries`
+  );
 
 /**
  * The bytes were already read, so hand the handler a request that carries them. A `NextRequest` stays
@@ -76,8 +91,10 @@ const isClientAbort = (request: Request, error: unknown): boolean =>
  *
  * The handler receives the same bytes as a fresh request, so the limit costs nothing that the handler's
  * own read did not already cost, and nothing downstream (the DCR preprocessing, Better Auth, `formData()`)
- * can buffer more than {@link AUTH_REQUEST_BODY_LIMIT_BYTES}. A request with no body — every GET — is
- * handed over untouched, identity included. Anything over the limit is answered `413` and the stream is
+ * can buffer more than {@link AUTH_REQUEST_BODY_LIMIT_BYTES}. A query string or body holding a collection over
+ * {@link AUTH_REQUEST_MAX_ENTRIES} entries is answered `400` before any schema sees it
+ * (auth-request-bounds.ts); the body is checked from the same read. A request with no body — every GET — has
+ * only its query checked, and is otherwise handed over untouched, identity included. Anything over the limit is answered `413` and the stream is
  * cancelled, whether it declared its size, understated it, or carried no `Content-Length` at all. A client
  * that disconnects mid-upload gets a bare `400` nobody reads, rather than a route error for every abandoned
  * anonymous request.
@@ -86,7 +103,10 @@ export const withAuthRequestBodyLimit = <Args extends unknown[], R extends Reque
   handler: (request: R, ...args: Args) => Response | Promise<Response>
 ) => {
   const limited = async (request: R, ...args: Args): Promise<Response> => {
-    if (!request.body) return handler(request, ...args);
+    if (!request.body) {
+      if (exceedsAuthRequestBounds(request.url, null, undefined)) return tooManyEntriesResponse(request);
+      return handler(request, ...args);
+    }
 
     let body: Uint8Array;
     try {
@@ -95,6 +115,10 @@ export const withAuthRequestBodyLimit = <Args extends unknown[], R extends Reque
       if (error instanceof RequestBodyTooLargeError) return bodyTooLargeResponse(error.limitBytes);
       if (isClientAbort(request, error)) return new Response(null, { status: 400 });
       throw error;
+    }
+
+    if (exceedsAuthRequestBounds(request.url, request.headers.get("content-type"), body)) {
+      return tooManyEntriesResponse(request);
     }
 
     return handler(withBody(request, body), ...args);

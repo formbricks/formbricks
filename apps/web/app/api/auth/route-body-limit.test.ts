@@ -5,6 +5,7 @@ import {
   AUTH_REQUEST_BODY_LIMIT_BYTES,
   isAuthRequestBodyLimited,
 } from "@/modules/auth/lib/auth-request-body-limit";
+import { AUTH_REQUEST_MAX_ENTRIES } from "@/modules/auth/lib/auth-request-bounds";
 
 // The handlers behind the routes are mocked out: what is under test is that the route FILES put the body
 // guard in front of them, and the guard answers before any of these is reached. If a route lost its
@@ -106,6 +107,30 @@ describe("/api/auth route surface", () => {
         const response = await post(request);
         expect(response.status).toBe(413);
       }
+      expect(handlerCalls).not.toHaveBeenCalled();
+      expect(jacksonMock).not.toHaveBeenCalled();
+      expect(prepareDcrRequestMock).not.toHaveBeenCalled();
+    }
+  );
+
+  test.each(postRouteFiles)(
+    "%s POST refuses a JSON body with an over-wide array with 400 before doing any work",
+    async (file) => {
+      const mod = await loadRoute(file);
+      const post = mod.POST as (request: Request) => Promise<Response>;
+      const url = `http://localhost/api/auth/${file
+        .replace(/^\.\/|\/route\.ts$/g, "")
+        .replace("[...all]", "oauth2/register")}`;
+
+      const response = await post(
+        new Request(url, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ contacts: Array(AUTH_REQUEST_MAX_ENTRIES + 1).fill(1) }),
+        })
+      );
+
+      expect(response.status).toBe(400);
       expect(handlerCalls).not.toHaveBeenCalled();
       expect(jacksonMock).not.toHaveBeenCalled();
       expect(prepareDcrRequestMock).not.toHaveBeenCalled();
