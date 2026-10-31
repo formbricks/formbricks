@@ -7,9 +7,10 @@ import { TSurvey, TSurveyElementSummarySignature } from "@formbricks/types/surve
 import { TUserLocale } from "@formbricks/types/user";
 import { convertFloatToNDecimal } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
 import { timeSince } from "@/lib/time";
-import { getClientOrigin, getSignatureImageSrc } from "@/modules/storage/signature-image";
+import { getClientOrigin } from "@/modules/storage/signature-image";
 import { EmptyState } from "@/modules/ui/components/empty-state";
 import { ProgressBar } from "@/modules/ui/components/progress-bar";
+import { getSignatureTile } from "../lib/signature-summary";
 import { ElementSummaryHeader } from "./ElementSummaryHeader";
 import { ResponseSampleModal } from "./ResponseSampleModal";
 
@@ -72,8 +73,7 @@ export const SignatureSummary = ({
             className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5"
             data-testid="signature-summary-list">
             {elementSummary.signatures.map((signature) => {
-              const src = getSignatureImageSrc(signature.value, origin);
-              if (!src) return null;
+              const tile = getSignatureTile(signature.value, origin);
               return (
                 <li key={signature.id} className="flex flex-col gap-1">
                   <button
@@ -81,14 +81,22 @@ export const SignatureSummary = ({
                     aria-label={t("workspace.surveys.summary.open_response_details")}
                     className="rounded-md focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:outline-none"
                     onClick={() => setSelectedResponseId(signature.id)}>
-                    <Image
-                      src={src}
-                      alt={t("common.signature")}
-                      width={144}
-                      height={48}
-                      unoptimized
-                      className="h-12 w-36 max-w-full rounded-md border border-slate-200 bg-white object-contain"
-                    />
+                    {tile.kind === "image" ? (
+                      <Image
+                        src={tile.src}
+                        alt={t("common.signature")}
+                        width={144}
+                        height={48}
+                        unoptimized
+                        className="h-12 w-36 max-w-full rounded-md border border-slate-200 bg-white object-contain"
+                      />
+                    ) : (
+                      <span
+                        className="ph-no-capture flex h-12 w-36 max-w-full items-center rounded-md border border-slate-200 bg-slate-50 px-2 text-left text-xs text-slate-700"
+                        data-testid="signature-summary-text-tile">
+                        <span className="truncate">{tile.text}</span>
+                      </span>
+                    )}
                   </button>
                   <p className="text-xs text-slate-500">
                     {timeSince(new Date(signature.updatedAt).toISOString(), locale)}

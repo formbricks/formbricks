@@ -43,12 +43,12 @@ const meta: Meta<StoryProps> = {
     hasSavedSignature: {
       control: "boolean",
       description: "A signature was saved earlier and only its URL is left (shows the saved state)",
-      table: { category: "State" },
+      table: { category: "Behavior" },
     },
     isUploading: {
       control: "boolean",
       description: "The signature image is uploading",
-      table: { category: "State" },
+      table: { category: "Behavior" },
     },
     typedFontUrl: {
       control: "text",

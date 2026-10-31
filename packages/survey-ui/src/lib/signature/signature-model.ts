@@ -93,7 +93,7 @@ export const hasSignificantStroke = (strokes: readonly SignatureStroke[]): boole
  */
 export const isTypedNameSigned = (typedName: string): boolean => /[\p{L}\p{N}\p{S}]/u.test(typedName.trim());
 
-/** Signed: a drawn stroke of minimum length, or a non-blank typed name, whichever mode is showing. */
+/** Signed: a drawn stroke of minimum length, or a typed name with at least one letter, number or symbol, whichever mode is showing. */
 export const isSignatureSigned = (value: SignatureValue): boolean =>
   hasSignificantStroke(value.strokes) || isTypedNameSigned(value.typedName);
 
@@ -133,6 +133,18 @@ export const signatureFingerprint = (value: SignatureValue): string | null => {
   if (!content) return null;
   if (content.kind === "name") return `name:${content.name}`;
   return `strokes:${content.strokes.map((stroke) => stroke.map((p) => `${round4(p.x)},${round4(p.y)}`).join(" ")).join("|")}`;
+};
+
+/**
+ * What the element renders for its settings. With typed signatures off there is no Draw / Type toggle and
+ * no name field, and the pad is always the drawing pad, whatever mode an earlier value was left in.
+ */
+export const getSignatureLayout = (
+  allowTypedSignature: boolean,
+  storedMode: SignatureMode
+): { showModeToggle: boolean; mode: SignatureMode; showNameInput: boolean } => {
+  const mode = allowTypedSignature ? storedMode : "draw";
+  return { showModeToggle: allowTypedSignature, mode, showNameInput: mode === "type" };
 };
 
 /** The tab that arrow / Home / End keys move to, or `null` for a key that does not move the tab. */

@@ -68,6 +68,14 @@ describe("Signature in the element catalog", () => {
     expect(getCXElementTypes(t).map((type) => type.id)).not.toContain(TSurveyElementTypeEnum.Signature);
   });
 
+  test("is not plan-gated: the catalog has no plan input, and every plan gets the same entry", () => {
+    // `getElementTypes` takes only `t`, so a free-plan workspace and an enterprise one see one catalog.
+    expect(getElementTypes.length).toBe(1);
+    expect(signature()).toBeDefined();
+    // The preset builds from an empty workspace, which is all a free-plan context adds.
+    expect(getElementDefaults(TSurveyElementTypeEnum.Signature, {}, t)).toMatchObject({ required: true });
+  });
+
   test("does not change File upload's preset", () => {
     const fileUpload = defaultsFor(TSurveyElementTypeEnum.FileUpload);
     expect(fileUpload.required).toBeUndefined();

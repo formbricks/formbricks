@@ -61,7 +61,7 @@ export function SignatureElement({
   signatureDrafts,
   registerSubmitContributor,
 }: Readonly<SignatureElementProps>) {
-  const [startTime, setStartTime] = useState(performance.now());
+  const [startTime, setStartTime] = useState(() => performance.now());
   const [uploadErrorMessage, setUploadErrorMessage] = useState<string | undefined>(undefined);
   const [isUploading, setIsUploading] = useState(false);
   const isCurrent = element.id === currentElementId;

@@ -222,6 +222,25 @@ describe("getSignatureUploadError", () => {
     });
   });
 
+  test("a network failure, which is what an upload attempt rejects with offline, shows the upload-failed error", async () => {
+    const offline = new TypeError("Failed to fetch");
+    const uploadPng = vi.fn<() => Promise<string>>().mockRejectedValue(offline);
+    const { exportPng } = setup();
+
+    const result = await resolveSignatureAnswer({
+      draft: draftOf(drawn),
+      savedUrl: "",
+      exportPng,
+      uploadPng,
+    });
+
+    expect(result).toEqual({ status: "error", error: offline });
+    expect(getSignatureUploadError(offline)).toEqual({
+      kind: "key",
+      key: "errors.file_input.upload_failed",
+    });
+  });
+
   test("a too-large file shows the server's own message", () => {
     const error = Object.assign(new Error("File size exceeds the size limit"), {
       name: FILE_UPLOAD_ERROR_NAMES.FILE_TOO_LARGE,

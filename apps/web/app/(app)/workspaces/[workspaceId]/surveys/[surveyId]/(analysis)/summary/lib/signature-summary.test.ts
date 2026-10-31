@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { SIGNATURE_SUMMARY_LIMIT, summarizeSignatureAnswers } from "./signature-summary";
+import { SIGNATURE_SUMMARY_LIMIT, getSignatureTile, summarizeSignatureAnswers } from "./signature-summary";
 
 const url = (n: number) => `/storage/ws/private/surveys/s1/elements/sig/signature--fid--${n}.png`;
 
@@ -68,5 +68,39 @@ describe("summarizeSignatureAnswers", () => {
     expect(summary.signatures).toHaveLength(10);
     expect(summary.signatures[0].id).toBe("r0");
     expect(summary.signatures[9].id).toBe("r9");
+  });
+});
+
+describe("getSignatureTile", () => {
+  const origin = "https://app.example.com";
+
+  test("shows a private storage URL of this app as an image", () => {
+    expect(getSignatureTile(url(1), origin)).toEqual({ kind: "image", src: url(1) });
+  });
+
+  test("falls back to plain text for a value that is no private storage URL, never an image source", () => {
+    for (const value of [
+      "javascript:alert(1)",
+      "https://evil.example/x.png",
+      "/storage/ws/public/a.png",
+      "Jane",
+    ]) {
+      expect(getSignatureTile(value, origin)).toEqual({ kind: "text", text: value });
+    }
+  });
+
+  test("gives every counted signature a tile, so a rejected value does not shrink the grid", () => {
+    const responses = [
+      response("bad", { sig: "https://evil.example/x.png" }),
+      ...Array.from({ length: SIGNATURE_SUMMARY_LIMIT + 3 }, (_, i) => response(`r${i}`, { sig: url(i) })),
+    ];
+
+    const { signatures, signedCount } = summarizeSignatureAnswers("sig", responses);
+    const tiles = signatures.map((signature) => getSignatureTile(signature.value, origin));
+
+    expect(signedCount).toBe(SIGNATURE_SUMMARY_LIMIT + 4);
+    expect(tiles).toHaveLength(SIGNATURE_SUMMARY_LIMIT);
+    expect(tiles.filter((tile) => tile.kind === "text")).toHaveLength(1);
+    expect(tiles.filter((tile) => tile.kind === "image")).toHaveLength(SIGNATURE_SUMMARY_LIMIT - 1);
   });
 });

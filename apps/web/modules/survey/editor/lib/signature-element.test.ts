@@ -1,7 +1,11 @@
 import { TFunction } from "i18next";
 import { describe, expect, test } from "vitest";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
-import { isTypedSignatureAllowed, shouldWarnTypedSignatureOff } from "./signature-element";
+import {
+  isTypedSignatureAllowed,
+  shouldShowNotSignedLogicHint,
+  shouldWarnTypedSignatureOff,
+} from "./signature-element";
 import { getElementOperatorOptions } from "./utils";
 
 describe("isTypedSignatureAllowed", () => {
@@ -30,6 +34,14 @@ describe("shouldWarnTypedSignatureOff", () => {
   });
 });
 
+describe("shouldShowNotSignedLogicHint", () => {
+  test("explains the missing is not signed condition on a required Signature only", () => {
+    expect(shouldShowNotSignedLogicHint({ required: true })).toBe(true);
+    expect(shouldShowNotSignedLogicHint({ required: false })).toBe(false);
+    expect(shouldShowNotSignedLogicHint({})).toBe(false);
+  });
+});
+
 describe("Signature logic operators in the editor", () => {
   const t = ((key: string) => key) as unknown as TFunction;
   const base = {
@@ -39,9 +51,12 @@ describe("Signature logic operators in the editor", () => {
     allowTypedSignature: true,
   };
 
+  const labelled = (options: { label: string; value: string | number }[]) =>
+    options.map((option) => [option.label, option.value]);
+
   test("an optional Signature offers is signed and is not signed", () => {
     const options = getElementOperatorOptions({ ...base, required: false }, t);
-    expect(options.map((option) => [option.label, option.value])).toEqual([
+    expect(labelled(options)).toEqual([
       ["workspace.surveys.edit.is_signed", "isSubmitted"],
       ["workspace.surveys.edit.is_not_signed", "isSkipped"],
     ]);
@@ -49,6 +64,22 @@ describe("Signature logic operators in the editor", () => {
 
   test("a required Signature offers only is signed, as File upload does for isSkipped", () => {
     const options = getElementOperatorOptions({ ...base, required: true }, t);
-    expect(options.map((option) => option.value)).toEqual(["isSubmitted"]);
+    expect(labelled(options)).toEqual([["workspace.surveys.edit.is_signed", "isSubmitted"]]);
+  });
+
+  test("File upload keeps its submitted / skipped words, with or without Required", () => {
+    const fileUpload = {
+      id: "file",
+      type: TSurveyElementTypeEnum.FileUpload as const,
+      headline: { default: "Upload" },
+      allowMultipleFiles: false,
+    };
+    expect(labelled(getElementOperatorOptions({ ...fileUpload, required: false } as never, t))).toEqual([
+      ["workspace.surveys.edit.is_submitted", "isSubmitted"],
+      ["workspace.surveys.edit.is_skipped", "isSkipped"],
+    ]);
+    expect(labelled(getElementOperatorOptions({ ...fileUpload, required: true } as never, t))).toEqual([
+      ["workspace.surveys.edit.is_submitted", "isSubmitted"],
+    ]);
   });
 });

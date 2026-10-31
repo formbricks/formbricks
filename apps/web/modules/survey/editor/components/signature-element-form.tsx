@@ -11,6 +11,7 @@ import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
 import {
   isTypedSignatureAllowed,
+  shouldShowNotSignedLogicHint,
   shouldWarnTypedSignatureOff,
 } from "@/modules/survey/editor/lib/signature-element";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
@@ -37,7 +38,7 @@ export const SignatureElementForm = ({
   locale,
   isStorageConfigured = true,
   isExternalUrlsAllowed,
-}: SignatureElementFormProps): JSX.Element => {
+}: Readonly<SignatureElementFormProps>): JSX.Element => {
   const { t } = useTranslation();
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
   const [parent] = useAutoAnimate();
@@ -114,6 +115,11 @@ export const SignatureElementForm = ({
               {t("workspace.surveys.edit.typed_signature_off_warning_description")}
             </AlertDescription>
           </Alert>
+        )}
+        {shouldShowNotSignedLogicHint(element) && (
+          <p className="text-sm text-slate-500">
+            {t("workspace.surveys.edit.signature_logic_required_hint")}
+          </p>
         )}
       </div>
     </form>

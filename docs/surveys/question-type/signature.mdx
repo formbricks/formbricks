@@ -1,16 +1,16 @@
 ---
 title: "Signature"
-description: "The Signature question type lets respondents sign by drawing with a finger, stylus or mouse, or by typing their name. You receive the signature as one PNG image with the response."
+description: "The Signature type lets respondents sign by drawing with a finger, stylus or mouse, or by typing their name. You receive the signature as one PNG image with the response."
 icon: "signature"
 ---
 
 <Note>
-  **Self-Hosting Requirements**: This question type stores the signature as an image, so it requires file
+  **Self-Hosting Requirements**: The Signature type stores the signature as an image, so it requires file
   upload storage to be configured. If you're self-hosting Formbricks, make sure to [configure file
   uploads](/self-hosting/configuration/file-uploads) before using this feature.
 </Note>
 
-Use a Signature question to collect a signature as part of a survey, for example a confirmation on a form, a consent on site or a sign-off on a tablet. It is available on every plan.
+Use Signature to collect a signature as part of a survey, for example a confirmation on a form, a consent on site or a sign-off on a tablet. It is available on every plan.
 
 ## Elements
 
@@ -24,7 +24,7 @@ Provide an optional description, for example the text or terms the signature app
 
 ### Required
 
-A Signature question is required by default. A required question that is left empty blocks the respondent on **Next** with the usual required message. Turn the setting off and the respondent can skip it.
+A Signature is required by default. A required Signature that is left empty blocks the respondent on **Next** with the usual required message. Turn the setting off and the respondent can skip it.
 
 ### Allow typed signature
 
@@ -35,23 +35,23 @@ Turn the setting off to hide the switch, so respondents can only draw.
 <Warning>
   Keep typed signatures on unless you have another way for people to answer. Drawing needs a pointing device or
   a touch screen, so respondents who use a keyboard or a screen reader cannot complete a drawn-only required
-  Signature question. When the setting is off and the question is required, the editor warns you about this.
+  Signature. When the setting is off and the question is required, the editor warns you about this.
 </Warning>
 
 ## How respondents sign
 
 On a phone or tablet, the respondent draws with a finger or a stylus. The pad does not scroll the page while they draw. On a computer, they draw with the mouse. They can select **Clear** at any time and sign again, and the signature is kept if they rotate the device or go back to the question.
 
-A signature counts as signed once the respondent has drawn a stroke of minimum length or typed a name. A single tap or a blank name does not count, so it does not satisfy a required question.
+A signature counts as signed once the respondent has drawn a stroke of minimum length or typed a name with at least one letter, number or symbol. A single tap, an empty name, or a name of only spaces or punctuation does not count, so it does not satisfy a required Signature.
 
 The image is saved when the respondent selects **Next**, not while they draw. If saving fails, they see an error and stay on the question.
 
 ## Logic
 
-Use a Signature question in [logic](/surveys/general-features/conditional-logic) with these conditions:
+Use a Signature in [logic](/surveys/general-features/conditional-logic) with these conditions:
 
 - **Is signed**: the respondent drew or typed a signature.
-- **Is not signed**: the respondent skipped the question.
+- **Is not signed**: the respondent skipped the question. Logic offers this condition only while **Required** is off, because a required Signature cannot be skipped. The editor shows a note about it under the settings of a required Signature.
 
 ## What is stored
 
@@ -61,7 +61,7 @@ Typed names use the Dancing Script font. It covers Latin and Latin Extended char
 
 <Note>
   A signature is an image plus the response timestamp. Formbricks does not add an audit trail or tamper
-  evidence, and a Signature question does not make a survey a legally binding electronic signature. Check what
+  evidence, and a Signature does not make a survey a legally binding electronic signature. Check what
   your use case requires before relying on it.
 </Note>
 

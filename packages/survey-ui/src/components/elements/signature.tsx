@@ -10,6 +10,7 @@ import {
   type SignatureValue,
   TYPED_NAME_MAX_LENGTH,
   clearSignature,
+  getSignatureLayout,
   isSignatureSigned,
   isTypedNameSigned,
   nextSignatureMode,
@@ -151,7 +152,7 @@ function Signature({
     onChangeRef.current = onChange;
   });
 
-  const mode: SignatureMode = allowTypedSignature ? value.mode : "draw";
+  const { showModeToggle, mode, showNameInput } = getSignatureLayout(allowTypedSignature, value.mode);
   const hasSavedOnly = hasSavedSignature && !isSignatureSigned(value);
   const isSigned = isSignatureSigned(value) || hasSavedSignature;
   const hasAnyInput = value.strokes.length > 0 || value.typedName.length > 0 || hasSavedSignature;
@@ -284,7 +285,7 @@ function Signature({
 
         <div role="group" aria-labelledby={headlineId} aria-describedby={describedBy} className="space-y-2">
           <div className="flex items-center justify-between gap-2">
-            {allowTypedSignature ? (
+            {showModeToggle ? (
               <div role="tablist" aria-label={text.method} className="flex items-center gap-1">
                 {renderTab("draw", text.draw)}
                 {renderTab("type", text.type)}
@@ -304,8 +305,8 @@ function Signature({
 
           <div
             id={panelId}
-            role={allowTypedSignature ? "tabpanel" : undefined}
-            aria-labelledby={allowTypedSignature ? `${inputId}-tab-${mode}` : undefined}
+            role={showModeToggle ? "tabpanel" : undefined}
+            aria-labelledby={showModeToggle ? `${inputId}-tab-${mode}` : undefined}
             className="space-y-2">
             {/* The pad is a fixed white page with near-black ink in every theme: it is what the exported
                 PNG looks like, so it must not follow the survey's colours or dark appearance. */}
@@ -345,7 +346,7 @@ function Signature({
               ) : null}
             </div>
 
-            {allowTypedSignature && mode === "type" ? (
+            {showNameInput ? (
               <Input
                 id={nameId}
                 ref={nameRef}

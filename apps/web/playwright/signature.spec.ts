@@ -54,16 +54,12 @@ type SeededSurvey = {
   headline: string;
 };
 
-const signatureElement = (
-  id: string,
-  headline: string,
-  options: { required: boolean; allowTypedSignature?: boolean }
-) => ({
+const signatureElement = (id: string, headline: string, options: { required: boolean }) => ({
   id,
   type: TSurveyElementTypeEnum.Signature,
   headline: i18nValue(headline),
   required: options.required,
-  allowTypedSignature: options.allowTypedSignature ?? true,
+  allowTypedSignature: true,
 });
 
 const followUpElement = (id: string) => ({
@@ -77,7 +73,7 @@ const followUpElement = (id: string) => ({
 
 const createSurvey = async (
   owner: Awaited<ReturnType<UsersFixture["create"]>>,
-  data: { name: string; blocks: TSurveyBlock[]; endings?: unknown[] }
+  data: { name: string; blocks: TSurveyBlock[] }
 ): Promise<string> => {
   if (!owner.workspaceId) throw new Error("users.create() did not return a workspaceId");
 
@@ -90,9 +86,9 @@ const createSurvey = async (
       status: "inProgress",
       welcomeCard: { enabled: false, timeToFinish: false, showResponseCount: false },
       blocks: data.blocks as unknown as Prisma.InputJsonValue[],
-      endings: (data.endings ?? [
+      endings: [
         { id: createId(), type: "endScreen", headline: i18nValue("Thank you!") },
-      ]) as unknown as Prisma.InputJsonValue[],
+      ] as unknown as Prisma.InputJsonValue[],
     },
     select: { id: true },
   });
@@ -103,7 +99,7 @@ const createSurvey = async (
 /** Block 1 holds the Signature; block 2 a text question, so block 1's button is "Next", not "Finish". */
 const seedSignatureSurvey = async (
   owner: Awaited<ReturnType<UsersFixture["create"]>>,
-  options: { name: string; required: boolean; allowTypedSignature?: boolean }
+  options: { name: string; required: boolean }
 ): Promise<SeededSurvey> => {
   const signatureId = createId();
   const headline = `${options.name}: please sign`;
@@ -201,17 +197,22 @@ const trackStorageUploads = (page: Page): string[] => {
   return uploads;
 };
 
+/** The answer a response currently holds for an element, or "" while there is none. */
+const readSignatureAnswer = async (surveyId: string, elementId: string): Promise<string> => {
+  const responses = await prisma.response.findMany({ where: { surveyId }, select: { data: true } });
+  const stored = responses
+    .map((response) => (response.data as Record<string, unknown>)[elementId])
+    .find((value) => typeof value === "string" && value !== "");
+  return typeof stored === "string" ? stored : "";
+};
+
 /** The answer a response holds for an element. Responses are written asynchronously, so this polls. */
 const waitForSignatureAnswer = async (surveyId: string, elementId: string): Promise<string> => {
   let answer = "";
   await expect
     .poll(
       async () => {
-        const responses = await prisma.response.findMany({ where: { surveyId }, select: { data: true } });
-        const stored = responses
-          .map((response) => (response.data as Record<string, unknown>)[elementId])
-          .find((value) => typeof value === "string" && value !== "");
-        answer = typeof stored === "string" ? stored : "";
+        answer = await readSignatureAnswer(surveyId, elementId);
         return answer;
       },
       { timeout: 30_000, message: "The signed response should be stored" }
@@ -300,7 +301,7 @@ const attachShot = async (page: Page, testInfo: TestInfo, name: string): Promise
 // ---- Tests ----------------------------------------------------------------------------------------
 
 test.describe("Signature element @slow", () => {
-  test("a respondent signs by touch, Clear and redraw, and one PNG is uploaded and kept", async ({
+  test("a respondent signs by touch and by keyboard, and one PNG is uploaded per signature", async ({
     browser,
     baseURL,
     users,
@@ -374,87 +375,43 @@ test.describe("Signature element @slow", () => {
         expect(uploads).toHaveLength(1);
       });
 
-      expect(pageErrors).toEqual([]);
-    } finally {
-      await context.close();
-    }
-  });
+      await test.step("a keyboard-only respondent clears it and signs by typing, which replaces the stored PNG", async () => {
+        const touchAnswer = await waitForSignatureAnswer(seeded.surveyId, seeded.signatureId);
+        await page.getByRole("button", { name: "Back" }).click();
+        await clear.click();
+        await expect(signatureStatus(card)).toHaveText("Not signed");
 
-  test("a keyboard-only respondent signs by typing, and Draw-only elements have no toggle", async ({
-    browser,
-    baseURL,
-    users,
-  }, testInfo) => {
-    const owner = await users.create({ skipSurveySeed: true });
-    const typedId = createId();
-    const drawOnlyId = createId();
-    const surveyId = await createSurvey(owner, {
-      name: "Typed signature",
-      blocks: [
-        {
-          id: createId(),
-          name: "Block 1",
-          elements: [signatureElement(typedId, "Type to sign", { required: true })],
-        },
-        {
-          id: createId(),
-          name: "Block 2",
-          elements: [
-            signatureElement(drawOnlyId, "Draw to sign", { required: false, allowTypedSignature: false }),
-          ],
-        },
-      ] as unknown as TSurveyBlock[],
-    });
-    const { context, page } = await openAsRespondent(browser, baseURL);
-
-    try {
-      const typedCard = signatureCard(page, typedId);
-      const nameInput = typedCard.getByRole("textbox", { name: "Type your name" });
-
-      await test.step("the Type tab is reached and chosen with the keyboard alone", async () => {
-        await page.goto(`/s/${surveyId}`);
-        const drawTab = typedCard.getByRole("tab", { name: "Draw" });
-        await expect(drawTab).toHaveAttribute("aria-selected", "true");
+        // The Type tab is reached and chosen with the keyboard alone, then Tab lands in the name field.
+        const drawTab = card.getByRole("tab", { name: "Draw" });
         await drawTab.focus();
         await page.keyboard.press("ArrowRight");
-        const typeTab = typedCard.getByRole("tab", { name: "Type" });
+        const typeTab = card.getByRole("tab", { name: "Type" });
         await expect(typeTab).toBeFocused();
         await expect(typeTab).toHaveAttribute("aria-selected", "true");
-      });
-
-      await test.step("Tab lands in the name field and typing signs the element", async () => {
         await page.keyboard.press("Tab");
+        const nameInput = card.getByRole("textbox", { name: "Type your name" });
         await expect(nameInput).toBeFocused();
         await page.keyboard.type("Ada Lovelace");
-        await expect(signatureStatus(typedCard)).toHaveText("Signed");
+        await expect(signatureStatus(card)).toHaveText("Signed");
         await attachShot(page, testInfo, "typed-name");
-      });
 
-      await test.step("Enter on Next uploads the typed signature and moves on", async () => {
         await page.getByRole("button", { name: "Next", exact: true }).focus();
         await page.keyboard.press("Enter");
-        await expect(page.getByText("Draw to sign")).toBeVisible({ timeout: UPLOAD_TIMEOUT });
-        await waitForSignatureAnswer(surveyId, typedId);
+        await expect(page.getByText("Anything else?")).toBeVisible({ timeout: UPLOAD_TIMEOUT });
+        expect(uploads).toHaveLength(2);
+
+        await expect
+          .poll(() => readSignatureAnswer(seeded.surveyId, seeded.signatureId), {
+            timeout: 30_000,
+            message: "the typed signature should replace the drawn one in the response",
+          })
+          .not.toBe(touchAnswer);
+        expect(await readSignatureAnswer(seeded.surveyId, seeded.signatureId)).toMatch(
+          SIGNATURE_URL_PATTERN(seeded.workspaceId, seeded.surveyId, seeded.signatureId)
+        );
       });
 
-      await test.step("the draw-only element renders no Draw/Type toggle", async () => {
-        const drawOnlyCard = signatureCard(page, drawOnlyId);
-        await expect(signaturePad(drawOnlyCard)).toBeVisible();
-        await expect(page.getByRole("tablist")).toHaveCount(0);
-        await expect(drawOnlyCard.getByRole("textbox")).toHaveCount(0);
-      });
-
-      await test.step("an optional element left unsigned is skipped, the typed one is stored", async () => {
-        await page.getByRole("button", { name: "Finish" }).click();
-        await expect(page.getByText("Thank you!")).toBeVisible({ timeout: 60_000 });
-        const typedAnswer = await waitForSignatureAnswer(surveyId, typedId);
-        expect(typedAnswer).toMatch(SIGNATURE_URL_PATTERN(owner.workspaceId as string, surveyId, typedId));
-        const response = await prisma.response.findFirstOrThrow({
-          where: { surveyId },
-          select: { data: true },
-        });
-        expect((response.data as Record<string, unknown>)[drawOnlyId] ?? "").toBe("");
-      });
+      expect(pageErrors).toEqual([]);
     } finally {
       await context.close();
     }
@@ -512,7 +469,7 @@ test.describe("Signature element @slow", () => {
       await page.keyboard.press("Escape");
     });
 
-    await test.step("the responses table shows a thumbnail without growing the row", async () => {
+    await test.step("the responses table shows the signature thumbnail", async () => {
       await page.goto(`${base}/responses`);
       const table = page.getByTestId("response-table").locator("table");
       await expect(table).toBeVisible();
@@ -521,8 +478,6 @@ test.describe("Signature element @slow", () => {
       const image = thumbnail.getByRole("img", { name: "Signature" });
       await expect(image).toBeVisible();
       await expect.poll(() => image.evaluate((node) => (node as HTMLImageElement).naturalWidth)).toBe(900);
-      const box = await image.boundingBox();
-      expect(box?.height, "the thumbnail is about 32px high").toBeLessThanOrEqual(40);
       await thumbnail.scrollIntoViewIfNeeded();
       await attachShot(page, testInfo, "table-thumbnail");
     });

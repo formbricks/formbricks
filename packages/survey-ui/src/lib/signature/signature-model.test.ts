@@ -5,6 +5,7 @@ import {
   type SignatureStroke,
   type SignatureValue,
   clearSignature,
+  getSignatureLayout,
   isSignatureSigned,
   isSignificantStroke,
   isTypedNameSigned,
@@ -193,6 +194,34 @@ describe("signatureFingerprint", () => {
   test("ignores a change in the other, unused input", () => {
     const drawn = value({ mode: "draw", strokes: [line(0.3)] });
     expect(signatureFingerprint({ ...drawn, typedName: "left over" })).toBe(signatureFingerprint(drawn));
+  });
+});
+
+describe("getSignatureLayout", () => {
+  test("shows the Draw / Type toggle, and the name field in Type mode, when typed signatures are on", () => {
+    expect(getSignatureLayout(true, "draw")).toEqual({
+      showModeToggle: true,
+      mode: "draw",
+      showNameInput: false,
+    });
+    expect(getSignatureLayout(true, "type")).toEqual({
+      showModeToggle: true,
+      mode: "type",
+      showNameInput: true,
+    });
+  });
+
+  test("renders no toggle and no name field when typed signatures are off, even for a value left in Type", () => {
+    expect(getSignatureLayout(false, "draw")).toEqual({
+      showModeToggle: false,
+      mode: "draw",
+      showNameInput: false,
+    });
+    expect(getSignatureLayout(false, "type")).toEqual({
+      showModeToggle: false,
+      mode: "draw",
+      showNameInput: false,
+    });
   });
 });
 

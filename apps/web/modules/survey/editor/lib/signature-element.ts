@@ -12,3 +12,10 @@ export const isTypedSignatureAllowed = (element: TSignatureSettings): boolean =>
  */
 export const shouldWarnTypedSignatureOff = (element: TSignatureSettings): boolean =>
   element.required === true && !isTypedSignatureAllowed(element);
+
+/**
+ * A required element can never be skipped, so logic offers no "is not signed" condition for it (see
+ * `getElementOperatorOptions`). The editor says so, because nothing else explains why the option is missing.
+ */
+export const shouldShowNotSignedLogicHint = (element: TSignatureSettings): boolean =>
+  element.required === true;
