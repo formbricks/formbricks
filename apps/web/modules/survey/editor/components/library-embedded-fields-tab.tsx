@@ -1,13 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import toast from "react-hot-toast";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import { getSharedEmbeddedDataAction } from "@/modules/embedded-data/actions";
+import { useEmbeddedDataLibrary } from "@/modules/embedded-data/hooks/use-embedded-data";
 import { FieldSourceIndicator } from "@/modules/embedded-data/settings/components/field-status";
-import type { TSharedEmbeddedDataListItem } from "@/modules/embedded-data/types";
 import {
   type TLinkableSharedField,
   listLinkableSharedFields,
@@ -55,39 +52,15 @@ export const LibraryEmbeddedFieldsTab = ({
   onLink,
 }: Readonly<LibraryEmbeddedFieldsTabProps>) => {
   const { t } = useTranslation();
-  const [library, setLibrary] = useState<TSharedEmbeddedDataListItem[] | null>(null);
-  // Distinct from "no rows": a failed load used to set `[]`, and the dialog then told the author
-  // their workspace library was empty — false, and with no way to retry but closing and reopening.
-  const [loadFailed, setLoadFailed] = useState(false);
+  const { data: library, isError } = useEmbeddedDataLibrary(workspaceId);
   const [search, setSearch] = useState("");
 
-  useEffect(() => {
-    let isCurrent = true;
-    const load = async () => {
-      const response = await getSharedEmbeddedDataAction({ workspaceId });
-      if (!isCurrent) return;
-
-      if (!response?.data) {
-        toast.error(getFormattedErrorMessage(response) || t("common.something_went_wrong_please_try_again"));
-        setLoadFailed(true);
-        return;
-      }
-
-      setLoadFailed(false);
-      setLibrary(response.data);
-    };
-
-    void load();
-    return () => {
-      isCurrent = false;
-    };
-  }, [workspaceId, t]);
-
-  if (loadFailed) {
+  // Distinct from "no rows": a failed load must not tell the author their workspace library is empty.
+  if (isError) {
     return <EmptyState variant="simple" text={t("workspace.embedded_data.library_load_failed")} />;
   }
 
-  if (library === null) {
+  if (!library) {
     return (
       <div className="flex justify-center py-8">
         <LoadingSpinner />

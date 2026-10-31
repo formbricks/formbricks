@@ -622,6 +622,19 @@ strings for them.
 Cube keeps no state of its own, so rolling back only this change means restoring the backed-up Compose file or
 your previous `cube.image` values and recreating the `cube` service.
 
+### Session-cookie writes need the Formbricks app (action required only for scripts using a session cookie)
+
+A `POST`, `PUT`, `PATCH` or `DELETE` that authenticates with the Formbricks **session cookie** is now accepted
+only when the Formbricks app sent it: the browser's `Sec-Fetch-Site: same-origin`, or an `Origin` matching the
+host the request was sent to (the first `X-Forwarded-Host`, else `Host`). Anything else gets `403`. Requests
+with an API key (`x-api-key` or `Authorization: Bearer`) are not affected.
+
+- **Browsers need nothing.** The host rule is the one your dashboard's server actions already had to pass.
+- **Scripts that send a browser's session cookie** to write through `/api/v3` now get `403`. The v3 reference
+  listed the cookie as an auth method until this release; create an API key and send that instead.
+- If the dashboard is also reached from another origin that your proxy forwards without the original host, list
+  it in `BETTER_AUTH_TRUSTED_ORIGINS` (comma-separated), which sign-in already honours.
+
 ## v5.4
 
 v5.4 carries one application-level breaking change, and it is narrow: it affects **API keys** used against

@@ -9,11 +9,11 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { getAccessFlags } from "@/lib/membership/utils";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import { updateTeamDetailsAction } from "@/modules/ee/teams/team-list/actions";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { DeleteTeam } from "@/modules/ee/teams/team-list/components/team-settings/delete-team";
 import { MemberRow } from "@/modules/ee/teams/team-list/components/team-settings/member-row";
 import { WorkspaceRow } from "@/modules/ee/teams/team-list/components/team-settings/workspace-row";
+import { updateTeam } from "@/modules/ee/teams/team-list/lib/api-client";
 import {
   TOrganizationMember,
   TTeamDetails,
@@ -128,22 +128,13 @@ export const TeamSettingsModal = ({
     const members = data.members.filter((m) => m.userId);
     const workspaces = data.workspaces.filter((p) => p.workspaceId);
 
-    const updatedTeamActionResponse = await updateTeamDetailsAction({
-      teamId: team.id,
-      data: {
-        name: data.name,
-        members,
-        workspaces,
-      },
-    });
-
-    if (updatedTeamActionResponse?.data) {
+    try {
+      await updateTeam({ teamId: team.id, body: { name: data.name, members, workspaces } });
       toast.success(t("workspace.settings.teams.team_updated_successfully"));
       closeSettingsModal();
       router.refresh();
-    } else {
-      const errorMessage = getFormattedErrorMessage(updatedTeamActionResponse);
-      toast.error(errorMessage);
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
   };
 

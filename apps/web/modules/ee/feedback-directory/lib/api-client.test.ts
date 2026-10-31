@@ -1,6 +1,11 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { V3ApiError } from "@/modules/api/lib/v3-client";
-import { purgeFeedbackDataset } from "./api-client";
+import {
+  createFeedbackDataset,
+  getFeedbackDataset,
+  purgeFeedbackDataset,
+  updateFeedbackDataset,
+} from "./api-client";
 
 const fetchMock = vi.fn();
 
@@ -59,5 +64,35 @@ describe("purgeFeedbackDataset", () => {
     await purgeFeedbackDataset("ds_1");
 
     expect(fetchMock.mock.calls[0][1].signal).toBeInstanceOf(AbortSignal);
+  });
+});
+
+const ok = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
+
+describe("dataset settings", () => {
+  test("creates a dataset in the named organization and returns it", async () => {
+    fetchMock.mockResolvedValue(ok({ data: { id: "ds_1", name: "Support" } }, 201));
+
+    await expect(createFeedbackDataset("org_1", { name: "Support" })).resolves.toEqual({
+      id: "ds_1",
+      name: "Support",
+    });
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("/api/internal/feedback-datasets?organizationId=org_1");
+    expect(init.method).toBe("POST");
+    expect(JSON.parse(init.body)).toEqual({ name: "Support" });
+  });
+
+  test("reads and updates one dataset at its own path", async () => {
+    fetchMock.mockImplementation(async () => ok({ data: { id: "ds_1" } }));
+
+    await getFeedbackDataset("ds_1");
+    await updateFeedbackDataset("ds_1", { isArchived: true });
+
+    expect(fetchMock.mock.calls[0][0]).toBe("/api/internal/feedback-datasets/ds_1");
+    expect(fetchMock.mock.calls[1][0]).toBe("/api/internal/feedback-datasets/ds_1");
+    expect(fetchMock.mock.calls[1][1].method).toBe("PATCH");
   });
 });

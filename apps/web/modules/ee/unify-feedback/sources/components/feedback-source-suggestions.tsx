@@ -83,6 +83,7 @@ export function FeedbackSourceSuggestions({
         return (
           <div
             key={survey.id}
+            data-testid="feedback-source-suggestion"
             className="m-2 grid h-12 min-h-12 grid-cols-12 content-center rounded-md bg-slate-50 transition-colors ease-in-out">
             <div className="col-span-6 flex min-w-0 items-center gap-2 pl-6">
               {getFeedbackSourceIcon("formbricks_survey", "h-4 w-4 shrink-0 text-slate-500")}

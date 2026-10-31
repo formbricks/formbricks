@@ -5,9 +5,9 @@ import { Dispatch, SetStateAction, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TOrganization } from "@formbricks/types/organizations";
-import { deleteOrganizationAction } from "@/app/(app)/workspaces/[workspaceId]/settings/organization/general/actions";
+import { deleteOrganization } from "@/app/(app)/workspaces/[workspaceId]/settings/organization/general/lib/api-client";
 import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@/lib/localStorage";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { V3ApiError, getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
@@ -33,19 +33,25 @@ export const DeleteOrganization = ({
     setIsDeleting(true);
 
     try {
-      const result = await deleteOrganizationAction({ organizationId: organization.id });
-      if (result?.serverError) {
-        toast.error(getFormattedErrorMessage(result));
-        setIsDeleting(false);
-        return;
-      }
+      await deleteOrganization(organization.id);
       toast.success(t("workspace.settings.general.organization_deleted_successfully"));
       if (typeof localStorage !== "undefined") {
         localStorage.removeItem(FORMBRICKS_ENVIRONMENT_ID_LS);
       }
       router.push("/");
-    } catch (err) {
-      toast.error(t("workspace.settings.general.error_deleting_organization_please_try_again"));
+    } catch (error) {
+      toast.error(
+        getV3ApiErrorMessage(
+          error,
+          t("workspace.settings.general.error_deleting_organization_please_try_again")
+        )
+      );
+      // A refusal from the server leaves the dialog open, to retry or cancel; a request that never got an
+      // answer closes it.
+      if (error instanceof V3ApiError && error.status > 0) {
+        setIsDeleting(false);
+        return;
+      }
     }
 
     setIsDeleteDialogOpen(false);

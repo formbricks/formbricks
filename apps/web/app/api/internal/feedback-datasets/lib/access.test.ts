@@ -33,7 +33,7 @@ describe("requireFeedbackDatasetMutationAccess", () => {
   test("returns the organization for an owner or manager", async () => {
     const result = await requireFeedbackDatasetMutationAccess(session, ...args);
 
-    expect(result).toEqual({ organizationId: "org_1" });
+    expect(result).toEqual({ organizationId: "org_1", userId: "user_1" });
   });
 
   // The organization must be derived from the dataset, never taken from the caller — otherwise a

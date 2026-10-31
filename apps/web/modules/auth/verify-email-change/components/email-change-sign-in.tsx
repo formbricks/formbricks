@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
 import { authClient } from "@/modules/auth/lib/auth-client";
-import { verifyEmailChangeAction } from "@/modules/auth/verify-email-change/actions";
+import { verifyEmailChange } from "@/modules/auth/lib/pre-login-api-client";
 
 interface EmailChangeSignInProps {
   token: string;
@@ -17,12 +17,11 @@ export const EmailChangeSignIn = ({ token }: EmailChangeSignInProps) => {
   useEffect(() => {
     const validateToken = async () => {
       if (typeof token === "string" && token.trim() !== "") {
-        const result = await verifyEmailChangeAction({ token });
-
-        if (!result?.data) {
-          setStatus("error");
-        } else {
+        try {
+          await verifyEmailChange(token);
           setStatus("success");
+        } catch {
+          setStatus("error");
         }
       } else {
         setStatus("error");

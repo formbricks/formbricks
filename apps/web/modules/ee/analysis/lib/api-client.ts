@@ -5,7 +5,13 @@ import type {
   TV3DashboardResource,
   TV3DashboardWidget,
 } from "@/app/api/v3/dashboards/lib/resources";
-import { V3ApiError, parseV3ApiError } from "@/modules/api/lib/v3-client";
+import {
+  type TApiListPage,
+  getApiData,
+  getApiPage,
+  sendApiRequest,
+} from "@/modules/api/lib/internal-api-client";
+import { V3ApiError } from "@/modules/api/lib/v3-client";
 import type {
   AnalyticsResponse,
   TChartDataRow,
@@ -16,22 +22,17 @@ import type {
 
 /**
  * The app's client for the public chart and dashboard API (ADR 0002: the app goes through the same
- * `/api/v3` contract agents use). Every function throws the parsed problem (`V3ApiError`) on a non-2xx,
- * so callers branch on `code` rather than on prose.
+ * `/api/v3` contract agents use). Requests go through the shared helpers (`internal-api-client`), so every
+ * failure is a `V3ApiError` and callers branch on `code` rather than on prose.
  */
 
 const CHARTS_PATH = "/api/v3/charts";
 const DASHBOARDS_PATH = "/api/v3/dashboards";
-const JSON_HEADERS = { "Content-Type": "application/json" };
-
-/** Bounds a write so a stalled request cannot leave a dialog's spinner running forever. */
-export const MUTATION_TIMEOUT_MS = 15_000;
-
 /** A problem's `details` are typed `unknown`; the operations that set them put a JSON object there. */
 const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
-export type TV3ListPage<T> = { data: T[]; meta: { limit: number; nextCursor: string | null } };
+export type TV3ListPage<T> = TApiListPage<T>;
 
 /**
  * A chart as the app's components use it. The public resource names its Feedback Dataset `datasetId`;
@@ -52,11 +53,6 @@ export const toAppChart = (resource: TV3ChartResource): TAppChart => ({
   creator: resource.creator,
   dashboards: resource.dashboards,
 });
-
-const readData = async <T>(response: Response): Promise<T> => {
-  if (!response.ok) throw await parseV3ApiError(response);
-  return ((await response.json()) as { data: T }).data;
-};
 
 export type TChartListFilters = { nameContains?: string; datasetId?: string };
 
@@ -87,22 +83,15 @@ export const listCharts = async ({
 }: Parameters<typeof buildChartListSearchParams>[0] & { signal?: AbortSignal }): Promise<
   TV3ListPage<TAppChart>
 > => {
-  const response = await fetch(`${CHARTS_PATH}?${buildChartListSearchParams(input).toString()}`, {
-    cache: "no-store",
-    signal,
-  });
-  if (!response.ok) throw await parseV3ApiError(response);
-
-  const page = (await response.json()) as TV3ListPage<TV3ChartResource>;
+  const page = await getApiPage<TV3ChartResource>(
+    `${CHARTS_PATH}?${buildChartListSearchParams(input).toString()}`,
+    { signal }
+  );
   return { data: page.data.map(toAppChart), meta: page.meta };
 };
 
 export const getChart = async (chartId: string, signal?: AbortSignal): Promise<TAppChart> =>
-  toAppChart(
-    await readData<TV3ChartResource>(
-      await fetch(`${CHARTS_PATH}/${encodeURIComponent(chartId)}`, { cache: "no-store", signal })
-    )
-  );
+  toAppChart(await getApiData<TV3ChartResource>(`${CHARTS_PATH}/${encodeURIComponent(chartId)}`, { signal }));
 
 /** A chart query's result as the renderers take it. */
 export type TAppChartData = {
@@ -140,15 +129,12 @@ export const previewChart = async ({
   signal?: AbortSignal;
 }): Promise<TAppChartData> =>
   toAppChartData(
-    await readData<TV3ChartData>(
-      await fetch(`${CHARTS_PATH}/preview`, {
-        method: "POST",
-        cache: "no-store",
-        headers: JSON_HEADERS,
-        body: JSON.stringify(body),
-        signal,
-      })
-    )
+    await sendApiRequest<TV3ChartData>(`${CHARTS_PATH}/preview`, {
+      method: "POST",
+      body,
+      timeoutMs: null,
+      signal,
+    })
   );
 
 /**
@@ -161,15 +147,6 @@ export const getChartApiErrorMessage = (error: unknown, fallback: string): strin
   const firstReason = error.invalid_params?.[0]?.reason;
   return firstReason ? `${error.detail} ${firstReason}` : error.detail || fallback;
 };
-
-const sendJson = (method: "POST" | "PATCH" | "PUT", path: string, body: unknown): Promise<Response> =>
-  fetch(path, {
-    method,
-    cache: "no-store",
-    headers: JSON_HEADERS,
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(MUTATION_TIMEOUT_MS),
-  });
 
 export type TChartWriteInput = {
   name: string;
@@ -184,16 +161,18 @@ export const createChart = async ({
   ...chart
 }: TChartWriteInput & { workspaceId: string; datasetId: string }): Promise<TAppChart> =>
   toAppChart(
-    await readData<TV3ChartResource>(
-      await sendJson("POST", CHARTS_PATH, { workspaceId, datasetId, ...chart })
-    )
+    await sendApiRequest<TV3ChartResource>(CHARTS_PATH, {
+      method: "POST",
+      body: { workspaceId, datasetId, ...chart },
+    })
   );
 
 export const updateChart = async (chartId: string, update: Partial<TChartWriteInput>): Promise<TAppChart> =>
   toAppChart(
-    await readData<TV3ChartResource>(
-      await sendJson("PATCH", `${CHARTS_PATH}/${encodeURIComponent(chartId)}`, update)
-    )
+    await sendApiRequest<TV3ChartResource>(`${CHARTS_PATH}/${encodeURIComponent(chartId)}`, {
+      method: "PATCH",
+      body: update,
+    })
   );
 
 /** A date range as the data route's query string spells it. */
@@ -217,7 +196,7 @@ export const getChartData = async ({
   const search = dateRangeSearchParams(dateRange).toString();
   const base = `${CHARTS_PATH}/${encodeURIComponent(chartId)}/data`;
   const path = search ? `${base}?${search}` : base;
-  return toAppChartData(await readData<TV3ChartData>(await fetch(path, { cache: "no-store", signal })));
+  return toAppChartData(await getApiData<TV3ChartData>(path, { signal }));
 };
 
 /** A field's stored value, with the question type when the field is the question label. */
@@ -240,7 +219,7 @@ export const listChartFieldValues = async ({
   const params = new URLSearchParams({ workspaceId, datasetId });
   if (search) params.set("search", search);
   const path = `${CHARTS_PATH}/fields/${encodeURIComponent(field)}/values?${params.toString()}`;
-  return readData<TChartFieldValue[]>(await fetch(path, { cache: "no-store", signal }));
+  return getApiData<TChartFieldValue[]>(path, { signal });
 };
 
 /** A dashboard row as the list shows it. */
@@ -301,18 +280,15 @@ export const listDashboards = async ({
   if (nameContains) params.set("filter[name][contains]", nameContains);
   if (filters?.chartId) params.set("filter[chartId][eq]", filters.chartId);
 
-  const response = await fetch(`${DASHBOARDS_PATH}?${params.toString()}`, { cache: "no-store", signal });
-  if (!response.ok) throw await parseV3ApiError(response);
-
-  const page = (await response.json()) as TV3ListPage<TV3DashboardListItem>;
+  const page = await getApiPage<TV3DashboardListItem>(`${DASHBOARDS_PATH}?${params.toString()}`, { signal });
   return { data: page.data.map(toAppDashboardListItem), meta: page.meta };
 };
 
 export const getDashboard = async (dashboardId: string, signal?: AbortSignal): Promise<TAppDashboard> =>
   toAppDashboard(
-    await readData<TV3DashboardResource>(
-      await fetch(`${DASHBOARDS_PATH}/${encodeURIComponent(dashboardId)}`, { cache: "no-store", signal })
-    )
+    await getApiData<TV3DashboardResource>(`${DASHBOARDS_PATH}/${encodeURIComponent(dashboardId)}`, {
+      signal,
+    })
   );
 
 const dashboardPath = (dashboardId: string) => `${DASHBOARDS_PATH}/${encodeURIComponent(dashboardId)}`;
@@ -325,7 +301,10 @@ export const createDashboard = async ({
   name: string;
 }): Promise<TAppDashboard> =>
   toAppDashboard(
-    await readData<TV3DashboardResource>(await sendJson("POST", DASHBOARDS_PATH, { workspaceId, name }))
+    await sendApiRequest<TV3DashboardResource>(DASHBOARDS_PATH, {
+      method: "POST",
+      body: { workspaceId, name },
+    })
   );
 
 /**
@@ -342,7 +321,7 @@ export const replaceDashboard = async (
   }
 ): Promise<TAppDashboard> =>
   toAppDashboard(
-    await readData<TV3DashboardResource>(await sendJson("PUT", dashboardPath(dashboardId), dashboard))
+    await sendApiRequest<TV3DashboardResource>(dashboardPath(dashboardId), { method: "PUT", body: dashboard })
   );
 
 /** The dashboard changed after the caller read it, so a save expecting the old `updatedAt` was refused. */
@@ -355,19 +334,13 @@ export const isStaleDashboardError = (error: unknown): boolean =>
 /** A copy whose widgets point at the same charts; without a `name` the server picks the "(copy)" one. */
 export const duplicateDashboard = async (dashboardId: string, name?: string): Promise<TAppDashboard> =>
   toAppDashboard(
-    await readData<TV3DashboardResource>(
-      await sendJson("POST", `${dashboardPath(dashboardId)}/duplicate`, name === undefined ? {} : { name })
-    )
+    await sendApiRequest<TV3DashboardResource>(`${dashboardPath(dashboardId)}/duplicate`, {
+      method: "POST",
+      body: name === undefined ? {} : { name },
+    })
   );
 
-const sendDelete = async (path: string): Promise<void> => {
-  const response = await fetch(path, {
-    method: "DELETE",
-    cache: "no-store",
-    signal: AbortSignal.timeout(MUTATION_TIMEOUT_MS),
-  });
-  if (!response.ok) throw await parseV3ApiError(response);
-};
+const sendDelete = (path: string): Promise<void> => sendApiRequest<void>(path, { method: "DELETE" });
 
 /** Deletes the dashboard and its widgets; the charts stay. */
 export const deleteDashboard = (dashboardId: string): Promise<void> => sendDelete(dashboardPath(dashboardId));
@@ -381,7 +354,7 @@ export const addDashboardWidget = async (
 ): Promise<TDashboardWidget> =>
   toAppDashboardWidget(
     dashboardId,
-    await readData<TV3DashboardWidget>(await sendJson("POST", widgetsPath(dashboardId), widget))
+    await sendApiRequest<TV3DashboardWidget>(widgetsPath(dashboardId), { method: "POST", body: widget })
   );
 
 /** Takes a widget off its dashboard; the chart stays. */
@@ -423,9 +396,10 @@ export const duplicateChart = async (
 ): Promise<TAppChart> => {
   const send = async (body: Record<string, unknown>) =>
     toAppChart(
-      await readData<TV3ChartResource>(
-        await sendJson("POST", `${CHARTS_PATH}/${encodeURIComponent(chartId)}/duplicate`, body)
-      )
+      await sendApiRequest<TV3ChartResource>(`${CHARTS_PATH}/${encodeURIComponent(chartId)}/duplicate`, {
+        method: "POST",
+        body,
+      })
     );
   if (!placement) return send({});
   return placeOrFirstOpenSlot(placement.layout, (layout) =>
@@ -463,13 +437,11 @@ export const generateChart = async ({
   datasetId: string;
   prompt: string;
   signal?: AbortSignal;
-}): Promise<AnalyticsResponse> => {
-  const response = await fetch("/api/internal/charts/generate", {
+}): Promise<AnalyticsResponse> =>
+  sendApiRequest<AnalyticsResponse>("/api/internal/charts/generate", {
     method: "POST",
-    cache: "no-store",
-    headers: JSON_HEADERS,
-    body: JSON.stringify({ workspaceId, datasetId, prompt }),
+    body: { workspaceId, datasetId, prompt },
+    // An AI call takes its time; the user's Stop is the bound, not a fixed timeout.
+    timeoutMs: null,
     signal,
   });
-  return readData<AnalyticsResponse>(response);
-};

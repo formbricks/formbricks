@@ -4,9 +4,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import { updateWorkspaceBrandingAction } from "@/modules/ee/whitelabel/remove-branding/actions";
-import { TWorkspaceUpdateBrandingInput } from "@/modules/ee/whitelabel/remove-branding/types/workspace";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { updateWorkspaceBranding } from "@/modules/ee/whitelabel/remove-branding/lib/api-client";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
 
@@ -28,21 +27,22 @@ export const EditBranding = ({ type, isEnabled, workspaceId, isReadOnly }: EditB
     const newBrandingState = !isBrandingEnabled;
     setIsBrandingEnabled(newBrandingState);
 
-    let inputWorkspace: TWorkspaceUpdateBrandingInput = {
-      [type === "linkSurvey" ? "linkSurveyBranding" : "inAppSurveyBranding"]: newBrandingState,
-    };
-    const updateBrandingResponse = await updateWorkspaceBrandingAction({ workspaceId, data: inputWorkspace });
-
-    if (updateBrandingResponse?.data) {
+    try {
+      await updateWorkspaceBranding({
+        workspaceId,
+        body:
+          type === "linkSurvey"
+            ? { linkSurveyBranding: newBrandingState }
+            : { inAppSurveyBranding: newBrandingState },
+      });
       toast.success(
         newBrandingState
           ? t("workspace.look.formbricks_branding_shown")
           : t("workspace.look.formbricks_branding_hidden")
       );
       router.refresh();
-    } else {
-      const errorMessage = getFormattedErrorMessage(updateBrandingResponse);
-      toast.error(errorMessage);
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
     setUpdatingBranding(false);
   };

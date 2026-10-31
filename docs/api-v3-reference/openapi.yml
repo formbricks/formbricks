@@ -7735,10 +7735,10 @@ components:
     sessionAuth:
       type: apiKey
       in: cookie
-      name: next-auth.session-token
+      name: formbricks.session_token
       description: |
-        NextAuth session JWT cookie. **Development:** often `next-auth.session-token`.
-        **Production (HTTPS):** often `__Secure-next-auth.session-token`. Send the cookie your browser receives after sign-in.
+        The Formbricks app's own sign-in session (`formbricks.session_token`, or `__Secure-formbricks.session_token` over HTTPS). It is how the Formbricks app calls this API, and it is not supported for scripts or integrations: use an API key.
+        Session-authenticated writes (`POST`, `PUT`, `PATCH`, `DELETE`) are accepted only from the Formbricks app itself (a same-origin browser request) and get a `403` otherwise.
     apiKeyAuth:
       type: apiKey
       in: header

@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
-import { getActiveInactiveSurveysAction } from "@/modules/workspaces/settings/(setup)/app-connection/actions";
+import { getActionClassSurveys } from "@/modules/workspaces/settings/(setup)/app-connection/lib/api-client";
 
 interface ActionSharedSurveysWarningProps {
   actionClassId: string;
@@ -21,22 +21,17 @@ export const ActionSharedSurveysWarning = ({
 
   useEffect(() => {
     const fetchOtherSurveys = async () => {
-      const response = await getActiveInactiveSurveysAction({
-        actionClassId,
-        excludeSurveyId: currentSurveyId,
-      });
-
-      if (response?.data) {
-        setOtherSurveyNames([...response.data.activeSurveys, ...response.data.inactiveSurveys]);
-        return;
+      try {
+        const surveys = await getActionClassSurveys(actionClassId, currentSurveyId);
+        setOtherSurveyNames([...surveys.activeSurveys, ...surveys.inactiveSurveys]);
+      } catch (error) {
+        toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
+        setOtherSurveyNames([]);
       }
-
-      toast.error(getFormattedErrorMessage(response));
-      setOtherSurveyNames([]);
     };
 
     void fetchOtherSurveys();
-  }, [actionClassId, currentSurveyId]);
+  }, [actionClassId, currentSurveyId, t]);
 
   if (!otherSurveyNames?.length) {
     return null;

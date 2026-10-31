@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { TooManyRequestsError } from "@formbricks/types/errors";
+import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { POST } from "./route";
 
@@ -32,7 +33,7 @@ const post = (payload: unknown = body) =>
     new NextRequest("http://localhost/api/internal/charts/generate", {
       method: "POST",
       body: JSON.stringify(payload),
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...SAME_ORIGIN_HEADERS },
     }),
     {} as never
   );

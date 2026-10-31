@@ -98,7 +98,7 @@ export const getMembershipRoleByEmail = async (
 
 /**
  * Mirrors the role clamp enforced on the settings/session path
- * (modules/ee/role-management/actions.ts): an owner may assign any role, a manager may only assign
+ * (app/api/internal/members/[userId]/lib/operations.ts): an owner may assign any role, a manager may only assign
  * the member role and may not change the role of an existing owner (no demoting owners). Anyone
  * else — including an unresolved creator — may not assign a role at all. This prevents privilege
  * escalation (e.g. a manager promoting a user to owner) through the management API, matching the
