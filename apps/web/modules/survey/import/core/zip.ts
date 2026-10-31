@@ -55,6 +55,8 @@ const ZIP64_U32 = 0xffffffff;
 const MAX_COMMENT_LENGTH = 0xffff;
 
 const FLAG_ENCRYPTED = 0x1;
+/** The entry's sizes follow its data in a descriptor; its local header carries zeros for them. */
+const FLAG_DATA_DESCRIPTOR = 0x8;
 const METHOD_STORED = 0;
 const METHOD_DEFLATED = 8;
 
@@ -150,6 +152,8 @@ const findEndRecord = (reader: ZipReader): number => {
 const locateDirectory = (reader: ZipReader): TDirectoryLocation => {
   const endOffset = findEndRecord(reader);
   let entryCount = reader.u16(endOffset + 10);
+  // Readers differ in which count they trust (SheetJS reads the one "on this disk"), so the two must agree.
+  let countsAgree = reader.u16(endOffset + 8) === entryCount;
   let size = reader.u32(endOffset + 12);
   let offset = reader.u32(endOffset + 16);
   let end = endOffset;
@@ -162,6 +166,7 @@ const locateDirectory = (reader: ZipReader): TDirectoryLocation => {
       throw unreadable("The archive's directory is damaged");
     }
     entryCount = reader.u64(zip64End + 32);
+    countsAgree = countsAgree && reader.u64(zip64End + 24) === entryCount;
     size = reader.u64(zip64End + 40);
     offset = reader.u64(zip64End + 48);
     end = zip64End;
@@ -171,6 +176,7 @@ const locateDirectory = (reader: ZipReader): TDirectoryLocation => {
   // costs nothing to refuse.
   if (entryCount > SURVEY_IMPORT_ZIP_MAX_ENTRIES) throw refuseTooLarge("zip_entries");
   if (disksSplit) throw unreadable("The archive is split across several files");
+  if (!countsAgree) throw unreadable("The archive's directory is damaged");
   if (offset + size > end) throw unreadable("The archive's directory is damaged");
 
   return { entryCount, offset, size, end };
@@ -212,6 +218,27 @@ const readZip64Extra = (
   throw unreadable("The archive's directory is damaged");
 };
 
+/**
+ * Whether an entry's local header says what its directory entry says: the same name, and the same sizes
+ * unless they follow the data in a descriptor. Readers that name or size an entry from its local header
+ * (SheetJS does both) would otherwise read another archive than the one these limits were checked on.
+ */
+const localHeaderAgrees = (reader: ZipReader, entry: TZipEntry, encodedName: Uint8Array): boolean => {
+  const header = entry.localHeaderOffset;
+  if (!reader.has(header, LOCAL_LENGTH) || reader.u32(header) !== LOCAL_SIGNATURE) return false;
+  const nameLength = reader.u16(header + 26);
+  if (nameLength !== encodedName.length || !reader.has(header + LOCAL_LENGTH, nameLength)) return false;
+  const localName = reader.bytes.subarray(header + LOCAL_LENGTH, header + LOCAL_LENGTH + nameLength);
+  if (!localName.every((byte, index) => byte === encodedName[index])) return false;
+  if (reader.u16(header + 6) & FLAG_DATA_DESCRIPTOR) return true;
+
+  const sizeAgrees = (local: number, declared: number) => local === ZIP64_U32 || local === declared;
+  return (
+    sizeAgrees(reader.u32(header + 18), entry.compressedSize) &&
+    sizeAgrees(reader.u32(header + 22), entry.uncompressedSize)
+  );
+};
+
 const nameDecoder = new TextDecoder();
 
 /** Walk the central directory, holding each entry to the limits on what it declares. */
@@ -251,6 +278,9 @@ const readDirectory = (reader: ZipReader, directory: TDirectoryLocation): Map<st
     };
 
     if (entries.has(name)) throw unreadable("The archive lists the same entry twice");
+    if (!localHeaderAgrees(reader, entry, reader.bytes.subarray(nameStart, extraStart))) {
+      throw unreadable("An entry of the archive is damaged");
+    }
     if (entry.uncompressedSize > entry.compressedSize * SURVEY_IMPORT_ZIP_MAX_COMPRESSION_RATIO) {
       throw refuseTooLarge("zip_compression_ratio");
     }

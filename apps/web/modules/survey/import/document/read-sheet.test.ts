@@ -1,7 +1,7 @@
 import { strFromU8, strToU8, unzipSync, zipSync } from "fflate";
 import { describe, expect, test } from "vitest";
 import * as XLSX from "xlsx";
-import { setDeclaredSizes } from "../core/__fixtures__/zip-builders";
+import { editLocalHeader, setDeclaredSizes, setFlags } from "../core/__fixtures__/zip-builders";
 import { SurveyImportFileTooLargeError, SurveyImportInputError } from "../core/errors";
 import { openZipArchive } from "../core/zip";
 import {
@@ -13,7 +13,7 @@ import {
 import { loadDocumentFixture } from "./__fixtures__/load-fixture";
 import { readSheetDocument } from "./read-sheet";
 
-const read = (bytes: Uint8Array) => readSheetDocument(bytes, openZipArchive(bytes));
+const read = (bytes: Uint8Array) => readSheetDocument(openZipArchive(bytes));
 
 /** A workbook written by SheetJS: one sheet per entry, each a grid of text rows. */
 const workbook = (
@@ -196,6 +196,18 @@ describe("readSheetDocument", () => {
     const lying = setDeclaredSizes(bombed, "xl/media/image1.bin", { uncompressedSize: 1024 });
 
     expect(() => read(lying)).toThrow(SurveyImportFileTooLargeError);
+  });
+
+  test("gives SheetJS the archive the zip guard read, never the upload's own bytes", () => {
+    // Every local header defers its sizes to a descriptor (zeros), which SheetJS, sizing each entry from
+    // its local header, cannot read; the guard reads each entry from its directory entry.
+    let bytes = workbook({ Questions: [["How was your visit?"]] });
+    for (const name of openZipArchive(bytes).names) {
+      bytes = setFlags(editLocalHeader(bytes, name, { compressedSize: 0, uncompressedSize: 0 }), name, 0x8);
+    }
+    expect(() => XLSX.read(bytes, { type: "array" })).toThrow();
+
+    expect(read(bytes).lines).toEqual([{ key: "R1", cells: [{ key: "A1", text: "How was your visit?" }] }]);
   });
 
   describe("holds every XML part to the XML limits before SheetJS reads any", () => {

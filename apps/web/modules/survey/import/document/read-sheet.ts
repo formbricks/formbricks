@@ -1,3 +1,4 @@
+import { type Zippable, zipSync } from "fflate";
 import * as XLSX from "xlsx";
 import {
   SurveyImportFileTooLargeError,
@@ -20,25 +21,31 @@ import { checkDocumentXml } from "./xml";
  * no styles, no macros — and held to the sheet limits. The other sheets are never parsed; the report
  * names them.
  *
- * SheetJS inflates the archive with its own inflater, which counts nothing. So every entry is first read
- * through the upload's zip guard (`core/zip.ts`), which counts what each one actually inflates to against
- * the zip limits and checks it is the size the directory declares: once that passed, what SheetJS
- * inflates is known to be within them. Each XML part is held to the XML limits there too — its depth,
- * its element count, no DTD — before SheetJS parses any.
+ * SheetJS inflates an archive with its own inflater, which counts nothing, and reads an archive its own
+ * way: the entries "on this disk", each named and sized from its local header. So it never gets the
+ * upload. Every entry is read through the upload's zip guard (`core/zip.ts`), which counts what each one
+ * inflates to against the zip limits, and each XML part is held to the XML limits — its depth, its
+ * element count, no DTD. SheetJS then parses an archive rebuilt from exactly those entries, stored
+ * uncompressed: nothing it reads is anything the guard has not read and checked.
  */
 
 /** A sheet hidden so the user cannot unhide it from Excel: a file's own bookkeeping, not a sheet to name. */
 const VERY_HIDDEN = 2;
 
 /**
- * Read every entry once through the zip guard, so nothing inflates past the zip limits afterwards, and
- * hold every XML part to the XML limits (`xml.ts`): SheetJS parses them with none of its own.
+ * The archive SheetJS parses: every entry read once through the zip guard, every XML part held to the XML
+ * limits (`xml.ts`), since SheetJS parses them with none of its own, and all of them stored again as they
+ * came out. Stored, so SheetJS copies rather than inflates; no larger than what the zip limits allow.
  */
-const checkArchive = (archive: TZipArchive): void => {
+const rebuildCheckedArchive = (archive: TZipArchive): Uint8Array => {
+  const entries: Zippable = {};
   for (const name of archive.names) {
     const bytes = archive.read(name);
-    if (bytes !== null && XML_PART.test(name)) checkDocumentXml(bytes, name);
+    if (bytes === null) continue;
+    if (XML_PART.test(name)) checkDocumentXml(bytes, name);
+    entries[name] = bytes;
   }
+  return zipSync(entries, { level: 0 });
 };
 
 const readWorkbook = (bytes: Uint8Array): XLSX.WorkBook => {
@@ -122,14 +129,13 @@ const titleOf = (book: XLSX.WorkBook): string | null => {
 };
 
 /**
- * Read a `.xlsx` (its bytes, and the archive the sniffer opened over them) into the document model.
+ * Read a `.xlsx` (the archive the sniffer opened) into the document model.
  * Throws `SurveyImportFileTooLargeError` (413) past the zip limits, and `SurveyImportInputError` (422)
  * past the XML or sheet limits (`document_limit_exceeded`) or for a workbook that cannot be read,
  * declares a DTD, or whose first sheet has no text (`file_unreadable`).
  */
-export const readSheetDocument = (bytes: Uint8Array, archive: TZipArchive): TDocumentModel => {
-  checkArchive(archive);
-  const book = readWorkbook(bytes);
+export const readSheetDocument = (archive: TZipArchive): TDocumentModel => {
+  const book = readWorkbook(rebuildCheckedArchive(archive));
   const firstName = book.SheetNames[0];
   const sheet = firstName === undefined ? undefined : book.Sheets[firstName];
   if (!sheet) throw surveyImportFileUnreadable("The workbook has no sheet");

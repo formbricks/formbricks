@@ -8,10 +8,12 @@ import {
 } from "../limits";
 import type { TSurveyImportFileLimit } from "../types";
 import {
+  editLocalHeader,
   findCentralEntry,
   hexText,
   setDeclaredEntryCount,
   setDeclaredSizes,
+  setDiskEntryCount,
   setFlags,
   zipOf,
 } from "./__fixtures__/zip-builders";
@@ -175,6 +177,48 @@ describe("openZipArchive, before anything is inflated", () => {
     renamed[second.nameOffset + "word/documen".length] = "t".charCodeAt(0);
 
     expectUnreadable(() => openZipArchive(renamed));
+  });
+
+  // Readers that trust different fields read different archives (SheetJS counts the entries "on this
+  // disk" and names and sizes each entry from its local header), so an archive whose copies disagree is
+  // refused rather than read one way here and another way there.
+  test("refuses an end record whose two entry counts disagree", () => {
+    const archive = zipOf({ "xl/workbook.xml": "<a/>", "xl/hidden.xml": "<b/>" });
+
+    expectUnreadable(() => openZipArchive(setDiskEntryCount(setDeclaredEntryCount(archive, 1), 2)));
+    expectUnreadable(() => openZipArchive(setDiskEntryCount(archive, 1)));
+  });
+
+  test("refuses an entry whose local header names another entry", () => {
+    const archive = zipOf({ "xl/media/x.bin": "data", "xl/workbook.xml": "<a/>" });
+
+    expectUnreadable(() =>
+      openZipArchive(editLocalHeader(archive, "xl/media/x.bin", { localName: "xl/media/y.bin" }))
+    );
+  });
+
+  test("refuses an entry whose local header declares other sizes than its directory entry", () => {
+    const archive = zipOf({ "xl/workbook.xml": "<workbook/>" });
+
+    expectUnreadable(() =>
+      openZipArchive(editLocalHeader(archive, "xl/workbook.xml", { uncompressedSize: 1 }))
+    );
+    expectUnreadable(() =>
+      openZipArchive(editLocalHeader(archive, "xl/workbook.xml", { compressedSize: 1 }))
+    );
+  });
+
+  test("takes an entry whose sizes follow its data in a descriptor, as streaming writers emit them", () => {
+    const archive = zipOf({ "xl/workbook.xml": "<workbook/>" });
+    const streamed = setFlags(
+      editLocalHeader(archive, "xl/workbook.xml", { compressedSize: 0, uncompressedSize: 0 }),
+      "xl/workbook.xml",
+      0x8
+    );
+
+    expect(new TextDecoder().decode(openZipArchive(streamed).read("xl/workbook.xml") ?? undefined)).toBe(
+      "<workbook/>"
+    );
   });
 });
 

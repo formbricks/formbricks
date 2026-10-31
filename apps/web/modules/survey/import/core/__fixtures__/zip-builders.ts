@@ -69,24 +69,37 @@ export const findCentralEntry = (archive: Uint8Array, name: string): TCentralEnt
   throw new Error(`No central directory entry named ${name}`);
 };
 
-/** A copy whose central directory declares other sizes for `name`. */
+/**
+ * A copy that declares other sizes for `name`, in its central directory entry and its local header
+ * alike: a lie told consistently, which only counting what the entry inflates to can catch.
+ */
 export const setDeclaredSizes = (
   archive: Uint8Array,
   name: string,
   sizes: { compressedSize?: number; uncompressedSize?: number }
 ): Uint8Array<ArrayBuffer> => {
   const copy = new Uint8Array(archive);
+  const data = view(copy);
   const { offset } = findCentralEntry(copy, name);
-  if (sizes.compressedSize !== undefined) view(copy).setUint32(offset + 20, sizes.compressedSize, true);
-  if (sizes.uncompressedSize !== undefined) view(copy).setUint32(offset + 24, sizes.uncompressedSize, true);
+  const local = data.getUint32(offset + 42, true);
+  if (sizes.compressedSize !== undefined) {
+    data.setUint32(offset + 20, sizes.compressedSize, true);
+    data.setUint32(local + 18, sizes.compressedSize, true);
+  }
+  if (sizes.uncompressedSize !== undefined) {
+    data.setUint32(offset + 24, sizes.uncompressedSize, true);
+    data.setUint32(local + 22, sizes.uncompressedSize, true);
+  }
   return copy;
 };
 
-/** A copy whose central directory sets these general-purpose flags on `name` (bit 0: encrypted). */
+/** A copy that sets these general-purpose flags on `name`, in both of its headers (bit 0: encrypted). */
 export const setFlags = (archive: Uint8Array, name: string, flags: number): Uint8Array<ArrayBuffer> => {
   const copy = new Uint8Array(archive);
+  const data = view(copy);
   const { offset } = findCentralEntry(copy, name);
-  view(copy).setUint16(offset + 8, flags, true);
+  data.setUint16(offset + 8, flags, true);
+  data.setUint16(data.getUint32(offset + 42, true) + 6, flags, true);
   return copy;
 };
 
@@ -101,4 +114,40 @@ export const setDeclaredEntryCount = (archive: Uint8Array, count: number): Uint8
     return copy;
   }
   throw new Error("No end of central directory record");
+};
+
+/**
+ * A copy whose end record says `count` entries are on this disk, leaving the total as it is: what a
+ * reader counting the other field sees as more entries, or fewer, than the directory holds.
+ */
+export const setDiskEntryCount = (archive: Uint8Array, count: number): Uint8Array<ArrayBuffer> => {
+  const copy = new Uint8Array(archive);
+  const data = view(copy);
+  for (let offset = copy.length - 22; offset >= 0; offset -= 1) {
+    if (data.getUint32(offset, true) !== END_SIGNATURE) continue;
+    data.setUint16(offset + 8, count, true);
+    return copy;
+  }
+  throw new Error("No end of central directory record");
+};
+
+/** A copy whose local header for `name` names it `localName` instead (same length), or declares other sizes. */
+export const editLocalHeader = (
+  archive: Uint8Array,
+  name: string,
+  edit: { localName?: string; compressedSize?: number; uncompressedSize?: number }
+): Uint8Array<ArrayBuffer> => {
+  const copy = new Uint8Array(archive);
+  const data = view(copy);
+  const { offset } = findCentralEntry(copy, name);
+  const local = data.getUint32(offset + 42, true);
+  if (edit.localName !== undefined) {
+    const encoded = new TextEncoder().encode(edit.localName);
+    if (encoded.length !== data.getUint16(local + 26, true))
+      throw new Error("The local name must keep its length");
+    copy.set(encoded, local + 30);
+  }
+  if (edit.compressedSize !== undefined) data.setUint32(local + 18, edit.compressedSize, true);
+  if (edit.uncompressedSize !== undefined) data.setUint32(local + 22, edit.uncompressedSize, true);
+  return copy;
 };

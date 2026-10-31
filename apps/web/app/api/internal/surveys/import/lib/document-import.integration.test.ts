@@ -148,7 +148,7 @@ const fileTexts = (name: string, bytes: Uint8Array): string[] => {
   const readModel = () => {
     if (name.endsWith(".csv")) return readCsvDocument(new TextDecoder().decode(bytes));
     if (name.endsWith(".docx")) return readWordDocument(openZipArchive(bytes));
-    return readSheetDocument(bytes, openZipArchive(bytes));
+    return readSheetDocument(openZipArchive(bytes));
   };
   const model = readModel();
   return [...model.cells.values()].map((text) => text.replaceAll(/\s+/gu, " ").trim());

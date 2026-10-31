@@ -17,7 +17,7 @@ export type TDocumentImportInput = TDocumentUpload & { fileName: string };
 const readDocument = (input: TDocumentImportInput): TDocumentModel => {
   switch (input.type) {
     case "xlsx":
-      return readSheetDocument(input.bytes, input.archive);
+      return readSheetDocument(input.archive);
     case "csv":
       return readCsvDocument(input.text, input.encoding);
     case "docx":
