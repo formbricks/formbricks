@@ -178,11 +178,10 @@ async function buildV3AppSurveyCreateFields(
 }
 
 /**
- * Finalize a freshly created app survey by re-reading it. `createSurvey` returns the survey BEFORE
- * its private segment is connected (the segment is linked in a separate, un-selected update) and
- * without the Decimal→number transform for displayPercentage, so the re-read makes the response carry
- * the connected segment — including any targeting filters, which `createSurvey` writes atomically at
- * creation time — and the numeric display fields.
+ * Finalize a freshly created app survey by re-reading it. `createSurvey` already re-reads inside its
+ * transaction, so the survey it returns carries its private segment and targeting filters; what it
+ * lacks is the Decimal→number transform for `displayPercentage`, which this read applies so the
+ * response carries the numeric display fields.
  */
 async function finalizeV3AppSurveyCreate(
   survey: TSurvey,
