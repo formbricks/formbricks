@@ -11,6 +11,20 @@ import { mixColor } from "@/lib/color";
 export const SURVEY_CLOSE_BUTTON_ROW_CLASS_NAME =
   "pt-[clamp(4px,calc(var(--fb-border-radius)*0.3),15%)] pe-[clamp(4px,calc(var(--fb-border-radius)*0.3),15%)]";
 
+// When the close button floats beside the question, the headlines of the card stop short of it: the
+// button is 32px wide and inset as above, less the content's own 16px padding, plus a 4px gap. A
+// centered headline (welcome and ending cards) takes the same padding on both sides so it stays
+// centered under its icon.
+export const SURVEY_CLOSE_BUTTON_HEADLINE_CLEARANCE_CLASS_NAME =
+  "[&_[data-fb-part=headline]]:pe-[calc(clamp(4px,calc(var(--fb-border-radius)*0.3),15%)+20px)] [&_[data-fb-headline-centered]>[data-fb-part=headline]]:ps-[calc(clamp(4px,calc(var(--fb-border-radius)*0.3),15%)+20px)]";
+
+// Once the content scrolls, the fade at the top of the scroll area (ScrollableContainer) stays solid down
+// to the button's bottom edge, its inset plus 32px, so content is gone before it slides under the button
+// and the band takes a near-miss tap instead of an option nobody can see. A percentage would resolve
+// against the band's height here, so the inset's 15% cap is approximated with a fixed 6rem.
+export const SURVEY_CLOSE_BUTTON_SCROLL_FADE_CLASS_NAME =
+  "[--fb-scroll-fade-solid:calc(min(max(4px,calc(var(--fb-border-radius)*0.3)),6rem)+32px)]";
+
 interface SurveyCloseButtonProps {
   onClose?: () => void;
   hoverColor?: string;
@@ -35,7 +49,7 @@ export function SurveyCloseButton({ onClose, hoverColor, borderRadius }: Readonl
         }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        className="text-heading relative flex h-11 w-11 items-center justify-center"
+        className="text-heading relative flex h-8 w-8 items-center justify-center"
         aria-label={t("common.close_survey")}>
         <CloseIcon />
       </button>

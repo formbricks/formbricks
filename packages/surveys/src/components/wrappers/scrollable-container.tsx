@@ -81,7 +81,9 @@ export const ScrollableContainer = forwardRef<ScrollableContainerHandle, Scrolla
     return (
       <div className="relative">
         {!disableInternalScroll && !isAtTop && (
-          <div className="from-survey-bg absolute top-0 right-2 left-0 z-10 h-4 bg-linear-to-b to-transparent" />
+          // Solid for --fb-scroll-fade-solid (set while the close button floats over the content), then
+          // the usual 16px fade; unset, it is the plain fade.
+          <div className="absolute top-0 right-2 left-0 z-10 h-[calc(var(--fb-scroll-fade-solid,0px)+1rem)] bg-[linear-gradient(to_bottom,var(--fb-survey-background-color)_var(--fb-scroll-fade-solid,0px),transparent)]" />
         )}
         <div
           ref={containerRef}
