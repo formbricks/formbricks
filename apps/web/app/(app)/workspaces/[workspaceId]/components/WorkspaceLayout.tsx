@@ -133,7 +133,11 @@ export const WorkspaceLayout = async ({ layoutData, cookieStore, children }: Wor
         )}
 
         {trialEndingDaysRemaining && (
-          <TrialEndingWarningModal daysRemaining={trialEndingDaysRemaining} billingHref={billingHref} />
+          <TrialEndingWarningModal
+            daysRemaining={trialEndingDaysRemaining}
+            billingHref={billingHref}
+            endsOnHobby={organization.billing?.stripe?.trialEndsOnHobby === true}
+          />
         )}
 
         <div className="flex h-full">

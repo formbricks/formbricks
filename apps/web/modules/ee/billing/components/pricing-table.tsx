@@ -1540,7 +1540,9 @@ export const PricingTable = ({
               </div>
               {isTrialing && trialEndLabel && (
                 <p className="mt-1 text-sm text-slate-500">
-                  {t("workspace.settings.billing.trial_cancels_automatically", { date: trialEndLabel })}
+                  {organization.billing.stripe?.trialEndsOnHobby
+                    ? t("workspace.settings.billing.trial_cancels_automatically", { date: trialEndLabel })
+                    : t("workspace.settings.billing.trial_ends_on", { date: trialEndLabel })}
                 </p>
               )}
             </div>
