@@ -3,7 +3,7 @@ import { capInvalidParams } from "@/app/api/v3/lib/invalid-params";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { isPlainObject } from "@/app/api/v3/surveys/guards";
 import { formatV3ZodInvalidParams } from "@/app/api/v3/surveys/schemas";
-import { collectV3TargetingAttributeKeys } from "@/app/api/v3/surveys/targeting";
+import { collectV3TargetingAttributeKeys } from "@/app/api/v3/surveys/targeting-references";
 import { SurveyImportFileTooLargeError, SurveyImportInputError } from "@/modules/survey/import/core/errors";
 import type { TSurveyImportPipelineIssue } from "@/modules/survey/import/core/report";
 import {
@@ -149,30 +149,33 @@ const deleteAtPath = (root: unknown, path: readonly PropertyKey[]): boolean => {
  * pass drops what the last parse reported, so an unknown key inside an object that was itself
  * misplaced is reached once the outer one is gone; the passes are capped, and what is still wrong
  * after them is malformed input.
+ *
+ * The keys are deleted from `value` itself, not from a copy: it is a parsed upload or request body that
+ * nothing reads afterwards, and copying a 15 MiB file of a million small objects doubled what reading it
+ * held (ENG-6844).
  */
 const parseDroppingUnknownKeys = <TSchema extends z.ZodType>(
   schema: TSchema,
   value: Record<string, unknown>
 ): { result: z.ZodSafeParseResult<z.output<TSchema>>; value: Record<string, unknown>; dropped: string[] } => {
-  const copy = structuredClone(value);
   const dropped: string[] = [];
 
-  let result = schema.safeParse(copy);
+  let result = schema.safeParse(value);
   for (let pass = 0; !result.success && pass < FORMBRICKS_FILE_MAX_UNKNOWN_KEY_PASSES; pass++) {
     let droppedThisPass = false;
     for (const issue of result.error.issues) {
       for (const path of unknownKeyPaths(issue)) {
-        if (deleteAtPath(copy, path)) {
+        if (deleteAtPath(value, path)) {
           dropped.push(path.map(String).join("."));
           droppedThisPass = true;
         }
       }
     }
     if (!droppedThisPass) break;
-    result = schema.safeParse(copy);
+    result = schema.safeParse(value);
   }
 
-  return { result, value: copy, dropped };
+  return { result, value, dropped };
 };
 
 /** One warning per dropped key, the first few by name and the rest counted, so a file cannot flood the report. */
@@ -333,7 +336,8 @@ const readContent = (
 /**
  * Read an uploaded Formbricks file: probe its format, refuse a newer one, upgrade an older one, and
  * check it against the current format with unknown keys dropped. Problems are named from the file's
- * root (`file.survey.blocks.0.elements.1.headline`).
+ * root (`file.survey.blocks.0.elements.1.headline`). Unknown keys are deleted from `file` as they are
+ * dropped, so pass a parsed file nothing else reads.
  *
  * @throws SurveyImportInputError — a 422 naming each field, nothing created.
  */
@@ -346,7 +350,7 @@ export const readFormbricksFile = (file: Record<string, unknown>): TFormbricksFi
 /**
  * Read a reviewed survey and its references again, as the dialog sends them to be created: the commit
  * never trusts what the preview resolved, so it runs the same checks. Problems are named from the
- * request body's root (`survey.blocks.0…`).
+ * request body's root (`survey.blocks.0…`). Unknown keys are deleted from `body` as they are dropped.
  *
  * @throws SurveyImportInputError — a 422 naming each field, nothing created.
  */

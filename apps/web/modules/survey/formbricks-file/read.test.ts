@@ -307,6 +307,15 @@ describe("readFormbricksFile", () => {
     ]);
   });
 
+  test("drops unknown keys from the file it is given rather than from a copy of it", () => {
+    // A copy of a 15 MiB file of a million small objects doubled what reading it held.
+    const given = file({ junk: { a: {}, b: {} } });
+
+    readFormbricksFile(given);
+
+    expect(given).not.toHaveProperty("junk");
+  });
+
   test("names the first fifty dropped keys and counts the rest in one line", () => {
     const extraKeys = Object.fromEntries(
       Array.from({ length: FORMBRICKS_FILE_MAX_REPORTED_DROPPED_KEYS + 7 }, (_, index) => [
