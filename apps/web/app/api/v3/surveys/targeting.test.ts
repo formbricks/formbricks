@@ -12,10 +12,10 @@ import type { TV3SurveyTargeting } from "./schemas";
 import {
   areV3SurveyTargetingFiltersEqual,
   assertV3SurveyTargetingFilterReferences,
-  collectV3TargetingAttributeKeys,
   resolveV3ContactsEntitlement,
   setV3SurveySegmentFilters,
 } from "./targeting";
+import { collectV3TargetingAttributeKeys } from "./targeting-references";
 
 vi.mock("server-only", () => ({}));
 

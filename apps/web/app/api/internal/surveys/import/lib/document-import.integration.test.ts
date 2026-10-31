@@ -9,6 +9,7 @@ import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { type TDashboardsFixture, seedDashboardsFixture, sessionOf } from "@/integration/dashboards-fixture";
 import { createIcuTranslate } from "@/modules/survey/excel-export/__fixtures__/translate";
 import { writeExcelExport } from "@/modules/survey/excel-export/write";
+import { openSurveyImportUploadInProcess } from "@/modules/survey/import/core/__fixtures__/in-process-upload";
 import type { TImportPlanRequest } from "@/modules/survey/import/core/ai-plan";
 import { openZipArchive } from "@/modules/survey/import/core/zip";
 import { docx, p, r, tbl } from "@/modules/survey/import/document/__fixtures__/docx-builders";
@@ -40,6 +41,12 @@ const ai = vi.hoisted(() => ({
   calls: 0,
 }));
 
+// Vitest cannot start the app's worker, so the upload is read in this thread, across the same
+// boundary (`core/upload-thread.test.ts` runs the real thread).
+vi.mock("@/modules/survey/import/core/upload-thread", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/survey/import/core/upload-thread")>()),
+  openSurveyImportUpload: (bytes: Uint8Array) => openSurveyImportUploadInProcess(bytes),
+}));
 vi.mock("@/lib/ai/service", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/ai/service")>()),
   assertOrganizationAIConfigured: async () => ({}),

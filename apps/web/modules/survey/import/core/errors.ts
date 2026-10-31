@@ -122,6 +122,54 @@ export const surveyImportFileUnreadable = (reason: string): SurveyImportInputErr
     "The file could not be read."
   );
 
+/**
+ * A refusal on its way out of the upload's worker thread (`upload-thread.ts`). A structured clone keeps
+ * an error's message but not its class, so the class travels as `kind` and is built again on this side.
+ */
+export type TSurveyImportRefusal =
+  | { kind: "too_large" | "unsupported"; message: string; invalidParams: TSurveyImportInvalidParam[] }
+  | {
+      kind: "input";
+      message: string;
+      invalidParams: (TSurveyImportInvalidParam | InvalidParam)[];
+      problemCode?: TSurveyImportProblemCode;
+    };
+
+/** `error` as a refusal that can be posted to another thread, or `null` for an error that is none. */
+export const toSurveyImportRefusal = (error: unknown): TSurveyImportRefusal | null => {
+  if (error instanceof SurveyImportFileTooLargeError) {
+    return { kind: "too_large", message: error.message, invalidParams: error.invalidParams };
+  }
+  if (error instanceof SurveyImportUnsupportedFileError) {
+    return { kind: "unsupported", message: error.message, invalidParams: error.invalidParams };
+  }
+  if (error instanceof SurveyImportInputError) {
+    return {
+      kind: "input",
+      message: error.message,
+      invalidParams: error.invalidParams,
+      ...(error.problemCode ? { problemCode: error.problemCode } : {}),
+    };
+  }
+  return null;
+};
+
+/** The error a posted refusal was, built again so `toRefusalResponse` answers it as it would have. */
+export const fromSurveyImportRefusal = (refusal: TSurveyImportRefusal): Error => {
+  if (refusal.kind === "input") {
+    return new SurveyImportInputError(refusal.invalidParams, refusal.message, refusal.problemCode);
+  }
+  // Each of the other two carries the one param its constructor makes from these.
+  const [param] = refusal.invalidParams;
+  if (refusal.kind === "too_large" && param?.code === "file_limit_exceeded") {
+    return new SurveyImportFileTooLargeError(param.identifier, refusal.message, param.name);
+  }
+  if (refusal.kind === "unsupported" && param?.code === "file_type_unsupported") {
+    return new SurveyImportUnsupportedFileError(refusal.message, param.identifier);
+  }
+  return new Error(`The survey import's reader posted a malformed ${refusal.kind} refusal`);
+};
+
 /** Problems the create's checks found, named from where the survey sits: `file.survey…` or `survey…`. */
 export const nameFromSurvey = (params: InvalidParam[], fieldPrefix: string | null): InvalidParam[] => {
   const root = fieldPrefix ? `${fieldPrefix}.survey` : "survey";

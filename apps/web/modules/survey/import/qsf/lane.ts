@@ -1,11 +1,14 @@
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import type { TSurveyImportLane } from "../core/lane";
-import { type TPreparedQsfImport, prepareQsfImport, runQsfImport } from "./pipeline";
+import { runQsfImport } from "./pipeline";
+import type { TPreparedQsfImport } from "./prepare";
 
-/** What the stream route hands the Qualtrics lane: the parsed export and its file name. */
+/**
+ * What the stream route hands the Qualtrics lane: the read of the export (`prepareQsfImport`), which
+ * runs in the upload's thread once the lane's rate limit and AI gate have let it through.
+ */
 export interface TQsfImportInput {
-  qsf: Record<string, unknown>;
-  fileName: string;
+  read: () => Promise<TPreparedQsfImport>;
 }
 
 /**
@@ -16,6 +19,6 @@ export const qsfImportLane: TSurveyImportLane<TQsfImportInput, TPreparedQsfImpor
   kind: "qsf",
   usesAI: true,
   rateLimit: rateLimitConfigs.api.v3SurveyGenerate,
-  prepare: ({ qsf, fileName }) => prepareQsfImport(qsf, fileName),
+  prepare: ({ read }) => read(),
   run: (params) => runQsfImport(params),
 };

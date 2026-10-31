@@ -13,7 +13,8 @@ import {
 } from "./__fixtures__/load-fixture";
 import { loadRecordedPlan, recordedGenerate, timedGenerate } from "./__fixtures__/recorded-plans";
 import type { TQsfPlanGenerate } from "./ai-plan";
-import { type TRunQsfImportParams, prepareQsfImport, runQsfImport } from "./pipeline";
+import { type TRunQsfImportParams, runQsfImport } from "./pipeline";
+import { prepareQsfImport } from "./prepare";
 
 const mocks = vi.hoisted(() => ({
   generateOrganizationAIObject: vi.fn(),

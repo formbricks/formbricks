@@ -12,10 +12,11 @@ import type { TSurveyImportPayload } from "./draft";
  * A lane: what the import does with one kind of file (ENG-6846). The stream route runs any lane the
  * same way, so a new file type adds a lane, not a route:
  *
- * - `prepare` reads and checks the file before the response opens — cheap, throwing
- *   `SurveyImportInputError` for a 422 — because once a 200 has started there is no way back to a
- *   problem response. A lane that needs the workspace to check the file (a Formbricks file's
- *   references, its entitlements) does that here, asynchronously; one that does not stays synchronous;
+ * - `prepare` reads and checks the file before the response opens, throwing `SurveyImportInputError`
+ *   for a 422, because once a 200 has started there is no way back to a problem response. The reading
+ *   itself runs in the upload's own thread (`upload-thread.ts`), which its input's `read` asks for; a
+ *   lane that needs the workspace to check the file (a Formbricks file's references, its
+ *   entitlements) does that here, on the server's thread, once the read is back;
  * - `run` does the rest while the stream reports progress, and returns the draft and its report.
  *
  * A lane that plans with AI (`usesAI`) is held to the organization's AI gate before `prepare`, and

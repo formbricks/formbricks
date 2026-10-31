@@ -15,28 +15,26 @@ import { type TSurveyImportPipelineIssue, buildSurveyImportReport } from "../cor
 import { sanitizeName } from "../core/sanitize-text";
 import {
   SURVEY_IMPORT_AI_CALL_TIMEOUT_MS,
-  SURVEY_IMPORT_AI_MAX_SOURCE_CHARS,
-  SURVEY_IMPORT_DOCUMENT_MAX_CHUNKS,
   SURVEY_IMPORT_MAX_NAME_CHARS,
   SURVEY_IMPORT_MAX_QUESTIONS,
 } from "../limits";
-import { countDocumentChunks, planDocumentImport } from "./ai-plan";
+import { planDocumentImport } from "./ai-plan";
 import { assembleDocumentDraft } from "./assemble";
-import { documentLimitExceeded } from "./errors";
-import type { TDocumentModel } from "./model";
 import {
   type DocumentPlanContext,
   type TDocumentPlannedEntry,
   collapseWhitespace,
   orderedEntries,
 } from "./plan-checks";
+import type { TPreparedDocumentImport } from "./prepare";
 
 /**
  * The document import pipeline (ENG-6852): a question list read into the keyed model in, a v3 create
  * document and the import report out. It is the Excel, CSV and Word lane (`documentImportLane`);
  * nothing here knows about HTTP or about the kind of file, only about the model each reader builds.
  *
- * - `prepareDocumentImport` holds the model to the AI ceiling before the stream opens: past 240k
+ * - `prepareDocumentImport` (`prepare.ts`) reads the file into the model and holds it to the AI ceiling
+ *   before the stream opens, in the upload's worker thread: past 240k
  *   characters, or more chunks than the AI budget plans, the file is refused with a 422 and the dialog
  *   points at MCP (decision 18);
  * - `runDocumentImport` plans (`ai`), refuses a plan of more than 200 questions with the same pointer,
@@ -46,29 +44,9 @@ import {
  * splits, and only what is found in the cell word for word is used, copied from the cell.
  */
 
-export interface TPreparedDocumentImport {
-  fileName: string;
-  model: TDocumentModel;
-}
-
 /** A document lane's run, plus the model call an eval script or a test swaps in. */
 export interface TRunDocumentImportParams extends TSurveyImportRunParams<TPreparedDocumentImport> {
   generate?: TImportPlanGenerate;
-}
-
-/** Hold a read document to the AI ceiling, before any AI call. */
-export function prepareDocumentImport(model: TDocumentModel, fileName: string): TPreparedDocumentImport {
-  if (model.sourceChars > SURVEY_IMPORT_AI_MAX_SOURCE_CHARS) {
-    throw documentLimitExceeded(
-      "source_size",
-      "file",
-      `The file's text must not exceed ${SURVEY_IMPORT_AI_MAX_SOURCE_CHARS} characters`
-    );
-  }
-  if (countDocumentChunks(model) > SURVEY_IMPORT_DOCUMENT_MAX_CHUNKS) {
-    throw documentLimitExceeded("source_size", "file", "The file has more lines than one import can plan");
-  }
-  return { fileName, model };
 }
 
 function organizationGenerate(params: TRunDocumentImportParams): TImportPlanGenerate {

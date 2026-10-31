@@ -10,14 +10,12 @@ import { yieldToOthers } from "../core/event-loop";
 import { checkImportDraftInSlices, elementsAtFault } from "../core/final-gate";
 import type { TSurveyImportResult, TSurveyImportRunParams } from "../core/lane";
 import { type TSurveyImportPipelineIssue, buildSurveyImportReport } from "../core/report";
-import { SURVEY_IMPORT_AI_CALL_TIMEOUT_MS, SURVEY_IMPORT_AI_MAX_SOURCE_CHARS } from "../limits";
+import { SURVEY_IMPORT_AI_CALL_TIMEOUT_MS } from "../limits";
 import { type TQsfPlanGenerate, planQsfImport } from "./ai-plan";
 import { assembleQsfDraft } from "./assemble";
-import { qsfLimitExceeded } from "./errors";
 import { fitQsfDraftToCreateLimit, fitQsfSurveyToCreateLimit } from "./fit-draft";
-import { estimateQsfMinimumPromptChars } from "./prompt";
+import type { TPreparedQsfImport } from "./prepare";
 import type { TQsfSurvey } from "./qsf-model";
-import { readQsf } from "./read-qsf";
 import { sanitizeQsfTexts } from "./sanitize-text";
 
 /**
@@ -28,8 +26,8 @@ import { sanitizeQsfTexts } from "./sanitize-text";
  * Two phases, because the route has to answer a bad file with a problem response before its stream
  * opens:
  *
- * - `prepareQsfImport` is the reader and its limits: synchronous and cheap (≤ ~50 ms on the largest
- *   file), throwing `SurveyImportInputError` for a 422;
+ * - `prepareQsfImport` (`prepare.ts`) is the reader and its limits, run in the upload's worker thread
+ *   (`../core/upload-thread.ts`), throwing `SurveyImportInputError` for a 422;
  * - `runQsfImport` does the rest while the stream reports progress: sanitize the texts (yielding to
  *   the event loop), ask the AI for a plan and check it (`ai`), assemble the draft and gate it with
  *   the create's own checks (`assembling`).
@@ -38,30 +36,10 @@ import { sanitizeQsfTexts } from "./sanitize-text";
  * plays which role, and the assembly copies every text from the file by key (ENG-3479).
  */
 
-export interface TPreparedQsfImport {
-  fileName: string;
-  surveyName: string;
-  survey: TQsfSurvey;
-}
-
 /** The Qualtrics lane's run, plus the model call the eval script swaps in. */
 export interface TRunQsfImportParams extends TSurveyImportRunParams<TPreparedQsfImport> {
   /** The model call. The organization's AI by default; the eval script passes its own. */
   generate?: TQsfPlanGenerate;
-}
-
-/** Read and check the file, before any AI call. Throws `SurveyImportInputError` for a file it cannot read. */
-export function prepareQsfImport(qsf: Record<string, unknown>, fileName: string): TPreparedQsfImport {
-  const survey = readQsf(qsf);
-  // Every part of the prompt is bounded, so only a hostile file gets here; refuse it before the stream.
-  if (estimateQsfMinimumPromptChars(survey) > SURVEY_IMPORT_AI_MAX_SOURCE_CHARS) {
-    throw qsfLimitExceeded(
-      "prompt_size",
-      "file.SurveyElements",
-      "The survey's questions and logic are too large to import"
-    );
-  }
-  return { fileName, surveyName: survey.name, survey };
 }
 
 function organizationGenerate(params: TRunQsfImportParams): TQsfPlanGenerate {

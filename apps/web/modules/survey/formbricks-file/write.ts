@@ -7,7 +7,7 @@ import {
   type TV3SurveyResourceVisibility,
   serializeV3SurveyResource,
 } from "@/app/api/v3/surveys/serializers";
-import { collectV3TargetingAttributeKeys } from "@/app/api/v3/surveys/targeting";
+import { collectV3TargetingAttributeKeys } from "@/app/api/v3/surveys/targeting-references";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import {
   FORMBRICKS_FILE_FORMAT,

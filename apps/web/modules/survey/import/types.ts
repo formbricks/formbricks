@@ -127,7 +127,8 @@ export type TSurveyImportFileType = "formbricks" | "qsf" | "docx" | "xlsx" | "cs
  *   what it is when the import recognized it: `legacy_office` for a `.doc` or `.xls`, which the reason
  *   asks to save as `.docx` or `.xlsx`, or a `TSurveyImportFileType` whose lane is not built yet;
  * - `file_limit_exceeded` — the file is past one of the upload's limits, named in `identifier`
- *   (`TSurveyImportFileLimit`): 413 for a size, 422 for the JSON budget;
+ *   (`TSurveyImportFileLimit`): 413 for a size, 422 for the JSON budget and for a file that takes longer
+ *   or more memory to read than its thread is given (`read_time`, `read_memory`);
  * - `file_unreadable` (422) — the file is the kind it looks like, but broken: an empty file, a damaged
  *   or encrypted archive, JSON that does not parse.
  *
@@ -182,7 +183,9 @@ export type TSurveyImportFileLimit =
   | "array_items"
   | "array_elements"
   | "nesting_depth"
-  | "survey_size";
+  | "survey_size"
+  | "read_time"
+  | "read_memory";
 
 /**
  * The limit a `document_limit_exceeded` param is about, in its `identifier`: the sheet's or CSV's rows,

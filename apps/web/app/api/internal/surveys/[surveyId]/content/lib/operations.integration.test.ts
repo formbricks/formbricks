@@ -6,6 +6,7 @@ import { streamSurveyImport } from "@/app/api/internal/surveys/import/lib/operat
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { type TDashboardsFixture, seedDashboardsFixture, sessionOf } from "@/integration/dashboards-fixture";
+import { openSurveyImportUploadInProcess } from "@/modules/survey/import/core/__fixtures__/in-process-upload";
 import type { TSurveyImportMatch } from "@/modules/survey/import/types";
 import { updateSurveyContent } from "./operations";
 
@@ -21,6 +22,12 @@ import { updateSurveyContent } from "./operations";
 
 const entitlements = vi.hoisted(() => ({ contacts: true, externalUrls: true }));
 
+// Vitest cannot start the app's worker, so the upload is read in this thread, across the same
+// boundary (`core/upload-thread.test.ts` runs the real thread).
+vi.mock("@/modules/survey/import/core/upload-thread", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/survey/import/core/upload-thread")>()),
+  openSurveyImportUpload: (bytes: Uint8Array) => openSurveyImportUploadInProcess(bytes),
+}));
 vi.mock("@/modules/ee/license-check/lib/utils", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/modules/ee/license-check/lib/utils")>()),
   getIsContactsEnabled: async () => entitlements.contacts,

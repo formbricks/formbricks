@@ -27,7 +27,7 @@ import {
   getFormbricksFileSurveyLanguageCodes,
   hasFormbricksFileRedirectEnding,
 } from "./fit";
-import { type TFormbricksFileRead, readFormbricksFile, readFormbricksFileContent } from "./read";
+import { type TFormbricksFileRead, readFormbricksFileContent } from "./read";
 import {
   type TFormbricksFileCreatedReferences,
   type TFormbricksFileReferencePlan,
@@ -134,18 +134,18 @@ export interface TFormbricksFileImportPreview {
  * @throws SurveyImportInputError — a 422 naming each problem, before anything is written.
  */
 export const previewFormbricksFileImport = async ({
-  file,
+  read,
   workspaceId,
   organizationId,
   userId,
 }: {
-  file: Record<string, unknown>;
+  /** The file as `readFormbricksFile` read it. */
+  read: TFormbricksFileRead;
   workspaceId: string;
   organizationId: string;
   /** The importing user, whose language names the draft. */
   userId: string | null;
 }): Promise<TFormbricksFileImportPreview> => {
-  const read = readFormbricksFile(file);
   const t = await getImporterTranslate(userId);
   const { draft, issues } = await prepareFormbricksFileDraft({
     read,

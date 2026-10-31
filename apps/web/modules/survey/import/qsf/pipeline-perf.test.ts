@@ -21,7 +21,8 @@ import type { TQsfPlanGenerate } from "./ai-plan";
 import { fitQsfSurveyToCreateLimit } from "./fit-draft";
 import { normalizeQualtricsLanguageCode } from "./language-codes";
 import { QSF_RECALL_FALLBACK } from "./piped-text";
-import { prepareQsfImport, runQsfImport } from "./pipeline";
+import { runQsfImport } from "./pipeline";
+import { prepareQsfImport } from "./prepare";
 import type { TQsfSurvey } from "./qsf-model";
 
 /**

@@ -9,6 +9,7 @@ import {
 } from "@/app/api/v3/lib/array-budget";
 import { problemForbidden } from "@/app/api/v3/lib/response";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
+import { openSurveyImportUploadInProcess } from "@/modules/survey/import/core/__fixtures__/in-process-upload";
 import { zipOf } from "@/modules/survey/import/core/__fixtures__/zip-builders";
 import { SurveyImportInputError, SurveyImportTimeoutError } from "@/modules/survey/import/core/errors";
 import type { TSurveyImportLane, TSurveyImportResult } from "@/modules/survey/import/core/lane";
@@ -30,11 +31,14 @@ const mocks = vi.hoisted(() => ({
   assertOrganizationAIConfigured: vi.fn(),
   runQsfImport: vi.fn(),
   prepareQsfImport: vi.fn(),
+  readFormbricksFile: vi.fn(),
   previewFormbricksFileImport: vi.fn(),
   runDocumentImport: vi.fn(),
   findFormbricksFileMatch: vi.fn(),
   realPrepareQsfImport:
-    undefined as unknown as typeof import("@/modules/survey/import/qsf/pipeline").prepareQsfImport,
+    undefined as unknown as typeof import("@/modules/survey/import/qsf/prepare").prepareQsfImport,
+  realReadFormbricksFile:
+    undefined as unknown as typeof import("@/modules/survey/formbricks-file/read").readFormbricksFile,
   log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 
@@ -66,12 +70,27 @@ vi.mock("@/lib/ai/service", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   assertOrganizationAIConfigured: mocks.assertOrganizationAIConfigured,
 }));
-// The real reader runs, behind a spy a test can make fail; only the AI-backed part is replaced.
-vi.mock("@/modules/survey/import/qsf/pipeline", async (importOriginal) => {
-  const original = await importOriginal<typeof import("@/modules/survey/import/qsf/pipeline")>();
+// Vitest cannot start the app's worker, so the upload is read in this thread, across the same
+// boundary (`upload-worker.test.ts` runs the real thread).
+vi.mock("@/modules/survey/import/core/upload-thread", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/survey/import/core/upload-thread")>()),
+  openSurveyImportUpload: (bytes: Uint8Array) => openSurveyImportUploadInProcess(bytes),
+}));
+// The real readers run, behind spies a test can make fail; only the AI-backed part is replaced.
+vi.mock("@/modules/survey/import/qsf/prepare", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@/modules/survey/import/qsf/prepare")>();
   mocks.realPrepareQsfImport = original.prepareQsfImport;
-  return { ...original, prepareQsfImport: mocks.prepareQsfImport, runQsfImport: mocks.runQsfImport };
+  return { ...original, prepareQsfImport: mocks.prepareQsfImport };
 });
+vi.mock("@/modules/survey/formbricks-file/read", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@/modules/survey/formbricks-file/read")>();
+  mocks.realReadFormbricksFile = original.readFormbricksFile;
+  return { ...original, readFormbricksFile: mocks.readFormbricksFile };
+});
+vi.mock("@/modules/survey/import/qsf/pipeline", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/survey/import/qsf/pipeline")>()),
+  runQsfImport: mocks.runQsfImport,
+}));
 // The document lanes' readers run; their AI-backed part, and its naming against the database, is the
 // integration suite's.
 vi.mock("@/modules/survey/import/document/pipeline", async (importOriginal) => ({
@@ -183,6 +202,7 @@ describe("streamSurveyImport", () => {
     mocks.assertOrganizationAIConfigured.mockResolvedValue({ isInstanceConfigured: true });
     mocks.applyRateLimit.mockResolvedValue(undefined);
     mocks.prepareQsfImport.mockImplementation(mocks.realPrepareQsfImport);
+    mocks.readFormbricksFile.mockImplementation(mocks.realReadFormbricksFile);
     mocks.runQsfImport.mockImplementation(async ({ onProgress }: TRunQsfImportParams) => {
       onProgress("ai");
       onProgress("assembling");
@@ -371,6 +391,9 @@ describe("streamSurveyImport", () => {
       };
       mocks.findFormbricksFileMatch.mockResolvedValue(match);
       const file = { formbricks: { format: 1 }, survey: { name: "Onboarding" } };
+      // The file as the reader read it; the preview takes it from there.
+      const read = { content: { survey: { name: "Onboarding" }, references }, source, issues: [] };
+      mocks.readFormbricksFile.mockReturnValueOnce(read);
 
       const response = await importFile(upload(JSON.stringify(file), "Onboarding.formbricks.json"));
 
@@ -387,8 +410,9 @@ describe("streamSurveyImport", () => {
           issues: [{ code: "content_only", severity: "info" }],
         },
       });
+      expect(mocks.readFormbricksFile).toHaveBeenCalledWith(file);
       expect(mocks.previewFormbricksFileImport).toHaveBeenCalledWith({
-        file,
+        read,
         workspaceId: body.workspaceId,
         organizationId: "org_1",
         userId: "user_1",
@@ -655,7 +679,9 @@ describe("streamSurveyImport", () => {
     });
 
     describe("holds a Formbricks file to the JSON budget, at each limit and one past it", () => {
+      // The budget is the sniffer's, held before the file is read; what reads it is the reader's test.
       const previewOk = () => {
+        mocks.readFormbricksFile.mockReturnValue({ content: {}, source: null, issues: [] });
         mocks.previewFormbricksFileImport.mockResolvedValue({
           draft: { workspaceId: body.workspaceId, name: "x", status: "draft", blocks: [] },
           references: { actionClasses: [], attributeKeys: [], embeddedFields: [] },

@@ -113,17 +113,33 @@ export const SURVEY_IMPORT_WORD_MAX_TABLES = 500;
 export const SURVEY_IMPORT_WORD_MAX_TABLE_CELLS = 50_000;
 
 /**
- * Imports one server process runs at once. The request budget is checked on the raw text before it is
- * parsed, so nesting and long arrays never reach `JSON.parse` (15.5 MiB of `[[[…]]]` would retain about
- * 470 MB). Measured on the worst 15.5 MiB body that does: one object with 1.2M keys holding `{}` retains
- * about 150 MB, the walk over it about 20 MB more, and the raw text 16 MB. Its transient copies (the
- * upload's bytes, the decoded text, the parse) come on top until collected: three such imports at once
- * on a production build raised RSS from 220 MB to about 1.2 GB at the peak and left about 480 MB once
- * collected (2026-10-31), inside the web pod's 2 GiB. Object keys are not budgeted, since a large
- * multilingual Qualtrics export legitimately holds hundreds of thousands. The per-user rate limit does
- * not cover many users importing at the same time; this does.
+ * Imports one server process runs at once. Memory is what this bounds; the server's thread is kept free
+ * by reading each file in a thread of its own (`core/upload-thread.ts`), one at a time
+ * (`SURVEY_IMPORT_MAX_READ_THREADS`). The request budget is checked on the raw text before it is parsed,
+ * so nesting and long arrays never reach `JSON.parse` (15.5 MiB of `[[[…]]]` would retain about 470 MB).
+ * Measured on the worst 15 MiB body that does, one object with 1.2M keys holding `{}`, sent as a
+ * Formbricks file: three such imports at once raised a process from 235 MB to a peak of about 1.2 GB of
+ * RSS, inside the web pod's 2 GiB (2026-10-31). A production build under the same load rose about
+ * 450 MB, stayed up, and answered every other request within 40 ms. Object keys are not budgeted, since a large multilingual
+ * Qualtrics export legitimately holds hundreds of thousands. The per-user rate limit does not cover many
+ * users importing at the same time; this does.
  */
 export const SURVEY_IMPORT_MAX_IN_FLIGHT = 3;
+
+/**
+ * Upload threads one process runs at once (`core/upload-thread.ts`); the next upload waits its turn.
+ * Threads that run at once hold their files at once, so this bounds the memory reading takes.
+ */
+export const SURVEY_IMPORT_MAX_READ_THREADS = 1;
+
+/**
+ * How long an upload's thread may take to tell the file's type and read it for its lane
+ * (`core/upload-thread.ts`), each step on its own. Past it the file is refused with a 422. The thread
+ * runs beside the server's, so this bounds what one upload costs the pod, not how long others wait. The
+ * costliest file the upload's limits let through, 15 MiB of a million small objects as a Formbricks
+ * file, takes about 1.7 s (2026-10-31).
+ */
+export const SURVEY_IMPORT_READ_TIME_MS = 30_000;
 
 /** Imports one user runs at once on a server process, so one user cannot take every slot. */
 export const SURVEY_IMPORT_MAX_IN_FLIGHT_PER_USER = 1;

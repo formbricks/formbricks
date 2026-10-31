@@ -35,6 +35,7 @@ describe("getSurveyImportRequestErrorCode", () => {
       "file_too_complex",
     ],
     ["nesting past the cap", fileRefusal(422, "file_limit_exceeded", "nesting_depth"), "file_too_complex"],
+    ["a file too slow to read", fileRefusal(422, "file_limit_exceeded", "read_time"), "file_too_complex"],
     ["a broken file", fileRefusal(422, "file_unreadable"), "file_unreadable"],
     ["a body the dialog sent wrong", refusal(400, "bad_request", ["fileName"]), "file_unreadable"],
     ["a body that is not multipart", refusal(415, "unsupported_media_type"), "file_type_unsupported"],

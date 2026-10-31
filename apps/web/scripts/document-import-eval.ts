@@ -12,8 +12,12 @@ import { sniffSurveyImportFile } from "@/modules/survey/import/core/sniff";
 import { loadDocumentFixture } from "@/modules/survey/import/document/__fixtures__/load-fixture";
 import { longQuestionnaireDocx } from "@/modules/survey/import/document/__fixtures__/long-questionnaire";
 import { promptInjectionWithoutInjectedText } from "@/modules/survey/import/document/__fixtures__/prompt-injection";
-import { DOCUMENT_IMPORT_LANES, isDocumentUpload } from "@/modules/survey/import/document/lane";
-import { type TPreparedDocumentImport, runDocumentImport } from "@/modules/survey/import/document/pipeline";
+import { isDocumentUpload } from "@/modules/survey/import/document/lane";
+import { runDocumentImport } from "@/modules/survey/import/document/pipeline";
+import {
+  type TPreparedDocumentImport,
+  prepareDocumentImport,
+} from "@/modules/survey/import/document/prepare";
 
 /**
  * ENG-6853 — the document import (Word, Excel, CSV) against a real model, and the eval that confirms
@@ -125,7 +129,7 @@ const environmentGenerate =
 const prepare = async (bytes: Uint8Array, fileName: string): Promise<TPreparedDocumentImport> => {
   const upload = sniffSurveyImportFile(bytes);
   if (!isDocumentUpload(upload)) throw new Error(`Not a document: ${upload.type}`);
-  return DOCUMENT_IMPORT_LANES[upload.type].prepare({ ...upload, fileName });
+  return prepareDocumentImport(upload, fileName);
 };
 
 interface TRecordedPlan {

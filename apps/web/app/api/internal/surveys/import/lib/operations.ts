@@ -19,7 +19,11 @@ import {
   toRefusalResponse,
 } from "@/modules/survey/import/core/errors";
 import type { TSurveyImportLane, TSurveyImportResult } from "@/modules/survey/import/core/lane";
-import { type TSurveyImportFile, sniffSurveyImportFile } from "@/modules/survey/import/core/sniff";
+import {
+  type TSurveyImportUpload,
+  openSurveyImportUpload,
+  readSurveyImportUploadAs,
+} from "@/modules/survey/import/core/upload-thread";
 import { DOCUMENT_IMPORT_LANES } from "@/modules/survey/import/document/lane";
 import { formbricksFileImportLane } from "@/modules/survey/import/formbricks/lane";
 import { SURVEY_IMPORT_DEADLINE_MS, SURVEY_IMPORT_MAX_FILE_BYTES } from "@/modules/survey/import/limits";
@@ -59,26 +63,26 @@ export interface TRunSurveyImportLaneParams<TInput, TPrepared> {
 type TImportOutcome = "done" | "failed" | "timed_out" | "aborted";
 
 /**
- * Read the upload and tell its type from its bytes, under the upload's limits: the file's size, then
- * what `sniffSurveyImportFile` checks (the zip limits for a `.docx` or `.xlsx`, the JSON budget for a
- * JSON file). Throws the refusals `toRefusalResponse` maps.
+ * Read the upload and tell its type from its bytes, in a thread of its own, under the upload's limits:
+ * the file's size, then what `sniffSurveyImportFile` checks (the zip limits for a `.docx` or `.xlsx`, the
+ * JSON budget for a JSON file). Throws the refusals `toRefusalResponse` maps.
  */
-const readUpload = async (file: File): Promise<TSurveyImportFile> => {
+const openUpload = async (file: File): Promise<TSurveyImportUpload> => {
   if (file.size > SURVEY_IMPORT_MAX_FILE_BYTES) {
     throw new SurveyImportFileTooLargeError(
       "file_size",
       `The file must not exceed ${SURVEY_IMPORT_MAX_FILE_BYTES} bytes`
     );
   }
-  return sniffSurveyImportFile(new Uint8Array(await file.arrayBuffer()));
+  return openSurveyImportUpload(new Uint8Array(await file.arrayBuffer()));
 };
 
 /**
  * Import an uploaded survey file, streaming progress as NDJSON (ENG-3604, ENG-3653, ENG-6846,
  * ENG-6848). Every file type comes in the same way: the route's wrapper has already authenticated,
  * charged the default v3 bucket, read the multipart body within its byte limit and then taken a
- * concurrency slot. Here the workspace is checked first, then the file is read and its type told from its content,
- * and the file goes to its type's lane: a Formbricks file, a Qualtrics export, or a questionnaire from
+ * concurrency slot. Here the workspace is checked first, then the file's type is told from its content in
+ * the upload's own thread (`openSurveyImportUpload`), and the file goes to its type's lane: a Formbricks file, a Qualtrics export, or a questionnaire from
  * Excel, CSV (ENG-6852) or Word (ENG-6853).
  *
  * Nothing is written: the dialog shows the draft for review and creates it through
@@ -108,9 +112,9 @@ export async function streamSurveyImport({
 
   const { organizationId, workspaceId } = workspaceAccess;
 
-  let upload: TSurveyImportFile;
+  let upload: TSurveyImportUpload;
   try {
-    upload = await readUpload(file);
+    upload = await openUpload(file);
   } catch (error) {
     const refusal = toRefusalResponse(error, requestId, instance);
     if (refusal) return refusal;
@@ -136,29 +140,40 @@ export async function streamSurveyImport({
   // The name the user's file had, for the report to show. Never a path, never stored.
   const fileName = file.name.trim();
 
-  switch (upload.type) {
-    case "qsf":
-      return runSurveyImportLane({ ...lane, lane: qsfImportLane, input: { qsf: upload.json, fileName } });
-    case "formbricks":
-      return runSurveyImportLane({
-        ...lane,
-        lane: formbricksFileImportLane,
-        input: {
-          file: upload.json,
-          fileName,
-          workspaceId,
-          organizationId,
-          authentication,
-        },
-      });
-    case "xlsx":
-    case "csv":
-    case "docx":
-      return runSurveyImportLane({
-        ...lane,
-        lane: DOCUMENT_IMPORT_LANES[upload.type],
-        input: { ...upload, fileName },
-      });
+  // The upload's thread waits for its lane's read, and ends once the lane has it, or here.
+  try {
+    switch (upload.type) {
+      case "qsf":
+        return await runSurveyImportLane({
+          ...lane,
+          lane: qsfImportLane,
+          input: { read: async () => (await readSurveyImportUploadAs(upload, "qsf", fileName)).prepared },
+        });
+      case "formbricks":
+        return await runSurveyImportLane({
+          ...lane,
+          lane: formbricksFileImportLane,
+          input: {
+            read: async () => (await readSurveyImportUploadAs(upload, "formbricks", fileName)).read,
+            fileName,
+            workspaceId,
+            organizationId,
+            authentication,
+          },
+        });
+      case "xlsx":
+      case "csv":
+      case "docx": {
+        const { type } = upload;
+        return await runSurveyImportLane({
+          ...lane,
+          lane: DOCUMENT_IMPORT_LANES[type],
+          input: { read: async () => (await readSurveyImportUploadAs(upload, type, fileName)).prepared },
+        });
+      }
+    }
+  } finally {
+    upload.close();
   }
 }
 

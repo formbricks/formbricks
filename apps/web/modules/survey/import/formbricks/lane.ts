@@ -5,6 +5,7 @@ import { getSessionUserId } from "@/app/api/v3/surveys/lib/operations";
 import type { TFormbricksFileReferences } from "@/modules/survey/formbricks-file/envelope";
 import { getFormbricksFileSurveyLanguageCodes } from "@/modules/survey/formbricks-file/fit";
 import { previewFormbricksFileImport } from "@/modules/survey/formbricks-file/import";
+import type { TFormbricksFileRead } from "@/modules/survey/formbricks-file/read";
 import { findFormbricksFileMatch } from "@/modules/survey/formbricks-file/update";
 import type { TSurveyImportFileDraft } from "@/modules/survey/import/core/draft";
 import type { TSurveyImportPipelineIssue } from "@/modules/survey/import/core/report";
@@ -13,12 +14,12 @@ import type { TSurveyImportLane } from "../core/lane";
 import { buildSurveyImportReport } from "../core/report";
 
 /**
- * What the stream route hands the Formbricks file lane: the parsed file, its name, where it goes, and
- * who imports it — whose language names the draft, and whose rights decide whether the file's survey
- * is offered as a Match.
+ * What the stream route hands the Formbricks file lane: the read of the file (`readFormbricksFile`, in
+ * the upload's thread), its name, where it goes, and who imports it — whose language names the draft,
+ * and whose rights decide whether the file's survey is offered as a Match.
  */
 export interface TFormbricksFileImportInput {
-  file: Record<string, unknown>;
+  read: () => Promise<TFormbricksFileRead>;
   fileName: string;
   workspaceId: string;
   organizationId: string;
@@ -57,9 +58,9 @@ export const formbricksFileImportLane: TSurveyImportLane<
   kind: "formbricks",
   usesAI: false,
   rateLimit: null,
-  prepare: async ({ file, fileName, workspaceId, organizationId, authentication }) => {
+  prepare: async ({ read, fileName, workspaceId, organizationId, authentication }) => {
     const { draft, references, issues, source, plan } = await previewFormbricksFileImport({
-      file,
+      read: await read(),
       workspaceId,
       organizationId,
       userId: getSessionUserId(authentication),

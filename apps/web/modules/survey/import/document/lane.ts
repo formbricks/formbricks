@@ -1,29 +1,17 @@
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import type { TSurveyImportLane } from "../core/lane";
 import type { TSurveyImportFile } from "../core/sniff";
-import type { TDocumentKind, TDocumentModel } from "./model";
-import { type TPreparedDocumentImport, prepareDocumentImport, runDocumentImport } from "./pipeline";
-import { readCsvDocument } from "./read-csv";
-import { readSheetDocument } from "./read-sheet";
-import { readWordDocument } from "./read-word";
+import type { TDocumentKind } from "./model";
+import { runDocumentImport } from "./pipeline";
+import type { TDocumentUpload, TPreparedDocumentImport } from "./prepare";
 
-/** A file the sniffer read as a document: a Word questionnaire, or an Excel or CSV question list. */
-export type TDocumentUpload = Extract<TSurveyImportFile, { type: TDocumentKind }>;
-
-/** What the stream route hands a document lane: the file as the sniffer read it, and its name. */
-export type TDocumentImportInput = TDocumentUpload & { fileName: string };
-
-/** Each kind of document's reader, each building the same model. */
-const readDocument = (input: TDocumentImportInput): TDocumentModel => {
-  switch (input.type) {
-    case "xlsx":
-      return readSheetDocument(input.archive);
-    case "csv":
-      return readCsvDocument(input.text, input.encoding);
-    case "docx":
-      return readWordDocument(input.archive);
-  }
-};
+/**
+ * What the stream route hands a document lane: the read of the file (`prepareDocumentImport`), which
+ * runs in the upload's thread once the lane's rate limit and AI gate have let it through.
+ */
+export interface TDocumentImportInput {
+  read: () => Promise<TPreparedDocumentImport>;
+}
 
 /**
  * A document lane (ENG-6852, ENG-6853): a questionnaire or question list in any layout, read by code
@@ -36,7 +24,7 @@ const documentImportLane = (
   kind,
   usesAI: true,
   rateLimit: rateLimitConfigs.api.v3SurveyGenerate,
-  prepare: (input) => prepareDocumentImport(readDocument(input), input.fileName),
+  prepare: ({ read }) => read(),
   run: (params) => runDocumentImport(params),
 });
 

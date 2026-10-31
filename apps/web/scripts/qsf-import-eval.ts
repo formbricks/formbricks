@@ -10,7 +10,8 @@ import {
   loadQsfFixture,
 } from "@/modules/survey/import/qsf/__fixtures__/load-fixture";
 import type { TQsfPlanGenerate } from "@/modules/survey/import/qsf/ai-plan";
-import { prepareQsfImport, runQsfImport } from "@/modules/survey/import/qsf/pipeline";
+import { runQsfImport } from "@/modules/survey/import/qsf/pipeline";
+import { prepareQsfImport } from "@/modules/survey/import/qsf/prepare";
 
 /**
  * ENG-3654 — the Qualtrics import against a real model. Not run in CI: CI uses the recorded plans in

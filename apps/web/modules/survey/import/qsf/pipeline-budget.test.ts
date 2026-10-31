@@ -4,7 +4,8 @@ import { loadQsfFixture } from "./__fixtures__/load-fixture";
 import { buildMatrixHeavyQsf } from "./__fixtures__/matrix-heavy";
 import { loadRecordedPlan, recordedGenerate, refsInPrompt } from "./__fixtures__/recorded-plans";
 import type { TQsfPlanGenerate } from "./ai-plan";
-import { prepareQsfImport, runQsfImport } from "./pipeline";
+import { runQsfImport } from "./pipeline";
+import { prepareQsfImport } from "./prepare";
 
 const budget = vi.hoisted(() => ({
   estimate: null as number | null,
