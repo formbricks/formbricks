@@ -55,7 +55,9 @@ const getDocumentLimitMessage = (limit: string, t: TTranslate): string => {
       return t("workspace.surveys.import.errors.document_limits.cell_size");
     case "xml_depth":
       return t("workspace.surveys.import.errors.document_limits.xml_depth");
+    // Too many attributes is too much content to the user, as too many elements is.
     case "xml_elements":
+    case "xml_attributes":
       return t("workspace.surveys.import.errors.document_limits.xml_elements");
     case "paragraphs":
       return t("workspace.surveys.import.errors.document_limits.paragraphs");

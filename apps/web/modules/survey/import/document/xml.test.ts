@@ -1,6 +1,10 @@
 import { describe, expect, test } from "vitest";
 import { SurveyImportInputError } from "../core/errors";
-import { SURVEY_IMPORT_XML_MAX_DEPTH, SURVEY_IMPORT_XML_MAX_ELEMENTS } from "../limits";
+import {
+  SURVEY_IMPORT_XML_MAX_ATTRIBUTES,
+  SURVEY_IMPORT_XML_MAX_DEPTH,
+  SURVEY_IMPORT_XML_MAX_ELEMENTS,
+} from "../limits";
 import { checkDocumentXml, parseDocumentXml } from "./xml";
 
 const encode = (text: string) => new TextEncoder().encode(text);
@@ -108,6 +112,36 @@ describe("checkDocumentXml", () => {
     expect(refusal(() => check(flat(SURVEY_IMPORT_XML_MAX_ELEMENTS + 1)))).toMatchObject({
       identifier: "xml_elements",
     });
+  });
+
+  test("takes exactly the attribute limit and refuses one attribute more, in one element or across many", () => {
+    /** `count` attributes, `perElement` to an element, each `a="b"` with `>` and `=` inside some values. */
+    const attributes = (count: number, perElement: number) => {
+      const elements: string[] = [];
+      for (let left = count; left > 0; left -= perElement) {
+        const here = Math.min(perElement, left);
+        elements.push(
+          `<e ${Array.from({ length: here }, (_, index) => `a${index}="=>${index}"`).join(" ")}/>`
+        );
+      }
+      return `<r>${elements.join("")}</r>`;
+    };
+
+    expect(() => check(attributes(SURVEY_IMPORT_XML_MAX_ATTRIBUTES, 1_000))).not.toThrow();
+    for (const perElement of [SURVEY_IMPORT_XML_MAX_ATTRIBUTES + 1, 1_000]) {
+      expect(
+        refusal(() => check(attributes(SURVEY_IMPORT_XML_MAX_ATTRIBUTES + 1, perElement)))
+      ).toMatchObject({
+        code: "document_limit_exceeded",
+        identifier: "xml_attributes",
+      });
+    }
+    // Refused before the DOM parser allocates a node for any of them.
+    expect(
+      refusal(() =>
+        parseDocumentXml(encode(attributes(SURVEY_IMPORT_XML_MAX_ATTRIBUTES + 1, 1_000)), "word/document.xml")
+      )
+    ).toMatchObject({ identifier: "xml_attributes" });
   });
 
   // A lenient reader such as SheetJS reads on past markup that never closes, so the limits must not

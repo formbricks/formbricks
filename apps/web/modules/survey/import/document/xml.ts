@@ -1,13 +1,17 @@
 import { DOMParser, type Element, MIME_TYPE } from "@xmldom/xmldom";
 import { surveyImportFileUnreadable } from "../core/errors";
-import { SURVEY_IMPORT_XML_MAX_DEPTH, SURVEY_IMPORT_XML_MAX_ELEMENTS } from "../limits";
+import {
+  SURVEY_IMPORT_XML_MAX_ATTRIBUTES,
+  SURVEY_IMPORT_XML_MAX_DEPTH,
+  SURVEY_IMPORT_XML_MAX_ELEMENTS,
+} from "../limits";
 import { documentLimitExceeded } from "./errors";
 
 /**
  * One XML part of an Office file, parsed into a DOM under the import's XML limits (ENG-6853).
  *
  * The part arrives already capped in size by the zip guard (`core/zip.ts`). Before the DOM parser
- * allocates a node, the raw text is scanned once for its shape: its nesting and its element count are
+ * allocates a node, the raw text is scanned once for its shape: its nesting, elements and attributes are
  * held to the XML limits, and a part that declares a DTD is refused, so no entity is ever defined,
  * expanded or fetched (Office never writes one). Only then does @xmldom/xmldom parse it, with every
  * error fatal: a part that is not well-formed is unreadable, never half-read.
@@ -19,11 +23,15 @@ const QUESTION = 0x3f;
 const BANG = 0x21;
 const DOUBLE_QUOTE = 0x22;
 const SINGLE_QUOTE = 0x27;
+const EQUALS = 0x3d;
 
 const refuseDtd = () => surveyImportFileUnreadable("The file declares a DTD, which the import does not read");
 
-/** Where the start tag opening at `start` ends (its `>`), quoted attribute values skipped; -1 if never. */
-const endOfStartTag = (text: string, start: number): number => {
+/**
+ * Where the start tag opening at `start` ends (its `>`), quoted attribute values skipped; -1 if never.
+ * Calls `onAttribute` for each attribute, by its `=`, the one place an `=` can stand outside a value.
+ */
+const endOfStartTag = (text: string, start: number, onAttribute: () => void): number => {
   let quote = 0;
   for (let index = start + 1; index < text.length; index += 1) {
     const code = text.charCodeAt(index);
@@ -31,6 +39,8 @@ const endOfStartTag = (text: string, start: number): number => {
       if (code === quote) quote = 0;
     } else if (code === DOUBLE_QUOTE || code === SINGLE_QUOTE) {
       quote = code;
+    } else if (code === EQUALS) {
+      onAttribute();
     } else if (code === GT) {
       return index;
     }
@@ -48,6 +58,17 @@ const unclosed = () => surveyImportFileUnreadable("A part of the file is not wel
 const checkShape = (text: string, part: string): void => {
   let depth = 0;
   let elements = 0;
+  let attributes = 0;
+  const countAttribute = () => {
+    attributes += 1;
+    if (attributes > SURVEY_IMPORT_XML_MAX_ATTRIBUTES) {
+      throw documentLimitExceeded(
+        "xml_attributes",
+        `file.${part}`,
+        `An XML part must not have more than ${SURVEY_IMPORT_XML_MAX_ATTRIBUTES} attributes`
+      );
+    }
+  };
   let position = text.indexOf("<");
 
   while (position !== -1) {
@@ -79,7 +100,7 @@ const checkShape = (text: string, part: string): void => {
           `An XML part must not have more than ${SURVEY_IMPORT_XML_MAX_ELEMENTS} elements`
         );
       }
-      end = endOfStartTag(text, position);
+      end = endOfStartTag(text, position, countAttribute);
       if (end !== -1 && text.charCodeAt(end - 1) !== SLASH) {
         depth += 1;
         if (depth > SURVEY_IMPORT_XML_MAX_DEPTH) {

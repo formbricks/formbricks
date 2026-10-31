@@ -126,6 +126,12 @@ describe("getSurveyImportErrorMessage for a question list past a limit", () => {
     );
   });
 
+  test("says the document holds too much content for too many attributes, as for too many elements", () => {
+    expect(getSurveyImportErrorMessage("document_limit_exceeded:xml_attributes", t)).toBe(
+      "workspace.surveys.import.errors.document_limits.xml_elements"
+    );
+  });
+
   test("falls back to a general line for a limit this client does not know yet", () => {
     expect(getSurveyImportErrorMessage("document_limit_exceeded:something_new", t)).toBe(
       "workspace.surveys.import.errors.document_limits.other"

@@ -91,6 +91,13 @@ export const SURVEY_IMPORT_XML_MAX_DEPTH = 256;
  */
 export const SURVEY_IMPORT_XML_MAX_ELEMENTS = 500_000;
 
+/**
+ * Attributes in one part. A DOM attribute weighs about what an element does (xmldom: ~800,000 in one
+ * 8 MB part held ~390 MB), so they are bounded like elements: twice the element cap, since Office
+ * writes about two to an element.
+ */
+export const SURVEY_IMPORT_XML_MAX_ATTRIBUTES = 1_000_000;
+
 /*
  * A Word questionnaire's body (ENG-6853): its paragraphs, tables and table cells, counted as the reader
  * walks the document, nested tables included. Past any, the file is refused with a 422 naming it.

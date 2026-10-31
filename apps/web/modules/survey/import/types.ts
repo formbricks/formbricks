@@ -195,6 +195,7 @@ export type TSurveyImportDocumentLimit =
   | "cell_size"
   | "xml_depth"
   | "xml_elements"
+  | "xml_attributes"
   | "paragraphs"
   | "tables"
   | "table_cells"
