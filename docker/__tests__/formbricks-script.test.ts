@@ -1195,7 +1195,9 @@ if [[ -n "$FAIL_ON" && "$*" == *"$FAIL_ON"* ]]; then exit 3; fi
     const commandLog = join(tempDir, "commands.log");
     mkdirSync(binDir);
     mkdirSync(join(tempDir, "formbricks"));
-    writeFileSync(join(binDir, "sudo"), `#!/bin/sh\nprintf '%s\\n' "$*" >> "$COMMAND_LOG"\n`, { mode: 0o700 });
+    writeFileSync(join(binDir, "sudo"), `#!/bin/sh\nprintf '%s\\n' "$*" >> "$COMMAND_LOG"\n`, {
+      mode: 0o700,
+    });
 
     const result = spawnSync("bash", [formbricksScriptPath, ...args], {
       cwd: tempDir,
