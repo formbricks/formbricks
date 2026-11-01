@@ -2352,15 +2352,26 @@ restart_formbricks() {
   echo "🎉 Formbricks restarted successfully!"
 }
 
+# The failure report sends people to `logs` and `status`, so both ask the daemon the installer used, the same
+# way it chose it: plain docker when that reaches a daemon (rootless Docker, say), else sudo docker.
+select_formbricks_docker_command() {
+  if ! configure_formbricks_docker_command; then
+    echo "❌ Could not reach the Docker daemon with 'docker' or 'sudo docker'." >&2
+    exit 1
+  fi
+}
+
 get_logs() {
   echo "📃 Getting Formbricks logs..."
   cd formbricks
-  sudo docker compose logs "$@"
+  select_formbricks_docker_command
+  run_formbricks_docker_compose logs "$@"
 }
 
 get_status() {
   cd formbricks
-  sudo docker compose ps --all
+  select_formbricks_docker_command
+  run_formbricks_docker_compose ps --all
 }
 
 print_usage() {

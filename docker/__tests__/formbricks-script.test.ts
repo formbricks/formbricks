@@ -35,6 +35,8 @@ const dockerComposeOverrideKeys = [
   "CUBEJS_DB_PASS",
   "AUTHZED_TOKEN",
   "AUTHZED_DATABASE_PASSWORD",
+  "AUTHZED_ENDPOINT",
+  "AUTHZED_SYSTEM_KEY",
   "FORMBRICKS_UNSET_PASSWORD_SENTINEL",
 ];
 const dockerComposeTestTimeout = 30_000;
@@ -1189,42 +1191,73 @@ if [[ -n "$FAIL_ON" && "$*" == *"$FAIL_ON"* ]]; then exit 3; fi
     expect(result.commands.every((command) => command.startsWith("sudo compose "))).toBe(true);
   });
 
-  const runFormbricksCommand = (...args: string[]) => {
+  // Runs the script against stub docker and sudo binaries. `reaches` says which of them gets to a daemon.
+  // Returns the Compose commands only, so the daemon probes do not hide which command did the work.
+  const runFormbricksCommand = (args: string[], reaches: "docker" | "sudo" | "none" = "sudo") => {
     const tempDir = createTempDir();
     const binDir = join(tempDir, "bin");
     const commandLog = join(tempDir, "commands.log");
     mkdirSync(binDir);
     mkdirSync(join(tempDir, "formbricks"));
-    writeFileSync(join(binDir, "sudo"), `#!/bin/sh\nprintf '%s\\n' "$*" >> "$COMMAND_LOG"\n`, {
-      mode: 0o700,
-    });
+    for (const name of ["docker", "sudo"]) {
+      writeFileSync(
+        join(binDir, name),
+        `#!/bin/sh\nprintf '${name} %s\\n' "$*" >> "$COMMAND_LOG"\ncase "$*" in *info) [ "$REACHES" = ${name} ] || exit 1 ;; esac\n`,
+        { mode: 0o700 }
+      );
+    }
 
     const result = spawnSync("bash", [formbricksScriptPath, ...args], {
       cwd: tempDir,
       encoding: "utf8",
       input: "",
-      env: { ...process.env, COMMAND_LOG: commandLog, PATH: `${binDir}:${process.env.PATH ?? ""}` },
+      env: {
+        ...process.env,
+        COMMAND_LOG: commandLog,
+        REACHES: reaches,
+        PATH: `${binDir}:${process.env.PATH ?? ""}`,
+      },
     });
-    const commands = existsSync(commandLog) ? readFileSync(commandLog, "utf8").trim().split("\n") : [];
+    const commands = existsSync(commandLog)
+      ? readFileSync(commandLog, "utf8")
+          .trim()
+          .split("\n")
+          .filter((command) => command.includes(" compose "))
+      : [];
     return { ...result, commands };
   };
 
   test("status lists every service container, including exited ones", () => {
-    const result = runFormbricksCommand("status");
+    const result = runFormbricksCommand(["status"]);
 
     expect(result.status).toBe(0);
-    expect(result.commands).toEqual(["docker compose ps --all"]);
+    expect(result.commands).toEqual(["sudo docker compose ps --all"]);
   });
 
   test("logs passes the named services to Compose", () => {
-    const result = runFormbricksCommand("logs", "--tail", "200", "formbricks-migrate");
+    const result = runFormbricksCommand(["logs", "--tail", "200", "formbricks-migrate"]);
 
     expect(result.status).toBe(0);
-    expect(result.commands).toEqual(["docker compose logs --tail 200 formbricks-migrate"]);
+    expect(result.commands).toEqual(["sudo docker compose logs --tail 200 formbricks-migrate"]);
+  });
+
+  test("status and logs ask the daemon plain docker reaches, as the installer did", () => {
+    expect(runFormbricksCommand(["status"], "docker").commands).toEqual(["docker compose ps --all"]);
+    expect(runFormbricksCommand(["logs", "formbricks-migrate"], "docker").commands).toEqual([
+      "docker compose logs formbricks-migrate",
+    ]);
+  });
+
+  test("logs says so when no Docker daemon is reachable", () => {
+    const result = runFormbricksCommand(["logs"], "none");
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("Could not reach the Docker daemon");
+    expect(result.commands).toEqual([]);
   });
 
   test("rejects an unknown command instead of starting an installation", () => {
-    const result = runFormbricksCommand("statsu");
+    const result = runFormbricksCommand(["statsu"]);
 
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("Unknown command: statsu");
