@@ -15,7 +15,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Harden the runner
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
         with:
           egress-policy: audit
 
@@ -25,6 +25,6 @@ jobs:
           fetch-depth: 0
 
       - name: Sync Linear release
-        uses: linear/linear-release-action@30f9ae77461ec29f07fffe0c52edd1909bfbb6f5 # v0.18.1
+        uses: linear/linear-release-action@dd4fc407f860b9460d2cf0b3fb1edd8985cf443f # v0.18.2
         with:
           access_key: ${{ secrets.LINEAR_ACCESS_KEY }}
