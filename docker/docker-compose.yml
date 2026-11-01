@@ -374,7 +374,11 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    <<: *environment
+    # validate-env requires these when .env enables AuthZed, so the migration gets the app's defaults too.
+    environment:
+      <<: *app-environment
+      AUTHZED_ENDPOINT: ${AUTHZED_ENDPOINT:-spicedb:50051}
+      AUTHZED_SYSTEM_KEY: ${AUTHZED_SYSTEM_KEY:-formbricks}
 
   formbricks:
     restart: always
