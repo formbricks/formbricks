@@ -367,6 +367,51 @@ run_formbricks_docker_compose() {
   "${formbricks_docker_command[@]}" compose "$@"
 }
 
+# Compose reports only an exit code when a one-shot service such as a migration fails, so name each service
+# container that exited with an error and the command that shows its logs.
+report_failed_formbricks_services() {
+  local failed_services service
+
+  failed_services=$(run_formbricks_docker_compose ps --all --status exited --format '{{.Service}} {{.ExitCode}}' \
+    2>/dev/null | awk '$2 != "" && $2 != 0 { print $1 }' | sort -u)
+
+  if [[ -z "$failed_services" ]]; then
+    echo "Check the Compose output above. From the directory that contains formbricks/, run"
+    echo "'./formbricks.sh status' to see every service and './formbricks.sh logs <service>' to read one."
+    return
+  fi
+
+  echo "These services exited with an error. From the directory that contains formbricks/, read their logs with:"
+  while IFS= read -r service; do
+    echo "   ./formbricks.sh logs $service"
+  done <<<"$failed_services"
+}
+
+# Runs one step of the first startup. stdin is closed so a Compose command can never read the installer's input.
+run_formbricks_startup_step() {
+  local description="$1"
+  local status=0
+  shift
+
+  run_formbricks_docker_compose "$@" </dev/null || status=$?
+  if [[ $status -ne 0 ]]; then
+    echo "❌ Formbricks setup stopped while $description (exit code $status)." >&2
+    report_failed_formbricks_services >&2
+  fi
+  return "$status"
+}
+
+start_formbricks_stack() {
+  run_formbricks_startup_step "starting the database and SpiceDB" \
+    up -d postgres authzed-db-bootstrap spicedb-migrate spicedb formbricks-migrate || return
+  run_formbricks_startup_step "running the Formbricks database migration" wait formbricks-migrate || return
+  run_formbricks_startup_step "preparing the AuthZed permission graph" \
+    --profile authzed-ops run --rm --interactive=false -T authzed-ops upgrade prepare || return
+  run_formbricks_startup_step "checking the AuthZed permission graph" \
+    --profile authzed-ops run --rm --interactive=false -T authzed-ops upgrade check || return
+  run_formbricks_startup_step "starting Formbricks" up -d || return
+}
+
 read_rendered_compose_password() {
   local compose_file="$1"
   local env_file="${2:-}"
@@ -1456,31 +1501,22 @@ EOF
     write_rustfs_init_script "rustfs-init.sh"
   fi
 
-  newgrp docker <<END
+  # Runs through the Docker command preflight chose: the docker group added above only applies to new logins.
+  start_formbricks_stack
 
-set -e
-docker compose up -d postgres authzed-db-bootstrap spicedb-migrate spicedb formbricks-migrate
-docker compose wait formbricks-migrate
-docker compose --profile authzed-ops run --rm --interactive=false -T authzed-ops upgrade prepare
-docker compose --profile authzed-ops run --rm --interactive=false -T authzed-ops upgrade check
-docker compose up -d
+  echo "🔗 To edit more variables and deeper config, go to the formbricks/docker-compose.yml, edit the file, and restart the container!"
 
-echo "🔗 To edit more variables and deeper config, go to the formbricks/docker-compose.yml, edit the file, and restart the container!"
+  echo "🚨 Make sure you have set up the DNS records as well as inbound rules for the domain name and IP address of this instance."
+  echo ""
 
-echo "🚨 Make sure you have set up the DNS records as well as inbound rules for the domain name and IP address of this instance."
-echo ""
-
-if [[ $rustfs_storage == "y" ]]; then
+  if [[ $rustfs_storage == "y" ]]; then
     echo "🗄️  RustFS Storage Setup Complete:"
     echo "   • Bucket: $rustfs_bucket_name (✅ created and secured)"
     echo "   • Generated credentials stored in ./formbricks/.env (permissions set to 600)"
     echo ""
-fi
+  fi
 
-echo "🎉 All done! Please setup your Formbricks instance by visiting your domain at https://$domain_name. You can check the status of Formbricks & Traefik with 'cd formbricks && sudo docker compose ps.'"
-
-END
-
+  echo "🎉 All done! Please setup your Formbricks instance by visiting your domain at https://$domain_name. You can check the status of Formbricks & Traefik with './formbricks.sh status'."
 }
 
 uninstall_formbricks() {
@@ -2319,7 +2355,16 @@ restart_formbricks() {
 get_logs() {
   echo "📃 Getting Formbricks logs..."
   cd formbricks
-  sudo docker compose logs
+  sudo docker compose logs "$@"
+}
+
+get_status() {
+  cd formbricks
+  sudo docker compose ps --all
+}
+
+print_usage() {
+  echo "Usage: ./formbricks.sh [install|update|stop|restart|status|logs [service...]|refresh-cube|cleanup-rustfs-init|uninstall]"
 }
 
 cleanup_rustfs_init() {
@@ -2379,8 +2424,11 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   restart)
     restart_formbricks
     ;;
+  status)
+    get_status
+    ;;
   logs)
-    get_logs
+    get_logs "${@:2}"
     ;;
   refresh-cube)
     refresh_cube_model
@@ -2394,9 +2442,18 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   uninstall)
     uninstall_formbricks
     ;;
-  *)
+  "")
     echo "🚀 Executing default step of installing Formbricks"
     install_formbricks
+    ;;
+  -h | --help | help)
+    print_usage
+    ;;
+  *)
+    # Installing here would answer a mistyped command with a new installation.
+    echo "❌ Unknown command: $1" >&2
+    print_usage >&2
+    exit 1
     ;;
   esac
 fi

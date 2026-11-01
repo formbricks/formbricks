@@ -876,6 +876,15 @@ describe("docker/formbricks.sh AuthZed setup", () => {
     expect(migrationEnvironment.AUTHZED_SYSTEM_KEY).toBe("formbricks");
   });
 
+  dockerComposeTest("gives the migration service AuthZed defaults when .env only enables AuthZed", () => {
+    const config = renderDockerCompose("POSTGRES_PASSWORD=password\nAUTHZED_ENABLED=true\n");
+    const migrationEnvironment = getRenderedServiceEnvironment(config, "formbricks-migrate");
+
+    expect(migrationEnvironment.AUTHZED_ENABLED).toBe("true");
+    expect(migrationEnvironment.AUTHZED_ENDPOINT).toBe("spicedb:50051");
+    expect(migrationEnvironment.AUTHZED_SYSTEM_KEY).toBe("formbricks");
+  });
+
   test("blocks customized updates until the AuthZed v6 contract is present and acknowledged", () => {
     const script = readFileSync(formbricksScriptPath, "utf8");
     const updateFunction = script.slice(
@@ -1067,53 +1076,159 @@ describe("docker/formbricks.sh AuthZed setup", () => {
     }
   );
 
-  test("waits for the source migration before preparing a fresh AuthZed graph", () => {
-    const script = readFileSync(formbricksScriptPath, "utf8");
-    const setupStart = script.indexOf(
-      "docker compose up -d postgres authzed-db-bootstrap spicedb-migrate spicedb formbricks-migrate"
-    );
-    const migrationWait = script.indexOf("docker compose wait formbricks-migrate", setupStart);
-    const upgradePrepare = script.indexOf("authzed-ops upgrade prepare", setupStart);
-
-    expect(setupStart).toBeGreaterThanOrEqual(0);
-    expect(migrationWait).toBeGreaterThan(setupStart);
-    expect(upgradePrepare).toBeGreaterThan(migrationWait);
-  });
-
-  test("reaches application startup when Compose run can consume the setup input", () => {
-    const script = readFileSync(formbricksScriptPath, "utf8");
-    const setupCommands = script.match(
-      /newgrp docker <<[ \t]*([^\r\n]+)\r?\n([\s\S]*?)\r?\n\1(?:\r?\n|$)/
-    )?.[2];
-    expect(setupCommands).toBeDefined();
-
+  // Runs the first startup against a stub Docker CLI. FAIL_ON names the command that fails; EXITED is what
+  // `compose ps` then reports, one "<service> <exit code>" per line. Commands log as "<docker|sudo> <args>".
+  const startFormbricksStack = ({
+    dockerCommand = "docker",
+    exited = "",
+    failOn = "",
+    stdin = "input the installer still needs\n",
+  }: {
+    dockerCommand?: "docker" | "sudo docker";
+    exited?: string;
+    failOn?: string;
+    stdin?: string;
+  } = {}) => {
     const tempDir = createTempDir();
     const binDir = join(tempDir, "bin");
     const commandLog = join(tempDir, "commands.log");
     mkdirSync(binDir);
-    writeFileSync(
-      join(binDir, "docker"),
-      `#!/usr/bin/env bash
-printf '%s\\n' "$*" >> "$COMMAND_LOG"
-if [[ "$*" == *" run "* && "$*" != *" --interactive=false "* ]]; then
-  cat >/dev/null
-fi
-`,
-      { mode: 0o700 }
-    );
+    const stub = (name: string) => `#!/usr/bin/env bash
+if [[ "$1" == docker ]]; then shift; fi
+printf '${name} %s\\n' "$*" >> "$COMMAND_LOG"
+# Anything that reads stdin would swallow whatever setup input follows it.
+if [[ "$*" == *" run "* ]]; then cat >/dev/null; fi
+if [[ "$*" == "compose ps "* ]]; then printf '%b' "$EXITED"; exit 0; fi
+if [[ -n "$FAIL_ON" && "$*" == *"$FAIL_ON"* ]]; then exit 3; fi
+`;
+    writeFileSync(join(binDir, "docker"), stub("docker"), { mode: 0o700 });
+    writeFileSync(join(binDir, "sudo"), stub("sudo"), { mode: 0o700 });
 
-    const result = spawnSync("bash", [], {
-      input: `set -e\n${setupCommands}\n`,
-      cwd: tempDir,
-      encoding: "utf8",
-      env: { ...process.env, COMMAND_LOG: commandLog, PATH: `${binDir}:${process.env.PATH ?? ""}` },
-    });
+    const result = spawnSync(
+      "bash",
+      [
+        "-c",
+        `source "$1"; formbricks_docker_command=(${dockerCommand}); start_formbricks_stack; read -r line; echo "remaining input: $line"`,
+        "bash",
+        formbricksScriptPath,
+      ],
+      {
+        input: stdin,
+        cwd: tempDir,
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          COMMAND_LOG: commandLog,
+          EXITED: exited,
+          FAIL_ON: failOn,
+          PATH: `${binDir}:${process.env.PATH ?? ""}`,
+        },
+      }
+    );
+    const commands = existsSync(commandLog) ? readFileSync(commandLog, "utf8").trim().split("\n") : [];
+    return { ...result, commands };
+  };
+
+  test("runs the first startup in order without letting Compose read the installer's input", () => {
+    const result = startFormbricksStack();
 
     expect(result.status).toBe(0);
-    const commands = readFileSync(commandLog, "utf8").trim().split("\n");
-    expect(commands.some((command) => command.includes("authzed-ops upgrade prepare"))).toBe(true);
-    expect(commands.some((command) => command.includes("authzed-ops upgrade check"))).toBe(true);
-    expect(commands.at(-1)).toBe("compose up -d");
+    expect(result.stdout).toContain("remaining input: input the installer still needs");
+    expect(result.commands).toEqual([
+      "docker compose up -d postgres authzed-db-bootstrap spicedb-migrate spicedb formbricks-migrate",
+      "docker compose wait formbricks-migrate",
+      "docker compose --profile authzed-ops run --rm --interactive=false -T authzed-ops upgrade prepare",
+      "docker compose --profile authzed-ops run --rm --interactive=false -T authzed-ops upgrade check",
+      "docker compose up -d",
+    ]);
+  });
+
+  test("names the failed migration and how to read its logs, and stops before AuthZed and the app", () => {
+    const result = startFormbricksStack({
+      failOn: "wait formbricks-migrate",
+      exited: "authzed-db-bootstrap 0\\nspicedb-migrate 0\\nformbricks-migrate 1\\n",
+    });
+
+    expect(result.status).toBe(3);
+    expect(result.stderr).toContain(
+      "Formbricks setup stopped while running the Formbricks database migration (exit code 3)."
+    );
+    expect(result.stderr).toContain("./formbricks.sh logs formbricks-migrate");
+    expect(result.stderr).not.toContain("logs spicedb-migrate");
+    expect(result.commands.some((command) => command.includes("upgrade prepare"))).toBe(false);
+    expect(result.commands).not.toContain("docker compose up -d");
+  });
+
+  test("names a dependency that failed while the first services started", () => {
+    const result = startFormbricksStack({
+      failOn: "up -d postgres",
+      exited: "authzed-db-bootstrap 0\\nspicedb-migrate 1\\n",
+    });
+
+    expect(result.status).toBe(3);
+    expect(result.stderr).toContain("Formbricks setup stopped while starting the database and SpiceDB");
+    expect(result.stderr).toContain("./formbricks.sh logs spicedb-migrate");
+    expect(result.commands).toHaveLength(2);
+    expect(result.commands[1]).toMatch(/^docker compose ps /);
+  });
+
+  test("points to status and logs when no service container exited with an error", () => {
+    const result = startFormbricksStack({ failOn: "upgrade check", exited: "formbricks-migrate 0\\n" });
+
+    expect(result.status).toBe(3);
+    expect(result.stderr).toContain("checking the AuthZed permission graph");
+    expect(result.stderr).toContain("'./formbricks.sh status'");
+    expect(result.commands).not.toContain("docker compose up -d");
+  });
+
+  test("starts through sudo when preflight selected it for an existing Docker installation", () => {
+    const result = startFormbricksStack({ dockerCommand: "sudo docker" });
+
+    expect(result.status).toBe(0);
+    expect(result.commands).toHaveLength(5);
+    expect(result.commands.every((command) => command.startsWith("sudo compose "))).toBe(true);
+  });
+
+  const runFormbricksCommand = (...args: string[]) => {
+    const tempDir = createTempDir();
+    const binDir = join(tempDir, "bin");
+    const commandLog = join(tempDir, "commands.log");
+    mkdirSync(binDir);
+    mkdirSync(join(tempDir, "formbricks"));
+    writeFileSync(join(binDir, "sudo"), `#!/bin/sh\nprintf '%s\\n' "$*" >> "$COMMAND_LOG"\n`, { mode: 0o700 });
+
+    const result = spawnSync("bash", [formbricksScriptPath, ...args], {
+      cwd: tempDir,
+      encoding: "utf8",
+      input: "",
+      env: { ...process.env, COMMAND_LOG: commandLog, PATH: `${binDir}:${process.env.PATH ?? ""}` },
+    });
+    const commands = existsSync(commandLog) ? readFileSync(commandLog, "utf8").trim().split("\n") : [];
+    return { ...result, commands };
+  };
+
+  test("status lists every service container, including exited ones", () => {
+    const result = runFormbricksCommand("status");
+
+    expect(result.status).toBe(0);
+    expect(result.commands).toEqual(["docker compose ps --all"]);
+  });
+
+  test("logs passes the named services to Compose", () => {
+    const result = runFormbricksCommand("logs", "--tail", "200", "formbricks-migrate");
+
+    expect(result.status).toBe(0);
+    expect(result.commands).toEqual(["docker compose logs --tail 200 formbricks-migrate"]);
+  });
+
+  test("rejects an unknown command instead of starting an installation", () => {
+    const result = runFormbricksCommand("statsu");
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("Unknown command: statsu");
+    expect(result.stderr).toContain("Usage: ./formbricks.sh");
+    expect(result.stdout).not.toContain("Welcome");
+    expect(result.commands).toEqual([]);
   });
 
   test("pins and verifies the downloaded bootstrap helper before making it executable", () => {
