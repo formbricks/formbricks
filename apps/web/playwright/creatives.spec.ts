@@ -52,15 +52,12 @@ test.describe("Creatives", () => {
     workspaceId = seeded.workspaceId;
     await seeded.user.login();
 
-    const licensed = await test.step("the instance's license includes Creatives", () =>
-      hasCreativesLicense(page.request, workspaceId));
-    // TEMPORARY (ENG-6772): CI's license lacks `creatives` until formbricks/ee#142 is deployed. Once it
-    // has the flag, replace this skip with `expect(licensed).toBe(true)`, so a license without Creatives
-    // fails the journey again instead of hiding it.
-    test.skip(
-      !licensed,
-      "The instance's Enterprise license doesn't include Creatives (403 creatives_not_entitled)"
-    );
+    await test.step("the instance's license includes Creatives", async () => {
+      expect(
+        await hasCreativesLicense(page.request, workspaceId),
+        "the instance's Enterprise license must include Creatives (API v3 answered 403 creatives_not_entitled)"
+      ).toBe(true);
+    });
 
     const creativeId = await test.step("publish a feedback button through API v3", async () => {
       // A survey Destination must be visible to the whole workspace with no visibility change pending;
