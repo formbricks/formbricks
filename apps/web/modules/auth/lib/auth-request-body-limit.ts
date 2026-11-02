@@ -91,11 +91,12 @@ const isClientAbort = (request: Request, error: unknown): boolean =>
  *
  * The handler receives the same bytes as a fresh request, so the limit costs nothing that the handler's
  * own read did not already cost, and nothing downstream (the DCR preprocessing, Better Auth, `formData()`)
- * can buffer more than {@link AUTH_REQUEST_BODY_LIMIT_BYTES}. A query string or body holding a collection over
- * {@link AUTH_REQUEST_MAX_ENTRIES} entries is answered `400` before any schema sees it
- * (auth-request-bounds.ts); the body is checked from the same read. A request with no body — every GET — has
- * only its query checked, and is otherwise handed over untouched, identity included. Anything over the limit is answered `413` and the stream is
- * cancelled, whether it declared its size, understated it, or carried no `Content-Length` at all. A client
+ * can buffer more than {@link AUTH_REQUEST_BODY_LIMIT_BYTES}. A query string or body holding a collection
+ * over {@link AUTH_REQUEST_MAX_ENTRIES} entries is answered `400` before any schema sees it
+ * (auth-request-bounds.ts); the body is checked from the same read. A request with no body — every GET —
+ * has only its query checked, and is otherwise handed over untouched, identity included. Anything over the
+ * limit is answered `413` and the stream is cancelled, whether it declared its size, understated it, or
+ * carried no `Content-Length` at all. A client
  * that disconnects mid-upload gets a bare `400` nobody reads, rather than a route error for every abandoned
  * anonymous request.
  */

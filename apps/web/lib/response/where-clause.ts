@@ -819,8 +819,8 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
               // predicate matched:
               //
               //   - nothing enforces uniqueness (`ZResponseDataValue` is `z.array(z.string())`; some
-              //     write paths cap its length, none its contents), so `["A0","A0","A0","A0","write-in"]` is accepted on a
-              //     3-choice element;
+              //     write paths cap its length, none its contents), so
+              //     `["A0","A0","A0","A0","write-in"]` is accepted on a 3-choice element;
               //   - deleting choices from a running survey shrinks `choices.length` while the already
               //     collected answers keep their original length.
               //
