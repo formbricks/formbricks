@@ -1,0 +1,5 @@
+interface:
+  display_name: "Release notes"
+  short_description: "Draft the GitHub release notes for a Formbricks release."
+policy:
+  allow_implicit_invocation: false

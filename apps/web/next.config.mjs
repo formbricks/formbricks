@@ -510,7 +510,7 @@ if (process.env.WEBAPP_URL) {
 
 // Build-time release identifier, derived exactly the way the runtime `SENTRY_RELEASE` is
 // derived in lib/constants.ts. CI bumps apps/web/package.json to the release version before
-// the image build (.github/actions/build-and-push-docker/action.yml), so the release the
+// the image build (.github/workflows/build-docker-candidate.yml), so the release the
 // artifacts are uploaded under and the release the events are tagged with always agree.
 // It doubles as the "is this an official release build?" signal below: only CI bumps this
 // file, so an unbumped 0.0.0 means a local or self-hosted build.

@@ -56,15 +56,15 @@ import { Switch } from "@/modules/ui/components/switch";
 import { QuotaConditionBuilder } from "./quota-condition-builder";
 
 interface QuotaModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  survey: TSurvey;
-  setQuotaToDelete: (quota: TSurveyQuota) => void;
-  quota?: TSurveyQuota | null;
-  onClose: () => void;
-  duplicateQuota: (quota: TSurveyQuota) => void;
-  hasResponses: boolean;
-  quotaResponseCount: number;
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly survey: TSurvey;
+  readonly setQuotaToDelete: (quota: TSurveyQuota) => void;
+  readonly quota?: TSurveyQuota | null;
+  readonly onClose: () => void;
+  readonly duplicateQuota: (quota: TSurveyQuota) => void;
+  readonly hasResponses: boolean;
+  readonly quotaResponseCount: number;
 }
 
 export const QuotaModal = ({

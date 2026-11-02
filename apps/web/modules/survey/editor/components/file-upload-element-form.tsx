@@ -19,16 +19,16 @@ import { Input } from "@/modules/ui/components/input";
 import { useGetBillingInfo } from "@/modules/utils/hooks/useGetBillingInfo";
 
 interface FileUploadFormProps {
-  localSurvey: TSurvey;
-  workspace: TWorkspaceWithoutCustomCss;
-  element: TSurveyFileUploadElement;
-  elementIdx: number;
-  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
-  isInvalid: boolean;
-  isFormbricksCloud: boolean;
-  locale: TUserLocale;
-  isStorageConfigured: boolean;
-  isExternalUrlsAllowed?: boolean;
+  readonly localSurvey: TSurvey;
+  readonly workspace: TWorkspaceWithoutCustomCss;
+  readonly element: TSurveyFileUploadElement;
+  readonly elementIdx: number;
+  readonly updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
+  readonly isInvalid: boolean;
+  readonly isFormbricksCloud: boolean;
+  readonly locale: TUserLocale;
+  readonly isStorageConfigured: boolean;
+  readonly isExternalUrlsAllowed?: boolean;
 }
 
 export const FileUploadElementForm = ({
@@ -156,6 +156,7 @@ export const FileUploadElementForm = ({
                       autoFocus
                       type="number"
                       id="fileSizeLimit"
+                      min={1}
                       value={element.maxSizeInMB}
                       onChange={(e) => {
                         const parsedValue = Number.parseInt(e.target.value, 10);
@@ -171,7 +172,8 @@ export const FileUploadElementForm = ({
                           return;
                         }
 
-                        updateElement(elementIdx, { maxSizeInMB: Number.parseInt(e.target.value, 10) });
+                        // A file size limit below 1 MB is meaningless, so clamp zero and negative values.
+                        updateElement(elementIdx, { maxSizeInMB: Math.max(1, parsedValue) });
                       }}
                       className="mr-2 ml-2 inline w-20 bg-white text-center text-sm"
                     />

@@ -11,10 +11,10 @@ import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
 
 interface EditBrandingProps {
-  type: "linkSurvey" | "appSurvey";
-  isEnabled: boolean;
-  workspaceId: string;
-  isReadOnly?: boolean;
+  readonly type: "linkSurvey" | "appSurvey";
+  readonly isEnabled: boolean;
+  readonly workspaceId: string;
+  readonly isReadOnly?: boolean;
 }
 
 export const EditBranding = ({ type, isEnabled, workspaceId, isReadOnly }: EditBrandingProps) => {

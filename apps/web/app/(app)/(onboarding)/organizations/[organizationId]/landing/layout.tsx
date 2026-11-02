@@ -5,8 +5,8 @@ import { getUserWorkspaces } from "@/lib/workspace/service";
 import { getSession } from "@/modules/auth/lib/session";
 
 const LandingLayout = async (props: {
-  params: Promise<{ organizationId: string }>;
-  children: React.ReactNode;
+  readonly params: Promise<{ organizationId: string }>;
+  readonly children: React.ReactNode;
 }) => {
   const params = await props.params;
 

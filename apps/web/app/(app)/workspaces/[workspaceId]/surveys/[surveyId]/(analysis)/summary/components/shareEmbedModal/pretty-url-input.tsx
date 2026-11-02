@@ -4,10 +4,10 @@ import { useTranslation } from "react-i18next";
 import { Input } from "@/modules/ui/components/input";
 
 interface PrettyUrlInputProps {
-  value: string;
-  onChange: (value: string) => void;
-  publicDomain: string;
-  disabled?: boolean;
+  readonly value: string;
+  readonly onChange: (value: string) => void;
+  readonly publicDomain: string;
+  readonly disabled?: boolean;
 }
 
 export const PrettyUrlInput = ({ value, onChange, publicDomain, disabled = false }: PrettyUrlInputProps) => {

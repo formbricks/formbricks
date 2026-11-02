@@ -20,11 +20,11 @@ import { TWorkspaceLayoutData } from "@/modules/workspaces/types/workspace-auth"
 type TCookieStore = Awaited<ReturnType<typeof cookies>>;
 
 interface WorkspaceLayoutProps {
-  layoutData: TWorkspaceLayoutData;
+  readonly layoutData: TWorkspaceLayoutData;
   // Resolved by the parent layout before the `page` authorization surface opens. Reading `cookies()`
   // here would race a mid-render request close (ENG-3375).
-  cookieStore: TCookieStore;
-  children?: React.ReactNode;
+  readonly cookieStore: TCookieStore;
+  readonly children?: React.ReactNode;
 }
 
 // Response-limit warning for Hobby (free) plan: 200 = 80% of the 250/mo cap, 250 = limit reached.

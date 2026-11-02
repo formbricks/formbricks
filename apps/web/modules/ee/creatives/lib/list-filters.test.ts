@@ -1,42 +1,54 @@
 import { describe, expect, test } from "vitest";
-import {
-  INITIAL_CREATIVE_FILTERS,
-  type TCreativeListFilters,
-  hasActiveCreativeFilters,
-  parseStoredCreativeFilters,
-} from "./list-filters";
+import type { TTableFilter } from "@/modules/ui/components/table-toolbar/lib/types";
+import { setShowArchived, toCreativeListFilters } from "./list-filters";
 
-describe("hasActiveCreativeFilters", () => {
-  test("ignores the sort and a blank search", () => {
-    expect(hasActiveCreativeFilters({ ...INITIAL_CREATIVE_FILTERS, sortBy: "name", name: "  " })).toBe(false);
-    expect(hasActiveCreativeFilters({ ...INITIAL_CREATIVE_FILTERS, types: ["banner"] })).toBe(true);
-    expect(hasActiveCreativeFilters({ ...INITIAL_CREATIVE_FILTERS, displayStatuses: ["archived"] })).toBe(
-      true
-    );
-  });
-});
+const status = (...values: string[]): TTableFilter => ({ property: "status", operator: "in", values });
 
-describe("parseStoredCreativeFilters", () => {
-  test("reads back filters the list stored", () => {
-    const stored: TCreativeListFilters = {
+describe("toCreativeListFilters", () => {
+  test("no filters ask for the API default: live creatives, newest edit first", () => {
+    expect(toCreativeListFilters([], "  notice ", "updatedAt")).toEqual({
       name: "notice",
-      displayStatuses: ["active", "scheduled"],
-      types: ["feedbackButton"],
-      sortBy: "createdAt",
-    };
-
-    expect(parseStoredCreativeFilters(JSON.stringify(stored))).toEqual(stored);
+      displayStatuses: [],
+      types: [],
+      sortBy: "updatedAt",
+    });
   });
 
-  test("gives up on anything else, so the toolbar falls back to its defaults", () => {
-    expect(parseStoredCreativeFilters(null)).toBeNull();
-    expect(parseStoredCreativeFilters("{not json")).toBeNull();
+  test("ticked statuses and types are what the API is asked for", () => {
     expect(
-      parseStoredCreativeFilters(JSON.stringify({ ...INITIAL_CREATIVE_FILTERS, displayStatuses: ["live"] }))
-    ).toBeNull();
-    // The mock list stored its filters under other names and spellings.
+      toCreativeListFilters(
+        [status("active", "paused"), { property: "type", operator: "in", values: ["banner"] }],
+        "",
+        "name"
+      )
+    ).toMatchObject({ displayStatuses: ["active", "paused"], types: ["banner"], sortBy: "name" });
+  });
+
+  test("Show archived adds archived on top of the picked statuses, or of every live one", () => {
+    expect(toCreativeListFilters(setShowArchived([status("draft")], true), "", "updatedAt")).toMatchObject({
+      displayStatuses: ["draft", "archived"],
+    });
+    expect(toCreativeListFilters(setShowArchived([], true), "", "updatedAt")?.displayStatuses).toEqual([
+      "draft",
+      "scheduled",
+      "active",
+      "paused",
+      "closed",
+      "archived",
+    ]);
+  });
+
+  test("filters that exclude every status match nothing", () => {
     expect(
-      parseStoredCreativeFilters(JSON.stringify({ name: "", status: [], type: ["feedback_button"] }))
+      toCreativeListFilters(
+        [status("draft"), { property: "status", operator: "notEquals", values: ["draft"] }],
+        "",
+        "updatedAt"
+      )
     ).toBeNull();
+  });
+
+  test("an unknown sort in the URL falls back to the default", () => {
+    expect(toCreativeListFilters([], "", "runs")?.sortBy).toBe("updatedAt");
   });
 });

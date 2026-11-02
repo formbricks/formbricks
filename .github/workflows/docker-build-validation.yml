@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       force_local_builder:
-        description: Validate the fallback Docker builder even when Depot credentials are available
+        description: Use an isolated GitHub runner instead of the persistent Blacksmith builder
         type: boolean
         required: false
         default: false
@@ -58,7 +58,7 @@ jobs:
         run: pnpm install --frozen-lockfile --config.platform=linux --config.architecture=x64
 
       - name: Test maintenance, development preparation and release tagging
-        run: pnpm exec vitest run docker/__tests__/maintenance-upgrade.test.ts scripts/setup-dev-env.test.ts scripts/dev-authzed-up.test.ts .github/actions/build-and-push-docker/ghcr-tags.test.ts
+        run: pnpm exec vitest run docker/__tests__/maintenance-upgrade.test.ts scripts/setup-dev-env.test.ts scripts/dev-authzed-up.test.ts .github/actions/prepare-docker-image/ghcr-tags.test.ts
 
       - name: Build web workspace dependencies
         run: pnpm build --filter=@formbricks/web^...
@@ -163,9 +163,9 @@ jobs:
 
   validate-docker-build:
     name: Validate Docker Build
-    # Playwright 1.58.2 supports Ubuntu 24.04; ubuntu-latest can select unsupported 26.04.
-    runs-on: ubuntu-24.04
-    # Forks cannot access Depot credentials and need time for a cold Node source build.
+    # Pin the isolated runner to Ubuntu 24.04, supported by the browser checks.
+    runs-on: ${{ !inputs.force_local_builder && github.event_name != 'merge_group' && !github.event.repository.fork && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && 'blacksmith-16vcpu-ubuntu-2404' || 'ubuntu-24.04' }}
+    # Forks and merge groups (which can include forks) use isolated GitHub runners.
     timeout-minutes: 180
     permissions:
       contents: read
@@ -173,6 +173,7 @@ jobs:
     # Public fixtures for this disposable validation environment, including Dependabot/fork runs.
     # These values must never authenticate to external services.
     env:
+      BLACKSMITH_BUILD: ${{ !inputs.force_local_builder && github.event_name != 'merge_group' && !github.event.repository.fork && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
       DUMMY_DATABASE_URL: postgresql://test:test@127.0.0.1:5432/formbricks
       DUMMY_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
 
@@ -200,6 +201,7 @@ jobs:
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
+        if: env.BLACKSMITH_BUILD != 'true'
         uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with:
           egress-policy: audit
@@ -213,24 +215,15 @@ jobs:
         uses: ./.github/actions/setup-image-smoke
 
       - name: Set up Docker Buildx
+        if: env.BLACKSMITH_BUILD != 'true'
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
-      - name: Select Docker builder
-        id: docker-builder
-        shell: bash
-        env:
-          DEPOT_PROJECT_TOKEN: ${{ secrets.DEPOT_PROJECT_TOKEN }}
-          FORCE_LOCAL_BUILDER: ${{ inputs.force_local_builder }}
-        run: |
-          if [[ "$FORCE_LOCAL_BUILDER" != "true" && -n "$DEPOT_PROJECT_TOKEN" ]]; then
-            echo "depot=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "depot=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Set up Depot CLI
-        if: steps.docker-builder.outputs.depot == 'true'
-        uses: depot/setup-action@91bc8495a33ebfc504ffc89e5674379ccf23c29c # v1.7.2
+      - name: Set up persistent PR Docker builder
+        if: env.BLACKSMITH_BUILD == 'true'
+        uses: useblacksmith/setup-docker-builder@19215110ab936351210feebdfa5b440b4493e184 # v2.2.0
+        with:
+          cache-key: apps/web/Dockerfile-pr-amd64
+          nofallback: true
 
       - name: Verify Valkey Image Platforms
         shell: bash
@@ -250,14 +243,13 @@ jobs:
             any(.manifests[]; .platform.os == "linux" and .platform.architecture == "arm64")
           ' <<<"$manifest"
 
-      # Reuse the release builder's persistent Node compilation and pnpm caches. Load the PR image
-      # onto this runner so every runtime check below still exercises the current checkout.
+      # PRs have their own cache; forks cannot read or write trusted builder state.
+      # Load the current image so all runtime checks exercise this checkout.
       - name: Build Docker Image
-        if: steps.docker-builder.outputs.depot == 'true'
-        uses: depot/build-push-action@98e78adca7817480b8185f474a400b451d74e287 # v1.18.0
+        id: build
+        if: env.BLACKSMITH_BUILD == 'true'
+        uses: useblacksmith/build-push-action@9b0579bbec7a6cad2f171596c57e7ac1e7658850 # v2.3.0
         with:
-          project: tw0fqmsx3c
-          token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
           context: .
           file: ./apps/web/Dockerfile
           platforms: linux/amd64
@@ -265,6 +257,7 @@ jobs:
           push: false
           load: true
           build-args: |
+            NODE_BUILD_JOBS=12
             FORMBRICKS_DEPLOYMENT_ID=${{ github.sha }}-pr
             FORMBRICKS_BUILD_VARIANT=pr
           tags: formbricks-test:${{ github.sha }}
@@ -277,8 +270,8 @@ jobs:
             cubejs_api_url=http://localhost:4000
             cubejs_api_secret=build-time-placeholder
 
-      - name: Build Docker Image without Depot credentials
-        if: steps.docker-builder.outputs.depot == 'false'
+      - name: Build Docker Image on isolated GitHub runner
+        if: env.BLACKSMITH_BUILD != 'true'
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         env:
           GITHUB_SHA: ${{ github.sha }}
@@ -778,3 +771,13 @@ jobs:
           node docker/smoke-next-browser.mjs http://localhost:3000
 
           echo "✨ Docker validation complete - all checks passed!"
+
+      - name: Remove PR image from the runner cache
+        if: ${{ always() && env.BLACKSMITH_BUILD == 'true' && steps.build.outcome == 'success' }}
+        run: docker image rm "formbricks-test:$GITHUB_SHA"
+
+      - name: Bound persistent PR build cache
+        if: ${{ !cancelled() && env.BLACKSMITH_BUILD == 'true' && (steps.build.outcome == 'success' || steps.build.outcome == 'failure') }}
+        run: |
+          docker buildx prune --force --max-used-space 30gb
+          docker buildx du >> "$GITHUB_STEP_SUMMARY"

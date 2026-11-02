@@ -106,6 +106,8 @@ export type TCreativeLanguagesForm = {
   others: { code: string; enabled: boolean }[];
   /** Keyed by the codes in `others`. */
   texts: Record<string, TCreativeTranslation>;
+  /** "Use browser language by default"; `null` was never chosen and is off, as on surveys. */
+  autoSelectLanguage: boolean | null;
 };
 
 /** The Settings tab: Show on, Show when and Share of visitors (the v3 `distribution` group). */
@@ -184,6 +186,7 @@ const toLanguagesForm = (resource: TCreativeResource): TCreativeLanguagesForm =>
     defaultLanguage: resource.defaultLanguage,
     others,
     texts: Object.fromEntries(others.map(({ code }) => [code, toTranslation(resource, code)])),
+    autoSelectLanguage: resource.autoSelectLanguage,
   };
 };
 
@@ -312,6 +315,7 @@ export const buildCreativePatch = (
 ): TCreativePatchBody => ({
   name: form.name.trim(),
   ...toLanguagesBody(form.languages, resource),
+  autoSelectLanguage: form.languages.autoSelectLanguage,
   content: toContentBody(form, resource),
   destination: toDestinationBody(form),
   styling: toStylingBody(form.styling),

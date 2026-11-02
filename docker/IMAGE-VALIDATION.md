@@ -17,13 +17,45 @@ not runtime configuration or secrets. Local Docker builds need neither argument;
 they receive a local identity during compilation. Do not override deployment identity
 when starting an already-built image.
 
-Release workflows save candidates in Depot's private build registry. They publish no candidate
-tags or unverified digests to GHCR/ECR. After validation, `depot push` copies the saved build
-to explicit release tags and the workflow checks every destination digest against the tested
-private digest. The saved build ID is also checked against that digest before copying.
-Do not use multi-platform `push-by-digest` with Depot here: its merge step can create an
-implicit `latest` tag. Do not delete GHCR package versions to clean up temporary tags;
-a version may also carry published release tags.
+Release workflows build AMD64 and ARM64 candidates on native Blacksmith runners and
+assemble their index under run-specific tags in the existing destination repository.
+Cloud builds use ECR; community and experimental builds use their respective GHCR
+packages. Candidates have the destination repository's normal visibility. Version,
+`latest`, and deployment tags are assigned only after validation. See
+[Blacksmith setup and trials](blacksmith-trial.md) for validation commands.
+
+After validation, `skopeo copy --all --preserve-digests` applies the explicit release
+tags within that same repository. The workflow checks every destination against the
+tested index digest and signs GHCR images. Authentication is specific to the chosen
+registry; community builds do not need AWS access.
+
+**Do not delete GHCR package versions to clean up candidate tags.** GHCR deletes
+the whole version (digest), not just the selected tag. A `blacksmith-candidate-*`
+tag can share its digest with a published version, `latest`, or a branch alias;
+deleting that package version removes those release tags too. Check every tag on
+the digest before any cleanup, and preserve released images and their signatures.
+
+Candidate tags are retained for diagnosis and retries; this workflow does not
+remove them or configure expiry. An ECR policy that expires only untagged images
+will not remove images still carrying candidate tags. Verify the repository's
+live lifecycle policy before assuming candidates age out. Do not add a blanket
+candidate-prefix expiration rule: ECR expires the image, which may also carry
+release or deployment tags. Retention changes need to protect every released
+digest, including architecture manifests referenced by a published index.
+
+## Build-provider credentials
+
+Native release builds run on Blacksmith VMs with registry push credentials:
+the existing ECR push role for cloud builds or a `packages: write` token for GHCR,
+plus the Sentry upload token when configured. These credentials are not limited
+to candidate tags; they can also update release or deployment tags. The workflow
+gates normal promotion, but those gates are not an IAM restriction on the builder.
+`harden-runner` does not run on these Blacksmith VMs. This extends trust in
+Blacksmith beyond the existing E2E workload and must be considered at cutover.
+Preparation receives only a Sentry-presence flag; the actual token is used by
+the build job. PR validation uses public disposable fixtures and no publish credentials.
+
+## Native candidate validation
 
 Separate AMD64 and ARM64 jobs validate the exact index digest in parallel on matching native
 runners. They do not install QEMU or pull different architectures into the same Docker image
@@ -98,9 +130,11 @@ repeat with warm caches, and run the same verifier/browser checks on each digest
 the release Sentry configuration, since PR builds intentionally omit upload credentials.
 
 Failed candidate validation leaves deployment tags unchanged. Keep its digest and failed-check
-output and private build ID for diagnosis, then rerun validation of that digest.
-Private pulls require the existing Depot project credential and a build-scoped pull token. Use the explicit repair option
-when the application needs to be rebuilt.
+output for diagnosis, then rerun validation of that digest while it remains available
+under the registry's existing retention settings. ECR pulls use the existing AWS OIDC
+role; GHCR pulls use the workflow's package permissions. If an image has been removed,
+start a new build and validate its digest. Use the explicit repair option when the
+application needs to be rebuilt.
 
 Registry writes to multiple tags are not transactional. A failure after promotion begins
 can leave only some tags updated, including a tag already consumed by a deployment controller.

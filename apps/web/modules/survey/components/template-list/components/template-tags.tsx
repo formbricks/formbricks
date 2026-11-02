@@ -11,8 +11,8 @@ import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { getChannelMapping, getIndustryMapping, getRoleMapping } from "../lib/utils";
 
 interface TemplateTagsProps {
-  template: TTemplate;
-  selectedFilter: TTemplateFilter[];
+  readonly template: TTemplate;
+  readonly selectedFilter: TTemplateFilter[];
 }
 
 type NonNullabeChannel = NonNullable<TWorkspaceConfigChannel>;

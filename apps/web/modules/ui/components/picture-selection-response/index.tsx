@@ -6,10 +6,10 @@ import { isExternalImageSrc } from "@/lib/image-hosts";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 
 interface PictureSelectionResponseProps {
-  choices: { id: string; imageUrl: string }[];
-  selected: string | number | string[];
-  isExpanded?: boolean;
-  showId: boolean;
+  readonly choices: { id: string; imageUrl: string }[];
+  readonly selected: string | number | string[];
+  readonly isExpanded?: boolean;
+  readonly showId: boolean;
 }
 
 export const PictureSelectionResponse = ({

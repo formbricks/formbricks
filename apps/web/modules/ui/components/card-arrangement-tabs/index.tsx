@@ -11,10 +11,10 @@ import { StraightCardArrangementIcon } from "@/modules/ui/components/icons/strai
 import { StylingTabs } from "@/modules/ui/components/styling-tabs";
 
 interface CardArrangementTabsProps {
-  surveyType: TSurveyType;
-  activeCardArrangement: TCardArrangementOptions;
-  setActiveCardArrangement: (arrangement: TCardArrangementOptions, surveyType: TSurveyType) => void;
-  disabled?: boolean;
+  readonly surveyType: TSurveyType;
+  readonly activeCardArrangement: TCardArrangementOptions;
+  readonly setActiveCardArrangement: (arrangement: TCardArrangementOptions, surveyType: TSurveyType) => void;
+  readonly disabled?: boolean;
 }
 
 export const CardArrangementTabs = ({

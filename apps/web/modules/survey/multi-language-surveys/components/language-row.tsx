@@ -8,11 +8,11 @@ import { Input } from "@/modules/ui/components/input";
 import { LanguageSelect } from "./language-select";
 
 interface LanguageRowProps {
-  language: Language;
-  isEditing: boolean;
-  onLanguageChange: (newLanguage: Language) => void;
-  onDelete: () => void;
-  locale: TUserLocale;
+  readonly language: Language;
+  readonly isEditing: boolean;
+  readonly onLanguageChange: (newLanguage: Language) => void;
+  readonly onDelete: () => void;
+  readonly locale: TUserLocale;
 }
 
 export function LanguageRow({ language, isEditing, onLanguageChange, onDelete, locale }: LanguageRowProps) {

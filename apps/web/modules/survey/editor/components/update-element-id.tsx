@@ -14,10 +14,10 @@ import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 
 interface UpdateElementIdProps {
-  localSurvey: TSurvey;
-  element: TSurveyElement;
-  elementIdx: number;
-  updateElement: (elementIdx: number, updatedAttributes: any) => void;
+  readonly localSurvey: TSurvey;
+  readonly element: TSurveyElement;
+  readonly elementIdx: number;
+  readonly updateElement: (elementIdx: number, updatedAttributes: any) => void;
 }
 
 export const UpdateElementId = ({

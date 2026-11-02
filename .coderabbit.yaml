@@ -87,15 +87,15 @@ reviews:
     - "!packages/api-v3-schemas/src/generated/**"
     # Agent skills vendored from upstream and pinned by hash in skills-lock.json; the next
     # `skills` update overwrites local edits. Formbricks-specific behaviour belongs in
-    # docs/agents/, which is reviewed. nextjs-docs is ours, so it stays in review, and so
-    # does skills-lock.json: it records each skill's source and hash.
-    - "!.agents/skills/!(nextjs-docs)/**"
+    # docs/agents/, which is reviewed. skills-lock.json stays in review: it records each skill's
+    # source and hash.
+    - "!.agents/skills/**"
     - "!.claude/skills/**"
 
   path_instructions:
     - path: "**/*.test.tsx"
       instructions: |
-        AGENTS.md forbids React component unit tests in this repo. If this file is newly added, say
+        CODING_STANDARDS.md forbids React component unit tests in this repo. If this file is newly added, say
         so and ask for the logic under test to move into a `.ts` module with a unit test. Do not ask
         for a Playwright spec instead: deleting a `.test.tsx` creates no E2E obligation, and a
         component is not an E2E subject. Do not raise this on edits to the handful of `.test.tsx`
@@ -103,7 +103,7 @@ reviews:
 
     - path: "**/*.tsx"
       instructions: |
-        - Never suggest adding unit tests for `.tsx` files — AGENTS.md forbids them, and their
+        - Never suggest adding unit tests for `.tsx` files — CODING_STANDARDS.md forbids them, and their
           absence is not a coverage gap to fill somewhere else. Ask for a Playwright spec only when
           the diff changes a feature's happy path or a journey across several surfaces, and then ask
           for it in that feature's existing spec — or, if the diff opens a feature area the suite does
@@ -114,7 +114,6 @@ reviews:
         - New client data flows go through an `/api/v3` route with TanStack Query, not a new Server
           Action. Server data lives in the query cache only — flag it being mirrored into
           `useState` or Jotai, and flag `router.refresh()` used as a data-refresh mechanism.
-        - Component props must be `Readonly<>` (e.g. `({ children }: Readonly<Props>)`).
         - All user-facing strings must go through `t()` from `react-i18next` with lowercase
           dot-nested keys, never hardcoded text.
         - Dates and times must use the shared formatting helpers, never ad-hoc `date-fns`, `Intl`,
@@ -129,17 +128,18 @@ reviews:
 
     - path: "**/*.test.ts"
       instructions: |
-        Judge tests by confidence, not coverage (AGENTS.md "Testing Guidelines"):
+        Judge tests by confidence, not coverage (CODING_STANDARDS.md "Testing Guidelines"):
         - Assert on inputs and outputs. Flag tests that lock implementation details, markup, or
           snapshots, and tests that cannot fail (no meaningful assertion, everything mocked).
         - Do not request extra tests purely to raise coverage, and do not request tests for `.tsx`.
-        - Network and storage boundaries should be mocked via helpers from `@formbricks/*` and
-          mocks placed in a `__mocks__` directory.
+        - Module boundaries are mocked with `vi.mock`; where a shared `__mocks__` module exists
+          (e.g. `apps/web/lib/__mocks__/database.ts`) the test reuses it instead of redefining it.
+          Do not ask for a shared helper that does not exist.
 
     - path: "apps/web/playwright/**/*.spec.ts"
       instructions: |
         This suite is the critical path of every PR and every test is paid on every PR forever, so
-        cost is a review dimension here rather than a nit (AGENTS.md "Testing Guidelines"):
+        cost is a review dimension here rather than a nit (CODING_STANDARDS.md "Testing Guidelines"):
         - A new spec file is a finding unless it opens a feature area the suite does not cover yet
           (the spec filenames in `apps/web/playwright/` are the inventory — check before claiming an
           area is uncovered); the default is assertions or a `test.step` added to that feature's
@@ -191,7 +191,7 @@ reviews:
 
     - path: "{apps/web,packages}/**/*.{ts,tsx}"
       instructions: |
-        Performance is an explicit review dimension in this repo (AGENTS.md "Performance in Review"):
+        Performance is an explicit review dimension in this repo (CODING_STANDARDS.md "Performance in Review"):
         the patterns below reach `main` when nobody looks for them. Raise one where the diff
         introduces it:
         - N+1 work: a query, AI call or cross-service fetch issued inside a `for`/`map`/`Promise.all`
@@ -207,7 +207,7 @@ reviews:
           depend on each other, or many calls fired from a loop where one batch request would do.
         - Render amplification: one state change or parent update re-rendering a large subtree that
           does not depend on it (a context value rebuilt every render, unstable props into a big list).
-          Name the measured cost, not a missing `useMemo`; AGENTS.md rules out memoization for its
+          Name the measured cost, not a missing `useMemo`; CODING_STANDARDS.md rules out memoization for its
           own sake.
         - Large lists rendered in full with no pagination or virtualization.
         Quantify the cost against the data ("one query per response, ~5k on a 5k-response survey").
@@ -236,8 +236,10 @@ reviews:
 
     - path: "packages/database/migration/**/migration.ts"
       instructions: |
-        Data migrations must be idempotent, batched (never load a whole table into memory), and
-        safe to resume after a partial failure. Check transaction boundaries and timeouts.
+        Data migrations must be idempotent, bounded in memory (cursor reads, never a whole table at
+        once), and safe to resume after a partial failure. The runner wraps each data migration in one
+        interactive transaction, so do not ask for batching inside it; check that the work fits the
+        runner's transaction timeout.
 
     - path: "apps/web/app/api/v1/**"
       instructions: |
@@ -317,6 +319,9 @@ reviews:
         Ships to end users' websites as an embedded bundle. Be strict about added dependencies and
         bundle size, browser compatibility, and anything that leaks respondent data. No Node-only
         APIs. Public SDK signatures are a compatibility contract — changes are breaking.
+        The host page is hostile (CODING_STANDARDS.md "Survey Bundles"): flag global CSS (`*`,
+        `:root`, `@property`), buttons without `type="button"`, code that needs `eval`, and reliance
+        on host globals.
   abort_on_close: true
   disable_cache: false
 
@@ -635,7 +640,8 @@ knowledge_base:
     enabled: true
   code_guidelines:
     enabled: true
-    filePatterns: []
+    filePatterns:
+      - "**/CODING_STANDARDS.md"
   learnings:
     scope: auto
     # Not 0. A learning is a durable review rule, and at 0 it applies immediately —

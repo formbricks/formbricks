@@ -45,6 +45,7 @@ describe("getInviteRateLimitConfig", () => {
       interval: 3600 * 24,
       allowedPerInterval: 75,
       namespace: "action:invite-member",
+      failClosed: true,
     });
     expect(getBulkInvitePermission).not.toHaveBeenCalled();
   });
@@ -77,13 +78,18 @@ describe("getInviteRateLimitConfig", () => {
 
     expect(reserveRateLimitUsage).toHaveBeenNthCalledWith(
       1,
-      { interval: 3600 * 24, allowedPerInterval: 75, namespace: "action:invite-member" },
+      { interval: 3600 * 24, allowedPerInterval: 75, namespace: "action:invite-member", failClosed: true },
       "org_1",
       25
     );
     expect(reserveRateLimitUsage).toHaveBeenNthCalledWith(
       2,
-      { interval: 3600 * 24, allowedPerInterval: 75, namespace: "action:invite-member:user" },
+      {
+        interval: 3600 * 24,
+        allowedPerInterval: 75,
+        namespace: "action:invite-member:user",
+        failClosed: true,
+      },
       "user_1",
       25
     );

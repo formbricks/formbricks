@@ -18,13 +18,13 @@ import { RatingResponse } from "@/modules/ui/components/rating-response";
 import { ResponseBadges } from "@/modules/ui/components/response-badges";
 
 interface RenderResponseProps {
-  responseData: TResponseDataValue;
-  element: TSurveyElement;
-  survey: TSurvey;
-  language: string | null;
-  locale: TUserLocale;
-  isExpanded?: boolean;
-  showId: boolean;
+  readonly responseData: TResponseDataValue;
+  readonly element: TSurveyElement;
+  readonly survey: TSurvey;
+  readonly language: string | null;
+  readonly locale: TUserLocale;
+  readonly isExpanded?: boolean;
+  readonly showId: boolean;
 }
 
 export const RenderResponse: React.FC<RenderResponseProps> = ({
@@ -156,7 +156,11 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
     case TSurveyElementTypeEnum.MultipleChoiceSingle:
     case TSurveyElementTypeEnum.Ranking:
       if (typeof responseData === "string" || typeof responseData === "number") {
-        const choiceId = getChoiceIdByValue(responseData.toString(), element);
+        const choiceId = getChoiceIdByValue(
+          responseData.toString(),
+          element,
+          getLanguageCode(survey.languages, language)
+        );
         return (
           <ResponseBadges
             items={[{ value: responseData.toString(), id: choiceId }]}
@@ -168,7 +172,7 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
         const itemsArray = responseData
           .filter((choice) => choice !== "")
           .map((choice) => {
-            const choiceId = getChoiceIdByValue(choice, element);
+            const choiceId = getChoiceIdByValue(choice, element, getLanguageCode(survey.languages, language));
             return { value: choice, id: choiceId };
           });
         return (

@@ -3,8 +3,8 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 
 interface ChartErrorBoundaryProps {
-  fallbackMessage: string;
-  children: ReactNode;
+  readonly fallbackMessage: string;
+  readonly children: ReactNode;
 }
 
 interface ChartErrorBoundaryState {

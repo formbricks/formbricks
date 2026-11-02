@@ -31,11 +31,11 @@ const allowedFileExtensions: TAllowedFileExtension[] = ["png", "jpeg", "jpg", "i
 const MAX_FAVICON_SIZE_MB = 0.1; // 100KB
 
 interface FaviconCustomizationSettingsProps {
-  organization: TOrganization;
-  hasWhiteLabelPermission: boolean;
-  workspaceId: string;
-  isReadOnly: boolean;
-  isStorageConfigured: boolean;
+  readonly organization: TOrganization;
+  readonly hasWhiteLabelPermission: boolean;
+  readonly workspaceId: string;
+  readonly isReadOnly: boolean;
+  readonly isStorageConfigured: boolean;
 }
 
 export const FaviconCustomizationSettings = ({

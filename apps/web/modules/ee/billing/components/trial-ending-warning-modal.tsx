@@ -11,17 +11,17 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/modules
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 days — long enough to outlive the trial's final days
 
 interface TrialEndingWarningModalProps {
-  daysRemaining: number;
-  billingHref: string;
+  readonly daysRemaining: number;
+  readonly billingHref: string;
   /** The trial ends on Hobby on Stripe's side; only then may the copy promise no charge. */
-  endsOnHobby: boolean;
+  readonly endsOnHobby: boolean;
 }
 
 export const TrialEndingWarningModal = ({
   daysRemaining,
   billingHref,
   endsOnHobby,
-}: Readonly<TrialEndingWarningModalProps>) => {
+}: TrialEndingWarningModalProps) => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
 

@@ -2,9 +2,9 @@ import { useState } from "react";
 import { ColorPicker } from "@/modules/ui/components/color-picker";
 
 interface ColorSurveyBgProps {
-  handleBgChange: (bg: string, bgType: string) => void;
-  colors: string[];
-  background: string;
+  readonly handleBgChange: (bg: string, bgType: string) => void;
+  readonly colors: string[];
+  readonly background: string;
 }
 
 export const ColorSurveyBg = ({ handleBgChange, colors, background }: ColorSurveyBgProps) => {

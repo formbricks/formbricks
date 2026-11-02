@@ -81,7 +81,12 @@ describe("v3 list meta contract", () => {
     // Names the composers that exist today so a broken glob cannot pass this vacuously, without
     // pinning the set — a fourth composer is covered by the loop, not a failure here.
     expect(composing).toEqual(
-      expect.arrayContaining(["CursorPaginationMeta.yml", "ResponseListMeta.yml", "SurveyListMeta.yml"])
+      expect.arrayContaining([
+        "CountedListMeta.yml",
+        "CursorPaginationMeta.yml",
+        "ResponseListMeta.yml",
+        "SurveyListMeta.yml",
+      ])
     );
   });
 
@@ -94,10 +99,15 @@ describe("v3 list meta contract", () => {
       properties: ["limit", "nextCursor", "totalCount", "workspaceSurveyCount"],
       required: ["limit", "nextCursor", "totalCount", "workspaceSurveyCount"],
     });
-    // `action-classes` and `contact-attribute-keys` both point here.
+    // `action-classes` and the workflow-run list point here.
     expect(await resolveMeta("CursorPaginationMeta.yml")).toEqual({
       properties: ["limit", "nextCursor"],
       required: ["limit", "nextCursor"],
+    });
+    // `contacts`, `segments`, `contact-attribute-keys` and the workflow list point here.
+    expect(await resolveMeta("CountedListMeta.yml")).toEqual({
+      properties: ["limit", "nextCursor", "totalCount"],
+      required: ["limit", "nextCursor", "totalCount"],
     });
   });
 

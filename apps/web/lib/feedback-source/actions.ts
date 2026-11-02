@@ -23,10 +23,7 @@ import {
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
-import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getContactIdsByUserIds } from "@/modules/ee/unify-feedback/lib/contacts";
-import { listFeedbackRecords } from "@/modules/hub/service";
-import type { FeedbackRecordListParams, FeedbackRecordListResponse } from "@/modules/hub/types";
 import { assertFeedbackSourceDirectoryAccess } from "./access";
 import { importHistoricalResponses } from "./import";
 import { resolveFormbricksMappingsInput } from "./mappings";
@@ -371,68 +368,6 @@ export const importHistoricalResponsesAction = authenticatedActionClient
       ctx.auditLoggingCtx.newObject = importResult;
       return importResult;
     })
-  );
-
-const ZListFeedbackRecordsAction = z.object({
-  workspaceId: ZId,
-  frdId: ZId,
-  limit: z.number().min(1).max(1000).optional(),
-  cursor: z.string().optional(),
-  sourceType: z.string().optional(),
-  fieldType: z
-    .enum(["text", "categorical", "nps", "csat", "ces", "rating", "number", "boolean", "date"])
-    .optional(),
-  since: z.string().optional(),
-  until: z.string().optional(),
-});
-
-export const listFeedbackRecordsAction = authenticatedActionClient
-  .inputSchema(ZListFeedbackRecordsAction)
-  .action(
-    async ({
-      ctx,
-      parsedInput,
-    }: {
-      ctx: AuthenticatedActionClientCtx;
-      parsedInput: z.infer<typeof ZListFeedbackRecordsAction>;
-    }): Promise<FeedbackRecordListResponse> => {
-      await assertCan({ type: "user", id: ctx.user.id }, "workspace.read", {
-        type: "workspace",
-        id: parsedInput.workspaceId,
-      });
-
-      // Verify FRD belongs to workspace's accessible FRDs
-      const frds = await getFeedbackDirectoriesByWorkspaceId(parsedInput.workspaceId);
-      if (!frds.some((f) => f.id === parsedInput.frdId)) {
-        throw new Error("Feedback directory not accessible");
-      }
-      await assertFeedbackSourceDirectoryAccess(
-        ctx.user.id,
-        parsedInput.frdId,
-        parsedInput.workspaceId,
-        "read"
-      );
-
-      const params: FeedbackRecordListParams = {
-        tenant_id: parsedInput.frdId,
-        limit: parsedInput.limit ?? 50,
-      };
-      if (parsedInput.cursor) params.cursor = parsedInput.cursor;
-      // One-element OR lists: Hub 0.8.4 made these filters repeatable, this caller stays single-valued.
-      if (parsedInput.sourceType) params.source_type = [parsedInput.sourceType];
-      if (parsedInput.fieldType) params.field_type = [parsedInput.fieldType];
-      if (parsedInput.since) params.since = parsedInput.since;
-      if (parsedInput.until) params.until = parsedInput.until;
-
-      const result = await listFeedbackRecords(params);
-      if (result.error || !result.data) {
-        // listFeedbackRecords already logged this with the full error and a Hub-unreachable hint;
-        // re-logging here only produced a second, thinner line per request.
-        throw new Error(result.error?.message ?? "Failed to load feedback records");
-      }
-
-      return result.data;
-    }
   );
 
 const ZGetFeedbackRecordContactsAction = z.object({

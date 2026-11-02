@@ -36,7 +36,7 @@ We use Vitest as our primary testing framework. All unit tests follow these conv
 
 3. **Coverage**
    - Coverage is measured, not targeted: confidence over coverage, and no test exists to move the
-     number (see `AGENTS.md`, "Testing Guidelines")
+     number (see `CODING_STANDARDS.md`, "Testing Guidelines")
    - The repo enforces exactly one Vitest threshold: `modules/auth/lib/**` at 80%
      (`apps/web/vite.config.mts`). Everything else is reported — `pnpm test:coverage` emits lcov and
      the SonarQube workflow uploads it, with the quality gate configured in SonarQube, not here
@@ -48,8 +48,8 @@ We use Vitest as our primary testing framework. All unit tests follow these conv
 
 ### End-to-End Testing with Playwright
 
-E2E tests are located in `apps/web/playwright/` and focus on critical user workflows. `AGENTS.md` is the
-source of truth for when one is warranted; the short version:
+E2E tests are located in `apps/web/playwright/` and focus on critical user workflows. `CODING_STANDARDS.md`
+is the source of truth for when one is warranted; the short version:
 
 1. **Level.** Prove a behavior at the cheapest level that can fail on it. A feature's happy path or a
    journey across several surfaces is E2E. Business logic, invariants and anything pure is a unit test on

@@ -4,9 +4,9 @@ import type { TLanguageMatch } from "./types";
  * Which language a visitor gets on a creative (ENG-4003), decided on the page with nothing to load: the
  * server precomputes each language list (`TLanguageMatch`) with the full matcher (`resolveSurveyLanguage`
  * in `@formbricks/i18n-utils`), so the SDK only looks the visitor's language up. The same order as that
- * matcher: the language the site set, then the browser's when its survey uses browser language, then the
- * default. The server builds the list's keys with `toLanguageKey` and `toLanguageBase` from here, so both
- * sides normalize a code the same way.
+ * matcher: the language the site set, then the browser's when the creative uses browser language
+ * (ENG-6871), then the default. The server builds the list's keys with `toLanguageKey` and
+ * `toLanguageBase` from here, so both sides normalize a code the same way.
  */
 
 /** What the SDK knows of the visitor's language. */

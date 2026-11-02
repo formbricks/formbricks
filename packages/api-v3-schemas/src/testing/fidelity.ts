@@ -22,9 +22,26 @@ export const toJsonSchema = (schema: z.ZodType): JsonObject => {
     reused: "inline",
     cycles: "ref",
   });
-  const plain = cloneJson(json as JsonValue);
+  const plain = expandTypeUnions(cloneJson(json as JsonValue));
   if (!isJsonObject(plain)) throw new Error("z.toJSONSchema did not return an object");
   return plain;
+};
+
+/**
+ * Since zod 4.6, a union of bare primitives (`z.union([z.string(), z.number()])`) is emitted as one
+ * `type: ["string", "number"]` instead of an `anyOf` per member. Both accept the same values, but the
+ * differ compares unions member by member, so rewrite the collapsed form back into `anyOf`. A single
+ * type plus `"null"` stays as it is — that is how nullable has always been emitted.
+ */
+const expandTypeUnions = (value: JsonValue): JsonValue => {
+  if (Array.isArray(value)) return value.map(expandTypeUnions);
+  if (!isJsonObject(value)) return value;
+  const node: JsonObject = Object.fromEntries(
+    Object.entries(value).map(([key, child]) => [key, expandTypeUnions(child)])
+  );
+  if (!Array.isArray(node.type) || node.type.filter((type) => type !== "null").length < 2) return node;
+  const { type, ...rest } = node;
+  return { ...rest, anyOf: type.map((member) => ({ type: member })) };
 };
 
 /** Peel optional/nullable/default/readonly wrappers off a schema. */

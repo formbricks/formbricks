@@ -20,12 +20,12 @@ import { cn } from "@/modules/ui/lib/utils";
 const Separator = () => <div>|</div>;
 
 interface SelectedRowSettingsProps<T> {
-  table: Table<T>;
-  updateRowList: (rowId: string[]) => void;
-  type: "response" | "contact" | "attribute";
-  deleteAction: (id: string, params?: Record<string, boolean>) => Promise<void>;
-  downloadRowsAction?: (rowIds: string[], format: "xlsx" | "csv") => Promise<void>;
-  isQuotasAllowed: boolean;
+  readonly table: Table<T>;
+  readonly updateRowList: (rowId: string[]) => void;
+  readonly type: "response" | "contact" | "attribute";
+  readonly deleteAction: (id: string, params?: Record<string, boolean>) => Promise<void>;
+  readonly downloadRowsAction?: (rowIds: string[], format: "xlsx" | "csv") => Promise<void>;
+  readonly isQuotasAllowed: boolean;
 }
 
 export const SelectedRowSettings = <T,>({
