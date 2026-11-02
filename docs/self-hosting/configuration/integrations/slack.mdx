@@ -70,8 +70,8 @@ Still struggling or something not working as expected? [Join our Github Discussi
   * You can update the `go` script in your `apps/web/package.json` to include the `--experimental-https` flag. The
     command will look like: <br />
 
-    ```bash
-      "go": next dev --experimental-https -p 3000
+    ```json
+      {"scripts": {"go": "next dev --experimental-https -p 3000"}}
     ```
 
   * You also need to update the .env file in the `apps/web` directory to include the `WEBAPP_URL` as `https://localhost:3000` instead of `http://localhost:3000`.

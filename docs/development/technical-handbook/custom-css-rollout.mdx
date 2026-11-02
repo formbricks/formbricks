@@ -63,13 +63,15 @@ Run before each step above:
 
 ## SDK Handoff
 
-| SDK | Repository | Package | Version | Status |
-| --- | --- | --- | --- | --- |
-| JavaScript | `formbricks/js` | `@formbricks/js` | Pending release | Not published |
-| iOS | `formbricks/ios` | `FormbricksSDK` | Pending release | Not published |
-| Android | `formbricks/android` | `com.formbricks:android` | Pending release | Not published |
-| React Native | `formbricks/react-native` | `@formbricks/react-native` | Pending release | Not published |
-| Flutter | `formbricks/flutter` | `formbricks` | Pending release | Not published |
+Use [SDK Compatibility](/surveys/website-app-surveys/sdk-compatibility) as the publication status record.
+
+| SDK | Repository | Package |
+| --- | --- | --- |
+| JavaScript | `formbricks/js` | `@formbricks/js` |
+| iOS | `formbricks/ios` | `FormbricksSDK` |
+| Android | `formbricks/android` | `com.formbricks:android` |
+| React Native | `formbricks/react-native` | `@formbricks/react-native` |
+| Flutter | `formbricks/flutter` | `formbricks` |
 
 Every mobile SDK must pass `customCss: { workspace, survey }` explicitly, from `workspaceSettings.customCss` and each `survey.customCss`, and feature-detect `formbricksSurveys.setAppearance`. The renderer applies Custom CSS only from that prop, so an SDK that does not pass it renders no Custom CSS at all rather than half of it.
 

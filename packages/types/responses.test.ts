@@ -84,6 +84,22 @@ describe("ZResponseInput.meta", () => {
 
     expect(parsed.meta).toStrictEqual({ pagePath: "/checkout" });
   });
+
+  test("drops an openedByCreativeId that isn't text instead of refusing the response", () => {
+    // The ingest routes keep the attribution only after checking it; a malformed one from any client
+    // must cost the attribution, never the answer.
+    const parsed = ZResponseInput.safeParse({
+      workspaceId: "clx0000000000000000000w1",
+      surveyId: "clx0000000000000000000s2",
+      finished: false,
+      data: {},
+      meta: { pagePath: "/checkout", openedByCreativeId: 42 },
+    });
+
+    expect(parsed.success).toBe(true);
+    expect(parsed.data?.meta?.pagePath).toBe("/checkout");
+    expect(parsed.data?.meta?.openedByCreativeId).toBeUndefined();
+  });
 });
 
 describe("ZResponseUpdate.meta", () => {

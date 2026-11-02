@@ -12,6 +12,8 @@ Follow the [upgrade-path table](/self-hosting/upgrade/paths) when starting on an
   [October security patch actions](/self-hosting/upgrade/versions/2026-10-security-patches).
 </Note>
 
+For the latest patch on this line, also read the [27 October patch actions](/self-hosting/upgrade/versions/2026-10-27-patches).
+
 ## Before
 
 - Applies to self-hosted 6.0 → 6.1 upgrades. From v5, complete the [6.0 prerequisites](/self-hosting/upgrade/versions/6.0) first.
@@ -21,6 +23,8 @@ Follow the [upgrade-path table](/self-hosting/upgrade/paths) when starting on an
 - Read the integration changes below before scheduling the upgrade.
 - The target runner builds and verifies response keyset indexes and backfills remaining Embedded Data and
   survey ownership. Allow time and disk/WAL headroom; require migration completion before reopening.
+- If you use chart-managed Envoy, configure a dedicated external Redis/Valkey backend; the bundled
+  Envoy Redis images are unavailable. See [Envoy Redis images](/self-hosting/upgrade/versions/6.1-runtime#envoy-redis-images).
 - Refresh Cube model files and add the Hub worker where absent. Review [runtime changes](/self-hosting/upgrade/versions/6.1-runtime).
 
 ## During

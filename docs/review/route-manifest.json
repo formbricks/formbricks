@@ -1,8 +1,8 @@
 {
-  "baseline_commit": "6a8e76651f73a12671275e1af91d07ec77809131",
-  "baseline_mdx_count": 247,
+  "baseline_commit": "0b36f5f630a3934b780ad6b87927c1d4f8e53d1c",
+  "baseline_mdx_count": 255,
   "coverage": "All public MDX structurally parsed; navigation, internal links and anchors checked. Targeted semantic/source review, not exhaustive factual or runtime validation. Generated API operation routes are not counted as orphaned MDX.",
-  "current_mdx_count": 284,
+  "current_mdx_count": 295,
   "existing_redirects_preserved": true,
   "new_redirects": [
     {
@@ -108,6 +108,14 @@
     {
       "destination": "/workflows/overview",
       "source": "/self-hosting/advanced/enterprise-features/workflows"
+    },
+    {
+      "destination": "/surveys/creatives/overview",
+      "source": "/self-hosting/advanced/enterprise-features/creatives"
+    },
+    {
+      "destination": "/docs/surveys/creatives/overview",
+      "source": "/docs/self-hosting/advanced/enterprise-features/creatives"
     }
   ],
   "review_date": "2026-10-27",
@@ -606,6 +614,16 @@
       "action": "keep",
       "navigation_after": true,
       "navigation_before": true,
+      "reason": "Retain incoming main content in its product or operator section.",
+      "route": "development/technical-handbook/creatives",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "development/technical-handbook/creatives"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
       "reason": "Retain useful existing content.",
       "route": "development/technical-handbook/cube-tenant-isolation",
       "runtime_validation": false,
@@ -641,6 +659,16 @@
       "runtime_validation": false,
       "structural_scan": true,
       "target": "development/technical-handbook/email-sending"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain incoming main content in its product or operator section.",
+      "route": "development/technical-handbook/license-check",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "development/technical-handbook/license-check"
     },
     {
       "action": "update",
@@ -873,7 +901,7 @@
       "target": "platform/features/integrations/zapier"
     },
     {
-      "action": "keep",
+      "action": "update",
       "navigation_after": true,
       "navigation_before": true,
       "reason": "Retain useful existing content.",
@@ -913,7 +941,7 @@
       "target": "platform/features/user-management/organizations-and-roles"
     },
     {
-      "action": "keep",
+      "action": "update",
       "navigation_after": true,
       "navigation_before": true,
       "reason": "Retain useful existing content.",
@@ -983,7 +1011,7 @@
       "target": "platform/what-is-formbricks"
     },
     {
-      "action": "redirect",
+      "action": "remove",
       "navigation_after": false,
       "navigation_before": true,
       "reason": "Consolidate duplicate setup or capability stub into its canonical guide.",
@@ -1003,7 +1031,7 @@
       "target": "self-hosting/advanced/enterprise-features/audit-logging"
     },
     {
-      "action": "redirect",
+      "action": "remove",
       "navigation_after": false,
       "navigation_before": true,
       "reason": "Consolidate duplicate setup or capability stub into its canonical guide.",
@@ -1013,7 +1041,17 @@
       "target": "platform/features/contacts"
     },
     {
-      "action": "redirect",
+      "action": "remove",
+      "navigation_after": false,
+      "navigation_before": true,
+      "reason": "Retain incoming main content in its product or operator section.",
+      "route": "self-hosting/advanced/enterprise-features/creatives",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/creatives/overview"
+    },
+    {
+      "action": "remove",
       "navigation_after": false,
       "navigation_before": true,
       "reason": "Consolidate duplicate setup or capability stub into its canonical guide.",
@@ -1023,7 +1061,7 @@
       "target": "unify-feedback/dashboards-charts"
     },
     {
-      "action": "redirect",
+      "action": "remove",
       "navigation_after": false,
       "navigation_before": true,
       "reason": "Consolidate duplicate setup or capability stub into its canonical guide.",
@@ -1033,7 +1071,7 @@
       "target": "platform/features/styling-theme"
     },
     {
-      "action": "redirect",
+      "action": "remove",
       "navigation_after": false,
       "navigation_before": true,
       "reason": "Consolidate duplicate setup or capability stub into its canonical guide.",
@@ -1043,7 +1081,7 @@
       "target": "self-hosting/configuration/auth-sso/open-id-connect"
     },
     {
-      "action": "redirect",
+      "action": "remove",
       "navigation_after": false,
       "navigation_before": true,
       "reason": "Consolidate duplicate setup or capability stub into its canonical guide.",
@@ -1053,7 +1091,7 @@
       "target": "self-hosting/configuration/auth-sso/saml-sso"
     },
     {
-      "action": "redirect",
+      "action": "remove",
       "navigation_after": false,
       "navigation_before": true,
       "reason": "Consolidate duplicate setup or capability stub into its canonical guide.",
@@ -1063,7 +1101,7 @@
       "target": "platform/features/user-management"
     },
     {
-      "action": "redirect",
+      "action": "remove",
       "navigation_after": false,
       "navigation_before": true,
       "reason": "Consolidate duplicate setup or capability stub into its canonical guide.",
@@ -1073,7 +1111,7 @@
       "target": "unify-feedback/overview"
     },
     {
-      "action": "redirect",
+      "action": "remove",
       "navigation_after": false,
       "navigation_before": true,
       "reason": "Consolidate duplicate setup or capability stub into its canonical guide.",
@@ -1083,7 +1121,7 @@
       "target": "platform/features/email-customization"
     },
     {
-      "action": "redirect",
+      "action": "remove",
       "navigation_after": false,
       "navigation_before": true,
       "reason": "Consolidate duplicate setup or capability stub into its canonical guide.",
@@ -1184,7 +1222,7 @@
     },
     {
       "action": "add",
-      "navigation_after": false,
+      "navigation_after": true,
       "navigation_before": false,
       "reason": "Provide a focused operator task, integration entry or extracted historical note.",
       "route": "self-hosting/configuration/ai-deployment",
@@ -1324,7 +1362,7 @@
     },
     {
       "action": "add",
-      "navigation_after": false,
+      "navigation_after": true,
       "navigation_before": false,
       "reason": "Provide a focused operator task, integration entry or extracted historical note.",
       "route": "self-hosting/configuration/docker-storage",
@@ -1383,7 +1421,7 @@
       "target": "self-hosting/configuration/integrations"
     },
     {
-      "action": "redirect",
+      "action": "remove",
       "navigation_after": false,
       "navigation_before": true,
       "reason": "Consolidate duplicate setup or capability stub into its canonical guide.",
@@ -1413,7 +1451,7 @@
       "target": "self-hosting/configuration/integrations/google-sheets"
     },
     {
-      "action": "redirect",
+      "action": "remove",
       "navigation_after": false,
       "navigation_before": true,
       "reason": "Consolidate duplicate setup or capability stub into its canonical guide.",
@@ -1443,7 +1481,7 @@
       "target": "self-hosting/configuration/integrations/slack"
     },
     {
-      "action": "redirect",
+      "action": "remove",
       "navigation_after": false,
       "navigation_before": true,
       "reason": "Consolidate duplicate setup or capability stub into its canonical guide.",
@@ -1491,6 +1529,16 @@
       "runtime_validation": false,
       "structural_scan": true,
       "target": "self-hosting/configuration/smtp"
+    },
+    {
+      "action": "add",
+      "navigation_after": true,
+      "navigation_before": false,
+      "reason": "Retain incoming main content in its product or operator section.",
+      "route": "self-hosting/configuration/spicedb-external-postgres",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/configuration/spicedb-external-postgres"
     },
     {
       "action": "update",
@@ -1684,7 +1732,7 @@
     },
     {
       "action": "add",
-      "navigation_after": false,
+      "navigation_after": true,
       "navigation_before": false,
       "reason": "Provide a focused operator task, integration entry or extracted historical note.",
       "route": "self-hosting/upgrade/versions/1.1",
@@ -1694,7 +1742,7 @@
     },
     {
       "action": "add",
-      "navigation_after": false,
+      "navigation_after": true,
       "navigation_before": false,
       "reason": "Provide a focused operator task, integration entry or extracted historical note.",
       "route": "self-hosting/upgrade/versions/1.2",
@@ -1704,7 +1752,7 @@
     },
     {
       "action": "add",
-      "navigation_after": false,
+      "navigation_after": true,
       "navigation_before": false,
       "reason": "Provide a focused operator task, integration entry or extracted historical note.",
       "route": "self-hosting/upgrade/versions/1.6",
@@ -1714,7 +1762,7 @@
     },
     {
       "action": "add",
-      "navigation_after": false,
+      "navigation_after": true,
       "navigation_before": false,
       "reason": "Provide a focused operator task, integration entry or extracted historical note.",
       "route": "self-hosting/upgrade/versions/2.0",
@@ -1724,7 +1772,7 @@
     },
     {
       "action": "add",
-      "navigation_after": false,
+      "navigation_after": true,
       "navigation_before": false,
       "reason": "Provide a focused operator task, integration entry or extracted historical note.",
       "route": "self-hosting/upgrade/versions/2.1",
@@ -1734,7 +1782,7 @@
     },
     {
       "action": "add",
-      "navigation_after": false,
+      "navigation_after": true,
       "navigation_before": false,
       "reason": "Provide a focused operator task, integration entry or extracted historical note.",
       "route": "self-hosting/upgrade/versions/2.2",
@@ -1744,7 +1792,7 @@
     },
     {
       "action": "add",
-      "navigation_after": false,
+      "navigation_after": true,
       "navigation_before": false,
       "reason": "Provide a focused operator task, integration entry or extracted historical note.",
       "route": "self-hosting/upgrade/versions/2.3",
@@ -1754,7 +1802,7 @@
     },
     {
       "action": "add",
-      "navigation_after": false,
+      "navigation_after": true,
       "navigation_before": false,
       "reason": "Provide a focused operator task, integration entry or extracted historical note.",
       "route": "self-hosting/upgrade/versions/2.4",
@@ -1764,7 +1812,7 @@
     },
     {
       "action": "add",
-      "navigation_after": false,
+      "navigation_after": true,
       "navigation_before": false,
       "reason": "Provide a focused operator task, integration entry or extracted historical note.",
       "route": "self-hosting/upgrade/versions/2.5",
@@ -1774,7 +1822,7 @@
     },
     {
       "action": "add",
-      "navigation_after": false,
+      "navigation_after": true,
       "navigation_before": false,
       "reason": "Provide a focused operator task, integration entry or extracted historical note.",
       "route": "self-hosting/upgrade/versions/2.6",
@@ -1784,7 +1832,7 @@
     },
     {
       "action": "add",
-      "navigation_after": false,
+      "navigation_after": true,
       "navigation_before": false,
       "reason": "Provide a focused operator task, integration entry or extracted historical note.",
       "route": "self-hosting/upgrade/versions/2.7",
@@ -1794,7 +1842,17 @@
     },
     {
       "action": "add",
-      "navigation_after": false,
+      "navigation_after": true,
+      "navigation_before": false,
+      "reason": "Retain incoming main content in its product or operator section.",
+      "route": "self-hosting/upgrade/versions/2026-10-27-patches",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/2026-10-27-patches"
+    },
+    {
+      "action": "add",
+      "navigation_after": true,
       "navigation_before": false,
       "reason": "Shared detailed actions linked from the three affected patch releases and target-minor notes.",
       "route": "self-hosting/upgrade/versions/2026-10-security-patches",
@@ -1804,7 +1862,7 @@
     },
     {
       "action": "add",
-      "navigation_after": false,
+      "navigation_after": true,
       "navigation_before": false,
       "reason": "Provide a focused operator task, integration entry or extracted historical note.",
       "route": "self-hosting/upgrade/versions/3.0",
@@ -1814,7 +1872,7 @@
     },
     {
       "action": "add",
-      "navigation_after": false,
+      "navigation_after": true,
       "navigation_before": false,
       "reason": "Provide a focused operator task, integration entry or extracted historical note.",
       "route": "self-hosting/upgrade/versions/3.1",
@@ -1824,7 +1882,7 @@
     },
     {
       "action": "add",
-      "navigation_after": false,
+      "navigation_after": true,
       "navigation_before": false,
       "reason": "Provide a focused operator task, integration entry or extracted historical note.",
       "route": "self-hosting/upgrade/versions/3.2",
@@ -1834,7 +1892,7 @@
     },
     {
       "action": "add",
-      "navigation_after": false,
+      "navigation_after": true,
       "navigation_before": false,
       "reason": "Provide a focused operator task, integration entry or extracted historical note.",
       "route": "self-hosting/upgrade/versions/3.3",
@@ -1844,7 +1902,7 @@
     },
     {
       "action": "add",
-      "navigation_after": false,
+      "navigation_after": true,
       "navigation_before": false,
       "reason": "Provide a focused operator task, integration entry or extracted historical note.",
       "route": "self-hosting/upgrade/versions/4.0",
@@ -1854,7 +1912,7 @@
     },
     {
       "action": "add",
-      "navigation_after": false,
+      "navigation_after": true,
       "navigation_before": false,
       "reason": "Provide a focused operator task, integration entry or extracted historical note.",
       "route": "self-hosting/upgrade/versions/4.7",
@@ -1864,7 +1922,7 @@
     },
     {
       "action": "add",
-      "navigation_after": false,
+      "navigation_after": true,
       "navigation_before": false,
       "reason": "Retain incoming documentation in its existing canonical section.",
       "route": "self-hosting/upgrade/versions/4.x",
@@ -1874,7 +1932,7 @@
     },
     {
       "action": "add",
-      "navigation_after": false,
+      "navigation_after": true,
       "navigation_before": false,
       "reason": "Provide a focused operator task, integration entry or extracted historical note.",
       "route": "self-hosting/upgrade/versions/5.0",
@@ -1884,7 +1942,7 @@
     },
     {
       "action": "add",
-      "navigation_after": false,
+      "navigation_after": true,
       "navigation_before": false,
       "reason": "Retain incoming documentation in its existing canonical section.",
       "route": "self-hosting/upgrade/versions/5.1",
@@ -1894,7 +1952,7 @@
     },
     {
       "action": "add",
-      "navigation_after": false,
+      "navigation_after": true,
       "navigation_before": false,
       "reason": "Provide a focused operator task, integration entry or extracted historical note.",
       "route": "self-hosting/upgrade/versions/5.2",
@@ -1904,7 +1962,7 @@
     },
     {
       "action": "add",
-      "navigation_after": false,
+      "navigation_after": true,
       "navigation_before": false,
       "reason": "Provide a focused operator task, integration entry or extracted historical note.",
       "route": "self-hosting/upgrade/versions/5.3",
@@ -1914,7 +1972,7 @@
     },
     {
       "action": "add",
-      "navigation_after": false,
+      "navigation_after": true,
       "navigation_before": false,
       "reason": "Provide a focused operator task, integration entry or extracted historical note.",
       "route": "self-hosting/upgrade/versions/5.4",
@@ -1924,7 +1982,7 @@
     },
     {
       "action": "add",
-      "navigation_after": false,
+      "navigation_after": true,
       "navigation_before": false,
       "reason": "Retain incoming documentation in its existing canonical section.",
       "route": "self-hosting/upgrade/versions/5.4-api-permissions",
@@ -1934,7 +1992,7 @@
     },
     {
       "action": "add",
-      "navigation_after": false,
+      "navigation_after": true,
       "navigation_before": false,
       "reason": "Retain incoming documentation in its existing canonical section.",
       "route": "self-hosting/upgrade/versions/5.4-authentication",
@@ -1944,7 +2002,7 @@
     },
     {
       "action": "add",
-      "navigation_after": false,
+      "navigation_after": true,
       "navigation_before": false,
       "reason": "Retain incoming documentation in its existing canonical section.",
       "route": "self-hosting/upgrade/versions/5.4-database",
@@ -1954,7 +2012,7 @@
     },
     {
       "action": "add",
-      "navigation_after": false,
+      "navigation_after": true,
       "navigation_before": false,
       "reason": "Retain incoming documentation in its existing canonical section.",
       "route": "self-hosting/upgrade/versions/5.4-runtime",
@@ -1964,7 +2022,7 @@
     },
     {
       "action": "add",
-      "navigation_after": false,
+      "navigation_after": true,
       "navigation_before": false,
       "reason": "Provide a focused operator task, integration entry or extracted historical note.",
       "route": "self-hosting/upgrade/versions/6.0",
@@ -1974,7 +2032,7 @@
     },
     {
       "action": "add",
-      "navigation_after": false,
+      "navigation_after": true,
       "navigation_before": false,
       "reason": "Provide a focused operator task, integration entry or extracted historical note.",
       "route": "self-hosting/upgrade/versions/6.1",
@@ -1984,7 +2042,7 @@
     },
     {
       "action": "add",
-      "navigation_after": false,
+      "navigation_after": true,
       "navigation_before": false,
       "reason": "Provide a focused operator task, integration entry or extracted historical note.",
       "route": "self-hosting/upgrade/versions/6.1-runtime",
@@ -1994,7 +2052,7 @@
     },
     {
       "action": "add",
-      "navigation_after": false,
+      "navigation_after": true,
       "navigation_before": false,
       "reason": "Provide a focused operator task, integration entry or extracted historical note.",
       "route": "self-hosting/upgrade/versions/6.1-single-use-links",
@@ -2004,7 +2062,7 @@
     },
     {
       "action": "add",
-      "navigation_after": false,
+      "navigation_after": true,
       "navigation_before": false,
       "reason": "Provide a focused operator task, integration entry or extracted historical note.",
       "route": "self-hosting/upgrade/versions/6.1-visibility",
@@ -2014,13 +2072,33 @@
     },
     {
       "action": "add",
-      "navigation_after": false,
+      "navigation_after": true,
+      "navigation_before": false,
+      "reason": "Retain incoming main content in its product or operator section.",
+      "route": "self-hosting/upgrade/versions/charts-dashboards",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/charts-dashboards"
+    },
+    {
+      "action": "add",
+      "navigation_after": true,
       "navigation_before": false,
       "reason": "Retain incoming documentation in its existing canonical section.",
       "route": "self-hosting/upgrade/versions/cube",
       "runtime_validation": false,
       "structural_scan": true,
       "target": "self-hosting/upgrade/versions/cube"
+    },
+    {
+      "action": "add",
+      "navigation_after": true,
+      "navigation_before": false,
+      "reason": "Retain incoming main content in its product or operator section.",
+      "route": "self-hosting/upgrade/versions/valkey-9",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/valkey-9"
     },
     {
       "action": "keep",
@@ -2171,6 +2249,56 @@
       "runtime_validation": false,
       "structural_scan": true,
       "target": "surveys/best-practices/understanding-survey-types"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain incoming main content in its product or operator section.",
+      "route": "surveys/creatives/banner",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/creatives/banner"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain incoming main content in its product or operator section.",
+      "route": "surveys/creatives/feedback-button",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/creatives/feedback-button"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain incoming main content in its product or operator section.",
+      "route": "surveys/creatives/measure-performance",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/creatives/measure-performance"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain incoming main content in its product or operator section.",
+      "route": "surveys/creatives/overview",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/creatives/overview"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain incoming main content in its product or operator section.",
+      "route": "surveys/creatives/when-it-shows",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/creatives/when-it-shows"
     },
     {
       "action": "keep",
@@ -2763,7 +2891,7 @@
       "target": "surveys/question-type/thank-you-card"
     },
     {
-      "action": "keep",
+      "action": "update",
       "navigation_after": true,
       "navigation_before": true,
       "reason": "Retain useful existing content.",
@@ -2873,7 +3001,7 @@
       "target": "surveys/website-app-surveys/show-conditions"
     },
     {
-      "action": "keep",
+      "action": "update",
       "navigation_after": true,
       "navigation_before": true,
       "reason": "Retain useful existing content.",
@@ -2883,7 +3011,7 @@
       "target": "surveys/website-app-surveys/show-survey-to-percent-of-users"
     },
     {
-      "action": "keep",
+      "action": "update",
       "navigation_after": true,
       "navigation_before": true,
       "reason": "Retain useful existing content.",

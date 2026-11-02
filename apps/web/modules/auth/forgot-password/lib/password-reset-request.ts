@@ -61,7 +61,7 @@ const canResetPassword = async (user: {
 /**
  * Charge one mail against this account's forgot-password budget (ENG-3640). The IP limit in the action
  * does not stop someone rotating addresses from flooding one inbox; this does. `false` when the budget is
- * spent. The limiter fails open if Redis is unavailable, like every other limit in the app.
+ * spent, and also while Redis is unavailable: this limit fails closed (docs/adr/0015-abuse-limits-fail-closed.md).
  */
 const consumeAccountMailBudget = async (userId: string): Promise<boolean> => {
   try {

@@ -5,6 +5,7 @@ import {
   ZV3WorkspaceCustomCssResource,
 } from "@/app/api/v3/workspaces/lib/custom-css-schemas";
 import { listV3Workspaces } from "@/app/api/v3/workspaces/lib/operations";
+import { MCP_READ_SCOPES } from "@/modules/auth/lib/oauth-urls";
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import { getMcpAuthentication, getMcpRequestId, getMcpToolAuthInfo } from "../auth";
 import { responseToMcpToolResult } from "../errors";
@@ -29,19 +30,18 @@ export const ZMcpWorkspaceCustomCssOutput = mcpToolOutput(ZV3WorkspaceCustomCssR
   .strict();
 
 export function registerWorkspaceTools(server: McpServer): void {
-  // list_workspaces is the workspaceId-discovery prerequisite for the survey, workflow, feedback-record
-  // AND response tools, so it gates on ANY resource read scope rather than a single one. auth.ts's
-  // baseline is "at least one resource scope" (MCP_RESOURCE_SCOPES), so a workflows-only,
-  // feedbackRecords-only or responses-only token is a legitimate client and must still be able to
-  // discover its workspaceId. The result is derived from the caller's own memberships/key grants, so
-  // admitting any read scope exposes nothing extra.
+  // list_workspaces is the workspaceId-discovery prerequisite for every other tool group, so it gates on
+  // ANY resource read scope rather than a single one. auth.ts's baseline is "at least one resource scope"
+  // (MCP_RESOURCE_SCOPES), so a token holding only one family's read scope — `dashboards:read`, say — is a
+  // legitimate client and must still be able to discover its workspaceId. The result is derived from the
+  // caller's own memberships/key grants, so admitting any read scope exposes nothing extra.
   registerScopedTool(
     server,
     "list_workspaces",
     {
       title: "List workspaces",
       description:
-        "List the Formbricks workspaces the authenticated user can access. Use this to discover the workspaceId required by the survey, workflow, feedback-record and response tools.",
+        "List the Formbricks workspaces the authenticated user can access. Use this to discover the workspaceId required by the survey, workflow, feedback-record, response, chart and dashboard tools.",
       inputSchema: ZMcpListWorkspacesInput,
       annotations: {
         readOnlyHint: true,
@@ -50,9 +50,9 @@ export function registerWorkspaceTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    // Every tool group needs a workspaceId first, so this has to admit any of them — `responses:read`
-    // included, which a responses-only token can hold now that the pair is advertised (ENG-3470).
-    { anyOf: ["surveys:read", "workflows:read", "feedbackRecords:read", "responses:read"] },
+    // Derived from the scope registry, so a new family's read scope reaches discovery without an edit
+    // here — the gap that once left a responses-only token unable to find its workspace.
+    { anyOf: [...MCP_READ_SCOPES] },
     async (_input: TMcpListWorkspacesInput, ctx) => {
       const authInfo = getMcpToolAuthInfo(ctx);
       const requestId = getMcpRequestId(authInfo);

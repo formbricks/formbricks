@@ -49,7 +49,7 @@ export const generateAttributeTableColumns = (
           <HighlightedText value={description} searchValue={searchValue} />
         </div>
       ) : (
-        <span className="text-slate-400">-</span>
+        <span className="text-slate-400">—</span>
       );
     },
   };

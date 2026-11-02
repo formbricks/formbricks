@@ -22,7 +22,6 @@ jobs:
       id-token: write
     secrets:
       AWS_ECR_PUSH_ROLE_ARN: ${{ secrets.AWS_ECR_PUSH_ROLE_ARN }}
-      DEPOT_PROJECT_TOKEN: ${{ secrets.DEPOT_PROJECT_TOKEN }}
       DUMMY_DATABASE_URL: ${{ secrets.DUMMY_DATABASE_URL }}
       DUMMY_ENCRYPTION_KEY: ${{ secrets.DUMMY_ENCRYPTION_KEY }}
       DUMMY_REDIS_URL: ${{ secrets.DUMMY_REDIS_URL }}

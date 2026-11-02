@@ -138,6 +138,17 @@ Customize your survey with your brand's logo.
 
 <Note>The logo settings apply across all Link Survey pages.</Note>
 
+## Font
+
+**Font** decides which font app surveys and [creatives](/surveys/creatives/overview) use:
+
+- **Page font:** the font of the website they show on, so they look like part of your site.
+- **Survey font:** the survey's own font.
+
+Link surveys always use the survey font. Formbricks never loads a font from another site. New workspaces start with **Page font**; existing workspaces keep the survey font until you change it. An app survey with its own styling can choose its own font, and so can a creative with custom styles.
+
+Creatives also take their look from this theme: a feedback button looks like the survey button, and a banner like the survey card with the survey button inside.
+
 ## Overwrite Styling Theme
 
 You can let individual surveys replace the theme with their own styling. Turn on **Allow survey-level styling** under **Survey overrides**, at the bottom of the **Theme** card:
@@ -153,3 +164,11 @@ Under the hood, every styling property maps to a CSS variable prefixed with `--f
 See the full [CSS Variables Reference](/surveys/general-features/overwrite-styling#overwrite-css-styles-for-app-&-website-surveys) in the Custom Styling guide.
 
 To go beyond the theme editor, add [Custom CSS](/surveys/general-features/custom-css) for the whole workspace in **Appearance**, or for a single survey in its **Styling** tab.
+
+## Hide Formbricks branding
+
+With a plan or self-hosted [license](/self-hosting/advanced/license) that includes branding removal:
+
+1. Open **Settings → Workspace → Appearance**.
+2. Under **Formbricks Branding**, turn off **Show Formbricks Branding** separately for Link Surveys and App Surveys.
+3. The changes save automatically. Open a survey of each type to check the footer.

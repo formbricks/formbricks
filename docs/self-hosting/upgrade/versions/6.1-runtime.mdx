@@ -167,7 +167,8 @@ Keep the rate-limit backend separate from the application's Redis traffic.
 
 ## Auth environment aliases
 
-The docs use `BETTER_AUTH_URL` and `BETTER_AUTH_SECRET` for new installations. Existing `NEXTAUTH_URL`
+New installations must set `BETTER_AUTH_URL` and `BETTER_AUTH_SECRET`. The 6.1 runtime resolves the auth
+URL from `BETTER_AUTH_URL`, then `NEXTAUTH_URL`; it does not fall back to `WEBAPP_URL`. Existing `NEXTAUTH_URL`
 and `NEXTAUTH_SECRET` remain supported; no rename is needed. If renaming, copy the existing values.
 A different secret invalidates sessions and outstanding authentication links. Keep a configured secret
 in test environments too; the current runtime rejects a missing value.

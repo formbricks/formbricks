@@ -1,0 +1,17 @@
+allOf:
+  - $ref: ./CreativeResourceBase.yml
+  - type: object
+    required:
+      - content
+      - styling
+    properties:
+      type:
+        type: string
+        enum:
+          - banner
+      content:
+        $ref: ./BannerContent.yml
+      styling:
+        $ref: ./BannerStyling.yml
+unevaluatedProperties: false
+description: A banner.

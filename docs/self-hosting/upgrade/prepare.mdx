@@ -75,6 +75,16 @@ must receive the application database URL, migration credentials when different,
 client variables. The distributed default uses the bundled PostgreSQL database; customize it when your
 installation uses a managed database. No database or SpiceDB port needs public exposure.
 
+For a pre-provisioned external SpiceDB database, apply the release-matched
+[external Compose override](/self-hosting/configuration/spicedb-external-postgres) before starting
+`spicedb-migrate` or running this preparation. Keep `COMPOSE_FILE` in `.env` so validation, preparation, checks,
+and cutover all use the same override; if you pass `-f`, specify both files in the same order every time. Its URI
+and any private CA mount must reach both SpiceDB migration and
+runtime services. Confirm `docker compose config --services` omits `authzed-db-bootstrap`, then use
+`docker compose ps -a` to verify a completed migration and healthy SpiceDB. The database administrator provisions
+the database and scoped login once, outside Compose; no administrator URL belongs in the application stack.
+Include the external SpiceDB database in the coordinated backup before preparation and in the rollback plan.
+
 After successful preparation, a one-click installation also sets
 `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` before its explicit v6 update. Do not invoke an
 unattended update or move a floating image tag until the release-specific installation tests pass.
@@ -191,8 +201,8 @@ A blocked result can carry more fields, never values from your data:
 
 Each step has a 90-minute limit. Set `FORMBRICKS_AUTHZED_PREPARE_STEP_TIMEOUT_SECONDS` (60 to 86400) to change
 it. The graph step rewrites every organization's relationships and then audits them all, so its runtime grows
-with the number of organizations: an instance with about 50,000 organizations needed about 35 minutes. Time the
-rehearsal, and keep the Job's `activeDeadlineSeconds` above the sum of its steps: a Job deadline stops the
+with the number of organizations. Newer images audit several organizations concurrently; an older sequential
+run took about 35 minutes for 50,000 organizations. Size the limit from your own rehearsal, and keep the Job's `activeDeadlineSeconds` above the sum of its steps: a Job deadline stops the
 container before the wrapper can print a result. Interrupted containers can exit with a signal code rather
 than JSON; any nonzero exit remains blocked.
 
@@ -210,7 +220,7 @@ For failures before Prisma records the attempt, check connectivity and permissio
 session. If a migration must be retried, first establish whether partial changes need repair, then use
 the target image's `node /home/nextjs/packages/database/dist/scripts/apply-migrations.js` under maintenance.
 Capture any diagnostic output only in operator-controlled storage; never enable it on normal startup.
-[If a migration fails](/self-hosting/advanced/migration#if-a-migration-fails) shows how to find the real error,
+[If a migration fails](/self-hosting/upgrade/troubleshooting#if-a-migration-fails) shows how to find the real error,
 check what the failed migration left behind, and clear its failed record before retrying.
 
 After database changes, **`helm rollback` or changing the image is not necessarily a safe rollback**.

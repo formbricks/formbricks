@@ -73,10 +73,14 @@ const BLOCKER_TYPE_ORDER: readonly TSurveyVisibilityBlocker["type"][] = [
   "integration",
   "webhook",
   "workflow",
+  "creative",
   "dashboard",
 ];
 
-/** Blockers grouped by type in a fixed order, names sorted, so the warning reads the same every time. */
+/**
+ * Blockers grouped by type in a fixed order, names sorted, so the warning reads the same every time.
+ * A type missing from `BLOCKER_TYPE_ORDER` is dropped, so a new blocker type must be added there.
+ */
 export const groupBlockersByType = (blockers: readonly TSurveyVisibilityBlocker[]): TBlockerGroup[] =>
   BLOCKER_TYPE_ORDER.map((type) => ({
     type,

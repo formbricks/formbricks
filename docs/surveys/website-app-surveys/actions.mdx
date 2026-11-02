@@ -41,7 +41,7 @@ icon: "code"
 
 <Note>
   **Important**: Any changes to actions, surveys, or environment configuration will take **up to 1 minute** to
-  reflect in your app/website due to server-side caching. This includes new actions, modified action 
+  reflect in your app/website due to server-side caching. This includes new actions, modified action
   configurations, and survey trigger updates.
 </Note>
 
@@ -153,6 +153,8 @@ Every no-code action can be limited to certain pages. Leave it on **On all pages
 An action does nothing until a survey listens for it. In the survey editor, open **Settings → Survey Trigger** and add one. A survey can listen for several actions; any one of them is enough to show it. To show it only on certain pages, visits or devices when the action fires, add [show conditions](/surveys/website-app-surveys/show-conditions) in the same card.
 
 ![The Survey Trigger section with one action attached](/images/surveys/website-app-surveys/actions/survey-trigger.webp "The Survey Trigger section with one action attached")
+
+An app survey that a [creative](/surveys/creatives/overview) opens can go live without an action: it then shows when someone clicks the creative. Actions can also make creatives appear: set a creative's **Show on** to **When an action fires**. See [When It Shows](/surveys/creatives/when-it-shows#show-on).
 
 ## Setting up code Actions
 

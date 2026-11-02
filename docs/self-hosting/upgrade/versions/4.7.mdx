@@ -19,8 +19,10 @@ Docker/one-click and Kubernetes, both editions. See the [upgrade path](/self-hos
 ## Before
 
 - Back up application data and files. Allow time for contact-attribute and storage-URL data migrations.
-- The attribute migration infers `text`, `number` or `date` for each key. Below **1,000,000 attribute rows**, it
-  also fills the typed value columns. At or above that threshold, the value backfill is skipped.
+- The attribute migration infers `text`, `number` or `date` for each key. It counts only number/date values that match
+  the conversion pattern, are nonempty and still lack a typed value. Below **1,000,000 eligible values**,
+  it fills those columns; at or above that threshold, it skips the value backfill. Use the migration logs
+  to decide whether the backfill below is needed; the total attribute count is not the threshold.
 - Storage URLs in surveys, styling, branding and response data are converted to relative paths. Keep the
   existing S3 endpoint, bucket and proxy route; this is not a transfer to another storage provider.
 

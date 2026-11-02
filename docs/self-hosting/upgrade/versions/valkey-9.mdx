@@ -1,0 +1,51 @@
+---
+title: "Bundled Valkey 9"
+description: "Upgrade the bundled Redis-compatible service while preserving data and a recovery point."
+icon: "database"
+---
+
+**Applies to:** deployments adopting the upcoming release's Valkey 9.1.2 default from bundled 8.1.9.
+This change is on `main`, not in 6.1.2, 6.0.5 or 5.4.8. Managed Redis/Valkey services follow their provider's procedure.
+
+## Before
+
+- Schedule a brief service interruption and stop writers using the [standard upgrade procedure](/self-hosting/advanced/upgrade).
+- Back up the Valkey volume and record its current image and configuration. Keep the existing volume.
+- Use the image/digest from your **selected release's** Compose file or Helm values. Both `linux/amd64`
+  and `linux/arm64` are supported; do not substitute a platform-specific digest.
+
+## During
+
+<Tabs>
+  <Tab title="Docker Compose">
+    [Download the selected release](/self-hosting/upgrade/configuration#download-the-selected-release).
+    Copy only its `redis` image reference into your working Compose file, preserving local settings and mounts.
+
+    ```bash
+    docker compose config --quiet &&
+      docker compose pull redis &&
+      docker compose up -d --no-deps --force-recreate redis
+    ```
+
+    One-click updates replace the legacy amd64-only 8.1.1 pin automatically, but keep custom pins.
+    The Compose backup still uses the historical `.before-valkey-8.1.9` suffix.
+  </Tab>
+  <Tab title="Kubernetes">
+    Copy `redis.image.digest` from the selected chart's defaults into your tracked values if you previously
+    pinned it. Apply it during the [Kubernetes upgrade](/self-hosting/upgrade/kubernetes), retaining the PVC.
+    Explicit old overrides otherwise keep the old image.
+  </Tab>
+</Tabs>
+
+## After
+
+Check Redis/Valkey connectivity, pending jobs and rate limiting before reopening traffic.
+Do not delete the volume or run `FLUSHDB`.
+
+## Recovery
+
+Stop writers before recovery. Older Valkey versions may not read persistence files rewritten by version 9.
+Restore the pre-upgrade data backup with its matching image and configuration; reconcile pending work
+before restarting consumers.
+
+Source: [Valkey image upgrade](https://github.com/formbricks/formbricks/pull/9743).

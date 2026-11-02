@@ -8,7 +8,7 @@
   "paths": {
     "/api/v1/client/{workspaceId}/displays": {
       "post": {
-        "description": "Create a new display for a valid survey ID. If a userId is passed, the display is linked to the user. Note - Environments are deprecated. Use Workspace/workspaceId terminology.",
+        "description": "Create a new display for a valid survey ID. If a userId is passed, the display is linked to the user. If a creativeId is passed, the display records the creative that opened the survey, but only when that creative is in the workspace and opens this survey; otherwise it is ignored. Note - Environments are deprecated. Use Workspace/workspaceId terminology.",
         "parameters": [
           {
             "in": "path",
@@ -24,6 +24,7 @@
             "application/json": {
               "schema": {
                 "example": {
+                  "creativeId": "{{creativeId}} (optional)",
                   "surveyId": "{{surveyId}}",
                   "userId": "{{userId}} (optional)"
                 },
@@ -253,6 +254,99 @@
                               },
                               "type": {
                                 "example": "automatic",
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
+                        "creatives": {
+                          "description": "The creatives (feedback buttons and banners) the web SDK shows. Present only when the workspace has at least one deliverable creative: published and not paused, closed or archived, not past its end time, and opening an active survey if it opens one. The envelope next to `expiresAt` also carries `serverTime`, when the server built the response, which the SDK uses to run creative schedules on the server's clock. Source of truth for the item shape: `TCreativePayload` in `packages/creatives/src/types.ts`.",
+                          "items": {
+                            "properties": {
+                              "autoSelectLanguage": {
+                                "description": "Whether the browser's languages pick the language when the site set none with `setLanguage`: the Destination survey's \"Use browser language\" setting; false when it opens no survey.",
+                                "type": "boolean"
+                              },
+                              "conditions": {
+                                "description": "Show when conditions, shared with surveys; null always passes.",
+                                "nullable": true,
+                                "type": "object"
+                              },
+                              "content": {
+                                "description": "As in API v3: a feedback button's `label` and `icon`, or a banner's `message`, `button`, `dismissible` and `accessibleName`. Texts are keyed by locale code.",
+                                "type": "object"
+                              },
+                              "defaultLanguage": {
+                                "description": "The locale code the texts fall back to.",
+                                "example": "en-US",
+                                "type": "string"
+                              },
+                              "destination": {
+                                "description": "What pressing it opens: `{ type: survey, surveyId, opensAs: popup }` (an app survey in `surveys`, sent with `triggers: []` when only creatives open it), `{ type: survey, surveyId, opensAs: newTab, url }` (a link survey, opened with `lang=` set to the language the site set, if any) or `{ type: link, url }`. Null for a banner without a button. A creative whose popup survey the visitor's language would skip is not shown.",
+                                "nullable": true,
+                                "type": "object"
+                              },
+                              "displayPercentage": {
+                                "description": "Share of visitors in percent; null shows it to everyone.",
+                                "nullable": true,
+                                "type": "number"
+                              },
+                              "endAt": {
+                                "format": "date-time",
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "id": {
+                                "type": "string"
+                              },
+                              "labels": {
+                                "description": "Banners only: the words the SDK draws that the author doesn't write, keyed by each language a visitor can get (the default and the enabled ones): `siteNotice`, the region's name when `content.accessibleName` is null, and `dismiss`, the Dismiss control's name.",
+                                "type": "object"
+                              },
+                              "languageMatch": {
+                                "description": "`languages` precomputed for matching a visitor's language on the page, with the same answers as the survey language matcher: `keys` maps a requested code (lowercase, `_` as `-`) to the matched code (`default` for the default language), covering every stored code, alias and canonical spelling; `bases` maps a base language (`de`, `zh-hant`) to the match for any other tag of it. Both are empty when there is one language.",
+                                "type": "object"
+                              },
+                              "languages": {
+                                "description": "Every language the texts are written in, the default first, shaped like a survey's languages: `default`, `enabled` and `language` (`code`, `alias`). A visitor whose language is missing or disabled, or whose translation of a text is empty, sees the default language.",
+                                "items": {
+                                  "type": "object"
+                                },
+                                "type": "array"
+                              },
+                              "position": {
+                                "description": "As in API v3 `styling.position`: `desktop`, and `phone` (below 768 px) or null.",
+                                "type": "object"
+                              },
+                              "showOn": {
+                                "enum": ["pageView", "action"],
+                                "type": "string"
+                              },
+                              "startAt": {
+                                "format": "date-time",
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "style": {
+                                "description": "The look, computed by the server from the workspace Look & Feel and the creative's custom styles; the SDK only applies it. `element` (the button, or the banner's bar) and `button` (the banner's button, null for a feedback button) each carry colours per appearance (`light`, `dark`: `backgroundColor`, `textColor`, `borderColor`), sizes per device (`desktop`, `phone` below 768 px: `fontSize`, `paddingX`, `paddingY`), `borderRadius` and `fontWeight`, in px and #rrggbb. `pageFont` is true when it renders in the host page's font. `customCss` is the creative's own CSS, compiled for its shadow root (`light`, `dark`), or null.",
+                                "type": "object"
+                              },
+                              "surveyLanguageMatch": {
+                                "description": "For a popup survey Destination, that survey's languages precomputed like `languageMatch`, so the SDK hides a creative whose survey the visitor's language would skip without loading the survey renderer. Null for any other Destination.",
+                                "nullable": true,
+                                "type": "object"
+                              },
+                              "triggers": {
+                                "description": "Names of the actions that show it when `showOn` is `action`.",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "type": "array"
+                              },
+                              "type": {
+                                "enum": ["feedbackButton", "banner"],
                                 "type": "string"
                               }
                             },
@@ -685,6 +779,10 @@
                   "meta": {
                     "properties": {
                       "action": {
+                        "type": "string"
+                      },
+                      "openedByCreativeId": {
+                        "description": "The creative whose click opened the survey. Stored, with the creative's name as openedByCreativeName, only when the creative is in the workspace and opens this survey; otherwise ignored. A client-sent openedByCreativeName is always ignored.",
                         "type": "string"
                       },
                       "source": {
@@ -6729,6 +6827,75 @@
         },
         "summary": "Get Webhook",
         "tags": ["Management API - Webhook"]
+      }
+    },
+    "/api/v2/client/{workspaceId}/creatives/events": {
+      "post": {
+        "description": "Counts the Impressions and Clicks of creatives on one page view. The web SDK sends it as `text/plain` with `keepalive`, 2 s after the first event of a page or when the page is hidden. An Impression is one page view on which a creative showed; a Click is one press that opened its Destination. The answer is always 204 with no body: requests from bots, over the IP rate limit (600 per minute) or with a body of another shape count nothing, and events for creatives the workspace hasn't published (or has archived) are dropped. Counts reach `GET /api/v3/creatives/{creativeId}/stats` within about a minute, through the BullMQ worker. Source of truth for the body: `TCreativeEventsBody` in `packages/creatives/src/events.ts`.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspaceId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "text/plain": {
+              "schema": {
+                "example": {
+                  "deviceType": "phone",
+                  "events": [
+                    { "creativeId": "clcr1234567890123456789012", "type": "impression" },
+                    { "creativeId": "clcr1234567890123456789012", "type": "click" }
+                  ],
+                  "page": "example.com/pricing"
+                },
+                "properties": {
+                  "deviceType": {
+                    "enum": ["phone", "tablet", "desktop"],
+                    "type": "string"
+                  },
+                  "events": {
+                    "items": {
+                      "properties": {
+                        "creativeId": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "enum": ["impression", "click"],
+                          "type": "string"
+                        }
+                      },
+                      "required": ["creativeId", "type"],
+                      "type": "object"
+                    },
+                    "maxItems": 100,
+                    "minItems": 1,
+                    "type": "array"
+                  },
+                  "page": {
+                    "description": "Host and path, without query string or hash.",
+                    "maxLength": 512,
+                    "type": "string"
+                  }
+                },
+                "required": ["page", "deviceType", "events"],
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Always, whether or not anything was counted."
+          }
+        },
+        "summary": "Count creative events",
+        "tags": ["Client API - Creatives"]
       }
     },
     "/health": {

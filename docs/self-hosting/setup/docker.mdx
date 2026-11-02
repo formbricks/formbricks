@@ -31,6 +31,8 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
 ## Choose Your Setup Path
 
 - Use this manual Docker Compose guide for local installs, custom servers, or custom reverse-proxy setups.
+- For a pre-provisioned SpiceDB database, complete [External PostgreSQL for SpiceDB](#external-postgresql-for-spicedb)
+  before validating or starting this stack.
 - Use the [one-click setup script](/self-hosting/setup/one-click) for Debian 12/13 or Ubuntu servers where you want
   Traefik, HTTPS certificates, and optional RustFS automation.
 - Use the [migration guide](/self-hosting/advanced/migration#v5) before updating an existing Formbricks 4.x
@@ -72,6 +74,9 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
      -o cube/schema/FeedbackRecords.js \
      https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/cube/schema/FeedbackRecords.js
    ```
+
+   External SpiceDB PostgreSQL does not use the downloaded bootstrap helper; select its override below before
+   starting the stack.
 
 1. **Create the Environment File**
 
@@ -115,7 +120,8 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
    ```
 
    If validation fails, check that `.env` contains the required values and that `docker-compose.yml` has valid
-   syntax.
+   syntax. In bundled mode, ensure `AUTHZED_DATABASE_PASSWORD` is non-empty; bootstrap also checks it before
+   creating the SpiceDB database.
 
 1. **Start the Docker Setup**
 
@@ -135,13 +141,14 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
    ```bash
    docker compose ps -a
    curl -fsS http://localhost:3000/health
-   docker compose logs --tail=100 formbricks-migrate hub-migrate authzed-db-bootstrap spicedb-migrate
+   docker compose logs --tail=100 formbricks-migrate hub-migrate spicedb-migrate
    docker compose logs --tail=100 formbricks hub hub-worker cube spicedb
    ```
 
-   `formbricks-migrate`, `hub-migrate`, `authzed-db-bootstrap`, and `spicedb-migrate` should complete
-   successfully. `postgres`, `redis`, `cube`, `hub`, `hub-worker`, `spicedb`, and `formbricks` should be running
-   or healthy. The worker has no HTTP health endpoint, so verify that it stays `Up` without repeated restarts.
+   `formbricks-migrate`, `hub-migrate`, and `spicedb-migrate` should complete successfully; bundled mode also
+   completes `authzed-db-bootstrap`, while external mode has no bootstrap service. `postgres`, `redis`, `cube`,
+   `hub`, `hub-worker`, `spicedb`, and `formbricks` should be running or healthy. The worker has no HTTP health
+   endpoint, so verify that it stays `Up` without repeated restarts.
 
 1. **Open Formbricks in Your Browser**
 
@@ -164,8 +171,14 @@ without making Formbricks startup or `/health` depend on SpiceDB. SpiceDB is rea
 network at `spicedb:50051`; it is not published on the host or routed through Traefik.
 
 The Formbricks container receives the supported AuthZed variables automatically. Keep `AUTHZED_TOKEN` and
-`AUTHZED_DATABASE_PASSWORD` private and include `.env` and the PostgreSQL volume in your backup plan. Running
-`docker compose down` preserves the volume; `docker compose down -v` deletes both Formbricks and SpiceDB data.
+the bundled `AUTHZED_DATABASE_PASSWORD` private and include `.env` and the PostgreSQL volume in your backup plan. Running
+`docker compose down` preserves the volume; `docker compose down -v` deletes the bundled database volumes, but
+does not delete an external SpiceDB database.
+
+### External PostgreSQL for SpiceDB
+
+Follow [External PostgreSQL for SpiceDB](/self-hosting/configuration/spicedb-external-postgres) before
+validating or starting the stack. Keep the same override for installation, maintenance and recovery.
 
 The release image includes an opt-in operations CLI. It does not start during normal installation:
 

@@ -7,10 +7,10 @@ import { formatDate, timeSinceDate } from "@/lib/time";
 import { ChartDropdownMenu } from "@/modules/ee/analysis/charts/components/chart-dropdown-menu";
 import { CreateChartDialog } from "@/modules/ee/analysis/charts/components/create-chart-dialog";
 import { CHART_TYPE_ICONS } from "@/modules/ee/analysis/charts/lib/chart-types";
-import type { TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
+import type { TAppChart } from "@/modules/ee/analysis/lib/api-client";
 
 interface ChartRowProps {
-  chart: TChartWithCreator;
+  chart: TAppChart;
   workspaceId: string;
   isReadOnly: boolean;
   directories: { id: string; name: string }[];

@@ -117,7 +117,7 @@ services:
       start_period: 10s
 
   authzed-cli:
-    image: ${ZED_IMAGE_REF:-authzed/zed:v1.1.1}
+    image: ${ZED_IMAGE_REF:-authzed/zed:v1.14.0}
     profiles: ["authzed-tools"]
     entrypoint: ["zed"]
     volumes:
@@ -148,7 +148,7 @@ services:
       - 1025:1025
 
   valkey:
-    image: valkey/valkey@sha256:e0eb7c480958d32bdc4357a74bdd70653ae15f2f9b4c93c4a5a9fad1dc471c84
+    image: valkey/valkey@sha256:418652cfb58ef879d4978c33553735d7147016032d5aefaa14c828e611eb9dfd
     command: "valkey-server --maxmemory-policy noeviction"
     ports:
       - 6379:6379
@@ -347,7 +347,7 @@ services:
 
   # Optional bundled Qwen/vLLM OpenAI-compatible runtime. Enable with COMPOSE_PROFILES=qwen.
   vllm:
-    image: ${QWEN_VLLM_IMAGE:-vllm/vllm-openai:v0.14.0}
+    image: ${QWEN_VLLM_IMAGE:-vllm/vllm-openai:v0.32.0}
     profiles: ["qwen"]
     deploy:
       resources:

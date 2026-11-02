@@ -4,7 +4,7 @@ description: "Optional single-server storage examples for development and custom
 icon: "database"
 ---
 
-## Optional: Add RustFS for File Storage
+## Optional: add RustFS for file storage
 
 RustFS provides S3-compatible object storage for file uploads in Formbricks. It is not required for the
 baseline Docker setup. Add it only when you want features like image uploads, survey file uploads, or custom
@@ -29,13 +29,13 @@ logos.
   object storage or run a dedicated RustFS deployment separately.
 </Warning>
 
-### Quick Start: Repository Development Stack
+### Quick start: repository development stack
 
 If you cloned the Formbricks repository, the fastest way to test file uploads locally is to use the included
 `docker-compose.dev.yml`, which already starts RustFS and auto-creates the `formbricks` bucket.
 
 <Note>
-  This development compose file is not downloaded by the manual production quickstart above. If you only
+  This development compose file is not downloaded by the [manual production quickstart](/self-hosting/setup/docker). If you only
   downloaded `docker-compose.yml`, use the manual RustFS setup below or the one-click production setup.
 </Note>
 
@@ -78,7 +78,7 @@ If you cloned the Formbricks repository, the fastest way to test file uploads lo
   The development compose file also runs a `rustfs-init` job so you do not need to create the bucket manually.
 </Note>
 
-### Manual RustFS Setup (Custom Configuration)
+### Manual RustFS setup (custom configuration)
 
 <Note>
   <strong>Recommended:</strong> Prefer <code>docker-compose.dev.yml</code> for local development unless you
@@ -136,11 +136,11 @@ services:
       - -c
       - |
         set -e
-        until rc alias set rustfs http://rustfs:9000 "$RUSTFS_ADMIN_USER" "$RUSTFS_ADMIN_PASSWORD" >/dev/null 2>&1 \
+        until rc alias set rustfs http://rustfs:9000 "$$RUSTFS_ADMIN_USER" "$$RUSTFS_ADMIN_PASSWORD" >/dev/null 2>&1 \
           && rc bucket list rustfs >/dev/null 2>&1; do
           sleep 2
         done
-        rc bucket create rustfs/"$RUSTFS_BUCKET_NAME" --ignore-existing
+        rc bucket create rustfs/"$$RUSTFS_BUCKET_NAME" --ignore-existing
         cat > /tmp/formbricks-policy.json << EOF
         {
           "Version": "2012-10-17",
@@ -148,23 +148,23 @@ services:
             {
               "Effect": "Allow",
               "Action": ["s3:DeleteObject", "s3:GetObject", "s3:PutObject"],
-              "Resource": ["arn:aws:s3:::$RUSTFS_BUCKET_NAME/*"]
+              "Resource": ["arn:aws:s3:::$$RUSTFS_BUCKET_NAME/*"]
             },
             {
               "Effect": "Allow",
               "Action": ["s3:ListBucket"],
-              "Resource": ["arn:aws:s3:::$RUSTFS_BUCKET_NAME"]
+              "Resource": ["arn:aws:s3:::$$RUSTFS_BUCKET_NAME"]
             }
           ]
         }
         EOF
-        if ! rc admin policy info rustfs "$RUSTFS_POLICY_NAME" >/dev/null 2>&1; then
-          rc admin policy create rustfs "$RUSTFS_POLICY_NAME" /tmp/formbricks-policy.json
+        if ! rc admin policy info rustfs "$$RUSTFS_POLICY_NAME" >/dev/null 2>&1; then
+          rc admin policy create rustfs "$$RUSTFS_POLICY_NAME" /tmp/formbricks-policy.json
         fi
-        if ! rc admin user info rustfs "$RUSTFS_SERVICE_USER" >/dev/null 2>&1; then
-          rc admin user add rustfs "$RUSTFS_SERVICE_USER" "$RUSTFS_SERVICE_PASSWORD"
+        if ! rc admin user info rustfs "$$RUSTFS_SERVICE_USER" >/dev/null 2>&1; then
+          rc admin user add rustfs "$$RUSTFS_SERVICE_USER" "$$RUSTFS_SERVICE_PASSWORD"
         fi
-        rc admin policy attach rustfs "$RUSTFS_POLICY_NAME" --user "$RUSTFS_SERVICE_USER"
+        rc admin policy attach rustfs "$$RUSTFS_POLICY_NAME" --user "$$RUSTFS_SERVICE_USER"
 ```
 
 Declare the corresponding volume:
@@ -214,7 +214,7 @@ RustFS console step is required.
   account automatically.
 </Note>
 
-#### Tips & Common Gotchas
+#### Tips & common gotchas
 
 - **Permission denied on `/data`**: Ensure the mounted directory or volume is owned by UID `10001`. The
   `rustfs-perms` helper handles this for Compose-managed volumes.
@@ -235,7 +235,7 @@ RustFS console step is required.
   docker compose exec formbricks sh -c 'wget -O- http://rustfs:9000/health'
   ```
 
-### Production Setup with Traefik
+### Production setup with Traefik
 
 For production deployments, use the [one-click setup script](/self-hosting/setup/one-click), which
 automatically configures:

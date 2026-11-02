@@ -67,6 +67,12 @@ export const ZBaseStyling = z.object({
   // strict ZColor like every other color field.
   footerLinkColor: ZStylingColor.nullish(),
   fontFamily: z.string().nullish(),
+  /**
+   * Page font (ENG-3864): app surveys and creatives render in the host page's font instead of the survey
+   * font. Absent or `false` keeps the survey font, so workspaces from before it keep their look; new
+   * workspaces start with it on. Link surveys always keep the survey font.
+   */
+  pageFont: z.boolean().nullish(),
 
   // Buttons
   buttonBgColor: ZStylingColor.nullish(),

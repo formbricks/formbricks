@@ -629,6 +629,9 @@ const parsedEnv = createEnv({
     EMAIL_VERIFICATION_DISABLED: z.enum(["1", "0"]).optional(),
     ENCRYPTION_KEY: z.string(),
     ENTERPRISE_LICENSE_KEY: z.string().optional(),
+    // Development only: a local licence server for QA. Ignored unless NODE_ENV is "development" and the
+    // host is loopback (`resolveLicenseServerUrl` in modules/ee/license-check/lib/license-server-url.ts).
+    ENTERPRISE_LICENSE_SERVER_URL: z.url().optional(),
     ENVIRONMENT: z.enum(["production", "staging"]).prefault("production"),
     GITHUB_ID: z.string().optional(),
     GITHUB_SECRET: z.string().optional(),
@@ -862,6 +865,7 @@ const parsedEnv = createEnv({
     EMAIL_VERIFICATION_DISABLED: process.env.EMAIL_VERIFICATION_DISABLED,
     ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
     ENTERPRISE_LICENSE_KEY: process.env.ENTERPRISE_LICENSE_KEY,
+    ENTERPRISE_LICENSE_SERVER_URL: process.env.ENTERPRISE_LICENSE_SERVER_URL,
     ENVIRONMENT: process.env.ENVIRONMENT,
     GITHUB_ID: process.env.GITHUB_ID,
     GITHUB_SECRET: process.env.GITHUB_SECRET,

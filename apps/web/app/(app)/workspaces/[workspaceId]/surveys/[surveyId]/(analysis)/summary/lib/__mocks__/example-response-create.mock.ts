@@ -6,7 +6,7 @@ import type {
 
 /**
  * Response-creation boundary for the example-response persistence tests. Kept in `__mocks__` (per
- * AGENTS.md) so the `vi.mock` call is hoisted by import order rather than by a bare `vi.mock` in the
+ * CODING_STANDARDS.md) so the `vi.mock` call is hoisted by import order rather than by a bare `vi.mock` in the
  * spec. Typed off the real export, so the transaction client the spec asserts on is checked against
  * the real second parameter.
  */

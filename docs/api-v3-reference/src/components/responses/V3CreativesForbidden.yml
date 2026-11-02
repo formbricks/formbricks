@@ -1,0 +1,50 @@
+description: >-
+  Forbidden, one of two codes. `forbidden`: the caller lacks the workspace access the operation needs,
+  or the creative does not exist (404 is not used, so creative ids cannot be probed for existence).
+  `creatives_not_entitled`: Creatives is not available on this instance (Formbricks Cloud, or a
+  self-hosted license that does not include it). It is checked only
+  after the caller's own access, so it says nothing about a workspace the caller cannot see. A workspace
+  that still has creatives is in wind-down: listing, reading, stats, a PATCH that sets nothing but
+  `status` to `paused` or `completed`, pausing a survey's creatives (`POST /api/v3/creatives/pause`),
+  and DELETE keep working, and everything else answers this. A
+  workspace without creatives answers it on every operation.
+headers:
+  X-Request-Id:
+    schema:
+      type: string
+    description: Request correlation ID
+  Cache-Control:
+    schema:
+      type: string
+    example: private, no-store
+content:
+  application/problem+json:
+    schema:
+      $ref: ../schemas/Problem.yml
+    examples:
+      notAllowed:
+        summary: No access to the workspace, or an unknown creative
+        value:
+          title: Forbidden
+          status: 403
+          detail: You are not authorized to access this resource
+          code: forbidden
+          requestId: req_01j8z3
+      notEntitled:
+        summary: Creatives is not available (Cloud, or no license with Creatives and no creatives)
+        value:
+          title: Forbidden
+          status: 403
+          detail: Creatives is not available on this instance
+          code: creatives_not_entitled
+          requestId: req_01j8z4
+      windDown:
+        summary: The license does not include Creatives, and the operation is not one wind-down allows
+        value:
+          title: Forbidden
+          status: 403
+          detail: >-
+            Creatives is not included in this instance's license: existing creatives can only be
+            listed, read, paused, closed or deleted
+          code: creatives_not_entitled
+          requestId: req_01j8z5

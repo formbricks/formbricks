@@ -25,13 +25,12 @@ If you are upgrading to Formbricks v2.0, follow this guide to ensure a smooth mi
 <Info>
   If you've used the Formbricks Enterprise Edition with a free beta license key, your instance will be
   downgraded to the Community Edition 2.0. You can find all license details on the [license
-  page](https://formbricks.com/docs/self-hosting/license).
+  page](/self-hosting/advanced/license).
 </Info>
 
 <Warning>
   We are moving from DockerHub to GitHub Packages for our images. If you are still pulling the images from
-  DockerHub please change `image:
-  formbricks/formbricks:latest` to `image:ghcr.io/formbricks/formbricks:latest` in
+  DockerHub please change `image: formbricks/formbricks:2.0.0` to `image: ghcr.io/formbricks/formbricks:2.0.0` in
   your `docker-compose.yml` file.
 </Warning>
 

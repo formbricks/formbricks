@@ -113,7 +113,7 @@
             "pages": ["surveys/overview", "surveys/analysis/reading-results"]
           },
           {
-            "group": "Survey Features",
+            "group": "Surveys",
             "pages": [
               {
                 "group": "General Features",
@@ -232,6 +232,16 @@
             ]
           },
           {
+            "group": "Creatives",
+            "pages": [
+              "surveys/creatives/overview",
+              "surveys/creatives/feedback-button",
+              "surveys/creatives/banner",
+              "surveys/creatives/when-it-shows",
+              "surveys/creatives/measure-performance"
+            ]
+          },
+          {
             "group": "Best Practices",
             "pages": [
               "surveys/best-practices/understanding-survey-types",
@@ -338,6 +348,78 @@
               "self-hosting/advanced/migration",
               "self-hosting/upgrade/troubleshooting",
               {
+                "group": "Version-specific steps",
+                "pages": [
+                  {
+                    "group": "6.x",
+                    "pages": [
+                      "self-hosting/upgrade/versions/6.0",
+                      "self-hosting/upgrade/versions/6.1",
+                      "self-hosting/upgrade/versions/6.1-runtime",
+                      "self-hosting/upgrade/versions/6.1-single-use-links",
+                      "self-hosting/upgrade/versions/6.1-visibility"
+                    ]
+                  },
+                  {
+                    "group": "5.x",
+                    "pages": [
+                      "self-hosting/upgrade/versions/5.0",
+                      "self-hosting/upgrade/versions/5.1",
+                      "self-hosting/upgrade/versions/5.2",
+                      "self-hosting/upgrade/versions/5.3",
+                      "self-hosting/upgrade/versions/5.4",
+                      "self-hosting/upgrade/versions/5.4-database",
+                      "self-hosting/upgrade/versions/5.4-authentication",
+                      "self-hosting/upgrade/versions/5.4-api-permissions",
+                      "self-hosting/upgrade/versions/5.4-runtime"
+                    ]
+                  },
+                  {
+                    "group": "4.x",
+                    "pages": [
+                      "self-hosting/upgrade/versions/4.x",
+                      "self-hosting/upgrade/versions/4.0",
+                      "self-hosting/upgrade/versions/4.7"
+                    ]
+                  },
+                  {
+                    "group": "Patch and component actions",
+                    "pages": [
+                      "self-hosting/upgrade/versions/2026-10-27-patches",
+                      "self-hosting/upgrade/versions/2026-10-security-patches",
+                      "self-hosting/upgrade/versions/cube"
+                    ]
+                  },
+                  {
+                    "group": "Upcoming changes",
+                    "pages": [
+                      "self-hosting/upgrade/versions/charts-dashboards",
+                      "self-hosting/upgrade/versions/valkey-9"
+                    ]
+                  },
+                  {
+                    "group": "Older releases",
+                    "pages": [
+                      "self-hosting/upgrade/versions/3.3",
+                      "self-hosting/upgrade/versions/3.2",
+                      "self-hosting/upgrade/versions/3.1",
+                      "self-hosting/upgrade/versions/3.0",
+                      "self-hosting/upgrade/versions/2.7",
+                      "self-hosting/upgrade/versions/2.6",
+                      "self-hosting/upgrade/versions/2.5",
+                      "self-hosting/upgrade/versions/2.4",
+                      "self-hosting/upgrade/versions/2.3",
+                      "self-hosting/upgrade/versions/2.2",
+                      "self-hosting/upgrade/versions/2.1",
+                      "self-hosting/upgrade/versions/2.0",
+                      "self-hosting/upgrade/versions/1.6",
+                      "self-hosting/upgrade/versions/1.2",
+                      "self-hosting/upgrade/versions/1.1"
+                    ]
+                  }
+                ]
+              },
+              {
                 "group": "Advanced",
                 "pages": [
                   "self-hosting/upgrade/configuration",
@@ -388,7 +470,10 @@
                   "self-hosting/configuration/integrations/notion",
                   "self-hosting/configuration/integrations/slack"
                 ]
-              }
+              },
+              "self-hosting/configuration/ai-deployment",
+              "self-hosting/configuration/docker-storage",
+              "self-hosting/configuration/spicedb-external-postgres"
             ]
           },
           {
@@ -428,11 +513,13 @@
               "development/technical-handbook/overview",
               "development/technical-handbook/api-gateway",
               "development/technical-handbook/api-v3-schema-generation",
+              "development/technical-handbook/creatives",
               "development/technical-handbook/mcp-server",
               "development/technical-handbook/cube-tenant-isolation",
               "development/technical-handbook/custom-css-rollout",
               "development/technical-handbook/database-model",
               "development/technical-handbook/email-sending",
+              "development/technical-handbook/license-check",
               "development/technical-handbook/tenant-separation"
             ]
           },
@@ -1471,6 +1558,14 @@
     {
       "destination": "/workflows/overview",
       "source": "/self-hosting/advanced/enterprise-features/workflows"
+    },
+    {
+      "destination": "/surveys/creatives/overview",
+      "source": "/self-hosting/advanced/enterprise-features/creatives"
+    },
+    {
+      "destination": "/docs/surveys/creatives/overview",
+      "source": "/docs/self-hosting/advanced/enterprise-features/creatives"
     }
   ],
   "theme": "mint"

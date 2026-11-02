@@ -6,7 +6,7 @@ icon: "arrow-up-right-dots"
 
 [Back to the 5.4 checklist](/self-hosting/upgrade/versions/5.4).
 
-### Feedback Record Mutations by API Key (action required for some integrations)
+### Feedback record mutations by API key (action required for some integrations)
 
 **Applies to API-key authentication**, including MCP tools using a key. Deleting feedback records now
 requires `manage`. Updating or deleting records in a dataset assigned to multiple workspaces is denied,
@@ -50,7 +50,9 @@ Check the integration's intended access before broadening permissions.
 #### What to do before upgrading
 
 1. Run the query above. If it returns rows, decide how each affected integration should proceed.
-2. Raise any API key that deletes feedback records from `write` to `manage`.
+2. For integrations that delete records, create a replacement key with `manage` access to the required
+   workspace. Existing key permissions cannot be edited. Update the integration, verify it with the new
+   key, then revoke the old key.
 3. After deploying, smoke test your feedback-record integrations. Two log lines identify an integration
    caught by the new rules — grep for `Feedback record mutation denied` (the MCP path, which names the
    reason) and for `Feedback records gateway authorization denied` (the REST path, which logs
@@ -58,6 +60,6 @@ Check the integration's intended access before broadening permissions.
 
 #### Rollback
 
-Changing an API key's scope does not undo or require a database migration. Keep the added permission
-only where needed. For a full application rollback, also review the [database/authentication recovery
+Replacing an API key does not undo or require a database migration. To reduce permissions, issue another
+key with only the required access, update and test the integration, then revoke the broader key. For a full application rollback, also review the [database/authentication recovery
 notes](/self-hosting/upgrade/versions/5.4-database#recovery-across-5-4) and Hub changes; the access rule alone does not establish rollback safety.

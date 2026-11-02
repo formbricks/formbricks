@@ -15,6 +15,7 @@ import {
   getIsAISmartToolsEnabled,
   getIsAuditLogsEnabled,
   getIsContactsEnabled,
+  getIsCreativesEnabled,
   getIsDashboardsEnabled,
   getIsDataRetentionEnabled,
   getIsFeedbackDirectoriesEnabled,
@@ -75,6 +76,7 @@ const defaultFeatures: TEnterpriseLicenseFeatures = {
   dashboards: false,
   workflows: false,
   dataRetention: false,
+  creatives: false,
 };
 
 const defaultLicense = {
@@ -576,6 +578,54 @@ describe("License Utils", () => {
       const result = await getIsSamlSsoEnabled();
 
       expect(result).toBe(true);
+    });
+  });
+
+  // Creatives are self-hosted only (ENG-6602): no Cloud plan includes them, so there is no Stripe path.
+  describe("getIsCreativesEnabled", () => {
+    const licenseWithCreatives = {
+      ...defaultLicense,
+      features: { ...defaultFeatures, creatives: true },
+    };
+
+    test("is off on Cloud, even with a licence that includes Creatives", async () => {
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
+      vi.mocked(getEnterpriseLicense).mockResolvedValue(licenseWithCreatives);
+      vi.mocked(hasOrganizationEntitlementWithLicenseGuard).mockResolvedValue(true);
+
+      expect(await getIsCreativesEnabled("org_1")).toBe(false);
+      expect(hasOrganizationEntitlementWithLicenseGuard).not.toHaveBeenCalled();
+    });
+
+    test("is off without a licence", async () => {
+      vi.mocked(getEnterpriseLicense).mockResolvedValue({
+        ...defaultLicense,
+        active: false,
+        features: null,
+        status: "no-license",
+      });
+
+      expect(await getIsCreativesEnabled("org_1")).toBe(false);
+    });
+
+    test("is off with an active licence that doesn't include Creatives", async () => {
+      expect(await getIsCreativesEnabled("org_1")).toBe(false);
+    });
+
+    test("is off with an inactive licence, even one that includes Creatives", async () => {
+      vi.mocked(getEnterpriseLicense).mockResolvedValue({
+        ...licenseWithCreatives,
+        active: false,
+        status: "expired",
+      });
+
+      expect(await getIsCreativesEnabled("org_1")).toBe(false);
+    });
+
+    test("is on with an active self-hosted licence that includes Creatives", async () => {
+      vi.mocked(getEnterpriseLicense).mockResolvedValue(licenseWithCreatives);
+
+      expect(await getIsCreativesEnabled("org_1")).toBe(true);
     });
   });
 

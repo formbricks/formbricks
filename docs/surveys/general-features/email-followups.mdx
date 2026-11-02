@@ -14,8 +14,10 @@ icon: "envelope"
 
 1. Confirm Workflows is available in your Cloud plan or self-hosted Enterprise license and release.
 2. Rebuild each follow-up using **Response completed**, its ending-card filter and **Send email**.
-3. Copy recipients, reply-to, subject, content and response-data settings. Test with a sample response.
-4. Disable the old follow-up when enabling its replacement to avoid duplicate email delivery.
+3. Copy recipients, reply-to, subject, content and response-data settings. Enable and test the replacement
+   on an isolated survey with test recipients. Do not enable both paths on the live survey.
+4. Schedule the live cutover: pause responses, disable the old follow-up, enable the replacement, then
+   resume responses. Verify one delivery and account for any queued messages before retrying.
 
 Workflows is in Beta. Check [current capabilities](/workflows/overview) before switching.
 Existing follow-ups keep their editor tab. Self-hosted Community installations can still have follow-ups

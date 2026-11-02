@@ -1152,6 +1152,63 @@
         "docker/smoke-release-image.sh"
       ],
       "to": "6.1.1"
+    },
+    {
+      "commit": "d453e758390382e8f798b04eb826d5d0bd4333e8",
+      "from": "5.4.7",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [
+        "apps/web/modules/email/index.tsx",
+        "apps/web/modules/email/lib/single-recipient.test.ts",
+        "apps/web/modules/email/lib/single-recipient.ts"
+      ],
+      "to": "5.4.8"
+    },
+    {
+      "commit": "ab79af7124a44bf57252e108fe6033fe4cef8419",
+      "from": "6.0.4",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [
+        "apps/web/modules/email/index.tsx",
+        "apps/web/modules/email/lib/single-recipient.test.ts",
+        "apps/web/modules/email/lib/single-recipient.ts"
+      ],
+      "to": "6.0.5"
+    },
+    {
+      "commit": "edb0b66d4d77ddacc69bd6bd01045c0f4e4918e9",
+      "from": "6.1.1",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [
+        "apps/web/modules/ee/auth/saml/api/callback/route.test.ts",
+        "apps/web/modules/ee/auth/saml/api/callback/route.ts",
+        "apps/web/modules/ee/auth/saml/lib/saml-response-bounds.test.ts",
+        "apps/web/modules/ee/auth/saml/lib/saml-response-bounds.ts",
+        "apps/web/modules/email/lib/send-email.test.ts",
+        "apps/web/modules/email/lib/send-email.ts",
+        "apps/web/modules/survey/link/actions.test.ts",
+        "apps/web/modules/survey/link/actions.ts",
+        "apps/web/modules/survey/link/components/pin-screen.tsx",
+        "apps/web/modules/survey/link/components/survey-renderer.tsx",
+        "apps/web/modules/survey/link/components/verify-email.tsx",
+        "apps/web/modules/survey/link/contact-survey/contact-survey-page.test.ts",
+        "apps/web/modules/survey/link/contact-survey/page.tsx",
+        "apps/web/modules/survey/link/lib/data.test.ts",
+        "apps/web/modules/survey/link/lib/data.ts",
+        "apps/web/modules/survey/link/lib/public-access.ts",
+        "apps/web/modules/survey/link/lib/servable-survey.ts",
+        "apps/web/modules/survey/link/lib/single-use-link-metrics.ts",
+        "apps/web/modules/survey/link/lib/single-use-link.test.ts",
+        "apps/web/modules/survey/link/lib/single-use-link.ts",
+        "apps/web/modules/survey/link/lib/single-use-unanswered.ts",
+        "apps/web/modules/survey/link/metadata.test.ts",
+        "apps/web/modules/survey/link/metadata.ts",
+        "apps/web/modules/survey/link/page.test.ts",
+        "apps/web/modules/survey/link/page.tsx",
+        "charts/formbricks/README.md",
+        "charts/formbricks/values.yaml"
+      ],
+      "to": "6.1.2"
     }
   ],
   "compose_config_validation": {
@@ -1343,7 +1400,7 @@
     "https://docs.gitlab.com/update/background_migrations/",
     "https://docs.gitlab.com/administration/silent_mode/"
   ],
-  "release_count": 72,
+  "release_count": 75,
   "retained_version_anchors": [
     {
       "page": "docs/self-hosting/upgrade/versions/4.0.mdx",
@@ -1437,7 +1494,7 @@
       ]
     }
   ],
-  "reviewed_at": "2026-10-27",
+  "reviewed_at": "2026-11-02",
   "runtime_evidence": "No full application upgrade or restore rehearsal performed. Published 6.0.2 -> 6.1.0 evidence retained as reported evidence only. Recommended catch-up stops are source-reviewed rehearsal routes.",
   "scope": "All stable 4.x, 5.x and 6.x tags available at review time; operator-facing deployment assets, application schema/data migrations, environment and SSO configuration. Earlier guides retained without re-review. This is not an exhaustive product/API audit."
 }

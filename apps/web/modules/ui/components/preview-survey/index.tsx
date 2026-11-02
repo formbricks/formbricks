@@ -1,7 +1,7 @@
 "use client";
 
 import { MotionConfig, motion } from "framer-motion";
-import { ExpandIcon, GlobeIcon, MonitorIcon, ShrinkIcon, SmartphoneIcon } from "lucide-react";
+import { ExpandIcon, GlobeIcon, ShrinkIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getLanguageLabel } from "@formbricks/i18n-utils/utils";
@@ -27,10 +27,9 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 import { MediaBackground } from "@/modules/ui/components/media-background";
 import { ResetProgressButton } from "@/modules/ui/components/reset-progress-button";
-import { PreviewAppearanceSwitch } from "@/modules/ui/components/styling-appearance";
 import { SurveyInline } from "@/modules/ui/components/survey";
 import { Modal } from "./components/modal";
-import { TabOption } from "./components/tab-option";
+import { PreviewModeSwitches, PreviewWindowBar } from "./components/preview-frame";
 import { PREVIEW_BOUNDARY_CLASS_NAME, previewBoundaryProps } from "./lib/containment";
 import { mirrorPlacementForDir } from "./lib/utils";
 
@@ -166,6 +165,9 @@ export const PreviewSurvey = ({
 
     return workspace.styling;
   }, [workspace.styling, survey.styling]);
+
+  // Page font (ENG-3864): the app survey takes the font of the page around it, here the editor's.
+  const pageFont = (styling.pageFont ?? workspace.styling.pageFont) === true;
 
   const isCardless = styling.cardArrangement?.linkSurveys === "cardless";
   // The mock modal paints its own card color around the survey, so it has to follow the dark palette.
@@ -364,6 +366,7 @@ export const PreviewSurvey = ({
                       isRedirectDisabled={true}
                       languageCode={activeLanguageCode}
                       styling={styling}
+                      pageFont={pageFont}
                       isCardBorderVisible={!styling.highlightBorderColor?.light}
                       onClose={handlePreviewModalClose}
                       getSetBlockId={(f: (value: string) => void) => {
@@ -431,59 +434,42 @@ export const PreviewSurvey = ({
           )}
           {previewMode === "desktop" && (
             <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden">
-              <div className="flex h-8 w-full items-center rounded-t-lg bg-slate-100">
-                <div className="ml-6 flex gap-x-2">
-                  <div className="size-3 rounded-full bg-red-500"></div>
-                  <div className="size-3 rounded-full bg-amber-500"></div>
-                  <button
-                    type="button"
-                    className="size-3 cursor-pointer rounded-full bg-emerald-500"
+              <PreviewWindowBar
+                title={
+                  previewType === "modal" ? t("workspace.surveys.edit.your_web_app") : t("common.preview")
+                }
+                expand={{
+                  isExpanded: isFullScreenPreview,
+                  onToggle: () => setIsFullScreenPreview(!isFullScreenPreview),
+                  label: isFullScreenPreview
+                    ? t("workspace.surveys.edit.shrink_preview")
+                    : t("workspace.surveys.edit.expand_preview"),
+                }}>
+                {showLanguageSelector && (
+                  <LanguageSelector
+                    languages={enabledLanguages}
+                    languageCode={languageCode}
+                    setLanguageCode={handleChromeLanguageChange}
+                    locale={locale}
+                  />
+                )}
+                {isFullScreenPreview ? (
+                  <ShrinkIcon
+                    className="mr-1 size-[22px] cursor-pointer rounded-md bg-white p-1 text-slate-500 hover:text-slate-700"
                     onClick={() => {
-                      if (isFullScreenPreview) {
-                        setIsFullScreenPreview(false);
-                      } else {
-                        setIsFullScreenPreview(true);
-                      }
+                      setIsFullScreenPreview(false);
                     }}
-                    aria-label={
-                      isFullScreenPreview
-                        ? t("workspace.surveys.edit.shrink_preview")
-                        : t("workspace.surveys.edit.expand_preview")
-                    }></button>
-                </div>
-                <div className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
-                  <p className="text-slate-600">
-                    {previewType === "modal" ? t("workspace.surveys.edit.your_web_app") : t("common.preview")}
-                  </p>
-
-                  <div className="flex items-center">
-                    {showLanguageSelector && (
-                      <LanguageSelector
-                        languages={enabledLanguages}
-                        languageCode={languageCode}
-                        setLanguageCode={handleChromeLanguageChange}
-                        locale={locale}
-                      />
-                    )}
-                    {isFullScreenPreview ? (
-                      <ShrinkIcon
-                        className="mr-1 size-[22px] cursor-pointer rounded-md bg-white p-1 text-slate-500 hover:text-slate-700"
-                        onClick={() => {
-                          setIsFullScreenPreview(false);
-                        }}
-                      />
-                    ) : (
-                      <ExpandIcon
-                        className="mr-1 size-[22px] cursor-pointer rounded-md bg-white p-1 text-slate-500 hover:text-slate-700"
-                        onClick={() => {
-                          setIsFullScreenPreview(true);
-                        }}
-                      />
-                    )}
-                    <ResetProgressButton onClick={resetProgress} />
-                  </div>
-                </div>
-              </div>
+                  />
+                ) : (
+                  <ExpandIcon
+                    className="mr-1 size-[22px] cursor-pointer rounded-md bg-white p-1 text-slate-500 hover:text-slate-700"
+                    onClick={() => {
+                      setIsFullScreenPreview(true);
+                    }}
+                  />
+                )}
+                <ResetProgressButton onClick={resetProgress} />
+              </PreviewWindowBar>
 
               {/* The trusted box the survey is contained in, below the chrome and its controls. */}
               <div
@@ -510,6 +496,7 @@ export const PreviewSurvey = ({
                       isRedirectDisabled={true}
                       languageCode={activeLanguageCode}
                       styling={styling}
+                      pageFont={pageFont}
                       isCardBorderVisible={!styling.highlightBorderColor?.light}
                       onClose={handlePreviewModalClose}
                       getSetBlockId={(f: (value: string) => void) => {
@@ -593,30 +580,12 @@ export const PreviewSurvey = ({
           />
         )}
 
-        <div className="mt-2 flex items-center justify-center gap-2">
-          {/* for toggling between mobile and desktop mode  */}
-          <div className="flex rounded-full border-2 border-slate-300 p-1">
-            <TabOption
-              active={previewMode === "mobile"}
-              icon={<SmartphoneIcon className="mx-4 my-2 size-4 text-slate-700" />}
-              label={t("workspace.surveys.edit.mobile_preview")}
-              onClick={() => handlePreviewModeChange("mobile")}
-            />
-            <TabOption
-              active={previewMode === "desktop"}
-              icon={<MonitorIcon className="mx-4 my-2 size-4 text-slate-700" />}
-              label={t("workspace.surveys.edit.desktop_preview")}
-              onClick={() => handlePreviewModeChange("desktop")}
-            />
-          </div>
-          {onAppearanceChange && (
-            <PreviewAppearanceSwitch
-              appearance={appearance}
-              onChange={onAppearanceChange}
-              optionClassName="px-4 py-2"
-            />
-          )}
-        </div>
+        <PreviewModeSwitches
+          previewMode={previewMode === "mobile" || previewMode === "desktop" ? previewMode : null}
+          onPreviewModeChange={handlePreviewModeChange}
+          appearance={appearance}
+          onAppearanceChange={onAppearanceChange}
+        />
       </div>
     </MotionConfig>
   );

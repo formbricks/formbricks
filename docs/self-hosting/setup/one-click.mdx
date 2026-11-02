@@ -111,7 +111,7 @@ New installations cap request bodies on `/api/auth/*` at 1 MiB in Traefik. An ov
 OAuth endpoint is refused by Traefik, and a slow one is read in full by Traefik first, so it does not tie up
 Formbricks while it arrives. No legitimate request to these routes comes close to that size. The cap applies to
 requests that go through Traefik, which is every outside request once port `3000` is published on `127.0.0.1` only
-(see [Update](#update)). The update command does not add the cap to an existing installation, so add it yourself
+(see [one-click update details](/self-hosting/upgrade/one-click-details)). The update command does not add the cap to an existing installation, so add it yourself
 if you want it.
 
 <Warning>

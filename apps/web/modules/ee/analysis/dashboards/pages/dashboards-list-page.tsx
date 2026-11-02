@@ -1,4 +1,3 @@
-import { use } from "react";
 import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { AnalysisPageLayout } from "@/modules/ee/analysis/components/analysis-page-layout";
@@ -7,26 +6,8 @@ import { getIsDashboardsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { FeedbackDataEmptyState } from "@/modules/ee/unify-feedback/components/feedback-data-empty-state";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
-import { TDashboardWithCount } from "../../types/analysis";
 import { CreateDashboardButton } from "../components/create-dashboard-button";
 import { DashboardsTable } from "../components/dashboards-table";
-import { getDashboards } from "../lib/dashboards";
-
-interface DashboardsListContentProps {
-  dashboardsPromise: Promise<TDashboardWithCount[]>;
-  workspaceId: string;
-  isReadOnly: boolean;
-}
-
-const DashboardsListContent = ({
-  dashboardsPromise,
-  workspaceId,
-  isReadOnly,
-}: Readonly<DashboardsListContentProps>) => {
-  const dashboards = use(dashboardsPromise);
-
-  return <DashboardsTable dashboards={dashboards} workspaceId={workspaceId} isReadOnly={isReadOnly} />;
-};
 
 interface DashboardsListPageProps {
   workspaceId: string;
@@ -81,7 +62,6 @@ export const DashboardsListPage = async ({ workspaceId }: Readonly<DashboardsLis
   }
 
   const { feedbackSources, hasFeedbackRecords } = feedbackDataAvailability;
-  const dashboardsPromise = hasFeedbackRecords ? getDashboards(workspaceId) : null;
 
   return (
     <AnalysisPageLayout
@@ -92,12 +72,8 @@ export const DashboardsListPage = async ({ workspaceId }: Readonly<DashboardsLis
           <CreateDashboardButton workspaceId={workspaceId} disabled={!hasFeedbackRecords} />
         )
       }>
-      {hasFeedbackRecords && dashboardsPromise ? (
-        <DashboardsListContent
-          dashboardsPromise={dashboardsPromise}
-          workspaceId={workspaceId}
-          isReadOnly={isReadOnly}
-        />
+      {hasFeedbackRecords ? (
+        <DashboardsTable workspaceId={workspaceId} isReadOnly={isReadOnly} />
       ) : (
         <FeedbackDataEmptyState
           variant="no-records"

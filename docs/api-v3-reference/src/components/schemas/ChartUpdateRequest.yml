@@ -1,0 +1,24 @@
+type: object
+description: >-
+  Send at least one field. `config` replaces the display settings whole. A chart's Feedback Dataset
+  and workspace are fixed: `datasetId` or `workspaceId` in the body is refused with 400
+  (`read_only_field`) — create a new chart to chart another dataset.
+minProperties: 1
+properties:
+  name:
+    type: string
+    minLength: 1
+    maxLength: 255
+  type:
+    type: string
+    enum:
+      - area
+      - bar
+      - pie
+      - big_number
+      - matrix
+  query:
+    $ref: ./ChartQuery.yml
+  config:
+    $ref: ./ChartConfig.yml
+additionalProperties: false

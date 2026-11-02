@@ -38,7 +38,7 @@ Use this procedure for **v6 targets** with Helm, Argo CD or Flux. For a 4.x/5.x 
   </Step>
   <Step title="Deploy the reviewed release">
     Set `authzed.migrationAcknowledged: true` in the values tracked by your deployment system only
-    after preparation succeeds. Keep `AUTHZED_CONSISTENCY=fully_consistent`.
+    after preparation succeeds. Keep `authzed.consistency: fully_consistent` in the tracked Helm values.
 
     For direct Helm deployments:
 

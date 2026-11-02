@@ -24,6 +24,7 @@ const webTurboJsonPath = path.join(repoRoot, "apps", "web", "turbo.json");
 const REQUIRED_EXCLUSIONS = ["!.next/cache/**", "!.next/dev/**"];
 
 interface TaskConfig {
+  dependsOn?: string[];
   outputs?: string[];
 }
 
@@ -182,5 +183,18 @@ describe("turbo.json SDK bundle tasks declare the files they copy into apps/web/
         "task's cache entry and a hit restores them. Add the path to BUNDLE_OUTPUTS under its single " +
         "owning task, or do not declare it (ENG-2924)."
     ).toEqual([]);
+  });
+});
+
+// Guards the edge that versions the survey renderer URL (ENG-3992). js-core inlines a content hash of
+// the built renderer and loads `/js/surveys.umd.cjs?v=<hash>`, so its build has to run after the
+// renderer's and be invalidated by it — a task's hash folds in the tasks named in its `dependsOn`.
+// Without the edge, a renderer change replays a cached SDK that still asks for the old `?v=`, and the
+// CDN keeps serving the old renderer for up to 30 days. The package block replaces the shared `build`
+// config, so `^build` has to stay beside it (ENG-2925).
+describe("turbo.json builds js-core after the survey renderer whose hash it inlines", () => {
+  test("@formbricks/js-core#build depends on @formbricks/surveys#build", () => {
+    const dependsOn = readTasks(rootTurboJsonPath)["@formbricks/js-core#build"]?.dependsOn ?? [];
+    expect(dependsOn).toEqual(expect.arrayContaining(["^build", "@formbricks/surveys#build"]));
   });
 });

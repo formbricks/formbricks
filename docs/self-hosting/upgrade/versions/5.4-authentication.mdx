@@ -45,8 +45,8 @@ When crossing from 5.1 or earlier, first apply the [5.2 callback change](/self-h
 | SAML / Jackson | `/api/auth/oauth2/callback/saml` |
 | Google / GitHub | `/api/auth/callback/{provider}` |
 
-Prefix the path with your configured auth origin: `BETTER_AUTH_URL`, otherwise `NEXTAUTH_URL`, otherwise
-`WEBAPP_URL`. If an extra callback was registered in anticipation of a change, Formbricks does not use it;
+In 5.4, prefix the path with your configured auth origin: `BETTER_AUTH_URL`, otherwise `NEXTAUTH_URL`,
+otherwise `WEBAPP_URL`. That last fallback is historical: [6.1 requires an explicit auth URL](/self-hosting/upgrade/versions/6.1-runtime#auth-environment-aliases). If an extra callback was registered in anticipation of a change, Formbricks does not use it;
 keeping it registered does not require changing the app.
 
 ### Generic OIDC and `issuer_missing`

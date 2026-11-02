@@ -1,0 +1,43 @@
+---
+title: "27 October security patches"
+description: "Email limits, signed-link validation and taxonomy checks for 5.4.8, 6.0.5 and 6.1.2."
+icon: "shield-halved"
+---
+
+**Applies to:** 5.4.8, 6.0.5 and 6.1.2, published on 27 October 2026. These patches also update Next.js
+for security fixes. Complete any earlier [patch actions](/self-hosting/upgrade/versions/2026-10-security-patches)
+you cross; patch numbers alone do not mean no operator action is needed.
+
+## Before
+
+- **Email senders, all three releases:** review [email limits](/self-hosting/configuration/rate-limiting#email-limits).
+  Redis/Valkey must be reachable. Set `EMAIL_RATE_LIMIT_MULTIPLIER` for legitimate higher volumes before
+  upgrading; it does not increase per-recipient caps. Custom senders must send one recipient per message.
+  `RATE_LIMITING_DISABLED=1` disables these protections too.
+- **Custom respondent clients on 6.1.2:** PIN and email-verification gates now validate signed survey links.
+  Preserve the full issued link and its signature parameters when calling these gates. Test protected
+  surveys with valid and invalid links; do not strip parameters or disable signing to recover access.
+- **Taxonomy on Helm 6.1.2:** the default image changes to `0.1.14`. Compare explicit image overrides with
+  the selected chart, then verify taxonomy jobs and callbacks if you enable this optional service.
+
+## During
+
+Follow the [standard procedure](/self-hosting/advanced/upgrade) for your deployment and release line.
+These three patch comparisons add no application schema or data migrations. The normal runner still
+applies any pending migrations when you skip earlier releases.
+
+## After
+
+Test login, a protected survey response and a controlled email delivery. Check for unexpected email
+rate-limit errors and verify Redis connectivity. On 6.1.2, also test SAML if configured and taxonomy if enabled.
+Complete the [shared acceptance checks](/self-hosting/upgrade/rehearse#acceptance-at-every-stop).
+
+## Recovery
+
+Keep traffic closed if acceptance fails and investigate first. Reverting to a vulnerable image is not a
+fix for a blocked email or invalid survey link. If a restore is necessary, use your coordinated backup
+and [recovery procedure](/self-hosting/operate/backup-restore).
+
+Sources: [5.4.8](https://github.com/formbricks/formbricks/releases/tag/5.4.8),
+[6.0.5](https://github.com/formbricks/formbricks/releases/tag/6.0.5),
+[6.1.2](https://github.com/formbricks/formbricks/releases/tag/6.1.2).

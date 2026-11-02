@@ -48,7 +48,8 @@ Choose [release stops](/self-hosting/upgrade/paths), read all crossed version no
     No SpiceDB command, `authzed-ops` service or v6 acknowledgement applies to these targets.
   </Tab>
   <Tab title="Kubernetes and GitOps">
-    1. Render the selected published chart with reviewed values and explicit images. Keep Secret names,
+    1. Render the selected published chart with `--version <selected-chart-version>`, reviewed
+       `-f <values-file>` and explicit images. Keep Secret names,
        PVCs, external datastores and operator ownership. Check which migration hooks this chart actually ships.
     2. Close ingress traffic; pause GitOps, autoscalers, schedules and all app/Hub writers. Take coordinated backups.
     3. Apply prerequisite infrastructure and Secrets. Deploy the selected chart with `--wait --wait-for-jobs`

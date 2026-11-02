@@ -80,7 +80,7 @@ describe("useWorkflows", () => {
 
     await waitFor(() => expect(result.current.workflows[0]?.name).toBe("Onboarding"));
     expect(fetchMock).toHaveBeenLastCalledWith(
-      "/api/v3/workflows?workspaceId=ws_1&limit=12&filter%5Bname%5D%5Bcontains%5D=onboarding",
+      "/api/v3/workflows?workspaceId=ws_1&limit=12&includeTotalCount=true&filter%5Bname%5D%5Bcontains%5D=onboarding",
       expect.objectContaining({ method: "GET", cache: "no-store" })
     );
   });

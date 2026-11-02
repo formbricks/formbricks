@@ -94,58 +94,67 @@ export const getMcpOrigin = (): string => new URL(getMcpResourceUrl()).origin;
  */
 export const getOAuthUserInfoUrl = (): string => `${getAuthIssuerUrl()}/oauth2/userinfo`;
 
+/**
+ * The MCP resource scope families, each one a `<family>:read` / `<family>:write` pair. Every list of
+ * resource scopes below, the API-key scope mapping (`getMcpScopes`) and the `list_workspaces` gate derive
+ * from this one array, so a new family is one entry here plus what this array cannot do for it: its
+ * consent labels (`getOAuthScopeLabel`) and its two repair migrations.
+ *
+ * ENG-2862: responses got their own pair rather than riding on `surveys:*`, which would silently widen
+ * every token an integrator already holds to include respondent PII — the survey document is
+ * configuration, a response is someone's answers. ENG-6581: dashboards got theirs on the same grounds,
+ * since an app that may read records must not thereby gain the right to edit dashboards.
+ *
+ * **A family is added here only together with two data migrations.** Instances that have already
+ * upgraded keep whatever `oauthResource.allowedScopes` they were seeded with, `resolveResourcePolicy`
+ * intersects the new scopes away, and `resourceSeedMode: "insertOnly"` never repairs the row — so
+ * `/authorize` answers `invalid_scope` with nothing logged. One migration grants the pair to existing
+ * resource rows (listed in `REPAIR_MIGRATIONS` in `mcp-oauth-resource-seed.test.ts`). The other grants
+ * it to each registered client's `scopes`: the oauth-provider validates `/authorize` as a subset of the
+ * scopes a client REGISTERED with, and every spec-following MCP client asks for what the
+ * protected-resource metadata advertises, so without it every integration registered before the family
+ * existed gets `invalid_scope` as its connection re-authorizes. Responses took both steps (ENG-2862,
+ * 20260915120000; ENG-3470, 20261005130000), dashboards too (ENG-6581, 20261022120000 and
+ * 20261022120001).
+ *
+ * Never by editing the 20260812110001 seed migration. That one has already run everywhere, so widening
+ * its literal repairs nothing and only makes it claim something it never did.
+ */
+export const MCP_SCOPE_FAMILIES = [
+  "surveys",
+  "workflows",
+  "feedbackRecords",
+  "responses",
+  "dashboards",
+] as const;
+
+type TMcpScopeFamily = (typeof MCP_SCOPE_FAMILIES)[number];
+export type TMcpReadScope = `${TMcpScopeFamily}:read`;
+export type TMcpWriteScope = `${TMcpScopeFamily}:write`;
+
+type TNonEmpty<T> = readonly [T, ...T[]];
+
+// Non-empty by construction (the family list is a non-empty literal), which is what lets a scope gate
+// that refuses `[]` take these lists directly.
+export const MCP_READ_SCOPES = MCP_SCOPE_FAMILIES.map(
+  (family) => `${family}:read` as const
+) as unknown as TNonEmpty<TMcpReadScope>;
+
+export const MCP_WRITE_SCOPES = MCP_SCOPE_FAMILIES.map(
+  (family) => `${family}:write` as const
+) as unknown as TNonEmpty<TMcpWriteScope>;
+
+/** The resource scopes MCP clients are told about, as read/write pairs in family order. */
+export const MCP_RESOURCE_SCOPES: readonly (TMcpReadScope | TMcpWriteScope)[] = MCP_SCOPE_FAMILIES.flatMap(
+  (family) => [`${family}:read`, `${family}:write`] as const
+);
+
 export const MCP_OAUTH_SCOPES = [
   "openid",
   "profile",
   "email",
   "offline_access",
-  "surveys:read",
-  "surveys:write",
-  "workflows:read",
-  "workflows:write",
-  "feedbackRecords:read",
-  "feedbackRecords:write",
-  // ENG-2862. Responses get their own pair rather than riding on `surveys:*`, which would silently
-  // widen every token an integrator already holds to include respondent PII — the survey document is
-  // configuration, a response is someone's answers.
-  //
-  // Adding a scope here is half the work. Instances that have already upgraded keep whatever
-  // `oauthResource.allowedScopes` they were seeded with, `resolveResourcePolicy` intersects the new
-  // scope away, and `resourceSeedMode: "insertOnly"` never repairs the row — so `/authorize` answers
-  // `invalid_scope` with nothing logged. The second half is a **data migration that grants it to
-  // existing rows**, listed in `REPAIR_MIGRATIONS` in `mcp-oauth-resource-seed.test.ts`.
-  //
-  // Not by editing the 20260812110001 seed migration. That one has already run everywhere, so widening
-  // its literal repairs nothing and only makes it claim something it never did.
-  "responses:read",
-  "responses:write",
-] as const;
-
-/**
- * The resource scopes MCP clients are told about.
- *
- * A scope listed here is one every spec-following client will ask for: the MCP SDK client takes its
- * scope from the 401 challenge and the protected-resource metadata, both derived from this list. And
- * asking is what breaks. The oauth-provider validates `/authorize` as a subset of the scopes a client
- * REGISTERED with, so advertising a scope to clients that registered before it existed earns them
- * `invalid_scope` — not on deploy day, but trickling in as connections re-authorize.
- *
- * **So a scope is added here only together with a migration that grants it to existing client rows**,
- * on top of the one that grants it on the resource row. `responses:read` / `responses:write` took all
- * three steps: `MCP_OAUTH_SCOPES` and the resource's `allowedScopes` (ENG-2862, 20260915120000), then
- * each registered client's `scopes` (ENG-3470, 20261005130000), which mirrors what the client already
- * holds and skips `skipConsent` clients. Adding a scope to this list without the client migration
- * reintroduces the `invalid_scope` break for every integration registered before it.
- */
-export const MCP_RESOURCE_SCOPES = [
-  "surveys:read",
-  "surveys:write",
-  "workflows:read",
-  "workflows:write",
-  "feedbackRecords:read",
-  "feedbackRecords:write",
-  "responses:read",
-  "responses:write",
+  ...MCP_RESOURCE_SCOPES,
 ] as const;
 
 // Scopes advertised in the RFC 9728 protected-resource metadata. MCP clients derive their

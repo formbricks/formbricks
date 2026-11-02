@@ -2,9 +2,10 @@ import * as Sentry from "@sentry/nextjs";
 import { randomUUID } from "node:crypto";
 import { createCacheKey } from "@formbricks/cache";
 import { logger } from "@formbricks/logger";
-import { Result, ok } from "@formbricks/types/error-handlers";
+import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { cache } from "@/lib/cache";
 import { RATE_LIMITING_DISABLED, SENTRY_DSN } from "@/lib/constants";
+import { recordRateLimiterUnavailable } from "./rate-limit-metrics";
 import { TRateLimitConfig, type TRateLimitResponse } from "./types/rate-limit";
 
 export type TRateLimitReservation = {
@@ -42,6 +43,19 @@ const buildRateLimitResponse = (
 };
 
 /**
+ * The answer to a check that could not reach Redis. Abuse limits (`failClosed`: email, account creation,
+ * brute-force guards) refuse; every other limit lets the request through unchecked, so a Redis outage does
+ * not take the whole app down with it (docs/adr/0015-abuse-limits-fail-closed.md).
+ */
+const limiterUnavailable = (
+  config: TRateLimitConfig,
+  reason: "no_client" | "error"
+): Result<TRateLimitReservationResponse, string> => {
+  recordRateLimiterUnavailable({ failMode: config.failClosed ? "closed" : "open", reason });
+  return config.failClosed ? err("Rate limiter unavailable") : ok({ allowed: true });
+};
+
+/**
  * Read the current rate limit usage without incrementing the counter.
  */
 export const peekRateLimit = async (
@@ -58,10 +72,11 @@ export const peekRateLimit = async (
   try {
     const redis = await cache.getRedisClient();
     if (!redis) {
-      logger.debug(`Redis unavailable`);
-      return ok({
-        allowed: true,
-      });
+      logger.error(
+        { namespace: config.namespace, failClosed: config.failClosed === true },
+        `Redis unavailable`
+      );
+      return limiterUnavailable(config, "no_client");
     }
 
     const { key, ttlSeconds } = getRateLimitWindow(config, identifier);
@@ -87,7 +102,12 @@ export const peekRateLimit = async (
     return ok(response);
   } catch (error) {
     const errorMessage = `Rate limit check failed`;
-    const errorContext = { error, identifier, namespace: config.namespace };
+    const errorContext = {
+      error,
+      identifier,
+      namespace: config.namespace,
+      failClosed: config.failClosed === true,
+    };
 
     logger.error(errorContext, errorMessage);
 
@@ -101,9 +121,7 @@ export const peekRateLimit = async (
       });
     }
 
-    return ok({
-      allowed: true,
-    });
+    return limiterUnavailable(config, "error");
   }
 };
 
@@ -129,10 +147,11 @@ const consumeRateLimit = async (
     // Get Redis client
     const redis = await cache.getRedisClient();
     if (!redis) {
-      logger.debug(`Redis unavailable`);
-      return ok({
-        allowed: true,
-      });
+      logger.error(
+        { namespace: config.namespace, failClosed: config.failClosed === true },
+        `Redis unavailable`
+      );
+      return limiterUnavailable(config, "no_client");
     }
 
     const { key, windowEnd, ttlSeconds } = getRateLimitWindow(config, identifier);
@@ -226,7 +245,12 @@ const consumeRateLimit = async (
     return ok(response);
   } catch (error) {
     const errorMessage = `Rate limit check failed`;
-    const errorContext = { error, identifier, namespace: config.namespace };
+    const errorContext = {
+      error,
+      identifier,
+      namespace: config.namespace,
+      failClosed: config.failClosed === true,
+    };
 
     logger.error(errorContext, errorMessage);
 
@@ -241,11 +265,7 @@ const consumeRateLimit = async (
       });
     }
 
-    // Fail open - allow request if rate limiting fails
-    // This ensures system availability over perfect rate limiting
-    return ok({
-      allowed: true,
-    });
+    return limiterUnavailable(config, "error");
   }
 };
 

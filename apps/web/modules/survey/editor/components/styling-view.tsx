@@ -274,6 +274,9 @@ export const StylingView = ({
                   <DarkContrastWarnings appearance={appearance} styling={form.watch()} />
                 )
               }
+              pageFontFallback={
+                localSurvey.type === "app" ? savedWorkspaceStyling?.pageFont === true : undefined
+              }
             />
 
             <CardStylingSettings

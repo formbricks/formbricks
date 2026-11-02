@@ -1,11 +1,13 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
+import type { Prisma } from "@formbricks/database/prisma";
+import { findLinkedCreatives } from "@/modules/ee/creatives/lib/linked-creatives";
 
 /** An outbound connection that makes `restricted` refusable (contract §3, Decision 13). */
 export type TSurveyVisibilityBlocker = Readonly<{
   id: string;
   name: string;
-  type: "dashboard" | "feedbackSource" | "integration" | "webhook" | "workflow";
+  type: "creative" | "dashboard" | "feedbackSource" | "integration" | "webhook" | "workflow";
 }>;
 
 const INTEGRATION_NAMES: Readonly<Record<string, string>> = {
@@ -17,6 +19,22 @@ const INTEGRATION_NAMES: Readonly<Record<string, string>> = {
 
 const nonEmpty = (name: string | null | undefined, fallback: string): string =>
   name && name.trim() !== "" ? name : fallback;
+
+/**
+ * The survey's linked creatives (ENG-3868): a creative is visible to the whole workspace, so its
+ * Destination can't be restricted. Archived ones don't block; a restriction unlinks them. Takes the
+ * client so the visibility change can re-read them under the lock a creative link also takes.
+ */
+export const findCreativeBlockers = async (
+  client: Pick<Prisma.TransactionClient, "creative">,
+  surveyId: string,
+  workspaceId: string
+): Promise<TSurveyVisibilityBlocker[]> =>
+  (await findLinkedCreatives(client, { surveyId, workspaceId })).map(({ id, name }) => ({
+    id,
+    name: nonEmpty(name, "Creative"),
+    type: "creative" as const,
+  }));
 
 /**
  * Every outbound connection that references this survey by id, in a stable order. Workspace-scoped on
@@ -32,7 +50,7 @@ export const findSurveyOutboundBlockers = async (
   surveyId: string,
   workspaceId: string
 ): Promise<TSurveyVisibilityBlocker[]> => {
-  const [webhooks, integrations, feedbackSources, workflows] = await Promise.all([
+  const [webhooks, integrations, feedbackSources, workflows, creatives] = await Promise.all([
     prisma.webhook.findMany({
       where: { surveyIds: { has: surveyId }, workspaceId },
       select: { id: true, name: true },
@@ -61,6 +79,7 @@ export const findSurveyOutboundBlockers = async (
         AND w.definition -> 'trigger' -> 'config' ->> 'surveyId' = ${surveyId}
       ORDER BY w.id
     `,
+    findCreativeBlockers(prisma, surveyId, workspaceId),
   ]);
 
   return [
@@ -76,5 +95,6 @@ export const findSurveyOutboundBlockers = async (
       type: "feedbackSource" as const,
     })),
     ...workflows.map(({ id, name }) => ({ id, name: nonEmpty(name, "Workflow"), type: "workflow" as const })),
+    ...creatives,
   ];
 };

@@ -152,4 +152,30 @@ describe("seedReservedColumnVisibility", () => {
     expect(seeded.ELEMENT_q1).toBe(false);
     expect(seeded.tags).toBe(true);
   });
+
+  describe("on a survey that creatives open", () => {
+    const openedBy = reservedColumnId("openedByCreativeName");
+    const openedById = reservedColumnId("openedByCreativeId");
+
+    test("starts the Opened by creative column visible, and only that one", () => {
+      const seeded = seedReservedColumnVisibility({}, { isOpenedByCreatives: true });
+
+      expect(seeded).not.toHaveProperty(openedBy);
+      expect(seeded[openedById]).toBe(false);
+      for (const id of secondaryIds.filter((id) => id !== openedBy)) {
+        expect(seeded[id], id).toBe(false);
+      }
+    });
+
+    test("still never overrides a choice the author has already made", () => {
+      const seeded = seedReservedColumnVisibility({ [openedBy]: false }, { isOpenedByCreatives: true });
+
+      expect(seeded[openedBy]).toBe(false);
+    });
+
+    test("anywhere else it starts hidden like every secondary column", () => {
+      expect(seedReservedColumnVisibility({}, { isOpenedByCreatives: false })[openedBy]).toBe(false);
+      expect(seedReservedColumnVisibility({})[openedBy]).toBe(false);
+    });
+  });
 });

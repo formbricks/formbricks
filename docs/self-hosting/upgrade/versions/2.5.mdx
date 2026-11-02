@@ -66,7 +66,7 @@ docker compose up -d
 <Info>To find your Docker Network name for your Postgres Database, find it using `docker network ls`</Info>
 
 ```bash
-docker pull ghcr.io/formbricks/data-migrations:latest && \
+docker pull ghcr.io/formbricks/data-migrations:v2.5.3 && \
 docker run --rm \
   --network=formbricks_default \
   -e DATABASE_URL="postgresql://postgres:postgres@postgres:5432/formbricks?schema=public" \

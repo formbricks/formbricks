@@ -93,6 +93,8 @@ interface SurveyMenuBarProps {
    * no CSS) and keeps the last saved CSS otherwise, so other edits still save.
    */
   customCssValidationStatus?: TCustomCssValidationStatus;
+  /** A non-archived creative opens this survey, so it publishes without a trigger of its own. */
+  isOpenedByCreative: boolean;
 }
 
 export const SurveyMenuBar = ({
@@ -118,6 +120,7 @@ export const SurveyMenuBar = ({
   surveyAccess,
   ownerName,
   customCssValidationStatus = "empty",
+  isOpenedByCreative,
 }: Readonly<SurveyMenuBarProps>) => {
   const workspaceBasePath = `/workspaces/${workspace.id}`;
   const { t } = useTranslation();
@@ -253,7 +256,7 @@ export const SurveyMenuBar = ({
    * enforced server-side.
    */
   const blockOnMissingTrigger = (targetStatus: TSurveyStatus): boolean => {
-    if (!isMissingRequiredTrigger(localSurvey, targetStatus)) return false;
+    if (!isMissingRequiredTrigger(localSurvey, targetStatus, isOpenedByCreative)) return false;
 
     toast.error(t("workspace.surveys.edit.please_set_a_survey_trigger"));
     setHasTriggerError(true);

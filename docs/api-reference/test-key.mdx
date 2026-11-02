@@ -33,7 +33,9 @@ A successful `200` response has this shape:
 
 - `401`: check the key and instance URL.
 - `400`: this legacy endpoint requires exactly one workspace scope. Use `GET /api/v2/me` for an
-  organization-only or multi-workspace key; its permission requirements still apply.
+  organization-only or multi-workspace key **with organization read access**. Without that permission,
+  `/api/v2/me` returns `401` even for a valid key. Test an authorized workspace endpoint instead; do not
+  broaden the key just to run this check.
 - `403` on another endpoint: inspect its required scopes and the key's workspace access.
 
 See [key setup](/api-reference/generate-key). Keep keys out of client-side code and shared logs.

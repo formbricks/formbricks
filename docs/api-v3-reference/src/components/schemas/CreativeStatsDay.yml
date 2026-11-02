@@ -1,0 +1,23 @@
+type: object
+description: One UTC day's counts.
+required:
+  - date
+  - impressions
+  - clicks
+  - clickRate
+properties:
+  date:
+    type: string
+    format: date
+  impressions:
+    type: integer
+    minimum: 0
+  clicks:
+    type: integer
+    minimum: 0
+  clickRate:
+    type:
+      - number
+      - "null"
+    minimum: 0
+additionalProperties: false

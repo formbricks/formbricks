@@ -42,6 +42,10 @@ application database). Run this read-only estimate; the result is an approximate
 SELECT reltuples::bigint FROM pg_class WHERE relname = 'feedback_records';
 ```
 
+A result of `-1` means the estimate is unknown, not zero. Ask the database owner to run
+`ANALYZE feedback_records;` and retry, or use `SELECT count(*) FROM feedback_records;` for an exact
+count (which scans the table). Do not choose a shorter timeout from an unknown estimate.
+
 The release notes recommend allowing more time above roughly five million rows. Add
 `--timeout 30m --set hub.migration.activeDeadlineSeconds=3600` to your normal Helm upgrade command.
 Rehearse against your data: the estimate is not a runtime guarantee.

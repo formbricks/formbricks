@@ -1,31 +1,33 @@
-import { describe, expect, test, vi } from "vitest";
-import {
-  AI_CHART_PROMPT_ERROR_CODE,
-  AI_QUOTA_EXCEEDED_ERROR_CODE,
-  getTranslatedAIChartError,
-} from "./ai-chart-errors";
+import { describe, expect, test } from "vitest";
+import { V3ApiError } from "@/modules/api/lib/v3-client";
+import { getAIChartErrorMessage } from "./ai-chart-errors";
+
+const t = (key: string) => `translated:${key}`;
+const problem = (status: number, code: string, detail = "Server detail") =>
+  new V3ApiError({ status, code, detail });
 
 describe("AI chart errors", () => {
-  test("translates the prompt conversion error code", () => {
-    const t = vi.fn((key: string) => `translated:${key}`);
-
-    expect(getTranslatedAIChartError(AI_CHART_PROMPT_ERROR_CODE, t)).toBe(
+  test("reads a prompt the model could not use as the could-not-be-converted message", () => {
+    expect(getAIChartErrorMessage(problem(422, "ai_generated_payload_invalid"), t)).toBe(
       "translated:workspace.analysis.charts.ai_prompt_could_not_be_converted"
     );
   });
 
-  test("translates the quota exceeded error code", () => {
-    const t = vi.fn((key: string) => `translated:${key}`);
-
-    expect(getTranslatedAIChartError(AI_QUOTA_EXCEEDED_ERROR_CODE, t)).toBe(
+  test("reads any 429 — provider quota or the per-minute limit — as try again shortly", () => {
+    expect(getAIChartErrorMessage(problem(429, "too_many_requests"), t)).toBe(
       "translated:workspace.analysis.charts.ai_quota_exceeded"
     );
   });
 
-  test("passes unknown error strings through unchanged", () => {
-    const t = vi.fn((key: string) => `translated:${key}`);
+  test("reads an AI gate the way every AI feature does", () => {
+    expect(getAIChartErrorMessage(problem(403, "ai_smart_tools_disabled"), t)).toMatch(/^translated:/);
+    expect(getAIChartErrorMessage(problem(403, "ai_smart_tools_disabled"), t)).not.toBe("Server detail");
+  });
 
-    expect(getTranslatedAIChartError("SOMETHING_ELSE", t)).toBe("SOMETHING_ELSE");
-    expect(t).not.toHaveBeenCalled();
+  test("falls back to the server's sentence, then to the generic one", () => {
+    expect(getAIChartErrorMessage(problem(502, "bad_gateway"), t)).toBe("Server detail");
+    expect(getAIChartErrorMessage(new Error("offline"), t)).toBe(
+      "translated:common.something_went_wrong_please_try_again"
+    );
   });
 });

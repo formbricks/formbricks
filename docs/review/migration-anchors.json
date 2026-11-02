@@ -623,5 +623,15 @@
     "heading": "Outgoing email caps",
     "old_anchor": "outgoing-email-caps",
     "target": "/platform/changelog#release-unreleased"
+  },
+  {
+    "heading": "Bundled Valkey 9.1.2 image",
+    "old_anchor": "bundled-valkey-9-1-2-image",
+    "target": "/self-hosting/upgrade/versions/valkey-9"
+  },
+  {
+    "heading": "Charts and dashboards API",
+    "old_anchor": "charts-and-dashboards-api",
+    "target": "/self-hosting/upgrade/versions/charts-dashboards"
   }
 ]

@@ -258,6 +258,10 @@ A chart version and an application version are separate choices.
 For the complete values surface, refer to the chart README in the repository:
 [charts/formbricks/README.md](https://github.com/formbricks/formbricks/tree/main/charts/formbricks).
 
+## Verify the installation
+
+Run the [deployment check](/self-hosting/setup/deployment-check) in a dedicated workspace before collecting real responses.
+
 ## 6. Uninstalling The Deployment
 
 To remove the deployment:
@@ -271,7 +275,3 @@ If you also want to remove in-cluster persistent volumes:
 ```sh
 kubectl delete pvc --all -n formbricks
 ```
-
-## Verify the installation
-
-Run the [deployment check](/self-hosting/setup/deployment-check) in a dedicated workspace before collecting real responses.

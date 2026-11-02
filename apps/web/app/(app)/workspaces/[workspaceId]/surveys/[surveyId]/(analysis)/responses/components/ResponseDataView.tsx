@@ -9,6 +9,7 @@ import { TResponseDataValue, TResponseTableData, TResponseWithQuotas } from "@fo
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
+import type { TResponseToolbarState } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/ResponseToolbar";
 import { ResponseTable } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTable";
 import { getReservedColumnValues } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/responses/lib/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
@@ -27,6 +28,9 @@ interface ResponseDataViewProps {
   locale: TUserLocale;
   isQuotasAllowed: boolean;
   quotas: TSurveyQuota[];
+  toolbar: TResponseToolbarState;
+  /** Creatives open this survey: its table then shows "Opened by creative" by default. */
+  isOpenedByCreatives: boolean;
 }
 
 // Helper function to format array values to record with specified keys
@@ -115,7 +119,7 @@ const mapResponsesToTableData = (
   }));
 };
 
-export const ResponseDataView: React.FC<ResponseDataViewProps> = ({
+export const ResponseDataView: React.FC<Readonly<ResponseDataViewProps>> = ({
   survey,
   responses,
   user,
@@ -129,6 +133,8 @@ export const ResponseDataView: React.FC<ResponseDataViewProps> = ({
   locale,
   isQuotasAllowed,
   quotas,
+  toolbar,
+  isOpenedByCreatives,
 }) => {
   const { t } = useTranslation();
   const [selectedResponseId, setSelectedResponseId] = React.useState<string | null>(null);
@@ -154,8 +160,10 @@ export const ResponseDataView: React.FC<ResponseDataViewProps> = ({
         locale={locale}
         isQuotasAllowed={isQuotasAllowed}
         quotas={quotas}
+        toolbar={toolbar}
         selectedResponseId={selectedResponseId}
         setSelectedResponseId={setSelectedResponseIdTransition}
+        isOpenedByCreatives={isOpenedByCreatives}
       />
     </div>
   );

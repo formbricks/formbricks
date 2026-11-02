@@ -1,0 +1,72 @@
+---
+title: "Local License Testing"
+description: "Test Enterprise license features against a license server running on your machine"
+icon: "key"
+---
+
+## How Features Are Gated
+
+- **Defined:** the feature flags of a license are the schema in `apps/web/modules/ee/license-check/types/enterprise-license.ts`, mirrored by the response schema in `lib/license.ts`.
+- **Fetched:** `lib/license.ts` posts the key to the license server's `/api/licenses/check`, caches the answer in Valkey (24 hours, 10 minutes after a failed check) and keeps it in process memory for a minute.
+- **Read:** feature code asks the helpers in `lib/utils.ts` (`getIsDashboardsEnabled`, `getIsCreativesEnabled`, …) rather than reading the license itself.
+- A flag added after the first release (`dashboards`, `workflows`, `creatives`, …) defaults to **off** when the server's answer omits it, so a license server that predates the flag never unlocks the feature.
+
+## Point the App at a Local License Server
+
+`ENTERPRISE_LICENSE_SERVER_URL` (see `lib/license-server-url.ts`) replaces `https://ee.formbricks.com`, but only when both hold:
+
+- the app runs with `next dev`, and
+- the URL's host is loopback: `localhost`, `127.0.0.1`, `::1` or `*.localhost`.
+
+Anything else is ignored with a warning, and a production build always checks the real server. Answers from the override are cached under their own key, so switching back does not serve them as the real server's.
+
+Leave the root `.env` (which `apps/web/.env` links to) and its real key untouched. Put the local key and the override in `apps/web/.env.development.local`: it is gitignored and Next.js reads it before `.env`. A variable exported in your shell still wins over both.
+
+```bash apps/web/.env.development.local
+ENTERPRISE_LICENSE_KEY=<licenseKey from "Create a license" below>
+ENTERPRISE_LICENSE_SERVER_URL=http://localhost:3006
+```
+
+## Run the License Server
+
+You need access to the private `formbricks/ee` (license server) and `formbricks/license-app` (admin UI) repositories. The server uses a `license-server` database in the Formbricks dev Postgres; its own compose file would clash with port 5432.
+
+<Steps>
+  <Step title="Create the database">
+    ```bash
+    docker compose -f docker-compose.dev.yml exec postgres psql -U postgres -c 'CREATE DATABASE "license-server"'
+    ```
+  </Step>
+  <Step title="Start the server on port 3006">
+    From the `ee` checkout. Set `DATABASE_URL` inline: the repository's own `.env` points at a different database. `API_KEY` is any value you choose; it protects the admin endpoints.
+    ```bash
+    export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/license-server" API_KEY=<local-api-key> PORT=3006 OTEL_ENABLED=false
+    pnpm install --frozen-lockfile && pnpm prisma migrate deploy && pnpm db:seed -- --clear
+    pnpm dev
+    ```
+  </Step>
+  <Step title="Create a license">
+    ```bash
+    curl -s -X POST localhost:3006/api/v1/licenses -H 'x-api-key: <local-api-key>' -H 'content-type: application/json' \
+      -d '{"email":"dev@example.com","features":{"creatives":true}}'
+    ```
+    The response holds the `licenseKey` (shown once) and the license `id`. Do not use the seeded keys: they are bound to made-up instances and answer with an instance mismatch. A new license binds to the first instance that checks it; `DELETE /api/v1/licenses/<id>/instance` releases it.
+  </Step>
+  <Step title="Toggle features">
+    Through the API, `PATCH /api/v1/licenses/<id>` with `{"features":{"creatives":false}}`, or in the admin UI: run `license-app` with `VITE_API_URL=http://localhost:3006/api/v1 VITE_API_KEY=<local-api-key> pnpm dev`.
+  </Step>
+</Steps>
+
+## After Every License Change
+
+Clear the cached answer and restart the dev server: the process keeps the license in memory and reads the key and server URL only at boot.
+
+```bash
+docker compose -f docker-compose.dev.yml exec valkey sh -c "valkey-cli --scan --pattern 'fb:license:*' | xargs -r valkey-cli del"
+```
+
+The organization's **Enterprise License** settings page shows the status and features the app now sees.
+
+## Cloud Mode
+
+Set `IS_FORMBRICKS_CLOUD=1` in the same `.env.development.local` and restart. On Cloud, most features come from the organization's Stripe plan; the instance license only guards a subset of them (`LICENSE_GUARDED_ENTITLEMENTS` in `modules/entitlements/lib/checks.ts`). Creatives are always off on Cloud.

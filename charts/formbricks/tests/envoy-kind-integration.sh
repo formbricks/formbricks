@@ -288,7 +288,7 @@ spec:
     spec:
       containers:
         - name: redis
-          image: valkey/valkey@sha256:e0eb7c480958d32bdc4357a74bdd70653ae15f2f9b4c93c4a5a9fad1dc471c84
+          image: valkey/valkey@sha256:418652cfb58ef879d4978c33553735d7147016032d5aefaa14c828e611eb9dfd
           ports:
             - containerPort: 6379
           readinessProbe:

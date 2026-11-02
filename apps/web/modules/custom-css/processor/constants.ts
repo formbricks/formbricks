@@ -78,8 +78,17 @@ export const CUSTOM_CSS_INCLUDE_FEATURES = Features.Nesting | Features.MediaQuer
 export const CUSTOM_CSS_EXCLUDE_FEATURES =
   Features.LogicalProperties | Features.DirSelector | Features.LightDark;
 
-/** The survey root every customer selector is scoped to. */
-export const SURVEY_ROOT_ID = "fbjs";
+/**
+ * The element every customer selector is scoped to: an id or a class, named without its `#` or `.`.
+ * It, `:root`, `html` and `body` are the root aliases a selector may start from.
+ */
+export interface TCustomCssRoot {
+  type: "id" | "class";
+  name: string;
+}
+
+/** The survey root, `#fbjs`: the default, and the only root survey and workspace CSS is scoped to. */
+export const SURVEY_ROOT: TCustomCssRoot = { type: "id", name: "fbjs" };
 export const APPEARANCE_ATTRIBUTE = "data-appearance";
 
 type TCustomCssLayer = (typeof CUSTOM_CSS_LAYER_ORDER)[number];

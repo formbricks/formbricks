@@ -8,6 +8,7 @@ import {
   ZCreateWorkflowInput,
   ZCursorPaginationMeta,
   ZWorkflowListItem,
+  ZWorkflowListPaginationMeta,
   ZWorkflowRunListItem,
   ZWorkflowRunResource,
   ZWorkflowRunSummary,
@@ -146,6 +147,12 @@ describe("resource shapes", () => {
     // with every other v3 list, and this schema exists to close it.
     expect(await composedPropertyKeys("components/schemas/CursorPaginationMeta.yml")).toEqual(
       schemaKeys(ZCursorPaginationMeta)
+    );
+  });
+
+  test("the workflow list's meta matches the counted list meta it documents", async () => {
+    expect(await composedPropertyKeys("components/schemas/CountedListMeta.yml")).toEqual(
+      schemaKeys(ZWorkflowListPaginationMeta)
     );
   });
 

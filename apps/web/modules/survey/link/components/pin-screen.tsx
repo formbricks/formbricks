@@ -42,6 +42,8 @@ interface PinScreenProps {
   isSpamProtectionEnabled?: boolean;
   responseCount?: number;
   styling: TWorkspaceStyling | TSurveyStyling;
+  /** The app's release version, which the survey renderer is loaded under. */
+  rendererVersion?: string;
 }
 
 export const PinScreen = (props: Readonly<PinScreenProps>) => {
@@ -68,6 +70,7 @@ export const PinScreen = (props: Readonly<PinScreenProps>) => {
     isSpamProtectionEnabled = false,
     responseCount,
     styling,
+    rendererVersion,
   } = props;
 
   const [localPinEntry, setLocalPinEntry] = useState<string>("");
@@ -187,6 +190,7 @@ export const PinScreen = (props: Readonly<PinScreenProps>) => {
       IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
       pinAuthToken={pinAuthToken}
       customCss={customCss}
+      rendererVersion={rendererVersion}
     />
   );
 };

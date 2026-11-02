@@ -1,7 +1,6 @@
 import { getLocale } from "@/lingodotdev/language";
 import { getTranslate } from "@/lingodotdev/server";
 import { ContactsPageLayout } from "@/modules/ee/contacts/components/contacts-page-layout";
-import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { AttributesTable } from "./components/attributes-table";
@@ -17,8 +16,6 @@ export const AttributesPage = async ({
   const t = await getTranslate();
   const { isReadOnly, organization, workspace } = await getWorkspaceAuth(params.workspaceId);
 
-  const contactAttributeKeys = await getContactAttributeKeys(workspace.id);
-
   const isContactsEnabled = await getIsContactsEnabled(organization.id);
 
   return (
@@ -30,12 +27,7 @@ export const AttributesPage = async ({
       isContactsEnabled={isContactsEnabled}
       isReadOnly={isReadOnly}
       cta={<CreateAttributeModal workspaceId={workspace.id} />}>
-      <AttributesTable
-        contactAttributeKeys={contactAttributeKeys}
-        isReadOnly={isReadOnly}
-        workspaceId={params.workspaceId}
-        locale={locale}
-      />
+      <AttributesTable isReadOnly={isReadOnly} workspaceId={params.workspaceId} locale={locale} />
     </ContactsPageLayout>
   );
 };

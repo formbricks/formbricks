@@ -210,9 +210,10 @@ test.describe("Auto-captured browser context on responses @slow", () => {
     await owner.login();
     await page.goto(`/workspaces/${owner.workspaceId}/surveys/${ownSurveyId}/responses`);
 
-    // The response card lives in the response modal, and the table is the default view. Clicking any
-    // cell but `select` opens it (`ResponseTableCell.handleCellClick`); the dedicated "Expand
-    // response" button is `group-hover:flex`, so it needs a hover dance this does not.
+    // The response card lives in the response modal, and the table is the default view: clicking a row
+    // opens that response (`ListTable`'s row click), except on its checkbox, links and buttons. The match
+    // count is fetched on the client, so once it shows the row's click handler is attached.
+    await expect(page.getByTestId("table-match-count")).toHaveText("1 result", { timeout: 60000 });
     await page.getByRole("cell", { name: "Anonymous" }).click();
 
     await test.step("the stored values show in the Metadata popover", async () => {

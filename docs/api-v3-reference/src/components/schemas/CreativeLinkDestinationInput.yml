@@ -1,0 +1,21 @@
+type: object
+description: Open an `http` or `https` link in a new tab.
+required:
+  - type
+  - url
+properties:
+  type:
+    type: string
+    enum:
+      - link
+  url:
+    type: string
+    description: >-
+      An absolute `http://` or `https://` URL with a real host: `localhost`, an IP address, or a
+      domain whose labels are letters, digits and hyphens and whose top-level domain has at least two
+      letters (punycode allowed). `https://example.` and `https://example` are refused. `web-url`
+      names this rule; `pattern` states the part of it a regular expression can.
+    maxLength: 2048
+    format: web-url
+    pattern: '^https?://(?:[^\s/?#@]+@)?(?:localhost|\d{1,3}(?:\.\d{1,3}){3}|\[[0-9A-Fa-f:.]+\]|(?:[^\s/\\?#@:.\[\]]+\.)+[^\s/\\?#@:.\[\]\d][^\s/\\?#@:.\[\]]+)(?::\d{1,5})?(?:[/?#]\S*)?$'
+additionalProperties: false

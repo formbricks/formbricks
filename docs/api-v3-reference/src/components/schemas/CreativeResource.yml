@@ -1,0 +1,18 @@
+oneOf:
+  - $ref: ./FeedbackButtonCreative.yml
+  - $ref: ./BannerCreative.yml
+discriminator:
+  propertyName: type
+  mapping:
+    feedbackButton: ./FeedbackButtonCreative.yml
+    banner: ./BannerCreative.yml
+description: >
+  A creative: a page element the web SDK renders on the customer's site next to surveys, with its own
+  content, look, display rules and schedule. `type` selects the `content` and `styling` shape: switch
+  on it.
+
+
+  The writable groups are `name`, `status`, `defaultLanguage` with `languages`, `content`, `styling`,
+  `destination`, `distribution` and `schedule`; a `PATCH` replaces each group it sends as a whole.
+  `displayStatus`, `displayStatusReason`, `warnings`, the timestamps, `creator` and
+  `destination.opensAs` are read-only.

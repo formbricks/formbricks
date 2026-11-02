@@ -1,0 +1,13 @@
+type: string
+enum:
+  - draft
+  - scheduled
+  - active
+  - paused
+  - closed
+  - archived
+description: >
+  What the creative is doing now, derived in this order: `archived` when archived; `draft` and
+  `closed` (status `completed`) when the author said so; `closed` when the schedule's `endAt` has
+  passed; `paused` when the author paused it; `scheduled` before the schedule's `startAt`; `paused`
+  when its Destination survey isn't active (not `inProgress`, or archived); otherwise `active`.

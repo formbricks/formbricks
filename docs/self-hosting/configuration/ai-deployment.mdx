@@ -10,7 +10,7 @@ and confirm license, provider and capacity requirements before enabling them.
 <Tabs>
 <Tab title="Docker">
 
-### Enable Bundled Qwen/vLLM For AI
+### Enable bundled Qwen/vLLM for AI
 
 The Docker stack can optionally run Qwen through vLLM as an OpenAI-compatible `/v1` endpoint. Baseline
 installs do not start vLLM and can still use Google Vertex, Azure, AWS Bedrock, or another OpenAI-compatible
@@ -48,7 +48,7 @@ The vLLM endpoint is available inside the Compose network at `http://vllm:8000/v
 If you run your own Qwen/vLLM service, do not enable the `qwen` profile. Set `AI_PROVIDER`, `AI_MODEL`, and
 `AI_OPENAI_COMPATIBLE_BASE_URL` to your external endpoint instead.
 
-### Enable AI Taxonomy Beta
+### Enable AI taxonomy beta
 
 The standalone AI taxonomy service is included as an opt-in Docker Compose profile. Baseline installs do not
 start taxonomy and do not require taxonomy or LLM secrets.
@@ -154,7 +154,7 @@ The taxonomy service remains internal to the compose network by default. `TAXONO
 </Tab>
 <Tab title="Kubernetes">
 
-### Optional Bundled Qwen/vLLM For AI
+### Optional bundled Qwen/vLLM for AI
 
 The Helm chart can optionally deploy a Formbricks-provided Qwen runtime through vLLM. This is disabled by
 default and requires GPU-capable Kubernetes nodes.
@@ -180,7 +180,7 @@ llm:
 Keep `llm.enabled: false` when you use Google Vertex, Azure, AWS Bedrock, or an externally managed
 OpenAI-compatible endpoint. Configure those providers through `deployment.env`.
 
-### Optional AI Taxonomy Beta
+### Optional AI taxonomy beta
 
 The Helm chart can optionally deploy the standalone taxonomy service. This is disabled by default and does not
 force the bundled Qwen/vLLM runtime.

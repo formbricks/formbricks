@@ -12,7 +12,7 @@ The bundled image changes from upstream Cube to the Formbricks image, starting w
 Use the image shipped by your selected patch. Follow the [Cube service update](/self-hosting/upgrade/versions/cube)
 with that **5.4** tag, not a v6 Compose file.
 
-### Bundled Valkey 8.1.9 Upgrade (action required for some self-hosted deployments)
+### Bundled Valkey 8.1.9 upgrade (action required for some self-hosted deployments)
 
 The old bundled digest selects only `linux/amd64`. The new digest selects the matching native image on
 `linux/amd64` and `linux/arm64`, without requiring QEMU or `binfmt`. Valkey 8.1.9 also contains upstream
@@ -45,7 +45,7 @@ do not download today's `stable` script for a historical upgrade.
 The chart also stops publishing the bundled cache to the host. If a component outside the deployment
 previously used that port, provide a private authenticated route or external Redis instead of reopening it publicly.
 
-### Envoy Gateway 1.8.4 CRD Upgrade
+### Envoy Gateway 1.8.4 CRD upgrade
 
 **From 5.4.3**, the Helm chart replaces Envoy Gateway 1.7.1 and Gateway API 1.4.1 with Envoy Gateway 1.8.4 and Gateway
 API 1.5.1. Fresh installations receive the new CRDs automatically. Helm does not update CRDs during an ordinary
