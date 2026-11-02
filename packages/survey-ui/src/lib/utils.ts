@@ -21,21 +21,29 @@ export function cn(...inputs: ClassValue[]): string {
   return twMerge(clsx(inputs));
 }
 
+// One opening tag. A quoted value is consumed whole, so a `>` inside it does not end the tag, and `<` is
+// excluded outside quotes so a stray one ends the attempt instead of scanning to the end of the string.
+// Every alternative starts with a different character, so there is no backtracking to speak of.
+const OPENING_TAG = /<[a-zA-Z](?:"[^"]*"|'[^']*'|[^<>"'])*>/g;
+// Inside a tag: a quoted style attribute, or any other quoted value, which is kept whole so text that
+// merely looks like one (`title="Choose style = 'casual'"`) is never mistaken for an attribute.
+const STYLE_ATTRIBUTE_OR_QUOTED_VALUE = /\sstyle\s*=\s*(?:"[^"]*"|'[^']*')|"[^"]*"|'[^']*'/gi;
+
 /**
- * Removes quoted `style` attributes from a raw HTML string, without parsing it.
+ * Removes quoted `style` attributes from the opening tags of a raw HTML string, without parsing it.
  * Must run BEFORE anything parses the markup: under a strict CSP `style-src` the browser reports every
  * element it parses with a style attribute, even one discarded afterwards, so stripping the attribute
  * from the parsed tree is too late.
  * Any whitespace may separate the attribute from the tag (a newline or tab, not just a space) and
- * surround the `=`. Quoted values only: an unquoted `style=x` is not matched, because it cannot be told
- * from prose here.
- * The regex is O(n) safe: [^"]* and [^']* are negated classes bounded by fixed quote delimiters, so no
- * backtracking can occur.
+ * surround the `=`. Quoted values only: an unquoted `style=x` is not matched. Text outside tags, and
+ * other attributes' values, are left alone.
  * @param html - The raw HTML string
  * @returns The string without its quoted style attributes
  */
 export const removeStyleAttributes = (html: string): string =>
-  html.replaceAll(/\sstyle\s*=\s*(?:"[^"]*"|'[^']*')/gi, "");
+  html.replaceAll(OPENING_TAG, (tag) =>
+    tag.replaceAll(STYLE_ATTRIBUTE_OR_QUOTED_VALUE, (match) => (/^\s/.test(match) ? "" : match))
+  );
 
 /**
  * Strip inline style attributes from HTML string to avoid CSP violations

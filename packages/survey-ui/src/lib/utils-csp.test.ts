@@ -21,6 +21,13 @@ describe("removeStyleAttributes", () => {
       '<p dir="ltr"><span>Hi</span></p>',
     ],
     ["a value that contains >", '<p style="background: url(a>b)">Hi</p>', "<p>Hi</p>"],
+    [
+      "next to an attribute whose value mentions style",
+      `<a title="Choose style = 'casual'" style="color: red">Hi</a>`,
+      `<a title="Choose style = 'casual'">Hi</a>`,
+    ],
+    ["in a self-closing tag", '<br style="clear: both" />', "<br />"],
+    ["in every tag of a string", '<p style="a">x</p><p style="b">y</p>', "<p>x</p><p>y</p>"],
   ])("removes a style attribute: %s", (_, html, expected) => {
     expect(removeStyleAttributes(html)).toBe(expected);
   });
@@ -31,6 +38,9 @@ describe("removeStyleAttributes", () => {
     ["markup without styles", '<p class="a">Hi</p>'],
     ["plain text", "Tom & Jerry"],
     ["the word style in text", "<p>the style guide</p>"],
+    ["text that looks like an attribute", `<p>Choose style = 'casual' or style="bold"</p>`],
+    ["an attribute value that looks like one", `<a title="Choose style = 'casual'">Hi</a>`],
+    ["a stray <", "1 < 2 and style='x' > 0"],
   ])("leaves %s alone", (_, html) => {
     expect(removeStyleAttributes(html)).toBe(html);
   });

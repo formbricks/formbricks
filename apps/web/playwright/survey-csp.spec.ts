@@ -36,10 +36,22 @@ const styledEditorText = (text: string): string =>
   `<p class="fb-editor-paragraph" dir="ltr" style="text-align: left;"><span style="white-space: pre-wrap;">${text}</span></p>`;
 const styledApiText = (text: string): string => `<p\nstyle = 'color: #334155'><b style="">${text}</b></p>`;
 
+// Matrix row and column labels render through the same rich-text label as headlines.
+type TLabelled = { id: string; label: { default: string } };
+const styledLabels = (items: unknown): TLabelled[] | undefined =>
+  Array.isArray(items)
+    ? (items as TLabelled[]).map((item) => ({
+        ...item,
+        label: { default: styledEditorText(item.label.default) },
+      }))
+    : undefined;
+
 const withStyledText = (element: Record<string, unknown>): Record<string, unknown> => {
-  const { headline, subheader } = element as {
+  const { headline, subheader, rows, columns } = element as {
     headline?: { default?: string };
     subheader?: { default?: string };
+    rows?: unknown;
+    columns?: unknown;
   };
   return {
     ...element,
@@ -49,6 +61,8 @@ const withStyledText = (element: Record<string, unknown>): Record<string, unknow
     ...(subheader?.default !== undefined && {
       subheader: { default: styledApiText(`${MARKER}: ${subheader.default}`) },
     }),
+    ...(rows !== undefined && { rows: styledLabels(rows) }),
+    ...(columns !== undefined && { columns: styledLabels(columns) }),
   };
 };
 
