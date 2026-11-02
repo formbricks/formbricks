@@ -32,6 +32,8 @@ import {
   EMPTY_TRANSLATION,
   type TTranslatableField,
   addCreativeLanguage,
+  applyAutoSelectLanguageRule,
+  canAutoSelectLanguage,
   getTranslatableFields,
   getTranslationProgress,
   makeDefaultLanguage,
@@ -120,7 +122,8 @@ const TranslationFields = ({
 /**
  * The Language tab (ENG-4003), on every plan: the creative's languages from the workspace's, which are
  * shown to visitors, and their translations. Visitors get the language the site sets, or their
- * browser's when the survey uses it; a missing or hidden translation shows the default language.
+ * browser's when "Use browser language by default" is on (ENG-6871); a missing or hidden translation
+ * shows the default language.
  */
 export const LanguageTab = ({
   workspaceId,
@@ -142,10 +145,17 @@ export const LanguageTab = ({
   const { languages } = form;
   const [editingCode, setEditingCode] = useState<string | null>(languages.others[0]?.code ?? null);
   const [removingCode, setRemovingCode] = useState<string | null>(null);
+  const autoSelectId = useId();
   const nameOf = (code: string) => getLanguageLabel(code, locale) ?? code;
+  // Every change here keeps "Use browser language by default" in step with the languages.
+  const updateForm = (update: (current: TCreativeEditorForm) => TCreativeEditorForm) =>
+    setForm((current) => {
+      const next = update(current);
+      return { ...next, languages: applyAutoSelectLanguageRule(current.languages, next.languages) };
+    });
   const setLanguages = (
     update: (current: TCreativeEditorForm["languages"]) => TCreativeEditorForm["languages"]
-  ) => setForm((current) => ({ ...current, languages: update(current.languages) }));
+  ) => updateForm((current) => ({ ...current, languages: update(current.languages) }));
 
   const usedCodes = new Set([languages.defaultLanguage, ...languages.others.map(({ code }) => code)]);
   const addableCodes = workspaceLanguageCodes.filter((code) => !usedCodes.has(code));
@@ -232,7 +242,7 @@ export const LanguageTab = ({
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => {
-                              setForm((current) => makeDefaultLanguage(current, code));
+                              updateForm((current) => makeDefaultLanguage(current, code));
                               setEditingCode(languages.defaultLanguage);
                             }}>
                             {t("workspace.surveys.edit.make_default")}
@@ -281,6 +291,25 @@ export const LanguageTab = ({
               <ArrowUpRightIcon />
             </Link>
           </Button>
+        </div>
+
+        <div className="flex items-center justify-between gap-4 border-t border-slate-100 pt-4">
+          <label htmlFor={autoSelectId} className="space-y-0.5">
+            <span className="block text-sm font-medium text-slate-900">
+              {t("workspace.surveys.edit.auto_select_browser_language")}
+            </span>
+            <span className="block text-xs text-slate-500">
+              {t("workspace.creatives.editor.auto_select_browser_language_description")}
+            </span>
+          </label>
+          <Switch
+            id={autoSelectId}
+            checked={!!languages.autoSelectLanguage}
+            disabled={!canAutoSelectLanguage(languages)}
+            onCheckedChange={(autoSelectLanguage) =>
+              setLanguages((current) => ({ ...current, autoSelectLanguage }))
+            }
+          />
         </div>
       </EditorPanel>
 

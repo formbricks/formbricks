@@ -77,25 +77,26 @@ describe("SSO recovery sign-in (real Postgres)", () => {
 /**
  * ENG-2555. The unit tests for `syncSsoIdentityForUser` mock Prisma and assert the issuer *we* pass, so
  * they can only ever confirm the value we chose — which is exactly how a wrong one shipped. These assert
- * the property that actually matters: after recovery links an account, Better Auth can find it again.
+ * the property that actually matters: after recovery links an account, a 1.7.0 pod can find it again.
  *
- * The lookup key is reproduced the way upstream builds it (a declared `accountIssuer` wins, else the
- * synthetic form), so this fails if our write and upstream's read ever disagree — regardless of which
- * side moved.
+ * Better Auth 1.7.7 finds accounts by `(providerId, accountId)` and ignores `issuer`, but 1.7.0 keyed them
+ * on `(issuer, accountId)`, so this is the rollback guarantee. The key is reproduced the way 1.7.0 built
+ * it (a declared `accountIssuer` wins, else the synthetic form), as frozen literals: those values are in
+ * rows 1.7.0 and the migrations already wrote, so they no longer track upstream.
  */
-describe("SSO recovery writes an issuer Better Auth can find (real Postgres)", () => {
-  const findByBetterAuthKey = (issuer: string, accountId: string) =>
+describe("SSO recovery writes the issuer a Better Auth 1.7.0 rollback finds (real Postgres)", () => {
+  const findByRollbackKey = (issuer: string, accountId: string) =>
     prisma.account.findUnique({
       where: { issuer_providerAccountId: { issuer, providerAccountId: accountId } },
       select: { userId: true, provider: true },
     });
 
   test.each([
-    // google declares its own issuer upstream — the case that broke
+    // google declared its own issuer in 1.7.0 — the case that broke
     ["google", "google-sub-1", "https://accounts.google.com"],
-    // github declares none, so the synthetic form is correct for it
+    // github declared none, so the synthetic form is correct for it
     ["github", "github-id-1", "local:oauth:github"],
-  ] as const)("links %s under the key Better Auth looks it up by", async (provider, sub, expectedIssuer) => {
+  ] as const)("links %s under the key 1.7.0 looks it up by", async (provider, sub, expectedIssuer) => {
     const user = await prisma.user.create({
       data: { email: `${provider}-link@example.com`, name: "Linked", emailVerified: true },
     });
@@ -109,7 +110,7 @@ describe("SSO recovery writes an issuer Better Auth can find (real Postgres)", (
       })
     );
 
-    const found = await findByBetterAuthKey(expectedIssuer, sub);
+    const found = await findByRollbackKey(expectedIssuer, sub);
 
     expect(found).not.toBeNull();
     expect(found?.userId).toBe(user.id);
@@ -143,7 +144,7 @@ describe("SSO recovery writes an issuer Better Auth can find (real Postgres)", (
       })
     );
 
-    expect(await findByBetterAuthKey("https://accounts.google.com", "google-sub-2")).not.toBeNull();
+    expect(await findByRollbackKey("https://accounts.google.com", "google-sub-2")).not.toBeNull();
     // and no duplicate was created in the process
     expect(await prisma.account.count({ where: { userId: user.id } })).toBe(1);
   });

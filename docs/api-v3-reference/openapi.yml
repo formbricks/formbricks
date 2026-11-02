@@ -5276,6 +5276,7 @@ paths:
                           - code: en-US
                             default: true
                             enabled: true
+                        autoSelectLanguage: null
                         content:
                           label:
                             en-US: Feedback
@@ -5435,6 +5436,7 @@ paths:
                         - code: en-US
                           default: true
                           enabled: true
+                      autoSelectLanguage: null
                       content:
                         message:
                           en-US:
@@ -5614,6 +5616,7 @@ paths:
                         - code: es-US
                           default: false
                           enabled: true
+                      autoSelectLanguage: true
                       content:
                         label:
                           en-US: Feedback
@@ -8457,6 +8460,7 @@ components:
       type: string
       enum:
         - list
+        - row
         - dropdown
     SurveyMultipleChoiceSingleElement:
       allOf:
@@ -14350,6 +14354,7 @@ components:
         - creator
         - defaultLanguage
         - languages
+        - autoSelectLanguage
         - destination
         - distribution
         - schedule
@@ -14415,6 +14420,11 @@ components:
           items:
             $ref: '#/components/schemas/CreativeLanguage'
           description: Every language the texts are written in, the default first.
+        autoSelectLanguage:
+          type:
+            - boolean
+            - 'null'
+          description: Show the texts in the visitor's browser language when the site sets none with `setLanguage` and it matches the default or an enabled language; otherwise the default language is used. `null` (never chosen) and `false` both mean off.
         destination:
           anyOf:
             - $ref: '#/components/schemas/CreativeDestination'
@@ -14915,7 +14925,7 @@ components:
       description: |
         A creative: a page element the web SDK renders on the customer's site next to surveys, with its own content, look, display rules and schedule. `type` selects the `content` and `styling` shape: switch on it.
 
-        The writable groups are `name`, `status`, `defaultLanguage` with `languages`, `content`, `styling`, `destination`, `distribution` and `schedule`; a `PATCH` replaces each group it sends as a whole. `displayStatus`, `displayStatusReason`, `warnings`, the timestamps, `creator` and `destination.opensAs` are read-only.
+        The writable groups are `name`, `status`, `defaultLanguage` with `languages`, `autoSelectLanguage`, `content`, `styling`, `destination`, `distribution` and `schedule`; a `PATCH` replaces each group it sends as a whole. `displayStatus`, `displayStatusReason`, `warnings`, the timestamps, `creator` and `destination.opensAs` are read-only.
     CreativeListMeta:
       allOf:
         - $ref: '#/components/schemas/ListPaginationMeta'
@@ -15015,6 +15025,12 @@ components:
           items:
             $ref: '#/components/schemas/CreativeLanguageInput'
           description: Other languages the texts are written in. Omit for none.
+        autoSelectLanguage:
+          type:
+            - boolean
+            - 'null'
+          default: null
+          description: Show the texts in the visitor's browser language when the site sets none with `setLanguage` and it matches the default or an enabled language; otherwise the default language is used. `null` (never chosen) and `false` both mean off.
         destination:
           anyOf:
             - $ref: '#/components/schemas/CreativeDestinationInput'
@@ -15126,6 +15142,11 @@ components:
           maxItems: 50
           items:
             $ref: '#/components/schemas/CreativeLanguageInput'
+        autoSelectLanguage:
+          type:
+            - boolean
+            - 'null'
+          description: Show the texts in the visitor's browser language when the site sets none with `setLanguage` and it matches the default or an enabled language; otherwise the default language is used. `null` (never chosen) and `false` both mean off. Omit to keep the stored value.
         content:
           oneOf:
             - $ref: '#/components/schemas/FeedbackButtonContent'

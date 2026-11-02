@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE } from "@formbricks/types/errors";
 import { flushAfter } from "@/integration/after";
 import { resetDb } from "@/integration/reset-db";
 import { forgotPasswordAction } from "@/modules/auth/forgot-password/actions";
@@ -10,8 +9,10 @@ import { sendPasswordResetLinkEmail } from "@/modules/email";
 
 /**
  * ENG-3258 against real Postgres + real Better Auth: a credential `Account` row whose `issuer` is NULL,
- * the shape a 1.6 pod writes during a rolling upgrade. Better Auth 1.7 filters its credential lookup on
- * `issuer`, so the bug only exists where that real query runs against a real row.
+ * the shape a 1.6 pod writes during a rolling upgrade, and the shape Better Auth 1.7.7 itself writes now.
+ * 1.7.0 filtered its credential lookup on `issuer`, so a NULL one was invisible to it. 1.7.7 no longer
+ * reads the column, so every flow below must work with or without it; the heal hook stays only so a
+ * rollback to 1.7.0 still finds the row.
  */
 
 // `after()` needs a Next request scope; this suite drives code that defers work with it (ENG-3639).
@@ -64,6 +65,19 @@ beforeEach(async () => {
   await dropCredentialIssuer();
 });
 
+describe("credential row written by Better Auth 1.7.7 (real Postgres)", () => {
+  test("carries the issuer a 1.7.0 pod looks it up by", async () => {
+    await resetDb();
+    await auth.api.signUpEmail({ body: { email: EMAIL, password: PASSWORD, name: "Fresh Sign-up" } });
+
+    const account = await prisma.account.findFirstOrThrow({
+      where: { provider: "credential", user: { email: EMAIL } },
+      select: { issuer: true },
+    });
+    expect(account.issuer).toBe("local:credential");
+  });
+});
+
 describe("credential row with a NULL issuer (real Postgres + Better Auth)", () => {
   test("signs in with the correct password", async () => {
     const result = await auth.api.signInEmail({ body: { email: EMAIL, password: PASSWORD } });
@@ -81,14 +95,16 @@ describe("credential row with a NULL issuer (real Postgres + Better Auth)", () =
     expect(signIn.user.email).toBe(EMAIL);
   });
 
-  test("a link issued before the heal fails as an invalid link, not a server error", async () => {
-    // The link was mailed while the row was still NULL, i.e. before this fix was deployed: request it
-    // (which heals), then put the row back the way it was when that link went out.
+  test("a link mailed while the row had a NULL issuer still resets the password", async () => {
+    // Requesting the link heals the row; put it back as it was when the link went out. 1.7.0 rejected
+    // this as an invalid link, 1.7.7 does not look at the issuer at all.
     const token = await requestResetToken();
     await dropCredentialIssuer();
 
     const result = await resetPasswordAction({ token, password: NEW_PASSWORD });
 
-    expect(result?.serverError).toBe(INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE);
+    expect(result?.data).toEqual({ success: true });
+    const signIn = await auth.api.signInEmail({ body: { email: EMAIL, password: NEW_PASSWORD } });
+    expect(signIn.user.email).toBe(EMAIL);
   });
 });

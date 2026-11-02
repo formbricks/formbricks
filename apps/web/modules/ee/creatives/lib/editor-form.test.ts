@@ -33,6 +33,7 @@ const base = {
     { code: "en-US", default: true, enabled: true },
     { code: "de-DE", default: false, enabled: true },
   ],
+  autoSelectLanguage: true,
   distribution: { showOn: "pageView", triggers: [], conditions: null, displayPercentage: null },
   schedule: { startAt: null, endAt: null },
   warnings: [],
@@ -187,6 +188,7 @@ describe("feedback button form", () => {
 
     expect(buildCreativePatch(form, feedbackButton, "save")).toEqual({
       name: "Site feedback",
+      autoSelectLanguage: true,
       content: { label: { "en-US": "Feedback", "de-DE": "Feedback geben" }, icon: "messageSquare" },
       destination: { type: "survey", surveyId: "clsurvey0000000000000001" },
       styling: {
@@ -317,6 +319,7 @@ describe("languages (ENG-4003)", () => {
           accessibleName: "",
         },
       },
+      autoSelectLanguage: true,
     });
     expect(buildCreativePatch(form, banner, "save")).not.toHaveProperty("languages");
     expect(buildCreativePatch(form, banner, "save")).not.toHaveProperty("defaultLanguage");
@@ -355,6 +358,14 @@ describe("languages (ENG-4003)", () => {
       },
     });
     expect(buildCreativePatch(removed, banner, "save").content).not.toHaveProperty("message.de-DE");
+  });
+
+  test("sends Use browser language by default as the Language tab holds it", () => {
+    const form = toCreativeEditorForm(feedbackButton);
+    expect(form.languages.autoSelectLanguage).toBe(true);
+
+    const optedOut = { ...form, languages: { ...form.languages, autoSelectLanguage: false } };
+    expect(buildCreativePatch(optedOut, feedbackButton, "save")).toMatchObject({ autoSelectLanguage: false });
   });
 
   test("a new default language holds every text, the old default kept as a translation", () => {
