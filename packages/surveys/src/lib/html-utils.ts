@@ -24,6 +24,7 @@ export const isValidHTML = (str: string): boolean => {
     // Strip inline style attributes to avoid CSP violations during parsing
     const strippedStr = stripInlineStyles(str);
 
+    // eslint-disable-next-line no-restricted-syntax -- strippedStr is stripInlineStyles output
     const doc = new DOMParser().parseFromString(strippedStr, "text/html");
     const errorNode = doc.querySelector("parsererror");
     if (errorNode) return false;
@@ -46,6 +47,7 @@ export const htmlToPlainText = (value: string): string => {
 
   try {
     return (
+      // eslint-disable-next-line no-restricted-syntax -- the value passes through stripInlineStyles
       new DOMParser().parseFromString(stripInlineStyles(value), "text/html").body.textContent?.trim() ?? value
     );
   } catch {
