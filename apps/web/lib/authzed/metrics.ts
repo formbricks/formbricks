@@ -1,6 +1,7 @@
 import "server-only";
 import { type BatchObservableResult, metrics } from "@opentelemetry/api";
 import { logger } from "@formbricks/logger";
+import { loggableError } from "@/lib/utils/loggable-error";
 import type { TAuthzedOutboxStatus } from "./outbox-types";
 
 /**
@@ -249,7 +250,7 @@ export const observeAuthzedOutboxStatus = (readStatus: () => Promise<TAuthzedOut
         status = await readStatus();
       } catch (error) {
         logger.warn(
-          { component: "authzed", err: error, operation: "outbox_status_metrics" },
+          { component: "authzed", ...loggableError(error), operation: "outbox_status_metrics" },
           "Could not read AuthZed outbox status for metrics"
         );
         return;

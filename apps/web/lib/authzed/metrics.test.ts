@@ -196,9 +196,11 @@ describe("observeAuthzedOutboxStatus", () => {
 
     expect(await collect()).toEqual([]);
     expect(mockLoggerWarn).toHaveBeenCalledWith(
-      expect.objectContaining({ operation: "outbox_status_metrics" }),
+      expect.objectContaining({ errName: "Error", operation: "outbox_status_metrics" }),
       "Could not read AuthZed outbox status for metrics"
     );
+    // The message can quote query input; only the name and frames are logged.
+    expect(JSON.stringify(mockLoggerWarn.mock.calls)).not.toContain("database unavailable");
   });
 });
 

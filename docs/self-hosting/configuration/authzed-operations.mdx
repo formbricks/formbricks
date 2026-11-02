@@ -684,6 +684,11 @@ formbricks_authzed_projection_outbox_status{state=~"revocation_warning|revocatio
 # Delivery has stopped running on every replica.
 time() - max(formbricks_authzed_projection_outbox_last_drain_timestamp_seconds) > 30
 
+# Delivery has not run since the jobs processes started (for example, Redis was down at boot), so the
+# heartbeat was never written. Add your deployment's job or namespace label, and hold it with a `for:`
+# of a few minutes so a fresh rollout does not page.
+absent(formbricks_authzed_projection_outbox_last_drain_timestamp_seconds)
+
 # Dead letters and failed scheduled repairs both block cutover.
 formbricks_authzed_projection_outbox_status{state="dead_lettered"}
 or

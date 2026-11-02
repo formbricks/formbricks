@@ -35,16 +35,20 @@ export const nodeAutoInstrumentationConfig: InstrumentationConfigMap = {
 };
 
 const DEFAULT_METRIC_EXPORT_INTERVAL_MS = 60_000;
+/** Node's timer limit; a longer interval silently fires after 1 ms and turns every export into a busy loop. */
+const MAX_TIMER_DELAY_MS = 2_147_483_647;
 
 /**
  * The OTLP metric export interval, from the standard `OTEL_METRIC_EXPORT_INTERVAL` (milliseconds).
  *
  * The default stays 60 s, but the AuthZed outbox alerts have to land before the 60 s freshness guard
  * trips, which a 60 s export cannot promise for a 15 s warning (ENG-3764) — so an operator alerting on
- * them sets this lower. Anything that is not a positive integer falls back to the default rather than
- * failing boot: telemetry must never take the app down.
+ * them sets this lower. Anything that is not a positive integer within Node's timer limit falls back to the
+ * default rather than failing boot: telemetry must never take the app down.
  */
 export const getMetricExportIntervalMs = (value: string | undefined): number => {
   const parsed = Number(value);
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : DEFAULT_METRIC_EXPORT_INTERVAL_MS;
+  return Number.isInteger(parsed) && parsed > 0 && parsed <= MAX_TIMER_DELAY_MS
+    ? parsed
+    : DEFAULT_METRIC_EXPORT_INTERVAL_MS;
 };

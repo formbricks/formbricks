@@ -31,8 +31,8 @@ The web application creates jobs and consumes them from shared Redis-backed queu
 
 ### Dedicated queues
 
-These jobs have a queue and a worker of their own in every web process, so they do not wait behind each
-other or behind the jobs on `background-jobs`:
+These jobs have their own queues and workers in every web process, so they never wait behind a job on
+another queue, including `background-jobs`. The two audits share one queue and can wait behind each other:
 
 - `authzed-projection.deliver`, described below.
 - `authzed-reconciliation.audit` and `authzed-survey.audit`, which share `authzed-reconciliation`. The
