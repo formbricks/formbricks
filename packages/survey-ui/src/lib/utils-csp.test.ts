@@ -1,54 +1,37 @@
-import { sanitize } from "isomorphic-dompurify";
-import { afterEach, describe, expect, test, vi } from "vitest";
-import { sanitizeSurveyHtml, stripInlineStyles } from "./utils";
+import { describe, expect, test } from "vitest";
+import { removeStyleAttributes } from "./utils";
 
-// Under a `style-src` without 'unsafe-inline', the browser reports a violation for every element it
-// *parses* with a `style` attribute, even when the sanitizer throws the attribute away afterwards. So the
-// property to prove is on the sanitizer's INPUT: no markup with a style attribute may reach it. The real
-// sanitizer runs (a mock would hide the output), wrapped only so its calls can be read.
-vi.mock("isomorphic-dompurify", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("isomorphic-dompurify")>();
-  return { ...actual, sanitize: vi.fn(actual.sanitize) };
-});
-
-const STYLE_ATTRIBUTE = /\sstyle\s*=/i;
-
-const STYLED_HTML = [
-  ["double-quoted", '<p style="color: red;">Hi</p>'],
-  ["empty", '<p style="">Hi</p>'],
-  ["single-quoted", "<p style='color: red;'>Hi</p>"],
-  ["uppercase", '<p STYLE="color: red;">Hi</p>'],
-  ["editor output", '<p dir="ltr"><span style="white-space: pre-wrap;">Hi</span></p>'],
-  ["after a newline", '<p class="a"\nstyle="color: red;">Hi</p>'],
-  ["after a tab", '<p\tstyle="color: red;">Hi</p>'],
-  ["with spaces around =", '<p style = "color: red;">Hi</p>'],
-] as const;
-
-const sanitizerInputsWithStyle = (): string[] =>
-  vi
-    .mocked(sanitize)
-    .mock.calls.map(([html]) => String(html))
-    .filter((html) => STYLE_ATTRIBUTE.test(html));
-
-describe("inline styles never reach the sanitizer's parser", () => {
-  afterEach(() => {
-    vi.mocked(sanitize).mockClear();
+// Under a strict `style-src` the browser reports every element it parses with a style attribute, so the
+// attribute has to leave the raw string before anything parses it. Whether the markup then stays clean in
+// the shipped bundle is checked in a real browser by apps/web/playwright/survey-csp.spec.ts; this table
+// owns the spellings of the attribute the regex has to recognise.
+describe("removeStyleAttributes", () => {
+  test.each([
+    ["double-quoted", '<p style="color: red;">Hi</p>', "<p>Hi</p>"],
+    ["single-quoted", "<p style='color: red;'>Hi</p>", "<p>Hi</p>"],
+    ["empty", '<p style="">Hi</p>', "<p>Hi</p>"],
+    ["upper case", '<p STYLE="color: red;">Hi</p>', "<p>Hi</p>"],
+    ["after another attribute", '<p class="a" style="color: red;">Hi</p>', '<p class="a">Hi</p>'],
+    ["after a newline", '<p class="a"\nstyle="color: red;">Hi</p>', '<p class="a">Hi</p>'],
+    ["after a tab", '<p\tstyle="color: red;">Hi</p>', "<p>Hi</p>"],
+    ["with spaces around =", '<p style = "color: red;">Hi</p>', "<p>Hi</p>"],
+    [
+      "nested, as the editor saves it",
+      '<p dir="ltr"><span style="white-space: pre-wrap;">Hi</span></p>',
+      '<p dir="ltr"><span>Hi</span></p>',
+    ],
+    ["a value that contains >", '<p style="background: url(a>b)">Hi</p>', "<p>Hi</p>"],
+  ])("removes a style attribute: %s", (_, html, expected) => {
+    expect(removeStyleAttributes(html)).toBe(expected);
   });
 
-  test.each(STYLED_HTML)("stripInlineStyles, %s", (_, html) => {
-    expect(stripInlineStyles(html)).toContain("Hi");
-    expect(sanitizerInputsWithStyle()).toEqual([]);
-  });
-
-  test.each(STYLED_HTML)("sanitizeSurveyHtml, %s", (_, html) => {
-    expect(sanitizeSurveyHtml(html)).toContain("Hi");
-    expect(sanitizerInputsWithStyle()).toEqual([]);
-  });
-
-  test("text that merely mentions a style attribute is not rewritten", () => {
-    expect(stripInlineStyles("<p>data-style is not a style attribute</p>")).toBe(
-      "<p>data-style is not a style attribute</p>"
-    );
-    expect(stripInlineStyles('<p data-style="x">Hi</p>')).toBe('<p data-style="x">Hi</p>');
+  test.each([
+    ["a data- attribute", '<p data-style="x">Hi</p>'],
+    ["a class named style", '<p class="style">Hi</p>'],
+    ["markup without styles", '<p class="a">Hi</p>'],
+    ["plain text", "Tom & Jerry"],
+    ["the word style in text", "<p>the style guide</p>"],
+  ])("leaves %s alone", (_, html) => {
+    expect(removeStyleAttributes(html)).toBe(html);
   });
 });

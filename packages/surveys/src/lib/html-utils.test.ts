@@ -1,56 +1,8 @@
 // @vitest-environment happy-dom
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { describe, expect, test } from "vitest";
 import { htmlToPlainText, isValidHTML, sanitizeSurveyHtml, stripInlineStyles } from "./html-utils";
 
-// Under a `style-src` without 'unsafe-inline', the browser reports a violation for every element it
-// *parses* with a `style` attribute, even when the attribute is thrown away afterwards. Happy-dom does not
-// enforce CSP, so these tests watch what is handed to the HTML parser instead: that is the input Chromium
-// reports on (checked against a strict policy in the PR).
-const STYLE_ATTRIBUTE = /\sstyle\s*=/i;
-
-const STYLED_HTML = [
-  ["double-quoted", '<p style="color: red;">Hi</p>'],
-  ["empty", '<p style="">Hi</p>'],
-  ["single-quoted", "<p style='color: red;'>Hi</p>"],
-  ["editor output", '<p dir="ltr"><span style="white-space: pre-wrap;">Hi</span></p>'],
-  ["after a newline", '<p class="a"\nstyle="color: red;">Hi</p>'],
-  ["after a tab", '<p\tstyle="color: red;">Hi</p>'],
-  ["with spaces around =", '<p style = "color: red;">Hi</p>'],
-] as const;
-
-const watchParser = () => {
-  const parse = vi.spyOn(DOMParser.prototype, "parseFromString");
-  return () => parse.mock.calls.map(([html]) => String(html)).filter((html) => STYLE_ATTRIBUTE.test(html));
-};
-
 describe("html-utils", () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  describe("no markup with an inline style reaches the HTML parser", () => {
-    test.each(STYLED_HTML)("htmlToPlainText, %s", (_, html) => {
-      const parsedWithStyle = watchParser();
-
-      expect(htmlToPlainText(html)).toBe("Hi");
-      expect(parsedWithStyle()).toEqual([]);
-    });
-
-    test.each(STYLED_HTML)("isValidHTML, %s", (_, html) => {
-      const parsedWithStyle = watchParser();
-
-      expect(isValidHTML(html)).toBe(true);
-      expect(parsedWithStyle()).toEqual([]);
-    });
-
-    test.each(STYLED_HTML)("stripInlineStyles, %s", (_, html) => {
-      const parsedWithStyle = watchParser();
-
-      expect(stripInlineStyles(html)).not.toMatch(STYLE_ATTRIBUTE);
-      expect(parsedWithStyle()).toEqual([]);
-    });
-  });
-
   describe("stripInlineStyles", () => {
     test("should remove inline styles with double quotes", () => {
       const input = '<div style="color: red;">Test</div>';

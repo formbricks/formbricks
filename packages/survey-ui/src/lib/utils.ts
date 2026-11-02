@@ -22,23 +22,33 @@ export function cn(...inputs: ClassValue[]): string {
 }
 
 /**
+ * Removes quoted `style` attributes from a raw HTML string, without parsing it.
+ * Must run BEFORE anything parses the markup: under a strict CSP `style-src` the browser reports every
+ * element it parses with a style attribute, even one discarded afterwards, so stripping the attribute
+ * from the parsed tree is too late.
+ * Any whitespace may separate the attribute from the tag (a newline or tab, not just a space) and
+ * surround the `=`. Quoted values only: an unquoted `style=x` is not matched, because it cannot be told
+ * from prose here.
+ * The regex is O(n) safe: [^"]* and [^']* are negated classes bounded by fixed quote delimiters, so no
+ * backtracking can occur.
+ * @param html - The raw HTML string
+ * @returns The string without its quoted style attributes
+ */
+export const removeStyleAttributes = (html: string): string =>
+  html.replaceAll(/\sstyle\s*=\s*(?:"[^"]*"|'[^']*')/gi, "");
+
+/**
  * Strip inline style attributes from HTML string to avoid CSP violations
- * Uses DOMPurify for secure, proper HTML parsing instead of regex
+ * Uses DOMPurify for secure, proper HTML parsing after the raw string is pre-stripped
  * @param html - The HTML string to process
  * @returns HTML string with all style attributes removed
  */
 export const stripInlineStyles = (html: string): string => {
   if (!html) return html;
 
-  // Pre-strip style attributes from the raw string BEFORE DOMPurify parses it.
-  // DOMPurify internally uses innerHTML to parse HTML, which triggers CSP
-  // `style-src` violations at parse time — before FORBID_ATTR can strip them.
-  // Any whitespace may separate the attribute from the tag (a newline or tab, not just a space) and
-  // surround the `=`; the parser reports a style attribute whichever way it is spelled. Quoted values
-  // only: an unquoted `style=x` is not matched, because it cannot be told from prose here.
-  // The regex is O(n) safe: [^"]* and [^']* are negated classes bounded by
-  // fixed quote delimiters, so no backtracking can occur.
-  const preStripped = html.replaceAll(/\sstyle\s*=\s*(?:"[^"]*"|'[^']*')/gi, "");
+  // DOMPurify parses with the browser's HTML parser, which triggers CSP `style-src` violations at
+  // parse time, before FORBID_ATTR can strip anything, so the attributes go from the raw string first.
+  const preStripped = removeStyleAttributes(html);
 
   return sanitize(preStripped, {
     FORBID_ATTR: ["style"],
