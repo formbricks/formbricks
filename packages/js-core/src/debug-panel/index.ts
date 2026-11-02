@@ -216,6 +216,9 @@ const mount = (): void => {
   document.body.appendChild(host);
   const shadow = host.attachShadow({ mode: "open" });
   const style = document.createElement("style");
+  // The host page's `style-src` blocks a <style> without the nonce it gave `setNonce()`.
+  const nonce = (window as TWindowWithFormbricks).__formbricksNonce;
+  if (nonce) style.setAttribute("nonce", nonce);
   style.textContent = STYLES;
   const container = element("div", "panel");
   container.setAttribute("role", "region");

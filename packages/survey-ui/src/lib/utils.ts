@@ -33,9 +33,12 @@ export const stripInlineStyles = (html: string): string => {
   // Pre-strip style attributes from the raw string BEFORE DOMPurify parses it.
   // DOMPurify internally uses innerHTML to parse HTML, which triggers CSP
   // `style-src` violations at parse time — before FORBID_ATTR can strip them.
+  // Any whitespace may separate the attribute from the tag (a newline or tab, not just a space) and
+  // surround the `=`; the parser reports a style attribute whichever way it is spelled. Quoted values
+  // only: an unquoted `style=x` is not matched, because it cannot be told from prose here.
   // The regex is O(n) safe: [^"]* and [^']* are negated classes bounded by
   // fixed quote delimiters, so no backtracking can occur.
-  const preStripped = html.replaceAll(/ style="[^"]*"| style='[^']*'/gi, "");
+  const preStripped = html.replaceAll(/\sstyle\s*=\s*(?:"[^"]*"|'[^']*')/gi, "");
 
   return sanitize(preStripped, {
     FORBID_ATTR: ["style"],
