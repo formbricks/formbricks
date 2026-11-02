@@ -85,6 +85,41 @@ describe("exportSignaturePng", () => {
     expect(canvas.toDataURL).not.toHaveBeenCalled();
   });
 
+  test("the PNG is the active tab's content: Type with an empty name exports nothing, not the hidden drawing", async () => {
+    const { canvas, ctx } = createFakeCanvas();
+    const result = await exportSignaturePng(
+      { ...drawn, mode: "type", typedName: "" },
+      { createCanvas: () => canvas }
+    );
+    expect(result).toBeNull();
+    expect(ctx.stroke).not.toHaveBeenCalled();
+    expect(canvas.toDataURL).not.toHaveBeenCalled();
+  });
+
+  test("Draw with no drawing exports nothing, not the typed name kept behind the tab", async () => {
+    const { canvas, ctx } = createFakeCanvas();
+    const result = await exportSignaturePng(
+      { ...EMPTY_SIGNATURE, mode: "draw", typedName: "Ada" },
+      { createCanvas: () => canvas }
+    );
+    expect(result).toBeNull();
+    expect(ctx.fillText).not.toHaveBeenCalled();
+  });
+
+  test("with both inputs kept, each tab exports its own: strokes in Draw, the name in Type", async () => {
+    const both: SignatureValue = { ...drawn, typedName: "Ada" };
+
+    const draw = createFakeCanvas();
+    await exportSignaturePng({ ...both, mode: "draw" }, { createCanvas: () => draw.canvas });
+    expect(draw.ctx.lineTo).toHaveBeenCalledWith(720, 150);
+    expect(draw.ctx.fillText).not.toHaveBeenCalled();
+
+    const type = createFakeCanvas();
+    await exportSignaturePng({ ...both, mode: "type" }, { createCanvas: () => type.canvas });
+    expect(type.ctx.fillText).toHaveBeenCalledWith("Ada", 450, 150);
+    expect(type.ctx.lineTo).not.toHaveBeenCalled();
+  });
+
   test("waits for the typed-signature font before drawing a typed name", async () => {
     const { canvas, ctx } = createFakeCanvas();
     let release: () => void = () => undefined;

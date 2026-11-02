@@ -43,6 +43,7 @@ interface ElementConditionalProps {
   surveyLanguages: TSurveyLanguage[];
   signatureDrafts: SignatureDraftStore; // The survey's in-memory Signature drawings
   registerSubmitContributor: (elementId: string, contributor: SubmitContributor | null) => void; // Lets an element produce its answer on Next
+  disabled?: boolean; // The block is submitting: elements a <fieldset disabled> cannot lock (a canvas) must lock themselves
 }
 
 export function ElementConditional({
@@ -64,6 +65,7 @@ export function ElementConditional({
   errorMessage,
   signatureDrafts,
   registerSubmitContributor,
+  disabled,
 }: Readonly<ElementConditionalProps>) {
   // Ref to the container div, used to find and expose the form element inside
   const containerRef = useRef<HTMLDivElement>(null);
@@ -283,6 +285,7 @@ export function ElementConditional({
             dir={dir}
             signatureDrafts={signatureDrafts}
             registerSubmitContributor={registerSubmitContributor}
+            disabled={disabled}
           />
         );
       case TSurveyElementTypeEnum.Cal:

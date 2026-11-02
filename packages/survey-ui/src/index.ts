@@ -61,6 +61,7 @@ export {
 export {
   EMPTY_SIGNATURE,
   clearSignature,
+  hasSignatureInput,
   isSignatureSigned,
   signatureFingerprint,
   type SignatureMode,

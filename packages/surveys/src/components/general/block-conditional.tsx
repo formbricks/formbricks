@@ -154,24 +154,17 @@ export function BlockConditional({
       isMountedRef.current = false;
     };
   }, []);
-  // The upload outlives the render that started it, so what runs after it reads these, not its closure.
-  const latestRef = useRef({ value, block, onSubmit });
+  // The upload outlives the render that started it, so what runs after it reads this, not its closure. Only
+  // the submit handler is read late; the answers it sends are the ones validated when Next was pressed.
+  const latestRef = useRef({ onSubmit });
   useEffect(() => {
-    latestRef.current = { value, block, onSubmit };
+    latestRef.current = { onSubmit };
   });
   const pendingTtcRef = useRef<TResponseTtc>({});
   const refocusSubmitRef = useRef(false);
   const [submitRunner] = useState(() =>
     createBlockSubmitRunner({
       getContributors: () => submitContributorsRef.current,
-      collectResponses: () => {
-        const { value: latestValue, block: latestBlock } = latestRef.current;
-        const answers: TResponseData = {};
-        for (const element of latestBlock.elements) {
-          if (latestValue[element.id] !== undefined) answers[element.id] = latestValue[element.id];
-        }
-        return answers;
-      },
       onSubmit: (answers) => {
         latestRef.current.onSubmit(answers, pendingTtcRef.current);
       },
@@ -513,9 +506,10 @@ export function BlockConditional({
 
     // Upload on Next: elements that produce their answer now (the Signature renders and uploads its
     // image) are awaited before the block advances. A failure leaves the card as it is, with the
-    // element's own error showing, and pressing Next again retries.
+    // element's own error showing, and pressing Next again retries. What advances is the snapshot that
+    // was just validated, never the card's state after the upload.
     pendingTtcRef.current = blockTtc;
-    submitRunner.run();
+    submitRunner.run(collectBlockResponses(answers));
   };
 
   return (
@@ -523,7 +517,9 @@ export function BlockConditional({
       {/* Scrollable container for the entire block */}
       <ScrollableContainer fullSizeCards={fullSizeCards} disableInternalScroll={isCardless}>
         <div className="space-y-6">
-          <div className="space-y-6">
+          {/* While Next uploads, the card's other inputs are read-only: the answers sent are the ones that were
+              just validated, so an edit made now would be silently dropped. */}
+          <fieldset disabled={isSubmitting} className="m-0 min-w-0 space-y-6 border-0 p-0">
             {block.elements.map((element, index) => {
               const isFirstElement = index === 0;
 
@@ -554,10 +550,11 @@ export function BlockConditional({
                   errorMessage={getFirstErrorMessage(elementErrors, element.id)}
                   signatureDrafts={signatureDrafts}
                   registerSubmitContributor={registerSubmitContributor}
+                  disabled={isSubmitting}
                 />
               );
             })}
-          </div>
+          </fieldset>
 
           <div
             className={cn(

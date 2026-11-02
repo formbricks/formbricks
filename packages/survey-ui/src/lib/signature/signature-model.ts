@@ -15,8 +15,9 @@ export type SignatureStroke = SignaturePoint[];
 export type SignatureMode = "draw" | "type";
 
 /**
- * Everything the respondent has entered. Both inputs are kept when the respondent switches between
- * Draw and Type, until Clear; `mode` says which one is showing.
+ * Everything the respondent has entered. Both inputs are kept in memory when the respondent switches
+ * between Draw and Type, until Clear, but only the one `mode` names (the visible tab) is the signature:
+ * whether the element is signed, what the exported PNG shows and its fingerprint all come from it.
  */
 export interface SignatureValue {
   mode: SignatureMode;
@@ -93,9 +94,17 @@ export const hasSignificantStroke = (strokes: readonly SignatureStroke[]): boole
  */
 export const isTypedNameSigned = (typedName: string): boolean => /[\p{L}\p{N}\p{S}]/u.test(typedName.trim());
 
-/** Signed: a drawn stroke of minimum length, or a typed name with at least one letter, number or symbol, whichever mode is showing. */
+/**
+ * Whether the active tab holds a signature: a drawn stroke of minimum length in Draw, a typed name with at
+ * least one letter, number or symbol in Type. The other tab's input is kept but does not count, so what the
+ * respondent sees is what is signed.
+ */
 export const isSignatureSigned = (value: SignatureValue): boolean =>
-  hasSignificantStroke(value.strokes) || isTypedNameSigned(value.typedName);
+  value.mode === "type" ? isTypedNameSigned(value.typedName) : hasSignificantStroke(value.strokes);
+
+/** Whether either tab holds anything at all, signed or not: what Clear would remove. */
+export const hasSignatureInput = (value: SignatureValue): boolean =>
+  value.strokes.length > 0 || value.typedName.length > 0;
 
 /** The value after Clear: nothing drawn or typed, and the respondent stays in the mode they were in. */
 export const clearSignature = (value: SignatureValue): SignatureValue => ({
@@ -109,17 +118,13 @@ export type SignatureContent =
   | { kind: "name"; name: string };
 
 /**
- * What the exported PNG shows. The mode the respondent is in wins when it holds a signature, so the
- * image matches the pad; if that mode is empty but the other one is signed, the other one is used,
- * because the element counts as signed. `null` when nothing is signed.
+ * What the exported PNG shows: the active tab's content, so the image matches the pad. A signature kept
+ * in the other tab is ignored. `null` when the active tab is not signed.
  */
 export const resolveSignatureContent = (value: SignatureValue): SignatureContent | null => {
-  const drawn = hasSignificantStroke(value.strokes);
-  const typed = isTypedNameSigned(value.typedName);
-  if (value.mode === "type" && typed) return { kind: "name", name: value.typedName.trim() };
-  if (drawn) return { kind: "strokes", strokes: value.strokes };
-  if (typed) return { kind: "name", name: value.typedName.trim() };
-  return null;
+  if (!isSignatureSigned(value)) return null;
+  if (value.mode === "type") return { kind: "name", name: value.typedName.trim() };
+  return { kind: "strokes", strokes: value.strokes };
 };
 
 const round4 = (n: number): number => Math.round(n * 10000) / 10000;

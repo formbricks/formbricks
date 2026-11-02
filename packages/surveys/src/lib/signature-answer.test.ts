@@ -122,6 +122,132 @@ describe("resolveSignatureAnswer (upload on Next)", () => {
     expect(uploadPng).not.toHaveBeenCalled();
   });
 
+  test("only the active tab is uploaded: Draw uploads the drawing, not the name kept behind the other tab", async () => {
+    const { exportPng, uploadPng } = setup();
+    const both: SignatureValue = { ...drawn, typedName: "Ada" };
+    const first = await resolveSignatureAnswer({
+      draft: draftOf({ ...both, mode: "draw" }),
+      savedUrl: "",
+      exportPng,
+      uploadPng,
+    });
+    expect(first).toMatchObject({ status: "ok", url: STORED_URL });
+    expect(exportPng).toHaveBeenLastCalledWith({ ...both, mode: "draw" });
+  });
+
+  test("switching tabs changes which content is up to date: the same inputs upload again for the other tab", async () => {
+    const { exportPng, uploadPng } = setup();
+    const both: SignatureValue = { ...drawn, typedName: "Ada" };
+    const drawnUpload = await resolveSignatureAnswer({
+      draft: draftOf({ ...both, mode: "draw" }),
+      savedUrl: "",
+      exportPng,
+      uploadPng,
+    });
+    if (drawnUpload.status !== "ok") throw new Error("expected ok");
+
+    await resolveSignatureAnswer({
+      draft: draftOf({ ...both, mode: "type" }, drawnUpload.uploaded),
+      savedUrl: drawnUpload.url,
+      exportPng,
+      uploadPng,
+    });
+    expect(uploadPng).toHaveBeenCalledTimes(2);
+  });
+
+  test("going back to the tab that was uploaded reuses that upload: the inactive tab's edits do not matter", async () => {
+    const { exportPng, uploadPng } = setup();
+    const first = await resolveSignatureAnswer({ draft: draftOf(drawn), savedUrl: "", exportPng, uploadPng });
+    if (first.status !== "ok") throw new Error("expected ok");
+
+    const result = await resolveSignatureAnswer({
+      draft: draftOf({ ...drawn, typedName: "typed later, behind the Draw tab" }, first.uploaded),
+      savedUrl: first.url,
+      exportPng,
+      uploadPng,
+    });
+    expect(uploadPng).toHaveBeenCalledTimes(1);
+    expect(result).toMatchObject({ status: "ok", url: STORED_URL });
+  });
+
+  test("Type with an empty name is not signed even though a drawing is kept: nothing is exported, no URL answers", async () => {
+    const { exportPng, uploadPng } = setup();
+    const result = await resolveSignatureAnswer({
+      draft: draftOf({ ...drawn, mode: "type", typedName: "" }),
+      savedUrl: "",
+      exportPng,
+      uploadPng,
+    });
+    expect(result).toEqual({ status: "ok", url: "", uploaded: null });
+    expect(exportPng).not.toHaveBeenCalled();
+    expect(uploadPng).not.toHaveBeenCalled();
+  });
+
+  test("Type with an empty name after an earlier upload does not answer with the stored drawing", async () => {
+    const { exportPng, uploadPng } = setup();
+    const uploaded = { fingerprint: "strokes:x", url: STORED_URL };
+    const result = await resolveSignatureAnswer({
+      draft: draftOf({ ...drawn, mode: "type", typedName: "" }, uploaded),
+      savedUrl: STORED_URL,
+      exportPng,
+      uploadPng,
+    });
+    expect(result).toMatchObject({ status: "ok", url: "" });
+    expect(uploadPng).not.toHaveBeenCalled();
+  });
+
+  test("an empty tab after an upload forgets the cached upload, so switching back uploads again (the server deleted the first image)", async () => {
+    const { exportPng, uploadPng } = setup({
+      uploadPng: vi
+        .fn<() => Promise<string>>()
+        .mockResolvedValueOnce(STORED_URL)
+        .mockResolvedValueOnce(OTHER_URL),
+    });
+    const typedAnn: SignatureValue = { ...EMPTY_SIGNATURE, mode: "type", typedName: "Ann" };
+
+    // Type "Ann" -> Next: uploaded.
+    const first = await resolveSignatureAnswer({
+      draft: draftOf(typedAnn),
+      savedUrl: "",
+      exportPng,
+      uploadPng,
+    });
+    expect(first).toMatchObject({ status: "ok", url: STORED_URL });
+    if (first.status !== "ok") throw new Error("unreachable");
+
+    // Back -> Draw (nothing drawn) -> Next: replaces the stored URL with "", the server queues the first image for deletion.
+    const emptied = await resolveSignatureAnswer({
+      draft: draftOf({ ...typedAnn, mode: "draw" }, first.uploaded),
+      savedUrl: STORED_URL,
+      exportPng,
+      uploadPng,
+    });
+    expect(emptied).toMatchObject({ status: "ok", url: "", uploaded: null });
+    if (emptied.status !== "ok") throw new Error("unreachable");
+
+    // Back -> Type again -> Next: the first image is gone, so "Ann" must be uploaded again, not answered with its URL.
+    const again = await resolveSignatureAnswer({
+      draft: draftOf(typedAnn, emptied.uploaded),
+      savedUrl: "",
+      exportPng,
+      uploadPng,
+    });
+    expect(again).toMatchObject({ status: "ok", url: OTHER_URL });
+    expect(uploadPng).toHaveBeenCalledTimes(2);
+  });
+
+  test("Draw with no drawing is not signed even though a typed name is kept", async () => {
+    const { exportPng, uploadPng } = setup();
+    const result = await resolveSignatureAnswer({
+      draft: draftOf({ mode: "draw", strokes: [], typedName: "Ada" }),
+      savedUrl: "",
+      exportPng,
+      uploadPng,
+    });
+    expect(result).toEqual({ status: "ok", url: "", uploaded: null });
+    expect(uploadPng).not.toHaveBeenCalled();
+  });
+
   test("a bare tap is not a signature: nothing is exported or uploaded", async () => {
     const { exportPng, uploadPng } = setup();
     const tap: SignatureValue = { ...EMPTY_SIGNATURE, strokes: [[{ x: 0.5, y: 0.5 }]] };
@@ -194,6 +320,38 @@ describe("hasSignatureAnswer", () => {
   test("nothing drawn, typed or saved is no answer", () => {
     expect(hasSignatureAnswer(EMPTY_SIGNATURE_DRAFT, "")).toBe(false);
     expect(hasSignatureAnswer(draftOf({ ...EMPTY_SIGNATURE, typedName: "   " }), "")).toBe(false);
+  });
+});
+
+describe("the visible tab decides whether the element is answered", () => {
+  test("Type with an empty name after drawing is not an answer, so a required Signature shows the required error", () => {
+    expect(hasSignatureAnswer(draftOf({ ...drawn, mode: "type", typedName: "" }), "")).toBe(false);
+    expect(hasSignatureAnswer(draftOf({ ...drawn, mode: "type", typedName: "   " }), "")).toBe(false);
+  });
+
+  test("Draw with no drawing after typing a name is not an answer", () => {
+    expect(hasSignatureAnswer(draftOf({ mode: "draw", strokes: [], typedName: "Ada" }), "")).toBe(false);
+  });
+
+  test("switching back to the tab that holds the signature makes it an answer again", () => {
+    const both: SignatureValue = { ...drawn, typedName: "Ada" };
+    expect(hasSignatureAnswer(draftOf({ ...both, mode: "type" }), "")).toBe(true);
+    expect(hasSignatureAnswer(draftOf({ ...both, mode: "draw" }), "")).toBe(true);
+  });
+
+  test("a stored URL does not make an empty tab an answer once the pad holds input", () => {
+    expect(hasSignatureAnswer(draftOf({ ...drawn, mode: "type", typedName: "" }), STORED_URL)).toBe(false);
+  });
+
+  test("after a reload (nothing kept in memory) the stored URL is the answer", () => {
+    expect(hasSignatureAnswer(draftOf({ ...EMPTY_SIGNATURE, mode: "type" }), STORED_URL)).toBe(true);
+  });
+
+  test("an optional Signature switched to an empty tab after an upload replaces the stored answer with an empty one", () => {
+    expect(toSignatureAnswerData("sig1", "", { savedUrl: STORED_URL, overwriteStored: false })).toEqual({
+      sig1: "",
+    });
+    expect(toSignatureAnswerData("sig1", "", { savedUrl: "", overwriteStored: false })).toEqual({});
   });
 });
 
@@ -330,7 +488,12 @@ describe("Clear and the stored URL", () => {
   test("after Clear the stale stored answer is replaced with an empty one on the server", () => {
     const cleared = clearSignatureAnswerState(stateWithSavedUpload());
     expect(cleared.overwriteStored).toBe(true);
-    expect(toSignatureAnswerData("sig1", "", cleared.overwriteStored)).toEqual({ sig1: "" });
+    expect(
+      toSignatureAnswerData("sig1", "", {
+        savedUrl: cleared.savedUrl,
+        overwriteStored: cleared.overwriteStored,
+      })
+    ).toEqual({ sig1: "" });
   });
 
   test("clearing a signature that was never stored does not invent an answer", () => {
@@ -340,11 +503,18 @@ describe("Clear and the stored URL", () => {
       overwriteStored: false,
     });
     expect(cleared.overwriteStored).toBe(false);
-    expect(toSignatureAnswerData("sig1", "", cleared.overwriteStored)).toEqual({});
+    expect(
+      toSignatureAnswerData("sig1", "", {
+        savedUrl: cleared.savedUrl,
+        overwriteStored: cleared.overwriteStored,
+      })
+    ).toEqual({});
   });
 
   test("a URL is always the answer", () => {
-    expect(toSignatureAnswerData("sig1", STORED_URL, true)).toEqual({ sig1: STORED_URL });
+    expect(toSignatureAnswerData("sig1", STORED_URL, { savedUrl: "", overwriteStored: true })).toEqual({
+      sig1: STORED_URL,
+    });
   });
 });
 

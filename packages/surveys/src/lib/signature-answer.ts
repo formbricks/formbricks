@@ -2,6 +2,7 @@ import {
   EMPTY_SIGNATURE,
   type SignatureValue,
   clearSignature,
+  hasSignatureInput,
   isSignatureSigned,
   signatureFingerprint,
 } from "@formbricks/survey-ui";
@@ -54,15 +55,16 @@ export const clearSignatureAnswerState = (state: SignatureAnswerState): Signatur
 
 /**
  * The answer data a Signature contributes on Next. A URL is the answer; with none, the element sends
- * nothing, unless a stored URL was cleared, in which case `""` replaces it.
+ * nothing, unless a stored URL has to be replaced by an empty answer: it was cleared, or the visible tab
+ * is no longer signed (the respondent signed and uploaded, came back, and switched to an empty tab).
  */
 export const toSignatureAnswerData = (
   elementId: string,
   url: string,
-  overwriteStored: boolean
+  state: Pick<SignatureAnswerState, "savedUrl" | "overwriteStored">
 ): TResponseData => {
   if (url) return { [elementId]: url };
-  return overwriteStored ? { [elementId]: "" } : {};
+  return state.overwriteStored || state.savedUrl !== "" ? { [elementId]: "" } : {};
 };
 
 export type SignatureAnswerResult =
@@ -114,17 +116,24 @@ const withUploadTimeout = <T>(promise: Promise<T>, timeoutMs: number): Promise<T
 /**
  * Whether the element holds an answer at all, before anything is uploaded. Required-validation asks
  * this on Next: a signature that is drawn but not uploaded yet is an answer, and a Clear is not.
+ *
+ * The visible tab is the signature. Once either tab holds input, only the active tab decides (a drawing
+ * kept behind an empty Type tab is not an answer, even if an earlier Next stored it). A stored URL is an
+ * answer on its own only while nothing is kept in memory, which is the state after a reload.
  */
 export const hasSignatureAnswer = (draft: SignatureDraft, savedUrl: string): boolean =>
-  isSignatureSigned(draft.value) || savedUrl !== "";
+  hasSignatureInput(draft.value) ? isSignatureSigned(draft.value) : savedUrl !== "";
 
 /**
  * Produces the element's answer when the block is submitted ("upload on Next"). The PNG is made and
  * uploaded once; pressing Next again, or returning to the card and pressing Next without changing the
  * signature, reuses the stored URL instead of uploading a second copy.
  *
- * - nothing drawn or typed and a saved URL (the page was reloaded): the saved URL stays the answer;
- * - nothing drawn or typed and no saved URL: no answer (`""`);
+ * Only the active tab counts: a drawing kept behind the Type tab, or a name behind the Draw tab, is never
+ * exported, uploaded or compared.
+ *
+ * - nothing kept in either tab and a saved URL (the page was reloaded): the saved URL stays the answer;
+ * - the active tab is not signed (and nothing saved survives it): no answer (`""`);
  * - signed, and the last upload was of the same strokes/name: that upload's URL;
  * - otherwise: export, upload, and report the new URL.
  *
@@ -141,7 +150,11 @@ export const resolveSignatureAnswer = async ({
   const fingerprint = signatureFingerprint(draft.value);
 
   if (fingerprint === null) {
-    return { status: "ok", url: savedUrl, uploaded: draft.uploaded };
+    // The saved URL is the answer only when the respondent has not touched the pad since the reload.
+    if (!hasSignatureInput(draft.value)) return { status: "ok", url: savedUrl, uploaded: draft.uploaded };
+    // An empty active tab replaces the stored image with "" and the server queues that file for deletion,
+    // so the cached upload must not be reused: switching back to its content has to upload again.
+    return { status: "ok", url: "", uploaded: null };
   }
 
   if (draft.uploaded?.fingerprint === fingerprint) {

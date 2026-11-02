@@ -1,6 +1,7 @@
 import { describe, expect, test, vi } from "vitest";
 import {
   type BlockSubmitRunnerOptions,
+  type ContributedAnswer,
   PENDING_ANSWER,
   type SubmitContributor,
   type SubmitContributors,
@@ -9,11 +10,16 @@ import {
   resolveContributedAnswers,
 } from "./block-submit";
 
-const contributor = (overrides: Partial<SubmitContributor> = {}): SubmitContributor => ({
-  hasAnswer: () => false,
-  resolveAnswer: () => Promise.resolve({ ok: true, data: {} }),
-  ...overrides,
+type Resolve = () => Promise<ContributedAnswer>;
+
+/** A contributor whose answer does not depend on when it is captured. */
+const contributor = (
+  overrides: { hasAnswer?: () => boolean; resolveAnswer?: Resolve } = {}
+): SubmitContributor => ({
+  hasAnswer: overrides.hasAnswer ?? (() => false),
+  capture: () => overrides.resolveAnswer ?? (() => Promise.resolve({ ok: true, data: {} })),
 });
+const captured = (entries: Record<string, Resolve>) => new Map(Object.entries(entries));
 const contributors = (entries: Record<string, SubmitContributor>): SubmitContributors =>
   new Map(Object.entries(entries));
 const STORED = "/storage/ws1/private/surveys/s1/elements/sig/a.png";
@@ -54,10 +60,10 @@ describe("answersForValidation", () => {
 describe("resolveContributedAnswers", () => {
   test("merges the answers every contributor produced", async () => {
     const result = await resolveContributedAnswers(
-      contributors({
-        a: contributor({ resolveAnswer: () => Promise.resolve({ ok: true, data: { a: "/storage/a.png" } }) }),
-        b: contributor({ resolveAnswer: () => Promise.resolve({ ok: true, data: {} }) }),
-        c: contributor({ resolveAnswer: () => Promise.resolve({ ok: true, data: { c: "/storage/c.png" } }) }),
+      captured({
+        a: () => Promise.resolve({ ok: true, data: { a: "/storage/a.png" } }),
+        b: () => Promise.resolve({ ok: true, data: {} }),
+        c: () => Promise.resolve({ ok: true, data: { c: "/storage/c.png" } }),
       })
     );
     expect(result).toEqual({ ok: true, data: { a: "/storage/a.png", c: "/storage/c.png" } });
@@ -66,10 +72,7 @@ describe("resolveContributedAnswers", () => {
   test("stops at the first failure and names the element, so the block does not advance", async () => {
     const afterFailure = vi.fn(() => Promise.resolve({ ok: true as const, data: {} }));
     const result = await resolveContributedAnswers(
-      contributors({
-        a: contributor({ resolveAnswer: () => Promise.resolve({ ok: false }) }),
-        b: contributor({ resolveAnswer: afterFailure }),
-      })
+      captured({ a: () => Promise.resolve({ ok: false }), b: afterFailure })
     );
     expect(result).toEqual({ ok: false, failedElementId: "a" });
     expect(afterFailure).not.toHaveBeenCalled();
@@ -78,23 +81,11 @@ describe("resolveContributedAnswers", () => {
   test("with no contributors there is nothing to wait for", async () => {
     expect(await resolveContributedAnswers(new Map())).toEqual({ ok: true, data: {} });
   });
-
-  test("a contributor re-registering while an earlier one is awaited does not make the loop run forever", async () => {
-    const map = new Map<string, SubmitContributor>();
-    const registered = contributor({
-      resolveAnswer: async () => {
-        // What a re-rendering element does mid-upload: unregister, then register a new contributor.
-        map.delete("a");
-        map.set("a", contributor());
-        return { ok: true as const, data: {} };
-      },
-    });
-    map.set("a", registered);
-    expect(await resolveContributedAnswers(map)).toEqual({ ok: true, data: {} });
-  });
 });
 
 describe("createBlockSubmitRunner", () => {
+  const VALIDATED = { other: "x", sig: "pending" };
+
   const setup = (overrides: Partial<BlockSubmitRunnerOptions> = {}) => {
     const events: string[] = [];
     let mounted = true;
@@ -105,7 +96,6 @@ describe("createBlockSubmitRunner", () => {
             resolveAnswer: () => Promise.resolve({ ok: true, data: { sig: STORED } }),
           }),
         }),
-      collectResponses: () => ({ other: "x", sig: "/storage/stale.png" }),
       onSubmit: vi.fn((answers) => events.push(`submit ${JSON.stringify(answers)}`)),
       onFailure: vi.fn((id) => events.push(`failure ${id}`)),
       onBusyChange: vi.fn((busy) => events.push(`busy ${String(busy)}`)),
@@ -116,10 +106,15 @@ describe("createBlockSubmitRunner", () => {
     return { options, events, unmount: () => (mounted = false), runner: createBlockSubmitRunner(options) };
   };
   const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
+  const deferred = <T>() => {
+    let resolve: (value: T) => void = () => undefined;
+    const promise = new Promise<T>((res) => (resolve = res));
+    return { promise, resolve };
+  };
 
-  test("submits once with the contributors' answers replacing whatever the block held for them", async () => {
+  test("submits once with the contributors' answers replacing whatever the snapshot held for them", async () => {
     const { runner, options, events } = setup();
-    expect(runner.run()).toBe(true);
+    expect(runner.run(VALIDATED)).toBe(true);
     await settle();
     expect(options.onSubmit).toHaveBeenCalledTimes(1);
     expect(events).toEqual([
@@ -134,8 +129,8 @@ describe("createBlockSubmitRunner", () => {
     const { runner, options } = setup({
       getContributors: () => contributors({ sig: contributor({ resolveAnswer }) }),
     });
-    const first = runner.run();
-    const second = runner.run();
+    const first = runner.run(VALIDATED);
+    const second = runner.run(VALIDATED);
     await settle();
     expect([first, second]).toEqual([true, false]);
     expect(resolveAnswer).toHaveBeenCalledTimes(1);
@@ -153,21 +148,21 @@ describe("createBlockSubmitRunner", () => {
           }),
         }),
     });
-    runner.run();
+    runner.run(VALIDATED);
     await settle();
     expect(options.onFailure).toHaveBeenCalledWith("sig");
     expect(options.onSubmit).not.toHaveBeenCalled();
     expect(options.onBusyChange).toHaveBeenLastCalledWith(false);
 
     fail = false;
-    expect(runner.run()).toBe(true);
+    expect(runner.run(VALIDATED)).toBe(true);
     await settle();
     expect(options.onSubmit).toHaveBeenCalledTimes(1);
   });
 
   test("when the card is gone by the time the upload finishes, nothing advances and nothing is touched", async () => {
     const { runner, options, unmount } = setup();
-    runner.run();
+    runner.run(VALIDATED);
     unmount();
     await settle();
     expect(options.onSubmit).not.toHaveBeenCalled();
@@ -181,13 +176,152 @@ describe("createBlockSubmitRunner", () => {
       throw boom;
     });
     const { runner, options } = setup({ onSubmit });
-    runner.run();
+    runner.run(VALIDATED);
     await settle();
     expect(options.onError).toHaveBeenCalledWith(boom);
     expect(options.onBusyChange).toHaveBeenLastCalledWith(false);
 
-    expect(runner.run()).toBe(true);
+    expect(runner.run(VALIDATED)).toBe(true);
     await settle();
     expect(onSubmit).toHaveBeenCalledTimes(2);
+  });
+
+  describe("an edit made while the upload runs", () => {
+    test("does not change what is submitted: the validated snapshot is sent, not the card's state after the upload", async () => {
+      // The block as the respondent has it, edited by the test while the upload is pending.
+      const live: Record<string, string> = { email: "ada@example.com" };
+      const upload = deferred<ContributedAnswer>();
+      const { runner, options } = setup({
+        getContributors: () => contributors({ sig: contributor({ resolveAnswer: () => upload.promise }) }),
+      });
+
+      // Next pressed: validation passed on this snapshot.
+      runner.run({ ...live, sig: PENDING_ANSWER });
+      // The respondent clears the required email while "Uploading..." shows. This is the edit that used to
+      // reach the server as an empty required answer and lose the whole response.
+      live.email = "";
+      upload.resolve({ ok: true, data: { sig: STORED } });
+      await settle();
+
+      expect(options.onSubmit).toHaveBeenCalledTimes(1);
+      expect(options.onSubmit).toHaveBeenCalledWith({ email: "ada@example.com", sig: STORED });
+    });
+
+    test("an edit that only makes the live state invalid cannot turn the submit into a rejected one", async () => {
+      const upload = deferred<ContributedAnswer>();
+      const validated = { email: "ada@example.com", sig: PENDING_ANSWER };
+      const { runner, options } = setup({
+        getContributors: () => contributors({ sig: contributor({ resolveAnswer: () => upload.promise }) }),
+      });
+      runner.run(validated);
+      // Even the snapshot object itself being mutated afterwards (a caller reusing it) does not leak in.
+      validated.email = "";
+      upload.resolve({ ok: true, data: { sig: STORED } });
+      await settle();
+      expect(options.onSubmit).toHaveBeenCalledWith({ email: "ada@example.com", sig: STORED });
+    });
+
+    test("the contributor's own answer is frozen when Next is pressed: a later redraw or clear is not what is uploaded", async () => {
+      let held = "strokes-as-validated";
+      const uploaded: string[] = [];
+      const editable: SubmitContributor = {
+        hasAnswer: () => held !== "",
+        capture: () => {
+          const frozen = held;
+          return async () => {
+            await Promise.resolve();
+            uploaded.push(frozen);
+            return { ok: true as const, data: { sig: `/storage/${frozen}.png` } };
+          };
+        },
+      };
+      const { runner, options } = setup({ getContributors: () => contributors({ sig: editable }) });
+
+      runner.run(VALIDATED);
+      held = ""; // cleared right after Next
+      await settle();
+
+      expect(uploaded).toEqual(["strokes-as-validated"]);
+      expect(options.onSubmit).toHaveBeenCalledWith({ other: "x", sig: "/storage/strokes-as-validated.png" });
+    });
+
+    test("with two Signatures every one is frozen at Next, including the one that is only uploaded second", async () => {
+      const state = { first: "first-as-validated", second: "second-as-validated" };
+      const captureOrder: string[] = [];
+      const uploadOrder: string[] = [];
+      const make = (key: "first" | "second"): SubmitContributor => ({
+        hasAnswer: () => state[key] !== "",
+        capture: () => {
+          const frozen = state[key];
+          captureOrder.push(key);
+          return async () => {
+            await settle();
+            uploadOrder.push(frozen);
+            return { ok: true as const, data: { [key]: `/storage/${frozen}.png` } };
+          };
+        },
+      });
+      const { runner, options } = setup({
+        getContributors: () => contributors({ first: make("first"), second: make("second") }),
+      });
+
+      runner.run({ other: "x", first: PENDING_ANSWER, second: PENDING_ANSWER });
+      // Both are captured before the first upload has even started; the second is then edited while the first uploads.
+      expect(captureOrder).toEqual(["first", "second"]);
+      state.second = "";
+      await new Promise((resolve) => setTimeout(resolve, 20));
+
+      expect(uploadOrder).toEqual(["first-as-validated", "second-as-validated"]);
+      expect(options.onSubmit).toHaveBeenCalledWith({
+        other: "x",
+        first: "/storage/first-as-validated.png",
+        second: "/storage/second-as-validated.png",
+      });
+    });
+
+    test("the submit still uses the snapshot when the element unregisters mid-upload", async () => {
+      const map = new Map<string, SubmitContributor>();
+      const upload = deferred<ContributedAnswer>();
+      map.set("sig", contributor({ resolveAnswer: () => upload.promise }));
+      const { runner, options } = setup({ getContributors: () => map });
+      runner.run(VALIDATED);
+      map.delete("sig"); // the card re-rendered and re-registered, or the element went away
+      map.set("sig", contributor());
+      upload.resolve({ ok: true, data: { sig: STORED } });
+      await settle();
+      expect(options.onSubmit).toHaveBeenCalledWith({ other: "x", sig: STORED });
+    });
+
+    test("a block that is gone (respondent left the card) never submits, whatever was edited", async () => {
+      const upload = deferred<ContributedAnswer>();
+      const { runner, options, unmount } = setup({
+        getContributors: () => contributors({ sig: contributor({ resolveAnswer: () => upload.promise }) }),
+      });
+      runner.run(VALIDATED);
+      unmount();
+      upload.resolve({ ok: true, data: { sig: STORED } });
+      await settle();
+      expect(options.onSubmit).not.toHaveBeenCalled();
+    });
+  });
+
+  test("a contributor that throws while being frozen is reported and does not leave the block locked", async () => {
+    const boom = new Error("capture failed");
+    const { runner, options } = setup({
+      getContributors: () =>
+        contributors({
+          sig: {
+            hasAnswer: () => true,
+            capture: () => {
+              throw boom;
+            },
+          },
+        }),
+    });
+    expect(runner.run(VALIDATED)).toBe(true);
+    expect(options.onError).toHaveBeenCalledWith(boom);
+    expect(options.onSubmit).not.toHaveBeenCalled();
+    expect(options.onBusyChange).toHaveBeenLastCalledWith(false);
+    expect(runner.run(VALIDATED)).toBe(true);
   });
 });

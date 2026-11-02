@@ -1,5 +1,8 @@
 import { type TResponseData } from "@formbricks/types/responses";
 
+/** What a contributor's answer turned out to be: its data for the block, or a failure it has already shown. */
+export type ContributedAnswer = { ok: true; data: TResponseData } | { ok: false };
+
 /**
  * An element whose answer is produced when the block is submitted instead of while the respondent
  * edits it. The Signature element is the one user: its PNG is rendered and uploaded on Next, so the
@@ -11,8 +14,13 @@ export interface SubmitContributor {
    * element is the authority: the survey's own copy of its answer can lag a render behind (a Clear).
    */
   hasAnswer: () => boolean;
-  /** Produces the answer for the block's submit. May take a while (an upload); never rejects. */
-  resolveAnswer: () => Promise<{ ok: true; data: TResponseData } | { ok: false }>;
+  /**
+   * Freezes what the element holds at this moment, the same moment the block was validated, and returns
+   * what produces the answer from that frozen state. Whatever the respondent does to the element while
+   * the answer is being produced (an upload takes seconds) does not change what is submitted. The
+   * returned function may take a while; it never rejects.
+   */
+  capture: () => () => Promise<ContributedAnswer>;
 }
 
 export type SubmitContributors = ReadonlyMap<string, SubmitContributor>;
@@ -49,17 +57,15 @@ export const answersForValidation = (
 };
 
 /**
- * Asks every contributor for its answer, one after another, and stops at the first that fails (it has
- * already shown its own error). Resolves with the merged answers, or the id of the element that failed.
+ * Asks every captured contributor for its answer, one after another, and stops at the first that fails
+ * (it has already shown its own error). Resolves with the merged answers, or the id of the element that failed.
  */
 export const resolveContributedAnswers = async (
-  contributors: SubmitContributors
+  captured: ReadonlyMap<string, () => Promise<ContributedAnswer>>
 ): Promise<{ ok: true; data: TResponseData } | { ok: false; failedElementId: string }> => {
   const data: TResponseData = {};
-  // A snapshot: a card re-rendering mid-upload re-registers its element, and a live Map iterator would
-  // visit that entry again.
-  for (const [elementId, contributor] of [...contributors]) {
-    const result = await contributor.resolveAnswer();
+  for (const [elementId, resolveAnswer] of captured) {
+    const result = await resolveAnswer();
     if (!result.ok) return { ok: false, failedElementId: elementId };
     Object.assign(data, result.data);
   }
@@ -68,8 +74,6 @@ export const resolveContributedAnswers = async (
 
 export interface BlockSubmitRunnerOptions {
   getContributors: () => SubmitContributors;
-  /** The block's answers as they are now, read when the contributors have finished. */
-  collectResponses: () => TResponseData;
   /** Advances the block with the complete set of answers. */
   onSubmit: (answers: TResponseData) => void;
   /** A contributor failed (it shows its own error); the block stays where it is. */
@@ -85,28 +89,47 @@ export interface BlockSubmitRunnerOptions {
 /**
  * Runs "upload on Next" for a block: asks the contributors for their answers, then advances once.
  *
+ * What is submitted is what was validated. `run` takes the block's answers as they stood when validation
+ * passed and freezes every contributor at the same moment; nothing is read from the live survey after the
+ * upload, so an edit made while it runs (another field cleared, a second Signature redrawn) can neither
+ * change the submit nor make it fail the server's validation. The contributors' own answers replace
+ * whatever the snapshot held for their elements.
+ *
  * `run` is safe to call twice in a row, before anything has re-rendered: the in-flight flag is a plain
  * variable, not state, so a second press while the first is running does nothing instead of starting a
  * second upload. The flag is released whatever happens.
  */
 export const createBlockSubmitRunner = ({
   getContributors,
-  collectResponses,
   onSubmit,
   onFailure,
   onBusyChange,
   isMounted,
   onError,
-}: BlockSubmitRunnerOptions): { run: () => boolean } => {
+}: BlockSubmitRunnerOptions): { run: (validatedAnswers: TResponseData) => boolean } => {
   let inFlight = false;
 
-  const run = (): boolean => {
+  const run = (validatedAnswers: TResponseData): boolean => {
     if (inFlight) return false;
     inFlight = true;
     onBusyChange(true);
 
-    const contributors = new Map(getContributors());
-    void resolveContributedAnswers(contributors)
+    // A card re-rendering mid-upload re-registers its element in the live map; the snapshot is unaffected.
+    const captured = new Map<string, () => Promise<ContributedAnswer>>();
+    const snapshot = { ...validatedAnswers };
+    try {
+      getContributors().forEach((contributor, elementId) => {
+        captured.set(elementId, contributor.capture());
+        delete snapshot[elementId];
+      });
+    } catch (error) {
+      inFlight = false;
+      onBusyChange(false);
+      onError(error);
+      return true;
+    }
+
+    void resolveContributedAnswers(captured)
       .then((contributed) => {
         // The respondent left the card while the upload ran; advancing now would skip a card.
         if (!isMounted()) return;
@@ -114,12 +137,7 @@ export const createBlockSubmitRunner = ({
           onFailure(contributed.failedElementId);
           return;
         }
-        // The contributors speak for their own elements: whatever the survey held for them is replaced.
-        const answers = collectResponses();
-        contributors.forEach((_, elementId) => {
-          delete answers[elementId];
-        });
-        onSubmit({ ...answers, ...contributed.data });
+        onSubmit({ ...snapshot, ...contributed.data });
       })
       .catch(onError)
       .finally(() => {

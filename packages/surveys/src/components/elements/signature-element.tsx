@@ -44,6 +44,8 @@ interface SignatureElementProps {
   signatureDrafts: SignatureDraftStore;
   /** Lets the block ask this element for its answer when Next is pressed. */
   registerSubmitContributor: (elementId: string, contributor: SubmitContributor | null) => void;
+  /** The block is uploading: the pad cannot be drawn on, which a surrounding fieldset does not stop. */
+  disabled?: boolean;
 }
 
 export function SignatureElement({
@@ -60,6 +62,7 @@ export function SignatureElement({
   dir,
   signatureDrafts,
   registerSubmitContributor,
+  disabled = false,
 }: Readonly<SignatureElementProps>) {
   const [startTime, setStartTime] = useState(() => performance.now());
   const [uploadErrorMessage, setUploadErrorMessage] = useState<string | undefined>(undefined);
@@ -69,9 +72,14 @@ export function SignatureElement({
 
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
 
-  const [draft, setDraftState] = useState<SignatureDraft>(
-    () => signatureDrafts.get(element.id) ?? EMPTY_SIGNATURE_DRAFT
-  );
+  const [draft, setDraftState] = useState<SignatureDraft>(() => {
+    const kept = signatureDrafts.get(element.id) ?? EMPTY_SIGNATURE_DRAFT;
+    // Without the Type tab the visible tab is always Draw; a draft kept in Type mode (the setting was turned
+    // off since) must not decide "signed" from a tab the respondent cannot see.
+    return element.allowTypedSignature || kept.value.mode === "draw"
+      ? kept
+      : { ...kept, value: { ...kept.value, mode: "draw" } };
+  });
   const [savedUrl, setSavedUrlState] = useState(value);
 
   // Everything the element knows about its answer, kept in a ref so the upload on Next and the block's
@@ -122,47 +130,53 @@ export function SignatureElement({
   useEffect(() => {
     const contributor: SubmitContributor = {
       hasAnswer: () => hasSignatureAnswer(answerRef.current.draft, answerRef.current.savedUrl),
-      resolveAnswer: async () => {
-        setUploadErrorMessage(undefined);
-        const {
-          onFileUpload: upload,
-          surveyId: currentSurveyId,
-          fontUrl: currentFontUrl,
-          t: translate,
-        } = callbacksRef.current;
+      // Called at the moment the block is validated: the upload then runs on what the respondent had signed
+      // at that moment, whatever they do to the card (or a second Signature on it) while it takes seconds.
+      capture: () => {
+        const frozen = answerRef.current;
+        return async () => {
+          setUploadErrorMessage(undefined);
+          const {
+            onFileUpload: upload,
+            surveyId: currentSurveyId,
+            fontUrl: currentFontUrl,
+            t: translate,
+          } = callbacksRef.current;
 
-        try {
-          const result = await resolveSignatureAnswer({
-            draft: answerRef.current.draft,
-            savedUrl: answerRef.current.savedUrl,
-            // The busy state starts only when there is real work: a signature already uploaded, or one
-            // left empty, answers straight away.
-            exportPng: (signature) => {
-              setIsUploading(true);
-              return exportSignaturePng(signature, {
-                ensureTypedFont: () =>
-                  currentFontUrl ? loadSignatureFont(currentFontUrl) : Promise.resolve(false),
-              });
-            },
-            uploadPng: (dataUrl) =>
-              upload(
-                { name: SIGNATURE_PNG_FILE_NAME, type: SIGNATURE_PNG_MIME_TYPE, base64: dataUrl },
-                { allowedFileExtensions: ["png"], surveyId: currentSurveyId, elementId: element.id }
-              ),
-          });
+          try {
+            const result = await resolveSignatureAnswer({
+              draft: frozen.draft,
+              savedUrl: frozen.savedUrl,
+              // The busy state starts only when there is real work: a signature already uploaded, or one
+              // left empty, answers straight away.
+              exportPng: (signature) => {
+                setIsUploading(true);
+                return exportSignaturePng(signature, {
+                  ensureTypedFont: () =>
+                    currentFontUrl ? loadSignatureFont(currentFontUrl) : Promise.resolve(false),
+                });
+              },
+              uploadPng: (dataUrl) =>
+                upload(
+                  { name: SIGNATURE_PNG_FILE_NAME, type: SIGNATURE_PNG_MIME_TYPE, base64: dataUrl },
+                  { allowedFileExtensions: ["png"], surveyId: currentSurveyId, elementId: element.id }
+                ),
+            });
 
-          if (result.status === "error") {
-            const failure = getSignatureUploadError(result.error);
-            setUploadErrorMessage(failure.kind === "message" ? failure.message : translate(failure.key));
-            return { ok: false };
+            if (result.status === "error") {
+              const failure = getSignatureUploadError(result.error);
+              setUploadErrorMessage(failure.kind === "message" ? failure.message : translate(failure.key));
+              return { ok: false };
+            }
+
+            // Remember which strokes/name this upload was made from, so Next does not upload them twice.
+            const current = answerRef.current;
+            commit({ ...current, draft: { ...current.draft, uploaded: result.uploaded } });
+            return { ok: true, data: toSignatureAnswerData(element.id, result.url, frozen) };
+          } finally {
+            setIsUploading(false);
           }
-
-          const current = answerRef.current;
-          commit({ ...current, draft: { ...current.draft, uploaded: result.uploaded } });
-          return { ok: true, data: toSignatureAnswerData(element.id, result.url, current.overwriteStored) };
-        } finally {
-          setIsUploading(false);
-        }
+        };
       },
     };
     registerSubmitContributor(element.id, contributor);
@@ -209,6 +223,7 @@ export function SignatureElement({
         allowTypedSignature={element.allowTypedSignature}
         hasSavedSignature={savedUrl !== ""}
         isUploading={isUploading}
+        disabled={disabled}
         typedFontUrl={fontUrl}
         labels={labels}
         required={element.required}

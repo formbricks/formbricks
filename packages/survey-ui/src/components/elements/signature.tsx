@@ -11,6 +11,7 @@ import {
   TYPED_NAME_MAX_LENGTH,
   clearSignature,
   getSignatureLayout,
+  hasSignatureInput,
   isSignatureSigned,
   isTypedNameSigned,
   nextSignatureMode,
@@ -155,9 +156,14 @@ function Signature({
   });
 
   const { showModeToggle, mode, showNameInput } = getSignatureLayout(allowTypedSignature, value.mode);
-  const hasSavedOnly = hasSavedSignature && !isSignatureSigned(value);
-  const isSigned = isSignatureSigned(value) || hasSavedSignature;
-  const hasAnyInput = value.strokes.length > 0 || value.typedName.length > 0 || hasSavedSignature;
+  // The visible tab is the signature. A stored URL with nothing kept in memory (the page was reloaded) is shown
+  // as saved; once either tab holds input, the active tab alone decides, whatever was stored before.
+  const hasKeptInput = hasSignatureInput(value);
+  const hasSavedOnly = hasSavedSignature && !hasKeptInput;
+  const isSigned = isSignatureSigned(value) || hasSavedOnly;
+  const hasAnyInput = hasKeptInput || hasSavedSignature;
+  // The hint belongs to the tab on show: a drawing kept behind the Type tab must not hide "Type your name".
+  const hasActiveInput = mode === "type" ? value.typedName.length > 0 : value.strokes.length > 0;
   const locked = disabled || isUploading;
   const drawingEnabled = mode === "draw" && !locked && !hasSavedOnly;
 
@@ -266,7 +272,7 @@ function Signature({
     );
   };
 
-  const showHint = !isSigned && !hasAnyInput && !isUploading && !isStroking;
+  const showHint = !isSigned && !hasActiveInput && !isUploading && !isStroking;
   // In Type mode the canvas is only a preview of the name typed below it, and in the saved state it is
   // blank: neither is something to announce.
   const isPadLabelled = mode === "draw" && !hasSavedOnly;

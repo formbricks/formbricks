@@ -6,6 +6,7 @@ import {
   type SignatureValue,
   clearSignature,
   getSignatureLayout,
+  hasSignatureInput,
   isSignatureSigned,
   isSignificantStroke,
   isTypedNameSigned,
@@ -125,9 +126,37 @@ describe("signed rule", () => {
     expect(isSignatureSigned(value({ mode: "type", typedName: " Ada " }))).toBe(true);
   });
 
-  test("either input signs the element whichever mode is showing", () => {
-    expect(isSignatureSigned(value({ mode: "draw", typedName: "Ada" }))).toBe(true);
-    expect(isSignatureSigned(value({ mode: "type", strokes: [line(0.3)] }))).toBe(true);
+  test("the visible tab is the signature: a drawing counts in Draw, a name counts in Type", () => {
+    expect(isSignatureSigned(value({ mode: "draw", strokes: [line(0.3)] }))).toBe(true);
+    expect(isSignatureSigned(value({ mode: "type", typedName: "Ada" }))).toBe(true);
+  });
+
+  test("a typed name kept behind the Draw tab does not sign: Draw with no drawing is not signed", () => {
+    expect(isSignatureSigned(value({ mode: "draw", typedName: "Ada" }))).toBe(false);
+  });
+
+  test("a drawing kept behind the Type tab does not sign: Type with an empty name is not signed", () => {
+    expect(isSignatureSigned(value({ mode: "type", strokes: [line(0.3)], typedName: "" }))).toBe(false);
+    expect(isSignatureSigned(value({ mode: "type", strokes: [line(0.3)], typedName: "   " }))).toBe(false);
+  });
+
+  test("switching back to a tab brings its kept input back as the signature", () => {
+    const both = value({ mode: "draw", strokes: [line(0.3)], typedName: "Ada" });
+    const onType = { ...both, mode: "type" as const };
+    const backOnDraw = { ...onType, mode: "draw" as const };
+    expect(isSignatureSigned(onType)).toBe(true);
+    expect(isSignatureSigned(backOnDraw)).toBe(true);
+    expect(backOnDraw.strokes).toBe(both.strokes);
+    expect(backOnDraw.typedName).toBe("Ada");
+  });
+});
+
+describe("hasSignatureInput", () => {
+  test("is true when either tab holds anything, signed or not, and false once both are empty", () => {
+    expect(hasSignatureInput(EMPTY_SIGNATURE)).toBe(false);
+    expect(hasSignatureInput(value({ mode: "type", strokes: [line(0.3)] }))).toBe(true);
+    expect(hasSignatureInput(value({ mode: "draw", typedName: " " }))).toBe(true);
+    expect(hasSignatureInput(value({ strokes: [[{ x: 0.5, y: 0.5 }]] }))).toBe(true);
   });
 });
 
@@ -147,7 +176,7 @@ describe("resolveSignatureContent", () => {
     expect(resolveSignatureContent(value({ strokes: [[{ x: 0.5, y: 0.5 }]], typedName: " " }))).toBeNull();
   });
 
-  test("the showing mode wins when it holds a signature", () => {
+  test("the content is the active tab's, never the other one's", () => {
     const both = value({ strokes: [line(0.3)], typedName: "  Ada  " });
     expect(resolveSignatureContent({ ...both, mode: "draw" })).toEqual({
       kind: "strokes",
@@ -156,12 +185,9 @@ describe("resolveSignatureContent", () => {
     expect(resolveSignatureContent({ ...both, mode: "type" })).toEqual({ kind: "name", name: "Ada" });
   });
 
-  test("falls back to the other mode when the showing one is empty", () => {
-    expect(resolveSignatureContent(value({ mode: "type", strokes: [line(0.3)] }))?.kind).toBe("strokes");
-    expect(resolveSignatureContent(value({ mode: "draw", typedName: "Ada" }))).toEqual({
-      kind: "name",
-      name: "Ada",
-    });
+  test("an empty active tab resolves to null even when the other tab is signed (no hidden signature)", () => {
+    expect(resolveSignatureContent(value({ mode: "type", strokes: [line(0.3)] }))).toBeNull();
+    expect(resolveSignatureContent(value({ mode: "draw", typedName: "Ada" }))).toBeNull();
   });
 });
 
@@ -172,11 +198,22 @@ describe("signatureFingerprint", () => {
 
   test("is equal for values that export the same image", () => {
     const a = value({ strokes: [line(0.3)] });
-    const b = value({ strokes: [line(0.3)], mode: "type", typedName: "  " });
+    const b = value({ strokes: [line(0.3)], typedName: "left over" });
     expect(signatureFingerprint(a)).toBe(signatureFingerprint(b));
-    expect(signatureFingerprint(value({ typedName: " Ada " }))).toBe(
-      signatureFingerprint(value({ typedName: "Ada" }))
+    expect(signatureFingerprint(value({ mode: "type", typedName: " Ada " }))).toBe(
+      signatureFingerprint(value({ mode: "type", typedName: "Ada" }))
     );
+  });
+
+  test("is null for a value whose active tab is empty, however much the other tab holds", () => {
+    expect(signatureFingerprint(value({ mode: "type", strokes: [line(0.3)] }))).toBeNull();
+    expect(signatureFingerprint(value({ mode: "draw", typedName: "Ada" }))).toBeNull();
+  });
+
+  test("follows the active tab: the same two inputs fingerprint differently in each mode", () => {
+    const both = value({ strokes: [line(0.3)], typedName: "Ada" });
+    expect(signatureFingerprint({ ...both, mode: "draw" })).toMatch(/^strokes:/);
+    expect(signatureFingerprint({ ...both, mode: "type" })).toBe("name:Ada");
   });
 
   test("changes when a stroke or the name changes", () => {
@@ -186,8 +223,8 @@ describe("signatureFingerprint", () => {
     expect(signatureFingerprint(value({ strokes: [line(0.3), line(0.2)] }))).not.toBe(
       signatureFingerprint(value({ strokes: [line(0.3)] }))
     );
-    expect(signatureFingerprint(value({ typedName: "Ada" }))).not.toBe(
-      signatureFingerprint(value({ typedName: "Ada L" }))
+    expect(signatureFingerprint(value({ mode: "type", typedName: "Ada" }))).not.toBe(
+      signatureFingerprint(value({ mode: "type", typedName: "Ada L" }))
     );
   });
 
