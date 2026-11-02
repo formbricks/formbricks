@@ -1,0 +1,20 @@
+diff --git a/dist/authorize-K1WHCNih.mjs b/dist/authorize-K1WHCNih.mjs
+index 892e39f..0222676 100644
+--- a/dist/authorize-K1WHCNih.mjs
++++ b/dist/authorize-K1WHCNih.mjs
+@@ -4404,7 +4404,14 @@ const oauthProvider = (options) => {
+ 		onRequest: handleIssuerMetadataRequest,
+ 		init: async (ctx) => {
+ 			if (ctx.options.secondaryStorage && ctx.options.session?.storeSessionInDatabase !== true) throw new BetterAuthError("OAuth Provider requires `session.storeSessionInDatabase: true` when using secondaryStorage");
+-			await seedResources(ctx, opts);
++			try {
++				await seedResources(ctx, opts);
++			} catch (error) {
++				ctx.logger.warn(
++					"oauth-provider: resource seed failed during init; deferring to first resource access.",
++					error
++				);
++			}
+ 			logEnforcePerClientResourcesResolution(opts);
+ 			if (!opts.disableJwtPlugin) {
+ 				const jwtPluginOptions = getJwtPlugin(ctx)?.options;
