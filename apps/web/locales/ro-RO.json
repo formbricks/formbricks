@@ -697,6 +697,10 @@
   },
   "emails": {
     "accept": "Acceptă",
+    "account_deleted_email_did_not_request": "Dacă nu ți-ai șters tu contul, te rugăm să contactezi imediat echipa de asistență.",
+    "account_deleted_email_heading": "Contul tău a fost șters",
+    "account_deleted_email_subject": "Contul tău Formbricks a fost șters",
+    "account_deleted_email_text": "Contul tău Formbricks a fost șters definitiv.",
     "click_or_drag_to_upload_files": "Faceți clic sau trageți pentru a încărca fișiere.",
     "delete_account_email_confirm_deletion": "Confirmă ștergerea contului",
     "delete_account_email_did_not_request": "Dacă nu ai solicitat acest lucru, ignoră acest e-mail, iar contul tău va rămâne activ.",

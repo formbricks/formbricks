@@ -4,6 +4,7 @@ import type { TSurvey } from "@formbricks/types/surveys/types";
 import { applyEmailRateLimits } from "@/modules/email/lib/email-rate-limits";
 import { sendFollowUpEmail } from "@/modules/survey/follow-ups/lib/email";
 import {
+  sendAccountDeletedEmail,
   sendDeleteAccountConfirmationEmail,
   sendEmailCustomizationPreviewEmail,
   sendEmbedSurveyPreviewEmail,
@@ -44,6 +45,7 @@ vi.mock("@/modules/email/lib/survey-response-email", () => ({
   buildSurveyResponseEmailHtml: async () => "<p>Body</p>",
 }));
 vi.mock("@formbricks/email", () => ({
+  renderAccountDeletedEmail: async () => "html",
   renderAccountDeletionEmail: async () => "html",
   renderEmailCustomizationPreviewEmail: async () => "html",
   renderEmbedSurveyPreviewEmail: async () => "html",
@@ -87,6 +89,7 @@ const senders: [string, () => Promise<unknown>][] = [
     () => sendDeleteAccountConfirmationEmail({ email, locale, deleteLink: link, linkValidityInMinutes: 30 }),
   ],
   ["password_reset_notification", () => sendPasswordResetNotifyEmail({ email, locale })],
+  ["account_deletion_notification", () => sendAccountDeletedEmail({ email, locale })],
   [
     "sso_recovery_notification",
     () =>

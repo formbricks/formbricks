@@ -697,6 +697,10 @@
   },
   "emails": {
     "accept": "接受",
+    "account_deleted_email_did_not_request": "如果你並未刪除帳號，請立即聯絡客服支援。",
+    "account_deleted_email_heading": "你的帳號已刪除",
+    "account_deleted_email_subject": "你的 Formbricks 帳號已刪除",
+    "account_deleted_email_text": "你的 Formbricks 帳號已被永久移除。",
     "click_or_drag_to_upload_files": "點擊或拖曳以上傳檔案。",
     "delete_account_email_confirm_deletion": "確認刪除帳戶",
     "delete_account_email_did_not_request": "如果這不是您發起的，請忽略此郵件，您的帳戶將保持有效。",

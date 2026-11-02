@@ -1,6 +1,7 @@
 import {
   type TRetentionNoticeArchivedSurvey,
   type TRetentionNoticeResponseDeletion,
+  renderAccountDeletedEmail,
   renderAccountDeletionEmail,
   renderEmailCustomizationPreviewEmail,
   renderEmbedSurveyPreviewEmail,
@@ -214,6 +215,25 @@ export const sendPasswordResetNotifyEmail = async (user: {
     emailType: "password_reset_notification",
     to: user.email,
     subject: t("emails.password_reset_notify_email_subject"),
+    html,
+  });
+};
+
+/**
+ * Tell a user their account was deleted (ENG-862). Sent after the deletion has committed, so the address
+ * comes from the deleted user and nobody can be signed in to receive anything else. Not to be confused with
+ * `sendDeleteAccountConfirmationEmail`, the link an SSO user clicks to confirm the deletion.
+ */
+export const sendAccountDeletedEmail = async (user: {
+  email: string;
+  locale: TUserLocale;
+}): Promise<boolean> => {
+  const t = await getTranslate(user.locale);
+  const html = await renderAccountDeletedEmail({ t, ...legalProps });
+  return await sendEmail({
+    emailType: "account_deletion_notification",
+    to: user.email,
+    subject: t("emails.account_deleted_email_subject"),
     html,
   });
 };

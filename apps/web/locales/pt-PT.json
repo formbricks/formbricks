@@ -697,6 +697,10 @@
   },
   "emails": {
     "accept": "Aceitar",
+    "account_deleted_email_did_not_request": "Se não eliminaste a tua conta, contacta o suporte imediatamente.",
+    "account_deleted_email_heading": "A tua conta foi eliminada",
+    "account_deleted_email_subject": "A tua conta Formbricks foi eliminada",
+    "account_deleted_email_text": "A tua conta do Formbricks foi removida permanentemente.",
     "click_or_drag_to_upload_files": "Clique ou arraste para carregar ficheiros.",
     "delete_account_email_confirm_deletion": "Confirmar eliminação da conta",
     "delete_account_email_did_not_request": "Se não solicitou isto, ignore este e-mail e a sua conta permanecerá ativa.",

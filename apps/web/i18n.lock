@@ -660,6 +660,10 @@ checksums:
     common/your_license_has_expired_please_renew: 3f21ae4a7deab351b143b407ece58254
     common/your_profile: 955b66d0455e28c805cc462b8f8d1f11
     emails/accept: f8cc1de4f5e3c850cfdbbc0ec831ade7
+    emails/account_deleted_email_did_not_request: 25d9b22890b15739e812ac2203935f47
+    emails/account_deleted_email_heading: 804400728b6c442c746b32ee02d1795a
+    emails/account_deleted_email_subject: 319a26159c27fd95d550e191267fa289
+    emails/account_deleted_email_text: ba688f66632dfe24d65de4cbe3f49853
     emails/click_or_drag_to_upload_files: 64f59bc339568d52b8464b82546b70ea
     emails/delete_account_email_confirm_deletion: 2981b97792984be2c76286881cdd8ad1
     emails/delete_account_email_did_not_request: 0dbe7e2e9df8451b1eab8242970fd3c2
