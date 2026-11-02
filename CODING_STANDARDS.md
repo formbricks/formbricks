@@ -259,3 +259,8 @@ The following conventions apply to published `.mdx` pages. Internal Markdown ref
   the caller's scoped permissions; review each caller's map.
 - For runners selected by expressions or labels outside `ubuntu-*`, review the resolved runner choices
   and ensure GitHub-hosted Ubuntu jobs harden the runner before other steps.
+- Each `release/*` branch keeps its own copy of `.github/`. A workflow or shared-action change on `main`
+  (runner, toolchain version, pinned action) doesn't reach a maintained release line unless it is
+  backported. In the PR, say whether each maintained line needs it. Otherwise the gap shows up only when a
+  security backport needs that check, as when `ubuntu-latest` moved to 26.04 and 6.1's
+  `Validate Docker Build` failed in setup, because `main`'s runner pin (#9715) never reached that branch.
