@@ -18,21 +18,35 @@ const CONTROL_CHARACTERS = /[\p{Cc}\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]
 const WHITESPACE_CONTROLS = /[\t\n\v\f\r\u0085\u2028\u2029]/g;
 // A lone surrogate is not text and would make `encodeURIComponent` throw.
 const LONE_SURROGATES = /\p{Cs}/gu;
-const EDGE_DOTS_AND_SPACES = /^[.\s]+|[.\s]+$/g;
 // CON, PRN, AUX, NUL, COM1–9 and LPT1–9 name devices on Windows, with or without an extension.
 const WINDOWS_RESERVED_NAME = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i;
 
 const encoder = new TextEncoder();
 
+const isDotOrSpace = (character: string): boolean => character === "." || /\s/.test(character);
+
+/**
+ * `value` without its leading and trailing dots and whitespace. A loop rather than `/[.\s]+$/`, which
+ * backtracks from every dot and space of a run that stops short of the end: 22 s on a 200 KB name.
+ */
+const trimDotsAndSpaces = (value: string): string => {
+  let start = 0;
+  let end = value.length;
+  while (start < end && isDotOrSpace(value[start])) start += 1;
+  while (end > start && isDotOrSpace(value[end - 1])) end -= 1;
+  return value.slice(start, end);
+};
+
 const cleanName = (name: string): string =>
-  name
-    .replaceAll(LONE_SURROGATES, "")
-    .normalize("NFC")
-    .replaceAll(WHITESPACE_CONTROLS, " ")
-    .replaceAll(CONTROL_CHARACTERS, "")
-    .replaceAll(FORBIDDEN_CHARACTERS, "")
-    .replaceAll(/\s+/g, " ")
-    .replaceAll(EDGE_DOTS_AND_SPACES, "");
+  trimDotsAndSpaces(
+    name
+      .replaceAll(LONE_SURROGATES, "")
+      .normalize("NFC")
+      .replaceAll(WHITESPACE_CONTROLS, " ")
+      .replaceAll(CONTROL_CHARACTERS, "")
+      .replaceAll(FORBIDDEN_CHARACTERS, "")
+      .replaceAll(/\s+/g, " ")
+  );
 
 /** The longest prefix of `value` that fits in `maxBytes` of UTF-8, cut between code points. */
 const truncateToBytes = (value: string, maxBytes: number): string => {
@@ -60,7 +74,7 @@ export const buildDownloadFileName = (name: string, extension: string, fallbackN
 
   let base = cleanName(name) || fallbackName;
   if (WINDOWS_RESERVED_NAME.test(base.split(".")[0].trim())) base = `_${base}`;
-  base = truncateToBytes(base, maxBaseBytes).replaceAll(EDGE_DOTS_AND_SPACES, "") || fallbackName;
+  base = trimDotsAndSpaces(truncateToBytes(base, maxBaseBytes)) || fallbackName;
 
   return `${base}${extension}`;
 };
@@ -82,7 +96,7 @@ const toAsciiFallback = (fileName: string): string =>
 const encodeRfc8187 = (value: string): string =>
   encodeURIComponent(value).replaceAll(
     /['()*]/g,
-    (character) => `%${character.charCodeAt(0).toString(16).toUpperCase()}`
+    (character) => `%${(character.codePointAt(0) ?? 0).toString(16).toUpperCase()}`
   );
 
 /**

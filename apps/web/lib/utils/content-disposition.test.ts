@@ -50,6 +50,18 @@ describe("buildDownloadFileName", () => {
     expect(buildDownloadFileName("a   \n  b", EXTENSION, FALLBACK)).toBe("a b.formbricks.json");
   });
 
+  test("trims in time linear in the name, however many dots and spaces it holds", () => {
+    // A backtracking `[.\s]+$` retries from every dot and space of a run that never reaches the end.
+    const name = `a${". ".repeat(100_000)}b`;
+
+    const started = performance.now();
+    const fileName = buildDownloadFileName(name, EXTENSION, FALLBACK);
+
+    expect(performance.now() - started).toBeLessThan(250);
+    // Cut inside the run, whose dots and spaces are then trimmed from the end.
+    expect(fileName).toBe("a.formbricks.json");
+  });
+
   test("escapes the device names Windows reserves, whatever their case or extension", () => {
     expect(buildDownloadFileName("CON", EXTENSION, FALLBACK)).toBe("_CON.formbricks.json");
     expect(buildDownloadFileName("lpt9", EXTENSION, FALLBACK)).toBe("_lpt9.formbricks.json");
