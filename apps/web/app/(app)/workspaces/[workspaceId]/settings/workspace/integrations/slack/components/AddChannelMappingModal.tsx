@@ -3,6 +3,7 @@
 import { CircleHelpIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -65,6 +66,7 @@ export const AddChannelMappingModal = ({
   // The mapping being edited keeps its survey selectable even if it has since been restricted.
   const attachedSurveyIds = selectedIntegration ? [selectedIntegration.surveyId] : [];
   const { t } = useTranslation();
+  const router = useRouter();
   const [selectedElements, setSelectedElements] = useState<string[]>([]);
   const [isLinkingChannel, setIsLinkingChannel] = useState(false);
   const [selectedSurvey, setSelectedSurvey] = useState<TSurvey | null>(null);
@@ -172,6 +174,7 @@ export const AddChannelMappingModal = ({
       }
       resetForm();
       setOpen(false);
+      router.refresh();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Unknown error occurred");
     } finally {
@@ -211,6 +214,7 @@ export const AddChannelMappingModal = ({
       }
       toast.success(t("workspace.integrations.integration_removed_successfully"));
       setOpen(false);
+      router.refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unknown error occurred");
     } finally {

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -69,6 +70,7 @@ export const AddIntegrationModal = ({
   selectedIntegration,
 }: Readonly<AddIntegrationModalProps>) => {
   const { t } = useTranslation();
+  const router = useRouter();
   const integrationData: TIntegrationGoogleSheetsConfigData = {
     spreadsheetId: "",
     spreadsheetName: "",
@@ -208,6 +210,7 @@ export const AddIntegrationModal = ({
       }
       resetForm();
       setOpen(false);
+      router.refresh();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Unknown error occurred");
     } finally {
@@ -250,6 +253,7 @@ export const AddIntegrationModal = ({
       }
       toast.success(t("workspace.integrations.integration_removed_successfully"));
       setOpen(false);
+      router.refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unknown error occurred");
     } finally {
