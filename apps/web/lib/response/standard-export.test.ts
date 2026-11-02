@@ -178,7 +178,11 @@ const parseSheet = (base64: string) => {
   const wb = xlsx.read(Buffer.from(base64, "base64"), { type: "buffer" });
   return {
     sheetNames: wb.SheetNames,
-    rows: xlsx.utils.sheet_to_json<string[]>(wb.Sheets["Sheet1"], { header: 1, defval: "", raw: false }),
+    rows: xlsx.utils.sheet_to_json<string[]>(wb.Sheets["Response Data"], {
+      header: 1,
+      defval: "",
+      raw: false,
+    }),
   };
 };
 
@@ -201,10 +205,10 @@ describe("Standard export file shape", () => {
     expect(fileContents.endsWith("\n")).toBe(false);
   });
 
-  test("XLSX is a single sheet named Sheet1", async () => {
+  test("XLSX is a single sheet named Response Data", async () => {
     const { fileContents } = await download("xlsx");
 
-    expect(parseSheet(fileContents).sheetNames).toEqual(["Sheet1"]);
+    expect(parseSheet(fileContents).sheetNames).toEqual(["Response Data"]);
   });
 
   test("CSV and XLSX carry the same header row", async () => {

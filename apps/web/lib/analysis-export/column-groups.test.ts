@@ -57,6 +57,38 @@ describe("a multi-select written as one cell", () => {
   });
 });
 
+describe("metadata and contact attributes", () => {
+  const embedded = (name: string, origin: "metadata" | "contact"): TAnalysisColumn => ({
+    name,
+    kind: "text",
+    source: "embedded",
+    embedded: { type: "string", origin, label: name },
+  });
+  const columns = [
+    embedded("browser", "metadata"),
+    embedded("country", "metadata"),
+    embedded("person_plan", "contact"),
+    embedded("person_first_name", "contact"),
+    embedded("campaign", "metadata"),
+  ];
+
+  test("each is one entry, however many fields it holds, as in the Standard list", () => {
+    expect(analysisColumnGroups(columns)).toEqual([
+      { id: "metadata", label: "metadata" },
+      { id: "person", label: "person" },
+    ]);
+    expect(columnsByEntry(columns)).toEqual({ metadata: 3, person: 2 });
+  });
+
+  test("switching the entry off takes every field with it", () => {
+    const exported = { columns, rows: async function* () {} } as unknown as ReturnType<
+      typeof buildSampleExport
+    >;
+    const kept = withoutColumnGroups(exported, ["metadata"]).columns.map((column) => column.name);
+    expect(kept).toEqual(["person_plan", "person_first_name"]);
+  });
+});
+
 describe("withoutColumnGroups", () => {
   test("with nothing switched off it is the same export", () => {
     const exported = buildSampleExport("both");

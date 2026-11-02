@@ -235,9 +235,9 @@ test.describe("Response export @slow", () => {
       expect(xlsxPath).toMatch(/\.xlsx$/);
 
       const workbook = xlsx.read(await readFile(xlsxPath), { type: "buffer" });
-      expect(workbook.SheetNames).toEqual(["Codes", "Datamap", "Unmapped values"]);
+      expect(workbook.SheetNames).toEqual(["Response Data", "Datamap", "Unmapped values"]);
 
-      const codes = xlsx.utils.sheet_to_json<string[]>(workbook.Sheets.Codes, { header: 1 });
+      const codes = xlsx.utils.sheet_to_json<string[]>(workbook.Sheets["Response Data"], { header: 1 });
       const [header, ...rows] = codes;
       expect(header).toEqual(expect.arrayContaining(["response_id", "outcome", "q1", "q2"]));
       expect(rows).toHaveLength(4);

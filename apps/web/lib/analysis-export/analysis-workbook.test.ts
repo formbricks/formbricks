@@ -21,13 +21,13 @@ describe("buildAnalysisWorkbook", () => {
   });
 
   test("a single answer display has one data sheet, then Datamap and Unmapped values", async () => {
-    expect((await open("codes")).SheetNames).toEqual(["Codes", "Datamap", "Unmapped values"]);
-    expect((await open("text")).SheetNames).toEqual(["Labels", "Datamap", "Unmapped values"]);
+    expect((await open("codes")).SheetNames).toEqual(["Response Data", "Datamap", "Unmapped values"]);
+    expect((await open("text")).SheetNames).toEqual(["Response Data", "Datamap", "Unmapped values"]);
   });
 
-  test("the Codes sheet holds codes as text and counts as numbers, rows newest first as the service gives them", async () => {
+  test("the data sheet holds codes as text and counts as numbers, rows newest first as the service gives them", async () => {
     const book = await open("codes");
-    const rows = table(book, "Codes");
+    const rows = table(book, "Response Data");
     expect(rows[0]).toEqual([
       "response_id",
       "language",
@@ -48,19 +48,19 @@ describe("buildAnalysisWorkbook", () => {
     expect(rows.slice(1).map((row) => row[0])).toEqual(["resp_1", "resp_2", "resp_3"]);
     // colour is Red = code "1", asked of resp_1; region 01 keeps its zero.
     expect(rows[1].slice(4, 11)).toEqual([1, "1", 1, 0, 1, "01", 9]);
-    expect(book.Sheets.Codes.F2).toMatchObject({ t: "s", v: "1" });
-    expect(book.Sheets.Codes.J2).toMatchObject({ t: "s", v: "01" });
-    expect(book.Sheets.Codes.K2).toMatchObject({ t: "n", v: 9 });
+    expect(book.Sheets["Response Data"].F2).toMatchObject({ t: "s", v: "1" });
+    expect(book.Sheets["Response Data"].J2).toMatchObject({ t: "s", v: "01" });
+    expect(book.Sheets["Response Data"].K2).toMatchObject({ t: "n", v: 9 });
   });
 
   test("an UNMAPPED cell is text, as given", async () => {
-    const rows = table(await open("codes"), "Codes");
+    const rows = table(await open("codes"), "Response Data");
     expect(rows[2][9]).toBe("UNMAPPED:Somewhere else");
     expect(rows[3][9]).toBe("UNMAPPED:Western Provnce");
   });
 
   test("the Excel file keeps line breaks, quotes and Arabic; a formula-like text is defanged", async () => {
-    const rows = table(await open("codes"), "Codes");
+    const rows = table(await open("codes"), "Response Data");
     expect(rows[1][11]).toBe('He said "hello"\nsecond line, with a comma');
     expect(rows[2][11]).toBe(LONG_ARABIC_TEXT);
     expect(rows[3][11]).toBe("'=SUM(A1:A9)");
@@ -109,7 +109,7 @@ describe("buildAnalysisWorkbook", () => {
       ),
       { type: "buffer" }
     );
-    expect(table(book, "Codes")).toHaveLength(1);
+    expect(table(book, "Response Data")).toHaveLength(1);
     expect(table(book, "Unmapped values")).toEqual([[...UNMAPPED_HEADERS]]);
   });
 
@@ -157,6 +157,6 @@ describe("buildAnalysisWorkbook", () => {
       }),
       { type: "buffer", raw: true }
     );
-    expect(onlyDatamap.SheetNames).toEqual(["Codes", "Datamap"]);
+    expect(onlyDatamap.SheetNames).toEqual(["Response Data", "Datamap"]);
   });
 });

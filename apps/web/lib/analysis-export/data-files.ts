@@ -3,15 +3,16 @@ import type { TAnalysisColumn, TAnswerDisplay } from "./types";
 export type TDataKind = "codes" | "labels";
 
 /** One data table of an Analysis export: a sheet in the workbook, a CSV file in the zip. */
-export type TDataPart = { kind: TDataKind; sheet: "Codes" | "Labels"; csvName: string };
+export type TDataPart = { kind: TDataKind; sheet: "Response Data" | "Codes" | "Labels"; csvName: string };
 
 /**
  * Which data tables "Display answers" asks for. "Text and code" is two files (`labels.csv` plus
- * `codes.csv`) and two sheets; the other two are a single `data.csv` and a single sheet.
+ * `codes.csv`) and two sheets, Labels and Codes; the other two are a single `data.csv` and a single sheet,
+ * Response Data like the Standard export's.
  */
 export const dataParts = (display: TAnswerDisplay): TDataPart[] => {
-  if (display === "codes") return [{ kind: "codes", sheet: "Codes", csvName: "data.csv" }];
-  if (display === "text") return [{ kind: "labels", sheet: "Labels", csvName: "data.csv" }];
+  if (display === "codes") return [{ kind: "codes", sheet: "Response Data", csvName: "data.csv" }];
+  if (display === "text") return [{ kind: "labels", sheet: "Response Data", csvName: "data.csv" }];
   return [
     { kind: "labels", sheet: "Labels", csvName: "labels.csv" },
     { kind: "codes", sheet: "Codes", csvName: "codes.csv" },

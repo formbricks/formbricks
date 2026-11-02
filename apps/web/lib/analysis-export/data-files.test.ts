@@ -4,8 +4,8 @@ import { dataHeaderCells, dataParts } from "./data-files";
 
 describe("dataParts", () => {
   test("Code gives one data file, Text gives one data file, Text and code gives two", () => {
-    expect(dataParts("codes")).toEqual([{ kind: "codes", sheet: "Codes", csvName: "data.csv" }]);
-    expect(dataParts("text")).toEqual([{ kind: "labels", sheet: "Labels", csvName: "data.csv" }]);
+    expect(dataParts("codes")).toEqual([{ kind: "codes", sheet: "Response Data", csvName: "data.csv" }]);
+    expect(dataParts("text")).toEqual([{ kind: "labels", sheet: "Response Data", csvName: "data.csv" }]);
     expect(dataParts("both")).toEqual([
       { kind: "labels", sheet: "Labels", csvName: "labels.csv" },
       { kind: "codes", sheet: "Codes", csvName: "codes.csv" },

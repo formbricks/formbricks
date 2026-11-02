@@ -96,9 +96,9 @@ describe("countExportResponses", () => {
       survey: { ...withId, workspaceId: "ws1" } as never,
       plan: analysisPlan("codes", "csv"),
     });
-    expect(columnGroups.filter((group) => group.label.startsWith("person."))).toEqual([
-      { id: "e:person_plan", label: "person.plan" },
-      { id: "e:person_first_name", label: "person.firstName" },
+    // One entry for all of them, as in the Standard list, so the list does not grow with the attributes.
+    expect(columnGroups.filter((group) => group.label.startsWith("person"))).toEqual([
+      { id: "person", label: "person" },
     ]);
     expect(mocks.attributeKeys).toHaveBeenCalledWith(
       expect.objectContaining({ where: { workspaceId: "ws1", attributes: { some: {} } } })
