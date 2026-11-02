@@ -697,6 +697,10 @@
   },
   "emails": {
     "accept": "Elfogadás",
+    "account_deleted_email_did_not_request": "Amennyiben Ön nem törölte a fiókját, kérjük, haladéktalanul forduljon az ügyfélszolgálathoz.",
+    "account_deleted_email_heading": "Az Ön fiókját törölték",
+    "account_deleted_email_subject": "Az Ön Formbricks-fiókját törölték",
+    "account_deleted_email_text": "Az Ön Formbricks-fiókját és a hozzá tartozó valamennyi adatot véglegesen eltávolítottuk.",
     "click_or_drag_to_upload_files": "Kattintson vagy húzza ide a fájlok feltöltéséhez.",
     "delete_account_email_confirm_deletion": "Fiók törlésének megerősítése",
     "delete_account_email_did_not_request": "Ha Ön nem kérte ezt, akkor hagyja figyelmen kívül ezt a levelet, és a fiókja aktív marad.",
