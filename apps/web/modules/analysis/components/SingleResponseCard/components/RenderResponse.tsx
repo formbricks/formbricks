@@ -18,13 +18,13 @@ import { RatingResponse } from "@/modules/ui/components/rating-response";
 import { ResponseBadges } from "@/modules/ui/components/response-badges";
 
 interface RenderResponseProps {
-  responseData: TResponseDataValue;
-  element: TSurveyElement;
-  survey: TSurvey;
-  language: string | null;
-  locale: TUserLocale;
-  isExpanded?: boolean;
-  showId: boolean;
+  readonly responseData: TResponseDataValue;
+  readonly element: TSurveyElement;
+  readonly survey: TSurvey;
+  readonly language: string | null;
+  readonly locale: TUserLocale;
+  readonly isExpanded?: boolean;
+  readonly showId: boolean;
 }
 
 export const RenderResponse: React.FC<RenderResponseProps> = ({

@@ -56,6 +56,9 @@ export const next = [
     rules: {
       "@next/next/no-html-link-for-pages": "off",
       "react/jsx-key": "off",
+      // Props are read-only: CODING_STANDARDS listed this as a review check, and CodeRabbit raised it
+      // by hand on almost every UI PR. The autofix adds `readonly`, so `pnpm lint --fix` clears it.
+      "react/prefer-read-only-props": "error",
       "no-restricted-imports": ["error", { paths: [nextCacheRestriction] }],
     },
   },

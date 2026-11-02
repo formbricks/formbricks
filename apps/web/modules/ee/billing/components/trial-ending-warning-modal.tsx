@@ -11,8 +11,8 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/modules
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 days — long enough to outlive the trial's final days
 
 interface TrialEndingWarningModalProps {
-  daysRemaining: number;
-  billingHref: string;
+  readonly daysRemaining: number;
+  readonly billingHref: string;
 }
 
 export const TrialEndingWarningModal = ({ daysRemaining, billingHref }: TrialEndingWarningModalProps) => {

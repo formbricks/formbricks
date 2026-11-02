@@ -15,7 +15,7 @@ import { PageHeader } from "@/modules/ui/components/page-header";
 import { ActivitySection } from "./components/activity-section";
 
 export const SingleContactPage = async (props: {
-  params: Promise<{ workspaceId: string; contactId: string }>;
+  readonly params: Promise<{ workspaceId: string; contactId: string }>;
 }) => {
   const params = await props.params;
 

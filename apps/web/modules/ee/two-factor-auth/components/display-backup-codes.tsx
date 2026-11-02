@@ -6,8 +6,8 @@ import { copyToClipboard } from "@/lib/utils/clipboard";
 import { Button } from "@/modules/ui/components/button";
 
 interface DisplayBackupCodesProps {
-  backupCodes: string[];
-  setOpen: (open: boolean) => void;
+  readonly backupCodes: string[];
+  readonly setOpen: (open: boolean) => void;
 }
 
 export const DisplayBackupCodes = ({ backupCodes, setOpen }: DisplayBackupCodesProps) => {

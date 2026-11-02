@@ -11,8 +11,8 @@ import {
 } from "@/modules/ui/components/select";
 
 interface ValidationLogicSelectorProps {
-  value: TValidationLogic;
-  onChange: (value: TValidationLogic) => void;
+  readonly value: TValidationLogic;
+  readonly onChange: (value: TValidationLogic) => void;
 }
 
 export const ValidationLogicSelector = ({ value, onChange }: ValidationLogicSelectorProps) => {

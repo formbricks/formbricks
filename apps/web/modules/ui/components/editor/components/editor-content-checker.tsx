@@ -2,7 +2,11 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { $getRoot } from "lexical";
 import { useEffect } from "react";
 
-export const EditorContentChecker = ({ onEmptyChange }: { onEmptyChange: (isEmpty: boolean) => void }) => {
+export const EditorContentChecker = ({
+  onEmptyChange,
+}: {
+  readonly onEmptyChange: (isEmpty: boolean) => void;
+}) => {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {

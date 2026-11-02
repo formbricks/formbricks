@@ -9,10 +9,10 @@ import { ActionClassesTable } from "@/modules/workspaces/settings/(setup)/compon
 import { AddActionModal } from "@/modules/workspaces/settings/(setup)/components/AddActionModal";
 
 interface ActionSettingsCardProps {
-  workspaceId: string;
-  actionClasses: TActionClass[];
-  isReadOnly: boolean;
-  locale: TUserLocale;
+  readonly workspaceId: string;
+  readonly actionClasses: TActionClass[];
+  readonly isReadOnly: boolean;
+  readonly locale: TUserLocale;
 }
 export const ActionSettingsCard = ({
   workspaceId,

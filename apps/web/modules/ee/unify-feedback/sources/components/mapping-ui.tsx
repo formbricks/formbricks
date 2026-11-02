@@ -11,14 +11,14 @@ import { TMappingConfidence, getCsvIdentityMappingAlert } from "../utils";
 import { FormTargetField, TAutoMapState } from "./mapping-field";
 
 interface MappingUIProps {
-  sourceFields: TSourceField[];
-  mappings: TFieldMapping[];
-  onMappingsChange: (mappings: TFieldMapping[]) => void;
-  feedbackSourceType: TFeedbackSourceType;
-  confidenceByTargetId?: Record<string, TMappingConfidence>;
-  sampleRow?: Record<string, string>;
+  readonly sourceFields: TSourceField[];
+  readonly mappings: TFieldMapping[];
+  readonly onMappingsChange: (mappings: TFieldMapping[]) => void;
+  readonly feedbackSourceType: TFeedbackSourceType;
+  readonly confidenceByTargetId?: Record<string, TMappingConfidence>;
+  readonly sampleRow?: Record<string, string>;
   /** When true, all mapping controls render read-only (e.g. for viewers). */
-  disabled?: boolean;
+  readonly disabled?: boolean;
 }
 
 const toAutoMapState = (confidence?: TMappingConfidence): TAutoMapState | undefined => {
@@ -53,12 +53,12 @@ export function MappingUI({
 }
 
 interface CsvMappingFormProps {
-  sourceFields: TSourceField[];
-  mappings: TFieldMapping[];
-  onMappingsChange: (mappings: TFieldMapping[]) => void;
-  confidenceByTargetId?: Record<string, TMappingConfidence>;
-  sampleRow?: Record<string, string>;
-  disabled?: boolean;
+  readonly sourceFields: TSourceField[];
+  readonly mappings: TFieldMapping[];
+  readonly onMappingsChange: (mappings: TFieldMapping[]) => void;
+  readonly confidenceByTargetId?: Record<string, TMappingConfidence>;
+  readonly sampleRow?: Record<string, string>;
+  readonly disabled?: boolean;
 }
 
 const CsvMappingForm = ({

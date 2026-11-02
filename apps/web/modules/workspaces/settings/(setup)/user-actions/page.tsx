@@ -7,7 +7,7 @@ import { PageHeader } from "@/modules/ui/components/page-header";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { ActionSettingsCard } from "../components/action-settings-card";
 
-export const UserActionsPage = async ({ params }: { params: Promise<{ workspaceId: string }> }) => {
+export const UserActionsPage = async ({ params }: { readonly params: Promise<{ workspaceId: string }> }) => {
   const t = await getTranslate();
   const { workspaceId } = await params;
 

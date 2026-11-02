@@ -11,7 +11,7 @@ import { type TTaxonomyScopeSelection, taxonomyKeys } from "../lib/query";
 import { useRemoveTaxonomyNode } from "./use-remove-taxonomy-node";
 
 function createWrapper(queryClient: QueryClient) {
-  const Wrapper = ({ children }: { children: ReactNode }) =>
+  const Wrapper = ({ children }: { readonly children: ReactNode }) =>
     createElement(QueryClientProvider, { client: queryClient }, children);
   Wrapper.displayName = "UseRemoveTaxonomyNodeTestWrapper";
   return Wrapper;

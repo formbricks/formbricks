@@ -4,9 +4,9 @@ import { useTranslation } from "react-i18next";
 import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 
 interface UnifyConfigNavigationProps {
-  workspaceId: string;
-  activeId?: string;
-  loading?: boolean;
+  readonly workspaceId: string;
+  readonly activeId?: string;
+  readonly loading?: boolean;
 }
 
 export const UnifyConfigNavigation = ({

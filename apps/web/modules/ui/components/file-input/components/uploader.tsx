@@ -6,18 +6,18 @@ import { cn } from "@/lib/cn";
 import { showStorageNotConfiguredToast } from "@/modules/ui/components/storage-not-configured-toast/lib/utils";
 
 interface UploaderProps {
-  id: string;
-  name: string;
-  ref?: React.RefObject<HTMLInputElement>;
-  handleDragOver: (e: React.DragEvent<HTMLLabelElement>) => void;
-  uploaderClassName: string;
-  handleDrop: (e: React.DragEvent<HTMLLabelElement>) => void;
-  allowedFileExtensions: TAllowedFileExtension[];
-  multiple: boolean;
-  handleUpload: (files: File[]) => void;
-  uploadMore?: boolean;
-  disabled?: boolean;
-  isStorageConfigured: boolean;
+  readonly id: string;
+  readonly name: string;
+  readonly ref?: React.RefObject<HTMLInputElement>;
+  readonly handleDragOver: (e: React.DragEvent<HTMLLabelElement>) => void;
+  readonly uploaderClassName: string;
+  readonly handleDrop: (e: React.DragEvent<HTMLLabelElement>) => void;
+  readonly allowedFileExtensions: TAllowedFileExtension[];
+  readonly multiple: boolean;
+  readonly handleUpload: (files: File[]) => void;
+  readonly uploadMore?: boolean;
+  readonly disabled?: boolean;
+  readonly isStorageConfigured: boolean;
 }
 
 export const Uploader = ({

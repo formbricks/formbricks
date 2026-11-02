@@ -24,16 +24,16 @@ type KeyOption = {
 };
 
 interface AttributeFieldRowProps {
-  index: number;
-  fieldId: string;
-  form: any;
-  attributeKeys: TContactAttributeKey[];
-  watchedAttributes: { key: string; value: string }[];
-  allKeyOptions: KeyOption[];
-  getAvailableOptions: (index: number) => KeyOption[];
-  savedAttributeKeys: Set<string>;
-  onRemove: (index: number) => void;
-  t: (key: string) => string;
+  readonly index: number;
+  readonly fieldId: string;
+  readonly form: any;
+  readonly attributeKeys: TContactAttributeKey[];
+  readonly watchedAttributes: { key: string; value: string }[];
+  readonly allKeyOptions: KeyOption[];
+  readonly getAvailableOptions: (index: number) => KeyOption[];
+  readonly savedAttributeKeys: Set<string>;
+  readonly onRemove: (index: number) => void;
+  readonly t: (key: string) => string;
 }
 
 export const AttributeFieldRow = ({

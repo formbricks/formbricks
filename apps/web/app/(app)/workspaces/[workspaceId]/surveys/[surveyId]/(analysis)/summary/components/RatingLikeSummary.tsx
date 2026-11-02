@@ -27,16 +27,16 @@ type RatingLikeElementSummary =
   | TSurveyElementSummaryRating;
 
 interface RatingLikeSummaryProps {
-  elementSummary: RatingLikeElementSummary;
-  survey: TSurvey;
-  setFilter: (
+  readonly elementSummary: RatingLikeElementSummary;
+  readonly survey: TSurvey;
+  readonly setFilter: (
     elementId: string,
     label: TI18nString,
     elementType: TSurveyElementTypeEnum,
     filterValue: string,
     filterComboBoxValue?: string | string[]
   ) => void;
-  additionalInfo: JSX.Element;
+  readonly additionalInfo: JSX.Element;
 }
 
 export const RatingLikeSummary = ({

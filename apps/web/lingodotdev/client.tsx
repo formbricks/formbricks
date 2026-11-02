@@ -10,9 +10,9 @@ import { logger } from "@formbricks/logger";
 let isInit = false;
 
 interface I18nProviderProps {
-  children: ReactNode;
-  language: string;
-  defaultLanguage: string;
+  readonly children: ReactNode;
+  readonly language: string;
+  readonly defaultLanguage: string;
 }
 
 export const I18nProvider = ({ children, language, defaultLanguage }: I18nProviderProps) => {

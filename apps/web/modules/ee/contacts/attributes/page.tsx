@@ -9,7 +9,7 @@ import { CreateAttributeModal } from "./components/create-attribute-modal";
 export const AttributesPage = async ({
   params: paramsProps,
 }: {
-  params: Promise<{ workspaceId: string }>;
+  readonly params: Promise<{ workspaceId: string }>;
 }) => {
   const params = await paramsProps;
   const locale = await getLocale();

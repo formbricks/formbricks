@@ -10,10 +10,10 @@ import { getMembersByOrganizationId } from "@/modules/organization/settings/team
 import { ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 
 interface TeamsViewProps {
-  organizationId: string;
-  membershipRole?: TOrganizationRole;
-  currentUserId: string;
-  isAccessControlAllowed: boolean;
+  readonly organizationId: string;
+  readonly membershipRole?: TOrganizationRole;
+  readonly currentUserId: string;
+  readonly isAccessControlAllowed: boolean;
 }
 
 export const TeamsView = async ({

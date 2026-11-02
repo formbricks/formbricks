@@ -15,10 +15,10 @@ import { getWorkspaceById } from "@/modules/survey/link/lib/workspace";
 import { getGenericSurveyMetadata, getMetadataForContactSurvey } from "@/modules/survey/link/metadata";
 
 interface ContactSurveyPageProps {
-  params: Promise<{
+  readonly params: Promise<{
     jwt: string;
   }>;
-  searchParams: Promise<TLinkSurveySearchParams>;
+  readonly searchParams: Promise<TLinkSurveySearchParams>;
 }
 
 export const generateMetadata = async (props: ContactSurveyPageProps): Promise<Metadata> => {

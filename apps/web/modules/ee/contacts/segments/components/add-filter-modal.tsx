@@ -21,11 +21,11 @@ import AttributeTabContent from "./attribute-tab-content";
 import FilterButton from "./filter-button";
 
 interface TAddFilterModalProps {
-  open: boolean;
-  setOpen: (open: boolean) => void;
-  onAddFilter: (filter: TBaseFilter) => void;
-  contactAttributeKeys: TContactAttributeKey[];
-  segments: TSegment[];
+  readonly open: boolean;
+  readonly setOpen: (open: boolean) => void;
+  readonly onAddFilter: (filter: TBaseFilter) => void;
+  readonly contactAttributeKeys: TContactAttributeKey[];
+  readonly segments: TSegment[];
 }
 
 type TFilterType = "attribute" | "segment" | "device" | "person" | "surveyInteraction";

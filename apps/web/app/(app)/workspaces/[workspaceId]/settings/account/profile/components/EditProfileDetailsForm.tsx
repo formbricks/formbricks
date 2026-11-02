@@ -32,9 +32,9 @@ const ZEditProfileNameFormSchema = ZUser.pick({ name: true, locale: true, email:
 type TEditProfileNameForm = z.infer<typeof ZEditProfileNameFormSchema>;
 
 interface IEditProfileDetailsFormProps {
-  user: TUser;
-  isPasswordResetEnabled?: boolean;
-  emailVerificationDisabled: boolean;
+  readonly user: TUser;
+  readonly isPasswordResetEnabled?: boolean;
+  readonly emailVerificationDisabled: boolean;
 }
 
 export const EditProfileDetailsForm = ({

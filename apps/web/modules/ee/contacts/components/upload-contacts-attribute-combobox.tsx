@@ -24,14 +24,14 @@ type Key = {
 };
 
 interface ITagsComboboxProps {
-  keys: Key[];
-  addKey: (tagId: string) => void;
-  createKey: (tagName: string) => void;
-  searchValue: string;
-  setSearchValue: React.Dispatch<React.SetStateAction<string>>;
-  open: boolean;
-  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  currentKey: Key | null;
+  readonly keys: Key[];
+  readonly addKey: (tagId: string) => void;
+  readonly createKey: (tagName: string) => void;
+  readonly searchValue: string;
+  readonly setSearchValue: React.Dispatch<React.SetStateAction<string>>;
+  readonly open: boolean;
+  readonly setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  readonly currentKey: Key | null;
 }
 
 export const UploadContactsAttributeCombobox = ({

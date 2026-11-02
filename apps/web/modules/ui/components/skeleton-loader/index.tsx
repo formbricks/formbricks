@@ -1,7 +1,7 @@
 import { Skeleton } from "@/modules/ui/components/skeleton";
 
 type SkeletonLoaderProps = {
-  type: "response" | "responseTable" | "summary";
+  readonly type: "response" | "responseTable" | "summary";
 };
 
 export const SkeletonLoader = ({ type }: SkeletonLoaderProps) => {

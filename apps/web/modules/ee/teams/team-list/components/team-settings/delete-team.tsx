@@ -12,9 +12,9 @@ import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 interface DeleteTeamProps {
-  teamId: TTeam["id"];
-  onDelete: () => void;
-  isOwnerOrManager: boolean;
+  readonly teamId: TTeam["id"];
+  readonly onDelete: () => void;
+  readonly isOwnerOrManager: boolean;
 }
 
 export const DeleteTeam = ({ teamId, onDelete, isOwnerOrManager }: DeleteTeamProps) => {
