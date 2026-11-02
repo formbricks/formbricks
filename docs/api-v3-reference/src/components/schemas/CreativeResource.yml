@@ -12,7 +12,8 @@ description: >
   on it.
 
 
-  The writable groups are `name`, `status`, `defaultLanguage` with `languages`, `content`, `styling`,
-  `destination`, `distribution` and `schedule`; a `PATCH` replaces each group it sends as a whole.
+  The writable groups are `name`, `status`, `defaultLanguage` with `languages`, `autoSelectLanguage`,
+  `content`, `styling`, `destination`, `distribution` and `schedule`; a `PATCH` replaces each group it
+  sends as a whole.
   `displayStatus`, `displayStatusReason`, `warnings`, the timestamps, `creator` and
   `destination.opensAs` are read-only.

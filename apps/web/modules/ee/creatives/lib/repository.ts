@@ -45,6 +45,7 @@ export type TCreativeRowData = {
   archivedAt: Date | null;
   content: Prisma.InputJsonValue;
   styling: Prisma.InputJsonValue;
+  autoSelectLanguage: boolean | null;
   surveyId: string | null;
   linkUrl: string | null;
   showOn: TCreativeRecord["showOn"];

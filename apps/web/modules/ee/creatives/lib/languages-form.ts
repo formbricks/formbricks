@@ -54,6 +54,31 @@ export const setCreativeLanguageEnabled = (
   others: languages.others.map((language) => (language.code === code ? { code, enabled } : language)),
 });
 
+/** The languages visitors can get: the default and every shown one. */
+const countOfferedLanguages = ({ others }: TCreativeLanguagesForm): number =>
+  1 + others.filter(({ enabled }) => enabled).length;
+
+/**
+ * Keeps "Use browser language by default" in step with the languages across one Language tab change, as
+ * the survey editor does (`applyAutoSelectLanguageRule` there, ENG-6871):
+ * - starting to offer a second language turns it on while it was never chosen (`null`); an explicit
+ *   `false` is the author's opt-out and stays;
+ * - removing the last other language sets it back to never chosen, so adding one again turns it on.
+ */
+export const applyAutoSelectLanguageRule = (
+  previous: TCreativeLanguagesForm,
+  next: TCreativeLanguagesForm
+): TCreativeLanguagesForm => {
+  if (previous.others.length > 0 && next.others.length === 0) return { ...next, autoSelectLanguage: null };
+  const startsOfferingSeveral = countOfferedLanguages(previous) <= 1 && countOfferedLanguages(next) >= 2;
+  if (startsOfferingSeveral && next.autoSelectLanguage === null) return { ...next, autoSelectLanguage: true };
+  return next;
+};
+
+/** Whether the setting can change anything: a visitor can get more than one language. */
+export const canAutoSelectLanguage = (languages: TCreativeLanguagesForm): boolean =>
+  countOfferedLanguages(languages) >= 2;
+
 export const updateTranslation = (
   languages: TCreativeLanguagesForm,
   code: string,
@@ -98,6 +123,7 @@ export const makeDefaultLanguage = <TForm extends TTextsForm>(form: TForm, code:
             accessibleName: promoted.accessibleName,
           },
     languages: {
+      ...languages,
       defaultLanguage: code,
       others: languages.others.map((language) =>
         language.code === code ? { code: languages.defaultLanguage, enabled: true } : language
