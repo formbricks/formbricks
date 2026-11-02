@@ -1,4 +1,4 @@
-import { isLanguageCodeShaped, normalizeImportLanguageCode } from "../core/language-codes";
+import { normalizeImportLanguageCode } from "../core/language-codes";
 
 /**
  * Qualtrics language codes → the region-qualified BCP-47 tags the v3 survey document stores.
@@ -45,4 +45,4 @@ export const normalizeQualtricsLanguageCode = (raw: string): string | null =>
   );
 
 /** Whether a raw code is worth naming in a report line: bounded, so a report never quotes a blob. */
-export const isReportableLanguageCode = isLanguageCodeShaped;
+export { isLanguageCodeShaped as isReportableLanguageCode } from "../core/language-codes";

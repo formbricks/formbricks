@@ -79,7 +79,7 @@ function dropLanguages(
 
   const dropped = new Set<string>();
   let remaining = overBy;
-  for (const language of droppable.reverse()) {
+  for (const language of droppable.toReversed()) {
     if (remaining <= 0) break;
     dropped.add(language.code);
     remaining -= weight.get(language.code) ?? 0;

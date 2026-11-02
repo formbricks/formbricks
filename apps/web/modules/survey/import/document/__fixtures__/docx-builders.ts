@@ -13,9 +13,16 @@ const OFFICE_REL = "http://schemas.openxmlformats.org/officeDocument/2006/relati
 const escape = (text: string) =>
   text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
 
+/** `<tag>content</tag>`, or nothing when there is no content. */
+const optional = (tag: string, content: string | undefined) => (content ? `<${tag}>${content}</${tag}>` : "");
+
+/** An empty element with one `w:val`, or nothing when there is no value. */
+const valueElement = (tag: string, value: string | number | undefined) =>
+  value === undefined ? "" : `<${tag} w:val="${value}"/>`;
+
 /** A run of text. */
 export const r = (text: string, rPr = "") =>
-  `<w:r>${rPr ? `<w:rPr>${rPr}</w:rPr>` : ""}<w:t xml:space="preserve">${escape(text)}</w:t></w:r>`;
+  `<w:r>${optional("w:rPr", rPr)}<w:t xml:space="preserve">${escape(text)}</w:t></w:r>`;
 
 /** A paragraph of `content` (runs, or plain text made one run), with its paragraph properties. */
 export const p = (
@@ -23,21 +30,18 @@ export const p = (
   { style, num, pPr = "" }: { style?: string; num?: [number, number]; pPr?: string } = {}
 ) => {
   const runs = content.startsWith("<") ? content : r(content);
-  const properties = [
-    style ? `<w:pStyle w:val="${style}"/>` : "",
-    num ? `<w:numPr><w:ilvl w:val="${num[1]}"/><w:numId w:val="${num[0]}"/></w:numPr>` : "",
-    pPr,
-  ].join("");
-  return `<w:p>${properties ? `<w:pPr>${properties}</w:pPr>` : ""}${runs}</w:p>`;
+  const numbering = num ? valueElement("w:ilvl", num[1]) + valueElement("w:numId", num[0]) : undefined;
+  const properties = [valueElement("w:pStyle", style), optional("w:numPr", numbering), pPr].join("");
+  return `<w:p>${optional("w:pPr", properties)}${runs}</w:p>`;
 };
 
 /** A table cell holding `content` (paragraphs, or plain text made one), with its cell properties. */
 export const tc = (content: string, tcPr = "") =>
-  `<w:tc>${tcPr ? `<w:tcPr>${tcPr}</w:tcPr>` : ""}${content.startsWith("<") ? content : p(content)}</w:tc>`;
+  `<w:tc>${optional("w:tcPr", tcPr)}${content.startsWith("<") ? content : p(content)}</w:tc>`;
 
 /** A table row of cells (each a `tc`, or plain text made one). */
 export const tr = (cells: string[], trPr = "") =>
-  `<w:tr>${trPr ? `<w:trPr>${trPr}</w:trPr>` : ""}${cells.map((cell) => (cell.startsWith("<w:tc") ? cell : tc(cell))).join("")}</w:tr>`;
+  `<w:tr>${optional("w:trPr", trPr)}${cells.map((cell) => (cell.startsWith("<w:tc") ? cell : tc(cell))).join("")}</w:tr>`;
 
 /** A table of rows (each a `tr`, or a list of cell texts). */
 export const tbl = (rows: (string | string[])[]) =>
@@ -80,9 +84,10 @@ export const styles = (defs: Record<string, { name: string; basedOn?: string; pP
   `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="${W_NS}">${Object.entries(defs)
     .map(
       ([id, def]) =>
-        `<w:style w:type="paragraph" w:styleId="${id}"><w:name w:val="${def.name}"/>${
-          def.basedOn ? `<w:basedOn w:val="${def.basedOn}"/>` : ""
-        }${def.pPr ? `<w:pPr>${def.pPr}</w:pPr>` : ""}</w:style>`
+        `<w:style w:type="paragraph" w:styleId="${id}">${valueElement("w:name", def.name)}${valueElement(
+          "w:basedOn",
+          def.basedOn
+        )}${optional("w:pPr", def.pPr)}</w:style>`
     )
     .join("")}</w:styles>`;
 

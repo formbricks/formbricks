@@ -1,44 +1,42 @@
 {
   "plan": {
     "defaultLanguage": "en-US",
-    "languages": [
-      "en-US",
-      "ar-SA"
-    ],
-    "titleCell": null,
+    "languages": ["en-US", "ar-SA"],
     "questions": [
       {
-        "ref": "R2",
-        "kind": "multipleChoiceSingle",
-        "idCell": "A2",
-        "sectionCell": null,
-        "required": true,
+        "columns": [],
+        "dropdown": true,
+        "format": null,
         "headline": [
           {
-            "language": "en-US",
             "cell": "C2",
+            "language": "en-US",
             "text": "Which day did you visit?"
           },
           {
-            "language": "ar-SA",
             "cell": "D2",
+            "language": "ar-SA",
             "text": "في أي يوم زرت المكتبة؟"
           }
         ],
-        "subheader": [],
+        "idCell": "A2",
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
         "options": [
           {
             "code": null,
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "C2",
+                "language": "en-US",
                 "text": "Monday"
               },
               {
-                "language": "ar-SA",
                 "cell": "D2",
+                "language": "ar-SA",
                 "text": "الاثنين"
               }
             ]
@@ -48,13 +46,13 @@
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "C2",
+                "language": "en-US",
                 "text": "Tuesday"
               },
               {
-                "language": "ar-SA",
                 "cell": "D2",
+                "language": "ar-SA",
                 "text": "الثلاثاء"
               }
             ]
@@ -64,13 +62,13 @@
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "C2",
+                "language": "en-US",
                 "text": "Wednesday"
               },
               {
-                "language": "ar-SA",
                 "cell": "D2",
+                "language": "ar-SA",
                 "text": "الأربعاء"
               }
             ]
@@ -80,13 +78,13 @@
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "C2",
+                "language": "en-US",
                 "text": "Thursday"
               },
               {
-                "language": "ar-SA",
                 "cell": "D2",
+                "language": "ar-SA",
                 "text": "الخميس"
               }
             ]
@@ -96,13 +94,13 @@
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "C2",
+                "language": "en-US",
                 "text": "Friday"
               },
               {
-                "language": "ar-SA",
                 "cell": "D2",
+                "language": "ar-SA",
                 "text": "الجمعة"
               }
             ]
@@ -112,13 +110,13 @@
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "C2",
+                "language": "en-US",
                 "text": "Saturday"
               },
               {
-                "language": "ar-SA",
                 "cell": "D2",
+                "language": "ar-SA",
                 "text": "السبت"
               }
             ]
@@ -128,61 +126,61 @@
             "isOther": true,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "C2",
+                "language": "en-US",
                 "text": "Other"
               },
               {
-                "language": "ar-SA",
                 "cell": "D2",
+                "language": "ar-SA",
                 "text": "أخرى"
               }
             ]
           }
         ],
-        "columns": [],
-        "lowerLabel": [],
-        "upperLabel": [],
-        "dropdown": true,
-        "inputType": null,
-        "scale": null,
         "range": null,
-        "format": null,
+        "ref": "R2",
+        "required": true,
         "rules": [],
-        "logicNotes": []
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
       },
       {
-        "ref": "R3",
-        "kind": "multipleChoiceSingle",
-        "idCell": "A3",
-        "sectionCell": null,
-        "required": false,
+        "columns": [],
+        "dropdown": false,
+        "format": null,
         "headline": [
           {
-            "language": "en-US",
             "cell": "C3",
+            "language": "en-US",
             "text": "How sure are you that you will come back?"
           },
           {
-            "language": "ar-SA",
             "cell": "D3",
+            "language": "ar-SA",
             "text": "ما مدى تأكدك من أنك ستعود؟"
           }
         ],
-        "subheader": [],
+        "idCell": "A3",
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
         "options": [
           {
             "code": "1",
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "C3",
+                "language": "en-US",
                 "text": "Not sure at all"
               },
               {
-                "language": "ar-SA",
                 "cell": "D3",
+                "language": "ar-SA",
                 "text": "غير متأكد إطلاقاً"
               }
             ]
@@ -192,13 +190,13 @@
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "C3",
+                "language": "en-US",
                 "text": "Slightly sure"
               },
               {
-                "language": "ar-SA",
                 "cell": "D3",
+                "language": "ar-SA",
                 "text": "متأكد قليلاً"
               }
             ]
@@ -208,13 +206,13 @@
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "C3",
+                "language": "en-US",
                 "text": "Neutral"
               },
               {
-                "language": "ar-SA",
                 "cell": "D3",
+                "language": "ar-SA",
                 "text": "محايد"
               }
             ]
@@ -224,13 +222,13 @@
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "C3",
+                "language": "en-US",
                 "text": "Fairly sure"
               },
               {
-                "language": "ar-SA",
                 "cell": "D3",
+                "language": "ar-SA",
                 "text": "متأكد إلى حد ما"
               }
             ]
@@ -240,103 +238,102 @@
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "C3",
+                "language": "en-US",
                 "text": "Very sure"
               },
               {
-                "language": "ar-SA",
                 "cell": "D3",
+                "language": "ar-SA",
                 "text": "متأكد جداً"
               }
             ]
           }
         ],
-        "columns": [],
-        "lowerLabel": [],
-        "upperLabel": [],
-        "dropdown": false,
-        "inputType": null,
-        "scale": null,
         "range": null,
-        "format": null,
+        "ref": "R3",
+        "required": false,
         "rules": [],
-        "logicNotes": []
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
       },
       {
-        "ref": "R4",
-        "kind": "openText",
-        "idCell": "A4",
-        "sectionCell": null,
-        "required": false,
+        "columns": [],
+        "dropdown": false,
+        "format": null,
         "headline": [
           {
-            "language": "en-US",
             "cell": "C4",
+            "language": "en-US",
             "text": null
           },
           {
-            "language": "ar-SA",
             "cell": "D4",
+            "language": "ar-SA",
             "text": null
           }
         ],
-        "subheader": [],
-        "options": [],
-        "columns": [],
-        "lowerLabel": [],
-        "upperLabel": [],
-        "dropdown": false,
+        "idCell": "A4",
         "inputType": "text",
-        "scale": null,
+        "kind": "openText",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
         "range": null,
-        "format": null,
+        "ref": "R4",
+        "required": false,
         "rules": [],
-        "logicNotes": []
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
       },
       {
-        "ref": "R5",
-        "kind": "ending",
-        "idCell": null,
-        "sectionCell": null,
-        "required": false,
+        "columns": [],
+        "dropdown": false,
+        "format": null,
         "headline": [
           {
-            "language": "en-US",
             "cell": "C5",
+            "language": "en-US",
             "text": "Thank you!"
           },
           {
-            "language": "ar-SA",
             "cell": "D5",
+            "language": "ar-SA",
             "text": "شكراً لك!"
           }
         ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "ending",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "R5",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
         "subheader": [
           {
-            "language": "en-US",
             "cell": "C5",
+            "language": "en-US",
             "text": "See you soon."
           },
           {
-            "language": "ar-SA",
             "cell": "D5",
+            "language": "ar-SA",
             "text": "نراك قريباً."
           }
         ],
-        "options": [],
-        "columns": [],
-        "lowerLabel": [],
-        "upperLabel": [],
-        "dropdown": false,
-        "inputType": null,
-        "scale": null,
-        "range": null,
-        "format": null,
-        "rules": [],
-        "logicNotes": []
+        "upperLabel": []
       }
     ],
-    "skipped": []
+    "skipped": [],
+    "titleCell": null
   }
 }

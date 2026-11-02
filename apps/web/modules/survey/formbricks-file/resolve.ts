@@ -67,7 +67,7 @@ const canonicalJson = (value: unknown): string =>
     isPlainObject(nested)
       ? Object.fromEntries(
           Object.keys(nested)
-            .sort()
+            .sort((a, b) => a.localeCompare(b))
             .map((key) => [key, nested[key]])
         )
       : nested

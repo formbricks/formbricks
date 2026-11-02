@@ -34,7 +34,7 @@ import { parseDocumentXml } from "./xml";
 const W_NAMESPACES: ReadonlySet<string> = new Set([
   "http://schemas.openxmlformats.org/wordprocessingml/2006/main",
   // ISO 29500 Strict, which Word writes when asked to.
-  "http://purl.oclc.org/ooxml/wordprocessingml/main",
+  "http://purl.oclc.org/ooxml/wordprocessingml/main", // NOSONAR(typescript:S5332) -- a namespace name, never fetched
 ]);
 const MC_NAMESPACE = "http://schemas.openxmlformats.org/markup-compatibility/2006";
 const DC_NAMESPACE = "http://purl.org/dc/elements/1.1/";

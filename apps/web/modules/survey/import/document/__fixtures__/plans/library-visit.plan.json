@@ -1,86 +1,84 @@
 {
   "plan": {
     "defaultLanguage": "en-US",
-    "languages": [
-      "en-US",
-      "ar-SA"
-    ],
-    "titleCell": null,
+    "languages": ["en-US", "ar-SA"],
     "questions": [
       {
-        "ref": "R2",
-        "kind": "welcome",
-        "idCell": null,
-        "sectionCell": null,
-        "required": false,
+        "columns": [],
+        "dropdown": false,
+        "format": null,
         "headline": [
           {
-            "language": "en-US",
             "cell": "C2",
+            "language": "en-US",
             "text": "Hello,"
           },
           {
-            "language": "ar-SA",
             "cell": "D2",
+            "language": "ar-SA",
             "text": "مرحباً"
           }
         ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "welcome",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "R2",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
         "subheader": [
           {
-            "language": "en-US",
             "cell": "C2",
+            "language": "en-US",
             "text": "Thank you for visiting the city library today. This short survey takes about two minutes. Your answers are anonymous."
           },
           {
-            "language": "ar-SA",
             "cell": "D2",
+            "language": "ar-SA",
             "text": "شكراً لزيارتك مكتبة المدينة اليوم. يستغرق هذا الاستبيان القصير دقيقتين تقريباً. إجاباتك مجهولة الهوية."
           }
         ],
-        "options": [],
-        "columns": [],
-        "lowerLabel": [],
-        "upperLabel": [],
-        "dropdown": false,
-        "inputType": null,
-        "scale": null,
-        "range": null,
-        "format": null,
-        "rules": [],
-        "logicNotes": []
+        "upperLabel": []
       },
       {
-        "ref": "R3",
-        "kind": "multipleChoiceSingle",
-        "idCell": "A3",
-        "sectionCell": null,
-        "required": true,
+        "columns": [],
+        "dropdown": false,
+        "format": null,
         "headline": [
           {
-            "language": "en-US",
             "cell": "C3",
+            "language": "en-US",
             "text": "Age group"
           },
           {
-            "language": "ar-SA",
             "cell": "D3",
+            "language": "ar-SA",
             "text": "الفئة العمرية"
           }
         ],
-        "subheader": [],
+        "idCell": "A3",
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
         "options": [
           {
             "code": null,
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "C3",
+                "language": "en-US",
                 "text": "18-24"
               },
               {
-                "language": "ar-SA",
                 "cell": "D3",
+                "language": "ar-SA",
                 "text": "18-24"
               }
             ]
@@ -90,13 +88,13 @@
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "C3",
+                "language": "en-US",
                 "text": "25-34"
               },
               {
-                "language": "ar-SA",
                 "cell": "D3",
+                "language": "ar-SA",
                 "text": "25-34"
               }
             ]
@@ -106,13 +104,13 @@
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "C3",
+                "language": "en-US",
                 "text": "35-44"
               },
               {
-                "language": "ar-SA",
                 "cell": "D3",
+                "language": "ar-SA",
                 "text": "35-44"
               }
             ]
@@ -122,13 +120,13 @@
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "C3",
+                "language": "en-US",
                 "text": "45-54"
               },
               {
-                "language": "ar-SA",
                 "cell": "D3",
+                "language": "ar-SA",
                 "text": "45-54"
               }
             ]
@@ -138,61 +136,61 @@
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "C3",
+                "language": "en-US",
                 "text": "55+"
               },
               {
-                "language": "ar-SA",
                 "cell": "D3",
+                "language": "ar-SA",
                 "text": "55+"
               }
             ]
           }
         ],
-        "columns": [],
-        "lowerLabel": [],
-        "upperLabel": [],
-        "dropdown": false,
-        "inputType": null,
-        "scale": null,
         "range": null,
-        "format": null,
+        "ref": "R3",
+        "required": true,
         "rules": [],
-        "logicNotes": []
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
       },
       {
-        "ref": "R4",
-        "kind": "multipleChoiceSingle",
-        "idCell": "A4",
-        "sectionCell": null,
-        "required": true,
+        "columns": [],
+        "dropdown": true,
+        "format": null,
         "headline": [
           {
-            "language": "en-US",
             "cell": "C4",
+            "language": "en-US",
             "text": "Which branch did you visit?"
           },
           {
-            "language": "ar-SA",
             "cell": "D4",
+            "language": "ar-SA",
             "text": "أي فرع زرت؟"
           }
         ],
-        "subheader": [],
+        "idCell": "A4",
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
         "options": [
           {
             "code": null,
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "C4",
+                "language": "en-US",
                 "text": "Central"
               },
               {
-                "language": "ar-SA",
                 "cell": "D4",
+                "language": "ar-SA",
                 "text": "الفرع المركزي"
               }
             ]
@@ -202,13 +200,13 @@
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "C4",
+                "language": "en-US",
                 "text": "Riverside"
               },
               {
-                "language": "ar-SA",
                 "cell": "D4",
+                "language": "ar-SA",
                 "text": "فرع ضفة النهر"
               }
             ]
@@ -218,13 +216,13 @@
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "C4",
+                "language": "en-US",
                 "text": "Hillcrest"
               },
               {
-                "language": "ar-SA",
                 "cell": "D4",
+                "language": "ar-SA",
                 "text": "فرع التلال"
               }
             ]
@@ -234,61 +232,61 @@
             "isOther": true,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "C4",
+                "language": "en-US",
                 "text": "Other"
               },
               {
-                "language": "ar-SA",
                 "cell": "D4",
+                "language": "ar-SA",
                 "text": "أخرى"
               }
             ]
           }
         ],
-        "columns": [],
-        "lowerLabel": [],
-        "upperLabel": [],
-        "dropdown": true,
-        "inputType": null,
-        "scale": null,
         "range": null,
-        "format": null,
+        "ref": "R4",
+        "required": true,
         "rules": [],
-        "logicNotes": []
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
       },
       {
-        "ref": "R6",
-        "kind": "multipleChoiceSingle",
-        "idCell": "A6",
-        "sectionCell": null,
-        "required": true,
+        "columns": [],
+        "dropdown": false,
+        "format": null,
         "headline": [
           {
-            "language": "en-US",
             "cell": "C6",
+            "language": "en-US",
             "text": "Where do you live?"
           },
           {
-            "language": "ar-SA",
             "cell": "D6",
+            "language": "ar-SA",
             "text": "أين تسكن؟"
           }
         ],
-        "subheader": [],
+        "idCell": "A6",
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": ["If the answer is In the city or In a nearby town, skip to 06."],
+        "lowerLabel": [],
         "options": [
           {
             "code": null,
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "C6",
+                "language": "en-US",
                 "text": "In the city"
               },
               {
-                "language": "ar-SA",
                 "cell": "D6",
+                "language": "ar-SA",
                 "text": "في المدينة"
               }
             ]
@@ -298,13 +296,13 @@
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "C6",
+                "language": "en-US",
                 "text": "In a nearby town"
               },
               {
-                "language": "ar-SA",
                 "cell": "D6",
+                "language": "ar-SA",
                 "text": "في بلدة قريبة"
               }
             ]
@@ -314,170 +312,161 @@
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "C6",
+                "language": "en-US",
                 "text": "Further away"
               },
               {
-                "language": "ar-SA",
                 "cell": "D6",
+                "language": "ar-SA",
                 "text": "أبعد من ذلك"
               }
             ]
           }
         ],
-        "columns": [],
-        "lowerLabel": [],
-        "upperLabel": [],
-        "dropdown": false,
-        "inputType": null,
-        "scale": null,
         "range": null,
-        "format": null,
+        "ref": "R6",
+        "required": true,
         "rules": [
           {
             "kind": "skipTo",
-            "question": "03",
             "operator": "isAnyOf",
-            "values": [
-              "In the city",
-              "In a nearby town"
-            ],
-            "target": "06"
+            "question": "03",
+            "target": "06",
+            "values": ["In the city", "In a nearby town"]
           }
         ],
-        "logicNotes": [
-          "If the answer is In the city or In a nearby town, skip to 06."
-        ]
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
       },
       {
-        "ref": "R7",
-        "kind": "openText",
-        "idCell": "A7",
-        "sectionCell": null,
-        "required": false,
+        "columns": [],
+        "dropdown": false,
+        "format": null,
         "headline": [
           {
-            "language": "en-US",
             "cell": "C7",
+            "language": "en-US",
             "text": "How many minutes did your trip take?"
           },
           {
-            "language": "ar-SA",
             "cell": "D7",
+            "language": "ar-SA",
             "text": "كم دقيقة استغرقت رحلتك؟"
           }
         ],
-        "subheader": [],
-        "options": [],
-        "columns": [],
-        "lowerLabel": [],
-        "upperLabel": [],
-        "dropdown": false,
+        "idCell": "A7",
         "inputType": "number",
-        "scale": null,
+        "kind": "openText",
+        "logicNotes": ["Asked only if 03 is Further away."],
+        "lowerLabel": [],
+        "options": [],
         "range": null,
-        "format": null,
+        "ref": "R7",
+        "required": false,
         "rules": [
           {
             "kind": "showIf",
-            "question": "03",
             "operator": "equals",
-            "values": [
-              "Further away"
-            ],
-            "target": null
+            "question": "03",
+            "target": null,
+            "values": ["Further away"]
           }
         ],
-        "logicNotes": [
-          "Asked only if 03 is Further away."
-        ]
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
       },
       {
-        "ref": "R8",
-        "kind": "csat",
-        "idCell": "A8",
-        "sectionCell": null,
-        "required": true,
+        "columns": [],
+        "dropdown": false,
+        "format": null,
         "headline": [
           {
-            "language": "en-US",
             "cell": "C8",
+            "language": "en-US",
             "text": "How satisfied are you with the journey to the library?"
           },
           {
-            "language": "ar-SA",
             "cell": "D8",
+            "language": "ar-SA",
             "text": "ما مدى رضاك عن الرحلة إلى المكتبة؟"
           }
         ],
-        "subheader": [],
-        "options": [],
-        "columns": [],
+        "idCell": "A8",
+        "inputType": null,
+        "kind": "csat",
+        "logicNotes": [],
         "lowerLabel": [
           {
-            "language": "en-US",
             "cell": "C8",
+            "language": "en-US",
             "text": "Very dissatisfied"
           },
           {
-            "language": "ar-SA",
             "cell": "D8",
+            "language": "ar-SA",
             "text": "غير راضٍ جدًا"
           }
         ],
+        "options": [],
+        "range": "5",
+        "ref": "R8",
+        "required": true,
+        "rules": [],
+        "scale": "smiley",
+        "sectionCell": null,
+        "subheader": [],
         "upperLabel": [
           {
-            "language": "en-US",
             "cell": "C8",
+            "language": "en-US",
             "text": "Very satisfied"
           },
           {
-            "language": "ar-SA",
             "cell": "D8",
+            "language": "ar-SA",
             "text": "راضٍ جدًا"
           }
-        ],
-        "dropdown": false,
-        "inputType": null,
-        "scale": "smiley",
-        "range": "5",
-        "format": null,
-        "rules": [],
-        "logicNotes": []
+        ]
       },
       {
-        "ref": "R9",
-        "kind": "multipleChoiceSingle",
-        "idCell": "A9",
-        "sectionCell": null,
-        "required": false,
+        "columns": [],
+        "dropdown": false,
+        "format": null,
         "headline": [
           {
-            "language": "en-US",
             "cell": "C9",
+            "language": "en-US",
             "text": "What did you come for today?"
           },
           {
-            "language": "ar-SA",
             "cell": "D9",
+            "language": "ar-SA",
             "text": "ما سبب زيارتك اليوم؟"
           }
         ],
-        "subheader": [],
+        "idCell": "A9",
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
         "options": [
           {
             "code": null,
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "C9",
+                "language": "en-US",
                 "text": "Borrowing books"
               },
               {
-                "language": "ar-SA",
                 "cell": "D9",
+                "language": "ar-SA",
                 "text": "استعارة الكتب"
               }
             ]
@@ -487,13 +476,13 @@
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "C9",
+                "language": "en-US",
                 "text": "Studying"
               },
               {
-                "language": "ar-SA",
                 "cell": "D9",
+                "language": "ar-SA",
                 "text": "الدراسة"
               }
             ]
@@ -503,13 +492,13 @@
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "C9",
+                "language": "en-US",
                 "text": "An event (talk, workshop)"
               },
               {
-                "language": "ar-SA",
                 "cell": "D9",
+                "language": "ar-SA",
                 "text": "فعالية (محاضرة، ورشة)"
               }
             ]
@@ -519,114 +508,114 @@
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "C9",
+                "language": "en-US",
                 "text": "Using the computers"
               },
               {
-                "language": "ar-SA",
                 "cell": "D9",
+                "language": "ar-SA",
                 "text": "استخدام الحواسيب"
               }
             ]
           }
         ],
-        "columns": [],
-        "lowerLabel": [],
-        "upperLabel": [],
-        "dropdown": false,
-        "inputType": null,
-        "scale": null,
         "range": null,
-        "format": null,
+        "ref": "R9",
+        "required": false,
         "rules": [],
-        "logicNotes": []
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
       },
       {
-        "ref": "R10",
-        "kind": "ces",
-        "idCell": "A10",
-        "sectionCell": null,
-        "required": true,
+        "columns": [],
+        "dropdown": false,
+        "format": null,
         "headline": [
           {
-            "language": "en-US",
             "cell": "C10",
+            "language": "en-US",
             "text": "How easy was it to find what you needed?"
           },
           {
-            "language": "ar-SA",
             "cell": "D10",
+            "language": "ar-SA",
             "text": "ما مدى سهولة العثور على ما تحتاجه؟"
           }
         ],
-        "subheader": [],
-        "options": [],
-        "columns": [],
+        "idCell": "A10",
+        "inputType": null,
+        "kind": "ces",
+        "logicNotes": [],
         "lowerLabel": [
           {
-            "language": "en-US",
             "cell": "C10",
+            "language": "en-US",
             "text": "Very difficult"
           },
           {
-            "language": "ar-SA",
             "cell": "D10",
+            "language": "ar-SA",
             "text": "صعب جدًا"
           }
         ],
+        "options": [],
+        "range": "5",
+        "ref": "R10",
+        "required": true,
+        "rules": [],
+        "scale": "number",
+        "sectionCell": null,
+        "subheader": [],
         "upperLabel": [
           {
-            "language": "en-US",
             "cell": "C10",
+            "language": "en-US",
             "text": "Very easy"
           },
           {
-            "language": "ar-SA",
             "cell": "D10",
+            "language": "ar-SA",
             "text": "سهل جدًا"
           }
-        ],
-        "dropdown": false,
-        "inputType": null,
-        "scale": "number",
-        "range": "5",
-        "format": null,
-        "rules": [],
-        "logicNotes": []
+        ]
       },
       {
-        "ref": "R11",
-        "kind": "multipleChoiceSingle",
-        "idCell": "A11",
-        "sectionCell": null,
-        "required": true,
+        "columns": [],
+        "dropdown": false,
+        "format": null,
         "headline": [
           {
-            "language": "en-US",
             "cell": "C11",
+            "language": "en-US",
             "text": "Did you use the study rooms?"
           },
           {
-            "language": "ar-SA",
             "cell": "D11",
+            "language": "ar-SA",
             "text": "هل استخدمت غرف الدراسة؟"
           }
         ],
-        "subheader": [],
+        "idCell": "A11",
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": ["If the answer is No, skip to 10."],
+        "lowerLabel": [],
         "options": [
           {
             "code": null,
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "C11",
+                "language": "en-US",
                 "text": "Yes"
               },
               {
-                "language": "ar-SA",
                 "cell": "D11",
+                "language": "ar-SA",
                 "text": "نعم"
               }
             ]
@@ -636,226 +625,221 @@
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "C11",
+                "language": "en-US",
                 "text": "No"
               },
               {
-                "language": "ar-SA",
                 "cell": "D11",
+                "language": "ar-SA",
                 "text": "لا"
               }
             ]
           }
         ],
-        "columns": [],
-        "lowerLabel": [],
-        "upperLabel": [],
-        "dropdown": false,
-        "inputType": null,
-        "scale": null,
         "range": null,
-        "format": null,
+        "ref": "R11",
+        "required": true,
         "rules": [
           {
             "kind": "skipTo",
-            "question": "08",
             "operator": "isAnyOf",
-            "values": [
-              "No"
-            ],
-            "target": "10"
+            "question": "08",
+            "target": "10",
+            "values": ["No"]
           }
         ],
-        "logicNotes": [
-          "If the answer is No, skip to 10."
-        ]
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
       },
       {
-        "ref": "R12",
-        "kind": "csat",
-        "idCell": "A12",
-        "sectionCell": null,
-        "required": true,
+        "columns": [],
+        "dropdown": false,
+        "format": null,
         "headline": [
           {
-            "language": "en-US",
             "cell": "C12",
+            "language": "en-US",
             "text": "How satisfied are you with the study rooms?"
           },
           {
-            "language": "ar-SA",
             "cell": "D12",
+            "language": "ar-SA",
             "text": "ما مدى رضاك عن غرف الدراسة؟"
           }
         ],
-        "subheader": [],
-        "options": [],
-        "columns": [],
+        "idCell": "A12",
+        "inputType": null,
+        "kind": "csat",
+        "logicNotes": [],
         "lowerLabel": [
           {
-            "language": "en-US",
             "cell": "C12",
+            "language": "en-US",
             "text": "Very dissatisfied"
           },
           {
-            "language": "ar-SA",
             "cell": "D12",
+            "language": "ar-SA",
             "text": "غير راضٍ جدًا"
           }
         ],
+        "options": [],
+        "range": "5",
+        "ref": "R12",
+        "required": true,
+        "rules": [],
+        "scale": "smiley",
+        "sectionCell": null,
+        "subheader": [],
         "upperLabel": [
           {
-            "language": "en-US",
             "cell": "C12",
+            "language": "en-US",
             "text": "Very satisfied"
           },
           {
-            "language": "ar-SA",
             "cell": "D12",
+            "language": "ar-SA",
             "text": "راضٍ جدًا"
           }
-        ],
-        "dropdown": false,
-        "inputType": null,
-        "scale": "smiley",
-        "range": "5",
-        "format": null,
-        "rules": [],
-        "logicNotes": []
+        ]
       },
       {
-        "ref": "R13",
-        "kind": "nps",
-        "idCell": "A13",
-        "sectionCell": null,
-        "required": true,
+        "columns": [],
+        "dropdown": false,
+        "format": null,
         "headline": [
           {
-            "language": "en-US",
             "cell": "C13",
+            "language": "en-US",
             "text": "How likely are you to recommend the library to a friend?"
           },
           {
-            "language": "ar-SA",
             "cell": "D13",
+            "language": "ar-SA",
             "text": "ما مدى احتمال أن توصي صديقاً بالمكتبة؟"
           }
         ],
-        "subheader": [],
-        "options": [],
-        "columns": [],
+        "idCell": "A13",
+        "inputType": null,
+        "kind": "nps",
+        "logicNotes": [],
         "lowerLabel": [
           {
-            "language": "en-US",
             "cell": "C13",
+            "language": "en-US",
             "text": "Not at all likely"
           },
           {
-            "language": "ar-SA",
             "cell": "D13",
+            "language": "ar-SA",
             "text": "غير محتمل إطلاقاً"
           }
         ],
+        "options": [],
+        "range": null,
+        "ref": "R13",
+        "required": true,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
         "upperLabel": [
           {
-            "language": "en-US",
             "cell": "C13",
+            "language": "en-US",
             "text": "Extremely likely"
           },
           {
-            "language": "ar-SA",
             "cell": "D13",
+            "language": "ar-SA",
             "text": "محتمل جداً"
           }
-        ],
-        "dropdown": false,
-        "inputType": null,
-        "scale": null,
-        "range": null,
-        "format": null,
-        "rules": [],
-        "logicNotes": []
+        ]
       },
       {
-        "ref": "R14",
-        "kind": "openText",
-        "idCell": "A14",
-        "sectionCell": null,
-        "required": false,
+        "columns": [],
+        "dropdown": false,
+        "format": null,
         "headline": [
           {
-            "language": "en-US",
             "cell": "C14",
+            "language": "en-US",
             "text": null
           },
           {
-            "language": "ar-SA",
             "cell": "D14",
+            "language": "ar-SA",
             "text": null
           }
         ],
-        "subheader": [],
-        "options": [],
-        "columns": [],
-        "lowerLabel": [],
-        "upperLabel": [],
-        "dropdown": false,
+        "idCell": "A14",
         "inputType": "text",
-        "scale": null,
+        "kind": "openText",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
         "range": null,
-        "format": null,
+        "ref": "R14",
+        "required": false,
         "rules": [],
-        "logicNotes": []
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
       },
       {
-        "ref": "R15",
-        "kind": "ending",
-        "idCell": null,
-        "sectionCell": null,
-        "required": false,
+        "columns": [],
+        "dropdown": false,
+        "format": null,
         "headline": [
           {
-            "language": "en-US",
             "cell": "C15",
+            "language": "en-US",
             "text": "Thank you!"
           },
           {
-            "language": "ar-SA",
             "cell": "D15",
+            "language": "ar-SA",
             "text": "شكراً لك!"
           }
         ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "ending",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "R15",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
         "subheader": [
           {
-            "language": "en-US",
             "cell": "C15",
+            "language": "en-US",
             "text": "We appreciate your feedback."
           },
           {
-            "language": "ar-SA",
             "cell": "D15",
+            "language": "ar-SA",
             "text": "نقدّر ملاحظاتك."
           }
         ],
-        "options": [],
-        "columns": [],
-        "lowerLabel": [],
-        "upperLabel": [],
-        "dropdown": false,
-        "inputType": null,
-        "scale": null,
-        "range": null,
-        "format": null,
-        "rules": [],
-        "logicNotes": []
+        "upperLabel": []
       }
     ],
     "skipped": [
       {
-        "ref": "R5",
-        "reason": "A hidden question coded for quotas has no answer to collect."
+        "reason": "A hidden question coded for quotas has no answer to collect.",
+        "ref": "R5"
       }
-    ]
+    ],
+    "titleCell": null
   }
 }

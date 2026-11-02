@@ -34,7 +34,7 @@ const refuseDtd = () => surveyImportFileUnreadable("The file declares a DTD, whi
 const endOfStartTag = (text: string, start: number, onAttribute: () => void): number => {
   let quote = 0;
   for (let index = start + 1; index < text.length; index += 1) {
-    const code = text.charCodeAt(index);
+    const code = text.codePointAt(index);
     if (quote !== 0) {
       if (code === quote) quote = 0;
     } else if (code === DOUBLE_QUOTE || code === SINGLE_QUOTE) {
@@ -72,7 +72,7 @@ const checkShape = (text: string, part: string): void => {
   let position = text.indexOf("<");
 
   while (position !== -1) {
-    const next = text.charCodeAt(position + 1);
+    const next = text.codePointAt(position + 1);
     let end: number;
     if (next === SLASH) {
       depth -= 1;
@@ -101,7 +101,7 @@ const checkShape = (text: string, part: string): void => {
         );
       }
       end = endOfStartTag(text, position, countAttribute);
-      if (end !== -1 && text.charCodeAt(end - 1) !== SLASH) {
+      if (end !== -1 && text.codePointAt(end - 1) !== SLASH) {
         depth += 1;
         if (depth > SURVEY_IMPORT_XML_MAX_DEPTH) {
           throw documentLimitExceeded(

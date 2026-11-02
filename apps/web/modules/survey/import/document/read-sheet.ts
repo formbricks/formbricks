@@ -124,8 +124,7 @@ const skippedSheets = (book: XLSX.WorkBook): string[] =>
   );
 
 const titleOf = (book: XLSX.WorkBook): string | null => {
-  const title = book.Props?.Title?.trim();
-  return title ? title : null;
+  return book.Props?.Title?.trim() || null;
 };
 
 /**

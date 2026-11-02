@@ -119,11 +119,9 @@ const BINARY_CONTROL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/;
  * tab or a line break is binary, not a legacy text file.
  */
 const decodeText = (bytes: Uint8Array): { text: string; encoding: TSurveyImportTextEncoding } | null => {
-  const bom16 = startsWith(bytes, [0xff, 0xfe])
-    ? "utf-16le"
-    : startsWith(bytes, [0xfe, 0xff])
-      ? "utf-16be"
-      : null;
+  let bom16: "utf-16le" | "utf-16be" | null = null;
+  if (startsWith(bytes, [0xff, 0xfe])) bom16 = "utf-16le";
+  else if (startsWith(bytes, [0xfe, 0xff])) bom16 = "utf-16be";
   if (bom16) {
     try {
       const text = new TextDecoder(bom16, { fatal: true }).decode(bytes);

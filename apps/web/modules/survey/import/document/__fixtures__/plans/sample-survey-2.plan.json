@@ -1,59 +1,58 @@
 {
   "plan": {
     "defaultLanguage": "en-US",
-    "languages": [
-      "en-US"
-    ],
-    "titleCell": null,
+    "languages": ["en-US"],
     "questions": [
       {
-        "ref": "R2",
-        "kind": "openText",
-        "idCell": "A2",
-        "sectionCell": null,
-        "required": false,
+        "columns": [],
+        "dropdown": false,
+        "format": null,
         "headline": [
           {
-            "language": "en-US",
             "cell": "C2",
+            "language": "en-US",
             "text": null
           }
         ],
-        "subheader": [],
-        "options": [],
-        "columns": [],
-        "lowerLabel": [],
-        "upperLabel": [],
-        "dropdown": false,
+        "idCell": "A2",
         "inputType": "text",
-        "scale": null,
+        "kind": "openText",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
         "range": null,
-        "format": null,
+        "ref": "R2",
+        "required": false,
         "rules": [],
-        "logicNotes": []
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
       },
       {
-        "ref": "R3",
-        "kind": "multipleChoiceSingle",
-        "idCell": "A3",
-        "sectionCell": null,
-        "required": true,
+        "columns": [],
+        "dropdown": false,
+        "format": null,
         "headline": [
           {
-            "language": "en-US",
             "cell": "C3",
+            "language": "en-US",
             "text": null
           }
         ],
-        "subheader": [],
+        "idCell": "A3",
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
         "options": [
           {
             "code": null,
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "D3",
+                "language": "en-US",
                 "text": "Option A"
               }
             ]
@@ -63,8 +62,8 @@
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "D3",
+                "language": "en-US",
                 "text": "Option B"
               }
             ]
@@ -74,46 +73,46 @@
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "D3",
+                "language": "en-US",
                 "text": "Option C"
               }
             ]
           }
         ],
-        "columns": [],
-        "lowerLabel": [],
-        "upperLabel": [],
-        "dropdown": false,
-        "inputType": null,
-        "scale": null,
         "range": null,
-        "format": null,
+        "ref": "R3",
+        "required": true,
         "rules": [],
-        "logicNotes": []
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
       },
       {
-        "ref": "R4",
-        "kind": "multipleChoiceSingle",
-        "idCell": "A4",
-        "sectionCell": null,
-        "required": true,
+        "columns": [],
+        "dropdown": true,
+        "format": null,
         "headline": [
           {
-            "language": "en-US",
             "cell": "C4",
+            "language": "en-US",
             "text": null
           }
         ],
-        "subheader": [],
+        "idCell": "A4",
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
         "options": [
           {
             "code": null,
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "D4",
+                "language": "en-US",
                 "text": "Red"
               }
             ]
@@ -123,8 +122,8 @@
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "D4",
+                "language": "en-US",
                 "text": "Green"
               }
             ]
@@ -134,8 +133,8 @@
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "D4",
+                "language": "en-US",
                 "text": "Blue"
               }
             ]
@@ -145,46 +144,46 @@
             "isOther": true,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "D4",
+                "language": "en-US",
                 "text": "Other"
               }
             ]
           }
         ],
-        "columns": [],
-        "lowerLabel": [],
-        "upperLabel": [],
-        "dropdown": true,
-        "inputType": null,
-        "scale": null,
         "range": null,
-        "format": null,
+        "ref": "R4",
+        "required": true,
         "rules": [],
-        "logicNotes": []
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
       },
       {
-        "ref": "R5",
-        "kind": "multipleChoiceMulti",
-        "idCell": "A5",
-        "sectionCell": null,
-        "required": false,
+        "columns": [],
+        "dropdown": false,
+        "format": null,
         "headline": [
           {
-            "language": "en-US",
             "cell": "C5",
+            "language": "en-US",
             "text": null
           }
         ],
-        "subheader": [],
+        "idCell": "A5",
+        "inputType": null,
+        "kind": "multipleChoiceMulti",
+        "logicNotes": [],
+        "lowerLabel": [],
         "options": [
           {
             "code": null,
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "D5",
+                "language": "en-US",
                 "text": "Email"
               }
             ]
@@ -194,8 +193,8 @@
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "D5",
+                "language": "en-US",
                 "text": "SMS"
               }
             ]
@@ -205,8 +204,8 @@
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "D5",
+                "language": "en-US",
                 "text": "Phone"
               }
             ]
@@ -216,198 +215,198 @@
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "D5",
+                "language": "en-US",
                 "text": "Post"
               }
             ]
           }
         ],
-        "columns": [],
-        "lowerLabel": [],
-        "upperLabel": [],
-        "dropdown": false,
-        "inputType": null,
-        "scale": null,
         "range": null,
-        "format": null,
+        "ref": "R5",
+        "required": false,
         "rules": [],
-        "logicNotes": []
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
       },
       {
-        "ref": "R7",
-        "kind": "rating",
-        "idCell": "A7",
-        "sectionCell": null,
-        "required": true,
+        "columns": [],
+        "dropdown": false,
+        "format": null,
         "headline": [
           {
-            "language": "en-US",
             "cell": "C7",
+            "language": "en-US",
             "text": null
           }
         ],
-        "subheader": [],
-        "options": [],
-        "columns": [],
+        "idCell": "A7",
+        "inputType": null,
+        "kind": "rating",
+        "logicNotes": [],
         "lowerLabel": [
           {
-            "language": "en-US",
             "cell": "D7",
+            "language": "en-US",
             "text": "Poor"
           }
         ],
+        "options": [],
+        "range": "5",
+        "ref": "R7",
+        "required": true,
+        "rules": [],
+        "scale": "star",
+        "sectionCell": null,
+        "subheader": [],
         "upperLabel": [
           {
-            "language": "en-US",
             "cell": "D7",
+            "language": "en-US",
             "text": "Excellent"
           }
-        ],
-        "dropdown": false,
-        "inputType": null,
-        "scale": "star",
-        "range": "5",
-        "format": null,
-        "rules": [],
-        "logicNotes": []
+        ]
       },
       {
-        "ref": "R8",
-        "kind": "nps",
-        "idCell": "A8",
-        "sectionCell": null,
-        "required": true,
+        "columns": [],
+        "dropdown": false,
+        "format": null,
         "headline": [
           {
-            "language": "en-US",
             "cell": "C8",
+            "language": "en-US",
             "text": null
           }
         ],
-        "subheader": [],
-        "options": [],
-        "columns": [],
+        "idCell": "A8",
+        "inputType": null,
+        "kind": "nps",
+        "logicNotes": [],
         "lowerLabel": [
           {
-            "language": "en-US",
             "cell": "D8",
+            "language": "en-US",
             "text": "Not at all likely"
           }
         ],
+        "options": [],
+        "range": null,
+        "ref": "R8",
+        "required": true,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
         "upperLabel": [
           {
-            "language": "en-US",
             "cell": "D8",
+            "language": "en-US",
             "text": "Extremely likely"
           }
-        ],
-        "dropdown": false,
-        "inputType": null,
-        "scale": null,
-        "range": null,
-        "format": null,
-        "rules": [],
-        "logicNotes": []
+        ]
       },
       {
-        "ref": "R9",
-        "kind": "csat",
-        "idCell": "A9",
-        "sectionCell": null,
-        "required": true,
+        "columns": [],
+        "dropdown": false,
+        "format": null,
         "headline": [
           {
-            "language": "en-US",
             "cell": "C9",
+            "language": "en-US",
             "text": null
           }
         ],
-        "subheader": [],
-        "options": [],
-        "columns": [],
+        "idCell": "A9",
+        "inputType": null,
+        "kind": "csat",
+        "logicNotes": [],
         "lowerLabel": [
           {
-            "language": "en-US",
             "cell": "D9",
+            "language": "en-US",
             "text": "Very dissatisfied"
           }
         ],
+        "options": [],
+        "range": "5",
+        "ref": "R9",
+        "required": true,
+        "rules": [],
+        "scale": "smiley",
+        "sectionCell": null,
+        "subheader": [],
         "upperLabel": [
           {
-            "language": "en-US",
             "cell": "D9",
+            "language": "en-US",
             "text": "Very satisfied"
           }
-        ],
-        "dropdown": false,
-        "inputType": null,
-        "scale": "smiley",
-        "range": "5",
-        "format": null,
-        "rules": [],
-        "logicNotes": []
+        ]
       },
       {
-        "ref": "R10",
-        "kind": "ces",
-        "idCell": "A10",
-        "sectionCell": null,
-        "required": true,
+        "columns": [],
+        "dropdown": false,
+        "format": null,
         "headline": [
           {
-            "language": "en-US",
             "cell": "C10",
+            "language": "en-US",
             "text": null
           }
         ],
-        "subheader": [],
-        "options": [],
-        "columns": [],
+        "idCell": "A10",
+        "inputType": null,
+        "kind": "ces",
+        "logicNotes": [],
         "lowerLabel": [
           {
-            "language": "en-US",
             "cell": "D10",
+            "language": "en-US",
             "text": "Very difficult"
           }
         ],
+        "options": [],
+        "range": "5",
+        "ref": "R10",
+        "required": true,
+        "rules": [],
+        "scale": "number",
+        "sectionCell": null,
+        "subheader": [],
         "upperLabel": [
           {
-            "language": "en-US",
             "cell": "D10",
+            "language": "en-US",
             "text": "Very easy"
           }
-        ],
-        "dropdown": false,
-        "inputType": null,
-        "scale": "number",
-        "range": "5",
-        "format": null,
-        "rules": [],
-        "logicNotes": []
+        ]
       },
       {
-        "ref": "R11",
-        "kind": "ranking",
-        "idCell": "A11",
-        "sectionCell": null,
-        "required": false,
+        "columns": [],
+        "dropdown": false,
+        "format": null,
         "headline": [
           {
-            "language": "en-US",
             "cell": "C11",
+            "language": "en-US",
             "text": null
           }
         ],
-        "subheader": [],
+        "idCell": "A11",
+        "inputType": null,
+        "kind": "ranking",
+        "logicNotes": [],
+        "lowerLabel": [],
         "options": [
           {
             "code": null,
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "D11",
+                "language": "en-US",
                 "text": "Price"
               }
             ]
@@ -417,8 +416,8 @@
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "D11",
+                "language": "en-US",
                 "text": "Quality"
               }
             ]
@@ -428,8 +427,8 @@
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "D11",
+                "language": "en-US",
                 "text": "Speed"
               }
             ]
@@ -439,81 +438,31 @@
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "D11",
+                "language": "en-US",
                 "text": "Support"
               }
             ]
           }
         ],
-        "columns": [],
-        "lowerLabel": [],
-        "upperLabel": [],
-        "dropdown": false,
-        "inputType": null,
-        "scale": null,
         "range": null,
-        "format": null,
+        "ref": "R11",
+        "required": false,
         "rules": [],
-        "logicNotes": []
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
       },
       {
-        "ref": "R12",
-        "kind": "matrix",
-        "idCell": "A12",
-        "sectionCell": null,
-        "required": false,
-        "headline": [
-          {
-            "language": "en-US",
-            "cell": "C12",
-            "text": null
-          }
-        ],
-        "subheader": [],
-        "options": [
-          {
-            "code": null,
-            "isOther": false,
-            "texts": [
-              {
-                "language": "en-US",
-                "cell": "D12",
-                "text": "Staff"
-              }
-            ]
-          },
-          {
-            "code": null,
-            "isOther": false,
-            "texts": [
-              {
-                "language": "en-US",
-                "cell": "D12",
-                "text": "Facilities"
-              }
-            ]
-          },
-          {
-            "code": null,
-            "isOther": false,
-            "texts": [
-              {
-                "language": "en-US",
-                "cell": "D12",
-                "text": "Value"
-              }
-            ]
-          }
-        ],
         "columns": [
           {
             "code": null,
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "D12",
+                "language": "en-US",
                 "text": "Poor"
               }
             ]
@@ -523,8 +472,8 @@
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "D12",
+                "language": "en-US",
                 "text": "OK"
               }
             ]
@@ -534,125 +483,174 @@
             "isOther": false,
             "texts": [
               {
-                "language": "en-US",
                 "cell": "D12",
+                "language": "en-US",
                 "text": "Good"
               }
             ]
           }
         ],
-        "lowerLabel": [],
-        "upperLabel": [],
         "dropdown": false,
-        "inputType": null,
-        "scale": null,
-        "range": null,
         "format": null,
-        "rules": [],
-        "logicNotes": []
-      },
-      {
-        "ref": "R13",
-        "kind": "date",
-        "idCell": "A13",
-        "sectionCell": null,
-        "required": false,
         "headline": [
           {
+            "cell": "C12",
             "language": "en-US",
-            "cell": "C13",
             "text": null
           }
         ],
-        "subheader": [],
-        "options": [],
-        "columns": [],
-        "lowerLabel": [],
-        "upperLabel": [],
-        "dropdown": false,
+        "idCell": "A12",
         "inputType": null,
-        "scale": null,
+        "kind": "matrix",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "D12",
+                "language": "en-US",
+                "text": "Staff"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "D12",
+                "language": "en-US",
+                "text": "Facilities"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "D12",
+                "language": "en-US",
+                "text": "Value"
+              }
+            ]
+          }
+        ],
         "range": null,
+        "ref": "R12",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
         "format": "M-d-y",
-        "rules": [],
-        "logicNotes": []
-      },
-      {
-        "ref": "R15",
-        "kind": "fileUpload",
-        "idCell": "A15",
-        "sectionCell": null,
-        "required": false,
         "headline": [
           {
+            "cell": "C13",
             "language": "en-US",
-            "cell": "C15",
             "text": null
           }
         ],
-        "subheader": [],
-        "options": [],
-        "columns": [],
-        "lowerLabel": [],
-        "upperLabel": [],
-        "dropdown": false,
+        "idCell": "A13",
         "inputType": null,
-        "scale": null,
+        "kind": "date",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
         "range": null,
-        "format": null,
+        "ref": "R13",
+        "required": false,
         "rules": [],
-        "logicNotes": []
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
       },
       {
-        "ref": "R16",
-        "kind": "consent",
-        "idCell": "A16",
-        "sectionCell": null,
-        "required": true,
+        "columns": [],
+        "dropdown": false,
+        "format": null,
         "headline": [
           {
+            "cell": "C15",
             "language": "en-US",
-            "cell": "C16",
             "text": null
           }
         ],
+        "idCell": "A15",
+        "inputType": null,
+        "kind": "fileUpload",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "R15",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "C16",
+            "language": "en-US",
+            "text": null
+          }
+        ],
+        "idCell": "A16",
+        "inputType": null,
+        "kind": "consent",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "R16",
+        "required": true,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
         "subheader": [
           {
-            "language": "en-US",
             "cell": "D16",
+            "language": "en-US",
             "text": null
           }
         ],
-        "options": [],
-        "columns": [],
-        "lowerLabel": [],
-        "upperLabel": [],
-        "dropdown": false,
-        "inputType": null,
-        "scale": null,
-        "range": null,
-        "format": null,
-        "rules": [],
-        "logicNotes": []
+        "upperLabel": []
       }
     ],
     "skipped": [
       {
-        "ref": "R6",
-        "reason": "Picture Selection questions cannot be imported."
+        "reason": "Picture Selection questions cannot be imported.",
+        "ref": "R6"
       },
       {
-        "ref": "R14",
-        "reason": "Schedule a Meeting questions cannot be imported."
+        "reason": "Schedule a Meeting questions cannot be imported.",
+        "ref": "R14"
       },
       {
-        "ref": "R17",
-        "reason": "Address questions cannot be imported."
+        "reason": "Address questions cannot be imported.",
+        "ref": "R17"
       },
       {
-        "ref": "R18",
-        "reason": "Contact Info questions cannot be imported."
+        "reason": "Contact Info questions cannot be imported.",
+        "ref": "R18"
       }
-    ]
+    ],
+    "titleCell": null
   }
 }

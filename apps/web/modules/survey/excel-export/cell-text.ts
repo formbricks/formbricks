@@ -31,7 +31,8 @@ const flattenRichText = (html: string): string =>
 export const fitCell = (text: string, truncatedSuffix: string): string => {
   if (text.length <= EXCEL_EXPORT_MAX_CELL_CHARS) return text;
   let end = EXCEL_EXPORT_MAX_CELL_CHARS - truncatedSuffix.length;
-  if (isHighSurrogate(text.charCodeAt(end - 1))) end -= 1;
+  // The UTF-16 unit, not the code point: a lone high surrogate is what must not end the cell.
+  if (isHighSurrogate(text.charCodeAt(end - 1))) end -= 1; // NOSONAR(typescript:S7758) -- a unit, on purpose
   return `${text.slice(0, end)}${truncatedSuffix}`;
 };
 

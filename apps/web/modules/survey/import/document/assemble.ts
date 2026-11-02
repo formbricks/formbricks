@@ -35,9 +35,9 @@ import type { TDocumentPlanRule } from "./plan-schema";
  * creates — the locale-keyed request shape — and their routing becomes logic.
  *
  * Every text is the file's, as the checks read it from its cell; here it is sanitized like any imported
- * text (plain text, so markup in a cell shows as typed). Ids are the import's own: element ids from the
- * IDs the file gives its questions through `SurveyImportIdRegistry`, every choice, block and ending id
- * from `createId()`.
+ * text (plain text, so a cell's markup is stripped, not shown). Ids are the import's own: element ids
+ * from the IDs the file gives its questions through `SurveyImportIdRegistry`, every choice, block and
+ * ending id from `createId()`.
  *
  * Blocks follow the file's sections: consecutive questions of one section share a block, a question
  * outside any is a block of its own. Routing then splits blocks where logic needs a block to start or
@@ -539,7 +539,7 @@ class DocumentDraftBuilder {
 
         let target: TResolvedRule["target"] = null;
         if (rule.kind === "skipTo") {
-          const named = rule.target === null ? undefined : rule.target;
+          const named = rule.target ?? undefined;
           if (named !== undefined && routingKey(named) === "end") target = "end";
           else if (named !== undefined) {
             const found = this.findQuestion(questions, named);
@@ -624,12 +624,9 @@ class DocumentDraftBuilder {
     for (const rule of rules) {
       if (rule.kind !== "skipTo") continue;
       const at = blockOf.get(rule.entry.ref);
-      const target =
-        rule.target === "end"
-          ? endingId
-          : rule.target
-            ? blocks[blockOf.get(rule.target.ref) ?? -1]?.id
-            : null;
+      let target: string | null | undefined = null;
+      if (rule.target === "end") target = endingId;
+      else if (rule.target) target = blocks[blockOf.get(rule.target.ref) ?? -1]?.id;
       if (at === undefined || !target) {
         this.reportRule(rule.entry, rule.index, false);
         continue;

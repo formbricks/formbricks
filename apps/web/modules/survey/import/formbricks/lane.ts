@@ -74,10 +74,10 @@ export const formbricksFileImportLane: TSurveyImportLane<
     });
     return { draft, references, issues, match, fileName };
   },
-  run: async ({ prepared, onProgress }) => {
+  run: ({ prepared, onProgress }) => {
     onProgress("assembling");
     const { draft, references, issues, match, fileName } = prepared;
-    return {
+    return Promise.resolve({
       payload: draft,
       references,
       match,
@@ -90,6 +90,6 @@ export const formbricksFileImportLane: TSurveyImportLane<
         },
         issues,
       }),
-    };
+    });
   },
 };

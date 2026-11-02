@@ -1,11 +1,4 @@
-import { EMBEDDED_DATA_KEY_MAX_LENGTH } from "@formbricks/types/embedded-data";
 import { V3_SURVEY_MAX_HIDDEN_FIELDS, V3_SURVEY_MAX_VARIABLES } from "@/app/api/v3/surveys/schemas";
-import {
-  SURVEY_IMPORT_MAX_DRAFT_BYTES,
-  SURVEY_IMPORT_MAX_LANGUAGE_CODE_CHARS,
-  SURVEY_IMPORT_MAX_OPTIONS_PER_QUESTION,
-  SURVEY_IMPORT_MAX_TEXT_CHARS,
-} from "@/modules/survey/import/limits";
 
 /**
  * Limits of a Formbricks file's `references` (ADR 0016). Each kind is capped by what one survey can
@@ -35,7 +28,7 @@ export const FORMBRICKS_FILE_MAX_REPORTED_DROPPED_KEYS = 50;
  * The most a file's survey may weigh, as JSON: what a draft the import builds may weigh, since the survey
  * becomes that draft and is created with it. A larger one is refused with a 413 before it is checked.
  */
-export const FORMBRICKS_FILE_MAX_SURVEY_BYTES = SURVEY_IMPORT_MAX_DRAFT_BYTES;
+export { SURVEY_IMPORT_MAX_DRAFT_BYTES as FORMBRICKS_FILE_MAX_SURVEY_BYTES } from "@/modules/survey/import/limits";
 
 /*
  * The survey's content, held to the caps every import lane holds a survey to. Past one, the file is
@@ -43,10 +36,10 @@ export const FORMBRICKS_FILE_MAX_SURVEY_BYTES = SURVEY_IMPORT_MAX_DRAFT_BYTES;
  */
 
 /** Options of one question: its choices, or a matrix's rows and columns each. */
-export const FORMBRICKS_FILE_MAX_OPTIONS_PER_QUESTION = SURVEY_IMPORT_MAX_OPTIONS_PER_QUESTION;
+export { SURVEY_IMPORT_MAX_OPTIONS_PER_QUESTION as FORMBRICKS_FILE_MAX_OPTIONS_PER_QUESTION } from "@/modules/survey/import/limits";
 
 /** One text of the survey, in any language: a headline, a choice's label, a variable's value… */
-export const FORMBRICKS_FILE_MAX_TEXT_CHARS = SURVEY_IMPORT_MAX_TEXT_CHARS;
+export { SURVEY_IMPORT_MAX_TEXT_CHARS as FORMBRICKS_FILE_MAX_TEXT_CHARS } from "@/modules/survey/import/limits";
 
 /*
  * The strings of a file's envelope and references, each capped, so a file cannot carry an unbounded
@@ -58,7 +51,7 @@ export const FORMBRICKS_FILE_MAX_TEXT_CHARS = SURVEY_IMPORT_MAX_TEXT_CHARS;
  * A key — an action class's, an attribute key's, a shared field's and the storage key the survey links
  * it under: the longest library key a workspace takes (`EMBEDDED_DATA_KEY_MAX_LENGTH`).
  */
-export const FORMBRICKS_FILE_MAX_KEY_CHARS = EMBEDDED_DATA_KEY_MAX_LENGTH;
+export { EMBEDDED_DATA_KEY_MAX_LENGTH as FORMBRICKS_FILE_MAX_KEY_CHARS } from "@formbricks/types/embedded-data";
 
 /** A name — an action class's, an attribute key's, a shared field's — and a language's alias. */
 export const FORMBRICKS_FILE_MAX_NAME_CHARS = 255;
@@ -73,7 +66,7 @@ export const FORMBRICKS_FILE_MAX_DEFAULT_VALUE_CHARS = 5_000;
 export const FORMBRICKS_FILE_MAX_NO_CODE_CONFIG_CHARS = 10_000;
 
 /** A language code, as the import takes one from any file. */
-export const FORMBRICKS_FILE_MAX_LANGUAGE_CODE_CHARS = SURVEY_IMPORT_MAX_LANGUAGE_CODE_CHARS;
+export { SURVEY_IMPORT_MAX_LANGUAGE_CODE_CHARS as FORMBRICKS_FILE_MAX_LANGUAGE_CODE_CHARS } from "@/modules/survey/import/limits";
 
 /** The Formbricks version that wrote the file (`formbricks.appVersion`). */
 export const FORMBRICKS_FILE_MAX_APP_VERSION_CHARS = 64;

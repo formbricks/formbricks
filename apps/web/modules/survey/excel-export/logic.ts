@@ -209,12 +209,11 @@ const jumpTargetPhrase = (ctx: TLogicContext, targetId: string): string => {
 
 const calculationPhrase = (ctx: TLogicContext, action: TActionCalculate): string => {
   const variable = fieldName(ctx, action.variableId, "computed");
-  const value =
-    action.value.type === "static"
-      ? typeof action.value.value === "number"
-        ? String(action.value.value)
-        : quote(ctx, action.value.value)
-      : fieldPhrase(ctx, action.value);
+  const { value: operand } = action;
+  let value: string;
+  if (operand.type !== "static") value = fieldPhrase(ctx, operand);
+  else if (typeof operand.value === "number") value = String(operand.value);
+  else value = quote(ctx, operand.value);
   const operands = { variable, value };
 
   switch (action.operator) {
