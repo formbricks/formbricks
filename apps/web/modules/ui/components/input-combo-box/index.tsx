@@ -161,7 +161,9 @@ function ComboboxOptionLabel({
   selected,
   wrap = false,
 }: Readonly<ComboboxOptionLabelProps>) {
-  const labelClassName = wrap ? "break-words whitespace-normal text-slate-900" : "truncate text-slate-900";
+  const labelClassName = wrap
+    ? "min-w-0 break-words whitespace-normal text-slate-900"
+    : "truncate text-slate-900";
   return (
     <>
       {showCheckIcon && selected && (
