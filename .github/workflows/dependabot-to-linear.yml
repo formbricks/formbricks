@@ -19,9 +19,19 @@ concurrency:
 
 jobs:
   sync:
-    name: Sync Dependabot alerts to Linear
+    name: Sync Dependabot alerts to Linear (${{ matrix.repository }})
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    strategy:
+      # One repository's API failure must not hide the others' alerts.
+      fail-fast: false
+      matrix:
+        # DEPENDABOT_ALERTS_TOKEN needs "Dependabot alerts: read" on every repository listed.
+        # formbricks/taxonomy joins once its Dependabot alerts are enabled (ENG-6884).
+        repository:
+          - formbricks/formbricks
+          - formbricks/ee
+          - formbricks/hub
     steps:
       - name: Harden the runner
         uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
@@ -40,6 +50,7 @@ jobs:
 
       - name: Sync alerts to Linear
         env:
+          DEPENDABOT_REPOSITORY: ${{ matrix.repository }}
           DEPENDABOT_ALERTS_TOKEN: ${{ secrets.DEPENDABOT_ALERTS_TOKEN }}
           LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
           # Fallback used by the script if LINEAR_API_KEY is not set; must be

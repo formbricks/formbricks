@@ -12,14 +12,18 @@
 // linger as "ghosts" after GitHub has already closed the alert. Issues already
 // in a completed/canceled state are left untouched.
 //
-// Both passes are idempotent: issues are matched by a stable
-// `[Dependabot #<number>]` title prefix, so re-running never creates duplicates
-// and never re-closes an already-closed ticket.
+// Both passes are idempotent: issues are matched by a stable title prefix, so
+// re-running never creates duplicates and never re-closes an already-closed
+// ticket. Alert numbers restart in every repository, so the prefix names the
+// repository: `[Dependabot ee#<number>]`. formbricks/formbricks keeps the bare
+// `[Dependabot #<number>]` its existing tickets were filed under.
 //
 // Env:
-//   GITHUB_REPOSITORY      "owner/repo" (provided automatically in Actions)
-//   DEPENDABOT_ALERTS_TOKEN  token with "Dependabot alerts: read" (the default
-//                            GITHUB_TOKEN cannot read this API)
+//   DEPENDABOT_REPOSITORY  "owner/repo" to sync; the workflow runs once per repository.
+//                          Falls back to GITHUB_REPOSITORY (provided in Actions).
+//   DEPENDABOT_ALERTS_TOKEN  token with "Dependabot alerts: read" on that
+//                            repository (the default GITHUB_TOKEN cannot read
+//                            this API)
 //   LINEAR_API_KEY | LINEAR_ACCESS_KEY  Linear personal API key with BOTH
 //                            `read` (to dedupe against existing issues) and
 //                            `write` / `issues:create` (to create new ones).
@@ -47,6 +51,10 @@ const PRIORITY_BY_SEVERITY = {
 };
 
 const LINEAR_API_URL = "https://api.linear.app/graphql";
+
+// The repository whose tickets predate per-repository prefixes.
+const UNQUALIFIED_PREFIX_REPO = "formbricks/formbricks";
+const REPOSITORY_PATTERN = /^[\w.-]+\/[\w.-]+$/;
 
 // Abort any outbound request that hangs, so a stuck connection can't tie up the
 // runner until the workflow-level timeout.
@@ -115,7 +123,14 @@ async function linearRequest(apiKey, query, variables) {
   return json.data;
 }
 
-// Returns the matching issue (id + workflow state) for a `[Dependabot #N]`
+// The title prefix that identifies an alert's ticket. It must never change for
+// a given alert, or the next run files a duplicate and orphans the old ticket.
+function alertTitlePrefix(repo, number) {
+  if (repo === UNQUALIFIED_PREFIX_REPO) return `[Dependabot #${number}]`;
+  return `[Dependabot ${repo.split("/")[1]}#${number}]`;
+}
+
+// Returns the matching issue (id + workflow state) for an alert's title
 // prefix, or null. Used by both passes: the create pass skips when non-null,
 // the reconcile pass inspects the state before closing.
 async function findIssue(apiKey, titlePrefix) {
@@ -208,7 +223,7 @@ async function createIssue(
   return data.issueCreate.issue;
 }
 
-function buildIssue(alert) {
+function buildIssue(alert, repo) {
   const number = alert.number;
   const severity = alert.security_vulnerability?.severity ?? "medium";
   const priority = PRIORITY_BY_SEVERITY[severity] ?? 3;
@@ -222,12 +237,13 @@ function buildIssue(alert) {
   const patched = vuln.first_patched_version?.identifier ?? "no patched version yet";
   const range = vuln.vulnerable_version_range ?? "unknown";
 
-  const titlePrefix = `[Dependabot #${number}]`;
+  const titlePrefix = alertTitlePrefix(repo, number);
   const title = `${titlePrefix} ${pkg} — ${summary}`;
 
   const description = [
-    `**Dependabot alert [#${number}](${alert.html_url})**`,
+    `**Dependabot alert [${repo}#${number}](${alert.html_url})**`,
     "",
+    `- **Repository:** \`${repo}\``,
     `- **Package:** \`${pkg}\`${ecosystem ? ` (${ecosystem})` : ""}`,
     `- **Severity:** ${severity}`,
     ghsa ? `- **Advisory:** ${ghsa}` : null,
@@ -244,7 +260,8 @@ function buildIssue(alert) {
 }
 
 async function main() {
-  const repo = requireEnv("GITHUB_REPOSITORY");
+  const repo = requireEnv("DEPENDABOT_REPOSITORY", "GITHUB_REPOSITORY");
+  if (!REPOSITORY_PATTERN.test(repo)) throw new Error(`Not an "owner/repo" name: ${repo}`);
   const ghToken = requireEnv("DEPENDABOT_ALERTS_TOKEN");
   const linearKey = requireEnv("LINEAR_API_KEY", "LINEAR_ACCESS_KEY");
 
@@ -266,7 +283,7 @@ async function main() {
   // active ticket — reopen it to Triage rather than skipping. Active matches are
   // left untouched so re-runs don't churn.
   for (const alert of openAlerts) {
-    const issue = buildIssue(alert);
+    const issue = buildIssue(alert, repo);
     try {
       const existing = await findIssue(linearKey, issue.titlePrefix);
       const isClosed =
@@ -307,7 +324,7 @@ async function main() {
   // already in a completed/canceled state (no churn on re-runs).
   let doneStateId = null;
   for (const alert of resolvedAlerts) {
-    const titlePrefix = `[Dependabot #${alert.number}]`;
+    const titlePrefix = alertTitlePrefix(repo, alert.number);
     try {
       const existing = await findIssue(linearKey, titlePrefix);
       if (!existing) continue; // never synced, nothing to close
@@ -335,6 +352,8 @@ async function main() {
 
 // Shared by the container scanner; importing this module must never start a sync.
 export {
+  alertTitlePrefix,
+  buildIssue,
   linearRequest,
   createIssue,
   setIssueState,
