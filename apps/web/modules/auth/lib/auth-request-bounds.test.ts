@@ -66,6 +66,18 @@ describe("exceedsAuthRequestBounds", () => {
       }
     );
 
+    // The consent endpoint takes `claims` as a string in a JSON body and parses it itself.
+    test("with JSON text in a string field holding an oversized collection is refused", () => {
+      const consent = (count: number) =>
+        json({ accept: true, claims: JSON.stringify({ userinfo: keys(count) }) });
+
+      expect(exceedsAuthRequestBounds(URL_BASE, "application/json", consent(MAX + 1))).toBe(true);
+      expect(exceedsAuthRequestBounds(URL_BASE, "application/json", consent(MAX))).toBe(false);
+      expect(
+        exceedsAuthRequestBounds(URL_BASE, "application/json", json({ password: `{${"x".repeat(500)}` }))
+      ).toBe(false);
+    });
+
     test("that does not parse is left to the handler", () => {
       expect(exceedsAuthRequestBounds(URL_BASE, "application/json", encode("{not json"))).toBe(false);
     });

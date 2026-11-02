@@ -1,11 +1,11 @@
 /**
  * Most entries any list or map in an `/api/auth/*` request may hold (ENG-6797): an array or object in a
- * JSON body, a parameter repeated in the query or a form body, or the JSON a parameter carries as text.
+ * JSON body, a parameter repeated in the query or a form body, or the JSON a value carries as text.
  *
  * Better Auth and its plugins validate these requests with schemas we do not own, and many of their arrays
  * and records carry no size limit: `scopes` on social sign-in, `redirect_uris` and `contacts` on dynamic
- * client registration, `resource` on authorize (repeated in the query), `claims` on authorize (JSON in a
- * form field or the query). Zod reports each bad item of such a collection on its own, so the limit has to
+ * client registration, `resource` on authorize (repeated in the query), `claims` on authorize and consent
+ * (JSON text in a form field, the query or a JSON body). Zod reports each bad item of such a collection on its own, so the limit has to
  * be checked on the raw request, before Better Auth parses it.
  *
  * 100 is far above anything these routes legitimately receive: the longest list a client sends is the
@@ -20,22 +20,6 @@ const JSON_CONTENT_TYPE = /^application\/([a-z0-9.+-]*\+)?json/i;
 export const isJsonContentType = (contentType: string | null): boolean =>
   contentType !== null && JSON_CONTENT_TYPE.test(contentType);
 
-/**
- * Whether any array or object in `value` holds more than `maxEntries` entries. Walks with an explicit
- * stack, so how deeply the value nests costs no call depth.
- */
-export const hasOversizedJsonCollection = (value: unknown, maxEntries: number): boolean => {
-  const pending: unknown[] = [value];
-  while (pending.length > 0) {
-    const current = pending.pop();
-    if (typeof current !== "object" || current === null) continue;
-    const entries = Array.isArray(current) ? current : Object.values(current);
-    if (entries.length > maxEntries) return true;
-    pending.push(...entries);
-  }
-  return false;
-};
-
 // A value `JSON.parse` would read as an array or object: JSON allows these four whitespace characters
 // before it, so a consumer parsing the text accepts a padded value as readily as a bare one.
 const JSON_COLLECTION_START = /^[\t\n\r ]*[[{]/;
@@ -49,6 +33,28 @@ const parseJson = (text: string): unknown => {
 };
 
 /**
+ * Whether any array or object in `value` holds more than `maxEntries` entries, counting the collections
+ * a string carries as JSON text: oauth-provider parses `claims` from a string on consent as well as on
+ * authorize. Walks with an explicit stack, so how deeply the value nests costs no call depth; a string
+ * is parsed only once it reads as an array or object, and what it parses to is shorter than the string.
+ */
+export const hasOversizedJsonCollection = (value: unknown, maxEntries: number): boolean => {
+  const pending: unknown[] = [value];
+  while (pending.length > 0) {
+    const current = pending.pop();
+    if (typeof current === "string") {
+      if (JSON_COLLECTION_START.test(current)) pending.push(parseJson(current));
+      continue;
+    }
+    if (typeof current !== "object" || current === null) continue;
+    const entries = Array.isArray(current) ? current : Object.values(current);
+    if (entries.length > maxEntries) return true;
+    pending.push(...entries);
+  }
+  return false;
+};
+
+/**
  * Whether a query string or form body repeats a parameter more than the cap allows, or carries a value
  * that is JSON with an oversized collection. better-call turns a repeated query parameter into an array,
  * and oauth-provider parses `claims` from text, so both reach a schema as collections.
@@ -59,12 +65,7 @@ const hasOversizedParams = (params: URLSearchParams): boolean => {
     const count = (counts.get(key) ?? 0) + 1;
     if (count > AUTH_REQUEST_MAX_ENTRIES) return true;
     counts.set(key, count);
-    if (
-      JSON_COLLECTION_START.test(value) &&
-      hasOversizedJsonCollection(parseJson(value), AUTH_REQUEST_MAX_ENTRIES)
-    ) {
-      return true;
-    }
+    if (hasOversizedJsonCollection(value, AUTH_REQUEST_MAX_ENTRIES)) return true;
   }
   return false;
 };
