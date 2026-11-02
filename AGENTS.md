@@ -59,7 +59,7 @@ Read `docs/agents/performance-testing.md` before running a load test or reading 
 
 ## Next.js Documentation
 
-Do not rely on training data for Next.js behavior in this repo. For any Next.js-related work (routing, layouts, server/client components, caching, next.config, etc.), use the `nextjs-docs` skill, which indexes the version-pinned local docs in `.next-docs/`.
+Do not rely on training data for Next.js behavior in this repo. Before any Next.js work (routing, layouts, server/client components, caching, next.config), read the version-matched docs Next.js ships in `node_modules/next/dist/docs/`.
 
 ## Agent skills
 
