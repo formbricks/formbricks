@@ -14,7 +14,7 @@ import {
   findLinkedCreatives,
   unlinkSurveyCreatives,
 } from "@/modules/ee/creatives/lib/linked-creatives";
-import { requestEmailAuditErasureBestEffort } from "@/modules/email/lib/email-audit-maintenance";
+import { requestEmailAuditErasureRequired } from "@/modules/email/lib/email-audit-maintenance";
 import { collectSurveyResponseFileUrls } from "@/modules/storage/lib/survey-response-files";
 import { getSurveyPurgeEligibleWhere } from "@/modules/survey/archive/lib/purge-eligibility";
 import { restartSurveyRetention } from "@/modules/survey/archive/lib/retention-restart";
@@ -131,6 +131,7 @@ export const deleteSurvey = async (
       }
 
       await options?.inTransaction?.(tx);
+      await requestEmailAuditErasureRequired({ surveyId }, tx);
 
       return {
         deletedSurvey,
@@ -138,8 +139,6 @@ export const deleteSurvey = async (
         unlinked: { creatives: unlinkedCreatives, organizationId: locked.organizationId },
       };
     });
-
-    await requestEmailAuditErasureBestEffort({ surveyId });
 
     // The survey is already gone, so a failure here must not reach the caller, who would retry a delete
     // that happened: what isn't done now stays queued for the drain job.

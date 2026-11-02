@@ -4,7 +4,7 @@ import {
   processEmailAuditMaintenanceJob,
   requestEmailAuditErasure,
   requestEmailAuditErasureBeforeUserDeletion,
-  requestEmailAuditErasureBestEffort,
+  requestEmailAuditErasureRequired,
 } from "./email-audit-maintenance";
 
 const jobContext: JobExecutionContext = {
@@ -17,6 +17,7 @@ const jobContext: JobExecutionContext = {
 
 const mocks = vi.hoisted(() => ({
   findMany: vi.fn(),
+  findFirst: vi.fn(),
   updateMany: vi.fn(),
   update: vi.fn(),
   deleteMany: vi.fn(),
@@ -24,12 +25,14 @@ const mocks = vi.hoisted(() => ({
   getMac: vi.fn(),
   reportFailure: vi.fn(),
   warn: vi.fn(),
+  bucket: "private-audit-bucket" as string | undefined,
 }));
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
     outboundEmailAudit: {
       findMany: mocks.findMany,
+      findFirst: mocks.findFirst,
       updateMany: mocks.updateMany,
       update: mocks.update,
       deleteMany: mocks.deleteMany,
@@ -38,7 +41,9 @@ vi.mock("@formbricks/database", () => ({
 }));
 vi.mock("@formbricks/logger", () => ({ logger: { warn: mocks.warn } }));
 vi.mock("@/lib/constants", () => ({
-  EMAIL_SEND_AUDIT_BUCKET: "private-audit-bucket",
+  get EMAIL_SEND_AUDIT_BUCKET() {
+    return mocks.bucket;
+  },
   EMAIL_SEND_AUDIT_HMAC_KEY_ARN: "hmac-key",
 }));
 vi.mock("./email-audit-storage", () => ({
@@ -50,7 +55,9 @@ vi.mock("./email-audit-monitoring", () => ({ reportEmailAuditFailure: mocks.repo
 describe("email audit retention and erasure", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.bucket = "private-audit-bucket";
     mocks.findMany.mockResolvedValue([]);
+    mocks.findFirst.mockResolvedValue(null);
     mocks.updateMany.mockResolvedValue({ count: 0 });
     mocks.update.mockResolvedValue({});
     mocks.deleteMany.mockResolvedValue({ count: 0 });
@@ -86,14 +93,45 @@ describe("email audit retention and erasure", () => {
     expect(mocks.updateMany).not.toHaveBeenCalled();
   });
 
-  test("reports an erasure gap when an identifier-based request fails", async () => {
+  test("rejects an identifier-based erasure failure so source deletion can roll back", async () => {
     mocks.updateMany.mockRejectedValueOnce(new Error("database unavailable"));
 
-    await requestEmailAuditErasureBestEffort({ organizationId: "org-1" });
+    await expect(
+      requestEmailAuditErasureRequired({ organizationId: "org-1" }, {
+        outboundEmailAudit: { updateMany: mocks.updateMany },
+      } as never)
+    ).rejects.toThrow("database unavailable");
 
     expect(mocks.reportFailure).toHaveBeenCalledWith("email_audit_erasure_request_failed", {
       phase: undefined,
     });
+  });
+
+  test("rejects missing bucket configuration while audit rows remain, even with sending disabled", async () => {
+    mocks.bucket = undefined;
+    mocks.findFirst.mockResolvedValueOnce({ id: "audit-1" });
+
+    await expect(requestEmailAuditErasure({ organizationId: "org-1" })).rejects.toThrow(
+      "Email audit bucket configuration is missing while audit rows remain"
+    );
+    expect(mocks.updateMany).not.toHaveBeenCalled();
+  });
+
+  test("permits deployments without an audit store when no audit rows exist", async () => {
+    mocks.bucket = undefined;
+
+    await expect(requestEmailAuditErasure({ organizationId: "org-1" })).resolves.toBeUndefined();
+    expect(mocks.findFirst).toHaveBeenCalledWith({ select: { id: true } });
+  });
+
+  test("signals missing storage configuration when retained audit rows exist", async () => {
+    mocks.bucket = undefined;
+    mocks.findFirst.mockResolvedValueOnce({ id: "audit-1" });
+
+    await expect(processEmailAuditMaintenanceJob({ scope: "global" }, jobContext)).rejects.toThrow(
+      "Email audit bucket configuration is missing while audit rows remain"
+    );
+    expect(mocks.reportFailure).toHaveBeenCalledWith("email_audit_gap", { phase: "bucket_config" });
   });
 
   test("blocks user deletion while recipient erasure cannot be queued", async () => {

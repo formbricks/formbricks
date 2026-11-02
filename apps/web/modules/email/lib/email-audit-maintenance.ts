@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
+import type { Prisma } from "@formbricks/database/prisma";
 import type { JobHandler, TGlobalScopeJobData } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
 import { EMAIL_SEND_AUDIT_BUCKET, EMAIL_SEND_AUDIT_HMAC_KEY_ARN } from "@/lib/constants";
@@ -47,10 +48,27 @@ const erasureConditions = (scope: TEmailAuditErasureScope, recipientMac?: string
   ].filter((condition) => condition !== undefined);
 
 /** Marks matching rows for the maintenance job, which retries object erasure until it succeeds. */
-export const requestEmailAuditErasure = async (scope: TEmailAuditErasureScope): Promise<void> => {
+export const requestEmailAuditErasure = async (
+  scope: TEmailAuditErasureScope,
+  client: Pick<Prisma.TransactionClient, "outboundEmailAudit"> = prisma
+): Promise<void> => {
+  if (
+    !scope.organizationId &&
+    !scope.surveyId &&
+    !scope.responseId &&
+    !scope.userId &&
+    !scope.email &&
+    !scope.responseIds?.length
+  ) {
+    return;
+  }
   // The audit store is intentionally absent from KSA and self-hosted deployments.
   // EU rollback keeps the bucket configuration while disabling new writes.
-  if (!EMAIL_SEND_AUDIT_BUCKET) return;
+  if (!EMAIL_SEND_AUDIT_BUCKET) {
+    const existingRow = await client.outboundEmailAudit.findFirst({ select: { id: true } });
+    if (existingRow) throw new Error("Email audit bucket configuration is missing while audit rows remain");
+    return;
+  }
   // A recipient lookup must succeed before any deletion can proceed. Callers
   // retaining that identity can retry; account deletion stops on failure.
   const recipientMac = scope.email ? await getRecipientMacForErasure(scope.email) : undefined;
@@ -61,26 +79,31 @@ export const requestEmailAuditErasure = async (scope: TEmailAuditErasureScope): 
   }
   const requestedAt = new Date();
   if (conditions.length > 0) {
-    await prisma.outboundEmailAudit.updateMany({
+    await client.outboundEmailAudit.updateMany({
       where: { OR: conditions, erasedAt: null },
       data: { erasureRequestedAt: requestedAt },
     });
   }
   for (let index = 0; index < responseIds.length; index += 500) {
-    await prisma.outboundEmailAudit.updateMany({
+    await client.outboundEmailAudit.updateMany({
       where: { responseId: { in: responseIds.slice(index, index + 500) }, erasedAt: null },
       data: { erasureRequestedAt: requestedAt },
     });
   }
 };
 
-export const requestEmailAuditErasureBestEffort = async (scope: Omit<TEmailAuditErasureScope, "email">) => {
+/** Keep the source deletion and erasure request in the same database transaction. */
+export const requestEmailAuditErasureRequired = async (
+  scope: Omit<TEmailAuditErasureScope, "email">,
+  client: Pick<Prisma.TransactionClient, "outboundEmailAudit">
+) => {
   try {
-    await requestEmailAuditErasure(scope);
+    await requestEmailAuditErasure(scope, client);
   } catch (error) {
     await reportEmailAuditFailure("email_audit_erasure_request_failed", {
       phase: erasureFailurePhase(error),
     });
+    throw error;
   }
 };
 
@@ -89,7 +112,6 @@ export const requestEmailAuditErasureBeforeUserDeletion = async (
   userId: string,
   email: string
 ): Promise<void> => {
-  if (!EMAIL_SEND_AUDIT_BUCKET) return;
   try {
     await requestEmailAuditErasure({ userId, email });
   } catch (error) {
@@ -140,6 +162,13 @@ const removeContent = async (row: {
 };
 
 export const processEmailAuditMaintenanceJob: JobHandler<TGlobalScopeJobData> = async () => {
+  if (!EMAIL_SEND_AUDIT_BUCKET) {
+    const existingRow = await prisma.outboundEmailAudit.findFirst({ select: { id: true } });
+    if (existingRow) {
+      await reportEmailAuditFailure("email_audit_gap", { phase: "bucket_config" });
+      throw new Error("Email audit bucket configuration is missing while audit rows remain");
+    }
+  }
   const now = new Date();
   const stale = await prisma.outboundEmailAudit.findMany({
     where: {

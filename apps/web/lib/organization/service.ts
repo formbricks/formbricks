@@ -25,7 +25,7 @@ import { updateUser } from "@/lib/user/service";
 import { getBillingUsageCycleWindow } from "@/lib/utils/billing";
 import { getWorkspaces } from "@/lib/workspace/service";
 import { cleanupStripeCustomer } from "@/modules/ee/billing/lib/organization-billing";
-import { requestEmailAuditErasureBestEffort } from "@/modules/email/lib/email-audit-maintenance";
+import { requestEmailAuditErasureRequired } from "@/modules/email/lib/email-audit-maintenance";
 import { deleteHubTenantData } from "@/modules/hub/service";
 import { countOrganizationResponses } from "@/modules/organization/usage/lib/response-count";
 import { deleteWorkspaceFilesBestEffort } from "@/modules/storage/service";
@@ -288,53 +288,57 @@ export const updateOrganization = async (
 export const deleteOrganization = async (organizationId: string) => {
   validateInputs([organizationId, ZId]);
   try {
-    const deletedOrganization = await prisma.organization.delete({
-      where: {
-        id: organizationId,
+    const deletedOrganization = await prisma.$transaction(
+      async (tx) => {
+        await requestEmailAuditErasureRequired({ organizationId }, tx);
+        return tx.organization.delete({
+          where: {
+            id: organizationId,
+          },
+          select: {
+            id: true,
+            name: true,
+            billing: {
+              select: {
+                stripeCustomerId: true,
+              },
+            },
+            memberships: {
+              select: {
+                userId: true,
+              },
+            },
+            // legacyEnvironmentId is selected off the *deleted* rows so both storage prefixes are
+            // captured atomically, before the cascade takes the workspace rows with it. Reading them
+            // back afterwards is not possible, which is why getWorkspaceLegacyStoragePrefixes cannot
+            // be used here.
+            workspaces: {
+              select: {
+                id: true,
+                legacyEnvironmentId: true,
+              },
+            },
+            teams: {
+              select: {
+                id: true,
+              },
+            },
+            apiKeys: {
+              select: {
+                id: true,
+              },
+            },
+            feedbackDirectories: {
+              select: {
+                id: true,
+                workspaces: { select: { workspaceId: true } },
+              },
+            },
+          },
+        });
       },
-      select: {
-        id: true,
-        name: true,
-        billing: {
-          select: {
-            stripeCustomerId: true,
-          },
-        },
-        memberships: {
-          select: {
-            userId: true,
-          },
-        },
-        // legacyEnvironmentId is selected off the *deleted* rows so both storage prefixes are
-        // captured atomically, before the cascade takes the workspace rows with it. Reading them
-        // back afterwards is not possible, which is why getWorkspaceLegacyStoragePrefixes cannot
-        // be used here.
-        workspaces: {
-          select: {
-            id: true,
-            legacyEnvironmentId: true,
-          },
-        },
-        teams: {
-          select: {
-            id: true,
-          },
-        },
-        apiKeys: {
-          select: {
-            id: true,
-          },
-        },
-        feedbackDirectories: {
-          select: {
-            id: true,
-            workspaces: { select: { workspaceId: true } },
-          },
-        },
-      },
-    });
-
-    await requestEmailAuditErasureBestEffort({ organizationId });
+      { timeout: 60_000 }
+    );
 
     await runPostCommitProjection("organization_delete_relationship_cleanup", () =>
       deleteOrganizationRelationships(organizationId)

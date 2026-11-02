@@ -8,6 +8,9 @@ import {
 } from "./service";
 
 vi.mock("server-only", () => ({}));
+vi.mock("@/modules/email/lib/email-audit-maintenance", () => ({
+  requestEmailAuditErasureRequired: vi.fn().mockResolvedValue(undefined),
+}));
 
 const {
   mockTxDelete,

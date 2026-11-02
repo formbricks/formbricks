@@ -20,7 +20,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { reduceQuotaLimits } from "@/modules/ee/quotas/lib/quotas";
-import { requestEmailAuditErasureBestEffort } from "@/modules/email/lib/email-audit-maintenance";
+import { requestEmailAuditErasureRequired } from "@/modules/email/lib/email-audit-maintenance";
 import { deleteResponseFileUrls } from "@/modules/storage/lib/delete-response-files";
 import {
   collectResponseFileUrls,
@@ -728,10 +728,10 @@ export const deleteResponse = async (
         await reduceQuotaLimits(quotaIds, tx);
       }
 
+      await requestEmailAuditErasureRequired({ responseId }, tx);
+
       return response;
     });
-
-    await requestEmailAuditErasureBestEffort({ responseId });
 
     const survey = await getSurvey(txResponse.surveyId);
 
