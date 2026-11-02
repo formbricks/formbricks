@@ -120,6 +120,12 @@ export const POST = withV1ApiWrapper({
           ? jsonInput.attributes
           : undefined;
 
+      if (Array.isArray(attributes)) {
+        return {
+          response: responses.badRequestResponse("attributes must be an object", undefined, true),
+        };
+      }
+
       if (attributes && Object.keys(attributes).length > MAX_CONTACT_ATTRIBUTES_PER_REQUEST) {
         return {
           response: responses.badRequestResponse(

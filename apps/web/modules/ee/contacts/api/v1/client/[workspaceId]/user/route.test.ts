@@ -23,7 +23,7 @@ vi.mock("./lib/update-user", () => ({ updateUser: mocks.updateUser }));
 
 const WORKSPACE_ID = "clws00000000000000000001";
 
-const identify = (attributes: Record<string, unknown>) =>
+const identify = (attributes: unknown) =>
   (POST as unknown as (input: unknown) => Promise<{ response: Response }>)({
     req: new Request(`http://localhost/api/v1/client/${WORKSPACE_ID}/user`, {
       method: "POST",
@@ -57,6 +57,13 @@ describe("POST /api/v1/client/[workspaceId]/user attribute cap", () => {
 
     expect(response.status).toBe(400);
     expect(mocks.getIsContactsEnabled).not.toHaveBeenCalled();
+    expect(mocks.updateUser).not.toHaveBeenCalled();
+  });
+
+  test("refuses attributes sent as an array before reading them", async () => {
+    const { response } = await identify(Array.from({ length: 1_000 }, () => "value"));
+
+    expect(response.status).toBe(400);
     expect(mocks.updateUser).not.toHaveBeenCalled();
   });
 });
