@@ -122,6 +122,9 @@ export const countExportResponses = async ({
   isQuotasAllowed?: boolean;
   timeZone?: string;
 }): Promise<TExportCounts> => {
+  const lowQualityScope = buildLowQualityScopeWhere(survey, filter);
+  const countLowQualityInScope = () =>
+    lowQualityScope ? prisma.response.count({ where: lowQualityScope }) : Promise.resolve(0);
   if (plan.kind === "standard") {
     // Today's file keeps Low quality responses; the dialog's checkbox can leave them out.
     const [included, lowQualityInScope, total] = await Promise.all([
@@ -131,7 +134,7 @@ export const countExportResponses = async ({
           ...buildWhereClause(survey, standardFilter(filter, includeLowQuality)),
         },
       }),
-      prisma.response.count({ where: buildLowQualityScopeWhere(survey, filter) }),
+      countLowQualityInScope(),
       prisma.response.count({ where: { surveyId: survey.id } }),
     ]);
     return {
@@ -148,7 +151,7 @@ export const countExportResponses = async ({
   const [included, lowQualityLeftOut, lowQualityInScope, total, contactAttributeKeys] = await Promise.all([
     prisma.response.count({ where: where.included }),
     where.lowQualityLeftOut ? prisma.response.count({ where: where.lowQualityLeftOut }) : 0,
-    prisma.response.count({ where: buildLowQualityScopeWhere(survey, filter) }),
+    countLowQualityInScope(),
     prisma.response.count({ where: { surveyId: survey.id } }),
     getContactAttributeKeys(survey.workspaceId),
   ]);

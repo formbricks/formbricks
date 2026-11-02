@@ -53,13 +53,18 @@ export const buildAnalysisWhere = (
   };
 };
 
-/** The Low quality responses the filter reaches, whether or not the export includes them: the dialog's "(N)". */
+/**
+ * The Low quality responses the filter reaches, whether or not the export includes them: the dialog's "(N)".
+ * `null` when the filter itself selects an outcome: the filter then decides alone (ADR 0017), so the dialog
+ * has no Low quality choice to offer and leaves nothing out.
+ */
 export const buildLowQualityScopeWhere = (
   survey: TSurvey,
   filter?: TResponseFilterCriteria
-): Prisma.ResponseWhereInput => ({
-  AND: [{ surveyId: survey.id, ...buildWhereClause(survey, filter) }, { outcome: "lowQuality" }],
-});
+): Prisma.ResponseWhereInput | null =>
+  filter?.outcome
+    ? null
+    : { AND: [{ surveyId: survey.id, ...buildWhereClause(survey, filter) }, { outcome: "lowQuality" }] };
 
 /** Selects only what the chosen fields need: the lean shape the ticket asks for in place of `getResponses`. */
 export const buildAnalysisSelect = (fields: TAnalysisResponseFields, isQuotasAllowed: boolean) =>

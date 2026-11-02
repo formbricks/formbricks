@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { TExportRequest } from "@/lib/analysis-export/export-request";
-import { EXCEL_MAX_WAITERS, EXCEL_WAIT_MS, excelBuildLimiter, handleExportRequest } from "./handle-export";
+import { EXCEL_MAX_WAITERS, EXCEL_WAIT_MS } from "./export-limits";
+import { excelBuildLimiter, handleExportRequest } from "./handle-export";
 
 vi.mock("server-only", () => ({}));
 

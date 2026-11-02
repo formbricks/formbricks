@@ -22,6 +22,7 @@ import { capturePostHogEvent } from "@/lib/posthog";
 import { checkRateLimit } from "@/modules/core/rate-limit/rate-limit";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
+import { EXCEL_MAX_WAITERS, EXCEL_WAIT_MS } from "./export-limits";
 import { ExportCancelledError, buildExportResponse, countExportResponses } from "./export-response";
 
 /**
@@ -33,12 +34,10 @@ export const excelBuildLimiter = new ConcurrencyLimiter(1);
 const EXCEL_BUSY_RETRY_SECONDS = 15;
 
 /**
- * A second Excel export waits for the slot instead of being refused on the spot: a build takes seconds, and
- * even today's Standard export is one. Up to `EXCEL_MAX_WAITERS` wait at once, each for at most
- * `EXCEL_WAIT_MS`; past either, the answer is the 429. Exported for the tests.
+ * A second Excel export waits for the slot instead of being refused on the spot: even today's Standard
+ * export is one. Up to `EXCEL_MAX_WAITERS` wait at once, each for at most `EXCEL_WAIT_MS`; past either, the
+ * answer is the 429.
  */
-export const EXCEL_WAIT_MS = 60_000;
-export const EXCEL_MAX_WAITERS = 8;
 const EXCEL_POLL_MS = 100;
 let excelWaiters = 0;
 

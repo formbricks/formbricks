@@ -27,3 +27,15 @@
  * code, 1,600 of 300 Text and code. Raise it only after re-running the spike on the target container.
  */
 export const EXCEL_EXPORT_MAX_CELLS: number | undefined = 1_000_000;
+
+/** Exports running at once, per process and per signed-in user: the route's limiter. */
+export const EXPORT_MAX_CONCURRENT = 6;
+export const EXPORT_MAX_CONCURRENT_PER_USER = 3;
+
+/**
+ * A second Excel export waits for the process's one build slot instead of being refused: a build takes
+ * seconds. Each waiter still holds one of the route's `EXPORT_MAX_CONCURRENT` slots while it waits, so the
+ * one build plus its waiters stay within half of them, and CSV and zip exports keep the rest.
+ */
+export const EXCEL_MAX_WAITERS = 2;
+export const EXCEL_WAIT_MS = 60_000;

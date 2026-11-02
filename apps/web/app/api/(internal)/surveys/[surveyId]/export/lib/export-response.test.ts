@@ -171,7 +171,20 @@ describe("countExportResponses", () => {
     ).toMatchObject({
       included: 4,
       lowQualityLeftOut: 0,
+      lowQualityInScope: 0,
     });
+  });
+
+  test("a filter that selects Low quality wins over the Standard export's unticked box", async () => {
+    mocks.count.mockResolvedValue(4);
+    expect(
+      await countExportResponses({
+        survey: withId as never,
+        plan: { kind: "standard", format: "csv" },
+        filter: { outcome: "lowQuality" },
+        includeLowQuality: false,
+      })
+    ).toMatchObject({ included: 4, lowQualityLeftOut: 0, lowQualityInScope: 0 });
   });
 
   describe("the Excel size an Analysis export would have", () => {

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
 import { ConcurrencyLimiter } from "@/app/lib/api/concurrency-limiter";
 import { ZExportRequest } from "@/lib/analysis-export/export-request";
+import { EXPORT_MAX_CONCURRENT, EXPORT_MAX_CONCURRENT_PER_USER } from "./lib/export-limits";
 import { handleExportRequest } from "./lib/handle-export";
 
 // @formbricks/database and the archive writers are Node-only.
@@ -34,7 +35,9 @@ const querySchema = z.object({
  * The modal's `dryRun` count requests are not exports and take no slot: it fires one per option the owner
  * toggles, and counting them here turned a few quick clicks into a 429 or 503 with no count shown.
  */
-const exportConcurrency = new ConcurrencyLimiter(6, { maxPerKey: 3 });
+const exportConcurrency = new ConcurrencyLimiter(EXPORT_MAX_CONCURRENT, {
+  maxPerKey: EXPORT_MAX_CONCURRENT_PER_USER,
+});
 
 export const POST = withV3ApiWrapper({
   auth: "session",

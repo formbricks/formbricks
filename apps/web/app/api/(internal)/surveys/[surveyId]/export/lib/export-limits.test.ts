@@ -1,6 +1,12 @@
 import { describe, expect, test } from "vitest";
 import { analysisWorkbookCells, excelSizeVerdict } from "@/lib/analysis-export/excel-size";
-import { EXCEL_EXPORT_MAX_CELLS } from "./export-limits";
+import { EXCEL_EXPORT_MAX_CELLS, EXCEL_MAX_WAITERS, EXPORT_MAX_CONCURRENT } from "./export-limits";
+
+describe("EXCEL_MAX_WAITERS", () => {
+  test("leaves CSV and zip exports half the route's slots: each waiter holds one while it waits", () => {
+    expect(1 + EXCEL_MAX_WAITERS).toBeLessThanOrEqual(EXPORT_MAX_CONCURRENT / 2);
+  });
+});
 
 describe("EXCEL_EXPORT_MAX_CELLS", () => {
   test("is set: Excel is built whole in memory and must not run without a cap", () => {

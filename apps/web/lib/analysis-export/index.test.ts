@@ -84,6 +84,10 @@ describe("buildAnalysisWhere", () => {
     expect(JSON.stringify(where.included)).not.toContain('"outcome":null');
     expect(where.lowQualityLeftOut).toBeNull();
   });
+
+  test("a filter that selects Low quality leaves the dialog no Low quality choice", () => {
+    expect(buildLowQualityScopeWhere(survey as never, { outcome: "lowQuality" })).toBeNull();
+  });
 });
 
 describe("buildAnalysisSelect", () => {
