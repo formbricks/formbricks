@@ -172,7 +172,9 @@ export type TSurveyImportUnsupportedFile = TSurveyImportFileType | "legacy_offic
  *   archive's entries, its inflated bytes in total and per part, and one entry's compression ratio (413);
  * - `array_items`, `array_elements`, `nesting_depth` — a JSON file's longest array, its array elements
  *   in total, and its nesting (422);
- * - `survey_size` — a Formbricks file's survey, as JSON, past what one survey may weigh (413).
+ * - `survey_size` — a Formbricks file's survey, as JSON, past what one survey may weigh (413);
+ * - `read_time`, `read_memory` — a file that takes its thread longer, or more heap, to read than it is
+ *   given (422).
  */
 export type TSurveyImportFileLimit =
   | "file_size"

@@ -1,6 +1,10 @@
 import "server-only";
 import { MessageChannel, type MessagePort, Worker, receiveMessageOnPort } from "node:worker_threads";
-import { SURVEY_IMPORT_MAX_READ_THREADS, SURVEY_IMPORT_READ_TIME_MS } from "../limits";
+import {
+  SURVEY_IMPORT_MAX_READ_THREADS,
+  SURVEY_IMPORT_READ_HEAP_MB,
+  SURVEY_IMPORT_READ_TIME_MS,
+} from "../limits";
 import type { TSurveyImportFileLimit } from "../types";
 import { SurveyImportInputError, fromSurveyImportRefusal } from "./errors";
 import type { TSurveyImportUploadRead } from "./read-upload";
@@ -15,27 +19,17 @@ import type { TUploadWorkerFailure, TUploadWorkerReply, TUploadWorkerRequest } f
  * worker thread of its own (`upload-worker.ts`), and only what its lane reads comes back: the parsed file
  * never crosses, since cloning a million objects across costs more than parsing them did.
  *
- * The thread is held to a time limit (`SURVEY_IMPORT_READ_TIME_MS`): a file that takes longer is refused
- * with a 422 naming the limit, and the thread ends, its memory with it. A thread that could not start or
- * failed is an error, answered as a 500.
+ * The thread is held to a time limit per step (`SURVEY_IMPORT_READ_TIME_MS`) and a heap limit
+ * (`SURVEY_IMPORT_READ_HEAP_MB`): a file that takes longer or more is refused with a 422 naming the limit,
+ * and the thread ends, its memory with it. The heap limit sits at twice what the costliest file the
+ * upload's limits let through needs: 15 MiB of a million small objects reads within 256 MB, and ends the
+ * thread cleanly at 128 MB (2026-11-02). Without it the thread would get V8's default, in an isolate of its
+ * own, beside the server's: past the pod's memory before V8's. A thread that could not start or failed is
+ * an error, answered as a 500. A client that leaves ends its upload, waiting or reading, at once.
  *
- * It has no heap limit of its own (`resourceLimits`) on purpose. Node ends a worker that reaches one only
- * where V8 can stop its JavaScript: past the limit inside a native allocation — `structuredClone`, which
- * the Formbricks file's reader runs on the whole file, is one — V8 aborts the process instead, so a capped
- * thread would let a hostile file crash the server. Its heap is the process's (`--max-old-space-size`),
- * as the server's own thread's is, and what a file can make it hold is bounded by the upload's limits
- * (see `SURVEY_IMPORT_MAX_IN_FLIGHT`). One that still runs out where V8 can stop it ends the thread and
- * is refused like a slow one; anywhere else it aborts the process, as it would on the server's thread.
- *
- * It answers in two steps, so a lane is charged its rate limit and held to the AI gate before its file
- * is read (`runSurveyImportLane`): `openSurveyImportUpload` tells the type, and the upload's `read` reads
- * it for the lane. The thread lives from one to the other.
- *
- * A process runs `SURVEY_IMPORT_MAX_READ_THREADS` of them at once, and the next upload waits its turn.
- * Threads that run at once also hold their files at once: three of the costliest JSON uploads read side
- * by side peaked at about 1.9 GB of RSS, one after the other at 1.2 GB, against the web pod's 2 GiB. A
- * read takes a couple of seconds at the most, and the import slots (`SURVEY_IMPORT_MAX_IN_FLIGHT`) bound
- * how many wait.
+ * The limit must not meet a native allocation of the whole file: V8 aborts the process, rather than end
+ * the thread, when a capped worker runs out inside one (a `structuredClone`, say). So nothing in the
+ * thread copies the file whole; what it posts back is bounded by its lane's limits.
  */
 
 /** An upload being read in its thread. */
@@ -47,8 +41,10 @@ export interface TSurveyImportUpload {
   close: () => void;
 }
 
-/** `workerUrl` runs another build of `upload-worker.ts` — a test's bundle; the app's own by default. */
 export interface TOpenSurveyImportUploadOptions {
+  /** The request's signal: when the client leaves, the upload stops waiting or reading. */
+  signal?: AbortSignal;
+  /** Another build of `upload-worker.ts` to run — a test's bundle; the app's own by default. */
   workerUrl?: URL;
 }
 
@@ -60,7 +56,7 @@ const tooCostly = (identifier: Extract<TSurveyImportFileLimit, "read_time" | "re
         reason:
           identifier === "read_time"
             ? `The file must be readable within ${SURVEY_IMPORT_READ_TIME_MS / 1000} seconds`
-            : "The file needs more memory to read than the server has for it",
+            : `The file must be readable within ${SURVEY_IMPORT_READ_HEAP_MB} MB of memory`,
         code: "file_limit_exceeded",
         identifier,
       },
@@ -70,12 +66,33 @@ const tooCostly = (identifier: Extract<TSurveyImportFileLimit, "read_time" | "re
 
 /** The read threads running now, and the uploads waiting for one, first come first served. */
 let readThreads = 0;
-const waitingForThread: (() => void)[] = [];
+const waitingForThread: { resolve: () => void; reject: (reason: unknown) => void }[] = [];
 
-/** Wait for a turn to run a read thread; the function it resolves to gives the turn back, once. */
-const takeReadThread = async (): Promise<() => void> => {
-  if (readThreads < SURVEY_IMPORT_MAX_READ_THREADS) readThreads += 1;
-  else await new Promise<void>((resolve) => waitingForThread.push(resolve));
+/**
+ * Wait for a turn to run a read thread; the function it resolves to gives the turn back, once. An upload
+ * whose client leaves while it waits leaves the queue and rejects with the signal's reason.
+ */
+const takeReadThread = async (signal: AbortSignal | undefined): Promise<() => void> => {
+  signal?.throwIfAborted();
+  if (readThreads < SURVEY_IMPORT_MAX_READ_THREADS) {
+    readThreads += 1;
+  } else {
+    await new Promise<void>((resolve, reject) => {
+      const waiter = {
+        resolve: () => {
+          signal?.removeEventListener("abort", leave);
+          resolve();
+        },
+        reject,
+      };
+      const leave = () => {
+        waitingForThread.splice(waitingForThread.indexOf(waiter), 1);
+        reject(signal?.reason);
+      };
+      signal?.addEventListener("abort", leave, { once: true });
+      waitingForThread.push(waiter);
+    });
+  }
 
   let given = false;
   return () => {
@@ -83,16 +100,20 @@ const takeReadThread = async (): Promise<() => void> => {
     given = true;
     // Handed straight to the next upload, so a newcomer cannot take it in between.
     const next = waitingForThread.shift();
-    if (next) next();
+    if (next) next.resolve();
     else readThreads -= 1;
   };
 };
 
-const fromFailure = ({ name, message, stack }: TUploadWorkerFailure): Error =>
-  Object.assign(new Error(message), { name, stack });
+const fromFailure = ({ name, message, stack, code }: TUploadWorkerFailure): Error =>
+  Object.assign(new Error(message), { name, stack }, code === undefined ? {} : { code });
 
 const startWorker = (port: MessagePort, workerUrl: URL | undefined): Worker => {
-  const options = { workerData: { port }, transferList: [port] };
+  const options = {
+    resourceLimits: { maxOldGenerationSizeMb: SURVEY_IMPORT_READ_HEAP_MB, maxYoungGenerationSizeMb: 32 },
+    workerData: { port },
+    transferList: [port],
+  };
   // Written out in full: the bundler builds the worker from this exact expression.
   const worker = workerUrl
     ? new Worker(workerUrl, options)
@@ -115,14 +136,15 @@ const transferable = (bytes: Uint8Array): ArrayBuffer[] =>
 
 /**
  * Sniff `bytes` in a thread of their own, and keep the thread for the lane's read. The buffer is
- * transferred when `bytes` is all of it, so `bytes` is then empty. Throws the sniffer's refusals (`toRefusalResponse` maps
- * them), the read's own when past its limits, and an error when the thread fails.
+ * transferred when `bytes` is all of it, so `bytes` is then empty. Throws the sniffer's refusals
+ * (`toRefusalResponse` maps them), the read's own when past its limits, the signal's reason when the client
+ * leaves, and an error when the thread fails.
  */
 export const openSurveyImportUpload = async (
   bytes: Uint8Array,
-  { workerUrl }: TOpenSurveyImportUploadOptions = {}
+  { signal, workerUrl }: TOpenSurveyImportUploadOptions = {}
 ): Promise<TSurveyImportUpload> => {
-  const giveTurnBack = await takeReadThread();
+  const giveTurnBack = await takeReadThread(signal);
   const { port1: port, port2 } = new MessageChannel();
   port.unref();
   let worker: Worker;
@@ -139,8 +161,8 @@ export const openSurveyImportUpload = async (
     if (closed) return;
     closed = true;
     port.close();
-    void worker.terminate();
-    giveTurnBack();
+    // The next upload starts once this thread has ended, so two files are never held at once.
+    worker.terminate().then(giveTurnBack, giveTurnBack);
   };
   // A thread that fails between two requests ends there; the next request is answered by `read`'s check.
   worker.on("error", close);
@@ -153,6 +175,7 @@ export const openSurveyImportUpload = async (
         port.off("message", onReply);
         worker.off("error", onError);
         worker.off("exit", onExit);
+        signal?.removeEventListener("abort", onAbort);
         outcome();
       };
       const onReply = (reply: TUploadWorkerReply) =>
@@ -161,7 +184,7 @@ export const openSurveyImportUpload = async (
           close();
           reject("refusal" in reply ? fromSurveyImportRefusal(reply.refusal) : fromFailure(reply.failure));
         });
-      const fail = (error: Error) =>
+      const fail = (error: unknown) =>
         settle(() => {
           close();
           reject(error);
@@ -169,6 +192,7 @@ export const openSurveyImportUpload = async (
       const onError = (error: Error & { code?: string }) =>
         fail(error.code === "ERR_WORKER_OUT_OF_MEMORY" ? tooCostly("read_memory") : error);
       const onExit = (code: number) => fail(new Error(`The survey import's reader exited with ${code}`));
+      const onAbort = () => fail(signal?.reason);
       const timer = setTimeout(() => {
         // The answer may be waiting behind a busy thread here: read it before blaming the file.
         const pending = receiveMessageOnPort(port);
@@ -179,6 +203,8 @@ export const openSurveyImportUpload = async (
       port.on("message", onReply);
       worker.on("error", onError);
       worker.on("exit", onExit);
+      if (signal?.aborted) return onAbort();
+      signal?.addEventListener("abort", onAbort, { once: true });
       port.postMessage(request, transfer);
     });
 

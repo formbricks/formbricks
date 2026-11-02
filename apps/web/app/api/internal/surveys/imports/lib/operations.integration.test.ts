@@ -27,7 +27,10 @@ const surveyLimit = vi.hoisted(() => ({ fail: false }));
 // boundary (`core/upload-thread.test.ts` runs the real thread).
 vi.mock("@/modules/survey/import/core/upload-thread", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/modules/survey/import/core/upload-thread")>()),
-  openSurveyImportUpload: (bytes: Uint8Array) => openSurveyImportUploadInProcess(bytes),
+  openSurveyImportUpload: (
+    bytes: Uint8Array,
+    options?: import("@/modules/survey/import/core/upload-thread").TOpenSurveyImportUploadOptions
+  ) => openSurveyImportUploadInProcess(bytes, options),
 }));
 vi.mock("@/modules/ee/license-check/lib/utils", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/modules/ee/license-check/lib/utils")>()),

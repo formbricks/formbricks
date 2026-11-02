@@ -1,13 +1,14 @@
 import { fromSurveyImportRefusal, toSurveyImportRefusal } from "../errors";
 import { type TSurveyImportUploadRead, readSurveyImportUpload } from "../read-upload";
 import { sniffSurveyImportFile } from "../sniff";
-import type { TSurveyImportUpload } from "../upload-thread";
+import type { TOpenSurveyImportUploadOptions, TSurveyImportUpload } from "../upload-thread";
 
 /**
  * `openSurveyImportUpload` without the thread, for a test that runs the route under Vitest, which
- * cannot start the app's worker (`upload-worker.test.ts` runs the real one). It reads with the same
+ * cannot start the app's worker (`upload-thread.test.ts` runs the real one). It reads with the same
  * functions, and crosses the same boundary: what comes back is a structured clone, as `postMessage`
- * makes it, and a refusal is rebuilt from its posted form.
+ * makes it, and a refusal is rebuilt from its posted form. It keeps the thread's contract too: a closed
+ * upload, or one whose client left, reads nothing.
  */
 const inTheThread = <T>(run: () => T): T => {
   try {
@@ -20,16 +21,44 @@ const inTheThread = <T>(run: () => T): T => {
 
 const acrossTheThread = <T>(run: () => T): T => structuredClone(inTheThread(run));
 
-export const openSurveyImportUploadInProcess = async (bytes: Uint8Array): Promise<TSurveyImportUpload> => {
+/** An upload opened in this thread, and whether it was closed, as the route must close each one. */
+export interface TInProcessUpload extends TSurveyImportUpload {
+  readonly closed: boolean;
+}
+
+/** Every upload opened so far; a test empties it before it runs (`openedUploads.length = 0`). */
+export const openedUploads: TInProcessUpload[] = [];
+
+export const openSurveyImportUploadInProcess = async (
+  bytes: Uint8Array,
+  { signal }: TOpenSurveyImportUploadOptions = {}
+): Promise<TSurveyImportUpload> => {
+  signal?.throwIfAborted();
   // The thread keeps what it sniffed and posts only its type.
   const sniffed = inTheThread(() => sniffSurveyImportFile(bytes));
+  let closed = false;
   let read: Promise<TSurveyImportUploadRead> | null = null;
-  return {
+  const upload: TInProcessUpload = {
     type: sniffed.type,
+    get closed() {
+      return closed;
+    },
     read: (fileName) => {
-      read ??= Promise.resolve().then(() => acrossTheThread(() => readSurveyImportUpload(sniffed, fileName)));
+      if (closed) return Promise.reject(new Error("The survey import's reader was closed"));
+      read ??= Promise.resolve()
+        .then(() => {
+          signal?.throwIfAborted();
+          return acrossTheThread(() => readSurveyImportUpload(sniffed, fileName));
+        })
+        .finally(() => {
+          closed = true;
+        });
       return read;
     },
-    close: () => undefined,
+    close: () => {
+      closed = true;
+    },
   };
+  openedUploads.push(upload);
+  return upload;
 };

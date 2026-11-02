@@ -65,25 +65,32 @@ type TImportOutcome = "done" | "failed" | "timed_out" | "aborted";
 /**
  * Read the upload and tell its type from its bytes, in a thread of its own, under the upload's limits:
  * the file's size, then what `sniffSurveyImportFile` checks (the zip limits for a `.docx` or `.xlsx`, the
- * JSON budget for a JSON file). Throws the refusals `toRefusalResponse` maps.
+ * JSON budget for a JSON file). Throws the refusals `toRefusalResponse` maps, and stops when the client
+ * leaves.
  */
-const openUpload = async (file: File): Promise<TSurveyImportUpload> => {
+const openUpload = async (file: File, signal: AbortSignal): Promise<TSurveyImportUpload> => {
   if (file.size > SURVEY_IMPORT_MAX_FILE_BYTES) {
     throw new SurveyImportFileTooLargeError(
       "file_size",
       `The file must not exceed ${SURVEY_IMPORT_MAX_FILE_BYTES} bytes`
     );
   }
-  return openSurveyImportUpload(new Uint8Array(await file.arrayBuffer()));
+  return openSurveyImportUpload(new Uint8Array(await file.arrayBuffer()), { signal });
 };
+
+/**
+ * What a request whose client left is answered with: nobody reads it, and it is no failure of the
+ * server's. 499 is the conventional "client closed request".
+ */
+const clientClosedRequest = () => new Response(null, { status: 499 });
 
 /**
  * Import an uploaded survey file, streaming progress as NDJSON (ENG-3604, ENG-3653, ENG-6846,
  * ENG-6848). Every file type comes in the same way: the route's wrapper has already authenticated,
  * charged the default v3 bucket, read the multipart body within its byte limit and then taken a
- * concurrency slot. Here the workspace is checked first, then the file's type is told from its content in
- * the upload's own thread (`openSurveyImportUpload`), and the file goes to its type's lane: a Formbricks file, a Qualtrics export, or a questionnaire from
- * Excel, CSV (ENG-6852) or Word (ENG-6853).
+ * concurrency slot. Here the workspace is checked first, then the file's type is told from its content
+ * in the upload's own thread (`openSurveyImportUpload`), and the file goes to its type's lane: a
+ * Formbricks file, a Qualtrics export, or a questionnaire from Excel, CSV (ENG-6852) or Word (ENG-6853).
  *
  * Nothing is written: the dialog shows the draft for review and creates it through
  * `POST /api/internal/surveys/imports` (ENG-6850), a Formbricks file with its references, or updates a
@@ -114,8 +121,9 @@ export async function streamSurveyImport({
 
   let upload: TSurveyImportUpload;
   try {
-    upload = await openUpload(file);
+    upload = await openUpload(file, req.signal);
   } catch (error) {
+    if (isClientAbort(req.signal)) return clientClosedRequest();
     const refusal = toRefusalResponse(error, requestId, instance);
     if (refusal) return refusal;
 
@@ -222,6 +230,7 @@ export async function runSurveyImportLane<TInput, TPrepared>({
   try {
     prepared = await lane.prepare(input);
   } catch (error) {
+    if (isClientAbort(req.signal)) return clientClosedRequest();
     const refusal = toRefusalResponse(error, requestId, instance);
     if (refusal) return refusal;
 

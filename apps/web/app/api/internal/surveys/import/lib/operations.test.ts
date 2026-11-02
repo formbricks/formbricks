@@ -9,7 +9,10 @@ import {
 } from "@/app/api/v3/lib/array-budget";
 import { problemForbidden } from "@/app/api/v3/lib/response";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
-import { openSurveyImportUploadInProcess } from "@/modules/survey/import/core/__fixtures__/in-process-upload";
+import {
+  openSurveyImportUploadInProcess,
+  openedUploads,
+} from "@/modules/survey/import/core/__fixtures__/in-process-upload";
 import { zipOf } from "@/modules/survey/import/core/__fixtures__/zip-builders";
 import { SurveyImportInputError, SurveyImportTimeoutError } from "@/modules/survey/import/core/errors";
 import type { TSurveyImportLane, TSurveyImportResult } from "@/modules/survey/import/core/lane";
@@ -71,10 +74,13 @@ vi.mock("@/lib/ai/service", async (importOriginal) => ({
   assertOrganizationAIConfigured: mocks.assertOrganizationAIConfigured,
 }));
 // Vitest cannot start the app's worker, so the upload is read in this thread, across the same
-// boundary (`upload-worker.test.ts` runs the real thread).
+// boundary (`upload-thread.test.ts` runs the real thread).
 vi.mock("@/modules/survey/import/core/upload-thread", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/modules/survey/import/core/upload-thread")>()),
-  openSurveyImportUpload: (bytes: Uint8Array) => openSurveyImportUploadInProcess(bytes),
+  openSurveyImportUpload: (
+    bytes: Uint8Array,
+    options?: import("@/modules/survey/import/core/upload-thread").TOpenSurveyImportUploadOptions
+  ) => openSurveyImportUploadInProcess(bytes, options),
 }));
 // The real readers run, behind spies a test can make fail; only the AI-backed part is replaced.
 vi.mock("@/modules/survey/import/qsf/prepare", async (importOriginal) => {
@@ -195,6 +201,7 @@ describe("streamSurveyImport", () => {
   beforeEach(() => {
     aiTimeoutEnv.multiplier = 1;
     vi.clearAllMocks();
+    openedUploads.length = 0;
     mocks.requireV3WorkspaceAccess.mockResolvedValue({
       organizationId: "org_1",
       workspaceId: body.workspaceId,
@@ -212,6 +219,64 @@ describe("streamSurveyImport", () => {
 
   afterEach(() => {
     vi.useRealTimers();
+  });
+
+  describe("the upload's thread", () => {
+    test.each([
+      ["the import runs", () => undefined, 200],
+      [
+        "the lane's rate limit refuses it",
+        () => mocks.applyRateLimit.mockRejectedValueOnce(new TooManyRequestsError("Rate limit exceeded", 30)),
+        429,
+      ],
+      [
+        "the AI gate refuses it",
+        () =>
+          mocks.assertOrganizationAIConfigured.mockRejectedValue(
+            new OperationNotAllowedError("ai_features_not_enabled")
+          ),
+        403,
+      ],
+      [
+        "the reader refuses the file",
+        () =>
+          mocks.prepareQsfImport.mockImplementationOnce(() => {
+            throw new SurveyImportInputError([{ name: "file", reason: "x" }], "Refused.");
+          }),
+        422,
+      ],
+      [
+        "the reader fails",
+        () =>
+          mocks.prepareQsfImport.mockImplementationOnce(() => {
+            throw new SyntaxError("broken reader");
+          }),
+        500,
+      ],
+    ])("ends when %s, so the next upload gets its turn", async (_label, arrange, status) => {
+      arrange();
+
+      const response = await call();
+      await response.text();
+
+      expect(response.status).toBe(status);
+      expect(openedUploads).toHaveLength(1);
+      expect(openedUploads[0].closed).toBe(true);
+    });
+
+    test("stops reading for a client that left, answers 499 and logs no failure", async () => {
+      const client = new AbortController();
+      mocks.applyRateLimit.mockImplementationOnce(async () => {
+        client.abort();
+      });
+
+      const response = await call(client.signal);
+
+      expect(response.status).toBe(499);
+      expect(mocks.prepareQsfImport).not.toHaveBeenCalled();
+      expect(mocks.log.error).not.toHaveBeenCalled();
+      expect(openedUploads[0].closed).toBe(true);
+    });
   });
 
   describe("before the stream opens", () => {

@@ -7,7 +7,7 @@ import { type TSurveyImportFile, sniffSurveyImportFile } from "./sniff";
  * Worker side of the upload's thread (`upload-thread.ts`). It sniffs the bytes it is sent and keeps
  * what it sniffed, then reads it for its lane when asked, so the parsed file stays in this thread and
  * only the lane's bounded read is posted back. Nothing here may load server code (the database, the
- * AI SDK, `server-only`): `upload-worker.test.ts` bundles this file and runs it in a real thread.
+ * AI SDK, `server-only`): `upload-thread.test.ts` bundles this file and runs it in a real thread.
  */
 
 export type TUploadWorkerRequest = { step: "sniff"; bytes: Uint8Array } | { step: "read"; fileName: string };
@@ -17,6 +17,8 @@ export interface TUploadWorkerFailure {
   name: string;
   message: string;
   stack?: string;
+  /** A Node error's code, which its stack's first line carries too. */
+  code?: string;
 }
 
 export type TUploadWorkerReply =
@@ -28,7 +30,8 @@ const toReply = (error: unknown): TUploadWorkerReply => {
   const refusal = toSurveyImportRefusal(error);
   if (refusal) return { ok: false, refusal };
   const { name, message, stack } = error instanceof Error ? error : new Error(String(error));
-  return { ok: false, failure: { name, message, stack } };
+  const { code } = error as { code?: unknown };
+  return { ok: false, failure: { name, message, stack, ...(typeof code === "string" ? { code } : {}) } };
 };
 
 export const serveSurveyImportUpload = (port: MessagePort): void => {

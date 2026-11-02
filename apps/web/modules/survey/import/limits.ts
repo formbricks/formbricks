@@ -1,4 +1,3 @@
-import { AI_DEFAULT_TIMEOUT_MS } from "@formbricks/types/ai-timeout";
 import { DEFAULT_REQUEST_BODY_LIMIT_BYTES } from "@/app/lib/api/request-body";
 
 /**
@@ -134,12 +133,18 @@ export const SURVEY_IMPORT_MAX_READ_THREADS = 1;
 
 /**
  * How long an upload's thread may take to tell the file's type and read it for its lane
- * (`core/upload-thread.ts`), each step on its own. Past it the file is refused with a 422. The thread
- * runs beside the server's, so this bounds what one upload costs the pod, not how long others wait. The
- * costliest file the upload's limits let through, 15 MiB of a million small objects as a Formbricks
- * file, takes about 1.7 s (2026-10-31).
+ * (`core/upload-thread.ts`), each step on its own. Past it the file is refused with a 422. One upload
+ * reads at a time, so this also bounds how long the next one waits. The costliest file the upload's
+ * limits let through, 15 MiB of a million small objects as a Formbricks file, takes about 1.7 s on a
+ * laptop (2026-10-31); a busy pod is slower.
  */
-export const SURVEY_IMPORT_READ_TIME_MS = 30_000;
+export const SURVEY_IMPORT_READ_TIME_MS = 15_000;
+
+/**
+ * The heap an upload's thread may grow to (`core/upload-thread.ts`, which says why it is this). A file
+ * that needs more ends the thread, not the server, and is refused with a 422.
+ */
+export const SURVEY_IMPORT_READ_HEAP_MB = 512;
 
 /** Imports one user runs at once on a server process, so one user cannot take every slot. */
 export const SURVEY_IMPORT_MAX_IN_FLIGHT_PER_USER = 1;
@@ -237,7 +242,7 @@ export const SURVEY_IMPORT_AI_CHUNK_OUTPUT_TOKENS = 1_400;
 export const SURVEY_IMPORT_AI_MAX_PARALLEL_CALLS = 4;
 
 /** One call's time budget, before `AI_TIMEOUT_MULTIPLIER`. */
-export const SURVEY_IMPORT_AI_CALL_TIMEOUT_MS = AI_DEFAULT_TIMEOUT_MS;
+export { AI_DEFAULT_TIMEOUT_MS as SURVEY_IMPORT_AI_CALL_TIMEOUT_MS } from "@formbricks/types/ai-timeout";
 
 /** Retries per call after the first attempt: the AI SDK's default `maxRetries` (`core/call-retry.ts`). */
 export const SURVEY_IMPORT_MAX_CALL_RETRIES = 2;

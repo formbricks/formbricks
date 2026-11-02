@@ -1,5 +1,8 @@
+import { rmSync } from "node:fs";
+import { dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 import { MessageChannel } from "node:worker_threads";
-import { beforeAll, describe, expect, test, vi } from "vitest";
+import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 import { FORMBRICKS_FILE_V1_SCHEMA_URL } from "@/modules/survey/formbricks-file/envelope";
 import { loadDocumentFixture } from "../document/__fixtures__/load-fixture";
 import { SURVEY_IMPORT_ZIP_MAX_ENTRIES } from "../limits";
@@ -10,13 +13,16 @@ import { zipOf } from "./__fixtures__/zip-builders";
 import { toSurveyImportRefusal } from "./errors";
 import { serveSurveyImportUpload } from "./upload-worker";
 
-const limits = vi.hoisted(() => ({ readTimeMs: 30_000 }));
+const limits = vi.hoisted(() => ({ readTimeMs: 15_000, heapMb: 512 }));
 
 vi.mock("server-only", () => ({}));
 vi.mock("../limits", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../limits")>()),
   get SURVEY_IMPORT_READ_TIME_MS() {
     return limits.readTimeMs;
+  },
+  get SURVEY_IMPORT_READ_HEAP_MB() {
+    return limits.heapMb;
   },
 }));
 
@@ -96,7 +102,24 @@ beforeAll(async () => {
   workerUrl = await bundleUploadWorker();
 }, 120_000);
 
-const open = (bytes: Uint8Array) => openSurveyImportUpload(bytes, { workerUrl });
+afterAll(() => {
+  rmSync(dirname(fileURLToPath(workerUrl)), { recursive: true, force: true });
+});
+
+const open = (bytes: Uint8Array, signal?: AbortSignal) =>
+  openSurveyImportUpload(bytes, { workerUrl, signal });
+
+const simpleQsf = () => encode(JSON.stringify(loadQsfFixture("simple.qsf")));
+
+/** Whether `promise` settles within `ms`. */
+const settlesWithin = (promise: Promise<unknown>, ms: number): Promise<boolean> =>
+  Promise.race([
+    promise.then(
+      () => true,
+      () => true
+    ),
+    new Promise<boolean>((resolve) => setTimeout(() => resolve(false), ms)),
+  ]);
 
 describe("openSurveyImportUpload: a file read in a thread of its own", () => {
   test.each([
@@ -145,19 +168,16 @@ describe("openSurveyImportUpload: a file read in a thread of its own", () => {
   });
 
   test("keeps this thread free while it reads the costliest JSON upload", async () => {
-    const bytes = millionObjects();
-    // The same file read on this thread holds it for hundreds of milliseconds (see the second check).
+    // The thread first, before the same read on this thread leaves a million dead objects to collect.
+    const stall = await longestStall(async () => (await open(millionObjects())).read("big.qsf"));
     const inThread = await longestStall(async () =>
       (await openSurveyImportUploadInProcess(millionObjects())).read("big.qsf")
     );
 
-    const stall = await longestStall(async () => (await open(bytes)).read("big.qsf"));
-
-    expect(inThread).toBeGreaterThan(200);
-    expect(stall).toBeLessThan(100);
+    expect(stall).toBeLessThan(inThread / 4);
   }, 60_000);
 
-  test("refuses a file its thread takes too long to read, and ends the thread", async () => {
+  test("refuses a file its thread takes too long to read, and hands the turn on", async () => {
     limits.readTimeMs = 20;
     try {
       const refusal = await refusalOf(() => open(millionObjects()));
@@ -170,8 +190,56 @@ describe("openSurveyImportUpload: a file read in a thread of its own", () => {
         ],
       });
     } finally {
-      limits.readTimeMs = 30_000;
+      limits.readTimeMs = 15_000;
     }
+    const next = await open(simpleQsf());
+    next.close();
+  }, 60_000);
+
+  test("refuses a file that needs more than the thread's heap, and the server's thread carries on", async () => {
+    limits.heapMb = 64;
+    try {
+      const refusal = await refusalOf(() => open(millionObjects()));
+
+      expect(refusal?.invalidParams).toEqual([
+        expect.objectContaining({ code: "file_limit_exceeded", identifier: "read_memory" }),
+      ]);
+    } finally {
+      limits.heapMb = 512;
+    }
+    const next = await open(simpleQsf());
+    expect(next.type).toBe("qsf");
+    next.close();
+  }, 60_000);
+
+  test("lets a client that leaves while it waits for its turn out of the queue", async () => {
+    const first = await open(simpleQsf());
+    const client = new AbortController();
+    const waiting = open(simpleQsf(), client.signal);
+    const behind = open(simpleQsf());
+
+    client.abort();
+    await expect(waiting).rejects.toMatchObject({ name: "AbortError" });
+
+    first.close();
+    expect(await settlesWithin(behind, 5_000)).toBe(true);
+    (await behind).close();
+  });
+
+  test("stops reading for a client that leaves, and hands the turn on", async () => {
+    const client = new AbortController();
+    const upload = await open(millionObjects(), client.signal);
+
+    const read = upload.read("big.qsf");
+    client.abort();
+
+    await expect(read).rejects.toMatchObject({ name: "AbortError" });
+    expect(
+      await settlesWithin(
+        open(simpleQsf()).then((next) => next.close()),
+        5_000
+      )
+    ).toBe(true);
   }, 60_000);
 
   test("reads once, and ends the thread with the read", async () => {
