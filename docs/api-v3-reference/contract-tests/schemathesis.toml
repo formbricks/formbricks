@@ -32,3 +32,11 @@ fill-missing = true
 [[operations]]
 include-tag = "V3 Feedback Records"
 enabled = false
+
+# Chart data, chart preview and field values query Cube, and this job runs no Cube, so with a licence
+# that grants Dashboards they answer their documented 502. `not_a_server_error` would flag that, so it
+# is off for these three only; status-code, content-type and response-schema conformance still check
+# the 502 against the spec. Without Dashboards they answer the documented 403 before reaching Cube.
+[[operations]]
+include-operation-id = ["getChartDataV3", "previewChartV3", "listChartFieldValuesV3"]
+checks.not_a_server_error.enabled = false
