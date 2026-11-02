@@ -117,7 +117,12 @@ export const beginEmailSendAudit = async (
     auditGap = true;
     await reportGap(id, "ledger_create");
   }
+  if (!rowCreated) {
+    emitMetadata(id, emailType, context, "prepared", auditGap);
+    return { id, rowCreated, auditGap };
+  }
 
+  let snapshotStored = false;
   try {
     const saved = await putEmailAuditSnapshot(
       EMAIL_SEND_AUDIT_BUCKET!,
@@ -125,28 +130,30 @@ export const beginEmailSendAudit = async (
       id,
       snapshot
     );
-    if (rowCreated) {
-      const updated = await prisma.outboundEmailAudit.updateMany({
-        where: { id, erasedAt: null },
-        data: { snapshotKey: saved.key, snapshotSha256: saved.sha256 },
-      });
-      if (updated.count === 0) {
-        // An erasure finished while S3 was writing. Do not recreate content for the erased row.
-        await deleteEmailAuditSnapshot(EMAIL_SEND_AUDIT_BUCKET!, id);
-      }
-    } else {
-      await reportGap(id, "orphan_snapshot");
+    snapshotStored = true;
+    const updated = await prisma.outboundEmailAudit.updateMany({
+      where: { id, erasedAt: null },
+      data: { snapshotKey: saved.key, snapshotSha256: saved.sha256 },
+    });
+    if (updated.count === 0) {
+      // An erasure finished while S3 was writing. Do not recreate content for the erased row.
       await deleteEmailAuditSnapshot(EMAIL_SEND_AUDIT_BUCKET!, id);
+      snapshotStored = false;
     }
   } catch {
     auditGap = true;
     await reportGap(id, "snapshot_write");
-    if (rowCreated) {
+    if (snapshotStored) {
       try {
-        await prisma.outboundEmailAudit.update({ where: { id }, data: { auditGap: true } });
+        await deleteEmailAuditSnapshot(EMAIL_SEND_AUDIT_BUCKET!, id);
       } catch {
-        await reportGap(id, "ledger_gap_update");
+        await reportEmailAuditFailure("email_audit_content_delete_failed", { auditId: id });
       }
+    }
+    try {
+      await prisma.outboundEmailAudit.update({ where: { id }, data: { auditGap: true } });
+    } catch {
+      await reportGap(id, "ledger_gap_update");
     }
   }
   emitMetadata(id, emailType, context, "prepared", auditGap);

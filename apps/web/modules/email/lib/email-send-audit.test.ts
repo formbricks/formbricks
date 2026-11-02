@@ -96,15 +96,21 @@ describe("outbound email audit", () => {
     );
   });
 
-  test("continues with an explicit gap when the ledger or snapshot fails", async () => {
+  test("continues with an explicit gap and no content copy when the ledger fails", async () => {
     mocks.create.mockRejectedValueOnce(new Error("database unavailable"));
-    mocks.putSnapshot.mockRejectedValueOnce(new Error("object store unavailable"));
     const state = await beginEmailSendAudit("invite", "person@example.com", snapshot, context);
     expect(state).toMatchObject({ rowCreated: false, auditGap: true });
+    expect(mocks.putSnapshot).not.toHaveBeenCalled();
     expect(mocks.reportFailure).toHaveBeenCalledWith("email_audit_gap", {
       auditId: state?.id,
       phase: "ledger_create",
     });
+  });
+
+  test("continues with an explicit gap when the content store fails", async () => {
+    mocks.putSnapshot.mockRejectedValueOnce(new Error("object store unavailable"));
+    const state = await beginEmailSendAudit("invite", "person@example.com", snapshot, context);
+    expect(state).toMatchObject({ rowCreated: true, auditGap: true });
     expect(mocks.reportFailure).toHaveBeenCalledWith("email_audit_gap", {
       auditId: state?.id,
       phase: "snapshot_write",
@@ -118,6 +124,16 @@ describe("outbound email audit", () => {
     expect(mocks.updateMany).toHaveBeenCalledWith({
       where: { id: state?.id, erasedAt: null },
       data: { snapshotKey: "email-audit/test.json", snapshotSha256: "digest" },
+    });
+  });
+
+  test("deletes an unindexed snapshot when linking it to the ledger fails", async () => {
+    mocks.updateMany.mockRejectedValueOnce(new Error("ledger unavailable"));
+    const state = await beginEmailSendAudit("invite", "person@example.com", snapshot, context);
+    expect(mocks.deleteSnapshot).toHaveBeenCalledWith("private-test-bucket", state?.id);
+    expect(mocks.reportFailure).toHaveBeenCalledWith("email_audit_gap", {
+      auditId: state?.id,
+      phase: "snapshot_write",
     });
   });
 
