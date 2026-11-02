@@ -30,6 +30,10 @@ export const exampleData = {
     // No props needed
   },
 
+  accountDeletedEmail: {
+    // No props needed
+  },
+
   ssoRecoveryFactorsRemovedEmail: {
     passwordRemoved: true,
     twoFactorRemoved: true,

@@ -9,6 +9,7 @@ import {
   Tailwind,
   Text,
   render,
+  renderAccountDeletedEmail,
   renderAccountDeletionEmail,
   renderEmailCustomizationPreviewEmail,
   renderEmbedSurveyPreviewEmail,
@@ -62,6 +63,7 @@ const renderers: [string, () => Promise<string>][] = [
     () => renderNewEmailVerification({ ...exampleData.newEmailVerification, ...legal, t }),
   ],
   ["renderPasswordResetNotifyEmail", () => renderPasswordResetNotifyEmail({ ...legal, t })],
+  ["renderAccountDeletedEmail", () => renderAccountDeletedEmail({ ...legal, t })],
   [
     "renderSsoRecoveryFactorsRemovedEmail",
     () =>

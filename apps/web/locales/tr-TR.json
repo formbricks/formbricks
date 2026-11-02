@@ -700,6 +700,10 @@
   },
   "emails": {
     "accept": "Kabul Et",
+    "account_deleted_email_did_not_request": "Hesabını sen silmediysen lütfen hemen destek ekibiyle iletişime geç.",
+    "account_deleted_email_heading": "Hesabın silindi",
+    "account_deleted_email_subject": "Formbricks hesabın silindi",
+    "account_deleted_email_text": "Formbricks hesabın kalıcı olarak silindi.",
     "click_or_drag_to_upload_files": "Dosya yüklemek için tıklayın veya sürükleyin.",
     "click_to_sign": "İmzalamak için tıkla.",
     "delete_account_email_confirm_deletion": "Hesap silmeyi onayla",

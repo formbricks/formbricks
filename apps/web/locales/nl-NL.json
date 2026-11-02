@@ -700,6 +700,10 @@
   },
   "emails": {
     "accept": "Accepteren",
+    "account_deleted_email_did_not_request": "Heb je je account niet zelf verwijderd? Neem dan direct contact op met de support.",
+    "account_deleted_email_heading": "Je account is verwijderd",
+    "account_deleted_email_subject": "Je Formbricks-account is verwijderd",
+    "account_deleted_email_text": "Je Formbricks-account is definitief verwijderd.",
     "click_or_drag_to_upload_files": "Klik of sleep om bestanden te uploaden.",
     "click_to_sign": "Klik om te ondertekenen.",
     "delete_account_email_confirm_deletion": "Accountverwijdering bevestigen",
