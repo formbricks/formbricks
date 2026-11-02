@@ -126,6 +126,27 @@ describe("withAuthRequestBodyLimit", () => {
     expect(handler).not.toHaveBeenCalled();
   });
 
+  // Fetch's formData() reads the last media type in such a list and better-call matches by substring, so
+  // the guard cannot tell how the body would be parsed; it is refused unread.
+  test.each([
+    "text/plain, application/x-www-form-urlencoded",
+    "application/x-www-form-urlencoded; a=b, multipart/form-data; boundary=x",
+    "x/application/x-www-form-urlencoded, multipart/form-data; boundary=x",
+  ])("answers 415 to a Content-Type listing several media types: %s", async (contentType) => {
+    const handler = vi.fn(ok);
+    const request = new Request("http://localhost/api/auth/oauth2/authorize", {
+      method: "POST",
+      headers: { "content-type": contentType },
+      body: "a=1",
+    });
+
+    const response = await withAuthRequestBodyLimit(handler)(request);
+
+    expect(response.status).toBe(415);
+    expect(await response.json()).toMatchObject({ error: "invalid_request", code: "UNSUPPORTED_MEDIA_TYPE" });
+    expect(handler).not.toHaveBeenCalled();
+  });
+
   test("answers a dynamic client registration with RFC 7591's error code", async () => {
     const handler = vi.fn(ok);
     const request = new Request("http://localhost/api/auth/oauth2/register", {

@@ -184,6 +184,33 @@ describe("/api/auth route surface", () => {
     expect(jacksonMock).not.toHaveBeenCalled();
   });
 
+  test.each([
+    ["./[...all]/route.ts", "oauth2/authorize"],
+    ["./saml/token/route.ts", "saml/token"],
+  ])("%s refuses a Content-Type listing several media types before any handler", async (file, path) => {
+    const { POST } = (await loadRoute(file)) as { POST: (request: Request) => Promise<Response> };
+    const fields = Array.from({ length: AUTH_REQUEST_MAX_ENTRIES + 1 }, (_, index) => `k${index}=1`).join(
+      "&"
+    );
+
+    for (const contentType of [
+      "text/plain, application/x-www-form-urlencoded",
+      "application/x-www-form-urlencoded; a=b, multipart/form-data; boundary=x",
+    ]) {
+      const response = await POST(
+        new Request(`http://localhost/api/auth/${path}`, {
+          method: "POST",
+          headers: { "content-type": contentType },
+          body: fields,
+        })
+      );
+
+      expect(response.status).toBe(415);
+    }
+    expect(handlerCalls).not.toHaveBeenCalled();
+    expect(jacksonMock).not.toHaveBeenCalled();
+  });
+
   describe("the SAML callback, at the same boundary", () => {
     const callback = (bytes: number) =>
       new Request("http://localhost/api/auth/saml/callback", {

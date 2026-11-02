@@ -33,8 +33,9 @@ export const isJsonContentType = (contentType: string | null): boolean =>
 export const mediaTypeOf = (contentType: string | null): string =>
   (contentType ?? "").split(";")[0].trim().toLowerCase();
 
-// better-call parses a body as a form when its media type is this one: `getBody` reads it with
-// `formData()`, which takes no other, and its allow-list refuses a form type named only in a parameter.
+// Whether a body is read as a form. `withAuthRequestBodyLimit` refuses a `Content-Type` that lists more
+// than one media type, so the header names one, and its media type decides: `formData()` reads a form
+// only under this exact type, and better-call's allow-list refuses one named only in a parameter.
 export const isFormContentType = (contentType: string | null): boolean =>
   mediaTypeOf(contentType) === "application/x-www-form-urlencoded";
 

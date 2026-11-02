@@ -59,6 +59,17 @@ const tooManyEntriesResponse = (request: Request): Response =>
     `Request lists, objects and parameter sets must not hold more than ${AUTH_REQUEST_MAX_ENTRIES} entries`
   );
 
+// A `Content-Type` listing several media types: Fetch's `formData()` reads the last valid one, while
+// better-call picks its parser by substring, so the guard could not know which way the body is read.
+// No client sends one, so it is refused rather than guessed at.
+const multipleMediaTypesResponse = (): Response =>
+  errorResponse(
+    415,
+    "invalid_request",
+    "UNSUPPORTED_MEDIA_TYPE",
+    "Content-Type must name a single media type"
+  );
+
 /**
  * The bytes were already read, so hand the handler a request that carries them. A `NextRequest` stays
  * one: a handler that reads `nextUrl` or cookies must not find a bare `Request` where it expected one.
@@ -94,11 +105,11 @@ const isClientAbort = (request: Request, error: unknown): boolean =>
  * can buffer more than {@link AUTH_REQUEST_BODY_LIMIT_BYTES}. A query string or body holding a collection
  * over {@link AUTH_REQUEST_MAX_ENTRIES} entries is answered `400` before any schema sees it
  * (auth-request-bounds.ts); the body is checked from the same read. A request with no body — every GET —
- * has only its query checked, and is otherwise handed over untouched, identity included. Anything over the
- * limit is answered `413` and the stream is cancelled, whether it declared its size, understated it, or
- * carried no `Content-Length` at all. A client
- * that disconnects mid-upload gets a bare `400` nobody reads, rather than a route error for every abandoned
- * anonymous request.
+ * has only its query checked, and is otherwise handed over untouched, identity included. A body whose
+ * `Content-Type` lists more than one media type is answered `415` unread. Anything over the limit is
+ * answered `413` and the stream is cancelled, whether it declared its size, understated it, or carried no
+ * `Content-Length` at all. A client that disconnects mid-upload gets a bare `400` nobody reads, rather than
+ * a route error for every abandoned anonymous request.
  */
 export const withAuthRequestBodyLimit = <Args extends unknown[], R extends Request>(
   handler: (request: R, ...args: Args) => Response | Promise<Response>
@@ -108,6 +119,8 @@ export const withAuthRequestBodyLimit = <Args extends unknown[], R extends Reque
       if (exceedsAuthRequestBounds(request.url, null, undefined)) return tooManyEntriesResponse(request);
       return handler(request, ...args);
     }
+
+    if (request.headers.get("content-type")?.includes(",")) return multipleMediaTypesResponse();
 
     let body: Uint8Array;
     try {
