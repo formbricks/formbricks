@@ -345,11 +345,11 @@
               "self-hosting/upgrade/rehearse",
               "self-hosting/upgrade/kubernetes",
               "self-hosting/upgrade/docker",
-              "self-hosting/advanced/migration",
               "self-hosting/upgrade/troubleshooting",
               {
-                "group": "Version-specific steps",
+                "group": "Upgrade by version",
                 "pages": [
+                  "self-hosting/advanced/migration",
                   {
                     "group": "6.x",
                     "pages": [

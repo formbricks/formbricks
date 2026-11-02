@@ -1,6 +1,6 @@
 {
   "checks": {
-    "anchors": "295 public MDX parsed with Mintlify heading generation; 274 fragment links; seven punctuation-related static discrepancies verified in browser; zero unresolved",
+    "anchors": "295 public MDX parsed with Mintlify heading generation; 270 fragment links; seven previously verified punctuation-related static discrepancies; zero new unresolved links",
     "build": "passed: cd docs && NODE_USE_ENV_PROXY=1 npx mint@4.2.1126 validate",
     "formatting": "passed for changed JSON; MDX follows repository formatter exclusions",
     "isolated_failure": "lib/utils/validate-webhook-url.toctou.test.ts:36 times out at 5000ms fetching a reserved .invalid hostname; reproduced in isolation. Source unchanged by this PR.",
@@ -688,6 +688,16 @@
     "review_corrections": "Added 5.3.5 and 5.4.6 discovery and completed the 6.0.3 checklist link, retaining review-required release evidence. Confirmed the Valkey boundary from 5.3.5 versus 5.4.0 Compose and Helm values; documented Formbricks 5.4.0 introduction.",
     "runtime": "Presentation/navigation change; no new runtime upgrade claims or deployment rehearsal.",
     "scope": "Version-first titles, release-line patch indexes, shared backport procedures, applicability statements and authoring rules. Existing URLs, redirects and heading anchors preserved.",
+    "screenshots": [
+      "review/screenshots/release-version-navigation.png",
+      "review/screenshots/release-version-mobile.png"
+    ]
+  },
+  "upgrade_navigation": {
+    "date": "2026-11-02",
+    "links": "Existing migration URL, all 145 explicit anchors and ten previous heading anchors preserved and checked in the browser. Mintlify validation and broken-links passed.",
+    "preview": "Desktop and mobile rendered; followed a detailed guide from the directory and returned through the All versions sidebar link. No horizontal overflow.",
+    "scope": "One Upgrade by version group; All versions is its first page. The directory mirrors all 34 guide routes and release groups in the sidebar.",
     "screenshots": [
       "review/screenshots/release-version-navigation.png",
       "review/screenshots/release-version-mobile.png"
