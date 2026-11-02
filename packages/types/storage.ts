@@ -136,15 +136,23 @@ export const ZUploadFileConfig = z.object({
 
 export type TUploadFileConfig = z.infer<typeof ZUploadFileConfig>;
 
+/**
+ * Most entries an upload request's extension list may carry. The list is the element's own, picked from
+ * the allowed set, but the survey schema does not make it unique, so a saved list can repeat entries:
+ * the cap leaves room for that while keeping the list bounded.
+ */
+export const MAX_ALLOWED_FILE_EXTENSIONS_PER_REQUEST = 100;
+
+const ZAllowedFileExtensionsInput = z
+  .array(ZAllowedFileExtension)
+  .max(MAX_ALLOWED_FILE_EXTENSIONS_PER_REQUEST)
+  .optional();
+
 export const ZUploadPrivateFileRequest = z
   .object({
     fileName: z.string().trim().min(1),
     fileType: z.string().trim().min(1),
-    // The element's extension list, picked from the allowed set — so never longer than that set.
-    allowedFileExtensions: z
-      .array(ZAllowedFileExtension)
-      .max(ALLOWED_FILE_EXTENSIONS_TUPLE.length)
-      .optional(),
+    allowedFileExtensions: ZAllowedFileExtensionsInput,
     surveyId: z.cuid2(),
     elementId: z
       .string()
@@ -192,7 +200,7 @@ export const ZUploadPublicFileRequest = z
     fileName: z.string().trim().min(1),
     fileType: z.string().trim().min(1),
     workspaceId: z.cuid2(),
-    allowedFileExtensions: z.array(ZAllowedFileExtension).optional(),
+    allowedFileExtensions: ZAllowedFileExtensionsInput,
   })
   .superRefine((data, ctx) => {
     refineFileUploadInput({
