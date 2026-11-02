@@ -16,9 +16,10 @@ const loadReplay = async () => {
 };
 
 /**
- * Adds Session Replay after the page goes idle rather than at init, keeping it out of first-load JS.
- * The replay sample rates stay on `Sentry.init`: the integration reads them from the client options
- * when it is added. Errors thrown before it loads are still captured, only without a replay.
+ * Adds Session Replay once the page has loaded and gone idle rather than at init, keeping it out of
+ * first-load JS. The replay sample rates stay on `Sentry.init`: the integration reads them from the
+ * client options when it is added. Errors thrown before it loads are still captured, only without a
+ * replay.
  */
 const scheduleReplay = () => {
   const load = () => {
@@ -27,11 +28,21 @@ const scheduleReplay = () => {
     loadReplay().catch(() => undefined);
   };
 
-  if (typeof window.requestIdleCallback === "function") {
-    window.requestIdleCallback(load, { timeout: REPLAY_IDLE_TIMEOUT_MS });
+  const loadWhenIdle = () => {
+    if (typeof window.requestIdleCallback === "function") {
+      window.requestIdleCallback(load, { timeout: REPLAY_IDLE_TIMEOUT_MS });
+    } else {
+      // Safari has no requestIdleCallback.
+      setTimeout(load, 0);
+    }
+  };
+
+  // This runs before hydration. Waiting for `load` keeps the Replay download behind first-load JS
+  // even where idle comes early: Safari's timeout fallback, or an idle gap mid-load elsewhere.
+  if (document.readyState === "complete") {
+    loadWhenIdle();
   } else {
-    // Safari has no requestIdleCallback.
-    setTimeout(load, 0);
+    window.addEventListener("load", loadWhenIdle, { once: true });
   }
 };
 

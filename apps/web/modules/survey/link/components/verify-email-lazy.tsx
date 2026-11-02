@@ -6,7 +6,8 @@ import dynamic from "next/dynamic";
 // Server Component, and a Client Component it imports statically ships in every link survey's
 // first-load JS. Loading it through `next/dynamic` from this client boundary moves it — with the
 // HTML parser `getTextContent` brings — into a chunk fetched only when the gate actually renders.
-// It still renders on the server, so the gate shows without a loading flash.
+// The cost is one round trip on email-gated surveys: the root `I18nProvider` renders nothing until
+// its locale has loaded, on the server too, so the chunk is requested only after that.
 export const VerifyEmail = dynamic(() =>
   import("@/modules/survey/link/components/verify-email").then((module) => module.VerifyEmail)
 );

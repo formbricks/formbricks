@@ -23,6 +23,8 @@ describe("initClientSentryFromRuntimeConfig", () => {
     vi.resetModules();
     vi.clearAllMocks();
     vi.stubGlobal("window", {} as Window);
+    // An already-loaded page unless a test says otherwise.
+    vi.stubGlobal("document", { readyState: "complete" });
   });
 
   afterEach(() => {
@@ -105,7 +107,7 @@ describe("initClientSentryFromRuntimeConfig", () => {
 
     (await importInit())();
 
-    expect(mockInit.mock.calls[0][0].integrations).toBeUndefined();
+    expect(mockReplayIntegration).not.toHaveBeenCalled();
     expect(mockAddIntegration).not.toHaveBeenCalled();
 
     runIdle();
@@ -118,6 +120,30 @@ describe("initClientSentryFromRuntimeConfig", () => {
     window[SENTRY_CLIENT_RUNTIME_CONFIG_KEY] = CONFIG;
 
     (await importInit())();
+
+    await vi.waitFor(() => expect(mockAddIntegration).toHaveBeenCalledWith({ name: "Replay" }));
+  });
+
+  test("waits for the page's load event before scheduling Replay", async () => {
+    vi.stubGlobal("document", { readyState: "loading" });
+    let fireLoad = () => {};
+    window.addEventListener = vi.fn((_type: string, listener: EventListenerOrEventListenerObject) => {
+      fireLoad = () => (listener as EventListener)(new Event("load"));
+    }) as Window["addEventListener"];
+    window.requestIdleCallback = vi.fn((callback: IdleRequestCallback) => {
+      callback({} as IdleDeadline);
+      return 1;
+    });
+    window[SENTRY_CLIENT_RUNTIME_CONFIG_KEY] = CONFIG;
+
+    (await importInit())();
+
+    // Safari has no requestIdleCallback and other browsers can go idle mid-load: neither may start
+    // the Replay download while first-load JS is still arriving.
+    expect(window.addEventListener).toHaveBeenCalledWith("load", expect.any(Function), { once: true });
+    expect(window.requestIdleCallback).not.toHaveBeenCalled();
+
+    fireLoad();
 
     await vi.waitFor(() => expect(mockAddIntegration).toHaveBeenCalledWith({ name: "Replay" }));
   });
