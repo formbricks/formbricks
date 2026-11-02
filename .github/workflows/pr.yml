@@ -74,9 +74,7 @@ jobs:
         run: bash authzed/validate.sh
 
   # Agent session and conversation links in commit messages (AGENTS.md; this repo is public). The
-  # commit-msg hook catches them locally; this catches hooks-off commits. The PR body is checked by
-  # pr-body-agent-links.yml instead, which re-runs on edits: tools append session footers when they open a
-  # PR, and a body fixed by an edit has to be able to turn the check green without a push.
+  # commit-msg hook catches them locally; this catches hooks-off commits.
   # Runs on every event so `required` never sees it skipped; only pull_request has commits to read.
   agent-links:
     name: Check Agent Session Links in Commits
