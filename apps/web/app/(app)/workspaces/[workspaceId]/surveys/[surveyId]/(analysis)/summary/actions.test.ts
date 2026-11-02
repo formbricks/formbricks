@@ -82,16 +82,16 @@ test("attributes a survey preview email to its initiator, survey, and organizati
     parsedInput: { surveyId: "survey1" },
   });
 
-  expect(mocks.sendEmbedSurveyPreviewEmail).toHaveBeenCalledWith(
-    "test@example.com",
-    "<p>Preview</p>",
-    "ws1",
-    "en-US",
-    "user1",
-    "https://example.com/logo.png",
-    "survey1",
-    "org1"
-  );
+  expect(mocks.sendEmbedSurveyPreviewEmail).toHaveBeenCalledWith({
+    to: "test@example.com",
+    innerHtml: "<p>Preview</p>",
+    workspaceId: "ws1",
+    locale: "en-US",
+    actorUserId: "user1",
+    logoUrl: "https://example.com/logo.png",
+    surveyId: "survey1",
+    organizationId: "org1",
+  });
 });
 
 describe("resetSurveyAction", () => {

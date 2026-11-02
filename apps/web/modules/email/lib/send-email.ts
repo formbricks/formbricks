@@ -72,6 +72,32 @@ const safeSmtpErrorCodes = new Set([
   "ETLS",
 ]);
 
+const getSafeSmtpErrorCode = (error: unknown): string => {
+  const code = error && typeof error === "object" && "code" in error ? error.code : undefined;
+  return typeof code === "string" && safeSmtpErrorCodes.has(code) ? code : "unknown";
+};
+
+const getTransportOptions = (): SMTPTransport.Options => ({
+  host: SMTP_HOST,
+  port: Number.parseInt(SMTP_PORT ?? "", 10),
+  secure: SMTP_SECURE_ENABLED,
+  ...(SMTP_AUTHENTICATED ? { auth: { type: "LOGIN", user: SMTP_USER, pass: SMTP_PASSWORD } } : {}),
+  tls: { rejectUnauthorized: SMTP_REJECT_UNAUTHORIZED_TLS },
+  // SMTP debug output can include message content. Audited sends keep it out of ordinary logs.
+  logger: DEBUG && !EMAIL_SEND_AUDIT_ENABLED,
+  debug: DEBUG && !EMAIL_SEND_AUDIT_ENABLED,
+});
+
+const getSesHeaders = (emailType: TEmailType) =>
+  SES_CONFIGURATION_SET && SES_EMAIL_ENVIRONMENT
+    ? {
+        headers: {
+          "X-SES-CONFIGURATION-SET": SES_CONFIGURATION_SET,
+          "X-SES-MESSAGE-TAGS": `email_type=${emailType}, environment=${SES_EMAIL_ENVIRONMENT}`,
+        },
+      }
+    : {};
+
 /**
  * One plain address, read the way nodemailer will read it: no list, no group, no display name, no angle
  * brackets. Parsed rather than matched against an address regex, so a valid internationalized address still
@@ -137,40 +163,13 @@ export const sendEmail = async ({
   }
   let sendInfo: unknown;
   try {
-    const transportOptions: SMTPTransport.Options = {
-      host: SMTP_HOST,
-      port: Number.parseInt(SMTP_PORT ?? "", 10),
-      secure: SMTP_SECURE_ENABLED,
-      ...(SMTP_AUTHENTICATED
-        ? {
-            auth: {
-              type: "LOGIN",
-              user: SMTP_USER,
-              pass: SMTP_PASSWORD,
-            },
-          }
-        : {}),
-      tls: {
-        rejectUnauthorized: SMTP_REJECT_UNAUTHORIZED_TLS,
-      },
-      // SMTP debug output can include message content. Audited sends keep it out of ordinary logs.
-      logger: DEBUG && !EMAIL_SEND_AUDIT_ENABLED,
-      debug: DEBUG && !EMAIL_SEND_AUDIT_ENABLED,
-    };
-    const transporter = createTransport(transportOptions);
+    const transporter = createTransport(getTransportOptions());
 
     const defaultFrom = `${MAIL_FROM_NAME ?? "Formbricks"} <${MAIL_FROM ?? "noreply@formbricks.com"}>`;
     sendInfo = await transporter.sendMail({
       ...emailData,
       from: emailData.from ?? defaultFrom,
-      ...(SES_CONFIGURATION_SET && SES_EMAIL_ENVIRONMENT
-        ? {
-            headers: {
-              "X-SES-CONFIGURATION-SET": SES_CONFIGURATION_SET,
-              "X-SES-MESSAGE-TAGS": `email_type=${emailType}, environment=${SES_EMAIL_ENVIRONMENT}`,
-            },
-          }
-        : {}),
+      ...getSesHeaders(emailType),
     });
   } catch (error) {
     try {
@@ -178,12 +177,11 @@ export const sendEmail = async ({
     } catch {
       await reportEmailAuditFailure("email_audit_gap", { phase: "unhandled_finish" });
     }
-    const errorCode = error && typeof error === "object" && "code" in error ? error.code : undefined;
     logger.error(
       {
         emailType,
         event: "email_send_failed",
-        errorCode: typeof errorCode === "string" && safeSmtpErrorCodes.has(errorCode) ? errorCode : "unknown",
+        errorCode: getSafeSmtpErrorCode(error),
       },
       "Error in sendEmail"
     );

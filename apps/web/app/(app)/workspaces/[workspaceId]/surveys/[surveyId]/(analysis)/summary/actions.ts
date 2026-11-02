@@ -51,16 +51,16 @@ export const sendEmbedSurveyPreviewEmailAction = authenticatedActionClient
       .replaceAll("?preview=true&;", "?")
       .replaceAll("?preview=true", "");
 
-    return await sendEmbedSurveyPreviewEmail(
-      ctx.user.email,
-      emailHtml,
-      survey.workspaceId,
-      ctx.user.locale,
-      ctx.user.id,
-      organizationLogoUrl || "",
-      survey.id,
-      organizationId
-    );
+    return await sendEmbedSurveyPreviewEmail({
+      to: ctx.user.email,
+      innerHtml: emailHtml,
+      workspaceId: survey.workspaceId,
+      locale: ctx.user.locale,
+      actorUserId: ctx.user.id,
+      logoUrl: organizationLogoUrl || "",
+      surveyId: survey.id,
+      organizationId,
+    });
   });
 
 const ZResetSurveyAction = z.object({

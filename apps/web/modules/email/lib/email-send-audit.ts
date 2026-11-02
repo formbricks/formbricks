@@ -164,12 +164,12 @@ export const beginEmailSendAudit = async (
 export const sesMessageHashFromSendInfo = (sendInfo: unknown): string | undefined => {
   if (!sendInfo || typeof sendInfo !== "object") return;
   const info = sendInfo as Record<string, unknown>;
-  const serverId =
-    typeof info.serverMessageId === "string"
-      ? info.serverMessageId
-      : typeof info.response === "string"
-        ? /\b250\s+Ok\s+([A-Za-z0-9_-]+)\b/i.exec(info.response)?.[1]
-        : undefined;
+  let serverId: string | undefined;
+  if (typeof info.serverMessageId === "string") {
+    serverId = info.serverMessageId;
+  } else if (typeof info.response === "string") {
+    serverId = /\b250\s+Ok\s+([a-z0-9_-]+)\b/i.exec(info.response)?.[1];
+  }
   return serverId ? createHash("sha256").update(serverId).digest("hex") : undefined;
 };
 

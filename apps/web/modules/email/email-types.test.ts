@@ -122,7 +122,17 @@ const senders: [string, () => Promise<unknown>][] = [
       }),
   ],
   ["response_notification", () => sendResponseFinishedEmail(email, locale, "workspace", survey, response, 1)],
-  ["survey_preview", () => sendEmbedSurveyPreviewEmail(email, "html", "workspace", locale, "user")],
+  [
+    "survey_preview",
+    () =>
+      sendEmbedSurveyPreviewEmail({
+        to: email,
+        innerHtml: "html",
+        workspaceId: "workspace",
+        locale,
+        actorUserId: "user",
+      }),
+  ],
   ["customization_preview", () => sendEmailCustomizationPreviewEmail(email, "User", locale, "user")],
   [
     "verified_survey_link",

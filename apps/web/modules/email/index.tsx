@@ -503,16 +503,25 @@ export const sendResponseFinishedEmail = async (
   });
 };
 
-export const sendEmbedSurveyPreviewEmail = async (
-  to: string,
-  innerHtml: string,
-  workspaceId: string,
-  locale: TUserLocale,
-  actorUserId: string,
-  logoUrl?: string,
-  surveyId?: string,
-  organizationId?: string
-): Promise<boolean> => {
+export const sendEmbedSurveyPreviewEmail = async ({
+  to,
+  innerHtml,
+  workspaceId,
+  locale,
+  actorUserId,
+  logoUrl,
+  surveyId,
+  organizationId,
+}: Readonly<{
+  to: string;
+  innerHtml: string;
+  workspaceId: string;
+  locale: TUserLocale;
+  actorUserId: string;
+  logoUrl?: string;
+  surveyId?: string;
+  organizationId?: string;
+}>): Promise<boolean> => {
   const t = await getTranslate(locale);
   // Resolve relative storage URLs to absolute URLs for email rendering
   const resolvedLogoUrl = logoUrl ? resolveStorageUrl(logoUrl) : undefined;

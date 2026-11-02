@@ -8,6 +8,18 @@ import { deleteEmailAuditSnapshot, getEmailAuditRecipientMac } from "./email-aud
 
 const batchSize = 100;
 
+const getRecipientMacForErasure = async (email: string): Promise<string | undefined> => {
+  if (!EMAIL_SEND_AUDIT_HMAC_KEY_ARN) {
+    await reportEmailAuditFailure("email_audit_erasure_request_failed", { phase: "recipient_hmac_config" });
+    return;
+  }
+  try {
+    return await getEmailAuditRecipientMac(email, EMAIL_SEND_AUDIT_HMAC_KEY_ARN);
+  } catch {
+    await reportEmailAuditFailure("email_audit_erasure_request_failed", { phase: "recipient_hmac" });
+  }
+};
+
 /** Called after a customer-data deletion; the maintenance job retries object erasure until it succeeds. */
 export const requestEmailAuditErasure = async (scope: {
   organizationId?: string;
@@ -20,18 +32,7 @@ export const requestEmailAuditErasure = async (scope: {
   // The audit store is intentionally absent from KSA and self-hosted deployments.
   // EU rollback keeps the bucket configuration while disabling new writes.
   if (!EMAIL_SEND_AUDIT_BUCKET) return;
-  let recipientMac: string | undefined;
-  if (scope.email) {
-    if (!EMAIL_SEND_AUDIT_HMAC_KEY_ARN) {
-      await reportEmailAuditFailure("email_audit_erasure_request_failed", { phase: "recipient_hmac_config" });
-    } else {
-      try {
-        recipientMac = await getEmailAuditRecipientMac(scope.email, EMAIL_SEND_AUDIT_HMAC_KEY_ARN);
-      } catch {
-        await reportEmailAuditFailure("email_audit_erasure_request_failed", { phase: "recipient_hmac" });
-      }
-    }
-  }
+  const recipientMac = scope.email ? await getRecipientMacForErasure(scope.email) : undefined;
   const conditions = [
     scope.organizationId ? { organizationId: scope.organizationId } : undefined,
     scope.surveyId ? { surveyId: scope.surveyId } : undefined,
