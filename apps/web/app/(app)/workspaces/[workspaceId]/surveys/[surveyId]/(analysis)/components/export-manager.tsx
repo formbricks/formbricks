@@ -1,7 +1,7 @@
 "use client";
 
 import * as Sentry from "@sentry/nextjs";
-import { useMutation } from "@tanstack/react-query";
+import { QueryClient, useMutation } from "@tanstack/react-query";
 import {
   type ReactNode,
   createContext,
@@ -64,51 +64,57 @@ const ExportManager = ({ children }: Readonly<{ children: ReactNode }>) => {
   const controllerRef = useRef<AbortController | null>(null);
   const startRef = useRef<(args: TStartExport) => void>(() => undefined);
   const [progress, setProgress] = useState<TExportProgress | null>(null);
+  // Its own client: the app layout has no QueryClientProvider, and the surveys area's client unmounts when
+  // the editor opens, which would take the running export with it.
+  const [queryClient] = useState(() => new QueryClient());
 
-  const mutation = useMutation({
-    mutationFn: ({ surveyId, request, signal, onProgress, rowOutput, onRows }: TJob) =>
-      requestExport({ surveyId, request, signal, onProgress, rowOutput, onRows }),
-    onSuccess: ({ blob, fileName }, job) => {
-      saveBlob(blob, fileName ?? "export");
-      toast.success(
-        job.included === undefined
-          ? t("workspace.surveys.export.export_ready_file", { fileName: fileName ?? "export" })
-          : t("workspace.surveys.export.export_ready_file_count", {
-              fileName: fileName ?? "export",
-              count: job.included,
-            }),
-        { id: EXPORT_TOAST_ID, duration: 6000 }
-      );
+  const mutation = useMutation(
+    {
+      mutationFn: ({ surveyId, request, signal, onProgress, rowOutput, onRows }: TJob) =>
+        requestExport({ surveyId, request, signal, onProgress, rowOutput, onRows }),
+      onSuccess: ({ blob, fileName }, job) => {
+        saveBlob(blob, fileName ?? "export");
+        toast.success(
+          job.included === undefined
+            ? t("workspace.surveys.export.export_ready_file", { fileName: fileName ?? "export" })
+            : t("workspace.surveys.export.export_ready_file_count", {
+                fileName: fileName ?? "export",
+                count: job.included,
+              }),
+          { id: EXPORT_TOAST_ID, duration: 6000 }
+        );
+      },
+      onError: (error, job) => {
+        if (job.signal.aborted) {
+          toast.dismiss(EXPORT_TOAST_ID);
+          return;
+        }
+        if (!(error instanceof ExportRequestError)) Sentry.captureException(error);
+        const message =
+          error instanceof ExportRequestError && READABLE_FAILURES.has(error.status)
+            ? error.message
+            : t("workspace.surveys.export.export_failed");
+        toast.error(
+          (toastInstance) => (
+            <span className="flex items-center gap-3">
+              <span>{message}</span>
+              <button
+                type="button"
+                className="rounded-md border border-slate-300 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                onClick={() => {
+                  toast.dismiss(toastInstance.id);
+                  startRef.current({ surveyId: job.surveyId, request: job.request, included: job.included });
+                }}>
+                {t("common.try_again")}
+              </button>
+            </span>
+          ),
+          { id: EXPORT_TOAST_ID, duration: 20000 }
+        );
+      },
     },
-    onError: (error, job) => {
-      if (job.signal.aborted) {
-        toast.dismiss(EXPORT_TOAST_ID);
-        return;
-      }
-      if (!(error instanceof ExportRequestError)) Sentry.captureException(error);
-      const message =
-        error instanceof ExportRequestError && READABLE_FAILURES.has(error.status)
-          ? error.message
-          : t("workspace.surveys.export.export_failed");
-      toast.error(
-        (toastInstance) => (
-          <span className="flex items-center gap-3">
-            <span>{message}</span>
-            <button
-              type="button"
-              className="rounded-md border border-slate-300 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
-              onClick={() => {
-                toast.dismiss(toastInstance.id);
-                startRef.current({ surveyId: job.surveyId, request: job.request, included: job.included });
-              }}>
-              {t("common.try_again")}
-            </button>
-          </span>
-        ),
-        { id: EXPORT_TOAST_ID, duration: 20000 }
-      );
-    },
-  });
+    queryClient
+  );
 
   const { isPending, mutate } = mutation;
 
@@ -162,9 +168,8 @@ const ExportManager = ({ children }: Readonly<{ children: ReactNode }>) => {
     startRef.current = startExport;
   }, [startExport]);
 
-  // The export runs in the app: leaving the surveys area (or the site) cancels it, and the server stops
-  // reading when the request is aborted. Moving between a survey's pages, the editor and the list keeps this
-  // mounted.
+  // The export runs in the app: leaving the site cancels it, and the server stops reading when the request is
+  // aborted. The app layout keeps this mounted while the person moves anywhere inside the app.
   useEffect(() => {
     return () => {
       controllerRef.current?.abort();
@@ -183,9 +188,9 @@ const ExportManager = ({ children }: Readonly<{ children: ReactNode }>) => {
 };
 
 /**
- * Owns the export for as long as the surveys layout is mounted, so closing the Export modal or moving
- * between Summary, Responses and the editor does not cancel it. Runs on the surveys area's QueryClient,
- * which also serves the modal's count line.
+ * Owns the export for as long as the app layout is mounted, so closing the Export modal or moving between
+ * Summary, Responses, the editor and the rest of the app does not cancel it. The editor sits in its own
+ * route group, so no layout below the app's is shared by the survey pages and the editor.
  */
 export const ExportManagerProvider = ({ children }: Readonly<{ children: ReactNode }>) => (
   <ExportManager>{children}</ExportManager>

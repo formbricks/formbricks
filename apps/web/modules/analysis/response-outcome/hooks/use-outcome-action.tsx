@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TResponseOutcome } from "@formbricks/types/responses";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { useBeforeUnloadPrompt } from "@/modules/ui/hooks/use-before-unload-prompt";
 import { OutcomeBatchError } from "../lib/client";
 import type { TOutcomeActions, TOutcomeChanges } from "../lib/outcome";
 import { useSetResponsesOutcome } from "./use-set-responses-outcome";
@@ -40,6 +41,9 @@ export const useOutcomeAction = ({
       );
     },
   });
+
+  // A bulk run sends one batch after another; a reload in between would stop it part-way: ask first.
+  useBeforeUnloadPrompt(() => mutation.isPending);
 
   const run = (ids: string[], outcome: TResponseOutcome | null, previous: TOutcomeChanges) =>
     mutation.mutate({ ids, outcome, previous });
