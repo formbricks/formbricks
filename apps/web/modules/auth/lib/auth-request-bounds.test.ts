@@ -6,6 +6,7 @@ import {
   AUTH_REQUEST_MAX_JSON_TEXTS,
   exceedsAuthRequestBounds,
   hasOversizedJsonCollection,
+  isFormContentType,
   isJsonContentType,
 } from "./auth-request-bounds";
 
@@ -179,11 +180,22 @@ describe("exceedsAuthRequestBounds", () => {
  * widened the test would let an oversized body past it. A JSON array body comes out of better-call as an
  * array only when it parsed it as JSON (a form parse yields an object, anything else a string).
  */
+// The slice of better-call these tests drive. Typed here rather than imported: apps/web does not depend on
+// better-call itself, and the copy under test is the one better-auth resolves, whatever version it pins.
+type TBetterCall = {
+  createEndpoint: (
+    path: string,
+    options: Record<string, unknown>,
+    handler: (ctx: { body: unknown; json: (value: unknown) => unknown }) => Promise<unknown>
+  ) => unknown;
+  createRouter: (endpoints: Record<string, unknown>) => { handler: (request: Request) => Promise<Response> };
+};
+
+const loadBetterCall = async () =>
+  (await import(createRequire(import.meta.resolve("better-auth")).resolve("better-call"))) as TBetterCall;
+
 describe("isJsonContentType, against better-call's own body parsing", async () => {
-  // Resolved from better-auth, so this is the copy Better Auth actually runs, whatever version it pins.
-  const { createEndpoint, createRouter } = (await import(
-    createRequire(import.meta.resolve("better-auth")).resolve("better-call")
-  )) as typeof import("better-call");
+  const { createEndpoint, createRouter } = await loadBetterCall();
   const echo = createEndpoint("/echo", { method: "POST", body: z.any() }, async (ctx) =>
     ctx.json({ parsedAsJson: Array.isArray(ctx.body) })
   );
@@ -211,5 +223,45 @@ describe("isJsonContentType, against better-call's own body parsing", async () =
     const { parsedAsJson } = (await response.json()) as { parsedAsJson: boolean };
 
     expect(isJsonContentType(contentType)).toBe(parsedAsJson);
+  });
+});
+
+/**
+ * The same check for form bodies: the guard counts a form's fields exactly when better-call would parse
+ * the body as one. The echo endpoint allows the media types Better Auth's form endpoints allow.
+ */
+describe("isFormContentType, against better-call's own body parsing", async () => {
+  const { createEndpoint, createRouter } = await loadBetterCall();
+  const echo = createEndpoint(
+    "/echo",
+    {
+      method: "POST",
+      body: z.any(),
+      metadata: { allowedMediaTypes: ["application/x-www-form-urlencoded", "application/json"] },
+    },
+    async (ctx) => ctx.json({ parsedAsForm: (ctx.body as Record<string, unknown> | undefined)?.a === "1" })
+  );
+  const router = createRouter({ echo });
+
+  test.each([
+    "application/x-www-form-urlencoded",
+    "APPLICATION/X-WWW-FORM-URLENCODED; charset=utf-8",
+    "application/x-www-form-urlencodedx",
+    'multipart/form-data; boundary=x; p="application/x-www-form-urlencoded"',
+    'text/plain; p="application/x-www-form-urlencoded"',
+    "application/json",
+  ])("agrees for %s", async (contentType) => {
+    const response = await router.handler(
+      new Request("http://localhost/echo", {
+        method: "POST",
+        headers: { "content-type": contentType },
+        body: "a=1",
+      })
+    );
+    // A body better-call refuses, or fails to read, answers without the echo.
+    const text = await response.text();
+    const { parsedAsForm = false } = (response.ok ? JSON.parse(text) : {}) as { parsedAsForm?: boolean };
+
+    expect(isFormContentType(contentType)).toBe(parsedAsForm);
   });
 });

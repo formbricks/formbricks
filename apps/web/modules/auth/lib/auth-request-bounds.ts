@@ -29,6 +29,15 @@ const JSON_CONTENT_TYPE = /^application\/([a-z0-9.+-]*\+)?json/i;
 export const isJsonContentType = (contentType: string | null): boolean =>
   contentType !== null && JSON_CONTENT_TYPE.test(contentType);
 
+/** The media type of a `Content-Type` header, without its parameters, lowercased. */
+export const mediaTypeOf = (contentType: string | null): string =>
+  (contentType ?? "").split(";")[0].trim().toLowerCase();
+
+// better-call parses a body as a form when its media type is this one: `getBody` reads it with
+// `formData()`, which takes no other, and its allow-list refuses a form type named only in a parameter.
+export const isFormContentType = (contentType: string | null): boolean =>
+  mediaTypeOf(contentType) === "application/x-www-form-urlencoded";
+
 // A value `JSON.parse` would read as an array or object: JSON allows these four whitespace characters
 // around it, so a consumer parsing the text accepts a padded value as readily as a bare one.
 const JSON_COLLECTION_START = /^[\t\n\r ]*[[{]/;
@@ -119,7 +128,7 @@ export const exceedsAuthRequestBounds = (
     const parsed = parseJson(new TextDecoder().decode(body));
     return hasOversizedJsonCollection(parsed, AUTH_REQUEST_MAX_ENTRIES, budget);
   }
-  if (contentType?.toLowerCase().includes("application/x-www-form-urlencoded")) {
+  if (isFormContentType(contentType)) {
     return hasOversizedParams(new URLSearchParams(new TextDecoder().decode(body)), budget);
   }
   return false;

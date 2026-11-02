@@ -161,6 +161,29 @@ describe("/api/auth route surface", () => {
     }
   );
 
+  // The guard counts form fields only for a form media type; the token route must not then read a
+  // multipart body that names the form type in a parameter, or its fields would go uncounted.
+  test("the SAML token route refuses a multipart body disguised as a form before jackson sees it", async () => {
+    const { POST } = (await loadRoute("./saml/token/route.ts")) as {
+      POST: (request: Request) => Promise<Response>;
+    };
+    const fields = Array.from(
+      { length: AUTH_REQUEST_MAX_ENTRIES + 1 },
+      (_, index) => `--x\r\nContent-Disposition: form-data; name="f${index}"\r\n\r\nv\r\n`
+    ).join("");
+
+    const response = await POST(
+      new Request("http://localhost/api/auth/saml/token", {
+        method: "POST",
+        headers: { "content-type": 'multipart/form-data; boundary=x; p="application/x-www-form-urlencoded"' },
+        body: `${fields}--x--\r\n`,
+      })
+    );
+
+    expect(response.status).toBe(400);
+    expect(jacksonMock).not.toHaveBeenCalled();
+  });
+
   describe("the SAML callback, at the same boundary", () => {
     const callback = (bytes: number) =>
       new Request("http://localhost/api/auth/saml/callback", {
