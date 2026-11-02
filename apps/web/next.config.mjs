@@ -313,7 +313,7 @@ const nextConfig = {
         // time a respondent opens the Type tab. Cached like the bundle: each request carries a `?v=`
         // content hash of the font files. CORS is open because the font is requested from the host page's
         // origin when the survey is embedded through the SDK, and font loads are always cross-origin checked.
-        source: "/js/fonts/(.*\\.woff2)",
+        source: String.raw`/js/fonts/(.*\.woff2)`,
         headers: [
           { key: "Cache-Control", value: JS_ASSET_CACHE_CONTROL },
           { key: "Content-Type", value: "font/woff2" },
@@ -322,7 +322,7 @@ const nextConfig = {
       },
       {
         // The font's license text, which ships beside it as the OFL requires.
-        source: "/js/fonts/(.*\\.txt)",
+        source: String.raw`/js/fonts/(.*\.txt)`,
         headers: [
           {
             key: "Content-Type",

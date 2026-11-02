@@ -610,6 +610,44 @@ const isValidBareStringAnswer = ({
   );
 };
 
+type TUploadElementConfig = ReturnType<typeof getSurveyUploadElementConfigs>[number];
+
+/** One URL string per element (ADR 0016) or an array of URLs, as the element's kind says. */
+const isValidUploadElementAnswer = ({
+  answer,
+  config,
+  workspaceId,
+  surveyId,
+  legacyOwnedStoragePrefixes,
+}: {
+  answer: unknown;
+  config: TUploadElementConfig;
+  workspaceId: string;
+  surveyId: string;
+  legacyOwnedStoragePrefixes?: string[];
+}): boolean => {
+  const kind = uploadElementKinds[config.type];
+
+  if (kind.answerShape === "string") {
+    // Never a pre-#8044 flat key: no legacy prefixes.
+    return isValidBareStringAnswer({ answer, kind, workspaceId, surveyId, elementId: config.id });
+  }
+
+  if (!Array.isArray(answer) || !answer.every((url) => typeof url === "string")) return false;
+
+  return answer.every(
+    (fileUrl) =>
+      validateSingleFile(fileUrl, getUploadElementAllowedExtensions(config)) &&
+      isScopedPrivateUploadUrl({
+        fileUrl,
+        workspaceId,
+        surveyId,
+        elementId: config.id,
+        legacyOwnedStoragePrefixes,
+      })
+  );
+};
+
 export const validateClientFileUploads = ({
   data,
   workspaceId,
@@ -630,50 +668,11 @@ export const validateClientFileUploads = ({
 }): boolean => {
   if (!data) return true;
 
-  const uploadElementConfigs = getSurveyUploadElementConfigs({ blocks, questions });
-
-  for (const uploadElementConfig of uploadElementConfigs) {
-    const fileUrls = data[uploadElementConfig.id];
-
-    if (fileUrls === undefined) continue;
-
-    const kind = uploadElementKinds[uploadElementConfig.type];
-
-    if (kind.answerShape === "string") {
-      // One URL string, never an array (ADR 0016), and never a pre-#8044 flat key: no legacy prefixes.
-      if (
-        !isValidBareStringAnswer({
-          answer: fileUrls,
-          kind,
-          workspaceId,
-          surveyId,
-          elementId: uploadElementConfig.id,
-        })
-      ) {
-        return false;
-      }
-      continue;
-    }
-
-    if (!Array.isArray(fileUrls) || !fileUrls.every((url) => typeof url === "string")) return false;
-
-    for (const fileUrl of fileUrls) {
-      if (!validateSingleFile(fileUrl, getUploadElementAllowedExtensions(uploadElementConfig))) return false;
-      if (
-        !isScopedPrivateUploadUrl({
-          fileUrl,
-          workspaceId,
-          surveyId,
-          elementId: uploadElementConfig.id,
-          legacyOwnedStoragePrefixes,
-        })
-      ) {
-        return false;
-      }
-    }
-  }
-
-  return true;
+  return getSurveyUploadElementConfigs({ blocks, questions }).every((config) => {
+    const answer = data[config.id];
+    if (answer === undefined) return true;
+    return isValidUploadElementAnswer({ answer, config, workspaceId, surveyId, legacyOwnedStoragePrefixes });
+  });
 };
 
 export const isValidImageFile = (fileUrl: string): boolean => {

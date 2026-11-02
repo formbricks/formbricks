@@ -84,5 +84,5 @@ export const getSignatureResponseView = (
   const src = getSignatureImageSrc(value, currentOrigin);
   if (src) return { kind: "image", src, fileName: getSignatureDownloadFileName(src, responseId) };
 
-  return { kind: "text", text: String(value) };
+  return { kind: "text", text: typeof value === "object" ? JSON.stringify(value) : String(value) };
 };

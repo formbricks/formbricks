@@ -11,7 +11,7 @@ import {
 } from "@formbricks/survey-ui";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveySignatureElement } from "@formbricks/types/surveys/elements";
-import { type SubmitContributor } from "@/lib/block-submit";
+import { type ContributedAnswer, type SubmitContributor } from "@/lib/block-submit";
 import { getLocalizedValue } from "@/lib/i18n";
 import {
   EMPTY_SIGNATURE_DRAFT,
@@ -127,63 +127,65 @@ export function SignatureElement({
     onChange({ [element.id]: "" });
   };
 
+  // Called at the moment the block is validated: the upload then runs on what the respondent had signed at
+  // that moment, whatever they do to the card (or a second Signature on it) while it takes seconds.
+  const capture = useCallback((): (() => Promise<ContributedAnswer>) => {
+    const frozen = answerRef.current;
+    return async () => {
+      setUploadErrorMessage(undefined);
+      const {
+        onFileUpload: upload,
+        surveyId: currentSurveyId,
+        fontUrl: currentFontUrl,
+        t: translate,
+      } = callbacksRef.current;
+
+      try {
+        const result = await resolveSignatureAnswer({
+          draft: frozen.draft,
+          savedUrl: frozen.savedUrl,
+          // The busy state starts only when there is real work: a signature already uploaded, or one
+          // left empty, answers straight away.
+          exportPng: (signature) => {
+            setIsUploading(true);
+            return exportSignaturePng(signature, {
+              ensureTypedFont: () =>
+                currentFontUrl ? loadSignatureFont(currentFontUrl) : Promise.resolve(false),
+            });
+          },
+          uploadPng: (dataUrl) =>
+            upload(
+              { name: SIGNATURE_PNG_FILE_NAME, type: SIGNATURE_PNG_MIME_TYPE, base64: dataUrl },
+              { allowedFileExtensions: ["png"], surveyId: currentSurveyId, elementId: element.id }
+            ),
+        });
+
+        if (result.status === "error") {
+          const failure = getSignatureUploadError(result.error);
+          setUploadErrorMessage(failure.kind === "message" ? failure.message : translate(failure.key));
+          return { ok: false };
+        }
+
+        // Remember which strokes/name this upload was made from, so Next does not upload them twice.
+        const current = answerRef.current;
+        commit({ ...current, draft: { ...current.draft, uploaded: result.uploaded } });
+        return { ok: true, data: toSignatureAnswerData(element.id, result.url, frozen) };
+      } finally {
+        setIsUploading(false);
+      }
+    };
+  }, [element.id, commit]);
+
   useEffect(() => {
     const contributor: SubmitContributor = {
       hasAnswer: () => hasSignatureAnswer(answerRef.current.draft, answerRef.current.savedUrl),
-      // Called at the moment the block is validated: the upload then runs on what the respondent had signed
-      // at that moment, whatever they do to the card (or a second Signature on it) while it takes seconds.
-      capture: () => {
-        const frozen = answerRef.current;
-        return async () => {
-          setUploadErrorMessage(undefined);
-          const {
-            onFileUpload: upload,
-            surveyId: currentSurveyId,
-            fontUrl: currentFontUrl,
-            t: translate,
-          } = callbacksRef.current;
-
-          try {
-            const result = await resolveSignatureAnswer({
-              draft: frozen.draft,
-              savedUrl: frozen.savedUrl,
-              // The busy state starts only when there is real work: a signature already uploaded, or one
-              // left empty, answers straight away.
-              exportPng: (signature) => {
-                setIsUploading(true);
-                return exportSignaturePng(signature, {
-                  ensureTypedFont: () =>
-                    currentFontUrl ? loadSignatureFont(currentFontUrl) : Promise.resolve(false),
-                });
-              },
-              uploadPng: (dataUrl) =>
-                upload(
-                  { name: SIGNATURE_PNG_FILE_NAME, type: SIGNATURE_PNG_MIME_TYPE, base64: dataUrl },
-                  { allowedFileExtensions: ["png"], surveyId: currentSurveyId, elementId: element.id }
-                ),
-            });
-
-            if (result.status === "error") {
-              const failure = getSignatureUploadError(result.error);
-              setUploadErrorMessage(failure.kind === "message" ? failure.message : translate(failure.key));
-              return { ok: false };
-            }
-
-            // Remember which strokes/name this upload was made from, so Next does not upload them twice.
-            const current = answerRef.current;
-            commit({ ...current, draft: { ...current.draft, uploaded: result.uploaded } });
-            return { ok: true, data: toSignatureAnswerData(element.id, result.url, frozen) };
-          } finally {
-            setIsUploading(false);
-          }
-        };
-      },
+      capture,
     };
     registerSubmitContributor(element.id, contributor);
     return () => {
       registerSubmitContributor(element.id, null);
     };
-  }, [element.id, registerSubmitContributor, commit]);
+  }, [element.id, registerSubmitContributor, capture]);
 
   const labels = useMemo<Partial<SignatureLabels>>(
     () => ({

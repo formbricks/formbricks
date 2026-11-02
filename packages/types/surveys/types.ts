@@ -3278,6 +3278,8 @@ const isInvalidOperatorsForElementType = (
       }
       break;
     case TSurveyElementTypeEnum.Ranking:
+    case TSurveyElementTypeEnum.FileUpload:
+    case TSurveyElementTypeEnum.Signature:
       if (!["isSubmitted", "isSkipped"].includes(operator)) {
         isInvalidOperator = true;
       }
@@ -3313,12 +3315,6 @@ const isInvalidOperatorsForElementType = (
       break;
     case TSurveyElementTypeEnum.Cal:
       if (!["isBooked", "isSkipped"].includes(operator)) {
-        isInvalidOperator = true;
-      }
-      break;
-    case TSurveyElementTypeEnum.FileUpload:
-    case TSurveyElementTypeEnum.Signature:
-      if (!["isSubmitted", "isSkipped"].includes(operator)) {
         isInvalidOperator = true;
       }
       break;

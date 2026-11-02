@@ -6,6 +6,7 @@ import {
   type SignatureValue,
   clearSignature,
   getSignatureLayout,
+  getSignatureViewState,
   hasSignatureInput,
   isSignatureSigned,
   isSignificantStroke,
@@ -279,5 +280,65 @@ describe("nextSignatureMode", () => {
     expect(nextSignatureMode("End", "draw", "ltr")).toBe("type");
     expect(nextSignatureMode("Enter", "draw", "ltr")).toBeNull();
     expect(nextSignatureMode("ArrowDown", "draw", "ltr")).toBeNull();
+  });
+});
+
+describe("getSignatureViewState", () => {
+  const base = { allowTypedSignature: true, hasSavedSignature: false, disabled: false, isUploading: false };
+  const drawing = {
+    ...EMPTY_SIGNATURE,
+    strokes: [
+      [
+        { x: 0.1, y: 0.5 },
+        { x: 0.9, y: 0.5 },
+      ],
+    ],
+  };
+
+  test("a stored URL with nothing kept in memory shows as saved and signed, and locks drawing", () => {
+    const state = getSignatureViewState({ ...base, value: EMPTY_SIGNATURE, hasSavedSignature: true });
+    expect(state).toMatchObject({
+      hasSavedOnly: true,
+      isSigned: true,
+      hasAnyInput: true,
+      drawingEnabled: false,
+    });
+  });
+
+  test("once the pad holds input the stored URL no longer decides: an empty Type tab is not signed", () => {
+    const state = getSignatureViewState({
+      ...base,
+      value: { ...drawing, mode: "type" },
+      hasSavedSignature: true,
+    });
+    expect(state).toMatchObject({
+      hasSavedOnly: false,
+      isSigned: false,
+      hasActiveInput: false,
+      mode: "type",
+    });
+  });
+
+  test("with typed signatures off the pad is always Draw", () => {
+    const state = getSignatureViewState({
+      ...base,
+      allowTypedSignature: false,
+      value: { ...drawing, mode: "type", typedName: "Ann" },
+    });
+    expect(state).toMatchObject({
+      mode: "draw",
+      showModeToggle: false,
+      isSigned: true,
+      hasActiveInput: true,
+    });
+  });
+
+  test("uploading or disabled locks the pad", () => {
+    expect(getSignatureViewState({ ...base, value: drawing, isUploading: true })).toMatchObject({
+      locked: true,
+      drawingEnabled: false,
+    });
+    expect(getSignatureViewState({ ...base, value: drawing, disabled: true }).locked).toBe(true);
+    expect(getSignatureViewState({ ...base, value: drawing }).drawingEnabled).toBe(true);
   });
 });

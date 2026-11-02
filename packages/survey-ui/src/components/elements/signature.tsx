@@ -10,9 +10,7 @@ import {
   type SignatureValue,
   TYPED_NAME_MAX_LENGTH,
   clearSignature,
-  getSignatureLayout,
-  hasSignatureInput,
-  isSignatureSigned,
+  getSignatureViewState,
   isTypedNameSigned,
   nextSignatureMode,
 } from "@/lib/signature/signature-model";
@@ -115,6 +113,52 @@ const CONTROL_CLASSES = cn(
   "disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0"
 );
 
+const getStatusText = (
+  { isUploading, isSigned }: { isUploading: boolean; isSigned: boolean },
+  text: SignatureLabels
+): string => {
+  if (isUploading) return text.uploading;
+  return isSigned ? text.signed : text.notSigned;
+};
+
+/** What sits over the pad: the hint, the saved notice after a reload, and the busy veil while uploading. */
+function PadOverlays({
+  text,
+  mode,
+  showHint,
+  hasSavedOnly,
+  isUploading,
+}: Readonly<{
+  text: SignatureLabels;
+  mode: SignatureMode;
+  showHint: boolean;
+  hasSavedOnly: boolean;
+  isUploading: boolean;
+}>): React.JSX.Element {
+  return (
+    <>
+      {showHint ? (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 flex items-center justify-center text-sm text-neutral-500">
+          {mode === "type" ? text.typeYourName : text.signHere}
+        </span>
+      ) : null}
+      {hasSavedOnly ? (
+        <div className="absolute inset-0 flex items-center justify-center gap-2 bg-white p-4 text-center text-sm text-neutral-700">
+          <Check aria-hidden="true" className="size-4 shrink-0" />
+          <span>{text.saved}</span>
+        </div>
+      ) : null}
+      {isUploading ? (
+        <div className="absolute inset-0 flex items-center justify-center bg-white/80 text-sm font-medium text-neutral-700 motion-safe:animate-pulse">
+          {text.uploading}
+        </div>
+      ) : null}
+    </>
+  );
+}
+
 function Signature({
   elementId,
   headline,
@@ -155,17 +199,17 @@ function Signature({
     onChangeRef.current = onChange;
   });
 
-  const { showModeToggle, mode, showNameInput } = getSignatureLayout(allowTypedSignature, value.mode);
-  // The visible tab is the signature. A stored URL with nothing kept in memory (the page was reloaded) is shown
-  // as saved; once either tab holds input, the active tab alone decides, whatever was stored before.
-  const hasKeptInput = hasSignatureInput(value);
-  const hasSavedOnly = hasSavedSignature && !hasKeptInput;
-  const isSigned = isSignatureSigned(value) || hasSavedOnly;
-  const hasAnyInput = hasKeptInput || hasSavedSignature;
-  // The hint belongs to the tab on show: a drawing kept behind the Type tab must not hide "Type your name".
-  const hasActiveInput = mode === "type" ? value.typedName.length > 0 : value.strokes.length > 0;
-  const locked = disabled || isUploading;
-  const drawingEnabled = mode === "draw" && !locked && !hasSavedOnly;
+  const {
+    showModeToggle,
+    mode,
+    showNameInput,
+    hasSavedOnly,
+    isSigned,
+    hasAnyInput,
+    hasActiveInput,
+    locked,
+    drawingEnabled,
+  } = getSignatureViewState({ value, allowTypedSignature, hasSavedSignature, disabled, isUploading });
 
   React.useEffect(() => {
     const canvas = canvasRef.current;
@@ -276,7 +320,7 @@ function Signature({
   // In Type mode the canvas is only a preview of the name typed below it, and in the saved state it is
   // blank: neither is something to announce.
   const isPadLabelled = mode === "draw" && !hasSavedOnly;
-  const statusText = isUploading ? text.uploading : isSigned ? text.signed : text.notSigned;
+  const statusText = getStatusText({ isUploading, isSigned }, text);
 
   const clearButton = (
     <button
@@ -306,7 +350,10 @@ function Signature({
       <div className="relative" data-element-input>
         <ElementError errorMessage={errorMessage} dir={dir} id={errorAria.errorId} />
 
-        <div role="group" aria-labelledby={headlineId} aria-describedby={describedBy} className="space-y-2">
+        <fieldset
+          aria-labelledby={headlineId}
+          aria-describedby={describedBy}
+          className="m-0 min-w-0 space-y-2 border-0 p-0">
           {/* With tabs, Clear shares their row; without them it sits under the pad rather than alone on an
               empty row above it. */}
           {showModeToggle ? (
@@ -339,7 +386,7 @@ function Signature({
               style={{ aspectRatio: `${String(SIGNATURE_ASPECT_RATIO)} / 1` }}>
               <canvas
                 ref={canvasRef}
-                role={isPadLabelled ? "img" : undefined}
+                role={isPadLabelled ? "img" : undefined} // NOSONAR a canvas cannot be an <img>; role="img" plus a label is how a drawing pad is exposed
                 aria-label={isPadLabelled ? text.padLabel : undefined}
                 aria-hidden={isPadLabelled ? undefined : true}
                 className="absolute inset-0 block h-full w-full touch-none select-none"
@@ -348,24 +395,13 @@ function Signature({
                   event.preventDefault();
                 }}
               />
-              {showHint ? (
-                <span
-                  aria-hidden="true"
-                  className="pointer-events-none absolute inset-0 flex items-center justify-center text-sm text-neutral-500">
-                  {mode === "type" ? text.typeYourName : text.signHere}
-                </span>
-              ) : null}
-              {hasSavedOnly ? (
-                <div className="absolute inset-0 flex items-center justify-center gap-2 bg-white p-4 text-center text-sm text-neutral-700">
-                  <Check aria-hidden="true" className="size-4 shrink-0" />
-                  <span>{text.saved}</span>
-                </div>
-              ) : null}
-              {isUploading ? (
-                <div className="absolute inset-0 flex items-center justify-center bg-white/80 text-sm font-medium text-neutral-700 motion-safe:animate-pulse">
-                  {text.uploading}
-                </div>
-              ) : null}
+              <PadOverlays
+                text={text}
+                mode={mode}
+                showHint={showHint}
+                hasSavedOnly={hasSavedOnly}
+                isUploading={isUploading}
+              />
             </div>
 
             {showNameInput ? (
@@ -398,7 +434,7 @@ function Signature({
           <p role="status" aria-live="polite" className="sr-only">
             {statusText}
           </p>
-        </div>
+        </fieldset>
       </div>
     </div>
   );

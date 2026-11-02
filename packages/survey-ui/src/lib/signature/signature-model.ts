@@ -137,7 +137,9 @@ export const signatureFingerprint = (value: SignatureValue): string | null => {
   const content = resolveSignatureContent(value);
   if (!content) return null;
   if (content.kind === "name") return `name:${content.name}`;
-  return `strokes:${content.strokes.map((stroke) => stroke.map((p) => `${round4(p.x)},${round4(p.y)}`).join(" ")).join("|")}`;
+  const strokeKey = (stroke: SignatureStroke): string =>
+    stroke.map((p) => `${round4(p.x)},${round4(p.y)}`).join(" ");
+  return `strokes:${content.strokes.map(strokeKey).join("|")}`;
 };
 
 /**
@@ -150,6 +152,53 @@ export const getSignatureLayout = (
 ): { showModeToggle: boolean; mode: SignatureMode; showNameInput: boolean } => {
   const mode = allowTypedSignature ? storedMode : "draw";
   return { showModeToggle: allowTypedSignature, mode, showNameInput: mode === "type" };
+};
+
+export interface SignatureViewState {
+  showModeToggle: boolean;
+  mode: SignatureMode;
+  showNameInput: boolean;
+  /** A stored URL with nothing kept in memory: the page was reloaded, so the image is shown as saved. */
+  hasSavedOnly: boolean;
+  isSigned: boolean;
+  /** Whether Clear has anything to remove, in either tab or in the stored answer. */
+  hasAnyInput: boolean;
+  /** Whether the tab on show holds input; the hint belongs to that tab. */
+  hasActiveInput: boolean;
+  locked: boolean;
+  drawingEnabled: boolean;
+}
+
+/**
+ * Everything the pad shows and enables, derived from the value and the element's settings. The visible tab
+ * is the signature: once either tab holds input the active tab alone decides, whatever was stored before.
+ */
+export const getSignatureViewState = ({
+  value,
+  allowTypedSignature,
+  hasSavedSignature,
+  disabled,
+  isUploading,
+}: {
+  value: SignatureValue;
+  allowTypedSignature: boolean;
+  hasSavedSignature: boolean;
+  disabled: boolean;
+  isUploading: boolean;
+}): SignatureViewState => {
+  const layout = getSignatureLayout(allowTypedSignature, value.mode);
+  const hasKeptInput = hasSignatureInput(value);
+  const hasSavedOnly = hasSavedSignature && !hasKeptInput;
+  const locked = disabled || isUploading;
+  return {
+    ...layout,
+    hasSavedOnly,
+    isSigned: isSignatureSigned(value) || hasSavedOnly,
+    hasAnyInput: hasKeptInput || hasSavedSignature,
+    hasActiveInput: layout.mode === "type" ? value.typedName.length > 0 : value.strokes.length > 0,
+    locked,
+    drawingEnabled: layout.mode === "draw" && !locked && !hasSavedOnly,
+  };
 };
 
 /** The tab that arrow / Home / End keys move to, or `null` for a key that does not move the tab. */

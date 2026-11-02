@@ -202,7 +202,7 @@ export const createSignaturePad = ({
   };
 
   const onPointerMove: PadListener = (event) => {
-    if (!active || event.pointerId !== active.pointerId) return;
+    if (active?.pointerId !== event.pointerId) return;
     event.preventDefault();
     const samples = event.getCoalescedEvents?.() ?? [];
     for (const sample of samples.length > 0 ? samples : [event]) {
@@ -215,7 +215,7 @@ export const createSignaturePad = ({
   };
 
   const onPointerEnd: PadListener = (event) => {
-    if (!active || event.pointerId !== active.pointerId) return;
+    if (active?.pointerId !== event.pointerId) return;
     event.preventDefault();
     finishStroke();
   };
