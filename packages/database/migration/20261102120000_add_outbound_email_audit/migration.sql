@@ -1,4 +1,9 @@
-CREATE TABLE "OutboundEmailAudit" (
+-- New table is empty, so standard indexes build without blocking existing writes.
+-- Prisma applies this file transactionally; CONCURRENTLY cannot run in the transaction.
+BEGIN;
+SET LOCAL lock_timeout = '1s';
+
+CREATE TABLE IF NOT EXISTS "OutboundEmailAudit" (
     "id" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -29,15 +34,29 @@ CREATE TABLE "OutboundEmailAudit" (
     CONSTRAINT "OutboundEmailAudit_pkey" PRIMARY KEY ("id")
 );
 
-CREATE INDEX "OutboundEmailAudit_environment_createdAt_id_idx" ON "OutboundEmailAudit"("environment", "createdAt", "id");
-CREATE INDEX "OutboundEmailAudit_organizationId_createdAt_id_idx" ON "OutboundEmailAudit"("organizationId", "createdAt", "id");
-CREATE INDEX "OutboundEmailAudit_surveyId_createdAt_id_idx" ON "OutboundEmailAudit"("surveyId", "createdAt", "id");
-CREATE INDEX "OutboundEmailAudit_responseId_createdAt_id_idx" ON "OutboundEmailAudit"("responseId", "createdAt", "id");
-CREATE INDEX "OutboundEmailAudit_actorUserId_createdAt_id_idx" ON "OutboundEmailAudit"("actorUserId", "createdAt", "id");
-CREATE INDEX "OutboundEmailAudit_configuredByUserId_createdAt_id_idx" ON "OutboundEmailAudit"("configuredByUserId", "createdAt", "id");
-CREATE INDEX "OutboundEmailAudit_recipientMac_createdAt_id_idx" ON "OutboundEmailAudit"("recipientMac", "createdAt", "id");
-CREATE INDEX "OutboundEmailAudit_sesMessageHash_idx" ON "OutboundEmailAudit"("sesMessageHash");
-CREATE INDEX "OutboundEmailAudit_status_createdAt_id_idx" ON "OutboundEmailAudit"("status", "createdAt", "id");
-CREATE INDEX "OutboundEmailAudit_contentExpiresAt_id_idx" ON "OutboundEmailAudit"("contentExpiresAt", "id");
-CREATE INDEX "OutboundEmailAudit_expiresAt_id_idx" ON "OutboundEmailAudit"("expiresAt", "id");
-CREATE INDEX "OutboundEmailAudit_erasureRequestedAt_id_idx" ON "OutboundEmailAudit"("erasureRequestedAt", "id");
+-- squawk-ignore require-concurrent-index-creation
+CREATE INDEX IF NOT EXISTS "OutboundEmailAudit_environment_createdAt_id_idx" ON "OutboundEmailAudit"("environment", "createdAt", "id");
+-- squawk-ignore require-concurrent-index-creation
+CREATE INDEX IF NOT EXISTS "OutboundEmailAudit_organizationId_createdAt_id_idx" ON "OutboundEmailAudit"("organizationId", "createdAt", "id");
+-- squawk-ignore require-concurrent-index-creation
+CREATE INDEX IF NOT EXISTS "OutboundEmailAudit_surveyId_createdAt_id_idx" ON "OutboundEmailAudit"("surveyId", "createdAt", "id");
+-- squawk-ignore require-concurrent-index-creation
+CREATE INDEX IF NOT EXISTS "OutboundEmailAudit_responseId_createdAt_id_idx" ON "OutboundEmailAudit"("responseId", "createdAt", "id");
+-- squawk-ignore require-concurrent-index-creation
+CREATE INDEX IF NOT EXISTS "OutboundEmailAudit_actorUserId_createdAt_id_idx" ON "OutboundEmailAudit"("actorUserId", "createdAt", "id");
+-- squawk-ignore require-concurrent-index-creation
+CREATE INDEX IF NOT EXISTS "OutboundEmailAudit_configuredByUserId_createdAt_id_idx" ON "OutboundEmailAudit"("configuredByUserId", "createdAt", "id");
+-- squawk-ignore require-concurrent-index-creation
+CREATE INDEX IF NOT EXISTS "OutboundEmailAudit_recipientMac_createdAt_id_idx" ON "OutboundEmailAudit"("recipientMac", "createdAt", "id");
+-- squawk-ignore require-concurrent-index-creation
+CREATE INDEX IF NOT EXISTS "OutboundEmailAudit_sesMessageHash_idx" ON "OutboundEmailAudit"("sesMessageHash");
+-- squawk-ignore require-concurrent-index-creation
+CREATE INDEX IF NOT EXISTS "OutboundEmailAudit_status_createdAt_id_idx" ON "OutboundEmailAudit"("status", "createdAt", "id");
+-- squawk-ignore require-concurrent-index-creation
+CREATE INDEX IF NOT EXISTS "OutboundEmailAudit_contentExpiresAt_id_idx" ON "OutboundEmailAudit"("contentExpiresAt", "id");
+-- squawk-ignore require-concurrent-index-creation
+CREATE INDEX IF NOT EXISTS "OutboundEmailAudit_expiresAt_id_idx" ON "OutboundEmailAudit"("expiresAt", "id");
+-- squawk-ignore require-concurrent-index-creation
+CREATE INDEX IF NOT EXISTS "OutboundEmailAudit_erasureRequestedAt_id_idx" ON "OutboundEmailAudit"("erasureRequestedAt", "id");
+
+COMMIT;
