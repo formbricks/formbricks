@@ -42,9 +42,11 @@ Packages under `packages/*` use their own env access; they cannot import the web
 
 ## Coding Standards
 
-`CODING_STANDARDS.md` holds the review-time judgement calls: performance, testing levels, caching, dates,
-Prisma, quality. Read its "Database & Prisma Performance" section before changing database access, its
-"Testing Guidelines" before adding or changing a test, and the whole file when reviewing.
+`CODING_STANDARDS.md` holds the judgement calls: existing patterns, API design, file uploads and downloads,
+input limits, performance, testing levels, caching, dates, Prisma, quality. Read its sections from
+"Existing Patterns" through "Input Limits" before planning a change, its "Database & Prisma Performance"
+section before changing database access, its "Testing Guidelines" before adding or changing a test, and the
+whole file when reviewing.
 
 ## Commit & Pull Request Guidelines
 

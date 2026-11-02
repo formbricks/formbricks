@@ -1,4 +1,5 @@
 {
+  "additional_main_sync": "76b05fb only updates AGENTS.md and CODING_STANDARDS.md; no incoming docs/ content. Read updated standards; public documentation placement unchanged.",
   "additional_review_bodies": "Outside-diff environment recreation finding and duplicate navigation, backup, Envoy, row estimate, readiness and Helm findings assessed with the corresponding inline findings.",
   "findings": [
     {
@@ -1439,7 +1440,11 @@
       "status": "M"
     }
   ],
-  "merged_main": "0b36f5f630a3934b780ad6b87927c1d4f8e53d1c",
+  "independent_reviews": {
+    "spec": "No actionable findings at a8120cd8; all 210 incoming docs paths accounted for, 188 byte-identical.",
+    "standards": "Three presentation findings and one duplication concern fixed; verification at cbe614d5 reports no remaining actionable findings."
+  },
+  "merged_main": "76b05fb98dd870000d820ad8a27527e483dcfbb0",
   "reviewed_at": "2026-11-02",
   "reviewed_head": "aecb81b890165c029fad2c98e1a473cacc862771",
   "runtime_limit": "Source/configuration and documentation checks only; no production upgrade or restore executed."

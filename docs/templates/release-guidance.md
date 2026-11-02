@@ -62,9 +62,9 @@ Choose the required stops in [Upgrade paths](/self-hosting/upgrade/paths).
 
 ## Before
 
-| Who needs to act | Change | Required action |
-| --- | --- | --- |
-| AFFECTED SETUP | OLD → NEW | Exact setting/service/file, where to change it, and what to preserve. |
+| Who needs to act | Change    | Required action                                                       |
+| ---------------- | --------- | --------------------------------------------------------------------- |
+| AFFECTED SETUP   | OLD → NEW | Exact setting/service/file, where to change it, and what to preserve. |
 
 State maintenance impact, migration duration factors, prerequisites and backup scope.
 New secrets: include the exact generation command, storage location and service bindings. Distinguish

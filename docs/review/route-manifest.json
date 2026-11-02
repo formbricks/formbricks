@@ -1,5 +1,5 @@
 {
-  "baseline_commit": "0b36f5f630a3934b780ad6b87927c1d4f8e53d1c",
+  "baseline_commit": "76b05fb98dd870000d820ad8a27527e483dcfbb0",
   "baseline_mdx_count": 255,
   "coverage": "All public MDX structurally parsed; navigation, internal links and anchors checked. Targeted semantic/source review, not exhaustive factual or runtime validation. Generated API operation routes are not counted as orphaned MDX.",
   "current_mdx_count": 295,

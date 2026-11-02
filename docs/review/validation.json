@@ -1,6 +1,6 @@
 {
   "checks": {
-    "anchors": "295 public MDX parsed with Mintlify heading generation; 262 fragment links; seven punctuation-related static discrepancies verified in browser; zero unresolved",
+    "anchors": "295 public MDX parsed with Mintlify heading generation; 264 fragment links; seven punctuation-related static discrepancies verified in browser; zero unresolved",
     "build": "passed: cd docs && NODE_USE_ENV_PROXY=1 npx mint@4.2.1126 validate",
     "formatting": "passed for changed JSON; MDX follows repository formatter exclusions",
     "isolated_failure": "lib/utils/validate-webhook-url.toctou.test.ts:36 times out at 5000ms fetching a reserved .invalid hostname; reproduced in isolation. Source unchanged by this PR.",
@@ -113,12 +113,14 @@
   },
   "main_sync_2026_11_02": {
     "base": "0b36f5f630a3934b780ad6b87927c1d4f8e53d1c",
+    "ci_followup": "Run Linters failed only Prettier on docs/templates/release-guidance.md. Formatted the template and rechecked changed JSON/Markdown.",
     "command_checks": [
       "RustFS snippet combined with its declared volume: docker compose config succeeds; container variables survive interpolation.",
       "External SpiceDB override: docker compose config succeeds with synthetic values; no bootstrap service.",
       "Backup shell simulation: first pg_dump failure returns nonzero and prevents second invocation."
     ],
     "commit_hook": "Merge hook attempted lint on incoming main application files; fails on unresolved generated Creative Prisma types. All non-doc files match main. Merge committed with HUSKY=0 after docs checks; this is not an application lint pass.",
+    "final_standards_followup": "Eight changed procedure/AI pages rendered successfully; AI canonical heading links verified. Live Mintlify preview October27 patch page loads.",
     "incoming_docs_paths": 210,
     "legacy_anchors": 127,
     "preview": [
