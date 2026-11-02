@@ -11369,7 +11369,7 @@ components:
 
             At most 500 keys, and at most 1000 entries in a multi-select array or matrix object. Both sit far above any real survey — a response holds one entry per element, a multi-select answer one per choice — and exist because every later reader pays per entry: the serializer's per-answer mapping, export columns, and the positional probe the "Other" response filter emits. Exceeding either is a **400** from the request schema, not a 422.
 
-            Deliberately separate from `ResponseDataMap`, which the read returns. These bounds are v3-only — the v1 and v2 write paths store the same map without them — so a stored response may exceed them, and the read schema must not claim otherwise.
+            Deliberately separate from `ResponseDataMap`, which the read returns. The v1 and v2 client writes and the v1 management write apply the same bounds, but the v2 management write does not and older responses predate them, so a stored response may exceed them, and the read schema must not claim otherwise.
           maxProperties: 500
           additionalProperties:
             if:
@@ -11412,7 +11412,7 @@ components:
 
         Reserved names collide differently and are not ambiguous: `reserved` is not writable at all, so a name that matches both a declared field and a catalog entry resolves to the declared one.
 
-        **At most 500 names.** Every name that matches no declared field becomes its own `invalid_params` entry naming it, so without a cap a large body answers with a 422 several times its own size. Far above any real survey; a v3-only bound, as on `data`.
+        **At most 500 names.** Every name that matches no declared field becomes its own `invalid_params` entry naming it, so without a cap a large body answers with a 422 several times its own size. Far above any real survey; the same bound as on `data`.
       maxProperties: 500
       additionalProperties:
         oneOf:

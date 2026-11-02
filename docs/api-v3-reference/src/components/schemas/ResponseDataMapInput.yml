@@ -12,9 +12,10 @@ allOf:
       either is a **400** from the request schema, not a 422.
 
 
-      Deliberately separate from `ResponseDataMap`, which the read returns. These bounds are v3-only
-      — the v1 and v2 write paths store the same map without them — so a stored response may exceed
-      them, and the read schema must not claim otherwise.
+      Deliberately separate from `ResponseDataMap`, which the read returns. The v1 and v2 client
+      writes and the v1 management write apply the same bounds, but the v2 management write does not
+      and older responses predate them, so a stored response may exceed them, and the read schema
+      must not claim otherwise.
     maxProperties: 500
     # Deliberately says nothing about which value shapes are allowed — `ResponseDataMap` above owns
     # that, and restating its `oneOf` here would mean the write contract silently narrowed (or stopped
