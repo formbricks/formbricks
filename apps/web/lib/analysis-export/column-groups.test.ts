@@ -68,24 +68,22 @@ describe("metadata and contact attributes", () => {
     embedded("browser", "metadata"),
     embedded("country", "metadata"),
     embedded("person_plan", "contact"),
-    embedded("person_first_name", "contact"),
-    embedded("campaign", "metadata"),
   ];
 
-  test("each is one entry, however many fields it holds, as in the Standard list", () => {
-    expect(analysisColumnGroups(columns)).toEqual([
-      { id: "metadata", label: "metadata" },
-      { id: "person", label: "person" },
+  test("each field is its own entry, so the list shows every column the file can hold", () => {
+    expect(analysisColumnGroups(columns).map((group) => group.id)).toEqual([
+      "e:browser",
+      "e:country",
+      "e:person_plan",
     ]);
-    expect(columnsByEntry(columns)).toEqual({ metadata: 3, person: 2 });
   });
 
-  test("switching the entry off takes every field with it", () => {
+  test("switching one off leaves the others", () => {
     const exported = { columns, rows: async function* () {} } as unknown as ReturnType<
       typeof buildSampleExport
     >;
-    const kept = withoutColumnGroups(exported, ["metadata"]).columns.map((column) => column.name);
-    expect(kept).toEqual(["person_plan", "person_first_name"]);
+    const kept = withoutColumnGroups(exported, ["e:country"]).columns.map((column) => column.name);
+    expect(kept).toEqual(["browser", "person_plan"]);
   });
 });
 

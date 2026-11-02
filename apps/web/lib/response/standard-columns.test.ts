@@ -51,6 +51,14 @@ describe("standardColumnGroups", () => {
     ]);
   });
 
+  test("every metadata field is its own entry, so the list shows each column the file holds", () => {
+    const metadata = groups(false).filter((group) => group.id.startsWith("m:"));
+    const fields = extractSurveyDetails(survey, []).metaDataFields;
+    expect(fields.length).toBeGreaterThan(1);
+    expect(metadata.map((group) => group.headers)).toEqual(fields.map((field) => [field]));
+    expect(standardHeaders(groups(false), [`m:${fields[0]}`])).not.toContain(fields[0]);
+  });
+
   test("the Quotas column is only there when quotas are", () => {
     expect(groups(false).some((group) => group.id === "quotas")).toBe(false);
   });

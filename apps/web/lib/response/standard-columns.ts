@@ -18,7 +18,7 @@ type TSurveyDetails = Pick<
 
 /**
  * The Standard export's columns as the Include columns list shows them: one entry per fixed column, per
- * question (its Option ID column goes with it), per Embedded Data field. Flattened in order they are exactly
+ * metadata field, per question (its Option ID column goes with it), per Embedded Data field. Flattened in order they are exactly
  * the header row of today's file, which is what `getResponseDownloadFile` writes.
  *
  * The contact attribute columns (`person.*`) come from the responses read, so a list made without responses
@@ -66,9 +66,8 @@ export const standardColumnGroups = ({
     fixed("formbricksId", "formbricksId", "Formbricks ID (internal)"),
     fixed("userId", "userId", "User ID"),
     fixed("tags", "tags", "Tags"),
-    ...(details.metaDataFields.length > 0
-      ? [{ id: "metadata", label: "metadata", headers: details.metaDataFields }]
-      : []),
+    // Every metadata field is its own entry, as in the Analysis list, so the list shows what the file holds.
+    ...details.metaDataFields.map((header) => field("m", header)),
     ...questionGroups,
     ...details.variables.map((header) => field("e", header)),
     ...details.hiddenFields.map((header) => field("e", header)),

@@ -9,12 +9,9 @@ const RESPONSE_COLUMN_LABELS: Record<string, string> = {
   verified_email: "verifiedEmail",
 };
 
-/** The Include columns entry a column belongs to: a question's columns go together, so do its options and the metadata fields. */
+/** The Include columns entry a column belongs to: a question's columns go together, so do its options. */
 export const analysisColumnGroupId = (column: TAnalysisColumn): string => {
   if (column.source === "question" && column.question) return `q:${column.question.id}`;
-  // The reserved metadata fields and the contact attributes are one entry each, as in the Standard list.
-  if (column.source === "embedded" && column.embedded?.origin === "metadata") return "metadata";
-  if (column.source === "embedded" && column.embedded?.origin === "contact") return "person";
   if (column.source === "embedded") return `e:${column.name}`;
   return `r:${column.name}`;
 };
@@ -60,8 +57,6 @@ const groupLabel = (column: TAnalysisColumn): string => {
   if (column.source === "question" && column.question) {
     return `${column.question.code} · ${column.question.headline}`;
   }
-  if (column.source === "embedded" && column.embedded?.origin === "metadata") return "metadata";
-  if (column.source === "embedded" && column.embedded?.origin === "contact") return "person";
   if (column.source === "embedded") return column.embedded?.label ?? column.name;
   return RESPONSE_COLUMN_LABELS[column.name] ?? column.name;
 };
