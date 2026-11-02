@@ -1,6 +1,6 @@
 {
   "checks": {
-    "anchors": "284 public MDX parsed with Mintlify heading generation; 229 fragments; zero unresolved",
+    "anchors": "295 public MDX parsed with Mintlify heading generation; 262 fragment links; seven punctuation-related static discrepancies verified in browser; zero unresolved",
     "build": "passed: cd docs && NODE_USE_ENV_PROXY=1 npx mint@4.2.1126 validate",
     "formatting": "passed for changed JSON; MDX follows repository formatter exclusions",
     "isolated_failure": "lib/utils/validate-webhook-url.toctou.test.ts:36 times out at 5000ms fetching a reserved .invalid hostname; reproduced in isolation. Source unchanged by this PR.",
@@ -11,7 +11,7 @@
   "coverage": {
     "publication": "No merge, live publication, live search/sitemap/LLM-index verification performed",
     "runtime": "No infrastructure deployment, database upgrade or restore rehearsal performed",
-    "structural": "247 baseline and 284 resulting public MDX pages; targeted semantic/source review, not runtime validation"
+    "structural": "255 baseline and 295 resulting public MDX pages; targeted semantic/source review, not runtime validation"
   },
   "evidence": [
     {
@@ -110,6 +110,276 @@
       "self-hosting/upgrade/versions/2026-10-security-patches": "Shared detailed actions linked from the three affected patch releases and target-minor notes."
     },
     "previous_base": "f77455cdee1eacd6bd9f8bfbdd6888d6a907932c"
+  },
+  "main_sync_2026_11_02": {
+    "base": "0b36f5f630a3934b780ad6b87927c1d4f8e53d1c",
+    "command_checks": [
+      "RustFS snippet combined with its declared volume: docker compose config succeeds; container variables survive interpolation.",
+      "External SpiceDB override: docker compose config succeeds with synthetic values; no bootstrap service.",
+      "Backup shell simulation: first pg_dump failure returns nonzero and prevents second invocation."
+    ],
+    "commit_hook": "Merge hook attempted lint on incoming main application files; fails on unresolved generated Creative Prisma types. All non-doc files match main. Merge committed with HUSKY=0 after docs checks; this is not an application lint pass.",
+    "incoming_docs_paths": 210,
+    "legacy_anchors": 127,
+    "preview": [
+      {
+        "route": "self-hosting/upgrade/versions/6.0",
+        "status": 200
+      },
+      {
+        "route": "self-hosting/upgrade/versions/5.4",
+        "status": 200
+      },
+      {
+        "route": "self-hosting/upgrade/versions/4.7",
+        "status": 200
+      },
+      {
+        "route": "self-hosting/upgrade/versions/2026-10-27-patches",
+        "status": 200
+      },
+      {
+        "route": "self-hosting/upgrade/versions/charts-dashboards",
+        "status": 200
+      },
+      {
+        "route": "self-hosting/upgrade/versions/valkey-9",
+        "status": 200
+      },
+      {
+        "route": "self-hosting/configuration/spicedb-external-postgres",
+        "status": 200
+      },
+      {
+        "route": "surveys/creatives/overview",
+        "status": 200
+      },
+      {
+        "route": "platform/features/integrations/n8n",
+        "status": 200
+      },
+      {
+        "route": "self-hosting/operate/backup-restore",
+        "status": 200
+      },
+      {
+        "route": "self-hosting/advanced/migration",
+        "status": 200
+      },
+      {
+        "route": "platform/changelog",
+        "status": 200
+      },
+      {
+        "anchor": "/self-hosting/advanced/license#what-features-are-free",
+        "exists": true
+      },
+      {
+        "anchor": "/self-hosting/advanced/license#what-features-are-free",
+        "exists": true
+      },
+      {
+        "anchor": "/self-hosting/advanced/license#what-features-are-free",
+        "exists": true
+      },
+      {
+        "anchor": "/self-hosting/advanced/migrating-surveys#step-4-finish-by-hand",
+        "exists": true
+      },
+      {
+        "anchor": "/self-hosting/advanced/migrating-surveys#step-1-export-the-source-workspace",
+        "exists": true
+      },
+      {
+        "anchor": "/surveys/website-app-surveys/survey-display-logic#recontact-options-or-interaction-based-segments",
+        "exists": true
+      },
+      {
+        "anchor": "/self-hosting/upgrade/versions/5.2#hub-enrichment-sentiment-emotion-translation",
+        "exists": true
+      },
+      {
+        "mobileOverflow": false,
+        "route": "self-hosting/upgrade/versions/6.0"
+      },
+      {
+        "mobileOverflow": false,
+        "route": "self-hosting/configuration/spicedb-external-postgres"
+      }
+    ],
+    "redirect_results": [
+      {
+        "destination": "/docs/platform/features/integrations/n8n",
+        "location": "/docs/platform/features/integrations/n8n",
+        "source": "/docs/self-hosting/configuration/integrations/n8n",
+        "status": 307
+      },
+      {
+        "destination": "/platform/features/integrations/n8n",
+        "location": "/platform/features/integrations/n8n",
+        "source": "/self-hosting/configuration/integrations/n8n",
+        "status": 307
+      },
+      {
+        "destination": "/docs/platform/features/integrations/zapier",
+        "location": "/docs/platform/features/integrations/zapier",
+        "source": "/docs/self-hosting/configuration/integrations/zapier",
+        "status": 307
+      },
+      {
+        "destination": "/platform/features/integrations/zapier",
+        "location": "/platform/features/integrations/zapier",
+        "source": "/self-hosting/configuration/integrations/zapier",
+        "status": 307
+      },
+      {
+        "destination": "/docs/platform/features/integrations/activepieces",
+        "location": "/docs/platform/features/integrations/activepieces",
+        "source": "/docs/self-hosting/configuration/integrations/activepieces",
+        "status": 307
+      },
+      {
+        "destination": "/platform/features/integrations/activepieces",
+        "location": "/platform/features/integrations/activepieces",
+        "source": "/self-hosting/configuration/integrations/activepieces",
+        "status": 307
+      },
+      {
+        "destination": "/docs/platform/features/styling-theme",
+        "location": "/docs/platform/features/styling-theme",
+        "source": "/docs/self-hosting/advanced/enterprise-features/hide-powered-by-formbricks",
+        "status": 307
+      },
+      {
+        "destination": "/platform/features/styling-theme",
+        "location": "/platform/features/styling-theme",
+        "source": "/self-hosting/advanced/enterprise-features/hide-powered-by-formbricks",
+        "status": 307
+      },
+      {
+        "destination": "/docs/platform/features/email-customization",
+        "location": "/docs/platform/features/email-customization",
+        "source": "/docs/self-hosting/advanced/enterprise-features/whitelabel-email-follow-ups",
+        "status": 307
+      },
+      {
+        "destination": "/platform/features/email-customization",
+        "location": "/platform/features/email-customization",
+        "source": "/self-hosting/advanced/enterprise-features/whitelabel-email-follow-ups",
+        "status": 307
+      },
+      {
+        "destination": "/docs/platform/features/user-management",
+        "location": "/docs/platform/features/user-management",
+        "source": "/docs/self-hosting/advanced/enterprise-features/team-access",
+        "status": 307
+      },
+      {
+        "destination": "/platform/features/user-management",
+        "location": "/platform/features/user-management",
+        "source": "/self-hosting/advanced/enterprise-features/team-access",
+        "status": 307
+      },
+      {
+        "destination": "/docs/platform/features/contacts",
+        "location": "/docs/platform/features/contacts",
+        "source": "/docs/self-hosting/advanced/enterprise-features/contact-management-segments",
+        "status": 307
+      },
+      {
+        "destination": "/platform/features/contacts",
+        "location": "/platform/features/contacts",
+        "source": "/self-hosting/advanced/enterprise-features/contact-management-segments",
+        "status": 307
+      },
+      {
+        "destination": "/docs/self-hosting/configuration/auth-sso/open-id-connect",
+        "location": "/docs/self-hosting/configuration/auth-sso/open-id-connect",
+        "source": "/docs/self-hosting/advanced/enterprise-features/oidc-sso",
+        "status": 307
+      },
+      {
+        "destination": "/self-hosting/configuration/auth-sso/open-id-connect",
+        "location": "/self-hosting/configuration/auth-sso/open-id-connect",
+        "source": "/self-hosting/advanced/enterprise-features/oidc-sso",
+        "status": 307
+      },
+      {
+        "destination": "/docs/self-hosting/configuration/auth-sso/saml-sso",
+        "location": "/docs/self-hosting/configuration/auth-sso/saml-sso",
+        "source": "/docs/self-hosting/advanced/enterprise-features/saml-sso",
+        "status": 307
+      },
+      {
+        "destination": "/self-hosting/configuration/auth-sso/saml-sso",
+        "location": "/self-hosting/configuration/auth-sso/saml-sso",
+        "source": "/self-hosting/advanced/enterprise-features/saml-sso",
+        "status": 307
+      },
+      {
+        "destination": "/docs/unify-feedback/overview",
+        "location": "/docs/unify-feedback/overview",
+        "source": "/docs/self-hosting/advanced/enterprise-features/unify-feedback",
+        "status": 307
+      },
+      {
+        "destination": "/unify-feedback/overview",
+        "location": "/unify-feedback/overview",
+        "source": "/self-hosting/advanced/enterprise-features/unify-feedback",
+        "status": 307
+      },
+      {
+        "destination": "/docs/unify-feedback/dashboards-charts",
+        "location": "/docs/unify-feedback/dashboards-charts",
+        "source": "/docs/self-hosting/advanced/enterprise-features/dashboards",
+        "status": 307
+      },
+      {
+        "destination": "/unify-feedback/dashboards-charts",
+        "location": "/unify-feedback/dashboards-charts",
+        "source": "/self-hosting/advanced/enterprise-features/dashboards",
+        "status": 307
+      },
+      {
+        "destination": "/docs/self-hosting/configuration/ai-features",
+        "location": "/docs/self-hosting/configuration/ai-features",
+        "source": "/docs/self-hosting/advanced/enterprise-features/ai-features",
+        "status": 307
+      },
+      {
+        "destination": "/self-hosting/configuration/ai-features",
+        "location": "/self-hosting/configuration/ai-features",
+        "source": "/self-hosting/advanced/enterprise-features/ai-features",
+        "status": 307
+      },
+      {
+        "destination": "/docs/workflows/overview",
+        "location": "/docs/workflows/overview",
+        "source": "/docs/self-hosting/advanced/enterprise-features/workflows",
+        "status": 307
+      },
+      {
+        "destination": "/workflows/overview",
+        "location": "/workflows/overview",
+        "source": "/self-hosting/advanced/enterprise-features/workflows",
+        "status": 307
+      },
+      {
+        "destination": "/surveys/creatives/overview",
+        "location": "/surveys/creatives/overview",
+        "source": "/self-hosting/advanced/enterprise-features/creatives",
+        "status": 307
+      },
+      {
+        "destination": "/docs/surveys/creatives/overview",
+        "location": "/docs/surveys/creatives/overview",
+        "source": "/docs/self-hosting/advanced/enterprise-features/creatives",
+        "status": 307
+      }
+    ],
+    "redirects": 28,
+    "releases_reviewed": 75,
+    "reviewed_head": "a8120cd8405cb15e3ebb05ed00c78f7ba9560a5c"
   },
   "open_review_items": [
     "Operational owner: validate procedures against the intended enterprise topology and runtime upgrade/restore evidence.",
