@@ -4,11 +4,13 @@
 // This repo is public, and a session transcript can hold customer data, internal context and
 // credentials. The prose rule alone did not hold: agent harnesses append these links as attribution
 // on every turn, later and more specifically than AGENTS.md, so links kept reaching PR bodies after
-// the rule landed. Two callers run this check:
+// the rule landed. Three callers run this check:
 //
 //   - `.husky/commit-msg` passes the commit message file, so a commit is refused locally.
-//   - The `agent-links` job in `.github/workflows/pr.yml` pipes the PR body and every commit message
-//     of the PR, so a commit made with hooks off or edited on GitHub is still caught.
+//   - The `agent-links` job in `.github/workflows/pr.yml` passes every commit message of the PR, so a
+//     commit made with hooks off or on GitHub is still caught.
+//   - `.github/workflows/pr-body-agent-links.yml` passes the PR body, and re-runs when the body is
+//     edited: tools append a session footer when they open a PR, so the fix is usually an edit.
 //
 // Usage: `node scripts/check-agent-links.mjs [file ...]`; with no file, reads stdin.
 import { readFileSync } from "node:fs";

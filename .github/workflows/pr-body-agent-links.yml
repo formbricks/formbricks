@@ -1,0 +1,39 @@
+name: PR Body Agent Links
+
+# Agent session and conversation links in the PR body (AGENTS.md; this repo is public). Separate from
+# pr.yml because it must re-run when the body is edited: tools append session footers when they open a
+# PR, and editing the footer out has to turn the check green without a push. Adding `edited` to pr.yml
+# would re-run, and cancel, the whole gate on every title or body edit.
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Check PR Body for Agent Session Links
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: audit
+      - name: Checkout Repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check PR body
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          printf '%s' "$PR_BODY" > "$RUNNER_TEMP/pr-body.md"
+          node scripts/check-agent-links.mjs "$RUNNER_TEMP/pr-body.md"
