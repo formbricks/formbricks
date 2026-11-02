@@ -22,12 +22,12 @@ const HEALED_PATHS = new Set(["/sign-in/email", "/request-password-reset"]);
  * during a rolling upgrade, after the ENG-2343 backfill has already run, so no migration can reach them.
  * Healing on use does, including on self-hosted instances we cannot query.
  *
- * Better Auth 1.7.7 no longer reads or writes `issuer`, so its own credential rows have a NULL one. This
- * hook keeps stamping it so a rollback to 1.7.0 still finds them; delete it once that rollback is off the
- * table.
+ * Better Auth 1.7.7 no longer reads `issuer`, so on 1.7.7 these rows sign in and reset fine. New rows get
+ * their issuer from the `account.create.before` hook in better-auth-hooks.ts; this hook keeps healing the
+ * older NULL rows so a rollback to 1.7.0 still finds them. Delete both once that rollback is off the table.
  *
  * The reset is healed at the request, not at `/reset-password`, because the request carries the email.
- * A link issued before the heal still fails, cleanly, in `resetPasswordAction`.
+ * On 1.7.0 a link issued before the heal fails, cleanly, in `resetPasswordAction`; on 1.7.7 it resets.
  *
  * The user is matched the way Better Auth matches them (lowercased, then exact). Only `issuer` changes
  * and its value follows from `provider`, so no row can move between users. Best effort: a failure is
