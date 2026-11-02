@@ -1,6 +1,5 @@
 import { type i18n as TI18n, createInstance } from "i18next";
 import ICU from "i18next-icu";
-import { logger } from "@formbricks/logger";
 import { loadLocaleMessages } from "./load-locale-messages";
 
 export type TLocaleMessages = Record<string, unknown>;
@@ -33,7 +32,9 @@ export const createI18n = (locale: string, messages: TLocaleMessages): TI18n => 
       initAsync: false,
       interpolation: { escapeValue: false },
     })
-    .catch((error: unknown) => logger.error(error));
+    // Not `@formbricks/logger`: this runs in the provider that wraps every page, and the logger would
+    // put pino in every page's first-load JS for this one line.
+    .catch((error: unknown) => console.error(error));
 
   const switchLanguage = instance.changeLanguage.bind(instance);
   let requested: string | undefined;
