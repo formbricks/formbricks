@@ -266,6 +266,17 @@ function Signature({
   const isPadLabelled = mode === "draw" && !hasSavedOnly;
   const statusText = isUploading ? text.uploading : isSigned ? text.signed : text.notSigned;
 
+  const clearButton = (
+    <button
+      type="button"
+      onClick={handleClear}
+      disabled={locked || !hasAnyInput}
+      className={cn(CONTROL_CLASSES, "hover:bg-input-selected-bg")}>
+      <Eraser aria-hidden="true" />
+      {text.clear}
+    </button>
+  );
+
   return (
     <div className="w-full space-y-4" id={elementId} dir={dir}>
       <ElementHeader
@@ -284,24 +295,17 @@ function Signature({
         <ElementError errorMessage={errorMessage} dir={dir} id={errorAria.errorId} />
 
         <div role="group" aria-labelledby={headlineId} aria-describedby={describedBy} className="space-y-2">
-          <div className="flex items-center justify-between gap-2">
-            {showModeToggle ? (
+          {/* With tabs, Clear shares their row; without them it sits under the pad rather than alone on an
+              empty row above it. */}
+          {showModeToggle ? (
+            <div className="flex items-center justify-between gap-2">
               <div role="tablist" aria-label={text.method} className="flex items-center gap-1">
                 {renderTab("draw", text.draw)}
                 {renderTab("type", text.type)}
               </div>
-            ) : (
-              <span />
-            )}
-            <button
-              type="button"
-              onClick={handleClear}
-              disabled={locked || !hasAnyInput}
-              className={cn(CONTROL_CLASSES, "hover:bg-input-selected-bg")}>
-              <Eraser aria-hidden="true" />
-              {text.clear}
-            </button>
-          </div>
+              {clearButton}
+            </div>
+          ) : null}
 
           <div
             id={panelId}
@@ -310,9 +314,15 @@ function Signature({
             className="space-y-2">
             {/* The pad is a fixed white page with near-black ink in every theme: it is what the exported
                 PNG looks like, so it must not follow the survey's colours or dark appearance. */}
+            {/* The pad cancels pointerdown so a stroke never scrolls or selects, which also cancels the focus
+                move a press makes. Focusing the pad by hand drops the ring the card's mount focus left on the
+                Draw tab, so it does not linger while the respondent draws. */}
             <div
               ref={padBoxRef}
               tabIndex={-1}
+              onPointerDown={() => {
+                if (drawingEnabled) padBoxRef.current?.focus({ preventScroll: true });
+              }}
               className="rounded-input border-input-border relative w-full overflow-hidden border bg-white outline-none"
               style={{ aspectRatio: `${String(SIGNATURE_ASPECT_RATIO)} / 1` }}>
               <canvas
@@ -370,6 +380,8 @@ function Signature({
               />
             ) : null}
           </div>
+
+          {showModeToggle ? null : <div className="flex justify-end">{clearButton}</div>}
 
           <p role="status" aria-live="polite" className="sr-only">
             {statusText}
