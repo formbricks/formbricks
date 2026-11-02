@@ -150,6 +150,14 @@ const describe = (column: TAnalysisColumn): TInfo & { type: string } => {
         notes: `${BLANK_MEANS}${matrixRowNote}`,
         codes: (column.codes ?? []).map(({ code, label }) => [code, label]),
       };
+    case "codes":
+      return {
+        type: typeName,
+        text,
+        detail: "codes",
+        notes: `${BLANK_MEANS} The chosen codes in option order, separated by "; ".`,
+        codes: (column.codes ?? []).map(({ code, label }) => [code, label]),
+      };
     case "flag":
       return {
         type: typeName,
@@ -219,10 +227,10 @@ export const buildDatamap = (
 ): TDatamapRow[] =>
   columns.flatMap((column) => {
     const info = describe(column);
+    // A multi-select's unmatched choices are listed in the Unmapped values only, never in its cells.
+    const holdsUnmapped = column.kind !== "flag" && column.kind !== "rank" && column.kind !== "codes";
     const notes =
-      unmappedColumns?.has(column.name) && column.kind !== "flag" && column.kind !== "rank"
-        ? `${info.notes} ${UNMAPPED_NOTE}`
-        : info.notes;
+      unmappedColumns?.has(column.name) && holdsUnmapped ? `${info.notes} ${UNMAPPED_NOTE}` : info.notes;
     const common = [
       column.name,
       column.question?.id ?? null,

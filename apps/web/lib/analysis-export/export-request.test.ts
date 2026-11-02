@@ -176,6 +176,39 @@ describe("Display questions", () => {
   });
 });
 
+describe("1/0 multi-select columns", () => {
+  test("left out, an Analysis export writes the columns and the Standard export stays today's file", () => {
+    expect(planExport(ZExportRequest.parse({ format: "csv", display: "codes" }))).toMatchObject({
+      kind: "analysis",
+      multiSelect: "columns",
+    });
+    expect(planExport(ZExportRequest.parse({ format: "csv" })).kind).toBe("standard");
+  });
+
+  test("off, a multi-select is one cell; off with Text only is still the Standard export", () => {
+    const codes = ZExportRequest.parse({ format: "xlsx", display: "codes", multiSelectColumns: false });
+    expect(planExport(codes)).toMatchObject({ kind: "analysis", multiSelect: "cell" });
+    expect(planExport(ZExportRequest.parse({ format: "csv", multiSelectColumns: false })).kind).toBe(
+      "standard"
+    );
+  });
+
+  test("on with Text only is an Analysis export, never the Standard file", () => {
+    expect(planExport(ZExportRequest.parse({ format: "csv", multiSelectColumns: true }))).toMatchObject({
+      kind: "analysis",
+      display: "text",
+      multiSelect: "columns",
+    });
+  });
+
+  test("the SPSS syntax file needs the columns", () => {
+    expect(
+      parse({ format: "csv", display: "codes", questions: "codes", spss: true, multiSelectColumns: false })
+        .success
+    ).toBe(false);
+  });
+});
+
 describe("Low quality responses", () => {
   test("the request may carry the choice, and leaving it out keeps the kind's default", () => {
     expect(parse({ format: "csv", includeLowQuality: false }).data?.includeLowQuality).toBe(false);

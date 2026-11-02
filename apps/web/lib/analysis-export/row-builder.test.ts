@@ -71,12 +71,14 @@ const run = (
   options: {
     fields?: TAnalysisResponseFields;
     answers?: "codes" | "text" | "both";
+    multiSelect?: "columns" | "cell";
     survey?: Partial<TAnalysisSurvey>;
   } = {}
 ) => {
   const builder = createAnalysisRowBuilder({
     survey: surveyWith(elements, options.survey),
     answers: options.answers ?? "codes",
+    multiSelect: options.multiSelect,
     fields: options.fields ?? {},
   });
   const reports: unknown[] = [];
@@ -86,6 +88,15 @@ const run = (
     Object.fromEntries(names.map((name, i) => [name, rows[index].codes?.[i] ?? null]));
   return { builder, rows, reports, names, cells };
 };
+
+/** A column of a one-question export with multi-selects written as one cell. */
+const cellLayoutColumn = (questionElement: Record<string, unknown>, name: string) =>
+  createAnalysisRowBuilder({
+    survey: surveyWith([questionElement]),
+    answers: "codes",
+    multiSelect: "cell",
+    fields: {},
+  }).columns.find((column) => column.name === name);
 
 describe("response columns", () => {
   test("response_id, language and outcome are always there; others only when selected", () => {
@@ -286,6 +297,80 @@ describe("multi select", () => {
     expect(reports).toEqual([
       expect.objectContaining({ column: "q2", value: "Painting", reason: "no_match" }),
     ]);
+  });
+});
+
+describe("multi select as one cell", () => {
+  const hobbies = element({
+    id: "e2",
+    code: "q2",
+    type: "multipleChoiceMulti",
+    choices: [
+      choice("h1", "1", "Reading", "القراءة"),
+      choice("h2", "2", "Chess", "الشطرنج"),
+      choice("h3", "3", "Golf", "الغولف"),
+      choice("other", "98", "Other", "آخر"),
+    ],
+  });
+  const asCell = { multiSelect: "cell" } as const;
+
+  test("one cell with the chosen codes in option order, whatever order they were ticked in", () => {
+    const { names, cells } = run(
+      [hobbies],
+      [response({ e2: ["Golf", "Reading"] }), response({}, { id: "r2" })],
+      asCell
+    );
+    expect(names).toEqual(expect.arrayContaining(["q2", "q2_98_text"]));
+    expect(names).not.toContain("q2_1");
+    expect(cellLayoutColumn(hobbies, "q2")).toMatchObject({ kind: "codes" });
+    expect(cells(0)).toMatchObject({ q2: "1; 3", q2_98_text: null });
+    expect(cells(1)).toMatchObject({ q2: null, q2_98_text: null });
+  });
+
+  test("labels are the answers as given; Other is its text, which also fills its own column", () => {
+    const { rows, names } = run(
+      [hobbies],
+      [response({ e2: ["الشطرنج", "", "Painting"] }, { language: "ar" })],
+      { ...asCell, answers: "both" }
+    );
+    const at = (cells: unknown[] | null, name: string) => cells?.[names.indexOf(name)];
+    expect(at(rows[0].codes, "q2")).toBe("2; 98");
+    expect(at(rows[0].labels, "q2")).toBe("الشطرنج; Painting");
+    expect(at(rows[0].codes, "q2_98_text")).toBe("Painting");
+  });
+
+  test("a selection that matches no option stays out of the cell and is listed", () => {
+    const noOther = element({
+      ...hobbies,
+      choices: (hobbies as unknown as { choices: { id: string }[] }).choices.slice(0, 3),
+    });
+    const { cells, reports } = run([noOther], [response({ e2: ["Chess", "Painting"] })], asCell);
+    expect(cells()).toMatchObject({ q2: "2" });
+    expect(reports).toEqual([
+      expect.objectContaining({ column: "q2", value: "Painting", reason: "no_match" }),
+    ]);
+  });
+
+  test("a picture selection with several picks is one cell too; ranking keeps a column per option", () => {
+    const pictures = element({
+      id: "e9",
+      code: "q9",
+      type: "pictureSelection",
+      allowMulti: true,
+      choices: [
+        { id: "p1", code: "1", imageUrl: "a.png" },
+        { id: "p2", code: "2", imageUrl: "b.png" },
+      ],
+    });
+    const ranking = element({ ...hobbies, id: "e3", code: "q3", type: "ranking" });
+    const { names, cells, reports } = run(
+      [pictures, ranking],
+      [response({ e9: ["p2", "p1", "px"], e3: ["Chess"] })],
+      asCell
+    );
+    expect(cells()).toMatchObject({ q9: "1; 2", q3_2: 1 });
+    expect(names).not.toContain("q9_1");
+    expect(reports).toEqual([expect.objectContaining({ column: "q9", value: "px", reason: "no_match" })]);
   });
 });
 

@@ -158,6 +158,7 @@ export const countExportResponses = async ({
   const { columns } = createAnalysisRowBuilder({
     survey,
     answers: plan.display,
+    multiSelect: plan.multiSelect,
     fields: ANALYSIS_EXPORT_FIELDS,
     isQuotasAllowed,
     timeZone,
@@ -320,6 +321,7 @@ export const buildExportResponse = async ({
         filter,
         includeLowQuality,
         answers: plan.display,
+        multiSelect: plan.multiSelect,
         fields: ANALYSIS_EXPORT_FIELDS,
         isQuotasAllowed,
         timeZone,

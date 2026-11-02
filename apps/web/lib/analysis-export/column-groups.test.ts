@@ -5,6 +5,7 @@ import { selectedGroups } from "./column-selection";
 import { createColumnStats } from "./column-stats";
 import { buildDatamap } from "./datamap";
 import { buildSpssSyntax } from "./spss-syntax";
+import type { TAnalysisColumn } from "./types";
 
 const drain = async (exported: ReturnType<typeof buildSampleExport>) => {
   const rows = [];
@@ -38,6 +39,21 @@ describe("analysisColumnGroups", () => {
     );
     expect(options[0].label).toMatch(/^fruit_\w+ · /);
     expect(groups.filter((group) => group.parentId && group.parentId !== fruit.id)).toEqual([]);
+  });
+});
+
+describe("a multi-select written as one cell", () => {
+  const column = (name: string, kind: TAnalysisColumn["kind"]): TAnalysisColumn => ({
+    name,
+    kind,
+    source: "question",
+    question: { id: "e2", code: "q2", type: "multipleChoiceMulti", headline: "Hobbies?" },
+  });
+  const columns = [column("q2", "codes"), column("q2_98_text", "other_text")];
+
+  test("is one entry, like any other question, holding both of its columns", () => {
+    expect(analysisColumnGroups(columns)).toEqual([{ id: "q:e2", label: "q2 · Hobbies?" }]);
+    expect(columnsByEntry(columns)).toEqual({ "q:e2": 2 });
   });
 });
 

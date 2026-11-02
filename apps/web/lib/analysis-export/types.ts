@@ -13,6 +13,12 @@ export type TAnalysisCell = string | number | null;
 /** Which answer cells a row carries: codes, the answer text, or both (the writer then makes two files). */
 export type TAnswerDisplay = "codes" | "text" | "both";
 
+/**
+ * How a multi-select question is written: one 1/0 column per option, or one cell with the chosen codes (or
+ * labels) in option order, separated by `; ` (`1; 4`).
+ */
+export type TMultiSelectLayout = "columns" | "cell";
+
 /** Response columns on top of the three that are always there (`response_id`, `language`, `outcome`). */
 export type TAnalysisResponseFields = {
   /** `timestamp`, the creation time in the organization's time zone, as the Standard export writes it. */
@@ -46,6 +52,8 @@ export type TAnalysisExportInput = {
   includeLowQuality?: boolean;
   /** Default `"codes"`. */
   answers?: TAnswerDisplay;
+  /** Default `"columns"`. */
+  multiSelect?: TMultiSelectLayout;
   fields?: TAnalysisResponseFields;
   isQuotasAllowed?: boolean;
   /** IANA zone for `timestamp`. Default `"UTC"`. */
@@ -63,6 +71,8 @@ export type TAnalysisColumnKind =
   | "code"
   /** Multi-select option: 1 chosen, 0 answered without it, blank unanswered. Also `finished`. */
   | "flag"
+  /** A multi-select in one cell: the chosen codes in option order, separated by `; `. Values come from `codes`. */
+  | "codes"
   /** Ranking option: the rank given, blank if unranked. */
   | "rank"
   /** The text a respondent typed into an Other option. */
@@ -76,7 +86,7 @@ export type TAnalysisColumn = {
   source: "response" | "question" | "embedded";
   /** Set for `source: "question"`. `headline` is the default-language plain text. */
   question?: { id: string; code: string; type: string; headline: string };
-  /** Answer codes a `code` column can hold, in option order. Matrix: the matrix columns. */
+  /** Answer codes a `code` or `codes` column can hold, in option order. Matrix: the matrix columns. */
   codes?: { code: string; label: string }[];
   /** The option a `flag`, `rank` or `other_text` column stands for. */
   option?: { code: string; label: string };

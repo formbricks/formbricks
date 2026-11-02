@@ -34,6 +34,11 @@ export type TExportOptions = {
    * the Standard export (today's file), unticked once any Analysis option is on.
    */
   includeLowQuality?: boolean;
+  /**
+   * The "one column per multi-select option" checkbox once the person has touched it. Until then it follows
+   * the export: unticked for the Standard export (today's file), ticked once any Analysis option is on.
+   */
+  multiSelectColumns?: boolean;
 };
 
 /** The Standard export: today's CSV. The modal always opens with these and remembers nothing. */
@@ -50,6 +55,23 @@ export const DEFAULT_EXPORT_OPTIONS: TExportOptions = {
 /** Whether the file will hold Low quality responses: the person's choice, else the default of its kind. */
 export const isLowQualityIncluded = (options: TExportOptions): boolean =>
   options.includeLowQuality ?? planExport(toExportRequest(options)).kind === "standard";
+
+/** The SPSS syntax file needs one 1/0 column per multi-select option: the checkbox stays ticked while it is. */
+export const isMultiSelectColumnsLocked = (options: TExportOptions): boolean => options.spss;
+
+/** Whether multi-selects get one 1/0 column per option: the person's choice, else the default of the export. */
+export const isMultiSelectColumnsOn = (options: TExportOptions): boolean => {
+  if (isMultiSelectColumnsLocked(options)) return true;
+  return (
+    options.multiSelectColumns ??
+    planExport(toExportRequest({ ...options, multiSelectColumns: undefined })).kind === "analysis"
+  );
+};
+
+export const setMultiSelectColumns = (options: TExportOptions, on: boolean): TExportOptions => ({
+  ...options,
+  multiSelectColumns: on,
+});
 
 /** The SPSS syntax file needs codes, so Text only is off the table while it is ticked. */
 export const isTextOnlyAvailable = (options: TExportOptions): boolean => !options.spss;
@@ -221,6 +243,10 @@ export const toExportRequest = (
       ? excludedForRequest(scope.columnGroups, options.excludedColumns)
       : [],
     ...(options.includeLowQuality === undefined ? {} : { includeLowQuality: options.includeLowQuality }),
+    // Left out until touched: the route then picks the export's default. The SPSS file always takes the columns.
+    ...(options.multiSelectColumns === undefined || options.spss
+      ? {}
+      : { multiSelectColumns: options.multiSelectColumns }),
     ...(filter ? { filter } : {}),
   };
 };

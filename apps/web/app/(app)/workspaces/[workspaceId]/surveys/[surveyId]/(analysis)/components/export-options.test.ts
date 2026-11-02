@@ -10,6 +10,8 @@ import {
   isExcelTooLarge,
   isExportReady,
   isLowQualityIncluded,
+  isMultiSelectColumnsLocked,
+  isMultiSelectColumnsOn,
   isSpssAvailable,
   isTextOnlyAvailable,
   isZipAvailable,
@@ -18,6 +20,7 @@ import {
   setDisplay,
   setExcludedColumns,
   setFormat,
+  setMultiSelectColumns,
   setQuestions,
   setSpss,
   setZip,
@@ -229,6 +232,32 @@ describe("isExportReady", () => {
     expect(isExportReady({ isSuccess: false, isPlaceholderData: false })).toBe(false);
     // The previous counts are on screen while the new ones load: the column list may be out of date.
     expect(isExportReady({ isSuccess: true, isPlaceholderData: true })).toBe(false);
+  });
+});
+
+describe("the 1/0 multi-select columns checkbox", () => {
+  test("follows the export until touched: unticked for the Standard export, ticked for an Analysis export", () => {
+    expect(isMultiSelectColumnsOn(DEFAULT_EXPORT_OPTIONS)).toBe(false);
+    expect(isMultiSelectColumnsOn(setDisplay(DEFAULT_EXPORT_OPTIONS, "codes"))).toBe(true);
+    expect(toExportRequest(setDisplay(DEFAULT_EXPORT_OPTIONS, "codes"))).not.toHaveProperty(
+      "multiSelectColumns"
+    );
+  });
+
+  test("unticked on an Analysis export writes one cell; ticked on Text only makes it an Analysis export", () => {
+    const cell = setMultiSelectColumns(setDisplay(DEFAULT_EXPORT_OPTIONS, "codes"), false);
+    expect(isMultiSelectColumnsOn(cell)).toBe(false);
+    expect(planExport(toExportRequest(cell))).toMatchObject({ kind: "analysis", multiSelect: "cell" });
+    const ticked = setMultiSelectColumns(DEFAULT_EXPORT_OPTIONS, true);
+    expect(planExport(toExportRequest(ticked))).toMatchObject({ kind: "analysis", multiSelect: "columns" });
+  });
+
+  test("stays ticked and locked while the SPSS syntax file is on, and the request never says otherwise", () => {
+    const options = setSpss(setMultiSelectColumns(setDisplay(DEFAULT_EXPORT_OPTIONS, "codes"), false), true);
+    expect(isMultiSelectColumnsLocked(options)).toBe(true);
+    expect(isMultiSelectColumnsOn(options)).toBe(true);
+    expect(toExportRequest(options)).not.toHaveProperty("multiSelectColumns");
+    expect(isMultiSelectColumnsOn(setSpss(options, false))).toBe(false);
   });
 });
 

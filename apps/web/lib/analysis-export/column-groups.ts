@@ -16,19 +16,32 @@ export const analysisColumnGroupId = (column: TAnalysisColumn): string => {
   return `r:${column.name}`;
 };
 
-/** The entry of a multi-select option or Other text column, listed under its question. Other columns have none. */
-const analysisColumnOptionId = (column: TAnalysisColumn): string | null =>
-  column.source === "question" && column.question?.type === "multipleChoiceMulti" ? `c:${column.name}` : null;
+/**
+ * The multi-select questions written as one 1/0 column per option: only those list their options. One written
+ * as a single cell (`1; 4`) is one entry, like any other question.
+ */
+const questionsWithOptionColumns = (columns: readonly TAnalysisColumn[]): ReadonlySet<string> =>
+  new Set(
+    columns.flatMap((column) =>
+      column.kind === "flag" && column.question?.type === "multipleChoiceMulti" ? [column.question.id] : []
+    )
+  );
 
-/** The entry of the Include columns list that holds this column: its option when it has one, else its group. */
-export const analysisColumnEntryId = (column: TAnalysisColumn): string =>
-  analysisColumnOptionId(column) ?? analysisColumnGroupId(column);
+/** The entry of a multi-select option or Other text column, listed under its question. Other columns have none. */
+const analysisColumnOptionId = (
+  column: TAnalysisColumn,
+  optionQuestions: ReadonlySet<string>
+): string | null =>
+  column.source === "question" && column.question && optionQuestions.has(column.question.id)
+    ? `c:${column.name}`
+    : null;
 
 /** How many columns each entry holds, for sizing a workbook after some entries are switched off. */
 export const columnsByEntry = (columns: readonly TAnalysisColumn[]): Record<string, number> => {
+  const optionQuestions = questionsWithOptionColumns(columns);
   const counts: Record<string, number> = {};
   for (const column of columns) {
-    const id = analysisColumnEntryId(column);
+    const id = analysisColumnOptionId(column, optionQuestions) ?? analysisColumnGroupId(column);
     counts[id] = (counts[id] ?? 0) + 1;
   }
   return counts;
@@ -50,11 +63,12 @@ const groupLabel = (column: TAnalysisColumn): string => {
 
 /** The Include columns list of an Analysis export, in column order. A multi-select lists its options too. */
 export const analysisColumnGroups = (columns: readonly TAnalysisColumn[]): TExportColumnGroup[] => {
+  const optionQuestions = questionsWithOptionColumns(columns);
   const groups = new Map<string, TExportColumnGroup>();
   for (const column of columns) {
     const id = analysisColumnGroupId(column);
     if (!groups.has(id)) groups.set(id, { id, label: groupLabel(column) });
-    const optionId = analysisColumnOptionId(column);
+    const optionId = analysisColumnOptionId(column, optionQuestions);
     if (optionId) groups.set(optionId, { id: optionId, label: optionLabel(column), parentId: id });
   }
   return [...groups.values()];
@@ -69,10 +83,11 @@ export const withoutColumnGroups = (
   excluded: readonly string[]
 ): TAnalysisExport => {
   if (excluded.length === 0) return exported;
+  const optionQuestions = questionsWithOptionColumns(exported.columns);
   const keep = exported.columns.map(
     (column) =>
       !excluded.includes(analysisColumnGroupId(column)) &&
-      !excluded.includes(analysisColumnOptionId(column) ?? "")
+      !excluded.includes(analysisColumnOptionId(column, optionQuestions) ?? "")
   );
   const pick = <T>(cells: T[] | null): T[] | null => (cells ? cells.filter((_, index) => keep[index]) : null);
   return {

@@ -4543,6 +4543,9 @@ checksums:
     workspace/surveys/export/format_title: 14dfd9f7515f22e0f6f2ba64bc6af47e
     workspace/surveys/export/include_low_quality: a490c6beeded34c3630c56d6e3034f87
     workspace/surveys/export/modal_title: e08e77577b795bfb5e9f33202d79472a
+    workspace/surveys/export/multi_select_columns_description: aa890498d92c2871e819af4a8519faeb
+    workspace/surveys/export/multi_select_columns_description_spss: 81a45a8918381d10e458533789c9df8f
+    workspace/surveys/export/multi_select_columns_label: 475eb586ad03738ae82011d0552de00d
     workspace/surveys/export/spss_label: 0f122c2c3f72fa739ea01a1d6fc1c230
     workspace/surveys/export/zip_description: 0586b42d64d044a0c5ac9b8655fb8216
     workspace/surveys/export/zip_description_optional: c590c195f31080ceccd7189a6c573d2b

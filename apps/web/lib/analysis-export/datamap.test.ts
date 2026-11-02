@@ -194,6 +194,26 @@ describe("notes and types for the other kinds of column", () => {
     expect(rows[1][5]).toBe("Selected: Logo A");
   });
 
+  test("a multi-select in one cell lists its codes and says how they are written", () => {
+    const column: TAnalysisColumn = {
+      name: "q2",
+      kind: "codes",
+      source: "question",
+      question: { id: "e2", code: "q2", type: "multipleChoiceMulti", headline: "Hobbies?" },
+      codes: [
+        { code: "1", label: "Reading" },
+        { code: "2", label: "Chess" },
+      ],
+    };
+    const rows = buildDatamap([column], { unmappedColumns: new Set(["q2"]) });
+    expect(rows.map((row) => [row[3], row[4], row[5]])).toEqual([
+      ["multi select . codes", "1", "Reading"],
+      ["multi select . codes", "2", "Chess"],
+    ]);
+    // Its unmatched choices are only in the Unmapped values, never in the cell.
+    expect(rows[0][6]).toBe(`${BLANK} The chosen codes in option order, separated by "; ".`);
+  });
+
   test("Embedded Data and response info are listed with their types, booleans as true/false", () => {
     const embedded = (
       name: string,

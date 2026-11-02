@@ -32,6 +32,7 @@ import {
   type TAnalysisResponseFields,
   type TAnalysisRow,
   type TAnswerDisplay,
+  type TMultiSelectLayout,
   type TUnmappedValue,
   UNMAPPED_PREFIX,
 } from "./types";
@@ -129,6 +130,7 @@ type TElementOf<T extends string> = Extract<TSurveyElement, { type: T }>;
 type TQuestionEnv = {
   code: string;
   question: TQuestionInfo;
+  multiSelect: TMultiSelectLayout;
   baseColumn: (
     name: string,
     kind: TAnalysisColumn["kind"],
@@ -154,10 +156,13 @@ const toTextList = (answer: TResponseDataValue | undefined): string[] => {
   return isBlank(answer) ? [] : [toText(answer)];
 };
 
+/** How a list of answers shares one cell, as the Standard export writes it. */
+const LIST_SEPARATOR = "; ";
+
 /** The Standard export's cell for answers that are not options: `processResponseData`'s text. */
 const textOfAnswer = (answer: NonNullable<TResponseDataValue>): string => {
   if (Array.isArray(answer)) {
-    return answer.filter((item) => item !== null && item !== undefined && item !== "").join("; ");
+    return answer.filter((item) => item !== null && item !== undefined && item !== "").join(LIST_SEPARATOR);
   }
   if (typeof answer === "object") {
     return Object.entries(answer)
@@ -223,9 +228,10 @@ const planSingleChoice = (
   };
 };
 
-type TChosen = Map<string, { rank: number; texts: string[] }>;
+/** Per chosen option: its rank, the answer as given (`""` for the Other sentinel) and any Other text. */
+type TChosen = Map<string, { rank: number; given: string; texts: string[] }>;
 
-/** Resolves each ticked entry to its choice, remembering the rank and any Other text. */
+/** Resolves each ticked entry to its choice, remembering the rank, the answer as given and any Other text. */
 const collectChosen = ({
   entries,
   choices,
@@ -240,8 +246,8 @@ const collectChosen = ({
   report: TUnmappedReporter;
 }): TChosen => {
   const chosen: TChosen = new Map();
-  const mark = (id: string, rank: number, text?: string): void => {
-    const slot = chosen.get(id) ?? { rank, texts: [] };
+  const mark = (id: string, rank: number, given: string, text?: string): void => {
+    const slot = chosen.get(id) ?? { rank, given, texts: [] };
     if (text) slot.texts.push(text);
     chosen.set(id, slot);
   };
@@ -249,12 +255,12 @@ const collectChosen = ({
     const rank = index + 1;
     if (entry === "" || entry === other?.id) {
       // The "" sentinel (and the legacy `other` id) say Other was ticked; its text follows.
-      if (other) mark(other.id, rank);
+      if (other) mark(other.id, rank, "");
       return;
     }
     const resolution = resolveAnswerOption({ text: entry, choices, language });
-    if (resolution.status === "matched") mark(resolution.choice.id, rank);
-    else if (resolution.status === "other") mark(resolution.choice.id, rank, entry);
+    if (resolution.status === "matched") mark(resolution.choice.id, rank, entry);
+    else if (resolution.status === "other") mark(resolution.choice.id, rank, entry, entry);
     else report(entry, resolution.reason);
   });
   return chosen;
@@ -272,15 +278,78 @@ const writeChosen = (offsetOf: TChoiceOffsets, chosen: TChosen, isRanking: boole
       put(offsets.flag, slot ? 1 : 0);
     }
     if (offsets.text !== null && slot && slot.texts.length > 0) {
-      put(offsets.text, slot.texts.join("; "));
+      put(offsets.text, slot.texts.join(LIST_SEPARATOR));
     }
   }
 };
 
-const planMultiChoice = (
-  element: TElementOf<"multipleChoiceMulti" | "ranking">,
+type TCodedChoice = { id: string; code?: string; label: Readonly<Record<string, string>> };
+
+/**
+ * A multi-select as one cell: the chosen codes in option order (`1; 4`), and as labels the answers as given,
+ * Other as its typed text. A choice that matched no option is in the Unmapped values only, not in the cell.
+ */
+const writeChosenCell = (
+  choices: readonly TCodedChoice[],
+  chosen: TChosen,
+  otherTextOffset: number | null,
+  put: TPut
+): void => {
+  const picked = choices.flatMap((choice) => {
+    const slot = chosen.get(choice.id);
+    return slot ? [{ choice, slot }] : [];
+  });
+  if (picked.length === 0) return;
+  const labelOf = ({ choice, slot }: (typeof picked)[number]): string => {
+    if (slot.texts.length > 0) return slot.texts.join(LIST_SEPARATOR);
+    return slot.given || plainLabel(choice.label);
+  };
+  put(
+    0,
+    picked.map(({ choice }) => codeOf(choice)).join(LIST_SEPARATOR),
+    picked.map(labelOf).join(LIST_SEPARATOR)
+  );
+  const otherTexts = picked.flatMap(({ slot }) => slot.texts);
+  if (otherTextOffset !== null && otherTexts.length > 0)
+    put(otherTextOffset, otherTexts.join(LIST_SEPARATOR));
+};
+
+const planMultiChoiceCell = (
+  element: TElementOf<"multipleChoiceMulti">,
   { code, question, baseColumn }: TQuestionEnv
 ): TQuestionPlan => {
+  const choices = matchables(element.choices);
+  const other = element.choices.find((choice) => choice.id === OTHER_OPTION_ID);
+  const columns: TAnalysisColumn[] = [
+    baseColumn(code, "codes", {
+      codes: element.choices.map((c) => ({ code: codeOf(c), label: plainLabel(c.label) })),
+    }),
+  ];
+  if (other) {
+    // Named as with one column per option, so the Other text column keeps its name whichever layout is chosen.
+    const option = { code: codeOf(other), label: plainLabel(other.label) };
+    columns.push(baseColumn(`${code}_${option.code}_text`, "other_text", { option }));
+  }
+  return {
+    columns,
+    fill: (ctx, answer, put) => {
+      const entries = toTextList(answer);
+      if (entries.length === 0) return;
+      const report = unmappedReporter(ctx, question, code, choices);
+      const chosen = collectChosen({ entries, choices, other, language: ctx.language, report });
+      writeChosenCell(element.choices, chosen, other ? 1 : null, put);
+    },
+  };
+};
+
+const planMultiChoice = (
+  element: TElementOf<"multipleChoiceMulti" | "ranking">,
+  env: TQuestionEnv
+): TQuestionPlan => {
+  if (element.type === "multipleChoiceMulti" && env.multiSelect === "cell") {
+    return planMultiChoiceCell(element, env);
+  }
+  const { code, question, baseColumn } = env;
   const isRanking = element.type === "ranking";
   const choices = matchables(element.choices);
   const other = element.choices.find((choice) => choice.id === OTHER_OPTION_ID);
@@ -308,52 +377,87 @@ const planMultiChoice = (
   };
 };
 
-const planPictureSelection = (
-  element: TElementOf<"pictureSelection">,
-  { code, question, baseColumn }: TQuestionEnv
-): TQuestionPlan => {
-  const choices = element.choices;
-  const labelOf = (choice: (typeof choices)[number]): string =>
-    plainLabel(choice.imageAltText ?? { default: choice.id });
+type TPictureChoice = TElementOf<"pictureSelection">["choices"][number];
 
-  if (!element.allowMulti) {
-    const main = baseColumn(code, "code", {
-      codes: choices.map((choice) => ({ code: codeOf(choice), label: labelOf(choice) })),
-    });
-    return {
-      columns: [main],
-      fill: (ctx, answer, put) => {
-        if (isBlank(answer)) return;
-        const id = Array.isArray(answer) ? toText(answer[0]) : toText(answer);
-        const choice = choices.find((c) => c.id === id);
-        if (choice) {
-          put(0, codeOf(choice), id);
-          return;
-        }
-        put(0, unmappedCell(id), id);
-        unmappedReporter(ctx, question, code, [])(id, "no_match");
-      },
-    };
-  }
+const pictureLabelOf = (choice: TPictureChoice): string =>
+  plainLabel(choice.imageAltText ?? { default: choice.id });
 
+const pictureCodes = (choices: readonly TPictureChoice[]) =>
+  choices.map((choice) => ({ code: codeOf(choice), label: pictureLabelOf(choice) }));
+
+/** A picked picture that is no option of the question is listed in the Unmapped values only. */
+const reportUnknownPictures = (
+  ids: readonly string[],
+  choices: readonly TPictureChoice[],
+  report: TUnmappedReporter
+): void => {
   const known = new Set(choices.map((choice) => choice.id));
-  const columns = choices.map((choice) =>
+  for (const id of ids) {
+    if (!known.has(id)) report(id, "no_match");
+  }
+};
+
+const planPictureSingle = (
+  choices: readonly TPictureChoice[],
+  { code, question, baseColumn }: TQuestionEnv
+): TQuestionPlan => ({
+  columns: [baseColumn(code, "code", { codes: pictureCodes(choices) })],
+  fill: (ctx, answer, put) => {
+    if (isBlank(answer)) return;
+    const id = Array.isArray(answer) ? toText(answer[0]) : toText(answer);
+    const choice = choices.find((c) => c.id === id);
+    if (choice) {
+      put(0, codeOf(choice), id);
+      return;
+    }
+    put(0, unmappedCell(id), id);
+    unmappedReporter(ctx, question, code, [])(id, "no_match");
+  },
+});
+
+/** The picked pictures in option order as one cell, labelled like a single pick: by the picture's id. */
+const planPictureCell = (
+  choices: readonly TPictureChoice[],
+  { code, question, baseColumn }: TQuestionEnv
+): TQuestionPlan => ({
+  columns: [baseColumn(code, "codes", { codes: pictureCodes(choices) })],
+  fill: (ctx, answer, put) => {
+    const ids = toTextList(answer);
+    if (ids.length === 0) return;
+    const picked = choices.filter((choice) => ids.includes(choice.id));
+    if (picked.length > 0) {
+      put(
+        0,
+        picked.map((choice) => codeOf(choice)).join(LIST_SEPARATOR),
+        picked.map((choice) => choice.id).join(LIST_SEPARATOR)
+      );
+    }
+    reportUnknownPictures(ids, choices, unmappedReporter(ctx, question, code, []));
+  },
+});
+
+const planPictureColumns = (
+  choices: readonly TPictureChoice[],
+  { code, question, baseColumn }: TQuestionEnv
+): TQuestionPlan => ({
+  columns: choices.map((choice) =>
     baseColumn(`${code}_${codeOf(choice)}`, "flag", {
-      option: { code: codeOf(choice), label: labelOf(choice) },
+      option: { code: codeOf(choice), label: pictureLabelOf(choice) },
     })
-  );
-  return {
-    columns,
-    fill: (ctx, answer, put) => {
-      const ids = toTextList(answer);
-      if (ids.length === 0) return;
-      choices.forEach((choice, index) => put(index, ids.includes(choice.id) ? 1 : 0));
-      const report = unmappedReporter(ctx, question, code, []);
-      for (const id of ids) {
-        if (!known.has(id)) report(id, "no_match");
-      }
-    },
-  };
+  ),
+  fill: (ctx, answer, put) => {
+    const ids = toTextList(answer);
+    if (ids.length === 0) return;
+    choices.forEach((choice, index) => put(index, ids.includes(choice.id) ? 1 : 0));
+    reportUnknownPictures(ids, choices, unmappedReporter(ctx, question, code, []));
+  },
+});
+
+const planPictureSelection = (element: TElementOf<"pictureSelection">, env: TQuestionEnv): TQuestionPlan => {
+  if (!element.allowMulti) return planPictureSingle(element.choices, env);
+  return env.multiSelect === "cell"
+    ? planPictureCell(element.choices, env)
+    : planPictureColumns(element.choices, env);
 };
 
 /** The text a matrix row was answered with, or null when that row is blank. */
@@ -593,7 +697,11 @@ const buildEmbeddedColumns = ({
 
 // ---- Question columns -------------------------------------------------------------------------
 
-const buildQuestionPlans = (elements: TSurveyElement[], claim: TNameRegistry["claim"]): TQuestionPlan[] =>
+const buildQuestionPlans = (
+  elements: TSurveyElement[],
+  claim: TNameRegistry["claim"],
+  multiSelect: TMultiSelectLayout
+): TQuestionPlan[] =>
   elements
     .filter((element) => element.type !== "cta")
     .map((element) => {
@@ -607,7 +715,7 @@ const buildQuestionPlans = (elements: TSurveyElement[], claim: TNameRegistry["cl
         question: questionInfo,
         ...extra,
       });
-      return planQuestion(element, { code, question, baseColumn });
+      return planQuestion(element, { code, question, multiSelect, baseColumn });
     });
 
 const projectReserved = (
@@ -628,6 +736,7 @@ const projectReserved = (
 export const createAnalysisRowBuilder = ({
   survey: inputSurvey,
   answers,
+  multiSelect = "columns",
   fields,
   isQuotasAllowed = false,
   timeZone = "UTC",
@@ -635,6 +744,7 @@ export const createAnalysisRowBuilder = ({
 }: {
   survey: TAnalysisSurvey;
   answers: TAnswerDisplay;
+  multiSelect?: TMultiSelectLayout;
   fields: TAnalysisResponseFields;
   isQuotasAllowed?: boolean;
   timeZone?: string;
@@ -667,7 +777,7 @@ export const createAnalysisRowBuilder = ({
     timeZone,
     claim,
   });
-  const plans = buildQuestionPlans(elements, claim);
+  const plans = buildQuestionPlans(elements, claim, multiSelect);
   const embeddedColumns = buildEmbeddedColumns({
     survey: inputSurvey,
     fields,

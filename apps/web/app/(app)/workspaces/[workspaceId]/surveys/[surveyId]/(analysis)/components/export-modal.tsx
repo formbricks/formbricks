@@ -50,6 +50,8 @@ import {
   isExcelTooLarge,
   isExportReady,
   isLowQualityIncluded,
+  isMultiSelectColumnsLocked,
+  isMultiSelectColumnsOn,
   isSpssAvailable,
   isTextOnlyAvailable,
   isZipAvailable,
@@ -57,6 +59,7 @@ import {
   setDisplay,
   setExcludedColumns,
   setFormat,
+  setMultiSelectColumns,
   setQuestions,
   setSpss,
   setZip,
@@ -415,6 +418,7 @@ const ExportModalBody = ({
   );
   const extension = exportFileExtension(options);
   const zipLocked = isZipLocked(options);
+  const multiSelectColumnsLocked = isMultiSelectColumnsLocked(options);
 
   return (
     <>
@@ -563,6 +567,20 @@ const ExportModalBody = ({
           </button>
           {advancedOpen && (
             <div className="flex flex-col gap-2">
+              <OptionRow
+                id="export-multi-select-columns"
+                checked={isMultiSelectColumnsOn(options)}
+                disabled={multiSelectColumnsLocked}
+                onCheckedChange={(checked) =>
+                  setOptions((current) => setMultiSelectColumns(current, checked))
+                }
+                label={t("workspace.surveys.export.multi_select_columns_label")}
+                description={
+                  multiSelectColumnsLocked
+                    ? t("workspace.surveys.export.multi_select_columns_description_spss")
+                    : t("workspace.surveys.export.multi_select_columns_description")
+                }
+              />
               {visibleAdvanced.map((option) => (
                 <OptionRow
                   key={option.id}

@@ -6,7 +6,7 @@
 import type { TFunction } from "i18next";
 import { z } from "zod";
 import { ZResponseFilterCriteria } from "@formbricks/types/responses";
-import type { TAnswerDisplay } from "./types";
+import type { TAnswerDisplay, TMultiSelectLayout } from "./types";
 
 export type TExportFormat = "csv" | "xlsx";
 
@@ -87,6 +87,12 @@ export const ZExportRequest = z
     /** Ids of the Advanced options that are on. */
     advanced: z.array(z.enum(ADVANCED_IDS)).max(ADVANCED_IDS.length).default([]),
     /**
+     * One 1/0 column per multi-select option. Off, a multi-select is one cell with the chosen codes or labels in
+     * option order (`1; 4`). Left out, the export decides: an Analysis export writes the columns, the Standard
+     * export stays today's file. On, it is an Analysis export. The SPSS syntax file needs the columns.
+     */
+    multiSelectColumns: z.boolean().optional(),
+    /**
      * Ids of the column groups the Include columns list switched off (see `column-selection.ts`). The
      * Standard defaults leave none off, which is today's file with every column.
      */
@@ -112,6 +118,13 @@ export const ZExportRequest = z
     }
     if (request.spss && request.display === "text") {
       ctx.addIssue({ code: "custom", path: ["spss"], message: "The SPSS syntax file needs answer codes." });
+    }
+    if (request.spss && request.multiSelectColumns === false) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["multiSelectColumns"],
+        message: "The SPSS syntax file needs one column per multi-select option.",
+      });
     }
     for (const id of request.advanced) {
       const definition = EXPORT_ADVANCED_OPTIONS.find((option) => option.id === id);
@@ -151,22 +164,26 @@ export type TExportPlan =
       display: TAnswerDisplay;
       /** Display questions, or `undefined` when the headers follow `display`. */
       questions?: TAnswerDisplay;
+      /** How multi-select questions are written; `"columns"` when left out. */
+      multiSelect?: TMultiSelectLayout;
       output: TExportOutput;
       include: { datamap: boolean; unmappedValues: boolean; spssSyntax: boolean };
     };
 
 /**
  * Which export a request asks for (GLOSSARY: Standard export, Analysis export). Anything but the
- * defaults, that is codes, an advanced option or the SPSS file, is an Analysis export.
+ * defaults, that is codes, an advanced option, 1/0 multi-select columns or the SPSS file, is an Analysis
+ * export.
  */
 export const planExport = (
   request: Pick<TExportRequest, "format" | "display" | "spss" | "advanced"> &
-    Partial<Pick<TExportRequest, "questions" | "zip">>
+    Partial<Pick<TExportRequest, "questions" | "zip" | "multiSelectColumns">>
 ): TExportPlan => {
   const { format, display, questions, spss, advanced } = request;
   const zip = request.zip === true && format === "csv";
   const questionsAsToday = questions === undefined || questions === "text";
-  if (display === "text" && questionsAsToday && !spss && advanced.length === 0) {
+  const asToday = display === "text" && questionsAsToday && !spss && advanced.length === 0;
+  if (asToday && request.multiSelectColumns !== true) {
     return { kind: "standard", format, ...(zip ? { zip } : {}) };
   }
 
@@ -175,14 +192,25 @@ export const planExport = (
     unmappedValues: advanced.includes("unmappedValues"),
     spssSyntax: spss,
   };
-  if (format === "xlsx") return { kind: "analysis", format, display, questions, output: "xlsx", include };
+  const multiSelect: TMultiSelectLayout = request.multiSelectColumns === false && !spss ? "cell" : "columns";
+  if (format === "xlsx") {
+    return { kind: "analysis", format, display, questions, multiSelect, output: "xlsx", include };
+  }
 
   const addsFile =
     zip ||
     display === "both" ||
     spss ||
     advanced.some((id) => EXPORT_ADVANCED_OPTIONS.find((option) => option.id === id)?.forcesZip);
-  return { kind: "analysis", format, display, questions, output: addsFile ? "zip" : "csv", include };
+  return {
+    kind: "analysis",
+    format,
+    display,
+    questions,
+    multiSelect,
+    output: addsFile ? "zip" : "csv",
+    include,
+  };
 };
 
 /** The file extension and media type of what a plan downloads. */

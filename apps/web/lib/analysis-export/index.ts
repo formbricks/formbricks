@@ -165,6 +165,7 @@ export const openAnalysisExport = async (input: TAnalysisExportInput): Promise<T
     const builder = createAnalysisRowBuilder({
       survey,
       answers: input.answers ?? "codes",
+      multiSelect: input.multiSelect,
       fields,
       isQuotasAllowed,
       timeZone: input.timeZone,
