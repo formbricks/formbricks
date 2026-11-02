@@ -39,8 +39,8 @@ const ZDisableTwoFactorFormState = z
 type TDisableTwoFactorFormState = z.infer<typeof ZDisableTwoFactorFormState>;
 
 interface DisableTwoFactorModalProps {
-  open: boolean;
-  setOpen: (open: boolean) => void;
+  readonly open: boolean;
+  readonly setOpen: (open: boolean) => void;
 }
 
 export const DisableTwoFactorModal = ({ open, setOpen }: DisableTwoFactorModalProps) => {

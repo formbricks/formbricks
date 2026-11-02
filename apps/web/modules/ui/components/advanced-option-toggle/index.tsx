@@ -3,16 +3,16 @@ import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
 
 interface AdvancedOptionToggleProps {
-  isChecked: boolean;
-  onToggle: (checked: boolean) => void;
-  htmlId: string;
-  title: string;
-  description: any;
-  children?: React.ReactNode;
-  childBorder?: boolean;
-  customContainerClass?: string;
-  disabled?: boolean;
-  childrenContainerClass?: string;
+  readonly isChecked: boolean;
+  readonly onToggle: (checked: boolean) => void;
+  readonly htmlId: string;
+  readonly title: string;
+  readonly description: any;
+  readonly children?: React.ReactNode;
+  readonly childBorder?: boolean;
+  readonly customContainerClass?: string;
+  readonly disabled?: boolean;
+  readonly childrenContainerClass?: string;
 }
 
 export const AdvancedOptionToggle = ({

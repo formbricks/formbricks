@@ -9,7 +9,7 @@ import { TemplateCreateQueryClientProvider } from "@/modules/survey/components/t
 import { getSurveyAIAvailability } from "@/modules/survey/lib/get-survey-ai-availability";
 
 interface AIOnboardingPageProps {
-  params: Promise<{
+  readonly params: Promise<{
     organizationId: string;
   }>;
 }

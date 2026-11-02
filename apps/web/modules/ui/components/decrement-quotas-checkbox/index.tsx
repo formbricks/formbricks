@@ -2,9 +2,9 @@ import { useTranslation } from "react-i18next";
 import { Checkbox } from "@/modules/ui/components/checkbox";
 
 interface DecrementQuotasCheckboxProps {
-  title: string;
-  checked: boolean;
-  onCheckedChange: React.Dispatch<React.SetStateAction<boolean>>;
+  readonly title: string;
+  readonly checked: boolean;
+  readonly onCheckedChange: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export const DecrementQuotasCheckbox = ({

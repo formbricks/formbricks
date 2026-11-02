@@ -8,12 +8,12 @@ import { type TranslatableString } from "../lib/types";
 import { RichTextTranslationInput } from "./rich-text-translation-input";
 
 interface TranslationRowProps {
-  s: TranslatableString;
-  value: string;
-  onChange: (path: string, value: string) => void;
-  localSurvey: TSurvey;
-  languageCode: string;
-  disabled?: boolean;
+  readonly s: TranslatableString;
+  readonly value: string;
+  readonly onChange: (path: string, value: string) => void;
+  readonly localSurvey: TSurvey;
+  readonly languageCode: string;
+  readonly disabled?: boolean;
 }
 
 const DefaultTextCell = ({
@@ -21,9 +21,9 @@ const DefaultTextCell = ({
   isRichText,
   noTextLabel,
 }: {
-  text: string;
-  isRichText: boolean;
-  noTextLabel: string;
+  readonly text: string;
+  readonly isRichText: boolean;
+  readonly noTextLabel: string;
 }) => {
   if (!text) {
     return <div className="text-sm text-slate-400 italic">{noTextLabel}</div>;

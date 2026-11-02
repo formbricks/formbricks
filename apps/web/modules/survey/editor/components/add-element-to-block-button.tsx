@@ -28,12 +28,12 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 
 interface AddElementToBlockButtonProps {
-  localSurvey: TSurvey;
-  block: TSurveyBlock;
-  setLocalSurvey: Dispatch<SetStateAction<TSurvey>>;
-  setActiveElementId: (elementId: string) => void;
-  workspace: TWorkspaceWithoutCustomCss;
-  isCxMode: boolean;
+  readonly localSurvey: TSurvey;
+  readonly block: TSurveyBlock;
+  readonly setLocalSurvey: Dispatch<SetStateAction<TSurvey>>;
+  readonly setActiveElementId: (elementId: string) => void;
+  readonly workspace: TWorkspaceWithoutCustomCss;
+  readonly isCxMode: boolean;
 }
 
 export const AddElementToBlockButton = ({

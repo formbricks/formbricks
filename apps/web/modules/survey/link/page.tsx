@@ -13,10 +13,10 @@ import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/work
 import { getMetadataForLinkSurvey } from "@/modules/survey/link/metadata";
 
 interface LinkSurveyPageProps {
-  params: Promise<{
+  readonly params: Promise<{
     surveyId: string;
   }>;
-  searchParams: Promise<TLinkSurveySearchParams>;
+  readonly searchParams: Promise<TLinkSurveySearchParams>;
 }
 
 export const generateMetadata = async (props: LinkSurveyPageProps): Promise<Metadata> => {

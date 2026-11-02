@@ -13,9 +13,9 @@ import { EmptyState } from "@/modules/ui/components/empty-state";
 import { ElementSummaryHeader } from "./ElementSummaryHeader";
 
 interface AddressSummaryProps {
-  elementSummary: TSurveyElementSummaryAddress;
-  survey: TSurvey;
-  locale: TUserLocale;
+  readonly elementSummary: TSurveyElementSummaryAddress;
+  readonly survey: TSurvey;
+  readonly locale: TUserLocale;
 }
 
 export const AddressSummary = ({ elementSummary, survey, locale }: AddressSummaryProps) => {

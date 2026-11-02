@@ -12,8 +12,8 @@ interface DocumentationLink {
 }
 
 interface DocumentationLinksSectionProps {
-  title: string;
-  links: DocumentationLink[];
+  readonly title: string;
+  readonly links: DocumentationLink[];
 }
 
 export const DocumentationLinksSection = ({ title, links }: DocumentationLinksSectionProps) => {

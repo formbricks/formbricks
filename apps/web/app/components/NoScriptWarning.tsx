@@ -2,7 +2,7 @@ import type { TUserLocale } from "@formbricks/types/user";
 import { getTranslate } from "@/lingodotdev/server";
 
 interface NoScriptWarningProps {
-  locale: TUserLocale;
+  readonly locale: TUserLocale;
 }
 
 export const NoScriptWarning = async ({ locale }: NoScriptWarningProps) => {

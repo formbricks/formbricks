@@ -15,9 +15,9 @@ import { EmptyState } from "@/modules/ui/components/empty-state";
 import { ElementSummaryHeader } from "./ElementSummaryHeader";
 
 interface DateElementSummary {
-  elementSummary: TSurveyElementSummaryDate;
-  survey: TSurvey;
-  locale: TUserLocale;
+  readonly elementSummary: TSurveyElementSummaryDate;
+  readonly survey: TSurvey;
+  readonly locale: TUserLocale;
 }
 
 export const DateElementSummary = ({ elementSummary, survey, locale }: DateElementSummary) => {

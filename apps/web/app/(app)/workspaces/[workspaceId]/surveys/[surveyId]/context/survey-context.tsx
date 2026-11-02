@@ -20,8 +20,8 @@ export const useSurvey = () => {
 
 // Client wrapper component to be used in server components
 interface SurveyContextWrapperProps {
-  survey: TSurvey;
-  children: React.ReactNode;
+  readonly survey: TSurvey;
+  readonly children: React.ReactNode;
 }
 
 export const SurveyContextWrapper = ({ survey, children }: SurveyContextWrapperProps) => {

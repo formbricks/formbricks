@@ -5,7 +5,7 @@ import { EmailChangeSignIn } from "@/modules/auth/verify-email-change/components
 export const VerifyEmailChangePage = async ({
   searchParams,
 }: {
-  searchParams: Promise<{ token: string }>;
+  readonly searchParams: Promise<{ token: string }>;
 }) => {
   const { token } = await searchParams;
 

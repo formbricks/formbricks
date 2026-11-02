@@ -9,8 +9,8 @@ import { getWorkspaceLayoutData } from "@/modules/workspaces/lib/utils";
 import WorkspaceStorageHandler from "./components/WorkspaceStorageHandler";
 
 const WorkspaceLayout = async (props: {
-  params: Promise<{ workspaceId: string }>;
-  children: React.ReactNode;
+  readonly params: Promise<{ workspaceId: string }>;
+  readonly children: React.ReactNode;
 }) => {
   const params = await props.params;
   const { children } = props;

@@ -9,17 +9,17 @@ interface Option<T> {
 }
 
 interface StylingTabsProps<T> {
-  id: string;
-  options: Option<T>[];
-  defaultSelected?: T;
-  onChange: (value: T) => void;
-  className?: string;
-  tabsContainerClassName?: string;
+  readonly id: string;
+  readonly options: Option<T>[];
+  readonly defaultSelected?: T;
+  readonly onChange: (value: T) => void;
+  readonly className?: string;
+  readonly tabsContainerClassName?: string;
 
-  label?: string;
-  subLabel?: string;
-  activeTabClassName?: string;
-  inactiveTabClassName?: string;
+  readonly label?: string;
+  readonly subLabel?: string;
+  readonly activeTabClassName?: string;
+  readonly inactiveTabClassName?: string;
 }
 
 export const StylingTabs = <T extends string | number>({

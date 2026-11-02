@@ -1,7 +1,7 @@
 import { Toaster } from "react-hot-toast";
 import { FormbricksLogo } from "@/modules/ui/components/formbricks-logo";
 
-export const SetupLayout = ({ children }: { children: React.ReactNode }) => {
+export const SetupLayout = ({ children }: { readonly children: React.ReactNode }) => {
   return (
     <>
       <Toaster />

@@ -14,19 +14,19 @@ import { Button } from "@/modules/ui/components/button";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 interface MatrixSortableItemProps {
-  choice: TSurveyMatrixElementChoice;
-  type: "row" | "column";
-  index: number;
-  localSurvey: TSurvey;
-  element: TSurveyMatrixElement;
-  elementIdx: number;
-  updateMatrixLabel: (index: number, type: "row" | "column", matrixLabel: TI18nString) => void;
-  onDelete: (index: number) => void;
-  onKeyDown: (e: React.KeyboardEvent) => void;
-  canDelete: boolean;
-  isInvalid: boolean;
-  locale: TUserLocale;
-  isStorageConfigured: boolean;
+  readonly choice: TSurveyMatrixElementChoice;
+  readonly type: "row" | "column";
+  readonly index: number;
+  readonly localSurvey: TSurvey;
+  readonly element: TSurveyMatrixElement;
+  readonly elementIdx: number;
+  readonly updateMatrixLabel: (index: number, type: "row" | "column", matrixLabel: TI18nString) => void;
+  readonly onDelete: (index: number) => void;
+  readonly onKeyDown: (e: React.KeyboardEvent) => void;
+  readonly canDelete: boolean;
+  readonly isInvalid: boolean;
+  readonly locale: TUserLocale;
+  readonly isStorageConfigured: boolean;
 }
 
 export const MatrixSortableItem = ({

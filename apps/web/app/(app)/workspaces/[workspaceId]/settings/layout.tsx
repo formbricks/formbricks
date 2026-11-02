@@ -1,4 +1,4 @@
-const SettingsLayout = (props: { children: React.ReactNode }) => {
+const SettingsLayout = (props: { readonly children: React.ReactNode }) => {
   return <>{props.children}</>;
 };
 

@@ -5,10 +5,10 @@ import { useEffect, useRef } from "react";
 import { IS_DEVELOPMENT_BUILD } from "@/lib/env-client";
 
 interface PostHogIdentifyProps {
-  posthogKey: string;
-  userId: string;
-  email: string;
-  name: string | null;
+  readonly posthogKey: string;
+  readonly userId: string;
+  readonly email: string;
+  readonly name: string | null;
 }
 
 export const PostHogIdentify = ({ posthogKey, userId, email, name }: PostHogIdentifyProps) => {

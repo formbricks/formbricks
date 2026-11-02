@@ -7,8 +7,8 @@ import { getSession } from "@/modules/auth/lib/session";
 import { invalidateOrganizationBillingCache } from "@/modules/ee/billing/lib/organization-billing";
 
 const OnboardingLayout = async (props: {
-  params: Promise<{ organizationId: string }>;
-  children: React.ReactNode;
+  readonly params: Promise<{ organizationId: string }>;
+  readonly children: React.ReactNode;
 }) => {
   const params = await props.params;
 

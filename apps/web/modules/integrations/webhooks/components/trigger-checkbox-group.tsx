@@ -6,9 +6,9 @@ import { PipelineTriggers } from "@formbricks/database/prisma-browser";
 import { Checkbox } from "@/modules/ui/components/checkbox";
 
 interface TriggerCheckboxGroupProps {
-  selectedTriggers: PipelineTriggers[];
-  onCheckboxChange: (selectedValue: PipelineTriggers) => void;
-  allowChanges: boolean;
+  readonly selectedTriggers: PipelineTriggers[];
+  readonly onCheckboxChange: (selectedValue: PipelineTriggers) => void;
+  readonly allowChanges: boolean;
 }
 
 export const TriggerCheckboxGroup: React.FC<TriggerCheckboxGroupProps> = ({
