@@ -52,30 +52,26 @@ describe("exceedsAuthRequestBounds", () => {
   describe("named values", () => {
     const fields = (count: number) => Array.from({ length: count }, (_, index) => `f${index}=1`).join("&");
     const words = (count: number) => Array.from({ length: count }, (_, index) => `s${index}`).join(" ");
-    const carriers = (name: string, value: string) => ({
-      "a JSON body": [URL_BASE, "application/json", json({ [name]: value })] as const,
-      "a form body": [
-        URL_BASE,
-        "application/x-www-form-urlencoded",
-        encode(new URLSearchParams({ [name]: value }).toString()),
-      ] as const,
-      "the query": [
-        `${URL_BASE}?${new URLSearchParams({ [name]: value }).toString()}`,
-        null,
-        undefined,
-      ] as const,
-    });
+    type TCarrier = [label: string, url: string, contentType: string | null, body: Uint8Array | undefined];
+    const carriers = (name: string, value: string): TCarrier[] => {
+      const encoded = new URLSearchParams({ [name]: value }).toString();
+      return [
+        ["a JSON body", URL_BASE, "application/json", json({ [name]: value })],
+        ["a form body", URL_BASE, "application/x-www-form-urlencoded", encode(encoded)],
+        ["the query", `${URL_BASE}?${encoded}`, null, undefined],
+      ];
+    };
 
     test.each([
       ["oauth_query", fields],
       ["scope", words],
       ["prompt", words],
     ])("%s is refused past the cap in a JSON body, a form body or the query", (name, build) => {
-      for (const [carrier, args] of Object.entries(carriers(name, build(MAX + 1)))) {
-        expect(exceedsAuthRequestBounds(...args), carrier).toBe(true);
+      for (const [carrier, url, contentType, body] of carriers(name, build(MAX + 1))) {
+        expect(exceedsAuthRequestBounds(url, contentType, body), carrier).toBe(true);
       }
-      for (const [carrier, args] of Object.entries(carriers(name, build(MAX)))) {
-        expect(exceedsAuthRequestBounds(...args), carrier).toBe(false);
+      for (const [carrier, url, contentType, body] of carriers(name, build(MAX))) {
+        expect(exceedsAuthRequestBounds(url, contentType, body), carrier).toBe(false);
       }
     });
 
