@@ -2,8 +2,10 @@ import "server-only";
 import { NextRequest } from "next/server";
 import { RequestBodyTooLargeError, readRequestBytesWithLimit } from "@/app/lib/api/request-body";
 import {
+  AUTH_REQUEST_MAX_DEPTH,
   AUTH_REQUEST_MAX_ENTRIES,
   AUTH_REQUEST_MAX_JSON_TEXTS,
+  authBodyKindOf,
   exceedsAuthRequestBounds,
 } from "./auth-request-bounds";
 
@@ -36,7 +38,7 @@ const LIMITED = Symbol.for("formbricks.authRequestBodyLimited");
 // `error` / `error_description` are what an OAuth client reads (RFC 6749 §5.2, RFC 7591 §3.2.2);
 // `message` / `code` are what Better Auth's own client reads. `no-store` because a token-endpoint response
 // must never be cached (RFC 6749 §5.1).
-const errorResponse = (status: number, error: string, code: string, description: string): Response =>
+export const errorResponse = (status: number, error: string, code: string, description: string): Response =>
   Response.json(
     { error, error_description: description, code, message: description },
     { status, headers: { "cache-control": "no-store" } }
@@ -51,8 +53,9 @@ const bodyTooLargeResponse = (limitBytes: number): Response =>
   );
 
 const TOO_MANY_ENTRIES_MESSAGE =
-  `Request lists, objects and parameter sets must not hold more than ${AUTH_REQUEST_MAX_ENTRIES} entries, ` +
-  `and a request must not carry more than ${AUTH_REQUEST_MAX_JSON_TEXTS} values as JSON text`;
+  `Request lists, objects and parameter sets must not hold more than ${AUTH_REQUEST_MAX_ENTRIES} entries ` +
+  `or nest more than ${AUTH_REQUEST_MAX_DEPTH} levels, and a request must not carry more than ` +
+  `${AUTH_REQUEST_MAX_JSON_TEXTS} values as JSON text`;
 
 // `VALIDATION_ERROR` is the code Better Auth itself answers a body that fails its schema with. A dynamic
 // client registration gets the error RFC 7591 §3.2.2 defines for bad metadata; anything else the generic
@@ -67,15 +70,14 @@ const tooManyEntriesResponse = (request: Request): Response =>
     TOO_MANY_ENTRIES_MESSAGE
   );
 
-// A `Content-Type` listing several media types: Fetch's `formData()` reads the last valid one, while
-// better-call picks its parser by substring, so the guard could not know which way the body is read.
-// No client sends one, so it is refused rather than guessed at.
-const multipleMediaTypesResponse = (): Response =>
+// A body outside the two shapes `/api/auth` takes (see `authBodyKindOf`): its consumers would disagree on
+// how to read it, so it is refused rather than guessed at.
+const unsupportedMediaTypeResponse = (): Response =>
   errorResponse(
     415,
     "invalid_request",
     "UNSUPPORTED_MEDIA_TYPE",
-    "Content-Type must name a single media type"
+    "Content-Type must be application/json or application/x-www-form-urlencoded, with at most a UTF-8 charset"
   );
 
 /**
@@ -108,16 +110,15 @@ const isClientAbort = (request: Request, error: unknown): boolean =>
 /**
  * Wraps a route handler so the request body is read once, bounded, before the handler sees it.
  *
- * The handler receives the same bytes as a fresh request, so the limit costs nothing that the handler's
- * own read did not already cost, and nothing downstream (the DCR preprocessing, Better Auth, `formData()`)
- * can buffer more than {@link AUTH_REQUEST_BODY_LIMIT_BYTES}. A query string or body holding a collection
- * over {@link AUTH_REQUEST_MAX_ENTRIES} entries is answered `400` before any schema sees it
- * (auth-request-bounds.ts); the body is checked from the same read. A request with no body — every GET —
- * has only its query checked, and is otherwise handed over untouched, identity included. A body whose
- * `Content-Type` lists more than one media type is answered `415` unread. Anything over the limit is
- * answered `413` and the stream is cancelled, whether it declared its size, understated it, or carried no
- * `Content-Length` at all. A client that disconnects mid-upload gets a bare `400` nobody reads, rather than
- * a route error for every abandoned anonymous request.
+ * The handler receives the same bytes as a fresh request, and nothing downstream (the DCR preprocessing,
+ * Better Auth, `formData()`) can buffer more than {@link AUTH_REQUEST_BODY_LIMIT_BYTES}. A body that is not
+ * JSON or a form ({@link authBodyKindOf}) is answered `415`. The guard then decodes and walks the body once
+ * more (auth-request-bounds.ts), a cost bounded by the byte limit, and answers `400` to a query string or
+ * body holding a collection over {@link AUTH_REQUEST_MAX_ENTRIES} entries before any schema sees it. A
+ * request with no body — every GET — has only its query checked, and is otherwise handed over untouched,
+ * identity included. Anything over the limit is answered `413` and the stream is cancelled, whether it
+ * declared its size, understated it, or carried no `Content-Length` at all. A client that disconnects
+ * mid-upload gets a bare `400` nobody reads, rather than a route error for every abandoned anonymous request.
  */
 export const withAuthRequestBodyLimit = <Args extends unknown[], R extends Request>(
   handler: (request: R, ...args: Args) => Response | Promise<Response>
@@ -128,8 +129,6 @@ export const withAuthRequestBodyLimit = <Args extends unknown[], R extends Reque
       return handler(request, ...args);
     }
 
-    if (request.headers.get("content-type")?.includes(",")) return multipleMediaTypesResponse();
-
     let body: Uint8Array;
     try {
       body = await readRequestBytesWithLimit(request, AUTH_REQUEST_BODY_LIMIT_BYTES);
@@ -139,9 +138,9 @@ export const withAuthRequestBodyLimit = <Args extends unknown[], R extends Reque
       throw error;
     }
 
-    if (exceedsAuthRequestBounds(request.url, request.headers.get("content-type"), body)) {
-      return tooManyEntriesResponse(request);
-    }
+    const kind = authBodyKindOf(request.headers.get("content-type"));
+    if (body.byteLength > 0 && kind === null) return unsupportedMediaTypeResponse();
+    if (exceedsAuthRequestBounds(request.url, kind, body)) return tooManyEntriesResponse(request);
 
     return handler(withBody(request, body), ...args);
   };

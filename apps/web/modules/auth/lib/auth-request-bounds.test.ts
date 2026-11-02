@@ -2,12 +2,13 @@ import { createRequire } from "node:module";
 import { describe, expect, test, vi } from "vitest";
 import { z } from "zod";
 import {
+  AUTH_REQUEST_MAX_DEPTH,
   AUTH_REQUEST_MAX_ENTRIES,
   AUTH_REQUEST_MAX_JSON_TEXTS,
+  OAUTH_QUERY_MAX_FIELDS,
+  authBodyKindOf,
   exceedsAuthRequestBounds,
   hasOversizedJsonCollection,
-  isFormContentType,
-  isJsonContentType,
 } from "./auth-request-bounds";
 
 const MAX = AUTH_REQUEST_MAX_ENTRIES;
@@ -40,10 +41,12 @@ describe("hasOversizedJsonCollection", () => {
     expect(hasOversizedJsonCollection(value, MAX)).toBe(true);
   });
 
-  test("walks a deeply nested body without running out of stack", () => {
-    const deep = JSON.parse("[".repeat(100_000) + "]".repeat(100_000));
+  test("refuses nesting one level past the cap, and a far deeper body without running out of stack", () => {
+    const nested = (levels: number) => JSON.parse("[".repeat(levels) + "]".repeat(levels));
 
-    expect(hasOversizedJsonCollection(deep, MAX)).toBe(false);
+    expect(hasOversizedJsonCollection(nested(AUTH_REQUEST_MAX_DEPTH), MAX)).toBe(false);
+    expect(hasOversizedJsonCollection(nested(AUTH_REQUEST_MAX_DEPTH + 1), MAX)).toBe(true);
+    expect(hasOversizedJsonCollection(nested(100_000), MAX)).toBe(true);
   });
 });
 
@@ -52,67 +55,72 @@ describe("exceedsAuthRequestBounds", () => {
   describe("named values", () => {
     const fields = (count: number) => Array.from({ length: count }, (_, index) => `f${index}=1`).join("&");
     const words = (count: number) => Array.from({ length: count }, (_, index) => `s${index}`).join(" ");
-    type TCarrier = [label: string, url: string, contentType: string | null, body: Uint8Array | undefined];
+    type TCarrier = [label: string, url: string, kind: "json" | "form" | null, body: Uint8Array | undefined];
     const carriers = (name: string, value: string): TCarrier[] => {
       const encoded = new URLSearchParams({ [name]: value }).toString();
       return [
-        ["a JSON body", URL_BASE, "application/json", json({ [name]: value })],
-        ["a form body", URL_BASE, "application/x-www-form-urlencoded", encode(encoded)],
+        ["a JSON body", URL_BASE, "json", json({ [name]: value })],
+        ["a form body", URL_BASE, "form", encode(encoded)],
         ["the query", `${URL_BASE}?${encoded}`, null, undefined],
       ];
     };
 
     test.each([
-      ["oauth_query", fields],
-      ["scope", words],
-      ["prompt", words],
-    ])("%s is refused past the cap in a JSON body, a form body or the query", (name, build) => {
-      for (const [carrier, url, contentType, body] of carriers(name, build(MAX + 1))) {
-        expect(exceedsAuthRequestBounds(url, contentType, body), carrier).toBe(true);
+      ["oauth_query", fields, OAUTH_QUERY_MAX_FIELDS],
+      ["scope", words, MAX],
+      ["prompt", words, MAX],
+    ])("%s is refused past its cap in a JSON body, a form body or the query", (name, build, cap) => {
+      for (const [carrier, url, kind, body] of carriers(name, build(cap + 1))) {
+        expect(exceedsAuthRequestBounds(url, kind, body), carrier).toBe(true);
       }
-      for (const [carrier, url, contentType, body] of carriers(name, build(MAX))) {
-        expect(exceedsAuthRequestBounds(url, contentType, body), carrier).toBe(false);
+      for (const [carrier, url, kind, body] of carriers(name, build(cap))) {
+        expect(exceedsAuthRequestBounds(url, kind, body), carrier).toBe(false);
       }
     });
 
+    // oauth-provider signs the authorize request it sends to the login and consent pages: each parameter,
+    // a `ba_param` naming it, and `exp`, `ba_iat`, `sig` and `ba_pl` with their own `ba_param` entries.
+    test("a signed oauth_query for an authorize request at the cap still passes", () => {
+      const names = [
+        ...Array.from({ length: MAX }, (_, index) => `p${index}`),
+        "exp",
+        "ba_iat",
+        "sig",
+        "ba_pl",
+      ];
+      const signed = [
+        ...names.map((name) => `${name}=v`),
+        ...names.filter((name) => name !== "sig").map((name) => `ba_param=${name}`),
+        "ba_param=ba_param",
+      ].join("&");
+
+      expect(exceedsAuthRequestBounds(`${URL_BASE}?${distinct(MAX)}`, null, undefined)).toBe(false);
+      expect(exceedsAuthRequestBounds(URL_BASE, "json", json({ oauth_query: signed }))).toBe(false);
+    });
+
     test("a scope list of empty items counts each one, as split(' ') does", () => {
-      expect(exceedsAuthRequestBounds(URL_BASE, "application/json", json({ scope: " ".repeat(MAX) }))).toBe(
-        true
-      );
+      expect(exceedsAuthRequestBounds(URL_BASE, "json", json({ scope: " ".repeat(MAX) }))).toBe(true);
     });
   });
 
   describe("a JSON body", () => {
     const oversized = json({ scopes: items(MAX + 1) });
 
-    test.each([
-      "application/json",
-      "Application/JSON",
-      "application/json; charset=utf-8",
-      "application/merge-patch+json",
-    ])("is checked when sent as %s", (contentType) => {
-      expect(exceedsAuthRequestBounds(URL_BASE, contentType, oversized)).toBe(true);
-      expect(exceedsAuthRequestBounds(URL_BASE, contentType, json({ scopes: items(MAX) }))).toBe(false);
+    test("is checked", () => {
+      expect(exceedsAuthRequestBounds(URL_BASE, "json", oversized)).toBe(true);
+      expect(exceedsAuthRequestBounds(URL_BASE, "json", json({ scopes: items(MAX) }))).toBe(false);
     });
-
-    // Better Auth parses none of these as JSON, so the array never reaches a schema.
-    test.each([null, "multipart/form-data; boundary=x", "text/plain"])(
-      "is left alone when sent as %s",
-      (contentType) => {
-        expect(exceedsAuthRequestBounds(URL_BASE, contentType, oversized)).toBe(false);
-      }
-    );
 
     // The consent endpoint takes `claims` as a string in a JSON body and parses it itself.
     test("with JSON text in a string field holding an oversized collection is refused", () => {
       const consent = (count: number) =>
         json({ accept: true, claims: JSON.stringify({ userinfo: keys(count) }) });
 
-      expect(exceedsAuthRequestBounds(URL_BASE, "application/json", consent(MAX + 1))).toBe(true);
-      expect(exceedsAuthRequestBounds(URL_BASE, "application/json", consent(MAX))).toBe(false);
-      expect(
-        exceedsAuthRequestBounds(URL_BASE, "application/json", json({ password: `{${"x".repeat(500)}` }))
-      ).toBe(false);
+      expect(exceedsAuthRequestBounds(URL_BASE, "json", consent(MAX + 1))).toBe(true);
+      expect(exceedsAuthRequestBounds(URL_BASE, "json", consent(MAX))).toBe(false);
+      expect(exceedsAuthRequestBounds(URL_BASE, "json", json({ password: `{${"x".repeat(500)}` }))).toBe(
+        false
+      );
     });
 
     // Each list stays within the entry cap; what grows is how many strings the guard would parse.
@@ -123,7 +131,7 @@ describe("exceedsAuthRequestBounds", () => {
       test("parses none that only start like JSON", () => {
         const parse = vi.spyOn(JSON, "parse");
 
-        expect(exceedsAuthRequestBounds(URL_BASE, "application/json", wide("["))).toBe(false);
+        expect(exceedsAuthRequestBounds(URL_BASE, "json", wide("["))).toBe(false);
         expect(parse).toHaveBeenCalledTimes(1);
         parse.mockRestore();
       });
@@ -131,7 +139,7 @@ describe("exceedsAuthRequestBounds", () => {
       test("refuses once the JSON-text budget is spent, without parsing the rest", () => {
         const parse = vi.spyOn(JSON, "parse");
 
-        expect(exceedsAuthRequestBounds(URL_BASE, "application/json", wide("[]"))).toBe(true);
+        expect(exceedsAuthRequestBounds(URL_BASE, "json", wide("[]"))).toBe(true);
         expect(parse).toHaveBeenCalledTimes(1 + AUTH_REQUEST_MAX_JSON_TEXTS);
         parse.mockRestore();
       });
@@ -139,15 +147,13 @@ describe("exceedsAuthRequestBounds", () => {
       test("accepts as many JSON texts as the budget holds", () => {
         const texts = Array.from({ length: AUTH_REQUEST_MAX_JSON_TEXTS }, () => "[]");
 
-        expect(exceedsAuthRequestBounds(URL_BASE, "application/json", json({ texts }))).toBe(false);
-        expect(
-          exceedsAuthRequestBounds(URL_BASE, "application/json", json({ texts: [...texts, "[]"] }))
-        ).toBe(true);
+        expect(exceedsAuthRequestBounds(URL_BASE, "json", json({ texts }))).toBe(false);
+        expect(exceedsAuthRequestBounds(URL_BASE, "json", json({ texts: [...texts, "[]"] }))).toBe(true);
       });
     });
 
     test("that does not parse is left to the handler", () => {
-      expect(exceedsAuthRequestBounds(URL_BASE, "application/json", encode("{not json"))).toBe(false);
+      expect(exceedsAuthRequestBounds(URL_BASE, "json", encode("{not json"))).toBe(false);
     });
   });
 
@@ -174,7 +180,7 @@ describe("exceedsAuthRequestBounds", () => {
   });
 
   describe("a form body", () => {
-    const form = "application/x-www-form-urlencoded";
+    const form = "form";
 
     // URLSearchParams slows down sharply on fields with no value, so an over-long body is refused on the
     // count alone, before one is built.
@@ -197,10 +203,13 @@ describe("exceedsAuthRequestBounds", () => {
       }
     });
 
-    test("with empty fields is counted the way URLSearchParams reads it", () => {
-      expect(exceedsAuthRequestBounds(URL_BASE, form, encode(`${distinct(MAX)}${"&".repeat(1_000)}`))).toBe(
+    // URLSearchParams skips empty fields, so they don't count toward the cap, but a body made of them is
+    // still refused once it holds more than four times the cap.
+    test("with empty fields is counted the way URLSearchParams reads it, up to a limit", () => {
+      expect(exceedsAuthRequestBounds(URL_BASE, form, encode(`${distinct(MAX)}${"&".repeat(MAX)}`))).toBe(
         false
       );
+      expect(exceedsAuthRequestBounds(URL_BASE, form, encode("&".repeat(4 * MAX)))).toBe(true);
     });
 
     test("with JSON in a field holding an oversized collection is refused", () => {
@@ -236,10 +245,45 @@ describe("exceedsAuthRequestBounds", () => {
   });
 });
 
+describe("authBodyKindOf", () => {
+  test.each([
+    ["application/json", "json"],
+    ["Application/JSON", "json"],
+    ["application/json; charset=utf-8", "json"],
+    ["application/json;charset=UTF-8", "json"],
+    ['application/json; charset="utf-8"', "json"],
+    ["application/x-www-form-urlencoded", "form"],
+    ["application/x-www-form-urlencoded; charset=UTF-8", "form"],
+  ])("reads %s as %s", (contentType, kind) => {
+    expect(authBodyKindOf(contentType)).toBe(kind);
+  });
+
+  // Each of these is read one way by better-call and another by oauth-provider, or by neither, so the
+  // routes refuse it before either sees it.
+  test.each([
+    null,
+    "",
+    "text/plain",
+    "multipart/form-data; boundary=x",
+    "application/merge-patch+json",
+    "application/x-www-form-urlencoded+json",
+    "application/jsonapplication/x-www-form-urlencoded",
+    "application/x-www-form-urlencodedx",
+    "multipart/form-data/application/x-www-form-urlencoded",
+    'application/json; p="application/x-www-form-urlencoded"',
+    "application/json; charset=x-www-form-urlencoded",
+    "application/json; charset=latin1",
+    "text/plain, application/x-www-form-urlencoded",
+    "application/x-www-form-urlencoded; a=b, multipart/form-data; boundary=x",
+  ])("refuses %s", (contentType) => {
+    expect(authBodyKindOf(contentType)).toBeNull();
+  });
+});
+
 /**
- * The guard decides "is this JSON" with its own copy of better-call's test, so a better-call upgrade that
- * widened the test would let an oversized body past it. A JSON array body comes out of better-call as an
- * array only when it parsed it as JSON (a form parse yields an object, anything else a string).
+ * Every content type the guard accepts must be read the same way by everything downstream: better-call,
+ * which parses the body, and oauth-provider, which re-reads any body whose header contains the form type
+ * as a form. A better-call upgrade that changed its parsing would fail here, not in production.
  */
 // The slice of better-call these tests drive. Typed here rather than imported: apps/web does not depend on
 // better-call itself, and the copy under test is the one better-auth resolves, whatever version it pins.
@@ -255,43 +299,15 @@ type TBetterCall = {
 const loadBetterCall = async () =>
   (await import(createRequire(import.meta.resolve("better-auth")).resolve("better-call"))) as TBetterCall;
 
-describe("isJsonContentType, against better-call's own body parsing", async () => {
-  const { createEndpoint, createRouter } = await loadBetterCall();
-  const echo = createEndpoint("/echo", { method: "POST", body: z.any() }, async (ctx) =>
-    ctx.json({ parsedAsJson: Array.isArray(ctx.body) })
-  );
-  const router = createRouter({ echo });
+const ACCEPTED = [
+  "application/json",
+  "APPLICATION/JSON; charset=utf-8",
+  'application/json; charset="UTF-8"',
+  "application/x-www-form-urlencoded",
+  "application/x-www-form-urlencoded;charset=UTF-8",
+];
 
-  test.each([
-    "application/json",
-    "APPLICATION/JSON",
-    "application/json; charset=utf-8",
-    "application/merge-patch+json",
-    "application/vnd.api+json",
-    "text/json",
-    "text/plain",
-    "application/x-www-form-urlencoded",
-    "application/jsonx",
-    "application/x-json",
-  ])("agrees for %s", async (contentType) => {
-    const response = await router.handler(
-      new Request("http://localhost/echo", {
-        method: "POST",
-        headers: { "content-type": contentType },
-        body: "[1,2]",
-      })
-    );
-    const { parsedAsJson } = (await response.json()) as { parsedAsJson: boolean };
-
-    expect(isJsonContentType(contentType)).toBe(parsedAsJson);
-  });
-});
-
-/**
- * The same check for form bodies: the guard counts a form's fields exactly when better-call would parse
- * the body as one. The echo endpoint allows the media types Better Auth's form endpoints allow.
- */
-describe("isFormContentType, against better-call's own body parsing", async () => {
+describe("accepted content types, against what reads them downstream", async () => {
   const { createEndpoint, createRouter } = await loadBetterCall();
   const echo = createEndpoint(
     "/echo",
@@ -300,29 +316,52 @@ describe("isFormContentType, against better-call's own body parsing", async () =
       body: z.any(),
       metadata: { allowedMediaTypes: ["application/x-www-form-urlencoded", "application/json"] },
     },
-    async (ctx) => ctx.json({ parsedAsForm: (ctx.body as Record<string, unknown> | undefined)?.a === "1" })
+    async (ctx) =>
+      ctx.json({
+        parsedAsJson: Array.isArray(ctx.body),
+        parsedAsForm: (ctx.body as Record<string, unknown> | undefined)?.a === "1",
+      })
   );
   const router = createRouter({ echo });
-
-  test.each([
-    "application/x-www-form-urlencoded",
-    "APPLICATION/X-WWW-FORM-URLENCODED; charset=utf-8",
-    "application/x-www-form-urlencodedx",
-    'multipart/form-data; boundary=x; p="application/x-www-form-urlencoded"',
-    'text/plain; p="application/x-www-form-urlencoded"',
-    "application/json",
-  ])("agrees for %s", async (contentType) => {
+  const read = async (contentType: string, body: string) => {
     const response = await router.handler(
-      new Request("http://localhost/echo", {
-        method: "POST",
-        headers: { "content-type": contentType },
-        body: "a=1",
-      })
+      new Request("http://localhost/echo", { method: "POST", headers: { "content-type": contentType }, body })
     );
-    // A body better-call refuses, or fails to read, answers without the echo.
-    const text = await response.text();
-    const { parsedAsForm = false } = (response.ok ? JSON.parse(text) : {}) as { parsedAsForm?: boolean };
+    // A body better-call refuses (form text sent as JSON is invalid JSON) answers without the echo.
+    const echoed = response.ok ? ((await response.json()) as Partial<Record<string, boolean>>) : {};
+    return { parsedAsJson: echoed.parsedAsJson ?? false, parsedAsForm: echoed.parsedAsForm ?? false };
+  };
 
-    expect(isFormContentType(contentType)).toBe(parsedAsForm);
+  test.each(ACCEPTED)("better-call reads %s the way the guard does", async (contentType) => {
+    const kind = authBodyKindOf(contentType);
+
+    expect((await read(contentType, "[1,2]")).parsedAsJson).toBe(kind === "json");
+    expect((await read(contentType, "a=1")).parsedAsForm).toBe(kind === "form");
+  });
+
+  // oauth-provider's own test (introspect and token handlers): `content-type.includes(form type)`.
+  test.each(ACCEPTED)("oauth-provider reads %s the way the guard does", (contentType) => {
+    const readAsForm = contentType.toLowerCase().includes("application/x-www-form-urlencoded");
+
+    expect(readAsForm).toBe(authBodyKindOf(contentType) === "form");
+  });
+});
+
+/**
+ * The named values the guard special-cases are oauth-provider's. If an upgrade renamed one, the guard would
+ * silently stop covering it, so pin that the installed oauth-provider still reads them.
+ */
+describe("oauth-provider still reads the named values the guard caps", () => {
+  test("its before-hook matches on `oauth_query` in the body", async () => {
+    const { readFileSync, readdirSync } = await import("node:fs");
+    const { dirname, join } = await import("node:path");
+    const require = createRequire(import.meta.resolve("better-auth"));
+    const dist = dirname(require.resolve("@better-auth/oauth-provider"));
+    const source = readdirSync(dist)
+      .filter((file) => file.endsWith(".mjs"))
+      .map((file) => readFileSync(join(dist, file), "utf8"))
+      .join("\n");
+
+    expect(source).toContain("ctx.body?.oauth_query");
   });
 });

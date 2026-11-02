@@ -1,5 +1,5 @@
 import "server-only";
-import { isJsonContentType } from "./auth-request-bounds";
+import { authBodyKindOf } from "./auth-request-bounds";
 import {
   findDisallowedRedirectUri,
   getAllowedDcrRedirectUris,
@@ -86,9 +86,11 @@ export const withInferredApplicationType = (body: string): string => {
  * is single-use, so it cannot be inspected and then reused.
  */
 export const prepareDcrRequest = async (request: Request): Promise<Request | Response> => {
-  // better-call refuses any other content type with 415, so a non-JSON body is never worth parsing here;
-  // the JSON one has already passed the entry cap in withAuthRequestBodyLimit.
-  if (!isDcrRegistration(request) || !isJsonContentType(request.headers.get("content-type"))) return request;
+  // Registration is JSON-only, and withAuthRequestBodyLimit has already refused any other body shape and
+  // capped the JSON one, so a form body is never worth parsing here.
+  if (!isDcrRegistration(request) || authBodyKindOf(request.headers.get("content-type")) !== "json") {
+    return request;
+  }
 
   const raw = await request.text();
   const disallowed = findDisallowedRedirectUri(raw, getAllowedDcrRedirectUris());

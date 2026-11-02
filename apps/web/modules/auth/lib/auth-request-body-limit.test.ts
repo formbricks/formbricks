@@ -7,7 +7,11 @@ import {
   isAuthRequestBodyLimited,
   withAuthRequestBodyLimit,
 } from "./auth-request-body-limit";
-import { AUTH_REQUEST_MAX_ENTRIES, AUTH_REQUEST_MAX_JSON_TEXTS } from "./auth-request-bounds";
+import {
+  AUTH_REQUEST_MAX_DEPTH,
+  AUTH_REQUEST_MAX_ENTRIES,
+  AUTH_REQUEST_MAX_JSON_TEXTS,
+} from "./auth-request-bounds";
 
 const LIMIT = AUTH_REQUEST_BODY_LIMIT_BYTES;
 
@@ -19,7 +23,7 @@ const chunkedRequest = (totalBytes: number, chunkBytes = 16 * 1024, headers: Hea
   const state = { pulls: 0, cancelled: false };
   const request = new Request("http://localhost/api/auth/sign-in/email", {
     method: "POST",
-    headers,
+    headers: { "content-type": "application/json", ...headers },
     body: new ReadableStream<Uint8Array>({
       pull(controller) {
         state.pulls += 1;
@@ -119,20 +123,23 @@ describe("withAuthRequestBodyLimit", () => {
     expect(response.headers.get("cache-control")).toBe("no-store");
     expect(await response.json()).toEqual({
       error: "invalid_request",
-      error_description: `Request lists, objects and parameter sets must not hold more than ${AUTH_REQUEST_MAX_ENTRIES} entries, and a request must not carry more than ${AUTH_REQUEST_MAX_JSON_TEXTS} values as JSON text`,
+      error_description: `Request lists, objects and parameter sets must not hold more than ${AUTH_REQUEST_MAX_ENTRIES} entries or nest more than ${AUTH_REQUEST_MAX_DEPTH} levels, and a request must not carry more than ${AUTH_REQUEST_MAX_JSON_TEXTS} values as JSON text`,
       code: "VALIDATION_ERROR",
-      message: `Request lists, objects and parameter sets must not hold more than ${AUTH_REQUEST_MAX_ENTRIES} entries, and a request must not carry more than ${AUTH_REQUEST_MAX_JSON_TEXTS} values as JSON text`,
+      message: `Request lists, objects and parameter sets must not hold more than ${AUTH_REQUEST_MAX_ENTRIES} entries or nest more than ${AUTH_REQUEST_MAX_DEPTH} levels, and a request must not carry more than ${AUTH_REQUEST_MAX_JSON_TEXTS} values as JSON text`,
     });
     expect(handler).not.toHaveBeenCalled();
   });
 
-  // Fetch's formData() reads the last media type in such a list and better-call matches by substring, so
-  // the guard cannot tell how the body would be parsed; it is refused unread.
+  // Better Auth, better-call, oauth-provider and Fetch's formData() each classify a body their own way;
+  // anything but plain JSON or a form could be read two ways, so it is refused before any of them.
   test.each([
+    "text/plain;charset=UTF-8",
+    "multipart/form-data; boundary=x",
+    "application/x-www-form-urlencoded+json",
     "text/plain, application/x-www-form-urlencoded",
     "application/x-www-form-urlencoded; a=b, multipart/form-data; boundary=x",
     "x/application/x-www-form-urlencoded, multipart/form-data; boundary=x",
-  ])("answers 415 to a Content-Type listing several media types: %s", async (contentType) => {
+  ])("answers 415 to a body sent as %s", async (contentType) => {
     const handler = vi.fn(ok);
     const request = new Request("http://localhost/api/auth/oauth2/authorize", {
       method: "POST",
@@ -205,7 +212,18 @@ describe("withAuthRequestBodyLimit", () => {
     expect(await response.json()).toEqual({ bytes: LIMIT });
   });
 
-  test("hands over a body that parses as the form or multipart post it was", async () => {
+  test("answers 415 to a body with no Content-Type", async () => {
+    const handler = vi.fn(ok);
+    const request = new Request("http://localhost/api/auth/sign-in/email", {
+      method: "POST",
+      body: new Uint8Array([123, 125]),
+    });
+
+    expect((await withAuthRequestBodyLimit(handler)(request)).status).toBe(415);
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  test("hands over a form body that parses as the form post it was", async () => {
     const seen = vi.fn(async (request: Request) => {
       const form = await request.formData();
       return Response.json(Object.fromEntries(form.entries()));
@@ -215,19 +233,9 @@ describe("withAuthRequestBodyLimit", () => {
       headers: { "content-type": "application/x-www-form-urlencoded" },
       body: "grant_type=authorization_code&code=abc%20def",
     });
-    const multipartBody = new FormData();
-    multipartBody.set("SAMLResponse", "PHNhbWw+");
-    const multipart = new Request("http://localhost/api/auth/saml/callback", {
-      method: "POST",
-      body: multipartBody,
-    });
-
     expect(await (await withAuthRequestBodyLimit(seen)(urlencoded)).json()).toEqual({
       grant_type: "authorization_code",
       code: "abc def",
-    });
-    expect(await (await withAuthRequestBodyLimit(seen)(multipart)).json()).toEqual({
-      SAMLResponse: "PHNhbWw+",
     });
   });
 
@@ -277,7 +285,11 @@ describe("withAuthRequestBodyLimit", () => {
 
     await wrapped(new Request("http://localhost/api/auth/get-session"), context);
     await wrapped(
-      new Request("http://localhost/api/auth/sign-in/email", { method: "POST", body: "{}" }),
+      new Request("http://localhost/api/auth/sign-in/email", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: "{}",
+      }),
       context
     );
 
@@ -290,6 +302,7 @@ describe("withAuthRequestBodyLimit", () => {
     const controller = new AbortController();
     const request = new Request("http://localhost/api/auth/sign-in/email", {
       method: "POST",
+      headers: { "content-type": "application/json" },
       body: "{}",
       signal: controller.signal,
     });
@@ -307,6 +320,7 @@ describe("withAuthRequestBodyLimit", () => {
     const seen = vi.fn(async (request: NextRequest) => Response.json({ path: request.nextUrl.pathname }));
     const request = new NextRequest("http://localhost/api/auth/saml/token?x=1", {
       method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
       body: "grant_type=authorization_code",
     });
 
@@ -318,7 +332,11 @@ describe("withAuthRequestBodyLimit", () => {
 
   test("lets an error thrown by the handler propagate unchanged", async () => {
     const boom = new Error("boom");
-    const request = new Request("http://localhost/api/auth/x", { method: "POST", body: "{}" });
+    const request = new Request("http://localhost/api/auth/x", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: "{}",
+    });
 
     await expect(
       withAuthRequestBodyLimit(() => {

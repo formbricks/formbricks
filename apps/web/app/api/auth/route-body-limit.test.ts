@@ -180,7 +180,7 @@ describe("/api/auth route surface", () => {
       })
     );
 
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(415);
     expect(jacksonMock).not.toHaveBeenCalled();
   });
 
@@ -210,6 +210,35 @@ describe("/api/auth route surface", () => {
     expect(handlerCalls).not.toHaveBeenCalled();
     expect(jacksonMock).not.toHaveBeenCalled();
   });
+
+  // A hybrid type reads as JSON to better-call and as a form to oauth-provider; multipart reaches the SAML
+  // routes' formData() uncounted. Every route refuses both before its handler, jackson or the DCR step runs.
+  test.each(postRouteFiles)(
+    "%s POST refuses a body that is not plain JSON or a form with 415",
+    async (file) => {
+      const mod = await loadRoute(file);
+      const post = mod.POST as (request: Request) => Promise<Response>;
+      const url = `http://localhost/api/auth/${file.replace(/^\.\/|\/route\.ts$/g, "").replace("[...all]", "oauth2/token")}`;
+
+      for (const contentType of [
+        "application/x-www-form-urlencoded+json",
+        "multipart/form-data; boundary=x",
+      ]) {
+        const response = await post(
+          new Request(url, {
+            method: "POST",
+            headers: { "content-type": contentType },
+            body: '{"grant_type":"x","z":"a&a&a"}',
+          })
+        );
+
+        expect(response.status, contentType).toBe(415);
+      }
+      expect(handlerCalls).not.toHaveBeenCalled();
+      expect(jacksonMock).not.toHaveBeenCalled();
+      expect(prepareDcrRequestMock).not.toHaveBeenCalled();
+    }
+  );
 
   describe("the SAML callback, at the same boundary", () => {
     const callback = (bytes: number) =>

@@ -11,10 +11,25 @@
  *
  * 100 is far above anything these routes legitimately receive: the longest list a client sends is the
  * MCP scope set (14 entries), an OAuth or SAML callback carries a few parameters, and a registration or
- * sign-up body has a few dozen fields at most. JSON inside another encoding — a JWT payload such as
- * `id_token_hint` — is not inspected: Better Auth decodes those without a schema or a per-entry loop.
+ * sign-up body has a few dozen fields at most. A signed `oauth_query` is the exception, sized on its own
+ * ({@link OAUTH_QUERY_MAX_FIELDS}). JSON inside another encoding — a JWT payload such as `id_token_hint` —
+ * is not inspected: Better Auth decodes those without a schema or a per-entry loop.
+ *
+ * Checked against @better-auth/oauth-provider 1.7.0–1.7.15 and better-call 1.4: none of them bounds these
+ * collections. Re-check the named values below ({@link isOversizedNamedValue}) on every upgrade.
  */
 export const AUTH_REQUEST_MAX_ENTRIES = 100;
+
+/**
+ * Fields a signed `oauth_query` may carry. oauth-provider signs the authorize request it redirects to the
+ * login or consent page: every parameter, plus a `ba_param` field naming each one, plus `exp`, `ba_iat`,
+ * `sig` and `ba_pl` with their own `ba_param` entries. So it holds about twice the fields of the authorize
+ * request, and an authorize request at {@link AUTH_REQUEST_MAX_ENTRIES} must still sign in.
+ */
+export const OAUTH_QUERY_MAX_FIELDS = 2 * AUTH_REQUEST_MAX_ENTRIES + 8;
+
+/** Deepest a JSON body may nest. Better Auth's deepest real body, a JWKS in a registration, nests 4. */
+export const AUTH_REQUEST_MAX_DEPTH = 32;
 
 /**
  * Most values one request may carry as JSON text. Reading one means parsing it, so without a budget a
@@ -23,22 +38,25 @@ export const AUTH_REQUEST_MAX_ENTRIES = 100;
  */
 export const AUTH_REQUEST_MAX_JSON_TEXTS = 10;
 
-// The test better-call applies before it parses a body as JSON (`getBody`); auth-request-bounds.test.ts
-// keeps the two in step. Every other body type it hands over as text or as a flat map of strings.
-const JSON_CONTENT_TYPE = /^application\/([a-z0-9.+-]*\+)?json/i;
+/**
+ * The only request bodies `/api/auth` accepts: JSON or a form, with at most a UTF-8 charset. Better Auth's
+ * routes take nothing else (better-call refuses other types with 415), but its consumers classify a body
+ * loosely: better-call matches the allow-list by substring and parses JSON on an unanchored regex, and
+ * oauth-provider re-reads any body whose `Content-Type` merely contains the form type as a form. A header
+ * such as `application/x-www-form-urlencoded+json` would be read as JSON by one and as a form by another.
+ * Holding the header to these two exact shapes leaves one reading, the one the guard checks.
+ */
+const AUTH_BODY_CONTENT_TYPE =
+  /^[\t ]*application\/(json|x-www-form-urlencoded)[\t ]*(?:;[\t ]*charset[\t ]*=[\t ]*"?utf-?8"?[\t ]*)?$/i;
 
-export const isJsonContentType = (contentType: string | null): boolean =>
-  contentType !== null && JSON_CONTENT_TYPE.test(contentType);
+export type TAuthBodyKind = "json" | "form";
 
-/** The media type of a `Content-Type` header, without its parameters, lowercased. */
-export const mediaTypeOf = (contentType: string | null): string =>
-  (contentType ?? "").split(";")[0].trim().toLowerCase();
-
-// Whether a body is read as a form. `withAuthRequestBodyLimit` refuses a `Content-Type` that lists more
-// than one media type, so the header names one, and its media type decides: `formData()` reads a form
-// only under this exact type, and better-call's allow-list refuses one named only in a parameter.
-export const isFormContentType = (contentType: string | null): boolean =>
-  mediaTypeOf(contentType) === "application/x-www-form-urlencoded";
+/** How an `/api/auth` body is read, or `null` for a `Content-Type` the routes must refuse. */
+export const authBodyKindOf = (contentType: string | null): TAuthBodyKind | null => {
+  const match = contentType === null ? null : AUTH_BODY_CONTENT_TYPE.exec(contentType);
+  if (!match) return null;
+  return match[1].toLowerCase() === "json" ? "json" : "form";
+};
 
 // A value `JSON.parse` would read as an array or object: JSON allows these four whitespace characters
 // around it, so a consumer parsing the text accepts a padded value as readily as a bare one.
@@ -72,15 +90,18 @@ const parseJson = (text: string): unknown => {
  * Whether `text`, read the way `URLSearchParams` reads a query string or form body, holds more than `max`
  * fields. Counted by scanning for `&` rather than by parsing: `URLSearchParams` slows down sharply on many
  * fields without a value (`a&a&a…`), so it is only built once the count is known to be within the cap.
- * Empty fields are skipped, as `URLSearchParams` skips them.
+ * Empty fields are skipped as `URLSearchParams` skips them, but still cost a scan, so more than four times
+ * `max` of them counts as oversized too.
  */
 const hasMoreFieldsThan = (text: string, max: number): boolean => {
-  let count = 0;
+  let fields = 0;
+  let segments = 0;
   let start = 0;
   while (start <= text.length) {
     const separator = text.indexOf("&", start);
     const end = separator === -1 ? text.length : separator;
-    if (end > start && ++count > max) return true;
+    if (++segments > 4 * max) return true;
+    if (end > start && ++fields > max) return true;
     start = end + 1;
   }
   return false;
@@ -101,39 +122,40 @@ const hasMoreListItemsThan = (text: string, max: number): boolean => {
  * `scope` and `prompt` into lists it checks against each other.
  */
 const isOversizedNamedValue = (name: string, value: string): boolean => {
-  if (name === "oauth_query") return hasMoreFieldsThan(value, AUTH_REQUEST_MAX_ENTRIES);
+  if (name === "oauth_query") return hasMoreFieldsThan(value, OAUTH_QUERY_MAX_FIELDS);
   if (name === "scope" || name === "prompt") return hasMoreListItemsThan(value, AUTH_REQUEST_MAX_ENTRIES);
   return false;
 };
 
 /**
- * Whether any array or object in `value` holds more than `maxEntries` entries, counting the collections
- * a string carries as JSON text (oauth-provider parses `claims` from a string on consent as well as on
- * authorize) and the ones a named string carries ({@link isOversizedNamedValue}). Walks with an explicit
- * stack, so how deeply the value nests costs no call depth, and counts an object's keys as it goes, so an
- * oversized one is refused before its values are collected. A string is parsed only when it starts and
- * ends like an array or object, and each parse spends `budget`; a value that needs more parses than the
- * budget holds counts as oversized.
+ * Whether any array or object in `value` holds more than `maxEntries` entries or nests deeper than
+ * {@link AUTH_REQUEST_MAX_DEPTH}, counting the collections a string carries as JSON text (oauth-provider
+ * parses `claims` from a string on consent as well as on authorize) and the ones a named string carries
+ * ({@link isOversizedNamedValue}). Walks with an explicit stack, so how deeply the value nests costs no
+ * call depth, and counts an object's keys as it goes, so an oversized one is refused before its values
+ * are collected. A string is parsed only when it starts and ends like an array or object, and each parse
+ * spends `budget`; a value that needs more parses than the budget holds counts as oversized.
  */
 export const hasOversizedJsonCollection = (
   value: unknown,
   maxEntries: number,
   budget: TJsonTextBudget = newJsonTextBudget()
 ): boolean => {
-  const pending: unknown[] = [value];
+  const pending: { value: unknown; depth: number }[] = [{ value, depth: 0 }];
   while (pending.length > 0) {
-    const current = pending.pop();
+    const { value: current, depth } = pending.pop() as { value: unknown; depth: number };
     if (typeof current === "string") {
       if (looksLikeJsonCollection(current)) {
         if (--budget.remaining < 0) return true;
-        pending.push(parseJson(current));
+        pending.push({ value: parseJson(current), depth });
       }
       continue;
     }
     if (typeof current !== "object" || current === null) continue;
+    if (depth >= AUTH_REQUEST_MAX_DEPTH) return true;
     if (Array.isArray(current)) {
       if (current.length > maxEntries) return true;
-      pending.push(...current);
+      for (const entry of current) pending.push({ value: entry, depth: depth + 1 });
       continue;
     }
     const record = current as Record<string, unknown>;
@@ -143,7 +165,7 @@ export const hasOversizedJsonCollection = (
       if (++count > maxEntries) return true;
       const entry = record[name];
       if (typeof entry === "string" && isOversizedNamedValue(name, entry)) return true;
-      pending.push(entry);
+      pending.push({ value: entry, depth: depth + 1 });
     }
   }
   return false;
@@ -166,23 +188,18 @@ const hasOversizedParams = (text: string, budget: TJsonTextBudget): boolean => {
 
 /**
  * Whether a request's query string or body holds a collection over {@link AUTH_REQUEST_MAX_ENTRIES}.
- * Only the body types Better Auth parses into collections are read: JSON, and form bodies (for the JSON
- * their fields carry). A body that does not parse is left to the handler, which answers it as before.
+ * `kind` is the body's reading per {@link authBodyKindOf}; the caller refuses a body that has none. A JSON
+ * body that does not parse is left to the handler, which answers it as before.
  */
 export const exceedsAuthRequestBounds = (
   url: string,
-  contentType: string | null,
+  kind: TAuthBodyKind | null,
   body: Uint8Array | undefined
 ): boolean => {
   const budget = newJsonTextBudget();
   if (hasOversizedParams(new URL(url).search.slice(1), budget)) return true;
-  if (!body) return false;
-  if (isJsonContentType(contentType)) {
-    const parsed = parseJson(new TextDecoder().decode(body));
-    return hasOversizedJsonCollection(parsed, AUTH_REQUEST_MAX_ENTRIES, budget);
-  }
-  if (isFormContentType(contentType)) {
-    return hasOversizedParams(new TextDecoder().decode(body), budget);
-  }
-  return false;
+  if (!body || kind === null) return false;
+  const text = new TextDecoder().decode(body);
+  if (kind === "json") return hasOversizedJsonCollection(parseJson(text), AUTH_REQUEST_MAX_ENTRIES, budget);
+  return hasOversizedParams(text, budget);
 };
