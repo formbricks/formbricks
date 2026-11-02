@@ -12,6 +12,7 @@ import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { deleteUserTeamRelationships } from "@/lib/authzed/team-workspace";
 import { deleteOrganization, getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
 import { deleteBrevoCustomerByEmail } from "@/modules/auth/lib/brevo";
+import { requestEmailAuditErasureBestEffort } from "@/modules/email/lib/email-audit-maintenance";
 import { normalizeEmailForComparison } from "../utils/email";
 import { validateInputs } from "../utils/validate";
 import { publicUserSelect } from "./public-user";
@@ -130,6 +131,7 @@ export const deleteUser = async (id: string): Promise<TUser> => {
     await prisma.invite.deleteMany({ where: { creatorId: id } });
 
     const deletedUser = await deleteUserById(id);
+    await requestEmailAuditErasureBestEffort({ userId: id, email: deletedUser.email });
     await runPostCommitProjection("user_delete_organization_cleanup", () =>
       deleteUserOrganizationRelationships(id)
     );

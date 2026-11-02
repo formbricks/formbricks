@@ -1,0 +1,183 @@
+import { createHash, randomUUID } from "node:crypto";
+import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
+import {
+  EMAIL_SEND_AUDIT_BUCKET,
+  EMAIL_SEND_AUDIT_ENABLED,
+  EMAIL_SEND_AUDIT_HMAC_KEY_ARN,
+  EMAIL_SEND_AUDIT_KMS_KEY_ARN,
+  SES_EMAIL_ENVIRONMENT,
+} from "@/lib/constants";
+import { reportEmailAuditFailure } from "./email-audit-monitoring";
+import { getEmailAuditRecipientMac, putEmailAuditSnapshot } from "./email-audit-storage";
+import type { TEmailType } from "./send-email";
+
+export type TEmailAuditContext = Readonly<{
+  trigger: "user" | "response" | "workflow" | "system";
+  actorUserId?: string;
+  configuredByUserId?: string;
+  organizationId?: string;
+  surveyId?: string;
+  responseId?: string;
+  followUpId?: string;
+  workflowId?: string;
+  workflowRunId?: string;
+  inviteId?: string;
+}>;
+
+type TAuditState = Readonly<{ id: string; rowCreated: boolean; auditGap: boolean }>;
+
+const contentTtlMs = 30 * 24 * 60 * 60 * 1000;
+const metadataTtlMs = 90 * 24 * 60 * 60 * 1000;
+
+const reportGap = (id: string, phase: string): Promise<void> =>
+  reportEmailAuditFailure("email_audit_gap", { auditId: id, phase });
+
+const emitMetadata = (
+  id: string,
+  emailType: TEmailType,
+  context: TEmailAuditContext,
+  status: string,
+  auditGap: boolean,
+  sesMessageHash?: string
+): void => {
+  // Explicit allowlist: no recipient address, subject, body, or SMTP response enters logs/SigNoz.
+  logger.audit(
+    {
+      event: "outbound_email_audit",
+      auditId: id,
+      emailType,
+      environment: SES_EMAIL_ENVIRONMENT,
+      trigger: context.trigger,
+      actorUserId: context.actorUserId,
+      configuredByUserId: context.configuredByUserId,
+      organizationId: context.organizationId,
+      surveyId: context.surveyId,
+      responseId: context.responseId,
+      followUpId: context.followUpId,
+      workflowId: context.workflowId,
+      workflowRunId: context.workflowRunId,
+      inviteId: context.inviteId,
+      status,
+      auditGap,
+      sesMessageHash,
+    },
+    "Outbound email audit"
+  );
+};
+
+export const beginEmailSendAudit = async (
+  emailType: TEmailType,
+  to: string,
+  snapshot: Readonly<{ subject: string; html: string; text?: string }>,
+  context: TEmailAuditContext
+): Promise<TAuditState | null> => {
+  if (!EMAIL_SEND_AUDIT_ENABLED) return null;
+  const id = randomUUID();
+  const now = Date.now();
+  let recipientMac: string | undefined;
+  let auditGap = false;
+  try {
+    recipientMac = await getEmailAuditRecipientMac(to, EMAIL_SEND_AUDIT_HMAC_KEY_ARN!);
+  } catch {
+    auditGap = true;
+    await reportGap(id, "recipient_hmac");
+  }
+
+  let rowCreated = false;
+  try {
+    await prisma.outboundEmailAudit.create({
+      data: {
+        id,
+        environment: SES_EMAIL_ENVIRONMENT!,
+        emailType,
+        trigger: context.trigger,
+        actorKind: context.actorUserId ? "user" : "system",
+        actorUserId: context.actorUserId,
+        configuredByUserId: context.configuredByUserId,
+        organizationId: context.organizationId,
+        surveyId: context.surveyId,
+        responseId: context.responseId,
+        followUpId: context.followUpId,
+        workflowId: context.workflowId,
+        workflowRunId: context.workflowRunId,
+        inviteId: context.inviteId,
+        recipientMac,
+        auditGap: !recipientMac,
+        expiresAt: new Date(now + metadataTtlMs),
+        contentExpiresAt: new Date(now + contentTtlMs),
+      },
+    });
+    rowCreated = true;
+  } catch {
+    auditGap = true;
+    await reportGap(id, "ledger_create");
+  }
+
+  try {
+    const saved = await putEmailAuditSnapshot(
+      EMAIL_SEND_AUDIT_BUCKET!,
+      EMAIL_SEND_AUDIT_KMS_KEY_ARN!,
+      id,
+      snapshot
+    );
+    if (rowCreated) {
+      await prisma.outboundEmailAudit.update({
+        where: { id },
+        data: { snapshotKey: saved.key, snapshotSha256: saved.sha256 },
+      });
+    } else {
+      await reportGap(id, "orphan_snapshot");
+    }
+  } catch {
+    auditGap = true;
+    await reportGap(id, "snapshot_write");
+    if (rowCreated) {
+      try {
+        await prisma.outboundEmailAudit.update({ where: { id }, data: { auditGap: true } });
+      } catch {
+        await reportGap(id, "ledger_gap_update");
+      }
+    }
+  }
+  emitMetadata(id, emailType, context, "prepared", auditGap);
+  return { id, rowCreated, auditGap };
+};
+
+/** SES assigns this identifier after SMTP acceptance; RFC Message-ID is a separate header. */
+export const sesMessageHashFromSendInfo = (sendInfo: unknown): string | undefined => {
+  if (!sendInfo || typeof sendInfo !== "object") return;
+  const info = sendInfo as Record<string, unknown>;
+  const serverId =
+    typeof info.serverMessageId === "string"
+      ? info.serverMessageId
+      : typeof info.response === "string"
+        ? /\b250\s+Ok\s+([A-Za-z0-9_-]+)\b/i.exec(info.response)?.[1]
+        : undefined;
+  return serverId ? createHash("sha256").update(serverId).digest("hex") : undefined;
+};
+
+export const finishEmailSendAudit = async (
+  state: TAuditState | null,
+  emailType: TEmailType,
+  context: TEmailAuditContext,
+  status: "accepted" | "failed",
+  sendInfo?: unknown
+): Promise<void> => {
+  if (!state) return;
+  const sesMessageHash = status === "accepted" ? sesMessageHashFromSendInfo(sendInfo) : undefined;
+  let auditGap = state.auditGap || (status === "accepted" && !sesMessageHash);
+  if (state.rowCreated) {
+    try {
+      await prisma.outboundEmailAudit.update({
+        where: { id: state.id },
+        data: { status, sesMessageHash, ...(auditGap ? { auditGap: true } : {}) },
+      });
+    } catch {
+      auditGap = true;
+      await reportGap(state.id, "ledger_finish");
+    }
+  }
+  if (status === "accepted" && !sesMessageHash) await reportGap(state.id, "ses_message_id_missing");
+  emitMetadata(state.id, emailType, context, status, auditGap, sesMessageHash);
+};

@@ -6,6 +6,9 @@ const mocks = vi.hoisted(() => ({
   sendMail: vi.fn(),
   createTransport: vi.fn(),
   applyEmailRateLimits: vi.fn(),
+  beginEmailSendAudit: vi.fn(),
+  finishEmailSendAudit: vi.fn(),
+  reportEmailAuditFailure: vi.fn(),
   constants: {
     DEBUG: false,
     IS_SMTP_CONFIGURED: true,
@@ -13,6 +16,7 @@ const mocks = vi.hoisted(() => ({
     MAIL_FROM_NAME: "Formbricks",
     SES_CONFIGURATION_SET: undefined as string | undefined,
     SES_EMAIL_ENVIRONMENT: undefined as string | undefined,
+    EMAIL_SEND_AUDIT_ENABLED: false,
     SMTP_AUTHENTICATED: false,
     SMTP_HOST: "localhost",
     SMTP_PASSWORD: undefined,
@@ -28,9 +32,15 @@ vi.mock("nodemailer", () => ({
   createTransport: mocks.createTransport,
 }));
 vi.mock("./email-rate-limits", () => ({ applyEmailRateLimits: mocks.applyEmailRateLimits }));
+vi.mock("./email-send-audit", () => ({
+  beginEmailSendAudit: mocks.beginEmailSendAudit,
+  finishEmailSendAudit: mocks.finishEmailSendAudit,
+}));
+vi.mock("./email-audit-monitoring", () => ({ reportEmailAuditFailure: mocks.reportEmailAuditFailure }));
 
 const email = {
   emailType: "invite" as const,
+  auditContext: { trigger: "system" as const },
   to: "recipient@example.com",
   subject: "Invitation",
   html: "<p>Join</p>",
@@ -42,9 +52,13 @@ describe("sendEmail SES event publishing", () => {
     mocks.applyEmailRateLimits.mockResolvedValue(undefined);
     mocks.createTransport.mockReturnValue({ sendMail: mocks.sendMail });
     mocks.sendMail.mockResolvedValue({ messageId: "smtp-message-id" });
+    mocks.beginEmailSendAudit.mockResolvedValue(null);
+    mocks.finishEmailSendAudit.mockResolvedValue(undefined);
+    mocks.reportEmailAuditFailure.mockResolvedValue(undefined);
     mocks.constants.IS_SMTP_CONFIGURED = true;
     mocks.constants.SES_CONFIGURATION_SET = undefined;
     mocks.constants.SES_EMAIL_ENVIRONMENT = undefined;
+    mocks.constants.EMAIL_SEND_AUDIT_ENABLED = false;
   });
 
   test("keeps ordinary SMTP messages free of SES headers and internal metadata", async () => {
@@ -185,5 +199,45 @@ describe("sendEmail SES event publishing", () => {
   test("preserves the existing SMTP failure contract", async () => {
     mocks.sendMail.mockRejectedValue(new Error("SMTP failed"));
     await expect(sendEmail(email)).rejects.toThrow("Incorrect SMTP credentials");
+  });
+
+  test("audits before SMTP and treats acceptance separately from delivery", async () => {
+    const state = { id: "audit-id", rowCreated: true, auditGap: false };
+    const info = { response: "250 Ok ses-id" };
+    mocks.beginEmailSendAudit.mockResolvedValueOnce(state);
+    mocks.sendMail.mockResolvedValueOnce(info);
+
+    await expect(sendEmail(email)).resolves.toBe(true);
+
+    expect(mocks.beginEmailSendAudit).toHaveBeenCalledWith(
+      "invite",
+      email.to,
+      { subject: email.subject, html: email.html, text: undefined },
+      email.auditContext
+    );
+    expect(mocks.beginEmailSendAudit.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.sendMail.mock.invocationCallOrder[0]
+    );
+    expect(mocks.finishEmailSendAudit).toHaveBeenCalledWith(
+      state,
+      "invite",
+      email.auditContext,
+      "accepted",
+      info
+    );
+  });
+
+  test("continues sending if audit preparation or finalization fails", async () => {
+    mocks.beginEmailSendAudit.mockRejectedValueOnce(new Error("audit unavailable"));
+    await expect(sendEmail(email)).resolves.toBe(true);
+    expect(mocks.reportEmailAuditFailure).toHaveBeenCalledWith("email_audit_gap", {
+      phase: "unhandled_begin",
+    });
+
+    mocks.finishEmailSendAudit.mockRejectedValueOnce(new Error("audit unavailable"));
+    await expect(sendEmail(email)).resolves.toBe(true);
+    expect(mocks.reportEmailAuditFailure).toHaveBeenCalledWith("email_audit_gap", {
+      phase: "unhandled_finish",
+    });
   });
 });

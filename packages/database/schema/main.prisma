@@ -16,6 +16,50 @@ generator json {
   provider = "prisma-json-types-generator"
 }
 
+/// Metadata for an outbound email attempt. Content and recipient addresses are never stored here.
+/// Identifiers are deliberately not foreign keys so erasure can scrub a row without retaining source data.
+model OutboundEmailAudit {
+  id                 String    @id @default(uuid())
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  expiresAt          DateTime
+  contentExpiresAt   DateTime
+  environment        String
+  emailType          String
+  trigger            String
+  actorKind          String
+  actorUserId        String?
+  configuredByUserId String?
+  organizationId     String?
+  surveyId           String?
+  responseId         String?
+  followUpId         String?
+  workflowId         String?
+  workflowRunId      String?
+  inviteId           String?
+  recipientMac       String?
+  sesMessageHash     String?
+  snapshotKey        String?
+  snapshotSha256     String?
+  status             String    @default("prepared")
+  auditGap           Boolean   @default(false)
+  erasureRequestedAt DateTime?
+  erasedAt           DateTime?
+
+  @@index([environment, createdAt, id])
+  @@index([organizationId, createdAt, id])
+  @@index([surveyId, createdAt, id])
+  @@index([responseId, createdAt, id])
+  @@index([actorUserId, createdAt, id])
+  @@index([configuredByUserId, createdAt, id])
+  @@index([recipientMac, createdAt, id])
+  @@index([sesMessageHash])
+  @@index([status, createdAt, id])
+  @@index([contentExpiresAt, id])
+  @@index([expiresAt, id])
+  @@index([erasureRequestedAt, id])
+}
+
 enum PipelineTriggers {
   responseCreated
   responseUpdated

@@ -33,6 +33,7 @@ allowBuilds:
 # `^19.0.0` range (a published package's peer range, not a pinned install) and are
 # therefore excluded from the catalog rather than collapsed into the exact version.
 catalog:
+  "@aws-sdk/client-s3": 3.1007.0
   # --- build & test toolchain ---
   typescript: 5.9.3
   # Vite stays on 7.x. Vite 8 replaces Rollup with rolldown, and @vitejs/plugin-react

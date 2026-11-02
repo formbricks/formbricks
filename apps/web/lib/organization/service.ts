@@ -25,6 +25,7 @@ import { updateUser } from "@/lib/user/service";
 import { getBillingUsageCycleWindow } from "@/lib/utils/billing";
 import { getWorkspaces } from "@/lib/workspace/service";
 import { cleanupStripeCustomer } from "@/modules/ee/billing/lib/organization-billing";
+import { requestEmailAuditErasureBestEffort } from "@/modules/email/lib/email-audit-maintenance";
 import { deleteHubTenantData } from "@/modules/hub/service";
 import { countOrganizationResponses } from "@/modules/organization/usage/lib/response-count";
 import { deleteWorkspaceFilesBestEffort } from "@/modules/storage/service";
@@ -332,6 +333,8 @@ export const deleteOrganization = async (organizationId: string) => {
         },
       },
     });
+
+    await requestEmailAuditErasureBestEffort({ organizationId });
 
     await runPostCommitProjection("organization_delete_relationship_cleanup", () =>
       deleteOrganizationRelationships(organizationId)

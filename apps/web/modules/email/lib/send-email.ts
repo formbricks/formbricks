@@ -5,6 +5,7 @@ import { logger } from "@formbricks/logger";
 import { InvalidInputError } from "@formbricks/types/errors";
 import {
   DEBUG,
+  EMAIL_SEND_AUDIT_ENABLED,
   IS_SMTP_CONFIGURED,
   MAIL_FROM,
   MAIL_FROM_NAME,
@@ -18,7 +19,9 @@ import {
   SMTP_SECURE_ENABLED,
   SMTP_USER,
 } from "@/lib/constants";
+import { reportEmailAuditFailure } from "./email-audit-monitoring";
 import { type TEmailRateLimitContext, applyEmailRateLimits } from "./email-rate-limits";
+import { type TEmailAuditContext, beginEmailSendAudit, finishEmailSendAudit } from "./email-send-audit";
 
 // Fixed categories keep CloudWatch cardinality independent of users and surveys.
 export type TEmailType =
@@ -52,6 +55,8 @@ interface SendEmailDataProps {
   messageId?: string;
   /** Who the email is sent for; `emailRateLimits` says which fields each type needs. */
   rateLimit?: TEmailRateLimitContext;
+  /** Audit identity and source, kept out of the SMTP payload. */
+  auditContext: TEmailAuditContext;
 }
 
 const MAX_ADDRESS_LENGTH = 320;
@@ -93,6 +98,7 @@ const isSingleRecipient = (to: string): boolean => {
 export const sendEmail = async ({
   emailType,
   rateLimit,
+  auditContext,
   ...emailData
 }: SendEmailDataProps): Promise<boolean> => {
   // nodemailer reads `to` as an address list, so "a@x, b@y" would reach both. Every email goes to one
@@ -107,6 +113,18 @@ export const sendEmail = async ({
   // Outside the try below, so a capped email reaches the caller as `TooManyRequestsError`, not as an SMTP
   // failure, and never opens a connection.
   await applyEmailRateLimits(emailType, emailData.to, rateLimit);
+  let auditState: Awaited<ReturnType<typeof beginEmailSendAudit>> = null;
+  try {
+    auditState = await beginEmailSendAudit(
+      emailType,
+      emailData.to,
+      { subject: emailData.subject, html: emailData.html, text: emailData.text },
+      auditContext
+    );
+  } catch {
+    await reportEmailAuditFailure("email_audit_gap", { phase: "unhandled_begin" });
+  }
+  let sendInfo: unknown;
   try {
     const transportOptions: SMTPTransport.Options = {
       host: SMTP_HOST,
@@ -124,13 +142,14 @@ export const sendEmail = async ({
       tls: {
         rejectUnauthorized: SMTP_REJECT_UNAUTHORIZED_TLS,
       },
-      logger: DEBUG,
-      debug: DEBUG,
+      // SMTP debug output can include message content. Audited sends keep it out of ordinary logs.
+      logger: DEBUG && !EMAIL_SEND_AUDIT_ENABLED,
+      debug: DEBUG && !EMAIL_SEND_AUDIT_ENABLED,
     };
     const transporter = createTransport(transportOptions);
 
     const defaultFrom = `${MAIL_FROM_NAME ?? "Formbricks"} <${MAIL_FROM ?? "noreply@formbricks.com"}>`;
-    await transporter.sendMail({
+    sendInfo = await transporter.sendMail({
       ...emailData,
       from: emailData.from ?? defaultFrom,
       ...(SES_CONFIGURATION_SET && SES_EMAIL_ENVIRONMENT
@@ -142,10 +161,19 @@ export const sendEmail = async ({
           }
         : {}),
     });
-
-    return true;
-  } catch (error) {
-    logger.error(error, "Error in sendEmail");
+  } catch {
+    try {
+      await finishEmailSendAudit(auditState, emailType, auditContext, "failed");
+    } catch {
+      await reportEmailAuditFailure("email_audit_gap", { phase: "unhandled_finish" });
+    }
+    logger.error({ emailType, event: "email_send_failed" }, "Error in sendEmail");
     throw new InvalidInputError("Incorrect SMTP credentials");
   }
+  try {
+    await finishEmailSendAudit(auditState, emailType, auditContext, "accepted", sendInfo);
+  } catch {
+    await reportEmailAuditFailure("email_audit_gap", { phase: "unhandled_finish" });
+  }
+  return true;
 };

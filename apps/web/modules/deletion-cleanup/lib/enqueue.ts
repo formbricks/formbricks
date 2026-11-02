@@ -1,6 +1,6 @@
 import "server-only";
 import type { DeletionCleanupCreateManyInput, Prisma } from "@formbricks/database/prisma";
-import { IS_STORAGE_CONFIGURED } from "@/lib/constants";
+import { EMAIL_SEND_AUDIT_BUCKET, IS_STORAGE_CONFIGURED } from "@/lib/constants";
 import type { TDeletedSurveyResponses } from "@/lib/response/delete-responses";
 import { CLEANUP_SETTLE_MS, STORAGE_CLEANUP_CHUNK_SIZE } from "./constants";
 
@@ -36,6 +36,12 @@ export const enqueueSurveyDeletionCleanups = async (
   tx: Prisma.TransactionClient,
   { organizationId, workspaceId, surveyId, fileUrls }: TSurveyDeletionCleanupInput
 ): Promise<{ drainNowIds: string[] }> => {
+  if (EMAIL_SEND_AUDIT_BUCKET) {
+    await tx.outboundEmailAudit.updateMany({
+      where: { surveyId },
+      data: { erasureRequestedAt: new Date() },
+    });
+  }
   const tenantIds = await readTenantIds(tx, organizationId);
   const scope = { organizationId, workspaceId, surveyId };
   const settledAt = new Date(Date.now() + CLEANUP_SETTLE_MS);
@@ -75,6 +81,12 @@ export const enqueueResponsesDeletionCleanups = async (
 ): Promise<{ drainNowIds: string[] }> => {
   const deleted = surveys.filter((survey) => survey.responseIds.length > 0);
   if (deleted.length === 0) return { drainNowIds: [] };
+  if (EMAIL_SEND_AUDIT_BUCKET) {
+    await tx.outboundEmailAudit.updateMany({
+      where: { responseId: { in: deleted.flatMap((survey) => survey.responseIds) } },
+      data: { erasureRequestedAt: new Date() },
+    });
+  }
   const tenantIds = await readTenantIds(tx, organizationId);
   const settledAt = new Date(Date.now() + CLEANUP_SETTLE_MS);
 

@@ -57,7 +57,9 @@ export const sendEmbedSurveyPreviewEmailAction = authenticatedActionClient
       survey.workspaceId,
       ctx.user.locale,
       ctx.user.id,
-      organizationLogoUrl || ""
+      organizationLogoUrl || "",
+      survey.id,
+      organizationId
     );
   });
 
