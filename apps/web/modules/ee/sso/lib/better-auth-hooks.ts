@@ -340,9 +340,8 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
       // rollback) still finds accounts by it and cannot see a row without one. Stamp the value 1.7.0
       // would have written, credential rows included. Remove with `credential-issuer-heal.ts` once a
       // rollback to 1.7.0 is off the table.
-      before: async (account) => ({
-        data: { ...account, issuer: canonicalAccountIssuer(account.providerId) },
-      }),
+      before: (account) =>
+        Promise.resolve({ data: { ...account, issuer: canonicalAccountIssuer(account.providerId) } }),
       after: async (account, context) => {
         if (!context || account.providerId === "credential") return; // email/password, not SSO
         const identityProvider = normalizeSsoProvider(account.providerId);
