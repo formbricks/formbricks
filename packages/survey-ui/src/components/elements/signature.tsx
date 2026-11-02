@@ -395,12 +395,15 @@ function Signature({
               }}
               className="rounded-input border-input-border relative w-full overflow-hidden border bg-white outline-none"
               style={{ aspectRatio: `${String(SIGNATURE_ASPECT_RATIO)} / 1` }}>
-              <canvas
-                ref={canvasRef}
-                aria-hidden="true"
-                className="absolute inset-0 block h-full w-full touch-none select-none"
-                style={{ touchAction: "none", WebkitTouchCallout: "none" }}
-              />
+              {/* The canvas is a picture of the pad. It is hidden from assistive technology through this
+                  wrapper, because the rule against aria-hidden on focusable elements counts a canvas as one. */}
+              <div aria-hidden="true" className="absolute inset-0">
+                <canvas
+                  ref={canvasRef}
+                  className="block h-full w-full touch-none select-none"
+                  style={{ touchAction: "none", WebkitTouchCallout: "none" }}
+                />
+              </div>
               <PadOverlays
                 text={text}
                 mode={mode}
