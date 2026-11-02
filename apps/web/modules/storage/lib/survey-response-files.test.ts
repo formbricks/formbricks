@@ -48,11 +48,34 @@ describe("collectSurveyResponseFileUrls with a Signature element", () => {
   test("collects the signature left by a removed element on a full scan", async () => {
     const orphan = scoped("removed", "signature--fid--abc.png");
     vi.mocked(getSurvey).mockResolvedValue(surveyWith([{ id: "text", type: "openText" }]));
-    respondWith({ removed: orphan, text: scoped("text", "pasted--fid--abc.png") });
+    respondWith({ removed: orphan, text: "just an answer" });
 
     const { fileUrls } = await collectSurveyResponseFileUrls(SURVEY_ID);
 
     expect(fileUrls).toEqual([orphan]);
+  });
+
+  // A Signature retyped to Free text keeps its id, so its PNG sits under a live text element.
+  test("collects the signature of an element retyped to Free text on a full scan", async () => {
+    const retyped = scoped("text", "signature--fid--abc.png");
+    vi.mocked(getSurvey).mockResolvedValue(surveyWith([{ id: "text", type: "openText" }]));
+    respondWith({ text: retyped });
+
+    const { fileUrls } = await collectSurveyResponseFileUrls(SURVEY_ID);
+
+    expect(fileUrls).toEqual([retyped]);
+  });
+
+  test("never collects a URL pasted into a text answer that names another element or survey", async () => {
+    vi.mocked(getSurvey).mockResolvedValue(surveyWith([{ id: "text", type: "openText" }]));
+    respondWith({
+      text: scoped("another-element", "signature--fid--abc.png"),
+      other: `/storage/${WORKSPACE_ID}/private/surveys/svy_2/elements/other/signature--fid--abc.png`,
+    });
+
+    const { fileUrls } = await collectSurveyResponseFileUrls(SURVEY_ID);
+
+    expect(fileUrls).toEqual([]);
   });
 
   // The survey-delete folder sweep already removes every scoped key, so a flat-keys-only scan must not

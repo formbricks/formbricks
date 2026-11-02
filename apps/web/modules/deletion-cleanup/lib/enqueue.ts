@@ -96,6 +96,33 @@ export const enqueueResponsesDeletionCleanups = async (
   return insertCleanups(tx, drainNow, drainLater);
 };
 
+export type TResponseFilesDeletionCleanupInput = {
+  organizationId: string;
+  workspaceId: string;
+  surveyId: string;
+  /** Files of a response that still exists (a replaced Signature image), as `collectReplacedSignatureFileUrls` picked them. */
+  fileUrls: readonly string[];
+};
+
+/**
+ * Queue the deletion of files a response no longer references while the response itself stays: the old
+ * image of a Signature the respondent cleared or redrew. Call it inside the update's transaction, after
+ * the write, like the delete variants: an update that rolls back queues nothing, and one that commits
+ * always gets its cleanup. No Hub records are queued, as the response is not deleted. The rows wait for
+ * the drain job (`DELETION_CLEANUP_DRAIN_INTERVAL_MS`); nothing is shown to anyone in the meantime, so
+ * the update does not wait on storage.
+ *
+ * Without file storage no row is queued, as for the delete variants.
+ */
+export const enqueueResponseFilesDeletionCleanup = async (
+  tx: Prisma.TransactionClient,
+  { organizationId, workspaceId, surveyId, fileUrls }: TResponseFilesDeletionCleanupInput
+): Promise<void> => {
+  if (!IS_STORAGE_CONFIGURED || fileUrls.length === 0) return;
+
+  await insertCleanups(tx, storageFileRows({ organizationId, workspaceId, surveyId }, fileUrls), []);
+};
+
 /** Every feedback directory of the organisation: a Hub tenant that may hold the deleted data's records. */
 const readTenantIds = async (tx: Prisma.TransactionClient, organizationId: string): Promise<string[]> =>
   (await tx.feedbackDirectory.findMany({ where: { organizationId }, select: { id: true } })).map(

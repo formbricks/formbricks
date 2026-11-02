@@ -25,7 +25,6 @@ describe("deleteResponsesInTransaction", () => {
     vi.mocked(getSurveyUploadElementIds).mockImplementation(() => ({
       fileUpload: new Set(["upload"]),
       signature: new Set(),
-      live: new Set(["upload"]),
     }));
     vi.mocked(collectResponseFileUrls).mockImplementation((_data, _ids, surveyId) => [`file-of-${surveyId}`]);
     const tx = makeTx([

@@ -56,6 +56,8 @@ export type TArrayUploadElementKind<TElement extends TSurveyUploadElement = TSur
    * receives its own.
    */
   readAllowedExtensions(element: TElement): readonly TAllowedFileExtension[] | undefined;
+  /** No per-kind size cap: the general upload limits apply as they do for any file. */
+  maxFileSizeBytes?: never;
 };
 
 /**
@@ -67,6 +69,14 @@ export type TStringUploadElementKind = {
   fixedAllowedExtensions: readonly [TAllowedFileExtension, ...TAllowedFileExtension[]];
   /** Whether `""` is a skipped answer rather than a URL (a skipped Signature may be stored as `""`). */
   emptyStringIsSkipped: boolean;
+  /**
+   * The name the stored file must have: the one the upload route produces for the name the runtime
+   * sends (`getSignedUrlForUpload` renames `name.ext` to `name--fid--{uuid}.ext`). A write whose URL
+   * names anything else was not produced by an upload for this element.
+   */
+  fileNamePattern: RegExp;
+  /** The most one file of this kind may weigh. Applied beside the general limit: the lower wins. */
+  maxFileSizeBytes: number;
 };
 
 /**
@@ -83,6 +93,11 @@ export const uploadElementKinds = {
     answerShape: "string",
     fixedAllowedExtensions: ["png"],
     emptyStringIsSkipped: true,
+    // `signature.png` as the runtime names its export (`SIGNATURE_PNG_FILE_NAME`), then the id the upload adds.
+    fileNamePattern: /^signature--fid--[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.png$/,
+    // A 900x300 export is about 35 KB; 1 MB leaves headroom without letting a public upload route hold
+    // the general limit (up to 1 GB on enterprise) for a file the owner views as a thumbnail.
+    maxFileSizeBytes: 1024 * 1024,
   },
 } as const satisfies { [T in TUploadElementType]: TUploadElementKind<TUploadElementOfType<T>> };
 
@@ -99,6 +114,33 @@ export const getUploadElementAllowedExtensions = (
   return kind.answerShape === "string" ? kind.fixedAllowedExtensions : kind.readAllowedExtensions(element);
 };
 
+/**
+ * The size ceiling an upload element's kind sets, or `undefined` when the kind sets none (File upload).
+ * The route applies it beside the general limit, so it can only ever lower it.
+ */
+export const getUploadElementMaxFileSize = (element: TSurveyUploadElement): number | undefined => {
+  const kind: TUploadElementKind = uploadElementKinds[element.type];
+
+  return kind.maxFileSizeBytes;
+};
+
+/** The size ceiling the kind of the survey's upload element `elementId` sets, if any. */
+export const getSurveyUploadElementMaxFileSize = ({
+  elementId,
+  blocks,
+  questions,
+}: {
+  elementId: string;
+  blocks?: TSurveyBlock[] | null;
+  questions?: readonly TUploadElementCandidate[] | null;
+}): number | undefined => {
+  const element = getSurveyUploadElementConfigs({ blocks, questions }).find(
+    (config) => config.id === elementId
+  );
+
+  return element ? getUploadElementMaxFileSize(element) : undefined;
+};
+
 /** A value for every upload element type, derived from `uploadElementKinds`' keys. */
 export const mapUploadElementTypes = <T>(
   build: (type: TUploadElementType) => T
@@ -108,26 +150,20 @@ export const mapUploadElementTypes = <T>(
   ) as Record<TUploadElementType, T>;
 
 /**
- * The ids of the elements whose answers hold storage URLs, split by how the answer holds them: a File
- * upload answer is an array of URLs, a Signature answer is one URL string (ADR 0016).
+ * The ids of the upload elements a survey has, per element type.
  *
- * The split is what lets `collectResponseFileUrls` accept a string for a Signature id only. A single
- * flat set would force it to guess the shape from the value, and a plain text answer holding a pasted
- * storage URL would become a delete target. `live` is every element id the survey still has, of any
- * type: a string under an id outside it is what a deleted or retyped Signature leaves behind.
+ * `collectResponseFileUrls` reads the File upload set to trust a flat pre-#8044 key inside that
+ * element's array. It does not read the Signature set: a bare string is a delete target by its key's
+ * scope under any element id, never by which element holds it (ADR 0016).
  */
-export type TSurveyUploadElementIds = Record<TUploadElementType, ReadonlySet<string>> & {
-  live: ReadonlySet<string>;
-};
+export type TSurveyUploadElementIds = Record<TUploadElementType, ReadonlySet<string>>;
 
 /**
  * The ids of a survey whose elements were not read: every upload type gets an empty set, derived from
  * `uploadElementKinds` so a new upload element type needs no edit here.
  */
-export const createEmptyUploadElementIds = (): TSurveyUploadElementIds => ({
-  ...mapUploadElementTypes(() => new Set<string>()),
-  live: new Set<string>(),
-});
+export const createEmptyUploadElementIds = (): TSurveyUploadElementIds =>
+  mapUploadElementTypes(() => new Set<string>());
 
 /**
  * Every upload element in a survey: File upload and Signature.

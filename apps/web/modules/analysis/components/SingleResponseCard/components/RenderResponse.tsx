@@ -28,6 +28,8 @@ interface RenderResponseProps {
   showId: boolean;
   /** Layout of a Signature answer: `thumbnail` for table cells, `full` (large image and download) for the single response card. */
   signatureVariant?: "thumbnail" | "full";
+  /** The response the answer belongs to; names a downloaded signature. */
+  responseId?: string;
 }
 
 export const RenderResponse: React.FC<RenderResponseProps> = ({
@@ -39,6 +41,7 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
   isExpanded = true,
   showId,
   signatureVariant = "thumbnail",
+  responseId,
 }) => {
   if (
     (typeof responseData === "string" && responseData === "") ||
@@ -97,7 +100,7 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
       break;
     case TSurveyElementTypeEnum.Signature:
       if (typeof responseData === "string") {
-        return <SignatureResponse value={responseData} variant={signatureVariant} />;
+        return <SignatureResponse value={responseData} variant={signatureVariant} responseId={responseId} />;
       }
       break;
     case TSurveyElementTypeEnum.Matrix:

@@ -36,6 +36,19 @@ describe("getSignatureImageSrc", () => {
     expect(getSignatureImageSrc(value, ORIGIN)).toBeNull();
   });
 
+  // `URL.parse` is Safari 18 / Chrome 126: the owner view must not depend on it.
+  test("reads an absolute URL where URL.parse does not exist", () => {
+    const original = Object.getOwnPropertyDescriptor(URL, "parse");
+    Object.defineProperty(URL, "parse", { value: undefined, configurable: true, writable: true });
+    try {
+      expect(getSignatureImageSrc(`${ORIGIN}${PATH}`, ORIGIN)).toBe(PATH);
+      expect(getSignatureImageSrc("not a url", ORIGIN)).toBeNull();
+      expect(getSignatureImageSrc("https://", ORIGIN)).toBeNull();
+    } finally {
+      if (original) Object.defineProperty(URL, "parse", original);
+    }
+  });
+
   test("refuses an absolute URL when no origin is given", () => {
     expect(getSignatureImageSrc(`${ORIGIN}${PATH}`)).toBeNull();
   });
@@ -49,6 +62,26 @@ describe("getSignatureDownloadFileName", () => {
   test("falls back when the URL has no readable name", () => {
     expect(getSignatureDownloadFileName("/storage/ws1/private/%E0%A4%A")).toBe("signature.png");
   });
+
+  test("puts the response id after the name", () => {
+    expect(getSignatureDownloadFileName(PATH, "clx0abc123def456ghi789jkl")).toBe(
+      "signature-clx0abc123def456ghi789jkl.png"
+    );
+  });
+
+  test("keeps only file-name-safe characters of the response id", () => {
+    expect(getSignatureDownloadFileName(PATH, 'a/b\\c:d e.f?g"h')).toBe("signature-abcdefgh.png");
+    expect(getSignatureDownloadFileName(PATH, "../..")).toBe("signature.png");
+  });
+
+  test("cuts a very long response id", () => {
+    expect(getSignatureDownloadFileName(PATH, "x".repeat(200))).toBe(`signature-${"x".repeat(64)}.png`);
+  });
+
+  test("falls back to the plain name for an empty response id", () => {
+    expect(getSignatureDownloadFileName(PATH, "")).toBe("signature.png");
+    expect(getSignatureDownloadFileName(PATH, undefined)).toBe("signature.png");
+  });
 });
 
 describe("getSignatureResponseView", () => {
@@ -61,6 +94,14 @@ describe("getSignatureResponseView", () => {
       kind: "image",
       src: PATH,
       fileName: "signature.png",
+    });
+  });
+
+  test("names the download after the response", () => {
+    expect(getSignatureResponseView(PATH, ORIGIN, "resp1")).toEqual({
+      kind: "image",
+      src: PATH,
+      fileName: "signature-resp1.png",
     });
   });
 

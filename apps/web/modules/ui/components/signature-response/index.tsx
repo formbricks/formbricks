@@ -11,15 +11,17 @@ interface SignatureResponseProps {
   value: unknown;
   /** `thumbnail` for table cells and lists, `full` for the single response card. */
   variant: "thumbnail" | "full";
+  /** Names the downloaded file, so several downloads stay apart. */
+  responseId?: string;
 }
 
 // The signature is always a 900x300 PNG, so the 3:1 box never crops it.
 const THUMBNAIL_SIZE = { width: 96, height: 32 };
 const FULL_SIZE = { width: 900, height: 300 };
 
-export const SignatureResponse = ({ value, variant }: Readonly<SignatureResponseProps>) => {
+export const SignatureResponse = ({ value, variant, responseId }: Readonly<SignatureResponseProps>) => {
   const { t } = useTranslation();
-  const view = getSignatureResponseView(value, getClientOrigin());
+  const view = getSignatureResponseView(value, getClientOrigin(), responseId);
 
   if (view.kind === "skipped") {
     return <div className="font-semibold text-slate-500">{t("common.skipped")}</div>;

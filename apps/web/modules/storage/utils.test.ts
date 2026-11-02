@@ -6,6 +6,7 @@ import { ZAllowedFileExtension } from "@formbricks/types/storage";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyQuestion } from "@formbricks/types/surveys/types";
 import {
+  collectReplacedSignatureFileUrls,
   collectResponseFileUrls,
   getStorageUrlSurveyId,
   getSurveyUploadElementIds,
@@ -479,7 +480,6 @@ describe("storage utils", () => {
   const noUploadElementIds = {
     fileUpload: new Set<string>(),
     signature: new Set<string>(),
-    live: new Set<string>(),
   };
 
   describe("getSurveyUploadElementIds", () => {
@@ -502,7 +502,6 @@ describe("storage utils", () => {
       expect(getSurveyUploadElementIds({ blocks, questions })).toEqual({
         fileUpload: new Set(["block-upload", "question-upload"]),
         signature: new Set(),
-        live: new Set(["block-upload", "block-text", "question-upload", "question-text"]),
       });
     });
 
@@ -525,7 +524,6 @@ describe("storage utils", () => {
       expect(getSurveyUploadElementIds({ blocks, questions })).toEqual({
         fileUpload: new Set(["block-upload", "question-upload"]),
         signature: new Set(["block-signature", "question-signature"]),
-        live: new Set(["block-upload", "block-signature", "question-upload", "question-signature"]),
       });
     });
 
@@ -541,7 +539,6 @@ describe("storage utils", () => {
     const fileUploadElementIds = {
       fileUpload: new Set(["upload"]),
       signature: new Set<string>(),
-      live: new Set(["upload", "text", "choices"]),
     };
     const firstUrl = "https://example.com/storage/ws-1/private/one.png";
     const secondUrl = "https://example.com/storage/ws-1/private/two.pdf";
@@ -655,7 +652,6 @@ describe("storage utils", () => {
       const signatureIds = {
         fileUpload: new Set(["upload"]),
         signature: new Set(["sig"]),
-        live: new Set(["upload", "sig", "text"]),
       };
       const signatureUrl = (keySurveyId: string, elementId = "sig", fileName = "signature--fid--abc.png") =>
         `/storage/ws-1/private/surveys/${keySurveyId}/elements/${elementId}/${fileName}`;
@@ -681,37 +677,74 @@ describe("storage utils", () => {
         expect(collectResponseFileUrls({ sig: own }, signatureIds, surveyId)).toEqual([own]);
       });
 
-      // The element decides, never the value's shape: even a key that names the answer's own element is
-      // not a target when that element is live and not a Signature.
+      // The key decides, not the element or the value's shape: a bare string under any id is a target
+      // when its key is filed under this survey and that same id, because only an upload element
+      // could have been given such a key.
       test.each([
         ["an open text answer", { text: signatureUrl(surveyId, "text") }],
         ["a File upload answer", { upload: signatureUrl(surveyId, "upload") }],
-      ])("should never collect a bare string URL under a live %s", (_label, data) => {
-        expect(collectResponseFileUrls(data, signatureIds, surveyId)).toEqual([]);
-        expect(collectResponseFileUrls(data, fileUploadElementIds, surveyId)).toEqual([]);
-      });
+        ["an id the survey no longer has", { gone: signatureUrl(surveyId, "gone") }],
+      ])(
+        "should collect a bare string URL under %s when its key names this survey and that element",
+        (_label, data) => {
+          const [url] = Object.values(data);
 
-      // A deleted element, or one retyped away from Signature, leaves its answer under an id the survey
-      // no longer has; its image has to go with the response.
-      test("should collect a bare string URL under an id the survey no longer has, when its key is this survey's and that element's", () => {
-        const orphan = signatureUrl(surveyId, "removed-signature");
+          expect(collectResponseFileUrls(data, signatureIds, surveyId)).toEqual([url]);
+          expect(collectResponseFileUrls(data, fileUploadElementIds, surveyId)).toEqual([url]);
+          expect(collectResponseFileUrls(data, noUploadElementIds, surveyId)).toEqual([url]);
+        }
+      );
 
-        expect(collectResponseFileUrls({ "removed-signature": orphan }, signatureIds, surveyId)).toEqual([
-          orphan,
+      // Changing a Signature to Free text keeps the element id, so the PNG sits under a live text id that
+      // is no longer a Signature. Its image must still go with the response.
+      test("should collect a Signature's PNG after the element is retyped to Free text", () => {
+        const retyped = signatureUrl(surveyId, "was-signature");
+        const afterRetype = { fileUpload: new Set<string>(), signature: new Set<string>() };
+
+        expect(collectResponseFileUrls({ "was-signature": retyped }, afterRetype, surveyId)).toEqual([
+          retyped,
         ]);
       });
 
-      test("should not collect the same URL once the id is a live text element", () => {
-        const url = signatureUrl(surveyId, "was-signature");
+      // The scoped key must name the element the answer sits under. The same PNG pasted under another
+      // text answer is somebody else's file, however live that answer's id is.
+      test.each([
+        ["a text answer with another id", { text: signatureUrl(surveyId, "was-signature") }],
+        ["a File upload answer with another id", { upload: signatureUrl(surveyId, "sig") }],
+        ["an id the survey no longer has", { gone: signatureUrl(surveyId, "was-signature") }],
+      ])(
+        "should refuse a URL whose element segment does not match the key it sits under (%s)",
+        (_label, data) => {
+          expect(collectResponseFileUrls(data, signatureIds, surveyId)).toEqual([]);
+        }
+      );
 
-        expect(collectResponseFileUrls({ "was-signature": url }, signatureIds, surveyId)).toEqual([url]);
-        expect(
-          collectResponseFileUrls(
-            { "was-signature": url },
-            { ...signatureIds, live: new Set([...signatureIds.live, "was-signature"]) },
-            surveyId
-          )
-        ).toEqual([]);
+      test.each([
+        ["another survey's", signatureUrl(otherSurveyId, "text")],
+        ["another element's", signatureUrl(surveyId, "other-element")],
+        ["another workspace's flat key", "/storage/ws-2/private/text--fid--abc.png"],
+        ["a flat pre-#8044 key", "/storage/ws-1/private/text--fid--abc.png"],
+        ["a public key", `/storage/ws-1/public/surveys/${surveyId}/elements/text/s.png`],
+        [
+          "an encoded foreign survey key",
+          `/storage/ws-1/private/%73urveys/${otherSurveyId}/elements/text/s.png`,
+        ],
+        [
+          "encoded slashes naming a foreign survey",
+          `/storage/ws-1/private/surveys%2F${otherSurveyId}%2Felements%2Ftext%2Fs.png`,
+        ],
+        [
+          "an encoded separator inside this survey's own key",
+          `/storage/ws-1/private/surveys/${surveyId}/elements/text%2F..%2F..%2F${otherSurveyId}/s.png`,
+        ],
+        [
+          "a dot-segment out of the element folder",
+          `/storage/ws-1/private/surveys/${surveyId}/elements/text/../x.png`,
+        ],
+        ["a plain string", "not a url"],
+        ["an empty string", ""],
+      ])("should refuse %s URL pasted into a text answer", (_label, url) => {
+        expect(collectResponseFileUrls({ text: url }, signatureIds, surveyId)).toEqual([]);
       });
 
       test.each([
@@ -746,7 +779,6 @@ describe("storage utils", () => {
         const retyped = {
           fileUpload: new Set<string>(),
           signature: new Set(["was-upload"]),
-          live: new Set(["was-upload"]),
         };
 
         expect(collectResponseFileUrls({ "was-upload": [upload] }, retyped, surveyId)).toEqual([upload]);
@@ -769,6 +801,24 @@ describe("storage utils", () => {
         ],
       ])("should refuse %s URL under a Signature answer", (_label, url) => {
         expect(collectResponseFileUrls({ sig: url }, signatureIds, surveyId)).toEqual([]);
+      });
+
+      // A hand-made value must not steer the delete: the key the store would build from it is read with
+      // the name decoded, so an encoded separator or dot is refused outright for a bare string.
+      test.each([
+        ["an encoded slash", `/storage/ws-1/private/surveys/${surveyId}/elements/sig%2F..%2F..%2Fx/s.png`],
+        ["a lower-case encoded slash", `/storage/ws-1/private/surveys/${surveyId}/elements/sig/..%2fs.png`],
+        ["an encoded backslash", `/storage/ws-1/private/surveys/${surveyId}/elements/sig/..%5Cs.png`],
+        ["an encoded dot", `/storage/ws-1/private/surveys/${surveyId}/elements/sig/%2e%2e/s.png`],
+      ])("should refuse a bare string URL with %s, and count it", (_label, url) => {
+        const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+        onTestFinished(() => warnSpy.mockRestore());
+
+        expect(collectResponseFileUrls({ sig: url }, signatureIds, surveyId)).toEqual([]);
+        expect(warnSpy).toHaveBeenCalledWith(
+          { surveyId, refusedCount: 1 },
+          "Refusing response files filed under another survey or element"
+        );
       });
 
       test("should collect nothing for a non-URL or non-string answer under a Signature id", () => {
@@ -1136,6 +1186,79 @@ describe("storage utils", () => {
     });
   });
 
+  describe("collectReplacedSignatureFileUrls", () => {
+    const surveyId = "survey-1";
+    const signatureElementIds = new Set(["sig"]);
+    const image = (name: string, elementId = "sig", keySurveyId = surveyId) =>
+      `/storage/ws-1/private/surveys/${keySurveyId}/elements/${elementId}/${name}`;
+    const oldImage = image("signature--fid--old.png");
+    const newImage = image("signature--fid--new.png");
+    const collect = (previousData: unknown, nextData: unknown, ids = signatureElementIds) =>
+      collectReplacedSignatureFileUrls({ previousData, nextData, signatureElementIds: ids, surveyId });
+
+    test("collects the old image when the signature is replaced by another", () => {
+      expect(collect({ sig: oldImage }, { sig: newImage })).toEqual([oldImage]);
+    });
+
+    test("collects the old image when the signature is cleared to an empty string", () => {
+      expect(collect({ sig: oldImage }, { sig: "" })).toEqual([oldImage]);
+    });
+
+    test("collects the old image when the answer is gone from the written data", () => {
+      expect(collect({ sig: oldImage }, {})).toEqual([oldImage]);
+      expect(collect({ sig: oldImage }, null)).toEqual([oldImage]);
+    });
+
+    test("keeps the image when the answer is unchanged", () => {
+      expect(collect({ sig: oldImage }, { sig: oldImage })).toEqual([]);
+    });
+
+    // A client that re-submits what a read returned sends the resolved absolute URL of the same file.
+    test("keeps the image when the same file comes back as an absolute URL", () => {
+      expect(collect({ sig: oldImage }, { sig: `https://app.example.com${oldImage}` })).toEqual([]);
+      expect(collect({ sig: `https://app.example.com${oldImage}` }, { sig: oldImage })).toEqual([]);
+    });
+
+    test("collects nothing when the signature was skipped before", () => {
+      expect(collect({ sig: "" }, { sig: newImage })).toEqual([]);
+      expect(collect({}, { sig: newImage })).toEqual([]);
+    });
+
+    test("reads only Signature ids: a File upload array or a text answer is never collected", () => {
+      const upload = image("photo--fid--a.png", "upload");
+      const text = image("signature--fid--b.png", "text");
+
+      expect(collect({ upload: [upload], text }, { upload: [], text: "" })).toEqual([]);
+    });
+
+    // The URL must still be filed under this survey and the answer's own element, as for a delete.
+    test.each([
+      ["another survey's", image("signature--fid--x.png", "sig", "survey-2")],
+      ["another element's", image("signature--fid--x.png", "other")],
+      ["a flat pre-#8044", "/storage/ws-1/private/signature--fid--x.png"],
+      ["a public", `/storage/ws-1/public/surveys/${surveyId}/elements/sig/signature--fid--x.png`],
+      ["an encoded-separator", `/storage/ws-1/private/surveys/${surveyId}/elements/sig%2F..%2Fx/s.png`],
+      ["a plain string", "John Doe"],
+    ])("refuses to collect %s URL as the old value", (_label, url) => {
+      expect(collect({ sig: url }, { sig: "" })).toEqual([]);
+    });
+
+    test("collects nothing for data that is not a response object", () => {
+      for (const previousData of [null, undefined, "", 42, [oldImage]]) {
+        expect(collect(previousData, { sig: "" })).toEqual([]);
+      }
+    });
+
+    test("collects only the replaced one of several signatures", () => {
+      const keptImage = image("signature--fid--kept.png", "sig2");
+      const ids = new Set(["sig", "sig2"]);
+
+      expect(collect({ sig: oldImage, sig2: keptImage }, { sig: newImage, sig2: keptImage }, ids)).toEqual([
+        oldImage,
+      ]);
+    });
+  });
+
   describe("validateClientFileUploads for a Signature element", () => {
     const workspaceId = "clxworkspace123";
     const surveyId = "clxsurvey123";
@@ -1151,7 +1274,8 @@ describe("storage utils", () => {
         ],
       },
     ] as unknown as TSurveyBlock[];
-    const ownUrl = `/storage/${workspaceId}/private/surveys/${surveyId}/elements/${elementId}/signature--fid--abc.png`;
+    const signatureFileName = "signature--fid--11111111-2222-4333-8444-555555555555.png";
+    const ownUrl = `/storage/${workspaceId}/private/surveys/${surveyId}/elements/${elementId}/${signatureFileName}`;
     const validate = (
       data: unknown,
       overrides: Partial<Parameters<typeof validateClientFileUploads>[0]> = {}
@@ -1189,31 +1313,98 @@ describe("storage utils", () => {
     test.each([
       [
         "another workspace's",
-        `/storage/otherWorkspace/private/surveys/${surveyId}/elements/${elementId}/s.png`,
+        `/storage/otherWorkspace/private/surveys/${surveyId}/elements/${elementId}/${signatureFileName}`,
       ],
-      ["another survey's", `/storage/${workspaceId}/private/surveys/otherSurvey/elements/${elementId}/s.png`],
+      [
+        "another survey's",
+        `/storage/${workspaceId}/private/surveys/otherSurvey/elements/${elementId}/${signatureFileName}`,
+      ],
       [
         "another element's",
-        `/storage/${workspaceId}/private/surveys/${surveyId}/elements/otherElement/s.png`,
+        `/storage/${workspaceId}/private/surveys/${surveyId}/elements/otherElement/${signatureFileName}`,
       ],
       [
         "a File upload element's",
-        `/storage/${workspaceId}/private/surveys/${surveyId}/elements/file_element/s.png`,
+        `/storage/${workspaceId}/private/surveys/${surveyId}/elements/file_element/${signatureFileName}`,
       ],
-      ["a public", `/storage/${workspaceId}/public/surveys/${surveyId}/elements/${elementId}/s.png`],
+      [
+        "a public",
+        `/storage/${workspaceId}/public/surveys/${surveyId}/elements/${elementId}/${signatureFileName}`,
+      ],
       ["a foreign-origin absolute", `https://evil.example.com${ownUrl}`],
       ["an external", "https://example.com/signature.png"],
       ["a non-png", `/storage/${workspaceId}/private/surveys/${surveyId}/elements/${elementId}/s.pdf`],
       ["a jpg", `/storage/${workspaceId}/private/surveys/${surveyId}/elements/${elementId}/s.jpg`],
-      ["a flat pre-#8044", `/storage/${workspaceId}/private/signature--fid--abc.png`],
+      ["a flat pre-#8044", `/storage/${workspaceId}/private/${signatureFileName}`],
     ])("should reject %s URL under a Signature id", (_label, url) => {
+      expect(validate({ [elementId]: url })).toBe(false);
+    });
+
+    // The upload route names a signature `signature--fid--{uuid}.png`, so a value that only looks like a
+    // key for this element is a forgery, however well its folder matches.
+    test.each([
+      ["a name that is not signature", "photo--fid--11111111-2222-4333-8444-555555555555.png"],
+      ["a name with no upload id", "signature.png"],
+      ["an upload id that is not a uuid", "signature--fid--abc.png"],
+      ["an upper-case uuid", "signature--fid--11111111-2222-4333-8444-55555555555A.png"],
+      ["a second extension", "signature--fid--11111111-2222-4333-8444-555555555555.png.png"],
+      ["a prefix before the name", "x-signature--fid--11111111-2222-4333-8444-555555555555.png"],
+    ])("should reject a Signature URL with %s", (_label, name) => {
+      const url = `/storage/${workspaceId}/private/surveys/${surveyId}/elements/${elementId}/${name}`;
+
+      expect(validate({ [elementId]: url })).toBe(false);
+    });
+
+    test("should accept the name with a query string or hash after it", () => {
+      expect(validate({ [elementId]: `${ownUrl}?v=1` })).toBe(true);
+    });
+
+    // Every spelling of a separator or dot that a decoding store or proxy could resolve into another key.
+    test.each([
+      [
+        "an encoded slash in the folder",
+        `/storage/${workspaceId}/private/surveys%2F${surveyId}/elements/${elementId}/${signatureFileName}`,
+      ],
+      [
+        "an upper-case encoded slash",
+        `/storage/${workspaceId}/private/surveys/${surveyId}/elements/${elementId}%2F..%2Fx/${signatureFileName}`,
+      ],
+      [
+        "a lower-case encoded slash",
+        `/storage/${workspaceId}/private/surveys/${surveyId}/elements/${elementId}/..%2f${signatureFileName}`,
+      ],
+      [
+        "an encoded backslash",
+        `/storage/${workspaceId}/private/surveys/${surveyId}/elements/${elementId}/..%5C${signatureFileName}`,
+      ],
+      [
+        "an upper-case encoded backslash",
+        `/storage/${workspaceId}/private/surveys/${surveyId}/elements/${elementId}/%5C${signatureFileName}`,
+      ],
+      [
+        "an encoded dot-segment",
+        `/storage/${workspaceId}/private/surveys/${surveyId}/elements/%2e%2e/${elementId}/${signatureFileName}`,
+      ],
+      [
+        "an encoded dot in the name",
+        `/storage/${workspaceId}/private/surveys/${surveyId}/elements/${elementId}/signature--fid--11111111-2222-4333-8444-555555555555%2epng`,
+      ],
+      [
+        "an empty path segment",
+        `/storage/${workspaceId}/private/surveys/${surveyId}//elements/${elementId}/${signatureFileName}`,
+      ],
+      [
+        "a literal dot-segment in an absolute URL",
+        `${resolveStorageUrl(ownUrl, "private").replace(`/elements/${elementId}/`, `/elements/other/../${elementId}/`)}`,
+      ],
+    ])("should reject %s", (_label, url) => {
       expect(validate({ [elementId]: url })).toBe(false);
     });
 
     test("should not accept a pre-#8044 flat key for a Signature even from a management route", () => {
       expect(
         validate(
-          { [elementId]: `/storage/${workspaceId}/private/signature--fid--abc.png` },
+          { [elementId]: `/storage/${workspaceId}/private/${signatureFileName}` },
           { legacyOwnedStoragePrefixes: [workspaceId] }
         )
       ).toBe(false);
@@ -1232,7 +1423,7 @@ describe("storage utils", () => {
 
     test("should read the legacy questions shape too", () => {
       const questions = [{ id: "legacy-sig", type: "signature" }] as unknown as TSurveyQuestion[];
-      const legacyUrl = `/storage/${workspaceId}/private/surveys/${surveyId}/elements/legacy-sig/s--fid--abc.png`;
+      const legacyUrl = `/storage/${workspaceId}/private/surveys/${surveyId}/elements/legacy-sig/${signatureFileName}`;
 
       expect(validate({ "legacy-sig": legacyUrl }, { blocks: undefined, questions })).toBe(true);
       expect(validate({ "legacy-sig": [legacyUrl] }, { blocks: undefined, questions })).toBe(false);

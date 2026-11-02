@@ -74,7 +74,6 @@ vi.mock("@/modules/storage/utils", async (importOriginal) => ({
   getSurveyUploadElementIds: () => ({
     fileUpload: new Set(["screenshots"]),
     signature: new Set(["signature"]),
-    live: new Set(["screenshots", "signature", "text"]),
   }),
 }));
 
@@ -283,12 +282,23 @@ describe("deleteScopedResponse", () => {
     expect(mockDeleteFiles).toHaveBeenCalledWith([orphan], "ws_1");
   });
 
-  test("never removes a signature URL from another survey or element, or one pasted into a live text answer", async () => {
+  // Changing a Signature to Free text keeps the id, so the PNG sits under a live text element and is
+  // still this response's to remove.
+  test("removes the signature image of an element since retyped to Free text", async () => {
+    const retyped = "/storage/ws_1/private/surveys/svy_1/elements/text/s--fid--abc.png";
+    runTransaction(deletedRow({ data: { text: retyped } }));
+
+    await deleteScopedResponse(RESPONSE_ID, SCOPE);
+
+    expect(mockDeleteFiles).toHaveBeenCalledWith([retyped], "ws_1");
+  });
+
+  test("never removes a signature URL from another survey or element, or one pasted into another text answer", async () => {
     runTransaction(
       deletedRow({
         data: {
           signature: "/storage/ws_1/private/surveys/svy_other/elements/signature/s--fid--abc.png",
-          text: "/storage/ws_1/private/surveys/svy_1/elements/text/s--fid--abc.png",
+          text: "/storage/ws_1/private/surveys/svy_1/elements/signature/s--fid--abc.png",
         },
       })
     );

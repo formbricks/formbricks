@@ -15,6 +15,9 @@ const DOT_SEGMENT = /^(\.|%2e){1,2}$/i;
 
 const FALLBACK_FILE_NAME = "signature.png";
 
+/** The longest response id kept in a download name; real ids are 25 characters. */
+const MAX_FILE_NAME_ID_LENGTH = 64;
+
 /** The browser's origin, or `undefined` while rendering on the server, where an absolute URL cannot be checked. */
 export const getClientOrigin = (): string | undefined =>
   typeof window === "undefined" ? undefined : window.location.origin;
@@ -41,24 +44,45 @@ export const getSignatureImageSrc = (value: unknown, currentOrigin?: string): st
   if (value.startsWith("/storage/")) return isPrivateStoragePath(value) ? value : null;
 
   if (!currentOrigin) return null;
-  const url = URL.parse(value);
-  if (!url || (url.protocol !== "https:" && url.protocol !== "http:") || url.origin !== currentOrigin) {
+  // `new URL` in a try, not `URL.parse`: the latter needs Safari 18 / Chrome 126 and this runs in the browser.
+  let url: URL | null = null;
+  try {
+    url = new URL(value);
+  } catch {
+    return null;
+  }
+  if ((url.protocol !== "https:" && url.protocol !== "http:") || url.origin !== currentOrigin) {
     return null;
   }
   const path = `${url.pathname}${url.search}`;
   return isPrivateStoragePath(path) ? path : null;
 };
 
-/** The name a downloaded signature gets: the original `signature.png`, never the storage id. */
-export const getSignatureDownloadFileName = (src: string): string =>
-  getOriginalFileNameFromUrl(src) || FALLBACK_FILE_NAME;
+/**
+ * The name a downloaded signature gets: the original `signature.png`, never the storage id, with the
+ * response's id after the name (`signature-{responseId}.png`) so several downloads stay apart and each
+ * one traces back to its response. The id is cut down to file-name-safe characters.
+ */
+export const getSignatureDownloadFileName = (src: string, responseId?: string): string => {
+  const originalName = getOriginalFileNameFromUrl(src) || FALLBACK_FILE_NAME;
+  const safeId = (responseId ?? "").replaceAll(/[^A-Za-z0-9_-]/g, "").slice(0, MAX_FILE_NAME_ID_LENGTH);
+  if (!safeId) return originalName;
+
+  const extensionStart = originalName.lastIndexOf(".");
+  if (extensionStart <= 0) return `${originalName}-${safeId}`;
+  return `${originalName.slice(0, extensionStart)}-${safeId}${originalName.slice(extensionStart)}`;
+};
 
 /** What to render for a Signature answer: nothing signed, the image, or the raw text when it is no image. */
-export const getSignatureResponseView = (value: unknown, currentOrigin?: string): TSignatureResponseView => {
+export const getSignatureResponseView = (
+  value: unknown,
+  currentOrigin?: string,
+  responseId?: string
+): TSignatureResponseView => {
   if (value === undefined || value === null || value === "") return { kind: "skipped" };
 
   const src = getSignatureImageSrc(value, currentOrigin);
-  if (src) return { kind: "image", src, fileName: getSignatureDownloadFileName(src) };
+  if (src) return { kind: "image", src, fileName: getSignatureDownloadFileName(src, responseId) };
 
   return { kind: "text", text: String(value) };
 };

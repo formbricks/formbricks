@@ -4,6 +4,7 @@ import type { TSurveyFileUploadElement, TSurveySignatureElement } from "@formbri
 import {
   createEmptyUploadElementIds,
   getSurveyUploadElementConfigs,
+  getSurveyUploadElementMaxFileSize,
   getUploadElementAllowedExtensions,
   getUploadElementKind,
   mapUploadElementTypes,
@@ -24,6 +25,57 @@ describe("survey upload elements", () => {
         expect(getUploadElementKind(type)).toBeUndefined();
       }
     );
+  });
+
+  describe("per-kind upload limits", () => {
+    const blocks = [
+      {
+        id: "b1",
+        name: "Block 1",
+        elements: [
+          { id: "sig", type: "signature" },
+          { id: "file", type: "fileUpload" },
+          { id: "text", type: "openText" },
+        ],
+      },
+    ] as unknown as TSurveyBlock[];
+
+    test("a Signature is capped at 1 MB and a File upload sets no cap of its own", () => {
+      expect(uploadElementKinds.signature.maxFileSizeBytes).toBe(1024 * 1024);
+      expect(getSurveyUploadElementMaxFileSize({ elementId: "sig", blocks })).toBe(1024 * 1024);
+      expect(getSurveyUploadElementMaxFileSize({ elementId: "file", blocks })).toBeUndefined();
+    });
+
+    test("is undefined for an element that is not an upload element or does not exist", () => {
+      expect(getSurveyUploadElementMaxFileSize({ elementId: "text", blocks })).toBeUndefined();
+      expect(getSurveyUploadElementMaxFileSize({ elementId: "nope", blocks })).toBeUndefined();
+    });
+
+    test("reads a legacy question too", () => {
+      expect(
+        getSurveyUploadElementMaxFileSize({ elementId: "q", questions: [{ id: "q", type: "signature" }] })
+      ).toBe(1024 * 1024);
+    });
+  });
+
+  describe("the Signature file name pattern", () => {
+    const { fileNamePattern } = uploadElementKinds.signature;
+
+    test("matches exactly what the upload route stores for signature.png", () => {
+      expect(fileNamePattern.test("signature--fid--0b8a4a3e-1111-4222-8333-444455556666.png")).toBe(true);
+    });
+
+    test.each([
+      "signature.png",
+      "signature--fid--abc.png",
+      "photo--fid--0b8a4a3e-1111-4222-8333-444455556666.png",
+      "signature--fid--0b8a4a3e-1111-4222-8333-444455556666.png.png",
+      "signature--fid--0b8a4a3e-1111-4222-8333-444455556666.jpg",
+      "../signature--fid--0b8a4a3e-1111-4222-8333-444455556666.png",
+      "signature--fid--0B8A4A3E-1111-4222-8333-444455556666.png",
+    ])("refuses %s", (name) => {
+      expect(fileNamePattern.test(name)).toBe(false);
+    });
   });
 
   describe("getSurveyUploadElementConfigs", () => {
@@ -86,11 +138,10 @@ describe("survey upload elements", () => {
   });
 
   describe("createEmptyUploadElementIds", () => {
-    test("has an empty set for every upload element type and for the live ids", () => {
+    test("has an empty set for every upload element type", () => {
       expect(createEmptyUploadElementIds()).toEqual({
         fileUpload: new Set(),
         signature: new Set(),
-        live: new Set(),
       });
     });
 
@@ -99,7 +150,7 @@ describe("survey upload elements", () => {
       const second = createEmptyUploadElementIds();
 
       expect(first.fileUpload).not.toBe(second.fileUpload);
-      expect(first.live).not.toBe(second.live);
+      expect(first.signature).not.toBe(second.signature);
     });
   });
 });

@@ -1,6 +1,10 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { CLEANUP_SETTLE_MS, STORAGE_CLEANUP_CHUNK_SIZE } from "./constants";
-import { enqueueResponsesDeletionCleanups, enqueueSurveyDeletionCleanups } from "./enqueue";
+import {
+  enqueueResponseFilesDeletionCleanup,
+  enqueueResponsesDeletionCleanups,
+  enqueueSurveyDeletionCleanups,
+} from "./enqueue";
 
 vi.mock("server-only", () => ({}));
 const storage = vi.hoisted(() => ({ configured: true }));
@@ -205,5 +209,45 @@ describe("enqueueResponsesDeletionCleanups", () => {
     ).resolves.toEqual({ drainNowIds: [] });
     expect(tx.deletionCleanup.createManyAndReturn).not.toHaveBeenCalled();
     expect(tx.deletionCleanup.createMany).not.toHaveBeenCalled();
+  });
+});
+
+describe("enqueueResponseFilesDeletionCleanup", () => {
+  test("queues only the files, in chunks, and no Hub or folder cleanup: the response stays", async () => {
+    const tx = makeTx(["dir-a"]);
+    const fileUrls = urls(STORAGE_CLEANUP_CHUNK_SIZE + 1);
+
+    await enqueueResponseFilesDeletionCleanup(tx as never, { ...SCOPE, fileUrls });
+
+    expect(tx.deletionCleanup.createManyAndReturn).toHaveBeenCalledWith({
+      data: [
+        { ...SCOPE, kind: "storageFiles", fileKeys: fileUrls.slice(0, STORAGE_CLEANUP_CHUNK_SIZE) },
+        { ...SCOPE, kind: "storageFiles", fileKeys: fileUrls.slice(STORAGE_CLEANUP_CHUNK_SIZE) },
+      ],
+      select: { id: true },
+    });
+    expect(tx.deletionCleanup.createMany).not.toHaveBeenCalled();
+    expect(tx.feedbackDirectory.findMany).not.toHaveBeenCalled();
+  });
+
+  test("queues nothing for no files", async () => {
+    const tx = makeTx([]);
+
+    await enqueueResponseFilesDeletionCleanup(tx as never, { ...SCOPE, fileUrls: [] });
+
+    expect(tx.deletionCleanup.createManyAndReturn).not.toHaveBeenCalled();
+  });
+
+  test("queues nothing without file storage: a storage row could never succeed", async () => {
+    storage.configured = false;
+    try {
+      const tx = makeTx([]);
+
+      await enqueueResponseFilesDeletionCleanup(tx as never, { ...SCOPE, fileUrls: urls(1) });
+
+      expect(tx.deletionCleanup.createManyAndReturn).not.toHaveBeenCalled();
+    } finally {
+      storage.configured = true;
+    }
   });
 });

@@ -13,6 +13,7 @@ import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getBiggerUploadFileSizePermission } from "@/modules/ee/license-check/lib/utils";
 import { getSignedUrlForUpload } from "@/modules/storage/service";
+import { getSurveyUploadElementMaxFileSize } from "@/modules/storage/survey-upload-elements";
 import { getErrorResponseFromStorageError, validateSurveyAllowsUpload } from "@/modules/storage/utils";
 import { verifyLinkSurveyPinToken } from "@/modules/survey/link/lib/pin-token";
 
@@ -150,9 +151,20 @@ export const POST = withV1ApiWrapper({
     }
 
     const isBiggerFileUploadAllowed = await getBiggerUploadFileSizePermission(organization.id);
-    const maxFileUploadSize = isBiggerFileUploadAllowed
+    const generalMaxFileUploadSize = isBiggerFileUploadAllowed
       ? MAX_FILE_UPLOAD_SIZES.big
       : MAX_FILE_UPLOAD_SIZES.standard;
+    // An element's kind may cap its file below the general limit (a Signature is a ~35 KB PNG). The
+    // lower one goes into the presigned POST policy, so storage itself refuses a larger body.
+    const elementMaxFileSize = getSurveyUploadElementMaxFileSize({
+      elementId,
+      blocks: survey.blocks,
+      questions: survey.questions,
+    });
+    const maxFileUploadSize =
+      elementMaxFileSize === undefined
+        ? generalMaxFileUploadSize
+        : Math.min(elementMaxFileSize, generalMaxFileUploadSize);
 
     const signedUrlResponse = await getSignedUrlForUpload(
       fileName,

@@ -153,4 +153,75 @@ describe("POST /api/v1/client/[workspaceId]/storage", () => {
     expect(mocks.verifyLinkSurveyPinToken).not.toHaveBeenCalled();
     expect(mocks.getSignedUrlForUpload).toHaveBeenCalledOnce();
   });
+
+  describe("the upload size ceiling", () => {
+    const MB = 1024 * 1024;
+    const surveyWithUploads = {
+      id: SURVEY_ID,
+      workspaceId: WORKSPACE_ID,
+      type: "link",
+      blocks: [
+        {
+          id: "block-1",
+          name: "Block 1",
+          elements: [
+            { id: "file-el", type: "fileUpload" },
+            { id: "sig-el", type: "signature" },
+          ],
+        },
+      ],
+      questions: [],
+    };
+    const maxSizeOfIssuedUpload = () => mocks.getSignedUrlForUpload.mock.calls[0][4];
+
+    beforeEach(() => {
+      mocks.getSurvey.mockResolvedValue(surveyWithUploads);
+    });
+
+    test("caps a Signature upload at 1 MB without the bigger-upload license", async () => {
+      await callPost({ elementId: "sig-el", fileName: "signature.png" });
+
+      expect(maxSizeOfIssuedUpload()).toBe(1 * MB);
+    });
+
+    // The cap is the kind's, so the license that lifts File upload to 1 GB must not lift a Signature.
+    test("caps a Signature upload at 1 MB with the bigger-upload license", async () => {
+      mocks.getBiggerUploadFileSizePermission.mockResolvedValue(true);
+
+      await callPost({ elementId: "sig-el", fileName: "signature.png" });
+
+      expect(maxSizeOfIssuedUpload()).toBe(1 * MB);
+    });
+
+    test("leaves a File upload at the general limits", async () => {
+      await callPost({ elementId: "file-el" });
+      expect(maxSizeOfIssuedUpload()).toBe(10 * MB);
+
+      vi.clearAllMocks();
+      mocks.getBiggerUploadFileSizePermission.mockResolvedValue(true);
+      mocks.getSignedUrlForUpload.mockResolvedValue({
+        ok: true,
+        data: { signedUrl: "https://s3/upload", fileUrl: "/storage/x", presignedFields: {} },
+      });
+      mocks.getOrganization.mockResolvedValue({ id: "org-1" });
+      mocks.getOrganizationIdFromWorkspaceId.mockResolvedValue("org-1");
+      mocks.resolveClientApiIds.mockResolvedValue({ workspaceId: WORKSPACE_ID });
+      mocks.getSurvey.mockResolvedValue(surveyWithUploads);
+
+      await callPost({ elementId: "file-el" });
+      expect(maxSizeOfIssuedUpload()).toBe(1024 * MB);
+    });
+
+    test("reads the cap from a legacy Signature question too", async () => {
+      mocks.getSurvey.mockResolvedValue({
+        ...surveyWithUploads,
+        blocks: [],
+        questions: [{ id: "sig-el", type: "signature" }],
+      });
+
+      await callPost({ elementId: "sig-el", fileName: "signature.png" });
+
+      expect(maxSizeOfIssuedUpload()).toBe(1 * MB);
+    });
+  });
 });
