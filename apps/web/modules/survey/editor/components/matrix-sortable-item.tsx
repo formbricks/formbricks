@@ -10,7 +10,10 @@ import { TSurveyMatrixElement, TSurveyMatrixElementChoice } from "@formbricks/ty
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
-import { PublishedLockNotice } from "@/modules/survey/editor/components/published-lock-notice";
+import {
+  LOCK_TOOLTIP_DELAY_MS,
+  PublishedLockNotice,
+} from "@/modules/survey/editor/components/published-lock-notice";
 import { NO_ELEMENT_LOCK, TElementLock } from "@/modules/survey/editor/lib/published-lock";
 import { Button } from "@/modules/ui/components/button";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
@@ -91,6 +94,7 @@ export const MatrixSortableItem = ({
             tooltipContent={
               isDeleteLocked ? t("workspace.surveys.edit.lock_explanation_option_delete") : t("common.delete")
             }
+            delayDuration={isDeleteLocked ? LOCK_TOOLTIP_DELAY_MS : undefined}
             className={isDeleteLocked ? "max-w-xs text-xs" : undefined}>
             <Button
               variant="ghost"

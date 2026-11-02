@@ -7,6 +7,12 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modu
 
 export type TPublishedLockKind = "code" | "type" | "optionText" | "optionDelete";
 
+/**
+ * How long every explanation of the published lock waits before it opens, so it does not flash up while
+ * the pointer merely passes over a locked control.
+ */
+export const LOCK_TOOLTIP_DELAY_MS = 500;
+
 interface PublishedLockNoticeProps {
   kind: TPublishedLockKind;
   className?: string;
@@ -27,7 +33,7 @@ export const PublishedLockNotice = ({ kind, className }: Readonly<PublishedLockN
   }[kind];
 
   return (
-    <TooltipProvider delayDuration={500}>
+    <TooltipProvider delayDuration={LOCK_TOOLTIP_DELAY_MS}>
       <Tooltip>
         <TooltipTrigger asChild>
           <button

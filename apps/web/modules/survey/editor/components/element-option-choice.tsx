@@ -16,7 +16,10 @@ import { cn } from "@/lib/cn";
 import { createI18nString } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
 import { CopyIdButton } from "@/modules/survey/editor/components/copy-id-button";
-import { PublishedLockNotice } from "@/modules/survey/editor/components/published-lock-notice";
+import {
+  LOCK_TOOLTIP_DELAY_MS,
+  PublishedLockNotice,
+} from "@/modules/survey/editor/components/published-lock-notice";
 import { TElementLock } from "@/modules/survey/editor/lib/published-lock";
 import { Button } from "@/modules/ui/components/button";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
@@ -176,6 +179,7 @@ export const ElementOptionChoice = ({
                 ? t("workspace.surveys.edit.lock_explanation_option_delete")
                 : t("workspace.surveys.edit.delete_choice")
             }
+            delayDuration={isDeleteLocked ? LOCK_TOOLTIP_DELAY_MS : undefined}
             className={isDeleteLocked ? "max-w-xs text-xs" : undefined}>
             <Button
               variant="secondary"

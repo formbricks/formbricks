@@ -21,7 +21,10 @@ import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
 import { BulkEditOptionsModal } from "@/modules/survey/editor/components/bulk-edit-options-modal";
 import { ElementOptionChoice } from "@/modules/survey/editor/components/element-option-choice";
-import { PublishedLockNotice } from "@/modules/survey/editor/components/published-lock-notice";
+import {
+  LOCK_TOOLTIP_DELAY_MS,
+  PublishedLockNotice,
+} from "@/modules/survey/editor/components/published-lock-notice";
 import { NO_ELEMENT_LOCK, TElementLock } from "@/modules/survey/editor/lib/published-lock";
 import {
   ensureSpecialChoicesOrder,
@@ -342,6 +345,7 @@ export const MultipleChoiceElementForm = ({
               })}
               <TooltipRenderer
                 shouldRender={lock.isTypeLocked}
+                delayDuration={LOCK_TOOLTIP_DELAY_MS}
                 tooltipContent={t("workspace.surveys.edit.lock_explanation_option_text")}
                 className="max-w-xs text-xs">
                 <Button

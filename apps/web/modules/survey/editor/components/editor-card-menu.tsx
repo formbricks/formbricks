@@ -10,6 +10,7 @@ import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/survey
 import { TSurvey, TSurveyEndScreenCard, TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
 import { type TWorkspaceWithoutCustomCss } from "@/modules/custom-css/lib/types";
 import { useCopyId } from "@/modules/survey/editor/components/copy-id-button";
+import { LOCK_TOOLTIP_DELAY_MS } from "@/modules/survey/editor/components/published-lock-notice";
 import { getBlockDisplayName } from "@/modules/survey/editor/lib/blocks";
 import { getChoiceTypeSwitchUpdate } from "@/modules/survey/editor/lib/element-type-switch";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
@@ -220,7 +221,7 @@ export const EditorCardMenu = ({
           <div className="flex flex-col">
             {cardType === "element" && isTypeLocked && (
               <TooltipRenderer
-                delayDuration={500}
+                delayDuration={LOCK_TOOLTIP_DELAY_MS}
                 triggerClass="block"
                 className="max-w-xs text-xs leading-relaxed"
                 tooltipContent={
