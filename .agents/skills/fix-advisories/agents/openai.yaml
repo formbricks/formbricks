@@ -1,5 +1,0 @@
-interface:
-  display_name: "Fix advisories"
-  short_description: "Clear dependency advisories without breaking their consumers."
-policy:
-  allow_implicit_invocation: false
