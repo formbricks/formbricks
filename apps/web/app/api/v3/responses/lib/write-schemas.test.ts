@@ -84,6 +84,18 @@ describe("ZV3CreateResponseBody", () => {
     expect(create({ data: fields(501) }).success).toBe(false);
   });
 
+  // The key cap runs before Zod reads a value, so bad values past it add no issues of their own.
+  test.each([
+    ["data", { q: { nested: 1 } }],
+    ["embeddedData", ["not a scalar"]],
+    ["ttc", "not a number"],
+  ])("%s past the key cap is refused in a single issue, whatever its values hold", (field, value) => {
+    const map = Object.fromEntries(Array.from({ length: 100_000 }, (_unused, i) => [`k${i}`, value]));
+    const result = create({ [field]: map });
+
+    expect(result.success ? [] : result.error.issues).toHaveLength(1);
+  });
+
   test("data refuses a shape no element can store", () => {
     expect(create({ data: { q1: { nested: { deep: 1 } } } }).success).toBe(false);
   });

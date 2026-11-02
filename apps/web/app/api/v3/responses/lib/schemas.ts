@@ -11,7 +11,12 @@ import {
   zValidateResponseCreateRequest,
   zValidateResponsePatchRequest,
 } from "@formbricks/api-v3-schemas";
-import { MAX_RESPONSE_DATA_KEYS, MAX_RESPONSE_DATA_VALUES } from "@formbricks/types/responses";
+import {
+  MAX_RESPONSE_DATA_KEYS,
+  MAX_RESPONSE_DATA_VALUES,
+  maxKeys,
+  withSizeCheck,
+} from "@formbricks/types/responses";
 import { declareReference } from "./reference-manifest";
 
 /**
@@ -76,11 +81,10 @@ export type TV3BatchDeleteResponsesBody = z.infer<typeof ZV3BatchDeleteResponses
  * array.
  *
  * The contract caps each value with `if/then` — an array at most 1000 items, a matrix at most 1000
- * rows — and the map with `maxProperties`. The value caps refine the generated value union and the
- * key cap refines the map, which reports issues exactly as the per-value `.max()` schema did: a value
- * over its cap and a map over 500 keys are both reported, while a value of the wrong shape fails the
- * map's parse and Zod then skips the key cap. The array cap raises Zod's own `too_big` issue, so its
- * `reason` reads the way a `.max()` would.
+ * rows — and the map with `maxProperties`. The value caps refine the generated value union. The key
+ * cap is checked before the map is parsed, so a map over 500 keys is refused with that one issue
+ * whatever its values hold, instead of one issue per bad value. The array cap raises Zod's own
+ * `too_big` issue, so its `reason` reads the way a `.max()` would.
  */
 const ZV3ResponseDataValue = zResponseDataMapInput.valueType.superRefine((value, ctx) => {
   if (Array.isArray(value)) {
@@ -102,11 +106,13 @@ const ZV3ResponseDataValue = zResponseDataMapInput.valueType.superRefine((value,
   }
 });
 
-const ZV3ResponseDataInput = z
-  .record(zResponseDataMapInput.keyType, ZV3ResponseDataValue)
-  .refine((entries) => Object.keys(entries).length <= MAX_RESPONSE_DATA_KEYS, {
-    message: `A response may answer at most ${MAX_RESPONSE_DATA_KEYS} fields`,
-  });
+const ZV3ResponseDataInput = withSizeCheck(
+  z.record(zResponseDataMapInput.keyType, ZV3ResponseDataValue),
+  (entries) =>
+    Object.keys(entries).length > MAX_RESPONSE_DATA_KEYS
+      ? `A response may answer at most ${MAX_RESPONSE_DATA_KEYS} fields`
+      : undefined
+);
 
 /**
  * The same key cap `data` carries, for the other two element-keyed maps on this body.
@@ -118,9 +124,7 @@ const ZV3ResponseDataInput = z
  * `invalid_params` are bounded (`hub-errors.ts`); locally generated ones are not.
  */
 const withKeyCap = <T extends z.ZodType<Record<string, unknown>>>(schema: T, what: string) =>
-  schema.refine((entries) => Object.keys(entries).length <= MAX_RESPONSE_DATA_KEYS, {
-    message: `A response may carry at most ${MAX_RESPONSE_DATA_KEYS} ${what}`,
-  });
+  withSizeCheck(schema, maxKeys(MAX_RESPONSE_DATA_KEYS, what));
 
 /** Embedded Data accepts scalars only, plus `null` to clear a field — per `ResponseEmbeddedDataInput`. */
 const ZV3EmbeddedDataInput = withKeyCap(zResponseEmbeddedDataInput, "Embedded Data fields");

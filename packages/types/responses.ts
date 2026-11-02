@@ -75,7 +75,7 @@ const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
  * whatever its size. `z.preprocess` keeps `schema`'s output type and its OpenAPI shape; only the
  * inferred input type widens to `unknown`.
  */
-const withSizeCheck = <TSchema extends z.ZodType>(
+export const withSizeCheck = <TSchema extends z.ZodType>(
   schema: TSchema,
   check: (record: Record<string, unknown>) => string | undefined
 ) =>
@@ -85,7 +85,7 @@ const withSizeCheck = <TSchema extends z.ZodType>(
     return value;
   }, schema);
 
-const maxKeys = (max: number, what: string) => (record: Record<string, unknown>) =>
+export const maxKeys = (max: number, what: string) => (record: Record<string, unknown>) =>
   Object.keys(record).length > max ? `A response may carry at most ${max} ${what}` : undefined;
 
 const checkResponseDataSize = (data: Record<string, unknown>): string | undefined => {
