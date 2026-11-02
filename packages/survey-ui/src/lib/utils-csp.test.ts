@@ -29,6 +29,8 @@ describe("removeStyleAttributes", () => {
     ["unquoted", "<p style=color:red>Hi</p>", "<p>Hi</p>"],
     ["unquoted, among other attributes", "<p class=a style=color:red id=b>Hi</p>", "<p class=a id=b>Hi</p>"],
     ["unquoted, with an empty value", "<p style=>Hi</p>", "<p>Hi</p>"],
+    ["with no value at all", "<p style>Hi</p>", "<p>Hi</p>"],
+    ["next to a data- attribute", '<p data-style="x" style="y">Hi</p>', '<p data-style="x">Hi</p>'],
     ["in a self-closing tag", '<br style="clear: both" />', "<br />"],
     ["in every tag of a string", '<p style="a">x</p><p style="b">y</p>', "<p>x</p><p>y</p>"],
   ])("removes a style attribute: %s", (_, html, expected) => {

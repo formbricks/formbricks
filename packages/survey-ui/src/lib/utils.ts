@@ -25,13 +25,16 @@ export function cn(...inputs: ClassValue[]): string {
 // excluded outside quotes so a stray one ends the attempt instead of scanning to the end of the string.
 // Every alternative starts with a different character, so there is no backtracking to speak of.
 const OPENING_TAG = /<[a-zA-Z](?:"[^"]*"|'[^']*'|[^<>"'])*>/g;
-// Inside a tag: a style attribute (quoted, or unquoted up to the next space or `>`), or any other quoted
-// value, which is kept whole so text that merely looks like one (`title="Choose style = 'casual'"`) is
-// never mistaken for an attribute.
-const STYLE_ATTRIBUTE_OR_QUOTED_VALUE = /\sstyle\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'>]*)|"[^"]*"|'[^']*'/gi;
+// Inside a tag, one attribute: whitespace, a name, and an optional `= value`. The value is quoted or bare,
+// and a quoted one is consumed whole, so text inside another attribute's value that looks like
+// `style = 'x'` (`title="Choose style = 'casual'"`) is never mistaken for an attribute. Built from named
+// parts so each stays readable.
+const ATTRIBUTE_NAME = `[^\\s"'<>/=]+`;
+const ATTRIBUTE_VALUE = `"[^"]*"|'[^']*'|[^\\s"'>]*`;
+const ATTRIBUTE = new RegExp(`\\s+(${ATTRIBUTE_NAME})(?:\\s*=\\s*(?:${ATTRIBUTE_VALUE}))?`, "g");
 
 /**
- * Removes quoted `style` attributes from the opening tags of a raw HTML string, without parsing it.
+ * Removes `style` attributes from the opening tags of a raw HTML string, without parsing it.
  * Must run BEFORE anything parses the markup: under a strict CSP `style-src` the browser reports every
  * element it parses with a style attribute, even one discarded afterwards, so stripping the attribute
  * from the parsed tree is too late.
@@ -43,7 +46,7 @@ const STYLE_ATTRIBUTE_OR_QUOTED_VALUE = /\sstyle\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'
  */
 export const removeStyleAttributes = (html: string): string =>
   html.replaceAll(OPENING_TAG, (tag) =>
-    tag.replaceAll(STYLE_ATTRIBUTE_OR_QUOTED_VALUE, (match) => (/^\s/.test(match) ? "" : match))
+    tag.replaceAll(ATTRIBUTE, (attribute, name: string) => (name.toLowerCase() === "style" ? "" : attribute))
   );
 
 /**
