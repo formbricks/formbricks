@@ -1,8 +1,9 @@
 import { createRequire } from "node:module";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { z } from "zod";
 import {
   AUTH_REQUEST_MAX_ENTRIES,
+  AUTH_REQUEST_MAX_JSON_TEXTS,
   exceedsAuthRequestBounds,
   hasOversizedJsonCollection,
   isJsonContentType,
@@ -77,6 +78,37 @@ describe("exceedsAuthRequestBounds", () => {
       expect(
         exceedsAuthRequestBounds(URL_BASE, "application/json", json({ password: `{${"x".repeat(500)}` }))
       ).toBe(false);
+    });
+
+    // Each list stays within the entry cap; what grows is how many strings the guard would parse.
+    describe("with many strings that look like JSON", () => {
+      const wide = (text: string) =>
+        json(Array.from({ length: MAX }, () => Array.from({ length: MAX }, () => text)));
+
+      test("parses none that only start like JSON", () => {
+        const parse = vi.spyOn(JSON, "parse");
+
+        expect(exceedsAuthRequestBounds(URL_BASE, "application/json", wide("["))).toBe(false);
+        expect(parse).toHaveBeenCalledTimes(1);
+        parse.mockRestore();
+      });
+
+      test("refuses once the JSON-text budget is spent, without parsing the rest", () => {
+        const parse = vi.spyOn(JSON, "parse");
+
+        expect(exceedsAuthRequestBounds(URL_BASE, "application/json", wide("[]"))).toBe(true);
+        expect(parse).toHaveBeenCalledTimes(1 + AUTH_REQUEST_MAX_JSON_TEXTS);
+        parse.mockRestore();
+      });
+
+      test("accepts as many JSON texts as the budget holds", () => {
+        const texts = Array.from({ length: AUTH_REQUEST_MAX_JSON_TEXTS }, () => "[]");
+
+        expect(exceedsAuthRequestBounds(URL_BASE, "application/json", json({ texts }))).toBe(false);
+        expect(
+          exceedsAuthRequestBounds(URL_BASE, "application/json", json({ texts: [...texts, "[]"] }))
+        ).toBe(true);
+      });
     });
 
     test("that does not parse is left to the handler", () => {
