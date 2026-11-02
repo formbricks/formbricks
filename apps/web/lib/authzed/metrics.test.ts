@@ -178,6 +178,7 @@ describe("observeAuthzedOutboxStatus", () => {
   // ENG-3764: these were recorded only when a delivery run finished, so a stalled delivery froze them at
   // their last value. Read at collection time, a second collection sees the outbox as it is now.
   test("reports the outbox as it is at each collection, not as the last delivery left it", async () => {
+    const now = vi.spyOn(Date, "now").mockReturnValue(1_700_000_000_000);
     readStatus.mockResolvedValueOnce({ ...status, oldestPendingAgeSeconds: 0, revocationsPastWarning: 0 });
     await collect();
     readStatus.mockResolvedValueOnce(status);
@@ -188,10 +189,13 @@ describe("observeAuthzedOutboxStatus", () => {
       ["formbricks_authzed_projection_outbox_status", 3, { state: "revocation_warning" }],
       ["formbricks_authzed_projection_outbox_status", 1, { state: "revocation_critical" }],
       ["formbricks_authzed_projection_outbox_oldest_pending_age_seconds", 47, undefined],
+      ["formbricks_authzed_projection_outbox_status_last_read_timestamp_seconds", 1_700_000_000, undefined],
     ]);
+    now.mockRestore();
   });
 
-  test("observes nothing rather than a healthy outbox when the status read fails", async () => {
+  // Observing nothing leaves the last values exported, so the read timestamp must not advance either.
+  test("observes nothing, read timestamp included, when the status read fails", async () => {
     readStatus.mockRejectedValueOnce(new Error("database unavailable"));
 
     expect(await collect()).toEqual([]);

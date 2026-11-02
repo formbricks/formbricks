@@ -20,6 +20,7 @@ import type { TAuthzedOutboxStatus } from "./outbox-types";
 vi.mock("@formbricks/logger", () => ({ logger: { warn: vi.fn() } }));
 
 const AGE_GAUGE = "formbricks_authzed_projection_outbox_oldest_pending_age_seconds";
+const LAST_READ_GAUGE = "formbricks_authzed_projection_outbox_status_last_read_timestamp_seconds";
 
 const status = (oldestPendingAgeSeconds: number): TAuthzedOutboxStatus => ({
   deadLettered: 0,
@@ -50,22 +51,34 @@ describe("outbox status gauges", () => {
     const { observeAuthzedOutboxStatus } = await import("./metrics");
     observeAuthzedOutboxStatus(readStatus);
 
-    const collectAge = async () => {
+    const collect = async () => {
       exporter.reset();
       await reader.forceFlush();
-      return exporter
+      const exported = exporter
         .getMetrics()
         .flatMap((resourceMetric) => resourceMetric.scopeMetrics)
-        .flatMap((scopeMetric) => scopeMetric.metrics)
-        .find((metric) => metric.descriptor.name === AGE_GAUGE)?.dataPoints[0]?.value;
+        .flatMap((scopeMetric) => scopeMetric.metrics);
+      const valueOf = (name: string) =>
+        exported.find((metric) => metric.descriptor.name === name)?.dataPoints[0]?.value;
+      return { age: valueOf(AGE_GAUGE), lastRead: valueOf(LAST_READ_GAUGE) };
     };
+    const now = vi.spyOn(Date, "now");
 
+    now.mockReturnValue(1_000_000);
     readStatus.mockResolvedValueOnce(status(3));
-    expect(await collectAge()).toBe(3);
+    expect(await collect()).toEqual({ age: 3, lastRead: 1_000 });
 
     // Delivery never ran; the revocation simply got older. The next collection has to see that.
+    now.mockReturnValue(2_000_000);
     readStatus.mockResolvedValueOnce(status(50));
-    expect(await collectAge()).toBe(50);
-    expect(readStatus).toHaveBeenCalledTimes(2);
+    expect(await collect()).toEqual({ age: 50, lastRead: 2_000 });
+
+    // A failed read cannot clear what the SDK already holds: the age is re-exported as it was, and only
+    // the read timestamp standing still tells an alert that it is stale.
+    now.mockReturnValue(3_000_000);
+    readStatus.mockRejectedValueOnce(new Error("database unavailable"));
+    expect(await collect()).toEqual({ age: 50, lastRead: 2_000 });
+    expect(readStatus).toHaveBeenCalledTimes(3);
+    now.mockRestore();
   });
 });

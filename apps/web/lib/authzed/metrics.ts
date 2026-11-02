@@ -143,6 +143,18 @@ const outboxOldestPendingAge = meter.createObservableGauge(
   }
 );
 
+/**
+ * When the outbox status was last read. A failed read cannot clear the gauges above: a cumulative reader
+ * keeps exporting their last values, so this timestamp falling behind is what says they are stale.
+ */
+const outboxStatusLastRead = meter.createObservableGauge(
+  "formbricks_authzed_projection_outbox_status_last_read_timestamp_seconds",
+  {
+    description: "Unix time at which the authorization projection outbox status was last read",
+    unit: "s",
+  }
+);
+
 /** When a delivery run last completed, so "delivery is not running" is alertable on its own. */
 const outboxLastDrain = meter.createGauge(
   "formbricks_authzed_projection_outbox_last_drain_timestamp_seconds",
@@ -236,8 +248,8 @@ let outboxStatusObserved = false;
  * Start reporting outbox health on every collection, read through `readStatus`. Idempotent, so a retried
  * worker startup does not register a second callback (and a second query per collection).
  *
- * A failed read observes nothing rather than zeros, so the series goes absent instead of reporting a
- * healthy outbox it could not see.
+ * A failed read observes nothing rather than zeros. The SDK then re-exports the last values it saw, so
+ * the read timestamp is observed only on success: its age is how an alert tells a stale reading apart.
  */
 export const observeAuthzedOutboxStatus = (readStatus: () => Promise<TAuthzedOutboxStatus>): void => {
   if (outboxStatusObserved) return;
@@ -261,8 +273,9 @@ export const observeAuthzedOutboxStatus = (readStatus: () => Promise<TAuthzedOut
       result.observe(outboxStatus, status.revocationsPastWarning, { state: "revocation_warning" });
       result.observe(outboxStatus, status.revocationsPastCritical, { state: "revocation_critical" });
       result.observe(outboxOldestPendingAge, status.oldestPendingAgeSeconds ?? 0);
+      result.observe(outboxStatusLastRead, Date.now() / 1_000);
     },
-    [outboxStatus, outboxOldestPendingAge]
+    [outboxStatus, outboxOldestPendingAge, outboxStatusLastRead]
   );
 };
 
