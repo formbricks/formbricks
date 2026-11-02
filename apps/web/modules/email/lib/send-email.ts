@@ -60,6 +60,17 @@ interface SendEmailDataProps {
 }
 
 const MAX_ADDRESS_LENGTH = 320;
+const safeSmtpErrorCodes = new Set([
+  "EAUTH",
+  "ECONNECTION",
+  "ECONNREFUSED",
+  "EENVELOPE",
+  "EMESSAGE",
+  "ENOTFOUND",
+  "ESOCKET",
+  "ETIMEDOUT",
+  "ETLS",
+]);
 
 /**
  * One plain address, read the way nodemailer will read it: no list, no group, no display name, no angle
@@ -161,13 +172,21 @@ export const sendEmail = async ({
           }
         : {}),
     });
-  } catch {
+  } catch (error) {
     try {
       await finishEmailSendAudit(auditState, emailType, auditContext, "failed");
     } catch {
       await reportEmailAuditFailure("email_audit_gap", { phase: "unhandled_finish" });
     }
-    logger.error({ emailType, event: "email_send_failed" }, "Error in sendEmail");
+    const errorCode = error && typeof error === "object" && "code" in error ? error.code : undefined;
+    logger.error(
+      {
+        emailType,
+        event: "email_send_failed",
+        errorCode: typeof errorCode === "string" && safeSmtpErrorCodes.has(errorCode) ? errorCode : "unknown",
+      },
+      "Error in sendEmail"
+    );
     throw new InvalidInputError("Incorrect SMTP credentials");
   }
   try {

@@ -4,6 +4,7 @@ import { logger } from "@formbricks/logger";
 import { SES_EMAIL_ENVIRONMENT } from "@/lib/constants";
 
 const cloudwatch = new CloudWatchClient({ region: "eu-central-1" });
+const awsCallTimeoutMs = 3_000;
 
 export const reportEmailAuditFailure = async (
   event:
@@ -26,7 +27,8 @@ export const reportEmailAuditFailure = async (
             Dimensions: [{ Name: "Environment", Value: SES_EMAIL_ENVIRONMENT ?? "unknown" }],
           },
         ],
-      })
+      }),
+      { abortSignal: AbortSignal.timeout(awsCallTimeoutMs) }
     );
   } catch {
     logger.error({ event: "email_audit_metric_publish_failed" }, "Email audit metric delivery failed");

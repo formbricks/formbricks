@@ -4,6 +4,7 @@ import { DeleteObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client
 import { createHash } from "node:crypto";
 
 const region = "eu-central-1";
+const awsCallTimeoutMs = 3_000;
 const s3 = new S3Client({ region });
 const kms = new KMSClient({ region });
 
@@ -21,7 +22,8 @@ export const getEmailAuditRecipientMac = async (address: string, keyArn: string)
       KeyId: keyArn,
       MacAlgorithm: "HMAC_SHA_256",
       Message: Buffer.from(address.trim().toLowerCase(), "utf8"),
-    })
+    }),
+    { abortSignal: AbortSignal.timeout(awsCallTimeoutMs) }
   );
   if (!result.Mac) throw new Error("KMS did not return an email audit recipient MAC");
   return Buffer.from(result.Mac).toString("hex");
@@ -43,11 +45,14 @@ export const putEmailAuditSnapshot = async (
       ContentType: "application/json",
       ServerSideEncryption: "aws:kms",
       SSEKMSKeyId: keyArn,
-    })
+    }),
+    { abortSignal: AbortSignal.timeout(awsCallTimeoutMs) }
   );
   return { key, sha256: createHash("sha256").update(body).digest("hex") };
 };
 
 export const deleteEmailAuditSnapshot = async (bucket: string, auditId: string): Promise<void> => {
-  await s3.send(new DeleteObjectCommand({ Bucket: bucket, Key: emailAuditObjectKey(auditId) }));
+  await s3.send(new DeleteObjectCommand({ Bucket: bucket, Key: emailAuditObjectKey(auditId) }), {
+    abortSignal: AbortSignal.timeout(awsCallTimeoutMs),
+  });
 };

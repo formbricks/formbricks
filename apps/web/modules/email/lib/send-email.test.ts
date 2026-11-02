@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   beginEmailSendAudit: vi.fn(),
   finishEmailSendAudit: vi.fn(),
   reportEmailAuditFailure: vi.fn(),
+  loggerError: vi.fn(),
   constants: {
     DEBUG: false,
     IS_SMTP_CONFIGURED: true,
@@ -28,6 +29,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/constants", () => mocks.constants);
+vi.mock("@formbricks/logger", () => ({ logger: { info: vi.fn(), error: mocks.loggerError } }));
 vi.mock("nodemailer", () => ({
   createTransport: mocks.createTransport,
 }));
@@ -239,5 +241,20 @@ describe("sendEmail SES event publishing", () => {
     expect(mocks.reportEmailAuditFailure).toHaveBeenCalledWith("email_audit_gap", {
       phase: "unhandled_finish",
     });
+  });
+
+  test("records only an allowlisted SMTP error code", async () => {
+    const failure = Object.assign(new Error("recipient@example.com was rejected"), {
+      code: "EENVELOPE",
+      response: "recipient@example.com was rejected",
+    });
+    mocks.sendMail.mockRejectedValueOnce(failure);
+
+    await expect(sendEmail(email)).rejects.toThrow("Incorrect SMTP credentials");
+    expect(mocks.loggerError).toHaveBeenCalledWith(
+      { emailType: "invite", event: "email_send_failed", errorCode: "EENVELOPE" },
+      "Error in sendEmail"
+    );
+    expect(JSON.stringify(mocks.loggerError.mock.calls)).not.toContain("recipient@example.com");
   });
 });
