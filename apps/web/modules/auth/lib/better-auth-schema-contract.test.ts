@@ -23,8 +23,8 @@ import { describe, expect, test } from "vitest";
  * So these read each plugin's own declaration rather than restating a field list, and the next field
  * upstream adds fails at `pnpm test` instead of in production.
  *
- * The same drift is possible on the CORE tables, and there it has already bitten us twice: 1.7 keys
- * accounts on `(issuer, accountId)`, and `Account.issuer` is a core field no plugin declares — so the
+ * The same drift is possible on the CORE tables, and there it has already bitten us twice: 1.7.0 keyed
+ * accounts on `(issuer, accountId)`, and `Account.issuer` was a core field no plugin declares — so the
  * plugin-only pass below would not have caught a missing column. `getAuthTables` is upstream's own
  * resolver for the merged core+plugin schema, so the core assertions track whatever the installed
  * version declares, exactly like the plugin ones.
@@ -144,9 +144,12 @@ describe("Better Auth ↔ Prisma schema contract", () => {
       expect(source).toContain(strips);
     });
 
-    // The field this whole file exists for: 1.7 filters account lookups on it, and it is ours to keep.
-    test("account.issuer is declared by Better Auth and present on our model", () => {
-      expect(Object.keys(coreTables.account.fields)).toContain("issuer");
+    // Better Auth 1.7.3 dropped `account.issuer` from its model and keys accounts on
+    // `(providerId, accountId)`. We keep the column because a 1.7.0 pod still filters on it, so this
+    // pins both halves: upstream no longer declares it (if it comes back, the superset test above
+    // starts covering it and this one can go), and our model still has it.
+    test("account.issuer is no longer declared by Better Auth but stays on our model for rollback", () => {
+      expect(Object.keys(coreTables.account.fields)).not.toContain("issuer");
       expect(prismaModelFields(prismaSchema, "Account")).toContain("issuer");
     });
   });
