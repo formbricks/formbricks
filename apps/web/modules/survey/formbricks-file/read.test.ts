@@ -307,6 +307,39 @@ describe("readFormbricksFile", () => {
     ]);
   });
 
+  test("drops a dotted key without following its name out of the file: Object.prototype keeps its methods", () => {
+    // The survey's unknown-key issue names the key by a dotted path, so `__proto__.hasOwnProperty`
+    // reads like the path survey → __proto__ → hasOwnProperty.
+    const saved = Object.getOwnPropertyDescriptors(Object.prototype);
+    try {
+      const read = readFormbricksFileContent({
+        survey: { ...survey(), "__proto__.hasOwnProperty": 1, "constructor.prototype.toString": 1 },
+        references: references(),
+      });
+
+      expect(Object.getOwnPropertyDescriptors(Object.prototype)).toEqual(saved);
+      expect(read.content.survey).toEqual(survey());
+      expect(read.issues.map((issue) => issue.params)).toEqual([
+        { field: "survey.__proto__.hasOwnProperty" },
+        { field: "survey.constructor.prototype.toString" },
+      ]);
+    } finally {
+      for (const [key, descriptor] of Object.entries(saved)) {
+        if (!Object.hasOwn(Object.prototype, key)) Object.defineProperty(Object.prototype, key, descriptor);
+      }
+    }
+  });
+
+  test("drops a dotted key that reads like the path to a real field, and keeps the field", () => {
+    const read = readFormbricksFileContent({
+      survey: { ...survey(), "blocks.0.elements": 1 },
+      references: references(),
+    });
+
+    expect(read.content.survey).toEqual(survey());
+    expect(read.issues).toHaveLength(1);
+  });
+
   test("drops unknown keys from the file it is given rather than from a copy of it", () => {
     // A copy of a 15 MiB file of a million small objects doubled what reading it held.
     const given = file({ junk: { a: {}, b: {} } });

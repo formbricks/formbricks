@@ -131,17 +131,30 @@ const unknownKeyPaths = (issue: z.core.$ZodIssue): PropertyKey[][] => {
   return params?.code === "unsupported_field" && issue.path.length > 0 ? [[...issue.path]] : [];
 };
 
-/** Delete the key at `path`; `false` when the path no longer leads to it. */
+/**
+ * Delete the unknown key at `path`; `false` when the path does not lead to one.
+ *
+ * The walk follows the file's own keys only, so no path, whatever its keys are called (`__proto__`,
+ * `constructor`), reaches an object outside the file. And a key may hold dots: the survey document
+ * names its unknown keys by a dotted path, which reads `survey["blocks.0.elements"]` as
+ * survey → blocks → 0 → elements. The schema's own keys hold none, so at each step the rest of the path
+ * is tried as one key of the object first, and the walk goes a level down only when it is not one.
+ */
 const deleteAtPath = (root: unknown, path: readonly PropertyKey[]): boolean => {
+  const segments = path.map(String);
   let parent: unknown = root;
-  for (const segment of path.slice(0, -1)) {
+  for (let index = 0; index < segments.length; index += 1) {
     if (typeof parent !== "object" || parent === null) return false;
-    parent = (parent as Record<PropertyKey, unknown>)[segment];
+    const rest = segments.slice(index).join(".");
+    if (Object.hasOwn(parent, rest)) {
+      if (!isPlainObject(parent)) return false;
+      delete parent[rest];
+      return true;
+    }
+    if (!Object.hasOwn(parent, segments[index])) return false;
+    parent = (parent as Record<string, unknown>)[segments[index]];
   }
-  const key = path.at(-1);
-  if (!isPlainObject(parent) || key === undefined || !Object.hasOwn(parent, key)) return false;
-  delete parent[key as string];
-  return true;
+  return false;
 };
 
 /**
