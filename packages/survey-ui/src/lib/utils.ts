@@ -25,9 +25,10 @@ export function cn(...inputs: ClassValue[]): string {
 // excluded outside quotes so a stray one ends the attempt instead of scanning to the end of the string.
 // Every alternative starts with a different character, so there is no backtracking to speak of.
 const OPENING_TAG = /<[a-zA-Z](?:"[^"]*"|'[^']*'|[^<>"'])*>/g;
-// Inside a tag: a quoted style attribute, or any other quoted value, which is kept whole so text that
-// merely looks like one (`title="Choose style = 'casual'"`) is never mistaken for an attribute.
-const STYLE_ATTRIBUTE_OR_QUOTED_VALUE = /\sstyle\s*=\s*(?:"[^"]*"|'[^']*')|"[^"]*"|'[^']*'/gi;
+// Inside a tag: a style attribute (quoted, or unquoted up to the next space or `>`), or any other quoted
+// value, which is kept whole so text that merely looks like one (`title="Choose style = 'casual'"`) is
+// never mistaken for an attribute.
+const STYLE_ATTRIBUTE_OR_QUOTED_VALUE = /\sstyle\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'>]*)|"[^"]*"|'[^']*'/gi;
 
 /**
  * Removes quoted `style` attributes from the opening tags of a raw HTML string, without parsing it.
@@ -35,10 +36,10 @@ const STYLE_ATTRIBUTE_OR_QUOTED_VALUE = /\sstyle\s*=\s*(?:"[^"]*"|'[^']*')|"[^"]
  * element it parses with a style attribute, even one discarded afterwards, so stripping the attribute
  * from the parsed tree is too late.
  * Any whitespace may separate the attribute from the tag (a newline or tab, not just a space) and
- * surround the `=`. Quoted values only: an unquoted `style=x` is not matched. Text outside tags, and
- * other attributes' values, are left alone.
+ * surround the `=`, and the value may be quoted or not. Text outside tags, and other attributes' values,
+ * are left alone.
  * @param html - The raw HTML string
- * @returns The string without its quoted style attributes
+ * @returns The string without its style attributes
  */
 export const removeStyleAttributes = (html: string): string =>
   html.replaceAll(OPENING_TAG, (tag) =>

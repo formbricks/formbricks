@@ -26,6 +26,9 @@ describe("removeStyleAttributes", () => {
       `<a title="Choose style = 'casual'" style="color: red">Hi</a>`,
       `<a title="Choose style = 'casual'">Hi</a>`,
     ],
+    ["unquoted", "<p style=color:red>Hi</p>", "<p>Hi</p>"],
+    ["unquoted, among other attributes", "<p class=a style=color:red id=b>Hi</p>", "<p class=a id=b>Hi</p>"],
+    ["unquoted, with an empty value", "<p style=>Hi</p>", "<p>Hi</p>"],
     ["in a self-closing tag", '<br style="clear: both" />', "<br />"],
     ["in every tag of a string", '<p style="a">x</p><p style="b">y</p>', "<p>x</p><p>y</p>"],
   ])("removes a style attribute: %s", (_, html, expected) => {
@@ -40,6 +43,8 @@ describe("removeStyleAttributes", () => {
     ["the word style in text", "<p>the style guide</p>"],
     ["text that looks like an attribute", `<p>Choose style = 'casual' or style="bold"</p>`],
     ["an attribute value that looks like one", `<a title="Choose style = 'casual'">Hi</a>`],
+    ["an unquoted value that contains style=", "<p title=style=x>Hi</p>"],
+    ["text after an unquoted attribute", "<a href=x>style=y</a>"],
     ["a stray <", "1 < 2 and style='x' > 0"],
   ])("leaves %s alone", (_, html) => {
     expect(removeStyleAttributes(html)).toBe(html);

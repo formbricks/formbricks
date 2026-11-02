@@ -34,7 +34,8 @@ const MARKER = "Csp gate";
 // What the editor saves, and the spellings other writers (API, import) produce for the same attribute.
 const styledEditorText = (text: string): string =>
   `<p class="fb-editor-paragraph" dir="ltr" style="text-align: left;"><span style="white-space: pre-wrap;">${text}</span></p>`;
-const styledApiText = (text: string): string => `<p\nstyle = 'color: #334155'><b style="">${text}</b></p>`;
+const styledApiText = (text: string): string =>
+  `<p\nstyle = 'color: #334155'><b style=""><i style=font-style:italic>${text}</i></b></p>`;
 
 // Matrix row and column labels render through the same rich-text label as headlines.
 type TLabelled = { id: string; label: { default: string } };
