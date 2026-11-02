@@ -1,5 +1,5 @@
-# Version updates for the actions pinned in .github/, the Cube image built from docker/cube-image, and the
-# dev container's features.
+# Version updates for the actions pinned in .github/, the Cube image built from docker/cube-image, the
+# dev container's features, and patch and minor releases of the npm workspace.
 # Security updates for the npm workspace are configured separately in the repository settings and routed to
 # Linear by dependabot-to-linear.yml.
 version: 2
@@ -112,3 +112,30 @@ updates:
       - dependencies
     commit-message:
       prefix: "chore(docker)"
+
+  # Patch and minor releases of the workspace's npm dependencies, one grouped PR a week, so fixes land
+  # before they become advisories. Majors need a deliberate migration and get a ticket instead. `allow`
+  # narrows version updates only, so security updates for a major still arrive.
+  # The cooldown matches pnpm's minimumReleaseAge (4320 minutes), so a PR never proposes a version that
+  # `pnpm install` would refuse.
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 3
+    allow:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-minor
+          - version-update:semver-patch
+    groups:
+      npm-minor-and-patch:
+        patterns:
+          - "*"
+    labels:
+      - dependencies
+      - javascript
+    commit-message:
+      prefix: "chore(deps)"
