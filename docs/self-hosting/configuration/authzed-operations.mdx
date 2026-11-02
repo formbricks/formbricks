@@ -683,8 +683,9 @@ histogram_quantile(
 # Revocations that missed the warning or critical delivery thresholds.
 formbricks_authzed_projection_outbox_status{state=~"revocation_warning|revocation_critical"}
 
-# Delivery has stopped running on every replica.
-time() - max(formbricks_authzed_projection_outbox_last_drain_timestamp_seconds) > 30
+# Delivery has stopped running on every replica. Group by the label that tells your deployments apart
+# (`job` here), or one deployment's heartbeat hides another's stall.
+time() - max by (job) (formbricks_authzed_projection_outbox_last_drain_timestamp_seconds) > 30
 
 # Delivery has not run since the jobs processes started (for example, Redis was down at boot), so the
 # heartbeat was never written. Add your deployment's job or namespace label, and hold it with a `for:`
@@ -692,7 +693,7 @@ time() - max(formbricks_authzed_projection_outbox_last_drain_timestamp_seconds) 
 absent(formbricks_authzed_projection_outbox_last_drain_timestamp_seconds)
 
 # The outbox status could not be read, so the status and age gauges above still show an older reading.
-time() - max(formbricks_authzed_projection_outbox_status_last_read_timestamp_seconds) > 30
+time() - max by (job) (formbricks_authzed_projection_outbox_status_last_read_timestamp_seconds) > 30
 
 # Dead letters and failed scheduled repairs both block cutover.
 formbricks_authzed_projection_outbox_status{state="dead_lettered"}
