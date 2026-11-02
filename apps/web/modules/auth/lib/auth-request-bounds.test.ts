@@ -16,6 +16,7 @@ const encode = (text: string) => new TextEncoder().encode(text);
 const json = (value: unknown) => encode(JSON.stringify(value));
 const repeated = (key: string, count: number) =>
   Array.from({ length: count }, (_, index) => `${key}=r${index}`).join("&");
+const distinct = (count: number) => Array.from({ length: count }, (_, index) => `p${index}=x`).join("&");
 const claims = (count: number) => `claims=${encodeURIComponent(JSON.stringify({ userinfo: keys(count) }))}`;
 
 describe("hasOversizedJsonCollection", () => {
@@ -93,6 +94,12 @@ describe("exceedsAuthRequestBounds", () => {
       );
     });
 
+    // The whole query is one map to the handler, so distinct names count as much as repeats.
+    test("with more distinct parameters than the cap is refused", () => {
+      expect(exceedsAuthRequestBounds(`${URL_BASE}?${distinct(MAX + 1)}`, null, undefined)).toBe(true);
+      expect(exceedsAuthRequestBounds(`${URL_BASE}?${distinct(MAX)}`, null, undefined)).toBe(false);
+    });
+
     test("with JSON in a parameter holding an oversized collection is refused", () => {
       expect(exceedsAuthRequestBounds(`${URL_BASE}?${claims(MAX + 1)}`, null, undefined)).toBe(true);
       expect(exceedsAuthRequestBounds(`${URL_BASE}?${claims(MAX)}`, null, undefined)).toBe(false);
@@ -109,6 +116,11 @@ describe("exceedsAuthRequestBounds", () => {
 
     test("with a field repeated past the cap is refused", () => {
       expect(exceedsAuthRequestBounds(URL_BASE, form, encode(repeated("resource", MAX + 1)))).toBe(true);
+    });
+
+    test("with more distinct fields than the cap is refused", () => {
+      expect(exceedsAuthRequestBounds(URL_BASE, form, encode(distinct(MAX + 1)))).toBe(true);
+      expect(exceedsAuthRequestBounds(URL_BASE, form, encode(distinct(MAX)))).toBe(false);
     });
 
     // `+` decodes to a space, and JSON.parse skips leading whitespace, so a padded value parses too.

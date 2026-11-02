@@ -56,7 +56,7 @@ const tooManyEntriesResponse = (request: Request): Response =>
       ? "invalid_client_metadata"
       : "invalid_request",
     "VALIDATION_ERROR",
-    `Request lists, objects and repeated parameters must not hold more than ${AUTH_REQUEST_MAX_ENTRIES} entries`
+    `Request lists, objects and parameter sets must not hold more than ${AUTH_REQUEST_MAX_ENTRIES} entries`
   );
 
 /**

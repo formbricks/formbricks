@@ -137,6 +137,30 @@ describe("/api/auth route surface", () => {
     }
   );
 
+  test.each(postRouteFiles)(
+    "%s POST refuses a form body with too many distinct parameters with 400 before doing any work",
+    async (file) => {
+      const mod = await loadRoute(file);
+      const post = mod.POST as (request: Request) => Promise<Response>;
+      const url = `http://localhost/api/auth/${file
+        .replace(/^\.\/|\/route\.ts$/g, "")
+        .replace("[...all]", "oauth2/authorize")}`;
+      const params = Array.from({ length: AUTH_REQUEST_MAX_ENTRIES + 1 }, (_, index) => `p${index}=`);
+
+      const response = await post(
+        new Request(url, {
+          method: "POST",
+          headers: { "content-type": "application/x-www-form-urlencoded" },
+          body: params.join("&"),
+        })
+      );
+
+      expect(response.status).toBe(400);
+      expect(handlerCalls).not.toHaveBeenCalled();
+      expect(jacksonMock).not.toHaveBeenCalled();
+    }
+  );
+
   describe("the SAML callback, at the same boundary", () => {
     const callback = (bytes: number) =>
       new Request("http://localhost/api/auth/saml/callback", {

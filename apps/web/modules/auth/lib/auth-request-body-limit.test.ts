@@ -119,9 +119,9 @@ describe("withAuthRequestBodyLimit", () => {
     expect(response.headers.get("cache-control")).toBe("no-store");
     expect(await response.json()).toEqual({
       error: "invalid_request",
-      error_description: `Request lists, objects and repeated parameters must not hold more than ${AUTH_REQUEST_MAX_ENTRIES} entries`,
+      error_description: `Request lists, objects and parameter sets must not hold more than ${AUTH_REQUEST_MAX_ENTRIES} entries`,
       code: "VALIDATION_ERROR",
-      message: `Request lists, objects and repeated parameters must not hold more than ${AUTH_REQUEST_MAX_ENTRIES} entries`,
+      message: `Request lists, objects and parameter sets must not hold more than ${AUTH_REQUEST_MAX_ENTRIES} entries`,
     });
     expect(handler).not.toHaveBeenCalled();
   });

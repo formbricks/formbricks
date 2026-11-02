@@ -1,6 +1,6 @@
 /**
  * Most entries any list or map in an `/api/auth/*` request may hold (ENG-6797): an array or object in a
- * JSON body, a parameter repeated in the query or a form body, or the JSON a value carries as text.
+ * JSON body, the parameters of a query string or form body, or the JSON a value carries as text.
  *
  * Better Auth and its plugins validate these requests with schemas we do not own, and many of their arrays
  * and records carry no size limit: `scopes` on social sign-in, `redirect_uris` and `contacts` on dynamic
@@ -9,7 +9,9 @@
  * be checked on the raw request, before Better Auth parses it.
  *
  * 100 is far above anything these routes legitimately receive: the longest list a client sends is the
- * MCP scope set (14 entries), and a registration or sign-up body has a few dozen fields at most.
+ * MCP scope set (14 entries), an OAuth or SAML callback carries a few parameters, and a registration or
+ * sign-up body has a few dozen fields at most. JSON inside another encoding — a JWT payload such as
+ * `id_token_hint` — is not inspected: Better Auth decodes those without a schema or a per-entry loop.
  */
 export const AUTH_REQUEST_MAX_ENTRIES = 100;
 
@@ -55,16 +57,15 @@ export const hasOversizedJsonCollection = (value: unknown, maxEntries: number): 
 };
 
 /**
- * Whether a query string or form body repeats a parameter more than the cap allows, or carries a value
- * that is JSON with an oversized collection. better-call turns a repeated query parameter into an array,
- * and oauth-provider parses `claims` from text, so both reach a schema as collections.
+ * Whether a query string or form body holds more parameters than the cap allows, or a value that is JSON
+ * with an oversized collection. Every parameter counts, repeated or not: better-call turns a repeated one
+ * into an array, the whole set reaches handlers as one map (oauth-provider re-serializes it, at a cost
+ * that grows faster than its size), and oauth-provider parses `claims` from text.
  */
 const hasOversizedParams = (params: URLSearchParams): boolean => {
-  const counts = new Map<string, number>();
-  for (const [key, value] of params) {
-    const count = (counts.get(key) ?? 0) + 1;
-    if (count > AUTH_REQUEST_MAX_ENTRIES) return true;
-    counts.set(key, count);
+  let count = 0;
+  for (const [, value] of params) {
+    if (++count > AUTH_REQUEST_MAX_ENTRIES) return true;
     if (hasOversizedJsonCollection(value, AUTH_REQUEST_MAX_ENTRIES)) return true;
   }
   return false;
