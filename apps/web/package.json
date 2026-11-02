@@ -15,7 +15,7 @@
     "typegen": "dotenv -e ../../.env -- tsx scripts/typegen.ts",
     "api:internal:inventory": "tsx scripts/api-boundary/internal-route-inventory.ts",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
+    "lint:fix": "eslint . --fix --rule \"react/prefer-read-only-props: off\"",
     "test": "dotenv -e ../../.env -- vitest run",
     "test:coverage": "dotenv -e ../../.env -- vitest run --coverage",
     "test:integration": "node integration/gen-boolean-client.mjs && dotenv -e ../../.env -- vitest run --config vitest.integration.config.mts",

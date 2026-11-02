@@ -7,7 +7,7 @@ import { authClient } from "@/modules/auth/lib/auth-client";
 import { verifyEmailChange } from "@/modules/auth/lib/pre-login-api-client";
 
 interface EmailChangeSignInProps {
-  token: string;
+  readonly token: string;
 }
 
 export const EmailChangeSignIn = ({ token }: EmailChangeSignInProps) => {

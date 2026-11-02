@@ -42,10 +42,10 @@ const ZCreateWorkspaceForm = z.object({
 type TCreateWorkspaceForm = z.infer<typeof ZCreateWorkspaceForm>;
 
 interface CreateWorkspaceModalProps {
-  open: boolean;
-  setOpen: (open: boolean) => void;
-  organizationId: string;
-  isAccessControlAllowed: boolean;
+  readonly open: boolean;
+  readonly setOpen: (open: boolean) => void;
+  readonly organizationId: string;
+  readonly isAccessControlAllowed: boolean;
 }
 
 /** The dialog reads the organization's teams through the dashboard API, so it brings its own query client. */

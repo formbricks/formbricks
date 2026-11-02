@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
 interface PasswordChecksProps {
-  password: string | null;
+  readonly password: string | null;
 }
 
 const PASSWORD_REGEX = {
@@ -13,7 +13,7 @@ const PASSWORD_REGEX = {
   NUMBER: /\d/,
 };
 
-const ValidationIcon = ({ state }: { state: boolean }) =>
+const ValidationIcon = ({ state }: { readonly state: boolean }) =>
   state ? (
     <CheckIcon className="size-5 shrink-0" aria-hidden="true" />
   ) : (

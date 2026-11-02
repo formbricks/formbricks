@@ -42,14 +42,14 @@ import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { Muted } from "@/modules/ui/components/typography";
 
 interface TeamSettingsModalProps {
-  open: boolean;
-  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  team: TTeamDetails;
-  orgMembers: TOrganizationMember[];
-  orgWorkspaces: TOrganizationWorkspace[];
-  membershipRole?: TOrganizationRole;
-  userTeamRole: TTeamRole | undefined;
-  currentUserId: string;
+  readonly open: boolean;
+  readonly setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  readonly team: TTeamDetails;
+  readonly orgMembers: TOrganizationMember[];
+  readonly orgWorkspaces: TOrganizationWorkspace[];
+  readonly membershipRole?: TOrganizationRole;
+  readonly userTeamRole: TTeamRole | undefined;
+  readonly currentUserId: string;
 }
 
 export const TeamSettingsModal = ({

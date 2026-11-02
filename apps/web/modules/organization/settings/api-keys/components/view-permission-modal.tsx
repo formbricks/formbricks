@@ -26,12 +26,12 @@ import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
 
 interface ViewPermissionModalProps {
-  open: boolean;
-  setOpen: (v: boolean) => void;
-  onSubmit: (data: TApiKeyUpdateInput) => Promise<void>;
-  apiKey: TApiKeyResource;
-  workspaces: TOrganizationWorkspace[];
-  isUpdating: boolean;
+  readonly open: boolean;
+  readonly setOpen: (v: boolean) => void;
+  readonly onSubmit: (data: TApiKeyUpdateInput) => Promise<void>;
+  readonly apiKey: TApiKeyResource;
+  readonly workspaces: TOrganizationWorkspace[];
+  readonly isUpdating: boolean;
 }
 
 export const ViewPermissionModal = ({

@@ -14,19 +14,19 @@ import {
 } from "@/modules/ui/components/dialog";
 
 interface DeleteDialogProps {
-  open: boolean;
-  setOpen: (open: boolean) => void;
-  deleteWhat: string;
-  onDelete: () => void;
-  text?: string;
-  isDeleting?: boolean;
-  isSaving?: boolean;
-  useSaveInsteadOfCancel?: boolean;
-  onSave?: () => void;
-  children?: React.ReactNode;
-  disabled?: boolean;
-  title?: string;
-  buttonLabel?: string;
+  readonly open: boolean;
+  readonly setOpen: (open: boolean) => void;
+  readonly deleteWhat: string;
+  readonly onDelete: () => void;
+  readonly text?: string;
+  readonly isDeleting?: boolean;
+  readonly isSaving?: boolean;
+  readonly useSaveInsteadOfCancel?: boolean;
+  readonly onSave?: () => void;
+  readonly children?: React.ReactNode;
+  readonly disabled?: boolean;
+  readonly title?: string;
+  readonly buttonLabel?: string;
 }
 
 export const DeleteDialog = ({

@@ -12,7 +12,7 @@ import { getActionClassSurveys } from "@/modules/workspaces/settings/(setup)/app
 import { ACTION_TYPE_ICON_LOOKUP } from "@/modules/workspaces/settings/(setup)/app-connection/utils";
 
 interface ActivityTabProps {
-  actionClass: TActionClass;
+  readonly actionClass: TActionClass;
 }
 
 export const ActionActivityTab = ({ actionClass }: ActivityTabProps) => {

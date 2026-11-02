@@ -108,6 +108,8 @@ export type TCreativeState = TCreativeTypedGroups & {
   archivedAt: Date | null;
   defaultLanguage: string;
   languages: TCreativeLanguageRef[];
+  /** "Use browser language by default" (ENG-6871); `null` was never chosen and is off. */
+  autoSelectLanguage: boolean | null;
   destination: TCreativeDestinationRef;
   distribution: TCreativeDistribution;
   schedule: TCreativeSchedule;

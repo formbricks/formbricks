@@ -56,9 +56,9 @@ const ElementCheckbox = ({
   selectedSurvey,
   field,
 }: {
-  element: TSurveyElement;
-  selectedSurvey: TSurvey;
-  field: {
+  readonly element: TSurveyElement;
+  readonly selectedSurvey: TSurvey;
+  readonly field: {
     value: string[] | undefined;
     onChange: (value: string[]) => void;
   };

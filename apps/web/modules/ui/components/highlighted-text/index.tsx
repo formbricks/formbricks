@@ -1,6 +1,6 @@
 interface HighlightedTextProps {
-  value: string;
-  searchValue: string;
+  readonly value: string;
+  readonly searchValue: string;
 }
 
 export const HighlightedText = ({ value, searchValue }: HighlightedTextProps) => {

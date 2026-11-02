@@ -12,7 +12,7 @@ import { useRestoreSurvey } from "./use-restore-survey";
 import { useSurveys } from "./use-surveys";
 
 function createWrapper(queryClient: QueryClient) {
-  const Wrapper = ({ children }: { children: ReactNode }) =>
+  const Wrapper = ({ children }: { readonly children: ReactNode }) =>
     createElement(QueryClientProvider, { client: queryClient }, children);
 
   Wrapper.displayName = "UseSurveysTestWrapper";

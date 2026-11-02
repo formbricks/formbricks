@@ -7,13 +7,13 @@ interface Tag {
 }
 
 interface ResponseTagsWrapperProps {
-  tagId: string;
-  tagName: string;
-  onDelete: (tagId: string) => void;
-  tags?: Tag[];
-  setTagsState?: (tags: Tag[]) => void;
-  highlight?: boolean;
-  allowDelete?: boolean;
+  readonly tagId: string;
+  readonly tagName: string;
+  readonly onDelete: (tagId: string) => void;
+  readonly tags?: Tag[];
+  readonly setTagsState?: (tags: Tag[]) => void;
+  readonly highlight?: boolean;
+  readonly allowDelete?: boolean;
 }
 
 export const Tag = ({

@@ -14,12 +14,12 @@ import {
 import { IntegrationModalInputs } from "../lib/types";
 
 interface BaseSelectProps {
-  control: Control<IntegrationModalInputs, any>;
-  isLoading: boolean;
-  fetchTable: (val: string) => Promise<void>;
-  airtableArray: TIntegrationItem[];
-  setValue: UseFormSetValue<IntegrationModalInputs>;
-  defaultValue: string | undefined;
+  readonly control: Control<IntegrationModalInputs, any>;
+  readonly isLoading: boolean;
+  readonly fetchTable: (val: string) => Promise<void>;
+  readonly airtableArray: TIntegrationItem[];
+  readonly setValue: UseFormSetValue<IntegrationModalInputs>;
+  readonly defaultValue: string | undefined;
 }
 
 export const BaseSelectDropdown = ({

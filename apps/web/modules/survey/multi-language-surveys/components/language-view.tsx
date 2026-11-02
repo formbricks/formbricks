@@ -43,11 +43,11 @@ import {
 import { ManageTranslationsModal } from "./manage-translations-modal";
 
 interface LanguageViewProps {
-  localSurvey: TSurvey;
-  setLocalSurvey: (survey: TSurvey) => void;
-  workspaceLanguages: Language[];
-  locale: TUserLocale;
-  setHasIncompleteTranslations: (has: boolean) => void;
+  readonly localSurvey: TSurvey;
+  readonly setLocalSurvey: (survey: TSurvey) => void;
+  readonly workspaceLanguages: Language[];
+  readonly locale: TUserLocale;
+  readonly setHasIncompleteTranslations: (has: boolean) => void;
 }
 
 interface ConfirmationModalInfo {

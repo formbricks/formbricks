@@ -9,8 +9,8 @@ import { Button } from "@/modules/ui/components/button";
 import { resendVerificationEmailAction } from "../actions";
 
 interface RequestVerificationEmailProps {
-  email: string | null;
-  callbackUrl?: string | null;
+  readonly email: string | null;
+  readonly callbackUrl?: string | null;
 }
 
 export const RequestVerificationEmail = ({ email, callbackUrl }: RequestVerificationEmailProps) => {

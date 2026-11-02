@@ -7,7 +7,7 @@ export const ZRateLimitConfig = z.object({
   allowedPerInterval: z.int().positive().describe("Maximum allowed requests per interval"),
   /** Namespace for grouping rate limit per feature */
   namespace: z.string().min(1).describe("Namespace for grouping rate limit per feature"),
-  /** Refuse instead of allow when the limiter cannot reach Redis (docs/adr/0015-abuse-limits-fail-closed.md) */
+  /** Refuse instead of allow when the limiter cannot reach Redis (docs/adr/0016-abuse-limits-fail-closed.md) */
   failClosed: z
     .boolean()
     .optional()

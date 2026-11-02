@@ -13,10 +13,10 @@ export type ModalButton = {
 };
 
 interface UpgradePromptProps {
-  title: string;
-  description?: string;
-  buttons: [ModalButton, ModalButton];
-  feature?: string;
+  readonly title: string;
+  readonly description?: string;
+  readonly buttons: [ModalButton, ModalButton];
+  readonly feature?: string;
 }
 
 export const UpgradePrompt = ({ title, description, buttons, feature }: UpgradePromptProps) => {

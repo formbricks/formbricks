@@ -9,11 +9,11 @@ import { Switch } from "@/modules/ui/components/switch";
 import { useUpdateNotificationSetting } from "../hooks/use-notification-settings";
 
 interface NotificationSwitchProps {
-  surveyOrWorkspaceOrOrganizationId: string;
-  notificationSettings: TUserNotificationSettings;
-  notificationType: "alert" | "unsubscribedOrganizationIds";
-  autoDisableNotificationType?: string;
-  autoDisableNotificationElementId?: string;
+  readonly surveyOrWorkspaceOrOrganizationId: string;
+  readonly notificationSettings: TUserNotificationSettings;
+  readonly notificationType: "alert" | "unsubscribedOrganizationIds";
+  readonly autoDisableNotificationType?: string;
+  readonly autoDisableNotificationElementId?: string;
 }
 
 export const NotificationSwitch = ({

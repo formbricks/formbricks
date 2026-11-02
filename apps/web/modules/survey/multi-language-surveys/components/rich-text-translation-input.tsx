@@ -7,13 +7,13 @@ import { md } from "@/lib/markdownIt";
 import { Editor } from "@/modules/ui/components/editor";
 
 interface RichTextTranslationInputProps {
-  path: string;
-  value: string;
-  onChange: (path: string, value: string) => void;
-  localSurvey: TSurvey;
-  languageCode: string;
-  elementId: string;
-  disabled?: boolean;
+  readonly path: string;
+  readonly value: string;
+  readonly onChange: (path: string, value: string) => void;
+  readonly localSurvey: TSurvey;
+  readonly languageCode: string;
+  readonly elementId: string;
+  readonly disabled?: boolean;
 }
 
 export const RichTextTranslationInput = ({

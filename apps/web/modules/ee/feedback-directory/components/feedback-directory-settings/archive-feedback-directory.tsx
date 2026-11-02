@@ -20,9 +20,9 @@ import {
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 interface ArchiveFeedbackDirectoryProps {
-  directoryId: string;
-  onArchive: () => void;
-  isOwnerOrManager: boolean;
+  readonly directoryId: string;
+  readonly onArchive: () => void;
+  readonly isOwnerOrManager: boolean;
 }
 
 export const ArchiveFeedbackDirectory = ({

@@ -267,7 +267,7 @@ describe("rateLimitConfigs", () => {
       expect(uniqueNamespaces.size).toBe(allNamespaces.length);
     });
 
-    // docs/adr/0015-abuse-limits-fail-closed.md: abuse limits refuse while Redis is down, throughput
+    // docs/adr/0016-abuse-limits-fail-closed.md: abuse limits refuse while Redis is down, throughput
     // limits never do, or a Redis blip would take the whole app down.
     test("abuse limits fail closed and throughput limits fail open", () => {
       const { auth, api, actions } = rateLimitConfigs;

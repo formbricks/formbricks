@@ -23,8 +23,8 @@ import {
 import { PrettyUrlInput } from "./pretty-url-input";
 
 interface PrettyUrlTabProps {
-  publicDomain: string;
-  isReadOnly?: boolean;
+  readonly publicDomain: string;
+  readonly isReadOnly?: boolean;
 }
 
 interface PrettyUrlFormData {

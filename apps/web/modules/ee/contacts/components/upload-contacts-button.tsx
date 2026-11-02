@@ -34,8 +34,8 @@ import {
 import { StylingTabs } from "@/modules/ui/components/styling-tabs";
 
 interface UploadContactsCSVButtonProps {
-  workspaceId: string;
-  contactAttributeKeys: TContactAttributeKey[];
+  readonly workspaceId: string;
+  readonly contactAttributeKeys: TContactAttributeKey[];
 }
 
 export const UploadContactsCSVButton = ({

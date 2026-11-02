@@ -5,9 +5,9 @@ import { cn } from "@/lib/cn";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 
 interface SurveyLoadingAnimationProps {
-  isWelcomeCardEnabled: boolean;
-  isBackgroundLoaded?: boolean;
-  isBrandingEnabled: boolean;
+  readonly isWelcomeCardEnabled: boolean;
+  readonly isBackgroundLoaded?: boolean;
+  readonly isBrandingEnabled: boolean;
 }
 
 export const SurveyLoadingAnimation = ({

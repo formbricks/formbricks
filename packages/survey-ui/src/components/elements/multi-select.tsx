@@ -15,6 +15,7 @@ import {
 import { ElementError, getElementErrorAria } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { Input } from "@/components/general/input";
+import { type TOptionLayout, getOptionGroupClassName, getOptionLayout } from "@/lib/option-layout";
 import { FB_PART } from "@/lib/parts";
 import { cn } from "@/lib/utils";
 
@@ -58,8 +59,8 @@ interface MultiSelectProps {
   dir?: TextDirection;
   /** Whether the options are disabled */
   disabled?: boolean;
-  /** Display variant: 'list' shows checkboxes, 'dropdown' shows a dropdown menu */
-  variant?: "list" | "dropdown";
+  /** Display variant: 'list' stacks checkboxes, 'row' lays them side by side, 'dropdown' shows a dropdown menu */
+  variant?: "list" | "row" | "dropdown";
   /** Placeholder text for dropdown button when no options are selected */
   placeholder?: string;
   /** ID for the 'other' option that allows custom input */
@@ -417,6 +418,7 @@ interface ListVariantProps {
   otherOptionPlaceholder: string;
   dir: TextDirection;
   otherInputRef: React.RefObject<HTMLInputElement | null>;
+  layout: TOptionLayout;
 }
 
 function ListVariant({
@@ -437,6 +439,7 @@ function ListVariant({
   otherOptionPlaceholder,
   dir,
   otherInputRef,
+  layout,
 }: Readonly<ListVariantProps>): React.JSX.Element {
   const isNoneSelected = value.includes("none");
   const otherTextId = otherOptionId ? `${inputId}-${otherOptionId}-input` : undefined;
@@ -462,7 +465,7 @@ function ListVariant({
   return (
     <>
       <ElementError errorMessage={errorMessage} dir={dir} id={errorAria.errorId} />
-      <div className="space-y-2">
+      <div className={getOptionGroupClassName(layout)}>
         {options.filter((option) => option.id !== "none").map(renderOption)}
         {hasOtherOption && otherOptionId ? (
           // The free-text input must NOT live inside the option <label>: a label may own only one
@@ -609,7 +612,7 @@ function MultiSelect({
     displayText = selectedLabels.join(", ");
   }
 
-  const isListVariant = variant === "list";
+  const isListVariant = variant !== "dropdown";
 
   return (
     <div className="w-full space-y-4" id={elementId} dir={dir}>
@@ -654,6 +657,7 @@ function MultiSelect({
               otherOptionPlaceholder={otherOptionPlaceholder}
               dir={dir}
               otherInputRef={otherInputRef}
+              layout={getOptionLayout(variant)}
             />
           </div>
         </fieldset>

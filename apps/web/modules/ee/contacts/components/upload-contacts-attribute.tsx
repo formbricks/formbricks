@@ -9,10 +9,10 @@ import { UploadContactsAttributeCombobox } from "@/modules/ee/contacts/component
 import { Badge } from "@/modules/ui/components/badge";
 
 interface UploadContactsAttributesProps {
-  attributeMap: Record<string, string>;
-  setAttributeMap: React.Dispatch<React.SetStateAction<Record<string, string>>>;
-  contactAttributeKeys: TContactAttributeKey[];
-  csvColumn: string;
+  readonly attributeMap: Record<string, string>;
+  readonly setAttributeMap: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  readonly contactAttributeKeys: TContactAttributeKey[];
+  readonly csvColumn: string;
 }
 
 export const UploadContactsAttributes = ({

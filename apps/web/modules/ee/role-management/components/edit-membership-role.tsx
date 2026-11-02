@@ -21,16 +21,16 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 
 interface Role {
-  currentUserRole: TOrganizationRole;
-  memberRole: TOrganizationRole;
-  organizationId: string;
-  memberId?: string;
-  userId: string;
-  memberAccepted?: boolean;
-  inviteId?: string;
-  doesOrgHaveMoreThanOneOwner?: boolean;
-  isFormbricksCloud: boolean;
-  isUserManagementDisabledFromUi: boolean;
+  readonly currentUserRole: TOrganizationRole;
+  readonly memberRole: TOrganizationRole;
+  readonly organizationId: string;
+  readonly memberId?: string;
+  readonly userId: string;
+  readonly memberAccepted?: boolean;
+  readonly inviteId?: string;
+  readonly doesOrgHaveMoreThanOneOwner?: boolean;
+  readonly isFormbricksCloud: boolean;
+  readonly isUserManagementDisabledFromUi: boolean;
 }
 
 export function EditMembershipRole({

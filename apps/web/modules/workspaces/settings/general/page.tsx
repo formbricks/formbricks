@@ -10,7 +10,7 @@ import { DeleteWorkspace } from "./components/delete-workspace";
 import { EditCooldownPeriodForm } from "./components/edit-cooldown-period-form";
 import { EditWorkspaceNameForm } from "./components/edit-workspace-name-form";
 
-export const GeneralSettingsPage = async (props: { params: Promise<{ workspaceId: string }> }) => {
+export const GeneralSettingsPage = async (props: { readonly params: Promise<{ workspaceId: string }> }) => {
   const params = await props.params;
   const t = await getTranslate();
 

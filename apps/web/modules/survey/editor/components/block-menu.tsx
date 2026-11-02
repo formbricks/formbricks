@@ -6,13 +6,13 @@ import { Button } from "@/modules/ui/components/button";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 interface BlockMenuProps {
-  isFirstBlock: boolean;
-  isLastBlock: boolean;
-  isOnlyBlock: boolean;
-  onDuplicate: () => void;
-  onDelete: () => void;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
+  readonly isFirstBlock: boolean;
+  readonly isLastBlock: boolean;
+  readonly isOnlyBlock: boolean;
+  readonly onDuplicate: () => void;
+  readonly onDelete: () => void;
+  readonly onMoveUp: () => void;
+  readonly onMoveDown: () => void;
 }
 
 export const BlockMenu = ({
