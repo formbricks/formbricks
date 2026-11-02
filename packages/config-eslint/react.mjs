@@ -5,6 +5,7 @@ import reactHooks from "eslint-plugin-react-hooks";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 import { base, commonIgnores, reactCompilerRulesOptOut, unusedVarsConvention } from "./base.mjs";
+import { a11yParity } from "./sonar-parity.mjs";
 
 /*
  * Flat config for React component libraries — the successor of the
@@ -44,6 +45,7 @@ export const react = ({ tsconfigRootDir }) => [
   // Accessibility rules (parity with the old @vercel/style-guide/react config; eslint-config-next
   // already provides these for the app, so this brings the react-library tier in line).
   jsxA11y.flatConfigs.recommended,
+  a11yParity(),
   // v7 exposes flat configs under `configs.flat.*`; the top-level `recommended-latest`
   // is the legacy eslintrc format and crashes ESLint 9.
   reactHooks.configs.flat.recommended,

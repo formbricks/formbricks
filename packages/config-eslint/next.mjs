@@ -2,6 +2,7 @@ import js from "@eslint/js";
 import nextConfig from "eslint-config-next";
 import tseslint from "typescript-eslint";
 import { base, commonIgnores, typescriptParsing, unusedVarsConvention } from "./base.mjs";
+import { a11yParity, stagedSeverity } from "./sonar-parity.mjs";
 
 /*
  * Flat config for the Next.js app — the successor of `legacy-next.js`:
@@ -52,6 +53,7 @@ export const next = [
   // repo-sanctioned `_`-prefixed intentionally-unused bindings.
   downgradeToWarn(unusedVarsConvention),
   ...nextConfig,
+  a11yParity(stagedSeverity()),
   {
     rules: {
       "@next/next/no-html-link-for-pages": "off",

@@ -2,6 +2,7 @@ import vitest from "@vitest/eslint-plugin";
 import prettier from "eslint-config-prettier";
 import turbo from "eslint-config-turbo/flat";
 import tseslint from "typescript-eslint";
+import { sonarParity } from "./sonar-parity.mjs";
 
 /*
  * Shared plumbing for every Formbricks flat config:
@@ -9,6 +10,7 @@ import tseslint from "typescript-eslint";
  * - Turborepo env-var checks
  * - Prettier compatibility (must stay last so it can disable conflicting stylistic rules)
  * - the repo-wide `test` over `it` convention
+ * - the Sonar-parity rules (off unless staged-file linting turns them on, see sonar-parity.mjs)
  * - common ignores
  *
  * This file intentionally carries no opinionated rule set — the exported tiers
@@ -90,4 +92,4 @@ export const reactCompilerRulesOptOut = {
 };
 
 // Turbo checks + test conventions + prettier-compat. Keep prettier last.
-export const base = [...turbo, vitestConventions, unusedDirectivesConvention, prettier];
+export const base = [...turbo, vitestConventions, ...sonarParity(), unusedDirectivesConvention, prettier];
