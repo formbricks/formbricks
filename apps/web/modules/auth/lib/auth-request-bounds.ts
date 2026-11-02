@@ -5,7 +5,8 @@
  * Better Auth and its plugins validate these requests with schemas we do not own, and many of their arrays
  * and records carry no size limit: `scopes` on social sign-in, `redirect_uris` and `contacts` on dynamic
  * client registration, `resource` on authorize (repeated in the query), `claims` on authorize and consent
- * (JSON text in a form field, the query or a JSON body). Zod reports each bad item of such a collection
+ * (JSON text in a form field, the query or a JSON body), `oauth_query` on every POST (a query string sent
+ * as one value), `scope` and `prompt` (space-separated lists). Zod reports each bad item of such a collection
  * on its own, so the limit has to be checked on the raw request, before Better Auth parses it.
  *
  * 100 is far above anything these routes legitimately receive: the longest list a client sends is the
@@ -68,11 +69,51 @@ const parseJson = (text: string): unknown => {
 };
 
 /**
+ * Whether `text`, read the way `URLSearchParams` reads a query string or form body, holds more than `max`
+ * fields. Counted by scanning for `&` rather than by parsing: `URLSearchParams` slows down sharply on many
+ * fields without a value (`a&a&a…`), so it is only built once the count is known to be within the cap.
+ * Empty fields are skipped, as `URLSearchParams` skips them.
+ */
+const hasMoreFieldsThan = (text: string, max: number): boolean => {
+  let count = 0;
+  let start = 0;
+  while (start <= text.length) {
+    const separator = text.indexOf("&", start);
+    const end = separator === -1 ? text.length : separator;
+    if (end > start && ++count > max) return true;
+    start = end + 1;
+  }
+  return false;
+};
+
+/** Whether `text` splits into more than `max` items on spaces or commas, empty items included. */
+const hasMoreListItemsThan = (text: string, max: number): boolean => {
+  let separators = 0;
+  for (let index = 0; index < text.length; index++) {
+    if ((text[index] === " " || text[index] === ",") && ++separators >= max) return true;
+  }
+  return false;
+};
+
+/**
+ * Strings Better Auth's plugins read as collections of their own, by name. oauth-provider verifies an
+ * `oauth_query` on every POST before any schema runs, re-parsing and sorting all its fields, and splits
+ * `scope` and `prompt` into lists it checks against each other.
+ */
+const isOversizedNamedValue = (name: string, value: string): boolean => {
+  if (name === "oauth_query") return hasMoreFieldsThan(value, AUTH_REQUEST_MAX_ENTRIES);
+  if (name === "scope" || name === "prompt") return hasMoreListItemsThan(value, AUTH_REQUEST_MAX_ENTRIES);
+  return false;
+};
+
+/**
  * Whether any array or object in `value` holds more than `maxEntries` entries, counting the collections
- * a string carries as JSON text: oauth-provider parses `claims` from a string on consent as well as on
- * authorize. Walks with an explicit stack, so how deeply the value nests costs no call depth. A string
- * is parsed only when it starts and ends like an array or object, and each parse spends `budget`; a value
- * that needs more parses than the budget holds counts as oversized.
+ * a string carries as JSON text (oauth-provider parses `claims` from a string on consent as well as on
+ * authorize) and the ones a named string carries ({@link isOversizedNamedValue}). Walks with an explicit
+ * stack, so how deeply the value nests costs no call depth, and counts an object's keys as it goes, so an
+ * oversized one is refused before its values are collected. A string is parsed only when it starts and
+ * ends like an array or object, and each parse spends `budget`; a value that needs more parses than the
+ * budget holds counts as oversized.
  */
 export const hasOversizedJsonCollection = (
   value: unknown,
@@ -90,23 +131,34 @@ export const hasOversizedJsonCollection = (
       continue;
     }
     if (typeof current !== "object" || current === null) continue;
-    const entries = Array.isArray(current) ? current : Object.values(current);
-    if (entries.length > maxEntries) return true;
-    pending.push(...entries);
+    if (Array.isArray(current)) {
+      if (current.length > maxEntries) return true;
+      pending.push(...current);
+      continue;
+    }
+    const record = current as Record<string, unknown>;
+    let count = 0;
+    for (const name in record) {
+      if (!Object.hasOwn(record, name)) continue;
+      if (++count > maxEntries) return true;
+      const entry = record[name];
+      if (typeof entry === "string" && isOversizedNamedValue(name, entry)) return true;
+      pending.push(entry);
+    }
   }
   return false;
 };
 
 /**
- * Whether a query string or form body holds more parameters than the cap allows, or a value that is JSON
- * with an oversized collection. Every parameter counts, repeated or not: better-call turns a repeated one
- * into an array, the whole set reaches handlers as one map (oauth-provider re-serializes it, at a cost
- * that grows faster than its size), and oauth-provider parses `claims` from text.
+ * Whether a query string or form body holds more parameters than the cap allows, or a value that is
+ * itself oversized. Every parameter counts, repeated or not: better-call turns a repeated one into an
+ * array, the whole set reaches handlers as one map (oauth-provider re-serializes it, at a cost that grows
+ * faster than its size), and its values can carry JSON text or a named collection.
  */
-const hasOversizedParams = (params: URLSearchParams, budget: TJsonTextBudget): boolean => {
-  let count = 0;
-  for (const [, value] of params) {
-    if (++count > AUTH_REQUEST_MAX_ENTRIES) return true;
+const hasOversizedParams = (text: string, budget: TJsonTextBudget): boolean => {
+  if (hasMoreFieldsThan(text, AUTH_REQUEST_MAX_ENTRIES)) return true;
+  for (const [name, value] of new URLSearchParams(text)) {
+    if (isOversizedNamedValue(name, value)) return true;
     if (hasOversizedJsonCollection(value, AUTH_REQUEST_MAX_ENTRIES, budget)) return true;
   }
   return false;
@@ -123,14 +175,14 @@ export const exceedsAuthRequestBounds = (
   body: Uint8Array | undefined
 ): boolean => {
   const budget = newJsonTextBudget();
-  if (hasOversizedParams(new URL(url).searchParams, budget)) return true;
+  if (hasOversizedParams(new URL(url).search.slice(1), budget)) return true;
   if (!body) return false;
   if (isJsonContentType(contentType)) {
     const parsed = parseJson(new TextDecoder().decode(body));
     return hasOversizedJsonCollection(parsed, AUTH_REQUEST_MAX_ENTRIES, budget);
   }
   if (isFormContentType(contentType)) {
-    return hasOversizedParams(new URLSearchParams(new TextDecoder().decode(body)), budget);
+    return hasOversizedParams(new TextDecoder().decode(body), budget);
   }
   return false;
 };

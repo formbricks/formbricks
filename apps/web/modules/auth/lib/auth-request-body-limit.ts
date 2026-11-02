@@ -1,7 +1,11 @@
 import "server-only";
 import { NextRequest } from "next/server";
 import { RequestBodyTooLargeError, readRequestBytesWithLimit } from "@/app/lib/api/request-body";
-import { AUTH_REQUEST_MAX_ENTRIES, exceedsAuthRequestBounds } from "./auth-request-bounds";
+import {
+  AUTH_REQUEST_MAX_ENTRIES,
+  AUTH_REQUEST_MAX_JSON_TEXTS,
+  exceedsAuthRequestBounds,
+} from "./auth-request-bounds";
 
 /**
  * Largest request body any `/api/auth/*` route will read (ENG-3846, ENG-3248).
@@ -46,6 +50,10 @@ const bodyTooLargeResponse = (limitBytes: number): Response =>
     `Request body must not exceed ${limitBytes} bytes`
   );
 
+const TOO_MANY_ENTRIES_MESSAGE =
+  `Request lists, objects and parameter sets must not hold more than ${AUTH_REQUEST_MAX_ENTRIES} entries, ` +
+  `and a request must not carry more than ${AUTH_REQUEST_MAX_JSON_TEXTS} values as JSON text`;
+
 // `VALIDATION_ERROR` is the code Better Auth itself answers a body that fails its schema with. A dynamic
 // client registration gets the error RFC 7591 §3.2.2 defines for bad metadata; anything else the generic
 // OAuth one (RFC 6749 §5.2).
@@ -56,7 +64,7 @@ const tooManyEntriesResponse = (request: Request): Response =>
       ? "invalid_client_metadata"
       : "invalid_request",
     "VALIDATION_ERROR",
-    `Request lists, objects and parameter sets must not hold more than ${AUTH_REQUEST_MAX_ENTRIES} entries`
+    TOO_MANY_ENTRIES_MESSAGE
   );
 
 // A `Content-Type` listing several media types: Fetch's `formData()` reads the last valid one, while

@@ -7,7 +7,7 @@ import {
   isAuthRequestBodyLimited,
   withAuthRequestBodyLimit,
 } from "./auth-request-body-limit";
-import { AUTH_REQUEST_MAX_ENTRIES } from "./auth-request-bounds";
+import { AUTH_REQUEST_MAX_ENTRIES, AUTH_REQUEST_MAX_JSON_TEXTS } from "./auth-request-bounds";
 
 const LIMIT = AUTH_REQUEST_BODY_LIMIT_BYTES;
 
@@ -119,9 +119,9 @@ describe("withAuthRequestBodyLimit", () => {
     expect(response.headers.get("cache-control")).toBe("no-store");
     expect(await response.json()).toEqual({
       error: "invalid_request",
-      error_description: `Request lists, objects and parameter sets must not hold more than ${AUTH_REQUEST_MAX_ENTRIES} entries`,
+      error_description: `Request lists, objects and parameter sets must not hold more than ${AUTH_REQUEST_MAX_ENTRIES} entries, and a request must not carry more than ${AUTH_REQUEST_MAX_JSON_TEXTS} values as JSON text`,
       code: "VALIDATION_ERROR",
-      message: `Request lists, objects and parameter sets must not hold more than ${AUTH_REQUEST_MAX_ENTRIES} entries`,
+      message: `Request lists, objects and parameter sets must not hold more than ${AUTH_REQUEST_MAX_ENTRIES} entries, and a request must not carry more than ${AUTH_REQUEST_MAX_JSON_TEXTS} values as JSON text`,
     });
     expect(handler).not.toHaveBeenCalled();
   });

@@ -48,6 +48,44 @@ describe("hasOversizedJsonCollection", () => {
 });
 
 describe("exceedsAuthRequestBounds", () => {
+  // Strings a Better Auth plugin reads as a collection of its own, wherever the request carries them.
+  describe("named values", () => {
+    const fields = (count: number) => Array.from({ length: count }, (_, index) => `f${index}=1`).join("&");
+    const words = (count: number) => Array.from({ length: count }, (_, index) => `s${index}`).join(" ");
+    const carriers = (name: string, value: string) => ({
+      "a JSON body": [URL_BASE, "application/json", json({ [name]: value })] as const,
+      "a form body": [
+        URL_BASE,
+        "application/x-www-form-urlencoded",
+        encode(new URLSearchParams({ [name]: value }).toString()),
+      ] as const,
+      "the query": [
+        `${URL_BASE}?${new URLSearchParams({ [name]: value }).toString()}`,
+        null,
+        undefined,
+      ] as const,
+    });
+
+    test.each([
+      ["oauth_query", fields],
+      ["scope", words],
+      ["prompt", words],
+    ])("%s is refused past the cap in a JSON body, a form body or the query", (name, build) => {
+      for (const [carrier, args] of Object.entries(carriers(name, build(MAX + 1)))) {
+        expect(exceedsAuthRequestBounds(...args), carrier).toBe(true);
+      }
+      for (const [carrier, args] of Object.entries(carriers(name, build(MAX)))) {
+        expect(exceedsAuthRequestBounds(...args), carrier).toBe(false);
+      }
+    });
+
+    test("a scope list of empty items counts each one, as split(' ') does", () => {
+      expect(exceedsAuthRequestBounds(URL_BASE, "application/json", json({ scope: " ".repeat(MAX) }))).toBe(
+        true
+      );
+    });
+  });
+
   describe("a JSON body", () => {
     const oversized = json({ scopes: items(MAX + 1) });
 
@@ -141,6 +179,33 @@ describe("exceedsAuthRequestBounds", () => {
 
   describe("a form body", () => {
     const form = "application/x-www-form-urlencoded";
+
+    // URLSearchParams slows down sharply on fields with no value, so an over-long body is refused on the
+    // count alone, before one is built.
+    test("with more fields than the cap is refused without parsing it", () => {
+      const built: unknown[] = [];
+      vi.stubGlobal(
+        "URLSearchParams",
+        class extends URLSearchParams {
+          constructor(init?: string) {
+            super(init);
+            built.push(init);
+          }
+        }
+      );
+      try {
+        expect(exceedsAuthRequestBounds(URL_BASE, form, encode("a&".repeat(100_000)))).toBe(true);
+        expect(built.filter((init) => typeof init === "string" && init.length > 1_000)).toEqual([]);
+      } finally {
+        vi.unstubAllGlobals();
+      }
+    });
+
+    test("with empty fields is counted the way URLSearchParams reads it", () => {
+      expect(exceedsAuthRequestBounds(URL_BASE, form, encode(`${distinct(MAX)}${"&".repeat(1_000)}`))).toBe(
+        false
+      );
+    });
 
     test("with JSON in a field holding an oversized collection is refused", () => {
       expect(exceedsAuthRequestBounds(URL_BASE, form, encode(claims(MAX + 1)))).toBe(true);
