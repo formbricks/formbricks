@@ -4,15 +4,10 @@ import { Prisma } from "@formbricks/database/prisma";
 import { type TSurveyEnding } from "@formbricks/types/surveys/types";
 import { transformQuestionsToBlocks } from "@/app/lib/api/survey-transformation";
 import { type UsersFixture } from "../fixtures/users";
-import {
-  OPEN_TEXT_HEADLINE,
-  SINGLE_SELECT_HEADLINE,
-  buildKitchenSinkQuestions,
-  i18nValue,
-} from "./kitchen-sink";
+import { buildKitchenSinkQuestions, i18nValue } from "./kitchen-sink";
 
 // Specs import these from here; they live with the question list they describe.
-export { OPEN_TEXT_HEADLINE, SINGLE_SELECT_HEADLINE };
+export { OPEN_TEXT_HEADLINE, SINGLE_SELECT_HEADLINE } from "./kitchen-sink";
 
 // The transform's own (legacy v1) question input type, derived from its signature so
 // this file does not reference the deprecated TSurveyQuestion name directly.
