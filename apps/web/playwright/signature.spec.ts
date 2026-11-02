@@ -44,9 +44,6 @@ const UPLOAD_TIMEOUT = 30_000;
 
 const PNG_MAGIC = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
-// NOSONAR: a conditional environment guard, not a disabled test: without object storage nothing here can run.
-test.skip(!process.env.S3_BUCKET_NAME, "The Signature journeys need real object storage (S3_BUCKET_NAME).");
-
 type SeededSurvey = {
   surveyId: string;
   workspaceId: string;
@@ -122,7 +119,7 @@ const seedSignatureSurvey = async (
 // ---- Respondent side ------------------------------------------------------------------------------
 
 const signatureCard = (page: Page, elementId: string): Locator => page.locator(`div[id="${elementId}"]`);
-const signaturePad = (card: Locator): Locator => card.getByRole("img", { name: /^Signature pad/ });
+const signaturePad = (card: Locator): Locator => card.locator("canvas");
 const signatureStatus = (card: Locator): Locator => card.getByRole("status");
 
 /** A wavy two-pass stroke across the pad: long enough to count as signed. */
@@ -302,6 +299,14 @@ const attachShot = async (page: Page, testInfo: TestInfo, name: string): Promise
 // ---- Tests ----------------------------------------------------------------------------------------
 
 test.describe("Signature element @slow", () => {
+  // Without object storage nothing here can run, so the journeys report as skipped on such a machine.
+  test.beforeEach(({}, testInfo) => {
+    testInfo.skip(
+      !process.env.S3_BUCKET_NAME,
+      "The Signature journeys need real object storage (S3_BUCKET_NAME)."
+    );
+  });
+
   test("a respondent signs by touch and by keyboard, and one PNG is uploaded per signature", async ({
     browser,
     baseURL,

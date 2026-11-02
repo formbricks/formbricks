@@ -665,17 +665,13 @@ export const ZSurveyFileUploadQuestion = ZSurveyQuestionBase.extend({
  */
 export type TSurveyFileUploadQuestion = z.infer<typeof ZSurveyFileUploadQuestion>;
 
-/**
- * @deprecated Use ZSurveySignatureElement instead. Kept for v1 API backward compatibility only.
- */
+/** The v1 API shape of a Signature element; use ZSurveySignatureElement in new code. */
 export const ZSurveySignatureQuestion = ZSurveyQuestionBase.extend({
-  type: z.literal(TSurveyQuestionTypeEnum.Signature),
+  type: z.literal(TSurveyQuestionTypeEnum.Signature), // NOSONAR the v1 compatibility shape has to name the legacy enum member
   allowTypedSignature: z.boolean().prefault(true),
 });
 
-/**
- * @deprecated Use TSurveySignatureElement instead. Kept for v1 API backward compatibility only.
- */
+/** The v1 API shape of a Signature element; use TSurveySignatureElement in new code. */
 export type TSurveySignatureQuestion = z.infer<typeof ZSurveySignatureQuestion>;
 
 /**
@@ -874,7 +870,7 @@ export const ZSurveyQuestionType = z.enum([
   TSurveyQuestionTypeEnum.ContactInfo,
   TSurveyQuestionTypeEnum.CSAT,
   TSurveyQuestionTypeEnum.CES,
-  TSurveyQuestionTypeEnum.Signature,
+  TSurveyQuestionTypeEnum.Signature, // NOSONAR the v1 compatibility list has to name the legacy enum member
 ]);
 
 /**
@@ -2252,7 +2248,7 @@ const isInvalidOperatorsForQuestionType = (
       }
       break;
     case TSurveyQuestionTypeEnum.FileUpload:
-    case TSurveyQuestionTypeEnum.Signature:
+    case TSurveyQuestionTypeEnum.Signature: // NOSONAR the legacy question switch has to name the legacy enum member
     case TSurveyQuestionTypeEnum.Address:
     case TSurveyQuestionTypeEnum.Ranking:
       if (!["isSubmitted", "isSkipped"].includes(operator)) {

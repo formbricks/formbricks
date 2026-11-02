@@ -257,6 +257,16 @@ function Signature({
   const panelId = `${inputId}-panel`;
   const nameId = `${inputId}-name`;
   const describedBy = [descriptionId, errorAria.ariaDescribedBy].filter(Boolean).join(" ") || undefined;
+  // In Type mode the canvas is only a preview of the name typed below it, and in the saved state it is
+  // blank: neither is something to announce.
+  const isPadLabelled = mode === "draw" && !hasSavedOnly;
+  // The canvas is a picture of the pad and is hidden from assistive technology; what a screen-reader user
+  // needs to know about it (and the typed alternative) is read as the description of the whole group.
+  const padLabelId = `${inputId}-pad-label`;
+  const groupDescribedBy =
+    [descriptionId, isPadLabelled ? padLabelId : undefined, errorAria.ariaDescribedBy]
+      .filter(Boolean)
+      .join(" ") || undefined;
 
   const selectMode = (next: SignatureMode): void => {
     if (next !== value.mode) onChange({ ...value, mode: next });
@@ -317,9 +327,6 @@ function Signature({
   };
 
   const showHint = !isSigned && !hasActiveInput && !isUploading && !isStroking;
-  // In Type mode the canvas is only a preview of the name typed below it, and in the saved state it is
-  // blank: neither is something to announce.
-  const isPadLabelled = mode === "draw" && !hasSavedOnly;
   const statusText = getStatusText({ isUploading, isSigned }, text);
 
   const clearButton = (
@@ -352,7 +359,7 @@ function Signature({
 
         <fieldset
           aria-labelledby={headlineId}
-          aria-describedby={describedBy}
+          aria-describedby={groupDescribedBy}
           className="m-0 min-w-0 space-y-2 border-0 p-0">
           {/* With tabs, Clear shares their row; without them it sits under the pad rather than alone on an
               empty row above it. */}
@@ -386,9 +393,7 @@ function Signature({
               style={{ aspectRatio: `${String(SIGNATURE_ASPECT_RATIO)} / 1` }}>
               <canvas
                 ref={canvasRef}
-                role={isPadLabelled ? "img" : undefined} // NOSONAR a canvas cannot be an <img>; role="img" plus a label is how a drawing pad is exposed
-                aria-label={isPadLabelled ? text.padLabel : undefined}
-                aria-hidden={isPadLabelled ? undefined : true}
+                aria-hidden="true"
                 className="absolute inset-0 block h-full w-full touch-none select-none"
                 style={{ touchAction: "none", WebkitTouchCallout: "none" }}
                 onContextMenu={(event) => {
@@ -430,6 +435,12 @@ function Signature({
           </div>
 
           {showModeToggle ? null : <div className="flex justify-end">{clearButton}</div>}
+
+          {isPadLabelled ? (
+            <p id={padLabelId} className="sr-only">
+              {text.padLabel}
+            </p>
+          ) : null}
 
           <p role="status" aria-live="polite" className="sr-only">
             {statusText}
