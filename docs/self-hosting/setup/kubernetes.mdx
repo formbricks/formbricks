@@ -149,9 +149,9 @@ For an already-running v6 installation, Helm prints release-specific diagnostic 
 release-matched operator CLI inside a Formbricks pod:
 
 ```bash
-kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed health
-kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed schema check
-kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed upgrade check
+kubectl exec -n <namespace> deployment/formbricks -- formbricks-authzed health
+kubectl exec -n <namespace> deployment/formbricks -- formbricks-authzed schema check
+kubectl exec -n <namespace> deployment/formbricks -- formbricks-authzed upgrade check
 ```
 
 A fresh install runs an idempotent initialization Job, but application startup and probes remain independent
@@ -235,8 +235,8 @@ Complete the [6.0 prerequisites](/self-hosting/upgrade/versions/6.0), then follo
 
 ### Later chart upgrades
 
-Check the [version notes](/self-hosting/advanced/migration) and [component inventory](/self-hosting/operate/components).
-A chart version and an application version are separate choices.
+Start with [Upgrade Formbricks](/self-hosting/advanced/upgrade), then follow the [Kubernetes runbook](/self-hosting/upgrade/kubernetes).
+Each release publishes a chart with the same version number as the app.
 
 ## 5. Key Values
 

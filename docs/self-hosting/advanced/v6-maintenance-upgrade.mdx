@@ -1,52 +1,21 @@
 ---
 title: "Upgrade a v5 installation to v6"
-description: "Start with the v6 prerequisites, then use your deployment procedure."
+description: "Where to find the steps for the first upgrade to Formbricks 6."
 icon: "arrow-up-right-dots"
 ---
 
-Start with [6.0: Upgrade guide](/self-hosting/upgrade/versions/6.0). A self-hosted Cloud bridge is not required.
+<span id="before-the-maintenance-window" />
+<span id="perform-the-upgrade" />
+<span id="docker-and-one-click" />
+<span id="helm-and-gitops" />
+<span id="exit-checklist" />
+<span id="results-and-recovery" />
+<span id="later-v6-upgrades" />
 
-<CardGroup cols={2}>
-  <Card title="Kubernetes and GitOps" href="/self-hosting/upgrade/kubernetes">Prepare, deploy and verify your cluster.</Card>
-  <Card title="Docker and one-click" href="/self-hosting/upgrade/docker">Upgrade during planned maintenance.</Card>
-</CardGroup>
+The v5 → v6 steps are on the [6.0 upgrade guide](/self-hosting/upgrade/versions/6.0). Upgrade from the latest
+5.4 patch, then follow the runbook for your setup:
+[Kubernetes](/self-hosting/upgrade/kubernetes), [Docker Compose](/self-hosting/upgrade/docker) or
+[one-click](/self-hosting/upgrade/one-click).
 
-## Before the maintenance window
-
-Use the [shared checklist](/self-hosting/advanced/upgrade#before-you-start).
-
-## Perform the upgrade
-
-Follow the deployment recipe above. [Preparation](/self-hosting/upgrade/prepare) owns the command reference.
-
-## Docker and one-click
-
-See [Docker preparation](/self-hosting/upgrade/prepare#docker-and-one-click).
-
-## Helm and GitOps
-
-See the [preparation Job template](/self-hosting/upgrade/prepare#helm-and-gitops).
-
-## Exit checklist
-
-Use the [completion checks](/self-hosting/advanced/upgrade#after-the-upgrade).
-
-## Results and recovery
-
-See [preparation results](/self-hosting/upgrade/prepare#results-and-recovery) and [recovery](/self-hosting/operate/backup-restore).
-
-## Later v6 upgrades
-
-Follow [Upgrading Formbricks](/self-hosting/advanced/upgrade) and your target-version notes.
-
-### Survey visibility
-
-See [the 6.1 visibility rollout](/self-hosting/upgrade/versions/6.1#complete-the-visibility-rollout).
-
-<span id="what-runs-where" />
-
-[What runs where](/self-hosting/upgrade/prepare#what-runs-where)
-
-<span id="diagnose-migration-failures-privately" />
-
-[Diagnose migration failures privately](/self-hosting/upgrade/prepare#diagnose-migration-failures-privately)
+For later v6 upgrades, start with [Upgrade Formbricks](/self-hosting/advanced/upgrade). If permission
+preparation fails, see [preparation results](/self-hosting/upgrade/prepare#results-and-recovery).

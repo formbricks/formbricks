@@ -1,74 +1,90 @@
 ---
-title: "Upgrading Formbricks"
-description: "Plan your upgrade, choose a deployment procedure and verify the result."
+title: "Upgrade Formbricks"
+description: "Find your next version, back up, upgrade with the runbook for your setup, and check the result."
 icon: "arrow-up-right-dots"
 ---
 
-Keep your deployment on a [maintained release](/self-hosting/advanced/release-maintenance-policy).
-Start with [Release notes](/platform/changelog) to see what changed and who needs to act.
-Choose your [upgrade path](/self-hosting/upgrade/paths), [rehearse it](/self-hosting/upgrade/rehearse),
-then use the deployment procedure for your target. For **4.x/5.x targets**, use the
-[historical maintenance procedure](/self-hosting/upgrade/legacy). The recipes below apply to **v6**.
-
 <span id="docker-and-one-click" />
 <span id="kubernetes-helm" />
+<span id="service-impact" />
 
-<CardGroup cols={2}>
-  <Card title="Kubernetes and GitOps" icon="dharmachakra" href="/self-hosting/upgrade/kubernetes">
-    Upgrade an enterprise cluster with Helm, Argo CD or Flux.
-  </Card>
-  <Card title="Docker Compose and one-click" icon="docker" href="/self-hosting/upgrade/docker">
-    Upgrade a single-server installation during planned maintenance.
-  </Card>
-</CardGroup>
+Every upgrade follows the same five steps. Do them once for each stop on your
+[upgrade path](/self-hosting/upgrade/paths).
 
-## Before you start
+<Steps>
+  <Step title="Find your setup and version">
+    | Your setup | How to recognize it | Check your version |
+    | --- | --- | --- |
+    | Kubernetes | Installed with the Formbricks Helm chart | `helm list -n <namespace>`, then the image tag of the `formbricks` Deployment |
+    | Docker Compose | You manage `docker-compose.yml` yourself | `docker compose images formbricks` in your Compose directory |
+    | One-click | A `formbricks.sh` script next to a `formbricks/` directory | `cd formbricks && docker compose images formbricks` |
 
-- Record your current version and choose a target from [stable releases](https://github.com/formbricks/formbricks/releases/latest).
-  Read the [release notes](/platform/changelog) for every version you cross, including patches.
-  Follow the linked actions; missing historical notes do not establish that an upgrade needs no extra steps.
-- Follow the [recommended stops and evidence](/self-hosting/upgrade/paths). Apply every change you cross,
-  even when you do not install that intermediate minor. Finish required backfills before advancing.
-- [Rehearse with an isolated copy](/self-hosting/upgrade/rehearse). Check existing integrations,
-  uploads and SSO; measure the maintenance and recovery windows.
-- Prepare a [recoverable backup](/self-hosting/operate/backup-restore) and retain the current configuration and images.
-- Review [components and ownership](/self-hosting/operate/components), including managed dependencies and workers.
+    If the image tag is `latest`, look up the running version in Formbricks under
+    **Organization settings → General → Formbricks version**.
+  </Step>
+  <Step title="Find your next stop">
+    Upgrade one minor version at a time, always to its latest patch. Skipping a minor version is not supported.
+    The [upgrade paths](/self-hosting/upgrade/paths) table shows your next stop.
+  </Step>
+  <Step title="Read the version page">
+    Open the [version page](/self-hosting/advanced/migration) for your next stop. Its **Before** section lists
+    what to prepare, and its **patch actions** list anything a patch needs. The [release notes](/platform/changelog)
+    show the upgrade impact of each release.
+  </Step>
+  <Step title="Back up">
+    Take a [backup you can restore](/self-hosting/operate/backup-restore) of the databases, files and configuration.
+    For production, we recommend testing the upgrade on a [copy of your installation](/self-hosting/upgrade/rehearse) first.
+  </Step>
+  <Step title="Upgrade with your runbook">
+    <CardGroup cols={3}>
+      <Card title="Kubernetes" icon="dharmachakra" href="/self-hosting/upgrade/kubernetes">
+        Helm, Argo CD or Flux.
+      </Card>
+      <Card title="Docker Compose" icon="docker" href="/self-hosting/upgrade/docker">
+        A Compose stack you manage yourself.
+      </Card>
+      <Card title="One-click" icon="rocket" href="/self-hosting/upgrade/one-click">
+        Installed with `formbricks.sh`.
+      </Card>
+    </CardGroup>
+    The runbooks cover upgrades **to 6.0 or later**. To upgrade to a 4.x or 5.x version, use the
+    [4.x and 5.x procedure](/self-hosting/upgrade/legacy).
+  </Step>
+</Steps>
 
-Use `stable` source links to find current guidance. For a production change, record the resolved chart
-version and image tags or digests in your deployment configuration. A moving `latest` tag can change
-between rehearsal, preparation and rollout.
+<span id="before-you-start" />
 
-## Service impact
+## How much work is an upgrade?
 
-| Surface | During the standard maintenance procedure |
-| --- | --- |
-| Surveys and respondents | New submissions pause; let in-flight responses finish before closing traffic. |
-| API and admin UI | Unavailable until deployment and acceptance checks complete. |
-| Background processing | Writers and workers pause; verify pending work resumes afterwards. |
+| Upgrade type | Example | What to do | Database migrations | Downtime |
+| --- | --- | --- | --- | --- |
+| Patch | 6.0.0 → 6.0.5 | Check the upgrade impact of each patch you cross. Otherwise update the version and restart. | Normally none. Exceptions are marked **Action required**. | A short restart |
+| Minor | 6.0 → 6.1 | Read the version page and run your runbook. | Possible | A maintenance window |
+| Major | 5.4 → 6.0 | Read the version page carefully. New components may be required. Test on a copy first. | Yes | A maintenance window |
 
-One-click and single-instance deployments require an interruption. Kubernetes replicas improve
-availability during node failures, but do not make database changes safe for mixed app versions.
-[Online upgrades](/self-hosting/configuration/online-upgrade) remain conditional and under validation.
-Use maintenance unless the selected release and topology have a validated alternative.
+During a maintenance window, surveys, the API and the admin UI are unavailable, and background jobs pause.
+New survey responses can't be submitted until the upgrade is done. On a single server, every upgrade needs
+a restart. On Kubernetes, more replicas protect you from node failures, but they don't make database
+migrations safe to run while the old version keeps serving traffic.
 
 ## After the upgrade
 
 Keep public traffic closed while you check:
 
-- Sign-in, an allowed user, a denied user, a scoped API key and a revoked permission.
-- A survey submission, its stored response, and an expected webhook or workflow delivery.
-- Permission preparation, running image IDs, worker queues, logs and dashboard queries.
+- You can sign in, and a user without access to a survey still can't see it.
+- An API key works for what it's allowed to do and is refused for anything else.
+- You can submit a survey response, and it appears in the results.
+- Webhooks and workflows that you rely on still run.
+- All migrations and background jobs finished, and the logs show no errors.
 
-Open a fresh browser session and hard-refresh an old tab. If you use a CDN, verify
-[current renderer assets](/self-hosting/configuration/cdn) reach clients.
-Resume controllers and traffic only after acceptance. Retain backups until the upgrade is accepted.
+Then open the app in a new browser session. If you use a CDN, check that browsers get the new
+[survey assets](/self-hosting/configuration/cdn). For a fuller check, run the
+[deployment check](/self-hosting/setup/deployment-check) against a test workspace.
 
-
-Run the [deployment check](/self-hosting/setup/deployment-check) in a dedicated workspace when a matching
-release image is published; otherwise use the manual acceptance checklist. It complements the permission, worker and release-specific checks; skipped checks are not proof of success.
+Reopen traffic only when these checks pass. Keep your backup until you're sure the upgrade is good.
 
 ## If something fails
 
-Keep maintenance active and use [troubleshooting](/self-hosting/upgrade/troubleshooting).
-Database changes can make an image-only downgrade unsafe. Follow the
-[coordinated restore procedure](/self-hosting/operate/backup-restore) when repair is not possible.
+Keep the maintenance window open and use [troubleshooting](/self-hosting/upgrade/troubleshooting). Going back
+to the old image doesn't undo database migrations. If you can't fix the problem, follow
+[backup and restore](/self-hosting/operate/backup-restore) to restore the database, files and configuration together.

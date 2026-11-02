@@ -61,7 +61,7 @@ does not fix this; it is not a supported configuration option in these releases.
 - For Microsoft Entra, use the [dedicated Azure AD provider](/self-hosting/configuration/auth-sso/azure-ad-oauth).
   Changing providers also requires testing existing-account linking; do not switch a production provider without rehearsal.
 - For generic OIDC, the [5.4 authentication update](/self-hosting/upgrade/versions/5.4-authentication)
-  removes the unconditional missing-`iss` requirement. Prefer the recommended latest 5.4 stop and verify
+  removes the unconditional missing-`iss` requirement. Verify
   sign-in against your actual provider. This does not disable issuer validation when `iss` is returned.
 - Keep a working administrator sign-in available during rehearsal. Capture redacted callback errors if it fails.
 

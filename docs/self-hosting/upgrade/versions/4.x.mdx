@@ -4,8 +4,8 @@ description: "Changes to review when catching up within the 4.x release line."
 icon: "arrow-up-right-dots"
 ---
 
-**Applies to:** existing 4.x installations, both editions and deployment methods. Use the latest 4.9
-patch as the [recommended stop](/self-hosting/upgrade/paths) before v5. Read only the rows you cross.
+**Applies to:** existing 4.x installations, both editions and deployment methods. Upgrade one minor at a
+time, to its latest patch, as described in [Upgrade paths](/self-hosting/upgrade/paths). Read the row for the minor you upgrade to.
 The detailed [4.0](/self-hosting/upgrade/versions/4.0) and [4.7](/self-hosting/upgrade/versions/4.7) instructions remain separate.
 
 ## Before
@@ -30,7 +30,7 @@ Do not copy a newer chart's gateway configuration into an older release without 
 
 Use the [4.x/5.x maintenance procedure](/self-hosting/upgrade/legacy). Startup applies pending schema and
 data migrations. Keep all writers stopped and traffic closed until migrations and required backfills complete.
-There is no requirement here to install every 4.x minor individually.
+Install every 4.x minor in turn. Skipping a minor is not supported.
 
 ## After
 
@@ -42,6 +42,6 @@ Verify an existing account and an existing integration; testing only newly creat
 These releases include dropped fields, renamed structures and data rewrites. Use a coordinated restore
 when required; do not assume an image-only downgrade is safe across 4.x minors.
 
-Sources: tagged deployment files and application migrations from
+All changes:
 [4.0.0 through 4.9.7](https://github.com/formbricks/formbricks/compare/4.0.0...4.9.7).
 See each [published release](https://github.com/formbricks/formbricks/releases) for the complete product changes.

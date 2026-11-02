@@ -97,13 +97,12 @@ before updating apt and prints the path to its backup.
 
 ## Update
 
-Follow [Upgrade Docker and one-click](/self-hosting/upgrade/docker) for preparation, maintenance,
-ordered commands and completion checks. Read [version-specific notes](/self-hosting/advanced/migration)
-before changing images.
+<span id="add-spicedb-to-an-existing-one-click-installation" />
 
-### Add SpiceDB to an Existing One-Click Installation
-
-See [v6 dependency setup](/self-hosting/upgrade/versions/6.0#one-click-dependency-setup).
+To upgrade, start with [Upgrade Formbricks](/self-hosting/advanced/upgrade), then follow the
+[one-click runbook](/self-hosting/upgrade/one-click). Don't run `./formbricks.sh update` before you've pinned
+the target version: it pulls whatever the image tag points to, which is `latest` by default. To add SpiceDB to
+an existing installation for 6.0, see the [6.0 setup steps](/self-hosting/upgrade/versions/6.0#first-v6-dependency-setup).
 
 ### Limit request bodies on authentication routes
 

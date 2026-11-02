@@ -154,7 +154,7 @@ breakdown** chart presets use them. On Docker the model is two files next to you
 `'npsCount' not found`.
 
 - **One-click:** `./formbricks.sh update`, run with the **target release’s** updater as described under
-  [Docker and one-click upgrade](/self-hosting/upgrade/docker), refreshes both files while the stack is stopped. It takes them
+  [one-click upgrade](/self-hosting/upgrade/one-click), refreshes both files while the stack is stopped. It takes them
   from the release your Formbricks image runs, and keeps the previous copies in `cube/previous/`. If either file
   cannot be refreshed, both stay as they were, and the update finishes and prints the command to retry.
   If the image is pinned to a digest or a custom tag, the updater leaves both files alone; use the Docker

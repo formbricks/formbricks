@@ -1,121 +1,133 @@
 # Release guidance template
 
-Use this for every stable release, including patches and backports. Write the deployment summary once
-and reuse it in the GitHub release notes. A release with no extra action still needs a release-note entry;
-it does not need an empty upgrade page.
+Use this for every stable release, including patches and backports.
+
+- **GitHub Releases is the source of truth for release notes.** The `release-notes` skill writes the
+  GitHub release, including its `## Upgrade impact` section.
+- **The docs mirror it.** After publication, copy the summary and the upgrade-impact line into
+  `docs/platform/changelog.mdx`. Don't rewrite the text.
+- **The docs hold the procedures.** Each minor has one version page with the steps. A patch adds a row
+  to its minor's page. A release with nothing to do still gets a release-notes entry, but no extra page.
 
 ## Before writing
 
-Compare the actual previous and target **release tags**, not current `main`. Backports can differ across
-release lines. Record the checked tags and source paths in the release evidence.
+Compare the previous and target **release tags**, not `main`. Backports can differ between release lines.
 
-- Review application **and Hub** migrations: data rewrites, removed fields, indexes/locks, backfills,
-  timeouts, order, disk/WAL needs, reruns and downgrade limits.
-- Compare Compose, installer, chart/CRDs, images, model files, configuration defaults and secret bindings.
-  Separate existing-install actions from fresh-install defaults. Never imply a PostgreSQL major or storage
-  engine change is safe just because a reference file changes.
-- Check integrations: SSO callbacks/account linking, SDK/API contracts, API-key scopes, webhooks, queues,
-  old uploads, survey links and optional features. Name affected and fixed patches.
-- Verify the proposed upgrade path, required stops and applicable deployment methods. Distinguish a
-  source review from a runtime upgrade/restore rehearsal; cite exact pairs and topology when tested.
-- Rehearse supported release paths with existing data before claiming they are tested. Include an existing
-  SSO account, an old file, a scoped/denied API key, a survey response, workers and rollback. Use synthetic
-  fixtures or authorized isolated data; never put customer configuration, identities or secrets in public docs.
+- Application and Hub migrations: data rewrites, removed fields, new indexes, backfills, timeouts, order,
+  disk space needed, and what a rollback can't undo.
+- Compose, installer, chart, CRDs, images, Cube model files, default settings and secret bindings.
+  Keep "what existing installations must do" separate from "new defaults for fresh installs".
+- The permission schema (`authzed/schema.zed`): if it changed, permission preparation needs the schema digest.
+- Integrations: SSO callbacks and account linking, API and SDK contracts, API-key scopes, webhooks,
+  old uploads, survey links and optional features.
+- The upgrade test: each minor is tested from the latest patch of the previous minor, and each patch
+  from the previous patch. Confirm it ran before publishing.
 
-## Release-note entry
+Never put customer configuration, identities or secrets in public docs.
 
-Add to `docs/platform/changelog.mdx`. Replace every placeholder; do not publish alternatives or empty fields.
+## Release-notes entry (docs mirror)
+
+Add to the top of `docs/platform/changelog.mdx`:
 
 ```mdx
 <Update label="VERSION" description="PUBLICATION DATE">
+<span id="release-X-Y-Z" />
 
-One sentence about the user-visible change.
+One sentence about what changed for users.
 
-**Deployment impact:** Action required for AFFECTED SETUPS / Standard procedure only.
+**Upgrade impact: None.**
 
-- REQUIRED ACTION, with a link to the exact procedure. Omit this bullet when no extra action is needed.
-- Expected downtime or a release-specific exception to the standard maintenance procedure.
+<!-- or: **Upgrade impact: Action required** for WHO: WHAT. Do the steps in [VERSION: TOPIC](/self-hosting/upgrade/versions/PAGE). -->
 
-[Upgrade steps](/self-hosting/upgrade/versions/TARGET) · [Complete changes](GITHUB_RELEASE_URL)
+[All changes on GitHub](GITHUB_RELEASE_URL)
 
 </Update>
 ```
 
-Use **Review required** if historical evidence is incomplete; do not infer “no action” from a missing
-migration guide. For a verified standard-only release, link the shared deployment procedure instead of
-creating `TARGET`. Link patch actions from the affected minor page too, so operators skipping patches find them.
+Use only the two upgrade-impact values. Never publish "review required" or another "not yet known" status:
+find out before publishing.
 
-## Upgrade checklist
+## Patch row
 
-Create a page only when extra actions need it. Keep the checklist brief. Move long SQL, troubleshooting
-and optional-feature procedures to focused linked pages; keep one canonical copy of each command.
+Add a row to the **Patch actions** table on the minor's version page:
 
-### Names and placement
+```mdx
+| 6.1.4 | None. |
+| 6.1.5 | Action required for WHO: [6.1.5 security updates](/self-hosting/upgrade/versions/PAGE) (SHORT LIST). |
+```
 
-- Use `<Formbricks version>: <Topic>`: `6.1: Upgrade guide`, `6.1.0: Single-use links`,
-  or `6.1.2: Security updates`. Use a release line for pages spanning its patches; an exact version
-  for a change introduced in that release. Component versions belong in the instructions.
-- Put patch actions in the affected release-line checklist. For shared backports, list every applicable
-  version in the shared page title and link it from each checklist with that line's exact version.
-- Keep dates in release metadata. Use `Unreleased: <Topic>` until a release is assigned. Preserve URLs
-  and anchors when renaming existing pages; do not create a separate patch/component navigation category.
+A patch that several release lines share gets one page, with every version in its title, linked from each line's row.
+
+## Version page (one per minor)
+
+Create `docs/self-hosting/upgrade/versions/MAJOR.MINOR.mdx`. Add it to `docs/docs.json`, to
+`docs/self-hosting/advanced/migration.mdx`, and as a row in `docs/self-hosting/upgrade/paths.mdx`.
 
 ```mdx
 ---
-title: "TARGET: Upgrade guide"
-description: "The concrete changes operators must prepare for."
+title: "MAJOR.MINOR: Upgrade guide"
+description: "What changes in MAJOR.MINOR and what you need to do when you upgrade."
 icon: "arrow-up-right-dots"
 ---
 
-**Applies to:** SOURCE RANGE → TARGET RANGE; DEPLOYMENT METHODS; EDITIONS/FEATURES.
-Choose the required stops in [Upgrade paths](/self-hosting/upgrade/paths).
-For a focused procedure, also state **Introduced in:** EXACT VERSION and who needs to act.
-Changes apply when crossing their version, including upgrades to later patches; they do not add
-intermediate installation stops.
+**Upgrade from:** the latest PREVIOUS_MINOR patch. Skipping a minor version is not supported; see [Upgrade paths](/self-hosting/upgrade/paths).
+**Downtime:** a maintenance window. **Applies to:** EDITIONS AND SETUPS.
 
-## Before
+## What changes
 
-| Who needs to act | Change    | Required action                                                       |
-| ---------------- | --------- | --------------------------------------------------------------------- |
-| AFFECTED SETUP   | OLD → NEW | Exact setting/service/file, where to change it, and what to preserve. |
+- Three to six plain bullets: what's different after the upgrade, and why it matters.
 
-State maintenance impact, migration duration factors, prerequisites and backup scope.
-New secrets: include the exact generation command, storage location and service bindings. Distinguish
-secrets from identifiers and provider-issued credentials; preserve existing keys.
-New files: link the release source or give a download command, destination and working directory.
-A “merge” instruction must name the blocks to copy, referenced YAML anchors and settings to preserve.
-Explain which setup runs automatically, what the operator runs, and the success/failure signals.
-Optional components: say explicitly when they can remain disabled.
-Name the first affected/fixed patch; do not apply a later patch's behavior to TARGET.0.
+## Before you upgrade
 
-## During
+| Who            | What to do                                                                 |
+| -------------- | -------------------------------------------------------------------------- |
+| Everyone       | Plan a maintenance window. SAY WHAT MAKES THE MIGRATION SLOW, IF ANYTHING. |
+| AFFECTED SETUP | The exact setting, service or file, where to change it, and what to keep.  |
 
-Link the deployment procedure applicable to this target. Add only release-specific ordering/commands.
-Use a selected immutable release for images, scripts, charts and model files; never copy historical
-commands that fetch today's `stable` or `latest`. State stop conditions and expected exit/result.
+### Patch actions
 
-## After
+Check each patch you cross. You can go straight to the latest MAJOR.MINOR patch.
 
-- Verify the changed behavior with existing data, users and integrations.
-- Confirm migrations, required backfills, permissions and workers completed before advancing.
-- Complete the [shared acceptance checks](/self-hosting/upgrade/rehearse#acceptance-at-every-stop).
+| Patch | Upgrade impact |
+| ----- | -------------- |
 
-## Recovery
+## Upgrade
 
-State which changes cannot be undone by an image rollback, which coordinated data must be restored,
-and any repair needed when rolling forward again. Link [restore](/self-hosting/operate/backup-restore).
+Follow the runbook for your setup: [Kubernetes](/self-hosting/upgrade/kubernetes),
+[Docker Compose](/self-hosting/upgrade/docker) or [one-click](/self-hosting/upgrade/one-click).
+Add only steps or ordering that are specific to this version.
 
-Sources: exact release notes/comparison links. Evidence: source review or named tested pair/topology,
-with upgrade and restore results. Never use a documentation build as runtime evidence.
+## Check it worked
+
+- Concrete checks with what the operator should see.
+
+Also do the [checks after the upgrade](/self-hosting/advanced/upgrade#after-the-upgrade).
+
+## If something goes wrong
+
+What a rollback to the old image can't undo, and what to restore. Link [backup and restore](/self-hosting/operate/backup-restore).
+
+All changes: [PREVIOUS → VERSION](https://github.com/formbricks/formbricks/compare/PREVIOUS...VERSION).
 ```
 
-## Ready for review
+Keep version pages short. Put long SQL, troubleshooting or optional-feature procedures on a focused page
+under `versions/`, named `MAJOR.MINOR.PATCH: Topic`, and link it. Keep one copy of each command.
 
-- A reader can identify their next stop and all required actions without researching an unnamed “tested pair”.
-- Commands use services/executables present in the target; dependency pins and chart/app mapping are checked.
-- A reader can obtain every file and secret, identify where each command runs, and recognize success without guessing.
-- Shared file-download and setup procedures have one canonical home; link them instead of duplicating scripts.
-- The route was walked from its oldest supported source, including patch actions and existing custom storage/SSO.
-- Test evidence, known gaps and recovery limits are explicit. “No extra action” is an assessed result.
-- Run Mintlify validation, links/anchors and a desktop/mobile preview. Preserve existing URLs and heading anchors.
-- Use the existing release-authoring checks; this template adds no separate approval workflow.
+## Writing rules
+
+- For each step, say where to run it, the exact command or file change, and what the operator should see.
+- New secrets: give the generation command, where to store the value and which services use it.
+- New files: link the release source or give the download command and destination.
+- "Merge" instructions name the blocks to copy and the settings to keep.
+- Say what runs automatically and what the operator runs.
+- Use pinned versions in examples, never `latest` or `stable`.
+- Write for the reader: no "evidence", "source review", "reviewed on" or other notes about how the page was made.
+- Plain words. No slash compounds such as "app/Hub" in sentences. Short sentences.
+
+## Before you merge
+
+- A reader can find their next stop and every required action without asking anyone.
+- Every command uses services and executables that exist in the target release.
+- Every file and secret can be obtained, every command says where it runs, and success is recognizable.
+- Run `npx mint validate` and `npx mint broken-links` in `docs/`, and check the pages on desktop and mobile in the preview.
+- Keep existing URLs and heading anchors. Add a redirect for a moved page and an invisible `<span id>` for a removed heading.

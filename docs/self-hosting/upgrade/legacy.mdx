@@ -25,7 +25,7 @@ Choose [release stops](/self-hosting/upgrade/paths), read all crossed version no
 
     1. Close traffic at the proxy and stop `formbricks`. Stop Hub, workers and scheduled/external writers
        **if present**. Leave databases running and take the [coordinated backup](/self-hosting/operate/backup-restore).
-    2. Install the reviewed configuration and [Cube model files](/self-hosting/upgrade/configuration#download-the-cube-model-files)
+    2. Install the updated configuration and [Cube model files](/self-hosting/upgrade/configuration#download-the-cube-model-files)
        (v5 targets only). Stop Cube before replacing its files if it is already running. For the bundled
        database/cache, run `docker compose up -d --wait postgres redis`; keep the same PostgreSQL major
        and volumes. Verify external infrastructure through its own deployment instead.
@@ -41,14 +41,14 @@ Choose [release stops](/self-hosting/upgrade/paths), read all crossed version no
        See the [5.4 index procedure](/self-hosting/upgrade/versions/5.4-database) for large response tables.
     4. For a **4.x target**, migrations run on app startup. The original **5.0 target** also runs app
        migrations at startup, with Hub migrations in its separate service. Keep traffic closed until all
-       migrations complete. Prefer the [recommended 5.4 stop](/self-hosting/upgrade/paths) when crossing from v4.
-    5. Start the reviewed stack with `docker compose up -d`. Inspect `docker compose ps -a` and migration
+       migrations complete. Upgrade one minor version at a time; see [Upgrade paths](/self-hosting/upgrade/paths).
+    5. Start the stack with `docker compose up -d`. Inspect `docker compose ps -a` and migration
        logs; a running app alone does not prove Hub migrations completed.
 
     No SpiceDB command, `authzed-ops` service or v6 acknowledgement applies to these targets.
   </Tab>
   <Tab title="Kubernetes and GitOps">
-    1. Render the selected published chart with `--version <selected-chart-version>`, reviewed
+    1. Render the selected published chart with `--version <selected-chart-version>`, your
        `-f <values-file>` and explicit images. Keep Secret names,
        PVCs, external datastores and operator ownership. Check which migration hooks this chart actually ships.
     2. Close ingress traffic; pause GitOps, autoscalers, schedules and all app/Hub writers. Take coordinated backups.

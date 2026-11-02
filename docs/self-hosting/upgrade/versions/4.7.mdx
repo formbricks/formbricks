@@ -35,7 +35,7 @@ mean a skipped backfill has completed.
 ### Complete a skipped backfill
 
 Run the script from the **installed release image**, after its migrations succeed. Do not run multiple
-copies concurrently. On the recommended route, complete it at the 4.9 stop before moving to v5.
+copies concurrently. Complete it before you upgrade to the next minor version.
 
 <Tabs>
   <Tab title="Docker">
@@ -70,5 +70,5 @@ database resources. Stop and investigate any error before advancing.
 Keep the old configuration and coordinated backup. Use [restore](/self-hosting/operate/backup-restore) if
 repair cannot complete; reverting an image does not undo URL or attribute-data rewrites.
 
-Sources: [4.7.0 changes](https://github.com/formbricks/formbricks/compare/4.6.1...4.7.0) and the
+All changes: [4.7.0 changes](https://github.com/formbricks/formbricks/compare/4.6.1...4.7.0) and the
 [backfill script](https://github.com/formbricks/formbricks/blob/4.9.7/packages/database/src/scripts/backfill-attribute-values.ts).

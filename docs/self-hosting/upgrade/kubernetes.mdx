@@ -1,80 +1,192 @@
 ---
 title: "Upgrade Kubernetes"
-description: "An ordered maintenance procedure for Helm and GitOps deployments."
+description: "Upgrade a Helm, Argo CD or Flux installation, step by step."
 icon: "dharmachakra"
 ---
 
-Use this procedure for **v6 targets** with Helm, Argo CD or Flux. For a 4.x/5.x target, use the
-[historical procedure](/self-hosting/upgrade/legacy). First complete the
-[upgrade checklist](/self-hosting/advanced/upgrade) and your [version notes](/self-hosting/advanced/migration).
+Use this runbook if you installed Formbricks with the Helm chart, directly or through Argo CD or Flux.
+It covers upgrades **to 6.0 or later**. To upgrade to a 4.x or 5.x version, use the
+[4.x and 5.x procedure](/self-hosting/upgrade/legacy).
+
+Before you start:
+
+- Find your next stop in [Upgrade paths](/self-hosting/upgrade/paths) and read its version page.
+- Plan a maintenance window for a minor or major upgrade. For a patch upgrade, see [patch upgrades](#patch-upgrades).
+- You need `kubectl` and `helm` access to the namespace, and `argocd` or `flux` if you use them.
 
 <Steps>
-  <Step title="Prepare the target configuration">
-    Follow [Prepare Helm values](/self-hosting/upgrade/configuration#prepare-helm-values). Record the chart version and all image references from its rendered manifests. Keep the application
-    image used for preparation identical to the image used for rollout. Chart and app versions are independent.
-
-    Preserve Secrets, storage bindings and custom values. Review CRD ownership before changing Envoy or
-    SpiceDB operators; use the [installation reference](/self-hosting/setup/kubernetes#envoy-bundle-modes).
-    Keep existing cluster-wide operators under their current owner.
-  </Step>
-  <Step title="Enter maintenance and stop writers">
-    Close public traffic at your ingress. Pause GitOps reconciliation, image updaters and autoscalers;
-    suspend schedules. Record their original settings.
-
-    Stop app replicas, Hub API/workers, optional taxonomy workers, running Jobs and external writers.
-    Suspending a CronJob does not stop its existing Jobs. Wait for in-flight transactions to finish.
-    Leave PostgreSQL, Redis and SpiceDB available.
-  </Step>
-  <Step title="Back up coordinated state">
-    Take [backups](/self-hosting/operate/backup-restore) after the final writes.
-    Include every affected datastore, object storage, configuration and secrets.
-  </Step>
-  <Step title="Prepare with the target image">
-    For releases using SpiceDB, run the [preparation Job](/self-hosting/upgrade/prepare#helm-and-gitops).
-    It applies application migrations and prepares permissions. Run only one preparation process.
-
-    Require exit `0` and `upgrade_prepared`. Review a schema mismatch before supplying the expected
-    digest. On failure, keep writers stopped and use [troubleshooting](/self-hosting/upgrade/troubleshooting).
-  </Step>
-  <Step title="Deploy the reviewed release">
-    Set `authzed.migrationAcknowledged: true` in the values tracked by your deployment system only
-    after preparation succeeds. Keep `authzed.consistency: fully_consistent` in the tracked Helm values.
-
-    For direct Helm deployments:
-
+  <Step title="Set the names and versions">
     ```bash
-    helm upgrade <release> oci://ghcr.io/formbricks/helm-charts/formbricks \
-      --namespace <namespace> --version <target-chart-version> \
-      --values values.yaml --wait --wait-for-jobs --timeout <rehearsed-timeout>
+    ns=formbricks                 # your namespace
+    rel=formbricks                # your Helm release name (helm list -n "$ns")
+    target_version=6.1.3          # your next stop
+    writers="app.kubernetes.io/instance=${rel},app.kubernetes.io/component in (formbricks,hub,hub-worker,taxonomy)"
     ```
 
-    Replace placeholders with your recorded values; use a timeout measured in rehearsal, such as `30m`.
-    The chart's permission gate checks prepared state; it does not replace the preparation Job.
-  </Step>
-  <Step title="Verify, then reopen traffic">
-    Run the [deployment check](/self-hosting/setup/deployment-check) in a dedicated workspace when a matching
-    published image exists; otherwise use the [manual checks](/self-hosting/upgrade/rehearse#acceptance-at-every-stop).
-    Also complete the permission, worker and release-specific checks below; skipped checks are not a pass.
+    Each release publishes a chart with the same version number as the app: chart `6.1.3` deploys app `6.1.3`.
+    Check it with:
 
-    Complete the [acceptance checks](/self-hosting/advanced/upgrade#after-the-upgrade), including any
-    version-specific backfill or enablement. Read actual pod image IDs and check Jobs completed.
-    Restore controllers against the new desired state, then reopen traffic and watch queues and errors.
+    ```bash
+    helm show chart oci://ghcr.io/formbricks/helm-charts/formbricks --version "$target_version" | grep -E '^(version|appVersion):'
+    ```
+  </Step>
+  <Step title="Update your values">
+    Compare the new chart's defaults with your values file, and add what the version page asks for:
+
+    ```bash
+    helm show values oci://ghcr.io/formbricks/helm-charts/formbricks --version "$target_version" > values-${target_version}-defaults.yaml
+    ```
+
+    - Keep your Secrets, storage, database and ingress settings.
+    - If you pin `deployment.image.tag` or `deployment.image.digest`, change it to the target version. Otherwise the chart uses its own app version.
+    - Keep `authzed.consistency: fully_consistent`.
+    - Don't set `authzed.migrationAcknowledged: true` for a **first** 6.0 upgrade yet. You set it after permission preparation.
+
+    See [Prepare Helm values](/self-hosting/upgrade/configuration#prepare-helm-values) for details.
+  </Step>
+  <Step title="Pause GitOps and close traffic">
+    Stop your deployment tool from changing the release during the upgrade:
+
+    ```bash
+    argocd app set <app> --sync-policy none          # Argo CD
+    flux suspend helmrelease <name> -n "$ns"         # Flux
+    ```
+
+    Write down the original sync settings so you can restore them. Then close public traffic at your ingress or load balancer.
+  </Step>
+  <Step title="Stop the app and workers">
+    Record the current replica counts, then scale the app, Hub, Hub worker and taxonomy to zero:
+
+    ```bash
+    kubectl get deploy -n "$ns" -l "$writers" \
+      -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.spec.replicas}{"\n"}{end}' > replicas-before.txt
+    cat replicas-before.txt
+    kubectl scale deploy -n "$ns" -l "$writers" --replicas=0
+    kubectl wait pod -n "$ns" -l "$writers" --for=delete --timeout=10m
+    kubectl get jobs -n "$ns"
+    ```
+
+    Wait for running Jobs to finish. Also stop any external process that writes to Formbricks.
+    PostgreSQL, Redis and SpiceDB keep running.
+  </Step>
+  <Step title="Back up">
+    Snapshot the app database and the SpiceDB database with your provider, for example an RDS snapshot.
+    For the bundled PostgreSQL:
+
+    ```bash
+    kubectl exec -n "$ns" formbricks-postgresql-0 -- pg_dump -Fc -U formbricks -d formbricks > formbricks-before-${target_version}.dump
+    ```
+
+    Also back up your values file, object storage and Secrets. See [backup and restore](/self-hosting/operate/backup-restore).
+  </Step>
+  <Step title="Prepare permissions (minor and major upgrades)">
+    Skip this step for a patch upgrade.
+
+    **First upgrade to 6.0 only:** SpiceDB must be running before preparation, but the 6.0 chart refuses the
+    upgrade until preparation is done. Deploy SpiceDB first, outside this Helm release, and point the chart
+    at it with `authzed.mode: external`, `authzed.operator.install: false` and `authzed.endpoint: <host>:<port>`.
+    For a database on managed PostgreSQL, first create its login and database:
+
+    ```sql
+    CREATE ROLE spicedb LOGIN PASSWORD '<password>';
+    GRANT spicedb TO CURRENT_USER;   -- needed when you aren't a superuser, for example on RDS
+    CREATE DATABASE spicedb OWNER spicedb;
+    ```
+
+    and store the connection and token in a Secret:
+
+    ```bash
+    kubectl create secret generic formbricks-authzed -n "$ns" \
+      --from-literal=preshared_key="$(openssl rand -hex 32)" \
+      --from-literal=datastore_uri='postgresql://spicedb:<url-encoded-password>@<host>:5432/spicedb?sslmode=require'
+    ```
+
+    See [SpiceDB authorization](/self-hosting/setup/kubernetes#spicedb-authorization) for the values that use this Secret.
+
+    **Every minor and major upgrade:** run the [preparation Job](/self-hosting/upgrade/prepare#helm-and-gitops)
+    with the target image and wait for it:
+
+    ```bash
+    kubectl apply -n "$ns" -f formbricks-prepare-job.yaml
+    kubectl wait -n "$ns" --for=condition=complete job/formbricks-v6-prepare --timeout=8h
+    kubectl logs -n "$ns" job/formbricks-v6-prepare | tail -20
+    ```
+
+    The log must end with `upgrade_prepared`. When the permission schema changes, as from 6.0 to 6.1, first get
+    the current schema digest and pass it to the Job; see [schema changes](/self-hosting/upgrade/prepare#schema-changes).
+    If preparation fails, keep everything stopped and see [preparation results](/self-hosting/upgrade/prepare#results-and-recovery).
+  </Step>
+  <Step title="Deploy the new version">
+    After preparation succeeds, set `authzed.migrationAcknowledged: true` in your values. Remove any leftover
+    migration Job, because Helm can't change an existing Job:
+
+    ```bash
+    kubectl delete job -n "$ns" formbricks-migration --ignore-not-found
+    ```
+
+    **Helm:**
+
+    ```bash
+    helm upgrade "$rel" oci://ghcr.io/formbricks/helm-charts/formbricks \
+      --namespace "$ns" --version "$target_version" --values values.yaml \
+      --wait --wait-for-jobs --timeout 30m
+    ```
+
+    Use a longer timeout if your migrations took longer in a test run.
+
+    **Argo CD or Flux:** commit the new chart version and values to Git, then sync once by hand, for example
+    `argocd app sync <app>`. Keep automatic sync off until the checks pass.
+  </Step>
+  <Step title="Check that it worked">
+    ```bash
+    kubectl get jobs -n "$ns"
+    kubectl get pods -n "$ns" -o custom-columns=NAME:.metadata.name,IMAGE:.spec.containers[0].image,STATUS:.status.phase
+    kubectl exec -n "$ns" deploy/formbricks -- formbricks-authzed upgrade check
+    ```
+
+    The migration Jobs must show `Complete`, the pods must run the target version, and `upgrade check` must exit `0`.
+    Then do the [checks after the upgrade](/self-hosting/advanced/upgrade#after-the-upgrade).
+  </Step>
+  <Step title="Restore replicas, controllers and traffic">
+    Hub, Hub worker and taxonomy start with the replica count from your values. If the app uses an autoscaler
+    (the default), scale it back up by hand, because an autoscaler doesn't scale up from zero:
+
+    ```bash
+    while read -r name replicas; do kubectl scale deploy -n "$ns" "$name" --replicas="$replicas"; done < replicas-before.txt
+    ```
+
+    Turn automatic sync back on with your original settings, for example
+    `argocd app set <app> --sync-policy automated --self-heal` or `flux resume helmrelease <name> -n "$ns"`.
+    Then reopen traffic and watch the logs and queues.
   </Step>
 </Steps>
 
-## GitOps sequencing
+<span id="gitops-sequencing" />
 
-- Commit the reviewed target chart, images and values before resuming reconciliation.
-- Make external Secrets and datastore prerequisites ready before the preparation Job.
-- Complete preparation before the application sync. Argo CD sync waves order chart resources;
-  they do not stop writers outside the release or prove maintenance is active.
-- Keep Flux CRD handling aligned with the platform owner. Do not let an automated rollback restart
-  old images against migrated data.
+## Patch upgrades
 
-If a Job already exists, inspect its result before deleting it to rerun. Keep sanitized evidence and
-remove temporary preparation resources after acceptance.
+A patch, such as 6.1.2 → 6.1.3, doesn't change the permission schema, so you don't run the preparation Job.
+Keep `authzed.migrationAcknowledged: true`. Before upgrading, check that the permission setup is clean:
 
-## Recovery
+```bash
+kubectl exec -n "$ns" deploy/formbricks -- formbricks-authzed upgrade check
+```
 
-`helm rollback` restores manifests, not database state. Keep traffic closed and follow
-[backup and restore](/self-hosting/operate/backup-restore) if completing the target upgrade is unsafe.
+It must exit `0`. Then run the **Deploy the new version** step. The chart runs the same check again before it
+upgrades. If the check reports pending permission work on a busy instance, stop the writers first as in the
+steps above, and run the upgrade again.
+
+<span id="recovery" />
+
+## If something goes wrong
+
+Keep traffic closed and GitOps paused. `helm rollback` restores the Kubernetes resources, not the database.
+To go back to the old version:
+
+1. Scale the writers to zero again.
+2. Restore the app database and the SpiceDB database from the backup, for example from the RDS snapshot.
+3. Roll back the release with `helm rollback "$rel" <revision> -n "$ns"` (find the revision with
+   `helm history "$rel" -n "$ns"`), or revert the commit in Git for Argo CD or Flux.
+4. Restore the replicas, check the old version works, then reopen traffic.
+
+See [troubleshooting](/self-hosting/upgrade/troubleshooting) and [backup and restore](/self-hosting/operate/backup-restore).

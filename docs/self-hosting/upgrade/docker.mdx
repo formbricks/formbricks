@@ -1,109 +1,124 @@
 ---
-title: "Upgrade Docker and one-click"
-description: "Upgrade your Compose installation with a recoverable maintenance window."
+title: "Upgrade Docker Compose"
+description: "Upgrade a Docker Compose installation that you manage yourself."
 icon: "docker"
 ---
 
-This procedure applies to **v6 targets**. For a target in 4.x or 5.x, use the
-[historical procedure](/self-hosting/upgrade/legacy).
+Use this runbook if you run Formbricks with your own `docker-compose.yml`. If you installed with the
+one-click script, use the [one-click runbook](/self-hosting/upgrade/one-click) instead. This runbook covers
+upgrades **to 6.0 or later**. To upgrade to a 4.x or 5.x version, use the [4.x and 5.x procedure](/self-hosting/upgrade/legacy).
 
-Run commands from your Compose directory; for one-click this is usually `formbricks/`.
-Keep the same project name, environment file and volume names. Complete the
-[planning checklist](/self-hosting/advanced/upgrade) first.
+Before you start:
+
+- Find your next stop in [Upgrade paths](/self-hosting/upgrade/paths) and read its version page.
+- **First upgrade to 6.0?** Do the [6.0 setup steps](/self-hosting/upgrade/versions/6.0#first-v6-dependency-setup)
+  first. They add the new permission services to your Compose file.
+- Plan a maintenance window for a minor or major upgrade. For a patch upgrade, see [patch upgrades](#patch-upgrades).
+- Run all commands in your Compose directory, with the same project name and `.env` file as always.
 
 <Steps>
-  <Step title="Review and download the target">
-    Follow the [configuration checklist](/self-hosting/upgrade/configuration), merging changes from the [version notes](/self-hosting/advanced/migration).
-    Keep your SMTP, storage, proxy and secret settings. The updater preserves customized Compose files;
-    pulling images alone does not add missing services.
-
-    Use the same target Formbricks image for `formbricks`, `formbricks-migrate`, `authzed-ops` and
-    `authzed-initialize`. Keep Hub API, worker and migration images matched too.
-
+  <Step title="Choose the target version">
     ```bash
-    docker compose config --quiet
-    docker compose pull
-    ```
-  </Step>
-  <Step title="Stop traffic and writers">
-    Enable maintenance at the proxy and let in-flight work finish. Stop app and Hub writers:
-
-    ```bash
-    docker compose stop formbricks hub
-    # If this project has a worker, also stop it:
-    # docker compose stop hub-worker
+    target_version=6.0.5
     ```
 
-    Check `docker compose config --services` and stop every worker present. Also stop optional taxonomy, external scripts and scheduled writers if present.
-    Keep databases running. Take a [coordinated backup](/self-hosting/operate/backup-restore).
+    Replace `6.0.5` with your next stop. Keep this terminal open; later steps use `target_version`.
   </Step>
-  <Step title="Prepare migrations and permissions">
+  <Step title="Update the configuration">
+    Follow the [configuration checklist](/self-hosting/upgrade/configuration). In short:
+
+    - Set the Formbricks image to `ghcr.io/formbricks/formbricks:<target_version>` on every service that uses it:
+      `formbricks`, `formbricks-migrate`, `authzed-ops` and `authzed-initialize`.
+    - Set `HUB_IMAGE_REF` to the Hub version of this release. All Hub services use the same image.
+    - Merge any new services or settings named on the version page. Keep your SMTP, storage, proxy and secret settings.
+    - Download the [Cube model files](/self-hosting/upgrade/configuration#download-the-cube-model-files) for the same version.
+
+    Then check the file and download the images before the maintenance window:
+
+    ```bash
+    docker compose config --quiet && docker compose pull
+    ```
+
+    The first command must print nothing. Pulling images doesn't add missing services; they must be in your Compose file.
+  </Step>
+  <Step title="Stop the app and back up">
+    Close traffic at your reverse proxy and let running requests finish. Stop every service that writes data:
+
+    ```bash
+    docker compose stop formbricks hub $(docker compose config --services | grep -x hub-worker)
+    ```
+
+    Also stop any taxonomy worker, scheduled script or external process that writes to Formbricks.
+    Keep the databases running. Then take a [backup](/self-hosting/operate/backup-restore) of the databases,
+    file storage, `.env` and `docker-compose.yml`.
+  </Step>
+  <Step title="Prepare permissions (minor and major upgrades)">
     <span id="prepare-migrations-and-permissions" />
 
-    For a first v6 upgrade, add the [v6 dependencies](/self-hosting/upgrade/versions/6.0#first-v6-dependency-setup)
-    while writers stay stopped. Start and verify PostgreSQL, datastore bootstrap, SpiceDB migrations and SpiceDB
-    using the reviewed configuration. For the bundled datastore, this starts its dependencies without the app:
+    For an upgrade to a new minor version, start only the databases and prepare the permission data with the new image:
 
     ```bash
     docker compose up -d --wait postgres spicedb
-    ```
-
-    For external datastores, verify their health through their own deployment instead.
-    Then, for both first and later v6 upgrades:
-
-    ```bash
     docker compose --profile authzed-ops run --rm --no-deps \
       --entrypoint formbricks-authzed-prepare authzed-ops \
       --backup-confirmed --writers-stopped
     ```
 
-    Use the [preparation reference](/self-hosting/upgrade/prepare#docker-and-one-click) for configuration details.
-    Stop on any failure. Review a changed schema before passing its expected digest.
-  </Step>
-  <Step title="Refresh assets and start the target">
-    For a first v6 upgrade, set `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` in `.env`
-    only after preparation. Review the [updater behavior](/self-hosting/upgrade/one-click-details).
+    If PostgreSQL or SpiceDB run outside this Compose project, skip the first command and check that they're healthy instead.
+    Preparation applies the app's database migrations, then prepares the permissions. It must end with
+    `upgrade_prepared`. If it fails, keep the app stopped and see [permission preparation](/self-hosting/upgrade/prepare#results-and-recovery).
 
-    **One-click:** from the directory containing `formbricks/`, download the updater for your recorded target release:
+    For a first upgrade to 6.0, then set `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` in `.env`.
+  </Step>
+  <Step title="Refresh the Cube model">
+    Skip this if Cube runs outside this Compose project. Otherwise stop Cube and install the model files
+    you downloaded for the target version:
 
     ```bash
-    cd ..
-    curl -fsSL "https://raw.githubusercontent.com/formbricks/formbricks/${target_version:?Set your target release tag}/docker/formbricks.sh" -o formbricks.sh
-    chmod +x formbricks.sh
-    ./formbricks.sh update
+    docker compose stop cube
     ```
 
-    **Manually managed Compose:** refresh the Cube model below. Preparation has completed application
-    migrations; run Hub migrations before starting its API and workers:
+    Then follow [install the Cube model files](/self-hosting/upgrade/configuration#download-the-cube-model-files).
+  </Step>
+  <Step title="Start the new version">
+    Run the app and Hub migrations, then start everything:
 
     ```bash
-    docker compose run --rm --no-deps hub-migrate
-    # Continue only after exit 0:
-    docker compose up -d
+    docker compose run --rm --no-deps formbricks-migrate &&
+      docker compose run --rm --no-deps hub-migrate &&
+      docker compose up -d
     docker compose ps -a
     ```
 
-    Check application and Hub migration services completed successfully before accepting traffic.
+    Each command only runs if the one before it succeeds. After permission preparation, the app migrations have
+    nothing left to do. All services must be running, or have
+    exited with code `0` for the migration services.
   </Step>
-  <Step title="Verify and reopen">
-    Run the [deployment check](/self-hosting/setup/deployment-check) in a dedicated workspace when a matching
-    published image exists; otherwise use the [manual checks](/self-hosting/upgrade/rehearse#acceptance-at-every-stop).
-    Also complete the permission, worker and release-specific checks below; skipped checks are not a pass.
-
-    Complete the [acceptance checks](/self-hosting/advanced/upgrade#after-the-upgrade).
-    Check worker delivery and renderer assets, then remove maintenance.
-    Keep backups and the previous configuration until acceptance.
+  <Step title="Check that it worked">
+    Do the [checks after the upgrade](/self-hosting/advanced/upgrade#after-the-upgrade). Then reopen traffic
+    at your proxy. Keep the backup and the old configuration until you're sure the upgrade is good.
   </Step>
 </Steps>
 
-## Refresh the Cube model
+<span id="refresh-the-cube-model" />
 
-Skip this when Cube is external. Use the [Cube model download and installation steps](/self-hosting/upgrade/configuration#download-the-cube-model-files)
-with the same target tag as the app. Stage both files before maintenance; stop Cube with `docker compose stop cube`
-and install the reviewed pair before restarting the stack. For one-click, see the
-[automatic refresh and its limits](/self-hosting/upgrade/versions/6.1-runtime#cube-model-files-for-docker).
+## Patch upgrades
 
-## Recovery
+A patch, such as 6.1.2 → 6.1.3, doesn't change the permission schema and normally has no database migrations.
+Check its upgrade impact in the [release notes](/platform/changelog), then:
 
-Do not run `docker compose down -v`. An old image cannot reverse migrations.
-Use [troubleshooting](/self-hosting/upgrade/troubleshooting) or [coordinated restore](/self-hosting/operate/backup-restore).
+1. Do the steps **Choose the target version** and **Update the configuration** above.
+2. Back up, then check that the permission setup is clean. This must exit `0`:
+
+   ```bash
+   docker compose --profile authzed-ops run --rm --no-deps authzed-ops upgrade check
+   ```
+
+3. Do the step **Start the new version** above. Skip permission preparation and the Cube refresh unless the
+   patch's upgrade impact asks for them.
+
+## If something goes wrong
+
+Don't run `docker compose down -v`: it deletes your data. Going back to the old image doesn't undo
+database migrations. Use [troubleshooting](/self-hosting/upgrade/troubleshooting), or restore the
+databases, files and configuration together with [backup and restore](/self-hosting/operate/backup-restore).

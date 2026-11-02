@@ -46,7 +46,7 @@ Compose file; pulling images alone cannot add the services.
 <Tabs>
   <Tab title="Docker and one-click">
     1. [Download the target Compose reference](/self-hosting/upgrade/configuration#download-the-selected-release)
-       into your existing Compose directory. When taking the recommended 5.4 stop, use that exact **5.4** tag.
+       into your existing Compose directory. Use the exact tag of your target version.
     2. Copy `hub`, `hub-migrate` and `cube` under your existing `services:` key. For targets 5.1 or later,
        also copy `formbricks-migrate`. Include their dependencies, environment and mounts, following the
        [merge checklist](/self-hosting/upgrade/configuration#merge-the-release-configuration).
@@ -105,7 +105,7 @@ not a newer example. Invalid provider credentials can prevent an enabled service
 ## During
 
 Follow the [4.x/5.x maintenance procedure](/self-hosting/upgrade/legacy).
-Stop writers, take coordinated backups, apply app migrations before Hub migrations, then start the reviewed stack.
+Stop writers, take coordinated backups, apply app migrations before Hub migrations, then start the stack.
 The original 5.0 assets run app migrations at startup; 5.1 and later provide `formbricks-migrate` separately.
 Use the target's ordering rather than copying a current startup command.
 
@@ -122,5 +122,5 @@ The environment/workspace migration renames tables and removes old columns. Reve
 alone is unsafe. Restore the pre-v5 database, files, configuration and images together using
 [backup and restore](/self-hosting/operate/backup-restore).
 
-Sources: [4.9.7 → 5.0.0](https://github.com/formbricks/formbricks/compare/4.9.7...5.0.0),
+All changes: [4.9.7 → 5.0.0](https://github.com/formbricks/formbricks/compare/4.9.7...5.0.0),
 [target 5.4.7 Compose](https://github.com/formbricks/formbricks/blob/5.4.7/docker/docker-compose.yml).

@@ -4,10 +4,9 @@ description: "Add SpiceDB, prepare permissions and verify the first v6 deploymen
 icon: "arrow-up-right-dots"
 ---
 
-**Applies to:** installations entering or updating within 6.0, Community and Enterprise, Docker/one-click and Kubernetes.
-The base-release steps apply when crossing 6.0.0; for later updates within 6.0, review the [patch actions](#patch-actions).
-From v4 or 5.0–5.3, first complete the [5.4 stop](/self-hosting/upgrade/paths). Review all crossed
-[5.x actions](/self-hosting/advanced/migration#version-5), including SSO and the response index.
+**Upgrade from:** the latest 5.4 patch. Skipping 5.4 is not supported; see [Upgrade paths](/self-hosting/upgrade/paths).
+**Downtime:** a maintenance window. **Applies to:** all editions and setups.
+Already on 6.0? For a later 6.0 patch, see the [patch actions](#patch-actions).
 
 <span id="during-and-after" />
 <span id="patch-specific-changes" />
@@ -133,50 +132,107 @@ is not required. [Prepare the target configuration](/self-hosting/upgrade/config
     </Steps>
   </Tab>
   <Tab title="Kubernetes">
-    - Configure the target chart for existing/external SpiceDB or the bundled operator, preserving cluster ownership.
-    - Provision the dedicated database/login and Secrets before running permission preparation. Do not install
-      a second operator over one managed by the platform team.
-    - Render the selected chart with your existing PVCs, database credentials and network policy.
-      Follow [SpiceDB operations](/self-hosting/configuration/authzed-operations) for the selected topology.
+    <Steps>
+      <Step title="Decide where SpiceDB runs">
+        The 6.0 chart refuses to upgrade a 5.4 release until permission preparation is done, and preparation
+        needs a running SpiceDB. So for this first upgrade, SpiceDB must run before you upgrade the Formbricks release:
+        either an existing SpiceDB managed by your platform team, or one you deploy separately first. Install
+        only one SpiceDB operator per cluster; if your platform team already runs one, set `authzed.operator.install: false`.
+      </Step>
+      <Step title="Create the SpiceDB database and Secret">
+        On managed PostgreSQL, such as RDS, create a separate login and database:
+
+        ```sql
+        CREATE ROLE spicedb LOGIN PASSWORD '<password>';
+        GRANT spicedb TO CURRENT_USER;   -- needed when you aren't a superuser
+        CREATE DATABASE spicedb OWNER spicedb;
+        ```
+
+        Store the connection and a new token in a Secret:
+
+        ```bash
+        kubectl create secret generic formbricks-authzed -n <namespace> \
+          --from-literal=preshared_key="$(openssl rand -hex 32)" \
+          --from-literal=datastore_uri='postgresql://spicedb:<url-encoded-password>@<host>:5432/spicedb?sslmode=require'
+        ```
+      </Step>
+      <Step title="Add the values">
+        ```yaml
+        authzed:
+          enabled: true
+          consistency: fully_consistent
+          auth:
+            existingSecret: formbricks-authzed
+          datastore:
+            existingSecret: formbricks-authzed
+          # For a SpiceDB that runs outside this release:
+          mode: external
+          operator:
+            install: false
+          endpoint: "<host>:<port>"
+          # External endpoints use TLS. Set insecure: true only for a plaintext endpoint inside the cluster.
+          # Set only after permission preparation succeeds:
+          migrationAcknowledged: false
+        ```
+
+        If your values set `DEFAULT_ORGANIZATION_ID` or `DEFAULT_ORGANIZATION_ROLE`, rename them as shown in the table above.
+        See [SpiceDB authorization](/self-hosting/setup/kubernetes#spicedb-authorization) for all options.
+      </Step>
+      <Step title="Continue with the runbook">
+        Follow the [Kubernetes runbook](/self-hosting/upgrade/kubernetes). Its permission preparation step
+        creates the permission data; then you set `authzed.migrationAcknowledged: true` and deploy.
+      </Step>
+    </Steps>
   </Tab>
 </Tabs>
 
 ### Patch actions
 
-Apply each change you cross on this release line, even when installing a later patch.
-These entries do not add intermediate installation stops.
+Check each patch you cross. You can go straight to the latest 6.0 patch. Patches within 6.0 don't change the
+permission schema, so you don't run permission preparation for them.
 
-| First affected patch | Action |
+| Patch | Upgrade impact |
 | --- | --- |
-| 6.0.1 | Storage setup helper changes to RustFS CLI; retain existing MinIO/S3 data and configuration. |
-| 6.0.2 | Apply the [6.0.2: Cube image migration](/self-hosting/upgrade/versions/cube). |
-| 6.0.3 | [6.0.3: Security updates](/platform/changelog#release-6-0-3). Helm AuthZed hooks use numeric user `1001`; review custom-image user overrides and authentication request-body limits. Deployment impact remains **review required**. |
-| 6.0.4 | [6.0.4: Security updates](/self-hosting/upgrade/versions/2026-10-security-patches): Redis CA, Hub/enrichment and MCP batches. |
-| 6.0.5 | [6.0.5: Security updates](/self-hosting/upgrade/versions/2026-10-27-patches): outgoing-email limits. |
+| 6.0.1 | The storage setup helper switches to the RustFS CLI. Keep your existing MinIO or S3 data and settings. |
+| 6.0.2 | Action required if you use the bundled Cube: [6.0.2 Cube image migration](/self-hosting/upgrade/versions/cube). |
+| 6.0.3 | None. Helm AuthZed hooks now run as user `1001`, which only matters for custom hook images. |
+| 6.0.4 | Action required for some setups: [6.0.4 security updates](/self-hosting/upgrade/versions/2026-10-security-patches) (Redis CA, Hub and enrichment, MCP batches). |
+| 6.0.5 | Action required for some setups: [6.0.5 security updates](/self-hosting/upgrade/versions/2026-10-27-patches) (outgoing-email limits). |
 
-## During
+<span id="during" />
 
-Use [Docker](/self-hosting/upgrade/docker) or [Kubernetes](/self-hosting/upgrade/kubernetes).
-Stop all writers, back up coordinated state and start only the required infrastructure. Run the selected
-image's [permission preparation](/self-hosting/upgrade/prepare); it applies app migrations before preparing
-and verifying permissions. Require exit `0` and `upgrade_prepared`; inspect failures instead of bypassing them.
+## Upgrade
 
-Only then set the deployment's v6 acknowledgement and start app/Hub services. Keep traffic closed.
-The released v6 images include the preparation executable; verify it in your selected image before maintenance,
-especially when using custom images or an older release candidate.
+Follow the runbook for your setup: [Kubernetes](/self-hosting/upgrade/kubernetes),
+[Docker Compose](/self-hosting/upgrade/docker) or [one-click](/self-hosting/upgrade/one-click).
+For this first v6 upgrade, the order matters:
 
-## After
+1. Stop the app and workers, and back up.
+2. Start only PostgreSQL and SpiceDB.
+3. Run [permission preparation](/self-hosting/upgrade/prepare) with the 6.0 image. It runs the app's
+   database migrations, then creates the permission data. It must end with `upgrade_prepared`.
+4. Only then set the v6 acknowledgement (`FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` in `.env`, or
+   `authzed.migrationAcknowledged: true` in Helm values) and start the app and Hub.
 
-- Verify allowed access, denied access, scoped API keys and revocation, including existing SSO users.
-- Check Embedded Data, existing responses, charts, old/new uploads and background work.
-- Include SpiceDB in backups and restore rehearsal. Run the [shared acceptance checks](/self-hosting/upgrade/rehearse#acceptance-at-every-stop).
+<span id="after" />
 
-## Recovery
+## Check it worked
 
-An image downgrade cannot undo app migrations or permission changes. Keep maintenance active and repair
-forward or restore coordinated data with matching v5 configuration/images. Never delete volumes.
-See [backup and restore](/self-hosting/operate/backup-restore).
+- Users can sign in, including existing SSO users, and see only what they should.
+- A scoped API key works for what it's allowed to do and is refused for everything else. A revoked permission stays revoked.
+- Embedded Data, existing responses, charts, and old and new uploads work.
+- Background jobs run.
 
-Source review: [5.4.0 → 6.0.0](https://github.com/formbricks/formbricks/compare/5.4.0...6.0.0) and
-[6.0 patches](https://github.com/formbricks/formbricks/compare/6.0.0...6.0.4).
-No published runtime evidence for a specific v5 → v6 pair is established here; [rehearse your route](/self-hosting/upgrade/rehearse).
+Also do the [checks after the upgrade](/self-hosting/advanced/upgrade#after-the-upgrade), and add the SpiceDB
+database to your regular backups.
+
+<span id="recovery" />
+
+## If something goes wrong
+
+Going back to the 5.4 image doesn't undo the database migrations or the permission data. Keep the maintenance
+window open, and either fix the problem and run preparation again, or restore the 5.4 database backup together
+with your 5.4 configuration. Never delete volumes. See [backup and restore](/self-hosting/operate/backup-restore).
+
+All changes: [5.4.0 → 6.0.0](https://github.com/formbricks/formbricks/compare/5.4.0...6.0.0) and
+[6.0 patches](https://github.com/formbricks/formbricks/compare/6.0.0...6.0.5).

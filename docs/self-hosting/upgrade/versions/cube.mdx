@@ -33,7 +33,7 @@ has no shell, so an old `command: sh -c '…'` wrapper fails with `Cannot find m
    ```
 
 4. During your [maintenance procedure](/self-hosting/advanced/upgrade), stop Cube, back up its model files
-   and install the reviewed pair using the linked steps. After the required app/Hub migrations succeed:
+   and install both files using the linked steps. After the required app/Hub migrations succeed:
 
    ```bash
    docker compose up -d --no-deps --force-recreate cube

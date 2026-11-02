@@ -15,9 +15,16 @@ icon: "server"
   <Card title="Configure Formbricks" icon="gear" href="/self-hosting/configuration">Connect identity, storage and integrations.</Card>
 </CardGroup>
 
-For a single server, choose [one-click](/self-hosting/setup/one-click) or [Docker Compose](/self-hosting/setup/docker).
-You own operation and recovery of a self-hosted deployment. Enterprise features require a
-[license](/self-hosting/advanced/license); support commitments follow your contract.
+## Choose your setup
+
+| Setup | Best for | Availability | Upgrades |
+| --- | --- | --- | --- |
+| [Kubernetes](/self-hosting/setup/kubernetes) | Production with high availability or an uptime SLA | Survives a node failure; you run managed PostgreSQL, Redis and object storage | Helm, Argo CD or Flux, in a maintenance window |
+| [Docker Compose](/self-hosting/setup/docker) | A single server that you manage yourself, with your own proxy or storage | One server: a restart or upgrade means downtime | You update `docker-compose.yml` and run the commands |
+| [One-click](/self-hosting/setup/one-click) | Small production installs on one Debian or Ubuntu server | One server: a restart or upgrade means downtime | `formbricks.sh` does most of the work |
+
+You run and recover a self-hosted installation yourself. Enterprise features need a
+[license](/self-hosting/advanced/license); support commitments are set in your contract.
 
 ## System requirements
 

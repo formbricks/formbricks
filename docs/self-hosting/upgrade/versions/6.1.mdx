@@ -1,58 +1,73 @@
 ---
 title: "6.1: Upgrade guide"
-description: "Required actions, compatibility exceptions and recovery for this release."
+description: "What changes in 6.1 and what you need to do when you upgrade."
 icon: "arrow-up-right-dots"
 ---
 
-**Applies to:** installations entering or updating within 6.1, both editions and deployment methods.
-The base-release steps apply when crossing 6.1.0; for later updates within 6.1, review the [patch actions](#patch-actions).
-Follow the [upgrade-path table](/self-hosting/upgrade/paths) when starting on an older major.
+**Upgrade from:** the latest 6.0 patch. Skipping 6.0 is not supported; see [Upgrade paths](/self-hosting/upgrade/paths).
+**Downtime:** a maintenance window. **Applies to:** all editions and setups.
 
-## Before
+## What changes
 
-- Applies to self-hosted 6.0 → 6.1 upgrades. From v5, complete the [6.0 prerequisites](/self-hosting/upgrade/versions/6.0) first.
-- The [published release notes](/platform/changelog) identify **6.0.2 → 6.1.0** as the tested pair.
-  This is reported release evidence, not a runtime rehearsal of your deployment.
-- Plan maintenance for respondent traffic, APIs and admin access; pause background workers.
-- Read the integration changes below before scheduling the upgrade.
-- The target runner builds and verifies response keyset indexes and backfills remaining Embedded Data and
-  survey ownership. Allow time and disk/WAL headroom; require migration completion before reopening.
-- If you use chart-managed Envoy, configure a dedicated external Redis/Valkey backend; the bundled
-  Envoy Redis images are unavailable. See [Envoy Redis images](/self-hosting/upgrade/versions/6.1-runtime#envoy-redis-images).
-- Refresh Cube model files and add the Hub worker where absent. Review [runtime changes](/self-hosting/upgrade/versions/6.1-runtime).
+- Survey visibility: organizations can restrict who sees each survey and its responses. It's off until you [turn it on](/self-hosting/upgrade/versions/6.1-visibility).
+- Encrypted single-use links created before 6.1 stop working and must be [created again](/self-hosting/upgrade/versions/6.1-single-use-links).
+- The permission schema changes, so permission preparation is needed.
+- New database indexes are built, and Embedded Data and survey ownership are backfilled during the migration.
+- Some API requests are validated more strictly (see [integration changes](#integration-changes-requiring-action)).
+
+## Before you upgrade
+
+| Who | What to do |
+| --- | --- |
+| Everyone | Plan a maintenance window. The migration builds indexes and backfills data, so allow extra time and free disk space on large databases. |
+| API integrations | Check the [integration changes](#integration-changes-requiring-action) below. |
+| Single-use link users | Plan to [create new encrypted single-use links](/self-hosting/upgrade/versions/6.1-single-use-links) after the upgrade. |
+| Docker Compose and one-click | Add the Hub worker if it's missing, and use the 6.1 Cube model files. See [runtime changes](/self-hosting/upgrade/versions/6.1-runtime). |
+| Kubernetes with chart-managed Envoy | Use your own Redis or Valkey for Envoy; the bundled Envoy Redis images are no longer available. See [Envoy Redis images](/self-hosting/upgrade/versions/6.1-runtime#envoy-redis-images). |
+| Kubernetes with custom images or taxonomy settings | Check the [security contexts and taxonomy timeouts](/self-hosting/upgrade/versions/6.1-runtime#helm-security-contexts-and-taxonomy-timeouts). |
 
 ### Patch actions
 
-Apply each change you cross on this release line, even when installing a later patch.
-These entries do not add intermediate installation stops.
+Check each patch you cross. You can go straight to the latest 6.1 patch.
 
-| First affected patch | Additional action |
+| Patch | Upgrade impact |
 | --- | --- |
-| 6.1.1 | [6.1.1: Security updates](/self-hosting/upgrade/versions/2026-10-security-patches): Redis CA, Hub, MCP batches and one-click port binding. |
-| 6.1.2 | [6.1.2: Security updates](/self-hosting/upgrade/versions/2026-10-27-patches): email limits, signed-link gates and taxonomy checks. |
+| 6.1.1 | Action required for some setups: [6.1.1 security updates](/self-hosting/upgrade/versions/2026-10-security-patches) (Redis CA, Hub, MCP batches, one-click port binding). |
+| 6.1.2 | Action required for some setups: [6.1.2 security updates](/self-hosting/upgrade/versions/2026-10-27-patches) (email limits, signed-link gates, taxonomy image). |
+| 6.1.3 | None. See [6.1.3](/platform/changelog#release-6-1-3). |
 
-## During
+<span id="during" />
 
-Use [Kubernetes](/self-hosting/upgrade/kubernetes) or [Docker Compose](/self-hosting/upgrade/docker).
-This release changes the permission schema. Review its current digest before preparation; do not bypass
-the mismatch check. The [online mode](/self-hosting/configuration/online-upgrade) remains under validation.
+## Upgrade
 
-## After
+Follow the runbook for your setup: [Kubernetes](/self-hosting/upgrade/kubernetes),
+[Docker Compose](/self-hosting/upgrade/docker) or [one-click](/self-hosting/upgrade/one-click).
+Because the permission schema changes, permission preparation asks you to confirm the change. See
+[schema changes](/self-hosting/upgrade/prepare) in permission preparation.
 
-Verify permissions, respondent submission, a scoped API key, background delivery and dashboard charts.
-Regenerate encrypted single-use links after deployment. Enable survey visibility only after its checks pass.
-Also check existing SSO, old/new uploads and the [shared acceptance checklist](/self-hosting/upgrade/rehearse#acceptance-at-every-stop).
+<span id="after" />
 
-## Recovery
+## Check it worked
 
-Keep maintenance active if migrations, permissions or acceptance checks fail. Restore matching app,
-Hub and SpiceDB state with configuration/images when repair cannot complete. Do not downgrade to recover
-unsigned links; it reintroduces the fixed vulnerability. See [coordinated recovery](/self-hosting/operate/backup-restore).
+- Users can sign in, including existing SSO users, and see the surveys they should.
+- You can submit a survey response, and API keys work for what they're allowed to do.
+- Webhooks and workflows run, and dashboard charts load.
+- Old and new file uploads open.
+- Then create new encrypted single-use links, and turn on survey visibility if you want it.
+
+Also do the [checks after the upgrade](/self-hosting/advanced/upgrade#after-the-upgrade).
+
+<span id="recovery" />
+
+## If something goes wrong
+
+Keep the maintenance window open. If you can't fix the problem, restore the app database, Hub data, SpiceDB and
+your configuration from the backup; see [backup and restore](/self-hosting/operate/backup-restore). Don't go back to
+an older version just to make old single-use links work again: that reopens the security issue 6.1 fixes.
 
 ## Integration changes requiring action
 
-These are historical compatibility exceptions; the [compatibility commitment](/self-hosting/advanced/release-maintenance-policy#integration-compatibility)
-does not erase them.
+6.1 is a minor release, but these changes can affect existing integrations.
 
 - Regenerate [encrypted single-use links](/self-hosting/upgrade/versions/6.1-single-use-links).
 - Review [Helm security contexts and taxonomy timeouts](/self-hosting/upgrade/versions/6.1-runtime#helm-security-contexts-and-taxonomy-timeouts)
@@ -64,39 +79,17 @@ does not erase them.
 * **Hidden fields can't share a name with a question.** Adding one on `POST` or `PUT /api/v1/management/surveys` returns 400. Existing surveys keep saving ([#9467](https://github.com/formbricks/formbricks/pull/9467))
 * **New survey limit per workspace.** `SURVEY_WORKSPACE_LIMIT` (a number, default `10000`, archived surveys included) caps the surveys in one workspace. Creating or copying a survey past it returns `422 workspace_survey_limit_reached` on v1 and v3. Raise it before upgrading if a workspace is close ([#9412](https://github.com/formbricks/formbricks/pull/9412))
 
+## More 6.1 changes
 
-## Survey visibility (opt-in)
+- <span id="survey-visibility-opt-in" />[Survey visibility (opt-in)](/self-hosting/upgrade/versions/6.1-visibility#survey-visibility-opt-in)
+- <span id="complete-the-visibility-rollout" />[Complete the survey visibility rollout](/self-hosting/upgrade/versions/6.1-visibility#complete-the-visibility-rollout)
+- <span id="encrypted-single-use-survey-links-must-be-regenerated-action-required-if-you-use-them" />[Regenerate encrypted single-use links (if you use them)](/self-hosting/upgrade/versions/6.1-single-use-links#encrypted-single-use-survey-links-must-be-regenerated-action-required-if-you-use-them)
+- <span id="bundled-tei-log-level" />[Bundled TEI log level](/self-hosting/upgrade/versions/6.1-runtime#bundled-tei-log-level)
+- <span id="database-transaction-limits" />[Database transaction limits](/self-hosting/upgrade/versions/6.1-runtime#database-transaction-limits)
+- <span id="611-one-click-port-binding" />[6.1.1: One-click port binding](/self-hosting/upgrade/versions/6.1-runtime#one-click-port-3000-is-published-on-the-host-only)
+- <span id="hub-worker-for-docker" />[Hub worker for Docker](/self-hosting/upgrade/versions/6.1-runtime#hub-worker-for-docker)
+- <span id="cube-model-files-for-docker" />[Cube model files for Docker](/self-hosting/upgrade/versions/6.1-runtime#cube-model-files-for-docker)
 
-See [6.1.0: Survey visibility](/self-hosting/upgrade/versions/6.1-visibility#survey-visibility-opt-in).
+<span id="release-details" />
 
-## Complete the visibility rollout
-
-See [6.1.0: Survey visibility](/self-hosting/upgrade/versions/6.1-visibility#complete-the-visibility-rollout).
-
-## Encrypted single-use survey links must be regenerated (action required if you use them)
-
-See [6.1.0: Single-use links](/self-hosting/upgrade/versions/6.1-single-use-links#encrypted-single-use-survey-links-must-be-regenerated-action-required-if-you-use-them).
-
-## Bundled TEI log level
-
-See [6.1: Runtime changes](/self-hosting/upgrade/versions/6.1-runtime#bundled-tei-log-level).
-
-## Database transaction limits
-
-See [6.1: Runtime changes](/self-hosting/upgrade/versions/6.1-runtime#database-transaction-limits).
-
-## 6.1.1: one-click port binding
-
-See [6.1: Runtime changes](/self-hosting/upgrade/versions/6.1-runtime#one-click-port-3000-is-published-on-the-host-only).
-
-## Hub worker for Docker
-
-See [6.1: Runtime changes](/self-hosting/upgrade/versions/6.1-runtime#hub-worker-for-docker).
-
-## Cube model files for Docker
-
-See [6.1: Runtime changes](/self-hosting/upgrade/versions/6.1-runtime#cube-model-files-for-docker).
-
-## Release details
-
-Reviewed on 26 October 2026. See [release notes](https://github.com/formbricks/formbricks/releases) for affected and fixed patches.
+See the [release notes](/platform/changelog) for each 6.1 patch.

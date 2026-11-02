@@ -342,10 +342,15 @@
             "pages": [
               "self-hosting/advanced/upgrade",
               "self-hosting/upgrade/paths",
-              "self-hosting/upgrade/rehearse",
-              "self-hosting/upgrade/kubernetes",
-              "self-hosting/upgrade/docker",
-              "self-hosting/upgrade/troubleshooting",
+              {
+                "group": "Runbooks",
+                "pages": [
+                  "self-hosting/upgrade/kubernetes",
+                  "self-hosting/upgrade/docker",
+                  "self-hosting/upgrade/one-click",
+                  "self-hosting/upgrade/legacy"
+                ]
+              },
               {
                 "group": "Upgrade by version",
                 "pages": [
@@ -388,37 +393,17 @@
                       "self-hosting/upgrade/versions/charts-dashboards",
                       "self-hosting/upgrade/versions/valkey-9"
                     ]
-                  },
-                  {
-                    "group": "Older releases",
-                    "pages": [
-                      "self-hosting/upgrade/versions/3.3",
-                      "self-hosting/upgrade/versions/3.2",
-                      "self-hosting/upgrade/versions/3.1",
-                      "self-hosting/upgrade/versions/3.0",
-                      "self-hosting/upgrade/versions/2.7",
-                      "self-hosting/upgrade/versions/2.6",
-                      "self-hosting/upgrade/versions/2.5",
-                      "self-hosting/upgrade/versions/2.4",
-                      "self-hosting/upgrade/versions/2.3",
-                      "self-hosting/upgrade/versions/2.2",
-                      "self-hosting/upgrade/versions/2.1",
-                      "self-hosting/upgrade/versions/2.0",
-                      "self-hosting/upgrade/versions/1.6",
-                      "self-hosting/upgrade/versions/1.2",
-                      "self-hosting/upgrade/versions/1.1"
-                    ]
                   }
                 ]
               },
               {
-                "group": "Advanced",
+                "group": "Reference",
                 "pages": [
                   "self-hosting/upgrade/configuration",
-                  "self-hosting/upgrade/legacy",
                   "self-hosting/upgrade/prepare",
-                  "self-hosting/configuration/online-upgrade",
-                  "self-hosting/upgrade/one-click-details"
+                  "self-hosting/upgrade/rehearse",
+                  "self-hosting/upgrade/one-click-details",
+                  "self-hosting/upgrade/troubleshooting"
                 ]
               }
             ]

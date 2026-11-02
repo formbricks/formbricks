@@ -110,7 +110,7 @@ installation must merge the released AuthZed services and environment manually, 
 v6 migration. The updater runs only the read-only `upgrade check` before stopping the existing application.
 A blocked check leaves it running. After a successful check, the updater stops the stack, waits for PostgreSQL,
 runs application migrations, and starts the new stack only if they succeed. Preparation is a separate
-[maintenance operation](/self-hosting/advanced/v6-maintenance-upgrade), including for later schema-changing releases.
+[maintenance operation](/self-hosting/upgrade/versions/6.0), including for later schema-changing releases.
 
 <Warning>
   `docker compose down` preserves PostgreSQL data. `docker compose down -v` deletes the volume containing both
@@ -228,7 +228,7 @@ application pod and do not require exposing PostgreSQL or SpiceDB.
 ## Upgrade an existing installation to v6
 
 Formbricks v6 has no legacy authorization fallback. Follow the
-[maintenance upgrade guide](/self-hosting/advanced/v6-maintenance-upgrade): stop all writers and controllers,
+[maintenance upgrade guide](/self-hosting/upgrade/versions/6.0): stop all writers and controllers,
 take recoverable backups, and run the target release's database migrations before preparing its graph.
 A bridge release is not required for the self-hosted maintenance path.
 
@@ -337,7 +337,7 @@ examples use `kubectl exec ... --`. The command names and arguments after those 
 Keep the original v5 images, configuration, coordinated backups, and schema digest until acceptance is complete.
 After database migrations, restoring an old image or running `helm rollback` alone may be incompatible with the
 database. Keep maintenance active and either fix forward or restore the matching backups and v5 configuration.
-Do not disable AuthZed inside v6. See the [recovery steps](/self-hosting/advanced/v6-maintenance-upgrade#results-and-recovery).
+Do not disable AuthZed inside v6. See the [recovery steps](/self-hosting/upgrade/prepare#results-and-recovery).
 
 Use explicit release versions and image digests for this upgrade. Do not rely on a moving `latest` or `stable`
 tag to perform the migration or to provide a tested rollback artifact.

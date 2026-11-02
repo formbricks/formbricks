@@ -6,8 +6,7 @@ icon: "arrow-up-right-dots"
 
 **Applies to:** installations entering or updating within 5.4, both editions and deployment methods.
 The base-release steps apply when crossing 5.4.0; for later updates within 5.4, review the [patch actions](#patch-actions).
-From v4, complete all earlier [5.x changes](/self-hosting/advanced/migration#version-5).
-Choose the latest 5.4 patch as the [recommended v5 stop](/self-hosting/upgrade/paths).
+**Upgrade from:** the latest 5.3 patch (5.3.5). Skipping a minor version is not supported; see [Upgrade paths](/self-hosting/upgrade/paths).
 
 ## Before
 
@@ -30,7 +29,7 @@ These entries do not add intermediate installation stops.
 | 5.4.3 | Envoy Gateway/CRD update and controller values move; coordinate cluster ownership. |
 | 5.4.4 | Bundled storage setup switches its helper client to RustFS CLI. Preserve existing MinIO/S3 data and settings. |
 | 5.4.5 | [5.4.5: Cube image migration](/self-hosting/upgrade/versions/cube). Copy the whole service, not only its image. |
-| 5.4.6 | [5.4.6: Security updates](/platform/changelog#release-5-4-6). Review authentication request-body limits; deployment impact remains **review required**. |
+| 5.4.6 | Nothing extra. See [5.4.6](/platform/changelog#release-5-4-6). |
 | 5.4.7 | [5.4.7: Security updates](/self-hosting/upgrade/versions/2026-10-security-patches): Redis CA, Hub/enrichment and MCP batches. |
 | 5.4.8 | [5.4.8: Security updates](/self-hosting/upgrade/versions/2026-10-27-patches): outgoing-email limits. |
 
@@ -56,8 +55,8 @@ recovery assessment. After a rollback to 5.3, accounts created there may need th
 [issuer repair before rolling forward](/self-hosting/upgrade/versions/5.4-database#recovery-across-5-4).
 Use [coordinated restore](/self-hosting/operate/backup-restore) when required.
 
-Sources: [5.3.5 → 5.4.0](https://github.com/formbricks/formbricks/compare/5.3.5...5.4.0),
-[5.4 patches](https://github.com/formbricks/formbricks/compare/5.4.0...5.4.7).
+All changes: [5.3.5 → 5.4.0](https://github.com/formbricks/formbricks/compare/5.3.5...5.4.0),
+[5.4 patches](https://github.com/formbricks/formbricks/compare/5.4.0...5.4.8).
 
 <span id="bundled-cube-image-update-action-required-for-some-deployments" />
 <span id="envoy-gateway-1-8-4-crd-upgrade" />

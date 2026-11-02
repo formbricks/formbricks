@@ -12,21 +12,21 @@ An upgrade **from v5 to v6** first needs the dependencies in [6.0: Upgrade guide
 ## Preparation contract
 
 - Run only the selected target image, with `AUTHZED_CONSISTENCY=fully_consistent`.
-- The command validates configuration and SpiceDB health, applies application migrations, prepares the
-  schema, drains the outbox, repairs relationships and performs independent verification.
+- The command checks the configuration and SpiceDB health, runs the app's database migrations, prepares
+  the permission schema, processes pending permission updates, repairs relationships and verifies the result.
 - A different non-empty schema is blocked. Review `formbricks-authzed schema check` and the release's
   schema changes before passing `--expected-current-digest sha256:<reviewed-digest>`.
 - Exit `0` and `upgrade_prepared` permit the next deployment step. Any nonzero result keeps maintenance active.
 
 ## What runs where
 
-Deployment tooling owns maintenance, workload shutdown, infrastructure, and restart. The release image
-owns database migrations and authorization preparation. Neither the application nor the chart maintains
-an activation receipt, a migration authority switch, or a second authorization engine for this process.
+You run the maintenance steps: stopping the app and workers, pausing controllers, taking backups and
+restarting. The preparation command in the release image runs the database migrations and prepares the
+permission data.
 
-`formbricks-authzed-prepare` is a preparation command, **not an unattended installer**. It does not
-discover or stop writers, suspend controllers, take backups, or restart workloads. Its confirmations are
-operator acknowledgements, not proof that maintenance is active. Complete and verify those steps first.
+`formbricks-authzed-prepare` does **not** stop anything, take backups or restart services for you. The
+`--backup-confirmed` and `--writers-stopped` flags are your confirmation that you've done those steps;
+the command doesn't check them. Do them first.
 
 The command reuses the image's existing migration runner and `formbricks-authzed upgrade prepare` and
 `upgrade check` implementations. It does not automatically prune unexplained relationships.
@@ -110,6 +110,8 @@ spec:
       securityContext:
         runAsNonRoot: true
         runAsUser: 1001
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: prepare
           image: ghcr.io/formbricks/formbricks@sha256:<target-image-digest>
@@ -119,12 +121,21 @@ spec:
             allowPrivilegeEscalation: false
             capabilities:
               drop: ["ALL"]
-          envFrom:
-            - secretRef:
-                name: formbricks-maintenance-env
-          # Inert placeholders for the shared environment check. Preparation never reads them, and they are
-          # not application secrets: never reuse these values in a running installation.
           env:
+            # Read from the Secrets the chart already created. Change the names if you manage Secrets yourself.
+            - name: DATABASE_URL
+              valueFrom: { secretKeyRef: { name: formbricks-app-secrets, key: DATABASE_URL } }
+            - name: WEBAPP_URL
+              valueFrom: { secretKeyRef: { name: formbricks-app-secrets, key: WEBAPP_URL } }
+            - name: AUTHZED_TOKEN
+              valueFrom: { secretKeyRef: { name: formbricks-authzed, key: preshared_key } }
+            - { name: AUTHZED_ENABLED, value: "true" }
+            - { name: AUTHZED_ENDPOINT, value: "formbricks-spicedb:50051" } # chart-managed SpiceDB
+            - { name: AUTHZED_INSECURE, value: "true" } # in-cluster only; use "false" for a TLS endpoint
+            - { name: AUTHZED_SYSTEM_KEY, value: formbricks }
+            - { name: AUTHZED_CONSISTENCY, value: fully_consistent }
+            # Inert placeholders for the shared environment check. Preparation never reads them, and they are
+            # not application secrets: never reuse these values in a running installation.
             - { name: ENCRYPTION_KEY, value: maintenance-unused }
             - { name: CUBEJS_API_SECRET, value: maintenance-unused }
             - { name: CUBEJS_API_URL, value: "http://localhost" }
@@ -133,20 +144,19 @@ spec:
             - { name: REDIS_URL, value: "redis://localhost" }
 ```
 
-This is a template, not a ready-to-apply manifest: set the namespace, digest, resource requests/limits,
-image-pull credentials, network policy, and environment bindings for your installation. The
-`formbricks-maintenance-env` Secret holds what preparation uses, with the values your release already uses:
+Save it as `formbricks-prepare-job.yaml`. Set the image digest, and add resource limits, `imagePullSecrets` and
+network policy if your cluster needs them. Don't make the root filesystem read-only: the migrations write to
+the container. For an external SpiceDB, set `AUTHZED_ENDPOINT` to its address and `AUTHZED_INSECURE` to `"false"`.
+Preparation uses these settings:
 
 - `DATABASE_URL`
 - `AUTHZED_ENABLED=true`, `AUTHZED_ENDPOINT`, `AUTHZED_TOKEN`, `AUTHZED_SYSTEM_KEY`, `AUTHZED_INSECURE`, and
   `AUTHZED_CONSISTENCY=fully_consistent`
 - `WEBAPP_URL`, in every case. Preparation runs the database migrations, and the OAuth resource-link data
-  migration (`eng_2343_backfill_oauth_resource_links`, first released in 5.4.0) derives each MCP OAuth client's
-  resource link from it. Whenever that migration runs on a database with MCP OAuth clients, as in any upgrade
-  from before 5.4.0, preparation stops with `upgrade_database_migration_failed` without it.
+  migration (first released in 5.4.0) derives each MCP OAuth client's
+  resource link from it. If you upgrade from before 5.4.0 and have MCP OAuth clients, preparation stops with
+  `upgrade_database_migration_failed` when `WEBAPP_URL` is missing.
 
-The chart's application Secret does not necessarily contain `DATABASE_URL` or the AuthZed values, which the
-chart injects separately. Prefer explicit `valueFrom.secretKeyRef` bindings to existing Secrets when possible.
 Never put secrets on a command line or commit their values. If migrations use a different database credential,
 bind `MIGRATE_DATABASE_URL` as well as `DATABASE_URL`; the target image's migration runner uses it when set. If
 the configuration is still incomplete, the Job reports `upgrade_configuration_invalid` with the names of the
@@ -154,8 +164,23 @@ variables to fix.
 
 Wait for Job completion and inspect its sanitized result before running `helm upgrade` or resuming an
 Argo CD/Flux reconciliation. Preparation is not a Helm migration hook or a permanent chart component.
-Delete the Job and any temporary environment Secret after acceptance; retain only sanitized evidence.
-There is no activation table to clean up.
+Delete the Job and any temporary environment Secret after the upgrade is done.
+
+<span id="schema-changes" />
+
+## When the permission schema changes
+
+Some minor releases change the permission schema, for example 6.0 → 6.1. Preparation then refuses to replace
+the existing schema until you confirm which one you're replacing:
+
+1. Run the same Job with `command: ["formbricks-authzed"]` and `args: ["schema", "check"]`, using the target
+   image, and a different name such as `formbricks-v6-schema-check`. It exits with code `2` (`drifted`), which is expected.
+2. Copy the `remoteDigest` value from its log.
+3. Run the preparation Job with the digest added:
+   `args: ["--backup-confirmed", "--writers-stopped", "--expected-current-digest", "sha256:<remoteDigest>"]`.
+
+On Docker Compose, run `docker compose --profile authzed-ops run --rm --no-deps authzed-ops schema check`, then add
+`--expected-current-digest sha256:<remoteDigest>` to the preparation command. Patch releases never change the schema.
 
 ## Exit checklist
 
@@ -163,8 +188,7 @@ Keep maintenance active until all of these are true:
 
 - `formbricks-authzed-prepare` exited `0`, including its two clean full audits, and the v6 migration
   acknowledgement is set only for this prepared upgrade.
-- The running image ID, chart values, schema, outbox, and a fresh `formbricks-authzed upgrade check` match
-  the reviewed target.
+- The pods run the target image, and a fresh `formbricks-authzed upgrade check` exits `0`.
 - Allowed and denied users, a scoped API key, organization/workspace lists, and a grant revocation work
   from a fresh browser session; an old tab recovers after a hard refresh.
 

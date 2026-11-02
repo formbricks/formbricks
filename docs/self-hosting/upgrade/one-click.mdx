@@ -1,0 +1,162 @@
+---
+title: "Upgrade one-click"
+description: "Upgrade an installation that was set up with the formbricks.sh one-click script."
+icon: "rocket"
+---
+
+Use this runbook if you installed Formbricks with the [one-click script](/self-hosting/setup/one-click):
+you have a `formbricks.sh` file next to a `formbricks/` directory. It covers upgrades **to 6.0 or later**.
+To upgrade to a 4.x or 5.x version, use the [4.x and 5.x procedure](/self-hosting/upgrade/legacy).
+
+<Danger>
+  **Don't run `./formbricks.sh update` until you've pinned the version.** One-click installs use the
+  `ghcr.io/formbricks/formbricks:latest` image by default, and the updater pulls whatever the image tag
+  points to. On an older installation, that jumps straight to the newest release and skips your upgrade stops.
+</Danger>
+
+Before you start:
+
+- Find your next stop in [Upgrade paths](/self-hosting/upgrade/paths) and read its version page.
+- **First upgrade to 6.0?** Do the [6.0 setup steps](/self-hosting/upgrade/versions/6.0#first-v6-dependency-setup)
+  first. The updater can't add the new 6.0 services for you.
+- Plan a maintenance window for a minor or major upgrade. Surveys and the app are unavailable while it runs.
+  For a patch upgrade, see [patch upgrades](#patch-upgrades).
+- Run the commands below on the server. If your user isn't in the `docker` group, put `sudo` before each `docker` command.
+
+<Steps>
+  <Step title="Choose the target version">
+    Open a terminal in the `formbricks/` directory. Set the version you're upgrading to, for example `6.0.5`:
+
+    ```bash
+    cd formbricks
+    target_version=6.0.5
+    ```
+
+    Keep this terminal open. Later steps use `target_version`.
+  </Step>
+  <Step title="Pin the app and Hub versions">
+    Replace the Formbricks image tag in `docker-compose.yml` with the target version. This keeps a copy
+    of the old file as `docker-compose.yml.bak`:
+
+    ```bash
+    sed -i.bak -E "s#(ghcr\.io/formbricks/formbricks):[^[:space:]\"']+#\1:${target_version}#" docker-compose.yml
+    grep -n 'ghcr.io/formbricks/' docker-compose.yml
+    ```
+
+    Every `ghcr.io/formbricks/formbricks` line must now end in your target version. If a line uses a
+    digest (`@sha256:…`), replace it by hand.
+
+    Then pin Hub to the version that belongs to this release:
+
+    ```bash
+    hub_tag=$(curl -fsSL "https://raw.githubusercontent.com/formbricks/formbricks/${target_version}/charts/formbricks/values.yaml" |
+      grep -A8 'repository: "ghcr.io/formbricks/hub"' | grep 'tag:' | head -1 | sed -E 's/.*"(.*)".*/\1/')
+    echo "Hub version: ${hub_tag:?Could not find the Hub version}"
+    cp .env .env.bak
+    if grep -q '^HUB_IMAGE_REF=' .env; then
+      sed -i "s/^HUB_IMAGE_REF=.*/HUB_IMAGE_REF=:${hub_tag}/" .env
+    else
+      echo "HUB_IMAGE_REF=:${hub_tag}" >> .env
+    fi
+    ```
+
+    The colon before the version is intentional.
+  </Step>
+  <Step title="Download the new images">
+    Download the images now, before the maintenance window starts:
+
+    ```bash
+    docker compose config --quiet && docker compose pull
+    ```
+
+    The first command must print nothing. If it shows an error, fix the file before you continue.
+  </Step>
+  <Step title="Stop the app and back up">
+    Stop the services that write data. The databases keep running:
+
+    ```bash
+    docker compose stop formbricks hub $(docker compose config --services | grep -x hub-worker)
+    ```
+
+    Then back up the databases and your configuration:
+
+    ```bash
+    umask 077
+    backup_time=$(date -u +%Y%m%dT%H%M%SZ)
+    docker compose exec -T postgres pg_dump -Fc -U postgres -d formbricks > "../formbricks-${backup_time}.dump" &&
+      docker compose exec -T postgres pg_dump -Fc -U postgres -d spicedb > "../spicedb-${backup_time}.dump" &&
+      cp .env.bak "../env-${backup_time}.bak" && cp docker-compose.yml.bak "../docker-compose-${backup_time}.yml"
+    ```
+
+    If you use the bundled file storage (RustFS or MinIO), also back up its volume. Find its name with
+    `docker volume ls`, then:
+
+    ```bash
+    docker run --rm -v <storage-volume>:/data:ro -v "$PWD/..":/backup alpine \
+      tar czf "/backup/storage-${backup_time}.tgz" -C /data .
+    ```
+
+    Every command must finish without an error. Copy the backup files to another machine before you continue.
+  </Step>
+  <Step title="Prepare permissions (minor and major upgrades)">
+    For an upgrade to a new minor version, such as 6.0 → 6.1, prepare the permission data with the new image:
+
+    ```bash
+    docker compose up -d --wait postgres spicedb
+    docker compose --profile authzed-ops run --rm --no-deps \
+      --entrypoint formbricks-authzed-prepare authzed-ops \
+      --backup-confirmed --writers-stopped
+    ```
+
+    It must end with `upgrade_prepared`. If it stops with an error, keep the app stopped and see
+    [permission preparation](/self-hosting/upgrade/prepare#results-and-recovery).
+
+    For a first upgrade to 6.0, then set `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` in `.env`.
+  </Step>
+  <Step title="Run the updater for the target version">
+    Download the updater that belongs to the target version, then run it from the directory that contains `formbricks/`:
+
+    ```bash
+    cd ..
+    curl -fsSL "https://raw.githubusercontent.com/formbricks/formbricks/${target_version}/docker/formbricks.sh" -o formbricks.sh
+    chmod +x formbricks.sh
+    ./formbricks.sh update
+    ```
+
+    The updater checks the permission setup, runs the database migrations and starts all services. It also
+    refreshes the Cube model files and applies small fixes for your release, such as the
+    [port binding](/self-hosting/upgrade/one-click-details). It ends with `Formbricks updated successfully!`.
+  </Step>
+  <Step title="Check that it worked">
+    ```bash
+    cd formbricks
+    docker compose ps -a
+    docker compose logs --tail=100 formbricks
+    ```
+
+    All services must be running or have exited with code `0`. Then do the
+    [checks after the upgrade](/self-hosting/advanced/upgrade#after-the-upgrade) before you open the app to users again.
+  </Step>
+</Steps>
+
+## Patch upgrades
+
+A patch, such as 6.1.2 → 6.1.3, doesn't change the permission schema and normally has no database migrations.
+Check its upgrade impact in the [release notes](/platform/changelog). Then do the steps above, but skip
+**Prepare permissions** unless the patch's upgrade impact asks for it. The updater checks the permission setup
+itself and stops before changing anything if it isn't clean.
+
+## If something goes wrong
+
+Don't run `docker compose down -v`: it deletes your data. Going back to the old image doesn't undo
+database migrations. To return to the old version:
+
+1. Stop the app: `docker compose stop formbricks hub $(docker compose config --services | grep -x hub-worker)`.
+2. Restore the databases from your dumps, for example
+   `docker compose exec -T postgres pg_restore --clean --if-exists -U postgres -d formbricks < ../formbricks-<time>.dump`,
+   and the same for `spicedb`.
+3. Put back the old `docker-compose.yml` and `.env` from your backup, and restore the storage volume if you backed it up.
+4. Start the old version with `docker compose up -d`.
+
+See [troubleshooting](/self-hosting/upgrade/troubleshooting) for common migration errors, and
+[backup and restore](/self-hosting/operate/backup-restore) for the full restore procedure.
