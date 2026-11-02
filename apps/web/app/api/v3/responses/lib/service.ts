@@ -180,6 +180,8 @@ export async function deleteScopedResponse(
         await deleteDisplay(deletedRow.displayId, tx);
       }
 
+      await requestEmailAuditErasureRequired({ responseId }, tx);
+
       // Deliberately no `reduceQuotaLimits` here. `ON DELETE CASCADE` drops the `ResponseQuotaLink`
       // rows, and the only fullness predicate in the repo is `screenedInCount >= quota.limit`
       // (`modules/ee/quotas/lib/utils.ts`) counting those same live rows — so the cascade *already*

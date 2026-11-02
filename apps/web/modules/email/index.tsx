@@ -605,7 +605,7 @@ export const sendLinkSurveyToVerifiedEmail = async (
   const html = await renderLinkSurveyEmail({ surveyName, surveyLink, logoUrl, t, ...legalProps });
   return await sendEmail({
     emailType: "verified_survey_link",
-    auditContext: { trigger: "system", surveyId },
+    auditContext: { trigger: "system", surveyId, organizationId: rateLimit.organizationId },
     to: data.email,
     subject: t("emails.verified_link_survey_email_subject"),
     html,

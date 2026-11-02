@@ -8,6 +8,7 @@ import {
   EMAIL_SEND_AUDIT_KMS_KEY_ARN,
   SES_EMAIL_ENVIRONMENT,
 } from "@/lib/constants";
+import { hashEmailAuditUserId } from "./email-audit-identity";
 import { reportEmailAuditFailure } from "./email-audit-monitoring";
 import {
   deleteEmailAuditSnapshot,
@@ -94,12 +95,17 @@ export const beginEmailSendAudit = async (
     await prisma.outboundEmailAudit.create({
       data: {
         id,
+        createdAt: new Date(now),
         environment: SES_EMAIL_ENVIRONMENT!,
         emailType,
         trigger: context.trigger,
         actorKind: context.actorUserId ? "user" : "system",
         actorUserId: context.actorUserId,
         configuredByUserId: context.configuredByUserId,
+        actorUserHash: context.actorUserId ? hashEmailAuditUserId(context.actorUserId) : undefined,
+        configuredByUserHash: context.configuredByUserId
+          ? hashEmailAuditUserId(context.configuredByUserId)
+          : undefined,
         organizationId: context.organizationId,
         surveyId: context.surveyId,
         responseId: context.responseId,

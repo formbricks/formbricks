@@ -171,7 +171,7 @@ describe("email source attribution", () => {
     ["data_retention_notice", { organizationId: "organization" }],
     ["response_notification", { organizationId: "org", surveyId: "survey", responseId: "response" }],
     ["customization_preview", { actorUserId: "user" }],
-    ["verified_survey_link", { surveyId: "survey" }],
+    ["verified_survey_link", { surveyId: "survey", organizationId: "organization" }],
   ] as const)("preserves %s source identifiers", async (emailType, expectedContext) => {
     const [, send] = senders.find(([type]) => type === emailType)!;
     await send();

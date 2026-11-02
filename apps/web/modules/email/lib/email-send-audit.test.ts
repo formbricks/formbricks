@@ -2,6 +2,8 @@ import { createHash } from "node:crypto";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { beginEmailSendAudit, finishEmailSendAudit, sesMessageHashFromSendInfo } from "./email-send-audit";
 
+vi.mock("crypto", async () => await vi.importActual<typeof import("crypto")>("crypto"));
+
 const mocks = vi.hoisted(() => ({
   create: vi.fn(),
   update: vi.fn(),
@@ -114,6 +116,30 @@ describe("outbound email audit", () => {
       auditId: state?.id,
       phase: "ledger_create",
     });
+  });
+
+  test("preserves the attempt start through a KMS wait and derives private actor recovery keys", async () => {
+    const startedAt = Date.parse("2026-11-02T10:00:00Z");
+    const clock = vi.spyOn(Date, "now").mockReturnValue(startedAt);
+    mocks.getMac.mockImplementationOnce(async () => {
+      clock.mockReturnValue(startedAt + 60_000);
+      return "recipient-mac";
+    });
+    try {
+      await beginEmailSendAudit("invite", "person@example.com", snapshot, {
+        trigger: "user",
+        actorUserId: "actor-1",
+        configuredByUserId: "owner-1",
+      });
+
+      expect(mocks.create.mock.calls[0][0].data).toMatchObject({
+        createdAt: new Date(startedAt),
+        actorUserHash: createHash("sha256").update("email-audit-user:actor-1").digest("hex"),
+        configuredByUserHash: createHash("sha256").update("email-audit-user:owner-1").digest("hex"),
+      });
+    } finally {
+      clock.mockRestore();
+    }
   });
 
   test("does not retain email content when the recipient identifier is unavailable", async () => {

@@ -8,7 +8,10 @@ import { deleteOrganization, getOrganizationsWhereUserIsSingleOwner } from "@/li
 import { capturePostHogEvent } from "@/lib/posthog";
 import { deleteBrevoCustomerByEmail } from "@/modules/auth/lib/brevo";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
-import { requestEmailAuditErasureBeforeUserDeletion } from "@/modules/email/lib/email-audit-maintenance";
+import {
+  activateEmailAuditErasureIntent,
+  requestEmailAuditErasureBeforeUserDeletion,
+} from "@/modules/email/lib/email-audit-maintenance";
 import { queueAccountDeletionAuditEvent } from "./account-deletion-audit";
 import {
   accountDeletionAfterDelete,
@@ -33,6 +36,7 @@ vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: vi.fn() }));
 vi.mock("@/modules/auth/lib/brevo", () => ({ deleteBrevoCustomerByEmail: vi.fn() }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsMultiOrgEnabled: vi.fn() }));
 vi.mock("@/modules/email/lib/email-audit-maintenance", () => ({
+  activateEmailAuditErasureIntent: vi.fn(),
   requestEmailAuditErasureBeforeUserDeletion: vi.fn(),
 }));
 vi.mock("./account-deletion-audit", () => ({ queueAccountDeletionAuditEvent: vi.fn() }));
@@ -118,6 +122,7 @@ describe("accountDeletionAfterDelete", () => {
   test("deletes the Brevo customer and queues a success audit event with the deleted user", async () => {
     await accountDeletionAfterDelete(user);
 
+    expect(activateEmailAuditErasureIntent).toHaveBeenCalledWith("user-1");
     expect(deleteUserOrganizationRelationships).toHaveBeenCalledWith("user-1");
     expect(deleteUserTeamRelationships).toHaveBeenCalledWith("user-1");
     expect(deleteBrevoCustomerByEmail).toHaveBeenCalledWith({ email: "ada@example.com" });

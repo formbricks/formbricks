@@ -1,11 +1,14 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { JobExecutionContext } from "@formbricks/jobs";
 import {
+  activateEmailAuditErasureIntent,
   processEmailAuditMaintenanceJob,
   requestEmailAuditErasure,
   requestEmailAuditErasureBeforeUserDeletion,
   requestEmailAuditErasureRequired,
 } from "./email-audit-maintenance";
+
+vi.mock("crypto", async () => await vi.importActual<typeof import("crypto")>("crypto"));
 
 const jobContext: JobExecutionContext = {
   attempt: 1,
@@ -25,11 +28,17 @@ const mocks = vi.hoisted(() => ({
   getMac: vi.fn(),
   reportFailure: vi.fn(),
   warn: vi.fn(),
+  queryRaw: vi.fn(),
+  executeRaw: vi.fn(),
+  intentCreate: vi.fn(),
+  intentUpdateMany: vi.fn(),
+  intentDeleteMany: vi.fn(),
+  userFindMany: vi.fn(),
   bucket: "private-audit-bucket" as string | undefined,
 }));
 
-vi.mock("@formbricks/database", () => ({
-  prisma: {
+vi.mock("@formbricks/database", () => {
+  const transactionClient = {
     outboundEmailAudit: {
       findMany: mocks.findMany,
       findFirst: mocks.findFirst,
@@ -37,8 +46,22 @@ vi.mock("@formbricks/database", () => ({
       update: mocks.update,
       deleteMany: mocks.deleteMany,
     },
-  },
-}));
+    outboundEmailAuditErasureIntent: {
+      create: mocks.intentCreate,
+      updateMany: mocks.intentUpdateMany,
+      deleteMany: mocks.intentDeleteMany,
+    },
+    user: { findMany: mocks.userFindMany },
+    $queryRaw: mocks.queryRaw,
+    $executeRaw: mocks.executeRaw,
+  };
+  return {
+    prisma: {
+      ...transactionClient,
+      $transaction: vi.fn(async (callback) => callback(transactionClient)),
+    },
+  };
+});
 vi.mock("@formbricks/logger", () => ({ logger: { warn: mocks.warn } }));
 vi.mock("@/lib/constants", () => ({
   get EMAIL_SEND_AUDIT_BUCKET() {
@@ -64,6 +87,12 @@ describe("email audit retention and erasure", () => {
     mocks.deleteSnapshot.mockResolvedValue(undefined);
     mocks.getMac.mockResolvedValue("recipient-mac");
     mocks.reportFailure.mockResolvedValue(undefined);
+    mocks.queryRaw.mockResolvedValue([]);
+    mocks.executeRaw.mockResolvedValue(0);
+    mocks.intentCreate.mockResolvedValue({});
+    mocks.intentUpdateMany.mockResolvedValue({ count: 0 });
+    mocks.intentDeleteMany.mockResolvedValue({ count: 0 });
+    mocks.userFindMany.mockResolvedValue([]);
   });
 
   test("requests erasure by normalized recipient identity without storing an address", async () => {
@@ -71,7 +100,7 @@ describe("email audit retention and erasure", () => {
     expect(mocks.getMac).toHaveBeenCalledWith("Person@Example.com", "hmac-key");
     expect(mocks.updateMany).toHaveBeenCalledWith({
       where: { OR: [{ recipientMac: "recipient-mac" }], erasedAt: null },
-      data: { erasureRequestedAt: expect.any(Date) },
+      data: { erasureRequestedAt: expect.any(Date), contentDeleteRetryAt: null },
     });
     expect(JSON.stringify(mocks.updateMany.mock.calls)).not.toContain("Person@Example.com");
   });
@@ -145,6 +174,48 @@ describe("email audit retention and erasure", () => {
     });
   });
 
+  test("persists a recipient intent with the account erasure mark", async () => {
+    await requestEmailAuditErasureBeforeUserDeletion("user-1", "Person@Example.com");
+
+    expect(mocks.intentCreate).toHaveBeenCalledWith({
+      data: {
+        userId: "user-1",
+        userHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+        recipientMac: "recipient-mac",
+        expiresAt: expect.any(Date),
+      },
+    });
+    expect(mocks.updateMany).toHaveBeenCalledWith({
+      where: { recipientMac: "recipient-mac", erasedAt: null },
+      data: { erasureRequestedAt: expect.any(Date), contentDeleteRetryAt: null },
+    });
+  });
+
+  test("removes the raw user id once deletion is confirmed", async () => {
+    await activateEmailAuditErasureIntent("user-1");
+    expect(mocks.intentUpdateMany).toHaveBeenCalledWith({
+      where: { userId: "user-1", activatedAt: null },
+      data: { userId: null, activatedAt: expect.any(Date) },
+    });
+  });
+
+  test("activates an intent after interrupted account deletion and marks late audit rows", async () => {
+    mocks.queryRaw.mockResolvedValueOnce([{ id: "intent-1", userId: "deleted-user" }]);
+    mocks.executeRaw.mockResolvedValueOnce(1);
+
+    await processEmailAuditMaintenanceJob({ scope: "global" }, jobContext);
+
+    expect(mocks.intentUpdateMany).toHaveBeenCalledWith({
+      where: { id: { in: ["intent-1"] } },
+      data: { userId: null, activatedAt: expect.any(Date), checkedAt: expect.any(Date) },
+    });
+    const lateRowQuery = (mocks.executeRaw.mock.calls[0][0] as TemplateStringsArray).join(" ");
+    expect(lateRowQuery).toContain('i."userHash" = a."actorUserHash"');
+    expect(lateRowQuery).toContain('i."userHash" = a."configuredByUserHash"');
+    expect(lateRowQuery).toContain('i."recipientMac" = a."recipientMac"');
+    expect(lateRowQuery).toContain('a."createdAt" <= i."activatedAt"');
+  });
+
   test("requests erasure for bulk-deleted responses in bounded batches", async () => {
     const responseIds = Array.from({ length: 501 }, (_, index) => `response-${index}`);
 
@@ -153,11 +224,11 @@ describe("email audit retention and erasure", () => {
     expect(mocks.updateMany).toHaveBeenCalledTimes(2);
     expect(mocks.updateMany).toHaveBeenNthCalledWith(1, {
       where: { responseId: { in: responseIds.slice(0, 500) }, erasedAt: null },
-      data: { erasureRequestedAt: expect.any(Date) },
+      data: { erasureRequestedAt: expect.any(Date), contentDeleteRetryAt: null },
     });
     expect(mocks.updateMany).toHaveBeenNthCalledWith(2, {
       where: { responseId: { in: responseIds.slice(500) }, erasedAt: null },
-      data: { erasureRequestedAt: expect.any(Date) },
+      data: { erasureRequestedAt: expect.any(Date), contentDeleteRetryAt: null },
     });
   });
 
@@ -166,13 +237,18 @@ describe("email audit retention and erasure", () => {
     mocks.findMany
       .mockResolvedValueOnce([{ id: "stale-id" }])
       .mockResolvedValueOnce([
-        { id: "erased-id", snapshotKey: "email-audit/erased-id.json", erasureRequestedAt: new Date() },
+        {
+          id: "erased-id",
+          snapshotKey: "email-audit/erased-id.json",
+          erasureRequestedAt: new Date(),
+          contentDeleteFailures: 0,
+        },
       ])
       .mockResolvedValueOnce([{ id: "expired-id" }]);
 
     await processEmailAuditMaintenanceJob({ scope: "global" }, jobContext);
 
-    const erasureCutoff = mocks.findMany.mock.calls[1][0].where.OR[0].erasureRequestedAt.lte as Date;
+    const erasureCutoff = mocks.findMany.mock.calls[1][0].where.AND[0].OR[0].erasureRequestedAt.lte as Date;
     expect(erasureCutoff.getTime()).toBeGreaterThanOrEqual(before - 60_000);
     expect(erasureCutoff.getTime()).toBeLessThanOrEqual(Date.now() - 60_000);
 
@@ -193,6 +269,8 @@ describe("email audit retention and erasure", () => {
         recipientMac: null,
         organizationId: null,
         actorUserId: null,
+        actorUserHash: null,
+        configuredByUserHash: null,
         status: "erased",
         erasedAt: expect.any(Date),
       }),
@@ -202,17 +280,32 @@ describe("email audit retention and erasure", () => {
   });
 
   test("keeps an erasure request pending when S3 deletion fails", async () => {
+    const before = Date.now();
     mocks.findMany
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([
-        { id: "erased-id", snapshotKey: "email-audit/erased-id.json", erasureRequestedAt: new Date() },
+        {
+          id: "erased-id",
+          snapshotKey: "email-audit/erased-id.json",
+          erasureRequestedAt: new Date(),
+          contentDeleteFailures: 0,
+        },
       ])
       .mockResolvedValueOnce([]);
     mocks.deleteSnapshot.mockRejectedValueOnce(new Error("S3 unavailable"));
 
     await processEmailAuditMaintenanceJob({ scope: "global" }, jobContext);
 
-    expect(mocks.updateMany).not.toHaveBeenCalled();
+    expect(mocks.updateMany).toHaveBeenCalledWith({
+      where: { id: "erased-id", erasedAt: null },
+      data: {
+        contentDeleteFailures: { increment: 1 },
+        contentDeleteRetryAt: expect.any(Date),
+      },
+    });
+    const retryAt = mocks.updateMany.mock.calls[0][0].data.contentDeleteRetryAt as Date;
+    expect(retryAt.getTime()).toBeGreaterThanOrEqual(before + 15 * 60_000);
+    expect(retryAt.getTime()).toBeLessThanOrEqual(Date.now() + 15 * 60_000);
     expect(mocks.reportFailure).toHaveBeenCalledWith("email_audit_content_delete_failed", {
       auditId: "erased-id",
     });
