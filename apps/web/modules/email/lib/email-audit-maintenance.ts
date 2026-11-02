@@ -9,7 +9,7 @@ import { deleteEmailAuditSnapshot, getEmailAuditRecipientMac } from "./email-aud
 const batchSize = 100;
 const inFlightWriteGraceMs = 60_000;
 
-const getRecipientMacForErasure = async (email: string): Promise<string | undefined> => {
+const getRecipientMacForErasure = async (email: string): Promise<string> => {
   if (!EMAIL_SEND_AUDIT_HMAC_KEY_ARN) {
     throw new Error("recipient_hmac_config");
   }
@@ -32,7 +32,15 @@ export const requestEmailAuditErasure = async (scope: {
   // The audit store is intentionally absent from KSA and self-hosted deployments.
   // EU rollback keeps the bucket configuration while disabling new writes.
   if (!EMAIL_SEND_AUDIT_BUCKET) return;
-  const recipientMac = scope.email ? await getRecipientMacForErasure(scope.email) : undefined;
+  let recipientMac: string | undefined;
+  let recipientError: Error | undefined;
+  if (scope.email) {
+    try {
+      recipientMac = await getRecipientMacForErasure(scope.email);
+    } catch (error) {
+      recipientError = error instanceof Error ? error : new Error("recipient_hmac");
+    }
+  }
   const conditions = [
     scope.organizationId ? { organizationId: scope.organizationId } : undefined,
     scope.surveyId ? { surveyId: scope.surveyId } : undefined,
@@ -42,7 +50,10 @@ export const requestEmailAuditErasure = async (scope: {
     recipientMac ? { recipientMac } : undefined,
   ].filter((condition) => condition !== undefined);
   const responseIds = scope.responseIds ?? [];
-  if (conditions.length === 0 && responseIds.length === 0) return;
+  if (conditions.length === 0 && responseIds.length === 0) {
+    if (recipientError) throw recipientError;
+    return;
+  }
   const requestedAt = new Date();
   if (conditions.length > 0) {
     await prisma.outboundEmailAudit.updateMany({
@@ -56,6 +67,7 @@ export const requestEmailAuditErasure = async (scope: {
       data: { erasureRequestedAt: requestedAt },
     });
   }
+  if (recipientError) throw recipientError;
 };
 
 export const requestEmailAuditErasureBestEffort = async (

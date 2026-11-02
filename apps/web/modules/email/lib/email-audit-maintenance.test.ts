@@ -86,6 +86,23 @@ describe("email audit retention and erasure", () => {
     });
   });
 
+  test("marks user-linked records for erasure even when recipient HMAC fails", async () => {
+    mocks.getMac.mockRejectedValueOnce(new Error("kms unavailable"));
+
+    await requestEmailAuditErasureBestEffort({ userId: "user-1", email: "Person@Example.com" });
+
+    expect(mocks.updateMany).toHaveBeenCalledWith({
+      where: {
+        OR: [{ actorUserId: "user-1" }, { configuredByUserId: "user-1" }],
+        erasedAt: null,
+      },
+      data: { erasureRequestedAt: expect.any(Date) },
+    });
+    expect(mocks.reportFailure).toHaveBeenCalledWith("email_audit_erasure_request_failed", {
+      phase: "recipient_hmac",
+    });
+  });
+
   test("requests erasure for bulk-deleted responses in bounded batches", async () => {
     const responseIds = Array.from({ length: 501 }, (_, index) => `response-${index}`);
 
