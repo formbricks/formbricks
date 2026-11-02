@@ -67,6 +67,19 @@ describe("getCardStartsWithMedia", () => {
     expect(getCardStartsWithMedia(video, "start")).toBe(true);
   });
 
+  test("ignores the welcome card's video when a logo is drawn in its place", () => {
+    const both = survey({
+      welcomeCard: {
+        enabled: true,
+        fileUrl: "https://e.com/logo.png",
+        videoUrl: "https://youtu.be/x",
+        timeToFinish: false,
+        showResponseCount: false,
+      },
+    });
+    expect(getCardStartsWithMedia(both, "start")).toBe(false);
+  });
+
   test("counts an end screen's media and never a redirect ending", () => {
     const s = survey({
       endings: [

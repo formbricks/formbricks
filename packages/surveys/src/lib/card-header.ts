@@ -6,10 +6,10 @@ import { type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
  * vanish against it, so those cards keep the close button on its own row above the content.
  *
  * The welcome card's `fileUrl` is a logo drawn at a quarter of the card width, on the left, so only
- * its video counts.
+ * its video counts — and only when there is no logo, since the welcome card then draws the logo instead.
  */
 export const getCardStartsWithMedia = (survey: TJsWorkspaceStateSurvey, blockId: string): boolean => {
-  if (blockId === "start") return Boolean(survey.welcomeCard.videoUrl);
+  if (blockId === "start") return !survey.welcomeCard.fileUrl && Boolean(survey.welcomeCard.videoUrl);
 
   const ending = survey.endings.find((candidate) => candidate.id === blockId);
   if (ending) return ending.type === "endScreen" && Boolean(ending.imageUrl || ending.videoUrl);

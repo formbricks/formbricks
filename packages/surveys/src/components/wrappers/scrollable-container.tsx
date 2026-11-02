@@ -90,7 +90,13 @@ export const ScrollableContainer = forwardRef<ScrollableContainerHandle, Scrolla
           style={{
             maxHeight,
           }}
-          className={cn(disableInternalScroll ? "overflow-visible" : "bg-survey-bg overflow-auto px-4 pt-4")}>
+          // The scroll padding matches the top band, solid part and fade, so an option scrolled into view
+          // by keyboard focus lands below it instead of underneath.
+          className={cn(
+            disableInternalScroll
+              ? "overflow-visible"
+              : "bg-survey-bg [scroll-padding-top:calc(var(--fb-scroll-fade-solid,0px)+1rem)] overflow-auto px-4 pt-4"
+          )}>
           {children}
         </div>
         {!disableInternalScroll && !isAtBottom && (
