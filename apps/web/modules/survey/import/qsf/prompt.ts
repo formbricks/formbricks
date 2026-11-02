@@ -1,3 +1,4 @@
+import { promptDataJson } from "../core/prompt-data";
 import { SURVEY_IMPORT_AI_MAX_SOURCE_CHARS } from "../limits";
 import type { TQsfPlanFailure } from "./plan-checks";
 import { QSF_PLAN_ELEMENT_TYPES } from "./plan-schema";
@@ -224,15 +225,12 @@ function describeContext(
   });
 }
 
-/** JSON whose `<` cannot close the data block, whatever the file says. */
-const safeJson = (value: unknown): string => JSON.stringify(value).replaceAll("<", String.raw`\u003c`);
-
 /** The characters one question adds to a call's data block, at the given limits. */
 export const describedQuestionChars = (
   question: TQsfQuestion,
   texts: TQsfPromptTexts,
   limits: TPromptLimits
-): number => safeJson(describeQuestion(question, texts, limits)).length;
+): number => promptDataJson(describeQuestion(question, texts, limits)).length;
 
 /** The loosest limits: what the AI call cap is sized for, since it describes the most rules. */
 export const QSF_LOOSEST_PROMPT_LIMITS = LOOSEST_LIMITS;
@@ -261,7 +259,7 @@ export function describeQsfQuestions(
     }));
   const context = describeContext(survey, refs, texts, limits);
 
-  return safeJson({ pages, questions, ...(context.length > 0 ? { otherQuestions: context } : {}) });
+  return promptDataJson({ pages, questions, ...(context.length > 0 ? { otherQuestions: context } : {}) });
 }
 
 /**

@@ -1,3 +1,4 @@
+import { promptDataJson } from "../core/prompt-data";
 import type { TDocumentKind, TDocumentModel } from "./model";
 import type { TDocumentPlanFailure } from "./plan-checks";
 import { DOCUMENT_PLAN_ELEMENT_TYPES, DOCUMENT_PLAN_OPERATORS } from "./plan-schema";
@@ -24,9 +25,6 @@ const HEADER_CELL_CHARS = 200;
 
 const cut = (text: string, max: number): string => (text.length > max ? `${text.slice(0, max - 1)}…` : text);
 
-/** JSON whose `<` cannot close the data block, whatever the file says. */
-const safeJson = (value: unknown): string => JSON.stringify(value).replaceAll("<", String.raw`<`);
-
 const describeLine = (line: TDocumentModel["lines"][number], maxCellChars?: number) => ({
   line: line.key,
   cells: Object.fromEntries(
@@ -36,7 +34,7 @@ const describeLine = (line: TDocumentModel["lines"][number], maxCellChars?: numb
 
 /** The characters one line adds to a call's data block. */
 export const describedLineChars = (line: TDocumentModel["lines"][number]): number =>
-  safeJson(describeLine(line)).length;
+  promptDataJson(describeLine(line)).length;
 
 /**
  * The data one call carries: the lines it asks about, the first lines of the document as a header, and
@@ -65,7 +63,7 @@ export function describeDocumentLines(model: TDocumentModel, refs: readonly stri
     }
   }
 
-  return safeJson({
+  return promptDataJson({
     ...(header.length > 0 ? { header } : {}),
     lines: askedIndexes.map((index) => describeLine(model.lines[index])),
     ...(following.size > 0
