@@ -23,6 +23,7 @@ import { useBeforeUnloadPrompt } from "@/modules/ui/hooks/use-before-unload-prom
  */
 export type TDraftStreamEvent<TReport = never, TPayload extends TDraftPayload = TV3CreateSurveyBody> =
   | { type: "start"; requestId?: string }
+  | { type: "heartbeat" }
   | { type: "progress"; stage: string }
   | { type: "partial"; seq?: number; draft: TSurveyGenerationDraftSnapshot }
   | { type: "done"; payload: TPayload; report?: TReport | null }

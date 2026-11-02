@@ -1,17 +1,23 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { CopyIcon, MoreVertical, PlusIcon, SquarePenIcon, TrashIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import { deleteChartAction, duplicateChartAction } from "@/modules/ee/analysis/charts/actions";
 import { AddToDashboardDialog } from "@/modules/ee/analysis/charts/components/add-to-dashboard-dialog";
-import { addChartToDashboardAction, getDashboardsAction } from "@/modules/ee/analysis/dashboards/actions";
-import type { TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
+import { DeleteChartDialog } from "@/modules/ee/analysis/charts/components/delete-chart-dialog";
+import { useDashboardOptions } from "@/modules/ee/analysis/dashboards/hooks/use-dashboard-options";
+import {
+  type TAppChart,
+  addDashboardWidget,
+  chartInUseDashboards,
+  deleteChart,
+  duplicateChart,
+  getChartApiErrorMessage,
+} from "@/modules/ee/analysis/lib/api-client";
+import { chartKeys, dashboardKeys } from "@/modules/ee/analysis/lib/query";
 import { Button } from "@/modules/ui/components/button";
-import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,79 +28,60 @@ import {
 
 interface ChartDropdownMenuProps {
   workspaceId: string;
-  chart: TChartWithCreator;
+  chart: TAppChart;
   onEdit?: () => void;
 }
 
 export function ChartDropdownMenu({ workspaceId, chart, onEdit }: Readonly<ChartDropdownMenuProps>) {
   const { t } = useTranslation();
-  const router = useRouter();
+  const queryClient = useQueryClient();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  // The dashboards a delete was refused for, when the list's copy of the chart was out of date.
+  const [refusedOnDashboards, setRefusedOnDashboards] = useState<{ id: string; name: string }[] | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState(false);
   const [isDropDownOpen, setIsDropDownOpen] = useState(false);
   const [isAddToDashboardDialogOpen, setIsAddToDashboardDialogOpen] = useState(false);
   const [isAddingToDashboard, setIsAddingToDashboard] = useState(false);
-  const [dashboards, setDashboards] = useState<Array<{ id: string; name: string; containsChart?: boolean }>>(
-    []
-  );
   const [selectedDashboardId, setSelectedDashboardId] = useState<string>();
+  const dashboardOptions = useDashboardOptions({ workspaceId, enabled: isAddToDashboardDialogOpen });
+  // Whether a dashboard already holds this chart comes from the chart itself, not another read.
+  const dashboards = useMemo(
+    () =>
+      (dashboardOptions.data ?? []).map((dashboard) => ({
+        ...dashboard,
+        containsChart: chart.dashboards.some((holder) => holder.id === dashboard.id),
+      })),
+    [dashboardOptions.data, chart.dashboards]
+  );
 
   useEffect(() => {
-    let cancelled = false;
-
-    if (!isAddToDashboardDialogOpen) {
-      return () => {
-        cancelled = true;
-      };
+    if (dashboardOptions.error) {
+      toast.error(
+        getChartApiErrorMessage(
+          dashboardOptions.error,
+          t("workspace.analysis.charts.failed_to_load_dashboards")
+        )
+      );
     }
-
-    void getDashboardsAction({ workspaceId, chartId: chart.id })
-      .then((result) => {
-        if (cancelled) {
-          return;
-        }
-
-        if (result?.data) {
-          setDashboards(
-            result.data.map((dashboard) => ({
-              id: dashboard.id,
-              name: dashboard.name,
-              containsChart: dashboard.containsChart,
-            }))
-          );
-        } else {
-          toast.error(getFormattedErrorMessage(result));
-        }
-      })
-      .catch((error) => {
-        if (cancelled) {
-          return;
-        }
-        const message =
-          error instanceof Error ? error.message : t("workspace.analysis.charts.failed_to_load_dashboards");
-        toast.error(message);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isAddToDashboardDialogOpen, workspaceId, chart.id, t]);
+  }, [dashboardOptions.error, t]);
 
   const handleDeleteChart = async () => {
     setIsDeleting(true);
     try {
-      const result = await deleteChartAction({ workspaceId, chartId: chart.id });
-      if (result?.data) {
-        toast.success(t("workspace.analysis.charts.chart_deleted_successfully"));
-        setIsDeleteDialogOpen(false);
-        router.refresh();
+      await deleteChart(chart.id);
+      toast.success(t("workspace.analysis.charts.chart_deleted_successfully"));
+      setIsDeleteDialogOpen(false);
+      void queryClient.invalidateQueries({ queryKey: chartKeys.all });
+    } catch (error) {
+      // Someone put the chart on a dashboard after this list was read: show where, as for any chart in use.
+      const holders = chartInUseDashboards(error);
+      if (holders) {
+        setRefusedOnDashboards(holders);
+        void queryClient.invalidateQueries({ queryKey: chartKeys.lists() });
       } else {
-        const msg = getFormattedErrorMessage(result) || t("workspace.analysis.charts.chart_deletion_error");
-        toast.error(msg);
+        toast.error(getChartApiErrorMessage(error, t("workspace.analysis.charts.chart_deletion_error")));
       }
-    } catch {
-      toast.error(t("common.something_went_wrong_please_try_again"));
     } finally {
       setIsDeleting(false);
     }
@@ -103,17 +90,11 @@ export function ChartDropdownMenu({ workspaceId, chart, onEdit }: Readonly<Chart
   const handleDuplicateChart = async () => {
     setIsDuplicating(true);
     try {
-      const result = await duplicateChartAction({ workspaceId, chartId: chart.id });
-      if (result?.data) {
-        toast.success(t("workspace.analysis.charts.chart_duplicated_successfully"));
-        router.refresh();
-      } else {
-        toast.error(
-          getFormattedErrorMessage(result) || t("workspace.analysis.charts.chart_duplication_error")
-        );
-      }
-    } catch {
-      toast.error(t("workspace.analysis.charts.chart_duplication_error"));
+      await duplicateChart(chart.id);
+      toast.success(t("workspace.analysis.charts.chart_duplicated_successfully"));
+      void queryClient.invalidateQueries({ queryKey: chartKeys.all });
+    } catch (error) {
+      toast.error(getChartApiErrorMessage(error, t("workspace.analysis.charts.chart_duplication_error")));
     } finally {
       setIsDuplicating(false);
     }
@@ -128,29 +109,16 @@ export function ChartDropdownMenu({ workspaceId, chart, onEdit }: Readonly<Chart
     setIsAddingToDashboard(true);
 
     try {
-      const result = await addChartToDashboardAction({
-        workspaceId,
-        chartId: chart.id,
-        dashboardId: selectedDashboardId,
-      });
-
-      if (!result?.data) {
-        toast.error(
-          getFormattedErrorMessage(result) || t("workspace.analysis.charts.failed_to_add_chart_to_dashboard")
-        );
-        return;
-      }
-
+      await addDashboardWidget(selectedDashboardId, { chartId: chart.id });
       toast.success(t("workspace.analysis.charts.chart_added_to_dashboard"));
       setIsAddToDashboardDialogOpen(false);
       setSelectedDashboardId(undefined);
-      router.refresh();
+      void queryClient.invalidateQueries({ queryKey: chartKeys.all });
+      void queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
     } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : t("workspace.analysis.charts.failed_to_add_chart_to_dashboard");
-      toast.error(message);
+      toast.error(
+        getChartApiErrorMessage(error, t("workspace.analysis.charts.failed_to_add_chart_to_dashboard"))
+      );
     } finally {
       setIsAddingToDashboard(false);
     }
@@ -210,13 +178,16 @@ export function ChartDropdownMenu({ workspaceId, chart, onEdit }: Readonly<Chart
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <DeleteDialog
-        deleteWhat={t("common.chart")}
+      <DeleteChartDialog
         open={isDeleteDialogOpen}
-        setOpen={setIsDeleteDialogOpen}
-        onDelete={handleDeleteChart}
-        text={t("workspace.analysis.charts.delete_chart_confirmation")}
+        setOpen={(open) => {
+          setIsDeleteDialogOpen(open);
+          if (!open) setRefusedOnDashboards(null);
+        }}
+        workspaceId={workspaceId}
+        dashboards={refusedOnDashboards ?? chart.dashboards}
         isDeleting={isDeleting}
+        onDelete={handleDeleteChart}
       />
       <AddToDashboardDialog
         isOpen={isAddToDashboardDialogOpen}

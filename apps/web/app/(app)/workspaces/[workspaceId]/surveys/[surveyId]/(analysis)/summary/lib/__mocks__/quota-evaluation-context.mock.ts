@@ -3,7 +3,7 @@ import type { loadQuotaEvaluationContext as loadQuotaEvaluationContextImpl } fro
 
 /**
  * Quota-definition loader for the example-response persistence tests, which must stay off the
- * database. Kept in `__mocks__` (per AGENTS.md) so the `vi.mock` call is hoisted by import order.
+ * database. Kept in `__mocks__` (per CODING_STANDARDS.md) so the `vi.mock` call is hoisted by import order.
  */
 export const loadQuotaEvaluationContext = vi.fn<typeof loadQuotaEvaluationContextImpl>();
 

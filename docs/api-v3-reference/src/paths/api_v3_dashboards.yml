@@ -1,0 +1,127 @@
+get:
+  operationId: listDashboardsV3
+  summary: List dashboards
+  description: |
+    Lists a workspace's dashboards, newest first, page by page, each with its widget count.
+    `filter[chartId][eq]` lists the dashboards that hold a chart. Needs read access to the workspace.
+  tags:
+    - V3 Dashboards
+  parameters:
+    - $ref: ../components/parameters/WorkspaceIdQuery.yml
+    - in: query
+      name: limit
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 250
+        default: 50
+      description: Page size (max 250). Treat `meta.nextCursor` as the only end-of-collection signal.
+    - $ref: ../components/parameters/CursorQuery.yml
+    - in: query
+      name: filter[name][contains]
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 255
+      description: Only dashboards whose name contains this text, ignoring case.
+    - in: query
+      name: filter[chartId][eq]
+      schema:
+        type: string
+        format: cuid2
+      description: Only dashboards that hold this chart.
+  responses:
+    "200":
+      description: A page of dashboards
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: ../components/schemas/DashboardListItem.yml
+              meta:
+                $ref: ../components/schemas/CursorPaginationMeta.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3DashboardsForbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []
+post:
+  operationId: createDashboardV3
+  summary: Create a dashboard
+  description: |
+    Creates an empty dashboard in a workspace. Needs write access to the workspace. A name already
+    used in the workspace answers 409.
+  tags:
+    - V3 Dashboards
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/DashboardCreateRequest.yml
+  responses:
+    "201":
+      description: Dashboard created
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+        Location:
+          schema:
+            type: string
+          example: /api/v3/dashboards/cldash00000000000000000001
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/DashboardResource.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3DashboardsForbidden.yml
+    "409":
+      $ref: ../components/responses/V3DashboardsConflict.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

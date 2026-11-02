@@ -1,4 +1,5 @@
 import { type Mock, beforeEach, describe, expect, test, vi } from "vitest";
+import { modelFetch } from "./model-fetch";
 import {
   AIConfigurationError,
   getActiveAiModel,
@@ -225,6 +226,7 @@ describe("packages/ai provider helpers", () => {
     expect(firstModel).toEqual({ providerName: "google", modelName: "gemini-2.5-flash" });
     expect(secondModel).toBe(firstModel);
     expect(mocks.createVertex).toHaveBeenCalledWith({
+      fetch: modelFetch,
       project: "test-project",
       location: "us-central1",
       googleAuthOptions: {
@@ -251,6 +253,7 @@ describe("packages/ai provider helpers", () => {
 
     expect(model).toEqual({ providerName: "google", modelName: "gemini-2.5-flash" });
     expect(mocks.createVertex).toHaveBeenCalledWith({
+      fetch: modelFetch,
       project: "test-project",
       location: "us-central1",
       googleAuthOptions: {
@@ -273,6 +276,7 @@ describe("packages/ai provider helpers", () => {
 
     expect(model).toEqual({ providerName: "google", modelName: "gemini-2.5-flash" });
     expect(mocks.createVertex).toHaveBeenCalledWith({
+      fetch: modelFetch,
       project: "test-project",
       location: "us-central1",
     });
@@ -301,6 +305,7 @@ describe("packages/ai provider helpers", () => {
 
     expect(model).toEqual({ providerName: "google", modelName: "gemini-3.5-flash" });
     expect(mocks.createVertex).toHaveBeenCalledWith({
+      fetch: modelFetch,
       project: "test-project",
       location,
       baseURL,
@@ -323,6 +328,7 @@ describe("packages/ai provider helpers", () => {
 
       expect(model).toEqual({ providerName: "google", modelName: "gemini-3.5-flash" });
       expect(mocks.createVertex).toHaveBeenCalledWith({
+        fetch: modelFetch,
         project: "test-project",
         location,
       });
@@ -371,6 +377,7 @@ describe("packages/ai provider helpers", () => {
 
     expect(model).toEqual({ providerName: "aws", modelName: "amazon.nova-lite-v1:0" });
     expect(mocks.createAmazonBedrock).toHaveBeenCalledWith({
+      fetch: modelFetch,
       region: "us-east-1",
       accessKeyId: "aws-access-key-id",
       secretAccessKey: "aws-secret-access-key",
@@ -392,6 +399,7 @@ describe("packages/ai provider helpers", () => {
 
     expect(model).toEqual({ providerName: "azure", modelName: "gpt-4.1" });
     expect(mocks.createAzure).toHaveBeenCalledWith({
+      fetch: modelFetch,
       apiKey: "azure-api-key",
       resourceName: "test-resource",
       apiVersion: "v1",
@@ -519,6 +527,7 @@ describe("packages/ai provider helpers", () => {
     expect(firstModel).toEqual({ providerName: "openai-compatible", modelName: "Qwen/Qwen2.5-7B-Instruct" });
     expect(secondModel).toBe(firstModel);
     expect(mocks.createOpenAICompatible).toHaveBeenCalledWith({
+      fetch: modelFetch,
       name: "qwen-vllm",
       baseURL: "http://vllm:8000/v1",
       supportsStructuredOutputs: true,
@@ -542,6 +551,7 @@ describe("packages/ai provider helpers", () => {
 
     expect(model).toEqual({ providerName: "openai-compatible", modelName: "Qwen/Qwen2.5-7B-Instruct" });
     expect(mocks.createOpenAICompatible).toHaveBeenCalledWith({
+      fetch: modelFetch,
       name: "openai-compatible",
       baseURL: "http://vllm:8000/v1",
       supportsStructuredOutputs: false,
@@ -598,6 +608,7 @@ describe("packages/ai provider helpers", () => {
       });
 
       expect(mocks.createOpenAICompatible.mock.calls[0][0]).toStrictEqual({
+        fetch: modelFetch,
         name: "qwen-vllm",
         baseURL: "http://vllm:8000/v1",
         supportsStructuredOutputs: true,

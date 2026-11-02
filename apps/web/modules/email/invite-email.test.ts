@@ -39,7 +39,7 @@ describe("sendInviteMemberEmail display names", () => {
   });
 
   test("passes an ordinary inviter and invitee name through unchanged", async () => {
-    await sendInviteMemberEmail("invite", "to@example.com", "Anna Müller", "Ben");
+    await sendInviteMemberEmail("invite", "to@example.com", "Anna Müller", "Ben", "organization");
 
     expect(renderedNames()).toEqual({ inviterName: "Anna Müller", inviteeName: "Ben" });
   });
@@ -49,7 +49,8 @@ describe("sendInviteMemberEmail display names", () => {
       "invite",
       "to@example.com",
       `Win now https://spam.example/claim ${"x".repeat(200)}`,
-      ""
+      "",
+      "organization"
     );
 
     const { inviterName, inviteeName } = renderedNames();
@@ -59,7 +60,7 @@ describe("sendInviteMemberEmail display names", () => {
   });
 
   test("uses the translated anonymous label when the inviter name has nothing displayable", async () => {
-    await sendInviteMemberEmail("invite", "to@example.com", "https://spam.example", "");
+    await sendInviteMemberEmail("invite", "to@example.com", "https://spam.example", "", "organization");
 
     expect(renderedNames().inviterName).toBe("Anonymous");
   });

@@ -1,0 +1,21 @@
+type: object
+description: A group of conditions inside the top-level group. Groups nest at most two levels deep.
+required:
+  - id
+  - connector
+  - conditions
+properties:
+  id:
+    type: string
+    format: cuid2
+  connector:
+    type: string
+    enum:
+      - and
+      - or
+  conditions:
+    type: array
+    maxItems: 20
+    items:
+      $ref: ./ShowCondition.yml
+additionalProperties: false

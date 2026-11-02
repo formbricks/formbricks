@@ -7,41 +7,68 @@ import { hashString } from "@/lib/hash-string";
 import type { SamlParseProbe } from "@/modules/ee/auth/saml/lib/saml-parse-budget";
 import {
   SAML_RESPONSE_MARKUP_BUDGET,
+  SAML_RESPONSE_MAX_ELEMENTS,
   SAML_RESPONSE_MAX_LENGTH,
 } from "@/modules/ee/auth/saml/lib/saml-response-bounds";
+import { samlResponseWithoutAssertion } from "@/modules/ee/auth/saml/lib/saml-response-without-assertion";
 import { JACKSON_RELAY_STATE_PREFIX, POST, type SamlErrorCode, buildLoginErrorUrl } from "./route";
 
 const CLAIMS = { issuer: "https://idp.example.com", id: "_resp1", inResponseTo: "_req1" };
 const PARSED: SamlParseProbe = { outcome: "parsed", ms: 3, claims: CLAIMS };
 
-const { samlResponseMock, decryptionKeyMock, jacksonMock, applyIPRateLimitMock, redirectMock, probeMock } =
-  vi.hoisted(() => {
-    const samlResponseMock = vi.fn(async (_body: { RelayState: string; SAMLResponse: string }) => ({
-      redirect_url: "https://app.example.com/api/auth/saml/authorize?code=c",
-    }));
-    const decryptionKeyMock = vi.fn(async () => "sp-private-key");
-    return {
-      samlResponseMock,
-      decryptionKeyMock,
-      jacksonMock: vi.fn(async () => ({
-        oauthController: { samlResponse: samlResponseMock },
-        getDecryptionKey: decryptionKeyMock,
-      })),
-      applyIPRateLimitMock: vi.fn(async (_config: unknown, _options?: unknown) => ({ allowed: true })),
-      redirectMock: vi.fn((url: string) => new Response(null, { status: 307, headers: { location: url } })),
-      probeMock: vi.fn(
-        async (_samlResponse: string, _decryptionKey?: string): Promise<SamlParseProbe> => PARSED
-      ),
-    };
-  });
+const {
+  samlResponseMock,
+  decryptionKeyMock,
+  jacksonMock,
+  applyIPRateLimitMock,
+  redirectMock,
+  probeMock,
+  chargeMock,
+  IDP_VERIFICATION,
+} = vi.hoisted(() => {
+  const samlResponseMock = vi.fn(async (_body: { RelayState: string; SAMLResponse: string }) => ({
+    redirect_url: "https://app.example.com/api/auth/saml/authorize?code=c",
+  }));
+  const decryptionKeyMock = vi.fn(async () => "sp-private-key");
+  // What jackson checks signatures with; the route passes it to the parse worker as it is (ENG-4108).
+  const IDP_VERIFICATION = { publicKey: "idp-certificate" };
+  return {
+    samlResponseMock,
+    decryptionKeyMock,
+    IDP_VERIFICATION,
+    jacksonMock: vi.fn(async () => ({
+      oauthController: { samlResponse: samlResponseMock },
+      getDecryptionKey: decryptionKeyMock,
+      idpVerification: IDP_VERIFICATION,
+    })),
+    applyIPRateLimitMock: vi.fn(async (_config: unknown, _options?: unknown) => ({ allowed: true })),
+    redirectMock: vi.fn((url: string) => new Response(null, { status: 307, headers: { location: url } })),
+    chargeMock: vi.fn((_ms: number) => undefined),
+    probeMock: vi.fn(
+      async (
+        _samlResponse: string,
+        _decryptionKey?: string | null,
+        _idpVerification?: unknown
+      ): Promise<SamlParseProbe> => PARSED
+    ),
+  };
+});
 
 vi.mock("@/modules/ee/auth/saml/lib/jackson", () => ({ default: jacksonMock }));
-vi.mock("@/modules/ee/auth/saml/lib/saml-parse-budget", () => ({ probeSamlResponseParse: probeMock }));
+vi.mock("@/modules/ee/auth/saml/lib/saml-parse-budget", () => ({
+  SAML_PARSE_TIME_BUDGET_MS: 250,
+  probeSamlResponseParse: probeMock,
+  chargeMainThreadParse: chargeMock,
+}));
 vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyIPRateLimit: applyIPRateLimitMock }));
 vi.mock("next/navigation", () => ({ redirect: redirectMock }));
 
 const b64 = (xml: string) => Buffer.from(xml).toString("base64");
 const ISSUER = "<samlp:Response><saml2:Issuer>https://idp.example.com</saml2:Issuer></samlp:Response>";
+
+/** The error jackson throws for a response it refuses, which carries a 4xx status. */
+const jacksonError = (message: string, statusCode: number, internalError?: string) =>
+  Object.assign(new Error(message), { statusCode, internalError });
 
 const callback = (fields: Record<string, string>) =>
   new Request("http://localhost/api/auth/saml/callback", {
@@ -114,6 +141,60 @@ describe("SAML callback route", () => {
 
     expect(response.status).toBe(400);
     expect(samlResponseMock).not.toHaveBeenCalled();
+  });
+
+  test("refuses a response over an element cap before jackson parses it", async () => {
+    // saml20's parseIssuer selects every Issuer element one by one through xpath's quadratic node-set add, on every
+    // callback and before any other check: this shape holds the thread ~1.9 s unless it is refused here.
+    const flood = `<samlp:Response>${"<Issuer>x</Issuer>".repeat(4_000)}</samlp:Response>`;
+    const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+
+    const response = await POST(callback({ SAMLResponse: b64(flood), RelayState: "s" }));
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({
+      code: "bad_request",
+      message: "SAMLResponse carries more elements than a SAML response does",
+    });
+    expect(samlResponseMock).not.toHaveBeenCalled();
+    expect(warn).toHaveBeenCalledWith(
+      {
+        reason: "elements",
+        localName: "Issuer",
+        count: SAML_RESPONSE_MAX_ELEMENTS.Issuer + 1,
+        length: b64(flood).length,
+        suppressedSinceLast: 0,
+      },
+      "Refused a SAML response before parsing it"
+    );
+  });
+
+  test("refuses a response with more Signature elements than the cap before parsing it, by count only", async () => {
+    const xml = ISSUER.replace(
+      "</samlp:Response>",
+      "<ds:Signature/>".repeat(SAML_RESPONSE_MAX_ELEMENTS.Signature + 1) + "</samlp:Response>"
+    );
+    const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+
+    const response = await POST(callback({ SAMLResponse: b64(xml), RelayState: "boxyhq_jackson_state" }));
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({
+      code: "bad_request",
+      message: "SAMLResponse carries more elements than a SAML response does",
+    });
+    expect(probeMock).not.toHaveBeenCalled();
+    expect(samlResponseMock).not.toHaveBeenCalled();
+    expect(warn).toHaveBeenCalledWith(
+      {
+        reason: "elements",
+        localName: "Signature",
+        count: SAML_RESPONSE_MAX_ELEMENTS.Signature + 1,
+        length: b64(xml).length,
+        suppressedSinceLast: 0,
+      },
+      "Refused a SAML response before parsing it"
+    );
   });
 
   test("refuses a response with a DOCTYPE before jackson parses it, naming the reason", async () => {
@@ -240,7 +321,7 @@ describe("SAML callback route", () => {
       await POST(callback({ SAMLResponse: b64(ISSUER), RelayState: "boxyhq_jackson_s" }));
 
       // With jackson's key, so an encrypted assertion is decrypted and timed before jackson does it (ENG-4051).
-      expect(probeMock).toHaveBeenCalledWith(b64(ISSUER), "sp-private-key");
+      expect(probeMock).toHaveBeenCalledWith(b64(ISSUER), "sp-private-key", IDP_VERIFICATION);
       expect(probeMock.mock.invocationCallOrder[0]).toBeLessThan(
         samlResponseMock.mock.invocationCallOrder[0]
       );
@@ -252,7 +333,9 @@ describe("SAML callback route", () => {
         await POST(callback({ SAMLResponse: b64(ISSUER), RelayState }));
 
         expect(decryptionKeyMock).not.toHaveBeenCalled();
-        expect(probeMock).toHaveBeenCalledWith(b64(ISSUER), null);
+        // No key and no certificates: jackson rejects an IdP-initiated flow before it validates, so the worker is
+        // given nothing to spend jackson's decrypt or signature-check time on (an anonymous DoS lever otherwise).
+        expect(probeMock).toHaveBeenCalledWith(b64(ISSUER), null, null);
         expect(samlResponseMock).toHaveBeenCalled();
       }
     );
@@ -299,31 +382,114 @@ describe("SAML callback route", () => {
       }
     );
 
-    test.each([
-      ["past the markup budget", { reason: "markup", markup: 13_002, depth: 2, decryptedBytes: 52_400 }],
-      ["carrying a DOCTYPE", { reason: "declaration", decryptedBytes: 900 }],
-    ] as const)(
-      "refuses a response whose decrypted assertion is %s as jackson refuses one, logged by size",
-      async (_name, refusal) => {
-        const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
-        probeMock.mockResolvedValueOnce({ outcome: "refused", refusal });
-
-        const response = await POST(callback({ SAMLResponse: b64(ISSUER), RelayState: "s" }));
-
-        // jackson's own answer to a response it rejects, so it says nothing about what the assertion held.
-        expect(response.status).toBe(400);
-        expect(await response.json()).toEqual({
-          code: "bad_request",
-          message: "The SAML response was not accepted",
-          details: {},
+    // ENG-6646: once the worker has begun decrypting, the route has no answer of its own. jackson answers the response
+    // without its assertion, which is how it answers an assertion that does not decrypt.
+    describe("a response refused once its encrypted assertion was opened", () => {
+      const OPENED = { RelayState: "boxyhq_jackson_s", SAMLResponse: b64(ISSUER) };
+      const opened = (cause: Extract<SamlParseProbe, { outcome: "refused_encrypted" }>["cause"]) =>
+        probeMock.mockResolvedValueOnce({
+          outcome: "refused_encrypted",
+          issuer: "https://idp.example.com",
+          cause,
         });
-        expect(samlResponseMock).not.toHaveBeenCalled();
-        expect(warn).toHaveBeenCalledWith(
-          { ...refusal, suppressedSinceLast: 0 },
-          "Refused a SAML response whose decrypted assertion is past the bounds"
+      /** What jackson is asked to judge in its place. */
+      const WITHOUT_ASSERTION = {
+        RelayState: OPENED.RelayState,
+        SAMLResponse: samlResponseWithoutAssertion("https://idp.example.com"),
+      };
+
+      test.each([
+        ["past the markup budget", { reason: "markup", markup: 13_002, depth: 2, decryptedBytes: 52_400 }],
+        ["carrying a DOCTYPE", { reason: "declaration", decryptedBytes: 900 }],
+      ] as const)(
+        "is answered by jackson when its decrypted assertion is %s, and logged by size",
+        async (_name, refusal) => {
+          const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+          opened(refusal);
+          samlResponseMock.mockRejectedValueOnce(
+            jacksonError("Unable to validate state from the origin request.", 403)
+          );
+
+          const response = await POST(callback(OPENED));
+
+          // jackson's refusal, as for an assertion that does not decrypt: no session, so before it would decrypt.
+          expect(response.status).toBe(403);
+          expect(await response.json()).toEqual({
+            code: "forbidden",
+            message: "The SAML response was not accepted",
+            details: {},
+          });
+          expect(samlResponseMock).toHaveBeenCalledExactlyOnceWith(WITHOUT_ASSERTION);
+          // jackson's time on it is charged like any main-thread SAML parse.
+          expect(chargeMock).toHaveBeenCalledExactlyOnceWith(expect.any(Number));
+          expect(warn).toHaveBeenCalledWith(
+            { ...refusal, suppressedSinceLast: 0 },
+            "Refused a SAML response whose decrypted assertion is past the bounds"
+          );
+        }
+      );
+
+      test.each(["time", "memory"] as const)(
+        "is answered by jackson when it was too costly (%s) once decrypting",
+        async (reason) => {
+          const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+          opened({ reason });
+          samlResponseMock.mockResolvedValueOnce({
+            redirect_url: "https://app.example.com/cb?error=access_denied",
+            error: "Could not find assertion",
+          } as never);
+
+          const response = await POST(callback(OPENED));
+
+          // jackson got as far as validation (a live session), so its validation failure: never "too costly".
+          expect(response.status).toBe(400);
+          expect(await response.json()).toEqual({
+            code: "bad_request",
+            message: "The SAML response was not accepted",
+            details: {},
+          });
+          expect(samlResponseMock).toHaveBeenCalledExactlyOnceWith(WITHOUT_ASSERTION);
+          expect(warn).toHaveBeenCalledWith(
+            expect.objectContaining({ stage: "parse_budget", reason, decrypting: true }),
+            "Refused a SAML response that was too costly to parse"
+          );
+        }
+      );
+
+      test("is answered by jackson when the worker died decrypting, and logged as an error", async () => {
+        const error = vi.spyOn(logger, "error").mockImplementation(() => undefined);
+        vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+        opened({ reason: "failed" });
+        samlResponseMock.mockRejectedValueOnce(jacksonError("SAML connection not found.", 403));
+
+        const response = await POST(callback(OPENED));
+
+        expect(response.status).toBe(403);
+        expect(samlResponseMock).toHaveBeenCalledExactlyOnceWith(WITHOUT_ASSERTION);
+        expect(error).toHaveBeenCalledWith(
+          expect.objectContaining({
+            claimed: expect.objectContaining({ issuer: "https://idp.example.com" }),
+          }),
+          "SAML parse worker failed while decrypting; refused a SAML response"
         );
-      }
-    );
+      });
+
+      test("is refused even were jackson to accept the response without its assertion", async () => {
+        const error = vi.spyOn(logger, "error").mockImplementation(() => undefined);
+        vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+        opened({ reason: "time" });
+        // The default mock accepts anything.
+
+        const response = await POST(callback(OPENED));
+
+        expect(response.status).toBe(400);
+        expect(response.headers.get("location")).toBeNull();
+        expect(error).toHaveBeenCalledWith(
+          expect.any(Object),
+          "jackson accepted a SAML response without an assertion; refused it"
+        );
+      });
+    });
 
     test("logs cheap-path refusals at most once per window, counting the rest", async () => {
       const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
@@ -379,8 +545,6 @@ describe("SAML callback route", () => {
     const NAVIGATE = { "sec-fetch-mode": "navigate", accept: "text/html" };
 
     const VALID = { SAMLResponse: b64(ISSUER), RelayState: "s" };
-    const jacksonError = (message: string, statusCode: number, internalError?: string) =>
-      Object.assign(new Error(message), { statusCode, internalError });
 
     // Every way the callback refuses a response, and the code the login page shows for it.
     const REFUSALS: [string, Record<string, string> | null, () => unknown, SamlErrorCode][] = [
@@ -459,13 +623,18 @@ describe("SAML callback route", () => {
         "saml_response_rejected",
       ],
       [
-        "a decrypted assertion past the bounds",
+        "a decrypted assertion past the bounds, as jackson refuses one that does not decrypt",
         VALID,
-        () =>
+        () => {
           probeMock.mockResolvedValueOnce({
-            outcome: "refused",
-            refusal: { reason: "depth", markup: 80, depth: 70, decryptedBytes: 4_000 },
-          }),
+            outcome: "refused_encrypted",
+            issuer: "https://idp.example.com",
+            cause: { reason: "depth", markup: 80, depth: 70, decryptedBytes: 4_000 },
+          });
+          samlResponseMock.mockRejectedValueOnce(
+            jacksonError("Unable to validate state from the origin request.", 403)
+          );
+        },
         "saml_response_rejected",
       ],
       [

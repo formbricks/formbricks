@@ -1,0 +1,4 @@
+allOf:
+  - $ref: ./ListPaginationMeta.yml
+unevaluatedProperties: false
+description: The list `meta` for creatives — pagination only.

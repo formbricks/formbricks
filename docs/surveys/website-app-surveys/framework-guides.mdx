@@ -373,37 +373,45 @@ Now, visit the [Validate Your Setup](#validate-your-setup) section to verify you
   **Interaction-based Segments:** targeting users by whether they have seen, started or completed a survey requires **FormbricksSDK 2.1.0** or higher. See [Survey Display Logic](/surveys/website-app-surveys/survey-display-logic#level-4-—-interaction-based-segments).
 </Info>
 
-Install the Formbricks iOS SDK using the following steps:
+Install the Formbricks iOS SDK using Swift Package Manager:
 
 **Swift Package Manager**
 
 1. In Xcode choose **File → Add Packages…**
-2. Enter your repo URL (e.g. `https://github.com/formbricks/ios.git`)
-3. Choose version rule (e.g. "Up to Next Major" starting at `2.1.0`).
-4. Import in your code:
+2. Enter `https://github.com/formbricks/ios.git`.
+3. Choose a version rule (e.g. "Up to Next Major" starting at `2.3.0`).
+4. Add the **FormbricksSDK** library product to your app target.
+5. Import in your code:
 
    ```swift
    import FormbricksSDK
    ```
 
-**CocoaPods**
+<Note>
+  New FormbricksSDK releases are distributed through Swift Package Manager only.
+  [CocoaPods Trunk is becoming read-only](https://blog.cocoapods.org/CocoaPods-Specs-Repo/), with a test
+  period on November 1–7, 2026 and a permanent switch on December 2, 2026. Previously published pod
+  versions remain available; migrate to receive future SDK updates.
+</Note>
 
-1. Add the following to your `Podfile`:
+### Migrate from CocoaPods
 
-   ```ruby
-   platform :ios, '16.4'
-   use_frameworks! :linkage => :static
+<Steps>
+  <Step title="Remove the FormbricksSDK pod">
+    Remove the `pod 'FormbricksSDK', ...` entry from every target in your `Podfile`, then run `pod install`
+    to update the workspace and lockfile. Keep any other pods your app uses.
+  </Step>
+  <Step title="Add the Swift package">
+    Follow the Swift Package Manager instructions above and add **FormbricksSDK** to each app target
+    that uses it. Do not link both the pod and the Swift package in the same target.
+  </Step>
+  <Step title="Build and test your app">
+    Keep `import FormbricksSDK` and your existing SDK calls. Build and test your app after switching.
+    If you also upgrade the SDK version, review its [release notes](https://github.com/formbricks/ios/releases).
+  </Step>
+</Steps>
 
-   target 'YourTargetName' do
-     pod 'FormbricksSDK', '~> 2.1'
-   end
-   ```
-
-2. Run `pod install` in your app directory
-3. Import in your code:
-   ```swift
-   import FormbricksSDK
-   ```
+### Initialize the SDK
 
 Now start using FormbricksSDK
 

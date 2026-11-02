@@ -15,6 +15,12 @@ deployment:
     requests:
       cpu: 100m
 cube:
+  # Loaded from this checkout by envoy-kind-integration.sh; the release tag may not be published yet.
+  image:
+    repository: formbricks-cube
+    tag: envoy-kind
+    digest: ""
+    pullPolicy: Never
   resources:
     requests:
       cpu: 100m

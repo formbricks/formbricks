@@ -37,6 +37,12 @@ const downgradeToWarn = ({ rules, ...config }) => ({
   }),
 });
 
+export const nextCacheRestriction = {
+  name: "next/cache",
+  importNames: ["unstable_cache"],
+  message: "Use React cache() for request deduplication or cache.withCache() / Redis for shared caching.",
+};
+
 export const next = [
   commonIgnores,
   typescriptParsing,
@@ -51,6 +57,7 @@ export const next = [
     rules: {
       "@next/next/no-html-link-for-pages": "off",
       "react/jsx-key": "off",
+      "no-restricted-imports": ["error", { paths: [nextCacheRestriction] }],
     },
   },
   // eslint-config-next registers the jsx-a11y plugin but enables only six of its rules; this adds

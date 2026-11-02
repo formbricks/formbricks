@@ -1,49 +1,14 @@
-import { use } from "react";
 import { getAISmartToolsUnavailableReason, getOrganizationAIConfig } from "@/lib/ai/service";
-import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { ChartsList } from "@/modules/ee/analysis/charts/components/charts-list";
 import { CreateChartButton } from "@/modules/ee/analysis/charts/components/create-chart-button";
-import { getChartsWithCreator } from "@/modules/ee/analysis/charts/lib/charts";
 import { AnalysisPageLayout } from "@/modules/ee/analysis/components/analysis-page-layout";
 import { getFeedbackDataAvailability } from "@/modules/ee/analysis/lib/feedback-data-availability";
-import type { TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
 import { getIsDashboardsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { FeedbackDataEmptyState } from "@/modules/ee/unify-feedback/components/feedback-data-empty-state";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
-
-interface ChartsListContentProps {
-  chartsPromise: Promise<TChartWithCreator[]>;
-  workspaceId: string;
-  isReadOnly: boolean;
-  directories: { id: string; name: string }[];
-  isAIAvailable: boolean;
-  aiUnavailableReason?: TAIUnavailableReason;
-}
-
-const ChartsListContent = ({
-  chartsPromise,
-  workspaceId,
-  isReadOnly,
-  directories,
-  isAIAvailable,
-  aiUnavailableReason,
-}: Readonly<ChartsListContentProps>) => {
-  const charts = use(chartsPromise);
-
-  return (
-    <ChartsList
-      charts={charts}
-      workspaceId={workspaceId}
-      isReadOnly={isReadOnly}
-      directories={directories}
-      isAIAvailable={isAIAvailable}
-      aiUnavailableReason={aiUnavailableReason}
-    />
-  );
-};
 
 interface ChartsListPageProps {
   workspaceId: string;
@@ -113,7 +78,6 @@ export async function ChartsListPage({ workspaceId }: Readonly<ChartsListPagePro
   }
 
   const { directories, feedbackSources, hasFeedbackRecords } = feedbackDataAvailability;
-  const chartsPromise = hasFeedbackRecords ? getChartsWithCreator(workspaceId) : null;
 
   return (
     <AnalysisPageLayout
@@ -130,9 +94,8 @@ export async function ChartsListPage({ workspaceId }: Readonly<ChartsListPagePro
           />
         )
       }>
-      {hasFeedbackRecords && chartsPromise ? (
-        <ChartsListContent
-          chartsPromise={chartsPromise}
+      {hasFeedbackRecords ? (
+        <ChartsList
           workspaceId={workspaceId}
           isReadOnly={isReadOnly}
           directories={directories}

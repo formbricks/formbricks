@@ -7,7 +7,7 @@
  * around the file adds a little.
  *
  * Must stay below Next's `proxyClientMaxBodySize` (16 MB, `next.config.mjs`). The patched Next
- * (`patches/next@16.3.8.patch`) no longer clones bodies for the proxy, but without the patch Next truncates
+ * (`patches/next@16.4.1.patch`) no longer clones bodies for the proxy, but without the patch Next truncates
  * a longer body before the route sees it instead of rejecting it, so an upload without a `Content-Length`
  * header would get a 400 for malformed JSON rather than this route's 413. `constants.test.ts` holds the two
  * apart.

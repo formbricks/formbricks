@@ -98,6 +98,11 @@ const getFeatureDefinitions = (t: TFunction): TFeatureDefinition[] => {
       docsUrl: "https://formbricks.com/docs/workflows/overview",
     },
     {
+      // No feature page yet.
+      key: "creatives",
+      labelKey: t("workspace.settings.enterprise.creatives"),
+    },
+    {
       // Its feature page comes with ENG-3698.
       key: "dataRetention",
       labelKey: t("workspace.settings.enterprise.data_retention"),

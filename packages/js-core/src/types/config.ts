@@ -1,3 +1,4 @@
+import type { TCreativePayload } from "@formbricks/creatives";
 import type { TShowConditions } from "@formbricks/types/show-conditions";
 
 type TJsonObject = Record<string, unknown>;
@@ -147,11 +148,20 @@ export interface TWorkspaceStateSettings {
 
 export interface TWorkspaceState {
   expiresAt: Date;
+  /** When the server built the response (ENG-3994). Absent from servers before creatives. */
+  serverTime?: string;
+  /**
+   * What to add to the device clock to read the server's, worked out by the SDK when the state arrived
+   * (`getClockOffset`) and kept with it, so creative schedules hold on every page of the hour.
+   */
+  clockOffset?: number;
   data: {
     surveys: TWorkspaceStateSurvey[];
     actionClasses: TWorkspaceStateActionClass[];
     settings: TWorkspaceStateSettings;
     recaptchaSiteKey?: string;
+    /** Present only when the workspace has deliverable creatives (`@formbricks/creatives` types). */
+    creatives?: TCreativePayload[];
   };
 }
 
@@ -194,7 +204,7 @@ export interface TConfigInput {
   environmentId?: string;
   workspaceId?: string;
   appUrl: string;
-  /** How surveys render. Defaults to light; can be changed later with `setAppearance`. */
+  /** How surveys and creatives render. Defaults to light; can be changed later with `setAppearance`. */
   appearance?: "light" | "dark" | "system";
 }
 
@@ -210,6 +220,8 @@ export interface TBaseStyling {
   accentBgColor?: TStylingColor | null;
   accentBgColorSelected?: TStylingColor | null;
   fontFamily?: string | null;
+  /** Page font (ENG-3864): the page's font instead of the survey font; absent means off. */
+  pageFont?: boolean | null;
 
   // Buttons
   buttonBgColor?: TStylingColor | null;

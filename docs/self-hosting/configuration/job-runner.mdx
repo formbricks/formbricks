@@ -82,8 +82,16 @@ Current workloads on the shared `background-jobs` queue include:
 | Survey scheduling | `survey-scheduling.reconcile`                    | Reconciles scheduled survey state.                                                         |
 | Survey archive    | `survey-archive-purge.process`                   | Permanently deletes surveys past the archive retention window.                             |
 | Deletion cleanup  | `deletion-cleanup.drain`                         | Removes the Hub records and stored files of deleted surveys and responses, retrying until done. |
+| Creative counts   | `creative-stats.flush`                           | Copies creative Impressions and Clicks from Redis to the database every minute.            |
 | Usage telemetry   | `usage-telemetry.process`                        | Sends the instance's daily usage update.                                                   |
 | Workflows         | `workflow-run.process`, `workflow-run.reconcile` | Executes workflow runs and recovers stalled runs.                                          |
+
+<Note>
+  [Creative](/surveys/creatives/measure-performance) Impressions and Clicks live only in Redis until
+  `creative-stats.flush` copies them to the database. The job only picks up the current and the previous UTC
+  day, so if no worker serves `background-jobs`, counts not copied by the end of the next UTC day are lost.
+  Counts already copied stay on the creatives' summary pages. The job is safe to run on several replicas at once.
+</Note>
 
 Two jobs run on [dedicated queues](#dedicated-queues) of their own instead:
 

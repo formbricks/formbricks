@@ -1,7 +1,6 @@
-import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { notFound } from "next/navigation";
 import { SurveyContextWrapper } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/context/survey-context";
 import { getSurvey } from "@/lib/survey/service";
-import { getTranslate } from "@/lingodotdev/server";
 import { getSurveyAuth } from "@/modules/survey/lib/survey-auth";
 
 interface SurveyLayoutProps {
@@ -18,10 +17,9 @@ const SurveyLayout = async ({ params, children }: Readonly<SurveyLayoutProps>) =
   await getSurveyAuth(resolvedParams.workspaceId, resolvedParams.surveyId);
 
   const survey = await getSurvey(resolvedParams.surveyId);
-  const t = await getTranslate();
 
   if (!survey) {
-    throw new ResourceNotFoundError(t("common.survey"), resolvedParams.surveyId);
+    return notFound();
   }
 
   return <SurveyContextWrapper survey={survey}>{children}</SurveyContextWrapper>;

@@ -1,0 +1,99 @@
+type: object
+description: >
+  One condition on the page, the visit or the device: `leftOperand` `operator` `rightOperand`.
+  The operand names its family in `leftOperand.type` (`page`: `currentUrl`, `pageReferrer`,
+  `entryReferrer`, `queryParam`; `visit`: `pagesViewed`, `uniquePagesViewed`, `timeOnSite`,
+  `visitedUrls`; `device`: `deviceType`, `browser`, `screenWidth`), and each operand accepts only its
+  own operators. `queryParam` names its parameter in `leftOperand.meta.key`. `isSet` and `isNotSet`
+  take no `rightOperand`; list operators (`containsAnyOf`, `containsNoneOf`, and the `currentUrl`-only
+  `pathIsAnyOf`, `pathIsNoneOf`, which compare exact page paths) take a non-empty list; numeric operands
+  take a number of 0 or more (`uniquePagesViewed` at most 200); `deviceType` takes `phone`, `tablet` or
+  `desktop`. A condition that breaks one of these rules answers **400**. Matching is case-insensitive.
+required:
+  - id
+  - leftOperand
+  - operator
+properties:
+  id:
+    type: string
+    format: cuid2
+  leftOperand:
+    type: object
+    required:
+      - type
+      - value
+    properties:
+      type:
+        type: string
+        enum:
+          - page
+          - visit
+          - device
+      value:
+        type: string
+        enum:
+          - currentUrl
+          - pageReferrer
+          - entryReferrer
+          - queryParam
+          - pagesViewed
+          - uniquePagesViewed
+          - timeOnSite
+          - visitedUrls
+          - deviceType
+          - browser
+          - screenWidth
+      meta:
+        type: object
+        required:
+          - key
+        properties:
+          key:
+            type: string
+            minLength: 1
+            maxLength: 200
+        additionalProperties: false
+    additionalProperties: false
+  operator:
+    type: string
+    enum:
+      - equals
+      - doesNotEqual
+      - contains
+      - doesNotContain
+      - startsWith
+      - endsWith
+      - containsAnyOf
+      - containsNoneOf
+      - pathIsAnyOf
+      - pathIsNoneOf
+      - isGreaterThan
+      - isLessThan
+      - isGreaterThanOrEqual
+      - isLessThanOrEqual
+      - includes
+      - doesNotInclude
+      - isSet
+      - isNotSet
+  rightOperand:
+    type: object
+    required:
+      - type
+      - value
+    properties:
+      type:
+        type: string
+        enum:
+          - static
+      value:
+        oneOf:
+          - type: string
+            maxLength: 2048
+          - type: number
+          - type: array
+            maxItems: 200
+            items:
+              type: string
+              maxLength: 2048
+    additionalProperties: false
+additionalProperties: false

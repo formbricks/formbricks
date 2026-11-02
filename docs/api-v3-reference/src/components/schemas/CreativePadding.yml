@@ -1,0 +1,21 @@
+type: object
+description: >-
+  Padding in px, per device. `phone` applies below 768 px viewport width; `null` there uses the
+  `desktop` value, and `null` on `desktop` uses the workspace Look & Feel.
+required:
+  - desktop
+  - phone
+properties:
+  desktop:
+    type:
+      - integer
+      - "null"
+    minimum: 0
+    maximum: 64
+  phone:
+    type:
+      - integer
+      - "null"
+    minimum: 0
+    maximum: 64
+additionalProperties: false

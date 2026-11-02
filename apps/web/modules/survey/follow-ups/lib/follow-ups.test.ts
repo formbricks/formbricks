@@ -6,6 +6,7 @@ import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { getOrganizationMemberEmails } from "@/modules/email/lib/email-actor";
 import { FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
 import { sendFollowUpEmail } from "./email";
 import { sendFollowUpsForResponse } from "./follow-ups";
@@ -22,6 +23,15 @@ vi.mock("@/lib/response/service", () => ({
 
 vi.mock("@/lib/survey/service", () => ({
   getSurvey: vi.fn(),
+}));
+
+// Owners resolve to themselves; only team@example.com and direct@example.com are members of the organization.
+vi.mock("@/modules/email/lib/email-actor", () => ({
+  resolveEmailActorUserId: vi.fn(async (ownerUserId: string | null) => ownerUserId ?? "org-owner"),
+  getOrganizationMemberEmails: vi.fn(
+    async (_organizationId: string, emails: readonly string[]) =>
+      new Set(emails.filter((email) => ["team@example.com", "direct@example.com"].includes(email)))
+  ),
 }));
 
 vi.mock("./email", () => ({
@@ -50,6 +60,9 @@ describe("Follow-ups", () => {
   const mockSurvey = {
     id: "survey1",
     workspaceId: "ws1",
+    // The owner carries the per-sender limit; `createdBy` is attribution an API caller may set (ENG-3823).
+    ownerId: "owner-1",
+    createdBy: "someone-else",
     followUps: [
       {
         id: "followup1",
@@ -119,6 +132,8 @@ describe("Follow-ups", () => {
           response: mockResponse,
           attachResponseData: true,
           logoUrl: "https://example.com/logo.png",
+          // The respondent typed this address in, so it is also capped per recipient (ENG-3823).
+          rateLimit: { organizationId: "org1", actorUserId: "owner-1", externalRecipient: true },
         });
       }
     });
@@ -242,6 +257,8 @@ describe("Follow-ups", () => {
           response: mockResponse,
           attachResponseData: true,
           logoUrl: "https://example.com/logo.png",
+          // A member of the organization: its own mail, not counted against the external budget.
+          rateLimit: { organizationId: "org1", actorUserId: "owner-1", externalRecipient: false },
         });
       }
     });
@@ -313,6 +330,45 @@ describe("Follow-ups", () => {
         });
         expect(sendFollowUpEmail).not.toHaveBeenCalled();
       }
+    });
+
+    // The author can type any address, so one outside the organization is counted like a respondent's.
+    test("counts a literal follow-up address outside the organization as external", async () => {
+      vi.mocked(getSurvey).mockResolvedValue({
+        ...mockSurvey,
+        followUps: [
+          {
+            ...mockSurvey.followUps[0],
+            action: {
+              ...mockSurvey.followUps[0].action,
+              properties: { ...mockSurvey.followUps[0].action.properties, to: "stranger@example.com" },
+            },
+          },
+        ],
+      } as unknown as TSurvey);
+
+      await sendFollowUpsForResponse("response1");
+
+      expect(sendFollowUpEmail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: "stranger@example.com",
+          rateLimit: { organizationId: "org1", actorUserId: "owner-1", externalRecipient: true },
+        })
+      );
+      // One lookup for the run's literal addresses, not one per follow-up.
+      expect(getOrganizationMemberEmails).toHaveBeenCalledTimes(1);
+      expect(getOrganizationMemberEmails).toHaveBeenCalledWith("org1", ["stranger@example.com"]);
+    });
+
+    // A survey created with an API key has no owner; its organization's owner is charged instead.
+    test("charges the organization's owner for a survey without an owner", async () => {
+      vi.mocked(getSurvey).mockResolvedValue({ ...mockSurvey, ownerId: null } as unknown as TSurvey);
+
+      await sendFollowUpsForResponse("response1");
+
+      expect(sendFollowUpEmail).toHaveBeenCalledWith(
+        expect.objectContaining({ rateLimit: expect.objectContaining({ actorUserId: "org-owner" }) })
+      );
     });
 
     test("should handle email sending error", async () => {

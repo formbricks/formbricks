@@ -1,6 +1,6 @@
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import type { TMembership, TOrganizationRole } from "@formbricks/types/memberships";
 import { can } from "@/lib/authorization";
 import { getBillingFallbackPath } from "@/lib/membership/navigation";
@@ -19,8 +19,14 @@ const mocks = vi.hoisted(() => ({ isFormbricksCloud: false, workspaceFindUnique:
 
 // Real getAccessFlags and getTeamPermissionFlags are used on purpose so the tests exercise the
 // actual role -> isBilling mapping (the redirect branch) and the permission -> isReadOnly mapping.
-// Everything else getWorkspaceAuth touches is stubbed. next/navigation is globally mocked in
-// vitestSetup.ts, so `redirect` is a no-op spy here.
+// Everything else getWorkspaceAuth touches is stubbed. `redirect` is a no-op spy; `notFound` throws, as
+// the real one does, so a 404 ends the helper instead of falling through.
+vi.mock("next/navigation", () => ({
+  redirect: vi.fn(),
+  notFound: vi.fn(() => {
+    throw new Error("NEXT_NOT_FOUND");
+  }),
+}));
 vi.mock("react", () => ({ cache: (fn: (...args: unknown[]) => unknown) => fn }));
 vi.mock("@/lib/constants", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/constants")>()),
@@ -106,9 +112,10 @@ describe("getWorkspaceAuth workspace-access gate + isReadOnly (ENG-1769)", () =>
     vi.mocked(getWorkspacePermissionByUserId).mockResolvedValue("read");
   });
 
-  test("throws ResourceNotFoundError when the workspace is missing", async () => {
+  test("404s when the workspace is missing", async () => {
     vi.mocked(getWorkspace).mockResolvedValue(null);
-    await expect(getWorkspaceAuth(workspaceId)).rejects.toThrow(ResourceNotFoundError);
+    await expect(getWorkspaceAuth(workspaceId)).rejects.toThrow("NEXT_NOT_FOUND");
+    expect(notFound).toHaveBeenCalled();
   });
 
   test("throws AuthenticationError when there is no session", async () => {
@@ -121,17 +128,17 @@ describe("getWorkspaceAuth workspace-access gate + isReadOnly (ENG-1769)", () =>
     await expect(getWorkspaceAuth(workspaceId)).rejects.toThrow(ResourceNotFoundError);
   });
 
-  test("throws AuthorizationError when the user has no org membership", async () => {
+  test("404s when the user has no org membership", async () => {
     vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue(null);
-    await expect(getWorkspaceAuth(workspaceId)).rejects.toThrow(AuthorizationError);
+    await expect(getWorkspaceAuth(workspaceId)).rejects.toThrow("NEXT_NOT_FOUND");
   });
 
   // The core fix: an org member with no WorkspaceTeam grant for this workspace
   // must be rejected instead of being admitted (and mislabeled as a writer).
-  test("throws AuthorizationError when the user has no workspace access", async () => {
+  test("404s when the user has no workspace access", async () => {
     vi.mocked(can).mockResolvedValue(false);
     vi.mocked(getWorkspacePermissionByUserId).mockResolvedValue(null);
-    await expect(getWorkspaceAuth(workspaceId)).rejects.toThrow(AuthorizationError);
+    await expect(getWorkspaceAuth(workspaceId)).rejects.toThrow("NEXT_NOT_FOUND");
     // The narrow read permission, not the navigation check: billing has already been
     // redirected above, so this choke point must not re-admit it.
     expect(can).toHaveBeenCalledWith({ type: "user", id: userId }, "workspace.read", {
@@ -247,18 +254,18 @@ describe("layout navigation gates (ENG-1737)", () => {
       expect(result.organization).toMatchObject({ id: layoutOrganizationId });
     });
 
-    test("throws AuthorizationError when the user may not navigate there", async () => {
+    test("404s when the user may not navigate there", async () => {
       vi.mocked(canUserNavigateWorkspace).mockResolvedValue(false);
 
-      await expect(workspaceIdLayoutChecks(layoutWorkspaceId)).rejects.toThrow(AuthorizationError);
+      await expect(workspaceIdLayoutChecks(layoutWorkspaceId)).rejects.toThrow("NEXT_NOT_FOUND");
     });
 
-    // Existence is now answered before access, so a missing workspace reports itself as missing
-    // instead of as a denial — matching getWorkspaceAuth.
-    test("throws ResourceNotFoundError for a workspace that does not exist", async () => {
+    // Existence is answered before access, so a missing workspace 404s without an access decision —
+    // matching getWorkspaceAuth.
+    test("404s for a workspace that does not exist", async () => {
       mocks.workspaceFindUnique.mockResolvedValue(null);
 
-      await expect(workspaceIdLayoutChecks(layoutWorkspaceId)).rejects.toThrow(ResourceNotFoundError);
+      await expect(workspaceIdLayoutChecks(layoutWorkspaceId)).rejects.toThrow("NEXT_NOT_FOUND");
       expect(canUserNavigateWorkspace).not.toHaveBeenCalled();
     });
 
@@ -303,20 +310,16 @@ describe("layout navigation gates (ENG-1737)", () => {
       expect(data.organization.displayTimeZone).toBe("Europe/Berlin");
     });
 
-    test("throws AuthorizationError when the user may not navigate there", async () => {
+    test("404s when the user may not navigate there", async () => {
       vi.mocked(canUserNavigateWorkspace).mockResolvedValue(false);
 
-      await expect(getWorkspaceLayoutData(layoutWorkspaceId, layoutUserId)).rejects.toThrow(
-        AuthorizationError
-      );
+      await expect(getWorkspaceLayoutData(layoutWorkspaceId, layoutUserId)).rejects.toThrow("NEXT_NOT_FOUND");
     });
 
-    test("throws ResourceNotFoundError for a workspace that does not exist", async () => {
+    test("404s for a workspace that does not exist", async () => {
       mocks.workspaceFindUnique.mockResolvedValue(null);
 
-      await expect(getWorkspaceLayoutData(layoutWorkspaceId, layoutUserId)).rejects.toThrow(
-        ResourceNotFoundError
-      );
+      await expect(getWorkspaceLayoutData(layoutWorkspaceId, layoutUserId)).rejects.toThrow("NEXT_NOT_FOUND");
       expect(canUserNavigateWorkspace).not.toHaveBeenCalled();
     });
   });

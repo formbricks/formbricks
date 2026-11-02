@@ -197,7 +197,7 @@ export function AdvancedChartBuilder({
     executeQueryRef.current = () => {
       lastRunQueryJsonRef.current = currentQueryJson;
       setIsConfigDirty(false);
-      void runQuery(currentQuery).then((result) => {
+      void runQuery(currentQuery, chartTypeRef.current).then((result) => {
         if (result) {
           onChartGenerated?.({ ...result, chartType: chartTypeRef.current });
         }

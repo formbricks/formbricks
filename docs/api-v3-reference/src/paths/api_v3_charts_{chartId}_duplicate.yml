@@ -1,0 +1,62 @@
+post:
+  operationId: duplicateChartV3
+  summary: Duplicate a chart
+  description: |
+    Copies a chart — same Feedback Dataset, type, chart query and display settings — so the copy can
+    change without touching the dashboards that show the original. With `dashboardId`, the copy is
+    also put on that dashboard (first open slot, or `layout`) in the same transaction, and the
+    dashboard's `updatedAt` moves; a dashboard already holding 250 widgets, or with no open slot above
+    the grid's last row, answers 409 and no copy is made. Needs write access to the chart's workspace and to its Feedback Dataset.
+  tags:
+    - V3 Charts
+  parameters:
+    - $ref: ../components/parameters/ChartIdPath.yml
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/ChartDuplicateRequest.yml
+  responses:
+    "201":
+      description: The copy
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+        Location:
+          schema:
+            type: string
+          example: /api/v3/charts/clchart000000000000000002
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/ChartResource.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3DashboardsForbidden.yml
+    "409":
+      $ref: ../components/responses/V3DashboardsConflict.yml
+    "422":
+      $ref: ../components/responses/V3UnprocessableContent.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

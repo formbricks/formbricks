@@ -37,6 +37,7 @@ import {
   ZSurveyCreateInput,
   ZSurveyHiddenFields,
 } from "@formbricks/types/surveys/types";
+import { lockSurveyVisibility } from "@/lib/authzed/survey";
 import {
   assertLinkableEmbeddedFields,
   assertWritableEmbeddedFields,
@@ -57,6 +58,11 @@ import {
   resolveCustomCssWriteOrThrow,
 } from "@/modules/custom-css/lib/service";
 import { getSurveyWorkspaceIdMap } from "@/modules/ee/contacts/segments/lib/segments";
+import {
+  assertNoLinkedCreatives,
+  getDestinationSettingTurnedOn,
+} from "@/modules/ee/creatives/lib/linked-creatives";
+import { isAppSurveyBlockedFromPublishing } from "@/modules/ee/creatives/lib/survey-publish";
 import { handleTriggerUpdates } from "@/modules/survey/lib/trigger-updates";
 import {
   isSurveySchedulingDue,
@@ -66,11 +72,10 @@ import {
 import { getActionClasses } from "../actionClass/service";
 import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
+import { APP_SURVEY_TRIGGER_REQUIRED_MESSAGE, isAppSurveyMissingTriggersToPublish } from "./publish-rule";
 import {
-  APP_SURVEY_TRIGGER_REQUIRED_MESSAGE,
   checkForInvalidImagesInQuestions,
   checkForInvalidMediaInBlocks,
-  isAppSurveyMissingTriggersToPublish,
   stripIsDraftFromBlocks,
   transformPrismaSurvey,
   validateMediaAndPrepareBlocks,
@@ -559,6 +564,15 @@ export const updateSurveyInternal = async (
     // everything this survey already declares, and any name — or clash — in it passes untouched.
     assertValidNewDeclaredFields({ existing: currentSurvey, incoming: updatedSurvey });
 
+    // A creative's Destination can't be single-use or PIN-protected, so turning either on is refused
+    // (409) while linked creatives open the survey. Checked here, before the segment writes below, and
+    // again in the transaction under the lock a creative write takes to link a survey.
+    const creativeBlockedChange = getDestinationSettingTurnedOn(currentSurvey, updatedSurvey);
+    const linkedCreativesSurvey = { surveyId, workspaceId: currentSurvey.workspaceId };
+    if (creativeBlockedChange) {
+      await assertNoLinkedCreatives(prisma, linkedCreativesSurvey, creativeBlockedChange);
+    }
+
     // ENG-1939/ENG-2115: validation may only be skipped for a draft-to-draft write, so BOTH sides of
     // the transition are gated. The lenient draft schema (ZSurveyDraft) does not validate elements at
     // all, so skipping validation on any other transition lets structurally invalid blocks reach the
@@ -576,9 +590,17 @@ export const updateSurveyInternal = async (
     if (!skipValidation) {
       checkForInvalidImagesInQuestions(questions);
 
-      // An app survey can never be shown without a trigger, so block publishing (non-draft status)
-      // one with zero triggers. The editor enforces this client-side only; mirror it server-side.
-      if (isAppSurveyMissingTriggersToPublish(type, updatedSurvey.status, triggers)) {
+      // An app survey can never be shown without a trigger or a creative that opens it, so block
+      // publishing (non-draft status) one with neither. The editor runs the same rule before saving.
+      if (
+        await isAppSurveyBlockedFromPublishing({
+          surveyId,
+          workspaceId: currentSurvey.workspaceId,
+          type,
+          status: updatedSurvey.status,
+          triggers,
+        })
+      ) {
         throw new InvalidInputError(APP_SURVEY_TRIGGER_REQUIRED_MESSAGE);
       }
     }
@@ -889,6 +911,11 @@ export const updateSurveyInternal = async (
     delete data.createdBy;
     const persistedSurvey = await prisma.$transaction(
       async (tx) => {
+        if (creativeBlockedChange) {
+          await lockSurveyVisibility(tx, surveyId);
+          await assertNoLinkedCreatives(tx, linkedCreativesSurvey, creativeBlockedChange);
+        }
+
         // Narrow select: what this update returns would describe the survey before the reconcile
         // below, and the re-read at the end of the transaction is what the caller gets instead.
         // Scoped by workspace as well as id, per the repo's data-access rule. `Survey.id` is globally
@@ -1148,13 +1175,15 @@ export const createSurvey = async (
     }
 
     // An app survey can never be shown without a trigger, so block creating one directly in a
-    // non-draft status with zero triggers (mirrors the editor's publish guard).
+    // non-draft status with zero triggers (mirrors the editor's publish guard). No creative can open a
+    // survey that doesn't exist yet.
     if (
-      isAppSurveyMissingTriggersToPublish(
-        restSurveyBody.type ?? "link",
-        restSurveyBody.status ?? "draft",
-        restSurveyBody.triggers
-      )
+      isAppSurveyMissingTriggersToPublish({
+        type: restSurveyBody.type ?? "link",
+        status: restSurveyBody.status ?? "draft",
+        triggers: restSurveyBody.triggers,
+        isOpenedByCreative: false,
+      })
     ) {
       throw new InvalidInputError(APP_SURVEY_TRIGGER_REQUIRED_MESSAGE);
     }

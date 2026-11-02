@@ -118,6 +118,20 @@ get:
         `me` keeps surveys whose `owner` is the caller; `others` keeps the rest, ownerless surveys
         included. Relative to the signed-in user, so an API key sending this parameter gets **400**.
     - in: query
+      name: filter[singleUse][eq]
+      schema:
+        type: boolean
+      description: >-
+        `true` keeps only single-use surveys (single-use links turned on), `false` only the others.
+        Omit it to list both. Applied in the query, so `limit` and the counts keep their meaning.
+    - in: query
+      name: filter[pinProtected][eq]
+      schema:
+        type: boolean
+      description: >-
+        `true` keeps only surveys that ask for a PIN before they open, `false` only the others. Omit
+        it to list both. Applied in the query, so `limit` and the counts keep their meaning.
+    - in: query
       name: sortBy
       schema:
         type: string

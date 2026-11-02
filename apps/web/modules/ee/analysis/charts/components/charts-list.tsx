@@ -1,11 +1,18 @@
+"use client";
+
+import { useTranslation } from "react-i18next";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
-import { getTranslate } from "@/lingodotdev/server";
 import { ChartRow } from "@/modules/ee/analysis/charts/components/chart-row";
+import { ChartsListSkeleton } from "@/modules/ee/analysis/charts/components/charts-list-skeleton";
 import { CreateChartButton } from "@/modules/ee/analysis/charts/components/create-chart-button";
-import type { TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
+import { useCharts } from "@/modules/ee/analysis/charts/hooks/use-charts";
+import { ListLoadError } from "@/modules/ee/analysis/components/list-load-error";
+import { LoadMoreOnScroll } from "@/modules/ee/analysis/components/load-more-on-scroll";
+
+/** Rows per page: enough to fill a screen, few enough that the first paint stays fast. */
+const CHARTS_PAGE_SIZE = 25;
 
 interface ChartsListProps {
-  charts: TChartWithCreator[];
   workspaceId: string;
   isReadOnly: boolean;
   directories: { id: string; name: string }[];
@@ -13,23 +20,34 @@ interface ChartsListProps {
   aiUnavailableReason?: TAIUnavailableReason;
 }
 
-export const ChartsList = async ({
-  charts,
+export const ChartsList = ({
   workspaceId,
   isReadOnly,
   directories,
   isAIAvailable,
   aiUnavailableReason,
 }: Readonly<ChartsListProps>) => {
-  const t = await getTranslate();
+  const { t } = useTranslation();
+  const { charts, isPending, isError, error, refetch, hasNextPage, isFetchingNextPage, fetchNextPage } =
+    useCharts({ workspaceId, limit: CHARTS_PAGE_SIZE });
+
+  const columnHeaders: [string, string, string, string] = [
+    t("common.title"),
+    t("common.created_by"),
+    t("common.created_at"),
+    t("common.updated_at"),
+  ];
+
+  if (isPending) return <ChartsListSkeleton columnHeaders={columnHeaders} />;
+  if (isError) return <ListLoadError error={error} onRetry={refetch} />;
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-xs">
       <div className="grid h-12 grid-cols-7 content-center border-b text-left text-sm font-semibold text-slate-900">
-        <div className="col-span-3 pl-6">{t("common.title")}</div>
-        <div className="col-span-1 hidden text-center sm:block">{t("common.created_by")}</div>
-        <div className="col-span-1 hidden text-center sm:block">{t("common.created_at")}</div>
-        <div className="col-span-1 hidden text-center sm:block">{t("common.updated_at")}</div>
+        <div className="col-span-3 pl-6">{columnHeaders[0]}</div>
+        <div className="col-span-1 hidden text-center sm:block">{columnHeaders[1]}</div>
+        <div className="col-span-1 hidden text-center sm:block">{columnHeaders[2]}</div>
+        <div className="col-span-1 hidden text-center sm:block">{columnHeaders[3]}</div>
         <div className="col-span-1" />
       </div>
       {charts.length === 0 ? (
@@ -53,15 +71,22 @@ export const ChartsList = async ({
           )}
         </div>
       ) : (
-        charts.map((chart) => (
-          <ChartRow
-            key={chart.id}
-            chart={chart}
-            workspaceId={workspaceId}
-            isReadOnly={isReadOnly}
-            directories={directories}
+        <>
+          {charts.map((chart) => (
+            <ChartRow
+              key={chart.id}
+              chart={chart}
+              workspaceId={workspaceId}
+              isReadOnly={isReadOnly}
+              directories={directories}
+            />
+          ))}
+          <LoadMoreOnScroll
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            fetchNextPage={fetchNextPage}
           />
-        ))
+        </>
       )}
     </div>
   );

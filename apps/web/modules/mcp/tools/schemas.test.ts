@@ -10,6 +10,8 @@ import {
   V3_SURVEY_MAX_LANGUAGES,
   V3_SURVEY_MAX_VARIABLES,
 } from "@/app/api/v3/surveys/schemas";
+import { CREATIVE_TEXTS, type TCreativeTextSpec } from "@/modules/ee/creatives/lib/creative-texts";
+import * as creativeSchemas from "./creative-schemas";
 import * as surveyAndFeedbackSchemas from "./schemas";
 import * as workflowSchemas from "./workflow-schemas";
 
@@ -131,6 +133,7 @@ function classifyObjectNodes(name: string, schema: z.ZodType): Walked {
 const allExports: [string, unknown][] = Object.entries({
   ...surveyAndFeedbackSchemas,
   ...workflowSchemas,
+  ...creativeSchemas,
 });
 
 const allSchemas = allExports.filter((entry): entry is [string, z.ZodType] => entry[1] instanceof z.ZodType);
@@ -145,6 +148,18 @@ const allSchemas = allExports.filter((entry): entry is [string, z.ZodType] => en
  * list and the test below it — the general case above then covers these two as well.
  */
 const SCHEMAS_WITH_OPEN_WORKFLOW_DEFINITION = ["ZMcpCreateWorkflowInput", "ZMcpPatchWorkflowInput"];
+
+/**
+ * The locale-keyed text maps of a creative's `content` (`CREATIVE_TEXTS`): `content` is `anyOf` the types'
+ * shapes in that list's order, and a step that can be null is itself an `anyOf` whose first branch it is.
+ */
+const creativeTextMapPaths = (content: string): string[] =>
+  Object.values(CREATIVE_TEXTS).flatMap((texts: readonly TCreativeTextSpec[], typeIndex) =>
+    texts.map(({ path }) => {
+      const steps = path.map(({ key, nullable }) => (nullable ? `${key}.anyOf|0` : key));
+      return `${content}.anyOf|${typeIndex}.${steps.join(".")}`;
+    })
+  );
 
 /**
  * Every field that may legitimately accept an arbitrary nested shape: the survey/workflow document payloads
@@ -172,6 +187,12 @@ const EXPECTED_FREE_FORM_PATHS: Record<string, string[]> = {
   ZMcpCreateFeedbackRecordInput: ["ZMcpCreateFeedbackRecordInput.metadata"],
   ZMcpCreateFeedbackRecordsInput: ["ZMcpCreateFeedbackRecordsInput.records[].metadata"],
   ZMcpUpdateFeedbackRecordInput: ["ZMcpUpdateFeedbackRecordInput.metadata"],
+  // A creative's texts are maps keyed by locale code ({"en-US": "..."}): the keys are data, not declared
+  // fields. The operation checks each against the languages the creative declares, so a misspelled locale
+  // is refused (422) rather than dropped.
+  ZMcpCreateCreativeFields: creativeTextMapPaths("ZMcpCreateCreativeFields.content"),
+  ZMcpCreateCreativeInput: creativeTextMapPaths("ZMcpCreateCreativeInput.content"),
+  ZMcpPatchCreativeInput: creativeTextMapPaths("ZMcpPatchCreativeInput.data.content"),
 };
 
 describe("MCP tool input schemas reject undeclared arguments (ENG-2256)", () => {

@@ -115,10 +115,14 @@ describe("initClientSentryFromRuntimeConfig", () => {
 
     const { beforeSend } = mockInit.mock.calls[0][0];
     const event = { message: "boom" };
-    const staleAction = Object.assign(new Error('Server Action "7f8e93d" was not found on the server.'), {
-      name: "UnrecognizedActionError",
-      __NEXT_ERROR_CODE: "E715",
-    });
+    const staleAction = Object.assign(
+      new Error(
+        'Server Action "7f8e93d" was not found on the server. \nRead more: https://nextjs.org/docs/messages/failed-to-find-server-action'
+      ),
+      {
+        name: "UnrecognizedActionError",
+      }
+    );
 
     expect(beforeSend(event, { originalException: staleAction })).toBeNull();
 

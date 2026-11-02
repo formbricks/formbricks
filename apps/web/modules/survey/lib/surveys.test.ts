@@ -9,6 +9,11 @@ import { getSurvey } from "@/lib/survey/service";
 import { validateInputs } from "@/lib/utils/validate";
 import { drainDeletionCleanups } from "@/modules/deletion-cleanup/lib/drain";
 import { enqueueSurveyDeletionCleanups } from "@/modules/deletion-cleanup/lib/enqueue";
+import {
+  SurveyLinkedCreativesError,
+  findLinkedCreatives,
+  unlinkSurveyCreatives,
+} from "@/modules/ee/creatives/lib/linked-creatives";
 import { getSurveyPurgeEligibleWhere } from "@/modules/survey/archive/lib/purge-eligibility";
 import { restartSurveyRetention } from "@/modules/survey/archive/lib/retention-restart";
 import { archiveSurvey, deleteSurvey, restoreSurvey } from "./surveys";
@@ -44,6 +49,12 @@ vi.mock("@/modules/deletion-cleanup/lib/drain", () => ({
 
 vi.mock("@/modules/survey/archive/lib/retention-restart", () => ({
   restartSurveyRetention: vi.fn(),
+}));
+
+vi.mock("@/modules/ee/creatives/lib/linked-creatives", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/ee/creatives/lib/linked-creatives")>()),
+  findLinkedCreatives: vi.fn(),
+  unlinkSurveyCreatives: vi.fn(),
 }));
 
 vi.mock("@formbricks/logger", () => ({
@@ -142,6 +153,8 @@ describe("deleteSurvey", () => {
     ] as never);
     vi.mocked(enqueueSurveyDeletionCleanups).mockResolvedValue({ drainNowIds: ["cleanup-1"] });
     vi.mocked(drainDeletionCleanups).mockResolvedValue({ done: 1, again: 0, failed: 0 });
+    vi.mocked(findLinkedCreatives).mockResolvedValue([]);
+    vi.mocked(unlinkSurveyCreatives).mockResolvedValue([]);
   });
 
   test("locks the survey, queues its cleanup, deletes it, then drains the storage cleanup", async () => {
@@ -257,6 +270,80 @@ describe("deleteSurvey", () => {
 
     await expect(deleteSurvey("invalid-id")).rejects.toThrow(validationError);
     expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  describe("creatives that open the survey", () => {
+    const linked = [
+      { id: "clcr1234567890123456789012", name: "Feedback tab" },
+      { id: "clcr1234567890123456789013", name: "Promo banner" },
+    ];
+
+    test("refuses while linked creatives open it, naming them, and queues and deletes nothing", async () => {
+      const tx = mockTransaction();
+      vi.mocked(findLinkedCreatives).mockResolvedValue(linked);
+
+      const refusal = await deleteSurvey(surveyId).catch((error: unknown) => error);
+
+      expect(refusal).toBeInstanceOf(SurveyLinkedCreativesError);
+      expect(refusal).toMatchObject({ statusCode: 409, blockedChange: "delete", creatives: linked });
+      // Checked under the row lock a link also takes, so a creative linked meanwhile can't slip past.
+      expect(findLinkedCreatives).toHaveBeenCalledWith(tx, { surveyId, workspaceId });
+      expect(unlinkSurveyCreatives).not.toHaveBeenCalled();
+      expect(enqueueSurveyDeletionCleanups).not.toHaveBeenCalled();
+      expect(tx.survey.delete).not.toHaveBeenCalled();
+    });
+
+    test("unlinks its archived creatives before the delete and hands them over once it commits", async () => {
+      const callOrder: string[] = [];
+      const tx = mockTransaction();
+      vi.mocked(unlinkSurveyCreatives).mockImplementation(async () => {
+        callOrder.push("unlink");
+        return [linked[0]];
+      });
+      tx.survey.delete.mockImplementation(async () => {
+        callOrder.push("delete");
+        return mockDeletedSurveyLink;
+      });
+      const onCreativesUnlinked = vi.fn(async () => {
+        callOrder.push("unlinked");
+      });
+
+      await deleteSurvey(surveyId, { onCreativesUnlinked });
+
+      expect(unlinkSurveyCreatives).toHaveBeenCalledWith(tx, {
+        surveyId,
+        workspaceId,
+        include: "archived",
+      });
+      expect(onCreativesUnlinked).toHaveBeenCalledWith([linked[0]], { organizationId });
+      expect(callOrder).toEqual(["unlink", "delete", "unlinked"]);
+    });
+
+    test("tells nobody when it unlinked nothing, and a failing report doesn't undo the delete", async () => {
+      mockTransaction();
+      const onCreativesUnlinked = vi.fn();
+
+      await deleteSurvey(surveyId, { onCreativesUnlinked });
+      expect(onCreativesUnlinked).not.toHaveBeenCalled();
+
+      vi.mocked(unlinkSurveyCreatives).mockResolvedValue([linked[0]]);
+      onCreativesUnlinked.mockRejectedValue(new Error("audit down"));
+      await expect(deleteSurvey(surveyId, { onCreativesUnlinked })).resolves.toEqual(mockDeletedSurveyLink);
+      expect(logger.error).toHaveBeenCalled();
+    });
+
+    test("the archive purge unlinks every creative instead of refusing", async () => {
+      const tx = mockTransaction();
+      vi.mocked(findLinkedCreatives).mockResolvedValue(linked);
+      vi.mocked(unlinkSurveyCreatives).mockResolvedValue(linked);
+      const onCreativesUnlinked = vi.fn();
+
+      await deleteSurvey(surveyId, { purgeCutoff: cutoff, onCreativesUnlinked });
+
+      expect(unlinkSurveyCreatives).toHaveBeenCalledWith(tx, { surveyId, workspaceId, include: "all" });
+      expect(tx.survey.delete).toHaveBeenCalled();
+      expect(onCreativesUnlinked).toHaveBeenCalledWith(linked, { organizationId });
+    });
   });
 
   describe("the archive purge's guard", () => {

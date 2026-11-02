@@ -1,0 +1,29 @@
+{
+  "name": "@formbricks/creatives",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Decides which creatives a page shows (resolve) and draws them into a Shadow DOM (render). Consumed from source and bundled into js-core.",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "clean": "rimraf .turbo node_modules coverage"
+  },
+  "dependencies": {
+    "@formbricks/types": "workspace:*"
+  },
+  "devDependencies": {
+    "@formbricks/config-eslint": "workspace:*",
+    "@formbricks/config-typescript": "workspace:*",
+    "@vitest/coverage-v8": "catalog:",
+    "jsdom": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

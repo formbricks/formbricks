@@ -1,0 +1,21 @@
+type: object
+description: >
+  Something about the creative that needs attention; the list marks such rows with a warning icon.
+  `destinationMissing`: it needs a Destination (a feedback button, or a banner with a button) and has
+  none, for example after its survey was unlinked. `destinationNotAllowed`: its survey can no longer
+  be a Destination (it became Restricted, single-use or PIN-protected), so pressing it would fail.
+  `actionMissing`: it shows on an action but has none, so it never shows. New codes may be added.
+required:
+  - code
+  - message
+properties:
+  code:
+    type: string
+    enum:
+      - destinationMissing
+      - destinationNotAllowed
+      - actionMissing
+  message:
+    type: string
+    description: The same warning in English, for people.
+additionalProperties: false

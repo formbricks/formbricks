@@ -1,0 +1,11 @@
+oneOf:
+  - $ref: ./CreateFeedbackButtonCreativeRequest.yml
+  - $ref: ./CreateBannerCreativeRequest.yml
+discriminator:
+  propertyName: type
+  mapping:
+    feedbackButton: ./CreateFeedbackButtonCreativeRequest.yml
+    banner: ./CreateBannerCreativeRequest.yml
+description: >-
+  A new creative. `type` selects the `content` and `styling` shape and can never change afterwards.
+  Unknown fields are rejected with **400**.

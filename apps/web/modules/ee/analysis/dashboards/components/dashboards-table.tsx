@@ -1,32 +1,49 @@
+"use client";
+
 import { BarChart3Icon } from "lucide-react";
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 import { formatDate, timeSinceDate } from "@/lib/time";
-import { getTranslate } from "@/lingodotdev/server";
-import { TDashboardWithCount } from "../../types/analysis";
+import { ListLoadError } from "@/modules/ee/analysis/components/list-load-error";
+import { LoadMoreOnScroll } from "@/modules/ee/analysis/components/load-more-on-scroll";
+import { useDashboards } from "../hooks/use-dashboards";
 import { CreateDashboardButton } from "./create-dashboard-button";
 import { DashboardDropdownMenu } from "./dashboard-dropdown-menu";
+import { DashboardsListSkeleton } from "./dashboards-list-skeleton";
+
+/** Rows per page: enough to fill a screen, few enough that the first paint stays fast. */
+const DASHBOARDS_PAGE_SIZE = 25;
 
 interface DashboardsTableProps {
-  dashboards: TDashboardWithCount[];
   workspaceId: string;
   isReadOnly: boolean;
 }
 
-export const DashboardsTable = async ({
-  dashboards,
-  workspaceId,
-  isReadOnly,
-}: Readonly<DashboardsTableProps>) => {
-  const t = await getTranslate();
+export const DashboardsTable = ({ workspaceId, isReadOnly }: Readonly<DashboardsTableProps>) => {
+  const { t } = useTranslation();
+  const { dashboards, isPending, isError, error, refetch, hasNextPage, isFetchingNextPage, fetchNextPage } =
+    useDashboards({ workspaceId, limit: DASHBOARDS_PAGE_SIZE });
+
+  const columnHeaders = [
+    t("common.title"),
+    t("common.charts"),
+    t("common.created_by"),
+    t("common.created"),
+    t("common.updated"),
+  ];
+
+  if (isPending) return <DashboardsListSkeleton columnHeaders={columnHeaders} />;
+  if (isError) return <ListLoadError error={error} onRetry={refetch} />;
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-xs">
       <div className="grid h-12 grid-cols-8 content-center border-b text-left text-sm font-semibold text-slate-900">
-        <div className="col-span-3 pl-6">{t("common.title")}</div>
-        <div className="col-span-1 hidden text-center sm:block">{t("common.charts")}</div>
-        <div className="col-span-1 hidden text-center sm:block">{t("common.created_by")}</div>
-        <div className="col-span-1 hidden text-center sm:block">{t("common.created")}</div>
-        <div className="col-span-1 hidden text-center sm:block">{t("common.updated")}</div>
+        <div className="col-span-3 pl-6">{columnHeaders[0]}</div>
+        {columnHeaders.slice(1).map((header) => (
+          <div key={header} className="col-span-1 hidden text-center sm:block">
+            {header}
+          </div>
+        ))}
         <div className="col-span-1" />
       </div>
       {dashboards.length === 0 ? (
@@ -44,8 +61,8 @@ export const DashboardsTable = async ({
           )}
         </div>
       ) : (
-        dashboards.map((dashboard) => {
-          return (
+        <>
+          {dashboards.map((dashboard) => (
             <div
               key={dashboard.id}
               className="relative grid h-12 w-full grid-cols-8 content-center text-left transition-colors ease-in-out hover:bg-slate-100">
@@ -63,13 +80,13 @@ export const DashboardsTable = async ({
                   </div>
                 </div>
                 <div className="col-span-1 my-auto hidden text-center text-sm whitespace-nowrap text-slate-500 sm:block">
-                  <div className="text-slate-900">{dashboard._count.widgets}</div>
+                  <div className="text-slate-900">{dashboard.widgetCount}</div>
                 </div>
                 <div className="col-span-1 my-auto hidden text-center text-sm whitespace-nowrap text-slate-500 sm:block">
                   <div className="text-slate-900">{dashboard.creator?.name || "-"}</div>
                 </div>
                 <div className="col-span-1 my-auto hidden text-center text-sm whitespace-normal text-slate-500 sm:block">
-                  <div className="text-slate-900">{formatDate(new Date(dashboard.createdAt))}</div>
+                  <div className="text-slate-900">{formatDate(dashboard.createdAt)}</div>
                 </div>
                 <div className="col-span-1 my-auto hidden text-center text-sm text-slate-500 sm:block">
                   <div className="text-slate-900">{timeSinceDate(dashboard.updatedAt)}</div>
@@ -85,8 +102,13 @@ export const DashboardsTable = async ({
                 )}
               </div>
             </div>
-          );
-        })
+          ))}
+          <LoadMoreOnScroll
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            fetchNextPage={fetchNextPage}
+          />
+        </>
       )}
     </div>
   );

@@ -3,6 +3,8 @@ import { AuthenticationError } from "@formbricks/types/errors";
 import { WorkspaceContextWrapper } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { SurveysQueryClientProvider } from "@/app/(app)/workspaces/[workspaceId]/surveys/query-client-provider";
 import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { CreativesAccessProvider } from "@/modules/ee/creatives/components/creatives-access-provider";
+import { getCreativesAccess } from "@/modules/ee/creatives/lib/access";
 import { getWorkspaceAuth, workspaceIdLayoutChecks } from "@/modules/workspaces/lib/utils";
 
 const SurveyEditorWorkspaceLayout = async (props: {
@@ -30,6 +32,11 @@ const SurveyEditorWorkspaceLayout = async (props: {
   // billing role, and getWorkspaceAuth redirects billing away before the workspace reaches the client.
   // Every page under this layout calls it too, so the request cache makes it free.
   const { workspace, organization } = await getWorkspaceAuth(params.workspaceId);
+  // The survey editor's creative UI ("Opened by", the dialogs naming linked creatives) reads it.
+  const creativesAccess = await getCreativesAccess({
+    organizationId: organization.id,
+    workspaceId: workspace.id,
+  });
 
   return (
     <WorkspaceContextWrapper
@@ -41,7 +48,9 @@ const SurveyEditorWorkspaceLayout = async (props: {
       }}>
       <div className="flex h-screen flex-col">
         <div className="h-full overflow-y-auto bg-slate-50">
-          <SurveysQueryClientProvider>{children}</SurveysQueryClientProvider>
+          <SurveysQueryClientProvider>
+            <CreativesAccessProvider access={creativesAccess}>{children}</CreativesAccessProvider>
+          </SurveysQueryClientProvider>
         </div>
       </div>
     </WorkspaceContextWrapper>

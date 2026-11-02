@@ -1,7 +1,6 @@
 "use client";
 
 import { CreateChartView } from "@/modules/ee/analysis/charts/components/create-chart-view";
-import { ChartsQueryClientProvider } from "@/modules/ee/analysis/charts/components/query-client-provider";
 import type { AnalyticsResponse, TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
 
 export interface CreateChartDialogProps {
@@ -29,18 +28,16 @@ export function CreateChartDialog({
   directories,
 }: Readonly<CreateChartDialogProps>) {
   return (
-    <ChartsQueryClientProvider>
-      <CreateChartView
-        open={open}
-        onOpenChange={onOpenChange}
-        workspaceId={workspaceId}
-        chartId={chartId}
-        initialChart={initialChart}
-        generatedChart={generatedChart}
-        autoAddToDashboardId={autoAddToDashboardId}
-        onSuccess={onSuccess}
-        directories={directories}
-      />
-    </ChartsQueryClientProvider>
+    <CreateChartView
+      open={open}
+      onOpenChange={onOpenChange}
+      workspaceId={workspaceId}
+      chartId={chartId}
+      initialChart={initialChart}
+      generatedChart={generatedChart}
+      autoAddToDashboardId={autoAddToDashboardId}
+      onSuccess={onSuccess}
+      directories={directories}
+    />
   );
 }

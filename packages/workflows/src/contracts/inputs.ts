@@ -91,6 +91,12 @@ export const ZListWorkflowsInput = z
     sortBy: ZWorkflowSortBy.default("updatedAt").describe(
       "The cursor token is bound to the selected sort order."
     ),
+    includeTotalCount: z
+      .boolean()
+      .default(false)
+      .describe(
+        "Parsed form of includeTotalCount. When true, meta.totalCount is the number of workflows matching the same filters across all pages; otherwise it is null."
+      ),
   })
   .describe("Lists workflow list items for a workspace.");
 export type TListWorkflowsInput = z.infer<typeof ZListWorkflowsInput>;

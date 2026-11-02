@@ -28,6 +28,7 @@ properties:
       - immutable_identifier
       - invalid_locale
       - invalid_reference
+      - limit_exceeded
       - missing_required_field
       - misordered_reference
       - missing_translation
@@ -44,6 +45,11 @@ properties:
       today and nothing more — `INVALID_PARAM_CODES` in `app/api/v3/lib/response.ts` is the
       registry, and a code absent from it is dropped before the response is built. Categories for
       operations that do not exist yet are added with the code that emits them, not ahead of it.
+
+
+      `limit_exceeded`: the field is well formed but past a limit the operation states, which
+      `reason` names together with what to change. Chart queries use it for a date range that spans
+      more time buckets than its granularity allows.
 
 
       `qsf_not_recognized` and `qsf_limit_exceeded` come from the Qualtrics import (an internal,

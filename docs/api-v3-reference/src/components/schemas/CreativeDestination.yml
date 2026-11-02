@@ -1,0 +1,11 @@
+oneOf:
+  - $ref: ./CreativeSurveyDestination.yml
+  - $ref: ./CreativeLinkDestination.yml
+discriminator:
+  propertyName: type
+  mapping:
+    survey: ./CreativeSurveyDestination.yml
+    link: ./CreativeLinkDestination.yml
+description: >-
+  What the creative opens when pressed, with the read-only `opensAs`. A write takes
+  `CreativeDestinationInput`, which carries neither `opensAs` nor `surveyName`.

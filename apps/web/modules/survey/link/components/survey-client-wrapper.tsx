@@ -47,6 +47,10 @@ interface SurveyClientWrapperProps {
   pinAuthToken?: string;
   /** Compiled workspace + survey custom CSS, resolved server-side (ENG-3552). Never the source. */
   customCss?: TRendererCustomCss;
+  /** The creative that opened this survey, already checked server-side from `?creativeId=` (ENG-4001). */
+  creativeId?: string;
+  /** The app's release version, which the survey renderer is loaded under. */
+  rendererVersion?: string;
 }
 
 let setBlockId = (_: string) => {};
@@ -74,6 +78,8 @@ export const SurveyClientWrapper = ({
   IS_FORMBRICKS_CLOUD,
   pinAuthToken,
   customCss,
+  creativeId,
+  rendererVersion,
 }: SurveyClientWrapperProps) => {
   const searchParams = useSearchParams();
 
@@ -272,6 +278,8 @@ export const SurveyClientWrapper = ({
           survey={jsSurvey}
           styling={styling}
           customCss={customCss}
+          creativeId={creativeId}
+          rendererVersion={rendererVersion}
           languageCode={languageCode}
           onLanguageChange={setCurrentLanguageCode}
           onPageChange={handlePageChange}

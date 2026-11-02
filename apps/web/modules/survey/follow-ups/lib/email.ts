@@ -3,6 +3,7 @@ import { TSurveyFollowUp } from "@formbricks/types/surveys/follow-up";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { sendEmail } from "@/modules/email";
+import type { TEmailRateLimitContext } from "@/modules/email/lib/email-rate-limits";
 import { buildSurveyResponseEmailHtml } from "@/modules/email/lib/survey-response-email";
 
 export const sendFollowUpEmail = async ({
@@ -16,6 +17,7 @@ export const sendFollowUpEmail = async ({
   includeHiddenFields = false,
   logoUrl,
   locale,
+  rateLimit,
 }: {
   followUp: TSurveyFollowUp;
   to: string;
@@ -27,6 +29,7 @@ export const sendFollowUpEmail = async ({
   response: TResponse;
   logoUrl?: string;
   locale?: TUserLocale;
+  rateLimit: TEmailRateLimitContext;
 }): Promise<void> => {
   const {
     action: {
@@ -51,5 +54,6 @@ export const sendFollowUpEmail = async ({
     replyTo: replyTo.join(", "),
     subject,
     html: emailHtmlBody,
+    rateLimit,
   });
 };

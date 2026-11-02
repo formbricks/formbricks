@@ -53,6 +53,7 @@ export const SegmentsPage = async ({ params: paramsProps }: { params: Promise<{ 
         contactAttributeKeys={contactAttributeKeys}
         isContactsEnabled={isContactsEnabled}
         isReadOnly={isReadOnly}
+        workspaceId={workspace.id}
       />
     </ContactsPageLayout>
   );

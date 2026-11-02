@@ -1,0 +1,29 @@
+{
+  "name": "@formbricks/deployment-check",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "description": "Post-deployment end-to-end health check for a self-hosted Formbricks instance",
+  "scripts": {
+    "check": "playwright test",
+    "clean": "rimraf .turbo node_modules coverage report",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "author": "Formbricks <hola@formbricks.com>",
+  "dependencies": {
+    "@playwright/test": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@formbricks/config-eslint": "workspace:*",
+    "@formbricks/config-typescript": "workspace:*",
+    "@types/node": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

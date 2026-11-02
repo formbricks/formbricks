@@ -310,14 +310,17 @@ const withBearer = (init: RequestInit | undefined, token: string): RequestInit =
  * The caller's `signal` is raced against the token fetch, so an aborted generation returns at once
  * instead of waiting out a slow identity provider.
  */
-export const createOAuthFetch = (source: OAuthTokenSource): typeof fetch => {
+export const createOAuthFetch = (
+  source: OAuthTokenSource,
+  fetchModel: typeof fetch = (input, init) => globalThis.fetch(input, init)
+): typeof fetch => {
   return async (input, init) => {
     if (init?.signal?.aborted) {
       throw getAbortReason(init.signal);
     }
 
     const token = await raceWithSignal(source.getToken(), init?.signal);
-    const response = await globalThis.fetch(input, withBearer(init, token));
+    const response = await fetchModel(input, withBearer(init, token));
 
     if (response.status !== 401) {
       return response;
@@ -338,6 +341,6 @@ export const createOAuthFetch = (source: OAuthTokenSource): typeof fetch => {
     // Release the rejected response's connection before the retry takes another one.
     await response.body?.cancel();
 
-    return globalThis.fetch(input, withBearer(init, freshToken));
+    return fetchModel(input, withBearer(init, freshToken));
   };
 };

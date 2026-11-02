@@ -134,6 +134,10 @@ export function buildSurveyListSearchParams({
     searchParams.append("filter[visibility][in]", visibility);
   });
 
+  normalizedFilters.owner?.forEach((owner) => {
+    searchParams.append("filter[owner][in]", owner);
+  });
+
   return searchParams;
 }
 

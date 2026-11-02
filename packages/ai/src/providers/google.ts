@@ -1,5 +1,6 @@
 import { createVertex as createGoogleCloudProvider } from "@ai-sdk/google-vertex";
 import { AIConfigurationError } from "../errors";
+import { modelFetch } from "../model-fetch";
 import type { AIProviderAdapter } from "../registry";
 import { getCredentialFingerprint, normalizeValue } from "../shared";
 import type { AIEnvironment } from "../types";
@@ -130,6 +131,7 @@ export const googleProviderAdapter: AIProviderAdapter = {
     }
 
     const googleCloudProvider = createGoogleCloudProvider({
+      fetch: modelFetch,
       project,
       location,
       ...(baseURL ? { baseURL } : {}),

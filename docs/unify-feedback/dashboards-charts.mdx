@@ -70,8 +70,19 @@ From a dashboard you can:
 - **Create** a new chart inline and have it added automatically.
 - **Add existing** charts.
 - **Reorder and resize** widgets.
-- **Duplicate** a chart for a quick variation.
+- **Duplicate** a chart for a quick variation; the copy lands on the same dashboard.
 - **Delete** a widget (the underlying chart stays in the workspace).
+
+A chart can sit on several dashboards, and editing it changes it on all of them. To change it on one dashboard
+only, duplicate it there and remove the original from that dashboard. A chart that is still on a dashboard can't be
+deleted: the delete dialog lists the dashboards that hold it, so you can remove it from them first.
+
+If someone else saves the dashboard while you are editing it, saving tells you so. Choose **Reload** to see their
+version and drop your changes, or **Save mine anyway** to keep yours; the dialog names any charts they added that
+saving yours would remove.
+
+Charts and dashboards are also available through the [MCP server](/platform/mcp/overview), so an agent can build
+them for you.
 
 ## Permissions
 

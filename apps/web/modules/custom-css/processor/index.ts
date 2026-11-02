@@ -13,6 +13,7 @@ export {
   CUSTOM_CSS_MAX_UNIVERSAL_COMPOUNDS,
   CUSTOM_CSS_MAX_WARNINGS,
   CUSTOM_CSS_PROCESSOR_VERSION,
+  type TCustomCssRoot,
   getCustomCssProcessorVersion,
 } from "./constants";
 export { normalizeCustomCssInput } from "./normalize";

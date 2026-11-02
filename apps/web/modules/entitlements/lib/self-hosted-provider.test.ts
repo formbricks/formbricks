@@ -68,6 +68,7 @@ const licenseFeatures = (
   dashboards: false,
   workflows: false,
   dataRetention: false,
+  creatives: false,
   ...overrides,
 });
 

@@ -31,6 +31,8 @@ interface ChartBuilderBodyProps {
   queryState: ChartQueryState;
   isLoadingChart: boolean;
   chartLoadError: string | null;
+  /** A saved chart whose data was refused: only its name can change, so nothing else is offered. */
+  renameOnly?: boolean;
 }
 
 /**
@@ -56,6 +58,7 @@ export function ChartBuilderBody({
   queryState,
   isLoadingChart,
   chartLoadError,
+  renameOnly = false,
 }: Readonly<ChartBuilderBodyProps>) {
   const { t } = useTranslation();
   const showsDisplaySettings = Boolean(chartData) && hasChartDisplaySettings(chartData?.chartType);
@@ -68,15 +71,17 @@ export function ChartBuilderBody({
       <div className="flex min-h-0 min-w-0 flex-col gap-4 overflow-y-auto px-1 pb-1 lg:pr-3">
         <ChartNameField formId={formId} value={chartName} onChange={onChartNameChange} onSubmit={onSave} />
 
-        <AdvancedChartBuilder
-          workspaceId={workspaceId}
-          chartType={chartType}
-          initialQuery={chartData?.query ?? initialQuery}
-          runInitialQuery={isAwaitingFirstRun}
-          onChartGenerated={onChartGenerated}
-          onQueryStateChange={onQueryStateChange}
-          feedbackDirectoryId={feedbackDirectoryId}
-        />
+        {!renameOnly && (
+          <AdvancedChartBuilder
+            workspaceId={workspaceId}
+            chartType={chartType}
+            initialQuery={chartData?.query ?? initialQuery}
+            runInitialQuery={isAwaitingFirstRun}
+            onChartGenerated={onChartGenerated}
+            onQueryStateChange={onQueryStateChange}
+            feedbackDirectoryId={feedbackDirectoryId}
+          />
+        )}
       </div>
 
       <ChartPreview
@@ -90,7 +95,11 @@ export function ChartBuilderBody({
             ? t("workspace.analysis.charts.matrix_empty_prompt")
             : t("workspace.analysis.charts.advanced_chart_builder_config_prompt")
         }
-        typeControl={<ChartTypeSwitch selectedChartType={chartType} onChartTypeSelect={onChartTypeSelect} />}
+        typeControl={
+          renameOnly ? undefined : (
+            <ChartTypeSwitch selectedChartType={chartType} onChartTypeSelect={onChartTypeSelect} />
+          )
+        }
         displaySettings={
           showsDisplaySettings ? (
             <ChartDisplaySettings

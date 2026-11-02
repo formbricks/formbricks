@@ -16,14 +16,11 @@ import { getActionClasses } from "@/lib/actionClass/service";
 import { reconcileEmbeddedData } from "@/lib/embedded-data/reconcile";
 import { scheduleFeedbackSourceReconciliation } from "@/lib/feedback-source/mapping-reconciliation";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
+import { APP_SURVEY_TRIGGER_REQUIRED_MESSAGE } from "@/lib/survey/publish-rule";
 import { selectSurveyWithCustomCss } from "@/lib/survey/service";
-import {
-  APP_SURVEY_TRIGGER_REQUIRED_MESSAGE,
-  isAppSurveyMissingTriggersToPublish,
-  stripIsDraftFromBlocks,
-  transformPrismaSurvey,
-} from "@/lib/survey/utils";
+import { stripIsDraftFromBlocks, transformPrismaSurvey } from "@/lib/survey/utils";
 import { invalidateCustomCssCaches, resolveCustomCssWrite } from "@/modules/custom-css/lib/service";
+import { isAppSurveyBlockedFromPublishing } from "@/modules/ee/creatives/lib/survey-publish";
 import { handleTriggerUpdates } from "@/modules/survey/lib/trigger-updates";
 import {
   isSurveySchedulingDue,
@@ -324,11 +321,19 @@ export async function executeV3SurveyPatch(params: {
     throw new V3SurveyReferenceValidationError(mediaInvalidParams);
   }
 
-  // An app survey can never be shown without a trigger, so reject setting a non-draft status with no
-  // effective triggers. Triggers only change when the patch carries a `distribution` (top-level
-  // replacement); otherwise the survey keeps its current triggers.
+  // An app survey can never be shown without a trigger or a creative that opens it, so reject setting a
+  // non-draft status with neither. Triggers only change when the patch carries a `distribution`
+  // (top-level replacement); otherwise the survey keeps its current triggers.
   const effectiveTriggers = document.distribution ? document.distribution.triggers : currentSurvey.triggers;
-  if (isAppSurveyMissingTriggersToPublish(currentSurvey.type, document.status, effectiveTriggers)) {
+  if (
+    await isAppSurveyBlockedFromPublishing({
+      surveyId: currentSurvey.id,
+      workspaceId: currentSurvey.workspaceId,
+      type: currentSurvey.type,
+      status: document.status,
+      triggers: effectiveTriggers,
+    })
+  ) {
     throw new V3SurveyReferenceValidationError([
       { name: "triggers", reason: APP_SURVEY_TRIGGER_REQUIRED_MESSAGE },
     ]);

@@ -1,10 +1,11 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
 import { generateOrganizationAIObject } from "@/lib/ai/service";
+import { getAITimeoutMs } from "@/lib/ai/timeout";
 import { AI_TRACING_FEATURE } from "@/lib/posthog/ai-tracing-feature";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import type { TQsfImportReport, TQsfImportStage } from "../types";
-import { type TQsfPlanGenerate, type TQsfPlanUsage, planQsfImport } from "./ai-plan";
+import { QSF_AI_CALL_TIMEOUT_MS, type TQsfPlanGenerate, type TQsfPlanUsage, planQsfImport } from "./ai-plan";
 import { type TQsfAssembly, type TQsfDraftDocument, assembleQsfDraft } from "./assemble";
 import { QsfImportFailedError, qsfLimitExceeded } from "./errors";
 import { yieldToOthers } from "./event-loop";
@@ -172,6 +173,7 @@ export async function runQsfImport(params: TRunQsfImportParams): Promise<TQsfImp
     generate: params.generate ?? organizationGenerate(params),
     signal,
     deadline,
+    callTimeoutMs: getAITimeoutMs(QSF_AI_CALL_TIMEOUT_MS),
   });
 
   signal.throwIfAborted();

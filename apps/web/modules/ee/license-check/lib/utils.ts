@@ -209,6 +209,22 @@ export const getIsDataRetentionEnabled = async (organizationId: string): Promise
   return getCustomPlanFeaturePermission(organizationId, "dataRetention");
 };
 
+/**
+ * Creatives (ENG-6602) are self-hosted only: always off on Formbricks Cloud, which has no plan that
+ * includes them, so unlike `getCustomPlanFeaturePermission` there is no Stripe path. Self-hosted needs an
+ * active licence with `creatives`. `organizationId` is unused today; it keeps the signature of the other
+ * feature checks so a Cloud plan can be added here without touching callers.
+ *
+ * Surfaces act on `getCreativesAccess` (`modules/ee/creatives/lib/access.ts`), which turns this into an
+ * access level; only delivery, which serves creatives at `full` access alone, needs nothing more.
+ */
+export const getIsCreativesEnabled = async (_organizationId: string): Promise<boolean> => {
+  if (IS_FORMBRICKS_CLOUD) return false;
+
+  const license = await getEnterpriseLicense();
+  return license.active && !!license.features?.creatives;
+};
+
 export const getBulkInvitePermission = async (organizationId: string): Promise<boolean> => {
   // Bulk invite is gated only on Formbricks Cloud (anti-spam, multi-tenant concern). Self-hosted
   // keeps the original unrestricted behavior for every tier, including community.

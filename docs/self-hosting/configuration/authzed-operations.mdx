@@ -53,7 +53,8 @@ There is no browser health or administration page. Use the release-matched opera
 | `AUTHZED_SYSTEM_KEY`        | Stable Formbricks authorization namespace identifier                | `formbricks`                                        |
 | `AUTHZED_INSECURE`          | Uses plaintext gRPC when enabled                                    | `true` for bundled Docker and chart-managed SpiceDB |
 | `AUTHZED_CONSISTENCY`       | Authorization read consistency                                      | `fully_consistent`                                  |
-| `AUTHZED_DATABASE_PASSWORD` | Password for Docker's dedicated `spicedb` PostgreSQL role           | No default                                          |
+| `AUTHZED_DATABASE_PASSWORD` | Password for bundled Docker's dedicated `spicedb` PostgreSQL role   | No default in bundled mode                          |
+| `SPICEDB_DATASTORE_CONN_URI` | Full PostgreSQL URI for external Docker SpiceDB migration and runtime | Required with the external Compose override       |
 | `SPICEDB_IMAGE_REF`         | Reviewed override used by both Docker migration and server services | `authzed/spicedb:v1.56.2`                           |
 
 `AUTHZED_ENABLED` and `AUTHZED_INSECURE` accept `true`, `false`, `1`, and `0`. The endpoint must contain an
@@ -79,8 +80,7 @@ for the complete validation contract.
 
 ## Operate Docker and one-click installations
 
-The released Compose stack runs one SpiceDB instance using a dedicated `spicedb` database and login in the
-bundled PostgreSQL container. Startup is ordered as follows:
+The released Compose stack runs one SpiceDB instance. Its bundled PostgreSQL path starts in this order:
 
 ```text
 postgres → authzed-db-bootstrap → spicedb-migrate → spicedb
@@ -90,6 +90,8 @@ spicedb + formbricks-migrate → authzed-initialize
 
 Database bootstrap and datastore migration are idempotent. Migration and serving always use the same
 `SPICEDB_IMAGE_REF`. SpiceDB is reachable only as `spicedb:50051` inside the Compose network.
+With the [external PostgreSQL override](/self-hosting/setup/docker#external-postgresql-for-spicedb), the
+database and login are pre-provisioned outside Compose; `spicedb-migrate → spicedb` remains the startup gate.
 
 `authzed-initialize` is an idempotent, one-shot service that prepares fresh installations. Formbricks does not
 depend on it, so application startup and `/health` remain independent from SpiceDB. The `authzed-ops` profile is

@@ -6,6 +6,7 @@ import { FORMBRICKS_EVENTS, emitFormbricksEvent } from "@/lib/common/events";
 import { Logger } from "@/lib/common/logger";
 import { getIsSetup, setIsSetup } from "@/lib/common/status";
 import { filterSurveys, getIsDebug, isNowExpired, wrapThrows } from "@/lib/common/utils";
+import { removeCreatives, showCachedCreatives } from "@/lib/creatives/creatives";
 import { addLiveRegionContainer, closeSurvey, prefetchSurveysScript } from "@/lib/survey/widget";
 import { DEFAULT_USER_STATE_NO_USER_ID } from "@/lib/user/state";
 import { sendUpdatesToBackend } from "@/lib/user/update";
@@ -227,6 +228,13 @@ export const setup = async (
       isUserStateExpired = true;
     }
 
+    // Creatives from the cached state right away, expired or not, so an In page banner never waits for
+    // the network; the page view after setup reconciles them with the refreshed state. A failed refresh
+    // below takes them off again: the SDK is not set up then, so nothing would keep them current (no
+    // dismiss, page view or action reaches them), and a creative paused since the state was cached
+    // would stay up.
+    showCachedCreatives();
+
     try {
       // fetch the workspace state (if expired)
       let workspace: TWorkspaceState = existingConfig.workspace;
@@ -249,6 +257,7 @@ export const setup = async (
           logger.error(
             `Error fetching workspace state: ${workspaceResponse.error.code} - ${workspaceResponse.error.responseMessage ?? ""}`
           );
+          removeCreatives();
           return err({
             code: "network_error",
             message: "Error fetching workspace state",
@@ -282,6 +291,7 @@ export const setup = async (
             logger.error(
               `Error updating user state: ${updatesResponse.error.code} - ${updatesResponse.error.responseMessage ?? ""}`
             );
+            removeCreatives();
             return err({
               code: "network_error",
               message: "Error updating user state",

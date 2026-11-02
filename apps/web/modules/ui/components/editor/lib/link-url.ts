@@ -1,4 +1,5 @@
 import { isEmailAddressShape } from "@formbricks/types/common";
+import { isWebUrl } from "@formbricks/types/web-url";
 import { isStringUrl } from "@/lib/utils/url";
 
 const hasControlCharacter = (value: string): boolean =>
@@ -20,9 +21,9 @@ export const isMailtoUrl = (url: string): boolean => url.trim().toLowerCase().st
 /**
  * Whether a URL typed into the rich-text link editor is an acceptable link target.
  *
- * Web links must be http(s) with a real host (a dotted domain, localhost or an IP address). `mailto:`
- * links are accepted too, as long as they name a recipient. Every other scheme — `javascript:`,
- * `data:` and the like — is rejected.
+ * Web links must be http(s) with a real host (`isWebUrl`: a domain with a real top-level domain,
+ * localhost or an IP address, so `https://example.` is refused). `mailto:` links are accepted too, as
+ * long as they name a recipient. Every other scheme — `javascript:`, `data:` and the like — is rejected.
  */
 export const isValidEditorLinkUrl = (url: string): boolean => {
   if (!isStringUrl(url)) {
@@ -34,12 +35,7 @@ export const isValidEditorLinkUrl = (url: string): boolean => {
     if (urlObj.protocol === "mailto:") {
       return isValidMailtoUrl(urlObj);
     }
-    if (urlObj.protocol !== "http:" && urlObj.protocol !== "https:") {
-      return false;
-    }
-    const isIPv6 = urlObj.hostname.startsWith("[") && urlObj.hostname.endsWith("]");
-    const isIPv4 = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(urlObj.hostname);
-    return urlObj.hostname.includes(".") || urlObj.hostname === "localhost" || isIPv6 || isIPv4;
+    return isWebUrl(url);
   } catch {
     return false;
   }

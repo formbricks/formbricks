@@ -1,7 +1,6 @@
-import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { notFound } from "next/navigation";
 import { getUserVisibleSurveyWhere } from "@/lib/survey/visibility/actor-context";
 import { getTagsByWorkspaceId } from "@/lib/tag/service";
-import { getTranslate } from "@/lingodotdev/server";
 import { AttributesSection } from "@/modules/ee/contacts/[contactId]/components/attributes-section";
 import { ContactControlBar } from "@/modules/ee/contacts/[contactId]/components/contact-control-bar";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
@@ -19,7 +18,6 @@ export const SingleContactPage = async (props: {
   params: Promise<{ workspaceId: string; contactId: string }>;
 }) => {
   const params = await props.params;
-  const t = await getTranslate();
 
   // Ties the contact in the URL to the workspace in the URL: authorizing the workspace alone would
   // let any authenticated user read a foreign contact's PII through their own workspace.
@@ -40,7 +38,7 @@ export const SingleContactPage = async (props: {
     ]);
 
   if (!contact) {
-    throw new ResourceNotFoundError(t("common.contact"), params.contactId);
+    return notFound();
   }
 
   const isQuotasAllowed = await getIsQuotasEnabled(organization.id);

@@ -1503,7 +1503,8 @@ export const ZV3SetSurveyBlockOrderBody = z.strictObject({
 /**
  * The CSS-only validation variant (ENG-3641), used by the editor's live check and `validate_survey`.
  * `surveyId`, when given, names an existing survey that must belong to `workspaceId`; survey scope
- * without one validates an unsaved draft. Read-only: it processes and reports, it never saves.
+ * without one validates an unsaved draft. `creativeType` validates a creative's own CSS, compiled for
+ * that creative's root element (ENG-4005). Read-only: it processes and reports, it never saves.
  */
 export const ZV3SurveyCustomCssValidationRequest = z
   .object({
@@ -1511,13 +1512,18 @@ export const ZV3SurveyCustomCssValidationRequest = z
     workspaceId: z.cuid2(),
     scope: ZCustomCssScope,
     surveyId: z.cuid2().optional(),
+    creativeType: z.enum(["feedbackButton", "banner"]).optional(),
     data: z.object({ customCss: ZV3SurveyCustomCss }).strict(),
   })
   .strict()
   .refine((body) => body.scope === "survey" || body.surveyId === undefined, {
     message: "surveyId is only valid with scope 'survey'",
     path: ["surveyId"],
-  });
+  })
+  .refine(
+    (body) => body.creativeType === undefined || (body.scope === "survey" && body.surveyId === undefined),
+    { message: "creativeType is only valid with scope 'survey' and without surveyId", path: ["creativeType"] }
+  );
 
 export const ZV3SurveyValidationRequestBody = z.discriminatedUnion("operation", [
   z

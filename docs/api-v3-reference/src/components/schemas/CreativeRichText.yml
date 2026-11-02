@@ -1,0 +1,18 @@
+type: object
+description: >-
+  Formatted text per language, keyed by locale code: each value is the text as a list of runs. Must
+  hold `defaultLanguage`; every other key must be declared in `languages`.
+propertyNames:
+  type: string
+  description: A locale code, `defaultLanguage` or one declared in `languages`.
+additionalProperties:
+  type: array
+  maxItems: 100
+  items:
+    $ref: ./CreativeTextRun.yml
+examples:
+  - en-US:
+      - text: "Scheduled maintenance tonight from 02:00 to 04:00. "
+      - text: Details
+        href: /maintenance
+        underline: true

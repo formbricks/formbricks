@@ -31,6 +31,8 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
 ## Choose Your Setup Path
 
 - Use this manual Docker Compose guide for local installs, custom servers, or custom reverse-proxy setups.
+- For a pre-provisioned SpiceDB database, complete [External PostgreSQL for SpiceDB](#external-postgresql-for-spicedb)
+  before validating or starting this stack.
 - Use the [one-click setup script](/self-hosting/setup/one-click) for Debian 12/13 or Ubuntu servers where you want
   Traefik, HTTPS certificates, and optional RustFS automation.
 - Use the [migration guide](/self-hosting/advanced/migration#v5) before updating an existing Formbricks 4.x
@@ -72,6 +74,9 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
      -o cube/schema/FeedbackRecords.js \
      https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/cube/schema/FeedbackRecords.js
    ```
+
+   External SpiceDB PostgreSQL does not use the downloaded bootstrap helper; select its override below before
+   starting the stack.
 
 1. **Create the Environment File**
 
@@ -115,7 +120,8 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
    ```
 
    If validation fails, check that `.env` contains the required values and that `docker-compose.yml` has valid
-   syntax.
+   syntax. In bundled mode, ensure `AUTHZED_DATABASE_PASSWORD` is non-empty; bootstrap also checks it before
+   creating the SpiceDB database.
 
 1. **Start the Docker Setup**
 
@@ -135,13 +141,14 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
    ```bash
    docker compose ps -a
    curl -fsS http://localhost:3000/health
-   docker compose logs --tail=100 formbricks-migrate hub-migrate authzed-db-bootstrap spicedb-migrate
+   docker compose logs --tail=100 formbricks-migrate hub-migrate spicedb-migrate
    docker compose logs --tail=100 formbricks hub hub-worker cube spicedb
    ```
 
-   `formbricks-migrate`, `hub-migrate`, `authzed-db-bootstrap`, and `spicedb-migrate` should complete
-   successfully. `postgres`, `redis`, `cube`, `hub`, `hub-worker`, `spicedb`, and `formbricks` should be running
-   or healthy. The worker has no HTTP health endpoint, so verify that it stays `Up` without repeated restarts.
+   `formbricks-migrate`, `hub-migrate`, and `spicedb-migrate` should complete successfully; bundled mode also
+   completes `authzed-db-bootstrap`, while external mode has no bootstrap service. `postgres`, `redis`, `cube`,
+   `hub`, `hub-worker`, `spicedb`, and `formbricks` should be running or healthy. The worker has no HTTP health
+   endpoint, so verify that it stays `Up` without repeated restarts.
 
 1. **Open Formbricks in Your Browser**
 
@@ -164,8 +171,74 @@ without making Formbricks startup or `/health` depend on SpiceDB. SpiceDB is rea
 network at `spicedb:50051`; it is not published on the host or routed through Traefik.
 
 The Formbricks container receives the supported AuthZed variables automatically. Keep `AUTHZED_TOKEN` and
-`AUTHZED_DATABASE_PASSWORD` private and include `.env` and the PostgreSQL volume in your backup plan. Running
-`docker compose down` preserves the volume; `docker compose down -v` deletes both Formbricks and SpiceDB data.
+the bundled `AUTHZED_DATABASE_PASSWORD` private and include `.env` and the PostgreSQL volume in your backup plan. Running
+`docker compose down` preserves the volume; `docker compose down -v` deletes the bundled database volumes, but
+does not delete an external SpiceDB database.
+
+### External PostgreSQL for SpiceDB
+
+Use this manual path when a database administrator has already provisioned a dedicated SpiceDB database and
+login. It changes only SpiceDB's datastore; Formbricks, Hub, and Cube keep their existing PostgreSQL settings.
+Docker Compose 2.24.4 or later is required for the override's `!reset` tags.
+
+| Who | Required PostgreSQL access |
+| --- | --- |
+| Database administrator, once outside this stack | Create the dedicated login and database, and assign ownership. Administrator credentials never enter Compose. |
+| SpiceDB connection login | Connect to and own only the SpiceDB database/schema. Migrations need DDL rights there; runtime reads and writes its tables. It needs no superuser, `CREATEDB`, or `CREATEROLE` rights. |
+
+<Steps>
+  <Step title="Provision the database">
+    Have the database administrator create an empty `spicedb` database owned by a dedicated login. Confirm that
+    the Compose host can reach it privately. Keep the login's password for the connection URI; do not configure
+    `POSTGRES_ADMIN_URL` or run the bundled bootstrap job.
+  </Step>
+  <Step title="Select the external Compose mode">
+    Download `docker-compose.spicedb-external.yml` from the same Formbricks release as `docker-compose.yml`.
+    Keep the base file and your existing application database settings. In `.env`, remove
+    `AUTHZED_DATABASE_PASSWORD` and add these lines, replacing the host and percent-encoded password:
+
+    ```bash
+    curl -fsSL -o docker-compose.spicedb-external.yml \
+      https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/docker-compose.spicedb-external.yml
+    ```
+
+    ```dotenv
+    COMPOSE_FILE=docker-compose.yml:docker-compose.spicedb-external.yml
+    SPICEDB_DATASTORE_CONN_URI=postgresql://spicedb:<encoded-password>@db.example.com:5432/spicedb?sslmode=verify-full
+    ```
+
+    `COMPOSE_FILE` makes every `docker compose` command in this guide use the override. Keep it in `.env` for
+    future updates. If you pass `-f` explicitly, pass both files in the same order for every command instead.
+    Protect `.env` with mode `0600`; do not paste its rendered configuration into logs or tickets.
+  </Step>
+  <Step title="Configure a private CA if needed">
+    If PostgreSQL uses a private CA, add `&sslrootcert=/certs/ca.pem` to the URI and mount the same CA file into
+    both services in the external override:
+
+    ```yaml
+    services:
+      spicedb-migrate:
+        volumes:
+          - ./spicedb-ca.pem:/certs/ca.pem:ro
+      spicedb:
+        volumes:
+          - ./spicedb-ca.pem:/certs/ca.pem:ro
+    ```
+
+    Merge these `volumes` entries into the downloaded override; keep its `!reset` and environment entries.
+    `sslmode=verify-full` checks the server certificate against the hostname in the URI.
+  </Step>
+  <Step title="Validate and start">
+    Run `docker compose config --quiet` before `docker compose up -d`. Check `docker compose config --services`:
+    it must omit `authzed-db-bootstrap`. After startup, `docker compose ps -a` should show
+    `spicedb-migrate` completed and `spicedb` healthy. A failed migration prevents SpiceDB from starting.
+  </Step>
+</Steps>
+
+<Note>
+  The one-click installer continues to use bundled PostgreSQL. Changing an existing v6 SpiceDB datastore from
+  bundled to external PostgreSQL also requires a separate data migration; this override does not copy data.
+</Note>
 
 The release image includes an opt-in operations CLI. It does not start during normal installation:
 
@@ -365,12 +438,17 @@ first release that requires the AuthZed runtime:
 
 1. Follow the [maintenance upgrade guide](/self-hosting/advanced/v6-maintenance-upgrade): stop all writers and
    controllers, drain in-flight work, then back up configuration, secrets, and databases.
-2. Download `authzed-postgres-bootstrap.sh` from the same Formbricks release as the Compose file.
-3. Generate `AUTHZED_TOKEN` and `AUTHZED_DATABASE_PASSWORD` with `openssl rand -hex 32` and add them to `.env`.
-4. Merge `authzed-db-bootstrap`, `spicedb-migrate`, `spicedb`, `authzed-initialize`, and the profiled
-   `authzed-ops` service, plus the six `AUTHZED_*` Formbricks variables, from the released Compose file into your
-   customized file. Use `AUTHZED_CONSISTENCY=fully_consistent`. Preserve proxy, storage, and SMTP settings.
-5. Validate the reviewed Compose configuration privately and pull the pinned images. Keep writers stopped.
+2. Choose the SpiceDB database path. For bundled PostgreSQL, download `authzed-postgres-bootstrap.sh` from the
+   same release and generate `AUTHZED_DATABASE_PASSWORD`. For a pre-provisioned database, follow
+   [External PostgreSQL for SpiceDB](#external-postgresql-for-spicedb), including its release-matched override,
+   connection URI, and persistent `COMPOSE_FILE` setting. Do not add an administrator URL to Compose.
+3. Generate `AUTHZED_TOKEN` with `openssl rand -hex 32` and add it to `.env`.
+4. Merge `spicedb-migrate`, `spicedb`, `authzed-initialize`, and the profiled `authzed-ops` service, plus the six
+   `AUTHZED_*` Formbricks variables, from the released Compose file into your customized file. Add
+   `authzed-db-bootstrap` for bundled mode only; the external override must remove it. Use
+   `AUTHZED_CONSISTENCY=fully_consistent`. Preserve proxy, storage, and SMTP settings.
+5. Validate the reviewed Compose configuration privately and pull the pinned images. In external mode,
+   `docker compose config --services` must omit `authzed-db-bootstrap`. Keep writers stopped.
 6. Wait for PostgreSQL and SpiceDB, then run the target image's maintenance command. It runs application
    migrations before graph preparation and verification:
 
@@ -386,11 +464,11 @@ first release that requires the AuthZed runtime:
 7. Only after preparation and verification exit `0`, set `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` in `.env` and
    run `docker compose up -d`. The one-click updater only checks the already-prepared graph; it does not perform
    online preparation. Keep maintenance active until authorization checks pass.
-8. Confirm `authzed-db-bootstrap`, `spicedb-migrate`, and `authzed-initialize` completed and `spicedb` is healthy
-   with `docker compose ps -a`.
-9. Back up the new authorization database with
-   `docker compose exec -T postgres pg_dump -U postgres -d spicedb > spicedb-backup.sql` after validation and
-   include it in future database backup procedures.
+8. Confirm `spicedb-migrate` and `authzed-initialize` completed and `spicedb` is healthy with
+   `docker compose ps -a`. Bundled mode also completes `authzed-db-bootstrap`; external mode omits it.
+9. Back up the new authorization database after validation. For bundled PostgreSQL, run
+   `docker compose exec -T postgres pg_dump -U postgres -d spicedb > spicedb-backup.sql`. For external PostgreSQL,
+   use the database administrator's backup procedure and include SpiceDB in future backups.
 
 After database changes, restoring the old image alone may not be safe. Remain in maintenance and either fix
 forward or restore coordinated backups with the matching v5 configuration. Never delete volumes. See the

@@ -1,6 +1,14 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import type { ZodType } from "zod";
 import { InvalidInputError } from "@formbricks/types/errors";
+import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { bulkInviteUsersAction, inviteUserAction, resendInviteAction } from "./actions";
+
+// The action client is mocked, so the schemas each action registers are read off the mock. Captured at
+// load, before any `clearAllMocks`.
+const actionSchemas = vi
+  .mocked(authenticatedActionClient.inputSchema)
+  .mock.calls.map(([schema]) => schema as unknown as ZodType);
 
 const mocks = vi.hoisted(() => ({
   applyRateLimit: vi.fn(),
@@ -122,6 +130,31 @@ vi.mock("./lib/invite-rate-limit", () => ({
   settleInviteRateLimit: mocks.settleInviteRateLimit,
 }));
 
+describe("single invite input", () => {
+  const validInvite = {
+    organizationId: "clxyz1234567890abcdefghij",
+    email: "invitee@example.com",
+    name: "Invitee",
+    role: "member",
+    teamIds: [],
+  };
+  const inviteSchema = actionSchemas.find((schema) => schema.safeParse(validInvite).success);
+
+  test("accepts one address", () => {
+    expect(inviteSchema).toBeDefined();
+  });
+
+  // ENG-6658: one invite, and one unit of the invite budget, must not reach several inboxes.
+  test.each([
+    "a@example.com, b@example.com",
+    "a@example.com; b@example.com",
+    '"Bob" <b@example.com>',
+    "nobody",
+  ])("rejects %j as the invitee address", (email) => {
+    expect(inviteSchema?.safeParse({ ...validInvite, email }).success).toBe(false);
+  });
+});
+
 describe("invite rate-limit settlement", () => {
   const organizationId = "org-1";
   const reservation = {
@@ -186,6 +219,14 @@ describe("invite rate-limit settlement", () => {
     ).resolves.toBe("invite-1");
 
     expect(mocks.settleInviteRateLimit).toHaveBeenCalledWith(reservation, 1);
+    // The organization carries the email's per-recipient cap (ENG-3823).
+    expect(mocks.sendInviteMemberEmail).toHaveBeenCalledWith(
+      "invite-1",
+      "invitee@example.com",
+      "Inviter",
+      "Invitee",
+      organizationId
+    );
   });
 
   test("settles a bulk reservation to the number of created invites", async () => {
@@ -247,6 +288,59 @@ describe("invite rate-limit settlement", () => {
 
     expect(mocks.reserveInviteRateLimit).toHaveBeenCalledWith(organizationId, ctx.user.id);
     expect(mocks.settleInviteRateLimit).toHaveBeenCalledWith(reservation, 0);
+  });
+
+  // Every invite email names the organization it is sent for, which carries its per-recipient cap (ENG-3823).
+  describe("passes the organization to every invite email", () => {
+    const nameless = { user: { id: "user-1", name: null }, auditLoggingCtx: {} };
+
+    test("on a resend, with the inviter and invitee unnamed", async () => {
+      mocks.getInvite.mockResolvedValueOnce({ creator: null });
+      mocks.resendInvite.mockResolvedValueOnce({ email: "invitee@example.com", name: null });
+
+      await resendInviteAction({ ctx, parsedInput: { inviteId: "invite-1", organizationId } } as never);
+
+      expect(mocks.sendInviteMemberEmail).toHaveBeenCalledWith(
+        "invite-1",
+        "invitee@example.com",
+        "",
+        "",
+        organizationId
+      );
+    });
+
+    test("on a single invite from an unnamed user", async () => {
+      await inviteUserAction({
+        ctx: nameless,
+        parsedInput: { organizationId, email: "invitee@example.com", role: "owner", teamIds: [] },
+      } as never);
+
+      expect(mocks.sendInviteMemberEmail).toHaveBeenCalledWith(
+        "invite-1",
+        "invitee@example.com",
+        "",
+        "",
+        organizationId
+      );
+    });
+
+    test("on a bulk invite from an unnamed user", async () => {
+      await bulkInviteUsersAction({
+        ctx: nameless,
+        parsedInput: {
+          organizationId,
+          invitees: [{ email: "First@Example.com", role: "member", teamIds: [] }],
+        },
+      } as never);
+
+      expect(mocks.sendInviteMemberEmail).toHaveBeenCalledWith(
+        "invite-1",
+        "first@example.com",
+        "",
+        "",
+        organizationId
+      );
+    });
   });
 
   test("keeps a resend unit when refresh succeeds even if email delivery fails", async () => {

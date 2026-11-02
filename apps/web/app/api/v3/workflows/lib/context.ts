@@ -7,7 +7,7 @@ import {
   createWorkflowsHandlers,
   createWorkflowsService,
 } from "@formbricks/workflows/server";
-import { getV3AuthorizationActor, requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
+import { getV3AuthorizationActor, getV3SessionUserId, requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { problemForbidden } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { ENCRYPTION_KEY } from "@/lib/constants";
@@ -31,9 +31,6 @@ const service = createWorkflowsService({ prisma });
 
 /** Singleton handlers; they are stateless and only close over the injected service. */
 export const workflowsHandlers = createWorkflowsHandlers(service);
-
-const getUserId = (authentication: TV3Authentication): string | null =>
-  authentication && "user" in authentication && authentication.user?.id ? authentication.user.id : null;
 
 /**
  * Confirm a workflow trigger's referenced survey + ending cards exist in the workspace. Injected so
@@ -143,7 +140,7 @@ export const buildWorkflowApiContext = (
   instance: string,
   auditLog?: TV3AuditLog
 ): WorkflowApiContext => ({
-  userId: getUserId(authentication),
+  userId: getV3SessionUserId(authentication),
   requestId,
   instance,
   logger: logger.withContext({ requestId }),

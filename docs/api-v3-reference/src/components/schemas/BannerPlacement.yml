@@ -1,0 +1,9 @@
+oneOf:
+  - $ref: ./BannerTopPlacement.yml
+  - $ref: ./BannerBottomPlacement.yml
+discriminator:
+  propertyName: placement
+  mapping:
+    top: ./BannerTopPlacement.yml
+    bottom: ./BannerBottomPlacement.yml
+description: Where a banner sits and how it lays out. A bottom banner is always an overlay.

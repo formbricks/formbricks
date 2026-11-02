@@ -7,8 +7,11 @@ export async function fetchMatrixQuestions(params: {
   feedbackDirectoryId: string;
   signal?: AbortSignal;
 }): Promise<TMatrixQuestion[]> {
-  const query = new URLSearchParams({ feedbackDirectoryId: params.feedbackDirectoryId });
-  const response = await fetch(`/api/workspaces/${params.workspaceId}/matrix-questions?${query.toString()}`, {
+  const query = new URLSearchParams({
+    workspaceId: params.workspaceId,
+    datasetId: params.feedbackDirectoryId,
+  });
+  const response = await fetch(`/api/internal/matrix-questions?${query.toString()}`, {
     method: "GET",
     cache: "no-store",
     signal: params.signal,

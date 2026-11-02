@@ -21,8 +21,8 @@ post:
     **Custom CSS.** A create or patch payload that carries `customCss` is also run through the custom
     CSS processor; the result adds the compiled `customCss` and `warnings`, or `errors` and
     `valid=false`. `operation: customCss` validates CSS alone for a live preview — with
-    `scope: workspace | survey` and, optionally, an existing `surveyId` in `workspaceId` — and returns
-    the compiled CSS and warnings. Validation never saves, versions, touches timestamps or invalidates
+    `scope: workspace | survey` and, optionally, an existing `surveyId` in `workspaceId`, or a
+    `creativeType` for a creative's own CSS — and returns the compiled CSS and warnings. Validation never saves, versions, touches timestamps or invalidates
     caches, needs only read access, and grants nothing: the write itself checks permissions and the
     plan again. Requests that process custom CSS also count against a separate budget of 60 per
     minute per user or API key, shared with the workspace custom CSS endpoint, with survey creates

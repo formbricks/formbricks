@@ -696,7 +696,7 @@ taxonomy:
       region: us-east-1
 ```
 
-Bedrock needs a taxonomy image of version 0.1.6 or later (the chart default, `0.1.12`, qualifies); earlier images
+Bedrock needs a taxonomy image of version 0.1.6 or later (the chart default, `0.1.14`, qualifies); earlier images
 ship without the AWS SDK and fail on the first Bedrock request whichever way credentials are supplied. Set
 `taxonomy.image.tag` (or `taxonomy.image.digest`) accordingly.
 
@@ -1131,7 +1131,7 @@ Upgrading from a chart that did not render the web container context:
 | redis.enabled                                                      | bool   | `true`                                                                      |                                                           |
 | redis.externalRedisUrl                                             | string | `""`                                                                        |                                                           |
 | redis.fullnameOverride                                             | string | `"formbricks-redis"`                                                        |                                                           |
-| redis.image.digest                                                 | string | `"sha256:e0eb7c480958d32bdc4357a74bdd70653ae15f2f9b4c93c4a5a9fad1dc471c84"` |                                                           |
+| redis.image.digest                                                 | string | `"sha256:418652cfb58ef879d4978c33553735d7147016032d5aefaa14c828e611eb9dfd"` |                                                           |
 | redis.image.pullPolicy                                             | string | `"IfNotPresent"`                                                            |                                                           |
 | redis.image.repository                                             | string | `"valkey/valkey"`                                                           |                                                           |
 | redis.image.tag                                                    | string | `""`                                                                        |                                                           |
@@ -1175,7 +1175,7 @@ Upgrading from a chart that did not render the web container context:
 | taxonomy.hubReaperIntervalSeconds                                  | string | `"60"`                                                                      | Interval between Hub stale-run reaper passes.             |
 | taxonomy.hubStaleRunTimeoutSeconds                                 | string | `"1800"`                                                                    | Hub stale-run timeout; lower only with a callback-heartbeating taxonomy image. |
 | taxonomy.image.repository                                          | string | `"ghcr.io/formbricks/taxonomy"`                                             | Taxonomy service image repository.                        |
-| taxonomy.image.tag                                                 | string | `"0.1.12"`                                                                  | Taxonomy service image tag.                               |
+| taxonomy.image.tag                                                 | string | `"0.1.14"`                                                                  | Taxonomy service image tag.                               |
 | taxonomy.llm.baseUrl                                               | string | `""`                                                                        | Defaults to bundled vLLM router URL when `llm.enabled=true`; set for external LLMs. |
 | taxonomy.llm.bedrock.region                                        | string | `""`                                                                        | AWS region for Bedrock; alternatively set `taxonomy.env.AWS_REGION`. |
 | taxonomy.llm.bundledModelSpecName                                  | string | `""`                                                                        | Enabled bundled `modelSpec` used by Taxonomy; required when multiple bundled models are enabled. |

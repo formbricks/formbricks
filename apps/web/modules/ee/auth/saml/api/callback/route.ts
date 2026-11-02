@@ -1,3 +1,4 @@
+import type { IOAuthController } from "@boxyhq/saml-jackson";
 import { redirect } from "next/navigation";
 import { logger } from "@formbricks/logger";
 import { TooManyRequestsError } from "@formbricks/types/errors";
@@ -9,11 +10,17 @@ import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import jackson from "@/modules/ee/auth/saml/lib/jackson";
 import {
+  SAML_PARSE_TIME_BUDGET_MS,
   type SamlParseProbe,
   type SamlResponseClaims,
+  chargeMainThreadParse,
   probeSamlResponseParse,
 } from "@/modules/ee/auth/saml/lib/saml-parse-budget";
-import { checkSamlResponseBounds } from "@/modules/ee/auth/saml/lib/saml-response-bounds";
+import {
+  type SamlResponseRefusal,
+  checkSamlResponseBounds,
+} from "@/modules/ee/auth/saml/lib/saml-response-bounds";
+import { samlResponseWithoutAssertion } from "@/modules/ee/auth/saml/lib/saml-response-without-assertion";
 
 /**
  * Longest jackson message, reason or error that reaches the log. They are fixed strings on this path today, but
@@ -173,11 +180,17 @@ const readCallbackForm = async (
   return { SAMLResponse, RelayState };
 };
 
-/** What a response past the byte bounds is told: the kind of bound, never the counts. */
-const boundsRefusalMessage = (reason: string): string =>
-  reason === "declaration"
-    ? "SAMLResponse must not contain a DOCTYPE or other declaration"
-    : "SAMLResponse is too large to process";
+/**
+ * What a response past the byte bounds is told: the kind of bound, never the counts. Keyed by every refusal reason,
+ * so a new one fails typecheck until it has a message of its own.
+ */
+const BOUNDS_REFUSAL_MESSAGES: Record<SamlResponseRefusal["reason"], string> = {
+  length: "SAMLResponse is too large to process",
+  markup: "SAMLResponse is too large to process",
+  depth: "SAMLResponse is too large to process",
+  declaration: "SAMLResponse must not contain a DOCTYPE or other declaration",
+  elements: "SAMLResponse carries more elements than a SAML response does",
+};
 
 /** The refusal for a response past the byte bounds or the caller's rate limit, or `null` when it may be parsed. */
 const refuseBeforeParsing = async (req: Request, SAMLResponse: string): Promise<Response | null> => {
@@ -188,7 +201,7 @@ const refuseBeforeParsing = async (req: Request, SAMLResponse: string): Promise<
     return refuse(
       req,
       "saml_response_rejected",
-      responses.badRequestResponse(boundsRefusalMessage(refusal.reason))
+      responses.badRequestResponse(BOUNDS_REFUSAL_MESSAGES[refusal.reason])
     );
   }
 
@@ -207,10 +220,13 @@ const refuseBeforeParsing = async (req: Request, SAMLResponse: string): Promise<
   return null;
 };
 
-/** The refusal for a response the worker did not parse within its budget, or could not parse at all. */
+/**
+ * The refusal for a response the worker did not parse within its budget, or could not parse at all, before it began
+ * decrypting an assertion (after that, see `refuseOpenedAssertion`).
+ */
 const refuseUnparsed = (
   req: Request,
-  probe: Exclude<SamlParseProbe, { outcome: "parsed" }>,
+  probe: Exclude<SamlParseProbe, { outcome: "parsed" | "refused_encrypted" }>,
   SAMLResponse: string,
   RelayState: string
 ): Response => {
@@ -236,15 +252,6 @@ const refuseUnparsed = (
         "saml_unavailable",
         responses.serviceUnavailableResponse("The SAML response could not be processed; retry shortly", 1)
       );
-    case "refused":
-      // Logged like the bounds on the response itself: throttled, by size only. Answered as jackson answers a response
-      // it rejects, though, so the answer says nothing about what the encrypted assertion held.
-      warnThrottled(
-        `decrypted:${probe.refusal.reason}`,
-        probe.refusal,
-        "Refused a SAML response whose decrypted assertion is past the bounds"
-      );
-      return refuse(req, "saml_response_rejected", jacksonRefusalResponse(400));
     case "too_costly":
       logger.warn(
         { stage: "parse_budget", reason: probe.reason, ...failureContext(SAMLResponse, RelayState) },
@@ -321,6 +328,74 @@ const refuseJacksonError = (
   return refuse(req, code, jacksonRefusalResponse(status));
 };
 
+type SamlResponseResult = Awaited<ReturnType<IOAuthController["samlResponse"]>>;
+
+/** jackson's result for `body`, or the answer to a refusal it threw (see `refuseJacksonError`). */
+const runJackson = async (
+  req: Request,
+  oauthController: IOAuthController,
+  body: { RelayState: string; SAMLResponse: string },
+  context: ReturnType<typeof failureContext>
+): Promise<SamlResponseResult | Response> => {
+  try {
+    return await oauthController.samlResponse(body);
+  } catch (error) {
+    return refuseJacksonError(req, error, context);
+  }
+};
+
+/**
+ * The answer to a response the worker refused once it had begun decrypting its assertion (ENG-6646). jackson has not
+ * yet checked the issuer, the connection or the SP session at that point, so an answer of our own (a 400, or "too
+ * costly") would tell an anonymous sender that the ciphertext decrypted, and something of the plaintext: the oracle
+ * attacks on XML Encryption need (W3C XML Encryption 1.1, sections 6.1 and 6.7). jackson answers instead, for the
+ * response without its assertion (`samlResponseWithoutAssertion`), which is its answer to an assertion that does not
+ * decrypt, so both kinds of failure look alike from outside. Why it was refused is logged, never answered.
+ */
+const refuseOpenedAssertion = async (
+  req: Request,
+  oauthController: IOAuthController,
+  probe: Extract<SamlParseProbe, { outcome: "refused_encrypted" }>,
+  SAMLResponse: string,
+  RelayState: string
+): Promise<Response> => {
+  const context = failureContext(SAMLResponse, RelayState, { issuer: probe.issuer });
+  const { cause } = probe;
+  if (cause.reason === "failed") {
+    logger.error(context, "SAML parse worker failed while decrypting; refused a SAML response");
+  } else if (cause.reason === "time" || cause.reason === "memory") {
+    logger.warn(
+      { stage: "parse_budget", reason: cause.reason, decrypting: true, ...context },
+      "Refused a SAML response that was too costly to parse"
+    );
+  } else {
+    // Logged like the bounds on the response itself: throttled, by size only.
+    warnThrottled(
+      `decrypted:${cause.reason}`,
+      cause,
+      "Refused a SAML response whose decrypted assertion is past the bounds"
+    );
+  }
+
+  // jackson's time on the stand-in is main-thread SAML work like any other, so it is charged to the allowance: its wall
+  // time, which includes the store lookups and so errs high.
+  const started = performance.now();
+  const result = await runJackson(
+    req,
+    oauthController,
+    { RelayState, SAMLResponse: samlResponseWithoutAssertion(probe.issuer) },
+    context
+  );
+  // Wall time, so it includes jackson's awaited store lookups and errs high; capped at one parse budget so a slow
+  // lookup cannot drain more than a single response's worth of the allowance.
+  chargeMainThreadParse(Math.min(performance.now() - started, SAML_PARSE_TIME_BUDGET_MS));
+  if (result instanceof Response) return result;
+  // With no assertion it cannot pass validation; were jackson ever to accept it, it is refused all the same.
+  if (!result.error)
+    logger.error(context, "jackson accepted a SAML response without an assertion; refused it");
+  return refuse(req, "saml_response_rejected", jacksonRefusalResponse(400));
+};
+
 export const POST = async (req: Request) => {
   const jacksonInstance = await jackson();
   if (!jacksonInstance) {
@@ -330,7 +405,7 @@ export const POST = async (req: Request) => {
       responses.forbiddenResponse("SAML SSO is not enabled in your Formbricks license")
     );
   }
-  const { oauthController, getDecryptionKey } = jacksonInstance;
+  const { oauthController, getDecryptionKey, idpVerification } = jacksonInstance;
 
   const form = await readCallbackForm(req);
   if (form instanceof Response) return form;
@@ -344,17 +419,22 @@ export const POST = async (req: Request) => {
 
   // The bounds model xmldom; this measures it. A worker parses the response under a time budget first, so a shape
   // the bounds misread costs the worker at most the budget and never blocks this thread for long. It decrypts an
-  // encrypted assertion with jackson's key and parses that too.
-  const probe = await probeSamlResponseParse(SAMLResponse, decryptionKey);
+  // encrypted assertion with jackson's key and parses that too, then runs jackson's signature check with the
+  // connection's IdP certificates (ENG-4108) — both only for an sp-initiated flow (`decryptionKey` is set), which is
+  // the only flow jackson validates here, so a response it rejects before validating is never charged that cost.
+  const probe = await probeSamlResponseParse(
+    SAMLResponse,
+    decryptionKey,
+    decryptionKey === null ? null : idpVerification
+  );
+  if (probe.outcome === "refused_encrypted") {
+    return refuseOpenedAssertion(req, oauthController, probe, SAMLResponse, RelayState);
+  }
   if (probe.outcome !== "parsed") return refuseUnparsed(req, probe, SAMLResponse, RelayState);
   const context = failureContext(SAMLResponse, RelayState, probe.claims);
 
-  let result: Awaited<ReturnType<typeof oauthController.samlResponse>>;
-  try {
-    result = await oauthController.samlResponse({ RelayState, SAMLResponse });
-  } catch (error) {
-    return refuseJacksonError(req, error, context);
-  }
+  const result = await runJackson(req, oauthController, { RelayState, SAMLResponse }, context);
+  if (result instanceof Response) return result;
 
   // A response that fails validation (signature, audience, expiry, decryption) does not throw: jackson returns a
   // redirect back to the sign-in flow with its raw error text in the URL. That text is parser and library detail,

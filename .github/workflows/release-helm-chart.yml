@@ -230,7 +230,7 @@ jobs:
 
           for expected in \
             "name: formbricks-taxonomy" \
-            "image: \"ghcr.io/formbricks/taxonomy:0.1.12\"" \
+            "image: \"ghcr.io/formbricks/taxonomy:0.1.14\"" \
             "name: TAXONOMY_SERVICE_URL" \
             "value: \"http://formbricks-taxonomy:8000\"" \
             "name: HUB_INTERNAL_API_URL" \

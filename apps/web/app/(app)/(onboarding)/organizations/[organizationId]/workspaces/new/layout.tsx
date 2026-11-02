@@ -1,10 +1,8 @@
 import { notFound, redirect } from "next/navigation";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { can } from "@/lib/authorization";
 import { withAuthorizationSurface } from "@/lib/authorization/context";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getOrganization } from "@/lib/organization/service";
-import { getTranslate } from "@/lingodotdev/server";
 import { getSession } from "@/modules/auth/lib/session";
 import { invalidateOrganizationBillingCache } from "@/modules/ee/billing/lib/organization-billing";
 
@@ -15,7 +13,6 @@ const OnboardingLayout = async (props: {
   const params = await props.params;
 
   const { children } = props;
-  const t = await getTranslate();
 
   const session = await getSession();
   if (!session?.user) {
@@ -48,7 +45,7 @@ const OnboardingLayout = async (props: {
 
   const organization = await getOrganization(params.organizationId);
   if (!organization) {
-    throw new ResourceNotFoundError(t("common.organization"), params.organizationId);
+    return notFound();
   }
 
   if (IS_FORMBRICKS_CLOUD) {

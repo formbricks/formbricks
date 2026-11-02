@@ -1,0 +1,9 @@
+type: object
+description: The button inside a banner. Pressing it opens the creative's Destination.
+required:
+  - label
+properties:
+  label:
+    $ref: ./CreativeText.yml
+    description: The button's text. Publishing needs a non-empty default-language label.
+additionalProperties: false
