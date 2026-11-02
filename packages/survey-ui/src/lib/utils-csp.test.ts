@@ -31,6 +31,10 @@ describe("removeStyleAttributes", () => {
     ["unquoted, with an empty value", "<p style=>Hi</p>", "<p>Hi</p>"],
     ["with no value at all", "<p style>Hi</p>", "<p>Hi</p>"],
     ["next to a data- attribute", '<p data-style="x" style="y">Hi</p>', '<p data-style="x">Hi</p>'],
+    ["right after a closing quote", '<p title="x"style="color:red">Hi</p>', '<p title="x">Hi</p>'],
+    ["right after a closing quote, unquoted", "<p class='a'style=color:red>Hi</p>", "<p class='a'>Hi</p>"],
+    ["right after a slash", '<br/style="clear: both">', "<br/>"],
+    ["after several spaces", '<p    style="x">Hi</p>', "<p   >Hi</p>"],
     ["in a self-closing tag", '<br style="clear: both" />', "<br />"],
     ["in every tag of a string", '<p style="a">x</p><p style="b">y</p>', "<p>x</p><p>y</p>"],
   ])("removes a style attribute: %s", (_, html, expected) => {
@@ -47,8 +51,21 @@ describe("removeStyleAttributes", () => {
     ["an attribute value that looks like one", `<a title="Choose style = 'casual'">Hi</a>`],
     ["an unquoted value that contains style=", "<p title=style=x>Hi</p>"],
     ["text after an unquoted attribute", "<a href=x>style=y</a>"],
+    ["a style element", '<style media="print">p { color: red }</style>'],
     ["a stray <", "1 < 2 and style='x' > 0"],
   ])("leaves %s alone", (_, html) => {
     expect(removeStyleAttributes(html)).toBe(html);
+  });
+
+  // A run of whitespace inside a tag, followed by something that is not an attribute name, used to be
+  // rescanned from every position: n spaces cost n squared steps (1.9 s at 40,000 on a fast machine).
+  test.each([
+    ["spaces then >", `<p${" ".repeat(60_000)}>`],
+    ["spaces then /", `<p${" ".repeat(60_000)}/>`],
+    ["tabs then =", `<p${"\t".repeat(60_000)}=>`],
+  ])("stays fast on a long run of whitespace: %s", (_, html) => {
+    const start = performance.now();
+    removeStyleAttributes(html);
+    expect(performance.now() - start).toBeLessThan(1000);
   });
 });

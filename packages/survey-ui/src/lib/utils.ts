@@ -25,29 +25,39 @@ export function cn(...inputs: ClassValue[]): string {
 // excluded outside quotes so a stray one ends the attempt instead of scanning to the end of the string.
 // Every alternative starts with a different character, so there is no backtracking to speak of.
 const OPENING_TAG = /<[a-zA-Z](?:"[^"]*"|'[^']*'|[^<>"'])*>/g;
-// Inside a tag, one attribute: whitespace, a name, and an optional `= value`. The value is quoted or bare,
-// and a quoted one is consumed whole, so text inside another attribute's value that looks like
-// `style = 'x'` (`title="Choose style = 'casual'"`) is never mistaken for an attribute. Built from named
-// parts so each stays readable.
+// Inside a tag, one attribute: a name and an optional `= value`. The value is quoted or bare, and a quoted
+// one is consumed whole, so text inside another attribute's value that looks like `style = 'x'`
+// (`title="Choose style = 'casual'"`) is never mistaken for an attribute. Built from named parts so each
+// stays readable.
+// The separator in front of the name is ONE optional whitespace character, deliberately not `\s+`: a run of
+// n spaces would be rescanned from every position (quadratic), and HTML does not need a separator after a
+// closing quote (`title="x"style="y"`), where browsers still read `style` as an attribute. No lookbehind:
+// an engine without it would throw while this module loads.
 const ATTRIBUTE_NAME = `[^\\s"'<>/=]+`;
 const ATTRIBUTE_VALUE = `"[^"]*"|'[^']*'|[^\\s"'>]*`;
-const ATTRIBUTE = new RegExp(`\\s+(${ATTRIBUTE_NAME})(?:\\s*=\\s*(?:${ATTRIBUTE_VALUE}))?`, "g");
+const ATTRIBUTE = new RegExp(`\\s?(${ATTRIBUTE_NAME})(?:\\s*=\\s*(?:${ATTRIBUTE_VALUE}))?`, "g");
+// `<p`, the tag name, which is not an attribute (a `<style>` element is not a style attribute).
+const TAG_NAME = /^<[^\s/>]+/;
 
 /**
  * Removes `style` attributes from the opening tags of a raw HTML string, without parsing it.
  * Must run BEFORE anything parses the markup: under a strict CSP `style-src` the browser reports every
  * element it parses with a style attribute, even one discarded afterwards, so stripping the attribute
  * from the parsed tree is too late.
- * Any whitespace may separate the attribute from the tag (a newline or tab, not just a space) and
- * surround the `=`, and the value may be quoted or not. Text outside tags, and other attributes' values,
- * are left alone.
+ * Any whitespace may separate the attribute from the tag (a newline or tab, not just a space), or nothing
+ * at all after a closing quote or a `/`, and it may surround the `=`; the value may be quoted or not. Text
+ * outside tags, and other attributes' values, are left alone.
  * @param html - The raw HTML string
  * @returns The string without its style attributes
  */
 export const removeStyleAttributes = (html: string): string =>
-  html.replaceAll(OPENING_TAG, (tag) =>
-    tag.replaceAll(ATTRIBUTE, (attribute, name: string) => (name.toLowerCase() === "style" ? "" : attribute))
-  );
+  html.replaceAll(OPENING_TAG, (tag) => {
+    const tagName = TAG_NAME.exec(tag)?.[0] ?? "";
+    const attributes = tag
+      .slice(tagName.length)
+      .replaceAll(ATTRIBUTE, (attribute, name: string) => (name.toLowerCase() === "style" ? "" : attribute));
+    return tagName + attributes;
+  });
 
 /**
  * Strip inline style attributes from HTML string to avoid CSP violations
