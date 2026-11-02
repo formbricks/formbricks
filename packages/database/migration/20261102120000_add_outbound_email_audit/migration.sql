@@ -22,6 +22,7 @@ CREATE TABLE "OutboundEmailAudit" (
     "snapshotKey" TEXT,
     "snapshotSha256" TEXT,
     "status" TEXT NOT NULL DEFAULT 'prepared',
+    "statusRecordedAt" TIMESTAMP(3),
     "auditGap" BOOLEAN NOT NULL DEFAULT false,
     "erasureRequestedAt" TIMESTAMP(3),
     "erasedAt" TIMESTAMP(3),

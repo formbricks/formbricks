@@ -109,7 +109,7 @@ export const processEmailAuditMaintenanceJob: JobHandler<TGlobalScopeJobData> = 
   if (stale.length > 0) {
     await prisma.outboundEmailAudit.updateMany({
       where: { id: { in: stale.map((row) => row.id) }, status: "prepared" },
-      data: { status: "indeterminate", auditGap: true },
+      data: { status: "indeterminate", statusRecordedAt: now, auditGap: true },
     });
     await reportEmailAuditFailure("email_audit_stale_prepared", { count: stale.length });
   }

@@ -85,7 +85,11 @@ describe("outbound email audit", () => {
     });
     expect(mocks.updateMany).toHaveBeenLastCalledWith({
       where: { id: state?.id, erasedAt: null, erasureRequestedAt: null },
-      data: { status: "accepted", sesMessageHash: createHash("sha256").update("ses-123").digest("hex") },
+      data: {
+        status: "accepted",
+        statusRecordedAt: expect.any(Date),
+        sesMessageHash: createHash("sha256").update("ses-123").digest("hex"),
+      },
     });
     expect(mocks.audit).toHaveBeenLastCalledWith(
       expect.objectContaining({

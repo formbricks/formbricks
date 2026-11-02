@@ -76,7 +76,7 @@ describe("email audit retention and erasure", () => {
 
     expect(mocks.updateMany).toHaveBeenCalledWith({
       where: { id: { in: ["stale-id"] }, status: "prepared" },
-      data: { status: "indeterminate", auditGap: true },
+      data: { status: "indeterminate", statusRecordedAt: expect.any(Date), auditGap: true },
     });
     expect(mocks.deleteSnapshot).toHaveBeenCalledWith("private-audit-bucket", "erased-id");
     expect(mocks.updateMany).toHaveBeenCalledWith({

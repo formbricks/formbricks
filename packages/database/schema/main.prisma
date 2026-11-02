@@ -42,6 +42,7 @@ model OutboundEmailAudit {
   snapshotKey        String?
   snapshotSha256     String?
   status             String    @default("prepared")
+  statusRecordedAt   DateTime?
   auditGap           Boolean   @default(false)
   erasureRequestedAt DateTime?
   erasedAt           DateTime?

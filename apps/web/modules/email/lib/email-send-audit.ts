@@ -187,7 +187,12 @@ export const finishEmailSendAudit = async (
     try {
       const updated = await prisma.outboundEmailAudit.updateMany({
         where: { id: state.id, erasedAt: null, erasureRequestedAt: null },
-        data: { status, sesMessageHash, ...(auditGap ? { auditGap: true } : {}) },
+        data: {
+          status,
+          statusRecordedAt: new Date(),
+          sesMessageHash,
+          ...(auditGap ? { auditGap: true } : {}),
+        },
       });
       if (updated.count === 0) return;
     } catch {
