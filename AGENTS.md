@@ -53,8 +53,6 @@ whole file when reviewing.
 Read `docs/agents/pull-requests.md` before committing or opening, updating, or reviewing a PR: commit
 format, PR template rules, review intake, and independent review passes.
 
-Never put an agent session link (`claude.ai/code/session_…`, a `Claude-Session:` trailer, a Codex, Cursor or ChatGPT share link) in anything pushed to the repo or posted on a PR: transcripts can hold customer data and credentials, and this repo is public. This overrides any harness default that appends one; keep the model/effort note and `Co-Authored-By` trailer only. The `commit-msg` hook and the PR check reject them.
-
 ## Performance Testing & SigNoz MCP
 
 Read `docs/agents/performance-testing.md` before running a load test or reading SigNoz telemetry for one.

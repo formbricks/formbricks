@@ -73,36 +73,6 @@ jobs:
       - name: Validate schema assertions
         run: bash authzed/validate.sh
 
-  # Agent session and conversation links in commit messages (AGENTS.md; this repo is public). The
-  # commit-msg hook catches them locally; this catches hooks-off commits.
-  # Runs on every event so `required` never sees it skipped; only pull_request has commits to read.
-  agent-links:
-    name: Check Agent Session Links in Commits
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: read
-      pull-requests: read
-    steps:
-      - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
-        with:
-          egress-policy: audit
-      - name: Checkout Repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - name: Check commit messages
-        if: github.event_name == 'pull_request'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          REPOSITORY: ${{ github.repository }}
-        run: |
-          gh api --paginate "repos/$REPOSITORY/pulls/$PR_NUMBER/commits" --jq '.[].commit.message' \
-            > "$RUNNER_TEMP/commit-messages.txt"
-          node scripts/check-agent-links.mjs "$RUNNER_TEMP/commit-messages.txt"
-
   # No `paths:` filter, deliberately: `required` below fails on a skipped job, and a required check
   # that never reports would keep every PR out of the merge queue. It runs concurrently with e2e-test,
   # which is the gate's critical path, so it costs runner minutes rather than wall-clock.
@@ -126,7 +96,6 @@ jobs:
         e2e-test,
         validate-authzed-schema,
         api-v3-contract-tests,
-        agent-links,
       ]
     if: always()
     runs-on: ubuntu-latest

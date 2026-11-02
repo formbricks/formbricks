@@ -5,7 +5,6 @@ Read before committing, or opening, updating, or reviewing a pull request.
 ## Commits
 
 Use Conventional Commits (`fix:`, `chore:`, `feat:`), keep commits scoped, and run the relevant checks.
-The rule against publishing agent session links lives in `AGENTS.md` and applies to every commit.
 
 ## Pull requests
 

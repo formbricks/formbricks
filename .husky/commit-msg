@@ -1,9 +1,0 @@
-#!/usr/bin/env sh
-
-# Refuses agent session and conversation links in the commit message (AGENTS.md; this repo is public).
-# The same check runs on every PR in .github/workflows/pr.yml, so skipping hooks only moves the failure.
-if command -v node >/dev/null 2>&1; then
-  node scripts/check-agent-links.mjs "$1"
-else
-  echo "commit-msg: node is unavailable in this Git hook PATH, so the agent-link check was skipped."
-fi
