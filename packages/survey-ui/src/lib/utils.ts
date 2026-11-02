@@ -33,9 +33,9 @@ const OPENING_TAG = /<[a-zA-Z](?:"[^"]*"|'[^']*'|[^<>"'])*>/g;
 // n spaces would be rescanned from every position (quadratic), and HTML does not need a separator after a
 // closing quote (`title="x"style="y"`), where browsers still read `style` as an attribute. No lookbehind:
 // an engine without it would throw while this module loads.
-const ATTRIBUTE_NAME = `[^\\s"'<>/=]+`;
-const ATTRIBUTE_VALUE = `"[^"]*"|'[^']*'|[^\\s"'>]*`;
-const ATTRIBUTE = new RegExp(`\\s?(${ATTRIBUTE_NAME})(?:\\s*=\\s*(?:${ATTRIBUTE_VALUE}))?`, "g");
+const ATTRIBUTE_NAME = String.raw`[^\s"'<>/=]+`;
+const ATTRIBUTE_VALUE = String.raw`"[^"]*"|'[^']*'|[^\s"'>]*`;
+const ATTRIBUTE = new RegExp(String.raw`\s?(${ATTRIBUTE_NAME})(?:\s*=\s*(?:${ATTRIBUTE_VALUE}))?`, "g");
 // `<p`, the tag name, which is not an attribute (a `<style>` element is not a style attribute).
 const TAG_NAME = /^<[^\s/>]+/;
 
