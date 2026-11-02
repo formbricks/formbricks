@@ -1,4 +1,13 @@
 import type { TFunction } from "i18next";
+import {
+  EyeOffIcon,
+  HashIcon,
+  LanguagesIcon,
+  type LucideIcon,
+  PieChartIcon,
+  SquareFunctionIcon,
+  UserIcon,
+} from "lucide-react";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import type {
@@ -14,7 +23,9 @@ import {
 } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/response-filter-options";
 import { DATE_RANGE_PRESETS } from "@/lib/date-ranges";
 import { getLocalizedValue } from "@/lib/i18n/utils";
+import { getReservedFieldIcon } from "@/modules/embedded-data/lib/field-display";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
+import { getElementIcon } from "@/modules/survey/lib/elements";
 import { resolveDateFilterBounds } from "@/modules/ui/components/table-toolbar/lib/date-filter";
 import type {
   TFilterOption,
@@ -177,6 +188,22 @@ const groupLabel = (kind: TResponseFieldKind, t: TFunction): string => {
 
 type TModelEntry = { property: TFilterProperty; field?: TResponseFilterField };
 
+/** The icon Advanced filter shows before each field, so questions, contact data and metadata read apart. */
+const fieldIcon = (kind: Exclude<TResponseFieldKind, "question" | "matrixRow">, id: string): LucideIcon => {
+  switch (kind) {
+    case "attribute":
+      return UserIcon;
+    case "hiddenField":
+      return EyeOffIcon;
+    case "variable":
+      return SquareFunctionIcon;
+    case "meta":
+      return getReservedFieldIcon(id);
+    case "quota":
+      return PieChartIcon;
+  }
+};
+
 type TBuildContext = {
   t: TFunction;
   filterOptionFor: (type: string, id: string) => ElementFilterOptions | undefined;
@@ -200,6 +227,7 @@ const matrixRowEntries = (
         id: `question.${id}.${row.id}`,
         group: t("common.elements"),
         label: `${label} · ${rowLabel}`,
+        icon: getElementIcon(TSurveyElementTypeEnum.Matrix, t),
         valueType: "enum",
         options: columns,
         ruleOperators: ["equals"],
@@ -225,6 +253,7 @@ const elementEntries = (
       property: {
         ...questionProperty(propertyId, label, elementType, filterOption),
         group: context.t("common.elements"),
+        icon: getElementIcon(elementType, context.t),
       },
       field: { kind: "question", id, label, elementType },
     },
@@ -252,6 +281,7 @@ const typedFieldEntries = (
         id: `${typed}.${id}`,
         label,
         group: groupLabel(typed, context.t),
+        icon: fieldIcon(typed, id),
         valueType,
         // Observed values: the only values of an enum, suggestions for a free-text field.
         ...(valueType === "enum"
@@ -310,6 +340,7 @@ const trailingProperties = (
   const tag: TFilterProperty = {
     id: TAG_PROPERTY,
     label: t("common.tags"),
+    icon: HashIcon,
     valueType: "enum",
     quick: true,
     options: tagOptions,
@@ -325,6 +356,7 @@ const trailingProperties = (
     {
       id: LANGUAGE_PROPERTY,
       label: t("common.language"),
+      icon: LanguagesIcon,
       valueType: "enum",
       quick: true,
       options: codes.map((code) => ({ value: code, label: code })),

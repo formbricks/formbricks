@@ -4,7 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Workspace } from "@formbricks/database/prisma-browser";
 import type { TRendererCustomCss } from "@formbricks/types/custom-css";
-import { getIngestedStorageKeys } from "@formbricks/types/embedded-data-resolver";
+import { getIngestedStorageKeys } from "@formbricks/types/embedded-data-fields";
 import { TResponseData } from "@formbricks/types/responses";
 import { findElementByIdOrCode } from "@formbricks/types/surveys/element-lookup";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
