@@ -137,8 +137,9 @@ const config = [
       // CODING_STANDARDS.md asks for `Readonly<>` props on every React component and Sonar enforces
       // it as S6759, so until now a miss surfaced only after push. eslint-plugin-react (registered by
       // eslint-config-next) accepts both the `Readonly<Props>` wrapper and `readonly` members; its
-      // autofix writes the latter, so prefer the wrapper when fixing by hand. 1795 violations across
-      // 386 files, no ratchet ticket yet; promote to "error" once the count reaches zero.
+      // autofix writes the latter, so `lint:fix` turns the rule off and fixes are made by hand with the
+      // wrapper. 1795 violations across 386 files, no ratchet ticket yet; promote to "error" once the
+      // count reaches zero.
       "react/prefer-read-only-props": "warn",
 
       "no-restricted-syntax": ["error", ...noDirectProcessEnv],
