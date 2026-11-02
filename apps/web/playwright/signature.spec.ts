@@ -466,12 +466,12 @@ test.describe("Signature element @slow", () => {
       await expect(card.getByRole("img", { name: "Signature" })).toBeVisible();
       await attachShot(page, testInfo, "response-card");
 
-      const download = card.locator('a[download="signature.png"]');
+      const download = card.locator('a[download^="signature-"][download$=".png"]');
       await expect(download).toHaveText("Download PNG");
       const downloadPromise = page.waitForEvent("download");
       await download.click();
       const saved = await downloadPromise;
-      expect(saved.suggestedFilename()).toBe("signature.png");
+      expect(saved.suggestedFilename()).toMatch(/^signature-.+\.png$/);
       const savedPath = testInfo.outputPath("signature.png");
       await saved.saveAs(savedPath);
       const downloaded = await readFile(savedPath);
