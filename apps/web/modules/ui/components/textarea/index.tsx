@@ -2,7 +2,7 @@ import * as React from "react";
 import { cn } from "@/lib/cn";
 
 export interface TextareaProps extends React.ComponentProps<"textarea"> {
-  isInvalid?: boolean;
+  readonly isInvalid?: boolean;
 }
 
 // Mirrors the Input component's border/focus treatment so single-line and multi-line fields look

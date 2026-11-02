@@ -7,8 +7,8 @@ import { getTranslate } from "@/lingodotdev/server";
 import footerLogo from "../lib/footerlogo.svg";
 
 interface SurveyCompletedMessageProps {
-  singleUseMessage: TSurveySingleUse | null;
-  workspace?: Pick<Workspace, "linkSurveyBranding">;
+  readonly singleUseMessage: TSurveySingleUse | null;
+  readonly workspace?: Pick<Workspace, "linkSurveyBranding">;
 }
 
 export const SurveyCompletedMessage = async ({

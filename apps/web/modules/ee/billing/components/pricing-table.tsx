@@ -80,23 +80,23 @@ type TDisplayPlan = "hobby" | "pro" | "scale" | "custom" | "unknown";
 type TStandardPlan = "hobby" | "pro" | "scale";
 
 interface PricingTableProps {
-  userId: string;
-  organization: TOrganization;
-  responseCount: number;
-  workspaceCount: number;
-  workflowRunCount: number;
-  isPlanComparison: boolean;
-  usageCycleStart: Date;
-  usageCycleEnd: Date;
-  hasBillingRights: boolean;
-  currentCloudPlan: TDisplayPlan;
-  currentBillingInterval: TCloudBillingInterval | null;
-  currentSubscriptionStatus: TOrganizationStripeSubscriptionStatus | null;
-  pendingChange: TOrganizationStripePendingChange | null;
-  isStripeSetupIncomplete: boolean;
-  trialDaysRemaining: number | null;
-  billingCatalog: TStripeBillingCatalogDisplay;
-  stripePublishableKey: string | null;
+  readonly userId: string;
+  readonly organization: TOrganization;
+  readonly responseCount: number;
+  readonly workspaceCount: number;
+  readonly workflowRunCount: number;
+  readonly isPlanComparison: boolean;
+  readonly usageCycleStart: Date;
+  readonly usageCycleEnd: Date;
+  readonly hasBillingRights: boolean;
+  readonly currentCloudPlan: TDisplayPlan;
+  readonly currentBillingInterval: TCloudBillingInterval | null;
+  readonly currentSubscriptionStatus: TOrganizationStripeSubscriptionStatus | null;
+  readonly pendingChange: TOrganizationStripePendingChange | null;
+  readonly isStripeSetupIncomplete: boolean;
+  readonly trialDaysRemaining: number | null;
+  readonly billingCatalog: TStripeBillingCatalogDisplay;
+  readonly stripePublishableKey: string | null;
 }
 
 const STANDARD_PLAN_LEVEL: Record<TStandardPlan, number> = {

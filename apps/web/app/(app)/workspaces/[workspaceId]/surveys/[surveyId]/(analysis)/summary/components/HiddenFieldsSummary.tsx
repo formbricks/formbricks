@@ -13,8 +13,8 @@ import { Button } from "@/modules/ui/components/button";
 import { EmptyState } from "@/modules/ui/components/empty-state";
 
 interface HiddenFieldsSummaryProps {
-  elementSummary: TSurveyElementSummaryHiddenFields;
-  locale: TUserLocale;
+  readonly elementSummary: TSurveyElementSummaryHiddenFields;
+  readonly locale: TUserLocale;
 }
 
 export const HiddenFieldsSummary = ({ elementSummary, locale }: HiddenFieldsSummaryProps) => {

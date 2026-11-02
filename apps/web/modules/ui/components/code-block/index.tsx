@@ -20,12 +20,12 @@ import { copyToClipboard } from "@/lib/utils/clipboard";
 import "./style.css";
 
 interface CodeBlockProps {
-  children: React.ReactNode;
-  language: string;
-  customCodeClass?: string;
-  customEditorClass?: string;
-  showCopyToClipboard?: boolean;
-  noMargin?: boolean;
+  readonly children: React.ReactNode;
+  readonly language: string;
+  readonly customCodeClass?: string;
+  readonly customEditorClass?: string;
+  readonly showCopyToClipboard?: boolean;
+  readonly noMargin?: boolean;
 }
 
 export const CodeBlock = ({

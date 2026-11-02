@@ -6,7 +6,7 @@ import { PageHeader } from "@/modules/ui/components/page-header";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { getTeamsByWorkspaceId } from "./lib/team";
 
-export const WorkspaceTeams = async (props: { params: Promise<{ workspaceId: string }> }) => {
+export const WorkspaceTeams = async (props: { readonly params: Promise<{ workspaceId: string }> }) => {
   const t = await getTranslate();
   const params = await props.params;
 

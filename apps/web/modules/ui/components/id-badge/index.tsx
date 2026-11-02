@@ -7,12 +7,12 @@ import { logger } from "@formbricks/logger";
 import { BadgeContent } from "./components/badge-content";
 
 interface IdBadgeProps {
-  id: string | number;
-  copyDisabled?: boolean;
-  showCopyIconOnHover?: boolean;
-  className?: string;
-  label?: string;
-  variant?: "row" | "column";
+  readonly id: string | number;
+  readonly copyDisabled?: boolean;
+  readonly showCopyIconOnHover?: boolean;
+  readonly className?: string;
+  readonly label?: string;
+  readonly variant?: "row" | "column";
 }
 
 export const IdBadge: React.FC<IdBadgeProps> = ({

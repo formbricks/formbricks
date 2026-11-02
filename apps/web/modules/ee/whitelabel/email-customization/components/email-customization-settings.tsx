@@ -30,15 +30,15 @@ import { ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prom
 const allowedFileExtensions: TAllowedFileExtension[] = ["jpeg", "png", "jpg", "webp"];
 
 interface EmailCustomizationSettingsProps {
-  organization: TOrganization;
-  hasWhiteLabelPermission: boolean;
-  workspaceId: string;
-  isReadOnly: boolean;
-  isFormbricksCloud: boolean;
-  user: TUser | null;
-  fbLogoUrl: string;
-  isStorageConfigured: boolean;
-  enterpriseLicenseRequestFormUrl: string;
+  readonly organization: TOrganization;
+  readonly hasWhiteLabelPermission: boolean;
+  readonly workspaceId: string;
+  readonly isReadOnly: boolean;
+  readonly isFormbricksCloud: boolean;
+  readonly user: TUser | null;
+  readonly fbLogoUrl: string;
+  readonly isStorageConfigured: boolean;
+  readonly enterpriseLicenseRequestFormUrl: string;
 }
 
 export const EmailCustomizationSettings = ({

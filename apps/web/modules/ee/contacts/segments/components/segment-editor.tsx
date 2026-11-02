@@ -27,12 +27,12 @@ import { AddFilterModal } from "./add-filter-modal";
 import { SegmentFilter } from "./segment-filter";
 
 interface TSegmentEditorProps {
-  group: TBaseFilters;
-  segment: TSegment;
-  segments: TSegment[];
-  contactAttributeKeys: TContactAttributeKey[];
-  setSegment: React.Dispatch<React.SetStateAction<TSegment | null>>;
-  viewOnly?: boolean;
+  readonly group: TBaseFilters;
+  readonly segment: TSegment;
+  readonly segments: TSegment[];
+  readonly contactAttributeKeys: TContactAttributeKey[];
+  readonly setSegment: React.Dispatch<React.SetStateAction<TSegment | null>>;
+  readonly viewOnly?: boolean;
 }
 
 export function SegmentEditor({

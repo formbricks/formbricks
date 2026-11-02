@@ -19,11 +19,11 @@ const ZConfirmPasswordFormState = z.object({
 type TConfirmPasswordFormState = z.infer<typeof ZConfirmPasswordFormState>;
 
 interface ConfirmPasswordFormProps {
-  setCurrentStep: (step: EnableTwoFactorModalStep) => void;
-  setBackupCodes: (codes: string[]) => void;
-  setDataUri: (dataUri: string) => void;
-  setSecret: (secret: string) => void;
-  setOpen: (open: boolean) => void;
+  readonly setCurrentStep: (step: EnableTwoFactorModalStep) => void;
+  readonly setBackupCodes: (codes: string[]) => void;
+  readonly setDataUri: (dataUri: string) => void;
+  readonly setSecret: (secret: string) => void;
+  readonly setOpen: (open: boolean) => void;
 }
 export const ConfirmPasswordForm = ({
   setBackupCodes,

@@ -17,13 +17,13 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modu
 import { isSubmissionTimeMoreThan5Minutes } from "../util";
 
 interface SingleResponseCardHeaderProps {
-  pageType: "people" | "response";
-  response: TResponse;
-  survey: TSurvey;
-  user?: TUser;
-  isReadOnly: boolean;
-  setDeleteDialogOpen: (deleteDialogOpen: boolean) => void;
-  locale: TUserLocale;
+  readonly pageType: "people" | "response";
+  readonly response: TResponse;
+  readonly survey: TSurvey;
+  readonly user?: TUser;
+  readonly isReadOnly: boolean;
+  readonly setDeleteDialogOpen: (deleteDialogOpen: boolean) => void;
+  readonly locale: TUserLocale;
 }
 
 export const SingleResponseCardHeader = ({

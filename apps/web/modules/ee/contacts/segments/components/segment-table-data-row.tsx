@@ -11,12 +11,12 @@ import { EditSegmentModal } from "./edit-segment-modal";
 import { TSegmentActivitySummary } from "./segment-activity-utils";
 
 type TSegmentTableDataRowProps = {
-  currentSegment: TSegmentWithSurveyRefs;
-  activitySummary: TSegmentActivitySummary;
-  segments: TSegment[];
-  contactAttributeKeys: TContactAttributeKey[];
-  isContactsEnabled: boolean;
-  isReadOnly: boolean;
+  readonly currentSegment: TSegmentWithSurveyRefs;
+  readonly activitySummary: TSegmentActivitySummary;
+  readonly segments: TSegment[];
+  readonly contactAttributeKeys: TContactAttributeKey[];
+  readonly isContactsEnabled: boolean;
+  readonly isReadOnly: boolean;
 };
 
 export const SegmentTableDataRow = ({

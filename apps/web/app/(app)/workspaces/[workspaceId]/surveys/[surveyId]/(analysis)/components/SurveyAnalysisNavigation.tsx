@@ -8,8 +8,8 @@ import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/works
 import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 
 interface SurveyAnalysisNavigationProps {
-  survey: TSurvey;
-  activeId: string;
+  readonly survey: TSurvey;
+  readonly activeId: string;
 }
 
 export const SurveyAnalysisNavigation = ({ survey, activeId }: SurveyAnalysisNavigationProps) => {

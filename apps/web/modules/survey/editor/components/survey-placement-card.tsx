@@ -14,8 +14,8 @@ import { TOverlaySettingsValue } from "@/modules/ui/components/overlay-settings/
 import { Switch } from "@/modules/ui/components/switch";
 
 interface SurveyPlacementCardProps {
-  localSurvey: TSurvey;
-  setLocalSurvey: (survey: TSurvey) => void;
+  readonly localSurvey: TSurvey;
+  readonly setLocalSurvey: (survey: TSurvey) => void;
 }
 
 export const SurveyPlacementCard = ({ localSurvey, setLocalSurvey }: SurveyPlacementCardProps) => {

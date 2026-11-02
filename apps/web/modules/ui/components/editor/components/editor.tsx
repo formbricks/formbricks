@@ -39,38 +39,38 @@ import { ToolbarPlugin } from "./toolbar-plugin";
   - underline
 */
 export type TextEditorProps = {
-  getText: () => string;
-  setText: (text: string) => void;
-  excludedToolbarItems?: string[];
-  variables?: string[];
-  height?: string;
-  placeholder?: string;
-  disableLists?: boolean;
-  updateTemplate?: boolean;
-  firstRender?: boolean;
-  setFirstRender?: Dispatch<SetStateAction<boolean>>;
-  editable?: boolean;
-  onEmptyChange?: (isEmpty: boolean) => void;
-  isInvalid?: boolean;
+  readonly getText: () => string;
+  readonly setText: (text: string) => void;
+  readonly excludedToolbarItems?: string[];
+  readonly variables?: string[];
+  readonly height?: string;
+  readonly placeholder?: string;
+  readonly disableLists?: boolean;
+  readonly updateTemplate?: boolean;
+  readonly firstRender?: boolean;
+  readonly setFirstRender?: Dispatch<SetStateAction<boolean>>;
+  readonly editable?: boolean;
+  readonly onEmptyChange?: (isEmpty: boolean) => void;
+  readonly isInvalid?: boolean;
   /**
    * Id of the element describing an invalid state (an inline error message). Forwarded to the
    * contenteditable alongside `aria-invalid`, so the editor announces its error like a native input
    * does — `isInvalid` alone only paints the border red.
    */
-  ariaDescribedBy?: string;
-  localSurvey?: TSurvey;
-  elementId?: string;
-  selectedLanguageCode?: string;
-  fallbacks?: { [id: string]: string };
-  addFallback?: () => void;
-  autoFocus?: boolean;
-  id?: string;
-  isExternalUrlsAllowed?: boolean;
+  readonly ariaDescribedBy?: string;
+  readonly localSurvey?: TSurvey;
+  readonly elementId?: string;
+  readonly selectedLanguageCode?: string;
+  readonly fallbacks?: { [id: string]: string };
+  readonly addFallback?: () => void;
+  readonly autoFocus?: boolean;
+  readonly id?: string;
+  readonly isExternalUrlsAllowed?: boolean;
   /**
    * Hand `setText` text's `<` and `>` still escaped, for a consumer that parses the markup as HTML again;
    * by default they come decoded (see `toEditorOutputHtml`).
    */
-  keepEscapedText?: boolean;
+  readonly keepEscapedText?: boolean;
 };
 
 const editorConfig = {

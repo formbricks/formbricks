@@ -9,8 +9,8 @@ import {
 import { getWorkspacesByOrganizationId } from "@/modules/ee/teams/team-list/lib/workspace";
 
 interface FeedbackDirectoryViewProps {
-  organizationId: string;
-  membershipRole: TOrganizationRole;
+  readonly organizationId: string;
+  readonly membershipRole: TOrganizationRole;
 }
 
 export const FeedbackDirectoryView = async ({

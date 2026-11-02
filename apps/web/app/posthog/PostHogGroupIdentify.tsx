@@ -4,10 +4,10 @@ import posthog from "posthog-js";
 import { useEffect, useRef } from "react";
 
 interface PostHogGroupIdentifyProps {
-  organizationId: string;
-  organizationName: string;
-  workspaceId: string;
-  workspaceName: string;
+  readonly organizationId: string;
+  readonly organizationName: string;
+  readonly workspaceId: string;
+  readonly workspaceName: string;
 }
 
 export const PostHogGroupIdentify = ({

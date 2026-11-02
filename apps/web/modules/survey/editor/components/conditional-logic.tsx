@@ -36,12 +36,12 @@ import {
 import { Label } from "@/modules/ui/components/label";
 
 interface ConditionalLogicProps {
-  localSurvey: TSurvey;
-  blockIdx: number;
-  block: TSurveyBlock;
-  updateBlockLogic: (blockIdx: number, logic: TSurveyBlockLogic[]) => void;
-  updateBlockLogicFallback: (blockIdx: number, logicFallback: string | undefined) => void;
-  invalidElements?: string[];
+  readonly localSurvey: TSurvey;
+  readonly blockIdx: number;
+  readonly block: TSurveyBlock;
+  readonly updateBlockLogic: (blockIdx: number, logic: TSurveyBlockLogic[]) => void;
+  readonly updateBlockLogicFallback: (blockIdx: number, logicFallback: string | undefined) => void;
+  readonly invalidElements?: string[];
 }
 
 export function ConditionalLogic({

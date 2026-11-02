@@ -5,11 +5,11 @@ import { Badge } from "@/modules/ui/components/badge";
 import { BillingSlider } from "./billing-slider";
 
 interface UsageCardProps {
-  metric: string;
-  currentCount: number;
-  limit: number | null;
-  isUnlimited: boolean;
-  unlimitedLabel: string;
+  readonly metric: string;
+  readonly currentCount: number;
+  readonly limit: number | null;
+  readonly isUnlimited: boolean;
+  readonly unlimitedLabel: string;
 }
 
 export const UsageCard = ({ metric, currentCount, limit, isUnlimited, unlimitedLabel }: UsageCardProps) => {

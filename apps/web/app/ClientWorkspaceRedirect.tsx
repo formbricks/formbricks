@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { FORMBRICKS_WORKSPACE_ID_LS } from "@/lib/localStorage";
 
 interface ClientWorkspaceRedirectProps {
-  userWorkspaceIds: string[];
+  readonly userWorkspaceIds: string[];
 }
 
 const ClientWorkspaceRedirect = ({ userWorkspaceIds }: ClientWorkspaceRedirectProps) => {

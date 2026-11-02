@@ -8,10 +8,10 @@ import { Label } from "@/modules/ui/components/label";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 interface QuotaListProps {
-  quotas: TSurveyQuota[];
-  onEdit: (quota: TSurveyQuota) => void;
-  deleteQuota: (quota: TSurveyQuota) => void;
-  duplicateQuota: (quota: TSurveyQuota) => void;
+  readonly quotas: TSurveyQuota[];
+  readonly onEdit: (quota: TSurveyQuota) => void;
+  readonly deleteQuota: (quota: TSurveyQuota) => void;
+  readonly duplicateQuota: (quota: TSurveyQuota) => void;
 }
 
 export const QuotaList = ({ quotas, onEdit, deleteQuota, duplicateQuota }: QuotaListProps) => {

@@ -15,10 +15,10 @@ import { Button } from "@/modules/ui/components/button";
 import { SettingsCard } from "../../../components/SettingsCard";
 
 interface EnterpriseLicenseStatusProps {
-  status: TLicenseStatus;
-  lastChecked: Date;
-  gracePeriodEnd?: Date;
-  workspaceId: string;
+  readonly status: TLicenseStatus;
+  readonly lastChecked: Date;
+  readonly gracePeriodEnd?: Date;
+  readonly workspaceId: string;
 }
 
 const getBadgeConfig = (

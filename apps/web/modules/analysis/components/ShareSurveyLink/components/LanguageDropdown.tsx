@@ -13,9 +13,9 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 
 interface LanguageDropdownProps {
-  survey: TSurvey;
-  setLanguage: (language: string) => void;
-  locale: TUserLocale;
+  readonly survey: TSurvey;
+  readonly setLanguage: (language: string) => void;
+  readonly locale: TUserLocale;
 }
 
 export const LanguageDropdown = ({ survey, setLanguage, locale }: LanguageDropdownProps) => {

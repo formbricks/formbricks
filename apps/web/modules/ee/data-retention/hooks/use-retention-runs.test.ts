@@ -14,7 +14,7 @@ vi.mock("../lib/file-download", async (importOriginal) => ({
 }));
 
 function createWrapper(queryClient: QueryClient) {
-  const Wrapper = ({ children }: { children: ReactNode }) =>
+  const Wrapper = ({ children }: { readonly children: ReactNode }) =>
     createElement(QueryClientProvider, { client: queryClient }, children);
   Wrapper.displayName = "UseRetentionRunsTestWrapper";
   return Wrapper;

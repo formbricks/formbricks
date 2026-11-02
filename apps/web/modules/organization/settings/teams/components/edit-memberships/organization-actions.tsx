@@ -34,20 +34,20 @@ import {
 } from "@/modules/ui/components/dialog";
 
 interface OrganizationActionsProps {
-  role: TOrganizationRole;
-  membershipRole?: TOrganizationRole;
-  isLeaveOrganizationDisabled: boolean;
-  organization: TOrganization;
-  teams: TOrganizationTeam[];
-  isInviteDisabled: boolean;
-  isAccessControlAllowed: boolean;
-  isFormbricksCloud: boolean;
-  isMultiOrgEnabled: boolean;
-  isUserManagementDisabledFromUi: boolean;
-  isTeamAdmin: boolean;
-  userAdminTeamIds?: string[];
-  enterpriseLicenseRequestFormUrl: string;
-  isBulkInviteAllowed: boolean;
+  readonly role: TOrganizationRole;
+  readonly membershipRole?: TOrganizationRole;
+  readonly isLeaveOrganizationDisabled: boolean;
+  readonly organization: TOrganization;
+  readonly teams: TOrganizationTeam[];
+  readonly isInviteDisabled: boolean;
+  readonly isAccessControlAllowed: boolean;
+  readonly isFormbricksCloud: boolean;
+  readonly isMultiOrgEnabled: boolean;
+  readonly isUserManagementDisabledFromUi: boolean;
+  readonly isTeamAdmin: boolean;
+  readonly userAdminTeamIds?: string[];
+  readonly enterpriseLicenseRequestFormUrl: string;
+  readonly isBulkInviteAllowed: boolean;
 }
 
 export const OrganizationActions = ({

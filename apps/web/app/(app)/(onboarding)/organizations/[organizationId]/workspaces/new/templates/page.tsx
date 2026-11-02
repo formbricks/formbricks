@@ -11,7 +11,7 @@ import { TemplateCreateQueryClientProvider } from "@/modules/survey/components/t
 import { Header } from "@/modules/ui/components/header";
 
 interface TemplatesOnboardingPageProps {
-  params: Promise<{
+  readonly params: Promise<{
     organizationId: string;
   }>;
 }

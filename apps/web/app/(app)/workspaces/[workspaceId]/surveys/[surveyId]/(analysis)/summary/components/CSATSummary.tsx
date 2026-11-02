@@ -11,9 +11,9 @@ import { RatingLikeSummary } from "./RatingLikeSummary";
 import { SatisfactionIndicator } from "./SatisfactionIndicator";
 
 interface CSATSummaryProps {
-  elementSummary: TSurveyElementSummaryCsat;
-  survey: TSurvey;
-  setFilter: (
+  readonly elementSummary: TSurveyElementSummaryCsat;
+  readonly survey: TSurvey;
+  readonly setFilter: (
     elementId: string,
     label: TI18nString,
     elementType: TSurveyElementTypeEnum,

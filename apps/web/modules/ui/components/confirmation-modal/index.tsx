@@ -23,22 +23,22 @@ interface SecondaryButtonProps {
 }
 
 interface ConfirmationModalProps {
-  title: string;
-  open: boolean;
-  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  onConfirm: () => void;
-  description?: string;
-  body: React.ReactNode;
-  buttonText: string;
-  isButtonDisabled?: boolean;
-  buttonVariant?: "destructive" | "default";
-  buttonLoading?: boolean;
-  closeOnOutsideClick?: boolean;
-  hideCloseButton?: boolean;
-  cancelButtonText?: string;
-  onCancel?: () => void;
-  Icon?: React.ElementType;
-  secondaryButton?: SecondaryButtonProps;
+  readonly title: string;
+  readonly open: boolean;
+  readonly setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  readonly onConfirm: () => void;
+  readonly description?: string;
+  readonly body: React.ReactNode;
+  readonly buttonText: string;
+  readonly isButtonDisabled?: boolean;
+  readonly buttonVariant?: "destructive" | "default";
+  readonly buttonLoading?: boolean;
+  readonly closeOnOutsideClick?: boolean;
+  readonly hideCloseButton?: boolean;
+  readonly cancelButtonText?: string;
+  readonly onCancel?: () => void;
+  readonly Icon?: React.ElementType;
+  readonly secondaryButton?: SecondaryButtonProps;
 }
 
 export const ConfirmationModal = ({
