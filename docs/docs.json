@@ -383,14 +383,6 @@
                     ]
                   },
                   {
-                    "group": "Patch and component actions",
-                    "pages": [
-                      "self-hosting/upgrade/versions/2026-10-27-patches",
-                      "self-hosting/upgrade/versions/2026-10-security-patches",
-                      "self-hosting/upgrade/versions/cube"
-                    ]
-                  },
-                  {
                     "group": "Upcoming changes",
                     "pages": [
                       "self-hosting/upgrade/versions/charts-dashboards",

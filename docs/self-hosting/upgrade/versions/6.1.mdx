@@ -1,18 +1,12 @@
 ---
-title: "Upgrade to 6.1"
+title: "6.1: Upgrade guide"
 description: "Required actions, compatibility exceptions and recovery for this release."
 icon: "arrow-up-right-dots"
 ---
 
-**Applies to:** 6.0 installations entering 6.1, both editions and deployment methods.
+**Applies to:** installations entering or updating within 6.1, both editions and deployment methods.
+The base-release steps apply when crossing 6.1.0; for later updates within 6.1, review the [patch actions](#patch-actions).
 Follow the [upgrade-path table](/self-hosting/upgrade/paths) when starting on an older major.
-
-<Note>
-  Upgrading to 6.1.1 or later on this release line? Also read the
-  [October security patch actions](/self-hosting/upgrade/versions/2026-10-security-patches).
-</Note>
-
-For the latest patch on this line, also read the [27 October patch actions](/self-hosting/upgrade/versions/2026-10-27-patches).
 
 ## Before
 
@@ -26,6 +20,16 @@ For the latest patch on this line, also read the [27 October patch actions](/sel
 - If you use chart-managed Envoy, configure a dedicated external Redis/Valkey backend; the bundled
   Envoy Redis images are unavailable. See [Envoy Redis images](/self-hosting/upgrade/versions/6.1-runtime#envoy-redis-images).
 - Refresh Cube model files and add the Hub worker where absent. Review [runtime changes](/self-hosting/upgrade/versions/6.1-runtime).
+
+### Patch actions
+
+Apply each change you cross on this release line, even when installing a later patch.
+These entries do not add intermediate installation stops.
+
+| First affected patch | Additional action |
+| --- | --- |
+| 6.1.1 | [6.1.1: Security updates](/self-hosting/upgrade/versions/2026-10-security-patches): Redis CA, Hub, MCP batches and one-click port binding. |
+| 6.1.2 | [6.1.2: Security updates](/self-hosting/upgrade/versions/2026-10-27-patches): email limits, signed-link gates and taxonomy checks. |
 
 ## During
 
@@ -63,35 +67,35 @@ does not erase them.
 
 ## Survey visibility (opt-in)
 
-See [Enable survey visibility](/self-hosting/upgrade/versions/6.1-visibility#survey-visibility-opt-in).
+See [6.1.0: Survey visibility](/self-hosting/upgrade/versions/6.1-visibility#survey-visibility-opt-in).
 
 ## Complete the visibility rollout
 
-See [Enable survey visibility](/self-hosting/upgrade/versions/6.1-visibility#complete-the-visibility-rollout).
+See [6.1.0: Survey visibility](/self-hosting/upgrade/versions/6.1-visibility#complete-the-visibility-rollout).
 
 ## Encrypted single-use survey links must be regenerated (action required if you use them)
 
-See [Regenerate encrypted single-use links](/self-hosting/upgrade/versions/6.1-single-use-links#encrypted-single-use-survey-links-must-be-regenerated-action-required-if-you-use-them).
+See [6.1.0: Single-use links](/self-hosting/upgrade/versions/6.1-single-use-links#encrypted-single-use-survey-links-must-be-regenerated-action-required-if-you-use-them).
 
 ## Bundled TEI log level
 
-See [6.1 runtime changes](/self-hosting/upgrade/versions/6.1-runtime#bundled-tei-log-level).
+See [6.1: Runtime changes](/self-hosting/upgrade/versions/6.1-runtime#bundled-tei-log-level).
 
 ## Database transaction limits
 
-See [6.1 runtime changes](/self-hosting/upgrade/versions/6.1-runtime#database-transaction-limits).
+See [6.1: Runtime changes](/self-hosting/upgrade/versions/6.1-runtime#database-transaction-limits).
 
 ## 6.1.1: one-click port binding
 
-See [6.1 runtime changes](/self-hosting/upgrade/versions/6.1-runtime#one-click-port-3000-is-published-on-the-host-only).
+See [6.1: Runtime changes](/self-hosting/upgrade/versions/6.1-runtime#one-click-port-3000-is-published-on-the-host-only).
 
 ## Hub worker for Docker
 
-See [6.1 runtime changes](/self-hosting/upgrade/versions/6.1-runtime#hub-worker-for-docker).
+See [6.1: Runtime changes](/self-hosting/upgrade/versions/6.1-runtime#hub-worker-for-docker).
 
 ## Cube model files for Docker
 
-See [6.1 runtime changes](/self-hosting/upgrade/versions/6.1-runtime#cube-model-files-for-docker).
+See [6.1: Runtime changes](/self-hosting/upgrade/versions/6.1-runtime#cube-model-files-for-docker).
 
 ## Release details
 

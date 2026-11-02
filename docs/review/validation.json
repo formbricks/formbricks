@@ -1,6 +1,6 @@
 {
   "checks": {
-    "anchors": "295 public MDX parsed with Mintlify heading generation; 264 fragment links; seven punctuation-related static discrepancies verified in browser; zero unresolved",
+    "anchors": "295 public MDX parsed with Mintlify heading generation; 274 fragment links; seven punctuation-related static discrepancies verified in browser; zero unresolved",
     "build": "passed: cd docs && NODE_USE_ENV_PROXY=1 npx mint@4.2.1126 validate",
     "formatting": "passed for changed JSON; MDX follows repository formatter exclusions",
     "isolated_failure": "lib/utils/validate-webhook-url.toctou.test.ts:36 times out at 5000ms fetching a reserved .invalid hostname; reproduced in isolation. Source unchanged by this PR.",
@@ -680,6 +680,19 @@
       "release": "6.1.1"
     }
   ],
+  "release_version_naming": {
+    "checks": "Mintlify validation and broken-links passed. Seven existing punctuation-related static anchor discrepancies verified in the rendered DOM.",
+    "date": "2026-11-02",
+    "legacy_anchors": "All 127 legacy migration anchors verified in the rendered DOM; no anchor deletions.",
+    "preview": "16 affected routes and two mobile layouts passed; shared patch URLs returned 200, all eleven patch/component links found in their applicable release checklists, no mobile overflow.",
+    "review_corrections": "Added 5.3.5 and 5.4.6 discovery and completed the 6.0.3 checklist link, retaining review-required release evidence. Confirmed the Valkey boundary from 5.3.5 versus 5.4.0 Compose and Helm values; documented Formbricks 5.4.0 introduction.",
+    "runtime": "Presentation/navigation change; no new runtime upgrade claims or deployment rehearsal.",
+    "scope": "Version-first titles, release-line patch indexes, shared backport procedures, applicability statements and authoring rules. Existing URLs, redirects and heading anchors preserved.",
+    "screenshots": [
+      "review/screenshots/release-version-navigation.png",
+      "review/screenshots/release-version-mobile.png"
+    ]
+  },
   "upgrade_review": {
     "preview": [
       {

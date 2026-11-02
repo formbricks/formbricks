@@ -50,15 +50,28 @@ creating `TARGET`. Link patch actions from the affected minor page too, so opera
 Create a page only when extra actions need it. Keep the checklist brief. Move long SQL, troubleshooting
 and optional-feature procedures to focused linked pages; keep one canonical copy of each command.
 
+### Names and placement
+
+- Use `<Formbricks version>: <Topic>`: `6.1: Upgrade guide`, `6.1.0: Single-use links`,
+  or `6.1.2: Security updates`. Use a release line for pages spanning its patches; an exact version
+  for a change introduced in that release. Component versions belong in the instructions.
+- Put patch actions in the affected release-line checklist. For shared backports, list every applicable
+  version in the shared page title and link it from each checklist with that line's exact version.
+- Keep dates in release metadata. Use `Unreleased: <Topic>` until a release is assigned. Preserve URLs
+  and anchors when renaming existing pages; do not create a separate patch/component navigation category.
+
 ```mdx
 ---
-title: "Upgrade to TARGET"
+title: "TARGET: Upgrade guide"
 description: "The concrete changes operators must prepare for."
 icon: "arrow-up-right-dots"
 ---
 
 **Applies to:** SOURCE RANGE → TARGET RANGE; DEPLOYMENT METHODS; EDITIONS/FEATURES.
 Choose the required stops in [Upgrade paths](/self-hosting/upgrade/paths).
+For a focused procedure, also state **Introduced in:** EXACT VERSION and who needs to act.
+Changes apply when crossing their version, including upgrades to later patches; they do not add
+intermediate installation stops.
 
 ## Before
 

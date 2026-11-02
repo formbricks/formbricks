@@ -1,14 +1,13 @@
 ---
-title: "Upgrade to 5.4"
+title: "5.4: Upgrade guide"
 description: "Prepare database indexes, authentication, API permissions and dependency changes."
 icon: "arrow-up-right-dots"
 ---
 
-**Applies to:** installations crossing 5.4, both editions and deployment methods.
+**Applies to:** installations entering or updating within 5.4, both editions and deployment methods.
+The base-release steps apply when crossing 5.4.0; for later updates within 5.4, review the [patch actions](#patch-actions).
 From v4, complete all earlier [5.x changes](/self-hosting/advanced/migration#version-5).
 Choose the latest 5.4 patch as the [recommended v5 stop](/self-hosting/upgrade/paths).
-
-For the latest patch on this line, also read the [27 October patch actions](/self-hosting/upgrade/versions/2026-10-27-patches).
 
 ## Before
 
@@ -22,13 +21,18 @@ For the latest patch on this line, also read the [27 October patch actions](/sel
 
 ### Patch actions
 
+Apply each change you cross on this release line, even when installing a later patch.
+These entries do not add intermediate installation stops.
+
 | First affected patch | Additional action |
 | --- | --- |
 | 5.4.1 | Microsoft multi-tenant SSO fixes; use a concrete Entra tenant for full token verification where appropriate. |
 | 5.4.3 | Envoy Gateway/CRD update and controller values move; coordinate cluster ownership. |
 | 5.4.4 | Bundled storage setup switches its helper client to RustFS CLI. Preserve existing MinIO/S3 data and settings. |
-| 5.4.5 | Copy the whole updated Cube service; image-only replacement is insufficient. |
-| 5.4.7 | [Redis private CA, Hub update/enrichment and MCP batch actions](/self-hosting/upgrade/versions/2026-10-security-patches). |
+| 5.4.5 | [5.4.5: Cube image migration](/self-hosting/upgrade/versions/cube). Copy the whole service, not only its image. |
+| 5.4.6 | [5.4.6: Security updates](/platform/changelog#release-5-4-6). Review authentication request-body limits; deployment impact remains **review required**. |
+| 5.4.7 | [5.4.7: Security updates](/self-hosting/upgrade/versions/2026-10-security-patches): Redis CA, Hub/enrichment and MCP batches. |
+| 5.4.8 | [5.4.8: Security updates](/self-hosting/upgrade/versions/2026-10-27-patches): outgoing-email limits. |
 
 Read the [published patch notes](https://github.com/formbricks/formbricks/releases) for other fixes too.
 A patch without an additional row still needs the standard checks.

@@ -1,8 +1,10 @@
 ---
-title: "5.4 dependency changes"
+title: "5.4: Dependency changes"
 description: "Valkey, Cube and Envoy actions for the 5.4 release line."
 icon: "arrow-up-right-dots"
 ---
+
+**Applies to:** dependency changes across the 5.4 release line. Follow the version boundaries below.
 
 [Back to the 5.4 checklist](/self-hosting/upgrade/versions/5.4).
 
@@ -13,6 +15,8 @@ Use the image shipped by your selected patch. Follow the [Cube service update](/
 with that **5.4** tag, not a v6 Compose file.
 
 ### Bundled Valkey 8.1.9 upgrade (action required for some self-hosted deployments)
+
+**Introduced in:** Formbricks 5.4.0, for deployments using bundled Valkey in Compose or Helm.
 
 The old bundled digest selects only `linux/amd64`. The new digest selects the matching native image on
 `linux/amd64` and `linux/arm64`, without requiring QEMU or `binfmt`. Valkey 8.1.9 also contains upstream

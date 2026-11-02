@@ -10,16 +10,27 @@ Choose your [upgrade path](/self-hosting/upgrade/paths), then use [Upgrading For
 for the shared checklist. Each release uses Before / During / After / Recovery; detailed SQL and component
 procedures are linked from the checklist.
 
-<CardGroup cols={2}>
-  <Card title="Upgrade to 6.1" href="/self-hosting/upgrade/versions/6.1">Visibility, signed links and integration changes.</Card>
-  <Card title="Upgrade to 6.0" href="/self-hosting/upgrade/versions/6.0">Prepare SpiceDB and your v5 deployment.</Card>
-</CardGroup>
+Titles start with the **Formbricks version**: `6.1` covers a release line; `6.1.0` names an exact release.
+Read every change between your installed and target versions, including patches. A change entry is not
+an extra installation stop; use the upgrade-path table for those.
 
-## Upcoming changes
+Patch instructions are linked from each affected release line: [5.3](/self-hosting/upgrade/versions/5.3#patch-actions),
+[5.4](/self-hosting/upgrade/versions/5.4#patch-actions),
+[6.0](/self-hosting/upgrade/versions/6.0#patch-actions) and [6.1](/self-hosting/upgrade/versions/6.1#patch-actions).
+
+<CardGroup cols={2}>
+  <Card title="6.1: Upgrade guide" href="/self-hosting/upgrade/versions/6.1">Visibility, signed links and integration changes.</Card>
+  <Card title="6.0: Upgrade guide" href="/self-hosting/upgrade/versions/6.0">Prepare SpiceDB and your v5 deployment.</Card>
+</CardGroup>
 
 <span id="outgoing-email-caps" />
 
-- [Outgoing email limits on main](/platform/changelog#release-unreleased): review before adopting a release that includes them.
+Outgoing-email limits shipped in [5.4.8 / 6.0.5 / 6.1.2: Security updates](/self-hosting/upgrade/versions/2026-10-27-patches).
+
+## Upcoming changes
+
+- [Unreleased: Charts and dashboards API](/self-hosting/upgrade/versions/charts-dashboards)
+- [Unreleased: Valkey 9 upgrade](/self-hosting/upgrade/versions/valkey-9)
 
 ## Detailed changes and recovery
 
@@ -43,7 +54,7 @@ Old migration-guide section links remain here. Choose the matching guide below.
 
 <span id="survey-visibility-opt-in" />
 
-- [6.1 survey visibility](/self-hosting/upgrade/versions/6.1-visibility)
+- [6.1.0: Survey visibility](/self-hosting/upgrade/versions/6.1-visibility)
 
 <span id="encrypted-single-use-survey-links-must-be-regenerated-action-required-if-you-use-them" />
 <span id="what-to-do-when-upgrading" />
@@ -52,7 +63,7 @@ Old migration-guide section links remain here. Choose the matching guide below.
 <span id="if-you-cannot-re-issue-in-time" />
 <span id="rollback" />
 
-- [6.1 encrypted single-use links](/self-hosting/upgrade/versions/6.1-single-use-links)
+- [6.1.0: Single-use links](/self-hosting/upgrade/versions/6.1-single-use-links)
 
 <span id="bundled-tei-log-level" />
 <span id="database-transaction-limits" />
@@ -61,7 +72,7 @@ Old migration-guide section links remain here. Choose the matching guide below.
 <span id="hub-worker-for-docker" />
 <span id="cube-model-files-for-docker" />
 
-- [6.1 runtime and component changes](/self-hosting/upgrade/versions/6.1-runtime)
+- [6.1: Runtime changes](/self-hosting/upgrade/versions/6.1-runtime)
 
 ## Historical releases
 
@@ -87,7 +98,7 @@ Keep these notes for intermediate upgrade steps. Their availability does not ext
 <span id="mcp-access-tokens-now-end-with-their-session" />
 <span id="rollback-better-auth-1-7" />
 
-- [Upgrade to 5.4](/self-hosting/upgrade/versions/5.4)
+- [5.4: Upgrade guide](/self-hosting/upgrade/versions/5.4)
 
 <span id="v53" />
 <span id="v5-3" />
@@ -100,7 +111,7 @@ Keep these notes for intermediate upgrade steps. Their availability does not ext
 <span id="upgrade-steps" />
 <span id="rollback-3" />
 
-- [Upgrade to 5.3](/self-hosting/upgrade/versions/5.3)
+- [5.3: Upgrade guide](/self-hosting/upgrade/versions/5.3)
 
 <span id="v52" />
 <span id="v5-2" />
@@ -114,7 +125,7 @@ Keep these notes for intermediate upgrade steps. Their availability does not ext
 <span id="upgrade-steps-2" />
 <span id="rollback-4" />
 
-- [Upgrade to 5.2](/self-hosting/upgrade/versions/5.2)
+- [5.2: Upgrade guide](/self-hosting/upgrade/versions/5.2)
 
 <span id="v5" />
 <span id="what-changes-in-v5" />
@@ -128,7 +139,7 @@ Keep these notes for intermediate upgrade steps. Their availability does not ext
 <span id="post-upgrade-verification" />
 <span id="troubleshooting-and-rollback" />
 
-- [Upgrade to 5.0](/self-hosting/upgrade/versions/5.0)
+- [5.0: Upgrade guide](/self-hosting/upgrade/versions/5.0)
 
 ### Version 4
 
@@ -139,7 +150,7 @@ Keep these notes for intermediate upgrade steps. Their availability does not ext
 <span id="what-happens-automatically" />
 <span id="steps-to-migrate" />
 
-- [Upgrade to 4.7](/self-hosting/upgrade/versions/4.7)
+- [4.7: Upgrade guide](/self-hosting/upgrade/versions/4.7)
 
 <span id="v40" />
 <span id="v4-0" />
@@ -153,7 +164,7 @@ Keep these notes for intermediate upgrade steps. Their availability does not ext
 <span id="s3-compatible-storage" />
 <span id="upgrade-process" />
 
-- [Upgrade to 4.0](/self-hosting/upgrade/versions/4.0)
+- [4.0: Upgrade guide](/self-hosting/upgrade/versions/4.0)
 
 ### Version 3
 
@@ -161,25 +172,25 @@ Keep these notes for intermediate upgrade steps. Their availability does not ext
 <span id="v3-3" />
 <span id="steps-to-migrate-2" />
 
-- [Upgrade to 3.3](/self-hosting/upgrade/versions/3.3)
+- [3.3: Upgrade guide](/self-hosting/upgrade/versions/3.3)
 
 <span id="v32" />
 <span id="v3-2" />
 <span id="steps-to-migrate-3" />
 
-- [Upgrade to 3.2](/self-hosting/upgrade/versions/3.2)
+- [3.2: Upgrade guide](/self-hosting/upgrade/versions/3.2)
 
 <span id="v31" />
 <span id="v3-1" />
 <span id="steps-to-migrate-4" />
 
-- [Upgrade to 3.1](/self-hosting/upgrade/versions/3.1)
+- [3.1: Upgrade guide](/self-hosting/upgrade/versions/3.1)
 
 <span id="v30" />
 <span id="v3-0" />
 <span id="steps-to-migrate-5" />
 
-- [Upgrade to 3.0](/self-hosting/upgrade/versions/3.0)
+- [3.0: Upgrade guide](/self-hosting/upgrade/versions/3.0)
 
 ### Version 2
 
@@ -188,54 +199,54 @@ Keep these notes for intermediate upgrade steps. Their availability does not ext
 <span id="additional-updates" />
 <span id="steps-to-migrate-6" />
 
-- [Upgrade to 2.7](/self-hosting/upgrade/versions/2.7)
+- [2.7: Upgrade guide](/self-hosting/upgrade/versions/2.7)
 
 <span id="v26" />
 <span id="v2-6" />
 <span id="steps-to-migrate-7" />
 
-- [Upgrade to 2.6](/self-hosting/upgrade/versions/2.6)
+- [2.6: Upgrade guide](/self-hosting/upgrade/versions/2.6)
 
 <span id="v25" />
 <span id="v2-5" />
 <span id="steps-to-migrate-8" />
 
-- [Upgrade to 2.5](/self-hosting/upgrade/versions/2.5)
+- [2.5: Upgrade guide](/self-hosting/upgrade/versions/2.5)
 
 <span id="v24" />
 <span id="v2-4" />
 <span id="steps-to-migrate-9" />
 <span id="additional-updates-2" />
 
-- [Upgrade to 2.4](/self-hosting/upgrade/versions/2.4)
+- [2.4: Upgrade guide](/self-hosting/upgrade/versions/2.4)
 
 <span id="v23" />
 <span id="v2-3" />
 <span id="steps-to-migrate-10" />
 <span id="additional-updates-3" />
 
-- [Upgrade to 2.3](/self-hosting/upgrade/versions/2.3)
+- [2.3: Upgrade guide](/self-hosting/upgrade/versions/2.3)
 
 <span id="v22" />
 <span id="v2-2" />
 <span id="steps-to-migrate-11" />
 <span id="changes-in-environment-variables-2" />
 
-- [Upgrade to 2.2](/self-hosting/upgrade/versions/2.2)
+- [2.2: Upgrade guide](/self-hosting/upgrade/versions/2.2)
 
 <span id="v21" />
 <span id="v2-1" />
 <span id="steps-to-migrate-12" />
 <span id="changes-in-environment-variables-3" />
 
-- [Upgrade to 2.1](/self-hosting/upgrade/versions/2.1)
+- [2.1: Upgrade guide](/self-hosting/upgrade/versions/2.1)
 
 <span id="v20" />
 <span id="v2-0" />
 <span id="steps-to-migrate-13" />
 <span id="app-surveys-with-@formbricks/js" />
 
-- [Upgrade to 2.0](/self-hosting/upgrade/versions/2.0)
+- [2.0: Upgrade guide](/self-hosting/upgrade/versions/2.0)
 
 ### Version 1
 
@@ -247,14 +258,14 @@ Keep these notes for intermediate upgrade steps. Their availability does not ext
 <span id="upgrade-and-pin-the-client-package" />
 <span id="deprecated-environment-variables" />
 
-- [Upgrade to 1.6](/self-hosting/upgrade/versions/1.6)
+- [1.6: Upgrade guide](/self-hosting/upgrade/versions/1.6)
 
 <span id="v12" />
 <span id="v1-2" />
 <span id="new-environment-variables" />
 <span id="deprecated-/-removed-environment-variables" />
 
-- [Upgrade to 1.2](/self-hosting/upgrade/versions/1.2)
+- [1.2: Upgrade guide](/self-hosting/upgrade/versions/1.2)
 
 <span id="v11" />
 <span id="v1-1" />
@@ -263,7 +274,7 @@ Keep these notes for intermediate upgrade steps. Their availability does not ext
 <span id="helper-shell-script" />
 <span id="docker-&-single-script-setup" />
 
-- [Upgrade to 1.1](/self-hosting/upgrade/versions/1.1)
+- [1.1: Upgrade guide](/self-hosting/upgrade/versions/1.1)
 
 ## Bundled Valkey 9.1.2 image
 

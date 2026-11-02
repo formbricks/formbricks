@@ -1,10 +1,11 @@
 ---
-title: "Upgrade to 6.0"
+title: "6.0: Upgrade guide"
 description: "Add SpiceDB, prepare permissions and verify the first v6 deployment."
 icon: "arrow-up-right-dots"
 ---
 
-**Applies to:** v5 installations entering v6, Community and Enterprise, Docker/one-click and Kubernetes.
+**Applies to:** installations entering or updating within 6.0, Community and Enterprise, Docker/one-click and Kubernetes.
+The base-release steps apply when crossing 6.0.0; for later updates within 6.0, review the [patch actions](#patch-actions).
 From v4 or 5.0–5.3, first complete the [5.4 stop](/self-hosting/upgrade/paths). Review all crossed
 [5.x actions](/self-hosting/advanced/migration#version-5), including SSO and the response index.
 
@@ -15,8 +16,6 @@ From v4 or 5.0–5.3, first complete the [5.4 stop](/self-hosting/upgrade/paths)
 <span id="release-details" />
 <span id="docker-dependency-setup" />
 <span id="one-click-dependency-setup" />
-
-For the latest patch on this line, also read the [27 October patch actions](/self-hosting/upgrade/versions/2026-10-27-patches).
 
 ## Before
 
@@ -144,12 +143,16 @@ is not required. [Prepare the target configuration](/self-hosting/upgrade/config
 
 ### Patch actions
 
+Apply each change you cross on this release line, even when installing a later patch.
+These entries do not add intermediate installation stops.
+
 | First affected patch | Action |
 | --- | --- |
 | 6.0.1 | Storage setup helper changes to RustFS CLI; retain existing MinIO/S3 data and configuration. |
-| 6.0.2 | Apply the [complete Cube service update](/self-hosting/upgrade/versions/cube). |
-| 6.0.3 | Helm AuthZed hooks use numeric user `1001`; review custom-image user overrides. |
-| 6.0.4 | Apply [Redis CA, Hub/enrichment and MCP batch actions](/self-hosting/upgrade/versions/2026-10-security-patches). |
+| 6.0.2 | Apply the [6.0.2: Cube image migration](/self-hosting/upgrade/versions/cube). |
+| 6.0.3 | [6.0.3: Security updates](/platform/changelog#release-6-0-3). Helm AuthZed hooks use numeric user `1001`; review custom-image user overrides and authentication request-body limits. Deployment impact remains **review required**. |
+| 6.0.4 | [6.0.4: Security updates](/self-hosting/upgrade/versions/2026-10-security-patches): Redis CA, Hub/enrichment and MCP batches. |
+| 6.0.5 | [6.0.5: Security updates](/self-hosting/upgrade/versions/2026-10-27-patches): outgoing-email limits. |
 
 ## During
 

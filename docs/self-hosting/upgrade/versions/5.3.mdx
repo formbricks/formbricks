@@ -1,10 +1,11 @@
 ---
-title: "Upgrade to 5.3"
+title: "5.3: Upgrade guide"
 description: "Review proxy trust and Hub images, then verify sign-in and scheduled work."
 icon: "arrow-up-right-dots"
 ---
 
-**Applies to:** installations crossing 5.3, Docker/one-click and Kubernetes, both editions.
+**Applies to:** installations entering or updating within 5.3, Docker/one-click and Kubernetes, both editions.
+The base-release steps apply when crossing 5.3.0; for later updates within 5.3, review the [patch actions](#patch-actions).
 Apply earlier [5.x notes](/self-hosting/advanced/migration#version-5) when coming from an older source.
 
 <span id="upgrade-steps" />
@@ -71,6 +72,15 @@ Two Cube-related deltas in v5.3. Neither changes the Cube schema, so there is **
   Hub version. Set `HUB_IMAGE_REF=:<selected-hub-tag>` in Compose's `.env`, keeping the leading colon
   and replacing the placeholder. Check `docker compose config --images` shows the same Hub image for
   API and migration services (and a worker if present). Do not assume all 5.3 patches ship the same Hub image.
+
+### Patch actions
+
+Apply each change you cross on this release line, even when installing a later patch.
+These entries do not add intermediate installation stops.
+
+| First affected patch | Additional action |
+| --- | --- |
+| 5.3.5 | [5.3.5: Security updates](/platform/changelog#release-5-3-5). Review authentication request-body limits and custom object-storage initialization. Deployment impact remains **review required**. |
 
 ## During
 
