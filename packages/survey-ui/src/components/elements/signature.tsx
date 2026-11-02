@@ -140,6 +140,8 @@ function Signature({
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   const padRef = React.useRef<SignaturePad | null>(null);
   const [clearCount, setClearCount] = React.useState(0);
+  // A stroke reaches `value` only when it ends; until then this keeps the hint off the ink being drawn.
+  const [isStroking, setIsStroking] = React.useState(false);
   const nameRef = React.useRef<HTMLInputElement>(null);
   const padBoxRef = React.useRef<HTMLDivElement>(null);
   const tabRefs = React.useRef<Partial<Record<SignatureMode, HTMLButtonElement | null>>>({});
@@ -165,7 +167,11 @@ function Signature({
     const pad = createSignaturePad({
       canvas,
       onStrokesChange: (strokes) => {
+        setIsStroking(false);
         onChangeRef.current({ ...valueRef.current, strokes });
+      },
+      onStrokeStart: () => {
+        setIsStroking(true);
       },
     });
     padRef.current = pad;
@@ -260,7 +266,7 @@ function Signature({
     );
   };
 
-  const showHint = !isSigned && !hasAnyInput && !isUploading;
+  const showHint = !isSigned && !hasAnyInput && !isUploading && !isStroking;
   // In Type mode the canvas is only a preview of the name typed below it, and in the saved state it is
   // blank: neither is something to announce.
   const isPadLabelled = mode === "draw" && !hasSavedOnly;

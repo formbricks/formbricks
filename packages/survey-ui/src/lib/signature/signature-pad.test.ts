@@ -64,11 +64,13 @@ const createFakeCanvas = (size = { width: 300, height: 100 }) => {
 const setup = (overrides: { pixelRatio?: number; size?: { width: number; height: number } } = {}) => {
   const fake = createFakeCanvas(overrides.size);
   const onStrokesChange = vi.fn<(strokes: SignatureStroke[]) => void>();
+  const onStrokeStart = vi.fn<() => void>();
   let resizeCallback: () => void = () => undefined;
   const stopObserving = vi.fn();
   const pad = createSignaturePad({
     canvas: fake.canvas,
     onStrokesChange,
+    onStrokeStart,
     getPixelRatio: () => overrides.pixelRatio ?? 1,
     observeResize: (callback) => {
       resizeCallback = callback;
@@ -76,7 +78,7 @@ const setup = (overrides: { pixelRatio?: number; size?: { width: number; height:
     },
     requestFrame: (callback) => callback(),
   });
-  return { ...fake, pad, onStrokesChange, resize: () => resizeCallback(), stopObserving };
+  return { ...fake, pad, onStrokesChange, onStrokeStart, resize: () => resizeCallback(), stopObserving };
 };
 
 // The pad is at (10, 20) and 300 x 100, so client (160, 70) is the centre.
@@ -104,6 +106,21 @@ describe("createSignaturePad drawing", () => {
         { x: 1, y: 1 },
       ],
     ]);
+  });
+
+  test("reports a stroke's start on press, before the stroke ends", () => {
+    const fake = setup();
+    fake.fire("pointerdown", { pointerId: 1, clientX: 50, clientY: 50, pointerType: "touch", button: 0 });
+    expect(fake.onStrokeStart).toHaveBeenCalledTimes(1);
+    expect(fake.onStrokesChange).not.toHaveBeenCalled();
+  });
+
+  test("a press it does not draw with (secondary button, drawing disabled) starts no stroke", () => {
+    const fake = setup();
+    fake.fire("pointerdown", { clientX: 50, clientY: 50, pointerType: "mouse", button: 2 });
+    fake.pad.setDrawingEnabled(false);
+    fake.fire("pointerdown", { clientX: 50, clientY: 50, pointerType: "touch", button: 0 });
+    expect(fake.onStrokeStart).not.toHaveBeenCalled();
   });
 
   test("captures the pointer and prevents the browser's own touch handling", () => {

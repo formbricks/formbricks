@@ -47,6 +47,8 @@ export interface SignaturePadOptions {
   canvas: PadCanvas;
   /** Called with the full stroke list each time a stroke ends. */
   onStrokesChange: (strokes: SignatureStroke[]) => void;
+  /** Called when a stroke starts, before it ends and reaches `onStrokesChange`. */
+  onStrokeStart?: () => void;
   /** Device pixel ratio of the screen the pad is on. Defaults to `window.devicePixelRatio`. */
   getPixelRatio?: () => number;
   /** Calls back whenever the canvas changes size; returns a stop function. Defaults to `ResizeObserver`. */
@@ -119,6 +121,7 @@ const defaultRequestFrame = (callback: () => void): unknown => {
 export const createSignaturePad = ({
   canvas,
   onStrokesChange,
+  onStrokeStart,
   getPixelRatio = defaultPixelRatio,
   observeResize = defaultObserveResize(canvas),
   requestFrame = defaultRequestFrame,
@@ -194,6 +197,7 @@ export const createSignaturePad = ({
       // Capture is a nicety (the stroke keeps following a finger that slides off the pad); drawing works without it.
     }
     active = { pointerId: event.pointerId, points: [pointFor(event)] };
+    onStrokeStart?.();
     schedulePaint();
   };
 
