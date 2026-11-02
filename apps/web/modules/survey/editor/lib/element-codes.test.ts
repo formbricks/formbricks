@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import {
   getBlockCodeIssueKey,
+  getCodeChangedNote,
   getElementCodeIssues,
   getInvalidCodeElementIds,
   getOptionCodeLists,
@@ -9,6 +10,7 @@ import {
   resetElementCodes,
   setElementCode,
   setOptionCode,
+  typeCode,
 } from "./element-codes";
 
 const mc = (id: string, code: string | undefined, choiceCodes: (string | undefined)[] = []) => ({
@@ -154,5 +156,33 @@ describe("normalizeCode", () => {
     expect(normalizeCode("1st", "question").value).toBe("1st");
     expect(normalizeCode("a__b", "question").value).toBe("a__b");
     expect(normalizeCode("all", "question").value).toBe("all");
+  });
+});
+
+describe("typeCode and getCodeChangedNote", () => {
+  test("a keystroke that needed no tidying says nothing", () => {
+    const draft = typeCode(null, "q", "question");
+    expect(draft).toEqual({ value: "q", wasNormalized: false });
+    expect(getCodeChangedNote(draft)).toBeNull();
+  });
+
+  test("once a keystroke was tidied, the note stays and names the current value", () => {
+    const tidied = typeCode(null, "Q", "question");
+    expect(getCodeChangedNote(tidied)).toBe("q");
+    // The next keystroke is already valid, and the note still shows, now naming "qu".
+    const next = typeCode(tidied, "qu", "question");
+    expect(next).toEqual({ value: "qu", wasNormalized: true });
+    expect(getCodeChangedNote(next)).toBe("qu");
+  });
+
+  test("an emptied field shows no note, and it comes back with the next character", () => {
+    const tidied = typeCode(null, "A", "answer");
+    const cleared = typeCode(tidied, "", "answer");
+    expect(getCodeChangedNote(cleared)).toBeNull();
+    expect(getCodeChangedNote(typeCode(cleared, "b", "answer"))).toBe("b");
+  });
+
+  test("a fresh focus (no draft) starts without the note", () => {
+    expect(getCodeChangedNote(null)).toBeNull();
   });
 });

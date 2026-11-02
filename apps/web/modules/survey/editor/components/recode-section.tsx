@@ -2,7 +2,7 @@
 
 import { CircleAlertIcon, InfoIcon } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TCodeIssue } from "@formbricks/types/surveys/codes";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
@@ -14,15 +14,17 @@ import { CopyIdButton } from "@/modules/survey/editor/components/copy-id-button"
 import { PublishedLockNotice } from "@/modules/survey/editor/components/published-lock-notice";
 import { describeCodeIssue, getCodeClashLabel } from "@/modules/survey/editor/lib/code-messages";
 import {
+  TCodeDraft,
   TOptionListKey,
+  getCodeChangedNote,
   getElementCodeIssues,
   getOptionCodeLists,
   hasQuestionCode,
-  normalizeCode,
   optionIssueKey,
   resetElementCodes,
   setElementCode,
   setOptionCode,
+  typeCode,
 } from "@/modules/survey/editor/lib/element-codes";
 import { NO_ELEMENT_LOCK, TElementLock } from "@/modules/survey/editor/lib/published-lock";
 import { Button } from "@/modules/ui/components/button";
@@ -43,14 +45,21 @@ interface CodeFieldProps {
   ariaLabel?: string;
   /** Sizes the input only: a message under it runs the full width of the row instead of wrapping. */
   inputClassName?: string;
+  /**
+   * Lays out `leading`, the input and `trailing` as one row (an answer code beside its option label
+   * and copy button). Only this row is sized: the message under it still runs the full width.
+   */
+  rowClassName?: string;
+  leading?: ReactNode;
+  trailing?: ReactNode;
 }
 
 /**
  * One code input. What is typed is tidied as it goes (lowercase, `_` for spaces, invalid characters
- * dropped), with a yellow note saying what it became. A problem that cannot be tidied shows under the
- * field in red, in the same words the publish check uses. A locked field keeps its value, greyed, with
- * the lock inside it. The root is `display: contents`: the input and its message are cells of whatever
- * row or column holds the field, and the message spans it.
+ * dropped), with a yellow note saying what it became, kept until the field loses focus. A problem that
+ * cannot be tidied shows under the field in red, in the same words the publish check uses. A locked
+ * field keeps its value, greyed, with the lock inside it. The root is `display: contents`: the input
+ * (or its row) and the message under it are laid out by whatever column holds the field.
  */
 export const CodeField = ({
   id,
@@ -62,53 +71,58 @@ export const CodeField = ({
   onChange,
   ariaLabel,
   inputClassName,
+  rowClassName,
+  leading,
+  trailing,
 }: Readonly<CodeFieldProps>) => {
   const { t } = useTranslation();
-  // An empty field is not committed while it has focus: the editor gives an uncoded question or
-  // option its default code at once, which would refill the field under the cursor mid-edit.
-  const [draft, setDraft] = useState<string | null>(null);
-  const [note, setNote] = useState<string | null>(null);
+  // What is typed while the field has focus. An empty field is not committed meanwhile: the editor
+  // gives an uncoded question or option its default code at once, which would refill the field under
+  // the cursor mid-edit.
+  const [draft, setDraft] = useState<TCodeDraft | null>(null);
+  const note = getCodeChangedNote(draft);
   return (
     <div className="contents">
-      <div className={cn("relative", inputClassName)}>
-        <Input
-          id={id}
-          disabled={locked}
-          value={draft ?? value ?? ""}
-          placeholder={t("workspace.surveys.edit.code_auto_placeholder")}
-          aria-label={ariaLabel}
-          aria-invalid={issue ? true : undefined}
-          aria-describedby={issue ? `${id}-error` : undefined}
-          isInvalid={Boolean(issue)}
-          autoComplete="off"
-          spellCheck={false}
-          onChange={(event) => {
-            const { value: normalized, changed } = normalizeCode(event.target.value, kind);
-            setDraft(normalized);
-            setNote(changed && normalized !== "" ? normalized : null);
-            if (normalized !== "") onChange(normalized);
-          }}
-          onBlur={() => {
-            if (draft === "") onChange("");
-            setDraft(null);
-            setNote(null);
-          }}
-          className={cn("h-9", locked && "pr-9", issue && "ring-1 ring-red-600")}
-        />
-        {locked && <PublishedLockNotice kind="code" className="absolute top-1.5 right-2" />}
+      <div className={rowClassName ?? "contents"}>
+        {leading}
+        <div className={cn("relative", inputClassName)}>
+          <Input
+            id={id}
+            disabled={locked}
+            value={draft?.value ?? value ?? ""}
+            placeholder={t("workspace.surveys.edit.code_auto_placeholder")}
+            aria-label={ariaLabel}
+            aria-invalid={issue ? true : undefined}
+            aria-describedby={issue ? `${id}-error` : undefined}
+            isInvalid={Boolean(issue)}
+            autoComplete="off"
+            spellCheck={false}
+            onChange={(event) => {
+              const next = typeCode(draft, event.target.value, kind);
+              setDraft(next);
+              if (next.value !== "") onChange(next.value);
+            }}
+            onBlur={() => {
+              if (draft?.value === "") onChange("");
+              setDraft(null);
+            }}
+            className={cn("h-9", locked && "pr-9", issue && "ring-1 ring-red-600")}
+          />
+          {locked && <PublishedLockNotice kind="code" className="absolute top-1.5 right-2" />}
+        </div>
+        {trailing}
       </div>
       {issue && (
-        <p
-          id={`${id}-error`}
-          className="col-span-full flex items-center gap-1 text-sm font-medium text-red-800">
+        <p id={`${id}-error`} className="flex items-center gap-1 text-sm font-medium text-red-800">
           <CircleAlertIcon className="size-4 shrink-0" aria-hidden="true" />
           {describeCodeIssue(issue, kind, t, clashLabel)}
         </p>
       )}
       {note && !issue && (
-        <p role="status" className="col-span-full text-sm text-amber-800">
+        // <output> has the status role; aria-live is spelled out for readers that do not infer it.
+        <output htmlFor={id} aria-live="polite" className="block text-sm text-amber-800">
           {t("workspace.surveys.edit.code_changed_to", { code: note })}
-        </p>
+        </output>
       )}
     </div>
   );
@@ -199,33 +213,47 @@ export const RecodeSection = ({
               const fieldId = `code-${element.id}-${key}-${option.id}`;
               const issue = issues?.options.get(optionIssueKey(key, option.id));
               return (
-                <div
-                  key={option.id}
-                  className={cn(
-                    "grid items-center gap-x-2 gap-y-1",
-                    option.imageUrl
-                      ? "grid-cols-[80px_minmax(0,1fr)_108px_auto]"
-                      : "grid-cols-[minmax(0,1fr)_204px_auto]",
-                    key === "choices" ? "max-w-[400px]" : "max-w-[300px]"
-                  )}>
-                  {option.imageUrl && (
-                    <Image
-                      src={option.imageUrl}
-                      alt=""
-                      width={80}
-                      height={45}
-                      className="h-[45px] w-20 shrink-0 rounded-lg object-cover"
-                      unoptimized={isExternalImageSrc(option.imageUrl)}
-                    />
-                  )}
-                  <TooltipRenderer tooltipContent={shownLabel} triggerClass="min-w-0 flex-1">
-                    <span className={cn("block h-9 truncate text-sm leading-9", !label && "text-slate-400")}>
-                      {shownLabel}
-                    </span>
-                  </TooltipRenderer>
+                <div key={option.id} className="flex flex-col gap-1">
                   <CodeField
                     id={fieldId}
                     kind="answer"
+                    // The row is capped so the inputs line up; the message below it is not, so it
+                    // runs the full width instead of wrapping inside the row.
+                    rowClassName={cn(
+                      "grid items-center gap-x-2",
+                      option.imageUrl
+                        ? "grid-cols-[80px_minmax(0,1fr)_108px_auto]"
+                        : "grid-cols-[minmax(0,1fr)_204px_auto]",
+                      key === "choices" ? "max-w-[400px]" : "max-w-[300px]"
+                    )}
+                    leading={
+                      <>
+                        {option.imageUrl && (
+                          <Image
+                            src={option.imageUrl}
+                            alt=""
+                            width={80}
+                            height={45}
+                            className="h-[45px] w-20 shrink-0 rounded-lg object-cover"
+                            unoptimized={isExternalImageSrc(option.imageUrl)}
+                          />
+                        )}
+                        <TooltipRenderer tooltipContent={shownLabel} triggerClass="min-w-0 flex-1">
+                          <span
+                            className={cn(
+                              "block h-9 truncate text-sm leading-9",
+                              !label && "text-slate-400"
+                            )}>
+                            {shownLabel}
+                          </span>
+                        </TooltipRenderer>
+                      </>
+                    }
+                    trailing={
+                      key === "choices" && (
+                        <CopyIdButton id={option.id} label={t("workspace.surveys.edit.copy_option_id")} />
+                      )
+                    }
                     locked={lock.isAnswerCodeLocked(key, option.id)}
                     ariaLabel={shownLabel}
                     value={option.code}
@@ -235,9 +263,6 @@ export const RecodeSection = ({
                       updateElement(elementIdx, setOptionCode(element, key, option.id, value))
                     }
                   />
-                  {key === "choices" && (
-                    <CopyIdButton id={option.id} label={t("workspace.surveys.edit.copy_option_id")} />
-                  )}
                 </div>
               );
             })}

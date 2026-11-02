@@ -145,6 +145,23 @@ export const normalizeCode = (
   return { value, changed: value !== raw };
 };
 
+/** A code field's text while it has focus, and whether any keystroke since focus had to be tidied. */
+export type TCodeDraft = { value: string; wasNormalized: boolean };
+
+/**
+ * One keystroke in a code field. Once a keystroke since focus was tidied, the draft stays marked until
+ * the field loses focus (the caller drops the draft then), so the "Changed to …" note does not vanish on
+ * the next keystroke that needed no tidying.
+ */
+export const typeCode = (draft: TCodeDraft | null, raw: string, kind: "question" | "answer"): TCodeDraft => {
+  const { value, changed } = normalizeCode(raw, kind);
+  return { value, wasNormalized: Boolean(draft?.wasNormalized) || changed };
+};
+
+/** What the "Changed to …" note names: the current value once a keystroke was tidied, else null. */
+export const getCodeChangedNote = (draft: TCodeDraft | null): string | null =>
+  draft?.wasNormalized && draft.value !== "" ? draft.value : null;
+
 /**
  * The empty string means "not coded yet". The editor's write path (`withFilledCodes`, ENG-6782)
  * then gives the question its default code at once, so clearing a code is how you ask for the default.
