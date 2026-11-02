@@ -464,4 +464,24 @@ describe("getEmbeddedFieldErrorMessage", () => {
       key: "workspace.embedded_data.survey_field_address_taken",
     });
   });
+
+  test("a duplicate the caller can name (a question's code) is said in the caller's words", () => {
+    const named = "q2 is already used by How are you? in Block 1";
+    expect(
+      getEmbeddedFieldErrorMessage(
+        { code: TValidateIdErrorCode.Duplicate, field: "q2" },
+        "Key",
+        spyT(),
+        named
+      )
+    ).toBe(named);
+    // Only a duplicate: any other refusal is about what was typed, not about who holds it.
+    const other = getEmbeddedFieldErrorMessage(
+      { code: TValidateIdErrorCode.HasSpaces, field: "q 2" },
+      "Key",
+      spyT(),
+      named
+    );
+    expect(JSON.parse(other).key).toBe("workspace.embedded_data.field_error_no_spaces");
+  });
 });

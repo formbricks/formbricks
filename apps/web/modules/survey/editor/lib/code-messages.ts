@@ -1,5 +1,7 @@
 import { TFunction } from "i18next";
+import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TCodeIssue } from "@formbricks/types/surveys/codes";
+import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import {
   TPublishedLockViolation,
   TPublishedLockViolationKind,
@@ -57,6 +59,38 @@ export const describeCodeIssue = (
   }
 };
 
+/** A question as a reader would name it: by its text (its ID when it has none) and its block. */
+const describeQuestionInBlock = (block: TSurveyBlock, element: TSurveyElement, t: TFunction): string =>
+  t("workspace.surveys.edit.code_clash_question_in_block", {
+    question: getTextContent(getLocalizedValue(element.headline, "default")) || element.id,
+    block: block.name,
+  });
+
+/**
+ * Why a name cannot be taken when it is a question's code, in the Recode section's words for a clash
+ * ("q2 is already used by How are you? in Block 1"). `undefined` when no question has that code.
+ * Case-insensitive, like `validateId`, which refuses such a name for an Embedded Data field.
+ */
+export const describeQuestionCodeClash = (
+  survey: TSurvey,
+  name: string,
+  t: TFunction
+): string | undefined => {
+  const wanted = name.toLowerCase();
+  for (const block of survey.blocks) {
+    for (const element of block.elements) {
+      const code = "code" in element ? element.code : undefined;
+      if (code?.toLowerCase() === wanted) {
+        return t("workspace.surveys.edit.code_error_used_by", {
+          code,
+          name: describeQuestionInBlock(block, element, t),
+        });
+      }
+    }
+  }
+  return undefined;
+};
+
 /**
  * What a duplicate code clashes with, as a reader would name it: a question by its text and block
  * ("How are you? in Block 1"), an answer by its label. `undefined` for the other kinds.
@@ -68,12 +102,7 @@ export const getCodeClashLabel = (survey: TSurvey, issue: TCodeIssue, t: TFuncti
   if (issue.kind === "duplicate_question_code" || issue.kind === "clashes_export_column") {
     for (const block of survey.blocks) {
       const element = block.elements.find((candidate) => candidate.id === issue.clashesWith);
-      if (!element) continue;
-      const headline = getTextContent(getLocalizedValue(element.headline, "default"));
-      return t("workspace.surveys.edit.code_clash_question_in_block", {
-        question: headline || element.id,
-        block: block.name,
-      });
+      if (element) return describeQuestionInBlock(block, element, t);
     }
     return undefined;
   }

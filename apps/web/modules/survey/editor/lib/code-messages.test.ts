@@ -7,6 +7,7 @@ import {
   describeCodeIssue,
   describeCodeIssueAtPath,
   describeLockRefusal,
+  describeQuestionCodeClash,
   getCodeClashLabel,
 } from "./code-messages";
 
@@ -158,6 +159,22 @@ describe("describeCodeIssueAtPath", () => {
       "is already used by"
     );
     expect(describeCodeIssueAtPath(survey, ["blocks", 0, "elements", 0, "headline"], t)).toBeUndefined();
+  });
+});
+
+describe("describeQuestionCodeClash", () => {
+  const survey = surveyOf([
+    { ...element("a", "q1"), headline: { default: "<p>How are you?</p>" } },
+    { ...element("b", "q2"), headline: { default: "" } },
+  ]);
+
+  test("names the question whose code it is, as the Recode section does, whatever the case typed", () => {
+    expect(describeQuestionCodeClash(survey, "Q1", t)).toBe("q1 is already used by How are you? in Block 1");
+  });
+
+  test("falls back to the question's ID without a headline, and says nothing for a free name", () => {
+    expect(describeQuestionCodeClash(survey, "q2", t)).toBe("q2 is already used by b in Block 1");
+    expect(describeQuestionCodeClash(survey, "region", t)).toBeUndefined();
   });
 });
 
