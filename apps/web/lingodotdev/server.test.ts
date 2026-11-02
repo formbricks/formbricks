@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { getLocale } from "@/lingodotdev/language";
-import { getTranslate } from "./server";
+import { getLocaleMessages, getTranslate } from "./server";
 
 vi.mock("@/lingodotdev/language", () => ({
   getLocale: vi.fn(),
@@ -31,6 +31,22 @@ describe("lingodotdev server", () => {
     const translate = await getTranslate("de-DE");
     expect(getLocale).not.toHaveBeenCalled();
     expect(translate).toBeDefined();
+  });
+
+  test("getLocaleMessages loads only the requested locale's catalogue", async () => {
+    const messages = (await getLocaleMessages("de-DE")) as { common: { language: string } };
+    expect(messages.common.language).toBe("Sprache");
+  });
+
+  test("getLocaleMessages fills keys missing from a translation with en-US", async () => {
+    vi.doMock("../locales/de-DE.json", () => ({ default: { common: { language: "Sprache" } } }));
+    vi.resetModules();
+    const { getLocaleMessages: load } = await import("./server");
+    const messages = (await load("de-DE")) as { common: { language: string; select: string } };
+    vi.doUnmock("../locales/de-DE.json");
+
+    expect(messages.common.language).toBe("Sprache");
+    expect(messages.common.select).toBe("Select");
   });
 
   test("should call getLocale when locale is not provided", async () => {

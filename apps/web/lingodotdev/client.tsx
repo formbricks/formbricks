@@ -1,66 +1,52 @@
 "use client";
 
-import i18n from "i18next";
+import { type i18n as TI18n, createInstance } from "i18next";
 import ICU from "i18next-icu";
-import resourcesToBackend from "i18next-resources-to-backend";
-import { ReactNode, useEffect, useState } from "react";
-import { I18nextProvider, initReactI18next } from "react-i18next";
+import { ReactNode, useState } from "react";
+import { I18nextProvider } from "react-i18next";
 import { logger } from "@formbricks/logger";
 
-let isInit = false;
+export type TLocaleMessages = Record<string, unknown>;
 
 interface I18nProviderProps {
   children: ReactNode;
   language: string;
-  defaultLanguage: string;
+  messages: TLocaleMessages;
 }
 
-export const I18nProvider = ({ children, language, defaultLanguage }: I18nProviderProps) => {
-  const locale = language || defaultLanguage;
-  const [isReady, setIsReady] = useState(false);
+/**
+ * Builds an i18next instance that is ready on the first render, on the server and the client alike.
+ *
+ * The root layout passes the current locale's messages (en-US fallback already merged in on the
+ * server), so there is nothing to load: no backend, and `initAsync: false` makes `init` synchronous.
+ * The page therefore renders into the server HTML instead of the whole tree waiting for a client-side
+ * locale import (ENG-3771). Adding a backend back would make init asynchronous again and suspend
+ * every `useTranslation`.
+ *
+ * An instance per provider rather than the global `i18next` singleton: this module also renders on
+ * the server, where a shared instance would leak one request's language into another.
+ */
+const createI18n = (locale: string, messages: TLocaleMessages): TI18n => {
+  const instance = createInstance();
+  instance
+    .use(ICU)
+    .init({
+      lng: locale,
+      resources: { [locale]: { translation: messages } },
+      initAsync: false,
+      interpolation: { escapeValue: false },
+    })
+    .catch((error: unknown) => logger.error(error));
+  return instance;
+};
 
-  useEffect(() => {
-    const initializeI18n = async () => {
-      if (isInit) {
-        if (i18n.language !== locale) {
-          await i18n.changeLanguage(locale);
-        }
-        setIsReady(true);
-      } else {
-        try {
-          await i18n
-            .use(ICU)
-            .use(initReactI18next)
-            .use(
-              resourcesToBackend((language: string) => {
-                return import(`../locales/${language}.json`);
-              })
-            )
-            .init({
-              lng: locale,
-              fallbackLng: defaultLanguage,
-              interpolation: { escapeValue: false },
-            });
-          isInit = true;
-          setIsReady(true);
-        } catch (error) {
-          logger.error(error);
-          setIsReady(true);
-        }
-      }
-    };
+export const I18nProvider = ({ children, language, messages }: I18nProviderProps) => {
+  const [state, setState] = useState(() => ({ language, i18n: createI18n(language, messages) }));
 
-    initializeI18n();
-  }, [locale, defaultLanguage]);
-
-  // Don't render children until i18n is ready to prevent race conditions
-  if (!isReady) {
-    return null;
+  // A language switch re-renders the root layout with the new locale and its messages.
+  if (state.language !== language) {
+    setState({ language, i18n: createI18n(language, messages) });
   }
 
-  return (
-    <I18nextProvider data-testid="i18next-provider" i18n={i18n}>
-      {children}
-    </I18nextProvider>
-  );
+  return <I18nextProvider i18n={state.i18n}>{children}</I18nextProvider>;
 };
