@@ -388,6 +388,53 @@
       "thread_id": "PRRT_kwDOHdHRYM6wuzrk"
     }
   ],
+  "followup_review": {
+    "findings": [
+      {
+        "disposition": "addressed",
+        "evidence": "Preparation wrapper source has five sequential timeout calls with a 5400-second default; example Job now allows 28800 seconds and explains aggregate/per-step sizing.",
+        "path": "docs/self-hosting/upgrade/prepare.mdx",
+        "source": "https://github.com/formbricks/formbricks/pull/9808#discussion_r4440708847",
+        "thread_id": "PRRT_kwDOHdHRYM6ymiwx"
+      },
+      {
+        "disposition": "addressed",
+        "evidence": "Historical 2.6 guide explicitly names docker network ls.",
+        "path": "docs/self-hosting/upgrade/versions/2.6.mdx",
+        "source": "https://github.com/formbricks/formbricks/pull/9808#discussion_r4440708869",
+        "thread_id": "PRRT_kwDOHdHRYM6ymiw_"
+      },
+      {
+        "disposition": "addressed",
+        "evidence": "Explicit Compose image pins and config --images checks added across 2.x and 3.0\u20133.3. GHCR manifest HEAD checks verify all 12 example v-prefixed tags (2.2 uses v2.2.2). The bot suggestion to use clean SemVer is not applicable to these historical GHCR images; unprefixed samples return 404.",
+        "path": "docs/self-hosting/upgrade/versions/3.0.mdx",
+        "source": "https://github.com/formbricks/formbricks/pull/9808#discussion_r4440708887",
+        "thread_id": "PRRT_kwDOHdHRYM6ymixL"
+      },
+      {
+        "disposition": "addressed",
+        "evidence": "Published 6.1.0 GitHub release confirms Cloud grace through 19 January 2027; product guide separates this from self-hosted default rejection and links to regeneration.",
+        "path": "docs/surveys/link-surveys/single-use-links.mdx",
+        "source": "https://github.com/formbricks/formbricks/pull/9808#discussion_r4440708892",
+        "thread_id": "PRRT_kwDOHdHRYM6ymixO"
+      }
+    ],
+    "registry_examples": [
+      "v2.0.0",
+      "v2.1.0",
+      "v2.2.2",
+      "v2.3.0",
+      "v2.4.0",
+      "v2.5.3",
+      "v2.6.0",
+      "v2.7.0",
+      "v3.0.0",
+      "v3.1.0",
+      "v3.2.0",
+      "v3.3.0"
+    ],
+    "reviewed_head": "cbe614d5b60a8225f942bdc4f54427f17c724cde"
+  },
   "incoming_documentation": [
     {
       "destination": "docs/adr/0003-one-creative-table.md",

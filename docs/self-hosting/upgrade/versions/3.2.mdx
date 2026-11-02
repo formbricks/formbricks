@@ -13,6 +13,11 @@ Read the notes for every version you cross. Use the [upgrade checklist](/self-ho
 to plan backups, service interruption and recovery. Old commands using `latest` or `stable` must be
 resolved to the historical target release before use; they must not jump to today's release.
 
+Before the Docker commands below, edit the `formbricks` service's `image` in your existing
+`docker-compose.yml`. Replace `latest` with your exact published **3.2.x** tag, for example
+`ghcr.io/formbricks/formbricks:v3.2.0` for the initial release. These historical GHCR tags include `v`. Confirm the selected tag with
+`docker compose config --images` before running `pull` or `up`; keep your existing volumes and settings.
+
 <Info>
   With Formbricks 3.0, we introduced an automatic data migration system. If you're using a version older than
   **v2.7**, you must upgrade step-by-step through earlier versions (e.g. **2.4 → 2.5 → 2.6 → 2.7**). Once you
@@ -39,7 +44,7 @@ docker exec formbricks-postgres-1 pg_dump -Fc -U postgres -d formbricks > formbr
 
 If you prefer storing the backup as an `*.sql` file remove the `-Fc` (custom format) option. In case of a restore scenario you will need to use `psql` then with an empty `formbricks` database.
 
-1. Pull the latest version of Formbricks:
+1. Pull the selected version of Formbricks:
 
 ```bash
 docker compose pull
@@ -51,7 +56,7 @@ docker compose pull
 docker compose down
 ```
 
-1. Restarting the containers with the latest version of Formbricks:
+1. Restarting the containers with the selected version of Formbricks:
 
 ```bash
 docker compose up -d

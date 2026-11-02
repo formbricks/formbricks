@@ -180,10 +180,11 @@ Formbricks re-validates the URL and rejects the response if the two do not match
   invalidates every single-use link that was already handed out.
 - **Since Formbricks 5.0**, unencrypted single-use links must carry a valid `suToken`. Links
   generated before 5.0 without a token are rejected — regenerate them.
-- **Since Formbricks 6.1**, the same applies to *encrypted* single-use links: they now carry a
-  `suToken` binding them to one survey. Encrypted links generated before 6.1 have no token and are
-  rejected — regenerate them. See the
-  [migration guide](/self-hosting/advanced/migration) if you handed out a batch before upgrading.
+- **Since Formbricks 6.1**, encrypted single-use links carry a `suToken` binding them to one survey.
+  **Self-hosted:** old encrypted links are rejected after upgrading unless you explicitly configure a
+  temporary grace period. [Regenerate and redistribute them](/self-hosting/upgrade/versions/6.1-single-use-links).
+  **Formbricks Cloud:** the [6.1 release notes](https://github.com/formbricks/formbricks/releases/tag/6.1.0)
+  give old encrypted links a grace period until **19 January 2027**. Replace them before that date.
 - The *"already answered"* screen can be customized via the `singleUse.heading` and
   `singleUse.subheading` fields on the survey in the Management API.
 - A survey that [creatives](/surveys/creatives/overview) open can't use single-use links: a feedback button or

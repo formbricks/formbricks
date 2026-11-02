@@ -102,7 +102,7 @@ metadata:
   name: formbricks-v6-prepare
 spec:
   backoffLimit: 0
-  activeDeadlineSeconds: 7200
+  activeDeadlineSeconds: 28800 # Five 5400-second steps, plus startup/result overhead.
   template:
     spec:
       restartPolicy: Never
@@ -199,7 +199,9 @@ A blocked result can carry more fields, never values from your data:
 - `cause` and `retryable`: the step's own error code, such as `authzed_unavailable`, and whether that error is
   transient. Retry a `"retryable":true` result once its cause, such as SpiceDB availability, has recovered.
 
-Each step has a 90-minute limit. Set `FORMBRICKS_AUTHZED_PREPARE_STEP_TIMEOUT_SECONDS` (60 to 86400) to change
+Preparation has five sequential timed steps, each with a 90-minute default limit. The example Job
+allows eight hours to cover their combined limits and startup/result overhead. Size both limits from
+your rehearsal; a longer Job deadline does not increase the per-step limit. Set `FORMBRICKS_AUTHZED_PREPARE_STEP_TIMEOUT_SECONDS` (60 to 86400) to change
 it. The graph step rewrites every organization's relationships and then audits them all, so its runtime grows
 with the number of organizations. Newer images audit several organizations concurrently; an older sequential
 run took about 35 minutes for 50,000 organizations. Size the limit from your own rehearsal, and keep the Job's `activeDeadlineSeconds` above the sum of its steps: a Job deadline stops the
