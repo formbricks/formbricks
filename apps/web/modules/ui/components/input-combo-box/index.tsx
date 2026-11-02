@@ -96,6 +96,11 @@ export interface InputComboboxProps {
    */
   onSearchChange?: (search: string) => void;
   iconClassName?: string;
+  /**
+   * Lets the list grow wider than its trigger (up to a cap) and wrap long labels instead of cutting
+   * them, for pickers whose options are whole sentences, such as survey questions.
+   */
+  wideDropdown?: boolean;
   disabled?: boolean;
   // The interactive trigger renders as a div[role="combobox"], which is not a labelable element,
   // so a paired <label htmlFor> gives it no accessible name. Callers pass one of these instead.
@@ -126,8 +131,8 @@ function hasOptionDetails(option: TComboboxOption): boolean {
   return Boolean(option.meta?.hint || option.meta?.badge);
 }
 
-function getOptionItemClassName(): string {
-  return "truncate px-2";
+function getOptionItemClassName(wrap = false): string {
+  return wrap ? "px-2" : "truncate px-2";
 }
 
 /**
@@ -146,6 +151,7 @@ interface ComboboxOptionLabelProps {
   iconClassName: string;
   showCheckIcon: boolean;
   selected: boolean;
+  wrap?: boolean;
 }
 
 function ComboboxOptionLabel({
@@ -153,13 +159,15 @@ function ComboboxOptionLabel({
   iconClassName,
   showCheckIcon,
   selected,
+  wrap = false,
 }: Readonly<ComboboxOptionLabelProps>) {
+  const labelClassName = wrap ? "break-words whitespace-normal text-slate-900" : "truncate text-slate-900";
   return (
     <>
       {showCheckIcon && selected && (
         <CheckIcon className="size-4 shrink-0 text-slate-300 hover:text-slate-400" />
       )}
-      {option.icon && <option.icon className={iconClassName} />}
+      {option.icon && <option.icon className={cn("shrink-0", iconClassName)} />}
       {option.imgSrc && (
         <Image
           src={option.imgSrc}
@@ -172,7 +180,7 @@ function ComboboxOptionLabel({
       )}
       {hasOptionDetails(option) ? (
         <span className="flex min-w-0 flex-1 items-center gap-2">
-          <span className="truncate text-slate-900">{option.label}</span>
+          <span className={labelClassName}>{option.label}</span>
           {option.meta?.badge && (
             <span className="shrink-0 rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-normal text-slate-500">
               {option.meta.badge}
@@ -192,7 +200,7 @@ function ComboboxOptionLabel({
           )}
         </span>
       ) : (
-        <span className="truncate text-slate-900">{option.label}</span>
+        <span className={labelClassName}>{option.label}</span>
       )}
     </>
   );
@@ -216,6 +224,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
   emptyDropdownText,
   onSearchChange,
   iconClassName = "h-5 w-5 text-slate-400",
+  wideDropdown = false,
   disabled = false,
   "aria-label": ariaLabel,
   "aria-labelledby": ariaLabelledBy,
@@ -486,7 +495,12 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
         <DropdownMenuContent
           side="bottom"
           align="start"
-          className="w-(--radix-dropdown-menu-trigger-width) min-w-52 overflow-y-hidden"
+          className={cn(
+            "min-w-52 overflow-y-hidden",
+            wideDropdown
+              ? "w-max max-w-[min(36rem,calc(100vw-2rem))] min-w-(--radix-dropdown-menu-trigger-width)"
+              : "w-(--radix-dropdown-menu-trigger-width)"
+          )}
           data-testid="dropdown-menu-content">
           <Command
             className="flex h-full w-full flex-col overflow-hidden"
@@ -526,12 +540,13 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
                       keywords={getOptionKeywords(opt)}
                       disabled={opt.disabled}
                       onSelect={() => handleSelect(opt)}
-                      className={getOptionItemClassName()}>
+                      className={getOptionItemClassName(wideDropdown)}>
                       <ComboboxOptionLabel
                         option={opt}
                         iconClassName={iconClassName}
                         showCheckIcon={showCheckIcon}
                         selected={isSelected(opt)}
+                        wrap={wideDropdown}
                       />
                     </CommandItem>
                   ))}
@@ -609,12 +624,13 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
                           keywords={getOptionKeywords(opt)}
                           disabled={opt.disabled}
                           onSelect={() => handleSelect(opt)}
-                          className={getOptionItemClassName()}>
+                          className={getOptionItemClassName(wideDropdown)}>
                           <ComboboxOptionLabel
                             option={opt}
                             iconClassName={iconClassName}
                             showCheckIcon={showCheckIcon}
                             selected={isSelected(opt)}
+                            wrap={wideDropdown}
                           />
                         </CommandItem>
                       )
