@@ -1101,4 +1101,80 @@ describe("ResponseQueue", () => {
     expect(offlineQueue["pendingDbIds"].get(responseUpdate)).toBe(10);
     expect(_syncLocks.get("s1")).toBe(false);
   });
+  describe("queue recreated while a send is in flight", () => {
+    // The link-survey host re-renders on every page change, which rebuilds the ResponseQueue right
+    // after each add(). The in-flight lock is shared per survey, so updates added to the newer
+    // instances bail while the first request is pending, and the newest instance ends up empty.
+    const createQueue = (sharedState: SurveyState, sendResponse?: ResponseQueue["sendResponse"]) => {
+      const config = getConfig({ surveyId: "s1" });
+      const instance = new ResponseQueue(config, sharedState);
+      const sendSpy = vi.spyOn(instance, "sendResponse");
+      if (sendResponse) sendSpy.mockImplementation(sendResponse);
+      else sendSpy.mockResolvedValue(ok(true));
+      return { instance, config, sendSpy };
+    };
+
+    test("sends every stranded update in order once the in-flight send resolves", async () => {
+      const sharedState = getSurveyState();
+      sharedState.responseId = "response1";
+      const sent: TResponseUpdate[] = [];
+
+      let resolveFirstSend!: (value: Awaited<ReturnType<ResponseQueue["sendResponse"]>>) => void;
+      const first = createQueue(sharedState, (update) => {
+        sent.push(update);
+        return new Promise((resolve) => {
+          resolveFirstSend = resolve;
+        });
+      });
+      const firstUpdate: TResponseUpdate = { data: { q1: "first" }, finished: false };
+      first.instance.add(firstUpdate);
+      await flushPromises();
+      expect(_syncLocks.getRequestInProgress("s1")).toBe(true);
+
+      const recordSend: ResponseQueue["sendResponse"] = async (update) => {
+        sent.push(update);
+        return ok(true);
+      };
+      const second = createQueue(sharedState, recordSend);
+      const editedUpdate: TResponseUpdate = { data: { q1: "edited" }, finished: false };
+      second.instance.add(editedUpdate);
+
+      const third = createQueue(sharedState, recordSend);
+      const finishUpdate: TResponseUpdate = { data: { q2: "done" }, finished: true };
+      third.instance.add(finishUpdate);
+
+      createQueue(sharedState); // the instance rendered after Finish, with nothing queued
+      await flushPromises();
+      expect(sent).toEqual([firstUpdate]);
+
+      resolveFirstSend(ok(true));
+      await flushPromises();
+      await flushPromises();
+
+      expect(sent).toEqual([firstUpdate, editedUpdate, finishUpdate]);
+      expect(second.instance.queue).toHaveLength(0);
+      expect(third.instance.queue).toHaveLength(0);
+      expect(third.config.onResponseSendingFinished).toHaveBeenCalled();
+      expect(_syncLocks.getRequestInProgress("s1")).toBe(false);
+    });
+
+    test("processQueue on an empty newer instance retries an older instance's failed update", async () => {
+      const sharedState = getSurveyState();
+      sharedState.responseId = "response1";
+
+      // The older instance's send failed earlier, so its update is still queued for a manual Retry,
+      // which survey.tsx runs on the newest instance.
+      const older = createQueue(sharedState);
+      older.instance.queue.push(responseUpdate);
+      older.instance["registerQueueWithItems"]();
+      const newer = createQueue(sharedState);
+
+      const result = await newer.instance.processQueue();
+
+      expect(result).toEqual({ success: true });
+      expect(older.sendSpy).toHaveBeenCalledWith(responseUpdate);
+      expect(older.instance.queue).toHaveLength(0);
+      expect(newer.sendSpy).not.toHaveBeenCalled();
+    });
+  });
 });

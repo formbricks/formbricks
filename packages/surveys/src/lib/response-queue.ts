@@ -39,6 +39,11 @@ export const delay = (ms: number): Promise<void> => {
 const syncingBySurvey = new Map<string, boolean>();
 const requestInProgressBySurvey = new Map<string, boolean>();
 const processedDbIdsPendingRemovalBySurvey = new Map<string, Set<number>>();
+// Instances that have queued items, in registration order. The host re-renders the survey on every
+// page change, so each update can land in a fresh instance while an older one's request holds the
+// shared lock above; that instance bails, and its items would never be sent unless an instance
+// with an empty queue hands off to the oldest one that still has items.
+const queuesWithItemsBySurvey = new Map<string, Set<ResponseQueue>>();
 
 /** @internal Exposed for tests only. */
 export const _syncLocks = {
@@ -46,6 +51,7 @@ export const _syncLocks = {
     syncingBySurvey.clear();
     requestInProgressBySurvey.clear();
     processedDbIdsPendingRemovalBySurvey.clear();
+    queuesWithItemsBySurvey.clear();
   },
   set: (surveyId: string, value: boolean) => syncingBySurvey.set(surveyId, value),
   get: (surveyId: string) => syncingBySurvey.get(surveyId) ?? false,
@@ -105,6 +111,28 @@ export class ResponseQueue {
       contactId: this.surveyState.contactId,
       responseAcc: { ...this.surveyState.responseAcc },
     };
+  }
+
+  private registerQueueWithItems() {
+    if (!this.config.surveyId) return;
+
+    const queues = queuesWithItemsBySurvey.get(this.config.surveyId) ?? new Set<ResponseQueue>();
+    queues.add(this);
+    queuesWithItemsBySurvey.set(this.config.surveyId, queues);
+  }
+
+  private findOtherQueueWithItems(): ResponseQueue | undefined {
+    if (!this.config.surveyId) return undefined;
+
+    const queues = queuesWithItemsBySurvey.get(this.config.surveyId);
+    if (!queues) return undefined;
+
+    for (const queue of queues) {
+      if (queue.queue.length > 0) return queue;
+      // Drained instances re-register on their next add().
+      queues.delete(queue);
+    }
+    return undefined;
   }
 
   private logOfflinePersistenceError(message: string, error: unknown) {
@@ -264,6 +292,7 @@ export class ResponseQueue {
     }
     // add response to queue
     this.queue.push(responseUpdate);
+    this.registerQueueWithItems();
 
     // persist to IndexedDB if offline persistence is enabled,
     // then start processing only after the DB write completes
@@ -290,7 +319,12 @@ export class ResponseQueue {
   }
 
   async processQueue(): Promise<{ success: boolean }> {
-    if (this.isRequestInProgress || this.queue.length === 0) {
+    if (this.queue.length === 0) {
+      const queueWithItems = this.findOtherQueueWithItems();
+      return queueWithItems ? queueWithItems.processQueue() : { success: false };
+    }
+
+    if (this.isRequestInProgress) {
       return { success: false };
     }
 
