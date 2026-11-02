@@ -13,8 +13,9 @@ allOf:
 
 
       Deliberately separate from `ResponseDataMap`, which the read returns. The v1 and v2 client
-      writes and the v1 management write apply the same bounds, but the v2 management write does not
-      and older responses predate them, so a stored response may exceed them, and the read schema
+      writes and the v1 management write apply the same bounds to each request, but a response built
+      over several updates can still exceed them, the v2 management write does not apply them, and
+      older responses predate them. A stored response may therefore exceed them, and the read schema
       must not claim otherwise.
     maxProperties: 500
     # Deliberately says nothing about which value shapes are allowed — `ResponseDataMap` above owns
