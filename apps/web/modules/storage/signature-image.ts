@@ -73,6 +73,15 @@ export const getSignatureDownloadFileName = (src: string, responseId?: string): 
   return `${originalName.slice(0, extensionStart)}-${safeId}${originalName.slice(extensionStart)}`;
 };
 
+/** The text shown for a stored value that is no image: a string as it is, anything else in its JSON form. */
+const toDisplayText = (value: unknown): string => {
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean" || typeof value === "bigint") {
+    return String(value);
+  }
+  return JSON.stringify(value) ?? "";
+};
+
 /** What to render for a Signature answer: nothing signed, the image, or the raw text when it is no image. */
 export const getSignatureResponseView = (
   value: unknown,
@@ -84,5 +93,5 @@ export const getSignatureResponseView = (
   const src = getSignatureImageSrc(value, currentOrigin);
   if (src) return { kind: "image", src, fileName: getSignatureDownloadFileName(src, responseId) };
 
-  return { kind: "text", text: typeof value === "object" ? JSON.stringify(value) : String(value) };
+  return { kind: "text", text: toDisplayText(value) };
 };

@@ -111,6 +111,15 @@ describe("getSignatureResponseView", () => {
       text: "javascript:alert(1)",
     });
   });
+
+  test.each([
+    ["a number", 42, "42"],
+    ["a boolean", false, "false"],
+    ["an array", ["a", "b"], '["a","b"]'],
+    ["an object", { url: "x" }, '{"url":"x"}'],
+  ])("shows %s as readable text, not [object Object]", (_label, value, text) => {
+    expect(getSignatureResponseView(value, ORIGIN)).toEqual({ kind: "text", text });
+  });
 });
 
 describe("getClientOrigin", () => {
