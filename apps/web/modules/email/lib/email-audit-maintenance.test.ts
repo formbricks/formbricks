@@ -76,31 +76,23 @@ describe("email audit retention and erasure", () => {
     expect(mocks.updateMany).not.toHaveBeenCalled();
   });
 
-  test("reports an erasure gap when a deletion cannot derive the recipient identifier", async () => {
+  test("stops before marking rows if recipient matching fails during user deletion", async () => {
     mocks.getMac.mockRejectedValueOnce(new Error("kms unavailable"));
 
-    await requestEmailAuditErasureBestEffort({ email: "Person@Example.com" });
+    await expect(requestEmailAuditErasure({ userId: "user-1", email: "Person@Example.com" })).rejects.toThrow(
+      "recipient_hmac"
+    );
 
     expect(mocks.updateMany).not.toHaveBeenCalled();
-    expect(mocks.reportFailure).toHaveBeenCalledWith("email_audit_erasure_request_failed", {
-      phase: "recipient_hmac",
-    });
   });
 
-  test("marks user-linked records for erasure even when recipient HMAC fails", async () => {
-    mocks.getMac.mockRejectedValueOnce(new Error("kms unavailable"));
+  test("reports an erasure gap when an identifier-based request fails", async () => {
+    mocks.updateMany.mockRejectedValueOnce(new Error("database unavailable"));
 
-    await requestEmailAuditErasureBestEffort({ userId: "user-1", email: "Person@Example.com" });
+    await requestEmailAuditErasureBestEffort({ organizationId: "org-1" });
 
-    expect(mocks.updateMany).toHaveBeenCalledWith({
-      where: {
-        OR: [{ actorUserId: "user-1" }, { configuredByUserId: "user-1" }],
-        erasedAt: null,
-      },
-      data: { erasureRequestedAt: expect.any(Date) },
-    });
     expect(mocks.reportFailure).toHaveBeenCalledWith("email_audit_erasure_request_failed", {
-      phase: "recipient_hmac",
+      phase: undefined,
     });
   });
 

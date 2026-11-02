@@ -153,7 +153,31 @@ describe("email source attribution", () => {
   test.each(senders)("classifies %s at the sending boundary", async (emailType, send) => {
     await send();
     expect(sendEmail).toHaveBeenCalledOnce();
-    expect(sendEmail).toHaveBeenCalledWith(expect.objectContaining({ emailType, to: email }));
+    const trigger = ["email_change_verification", "survey_preview", "customization_preview"].includes(
+      emailType
+    )
+      ? "user"
+      : emailType === "response_notification"
+        ? "response"
+        : "system";
+    expect(sendEmail).toHaveBeenCalledWith(
+      expect.objectContaining({ emailType, to: email, auditContext: expect.objectContaining({ trigger }) })
+    );
+  });
+
+  test.each([
+    ["invite", { organizationId: "organization", inviteId: "invite" }],
+    ["email_change_verification", { actorUserId: "user" }],
+    ["data_retention_notice", { organizationId: "organization" }],
+    ["response_notification", { organizationId: "org", surveyId: "survey", responseId: "response" }],
+    ["customization_preview", { actorUserId: "user" }],
+    ["verified_survey_link", { surveyId: "survey" }],
+  ] as const)("preserves %s source identifiers", async (emailType, expectedContext) => {
+    const [, send] = senders.find(([type]) => type === emailType)!;
+    await send();
+    expect(sendEmail).toHaveBeenCalledWith(
+      expect.objectContaining({ emailType, auditContext: expect.objectContaining(expectedContext) })
+    );
   });
 
   test("keeps the survey preview actor and tenant identifiers at the audit boundary", async () => {
@@ -230,6 +254,15 @@ describe("email source attribution", () => {
       attachResponseData: false,
       rateLimit: { organizationId: "organization", actorUserId: "owner", externalRecipient: true },
     });
-    expect(sendEmail).toHaveBeenCalledWith(expect.objectContaining({ emailType: "survey_follow_up" }));
+    expect(sendEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        emailType: "survey_follow_up",
+        auditContext: expect.objectContaining({
+          trigger: "response",
+          surveyId: "survey",
+          responseId: "response",
+        }),
+      })
+    );
   });
 });

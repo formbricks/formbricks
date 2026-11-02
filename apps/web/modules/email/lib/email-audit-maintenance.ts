@@ -51,19 +51,12 @@ export const requestEmailAuditErasure = async (scope: TEmailAuditErasureScope): 
   // The audit store is intentionally absent from KSA and self-hosted deployments.
   // EU rollback keeps the bucket configuration while disabling new writes.
   if (!EMAIL_SEND_AUDIT_BUCKET) return;
-  let recipientMac: string | undefined;
-  let recipientError: Error | undefined;
-  if (scope.email) {
-    try {
-      recipientMac = await getRecipientMacForErasure(scope.email);
-    } catch (error) {
-      recipientError = error instanceof Error ? error : new Error("recipient_hmac");
-    }
-  }
+  // A recipient lookup must succeed before any deletion can proceed. Callers
+  // retaining that identity can retry; account deletion stops on failure.
+  const recipientMac = scope.email ? await getRecipientMacForErasure(scope.email) : undefined;
   const conditions = erasureConditions(scope, recipientMac);
   const responseIds = scope.responseIds ?? [];
   if (conditions.length === 0 && responseIds.length === 0) {
-    if (recipientError) throw recipientError;
     return;
   }
   const requestedAt = new Date();
@@ -79,12 +72,9 @@ export const requestEmailAuditErasure = async (scope: TEmailAuditErasureScope): 
       data: { erasureRequestedAt: requestedAt },
     });
   }
-  if (recipientError) throw recipientError;
 };
 
-export const requestEmailAuditErasureBestEffort = async (
-  scope: Parameters<typeof requestEmailAuditErasure>[0]
-) => {
+export const requestEmailAuditErasureBestEffort = async (scope: Omit<TEmailAuditErasureScope, "email">) => {
   try {
     await requestEmailAuditErasure(scope);
   } catch (error) {

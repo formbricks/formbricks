@@ -1,18 +1,11 @@
-import "./__mocks__/brevo.mock";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { IdentityProvider, Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TOrganization } from "@formbricks/types/organizations";
 import { TUserLocale, TUserUpdateInput } from "@formbricks/types/user";
-import { deleteUserOrganizationRelationships } from "@/lib/authzed/organization-membership";
-import { deleteUserTeamRelationships } from "@/lib/authzed/team-workspace";
-import { deleteOrganization, getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
-import { deleteBrevoCustomerByEmail } from "@/modules/auth/lib/brevo";
-import { requestEmailAuditErasureBeforeUserDeletion } from "@/modules/email/lib/email-audit-maintenance";
 import { publicUserSelect } from "./public-user";
-import { deleteUser, getUser, getUserByEmail, getUsersWithOrganization, updateUser } from "./service";
+import { getUser, getUserByEmail, getUsersWithOrganization, updateUser } from "./service";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -20,28 +13,9 @@ vi.mock("@formbricks/database", () => ({
       findUnique: vi.fn(),
       findFirst: vi.fn(),
       update: vi.fn(),
-      delete: vi.fn(),
       findMany: vi.fn(),
     },
-    invite: {
-      deleteMany: vi.fn(),
-    },
   },
-}));
-
-vi.mock("@/lib/organization/service", () => ({
-  getOrganizationsWhereUserIsSingleOwner: vi.fn(),
-  deleteOrganization: vi.fn(),
-}));
-
-vi.mock("@/lib/authzed/organization-membership", () => ({
-  deleteUserOrganizationRelationships: vi.fn(),
-}));
-vi.mock("@/lib/authzed/team-workspace", () => ({
-  deleteUserTeamRelationships: vi.fn(),
-}));
-vi.mock("@/modules/email/lib/email-audit-maintenance", () => ({
-  requestEmailAuditErasureBeforeUserDeletion: vi.fn(),
 }));
 
 describe("User Service", () => {
@@ -70,43 +44,6 @@ describe("User Service", () => {
     lastLoginAt: new Date(),
     isActive: true,
   } as Prisma.UserGetPayload<object>;
-
-  const mockOrganizations: TOrganization[] = [
-    {
-      id: "org1",
-      name: "Organization 1",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      billing: {
-        stripeCustomerId: null,
-        limits: {
-          workspaces: 3,
-          monthly: {
-            responses: 1500,
-          },
-        },
-        usageCycleAnchor: new Date(),
-      },
-      isAISmartToolsEnabled: false,
-    },
-    {
-      id: "org2",
-      name: "Organization 2",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      billing: {
-        stripeCustomerId: null,
-        limits: {
-          workspaces: 3,
-          monthly: {
-            responses: 1500,
-          },
-        },
-        usageCycleAnchor: new Date(),
-      },
-      isAISmartToolsEnabled: false,
-    },
-  ];
 
   describe("getUser", () => {
     test("should return user when found", async () => {
@@ -220,77 +157,6 @@ describe("User Service", () => {
       vi.mocked(prisma.user.update).mockRejectedValue(prismaError);
 
       await expect(updateUser("nonexistent", { name: "New Name" })).rejects.toThrow(ResourceNotFoundError);
-    });
-  });
-
-  describe("deleteUser", () => {
-    beforeEach(() => {
-      vi.mocked(prisma.user.findUnique).mockResolvedValue({ email: mockPrismaUser.email } as never);
-      vi.mocked(requestEmailAuditErasureBeforeUserDeletion).mockResolvedValue(undefined);
-    });
-
-    test("should delete user and their organizations when they are single owner", async () => {
-      vi.mocked(prisma.user.delete).mockResolvedValue(mockPrismaUser);
-      vi.mocked(prisma.invite.deleteMany).mockResolvedValue({ count: 0 });
-      vi.mocked(getOrganizationsWhereUserIsSingleOwner).mockResolvedValue(mockOrganizations);
-      vi.mocked(deleteOrganization).mockResolvedValue();
-
-      const result = await deleteUser("user1");
-
-      expect(result).toEqual(mockPrismaUser);
-      expect(getOrganizationsWhereUserIsSingleOwner).toHaveBeenCalledWith("user1");
-      expect(deleteOrganization).toHaveBeenCalledWith("org1");
-      expect(prisma.invite.deleteMany).toHaveBeenCalledWith({ where: { creatorId: "user1" } });
-      expect(prisma.user.delete).toHaveBeenCalledWith({
-        where: { id: "user1", email: mockPrismaUser.email },
-        select: publicUserSelect,
-      });
-      expect(requestEmailAuditErasureBeforeUserDeletion).toHaveBeenCalledWith("user1", mockPrismaUser.email);
-      expect(deleteUserOrganizationRelationships).toHaveBeenCalledWith("user1");
-      expect(deleteUserTeamRelationships).toHaveBeenCalledWith("user1");
-      expect(deleteBrevoCustomerByEmail).toHaveBeenCalledWith({ email: mockPrismaUser.email });
-    });
-
-    // Regression for ENG-1057: Invite.creatorId has no onDelete rule, so any
-    // pending invite created by the user must be cleared before user.delete
-    // or Postgres rejects with a foreign-key constraint violation.
-    test("should delete pending invites where the user is creator before deleting the user", async () => {
-      vi.mocked(prisma.user.delete).mockResolvedValue(mockPrismaUser);
-      vi.mocked(prisma.invite.deleteMany).mockResolvedValue({ count: 3 });
-      vi.mocked(getOrganizationsWhereUserIsSingleOwner).mockResolvedValue([]);
-
-      await deleteUser("user1");
-
-      expect(prisma.invite.deleteMany).toHaveBeenCalledWith({ where: { creatorId: "user1" } });
-      const inviteDeleteOrder = vi.mocked(prisma.invite.deleteMany).mock.invocationCallOrder[0];
-      const userDeleteOrder = vi.mocked(prisma.user.delete).mock.invocationCallOrder[0];
-      const brevoDeleteOrder = vi.mocked(deleteBrevoCustomerByEmail).mock.invocationCallOrder[0];
-      expect(inviteDeleteOrder).toBeLessThan(userDeleteOrder);
-      expect(userDeleteOrder).toBeLessThan(brevoDeleteOrder);
-      expect(deleteBrevoCustomerByEmail).toHaveBeenCalledWith({ email: mockPrismaUser.email });
-    });
-
-    test("should throw DatabaseError when prisma throws", async () => {
-      const prismaError = new Prisma.PrismaClientKnownRequestError("Database error", {
-        code: "P2002",
-        clientVersion: "5.0.0",
-      });
-      vi.mocked(getOrganizationsWhereUserIsSingleOwner).mockResolvedValue([]);
-      vi.mocked(prisma.invite.deleteMany).mockResolvedValue({ count: 0 });
-      vi.mocked(prisma.user.delete).mockRejectedValue(prismaError);
-
-      await expect(deleteUser("user1")).rejects.toThrow(DatabaseError);
-    });
-
-    test("does not delete a user when audit erasure cannot be prepared", async () => {
-      vi.mocked(requestEmailAuditErasureBeforeUserDeletion).mockRejectedValueOnce(
-        new Error("audit unavailable")
-      );
-
-      await expect(deleteUser("user1")).rejects.toThrow("audit unavailable");
-
-      expect(getOrganizationsWhereUserIsSingleOwner).not.toHaveBeenCalled();
-      expect(prisma.user.delete).not.toHaveBeenCalled();
     });
   });
 

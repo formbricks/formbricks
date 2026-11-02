@@ -560,12 +560,14 @@ describe("instrumentation-jobs", () => {
     const { RECURRING_JOB_REGISTRATIONS_BY_KEY } = await import("@/lib/jobs/recurring-registrations");
     const sweep = RECURRING_JOB_REGISTRATIONS_BY_KEY.dataRetentionSweep.job.upsert;
     const drain = RECURRING_JOB_REGISTRATIONS_BY_KEY.deletionCleanupDrain.job.upsert;
+    const emailAudit = RECURRING_JOB_REGISTRATIONS_BY_KEY.emailAuditMaintenance.job.upsert;
     const creativeStats = RECURRING_JOB_REGISTRATIONS_BY_KEY.creativeStatsFlush.job.upsert;
     const delivery = RECURRING_JOB_REGISTRATIONS_BY_KEY.authzedProjectionDelivery.job.upsert;
 
     await registerRecurringJobs();
     expect(sweep).not.toHaveBeenCalled();
     expect(drain).not.toHaveBeenCalled();
+    expect(emailAudit).not.toHaveBeenCalled();
     // Replicas of the previous release have no handler for the creative counter flush.
     expect(creativeStats).not.toHaveBeenCalled();
     // Revocations must keep reaching SpiceDB throughout the upgrade, or every check fails closed.
@@ -575,6 +577,7 @@ describe("instrumentation-jobs", () => {
     await vi.advanceTimersByTimeAsync(30_000);
     expect(sweep).toHaveBeenCalledOnce();
     expect(drain).toHaveBeenCalledOnce();
+    expect(emailAudit).toHaveBeenCalledOnce();
     expect(creativeStats).toHaveBeenCalledOnce();
   });
 
@@ -642,6 +645,11 @@ describe("instrumentation-jobs", () => {
       expect(mockUpsertDeletionCleanupDrain).toHaveBeenCalledOnce();
       expect(mockUpsertDeletionCleanupDrain).toHaveBeenCalledWith({
         everyMs: DELETION_CLEANUP_DRAIN_INTERVAL_MS,
+        kind: "every",
+      });
+      expect(mockUpsertEmailAuditMaintenance).toHaveBeenCalledOnce();
+      expect(mockUpsertEmailAuditMaintenance).toHaveBeenCalledWith({
+        everyMs: 5 * 60_000,
         kind: "every",
       });
       // Creative counts reach the stats operation within about a minute (ENG-4000).
