@@ -119,8 +119,8 @@ const config = [
 
       /*
        * jsx-a11y's recommended set, which the `next` tier turns on at "error", on the same per-rule
-       * ratchet. Rules at zero stay at the tier's "error" and are deliberately not listed here. Five
-       * of them reach zero only through six inline disables, each on a site that already carries a
+       * ratchet. Rules at zero stay at the tier's "error" and are deliberately not listed here. Four
+       * of them reach zero only through five inline disables, each on a site that already carries a
        * NOSONAR for the same deliberate pattern (a `Trans` link whose text is injected, a
        * stopPropagation wrapper, a focusable scroll region).
        *

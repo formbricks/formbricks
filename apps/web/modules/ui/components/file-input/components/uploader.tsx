@@ -36,7 +36,7 @@ export const Uploader = ({
 }: UploaderProps) => {
   const { t } = useTranslation();
   return (
-    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions -- see NOSONAR below
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- see NOSONAR below
     <label // NOSONAR - This is a label for a file input, we need the onClick to trigger storage not configured toast
       htmlFor={`${id}-${name}`}
       data-testid="upload-file-label"
@@ -80,6 +80,21 @@ export const Uploader = ({
           e.preventDefault();
           e.stopPropagation();
           showStorageNotConfiguredToast();
+        }
+      }}
+      // Enter or Space on a focused label does not open its input, and the input itself is hidden, so
+      // keyboard users would reach this control but never get the file picker.
+      onKeyDown={(e) => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        e.preventDefault();
+
+        if (!isStorageConfigured) {
+          showStorageNotConfiguredToast();
+          return;
+        }
+
+        if (!disabled) {
+          e.currentTarget.querySelector("input")?.click();
         }
       }}>
       <div className="flex flex-col items-center justify-center pt-5 pb-6">
