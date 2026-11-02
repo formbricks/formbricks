@@ -43,7 +43,9 @@ Notes:
   existing code violates them; `scripts/lint-staged-eslint.mjs` sets `ESLINT_SONAR_PARITY=error` for the
   pre-commit hook, so a new violation in a staged file fails the commit. To widen, set `DEFAULT_SEVERITY`
   in `sonar-parity.mjs` to `"warn"` (visible, non-blocking) and later `"error"` once the backlog is fixed.
-  Every rule except the vitest one skips test files, as Sonar does. `jsx-a11y/no-aria-hidden-on-focusable` (`a11yParity`) is an
+  Every rule except the vitest one skips test files, as Sonar does. `prefer-optional-chain` needs type
+  information, so it runs in the library, react and react-hooks tiers but not in apps/web: one staged
+  file there loads the whole program and exhausts Node's default heap. `jsx-a11y/no-aria-hidden-on-focusable` (`a11yParity`) is an
   error in the react tiers, which are clean; apps/web has one existing hit
   (`input-combo-box`), so the next tier follows the staged severity.
 - Stale `eslint-disable` directives are reported as warnings workspace-wide (`reportUnusedDisableDirectives` in `base.mjs`).

@@ -50,29 +50,6 @@ export const sonarParity = (severity = stagedSeverity()) => [
     },
   },
   {
-    // S6582. Needs type information: the library and react tiers already parse with a project,
-    // the next and react-hooks tiers get one only while the rule is on, for the staged files.
-    name: "formbricks/sonar-parity-typed",
-    // Only `.ts`/`.tsx` outside config, declaration and tsconfig-excluded folders: a file the
-    // project service cannot find is a parse error, which would fail the commit.
-    files: ["**/*.{ts,tsx}"],
-    ignores: [
-      ...TEST_FILES,
-      "**/*.config.*",
-      "**/vitest*.ts",
-      "**/.*/**", // TypeScript's include globs skip dot-directories such as app/.well-known
-      "**/*.d.ts",
-      "**/integration/**",
-      "**/playwright/**",
-      "**/.storybook/**",
-    ],
-    plugins: { "@typescript-eslint": tseslint.plugin },
-    ...(severity === "off" ? {} : { languageOptions: { parserOptions: { projectService: true } } }),
-    rules: {
-      "@typescript-eslint/prefer-optional-chain": severity,
-    },
-  },
-  {
     // Test-only rule from the vitest plugin the repo already loads.
     name: "formbricks/sonar-parity-tests",
     files: ["**/*.test.{ts,tsx,mts,cts,js,jsx,mjs}"],
@@ -82,6 +59,36 @@ export const sonarParity = (severity = stagedSeverity()) => [
     },
   },
 ];
+
+/*
+ * S6582. Needs type information, so it only joins tiers that can supply it cheaply:
+ * - library and react already parse with a project: `sonarParityTyped()`.
+ * - react-hooks (surveys, email) have small tsconfigs: `sonarParityTyped({ ownProject: true })`
+ *   adds the project service while the rule is on, so only staged files pay for it.
+ * - next (apps/web) has none. Its program is large enough that linting a single staged file
+ *   exhausts Node's default heap, so the rule is not mirrored there.
+ */
+export const sonarParityTyped = ({ severity = stagedSeverity(), ownProject = false } = {}) => ({
+  name: "formbricks/sonar-parity-typed",
+  // Only `.ts`/`.tsx` outside config, declaration and tsconfig-excluded folders: a file the
+  // project service cannot find is a parse error, which would fail the commit.
+  files: ["**/*.{ts,tsx}"],
+  ignores: [
+    ...TEST_FILES,
+    "**/*.config.*",
+    "**/vitest*.ts",
+    "**/.*/**", // TypeScript's include globs skip dot-directories
+    "**/*.d.ts",
+    "**/integration/**",
+    "**/playwright/**",
+    "**/.storybook/**",
+  ],
+  plugins: { "@typescript-eslint": tseslint.plugin },
+  ...(ownProject && severity !== "off" && { languageOptions: { parserOptions: { projectService: true } } }),
+  rules: {
+    "@typescript-eslint/prefer-optional-chain": severity,
+  },
+});
 
 /*
  * S6825, for the tiers that load `eslint-plugin-jsx-a11y` (react, react-hooks, next). The

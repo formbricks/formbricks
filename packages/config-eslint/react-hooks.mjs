@@ -2,7 +2,7 @@ import jsxA11y from "eslint-plugin-jsx-a11y";
 import reactHooks from "eslint-plugin-react-hooks";
 import globals from "globals";
 import { base, commonIgnores, reactCompilerRulesOptOut, typescriptParsing } from "./base.mjs";
-import { a11yParity } from "./sonar-parity.mjs";
+import { a11yParity, sonarParityTyped } from "./sonar-parity.mjs";
 
 /*
  * Flat config mirroring the old `legacy-react.js` tier: turbo + prettier +
@@ -29,6 +29,7 @@ export const reactHooksConfig = [
     },
   },
   reactCompilerRulesOptOut,
+  sonarParityTyped({ ownProject: true }),
   ...base,
 ];
 

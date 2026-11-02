@@ -5,7 +5,7 @@ import reactHooks from "eslint-plugin-react-hooks";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 import { base, commonIgnores, reactCompilerRulesOptOut, unusedVarsConvention } from "./base.mjs";
-import { a11yParity } from "./sonar-parity.mjs";
+import { a11yParity, sonarParityTyped } from "./sonar-parity.mjs";
 
 /*
  * Flat config for React component libraries — the successor of the
@@ -62,6 +62,7 @@ export const react = ({ tsconfigRootDir }) => [
     },
   },
   reactCompilerRulesOptOut,
+  sonarParityTyped(),
   ...base,
 ];
 
