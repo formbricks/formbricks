@@ -21,4 +21,32 @@ describe("createI18n", () => {
     expect(en.t("greeting")).toBe("Hello");
     expect(de.t("greeting")).toBe("Hallo");
   });
+
+  // A link survey re-points the app at the survey's language (`useAppLocale`); without loading that
+  // locale first, every string would render as its raw key.
+  test("loads a locale's messages when switching to it", async () => {
+    const i18n = createI18n("de-DE", { common: { report_survey: "Umfrage melden" } });
+
+    await i18n.changeLanguage("en-US");
+
+    expect(i18n.language).toBe("en-US");
+    expect(i18n.t("common.report_survey")).toBe("Report Survey");
+  });
+
+  test("lets the latest switch win when an earlier one is still loading", async () => {
+    const i18n = createI18n("en-US", { greeting: "Hello" });
+
+    const slower = i18n.changeLanguage("fr-FR");
+    await i18n.changeLanguage("en-US");
+    await slower;
+
+    expect(i18n.language).toBe("en-US");
+  });
+
+  test("rejects a switch to a locale that does not exist", async () => {
+    const i18n = createI18n("en-US", { greeting: "Hello" });
+
+    await expect(i18n.changeLanguage("xx-XX")).rejects.toThrow();
+    expect(i18n.language).toBe("en-US");
+  });
 });
