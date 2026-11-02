@@ -159,6 +159,21 @@ const BlockCardComponent = ({
   const [isBlockCollapsed, setIsBlockCollapsed] = useState(false);
   const [blockTab, setBlockTab] = useState("questions");
 
+  // Questions and logic rules live on the Questions tab, so a flagged one switches back to it: the
+  // error is then visible, and the publish check's scroll finds the question's card (the Settings tab
+  // unmounts it). Re-checked on every new invalidElements, a fresh array each validation pass, so a
+  // second save switches back again even if the author reopened Settings while the error was still
+  // there. Adjusted during render rather than in an effect, so the card is back before the scroll.
+  const hasQuestionsTabIssue = hasInvalidElement || hasInvalidLogic;
+  const [lastIssueCheck, setLastIssueCheck] = useState({ invalidElements, hasQuestionsTabIssue });
+  if (
+    lastIssueCheck.invalidElements !== invalidElements ||
+    lastIssueCheck.hasQuestionsTabIssue !== hasQuestionsTabIssue
+  ) {
+    setLastIssueCheck({ invalidElements, hasQuestionsTabIssue });
+    if (hasQuestionsTabIssue) setBlockTab("questions");
+  }
+
   const nameInputRef = useRef<HTMLInputElement>(null);
 
   // Enter commits the rename by blurring, so the title reads as settled. There is nothing to flush:

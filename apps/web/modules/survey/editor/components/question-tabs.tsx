@@ -9,7 +9,7 @@ interface QuestionTabsProps {
   content: ReactNode;
   /** The Settings tab body: order, display options, validation rules, Recode. */
   settings: ReactNode;
-  /** A code problem lives on the Settings tab, so flag it there while Content is showing. */
+  /** A code problem lives on the Settings tab: the tabs open there, and flag it while Content is showing. */
   hasSettingsIssue?: boolean;
 }
 
@@ -23,7 +23,9 @@ export const QuestionTabs = ({
   hasSettingsIssue = false,
 }: Readonly<QuestionTabsProps>) => {
   const { t } = useTranslation();
-  const [tab, setTab] = useState("content");
+  // The tabs mount when the question is opened, so a question opened with a code problem starts on
+  // Settings, where the Recode field shows it (the publish check scrolls to the card, not into it).
+  const [tab, setTab] = useState(hasSettingsIssue ? "settings" : "content");
 
   return (
     <Tabs value={tab} onValueChange={setTab} className="mt-2 gap-4">
