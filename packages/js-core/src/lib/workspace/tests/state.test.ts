@@ -85,6 +85,22 @@ describe("environment/state.ts", () => {
       }
     });
 
+    test("keeps how far the device clock is behind the server's with the state it fetched", async () => {
+      vi.useFakeTimers({ now: Date.parse("2026-10-20T01:50:00.000Z") });
+      (ApiClient as unknown as Mock).mockImplementationOnce(function MockApiClient() {
+        return {
+          getWorkspaceState: vi.fn().mockResolvedValue({
+            ok: true,
+            data: { data: {}, expiresAt: new Date(), serverTime: "2026-10-20T02:00:00.000Z" },
+          }),
+        };
+      });
+
+      const result = await fetchWorkspaceState({ appUrl: "https://fake.host", workspaceId: "env_123" });
+
+      expect(result.ok && result.data.clockOffset).toBe(10 * 60_000);
+    });
+
     test("returns err(...) if workspace.getWorkspaceState is not ok", async () => {
       const mockError = { code: "forbidden", status: 403, message: "Access denied" };
 

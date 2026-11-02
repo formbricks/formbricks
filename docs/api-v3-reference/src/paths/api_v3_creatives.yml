@@ -1,0 +1,347 @@
+get:
+  operationId: getCreativesV3
+  summary: List creatives
+  description: >
+    Returns a workspace's creatives, most recently updated first. Session cookie, `x-api-key`, or a
+    Bearer token, with read access to the workspace.
+
+
+    **Archived creatives are left out** unless `filter[displayStatus][in]` asks for `archived`.
+    `filter[displayStatus][in]` filters on the derived `displayStatus`, so it matches what each row
+    shows: a creative whose survey is paused matches `paused`, one whose schedule has ended matches
+    `closed`. `surveyId` keeps the creatives that open that survey.
+
+
+    **Pagination is keyset** on the sort field and `id`. The `cursor` is opaque and bound to the sort
+    order and the filters it was issued for; changing either answers **400**. `meta.nextCursor` being
+    `null` is the only end-of-collection signal.
+  tags:
+    - V3 Creatives
+  parameters:
+    - $ref: ../components/parameters/WorkspaceIdQuery.yml
+    - $ref: ../components/parameters/LimitQuery.yml
+    - $ref: ../components/parameters/CursorQuery.yml
+    - in: query
+      name: filter[name][contains]
+      schema:
+        type: string
+        maxLength: 512
+      description: Case-insensitive substring match on the creative's name.
+    - in: query
+      name: filter[type][in]
+      schema:
+        type: array
+        items:
+          $ref: ../components/schemas/CreativeType.yml
+      style: form
+      explode: true
+      description: Creative types to include. Repeat the parameter or use comma-separated values.
+    - in: query
+      name: filter[displayStatus][in]
+      schema:
+        type: array
+        items:
+          $ref: ../components/schemas/CreativeDisplayStatus.yml
+      style: form
+      explode: true
+      description: >-
+        Derived statuses to include. Repeat the parameter or use comma-separated values. Omit for
+        every status but `archived`.
+    - in: query
+      name: surveyId
+      schema:
+        type: string
+        format: cuid2
+      description: Only creatives whose Destination is this survey.
+    - in: query
+      name: sortBy
+      schema:
+        type: string
+        enum:
+          - updatedAt
+          - createdAt
+          - name
+        default: updatedAt
+      description: >-
+        Sort order: `updatedAt` and `createdAt` newest first, `name` alphabetically. The `cursor` is
+        bound to it.
+  responses:
+    "200":
+      description: Creatives retrieved successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: ../components/schemas/CreativeResource.yml
+              meta:
+                $ref: ../components/schemas/CreativeListMeta.yml
+          examples:
+            page:
+              summary: One page with a feedback button
+              value:
+                data:
+                  - id: clcr1234567890123456789012
+                    workspaceId: clws1234567890123456789012
+                    name: Site feedback tab
+                    type: feedbackButton
+                    status: inProgress
+                    displayStatus: active
+                    displayStatusReason: null
+                    createdAt: "2026-10-16T09:00:00.000Z"
+                    updatedAt: "2026-10-16T09:30:00.000Z"
+                    publishedAt: "2026-10-16T09:30:00.000Z"
+                    archivedAt: null
+                    creator:
+                      name: Jane Doe
+                    defaultLanguage: en-US
+                    languages:
+                      - code: en-US
+                        default: true
+                        enabled: true
+                    content:
+                      label:
+                        en-US: Feedback
+                      icon: messageSquare
+                    styling:
+                      position:
+                        desktop:
+                          edge: right
+                          offset: 50
+                        phone: null
+                      theme:
+                        customStyles: false
+                        backgroundColor: null
+                        textColor: null
+                        borderColor: null
+                        borderRadius: null
+                        fontWeight: null
+                        fontSize:
+                          desktop: null
+                          phone: null
+                        paddingX:
+                          desktop: null
+                          phone: null
+                        paddingY:
+                          desktop: null
+                          phone: null
+                    destination:
+                      type: survey
+                      surveyId: clsv1234567890123456789012
+                      surveyName: Site feedback
+                      opensAs: popup
+                    distribution:
+                      showOn: pageView
+                      triggers: []
+                      conditions: null
+                      displayPercentage: null
+                    schedule:
+                      startAt: null
+                      endAt: null
+                    warnings: []
+                meta:
+                  limit: 20
+                  nextCursor: null
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3CreativesForbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []
+post:
+  operationId: createCreativeV3
+  summary: Create a creative
+  description: >
+    Creates a feedback button or a banner. Requires read/write access to `workspaceId`. The creative is
+    a **draft** unless `status` says otherwise.
+
+
+    **Destination.** A survey Destination must be in the same workspace, visible to the whole workspace
+    (never Restricted, nor with a visibility change pending), and neither single-use nor PIN-protected;
+    an `http(s)` link is the alternative. Anything else answers **422** naming `destination`.
+
+
+    **Publish rules**, checked whenever the resulting `status` isn't `draft`: a feedback button, and a
+    banner with a button, need a `destination`; a banner without a button can't have one; the default
+    language's label or message can't be empty; `showOn: action` needs at least one trigger. A breach
+    answers **422** with one `invalid_params` entry per problem.
+
+
+    **Languages.** Every text map must hold `defaultLanguage`, and any other locale key must be
+    declared in `languages` (**422** `unsupported_locale` otherwise). A missing translation is fine:
+    visitors see the default language.
+
+
+    **Custom CSS** (`styling.theme.customCss`). Adding it needs the Scale plan on Formbricks Cloud
+    (**403** `custom_css_plan_required`), and CSS that cannot be processed answers **422** naming
+    `styling.theme.customCss`. Processing counts against the custom CSS budget shared with surveys;
+    beyond it the request is a **429** and nothing is written.
+  tags:
+    - V3 Creatives
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/CreateCreativeRequest.yml
+        examples:
+          feedbackButton:
+            summary: A draft feedback button that opens a survey
+            value:
+              workspaceId: clws1234567890123456789012
+              name: Site feedback tab
+              type: feedbackButton
+              content:
+                label:
+                  en-US: Feedback
+                icon: messageSquare
+              destination:
+                type: survey
+                surveyId: clsv1234567890123456789012
+          banner:
+            summary: A scheduled maintenance banner, published straight away
+            value:
+              workspaceId: clws1234567890123456789012
+              name: Maintenance notice
+              type: banner
+              status: inProgress
+              content:
+                message:
+                  en-US:
+                    - text: "Scheduled maintenance tonight from 02:00 to 04:00. "
+                    - text: Details
+                      href: /maintenance
+                      underline: true
+                button: null
+                dismissible: true
+                accessibleName: null
+              schedule:
+                startAt: "2026-11-01T01:00:00.000Z"
+                endAt: "2026-11-01T04:00:00.000Z"
+  responses:
+    "201":
+      description: Creative created
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Location:
+          schema:
+            type: string
+          description: URL of the new creative.
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/CreativeResource.yml
+          examples:
+            banner:
+              summary: The banner created above
+              value:
+                data:
+                  id: clcr2234567890123456789012
+                  workspaceId: clws1234567890123456789012
+                  name: Maintenance notice
+                  type: banner
+                  status: inProgress
+                  displayStatus: scheduled
+                  displayStatusReason: null
+                  createdAt: "2026-10-16T09:00:00.000Z"
+                  updatedAt: "2026-10-16T09:00:00.000Z"
+                  publishedAt: "2026-10-16T09:00:00.000Z"
+                  archivedAt: null
+                  creator: null
+                  defaultLanguage: en-US
+                  languages:
+                    - code: en-US
+                      default: true
+                      enabled: true
+                  content:
+                    message:
+                      en-US:
+                        - text: "Scheduled maintenance tonight from 02:00 to 04:00. "
+                        - text: Details
+                          href: /maintenance
+                          underline: true
+                    button: null
+                    dismissible: true
+                    accessibleName: null
+                  styling:
+                    position:
+                      desktop:
+                        placement: top
+                        layout: inPage
+                      phone: null
+                    theme:
+                      customStyles: false
+                      backgroundColor: null
+                      textColor: null
+                      borderColor: null
+                      fontWeight: null
+                      fontSize:
+                        desktop: null
+                        phone: null
+                      paddingX:
+                        desktop: null
+                        phone: null
+                      paddingY:
+                        desktop: null
+                        phone: null
+                  destination: null
+                  distribution:
+                    showOn: pageView
+                    triggers: []
+                    conditions: null
+                    displayPercentage: null
+                  schedule:
+                    startAt: "2026-11-01T01:00:00.000Z"
+                    endAt: "2026-11-01T04:00:00.000Z"
+                  warnings: []
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3CreativesForbidden.yml
+    "422":
+      $ref: ../components/responses/V3UnprocessableContent.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

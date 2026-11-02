@@ -6,7 +6,10 @@ import { logger } from "@formbricks/logger";
 import { instrumentMcpServerWithTracing } from "@/lib/posthog/mcp-tracing";
 import { getMcpAuthentication } from "./auth";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./constants";
+import { MCP_REQUEST_MAX_ELEMENTS } from "./request-budget";
 import { mcpRequestStateCodec } from "./request-state";
+import { registerCreativeTools } from "./tools/creatives";
+import { registerDashboardTools } from "./tools/dashboards";
 import { registerFeedbackRecordTools } from "./tools/feedback-records";
 import { registerResponseTools } from "./tools/responses";
 import { registerSurveyTools } from "./tools/surveys";
@@ -76,6 +79,9 @@ export const MCP_HANDLER_OPTIONS = {
     version: MCP_SERVER_VERSION,
   },
   verboseLogs: false,
+  // GHSA-46jr-4wx8-v453: SDK 2.3 leaves its pre-validation limit disabled unless configured.
+  // The route also checks the combined budget across calls in a legacy batch.
+  maxToolInputElements: MCP_REQUEST_MAX_ELEMENTS,
   // Refuse `subscriptions/listen` outright. Protocol 2026-07-28 replaced the GET SSE endpoint and
   // `resources/subscribe` with a long-lived POST-response stream, which this POST route now serves -
   // under the v1 `disableSse: true` there was no long-lived path at all, so the migration would
@@ -118,5 +124,7 @@ export const mcpHandler = createMcpHandler((server) => {
   registerWorkspaceTools(server);
   registerFeedbackRecordTools(server);
   registerResponseTools(server);
+  registerCreativeTools(server);
+  registerDashboardTools(server);
   instrumentMcpServerWithTracing(server, identifyMcpUser);
 }, MCP_HANDLER_OPTIONS);

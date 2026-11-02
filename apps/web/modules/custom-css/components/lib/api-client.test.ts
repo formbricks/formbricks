@@ -89,6 +89,26 @@ describe("validateCustomCss", () => {
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).not.toHaveProperty("surveyId");
   });
 
+  test("names the creative type for a creative's own CSS, and only then", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(async () =>
+        jsonResponse({ data: { valid: true, customCss: { light: "c", dark: null } } })
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await validateCustomCss({
+      workspaceId: "ws_1",
+      scope: "survey",
+      creativeType: "feedbackButton",
+      input: { light: "a{}", dark: null },
+    });
+    await validateCustomCss({ workspaceId: "ws_1", scope: "survey", input: { light: "b{}", dark: null } });
+
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toMatchObject({ creativeType: "feedbackButton" });
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body)).not.toHaveProperty("creativeType");
+  });
+
   test("reads located CSS errors from a rejected request as an invalid result", async () => {
     vi.stubGlobal(
       "fetch",

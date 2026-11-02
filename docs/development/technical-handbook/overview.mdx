@@ -68,7 +68,7 @@ graph TD
 
 #### Client Applications
 
-- **Survey Widget**: A JavaScript component that can be embedded in web applications
+- **Survey Widget**: A JavaScript component that can be embedded in web applications. It also draws [creatives](/development/technical-handbook/creatives), the feedback buttons and banners that open surveys
 - **Mobile Application**: Native iOS/Android apps that integrate with the Formbricks SDK
 - **Web Dashboard**: The admin interface for managing surveys and viewing responses
 
@@ -90,6 +90,7 @@ graph TD
   - Caching frequently accessed data
   - Reducing database load
   - Improving response times
+  - Counting creative impressions and clicks until a background job writes them to PostgreSQL
 
 ### Communication Flow
 

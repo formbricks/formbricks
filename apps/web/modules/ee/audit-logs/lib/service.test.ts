@@ -33,9 +33,15 @@ describe("logAuditEvent", () => {
     logger = (await import("@formbricks/logger")).logger;
   });
 
-  test("derives scalar actor search fields from the authenticated actor", async () => {
+  test("derives scalar actor and target search fields from the event", async () => {
     await logAuditEvent(validEvent);
-    expect(logger.audit).toHaveBeenCalledWith({ ...validEvent, actorId: "user-1", actorType: "user" });
+    expect(logger.audit).toHaveBeenCalledWith({
+      ...validEvent,
+      actorId: "user-1",
+      actorType: "user",
+      targetId: "target-1",
+      targetType: "user",
+    });
   });
 
   test("logs event if access is granted and event is valid", async () => {

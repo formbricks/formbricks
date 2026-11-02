@@ -27,6 +27,8 @@ vi.mock("nodemailer", () => ({
 }));
 vi.mock("@/lib/jwt", () => ({ createToken: mocks.createToken, createEmailToken: mocks.createEmailToken }));
 vi.mock("@/lingodotdev/server", () => ({ getTranslate: async () => (key: string) => key }));
+// The link's lifetime is the subject here, not the email limits, so this never touches Redis.
+vi.mock("@/modules/email/lib/email-rate-limits", () => ({ applyEmailRateLimits: vi.fn() }));
 vi.mock("@/lib/organization/service", () => ({ getOrganizationByWorkspaceId: vi.fn() }));
 vi.mock("@formbricks/email", () => ({
   renderVerificationEmail: vi.fn(async () => "<html>verify</html>"),

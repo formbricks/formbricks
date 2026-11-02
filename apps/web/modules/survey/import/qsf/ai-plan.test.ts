@@ -42,7 +42,7 @@ const prepare = async (fixture: string) => {
 const plan = async (
   fixture: string,
   generate: TQsfPlanGenerate,
-  options: { signal?: AbortSignal; deadlineInMs?: number } = {}
+  options: { signal?: AbortSignal; deadlineInMs?: number; callTimeoutMs?: number } = {}
 ) => {
   const { survey, texts } = await prepare(fixture);
   return planQsfImport({
@@ -51,6 +51,7 @@ const plan = async (
     generate,
     signal: options.signal ?? new AbortController().signal,
     deadline: performance.now() + (options.deadlineInMs ?? 120_000),
+    callTimeoutMs: options.callTimeoutMs,
   });
 };
 
@@ -557,23 +558,26 @@ describe("planQsfImport", () => {
     expect(result.issues.map((issue) => issue.params?.cause)).not.toContain("ai_timeout");
   });
 
-  test("sizes each call's timeout to what is left before the deadline", async () => {
-    const hostile = loadRecordedPlan("hostile");
-    const timeouts: number[] = [];
-    const generate: TQsfPlanGenerate = async (request) => {
-      timeouts.push(request.timeout);
-      return { object: hostile };
-    };
+  test.each([45_000, 135_000])(
+    "clips a %i ms call budget to the remaining deadline",
+    async (callTimeoutMs) => {
+      const hostile = loadRecordedPlan("hostile");
+      const timeouts: number[] = [];
+      const generate: TQsfPlanGenerate = async (request) => {
+        timeouts.push(request.timeout);
+        return { object: hostile };
+      };
 
-    // 20 s left, 5 s of which are kept for assembly.
-    await plan("simple.qsf", generate, { deadlineInMs: 20_000 });
+      // 20 s left, 5 s of which are kept for assembly.
+      await plan("simple.qsf", generate, { deadlineInMs: 20_000, callTimeoutMs });
 
-    expect(timeouts).toHaveLength(2);
-    for (const timeout of timeouts) {
-      expect(timeout).toBeLessThanOrEqual(15_000);
-      expect(timeout).toBeGreaterThan(14_000);
+      expect(timeouts).toHaveLength(2);
+      for (const timeout of timeouts) {
+        expect(timeout).toBeLessThanOrEqual(15_000);
+        expect(timeout).toBeGreaterThan(14_000);
+      }
     }
-  });
+  );
 
   test("skips the retry when no time is left for it, dropping what failed", async () => {
     // 10.4 s to the deadline, 5 s kept for assembly: the first call gets 5.4 s and takes 0.5 s of it,
@@ -776,6 +780,7 @@ describe("planQsfImport retrying a call itself", () => {
       signal?: AbortSignal;
       abortAt?: { controller: AbortController; ms: number };
       fixture?: string;
+      callTimeoutMs?: number;
     } = {}
   ) => {
     const { survey, texts } = await prepare(options.fixture ?? "simple.qsf");
@@ -799,12 +804,13 @@ describe("planQsfImport retrying a call itself", () => {
         return respond(request, requests.length - 1);
       },
       signal: options.abortAt?.controller.signal ?? new AbortController().signal,
-      deadline: startedAt + 120_000,
+      deadline: startedAt + (options.callTimeoutMs === undefined ? 120_000 : 360_000),
+      callTimeoutMs: options.callTimeoutMs,
     }).then(
       (result) => ({ result, error: null as unknown }),
       (error: unknown) => ({ result: null, error })
     );
-    await vi.advanceTimersByTimeAsync(130_000);
+    await vi.advanceTimersByTimeAsync(options.callTimeoutMs === undefined ? 130_000 : 370_000);
     return { ...(await settled), requests };
   };
 
@@ -834,11 +840,12 @@ describe("planQsfImport retrying a call itself", () => {
     expect(requests).toHaveLength(1);
   });
 
-  test("waits out a 429 with a short Retry-After and sends the call again", async () => {
+  test.each([45_000, 135_000])("shares a %i ms call budget with retries", async (callTimeoutMs) => {
     const quota = new TooManyRequestsError("ai_quota_exceeded", 3);
 
-    const { result, error, requests } = await planRetrying((request, index) =>
-      index === 0 ? Promise.reject(quota) : answer(request)
+    const { result, error, requests } = await planRetrying(
+      (request, index) => (index === 0 ? Promise.reject(quota) : answer(request)),
+      { callTimeoutMs }
     );
 
     expect(error).toBeNull();
@@ -847,7 +854,8 @@ describe("planQsfImport retrying a call itself", () => {
     expect(requests.map((request) => request.refs.length)).toEqual([5, 5]);
     expect(requests[1].at).toBeGreaterThanOrEqual(3_000);
     // The retry gets what is left of the call's time, and the SDK never retries on its own.
-    expect(requests[1].timeout).toBeLessThanOrEqual(QSF_AI_CALL_TIMEOUT_MS - 3_000);
+    expect(requests[0].timeout).toBe(callTimeoutMs);
+    expect(requests[1].timeout).toBeLessThanOrEqual(callTimeoutMs - 3_000);
     expect(requests.every((request) => request.maxRetries === 0)).toBe(true);
   });
 

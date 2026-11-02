@@ -175,6 +175,24 @@ describe("translation threading", () => {
     expect(html).toContain("View survey summary");
     expect(html).not.toContain("more responses");
   });
+
+  test("points both opt-out links at the account notifications page", async () => {
+    const { WEBAPP_URL, survey, organization, workspaceId } = exampleData.responseFinishedEmail;
+    const html = await renderResponseFinishedEmail({
+      ...exampleData.responseFinishedEmail,
+      elements: responseFinishedElements,
+      t,
+    });
+
+    expect(html).toContain(
+      `${WEBAPP_URL}/account/settings/notifications?type=alert&amp;elementId=${survey.id}`
+    );
+    expect(html).toContain(
+      `${WEBAPP_URL}/account/settings/notifications?type=unsubscribedOrganizationIds&amp;elementId=${organization.id}`
+    );
+    expect(html).not.toContain(`/workspaces/${workspaceId}/settings/notifications`);
+    expect(html).toContain(`${WEBAPP_URL}/workspaces/${workspaceId}/surveys/${survey.id}/responses`);
+  });
 });
 
 describe("survey retention notice", () => {

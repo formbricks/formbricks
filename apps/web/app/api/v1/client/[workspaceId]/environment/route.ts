@@ -73,12 +73,16 @@ export const GET = withV1ApiWrapper({
       }
 
       const { data } = workspace;
+      const now = Date.now();
 
       return {
         response: responses.successResponse(
           {
             data,
-            expiresAt: new Date(Date.now() + 1000 * 60 * 60), // 1 hour for SDK to recheck
+            expiresAt: new Date(now + 1000 * 60 * 60), // 1 hour for SDK to recheck
+            // ENG-3994: per request, outside the cached `data`, so creative schedules can correct the
+            // visitor's clock (`getClockOffset` in @formbricks/creatives).
+            serverTime: new Date(now),
           },
           true,
           // Cache headers aligned with Redis cache TTL (1 minute)

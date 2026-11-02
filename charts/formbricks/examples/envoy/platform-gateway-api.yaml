@@ -1,0 +1,21 @@
+# The platform owns Gateway API v1.5.1; install Envoy Gateway v1.8.4 CRDs separately first.
+formbricks:
+  webappUrl: https://surveys.example.com
+envoy:
+  enabled: true
+  controller:
+    enabled: true
+  crds:
+    enabled: false
+  config:
+    envoyGateway:
+      rateLimit:
+        backend:
+          type: Redis
+          redis:
+            url: "redis.example.internal:6379"
+  formbricks:
+    policies:
+      enabled: true
+envoyRedis:
+  enabled: false

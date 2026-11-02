@@ -329,6 +329,27 @@ export type TCollectOptions = {
 
 type TPin = { prop: string; value: string };
 
+/**
+ * A Zod pattern is a `RegExp.source`, which always writes `/` as `\/` because a regex literal would
+ * otherwise end there; the contract's pattern is a plain string that never needs to. Both match the
+ * same thing, so the escape is dropped before comparing. Walks escape pairs rather than replacing
+ * text, so an escaped backslash before a slash (`\\\/`) keeps its backslash.
+ */
+const unescapeRegexSlashes = (source: string): string => {
+  let result = "";
+  for (let index = 0; index < source.length; index++) {
+    const char = source[index];
+    if (char === "\\" && index + 1 < source.length) {
+      const next = source[index + 1];
+      result += next === "/" ? "/" : `${char}${next}`;
+      index++;
+      continue;
+    }
+    result += char;
+  }
+  return result;
+};
+
 const scalarCells = (flat: IFlat, zodSide: boolean): TFactRow => {
   const row: TFactRow = {};
   const numeric = flat.types.has("number") || flat.types.has("integer");
@@ -339,7 +360,10 @@ const scalarCells = (flat: IFlat, zodSide: boolean): TFactRow => {
     if ((keyword === "minimum" || keyword === "maximum") && Math.abs(Number(value)) >= SAFE_INTEGER_BOUND)
       continue;
     if (keyword === "format" && numeric) continue; // int32/double are descriptive in this contract
-    row[keyword] = stringify(value);
+    row[keyword] =
+      zodSide && keyword === "pattern" && typeof value === "string"
+        ? unescapeRegexSlashes(value)
+        : stringify(value);
   }
   return row;
 };

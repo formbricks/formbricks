@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import type { TCreativeType } from "@formbricks/creatives";
 import { type TCustomCssInput, type TCustomCssScope } from "@formbricks/types/custom-css";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { validateCustomCss } from "../lib/api-client";
@@ -38,10 +39,12 @@ export const useCustomCssValidation = (params: {
   workspaceId: string;
   scope: TCustomCssScope;
   surveyId?: string | null;
+  /** A creative's own CSS: compiled for that creative's root element instead of `#fbjs`. */
+  creativeType?: TCreativeType;
   draft: TCustomCssDraft;
   enabled: boolean;
 }): TCustomCssValidationState => {
-  const { workspaceId, scope, surveyId, draft, enabled } = params;
+  const { workspaceId, scope, surveyId, creativeType, draft, enabled } = params;
   const input = normalizeCustomCssInput(draft);
   const currentKey = getCustomCssDraftKey(input);
   const debouncedKey = useDebouncedValue(currentKey, CUSTOM_CSS_VALIDATION_DEBOUNCE_MS);
@@ -50,8 +53,9 @@ export const useCustomCssValidation = (params: {
   const checkedInput = debouncedInput ?? NO_CSS;
 
   const query = useQuery({
-    queryKey: customCssKeys.validation({ workspaceId, scope, surveyId, input: checkedInput }),
-    queryFn: ({ signal }) => validateCustomCss({ workspaceId, scope, surveyId, input: checkedInput, signal }),
+    queryKey: customCssKeys.validation({ workspaceId, scope, surveyId, creativeType, input: checkedInput }),
+    queryFn: ({ signal }) =>
+      validateCustomCss({ workspaceId, scope, surveyId, creativeType, input: checkedInput, signal }),
     enabled: enabled && debouncedInput !== null && !isOverCustomCssByteLimit(scope, debouncedInput),
     // The same content always validates the same way within a session, and each entry can hold up to
     // twice the scope budget in source and output, so entries are reused but not hoarded.

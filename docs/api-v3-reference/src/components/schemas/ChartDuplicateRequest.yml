@@ -1,0 +1,19 @@
+type: object
+properties:
+  name:
+    type: string
+    minLength: 1
+    maxLength: 255
+    description: >-
+      Name for the copy, unique within the workspace. Without one the copy is named
+      "<original> (copy)", then "(copy 2)" and so on.
+  dashboardId:
+    type: string
+    format: cuid2
+    description: >-
+      Also put the copy on this dashboard, in the same transaction: if placing it fails, no copy is
+      left behind. Must be in the chart's workspace.
+  layout:
+    $ref: ./WidgetLayout.yml
+    description: Where to put the copy on `dashboardId`. Without one, the first open slot.
+additionalProperties: false

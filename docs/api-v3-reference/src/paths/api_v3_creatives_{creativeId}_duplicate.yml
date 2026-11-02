@@ -1,0 +1,52 @@
+post:
+  operationId: duplicateCreativeV3
+  summary: Duplicate a creative
+  description: >-
+    Copies a creative into a new **draft** named "<name> (copy)": same type, content, styling,
+    languages, Destination, distribution and schedule, with no counts. A survey Destination that can no
+    longer be one is left out of the copy, which then carries a `destinationMissing` warning. Works on
+    archived creatives too; the copy isn't archived. Read/write access to the creative's workspace;
+    an unknown or inaccessible `creativeId` answers **403**.
+  tags:
+    - V3 Creatives
+  parameters:
+    - $ref: ../components/parameters/CreativeIdPath.yml
+  responses:
+    "201":
+      description: Copy created
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Location:
+          schema:
+            type: string
+          description: URL of the copy.
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/CreativeResource.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3CreativesForbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

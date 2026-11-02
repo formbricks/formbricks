@@ -95,6 +95,7 @@ export async function streamV3SurveyGeneration({
   }
 
   return createNdjsonResponse<TSurveyGenerationStreamEvent>({
+    heartbeat: { intervalMs: 10_000, event: () => ({ type: "heartbeat" }) },
     produce: async (emit) => {
       emit({ type: "start", requestId });
 
@@ -140,7 +141,7 @@ export async function streamV3SurveyGeneration({
       }
     },
     onError: (error) => {
-      if (isClientAbort(error, generationAbort.signal)) {
+      if (isClientAbort(generationAbort.signal)) {
         // A user pressing Stop is not an incident and must not page anyone. The socket is already
         // gone, so there is nothing to tell them either.
         log.info("AI survey generation aborted by the client");

@@ -186,6 +186,11 @@ export const createOrganization = async (
       select,
     });
 
+    logger.warn(
+      { securityEvent: "organization.created", organizationId: organization.id },
+      "Organization created"
+    );
+
     return mapOrganization(organization);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {

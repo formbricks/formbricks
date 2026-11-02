@@ -1,4 +1,4 @@
-import next from "@formbricks/config-eslint/next";
+import next, { nextCacheRestriction } from "@formbricks/config-eslint/next";
 
 /*
  * Environment access goes through the validated env module (ENG-1685).
@@ -135,6 +135,7 @@ const config = [
         "error",
         {
           paths: [
+            nextCacheRestriction,
             {
               name: "@formbricks/api-v3-schemas/testing",
               message: "Test-only entry point; import the generated schemas from @formbricks/api-v3-schemas.",

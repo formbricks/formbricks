@@ -21,7 +21,21 @@ const mocks = vi.hoisted(() => ({
   log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 
+const aiTimeoutEnv = vi.hoisted(() => ({ multiplier: 1 }));
+
 vi.mock("server-only", () => ({}));
+vi.mock("@/lib/env", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@/lib/env")>();
+  return {
+    ...original,
+    env: {
+      ...original.env,
+      get AI_TIMEOUT_MULTIPLIER() {
+        return aiTimeoutEnv.multiplier;
+      },
+    },
+  };
+});
 vi.mock("@/app/api/v3/lib/auth", () => ({ requireV3WorkspaceAccess: mocks.requireV3WorkspaceAccess }));
 vi.mock("@/app/api/v3/surveys/lib/operations", () => ({
   getSessionUserId: (authentication: { user?: { id?: string } }) => authentication?.user?.id ?? null,
@@ -105,6 +119,7 @@ const hangUntilAborted = () =>
 
 describe("streamQsfImport", () => {
   beforeEach(() => {
+    aiTimeoutEnv.multiplier = 1;
     vi.clearAllMocks();
     mocks.requireV3WorkspaceAccess.mockResolvedValue({
       organizationId: "org_1",
@@ -319,13 +334,19 @@ describe("streamQsfImport", () => {
       expect(signal.aborted).toBe(true);
     });
 
-    test("stops at the deadline and says so", async () => {
+    test.each([1, 3])("stops at its scaled deadline (%i) and says so", async (multiplier) => {
+      aiTimeoutEnv.multiplier = multiplier;
       vi.useFakeTimers();
       hangUntilAborted();
 
       const response = await call();
       const events = readEvents(response);
-      await vi.advanceTimersByTimeAsync(QSF_IMPORT_DEADLINE_MS);
+      expect(mocks.runQsfImport).toHaveBeenCalledWith(
+        expect.objectContaining({ deadlineMs: QSF_IMPORT_DEADLINE_MS * multiplier })
+      );
+      await vi.advanceTimersByTimeAsync(QSF_IMPORT_DEADLINE_MS * multiplier - 1);
+      expect(mocks.runQsfImport.mock.calls[0][0].signal.aborted).toBe(false);
+      await vi.advanceTimersByTimeAsync(1);
 
       expect((await events).at(-1)).toMatchObject({ type: "error", code: "import_timed_out" });
       expect(mocks.log.info).toHaveBeenCalledWith(

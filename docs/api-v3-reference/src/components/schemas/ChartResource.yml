@@ -1,0 +1,76 @@
+type: object
+description: >-
+  A chart: one saved visualisation of one Feedback Dataset. It belongs to a workspace and can sit
+  on any number of dashboards — `dashboards` lists them, so a caller can see what an edit or a
+  delete would affect.
+required:
+  - id
+  - workspaceId
+  - datasetId
+  - name
+  - type
+  - query
+  - config
+  - creator
+  - dashboards
+  - createdAt
+  - updatedAt
+properties:
+  id:
+    type: string
+    format: cuid2
+  workspaceId:
+    type: string
+    format: cuid2
+  datasetId:
+    type: string
+    format: cuid2
+    description: The Feedback Dataset the chart reads. Fixed when the chart is created.
+  name:
+    type: string
+    description: Unique within the workspace.
+  type:
+    type: string
+    enum:
+      - area
+      - bar
+      - pie
+      - big_number
+      - matrix
+  query:
+    $ref: ./ChartQuery.yml
+  config:
+    $ref: ./ChartConfig.yml
+  creator:
+    description: Who created the chart, for display only; `null` once that user is gone.
+    oneOf:
+      - type: object
+        required:
+          - name
+        properties:
+          name:
+            type: string
+        additionalProperties: false
+      - type: "null"
+  dashboards:
+    type: array
+    description: The dashboards that hold the chart, by name.
+    items:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          format: cuid2
+        name:
+          type: string
+      additionalProperties: false
+  createdAt:
+    type: string
+    format: date-time
+  updatedAt:
+    type: string
+    format: date-time
+additionalProperties: false

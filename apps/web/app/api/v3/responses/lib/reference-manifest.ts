@@ -194,6 +194,13 @@ export const V3_RESPONSE_DENIED_FIELDS = [
 
 /**
  * Nested fields that must never appear. The routes derive these from the request, so a caller-supplied
- * value would be fiction — and, stored in `meta`, a forgeable one.
+ * value would be fiction — and, stored in `meta`, a forgeable one. The opened-by-creative pair (ENG-4001)
+ * is stamped only by the client ingest routes, after they check the creative opens that survey.
  */
-export const V3_RESPONSE_DENIED_NESTED_FIELDS = ["meta.country", "meta.userAgent", "meta.ipAddress"] as const;
+export const V3_RESPONSE_DENIED_NESTED_FIELDS = [
+  "meta.country",
+  "meta.userAgent",
+  "meta.ipAddress",
+  "meta.openedByCreativeId",
+  "meta.openedByCreativeName",
+] as const;

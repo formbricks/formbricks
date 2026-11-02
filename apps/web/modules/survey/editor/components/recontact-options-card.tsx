@@ -5,6 +5,9 @@ import { CheckIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { cn } from "@/lib/cn";
+import type { TCreativeOpenedMode } from "@/modules/ee/creatives/lib/survey-side";
+import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { RadioGroup, RadioGroupItem } from "@/modules/ui/components/radio-group";
@@ -25,10 +28,24 @@ interface WaitingTimeOption {
 interface RecontactOptionsCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
+  /**
+   * How creatives open the survey, if any. A click ignores these settings (ENG-3579): they are
+   * switched off when only creatives open it, and noted as popup-only when it has actions too.
+   */
+  creativeOpenedMode?: TCreativeOpenedMode | null;
 }
 
-export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactOptionsCardProps) => {
+export const RecontactOptionsCard = ({
+  localSurvey,
+  setLocalSurvey,
+  creativeOpenedMode = null,
+}: Readonly<RecontactOptionsCardProps>) => {
   const { t } = useTranslation();
+  const isDisabled = creativeOpenedMode === "creativesOnly";
+  const creativeNote: Record<TCreativeOpenedMode, string> = {
+    creativesOnly: t("workspace.creatives.survey_side.recontact_creatives_only"),
+    creativesAndActions: t("workspace.creatives.survey_side.recontact_creatives_and_actions"),
+  };
 
   const waitingTimeOptions: WaitingTimeOption[] = useMemo(
     () => [
@@ -174,7 +191,14 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
       <Collapsible.CollapsibleContent
         className={`flex flex-col ${open && "pb-3"} overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down`}>
         <hr className="py-1 text-slate-600" />
-        <div className="p-3">
+        {creativeOpenedMode && (
+          <div className="px-3 pt-3">
+            <Alert variant="info" size="small" role="status">
+              <AlertDescription>{creativeNote[creativeOpenedMode]}</AlertDescription>
+            </Alert>
+          </div>
+        )}
+        <div className={cn("p-3", isDisabled && "opacity-60")}>
           {/* Waiting Time Section */}
           <div className="mb-4 space-y-1 px-1">
             <h3 className="font-semibold text-slate-800">
@@ -188,12 +212,16 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
           <RadioGroup
             value={getWaitingTimeOption()}
             className="flex flex-col gap-y-3"
+            disabled={isDisabled}
             onValueChange={handleWaitingTimeChange}>
             {waitingTimeOptions.map((option) => (
               <div key={option.id}>
                 <Label
                   htmlFor={`cooldown-period-${option.id}`}
-                  className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4"
+                  className={cn(
+                    "flex w-full items-center rounded-lg border bg-slate-50 p-4",
+                    isDisabled ? "cursor-not-allowed" : "cursor-pointer"
+                  )}
                   data-testid={`cooldown-period-option-${option.id}`}>
                   <RadioGroupItem
                     value={option.id}
@@ -218,6 +246,7 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
                                 min="1"
                                 max="365"
                                 id="overwriteDays"
+                                disabled={isDisabled}
                                 value={inputDays}
                                 onChange={handleOverwriteDaysChange}
                                 className="mr-2 ml-2 inline w-20 bg-white text-center text-sm"
@@ -236,7 +265,7 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
 
         <hr className="my-3 text-slate-600" />
 
-        <div className="p-3">
+        <div className={cn("p-3", isDisabled && "opacity-60")}>
           {/* Recontact Options Section */}
           <div className="mb-4 space-y-1 px-1">
             <h3 className="font-semibold text-slate-800">
@@ -250,6 +279,7 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
           <RadioGroup
             value={localSurvey.displayOption}
             className="flex flex-col gap-y-3"
+            disabled={isDisabled}
             onValueChange={(v) => {
               if (v === "displayOnce" || v === "displayMultiple" || v === "respondMultiple") {
                 const updatedSurvey: TSurvey = { ...localSurvey, displayOption: v };
@@ -268,7 +298,10 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
                 <Label
                   key={option.name}
                   htmlFor={`recontact-option-${option.id}`}
-                  className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4"
+                  className={cn(
+                    "flex w-full items-center rounded-lg border bg-slate-50 p-4",
+                    isDisabled ? "cursor-not-allowed" : "cursor-pointer"
+                  )}
                   data-testid={`recontact-option-${option.id}`}>
                   <RadioGroupItem
                     value={option.id}
@@ -293,6 +326,7 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
                                 type="number"
                                 min="1"
                                 id="displayLimit"
+                                disabled={isDisabled}
                                 value={displayLimit.toString()}
                                 onChange={(e) => handleDisplayLimitChange(e)}
                                 className="mr-2 ml-2 inline w-20 bg-white text-center text-sm"

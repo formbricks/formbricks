@@ -6,6 +6,7 @@ export const mockDisplay: Display = {
   updatedAt: new Date(),
   contactId: "con_1",
   surveyId: "rp2di001zicbm3mk8je1ue9u",
+  creativeId: null,
 };
 
 export const displayId = "jcvb2vzt7ok3ftjsds4gt1gm";

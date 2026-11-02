@@ -1,7 +1,9 @@
+import { getClockOffset } from "@formbricks/creatives";
 import { ApiClient } from "@/lib/common/api";
 import { Config } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
 import { filterSurveys, getIsDebug } from "@/lib/common/utils";
+import { reconcileCreatives } from "@/lib/creatives/creatives";
 import type { TWorkspaceState } from "@/types/config";
 import { type ApiErrorResponse, type Result, err, ok } from "@/types/error";
 
@@ -52,7 +54,8 @@ export const fetchWorkspaceState = async ({
       delete legacyData.workspace;
     }
 
-    return ok(rawData);
+    // Worked out on arrival and kept with the state: creative schedules run on the server's clock.
+    return ok({ ...rawData, clockOffset: getClockOffset(rawData.serverTime, Date.now()) });
   } catch (e: unknown) {
     const errorTyped = e as ApiErrorResponse;
     return err({
@@ -102,6 +105,9 @@ export const addWorkspaceStateExpiryCheckListener = (): void => {
             workspace: state,
             filteredSurveys,
           });
+
+          // Creative writes reach a visitor here, without waiting for the next page view.
+          reconcileCreatives();
         } else {
           throw new Error(
             `Error fetching workspace state: ${workspace.error.code} - ${workspace.error.responseMessage ?? workspace.error.message}`

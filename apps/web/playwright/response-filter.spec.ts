@@ -1,19 +1,21 @@
 import { createId } from "@paralleldrive/cuid2";
 import { type Page, expect } from "@playwright/test";
+import { readFile } from "node:fs/promises";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { type TSurveyEnding } from "@formbricks/types/surveys/types";
 import { transformQuestionsToBlocks } from "@/app/lib/api/survey-transformation";
 import { test } from "./lib/fixtures";
+import { addAdvancedRule, clearAllFilters } from "./utils/table-toolbar";
 
 /**
  * **Filtering responses by a reserved field, end to end (ENG-1848).**
  *
  * The unit suites pin every layer on its own: enumeration and gating (getReservedFilterEntries),
  * the criteria mapping (getFormattedFilters), and the Prisma translation (buildWhereClause). This
- * walks the seam none of them reach — the real page: the filter dropdown offers the catalog field,
- * the observed value is pickable, Apply narrows the table through the real query, and the
- * no-value "Is not set" operator inverts it.
+ * walks the seam none of them reach — the real page: Advanced filter offers the catalog field, a rule
+ * on it narrows the table through the real query, the no-value "is not set" operator inverts it, and
+ * the filter follows the URL to Summary and into the filtered download (ENG-3536).
  */
 type I18n = { default: string };
 const i18nValue = (value: string): I18n => ({ default: value });
@@ -70,7 +72,10 @@ const submitAnswer = async (page: Page, answer: string): Promise<void> => {
 };
 
 test.describe("Response filtering by reserved fields @slow", () => {
-  test("filters the table by UTM Source, including the no-value Is-set family", async ({ page, users }) => {
+  test("filters the table by UTM Source, including the no-value Is-set family", async ({
+    page,
+    users,
+  }, testInfo) => {
     const owner = await users.create({ skipSurveySeed: true });
     if (!owner.workspaceId) throw new Error("users.create() did not return a workspaceId");
     const surveyId = await seedSurvey(owner.workspaceId, owner.id);
@@ -93,36 +98,38 @@ test.describe("Response filtering by reserved fields @slow", () => {
     await expect(page.getByText(CAMPAIGN_ANSWER).first()).toBeVisible({ timeout: 60000 });
     await expect(page.getByText(BARE_ANSWER).first()).toBeVisible();
 
-    await test.step("UTM Source equals newsletter → only the campaign response remains", async () => {
-      await page.getByRole("button", { name: /^Filter/ }).click();
-      await page.getByRole("button", { name: "Add filter" }).click();
-
-      // The field dropdown offers the catalog entry even though only one response carries it.
-      // The option list only renders after the combobox is clicked open.
-      await page.getByPlaceholder("Select filter").click();
-      await page.getByPlaceholder("Search...").fill("UTM Source");
-      await page.getByRole("option", { name: "UTM Source" }).click();
-
-      // Default operator is Equals; the observed value is offered in the combobox.
-      await page.getByText("Select...", { exact: true }).click();
-      await page.getByRole("option", { name: "newsletter" }).click();
-      await page.getByRole("button", { name: "Apply filters" }).click();
+    await test.step("UTM Source is newsletter → only the campaign response remains", async () => {
+      await addAdvancedRule(page, { property: "UTM Source", operator: "is", value: "newsletter" });
 
       // Positive first: once the expected row has re-rendered, the absence check is meaningful
       // (an empty still-loading table would satisfy toHaveCount(0) immediately).
       await expect(page.getByText(CAMPAIGN_ANSWER).first()).toBeVisible();
       await expect(page.getByText(BARE_ANSWER)).toHaveCount(0);
+      await expect(page.getByTestId("table-match-count")).toHaveText("1 result");
     });
 
     await test.step("UTM Source is not set → only the bare response remains", async () => {
-      await page.getByRole("button", { name: /^Filter/ }).click();
-      // Switch the operator on the existing row; "Is not set" needs no value at all.
-      await page.getByRole("button", { name: "Equals" }).click();
-      await page.getByRole("menuitem", { name: "Is not set" }).click();
-      await page.getByRole("button", { name: "Apply filters" }).click();
+      await clearAllFilters(page);
+      await addAdvancedRule(page, { property: "UTM Source", operator: "is not set" });
 
       await expect(page.getByText(BARE_ANSWER).first()).toBeVisible();
       await expect(page.getByText(CAMPAIGN_ANSWER)).toHaveCount(0);
+    });
+
+    await test.step("the filter follows to Summary and into the filtered download", async () => {
+      await page.getByRole("link", { name: "Summary" }).click();
+      await expect(page).toHaveURL(/\/summary\?filter%5Bmeta\.utmSource%5D%5BisNotSet%5D=true/);
+      await expect(page.getByTestId("table-match-count")).toHaveText("1 result");
+
+      await page.getByRole("button", { name: "Download" }).click();
+      const downloadPromise = page.waitForEvent("download");
+      await page.getByTestId("fb__custom-filter-download-filtered-csv").click();
+      const download = await downloadPromise;
+      const csvPath = testInfo.outputPath(download.suggestedFilename());
+      await download.saveAs(csvPath);
+      const csv = await readFile(csvPath, "utf8");
+      expect(csv).toContain(BARE_ANSWER);
+      expect(csv).not.toContain(CAMPAIGN_ANSWER);
     });
   });
 });

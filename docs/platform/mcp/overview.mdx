@@ -4,7 +4,7 @@ description: "Let AI assistants like Claude and Codex read and manage your Formb
 icon: "robot"
 ---
 
-Formbricks ships a **Model Context Protocol (MCP) server** that lets AI assistants — Claude Code, the Claude apps, Codex, and other MCP-capable clients — work with your workspace: list and read surveys, create link surveys, update or delete them, and read or add Unify Feedback records. The agent goes through the same APIs and permission checks you use in the app, so it always respects your permissions.
+Formbricks ships a **Model Context Protocol (MCP) server** that lets AI assistants — Claude Code, the Claude apps, Codex, and other MCP-capable clients — work with your workspace: list and read surveys, create link surveys, update or delete them, manage feedback buttons and banners, and read or add Unify Feedback records. The agent goes through the same APIs and permission checks you use in the app, so it always respects your permissions.
 
 You connect a client **with your own Formbricks login over OAuth 2.1** — there are no API keys to generate, copy, or paste. You approve the connection once on a consent screen, and you can revoke it at any time.
 
@@ -36,24 +36,30 @@ The whole flow uses Authorization Code + PKCE, the standard the [MCP authorizati
 
 ## What the agent can do
 
-The MCP server exposes survey, workflow, response and feedback-record tools, grouped into
+The MCP server exposes survey, creative, workflow, response, feedback-record, chart and dashboard tools, grouped into
 authorization scopes. Read tools require the matching `:read` scope; tools that create, update, or
 delete require the `:write` scope. Everything below is offered on the consent screen:
 
 | Scope | Tools | What it allows |
 | --- | --- | --- |
-| `surveys:read` | `list_surveys`, `get_survey`, `validate_survey`, `get_workspace_custom_css` | Read surveys and their custom CSS, and validate survey documents and CSS |
-| `surveys:write` | `create_survey`, `patch_survey`, `edit_survey_blocks`, `set_survey_block_order`, `delete_survey`, `patch_workspace_custom_css` | Create, update, and delete surveys, and save a workspace's shared survey CSS — which additionally needs an organization owner or manager |
+| `surveys:read` | `list_surveys`, `get_survey`, `validate_survey`, `get_workspace_custom_css`, `list_creatives`, `get_creative`, `get_creative_stats` | Read surveys, creatives and their counts, and surveys' custom CSS, and validate survey documents and CSS |
+| `surveys:write` | `create_survey`, `patch_survey`, `edit_survey_blocks`, `set_survey_block_order`, `delete_survey`, `patch_workspace_custom_css`, `create_creative`, `patch_creative`, `delete_creative`, `duplicate_creative`, `archive_creative`, `restore_creative` | Create, update, and delete surveys and creatives, and save a workspace's shared survey CSS — which additionally needs an organization owner or manager |
 | `workflows:read` | `list_workflows`, `get_workflow`, `list_workflow_runs`, `get_workflow_run`, `test_workflow`¹ | Read workflows and their runs |
 | `workflows:write` | `create_workflow`, `patch_workflow`, `duplicate_workflow`, `delete_workflow`, `enable_workflow`, `disable_workflow`, `archive_workflow`, `unarchive_workflow` | Create, update, and delete workflows |
 | `feedbackRecords:read` | `list_feedback_datasets`, `list_feedback_records`, `count_feedback_records`, `get_feedback_record`, `search_feedback_records`, `find_similar_feedback_records` | Read, count and search feedback records in a workspace's feedback dataset |
 | `feedbackRecords:write` | `create_feedback_record`, `create_feedback_records`, `update_feedback_record`², `delete_feedback_record`² | Create, correct and delete feedback records |
 | `responses:read` | `list_responses`, `count_responses`, `get_response` | Read and count survey responses |
 | `responses:write` | `validate_response`, `create_response`, `update_response`, `delete_response`, `batch_delete_responses` | Record, correct and delete survey responses |
+| `dashboards:read` | `list_chart_fields`, `list_charts`, `get_chart`, `list_dashboards`, `get_dashboard`; with `feedbackRecords:read` also `preview_chart`³, `get_chart_data`³, `list_chart_field_values`³ | Read charts and dashboards, the fields a chart can use, and — with feedback-record access — the numbers behind them |
+| `dashboards:write` | `create_chart`, `update_chart`, `duplicate_chart`, `create_dashboard`, `update_dashboard`, `duplicate_dashboard`, `update_dashboard_layout`, `add_chart_to_dashboard`, `update_widget`, `remove_chart_from_dashboard` | Create and change charts and dashboards. There is no tool that deletes a chart or a dashboard |
 
 ¹ `test_workflow` is a dry-run (no changes are saved), so it only needs the `workflows:read` scope — but because it evaluates the live workflow definition, it requires **write or manage** permission on the workspace. A read-only member will get a 403 even though the scope matches.
 
 ² Changing a record that already exists is held to a higher bar than creating one, because a feedback dataset shared across workspaces has no way to tell whose records are whose. Connected over **OAuth** (the flow on this page), both tools require you to be an **organization owner or manager**. Authenticated with an **API key** instead, they require the dataset to be assigned to a **single workspace** — a workspace-scoped key cannot be shown to own a record in a shared one — and `delete_feedback_record` additionally requires **manage** permission, matching `DELETE` elsewhere in the API. Creating, reading and searching are unaffected either way.
+
+³ A chart's rows are respondents' answers in aggregate, so reading them needs `feedbackRecords:read` as well as
+`dashboards:read` — a dashboards grant alone never reaches feedback. The same tools also need read access to the
+chart's feedback dataset.
 
 A response is someone's submitted answers, so grant `responses:read` deliberately — it is respondent
 data, which `surveys:read` never exposes. An integration you connected before these scopes existed
@@ -68,6 +74,23 @@ workspace id.
   The feedback-record tools work with **Unify Feedback** data and need the Enterprise Edition
   (`feedbackDirectories`), plus a feedback dataset assigned to the workspace. Without the entitlement or a
   directory, those tools return an authorization or validation error while the survey tools keep working.
+</Note>
+
+<Note>
+  The chart and dashboard tools need the **Dashboards** feature (an add-on on Formbricks Cloud, or an Enterprise
+  license that includes it). Without it they answer `dashboards_plan_required`. A chart can sit on several
+  dashboards, so `update_chart` changes it on all of them; to change it on one, `duplicate_chart` and point that
+  dashboard's widget at the copy with `update_widget`. `duplicate_dashboard` shares the original's charts rather
+  than copying them, and `remove_chart_from_dashboard` keeps the chart.
+</Note>
+
+<Note>
+  The creative tools manage [Creatives](/surveys/creatives/overview), the feedback buttons and banners on your
+  website. They need a self-hosted instance whose Enterprise license includes Creatives; elsewhere they answer
+  `creatives_not_entitled`. If the license stops including Creatives, the tools can still list and read
+  creatives and pause, close or delete them. A creative is created as a draft unless `create_creative` sets
+  `status`, `patch_creative` replaces each group it sends as a whole, and `restore_creative` always brings a
+  creative back as a draft.
 </Note>
 
 <Warning>

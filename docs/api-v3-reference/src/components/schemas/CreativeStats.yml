@@ -1,0 +1,62 @@
+type: object
+description: >
+  A creative's Impressions and Clicks over a range of UTC days. An **Impression** is one page view on
+  which the creative showed (showing it again on the same page adds none; a new page, a single-page-app
+  route change included, does). A **Click** is one press that opened its Destination; dismissing a
+  banner, or pressing while its survey is already open, isn't one. `clickRate` is Clicks divided by
+  Impressions, as a fraction (`0.05` is 5 %), or `null` without Impressions.
+
+
+  `totals` and every breakdown count the same events, so `days`, `pages` and `devices` each add up to
+  `totals`.
+required:
+  - creativeId
+  - from
+  - to
+  - groupBy
+  - totals
+  - days
+properties:
+  creativeId:
+    type: string
+    format: cuid2
+  from:
+    type: string
+    format: date
+    description: First UTC day counted, inclusive.
+  to:
+    type: string
+    format: date
+    description: Last UTC day counted, inclusive.
+  groupBy:
+    type:
+      - string
+      - "null"
+    enum:
+      - page
+      - device
+      - null
+    description: The breakdown requested, which adds `pages` or `devices`; `null` for none.
+  totals:
+    $ref: ./CreativeStatsCounts.yml
+  days:
+    type: array
+    description: One entry per UTC day from `from` to `to`, oldest first, days without counts included.
+    items:
+      $ref: ./CreativeStatsDay.yml
+  pages:
+    type: array
+    description: >-
+      Only with `groupBy=page`. Where the Impressions and Clicks happened, most Impressions first, at
+      most 100 pages. `(other)` sums every page not listed, including pages beyond the 1000 a creative
+      counts per day; it comes last and only when it has counts.
+    items:
+      $ref: ./CreativeStatsPage.yml
+  devices:
+    type: array
+    description: >-
+      Only with `groupBy=device`. The counts per device type, always `phone`, `tablet` and `desktop`,
+      in that order.
+    items:
+      $ref: ./CreativeStatsDevice.yml
+additionalProperties: false

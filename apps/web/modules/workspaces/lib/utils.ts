@@ -1,15 +1,10 @@
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
-import {
-  AuthenticationError,
-  AuthorizationError,
-  DatabaseError,
-  ResourceNotFoundError,
-} from "@formbricks/types/errors";
+import { AuthenticationError, DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { can } from "@/lib/authorization";
 import { withAuthorizationSurface } from "@/lib/authorization/context";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
@@ -36,7 +31,7 @@ import { TWorkspaceAuth, TWorkspaceLayoutData } from "@/modules/workspaces/types
  * than relying on the route layout to gate, so it is safe to reuse from any page or
  * route. Billing-role members are redirected to billing/enterprise screens; any org
  * member without a WorkspaceTeam grant (and who is not an owner/manager) is rejected
- * with an AuthorizationError instead of being silently admitted as a writer.
+ * with a 404 instead of being silently admitted as a writer.
  *
  * Opened as the `page` authorization surface (ENG-2388). Every product page funnels through here, so
  * this wrapper attributes authoritative decisions and checks-per-request telemetry to page traffic.
@@ -51,8 +46,10 @@ const resolveWorkspaceAuth = async (workspaceId: string): Promise<TWorkspaceAuth
 
   const [workspace, session] = await Promise.all([getWorkspace(workspaceId), getSession()]);
 
+  // A missing workspace and a workspace this user may not read both 404 (ENG-3974): the page must not
+  // reveal which ids exist, and an error boundary would misreport either as a backend failure.
   if (!workspace) {
-    throw new ResourceNotFoundError(t("common.workspace"), workspaceId);
+    return notFound();
   }
 
   if (!session) {
@@ -67,7 +64,7 @@ const resolveWorkspaceAuth = async (workspaceId: string): Promise<TWorkspaceAuth
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session.user.id, organization.id);
   if (!currentUserMembership) {
-    throw new AuthorizationError(t("common.membership_not_found"));
+    return notFound();
   }
 
   const { isMember, isOwner, isManager, isBilling } = getAccessFlags(currentUserMembership.role);
@@ -101,7 +98,7 @@ const resolveWorkspaceAuth = async (workspaceId: string): Promise<TWorkspaceAuth
   ]);
 
   if (!hasWorkspaceAccess) {
-    throw new AuthorizationError(t("common.not_authorized"));
+    return notFound();
   }
 
   const { hasReadAccess, hasReadWriteAccess, hasManageAccess } = getTeamPermissionFlags(workspacePermission);
@@ -188,7 +185,7 @@ const resolveWorkspaceIdLayoutChecks = async (workspaceId: string) => {
   });
 
   if (!workspace) {
-    throw new ResourceNotFoundError(t("common.workspace"), workspaceId);
+    return notFound();
   }
 
   // Navigation, not data: these layouts are also what a billing-role member has to pass
@@ -199,7 +196,7 @@ const resolveWorkspaceIdLayoutChecks = async (workspaceId: string) => {
     organizationId: workspace.organization.id,
   });
   if (!hasAccess) {
-    throw new AuthorizationError(t("common.not_authorized"));
+    return notFound();
   }
 
   return { t, session, user, organization: workspace.organization };
@@ -356,7 +353,7 @@ const resolveWorkspaceLayoutData = async (
   // nothing extra; it only moves.
   const relationData = await getWorkspaceWithRelations(workspaceId, userId);
   if (!relationData) {
-    throw new ResourceNotFoundError(t("common.workspace"), workspaceId);
+    return notFound();
   }
 
   const { workspace, organization, membership } = relationData;
@@ -367,12 +364,8 @@ const resolveWorkspaceLayoutData = async (
     id: workspace.id,
     organizationId: organization.id,
   });
-  if (!hasAccess) {
-    throw new AuthorizationError(t("common.not_authorized"));
-  }
-
-  if (!membership) {
-    throw new AuthorizationError(t("common.membership_not_found"));
+  if (!hasAccess || !membership) {
+    return notFound();
   }
 
   const [isAccessControlAllowed, workspacePermission, license] = await Promise.all([

@@ -34,6 +34,7 @@ import {
   getTextContent,
 } from "@formbricks/types/surveys/validation";
 import { extractLanguageCodes, getLocalizedValue } from "@/lib/i18n/utils";
+import { isAppSurveyMissingTriggersToPublish } from "@/lib/survey/publish-rule";
 import { checkForEmptyFallBackValue } from "@/lib/utils/recall";
 
 // Utility function to check if label is valid for all required languages
@@ -271,17 +272,25 @@ export const isEndingCardValid = (
 };
 
 /**
- * Whether saving `survey` at `targetStatus` would leave an app survey live with nothing that can
- * ever display it. `ZSurveyType` is `"link" | "app"`, so this is the client-side twin of the
- * server's `isAppSurveyMissingTriggersToPublish` — that module is `server-only`, hence the
- * duplication rather than an import.
+ * Whether saving `survey` at `targetStatus` would leave an app survey live with nothing that can ever
+ * display it: the server's own publish rule, run before the save so the editor never promises one the
+ * server refuses.
  *
  * `targetStatus` is the status the survey is heading for, not the one it has: publishing a draft
- * ("inProgress") and scheduling one ("paused") both need a trigger, while saving it as a draft does
- * not. Falsy entries are dropped because the editor's trigger array can hold holes.
+ * ("inProgress") and scheduling one ("paused") both need a trigger or a creative that opens it, while
+ * saving it as a draft does not.
  */
-export const isMissingRequiredTrigger = (survey: TSurvey, targetStatus: TSurveyStatus): boolean =>
-  survey.type !== "link" && targetStatus !== "draft" && (survey.triggers ?? []).filter(Boolean).length === 0;
+export const isMissingRequiredTrigger = (
+  survey: TSurvey,
+  targetStatus: TSurveyStatus,
+  isOpenedByCreative: boolean
+): boolean =>
+  isAppSurveyMissingTriggersToPublish({
+    type: survey.type,
+    status: targetStatus,
+    triggers: survey.triggers,
+    isOpenedByCreative,
+  });
 
 export const isSurveyValid = (
   survey: TSurvey,

@@ -1,0 +1,66 @@
+type: object
+description: >-
+  Display settings, kept apart from the chart query. Every key is optional; each applies to the
+  chart types named in its description and is ignored by the others.
+properties:
+  barOrientation:
+    type: string
+    enum: [vertical, horizontal]
+    description: Bar charts. Defaults to `vertical`.
+  pieDisplay:
+    type: string
+    enum: [pie, breakdown]
+    description: Pie charts. Defaults to `pie`.
+  areaDisplay:
+    type: string
+    enum: [filled, line]
+    description: Area charts. Defaults to `filled`.
+  matrixCellValue:
+    type: string
+    enum: [percent, count, both]
+    description: Matrix charts. Defaults to `percent`.
+  matrixColorScale:
+    type: boolean
+    description: Matrix charts. Defaults to `true`.
+  matrixShowTotals:
+    type: boolean
+    description: Matrix charts. Defaults to `false`.
+  matrixTranspose:
+    type: boolean
+    description: Matrix charts. Swaps rows and columns on screen; the query is unchanged.
+  colors:
+    type: array
+    maxItems: 50
+    items:
+      type: string
+      maxLength: 64
+  xAxisLabel:
+    type: string
+    maxLength: 255
+  yAxisLabel:
+    type: string
+    maxLength: 255
+  showLegend:
+    type: boolean
+  legendPosition:
+    type: string
+    enum: [top, bottom, left, right]
+  stacked:
+    type: boolean
+  showGrid:
+    type: boolean
+  showValues:
+    type: boolean
+  numberFormat:
+    type: string
+    maxLength: 64
+  dateFormat:
+    type: string
+    maxLength: 64
+  prefix:
+    type: string
+    maxLength: 32
+  suffix:
+    type: string
+    maxLength: 32
+additionalProperties: false

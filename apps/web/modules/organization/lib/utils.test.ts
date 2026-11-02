@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { AuthenticationError } from "@formbricks/types/errors";
 import { TMembership } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 import { can } from "@/lib/authorization";
@@ -8,6 +8,12 @@ import { getOrganization } from "@/lib/organization/service";
 import { getSession } from "@/modules/auth/lib/session";
 import { getOrganizationAuth } from "./utils";
 
+// `notFound` throws, as the real one does, so a 404 ends the helper instead of falling through.
+vi.mock("next/navigation", () => ({
+  notFound: vi.fn(() => {
+    throw new Error("NEXT_NOT_FOUND");
+  }),
+}));
 vi.mock("@/lib/membership/service", () => ({
   getMembershipByUserIdOrganizationId: vi.fn(),
 }));
@@ -73,30 +79,30 @@ describe("getOrganizationAuth", () => {
     await expect(getOrganizationAuth("org-1")).rejects.toThrow(AuthenticationError);
   });
 
-  test("throws if organization is missing", async () => {
+  test("404s if organization is missing", async () => {
     vi.mocked(getSession).mockResolvedValue(mockSession);
     vi.mocked(getOrganization).mockResolvedValue(null);
-    await expect(getOrganizationAuth("org-1")).rejects.toThrow(ResourceNotFoundError);
+    await expect(getOrganizationAuth("org-1")).rejects.toThrow("NEXT_NOT_FOUND");
   });
 
-  test("throws if membership is missing", async () => {
+  test("404s if membership is missing", async () => {
     vi.mocked(getSession).mockResolvedValue(mockSession);
     vi.mocked(getOrganization).mockResolvedValue(mockOrg);
     vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue(null);
-    await expect(getOrganizationAuth("org-1")).rejects.toThrow(ResourceNotFoundError);
+    await expect(getOrganizationAuth("org-1")).rejects.toThrow("NEXT_NOT_FOUND");
   });
 
   // ENG-2409: the gate half of that throw, isolated. Unreachable under the legacy evaluator, where
   // `organization.read` and "has a membership row" are the same condition — but reachable under
   // SpiceDB enforcement if projection drifts, and this is what proves the decision now actually
   // depends on `can()` rather than on the row.
-  test("throws when authorization denies even though a membership row exists", async () => {
+  test("404s when authorization denies even though a membership row exists", async () => {
     vi.mocked(getSession).mockResolvedValue(mockSession);
     vi.mocked(getOrganization).mockResolvedValue(mockOrg);
     vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue(mockMembership);
     vi.mocked(can).mockResolvedValue(false);
 
-    await expect(getOrganizationAuth("org-1")).rejects.toThrow(ResourceNotFoundError);
+    await expect(getOrganizationAuth("org-1")).rejects.toThrow("NEXT_NOT_FOUND");
   });
 
   test("asks the central interface for organization.read on the acting user", async () => {

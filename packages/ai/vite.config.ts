@@ -21,6 +21,7 @@ export default defineConfig({
         ...builtinModules,
         ...builtinModules.map((m) => `node:${m}`),
         "ai",
+        "undici",
         "@ai-sdk/amazon-bedrock",
         "@ai-sdk/azure",
         "@ai-sdk/google-vertex",

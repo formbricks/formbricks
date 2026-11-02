@@ -1,7 +1,7 @@
 "use client";
 
 import { InboxIcon, PresentationIcon } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
@@ -18,20 +18,26 @@ export const SurveyAnalysisNavigation = ({ survey, activeId }: SurveyAnalysisNav
   const { workspace } = useWorkspace();
 
   const url = `/workspaces/${workspace?.id}/surveys/${survey.id}`;
+  // Summary and Responses share one filter, kept in the URL: switching tabs carries it along.
+  const searchParams = useSearchParams();
+  const filterParams = new URLSearchParams(
+    [...searchParams.entries()].filter(([key]) => key.startsWith("filter["))
+  ).toString();
+  const query = filterParams ? `?${filterParams}` : "";
 
   const navigation = [
     {
       id: "summary",
       label: t("common.summary"),
       icon: <PresentationIcon className="size-5" />,
-      href: `${url}/summary?referer=true`,
+      href: `${url}/summary${query}`,
       current: pathname?.includes("/summary"),
     },
     {
       id: "responses",
       label: t("common.responses"),
       icon: <InboxIcon className="size-5" />,
-      href: `${url}/responses?referer=true`,
+      href: `${url}/responses${query}`,
       current: pathname?.includes("/responses"),
     },
   ];

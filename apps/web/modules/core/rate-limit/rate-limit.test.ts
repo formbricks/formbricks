@@ -1,5 +1,7 @@
 // Import modules after mocking
+import * as Sentry from "@sentry/nextjs";
 import { afterAll, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { logger } from "@formbricks/logger";
 // Import after mocking
 import {
   type TRateLimitReservation,
@@ -53,6 +55,13 @@ vi.mock("@sentry/nextjs", () => ({
   captureException: vi.fn(),
 }));
 
+const { mockRecordRateLimiterUnavailable } = vi.hoisted(() => ({
+  mockRecordRateLimiterUnavailable: vi.fn(),
+}));
+vi.mock("./rate-limit-metrics", () => ({
+  recordRateLimiterUnavailable: mockRecordRateLimiterUnavailable,
+}));
+
 describe("checkRateLimit", () => {
   const testConfig: TRateLimitConfig = {
     interval: 300, // 5 minutes
@@ -98,6 +107,18 @@ describe("checkRateLimit", () => {
     if (result.ok) {
       expect(result.data.allowed).toBe(false);
     }
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({
+        violationId: expect.stringMatching(/^[0-9a-f-]{36}$/),
+        namespace: "test",
+      }),
+      "Rate limit exceeded"
+    );
+
+    const firstViolation = vi.mocked(logger.error).mock.calls.at(-1)?.[0] as { violationId: string };
+    await checkRateLimit(testConfig, "test-user");
+    const secondViolation = vi.mocked(logger.error).mock.calls.at(-1)?.[0] as { violationId: string };
+    expect(secondViolation.violationId).not.toBe(firstViolation.violationId);
   });
 
   test("should fail open when Redis is unavailable", async () => {
@@ -488,6 +509,10 @@ describe("peekRateLimit", () => {
       expect(result.data.allowed).toBe(false);
       expect(result.data.retryAfter).toBeGreaterThan(0);
     }
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ violationId: expect.any(String), namespace: "test" }),
+      "Rate limit exceeded"
+    );
   });
 
   test("should treat missing redis key as zero usage", async () => {
@@ -598,5 +623,59 @@ describe("peekRateLimit", () => {
         }),
       })
     );
+  });
+});
+
+describe("when the limiter cannot reach Redis", () => {
+  const openConfig: TRateLimitConfig = { interval: 300, allowedPerInterval: 5, namespace: "test" };
+  const closedConfig: TRateLimitConfig = { ...openConfig, failClosed: true };
+  const checks = [
+    ["checkRateLimit", checkRateLimit],
+    ["reserveRateLimit", reserveRateLimit],
+    ["peekRateLimit", peekRateLimit],
+  ] as const;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockEval.mockReset();
+    mockGet.mockReset();
+    mockCache.getRedisClient.mockResolvedValue(mockRedisClient);
+  });
+
+  test.each(checks)("%s refuses a failClosed limit when there is no Redis client", async (_, check) => {
+    mockCache.getRedisClient.mockResolvedValue(null);
+
+    const result = await check(closedConfig, "test-user");
+
+    expect(result.ok).toBe(false);
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ namespace: "test", failClosed: true }),
+      "Redis unavailable"
+    );
+    expect(mockRecordRateLimiterUnavailable).toHaveBeenCalledWith({
+      failMode: "closed",
+      reason: "no_client",
+    });
+  });
+
+  test.each(checks)("%s refuses a failClosed limit when the Redis call throws", async (_, check) => {
+    const redisError = new Error("Redis connection failed");
+    mockEval.mockRejectedValue(redisError);
+    mockGet.mockRejectedValue(redisError);
+
+    const result = await check(closedConfig, "test-user");
+
+    expect(result.ok).toBe(false);
+    expect(Sentry.captureException).toHaveBeenCalledWith(redisError, expect.anything());
+    expect(mockRecordRateLimiterUnavailable).toHaveBeenCalledWith({ failMode: "closed", reason: "error" });
+  });
+
+  test.each(checks)("%s still lets a limit without failClosed through", async (_, check) => {
+    mockCache.getRedisClient.mockResolvedValue(null);
+
+    const result = await check(openConfig, "test-user");
+
+    expect(result).toEqual({ ok: true, data: { allowed: true } });
+    expect(mockRecordRateLimiterUnavailable).toHaveBeenCalledWith({ failMode: "open", reason: "no_client" });
   });
 });

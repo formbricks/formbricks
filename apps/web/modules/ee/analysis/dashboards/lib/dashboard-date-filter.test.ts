@@ -9,6 +9,7 @@ import {
   applyDashboardDateFilter,
   deserializeStoredDateFilter,
   parseDashboardDateFilter,
+  toChartDateRange,
 } from "./dashboard-date-filter";
 
 const COLLECTED_AT = "FeedbackRecords.collectedAt";
@@ -228,5 +229,17 @@ describe("deserializeStoredDateFilter", () => {
     expect(
       deserializeStoredDateFilter(JSON.stringify({ type: "custom", range: ["2026-01-31", "2026-01-01"] }))
     ).toBeNull();
+  });
+});
+
+describe("toChartDateRange", () => {
+  test("hands the chart data API the dashboard filter in its own shape", () => {
+    expect(toChartDateRange(null)).toBeNull();
+    expect(toChartDateRange({ type: "all-time" })).toBe("all-time");
+    expect(toChartDateRange({ type: "preset", value: "last 7 days" })).toBe("last 7 days");
+    expect(toChartDateRange({ type: "custom", range: ["2026-01-01", "2026-01-31"] })).toEqual({
+      from: "2026-01-01",
+      to: "2026-01-31",
+    });
   });
 });

@@ -8,6 +8,12 @@ import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
 import { drainDeletionCleanups } from "@/modules/deletion-cleanup/lib/drain";
 import { enqueueSurveyDeletionCleanups } from "@/modules/deletion-cleanup/lib/enqueue";
+import {
+  SurveyLinkedCreativesError,
+  type TLinkedCreative,
+  findLinkedCreatives,
+  unlinkSurveyCreatives,
+} from "@/modules/ee/creatives/lib/linked-creatives";
 import { collectSurveyResponseFileUrls } from "@/modules/storage/lib/survey-response-files";
 import { getSurveyPurgeEligibleWhere } from "@/modules/survey/archive/lib/purge-eligibility";
 import { restartSurveyRetention } from "@/modules/survey/archive/lib/retention-restart";
@@ -28,6 +34,12 @@ import { restartSurveyRetention } from "@/modules/survey/archive/lib/retention-r
  * always gets it, retried until done, and one that rolls back touches no file and no Hub record. The
  * storage part is drained straight after commit; the Hub part a few minutes later, once any record still
  * on its way has landed.
+ *
+ * Creatives: while linked creatives open the survey, the delete is refused with
+ * `SurveyLinkedCreativesError` (409), checked under the row lock, which a creative write linking the
+ * survey also takes. Archived creatives don't hold it: they are unlinked in the same transaction. The
+ * archive purge unlinks every creative instead of refusing, so a survey archived 30 days ago can't fail
+ * the purge forever. What was unlinked goes to `onCreativesUnlinked` after commit, for the caller's audit.
  */
 export const deleteSurvey = async (
   surveyId: string,
@@ -35,6 +47,11 @@ export const deleteSurvey = async (
     purgeCutoff?: Date;
     /** Runs in the delete's transaction, after the survey is gone: a record that must commit with it. */
     inTransaction?: (tx: Prisma.TransactionClient) => Promise<void>;
+    /** After commit, with the creatives the delete unlinked; never called when it unlinked none. */
+    onCreativesUnlinked?: (
+      creatives: TLinkedCreative[],
+      context: { organizationId: string }
+    ) => Promise<void>;
   }
 ) => {
   validateInputs([surveyId, ZId]);
@@ -57,7 +74,7 @@ export const deleteSurvey = async (
     // is never ours to delete.
     const { fileUrls } = await collectSurveyResponseFileUrls(surveyId, { flatKeysOnly: true });
 
-    const { deletedSurvey, drainNowIds } = await prisma.$transaction(async (tx) => {
+    const { deletedSurvey, drainNowIds, unlinked } = await prisma.$transaction(async (tx) => {
       const [locked] = await tx.$queryRaw<{ workspaceId: string; organizationId: string }[]>`
         SELECT s."workspaceId", w."organizationId"
         FROM "Survey" s
@@ -68,6 +85,20 @@ export const deleteSurvey = async (
       if (!locked || !(await isStillEligible(tx))) {
         throw new ResourceNotFoundError("Survey", surveyId);
       }
+
+      const survey = { surveyId, workspaceId: locked.workspaceId };
+      if (!options?.purgeCutoff) {
+        const linkedCreatives = await findLinkedCreatives(tx, survey);
+        if (linkedCreatives.length > 0) {
+          throw new SurveyLinkedCreativesError("delete", linkedCreatives);
+        }
+      }
+      // The Destination foreign key is NO ACTION: every creative still pointing here must go
+      // first, or the delete below fails.
+      const unlinkedCreatives = await unlinkSurveyCreatives(tx, {
+        ...survey,
+        include: options?.purgeCutoff ? "all" : "archived",
+      });
 
       const { drainNowIds } = await enqueueSurveyDeletionCleanups(tx, {
         organizationId: locked.organizationId,
@@ -100,7 +131,11 @@ export const deleteSurvey = async (
 
       await options?.inTransaction?.(tx);
 
-      return { deletedSurvey, drainNowIds };
+      return {
+        deletedSurvey,
+        drainNowIds,
+        unlinked: { creatives: unlinkedCreatives, organizationId: locked.organizationId },
+      };
     });
 
     // The survey is already gone, so a failure here must not reach the caller, who would retry a delete
@@ -109,6 +144,15 @@ export const deleteSurvey = async (
       await drainDeletionCleanups({ ids: drainNowIds });
     } catch (error) {
       logger.error({ err: error, surveyId }, "Deferred a deleted survey's storage cleanup to the drain job");
+    }
+
+    // Same reason: the unlink committed with the delete, so a failed report is logged, never thrown.
+    if (unlinked.creatives.length > 0 && options?.onCreativesUnlinked) {
+      try {
+        await options.onCreativesUnlinked(unlinked.creatives, { organizationId: unlinked.organizationId });
+      } catch (error) {
+        logger.error({ err: error, surveyId }, "Failed to report the creatives a survey delete unlinked");
+      }
     }
 
     return deletedSurvey;

@@ -93,4 +93,31 @@ grep -q 'gatewayClassName: platform-envoy' "${render_dir}/external-controller.ya
 grep -q '^kind: EnvoyProxy$' "${render_dir}/external-controller.yaml"
 grep -q '^kind: SecurityPolicy$' "${render_dir}/external-controller.yaml"
 
+# Keep the four published ownership examples renderable as the chart evolves.
+for example in bundled platform-gateway-api external-crds shared-controller; do
+  helm lint "${chart_dir}" -f "${chart_dir}/examples/envoy/${example}.yaml" >/dev/null
+  helm template qa "${chart_dir}" --include-crds \
+    -f "${chart_dir}/examples/envoy/${example}.yaml" > "${render_dir}/${example}.yaml"
+  grep -q '^kind: Gateway$' "${render_dir}/${example}.yaml"
+  grep -q '^kind: BackendTrafficPolicy$' "${render_dir}/${example}.yaml"
+done
+
+grep -Eq 'name: [a-z0-9-]+\.gateway\.networking\.k8s\.io$' "${render_dir}/bundled.yaml"
+grep -Eq 'name: [a-z0-9-]+\.gateway\.envoyproxy\.io$' "${render_dir}/bundled.yaml"
+for example in platform-gateway-api external-crds shared-controller; do
+  if grep -Eq 'name: [a-z0-9-]+\.(gateway\.networking\.k8s\.io|gateway\.envoyproxy\.io)$' \
+    "${render_dir}/${example}.yaml"; then
+    echo "External CRD example ${example} unexpectedly renders Envoy CRDs" >&2
+    exit 1
+  fi
+done
+for example in bundled platform-gateway-api external-crds; do
+  grep -q 'image: docker.io/envoyproxy/gateway:v1.8.4' "${render_dir}/${example}.yaml"
+done
+if grep -q 'image: docker.io/envoyproxy/gateway:v1.8.4' "${render_dir}/shared-controller.yaml"; then
+  echo "Shared-controller example renders a duplicate controller" >&2
+  exit 1
+fi
+grep -q 'gatewayClassName: platform-envoy' "${render_dir}/shared-controller.yaml"
+
 echo "Envoy Gateway Helm validation passed"

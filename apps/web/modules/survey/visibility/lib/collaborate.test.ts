@@ -101,6 +101,19 @@ describe("groupBlockersByType", () => {
     ]);
   });
 
+  test("keeps creatives, after workflows, rather than dropping them as an unknown type", () => {
+    expect(
+      groupBlockersByType([
+        { id: "c2", name: "Promo banner", type: "creative" },
+        { id: "wf1", name: "Notify", type: "workflow" },
+        { id: "c1", name: "Feedback tab", type: "creative" },
+      ])
+    ).toEqual([
+      { type: "workflow", names: ["Notify"] },
+      { type: "creative", names: ["Feedback tab", "Promo banner"] },
+    ]);
+  });
+
   test("no blockers, no groups", () => {
     expect(groupBlockersByType([])).toEqual([]);
   });

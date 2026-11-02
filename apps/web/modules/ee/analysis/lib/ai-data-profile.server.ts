@@ -41,7 +41,7 @@ export const getAIDataProfile = async ({
       feedbackDirectoryId,
       workspaceId,
       organizationId,
-      userId,
+      actor: { type: "user", id: userId },
       source: CUBE_QUERY_SOURCE,
     });
 

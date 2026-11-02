@@ -47,6 +47,10 @@ If you style the survey from your page anyway, target only the supported contrac
   details. They are not supported selectors and can change in any release.
 </Warning>
 
+## Feedback Buttons And Banners
+
+[Creatives](/surveys/creatives/overview) don't render under `#fbjs`. Each one is drawn in its own Shadow DOM, which your page CSS can't reach and which doesn't leak into your page, so nothing above applies to them. Only your page's font reaches them, when the workspace uses **Page font**. To style a creative, use its own **Custom CSS** field on the creative's **Styling** tab, scoped to `.fb-creative-button` or `.fb-creative-banner`. Your workspace Custom CSS doesn't apply to creatives.
+
 ## Troubleshooting
 
 **My page styles change the survey**

@@ -33,6 +33,7 @@ vi.mock("@formbricks/database", () => ({
       delete: vi.fn(),
     },
     surveyLanguage: { count: vi.fn(), findMany: vi.fn() },
+    creativeLanguage: { count: vi.fn(), findMany: vi.fn() },
   },
 }));
 
@@ -169,6 +170,8 @@ describe("deleteLanguage", () => {
     vi.mocked(getWorkspace).mockResolvedValue(workspaceOwningLanguage);
     vi.mocked(prisma.surveyLanguage.count).mockReset().mockResolvedValue(0);
     vi.mocked(prisma.surveyLanguage.findMany).mockReset().mockResolvedValue([]);
+    vi.mocked(prisma.creativeLanguage.count).mockReset().mockResolvedValue(0);
+    vi.mocked(prisma.creativeLanguage.findMany).mockReset().mockResolvedValue([]);
     vi.mocked(prisma.language.delete).mockReset();
   });
 
@@ -221,14 +224,35 @@ describe("deleteLanguage", () => {
       expect(prisma.language.delete).not.toHaveBeenCalled();
     });
 
-    test("deletes only a language no survey uses, enforced again at write time", async () => {
+    // A creative's default language and its translations are `CreativeLanguage` rows, which cascade too:
+    // a French-only creative would fall back to a language its texts don't have and show nothing.
+    test("refuses while a creative uses the language, naming the creatives", async () => {
+      vi.mocked(prisma.creativeLanguage.count).mockResolvedValue(2);
+      vi.mocked(prisma.creativeLanguage.findMany).mockResolvedValue([
+        { creative: { name: "Pricing banner" } },
+        { creative: { name: "Site feedback tab" } },
+      ] as never);
+
+      await expect(deleteLanguage(mockLanguageId, mockWorkspaceId, visibleSurveyWhere)).rejects.toThrow(
+        "This language is still used by the creatives Pricing banner, Site feedback tab. Remove the language from those creatives before deleting it."
+      );
+      expect(prisma.language.delete).not.toHaveBeenCalled();
+      expect(prisma.creativeLanguage.count).toHaveBeenCalledWith({ where: { languageId: mockLanguageId } });
+    });
+
+    test("deletes only a language no survey or creative uses, enforced again at write time", async () => {
       vi.mocked(prisma.language.delete).mockResolvedValue(mockLanguage);
 
       await deleteLanguage(mockLanguageId, mockWorkspaceId, visibleSurveyWhere);
 
       expect(prisma.language.delete).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { id: mockLanguageId, workspaceId: mockWorkspaceId, surveyLanguages: { none: {} } },
+          where: {
+            id: mockLanguageId,
+            workspaceId: mockWorkspaceId,
+            surveyLanguages: { none: {} },
+            creativeLanguages: { none: {} },
+          },
         })
       );
     });
@@ -342,6 +366,20 @@ describe("describeLanguageInUse", () => {
   test("never names a hidden survey, only counts it", () => {
     expect(describeLanguageInUse({ hiddenCount: 1, visibleCount: 0, visibleNames: [] })).toBe(
       "This language is still used by 1 survey you can't see. Remove the language from those surveys before deleting it."
+    );
+  });
+
+  test("names the creatives after the surveys, and summarises the ones beyond the list", () => {
+    expect(
+      describeLanguageInUse({
+        hiddenCount: 0,
+        visibleCount: 1,
+        visibleNames: ["A"],
+        creativeCount: 12,
+        creativeNames: ["Banner", "Tab"],
+      })
+    ).toBe(
+      "This language is still used by A and the creatives Banner, Tab and 10 more. Remove the language from those surveys and creatives before deleting it."
     );
   });
 });

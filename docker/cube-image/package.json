@@ -7,6 +7,9 @@
     "@cubejs-backend/server": "1.8.8"
   },
   "overrides": {
+    "@azure/identity": {
+      "@azure/msal-node": "7.1.1"
+    },
     "gaxios": {
       "uuid": "11.1.1"
     },

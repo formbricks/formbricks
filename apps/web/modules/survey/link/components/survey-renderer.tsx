@@ -5,6 +5,7 @@ import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import {
+  APP_RELEASE_VERSION,
   IMPRINT_URL,
   IS_FORMBRICKS_CLOUD,
   IS_RECAPTCHA_CONFIGURED,
@@ -13,6 +14,7 @@ import {
   TERMS_URL,
 } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
+import { getCreativeAttribution } from "@/modules/ee/creatives/lib/attribution";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { PinScreen } from "@/modules/survey/link/components/pin-screen";
 import { SurveyClientWrapper } from "@/modules/survey/link/components/survey-client-wrapper";
@@ -23,6 +25,7 @@ import type { TLinkSurvey } from "@/modules/survey/link/lib/data";
 import { getEmailVerificationDetails } from "@/modules/survey/link/lib/helper";
 import { isLinkSurveyServable } from "@/modules/survey/link/lib/public-access";
 import { getLinkSurveyCustomCss, omitCustomCssSource } from "@/modules/survey/link/lib/respondent-custom-css";
+import { singleSearchParamValue } from "@/modules/survey/link/lib/single-use-link";
 import type { TLinkSurveySearchParams } from "@/modules/survey/link/lib/types";
 import { hasUserIdSearchParam } from "@/modules/survey/link/lib/user-id";
 import { getGateLocale, resolveLinkSurveyLanguage } from "@/modules/survey/link/lib/utils";
@@ -95,6 +98,13 @@ export const renderSurvey = async ({
   // custom CSS, which carries the editable source. Compiled CSS goes through `customCss` below.
   const publicSurvey: TSurvey = { ...omitCustomCssSource(survey), pin: null };
 
+  // The single-use link exactly as it appears in the URL. The PIN and verify-email screens hand it back to
+  // their actions, which repeat the single-use check this page already passed (ENG-4041). A repeated
+  // parameter arrives as an array, which those actions' schemas would reject outright, leaving the gate
+  // impossible to pass.
+  const linkSuId = singleSearchParamValue(searchParams.suId);
+  const linkSuToken = singleSearchParamValue(searchParams.suToken);
+
   const isSpamProtectionEnabled = Boolean(IS_RECAPTCHA_CONFIGURED && survey.recaptcha?.enabled);
   const isScheduled = survey.status === "paused" && survey.publishOn !== null;
 
@@ -142,8 +152,8 @@ export const renderSurvey = async ({
     }
     return (
       <VerifyEmail
-        singleUseId={searchParams.suId ?? ""}
-        singleUseToken={searchParams.suToken}
+        singleUseId={linkSuId ?? ""}
+        singleUseToken={linkSuToken}
         survey={publicSurvey}
         languageCode={languageCode}
         styling={workspace.styling}
@@ -155,11 +165,12 @@ export const renderSurvey = async ({
   // Compute final styling based on workspace and survey settings
   const styling = computeStyling(workspace.styling, survey.styling);
   const publicDomain = getPublicDomain();
-  const [canReadUserIdFromUrl, customCss] = await Promise.all([
+  const [canReadUserIdFromUrl, customCss, creativeId] = await Promise.all([
     allowUrlUserIdLookup && !contactId && hasUserIdSearchParam(searchParams)
       ? getIsContactsEnabled(workspaceContext.organizationId)
       : false,
     getRendererCustomCss(survey, workspaceContext),
+    getOpeningCreativeId(survey, searchParams.creativeId, isPreview),
   ]);
 
   // Handle PIN-protected surveys
@@ -171,6 +182,8 @@ export const renderSurvey = async ({
         publicDomain={publicDomain}
         workspace={workspace}
         singleUseId={singleUseId}
+        suId={linkSuId}
+        suToken={linkSuToken}
         singleUseResponse={singleUseResponse}
         IMPRINT_URL={IMPRINT_URL}
         PRIVACY_URL={PRIVACY_URL}
@@ -186,6 +199,7 @@ export const renderSurvey = async ({
         recaptchaSiteKey={RECAPTCHA_SITE_KEY}
         isSpamProtectionEnabled={isSpamProtectionEnabled}
         responseCount={responseCount}
+        rendererVersion={APP_RELEASE_VERSION}
       />
     );
   }
@@ -213,6 +227,8 @@ export const renderSurvey = async ({
       TERMS_URL={TERMS_URL}
       IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
       customCss={customCss}
+      creativeId={creativeId}
+      rendererVersion={APP_RELEASE_VERSION}
     />
   );
 };
@@ -233,6 +249,27 @@ async function getRendererCustomCss(
     allowStyleOverwrite: workspaceContext.workspace.styling?.allowStyleOverwrite,
     survey,
   });
+}
+
+/**
+ * The creative whose link Destination opened this page with `?creativeId=` (ENG-4001). Checked here, so
+ * the renderer only ever carries a creative of this workspace that opens this survey; a preview records
+ * nothing, so it looks nothing up.
+ */
+async function getOpeningCreativeId(
+  survey: TSurvey,
+  creativeIdParam: string | undefined,
+  isPreview: boolean
+): Promise<string | undefined> {
+  if (isPreview || !creativeIdParam) {
+    return undefined;
+  }
+  const openedBy = await getCreativeAttribution({
+    creativeId: creativeIdParam,
+    workspaceId: survey.workspaceId,
+    surveyId: survey.id,
+  });
+  return openedBy?.id;
 }
 
 /**

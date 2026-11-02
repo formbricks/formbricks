@@ -145,7 +145,7 @@ describe("useTaxonomyRun", () => {
 /**
  * Exercised directly because both consumers must agree: the hook stops polling on it, and
  * `topics-subtopics-container` stops treating the run as in-flight. The container is a `.tsx` and so is not
- * unit-tested per AGENTS.md, which is precisely why the shared predicate carries the coverage.
+ * unit-tested per CODING_STANDARDS.md, which is precisely why the shared predicate carries the coverage.
  */
 describe("isTaxonomyRunGone", () => {
   test.each([

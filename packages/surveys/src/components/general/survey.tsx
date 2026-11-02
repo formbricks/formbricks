@@ -137,6 +137,7 @@ export function Survey({
   fullSizeCards = false,
   autoFocus,
   action,
+  creativeId,
   visit,
   singleUseId,
   singleUseResponseId,
@@ -449,7 +450,12 @@ export function Survey({
         name: file.name,
         base64: file.base64,
       },
-      params
+      {
+        ...params,
+        pinAuthToken: surveyState?.pinAuthToken,
+        singleUseId: surveyState?.singleUseId,
+        url: getWebSurveyMeta().url,
+      }
     );
 
     return response;
@@ -465,12 +471,9 @@ export function Survey({
   const createDisplay = useCallback(async () => {
     // Skip display creation in preview mode but still trigger the onDisplayCreated callback
     if (isPreviewMode) {
-      if (onDisplayCreated) {
-        onDisplayCreated();
-      }
-      if (onDisplay) {
-        onDisplay();
-      }
+      // Fire and forget, as before: a preview has no display to wait for.
+      void onDisplayCreated?.();
+      void onDisplay?.();
       return;
     }
 
@@ -480,6 +483,7 @@ export function Survey({
           surveyId: survey.id,
           ...(userId && { userId }),
           ...(contactId && { contactId }),
+          ...(creativeId && { creativeId }),
         });
 
         if (!display.ok) {
@@ -505,6 +509,7 @@ export function Survey({
     survey.id,
     userId,
     contactId,
+    creativeId,
     onDisplayCreated,
     isPreviewMode,
     onDisplay,
@@ -937,6 +942,8 @@ export function Survey({
           meta: {
             ...getWebSurveyMeta(),
             action,
+            // Meta is written on create only, so the id rides on every write to be on the first.
+            ...(creativeId && { openedByCreativeId: creativeId }),
           },
           variables: responseUpdate.variables,
           displayId: surveyState.displayId,
@@ -961,6 +968,7 @@ export function Survey({
       userId,
       survey,
       action,
+      creativeId,
       ingestedFieldsRecord,
       getWebSurveyMeta,
     ]

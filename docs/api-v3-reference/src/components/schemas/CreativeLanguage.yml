@@ -1,0 +1,18 @@
+type: object
+description: A language the creative's texts are written in.
+required:
+  - code
+  - default
+  - enabled
+properties:
+  code:
+    $ref: ./LocaleCode.yml
+  default:
+    type: boolean
+    description: Whether this is `defaultLanguage`. Exactly one entry is the default.
+  enabled:
+    type: boolean
+    description: >-
+      Whether visitors in this language see this translation. The default language is always
+      enabled; a disabled or missing translation falls back to the default language.
+additionalProperties: false

@@ -1,7 +1,12 @@
 "use server";
 
 import { headers } from "next/headers";
-import { AuthenticationError, AuthorizationError, OperationNotAllowedError } from "@formbricks/types/errors";
+import {
+  AuthenticationError,
+  AuthorizationError,
+  OperationNotAllowedError,
+  TooManyRequestsError,
+} from "@formbricks/types/errors";
 import {
   TUserPersonalInfoUpdateInput,
   TUserUpdateInput,
@@ -86,7 +91,13 @@ async function handleEmailUpdate({
     payload.email = inputEmail;
     await updateBrevoCustomer({ id: ctx.user.id, email: inputEmail });
   } else {
-    await sendVerificationNewEmail(ctx.user.id, inputEmail, ctx.user.locale);
+    try {
+      await sendVerificationNewEmail(ctx.user.id, inputEmail, ctx.user.locale);
+    } catch (error) {
+      // A taken address returns quietly above, so a capped email (ENG-3823) must too, or the refusal would
+      // tell the user which addresses are free.
+      if (!(error instanceof TooManyRequestsError)) throw error;
+    }
   }
   return payload;
 }
@@ -121,6 +132,10 @@ export const resetPasswordAction = authenticatedActionClient.action(
     if (ctx.user.identityProvider !== "email") {
       throw new OperationNotAllowedError("Password reset is not allowed for this user.");
     }
+
+    // Without a limit this was the one way to have reset emails sent unbounded. A budget of its own, so
+    // strangers spending forgot-password's per-account budget cannot lock the user out of this one.
+    await applyRateLimit(rateLimitConfigs.actions.passwordResetRequest, ctx.user.id);
 
     await auth.api.requestPasswordReset({
       body: { email: ctx.user.email, redirectTo: `${WEBAPP_URL}/auth/forgot-password/reset` },

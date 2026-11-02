@@ -1,0 +1,16 @@
+type: object
+description: >-
+  A language the creative's texts are written in. Every non-default locale key used in `content` must
+  be declared here. The workspace language is created when it doesn't exist yet.
+required:
+  - code
+  - enabled
+properties:
+  code:
+    $ref: ./LocaleCode.yml
+  enabled:
+    type: boolean
+    description: >-
+      Whether visitors in this language see this translation. Ignored for `defaultLanguage`, which is
+      always enabled.
+additionalProperties: false

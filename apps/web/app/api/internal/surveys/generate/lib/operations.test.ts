@@ -1,5 +1,5 @@
 import { LEAKY_AI_ERRORS, findPlantedContent } from "@/lib/ai/__mocks__/leaky-ai-errors";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
 import type { TV3SurveyGenerateBody } from "@/app/api/v3/surveys/generate/schemas";
 import { streamV3SurveyGeneration } from "./operations";
@@ -15,6 +15,8 @@ const mocks = vi.hoisted(() => ({
   log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 
+const aiTimeoutEnv = vi.hoisted(() => ({ multiplier: 1 }));
+
 vi.mock("@/app/api/v3/lib/auth", () => ({ requireV3WorkspaceAccess: mocks.requireV3WorkspaceAccess }));
 vi.mock("@/app/api/v3/surveys/lib/operations", () => ({ getSessionUserId: mocks.getSessionUserId }));
 vi.mock("@/lib/ai/service", async (importOriginal) => ({
@@ -25,7 +27,6 @@ vi.mock("@/lib/ai/service", async (importOriginal) => ({
 vi.mock("@/app/api/v3/surveys/generate/service", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   assertV3SurveyGeneratePrompt: mocks.assertV3SurveyGeneratePrompt,
-  buildV3SurveyGenerationRequest: () => ({ prompt: "built" }),
   buildV3SurveyGenerationTracing: () => undefined,
   buildV3SurveyCreatePayloadFromDraft: mocks.buildV3SurveyCreatePayloadFromDraft,
 }));
@@ -33,6 +34,19 @@ vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: mocks.capturePostHogEvent
 vi.mock("@formbricks/logger", () => ({
   logger: { withContext: vi.fn(() => mocks.log), error: vi.fn(), warn: vi.fn() },
 }));
+
+vi.mock("@/lib/env", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@/lib/env")>();
+  return {
+    ...original,
+    env: {
+      ...original.env,
+      get AI_TIMEOUT_MULTIPLIER() {
+        return aiTimeoutEnv.multiplier;
+      },
+    },
+  };
+});
 
 const body: TV3SurveyGenerateBody = {
   workspaceId: "workspace1",
@@ -88,7 +102,64 @@ const asyncIterable = <T>(items: T[]) => ({
 });
 
 describe("streamV3SurveyGeneration", () => {
+  afterEach(() => vi.useRealTimers());
+
+  test.each([1, 3])("uses the shared survey timeout with multiplier %i", async (multiplier) => {
+    aiTimeoutEnv.multiplier = multiplier;
+    mocks.streamOrganizationAIObject.mockResolvedValue({
+      partialObjectStream: asyncIterable([]),
+      completion: Promise.resolve({ name: "Draft" }),
+    });
+    await readEvents(await call());
+    expect(mocks.streamOrganizationAIObject).toHaveBeenCalledWith(
+      expect.objectContaining({ timeout: 45_000 * multiplier })
+    );
+  });
+
+  test.each(["AbortError", "TimeoutError"])(
+    "reports %s from an active request as a terminal error",
+    async (name) => {
+      const failure = new DOMException("Delay was aborted", name);
+      mocks.streamOrganizationAIObject.mockResolvedValue({
+        partialObjectStream: asyncIterable([]),
+        completion: Promise.reject(failure),
+      });
+      const events = await readEvents(await call());
+      expect(events.at(-1)).toMatchObject({ type: "error", code: "ai_generation_failed" });
+      expect(mocks.log.info).not.toHaveBeenCalledWith("AI survey generation aborted by the client");
+    }
+  );
+
+  test("keeps an idle stream alive and clears its heartbeat when cancelled", async () => {
+    vi.useFakeTimers();
+    hangUntilAborted();
+    const response = await call();
+    const reader = response.body!.getReader();
+    const decode = (value: Uint8Array | undefined) => JSON.parse(new TextDecoder().decode(value));
+    expect(decode((await reader.read()).value)).toMatchObject({ type: "start" });
+    await vi.advanceTimersByTimeAsync(9_999);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(decode((await reader.read()).value)).toEqual({ type: "heartbeat" });
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(decode((await reader.read()).value)).toEqual({ type: "heartbeat" });
+    await reader.cancel();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(passedSignal()?.aborted).toBe(true);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  test("clears its heartbeat after completing a draft", async () => {
+    vi.useFakeTimers();
+    mocks.streamOrganizationAIObject.mockResolvedValue({
+      partialObjectStream: asyncIterable([]),
+      completion: Promise.resolve({ name: "Draft" }),
+    });
+    expect((await readEvents(await call())).at(-1)).toMatchObject({ type: "done" });
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
   beforeEach(() => {
+    aiTimeoutEnv.multiplier = 1;
     vi.clearAllMocks();
     mocks.requireV3WorkspaceAccess.mockResolvedValue({
       organizationId: "org1",

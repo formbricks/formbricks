@@ -1,5 +1,6 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { AIConfigurationError } from "../errors";
+import { modelFetch } from "../model-fetch";
 import { type OAuthClientCredentialsConfig, createOAuthFetch, createOAuthTokenSource } from "../oauth-token";
 import type { AIProviderAdapter } from "../registry";
 import {
@@ -261,7 +262,7 @@ export const openaiCompatibleProviderAdapter: AIProviderAdapter = {
     if (authMode === "oauth2-client-credentials") {
       // No apiKey: the fetch wrapper is the only thing that sets Authorization. The token source
       // lives in this closure, so it is cached together with the model in provider.ts.
-      const oauthFetch = createOAuthFetch(createOAuthTokenSource(buildOAuthConfig(environment)));
+      const oauthFetch = createOAuthFetch(createOAuthTokenSource(buildOAuthConfig(environment)), modelFetch);
 
       return createOpenAICompatible({
         name: providerName,
@@ -274,6 +275,7 @@ export const openaiCompatibleProviderAdapter: AIProviderAdapter = {
     }
 
     const openaiCompatible = createOpenAICompatible({
+      fetch: modelFetch,
       name: providerName,
       baseURL,
       supportsStructuredOutputs,

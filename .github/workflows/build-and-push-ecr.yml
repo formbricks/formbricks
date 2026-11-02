@@ -55,8 +55,6 @@ on:
     secrets:
       AWS_ECR_PUSH_ROLE_ARN:
         required: true
-      DEPOT_PROJECT_TOKEN:
-        required: true
       DUMMY_DATABASE_URL:
         required: false
       DUMMY_ENCRYPTION_KEY:
@@ -92,59 +90,23 @@ concurrency:
   group: ecr-${{ inputs.deployment_tag || (inputs.IS_PRERELEASE && 'staging') || (inputs.deploy_staging && 'staging') || (inputs.deploy_production && 'production') || (inputs.MAKE_LATEST && 'production') || github.run_id }}
   cancel-in-progress: false
 
-env:
-  ECR_REGION: ${{ vars.ECR_REGION }}
-  # ECR settings are sourced from repository/environment variables for portability across envs/forks
-  ECR_REGISTRY: ${{ vars.ECR_REGISTRY }}
-  ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
-
 jobs:
   build-and-push:
-    name: Build and Push
-    runs-on: ubuntu-latest
-    timeout-minutes: 90
-    outputs:
-      IMAGE_TAG: ${{ steps.build.outputs.image_tag }}
-      IMAGE_REF: ${{ steps.build.outputs.image_ref }}
-      BUILD_IDENTITY: ${{ steps.build.outputs.build_identity }}
-      DEPOT_BUILD_ID: ${{ steps.build.outputs.depot_build_id }}
-      TAGS: ${{ steps.build.outputs.registry_tags }}
-    steps:
-      - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
-        with:
-          egress-policy: audit
-
-      - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Build and push cloud deployment image
-        id: build
-        uses: ./.github/actions/build-and-push-docker
-        with:
-          registry_type: "ecr"
-          rebuild_application: ${{ inputs.rebuild_application }}
-          ecr_registry: ${{ env.ECR_REGISTRY }}
-          ecr_repository: ${{ env.ECR_REPOSITORY }}
-          ecr_region: ${{ env.ECR_REGION }}
-          aws_role_arn: ${{ secrets.AWS_ECR_PUSH_ROLE_ARN }}
-          version: ${{ inputs.version_override || inputs.image_tag }}
-          deploy_production: ${{ inputs.deploy_production }}
-          deploy_staging: ${{ inputs.deploy_staging }}
-          deployment_tag: ${{ inputs.deployment_tag }}
-          is_prerelease: ${{ inputs.IS_PRERELEASE }}
-          make_latest: ${{ inputs.MAKE_LATEST }}
-        env:
-          DEPOT_PROJECT_TOKEN: ${{ secrets.DEPOT_PROJECT_TOKEN }}
-          DUMMY_DATABASE_URL: ${{ secrets.DUMMY_DATABASE_URL }}
-          DUMMY_ENCRYPTION_KEY: ${{ secrets.DUMMY_ENCRYPTION_KEY }}
-          DUMMY_REDIS_URL: ${{ secrets.DUMMY_REDIS_URL }}
-          DUMMY_HUB_API_URL: ${{ secrets.DUMMY_HUB_API_URL }}
-          DUMMY_HUB_API_KEY: ${{ secrets.DUMMY_HUB_API_KEY }}
-          DUMMY_CUBEJS_API_URL: ${{ secrets.DUMMY_CUBEJS_API_URL }}
-          DUMMY_CUBEJS_API_SECRET: ${{ secrets.DUMMY_CUBEJS_API_SECRET }}
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          POSTHOG_KEY: ${{ secrets.POSTHOG_KEY }}
+    name: Build cloud candidate
+    uses: ./.github/workflows/build-docker-candidate.yml
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      registry_type: ecr
+      version: ${{ inputs.version_override || inputs.image_tag || '' }}
+      rebuild_application: ${{ inputs.rebuild_application }}
+      deploy_production: ${{ inputs.deploy_production || false }}
+      deploy_staging: ${{ inputs.deploy_staging || false }}
+      deployment_tag: ${{ inputs.deployment_tag || '' }}
+      is_prerelease: ${{ inputs.IS_PRERELEASE || false }}
+      make_latest: ${{ inputs.MAKE_LATEST || false }}
+    secrets: inherit
 
   validate:
     name: Image smoke (${{ matrix.platform }})
@@ -161,6 +123,7 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: read
+      id-token: write
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
@@ -169,8 +132,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/test-release-image
         with:
-          depot_build_id: ${{ needs.build-and-push.outputs.DEPOT_BUILD_ID }}
-          depot_token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
+          aws_role_arn: ${{ secrets.AWS_ECR_PUSH_ROLE_ARN }}
+          ecr_region: ${{ vars.ECR_REGION }}
           image_ref: ${{ needs.build-and-push.outputs.IMAGE_REF }}
           build_identity: ${{ needs.build-and-push.outputs.BUILD_IDENTITY }}
           registry_type: "ecr"
@@ -192,10 +155,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/promote-verified-image
         with:
-          depot_build_id: ${{ needs.build-and-push.outputs.DEPOT_BUILD_ID }}
-          depot_token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
+          aws_role_arn: ${{ secrets.AWS_ECR_PUSH_ROLE_ARN }}
+          ecr_region: ${{ vars.ECR_REGION }}
           image_ref: ${{ needs.build-and-push.outputs.IMAGE_REF }}
           registry_type: "ecr"
           release_tags: ${{ needs.build-and-push.outputs.TAGS }}
-          ecr_region: ${{ vars.ECR_REGION }}
-          aws_role_arn: ${{ secrets.AWS_ECR_PUSH_ROLE_ARN }}

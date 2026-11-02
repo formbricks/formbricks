@@ -512,11 +512,8 @@ const sendNotificationEmailsSafely = async ({
         );
       } catch (error) {
         logger.error(
-          {
-            ...logContext,
-            err: error,
-            userEmail: user.email,
-          },
+          // No address: a capped notification lands here too, at volume, and addresses do not belong in logs.
+          { ...logContext, err: error },
           "Response pipeline notification email failed"
         );
       }

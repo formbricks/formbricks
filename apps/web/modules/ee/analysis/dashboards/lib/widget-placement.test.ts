@@ -1,5 +1,11 @@
 import { describe, expect, test } from "vitest";
-import { GRID_COLUMNS, findNextOpenSlot, parseWidgetLayouts } from "./widget-placement";
+import {
+  GRID_COLUMNS,
+  findNextOpenSlot,
+  findOverlappingWidget,
+  getDefaultWidgetLayout,
+  parseWidgetLayouts,
+} from "./widget-placement";
 
 describe("findNextOpenSlot", () => {
   test("places the first widget at the origin", () => {
@@ -86,5 +92,34 @@ describe("parseWidgetLayouts", () => {
     ];
 
     expect(parseWidgetLayouts(widgets)).toEqual([{ x: 0, y: 0, w: 4, h: 4 }]);
+  });
+});
+
+describe("findOverlappingWidget", () => {
+  const others = [
+    { id: "left", layout: { x: 0, y: 0, w: 6, h: 4 } },
+    { id: "unreadable", layout: { x: "6" } },
+  ];
+
+  test("names the widget a layout would cover", () => {
+    expect(findOverlappingWidget({ x: 4, y: 2, w: 4, h: 4 }, others)?.id).toBe("left");
+  });
+
+  test("allows a widget that only touches another's edge, and gaps", () => {
+    expect(findOverlappingWidget({ x: 6, y: 0, w: 6, h: 4 }, others)).toBeNull();
+    expect(findOverlappingWidget({ x: 0, y: 4, w: 6, h: 4 }, others)).toBeNull();
+    expect(findOverlappingWidget({ x: 0, y: 10, w: 3, h: 2 }, others)).toBeNull();
+  });
+
+  test("skips a stored layout it cannot read rather than refusing everything", () => {
+    expect(findOverlappingWidget({ x: 6, y: 0, w: 6, h: 4 }, others)).toBeNull();
+  });
+});
+
+describe("getDefaultWidgetLayout", () => {
+  test("sizes a widget for its chart type", () => {
+    expect(getDefaultWidgetLayout("big_number")).toEqual({ x: 0, y: 0, w: 3, h: 2 });
+    expect(getDefaultWidgetLayout("matrix")).toEqual({ x: 0, y: 0, w: 6, h: 5 });
+    expect(getDefaultWidgetLayout("bar")).toEqual({ x: 0, y: 0, w: 4, h: 4 });
   });
 });

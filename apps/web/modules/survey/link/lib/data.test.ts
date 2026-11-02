@@ -12,6 +12,7 @@ import {
   getOrganizationBilling,
   getResponseBySingleUseId,
   getSurveyMetadata,
+  getSurveyOwnerId,
   getSurveyWithMetadata,
 } from "./data";
 
@@ -260,11 +261,9 @@ describe("data", () => {
     const mockResponse = {
       id: "response-1",
       finished: true,
-      createdAt: new Date(),
-      data: { answer1: "test" },
     };
 
-    test("should find response by single use ID", async () => {
+    test("returns only the response status needed by public link pages", async () => {
       const surveyId = "survey-1";
       const singleUseId = "single-use-1";
 
@@ -281,8 +280,6 @@ describe("data", () => {
         select: {
           id: true,
           finished: true,
-          createdAt: true,
-          data: true,
         },
       });
     });
@@ -341,6 +338,9 @@ describe("data", () => {
         where: {
           surveyId,
           contactId,
+        },
+        orderBy: {
+          finished: "desc",
         },
         select: {
           id: true,
@@ -479,5 +479,37 @@ describe("legacy Embedded Data shape on the wire (ENG-1838)", () => {
 
     expect(survey.variables).toEqual([]);
     expect(survey.hiddenFields).toEqual({ enabled: true, fieldIds: ["plan"] });
+  });
+});
+
+// The owner carries the rate limits on the emails a survey's public page sends (ENG-3823).
+describe("getSurveyOwnerId", () => {
+  test("reads only the owner, so it never joins the survey the public page loads", async () => {
+    vi.mocked(prisma.survey.findUnique).mockResolvedValue({ ownerId: "owner-1" } as never);
+
+    await expect(getSurveyOwnerId("survey-1")).resolves.toBe("owner-1");
+    expect(prisma.survey.findUnique).toHaveBeenCalledWith({
+      where: { id: "survey-1" },
+      select: { ownerId: true },
+    });
+  });
+
+  test("is null for a survey without an owner or one that is gone", async () => {
+    vi.mocked(prisma.survey.findUnique).mockResolvedValueOnce({ ownerId: null } as never);
+    await expect(getSurveyOwnerId("survey-1")).resolves.toBeNull();
+
+    vi.mocked(prisma.survey.findUnique).mockResolvedValueOnce(null);
+    await expect(getSurveyOwnerId("missing")).resolves.toBeNull();
+  });
+
+  test("turns a Prisma error into a DatabaseError and rethrows anything else", async () => {
+    vi.mocked(prisma.survey.findUnique).mockRejectedValueOnce(
+      new Prisma.PrismaClientKnownRequestError("Database error", { code: "P2025", clientVersion: "5.0.0" })
+    );
+    await expect(getSurveyOwnerId("survey-1")).rejects.toBeInstanceOf(DatabaseError);
+
+    const other = new Error("boom");
+    vi.mocked(prisma.survey.findUnique).mockRejectedValueOnce(other);
+    await expect(getSurveyOwnerId("survey-1")).rejects.toBe(other);
   });
 });

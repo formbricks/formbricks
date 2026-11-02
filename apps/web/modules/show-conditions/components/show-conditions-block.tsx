@@ -39,6 +39,10 @@ interface ShowConditionsBlockProps {
   value: TShowConditions;
   onChange: (value: TShowConditions) => void;
   isReadOnly?: boolean;
+  /** Off when the host card already titles the conditions, as Creatives' Show when card does. */
+  showHeading?: boolean;
+  /** Off where only websites apply the conditions, as for Creatives: the note is about mobile apps. */
+  showMobileNote?: boolean;
 }
 
 const ENUM_OPERANDS = new Set(["deviceType", "browser"]);
@@ -54,6 +58,8 @@ export const ShowConditionsBlock = ({
   value,
   onChange,
   isReadOnly = false,
+  showHeading = true,
+  showMobileNote = true,
 }: Readonly<ShowConditionsBlockProps>) => {
   const { t } = useTranslation();
 
@@ -102,13 +108,15 @@ export const ShowConditionsBlock = ({
   };
 
   return (
-    <div className="flex flex-col gap-4 border-t border-slate-200 pt-4">
-      <div>
-        <p className="text-sm font-semibold text-slate-800">
-          {t("workspace.surveys.edit.show_conditions.heading")}
-        </p>
-        <p className="text-sm text-slate-500">{t("workspace.surveys.edit.show_conditions.description")}</p>
-      </div>
+    <div className={cn("flex flex-col gap-4", showHeading && "border-t border-slate-200 pt-4")}>
+      {showHeading && (
+        <div>
+          <p className="text-sm font-semibold text-slate-800">
+            {t("workspace.surveys.edit.show_conditions.heading")}
+          </p>
+          <p className="text-sm text-slate-500">{t("workspace.surveys.edit.show_conditions.description")}</p>
+        </div>
+      )}
 
       {value && (
         <fieldset
@@ -131,9 +139,11 @@ export const ShowConditionsBlock = ({
 
       <ShowConditionsUrlTester conditions={value} />
 
-      <Alert variant="info" size="small">
-        <AlertDescription>{t("workspace.surveys.edit.show_conditions.mobile_note")}</AlertDescription>
-      </Alert>
+      {showMobileNote && (
+        <Alert variant="info" size="small">
+          <AlertDescription>{t("workspace.surveys.edit.show_conditions.mobile_note")}</AlertDescription>
+        </Alert>
+      )}
     </div>
   );
 };

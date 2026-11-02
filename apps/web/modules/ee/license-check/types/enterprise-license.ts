@@ -22,6 +22,7 @@ const ZEnterpriseLicenseFeatures = z.object({
   dashboards: z.boolean().default(false),
   workflows: z.boolean().default(false),
   dataRetention: z.boolean().default(false),
+  creatives: z.boolean().default(false),
 });
 
 export type TEnterpriseLicenseFeatures = z.infer<typeof ZEnterpriseLicenseFeatures>;

@@ -180,6 +180,11 @@ spec:
       imagePullSecrets:
         {{- toYaml .Values.deployment.imagePullSecrets | nindent 8 }}
       {{- end }}
+      {{- if (.Values.taxonomy.securityContext | default dict).readOnlyRootFilesystem }}
+      volumes:
+        - name: taxonomy-tmp
+          emptyDir: {}
+      {{- end }}
       containers:
         - name: taxonomy
           image: {{ include "formbricks.taxonomyImage" . | quote }}
@@ -187,6 +192,11 @@ spec:
           {{- with .Values.taxonomy.securityContext }}
           securityContext:
             {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if (.Values.taxonomy.securityContext | default dict).readOnlyRootFilesystem }}
+          volumeMounts:
+            - name: taxonomy-tmp
+              mountPath: /tmp
           {{- end }}
           ports:
             - name: http

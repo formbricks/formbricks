@@ -161,6 +161,7 @@ describe("License Core Logic", () => {
       dashboards: false,
       workflows: false,
       dataRetention: false,
+      creatives: false,
     };
     const mockFetchedLicenseDetails: TEnterpriseLicenseDetails = {
       status: "active",
@@ -256,6 +257,32 @@ describe("License Core Logic", () => {
 
       expect(license.active).toBe(true);
       expect(license.features?.dataRetention).toBe(false);
+    });
+
+    // Same rule for Creatives (ENG-6602): a licence server that predates the flag keeps Creatives off.
+    test.each([
+      ["omits creatives", undefined, false],
+      ["sends creatives: true", true, true],
+    ])("parses the creatives flag when the license server %s", async (_case, creatives, expected) => {
+      const { getEnterpriseLicense } = await import("./license");
+      const fetch = global.fetch as Mock;
+      const { creatives: _omitted, ...featuresWithoutCreatives } = mockFetchedLicenseDetailsFeatures;
+
+      fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            ...mockFetchedLicenseDetails,
+            features:
+              creatives === undefined ? featuresWithoutCreatives : { ...featuresWithoutCreatives, creatives },
+          },
+        }),
+      });
+
+      const license = await getEnterpriseLicense();
+
+      expect(license.active).toBe(true);
+      expect(license.features?.creatives).toBe(expected);
     });
 
     // Tripwire for the `NODE_ENV: "test"` key in the `@/lib/env` mock at the top of this file.
@@ -431,6 +458,7 @@ describe("License Core Logic", () => {
             dashboards: false,
             workflows: false,
             dataRetention: false,
+            creatives: false,
           },
           lastChecked: expect.any(Date),
         },
@@ -456,6 +484,7 @@ describe("License Core Logic", () => {
           dashboards: false,
           workflows: false,
           dataRetention: false,
+          creatives: false,
         },
         lastChecked: expect.any(Date),
         isPendingDowngrade: false,
@@ -490,6 +519,7 @@ describe("License Core Logic", () => {
         dashboards: false,
         workflows: false,
         dataRetention: false,
+        creatives: false,
       };
       expect(mockCache.set).toHaveBeenCalledWith(
         expect.stringContaining("fb:license:"),
@@ -683,6 +713,7 @@ describe("License Core Logic", () => {
           dashboards: false,
           workflows: false,
           dataRetention: false,
+          creatives: false,
         },
       };
 
@@ -751,6 +782,7 @@ describe("License Core Logic", () => {
           dashboards: false,
           workflows: false,
           dataRetention: false,
+          creatives: false,
         },
       };
 
@@ -810,6 +842,7 @@ describe("License Core Logic", () => {
           dashboards: false,
           workflows: false,
           dataRetention: false,
+          creatives: false,
         },
       };
 
@@ -1014,6 +1047,7 @@ describe("License Core Logic", () => {
                   dashboards: false,
                   workflows: false,
                   dataRetention: false,
+                  creatives: false,
                 },
               },
             },
@@ -1196,6 +1230,7 @@ describe("License Core Logic", () => {
           dashboards: false,
           workflows: false,
           dataRetention: false,
+          creatives: false,
         },
       };
 
@@ -1326,6 +1361,7 @@ describe("License Core Logic", () => {
         dashboards: false,
         workflows: false,
         dataRetention: false,
+        creatives: false,
       },
     };
 
@@ -1575,6 +1611,54 @@ describe("License Core Logic", () => {
           method: "POST",
           headers: { "Content-Type": "application/json" },
         })
+      );
+    });
+
+    // The decision itself is proven in license-server-url.test.ts; these pin that the check uses it.
+    // crypto is mocked globally, so a readable stand-in shows what the cache identifier is built from.
+    const REAL_SERVER_STATUS_KEY = "fb:license:hash(test-license-key):status";
+    const importLicenseWithEnv = async (env: Record<string, string | undefined>) => {
+      vi.resetModules();
+      vi.doMock("@/lib/env", () => ({
+        env: { ENTERPRISE_LICENSE_KEY: "test-license-key", ENVIRONMENT: "production", ...env },
+      }));
+      vi.doMock("@/lib/hash-string", () => ({ hashString: (value: string) => `hash(${value})` }));
+      (global.fetch as Mock).mockResolvedValueOnce({ ok: false, status: 500 });
+      return import("./license");
+    };
+
+    test("checks against a loopback ENTERPRISE_LICENSE_SERVER_URL in development, in its own cache slots", async () => {
+      const { fetchLicense, getCacheKeys } = await importLicenseWithEnv({
+        NODE_ENV: "development",
+        ENTERPRISE_LICENSE_SERVER_URL: "http://localhost:8080",
+      });
+
+      await fetchLicense();
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        "http://localhost:8080/api/licenses/check",
+        expect.objectContaining({ method: "POST" })
+      );
+      expect(getCacheKeys().FETCH_LICENSE_CACHE_KEY).toBe(
+        "fb:license:hash(test-license-key@http://localhost:8080):status"
+      );
+    });
+
+    test("ignores ENTERPRISE_LICENSE_SERVER_URL in production and warns about it", async () => {
+      const { fetchLicense, getCacheKeys } = await importLicenseWithEnv({
+        NODE_ENV: "production",
+        ENTERPRISE_LICENSE_SERVER_URL: "http://localhost:8080",
+      });
+
+      await fetchLicense();
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        "https://ee.formbricks.com/api/licenses/check",
+        expect.objectContaining({ method: "POST" })
+      );
+      expect(getCacheKeys().FETCH_LICENSE_CACHE_KEY).toBe(REAL_SERVER_STATUS_KEY);
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        expect.stringContaining("ENTERPRISE_LICENSE_SERVER_URL is ignored")
       );
     });
   });

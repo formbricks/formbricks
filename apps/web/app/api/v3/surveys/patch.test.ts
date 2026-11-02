@@ -66,6 +66,10 @@ vi.mock("@formbricks/database", () => {
     segment: {
       update: vi.fn(),
     },
+    // ENG-3994: the publish rule asks whether a creative opens the survey. None does unless a test says so.
+    creative: {
+      findFirst: vi.fn(async () => null),
+    },
     // ENG-1837: the patch reconciles the EmbeddedData rows in the same transaction as the survey
     // write, so the models the reconcile touches have to exist on the client.
     surveyEmbeddedData: {
@@ -673,6 +677,39 @@ describe("patchV3Survey", () => {
       })
     ).rejects.toBeInstanceOf(V3SurveyReferenceValidationError);
     expect(prisma.survey.update).not.toHaveBeenCalled();
+  });
+
+  test("publishes an app survey with no triggers while a creative opens it (ENG-3994)", async () => {
+    vi.mocked(prisma.creative.findFirst).mockResolvedValueOnce({ id: "creative-1" } as never);
+    vi.mocked(prisma.survey.update).mockResolvedValue({
+      ...currentSurvey,
+      type: "app",
+      triggers: [],
+    } as never);
+
+    await executeV3SurveyPatch({
+      currentSurvey: { ...currentSurvey, type: "app", triggers: [] } as TSurvey,
+      document: {
+        name: currentSurvey.name,
+        status: "inProgress",
+        metadata: currentSurvey.metadata,
+        defaultLanguage: "en-US",
+        languages: [{ code: "en-US", enabled: true }],
+        welcomeCard: currentSurvey.welcomeCard,
+        blocks: currentSurvey.blocks,
+        endings: currentSurvey.endings,
+        hiddenFields: currentSurvey.hiddenFields,
+        variables: currentSurvey.variables,
+      } as unknown as Parameters<typeof executeV3SurveyPatch>[0]["document"],
+      languageRequests: [{ code: "en-US", default: true, enabled: true }],
+      requestId: "req_1",
+    });
+
+    expect(prisma.creative.findFirst).toHaveBeenCalledWith({
+      where: { surveyId: currentSurvey.id, workspaceId: currentSurvey.workspaceId, archivedAt: null },
+      select: { id: true },
+    });
+    expect(prisma.survey.update).toHaveBeenCalled();
   });
 
   /**

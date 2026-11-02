@@ -1,0 +1,135 @@
+/// Creatives (ENG-3993): page elements the web SDK renders next to surveys. Every type lives in
+/// `Creative`; `content` and `styling` are JSON validated per type by the API v3 schemas, so a new type is
+/// a new payload variant, not new columns.
+enum CreativeType {
+  feedbackButton
+  banner
+}
+
+/// The author's intent only. Scheduled, Active, "Paused with its survey" and Closed after the
+/// end time are derived (`apps/web/modules/ee/creatives/lib/display-status.ts` and its SQL twin); nothing
+/// writes this column when a schedule ends or a survey pauses.
+enum CreativeStatus {
+  draft
+  inProgress
+  paused
+  completed
+}
+
+/// What makes a creative appear. A creative left with no action never shows; it never falls back to
+/// every page view.
+enum CreativeShowOn {
+  pageView
+  action
+}
+
+/// A feedback button or a banner. Opens at most one Destination: a survey (`surveyId`) or a link
+/// (`linkUrl`), never both.
+///
+/// @property type - Fixed at creation.
+/// @property content - Per-type JSON (`FeedbackButtonContent` / `BannerContent` in the v3 spec), texts keyed by locale code.
+/// @property styling - Per-type JSON (`FeedbackButtonStyling` / `BannerStyling` in the v3 spec).
+/// @property survey - The Destination survey, in the same workspace by construction of the composite key.
+/// @property showConditions - Show when (`ZShowConditions`, shared with surveys); null always shows.
+model Creative {
+  id                String                  @id @default(cuid())
+  createdAt         DateTime                @default(now()) @map(name: "created_at")
+  updatedAt         DateTime                @updatedAt @map(name: "updated_at")
+  name              String
+  type              CreativeType
+  status            CreativeStatus          @default(draft)
+  publishedAt       DateTime?
+  archivedAt        DateTime?
+  workspace         Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId       String
+  creator           User?                   @relation("CreativeCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  createdBy         String?
+  content           Json
+  styling           Json
+  surveyId          String?
+  // Same-workspace Destination. NoAction, not Restrict: it is checked at the end of the
+  // statement, so a workspace or organization delete removes the creative through its own cascade first,
+  // while deleting the survey on its own still fails until the creative is unlinked.
+  survey            Survey?                 @relation(fields: [surveyId, workspaceId], references: [id, workspaceId], onDelete: NoAction, onUpdate: NoAction)
+  linkUrl           String?
+  showOn            CreativeShowOn          @default(pageView)
+  showConditions    Json?
+  displayPercentage Float?
+  startAt           DateTime?
+  endAt             DateTime?
+  triggers          CreativeTrigger[]
+  languages         CreativeLanguage[]
+  dailyStats        CreativeDailyStat[]
+  dailyPageStats    CreativeDailyPageStat[]
+
+  // One per list sort (updatedAt, createdAt, name); createdAt also serves the environment payload order.
+  @@index([workspaceId, updatedAt])
+  @@index([workspaceId, createdAt])
+  @@index([workspaceId, name])
+  @@index([surveyId])
+}
+
+/// The device type counts are split by: the values of the Show when `deviceType` operand.
+enum CreativeDeviceType {
+  phone
+  tablet
+  desktop
+}
+
+/// A creative's Impressions and Clicks on one UTC day on one device type (ENG-4000). Written
+/// only by the counter flush job as `GREATEST(stored, counted)`, from Redis counters that hold the day's
+/// running totals, so a repeated flush changes nothing. At most 3 rows per creative per day. Deleting
+/// the creative deletes its counts.
+model CreativeDailyStat {
+  creative    Creative           @relation(fields: [creativeId], references: [id], onDelete: Cascade)
+  creativeId  String
+  /// UTC day.
+  date        DateTime           @db.Date
+  deviceType  CreativeDeviceType
+  impressions Int                @default(0)
+  clicks      Int                @default(0)
+
+  @@id([creativeId, date, deviceType])
+}
+
+/// A creative's Impressions and Clicks on one UTC day on one page (host + path), written like
+/// `CreativeDailyStat`. At most 1000 pages per creative per day; the rest are counted under `(other)`.
+model CreativeDailyPageStat {
+  creative    Creative @relation(fields: [creativeId], references: [id], onDelete: Cascade)
+  creativeId  String
+  /// UTC day.
+  date        DateTime @db.Date
+  /// Host + path, without query string or hash, or `(other)`.
+  page        String
+  impressions Int      @default(0)
+  clicks      Int      @default(0)
+
+  @@id([creativeId, date, page])
+}
+
+/// Links a creative to the actions that show it (`showOn: action`). Mirrors `SurveyTrigger`.
+model CreativeTrigger {
+  id            String      @id @default(cuid())
+  createdAt     DateTime    @default(now()) @map(name: "created_at")
+  updatedAt     DateTime    @updatedAt @map(name: "updated_at")
+  creative      Creative    @relation(fields: [creativeId], references: [id], onDelete: Cascade)
+  creativeId    String
+  actionClass   ActionClass @relation(fields: [actionClassId], references: [id], onDelete: Cascade)
+  actionClassId String
+
+  @@unique([creativeId, actionClassId])
+  @@index([actionClassId])
+}
+
+/// The languages a creative's texts are written in. Mirrors `SurveyLanguage`; exactly one is the default.
+model CreativeLanguage {
+  language   Language @relation(fields: [languageId], references: [id], onDelete: Cascade)
+  languageId String
+  creative   Creative @relation(fields: [creativeId], references: [id], onDelete: Cascade)
+  creativeId String
+  default    Boolean  @default(false)
+  enabled    Boolean  @default(true)
+
+  @@id([languageId, creativeId])
+  @@index([creativeId])
+}

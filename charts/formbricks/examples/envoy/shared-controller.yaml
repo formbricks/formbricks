@@ -1,0 +1,17 @@
+# The platform owns Gateway API v1.5.1 and Envoy v1.8.4 CRDs, the matching
+# Envoy v1.8.4 controller, and a compatible GatewayClass.
+# Its Envoy controller must provide a rate-limit Redis backend for these policies.
+formbricks:
+  webappUrl: https://surveys.example.com
+envoy:
+  enabled: true
+  controller:
+    enabled: false
+  crds:
+    enabled: false
+  formbricks:
+    gatewayClass:
+      create: false
+      name: platform-envoy
+    policies:
+      enabled: true

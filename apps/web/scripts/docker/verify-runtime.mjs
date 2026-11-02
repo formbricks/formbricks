@@ -30,7 +30,7 @@ assert.equal(
 );
 assert.ok(atLeast(process.versions.openssl, "3.5.9"), "Node must use patched OpenSSL");
 assert.equal(process.versions.undici.split(".")[0], "7", "Recheck fixes before changing Undici majors");
-assert.ok(atLeast(process.versions.undici, "7.29.1"), "Node's built-in fetch must use patched Undici");
+assert.ok(atLeast(process.versions.undici, "7.30.1"), "Node's built-in fetch must use patched Undici");
 assert.equal(process.versions.modules, "137", "Native addons must retain the Node 24 ABI");
 assert.deepEqual(Intl.DateTimeFormat.supportedLocalesOf(["de", "es", "ja"]), ["de", "es", "ja"]);
 
@@ -85,7 +85,7 @@ if (process.argv.includes("--dependencies")) {
   // Minimum patched versions for every npm package in the live Inspector finding inventory.
   // Inspect nested copies too: a safe hoisted version does not fix an older transitive install.
   const minimumVersions = {
-    next: "16.3.8",
+    next: "16.4.1",
     "@grpc/grpc-js": "1.14.5",
     sharp: "0.35.5",
     "ip-address": "10.7.1",

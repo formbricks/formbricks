@@ -17,8 +17,8 @@ request-timeout = 30
 
 [phases.examples]
 # Load-bearing. The examples phase only emits cases for operations that carry explicit `example` /
-# `examples` in the spec — three of the twenty-eight v3 operations today. The other twenty-five are
-# silently skipped, which reads as a green run that proves nothing. `fill-missing` generates the
+# `examples` in the spec — only a few of the v3 operations. The rest would be silently skipped,
+# which reads as a green run that proves nothing. `fill-missing` generates the
 # absent parts so every documented operation gets a case, which is also what makes newly documented
 # endpoints covered with no per-endpoint registration.
 fill-missing = true

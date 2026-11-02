@@ -1,0 +1,132 @@
+get:
+  operationId: getDashboardWidgetV3
+  summary: Get a widget
+  description: |
+    Returns one widget on a dashboard with its full chart: the resource an add's `Location` names.
+    Needs read access to the dashboard's workspace; a widget that is not on the dashboard, or a
+    dashboard the caller cannot see, answers 403.
+  tags:
+    - V3 Dashboards
+  parameters:
+    - $ref: ../components/parameters/DashboardIdPath.yml
+    - $ref: ../components/parameters/WidgetIdPath.yml
+  responses:
+    "200":
+      description: The widget
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/DashboardWidget.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3DashboardsForbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []
+patch:
+  operationId: updateDashboardWidgetV3
+  summary: Move a widget or show another chart in it
+  description: |
+    Moves or resizes a widget, points it at another chart, or both. A layout covering another widget
+    answers 422 naming it; a chart already on the dashboard answers 409. Moves the dashboard's
+    `updatedAt`. Needs write access to the dashboard's workspace.
+  tags:
+    - V3 Dashboards
+  parameters:
+    - $ref: ../components/parameters/DashboardIdPath.yml
+    - $ref: ../components/parameters/WidgetIdPath.yml
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/WidgetUpdateRequest.yml
+  responses:
+    "200":
+      description: The updated widget
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/DashboardWidget.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3DashboardsForbidden.yml
+    "409":
+      $ref: ../components/responses/V3DashboardsConflict.yml
+    "422":
+      $ref: ../components/responses/V3UnprocessableContent.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []
+delete:
+  operationId: removeDashboardWidgetV3
+  summary: Remove a chart from a dashboard
+  description: |
+    Takes a widget off its dashboard. The chart is kept, with every other dashboard it sits on. Moves
+    the dashboard's `updatedAt`. Needs write access to the dashboard's workspace.
+  tags:
+    - V3 Dashboards
+  parameters:
+    - $ref: ../components/parameters/DashboardIdPath.yml
+    - $ref: ../components/parameters/WidgetIdPath.yml
+  responses:
+    "204":
+      description: Widget removed; the chart is kept
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3DashboardsForbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

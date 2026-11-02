@@ -1,3 +1,5 @@
+import { notFound } from "next/navigation";
+import { prisma } from "@formbricks/database";
 import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { SurveyAnalysisNavigation } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
 import { ResponsePage } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage";
@@ -17,6 +19,7 @@ import { getTagsByWorkspaceId } from "@/lib/tag/service";
 import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
+import { hasLinkedCreatives } from "@/modules/ee/creatives/lib/linked-creatives";
 import { getIsContactsEnabled, getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
@@ -36,16 +39,17 @@ const Page = async (props: Readonly<{ params: Promise<{ workspaceId: string; sur
     params.surveyId
   );
 
-  const [survey, user, tags, isContactsEnabled, responseCount] = await Promise.all([
+  const [survey, user, tags, isContactsEnabled, responseCount, isOpenedByCreatives] = await Promise.all([
     getSurvey(params.surveyId),
     getUser(session.user.id),
     getTagsByWorkspaceId(workspace.id),
     getIsContactsEnabled(organization.id),
     getResponseCountBySurveyId(params.surveyId),
+    hasLinkedCreatives(prisma, { surveyId: params.surveyId, workspaceId: workspace.id }),
   ]);
 
   if (!survey) {
-    throw new ResourceNotFoundError(t("common.survey"), params.surveyId);
+    return notFound();
   }
 
   if (!user) {
@@ -119,6 +123,7 @@ const Page = async (props: Readonly<{ params: Promise<{ workspaceId: string; sur
         isQuotasAllowed={isQuotasAllowed}
         quotas={quotas}
         initialResponses={initialResponses}
+        isOpenedByCreatives={isOpenedByCreatives}
       />
     </PageContentWrapper>
   );
