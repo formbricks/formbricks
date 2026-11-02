@@ -65,6 +65,19 @@ beforeEach(async () => {
   await dropCredentialIssuer();
 });
 
+describe("credential row written by Better Auth 1.7.7 (real Postgres)", () => {
+  test("carries the issuer a 1.7.0 pod looks it up by", async () => {
+    await resetDb();
+    await auth.api.signUpEmail({ body: { email: EMAIL, password: PASSWORD, name: "Fresh Sign-up" } });
+
+    const account = await prisma.account.findFirstOrThrow({
+      where: { provider: "credential", user: { email: EMAIL } },
+      select: { issuer: true },
+    });
+    expect(account.issuer).toBe("local:credential");
+  });
+});
+
 describe("credential row with a NULL issuer (real Postgres + Better Auth)", () => {
   test("signs in with the correct password", async () => {
     const result = await auth.api.signInEmail({ body: { email: EMAIL, password: PASSWORD } });

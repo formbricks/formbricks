@@ -312,6 +312,11 @@ export const auth = betterAuth({
       refreshToken: "refresh_token",
       idToken: "id_token",
     },
+    // Better Auth 1.7.3 dropped `issuer` from its account model; 1.7.0 keys accounts on it. Declared so
+    // the `account.create.before` hook in better-auth-hooks.ts can keep writing it for a 1.7.0 rollback.
+    additionalFields: {
+      issuer: { type: "string", required: false, input: false, returned: false },
+    },
   },
 
   // Existing Prisma columns that Better Auth doesn't know about; declared so the `user.create.before`

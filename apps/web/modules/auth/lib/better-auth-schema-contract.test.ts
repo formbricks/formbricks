@@ -78,9 +78,14 @@ const CORE_FIELD_MAPPING = {
   },
 } as const;
 
+/** Our own additional account fields, mirrored from `auth.ts` and guarded the same way. */
+const ACCOUNT_ADDITIONAL_FIELDS = {
+  issuer: { type: "string", required: false, input: false, returned: false },
+} as const;
+
 const coreTables = getAuthTables({
   session: { fields: { ...CORE_FIELD_MAPPING.session } },
-  account: { fields: { ...CORE_FIELD_MAPPING.account } },
+  account: { fields: { ...CORE_FIELD_MAPPING.account }, additionalFields: { ...ACCOUNT_ADDITIONAL_FIELDS } },
 });
 
 /**
@@ -144,13 +149,16 @@ describe("Better Auth ↔ Prisma schema contract", () => {
       expect(source).toContain(strips);
     });
 
-    // Better Auth 1.7.3 dropped `account.issuer` from its model and keys accounts on
-    // `(providerId, accountId)`. We keep the column because a 1.7.0 pod still filters on it, so this
-    // pins both halves: upstream no longer declares it (if it comes back, the superset test above
-    // starts covering it and this one can go), and our model still has it.
-    test("account.issuer is no longer declared by Better Auth but stays on our model for rollback", () => {
-      expect(Object.keys(coreTables.account.fields)).not.toContain("issuer");
-      expect(prismaModelFields(prismaSchema, "Account")).toContain("issuer");
+    // Better Auth 1.7.3 dropped `account.issuer` from its core model and keys accounts on
+    // `(providerId, accountId)`. A 1.7.0 pod still filters on it, so we declare it ourselves and write it
+    // on every account create: the superset test above then covers the column like any core field.
+    test("account.issuer is ours, not Better Auth's, and the auth.ts declaration is still there", () => {
+      expect(Object.keys(getAuthTables({}).account.fields)).not.toContain("issuer");
+      expect(Object.keys(coreTables.account.fields)).toContain("issuer");
+      const authSource = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "auth.ts"), "utf8");
+      expect(authSource).toContain(
+        'issuer: { type: "string", required: false, input: false, returned: false }'
+      );
     });
   });
 
