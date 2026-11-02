@@ -15,7 +15,7 @@ There are two kinds of export:
 | Columns | One column per question, named `1. Question text`, plus an `- Option ID` column for choice questions | One column per question, named by its [question code](/surveys/analysis/question-codes) (`q1`, `q5_1`) |
 | Answers | The text the respondent saw | Answer codes, text, or both |
 | Files | A CSV file, or an Excel file with one sheet named `Sheet1` | An Excel workbook with several sheets, or a zip of CSV files and an SPSS syntax file |
-| Low quality responses | Included | Left out by default |
+| Low quality responses | Included by default | Left out by default |
 
 The Standard export is the file Formbricks has always produced, so pipelines that read it keep working. It is plain UTF-8 text without a byte-order mark and with `\n` line breaks.
 
@@ -30,14 +30,18 @@ The Standard export is the file Formbricks has always produced, so pipelines tha
     Set the filter and time range on the Summary or Responses tab first. The export contains the responses the filter matches. To export only some responses, tick their rows in the Responses table and select **Download** in the selection bar: it opens the same modal for the selection.
   </Step>
   <Step title="Open the Export modal">
-    Select **Export**. The **Export options** modal opens with the settings of the Standard export. A count line at the top tells you how many responses are included and, for an Analysis export, how many Low quality responses are left out, for example "Include 1,240 responses · 3 Low quality left out". The **Export** button waits until the count has loaded.
+    Select **Export**. The **Export options** modal opens with the settings of the Standard export. A count box at the top says how many responses are included, for example "Include 1,240 responses", and below it what the number is based on, such as your filters, the Low quality responses left out and the total: "Matching your current filters · 3 Low quality left out · 1,300 responses total". The **Export** button waits until the count has loaded.
   </Step>
   <Step title="Pick the options">
     - **Format**: **.csv** or **.xlsx**.
     - **Add SPSS syntax file (.sps)**: CSV only. It adds a syntax file that reads the CSV into SPSS. It needs answer codes, so it switches **Text only** off.
     - **Display questions** and **Display answers**: **Text only**, **Code only** or **Text and code**, one choice for the column headers and one for the cells.
-    - **Include columns**: tick the columns the file keeps, or **Select all**. A multi-select question lists its options and its Other text under it, so you can leave one out without the rest.
-    - **Advanced options**: **Add datamap** and **Add unmapped values**, both for CSV and Excel. On CSV, each one adds a file, so the download becomes a zip. **Compress into .zip** downloads a single CSV as a zip.
+    - **Include columns**: tick the columns the file keeps, or **Select all**. A multi-select question written as one column per option lists its options and its Other text under it, so you can leave one out without the rest.
+    - **Include Low quality responses (N)**: shown when the responses you export contain Low quality ones. It is ticked for the Standard export and unticked once you choose any Analysis option, until you change it yourself. If your filter selects Low quality responses, the filter decides and the checkbox is not shown.
+    - **Advanced options**:
+      - **Split multi-select into 1/0 columns**: one column per option of a multi-select. It is ticked once you choose any Analysis option, and always on with the SPSS syntax file. Untick it to write each multi-select in one cell instead. Ticking it on the Standard settings makes the export an Analysis export.
+      - **Add datamap** and **Add unmapped values**, both for CSV and Excel. On CSV, each one adds a file, so the download becomes a zip.
+      - **Compress into .zip** downloads a single CSV as a zip.
   </Step>
   <Step title="Export">
     Select **Export**. The modal shows the progress, for example "Exporting… 600 of 1,240 responses", and you can close it: the download starts when the file is ready. A toast confirms it. If it fails, the toast offers **Try again**.
@@ -45,7 +49,7 @@ The Standard export is the file Formbricks has always produced, so pipelines tha
 </Steps>
 
 <Note>
-  The export runs in the app and streams the file as it is built. You can move between Summary, Responses and the survey editor while it runs. If you reload or close the tab, the browser asks you to confirm first, and the export stops if you do. Only one export runs at a time in your browser, and an Excel file is built by one export at a time on the server, so a second Excel export waits its turn.
+  The export runs in the app and streams the file as it is built. You can move anywhere in the app while it runs, the survey editor included. If you reload or close the tab, the browser asks you to confirm first, and the export stops if you do. Only one export runs at a time in your browser, and an Excel file is built by one export at a time on the server, so a second Excel export waits its turn.
 </Note>
 
 ### Attachments
@@ -92,6 +96,7 @@ When a selection is over the limit, the **Excel** option is greyed out, the moda
 - Each question has a column named by its question code. A matrix has one column per row, named `<code>_<row code>`.
 - A **single-select** or **picture selection** question has one cell with the answer code. If the question has an **Other** option, the text typed into it goes to `<code>_text`.
 - A **multi-select** question has one column per option, named `<code>_<answer code>`. A cell is `1` when the option was chosen, `0` when the question was answered without it, and blank when the question was not answered or not shown. Options added after the survey was published also get `0` for earlier responses that answered the question; the datamap notes this.
+- With **Split multi-select into 1/0 columns** unticked, a multi-select question is one column named by its question code. The cell lists the chosen answer codes in option order, separated by `; `, for example `1; 4`. In the `Labels` data it lists the answers as given, and an Other answer as its text. Its Other text keeps its own `<code>_<answer code>_text` column.
 - A **ranking** question has one column per option, holding the rank the respondent gave it (`1` is first), blank if the option was not ranked.
 - **Rating, NPS, CSAT and CES** questions hold the number. Number inputs are exported as numbers.
 - Address, contact info, file upload, date, consent and calendar questions hold the same cell as in the Standard export, under the question code.
@@ -167,11 +172,11 @@ Mark a response as **Low quality** when it should not count, for example a speed
 
 What changes for a Low quality response:
 
-- It is left out of the Analysis export by default, and the count line says how many were left out. This also holds when you export ticked rows. If your filter selects Low quality responses, the export contains them.
+- It is left out of the Analysis export by default, and the count line says how many were left out. Tick **Include Low quality responses** to keep them. This also holds when you export ticked rows. If your filter selects Low quality responses, the export contains them.
 - The **Status** column of the Responses table and the response card show a **Low quality** badge. The Analysis export has an `outcome` column that reads `lowQuality`.
 - Its Feedback Records are removed, so it drops out of [Dashboards](/unify-feedback/dashboards-charts). Restoring the response creates them again.
 
-What does not change: the Summary, response counts, API lists, webhooks and integrations keep counting Low quality responses. Webhooks and API responses carry `outcome`, so you can filter on it yourself. The Standard export includes Low quality responses too.
+What does not change: the Summary, response counts, API lists, webhooks and integrations keep counting Low quality responses. Webhooks and API responses carry `outcome`, so you can filter on it yourself. The Standard export includes Low quality responses too, unless you untick **Include Low quality responses**.
 
 <Note>
   Whoever marks responses needs edit rights on the survey.
