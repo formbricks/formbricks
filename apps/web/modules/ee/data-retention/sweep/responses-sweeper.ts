@@ -6,6 +6,7 @@ import { drainDeletionCleanups } from "@/modules/deletion-cleanup/lib/drain";
 import { enqueueResponsesDeletionCleanups } from "@/modules/deletion-cleanup/lib/enqueue";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
+import { requestEmailAuditErasureBestEffort } from "@/modules/email/lib/email-audit-maintenance";
 import {
   type TRetentionTargetState,
   getDueRetentionStep,
@@ -231,6 +232,7 @@ export const deleteDueResponses = async (
     });
     if (!batch) return;
 
+    await requestEmailAuditErasureBestEffort({ responseIds: batch.deletedIds });
     await auditDeletion(context, { id: survey.id, workspaceId: batch.workspaceId }, batch.deletedIds);
     try {
       await drainDeletionCleanups({ ids: batch.drainNowIds });

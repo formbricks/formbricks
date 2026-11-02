@@ -64,6 +64,22 @@ describe("email audit retention and erasure", () => {
     expect(JSON.stringify(mocks.updateMany.mock.calls)).not.toContain("Person@Example.com");
   });
 
+  test("requests erasure for bulk-deleted responses in bounded batches", async () => {
+    const responseIds = Array.from({ length: 501 }, (_, index) => `response-${index}`);
+
+    await requestEmailAuditErasure({ responseIds });
+
+    expect(mocks.updateMany).toHaveBeenCalledTimes(2);
+    expect(mocks.updateMany).toHaveBeenNthCalledWith(1, {
+      where: { responseId: { in: responseIds.slice(0, 500) }, erasedAt: null },
+      data: { erasureRequestedAt: expect.any(Date) },
+    });
+    expect(mocks.updateMany).toHaveBeenNthCalledWith(2, {
+      where: { responseId: { in: responseIds.slice(500) }, erasedAt: null },
+      data: { erasureRequestedAt: expect.any(Date) },
+    });
+  });
+
   test("marks interrupted attempts indeterminate and removes erased content and identifiers", async () => {
     mocks.findMany
       .mockResolvedValueOnce([{ id: "stale-id" }])

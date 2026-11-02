@@ -13,6 +13,7 @@ import type { TSurveyActorContext } from "@/lib/survey/visibility/actor-context"
 import { andVisibleSurveys, visibleSurveySqlPredicate } from "@/lib/survey/visibility/predicate";
 import { drainDeletionCleanups } from "@/modules/deletion-cleanup/lib/drain";
 import { enqueueResponsesDeletionCleanups } from "@/modules/deletion-cleanup/lib/enqueue";
+import { requestEmailAuditErasureBestEffort } from "@/modules/email/lib/email-audit-maintenance";
 import { deleteResponseFileUrls } from "@/modules/storage/lib/delete-response-files";
 import { collectResponseFileUrls, getSurveyFileUploadElementIds } from "@/modules/storage/utils";
 import type { TV3ResponsesFilter } from "./parse-v3-responses-list-query";
@@ -291,6 +292,8 @@ export async function deleteScopedResponses(
   }
 
   const { drainNowIds, ...result } = outcome;
+
+  await requestEmailAuditErasureBestEffort({ responseIds: result.deletedIds });
 
   try {
     await drainDeletionCleanups({ ids: drainNowIds });

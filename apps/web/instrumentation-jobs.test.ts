@@ -19,6 +19,7 @@ const mockUpsertAuthzedReconciliationAudit = vi.fn();
 const mockUpsertDeletionCleanupDrain = vi.fn();
 const mockUpsertDataRetentionSweep = vi.fn();
 const mockUpsertCreativeStatsFlush = vi.fn();
+const mockUpsertEmailAuditMaintenance = vi.fn();
 const mockDebug = vi.fn();
 const mockError = vi.fn();
 const mockWarn = vi.fn();
@@ -36,6 +37,7 @@ const mockProcessAuthzedScheduledReconciliationJob = vi.fn();
 const mockProcessDeletionCleanupDrainJob = vi.fn();
 const mockProcessDataRetentionSweepJob = vi.fn();
 const mockProcessCreativeStatsFlushJob = vi.fn();
+const mockProcessEmailAuditMaintenanceJob = vi.fn();
 const TEST_TIMEOUT_MS = 15_000;
 
 const slowTest = (name: string, fn: () => Promise<void>): void => {
@@ -51,6 +53,12 @@ vi.mock("@formbricks/jobs", () => ({
     workflowRun: "workflow-run.process",
   },
   recurringJobs: {
+    emailAuditMaintenance: {
+      name: "email-audit.maintain",
+      scheduleId: "email-audit-maintenance",
+      scope: "global",
+      upsert: mockUpsertEmailAuditMaintenance,
+    },
     authzedProjectionDelivery: {
       name: "authzed-projection.deliver",
       scheduleId: "authzed-projection-delivery",
@@ -181,6 +189,10 @@ vi.mock("@/modules/deletion-cleanup/lib/process-deletion-cleanup-drain-job", () 
   processDeletionCleanupDrainJob: mockProcessDeletionCleanupDrainJob,
 }));
 
+vi.mock("@/modules/email/lib/email-audit-maintenance", () => ({
+  processEmailAuditMaintenanceJob: mockProcessEmailAuditMaintenanceJob,
+}));
+
 vi.mock("@/lib/authzed/outbox-processor", () => ({
   processAuthzedProjectionDeliveryJob: mockProcessAuthzedProjectionDeliveryJob,
 }));
@@ -296,6 +308,7 @@ describe("instrumentation-jobs", () => {
         "creative-stats.flush": expect.any(Function),
         "data-retention.sweep": expect.any(Function),
         "deletion-cleanup.drain": expect.any(Function),
+        "email-audit.maintain": expect.any(Function),
         "response-pipeline.process": expect.any(Function),
         "survey-scheduling.reconcile": expect.any(Function),
         "survey-archive-purge.process": expect.any(Function),

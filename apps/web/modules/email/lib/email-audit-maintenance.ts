@@ -13,6 +13,7 @@ export const requestEmailAuditErasure = async (scope: {
   organizationId?: string;
   surveyId?: string;
   responseId?: string;
+  responseIds?: string[];
   userId?: string;
   email?: string;
 }): Promise<void> => {
@@ -39,11 +40,21 @@ export const requestEmailAuditErasure = async (scope: {
     scope.userId ? { configuredByUserId: scope.userId } : undefined,
     recipientMac ? { recipientMac } : undefined,
   ].filter((condition) => condition !== undefined);
-  if (conditions.length === 0) return;
-  await prisma.outboundEmailAudit.updateMany({
-    where: { OR: conditions, erasedAt: null },
-    data: { erasureRequestedAt: new Date() },
-  });
+  const responseIds = scope.responseIds ?? [];
+  if (conditions.length === 0 && responseIds.length === 0) return;
+  const requestedAt = new Date();
+  if (conditions.length > 0) {
+    await prisma.outboundEmailAudit.updateMany({
+      where: { OR: conditions, erasedAt: null },
+      data: { erasureRequestedAt: requestedAt },
+    });
+  }
+  for (let index = 0; index < responseIds.length; index += 500) {
+    await prisma.outboundEmailAudit.updateMany({
+      where: { responseId: { in: responseIds.slice(index, index + 500) }, erasedAt: null },
+      data: { erasureRequestedAt: requestedAt },
+    });
+  }
 };
 
 export const requestEmailAuditErasureBestEffort = async (
