@@ -2,9 +2,9 @@ import { cn } from "@/lib/cn";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 
 interface RankingResponseProps {
-  value: { value: string; id: string | undefined }[];
-  isExpanded: boolean;
-  showId: boolean;
+  readonly value: { value: string; id: string | undefined }[];
+  readonly isExpanded: boolean;
+  readonly showId: boolean;
 }
 
 export const RankingResponse = ({ value, isExpanded, showId }: RankingResponseProps) => {

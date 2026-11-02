@@ -7,7 +7,7 @@ import { DocumentationLinks } from "@/app/(app)/workspaces/[workspaceId]/surveys
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 
 interface DynamicPopupTabProps {
-  surveyId: string;
+  readonly surveyId: string;
 }
 
 export const DynamicPopupTab = ({ surveyId }: DynamicPopupTabProps) => {

@@ -37,16 +37,16 @@ import { Label } from "@/modules/ui/components/label";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 interface MultipleChoiceElementFormProps {
-  localSurvey: TSurvey;
-  element: TSurveyMultipleChoiceElement;
-  elementIdx: number;
-  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
-  selectedLanguageCode: string;
-  isInvalid: boolean;
-  locale: TUserLocale;
-  isStorageConfigured: boolean;
-  isExternalUrlsAllowed?: boolean;
-  lock?: TElementLock;
+  readonly localSurvey: TSurvey;
+  readonly element: TSurveyMultipleChoiceElement;
+  readonly elementIdx: number;
+  readonly updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
+  readonly selectedLanguageCode: string;
+  readonly isInvalid: boolean;
+  readonly locale: TUserLocale;
+  readonly isStorageConfigured: boolean;
+  readonly isExternalUrlsAllowed?: boolean;
+  readonly lock?: TElementLock;
 }
 
 export const MultipleChoiceElementForm = ({

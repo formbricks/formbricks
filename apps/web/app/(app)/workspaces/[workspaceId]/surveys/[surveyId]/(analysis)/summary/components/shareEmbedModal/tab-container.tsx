@@ -1,9 +1,9 @@
 import { H3, Small } from "@/modules/ui/components/typography";
 
 interface TabContainerProps {
-  title: string;
-  description: string;
-  children: React.ReactNode;
+  readonly title: string;
+  readonly description: string;
+  readonly children: React.ReactNode;
 }
 
 export const TabContainer = ({ title, description, children }: TabContainerProps) => {

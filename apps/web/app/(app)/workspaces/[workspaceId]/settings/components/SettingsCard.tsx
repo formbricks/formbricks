@@ -39,15 +39,15 @@ export const SettingsCard = ({
   buttonInfo,
   cta,
 }: {
-  title: string;
-  description: string;
-  children: any;
-  soon?: boolean;
-  bodyVariant?: TSettingsCardBodyVariant;
-  beta?: boolean;
-  className?: string;
-  buttonInfo?: ButtonInfo;
-  cta?: React.ReactNode;
+  readonly title: string;
+  readonly description: string;
+  readonly children: any;
+  readonly soon?: boolean;
+  readonly bodyVariant?: TSettingsCardBodyVariant;
+  readonly beta?: boolean;
+  readonly className?: string;
+  readonly buttonInfo?: ButtonInfo;
+  readonly cta?: React.ReactNode;
 }) => {
   const { t } = useTranslation();
   return (

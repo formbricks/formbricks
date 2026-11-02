@@ -7,15 +7,15 @@ import { RecodeSection } from "@/modules/survey/editor/components/recode-section
 import { TElementLock } from "@/modules/survey/editor/lib/published-lock";
 
 interface AdvancedSettingsProps {
-  element: TSurveyElement;
-  elementIdx: number;
-  localSurvey: TSurvey;
-  lock: TElementLock;
-  updateElement: (elementIdx: number, updatedAttributes: any) => void;
-  updateBlockLogic: (elementIdx: number, logic: TSurveyBlockLogic[]) => void;
-  updateBlockLogicFallback: (elementIdx: number, logicFallback: string | undefined) => void;
-  workspace?: TWorkspaceWithoutCustomCss;
-  isFormbricksCloud?: boolean;
+  readonly element: TSurveyElement;
+  readonly elementIdx: number;
+  readonly localSurvey: TSurvey;
+  readonly lock: TElementLock;
+  readonly updateElement: (elementIdx: number, updatedAttributes: any) => void;
+  readonly updateBlockLogic: (elementIdx: number, logic: TSurveyBlockLogic[]) => void;
+  readonly updateBlockLogicFallback: (elementIdx: number, logicFallback: string | undefined) => void;
+  readonly workspace?: TWorkspaceWithoutCustomCss;
+  readonly isFormbricksCloud?: boolean;
 }
 
 /**

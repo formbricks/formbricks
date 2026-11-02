@@ -3,9 +3,9 @@
 import { cn } from "@/lib/cn";
 
 interface BillingSliderProps {
-  className?: string;
-  value: number;
-  max: number;
+  readonly className?: string;
+  readonly value: number;
+  readonly max: number;
 }
 
 export const BillingSlider = ({ className, value, max }: BillingSliderProps) => {

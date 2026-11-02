@@ -695,6 +695,10 @@
   },
   "emails": {
     "accept": "Принять",
+    "account_deleted_email_did_not_request": "Если вы не удаляли свой аккаунт, пожалуйста, немедленно свяжитесь со службой поддержки.",
+    "account_deleted_email_heading": "Ваш аккаунт удалён",
+    "account_deleted_email_subject": "Ваш аккаунт Formbricks удалён",
+    "account_deleted_email_text": "Твой аккаунт Formbricks был окончательно удалён.",
     "click_or_drag_to_upload_files": "Нажмите или перетащите для загрузки файлов.",
     "delete_account_email_confirm_deletion": "Подтвердить удаление учётной записи",
     "delete_account_email_did_not_request": "Если вы не запрашивали это, проигнорируйте это письмо — ваша учётная запись останется активной.",

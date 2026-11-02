@@ -13,9 +13,9 @@ import {
 } from "@/modules/ui/components/select";
 
 interface FrdPickerProps {
-  directories: { id: string; name: string }[];
-  selectedDirectoryId: string | null;
-  onChange: (id: string) => void;
+  readonly directories: { id: string; name: string }[];
+  readonly selectedDirectoryId: string | null;
+  readonly onChange: (id: string) => void;
 }
 
 export const FrdPicker = ({ directories, selectedDirectoryId, onChange }: FrdPickerProps) => {

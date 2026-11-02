@@ -46,13 +46,13 @@ import {
 import { ManageTranslationsModal } from "./manage-translations-modal";
 
 interface LanguageViewProps {
-  localSurvey: TSurvey;
+  readonly localSurvey: TSurvey;
   /** The survey as stored: what the published lock compares the translations against. */
-  persistedSurvey: TSurvey;
-  setLocalSurvey: (survey: TSurvey) => void;
-  workspaceLanguages: Language[];
-  locale: TUserLocale;
-  setHasIncompleteTranslations: (has: boolean) => void;
+  readonly persistedSurvey: TSurvey;
+  readonly setLocalSurvey: (survey: TSurvey) => void;
+  readonly workspaceLanguages: Language[];
+  readonly locale: TUserLocale;
+  readonly setHasIncompleteTranslations: (has: boolean) => void;
 }
 
 interface ConfirmationModalInfo {

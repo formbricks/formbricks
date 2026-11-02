@@ -15,10 +15,10 @@ import { Button } from "@/modules/ui/components/button";
 import { SettingsCard } from "../../../components/SettingsCard";
 
 interface EnterpriseLicenseStatusProps {
-  status: TLicenseStatus;
-  lastChecked: Date;
-  gracePeriodEnd?: Date;
-  workspaceId: string;
+  readonly status: TLicenseStatus;
+  readonly lastChecked: Date;
+  readonly gracePeriodEnd?: Date;
+  readonly workspaceId: string;
 }
 
 const getBadgeConfig = (
@@ -155,6 +155,7 @@ export const EnterpriseLicenseStatus = ({
             i18nKey="workspace.settings.enterprise.questions_please_reach_out_to_email"
             components={{
               contactLink: (
+                // eslint-disable-next-line jsx-a11y/anchor-has-content -- Trans injects the link text
                 <a
                   className="font-medium text-slate-700 underline hover:text-slate-900"
                   href="mailto:hola@formbricks.com"

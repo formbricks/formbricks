@@ -5,16 +5,16 @@ import { Checkbox } from "../checkbox";
 import { Label } from "../label";
 
 interface AdditionalIntegrationSettingsProps {
-  includeVariables: boolean;
-  includeHiddenFields: boolean;
-  includeMetadata: boolean;
-  includeCreatedAt: boolean;
-  includeContactAttributes: boolean;
-  setIncludeVariables: (includeVariables: boolean) => void;
-  setIncludeHiddenFields: (includeHiddenFields: boolean) => void;
-  setIncludeMetadata: (includeMetadata: boolean) => void;
-  setIncludeCreatedAt: (includeCreatedAt: boolean) => void;
-  setIncludeContactAttributes: (includeContactAttributes: boolean) => void;
+  readonly includeVariables: boolean;
+  readonly includeHiddenFields: boolean;
+  readonly includeMetadata: boolean;
+  readonly includeCreatedAt: boolean;
+  readonly includeContactAttributes: boolean;
+  readonly setIncludeVariables: (includeVariables: boolean) => void;
+  readonly setIncludeHiddenFields: (includeHiddenFields: boolean) => void;
+  readonly setIncludeMetadata: (includeMetadata: boolean) => void;
+  readonly setIncludeCreatedAt: (includeCreatedAt: boolean) => void;
+  readonly setIncludeContactAttributes: (includeContactAttributes: boolean) => void;
 }
 
 export const AdditionalIntegrationSettings = ({

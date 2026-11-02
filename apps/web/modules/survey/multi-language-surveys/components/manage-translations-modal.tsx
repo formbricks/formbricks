@@ -38,18 +38,18 @@ import {
 import { TranslationRow } from "./translation-row";
 
 interface ManageTranslationsModalProps {
-  open: boolean;
-  setOpen: (open: boolean) => void;
-  localSurvey: TSurvey;
+  readonly open: boolean;
+  readonly setOpen: (open: boolean) => void;
+  readonly localSurvey: TSurvey;
   /** The survey as stored: an option text it already has in this language is locked once published. */
-  persistedSurvey: TSurvey;
-  setLocalSurvey: (survey: TSurvey) => void;
-  languageCode: string;
-  languageName: string;
-  defaultLanguageName: string;
-  workspaceId: string;
-  isAIAvailable: boolean;
-  aiUnavailableReason?: TAIUnavailableReason;
+  readonly persistedSurvey: TSurvey;
+  readonly setLocalSurvey: (survey: TSurvey) => void;
+  readonly languageCode: string;
+  readonly languageName: string;
+  readonly defaultLanguageName: string;
+  readonly workspaceId: string;
+  readonly isAIAvailable: boolean;
+  readonly aiUnavailableReason?: TAIUnavailableReason;
 }
 
 export const ManageTranslationsModal = ({

@@ -695,6 +695,10 @@
   },
   "emails": {
     "accept": "承認",
+    "account_deleted_email_did_not_request": "アカウントを削除した覚えがない場合は、すぐにサポートまでご連絡ください。",
+    "account_deleted_email_heading": "アカウントが削除されました",
+    "account_deleted_email_subject": "Formbricksアカウントが削除されました",
+    "account_deleted_email_text": "Formbricksアカウントが完全に削除されました。",
     "click_or_drag_to_upload_files": "クリックまたはドラッグしてファイルをアップロードしてください。",
     "delete_account_email_confirm_deletion": "アカウント削除を確認",
     "delete_account_email_did_not_request": "心当たりがない場合は、このメールを無視してください。アカウントは引き続き有効です。",

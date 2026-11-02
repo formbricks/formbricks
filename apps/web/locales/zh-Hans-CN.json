@@ -695,6 +695,10 @@
   },
   "emails": {
     "accept": "接受",
+    "account_deleted_email_did_not_request": "如果这不是你本人删除的账户，请立即联系客服支持。",
+    "account_deleted_email_heading": "你的账户已被删除",
+    "account_deleted_email_subject": "你的 Formbricks 账户已被删除",
+    "account_deleted_email_text": "你的 Formbricks 账户已被永久删除。",
     "click_or_drag_to_upload_files": "点击 或 拖动 上传 文件",
     "delete_account_email_confirm_deletion": "确认删除账户",
     "delete_account_email_did_not_request": "如果这不是您发起的，请忽略此邮件，您的账户将保持有效。",

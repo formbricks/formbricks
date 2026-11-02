@@ -21,9 +21,9 @@ import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 
 interface WebhookCreatedModalProps {
-  open: boolean;
-  webhook: Webhook;
-  onClose: () => void;
+  readonly open: boolean;
+  readonly webhook: Webhook;
+  readonly onClose: () => void;
 }
 
 export const WebhookCreatedModal = ({ open, webhook, onClose }: WebhookCreatedModalProps) => {

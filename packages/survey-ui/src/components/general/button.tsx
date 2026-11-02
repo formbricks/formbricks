@@ -6,8 +6,8 @@ import { cn } from "@/lib/utils";
 export type ButtonVariant = "default" | "destructive" | "outline" | "secondary" | "ghost" | "link" | "custom";
 export type ButtonSize = "default" | "custom" | "sm" | "lg" | "icon";
 interface ButtonVariantProps {
-  variant?: ButtonVariant | null;
-  size?: ButtonSize | null;
+  readonly variant?: ButtonVariant | null;
+  readonly size?: ButtonSize | null;
 }
 type ButtonVariantClassProps =
   | (ButtonVariantProps & { class?: string; className?: never })
@@ -44,7 +44,7 @@ const buttonVariants: (props?: ButtonVariantClassProps) => string = cva(
 );
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>, ButtonVariantProps {
-  asChild?: boolean;
+  readonly asChild?: boolean;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(

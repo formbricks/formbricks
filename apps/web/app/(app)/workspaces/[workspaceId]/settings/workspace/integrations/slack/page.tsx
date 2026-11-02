@@ -17,7 +17,7 @@ import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 export const generateMetadata = () =>
   getSettingsPageMetadata("workspace.integrations.slack.slack_integration");
 
-const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
+const Page = async (props: { readonly params: Promise<{ workspaceId: string }> }) => {
   const params = await props.params;
   const isEnabled = !!(SLACK_CLIENT_ID && SLACK_CLIENT_SECRET);
 

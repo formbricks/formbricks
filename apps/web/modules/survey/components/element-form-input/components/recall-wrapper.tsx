@@ -31,14 +31,18 @@ interface RecallWrapperRenderProps {
 }
 
 interface RecallWrapperProps {
-  value: string | undefined;
-  onChange: (val: string, recallItems: TSurveyRecallItem[], fallbacks: { [id: string]: string }) => void;
-  localSurvey: TSurvey;
-  elementId: string;
-  render: (props: RecallWrapperRenderProps) => React.ReactNode;
-  usedLanguageCode: string;
-  isRecallAllowed: boolean;
-  onAddFallback: (fallback: string) => void;
+  readonly value: string | undefined;
+  readonly onChange: (
+    val: string,
+    recallItems: TSurveyRecallItem[],
+    fallbacks: { [id: string]: string }
+  ) => void;
+  readonly localSurvey: TSurvey;
+  readonly elementId: string;
+  readonly render: (props: RecallWrapperRenderProps) => React.ReactNode;
+  readonly usedLanguageCode: string;
+  readonly isRecallAllowed: boolean;
+  readonly onAddFallback: (fallback: string) => void;
 }
 
 export const RecallWrapper = ({

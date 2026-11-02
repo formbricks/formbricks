@@ -13,13 +13,13 @@ import { LanguageDropdown } from "./components/LanguageDropdown";
 import { SurveyLinkDisplay } from "./components/SurveyLinkDisplay";
 
 interface ShareSurveyLinkProps {
-  survey: TSurvey;
-  publicDomain: string;
-  surveyUrl: string;
-  setSurveyUrl: (url: string) => void;
-  locale: TUserLocale;
-  enforceSurveyUrlWidth?: boolean;
-  isReadOnly: boolean;
+  readonly survey: TSurvey;
+  readonly publicDomain: string;
+  readonly surveyUrl: string;
+  readonly setSurveyUrl: (url: string) => void;
+  readonly locale: TUserLocale;
+  readonly enforceSurveyUrlWidth?: boolean;
+  readonly isReadOnly: boolean;
 }
 
 export const ShareSurveyLink = ({

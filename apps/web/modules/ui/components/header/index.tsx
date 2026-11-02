@@ -1,8 +1,8 @@
 import React from "react";
 
 interface HeaderProps {
-  title: string;
-  subtitle?: string;
+  readonly title: string;
+  readonly subtitle?: string;
 }
 
 export const Header: React.FC<HeaderProps> = ({ title, subtitle }) => {

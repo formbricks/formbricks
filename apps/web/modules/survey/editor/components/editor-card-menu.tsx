@@ -38,24 +38,24 @@ type EditorCardMenuSurveyElement = TSurveyElement & {
 };
 
 interface EditorCardMenuProps {
-  survey: TSurvey;
-  cardIdx: number;
-  lastCard: boolean;
-  blockId?: string;
-  elementIdx?: number; // Index of element within its block
-  duplicateCard: (cardIdx: number) => void;
-  deleteCard: (cardIdx: number) => void;
-  moveCard: (cardIdx: number, up: boolean) => void;
-  card: EditorCardMenuSurveyElement | TSurveyEndScreenCard | TSurveyRedirectUrlCard;
-  updateCard: (cardIdx: number, updatedAttributes: any) => void;
-  addCard: (element: any, index?: number) => void;
-  addCardToBlock?: (element: TSurveyElement, blockId: string, afterElementIdx: number) => void;
-  moveElementToBlock?: (elementId: string, targetBlockId: string) => void;
-  cardType: "element" | "ending";
-  workspace?: TWorkspaceWithoutCustomCss;
-  isCxMode?: boolean;
+  readonly survey: TSurvey;
+  readonly cardIdx: number;
+  readonly lastCard: boolean;
+  readonly blockId?: string;
+  readonly elementIdx?: number; // Index of element within its block
+  readonly duplicateCard: (cardIdx: number) => void;
+  readonly deleteCard: (cardIdx: number) => void;
+  readonly moveCard: (cardIdx: number, up: boolean) => void;
+  readonly card: EditorCardMenuSurveyElement | TSurveyEndScreenCard | TSurveyRedirectUrlCard;
+  readonly updateCard: (cardIdx: number, updatedAttributes: any) => void;
+  readonly addCard: (element: any, index?: number) => void;
+  readonly addCardToBlock?: (element: TSurveyElement, blockId: string, afterElementIdx: number) => void;
+  readonly moveElementToBlock?: (elementId: string, targetBlockId: string) => void;
+  readonly cardType: "element" | "ending";
+  readonly workspace?: TWorkspaceWithoutCustomCss;
+  readonly isCxMode?: boolean;
   /** The question existed when the survey was published: its type can no longer change. */
-  isTypeLocked?: boolean;
+  readonly isTypeLocked?: boolean;
 }
 
 export const EditorCardMenu = ({

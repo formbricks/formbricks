@@ -13,15 +13,15 @@ import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 const Separator = () => <div>|</div>;
 
 interface SelectedRowSettingsProps<T> {
-  table: Table<T>;
-  updateRowList: (rowId: string[]) => void;
-  type: "response" | "contact" | "attribute";
-  deleteAction: (id: string, params?: Record<string, boolean>) => Promise<void>;
+  readonly table: Table<T>;
+  readonly updateRowList: (rowId: string[]) => void;
+  readonly type: "response" | "contact" | "attribute";
+  readonly deleteAction: (id: string, params?: Record<string, boolean>) => Promise<void>;
   /** Opens the download for the selected rows (the Export modal, for responses). */
-  downloadRowsAction?: (rowIds: string[]) => void;
-  isQuotasAllowed: boolean;
+  readonly downloadRowsAction?: (rowIds: string[]) => void;
+  readonly isQuotasAllowed: boolean;
   /** Extra actions for the bar, given the table so they can read the selection when clicked. */
-  renderExtraActions?: (table: Table<T>) => ReactNode;
+  readonly renderExtraActions?: (table: Table<T>) => ReactNode;
 }
 
 export const SelectedRowSettings = <T,>({

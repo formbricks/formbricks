@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { getOriginalFileNameFromUrl } from "@/modules/storage/url-helpers";
 
 interface FileUploadResponseProps {
-  selected: string[];
+  readonly selected: string[];
 }
 export const FileUploadResponse = ({ selected }: FileUploadResponseProps) => {
   const { t } = useTranslation();

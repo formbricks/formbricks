@@ -18,19 +18,19 @@ import {
 } from "@/modules/ui/components/dialog";
 
 interface ResponseCardModalProps {
-  responses: TResponse[];
-  selectedResponseId: string | null;
-  setSelectedResponseId: (id: string | null) => void;
-  survey: TSurvey;
-  user?: TUser;
-  environmentTags: TTag[];
-  updateResponse: (responseId: string, updatedResponse: TResponse) => void;
-  updateResponseList: (responseIds: string[]) => void;
-  isReadOnly: boolean;
-  open: boolean;
-  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  locale: TUserLocale;
-  outcomeActions?: TOutcomeActions;
+  readonly responses: TResponse[];
+  readonly selectedResponseId: string | null;
+  readonly setSelectedResponseId: (id: string | null) => void;
+  readonly survey: TSurvey;
+  readonly user?: TUser;
+  readonly environmentTags: TTag[];
+  readonly updateResponse: (responseId: string, updatedResponse: TResponse) => void;
+  readonly updateResponseList: (responseIds: string[]) => void;
+  readonly isReadOnly: boolean;
+  readonly open: boolean;
+  readonly setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  readonly locale: TUserLocale;
+  readonly outcomeActions?: TOutcomeActions;
 }
 
 export const ResponseCardModal = ({

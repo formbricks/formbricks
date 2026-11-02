@@ -12,10 +12,10 @@ import { getElementTypes } from "@/modules/survey/lib/elements";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 
 interface HeadProps {
-  elementSummary: TSurveyElementSummary;
-  showResponses?: boolean;
-  additionalInfo?: JSX.Element;
-  survey: TSurvey;
+  readonly elementSummary: TSurveyElementSummary;
+  readonly showResponses?: boolean;
+  readonly additionalInfo?: JSX.Element;
+  readonly survey: TSurvey;
 }
 
 export const ElementSummaryHeader = ({

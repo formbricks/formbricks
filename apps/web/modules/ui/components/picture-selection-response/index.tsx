@@ -7,10 +7,10 @@ import { getChoiceBadgeText } from "@/modules/survey/lib/element-code-label";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 
 interface PictureSelectionResponseProps {
-  choices: { id: string; imageUrl: string; code?: string }[];
-  selected: string | number | string[];
-  isExpanded?: boolean;
-  showId: boolean;
+  readonly choices: { id: string; imageUrl: string; code?: string }[];
+  readonly selected: string | number | string[];
+  readonly isExpanded?: boolean;
+  readonly showId: boolean;
 }
 
 export const PictureSelectionResponse = ({

@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { TResponseData } from "@formbricks/types/responses";
 
 interface VerifiedEmailProps {
-  responseData: TResponseData;
+  readonly responseData: TResponseData;
 }
 export const VerifiedEmail = ({ responseData }: VerifiedEmailProps) => {
   const { t } = useTranslation();

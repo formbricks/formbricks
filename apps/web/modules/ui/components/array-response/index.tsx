@@ -1,5 +1,5 @@
 interface ArrayResponseProps {
-  value: string[];
+  readonly value: string[];
 }
 
 export const ArrayResponse = ({ value }: ArrayResponseProps) => {

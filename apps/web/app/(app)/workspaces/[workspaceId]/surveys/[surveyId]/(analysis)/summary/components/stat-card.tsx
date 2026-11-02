@@ -4,11 +4,11 @@ import { ReactNode } from "react";
 import { BaseCard } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/base-card";
 
 interface StatCardProps {
-  label: ReactNode;
-  percentage?: number | null;
-  value: ReactNode;
-  tooltipText?: ReactNode;
-  isLoading?: boolean;
+  readonly label: ReactNode;
+  readonly percentage?: number | null;
+  readonly value: ReactNode;
+  readonly tooltipText?: ReactNode;
+  readonly isLoading?: boolean;
 }
 
 export const StatCard = ({

@@ -2,7 +2,7 @@
  * `failClosed: true` marks the abuse limits: email-sending, account and organization creation, and the
  * brute-force guards. They refuse while Redis is unavailable instead of letting everything through; every
  * other limit fails open so an outage does not take the app down with it
- * (docs/adr/0015-abuse-limits-fail-closed.md).
+ * (docs/adr/0016-abuse-limits-fail-closed.md).
  */
 export const rateLimitConfigs = {
   // Authentication endpoints - stricter limits for security

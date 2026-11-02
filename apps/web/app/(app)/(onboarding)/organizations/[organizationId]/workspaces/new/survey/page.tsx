@@ -12,7 +12,7 @@ import { getSurveyAIAvailability } from "@/modules/survey/lib/get-survey-ai-avai
 import { Header } from "@/modules/ui/components/header";
 
 interface SurveyOnboardingPageProps {
-  params: Promise<{
+  readonly params: Promise<{
     organizationId: string;
   }>;
 }
