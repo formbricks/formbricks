@@ -97,7 +97,11 @@ jobs:
         validate-authzed-schema,
         api-v3-contract-tests,
       ]
-    if: always()
+    # `!cancelled()` rather than `always()`: a newer push cancels this run (concurrency above), and
+    # `always()` would still run the summary, which then reported a red failure for the superseded
+    # commit. A genuine failure or skip upstream still reaches the step below; cancelled jobs under a
+    # run that is not itself cancelled (a timeout, say) still fail it.
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
