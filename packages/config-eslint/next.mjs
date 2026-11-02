@@ -67,7 +67,15 @@ export const next = [
   // Severities below the upstream "error" are set per rule by the consumer (apps/web).
   {
     files: ["**/*.{js,jsx,mjs,ts,tsx,mts,cts}"],
-    rules: jsxA11y.flatConfigs.recommended.rules,
+    rules: {
+      ...jsxA11y.flatConfigs.recommended.rules,
+      // A severity-only entry keeps eslint-config-next's options, which check `<img>` alone. Restate
+      // the plugin's default elements, plus the `Image` mapping Next adds for next/image.
+      "jsx-a11y/alt-text": [
+        "error",
+        { elements: ["img", "object", "area", 'input[type="image"]'], img: ["Image"] },
+      ],
+    },
   },
   ...base,
 ];
