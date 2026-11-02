@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "agents:update": "npx @next/codemod@canary agents-md --output AGENTS.md",
+    "agents:update": "npx @next/codemod@canary agents-md --output .agents/skills/nextjs-docs/SKILL.md",
     "clean:all": "turbo run clean && rimraf node_modules pnpm-lock.yaml .turbo coverage out",
     "clean": "turbo run clean && rimraf node_modules .turbo coverage out",
     "clean:cache": "rimraf .turbo/cache apps/web/.next",

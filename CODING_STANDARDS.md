@@ -13,7 +13,8 @@ Prettier owns formatting and import order; ESLint owns its enabled rules; schema
 generated API drift. `packages/config-eslint/` and `apps/web/eslint.config.mjs` define lint severity and
 exceptions. A warning is still actionable when CI does not block it.
 
-Static `unstable_cache` imports from `next/cache` are lint errors. `pnpm workflow:check` enforces explicit
+Static `unstable_cache` imports from `next/cache` are lint errors, and so are React component props that
+are not read-only (`react/prefer-read-only-props`). `pnpm workflow:check` enforces explicit
 permission maps (or caller inheritance for workflows triggered only by `workflow_call`) and runner
 hardening first for literal `ubuntu-*` runner labels, including version and architecture pins. Reviewers
 still judge whether requested token permissions are minimal and whether runner choices outside this
@@ -23,9 +24,8 @@ check need hardening.
 
 These remain review checks until their enforcement handles the repository's existing patterns:
 
-- React component props use `Readonly<>`.
-- Cache keys use `createCacheKey.*` utilities.
-- Mock boundaries live in `__mocks__` so their imports register before the module under test.
+- Redis cache keys use `createCacheKey.*` utilities. TanStack Query keys are client-side and follow their
+  feature's own key factory.
 
 ## Quality Checklist
 
@@ -37,6 +37,8 @@ These remain review checks until their enforcement handles the repository's exis
   ESLint reports them only as warnings.
 - Keep components focused, avoid deep nesting, and ensure basic accessibility.
 - Context providers should guard against missing provider usage and use cleanup patterns that snapshot refs inside `useEffect` to avoid React hooks warnings
+- A control's enabled state comes from the permission the server action checks, passed down from the server,
+  not recomputed on the client. A control that looks editable and then fails on save is a finding.
 
 ## Existing Patterns
 
@@ -46,6 +48,9 @@ These remain review checks until their enforcement handles the repository's exis
   similar-looking screens, guided by `.agents/formbricks-context/DESIGN.md` when it exists.
 - A bad pattern is the exception: name what is wrong with it and fix it. When the change already touches that
   code, the refactor ships in the same PR as its own commit; otherwise it becomes a Linear ticket.
+- A fix names its siblings. Search for the same call, predicate or literal, then fix every copy in the same
+  PR or list the ones left under Open gaps. A defect found in one place has usually been copied, and most
+  follow-up fixes this year were the sibling the first fix missed.
 
 ## API Design
 
@@ -60,6 +65,19 @@ These remain review checks until their enforcement handles the repository's exis
 - Paths name resources, and each response uses the method and status code HTTP defines for the case. Writes
   that can race take the `updatedAt` compare-and-set (409 on mismatch); writes a retry could repeat are
   idempotent.
+- A gate (sign-up policy, role floor, entitlement, PIN or single-use link, survey status, visibility) is one
+  function that every entry point to the data calls, and the PR names the entry points it checked: server
+  actions (callable directly, whatever the UI hides), `/api/v1`, `/api/v2`, `/api/v3`, the Better Auth
+  endpoints mounted raw at `/api/auth/*` ([ADR-0017](docs/adr/0017-better-auth-native-endpoints-closed.md)),
+  public client routes and `/storage`, MCP tools and API-key paths, and the write side of a read-gated
+  module. A gate on fewer paths than reach the data is a finding, and so is a second copy of the predicate.
+- Unknown query parameters and body keys are rejected with 400 at every nesting level: `.strict()` on nested
+  objects too, and MCP tools register the schema, not its `.shape`. A dropped typo returns a confidently
+  wrong answer.
+- A change to a shared schema, the API wrapper, or a key's scope changes every route that uses it. A new 400
+  or 422, a renamed `meta` field or a widened scope gets a breaking-change entry like any route edit.
+  Shipped mobile SDKs, js-core's cached environment state and the Zapier app read `/api/v1` and the client
+  API without updating, so a field there is renamed only by adding the new one beside the old.
 
 ## File Uploads and Downloads
 
@@ -95,7 +113,22 @@ Downloads:
   budget in `apps/web/app/api/v3/lib/array-budget.ts`).
 - Each cap is enforced at the earliest boundary, before parsing or inflating where possible, has a test at the
   boundary, and fails with an error that names the limit (413 for size, 422 otherwise).
+- A new or tighter cap applies to what the caller sends, on every write path to that field (create, update,
+  add, duplicate, MCP). Rows already stored are read with the read schema, so a cap never makes an existing
+  record unreadable or un-patchable: a name-only PATCH on a survey with 101 variables still succeeds.
 - Unbounded database reads are covered under "Performance in Review" below.
+
+## Errors
+
+- Client input is validated (`safeParse`, a guarded decode) before any work, and its failures answer 400 or 422. Text bound for Postgres rejects `\u0000`, which Postgres refuses with a 500.
+- An error is mapped by where it was raised, not by its class: throw a typed error at the input boundary. A
+  `ValidationError` from a stored row, a 429 from a provider, or a storage failure is a server fault, logged
+  at `error`.
+- A `catch` that carries on names the errors it expects. Infrastructure errors (pool exhaustion, timeouts)
+  propagate to the retry that owns them.
+- Log a caught error through `loggableError` (`apps/web/lib/utils/loggable-error.ts`): its name and frames,
+  never its message. A message can carry prompts, file text, OAuth codes or respondent answers, so a new
+  `logger.*({ error })` on a path that handles such content is a finding.
 
 ## Performance in Review
 
@@ -131,7 +164,20 @@ raises them too — but that is a second pair of eyes, and its silence is not a 
 
 ## Database & Prisma Performance
 
-- Multi-tenancy: All data must be scoped by Organization or Environment.
+- **Tenancy.** An id the caller supplies (URL segment, body field, action input, file key, the target of a
+  `connect`) is resolved by a query filtered on the workspace or organization the caller was authorized
+  for: `where: { id, workspaceId }`, `connect: { id_workspaceId }`. Authorizing the parent is not enough:
+  most cross-tenant fixes shipped this year authorized the URL's workspace and then loaded a nested id
+  alone. Columns the server owns (`archivedAt`, `organizationId`, `createdBy`) are omitted from create and
+  update input. For a write body with several references, the model is the reference manifest in
+  `apps/web/app/api/v3/responses/lib/reference-manifest.ts` (ENG-2861).
+- A check that guards a write (a limit, a status, ownership, `finished`, "first user") runs in the same
+  transaction as the write, either on a row read `FOR UPDATE` or as the write's own `WHERE`
+  (`DELETE … WHERE "archivedAt" IS NOT NULL`). A check read before the transaction is a race. Snapshots for
+  audit logs and "previous value" diffs are read under that lock too.
+- `ON DELETE CASCADE` reaches only Postgres. Deleting a survey, response, workspace, organization or account
+  also deletes its storage objects (under the `workspaceId` prefix and the legacy `environmentId` one), its
+  Hub records and its pending invites, and its test asserts those deletes.
 - Soft Deletion: Check for `isActive` or `deletedAt` fields; use proper filtering.
 - Never use `skip`/`offset` with `prisma.response.count()`; only use `where`.
 - Separate count and data queries and run in parallel (`Promise.all`).
@@ -194,6 +240,10 @@ the table above: journey behavior extends that spec, logic goes to a unit test, 
 
 Do:
 
+- A test is done when it goes **red**: flip the line it guards (the permission argument, the tenant filter,
+  the fix itself) and watch it fail. A test whose fixture already satisfies the assertion cannot go red: a
+  synthetic schema in place of the real one, an input already invalid for another reason, a mock of the
+  module under test, or a call-site argument nobody asserts.
 - E2E tests (Playwright): one spec per **feature area**, not per ticket and not per component. Default to
   adding assertions or a `test.step` to that area's existing spec in `apps/web/playwright`; a new
   `*.spec.ts` is for a feature area that has none, and it takes the area's name (`billing.spec.ts`).
@@ -203,8 +253,9 @@ Do:
   before opening a PR.
 - Unit tests: cover stable, high-value logic in `.ts` files, such as validators, transformers,
   evaluators, calculations, and edge cases. Keep assertions on inputs and outputs, colocate specs with
-  the code they exercise (`utility.test.ts`), and mock network and storage boundaries through helpers
-  from `@formbricks/*`.
+  the code they exercise (`utility.test.ts`), and mock at module boundaries with `vi.mock`, reusing a
+  shared `__mocks__` module where one exists (`apps/web/lib/__mocks__/database.ts`) rather than
+  redefining it inline.
 - For API v3 changes, check that the spec, generated schemas, and route refinements agree. Review
   contract coverage against real fixtures using `docs/api-v3-reference/contract-tests/README.md`;
   generation and adoption procedures live in
@@ -236,6 +287,13 @@ Do not:
 - Do not create mega or flaky E2E tests; avoid timing hacks (`waitForTimeout`, `slowMo`) and unstable
   dependencies. `@slow` is triage metadata only: nothing in `playwright.config.ts` or CI reads it, so
   tagging a spec does not make its cost go away.
+
+## Survey Bundles
+
+- Code in `packages/surveys`, `packages/js-core` and `packages/survey-ui` runs inside customer pages, so it
+  assumes a hostile host: no global CSS (`*`, `:root`, `@property`), `type="button"` on every button that
+  does not submit the survey, nothing that needs `eval` under a strict CSP, and no reliance on host globals
+  (`define`, CSS custom properties such as `--spacing`).
 
 ## Storybook
 

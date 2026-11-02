@@ -14,7 +14,8 @@ It owns the structure, word budget, ticket syntax, coverage evidence, breaking-c
 migration/env reporting. Update the description with every scope change or review fix.
 
 Complete QA on the change's PR before requesting review. The author accounts for each changed behavior
-and names unverified behavior under Open gaps; reviewers challenge that evidence. Release review checks
+and names unverified behavior under Open gaps; reviewers challenge that evidence. A failure called
+pre-existing, flaky or noise names the run on `main` that shows it; without one it goes under Open gaps. Release review checks
 interactions between changes rather than repeating each PR's QA.
 
 ## Reviews

@@ -244,7 +244,7 @@ const getCharges = (emailType: TEmailType, to: string, context: TEmailRateLimitC
  * handed back, so a refused email costs nothing. Throws `TooManyRequestsError` when a limit is spent. An
  * email that is charged and then fails at the SMTP server keeps its charge, like any other attempt. Unlike
  * the app's throughput limits it fails closed: while Redis is unavailable every counted email is refused
- * (docs/adr/0015-abuse-limits-fail-closed.md). `RATE_LIMITING_DISABLED` turns it off.
+ * (docs/adr/0016-abuse-limits-fail-closed.md). `RATE_LIMITING_DISABLED` turns it off.
  */
 export const applyEmailRateLimits = async (
   emailType: TEmailType,
