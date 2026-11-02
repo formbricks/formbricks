@@ -58,7 +58,7 @@ export type TResponseVariables = z.infer<typeof ZResponseVariables>;
  * All are far past any real survey: a response holds at most one entry per element, a multi-select
  * answer at most one entry per choice, and a matrix answer one entry per row. The entry budget counts
  * the whole `data` map — its keys plus every array item and matrix row — and allows an average of 20
- * per key: a survey of 500 multi-selects with 20 choices each, every choice ticked.
+ * per key, the key included: a survey of 500 multi-selects with 19 choices each, every choice ticked.
  */
 export const MAX_RESPONSE_DATA_KEYS = 500;
 export const MAX_RESPONSE_DATA_VALUES = 1_000;
@@ -98,6 +98,9 @@ const checkResponseDataSize = (data: Record<string, unknown>): string | undefine
   let entries = keyCount;
   for (const value of Object.values(data)) {
     if (Array.isArray(value)) {
+      if (value.length > MAX_RESPONSE_DATA_VALUES) {
+        return `An answer may hold at most ${MAX_RESPONSE_DATA_VALUES} values`;
+      }
       entries += value.length;
     } else if (isPlainRecord(value)) {
       const rows = Object.keys(value).length;

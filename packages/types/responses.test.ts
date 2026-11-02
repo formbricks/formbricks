@@ -209,9 +209,14 @@ describe("response input caps", () => {
     expect(issuesOf(result)).toEqual([]);
   });
 
-  // The path says which check caught it: `.max()` on the array itself, or the size check on the map.
+  // Every one is caught by the size check on the map, before Zod reads a single item.
   test.each([
-    ["an array one past its cap", { q: strings(MAX_RESPONSE_DATA_VALUES + 1) }, ["data", "q"]],
+    ["an array one past its cap", { q: strings(MAX_RESPONSE_DATA_VALUES + 1) }, ["data"]],
+    [
+      "an array one past its cap, every item invalid",
+      { q: Array.from({ length: MAX_RESPONSE_DATA_VALUES + 1 }, () => 1) },
+      ["data"],
+    ],
     ["an array of a million invalid items", { q: Array.from({ length: 1_000_000 }, () => 1) }, ["data"]],
     ["a matrix one row past its cap", { q: keyed(MAX_RESPONSE_DATA_VALUES + 1, () => "column") }, ["data"]],
     ["one key past the cap", keyed(MAX_RESPONSE_DATA_KEYS + 1, () => "answer"), ["data"]],
