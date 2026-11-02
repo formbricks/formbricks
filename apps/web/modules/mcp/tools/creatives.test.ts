@@ -1,4 +1,4 @@
-import { McpServer, createMcpHandler } from "@modelcontextprotocol/server";
+import type { McpServer } from "@modelcontextprotocol/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ApiKeyPermission } from "@formbricks/database/prisma";
 import {
@@ -23,6 +23,7 @@ import {
 } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog } from "@/app/api/v3/lib/types";
 import { buildListCreativesSearchParams, registerCreativeTools } from "./creatives";
+import { type ToolCallEra, callToolOverHttp, errorText } from "./test-utils";
 
 vi.mock("@/app/api/v3/creatives/lib/operations", () => ({
   archiveV3Creative: vi.fn(),
@@ -537,65 +538,8 @@ describe("registerCreativeTools", () => {
  * mismatched `content` never reaches the operation is only provable through a real `tools/call`.
  */
 describe("tool arguments are validated by the SDK", () => {
-  type ToolCallOutcome = { result?: { isError?: boolean; content?: { type: string; text?: string }[] } };
-
-  const callTool = async (
-    name: string,
-    args: Record<string, unknown>,
-    era: "modern" | "legacy" = "modern"
-  ): Promise<ToolCallOutcome> => {
-    const handler = createMcpHandler(() => {
-      const server = new McpServer({ name: "test", version: "0.0.0" });
-      registerCreativeTools(server);
-      return server;
-    });
-
-    const modern = era === "modern";
-    const response = await handler.fetch(
-      new Request("https://formbricks.test/api/mcp", {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          accept: "application/json, text/event-stream",
-          ...(modern
-            ? { "Mcp-Method": "tools/call", "Mcp-Name": name, "MCP-Protocol-Version": "2026-07-28" }
-            : {}),
-        },
-        body: JSON.stringify({
-          jsonrpc: "2.0",
-          id: 1,
-          method: "tools/call",
-          params: {
-            name,
-            arguments: args,
-            ...(modern
-              ? {
-                  _meta: {
-                    "io.modelcontextprotocol/protocolVersion": "2026-07-28",
-                    "io.modelcontextprotocol/clientCapabilities": {},
-                  },
-                }
-              : {}),
-          },
-        }),
-      }),
-      { authInfo }
-    );
-
-    const text = await response.text();
-    const payload = response.headers.get("content-type")?.includes("text/event-stream")
-      ? text
-          .split("\n")
-          .filter((line) => line.startsWith("data:"))
-          .map((line) => line.slice("data:".length).trim())
-          .join("")
-      : text;
-
-    return JSON.parse(payload) as ToolCallOutcome;
-  };
-
-  const errorText = (outcome: ToolCallOutcome) =>
-    outcome.result?.content?.map((block) => block.text ?? "").join("") ?? "";
+  const callTool = (name: string, args: Record<string, unknown>, era?: ToolCallEra) =>
+    callToolOverHttp({ registerTools: registerCreativeTools, authInfo, name, args, era });
 
   beforeEach(() => {
     vi.resetAllMocks();
