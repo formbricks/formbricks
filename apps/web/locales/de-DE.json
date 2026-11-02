@@ -4487,7 +4487,7 @@
         "show_survey_to_users": "Umfrage an % der Nutzer anzeigen",
         "show_to_x_percentage_of_targeted_users": "An {percentage} % der anvisierten Nutzer anzeigen",
         "shrink_preview": "Vorschau verkleinern",
-        "signature_logic_required_hint": "Die Logik kann nur auf „nicht unterschrieben“ prüfen, wenn diese Frage optional ist.",
+        "signature_logic_required_hint": "Die Logik kann nur auf „Nicht unterschrieben“ prüfen, wenn diese Frage optional ist.",
         "simple": "Einfach",
         "six_points": "6 Punkte",
         "smiley": "Smiley",

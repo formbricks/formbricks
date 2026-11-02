@@ -4487,7 +4487,7 @@
         "show_survey_to_users": "Kérdőív megjelenítése a felhasználók ennyi százalékának",
         "show_to_x_percentage_of_targeted_users": "Megjelenítés a célzott felhasználók {percentage}%-ának",
         "shrink_preview": "Előnézet összecsukása",
-        "signature_logic_required_hint": "A logika kizárólag akkor vizsgálhatja a „nincs aláírva” állapotot, ha ez a kérdés nem kötelező.",
+        "signature_logic_required_hint": "A logika kizárólag akkor vizsgálhatja a „Nincs aláírva” feltételt, ha ez a kérdés nem kötelező.",
         "simple": "Egyszerű",
         "six_points": "6 pont",
         "smiley": "Hangulatjel",

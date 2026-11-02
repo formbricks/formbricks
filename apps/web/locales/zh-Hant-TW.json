@@ -4487,7 +4487,7 @@
         "show_survey_to_users": "將問卷顯示給 % 的使用者",
         "show_to_x_percentage_of_targeted_users": "顯示給 {percentage}% 的目標使用者",
         "shrink_preview": "收合預覽",
-        "signature_logic_required_hint": "僅當此問題為選填時,邏輯才能判斷「未簽名」。",
+        "signature_logic_required_hint": "只有在此題為選填時，邏輯才能測試「未簽名」條件。",
         "simple": "簡單",
         "six_points": "6 分",
         "smiley": "表情符號",
