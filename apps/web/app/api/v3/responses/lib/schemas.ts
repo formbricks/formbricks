@@ -106,12 +106,35 @@ const ZV3ResponseDataValue = zResponseDataMapInput.valueType.superRefine((value,
   }
 });
 
-const ZV3ResponseDataInput = withSizeCheck(
-  z.record(zResponseDataMapInput.keyType, ZV3ResponseDataValue),
-  (entries) =>
-    Object.keys(entries).length > MAX_RESPONSE_DATA_KEYS
-      ? `A response may answer at most ${MAX_RESPONSE_DATA_KEYS} fields`
-      : undefined
+/**
+ * Checked before the map is parsed, so neither an oversized map nor an oversized matrix has its entries
+ * parsed one by one. Arrays are already bounded by the wrapper's array budget before any schema runs, so
+ * they keep the `too_big` issue above; a matrix has no such budget. Each issue keeps the path the
+ * refinement would report.
+ */
+const ZV3ResponseDataInput = z.preprocess(
+  (value, ctx) => {
+    if (typeof value !== "object" || value === null || Array.isArray(value)) return value;
+    if (Object.keys(value).length > MAX_RESPONSE_DATA_KEYS) {
+      ctx.addIssue({
+        code: "custom",
+        message: `A response may answer at most ${MAX_RESPONSE_DATA_KEYS} fields`,
+      });
+      return value;
+    }
+    for (const [key, answer] of Object.entries(value)) {
+      const isMatrix = typeof answer === "object" && answer !== null && !Array.isArray(answer);
+      if (isMatrix && Object.keys(answer).length > MAX_RESPONSE_DATA_VALUES) {
+        ctx.addIssue({
+          code: "custom",
+          path: [key],
+          message: `A matrix answer may hold at most ${MAX_RESPONSE_DATA_VALUES} rows`,
+        });
+      }
+    }
+    return value;
+  },
+  z.record(zResponseDataMapInput.keyType, ZV3ResponseDataValue)
 );
 
 /**

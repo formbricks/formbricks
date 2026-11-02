@@ -96,6 +96,15 @@ describe("ZV3CreateResponseBody", () => {
     expect(result.success ? [] : result.error.issues).toHaveLength(1);
   });
 
+  test("a matrix past its row cap is refused in a single issue, whatever its rows hold", () => {
+    const rows = Object.fromEntries(Array.from({ length: 100_000 }, (_unused, i) => [`r${i}`, 1]));
+    const result = create({ data: { matrix: rows } });
+    const issues = result.success ? [] : result.error.issues;
+
+    expect(issues).toHaveLength(1);
+    expect(issues[0]).toMatchObject({ code: "custom", path: ["data", "matrix"] });
+  });
+
   test("data refuses a shape no element can store", () => {
     expect(create({ data: { q1: { nested: { deep: 1 } } } }).success).toBe(false);
   });
