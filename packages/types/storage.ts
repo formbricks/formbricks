@@ -143,15 +143,15 @@ export type TUploadFileAccess = {
 };
 
 /**
- * Most entries an upload request's extension list may carry. The list is the element's own, picked from
- * the allowed set, but the survey schema does not make it unique, so a saved list can repeat entries:
- * the cap leaves room for that while keeping the list bounded.
+ * An upload request's extension list: the element's own, picked from the allowed set. The survey schema
+ * does not make a saved list unique, so repeats are dropped first; what is left can never be longer than
+ * the allowed set, and an over-long list is refused before any entry is checked.
  */
-export const MAX_ALLOWED_FILE_EXTENSIONS_PER_REQUEST = 100;
-
 const ZAllowedFileExtensionsInput = z
-  .array(ZAllowedFileExtension)
-  .max(MAX_ALLOWED_FILE_EXTENSIONS_PER_REQUEST)
+  .preprocess(
+    (value) => (Array.isArray(value) ? [...new Set(value)] : value),
+    z.array(ZAllowedFileExtension).max(ALLOWED_FILE_EXTENSIONS_TUPLE.length)
+  )
   .optional();
 
 export const ZUploadPrivateFileRequest = z
