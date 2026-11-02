@@ -12,14 +12,14 @@ import { cn } from "@/lib/cn";
 import { isExternalImageSrc } from "@/lib/image-hosts";
 
 interface MediaBackgroundProps {
-  children: React.ReactNode;
-  styling: TSurveyStyling | TWorkspaceStyling;
-  surveyType: SurveyType;
-  isEditorView?: boolean;
-  isMobilePreview?: boolean;
-  ContentRef?: React.RefObject<HTMLDivElement> | null;
-  onBackgroundLoaded?: (isLoaded: boolean) => void;
-  useNaturalHeight?: boolean;
+  readonly children: React.ReactNode;
+  readonly styling: TSurveyStyling | TWorkspaceStyling;
+  readonly surveyType: SurveyType;
+  readonly isEditorView?: boolean;
+  readonly isMobilePreview?: boolean;
+  readonly ContentRef?: React.RefObject<HTMLDivElement> | null;
+  readonly onBackgroundLoaded?: (isLoaded: boolean) => void;
+  readonly useNaturalHeight?: boolean;
 }
 
 export const MediaBackground: React.FC<MediaBackgroundProps> = ({

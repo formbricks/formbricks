@@ -23,12 +23,12 @@ interface TContactAttributeWithKeyInfo {
 }
 
 interface ContactControlBarProps {
-  contactId: string;
-  isReadOnly: boolean;
-  isQuotasAllowed: boolean;
-  publishedLinkSurveys: PublishedLinkSurvey[];
-  allAttributeKeys: TContactAttributeKey[];
-  currentAttributes: TContactAttributeWithKeyInfo[];
+  readonly contactId: string;
+  readonly isReadOnly: boolean;
+  readonly isQuotasAllowed: boolean;
+  readonly publishedLinkSurveys: PublishedLinkSurvey[];
+  readonly allAttributeKeys: TContactAttributeKey[];
+  readonly currentAttributes: TContactAttributeWithKeyInfo[];
 }
 
 export const ContactControlBar = ({

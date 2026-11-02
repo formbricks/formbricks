@@ -6,7 +6,7 @@ import { CreateTeamModal } from "@/modules/ee/teams/team-list/components/create-
 import { Button } from "@/modules/ui/components/button";
 
 interface CreateTeamButtonProps {
-  organizationId: string;
+  readonly organizationId: string;
 }
 
 export const CreateTeamButton = ({ organizationId }: CreateTeamButtonProps) => {

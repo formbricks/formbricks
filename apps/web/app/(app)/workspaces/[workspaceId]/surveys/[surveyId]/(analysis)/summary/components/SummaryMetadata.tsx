@@ -7,12 +7,12 @@ import { StatCard } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId
 import { cn } from "@/modules/ui/lib/utils";
 
 interface SummaryMetadataProps {
-  surveySummary: TSurveySummary["meta"];
-  quotasCount: number;
-  isLoading: boolean;
-  tab: "dropOffs" | "quotas" | "impressions" | undefined;
-  setTab: React.Dispatch<React.SetStateAction<"dropOffs" | "quotas" | "impressions" | undefined>>;
-  isQuotasAllowed: boolean;
+  readonly surveySummary: TSurveySummary["meta"];
+  readonly quotasCount: number;
+  readonly isLoading: boolean;
+  readonly tab: "dropOffs" | "quotas" | "impressions" | undefined;
+  readonly setTab: React.Dispatch<React.SetStateAction<"dropOffs" | "quotas" | "impressions" | undefined>>;
+  readonly isQuotasAllowed: boolean;
 }
 
 const formatTime = (ttc: number) => {

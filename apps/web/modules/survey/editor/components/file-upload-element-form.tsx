@@ -19,16 +19,16 @@ import { Input } from "@/modules/ui/components/input";
 import { useGetBillingInfo } from "@/modules/utils/hooks/useGetBillingInfo";
 
 interface FileUploadFormProps {
-  localSurvey: TSurvey;
-  workspace: TWorkspaceWithoutCustomCss;
-  element: TSurveyFileUploadElement;
-  elementIdx: number;
-  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
-  isInvalid: boolean;
-  isFormbricksCloud: boolean;
-  locale: TUserLocale;
-  isStorageConfigured: boolean;
-  isExternalUrlsAllowed?: boolean;
+  readonly localSurvey: TSurvey;
+  readonly workspace: TWorkspaceWithoutCustomCss;
+  readonly element: TSurveyFileUploadElement;
+  readonly elementIdx: number;
+  readonly updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
+  readonly isInvalid: boolean;
+  readonly isFormbricksCloud: boolean;
+  readonly locale: TUserLocale;
+  readonly isStorageConfigured: boolean;
+  readonly isExternalUrlsAllowed?: boolean;
 }
 
 export const FileUploadElementForm = ({

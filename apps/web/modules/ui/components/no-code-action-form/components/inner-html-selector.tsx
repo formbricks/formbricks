@@ -8,8 +8,8 @@ import { FormControl, FormField, FormItem } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
 
 interface InnerHtmlSelectorProps {
-  form: UseFormReturn<TActionClassInput>;
-  disabled: boolean;
+  readonly form: UseFormReturn<TActionClassInput>;
+  readonly disabled: boolean;
 }
 
 export const InnerHtmlSelector = ({ form, disabled }: InnerHtmlSelectorProps) => {

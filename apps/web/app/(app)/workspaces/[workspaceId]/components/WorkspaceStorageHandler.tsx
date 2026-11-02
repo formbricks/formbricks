@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { FORMBRICKS_ENVIRONMENT_ID_LS, FORMBRICKS_WORKSPACE_ID_LS } from "@/lib/localStorage";
 
 interface WorkspaceStorageHandlerProps {
-  workspaceId: string;
+  readonly workspaceId: string;
 }
 
 const WorkspaceStorageHandler = ({ workspaceId }: WorkspaceStorageHandlerProps) => {

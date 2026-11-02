@@ -18,14 +18,14 @@ import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
 
 interface EditWelcomeCardProps {
-  localSurvey: TSurvey;
-  setLocalSurvey: (survey: TSurvey) => void;
-  setActiveElementId: (id: string | null) => void;
-  activeElementId: string | null;
-  isInvalid: boolean;
-  locale: TUserLocale;
-  isStorageConfigured: boolean;
-  isExternalUrlsAllowed?: boolean;
+  readonly localSurvey: TSurvey;
+  readonly setLocalSurvey: (survey: TSurvey) => void;
+  readonly setActiveElementId: (id: string | null) => void;
+  readonly activeElementId: string | null;
+  readonly isInvalid: boolean;
+  readonly locale: TUserLocale;
+  readonly isStorageConfigured: boolean;
+  readonly isExternalUrlsAllowed?: boolean;
 }
 
 export const EditWelcomeCard = ({

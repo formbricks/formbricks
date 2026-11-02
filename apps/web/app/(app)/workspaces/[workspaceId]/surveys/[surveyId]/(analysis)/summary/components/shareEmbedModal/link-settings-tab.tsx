@@ -31,9 +31,9 @@ import {
 } from "@/modules/ui/components/select";
 
 interface LinkSettingsTabProps {
-  isReadOnly: boolean;
-  locale: string;
-  isStorageConfigured: boolean;
+  readonly isReadOnly: boolean;
+  readonly locale: string;
+  readonly isStorageConfigured: boolean;
 }
 
 interface LinkSettingsFormData {

@@ -87,9 +87,9 @@ reviews:
     - "!packages/api-v3-schemas/src/generated/**"
     # Agent skills vendored from upstream and pinned by hash in skills-lock.json; the next
     # `skills` update overwrites local edits. Formbricks-specific behaviour belongs in
-    # docs/agents/, which is reviewed. nextjs-docs is ours, so it stays in review, and so
-    # does skills-lock.json: it records each skill's source and hash.
-    - "!.agents/skills/!(nextjs-docs)/**"
+    # docs/agents/, which is reviewed. skills-lock.json stays in review: it records each skill's
+    # source and hash.
+    - "!.agents/skills/**"
     - "!.claude/skills/**"
 
   path_instructions:
@@ -114,7 +114,6 @@ reviews:
         - New client data flows go through an `/api/v3` route with TanStack Query, not a new Server
           Action. Server data lives in the query cache only — flag it being mirrored into
           `useState` or Jotai, and flag `router.refresh()` used as a data-refresh mechanism.
-        - Component props must be `Readonly<>` (e.g. `({ children }: Readonly<Props>)`).
         - All user-facing strings must go through `t()` from `react-i18next` with lowercase
           dot-nested keys, never hardcoded text.
         - Dates and times must use the shared formatting helpers, never ad-hoc `date-fns`, `Intl`,
@@ -133,8 +132,9 @@ reviews:
         - Assert on inputs and outputs. Flag tests that lock implementation details, markup, or
           snapshots, and tests that cannot fail (no meaningful assertion, everything mocked).
         - Do not request extra tests purely to raise coverage, and do not request tests for `.tsx`.
-        - Network and storage boundaries should be mocked via helpers from `@formbricks/*` and
-          mocks placed in a `__mocks__` directory.
+        - Module boundaries are mocked with `vi.mock`; where a shared `__mocks__` module exists
+          (e.g. `apps/web/lib/__mocks__/database.ts`) the test reuses it instead of redefining it.
+          Do not ask for a shared helper that does not exist.
 
     - path: "apps/web/playwright/**/*.spec.ts"
       instructions: |
@@ -236,8 +236,10 @@ reviews:
 
     - path: "packages/database/migration/**/migration.ts"
       instructions: |
-        Data migrations must be idempotent, batched (never load a whole table into memory), and
-        safe to resume after a partial failure. Check transaction boundaries and timeouts.
+        Data migrations must be idempotent, bounded in memory (cursor reads, never a whole table at
+        once), and safe to resume after a partial failure. The runner wraps each data migration in one
+        interactive transaction, so do not ask for batching inside it; check that the work fits the
+        runner's transaction timeout.
 
     - path: "apps/web/app/api/v1/**"
       instructions: |
@@ -317,6 +319,9 @@ reviews:
         Ships to end users' websites as an embedded bundle. Be strict about added dependencies and
         bundle size, browser compatibility, and anything that leaks respondent data. No Node-only
         APIs. Public SDK signatures are a compatibility contract — changes are breaking.
+        The host page is hostile (CODING_STANDARDS.md "Survey Bundles"): flag global CSS (`*`,
+        `:root`, `@property`), buttons without `type="button"`, code that needs `eval`, and reliance
+        on host globals.
   abort_on_close: true
   disable_cache: false
 

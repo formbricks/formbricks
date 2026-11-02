@@ -2,17 +2,17 @@ import * as React from "react";
 import { cn } from "@/lib/cn";
 
 interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
-  label?: string;
-  description?: string;
-  connectText?: string;
-  connectHref?: string;
-  connectNewTab?: boolean;
-  docsText?: string;
-  docsHref?: string;
-  docsNewTab?: boolean;
-  connected?: boolean;
-  statusText?: string;
-  icon?: React.ReactNode;
+  readonly label?: string;
+  readonly description?: string;
+  readonly connectText?: string;
+  readonly connectHref?: string;
+  readonly connectNewTab?: boolean;
+  readonly docsText?: string;
+  readonly docsHref?: string;
+  readonly docsNewTab?: boolean;
+  readonly connected?: boolean;
+  readonly statusText?: string;
+  readonly icon?: React.ReactNode;
 }
 
 const Card = React.forwardRef<HTMLDivElement, CardProps>(

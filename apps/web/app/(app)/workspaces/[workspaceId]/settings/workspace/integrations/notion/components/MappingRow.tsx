@@ -37,10 +37,10 @@ const MappingErrorMessage = ({
   elem,
   t,
 }: {
-  error: TMappingError | undefined;
-  col: TColumnOrElement;
-  elem: TColumnOrElement;
-  t: ReturnType<typeof useTranslation>["t"];
+  readonly error: TMappingError | undefined;
+  readonly col: TColumnOrElement;
+  readonly elem: TColumnOrElement;
+  readonly t: ReturnType<typeof useTranslation>["t"];
 }) => {
   const showErrorMsg = useMemo(() => {
     switch (error?.type) {
@@ -86,13 +86,13 @@ const MappingErrorMessage = ({
 };
 
 interface MappingRowProps {
-  idx: number;
-  mapping: TMapping[];
-  setMapping: React.Dispatch<React.SetStateAction<TMapping[]>>;
-  filteredElementItems: TColumnOrElement[];
-  dbItems: TColumnOrElement[];
-  elementItems: TColumnOrElement[];
-  t: ReturnType<typeof useTranslation>["t"];
+  readonly idx: number;
+  readonly mapping: TMapping[];
+  readonly setMapping: React.Dispatch<React.SetStateAction<TMapping[]>>;
+  readonly filteredElementItems: TColumnOrElement[];
+  readonly dbItems: TColumnOrElement[];
+  readonly elementItems: TColumnOrElement[];
+  readonly t: ReturnType<typeof useTranslation>["t"];
 }
 
 export const MappingRow = ({

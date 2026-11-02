@@ -7,8 +7,8 @@ import { useTranslation } from "react-i18next";
 import { TOrganization } from "@formbricks/types/organizations";
 
 interface LimitsReachedBannerProps {
-  organization: TOrganization;
-  responseCount: number;
+  readonly organization: TOrganization;
+  readonly responseCount: number;
 }
 
 export const LimitsReachedBanner = ({ organization, responseCount }: LimitsReachedBannerProps) => {

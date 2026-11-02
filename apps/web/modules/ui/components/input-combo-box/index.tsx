@@ -75,40 +75,44 @@ export interface TComboboxGroupedOption {
 }
 
 export interface InputComboboxProps {
-  id: string;
-  showSearch?: boolean;
-  searchPlaceholder?: string;
-  placeholder?: string;
-  options?: TComboboxOption[];
-  groupedOptions?: TComboboxGroupedOption[];
-  value?: string | number | string[] | null;
-  onChangeValue: (value: string | number | string[], option?: TComboboxOption, fromInput?: boolean) => void;
-  inputProps?: Omit<React.ComponentProps<typeof Input>, "value" | "onChange">;
-  clearable?: boolean;
-  withInput?: boolean;
-  allowMultiSelect?: boolean;
-  showCheckIcon?: boolean;
-  comboboxClasses?: string;
-  emptyDropdownText?: string;
+  readonly id: string;
+  readonly showSearch?: boolean;
+  readonly searchPlaceholder?: string;
+  readonly placeholder?: string;
+  readonly options?: TComboboxOption[];
+  readonly groupedOptions?: TComboboxGroupedOption[];
+  readonly value?: string | number | string[] | null;
+  readonly onChangeValue: (
+    value: string | number | string[],
+    option?: TComboboxOption,
+    fromInput?: boolean
+  ) => void;
+  readonly inputProps?: Omit<React.ComponentProps<typeof Input>, "value" | "onChange">;
+  readonly clearable?: boolean;
+  readonly withInput?: boolean;
+  readonly allowMultiSelect?: boolean;
+  readonly showCheckIcon?: boolean;
+  readonly comboboxClasses?: string;
+  readonly emptyDropdownText?: string;
   /**
    * Hands the search to the caller, which filters `options` itself — on the server, for a list too
    * long to load whole. The built-in filter is off then, and the search resets to "" on close.
    */
-  onSearchChange?: (search: string) => void;
-  iconClassName?: string;
+  readonly onSearchChange?: (search: string) => void;
+  readonly iconClassName?: string;
   /**
    * Lets the list grow wider than its trigger (up to a cap) and wrap long labels instead of cutting
    * them, for pickers whose options are whole sentences, such as survey questions.
    */
-  wideDropdown?: boolean;
-  disabled?: boolean;
+  readonly wideDropdown?: boolean;
+  readonly disabled?: boolean;
   // The interactive trigger renders as a div[role="combobox"], which is not a labelable element,
   // so a paired <label htmlFor> gives it no accessible name. Callers pass one of these instead.
-  "aria-label"?: string;
-  "aria-labelledby"?: string;
+  readonly "aria-label"?: string;
+  readonly "aria-labelledby"?: string;
   // For a form field: what describes the trigger (its error, say), and whether its value is invalid.
-  "aria-describedby"?: string;
-  "aria-invalid"?: boolean;
+  readonly "aria-describedby"?: string;
+  readonly "aria-invalid"?: boolean;
 }
 
 // Helper to flatten all options and their children

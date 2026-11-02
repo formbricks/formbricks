@@ -81,14 +81,22 @@ export const ScrollableContainer = forwardRef<ScrollableContainerHandle, Scrolla
     return (
       <div className="relative">
         {!disableInternalScroll && !isAtTop && (
-          <div className="from-survey-bg absolute top-0 right-2 left-0 z-10 h-4 bg-linear-to-b to-transparent" />
+          // Solid for --fb-scroll-fade-solid (set while the close button floats over the content), then
+          // the usual 16px fade; unset, it is the plain fade.
+          <div className="absolute top-0 right-2 left-0 z-10 h-[calc(var(--fb-scroll-fade-solid,0px)+1rem)] bg-[linear-gradient(to_bottom,var(--fb-survey-background-color)_var(--fb-scroll-fade-solid,0px),transparent)]" />
         )}
         <div
           ref={containerRef}
           style={{
             maxHeight,
           }}
-          className={cn(disableInternalScroll ? "overflow-visible" : "bg-survey-bg overflow-auto px-4 pt-4")}>
+          // The scroll padding matches the top band, solid part and fade, so an option scrolled into view
+          // by keyboard focus lands below it instead of underneath.
+          className={cn(
+            disableInternalScroll
+              ? "overflow-visible"
+              : "bg-survey-bg [scroll-padding-top:calc(var(--fb-scroll-fade-solid,0px)+1rem)] overflow-auto px-4 pt-4"
+          )}>
           {children}
         </div>
         {!disableInternalScroll && !isAtBottom && (

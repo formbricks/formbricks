@@ -26,7 +26,7 @@ import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 export const generateMetadata = () =>
   getSettingsPageMetadata("workspace.integrations.notion.notion_integration");
 
-const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
+const Page = async (props: { readonly params: Promise<{ workspaceId: string }> }) => {
   const params = await props.params;
   const t = await getTranslate();
   const enabled = !!(

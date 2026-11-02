@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { TContactAttributeKey } from "./contact-attribute-key";
 import type { TEmbeddedData, TEmbeddedDataType, TSurveyEmbeddedData } from "./embedded-data";
+import { type TEmbeddedFieldsSurvey, getIngestedEmbeddedFields } from "./embedded-data-fields";
 import type { TI18nString } from "./i18n";
 import type { TResponse, TResponseData, TResponseVariables } from "./responses";
 import { formatFieldNameToTitleCase } from "./safe-identifier";
@@ -1298,50 +1299,15 @@ export const listReadableFields = (input: TListReadableFieldsInput): TReadableFi
   return { question, embeddedData, reserved, contactAttribute };
 };
 
-/**
- * The survey slice {@link getSurveyEmbeddedFields} needs. Deliberately looser than `TSurvey`: the
- * readers this serves hold everything from a full survey to a four-key `Pick`, and every one of them
- * must be able to call the accessor without widening its own select.
- */
-export interface TEmbeddedFieldsSurvey {
-  /** The rows, joined and inlined at load. Absent when the select omitted the join. */
-  embeddedFields?: TLinkedEmbeddedField[] | null;
-}
-
-/**
- * **Where a survey's Embedded Data definitions come from.** Every reader — recall, logic, export
- * columns, response filters, response tables, emails, integrations, the editor's own cards and
- * pickers, and the preview — calls this and nothing else.
- *
- * **The rows are the whole answer** (ENG-2412, ENG-2404). A survey with no rows is a survey with no
- * fields. The legacy `variables` / `hiddenFields` a survey still carries are derived *from* these
- * rows at the read seam, so there is nothing else to consult; a survey that has never been written
- * (a template in the gallery) is given `embeddedFields` where it is built, by
- * `embeddedFieldsFromLegacyInput`.
- *
- * **Every survey select that reaches a reader must therefore carry the join** —
- * `selectSurveyEmbeddedDataLinks`, inlined by `transformPrismaSurvey`. A select that omits it yields
- * `undefined` here and the survey reads as having no fields at all.
- *
- * This is a *definition* lookup only. ENG-1837 repoints where a field's name, source and dataType
- * come from; it deliberately does not repoint value arithmetic onto {@link resolveEmbeddedValue},
- * whose coercion and default tiers differ from today's call-site expressions (see the swap checklist
- * on {@link resolveEmbeddedValue}) and would change what stored responses render as.
- */
-export const getSurveyEmbeddedFields = (survey: TEmbeddedFieldsSurvey): TLinkedEmbeddedField[] =>
-  survey.embeddedFields ?? [];
-
-/** The computed (ex-variable) fields of a survey, in inlined order. */
-export const getComputedEmbeddedFields = (survey: TEmbeddedFieldsSurvey): TLinkedEmbeddedField[] =>
-  getSurveyEmbeddedFields(survey).filter(({ field }) => field.source === "computed");
-
-/** The ingested (ex-hidden-field) fields of a survey, in inlined order. */
-export const getIngestedEmbeddedFields = (survey: TEmbeddedFieldsSurvey): TLinkedEmbeddedField[] =>
-  getSurveyEmbeddedFields(survey).filter(({ field }) => field.source === "ingested");
-
-/** The storage keys of a survey's ingested fields — what `response.data` addresses them by. */
-export const getIngestedStorageKeys = (survey: TEmbeddedFieldsSurvey): string[] =>
-  getIngestedEmbeddedFields(survey).map(({ link }) => link.storageKey);
+// Defined in `embedded-data-fields` to keep them free of this module's runtime imports; re-exported
+// so callers keep importing them from here.
+export {
+  getComputedEmbeddedFields,
+  getIngestedEmbeddedFields,
+  getIngestedStorageKeys,
+  getSurveyEmbeddedFields,
+  type TEmbeddedFieldsSurvey,
+} from "./embedded-data-fields";
 
 /**
  * What an ingested field answers with when nothing usable was supplied for it — its `defaultValue`,

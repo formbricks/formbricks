@@ -41,10 +41,10 @@ const ZCreateWorkspaceForm = z.object({
 type TCreateWorkspaceForm = z.infer<typeof ZCreateWorkspaceForm>;
 
 interface CreateWorkspaceModalProps {
-  open: boolean;
-  setOpen: (open: boolean) => void;
-  organizationId: string;
-  isAccessControlAllowed: boolean;
+  readonly open: boolean;
+  readonly setOpen: (open: boolean) => void;
+  readonly organizationId: string;
+  readonly isAccessControlAllowed: boolean;
 }
 
 export const CreateWorkspaceModal = ({

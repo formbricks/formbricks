@@ -24,12 +24,12 @@ import { QuotaList } from "./quota-list";
 import { QuotaModal } from "./quota-modal";
 
 interface QuotasCardProps {
-  localSurvey: TSurvey;
-  isQuotasAllowed: boolean;
-  isFormbricksCloud?: boolean;
-  quotas: TSurveyQuota[];
-  hasResponses: boolean;
-  enterpriseLicenseRequestFormUrl: string;
+  readonly localSurvey: TSurvey;
+  readonly isQuotasAllowed: boolean;
+  readonly isFormbricksCloud?: boolean;
+  readonly quotas: TSurveyQuota[];
+  readonly hasResponses: boolean;
+  readonly enterpriseLicenseRequestFormUrl: string;
 }
 
 const AddQuotaButton = ({
@@ -39,11 +39,11 @@ const AddQuotaButton = ({
   hasResponses,
   setOpenCreateQuotaConfirmationModal,
 }: {
-  setIsQuotaModalOpen: (open: boolean) => void;
-  setActiveQuota: (quota: TSurveyQuota | null) => void;
-  t: TFunction;
-  hasResponses: boolean;
-  setOpenCreateQuotaConfirmationModal: (open: boolean) => void;
+  readonly setIsQuotaModalOpen: (open: boolean) => void;
+  readonly setActiveQuota: (quota: TSurveyQuota | null) => void;
+  readonly t: TFunction;
+  readonly hasResponses: boolean;
+  readonly setOpenCreateQuotaConfirmationModal: (open: boolean) => void;
 }) => {
   return (
     <Button

@@ -1,5 +1,5 @@
 import { APIError } from "better-auth/api";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { deleteUserOrganizationRelationships } from "@/lib/authzed/organization-membership";
@@ -8,6 +8,7 @@ import { deleteOrganization, getOrganizationsWhereUserIsSingleOwner } from "@/li
 import { capturePostHogEvent } from "@/lib/posthog";
 import { deleteBrevoCustomerByEmail } from "@/modules/auth/lib/brevo";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
+import { sendAccountDeletedEmail } from "@/modules/email";
 import {
   activateEmailAuditErasureIntent,
   requestEmailAuditErasureBeforeUserDeletion,
@@ -21,7 +22,7 @@ import {
 } from "./better-auth-account-deletion";
 
 vi.mock("@formbricks/database", () => ({ prisma: { invite: { deleteMany: vi.fn() } } }));
-vi.mock("@formbricks/logger", () => ({ logger: { error: vi.fn() } }));
+vi.mock("@formbricks/logger", () => ({ logger: { error: vi.fn(), warn: vi.fn() } }));
 vi.mock("@/lib/authzed/organization-membership", () => ({
   deleteUserOrganizationRelationships: vi.fn(),
 }));
@@ -39,6 +40,7 @@ vi.mock("@/modules/email/lib/email-audit-maintenance", () => ({
   activateEmailAuditErasureIntent: vi.fn(),
   requestEmailAuditErasureBeforeUserDeletion: vi.fn(),
 }));
+vi.mock("@/modules/email", () => ({ sendAccountDeletedEmail: vi.fn() }));
 vi.mock("./account-deletion-audit", () => ({ queueAccountDeletionAuditEvent: vi.fn() }));
 
 const user = { id: "user-1", email: "ada@example.com", name: "Ada" } as Parameters<
@@ -48,6 +50,7 @@ const user = { id: "user-1", email: "ada@example.com", name: "Ada" } as Paramete
 describe("accountDeletionBeforeDelete", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useFakeTimers();
     vi.mocked(prisma.invite.deleteMany).mockResolvedValue({ count: 0 } as never);
     vi.mocked(deleteOrganization).mockResolvedValue(true as never);
     vi.mocked(requestEmailAuditErasureBeforeUserDeletion).mockResolvedValue(undefined);
@@ -68,6 +71,9 @@ describe("accountDeletionBeforeDelete", () => {
     expect(deleteOrganization).not.toHaveBeenCalled();
     expect(prisma.invite.deleteMany).not.toHaveBeenCalled();
     expect(requestEmailAuditErasureBeforeUserDeletion).not.toHaveBeenCalled();
+    // a blocked deletion never reaches afterDelete, so nothing is mailed
+    await vi.runAllTimersAsync();
+    expect(sendAccountDeletedEmail).not.toHaveBeenCalled();
   });
 
   test("multi-org: deletes every sole-owner org and the creator's invites, no block", async () => {
@@ -115,8 +121,59 @@ describe("accountDeletionBeforeDelete", () => {
 describe("accountDeletionAfterDelete", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useFakeTimers();
     vi.mocked(deleteBrevoCustomerByEmail).mockResolvedValue(undefined as never);
     vi.mocked(queueAccountDeletionAuditEvent).mockResolvedValue(undefined as never);
+    vi.mocked(sendAccountDeletedEmail).mockResolvedValue(true);
+  });
+
+  test("schedules one account-deleted email to the deleted user's address without awaiting it", async () => {
+    await accountDeletionAfterDelete(user);
+
+    // queued, not sent inside the deletion request path
+    expect(sendAccountDeletedEmail).not.toHaveBeenCalled();
+
+    await vi.runAllTimersAsync();
+
+    expect(sendAccountDeletedEmail).toHaveBeenCalledOnce();
+    expect(sendAccountDeletedEmail).toHaveBeenCalledWith({ email: "ada@example.com", locale: "en-US" });
+    expect(vi.mocked(activateEmailAuditErasureIntent).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(sendAccountDeletedEmail).mock.invocationCallOrder[0]
+    );
+  });
+
+  test("does not wait for a slow mailer before resolving", async () => {
+    vi.mocked(sendAccountDeletedEmail).mockReturnValue(new Promise(() => {}));
+
+    await expect(accountDeletionAfterDelete(user)).resolves.toBeUndefined();
+    await vi.runAllTimersAsync();
+
+    expect(sendAccountDeletedEmail).toHaveBeenCalledOnce();
+  });
+
+  test("logs and swallows a thrown email failure", async () => {
+    vi.mocked(sendAccountDeletedEmail).mockRejectedValue(new Error("smtp down"));
+
+    await expect(accountDeletionAfterDelete(user)).resolves.toBeUndefined();
+    await vi.runAllTimersAsync();
+
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: "user-1" }),
+      "Failed to send account deletion email"
+    );
+  });
+
+  test("logs an email the mailer reports as not sent", async () => {
+    vi.mocked(sendAccountDeletedEmail).mockResolvedValue(false);
+
+    await expect(accountDeletionAfterDelete(user)).resolves.toBeUndefined();
+    await vi.runAllTimersAsync();
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      { userId: "user-1" },
+      "Account deletion email was not sent (mailer reported no delivery)"
+    );
+    expect(logger.error).not.toHaveBeenCalled();
   });
 
   test("deletes the Brevo customer and queues a success audit event with the deleted user", async () => {
@@ -170,6 +227,10 @@ describe("accountDeletionAfterDelete", () => {
     });
     expect(capturePostHogEvent).toHaveBeenCalledWith("user-1", "delete_account");
   });
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 describe("accountDeletionConfig", () => {

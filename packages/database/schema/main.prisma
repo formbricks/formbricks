@@ -1022,20 +1022,21 @@ model Account {
   accessTokenExpiresAt  DateTime?
   refreshTokenExpiresAt DateTime?
 
-  /// Better Auth 1.7 (ENG-2343): the account's identity namespace. 1.7 keys accounts on
-  /// (issuer, accountId) and filters EVERY lookup on it — findAccountByKey, findAccountOwnerByKey,
-  /// findCredentialAccount and updatePassword. A null here is not cosmetic: password sign-in stops
-  /// finding the credential row (rejects as if the password were wrong) and a password reset matches
-  /// zero rows, so it silently succeeds while changing nothing.
+  /// Better Auth 1.7.0 (ENG-2343): the account's identity namespace. 1.7.0 keyed accounts on
+  /// (issuer, accountId) and filtered every lookup on it — findAccountByKey, findAccountOwnerByKey,
+  /// findCredentialAccount and updatePassword — so on 1.7.0 a null here locks the user out.
+  /// 1.7.3 dropped the field and 1.7.7 keys accounts on (provider, providerAccountId) again
+  /// (ENG-3880). We keep writing it (see `account.create.before` in better-auth-hooks.ts) so a
+  /// rollback to 1.7.0 still finds every row; drop it once that rollback is off the table.
   ///
-  /// NULLABLE on purpose, even though better-auth declares it required. A NOT NULL column would fail
-  /// every INSERT from a 1.6 pod still serving during a rolling deploy. The migration backfills every
-  /// existing row; see the migration SQL for the value derivation.
+  /// NULLABLE on purpose. A NOT NULL column would fail every INSERT from a 1.6 pod still serving
+  /// during a rolling deploy. The migration backfills every existing row; see the migration SQL for
+  /// the value derivation.
   issuer String?
 
-  // Kept alongside the new (issuer, accountId) key rather than replaced: it is what 1.6 matched on,
-  // so it keeps a rollback to 1.6 working and guards against a backfill that collapses two providers
-  // onto one issuer.
+  // The key Better Auth 1.6 and 1.7.7 look accounts up by. The (issuer, providerAccountId) one is
+  // 1.7.0's, kept for a rollback; together they also guard against a backfill that collapses two
+  // providers onto one issuer.
   @@unique([provider, providerAccountId])
   @@unique([issuer, providerAccountId])
   @@index([userId])

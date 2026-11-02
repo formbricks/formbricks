@@ -108,8 +108,9 @@ interface TCreativePayloadBase {
    */
   surveyLanguageMatch: TLanguageMatch | null;
   /**
-   * Whether the browser's languages pick the language when the site set none with `setLanguage`: the
-   * Destination survey's "Use browser language" setting. `false` when it opens no survey.
+   * Whether the browser's languages pick the texts' language when the site set none with `setLanguage`:
+   * the creative's own "Use browser language by default" setting (ENG-6871). A popup survey still picks
+   * its own language with its own setting.
    */
   autoSelectLanguage: boolean;
   /** The look, computed by the server and only applied by the SDK (ENG-3998). */

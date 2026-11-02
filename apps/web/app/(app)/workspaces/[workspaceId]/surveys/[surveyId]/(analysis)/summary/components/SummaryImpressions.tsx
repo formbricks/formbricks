@@ -10,13 +10,13 @@ import { timeSince } from "@/lib/time";
 import { Button } from "@/modules/ui/components/button";
 
 interface SummaryImpressionsProps {
-  displays: TDisplayWithContact[];
-  isLoading: boolean;
-  hasMore: boolean;
-  displaysError: string | null;
-  locale: TUserLocale;
-  onLoadMore: () => void;
-  onRetry: () => void;
+  readonly displays: TDisplayWithContact[];
+  readonly isLoading: boolean;
+  readonly hasMore: boolean;
+  readonly displaysError: string | null;
+  readonly locale: TUserLocale;
+  readonly onLoadMore: () => void;
+  readonly onRetry: () => void;
 }
 
 const getDisplayContactIdentifier = (display: TDisplayWithContact): string => {

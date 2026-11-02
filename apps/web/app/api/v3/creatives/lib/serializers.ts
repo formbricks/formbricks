@@ -68,6 +68,7 @@ export const serializeV3Creative = (record: TCreativeRecord, now: Date): TV3Crea
       { code: state.defaultLanguage, default: true, enabled: true },
       ...state.languages.map(({ code, enabled }) => ({ code, default: false, enabled })),
     ],
+    autoSelectLanguage: state.autoSelectLanguage,
     destination: serializeDestination(record),
     distribution: {
       ...state.distribution,
