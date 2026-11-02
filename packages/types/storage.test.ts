@@ -26,8 +26,8 @@ describe.each(Object.entries(uploads))("%s upload allowedFileExtensions", (_, up
   });
 
   // A survey can save its element's list with repeats; the upload must still go through.
-  test("accepts a list that repeats allowed extensions, however often", () => {
-    const result = upload(Array.from({ length: 100_000 }, (_unused, index) => (index % 2 ? "pdf" : "png")));
+  test("accepts a list that repeats allowed extensions, up to a thousand entries", () => {
+    const result = upload(Array.from({ length: 1_000 }, (_unused, index) => (index % 2 ? "pdf" : "png")));
 
     expect(result.success && result.data.allowedFileExtensions).toEqual(["png", "pdf"]);
   });
@@ -39,5 +39,11 @@ describe.each(Object.entries(uploads))("%s upload allowedFileExtensions", (_, up
 
       expect(result.success ? [] : result.error.issues).toHaveLength(1);
     }
+  });
+
+  test("refuses more than a thousand entries without deduplicating them, even if all repeat", () => {
+    const result = upload(Array.from({ length: 1_001 }, () => "pdf"));
+
+    expect(result.success ? [] : result.error.issues).toHaveLength(1);
   });
 });
