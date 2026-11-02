@@ -129,7 +129,8 @@ const opensNothing = (
   if (destination?.type !== "survey" || destination.opensAs !== "popup") return false;
   return (
     !surveyIds.has(destination.surveyId) ||
-    chooseLanguage(creative.surveyLanguageMatch, creative.autoSelectLanguage, language, "skip") === null
+    // Only the language the site set skips a survey; the browser's never does, so no setting is needed.
+    chooseLanguage(creative.surveyLanguageMatch, false, language, "skip") === null
   );
 };
 

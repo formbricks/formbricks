@@ -96,6 +96,7 @@ export const MultipleChoiceElementForm = ({
 
   const multipleChoiceOptionDisplayTypeOptions = [
     { value: "list", label: t("workspace.surveys.edit.list") },
+    { value: "row", label: t("workspace.surveys.edit.side_by_side") },
     { value: "dropdown", label: t("workspace.surveys.edit.dropdown") },
   ];
 

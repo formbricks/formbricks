@@ -57,6 +57,7 @@ get:
                     - code: es-US
                       default: false
                       enabled: true
+                  autoSelectLanguage: true
                   content:
                     label:
                       en-US: Feedback

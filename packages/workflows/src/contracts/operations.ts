@@ -1,6 +1,6 @@
 import { type z } from "zod";
-import { ZWorkflowIdInput, ZWorkflowRunIdInput, zCursorPage } from "./common";
-import type { TCursorPage, TWorkflowIdInput, TWorkflowRunIdInput } from "./common";
+import { ZWorkflowIdInput, ZWorkflowRunIdInput, zCursorPage, zWorkflowListPage } from "./common";
+import type { TCursorPage, TWorkflowIdInput, TWorkflowListPage, TWorkflowRunIdInput } from "./common";
 import {
   ZCreateWorkflowInput,
   ZDuplicateWorkflowInput,
@@ -40,7 +40,7 @@ export const WORKFLOW_API_OPERATIONS = {
   listWorkflowsV3: {
     params: null,
     input: ZListWorkflowsInput,
-    output: zCursorPage(ZWorkflowListItem),
+    output: zWorkflowListPage(ZWorkflowListItem),
   },
   createWorkflowV3: {
     params: null,
@@ -116,7 +116,7 @@ export type TWorkflowApiOperationId = keyof typeof WORKFLOW_API_OPERATIONS;
  * transport layer.
  */
 export interface TWorkflowsApiContract {
-  listWorkflows: (input: TListWorkflowsInput) => Promise<TCursorPage<TWorkflowListItem>>;
+  listWorkflows: (input: TListWorkflowsInput) => Promise<TWorkflowListPage<TWorkflowListItem>>;
   createWorkflow: (input: TCreateWorkflowInput) => Promise<TWorkflowResource>;
   getWorkflow: (params: TWorkflowIdInput) => Promise<TWorkflowResource>;
   patchWorkflow: (params: TWorkflowIdInput, input: TPatchWorkflowInput) => Promise<TWorkflowResource>;

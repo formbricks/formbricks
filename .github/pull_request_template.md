@@ -101,8 +101,8 @@ Rerun: `<one command covering the table below>`
 
 <!-- ≤6 rows, one per behaviour the diff changes; Outcome ≤15 words of what you observed, naming the
 account, plan or flag state where it matters. `How` is one of `unit (red on main)`,
-`unit (mutation)`, `unit (guard)`, `e2e`, `manual` — AGENTS.md defines them and says how to pick the
-cheapest level that can fail. Every `unit` and `e2e` row names the test or spec it rests on, in the
+`unit (mutation)`, `unit (guard)`, `e2e`, `manual` — CODING_STANDARDS.md defines them and says how to pick
+the cheapest level that can fail. Every `unit` and `e2e` row names the test or spec it rests on, in the
 row or in a `Rerun:` line that names it. A `red on main` row names its own command where that
 differs from `Rerun:`; a `mutation` row names the mutated `file:line`. The table stays visible —
 fold long command logs, and rows past the sixth. -->
@@ -127,7 +127,8 @@ so "none" is a claim rather than a formality. -->
 ---
 
 <!-- Delete if no agent was involved. Read both values out of the tool, never from memory; a value the
-tool does not expose is `unknown`, never a guess. AGENTS.md says where each tool reports them. -->
+tool does not expose is `unknown`, never a guess. `docs/agents/pull-requests.md` says where each tool
+reports them. -->
 
 > [!NOTE]
 > **AI model used** — `<model>`, reasoning effort `<level>`.

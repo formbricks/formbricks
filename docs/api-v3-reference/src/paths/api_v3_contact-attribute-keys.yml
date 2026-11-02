@@ -4,8 +4,14 @@ get:
   description: |
     Returns the contact attribute keys for a workspace. Use the returned `key` values as
     `targeting.filters[].root.contactAttributeKey` when targeting app surveys; `dataType` hints which
-    operators apply. Session cookie, `x-api-key`, or a Bearer token. (Applying targeting filters requires the Contacts
-    entitlement; this discovery endpoint does not.)
+    operators apply. Requires the Contacts entitlement (**403** without it). Session cookie,
+    `x-api-key`, or a Bearer token.
+
+    Optional `search`, `filter[dataType][in]`, `filter[type][in]`, `sortBy` and `includeTotalCount`
+    narrow, order and count the list on the server. Without them the endpoint behaves as before:
+    ordered by `id`, `meta.totalCount` is `null`. The cursor is bound to `sortBy` and the
+    search/filter set; changing any of them while paging → **400** naming `cursor`. Unknown query
+    parameters → **400**.
   tags:
     - V3 Contact Attribute Keys
   parameters:
@@ -32,6 +38,61 @@ get:
       description: >
         Opaque cursor returned as `meta.nextCursor` from the previous page. Omit on the first
         request.
+    - in: query
+      name: includeTotalCount
+      schema:
+        type: boolean
+        default: false
+      description: >
+        When `true`, `meta.totalCount` is the number of keys matching the search and filters across all
+        pages; otherwise it is `null`.
+    - in: query
+      name: search
+      schema:
+        type: string
+        maxLength: 512
+      description: Case-insensitive substring match over `key`, `name` and `description`.
+    - in: query
+      name: filter[dataType][in]
+      schema:
+        type: array
+        items:
+          type: string
+          enum:
+            - string
+            - number
+            - date
+      style: form
+      explode: true
+      description: >
+        Keep only keys with one of these data types. Repeat the parameter or send comma-separated
+        values. Unknown values → **400**.
+    - in: query
+      name: filter[type][in]
+      schema:
+        type: array
+        items:
+          type: string
+          enum:
+            - default
+            - custom
+      style: form
+      explode: true
+      description: >
+        Keep only built-in (`default`) or workspace-defined (`custom`) keys. Repeat or comma-separate.
+    - in: query
+      name: sortBy
+      schema:
+        type: string
+        enum:
+          - createdAt
+          - -createdAt
+          - name
+          - updatedAt
+          - -updatedAt
+      description: >
+        Sort order. `name` sorts by the display name (falling back to `key`), case-insensitively. A
+        leading `-` sorts newest first. Omit for the original order (by `id`).
   responses:
     "200":
       description: Contact attribute keys retrieved successfully
@@ -57,7 +118,7 @@ get:
                 items:
                   $ref: ../components/schemas/ContactAttributeKeyResource.yml
               meta:
-                $ref: ../components/schemas/CursorPaginationMeta.yml
+                $ref: ../components/schemas/CountedListMeta.yml
     "400":
       $ref: ../components/responses/V3BadRequest.yml
     "401":

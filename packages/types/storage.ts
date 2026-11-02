@@ -136,6 +136,12 @@ export const ZUploadFileConfig = z.object({
 
 export type TUploadFileConfig = z.infer<typeof ZUploadFileConfig>;
 
+export type TUploadFileAccess = {
+  pinAuthToken?: string | null;
+  singleUseId?: string | null;
+  url?: string | null;
+};
+
 /**
  * Most entries an upload request's extension list may carry. The list is the element's own, picked from
  * the allowed set, but the survey schema does not make it unique, so a saved list can repeat entries:
@@ -163,6 +169,11 @@ export const ZUploadPrivateFileRequest = z
         "Element id must contain only alphanumeric characters, hyphens, or underscores"
       ),
     workspaceId: z.cuid2(),
+    // Credentials the respondent already holds for a PIN-protected or single-use link survey. The
+    // server checks them exactly as the client response APIs do; surveys without either ignore them.
+    pinAuthToken: z.string().nullish(),
+    singleUseId: z.string().nullish(),
+    url: z.string().nullish(),
   })
   .superRefine((data, ctx) => {
     refineFileUploadInput({

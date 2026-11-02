@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { ArrowUpFromLineIcon, FileUpIcon, PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -16,6 +17,7 @@ import {
   isReservedFutureDefaultAttributeKey,
 } from "@/modules/ee/contacts/lib/attribute-key-policy";
 import { parseContactsCSV } from "@/modules/ee/contacts/lib/parse-contacts-csv";
+import { contactQueryKeys } from "@/modules/ee/contacts/lib/query-keys";
 import { TContactCSVUploadResponse, ZContactCSVUploadResponse } from "@/modules/ee/contacts/types/contact";
 import { Alert } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -42,6 +44,7 @@ export const UploadContactsCSVButton = ({
 }: UploadContactsCSVButtonProps) => {
   const { t } = useTranslation();
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const errorContainerRef = useRef<HTMLDivElement | null>(null);
   const [open, setOpen] = useState(false);
@@ -230,6 +233,8 @@ export const UploadContactsCSVButton = ({
       resetState(true);
 
       router.refresh();
+      // The lists read through TanStack Query, which a router refresh does not reach.
+      void queryClient.invalidateQueries({ queryKey: contactQueryKeys.all });
       return;
     }
 

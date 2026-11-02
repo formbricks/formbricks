@@ -1,0 +1,96 @@
+get:
+  operationId: listSegmentsV3
+  summary: List segments
+  description: |
+    Returns a workspace's segments, searched, sorted and counted on the server. Private segments
+    (survey-local targeting drafts) are never listed. A segment's survey references — including the
+    `surveyIds` of its survey-interaction filters — only name surveys the caller may see. Requires the Contacts entitlement (**403** without it). The cursor is bound to
+    `sortBy` and `filter[title][contains]`; changing either while paging → **400** naming `cursor`. Unknown query
+    parameters → **400**. Session cookie, `x-api-key`, or a Bearer token.
+  tags:
+    - V3 Segments
+  parameters:
+    - in: query
+      name: workspaceId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Workspace identifier.
+    - in: query
+      name: limit
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 250
+        default: 50
+      description: Page size (max 250).
+    - in: query
+      name: cursor
+      schema:
+        type: string
+      description: Opaque cursor returned as `meta.nextCursor` from the previous page.
+    - in: query
+      name: includeTotalCount
+      schema:
+        type: boolean
+        default: false
+      description: >
+        Whether to calculate `meta.totalCount`. Send `true` on the first page to get the count; when
+        omitted or `false` the count query is skipped and `meta.totalCount` is `null`.
+    - in: query
+      name: filter[title][contains]
+      schema:
+        type: string
+        maxLength: 512
+      description: Case-insensitive substring match on the segment title.
+    - in: query
+      name: sortBy
+      schema:
+        type: string
+        enum:
+          - -updatedAt
+          - -createdAt
+          - title
+        default: -updatedAt
+      description: "`-updatedAt` (default), `-createdAt` (both newest first) or `title` (A–Z)."
+  responses:
+    "200":
+      description: Segments retrieved successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: ../components/schemas/SegmentResource.yml
+              meta:
+                $ref: ../components/schemas/CountedListMeta.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

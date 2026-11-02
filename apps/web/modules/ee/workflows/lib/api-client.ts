@@ -31,6 +31,8 @@ export interface TWorkflowListPage {
   meta: {
     limit: number;
     nextCursor: string | null;
+    // Workflows matching the filters; null unless the request asked for it (first page only).
+    totalCount?: number | null;
   };
 }
 
@@ -45,11 +47,13 @@ export function buildWorkflowListSearchParams({
   limit,
   cursor,
   filters,
+  includeTotalCount,
 }: {
   workspaceId: string;
   limit: number;
   cursor?: string | null;
   filters?: TWorkflowListFilters;
+  includeTotalCount?: boolean;
 }): URLSearchParams {
   const searchParams = new URLSearchParams();
 
@@ -62,6 +66,10 @@ export function buildWorkflowListSearchParams({
 
   if (cursor) {
     searchParams.set("cursor", cursor);
+  }
+
+  if (includeTotalCount) {
+    searchParams.set("includeTotalCount", "true");
   }
 
   const trimmedName = filters?.nameContains?.trim();
@@ -81,16 +89,18 @@ export async function listWorkflows({
   limit,
   cursor,
   filters,
+  includeTotalCount,
   signal,
 }: {
   workspaceId: string;
   limit: number;
   cursor?: string | null;
   filters?: TWorkflowListFilters;
+  includeTotalCount?: boolean;
   signal?: AbortSignal;
 }): Promise<TWorkflowListPage> {
   const response = await fetch(
-    `/api/v3/workflows?${buildWorkflowListSearchParams({ workspaceId, limit, cursor, filters }).toString()}`,
+    `/api/v3/workflows?${buildWorkflowListSearchParams({ workspaceId, limit, cursor, filters, includeTotalCount }).toString()}`,
     {
       method: "GET",
       cache: "no-store",

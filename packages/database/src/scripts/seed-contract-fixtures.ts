@@ -16,6 +16,7 @@ import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { logger } from "@formbricks/logger";
+import type { TBaseFilters } from "@formbricks/types/segment";
 import { type TSurveyBlocks } from "@formbricks/types/surveys/blocks";
 import type { TWorkflowDefinition } from "@formbricks/workflows";
 import { PrismaClient } from "../prisma";
@@ -53,6 +54,9 @@ const CONTRACT_IDS = {
   WORKFLOW_TEST: "clctworkflowtest00000001",
   ACTION_CLASS_READ: "clctactionclassread00001",
   RESPONSE_READ: "clctresponseread00000001",
+  ATTRIBUTE_KEY_PLAN: "clctattributekeyplan0001",
+  CONTACT_READ: "clctcontactread000000001",
+  SEGMENT_READ: "clctsegmentread000000001",
   DATASET: "clctdataset0000000000001",
   CHART_READ: "clctchartread00000000001",
   CHART_PATCH: "clctchartpatch0000000001",
@@ -78,6 +82,9 @@ const CONTRACT_IDS = {
   CREATIVE_DUPLICATE: "clctcreativeduplicate001",
   CREATIVE_PAUSE: "clctcreativepause0000001",
 } as const;
+
+/** The custom attribute the contact list and the distinct-values endpoint are exercised against. */
+const CONTRACT_ATTRIBUTE_KEY = "contractFixturePlan";
 
 /**
  * Pinned `updatedAt` for every seeded survey, so the block operations' `expectedUpdatedAt` override can
@@ -263,6 +270,88 @@ async function seedCustomCss(readSurveyId: string): Promise<void> {
       },
       customCssPrevious: { light: null, dark: CONTRACT_CUSTOM_CSS.dark, processorVersion: 0 },
     },
+  });
+}
+
+/**
+ * One contact with a custom string attribute, and one public segment, so
+ * `GET /api/v3/contacts`, `/contacts/attribute-values` and `/segments` return a populated item rather
+ * than an empty page (which validates the envelope and never the resource). The segment is
+ * `isPrivate: false` because private segments are never listed. It is attached to no survey on
+ * purpose: attaching it to a fixture survey would change that survey's targeting and with it the
+ * survey operations' responses.
+ */
+async function seedContactsAndSegment(): Promise<void> {
+  const attributeKey = await prisma.contactAttributeKey.upsert({
+    where: { key_workspaceId: { key: CONTRACT_ATTRIBUTE_KEY, workspaceId: SEED_IDS.WORKSPACE } },
+    update: {},
+    create: {
+      id: CONTRACT_IDS.ATTRIBUTE_KEY_PLAN,
+      key: CONTRACT_ATTRIBUTE_KEY,
+      name: "Contract fixture plan",
+      description: "Disposable fixture for the v3 API contract tests.",
+      type: "custom",
+      dataType: "string",
+      workspaceId: SEED_IDS.WORKSPACE,
+    },
+  });
+  const emailKey = await prisma.contactAttributeKey.findUnique({
+    where: { key_workspaceId: { key: "email", workspaceId: SEED_IDS.WORKSPACE } },
+    select: { id: true },
+  });
+
+  await prisma.contact.upsert({
+    where: { id: CONTRACT_IDS.CONTACT_READ },
+    update: {},
+    create: { id: CONTRACT_IDS.CONTACT_READ, workspaceId: SEED_IDS.WORKSPACE },
+  });
+
+  const values = [
+    { attributeKeyId: attributeKey.id, value: "Enterprise" },
+    ...(emailKey ? [{ attributeKeyId: emailKey.id, value: "contract-fixture@example.com" }] : []),
+  ];
+  for (const { attributeKeyId, value } of values) {
+    await prisma.contactAttribute.upsert({
+      where: { contactId_attributeKeyId: { contactId: CONTRACT_IDS.CONTACT_READ, attributeKeyId } },
+      update: { value },
+      create: { contactId: CONTRACT_IDS.CONTACT_READ, attributeKeyId, value },
+    });
+  }
+
+  const segmentFields = {
+    title: "Contract fixture — segment",
+    description: "Disposable fixture for the v3 API contract tests.",
+    isPrivate: false,
+    // One attribute rule and one survey-interaction rule, so the response carries both filter
+    // shapes the schema documents. `any` scope names no survey, so no survey's targeting changes.
+    filters: [
+      {
+        id: "clctsegfilterattribute01",
+        connector: null,
+        resource: {
+          id: "clctsegfilterattrres0001",
+          root: { type: "attribute", contactAttributeKey: CONTRACT_ATTRIBUTE_KEY },
+          qualifier: { operator: "equals" },
+          value: "Enterprise",
+        },
+      },
+      {
+        id: "clctsegfilterinteract001",
+        connector: "and",
+        resource: {
+          id: "clctsegfilterinterres001",
+          root: { type: "surveyInteraction" },
+          qualifier: { operator: "haveCompleted" },
+          value: { surveyScope: "any", surveyIds: [], within: { amount: 30, unit: "days" } },
+        },
+      },
+    ] satisfies TBaseFilters,
+    workspaceId: SEED_IDS.WORKSPACE,
+  };
+  await prisma.segment.upsert({
+    where: { id: CONTRACT_IDS.SEGMENT_READ },
+    update: segmentFields,
+    create: { id: CONTRACT_IDS.SEGMENT_READ, ...segmentFields },
   });
 }
 
@@ -563,6 +652,7 @@ async function main(): Promise<void> {
     },
   });
 
+  await seedContactsAndSegment();
   await seedDashboards(workspace.organizationId);
 
   // After the read survey's languages, which seed the workspace's en-US and de-DE. The read creative opens
@@ -715,6 +805,9 @@ async function main(): Promise<void> {
       archiveWorkflowV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_ARCHIVE } },
       unarchiveWorkflowV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_UNARCHIVE } },
       testWorkflowV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_TEST } },
+      // `key` is required and must name an attribute of the workspace, or the operation only ever
+      // exercises its documented 400.
+      listContactAttributeValuesV3: { query: { key: CONTRACT_ATTRIBUTE_KEY } },
       // Charts and dashboards (ENG-6596). Layouts are pinned to free grid cells: a generated one is as
       // likely to overlap a seeded widget, which only ever exercises the documented 422.
       updateChartV3: { path: { chartId: CONTRACT_IDS.CHART_PATCH } },

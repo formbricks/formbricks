@@ -184,6 +184,7 @@ describe("output envelopes", () => {
     creator: { name: "Dana" },
     defaultLanguage: "en-US",
     languages: [{ code: "en-US", default: true, enabled: true }],
+    autoSelectLanguage: null,
     distribution: { showOn: "pageView", triggers: [], conditions: null, displayPercentage: null },
     schedule: { startAt: null, endAt: null },
     warnings: [],

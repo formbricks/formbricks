@@ -9,6 +9,7 @@ import { TResponseDataValue, TResponseTableData, TResponseWithQuotas } from "@fo
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
+import type { TResponseToolbarState } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/ResponseToolbar";
 import { ResponseTable } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTable";
 import { getReservedColumnValues } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/responses/lib/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
@@ -27,6 +28,7 @@ interface ResponseDataViewProps {
   locale: TUserLocale;
   isQuotasAllowed: boolean;
   quotas: TSurveyQuota[];
+  toolbar: TResponseToolbarState;
   /** Creatives open this survey: its table then shows "Opened by creative" by default. */
   isOpenedByCreatives: boolean;
 }
@@ -131,6 +133,7 @@ export const ResponseDataView: React.FC<Readonly<ResponseDataViewProps>> = ({
   locale,
   isQuotasAllowed,
   quotas,
+  toolbar,
   isOpenedByCreatives,
 }) => {
   const { t } = useTranslation();
@@ -157,6 +160,7 @@ export const ResponseDataView: React.FC<Readonly<ResponseDataViewProps>> = ({
         locale={locale}
         isQuotasAllowed={isQuotasAllowed}
         quotas={quotas}
+        toolbar={toolbar}
         selectedResponseId={selectedResponseId}
         setSelectedResponseId={setSelectedResponseIdTransition}
         isOpenedByCreatives={isOpenedByCreatives}

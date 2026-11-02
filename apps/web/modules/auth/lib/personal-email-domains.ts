@@ -40,6 +40,10 @@ export const PERSONAL_EMAIL_DOMAINS: readonly string[] = [
   "protonmail.com",
   "pm.me",
   "passmail.com",
+  "protonmail.ch",
+  "passinbox.com", // Proton Pass alias domain
+  "passmail.net", // Proton Pass alias domain
+  "passfwd.com", // Proton Pass alias domain
   "mailbox.org",
   "posteo.de",
   "fastmail.com",
@@ -47,7 +51,18 @@ export const PERSONAL_EMAIL_DOMAINS: readonly string[] = [
   "duck.com",
   "anonaddy.com", // addy.io alias service
   "8alias.com", // SimpleLogin alias domain
+  "simplelogin.com", // SimpleLogin (Proton) alias domain
+  "simplelogin.fr", // SimpleLogin (Proton) alias domain
+  "aleeas.com", // SimpleLogin (Proton) alias domain
+  "slmail.me", // SimpleLogin (Proton) alias domain
+  "silomails.com", // SimpleLogin (Proton) alias domain
+  "8shield.net", // SimpleLogin (Proton) alias domain
+  "dralias.com", // SimpleLogin (Proton) alias domain
   "keemail.me", // Tutanota
+  "tuta.io", // Tuta (formerly Tutanota)
+  "tuta.com", // Tuta
+  "tutanota.de", // Tuta
+  "tutamail.com", // Tuta
   "ik.me", // Infomaniak
   "murena.io", // /e/ OS (Murena)
   "firemail.cc", // same operator as cock.li

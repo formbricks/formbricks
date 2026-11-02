@@ -151,6 +151,7 @@ export const CUSTOM_CSS_VARIABLES = [
   "--fb-focus-ring-inner-color",
   "--fb-focus-ring-outer-width",
   "--fb-focus-ring-inner-width",
+  "--fb-focus-ring-style",
 ] as const;
 
 export interface TCssSuggestionContext {

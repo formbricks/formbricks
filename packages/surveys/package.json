@@ -72,7 +72,7 @@
     "cross-env": "catalog:",
     "dotenv-cli": "catalog:",
     "fake-indexeddb": "6.2.5",
-    "happy-dom": "20.8.9",
+    "happy-dom": "21.0.4",
     "postcss": "catalog:",
     "rollup-plugin-visualizer": "7.0.1",
     "tailwindcss": "catalog:",
