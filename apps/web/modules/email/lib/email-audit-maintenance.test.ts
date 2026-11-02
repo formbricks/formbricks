@@ -3,6 +3,7 @@ import type { JobExecutionContext } from "@formbricks/jobs";
 import {
   processEmailAuditMaintenanceJob,
   requestEmailAuditErasure,
+  requestEmailAuditErasureBeforeUserDeletion,
   requestEmailAuditErasureBestEffort,
 } from "./email-audit-maintenance";
 
@@ -98,6 +99,17 @@ describe("email audit retention and erasure", () => {
       },
       data: { erasureRequestedAt: expect.any(Date) },
     });
+    expect(mocks.reportFailure).toHaveBeenCalledWith("email_audit_erasure_request_failed", {
+      phase: "recipient_hmac",
+    });
+  });
+
+  test("blocks user deletion while recipient erasure cannot be queued", async () => {
+    mocks.getMac.mockRejectedValueOnce(new Error("kms unavailable"));
+
+    await expect(requestEmailAuditErasureBeforeUserDeletion("user-1", "Person@Example.com")).rejects.toThrow(
+      "Email audit erasure could not be prepared"
+    );
     expect(mocks.reportFailure).toHaveBeenCalledWith("email_audit_erasure_request_failed", {
       phase: "recipient_hmac",
     });

@@ -9,6 +9,13 @@ import { deleteEmailAuditSnapshot, getEmailAuditRecipientMac } from "./email-aud
 const batchSize = 100;
 const inFlightWriteGraceMs = 60_000;
 
+const erasureFailurePhase = (error: unknown): string | undefined => {
+  if (!(error instanceof Error)) return;
+  return error.message === "recipient_hmac" || error.message === "recipient_hmac_config"
+    ? error.message
+    : undefined;
+};
+
 const getRecipientMacForErasure = async (email: string): Promise<string> => {
   if (!EMAIL_SEND_AUDIT_HMAC_KEY_ARN) {
     throw new Error("recipient_hmac_config");
@@ -76,9 +83,25 @@ export const requestEmailAuditErasureBestEffort = async (
   try {
     await requestEmailAuditErasure(scope);
   } catch (error) {
-    const phase =
-      error instanceof Error && error.message.startsWith("recipient_hmac") ? error.message : undefined;
-    await reportEmailAuditFailure("email_audit_erasure_request_failed", { phase });
+    await reportEmailAuditFailure("email_audit_erasure_request_failed", {
+      phase: erasureFailurePhase(error),
+    });
+  }
+};
+
+/** Preserve recipient identity for retry by stopping account deletion if erasure cannot be queued. */
+export const requestEmailAuditErasureBeforeUserDeletion = async (
+  userId: string,
+  email: string
+): Promise<void> => {
+  if (!EMAIL_SEND_AUDIT_BUCKET) return;
+  try {
+    await requestEmailAuditErasure({ userId, email });
+  } catch (error) {
+    await reportEmailAuditFailure("email_audit_erasure_request_failed", {
+      phase: erasureFailurePhase(error),
+    });
+    throw new Error("Email audit erasure could not be prepared");
   }
 };
 

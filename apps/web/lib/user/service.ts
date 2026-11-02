@@ -12,7 +12,7 @@ import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { deleteUserTeamRelationships } from "@/lib/authzed/team-workspace";
 import { deleteOrganization, getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
 import { deleteBrevoCustomerByEmail } from "@/modules/auth/lib/brevo";
-import { requestEmailAuditErasureBestEffort } from "@/modules/email/lib/email-audit-maintenance";
+import { requestEmailAuditErasureBeforeUserDeletion } from "@/modules/email/lib/email-audit-maintenance";
 import { normalizeEmailForComparison } from "../utils/email";
 import { validateInputs } from "../utils/validate";
 import { publicUserSelect } from "./public-user";
@@ -97,13 +97,14 @@ export const updateUser = async (personId: string, data: TUserUpdateInput): Prom
   }
 };
 
-const deleteUserById = async (id: string): Promise<TUser> => {
+const deleteUserById = async (id: string, expectedEmail: string): Promise<TUser> => {
   validateInputs([id, ZId]);
 
   try {
     const user = await prisma.user.delete({
       where: {
         id,
+        email: expectedEmail,
       },
       select: publicUserSelect,
     });
@@ -122,6 +123,10 @@ export const deleteUser = async (id: string): Promise<TUser> => {
   validateInputs([id, ZId]);
 
   try {
+    const userForAudit = await prisma.user.findUnique({ where: { id }, select: { email: true } });
+    if (!userForAudit) throw new ResourceNotFoundError("User", id);
+    await requestEmailAuditErasureBeforeUserDeletion(id, userForAudit.email);
+
     const organizationsWithSingleOwner = await getOrganizationsWhereUserIsSingleOwner(id);
 
     for (const organization of organizationsWithSingleOwner) {
@@ -130,8 +135,7 @@ export const deleteUser = async (id: string): Promise<TUser> => {
 
     await prisma.invite.deleteMany({ where: { creatorId: id } });
 
-    const deletedUser = await deleteUserById(id);
-    await requestEmailAuditErasureBestEffort({ userId: id, email: deletedUser.email });
+    const deletedUser = await deleteUserById(id, userForAudit.email);
     await runPostCommitProjection("user_delete_organization_cleanup", () =>
       deleteUserOrganizationRelationships(id)
     );

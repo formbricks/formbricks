@@ -12,6 +12,7 @@ import { ACCOUNT_DELETION_SOLE_OWNER_BLOCK_MESSAGE } from "@/modules/account/con
 import { deleteBrevoCustomerByEmail } from "@/modules/auth/lib/brevo";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
+import { requestEmailAuditErasureBeforeUserDeletion } from "@/modules/email/lib/email-audit-maintenance";
 import { queueAccountDeletionAuditEvent } from "./account-deletion-audit";
 
 type DeleteUserConfig = NonNullable<NonNullable<BetterAuthOptions["user"]>["deleteUser"]>;
@@ -57,6 +58,8 @@ export const accountDeletionBeforeDelete: NonNullable<DeleteUserConfig["beforeDe
       message: ACCOUNT_DELETION_SOLE_OWNER_BLOCK_MESSAGE,
     });
   }
+
+  await requestEmailAuditErasureBeforeUserDeletion(user.id, user.email);
 
   for (const organization of soleOwnerOrganizations) {
     await deleteOrganization(organization.id);

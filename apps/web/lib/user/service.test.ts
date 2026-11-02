@@ -1,5 +1,5 @@
 import "./__mocks__/brevo.mock";
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { IdentityProvider, Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
@@ -10,6 +10,7 @@ import { deleteUserOrganizationRelationships } from "@/lib/authzed/organization-
 import { deleteUserTeamRelationships } from "@/lib/authzed/team-workspace";
 import { deleteOrganization, getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
 import { deleteBrevoCustomerByEmail } from "@/modules/auth/lib/brevo";
+import { requestEmailAuditErasureBeforeUserDeletion } from "@/modules/email/lib/email-audit-maintenance";
 import { publicUserSelect } from "./public-user";
 import { deleteUser, getUser, getUserByEmail, getUsersWithOrganization, updateUser } from "./service";
 
@@ -38,6 +39,9 @@ vi.mock("@/lib/authzed/organization-membership", () => ({
 }));
 vi.mock("@/lib/authzed/team-workspace", () => ({
   deleteUserTeamRelationships: vi.fn(),
+}));
+vi.mock("@/modules/email/lib/email-audit-maintenance", () => ({
+  requestEmailAuditErasureBeforeUserDeletion: vi.fn(),
 }));
 
 describe("User Service", () => {
@@ -220,6 +224,11 @@ describe("User Service", () => {
   });
 
   describe("deleteUser", () => {
+    beforeEach(() => {
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({ email: mockPrismaUser.email } as never);
+      vi.mocked(requestEmailAuditErasureBeforeUserDeletion).mockResolvedValue(undefined);
+    });
+
     test("should delete user and their organizations when they are single owner", async () => {
       vi.mocked(prisma.user.delete).mockResolvedValue(mockPrismaUser);
       vi.mocked(prisma.invite.deleteMany).mockResolvedValue({ count: 0 });
@@ -233,9 +242,10 @@ describe("User Service", () => {
       expect(deleteOrganization).toHaveBeenCalledWith("org1");
       expect(prisma.invite.deleteMany).toHaveBeenCalledWith({ where: { creatorId: "user1" } });
       expect(prisma.user.delete).toHaveBeenCalledWith({
-        where: { id: "user1" },
+        where: { id: "user1", email: mockPrismaUser.email },
         select: publicUserSelect,
       });
+      expect(requestEmailAuditErasureBeforeUserDeletion).toHaveBeenCalledWith("user1", mockPrismaUser.email);
       expect(deleteUserOrganizationRelationships).toHaveBeenCalledWith("user1");
       expect(deleteUserTeamRelationships).toHaveBeenCalledWith("user1");
       expect(deleteBrevoCustomerByEmail).toHaveBeenCalledWith({ email: mockPrismaUser.email });
@@ -270,6 +280,17 @@ describe("User Service", () => {
       vi.mocked(prisma.user.delete).mockRejectedValue(prismaError);
 
       await expect(deleteUser("user1")).rejects.toThrow(DatabaseError);
+    });
+
+    test("does not delete a user when audit erasure cannot be prepared", async () => {
+      vi.mocked(requestEmailAuditErasureBeforeUserDeletion).mockRejectedValueOnce(
+        new Error("audit unavailable")
+      );
+
+      await expect(deleteUser("user1")).rejects.toThrow("audit unavailable");
+
+      expect(getOrganizationsWhereUserIsSingleOwner).not.toHaveBeenCalled();
+      expect(prisma.user.delete).not.toHaveBeenCalled();
     });
   });
 

@@ -8,6 +8,7 @@ import { deleteOrganization, getOrganizationsWhereUserIsSingleOwner } from "@/li
 import { capturePostHogEvent } from "@/lib/posthog";
 import { deleteBrevoCustomerByEmail } from "@/modules/auth/lib/brevo";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
+import { requestEmailAuditErasureBeforeUserDeletion } from "@/modules/email/lib/email-audit-maintenance";
 import { queueAccountDeletionAuditEvent } from "./account-deletion-audit";
 import {
   accountDeletionAfterDelete,
@@ -31,6 +32,9 @@ vi.mock("@/lib/organization/service", () => ({
 vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: vi.fn() }));
 vi.mock("@/modules/auth/lib/brevo", () => ({ deleteBrevoCustomerByEmail: vi.fn() }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsMultiOrgEnabled: vi.fn() }));
+vi.mock("@/modules/email/lib/email-audit-maintenance", () => ({
+  requestEmailAuditErasureBeforeUserDeletion: vi.fn(),
+}));
 vi.mock("./account-deletion-audit", () => ({ queueAccountDeletionAuditEvent: vi.fn() }));
 
 const user = { id: "user-1", email: "ada@example.com", name: "Ada" } as Parameters<
@@ -42,6 +46,7 @@ describe("accountDeletionBeforeDelete", () => {
     vi.clearAllMocks();
     vi.mocked(prisma.invite.deleteMany).mockResolvedValue({ count: 0 } as never);
     vi.mocked(deleteOrganization).mockResolvedValue(true as never);
+    vi.mocked(requestEmailAuditErasureBeforeUserDeletion).mockResolvedValue(undefined);
   });
 
   test("blocks deletion on a single-org instance when the user is a sole org owner", async () => {
@@ -58,6 +63,7 @@ describe("accountDeletionBeforeDelete", () => {
     // throws before any destructive cleanup
     expect(deleteOrganization).not.toHaveBeenCalled();
     expect(prisma.invite.deleteMany).not.toHaveBeenCalled();
+    expect(requestEmailAuditErasureBeforeUserDeletion).not.toHaveBeenCalled();
   });
 
   test("multi-org: deletes every sole-owner org and the creator's invites, no block", async () => {
@@ -73,6 +79,10 @@ describe("accountDeletionBeforeDelete", () => {
     expect(deleteOrganization).toHaveBeenCalledWith("org-1");
     expect(deleteOrganization).toHaveBeenCalledWith("org-2");
     expect(prisma.invite.deleteMany).toHaveBeenCalledWith({ where: { creatorId: "user-1" } });
+    expect(requestEmailAuditErasureBeforeUserDeletion).toHaveBeenCalledWith("user-1", "ada@example.com");
+    expect(vi.mocked(requestEmailAuditErasureBeforeUserDeletion).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(deleteOrganization).mock.invocationCallOrder[0]
+    );
   });
 
   test("no sole-owner orgs: skips the license check and deletes only the creator's invites", async () => {
@@ -83,6 +93,18 @@ describe("accountDeletionBeforeDelete", () => {
     expect(getIsMultiOrgEnabled).not.toHaveBeenCalled();
     expect(deleteOrganization).not.toHaveBeenCalled();
     expect(prisma.invite.deleteMany).toHaveBeenCalledWith({ where: { creatorId: "user-1" } });
+  });
+
+  test("stops account deletion before cleanup when audit erasure cannot be prepared", async () => {
+    vi.mocked(getOrganizationsWhereUserIsSingleOwner).mockResolvedValue([] as never);
+    vi.mocked(requestEmailAuditErasureBeforeUserDeletion).mockRejectedValueOnce(
+      new Error("audit unavailable")
+    );
+
+    await expect(accountDeletionBeforeDelete(user)).rejects.toThrow("audit unavailable");
+
+    expect(prisma.invite.deleteMany).not.toHaveBeenCalled();
+    expect(deleteOrganization).not.toHaveBeenCalled();
   });
 });
 
