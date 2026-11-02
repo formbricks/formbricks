@@ -156,6 +156,30 @@ describe("email source attribution", () => {
     expect(sendEmail).toHaveBeenCalledWith(expect.objectContaining({ emailType, to: email }));
   });
 
+  test("keeps the survey preview actor and tenant identifiers at the audit boundary", async () => {
+    await sendEmbedSurveyPreviewEmail({
+      to: email,
+      innerHtml: "html",
+      workspaceId: "workspace",
+      locale,
+      actorUserId: "user",
+      surveyId: "survey",
+      organizationId: "organization",
+    });
+
+    expect(sendEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        emailType: "survey_preview",
+        auditContext: {
+          trigger: "user",
+          actorUserId: "user",
+          surveyId: "survey",
+          organizationId: "organization",
+        },
+      })
+    );
+  });
+
   // A sender that drops its organization or actor would skip the limits that matter most (ENG-3823).
   test.each(senders)("passes the context %s's rate limits need", async (_emailType, send) => {
     await send();

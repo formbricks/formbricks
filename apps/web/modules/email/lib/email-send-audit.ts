@@ -108,7 +108,7 @@ export const beginEmailSendAudit = async (
         workflowRunId: context.workflowRunId,
         inviteId: context.inviteId,
         recipientMac,
-        snapshotKey: emailAuditObjectKey(id),
+        snapshotKey: recipientMac ? emailAuditObjectKey(id) : null,
         auditGap: !recipientMac,
         expiresAt: new Date(now + metadataTtlMs),
         contentExpiresAt: new Date(now + contentTtlMs),
@@ -119,7 +119,7 @@ export const beginEmailSendAudit = async (
     auditGap = true;
     await reportGap(id, "ledger_create");
   }
-  if (!rowCreated) {
+  if (!rowCreated || !recipientMac) {
     emitMetadata(id, emailType, context, "prepared", auditGap);
     return { id, rowCreated, auditGap };
   }

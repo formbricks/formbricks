@@ -116,6 +116,24 @@ describe("outbound email audit", () => {
     });
   });
 
+  test("does not retain email content when the recipient identifier is unavailable", async () => {
+    mocks.getMac.mockRejectedValueOnce(new Error("KMS unavailable"));
+
+    const state = await beginEmailSendAudit("password_reset", "person@example.com", snapshot, context);
+
+    expect(state).toMatchObject({ rowCreated: true, auditGap: true });
+    expect(mocks.create.mock.calls[0][0].data).toMatchObject({
+      recipientMac: undefined,
+      snapshotKey: null,
+      auditGap: true,
+    });
+    expect(mocks.putSnapshot).not.toHaveBeenCalled();
+    expect(mocks.reportFailure).toHaveBeenCalledWith("email_audit_gap", {
+      auditId: state?.id,
+      phase: "recipient_hmac",
+    });
+  });
+
   test("continues with an explicit gap when the content store fails", async () => {
     mocks.putSnapshot.mockRejectedValueOnce(new Error("object store unavailable"));
     const state = await beginEmailSendAudit("invite", "person@example.com", snapshot, context);
