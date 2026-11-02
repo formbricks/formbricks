@@ -1,3 +1,8 @@
+import { execFileSync, spawnSync } from "node:child_process";
+import { copyFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, test } from "vitest";
 import { isAllowedFile, mentionsLocalFolder, parseGitGrepOutput } from "./check-local-refs.mjs";
 
@@ -53,5 +58,39 @@ describe("parseGitGrepOutput", () => {
       { path: "docs/a:b.md", line: 12, text: "see: .local/x.md" },
       { path: "README.md", line: 3, text: ".local/y" },
     ]);
+  });
+});
+
+describe("the check", () => {
+  test("still reports a reference when the user's git config colours grep output", () => {
+    // `color.grep=always` wraps each match in escape codes, and the `m` that closes the opening code
+    // sits right before `.local/`, where the matcher reads it as a hostname character.
+    const repository = mkdtempSync(join(tmpdir(), "formbricks-local-refs-"));
+    try {
+      mkdirSync(join(repository, "scripts"));
+      copyFileSync(
+        fileURLToPath(new URL("check-local-refs.mjs", import.meta.url)),
+        join(repository, "scripts/check-local-refs.mjs")
+      );
+      writeFileSync(join(repository, "README.md"), "See .local/plan.md for the rollout.\n");
+      execFileSync("git", ["init", "--quiet"], { cwd: repository });
+      execFileSync("git", ["add", "."], { cwd: repository });
+
+      const result = spawnSync(process.execPath, ["scripts/check-local-refs.mjs"], {
+        cwd: repository,
+        env: {
+          ...process.env,
+          GIT_CONFIG_COUNT: "1",
+          GIT_CONFIG_KEY_0: "color.grep",
+          GIT_CONFIG_VALUE_0: "always",
+        },
+        encoding: "utf8",
+      });
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain("README.md:1: See .local/plan.md");
+    } finally {
+      rmSync(repository, { recursive: true, force: true });
+    }
   });
 });

@@ -58,8 +58,9 @@ function findViolations() {
   let output;
   try {
     // Tracked files only (`.local/` itself is ignored), text only (`-I`), fixed string as a cheap
-    // prefilter; `mentionsLocalFolder` then decides.
-    output = execFileSync("git", ["grep", "-z", "-n", "-I", "-F", "-e", ".local/"], {
+    // prefilter; `mentionsLocalFolder` then decides. `--no-color` because a user's `color.grep=always`
+    // puts escape codes right before each match, which the matcher would read as a hostname.
+    output = execFileSync("git", ["grep", "--no-color", "-z", "-n", "-I", "-F", "-e", ".local/"], {
       cwd: REPO_ROOT,
       encoding: "utf8",
       maxBuffer: 64 * 1024 * 1024,
