@@ -36,6 +36,10 @@ export const hasOversizedJsonCollection = (value: unknown, maxEntries: number): 
   return false;
 };
 
+// A value `JSON.parse` would read as an array or object: JSON allows these four whitespace characters
+// before it, so a consumer parsing the text accepts a padded value as readily as a bare one.
+const JSON_COLLECTION_START = /^[\t\n\r ]*[[{]/;
+
 const parseJson = (text: string): unknown => {
   try {
     return JSON.parse(text);
@@ -56,7 +60,7 @@ const hasOversizedParams = (params: URLSearchParams): boolean => {
     if (count > AUTH_REQUEST_MAX_ENTRIES) return true;
     counts.set(key, count);
     if (
-      (value.startsWith("{") || value.startsWith("[")) &&
+      JSON_COLLECTION_START.test(value) &&
       hasOversizedJsonCollection(parseJson(value), AUTH_REQUEST_MAX_ENTRIES)
     ) {
       return true;

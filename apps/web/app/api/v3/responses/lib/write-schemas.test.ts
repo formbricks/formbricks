@@ -224,7 +224,7 @@ describe("ResponseDataMap contract bounds match the schema", () => {
 
   /**
    * The bounds are enforced by the request schema only. `ResponseDataMap` is what the read returns,
-   * and the v1 and v2 write paths store the same map uncapped — so a response can legitimately carry
+   * and the v2 management write and older rows store the same map uncapped — so a response can carry
    * more than these bounds allow, and publishing them on the read shape would make
    * `GET /api/v3/responses/{responseId}` describe payloads it actually returns as invalid. Putting
    * them there is the mistake this guards, because nothing else would fail: the Zod bounds are

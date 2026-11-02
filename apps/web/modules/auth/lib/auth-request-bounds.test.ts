@@ -99,6 +99,19 @@ describe("exceedsAuthRequestBounds", () => {
       expect(exceedsAuthRequestBounds(URL_BASE, form, encode(repeated("resource", MAX + 1)))).toBe(true);
     });
 
+    // `+` decodes to a space, and JSON.parse skips leading whitespace, so a padded value parses too.
+    test.each([
+      ["a space", "+"],
+      ["a tab", "%09"],
+      ["a newline", "%0A"],
+    ])("with JSON padded by %s holding an oversized collection is refused", (_, padding) => {
+      const padded = (count: number) => claims(count).replace("claims=", `claims=${padding}`);
+
+      expect(exceedsAuthRequestBounds(URL_BASE, form, encode(padded(MAX + 1)))).toBe(true);
+      expect(exceedsAuthRequestBounds(`${URL_BASE}?${padded(MAX + 1)}`, null, undefined)).toBe(true);
+      expect(exceedsAuthRequestBounds(URL_BASE, form, encode(padded(MAX)))).toBe(false);
+    });
+
     test("with ordinary fields that only look like JSON is accepted", () => {
       expect(exceedsAuthRequestBounds(URL_BASE, form, encode("state=%7Bnot+json&scope=openid"))).toBe(false);
     });
