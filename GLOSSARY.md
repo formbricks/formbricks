@@ -3,6 +3,26 @@
 Domain terms the code and architecture reviews use. Add a term when a module is named after a concept
 that is not listed here.
 
+## Products and plans
+
+**Product** — What an organization is shown: Formbricks Surveys or the Experience Suite. It follows from the organization's license or Cloud plan; nobody picks it and it is never stored. _Avoid_: edition, mode, tier.
+
+**Formbricks Surveys** — The product of every organization without an Experience Suite feature: surveys, responses, integrations, and the Pro features its plan unlocks. Experience Suite features do not exist in it, not even as locked pages.
+
+**Experience Suite** — The product of an organization entitled to at least one Experience Suite feature. _Avoid_: Suite (on its own), XM Suite, Enterprise.
+
+**Experience Suite feature** — A capability only the Experience Suite offers: Feedback data, dashboards, workflows, creatives, data retention, quotas, roles and teams, audit logs and SAML. Being entitled to any one of them makes the organization's product the Experience Suite.
+
+**Plan** — What a customer is on. Self-hosted: Community (no license key), Lite, Pro or Experience Suite. Cloud: Free, Pro or Experience Suite. _Avoid_: tier, edition, Hobby, Scale.
+
+**Included responses** — The responses a Cloud plan pays for each month: 100 on Free, 1,000 on Pro. Unused ones do not carry over. _Avoid_: allowance, limit, quota (a Quota is an Experience Suite feature).
+
+**Response credit** — A prepaid response, bought in packs on Cloud Pro. Credits are used after the month's included responses, oldest first, and expire 12 months after purchase. _Avoid_: overage.
+
+**Auto top-up** — Buying one credit pack automatically when an organization runs out of included responses and credits, up to a monthly number of packs the owner sets.
+
+**Response stop** — The point at which a Cloud organization has used its included responses, its credits and a 10% buffer. From then on its surveys stop accepting responses until credits are added or the month resets.
+
 ## Survey runtime
 
 **Block** — One card of a survey holding one or more elements. Logic rules and a `logicFallback` hang off a block.
@@ -65,4 +85,4 @@ that is not listed here.
 
 **Click** — One press on a creative that opened its Destination. Dismissing a Banner is not a Click. _Avoid_: conversion, interaction.
 
-**Wind-down** — The Creatives access level of a self-hosted workspace that still has creatives after the Enterprise license stops including Creatives: they stop showing on sites and turn read-only, and authors can still pause, close and delete them.
+**Wind-down** — The Creatives access level of a self-hosted workspace on the Experience Suite that still has creatives after its license stops including Creatives: they stop showing on sites and turn read-only, and authors can still pause, close and delete them. In Formbricks Surveys there is no Wind-down; Creatives do not exist there.
