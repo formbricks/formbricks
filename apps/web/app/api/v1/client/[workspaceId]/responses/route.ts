@@ -94,10 +94,12 @@ export const POST = withV1ApiWrapper({
     }
     const { workspaceId } = resolved;
 
-    const responseInputValidation = ZResponseInput.safeParse({
-      ...responseInput,
-      workspaceId,
-    });
+    // Set on the parsed body rather than spread into a copy: a copy is a pass over every key the caller
+    // sent, before the schema has bounded any of them.
+    if (typeof responseInput === "object" && responseInput !== null && !Array.isArray(responseInput)) {
+      responseInput.workspaceId = workspaceId;
+    }
+    const responseInputValidation = ZResponseInput.safeParse(responseInput);
 
     if (!responseInputValidation.success) {
       return {

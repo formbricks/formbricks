@@ -14,6 +14,8 @@ import {
 import {
   MAX_RESPONSE_DATA_KEYS,
   MAX_RESPONSE_DATA_VALUES,
+  RESPONSE_DATA_LIMIT_MESSAGES,
+  isPlainRecord,
   maxKeys,
   withSizeCheck,
 } from "@formbricks/types/responses";
@@ -73,8 +75,9 @@ export type TV3BatchDeleteResponsesBody = z.infer<typeof ZV3BatchDeleteResponses
 /**
  * `ResponseDataMapInput`: the stored answer map with the write-side bounds.
  *
- * The caps are the ones the v1/v2 client and v1 management writes use (`@formbricks/types/responses`),
- * per the ENG-1652 input policy. Here they also guard later readers: without them a single request
+ * The key and per-answer caps are the ones the v1/v2 client and v1 management writes use
+ * (`@formbricks/types/responses`), per the ENG-1652 input policy; those writes also cap the whole map at
+ * 10,000 entries, which the v3 contract does not. Here they also guard later readers: without them a single request
  * could store an array of tens of thousands of entries, and every reader pays for it per entry — the
  * serializer's per-answer mapping, export columns, and the positional probe the "Other" response filter
  * emits (ENG-3161), whose window is sized from the survey's choice count rather than from the stored
@@ -101,7 +104,7 @@ const ZV3ResponseDataValue = zResponseDataMapInput.valueType.superRefine((value,
     ctx.addIssue({
       code: "custom",
       input: value,
-      message: `A matrix answer may hold at most ${MAX_RESPONSE_DATA_VALUES} rows`,
+      message: RESPONSE_DATA_LIMIT_MESSAGES.rows,
     });
   }
 });
@@ -118,17 +121,16 @@ const ZV3ResponseDataInput = z.preprocess(
     if (Object.keys(value).length > MAX_RESPONSE_DATA_KEYS) {
       ctx.addIssue({
         code: "custom",
-        message: `A response may answer at most ${MAX_RESPONSE_DATA_KEYS} fields`,
+        message: RESPONSE_DATA_LIMIT_MESSAGES.keys,
       });
       return value;
     }
     for (const [key, answer] of Object.entries(value)) {
-      const isMatrix = typeof answer === "object" && answer !== null && !Array.isArray(answer);
-      if (isMatrix && Object.keys(answer).length > MAX_RESPONSE_DATA_VALUES) {
+      if (isPlainRecord(answer) && Object.keys(answer).length > MAX_RESPONSE_DATA_VALUES) {
         ctx.addIssue({
           code: "custom",
           path: [key],
-          message: `A matrix answer may hold at most ${MAX_RESPONSE_DATA_VALUES} rows`,
+          message: RESPONSE_DATA_LIMIT_MESSAGES.rows,
         });
       }
     }

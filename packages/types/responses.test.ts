@@ -3,6 +3,7 @@ import {
   MAX_RESPONSE_DATA_ENTRIES,
   MAX_RESPONSE_DATA_KEYS,
   MAX_RESPONSE_DATA_VALUES,
+  RESPONSE_DATA_LIMIT_MESSAGES,
   ZResponseFilterCriteria,
   ZResponseInput,
   ZResponseMeta,
@@ -209,29 +210,50 @@ describe("response input caps", () => {
     expect(issuesOf(result)).toEqual([]);
   });
 
-  // Every one is caught by the size check on the map, before Zod reads a single item.
+  // Every one is caught by the size check on the map, before Zod reads a single item, and reported at the
+  // answer it names when there is one.
   test.each([
-    ["an array one past its cap", { q: strings(MAX_RESPONSE_DATA_VALUES + 1) }, ["data"]],
+    ["an array one past its cap", { q: strings(MAX_RESPONSE_DATA_VALUES + 1) }, ["data", "q"]],
     [
       "an array one past its cap, every item invalid",
       { q: Array.from({ length: MAX_RESPONSE_DATA_VALUES + 1 }, () => 1) },
-      ["data"],
+      ["data", "q"],
     ],
-    ["an array of a million invalid items", { q: Array.from({ length: 1_000_000 }, () => 1) }, ["data"]],
-    ["a matrix one row past its cap", { q: keyed(MAX_RESPONSE_DATA_VALUES + 1, () => "column") }, ["data"]],
+    ["an array of a million invalid items", { q: Array.from({ length: 1_000_000 }, () => 1) }, ["data", "q"]],
+    [
+      "a matrix one row past its cap",
+      { q: keyed(MAX_RESPONSE_DATA_VALUES + 1, () => "column") },
+      ["data", "q"],
+    ],
     ["one key past the cap", keyed(MAX_RESPONSE_DATA_KEYS + 1, () => "answer"), ["data"]],
     ["a hundred thousand keys", keyed(100_000, () => true), ["data"]],
-    // Each array is within its own cap; the whole map is not.
     [
       "every key at its array cap, every item invalid",
       keyed(MAX_RESPONSE_DATA_KEYS, () => Array.from({ length: MAX_RESPONSE_DATA_VALUES }, () => 1)),
-      ["data"],
+      ["data", "k0"],
     ],
   ])("rejects data with %s in a single issue", (_, data, path) => {
     const issues = issuesOf(create({ data }));
 
     expect(issues).toHaveLength(1);
     expect(issues[0].path).toEqual(path);
+  });
+
+  // Zod would report a wrong item inside the answer union once per item, nested; the pre-check refuses the
+  // answer with one plain issue instead.
+  test.each([
+    ["an array", { q: [1, 2, 3, "ok"] }],
+    ["a matrix", { q: { row: 1 } }],
+  ])("refuses %s holding non-text items with one issue naming the answer", (_, data) => {
+    const issues = issuesOf(create({ data }));
+
+    expect(issues).toEqual([
+      expect.objectContaining({
+        code: "custom",
+        path: ["data", "q"],
+        message: RESPONSE_DATA_LIMIT_MESSAGES.text,
+      }),
+    ]);
   });
 
   test("rejects data one entry past the budget, with every key and array within its own cap", () => {

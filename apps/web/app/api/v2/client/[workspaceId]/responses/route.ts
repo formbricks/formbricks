@@ -54,10 +54,14 @@ const parseAndValidateResponseInput = async (
   const responseInputValidation = await parseAndValidateJsonBody({
     request,
     schema: ZResponseInputV2,
-    buildInput: (jsonInput) => ({
-      ...(jsonInput !== null && typeof jsonInput === "object" ? jsonInput : {}),
-      workspaceId,
-    }),
+    // Set on the parsed body rather than spread into a copy: a copy is a pass over every key the caller
+    // sent, before the schema has bounded any of them.
+    buildInput: (jsonInput) => {
+      if (jsonInput === null || typeof jsonInput !== "object" || Array.isArray(jsonInput))
+        return { workspaceId };
+      (jsonInput as Record<string, unknown>).workspaceId = workspaceId;
+      return jsonInput;
+    },
     malformedJsonMessage: "Invalid JSON in request body",
   });
 

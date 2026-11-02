@@ -64,8 +64,20 @@ export const MAX_RESPONSE_DATA_KEYS = 500;
 export const MAX_RESPONSE_DATA_VALUES = 1_000;
 export const MAX_RESPONSE_DATA_ENTRIES = 10_000;
 
-const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
+export const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
+
+/** The refusals the response caps share across API versions, so v1/v2 and v3 word them alike. */
+export const RESPONSE_DATA_LIMIT_MESSAGES = {
+  keys: `A response may answer at most ${MAX_RESPONSE_DATA_KEYS} fields`,
+  values: `An answer may hold at most ${MAX_RESPONSE_DATA_VALUES} values`,
+  rows: `A matrix answer may hold at most ${MAX_RESPONSE_DATA_VALUES} rows`,
+  entries: `A response may hold at most ${MAX_RESPONSE_DATA_ENTRIES} values`,
+  text: "An answer's items must be text",
+} as const;
+
+/** A refusal from a size check: its message, and the path under the checked map when it names one key. */
+export type TSizeCheckFailure = string | { message: string; path: string[] };
 
 /**
  * Runs `check` on the raw input before `schema` parses it, and stops there when it fails.
@@ -73,46 +85,56 @@ const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
  * A record has no `.max()`, and a refinement only runs once Zod has parsed every key and array item —
  * reporting each bad item on its own. Checking the size first rejects an oversized map with one issue,
  * whatever its size. `z.preprocess` keeps `schema`'s output type and its OpenAPI shape; only the
- * inferred input type widens to `unknown`.
+ * inferred input type widens to `unknown`. A failure that names a key is reported at that key's path.
  */
 export const withSizeCheck = <TSchema extends z.ZodType>(
   schema: TSchema,
-  check: (record: Record<string, unknown>) => string | undefined
+  check: (record: Record<string, unknown>) => TSizeCheckFailure | undefined
 ) =>
   z.preprocess((value, ctx) => {
-    const message = isPlainRecord(value) ? check(value) : undefined;
-    if (message) ctx.addIssue({ code: "custom", message });
+    const failure = isPlainRecord(value) ? check(value) : undefined;
+    if (typeof failure === "string") ctx.addIssue({ code: "custom", message: failure });
+    else if (failure) ctx.addIssue({ code: "custom", message: failure.message, path: failure.path });
     return value;
   }, schema);
 
 export const maxKeys = (max: number, what: string) => (record: Record<string, unknown>) =>
   Object.keys(record).length > max ? `A response may carry at most ${max} ${what}` : undefined;
 
-const checkResponseDataSize = (data: Record<string, unknown>): string | undefined => {
-  // Keys first: on a large map `Object.values` costs about twice `Object.keys`, so it only runs once
+/**
+ * The caps on a submitted answer map, checked before Zod reads it. Each answer's items are checked too:
+ * an array answer holds text and a matrix maps rows to text, so one wrong item refuses the answer with
+ * one issue instead of Zod reporting every item of the union it fails.
+ */
+const checkResponseDataSize = (data: Record<string, unknown>): TSizeCheckFailure | undefined => {
+  // Keys first: on a large map walking the entries costs more than counting them, so it only runs once
   // the map is under the cap.
   const keyCount = Object.keys(data).length;
-  if (keyCount > MAX_RESPONSE_DATA_KEYS) {
-    return `A response may answer at most ${MAX_RESPONSE_DATA_KEYS} fields`;
-  }
+  if (keyCount > MAX_RESPONSE_DATA_KEYS) return RESPONSE_DATA_LIMIT_MESSAGES.keys;
+  // The entry budget is checked as it grows, so the item checks below never walk more than it allows.
   let entries = keyCount;
-  for (const value of Object.values(data)) {
+  for (const key in data) {
+    const value = data[key];
     if (Array.isArray(value)) {
-      if (value.length > MAX_RESPONSE_DATA_VALUES) {
-        return `An answer may hold at most ${MAX_RESPONSE_DATA_VALUES} values`;
-      }
+      if (value.length > MAX_RESPONSE_DATA_VALUES)
+        return { message: RESPONSE_DATA_LIMIT_MESSAGES.values, path: [key] };
       entries += value.length;
-    } else if (isPlainRecord(value)) {
-      const rows = Object.keys(value).length;
-      if (rows > MAX_RESPONSE_DATA_VALUES) {
-        return `A matrix answer may hold at most ${MAX_RESPONSE_DATA_VALUES} rows`;
+      if (entries > MAX_RESPONSE_DATA_ENTRIES) return RESPONSE_DATA_LIMIT_MESSAGES.entries;
+      if (!value.every((item) => typeof item === "string")) {
+        return { message: RESPONSE_DATA_LIMIT_MESSAGES.text, path: [key] };
       }
-      entries += rows;
+    } else if (isPlainRecord(value)) {
+      const rows = Object.keys(value);
+      if (rows.length > MAX_RESPONSE_DATA_VALUES)
+        return { message: RESPONSE_DATA_LIMIT_MESSAGES.rows, path: [key] };
+      entries += rows.length;
+      if (entries > MAX_RESPONSE_DATA_ENTRIES) return RESPONSE_DATA_LIMIT_MESSAGES.entries;
+      if (!rows.every((row) => typeof value[row] === "string")) {
+        return { message: RESPONSE_DATA_LIMIT_MESSAGES.text, path: [key] };
+      }
     }
   }
-  return entries > MAX_RESPONSE_DATA_ENTRIES
-    ? `A response may hold at most ${MAX_RESPONSE_DATA_ENTRIES} values`
-    : undefined;
+  return entries > MAX_RESPONSE_DATA_ENTRIES ? RESPONSE_DATA_LIMIT_MESSAGES.entries : undefined;
 };
 
 /** `ZResponseData` with the caps above, for the create and update inputs. */
