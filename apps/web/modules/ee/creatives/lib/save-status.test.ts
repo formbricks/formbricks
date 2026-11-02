@@ -36,6 +36,7 @@ const published = (patch: Record<string, unknown> = {}): TCreativeResource =>
     creator: null,
     defaultLanguage: "en-US",
     languages: [{ code: "en-US", default: true, enabled: true }],
+    autoSelectLanguage: null,
     content: { label: { "en-US": "Feedback" }, icon: "messageSquare" },
     styling: {
       position: { desktop: { edge: "right", offset: 50 }, phone: null },

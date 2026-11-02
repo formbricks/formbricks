@@ -826,7 +826,8 @@ describe("creatives on the wire (ENG-3994)", () => {
     displayPercentage: null,
     startAt: new Date("2026-10-20T02:00:00.000Z"),
     endAt: null,
-    survey: { type: "app", autoSelectLanguage: false, languages: [] },
+    autoSelectLanguage: null,
+    survey: { type: "app", languages: [] },
     triggers: [],
     languages: [{ default: true, enabled: true, language: { code: "en-US", alias: null } }],
   };
@@ -1003,7 +1004,7 @@ describe("creatives on the wire (ENG-3994)", () => {
         {
           ...storedButton,
           surveyId: "link-survey",
-          survey: { type: "link", autoSelectLanguage: false, languages: [] },
+          survey: { type: "link", languages: [] },
         },
       ],
     } as never);
@@ -1033,7 +1034,7 @@ describe("creatives on the wire (ENG-3994)", () => {
   });
 
   /** ENG-4003: the SDK picks the language, with what the server knows filled in. */
-  test("sends the creative's languages, its survey's browser-language setting and a banner's own words in each", async () => {
+  test("sends the creative's languages, its own browser-language setting and a banner's own words in each", async () => {
     const languages = [
       { default: true, enabled: true, language: { code: "en-US", alias: null } },
       { default: false, enabled: true, language: { code: "de-DE", alias: "de" } },
@@ -1069,13 +1070,16 @@ describe("creatives on the wire (ENG-3994)", () => {
       surveyId: null,
       survey: null,
       languages,
+      // Its own setting, though it opens no survey (ENG-6871).
+      autoSelectLanguage: true,
     };
     vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
       ...mockWorkspaceData,
       creatives: [
         {
           ...storedButton,
-          survey: { type: "app", autoSelectLanguage: true, languages: surveyLanguages },
+          autoSelectLanguage: false,
+          survey: { type: "app", languages: surveyLanguages },
           languages,
         },
         storedBanner,
@@ -1085,7 +1089,7 @@ describe("creatives on the wire (ENG-3994)", () => {
     const [button, banner] = (await getWorkspaceStateData(workspaceId)).creatives;
 
     expect(button).toEqual(
-      expect.objectContaining({ defaultLanguage: "en-US", languages, autoSelectLanguage: true })
+      expect.objectContaining({ defaultLanguage: "en-US", languages, autoSelectLanguage: false })
     );
     // Precomputed for the page: its own texts by code, alias or base language, its survey's skip
     // by the survey's languages; the disabled Italian is never matched.
@@ -1097,7 +1101,7 @@ describe("creatives on the wire (ENG-3994)", () => {
     expect(banner.surveyLanguageMatch).toBeNull();
     expect(banner).toEqual(
       expect.objectContaining({
-        autoSelectLanguage: false,
+        autoSelectLanguage: true,
         // Every language a visitor can get: the default and the enabled ones.
         labels: {
           siteNotice: { "en-US": "Site notice", "de-DE": expect.any(String) },
