@@ -8340,6 +8340,7 @@ components:
       type: string
       enum:
         - list
+        - row
         - dropdown
     SurveyMultipleChoiceSingleElement:
       allOf:

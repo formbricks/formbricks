@@ -16,12 +16,13 @@ import {
 import { ElementError, getElementErrorAria } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { Input } from "@/components/general/input";
+import { type TOptionLayout, getOptionGroupClassName, getOptionLayout } from "@/lib/option-layout";
 import { FB_PART } from "@/lib/parts";
 import { useRovingRadioGroup } from "@/lib/use-roving-radio-group";
 import { cn } from "@/lib/utils";
 
 type Direction = "ltr" | "rtl" | "auto";
-type SingleSelectVariant = "list" | "dropdown";
+type SingleSelectVariant = "list" | "row" | "dropdown";
 
 /**
  * Option for single-select element
@@ -58,7 +59,7 @@ interface SingleSelectProps {
   dir?: Direction;
   /** Whether the options are disabled */
   disabled?: boolean;
-  /** Display variant: 'list' shows radio buttons, 'dropdown' shows a dropdown menu */
+  /** Display variant: 'list' stacks radio buttons, 'row' lays them side by side, 'dropdown' shows a dropdown menu */
   variant?: SingleSelectVariant;
   /** Placeholder text for dropdown button when no option is selected */
   placeholder?: string;
@@ -378,6 +379,7 @@ interface ListVariantProps {
   isOtherSelected: boolean;
   otherInputRef: React.RefObject<HTMLInputElement | null>;
   handleOtherInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  layout: TOptionLayout;
 }
 
 const OPTION_LABEL_CLASS = "font-option text-option font-option-weight text-option-label";
@@ -499,6 +501,7 @@ function SingleSelectListVariant({
   isOtherSelected,
   otherInputRef,
   handleOtherInputChange,
+  layout,
 }: Readonly<ListVariantProps>): React.JSX.Element {
   const errorAria = getElementErrorAria(inputId, errorMessage);
   const regularOptions = options.filter((option) => option.id !== "none");
@@ -544,7 +547,7 @@ function SingleSelectListVariant({
   return (
     <div className="relative" data-element-input>
       <ElementError errorMessage={errorMessage} dir={dir} id={errorAria.errorId} />
-      <div className="w-full space-y-2">
+      <div className={cn("w-full", getOptionGroupClassName(layout))}>
         {regularOptions.map(renderOption)}
         {hasOtherOption && otherOptionId ? (
           <OtherOptionLabel
@@ -754,7 +757,7 @@ function SingleSelect({
 
   // The list variant groups options in a native <fieldset>/<legend>; the dropdown variant keeps a
   // standard headline -> trigger association via ElementHeader's default rendering.
-  const isListVariant = variant === "list";
+  const isListVariant = variant !== "dropdown";
 
   return (
     <div className="w-full space-y-4" id={elementId} dir={dir}>
@@ -797,6 +800,7 @@ function SingleSelect({
             isOtherSelected={isOtherSelected}
             otherInputRef={otherInputRef}
             handleOtherInputChange={handleOtherInputChange}
+            layout={getOptionLayout(variant)}
           />
         </fieldset>
       ) : (

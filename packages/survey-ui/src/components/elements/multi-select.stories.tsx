@@ -45,8 +45,9 @@ const meta: Meta<StoryProps> = {
     },
     variant: {
       control: { type: "select" },
-      options: ["list", "dropdown"],
-      description: "Display variant: 'list' shows checkboxes, 'dropdown' shows a dropdown menu",
+      options: ["list", "row", "dropdown"],
+      description:
+        "Display variant: 'list' stacks checkboxes, 'row' lays them side by side, 'dropdown' shows a dropdown menu",
       table: { category: "Layout" },
     },
     placeholder: {
@@ -249,6 +250,18 @@ export const MultipleElements: Story = {
       />
     </div>
   ),
+};
+
+export const Row: Story = {
+  args: {
+    headline: "Which plans did you compare?",
+    options: [
+      { id: "free", label: "Free" },
+      { id: "pro", label: "Pro" },
+      { id: "enterprise", label: "Enterprise" },
+    ],
+    variant: "row",
+  },
 };
 
 export const Dropdown: Story = {
