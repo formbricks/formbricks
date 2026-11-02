@@ -490,7 +490,7 @@ overrides:
   # === Closed by ENG-2343 (kept as a record, like the section above) ===
   # GHSA-p2fr-6hmx-4528 (@better-auth/oauth-provider RFC 8707 resource-indicator confusion) was carried
   # here as an accepted risk for as long as the only patched line was a pre-release. It is fixed as of
-  # better-auth 1.7.0 stable, which this workspace now pins, so `pnpm audit` no longer reports it and
+  # better-auth 1.7.0 stable (the workspace is on 1.7.7 now), so `pnpm audit` no longer reports it and
   # the ~50 lines of justification that used to sit here are gone with it. What replaced them is real
   # enforcement: the AS binds each token to the resources the authorization actually approved.
   #
@@ -539,10 +539,10 @@ minimumReleaseAgeExclude:
 # finish (including the provider's database hooks); its existing lazy resource lookup retries the seed.
 # Remove this version-pinned patch once upstream defers or safely handles eager seed failures.
 patchedDependencies:
-  "@better-auth/oauth-provider@1.7.0": patches/@better-auth__oauth-provider@1.7.0.patch
+  "@better-auth/oauth-provider@1.7.7": patches/@better-auth__oauth-provider@1.7.7.patch
   # ENG-2559: a failed secondary-storage session read bypasses Better Auth's configured database
   # fallback. Remove this version-pinned patch once upstream handles Redis read failures here.
-  "better-auth@1.7.0": patches/better-auth@1.7.0.patch
+  "better-auth@1.7.7": patches/better-auth@1.7.7.patch
   # ENG-3972 / ENG-3248: for every non-GET request the proxy matches, and for every external rewrite (the
   # PostHog /ingest proxy), Next clones the body. The clone reads the whole upload off the socket, keeps up
   # to proxyClientMaxBodySize in memory and holds the request until the client's last byte, so any

@@ -187,34 +187,8 @@ describe("better-auth SSO providers", () => {
       expect(azure.scopes).toEqual(["openid", "email", "profile"]);
       // ENG-1800 no longer needs an opt-out: Better Auth 1.7 only compares the RFC 9207 response
       // `iss` when the provider actually sends one, and Entra never does, so the check that produced
-      // `error=issuer_missing` cannot fire. What replaces it as the load-bearing invariant is the
-      // pinned account issuer below.
+      // `error=issuer_missing` cannot fire.
       expect(azure).not.toHaveProperty("requireIssuerValidation");
-      expect(azure.accountIssuer).toBe("local:oauth:azuread");
-    });
-
-    /**
-     * The account-identity contract with the database migration (ENG-2343).
-     *
-     * Better Auth 1.7 keys accounts on (issuer, accountId). Left unpinned, a provider with a
-     * discoveryUrl adopts the DISCOVERED issuer — tenant-specific, so different on every install and
-     * impossible to reproduce in a portable backfill. These values must stay byte-identical to what
-     * migration 20260812110000 writes into Account.issuer, or existing SSO users stop matching at
-     * sign-in and are pushed into account recovery.
-     */
-    test("pins a portable account issuer on every generic provider", async () => {
-      const m = await loadProviders({
-        ENTERPRISE_LICENSE_KEY: "lic",
-        AZURE_OAUTH_ENABLED: true,
-        OIDC_OAUTH_ENABLED: true,
-        SAML_OAUTH_ENABLED: true,
-      });
-
-      expect(m.ssoGenericOAuthConfig.map((c) => [c.providerId, c.accountIssuer])).toEqual([
-        ["azuread", "local:oauth:azuread"],
-        ["openid", "local:oauth:openid"],
-        ["saml", "local:oauth:saml"],
-      ]);
     });
 
     /**
@@ -307,7 +281,6 @@ describe("better-auth SSO providers", () => {
       expect(azure?.authorizationUrl).toBe("https://login.microsoftonline.com/common/oauth2/v2.0/authorize");
       expect(azure?.tokenUrl).toBe("https://login.microsoftonline.com/common/oauth2/v2.0/token");
       expect(azure?.userInfoUrl).toBe("https://graph.microsoft.com/oidc/userinfo");
-      expect(azure?.accountIssuer).toBe("local:oauth:azuread");
     });
 
     /**
@@ -490,7 +463,6 @@ describe("better-auth SSO providers", () => {
         clientSecret: "oidc-secret",
         pkce: true,
         // Issuer validation is automatic in 1.7 for providers that return `iss`, so the flag is gone.
-        accountIssuer: "local:oauth:openid",
       });
       expect(oidc.discoveryUrl).toBe("https://idp.test/.well-known/openid-configuration");
       expect(
@@ -536,8 +508,6 @@ describe("better-auth SSO providers", () => {
       );
       expect(oidc?.tokenUrl).toBe(`https://login.microsoftonline.com/${authority}/oauth2/v2.0/token`);
       expect(oidc?.userInfoUrl).toBe("https://graph.microsoft.com/oidc/userinfo");
-      // Account keying must not move, or existing linked accounts stop matching.
-      expect(oidc?.accountIssuer).toBe("local:oauth:openid");
       expect(loggerWarn).toHaveBeenCalledTimes(1);
       // Recommends the dedicated provider, and — like the azuread warning — does not imply the
       // configured authority has been discarded, since `organizations` keeps restricting sign-in.

@@ -17,6 +17,7 @@ required:
   - creator
   - defaultLanguage
   - languages
+  - autoSelectLanguage
   - destination
   - distribution
   - schedule
@@ -82,6 +83,14 @@ properties:
     items:
       $ref: ./CreativeLanguage.yml
     description: Every language the texts are written in, the default first.
+  autoSelectLanguage:
+    type:
+      - boolean
+      - "null"
+    description: >-
+      Show the texts in the visitor's browser language when the site sets none with `setLanguage`
+      and it matches the default or an enabled language; otherwise the default language is used.
+      `null` (never chosen) and `false` both mean off.
   destination:
     anyOf:
       - $ref: ./CreativeDestination.yml

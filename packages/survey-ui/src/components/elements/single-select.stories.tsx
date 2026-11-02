@@ -46,8 +46,9 @@ const meta: Meta<StoryProps> = {
     },
     variant: {
       control: { type: "select" },
-      options: ["list", "dropdown"],
-      description: "Display variant: 'list' shows radio buttons, 'dropdown' shows a dropdown menu",
+      options: ["list", "row", "dropdown"],
+      description:
+        "Display variant: 'list' stacks radio buttons, 'row' lays them side by side, 'dropdown' shows a dropdown menu",
       table: { category: "Layout" },
     },
     placeholder: {
@@ -236,6 +237,17 @@ export const MultipleElements: Story = {
         />
       </div>
     );
+  },
+};
+
+export const Row: Story = {
+  args: {
+    headline: "Did you find what you were looking for?",
+    options: [
+      { id: "yes", label: "Yes" },
+      { id: "no", label: "No" },
+    ],
+    variant: "row",
   },
 };
 

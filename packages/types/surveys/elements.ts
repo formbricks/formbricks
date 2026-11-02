@@ -166,7 +166,8 @@ export const ZStoredShuffleOptionWithDefault = z
   .preprocess(emptyStringAsUnset, ZShuffleOption.prefault("none"))
   .prefault("none");
 
-export const ZMultipleChoiceOptionDisplayType = z.enum(["list", "dropdown"]);
+// "row" is a list laid out side by side, for short choices such as Yes / No.
+export const ZMultipleChoiceOptionDisplayType = z.enum(["list", "row", "dropdown"]);
 export type TMultipleChoiceOptionDisplayType = z.infer<typeof ZMultipleChoiceOptionDisplayType>;
 
 // Multiple Choice Single Element

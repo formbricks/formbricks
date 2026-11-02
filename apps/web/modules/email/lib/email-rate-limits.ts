@@ -200,7 +200,12 @@ const getCharges = (emailType: TEmailType, to: string, context: TEmailRateLimitC
   const counter = limits.group ?? emailType;
   const charges: TCharge[] = [];
   const charge = (scope: TEmailRateLimitScope, value: TLimit, identifier: string) => {
-    charges.push({ scope, identifier, config: { ...value, namespace: `email:${scope}:${counter}` } });
+    // Fail closed: an email limit that lets everything through while Redis is down is no limit at all.
+    charges.push({
+      scope,
+      identifier,
+      config: { ...value, namespace: `email:${scope}:${counter}`, failClosed: true },
+    });
   };
 
   if (limits.organization) {
@@ -237,9 +242,9 @@ const getCharges = (emailType: TEmailType, to: string, context: TEmailRateLimitC
 /**
  * Charges one email against every limit its type has, all or nothing: when one refuses, the others are
  * handed back, so a refused email costs nothing. Throws `TooManyRequestsError` when a limit is spent. An
- * email that is charged and then fails at the SMTP server keeps its charge, like any other attempt. Like
- * every other limit in the app it fails open when Redis is unavailable, and `RATE_LIMITING_DISABLED` turns
- * it off.
+ * email that is charged and then fails at the SMTP server keeps its charge, like any other attempt. Unlike
+ * the app's throughput limits it fails closed: while Redis is unavailable every counted email is refused
+ * (docs/adr/0015-abuse-limits-fail-closed.md). `RATE_LIMITING_DISABLED` turns it off.
  */
 export const applyEmailRateLimits = async (
   emailType: TEmailType,
