@@ -5,8 +5,10 @@ import { beginEmailSendAudit, finishEmailSendAudit, sesMessageHashFromSendInfo }
 const mocks = vi.hoisted(() => ({
   create: vi.fn(),
   update: vi.fn(),
+  updateMany: vi.fn(),
   getMac: vi.fn(),
   putSnapshot: vi.fn(),
+  deleteSnapshot: vi.fn(),
   reportFailure: vi.fn(),
   audit: vi.fn(),
   constants: {
@@ -19,13 +21,16 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@formbricks/database", () => ({
-  prisma: { outboundEmailAudit: { create: mocks.create, update: mocks.update } },
+  prisma: {
+    outboundEmailAudit: { create: mocks.create, update: mocks.update, updateMany: mocks.updateMany },
+  },
 }));
 vi.mock("@formbricks/logger", () => ({ logger: { audit: mocks.audit } }));
 vi.mock("@/lib/constants", () => mocks.constants);
 vi.mock("./email-audit-storage", () => ({
   getEmailAuditRecipientMac: mocks.getMac,
   putEmailAuditSnapshot: mocks.putSnapshot,
+  deleteEmailAuditSnapshot: mocks.deleteSnapshot,
 }));
 vi.mock("./email-audit-monitoring", () => ({ reportEmailAuditFailure: mocks.reportFailure }));
 
@@ -38,7 +43,9 @@ describe("outbound email audit", () => {
     mocks.getMac.mockResolvedValue("stable-recipient-mac");
     mocks.create.mockResolvedValue({});
     mocks.update.mockResolvedValue({});
+    mocks.updateMany.mockResolvedValue({ count: 1 });
     mocks.putSnapshot.mockResolvedValue({ key: "email-audit/test.json", sha256: "digest" });
+    mocks.deleteSnapshot.mockResolvedValue(undefined);
     mocks.reportFailure.mockResolvedValue(undefined);
   });
 
@@ -76,8 +83,8 @@ describe("outbound email audit", () => {
       serverMessageId: "ses-123",
       messageId: "rfc-456",
     });
-    expect(mocks.update).toHaveBeenLastCalledWith({
-      where: { id: state?.id },
+    expect(mocks.updateMany).toHaveBeenLastCalledWith({
+      where: { id: state?.id, erasedAt: null, erasureRequestedAt: null },
       data: { status: "accepted", sesMessageHash: createHash("sha256").update("ses-123").digest("hex") },
     });
     expect(mocks.audit).toHaveBeenLastCalledWith(
@@ -101,6 +108,16 @@ describe("outbound email audit", () => {
     expect(mocks.reportFailure).toHaveBeenCalledWith("email_audit_gap", {
       auditId: state?.id,
       phase: "snapshot_write",
+    });
+  });
+
+  test("deletes a snapshot whose ledger was erased while S3 was writing", async () => {
+    mocks.updateMany.mockResolvedValueOnce({ count: 0 });
+    const state = await beginEmailSendAudit("invite", "person@example.com", snapshot, context);
+    expect(mocks.deleteSnapshot).toHaveBeenCalledWith("private-test-bucket", state?.id);
+    expect(mocks.updateMany).toHaveBeenCalledWith({
+      where: { id: state?.id, erasedAt: null },
+      data: { snapshotKey: "email-audit/test.json", snapshotSha256: "digest" },
     });
   });
 

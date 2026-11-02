@@ -9,7 +9,11 @@ import {
   SES_EMAIL_ENVIRONMENT,
 } from "@/lib/constants";
 import { reportEmailAuditFailure } from "./email-audit-monitoring";
-import { getEmailAuditRecipientMac, putEmailAuditSnapshot } from "./email-audit-storage";
+import {
+  deleteEmailAuditSnapshot,
+  getEmailAuditRecipientMac,
+  putEmailAuditSnapshot,
+} from "./email-audit-storage";
 import type { TEmailType } from "./send-email";
 
 export type TEmailAuditContext = Readonly<{
@@ -122,12 +126,17 @@ export const beginEmailSendAudit = async (
       snapshot
     );
     if (rowCreated) {
-      await prisma.outboundEmailAudit.update({
-        where: { id },
+      const updated = await prisma.outboundEmailAudit.updateMany({
+        where: { id, erasedAt: null },
         data: { snapshotKey: saved.key, snapshotSha256: saved.sha256 },
       });
+      if (updated.count === 0) {
+        // An erasure finished while S3 was writing. Do not recreate content for the erased row.
+        await deleteEmailAuditSnapshot(EMAIL_SEND_AUDIT_BUCKET!, id);
+      }
     } else {
       await reportGap(id, "orphan_snapshot");
+      await deleteEmailAuditSnapshot(EMAIL_SEND_AUDIT_BUCKET!, id);
     }
   } catch {
     auditGap = true;
@@ -169,10 +178,11 @@ export const finishEmailSendAudit = async (
   let auditGap = state.auditGap || (status === "accepted" && !sesMessageHash);
   if (state.rowCreated) {
     try {
-      await prisma.outboundEmailAudit.update({
-        where: { id: state.id },
+      const updated = await prisma.outboundEmailAudit.updateMany({
+        where: { id: state.id, erasedAt: null, erasureRequestedAt: null },
         data: { status, sesMessageHash, ...(auditGap ? { auditGap: true } : {}) },
       });
+      if (updated.count === 0) return;
     } catch {
       auditGap = true;
       await reportGap(state.id, "ledger_finish");

@@ -65,8 +65,13 @@ const removeContent = async (row: {
     if (!EMAIL_SEND_AUDIT_BUCKET) throw new Error("Email audit bucket configuration is missing");
     await deleteEmailAuditSnapshot(EMAIL_SEND_AUDIT_BUCKET, row.id);
   }
-  await prisma.outboundEmailAudit.update({
-    where: { id: row.id },
+  await prisma.outboundEmailAudit.updateMany({
+    where: {
+      id: row.id,
+      snapshotKey: row.snapshotKey,
+      erasureRequestedAt: row.erasureRequestedAt ? { not: null } : null,
+      erasedAt: null,
+    },
     data: row.erasureRequestedAt
       ? {
           snapshotKey: null,
@@ -82,6 +87,7 @@ const removeContent = async (row: {
           inviteId: null,
           actorUserId: null,
           configuredByUserId: null,
+          status: "erased",
           erasedAt: new Date(),
           erasureRequestedAt: null,
         }
@@ -92,7 +98,11 @@ const removeContent = async (row: {
 export const processEmailAuditMaintenanceJob: JobHandler<TGlobalScopeJobData> = async () => {
   const now = new Date();
   const stale = await prisma.outboundEmailAudit.findMany({
-    where: { status: "prepared", createdAt: { lt: new Date(now.getTime() - 15 * 60_000) } },
+    where: {
+      status: "prepared",
+      erasureRequestedAt: null,
+      createdAt: { lt: new Date(now.getTime() - 15 * 60_000) },
+    },
     select: { id: true },
     take: batchSize,
   });

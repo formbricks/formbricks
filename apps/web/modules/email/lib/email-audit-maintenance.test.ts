@@ -79,13 +79,19 @@ describe("email audit retention and erasure", () => {
       data: { status: "indeterminate", auditGap: true },
     });
     expect(mocks.deleteSnapshot).toHaveBeenCalledWith("private-audit-bucket", "erased-id");
-    expect(mocks.update).toHaveBeenCalledWith({
-      where: { id: "erased-id" },
+    expect(mocks.updateMany).toHaveBeenCalledWith({
+      where: {
+        id: "erased-id",
+        snapshotKey: "email-audit/erased-id.json",
+        erasureRequestedAt: { not: null },
+        erasedAt: null,
+      },
       data: expect.objectContaining({
         snapshotKey: null,
         recipientMac: null,
         organizationId: null,
         actorUserId: null,
+        status: "erased",
         erasedAt: expect.any(Date),
       }),
     });
@@ -104,7 +110,7 @@ describe("email audit retention and erasure", () => {
 
     await processEmailAuditMaintenanceJob({ scope: "global" }, jobContext);
 
-    expect(mocks.update).not.toHaveBeenCalled();
+    expect(mocks.updateMany).not.toHaveBeenCalled();
     expect(mocks.reportFailure).toHaveBeenCalledWith("email_audit_content_delete_failed", {
       auditId: "erased-id",
     });
