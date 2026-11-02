@@ -21,7 +21,7 @@ Formbricks v2.4 lets you create multiple endings for your surveys and choose whi
   triggers, but they will no longer be stored on the server to improve Formbricks' overall performance.
 </Info>
 
-### Steps to Migrate
+### Steps to migrate
 
 This guide is for users who are self-hosting Formbricks with our one-click setup. If you're using a different setup, you may need to adjust the commands accordingly.
 
@@ -78,6 +78,6 @@ The command above will migrate your data to the latest schema. This is an import
 
 - That's it! Once the migration is done, you can access your Formbricks instance at the same URL as before.
 
-### Additional Updates
+### Additional updates
 
 - The `CRON_SECRET` environment variable is now required to enhance the security of the internal cron APIs. Please ensure that this variable is set in your environment or `docker-compose.yml`. You can generate a secure secret using `openssl rand -hex 32`

@@ -39,40 +39,39 @@ If you cloned the Formbricks repository, the fastest way to test file uploads lo
   downloaded `docker-compose.yml`, use the manual RustFS setup below or the one-click production setup.
 </Note>
 
-1. **Start the local stack**
+<Steps>
+  <Step title="Start the local stack">
+    From the repository root:
 
-   From the repository root:
+    ```bash
+    docker compose -f docker-compose.dev.yml up -d
+    ```
 
-   ```bash
-   docker compose -f docker-compose.dev.yml up -d
-   ```
+    This starts PostgreSQL, Valkey (Redis), Mailhog, RustFS, a permissions helper, a one-time bucket
+    bootstrap job, Formbricks Hub, and a local Cube instance for analytics testing.
+  </Step>
+  <Step title="Open the storage console">
+    Open http://localhost:9001 in your browser and sign in with:
+    - Username: `devrustfs`
+    - Password: `devrustfs123`
+  </Step>
+  <Step title="Configure Formbricks">
+    Update your `.env` file or environment variables:
 
-   This starts PostgreSQL, Valkey (Redis), Mailhog, RustFS, a permissions helper, a one-time bucket
-   bootstrap job, Formbricks Hub, and a local Cube instance for analytics testing.
-
-2. **Access the RustFS console**
-
-   Open http://localhost:9001 in your browser and sign in with:
-   - Username: `devrustfs`
-   - Password: `devrustfs123`
-
-3. **Configure Formbricks**
-
-   Update your `.env` file or environment variables:
-
-   ```bash
-   S3_ACCESS_KEY="devrustfs"
-   S3_SECRET_KEY="devrustfs123"
-   S3_REGION="us-east-1"
-   S3_BUCKET_NAME="formbricks"
-   S3_ENDPOINT_URL="http://localhost:9000"
-   S3_FORCE_PATH_STYLE="1"
-   ```
-
-4. **Verify uploads**
-
-   After uploading a file in Formbricks, open http://localhost:9001 and navigate to **Buckets → formbricks**
-   to confirm the object was stored successfully.
+    ```bash
+    S3_ACCESS_KEY="devrustfs"
+    S3_SECRET_KEY="devrustfs123"
+    S3_REGION="us-east-1"
+    S3_BUCKET_NAME="formbricks"
+    S3_ENDPOINT_URL="http://localhost:9000"
+    S3_FORCE_PATH_STYLE="1"
+    ```
+  </Step>
+  <Step title="Verify uploads">
+    After uploading a file in Formbricks, open http://localhost:9001 and navigate to **Buckets → formbricks**
+    to confirm the object was stored successfully.
+  </Step>
+</Steps>
 
 <Note>
   The development compose file also runs a `rustfs-init` job so you do not need to create the bucket manually.

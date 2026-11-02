@@ -23,17 +23,29 @@ You need permission to manage webhooks in the survey's workspace and an HTTPS en
 
 ## Connect a workflow
 
-1. Create an n8n workflow with a **Webhook** trigger. Set the method to **POST**, choose a unique path,
-   and copy its **Test URL**. Start **Listen for test event** in n8n.
-2. In Formbricks, open **Configuration → Integrations → Manage Webhooks → Add Webhook**.
-   Paste the Test URL and select **Response Finished** and your test survey.
-3. Submit a response to that survey. Confirm n8n receives it, then map the response fields into your next
-   node. Keep test recipients and downstream actions isolated from production.
-4. Before handling real data, [verify the webhook signature](/platform/features/integrations/webhooks#signature-verification)
-   using the webhook's signing secret. Reject invalid requests before running downstream actions.
-   If your n8n setup cannot verify the raw request body, put a signature-verifying receiver in front of it.
-5. Publish or activate the workflow in your n8n version. Replace the Test URL in Formbricks with n8n's
-   **Production URL** and submit one controlled response. Verify exactly one execution and the expected result.
+<Steps>
+  <Step title="Create the trigger">
+    Create an n8n workflow with a **Webhook** trigger. Set the method to **POST**, choose a unique path,
+    and copy its **Test URL**. Start **Listen for test event** in n8n.
+  </Step>
+  <Step title="Connect Formbricks">
+    In Formbricks, open **Configuration → Integrations → Manage Webhooks → Add Webhook**.
+    Paste the Test URL and select **Response Finished** and your test survey.
+  </Step>
+  <Step title="Test with an isolated survey">
+    Submit a response to that survey. Confirm n8n receives it, then map the response fields into your next
+    node. Keep test recipients and downstream actions isolated from production.
+  </Step>
+  <Step title="Verify signatures">
+    Before handling real data, [verify the webhook signature](/platform/features/integrations/webhooks#signature-verification)
+    using the webhook's signing secret. Reject invalid requests before running downstream actions.
+    If your n8n setup cannot verify the raw request body, put a signature-verifying receiver in front of it.
+  </Step>
+  <Step title="Switch to the production URL">
+    Publish or activate the workflow in your n8n version. Replace the Test URL in Formbricks with n8n's
+    **Production URL** and submit one controlled response. Verify exactly one execution and the expected result.
+  </Step>
+</Steps>
 
 You do not need a Formbricks API key to create this webhook through the UI. Additional API calls from
 n8n need their own [scoped key](/api-reference/generate-key).

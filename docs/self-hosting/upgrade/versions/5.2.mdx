@@ -25,7 +25,7 @@ or SSO sign-in will fail with a redirect-URI mismatch.
   is needed.
 </Warning>
 
-### SSO Callback URL Change (action required for SSO users)
+### SSO callback URL change (action required for SSO users)
 
 Better Auth serves the OAuth2/OIDC callback at a new path:
 
@@ -65,7 +65,7 @@ does not fix this; it is not a supported configuration option in these releases.
   sign-in against your actual provider. This does not disable issuer validation when `iss` is returned.
 - Keep a working administrator sign-in available during rehearsal. Capture redacted callback errors if it fails.
 
-### Authentication Environment Variables
+### Authentication environment variables
 
 Better Auth introduces two optional variables. **Neither is required** for a standard upgrade — both fall
 back to your existing NextAuth configuration:
@@ -84,11 +84,11 @@ back to your existing NextAuth configuration:
 **Removed:** `DISABLE_ACCOUNT_DELETION_SSO_CONFIRMATION` no longer exists. Remove it from your environment
 if you set it; it now has no effect.
 
-### Optional New Configuration
+### Optional new configuration
 
 None of the following is required to run v5.2. Add them only if you want the associated feature.
 
-#### Hub Enrichment (sentiment, emotion, translation)
+#### Hub enrichment (sentiment, emotion, translation)
 
 Hub `>= 0.8.0` can classify sentiment and emotion and translate feedback. These are **off** unless you set
 a provider and model, and they run in both the Hub API and the hub-worker, so set the variables on **both**
@@ -106,7 +106,7 @@ Supported providers: `openai`, `google` (AI Studio, needs `*_PROVIDER_API_KEY`),
   not degrade gracefully. Set the credentials, or leave the provider unset.
 </Warning>
 
-#### AI Taxonomy (beta)
+#### AI taxonomy (beta)
 
 An optional standalone taxonomy service, enabled in Docker Compose with `COMPOSE_PROFILES=taxonomy`. It
 shares an internal token with Hub:
@@ -123,14 +123,14 @@ secret bindings; do not enable the profile with empty tokens. Generate each miss
 
 Use `COMPOSE_PROFILES=qwen,taxonomy` to back it with the bundled Qwen/vLLM service.
 
-#### Bundled Qwen / vLLM Runtime
+#### Bundled Qwen / vLLM runtime
 
 Docker Compose can now run a bundled OpenAI-compatible LLM for self-hosted AI features with
 `COMPOSE_PROFILES=qwen`. Tunable via `QWEN_VLLM_IMAGE`, `QWEN_MODEL_ID`, `QWEN_SERVED_MODEL_NAME`,
 `QWEN_MAX_MODEL_LEN`, `QWEN_MAX_NUM_SEQS`, `QWEN_GPU_MEMORY_UTILIZATION`, `QWEN_VLLM_HOST`, and
 `QWEN_VLLM_PORT`.
 
-#### OpenTelemetry Log Export
+#### OpenTelemetry log export
 
 - `OTEL_LOGS_ENABLED=1` — export Pino application logs via OTLP (off by default; also needs
   `OTEL_EXPORTER_OTLP_ENDPOINT`).

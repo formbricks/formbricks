@@ -27,12 +27,20 @@ Stop if the download fails. Keep this reference separate from the running config
 
 Open `docker-compose.release.yml` and your existing `docker-compose.yml` side by side:
 
-1. Copy each new service named in the version notes under the existing `services:` key. Include its
-   environment, mounts, healthcheck and dependencies; copying only `image:` misses required changes.
-2. Copy any referenced top-level `x-...` YAML blocks. For example, `*formbricks-database` needs the
-   matching `&formbricks-database` definition. Adapt connection URLs to your existing credentials.
-3. Add the new app settings to its existing `environment` block. Keep local networks, proxy labels,
-   SMTP, SSO, storage, volumes and secrets. A customized network must also reach the new services.
+<Steps>
+  <Step title="Copy complete services">
+    Copy each new service named in the version notes under the existing `services:` key. Include its
+    environment, mounts, healthcheck and dependencies; copying only `image:` misses required changes.
+  </Step>
+  <Step title="Copy referenced YAML blocks">
+    Copy any referenced top-level `x-...` YAML blocks. For example, `*formbricks-database` needs the
+    matching `&formbricks-database` definition. Adapt connection URLs to your existing credentials.
+  </Step>
+  <Step title="Preserve existing settings">
+    Add the new app settings to its existing `environment` block. Keep local networks, proxy labels,
+    SMTP, SSO, storage, volumes and secrets. A customized network must also reach the new services.
+  </Step>
+</Steps>
 
 Do not replace your whole Compose file. The downloaded reference can contain `latest` even at an old
 Git tag. Before pulling:

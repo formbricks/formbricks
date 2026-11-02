@@ -80,44 +80,53 @@ An existing installation keeps its local `docker-compose.yml` during `formbricks
 cannot add the service for you. Adding it is recommended rather than required in this release: the updater prints
 a warning and continues when the resolved Compose project does not contain `hub-worker`. Keep the worker enabled so asynchronous processing completes; do not infer a future enforcement date from this warning.
 
-1. In the directory containing your existing `docker-compose.yml`,
-   [download the exact target release](/self-hosting/upgrade/configuration#download-the-selected-release).
-   That step sets `target_version` and saves `docker-compose.release.yml`. Back up your working file:
+<Steps>
+  <Step title="Download the release configuration">
+    In the directory containing your existing `docker-compose.yml`,
+    [download the exact target release](/self-hosting/upgrade/configuration#download-the-selected-release).
+    That step sets `target_version` and saves `docker-compose.release.yml`. Back up your working file:
 
-   ```bash
-   cp -p docker-compose.yml docker-compose.yml.before-hub-worker
-   ```
+    ```bash
+    cp -p docker-compose.yml docker-compose.yml.before-hub-worker
+    ```
+  </Step>
+  <Step title="Add the worker and shared settings">
+    Copy the reference file’s `x-hub-runtime-environment` block to the top level of your Compose file.
+    Replace `hub` and add `hub-worker` under `services:`, including their shared environment and dependencies,
+    so the API and worker receive the same database and taxonomy configuration. Preserve local proxy,
+    storage, database, and image-pin customizations. `hub`, `hub-worker`, and `hub-migrate` must resolve to the
+    same Hub image reference.
+  </Step>
+  <Step title="Validate the configuration">
+    Validate the result before changing the running stack:
 
-2. Copy the reference file’s `x-hub-runtime-environment` block to the top level of your Compose file.
-   Replace `hub` and add `hub-worker` under `services:`, including their shared environment and dependencies,
-   so the API and worker receive the same database and taxonomy configuration. Preserve local proxy,
-   storage, database, and image-pin customizations. `hub`, `hub-worker`, and `hub-migrate` must resolve to the
-   same Hub image reference.
-3. Validate the result before changing the running stack:
+    ```bash
+    docker compose config --quiet
+    docker compose config --services | grep -Fx hub-worker
+    ```
+  </Step>
+  <Step title="Apply migrations in maintenance">
+    During the maintenance procedure, keep app/Hub writers stopped and complete application migrations first.
+    For a one-click installation, rerun `./formbricks.sh update` — the warning disappears once the resolved project
+    contains `hub-worker`. For a manually managed Compose installation, apply Hub migrations before starting the
+    API and worker from the new image:
 
-   ```bash
-   docker compose config --quiet
-   docker compose config --services | grep -Fx hub-worker
-   ```
+    ```bash
+    docker compose pull hub hub-migrate hub-worker
+    docker compose run --rm --no-deps hub-migrate &&
+      docker compose up -d hub hub-worker
+    ```
+  </Step>
+  <Step title="Verify the worker">
+    Verify that the worker stays running and that the existing River backlog decreases:
 
-4. During the maintenance procedure, keep app/Hub writers stopped and complete application migrations first.
-   For a one-click installation, rerun `./formbricks.sh update` — the warning disappears once the resolved project
-   contains `hub-worker`. For a manually managed Compose installation, apply Hub migrations before starting the
-   API and worker from the new image:
-
-   ```bash
-   docker compose pull hub hub-migrate hub-worker
-   docker compose run --rm --no-deps hub-migrate &&
-     docker compose up -d hub hub-worker
-   ```
-
-5. Verify that the worker stays running and that the existing River backlog decreases:
-
-   ```bash
-   # hub-migrate must exit 0 before starting the API/worker.
-   docker compose ps hub-worker
-   docker compose logs --tail=200 hub-worker
-   ```
+    ```bash
+    # hub-migrate must exit 0 before starting the API/worker.
+    docker compose ps hub-worker
+    docker compose logs --tail=200 hub-worker
+    ```
+  </Step>
+</Steps>
 
 The worker has no HTTP health endpoint. A stable process and decreasing queue are the readiness signals. If it
 restarts, verify PostgreSQL connectivity and every configured enrichment provider credential. Jobs already in

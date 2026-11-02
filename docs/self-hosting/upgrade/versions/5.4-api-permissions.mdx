@@ -49,14 +49,22 @@ Check the integration's intended access before broadening permissions.
 
 #### What to do before upgrading
 
-1. Run the query above. If it returns rows, decide how each affected integration should proceed.
-2. For integrations that delete records, create a replacement key with `manage` access to the required
-   workspace. Existing key permissions cannot be edited. Update the integration, verify it with the new
-   key, then revoke the old key.
-3. After deploying, smoke test your feedback-record integrations. Two log lines identify an integration
-   caught by the new rules — grep for `Feedback record mutation denied` (the MCP path, which names the
-   reason) and for `Feedback records gateway authorization denied` (the REST path, which logs
-   `verdict: "deny"` alongside the `operation` and `feedbackDirectoryId`).
+<Steps>
+  <Step title="Identify shared datasets">
+    Run the query above. If it returns rows, decide how each affected integration should proceed.
+  </Step>
+  <Step title="Replace affected API keys">
+    For integrations that delete records, create a replacement key with `manage` access to the required
+    workspace. Existing key permissions cannot be edited. Update the integration, verify it with the new
+    key, then revoke the old key.
+  </Step>
+  <Step title="Test the integrations">
+    After deploying, smoke test your feedback-record integrations. Two log lines identify an integration
+    caught by the new rules — grep for `Feedback record mutation denied` (the MCP path, which names the
+    reason) and for `Feedback records gateway authorization denied` (the REST path, which logs
+    `verdict: "deny"` alongside the `operation` and `feedbackDirectoryId`).
+  </Step>
+</Steps>
 
 #### Rollback
 

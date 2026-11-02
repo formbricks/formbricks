@@ -18,7 +18,7 @@ Wiring up an LLM takes two steps:
 <Steps>
   <Step title="Point the instance at a model">
     Set `AI_PROVIDER`, `AI_MODEL`, and the credentials for that provider as environment variables, then
-    restart your containers.
+    recreate the affected containers or roll out the pods.
   </Step>
   <Step title="Turn AI on for the organization">
     In the app, go to **Settings → Organization → General → Smart functionality (AI)** and enable the toggle.
@@ -45,36 +45,13 @@ GPU-capable hosts.
 
 ### Docker Compose
 
-The Docker stack deploys the Qwen/vLLM runtime through an opt-in Compose profile. It needs a GPU-capable Docker
-host with the NVIDIA Container Toolkit installed.
-
-```bash
-COMPOSE_PROFILES=qwen
-AI_PROVIDER=openai-compatible
-AI_MODEL=qwen3-14b-awq
-AI_OPENAI_COMPATIBLE_BASE_URL=http://vllm:8000/v1
-AI_OPENAI_COMPATIBLE_PROVIDER_NAME=vllm
-AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS=1
-```
-
-If you use the optional taxonomy service and want it to share the bundled Qwen runtime, start Docker Compose with
-`COMPOSE_PROFILES=qwen,taxonomy` and point `TAXONOMY_LLM_BASE_URL` at `http://vllm:8000/v1`.
+Follow the [Docker runtime setup](/self-hosting/configuration/ai-deployment#enable-bundled-qwen%2Fvllm-for-ai)
+for the Qwen profile, environment settings and health checks.
 
 ### Kubernetes Helm
 
-The Formbricks Helm chart deploys the same runtime on GPU-capable Kubernetes nodes.
-
-```yaml
-llm:
-  enabled: true
-```
-
-When `llm.enabled` is true, the chart deploys the vLLM router and Qwen serving engine. By default it also points
-the Formbricks app at the in-cluster OpenAI-compatible endpoint by injecting the required `AI_*` environment
-variables.
-
-Set `llm.autoConfigureApp=false` if you want the chart to deploy Qwen/vLLM but prefer to configure the app
-provider manually.
+Follow the [Kubernetes runtime setup](/self-hosting/configuration/ai-deployment#optional-bundled-qwen%2Fvllm-for-ai)
+for chart values, GPU prerequisites and manual provider overrides.
 
 ### Your own endpoint
 

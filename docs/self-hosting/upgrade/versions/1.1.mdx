@@ -15,7 +15,7 @@ resolved to the historical target release before use; they must not jump to toda
 
 Formbricks v1.1 introduces new features and improvements but includes breaking changes with environment variables. This guide will help you upgrade your Formbricks instance to v1.1 without data loss.
 
-### Renamed Environment Variables
+### Renamed environment variables
 
 | till v1.0                                 | v1.1                          |
 | ----------------------------------------- | ----------------------------- |
@@ -34,7 +34,7 @@ Formbricks v1.1 introduces new features and improvements but includes breaking c
 
 Please note that their values and the logic remains exactly the same. Only the prefix has been deprecated. The other environment variables remain the same as well.
 
-### Deprecated Environment Variables
+### Deprecated environment variables
 
 - **`NEXT_PUBLIC_VERCEL_URL`**: Was used as deployment URL fallback (used instead of `WEBAPP_URL`), but from v1.1, you can just set the `WEBAPP_URL` environment variable.
 
@@ -52,7 +52,7 @@ Please note that their values and the logic remains exactly the same. Only the p
 
 Rename the variables using the table above; keep their existing values.
 
-### Docker & Single Script Setup
+### Docker & single script setup
 
 Now that these variables can be defined at runtime, you can append them inside your `x-environment` in the `docker-compose.yml` itself.
 For a more detailed guide on these environment variables, please refer to the
