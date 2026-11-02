@@ -27,15 +27,27 @@ const getRecipientMacForErasure = async (email: string): Promise<string> => {
   }
 };
 
-/** Called after a customer-data deletion; the maintenance job retries object erasure until it succeeds. */
-export const requestEmailAuditErasure = async (scope: {
+type TEmailAuditErasureScope = {
   organizationId?: string;
   surveyId?: string;
   responseId?: string;
   responseIds?: string[];
   userId?: string;
   email?: string;
-}): Promise<void> => {
+};
+
+const erasureConditions = (scope: TEmailAuditErasureScope, recipientMac?: string) =>
+  [
+    scope.organizationId ? { organizationId: scope.organizationId } : undefined,
+    scope.surveyId ? { surveyId: scope.surveyId } : undefined,
+    scope.responseId ? { responseId: scope.responseId } : undefined,
+    scope.userId ? { actorUserId: scope.userId } : undefined,
+    scope.userId ? { configuredByUserId: scope.userId } : undefined,
+    recipientMac ? { recipientMac } : undefined,
+  ].filter((condition) => condition !== undefined);
+
+/** Marks matching rows for the maintenance job, which retries object erasure until it succeeds. */
+export const requestEmailAuditErasure = async (scope: TEmailAuditErasureScope): Promise<void> => {
   // The audit store is intentionally absent from KSA and self-hosted deployments.
   // EU rollback keeps the bucket configuration while disabling new writes.
   if (!EMAIL_SEND_AUDIT_BUCKET) return;
@@ -48,14 +60,7 @@ export const requestEmailAuditErasure = async (scope: {
       recipientError = error instanceof Error ? error : new Error("recipient_hmac");
     }
   }
-  const conditions = [
-    scope.organizationId ? { organizationId: scope.organizationId } : undefined,
-    scope.surveyId ? { surveyId: scope.surveyId } : undefined,
-    scope.responseId ? { responseId: scope.responseId } : undefined,
-    scope.userId ? { actorUserId: scope.userId } : undefined,
-    scope.userId ? { configuredByUserId: scope.userId } : undefined,
-    recipientMac ? { recipientMac } : undefined,
-  ].filter((condition) => condition !== undefined);
+  const conditions = erasureConditions(scope, recipientMac);
   const responseIds = scope.responseIds ?? [];
   if (conditions.length === 0 && responseIds.length === 0) {
     if (recipientError) throw recipientError;

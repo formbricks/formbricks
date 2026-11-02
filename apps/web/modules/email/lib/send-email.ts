@@ -77,17 +77,6 @@ const getSafeSmtpErrorCode = (error: unknown): string => {
   return typeof code === "string" && safeSmtpErrorCodes.has(code) ? code : "unknown";
 };
 
-const getTransportOptions = (): SMTPTransport.Options => ({
-  host: SMTP_HOST,
-  port: Number.parseInt(SMTP_PORT ?? "", 10),
-  secure: SMTP_SECURE_ENABLED,
-  ...(SMTP_AUTHENTICATED ? { auth: { type: "LOGIN", user: SMTP_USER, pass: SMTP_PASSWORD } } : {}),
-  tls: { rejectUnauthorized: SMTP_REJECT_UNAUTHORIZED_TLS },
-  // SMTP debug output can include message content. Audited sends keep it out of ordinary logs.
-  logger: DEBUG && !EMAIL_SEND_AUDIT_ENABLED,
-  debug: DEBUG && !EMAIL_SEND_AUDIT_ENABLED,
-});
-
 const getSesHeaders = (emailType: TEmailType) =>
   SES_CONFIGURATION_SET && SES_EMAIL_ENVIRONMENT
     ? {
@@ -97,6 +86,29 @@ const getSesHeaders = (emailType: TEmailType) =>
         },
       }
     : {};
+
+const submitEmailToSmtp = async (
+  emailData: Omit<SendEmailDataProps, "emailType" | "rateLimit" | "auditContext">,
+  emailType: TEmailType
+): Promise<unknown> => {
+  const transportOptions: SMTPTransport.Options = {
+    host: SMTP_HOST,
+    port: Number.parseInt(SMTP_PORT ?? "", 10),
+    secure: SMTP_SECURE_ENABLED,
+    ...(SMTP_AUTHENTICATED ? { auth: { type: "LOGIN", user: SMTP_USER, pass: SMTP_PASSWORD } } : {}),
+    tls: { rejectUnauthorized: SMTP_REJECT_UNAUTHORIZED_TLS },
+    // SMTP debug output can include message content. Audited sends keep it out of ordinary logs.
+    logger: DEBUG && !EMAIL_SEND_AUDIT_ENABLED,
+    debug: DEBUG && !EMAIL_SEND_AUDIT_ENABLED,
+  };
+  const transporter = createTransport(transportOptions);
+  const defaultFrom = `${MAIL_FROM_NAME ?? "Formbricks"} <${MAIL_FROM ?? "noreply@formbricks.com"}>`;
+  return transporter.sendMail({
+    ...emailData,
+    from: emailData.from ?? defaultFrom,
+    ...getSesHeaders(emailType),
+  });
+};
 
 /**
  * One plain address, read the way nodemailer will read it: no list, no group, no display name, no angle
@@ -163,14 +175,7 @@ export const sendEmail = async ({
   }
   let sendInfo: unknown;
   try {
-    const transporter = createTransport(getTransportOptions());
-
-    const defaultFrom = `${MAIL_FROM_NAME ?? "Formbricks"} <${MAIL_FROM ?? "noreply@formbricks.com"}>`;
-    sendInfo = await transporter.sendMail({
-      ...emailData,
-      from: emailData.from ?? defaultFrom,
-      ...getSesHeaders(emailType),
-    });
+    sendInfo = await submitEmailToSmtp(emailData, emailType);
   } catch (error) {
     try {
       await finishEmailSendAudit(auditState, emailType, auditContext, "failed");
