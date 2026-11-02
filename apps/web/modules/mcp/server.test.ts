@@ -28,7 +28,7 @@ vi.mock("./auth", () => ({
 }));
 
 vi.mock("@formbricks/logger", () => ({
-  logger: { warn: mocks.loggerWarn },
+  logger: { warn: mocks.loggerWarn, withContext: () => ({ warn: mocks.loggerWarn, error: vi.fn() }) },
 }));
 
 describe("mcpHandler options", () => {

@@ -1,5 +1,4 @@
 import "server-only";
-import { createLocalAccountIssuer } from "@better-auth/core/db";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { InvalidInputError } from "@formbricks/types/errors";
@@ -39,9 +38,10 @@ export const verifyUserPassword = async (userId: string, password: string): Prom
  * were) a password user, independently of whether a password is currently set on it.
  *
  * Deliberately the SAME predicate Better Auth's own `findCredentialAccount` uses — `userId`, provider
- * `credential`, the `local:credential` issuer, and `accountId` equal to the user id
- * (`better-auth/dist/db/internal-adapter.mjs`). That match matters because this answers "may this user
- * reset a password?", and the only consumer of the answer is `resetPassword`, which locates the row with
+ * `credential`, and `accountId` equal to the user id (`better-auth/dist/db/internal-adapter.mjs`).
+ * It does not filter on `Account.issuer`: 1.7.3 removed it, and 1.7.7 writes credential rows without one.
+ *
+ * That match matters because this answers "may this user reset a password?", and the only consumer of the answer is `resetPassword`, which locates the row with
  * that exact predicate: erring broader would return true for a row whose key has drifted, the reset
  * would then take its create-a-row branch, and that can collide with `@@unique([provider,
  * providerAccountId])` — a 500 instead of a reset.
@@ -50,16 +50,12 @@ export const verifyUserPassword = async (userId: string, password: string): Prom
  * purpose: a strip must never miss a live hash, so over-matching is the safe direction there. Here
  * over-matching promises something the next call cannot deliver, so under-matching is. Same schema, two
  * different questions.
- *
- * `createLocalAccountIssuer` rather than the `"local:credential"` literal so this tracks upstream if the
- * namespace ever changes — the same reason the Playwright user fixture uses it.
  */
 export const hasCredentialAccount = reactCache(async (userId: string): Promise<boolean> => {
   const count = await prisma.account.count({
     where: {
       userId,
       provider: "credential",
-      issuer: createLocalAccountIssuer("credential"),
       providerAccountId: userId,
     },
   });

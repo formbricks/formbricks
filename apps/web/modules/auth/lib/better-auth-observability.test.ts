@@ -1117,7 +1117,6 @@ describe("recordSsoCallbackOutcome — a real gate rejection through Better Auth
               authorizationUrl: `${IDP_ORIGIN}/authorize`,
               tokenUrl: `${IDP_ORIGIN}/token`,
               userInfoUrl: `${IDP_ORIGIN}/userinfo`,
-              accountIssuer: IDP_ORIGIN,
               scopes: ["openid", "email", "profile"],
             },
           ],
