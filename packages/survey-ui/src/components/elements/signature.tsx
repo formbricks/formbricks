@@ -389,6 +389,10 @@ function Signature({
               onPointerDown={() => {
                 if (drawingEnabled) padBoxRef.current?.focus({ preventScroll: true });
               }}
+              // A long press on the canvas must not open the browser's image menu; the event bubbles here.
+              onContextMenu={(event) => {
+                event.preventDefault();
+              }}
               className="rounded-input border-input-border relative w-full overflow-hidden border bg-white outline-none"
               style={{ aspectRatio: `${String(SIGNATURE_ASPECT_RATIO)} / 1` }}>
               <canvas
@@ -396,9 +400,6 @@ function Signature({
                 aria-hidden="true"
                 className="absolute inset-0 block h-full w-full touch-none select-none"
                 style={{ touchAction: "none", WebkitTouchCallout: "none" }}
-                onContextMenu={(event) => {
-                  event.preventDefault();
-                }}
               />
               <PadOverlays
                 text={text}
