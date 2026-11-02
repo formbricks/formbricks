@@ -52,7 +52,7 @@ describe("POST /api/v1/client/[workspaceId]/user attribute cap", () => {
     expect(mocks.updateUser).toHaveBeenCalledOnce();
   });
 
-  test("refuses one attribute over the cap before any lookup or update", async () => {
+  test("refuses one attribute over the cap before the license check or the update", async () => {
     const { response } = await identify(attributes(MAX_CONTACT_ATTRIBUTES_PER_REQUEST + 1));
 
     expect(response.status).toBe(400);

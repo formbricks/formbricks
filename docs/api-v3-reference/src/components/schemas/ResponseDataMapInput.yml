@@ -15,9 +15,8 @@ allOf:
       Deliberately separate from `ResponseDataMap`, which the read returns. The v1 and v2 client
       writes and the v1 management write apply these bounds to each request, plus a total of 10,000
       entries in each request's `data` map, but a response built over several updates can still
-      exceed them, the v2
-      management write does not apply them, and older responses predate them. A stored response may
-      therefore exceed them, and the read schema must not claim otherwise.
+      exceed them, the v2 management write does not apply them, and older responses predate them. A
+      stored response may therefore exceed them, and the read schema must not claim otherwise.
     maxProperties: 500
     # Deliberately says nothing about which value shapes are allowed — `ResponseDataMap` above owns
     # that, and restating its `oneOf` here would mean the write contract silently narrowed (or stopped
