@@ -647,6 +647,7 @@ signals are:
 | `formbricks_authzed_projection_revocation_delivery_duration_seconds` | Commit-to-SpiceDB revocation propagation time                     |
 | `formbricks_authzed_projection_outbox_status`        | Point-in-time pending, dead-letter, warning, and critical counts             |
 | `formbricks_authzed_projection_outbox_oldest_pending_age_seconds` | Age of the oldest pending event                                  |
+| `formbricks_authzed_projection_outbox_last_drain_timestamp_seconds` | Unix time at which the last outbox delivery run completed      |
 | `formbricks_authzed_reconciliation_audit_total`      | Scheduled audit outcomes                                                     |
 | `formbricks_authzed_reconciliation_drift_total`      | Attributable drift and failures observed by scheduled audits                 |
 | `formbricks_authzed_reconciliation_repair_total`     | Repaired and failed attributable relationship repair results                 |
@@ -680,6 +681,9 @@ histogram_quantile(
 # Revocations that missed the warning or critical delivery thresholds.
 formbricks_authzed_projection_outbox_status{state=~"revocation_warning|revocation_critical"}
 
+# Delivery has stopped running on every replica.
+time() - max(formbricks_authzed_projection_outbox_last_drain_timestamp_seconds) > 30
+
 # Dead letters and failed scheduled repairs both block cutover.
 formbricks_authzed_projection_outbox_status{state="dead_lettered"}
 or
@@ -688,7 +692,13 @@ sum(rate(formbricks_authzed_reconciliation_repair_total{status="failed"}[5m]))
 
 Starting gates are: operational-error rate at or below 0.1%, p95 below 250 ms, p99 below one second, no
 dead-letter revocations, no normal-operation 60-second freshness guard, and clean scheduled audits. Alert on
-revocation delivery at 15 seconds (warning) and 45 seconds (critical). The application on-call owns decision,
+revocation delivery at 15 seconds (warning) and 45 seconds (critical).
+
+Every web process that runs jobs reads the outbox status and oldest-pending age from PostgreSQL each time
+metrics are scraped or exported, so they keep reporting when delivery itself has stopped. If that read fails,
+the series is left out rather than reported as zero. A warning only reaches you before the 60-second guard
+trips if metrics leave the process often enough: scrape Prometheus every 15 seconds or less, and for OTLP set
+`OTEL_METRIC_EXPORT_INTERVAL` to `15000` or less, since the default exports once a minute. The application on-call owns decision,
 delivery, and repair alerts; the infrastructure on-call owns SpiceDB/datastore availability and capacity, with
 joint escalation whenever either side cannot restore a clean graph.
 

@@ -32,6 +32,7 @@ const mockProcessWorkflowRunJob = vi.fn();
 const mockProcessWorkflowRunReconcileJob = vi.fn();
 const mockProcessWorkflowsUsageSnapshotJob = vi.fn();
 const mockProcessAuthzedProjectionDeliveryJob = vi.fn();
+const mockObserveAuthzedOutboxHealth = vi.fn();
 const mockProcessAuthzedScheduledReconciliationJob = vi.fn();
 const mockProcessDeletionCleanupDrainJob = vi.fn();
 const mockProcessDataRetentionSweepJob = vi.fn();
@@ -182,6 +183,7 @@ vi.mock("@/modules/deletion-cleanup/lib/process-deletion-cleanup-drain-job", () 
 }));
 
 vi.mock("@/lib/authzed/outbox-processor", () => ({
+  observeAuthzedOutboxHealth: mockObserveAuthzedOutboxHealth,
   processAuthzedProjectionDeliveryJob: mockProcessAuthzedProjectionDeliveryJob,
 }));
 
@@ -257,6 +259,7 @@ describe("instrumentation-jobs", () => {
     expect(result).toBeNull();
     expect(mockStartJobsRuntime).not.toHaveBeenCalled();
     expect(mockUpsertSurveyScheduling).not.toHaveBeenCalled();
+    expect(mockObserveAuthzedOutboxHealth).not.toHaveBeenCalled();
     expect(mockDebug).toHaveBeenCalledWith("BullMQ worker startup skipped");
   });
 
@@ -497,6 +500,9 @@ describe("instrumentation-jobs", () => {
       { retryDelayMs: 30_000 },
       "BullMQ worker registration retry scheduled"
     );
+    // Outbox health keeps reporting from PostgreSQL even though the runtime never reached Redis
+    // (ENG-3764): a Redis outage is one of the ways delivery stops.
+    expect(mockObserveAuthzedOutboxHealth).toHaveBeenCalled();
   });
 
   slowTest("retries worker startup after a transient failure", async () => {

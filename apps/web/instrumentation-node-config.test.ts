@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { nodeAutoInstrumentationConfig } from "./instrumentation-node-config";
+import { getMetricExportIntervalMs, nodeAutoInstrumentationConfig } from "./instrumentation-node-config";
 
 describe("nodeAutoInstrumentationConfig", () => {
   test("leaves Pino log export to the OTEL_LOGS_ENABLED transport", () => {
@@ -24,5 +24,15 @@ describe("nodeAutoInstrumentationConfig", () => {
   test.each(["/auth/login", "/metrics-dashboard"])("instruments the %s route", (url) => {
     const config = nodeAutoInstrumentationConfig["@opentelemetry/instrumentation-http"];
     expect(config?.ignoreIncomingRequestHook?.({ url } as never)).toBe(false);
+  });
+});
+
+describe("getMetricExportIntervalMs", () => {
+  test("honours a positive integer interval", () => {
+    expect(getMetricExportIntervalMs("15000")).toBe(15_000);
+  });
+
+  test.each([undefined, "", "0", "-5", "15s", "1.5"])("falls back to 60 s for %j", (value) => {
+    expect(getMetricExportIntervalMs(value)).toBe(60_000);
   });
 });
