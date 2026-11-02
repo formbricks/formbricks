@@ -4,6 +4,7 @@ import { jwt } from "better-auth/plugins/jwt";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import ts from "typescript";
 import { describe, expect, test } from "vitest";
 
 /**
@@ -52,6 +53,49 @@ const prismaModelFields = (source: string, model: string): string[] => {
 };
 
 const prismaSchema = readFileSync(prismaSchemaPath, "utf8");
+
+/**
+ * The object literal at `path` inside the `betterAuth({...})` call in auth.ts, as property name → source
+ * text. Parsed rather than grepped, so a comment or another object that happens to hold the same text
+ * cannot stand in for the real option, and auth.ts is never imported (that would boot the instance).
+ */
+const betterAuthOptionEntry = (path: string[]): Record<string, string> => {
+  const fileName = join(dirname(fileURLToPath(import.meta.url)), "auth.ts");
+  const source = ts.createSourceFile(fileName, readFileSync(fileName, "utf8"), ts.ScriptTarget.Latest, true);
+
+  let options: ts.ObjectLiteralExpression | undefined;
+  const findCall = (node: ts.Node): void => {
+    if (
+      ts.isCallExpression(node) &&
+      ts.isIdentifier(node.expression) &&
+      node.expression.text === "betterAuth" &&
+      node.arguments[0] &&
+      ts.isObjectLiteralExpression(node.arguments[0])
+    ) {
+      options = node.arguments[0];
+      return;
+    }
+    ts.forEachChild(node, findCall);
+  };
+  findCall(source);
+  if (!options) throw new Error("betterAuth({...}) call not found in auth.ts");
+
+  const entry = path.reduce<ts.ObjectLiteralExpression>((object, key) => {
+    const property = object.properties.find(
+      (p): p is ts.PropertyAssignment => ts.isPropertyAssignment(p) && p.name.getText(source) === key
+    );
+    if (!property || !ts.isObjectLiteralExpression(property.initializer)) {
+      throw new Error(`betterAuth option ${path.join(".")} is missing or not an object literal in auth.ts`);
+    }
+    return property.initializer;
+  }, options);
+
+  return Object.fromEntries(
+    entry.properties
+      .filter(ts.isPropertyAssignment)
+      .map((p) => [p.name.getText(source), p.initializer.getText(source)])
+  );
+};
 
 /**
  * Both plugins expose their merged schema on the instance, so this tracks whatever the installed
@@ -155,10 +199,12 @@ describe("Better Auth ↔ Prisma schema contract", () => {
     test("account.issuer is ours, not Better Auth's, and the auth.ts declaration is still there", () => {
       expect(Object.keys(getAuthTables({}).account.fields)).not.toContain("issuer");
       expect(Object.keys(coreTables.account.fields)).toContain("issuer");
-      const authSource = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "auth.ts"), "utf8");
-      expect(authSource).toContain(
-        'issuer: { type: "string", required: false, input: false, returned: false }'
-      );
+      expect(betterAuthOptionEntry(["account", "additionalFields", "issuer"])).toEqual({
+        type: '"string"',
+        required: "false",
+        input: "false",
+        returned: "false",
+      });
     });
   });
 
