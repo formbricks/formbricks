@@ -39,6 +39,7 @@ Packages under `packages/*` use their own env access; they cannot import the web
 - Translations are in `apps/web/locales/`. `en-US.json` is the source of truth.
 - **Only ever add or edit strings in `en-US.json`.** Never hand-write, translate, or edit the other (non-English) locale files yourself — those are machine-generated from en-US by Lingo.dev.
 - After adding or changing an en-US string, run `pnpm i18n` to generate the translations for every other locale and validate keys. Lingo.dev also auto-translates from en-US on commit.
+- On a merge conflict in `apps/web/locales/`, `packages/surveys/locales/` or their `i18n.lock`, run `pnpm i18n:merge`.
 
 ## Coding Standards
 
@@ -67,6 +68,8 @@ Do not rely on training data for Next.js behavior in this repo. For any Next.js-
 
 Versioned skills live in `.agents/skills/`; `.claude/skills/` contains symlinks to them. Review with the
 `code-review` skill, whose Standards pass requires `CODING_STANDARDS.md`.
+When the user names a workflow skill by slash (`/implement`, `/implement-spec`, `/grill-with-docs`, `/to-spec`,
+`/to-tickets`, `/retro`), read `.agents/skills/<name>/SKILL.md` and follow it; they are missing from your skill list.
 Before UI work, read `.agents/formbricks-context/DESIGN.md` if present; this optional design context is
 machine-local and is not supplied by the versioned skills.
 
