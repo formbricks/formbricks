@@ -121,6 +121,27 @@ describe("fillMissingCodes: answer codes", () => {
     expect(optionCodes(result[0].elements[0])).toEqual(["2", "3"]);
   });
 
+  test("skips a number whose export column is another question's code or an Embedded Data name", () => {
+    const multi = (id: string, code: string, choices: ReturnType<typeof choice>[]): El => ({
+      id,
+      code,
+      type: "multipleChoiceMulti",
+      choices,
+    });
+    const result = fillMissingCodes(
+      [block("b1", multi("a", "q2", [choice("x", "1"), choice("y")]), open("b", { code: "Q2_2" }))],
+      ["q2_3"]
+    );
+    // q2_2 is question b's code and q2_3 an Embedded Data name, ignoring case: option y takes 4.
+    expect(optionCodes(result[0].elements[0])).toEqual(["1", "4"]);
+    // A single select names no column after its options, so its codes stay 1..n.
+    const plain = fillMissingCodes(
+      [block("b1", single("a", [choice("x")], { code: "q2" }), open("b", { code: "q2_1" }))],
+      []
+    );
+    expect(optionCodes(plain[0].elements[0])).toEqual(["1"]);
+  });
+
   test("codes ranking and picture selection choices", () => {
     const result = fillMissingCodes(
       [

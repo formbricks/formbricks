@@ -13,7 +13,9 @@
  * - Answer code: the next number after the highest numeric code already in that list, which is
  *   `1…n` in option order on a fresh list. "Other" and "none" sit last, so they take the next free
  *   number. Choices, picture choices, matrix rows and matrix columns are separate lists. NPS,
- *   rating, CSAT and CES have none.
+ *   rating, CSAT and CES have none. Where the export names a column after the option
+ *   (`<code>_<answer>`, see `derivedColumnNames` in `./codes`), a number whose column name is another
+ *   question's code or an Embedded Data name is skipped, so a filled code never makes a clash.
  * - A duplicated question is an element whose `code` was dropped: it gets the next `q<n>` and its
  *   answer codes stay.
  */
@@ -67,8 +69,11 @@ const mapElements = <TBlock>(blocks: readonly TBlock[], update: (element: TRecor
   return mapped.every((block, index) => block === blocks[index]) ? (blocks as TBlock[]) : mapped;
 };
 
-/** Fills `code` on the options of one list in order; returns the same array when nothing is missing. */
-const fillOptionCodes = (options: unknown): unknown => {
+/**
+ * Fills `code` on the options of one list in order; returns the same array when nothing is missing.
+ * `isFree` turns down a number that is unused in the list but would clash elsewhere.
+ */
+const fillOptionCodes = (options: unknown, isFree: (code: string) => boolean): unknown => {
   if (!Array.isArray(options)) return options;
   const list = options as unknown[];
   const used = new Set<string>();
@@ -82,21 +87,37 @@ const fillOptionCodes = (options: unknown): unknown => {
   const filled = list.map((option) => {
     if (!isRecord(option) || typeof option.code === "string") return option;
     do highest += 1;
-    while (used.has(String(highest)));
+    while (used.has(String(highest)) || !isFree(String(highest)));
     used.add(String(highest));
     return { ...option, code: String(highest) };
   });
   return filled.every((option, index) => option === list[index]) ? list : filled;
 };
 
-const fillAnswerCodes = (element: TRecord): TRecord => {
+/** The option list whose codes the export puts into column names (`<code>_<answer>`), if any. */
+const columnNamingList = (element: TRecord): string | null => {
+  if (element.type === "matrix") return "rows";
+  if (element.type === "multipleChoiceMulti" || element.type === "ranking") return "choices";
+  return element.type === "pictureSelection" && element.allowMulti === true ? "choices" : null;
+};
+
+const fillAnswerCodes = (
+  element: TRecord,
+  questionCode: string,
+  takenNames: ReadonlySet<string>
+): TRecord => {
   let keys: string[] = [];
   if (element.type === "matrix") keys = ["rows", "columns"];
   else if (CHOICE_ELEMENT_TYPES.has(String(element.type))) keys = ["choices"];
 
+  const namingList = columnNamingList(element);
+  const prefix = `${questionCode.toLowerCase()}_`;
+  const isColumnNameFree = (code: string): boolean =>
+    !takenNames.has(`${prefix}${code}`) && !takenNames.has(`${prefix}${code}_text`);
+
   let result = element;
   for (const key of keys) {
-    const filled = fillOptionCodes(element[key]);
+    const filled = fillOptionCodes(element[key], key === namingList ? isColumnNameFree : () => true);
     if (filled !== element[key]) result = { ...result, [key]: filled };
   }
   return result;
@@ -140,8 +161,9 @@ export const fillMissingCodes = <TBlock>(
 
   return mapElements(blocks, (element) => {
     if (element.type === "cta") return element;
-    const filled = fillAnswerCodes(element);
-    return typeof element.code === "string" ? filled : { ...filled, code: nextQuestionCode(element.id) };
+    const code = typeof element.code === "string" ? element.code : nextQuestionCode(element.id);
+    const filled = fillAnswerCodes(element, code, takenCodes);
+    return filled.code === code ? filled : { ...filled, code };
   });
 };
 
