@@ -1,9 +1,19 @@
 import type { TFunction } from "i18next";
+import {
+  EyeOffIcon,
+  HashIcon,
+  LanguagesIcon,
+  PieChartIcon,
+  SquareFunctionIcon,
+  UserIcon,
+} from "lucide-react";
 import { describe, expect, test } from "vitest";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { OptionsType } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/response-filter-options";
 import { generateElementAndFilterOptions, getFormattedFilters } from "@/app/lib/surveys/surveys";
+import { getReservedFieldIcon } from "@/modules/embedded-data/lib/field-display";
+import { getElementIcon } from "@/modules/survey/lib/elements";
 import type { TTableFilter } from "@/modules/ui/components/table-toolbar/lib/types";
 import {
   applicableResponseFilters,
@@ -397,5 +407,57 @@ describe("suggested values", () => {
 
     expect(utm?.suggestions).toEqual(["newsletter", "ads"]);
     expect(utm?.options).toBeUndefined();
+  });
+});
+
+describe("field icons", () => {
+  test("each field shows the icon of its kind, questions the editor's own", () => {
+    const withFields = {
+      ...survey,
+      embeddedFields: [
+        {
+          field: {
+            name: "campaign",
+            source: "ingested",
+            dataType: "string",
+            defaultValue: null,
+            locked: false,
+          },
+          link: { storageKey: "campaign" },
+        },
+        {
+          field: { name: "score", source: "computed", dataType: "number", defaultValue: null, locked: false },
+          link: { storageKey: "score" },
+        },
+      ],
+    } as unknown as TSurvey;
+    const seen = generateElementAndFilterOptions({
+      survey: withFields,
+      environmentTags: [],
+      attributes: { plan: ["Pro"] },
+      reservedValues: { utmSource: ["newsletter"] },
+      hiddenFields: {},
+      variableValues: {},
+      quotas: [{ id: "quota1", name: "Germany" } as never],
+      t,
+    });
+    const { properties } = buildResponseFilterModel({
+      survey: withFields,
+      elementOptions: seen.elementOptions,
+      elementFilterOptions: seen.elementFilterOptions,
+      tagNames: ["vip"],
+      t,
+    });
+    const iconOf = (id: string) => properties.find((item) => item.id === id)?.icon;
+
+    expect(iconOf("question.nps")).toBe(getElementIcon(TSurveyElementTypeEnum.NPS, t));
+    expect(iconOf("question.grid.r1")).toBe(getElementIcon(TSurveyElementTypeEnum.Matrix, t));
+    expect(iconOf("attribute.plan")).toBe(UserIcon);
+    expect(iconOf("hiddenField.campaign")).toBe(EyeOffIcon);
+    expect(iconOf("variable.score")).toBe(SquareFunctionIcon);
+    expect(iconOf("meta.utmSource")).toBe(getReservedFieldIcon("utmSource"));
+    expect(iconOf("quota.quota1")).toBe(PieChartIcon);
+    expect(iconOf("tag")).toBe(HashIcon);
+    expect(iconOf("language")).toBe(LanguagesIcon);
   });
 });

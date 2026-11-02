@@ -45,6 +45,9 @@ vi.mock("nodemailer", () => ({
   createTransport: mockCreateTransport,
 }));
 
+// Email limits fail closed without Redis, which this test does not run; they have their own suite.
+vi.mock("@/modules/email/lib/email-rate-limits", () => ({ applyEmailRateLimits: vi.fn() }));
+
 const survey = { id: "survey1", name: "Survey", variables: [], hiddenFields: {} } as unknown as TSurvey;
 const response = { id: "response1", data: {}, variables: {} } as unknown as TResponse;
 
