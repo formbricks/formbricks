@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { JobExecutionContext } from "@formbricks/jobs";
-import { processEmailAuditMaintenanceJob, requestEmailAuditErasure } from "./email-audit-maintenance";
+import {
+  processEmailAuditMaintenanceJob,
+  requestEmailAuditErasure,
+  requestEmailAuditErasureBestEffort,
+} from "./email-audit-maintenance";
 
 const jobContext: JobExecutionContext = {
   attempt: 1,
@@ -64,6 +68,24 @@ describe("email audit retention and erasure", () => {
     expect(JSON.stringify(mocks.updateMany.mock.calls)).not.toContain("Person@Example.com");
   });
 
+  test("does not silently skip email-only erasure when the HMAC service fails", async () => {
+    mocks.getMac.mockRejectedValueOnce(new Error("kms unavailable"));
+
+    await expect(requestEmailAuditErasure({ email: "Person@Example.com" })).rejects.toThrow("recipient_hmac");
+    expect(mocks.updateMany).not.toHaveBeenCalled();
+  });
+
+  test("reports an erasure gap when a deletion cannot derive the recipient identifier", async () => {
+    mocks.getMac.mockRejectedValueOnce(new Error("kms unavailable"));
+
+    await requestEmailAuditErasureBestEffort({ email: "Person@Example.com" });
+
+    expect(mocks.updateMany).not.toHaveBeenCalled();
+    expect(mocks.reportFailure).toHaveBeenCalledWith("email_audit_erasure_request_failed", {
+      phase: "recipient_hmac",
+    });
+  });
+
   test("requests erasure for bulk-deleted responses in bounded batches", async () => {
     const responseIds = Array.from({ length: 501 }, (_, index) => `response-${index}`);
 
@@ -81,6 +103,7 @@ describe("email audit retention and erasure", () => {
   });
 
   test("marks interrupted attempts indeterminate and removes erased content and identifiers", async () => {
+    const before = Date.now();
     mocks.findMany
       .mockResolvedValueOnce([{ id: "stale-id" }])
       .mockResolvedValueOnce([
@@ -89,6 +112,10 @@ describe("email audit retention and erasure", () => {
       .mockResolvedValueOnce([{ id: "expired-id" }]);
 
     await processEmailAuditMaintenanceJob({ scope: "global" }, jobContext);
+
+    const erasureCutoff = mocks.findMany.mock.calls[1][0].where.OR[0].erasureRequestedAt.lte as Date;
+    expect(erasureCutoff.getTime()).toBeGreaterThanOrEqual(before - 60_000);
+    expect(erasureCutoff.getTime()).toBeLessThanOrEqual(Date.now() - 60_000);
 
     expect(mocks.updateMany).toHaveBeenCalledWith({
       where: { id: { in: ["stale-id"] }, status: "prepared" },

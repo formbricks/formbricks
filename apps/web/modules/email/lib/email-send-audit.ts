@@ -11,6 +11,7 @@ import {
 import { reportEmailAuditFailure } from "./email-audit-monitoring";
 import {
   deleteEmailAuditSnapshot,
+  emailAuditObjectKey,
   getEmailAuditRecipientMac,
   putEmailAuditSnapshot,
 } from "./email-audit-storage";
@@ -107,6 +108,7 @@ export const beginEmailSendAudit = async (
         workflowRunId: context.workflowRunId,
         inviteId: context.inviteId,
         recipientMac,
+        snapshotKey: emailAuditObjectKey(id),
         auditGap: !recipientMac,
         expiresAt: new Date(now + metadataTtlMs),
         contentExpiresAt: new Date(now + contentTtlMs),
@@ -122,7 +124,6 @@ export const beginEmailSendAudit = async (
     return { id, rowCreated, auditGap };
   }
 
-  let snapshotStored = false;
   try {
     const saved = await putEmailAuditSnapshot(
       EMAIL_SEND_AUDIT_BUCKET!,
@@ -130,25 +131,23 @@ export const beginEmailSendAudit = async (
       id,
       snapshot
     );
-    snapshotStored = true;
     const updated = await prisma.outboundEmailAudit.updateMany({
       where: { id, erasedAt: null },
-      data: { snapshotKey: saved.key, snapshotSha256: saved.sha256 },
+      data: { snapshotSha256: saved.sha256 },
     });
     if (updated.count === 0) {
       // An erasure finished while S3 was writing. Do not recreate content for the erased row.
       await deleteEmailAuditSnapshot(EMAIL_SEND_AUDIT_BUCKET!, id);
-      snapshotStored = false;
     }
   } catch {
     auditGap = true;
     await reportGap(id, "snapshot_write");
-    if (snapshotStored) {
-      try {
-        await deleteEmailAuditSnapshot(EMAIL_SEND_AUDIT_BUCKET!, id);
-      } catch {
-        await reportEmailAuditFailure("email_audit_content_delete_failed", { auditId: id });
-      }
+    // A timed-out PutObject can still complete server-side. Keep the key in
+    // the ledger for maintenance and attempt immediate idempotent deletion.
+    try {
+      await deleteEmailAuditSnapshot(EMAIL_SEND_AUDIT_BUCKET!, id);
+    } catch {
+      await reportEmailAuditFailure("email_audit_content_delete_failed", { auditId: id });
     }
     try {
       await prisma.outboundEmailAudit.update({ where: { id }, data: { auditGap: true } });

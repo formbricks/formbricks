@@ -7,16 +7,16 @@ import { reportEmailAuditFailure } from "./email-audit-monitoring";
 import { deleteEmailAuditSnapshot, getEmailAuditRecipientMac } from "./email-audit-storage";
 
 const batchSize = 100;
+const inFlightWriteGraceMs = 60_000;
 
 const getRecipientMacForErasure = async (email: string): Promise<string | undefined> => {
   if (!EMAIL_SEND_AUDIT_HMAC_KEY_ARN) {
-    await reportEmailAuditFailure("email_audit_erasure_request_failed", { phase: "recipient_hmac_config" });
-    return;
+    throw new Error("recipient_hmac_config");
   }
   try {
     return await getEmailAuditRecipientMac(email, EMAIL_SEND_AUDIT_HMAC_KEY_ARN);
   } catch {
-    await reportEmailAuditFailure("email_audit_erasure_request_failed", { phase: "recipient_hmac" });
+    throw new Error("recipient_hmac");
   }
 };
 
@@ -63,8 +63,10 @@ export const requestEmailAuditErasureBestEffort = async (
 ) => {
   try {
     await requestEmailAuditErasure(scope);
-  } catch {
-    await reportEmailAuditFailure("email_audit_erasure_request_failed", {});
+  } catch (error) {
+    const phase =
+      error instanceof Error && error.message.startsWith("recipient_hmac") ? error.message : undefined;
+    await reportEmailAuditFailure("email_audit_erasure_request_failed", { phase });
   }
 };
 
@@ -129,7 +131,8 @@ export const processEmailAuditMaintenanceJob: JobHandler<TGlobalScopeJobData> = 
   const content = await prisma.outboundEmailAudit.findMany({
     where: {
       OR: [
-        { erasureRequestedAt: { not: null }, erasedAt: null },
+        // Let a concurrent S3 PutObject settle before deleting its object.
+        { erasureRequestedAt: { lte: new Date(now.getTime() - inFlightWriteGraceMs) }, erasedAt: null },
         { contentExpiresAt: { lte: now }, snapshotKey: { not: null } },
       ],
     },

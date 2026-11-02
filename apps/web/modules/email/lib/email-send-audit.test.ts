@@ -28,6 +28,7 @@ vi.mock("@formbricks/database", () => ({
 vi.mock("@formbricks/logger", () => ({ logger: { audit: mocks.audit } }));
 vi.mock("@/lib/constants", () => mocks.constants);
 vi.mock("./email-audit-storage", () => ({
+  emailAuditObjectKey: (id: string) => `email-audit/${id}.json`,
   getEmailAuditRecipientMac: mocks.getMac,
   putEmailAuditSnapshot: mocks.putSnapshot,
   deleteEmailAuditSnapshot: mocks.deleteSnapshot,
@@ -73,7 +74,11 @@ describe("outbound email audit", () => {
       organizationId: "org-1",
       surveyId: "survey-1",
       recipientMac: "stable-recipient-mac",
+      snapshotKey: `email-audit/${state?.id}.json`,
     });
+    expect(mocks.create.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.putSnapshot.mock.invocationCallOrder[0]
+    );
     expect(row.contentExpiresAt.getTime() - before).toBeGreaterThanOrEqual(30 * 86_400_000);
     expect(row.expiresAt.getTime() - before).toBeGreaterThanOrEqual(90 * 86_400_000);
     expect(JSON.stringify(mocks.create.mock.calls)).not.toContain("Person@Example.com");
@@ -115,6 +120,8 @@ describe("outbound email audit", () => {
     mocks.putSnapshot.mockRejectedValueOnce(new Error("object store unavailable"));
     const state = await beginEmailSendAudit("invite", "person@example.com", snapshot, context);
     expect(state).toMatchObject({ rowCreated: true, auditGap: true });
+    expect(mocks.create.mock.calls[0][0].data.snapshotKey).toBe(`email-audit/${state?.id}.json`);
+    expect(mocks.deleteSnapshot).toHaveBeenCalledWith("private-test-bucket", state?.id);
     expect(mocks.reportFailure).toHaveBeenCalledWith("email_audit_gap", {
       auditId: state?.id,
       phase: "snapshot_write",
@@ -127,7 +134,7 @@ describe("outbound email audit", () => {
     expect(mocks.deleteSnapshot).toHaveBeenCalledWith("private-test-bucket", state?.id);
     expect(mocks.updateMany).toHaveBeenCalledWith({
       where: { id: state?.id, erasedAt: null },
-      data: { snapshotKey: "email-audit/test.json", snapshotSha256: "digest" },
+      data: { snapshotSha256: "digest" },
     });
   });
 
