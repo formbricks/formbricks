@@ -65,10 +65,14 @@ describe("buildIssue", () => {
       },
     ]);
 
-    expect(issue.description).toContain(
-      "- **Also tracked as:** [ENG-1234](https://linear.app/formbricks/issue/ENG-1234) (ee#199), " +
-        "[ENG-1230](https://linear.app/formbricks/issue/ENG-1230) (formbricks#984)"
-    );
+    // Asserted per sibling rather than as one line: a heading or spacing change
+    // should not fail the test while both links still render.
+    expect(issue.description).toMatch(/^- \*\*Also tracked as:\*\* /m);
+    expect(issue.description).toContain("[ENG-1234](https://linear.app/formbricks/issue/ENG-1234)");
+    expect(issue.description).toContain("[ENG-1230](https://linear.app/formbricks/issue/ENG-1230)");
+    expect(issue.description).toContain("(ee#199)");
+    expect(issue.description).toContain("(formbricks#984)");
+    expect(issue.description.indexOf("ENG-1234")).toBeLessThan(issue.description.indexOf("ENG-1230"));
   });
 
   test("omits the cross-reference when no sibling exists", () => {
