@@ -499,7 +499,9 @@ export const SurveyEditor = ({
         <aside className="group hidden w-1/3 shrink-0 items-center justify-center overflow-hidden border-l border-slate-200 bg-slate-100 shadow-inner md:flex md:flex-col">
           <MemoizedPreviewSurvey
             survey={previewSurvey}
-            elementId={activeElementId}
+            // The Flow tab's preview is for trying the flow: editing a rule there must not pull it
+            // back to the question last active on the Questions tab.
+            elementId={activeView === "flow" ? null : activeElementId}
             workspace={localWorkspace}
             previewType={previewSurvey.type === "app" ? "modal" : "fullwidth"}
             languageCode={selectedLanguageCode}

@@ -32,7 +32,8 @@ import { Modal } from "./components/modal";
 import { PreviewModeSwitches, PreviewWindowBar } from "./components/preview-frame";
 import { TestValuesControl } from "./components/test-values-control";
 import { PREVIEW_BOUNDARY_CLASS_NAME, previewBoundaryProps } from "./lib/containment";
-import { getTestValueFields, getTestValuesKey, toHiddenFieldsRecord } from "./lib/test-values";
+import { INITIAL_FOLLOW_STATE, followActiveElement } from "./lib/follow-active-element";
+import { getPreviewStartKey, getTestValueFields, toHiddenFieldsRecord } from "./lib/test-values";
 import { mirrorPlacementForDir } from "./lib/utils";
 
 type TPreviewType = "modal" | "fullwidth" | "email";
@@ -90,14 +91,17 @@ export const PreviewSurvey = ({
 
   // "Test values" (ENG-6932): URL parameters and hidden fields for the preview, empty by default. The
   // rules before the first question run when the survey loads, so the preview is keyed by the values
-  // and starts over whenever they change.
+  // and those rules, and starts over whenever they change.
   const [testValues, setTestValues] = useState<Record<string, string>>({});
   const testValueFields = useMemo(() => getTestValueFields(survey), [survey]);
   const hiddenFieldsRecord = useMemo(
     () => toHiddenFieldsRecord(testValues, testValueFields),
     [testValues, testValueFields]
   );
-  const testValuesKey = getTestValuesKey(hiddenFieldsRecord);
+  const previewStartKey = useMemo(
+    () => getPreviewStartKey(hiddenFieldsRecord, survey.startLogic ?? []),
+    [hiddenFieldsRecord, survey.startLogic]
+  );
   const ContentRef = useRef<HTMLDivElement | null>(null);
   const enabledLanguages = useMemo(() => survey.languages.filter((l) => l.enabled), [survey.languages]);
   const showLanguageSelector = setLanguageCode && enabledLanguages.length > 1;
@@ -223,8 +227,14 @@ export const PreviewSurvey = ({
     [survey.welcomeCard.enabled, survey.blocks, survey.endings]
   );
 
+  // The preview follows the question the author works on, but opens like the live survey: the
+  // question the editor activates by itself is not followed, so the rules before the first question
+  // and the welcome card decide the first card here too (ENG-6932, see `followActiveElement`).
+  const followStateRef = useRef(INITIAL_FOLLOW_STATE);
   useEffect(() => {
-    if (elementId) {
+    const { state, follow } = followActiveElement(followStateRef.current, elementId ?? null);
+    followStateRef.current = state;
+    if (follow && elementId) {
       updateElementId(elementId);
     }
   }, [elementId, updateElementId]);
@@ -294,7 +304,7 @@ export const PreviewSurvey = ({
   const handlePreviewModeChange = (mode: "mobile" | "desktop") => {
     setPreviewMode(mode);
     requestAnimationFrame(() => {
-      if (elementId) {
+      if (elementId && followStateRef.current.picked) {
         updateElementId(elementId);
       }
     });
@@ -371,7 +381,7 @@ export const PreviewSurvey = ({
                     borderRadius={styling?.roundness ?? 8}
                     background={modalBackground}>
                     <SurveyInline
-                      key={testValuesKey}
+                      key={previewStartKey}
                       hiddenFieldsRecord={hiddenFieldsRecord}
                       appUrl={publicDomain}
                       isPreviewMode={true}
@@ -426,7 +436,7 @@ export const PreviewSurvey = ({
                           !isCardless && "justify-center"
                         )}>
                         <SurveyInline
-                          key={testValuesKey}
+                          key={previewStartKey}
                           hiddenFieldsRecord={hiddenFieldsRecord}
                           appUrl={publicDomain}
                           isPreviewMode={true}
@@ -506,7 +516,7 @@ export const PreviewSurvey = ({
                     borderRadius={styling.roundness ?? 8}
                     background={modalBackground}>
                     <SurveyInline
-                      key={testValuesKey}
+                      key={previewStartKey}
                       hiddenFieldsRecord={hiddenFieldsRecord}
                       appUrl={publicDomain}
                       isPreviewMode={true}
@@ -567,7 +577,7 @@ export const PreviewSurvey = ({
                             !isCardless && "justify-center"
                           )}>
                           <SurveyInline
-                            key={testValuesKey}
+                            key={previewStartKey}
                             hiddenFieldsRecord={hiddenFieldsRecord}
                             appUrl={publicDomain}
                             isPreviewMode={true}

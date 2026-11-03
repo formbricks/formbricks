@@ -3,7 +3,12 @@ import {
   SURVEY_FLOW_FIXTURE_IDS as ids,
   surveyFlowFixture,
 } from "@formbricks/types/surveys/test-fixtures/survey-flow-fixture";
-import { getTestValueFields, getTestValuesKey, toHiddenFieldsRecord } from "./test-values";
+import {
+  getPreviewStartKey,
+  getTestValueFields,
+  getTestValuesKey,
+  toHiddenFieldsRecord,
+} from "./test-values";
 
 /**
  * The preview's "Test values" (ENG-6932, P15/T27): URL parameters and hidden fields typed in the
@@ -39,5 +44,15 @@ describe("preview test values", () => {
     expect(getTestValuesKey({ panel_id: "p1", seg: "heavy" })).toBe(a);
     expect(getTestValuesKey({ seg: "light", panel_id: "p1" })).not.toBe(a);
     expect(getTestValuesKey({})).toBe("");
+  });
+
+  test("the preview also restarts when the rules before the first question change, and only then", () => {
+    const startLogic = surveyFlowFixture.startLogic ?? [];
+    expect(startLogic.length).toBeGreaterThan(0);
+    const key = getPreviewStartKey({ seg: "heavy" }, startLogic);
+
+    expect(getPreviewStartKey({ seg: "heavy" }, structuredClone(startLogic))).toBe(key);
+    expect(getPreviewStartKey({ seg: "heavy" }, startLogic.slice(1))).not.toBe(key);
+    expect(getPreviewStartKey({ seg: "light" }, startLogic)).not.toBe(key);
   });
 });

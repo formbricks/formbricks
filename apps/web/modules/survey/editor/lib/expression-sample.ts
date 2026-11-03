@@ -5,6 +5,7 @@ import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { evaluateSetValue } from "@formbricks/types/surveys/expression-evaluation";
 import type { TExpression } from "@formbricks/types/surveys/expressions";
 import type { TSurvey } from "@formbricks/types/surveys/types";
+import { formatDateForDisplay, formatDateTimeForDisplay } from "@/lib/utils/datetime";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 
 /**
@@ -103,4 +104,34 @@ export const getSampleResult = (
     language: "default",
     now: () => now,
   });
+};
+
+const CALENDAR_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * How a sample result reads: a date in the viewer's locale (a timestamp in their time zone, a
+ * calendar date as that day), with the stored ISO value as its title; anything else as it is.
+ */
+export const formatSampleResult = (
+  result: string | number,
+  targetDataType: TEmbeddedDataType,
+  locale: string,
+  timeZone?: string
+): { text: string; title?: string } => {
+  const text = String(result);
+  if (targetDataType !== "date" || typeof result !== "string") return { text };
+  const date = new Date(result);
+  if (Number.isNaN(date.getTime())) return { text };
+
+  const formatted = CALENDAR_DATE.test(result)
+    ? formatDateForDisplay(date, locale, { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" })
+    : formatDateTimeForDisplay(date, locale, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        timeZone,
+      });
+  return { text: formatted, title: result };
 };

@@ -31,3 +31,10 @@ export const getTestValuesKey = (record: Record<string, string>): string =>
     .sort((a, b) => a.localeCompare(b))
     .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(record[key])}`)
     .join("&");
+
+/**
+ * The preview's key: it starts over when the test values or the rules before the first question
+ * change, so what the preview opens on is what the live survey would open on with those values.
+ */
+export const getPreviewStartKey = (record: Record<string, string>, startLogic: readonly unknown[]): string =>
+  `${getTestValuesKey(record)}|${JSON.stringify(startLogic)}`;
