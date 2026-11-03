@@ -22,6 +22,9 @@ import type { TRetentionSweepContext } from "./sweep";
 import { lockUnchangedRetentionPolicy, runSweepTransaction } from "./transaction";
 
 vi.mock("server-only", () => ({}));
+vi.mock("@/modules/email/lib/email-audit-maintenance", () => ({
+  requestEmailAuditErasureRequired: vi.fn().mockResolvedValue(undefined),
+}));
 vi.mock("@formbricks/database", () => ({ prisma: { retentionRun: { update: vi.fn() } } }));
 vi.mock("@formbricks/logger", () => ({ logger: { info: vi.fn(), error: vi.fn() } }));
 vi.mock("@/lib/response/delete-responses", () => ({ deleteResponsesInTransaction: vi.fn() }));

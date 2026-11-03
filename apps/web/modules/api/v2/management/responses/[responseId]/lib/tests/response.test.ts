@@ -10,6 +10,7 @@ import {
   evaluateResponseQuotas,
   loadQuotaEvaluationContext,
 } from "@/modules/ee/quotas/lib/evaluation-service";
+import { requestEmailAuditErasureRequired } from "@/modules/email/lib/email-audit-maintenance";
 import { deleteDisplay } from "../display";
 import {
   deleteResponse,
@@ -73,8 +74,13 @@ vi.mock("@/lib/display/service", () => ({
   getDisplayForResponseValidation: vi.fn(),
 }));
 
+vi.mock("@/modules/email/lib/email-audit-maintenance", () => ({
+  requestEmailAuditErasureRequired: vi.fn().mockResolvedValue(undefined),
+}));
+
 vi.mock("@formbricks/database", () => ({
   prisma: {
+    $transaction: vi.fn(),
     response: {
       findUnique: vi.fn(),
       delete: vi.fn(),
@@ -95,6 +101,8 @@ vi.mock("@formbricks/database", () => ({
 describe("Response Lib", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(prisma as never));
+    vi.mocked(requestEmailAuditErasureRequired).mockResolvedValue(undefined);
   });
 
   describe("getResponse", () => {
@@ -320,6 +328,7 @@ describe("Response Lib", () => {
       expect(prisma.response.delete).toHaveBeenCalledWith({
         where: { id: responseId },
       });
+      expect(requestEmailAuditErasureRequired).toHaveBeenCalledWith({ responseId }, prisma);
       expect(deleteDisplay).toHaveBeenCalledWith(response.displayId);
       expect(getSurveyQuestions).toHaveBeenCalledWith(response.surveyId);
       // The survey id comes from the deleted row: it is what binds a survey-scoped upload key to this
@@ -334,6 +343,17 @@ describe("Response Lib", () => {
       if (result.ok) {
         expect(result.data).toEqual(response);
       }
+    });
+
+    test("stops the delete when email copy erasure cannot be requested", async () => {
+      vi.mocked(prisma.response.delete).mockResolvedValue(response);
+      vi.mocked(requestEmailAuditErasureRequired).mockRejectedValueOnce(new Error("audit unavailable"));
+
+      const result = await deleteResponse(responseId);
+
+      expect(result.ok).toBe(false);
+      expect(prisma.response.delete).toHaveBeenCalledOnce();
+      expect(deleteDisplay).not.toHaveBeenCalled();
     });
 
     test("return an error if deleteDisplay fails", async () => {

@@ -5,6 +5,10 @@ const mocks = vi.hoisted(() => ({
   assertCan: vi.fn(),
   getSurvey: vi.fn(),
   deleteResponsesAndDisplaysForSurvey: vi.fn(),
+  getEmailTemplateHtml: vi.fn(),
+  getOrganizationIdFromSurveyId: vi.fn(),
+  getOrganizationLogoUrl: vi.fn(),
+  sendEmbedSurveyPreviewEmail: vi.fn(),
 }));
 
 vi.mock("@/lib/utils/action-client", () => ({
@@ -20,7 +24,7 @@ vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
 vi.mock("@/lib/authorization", () => ({ assertCan: mocks.assertCan }));
 
 vi.mock("@/lib/utils/helper", () => ({
-  getOrganizationIdFromSurveyId: vi.fn().mockResolvedValue("org1"),
+  getOrganizationIdFromSurveyId: mocks.getOrganizationIdFromSurveyId,
   getWorkspaceIdFromSurveyId: vi.fn(),
 }));
 
@@ -33,7 +37,7 @@ vi.mock("./lib/survey", () => ({
 vi.mock(
   "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/emailTemplate",
   () => ({
-    getEmailTemplateHtml: vi.fn(),
+    getEmailTemplateHtml: mocks.getEmailTemplateHtml,
   })
 );
 vi.mock(
@@ -54,11 +58,11 @@ vi.mock("@/modules/ee/contacts/lib/contacts", () => ({ generatePersonalLinks: vi
 vi.mock("@/modules/ee/contacts/lib/personal-link-errors", () => ({ NO_CONTACTS_IN_SEGMENT_ERROR_CODE: "x" }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsContactsEnabled: vi.fn() }));
 vi.mock("@/modules/ee/whitelabel/email-customization/lib/organization", () => ({
-  getOrganizationLogoUrl: vi.fn(),
+  getOrganizationLogoUrl: mocks.getOrganizationLogoUrl,
 }));
-vi.mock("@/modules/email", () => ({ sendEmbedSurveyPreviewEmail: vi.fn() }));
+vi.mock("@/modules/email", () => ({ sendEmbedSurveyPreviewEmail: mocks.sendEmbedSurveyPreviewEmail }));
 
-const { resetSurveyAction } = await import("./actions");
+const { resetSurveyAction, sendEmbedSurveyPreviewEmailAction } = await import("./actions");
 
 const callReset = () =>
   (resetSurveyAction as unknown as (args: unknown) => Promise<unknown>)({
@@ -66,9 +70,34 @@ const callReset = () =>
     parsedInput: { surveyId: "survey1", workspaceId: "ws1" },
   });
 
+test("attributes a survey preview email to its initiator, survey, and organization", async () => {
+  vi.clearAllMocks();
+  mocks.getSurvey.mockResolvedValue({ id: "survey1", workspaceId: "ws1" });
+  mocks.getEmailTemplateHtml.mockResolvedValue("<p>Preview</p>");
+  mocks.getOrganizationIdFromSurveyId.mockResolvedValue("org1");
+  mocks.getOrganizationLogoUrl.mockResolvedValue("https://example.com/logo.png");
+
+  await (sendEmbedSurveyPreviewEmailAction as unknown as (args: unknown) => Promise<unknown>)({
+    ctx: { user: { id: "user1", email: "test@example.com", locale: "en-US" } },
+    parsedInput: { surveyId: "survey1" },
+  });
+
+  expect(mocks.sendEmbedSurveyPreviewEmail).toHaveBeenCalledWith({
+    to: "test@example.com",
+    innerHtml: "<p>Preview</p>",
+    workspaceId: "ws1",
+    locale: "en-US",
+    actorUserId: "user1",
+    logoUrl: "https://example.com/logo.png",
+    surveyId: "survey1",
+    organizationId: "org1",
+  });
+});
+
 describe("resetSurveyAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.getOrganizationIdFromSurveyId.mockResolvedValue("org1");
     mocks.assertCan.mockResolvedValue(undefined);
     mocks.getSurvey.mockResolvedValue({ id: "survey1", archivedAt: null });
     mocks.deleteResponsesAndDisplaysForSurvey.mockResolvedValue({
