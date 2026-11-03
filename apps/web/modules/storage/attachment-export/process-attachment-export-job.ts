@@ -135,6 +135,38 @@ const failExport = async (
   }
 };
 
+/**
+ * Re-collects the export's attachments with the filter and time zone stored at request time. Throws a
+ * non-retryable error for anything a retry cannot change.
+ */
+const collectExportEntries = async (
+  row: { surveyId: string; filterCriteria: unknown; timeZone: string },
+  workspaceId: string
+) => {
+  const survey = await getSurvey(row.surveyId);
+  if (survey?.workspaceId !== workspaceId) {
+    throw new AttachmentExportBuildError("survey_not_found", false);
+  }
+
+  const filter =
+    row.filterCriteria === null ? undefined : ZResponseFilterCriteria.safeParse(row.filterCriteria);
+  if (filter && !filter.success) {
+    throw new AttachmentExportBuildError("invalid_filter", false);
+  }
+
+  const { entries, fileCount, exceedsMaxFiles } = await collectResponseAttachments({
+    survey,
+    filterCriteria: filter?.data,
+    maxFiles: MAX_ATTACHMENT_FILES,
+    timeZone: row.timeZone,
+  });
+  // Both were checked when the export was requested; responses can change while it waits in the queue.
+  if (exceedsMaxFiles) throw new AttachmentExportBuildError("too_many_files", false);
+  if (fileCount === 0) throw new AttachmentExportBuildError("no_attachments", false);
+
+  return { survey, entries };
+};
+
 export const processAttachmentExportJob: JobHandler<TAttachmentExportJobData> = async (data, context) => {
   const logContext = {
     attachmentExportId: data.attachmentExportId,
@@ -180,26 +212,7 @@ export const processAttachmentExportJob: JobHandler<TAttachmentExportJobData> = 
   }
 
   try {
-    const survey = await getSurvey(row.surveyId);
-    if (survey?.workspaceId !== data.workspaceId) {
-      throw new AttachmentExportBuildError("survey_not_found", false);
-    }
-
-    const filter =
-      row.filterCriteria === null ? undefined : ZResponseFilterCriteria.safeParse(row.filterCriteria);
-    if (filter && !filter.success) {
-      throw new AttachmentExportBuildError("invalid_filter", false);
-    }
-
-    const { entries, fileCount, exceedsMaxFiles } = await collectResponseAttachments({
-      survey,
-      filterCriteria: filter?.data,
-      maxFiles: MAX_ATTACHMENT_FILES,
-      timeZone: row.timeZone,
-    });
-    // Both were checked when the export was requested; responses can change while it waits in the queue.
-    if (exceedsMaxFiles) throw new AttachmentExportBuildError("too_many_files", false);
-    if (fileCount === 0) throw new AttachmentExportBuildError("no_attachments", false);
+    const { survey, entries } = await collectExportEntries(row, data.workspaceId);
 
     const result = await buildArchiveAndUpload({
       entries,

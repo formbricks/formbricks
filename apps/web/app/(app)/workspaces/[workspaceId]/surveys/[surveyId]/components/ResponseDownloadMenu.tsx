@@ -142,6 +142,20 @@ export const ResponseDownloadMenu = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [attachmentExports]);
 
+  /** The message for a create error the user can act on, or `null` for an unexpected one. */
+  const getAttachmentExportErrorMessage = (err: V3ApiError): string | null => {
+    if (err.code === "attachment_export_too_large") {
+      return t("workspace.surveys.responses.too_many_attachments_to_download", {
+        maxFiles: MAX_ATTACHMENT_FILES,
+      });
+    }
+    if (err.code === "attachment_export_empty") {
+      return t("workspace.surveys.responses.no_attachments_to_download");
+    }
+    if (err.status === 429) return t("workspace.surveys.responses.too_many_attachment_exports");
+    return null;
+  };
+
   /**
    * Starts a background export (ENG-6862): the server builds the ZIP into storage and this page is told
    * when it is ready. Falls back to the streaming download when the server cannot run the job, which is
@@ -165,29 +179,15 @@ export const ResponseDownloadMenu = ({
         { id: toastId, duration: 8000 }
       );
     } catch (err) {
-      if (err instanceof V3ApiError) {
-        if (err.code === "attachment_export_unavailable") {
-          toast.dismiss(toastId);
-          await streamAttachments(filters);
-          return;
-        }
-        if (err.code === "attachment_export_too_large") {
-          toast.error(
-            t("workspace.surveys.responses.too_many_attachments_to_download", {
-              maxFiles: MAX_ATTACHMENT_FILES,
-            }),
-            { id: toastId }
-          );
-          return;
-        }
-        if (err.code === "attachment_export_empty") {
-          toast.error(t("workspace.surveys.responses.no_attachments_to_download"), { id: toastId });
-          return;
-        }
-        if (err.status === 429) {
-          toast.error(t("workspace.surveys.responses.too_many_attachment_exports"), { id: toastId });
-          return;
-        }
+      if (err instanceof V3ApiError && err.code === "attachment_export_unavailable") {
+        toast.dismiss(toastId);
+        await streamAttachments(filters);
+        return;
+      }
+      const message = err instanceof V3ApiError ? getAttachmentExportErrorMessage(err) : null;
+      if (message) {
+        toast.error(message, { id: toastId });
+        return;
       }
       Sentry.captureException(err);
       toast.error(t("workspace.surveys.responses.error_downloading_attachments"), { id: toastId });
