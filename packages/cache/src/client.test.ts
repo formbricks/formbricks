@@ -1,6 +1,7 @@
 import { rootCertificates } from "node:tls";
 import { createClient } from "redis";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { logger } from "@formbricks/logger";
 import type { RedisClient } from "@/types/client";
 import { ErrorCode } from "@/types/error";
 import { createRedisClientFromEnv, getCacheService, resetCacheFactory } from "./client";
@@ -344,13 +345,14 @@ describe("@formbricks/cache factory", () => {
 
     test("should handle connection errors gracefully", async () => {
       process.env.REDIS_URL = "redis://localhost:6379";
+      const cause = Object.assign(new Error("private connection detail"), { code: "ECONNRESET" });
 
       const mockClient: MockRedisClient = {
         isOpen: false,
         isReady: false,
         on: vi.fn(),
         connect: vi.fn().mockRejectedValue(new Error("Connection failed")),
-        destroy: vi.fn().mockRejectedValue(new Error("Destroy failed")),
+        destroy: vi.fn().mockRejectedValue(new AggregateError([cause], "private destroy detail")),
       };
 
       // @ts-expect-error - Mock client type incompatibility with Redis types
@@ -365,6 +367,14 @@ describe("@formbricks/cache factory", () => {
         expect(typeof result.error).toBe("object");
         expect(result.error).toHaveProperty("code");
       }
+      await vi.waitFor(() =>
+        expect(logger.error).toHaveBeenCalledWith(
+          { name: "AggregateError", causes: [{ name: "Error", code: "ECONNRESET" }] },
+          "Error destroying Redis client"
+        )
+      );
+      expect(JSON.stringify(vi.mocked(logger.error).mock.calls)).not.toContain("private connection detail");
+      expect(JSON.stringify(vi.mocked(logger.error).mock.calls)).not.toContain("private destroy detail");
     });
   });
 

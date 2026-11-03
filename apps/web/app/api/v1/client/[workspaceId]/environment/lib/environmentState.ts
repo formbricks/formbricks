@@ -64,6 +64,10 @@ const loadDuringRedisOutage = async (
       return value;
     }
     if (bytes <= MAX_ENTRY_BYTES) {
+      const insertedAt = Date.now();
+      for (const [cachedWorkspaceId, cached] of outageEntries) {
+        if (cached.expiresAt <= insertedAt) forgetOutageEntry(cachedWorkspaceId);
+      }
       while (
         outageEntries.size >= MAX_OUTAGE_ENTRIES ||
         (outageEntries.size > 0 && outageBytes + bytes > MAX_OUTAGE_BYTES)

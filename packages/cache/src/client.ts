@@ -27,13 +27,26 @@ const resetCacheInstance = (): void => {
   globalForCache.formbricksCacheInitializing = undefined;
 };
 
+const errorIdentity = (error: unknown): { name: string; code?: string } => {
+  if (!(error instanceof Error)) return { name: typeof error };
+  const code = "code" in error && typeof error.code === "string" ? error.code : undefined;
+  return { name: error.name, ...(code ? { code } : {}) };
+};
+
+const destroyErrorDetails = (error: unknown) => ({
+  ...errorIdentity(error),
+  ...(error instanceof AggregateError
+    ? { causes: error.errors.slice(0, 3).map((cause: unknown) => errorIdentity(cause)) }
+    : {}),
+});
+
 const destroyClient = (client: RedisClient): void => {
   try {
     void Promise.resolve(client.destroy()).catch((error: unknown) => {
-      logger.error({ error }, "Error destroying Redis client");
+      logger.error(destroyErrorDetails(error), "Error destroying Redis client");
     });
   } catch (error) {
-    logger.error({ error }, "Error destroying Redis client");
+    logger.error(destroyErrorDetails(error), "Error destroying Redis client");
   }
 };
 
@@ -44,6 +57,16 @@ const discardClient = (client: RedisClient): void => {
   recordCacheFailure();
   resetCacheInstance();
   destroyClient(client);
+};
+
+const discardUnreadyInstance = (): void => {
+  const client = globalForCache.formbricksCacheClient;
+  if (client) {
+    discardClient(client);
+  } else {
+    resetCacheInstance();
+    recordCacheFailure();
+  }
 };
 
 /**
@@ -142,13 +165,7 @@ export async function getCacheService(): Promise<Result<CacheService, CacheError
   // A formerly ready connection went away without an error event. Discard it
   // before a new request can open another socket or queue more commands.
   if (singleton || globalForCache.formbricksCache) {
-    const client = globalForCache.formbricksCacheClient;
-    if (client) {
-      discardClient(client);
-    } else {
-      resetCacheInstance();
-      recordCacheFailure();
-    }
+    discardUnreadyInstance();
     return err({ code: ErrorCode.RedisConnectionError });
   }
 
