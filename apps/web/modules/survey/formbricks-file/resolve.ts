@@ -492,8 +492,8 @@ export const applyFormbricksFileReferences = async (
     created: {
       actionClasses,
       // Sorted: the order `INSERT … RETURNING` gives is not promised, and nothing reads it.
-      attributeKeys: attributeKeys.map(({ key }) => key).sort(),
-      languages: languages.map(({ code }) => code).sort(),
+      attributeKeys: attributeKeys.map(({ key }) => key).sort((a, b) => a.localeCompare(b)),
+      languages: languages.map(({ code }) => code).sort((a, b) => a.localeCompare(b)),
     },
   };
 };
