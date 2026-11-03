@@ -40,6 +40,24 @@ vi.mock("@/modules/survey/lib/permission", async (importOriginal) => ({
   getExternalUrlsPermission: async () => entitlements.externalUrls,
 }));
 
+// The Update's feedback-source reconciliation runs after its commit; a test makes it fail once.
+const afterCommit = vi.hoisted(() => ({ fail: false }));
+vi.mock("@/lib/feedback-source/mapping-reconciliation", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@/lib/feedback-source/mapping-reconciliation")>();
+  return {
+    ...original,
+    scheduleFeedbackSourceReconciliation: async (
+      ...args: Parameters<typeof original.scheduleFeedbackSourceReconciliation>
+    ) => {
+      if (afterCommit.fail) {
+        afterCommit.fail = false;
+        throw new Error("reconciliation failed");
+      }
+      return original.scheduleFeedbackSourceReconciliation(...args);
+    },
+  };
+});
+
 // i18next-icu's ESM build cannot construct IntlMessageFormat under Node's own module loader, so outside
 // Next's bundler `t` returns messages uninterpolated. Names are checked with the en-US strings,
 // interpolated as ICU would.
@@ -732,5 +750,26 @@ describe("what an Update removes", () => {
     expect((await storedSurvey(surveyId)).endings).toEqual([
       expect.objectContaining({ id: endingId, type: "endScreen" }),
     ]);
+  });
+});
+
+describe("a failure in the work after an Update commits", () => {
+  test("is answered as done, and the retry is refused as stale rather than writing twice", async () => {
+    const surveyId = await seedSurvey({ status: "draft" });
+    const before = await storedSurvey(surveyId);
+    const done = await preview(reworded(await exportFile(surveyId)));
+    const updatedAt = done.match!.exportedUpdatedAt;
+
+    afterCommit.fail = true;
+    const first = await update(surveyId, done, { updatedAt });
+
+    // The update committed; only the reconciliation after it failed.
+    expect(first.status).toBe(200);
+    const after = await storedSurvey(surveyId);
+    expect(headlineOf(after)).toBe("Which colour do you like?");
+    expect(after.updatedAt.getTime()).toBeGreaterThan(before.updatedAt.getTime());
+
+    const retried = await update(surveyId, done, { updatedAt });
+    expect(retried.status).toBe(409);
   });
 });
