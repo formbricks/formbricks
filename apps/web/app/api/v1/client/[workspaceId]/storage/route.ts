@@ -154,6 +154,8 @@ export const POST = withV1ApiWrapper({
         responseString = "Survey does not allow file uploads";
       } else if (uploadPermission.reason === "file_upload_element_not_found") {
         responseString = "Element does not allow file uploads";
+      } else if (uploadPermission.reason === "file_name_not_allowed") {
+        responseString = "File name is not allowed for this element";
       } else {
         responseString = "File extension is not allowed for this element";
       }

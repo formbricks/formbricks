@@ -117,7 +117,11 @@ export type TSurveyUploadPermissionResult =
     }
   | {
       ok: false;
-      reason: "no_file_upload_element" | "file_upload_element_not_found" | "file_extension_not_allowed";
+      reason:
+        | "no_file_upload_element"
+        | "file_upload_element_not_found"
+        | "file_extension_not_allowed"
+        | "file_name_not_allowed";
     };
 
 const getAllowedFileExtensionFromFileName = (fileName: string): TAllowedFileExtension | null => {
@@ -369,12 +373,24 @@ export const validateSurveyAllowsUpload = ({
   const isFileExtensionAllowed =
     allowedFileExtensions === undefined || allowedFileExtensions.includes(fileExtension);
 
-  return isFileExtensionAllowed
-    ? { ok: true }
-    : {
-        ok: false,
-        reason: "file_extension_not_allowed",
-      };
+  if (!isFileExtensionAllowed) {
+    return {
+      ok: false,
+      reason: "file_extension_not_allowed",
+    };
+  }
+
+  // A kind that stores one fixed name (a Signature) accepts only that name, so the stored file is one a
+  // later write accepts.
+  const kind = uploadElementKinds[uploadElementConfig.type];
+  if (kind.answerShape === "string" && fileName !== kind.uploadFileName) {
+    return {
+      ok: false,
+      reason: "file_name_not_allowed",
+    };
+  }
+
+  return { ok: true };
 };
 
 // Origins that may legitimately prefix an absolute storage URL. A response GET resolves stored

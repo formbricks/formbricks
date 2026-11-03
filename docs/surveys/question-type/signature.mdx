@@ -57,13 +57,23 @@ Use a Signature in [logic](/surveys/general-features/conditional-logic) with the
 
 Each signature is stored as one PNG image, always 900 by 300 pixels, with an opaque white background and near-black ink, whichever way the respondent signed and on whichever device. Formbricks does not store whether the signature was drawn or typed, and it does not store the typed name as text. A signature image is about 35 KB, and Formbricks accepts at most 1 MB per signature, whatever the file size limit for file uploads is on your plan.
 
-Typed names use the Dancing Script font. It covers Latin and Latin Extended characters. A name in another script, such as Cyrillic or Chinese, is shown in the browser's own cursive font, so how it looks depends on the respondent's device.
+Typed names use the Dancing Script font. It covers Latin and Latin Extended-A characters. A name in another script, such as Cyrillic or Chinese, is shown in the browser's own cursive font, so how it looks depends on the respondent's device.
 
 <Note>
   A signature is an image plus the response timestamp. Formbricks does not add an audit trail or tamper
   evidence, and a Signature does not make a survey a legally binding electronic signature. Check what
   your use case requires before relying on it.
 </Note>
+
+## Submit a signature through the API
+
+A client that is not the Formbricks survey, such as your own form, uploads the image first and then submits its URL as the answer:
+
+1. Ask the client storage endpoint for an upload URL: `POST /client/{workspaceId}/storage` with `surveyId`, `elementId` (the ID of the Signature element), `fileName` set to exactly `signature.png`, and `fileType` set to `image/png`. The response holds `signedUrl`, `presignedFields` and `fileUrl`.
+2. Upload the PNG file with a multipart form `POST` to `signedUrl`, sending every `presignedFields` entry first and the file last.
+3. Create or update the response and set the Signature element's answer to the `fileUrl` from step 1, as one string and not an array: `"data": { "<elementId>": "<fileUrl>" }`.
+
+Only a PNG named `signature.png` up to 1 MB is accepted. The endpoint refuses any other file name or extension, storage refuses a larger file, and a response whose answer is not a file uploaded this way for that element is rejected.
 
 ## Where to find signatures
 

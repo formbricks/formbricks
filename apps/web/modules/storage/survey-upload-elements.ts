@@ -70,6 +70,11 @@ export type TStringUploadElementKind = {
   /** Whether `""` is a skipped answer rather than a URL (a skipped Signature may be stored as `""`). */
   emptyStringIsSkipped: boolean;
   /**
+   * The only file name an upload for this kind may carry, checked when the upload URL is issued so a client
+   * cannot store a file that a later write would refuse. It is the name the runtime sends.
+   */
+  uploadFileName: string;
+  /**
    * The name the stored file must have: the one the upload route produces for the name the runtime
    * sends (`getSignedUrlForUpload` renames `name.ext` to `name--fid--{uuid}.ext`). A write whose URL
    * names anything else was not produced by an upload for this element.
@@ -94,6 +99,7 @@ export const uploadElementKinds = {
     fixedAllowedExtensions: ["png"],
     emptyStringIsSkipped: true,
     // `signature.png` as the runtime names its export (`SIGNATURE_PNG_FILE_NAME`), then the id the upload adds.
+    uploadFileName: "signature.png",
     fileNamePattern: /^signature--fid--[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.png$/,
     // A 900x300 export is about 35 KB; 1 MB leaves headroom without letting a public upload route hold
     // the general limit (up to 1 GB on enterprise) for a file the owner views as a thumbnail.

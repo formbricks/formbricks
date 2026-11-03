@@ -418,8 +418,21 @@ describe("storage utils", () => {
       expect(validateSurveyAllowsUpload({ fileName: "signature.png", elementId: "sig1", blocks })).toEqual({
         ok: true,
       });
-      expect(validateSurveyAllowsUpload({ fileName: "SIGNATURE.PNG", elementId: "sig1", blocks })).toEqual({
-        ok: true,
+    });
+
+    // The upload route keeps the name as sent, so these would be stored under a name that a later write
+    // refuses: the upload is refused instead.
+    test.each([
+      "sig.png",
+      "SIGNATURE.PNG",
+      "Signature.png",
+      "my-signature.png",
+      "signature.png.png",
+      "a/signature.png",
+    ])("should refuse the png name %s: a Signature upload is named signature.png", (fileName) => {
+      expect(validateSurveyAllowsUpload({ fileName, elementId: "sig1", blocks })).toEqual({
+        ok: false,
+        reason: "file_name_not_allowed",
       });
     });
 

@@ -269,14 +269,22 @@ paths:
                 fileType:
                   type: string
                   description: The MIME type of the file.
+                elementId:
+                  type: string
+                  description: The ID of the File upload or Signature element the file is for.
+                    The request is refused when the survey has no such upload
+                    element. A Signature element accepts only a PNG named
+                    `signature.png`, up to 1 MB.
               required:
                 - surveyId
                 - fileName
                 - fileType
+                - elementId
               example:
                 surveyId: cm7pr0x2y004o192zmit8cjvb
                 fileName: example.jpg
                 fileType: image/jpeg
+                elementId: upload_element_1
       responses:
         "200":
           description: OK - Returns the signed URL, presigned fields, updated file name,

@@ -113,6 +113,22 @@ describe("POST /api/v1/client/[workspaceId]/storage", () => {
     expect(mocks.getSignedUrlForUpload).not.toHaveBeenCalled();
   });
 
+  test("refuses a file name the element does not accept, before any upload URL is issued", async () => {
+    mocks.getSurvey.mockResolvedValue({
+      id: SURVEY_ID,
+      workspaceId: WORKSPACE_ID,
+      type: "link",
+      status: "inProgress",
+    });
+    mocks.validateSurveyAllowsUpload.mockReturnValue({ ok: false, reason: "file_name_not_allowed" });
+
+    const { response } = await callPost({ fileName: "sig.png" });
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({ message: "File name is not allowed for this element" });
+    expect(mocks.getSignedUrlForUpload).not.toHaveBeenCalled();
+  });
+
   test("issues an upload URL for a PIN-protected survey with a valid PIN token", async () => {
     mocks.getSurvey.mockResolvedValue({
       id: SURVEY_ID,
