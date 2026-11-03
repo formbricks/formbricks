@@ -170,7 +170,7 @@ const contentOf = (payload: unknown): string =>
 /** One import of one file: its outcome, and the draft's content for a comparison. */
 const importOnce = async (bytes: Uint8Array, name: string, responses: unknown[]) => {
   const startedAt = performance.now();
-  const prepared = await prepare(bytes, name);
+  const prepared = prepare(bytes, name);
   try {
     const result = await runDocumentImport({
       prepared,
