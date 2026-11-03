@@ -244,11 +244,11 @@ reviews:
     - path: "apps/web/app/api/v1/**"
       instructions: |
         API v1 is the legacy public contract used by self-hosted deployments and existing
-        integrations. Treat a released shape as breaking when it breaks a consumer that cannot
-        update: renaming, removing or retyping a field, requiring one that was optional, or
-        changing a default or the status code for an existing case — it must be intentional, and
-        the PR's "Breaking changes" table must document it. A new optional field or endpoint is
-        additive and stays unticked. Prefer adding to v3 over changing v1.
+        integrations: shipped clients read it without updating. A released shape is breaking when it
+        is renamed, removed or retyped, when a field that was optional becomes required, or when a
+        default or an existing case's status code changes — it must be intentional, and the PR's
+        "Breaking changes" table must document it. A new optional field or endpoint is additive and
+        stays unticked. Prefer adding to v3 over changing v1.
 
     - path: "apps/web/{app/api/v2,modules/api/v2}/**"
       instructions: |
@@ -323,9 +323,10 @@ reviews:
       instructions: |
         Ships to end users' websites as an embedded bundle. Be strict about added dependencies and
         bundle size, browser compatibility, and anything that leaks respondent data. No Node-only
-        APIs. A published SDK signature is a compatibility contract: renaming, removing or
-        retyping an export, or requiring a parameter that was optional, is breaking once a release
-        publishes it; a new optional export is additive and stays unticked.
+        APIs. A published SDK signature is a compatibility contract: any change an existing caller
+        can trip over is breaking once a release publishes it — renaming, removing or retyping an
+        export, or requiring an argument that callers do not pass. A new optional export or
+        optional parameter is additive and stays unticked.
         The host page is hostile (CODING_STANDARDS.md "Survey Bundles"): flag global CSS (`*`,
         `:root`, `@property`), buttons without `type="button"`, code that needs `eval`, and reliance
         on host globals.
