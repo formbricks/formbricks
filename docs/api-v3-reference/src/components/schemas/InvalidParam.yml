@@ -67,8 +67,8 @@ properties:
       `identifier` names, or it is broken.
 
 
-      `document_limit_exceeded` comes from the survey import of a question list (Excel or CSV): the
-      sheet is past one of the import's limits, which `identifier` names.
+      `document_limit_exceeded` comes from the survey import of a questionnaire (Word, Excel or CSV):
+      the document is past one of the import's limits, which `identifier` names.
   identifier:
     type: string
     description: >-
