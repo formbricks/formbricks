@@ -90,9 +90,16 @@ export class SurveyImportInputError extends Error {
 export class SurveyImportFailedError extends Error {
   /**
    * `too_many_questions`: a document's plan holds more questions than one import takes, the AI ceiling
-   * past which the file is imported through MCP instead.
+   * past which the file is imported through MCP instead. `nothing_importable`: the file was read whole
+   * and holds no question the import can bring over, so trying again cannot help; `no_questions` is
+   * the same outcome with failures on the way, which a retry may not repeat.
    */
-  readonly reason: "no_questions" | "prompt_budget" | "draft_invalid" | "too_many_questions";
+  readonly reason:
+    | "no_questions"
+    | "nothing_importable"
+    | "prompt_budget"
+    | "draft_invalid"
+    | "too_many_questions";
 
   constructor(reason: SurveyImportFailedError["reason"]) {
     super(`The survey import failed: ${reason}`);
@@ -100,6 +107,14 @@ export class SurveyImportFailedError extends Error {
     this.reason = reason;
   }
 }
+
+/**
+ * A plan with no question in it: `nothing_importable` when the plan is conclusive (every unit answered
+ * as a skip or no question, nothing failing on the way), `no_questions` otherwise, since another try
+ * may plan what failed.
+ */
+export const noQuestionsPlanned = (conclusive: boolean): SurveyImportFailedError =>
+  new SurveyImportFailedError(conclusive ? "nothing_importable" : "no_questions");
 
 /**
  * The plan ran out of time before any question was planned: the AI calls that fit before the deadline

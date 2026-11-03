@@ -13,6 +13,8 @@ export const SURVEY_IMPORT_STREAM_ERROR_CODES = {
   TIMED_OUT: "import_timed_out",
   /** A document whose plan holds more questions than one import takes: the dialog points at MCP. */
   TOO_LARGE: "import_too_large",
+  /** A file read whole with no question the import can bring over: trying again cannot help. */
+  NOTHING_IMPORTABLE: "import_nothing_importable",
   FAILED: "import_failed",
 } as const;
 

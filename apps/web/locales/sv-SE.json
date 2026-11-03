@@ -4877,6 +4877,7 @@
           "needs_ai": "Qualtrics-, Word-, Excel- och CSV-filer läses med Formbricks AI, vilket din organisation inte har. Välj en Formbricks-fil (.json).",
           "not_a_qsf": "Det här är inte en exporterad Qualtrics-enkät. Exportera enkäten som en .qsf-fil i Qualtrics och försök igen.",
           "not_allowed": "Du har inte behörighet att importera enkäter till den här arbetsytan.",
+          "nothing_importable": "Den här filen innehåller inga frågor som importen kan ta med. Kontrollera att det är rätt fil, eller skapa enkäten i redigeraren.",
           "rate_limited": "För många förfrågningar. Försök igen om {seconds, plural, one {# sekund} other {# sekunder}}.",
           "session_expired": "Din session har gått ut. Logga in igen och försök på nytt.",
           "still_creating": "Den här enkäten skapas fortfarande. Vänta en stund och försök igen.",

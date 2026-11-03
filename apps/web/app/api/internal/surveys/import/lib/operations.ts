@@ -31,7 +31,13 @@ import { qsfImportLane } from "@/modules/survey/import/qsf/lane";
 import type { TSurveyImportStage } from "@/modules/survey/import/types";
 import { SURVEY_IMPORT_HEARTBEAT_MS } from "./constants";
 import { importTimedOutEvent, toSurveyImportStreamErrorEvent } from "./error-events";
-import type { TSurveyImportStreamEvent } from "./events";
+import { SURVEY_IMPORT_STREAM_ERROR_CODES, type TSurveyImportStreamEvent } from "./events";
+
+/** Stream failures that describe the file, which the user can act on, rather than a fault. */
+const FILE_OUTCOME_CODES: ReadonlySet<string> = new Set([
+  SURVEY_IMPORT_STREAM_ERROR_CODES.TOO_LARGE,
+  SURVEY_IMPORT_STREAM_ERROR_CODES.NOTHING_IMPORTABLE,
+]);
 
 const OPERATION = "surveys.import";
 
@@ -303,7 +309,10 @@ export async function runSurveyImportLane<TInput, TPrepared>({
 
       const event = toSurveyImportStreamErrorEvent(error);
       errorCode = event.code;
-      log.error(loggableAIError(error), "Survey import failed");
+      // A file past the AI ceiling, or with nothing to import, is the file's doing, not an incident.
+      if (FILE_OUTCOME_CODES.has(event.code))
+        log.warn({ errorCode: event.code }, "Survey import refused the file");
+      else log.error(loggableAIError(error), "Survey import failed");
       return event;
     },
     onCancel: importAbort.abort,

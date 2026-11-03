@@ -115,6 +115,11 @@ export interface TDocumentLanguages {
 }
 
 export interface TDocumentCheckedPlan extends TImportCheckedPlan<TDocumentPlanFailure> {
+  /**
+   * Answers that named none of the lines they were asked about. No failure (a chunk can hold only the
+   * rest of a question), but such an answer says nothing about whether its lines are questions.
+   */
+  silentResponses: number;
   entries: Map<string, TDocumentPlannedEntry>;
   /** Skipped by the AI, with its cleaned reason (or `null`). */
   skipped: Map<string, string | null>;
@@ -399,7 +404,12 @@ export function checkDocumentPlanResponses(
   responses: TImportPlanResponse[],
   round: { retry: boolean }
 ): TDocumentCheckedPlan {
-  const plan: TDocumentCheckedPlan = { entries: new Map(), skipped: new Map(), failures: new Map() };
+  const plan: TDocumentCheckedPlan = {
+    entries: new Map(),
+    skipped: new Map(),
+    failures: new Map(),
+    silentResponses: 0,
+  };
   const addFailure = (ref: string, reason: TDocumentPlanFailure) => {
     const reasons = plan.failures.get(ref) ?? [];
     if (!reasons.includes(reason)) reasons.push(reason);
@@ -448,6 +458,7 @@ function judgeResponse(
 ): void {
   const entries = collectEntries(envelope.questions, refs, addFailure);
   const skips = collectSkips(envelope.skipped, refs);
+  if (entries.size === 0 && skips.size === 0) plan.silentResponses += 1;
 
   // A line that is no entry's start — a header, a continuation, a comment — is not a failure: the AI
   // decides which lines are questions.
@@ -513,6 +524,7 @@ export function mergeDocumentPlans(
     entries: new Map([...first.entries, ...retry.entries]),
     skipped: new Map([...first.skipped, ...retry.skipped]),
     failures: new Map(retry.failures),
+    silentResponses: first.silentResponses + retry.silentResponses,
   };
 }
 

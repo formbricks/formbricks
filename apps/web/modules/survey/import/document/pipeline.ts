@@ -5,7 +5,7 @@ import { getAITimeoutMs } from "@/lib/ai/timeout";
 import { AI_TRACING_FEATURE } from "@/lib/posthog/ai-tracing-feature";
 import type { TImportPlanGenerate } from "../core/ai-plan";
 import type { TSurveyImportAssembly, TSurveyImportDraft } from "../core/draft";
-import { SurveyImportFailedError } from "../core/errors";
+import { SurveyImportFailedError, noQuestionsPlanned } from "../core/errors";
 import { yieldToOthers } from "../core/event-loop";
 import { checkImportDraftInSlices, elementsAtFault } from "../core/final-gate";
 import { fitDraftToCreateLimit } from "../core/fit-draft";
@@ -211,7 +211,7 @@ export async function runDocumentImport(
   // The AI ceiling on questions (decision 18): a survey this large is imported through MCP instead.
   if (countQuestions(entries) > SURVEY_IMPORT_MAX_QUESTIONS)
     throw new SurveyImportFailedError("too_many_questions");
-  if (countQuestions(entries) === 0) throw new SurveyImportFailedError("no_questions");
+  if (countQuestions(entries) === 0) throw noQuestionsPlanned(planned.conclusive);
   const languages = planned.context.languages;
   if (!languages) throw new SurveyImportFailedError("no_questions");
 

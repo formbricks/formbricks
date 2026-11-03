@@ -14,7 +14,11 @@ import {
   openedUploads,
 } from "@/modules/survey/import/core/__fixtures__/in-process-upload";
 import { zipOf } from "@/modules/survey/import/core/__fixtures__/zip-builders";
-import { SurveyImportInputError, SurveyImportTimeoutError } from "@/modules/survey/import/core/errors";
+import {
+  SurveyImportFailedError,
+  SurveyImportInputError,
+  SurveyImportTimeoutError,
+} from "@/modules/survey/import/core/errors";
 import type { TSurveyImportLane, TSurveyImportResult } from "@/modules/survey/import/core/lane";
 import { docx, p } from "@/modules/survey/import/document/__fixtures__/docx-builders";
 import {
@@ -952,6 +956,22 @@ describe("streamSurveyImport", () => {
         expect.objectContaining({ type: "error", code: "ai_quota_exceeded", retryAfter: 30 })
       );
     });
+
+    test.each([
+      ["nothing_importable", "import_nothing_importable"],
+      ["too_many_questions", "import_too_large"],
+    ] as const)(
+      "answers a file with %s as %s, a warning about the file, not an incident",
+      async (reason, code) => {
+        mocks.runQsfImport.mockRejectedValue(new SurveyImportFailedError(reason));
+
+        const events = await readEvents(await call());
+
+        expect(events.at(-1)).toMatchObject({ type: "error", code });
+        expect(mocks.log.warn).toHaveBeenCalledWith({ errorCode: code }, "Survey import refused the file");
+        expect(mocks.log.error).not.toHaveBeenCalled();
+      }
+    );
 
     test("reports any other failure with a fixed message, and logs where it failed, never what it said", async () => {
       // Any error can carry file content in its message — the AI SDK's validation errors carry the

@@ -591,6 +591,25 @@ describe("the AI ceiling", () => {
     expect(done.report.summary.questions).toBe(1);
   });
 
+  test("a file whose every line the AI answers as no question has nothing to import, not a retry", async () => {
+    const before = await surveyCount();
+    ai.generate = recordedDocumentGenerate({
+      defaultLanguage: "en-US",
+      languages: ["en-US"],
+      titleCell: null,
+      questions: [],
+      skipped: [
+        { ref: "R1", reason: "A heading" },
+        { ref: "R2", reason: "A note" },
+      ],
+    });
+
+    const events = await readEvents(await preview(new TextEncoder().encode("Heading\nNote"), "notes.csv"));
+
+    expect(events.at(-1)).toMatchObject({ type: "error", code: "import_nothing_importable" });
+    expect(await surveyCount()).toBe(before);
+  });
+
   test("a plan of more than 200 questions fails without a draft, pointing at MCP, and creates nothing", async () => {
     const before = await surveyCount();
     const rows = (count: number) => Array.from({ length: count }, (_, index) => `Q${index + 1}`).join("\n");

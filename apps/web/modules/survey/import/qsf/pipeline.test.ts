@@ -451,7 +451,7 @@ describe("runQsfImport on recorded plans", () => {
     expect((error as SurveyImportFailedError).reason).toBe("no_questions");
   });
 
-  test("fails the import when no question survives", async () => {
+  test("has nothing to import when the AI skips every question", async () => {
     mocks.generateOrganizationAIObject.mockResolvedValue({
       object: {
         blocks: [],
@@ -463,7 +463,7 @@ describe("runQsfImport on recorded plans", () => {
     const error = await run("simple.qsf").catch((caught: unknown) => caught);
 
     expect(error).toBeInstanceOf(SurveyImportFailedError);
-    expect((error as SurveyImportFailedError).reason).toBe("no_questions");
+    expect((error as SurveyImportFailedError).reason).toBe("nothing_importable");
   });
 
   test("drops an element the create would refuse, reports it and assembles again", async () => {

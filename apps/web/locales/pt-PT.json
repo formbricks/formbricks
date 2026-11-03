@@ -4877,6 +4877,7 @@
           "needs_ai": "Os ficheiros Qualtrics, Word, Excel e CSV são lidos com a IA do Formbricks, que a tua organização não tem. Escolhe um ficheiro Formbricks (.json).",
           "not_a_qsf": "Esta não é uma exportação de inquérito do Qualtrics. No Qualtrics, exporte o inquérito como ficheiro .qsf e tente novamente.",
           "not_allowed": "Não tem permissão para importar inquéritos para este espaço de trabalho.",
+          "nothing_importable": "Este ficheiro não tem nenhuma pergunta que a importação consiga trazer. Verifica se é o ficheiro certo ou cria o inquérito no editor.",
           "rate_limited": "Demasiados pedidos. Tente novamente dentro de {seconds, plural, one {# segundo} other {# segundos}}.",
           "session_expired": "A sua sessão expirou. Inicie sessão novamente e tente de novo.",
           "still_creating": "Este inquérito ainda está a ser criado. Aguarda um momento e tenta novamente.",

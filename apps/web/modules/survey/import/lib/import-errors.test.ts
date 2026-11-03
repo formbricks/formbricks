@@ -190,6 +190,7 @@ describe("getSurveyImportErrorMessage for each refusal and stream error", () => 
     ["import_timed_out", "timed_out"],
     ["import_failed", "failed"],
     ["import_too_large", "too_many_questions"],
+    ["import_nothing_importable", "nothing_importable"],
   ])("%s", (code, key) => {
     expect(getSurveyImportErrorMessage(code, t)).toBe(`workspace.surveys.import.errors.${key}`);
   });

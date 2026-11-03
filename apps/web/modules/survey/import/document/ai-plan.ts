@@ -108,5 +108,8 @@ export async function planDocumentImport(params: {
     throw new SurveyImportTimeoutError();
   }
 
-  return { plan, context, issues, usage: run.usage, calls: run.calls };
+  // Every line was answered: placed, skipped, or left out by an answer that named others.
+  const conclusive =
+    !run.failedOnTheWay && plan.silentResponses === 0 && plan.entries.size + plan.skipped.size > 0;
+  return { plan, context, issues, usage: run.usage, calls: run.calls, conclusive };
 }

@@ -342,6 +342,30 @@ describe("checkDocumentPlanResponses: an answer", () => {
   });
 });
 
+describe("an answer that names none of its lines", () => {
+  test("is no failure, but is counted, beside one that skipped its lines", () => {
+    const { plan } = check([
+      answer(["R1"], [], [{ ref: "R1", reason: "The header" }]),
+      answer(["R2", "R3", "R4"], [], []),
+    ]);
+
+    expect(plan.failures.size).toBe(0);
+    expect(plan.skipped.has("R1")).toBe(true);
+    expect(plan.silentResponses).toBe(1);
+  });
+
+  test("is counted across a retry", () => {
+    const first = check([answer(["R2"], [], [])]).plan;
+    const retry = check([answer(["R3"], [], [])], true).plan;
+
+    expect(mergeDocumentPlans(first, retry).silentResponses).toBe(2);
+  });
+
+  test("is not one that names a line it was asked about", () => {
+    expect(check([answer(["R2"], [entry("R2")])]).plan.silentResponses).toBe(0);
+  });
+});
+
 describe("mergeDocumentPlans", () => {
   test("the retry's verdicts replace the first round's failures, and its entries join the first's", () => {
     const first = check([answer(["R2", "R3"], [entry("R2"), entry("R3", { kind: "address" })])]).plan;

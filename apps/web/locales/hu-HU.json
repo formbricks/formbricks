@@ -4877,6 +4877,7 @@
           "needs_ai": "A Qualtrics-, Word-, Excel- és CSV-fájlokat a Formbricks AI olvassa be, amellyel az Ön szervezete nem rendelkezik. Kérjük, válasszon Formbricks-fájlt (.json).",
           "not_a_qsf": "Ez nem egy Qualtrics-felmérésexport. Kérjük, exportálja a felmérést a Qualtricsben .qsf fájlként, majd próbálja meg újra.",
           "not_allowed": "Önnek nincs jogosultsága felmérések importálására ebbe a munkaterületbe.",
+          "nothing_importable": "Ez a fájl nem tartalmaz olyan kérdést, amelyet az importálás át tudna vinni. Kérjük, ellenőrizze, hogy a megfelelő fájlt választotta-e ki, vagy hozza létre a felmérést a szerkesztőben.",
           "rate_limited": "Túl sok kérés érkezett. Kérjük, {seconds, plural, one {# másodperc} other {# másodperc}} múlva próbálja meg újra.",
           "session_expired": "Az Ön munkamenete lejárt. Kérjük, jelentkezzen be újra, majd próbálja meg ismét.",
           "still_creating": "A felmérés létrehozása még folyamatban van. Kérjük, várjon egy pillanatot, majd próbálja újra.",

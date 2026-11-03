@@ -4877,6 +4877,7 @@
           "needs_ai": "Fișierele Qualtrics, Word, Excel și CSV sunt citite cu Formbricks AI, de care organizația ta nu dispune. Alege un fișier Formbricks (.json).",
           "not_a_qsf": "Acesta nu este un export de sondaj Qualtrics. În Qualtrics, exportă sondajul ca fișier .qsf și încearcă din nou.",
           "not_allowed": "Nu ai permisiunea de a importa sondaje în acest spațiu de lucru.",
+          "nothing_importable": "Acest fișier nu conține nicio întrebare pe care importul să o poată prelua. Verifică dacă este fișierul corect sau creează chestionarul în editor.",
           "rate_limited": "Prea multe solicitări. Încearcă din nou peste {seconds, plural, one {# secundă} few {# secunde} other {# de secunde}}.",
           "session_expired": "Sesiunea ta a expirat. Autentifică-te din nou și reîncearcă.",
           "still_creating": "Sondajul este încă în curs de creare. Așteaptă un moment, apoi încearcă din nou.",

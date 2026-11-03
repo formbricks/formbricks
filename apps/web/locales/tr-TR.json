@@ -4877,6 +4877,7 @@
           "needs_ai": "Qualtrics, Word, Excel ve CSV dosyaları Formbricks AI ile okunur, ancak kuruluşunda bu özellik yok. Bir Formbricks dosyası (.json) seç.",
           "not_a_qsf": "Bu bir Qualtrics anket dışa aktarımı değil. Qualtrics'te anketi .qsf dosyası olarak dışa aktar ve tekrar dene.",
           "not_allowed": "Bu çalışma alanına anket içe aktarma izniniz yok.",
+          "nothing_importable": "Bu dosyada içe aktarılabilecek hiçbir soru yok. Doğru dosya olduğundan emin ol ya da anketi düzenleyicide oluştur.",
           "rate_limited": "Çok fazla istek gönderildi. {seconds, plural, one {# saniye} other {# saniye}} sonra tekrar dene.",
           "session_expired": "Oturumun sona erdi. Tekrar giriş yapıp yeniden dene.",
           "still_creating": "Bu anket hâlâ oluşturuluyor. Biraz bekle, sonra tekrar dene.",

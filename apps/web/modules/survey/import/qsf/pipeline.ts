@@ -5,7 +5,7 @@ import { getAITimeoutMs } from "@/lib/ai/timeout";
 import { AI_TRACING_FEATURE } from "@/lib/posthog/ai-tracing-feature";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import type { TSurveyImportAssembly, TSurveyImportDraft } from "../core/draft";
-import { SurveyImportFailedError } from "../core/errors";
+import { SurveyImportFailedError, noQuestionsPlanned } from "../core/errors";
 import { yieldToOthers } from "../core/event-loop";
 import { checkImportDraftInSlices, elementsAtFault } from "../core/final-gate";
 import type { TSurveyImportResult, TSurveyImportRunParams } from "../core/lane";
@@ -144,7 +144,7 @@ export async function runQsfImport(
 
   signal.throwIfAborted();
   onProgress("assembling");
-  if (planned.plan.questions.size === 0) throw new SurveyImportFailedError("no_questions");
+  if (planned.plan.questions.size === 0) throw noQuestionsPlanned(planned.conclusive);
 
   // Only asked when there is a redirect to keep: on Cloud it is a billing lookup.
   const allowExternalUrls = survey.endRedirectUrl ? await getExternalUrlsPermission(organizationId) : false;

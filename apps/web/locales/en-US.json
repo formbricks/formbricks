@@ -4877,6 +4877,7 @@
           "needs_ai": "Qualtrics, Word, Excel and CSV files are read with Formbricks AI, which your organization does not have. Choose a Formbricks file (.json).",
           "not_a_qsf": "This is not a Qualtrics survey export. In Qualtrics, export the survey as a .qsf file and try again.",
           "not_allowed": "You do not have permission to import surveys into this workspace.",
+          "nothing_importable": "This file has no question the import can bring over. Check that it is the right file, or create the survey in the editor.",
           "rate_limited": "Too many requests. Try again in {seconds, plural, one {# second} other {# seconds}}.",
           "session_expired": "Your session has expired. Sign in again and retry.",
           "still_creating": "This survey is still being created. Wait a moment, then try again.",

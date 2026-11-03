@@ -16,10 +16,20 @@ const STREAM_ERROR_DETAILS = {
   [SURVEY_IMPORT_STREAM_ERROR_CODES.TIMED_OUT]: "The import took too long and was stopped. Try again.",
   [SURVEY_IMPORT_STREAM_ERROR_CODES.TOO_LARGE]:
     "The survey has more questions than one import takes. Import it through MCP with an AI assistant instead.",
+  [SURVEY_IMPORT_STREAM_ERROR_CODES.NOTHING_IMPORTABLE]:
+    "The file has no question the import can bring over. Check the file, or create the survey in the editor.",
   [SURVEY_IMPORT_STREAM_ERROR_CODES.FAILED]: "The file could not be imported. Try again.",
 } as const;
 
 type TSurveyImportErrorEvent = Extract<TSurveyImportStreamEvent, { type: "error" }>;
+
+/** The failures a user can act on, each with its own code; any other reason is `import_failed`. */
+const FAILED_REASON_CODES: Partial<
+  Record<SurveyImportFailedError["reason"], keyof typeof STREAM_ERROR_DETAILS>
+> = {
+  too_many_questions: SURVEY_IMPORT_STREAM_ERROR_CODES.TOO_LARGE,
+  nothing_importable: SURVEY_IMPORT_STREAM_ERROR_CODES.NOTHING_IMPORTABLE,
+};
 
 /** The in-band event for an import that hit its deadline. */
 export function importTimedOutEvent(): TSurveyImportErrorEvent {
@@ -35,12 +45,9 @@ export function importTimedOutEvent(): TSurveyImportErrorEvent {
  * the AI gate, a file that is not a QSF — are problem responses, not events.
  */
 export function toSurveyImportStreamErrorEvent(error: unknown): TSurveyImportErrorEvent {
-  if (error instanceof SurveyImportFailedError && error.reason === "too_many_questions") {
-    return {
-      type: "error",
-      code: SURVEY_IMPORT_STREAM_ERROR_CODES.TOO_LARGE,
-      detail: STREAM_ERROR_DETAILS[SURVEY_IMPORT_STREAM_ERROR_CODES.TOO_LARGE],
-    };
+  if (error instanceof SurveyImportFailedError) {
+    const code = FAILED_REASON_CODES[error.reason];
+    if (code) return { type: "error", code, detail: STREAM_ERROR_DETAILS[code] };
   }
 
   const aiFailure = classifyAIStreamFailure(error);

@@ -4877,6 +4877,7 @@
           "needs_ai": "Qualtrics-, Word-, Excel- en CSV-bestanden worden gelezen met Formbricks AI, die je organisatie niet heeft. Kies een Formbricks-bestand (.json).",
           "not_a_qsf": "Dit is geen export van een Qualtrics-enquête. Exporteer de enquête in Qualtrics als .qsf-bestand en probeer het opnieuw.",
           "not_allowed": "Je hebt geen toestemming om enquêtes in deze workspace te importeren.",
+          "nothing_importable": "Dit bestand bevat geen vragen die kunnen worden geïmporteerd. Controleer of je het juiste bestand hebt gekozen, of maak de enquête aan in de editor.",
           "rate_limited": "Te veel verzoeken. Probeer het opnieuw over {seconds, plural, one {# seconde} other {# seconden}}.",
           "session_expired": "Je sessie is verlopen. Log opnieuw in en probeer het nog eens.",
           "still_creating": "Deze enquête wordt nog aangemaakt. Wacht even en probeer het dan opnieuw.",

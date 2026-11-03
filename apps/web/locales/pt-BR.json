@@ -4877,6 +4877,7 @@
           "needs_ai": "Arquivos do Qualtrics, Word, Excel e CSV são lidos com a IA do Formbricks, que sua organização não tem. Escolha um arquivo do Formbricks (.json).",
           "not_a_qsf": "Este arquivo não é uma exportação de pesquisa do Qualtrics. No Qualtrics, exporte a pesquisa como um arquivo .qsf e tente novamente.",
           "not_allowed": "Você não tem permissão para importar pesquisas para este workspace.",
+          "nothing_importable": "Este arquivo não tem nenhuma pergunta que a importação consiga trazer. Confira se é o arquivo certo ou crie a pesquisa no editor.",
           "rate_limited": "Muitas solicitações. Tente novamente em {seconds, plural, one {# segundo} many {# de segundos} other {# segundos}}.",
           "session_expired": "Sua sessão expirou. Faça login novamente e tente de novo.",
           "still_creating": "Esta pesquisa ainda está sendo criada. Aguarde um momento e tente novamente.",

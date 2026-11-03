@@ -4877,6 +4877,7 @@
           "needs_ai": "Los archivos de Qualtrics, Word, Excel y CSV se leen con Formbricks AI, que tu organización no tiene. Elige un archivo de Formbricks (.json).",
           "not_a_qsf": "Este archivo no es una exportación de una encuesta de Qualtrics. En Qualtrics, exporta la encuesta como archivo .qsf e inténtalo de nuevo.",
           "not_allowed": "No tienes permiso para importar encuestas en este espacio de trabajo.",
+          "nothing_importable": "Este archivo no contiene ninguna pregunta que se pueda importar. Comprueba que sea el archivo correcto o crea la encuesta en el editor.",
           "rate_limited": "Demasiadas solicitudes. Inténtalo de nuevo en {seconds, plural, one {# segundo} other {# segundos}}.",
           "session_expired": "Tu sesión ha caducado. Inicia sesión de nuevo e inténtalo otra vez.",
           "still_creating": "Esta encuesta aún se está creando. Espera un momento e inténtalo de nuevo.",

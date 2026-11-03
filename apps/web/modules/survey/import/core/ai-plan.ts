@@ -149,6 +149,11 @@ export interface TImportPlanRun<TPlan> {
   calls: number;
   /** Whether a call was left unsent because the time before the deadline was too short for one. */
   ranOutOfTime: boolean;
+  /**
+   * Whether any unit failed on the way, in the first round, even if the retry then placed or skipped
+   * it: a plan that came out empty after such a failure might not on another try.
+   */
+  failedOnTheWay: boolean;
 }
 
 interface TPlanContext<TFailure extends string, TPlan extends TImportCheckedPlan<TFailure>> {
@@ -439,6 +444,8 @@ export async function runImportPlan<
     Math.min(callTimeoutMs, Math.floor(deadline - performance.now() - SURVEY_IMPORT_ASSEMBLY_RESERVE_MS));
 
   let plan = await planRound(context, lane.chunk(refs), callTimeout, abort);
+  // Only units that failed are retried, so a first round without failures is the whole story.
+  const failedOnTheWay = plan.failures.size > 0;
 
   const unplanned = new Map(
     [...plan.failures].filter(
@@ -452,7 +459,13 @@ export async function runImportPlan<
     for (const [ref, reasons] of unplanned) plan.failures.set(ref, reasons);
   }
 
-  return { plan, usage: context.usage, calls: context.calls, ranOutOfTime: context.ranOutOfTime };
+  return {
+    plan,
+    usage: context.usage,
+    calls: context.calls,
+    ranOutOfTime: context.ranOutOfTime,
+    failedOnTheWay,
+  };
 }
 
 /** The report's cause for a unit the plan could not place. */

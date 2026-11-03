@@ -4877,6 +4877,7 @@
           "needs_ai": "Qualtrics、Word、Excel 和 CSV 文件需要通过 Formbricks AI 读取,而你的组织暂未开通该功能。请选择 Formbricks 文件 (.json)。",
           "not_a_qsf": "这不是 Qualtrics 问卷导出文件。请在 Qualtrics 中将问卷导出为 .qsf 文件，然后重试。",
           "not_allowed": "你没有权限向此工作区导入问卷。",
+          "nothing_importable": "这个文件中没有可以导入的问题。请检查是否选对了文件,或者直接在编辑器中创建问卷。",
           "rate_limited": "请求过于频繁。请在 {seconds, plural, other {# 秒}}后重试。",
           "session_expired": "你的登录已过期。请重新登录后再试。",
           "still_creating": "此问卷仍在创建中。请稍等片刻,然后重试。",

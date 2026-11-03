@@ -417,13 +417,36 @@ describe("runDocumentImport: the AI ceiling", () => {
     expect(report.summary.questions).toBe(SURVEY_IMPORT_MAX_QUESTIONS);
   });
 
-  test("a plan with no question in it fails: a welcome and an ending alone are no survey", async () => {
+  test("a plan with no question in it, every line answered, has nothing to import: a welcome and an ending alone are no survey", async () => {
     const plan = planOf([
       { ...openTextEntry("R1", "A1"), kind: "welcome" },
       { ...openTextEntry("R2", "A2"), kind: "ending" },
     ]);
 
+    expect(await failureOf(run(listOf(2), recordedDocumentGenerate(plan)))).toBe("nothing_importable");
+  });
+
+  test("an answer that names no line at all fails as retryable, not as nothing to import", async () => {
+    const plan = planOf([]);
+
     expect(await failureOf(run(listOf(2), recordedDocumentGenerate(plan)))).toBe("no_questions");
+  });
+
+  test("a plan that failed on the way stays retryable, even when the retry then leaves the line out", async () => {
+    let calls = 0;
+    const generate = recordedDocumentGenerate(planOf([]), () => {
+      calls += 1;
+      // The first answer places R2 and R3 on cells the file doesn't have, which fails both. The retry,
+      // asked about those two, skips R3 and leaves R2 out: no failure is left, and nothing is silent.
+      return calls === 1
+        ? planOf([openTextEntry("R2", "Z8"), openTextEntry("R3", "Z9")], {
+            skipped: [{ ref: "R1", reason: "A heading" }],
+          })
+        : planOf([], { skipped: [{ ref: "R3", reason: "A note" }] });
+    });
+
+    expect(await failureOf(run(listOf(3), generate))).toBe("no_questions");
+    expect(calls).toBe(2);
   });
 
   test("a plan whose languages could not be read fails with nothing to import", async () => {
