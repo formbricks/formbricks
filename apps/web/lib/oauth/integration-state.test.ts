@@ -20,6 +20,7 @@ vi.mock("@formbricks/logger", () => ({
 vi.mock("@/lib/cache", () => ({
   cache: {
     getRedisClient: vi.fn(),
+    runRedisOperation: vi.fn(),
     set: vi.fn(),
   },
 }));
@@ -35,7 +36,7 @@ const oauthStatePayload = {
 
 const mockRedisConsume = (value: unknown) => {
   const evalMock = vi.fn().mockResolvedValue(value === null ? null : JSON.stringify(value));
-  mockCache.getRedisClient.mockResolvedValueOnce({ eval: evalMock } as any);
+  mockCache.getRedisClient.mockResolvedValue({ eval: evalMock } as any);
   return evalMock;
 };
 
@@ -43,6 +44,11 @@ describe("integration OAuth state", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     mockCache.set.mockResolvedValue({ ok: true, data: undefined });
+    mockCache.runRedisOperation.mockImplementation(async (operation) => {
+      const redis = await mockCache.getRedisClient();
+      if (!redis) throw new Error("Redis unavailable");
+      return operation(redis);
+    });
   });
 
   test("creates an opaque cached state that does not expose the workspace id", async () => {
@@ -221,7 +227,7 @@ describe("integration OAuth state", () => {
   });
 
   test("rejects unexpected cached value types", async () => {
-    mockCache.getRedisClient.mockResolvedValueOnce({
+    mockCache.getRedisClient.mockResolvedValue({
       eval: vi.fn().mockResolvedValue(42),
     } as any);
 
@@ -237,7 +243,7 @@ describe("integration OAuth state", () => {
   });
 
   test("fails closed when atomic cache consumption fails", async () => {
-    mockCache.getRedisClient.mockResolvedValueOnce({
+    mockCache.getRedisClient.mockResolvedValue({
       eval: vi.fn().mockRejectedValue(new Error("Redis failed")),
     } as any);
 

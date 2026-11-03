@@ -104,18 +104,20 @@ const consumeCachedIntegrationOAuthState = async (
   }
 
   try {
-    const serializedValue = await redis.eval(
-      `
+    const serializedValue = await cache.runRedisOperation((client) =>
+      client.eval(
+        `
         local value = redis.call("GET", KEYS[1])
         if value then
           redis.call("DEL", KEYS[1])
         end
         return value
       `,
-      {
-        arguments: [],
-        keys: [cacheKey],
-      }
+        {
+          arguments: [],
+          keys: [cacheKey],
+        }
+      )
     );
 
     if (serializedValue === null) {

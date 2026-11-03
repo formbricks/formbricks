@@ -123,27 +123,29 @@ export const incrementCreativeCounters = async (
   if (!redis) return false;
 
   const day = toUtcDay(now);
-  await redis.eval(INCREMENT_SCRIPT, {
-    keys: [
-      createCacheKey.creativeStats.pending(day),
-      ...counts.creatives.flatMap(({ creativeId }) => [
-        createCacheKey.creativeStats.devices(day, creativeId),
-        createCacheKey.creativeStats.pages(day, creativeId),
-      ]),
-    ],
-    arguments: [
-      String(CREATIVE_COUNTER_TTL_SECONDS),
-      String(MAX_COUNTED_PAGES_PER_DAY),
-      counts.page,
-      counts.deviceType,
-      OTHER_PAGE,
-      ...counts.creatives.flatMap(({ creativeId, impressions, clicks }) => [
-        creativeId,
-        String(impressions),
-        String(clicks),
-      ]),
-    ],
-  });
+  await cache.runRedisOperation((client) =>
+    client.eval(INCREMENT_SCRIPT, {
+      keys: [
+        createCacheKey.creativeStats.pending(day),
+        ...counts.creatives.flatMap(({ creativeId }) => [
+          createCacheKey.creativeStats.devices(day, creativeId),
+          createCacheKey.creativeStats.pages(day, creativeId),
+        ]),
+      ],
+      arguments: [
+        String(CREATIVE_COUNTER_TTL_SECONDS),
+        String(MAX_COUNTED_PAGES_PER_DAY),
+        counts.page,
+        counts.deviceType,
+        OTHER_PAGE,
+        ...counts.creatives.flatMap(({ creativeId, impressions, clicks }) => [
+          creativeId,
+          String(impressions),
+          String(clicks),
+        ]),
+      ],
+    })
+  );
   return true;
 };
 
@@ -151,17 +153,21 @@ export const incrementCreativeCounters = async (
 export const claimCountedCreatives = async (day: string, limit: number): Promise<string[]> => {
   const redis = await getRedis();
   if (!redis) return [];
-  return (await redis.eval(CLAIM_SCRIPT, {
-    keys: [createCacheKey.creativeStats.pending(day), createCacheKey.creativeStats.flushing(day)],
-    arguments: [String(limit), String(CREATIVE_COUNTER_TTL_SECONDS)],
-  })) as string[];
+  return (await cache.runRedisOperation((client) =>
+    client.eval(CLAIM_SCRIPT, {
+      keys: [createCacheKey.creativeStats.pending(day), createCacheKey.creativeStats.flushing(day)],
+      arguments: [String(limit), String(CREATIVE_COUNTER_TTL_SECONDS)],
+    })
+  )) as string[];
 };
 
 /** Marks claimed creatives as flushed. Events counted since were added to `pending` again. */
 export const releaseCountedCreatives = async (day: string, creativeIds: readonly string[]): Promise<void> => {
   const redis = await getRedis();
   if (!redis || creativeIds.length === 0) return;
-  await redis.sRem(createCacheKey.creativeStats.flushing(day), [...creativeIds]);
+  await cache.runRedisOperation((client) =>
+    client.sRem(createCacheKey.creativeStats.flushing(day), [...creativeIds])
+  );
 };
 
 /** Splits `impressions:<x>` / `clicks:<x>` fields into per-`<x>` totals. */
@@ -194,14 +200,16 @@ export const readCreativeCounters = async (
   const redis = await getRedis();
   if (!redis) throw new Error("Redis is not available to read the claimed creative counters");
 
-  const hashes = await Promise.all(
-    creativeIds.map(async (creativeId) => {
-      const [devices, pages] = await Promise.all([
-        redis.hGetAll(createCacheKey.creativeStats.devices(day, creativeId)),
-        redis.hGetAll(createCacheKey.creativeStats.pages(day, creativeId)),
-      ]);
-      return { creativeId, devices, pages };
-    })
+  const hashes = await cache.runRedisOperation((client) =>
+    Promise.all(
+      creativeIds.map(async (creativeId) => {
+        const [devices, pages] = await Promise.all([
+          client.hGetAll(createCacheKey.creativeStats.devices(day, creativeId)),
+          client.hGetAll(createCacheKey.creativeStats.pages(day, creativeId)),
+        ]);
+        return { creativeId, devices, pages };
+      })
+    )
   );
 
   const deviceRows: TCreativeDeviceCountRow[] = [];

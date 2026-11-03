@@ -23,7 +23,8 @@ vi.mock("@/modules/survey/lib/utils", () => ({ transformPrismaSurvey: vi.fn() })
 // Mock dependencies
 vi.mock("@/lib/cache", () => ({
   cache: {
-    withCache: vi.fn(),
+    get: vi.fn(),
+    set: vi.fn(),
   },
 }));
 
@@ -173,8 +174,8 @@ describe("getWorkspaceState", () => {
   beforeEach(() => {
     vi.resetAllMocks();
 
-    // Mock cache.withCache to simply execute the function without caching for tests
-    vi.mocked(cache.withCache).mockImplementation(async (fn) => await fn());
+    vi.mocked(cache.get).mockResolvedValue({ ok: true, data: null });
+    vi.mocked(cache.set).mockResolvedValue({ ok: true, data: undefined });
 
     // Default mocks for successful retrieval
     vi.mocked(getWorkspaceStateData).mockResolvedValue(mockWorkspaceStateData);
@@ -293,14 +294,65 @@ describe("getWorkspaceState", () => {
     expect(result.data.recaptchaSiteKey).toBe("mock_recaptcha_site_key");
   });
 
-  test("should use cache.withCache for caching with correct cache key and TTL", () => {
-    getWorkspaceState(workspaceId);
+  test("should cache workspace state with the correct key and TTL", async () => {
+    await getWorkspaceState(workspaceId);
 
-    expect(cache.withCache).toHaveBeenCalledWith(
-      expect.any(Function),
+    expect(cache.get).toHaveBeenCalledWith(`fb:env:${workspaceId}:state`);
+    expect(cache.set).toHaveBeenCalledWith(
       `fb:env:${workspaceId}:state`,
-      60 * 1000 // 1 minutes in milliseconds
+      expect.objectContaining({ data: expect.any(Object) }),
+      60 * 1000
     );
+  });
+
+  test("bounds database refreshes for a hot workspace while Redis is unavailable", async () => {
+    const outageWorkspaceId = "outage-workspace";
+    const now = Date.now();
+    const clock = vi.spyOn(Date, "now").mockReturnValue(now);
+    vi.mocked(cache.get).mockResolvedValue({ ok: false, error: { code: "redis_connection_error" } });
+
+    await getWorkspaceState(outageWorkspaceId);
+    await getWorkspaceState(outageWorkspaceId);
+    expect(getWorkspaceStateData).toHaveBeenCalledTimes(1);
+    expect(cache.set).not.toHaveBeenCalled();
+
+    clock.mockReturnValue(now + 10_001);
+    await getWorkspaceState(outageWorkspaceId);
+    expect(getWorkspaceStateData).toHaveBeenCalledTimes(2);
+    clock.mockRestore();
+  });
+
+  test("uses Redis again when it recovers after an outage", async () => {
+    const recoveringWorkspaceId = "recovering-workspace";
+    vi.mocked(cache.get).mockResolvedValueOnce({
+      ok: false,
+      error: { code: "redis_connection_error" },
+    });
+
+    const duringOutage = await getWorkspaceState(recoveringWorkspaceId);
+    const recovered = { data: { ...duringOutage.data, recaptchaSiteKey: "recovered" } };
+    vi.mocked(cache.get).mockResolvedValue({ ok: true, data: recovered });
+
+    await expect(getWorkspaceState(recoveringWorkspaceId)).resolves.toEqual(recovered);
+    expect(getWorkspaceStateData).toHaveBeenCalledOnce();
+  });
+
+  test("coalesces concurrent database refreshes during a Redis outage", async () => {
+    vi.mocked(cache.get).mockResolvedValue({ ok: false, error: { code: "redis_connection_error" } });
+    let finishLoad: ((value: WorkspaceStateData) => void) | undefined;
+    vi.mocked(getWorkspaceStateData).mockReturnValue(
+      new Promise<WorkspaceStateData>((resolve) => {
+        finishLoad = resolve;
+      })
+    );
+
+    const first = getWorkspaceState("concurrent-outage-workspace");
+    const second = getWorkspaceState("concurrent-outage-workspace");
+    await vi.waitFor(() => expect(getWorkspaceStateData).toHaveBeenCalledOnce());
+    finishLoad?.(mockWorkspaceStateData);
+
+    await expect(Promise.all([first, second])).resolves.toHaveLength(2);
+    expect(getWorkspaceStateData).toHaveBeenCalledOnce();
   });
 
   test("should propagate database update errors", async () => {
