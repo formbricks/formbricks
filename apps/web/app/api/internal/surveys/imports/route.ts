@@ -5,8 +5,9 @@
  * transaction. 201 with a `Location` header naming the survey.
  *
  * Internal surface under the Internal API RFC (ENG-1668): session-only, no OpenAPI entry and no
- * stability promise, with every other v3 convention applied — the origin check, the default v3 rate
- * limit, RFC 9457 problems. Takes an `Idempotency-Key` header, one per review. Audited as `created` on
+ * stability promise, with every other v3 convention applied — session auth, the default v3 rate
+ * limit, RFC 9457 problems. Cross-site requests are left to the session cookie's SameSite=Lax until the
+ * wrapper checks the request's origin (ENG-3380). Takes an `Idempotency-Key` header, one per review. Audited as `created` on
  * the survey.
  */
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";

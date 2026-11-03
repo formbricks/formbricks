@@ -5,9 +5,10 @@
  * the survey is active or the file is not valid for it.
  *
  * Internal surface under the Internal API RFC (ENG-1668): session-only, no OpenAPI entry and no
- * stability promise, with every other v3 convention applied — the origin check, the default v3 rate
- * limit, RFC 9457 problems. Idempotent through its `updatedAt` precondition, so it takes no
- * Idempotency-Key. Audited as `updated` on the survey.
+ * stability promise, with every other v3 convention applied — session auth, the default v3 rate
+ * limit, RFC 9457 problems. Cross-site requests are left to the session cookie's SameSite=Lax until the
+ * wrapper checks the request's origin (ENG-3380). Idempotent through its `updatedAt` precondition, so it
+ * takes no Idempotency-Key. Audited as `updated` on the survey.
  */
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
 import { SURVEY_IMPORT_MAX_CREATE_BODY_BYTES } from "@/modules/survey/import/limits";
