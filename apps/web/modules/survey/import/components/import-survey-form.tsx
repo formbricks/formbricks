@@ -102,6 +102,9 @@ export const ImportSurveyForm = ({
             : importer.report.issues,
         }
       : null;
+  // An Update keeps the matched survey's name; only a new survey takes the draft's "<name> (imported)".
+  const reviewDraft =
+    isUpdating && importer.match ? { ...importer.draft, name: importer.match.name } : importer.draft;
 
   // The drop zone unmounts when the import starts; Stop is the only action left, so focus goes there.
   useEffect(() => {
@@ -239,7 +242,7 @@ export const ImportSurveyForm = ({
             />
           ) : null}
           <DraftReviewPanel
-            draft={importer.draft}
+            draft={reviewDraft}
             isGenerating={isImporting}
             source={sourceChip}
             facts={reviewReport ? <ImportFacts summary={reviewReport.summary} /> : undefined}

@@ -72,7 +72,7 @@ export const ImportMatchChoice = ({
   return (
     <section className="flex flex-col gap-3 text-sm" data-testid="survey-import-match">
       {conflict === "stale" ? (
-        <Alert variant="warning" size="small" data-testid="survey-import-stale">
+        <Alert variant="warning" data-testid="survey-import-stale">
           <AlertTitle>{t("workspace.surveys.import.match.stale_title", { name: match.name })}</AlertTitle>
           <AlertDescription>{t("workspace.surveys.import.match.stale_description")}</AlertDescription>
         </Alert>
