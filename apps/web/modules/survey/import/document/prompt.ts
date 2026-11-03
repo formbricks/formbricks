@@ -98,7 +98,7 @@ export function buildDocumentPlanSystemPrompt(kind: TDocumentKind): string {
     "2. titleCell: the cell holding the survey's title, when the file has a title line; else null.",
     `3. Each question in questions[], with its ref (the key of the line it starts on) and kind, one of: ${DOCUMENT_PLAN_ELEMENT_TYPES.join(", ")}; or "welcome" for an introduction shown before the questions, "ending" for the closing text.`,
     "4. Its texts: headline (the question), subheader (a description under it, if the file has one), options (choices, ranking items or matrix rows), columns (a matrix's columns), lowerLabel and upperLabel (a scale's end labels). Each is a list of pieces, one per language: {language, cell, text}. text is null when the whole cell is that text; else the exact part of the cell.",
-    "5. idCell: the cell holding the question's ID or number (VIS01, 05), and sectionCell: the cell naming the section or block it is in, if any.",
+    "5. idCell: the cell holding the question's ID or number (VIS01, 05), and sectionCell: the cell naming the section or block it is in, if any. Name every cell (titleCell, idCell, sectionCell) by its key as a string, e.g. C12; never as an object.",
     '6. Its routing, in rules[]: showIf when the question is asked only if an earlier answer holds ("Ask if coded 1 in VIS04"), skipTo when an answer jumps ahead ("If No, skip to Q5"). question is the ID of the question the condition reads, as the file writes it, or the key of the line it starts on; values are option codes or option texts as the file writes them, or numbers; target is the question jumped to, by ID or line key, or "end". One sentence per rule in logicNotes.',
     "",
     "Rules:",
