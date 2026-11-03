@@ -54,10 +54,23 @@ const ZFormbricksFileName = z.string().min(1).max(FORMBRICKS_FILE_MAX_NAME_CHARS
 const ZFormbricksFileDescription = z.string().max(FORMBRICKS_FILE_MAX_DESCRIPTION_CHARS);
 /**
  * An action class's name and key as `ZActionClass` holds them: trimmed first, so a value of spaces alone
- * is refused as empty rather than trimmed to an empty string after the length check passed.
+ * is refused as empty rather than trimmed to an empty string after the length check passed. The pattern
+ * says the same in the published JSON Schema, which cannot express a trim.
  */
-const ZFormbricksFileActionName = z.string().trim().min(1).max(FORMBRICKS_FILE_MAX_NAME_CHARS);
-const ZFormbricksFileActionKey = z.string().trim().min(1).max(FORMBRICKS_FILE_MAX_KEY_CHARS);
+const NOT_BLANK = /\S/;
+// `abort`: a blank value is reported once, as empty, not again by the pattern.
+const ZFormbricksFileActionName = z
+  .string()
+  .trim()
+  .min(1, { abort: true })
+  .max(FORMBRICKS_FILE_MAX_NAME_CHARS)
+  .regex(NOT_BLANK);
+const ZFormbricksFileActionKey = z
+  .string()
+  .trim()
+  .min(1, { abort: true })
+  .max(FORMBRICKS_FILE_MAX_KEY_CHARS)
+  .regex(NOT_BLANK);
 
 /**
  * Where the file came from. The survey id is what a later import matches on; the source instance's URL
