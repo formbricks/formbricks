@@ -18,6 +18,11 @@ import {
 import { lengthBoundedArray } from "@/app/api/v3/lib/bounded-array";
 import { BoundedInvalidParams } from "@/app/api/v3/lib/invalid-params";
 import { type InvalidParam, isInvalidParamCode } from "@/app/api/v3/lib/response";
+import {
+  V3_EMBEDDED_FIELD_KEYS,
+  V3_SURVEY_MAX_EMBEDDED_FIELDS,
+  ZV3SurveyEmbeddedField,
+} from "./embedded-fields";
 import { normalizeV3SurveyWriteLanguageCode } from "./language";
 import { V3_SURVEY_TRANSLATABLE_METADATA_KEYS } from "./translation-fields";
 
@@ -405,6 +410,7 @@ const ROOT_KEYS = new Set([
   "endings",
   "hiddenFields",
   "variables",
+  "embeddedFields",
   "distribution",
   "targeting",
 ]);
@@ -421,6 +427,7 @@ const PATCH_ROOT_KEYS = new Set([
   "endings",
   "hiddenFields",
   "variables",
+  "embeddedFields",
   "distribution",
   "targeting",
 ]);
@@ -1045,6 +1052,10 @@ function getUnsupportedV3SurveyDocumentFields(
     value.variables.forEach((variable, index) =>
       addUnknownKeyIssues(variable, VARIABLE_KEYS, `variables.${index}`, issues)
     );
+  Array.isArray(value.embeddedFields) &&
+    value.embeddedFields.forEach((field, index) =>
+      addUnknownKeyIssues(field, V3_EMBEDDED_FIELD_KEYS, `embeddedFields.${index}`, issues, "embedded field")
+    );
   Array.isArray(value.blocks) &&
     value.blocks.forEach((block, index) =>
       validateBlock(block, `blocks.${index}`, issues, defaultLanguage, options)
@@ -1170,6 +1181,8 @@ const createZV3SurveyEndings = (bound: boolean) =>
   documentArray(ZSurveyEndings.element, { max: V3_SURVEY_MAX_ENDINGS }, bound);
 const createZV3SurveyVariables = (bound: boolean) =>
   documentArray(ZSurveyVariables.element, { max: V3_SURVEY_MAX_VARIABLES }, bound);
+const createZV3SurveyEmbeddedFields = (bound: boolean) =>
+  documentArray(ZV3SurveyEmbeddedField, { max: V3_SURVEY_MAX_EMBEDDED_FIELDS }, bound);
 const createZV3SurveyHiddenFields = (bound: boolean): z.ZodType<z.output<typeof ZSurveyHiddenFields>> =>
   bound
     ? ZSurveyHiddenFields.extend({
@@ -1301,6 +1314,9 @@ function createV3SurveyDocumentShape(options?: TV3LanguageCompatibilityOptions, 
     endings: createZV3SurveyEndings(bound).prefault([]),
     hiddenFields: createZV3SurveyHiddenFields(bound).prefault({ enabled: false }),
     variables: createZV3SurveyVariables(bound).prefault([]),
+    // ENG-6930: typed Embedded Data. Absent unless the request sent it: the legacy keys above are then
+    // derived from it (`settleV3EmbeddedFieldFormats`), and the stored survey is parsed without it.
+    embeddedFields: createZV3SurveyEmbeddedFields(bound).optional(),
     distribution: createZV3SurveyDistribution(bound).optional(),
     targeting: ZV3SurveyTargeting.optional(),
     customCss: ZV3SurveyCustomCss.optional(),
@@ -1322,6 +1338,7 @@ function createV3SurveyPatchShape(options?: TV3LanguageCompatibilityOptions) {
     endings: createZV3SurveyEndings(true).optional(),
     hiddenFields: createZV3SurveyHiddenFields(true).optional(),
     variables: createZV3SurveyVariables(true).optional(),
+    embeddedFields: createZV3SurveyEmbeddedFields(true).optional(),
     distribution: ZV3SurveyDistribution.optional(),
     targeting: ZV3SurveyTargeting.optional(),
     // Omitted: unchanged. `null`: clear both fields. An object: replaces both fields.

@@ -46,6 +46,12 @@ export const SURVEY_FLOW_FIXTURE_IDS = {
     panelId: "panel_id",
     seg: "seg",
     signupDate: "signup_date",
+    // ENG-6930: a workspace library field the survey links by key, locked.
+    planTier: "plan_tier",
+  },
+  /** ENG-6930: the workspace library rows the survey links. */
+  libraryFields: {
+    planTier: "flowlibraryplantier00001",
   },
 } as const;
 
@@ -132,6 +138,19 @@ const embeddedFields: TLinkedEmbeddedField[] = [
       locked: false,
     },
     link: { storageKey: ids.hiddenFields.signupDate },
+  },
+  // ENG-6930: linked from the workspace library (`key` set, `id` naming the library row), and locked.
+  {
+    field: {
+      id: ids.libraryFields.planTier,
+      key: "plan_tier",
+      name: "Plan tier",
+      source: "ingested",
+      dataType: "string",
+      defaultValue: "free",
+      locked: true,
+    },
+    link: { storageKey: ids.hiddenFields.planTier },
   },
 ];
 
@@ -810,7 +829,12 @@ export const surveyFlowFixture: TSurvey = {
   ],
   hiddenFields: {
     enabled: true,
-    fieldIds: [ids.hiddenFields.panelId, ids.hiddenFields.seg, ids.hiddenFields.signupDate],
+    fieldIds: [
+      ids.hiddenFields.panelId,
+      ids.hiddenFields.seg,
+      ids.hiddenFields.signupDate,
+      ids.hiddenFields.planTier,
+    ],
   },
   embeddedFields,
   variables: [

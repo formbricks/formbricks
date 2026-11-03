@@ -516,7 +516,7 @@ paths:
                     $ref: '#/components/schemas/CustomCssWarnings'
         '400':
           description: |
-            Bad Request — the document failed schema validation, i.e. any rule checkable from the request body alone, without consulting stored state. Covers: invalid JSON; unknown or unsupported fields (including `distribution`/`targeting` sent on a `link` survey, which are `app`-only); missing required fields; wrong types or out-of-range values; bad enum values; malformed multilingual maps; and intra-document field-combination rules — notably `displayLimit` is required (must be >= 1) when `displayOption` is `displaySome`. Cross-reference failures that need stored state to detect return **422** instead. Every offending field is itemized in `invalid_params`. Unknown or forbidden fields carry `code: unsupported_field` (e.g. `distribution` on a link survey); omissions carry `code: missing_required_field` (e.g. `displayLimit` when `displayOption` is `displaySome`). Bare type, range, enum, and malformed-locale-map violations report the field `name` with a human-readable `reason` and no machine `code`.
+            Bad Request — the document failed schema validation, i.e. any rule checkable from the request body alone, without consulting stored state. Covers: invalid JSON; unknown or unsupported fields (including `distribution`/`targeting` sent on a `link` survey, which are `app`-only); missing required fields; wrong types or out-of-range values; bad enum values; malformed multilingual maps; and intra-document field-combination rules — notably `displayLimit` is required (must be >= 1) when `displayOption` is `displaySome`. Cross-reference failures that need stored state to detect return **422** instead. Every offending field is itemized in `invalid_params`. Unknown or forbidden fields carry `code: unsupported_field` (e.g. `distribution` on a link survey); omissions carry `code: missing_required_field` (e.g. `displayLimit` when `displayOption` is `displaySome`). Bare type, range, enum, and malformed-locale-map violations report the field `name` with a human-readable `reason` and no machine `code`. Typed Embedded Data that cannot be taken as sent is refused here too, naming each path in `invalid_params`: `embeddedFields` and the legacy `variables` / `hiddenFields` sent together but describing different fields, an `embeddedFields` entry linking a `key` the workspace library does not have, or a field the legacy format could not store.
           content:
             application/problem+json:
               schema:
@@ -1066,8 +1066,18 @@ paths:
                               required: true
                       endings: []
                       hiddenFields:
-                        enabled: false
+                        enabled: true
+                        fieldIds:
+                          - plan_tier
                       variables: []
+                      embeddedFields:
+                        - storageKey: plan_tier
+                          key: plan_tier
+                          name: Plan tier
+                          source: ingested
+                          dataType: string
+                          defaultValue: free
+                          locked: true
                       customCss: null
                 filtered:
                   summary: Language-filtered projection with ?lang=de-DE
@@ -1116,6 +1126,7 @@ paths:
                       hiddenFields:
                         enabled: false
                       variables: []
+                      embeddedFields: []
                       customCss: null
         '400':
           description: Invalid survey id, unsupported query parameter, unknown language, or unsupported legacy survey shape
@@ -1173,6 +1184,14 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchSurveyRequest'
             examples:
+              linkLibraryField:
+                summary: Set the survey's Embedded Data, linking a library field by key
+                value:
+                  embeddedFields:
+                    - key: plan_tier
+                    - name: region
+                      source: ingested
+                      defaultValue: emea
               renameSurvey:
                 summary: Rename a survey
                 value:
@@ -1235,7 +1254,7 @@ paths:
                     $ref: '#/components/schemas/CustomCssWarnings'
         '400':
           description: |
-            Bad Request — the patch failed schema validation, i.e. any rule checkable from the request body alone, without consulting stored state. Covers: malformed JSON; an unsupported query parameter; unknown or unsupported fields (`distribution`/`targeting` are `app`-only — sending them when patching a `link` survey is rejected); wrong types or out-of-range values; bad enum values; malformed multilingual maps; and intra-document field-combination rules — notably `displayLimit` is required (must be >= 1) when `displayOption` is `displaySome`. Cross-reference failures that need stored state to detect return **422** instead. Every offending field is itemized in `invalid_params`. Unknown, forbidden, immutable, or wrongly-combined fields carry `code: unsupported_field` (e.g. `distribution`/`targeting` on a link survey; a changed server-owned field such as `type` is **422** `read_only_field`, not this); omissions carry `code: missing_required_field`. Bare type, range, enum, and malformed-locale-map violations report the field `name` with a human-readable `reason` and no machine `code`.
+            Bad Request — the patch failed schema validation, i.e. any rule checkable from the request body alone, without consulting stored state. Covers: malformed JSON; an unsupported query parameter; unknown or unsupported fields (`distribution`/`targeting` are `app`-only — sending them when patching a `link` survey is rejected); wrong types or out-of-range values; bad enum values; malformed multilingual maps; and intra-document field-combination rules — notably `displayLimit` is required (must be >= 1) when `displayOption` is `displaySome`. Cross-reference failures that need stored state to detect return **422** instead. Every offending field is itemized in `invalid_params`. Unknown, forbidden, immutable, or wrongly-combined fields carry `code: unsupported_field` (e.g. `distribution`/`targeting` on a link survey; a changed server-owned field such as `type` is **422** `read_only_field`, not this); omissions carry `code: missing_required_field`. Bare type, range, enum, and malformed-locale-map violations report the field `name` with a human-readable `reason` and no machine `code`. Typed Embedded Data that cannot be taken as sent is refused here too, naming each path in `invalid_params`: `embeddedFields` and the legacy `variables` / `hiddenFields` sent together but describing different fields, an `embeddedFields` entry linking a `key` the workspace library does not have, or a field the legacy format could not store.
           content:
             application/problem+json:
               schema:
@@ -9352,6 +9371,50 @@ components:
         Survey variable accepted by `POST /api/v3/surveys`. `id` may be omitted and will be
         generated by the server. Provide an explicit cuid2 id when logic in the same request needs
         to reference this variable.
+    SurveyEmbeddedFieldInput:
+      type: object
+      description: |
+        One typed Embedded Data field to give the survey (the shape `GET` returns, with defaults).
+
+        **A local field** (`key` omitted or `null`) needs `name` and `source`. `dataType` defaults to `string`, `defaultValue` to `null`, `locked` to `false`. `storageKey` defaults to a new cuid2 for a computed field and to `name` for an ingested one.
+
+        **A library field** is linked by its `key` alone: the server fills in the definition the workspace library holds, and replaces any definition sent with it, because the workspace owns it. Its `storageKey` defaults to the address the survey already links it at, else to a new cuid2 (computed) or the key (ingested). A `key` the workspace library does not have is refused with **400** at `embeddedFields.<i>.key`; a `source` that contradicts the library's at `.source`.
+
+        Rules a field has to meet: only ingested fields can be `locked`; a computed field is `string` or `number`; `defaultValue` matches `dataType`; storage keys are unique in the survey, and must also be valid legacy ids (a computed field's a cuid2; an ingested field's free of reserved names, as for `hiddenFields.fieldIds`).
+      properties:
+        storageKey:
+          type: string
+          pattern: ^[a-zA-Z0-9_-]+$
+        key:
+          type:
+            - string
+            - 'null'
+          minLength: 1
+          description: A workspace library key, to link that library field.
+        name:
+          type: string
+          minLength: 1
+        source:
+          type: string
+          enum:
+            - computed
+            - ingested
+        dataType:
+          type: string
+          enum:
+            - string
+            - number
+            - boolean
+            - date
+        defaultValue:
+          type:
+            - string
+            - number
+            - boolean
+            - 'null'
+        locked:
+          type: boolean
+      additionalProperties: false
     SurveyShowCondition:
       type: object
       description: |
@@ -10053,6 +10116,12 @@ components:
           maxItems: 100
           items:
             $ref: '#/components/schemas/CreateSurveyVariable'
+        embeddedFields:
+          type: array
+          maxItems: 300
+          description: 'Typed Embedded Data (ADR 0027): the survey''s complete set of computed and ingested fields, including workspace library fields linked by `key`. Optional: existing clients keep sending `variables` and `hiddenFields` alone, which work exactly as before. Sent alone, the legacy fields are derived from this list. Sent together with either legacy field, both have to describe the same fields — matched by storage key, comparing a variable''s name, type and value — or the request is refused with **400**, `invalid_params` naming each path where they differ. On create, an empty `variables` or `hiddenFields` counts as not sent.'
+          items:
+            $ref: '#/components/schemas/SurveyEmbeddedFieldInput'
         distribution:
           allOf:
             - $ref: '#/components/schemas/SurveyDistribution'
@@ -10202,6 +10271,63 @@ components:
       description: |
         Survey variable. Variable ids are stable references used by logic and calculation actions.
         Variable names are human-readable labels and must be unique within the survey.
+    SurveyEmbeddedField:
+      type: object
+      description: |
+        One typed Embedded Data field the survey has. `embeddedFields` is the survey's complete set; the legacy `variables` (its computed fields) and `hiddenFields` (its ingested fields) are derived from it. Logic operands keep naming fields by storage key: a `variable` operand and a calculate action's `variableId` name a computed field's `storageKey`, a `hiddenField` operand an ingested field's.
+      required:
+        - storageKey
+        - key
+        - name
+        - source
+        - dataType
+        - defaultValue
+        - locked
+      properties:
+        storageKey:
+          type: string
+          pattern: ^[a-zA-Z0-9_-]+$
+          description: 'The survey''s address for the field: where responses store its value, and what logic names. A computed field''s is a cuid2 (its legacy variable id); an ingested field''s is the URL parameter or SDK key it arrives under (its legacy hidden field id).'
+          examples:
+            - plan_tier
+        key:
+          type:
+            - string
+            - 'null'
+          description: The workspace library key when the field is a linked library field, whose definition the workspace owns; `null` for a field local to this survey.
+          examples:
+            - plan_tier
+        name:
+          type: string
+          minLength: 1
+          description: Display name.
+          examples:
+            - Plan tier
+        source:
+          type: string
+          enum:
+            - computed
+            - ingested
+          description: '`computed`: set inside the survey by logic. `ingested`: arrives from outside, by URL parameter or SDK.'
+        dataType:
+          type: string
+          enum:
+            - string
+            - number
+            - boolean
+            - date
+          description: The type the value is read and coerced as. A computed field is `string` or `number` today.
+        defaultValue:
+          type:
+            - string
+            - number
+            - boolean
+            - 'null'
+          description: A computed field's initial value; an ingested field's value when nothing arrives. Matches `dataType`; a `date` default is an ISO 8601 date or date-time string.
+        locked:
+          type: boolean
+          description: Ingested fields only. A locked field refuses values from outside the survey.
+      additionalProperties: false
     SurveyResource:
       allOf:
         - type: object
@@ -10224,6 +10350,7 @@ components:
             - endings
             - hiddenFields
             - variables
+            - embeddedFields
             - customCss
           properties:
             id:
@@ -10293,6 +10420,11 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/SurveyVariable'
+            embeddedFields:
+              type: array
+              description: 'Typed Embedded Data (ADR 0027): the survey''s complete set of fields, which `variables` and `hiddenFields` are derived from. Library fields carry their `key`.'
+              items:
+                $ref: '#/components/schemas/SurveyEmbeddedField'
             distribution:
               allOf:
                 - $ref: '#/components/schemas/SurveyDistribution'
@@ -10554,7 +10686,7 @@ components:
 
         The server-owned fields `GET` returns — `id`, `workspaceId`, `type`, `createdAt`, `updatedAt`, `archivedAt`, `defaultLanguage` and `languages[].alias` — are accepted and verified, so a survey fetched with `GET` can be sent straight back. Echoing the value you were given is a no-op; changing one is a **422** `read_only_field`. `visibility`, `owner` and `access` are accepted the same way, but a changed value is a **422** `unsupported_field`: visibility changes go through `POST /api/v3/surveys/{surveyId}/visibility`. A round-tripped `updatedAt` additionally acts as an optimistic-concurrency precondition, and a stale one is rejected with **409**. `questions`, analytics, styling and scripts remain rejected outright. App surveys (stored `type: app`) additionally accept `distribution` and `targeting`; both are rejected for link surveys, and changing `targeting` filters requires the Contacts entitlement.
 
-        `metadata`, `languages`, `welcomeCard`, `blocks`, `endings`, `hiddenFields`, and `variables`
+        `metadata`, `languages`, `welcomeCard`, `blocks`, `endings`, `hiddenFields`, `variables` and `embeddedFields`
         replace their full top-level value when provided. Missing ids in replaced arrays are deletions.
         Non-default locale keys in translatable maps must be declared in `languages`; undeclared locale
         keys are rejected with `unsupported_locale`. To remove a language, remove it from both
@@ -10658,6 +10790,12 @@ components:
           maxItems: 100
           items:
             $ref: '#/components/schemas/SurveyVariable'
+        embeddedFields:
+          type: array
+          maxItems: 300
+          description: 'Typed Embedded Data (ADR 0027): the survey''s complete set of computed and ingested fields, including workspace library fields linked by `key`. Optional: existing clients keep sending `variables` and `hiddenFields` alone, which work exactly as before. Sent alone, the legacy fields are derived from this list. Sent together with either legacy field, both have to describe the same fields — matched by storage key, comparing a variable''s name, type and value — or the request is refused with **400**, `invalid_params` naming each path where they differ. Like the other arrays, it replaces the survey''s whole set; a field left out is removed (a library field is unlinked, never deleted).'
+          items:
+            $ref: '#/components/schemas/SurveyEmbeddedFieldInput'
         distribution:
           allOf:
             - $ref: '#/components/schemas/SurveyDistribution'
