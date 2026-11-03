@@ -51,6 +51,39 @@ describe("planFormbricksFileReferences", () => {
     ]);
     expect(plan.issues.filter((issue) => issue.code === "attribute_key_created")).toHaveLength(1);
   });
+
+  test.each([
+    ["one that is not a safe identifier", "Plan Tier"],
+    ["one reserved for a future default attribute", "user_id"],
+  ])("refuses to create %s, as every other way of creating a key does", async (_what, key) => {
+    const refusal = await planFormbricksFileReferences(emptyReader() as never, {
+      workspaceId: WORKSPACE_ID,
+      survey: surveyTargeting(key),
+      references: references([{ key, name: null }]),
+      t: (text: string) => text,
+      fieldPrefix: "file",
+    }).catch((error: unknown) => error);
+
+    expect(refusal).toBeInstanceOf(SurveyImportInputError);
+    expect((refusal as SurveyImportInputError).invalidParams).toEqual([
+      expect.objectContaining({ name: "file.references.attributeKeys.0.key" }),
+    ]);
+  });
+
+  test("links a key the workspace already has, whatever it is called", async () => {
+    const reader = emptyReader();
+    reader.contactAttributeKey.findMany = vi.fn(async () => [{ key: "userId" }]) as never;
+
+    const plan = await planFormbricksFileReferences(reader as never, {
+      workspaceId: WORKSPACE_ID,
+      survey: surveyTargeting("userId"),
+      references: references([{ key: "userId", name: "User Id" }]),
+      t: (text: string) => text,
+      fieldPrefix: null,
+    });
+
+    expect(plan.attributeKeysToCreate).toEqual([]);
+  });
 });
 
 const plannedCodeAction = {
@@ -150,11 +183,59 @@ describe("applyFormbricksFileReferences", () => {
     expect(applied.actionClassIds.get("file_nocode")).toBe("nocode_row");
   });
 
+  test("names an attribute key the file gives no name after its key, as the other create paths do", async () => {
+    const createManyAndReturn = vi.fn(async () => [{ key: "plan_tier" }]);
+    const tx = {
+      $executeRaw: vi.fn(async () => 0),
+      actionClass: { createManyAndReturn: vi.fn(async () => []), findMany: vi.fn(async () => []) },
+      contactAttributeKey: { count: vi.fn(async () => 0), createManyAndReturn },
+      language: { createManyAndReturn: vi.fn(async () => []) },
+    } as never;
+
+    await applyFormbricksFileReferences(tx, WORKSPACE_ID, {
+      actionClasses: new Map(),
+      attributeKeysToCreate: [{ key: "plan_tier", name: null, description: null, dataType: "string" }],
+      languagesToCreate: [],
+      issues: [],
+    });
+
+    expect(createManyAndReturn).toHaveBeenCalledWith(
+      expect.objectContaining({ data: [expect.objectContaining({ key: "plan_tier", name: "Plan Tier" })] })
+    );
+  });
+
+  test("holds the workspace's attribute key cap again inside the transaction, under a lock", async () => {
+    const executeRaw = vi.fn(async () => 0);
+    const createManyAndReturn = vi.fn(async () => []);
+    const tx = {
+      $executeRaw: executeRaw,
+      actionClass: { createManyAndReturn: vi.fn(async () => []), findMany: vi.fn(async () => []) },
+      // Another import filled the workspace between this one's plan and its write.
+      contactAttributeKey: { count: vi.fn(async () => 150), createManyAndReturn },
+      language: { createManyAndReturn: vi.fn(async () => []) },
+    } as never;
+
+    const refusal = await applyFormbricksFileReferences(tx, WORKSPACE_ID, {
+      actionClasses: new Map(),
+      attributeKeysToCreate: [{ key: "plan", name: "Plan", description: null, dataType: "string" }],
+      languagesToCreate: [],
+      issues: [],
+    }).catch((error: unknown) => error);
+
+    expect(refusal).toBeInstanceOf(SurveyImportInputError);
+    expect(executeRaw).toHaveBeenCalled();
+    expect(createManyAndReturn).not.toHaveBeenCalled();
+  });
+
   test("reports only the attribute keys and languages this transaction inserted", async () => {
     const tx = {
       actionClass: { createManyAndReturn: vi.fn(async () => []), findMany: vi.fn(async () => []) },
       // One of each was skipped: another import inserted it first.
-      contactAttributeKey: { createManyAndReturn: vi.fn(async () => [{ key: "plan" }]) },
+      $executeRaw: vi.fn(async () => 0),
+      contactAttributeKey: {
+        count: vi.fn(async () => 0),
+        createManyAndReturn: vi.fn(async () => [{ key: "plan" }]),
+      },
       language: { createManyAndReturn: vi.fn(async () => [{ code: "de-DE" }]) },
     } as never;
 

@@ -100,7 +100,7 @@ Anything under `survey`. Some rules keep the file importable:
 - **IDs.** Keep the IDs of what you don't change: logic, recall and existing responses point at them. A new question needs its own ID, unique in the survey, made of letters, numbers, `-` and `_`. A new block needs an ID of lowercase letters and numbers.
 - **Logic and recall** point at questions by ID. Logic can only check a question in the same or an earlier block, and recall can only use a question shown before it.
 - **Triggers** (app surveys) point at an action by its ID in `references.actionClasses`. Add the action there when you add a trigger.
-- **Targeting filters** that name a contact attribute need that attribute in `references.attributeKeys`.
+- **Targeting filters** that name a contact attribute need that attribute in `references.attributeKeys`. An attribute the workspace doesn't have yet is created, so its key must be lowercase letters, numbers and underscores, starting with a letter, and not one Formbricks reserves (`user_id`, `first_name`, `last_name`).
 - **`name`** is used for a new survey, with "(imported)" added. An Update keeps the survey's own name.
 - **`status`** is ignored. An import always creates a draft, and an Update keeps the survey's status.
 

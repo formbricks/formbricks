@@ -2,10 +2,15 @@ import "server-only";
 import { Prisma } from "@formbricks/database/prisma";
 import { embeddedFieldsFromLegacyInput } from "@formbricks/types/embedded-data-mapping";
 import type { TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
+import { formatSnakeCaseToTitleCase, isSafeIdentifier } from "@formbricks/types/safe-identifier";
 import type { TSurveyHiddenFields, TSurveyVariable } from "@formbricks/types/surveys/types";
 import { isPlainObject } from "@/app/api/v3/surveys/guards";
 import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
 import { escapeLikePattern } from "@/lib/utils/like-pattern";
+import {
+  RESERVED_FUTURE_DEFAULT_ATTRIBUTE_KEY_VALIDATION_MESSAGE,
+  isReservedFutureDefaultAttributeKey,
+} from "@/modules/ee/contacts/lib/attribute-key-policy";
 import { SurveyImportInputError } from "@/modules/survey/import/core/errors";
 import {
   type TTranslate,
@@ -220,6 +225,41 @@ const planActionClasses = async (
   return { actionClasses, issues };
 };
 
+/** Where a reference sits, from the root the caller names: the file (`file.…`), or the request body. */
+const at = (prefix: string | null, path: string): string => (prefix ? `${prefix}.${path}` : path);
+
+/** Why a new attribute key cannot be created, as the other create paths say it, or `null` when it can. */
+const attributeKeyRefusal = (key: string): string | null => {
+  if (!isSafeIdentifier(key)) {
+    return "A new attribute key must be a safe identifier: lowercase letters, numbers and underscores, starting with a letter";
+  }
+  if (isReservedFutureDefaultAttributeKey(key))
+    return RESERVED_FUTURE_DEFAULT_ATTRIBUTE_KEY_VALIDATION_MESSAGE;
+  return null;
+};
+
+/** Refuse an import whose new attribute keys would take the workspace past the cap. */
+const assertAttributeKeyCap = (count: number, adding: number, fieldPrefix: string | null): void => {
+  if (count + adding <= MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT) return;
+  throw new SurveyImportInputError(
+    [
+      {
+        name: at(fieldPrefix, "references.attributeKeys"),
+        reason: `Importing this survey adds ${adding} attribute keys, past the ${MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT} a workspace can have`,
+        code: "limit_exceeded",
+      },
+    ],
+    "The workspace cannot hold the attribute keys this survey needs.",
+    "formbricks_file_invalid"
+  );
+};
+
+/**
+ * Serializes the imports that create attribute keys in one workspace, so two cannot both pass the cap's
+ * count and together go past it. Taken in the import's transaction, released when it ends.
+ */
+const ATTRIBUTE_KEY_CAP_LOCK_PREFIX = "survey-import:attribute-keys:";
+
 const planAttributeKeys = async (
   db: TReader,
   workspaceId: string,
@@ -246,19 +286,23 @@ const planAttributeKeys = async (
     (attributeKey) => !existingKeys.has(attributeKey.key)
   );
 
-  if (count + attributeKeysToCreate.length > MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT) {
+  // A key the workspace has is linked whatever it is called; a new one is held to the rules every other
+  // way of creating a key holds it to.
+  const refused = attributeKeysToCreate.flatMap((attributeKey) => {
+    const reason = attributeKeyRefusal(attributeKey.key);
+    if (!reason) return [];
+    const index = wanted.indexOf(attributeKey);
+    return [{ name: at(fieldPrefix, `references.attributeKeys.${index}.key`), reason }];
+  });
+  if (refused.length > 0) {
     throw new SurveyImportInputError(
-      [
-        {
-          name: fieldPrefix ? `${fieldPrefix}.references.attributeKeys` : "references.attributeKeys",
-          reason: `Importing this survey adds ${attributeKeysToCreate.length} attribute keys, past the ${MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT} a workspace can have`,
-          code: "limit_exceeded",
-        },
-      ],
-      "The workspace cannot hold the attribute keys this survey needs.",
+      refused,
+      "The survey needs attribute keys the workspace cannot create.",
       "formbricks_file_invalid"
     );
   }
+
+  assertAttributeKeyCap(count, attributeKeysToCreate.length, fieldPrefix);
 
   return {
     attributeKeysToCreate,
@@ -406,6 +450,33 @@ const recoverSkippedActionClasses = async (
   return idByIdentity;
 };
 
+/**
+ * Create the plan's attribute keys, the cap held again under a lock: the plan counted before this
+ * transaction, and another import may have added keys since. A key without a name is named after itself,
+ * as the other create paths name it.
+ */
+const createAttributeKeys = async (
+  tx: Prisma.TransactionClient,
+  workspaceId: string,
+  attributeKeys: TFormbricksFileAttributeKey[]
+) => {
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${ATTRIBUTE_KEY_CAP_LOCK_PREFIX + workspaceId}))`;
+  assertAttributeKeyCap(
+    await tx.contactAttributeKey.count({ where: { workspaceId } }),
+    attributeKeys.length,
+    null
+  );
+  return tx.contactAttributeKey.createManyAndReturn({
+    data: attributeKeys.map((attributeKey) => ({
+      workspaceId,
+      ...attributeKey,
+      name: attributeKey.name ?? formatSnakeCaseToTitleCase(attributeKey.key),
+    })),
+    select: { key: true },
+    skipDuplicates: true,
+  });
+};
+
 /** Create what the plan says is missing, one query per kind; the rows this transaction inserted come back. */
 const createMissingReferences = async (
   tx: Prisma.TransactionClient,
@@ -430,11 +501,7 @@ const createMissingReferences = async (
         })
       : Promise.resolve([]),
     plan.attributeKeysToCreate.length > 0
-      ? tx.contactAttributeKey.createManyAndReturn({
-          data: plan.attributeKeysToCreate.map((attributeKey) => ({ workspaceId, ...attributeKey })),
-          select: { key: true },
-          skipDuplicates: true,
-        })
+      ? createAttributeKeys(tx, workspaceId, plan.attributeKeysToCreate)
       : Promise.resolve([]),
     plan.languagesToCreate.length > 0
       ? tx.language.createManyAndReturn({
