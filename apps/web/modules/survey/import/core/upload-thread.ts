@@ -1,10 +1,6 @@
 import "server-only";
 import { MessageChannel, type MessagePort, Worker, receiveMessageOnPort } from "node:worker_threads";
-import {
-  SURVEY_IMPORT_MAX_READ_THREADS,
-  SURVEY_IMPORT_READ_HEAP_MB,
-  SURVEY_IMPORT_READ_TIME_MS,
-} from "../limits";
+import { SURVEY_IMPORT_MAX_READ_THREADS, SURVEY_IMPORT_READ_TIME_MS } from "../limits";
 import type { TSurveyImportFileLimit } from "../types";
 import { SurveyImportInputError, fromSurveyImportRefusal } from "./errors";
 import type { TSurveyImportUploadRead } from "./read-upload";
@@ -19,17 +15,19 @@ import type { TUploadWorkerFailure, TUploadWorkerReply, TUploadWorkerRequest } f
  * worker thread of its own (`upload-worker.ts`), and only what its lane reads comes back: the parsed file
  * never crosses, since cloning a million objects across costs more than parsing them did.
  *
- * The thread is held to a time limit per step (`SURVEY_IMPORT_READ_TIME_MS`) and a heap limit
- * (`SURVEY_IMPORT_READ_HEAP_MB`): a file that takes longer or more is refused with a 422 naming the limit,
- * and the thread ends, its memory with it. The heap limit sits at twice what the costliest file the
- * upload's limits let through needs: 15 MiB of a million small objects reads within 256 MB, and ends the
- * thread cleanly at 128 MB (2026-11-02). Without it the thread would get V8's default, in an isolate of its
- * own, beside the server's: past the pod's memory before V8's. A thread that could not start or failed is
- * an error, answered as a 500. A client that leaves ends its upload, waiting or reading, at once.
+ * The thread is held to a time limit per step (`SURVEY_IMPORT_READ_TIME_MS`): a file that takes longer is
+ * refused with a 422 naming the limit, and the thread ends, its memory with it. A thread that could not
+ * start or failed is an error, answered as a 500. A client that leaves ends its upload, waiting or
+ * reading, at once.
  *
- * The limit must not meet a native allocation of the whole file: V8 aborts the process, rather than end
- * the thread, when a capped worker runs out inside one (a `structuredClone`, say). So nothing in the
- * thread copies the file whole; what it posts back is bounded by its lane's limits.
+ * It has no heap limit of its own (`resourceLimits`), on purpose. Node ends a capped worker cleanly only
+ * when it runs out where V8 can stop its JavaScript; elsewhere V8 aborts the whole process. Reading the
+ * costliest file the upload's limits let through (15 MiB of a million small objects) under a 64 MB cap
+ * aborted the process on Node 24 and 26 alike, and under 128 MB ended the thread: which one depends on
+ * where the allocation fails, not on the file (2026-11-03). A cap would only add a way for a file to take
+ * the server down. The thread's heap is V8's default, as the server's own thread's is; what a file can
+ * make it hold is bounded by the upload's limits (about 250 MB for that file) and by one read at a time.
+ * A thread that runs out where V8 can stop it ends, and its file is refused like a slow one.
  */
 
 /** An upload being read in its thread. */
@@ -56,7 +54,7 @@ const tooCostly = (identifier: Extract<TSurveyImportFileLimit, "read_time" | "re
         reason:
           identifier === "read_time"
             ? `The file must be readable within ${SURVEY_IMPORT_READ_TIME_MS / 1000} seconds`
-            : `The file must be readable within ${SURVEY_IMPORT_READ_HEAP_MB} MB of memory`,
+            : "The file needs more memory to read than the server can give it",
         code: "file_limit_exceeded",
         identifier,
       },
@@ -109,11 +107,7 @@ const fromFailure = ({ name, message, stack, code }: TUploadWorkerFailure): Erro
   Object.assign(new Error(message), { name, stack }, code === undefined ? {} : { code });
 
 const startWorker = (port: MessagePort, workerUrl: URL | undefined): Worker => {
-  const options = {
-    resourceLimits: { maxOldGenerationSizeMb: SURVEY_IMPORT_READ_HEAP_MB, maxYoungGenerationSizeMb: 32 },
-    workerData: { port },
-    transferList: [port],
-  };
+  const options = { workerData: { port }, transferList: [port] };
   // Written out in full: the bundler builds the worker from this exact expression.
   const worker = workerUrl
     ? new Worker(workerUrl, options)

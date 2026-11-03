@@ -13,16 +13,13 @@ import { zipOf } from "./__fixtures__/zip-builders";
 import { toSurveyImportRefusal } from "./errors";
 import { serveSurveyImportUpload } from "./upload-worker";
 
-const limits = vi.hoisted(() => ({ readTimeMs: 15_000, heapMb: 512 }));
+const limits = vi.hoisted(() => ({ readTimeMs: 15_000 }));
 
 vi.mock("server-only", () => ({}));
 vi.mock("../limits", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../limits")>()),
   get SURVEY_IMPORT_READ_TIME_MS() {
     return limits.readTimeMs;
-  },
-  get SURVEY_IMPORT_READ_HEAP_MB() {
-    return limits.heapMb;
   },
 }));
 
@@ -193,22 +190,6 @@ describe("openSurveyImportUpload: a file read in a thread of its own", () => {
       limits.readTimeMs = 15_000;
     }
     const next = await open(simpleQsf());
-    next.close();
-  }, 60_000);
-
-  test("refuses a file that needs more than the thread's heap, and the server's thread carries on", async () => {
-    limits.heapMb = 64;
-    try {
-      const refusal = await refusalOf(() => open(millionObjects()));
-
-      expect(refusal?.invalidParams).toEqual([
-        expect.objectContaining({ code: "file_limit_exceeded", identifier: "read_memory" }),
-      ]);
-    } finally {
-      limits.heapMb = 512;
-    }
-    const next = await open(simpleQsf());
-    expect(next.type).toBe("qsf");
     next.close();
   }, 60_000);
 

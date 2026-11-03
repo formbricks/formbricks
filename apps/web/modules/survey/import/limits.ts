@@ -140,12 +140,6 @@ export const SURVEY_IMPORT_MAX_READ_THREADS = 1;
  */
 export const SURVEY_IMPORT_READ_TIME_MS = 15_000;
 
-/**
- * The heap an upload's thread may grow to (`core/upload-thread.ts`, which says why it is this). A file
- * that needs more ends the thread, not the server, and is refused with a 422.
- */
-export const SURVEY_IMPORT_READ_HEAP_MB = 512;
-
 /** Imports one user runs at once on a server process, so one user cannot take every slot. */
 export const SURVEY_IMPORT_MAX_IN_FLIGHT_PER_USER = 1;
 
