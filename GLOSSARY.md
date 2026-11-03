@@ -27,6 +27,20 @@ that is not listed here.
 
 **Advance** — Moving from the current block to the next card, as decided by block flow. Back navigation is separate: it follows `history`, not logic.
 
+**Show-if** — A condition that decides whether a respondent sees a block, an element, a choice, or a matrix row or column. An item whose show-if fails is not shown, which is different from shown and skipped. _Avoid_: display logic, visibility rule, conditional display.
+
+**Hidden option** — A choice, matrix row or matrix column retired on a live survey instead of deleted: never shown again, keeping its id and earlier answers. It is not a show-if that never matches. _Avoid_: deleted option, disabled option.
+
+**Not shown** — What a respondent never saw because of a show-if, a hidden option, or a question left with no options. Recorded on the response while they answer, never worked out later from the current rules. A question passed over is skipped, and one never reached is a drop-off; neither is not shown. _Avoid_: skipped (for hidden items), hidden (for responses).
+
+**Copied options** — The options of a question copied from an earlier question, keeping their ids and answer codes, each shown only if it was picked in the source. Native carry-forward lists are a different, later feature. _Avoid_: carry-forward list, piped options.
+
+**Start logic** — The rules that run before the respondent sees the first block: they can screen out to an ending, jump, or set a value. The editor labels it "Before the first question". _Avoid_: pre-qualification logic, pre-Q1 logic.
+
+**Set value** — The rule action that writes a computed Embedded Data field from a fixed value, an answer, another field or an expression. A rule with no condition is drawn as a "Set a value" step; with one, the editor calls it a calculation. Both are the same action. _Avoid_: assign, variable update.
+
+**Expression** — A formula a Set value computes from answers, Embedded Data fields and fixed values, using arithmetic and a fixed list of functions. A rule's conditions never contain one. _Avoid_: formula, script.
+
 ## Dashboards
 
 **Feedback Dataset** — The set of Feedback Records a chart reads from. A chart reads exactly one, fixed when the chart is created. _Avoid_: feedback directory, tenant (internal names only).
@@ -99,4 +113,4 @@ that is not listed here.
 
 **Outcome** — The single status of a response. It is empty unless a reviewer or a survey rule sets one; Low quality is the only value for now.
 
-**Low quality** — The outcome of a response that should not count. It is set and undone by hand, nothing is deleted, and the response drops out of the Analysis export and of Dashboards. _Avoid_: rejected, deleted.
+**Low quality** — The outcome of a response that should not count. A reviewer or a survey rule sets it, only a reviewer undoes it, nothing is deleted, and the response drops out of the Analysis export and of Dashboards. _Avoid_: rejected, deleted.
