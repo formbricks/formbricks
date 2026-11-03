@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2Icon, ChevronsDownIcon, XCircleIcon } from "lucide-react";
+import { CheckCircle2Icon, ChevronsDownIcon, EyeOffIcon, XCircleIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
@@ -13,7 +13,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modu
 
 interface ElementSkipProps {
   skippedElements: string[] | undefined;
-  status: string;
+  /** `notShown`: the response's not-shown record lists these questions (ENG-6936). */
+  status: "welcomeCard" | "skipped" | "aborted" | "notShown";
   elements: TSurveyElement[];
   isFirstElementAnswered?: boolean;
   /**
@@ -105,6 +106,53 @@ export const ElementSkip = ({
                     </p>
                   );
                 })}
+              </div>
+            </div>
+          )}
+          {status === "notShown" && (
+            <div className="flex">
+              <div
+                className="flex w-0.5 items-start justify-center"
+                style={{
+                  background:
+                    "repeating-linear-gradient(to bottom,   rgb(203 213 225),  rgb(203 213 225) 8px, transparent 5px, transparent 15px)",
+                }}>
+                <EyeOffIcon className="min-h-6 min-w-6 rounded-full bg-white p-0.5 text-slate-400" />
+              </div>
+              <div className="mb-2 ml-4 flex flex-col">
+                <TooltipProvider delayDuration={50}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <p
+                        data-testid="response-card-not-shown"
+                        className="mb-2 w-fit rounded-lg bg-slate-100 px-2 font-medium text-slate-700">
+                        {t("workspace.surveys.responses.not_shown")}
+                      </p>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t("workspace.surveys.responses.respondent_not_shown_questions")}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                {skippedElements.map((questionId) => (
+                  <p className="my-2" key={questionId}>
+                    {getTextContent(
+                      parseRecallInfo(
+                        getLocalizedValue(
+                          elements.find((question) => question.id === questionId)?.headline ?? {
+                            default: "",
+                          },
+                          "default"
+                        ),
+                        recallValues,
+                        variables,
+                        false,
+                        locale,
+                        dateFormats
+                      )
+                    )}
+                  </p>
+                ))}
               </div>
             </div>
           )}
