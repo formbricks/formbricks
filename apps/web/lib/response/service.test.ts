@@ -22,6 +22,9 @@ vi.mock("@formbricks/database", () => ({
     },
   },
 }));
+vi.mock("@/modules/email/lib/email-audit-maintenance", () => ({
+  requestEmailAuditErasureRequired: vi.fn().mockResolvedValue(undefined),
+}));
 
 vi.mock("@/lib/utils/validate", () => ({
   validateInputs: vi.fn(),

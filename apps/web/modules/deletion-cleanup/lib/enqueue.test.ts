@@ -7,10 +7,13 @@ import {
 } from "./enqueue";
 
 vi.mock("server-only", () => ({}));
-const storage = vi.hoisted(() => ({ configured: true }));
+const storage = vi.hoisted(() => ({ configured: true, auditConfigured: false }));
 vi.mock("@/lib/constants", () => ({
   get IS_STORAGE_CONFIGURED() {
     return storage.configured;
+  },
+  get EMAIL_SEND_AUDIT_BUCKET() {
+    return storage.auditConfigured ? "private-audit-bucket" : undefined;
   },
 }));
 
@@ -26,6 +29,7 @@ const makeTx = (tenantIds: string[]) => {
   let next = 0;
   return {
     feedbackDirectory: { findMany: vi.fn().mockResolvedValue(tenantIds.map((id) => ({ id }))) },
+    outboundEmailAudit: { updateMany: vi.fn().mockResolvedValue({ count: 0 }) },
     deletionCleanup: {
       createManyAndReturn: vi.fn(async ({ data }: { data: unknown[] }) =>
         data.map(() => ({ id: `cln-${++next}` }))
@@ -45,6 +49,17 @@ describe("enqueueSurveyDeletionCleanups", () => {
   });
   afterEach(() => {
     vi.useRealTimers();
+    storage.auditConfigured = false;
+  });
+
+  test("marks survey audit records for erasure in the deletion transaction", async () => {
+    storage.auditConfigured = true;
+    const tx = makeTx([]);
+    await enqueueSurveyDeletionCleanups(tx as never, { ...SCOPE, fileUrls: [] });
+    expect(tx.outboundEmailAudit.updateMany).toHaveBeenCalledWith({
+      where: { surveyId: SCOPE.surveyId },
+      data: { erasureRequestedAt: NOW },
+    });
   });
 
   test("drains the folder and flat-key files now, then sweeps the folder and the Hub once uploads have settled", async () => {
@@ -119,6 +134,7 @@ describe("enqueueResponsesDeletionCleanups", () => {
   });
   afterEach(() => {
     vi.useRealTimers();
+    storage.auditConfigured = false;
   });
 
   test("queues nothing when no response was deleted", async () => {
@@ -135,6 +151,19 @@ describe("enqueueResponsesDeletionCleanups", () => {
     ).resolves.toEqual({ drainNowIds: [] });
     expect(tx.feedbackDirectory.findMany).not.toHaveBeenCalled();
     expect(tx.deletionCleanup.createManyAndReturn).not.toHaveBeenCalled();
+  });
+
+  test("marks deleted response audit records for erasure in the deletion transaction", async () => {
+    storage.auditConfigured = true;
+    const tx = makeTx([]);
+    await enqueueResponsesDeletionCleanups(tx as never, {
+      ...WORKSPACE,
+      surveys: [deleted("survey-1", ["response-1", "response-2"])],
+    });
+    expect(tx.outboundEmailAudit.updateMany).toHaveBeenCalledWith({
+      where: { responseId: { in: ["response-1", "response-2"] } },
+      data: { erasureRequestedAt: NOW },
+    });
   });
 
   test("drains the responses' files now, and their Hub records once anything on its way has landed", async () => {
