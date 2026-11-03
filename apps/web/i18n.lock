@@ -2019,6 +2019,7 @@ checksums:
     workspace/analysis/charts/vertical_bars: 408174fe449ea6f5457988dd218183be
     workspace/analysis/dashboards/add_count_charts: b4ee1f29efce0bb380a060e0bc5d64fa
     workspace/analysis/dashboards/already_on_this_dashboard: a4668a6a887b0bcd312cf30ebb1a89ad
+    workspace/analysis/dashboards/chart_cannot_be_filtered_by: 39518f0bb66ad3440a225d69e1a21a46
     workspace/analysis/dashboards/chart_duplicate_failed: 90d7166c85188b52f821c9d9f53ff8c4
     workspace/analysis/dashboards/chart_duplicated: 52765f173bd6fd5382731f8e06e436e0
     workspace/analysis/dashboards/chart_remove_failed: 198f5c3bdd522b40b80cb7479d3051a1
@@ -2042,8 +2043,8 @@ checksums:
     workspace/analysis/dashboards/dashboard_save_failed: 2b6c7be7947bc7ebb0389b71b5922ba6
     workspace/analysis/dashboards/dashboard_saved: 6eb27743b6b12d3d0a20b430319890b8
     workspace/analysis/dashboards/date_filter_all_time: 62258944e7c2e83f3ebf69074b2c2156
+    workspace/analysis/dashboards/date_filter_choose: 9398706509cfa9fca27d4d7c15810091
     workspace/analysis/dashboards/date_filter_default: cfacb900e350367581782f4078264a96
-    workspace/analysis/dashboards/date_filter_placeholder: be548c93a997ed6c2e9ac5c943faac10
     workspace/analysis/dashboards/delete_confirmation: 468a0fb0e24a985cc47a778b50b334ba
     workspace/analysis/dashboards/delete_failed: b108acc28b1f9abcb544a358a958b54b
     workspace/analysis/dashboards/delete_success: 9d161634daab9ea9d17fbfb413eeeffa
@@ -2051,6 +2052,11 @@ checksums:
     workspace/analysis/dashboards/duplicate_success: 37cbb14143776d4c215432673e32ebd9
     workspace/analysis/dashboards/failed_to_load_chart_data: ea980a6d12b1b1efed90d991dd0dd0fd
     workspace/analysis/dashboards/failed_to_load_dashboard: 6fb0efd73e55a235e75ece8c35aa2ebe
+    workspace/analysis/dashboards/filter_apply: 0f03e8e3752eb120bf8ea0b8f8f5d244
+    workspace/analysis/dashboards/filter_limit_reached: 0afdd9c25b1a67910920a81201781c19
+    workspace/analysis/dashboards/filter_move_left: d28e9036127dfcff2a867c41ed2b52bc
+    workspace/analysis/dashboards/filter_move_right: 51cabc93b9fa02d01d6f281c7ca29e62
+    workspace/analysis/dashboards/filter_operator: c8e105116d65a17dcf68f6026a5e35fc
     workspace/analysis/dashboards/new_dashboard: 994b8a982af4c22385861d26e373a949
     workspace/analysis/dashboards/no_charts_match_search: 7ef6b1e501080e8a50d9997234a51fca
     workspace/analysis/dashboards/no_dashboards_found: b4d9dce52bf5f83d074306980b505477

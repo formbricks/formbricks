@@ -1,11 +1,18 @@
 import type { TChartConfig, TChartQuery } from "@formbricks/types/analysis";
 import type { TV3ChartData, TV3ChartFieldCatalog, TV3ChartResource } from "@/app/api/v3/charts/lib/resources";
 import type {
+  TV3DashboardChartData,
+  TV3DashboardFilterValues,
   TV3DashboardListItem,
   TV3DashboardResource,
   TV3DashboardWidget,
 } from "@/app/api/v3/dashboards/lib/resources";
 import { V3ApiError, parseV3ApiError } from "@/modules/api/lib/v3-client";
+import { appendPickParams } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-picks";
+import type {
+  TDashboardFilter,
+  TDashboardFilterPicks,
+} from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
 import type {
   AnalyticsResponse,
   TChartDataRow,
@@ -204,7 +211,68 @@ const dateRangeSearchParams = (dateRange?: TChartDateRangeInput): URLSearchParam
     : new URLSearchParams({ from: dateRange.from, to: dateRange.to });
 };
 
-/** A saved chart's rows, for its own date range or a requested one that replaces it. */
+/** A chart's rows read through its dashboard, and the picked filters its dataset cannot be narrowed by. */
+export type TAppDashboardChartData = TAppChartData & {
+  unfilterableFilters: TV3DashboardChartData["unfilterableFilters"];
+};
+
+/** The dashboard date range and filter picks a dashboard-bound read is narrowed by. */
+const dashboardReadParams = (
+  dateRange: TChartDateRangeInput | undefined,
+  picks: TDashboardFilterPicks | undefined
+): URLSearchParams => appendPickParams(dateRangeSearchParams(dateRange), picks ?? {});
+
+/**
+ * A widget's rows through its dashboard (ADR-0002): the dashboard date range narrows the chart's own, and
+ * each filter pick is ANDed onto its saved filters.
+ */
+export const getDashboardChartData = async ({
+  dashboardId,
+  chartId,
+  dateRange,
+  picks,
+  signal,
+}: {
+  dashboardId: string;
+  chartId: string;
+  dateRange?: TChartDateRangeInput;
+  picks?: TDashboardFilterPicks;
+  signal?: AbortSignal;
+}): Promise<TAppDashboardChartData> => {
+  const search = dashboardReadParams(dateRange, picks).toString();
+  const base = `${dashboardPath(dashboardId)}/charts/${encodeURIComponent(chartId)}/data`;
+  const data = await readData<TV3DashboardChartData>(
+    await fetch(search ? `${base}?${search}` : base, { cache: "no-store", signal })
+  );
+  return { ...toAppChartData(data), unfilterableFilters: data.unfilterableFilters };
+};
+
+/** Up to 100 values a list dashboard filter offers, narrowed by the date range, the other picks and `search`. */
+export const listDashboardFilterValues = async ({
+  dashboardId,
+  filterId,
+  dateRange,
+  picks,
+  search,
+  signal,
+}: {
+  dashboardId: string;
+  filterId: string;
+  dateRange?: TChartDateRangeInput;
+  picks?: TDashboardFilterPicks;
+  search?: string;
+  signal?: AbortSignal;
+}): Promise<TV3DashboardFilterValues> => {
+  const params = dashboardReadParams(dateRange, picks);
+  if (search) params.set("search", search);
+  const query = params.toString();
+  const base = `${dashboardPath(dashboardId)}/filters/${encodeURIComponent(filterId)}/values`;
+  return readData<TV3DashboardFilterValues>(
+    await fetch(query ? `${base}?${query}` : base, { cache: "no-store", signal })
+  );
+};
+
+/** A saved chart's rows, for its own date range or a requested one that narrows it. */
 export const getChartData = async ({
   chartId,
   dateRange,
@@ -276,6 +344,7 @@ const toAppDashboardListItem = (item: TV3DashboardListItem): TAppDashboardListIt
  * sends back for the stale-check, and a round trip through `Date` would be one more place to lose it.
  */
 export type TAppDashboard = Pick<TV3DashboardResource, "id" | "workspaceId" | "name" | "updatedAt"> & {
+  filters: TDashboardFilter[];
   widgets: TDashboardWidget[];
 };
 
@@ -293,6 +362,7 @@ export const toAppDashboard = (resource: TV3DashboardResource): TAppDashboard =>
   workspaceId: resource.workspaceId,
   name: resource.name,
   updatedAt: resource.updatedAt,
+  filters: resource.filters,
   widgets: resource.widgets.map((widget) => toAppDashboardWidget(resource.id, widget)),
 });
 
@@ -345,7 +415,7 @@ export const createDashboard = async ({
   );
 
 /**
- * Saves the whole edited dashboard — its name and every widget's place — in one call. `expectedUpdatedAt` is the
+ * Saves the whole edited dashboard — its name, every widget's place and its filters — in one call. `expectedUpdatedAt` is the
  * version the edit started from; if the dashboard changed since, nothing is saved and the call throws
  * the 409 `isStaleDashboardError` recognises. A widget left out is removed.
  */
@@ -354,6 +424,7 @@ export const replaceDashboard = async (
   dashboard: {
     name: string;
     expectedUpdatedAt: string;
+    filters?: TDashboardFilter[];
     widgets: { widgetId: string; layout: TDashboardWidget["layout"]; order: number }[];
   }
 ): Promise<TAppDashboard> =>

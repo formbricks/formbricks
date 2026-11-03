@@ -9,12 +9,16 @@ import { DEFAULT_WIDGET_VIEW, type TWidgetView } from "@/modules/ee/analysis/das
 import type { TChartDateRangeInput } from "@/modules/ee/analysis/lib/api-client";
 import type { TChartType } from "@/modules/ee/analysis/types/analysis";
 import { useChartData } from "../hooks/use-chart-data";
+import type { TDashboardFilterPicks } from "../lib/dashboard-filters";
 import { DashboardWidgetSkeleton } from "./dashboard-widget-skeleton";
 
 interface DashboardWidgetDataProps {
+  dashboardId: string;
   chartId: string;
-  /** The dashboard's date range, replacing the chart's own; `null` keeps the chart's. */
+  /** The dashboard's date range, narrowing the chart's own; `null` keeps the chart's. */
   dateRange: TChartDateRangeInput | null;
+  /** The person's dashboard filter picks, each ANDed onto the chart's saved filters. */
+  picks: TDashboardFilterPicks;
   chartType: TChartType;
   /** Saved display settings of the chart behind this widget. */
   config?: TChartConfig;
@@ -22,18 +26,25 @@ interface DashboardWidgetDataProps {
 }
 
 /**
- * One widget's data, fetched by the widget itself from the chart data API: a slow or failing chart
- * shows its own spinner or error and never holds up the others.
+ * One widget's data, fetched by the widget itself through its dashboard: a slow or failing chart shows its
+ * own spinner or error and never holds up the others.
  */
 export function DashboardWidgetData({
+  dashboardId,
   chartId,
   dateRange,
+  picks,
   chartType,
   config,
   view = DEFAULT_WIDGET_VIEW,
 }: Readonly<DashboardWidgetDataProps>) {
   const { t } = useTranslation();
-  const { data: result, isPending, isError, error } = useChartData({ chartId, dateRange });
+  const {
+    data: result,
+    isPending,
+    isError,
+    error,
+  } = useChartData({ dashboardId, chartId, dateRange, picks });
 
   if (isPending) return <DashboardWidgetSkeleton />;
 
@@ -44,6 +55,18 @@ export function DashboardWidgetData({
       <div className="flex h-full flex-col items-center justify-center gap-1 px-4 text-center text-sm">
         <p className="text-red-500">{t("workspace.analysis.dashboards.failed_to_load_chart_data")}</p>
         {reason && <p className="text-xs text-slate-500">{reason}</p>}
+      </div>
+    );
+  }
+
+  // A pick on a field this chart's Feedback Dataset lacks: it cannot be narrowed to the pick, so it shows
+  // nothing, and says why rather than looking like a chart with no data.
+  if (result.unfilterableFilters.length > 0) {
+    return (
+      <div className="flex h-full items-center justify-center px-4 text-center text-sm text-slate-500">
+        {t("workspace.analysis.dashboards.chart_cannot_be_filtered_by", {
+          label: result.unfilterableFilters.map((filter) => filter.label).join(", "),
+        })}
       </div>
     );
   }

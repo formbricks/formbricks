@@ -11,6 +11,7 @@ import { getAuthorizedWorkspaceFeedbackDirectories } from "@/modules/ee/unify-fe
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { DashboardDetailClient } from "../components/dashboard-detail-client";
 import { getDateFilterCookieName, readStoredDateFilterFromCookie } from "../lib/dashboard-date-filter";
+import { deserializeFilterPicks, getFilterPicksCookieName } from "../lib/dashboard-filter-picks";
 
 export async function DashboardDetailPage({
   params,
@@ -25,6 +26,10 @@ export async function DashboardDetailPage({
   const cookieStore = await cookies();
   const storedDateFilter = readStoredDateFilterFromCookie(
     cookieStore.get(getDateFilterCookieName(dashboardId))?.value
+  );
+  // The filter picks are remembered the same way, so a revisit's first fetch is already narrowed by them.
+  const storedFilterPicks = deserializeFilterPicks(
+    cookieStore.get(getFilterPicksCookieName(dashboardId))?.value
   );
 
   const { isReadOnly, organizationId, userId, isDashboardViewer } = await getDashboardsPageAuth(workspaceId);
@@ -89,6 +94,7 @@ export async function DashboardDetailPage({
       workspaceId={workspaceId}
       dashboardId={dashboardId}
       storedDateFilter={storedDateFilter}
+      storedFilterPicks={storedFilterPicks}
       directories={directories}
       isReadOnly={isReadOnly}
       isAIAvailable={isAIAvailable}
