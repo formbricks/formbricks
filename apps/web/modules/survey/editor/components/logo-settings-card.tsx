@@ -23,12 +23,12 @@ import { showStorageNotConfiguredToast } from "@/modules/ui/components/storage-n
 import { Switch } from "@/modules/ui/components/switch";
 
 type LogoSettingsCardProps = {
-  open: boolean;
-  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  workspaceId: string;
-  form: UseFormReturn<TWorkspaceStyling | TSurveyStyling>;
-  disabled?: boolean;
-  isStorageConfigured: boolean;
+  readonly open: boolean;
+  readonly setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  readonly workspaceId: string;
+  readonly form: UseFormReturn<TWorkspaceStyling | TSurveyStyling>;
+  readonly disabled?: boolean;
+  readonly isStorageConfigured: boolean;
 };
 
 export const LogoSettingsCard = ({

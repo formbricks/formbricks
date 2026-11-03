@@ -9,9 +9,9 @@ import { formatDateTimeForDisplay } from "@/lib/utils/datetime";
 import { Label } from "@/modules/ui/components/label";
 
 interface ActivityTabProps {
-  webhook: Webhook;
-  surveys: TSurvey[];
-  locale: TUserLocale;
+  readonly webhook: Webhook;
+  readonly surveys: TSurvey[];
+  readonly locale: TUserLocale;
 }
 
 const getSurveyNamesForWebhook = (webhook: Webhook, allSurveys: TSurvey[]): string[] => {

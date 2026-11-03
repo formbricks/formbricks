@@ -24,8 +24,8 @@ import { RadioGroup, RadioGroupItem } from "@/modules/ui/components/radio-group"
 import { updateWorkspaceAction } from "@/modules/workspaces/settings/actions";
 
 interface EditPlacementProps {
-  workspace: TWorkspace;
-  isReadOnly: boolean;
+  readonly workspace: TWorkspace;
+  readonly isReadOnly: boolean;
 }
 
 const ZWorkspacePlacementInput = z.object({

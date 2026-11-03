@@ -50,12 +50,12 @@ import type { ChartConfig } from "@/modules/ui/components/chart";
 import { ChartContainer, ChartTooltip } from "@/modules/ui/components/chart";
 
 interface PieLabelProps {
-  cx?: number;
-  cy?: number;
-  midAngle?: number;
-  outerRadius?: number;
-  percent?: number;
-  value?: number;
+  readonly cx?: number;
+  readonly cy?: number;
+  readonly midAngle?: number;
+  readonly outerRadius?: number;
+  readonly percent?: number;
+  readonly value?: number;
 }
 
 // Tiny slices hide both label and leader line so adjacent labels don't overlap
@@ -112,9 +112,9 @@ const PieCenterLabel = ({
   total,
   label,
 }: {
-  viewBox?: { cx?: number; cy?: number };
-  total: number;
-  label: string;
+  readonly viewBox?: { cx?: number; cy?: number };
+  readonly total: number;
+  readonly label: string;
 }) => {
   const cx = viewBox?.cx;
   const cy = viewBox?.cy;

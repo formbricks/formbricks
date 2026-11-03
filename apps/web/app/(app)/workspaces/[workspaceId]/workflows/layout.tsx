@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { WorkflowsQueryClientProvider } from "./query-client-provider";
 
-const WorkflowsLayout = ({ children }: { children: ReactNode }) => {
+const WorkflowsLayout = ({ children }: { readonly children: ReactNode }) => {
   return <WorkflowsQueryClientProvider>{children}</WorkflowsQueryClientProvider>;
 };
 

@@ -26,6 +26,10 @@ const setTestEnv = (overrides: Record<string, string | undefined> = {}) => {
     AI_TIMEOUT_MULTIPLIER: undefined,
     SES_CONFIGURATION_SET: undefined,
     SES_EMAIL_ENVIRONMENT: undefined,
+    EMAIL_SEND_AUDIT_ENABLED: undefined,
+    EMAIL_SEND_AUDIT_BUCKET: undefined,
+    EMAIL_SEND_AUDIT_KMS_KEY_ARN: undefined,
+    EMAIL_SEND_AUDIT_HMAC_KEY_ARN: undefined,
     ...overrides,
   };
 };
@@ -71,6 +75,53 @@ describe("env", () => {
     const { env } = await import("./env");
     expect(env.SES_CONFIGURATION_SET).toBe("formbricks-email-config");
     expect(env.SES_EMAIL_ENVIRONMENT).toBe("production_eu");
+  });
+
+  test("keeps email send auditing disabled by default", async () => {
+    setTestEnv();
+    const { env } = await import("./env");
+    expect(env.EMAIL_SEND_AUDIT_ENABLED).toBeUndefined();
+  });
+
+  test("accepts email send auditing with EU storage and recipient HMAC configured", async () => {
+    setTestEnv({
+      SES_CONFIGURATION_SET: "formbricks-email-config",
+      SES_EMAIL_ENVIRONMENT: "production_eu",
+      EMAIL_SEND_AUDIT_ENABLED: "1",
+      EMAIL_SEND_AUDIT_BUCKET: "private-audit-bucket",
+      EMAIL_SEND_AUDIT_KMS_KEY_ARN: "content-key",
+      EMAIL_SEND_AUDIT_HMAC_KEY_ARN: "recipient-key",
+    });
+    const { env } = await import("./env");
+    expect(env.EMAIL_SEND_AUDIT_ENABLED).toBe("1");
+  });
+
+  test.each(["EMAIL_SEND_AUDIT_BUCKET", "EMAIL_SEND_AUDIT_KMS_KEY_ARN", "EMAIL_SEND_AUDIT_HMAC_KEY_ARN"])(
+    "rejects enabled auditing without %s",
+    async (missingKey) => {
+      setTestEnv({
+        SES_CONFIGURATION_SET: "formbricks-email-config",
+        SES_EMAIL_ENVIRONMENT: "staging",
+        EMAIL_SEND_AUDIT_ENABLED: "1",
+        EMAIL_SEND_AUDIT_BUCKET: "private-audit-bucket",
+        EMAIL_SEND_AUDIT_KMS_KEY_ARN: "content-key",
+        EMAIL_SEND_AUDIT_HMAC_KEY_ARN: "recipient-key",
+        [missingKey]: undefined,
+      });
+      await expect(import("./env")).rejects.toThrow(missingKey);
+    }
+  );
+
+  test("rejects email send auditing outside EU production and staging", async () => {
+    setTestEnv({
+      SES_CONFIGURATION_SET: "formbricks-email-config",
+      SES_EMAIL_ENVIRONMENT: "production_ksa",
+      EMAIL_SEND_AUDIT_ENABLED: "1",
+      EMAIL_SEND_AUDIT_BUCKET: "private-audit-bucket",
+      EMAIL_SEND_AUDIT_KMS_KEY_ARN: "content-key",
+      EMAIL_SEND_AUDIT_HMAC_KEY_ARN: "recipient-key",
+    });
+    await expect(import("./env")).rejects.toThrow("EMAIL_SEND_AUDIT_ENABLED");
   });
 
   test.each([{ SES_CONFIGURATION_SET: "formbricks-email-config" }, { SES_EMAIL_ENVIRONMENT: "staging" }])(

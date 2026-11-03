@@ -13,14 +13,14 @@ import { ValidationRulesEditor } from "@/modules/survey/editor/components/valida
 import { Button } from "@/modules/ui/components/button";
 
 interface IDateElementFormProps {
-  localSurvey: TSurvey;
-  element: TSurveyDateElement;
-  elementIdx: number;
-  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
-  isInvalid: boolean;
-  locale: TUserLocale;
-  isStorageConfigured: boolean;
-  isExternalUrlsAllowed?: boolean;
+  readonly localSurvey: TSurvey;
+  readonly element: TSurveyDateElement;
+  readonly elementIdx: number;
+  readonly updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
+  readonly isInvalid: boolean;
+  readonly locale: TUserLocale;
+  readonly isStorageConfigured: boolean;
+  readonly isExternalUrlsAllowed?: boolean;
 }
 
 export const DateElementForm = ({

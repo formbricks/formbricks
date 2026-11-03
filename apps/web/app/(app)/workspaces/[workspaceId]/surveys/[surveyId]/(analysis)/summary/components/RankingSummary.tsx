@@ -7,9 +7,9 @@ import { ElementSummaryHeader } from "./ElementSummaryHeader";
 import { OtherValuesList } from "./OtherValuesList";
 
 interface RankingSummaryProps {
-  elementSummary: TSurveyElementSummaryRanking;
-  surveyType: TSurveyType;
-  survey: TSurvey;
+  readonly elementSummary: TSurveyElementSummaryRanking;
+  readonly surveyType: TSurveyType;
+  readonly survey: TSurvey;
 }
 
 export const RankingSummary = ({ elementSummary, surveyType, survey }: RankingSummaryProps) => {

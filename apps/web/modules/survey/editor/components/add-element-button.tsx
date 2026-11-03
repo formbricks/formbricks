@@ -18,9 +18,9 @@ import {
 } from "@/modules/survey/lib/elements";
 
 interface AddElementButtonProps {
-  addElement: (element: any) => void;
-  workspace: TWorkspaceWithoutCustomCss;
-  isCxMode: boolean;
+  readonly addElement: (element: any) => void;
+  readonly workspace: TWorkspaceWithoutCustomCss;
+  readonly isCxMode: boolean;
 }
 
 export const AddElementButton = ({ addElement, workspace, isCxMode }: AddElementButtonProps) => {

@@ -433,11 +433,13 @@ export function BlockConditional({
     onSubmit(blockResponses, blockTtc);
   };
 
+  const isActionRowSticky = fullSizeCards && !isCardless;
+
   return (
     <div ref={containerRef} className={cn("space-y-6", fullSizeCards ? "h-full" : "")}>
       {/* Scrollable container for the entire block */}
       <ScrollableContainer fullSizeCards={fullSizeCards} disableInternalScroll={isCardless}>
-        <div className="space-y-6">
+        <div className={isActionRowSticky ? undefined : "space-y-6"}>
           <div className="space-y-6">
             {block.elements.map((element, index) => {
               const isFirstElement = index === 0;
@@ -475,7 +477,9 @@ export function BlockConditional({
           <div
             className={cn(
               "flex w-full flex-row-reverse justify-between",
-              fullSizeCards && !isCardless ? "bg-survey-bg sticky bottom-0" : ""
+              // The gap lives in the row's own padding: a margin on the elements scrolls away and
+              // leaves the sticky row flush against the last input.
+              isActionRowSticky ? "bg-survey-bg sticky bottom-0 pt-6" : ""
             )}>
             <div>
               {shouldHideSubmitButton ? (

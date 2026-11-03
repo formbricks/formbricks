@@ -45,6 +45,7 @@ const groupProperties = (properties: readonly TFilterProperty[], defaultGroup: s
     options: members.map((property) => ({
       label: property.label,
       value: property.id,
+      icon: property.icon,
       meta: { type: "property" },
     })),
   }));
@@ -127,6 +128,7 @@ export const AdvancedFilterDialog = ({
     },
     getDefaultOperator: () => "",
     showWhenLabel: false,
+    wideLeftOperandDropdown: true,
     formatLeftOperandValue: (condition) => condition.leftOperand.value,
   };
 
@@ -181,12 +183,13 @@ export const AdvancedFilterDialog = ({
         </DialogHeader>
         <DialogBody className="space-y-3">
           <ConditionsEditor conditions={group} config={config} callbacks={callbacks} isConnectorLocked />
-          {/* Lined up under the rules' first field: past the 40px connector slot and its 8px gap. */}
+          {/* Lined up under the rules' first field: past the 40px connector slot and its 8px gap, which
+              only exists once there is an "and" to show. */}
           <Button
             type="button"
             variant="secondary"
             size="sm"
-            className="ml-12"
+            className={group.conditions.length > 1 ? "ml-12" : undefined}
             onClick={() => updateConditions((conditions) => [...conditions, emptyCondition()])}>
             <PlusIcon />
             {t("common.add_filter")}

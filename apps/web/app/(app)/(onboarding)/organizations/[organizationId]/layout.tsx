@@ -9,8 +9,8 @@ import { getSession } from "@/modules/auth/lib/session";
 import { ToasterClient } from "@/modules/ui/components/toaster-client";
 
 const WorkspaceOnboardingLayout = async (props: {
-  params: Promise<{ organizationId: string }>;
-  children: React.ReactNode;
+  readonly params: Promise<{ organizationId: string }>;
+  readonly children: React.ReactNode;
 }) => {
   const params = await props.params;
 

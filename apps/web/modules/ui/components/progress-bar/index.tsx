@@ -35,7 +35,7 @@ interface HalfCircleProps {
   value: number;
 }
 
-export const HalfCircle: React.FC<HalfCircleProps> = ({ value }: { value: number }) => {
+export const HalfCircle: React.FC<HalfCircleProps> = ({ value }: { readonly value: number }) => {
   const normalizedValue = (value + 100) / 200;
   const mappedValue = (normalizedValue * 180 - 180).toString() + "deg";
 

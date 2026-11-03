@@ -68,8 +68,8 @@ export const generateSurveyEditorMetadata = async (props: TSurveyEditorPageParam
 };
 
 export const SurveyEditorPage = async (props: {
-  params: Promise<{ workspaceId: string; surveyId: string }>;
-  searchParams: Promise<{ mode?: string }>;
+  readonly params: Promise<{ workspaceId: string; surveyId: string }>;
+  readonly searchParams: Promise<{ mode?: string }>;
 }) => {
   const searchParams = await props.searchParams;
   const params = await props.params;

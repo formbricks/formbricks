@@ -15,9 +15,9 @@ import { Label } from "@/modules/ui/components/label";
 import { RadioGroup, RadioGroupItem } from "@/modules/ui/components/radio-group";
 
 interface HowToSendCardProps {
-  localSurvey: TSurvey;
-  setLocalSurvey: (survey: TSurvey | ((TSurvey: TSurvey) => TSurvey)) => void;
-  appSetupCompleted: boolean;
+  readonly localSurvey: TSurvey;
+  readonly setLocalSurvey: (survey: TSurvey | ((TSurvey: TSurvey) => TSurvey)) => void;
+  readonly appSetupCompleted: boolean;
 }
 
 export const HowToSendCard = ({ localSurvey, setLocalSurvey, appSetupCompleted }: HowToSendCardProps) => {

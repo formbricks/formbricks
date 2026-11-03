@@ -25,7 +25,9 @@ import { EditLogo } from "@/modules/workspaces/settings/look/components/edit-log
 import { EditPlacementForm } from "./components/edit-placement-form";
 import { ThemeStyling } from "./components/theme-styling";
 
-export const WorkspaceLookSettingsPage = async (props: { params: Promise<{ workspaceId: string }> }) => {
+export const WorkspaceLookSettingsPage = async (props: {
+  readonly params: Promise<{ workspaceId: string }>;
+}) => {
   const params = await props.params;
   const t = await getTranslate();
 

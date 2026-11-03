@@ -1,4 +1,4 @@
-import next from "@formbricks/config-eslint/next";
+import next, { nextCacheRestriction } from "@formbricks/config-eslint/next";
 
 /*
  * Environment access goes through the validated env module (ENG-1685).
@@ -116,6 +116,32 @@ const config = [
       // Kept as a warning (not off): exhaustive-deps is the main guard against stale closures, and the
       // web lint script has no `--max-warnings 0`, so it surfaces violations without blocking.
       "react-hooks/exhaustive-deps": "warn",
+
+      /*
+       * jsx-a11y's recommended set, which the `next` tier turns on at "error", on the same per-rule
+       * ratchet. Rules at zero stay at the tier's "error" and are deliberately not listed here. Four
+       * of them reach zero only through five inline disables, each on a site that already carries a
+       * NOSONAR for the same deliberate pattern (a `Trans` link whose text is injected, a
+       * stopPropagation wrapper, a focusable scroll region).
+       *
+       * The two below are counted with `--no-inline-config` and have no ratchet ticket yet; promote
+       * each to "error" once its count reaches zero.
+       */
+      // 62 violations across 38 files, nearly all `autoFocus` on the first field of a dialog or form.
+      "jsx-a11y/no-autofocus": "warn",
+      // Not in the recommended set; added because Sonar (S6819) reported a `role="presentation"`
+      // only after push. 115 violations across 82 files, 91 of them `role="status"` that wants
+      // `<output>`.
+      "jsx-a11y/prefer-tag-over-role": "warn",
+
+      // CODING_STANDARDS.md asks for `Readonly<>` props on every React component and Sonar enforces
+      // it as S6759, so until now a miss surfaced only after push. eslint-plugin-react (registered by
+      // eslint-config-next) accepts both the `Readonly<Props>` wrapper and `readonly` members; its
+      // autofix writes the latter, so `lint:fix` turns the rule off and fixes are made by hand with the
+      // wrapper. 1795 violations across 386 files, no ratchet ticket yet; promote to "error" once the
+      // count reaches zero.
+      "react/prefer-read-only-props": "warn",
+
       "no-restricted-syntax": ["error", ...noDirectProcessEnv],
     },
   },
@@ -135,6 +161,7 @@ const config = [
         "error",
         {
           paths: [
+            nextCacheRestriction,
             {
               name: "@formbricks/api-v3-schemas/testing",
               message: "Test-only entry point; import the generated schemas from @formbricks/api-v3-schemas.",

@@ -103,7 +103,7 @@ const DialogContent = React.forwardRef<
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 
 type DialogHeaderProps = Omit<React.HTMLAttributes<HTMLDivElement>, "dangerouslySetInnerHTML"> & {
-  dangerouslySetInnerHTML?: {
+  readonly dangerouslySetInnerHTML?: {
     __html: string;
   };
 };
@@ -121,7 +121,7 @@ const DialogHeader = ({ className, ...props }: DialogHeaderProps) => (
 DialogHeader.displayName = "DialogHeader";
 
 type DialogFooterProps = Omit<React.HTMLAttributes<HTMLDivElement>, "dangerouslySetInnerHTML"> & {
-  dangerouslySetInnerHTML?: {
+  readonly dangerouslySetInnerHTML?: {
     __html: string;
   };
 };
@@ -142,7 +142,7 @@ const DialogBody = ({
   className,
   unconstrained = false,
   ...props
-}: React.HTMLAttributes<HTMLElement> & { unconstrained?: boolean }) => (
+}: React.HTMLAttributes<HTMLElement> & { readonly unconstrained?: boolean }) => (
   <section
     className={cn("flex-1 text-sm", !unconstrained && "overflow-y-auto", className)}
     aria-label="Dialog content"

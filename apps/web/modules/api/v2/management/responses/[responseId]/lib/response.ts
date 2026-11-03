@@ -17,6 +17,7 @@ import {
   evaluateResponseQuotas,
   loadQuotaEvaluationContext,
 } from "@/modules/ee/quotas/lib/evaluation-service";
+import { requestEmailAuditErasureRequired } from "@/modules/email/lib/email-audit-maintenance";
 
 export const getResponse = reactCache(async (responseId: string) => {
   try {
@@ -97,10 +98,10 @@ export const getResponseForPipeline = async (
 
 export const deleteResponse = async (responseId: string): Promise<Result<Response, ApiErrorResponseV2>> => {
   try {
-    const deletedResponse = await prisma.response.delete({
-      where: {
-        id: responseId,
-      },
+    const deletedResponse = await prisma.$transaction(async (tx) => {
+      const response = await tx.response.delete({ where: { id: responseId } });
+      await requestEmailAuditErasureRequired({ responseId }, tx);
+      return response;
     });
 
     if (deletedResponse.displayId) {

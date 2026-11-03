@@ -19,8 +19,8 @@ import {
 export type EnableTwoFactorModalStep = "confirmPassword" | "scanQRCode" | "enterCode" | "backupCodes";
 
 interface EnableTwoFactorModalProps {
-  open: boolean;
-  setOpen: (open: boolean) => void;
+  readonly open: boolean;
+  readonly setOpen: (open: boolean) => void;
 }
 
 export const EnableTwoFactorModal = ({ open, setOpen }: EnableTwoFactorModalProps) => {

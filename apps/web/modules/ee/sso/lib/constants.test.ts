@@ -1,5 +1,3 @@
-import { createLocalAccountIssuer, createOAuthAccountIssuer } from "@better-auth/core/db";
-import { github, google } from "@better-auth/core/social-providers";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -13,18 +11,14 @@ import { canonicalAccountIssuer, isSsoRecoveryInternalCallbackUrl, ssoAccountIss
 const WEBAPP_URL = "https://app.example.com";
 
 /**
- * `Account.issuer` is spelled in four places that cannot import each other, and ENG-2555 happened
+ * `Account.issuer` is spelled in three places that cannot import each other, and ENG-2555 happened
  * because two of them disagreed about google: the SQL backfill had a `CASE` arm for it, the TypeScript
  * helper did not, and every Google sign-in broke while the whole suite stayed green.
  *
- * So this pins `canonicalAccountIssuer` against the two sources it has to agree with:
- *
- * - the SQL literal, parsed out of the migration rather than restated here — restating it would just
- *   move the drift into this file;
- * - Better Auth's own exports, which are what actually key the row at sign-in.
- *
- * The upstream leg is the one with a future in it: if a Better Auth release changes google's issuer, or
- * gives github one it does not have today, this fails at `pnpm test` instead of at somebody's login.
+ * Better Auth 1.7.7 no longer reads `Account.issuer`, but 1.7.0 pods still do, so we keep writing the
+ * value to keep a rollback to 1.7.0 working. This pins `canonicalAccountIssuer` against the SQL
+ * literals, parsed out of the migrations rather than restated here — restating them would just move the
+ * drift into this file.
  */
 const MIGRATION_DIR = join(
   dirname(fileURLToPath(import.meta.url)),
@@ -170,43 +164,27 @@ describe("canonicalAccountIssuer ↔ every SQL spelling of the mapping", () => {
   });
 });
 
-describe("canonicalAccountIssuer ↔ Better Auth's own account key", () => {
-  const providerOptions = { clientId: "pin-test", clientSecret: "pin-test" };
-
-  /**
-   * How upstream resolves the issuer (`better-auth/dist/oauth2/account-key.mjs`): a provider's declared
-   * `accountIssuer` wins, and only its absence falls back to the synthetic form.
-   */
-  test("google declares its own issuer, and we use that rather than the synthetic form", () => {
-    const declared = google(providerOptions).accountIssuer;
-
-    expect(declared).toBe("https://accounts.google.com");
-    expect(canonicalAccountIssuer("google")).toBe(declared);
-    // The regression itself: this is the value that was written, and it is not the one BA looks under.
+describe("canonicalAccountIssuer for the providers Better Auth 1.7.0 declared an issuer for", () => {
+  // 1.7.0 resolved the issuer from the provider's own declaration (google: `https://accounts.google.com`),
+  // falling back to the synthetic `local:oauth:<id>` form. Those values are frozen into rows written
+  // by 1.7.0 and by the migrations, so they are asserted here as literals, not read from upstream.
+  test("google keeps its declared issuer, not the synthetic form", () => {
+    expect(canonicalAccountIssuer("google")).toBe("https://accounts.google.com");
     expect(canonicalAccountIssuer("google")).not.toBe(ssoAccountIssuer("google"));
   });
 
-  /**
-   * Pins the *assumption* behind the fallback, not just the fallback. If a future release gives github a
-   * declared issuer, `local:oauth:github` silently becomes wrong for it in exactly the way it was wrong
-   * for google — and this is what notices.
-   */
-  test("github declares none, so the synthetic fallback is the right answer for it", () => {
-    // `in` rather than reading the property: upstream's type for github has no `accountIssuer` at all,
-    // so this is checked at compile time as well as here. If a release adds one, the property appears
-    // and this fails — which is the notification we want.
-    expect("accountIssuer" in github(providerOptions)).toBe(false);
-    expect(canonicalAccountIssuer("github")).toBe(createOAuthAccountIssuer("github"));
+  test("github falls back to the synthetic form", () => {
+    expect(canonicalAccountIssuer("github")).toBe("local:oauth:github");
   });
 
-  test("credential matches Better Auth's local account issuer", () => {
-    expect(canonicalAccountIssuer("credential")).toBe(createLocalAccountIssuer("credential"));
+  test("credential is the local credential issuer", () => {
+    expect(canonicalAccountIssuer("credential")).toBe("local:credential");
   });
 });
 
-describe("ssoAccountIssuer stays the pinning helper", () => {
-  // It is still correct for the generic providers we pin `accountIssuer` on, and this records that the
-  // two helpers are deliberately different rather than one being a leftover.
+describe("ssoAccountIssuer", () => {
+  // The synthetic form for the generic providers (azuread / openid / saml) and the fallback arm of
+  // `canonicalAccountIssuer`; kept as its own helper because google's canonical value is not this form.
   test.each(["azuread", "openid", "saml"])("%s keeps the synthetic form", (provider) => {
     expect(ssoAccountIssuer(provider)).toBe(`local:oauth:${provider}`);
     expect(canonicalAccountIssuer(provider)).toBe(ssoAccountIssuer(provider));

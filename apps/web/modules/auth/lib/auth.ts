@@ -312,6 +312,11 @@ export const auth = betterAuth({
       refreshToken: "refresh_token",
       idToken: "id_token",
     },
+    // Better Auth 1.7.3 dropped `issuer` from its account model; 1.7.0 keys accounts on it. Declared so
+    // the `account.create.before` hook in better-auth-hooks.ts can keep writing it for a 1.7.0 rollback.
+    additionalFields: {
+      issuer: { type: "string", required: false, input: false, returned: false },
+    },
   },
 
   // Existing Prisma columns that Better Auth doesn't know about; declared so the `user.create.before`
@@ -433,7 +438,16 @@ export const auth = betterAuth({
     // service layer). Better Auth's default id format is NOT cuid2, so without this every Formbricks
     // service that validates a user id via ZId (e.g. updateUser, called from the SSO provisioning
     // write path) would reject BA-created users at cutover — caught by the SSO-provisioning test.
-    database: { generateId: () => createId() },
+    database: {
+      generateId: () => createId(),
+      // Prisma owns the schema (`main.prisma` + migrations), not Better Auth. Since 1.7.3 every auth request
+      // awaits a schema check against the model Better Auth derives from its plugins. That model declares
+      // `user.image`, a column we dropped (the SSO create hook strips the provider image), so with the check
+      // on, every request and every `getSession` would throw `SchemaMismatchError`. What it would enforce is
+      // pinned by `better-auth-schema-contract.test.ts`, which diffs the models Better Auth owns against
+      // `main.prisma`.
+      validateSchema: false,
+    },
     defaultCookieAttributes: { sameSite: "lax", httpOnly: true, secure: USE_SECURE_COOKIES, path: "/" },
     // The OAuth state cookie would otherwise expire 5 minutes before the state it guards (ENG-3314).
     cookies: { state: { attributes: { maxAge: OAUTH_STATE_COOKIE_MAX_AGE_SECONDS } } },

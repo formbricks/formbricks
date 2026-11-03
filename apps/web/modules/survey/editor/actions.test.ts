@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
 import type { TSurvey } from "@formbricks/types/surveys/types";
@@ -164,5 +165,32 @@ describe.each([
     expect(write).toHaveBeenCalledWith(expect.objectContaining({ id: "survey_1" }), {
       customCssPrincipal: "user_1",
     });
+  });
+});
+
+// In Next 16 `revalidatePath` re-renders the current route whatever path it is given, so from the draft
+// action — the autosave's path — it re-rendered the whole editor page every 10 seconds.
+describe("route revalidation", () => {
+  beforeEach(() => {
+    vi.mocked(revalidatePath).mockReset();
+    vi.mocked(can).mockResolvedValue(true);
+    vi.mocked(getOrganizationIdFromSurveyId).mockResolvedValue("org_1");
+    vi.mocked(getWorkspaceIdFromSurveyId).mockResolvedValue("ws_1");
+    vi.mocked(getSurvey).mockResolvedValue(storedSurvey);
+    vi.mocked(updateSurvey).mockImplementation(async (survey) => survey);
+    vi.mocked(updateSurveyDraft).mockImplementation(async (survey) => survey);
+  });
+
+  test("a draft save does not revalidate the route", async () => {
+    await run(updateSurveyDraftAction, { ...storedSurvey, status: "draft" } as TSurvey);
+
+    expect(updateSurveyDraft).toHaveBeenCalled();
+    expect(revalidatePath).not.toHaveBeenCalled();
+  });
+
+  test("a full save revalidates the survey's route", async () => {
+    await run(updateSurveyAction, storedSurvey);
+
+    expect(revalidatePath).toHaveBeenCalledWith("/workspaces/ws_1/surveys/survey_1");
   });
 });

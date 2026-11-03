@@ -16,17 +16,17 @@ import { createTagAction, createTagToResponseAction, deleteTagOnResponseAction }
 import { SingleResponseCardMetadata } from "./SingleResponseCardMetadata";
 
 interface ResponseTagsWrapperProps {
-  tags: {
+  readonly tags: {
     tagId: string;
     tagName: string;
   }[];
-  workspaceId: string;
-  responseId: string;
-  environmentTags: TTag[];
-  updateFetchedResponses: () => void;
-  isReadOnly?: boolean;
-  response: TResponse;
-  locale: TUserLocale;
+  readonly workspaceId: string;
+  readonly responseId: string;
+  readonly environmentTags: TTag[];
+  readonly updateFetchedResponses: () => void;
+  readonly isReadOnly?: boolean;
+  readonly response: TResponse;
+  readonly locale: TUserLocale;
 }
 
 export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({

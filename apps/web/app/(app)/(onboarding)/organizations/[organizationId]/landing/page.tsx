@@ -11,7 +11,7 @@ import { getAccessControlPermission, getIsMultiOrgEnabled } from "@/modules/ee/l
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import { Header } from "@/modules/ui/components/header";
 
-const Page = async (props: { params: Promise<{ organizationId: string }> }) => {
+const Page = async (props: { readonly params: Promise<{ organizationId: string }> }) => {
   const params = await props.params;
   const t = await getTranslate();
 

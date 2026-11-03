@@ -7,12 +7,12 @@ import { useTranslation } from "react-i18next";
 export const TRIAL_BASE_RESPONSE_LIMIT = 250;
 
 interface TrialBannerNewProps {
-  trialDaysRemaining: number;
-  planName: string;
-  responseCount: number;
-  responseLimit: number | null;
-  baseResponseLimit: number;
-  billingHref: string;
+  readonly trialDaysRemaining: number;
+  readonly planName: string;
+  readonly responseCount: number;
+  readonly responseLimit: number | null;
+  readonly baseResponseLimit: number;
+  readonly billingHref: string;
 }
 
 export const TrialBannerNew = ({

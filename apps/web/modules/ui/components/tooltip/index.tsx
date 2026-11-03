@@ -35,12 +35,12 @@ TooltipContent.displayName = TooltipPrimitive.Content.displayName;
 export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger };
 
 interface TooltipRendererProps {
-  tooltipContent: ReactNode;
-  children: ReactNode;
-  className?: string;
-  triggerClass?: string;
-  shouldRender?: boolean;
-  delayDuration?: number;
+  readonly tooltipContent: ReactNode;
+  readonly children: ReactNode;
+  readonly className?: string;
+  readonly triggerClass?: string;
+  readonly shouldRender?: boolean;
+  readonly delayDuration?: number;
 }
 export const TooltipRenderer = (props: TooltipRendererProps) => {
   const { children, shouldRender = true, tooltipContent, className, triggerClass, delayDuration = 0 } = props;

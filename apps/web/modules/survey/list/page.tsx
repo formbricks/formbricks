@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 };
 
 interface SurveyTemplateProps {
-  params: Promise<{
+  readonly params: Promise<{
     workspaceId: string;
   }>;
 }

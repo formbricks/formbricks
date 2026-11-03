@@ -14,8 +14,8 @@ import { InnerHtmlSelector } from "./components/inner-html-selector";
 import { PageUrlSelector } from "./components/page-url-selector";
 
 interface NoCodeActionFormProps {
-  form: UseFormReturn<TActionClassInput>;
-  isReadOnly: boolean;
+  readonly form: UseFormReturn<TActionClassInput>;
+  readonly isReadOnly: boolean;
 }
 
 export const NoCodeActionForm = ({ form, isReadOnly }: NoCodeActionFormProps) => {

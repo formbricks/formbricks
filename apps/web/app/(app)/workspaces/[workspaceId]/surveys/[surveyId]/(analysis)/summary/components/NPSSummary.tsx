@@ -15,9 +15,9 @@ import { ElementSummaryHeader } from "./ElementSummaryHeader";
 import { SatisfactionIndicator } from "./SatisfactionIndicator";
 
 interface NPSSummaryProps {
-  elementSummary: TSurveyElementSummaryNps;
-  survey: TSurvey;
-  setFilter: (
+  readonly elementSummary: TSurveyElementSummaryNps;
+  readonly survey: TSurvey;
+  readonly setFilter: (
     elementId: string,
     label: TI18nString,
     elementType: TSurveyElementTypeEnum,

@@ -6,7 +6,7 @@ import { cn } from "@/modules/ui/lib/utils";
 const Breadcrumb = React.forwardRef<
   HTMLElement,
   React.ComponentPropsWithoutRef<"nav"> & {
-    separator?: React.ReactNode;
+    readonly separator?: React.ReactNode;
   }
 >(({ ...props }, ref) => <nav ref={ref} aria-label="breadcrumb" {...props} />);
 Breadcrumb.displayName = "Breadcrumb";
@@ -28,8 +28,8 @@ BreadcrumbList.displayName = "BreadcrumbList";
 const BreadcrumbItem = React.forwardRef<
   HTMLLIElement,
   React.ComponentPropsWithoutRef<"li"> & {
-    isActive?: boolean;
-    isHighlighted?: boolean;
+    readonly isActive?: boolean;
+    readonly isHighlighted?: boolean;
   }
 >(({ className, isActive, isHighlighted, ...props }, ref) => (
   <li
@@ -49,7 +49,7 @@ BreadcrumbItem.displayName = "BreadcrumbItem";
 const BreadcrumbLink = React.forwardRef<
   HTMLAnchorElement,
   React.ComponentPropsWithoutRef<"a"> & {
-    asChild?: boolean;
+    readonly asChild?: boolean;
   }
 >(({ asChild, className, ...props }, ref) => {
   const Comp = asChild ? Slot : "a";

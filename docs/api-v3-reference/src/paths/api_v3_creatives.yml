@@ -114,6 +114,7 @@ get:
                       - code: en-US
                         default: true
                         enabled: true
+                    autoSelectLanguage: null
                     content:
                       label:
                         en-US: Feedback
@@ -288,6 +289,7 @@ post:
                     - code: en-US
                       default: true
                       enabled: true
+                  autoSelectLanguage: null
                   content:
                     message:
                       en-US:

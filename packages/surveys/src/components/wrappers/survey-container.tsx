@@ -45,7 +45,7 @@ type UseNoOverlayModalOptions = {
  *
  * It lives here rather than in lib/ deliberately. It has exactly one call site and is specific to
  * this component's modal semantics, so it is not shared code; and its whole behaviour is DOM
- * listeners and a timer, which per AGENTS.md is covered by Playwright rather than unit tests. As a
+ * listeners and a timer, which per CODING_STANDARDS.md is covered by Playwright rather than unit tests. As a
  * lib/*.ts module it would have added 22 lines the repo does not unit-test on principle, failing the
  * new-code coverage gate for a refactor that changes no behaviour. The one piece that IS shared —
  * which Escape presses count as "close", modifier guard included — lives in lib/keyboard.ts as
@@ -117,7 +117,7 @@ type UseCardRectOptions = {
  * prop moves that break to compile time and lets this markup change freely.
  *
  * Lives in this file rather than lib/ for the same reason as `useNoOverlayModal` above: one call
- * site, and its whole behaviour is observers and a frame loop, which per AGENTS.md is Playwright's
+ * site, and its whole behaviour is observers and a frame loop, which per CODING_STANDARDS.md is Playwright's
  * job rather than a unit test's.
  */
 const useCardRect = ({ enabled, containerRef, onChange }: UseCardRectOptions): void => {

@@ -9,9 +9,9 @@ import { convertFloatToNDecimal } from "../lib/utils";
 import { ElementSummaryHeader } from "./ElementSummaryHeader";
 
 interface ConsentSummaryProps {
-  elementSummary: TSurveyElementSummaryConsent;
-  survey: TSurvey;
-  setFilter: (
+  readonly elementSummary: TSurveyElementSummaryConsent;
+  readonly survey: TSurvey;
+  readonly setFilter: (
     elementId: string,
     label: TI18nString,
     elementType: TSurveyElementTypeEnum,

@@ -31,11 +31,11 @@ import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { generatePersonalLinksAction } from "../../actions";
 
 interface PersonalLinksTabProps {
-  surveyId: string;
-  segments: TSegment[];
-  isContactsEnabled: boolean;
-  isFormbricksCloud: boolean;
-  enterpriseLicenseRequestFormUrl: string;
+  readonly surveyId: string;
+  readonly segments: TSegment[];
+  readonly isContactsEnabled: boolean;
+  readonly isFormbricksCloud: boolean;
+  readonly enterpriseLicenseRequestFormUrl: string;
 }
 
 interface PersonalLinksFormData {

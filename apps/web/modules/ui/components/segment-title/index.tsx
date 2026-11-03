@@ -4,9 +4,9 @@ import { UsersIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 interface SegmentTitleProps {
-  title?: string;
-  description?: string | null | undefined;
-  isPrivate?: boolean;
+  readonly title?: string;
+  readonly description?: string | null | undefined;
+  readonly isPrivate?: boolean;
 }
 
 export const SegmentTitle = ({ title, description, isPrivate }: SegmentTitleProps) => {

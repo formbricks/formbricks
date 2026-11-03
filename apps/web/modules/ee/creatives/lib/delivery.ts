@@ -34,10 +34,10 @@ export const deliveredCreativeSelect = {
   displayPercentage: true,
   startAt: true,
   endAt: true,
+  autoSelectLanguage: true,
   survey: {
     select: {
       type: true,
-      autoSelectLanguage: true,
       // For the popup survey's language skip, precomputed for the page (`surveyLanguageMatch`).
       languages: {
         select: { default: true, enabled: true, language: { select: { code: true, alias: true } } },
@@ -146,9 +146,8 @@ const toCreativePayload = async (
       destination?.type === "survey" && destination.opensAs === "popup" && row.survey
         ? buildLanguageMatch(row.survey.languages)
         : null,
-    // Its texts follow the language its survey would open in (ENG-4003); a link or no Destination has
-    // no such setting, so only the language the site set counts.
-    autoSelectLanguage: row.survey?.autoSelectLanguage ?? false,
+    // The creative's own "Use browser language by default" (ENG-6871); never chosen is off, as on surveys.
+    autoSelectLanguage: row.autoSelectLanguage ?? false,
     style: getCreativeStyle(groups, workspaceStyling, customCss),
     destination,
     showOn: row.showOn,

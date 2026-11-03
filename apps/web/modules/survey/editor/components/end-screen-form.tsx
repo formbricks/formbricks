@@ -17,17 +17,17 @@ import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
 
 interface EndScreenFormProps {
-  localSurvey: TSurvey;
-  endingCardIndex: number;
-  isInvalid: boolean;
-  selectedLanguageCode: string;
-  updateSurvey: (
+  readonly localSurvey: TSurvey;
+  readonly endingCardIndex: number;
+  readonly isInvalid: boolean;
+  readonly selectedLanguageCode: string;
+  readonly updateSurvey: (
     input: Partial<TSurveyEndScreenCard & { _forceUpdate?: boolean }> | Partial<TSurveyRedirectUrlCard>
   ) => void;
-  endingCard: TSurveyEndScreenCard;
-  locale: TUserLocale;
-  isStorageConfigured: boolean;
-  isExternalUrlsAllowed: boolean;
+  readonly endingCard: TSurveyEndScreenCard;
+  readonly locale: TUserLocale;
+  readonly isStorageConfigured: boolean;
+  readonly isExternalUrlsAllowed: boolean;
 }
 
 export const EndScreenForm = ({
