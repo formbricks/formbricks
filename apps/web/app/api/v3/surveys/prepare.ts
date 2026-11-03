@@ -162,6 +162,8 @@ function parseStoredV3SurveyDocument(
     endings: survey.endings,
     hiddenFields: survey.hiddenFields,
     variables: survey.variables,
+    // ENG-6932: `null` (the column default) reads as no rules before the first question.
+    startLogic: survey.startLogic ?? [],
     // ENG-3641: the stored CSS as source, so an omitted `customCss` merges to "unchanged" and the write
     // path compares normalized source rather than anything compiled.
     customCss: toCustomCssSource(survey.customCss),

@@ -22,7 +22,7 @@ import { ZShowConditions } from "../show-conditions";
 import { ZAllowedFileExtension } from "../storage";
 import { ZBaseStyling } from "../styling";
 import { ZLanguage } from "../workspace";
-import { type TSurveyBlock, type TSurveyBlockLogicAction, ZSurveyBlocks } from "./blocks";
+import { type TSurveyBlock, type TSurveyBlockLogicAction, ZSurveyBlockLogic, ZSurveyBlocks } from "./blocks";
 import { findBlocksWithCyclicLogic } from "./blocks-validation";
 import { validateSurveyCodes } from "./codes";
 import {
@@ -59,6 +59,7 @@ import {
   ZConditionGroupDeprecated,
   ZDynamicLogicFieldValueDeprecated,
 } from "./logic";
+import { validateStartLogic } from "./start-logic-validation";
 import {
   FORBIDDEN_IDS,
   findLanguageCodesForDuplicateLabels,
@@ -1082,6 +1083,13 @@ export const ZSurveyBase = z.object({
    * still type-check.
    */
   showConditions: ZShowConditions.nullish(),
+  /**
+   * Rules before the first question (ENG-6932, json-shapes.md section 4): the block-rule format, run
+   * by the survey as soon as it loads, before the welcome card and on start-at links. They may jump
+   * to a block, screen out by jumping to an ending, and set a value; `surveyRefinement` refuses the
+   * rest. Nullish: `null` (the column default) and a missing key both mean none.
+   */
+  startLogic: z.array(ZSurveyBlockLogic).nullish(),
 });
 
 /**
@@ -1959,6 +1967,11 @@ export const surveyRefinement = (rawSurvey: z.infer<typeof ZSurveyBase>, ctx: z.
       validateShowIf(survey, blockIndex, block, allElements).forEach((issue) => {
         ctx.addIssue(issue as z.IssueData);
       });
+    });
+
+    // Rules before the first question: jumps and Set value only, reading fields, never answers.
+    validateStartLogic(survey).forEach((issue) => {
+      ctx.addIssue(issue as z.IssueData);
     });
 
     // 5. Check for cyclic logic in blocks

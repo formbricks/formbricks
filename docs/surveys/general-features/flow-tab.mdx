@@ -1,6 +1,6 @@
 ---
 title: "Flow Tab"
-description: "See your whole survey flow on one outline: every block, the rules that run after it, where everyone else goes, and the endings. Add and edit logic where you see it."
+description: "See your whole survey flow on one outline: the rules before the first question, every block, the rules that run after it, where everyone else goes, and the endings. Add and edit logic where you see it."
 icon: "diagram-project"
 ---
 
@@ -44,6 +44,40 @@ You can switch any action of a rule between Jump to block, Require Answer and Ca
 Changes on the Flow tab are part of your survey draft, like changes on the Questions tab. They are kept when you save or publish the survey.
 
 Clicking an ending shows what kind of ending it is. Its text and button are edited on the **Questions** tab, and **Edit on the Questions tab** takes you there.
+
+## Rules before the first question
+
+The outline starts with **Before the first question**. Rules here run as soon as the survey loads, before the welcome card, so you can screen respondents or route them before they answer anything. They also run when a respondent opens the survey through a [start-at link](/surveys/link-surveys/start-at-block), so a screener can't be skipped that way.
+
+Nobody has answered anything yet, so these rules read only:
+
+* [URL parameters and hidden fields](/surveys/general-features/hidden-fields), for example a `panel_id` your panel provider adds to the link
+* calculated [Embedded Data](/surveys/general-features/variables) fields
+* response details the browser knows, such as the page URL or the survey language
+
+And they can only:
+
+* **Screen out**: jump to an ending. The respondent sees only that ending, not the welcome card or any question.
+* **Jump to a block**: start the respondent on a later block. With a welcome card, the welcome card still shows first and leads to that block. A jump also takes priority over a start-at link.
+* **Set a value**: change a calculated field. Its value is saved with the response when the respondent submits the first page.
+
+Rules are checked from top to bottom: the first jump that matches wins, and every matching calculation runs. When no rule jumps, the survey starts as it always does. Use **Add logic** under the section to add a **Jump rule** or a **Calculation**.
+
+### What a screen-out records
+
+A screen-out leaves a finished response straight away, even though no question was answered. It holds the ending the respondent was sent to, the URL parameters and hidden fields that caused it, and any values the rules set, so you can check your screener in the responses.
+
+<Note>
+  For now, a screened-out response counts as **Completed**: it appears in your completed responses and counts toward **Close survey after N responses**. Keep this in mind when you set a response limit on a survey with a screener.
+</Note>
+
+When spam protection is on, the survey runs its reCAPTCHA check before it records a screen-out, as it does before the first answer.
+
+### Trying a screener in the preview
+
+The editor preview has a **Test values** button next to **Restart**. Enter values for the survey's URL parameters and hidden fields, then click **Restart with these values**: the preview starts over as if the link had carried them, so you see exactly where a respondent with those values goes. **Clear** removes them. The values only affect the preview.
+
+You can also open the survey's link with the parameters added, for example `?panel_id=12345`, as before.
 
 ## When something is wrong
 

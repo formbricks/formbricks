@@ -168,7 +168,7 @@ export function registerSurveyTools(server: McpServer): void {
     {
       title: "Create survey",
       description:
-        "Create a Formbricks link survey using the v3 Surveys API contract. Optional `customCss` source is processed by the server; removed constructs come back as top-level `warnings`. Declare Embedded Data with typed `embeddedFields` (library fields linked by `key`) or the legacy `variables` / `hiddenFields`.",
+        "Create a Formbricks link survey using the v3 Surveys API contract. Optional `customCss` source is processed by the server; removed constructs come back as top-level `warnings`. Declare Embedded Data with typed `embeddedFields` (library fields linked by `key`) or the legacy `variables` / `hiddenFields`. Optional `startLogic` holds rules that run before the first question (screen out to an ending, jump to a block, set a value from URL parameters).",
       inputSchema: ZMcpCreateSurveyInput,
       audit: { action: "created", targetType: "survey" },
       annotations: {
@@ -233,7 +233,7 @@ export function registerSurveyTools(server: McpServer): void {
     {
       title: "Patch survey",
       description: [
-        "Update survey-level fields — name, status, languages, showLanguageSwitch, autoSelectLanguage, endings, welcomeCard, embeddedFields (typed Embedded Data; the legacy variables and hiddenFields are derived from it), customCss — using the v3 Surveys API patch contract.",
+        "Update survey-level fields — name, status, languages, showLanguageSwitch, autoSelectLanguage, endings, welcomeCard, embeddedFields (typed Embedded Data; the legacy variables and hiddenFields are derived from it), startLogic (rules before the first question), customCss — using the v3 Surveys API patch contract.",
         "On a survey that is not a draft and already has responses, nothing changes until you pass confirm: true: the call returns the editor's caution text instead, so show it to the user and retry only after they agree.",
         "For block changes prefer edit_survey_blocks (update, insert, remove) or set_survey_block_order (reorder): they address blocks by id, cost a fraction of the tokens, and cannot drop a block by omission.",
         "Provided top-level arrays and objects replace that whole subtree, so a partial `blocks` array deletes every block it leaves out.",

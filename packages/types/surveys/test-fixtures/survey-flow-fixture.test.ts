@@ -107,6 +107,19 @@ describe("the survey flow fixture", () => {
     ).toBe(true);
   });
 
+  test("has rules before the first question that screen out, jump to a block and set a value", () => {
+    const blockIds = new Set(surveyFlowFixture.blocks.map((block) => block.id));
+    const endingIds = new Set(surveyFlowFixture.endings.map((ending) => ending.id));
+    const startActions = (surveyFlowFixture.startLogic ?? []).flatMap((rule) => rule.actions);
+    const startJumps = startActions.flatMap((action) =>
+      action.objective === "jumpToBlock" ? [action.target] : []
+    );
+
+    expect(startJumps.some((target) => endingIds.has(target))).toBe(true);
+    expect(startJumps.some((target) => blockIds.has(target))).toBe(true);
+    expect(startActions.some((action) => action.objective === "calculate")).toBe(true);
+  });
+
   test("holds every ending type and every question type", () => {
     const endingTypes = new Set(unionMembers(ZSurveyEnding).flatMap((member) => literalOf(member, "type")));
     expect(new Set(surveyFlowFixture.endings.map((ending) => ending.type))).toEqual(endingTypes);

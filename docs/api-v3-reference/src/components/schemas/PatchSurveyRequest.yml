@@ -20,7 +20,7 @@ description: >
 
 
   `metadata`, `languages`, `welcomeCard`, `blocks`, `endings`, `hiddenFields`,
-  `variables` and `embeddedFields`
+  `variables`, `embeddedFields` and `startLogic`
 
   replace their full top-level value when provided. Missing ids in replaced
   arrays are deletions.
@@ -155,6 +155,11 @@ properties:
     maxItems: 100
     items:
       $ref: ./SurveyVariable.yml
+  startLogic:
+    anyOf:
+      - $ref: ./SurveyStartLogic.yml
+      - type: "null"
+    description: Replaces every rule before the first question. `null` or `[]` removes them; omit to keep them.
   embeddedFields:
     type: array
     maxItems: 300

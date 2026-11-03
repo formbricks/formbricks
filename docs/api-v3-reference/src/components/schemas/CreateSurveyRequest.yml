@@ -4,7 +4,7 @@ description: >
   only: name,
 
   metadata, languages and language settings, welcome card, blocks/elements/logic, endings, hidden
-  fields, and variables.
+  fields, variables, and rules before the first question (`startLogic`).
 
   App surveys (`type: app`) additionally accept the `distribution` (display options + triggers) and
   `targeting` (contact segment filters) objects; these are rejected for `link` surveys.
@@ -134,6 +134,10 @@ properties:
     maxItems: 100
     items:
       $ref: ./CreateSurveyVariable.yml
+  startLogic:
+    allOf:
+      - $ref: ./SurveyStartLogic.yml
+    default: []
   embeddedFields:
     type: array
     maxItems: 300
