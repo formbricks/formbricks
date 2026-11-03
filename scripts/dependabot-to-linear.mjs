@@ -58,7 +58,15 @@ const LINEAR_API_URL = "https://api.linear.app/graphql";
 
 // The repository whose tickets predate per-repository prefixes.
 const UNQUALIFIED_PREFIX_REPO = "formbricks/formbricks";
-const REPOSITORY_PATTERN = /^[\w.-]+\/[\w.-]+$/;
+
+// "owner/repo", the shape the GitHub API path needs. `[\w.-]` alone also accepts
+// `.` and `..`, which pass a shape check but climb one path segment once the URL
+// is normalised — so they are rejected by name.
+function isRepositoryName(value) {
+  const segments = String(value).split("/");
+  if (segments.length !== 2) return false;
+  return segments.every((segment) => /^[\w.-]+$/.test(segment) && segment !== "." && segment !== "..");
+}
 
 // Abort any outbound request that hangs, so a stuck connection can't tie up the
 // runner until the workflow-level timeout.
@@ -313,7 +321,7 @@ function buildIssue(alert, repo, siblings = []) {
 
 async function main() {
   const repo = requireEnv("DEPENDABOT_REPOSITORY", "GITHUB_REPOSITORY");
-  if (!REPOSITORY_PATTERN.test(repo)) throw new Error(`Not an "owner/repo" name: ${repo}`);
+  if (!isRepositoryName(repo)) throw new Error(`Not an "owner/repo" name: ${repo}`);
   const ghToken = requireEnv("DEPENDABOT_ALERTS_TOKEN");
   const linearKey = requireEnv("LINEAR_API_KEY", "LINEAR_ACCESS_KEY");
 
@@ -410,6 +418,7 @@ export {
   alertTitlePrefix,
   buildIssue,
   findSiblingIssues,
+  isRepositoryName,
   linearRequest,
   createIssue,
   setIssueState,

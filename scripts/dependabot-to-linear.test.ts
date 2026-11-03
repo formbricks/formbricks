@@ -1,5 +1,10 @@
 import { describe, expect, test, vi } from "vitest";
-import { alertTitlePrefix, buildIssue, findSiblingIssues } from "./dependabot-to-linear.mjs";
+import {
+  alertTitlePrefix,
+  buildIssue,
+  findSiblingIssues,
+  isRepositoryName,
+} from "./dependabot-to-linear.mjs";
 
 const alert = {
   number: 197,
@@ -69,6 +74,30 @@ describe("buildIssue", () => {
   test("omits the cross-reference when no sibling exists", () => {
     expect(buildIssue(alert, "formbricks/ee").description).not.toContain("Also tracked as");
     expect(buildIssue(alert, "formbricks/ee", []).description).not.toContain("Also tracked as");
+  });
+});
+
+describe("isRepositoryName", () => {
+  test("accepts the owner/repo names GitHub hands out", () => {
+    expect(isRepositoryName("formbricks/formbricks")).toBe(true);
+    expect(isRepositoryName("formbricks/ee")).toBe(true);
+    expect(isRepositoryName("foo-org/bar.js_v2")).toBe(true);
+  });
+
+  test("rejects names of another shape", () => {
+    expect(isRepositoryName("formbricks")).toBe(false);
+    expect(isRepositoryName("formbricks/ee/hub")).toBe(false);
+    expect(isRepositoryName("/ee")).toBe(false);
+    expect(isRepositoryName("ee/")).toBe(false);
+    expect(isRepositoryName("")).toBe(false);
+    expect(isRepositoryName("form bricks/ee")).toBe(false);
+  });
+
+  test("rejects dot segments, which would climb out of the API path", () => {
+    expect(isRepositoryName("../ee")).toBe(false);
+    expect(isRepositoryName("formbricks/..")).toBe(false);
+    expect(isRepositoryName(".")).toBe(false);
+    expect(isRepositoryName("./ee")).toBe(false);
   });
 });
 
