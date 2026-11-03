@@ -137,6 +137,12 @@ async function linearRequest(apiKey, query, variables) {
 
 // The title prefix that identifies an alert's ticket. It must never change for
 // a given alert, or the next run files a duplicate and orphans the old ticket.
+//
+// The name is the repository half only, so a title reads `[Dependabot ee#199]`
+// rather than `[Dependabot formbricks/ee#199]`. That stays unique while the
+// workflow matrix holds no two repositories with the same basename — and the
+// matrix is the only thing that feeds DEPENDABOT_REPOSITORY, so adding
+// `acme/ee` next to `formbricks/ee` would cross the two.
 function alertTitlePrefix(repo, number) {
   if (repo === UNQUALIFIED_PREFIX_REPO) return `[Dependabot #${number}]`;
   return `[Dependabot ${repo.split("/")[1]}#${number}]`;
@@ -177,6 +183,12 @@ function alertLabel(title) {
 //
 // Best-effort: a failed lookup logs and returns nothing, so the ticket is still
 // filed with its advisory id and nothing is lost but the cross-reference.
+//
+// `first: 10` is deliberate rather than paginated: one advisory can only ever have
+// one ticket per repository listed in the workflow matrix, so the result set is
+// bounded by that list (three today). The client-side filter below can drop every
+// row — this repository's own ticket, hand-written titles, completed siblings — so
+// the page is sized well past any plausible matrix rather than at the first match.
 async function findSiblingIssues(apiKey, ghsa, { excludePrefix, request = linearRequest } = {}) {
   if (!ghsa) return [];
   try {
@@ -185,7 +197,7 @@ async function findSiblingIssues(apiKey, ghsa, { excludePrefix, request = linear
       `query SiblingIssues($teamId: ID!, $ghsa: String!) {
         issues(
           filter: { team: { id: { eq: $teamId } }, description: { contains: $ghsa } }
-          first: 5
+          first: 10
         ) {
           nodes { identifier title url state { type } }
         }
