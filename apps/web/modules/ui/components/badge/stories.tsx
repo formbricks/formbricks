@@ -1,4 +1,5 @@
 import { Meta, StoryObj } from "@storybook/react-vite";
+import { ChevronDownIcon, EyeIcon } from "lucide-react";
 import { Badge } from "./index";
 
 const meta: Meta<typeof Badge> = {
@@ -211,6 +212,42 @@ export const WithRole: Story = {
     docs: {
       description: {
         story: "Use role attribute for better accessibility, especially for dynamic status updates.",
+      },
+    },
+  },
+};
+
+export const WithIcon: Story = {
+  args: {
+    text: "Show if: Netflix picked",
+    type: "gray",
+    size: "tiny",
+    icon: <EyeIcon />,
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "A leading icon says what kind of thing the badge labels (ENG-3632), like the eye of a show-if.",
+      },
+    },
+  },
+};
+
+export const Clickable: Story = {
+  args: {
+    text: "Show if: uses Netflix, Disney+ and Prime Video",
+    type: "gray",
+    size: "normal",
+    icon: <EyeIcon />,
+    trailingIcon: <ChevronDownIcon />,
+    onClick: () => undefined,
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "With `onClick` the badge is a button that opens its settings in place, as on the Flow tab. Clicking it does not also click the row it sits in.",
       },
     },
   },

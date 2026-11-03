@@ -10,6 +10,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
 } from "react";
 import { ActionClass, Language, OrganizationRole } from "@formbricks/database/prisma-browser";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
@@ -40,11 +41,13 @@ import type { TSurveyDataRetentionContext } from "@/modules/ee/data-retention/ty
 import { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
 import { ElementsView } from "@/modules/survey/editor/components/elements-view";
+import { FlowView } from "@/modules/survey/editor/components/flow-view";
 import { LoadingSkeleton } from "@/modules/survey/editor/components/loading-skeleton";
 import { SettingsView } from "@/modules/survey/editor/components/settings-view";
 import { StylingView } from "@/modules/survey/editor/components/styling-view";
 import { SurveyEditorTabs } from "@/modules/survey/editor/components/survey-editor-tabs";
 import { SurveyMenuBar } from "@/modules/survey/editor/components/survey-menu-bar";
+import { hasSeenFlowTab, markFlowTabSeen } from "@/modules/survey/editor/lib/flow-tab-notice";
 import { type TEditorWorkspace } from "@/modules/survey/editor/lib/workspace";
 import { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
 import { FollowUpsView } from "@/modules/survey/follow-ups/components/follow-ups-view";
@@ -67,6 +70,8 @@ const PREVIEW_DEBOUNCE_MS = 300;
 // Memoized so the editor's per-keystroke re-renders skip the preview while its debounced inputs are
 // unchanged; without it the preview would still re-render (and re-mount the survey) every time.
 const MemoizedPreviewSurvey = memo(PreviewSurvey);
+// The "Logic has moved" flag changes only through this editor, which tracks it in state as well.
+const subscribeToNothing = () => () => {};
 
 interface SurveyEditorProps {
   survey: TSurvey;
@@ -161,6 +166,21 @@ export const SurveyEditor = ({
 
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("elements");
   const [activeElementId, setActiveElementId] = useState<string | null>(null);
+  // ENG-6929: the one-time "Logic has moved" notice, shown until the Flow tab has been opened once in
+  // this browser. Read from storage on the client only (the server snapshot says "seen", so the notice
+  // never flashes in and out on hydration); opening the Flow tab hides it for this page view even
+  // where storage is refused.
+  const hasSeenFlowInBrowser = useSyncExternalStore(subscribeToNothing, hasSeenFlowTab, () => true);
+  const [hasOpenedFlow, setHasOpenedFlow] = useState(false);
+  if (activeView === "flow" && !hasOpenedFlow) setHasOpenedFlow(true);
+  useEffect(() => {
+    if (activeView === "flow") markFlowTabSeen();
+  }, [activeView]);
+  const showLogicMovedNotice = !hasSeenFlowInBrowser && !hasOpenedFlow;
+  const openOnQuestionsTab = useCallback((id: string) => {
+    setActiveView("elements");
+    setActiveElementId(id);
+  }, []);
   // `localSurvey` must stay a structural clone of `survey`: the menu bar compares the two with
   // `isDeepEqual` to gate the draft auto-save, the back-navigation dialog and the beforeunload
   // prompt, and that comparison short-circuits on differing key counts. The inlined
@@ -384,6 +404,18 @@ export const SurveyEditor = ({
               isStorageConfigured={isStorageConfigured}
               quotas={quotas}
               isExternalUrlsAllowed={isExternalUrlsAllowed}
+              showLogicMovedNotice={showLogicMovedNotice}
+              onOpenFlow={() => setActiveView("flow")}
+            />
+          )}
+
+          {activeView === "flow" && (
+            <FlowView
+              localSurvey={localSurvey}
+              setLocalSurvey={setLocalSurveyNonNull}
+              invalidElements={invalidElements}
+              setInvalidElements={setInvalidElements}
+              onEditOnQuestionsTab={openOnQuestionsTab}
             />
           )}
 

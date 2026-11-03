@@ -8,7 +8,7 @@ import { GripIcon, PencilIcon } from "lucide-react";
 import { type Dispatch, type KeyboardEvent, type SetStateAction, memo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TI18nString } from "@formbricks/types/i18n";
-import { TSurveyBlock, TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
+import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
@@ -23,7 +23,6 @@ import { BlockMenu } from "@/modules/survey/editor/components/block-menu";
 import { BlockSettings } from "@/modules/survey/editor/components/block-settings";
 import { CalElementForm } from "@/modules/survey/editor/components/cal-element-form";
 import { CESElementForm } from "@/modules/survey/editor/components/ces-element-form";
-import { ConditionalLogic } from "@/modules/survey/editor/components/conditional-logic";
 import { ConsentElementForm } from "@/modules/survey/editor/components/consent-element-form";
 import { ContactInfoElementForm } from "@/modules/survey/editor/components/contact-info-element-form";
 import { CSATElementForm } from "@/modules/survey/editor/components/csat-element-form";
@@ -58,8 +57,6 @@ interface BlockCardProps {
   blockIdx: number;
   moveElement: (elementIdx: number, up: boolean) => void;
   updateElement: (elementIdx: number, updatedAttributes: any) => void;
-  updateBlockLogic: (elementIdx: number, logic: TSurveyBlockLogic[]) => void;
-  updateBlockLogicFallback: (elementIdx: number, logicFallback: string | undefined) => void;
   updateBlockName: (blockIdx: number, name: string) => void;
   updateBlockButtonLabel: (
     blockIndex: number,
@@ -101,8 +98,6 @@ const BlockCardComponent = ({
   blockIdx,
   moveElement,
   updateElement,
-  updateBlockLogic,
-  updateBlockLogicFallback,
   updateBlockName,
   updateBlockButtonLabel,
   duplicateElement,
@@ -141,8 +136,6 @@ const BlockCardComponent = ({
   const blockCodes = block.elements
     .flatMap((element) => ("code" in element && element.code ? [element.code] : []))
     .join(", ");
-  const blockLogic = block.logic ?? [];
-
   // Check if any element in this block is currently active
   const isBlockOpen = block.elements.some((element) => element.id === activeElementId);
 
@@ -151,20 +144,20 @@ const BlockCardComponent = ({
   const hasInvalidElement = block.elements.some(
     (element) => invalidElements?.includes(element.id) || codeIssues.has(element.id)
   );
-  const hasInvalidLogic = blockLogic.some((logicItem) => invalidElements?.includes(logicItem.id));
-  // The block's own id is only ever flagged for an empty name (elements and logic rules use theirs).
+  // The block's own id is only ever flagged for an empty name (elements use theirs). Logic rules are
+  // flagged on the Flow tab, where they live since ENG-6929.
   const hasInvalidName = invalidElements?.includes(block.id) ?? false;
-  const isBlockInvalid = hasInvalidElement || hasInvalidLogic || hasInvalidName;
+  const isBlockInvalid = hasInvalidElement || hasInvalidName;
 
   const [isBlockCollapsed, setIsBlockCollapsed] = useState(false);
   const [blockTab, setBlockTab] = useState("questions");
 
-  // Questions and logic rules live on the Questions tab, so a flagged one switches back to it: the
+  // Questions live on the Questions tab, so a flagged one switches back to it: the
   // error is then visible, and the publish check's scroll finds the question's card (the Settings tab
   // unmounts it). Re-checked on every new invalidElements, a fresh array each validation pass, so a
   // second save switches back again even if the author reopened Settings while the error was still
   // there. Adjusted during render rather than in an effect, so the card is back before the scroll.
-  const hasQuestionsTabIssue = hasInvalidElement || hasInvalidLogic;
+  const hasQuestionsTabIssue = hasInvalidElement;
   const [lastIssueCheck, setLastIssueCheck] = useState({ invalidElements, hasQuestionsTabIssue });
   if (
     lastIssueCheck.invalidElements !== invalidElements ||
@@ -530,8 +523,6 @@ const BlockCardComponent = ({
                                   localSurvey={localSurvey}
                                   lock={getElementLock(persistedSurvey, element.id)}
                                   updateElement={updateElement}
-                                  updateBlockLogic={updateBlockLogic}
-                                  updateBlockLogicFallback={updateBlockLogicFallback}
                                   workspace={workspace}
                                   isFormbricksCloud={isFormbricksCloud}
                                 />
@@ -556,22 +547,6 @@ const BlockCardComponent = ({
                     isCxMode={isCxMode}
                   />
                 </div>
-
-                <hr className="border-dashed border-slate-200" />
-
-                {/* Conditional Logic */}
-                {block.elements[0] && (
-                  <div className="px-4 pb-4">
-                    <ConditionalLogic
-                      localSurvey={localSurvey}
-                      block={block}
-                      blockIdx={blockIdx}
-                      updateBlockLogic={updateBlockLogic}
-                      updateBlockLogicFallback={updateBlockLogicFallback}
-                      invalidElements={invalidElements}
-                    />
-                  </div>
-                )}
               </TabsContent>
               <TabsContent value="settings">
                 {/* Block Settings */}

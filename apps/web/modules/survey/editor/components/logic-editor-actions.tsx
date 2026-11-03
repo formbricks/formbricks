@@ -4,12 +4,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { CopyIcon, CornerDownRightIcon, EllipsisVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { getComputedEmbeddedFields } from "@formbricks/types/embedded-data-resolver";
-import {
-  TSurveyBlock,
-  TSurveyBlockLogic,
-  TSurveyBlockLogicAction,
-  TSurveyBlockLogicActionObjective,
-} from "@formbricks/types/surveys/blocks";
+import { TSurveyBlockLogicAction, TSurveyBlockLogicActionObjective } from "@formbricks/types/surveys/blocks";
 import {
   TActionNumberVariableCalculateOperator,
   TActionTextVariableCalculateOperator,
@@ -36,27 +31,26 @@ import { cn } from "@/modules/ui/lib/utils";
 
 interface LogicEditorActionsProps {
   readonly localSurvey: TSurvey;
-  readonly logicItem: TSurveyBlockLogic;
-  readonly logicIdx: number;
-  readonly block: TSurveyBlock;
-  readonly updateBlockLogic: (blockIdx: number, logic: TSurveyBlockLogic[]) => void;
-  readonly blockIdx: number;
+  readonly actions: TSurveyBlockLogicAction[];
+  readonly onActionsChange: (
+    updater: (actions: TSurveyBlockLogicAction[]) => TSurveyBlockLogicAction[]
+  ) => void;
+  /**
+   * Where the rule runs: the index of the block it follows. Jumps go to later blocks and endings,
+   * values come from that block and earlier ones. `-1` is before the first question (ENG-6932).
+   */
+  readonly scopeBlockIdx: number;
   readonly isLast?: boolean;
 }
 
 export function LogicEditorActions({
   localSurvey,
-  logicItem,
-  logicIdx,
-  block,
-  updateBlockLogic,
-  blockIdx,
+  actions,
+  onActionsChange,
+  scopeBlockIdx,
   isLast,
 }: LogicEditorActionsProps) {
-  const actions = logicItem.actions;
   const { t } = useTranslation();
-
-  const blockLogic = block.logic ?? [];
 
   /**
    * ENG-1837: which input widget a calculate action gets is driven by the computed field's declared
@@ -75,31 +69,29 @@ export function LogicEditorActions({
     actionIdx: number,
     action?: TSurveyBlockLogicAction
   ) => {
-    const logicCopy = structuredClone(blockLogic);
-    const currentLogicItem = logicCopy[logicIdx];
-    const actionsClone = currentLogicItem.actions;
+    if (operation === "update" && !action) return;
 
-    switch (operation) {
-      case "remove":
-        actionsClone.splice(actionIdx, 1);
-        break;
-      case "addBelow":
-        actionsClone.splice(actionIdx + 1, 0, {
-          id: createId(),
-          objective: hasJumpToBlockAction(logicItem.actions) ? "requireAnswer" : "jumpToBlock",
-          target: "",
-        });
-        break;
-      case "duplicate":
-        actionsClone.splice(actionIdx + 1, 0, { ...actionsClone[actionIdx], id: createId() });
-        break;
-      case "update":
-        if (!action) return;
-        actionsClone[actionIdx] = action;
-        break;
-    }
-
-    updateBlockLogic(blockIdx, logicCopy);
+    onActionsChange((actionsClone) => {
+      switch (operation) {
+        case "remove":
+          actionsClone.splice(actionIdx, 1);
+          break;
+        case "addBelow":
+          actionsClone.splice(actionIdx + 1, 0, {
+            id: createId(),
+            objective: hasJumpToBlockAction(actionsClone) ? "requireAnswer" : "jumpToBlock",
+            target: "",
+          });
+          break;
+        case "duplicate":
+          actionsClone.splice(actionIdx + 1, 0, { ...actionsClone[actionIdx], id: createId() });
+          break;
+        case "update":
+          if (action) actionsClone[actionIdx] = action;
+          break;
+      }
+      return actionsClone;
+    });
   };
 
   const handleObjectiveChange = (actionIdx: number, objective: TSurveyBlockLogicActionObjective) => {
@@ -162,7 +154,7 @@ export function LogicEditorActions({
                       id={`action-${idx}-target`}
                       key={`target-${action.id}`}
                       showSearch={true}
-                      options={getActionTargetOptions(action, localSurvey, blockIdx, t)}
+                      options={getActionTargetOptions(action, localSurvey, scopeBlockIdx, t)}
                       value={action.target}
                       onChangeValue={(val: string | number | string[]) => {
                         handleValuesChange(idx, {
@@ -226,7 +218,12 @@ export function LogicEditorActions({
                           placeholder: "Value",
                           type: getCalculateFieldType(action.variableId) ?? "text",
                         }}
-                        groupedOptions={getActionValueOptions(action.variableId, localSurvey, blockIdx, t)}
+                        groupedOptions={getActionValueOptions(
+                          action.variableId,
+                          localSurvey,
+                          scopeBlockIdx,
+                          t
+                        )}
                         onChangeValue={(val, option, fromInput) => {
                           const fieldType = option?.meta?.type as
                             | "static"
