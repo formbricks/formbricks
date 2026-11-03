@@ -145,6 +145,7 @@ export const ensureCustomCssLayerPrelude = (): void => {
 
   let prelude = document.getElementById(CUSTOM_CSS_LAYER_PRELUDE_STYLE_ID);
   if (!prelude) {
+    // eslint-disable-next-line no-restricted-syntax -- applyNonce sets the nonce below
     prelude = document.createElement("style");
     prelude.id = CUSTOM_CSS_LAYER_PRELUDE_STYLE_ID;
     prelude.textContent = CUSTOM_CSS_HEAD_PRELUDE;
@@ -173,6 +174,7 @@ const insertCustomCss = (css: string): void => {
       element = null;
     }
     if (!element) {
+      // eslint-disable-next-line no-restricted-syntax -- applyNonce sets the nonce below
       element = document.createElement("style");
       element.id = CUSTOM_CSS_STYLE_ID;
     }

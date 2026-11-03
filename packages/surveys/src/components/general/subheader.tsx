@@ -27,6 +27,7 @@ export function Subheader({ subheader }: SubheaderProps) {
       data-fb-part={FB_PART.description}
       data-testid="subheader"
       dir="auto"
+      // eslint-disable-next-line no-restricted-syntax -- safeHtml is sanitizeSurveyHtml output
       dangerouslySetInnerHTML={{ __html: safeHtml }}
     />
   ) : (
