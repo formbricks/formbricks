@@ -1370,7 +1370,7 @@ describe("per-route concurrency limit", () => {
     const post = (query: string) =>
       new NextRequest(`http://localhost/api/internal/surveys/import/stream${query}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": "application/json" },
         body: '{"a":"x"}',
       });
 
