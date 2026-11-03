@@ -3,7 +3,8 @@ import { embeddedFieldsFromLegacyInput } from "@formbricks/types/embedded-data-m
 import { type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { type TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
-import { type TAdvanceFromBlockInput, advanceFromBlock } from "./block-flow";
+import { type TConditionGroup } from "@formbricks/types/surveys/logic";
+import { type TAdvanceFromBlockInput, advanceFromBlock, enterBlock, getPageVisibility } from "./block-flow";
 
 vi.mock("@/lib/i18n", () => ({
   getLocalizedValue: vi.fn((value, language) =>
@@ -11,16 +12,25 @@ vi.mock("@/lib/i18n", () => ({
   ),
 }));
 
-const element = (id: string) => ({
+const element = (id: string, extra: { showIf?: TConditionGroup; required?: boolean } = {}) => ({
   id,
   type: TSurveyElementTypeEnum.OpenText,
   headline: { default: id },
   required: false,
   inputType: "text",
   charLimit: { enabled: false },
+  ...extra,
 });
 
-const block = (id: string, extra: { logic?: TSurveyBlockLogic[]; logicFallback?: string } = {}) => ({
+const block = (
+  id: string,
+  extra: {
+    logic?: TSurveyBlockLogic[];
+    logicFallback?: string;
+    showIf?: TConditionGroup;
+    elements?: ReturnType<typeof element>[];
+  } = {}
+) => ({
   id,
   name: id,
   elements: [element(`${id}-q`)],
@@ -270,5 +280,286 @@ describe("advanceFromBlock", () => {
       expect(warn).toHaveBeenCalledTimes(1);
       warn.mockRestore();
     });
+  });
+});
+
+const hiddenFieldIsSet = (fieldId: string): TConditionGroup => ({
+  id: `set-${fieldId}`,
+  connector: "and",
+  conditions: [
+    {
+      id: `c-set-${fieldId}`,
+      operator: "isSet",
+      leftOperand: { type: "hiddenField", value: fieldId },
+    },
+  ],
+});
+
+const addToScore = (id: string, amount: number): TSurveyBlockLogic["actions"][number] => ({
+  id,
+  objective: "calculate",
+  variableId: "score",
+  operator: "add",
+  value: { type: "static", value: amount },
+});
+
+const always = (id: string, actions: TSurveyBlockLogic["actions"]): TSurveyBlockLogic => ({
+  id,
+  conditions: { id: `g-${id}`, connector: "and", conditions: [] },
+  actions,
+});
+
+describe("show-if: what a page shows", () => {
+  // b2 asks "fav", then a follow-up shown only for "apple", then one shown only when the follow-up says "price".
+  const page = block("b2", {
+    elements: [
+      element("fav"),
+      element("why_apple", { showIf: answerEquals("fav", "apple"), required: true }),
+      element("price_detail", { showIf: answerEquals("why_apple", "price") }),
+    ],
+  });
+  const survey = makeSurvey([block("b1"), page]);
+  const visibility = (responseData: Record<string, string>) =>
+    getPageVisibility({
+      survey,
+      blockId: "b2",
+      responseData,
+      variables: {},
+      selectedLanguage: "default",
+      reservedFieldValues: {},
+    });
+
+  test("a follow-up appears live once the answer above it matches", () => {
+    expect(visibility({}).visibleElementIds).toEqual(["fav"]);
+    expect(visibility({ fav: "apple" }).visibleElementIds).toEqual(["fav", "why_apple"]);
+    expect(visibility({ fav: "apple", why_apple: "price" }).visibleElementIds).toEqual([
+      "fav",
+      "why_apple",
+      "price_detail",
+    ]);
+  });
+
+  test("an answer to a question that became hidden reads as unanswered for the questions below it", () => {
+    // The respondent answered the follow-up, then changed "fav": the follow-up hides, so does its child.
+    const result = visibility({ fav: "netflix", why_apple: "price" });
+
+    expect(result.visibleElementIds).toEqual(["fav"]);
+    expect(result.hiddenElementIds).toEqual(["why_apple", "price_detail"]);
+  });
+
+  test("a hidden required question is not part of the page, so it never blocks submission", () => {
+    expect(visibility({ fav: "netflix" }).visibleElementIds).not.toContain("why_apple");
+  });
+
+  test("an empty show-if group means always shown, whatever its connector", () => {
+    const emptyOr = makeSurvey([
+      block("b1", {
+        showIf: { id: "g", connector: "or", conditions: [] },
+        elements: [element("q", { showIf: { id: "g2", connector: "or", conditions: [] } })],
+      }),
+    ]);
+    const result = getPageVisibility({
+      survey: emptyOr,
+      blockId: "b1",
+      responseData: {},
+      variables: {},
+      selectedLanguage: "default",
+      reservedFieldValues: {},
+    });
+
+    expect(result).toMatchObject({ shown: true, visibleElementIds: ["q"], hiddenElementIds: [] });
+  });
+});
+
+describe("show-if: advancing", () => {
+  test("the current page's hidden answers are not submitted, and its logic doesn't see them", () => {
+    const survey = makeSurvey([
+      block("b1", {
+        elements: [element("b1-q"), element("follow_up", { showIf: answerEquals("b1-q", "yes") })],
+        logic: [
+          {
+            id: "r1",
+            conditions: answerEquals("follow_up", "stale"),
+            actions: [{ id: "a1", objective: "jumpToBlock", target: "end2" }],
+          },
+        ],
+      }),
+      block("b2"),
+    ]);
+
+    const result = advance(survey, {
+      // Answered the follow-up while "yes" was picked, then changed the answer above it.
+      responseData: { follow_up: "stale" },
+      submittedData: { "b1-q": "no", follow_up: "stale" },
+    });
+
+    expect(result.submittedData).toEqual({ "b1-q": "no" });
+    expect(result.hiddenElementIds).toEqual(["follow_up"]);
+    expect(result.nextBlockId).toBe("b2");
+  });
+
+  test("a block whose show-if fails is skipped, and its logic still runs as if submitted with no answers", () => {
+    const survey = makeSurvey([
+      block("b1"),
+      block("b2", {
+        showIf: hiddenFieldIsSet("panel_id"),
+        logic: [
+          always("r1", [addToScore("a1", 5)]),
+          // Reads its own question, which counts as unanswered.
+          {
+            id: "r2",
+            conditions: {
+              id: "g2",
+              connector: "and",
+              conditions: [
+                { id: "c2", operator: "isSkipped", leftOperand: { type: "element", value: "b2-q" } },
+              ],
+            },
+            actions: [{ id: "a2", objective: "jumpToBlock", target: "b4" }],
+          },
+        ],
+      }),
+      block("b3"),
+      block("b4"),
+    ]);
+
+    // A stale answer from before Back still counts as unanswered on the skipped block.
+    const result = advance(survey, { variables: { score: 1 }, responseData: { "b2-q": "old" } });
+
+    expect(result).toMatchObject({
+      nextBlockId: "b4",
+      finished: false,
+      skippedBlockIds: ["b2"],
+      variables: { score: 6 },
+    });
+  });
+
+  test("a block shown by its show-if is not skipped", () => {
+    const survey = makeSurvey([
+      block("b1"),
+      block("b2", { showIf: hiddenFieldIsSet("panel_id") }),
+      block("b3"),
+    ]);
+
+    const result = advance(survey, { responseData: { panel_id: "p-1" } });
+
+    expect(result).toMatchObject({ nextBlockId: "b2", skippedBlockIds: [] });
+  });
+
+  test("a block whose questions are all hidden is skipped, running its logic", () => {
+    const survey = makeSurvey([
+      block("b1"),
+      block("b2", {
+        elements: [element("b2-q", { showIf: answerEquals("b1-q", "yes") })],
+        logic: [always("r1", [addToScore("a1", 2)])],
+        logicFallback: "b4",
+      }),
+      block("b3"),
+      block("b4"),
+    ]);
+
+    expect(advance(survey, { submittedData: { "b1-q": "no" } })).toMatchObject({
+      nextBlockId: "b4",
+      skippedBlockIds: ["b2"],
+      variables: { score: 2 },
+    });
+    expect(advance(survey, { submittedData: { "b1-q": "yes" } })).toMatchObject({
+      nextBlockId: "b2",
+      skippedBlockIds: [],
+    });
+  });
+
+  test("skipped blocks chain, and skipping the last block finishes on the first ending", () => {
+    const hidden = { showIf: hiddenFieldIsSet("panel_id") };
+    const survey = makeSurvey([block("b1"), block("b2", hidden), block("b3", hidden)]);
+
+    expect(advance(survey)).toMatchObject({
+      nextBlockId: undefined,
+      nextCardId: "end1",
+      finished: true,
+      endingId: "end1",
+      skippedBlockIds: ["b2", "b3"],
+    });
+  });
+
+  test("a skipped block's jump to an ending finishes on that ending", () => {
+    const survey = makeSurvey([
+      block("b1"),
+      block("b2", {
+        showIf: hiddenFieldIsSet("panel_id"),
+        logic: [always("r1", [{ id: "a1", objective: "jumpToBlock", target: "end2" }])],
+      }),
+      block("b3"),
+    ]);
+
+    expect(advance(survey)).toMatchObject({ nextCardId: "end2", finished: true, endingId: "end2" });
+  });
+
+  test("skipped blocks that jump back to each other finish rather than loop forever", () => {
+    const hidden = hiddenFieldIsSet("panel_id");
+    const survey = makeSurvey([
+      block("b1"),
+      block("b2", {
+        showIf: hidden,
+        logic: [always("r1", [{ id: "a1", objective: "jumpToBlock", target: "b3" }])],
+      }),
+      block("b3", {
+        showIf: hidden,
+        logic: [always("r2", [{ id: "a2", objective: "jumpToBlock", target: "b2" }])],
+      }),
+    ]);
+
+    expect(advance(survey)).toMatchObject({ finished: true, endingId: "end1" });
+  });
+
+  test("from the welcome card, a hidden first block is skipped", () => {
+    const survey = makeSurvey([block("b1", { showIf: hiddenFieldIsSet("panel_id") }), block("b2")]);
+
+    expect(advance(survey, { blockId: "start", submittedData: {} })).toMatchObject({
+      nextBlockId: "b2",
+      skippedBlockIds: ["b1"],
+    });
+  });
+});
+
+describe("show-if: entering the survey without the welcome card", () => {
+  const enter = (survey: TJsWorkspaceStateSurvey, blockId: string, responseData = {}) =>
+    enterBlock({
+      survey,
+      blockId,
+      responseData,
+      variables: { score: 1 },
+      selectedLanguage: "default",
+      reservedFieldValues: {},
+    });
+
+  test("a shown first block is entered as it is", () => {
+    expect(enter(makeSurvey([block("b1"), block("b2")]), "b1")).toMatchObject({
+      nextCardId: "b1",
+      finished: false,
+      skippedBlockIds: [],
+      variables: { score: 1 },
+    });
+  });
+
+  test("a hidden first block is skipped, running its logic", () => {
+    const survey = makeSurvey([
+      block("b1", { showIf: hiddenFieldIsSet("panel_id"), logic: [always("r1", [addToScore("a1", 4)])] }),
+      block("b2"),
+    ]);
+
+    expect(enter(survey, "b1")).toMatchObject({
+      nextCardId: "b2",
+      finished: false,
+      skippedBlockIds: ["b1"],
+      variables: { score: 5 },
+    });
+    expect(enter(survey, "b1", { panel_id: "p-1" })).toMatchObject({ nextCardId: "b1", skippedBlockIds: [] });
+  });
+
+  test("when every block is hidden, the survey finishes on the first ending", () => {
+    const survey = makeSurvey([block("b1", { showIf: hiddenFieldIsSet("panel_id") })]);
+
+    expect(enter(survey, "b1")).toMatchObject({ nextCardId: "end1", finished: true, endingId: "end1" });
   });
 });

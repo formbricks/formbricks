@@ -1,6 +1,7 @@
 import { buildEmbeddedLookup } from "@formbricks/types/embedded-data-resolver";
 import { type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
+import { type TBlockVisibility, dropAnswers, getBlockVisibility } from "@formbricks/types/surveys/show-if";
 import { evaluateLogic, performActions } from "@/lib/logic";
 import { END_BLOCK_ID, START_BLOCK_ID, getForwardTargetFromOffBlockId } from "@/lib/survey-navigation";
 
@@ -33,7 +34,64 @@ export interface TAdvanceFromBlockResult {
   variables: TResponseVariables;
   /** Elements that logic made required. The caller applies and, on Back, reverts them. */
   requiredQuestionIds: string[];
+  /**
+   * The answers to persist from the current block: `submittedData` without the answers of elements
+   * hidden by show-if on this page (an answer typed before the question hid is not submitted).
+   */
+  submittedData: TResponseData;
+  /** Elements of the current block hidden by show-if when it was submitted. */
+  hiddenElementIds: string[];
+  /**
+   * Blocks passed over on the way to `nextBlockId` because they were not shown (their show-if
+   * failed, or all their elements were hidden). Their logic ran as if submitted with no answers.
+   */
+  skippedBlockIds: string[];
 }
+
+type TSurveyBlock = TJsWorkspaceStateSurvey["blocks"][number];
+
+export interface TPageVisibilityInput {
+  survey: TJsWorkspaceStateSurvey;
+  blockId: string;
+  /** Every answer known so far, including the ones being typed on this page. */
+  responseData: TResponseData;
+  variables: TResponseVariables;
+  selectedLanguage: string;
+  reservedFieldValues: Record<string, string | number>;
+}
+
+/** What a page shows; see `getBlockVisibility`. */
+export type TPageVisibility = TBlockVisibility<TResponseData>;
+
+const getVisibility = (
+  input: Omit<TPageVisibilityInput, "blockId">,
+  block: TSurveyBlock
+): TPageVisibility => {
+  const { survey, variables, selectedLanguage, reservedFieldValues } = input;
+  return getBlockVisibility(block, input.responseData, (group, data) =>
+    evaluateLogic(
+      survey,
+      data,
+      variables,
+      group,
+      selectedLanguage,
+      buildEmbeddedLookup(survey, reservedFieldValues, data)
+    )
+  );
+};
+
+/**
+ * What the page for `blockId` shows right now: re-evaluated by the renderer whenever an answer
+ * changes, so a follow-up appears right under the answer it depends on. A `blockId` that is not a
+ * block shows nothing.
+ */
+export const getPageVisibility = (input: TPageVisibilityInput): TPageVisibility => {
+  const block = input.survey.blocks.find((candidate) => candidate.id === input.blockId);
+  if (!block) {
+    return { shown: false, visibleElementIds: [], hiddenElementIds: [], data: input.responseData };
+  }
+  return getVisibility(input, block);
+};
 
 interface TLogicOutcome {
   jumpTarget: string | undefined;
@@ -43,13 +101,14 @@ interface TLogicOutcome {
 
 const runBlockLogic = (
   input: TAdvanceFromBlockInput,
-  block: TJsWorkspaceStateSurvey["blocks"][number]
+  block: TSurveyBlock,
+  data: TResponseData,
+  startVariables: TResponseVariables
 ): TLogicOutcome => {
-  const { survey, responseData, submittedData, selectedLanguage, reservedFieldValues } = input;
-  const data = { ...responseData, ...submittedData };
+  const { survey, selectedLanguage, reservedFieldValues } = input;
   const embeddedValues = buildEmbeddedLookup(survey, reservedFieldValues, data);
 
-  let variables = { ...input.variables };
+  let variables = { ...startVariables };
   let jumpTarget: string | undefined;
   const requiredQuestionIds: string[] = [];
 
@@ -68,13 +127,95 @@ const runBlockLogic = (
   return { jumpTarget: jumpTarget || block.logicFallback, requiredQuestionIds, variables };
 };
 
+interface TSkipOutcome {
+  target: string | undefined;
+  skippedBlockIds: string[];
+  variables: TResponseVariables;
+  requiredQuestionIds: string[];
+}
+
+/**
+ * From `target`, pass over every block that is not shown, running each one's logic as if it were
+ * submitted with no answers (its jumps, calculations and fallback still apply). Stops at the first
+ * shown block, an ending, or no target. A skipped block reached twice means skipped blocks jump in a
+ * circle, which would never end: that finishes the survey instead.
+ */
+const skipBlocksNotShown = (
+  input: TAdvanceFromBlockInput,
+  target: string | undefined,
+  data: TResponseData,
+  startVariables: TResponseVariables
+): TSkipOutcome => {
+  const { survey } = input;
+  const skippedBlockIds: string[] = [];
+  const requiredQuestionIds: string[] = [];
+  let variables = startVariables;
+  let answers = data;
+  let current = target;
+
+  for (;;) {
+    const blockIndex = survey.blocks.findIndex((block) => block.id === current);
+    const block = survey.blocks[blockIndex];
+    if (!block) break;
+
+    if (skippedBlockIds.includes(block.id)) {
+      current = undefined;
+      break;
+    }
+
+    const visibility = getVisibility({ ...input, responseData: answers, variables }, block);
+    if (visibility.shown) break;
+
+    if (skippedBlockIds.length === 0) variables = { ...input.variables, ...variables };
+    skippedBlockIds.push(block.id);
+    // "No answers": a stale answer to this block (from before Back) must not reach its logic.
+    answers = dropAnswers(
+      answers,
+      block.elements.map((element) => element.id)
+    );
+    const outcome = runBlockLogic(input, block, answers, variables);
+    variables = outcome.variables;
+    requiredQuestionIds.push(...outcome.requiredQuestionIds);
+    current = outcome.jumpTarget || survey.blocks[blockIndex + 1]?.id;
+  }
+
+  return { target: current, skippedBlockIds, variables, requiredQuestionIds };
+};
+
+/**
+ * Turns a raw target into where the renderer goes and what the response reports. A jump target may
+ * reference a deleted block or ending; such stale ids count as "no target" so the shown ending and
+ * the persisted endingId stay in sync. Without a block to go to the survey is finished, on the jump
+ * target's ending or else the first one.
+ */
+const resolveDestination = (
+  survey: TJsWorkspaceStateSurvey,
+  target: string | undefined
+): Pick<TAdvanceFromBlockResult, "nextBlockId" | "nextCardId" | "finished" | "endingId"> => {
+  const firstEndingId = survey.endings[0]?.id;
+  const targetIsBlock = survey.blocks.some((block) => block.id === target);
+  const targetIsEnding = survey.endings.some((ending) => ending.id === target);
+  const nextBlockId = targetIsBlock || targetIsEnding ? target : undefined;
+  const finished = !targetIsBlock;
+
+  return {
+    nextBlockId,
+    nextCardId: nextBlockId ?? firstEndingId ?? END_BLOCK_ID,
+    finished,
+    endingId: finished
+      ? (survey.endings.find((ending) => ending.id === nextBlockId)?.id ?? firstEndingId)
+      : undefined,
+  };
+};
+
 /**
  * Where the respondent goes after submitting from `blockId`.
  *
- * Owns the whole decision so the renderer only applies it: the block's logic rules (first jump wins,
- * then `logicFallback`, then the next block in order), the guard that treats a jump target naming a
- * deleted block or ending as "no target", and the `finished` / `endingId` the persisted response
- * reports. It reads nothing from the renderer and writes nothing, so every branch is testable
+ * Owns the whole decision so the renderer only applies it: the answers the page hid by show-if
+ * (dropped, ENG-6931), the block's logic rules (first jump wins, then `logicFallback`, then the next
+ * block in order), passing over blocks that are not shown while running their logic, the guard that
+ * treats a jump target naming a deleted block or ending as "no target", and the `finished` /
+ * `endingId` the persisted response reports. It reads nothing from the renderer and writes nothing, so every branch is testable
  * without mounting a survey.
  */
 export const advanceFromBlock = (input: TAdvanceFromBlockInput): TAdvanceFromBlockResult => {
@@ -88,11 +229,22 @@ export const advanceFromBlock = (input: TAdvanceFromBlockInput): TAdvanceFromBlo
   let variables: TResponseVariables;
   let requiredQuestionIds: string[] = [];
 
+  let data: TResponseData = { ...input.responseData, ...input.submittedData };
+  let submittedData = input.submittedData;
+  let hiddenElementIds: string[] = [];
+
   if (blockId === START_BLOCK_ID) {
     rawNextBlockId = survey.blocks[0]?.id || firstEndingId;
     variables = {};
   } else if (currentBlock) {
-    const outcome = runBlockLogic(input, currentBlock);
+    // The page as it was submitted: answers to its hidden elements are neither persisted nor read by
+    // its logic.
+    const page = getVisibility({ ...input, responseData: data }, currentBlock);
+    hiddenElementIds = page.hiddenElementIds;
+    data = page.data;
+    submittedData = dropAnswers(input.submittedData, hiddenElementIds);
+
+    const outcome = runBlockLogic(input, currentBlock, data, input.variables);
     rawNextBlockId = outcome.jumpTarget || survey.blocks[currentBlockIndex + 1]?.id;
     variables = outcome.variables;
     requiredQuestionIds = outcome.requiredQuestionIds;
@@ -119,25 +271,43 @@ export const advanceFromBlock = (input: TAdvanceFromBlockInput): TAdvanceFromBlo
     variables = { ...input.variables };
   }
 
-  // A jump target may reference a deleted block or ending; treat such stale ids as "no target" so the
-  // shown ending and the persisted endingId stay in sync.
-  const targetIsBlock = survey.blocks.some((block) => block.id === rawNextBlockId);
-  const targetIsEnding = survey.endings.some((ending) => ending.id === rawNextBlockId);
-  const nextBlockId = targetIsBlock || targetIsEnding ? rawNextBlockId : undefined;
-  const finished = !targetIsBlock;
-
-  // The ending that will be shown: an explicit jump target, or the first ending when the survey falls
-  // off the last block.
-  const endingId = finished
-    ? (survey.endings.find((ending) => ending.id === nextBlockId)?.id ?? firstEndingId)
-    : undefined;
+  const skipped = skipBlocksNotShown(input, rawNextBlockId, data, variables);
+  rawNextBlockId = skipped.target;
+  if (skipped.skippedBlockIds.length > 0) {
+    variables = skipped.variables;
+    requiredQuestionIds = [...requiredQuestionIds, ...skipped.requiredQuestionIds];
+  }
 
   return {
-    nextBlockId,
-    nextCardId: nextBlockId ?? firstEndingId ?? END_BLOCK_ID,
-    finished,
-    endingId,
+    ...resolveDestination(survey, rawNextBlockId),
     variables,
     requiredQuestionIds,
+    submittedData,
+    hiddenElementIds,
+    skippedBlockIds: skipped.skippedBlockIds,
+  };
+};
+
+/**
+ * Where the respondent lands when the survey opens straight onto `blockId` (no welcome card, or a
+ * start-at link): that block when it is shown, else the first shown block after it, running the
+ * logic of each block passed over. The welcome card's Next goes through `advanceFromBlock`, which
+ * does the same from the `"start"` sentinel.
+ */
+export const enterBlock = (input: Omit<TAdvanceFromBlockInput, "submittedData">): TAdvanceFromBlockResult => {
+  const skipped = skipBlocksNotShown(
+    { ...input, submittedData: {} },
+    input.blockId,
+    input.responseData,
+    input.variables
+  );
+
+  return {
+    ...resolveDestination(input.survey, skipped.target),
+    variables: skipped.variables,
+    requiredQuestionIds: skipped.requiredQuestionIds,
+    submittedData: {},
+    hiddenElementIds: [],
+    skippedBlockIds: skipped.skippedBlockIds,
   };
 };
