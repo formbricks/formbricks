@@ -661,7 +661,7 @@ describe("storage utils", () => {
       ).toEqual([]);
     });
 
-    describe("Signature answers (one URL string, ADR 0016)", () => {
+    describe("Signature answers (one URL string, ADR 0023)", () => {
       const signatureIds = {
         fileUpload: new Set(["upload"]),
         signature: new Set(["sig"]),

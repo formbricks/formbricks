@@ -2,6 +2,7 @@ import "server-only";
 import { createId } from "@paralleldrive/cuid2";
 import { AI_DEFAULT_TIMEOUT_MS } from "@formbricks/types/ai-timeout";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
+import { fillMissingCodes } from "@formbricks/types/surveys/fill-missing-codes";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { generateOrganizationAIObject } from "@/lib/ai/service";
 import { getAITimeoutMs } from "@/lib/ai/timeout";
@@ -344,11 +345,15 @@ function buildCreatePayload(input: TV3SurveyGenerateBody, generatedSurvey: TGene
             showResponseCount: false,
           }
         : { enabled: false },
-    blocks: generatedSurvey.blocks.map((block) => ({
-      id: createId(),
-      name: block.name,
-      elements: block.questions.map((element) => buildElement(element, questionIndex++, language)),
-    })),
+    // ENG-6782: generated questions and options arrive without codes; give them the defaults.
+    blocks: fillMissingCodes(
+      generatedSurvey.blocks.map((block) => ({
+        id: createId(),
+        name: block.name,
+        elements: block.questions.map((element) => buildElement(element, questionIndex++, language)),
+      })),
+      []
+    ),
     endings: [
       {
         id: createId(),

@@ -35,23 +35,23 @@ from the workspace channel chosen during onboarding, so a workspace set up for a
 
 This matters more than it looks. You are going to post responses to the client API from your own frontend, so nothing here uses the Formbricks widget. An **app** survey cannot be activated without a trigger — `survey-menu-bar.tsx` refuses to save one with no triggers — which is why older versions of this guide told you to invent an action that never fires. A link survey has no such requirement, so the workaround is unnecessary.
 
-### Set the question IDs
+### Copy the question IDs
 
-The frontend below refers to questions by ID, so give them names you will recognise. Open a question, click **Show Question settings** at the foot of its card, and set the **Question ID**:
+The frontend below posts answers to the client API, which refers to questions by their **Question ID**. Question IDs are generated and cannot be changed, so copy them from the survey instead of choosing them. Open each question, choose **Copy question ID** in its **⋯** menu, and note it next to the name used in the code:
 
-| Question | ID |
-| --- | --- |
-| Is this page helpful? | `isHelpful` |
-| Please elaborate | `additionalFeedback` |
-| Page URL | `pageUrl` |
+| Question | Name in the code | Where you paste the ID |
+| --- | --- | --- |
+| Is this page helpful? | `isHelpful` | `QUESTION_IDS.isHelpful` |
+| Please elaborate | `additionalFeedback` | `QUESTION_IDS.additionalFeedback` |
+| Page URL | `pageUrl` | `QUESTION_IDS.pageUrl` |
 
 <Note>
   The **answers** must match the frontend too. If you replace "Yes 👍" and "No 👎" with your own wording, change the choices in the code below to match — they are compared as strings.
 </Note>
 
-<Warning>
-  Question IDs can only be changed **before** a survey is activated. Afterwards they are fixed, because the responses already collected refer to them. Set them now.
-</Warning>
+<Note>
+  The client API reads answers by Question ID only. Question codes work in webhooks, prefill links and `startAt` links, but not as the keys of a response you post to the client API.
+</Note>
 
 Activate the survey.
 
@@ -251,11 +251,18 @@ The last step is to hook up your new frontend to the Formbricks API. To achieve 
 Here is the code for the `handleFeedbackSubmit` function with comments:
 
 ```tsx handleFeedbackSubmit() function definition
+// Paste the Question IDs you copied from the survey editor (question's ⋯ menu → Copy question ID).
+const QUESTION_IDS = {
+  isHelpful: "<question ID of “Is this page helpful?”>",
+  additionalFeedback: "<question ID of “Please elaborate”>",
+  pageUrl: "<question ID of “Page URL”>",
+};
+
 export const handleFeedbackSubmit = async (YesNo, pageUrl) => {
   const response_data = {
     data: {
-      isHelpful: YesNo, // the "Yes 👍" or "No 👎" response. Remember: They have to be identical with the choices in the survey on app.formbricks.com for it to work.
-      pageUrl: pageUrl, // So you know which page the user gives feedback about.
+      [QUESTION_IDS.isHelpful]: YesNo, // the "Yes 👍" or "No 👎" response. Remember: They have to be identical with the choices in the survey on app.formbricks.com for it to work.
+      [QUESTION_IDS.pageUrl]: pageUrl, // So you know which page the user gives feedback about.
     },
   };
 
@@ -300,7 +307,7 @@ export const updateFeedback = async (freeText, responseId) => {
   const payload = {
     response: {
       data: {
-        additionalFeedback: freeText,
+        [QUESTION_IDS.additionalFeedback]: freeText, // the same QUESTION_IDS object as above
       },
       finished: true, // Lets Formbricks calculate Completion Rate
     },

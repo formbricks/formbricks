@@ -11,6 +11,11 @@ import type { FeedbackRecordCreateParams, FeedbackRecordUpdateParams } from "@/m
 
 /** Hub returns this when (tenant_id, submission_id, field_id) already exists. It is terminal. */
 const CONFLICT_STATUS = 409;
+/**
+ * The other 409 the Hub sends on a create: a tenant data purge is running, so writes for the tenant wait.
+ * Nothing exists to reconcile; the caller retries the whole batch later.
+ */
+const TENANT_WRITE_CONFLICT_CODE = "tenant_write_conflict";
 
 /**
  * How many conflicts reconcile at once.
@@ -242,7 +247,7 @@ const partitionBatchOutcomes = (
 
     if (!error) {
       partition.created += 1;
-    } else if (error.status === CONFLICT_STATUS) {
+    } else if (error.status === CONFLICT_STATUS && error.code !== TENANT_WRITE_CONFLICT_CODE) {
       const record = records[index];
       if (record) {
         partition.conflicts.push({ record, index });

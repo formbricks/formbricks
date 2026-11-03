@@ -218,7 +218,7 @@ const getResponseFileUrlOwner = ({
  * `deleteResponseFileUrls`. Which URLs count is `getResponseFileUrlOwner`'s rule.
  *
  * File-upload answers are stored as an array of strings, so an array answer is read under any id, and
- * only its string entries. A Signature answer is one string (ADR 0016), and a bare string is read under
+ * only its string entries. A Signature answer is one string (ADR 0023), and a bare string is read under
  * any id, live or not, of any element type: what makes it a target is its key, not its element. A key
  * filed under this survey and the answer's own element id (`getResponseFileUrlOwner`) can only have been
  * written for that element, which only held an upload while it was a File upload or a Signature, so a
@@ -292,7 +292,7 @@ const getStorageFileKey = (fileUrl: string): string => {
 
 /**
  * The Signature images a write to a response leaves behind: the old file of each Signature answer the
- * write cleared, removed or replaced by another file (ADR 0016). Clearing a signature is the respondent
+ * write cleared, removed or replaced by another file (ADR 0023). Clearing a signature is the respondent
  * withdrawing it, and a replaced one is never shown again, so neither image should outlive the answer.
  *
  * `nextData` is what the response holds after the write (the merged data for a merging update, the new
@@ -584,7 +584,7 @@ const isScopedPrivateUploadUrl = ({
 };
 
 /**
- * A bare-string answer (a Signature, ADR 0016) is valid when it is a skipped `""` (if the element type
+ * A bare-string answer (a Signature, ADR 0023) is valid when it is a skipped `""` (if the element type
  * allows that) or one URL, filed under this workspace, survey and element, whose file name is the one the
  * upload route gives the type's export (`fileNamePattern`), with no encoded separator or dot anywhere.
  * This checks the URL, not the object: whether the file exists is not read on a public write route.
@@ -628,7 +628,7 @@ const isValidBareStringAnswer = ({
 
 type TUploadElementConfig = ReturnType<typeof getSurveyUploadElementConfigs>[number];
 
-/** One URL string per element (ADR 0016) or an array of URLs, as the element's kind says. */
+/** One URL string per element (ADR 0023) or an array of URLs, as the element's kind says. */
 const isValidUploadElementAnswer = ({
   answer,
   config,

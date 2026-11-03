@@ -23,6 +23,9 @@ vi.mock("@formbricks/database", () => ({
     },
   },
 }));
+vi.mock("@/modules/email/lib/email-audit-maintenance", () => ({
+  requestEmailAuditErasureRequired: vi.fn().mockResolvedValue(undefined),
+}));
 
 vi.mock("@/lib/utils/validate", () => ({
   validateInputs: vi.fn(),
@@ -123,6 +126,7 @@ const createMockCurrentResponse = (overrides: Partial<MockCurrentResponse> = {})
   singleUseId: null,
   language: "en",
   displayId: "display-123",
+  outcome: null,
   contact: null,
   tags: [],
   contactId: null,
@@ -134,6 +138,14 @@ const createMockResponseInput = (overrides: Partial<TResponseUpdateInput> = {}):
   finished: false,
   data: {},
   ...overrides,
+});
+
+describe("responseSelection", () => {
+  // The webhook body and the management sample route spread what this select returns, so a column left
+  // out of it is a key missing from the payload rather than a `null` (ENG-6780).
+  test("selects the outcome", () => {
+    expect(responseSelection.outcome).toBe(true);
+  });
 });
 
 describe("updateResponse", () => {

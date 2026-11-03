@@ -314,7 +314,7 @@ describe("collectResponseAttachments", () => {
     expect(result.exceedsMaxFiles).toBe(false);
   });
 
-  describe("Signature elements (one URL string, ADR 0016)", () => {
+  describe("Signature elements (one URL string, ADR 0023)", () => {
     const SIGNATURE_ELEMENT_ID = "el-signature";
     const signatureUrl = `/storage/${WORKSPACE_ID}/private/surveys/survey-1/elements/${SIGNATURE_ELEMENT_ID}/signature--fid--abc.png`;
     const buildSignatureSurvey = (): TSurvey =>

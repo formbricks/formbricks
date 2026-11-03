@@ -530,7 +530,7 @@ const serializeOne = (
     }
 
     case "signature": {
-      // One URL string, unlike `fileUpload`'s array (ADR 0016). Verbatim and relative, as stored.
+      // One URL string, unlike `fileUpload`'s array (ADR 0023). Verbatim and relative, as stored.
       if (typeof raw !== "string") return mismatch;
       return { answer: { ...base, elementType: "signature", imageUrl: raw } };
     }

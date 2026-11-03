@@ -392,6 +392,46 @@ describe("Tests for updateSurvey", () => {
       });
     });
 
+    test("fills the question and answer codes the editor payload lacks before writing blocks (ENG-6782)", async () => {
+      prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+      prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);
+
+      await updateSurvey(updateSurveyInput);
+
+      const written = vi.mocked(prisma.survey.update).mock.calls.at(0)?.[0].data.blocks as {
+        elements: { type: string; code?: string; choices?: { code?: string }[] }[];
+      }[];
+      const elements = written.flatMap((block) => block.elements);
+      const coded = elements.filter((element) => element.type !== "cta");
+      expect(coded.length).toBeGreaterThan(0);
+      expect(coded.map((element) => element.code)).toEqual(coded.map((_, index) => `q${index + 1}`));
+      for (const element of coded) {
+        element.choices?.forEach((choice, index) => expect(choice.code).toBe(String(index + 1)));
+      }
+    });
+
+    test("keeps the stored code of an element a payload re-sends without one (ENG-6782)", async () => {
+      const [firstBlock, ...otherBlocks] = mockSurveyOutput.blocks as unknown as {
+        elements: Record<string, unknown>[];
+      }[];
+      const [firstElement, ...otherElements] = firstBlock.elements;
+      prisma.survey.findUnique.mockResolvedValueOnce({
+        ...mockSurveyOutput,
+        blocks: [
+          { ...firstBlock, elements: [{ ...firstElement, code: "age" }, ...otherElements] },
+          ...otherBlocks,
+        ],
+      } as never);
+      prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);
+
+      await updateSurvey(updateSurveyInput);
+
+      const written = vi.mocked(prisma.survey.update).mock.calls.at(0)?.[0].data.blocks as {
+        elements: { id: string; code?: string }[];
+      }[];
+      expect(written[0].elements.find((element) => element.id === firstElement.id)?.code).toBe("age");
+    });
+
     test("deletes a removed language even when it was enabled", async () => {
       // The current survey carries en (default) and de, both enabled; the update keeps only en.
       prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
@@ -808,6 +848,113 @@ describe("Tests for updateSurvey", () => {
       await expect(updateSurveyInternal({ ...updateSurveyInput }, true)).rejects.toThrow(InvalidInputError);
 
       expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+
+    // ENG-6783: the published lock holds on the editor save and v1 PUT, which both land here.
+    describe("published lock (ENG-6783)", () => {
+      const choiceElement = (overrides: Record<string, unknown> = {}) => ({
+        id: "fruit",
+        type: "multipleChoiceSingle",
+        headline: { default: "Pick one" },
+        required: false,
+        code: "fruit",
+        shuffleOption: "none",
+        choices: [
+          { id: "apple", label: { default: "Apple" }, code: "1" },
+          { id: "pear", label: { default: "Pear" }, code: "2" },
+          { id: "plum", label: { default: "Plum" }, code: "3" },
+        ],
+        ...overrides,
+      });
+      const withElement = (element: unknown) => [{ id: "block1", name: "Block 1", elements: [element] }];
+      const stored = (status: string) =>
+        ({ ...mockSurveyOutput, status, blocks: withElement(choiceElement()) }) as never;
+      const incoming = (element: unknown, status = "inProgress") =>
+        ({ ...updateSurveyInput, status, blocks: withElement(element) }) as never;
+
+      test.each([
+        ["a question code", { code: "renamed" }, /question code "fruit"/],
+        [
+          "option text",
+          {
+            choices: [
+              { id: "apple", label: { default: "Apples" }, code: "1" },
+              { id: "pear", label: { default: "Pear" }, code: "2" },
+              { id: "plum", label: { default: "Plum" }, code: "3" },
+            ],
+          },
+          /text of option "apple"/,
+        ],
+        [
+          "an answer code",
+          {
+            choices: [
+              { id: "apple", label: { default: "Apple" }, code: "7" },
+              { id: "pear", label: { default: "Pear" }, code: "2" },
+              { id: "plum", label: { default: "Plum" }, code: "3" },
+            ],
+          },
+          /answer code "1"/,
+        ],
+        [
+          "an option deleted",
+          {
+            choices: [
+              { id: "apple", label: { default: "Apple" }, code: "1" },
+              { id: "pear", label: { default: "Pear" }, code: "2" },
+            ],
+          },
+          /option "plum".*cannot be deleted/,
+        ],
+        ["the question type", { type: "multipleChoiceMulti" }, /type of question "fruit"/],
+        [
+          "an isDraft flag the stored element does not have",
+          { isDraft: true, code: "renamed" },
+          /question code/,
+        ],
+      ])("refuses %s on a published survey and does not write", async (_label, change, message) => {
+        prisma.survey.findUnique.mockResolvedValueOnce(stored("inProgress"));
+
+        const attempt = updateSurveyInternal(incoming(choiceElement(change)));
+
+        await expect(attempt).rejects.toThrow(InvalidInputError);
+        await expect(attempt).rejects.toThrow(/^published_survey_locked: /);
+        await expect(attempt).rejects.toThrow(message);
+        expect(prisma.survey.update).not.toHaveBeenCalled();
+      });
+
+      test.each(["paused", "completed"])("also applies to a %s survey", async (status) => {
+        prisma.survey.findUnique.mockResolvedValueOnce(stored(status));
+
+        await expect(
+          updateSurveyInternal(incoming(choiceElement({ code: "renamed" }), status))
+        ).rejects.toThrow(/^published_survey_locked: /);
+      });
+
+      test("does not apply to a draft", async () => {
+        prisma.survey.findUnique.mockResolvedValueOnce(stored("draft"));
+        prisma.survey.update.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" } as never);
+
+        await updateSurveyInternal(incoming(choiceElement({ code: "renamed" }), "draft"), true);
+
+        expect(prisma.survey.update).toHaveBeenCalledTimes(1);
+      });
+
+      test("allows adding an option and editing the headline on a published survey", async () => {
+        prisma.survey.findUnique.mockResolvedValueOnce(stored("inProgress"));
+        prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);
+
+        await updateSurveyInternal(
+          incoming(
+            choiceElement({
+              headline: { default: "Pick one, please" },
+              choices: [...choiceElement().choices, { id: "fig", label: { default: "Fig" }, code: "4" }],
+            })
+          )
+        );
+
+        expect(prisma.survey.update).toHaveBeenCalledTimes(1);
+      });
     });
 
     describe("Feedback source reconciliation (ENG-2064)", () => {
@@ -1447,6 +1594,30 @@ describe("Tests for createSurvey", () => {
       expect(prisma.survey.create).toHaveBeenCalled();
       expect(result.name).toEqual(mockSurveyOutput.name);
       expect(subscribeOrganizationMembersToSurveyResponses).toHaveBeenCalled();
+    });
+
+    test("fills the codes a created survey lacks (ENG-6782)", async () => {
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
+      prisma.survey.create.mockResolvedValueOnce({ ...mockSurveyOutput });
+
+      await createSurvey(
+        mockWorkspaceId,
+        {
+          ...mockCreateSurveyInput,
+          questions: undefined,
+          blocks: updateSurveyInput.blocks,
+        } as never,
+        { creationFacts: WORKSPACE_CREATION_FACTS }
+      );
+
+      const { data } = prisma.survey.create.mock.calls[0][0] as {
+        data: { blocks: { elements: { type: string; code?: string }[] }[] };
+      };
+      const coded = data.blocks
+        .flatMap((block) => block.elements)
+        .filter((element) => element.type !== "cta");
+      expect(coded.length).toBeGreaterThan(0);
+      expect(coded.map((element) => element.code)).toEqual(coded.map((_, index) => `q${index + 1}`));
     });
 
     test("writes the visibility and owner it was handed, not anything from the body (ENG-3282)", async () => {

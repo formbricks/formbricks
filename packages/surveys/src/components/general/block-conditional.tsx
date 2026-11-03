@@ -512,11 +512,13 @@ export function BlockConditional({
     submitRunner.run(collectBlockResponses(answers));
   };
 
+  const isActionRowSticky = fullSizeCards && !isCardless;
+
   return (
     <div ref={containerRef} className={cn("space-y-6", fullSizeCards ? "h-full" : "")}>
       {/* Scrollable container for the entire block */}
       <ScrollableContainer fullSizeCards={fullSizeCards} disableInternalScroll={isCardless}>
-        <div className="space-y-6">
+        <div className={isActionRowSticky ? undefined : "space-y-6"}>
           {/* While Next uploads, the card's other inputs are read-only: the answers sent are the ones that were
               just validated, so an edit made now would be silently dropped. */}
           <fieldset disabled={isSubmitting} className="m-0 min-w-0 space-y-6 border-0 p-0">
@@ -559,7 +561,9 @@ export function BlockConditional({
           <div
             className={cn(
               "flex w-full flex-row-reverse justify-between",
-              fullSizeCards && !isCardless ? "bg-survey-bg sticky bottom-0" : ""
+              // The gap lives in the row's own padding: a margin on the elements scrolls away and
+              // leaves the sticky row flush against the last input.
+              isActionRowSticky ? "bg-survey-bg sticky bottom-0 pt-6" : ""
             )}>
             <div>
               {shouldHideSubmitButton ? (

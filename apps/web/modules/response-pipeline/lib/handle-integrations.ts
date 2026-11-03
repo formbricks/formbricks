@@ -340,7 +340,7 @@ const processElementResponse = (
       .join("; ");
   }
 
-  // One stored URL string (ADR 0016), resolved to an absolute URL like a File upload's entries.
+  // One stored URL string (ADR 0023), resolved to an absolute URL like a File upload's entries.
   if (element.type === TSurveyElementTypeEnum.Signature && typeof responseValue === "string") {
     return resolveStorageUrlAuto(responseValue);
   }
@@ -492,7 +492,7 @@ const buildNotionPayloadProperties = (
       .map((choice) => resolveStorageUrlAuto(choice.imageUrl));
   });
 
-  // A Signature answer is one stored URL string (ADR 0016). Notion rejects a relative URL, so it goes out
+  // A Signature answer is one stored URL string (ADR 0023). Notion rejects a relative URL, so it goes out
   // absolute like every other integration's.
   mapping.forEach((map) => {
     const answer = normalizedResponses[map.element.id];

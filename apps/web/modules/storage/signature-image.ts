@@ -1,7 +1,7 @@
 /**
  * Client-safe helpers for showing a Signature answer to the survey owner.
  *
- * A Signature answer is one storage URL string (ADR 0016) that the owner's browser loads with the session
+ * A Signature answer is one storage URL string (ADR 0023) that the owner's browser loads with the session
  * cookie. Whatever sits in the answer is respondent-written data, so nothing becomes an `href` or `src`
  * until it reads as a private storage path of this app. `parseStorageFileUrl` does that on the server but
  * lives in a `server-only` module, so the check is repeated here in the narrower form the owner UI needs.

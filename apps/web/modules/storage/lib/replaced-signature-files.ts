@@ -6,7 +6,7 @@ import { collectReplacedSignatureFileUrls, getSurveyUploadElementIds } from "@/m
 
 /**
  * Queue the deletion of the Signature images a write to a response has just cleared or replaced
- * (ADR 0016: clearing is the respondent withdrawing the signature). Call it inside the write's
+ * (ADR 0023: clearing is the respondent withdrawing the signature). Call it inside the write's
  * transaction, after the write succeeded: a write that rolls back queues nothing, so a failed update
  * never deletes a file, and the storage delete itself runs later in the cleanup drain, never in the
  * request.

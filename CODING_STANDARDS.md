@@ -294,6 +294,16 @@ Do not:
   assumes a hostile host: no global CSS (`*`, `:root`, `@property`), `type="button"` on every button that
   does not submit the survey, nothing that needs `eval` under a strict CSP, and no reliance on host globals
   (`define`, CSS custom properties such as `--spacing`).
+- A strict `style-src` reports every element the browser parses with a `style` attribute, even one discarded
+  afterwards, and every `<style>` without the host's nonce. Survey text is rich-text HTML full of `style`
+  attributes, so markup is never parsed or injected raw: pass it through `stripInlineStyles` or
+  `sanitizeSurveyHtml` from `@formbricks/survey-ui`, and write CSS with `textContent`. The `csp-safe`
+  ESLint rules in those four packages flag `DOMParser`, `innerHTML`, `dangerouslySetInnerHTML`,
+  `setAttribute("style")` and `createElement("style")`; an exception is disabled on its line with the reason.
+  Lint cannot see data, so `apps/web/playwright/survey-csp.spec.ts` renders the built bundle under the
+  customer policy with styled text in every rich-text field. A new question type goes into the kitchen sink
+  (`playwright/utils/kitchen-sink.ts`) and is covered by both suites; a new rich-text field goes into
+  `withStyledText` in the spec.
 
 ## Storybook
 

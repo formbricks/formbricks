@@ -29,6 +29,7 @@ export const ADOPTED_OPERATIONS: Readonly<Record<string, readonly string[]>> = {
     "countResponsesV3",
     "validateResponseV3",
     "batchDeleteResponsesV3",
+    "batchSetResponsesOutcomeV3",
     "getResponseV3",
     "updateResponseV3",
     "deleteResponseV3",

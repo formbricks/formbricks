@@ -18,7 +18,7 @@ import {
 import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from "@opentelemetry/semantic-conventions";
 import { PrismaInstrumentation } from "@prisma/instrumentation";
 import { logger } from "@formbricks/logger";
-import { nodeAutoInstrumentationConfig } from "./instrumentation-node-config";
+import { getMetricExportIntervalMs, nodeAutoInstrumentationConfig } from "./instrumentation-node-config";
 
 // --- Configuration from environment ---
 const serviceName = process.env.OTEL_SERVICE_NAME || "formbricks";
@@ -67,7 +67,8 @@ if (otlpMetricExporter) {
   metricReaders.push(
     new PeriodicExportingMetricReader({
       exporter: otlpMetricExporter,
-      exportIntervalMillis: 60000, // Export every 60 seconds
+      // Only the interval: the SDK then clamps its 30 s default export timeout to it.
+      exportIntervalMillis: getMetricExportIntervalMs(process.env.OTEL_METRIC_EXPORT_INTERVAL),
     })
   );
 }

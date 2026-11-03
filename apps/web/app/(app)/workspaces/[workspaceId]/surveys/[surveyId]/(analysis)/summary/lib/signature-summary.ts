@@ -25,7 +25,7 @@ type TSignatureSummary = Pick<
 /**
  * Signed / skipped counts and the latest signatures of one Signature element.
  *
- * Signed is a non-empty string answer (the stored image URL, ADR 0016). Skipped is an empty answer, or no
+ * Signed is a non-empty string answer (the stored image URL, ADR 0023). Skipped is an empty answer, or no
  * answer from a respondent who reached the element (a time-to-complete entry), so a response that never
  * got that far counts as neither. `responses` arrive newest first, so the first signed ones are the latest.
  */

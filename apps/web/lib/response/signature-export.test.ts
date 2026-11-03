@@ -9,7 +9,7 @@ import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { extractSurveyDetails, getResponsesJson } from "./utils";
 
 // The same chain `getResponseDownloadFile` runs: resolve storage URLs, build the rows, write the file.
-// A Signature answer is one stored URL string (ADR 0016), so it must come out as one absolute URL cell
+// A Signature answer is one stored URL string (ADR 0023), so it must come out as one absolute URL cell
 // under the element's headline, with no extra columns.
 
 const RELATIVE_URL = "/storage/ws1/private/surveys/survey1/elements/sig1/signature--fid--abc.png";

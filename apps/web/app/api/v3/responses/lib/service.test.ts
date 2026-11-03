@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { requestEmailAuditErasureRequired } from "@/modules/email/lib/email-audit-maintenance";
 import {
   deleteScopedResponse,
   deleteScopedResponses,
@@ -8,6 +9,9 @@ import {
 } from "./service";
 
 vi.mock("server-only", () => ({}));
+vi.mock("@/modules/email/lib/email-audit-maintenance", () => ({
+  requestEmailAuditErasureRequired: vi.fn().mockResolvedValue(undefined),
+}));
 
 const {
   mockTxDelete,
@@ -120,6 +124,25 @@ describe("deleteScopedResponse", () => {
     expect(mockTxDelete).toHaveBeenCalledTimes(1);
     const { where } = mockTxDelete.mock.calls[0][0];
     expect(where).toStrictEqual({ id: RESPONSE_ID, survey: { workspaceId: "ws_1" } });
+  });
+
+  test("marks the deleted response for email copy erasure in the transaction", async () => {
+    runTransaction(deletedRow());
+
+    await deleteScopedResponse(RESPONSE_ID, SCOPE);
+
+    expect(requestEmailAuditErasureRequired).toHaveBeenCalledWith(
+      { responseId: RESPONSE_ID },
+      expect.any(Object)
+    );
+  });
+
+  test("rolls back when the email erasure request fails", async () => {
+    runTransaction(deletedRow());
+    vi.mocked(requestEmailAuditErasureRequired).mockRejectedValueOnce(new Error("audit unavailable"));
+
+    await expect(deleteScopedResponse(RESPONSE_ID, SCOPE)).rejects.toThrow("audit unavailable");
+    expect(mockDeleteFiles).not.toHaveBeenCalled();
   });
 
   /**
@@ -263,7 +286,7 @@ describe("deleteScopedResponse", () => {
     expect(mockDeleteFiles).toHaveBeenCalledWith([ownFile], "ws_1");
   });
 
-  // A Signature answer is one URL string (ADR 0016); the element id decides it is a delete target.
+  // A Signature answer is one URL string (ADR 0023); the element id decides it is a delete target.
   test("removes the signature image of the response's own survey and element", async () => {
     const ownSignature = "/storage/ws_1/private/surveys/svy_1/elements/signature/s--fid--abc.png";
     runTransaction(deletedRow({ data: { signature: ownSignature } }));

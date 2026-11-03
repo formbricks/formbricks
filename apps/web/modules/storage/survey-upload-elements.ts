@@ -61,7 +61,7 @@ export type TArrayUploadElementKind<TElement extends TSurveyUploadElement = TSur
 };
 
 /**
- * An answer that is one URL string (Signature, see ADR 0016). The extensions are fixed by the element
+ * An answer that is one URL string (Signature, see ADR 0023). The extensions are fixed by the element
  * type: the runtime always exports a Signature as a PNG, so anything else under one is not a signature.
  */
 export type TStringUploadElementKind = {
@@ -160,7 +160,7 @@ export const mapUploadElementTypes = <T>(
  *
  * `collectResponseFileUrls` reads the File upload set to trust a flat pre-#8044 key inside that
  * element's array. It does not read the Signature set: a bare string is a delete target by its key's
- * scope under any element id, never by which element holds it (ADR 0016).
+ * scope under any element id, never by which element holds it (ADR 0023).
  */
 export type TSurveyUploadElementIds = Record<TUploadElementType, ReadonlySet<string>>;
 

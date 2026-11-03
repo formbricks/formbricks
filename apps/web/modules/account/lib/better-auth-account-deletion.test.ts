@@ -9,6 +9,10 @@ import { capturePostHogEvent } from "@/lib/posthog";
 import { deleteBrevoCustomerByEmail } from "@/modules/auth/lib/brevo";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { sendAccountDeletedEmail } from "@/modules/email";
+import {
+  activateEmailAuditErasureIntent,
+  requestEmailAuditErasureBeforeUserDeletion,
+} from "@/modules/email/lib/email-audit-maintenance";
 import { queueAccountDeletionAuditEvent } from "./account-deletion-audit";
 import {
   accountDeletionAfterDelete,
@@ -32,6 +36,10 @@ vi.mock("@/lib/organization/service", () => ({
 vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: vi.fn() }));
 vi.mock("@/modules/auth/lib/brevo", () => ({ deleteBrevoCustomerByEmail: vi.fn() }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsMultiOrgEnabled: vi.fn() }));
+vi.mock("@/modules/email/lib/email-audit-maintenance", () => ({
+  activateEmailAuditErasureIntent: vi.fn(),
+  requestEmailAuditErasureBeforeUserDeletion: vi.fn(),
+}));
 vi.mock("@/modules/email", () => ({ sendAccountDeletedEmail: vi.fn() }));
 vi.mock("./account-deletion-audit", () => ({ queueAccountDeletionAuditEvent: vi.fn() }));
 
@@ -45,6 +53,7 @@ describe("accountDeletionBeforeDelete", () => {
     vi.useFakeTimers();
     vi.mocked(prisma.invite.deleteMany).mockResolvedValue({ count: 0 } as never);
     vi.mocked(deleteOrganization).mockResolvedValue(true as never);
+    vi.mocked(requestEmailAuditErasureBeforeUserDeletion).mockResolvedValue(undefined);
   });
 
   test("blocks deletion on a single-org instance when the user is a sole org owner", async () => {
@@ -61,6 +70,7 @@ describe("accountDeletionBeforeDelete", () => {
     // throws before any destructive cleanup
     expect(deleteOrganization).not.toHaveBeenCalled();
     expect(prisma.invite.deleteMany).not.toHaveBeenCalled();
+    expect(requestEmailAuditErasureBeforeUserDeletion).not.toHaveBeenCalled();
     // a blocked deletion never reaches afterDelete, so nothing is mailed
     await vi.runAllTimersAsync();
     expect(sendAccountDeletedEmail).not.toHaveBeenCalled();
@@ -79,6 +89,10 @@ describe("accountDeletionBeforeDelete", () => {
     expect(deleteOrganization).toHaveBeenCalledWith("org-1");
     expect(deleteOrganization).toHaveBeenCalledWith("org-2");
     expect(prisma.invite.deleteMany).toHaveBeenCalledWith({ where: { creatorId: "user-1" } });
+    expect(requestEmailAuditErasureBeforeUserDeletion).toHaveBeenCalledWith("user-1", "ada@example.com");
+    expect(vi.mocked(requestEmailAuditErasureBeforeUserDeletion).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(deleteOrganization).mock.invocationCallOrder[0]
+    );
   });
 
   test("no sole-owner orgs: skips the license check and deletes only the creator's invites", async () => {
@@ -89,6 +103,18 @@ describe("accountDeletionBeforeDelete", () => {
     expect(getIsMultiOrgEnabled).not.toHaveBeenCalled();
     expect(deleteOrganization).not.toHaveBeenCalled();
     expect(prisma.invite.deleteMany).toHaveBeenCalledWith({ where: { creatorId: "user-1" } });
+  });
+
+  test("stops account deletion before cleanup when audit erasure cannot be prepared", async () => {
+    vi.mocked(getOrganizationsWhereUserIsSingleOwner).mockResolvedValue([] as never);
+    vi.mocked(requestEmailAuditErasureBeforeUserDeletion).mockRejectedValueOnce(
+      new Error("audit unavailable")
+    );
+
+    await expect(accountDeletionBeforeDelete(user)).rejects.toThrow("audit unavailable");
+
+    expect(prisma.invite.deleteMany).not.toHaveBeenCalled();
+    expect(deleteOrganization).not.toHaveBeenCalled();
   });
 });
 
@@ -111,6 +137,9 @@ describe("accountDeletionAfterDelete", () => {
 
     expect(sendAccountDeletedEmail).toHaveBeenCalledOnce();
     expect(sendAccountDeletedEmail).toHaveBeenCalledWith({ email: "ada@example.com", locale: "en-US" });
+    expect(vi.mocked(activateEmailAuditErasureIntent).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(sendAccountDeletedEmail).mock.invocationCallOrder[0]
+    );
   });
 
   test("does not wait for a slow mailer before resolving", async () => {
@@ -150,6 +179,7 @@ describe("accountDeletionAfterDelete", () => {
   test("deletes the Brevo customer and queues a success audit event with the deleted user", async () => {
     await accountDeletionAfterDelete(user);
 
+    expect(activateEmailAuditErasureIntent).toHaveBeenCalledWith("user-1");
     expect(deleteUserOrganizationRelationships).toHaveBeenCalledWith("user-1");
     expect(deleteUserTeamRelationships).toHaveBeenCalledWith("user-1");
     expect(deleteBrevoCustomerByEmail).toHaveBeenCalledWith({ email: "ada@example.com" });

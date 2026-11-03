@@ -46,7 +46,7 @@ export const renderEmailResponseValue = (
         </Container>
       );
 
-    // A Signature answer is a private storage URL (ADR 0016) that needs a login to open, and a relative one
+    // A Signature answer is a private storage URL (ADR 0023) that needs a login to open, and a relative one
     // an email client cannot resolve, so no email carries it.
     case TSurveyElementTypeEnum.Signature:
       return (

@@ -4,6 +4,8 @@ allOf:
     required:
       - label
     properties:
+      code:
+        $ref: ./SurveyQuestionCode.yml
       type:
         type: string
         enum:

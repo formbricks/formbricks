@@ -6,7 +6,7 @@ import { sendToPipeline } from "@/app/lib/pipelines";
 import { can } from "@/lib/authorization";
 import { isSurveyVisibilityReady } from "@/lib/authzed/scope-readiness";
 import { getSurvey } from "@/lib/survey/service";
-import { createResponseWithQuotaEvaluation, getResponses } from "./lib/response";
+import { createResponseWithQuotaEvaluation, getQuestionCodesBySurveyId, getResponses } from "./lib/response";
 import { GET, POST } from "./route";
 
 /**
@@ -33,6 +33,7 @@ vi.mock("@/modules/api/lib/validation", () => ({
 }));
 vi.mock("./lib/response", () => ({
   createResponseWithQuotaEvaluation: vi.fn(),
+  getQuestionCodesBySurveyId: vi.fn(),
   getResponses: vi.fn(),
   getResponsesByWorkspaceIds: vi.fn(),
 }));
@@ -81,6 +82,7 @@ beforeEach(() => {
   vi.mocked(isSurveyVisibilityReady).mockResolvedValue(true);
   vi.mocked(getSurvey).mockResolvedValue(survey);
   vi.mocked(getResponses).mockResolvedValue([]);
+  vi.mocked(getQuestionCodesBySurveyId).mockResolvedValue(new Map());
   vi.mocked(createResponseWithQuotaEvaluation).mockResolvedValue(created);
   vi.mocked(resolveBodyIds).mockImplementation(async (body) => ({
     ok: true,
@@ -128,5 +130,28 @@ describe("POST /api/v1/management/responses survey visibility", () => {
       type: "survey",
       id: surveyId,
     });
+  });
+});
+
+describe("GET /api/v1/management/responses question codes", () => {
+  test("carries dataByQuestionCode like the webhook body, so a Zapier test sample shows the keys", async () => {
+    actAsKey(true);
+    vi.mocked(getResponses).mockResolvedValue([
+      { id: "r1", surveyId, data: { el1: "Yes" } },
+      { id: "r2", surveyId, data: {} },
+    ] as unknown as TResponse[]);
+    vi.mocked(getQuestionCodesBySurveyId).mockResolvedValue(
+      new Map([[surveyId, { el1: "nps", el2: "why" }]])
+    );
+
+    const { response } = await get();
+    const body = (await response.json()) as {
+      data: { data: unknown; dataByQuestionCode: Record<string, unknown> }[];
+    };
+
+    expect(getQuestionCodesBySurveyId).toHaveBeenCalledWith([surveyId]);
+    expect(body.data[0].data).toEqual({ el1: "Yes" });
+    expect(body.data[0].dataByQuestionCode).toEqual({ nps: "Yes", why: null });
+    expect(body.data[1].dataByQuestionCode).toEqual({ nps: null, why: null });
   });
 });

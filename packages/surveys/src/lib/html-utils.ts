@@ -1,32 +1,10 @@
-import DOMPurify from "isomorphic-dompurify";
+import { stripInlineStyles } from "@formbricks/survey-ui";
 
 // Sanitization that has to stay identical between the SDK bundle and the React
 // components lives in survey-ui; re-exported here so callers keep one import.
-export { sanitizeSurveyHtml } from "@formbricks/survey-ui";
-
-/**
- * Strip inline style attributes from HTML string to avoid CSP violations
- * Uses DOMPurify for secure, proper HTML parsing instead of regex
- * @param html - The HTML string to process
- * @returns HTML string with all style attributes removed
- * @note This is a security measure to prevent CSP violations during HTML parsing
- */
-export const stripInlineStyles = (html: string): string => {
-  if (!html) return html;
-
-  // Pre-strip style attributes from the raw string BEFORE DOMPurify parses it.
-  // DOMPurify internally uses innerHTML to parse HTML, which triggers CSP
-  // `style-src` violations at parse time — before FORBID_ATTR can strip them.
-  // The regex is O(n) safe: [^"]* and [^']* are negated classes bounded by
-  // fixed quote delimiters, so no backtracking can occur.
-  const preStripped = html.replaceAll(/ style="[^"]*"| style='[^']*'/gi, "");
-
-  return DOMPurify.sanitize(preStripped, {
-    FORBID_ATTR: ["style"],
-    ADD_ATTR: ["target"],
-    KEEP_CONTENT: true,
-  });
-};
+// Never parse survey text with a DOM API directly: a strict `style-src` reports every element
+// parsed with a style attribute, so run it through `stripInlineStyles` first.
+export { sanitizeSurveyHtml, stripInlineStyles } from "@formbricks/survey-ui";
 
 /**
  * Lightweight HTML detection for browser environments
@@ -46,6 +24,7 @@ export const isValidHTML = (str: string): boolean => {
     // Strip inline style attributes to avoid CSP violations during parsing
     const strippedStr = stripInlineStyles(str);
 
+    // eslint-disable-next-line no-restricted-syntax -- strippedStr is stripInlineStyles output
     const doc = new DOMParser().parseFromString(strippedStr, "text/html");
     const errorNode = doc.querySelector("parsererror");
     if (errorNode) return false;
@@ -60,13 +39,17 @@ export const isValidHTML = (str: string): boolean => {
  * where raw markup would otherwise leak into the accessible name.
  * @param value - The string (plain or HTML) to flatten
  * @returns The text content; falls back to the original value outside the browser or on error
+ * @note Strips inline styles before parsing to avoid CSP violations
  */
 export const htmlToPlainText = (value: string): string => {
   // DOMParser is unavailable outside the browser (e.g. SSR); return the raw value there.
   if (!value || !("DOMParser" in globalThis)) return value;
 
   try {
-    return new DOMParser().parseFromString(value, "text/html").body.textContent?.trim() ?? value;
+    return (
+      // eslint-disable-next-line no-restricted-syntax -- the value passes through stripInlineStyles
+      new DOMParser().parseFromString(stripInlineStyles(value), "text/html").body.textContent?.trim() ?? value
+    );
   } catch {
     return value;
   }

@@ -21,7 +21,12 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { requestEmailAuditErasureRequired } from "@/modules/email/lib/email-audit-maintenance";
 import { deleteResponsesAndDisplaysForSurvey, getQuotasSummary } from "./survey";
+
+vi.mock("@/modules/email/lib/email-audit-maintenance", () => ({
+  requestEmailAuditErasureRequired: vi.fn().mockResolvedValue(undefined),
+}));
 
 /**
  * The fixtures declare only the three fields the service reads, so the hand-off to `getSurvey` (typed
@@ -43,6 +48,7 @@ const mockResponsePages = (...pages: ScannedResponse[][]) => {
 };
 
 beforeEach(() => {
+  vi.mocked(requestEmailAuditErasureRequired).mockResolvedValue(undefined);
   // Default: a survey with no file-upload element and no responses to scan.
   mockSurvey(surveyWithoutFileUpload);
   mockResponsePages();
@@ -65,13 +71,29 @@ describe("Tests for deleteResponsesAndDisplaysForSurvey service", () => {
       });
     });
 
+    test("marks every response copy before the reset deletes its source rows", async () => {
+      vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(prisma as never));
+      vi.mocked(prisma.response.deleteMany).mockResolvedValue({ count: 5 });
+      vi.mocked(prisma.display.deleteMany).mockResolvedValue({ count: 3 });
+
+      await deleteResponsesAndDisplaysForSurvey(surveyId);
+
+      expect(requestEmailAuditErasureRequired).toHaveBeenCalledWith(
+        { responsesOfSurveyId: surveyId },
+        prisma
+      );
+      expect(vi.mocked(requestEmailAuditErasureRequired).mock.invocationCallOrder[0]).toBeLessThan(
+        vi.mocked(prisma.response.deleteMany).mock.invocationCallOrder[0]
+      );
+    });
+
     test("runs the reset on its own execution budget rather than the client default (ENG-3285)", async () => {
       vi.mocked(prisma.$transaction).mockResolvedValue([{ count: 0 }, { count: 0 }]);
 
       await deleteResponsesAndDisplaysForSurvey(surveyId);
 
       // The whole survey is deleted in one batch; a short budget rolls back a reset about to commit.
-      expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Array), { timeout: 120_000 });
+      expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { timeout: 120_000 });
     });
 
     test("Handles case with no responses or displays to delete", async () => {
