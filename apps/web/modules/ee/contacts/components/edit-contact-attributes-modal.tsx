@@ -32,11 +32,11 @@ interface TContactAttributeWithKeyInfo {
 }
 
 interface EditContactAttributesModalProps {
-  open: boolean;
-  setOpen: (open: boolean) => void;
-  contactId: string;
-  currentAttributes: TContactAttributeWithKeyInfo[];
-  attributeKeys: TContactAttributeKey[];
+  readonly open: boolean;
+  readonly setOpen: (open: boolean) => void;
+  readonly contactId: string;
+  readonly currentAttributes: TContactAttributeWithKeyInfo[];
+  readonly attributeKeys: TContactAttributeKey[];
 }
 
 export const EditContactAttributesModal = ({

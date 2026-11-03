@@ -8,8 +8,8 @@ import { getCreativesAccess } from "@/modules/ee/creatives/lib/access";
 import { getWorkspaceAuth, workspaceIdLayoutChecks } from "@/modules/workspaces/lib/utils";
 
 const SurveyEditorWorkspaceLayout = async (props: {
-  params: Promise<{ workspaceId: string }>;
-  children: React.ReactNode;
+  readonly params: Promise<{ workspaceId: string }>;
+  readonly children: React.ReactNode;
 }) => {
   const params = await props.params;
 

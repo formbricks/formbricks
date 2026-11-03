@@ -18,14 +18,14 @@ import { SegmentActivityTab } from "./segment-activity-tab";
 import { TSegmentActivitySummary } from "./segment-activity-utils";
 
 interface EditSegmentModalProps {
-  open: boolean;
-  setOpen: (open: boolean) => void;
-  currentSegment: TSegmentWithSurveyRefs;
-  activitySummary: TSegmentActivitySummary;
-  segments: TSegment[];
-  contactAttributeKeys: TContactAttributeKey[];
-  isContactsEnabled: boolean;
-  isReadOnly: boolean;
+  readonly open: boolean;
+  readonly setOpen: (open: boolean) => void;
+  readonly currentSegment: TSegmentWithSurveyRefs;
+  readonly activitySummary: TSegmentActivitySummary;
+  readonly segments: TSegment[];
+  readonly contactAttributeKeys: TContactAttributeKey[];
+  readonly isContactsEnabled: boolean;
+  readonly isReadOnly: boolean;
 }
 
 const SegmentSettingsTab = ({

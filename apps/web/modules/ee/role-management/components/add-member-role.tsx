@@ -17,10 +17,10 @@ import {
 import { Muted, P } from "@/modules/ui/components/typography";
 
 interface AddMemberRoleProps {
-  control: Control<{ name: string; email: string; role: TOrganizationRole; teamIds: string[] }>;
-  isAccessControlAllowed: boolean;
-  isFormbricksCloud: boolean;
-  membershipRole?: TOrganizationRole;
+  readonly control: Control<{ name: string; email: string; role: TOrganizationRole; teamIds: string[] }>;
+  readonly isAccessControlAllowed: boolean;
+  readonly isFormbricksCloud: boolean;
+  readonly membershipRole?: TOrganizationRole;
 }
 
 export function AddMemberRole({

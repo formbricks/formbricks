@@ -9,13 +9,13 @@ import { Label } from "@/modules/ui/components/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
 
 interface FallbackInputProps {
-  filteredRecallItems: (TSurveyRecallItem | undefined)[];
-  fallbacks: { [type: string]: string };
-  setFallbacks: (fallbacks: { [type: string]: string }) => void;
-  addFallback: () => void;
-  open: boolean;
-  setOpen: (open: boolean) => void;
-  triggerButton?: ReactNode;
+  readonly filteredRecallItems: (TSurveyRecallItem | undefined)[];
+  readonly fallbacks: { [type: string]: string };
+  readonly setFallbacks: (fallbacks: { [type: string]: string }) => void;
+  readonly addFallback: () => void;
+  readonly open: boolean;
+  readonly setOpen: (open: boolean) => void;
+  readonly triggerButton?: ReactNode;
 }
 
 export const FallbackInput = ({

@@ -15,15 +15,15 @@ import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 
 interface CTAElementFormProps {
-  localSurvey: TSurvey;
-  element: TSurveyCTAElement;
-  elementIdx: number;
-  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
-  lastElement: boolean;
-  isInvalid: boolean;
-  locale: TUserLocale;
-  isStorageConfigured: boolean;
-  isExternalUrlsAllowed?: boolean;
+  readonly localSurvey: TSurvey;
+  readonly element: TSurveyCTAElement;
+  readonly elementIdx: number;
+  readonly updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
+  readonly lastElement: boolean;
+  readonly isInvalid: boolean;
+  readonly locale: TUserLocale;
+  readonly isStorageConfigured: boolean;
+  readonly isExternalUrlsAllowed?: boolean;
 }
 
 export const CTAElementForm = ({

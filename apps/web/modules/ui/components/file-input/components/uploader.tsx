@@ -6,18 +6,18 @@ import { cn } from "@/lib/cn";
 import { showStorageNotConfiguredToast } from "@/modules/ui/components/storage-not-configured-toast/lib/utils";
 
 interface UploaderProps {
-  id: string;
-  name: string;
-  ref?: React.RefObject<HTMLInputElement>;
-  handleDragOver: (e: React.DragEvent<HTMLLabelElement>) => void;
-  uploaderClassName: string;
-  handleDrop: (e: React.DragEvent<HTMLLabelElement>) => void;
-  allowedFileExtensions: TAllowedFileExtension[];
-  multiple: boolean;
-  handleUpload: (files: File[]) => void;
-  uploadMore?: boolean;
-  disabled?: boolean;
-  isStorageConfigured: boolean;
+  readonly id: string;
+  readonly name: string;
+  readonly ref?: React.RefObject<HTMLInputElement>;
+  readonly handleDragOver: (e: React.DragEvent<HTMLLabelElement>) => void;
+  readonly uploaderClassName: string;
+  readonly handleDrop: (e: React.DragEvent<HTMLLabelElement>) => void;
+  readonly allowedFileExtensions: TAllowedFileExtension[];
+  readonly multiple: boolean;
+  readonly handleUpload: (files: File[]) => void;
+  readonly uploadMore?: boolean;
+  readonly disabled?: boolean;
+  readonly isStorageConfigured: boolean;
 }
 
 export const Uploader = ({
@@ -36,6 +36,7 @@ export const Uploader = ({
 }: UploaderProps) => {
   const { t } = useTranslation();
   return (
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- see NOSONAR below
     <label // NOSONAR - This is a label for a file input, we need the onClick to trigger storage not configured toast
       htmlFor={`${id}-${name}`}
       data-testid="upload-file-label"
@@ -79,6 +80,21 @@ export const Uploader = ({
           e.preventDefault();
           e.stopPropagation();
           showStorageNotConfiguredToast();
+        }
+      }}
+      // Enter or Space on a focused label does not open its input, and the input itself is hidden, so
+      // keyboard users would reach this control but never get the file picker.
+      onKeyDown={(e) => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        e.preventDefault();
+
+        if (!isStorageConfigured) {
+          showStorageNotConfiguredToast();
+          return;
+        }
+
+        if (!disabled) {
+          e.currentTarget.querySelector("input")?.click();
         }
       }}>
       <div className="flex flex-col items-center justify-center pt-5 pb-6">

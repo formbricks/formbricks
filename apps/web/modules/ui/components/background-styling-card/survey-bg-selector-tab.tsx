@@ -10,13 +10,13 @@ import { ImageFromUnsplashSurveyBg } from "@/modules/survey/editor/components/un
 import { TabBar } from "@/modules/ui/components/tab-bar";
 
 interface SurveyBgSelectorTabProps {
-  handleBgChange: (bg: string, bgType: string) => void;
-  colors: string[];
-  bgType: string | null | undefined;
-  workspaceId: string;
-  isUnsplashConfigured: boolean;
-  bg: string;
-  isStorageConfigured: boolean;
+  readonly handleBgChange: (bg: string, bgType: string) => void;
+  readonly colors: string[];
+  readonly bgType: string | null | undefined;
+  readonly workspaceId: string;
+  readonly isUnsplashConfigured: boolean;
+  readonly bg: string;
+  readonly isStorageConfigured: boolean;
 }
 
 export const SurveyBgSelectorTab = ({

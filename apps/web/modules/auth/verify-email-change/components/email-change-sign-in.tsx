@@ -7,7 +7,7 @@ import { authClient } from "@/modules/auth/lib/auth-client";
 import { verifyEmailChangeAction } from "@/modules/auth/verify-email-change/actions";
 
 interface EmailChangeSignInProps {
-  token: string;
+  readonly token: string;
 }
 
 export const EmailChangeSignIn = ({ token }: EmailChangeSignInProps) => {

@@ -11,9 +11,9 @@ import { OTPInput } from "@/modules/ui/components/otp-input";
 import { EnableTwoFactorModalStep } from "./enable-two-factor-modal";
 
 interface EnterCodeProps {
-  setCurrentStep: (step: EnableTwoFactorModalStep) => void;
-  setOpen: (open: boolean) => void;
-  refreshData: () => void;
+  readonly setCurrentStep: (step: EnableTwoFactorModalStep) => void;
+  readonly setOpen: (open: boolean) => void;
+  readonly refreshData: () => void;
 }
 
 const ZEnterCodeFormState = z.object({

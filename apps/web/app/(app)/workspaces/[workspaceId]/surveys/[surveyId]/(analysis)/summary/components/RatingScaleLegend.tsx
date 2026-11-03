@@ -4,8 +4,8 @@ import { TSurveyRatingQuestion } from "@formbricks/types/surveys/types";
 import { RatingResponse } from "@/modules/ui/components/rating-response";
 
 interface RatingScaleLegendProps {
-  scale: TSurveyRatingQuestion["scale"];
-  range: number;
+  readonly scale: TSurveyRatingQuestion["scale"];
+  readonly range: number;
 }
 
 export const RatingScaleLegend = ({ scale, range }: RatingScaleLegendProps) => {

@@ -9,20 +9,20 @@ import { ElementFormInput } from "@/modules/survey/components/element-form-input
 import { Switch } from "@/modules/ui/components/switch";
 
 interface ElementToggleTableProps {
-  type: "address" | "contact";
-  fields: {
+  readonly type: "address" | "contact";
+  readonly fields: {
     required: boolean;
     show: boolean;
     id: string;
     label: string;
     placeholder: TI18nString;
   }[];
-  localSurvey: TSurvey;
-  elementIdx: number;
-  isInvalid: boolean;
-  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
-  locale: TUserLocale;
-  isStorageConfigured: boolean;
+  readonly localSurvey: TSurvey;
+  readonly elementIdx: number;
+  readonly isInvalid: boolean;
+  readonly updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
+  readonly locale: TUserLocale;
+  readonly isStorageConfigured: boolean;
 }
 
 export const ElementToggleTable = ({

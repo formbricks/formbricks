@@ -10,7 +10,7 @@ import { Button } from "@/modules/ui/components/button";
 import { CodeBlock } from "@/modules/ui/components/code-block";
 
 interface WebsiteEmbedTabProps {
-  surveyUrl: string;
+  readonly surveyUrl: string;
 }
 
 export const WebsiteEmbedTab = ({ surveyUrl }: WebsiteEmbedTabProps) => {

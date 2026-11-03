@@ -12,14 +12,14 @@ import { formatDate, timeSinceDate } from "@/lib/time";
 import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle } from "@/modules/ui/components/dialog";
 
 interface SegmentDetailProps {
-  segment: TSegment;
-  setSegment: (segment: TSegment) => void;
-  setOpen: (open: boolean) => void;
-  setIsSegmentEditorOpen: (isOpen: boolean) => void;
-  onSegmentLoad: (surveyId: string, segmentId: string) => Promise<TSurvey>;
-  surveyId: string;
-  currentSegment: TSegment;
-  locale: TUserLocale;
+  readonly segment: TSegment;
+  readonly setSegment: (segment: TSegment) => void;
+  readonly setOpen: (open: boolean) => void;
+  readonly setIsSegmentEditorOpen: (isOpen: boolean) => void;
+  readonly onSegmentLoad: (surveyId: string, segmentId: string) => Promise<TSurvey>;
+  readonly surveyId: string;
+  readonly currentSegment: TSegment;
+  readonly locale: TUserLocale;
 }
 
 const SegmentDetail = ({
@@ -121,14 +121,14 @@ const SegmentDetail = ({
 };
 
 type LoadSegmentModalProps = {
-  open: boolean;
-  setOpen: (open: boolean) => void;
-  surveyId: string;
-  currentSegment: TSegment;
-  segments: TSegment[];
-  setSegment: (segment: TSegment) => void;
-  setIsSegmentEditorOpen: (isOpen: boolean) => void;
-  onSegmentLoad: (surveyId: string, segmentId: string) => Promise<TSurvey>;
+  readonly open: boolean;
+  readonly setOpen: (open: boolean) => void;
+  readonly surveyId: string;
+  readonly currentSegment: TSegment;
+  readonly segments: TSegment[];
+  readonly setSegment: (segment: TSegment) => void;
+  readonly setIsSegmentEditorOpen: (isOpen: boolean) => void;
+  readonly onSegmentLoad: (surveyId: string, segmentId: string) => Promise<TSurvey>;
 };
 
 export const LoadSegmentModal = ({

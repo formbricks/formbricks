@@ -70,11 +70,11 @@ import { getNPSOptionColor, getRatingNumberOptionColor } from "../lib/utils";
 const EMAIL_RATING_SMILEY_SIZE = 40;
 
 interface PreviewEmailTemplateProps {
-  survey: TSurvey;
-  surveyUrl: string;
-  styling: TSurveyStyling;
-  locale: string;
-  t: TFunction;
+  readonly survey: TSurvey;
+  readonly surveyUrl: string;
+  readonly styling: TSurveyStyling;
+  readonly locale: string;
+  readonly t: TFunction;
 }
 
 interface PreviewFieldConfig {

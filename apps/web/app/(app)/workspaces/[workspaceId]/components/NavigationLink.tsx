@@ -5,14 +5,14 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 
 interface NavigationLinkProps {
-  href: string;
-  isActive: boolean;
-  isCollapsed: boolean;
-  children: React.ReactNode;
-  linkText: string;
-  isTextVisible: boolean;
-  disabled?: boolean;
-  disabledMessage?: string;
+  readonly href: string;
+  readonly isActive: boolean;
+  readonly isCollapsed: boolean;
+  readonly children: React.ReactNode;
+  readonly linkText: string;
+  readonly isTextVisible: boolean;
+  readonly disabled?: boolean;
+  readonly disabledMessage?: string;
 }
 
 export const NavigationLink = ({

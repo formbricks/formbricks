@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
 
 interface DocumentationLinksProps {
-  links: {
+  readonly links: {
     title: string;
     href: string;
   }[];

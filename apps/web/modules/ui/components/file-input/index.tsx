@@ -23,20 +23,20 @@ const isImage = (name: string) => {
 };
 
 interface FileInputProps {
-  id: string;
-  allowedFileExtensions: TAllowedFileExtension[];
-  workspaceId: string;
-  onFileUpload: (uploadedUrl: string[] | undefined, fileType: "image" | "video") => void;
-  fileUrl?: string | string[];
-  videoUrl?: string;
-  multiple?: boolean;
-  imageFit?: "cover" | "contain";
-  maxSizeInMB?: number;
-  isVideoAllowed?: boolean;
-  disabled?: boolean;
-  isStorageConfigured: boolean;
+  readonly id: string;
+  readonly allowedFileExtensions: TAllowedFileExtension[];
+  readonly workspaceId: string;
+  readonly onFileUpload: (uploadedUrl: string[] | undefined, fileType: "image" | "video") => void;
+  readonly fileUrl?: string | string[];
+  readonly videoUrl?: string;
+  readonly multiple?: boolean;
+  readonly imageFit?: "cover" | "contain";
+  readonly maxSizeInMB?: number;
+  readonly isVideoAllowed?: boolean;
+  readonly disabled?: boolean;
+  readonly isStorageConfigured: boolean;
   // Extra control overlaid on an uploaded image preview, e.g. the editor's alt text button.
-  renderImageAction?: (url: string) => ReactNode;
+  readonly renderImageAction?: (url: string) => ReactNode;
 }
 
 interface SelectedFile {

@@ -1,5 +1,5 @@
 interface SatisfactionIndicatorProps {
-  percentage: number;
+  readonly percentage: number;
 }
 
 export const SatisfactionIndicator = ({ percentage }: SatisfactionIndicatorProps) => {

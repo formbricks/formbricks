@@ -8,9 +8,9 @@ import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { ElementSummaryHeader } from "./ElementSummaryHeader";
 
 interface MatrixElementSummaryProps {
-  elementSummary: TSurveyElementSummaryMatrix;
-  survey: TSurvey;
-  setFilter: (
+  readonly elementSummary: TSurveyElementSummaryMatrix;
+  readonly survey: TSurvey;
+  readonly setFilter: (
     elementId: string,
     label: TI18nString,
     elementType: TSurveyElementTypeEnum,

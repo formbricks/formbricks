@@ -30,10 +30,10 @@ import {
 import { generatePersonalSurveyLinkAction } from "../actions";
 
 interface GeneratePersonalLinkModalProps {
-  open: boolean;
-  setOpen: (open: boolean) => void;
-  contactId: string;
-  publishedLinkSurveys: PublishedLinkSurvey[];
+  readonly open: boolean;
+  readonly setOpen: (open: boolean) => void;
+  readonly contactId: string;
+  readonly publishedLinkSurveys: PublishedLinkSurvey[];
 }
 
 export const GeneratePersonalLinkModal = ({

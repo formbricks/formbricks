@@ -5,12 +5,12 @@ import { OptionIds } from "@/modules/survey/editor/components/option-ids";
 import { UpdateElementId } from "@/modules/survey/editor/components/update-element-id";
 
 interface AdvancedSettingsProps {
-  element: TSurveyElement;
-  elementIdx: number;
-  localSurvey: TSurvey;
-  updateElement: (elementIdx: number, updatedAttributes: any) => void;
-  updateBlockLogic: (elementIdx: number, logic: TSurveyBlockLogic[]) => void;
-  updateBlockLogicFallback: (elementIdx: number, logicFallback: string | undefined) => void;
+  readonly element: TSurveyElement;
+  readonly elementIdx: number;
+  readonly localSurvey: TSurvey;
+  readonly updateElement: (elementIdx: number, updatedAttributes: any) => void;
+  readonly updateBlockLogic: (elementIdx: number, logic: TSurveyBlockLogic[]) => void;
+  readonly updateBlockLogicFallback: (elementIdx: number, logicFallback: string | undefined) => void;
 }
 
 export const AdvancedSettings = ({

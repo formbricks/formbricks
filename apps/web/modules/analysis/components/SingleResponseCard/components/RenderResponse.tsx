@@ -19,17 +19,17 @@ import { ResponseBadges } from "@/modules/ui/components/response-badges";
 import { SignatureResponse } from "@/modules/ui/components/signature-response";
 
 interface RenderResponseProps {
-  responseData: TResponseDataValue;
-  element: TSurveyElement;
-  survey: TSurvey;
-  language: string | null;
-  locale: TUserLocale;
-  isExpanded?: boolean;
-  showId: boolean;
+  readonly responseData: TResponseDataValue;
+  readonly element: TSurveyElement;
+  readonly survey: TSurvey;
+  readonly language: string | null;
+  readonly locale: TUserLocale;
+  readonly isExpanded?: boolean;
+  readonly showId: boolean;
   /** Layout of a Signature answer: `thumbnail` for table cells, `full` (large image and download) for the single response card. */
-  signatureVariant?: "thumbnail" | "full";
+  readonly signatureVariant?: "thumbnail" | "full";
   /** The response the answer belongs to; names a downloaded signature. */
-  responseId?: string;
+  readonly responseId?: string;
 }
 
 export const RenderResponse: React.FC<RenderResponseProps> = ({

@@ -13,10 +13,10 @@ export const SurveyInactive = async ({
   surveyClosedMessage,
   workspace,
 }: {
-  status: "paused" | "completed" | "link invalid" | "response submitted" | "link expired";
-  isScheduled?: boolean;
-  surveyClosedMessage?: TSurveyClosedMessage | null;
-  workspace?: Pick<Workspace, "linkSurveyBranding">;
+  readonly status: "paused" | "completed" | "link invalid" | "response submitted" | "link expired";
+  readonly isScheduled?: boolean;
+  readonly surveyClosedMessage?: TSurveyClosedMessage | null;
+  readonly workspace?: Pick<Workspace, "linkSurveyBranding">;
 }) => {
   const t = await getTranslate();
   const icons = {

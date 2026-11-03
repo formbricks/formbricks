@@ -22,17 +22,17 @@ import { RecallItemSelect } from "@/modules/survey/components/element-form-input
 import { $createRecallNode, RecallNode } from "./recall-node";
 
 interface RecallPluginProps {
-  localSurvey: TSurvey;
-  elementId: string;
-  selectedLanguageCode: string;
-  recallItems: TSurveyRecallItem[];
-  setRecallItems: (recallItems: TSurveyRecallItem[]) => void;
-  fallbacks: { [id: string]: string };
-  setFallbacks: (fallbacks: { [id: string]: string }) => void;
-  onShowFallbackInput: () => void;
-  setAddFallbackFunction: (fn: (() => void) | null) => void;
-  setShowRecallItemSelect: (show: boolean) => void;
-  showRecallItemSelect: boolean;
+  readonly localSurvey: TSurvey;
+  readonly elementId: string;
+  readonly selectedLanguageCode: string;
+  readonly recallItems: TSurveyRecallItem[];
+  readonly setRecallItems: (recallItems: TSurveyRecallItem[]) => void;
+  readonly fallbacks: { [id: string]: string };
+  readonly setFallbacks: (fallbacks: { [id: string]: string }) => void;
+  readonly onShowFallbackInput: () => void;
+  readonly setAddFallbackFunction: (fn: (() => void) | null) => void;
+  readonly setShowRecallItemSelect: (show: boolean) => void;
+  readonly showRecallItemSelect: boolean;
 }
 
 export const RecallPlugin = ({

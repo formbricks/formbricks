@@ -4,10 +4,10 @@ import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/
 import { Input } from "@/modules/ui/components/input";
 
 interface TextFieldProps {
-  form: any;
-  name: string;
-  label: string;
-  description?: string;
+  readonly form: any;
+  readonly name: string;
+  readonly label: string;
+  readonly description?: string;
 }
 
 export const TextField = ({ form, name, label, description }: TextFieldProps) => (
