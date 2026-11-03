@@ -1135,6 +1135,28 @@ const isUsedInRightOperand = (
   }
 };
 
+/**
+ * The first element whose show-if, or whose block's show-if, matches `isUsedInGroup`, or -1
+ * (ENG-6931). The removal guards below fall back to it, so removing a question, an option or a field a
+ * show-if depends on is stopped like removing one a rule depends on. `skipElementId` leaves out the
+ * element being removed: its own show-if goes with it.
+ */
+const findElementIndexByShowIf = (
+  survey: TSurvey,
+  isUsedInGroup: (group: TConditionGroup) => boolean,
+  skipElementId?: string
+): number =>
+  getElementsFromBlocks(survey.blocks).findIndex((element) => {
+    if (element.id === skipElementId) return false;
+    if (element.showIf && isUsedInGroup(element.showIf)) return true;
+    const { block } = findElementLocation(survey, element.id);
+    return Boolean(block?.showIf && isUsedInGroup(block.showIf));
+  });
+
+/** The logic hit first, else the show-if hit: both stop a removal, and logic is what it always named. */
+const firstUse = (logicIndex: number, showIfIndex: () => number): number =>
+  logicIndex === -1 ? showIfIndex() : logicIndex;
+
 export const findElementUsedInLogic = (survey: TSurvey, elementId: string): number => {
   const { block } = findElementLocation(survey, elementId);
 
@@ -1178,7 +1200,7 @@ export const findElementUsedInLogic = (survey: TSurvey, elementId: string): numb
 
   const elements = getElementsFromBlocks(survey.blocks);
 
-  return elements.findIndex((element) => {
+  const logicIndex = elements.findIndex((element) => {
     const { block } = findElementLocation(survey, element.id);
 
     if (!block) {
@@ -1189,6 +1211,10 @@ export const findElementUsedInLogic = (survey: TSurvey, elementId: string): numb
       block.logicFallback === elementId || (element.id !== elementId && block.logic?.some(isUsedInLogicRule))
     );
   });
+
+  return firstUse(logicIndex, () =>
+    findElementIndexByShowIf(survey, (group) => isUsedInCondition(group), elementId)
+  );
 };
 
 export const findBlockUsedInLogic = (survey: TSurvey, blockId: string): number => {
@@ -1408,7 +1434,9 @@ export const findOptionUsedInLogic = (
     return isUsedInCondition(logicRule.conditions);
   };
 
-  return findElementIndexByBlockLogic(survey, isUsedInLogicRule);
+  return firstUse(findElementIndexByBlockLogic(survey, isUsedInLogicRule), () =>
+    findElementIndexByShowIf(survey, (group) => isUsedInCondition(group))
+  );
 };
 
 /**
@@ -1447,7 +1475,9 @@ const findFieldUsedInLogic = (survey: TSurvey, type: "hiddenField" | "variable",
     return isUsedInCondition(logicRule.conditions) || logicRule.actions.some(isUsedInAction);
   };
 
-  return findElementIndexByBlockLogic(survey, isUsedInLogicRule);
+  return firstUse(findElementIndexByBlockLogic(survey, isUsedInLogicRule), () =>
+    findElementIndexByShowIf(survey, (group) => isUsedInCondition(group))
+  );
 };
 
 export const findVariableUsedInLogic = (survey: TSurvey, variableId: string): number =>

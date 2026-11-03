@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import type { TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
 import { surveyFlowFixture } from "@formbricks/types/surveys/test-fixtures/survey-flow-fixture";
-import { describeAction, describeConditionGroup } from "./flow-outline-text";
+import { describeAction, describeConditionGroup, describeRuleActions } from "./flow-outline-text";
 
 // Every key reads as its last segment, so the operator labels below are the i18n keys' names.
 const t = ((key: string, options?: { blockNumber?: number }) =>
@@ -99,5 +99,36 @@ describe("describeAction", () => {
       kind: "unknown",
       label: "markLowQuality",
     });
+  });
+});
+
+describe("describeRuleActions: a rule's actions read as separate steps", () => {
+  test("steps after the first are set apart, and the jump comes last behind “then”", () => {
+    // Two calculations, then a jump to the Profile block.
+    expect(describeRuleActions(rule(4, 3).actions, surveyFlowFixture, t)).toEqual([
+      { lead: "none", action: { kind: "calculate", label: "segment = “hot-lead”" } },
+      { lead: "and", action: { kind: "calculate", label: "tenure_days = score" } },
+      { lead: "then", action: { kind: "jump", target: "block", label: "Profile" } },
+    ]);
+  });
+
+  test("a jump listed before the other actions still reads last, because it happens last", () => {
+    const [first, second, jump] = rule(4, 3).actions;
+    const steps = describeRuleActions([jump, first, second], surveyFlowFixture, t);
+
+    expect(steps.map((step) => [step.lead, step.action.kind])).toEqual([
+      ["none", "calculate"],
+      ["and", "calculate"],
+      ["then", "jump"],
+    ]);
+  });
+
+  test("a rule that only jumps has no lead", () => {
+    expect(describeRuleActions(rule(4, 1).actions, surveyFlowFixture, t)).toEqual([
+      {
+        lead: "none",
+        action: { kind: "jump", target: "ending", label: "Good to know bundles aren't for you" },
+      },
+    ]);
   });
 });

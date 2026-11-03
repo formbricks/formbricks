@@ -59,7 +59,7 @@ const ids = SURVEY_FLOW_FIXTURE_IDS;
 
 // Sequential cuid2-shaped ids for rules, condition groups, conditions and actions.
 let sequence = 0;
-const nextId = (prefix: "rule" | "group" | "cond" | "action"): string => {
+const nextId = (prefix: "rule" | "group" | "cond" | "action" | "showif"): string => {
   sequence += 1;
   return `flow${prefix}${String(sequence).padStart(24 - 4 - prefix.length, "0")}`;
 };
@@ -293,6 +293,19 @@ const ratingsBlock: TSurveyBlock = {
 const heavyUsersBlock: TSurveyBlock = {
   id: ids.blocks.heavyUsers,
   name: "Heavy users",
+  // Block show-if (ENG-6931), on an earlier block's answer: only people using all three big services.
+  showIf: {
+    id: nextId("showif"),
+    connector: "and",
+    conditions: [
+      {
+        id: nextId("showif"),
+        leftOperand: { type: "element", value: "services" },
+        operator: "includesAllOf",
+        rightOperand: { type: "static", value: ["netflix", "disney", "prime"] },
+      },
+    ],
+  },
   elements: [
     {
       id: "hours",
@@ -472,6 +485,19 @@ const overallBlock: TSurveyBlock = {
       type: TSurveyElementTypeEnum.OpenText,
       headline: i18n("What would convince you to try Apple TV+?"),
       required: false,
+      // Question show-if (ENG-6931) on the question above it on the same page, shown live.
+      showIf: {
+        id: nextId("showif"),
+        connector: "and",
+        conditions: [
+          {
+            id: nextId("showif"),
+            leftOperand: { type: "element", value: "fav" },
+            operator: "equals",
+            rightOperand: { type: "static", value: "apple" },
+          },
+        ],
+      },
       inputType: "text",
       charLimit: { enabled: false },
     },

@@ -467,6 +467,8 @@ const BLOCK_KEYS = new Set([
   "elements",
   "logic",
   "logicFallback",
+  // ENG-6931: the block's show-if condition group.
+  "showIf",
   "buttonLabel",
   "backButtonLabel",
 ]);
@@ -496,6 +498,8 @@ const ELEMENT_BASE_KEYS = new Set([
   "videoUrl",
   "required",
   "isDraft",
+  // ENG-6931: the element's show-if condition group.
+  "showIf",
 ]);
 // Everything but CTA can carry a question code (ENG-6778); a missing entry here would silently drop it.
 const CODED_ELEMENT_BASE_KEYS = new Set([...ELEMENT_BASE_KEYS, "code"]);
@@ -928,6 +932,10 @@ function validateElement(
 
   validateValidation(value.validation, `${path}.validation`, issues);
 
+  if (value.showIf !== undefined) {
+    validateConditionGroup(value.showIf, `${path}.showIf`, issues);
+  }
+
   if (Array.isArray(value.choices)) {
     const choiceKeys = value.type === "pictureSelection" ? PICTURE_CHOICE_KEYS : LABEL_CHOICE_KEYS;
     value.choices.forEach((choice, index) =>
@@ -977,6 +985,10 @@ function validateBlock(
 
   if (Array.isArray(value.logic)) {
     value.logic.forEach((logic, index) => validateBlockLogic(logic, `${path}.logic.${index}`, issues));
+  }
+
+  if (value.showIf !== undefined) {
+    validateConditionGroup(value.showIf, `${path}.showIf`, issues);
   }
 }
 

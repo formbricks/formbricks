@@ -46,7 +46,7 @@ import { AutoCloseWrapper } from "@/components/wrappers/auto-close-wrapper";
 import { CardlessSurveyLayout } from "@/components/wrappers/cardless-survey-layout";
 import { StackedCardsContainer } from "@/components/wrappers/stacked-cards-container";
 import { ApiClient } from "@/lib/api-client";
-import { advanceFromBlock, startSurvey } from "@/lib/block-flow";
+import { advanceFromBlock, enterBlock, getPageVisibility, startSurvey } from "@/lib/block-flow";
 import { type TWebSurveyMeta, createWebSurveyMetaSnapshot } from "@/lib/browser-context";
 import { getCardStartsWithMedia } from "@/lib/card-header";
 import { getLocalizedValue } from "@/lib/i18n";
@@ -458,6 +458,9 @@ export function Survey({
   const [selectedLanguage, setSelectedLanguage] = useState(languageCode);
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
+  // The block the survey opened on after passing over blocks hidden by show-if (ENG-6931). Nothing
+  // precedes it, so it shows no Back button, like the first block.
+  const [entryBlockId, setEntryBlockId] = useState<string | undefined>(undefined);
   const isNavigatingBackRef = useRef(false);
   const [responseData, setResponseData] = useState<TResponseData>(ingestedFieldsRecord);
   const [_variableStack, setVariableStack] = useState<VariableStackEntry[]>([]);
@@ -1109,6 +1112,46 @@ export function Survey({
     [localSurvey, reservedValues, responseData]
   );
 
+  /**
+   * Show-if (ENG-6931): a survey that opens straight onto a block (no welcome card, or a start-at
+   * link) passes over it when it is not shown, running its logic, exactly as the welcome card's
+   * Next does. Values it sets travel with the first page's submit; when every block is passed over,
+   * the survey finishes on the ending at once.
+   */
+  const entryCheckedRef = useRef(false);
+  useEffect(() => {
+    if (entryCheckedRef.current) return;
+    entryCheckedRef.current = true;
+    if (!localSurvey.blocks.some((block) => block.id === blockId)) return;
+
+    const entry = enterBlock({
+      survey: localSurvey,
+      blockId,
+      responseData,
+      variables: currentVariables,
+      selectedLanguage,
+      reservedFieldValues: reservedValues,
+    });
+    if (entry.skippedBlockIds.length === 0) return;
+
+    setCurrentVariables(entry.variables);
+    if (entry.requiredQuestionIds.length > 0) makeQuestionsRequired(entry.requiredQuestionIds);
+    if (entry.finished) {
+      setIsSurveyFinished(true);
+      onResponseCreateOrUpdate({
+        data: {},
+        ttc: {},
+        finished: true,
+        variables: entry.variables,
+        language: selectedLanguage,
+        endingId: entry.endingId,
+      });
+    }
+    setEntryBlockId(entry.nextCardId);
+    setBlockId(entry.nextCardId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once, on the card the survey opened on
+  }, []);
+
   useEffect(() => {
     if (isPreviewMode || !survey.recaptcha?.enabled) return;
 
@@ -1222,6 +1265,8 @@ export function Survey({
       endingId,
       variables: calculatedVariables,
       requiredQuestionIds,
+      submittedData,
+      hiddenElementIds,
     } = advanceFromBlock({
       survey: localSurvey,
       blockId,
@@ -1242,11 +1287,17 @@ export function Survey({
 
     setIsSurveyFinished(finished);
 
-    onChange(surveyResponseData);
+    // An answer typed into a question that show-if hid before the submit is dropped, not submitted
+    // (ENG-6931): from the response and from the answers later conditions and recall read.
+    setResponseData((prev) => {
+      const next = { ...prev, ...submittedData };
+      for (const elementId of hiddenElementIds) delete next[elementId];
+      return next;
+    });
     onChangeVariables(calculatedVariables);
 
     onResponseCreateOrUpdate({
-      data: surveyResponseData,
+      data: submittedData,
       ttc: responsettc,
       finished,
       variables: calculatedVariables,
@@ -1264,7 +1315,7 @@ export function Survey({
       void saveSurveyProgress({
         surveyId: survey.id,
         blockId: nextCardId,
-        responseData: { ...responseData, ...surveyResponseData },
+        responseData: { ...responseData, ...submittedData },
         ttc: { ...ttc, ...responsettc },
         currentVariables: calculatedVariables,
         history: newHistory,
@@ -1433,6 +1484,15 @@ export function Survey({
         }
       } else {
         const block = localSurvey.blocks[blockIdx];
+        // Re-evaluated on every render, so a question appears or hides as the answers above it change.
+        const { visibleElementIds } = getPageVisibility({
+          survey: localSurvey,
+          blockId: block?.id ?? "",
+          responseData,
+          variables: currentVariables,
+          selectedLanguage,
+          reservedFieldValues: reservedValues,
+        });
         return (
           Boolean(block) && (
             <BlockConditional
@@ -1452,7 +1512,10 @@ export function Survey({
               ttc={ttc}
               setTtc={setTtc}
               onFileUpload={onFileUpload}
-              isFirstBlock={block.id === localSurvey.blocks[0]?.id}
+              isFirstBlock={
+                block.id === localSurvey.blocks[0]?.id || (history.length === 0 && block.id === entryBlockId)
+              }
+              visibleElementIds={visibleElementIds}
               skipPrefilled={skipPrefilled && !isNavigatingBackRef.current}
               prefilledResponseData={offset === 0 ? prefillResponseData : undefined}
               isLastBlock={block.id === localSurvey.blocks[localSurvey.blocks.length - 1].id}

@@ -4,9 +4,16 @@ import type { TEmbeddedDataType } from "@formbricks/types/embedded-data";
 import type { TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import type { TSingleCondition } from "@formbricks/types/surveys/logic";
+import {
+  SURVEY_FLOW_FIXTURE_IDS,
+  surveyFlowFixture,
+} from "@formbricks/types/surveys/test-fixtures/survey-flow-fixture";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import type { TComboboxGroupedOption, TComboboxOption } from "@/modules/ui/components/input-combo-box";
 import {
+  findElementUsedInLogic,
+  findHiddenFieldUsedInLogic,
+  findOptionUsedInLogic,
   getActionValueOptions,
   getActionVariableOptions,
   getConditionOperatorOptions,
@@ -595,5 +602,57 @@ describe("operators that take no right-hand side", () => {
     expect(getMatchValueProps(condition({ type: "hiddenField", value: "plan" }, operator), typed, t)).toEqual(
       { show: false, options: [] }
     );
+  });
+});
+
+describe("removal guards also see show-if (ENG-6931)", () => {
+  // Without block logic, the fixture's only uses of "services" and its "prime" option are the show-if
+  // of the Heavy users block (block 2, question "hours").
+  const withoutLogic = (): TSurvey => {
+    const survey = structuredClone(surveyFlowFixture);
+    survey.blocks = survey.blocks.map((block) => ({ ...block, logic: [], logicFallback: undefined }));
+    return survey;
+  };
+  const flatIndexOf = (survey: TSurvey, elementId: string) =>
+    survey.blocks.flatMap((block) => block.elements).findIndex((element) => element.id === elementId);
+
+  test("a question a block's show-if depends on is reported as used", () => {
+    const survey = withoutLogic();
+
+    expect(findElementUsedInLogic(survey, "services")).toBe(flatIndexOf(survey, "hours"));
+  });
+
+  test("a question another question's show-if depends on is reported as used", () => {
+    const survey = withoutLogic();
+
+    // "apple_reason" is shown only if "fav" is Apple TV+.
+    expect(findElementUsedInLogic(survey, "fav")).toBe(flatIndexOf(survey, "apple_reason"));
+  });
+
+  test("an option a show-if compares against is reported as used", () => {
+    const survey = withoutLogic();
+
+    expect(findOptionUsedInLogic(survey, "services", "prime")).toBe(flatIndexOf(survey, "hours"));
+    expect(findOptionUsedInLogic(survey, "services", "apple")).toBe(-1);
+  });
+
+  test("a hidden field a show-if reads is reported as used", () => {
+    const survey = withoutLogic();
+    const signupDate = SURVEY_FLOW_FIXTURE_IDS.hiddenFields.signupDate;
+    expect(findHiddenFieldUsedInLogic(survey, signupDate)).toBe(-1);
+
+    survey.blocks[4].elements[3].showIf = {
+      id: "showifgroup0000000000010",
+      connector: "and",
+      conditions: [
+        {
+          id: "showifcond00000000000010",
+          leftOperand: { type: "hiddenField", value: signupDate },
+          operator: "isSet",
+        },
+      ],
+    };
+
+    expect(findHiddenFieldUsedInLogic(survey, signupDate)).toBe(flatIndexOf(survey, "email"));
   });
 });
