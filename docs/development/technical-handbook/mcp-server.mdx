@@ -935,6 +935,24 @@ Input:
 Output uses the same survey resource shape as `GET /api/v3/surveys/{surveyId}` and includes the MCP
 `requestId`.
 
+#### Typed Embedded Data
+
+`create_survey`, `patch_survey` and `validate_survey` take the survey's Embedded Data as typed
+`embeddedFields` (ADR 0027), next to the legacy `variables` and `hiddenFields`, and `get_survey` returns
+both. An entry is `{ storageKey, key, name, source, dataType, defaultValue, locked }`:
+
+- `source: "computed"` is set by logic. Logic operands of type `variable` and calculate actions name its
+  `storageKey` (a cuid2, generated when omitted). Its `dataType` is `string` or `number`.
+- `source: "ingested"` arrives by URL parameter or SDK. Operands of type `hiddenField` name its
+  `storageKey`, which defaults to its name. It may be `boolean` or `date` too, and only these can be
+  `locked`.
+- A workspace library field is linked by sending `{ "key": "plan_tier" }` alone: the server fills in the
+  library's definition. A key the library does not have is a `400` at `embeddedFields.<i>.key`.
+
+`embeddedFields` is the complete set, and the legacy pair is derived from it. Either format alone works.
+Sent together, they have to describe the same fields, or the call fails with a `400` naming each path
+where they differ, so an edit made in one format is never silently dropped.
+
 ### validate_survey
 
 Validates a create or patch payload without writing survey changes. The tool is read-only and
@@ -1048,6 +1066,17 @@ Input:
 Output uses the same survey resource shape as `GET /api/v3/surveys/{surveyId}` and includes the MCP
 `requestId`.
 
+#### Confirmation on surveys with responses
+
+`patch_survey`, `edit_survey_blocks`, `set_survey_block_order` and `delete_survey` take an optional
+`confirm` argument. On a survey that is not a draft and already has at least one response, a call
+without `confirm: true` changes nothing: it returns an error (`status: 428`, "Confirmation required")
+whose `detail` is the caution the editor shows a person — mixed old and new responses for a change, the
+loss of every response for a delete — followed by "Pass confirm: true after the user agrees". The agent
+shows that to the user and retries with `confirm: true` only after they agree. Drafts and surveys
+without responses need nothing. The rule is MCP-only: the v3 HTTP API is unchanged, and an operation
+enforces it only when the tool passes `writeConfirmation`.
+
 `customCss` on `create_survey` and `patch_survey` is source only — `{ "light": "…", "dark": "…" }`, both
 keys, each a string or `null`; `null` clears it, and on a patch an omitted `customCss` is kept. Compiled
 output is computed by the server, and a payload carrying `compiled` or `processorVersion` is rejected. A
@@ -1111,8 +1140,9 @@ both: an insert without one gets a server-generated id, returned in the concise 
 list, and an update takes it from the operation's `id`.
 
 Removing a block orphans any answers already collected for its elements, and the API cannot undo
-that. The editor shows a human a caution before this; an agent has no equivalent, so confirm with the
-user before removing a block from a survey that is not a draft.
+that. The editor shows a human a caution before this, and the tool does the same: on a survey that is
+not a draft and has responses it refuses until the call passes `confirm: true` (see
+[Confirmation on surveys with responses](#confirmation-on-surveys-with-responses)).
 
 <Note>
   Fetch the survey first and pass its `updatedAt` as `expectedUpdatedAt`. If the survey changed since your

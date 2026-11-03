@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { prisma } from "@formbricks/database";
 import {
   DatabaseError,
   ResourceNotFoundError,
@@ -22,6 +23,8 @@ import { getSurveyCount, getWorkspaceSurveyCount } from "@/modules/survey/list/l
 import { getSurveyListPage } from "@/modules/survey/list/lib/survey-page";
 import { getAuthorizedV3Survey } from "../authorization";
 import { V3SurveyCreatePermissionError, V3SurveyInputValidationError, createV3Survey } from "../create";
+import { V3SurveyEmbeddedFieldsError } from "../embedded-fields";
+import { resolveV3EmbeddedFieldLibraryKeys } from "../embedded-fields-library";
 import { parseV3SurveysListQuery } from "../parse-v3-surveys-list-query";
 import { V3SurveyStaleError, V3SurveyStoredDocumentError, patchV3Survey } from "../patch";
 import { prepareV3SurveyCreateInput, prepareV3SurveyPatchInput } from "../prepare";
@@ -85,6 +88,9 @@ vi.mock("@formbricks/database", () => ({
   prisma: {
     survey: {
       findUnique: vi.fn(),
+    },
+    response: {
+      findFirst: vi.fn(),
     },
   },
 }));
@@ -161,6 +167,15 @@ vi.mock("../patch", () => {
     },
   };
 });
+
+// ENG-6930: library linking by key reads the database; its own suite covers it.
+// A pass-through by default: `vi.resetAllMocks()` restores this implementation rather than clearing it.
+vi.mock("../embedded-fields-library", () => ({
+  resolveV3EmbeddedFieldLibraryKeys: vi.fn(async (_workspaceId: string, input: unknown) => ({
+    ok: true,
+    input,
+  })),
+}));
 
 vi.mock("../prepare", () => ({
   prepareV3SurveyCreateInput: vi.fn(),
@@ -627,6 +642,24 @@ describe("createV3SurveyResponse", () => {
   // ENG-2587. The document passes `ZV3CreateSurveyBody` but fails the survey service's stricter
   // write schema; `executeV3SurveyCreate` catches that with a pre-write parse and throws this typed
   // error. Before the fix there was no branch for it and it landed on the generic 500.
+  test("answers an Embedded Data refusal with 400 naming the path (ENG-6930)", async () => {
+    vi.mocked(createV3Survey).mockRejectedValueOnce(
+      new V3SurveyEmbeddedFieldsError([{ name: "embeddedFields.0.key", reason: "No such library field" }])
+    );
+
+    const response = await createV3SurveyResponse({
+      body: parsedCreateBody,
+      authentication,
+      requestId,
+      instance,
+    });
+
+    expect(response.status).toBe(400);
+    expect((await response.json()).invalid_params).toEqual([
+      { name: "embeddedFields.0.key", reason: "No such library field" },
+    ]);
+  });
+
   test("maps V3SurveyInputValidationError to 422 naming the offending path", async () => {
     vi.mocked(createV3Survey).mockRejectedValueOnce(
       new V3SurveyInputValidationError([{ name: "blocks.0.elements.0.buttonUrl", reason: "Invalid url" }])
@@ -759,6 +792,120 @@ describe("getV3Survey", () => {
     });
 
     expect(response.status).toBe(500);
+  });
+});
+
+describe("MCP confirmation on surveys with responses (ENG-6930)", () => {
+  const liveSurvey = { ...survey, status: "inProgress" };
+  const base = { surveyId: "survey_1", authentication, requestId, instance };
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({
+      survey: liveSurvey,
+      authResult,
+      response: null,
+      visibility: RESOURCE_VISIBILITY,
+    } as any);
+    vi.mocked(prisma.response.findFirst).mockResolvedValue({ id: "response_1" } as any);
+    vi.mocked(patchV3Survey).mockResolvedValue(updatedSurvey as any);
+    vi.mocked(serializeV3SurveyResource).mockReturnValue(serializedSurvey as any);
+    vi.mocked(deleteSurvey).mockResolvedValue(liveSurvey as any);
+  });
+
+  test("refuses a change to a live survey with responses until the call confirms, with the editor's caution", async () => {
+    const response = await patchV3SurveyResponse({
+      ...base,
+      body: { name: "Renamed" },
+      writeConfirmation: { confirmed: false },
+    });
+
+    expect(response.status).toBe(428);
+    const body = await response.json();
+    expect(body.detail).toBe(
+      "This survey has responses. Changes may lead to inconsistencies. This may cause data inconsistencies in the survey summary. We recommend duplicating the survey instead. Pass confirm: true after the user agrees."
+    );
+    expect(patchV3Survey).not.toHaveBeenCalled();
+    expect(prisma.response.findFirst).toHaveBeenCalledWith({
+      where: { surveyId: "survey_1" },
+      select: { id: true },
+    });
+  });
+
+  test("lets the change through once the call confirms", async () => {
+    const response = await patchV3SurveyResponse({
+      ...base,
+      body: { name: "Renamed" },
+      writeConfirmation: { confirmed: true },
+    });
+
+    expect(response.status).toBe(200);
+    expect(patchV3Survey).toHaveBeenCalled();
+  });
+
+  test("covers the block tools too", async () => {
+    const edit = await editV3SurveyBlocksResponse({
+      ...base,
+      body: { ops: [{ op: "remove", id: "blk_a" }] },
+      writeConfirmation: { confirmed: false },
+    });
+    const reorder = await setV3SurveyBlockOrderResponse({
+      ...base,
+      body: { order: ["blk_a"] },
+      writeConfirmation: { confirmed: false },
+    });
+
+    expect([edit.status, reorder.status]).toEqual([428, 428]);
+    expect(patchV3Survey).not.toHaveBeenCalled();
+  });
+
+  test("refuses deleting a survey with responses with the delete warning", async () => {
+    const response = await deleteV3Survey({ ...base, writeConfirmation: { confirmed: false } });
+
+    expect(response.status).toBe(428);
+    expect((await response.json()).detail).toBe(
+      "This survey has responses. Are you sure you want to delete this survey and all of its responses? Pass confirm: true after the user agrees."
+    );
+    expect(deleteSurvey).not.toHaveBeenCalled();
+
+    expect((await deleteV3Survey({ ...base, writeConfirmation: { confirmed: true } })).status).toBe(204);
+  });
+
+  test("needs nothing on a survey without responses", async () => {
+    vi.mocked(prisma.response.findFirst).mockResolvedValue(null);
+
+    const response = await patchV3SurveyResponse({
+      ...base,
+      body: { name: "Renamed" },
+      writeConfirmation: { confirmed: false },
+    });
+
+    expect(response.status).toBe(200);
+  });
+
+  test("needs nothing on a draft, which is not even checked for responses", async () => {
+    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({
+      survey,
+      authResult,
+      response: null,
+      visibility: RESOURCE_VISIBILITY,
+    } as any);
+
+    const response = await patchV3SurveyResponse({
+      ...base,
+      body: { name: "Renamed" },
+      writeConfirmation: { confirmed: false },
+    });
+
+    expect(response.status).toBe(200);
+    expect(prisma.response.findFirst).not.toHaveBeenCalled();
+  });
+
+  test("leaves the v3 HTTP API unchanged: no option, no check", async () => {
+    const response = await patchV3SurveyResponse({ ...base, body: { name: "Renamed" } });
+
+    expect(response.status).toBe(200);
+    expect(prisma.response.findFirst).not.toHaveBeenCalled();
   });
 });
 
@@ -926,6 +1073,25 @@ describe("patchV3SurveyResponse", () => {
     expect(body.code).toBe("stored_survey_invalid");
     expect(body.detail).toMatch(/into the stored survey/);
     expect(body.invalid_params).toEqual([expect.objectContaining({ name: "blocks.0.elements.0.headline" })]);
+  });
+
+  test("answers formats that disagree with 400 naming the path (ENG-6930)", async () => {
+    vi.mocked(patchV3Survey).mockRejectedValue(
+      new V3SurveyEmbeddedFieldsError([{ name: "variables.0.name", reason: "Variable name differs" }])
+    );
+
+    const response = await patchV3SurveyResponse({
+      surveyId: "survey_1",
+      body: { embeddedFields: [], variables: [] },
+      authentication,
+      requestId,
+      instance,
+    });
+
+    expect(response.status).toBe(400);
+    expect((await response.json()).invalid_params).toEqual([
+      { name: "variables.0.name", reason: "Variable name differs" },
+    ]);
   });
 
   test("patches an authorized survey, serializes it, and enriches the audit log", async () => {
@@ -1304,6 +1470,43 @@ describe("validateV3Survey", () => {
       ok: false,
       validation: { invalidParams: [{ name: "name", reason: "Required" }] },
     } as any);
+  });
+
+  test("reports an unknown library key as invalid, without preparing the payload (ENG-6930)", async () => {
+    vi.mocked(resolveV3EmbeddedFieldLibraryKeys).mockResolvedValue({
+      ok: false,
+      invalidParams: [{ name: "embeddedFields.0.key", reason: "No such library field" }],
+    });
+
+    const patchResponse = await validateV3Survey({
+      body: { operation: "patch", surveyId: validSurveyId, data: { embeddedFields: [{ key: "x" }] } },
+      authentication,
+      requestId,
+      instance,
+    } as any);
+    const createResponse = await validateV3Survey({
+      body: { operation: "create", data: { ...createBody, embeddedFields: [{ key: "x" }] } },
+      authentication,
+      requestId,
+      instance,
+    } as any);
+
+    for (const response of [patchResponse, createResponse]) {
+      expect(response.status).toBe(200);
+      expect((await readJson(response)).data).toMatchObject({
+        valid: false,
+        invalid_params: [{ name: "embeddedFields.0.key", reason: "No such library field" }],
+      });
+    }
+    // Scoped to the workspace the caller was authorized for, and to the survey's own links.
+    expect(resolveV3EmbeddedFieldLibraryKeys).toHaveBeenCalledWith(
+      survey.workspaceId,
+      { embeddedFields: [{ key: "x" }] },
+      undefined // the fixture links no fields
+    );
+    expect(resolveV3EmbeddedFieldLibraryKeys).toHaveBeenCalledWith(workspaceId, expect.anything());
+    expect(prepareV3SurveyPatchInput).not.toHaveBeenCalled();
+    expect(prepareV3SurveyCreateInput).not.toHaveBeenCalled();
   });
 
   test("validates create input and checks workspace access when workspaceId is present", async () => {

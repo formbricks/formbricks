@@ -79,6 +79,7 @@ vi.mock("@formbricks/database", () => {
       updateMany: vi.fn(),
     },
     embeddedData: {
+      findMany: vi.fn(),
       create: vi.fn(),
       deleteMany: vi.fn(),
       updateMany: vi.fn(),
@@ -1027,6 +1028,87 @@ describe("patchV3Survey", () => {
     ).rejects.toThrow(V3SurveyReferenceValidationError);
 
     expect(prisma.survey.update).not.toHaveBeenCalled();
+  });
+
+  describe("typed Embedded Data (ENG-6930)", () => {
+    const planTierRow = {
+      id: "clplantier00000000000000001",
+      key: "plan_tier",
+      name: "Plan tier",
+      source: "ingested",
+      dataType: "string",
+      defaultValue: null,
+      locked: true,
+    };
+
+    beforeEach(() => {
+      vi.mocked(prisma.embeddedData.findMany).mockResolvedValue([planTierRow] as never);
+    });
+
+    test("writes embeddedFields as rows: a library field linked by key, a local one created", async () => {
+      await patchV3Survey(currentSurvey, {
+        embeddedFields: [
+          { key: "plan_tier" },
+          { name: "region", source: "ingested", dataType: "string", defaultValue: "emea", locked: true },
+        ],
+      });
+
+      // The library field is linked, never copied: its row is the workspace's.
+      expect(prisma.surveyEmbeddedData.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ storageKey: "plan_tier", embeddedDataId: planTierRow.id }),
+        })
+      );
+      expect(prisma.embeddedData.create).toHaveBeenCalledTimes(1);
+      expect(prisma.embeddedData.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ key: null, name: "region", defaultValue: "emea", locked: true }),
+        })
+      );
+      // The legacy columns written beside the rows are derived from them.
+      expect(prisma.survey.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: { variables: [], hiddenFields: { enabled: true, fieldIds: ["plan_tier", "region"] } },
+        })
+      );
+    });
+
+    test("refuses a library key the workspace does not have, at its path, and writes nothing", async () => {
+      await expect(
+        patchV3Survey(currentSurvey, { embeddedFields: [{ key: "churn_risk" }] })
+      ).rejects.toMatchObject({
+        name: "V3SurveyEmbeddedFieldsError",
+        invalidParams: [expect.objectContaining({ name: "embeddedFields.0.key" })],
+      });
+
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+
+    test("refuses both formats when they disagree, and writes nothing", async () => {
+      await expect(
+        patchV3Survey(currentSurvey, {
+          embeddedFields: [{ key: "plan_tier" }],
+          hiddenFields: { enabled: true, fieldIds: ["plan"] },
+        })
+      ).rejects.toMatchObject({
+        name: "V3SurveyEmbeddedFieldsError",
+        invalidParams: [
+          expect.objectContaining({ name: "hiddenFields.fieldIds.0" }),
+          expect.objectContaining({ name: "embeddedFields.0" }),
+        ],
+      });
+
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+
+    test("keeps the legacy-only write exactly as before: no library lookup, no typed rows", async () => {
+      await patchV3Survey(currentSurvey, { hiddenFields: { enabled: true, fieldIds: ["utm_source"] } });
+
+      expect(prisma.embeddedData.findMany).not.toHaveBeenCalled();
+      expect(prisma.embeddedData.create).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ name: "utm_source", locked: false }) })
+      );
+    });
   });
 
   test("rejects invalid patch documents before updating", async () => {

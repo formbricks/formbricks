@@ -30,6 +30,12 @@ import {
   reconcileDueSurveySchedules,
 } from "@/modules/survey/scheduling/lib/survey-scheduling";
 import { v3DistributionToScalars } from "./distribution";
+import {
+  type TV3SurveyEmbeddedField,
+  V3SurveyEmbeddedFieldsError,
+  toLinkedEmbeddedFields,
+} from "./embedded-fields";
+import { getV3LibraryFieldIdsByKey, resolveV3EmbeddedFieldLibraryKeys } from "./embedded-fields-library";
 import { type TV3SurveyLanguageRequest, ensureV3WorkspaceLanguages } from "./languages";
 import { type TV3SurveyReportedVisibility, prepareV3SurveyPatchInput } from "./prepare";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
@@ -345,9 +351,14 @@ export async function executeV3SurveyPatch(params: {
   // refusal is a validation response rather than a rollback, and before `ensureV3WorkspaceLanguages`
   // — which writes workspace languages — so a rejected patch creates nothing. Names `currentSurvey`
   // already declares are grandfathered and pass untouched.
+  //
+  // The declared names come from the legacy keys alone: prepare derived them from `embeddedFields`
+  // when the request sent it (ENG-6930), and the flat v3 entries are not the `{ field, link }` pairs
+  // the guard and the code filler read.
+  const declared = { variables: document.variables, hiddenFields: document.hiddenFields };
   const declaredFieldNameErrors = validateNewDeclaredFieldNames({
     existing: collectDeclaredFieldNames(currentSurvey),
-    incoming: collectDeclaredFieldNames(document),
+    incoming: collectDeclaredFieldNames(declared),
   });
   if (declaredFieldNameErrors.length > 0) {
     throw new V3SurveyReferenceValidationError(
@@ -379,7 +390,7 @@ export async function executeV3SurveyPatch(params: {
     // would otherwise wipe the stored ones. Carry them over by id first, then code what is new.
     blocks: fillSurveyBlockCodes(
       carryOverCodes(currentSurvey.blocks, stripIsDraftFromBlocks(document.blocks)),
-      document
+      declared
     ),
     endings: document.endings,
     closeOn: normalizedScheduling.closeOn,
@@ -441,6 +452,21 @@ export async function executeV3SurveyPatch(params: {
 
         await runSurveyUpdate(tx);
 
+        // ENG-6930: typed Embedded Data, when the request sent it, is the complete set and wins over
+        // the legacy keys (which prepare derived from it). Library entries link the workspace's row,
+        // read inside this transaction so a field deleted since the request was resolved is refused.
+        // Complete by now: prepare filled in every default (`settleV3EmbeddedFieldFormats`).
+        const typedFields = document.embeddedFields as TV3SurveyEmbeddedField[] | undefined;
+        const embeddedFields = typedFields
+          ? toLinkedEmbeddedFields(
+              typedFields,
+              await getV3LibraryFieldIdsByKey(tx, currentSurvey.workspaceId, typedFields)
+            )
+          : undefined;
+        if (embeddedFields && !embeddedFields.ok) {
+          throw new V3SurveyEmbeddedFieldsError(embeddedFields.invalidParams);
+        }
+
         // ENG-2412: from the patch document — the rows are the only place Embedded Data is stored
         // (ENG-2404). Safe on a partial patch for two reasons: `prepareV3SurveyPatchInput` merges the
         // body over the current survey first, so both keys arrive populated; and
@@ -449,7 +475,11 @@ export async function executeV3SurveyPatch(params: {
         await reconcileEmbeddedData(tx, {
           surveyId: currentSurvey.id,
           workspaceId: currentSurvey.workspaceId,
-          patch: { variables: document.variables, hiddenFields: document.hiddenFields },
+          patch: {
+            variables: document.variables,
+            hiddenFields: document.hiddenFields,
+            ...(embeddedFields ? { embeddedFields: embeddedFields.fields } : {}),
+          },
         });
 
         // Re-read AFTER the reconcile. The response's `variables` / `hiddenFields` — and the audit
@@ -535,6 +565,15 @@ async function resolveV3SurveyPatchCustomCss(
   return outcome;
 }
 
+function toV3SurveyPreparationError(
+  origin: "request" | "storedSurvey" | "embeddedFields" | undefined,
+  invalidParams: InvalidParam[]
+): Error {
+  if (origin === "storedSurvey") return new V3SurveyStoredDocumentError(invalidParams);
+  if (origin === "embeddedFields") return new V3SurveyEmbeddedFieldsError(invalidParams);
+  return new V3SurveyReferenceValidationError(invalidParams);
+}
+
 export async function patchV3Survey(
   currentSurvey: TSurvey,
   input: unknown,
@@ -548,11 +587,19 @@ export async function patchV3Survey(
   /** Who processing an added or edited `customCss` is charged to (`getV3CustomCssPrincipal`). */
   customCssPrincipal?: string | null
 ): Promise<TSurvey> {
-  const preparation = prepareV3SurveyPatchInput(currentSurvey, input, { reportedVisibility });
+  // ENG-6930: library fields linked by key get the library's definition before anything is judged.
+  const resolved = await resolveV3EmbeddedFieldLibraryKeys(
+    currentSurvey.workspaceId,
+    input,
+    currentSurvey.embeddedFields
+  );
+  if (!resolved.ok) {
+    throw new V3SurveyEmbeddedFieldsError(resolved.invalidParams);
+  }
+
+  const preparation = prepareV3SurveyPatchInput(currentSurvey, resolved.input, { reportedVisibility });
   if (!preparation.ok) {
-    throw preparation.origin === "storedSurvey"
-      ? new V3SurveyStoredDocumentError(preparation.validation.invalidParams)
-      : new V3SurveyReferenceValidationError(preparation.validation.invalidParams);
+    throw toV3SurveyPreparationError(preparation.origin, preparation.validation.invalidParams);
   }
 
   // Two ways in: the block endpoints pass `expectedUpdatedAt` explicitly, while a PATCH caller

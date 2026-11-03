@@ -64,6 +64,8 @@ import {
   V3SurveyInputValidationError,
   createV3Survey,
 } from "../create";
+import { V3SurveyEmbeddedFieldsError } from "../embedded-fields";
+import { resolveV3EmbeddedFieldLibraryKeys } from "../embedded-fields-library";
 import { parseV3SurveysListQuery } from "../parse-v3-surveys-list-query";
 import {
   type TV3SurveyWritePrecondition,
@@ -102,6 +104,7 @@ import {
   serializeV3SurveyVisibilityFields,
 } from "../serializers";
 import { resolveV3SurveyResourceVisibility, resolveV3SurveyVisibilityContext } from "../visibility-context";
+import { type TV3SurveyWriteConfirmation, getV3SurveyWriteConfirmationRefusal } from "../write-confirmation";
 import { V3SurveyWritePermissionError } from "../write-permissions";
 
 type TListV3SurveysParams = {
@@ -142,15 +145,15 @@ type TV3SurveyMutationParams = {
   requestId: string;
   instance: string;
   auditLog?: TV3AuditLog;
+  /**
+   * ENG-6930: MCP only. When set, a survey that is not a draft and has responses is left untouched
+   * unless `confirmed`, and the caller gets the editor's caution text (428). REST never sets it.
+   */
+  writeConfirmation?: TV3SurveyWriteConfirmation;
 };
 
-type TPatchV3SurveyParams = {
-  surveyId: string;
+type TPatchV3SurveyParams = TV3SurveyMutationParams & {
   body: unknown;
-  authentication: TV3Authentication;
-  requestId: string;
-  instance: string;
-  auditLog?: TV3AuditLog;
 };
 
 type TValidateV3SurveyParams = {
@@ -402,6 +405,25 @@ export async function listV3Surveys({
 }
 
 /**
+ * ENG-6930: Embedded Data the body alone shows cannot be taken — formats that disagree, a library key
+ * the workspace does not have, a field that could never be stored. 400, naming each path.
+ */
+function problemV3SurveyEmbeddedFields(
+  err: V3SurveyEmbeddedFieldsError,
+  {
+    log,
+    requestId,
+    instance,
+  }: { log: ReturnType<typeof logger.withContext>; requestId: string; instance: string }
+): Response {
+  log.warn({ statusCode: 400, invalidParams: err.invalidParams }, "Survey Embedded Data refused");
+  return problemBadRequest(requestId, "The survey's Embedded Data fields are invalid", {
+    invalid_params: err.invalidParams,
+    instance,
+  });
+}
+
+/**
  * Map an error thrown during survey creation to its problem+json Response. Extracted from
  * createV3SurveyResponse to keep that handler's cognitive complexity within bounds.
  */
@@ -420,6 +442,9 @@ function mapV3SurveyCreateError(
       "Survey custom CSS refused"
     );
     return customCssProblem;
+  }
+  if (err instanceof V3SurveyEmbeddedFieldsError) {
+    return problemV3SurveyEmbeddedFields(err, { log, requestId, instance });
   }
   if (err instanceof WorkspaceSurveyLimitError) {
     log.warn({ statusCode: 422, limit: err.limit }, "Workspace survey limit reached");
@@ -644,6 +669,7 @@ export async function deleteV3Survey({
   requestId,
   instance,
   auditLog,
+  writeConfirmation,
 }: TV3SurveyMutationParams): Promise<Response> {
   const log = logger.withContext({ requestId, surveyId });
 
@@ -659,6 +685,16 @@ export async function deleteV3Survey({
     if (response) {
       log.warn({ statusCode: 403 }, "Survey not found or not accessible");
       return response;
+    }
+
+    const refusal = await getV3SurveyWriteConfirmationRefusal(survey, writeConfirmation, {
+      action: "delete",
+      requestId,
+      instance,
+    });
+    if (refusal) {
+      log.warn({ statusCode: 428 }, "Survey delete awaits confirmation");
+      return refusal;
     }
 
     if (auditLog) {
@@ -830,6 +866,10 @@ function mapV3SurveyPatchError(
     return customCssProblem;
   }
 
+  if (err instanceof V3SurveyEmbeddedFieldsError) {
+    return problemV3SurveyEmbeddedFields(err, { log, requestId, instance });
+  }
+
   if (err instanceof V3SurveyReferenceValidationError) {
     // Semantic/reference validation failure on a well-formed document → 422 (see create handler).
     log.warn(
@@ -987,6 +1027,7 @@ async function runV3SurveyDocumentMutation({
   operation,
   precondition,
   buildInput,
+  writeConfirmation,
 }: TV3SurveyDocumentMutationParams): Promise<Response> {
   const log = logger.withContext({ requestId, surveyId, operation });
   let workspaceId: string | undefined;
@@ -1063,6 +1104,16 @@ async function runV3SurveyDocumentMutation({
     // honest answer is 409, re-read and retry. `patchV3Survey` re-checks the same value as a cheap
     // pre-flight; the compare-and-set in its UPDATE remains the guarantee.
     assertV3SurveyPrecondition(survey, effectivePrecondition);
+
+    const refusal = await getV3SurveyWriteConfirmationRefusal(survey, writeConfirmation, {
+      action: "change",
+      requestId,
+      instance,
+    });
+    if (refusal) {
+      log.warn({ statusCode: 428, workspaceId }, "Survey change awaits confirmation");
+      return refusal;
+    }
 
     const built = buildInput({ survey, getResource });
 
@@ -1417,10 +1468,18 @@ export async function validateV3Survey({
         }
       }
 
+      // ENG-6930: library fields linked by key are filled in first, as the create itself does — only
+      // in a workspace the caller was just authorized for; without one the schema refuses the body.
+      const resolved = workspaceResult.success
+        ? await resolveV3EmbeddedFieldLibraryKeys(workspaceResult.data.workspaceId, validationBody.data)
+        : { ok: true as const, input: validationBody.data };
+
       return successResponse(
         serializeValidationResult(
           "create",
-          prepareV3SurveyCreateInput(validationBody.data),
+          resolved.ok
+            ? prepareV3SurveyCreateInput(resolved.input)
+            : { ok: false, validation: { valid: false, invalidParams: resolved.invalidParams } },
           previewPayloadCustomCss(validationBody.data)
         ),
         {
@@ -1452,12 +1511,20 @@ export async function validateV3Survey({
       workspaceId: survey.workspaceId,
     });
 
+    const resolved = await resolveV3EmbeddedFieldLibraryKeys(
+      survey.workspaceId,
+      validationBody.data,
+      survey.embeddedFields
+    );
+
     return successResponse(
       serializeValidationResult(
         "patch",
-        prepareV3SurveyPatchInput(survey, validationBody.data, {
-          reportedVisibility: serializeV3SurveyVisibilityFields(survey, visibility.ownerName, visibility),
-        }),
+        resolved.ok
+          ? prepareV3SurveyPatchInput(survey, resolved.input, {
+              reportedVisibility: serializeV3SurveyVisibilityFields(survey, visibility.ownerName, visibility),
+            })
+          : { ok: false, validation: { valid: false, invalidParams: resolved.invalidParams } },
         previewPayloadCustomCss(validationBody.data)
       ),
       {

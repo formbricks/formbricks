@@ -1,0 +1,69 @@
+type: object
+description: >
+  One typed Embedded Data field the survey has. `embeddedFields` is the survey's complete set; the
+  legacy `variables` (its computed fields) and `hiddenFields` (its ingested fields) are derived from
+  it. Logic operands keep naming fields by storage key: a `variable` operand and a calculate action's
+  `variableId` name a computed field's `storageKey`, a `hiddenField` operand an ingested field's.
+required:
+  - storageKey
+  - key
+  - name
+  - source
+  - dataType
+  - defaultValue
+  - locked
+properties:
+  storageKey:
+    type: string
+    pattern: ^[a-zA-Z0-9_-]+$
+    description: >-
+      The survey's address for the field: where responses store its value, and what logic names. A
+      computed field's is a cuid2 (its legacy variable id); an ingested field's is the URL parameter
+      or SDK key it arrives under (its legacy hidden field id).
+    examples:
+      - plan_tier
+  key:
+    type:
+      - string
+      - "null"
+    description: >-
+      The workspace library key when the field is a linked library field, whose definition the
+      workspace owns; `null` for a field local to this survey.
+    examples:
+      - plan_tier
+  name:
+    type: string
+    minLength: 1
+    description: Display name.
+    examples:
+      - Plan tier
+  source:
+    type: string
+    enum:
+      - computed
+      - ingested
+    description: >-
+      `computed`: set inside the survey by logic. `ingested`: arrives from outside, by URL parameter
+      or SDK.
+  dataType:
+    type: string
+    enum:
+      - string
+      - number
+      - boolean
+      - date
+    description: >-
+      The type the value is read and coerced as. A computed field is `string` or `number` today.
+  defaultValue:
+    type:
+      - string
+      - number
+      - boolean
+      - "null"
+    description: >-
+      A computed field's initial value; an ingested field's value when nothing arrives. Matches
+      `dataType`; a `date` default is an ISO 8601 date or date-time string.
+  locked:
+    type: boolean
+    description: Ingested fields only. A locked field refuses values from outside the survey.
+additionalProperties: false
