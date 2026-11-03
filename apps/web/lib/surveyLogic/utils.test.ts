@@ -1101,6 +1101,100 @@ describe("surveyLogic", () => {
     ).toBe(false);
   });
 
+  describe("matrix conditions by id (ENG-6934)", () => {
+    // The rows and columns were reordered after the conditions were saved: the positions they stored
+    // now point at Disney+ / Poor, the ids still at Netflix / Good.
+    const reordered: TJsWorkspaceStateSurvey = {
+      ...mockSurvey,
+      blocks: [
+        {
+          id: "block1",
+          name: "Block 1",
+          elements: [
+            {
+              id: "grid",
+              type: TSurveyElementTypeEnum.Matrix,
+              headline: { default: "Rate each service" },
+              required: false,
+              rows: [
+                { id: "row_disney", label: { default: "Disney+" } },
+                { id: "row_netflix", label: { default: "Netflix" } },
+              ],
+              columns: [
+                { id: "col_good", label: { default: "Good" } },
+                { id: "col_poor", label: { default: "Poor" } },
+              ],
+              shuffleOption: "none",
+            },
+          ],
+        },
+      ],
+    };
+    const data: TResponseData = { grid: { Netflix: "Good", "Disney+": "Poor" } };
+    const netflixIsGood: TSingleCondition = {
+      id: "netflixGood",
+      leftOperand: { type: "element", value: "grid", meta: { row: "0", rowId: "row_netflix" } },
+      operator: "equals",
+      rightOperand: { type: "static", value: "1", columnId: "col_good" },
+    };
+
+    test("block logic reads the ids, which win over the stale positions", () => {
+      expect(
+        evaluateLogic(
+          reordered,
+          data,
+          {},
+          { id: "g", connector: "and", conditions: [netflixIsGood] },
+          "default"
+        )
+      ).toBe(true);
+    });
+
+    test("a quota condition, evaluated as the quota evaluator builds it, reads the ids too", () => {
+      const quotaLogic = { connector: "and" as const, conditions: [netflixIsGood] };
+
+      expect(evaluateLogic(reordered, data, {}, { id: "quota", ...quotaLogic }, "default")).toBe(true);
+    });
+
+    test("an isAnyOf reads its column ids, and an unknown column id never matches", () => {
+      const anyOf: TSingleCondition = {
+        ...netflixIsGood,
+        operator: "isAnyOf",
+        rightOperand: { type: "static", value: ["1"], columnIds: ["col_good"] },
+      };
+      const unknown: TSingleCondition = {
+        ...netflixIsGood,
+        rightOperand: { type: "static", value: "0", columnId: "col_gone" },
+      };
+
+      expect(
+        evaluateLogic(reordered, data, {}, { id: "g", connector: "and", conditions: [anyOf] }, "default")
+      ).toBe(true);
+      expect(
+        evaluateLogic(reordered, data, {}, { id: "g", connector: "and", conditions: [unknown] }, "default")
+      ).toBe(false);
+    });
+
+    test("without ids, the positions are read as before", () => {
+      const positionsOnly: TSingleCondition = {
+        ...netflixIsGood,
+        leftOperand: { type: "element", value: "grid", meta: { row: "0" } },
+        rightOperand: { type: "static", value: "1" },
+      };
+
+      // Row 0 is now Disney+, answered Poor (column 1).
+      expect(
+        evaluateLogic(
+          reordered,
+          data,
+          {},
+          { id: "g", connector: "and", conditions: [positionsOnly] },
+          "default"
+        )
+      ).toBe(true);
+    });
+  });
+
   test("getRightOperandValue handles different data types and sources", () => {
     const surveyWithVars: TJsWorkspaceStateSurvey = {
       ...mockSurvey,

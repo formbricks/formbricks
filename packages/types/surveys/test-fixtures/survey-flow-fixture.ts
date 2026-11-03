@@ -800,7 +800,8 @@ const profileBlock: TSurveyBlock = {
     },
   ],
   logic: [
-    // A matrix row condition (positions: row 0, column 1) and a date condition.
+    // A matrix row condition (ENG-6934: row and column ids next to the positions row 0, column 1)
+    // and a date condition.
     {
       id: nextId("rule"),
       conditions: {
@@ -809,9 +810,9 @@ const profileBlock: TSurveyBlock = {
         conditions: [
           {
             id: nextId("cond"),
-            leftOperand: { type: "element", value: "brand_grid", meta: { row: "0" } },
+            leftOperand: { type: "element", value: "brand_grid", meta: { row: "0", rowId: "row_netflix" } },
             operator: "equals",
-            rightOperand: { type: "static", value: "1" },
+            rightOperand: { type: "static", value: "1", columnId: "col_good" },
           },
           {
             id: nextId("cond"),

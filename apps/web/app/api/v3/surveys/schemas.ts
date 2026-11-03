@@ -651,7 +651,8 @@ const LOGIC_KEYS = new Set(["id", "conditions", "actions"]);
 const CONDITION_GROUP_KEYS = new Set(["id", "connector", "conditions"]);
 const CONDITION_KEYS = new Set(["id", "leftOperand", "operator", "rightOperand"]);
 const DYNAMIC_REFERENCE_KEYS = new Set(["type", "value", "meta"]);
-const STATIC_OPERAND_KEYS = new Set(["type", "value"]);
+// ENG-6934: a matrix row condition names its column(s) by id next to the position(s).
+const STATIC_OPERAND_KEYS = new Set(["type", "value", "columnId", "columnIds"]);
 const CALCULATE_ACTION_KEYS = new Set(["id", "objective", "variableId", "operator", "value"]);
 const EXPRESSION_VALUE_KEYS = new Set(["type", "value"]);
 const EXPRESSION_CALL_KEYS = new Set(["type", "fn", "args"]);

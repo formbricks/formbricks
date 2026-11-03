@@ -1057,6 +1057,66 @@ describe("Survey Logic", () => {
       expect(evaluateLogic(mockSurvey, mockData, mockVariablesData, matrixCondition, "default")).toBe(true);
     });
 
+    describe("matrix conditions by id (ENG-6934)", () => {
+      // mockData answers Row 1 → Column 1 and Row 2 → Column 2.
+      const matrixRow = (
+        meta: Record<string, string>,
+        rightOperand: TSingleCondition["rightOperand"],
+        operator: TSingleCondition["operator"] = "equals"
+      ): TConditionGroup => ({
+        id: "group1",
+        connector: "and",
+        conditions: [
+          { id: "condition1", operator, leftOperand: { type: "element", value: "q8", meta }, rightOperand },
+        ],
+      });
+
+      test("the row and column ids win over positions that disagree (a reorder since the save)", () => {
+        // Positions alone read "Row 1 is Column 2", which is false; the ids read "Row 2 is Column 2".
+        const condition = matrixRow(
+          { row: "0", rowId: "row2" },
+          { type: "static", value: "1", columnId: "col2" }
+        );
+
+        expect(evaluateLogic(mockSurvey, mockData, mockVariablesData, condition, "default")).toBe(true);
+      });
+
+      test("ids match in the respondent's language", () => {
+        const spanish: TResponseData = { q8: { "Fila 1": "Columna 2" } };
+        const condition = matrixRow(
+          { row: "1", rowId: "row1" },
+          { type: "static", value: "0", columnId: "col2" }
+        );
+
+        expect(evaluateLogic(mockSurvey, spanish, mockVariablesData, condition, "es")).toBe(true);
+      });
+
+      test("an isAnyOf reads its column ids", () => {
+        const condition = matrixRow(
+          { row: "1", rowId: "row1" },
+          { type: "static", value: ["1"], columnIds: ["col1"] },
+          "isAnyOf"
+        );
+
+        expect(evaluateLogic(mockSurvey, mockData, mockVariablesData, condition, "default")).toBe(true);
+      });
+
+      test("a column id the matrix doesn't have never matches, whatever the position says", () => {
+        const condition = matrixRow(
+          { row: "0", rowId: "row1" },
+          { type: "static", value: "0", columnId: "gone" }
+        );
+
+        expect(evaluateLogic(mockSurvey, mockData, mockVariablesData, condition, "default")).toBe(false);
+      });
+
+      test("a row id the matrix doesn't have reads as no answer", () => {
+        const condition = matrixRow({ row: "0", rowId: "gone" }, undefined, "isNotEmpty");
+
+        expect(evaluateLogic(mockSurvey, mockData, mockVariablesData, condition, "default")).toBe(false);
+      });
+    });
+
     test("evaluates file upload questions", () => {
       const fileUploadCondition: TConditionGroup = {
         id: "group1",

@@ -22,6 +22,9 @@ vi.mock("@formbricks/database", () => ({
       findUnique: vi.fn(),
       updateMany: vi.fn(),
     },
+    survey: {
+      findFirst: vi.fn(),
+    },
   },
 }));
 
@@ -239,6 +242,89 @@ describe("Quota Service", () => {
     test("should throw error on unknown error", async () => {
       vi.mocked(prisma.surveyQuota.update).mockRejectedValue(new Error("Unknown error"));
       await expect(updateQuota(updateInput, mockQuotaId)).rejects.toThrow(Error);
+    });
+  });
+
+  describe("matrix conditions by id (ENG-6934)", () => {
+    // The survey's matrix after a reorder: Disney+ is now row 0, Netflix row 1; Good column 0.
+    const surveyBlocks = [
+      {
+        id: "block1",
+        elements: [
+          {
+            id: "grid",
+            type: "matrix",
+            rows: [{ id: "row_disney" }, { id: "row_netflix" }],
+            columns: [{ id: "col_good" }, { id: "col_poor" }],
+          },
+        ],
+      },
+    ];
+    const withCondition = (
+      meta: Record<string, string>,
+      rightOperand: Record<string, unknown>
+    ): TSurveyQuotaInput => ({
+      surveyId: mockSurveyId,
+      name: "Netflix fans",
+      limit: 50,
+      logic: {
+        connector: "and",
+        conditions: [
+          {
+            id: "cond1",
+            leftOperand: { type: "element", value: "grid", meta },
+            operator: "equals",
+            rightOperand: { type: "static", value: "0", ...rightOperand },
+          },
+        ],
+      },
+      action: "endSurvey",
+      endingCardId: null,
+      countPartialSubmissions: false,
+    });
+    const writtenCondition = (call: { data: { logic?: unknown } }) =>
+      (call.data.logic as TSurveyQuotaInput["logic"]).conditions[0];
+
+    beforeEach(() => {
+      vi.mocked(prisma.survey.findFirst).mockResolvedValue({ blocks: surveyBlocks } as never);
+      vi.mocked(prisma.surveyQuota.create).mockResolvedValue(mockQuota);
+      vi.mocked(prisma.surveyQuota.update).mockResolvedValue(mockQuota);
+    });
+
+    test("create writes the ids next to positions the editor sent alone", async () => {
+      await createQuota(withCondition({ row: "1" }, { value: "0" }));
+
+      expect(prisma.survey.findFirst).toHaveBeenCalledWith({
+        where: { id: mockSurveyId },
+        select: { blocks: true },
+      });
+      expect(writtenCondition(vi.mocked(prisma.surveyQuota.create).mock.calls[0][0])).toMatchObject({
+        leftOperand: { meta: { row: "1", rowId: "row_netflix" } },
+        rightOperand: { value: "0", columnId: "col_good" },
+      });
+    });
+
+    test("update rewrites stale positions from the ids, reading the quota's own survey", async () => {
+      await updateQuota(
+        withCondition({ row: "0", rowId: "row_netflix" }, { value: "1", columnId: "col_good" }),
+        mockQuotaId
+      );
+
+      expect(prisma.survey.findFirst).toHaveBeenCalledWith({
+        where: { quotas: { some: { id: mockQuotaId } } },
+        select: { blocks: true },
+      });
+      expect(writtenCondition(vi.mocked(prisma.surveyQuota.update).mock.calls[0][0])).toMatchObject({
+        leftOperand: { meta: { row: "1", rowId: "row_netflix" } },
+        rightOperand: { value: "0", columnId: "col_good" },
+      });
+    });
+
+    test("refuses a row id the matrix doesn't have, and does not write", async () => {
+      await expect(createQuota(withCondition({ row: "0", rowId: "row_hulu" }, {}))).rejects.toThrow(
+        'Row id "row_hulu" does not exist in matrix question "grid" (logic.conditions.0.leftOperand.meta.rowId)'
+      );
+      expect(prisma.surveyQuota.create).not.toHaveBeenCalled();
     });
   });
 
