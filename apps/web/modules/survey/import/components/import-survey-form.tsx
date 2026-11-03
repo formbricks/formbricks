@@ -204,6 +204,84 @@ const ImportFooter = ({
   );
 };
 
+/**
+ * The import running or under review: the Match choice, the draft with its source, facts and report,
+ * and the progress line while it runs. The report and the languages warning can fill a short dialog;
+ * then this part scrolls and the list keeps two rows instead of shrinking to nothing, while the warning
+ * and the footer stay in view. -m-1/p-1 leave room for focus rings the scroll box would otherwise clip.
+ */
+const ImportReviewPane = ({
+  importer,
+  isImporting,
+  isReviewing,
+  reviewReport,
+  reviewDraft,
+  draftRef,
+}: Readonly<{
+  importer: TImportSurvey;
+  isImporting: boolean;
+  isReviewing: boolean;
+  reviewReport: ReturnType<typeof getReview>["reviewReport"];
+  reviewDraft: ReturnType<typeof getReview>["reviewDraft"];
+  draftRef: RefObject<HTMLElement | null>;
+}>) => {
+  const { t } = useTranslation();
+  const isUpdating = importer.match !== null && importer.choice === "update";
+  const progressMessages = [
+    t("workspace.surveys.import.progress.reading"),
+    t("workspace.surveys.import.progress.ai"),
+    t("workspace.surveys.import.progress.assembling"),
+  ];
+  const stageIndex = Math.max(0, importer.stage ? IMPORT_STAGES.indexOf(importer.stage) : 0);
+
+  return (
+    <div className="-m-1 flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-1">
+      {isReviewing && importer.match ? (
+        <ImportMatchChoice
+          match={importer.match}
+          newSurveyName={importer.newSurveyName}
+          choice={importer.choice}
+          onChoiceChange={importer.selectChoice}
+          triggersChoice={importer.triggersChoice}
+          onTriggersChoiceChange={importer.selectTriggersChoice}
+          conflict={importer.conflict}
+        />
+      ) : null}
+      <DraftReviewPanel
+        draft={reviewDraft}
+        isGenerating={isImporting}
+        source={
+          importer.file ? (
+            <SourceChip
+              id="import-source-echo"
+              icon={<FileIcon className="size-4" aria-hidden="true" />}
+              label={importer.file.name}
+              srLabel={t("workspace.surveys.import.your_file")}
+              editLabel={t("workspace.surveys.import.pick_another_file")}
+              disabled={importer.isCreatingSurvey}
+              onEdit={importer.pickAnotherFile}
+            />
+          ) : null
+        }
+        facts={reviewReport ? <ImportFacts summary={reviewReport.summary} /> : undefined}
+        report={
+          reviewReport ? (
+            // Remounted with the choice, so it opens by itself when an Update adds a warning.
+            <ImportReport key={isUpdating ? "update" : "create"} report={reviewReport} />
+          ) : undefined
+        }
+        status={
+          isImporting ? (
+            <AiStatusLine isActive messages={progressMessages} activeIndex={stageIndex} />
+          ) : undefined
+        }
+        scrollContainerRef={draftRef}
+        listClassName="min-h-48"
+      />
+    </div>
+  );
+};
+
 export const ImportSurveyForm = ({
   workspaceId,
   isAIAvailable,
@@ -221,7 +299,6 @@ export const ImportSurveyForm = ({
 
   const isImporting = importer.status === "generating";
   const isReviewing = importer.status === "review" || importer.status === "creating";
-  const isUpdating = importer.match !== null && importer.choice === "update";
   const { reviewReport, reviewDraft } = getReview(importer, isReviewing);
 
   // The drop zone unmounts when the import starts; Stop is the only action left, so focus goes there.
@@ -252,25 +329,6 @@ export const ImportSurveyForm = ({
     ? getSurveyImportErrorMessage(importer.errorCode, t, importer.retryAfterSeconds)
     : null;
 
-  const progressMessages = [
-    t("workspace.surveys.import.progress.reading"),
-    t("workspace.surveys.import.progress.ai"),
-    t("workspace.surveys.import.progress.assembling"),
-  ];
-  const stageIndex = Math.max(0, importer.stage ? IMPORT_STAGES.indexOf(importer.stage) : 0);
-
-  const sourceChip = importer.file ? (
-    <SourceChip
-      id="import-source-echo"
-      icon={<FileIcon className="size-4" aria-hidden="true" />}
-      label={importer.file.name}
-      srLabel={t("workspace.surveys.import.your_file")}
-      editLabel={t("workspace.surveys.import.pick_another_file")}
-      disabled={importer.isCreatingSurvey}
-      onEdit={importer.pickAnotherFile}
-    />
-  ) : null;
-
   return (
     // A fixed height once the review shows: the question list scrolls inside it, so the dialog does
     // not jump as the report opens or a long import lands.
@@ -290,41 +348,14 @@ export const ImportSurveyForm = ({
       ) : null}
 
       {isImporting || isReviewing ? (
-        // The report and the languages warning can fill a short dialog. Then this part scrolls and the
-        // list keeps two rows instead of shrinking to nothing, while the warning and the footer stay
-        // in view. -m-1/p-1 leave room for focus rings the scroll box would otherwise clip.
-        <div className="-m-1 flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-1">
-          {isReviewing && importer.match ? (
-            <ImportMatchChoice
-              match={importer.match}
-              newSurveyName={importer.newSurveyName}
-              choice={importer.choice}
-              onChoiceChange={importer.selectChoice}
-              triggersChoice={importer.triggersChoice}
-              onTriggersChoiceChange={importer.selectTriggersChoice}
-              conflict={importer.conflict}
-            />
-          ) : null}
-          <DraftReviewPanel
-            draft={reviewDraft}
-            isGenerating={isImporting}
-            source={sourceChip}
-            facts={reviewReport ? <ImportFacts summary={reviewReport.summary} /> : undefined}
-            report={
-              reviewReport ? (
-                // Remounted with the choice, so it opens by itself when an Update adds a warning.
-                <ImportReport key={isUpdating ? "update" : "create"} report={reviewReport} />
-              ) : undefined
-            }
-            status={
-              isImporting ? (
-                <AiStatusLine isActive messages={progressMessages} activeIndex={stageIndex} />
-              ) : undefined
-            }
-            scrollContainerRef={draftRef}
-            listClassName="min-h-48"
-          />
-        </div>
+        <ImportReviewPane
+          importer={importer}
+          isImporting={isImporting}
+          isReviewing={isReviewing}
+          reviewReport={reviewReport}
+          reviewDraft={reviewDraft}
+          draftRef={draftRef}
+        />
       ) : (
         <ImportFilePicker canReadWithAI={canReadWithAI} onFileSelect={importer.selectFile} />
       )}
