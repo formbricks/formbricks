@@ -81,8 +81,6 @@ type TExportModalProps = {
   scope: TExportScope;
   /** Offered when the survey collects files. Runs the attachments zip download for the same scope. */
   onDownloadAttachments?: () => void;
-  /** The requester's recent attachment exports, listed under the attachments download (ENG-6862). */
-  recentAttachmentExports?: ReactNode;
 };
 
 /** A square 16px checkbox in the modal's dark style. */
@@ -344,7 +342,6 @@ const ExportModalBody = ({
   scope,
   onClose,
   onDownloadAttachments,
-  recentAttachmentExports,
 }: Readonly<Omit<TExportModalProps, "open" | "onOpenChange"> & { onClose: () => void }>) => {
   const { t } = useTranslation();
   const { startExport, isExporting, progress } = useExportManager();
@@ -631,7 +628,6 @@ const ExportModalBody = ({
               <PaperclipIcon />
               {t("workspace.surveys.export.attachments_download")}
             </Button>
-            {recentAttachmentExports}
           </div>
         )}
       </DialogBody>

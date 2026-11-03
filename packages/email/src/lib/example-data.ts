@@ -41,6 +41,19 @@ export const exampleData = {
     securitySettingsLink: "https://app.formbricks.com/account/settings/profile",
   },
 
+  attachmentExportReadyEmail: {
+    surveyName: "Mystery shopper visit",
+    archiveSize: "5.7 GB",
+    expiryDate: "February 3, 2027",
+    truncated: false,
+    downloadLink: "https://app.formbricks.com/attachment-exports/cm8cmpnjj000108jfdr9exp01",
+  },
+
+  attachmentExportFailedEmail: {
+    surveyName: "Mystery shopper visit",
+    responsesLink: "https://app.formbricks.com/workspaces/ws/surveys/survey/responses",
+  },
+
   memberRetentionNoticeEmail: {
     organizationName: "Acme",
     deactivateDate: "Dec 7, 2026",

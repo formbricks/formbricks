@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
-import { GET, POST } from "./route";
+import { POST } from "./route";
 
 const mocks = vi.hoisted(() => ({
   getSession: vi.fn(),
@@ -14,8 +14,8 @@ const mocks = vi.hoisted(() => ({
   create: vi.fn(),
   dispatch: vi.fn(),
   failUndispatched: vi.fn(),
-  list: vi.fn(),
   queueAuditEvent: vi.fn(),
+  smtp: { configured: true },
 }));
 
 vi.mock("server-only", () => ({}));
@@ -33,6 +33,12 @@ vi.mock("@formbricks/logger", () => ({
   },
 }));
 vi.mock("./lib/authorize", () => ({ authorizeAttachmentExportAccess: mocks.authorize }));
+vi.mock("@/lib/constants", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/constants")>()),
+  get IS_SMTP_CONFIGURED() {
+    return mocks.smtp.configured;
+  },
+}));
 vi.mock("@/lib/jobs/config", () => ({ getJobsQueueingConfig: mocks.queueingConfig }));
 vi.mock("@/lib/upgrade/compatibility", () => ({ isNewReleaseWorkEnabled: mocks.releaseWork }));
 vi.mock("@/lib/organization/service", () => ({ getOrganization: mocks.getOrganization }));
@@ -44,7 +50,6 @@ vi.mock("@/modules/storage/attachment-export/service", () => ({
   createAttachmentExport: mocks.create,
   dispatchAttachmentExport: mocks.dispatch,
   failUndispatchedAttachmentExport: mocks.failUndispatched,
-  listAttachmentExports: mocks.list,
   toAttachmentExportDto: (row: { id: string; status: string }) => ({ id: row.id, status: row.status }),
 }));
 
@@ -58,7 +63,6 @@ const row = {
   dispatchCount: 0,
   status: "queued",
 };
-const props = { params: Promise.resolve({ surveyId: SURVEY_ID }) };
 
 const post = (body: unknown = {}) =>
   POST(
@@ -90,6 +94,7 @@ describe("POST /api/surveys/{surveyId}/attachment-exports", () => {
     mocks.create.mockResolvedValue({ row, created: true });
     mocks.dispatch.mockResolvedValue(undefined);
     mocks.queueAuditEvent.mockResolvedValue(undefined);
+    mocks.smtp.configured = true;
   });
 
   test("records the export, enqueues it and answers 202", async () => {
@@ -140,6 +145,13 @@ describe("POST /api/surveys/{surveyId}/attachment-exports", () => {
       () => mocks.queueingConfig.mockReturnValue({ enabled: false, redisUrl: null }),
     ],
     ["the online upgrade has not activated", () => mocks.releaseWork.mockResolvedValue(false)],
+    // The download link only reaches the user by email.
+    [
+      "email is not configured",
+      () => {
+        mocks.smtp.configured = false;
+      },
+    ],
   ])("asks the client to fall back to the stream when %s", async (_label, arrange) => {
     arrange();
 
@@ -199,36 +211,5 @@ describe("POST /api/surveys/{surveyId}/attachment-exports", () => {
 
     expect(response.status).toBe(400);
     expect(mocks.create).not.toHaveBeenCalled();
-  });
-});
-
-describe("GET /api/surveys/{surveyId}/attachment-exports", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mocks.getSession.mockResolvedValue({ user: { id: USER_ID } });
-    mocks.authorize.mockResolvedValue({
-      response: null,
-      survey,
-      organizationId: "org-1",
-      workspaceId: WORKSPACE_ID,
-      workspaceIdForAudit: WORKSPACE_ID,
-      userId: USER_ID,
-    });
-    mocks.list.mockResolvedValue([row]);
-  });
-
-  test("lists only the caller's exports of this survey", async () => {
-    const response = await GET(
-      new NextRequest(`http://localhost/api/surveys/${SURVEY_ID}/attachment-exports`),
-      props as never
-    );
-
-    expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ data: [{ id: row.id, status: "queued" }] });
-    expect(mocks.list).toHaveBeenCalledWith({
-      surveyId: SURVEY_ID,
-      workspaceId: WORKSPACE_ID,
-      requestedById: USER_ID,
-    });
   });
 });

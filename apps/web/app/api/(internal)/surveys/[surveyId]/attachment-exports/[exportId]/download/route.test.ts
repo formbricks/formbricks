@@ -1,6 +1,5 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { GET as GET_DOWNLOAD } from "./download/route";
 import { GET } from "./route";
 
 const mocks = vi.hoisted(() => ({
@@ -24,7 +23,7 @@ vi.mock("@formbricks/logger", () => ({
     withContext: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn() })),
   },
 }));
-vi.mock("../lib/authorize", () => ({ authorizeAttachmentExportAccess: mocks.authorize }));
+vi.mock("../../lib/authorize", () => ({ authorizeAttachmentExportAccess: mocks.authorize }));
 vi.mock("@formbricks/storage", () => ({ getSignedDownloadUrl: mocks.sign }));
 vi.mock("@/modules/storage/attachment-export/export-attachments", () => ({
   buildAttachmentArchiveFileName: (survey: { id: string }, date: Date) =>
@@ -82,31 +81,11 @@ beforeEach(() => {
   });
 });
 
-describe("GET /api/surveys/{surveyId}/attachment-exports/{exportId}", () => {
-  test("returns the caller's export", async () => {
-    mocks.getExport.mockResolvedValue(completedRow());
-
-    const response = await GET(request(), props);
-
-    expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ data: { id: EXPORT_ID, status: "completed" } });
-    expect(mocks.getExport).toHaveBeenCalledWith(requesterScope);
-  });
-
-  test("answers 404 for an export that is not the caller's", async () => {
-    mocks.getExport.mockResolvedValue(null);
-
-    const response = await GET(request(), props);
-
-    expect(response.status).toBe(404);
-  });
-});
-
 describe("GET /api/surveys/{surveyId}/attachment-exports/{exportId}/download", () => {
   test("signs a download URL that saves under the archive's name", async () => {
     mocks.getExport.mockResolvedValue(completedRow());
 
-    const response = await GET_DOWNLOAD(request("/download"), props);
+    const response = await GET(request("/download"), props);
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
@@ -135,7 +114,7 @@ describe("GET /api/surveys/{surveyId}/attachment-exports/{exportId}/download", (
   ])("answers 409 while the export is %s", async (_label, row) => {
     mocks.getExport.mockResolvedValue(row);
 
-    const response = await GET_DOWNLOAD(request("/download"), props);
+    const response = await GET(request("/download"), props);
 
     expect(response.status).toBe(409);
     expect((await response.json()).code).toBe("attachment_export_not_ready");
@@ -148,7 +127,7 @@ describe("GET /api/surveys/{surveyId}/attachment-exports/{exportId}/download", (
   ])("answers 410 for an export %s", async (_label, row) => {
     mocks.getExport.mockResolvedValue(row);
 
-    const response = await GET_DOWNLOAD(request("/download"), props);
+    const response = await GET(request("/download"), props);
 
     expect(response.status).toBe(410);
     expect((await response.json()).code).toBe("attachment_export_expired");
@@ -158,7 +137,7 @@ describe("GET /api/surveys/{surveyId}/attachment-exports/{exportId}/download", (
   test("answers 404 for another user's export, without signing anything", async () => {
     mocks.getExport.mockResolvedValue(null);
 
-    const response = await GET_DOWNLOAD(request("/download"), props);
+    const response = await GET(request("/download"), props);
 
     expect(response.status).toBe(404);
     expect(mocks.sign).not.toHaveBeenCalled();

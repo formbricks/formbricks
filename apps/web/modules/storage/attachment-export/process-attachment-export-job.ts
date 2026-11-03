@@ -8,13 +8,14 @@ import { ZResponseFilterCriteria } from "@formbricks/types/responses";
 import { getSurvey } from "@/lib/survey/service";
 import { loggableError } from "@/lib/utils/loggable-error";
 import { collectResponseAttachments } from "@/modules/storage/lib/collect-response-attachments";
-import { ATTACHMENT_EXPORT_MAX_BUILD_MS, ATTACHMENT_EXPORT_TTL_MS, MAX_ATTACHMENT_FILES } from "./constants";
+import { ATTACHMENT_EXPORT_MAX_BUILD_MS, MAX_ATTACHMENT_FILES, getAttachmentExportExpiry } from "./constants";
 import {
   type AttachmentArchiveSummary,
   buildAttachmentArchiveFileName,
   createAttachmentArchive,
   writeAttachmentArchive,
 } from "./export-attachments";
+import { notifyAttachmentExportFailed, notifyAttachmentExportReady } from "./notify-requester";
 import { buildAttachmentExportStorageKey } from "./storage-key";
 
 /**
@@ -114,7 +115,7 @@ const failExport = async (
   errorCode: string,
   storageKey: string | null
 ): Promise<void> => {
-  await prisma.attachmentExport.updateMany({
+  const failed = await prisma.attachmentExport.updateMany({
     where: {
       id: data.attachmentExportId,
       workspaceId: data.workspaceId,
@@ -122,6 +123,8 @@ const failExport = async (
     },
     data: { status: "failed", errorCode, finishedAt: new Date() },
   });
+  // Only the attempt that settled the export tells the requester, so a re-run never emails twice.
+  if (failed.count > 0) await notifyAttachmentExportFailed(data);
   if (storageKey) {
     // Normally nothing is there: a failed multipart upload is aborted. This covers an upload that
     // completed just before a later step failed. The reconcile job retries a failed delete.
@@ -221,6 +224,7 @@ export const processAttachmentExportJob: JobHandler<TAttachmentExportJobData> = 
     });
 
     const finishedAt = new Date();
+    const expiresAt = getAttachmentExportExpiry(finishedAt);
     const completed = await prisma.attachmentExport.updateMany({
       where: { id: data.attachmentExportId, workspaceId: data.workspaceId, status: "running" },
       data: {
@@ -229,7 +233,7 @@ export const processAttachmentExportJob: JobHandler<TAttachmentExportJobData> = 
         totalBytes: BigInt(result.archiveBytes),
         truncated: result.truncated,
         finishedAt,
-        expiresAt: new Date(finishedAt.getTime() + ATTACHMENT_EXPORT_TTL_MS),
+        expiresAt,
       },
     });
 
@@ -245,6 +249,13 @@ export const processAttachmentExportJob: JobHandler<TAttachmentExportJobData> = 
       { ...logContext, files: result.appendedFiles, bytes: result.archiveBytes, truncated: result.truncated },
       "Attachment export completed"
     );
+    await notifyAttachmentExportReady({
+      ...data,
+      archiveBytes: result.archiveBytes,
+      expiresAt,
+      truncated: result.truncated,
+      timeZone: row.timeZone,
+    });
   } catch (error) {
     const buildError = error instanceof AttachmentExportBuildError ? error : null;
     const retryable = buildError?.retryable ?? true;

@@ -3,8 +3,8 @@ import { parseV3ApiError } from "@/modules/api/lib/v3-client";
 import type { TAttachmentExport } from "../types";
 
 /**
- * Client fetchers for the attachment export routes (ENG-6862). Reads forward the TanStack `signal`;
- * mutations use a timeout. Every call throws a parsed `V3ApiError` on a non-2xx response.
+ * Client fetchers for the attachment export routes (ENG-6862). Each throws a parsed `V3ApiError` on a
+ * non-2xx response.
  */
 
 const MUTATION_TIMEOUT_MS = 30_000;
@@ -16,18 +16,6 @@ async function readData<T>(response: Response): Promise<T> {
     throw await parseV3ApiError(response);
   }
   return ((await response.json()) as { data: T }).data;
-}
-
-export async function listAttachmentExports(params: {
-  surveyId: string;
-  signal?: AbortSignal;
-}): Promise<TAttachmentExport[]> {
-  const response = await fetch(basePath(params.surveyId), {
-    method: "GET",
-    cache: "no-store",
-    signal: params.signal,
-  });
-  return readData<TAttachmentExport[]>(response);
 }
 
 /**

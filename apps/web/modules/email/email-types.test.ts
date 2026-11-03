@@ -5,6 +5,8 @@ import { applyEmailRateLimits } from "@/modules/email/lib/email-rate-limits";
 import { sendFollowUpEmail } from "@/modules/survey/follow-ups/lib/email";
 import {
   sendAccountDeletedEmail,
+  sendAttachmentExportFailedEmail,
+  sendAttachmentExportReadyEmail,
   sendDeleteAccountConfirmationEmail,
   sendEmailCustomizationPreviewEmail,
   sendEmbedSurveyPreviewEmail,
@@ -47,6 +49,8 @@ vi.mock("@/modules/email/lib/survey-response-email", () => ({
 vi.mock("@formbricks/email", () => ({
   renderAccountDeletedEmail: async () => "html",
   renderAccountDeletionEmail: async () => "html",
+  renderAttachmentExportFailedEmail: async () => "html",
+  renderAttachmentExportReadyEmail: async () => "html",
   renderEmailCustomizationPreviewEmail: async () => "html",
   renderEmbedSurveyPreviewEmail: async () => "html",
   renderForgotPasswordEmail: async () => "html",
@@ -124,6 +128,35 @@ const senders: [string, () => Promise<unknown>][] = [
         deactivateDate: "Dec 7, 2026",
       }),
   ],
+  [
+    "attachment_export",
+    () =>
+      sendAttachmentExportReadyEmail({
+        email,
+        locale,
+        userId: "user",
+        organizationId: "organization",
+        surveyId: "survey",
+        surveyName: "Survey",
+        attachmentExportId: "export",
+        archiveSize: "5.7 GB",
+        expiryDate: "Feb 3, 2027",
+        truncated: false,
+      }),
+  ],
+  [
+    "attachment_export",
+    () =>
+      sendAttachmentExportFailedEmail({
+        email,
+        locale,
+        userId: "user",
+        organizationId: "organization",
+        workspaceId: "workspace",
+        surveyId: "survey",
+        surveyName: "Survey",
+      }),
+  ],
   ["response_notification", () => sendResponseFinishedEmail(email, locale, "workspace", survey, response, 1)],
   [
     "survey_preview",
@@ -156,9 +189,12 @@ describe("email source attribution", () => {
   test.each(senders)("classifies %s at the sending boundary", async (emailType, send) => {
     await send();
     expect(sendEmail).toHaveBeenCalledOnce();
-    const trigger = ["email_change_verification", "survey_preview", "customization_preview"].includes(
-      emailType
-    )
+    const trigger = [
+      "email_change_verification",
+      "survey_preview",
+      "customization_preview",
+      "attachment_export",
+    ].includes(emailType)
       ? "user"
       : emailType === "response_notification"
         ? "response"
@@ -175,6 +211,7 @@ describe("email source attribution", () => {
     ["response_notification", { organizationId: "org", surveyId: "survey", responseId: "response" }],
     ["customization_preview", { actorUserId: "user" }],
     ["verified_survey_link", { surveyId: "survey", organizationId: "organization" }],
+    ["attachment_export", { actorUserId: "user", organizationId: "organization", surveyId: "survey" }],
   ] as const)("preserves %s source identifiers", async (emailType, expectedContext) => {
     const [, send] = senders.find(([type]) => type === emailType)!;
     await send();

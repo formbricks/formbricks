@@ -14,15 +14,22 @@ export const MAX_ATTACHMENT_FILES = 5000;
 export const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024 * 1024;
 
 /**
- * How long a finished archive stays in storage. Respondent files at rest are the cost; the benefit is a
- * retry window for a slow download. Re-exporting is one click.
+ * How long a finished archive stays downloadable, in calendar months from when it was built. The email
+ * that delivers it states the date, and the reconcile job deletes the archive once it passes.
  */
-export const ATTACHMENT_EXPORT_TTL_MS = 24 * 60 * 60 * 1000;
+export const ATTACHMENT_EXPORT_RETENTION_MONTHS = 3;
+
+/** When an archive built at `finishedAt` expires: the same day of the month, three months later. */
+export const getAttachmentExportExpiry = (finishedAt: Date): Date => {
+  const expiresAt = new Date(finishedAt);
+  expiresAt.setUTCMonth(expiresAt.getUTCMonth() + ATTACHMENT_EXPORT_RETENTION_MONTHS);
+  return expiresAt;
+};
 
 /**
  * Lifetime of the presigned download URL. A browser resumes an interrupted download against the same
- * URL, so it has to outlive a slow multi-GB transfer; a fresh one is minted on every click, so a short
- * lifetime never locks anyone out. Credentials from an assumed role can cap it lower.
+ * URL, so it has to outlive a slow multi-GB transfer; a fresh one is minted every time the emailed link
+ * is opened, so a short lifetime never locks anyone out. Credentials from an assumed role can cap it lower.
  */
 export const ATTACHMENT_EXPORT_DOWNLOAD_URL_TTL_SECONDS = 6 * 60 * 60;
 
@@ -38,9 +45,6 @@ export const ATTACHMENT_EXPORT_REDISPATCH_AFTER_MS = 5 * 60 * 1000;
  * plus the retry backoff, so a slow second attempt is never failed under itself.
  */
 export const ATTACHMENT_EXPORT_STALE_AFTER_MS = 3 * 60 * 60 * 1000;
-
-/** Exports listed in the download menu, newest first. */
-export const ATTACHMENT_EXPORT_LIST_LIMIT = 5;
 
 /** Rows the reconcile job handles per pass and step, so one pass stays short. */
 export const ATTACHMENT_EXPORT_RECONCILE_BATCH = 50;

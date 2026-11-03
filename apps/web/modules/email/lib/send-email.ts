@@ -37,6 +37,7 @@ export type TEmailType =
   | "sso_recovery_notification"
   | "sso_sign_in_hint"
   | "data_retention_notice"
+  | "attachment_export"
   | "response_notification"
   | "survey_preview"
   | "customization_preview"

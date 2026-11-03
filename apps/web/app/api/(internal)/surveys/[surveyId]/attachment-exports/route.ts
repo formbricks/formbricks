@@ -9,6 +9,7 @@ import {
   problemUnprocessableContent,
   successResponse,
 } from "@/app/api/v3/lib/response";
+import { IS_SMTP_CONFIGURED } from "@/lib/constants";
 import { getJobsQueueingConfig } from "@/lib/jobs/config";
 import { getOrganization } from "@/lib/organization/service";
 import { capturePostHogEvent } from "@/lib/posthog";
@@ -21,7 +22,6 @@ import {
   createAttachmentExport,
   dispatchAttachmentExport,
   failUndispatchedAttachmentExport,
-  listAttachmentExports,
   toAttachmentExportDto,
 } from "@/modules/storage/attachment-export/service";
 import { collectResponseAttachments } from "@/modules/storage/lib/collect-response-attachments";
@@ -31,11 +31,9 @@ import { authorizeAttachmentExportAccess } from "./lib/authorize";
  * `/api/surveys/{surveyId}/attachment-exports` — background attachment ZIP exports (ENG-6862).
  *
  * `POST` starts one: it checks the counts the way the streaming route's pre-flight does, records the
- * export and enqueues the build, then answers `202`. The client polls the export and, once it is
- * `completed`, asks `…/{exportId}/download` for a presigned URL, so the browser fetches the archive
- * straight from storage and can resume an interrupted download.
- *
- * `GET` lists the caller's recent exports of this survey for the download menu.
+ * export and enqueues the build, then answers `202`. The build emails the requester a link to
+ * `/attachment-exports/{exportId}`, which asks `…/{exportId}/download` for a presigned URL, so the
+ * browser fetches the archive straight from storage and can resume an interrupted download.
  *
  * Internal and session-only, like the streaming route it replaces: the only caller is this app.
  */
@@ -67,9 +65,9 @@ export const POST = withV3ApiWrapper({
     const { survey, organizationId, workspaceId, workspaceIdForAudit, userId } = access;
     const { filterCriteria } = parsedInput.body;
 
-    // Without a worker to build it, or while an online upgrade still has pods that would drop the job,
-    // the client falls back to the streaming route.
-    if (!getJobsQueueingConfig().enabled || !(await isNewReleaseWorkEnabled())) {
+    // Without a worker to build it, without email to deliver the link, or while an online upgrade still
+    // has pods that would drop the job, the client falls back to the streaming route.
+    if (!IS_SMTP_CONFIGURED || !getJobsQueueingConfig().enabled || !(await isNewReleaseWorkEnabled())) {
       return problemConflict(
         requestId,
         "Background attachment exports are not available right now.",
@@ -168,27 +166,5 @@ export const POST = withV3ApiWrapper({
     );
 
     return successResponse(toAttachmentExportDto(row), { requestId, status: 202 });
-  },
-});
-
-export const GET = withV3ApiWrapper({
-  auth: "session",
-  schemas: { params: paramsSchema },
-  handler: async ({ parsedInput, authentication, requestId, instance }) => {
-    const access = await authorizeAttachmentExportAccess({
-      surveyId: parsedInput.params.surveyId,
-      authentication,
-      requestId,
-      instance,
-    });
-    if (access.response) return access.response;
-
-    const rows = await listAttachmentExports({
-      surveyId: access.survey.id,
-      workspaceId: access.workspaceId,
-      requestedById: access.userId,
-    });
-
-    return successResponse(rows.map(toAttachmentExportDto), { requestId });
   },
 });

@@ -6,13 +6,6 @@ export const ZAttachmentExportStatus = z.enum(["queued", "running", "completed",
 
 export type TAttachmentExportStatus = z.infer<typeof ZAttachmentExportStatus>;
 
-/** States the export never leaves; the client stops polling on these. */
-export const ATTACHMENT_EXPORT_TERMINAL_STATUSES: ReadonlySet<TAttachmentExportStatus> = new Set([
-  "completed",
-  "failed",
-  "expired",
-]);
-
 /** What the routes return for one export. Dates are ISO strings; sizes are bytes. */
 export const ZAttachmentExport = z.object({
   id: z.string(),

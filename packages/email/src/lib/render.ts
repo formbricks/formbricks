@@ -16,6 +16,8 @@ import {
   type TRetentionNoticeArchivedSurvey,
   type TRetentionNoticeResponseDeletion,
 } from "../../emails/retention/survey-retention-notice-email";
+import { AttachmentExportFailedEmail } from "../../emails/survey/attachment-export-failed-email";
+import { AttachmentExportReadyEmail } from "../../emails/survey/attachment-export-ready-email";
 import { EmbedSurveyPreviewEmail } from "../../emails/survey/embed-survey-preview-email";
 import { FollowUpEmail, FollowUpEmailProps } from "../../emails/survey/follow-up-email";
 import { LinkSurveyEmail } from "../../emails/survey/link-survey-email";
@@ -120,6 +122,25 @@ export async function renderMemberRetentionNoticeEmail(
   } & TEmailTemplateLegalProps
 ): Promise<string> {
   return await render(MemberRetentionNoticeEmail(props));
+}
+
+export async function renderAttachmentExportReadyEmail(
+  props: {
+    surveyName: string;
+    archiveSize: string;
+    expiryDate: string;
+    truncated: boolean;
+    downloadLink: string;
+    t: TFunction;
+  } & TEmailTemplateLegalProps
+): Promise<string> {
+  return await render(AttachmentExportReadyEmail(props));
+}
+
+export async function renderAttachmentExportFailedEmail(
+  props: { surveyName: string; responsesLink: string; t: TFunction } & TEmailTemplateLegalProps
+): Promise<string> {
+  return await render(AttachmentExportFailedEmail(props));
 }
 
 export async function renderInviteEmail(

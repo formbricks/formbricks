@@ -42,7 +42,7 @@ another queue, including `background-jobs`. The two audits share one queue and c
   `background-jobs` (one worker, one job at a time by default), webhook deliveries, response pipeline
   runs and cleanup drains would all wait for it.
 - `attachment-export.process`, which builds a survey's response attachments into one ZIP in your bucket
-  for the user to download. A large export takes minutes and up to 5 GB of reads and writes, so each web
+  and emails the user a download link. A large export takes minutes and up to 5 GB of reads and writes, so each web
   process builds one at a time, apart from everything else.
 
 None of these workers needs configuration, and `BULLMQ_WORKER_COUNT` and `BULLMQ_WORKER_CONCURRENCY` do not
@@ -92,7 +92,7 @@ Current workloads on the shared `background-jobs` queue include:
 | Creative counts   | `creative-stats.flush`                           | Copies creative Impressions and Clicks from Redis to the database every minute.            |
 | Usage telemetry   | `usage-telemetry.process`                        | Sends the instance's daily usage update.                                                   |
 | Workflows         | `workflow-run.process`, `workflow-run.reconcile` | Executes workflow runs and recovers stalled runs.                                          |
-| Attachment exports | `attachment-export.reconcile`                   | Re-dispatches lost exports, fails stuck ones and deletes export ZIPs after 24 hours.        |
+| Attachment exports | `attachment-export.reconcile`                   | Re-dispatches lost exports, fails stuck ones and deletes export ZIPs after 3 months.        |
 
 <Note>
   [Creative](/surveys/creatives/measure-performance) Impressions and Clicks live only in Redis until
@@ -108,7 +108,7 @@ These jobs run on [dedicated queues](#dedicated-queues) of their own instead:
 | AuthZed delivery  | `authzed-projection.deliver`                           | Copies permission changes to SpiceDB every five seconds.                     |
 | AuthZed audits    | `authzed-reconciliation.audit`, `authzed-survey.audit` | Audits SpiceDB against the database every six hours, and surveys once a day. |
 | Data retention    | `data-retention.sweep`                                 | Sends retention notices and acts on what is due, nightly (Enterprise).       |
-| Attachment export | `attachment-export.process`                            | Builds one requested attachments ZIP into the bucket for download.           |
+| Attachment export | `attachment-export.process`                            | Builds one requested attachments ZIP into the bucket and emails the link.    |
 
 These are current examples rather than a fixed list. Future Formbricks features can use the same Job Runner for
 additional background work.

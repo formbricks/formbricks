@@ -4,8 +4,9 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { deleteFile, uploadFileStream } from "@formbricks/storage";
 import { getSurvey } from "@/lib/survey/service";
 import { collectResponseAttachments } from "@/modules/storage/lib/collect-response-attachments";
-import { ATTACHMENT_EXPORT_MAX_BUILD_MS, ATTACHMENT_EXPORT_TTL_MS, MAX_ATTACHMENT_FILES } from "./constants";
+import { ATTACHMENT_EXPORT_MAX_BUILD_MS, MAX_ATTACHMENT_FILES } from "./constants";
 import { writeAttachmentArchive } from "./export-attachments";
+import { notifyAttachmentExportFailed, notifyAttachmentExportReady } from "./notify-requester";
 import { processAttachmentExportJob } from "./process-attachment-export-job";
 
 vi.mock("server-only", () => ({}));
@@ -24,6 +25,11 @@ vi.mock("@formbricks/jobs", () => ({
 }));
 
 vi.mock("@/lib/survey/service", () => ({ getSurvey: vi.fn() }));
+
+vi.mock("./notify-requester", () => ({
+  notifyAttachmentExportReady: vi.fn(),
+  notifyAttachmentExportFailed: vi.fn(),
+}));
 
 vi.mock("@/modules/storage/lib/collect-response-attachments", () => ({
   collectResponseAttachments: vi.fn(),
@@ -54,6 +60,8 @@ const mockedDeleteFile = vi.mocked(deleteFile);
 const mockedGetSurvey = vi.mocked(getSurvey);
 const mockedCollect = vi.mocked(collectResponseAttachments);
 const mockedWrite = vi.mocked(writeAttachmentArchive);
+const mockedNotifyReady = vi.mocked(notifyAttachmentExportReady);
+const mockedNotifyFailed = vi.mocked(notifyAttachmentExportFailed);
 
 const EXPORT_ID = "cm8cmpnjj000108jfdr9exp01";
 const WORKSPACE_ID = "cm8cmpnjj000108jfdr9wks01";
@@ -137,10 +145,21 @@ describe("processAttachmentExportJob", () => {
         totalBytes: BigInt(4096),
         truncated: false,
         finishedAt: NOW,
-        expiresAt: new Date(NOW.getTime() + ATTACHMENT_EXPORT_TTL_MS),
+        // Three calendar months after the build finished: the same day in February.
+        expiresAt: new Date("2027-02-03T12:00:00.000Z"),
       },
     });
     expect(mockedDeleteFile).not.toHaveBeenCalled();
+    // The requester gets the link once the row says completed, with the date it stops working.
+    expect(mockedNotifyReady).toHaveBeenCalledWith({
+      attachmentExportId: EXPORT_ID,
+      workspaceId: WORKSPACE_ID,
+      archiveBytes: 4096,
+      expiresAt: new Date("2027-02-03T12:00:00.000Z"),
+      truncated: false,
+      timeZone: "Asia/Riyadh",
+    });
+    expect(mockedNotifyFailed).not.toHaveBeenCalled();
   });
 
   test("exports every response when no filter was stored", async () => {
@@ -227,6 +246,8 @@ describe("processAttachmentExportJob", () => {
     // Only the claim: no terminal write that would make the retry skip the export.
     expect(updateCalls()).toHaveLength(1);
     expect(archiveStub.abort).toHaveBeenCalled();
+    // The retry may still succeed, so nobody is told it failed yet.
+    expect(mockedNotifyFailed).not.toHaveBeenCalled();
   });
 
   test("fails the export on the final attempt and deletes anything written", async () => {
@@ -238,6 +259,11 @@ describe("processAttachmentExportJob", () => {
       expect.objectContaining({ status: "failed", errorCode: "storage_upload_failed" })
     );
     expect(mockedDeleteFile).toHaveBeenCalledWith(STORAGE_KEY);
+    expect(mockedNotifyFailed).toHaveBeenCalledWith({
+      attachmentExportId: EXPORT_ID,
+      workspaceId: WORKSPACE_ID,
+    });
+    expect(mockedNotifyReady).not.toHaveBeenCalled();
     // The key is cleared once the delete went through, so the reconcile job does not retry it.
     expect(updateCalls()[2]).toEqual({
       where: { id: EXPORT_ID, workspaceId: WORKSPACE_ID, status: "failed" },
@@ -272,6 +298,18 @@ describe("processAttachmentExportJob", () => {
     await processAttachmentExportJob(data, context);
 
     expect(mockedDeleteFile).toHaveBeenCalledWith(STORAGE_KEY);
+    expect(mockedNotifyReady).not.toHaveBeenCalled();
+  });
+
+  test("does not email a failure when the export was already settled elsewhere", async () => {
+    mockedUpload.mockResolvedValue({ ok: false, error: { code: "unknown" } } as never);
+    prisma.attachmentExport.updateMany
+      .mockResolvedValueOnce({ count: 1 }) // claim
+      .mockResolvedValueOnce({ count: 0 }); // fail: already failed as stale
+
+    await processAttachmentExportJob(data, finalContext);
+
+    expect(mockedNotifyFailed).not.toHaveBeenCalled();
   });
 
   test("does nothing when another delivery settled the export before the claim", async () => {

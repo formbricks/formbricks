@@ -4,7 +4,6 @@ import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { enqueueAttachmentExportJob } from "@formbricks/jobs";
 import type { TResponseFilterCriteria } from "@formbricks/types/responses";
-import { ATTACHMENT_EXPORT_LIST_LIMIT } from "./constants";
 import type { TAttachmentExport } from "./types";
 
 export { buildAttachmentExportStorageKey, isAttachmentExportFilePath } from "./storage-key";
@@ -122,7 +121,7 @@ export const dispatchAttachmentExport = async (
   );
 };
 
-/** Fails an export that never got a job, so the menu stops showing it as in progress. */
+/** Fails an export that never got a job, so the requester can start another straight away. */
 export const failUndispatchedAttachmentExport = async ({
   id,
   workspaceId,
@@ -142,11 +141,18 @@ export const getAttachmentExport = async ({
     select: attachmentExportSelect,
   });
 
-/** The requester's recent exports of this survey that can still be shown, newest first. */
-export const listAttachmentExports = async (scope: TAttachmentExportScope): Promise<TAttachmentExportRow[]> =>
-  prisma.attachmentExport.findMany({
-    where: { ...scope, status: { not: "expired" } },
-    orderBy: { createdAt: "desc" },
-    take: ATTACHMENT_EXPORT_LIST_LIMIT,
-    select: attachmentExportSelect,
+/**
+ * Where the emailed download link of an export points: found by id, but only for the user who started
+ * it. Survey read access is checked again by the download route, so losing access also loses the link.
+ */
+export const getRequesterAttachmentExport = async ({
+  id,
+  requestedById,
+}: {
+  id: string;
+  requestedById: string;
+}): Promise<Pick<TAttachmentExportRow, "id" | "surveyId" | "workspaceId" | "status"> | null> =>
+  prisma.attachmentExport.findFirst({
+    where: { id, requestedById },
+    select: { id: true, surveyId: true, workspaceId: true, status: true },
   });
