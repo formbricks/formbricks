@@ -763,16 +763,13 @@ const profileBlock: TSurveyBlock = {
       headline: i18n("How do you rate each service?"),
       required: false,
       shuffleOption: "none",
-      // ENG-6937: a row shown only to who uses the service, and a Hidden column.
+      // ENG-6937: a row shown only to who uses the service. (Two columns only: ENG-6934's tests reverse
+      // them to check that conditions follow column ids.)
       rows: [
         choice("row_netflix", "Netflix", "1"),
         { ...choice("row_disney", "Disney+", "2"), showIf: pickedIn("services", "disney") },
       ],
-      columns: [
-        choice("col_poor", "Poor", "1"),
-        choice("col_good", "Good", "2"),
-        { ...choice("col_fair", "Fair", "3"), hidden: true },
-      ],
+      columns: [choice("col_poor", "Poor", "1"), choice("col_good", "Good", "2")],
     },
     {
       id: "brand_rank",

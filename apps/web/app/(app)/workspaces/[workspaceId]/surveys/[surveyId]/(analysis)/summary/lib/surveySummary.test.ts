@@ -5578,7 +5578,6 @@ describe("option bases (ENG-6937)", () => {
         {
           options: { ad_pick: ["poster_b"], brand_rank: ["prime"] },
           rows: { brand_grid: ["row_disney"] },
-          columns: { brand_grid: ["col_fair"] },
         }
       ),
       response(
@@ -5587,7 +5586,7 @@ describe("option bases (ENG-6937)", () => {
           brand_rank: ["Prime Video", "Netflix"],
           brand_grid: { Netflix: "Poor", "Disney+": "Good" },
         },
-        { columns: { brand_grid: ["col_fair"] } }
+        {}
       ),
     ];
 

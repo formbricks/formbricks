@@ -287,7 +287,7 @@ describe("buildFlowOutline: constructs the Flow tab cannot edit yet come out rea
       fav.choices[2].showIf = showIf;
       fav.choices[2].hidden = true;
 
-      // The fixture's second row has a show-if and its third column is Hidden.
+      // The fixture's second row has a show-if.
       const grid = draft.blocks[5].elements[2];
       grid.rows[0].showIf = showIf;
       grid.columns[1].hidden = true;
@@ -302,7 +302,7 @@ describe("buildFlowOutline: constructs the Flow tab cannot edit yet come out rea
     ]);
     expect(outline.blocks[5].elements[2].badges).toEqual([
       { kind: "optionsShowIf", count: 2, editable: true },
-      { kind: "hiddenOptions", count: 2, editable: true },
+      { kind: "hiddenOptions", count: 1, editable: true },
     ]);
   });
 
