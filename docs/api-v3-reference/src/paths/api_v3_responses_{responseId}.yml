@@ -67,6 +67,7 @@ get:
                   endingId: cmpthankyou00000000000000
                   language: de
                   outcome: null
+                  notShown: null
                   durationSeconds: 8.2
                   resolution:
                     labelPolicy: currentSurveyDefinition
@@ -202,6 +203,7 @@ get:
                   endingId: null
                   language: null
                   outcome: null
+                  notShown: null
                   resolution:
                     labelPolicy: currentSurveyDefinition
                     labelsLanguage: null

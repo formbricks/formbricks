@@ -2192,6 +2192,7 @@ paths:
                         endingId: cmpthankyou00000000000000
                         language: de
                         outcome: null
+                        notShown: null
                         durationSeconds: 107.9
                         resolution:
                           labelPolicy: currentSurveyDefinition
@@ -2873,6 +2874,7 @@ paths:
                       endingId: cmpthankyou00000000000000
                       language: de
                       outcome: null
+                      notShown: null
                       durationSeconds: 8.2
                       resolution:
                         labelPolicy: currentSurveyDefinition
@@ -3008,6 +3010,7 @@ paths:
                       endingId: null
                       language: null
                       outcome: null
+                      notShown: null
                       resolution:
                         labelPolicy: currentSurveyDefinition
                         labelsLanguage: null
@@ -11396,6 +11399,50 @@ components:
                   items:
                     $ref: '#/components/schemas/SurveyVisibilityBlocker'
                   description: The same list `GET …/visibility` returns as `blockers[]`.
+    ResponseNotShown:
+      type: object
+      additionalProperties: false
+      description: |
+        What the respondent was **not shown**: the parts of the survey a show-if, a hidden option or a question left with no options kept from them, by stable ids. The survey records it while the respondent answers, so it says what was decided at answer time; editing a show-if later never changes it. Anything not listed was shown, or never reached.
+
+        An answer to an item that ended up hidden (after the respondent went back or changed an earlier answer) is removed from the response, so a listed element has no answer in `answers[]`. Read the base of a question as "everyone who reached it, minus those it lists".
+      properties:
+        blocks:
+          type: array
+          items:
+            type: string
+          description: 'Blocks the survey passed over: their show-if failed, or every question on them was hidden. Every question of a listed block was not shown.'
+        elements:
+          type: array
+          items:
+            type: string
+          description: Questions hidden by their show-if, or skipped because none of their options were left.
+        options:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          description: Question id → the ids of its options that were not shown.
+        rows:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          description: Matrix question id → the ids of its rows that were not shown.
+        columns:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          description: Matrix question id → the ids of its columns that were not shown.
+      example:
+        blocks:
+          - k2v8m1q0y3d7h5s9t4n6p0ra
+        elements:
+          - apple_reason
     ResponseResolution:
       type: object
       description: |
@@ -11991,6 +12038,7 @@ components:
         - endingId
         - language
         - outcome
+        - notShown
         - resolution
         - answers
         - embeddedData
@@ -12047,6 +12095,12 @@ components:
             - lowQuality
             - null
           description: 'A reviewer''s verdict on the response; `null` when none. `lowQuality` hides the response from the Analysis export by default and from Feedback Records, and from nothing else: it is never deleted and every count, list, webhook and integration still includes it. Set through `PATCH /api/v3/responses/{responseId}` or `POST /api/v3/responses/batch-outcome`.'
+        notShown:
+          readOnly: true
+          anyOf:
+            - $ref: '#/components/schemas/ResponseNotShown'
+            - type: 'null'
+          description: 'What the respondent was not shown, as the survey recorded it while they answered. `null` when unknown: responses from before the record existed, or from an older cached survey. Read-only: only the survey writes it.'
         durationSeconds:
           readOnly: true
           type: number
