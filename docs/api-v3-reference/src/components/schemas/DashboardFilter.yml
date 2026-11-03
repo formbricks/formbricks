@@ -1,0 +1,46 @@
+type: object
+description: >-
+  A dashboard filter: a field and an operator the dashboard's editors pin to its top bar, shared by
+  everyone who opens it. Each person picks or enters its value (`picks[<id>]` on the dashboard-bound
+  chart data and value list operations); a pick is ANDed onto every chart's saved query and never
+  widens it. A chart whose Feedback Dataset lacks the field shows no data under a pick.
+required:
+  - id
+  - field
+  - operator
+  - label
+properties:
+  id:
+    type: string
+    format: cuid2
+    description: Chosen by the writer; unique within the dashboard.
+  field:
+    type: string
+    minLength: 1
+    maxLength: 255
+    description: >-
+      A dimension from the field catalog (`GET /api/v3/charts/fields`, `kind` `dimension` or
+      `timeDimension`).
+    example: FeedbackRecords.sourceName
+  operator:
+    type: string
+    enum:
+      - equals
+      - notEquals
+      - contains
+      - notContains
+      - gt
+      - gte
+      - lt
+      - lte
+    description: >-
+      One of the field's `filterOperators`, fixed by the editor. `equals` and `notEquals` on a text
+      field pick from a list of values (`GET
+      /api/v3/dashboards/{dashboardId}/filters/{filterId}/values`) and take several values (any of);
+      every other filter takes one typed value.
+  label:
+    type: string
+    minLength: 1
+    maxLength: 100
+    description: What the top bar shows for the filter.
+additionalProperties: false

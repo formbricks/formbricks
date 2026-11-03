@@ -9,6 +9,7 @@ import {
 } from "@/app/api/v3/charts/lib/resources";
 import { V3_NAME_MAX_LENGTH, ZV3ChartConfig, ZV3ChartName } from "@/app/api/v3/charts/lib/schemas";
 import {
+  ZV3DashboardChartData,
   ZV3DashboardListItem,
   ZV3DashboardResource,
   ZV3DashboardWidget,
@@ -20,6 +21,11 @@ import {
   refuseEmptyWidgetUpdate,
   refuseRepeatedWidgets,
 } from "@/app/api/v3/dashboards/lib/schemas";
+import {
+  MAX_DASHBOARD_FILTERS,
+  MAX_DASHBOARD_FILTER_PICK_VALUES,
+  MAX_DASHBOARD_FILTER_PICK_VALUE_LENGTH,
+} from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
 import { ZChartType } from "@/modules/ee/analysis/types/analysis";
 import { ZMcpCursorListMeta, mcpToolOutput } from "./output-schemas";
 
@@ -90,12 +96,12 @@ export const ZMcpChartQuery = z
   );
 
 /**
- * A date range the read is for. It replaces the chart's own range on collectedAt, the way the dashboard
- * date filter does.
+ * A date range the read is for. It narrows the chart's own range on collectedAt, the way the dashboard
+ * date filter does (ADR-0019).
  */
 export const ZMcpChartDateRange = z
   .union([
-    z.string().describe("A date preset from list_chart_fields, or 'all-time' to remove the range."),
+    z.string().describe("A date preset from list_chart_fields, or 'all-time' to keep the chart's own range."),
     z
       .object({
         from: z.string().describe("First day, YYYY-MM-DD, inclusive."),
@@ -105,7 +111,7 @@ export const ZMcpChartDateRange = z
   ])
   .optional()
   .describe(
-    "Replaces the chart's date range on FeedbackRecords.collectedAt. Read in the organization's time zone."
+    "Narrows the chart's date range on FeedbackRecords.collectedAt to the days both cover; ranges that do not overlap give no rows. Read in the organization's time zone."
   );
 
 export const ZMcpPreviewChartInput = z
@@ -119,6 +125,8 @@ export const ZMcpPreviewChartInput = z
 export type TMcpPreviewChartInput = z.infer<typeof ZMcpPreviewChartInput>;
 
 export const ZMcpChartDataOutput = mcpToolOutput(ZV3ChartData);
+
+export const ZMcpDashboardChartDataOutput = mcpToolOutput(ZV3DashboardChartData);
 
 const ZMcpChartConfig = ZV3ChartConfig.describe(
   "Display settings, separate from the query: e.g. showLegend, stacked, barOrientation (vertical|horizontal), pieDisplay (pie|breakdown), areaDisplay (filled|line), colors, axis labels."
@@ -148,8 +156,24 @@ export type TMcpUpdateChartInput = z.infer<typeof ZMcpUpdateChartInput>;
 
 export const ZMcpGetChartDataInput = z
   .object({
-    chartId: ZId.describe("The chart to read."),
+    dashboardId: ZId.describe("The dashboard the chart sits on, as get_dashboard lists its widgets."),
+    chartId: ZId.describe("The chart to read: a widget's chartId on that dashboard."),
     dateRange: ZMcpChartDateRange,
+    picks: z
+      .record(
+        ZId,
+        z
+          .array(z.string().max(MAX_DASHBOARD_FILTER_PICK_VALUE_LENGTH))
+          .min(1)
+          .max(MAX_DASHBOARD_FILTER_PICK_VALUES)
+      )
+      .refine((picks) => Object.keys(picks).length <= MAX_DASHBOARD_FILTERS, {
+        message: `At most ${MAX_DASHBOARD_FILTERS} filters can be picked.`,
+      })
+      .optional()
+      .describe(
+        "Values for the dashboard's filters, by filter id from get_dashboard's filters: several values for an equals/notEquals filter on a text field (any of), one value otherwise. Each narrows the chart; it never widens it."
+      ),
   })
   .strict();
 export type TMcpGetChartDataInput = z.infer<typeof ZMcpGetChartDataInput>;

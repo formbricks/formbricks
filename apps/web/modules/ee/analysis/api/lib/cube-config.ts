@@ -15,6 +15,8 @@ export type TCubeQuerySource =
   | "v3.charts.data"
   | "v3.charts.preview"
   | "v3.charts.fieldValues"
+  | "v3.dashboards.chartData"
+  | "v3.dashboards.filterValues"
   | "charts.embeddedKeyDiscovery";
 
 /**

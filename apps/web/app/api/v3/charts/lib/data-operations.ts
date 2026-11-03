@@ -1,6 +1,6 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
-import type { TChartQuery } from "@formbricks/types/analysis";
+import type { TChartQuery, TCubeFilter } from "@formbricks/types/analysis";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import {
   refuseUnlessFeedbackDatasetAccess,
@@ -25,6 +25,7 @@ import {
   COLLECTED_AT_DIMENSION,
   applyDashboardDateFilter,
 } from "@/modules/ee/analysis/dashboards/lib/dashboard-date-filter";
+import { narrowWithFilters } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-picks";
 import {
   type TRequestedDateRangeNames,
   checkTimeBucketLimit,
@@ -87,7 +88,8 @@ export const emptyChartData = (query: TChartQuery): TV3ChartData => ({
  * passes it answers 422 rather than reaching Cube. A requested range is ANDed with the saved one
  * (ADR-0019); ranges that do not overlap answer an empty chart. The time-bucket limit is checked once, on
  * the query that will run, and a narrowed range too wide for the chart's granularity is named as
- * `dateRange`.
+ * `dateRange`. `extraFilters` (a dashboard's filter picks) are ANDed onto the saved filters the same way,
+ * and `respond` shapes the success body.
  */
 export async function runV3ChartQuery({
   access,
@@ -98,6 +100,8 @@ export async function runV3ChartQuery({
   source,
   context,
   dateRangeNames,
+  extraFilters = [],
+  respond = (data) => data,
 }: {
   access: V3WorkspaceContext;
   datasetId: string;
@@ -108,6 +112,8 @@ export async function runV3ChartQuery({
   context: TV3ChartOperationContext;
   /** What the caller calls the date range: the data routes take query parameters, the preview a body field. */
   dateRangeNames?: TRequestedDateRangeNames;
+  extraFilters?: TCubeFilter[];
+  respond?: (data: TV3ChartData) => object;
 }): Promise<Response> {
   // Reads take the relative ranges older charts were saved with: a saved chart's, and a preview of one being
   // edited in the builder. Nothing is saved here; a write keeps such a range only if its chart already had it.
@@ -128,11 +134,13 @@ export async function runV3ChartQuery({
   const actor = getV3AuthorizationActor(context.authentication);
   if (!actor) return problemUnauthorized(context.requestId, "Not authenticated", context.instance);
 
-  const narrowed = applyDashboardDateFilter(validated.query, requested.filter, {
-    timeZone: await getOrganizationReportingTimeZone(access.organizationId),
-  });
+  const narrowed = applyDashboardDateFilter(
+    narrowWithFilters(validated.query, extraFilters),
+    requested.filter,
+    { timeZone: await getOrganizationReportingTimeZone(access.organizationId) }
+  );
   if (!narrowed) {
-    return successResponse(emptyChartData(validated.query), { requestId: context.requestId });
+    return successResponse(respond(emptyChartData(validated.query)), { requestId: context.requestId });
   }
   const runnable = prepareQueryForChartType(narrowed, type);
   const bucketIssue = checkTimeBucketLimit(runnable, (index) =>
@@ -159,7 +167,7 @@ export async function runV3ChartQuery({
         fieldLabels: run.fieldLabels ?? {},
         query: run.effectiveQuery as TV3ChartData["query"],
       };
-      return successResponse(data, { requestId: context.requestId });
+      return successResponse(respond(data), { requestId: context.requestId });
     } catch (error) {
       if (error instanceof CubeQueryError) return cubeFailure(error, context);
       throw error;

@@ -647,7 +647,11 @@ describe("replaceV3Dashboard (PUT)", () => {
       targetId: DASHBOARD_ID,
       organizationId: ORGANIZATION_ID,
       oldObject: previous,
-      newObject: { name: "Saved", widgets: [{ id: WIDGET_A, layout: { x: 0, y: 0, w: 6, h: 4 }, order: 0 }] },
+      newObject: {
+        name: "Saved",
+        filters: [],
+        widgets: [{ id: WIDGET_A, layout: { x: 0, y: 0, w: 6, h: 4 }, order: 0 }],
+      },
     });
   });
 

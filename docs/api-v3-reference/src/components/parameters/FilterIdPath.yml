@@ -1,0 +1,7 @@
+in: path
+name: filterId
+required: true
+schema:
+  type: string
+  format: cuid2
+description: Dashboard filter identifier, from the dashboard's `filters`.

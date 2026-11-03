@@ -1,0 +1,6 @@
+in: query
+name: from
+schema:
+  type: string
+  format: date
+description: First day of a custom dashboard date range (inclusive). Requires `to`.

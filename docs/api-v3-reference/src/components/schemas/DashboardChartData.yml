@@ -1,0 +1,36 @@
+type: object
+description: >-
+  A chart's rows read through its dashboard, after the dashboard date range and the filter picks
+  narrowed its saved query. `unfilterableFilters` lists picked filters whose field the chart's
+  Feedback Dataset does not have; when it is not empty, `rows` is empty: the chart cannot be narrowed
+  to the pick, so it shows nothing rather than more than was picked.
+required:
+  - rows
+  - optionLabels
+  - fieldLabels
+  - query
+  - unfilterableFilters
+properties:
+  rows:
+    $ref: ./ChartData.yml#/properties/rows
+  optionLabels:
+    $ref: ./ChartData.yml#/properties/optionLabels
+  fieldLabels:
+    $ref: ./ChartData.yml#/properties/fieldLabels
+  query:
+    $ref: ./ChartData.yml#/properties/query
+  unfilterableFilters:
+    type: array
+    items:
+      type: object
+      required:
+        - id
+        - label
+      properties:
+        id:
+          type: string
+          format: cuid2
+        label:
+          type: string
+      additionalProperties: false
+additionalProperties: false

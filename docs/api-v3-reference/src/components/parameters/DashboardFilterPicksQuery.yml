@@ -1,0 +1,16 @@
+in: query
+name: picks
+style: deepObject
+explode: true
+schema:
+  type: object
+  maxProperties: 10
+  additionalProperties:
+    type: string
+    maxLength: 1000
+description: >-
+  Values picked for the dashboard's filters, as `picks[<filterId>]=value`; repeat the parameter for
+  several values of a list filter (any of). A filter takes one typed value otherwise. Each pick is
+  ANDed onto every chart's saved query; picks for filters the dashboard does not have are ignored.
+example:
+  clfi000000000000000000001: Web

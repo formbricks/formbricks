@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ApiKeyPermission } from "@formbricks/database/prisma";
-import { getV3ChartData, previewV3Chart } from "@/app/api/v3/charts/lib/data-operations";
+import { previewV3Chart } from "@/app/api/v3/charts/lib/data-operations";
 import { duplicateV3Chart } from "@/app/api/v3/charts/lib/duplicate-operations";
 import { getV3ChartFieldCatalog, listV3ChartFieldValues } from "@/app/api/v3/charts/lib/field-operations";
 import { createV3Chart, getV3Chart, listV3Charts, updateV3Chart } from "@/app/api/v3/charts/lib/operations";
+import { getV3DashboardChartData } from "@/app/api/v3/dashboards/lib/chart-data-operations";
 import {
   createV3Dashboard,
   duplicateV3Dashboard,
@@ -33,8 +34,10 @@ vi.mock("@/app/api/v3/charts/lib/operations", () => ({
 }));
 vi.mock("@/app/api/v3/charts/lib/duplicate-operations", () => ({ duplicateV3Chart: vi.fn() }));
 vi.mock("@/app/api/v3/charts/lib/data-operations", () => ({
-  getV3ChartData: vi.fn(),
   previewV3Chart: vi.fn(),
+}));
+vi.mock("@/app/api/v3/dashboards/lib/chart-data-operations", () => ({
+  getV3DashboardChartData: vi.fn(),
 }));
 vi.mock("@/app/api/v3/dashboards/lib/operations", () => ({
   createV3Dashboard: vi.fn(),
@@ -221,10 +224,18 @@ describe("chart and dashboard MCP tools", () => {
   });
 
   test("every tool that returns respondent data needs feedbackRecords:read on top of dashboards:read", async () => {
-    vi.mocked(getV3ChartData).mockResolvedValue(successResponse({}, { requestId: "req" }));
+    vi.mocked(getV3DashboardChartData).mockResolvedValue(successResponse({}, { requestId: "req" }));
     vi.mocked(listV3ChartFieldValues).mockResolvedValue(successResponse([], { requestId: "req" }));
     const dataTools = [
-      ["get_chart_data", { chartId: CHART_ID, dateRange: { from: "2026-01-01", to: "2026-01-31" } }],
+      [
+        "get_chart_data",
+        {
+          dashboardId: DASHBOARD_ID,
+          chartId: CHART_ID,
+          dateRange: { from: "2026-01-01", to: "2026-01-31" },
+          picks: { clfi000000000000000000001: ["Web"] },
+        },
+      ],
       [
         "list_chart_field_values",
         { workspaceId: WORKSPACE_ID, datasetId: DATASET_ID, field: "FeedbackRecords.sourceName" },
@@ -234,13 +245,17 @@ describe("chart and dashboard MCP tools", () => {
     for (const [name, input] of dataTools) {
       expect((await call(name, input, ["dashboards:read"])).isError).toBe(true);
     }
-    expect(getV3ChartData).not.toHaveBeenCalled();
+    expect(getV3DashboardChartData).not.toHaveBeenCalled();
     expect(listV3ChartFieldValues).not.toHaveBeenCalled();
 
     for (const [name, input] of dataTools)
       await call(name, input, ["dashboards:read", "feedbackRecords:read"]);
-    expect(getV3ChartData).toHaveBeenCalledWith(
-      expect.objectContaining({ chartId: CHART_ID, query: { from: "2026-01-01", to: "2026-01-31" } })
+    expect(getV3DashboardChartData).toHaveBeenCalledWith(
+      expect.objectContaining({
+        dashboardId: DASHBOARD_ID,
+        chartId: CHART_ID,
+        query: { from: "2026-01-01", to: "2026-01-31", picks: { clfi000000000000000000001: ["Web"] } },
+      })
     );
     expect(listV3ChartFieldValues).toHaveBeenCalledWith(
       expect.objectContaining({

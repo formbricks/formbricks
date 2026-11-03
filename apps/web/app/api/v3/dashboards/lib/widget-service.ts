@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import type { Prisma } from "@formbricks/database/prisma";
 import type { TWidgetLayout } from "@formbricks/types/analysis";
 import { retryOnTransactionConflict } from "@/lib/utils/prisma-error";
+import type { TDashboardFilter } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
 import {
   MAX_WIDGET_Y,
   findOverlappingWidget,
@@ -205,7 +206,11 @@ export type TDashboardReplaceResult =
   | {
       kind: "ok";
       row: TDashboardResourceRow;
-      previous: { name: string; widgets: { id: string; layout: unknown; order: number }[] };
+      previous: {
+        name: string;
+        filters?: unknown;
+        widgets: { id: string; layout: unknown; order: number }[];
+      };
     }
   | { kind: "gone" }
   /** The dashboard changed after the caller's read. */
@@ -257,6 +262,7 @@ export const replaceDashboardRow = ({
   dashboardId,
   expectedUpdatedAt,
   name,
+  filters,
   widgets,
   requireEveryWidget = false,
 }: {
@@ -264,6 +270,8 @@ export const replaceDashboardRow = ({
   expectedUpdatedAt: Date;
   /** Kept as it is when omitted. */
   name?: string;
+  /** Kept as they are when omitted. */
+  filters?: TDashboardFilter[];
   /** `order` is kept as it is when omitted. */
   widgets: { widgetId: string; layout: TWidgetLayout; order?: number }[];
   requireEveryWidget?: boolean;
@@ -277,6 +285,7 @@ export const replaceDashboardRow = ({
         select: {
           name: true,
           updatedAt: true,
+          filters: true,
           widgets: { select: { id: true, layout: true, order: true } },
         },
       });
@@ -305,10 +314,18 @@ export const replaceDashboardRow = ({
       await writeWidgetPlaces(tx, dashboardId, widgets);
       const row = await tx.dashboard.update({
         where: { id: dashboardId },
-        data: { ...(name === undefined ? {} : { name }), updatedAt: nextDashboardUpdatedAt(locked) },
+        data: {
+          ...(name === undefined ? {} : { name }),
+          ...(filters === undefined ? {} : { filters: filters as Prisma.InputJsonValue }),
+          updatedAt: nextDashboardUpdatedAt(locked),
+        },
         select: selectDashboardResource,
       });
 
-      return { kind: "ok", row, previous: { name: current.name, widgets: current.widgets } };
+      return {
+        kind: "ok",
+        row,
+        previous: { name: current.name, filters: current.filters, widgets: current.widgets },
+      };
     }, REPLACE_TRANSACTION_OPTIONS)
   );

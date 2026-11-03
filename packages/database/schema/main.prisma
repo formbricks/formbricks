@@ -1697,6 +1697,8 @@ model Chart {
 /// @property name - Display name of the dashboard
 /// @property workspace - The workspace this dashboard belongs to
 /// @property widgets - Charts on this dashboard
+/// @property filters - The dashboard filters pinned to its top bar, in order: `{ id, field, operator, label }`,
+///                     at most 10 (ADR-0019). Each viewer's picks live in their own browser, not here.
 /// @property createdBy - User who created the dashboard
 model Dashboard {
   id          String            @id @default(cuid())
@@ -1708,6 +1710,7 @@ model Dashboard {
   creator     User?             @relation("dashboardCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
   createdBy   String?
   widgets     DashboardWidget[]
+  filters     Json              @default("[]")
 
   @@unique([workspaceId, name])
   @@index([workspaceId, createdAt])

@@ -1,8 +1,9 @@
 import type { McpServer } from "@modelcontextprotocol/server";
-import { getV3ChartData, previewV3Chart } from "@/app/api/v3/charts/lib/data-operations";
+import { previewV3Chart } from "@/app/api/v3/charts/lib/data-operations";
 import { duplicateV3Chart } from "@/app/api/v3/charts/lib/duplicate-operations";
 import { getV3ChartFieldCatalog, listV3ChartFieldValues } from "@/app/api/v3/charts/lib/field-operations";
 import { createV3Chart, getV3Chart, listV3Charts, updateV3Chart } from "@/app/api/v3/charts/lib/operations";
+import { getV3DashboardChartData } from "@/app/api/v3/dashboards/lib/chart-data-operations";
 import {
   createV3Dashboard,
   duplicateV3Dashboard,
@@ -47,6 +48,7 @@ import {
   ZMcpChartOutput,
   ZMcpCreateChartInput,
   ZMcpCreateDashboardInput,
+  ZMcpDashboardChartDataOutput,
   ZMcpDashboardIdInput,
   ZMcpDashboardListOutput,
   ZMcpDashboardOutput,
@@ -240,18 +242,18 @@ export function registerDashboardTools(server: McpServer): void {
     {
       title: "Get chart data",
       description:
-        "Read a saved chart's rows. A dateRange (a preset, 'all-time', or { from, to }) replaces the chart's own range on collectedAt, so the numbers match a dashboard filtered the same way; without one the chart's saved range applies. Ranges are read in the organization's time zone. For a chart grouped by time alone, a range wider than 10,000 buckets of its granularity (about 13 months by the hour) is refused with limit_exceeded.",
+        "Read a chart's rows through the dashboard it sits on, as the dashboard shows them. A dateRange (a preset, 'all-time', or { from, to }) narrows the chart's own range on collectedAt to the days both cover; without one the chart's saved range applies. picks (values for the dashboard's filters, by filter id) are ANDed onto the chart's saved filters and never widen it; a pick on a field the chart's Feedback Dataset lacks returns no rows and names the filter in unfilterableFilters. Ranges are read in the organization's time zone. For a chart grouped by time alone, a range wider than 10,000 buckets of its granularity (about 13 months by the hour) is refused with limit_exceeded.",
       inputSchema: ZMcpGetChartDataInput,
-      outputSchema: ZMcpChartDataOutput,
+      outputSchema: ZMcpDashboardChartDataOutput,
       annotations: READ_ANNOTATIONS,
     },
     // The rows are respondents' answers in aggregate, so reading them also needs feedback-record access.
     ["dashboards:read", "feedbackRecords:read"],
-    async ({ chartId, dateRange }: TMcpGetChartDataInput, ctx) => {
+    async ({ dashboardId, chartId, dateRange, picks }: TMcpGetChartDataInput, ctx) => {
       const context = toolContext(ctx);
-      const query = typeof dateRange === "string" ? { dateRange } : (dateRange ?? {});
+      const range = typeof dateRange === "string" ? { dateRange } : (dateRange ?? {});
       return await responseToMcpToolResult(
-        await getV3ChartData({ chartId, query, ...context }),
+        await getV3DashboardChartData({ dashboardId, chartId, query: { ...range, picks }, ...context }),
         context.requestId
       );
     }

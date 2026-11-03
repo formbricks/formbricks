@@ -1,0 +1,6 @@
+in: query
+name: to
+schema:
+  type: string
+  format: date
+description: Last day of a custom dashboard date range (inclusive). Requires `from`.

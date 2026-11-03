@@ -128,9 +128,9 @@ export async function listV3Dashboards({
 }
 
 /**
- * `GET /api/v3/dashboards/{dashboardId}` → 200 `{ data }` with every widget and its full chart, so one
- * call tells a caller what is on the dashboard. Each widget then fetches its own data from the chart
- * data endpoint, so one slow chart never holds up the rest.
+ * `GET /api/v3/dashboards/{dashboardId}` → 200 `{ data }` with every widget and its full chart, and the
+ * dashboard filters, so one call tells a caller what is on the dashboard. Each widget then fetches its own
+ * data through the dashboard (`getV3DashboardChartData`), so one slow chart never holds up the rest.
  */
 export async function getV3Dashboard({
   dashboardId,
@@ -430,6 +430,7 @@ const runDashboardReplace = async (
     auditLog.oldObject = result.previous;
     auditLog.newObject = {
       name: dashboard.name,
+      filters: dashboard.filters,
       widgets: dashboard.widgets.map(({ id, layout, order }) => ({ id, layout, order })),
     };
   }
@@ -438,8 +439,8 @@ const runDashboardReplace = async (
 };
 
 /**
- * `PUT /api/v3/dashboards/{dashboardId}` → 200 `{ data }`: the name and every widget's place in one
- * transaction, or nothing. Widgets left out are removed. A stale `updatedAt` answers 409 with the
+ * `PUT /api/v3/dashboards/{dashboardId}` → 200 `{ data }`: the name, every widget's place and, when sent,
+ * the dashboard filters in one transaction, or nothing. Widgets left out are removed. A stale `updatedAt` answers 409 with the
  * current one in `details`.
  */
 export async function replaceV3Dashboard({
@@ -459,6 +460,7 @@ export async function replaceV3Dashboard({
           dashboardId,
           expectedUpdatedAt: new Date(body.expectedUpdatedAt),
           name: body.name,
+          filters: body.filters,
           widgets: body.widgets,
         })
     );

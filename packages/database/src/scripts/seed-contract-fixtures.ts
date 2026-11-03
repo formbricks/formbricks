@@ -71,6 +71,7 @@ const CONTRACT_IDS = {
   DASHBOARD_DUPLICATE: "clctdashboarddupl0000001",
   DASHBOARD_REPLACE: "clctdashboardreplace0001",
   DASHBOARD_WIDGETS: "clctdashboardwidgets0001",
+  DASHBOARD_FILTER: "clctdashboardfilter00001",
   WIDGET_READ: "clctwidgetread0000000001",
   WIDGET_REPLACE: "clctwidgetreplace0000001",
   WIDGET_PATCH: "clctwidgetpatch000000001",
@@ -485,6 +486,19 @@ async function seedDashboards(organizationId: string): Promise<void> {
       workspaceId: SEED_IDS.WORKSPACE,
       createdBy: SEED_IDS.USER_ADMIN,
       updatedAt: CONTRACT_FIXTURE_UPDATED_AT,
+      // The read dashboard carries a list filter, so its value list answers from a real filter rather
+      // than the documented 422.
+      filters:
+        id === CONTRACT_IDS.DASHBOARD_READ
+          ? [
+              {
+                id: CONTRACT_IDS.DASHBOARD_FILTER,
+                field: "FeedbackRecords.sourceType",
+                operator: "equals",
+                label: "Source type",
+              },
+            ]
+          : [],
     };
     await prisma.dashboard.upsert({ where: { id }, update: fields, create: { id, ...fields } });
     for (const [order, [widgetId, chartId]] of widgets.entries()) {
@@ -769,6 +783,7 @@ async function main(): Promise<void> {
       chartId: CONTRACT_IDS.CHART_READ,
       dashboardId: CONTRACT_IDS.DASHBOARD_READ,
       widgetId: CONTRACT_IDS.WIDGET_READ,
+      filterId: CONTRACT_IDS.DASHBOARD_FILTER,
     },
     operations: {
       getResponseV3: { path: { responseId: CONTRACT_IDS.RESPONSE_READ } },

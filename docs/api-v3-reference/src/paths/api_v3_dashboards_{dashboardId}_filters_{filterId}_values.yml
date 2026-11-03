@@ -1,0 +1,74 @@
+get:
+  operationId: listDashboardFilterValuesV3
+  summary: List a dashboard filter's values
+  description: |
+    The values a list dashboard filter offers — one whose operator is `equals` or `notEquals` on a
+    text field: the values the dashboard's charts let through under their own saved filters and date
+    ranges, narrowed by the dashboard date range and the other filters' picks. The filter's own pick
+    never narrows its list. Charts whose Feedback Dataset lacks the field, or lacks another picked
+    filter's field, offer nothing.
+
+    Up to 100 values, alphabetical; `hasMore` says more match, and `search` narrows them
+    (case-insensitive, contains). A filter the dashboard does not have, or one that takes a typed
+    value, answers 422.
+
+    Needs read access to the dashboard's workspace and to every Feedback Dataset whose charts have
+    the field. Lists are cached for 60 seconds per dashboard version, filter, picks, date range and
+    search, shared by everyone who may read the dashboard; only an uncached list counts against the
+    chart-query budget (600 per minute, 20 at once, per user or API key).
+  tags:
+    - V3 Dashboards
+  parameters:
+    - $ref: ../components/parameters/DashboardIdPath.yml
+    - $ref: ../components/parameters/FilterIdPath.yml
+    - $ref: ../components/parameters/DashboardDateRangeQuery.yml
+    - $ref: ../components/parameters/DashboardDateFromQuery.yml
+    - $ref: ../components/parameters/DashboardDateToQuery.yml
+    - $ref: ../components/parameters/DashboardFilterPicksQuery.yml
+    - in: query
+      name: search
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 255
+      description: Only values containing this text, ignoring case.
+      example: bian
+  responses:
+    "200":
+      description: The filter's values
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/DashboardFilterValues.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3DashboardsForbidden.yml
+    "422":
+      $ref: ../components/responses/V3UnprocessableContent.yml
+    "429":
+      $ref: ../components/responses/V3ChartQueryTooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+    "502":
+      $ref: ../components/responses/V3ChartQueryFailed.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

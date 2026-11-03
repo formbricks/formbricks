@@ -1,6 +1,14 @@
 import { z } from "zod";
 import { V3_NAME_MAX_LENGTH } from "@/app/api/v3/charts/lib/schemas";
 import { V3_LIST_DEFAULT_LIMIT, V3_LIST_MAX_LIMIT } from "@/app/api/v3/lib/cursor-pagination";
+import { splitPickParams } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-picks";
+import {
+  MAX_DASHBOARD_FILTERS,
+  MAX_DASHBOARD_FILTER_PICK_VALUES,
+  MAX_DASHBOARD_FILTER_PICK_VALUE_LENGTH,
+  ZDashboardFilter,
+  findDashboardFilterIssues,
+} from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
 import {
   GRID_COLUMNS,
   MAX_WIDGET_HEIGHT,
@@ -127,13 +135,29 @@ export const refuseRepeatedWidgets = (widgets: { widgetId: string }[], ctx: z.Re
 };
 
 /**
- * `PUT /api/v3/dashboards/{dashboardId}`: the name and every widget's place, in one write. A widget left
- * out of `widgets` is removed — this is the app's save, which sends the whole edited dashboard.
+ * A dashboard's filters as a write sends them: at most `MAX_DASHBOARD_FILTERS`, each a catalog dimension
+ * with an operator it allows, ids unique. Every problem is named at its position.
+ */
+export const ZV3DashboardFilters = z
+  .array(ZDashboardFilter)
+  .max(MAX_DASHBOARD_FILTERS)
+  .superRefine((filters, ctx) => {
+    // The cap is the array's own `max`; only the per-filter problems are added here.
+    for (const issue of findDashboardFilterIssues(filters)) {
+      if (issue.path.length > 0) ctx.addIssue({ code: "custom", message: issue.message, path: issue.path });
+    }
+  });
+
+/**
+ * `PUT /api/v3/dashboards/{dashboardId}`: the name, every widget's place and, optionally, the filters, in
+ * one write. A widget left out of `widgets` is removed — this is the app's save, which sends the whole
+ * edited dashboard. Without `filters` the saved ones stay as they are.
  */
 export const ZV3DashboardReplaceBody = z
   .object({
     name: ZV3DashboardName,
     expectedUpdatedAt: ZV3ExpectedDashboardUpdatedAt,
+    filters: ZV3DashboardFilters.optional(),
     widgets: z
       .array(
         z
@@ -165,3 +189,48 @@ export const ZV3DashboardLayoutBody = z
   .strict()
   .superRefine((body, ctx) => refuseRepeatedWidgets(body.widgets, ctx));
 export type TV3DashboardLayoutBody = z.infer<typeof ZV3DashboardLayoutBody>;
+
+/** `GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data`. */
+export const ZV3DashboardChartParams = z.object({ dashboardId: z.cuid2(), chartId: z.cuid2() }).strict();
+
+/** `GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values`. */
+export const ZV3DashboardFilterParams = z.object({ dashboardId: z.cuid2(), filterId: z.cuid2() }).strict();
+
+const ZV3PickValue = z.string().max(MAX_DASHBOARD_FILTER_PICK_VALUE_LENGTH);
+
+/**
+ * A person's dashboard filter picks, sent as `picks[<filterId>]=value`, repeated for several values. Picks
+ * for a filter the dashboard does not have are ignored, as the page drops them.
+ */
+const ZV3DashboardPicks = z
+  .record(z.cuid2(), z.array(ZV3PickValue).min(1).max(MAX_DASHBOARD_FILTER_PICK_VALUES))
+  .refine((picks) => Object.keys(picks).length <= MAX_DASHBOARD_FILTERS, {
+    message: `At most ${MAX_DASHBOARD_FILTERS} filters can be picked.`,
+  });
+
+/** The dashboard date range, as the chart data route takes it: `dateRange`, or `from` and `to`. */
+const dashboardDateRange = {
+  dateRange: z.string().min(1).max(64).optional(),
+  from: z.string().min(1).max(32).optional(),
+  to: z.string().min(1).max(32).optional(),
+};
+
+/** The date range and the picks a dashboard-bound chart read is narrowed by. */
+export const ZV3DashboardChartDataQuery = z.preprocess(
+  splitPickParams,
+  z.object({ ...dashboardDateRange, picks: ZV3DashboardPicks.optional() }).strict()
+);
+export type TV3DashboardChartDataQuery = z.infer<typeof ZV3DashboardChartDataQuery>;
+
+/** A filter's value list: narrowed like the charts, and by a case-insensitive `search`. */
+export const ZV3DashboardFilterValuesQuery = z.preprocess(
+  splitPickParams,
+  z
+    .object({
+      ...dashboardDateRange,
+      picks: ZV3DashboardPicks.optional(),
+      search: z.string().trim().min(1).max(V3_NAME_MAX_LENGTH).optional(),
+    })
+    .strict()
+);
+export type TV3DashboardFilterValuesQuery = z.infer<typeof ZV3DashboardFilterValuesQuery>;

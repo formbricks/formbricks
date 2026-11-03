@@ -1,0 +1,24 @@
+type: object
+description: >-
+  Up to 100 values a list dashboard filter offers, in order: the values the dashboard's charts let
+  through under their saved filters and date ranges, narrowed by the dashboard date range and the
+  other filters' picks.
+required:
+  - values
+  - hasMore
+properties:
+  values:
+    type: array
+    maxItems: 100
+    items:
+      type: object
+      required:
+        - value
+      properties:
+        value:
+          type: string
+      additionalProperties: false
+  hasMore:
+    type: boolean
+    description: More values match than are listed; narrow them with `search`.
+additionalProperties: false

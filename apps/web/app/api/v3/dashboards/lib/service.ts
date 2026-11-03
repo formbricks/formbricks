@@ -57,6 +57,7 @@ export const WIDGET_READ_ORDER = [
 
 export const selectDashboardResource = {
   ...selectDashboardBase,
+  filters: true,
   widgets: { orderBy: WIDGET_READ_ORDER, select: selectWidgetResource },
 } satisfies Prisma.DashboardSelect;
 
@@ -162,6 +163,7 @@ export const duplicateDashboardRow = ({
       select: {
         name: true,
         workspaceId: true,
+        filters: true,
         // In the order the source shows them, so the copy can number them plainly: orders may tie.
         widgets: { orderBy: WIDGET_READ_ORDER, select: { chartId: true, layout: true } },
       },
@@ -189,6 +191,8 @@ export const duplicateDashboardRow = ({
         name: resolvedName,
         workspaceId: source.workspaceId,
         createdBy,
+        // The copy keeps the filter bar: its filters say how the shared charts are meant to be sliced.
+        filters: (source.filters ?? []) as Prisma.InputJsonValue,
         widgets: {
           create: source.widgets.map((widget, order) => ({
             chartId: widget.chartId,
@@ -200,3 +204,28 @@ export const duplicateDashboardRow = ({
       select: selectDashboardResource,
     });
   });
+
+/**
+ * A dashboard with what a dashboard-bound read needs: its workspace, version and filters, and each widget's
+ * chart query and Feedback Dataset — `chartId` narrows the widgets to that chart. A chart sits on a dashboard
+ * at most once, so a chart that is a widget here comes back as the one widget.
+ */
+export const getDashboardChartsRow = (dashboardId: string, { chartId }: { chartId?: string } = {}) =>
+  prisma.dashboard.findUnique({
+    where: { id: dashboardId },
+    select: {
+      id: true,
+      workspaceId: true,
+      updatedAt: true,
+      filters: true,
+      widgets: {
+        ...(chartId ? { where: { chartId } } : {}),
+        orderBy: WIDGET_READ_ORDER,
+        select: {
+          chart: { select: { id: true, type: true, query: true, feedbackDirectoryId: true } },
+        },
+      },
+    },
+  });
+
+export type TDashboardChartsRow = NonNullable<Awaited<ReturnType<typeof getDashboardChartsRow>>>;
