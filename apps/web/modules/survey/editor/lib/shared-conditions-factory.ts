@@ -7,7 +7,12 @@ import {
   TSingleCondition,
   TSurveyLogicConditionsOperator,
 } from "@formbricks/types/surveys/logic";
+import {
+  isMatrixRowCondition,
+  withMatrixColumnIdsFromPositions,
+} from "@formbricks/types/surveys/matrix-conditions";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { isConditionGroup } from "@formbricks/types/surveys/validation";
 import {
   addConditionBelow,
   createGroupFromResource,
@@ -23,6 +28,7 @@ import {
   getDefaultOperatorForElement,
   getElementOperatorOptions,
   getFormatLeftOperandValue,
+  getFormatRightOperandValue,
   getMatchValueProps,
 } from "@/modules/survey/editor/lib/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
@@ -77,12 +83,13 @@ export function createSharedConditionsFactory(
   // Handles special update logic for matrix elements, setting appropriate operators and metadata
   const handleMatrixElementUpdate = (resourceId: string, updates: Partial<TSingleCondition>): boolean => {
     if (updates.leftOperand && updates.leftOperand.type === "element") {
-      const [elementId, rowId] = updates.leftOperand.value.split(".");
+      const [elementId, rowIdx] = updates.leftOperand.value.split(".");
       const element = elements.find((q) => q.id === elementId);
 
       if (element && element.type === TSurveyElementTypeEnum.Matrix) {
         if (updates.leftOperand.value.includes(".")) {
-          // Matrix element with rowId is selected
+          // A matrix row is selected (picked by position): store its id next to it (ENG-6934).
+          const rowId = element.rows[Number(rowIdx)]?.id;
           onConditionsChange((conditions) => {
             const conditionsCopy = structuredClone(conditions);
             updateCondition(conditionsCopy, resourceId, {
@@ -90,7 +97,8 @@ export function createSharedConditionsFactory(
                 value: elementId,
                 type: "element",
                 meta: {
-                  row: rowId,
+                  row: rowIdx,
+                  ...(rowId !== undefined && { rowId }),
                 },
               },
               operator: "isEmpty",
@@ -105,12 +113,35 @@ export function createSharedConditionsFactory(
     return false; // Not handled
   };
 
+  /**
+   * ENG-6934: a column (or, for isAnyOf, columns) just picked on a matrix row condition is picked by
+   * position, so its ids are set from those positions, replacing the ones the condition had.
+   */
+  const withPickedMatrixColumnIds = (group: TConditionGroup, resourceId: string): void => {
+    group.conditions.forEach((condition, index) => {
+      if (isConditionGroup(condition)) {
+        withPickedMatrixColumnIds(condition, resourceId);
+        return;
+      }
+      const { leftOperand, rightOperand } = condition;
+      if (condition.id !== resourceId || rightOperand?.type !== "static") return;
+      if (leftOperand.type !== "element" || !isMatrixRowCondition(leftOperand.meta)) return;
+      const element = elements.find((e) => e.id === leftOperand.value);
+      if (element?.type !== TSurveyElementTypeEnum.Matrix) return;
+      group.conditions[index] = {
+        ...condition,
+        rightOperand: withMatrixColumnIdsFromPositions(element, rightOperand),
+      };
+    });
+  };
+
   const config: TConditionsEditorConfig<TSingleCondition> = {
     getLeftOperandOptions: () => getConditionValueOptions(survey, t, blockIdx, includeReservedFields),
     getOperatorOptions: (condition) => getConditionOperatorOptions(condition, survey, t),
     getValueProps: (condition) => getMatchValueProps(condition, survey, t, blockIdx),
     getDefaultOperator,
     formatLeftOperandValue: (condition) => getFormatLeftOperandValue(condition, survey),
+    formatRightOperandValue: (condition) => getFormatRightOperandValue(condition, survey),
   };
 
   const callbacks: TConditionsEditorCallbacks<TSingleCondition> = {
@@ -180,6 +211,7 @@ export function createSharedConditionsFactory(
       onConditionsChange((conditions) => {
         const conditionsCopy = structuredClone(conditions);
         updateCondition(conditionsCopy, resourceId, updates);
+        if (updates.rightOperand?.type === "static") withPickedMatrixColumnIds(conditionsCopy, resourceId);
         return conditionsCopy;
       });
     },

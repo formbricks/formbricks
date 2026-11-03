@@ -7,6 +7,11 @@ import {
 } from "@formbricks/types/surveys/expression-types";
 import type { TExpression } from "@formbricks/types/surveys/expressions";
 import type { TConditionGroup, TDynamicLogicFieldValue } from "@formbricks/types/surveys/logic";
+import {
+  type TFindMatrix,
+  findUnknownMatrixIds,
+  getMatrixLookup,
+} from "@formbricks/types/surveys/matrix-conditions";
 import { getOptionLists } from "@formbricks/types/surveys/show-if";
 import type { TSurveyEndings, TSurveyHiddenFields, TSurveyVariables } from "@formbricks/types/surveys/types";
 import { capInvalidParams } from "@/app/api/v3/lib/invalid-params";
@@ -33,6 +38,7 @@ type TReferenceLookup = {
   elementIds: Set<string>;
   variableIds: Set<string>;
   hiddenFieldIds: Set<string>;
+  findMatrix: TFindMatrix;
 };
 type TInvalidParamReferenceType = Exclude<InvalidParam["referenceType"], undefined>;
 
@@ -335,13 +341,28 @@ function validateConditionGroup(
   conditionGroup: TConditionGroup,
   path: string,
   references: TReferenceLookup,
-  issues: InvalidParam[]
+  issues: InvalidParam[],
+  isRoot = true
 ): void {
+  // ENG-6934: a matrix row or column id the matrix doesn't have. That walk covers nested groups.
+  if (isRoot) {
+    for (const issue of findUnknownMatrixIds(conditionGroup, references.findMatrix, [])) {
+      issues.push({
+        name: [path, ...issue.path].join("."),
+        reason: issue.message.replace("Conditional Logic: ", ""),
+        code: "dangling_reference",
+        identifier: issue.id,
+        referenceType: "element",
+        missingId: issue.id,
+      });
+    }
+  }
+
   conditionGroup.conditions.forEach((condition, index) => {
     const conditionPath = `${path}.conditions.${index}`;
 
     if ("conditions" in condition) {
-      validateConditionGroup(condition, conditionPath, references, issues);
+      validateConditionGroup(condition, conditionPath, references, issues, false);
       return;
     }
 
@@ -400,6 +421,7 @@ export function getV3SurveyReferenceInvalidParams(input: TReferenceValidationInp
     elementIds: new Set(elementIds),
     variableIds: new Set([...variableIds, ...computedOnlyIds]),
     hiddenFieldIds: new Set(hiddenFieldIds),
+    findMatrix: getMatrixLookup(input.blocks),
   };
 
   addDuplicateIdIssues(blockEntries, "Block", "block", issues);

@@ -8283,6 +8283,7 @@ components:
           description: Element id, variable id, hidden field id, or — for `reserved` — the name of an Embedded Data field-catalog entry (`country`, `deviceType`, `utmSource`, …). Reserved names are checked for non-emptiness only, deliberately not against the catalog, so a survey authored against a newer catalog still parses on an older self-hosted deployment.
         meta:
           type: object
+          description: 'On a matrix row condition: `row`, the 0-based position of the row, and `rowId`, its id. The id is read first and wins when the two disagree, so the condition survives reordering; it must be a row of the matrix. Either may be sent alone: the other is filled in on write. Positions stay for the previous release, which reads them only.'
           additionalProperties:
             type: string
       additionalProperties: false
@@ -8304,6 +8305,17 @@ components:
                 - type: array
                   items:
                     type: string
+              description: On a matrix row condition, the 0-based position of the column (a list of positions for `isAnyOf`). Kept next to `columnId` / `columnIds` for the previous release, which reads positions only; every write rewrites it from the ids.
+            columnId:
+              type: string
+              minLength: 1
+              description: 'On a matrix row condition, the id of the column. Read before `value` and wins when the two disagree, so the condition survives reordering. Must be a column of the matrix. Optional: when only `value` is sent, the id is filled in from the position on write.'
+            columnIds:
+              type: array
+              items:
+                type: string
+                minLength: 1
+              description: On a matrix row condition with `isAnyOf`, the ids of the columns `value` lists. Read before `value`, like `columnId`.
           additionalProperties: false
         - $ref: '#/components/schemas/SurveyDynamicReference'
     SurveyCondition:

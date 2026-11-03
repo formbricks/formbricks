@@ -25,6 +25,11 @@ import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/survey
 import { evaluateSetValue } from "@formbricks/types/surveys/expression-evaluation";
 import { TConditionGroup, TSingleCondition } from "@formbricks/types/surveys/logic";
 import { evaluateConditionGroup } from "@formbricks/types/surveys/logic-evaluation";
+import {
+  isMatrixRowCondition,
+  resolveMatrixColumnValue,
+  resolveMatrixRowIndex,
+} from "@formbricks/types/surveys/matrix-conditions";
 import { TActionCalculate, TSurveyLogicAction } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
@@ -370,6 +375,17 @@ const evaluateSingleCondition = (
       rightValue = Number(rightValue as string);
     }
 
+    // ENG-6934: a matrix row condition compares column positions; its column id(s) decide them.
+    if (
+      condition.leftOperand.type === "element" &&
+      condition.rightOperand?.type === "static" &&
+      typeof leftField === "object" &&
+      leftField.type === TSurveyElementTypeEnum.Matrix &&
+      isMatrixRowCondition(condition.leftOperand.meta)
+    ) {
+      rightValue = resolveMatrixColumnValue(leftField, condition.rightOperand);
+    }
+
     switch (condition.operator) {
       case "equals":
         if (condition.leftOperand.type === "element") {
@@ -634,12 +650,10 @@ const getLeftOperandValue = (
         typeof responseValue === "object" &&
         !Array.isArray(responseValue)
       ) {
-        if (leftOperand.meta && leftOperand.meta.row !== undefined) {
-          const rowIndex = Number(leftOperand.meta.row);
-
-          if (isNaN(rowIndex) || rowIndex < 0 || rowIndex >= currentElement.rows.length) {
-            return undefined;
-          }
+        if (isMatrixRowCondition(leftOperand.meta)) {
+          // ENG-6934: the row id first, the position as the fallback; an unknown id is no row.
+          const rowIndex = resolveMatrixRowIndex(currentElement, leftOperand.meta);
+          if (rowIndex === undefined) return undefined;
           const row = getLocalizedValue(currentElement.rows[rowIndex].label, selectedLanguage);
 
           const rowValue = responseValue[row];

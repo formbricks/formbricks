@@ -1,3 +1,4 @@
+import { withMatrixConditionIdsInBlocks } from "@formbricks/types/surveys/matrix-conditions";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { isDeepEqual } from "@/lib/utils/object";
 import { toComparableStoredCustomCss } from "@/modules/custom-css/components/lib/draft";
@@ -41,9 +42,14 @@ const IGNORED_LEGACY_COLUMNS = {
  * Custom CSS (ENG-3553) is compared by normalized source only. The editor sends an edited field with
  * empty compiled output and the server compiles it on save, and the auto-save keeps its result in refs,
  * so compiled output and the processor version would otherwise keep a saved survey dirty forever.
+ *
+ * Matrix condition positions (ENG-6934) are compared as the save writes them, rewritten from the row
+ * and column ids: after a reorder the editor still holds the old positions, the save stores the new
+ * ones, and the ids, which are what the author picked, are compared as they are.
  */
 const ignoringServerOwned = (survey: TSurvey): TSurvey => ({
   ...survey,
+  blocks: Array.isArray(survey.blocks) ? withMatrixConditionIdsInBlocks(survey.blocks) : survey.blocks,
   ...IGNORED_LEGACY_COLUMNS,
   updatedAt: IGNORED_UPDATED_AT,
   embeddedFields: survey.embeddedFields?.map(({ field: { id: _id, ...field }, link }) => ({ field, link })),

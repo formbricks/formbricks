@@ -124,6 +124,13 @@ export type TDynamicLogicFieldValueDeprecated = z.infer<typeof ZDynamicLogicFiel
 export const ZRightOperandStatic = z.object({
   type: z.literal("static"),
   value: z.union([z.string(), z.number(), z.array(z.string())]),
+  /**
+   * ENG-6934: on a matrix row condition, the id of the column `value` holds the position of. Read
+   * before the position, and wins when the two disagree (`matrix-conditions.ts`).
+   */
+  columnId: z.string().min(1).optional(),
+  /** ENG-6934: the column ids of a matrix row condition whose `value` is a list of positions (`isAnyOf`). */
+  columnIds: z.array(z.string().min(1)).optional(),
 });
 
 const _ZLeftOperand = ZDynamicLogicFieldValue;

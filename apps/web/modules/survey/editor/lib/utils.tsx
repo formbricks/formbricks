@@ -13,7 +13,11 @@ import {
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSurveyBlockLogic, TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
-import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import {
+  TSurveyElement,
+  TSurveyElementTypeEnum,
+  type TSurveyMatrixElement,
+} from "@formbricks/types/surveys/elements";
 import { expressionReferences } from "@formbricks/types/surveys/expressions";
 import {
   TConditionGroup,
@@ -23,6 +27,11 @@ import {
   TSurveyLogicConditionsOperator,
 } from "@formbricks/types/surveys/logic";
 import { getOptionLists } from "@formbricks/types/surveys/show-if";
+import {
+  isMatrixRowCondition,
+  resolveMatrixColumnValue,
+  resolveMatrixRowIndex,
+} from "@formbricks/types/surveys/matrix-conditions";
 import {
   TSurvey,
   TSurveyEndings,
@@ -464,7 +473,7 @@ export const getElementOperatorOptions = (
     options = getLogicRules(t).element[`openText.${inputType}`].options;
   } else if (element.type === TSurveyElementTypeEnum.Matrix && condition) {
     const isMatrixRow =
-      condition.leftOperand.type === "element" && condition.leftOperand?.meta?.row !== undefined;
+      condition.leftOperand.type === "element" && isMatrixRowCondition(condition.leftOperand.meta);
     options = getLogicRules(t).element[`matrix${isMatrixRow ? ".row" : ""}`].options;
   } else {
     options = getLogicRules(t).element[element.type].options;
@@ -486,17 +495,43 @@ export const getDefaultOperatorForElement = (
   return options[0].value.toString() as TSurveyLogicConditionsOperator;
 };
 
+/** The matrix element a row condition points into, or `undefined` for any other condition. */
+const getMatrixOfRowCondition = (
+  condition: TSingleCondition,
+  localSurvey: TSurvey
+): TSurveyMatrixElement | undefined => {
+  const { leftOperand } = condition;
+  if (leftOperand.type !== "element" || !isMatrixRowCondition(leftOperand.meta)) return undefined;
+  const element = getElementsFromBlocks(localSurvey.blocks).find((e) => e.id === leftOperand.value);
+  return element?.type === TSurveyElementTypeEnum.Matrix ? element : undefined;
+};
+
+/**
+ * The left operand as the picker's value: a matrix row condition shows `<matrix id>.<row position>`,
+ * the position read from the row id first (ENG-6934), so a row reordered since shows correctly.
+ */
 export const getFormatLeftOperandValue = (condition: TSingleCondition, localSurvey: TSurvey): string => {
-  if (condition.leftOperand.type === "element") {
-    const elements = getElementsFromBlocks(localSurvey.blocks);
-    const element = elements.find((e) => e.id === condition.leftOperand.value);
-    if (element && element.type === TSurveyElementTypeEnum.Matrix) {
-      if (condition.leftOperand?.meta?.row !== undefined) {
-        return `${condition.leftOperand.value}.${condition.leftOperand.meta.row}`;
-      }
-    }
+  const matrix = getMatrixOfRowCondition(condition, localSurvey);
+  if (matrix && condition.leftOperand.type === "element") {
+    const meta = condition.leftOperand.meta;
+    const rowIndex = resolveMatrixRowIndex(matrix, meta);
+    return `${condition.leftOperand.value}.${rowIndex ?? meta?.row ?? ""}`;
   }
   return condition.leftOperand.value;
+};
+
+/**
+ * The right operand as the value picker's value. A matrix row condition's column options are
+ * positions, so its column ids are read back to positions first (ENG-6934).
+ */
+export const getFormatRightOperandValue = (
+  condition: TSingleCondition,
+  localSurvey: TSurvey
+): string | number | string[] | undefined => {
+  const { rightOperand } = condition;
+  const matrix = getMatrixOfRowCondition(condition, localSurvey);
+  if (matrix && rightOperand?.type === "static") return resolveMatrixColumnValue(matrix, rightOperand);
+  return rightOperand?.value;
 };
 
 /**

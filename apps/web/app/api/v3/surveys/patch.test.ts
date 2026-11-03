@@ -1744,6 +1744,103 @@ describe("patchV3Survey", () => {
     });
   });
 
+  // ENG-6934: PATCH, the block routes and the MCP tools all end in patchV3Survey, so the matrix ids
+  // written here are written for all of them.
+  describe("matrix conditions by id (ENG-6934)", () => {
+    const grid = (rows: string[], columns: string[]) => ({
+      id: "grid",
+      type: "matrix" as const,
+      headline: { "en-US": "Rate each service" },
+      required: false,
+      shuffleOption: "none" as const,
+      rows: rows.map((id) => ({ id, label: { "en-US": id } })),
+      columns: columns.map((id) => ({ id, label: { "en-US": id } })),
+    });
+    const blocksWith = (
+      matrix: ReturnType<typeof grid>,
+      meta: Record<string, string>,
+      rightOperand: Record<string, unknown>
+    ) => [
+      {
+        id: "clbk1234567890123456789012",
+        name: "Ratings",
+        elements: [matrix],
+        logic: [
+          {
+            id: "clrule34567890123456789012",
+            conditions: {
+              id: "clgrp234567890123456789012",
+              connector: "and",
+              conditions: [
+                {
+                  id: "clcond4567890123456789012",
+                  leftOperand: { type: "element", value: "grid", meta },
+                  operator: "equals",
+                  rightOperand: { type: "static", ...rightOperand },
+                },
+              ],
+            },
+            actions: [{ id: "clact234567890123456789012", objective: "requireAnswer", target: "why" }],
+          },
+        ],
+      },
+      {
+        id: "clbk2234567890123456789012",
+        name: "Follow-up",
+        elements: [{ id: "why", type: "openText", headline: { "en-US": "Why?" }, required: false }],
+      },
+    ];
+    const writtenCondition = () => {
+      const data = vi.mocked(prisma.survey.update).mock.calls.at(0)?.[0].data as {
+        blocks: { logic?: { conditions: { conditions: unknown[] } }[] }[];
+      };
+      return data.blocks[0].logic?.[0].conditions.conditions[0];
+    };
+
+    test("writes the ids next to positions a caller sent alone", async () => {
+      const blocks = blocksWith(grid(["netflix", "disney"], ["poor", "good"]), { row: "1" }, { value: "0" });
+
+      await patchV3Survey(currentSurvey, { blocks }, "req_matrix_1", "org_1");
+
+      expect(writtenCondition()).toMatchObject({
+        leftOperand: { meta: { row: "1", rowId: "disney" } },
+        rightOperand: { value: "0", columnId: "poor" },
+      });
+    });
+
+    test("accepts the id form and rewrites stale positions from the ids", async () => {
+      const blocks = blocksWith(
+        grid(["disney", "netflix"], ["good", "poor"]),
+        { row: "0", rowId: "netflix" },
+        { value: "1", columnId: "good" }
+      );
+
+      await patchV3Survey(currentSurvey, { blocks }, "req_matrix_2", "org_1");
+
+      expect(writtenCondition()).toMatchObject({
+        leftOperand: { meta: { row: "1", rowId: "netflix" } },
+        rightOperand: { value: "0", columnId: "good" },
+      });
+    });
+
+    test("refuses a column id the matrix doesn't have, with its path, and does not write", async () => {
+      const blocks = blocksWith(
+        grid(["netflix", "disney"], ["poor", "good"]),
+        { row: "0", rowId: "netflix" },
+        { value: "1", columnId: "great" }
+      );
+
+      await expect(patchV3Survey(currentSurvey, { blocks }, "req_matrix_3", "org_1")).rejects.toMatchObject({
+        invalidParams: [
+          expect.objectContaining({
+            name: "blocks.0.logic.0.conditions.conditions.0.rightOperand.columnId",
+          }),
+        ],
+      });
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+  });
+
   describe("optimistic concurrency (ENG-3069)", () => {
     const expectedUpdatedAt = new Date("2026-04-21T10:00:00.000Z");
     const movedOnAt = new Date("2026-04-21T11:30:00.000Z");
