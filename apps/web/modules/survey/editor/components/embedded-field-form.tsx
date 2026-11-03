@@ -62,8 +62,13 @@ import {
 interface EmbeddedFieldFormProps {
   /** The field being edited, or null when this is the create form. Always a field this survey owns. */
   entry: TLinkedEmbeddedField | null;
-  /** Ids already spoken for in the survey's namespace: its elements and ending cards. */
+  /** Ids already spoken for in the survey's namespace: its elements' ids and codes, and ending cards. */
   takenIds: string[];
+  /**
+   * The refusal for a name that is a question's code, naming that question; `undefined` when no
+   * question has it. Without it, a clash only says the survey already uses the key.
+   */
+  describeQuestionCodeClash: (name: string) => string | undefined;
   /**
    * The addresses this survey's other fields occupy. The survey would otherwise only fail at the
    * save, on `@@unique([surveyId, storageKey])`, as a Prisma violation with no field to point at.
@@ -112,6 +117,7 @@ interface EmbeddedFieldFormProps {
 export const EmbeddedFieldForm = ({
   entry,
   takenIds,
+  describeQuestionCodeClash,
   takenStorageKeys,
   otherDeclaredNames,
   otherDisplayNames,
@@ -258,7 +264,8 @@ export const EmbeddedFieldForm = ({
         message: getEmbeddedFieldErrorMessage(
           addressError,
           declaresByAddress ? t("common.key") : t("common.name"),
-          t
+          t,
+          describeQuestionCodeClash(declaredName)
         ),
       });
       return;

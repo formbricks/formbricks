@@ -79,7 +79,7 @@ describe("writeExcelExport", () => {
     ]);
     expect(rows.get("block.block-1.buttonLabel")).toEqual([
       "",
-      "Block 1: Button Label",
+      "Block 1: Button label",
       "Next",
       "Weiter",
       "",

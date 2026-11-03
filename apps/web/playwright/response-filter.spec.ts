@@ -121,9 +121,9 @@ test.describe("Response filtering by reserved fields @slow", () => {
       await expect(page).toHaveURL(/\/summary\?filter%5Bmeta\.utmSource%5D%5BisNotSet%5D=true/);
       await expect(page.getByTestId("table-match-count")).toHaveText("1 result");
 
-      await page.getByRole("button", { name: "Download" }).click();
+      await page.getByTestId("fb__custom-filter-export").click();
       const downloadPromise = page.waitForEvent("download");
-      await page.getByTestId("fb__custom-filter-download-filtered-csv").click();
+      await page.getByTestId("export-submit").click();
       const download = await downloadPromise;
       const csvPath = testInfo.outputPath(download.suggestedFilename());
       await download.saveAs(csvPath);

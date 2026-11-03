@@ -61,6 +61,7 @@ const webUrl = (schema: string, path: string): TUnenforced =>
 
 export const EXPECTED_UNENFORCED: readonly TUnenforced[] = [
   pin("BatchDeleteResponsesRequest", "$.ids", "uniqueItems", true),
+  pin("BatchSetResponsesOutcomeRequest", "$.ids", "uniqueItems", true),
   pin("CreateResponseRequest", "$.data", "maxProperties", 500),
   pin("CreateResponseRequest", "$.data{}", "conditional", DATA_VALUE_CAPS),
   pin("CreateResponseRequest", "$.embeddedData", "maxProperties", 500),

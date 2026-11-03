@@ -96,8 +96,12 @@ export const importHistoricalResponses = async (
     const responses = await getResponses(survey.id, IMPORT_BATCH_SIZE, offset, filterCriteria);
     if (responses.length === 0) break;
 
+    // Low quality responses have no Feedback Records (ENG-4026). Filtered here, after the page is read, rather
+    // than in the query: the filter criteria can only select an outcome, not exclude one. Paging still runs
+    // over the whole page, so a page of nothing but Low quality responses does not end the import.
+    const publishable = responses.filter((response) => response.outcome !== "lowQuality");
     const batch = await processBatch(
-      responses,
+      publishable,
       survey,
       feedbackSource.formbricksMappings,
       feedbackSource.feedbackDirectoryId,

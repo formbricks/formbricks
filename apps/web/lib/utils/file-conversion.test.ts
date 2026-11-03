@@ -91,7 +91,7 @@ describe("convertToXlsxBuffer", () => {
   test("should convert JSON array to XLSX buffer and preserve data", () => {
     const buffer = convertToXlsxBuffer(fields, data);
     const wb = xlsx.read(buffer, { type: "buffer" });
-    const sheet = wb.Sheets["Sheet1"];
+    const sheet = wb.Sheets["Response Data"];
     // Skip header row (range:1) and remove internal row metadata
     const raw = xlsx.utils.sheet_to_json<Record<string, string | number>>(sheet, {
       header: fields,
@@ -114,7 +114,7 @@ describe("convertToXlsxBuffer", () => {
     const rows = payloads.map((p) => ({ name: p }));
     const buffer = convertToXlsxBuffer(["name"], rows);
     const wb = xlsx.read(buffer, { type: "buffer" });
-    const sheet = wb.Sheets["Sheet1"];
+    const sheet = wb.Sheets["Response Data"];
     payloads.forEach((p, i) => {
       const cell = sheet[`A${i + 2}`]; // row 1 is header
       // value stored as plain text, not as a formula (no `f` property)
@@ -126,7 +126,7 @@ describe("convertToXlsxBuffer", () => {
   test("should defang formula injection in xlsx header names", () => {
     const buffer = convertToXlsxBuffer(["=evil", "name"], [{ "=evil": "x", name: "Alice" }]);
     const wb = xlsx.read(buffer, { type: "buffer" });
-    const sheet = wb.Sheets["Sheet1"];
+    const sheet = wb.Sheets["Response Data"];
     const headerCell = sheet["A1"];
     expect(headerCell.f).toBeUndefined();
     expect(headerCell.v).toBe("'=evil");
@@ -142,7 +142,7 @@ describe("convertToXlsxBuffer", () => {
     // both cells survive instead of one overwriting the other.
     const buffer = convertToXlsxBuffer(["=field", "'=field"], [{ "=field": "a", "'=field": "b" }]);
     const wb = xlsx.read(buffer, { type: "buffer" });
-    const sheet = wb.Sheets["Sheet1"];
+    const sheet = wb.Sheets["Response Data"];
     expect(sheet["A1"].v).toBe("'=field");
     expect(sheet["B1"].v).toBe("'=field");
     expect(sheet["A2"].v).toBe("a");

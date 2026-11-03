@@ -106,7 +106,12 @@
         "groups": [
           {
             "group": "Overview",
-            "pages": ["surveys/overview", "surveys/analysis/reading-results"]
+            "pages": [
+              "surveys/overview",
+              "surveys/analysis/reading-results",
+              "surveys/analysis/export-responses",
+              "surveys/analysis/question-codes"
+            ]
           },
           {
             "group": "Surveys",
