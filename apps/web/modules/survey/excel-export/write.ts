@@ -14,7 +14,7 @@ import { fitCell, toReadableText, toXmlSafeText } from "./cell-text";
 import { createLogicRenderer } from "./logic";
 
 /**
- * The Excel export (ADR 0017): a survey as a sheet for reviewers and translators who don't use
+ * The Excel export (ADR 0021): a survey as a sheet for reviewers and translators who don't use
  * Formbricks. One row per text the survey shows (each question, option, matrix row and column, and
  * the rest), one column per language, the question's id and type, and its block's logic in plain words.
  *

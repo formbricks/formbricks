@@ -1370,7 +1370,7 @@ const ZV3CreateSurveyBodyBase = z.preprocess(
 
 /**
  * The create body without the workspace it is created in or the link survey's share `metadata`: a
- * survey as a Formbricks file carries it (ADR 0016), so the file holds no server-owned field and
+ * survey as a Formbricks file carries it (ADR 0020), so the file holds no server-owned field and
  * imports into whichever workspace the importer picks. Same rules as the create body, and strict, so its JSON Schema tells an AI assistant
  * editing a file which keys exist.
  */

@@ -71,7 +71,7 @@ const buildExportFile = async ({
  *
  * The body is the file's bytes, sent whole with a `Content-Length` rather than streamed: a survey body is
  * capped at 2 MB, and a client that knows the length can tell a complete download from a cut one. Each
- * format is a Formbricks file (ADR 0016) or an Excel export (ADR 0017), with the same headers, access
+ * format is a Formbricks file (ADR 0020) or an Excel export (ADR 0021), with the same headers, access
  * check and audit event.
  */
 export async function exportSurveyOperation({
