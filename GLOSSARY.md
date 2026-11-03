@@ -39,13 +39,19 @@ that is not listed here.
 
 **Field catalog** — The published list of fields a chart query may use, with each field's kind, type, label and filter options. It is the contract: a field not in the catalog is refused.
 
-**Date range** — The window of `collectedAt` a chart shows: a named preset (`last 7 days`), all time, or a pair of calendar dates, always read in the organization's display time zone. A date range given when reading a chart's data replaces the one saved on the chart.
+**Date range** — The window of `collectedAt` a chart shows: a named preset (`last 7 days`), all time, or a pair of calendar dates, always read in the organization's display time zone. A date range given when reading a chart's data narrows the one saved on the chart; it never widens it.
+
+**Answer filter** — A chart filter rule on how the same submission answered another question in the chart's Feedback Dataset, such as "NPS where Delivery is Late". A submission that skipped that question never matches, not even an "is not" rule. _Avoid_: sibling filter, response-wide filter.
 
 **Dashboard** — A named grid of widgets in a workspace. Its charts can come from different Feedback Datasets.
 
 **Widget** — One chart's placement on one dashboard: its position and size on the dashboard's 12-column grid, and its order. A chart sits on a dashboard at most once; removing a widget keeps the chart. User-facing copy says "chart". _Avoid_: placement, tile, panel.
 
 **Layout** — The positions and sizes of a dashboard's widgets. Widgets may not overlap; gaps close upward when the dashboard is drawn.
+
+**Dashboard filter** — A filter on one field and operator that a dashboard's editors pin to the dashboard's top bar, shared by everyone who opens it. Each person picks or enters its value (their **filter pick**, kept in their own browser); the pick applies to every chart on the dashboard and only ever narrows what a chart's own saved filters let through, never widens it. A chart whose Feedback Dataset lacks the field shows no data and says it cannot be filtered by it. _Avoid_: global filter, slicer.
+
+**Dashboard viewer** — An organization role that can only read the dashboards of the workspaces its teams are granted, and pick values in their dashboard filters. It never sees surveys, responses, contacts or Feedback Records, and never runs a chart query of its own: only the saved charts on dashboards it can see. _Avoid_: viewer, read-only member (a Member on a read team still sees raw data).
 
 **In use** — A chart is in use while it sits on at least one dashboard. A chart in use cannot be deleted; the refusal names the dashboards holding it.
 
