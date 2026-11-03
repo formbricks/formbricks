@@ -137,6 +137,8 @@ export type TFlowActionText =
   | { kind: "jump"; target: "block" | "ending" | "missing"; label: string }
   | { kind: "requireAnswer"; label: string }
   | { kind: "calculate"; label: string }
+  /** ENG-6933: names nothing, so the row reads "Mark as low quality". */
+  | { kind: "markLowQuality"; label: string }
   | { kind: "unknown"; label: string };
 
 const CALCULATE_SYMBOLS: Record<string, string> = {
@@ -191,6 +193,8 @@ export const describeAction = (
       const symbol = CALCULATE_SYMBOLS[action.operator] ?? action.operator;
       return { kind: "calculate", label: `${getFieldName(survey, action.variableId)} ${symbol} ${value}` };
     }
+    case "markLowQuality":
+      return { kind: "markLowQuality", label: "" };
     default:
       return { kind: "unknown", label: String((action as { objective?: unknown }).objective ?? "") };
   }

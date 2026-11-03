@@ -13,7 +13,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { getUpdatedActionBody } from "@/lib/surveyLogic/utils";
 import { SetValueFormula } from "@/modules/survey/editor/components/set-value-formula";
 import { oneStepToFormula } from "@/modules/survey/editor/lib/expression-formula";
-import { getAllowedActionObjectives, getNextActionObjective } from "@/modules/survey/editor/lib/rule-list";
+import { getNextActionObjective, getObjectivesForAction } from "@/modules/survey/editor/lib/rule-list";
 import {
   getActionObjectiveOptions,
   getActionOperatorOptions,
@@ -114,14 +114,13 @@ export function LogicEditorActions({
     handleActionsChange("update", actionIdx, actionBody);
   };
 
-  // Before the first question a rule may only jump or set a value (ENG-6932).
-  const allowedObjectives = new Set<string>(getAllowedActionObjectives(scopeBlockIdx));
-  const objectiveOptions = getActionObjectiveOptions(t).filter((option) =>
-    allowedObjectives.has(String(option.value))
-  );
-  const filteredObjectiveOptions = objectiveOptions.filter((option) => option.value !== "jumpToBlock");
-
-  const jumpToBlockActionIdx = actions.findIndex((action) => action.objective === "jumpToBlock");
+  // Before the first question a rule may only jump or set a value (ENG-6932); a rule jumps once and
+  // marks Low quality once (ENG-6933).
+  const objectiveOptions = getActionObjectiveOptions(t);
+  const getObjectiveOptions = (actionIdx: number) => {
+    const allowed = new Set<string>(getObjectivesForAction(actions, actionIdx, scopeBlockIdx));
+    return objectiveOptions.filter((option) => allowed.has(String(option.value)));
+  };
 
   return (
     <div className="flex grow flex-col gap-2">
@@ -139,18 +138,17 @@ export function LogicEditorActions({
               <div className={cn("grid flex-1 grid-cols-12 gap-x-2")}>
                 <div
                   className={cn(
-                    action.objective !== "calculate" && "col-span-4",
-                    action.objective === "calculate" && "col-span-3"
+                    (action.objective === "jumpToBlock" || action.objective === "requireAnswer") &&
+                      "col-span-4",
+                    action.objective === "calculate" && "col-span-3",
+                    // ENG-6933: takes nothing else, so the objective is the whole action.
+                    action.objective === "markLowQuality" && "col-span-12"
                   )}>
                   <InputCombobox
                     id={`action-${idx}-objective`}
                     key={`objective-${action.id}`}
                     showSearch={false}
-                    options={
-                      jumpToBlockActionIdx === -1 || idx === jumpToBlockActionIdx
-                        ? objectiveOptions
-                        : filteredObjectiveOptions
-                    }
+                    options={getObjectiveOptions(idx)}
                     value={action.objective}
                     onChangeValue={(val: string | number | string[]) => {
                       handleObjectiveChange(idx, val as TSurveyBlockLogicActionObjective);
@@ -159,7 +157,7 @@ export function LogicEditorActions({
                   />
                 </div>
 
-                {action.objective !== "calculate" && (
+                {(action.objective === "jumpToBlock" || action.objective === "requireAnswer") && (
                   <div className="col-span-8">
                     <InputCombobox
                       id={`action-${idx}-target`}

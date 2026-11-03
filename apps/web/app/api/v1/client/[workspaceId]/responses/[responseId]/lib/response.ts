@@ -1,7 +1,8 @@
 import { prisma } from "@formbricks/database";
 import { type TIngestFlag } from "@formbricks/types/embedded-data-ingest";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
-import { TResponseUpdateInput } from "@formbricks/types/responses";
+import { TClientResponseUpdateInput } from "@formbricks/types/responses";
+import { markResponseLowQualityFromSurvey } from "@/app/api/client/[workspaceId]/responses/lib/mark-low-quality";
 import { updateResponse } from "@/lib/response/service";
 import {
   evaluateResponseQuotas,
@@ -16,13 +17,17 @@ import {
 export const updateResponseWithQuotaEvaluation = async (
   responseId: string,
   surveyId: string,
-  responseInput: TResponseUpdateInput,
+  responseInput: TClientResponseUpdateInput,
   ingestFlags?: readonly TIngestFlag[]
 ): Promise<TResponseWithQuotaFull> => {
   const quotaContext = await loadQuotaEvaluationContext(surveyId);
 
   const txResponse = await prisma.$transaction(async (tx) => {
-    const response = await updateResponse(responseId, responseInput, tx, ingestFlags);
+    const updated = await updateResponse(responseId, responseInput, tx, ingestFlags);
+    // ENG-6933: one way, and only on this flag; `outcome` itself is not part of the client update (#9847).
+    const response = responseInput.markLowQuality
+      ? await markResponseLowQualityFromSurvey(tx, updated)
+      : updated;
 
     const quotaResult = await evaluateResponseQuotas({
       surveyId: response.surveyId,

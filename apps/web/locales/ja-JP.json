@@ -4357,6 +4357,7 @@
         "make_default": "デフォルトにする",
         "manage_languages": "言語を管理",
         "manage_translations": "翻訳を管理",
+        "mark_as_low_quality": "低品質としてマーク",
         "matrix_all_fields": "すべてのフィールド",
         "matrix_rows": "行",
         "max_file_size": "最大ファイルサイズ",

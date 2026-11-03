@@ -2,6 +2,7 @@ oneOf:
   - $ref: ./SurveyCalculateAction.yml
   - $ref: ./SurveyRequireAnswerAction.yml
   - $ref: ./SurveyJumpToBlockAction.yml
+  - $ref: ./SurveyMarkLowQualityAction.yml
 description: >
   Logic action. Keep referenced ids stable: `calculate.variableId` points to a
   variable id,
@@ -9,4 +10,5 @@ description: >
   `requireAnswer.target` points to an element id, and `jumpToBlock.target`
   points to a block id
 
-  or ending id.
+  or ending id. `markLowQuality` takes no target: it marks the response Low
+  quality when the rule fires.

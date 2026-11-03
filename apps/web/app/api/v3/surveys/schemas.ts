@@ -657,6 +657,7 @@ const EXPRESSION_VALUE_KEYS = new Set(["type", "value"]);
 const EXPRESSION_CALL_KEYS = new Set(["type", "fn", "args"]);
 const REQUIRE_ANSWER_ACTION_KEYS = new Set(["id", "objective", "target"]);
 const JUMP_TO_BLOCK_ACTION_KEYS = REQUIRE_ANSWER_ACTION_KEYS;
+const MARK_LOW_QUALITY_ACTION_KEYS = new Set(["id", "objective"]);
 
 function addUnknownKeyIssues(
   value: unknown,
@@ -911,6 +912,12 @@ function validateAction(value: unknown, path: string, issues: InvalidParam[]): v
 
   if (value.objective === "jumpToBlock") {
     addUnknownKeyIssues(value, JUMP_TO_BLOCK_ACTION_KEYS, path, issues);
+    return;
+  }
+
+  // ENG-6933: takes no target; the action itself is the whole instruction.
+  if (value.objective === "markLowQuality") {
+    addUnknownKeyIssues(value, MARK_LOW_QUALITY_ACTION_KEYS, path, issues);
   }
 }
 

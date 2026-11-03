@@ -4212,6 +4212,7 @@ checksums:
     workspace/surveys/edit/make_default: ba5d708e6fbd731d222f6261d77b1594
     workspace/surveys/edit/manage_languages: fe82303bc27b55ccfc076b527b185e39
     workspace/surveys/edit/manage_translations: 09b01c5c251e6dbc3dc6cd8b33fb6301
+    workspace/surveys/edit/mark_as_low_quality: 6fdd5a9a25ebc16f0d17d7b0d1f6e797
     workspace/surveys/edit/matrix_all_fields: 187240509163b2f52a400a565e57c67f
     workspace/surveys/edit/matrix_rows: 8f41f34e6ca28221cf1ebd948af4c151
     workspace/surveys/edit/max_file_size: 3d35a22048f4d22e24da698fb5fb77d7

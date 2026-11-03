@@ -9258,15 +9258,31 @@ components:
           format: cuid2
           description: Target block id or ending id.
       additionalProperties: false
+    SurveyMarkLowQualityAction:
+      type: object
+      description: 'Marks the response Low quality when the rule fires. The respondent sees nothing and carries on; the survey sends a one-way `markLowQuality: true` with its next response write, and the server sets the response''s `outcome` to `lowQuality`, exactly as a reviewer marking it does (it leaves the Analysis export and Dashboards, and can be restored). It never clears an outcome. Allowed in block rules only: in `startLogic` it is rejected with a 422 naming `startLogic.<rule>.actions.<action>`.'
+      required:
+        - id
+        - objective
+      properties:
+        id:
+          type: string
+          format: cuid2
+        objective:
+          type: string
+          enum:
+            - markLowQuality
+      additionalProperties: false
     SurveyLogicAction:
       oneOf:
         - $ref: '#/components/schemas/SurveyCalculateAction'
         - $ref: '#/components/schemas/SurveyRequireAnswerAction'
         - $ref: '#/components/schemas/SurveyJumpToBlockAction'
+        - $ref: '#/components/schemas/SurveyMarkLowQualityAction'
       description: |
         Logic action. Keep referenced ids stable: `calculate.variableId` points to a variable id,
         `requireAnswer.target` points to an element id, and `jumpToBlock.target` points to a block id
-        or ending id.
+        or ending id. `markLowQuality` takes no target: it marks the response Low quality when the rule fires.
     SurveyBlockLogic:
       type: object
       description: Conditional logic rule evaluated at block level.
@@ -9482,7 +9498,7 @@ components:
     SurveyStartLogic:
       type: array
       maxItems: 100
-      description: 'Rules before the first question. The survey runs them as soon as it loads, before the welcome card, and also when a start-at link skips ahead. Each rule has the block-rule shape (`id`, `conditions`, `actions`), but only two actions are allowed: `jumpToBlock`, to a block or to an ending (an ending is a screen-out: the respondent sees only that ending, and a finished response is stored that counts as Completed), and `calculate`, to set a computed field. `requireAnswer` and any other action are rejected with a 422 naming `startLogic.<rule>.actions.<action>`. Nothing has been answered yet, so conditions and values may read `hiddenField` (URL parameters), `variable` and `reserved` operands only; an `element` operand is rejected with a 422 naming `startLogic.<rule>.conditions` (or the action''s `value`). A jump to a block or ending that does not exist is a `dangling_reference`. The first jump wins, every `calculate` runs, and with no jump the respondent continues to the first block (or the start-at target). `[]` means the survey has none.'
+      description: 'Rules before the first question. The survey runs them as soon as it loads, before the welcome card, and also when a start-at link skips ahead. Each rule has the block-rule shape (`id`, `conditions`, `actions`), but only two actions are allowed: `jumpToBlock`, to a block or to an ending (an ending is a screen-out: the respondent sees only that ending, and a finished response is stored that counts as Completed), and `calculate`, to set a computed field. `requireAnswer`, `markLowQuality` and any other action are rejected with a 422 naming `startLogic.<rule>.actions.<action>`. Nothing has been answered yet, so conditions and values may read `hiddenField` (URL parameters), `variable` and `reserved` operands only; an `element` operand is rejected with a 422 naming `startLogic.<rule>.conditions` (or the action''s `value`). A jump to a block or ending that does not exist is a `dangling_reference`. The first jump wins, every `calculate` runs, and with no jump the respondent continues to the first block (or the start-at target). `[]` means the survey has none.'
       items:
         $ref: '#/components/schemas/SurveyBlockLogic'
       example:

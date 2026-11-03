@@ -105,7 +105,7 @@ export interface TFlowOutline {
   counts: { blocks: number; endings: number };
 }
 
-const EDITABLE_ACTION_OBJECTIVES = new Set(["jumpToBlock", "requireAnswer", "calculate"]);
+const EDITABLE_ACTION_OBJECTIVES = new Set(["jumpToBlock", "requireAnswer", "calculate", "markLowQuality"]);
 const EDITABLE_VALUE_TYPES = new Set(["static", "element", "variable", "hiddenField", "reserved"]);
 // ENG-6935: a calculation's value may also be a Set value expression, edited in the formula box, in a
 // block's rules and before the first question alike.
@@ -113,8 +113,9 @@ const EDITABLE_CALCULATE_ONLY_VALUE_TYPES = new Set(["expression"]);
 const EDITABLE_OPERAND_TYPES = new Set(["element", "variable", "hiddenField", "reserved"]);
 
 /**
- * Before the first question the editor offers no answers and no "require answer" (ENG-6932). A rule
- * written there through the API with either is shown read-only, as the validator refuses it anyway.
+ * Before the first question the editor offers no answers, no "require answer" (ENG-6932) and no "mark
+ * as low quality" (ENG-6933). A rule written there through the API with any of them is shown read-only,
+ * as the validator refuses it anyway.
  */
 const START_EDITABLE = {
   objectives: new Set(["jumpToBlock", "calculate"]),

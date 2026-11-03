@@ -23,7 +23,13 @@ import { ZShowConditions } from "../show-conditions";
 import { ZAllowedFileExtension } from "../storage";
 import { ZBaseStyling } from "../styling";
 import { ZLanguage } from "../workspace";
-import { type TSurveyBlock, type TSurveyBlockLogicAction, ZSurveyBlockLogic, ZSurveyBlocks } from "./blocks";
+import {
+  type TSurveyBlock,
+  type TSurveyBlockLogicAction,
+  ZActionMarkLowQuality,
+  ZSurveyBlockLogic,
+  ZSurveyBlocks,
+} from "./blocks";
 import { findBlocksWithCyclicLogic } from "./blocks-validation";
 import { validateSurveyCodes } from "./codes";
 import {
@@ -436,7 +442,13 @@ const ZActionJumpToQuestion = ZActionBase.extend({
  */
 export type TActionJumpToQuestion = z.infer<typeof ZActionJumpToQuestion>;
 
-export const ZSurveyLogicAction = z.union([ZActionCalculate, ZActionRequireAnswer, ZActionJumpToQuestion]);
+// `markLowQuality` (ENG-6933) is carried as it is, so the v1 questions view round-trips a block rule using it.
+export const ZSurveyLogicAction = z.union([
+  ZActionCalculate,
+  ZActionRequireAnswer,
+  ZActionJumpToQuestion,
+  ZActionMarkLowQuality,
+]);
 
 export type TSurveyLogicAction = z.infer<typeof ZSurveyLogicAction>;
 
@@ -3117,7 +3129,7 @@ const validateActions = (
           };
         }
       }
-    } else {
+    } else if (action.objective === "jumpToQuestion" || action.objective === "requireAnswer") {
       const endingIds = survey.endings.map((ending) => ending.id);
 
       const possibleQuestionIds =
@@ -4141,8 +4153,7 @@ const validateBlockActions = (
           path: ["blocks", blockIndex, "logic", logicIndex],
         };
       }
-    } else {
-      // action.objective === "jumpToBlock"
+    } else if (action.objective === "jumpToBlock") {
       const targetBlockId = action.target;
       const blockIds = survey.blocks.map((b) => b.id);
       const endingIds = survey.endings.map((ending) => ending.id);
@@ -4168,6 +4179,7 @@ const validateBlockActions = (
         };
       }
     }
+    // `markLowQuality` (ENG-6933) has nothing to check: it takes no target.
 
     return undefined;
   });

@@ -4357,6 +4357,7 @@
         "make_default": "Сделать основным",
         "manage_languages": "Управление языками",
         "manage_translations": "Управление переводами",
+        "mark_as_low_quality": "Отметить как некачественный",
         "matrix_all_fields": "Все поля",
         "matrix_rows": "Строки",
         "max_file_size": "Максимальный размер файла",

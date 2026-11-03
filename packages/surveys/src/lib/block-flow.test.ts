@@ -784,3 +784,112 @@ describe("startSurvey: rules before the first question (ENG-6932)", () => {
     ).toMatchObject({ nextCardId: "b3", skippedBlockIds: ["b2"] });
   });
 });
+
+describe("Mark as low quality (ENG-6933)", () => {
+  const markLowQuality = (id: string) => ({ id, objective: "markLowQuality" as const });
+
+  test("a firing rule asks for Low quality, and the respondent carries on to the next block", () => {
+    const survey = makeSurvey([
+      block("b1", { logic: [rule("r1", "a", [markLowQuality("lq")])] }),
+      block("b2"),
+    ]);
+
+    const result = advance(survey, { submittedData: { "b1-q": "a" } });
+
+    expect(result).toMatchObject({ markLowQuality: true, nextCardId: "b2", finished: false });
+  });
+
+  test("a rule that does not fire doesn't ask for it", () => {
+    const survey = makeSurvey([
+      block("b1", { logic: [rule("r1", "a", [markLowQuality("lq")])] }),
+      block("b2"),
+    ]);
+
+    expect(advance(survey, { submittedData: { "b1-q": "b" } }).markLowQuality).toBe(false);
+    expect(advance(makeSurvey([block("b1"), block("b2")])).markLowQuality).toBe(false);
+  });
+
+  test("runs alongside the rule's other actions: its jump and its calculations still apply", () => {
+    const survey = makeSurvey([
+      block("b1", {
+        logic: [
+          rule("r1", "a", [
+            markLowQuality("lq"),
+            addToScore("s", 3),
+            { id: "j", objective: "jumpToBlock", target: "end2" },
+          ]),
+        ],
+      }),
+      block("b2"),
+    ]);
+
+    expect(advance(survey, { variables: { score: 1 } })).toMatchObject({
+      markLowQuality: true,
+      finished: true,
+      endingId: "end2",
+      variables: { score: 4 },
+    });
+  });
+
+  test("a later rule that marks it counts even when an earlier rule already jumped", () => {
+    const survey = makeSurvey([
+      block("b1", {
+        logic: [
+          rule("r1", "a", [{ id: "j", objective: "jumpToBlock", target: "b3" }]),
+          rule("r2", "a", [markLowQuality("lq")]),
+        ],
+      }),
+      block("b2"),
+      block("b3"),
+    ]);
+
+    expect(advance(survey)).toMatchObject({ markLowQuality: true, nextCardId: "b3" });
+  });
+
+  test("a block passed over by show-if marks it when its logic does, as if submitted with no answers", () => {
+    const survey = makeSurvey([
+      block("b1"),
+      block("b2", { showIf: hiddenFieldIsSet("panel_id"), logic: [always("r2", [markLowQuality("lq")])] }),
+      block("b3"),
+    ]);
+
+    expect(advance(survey)).toMatchObject({
+      markLowQuality: true,
+      nextCardId: "b3",
+      skippedBlockIds: ["b2"],
+    });
+    expect(
+      enterBlock({
+        survey,
+        blockId: "b2",
+        responseData: {},
+        variables: {},
+        selectedLanguage: "default",
+        reservedFieldValues: {},
+      })
+    ).toMatchObject({ markLowQuality: true, nextCardId: "b3" });
+  });
+
+  test("is ignored before the first question, where the validator refuses it", () => {
+    const survey = {
+      ...makeSurvey([block("b1")]),
+      startLogic: [always("start", [markLowQuality("lq")])],
+    } as TJsWorkspaceStateSurvey;
+
+    expect(
+      startSurvey({
+        survey,
+        responseData: {},
+        variables: {},
+        selectedLanguage: "default",
+        reservedFieldValues: {},
+      })
+    ).toEqual({
+      firstCardId: "b1",
+      startBlockId: undefined,
+      finished: false,
+      endingId: undefined,
+      variables: {},
+    });
+  });
+});
