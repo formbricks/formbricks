@@ -330,6 +330,40 @@ describe("survey block discoverability (ENG-2180)", () => {
   });
 });
 
+describe("show-if discoverability (ENG-6931)", () => {
+  test("the blocks description documents show-if, and its example validates on a follow-up element", async () => {
+    const { ZV3CreateSurveyBody } = await import("@/app/api/v3/surveys/schemas");
+    const description = surveyAndFeedbackSchemas.ZMcpCreateSurveyInput.shape.blocks.description ?? "";
+    const { SURVEY_BLOCK_EXAMPLE, SURVEY_SHOW_IF_EXAMPLE } = surveyAndFeedbackSchemas;
+
+    expect(description).toContain("`showIf`");
+    expect(description).toContain("Reference rule");
+    expect(description).toContain(JSON.stringify(SURVEY_SHOW_IF_EXAMPLE));
+
+    const parsed = ZV3CreateSurveyBody.safeParse({
+      workspaceId: "clxx1234567890123456789012",
+      name: "Example",
+      blocks: [
+        {
+          ...SURVEY_BLOCK_EXAMPLE,
+          elements: [
+            ...SURVEY_BLOCK_EXAMPLE.elements,
+            {
+              id: "price_detail",
+              type: "openText",
+              headline: { "en-US": "Which price felt too high?" },
+              required: true,
+              showIf: SURVEY_SHOW_IF_EXAMPLE,
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(parsed.error?.issues ?? []).toEqual([]);
+  });
+});
+
 /**
  * The SDK validates tool arguments through `~standard.validate` ahead of the scope gate, and Zod parses
  * every array element before an array-level `.max()` runs — so an unbounded array argument cost one issue

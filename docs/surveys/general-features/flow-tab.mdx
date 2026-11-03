@@ -13,9 +13,11 @@ The Flow tab is there in every survey, including surveys created in CX mode.
 Read the outline from top to bottom. That is the order a respondent moves through the survey.
 
 * **Blocks.** Each block is one page of the survey. Its row shows its number, its name, its questions and how many rules it has.
+* **Show if.** A block or a question shown only to some respondents carries a **Show if:** badge that reads its condition. See [Show If](/surveys/general-features/show-if).
 * **Rules.** The rows indented under a block run after the respondent submits that block. Each row reads as a sentence, for example *If “services” includes one of Apple TV+ → Require an answer to “apple_reason”*.
   * A **blue** row is a rule that jumps or requires an answer.
   * A **green** row only calculates: it changes a calculated [Embedded Data](/surveys/general-features/variables) field.
+  * A rule with several actions sets them apart with a dot, and a jump comes last, after **then**: *score + 10 · Require an answer to “q3” then Block 4*.
 * **Everyone else.** Under a block's rules, **All other answers will continue to** says where respondents go when none of the rules jumped. It is the next block unless you choose another block or an ending.
 * **Endings.** The endings are listed last, in red. A redirect ending shows the address it sends respondents to.
 
@@ -35,6 +37,7 @@ To add a rule, use **Add logic** under a block:
 
 * **Jump rule** starts a rule that sends respondents to a later block or an ending.
 * **Calculation** starts a rule that changes a calculated field.
+* **Show this block if…** shows the block only to the respondents a condition matches. To show a single question only to some respondents, hover it and choose **Show if…**. See [Show If](/surveys/general-features/show-if).
 
 You can switch any action of a rule between Jump to block, Require Answer and Calculate, and add more actions to the same rule.
 

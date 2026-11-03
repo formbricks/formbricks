@@ -8259,6 +8259,123 @@ components:
         showResponseCount:
           type: boolean
       additionalProperties: false
+    SurveyDynamicReference:
+      type: object
+      description: Dynamic reference to another value in the survey document.
+      required:
+        - type
+        - value
+      properties:
+        type:
+          type: string
+          enum:
+            - element
+            - variable
+            - hiddenField
+            - reserved
+        value:
+          type: string
+          description: Element id, variable id, hidden field id, or — for `reserved` — the name of an Embedded Data field-catalog entry (`country`, `deviceType`, `utmSource`, …). Reserved names are checked for non-emptiness only, deliberately not against the catalog, so a survey authored against a newer catalog still parses on an older self-hosted deployment.
+        meta:
+          type: object
+          additionalProperties:
+            type: string
+      additionalProperties: false
+    SurveyLogicOperand:
+      oneOf:
+        - type: object
+          required:
+            - type
+            - value
+          properties:
+            type:
+              type: string
+              enum:
+                - static
+            value:
+              oneOf:
+                - type: string
+                - type: number
+                - type: array
+                  items:
+                    type: string
+          additionalProperties: false
+        - $ref: '#/components/schemas/SurveyDynamicReference'
+    SurveyCondition:
+      type: object
+      description: |
+        Single condition. Operators such as `isSubmitted`, `isSkipped`, `isClicked`, `isAccepted`,
+        `isBooked`, `isSet`, and `isEmpty` do not use `rightOperand`; comparison operators do.
+      required:
+        - id
+        - leftOperand
+        - operator
+      properties:
+        id:
+          type: string
+          format: cuid2
+        leftOperand:
+          $ref: '#/components/schemas/SurveyDynamicReference'
+        operator:
+          type: string
+          enum:
+            - equals
+            - doesNotEqual
+            - contains
+            - doesNotContain
+            - startsWith
+            - doesNotStartWith
+            - endsWith
+            - doesNotEndWith
+            - isSubmitted
+            - isSkipped
+            - isGreaterThan
+            - isLessThan
+            - isGreaterThanOrEqual
+            - isLessThanOrEqual
+            - equalsOneOf
+            - includesAllOf
+            - includesOneOf
+            - doesNotIncludeOneOf
+            - doesNotIncludeAllOf
+            - isClicked
+            - isNotClicked
+            - isAccepted
+            - isBefore
+            - isAfter
+            - isBooked
+            - isPartiallySubmitted
+            - isCompletelySubmitted
+            - isSet
+            - isNotSet
+            - isEmpty
+            - isNotEmpty
+            - isAnyOf
+        rightOperand:
+          $ref: '#/components/schemas/SurveyLogicOperand'
+      additionalProperties: false
+    SurveyConditionGroup:
+      type: object
+      required:
+        - id
+        - connector
+        - conditions
+      properties:
+        id:
+          type: string
+          format: cuid2
+        connector:
+          type: string
+          enum:
+            - and
+            - or
+        conditions:
+          type: array
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/SurveyCondition'
+              - $ref: '#/components/schemas/SurveyConditionGroup'
+      additionalProperties: false
     SurveyElementBase:
       type: object
       required:
@@ -8308,6 +8425,10 @@ components:
         isDraft:
           type: boolean
           description: Draft marker used by the editor and future update rules.
+        showIf:
+          allOf:
+            - $ref: '#/components/schemas/SurveyConditionGroup'
+          description: 'Show-if: the element is shown only when this condition group matches, re-evaluated live as answers above it on the same page change. A hidden element is not validated (a hidden required element never blocks submission) and its answer is not submitted. Conditions use the same operands and operators as block `logic`. Reference rule: an element''s show-if may use answers from earlier blocks and from elements above it in the same block, never itself or anything below it; a violation fails with `misordered_reference` at the exact condition path. Omit it, or send an empty group, for an element that is always shown.'
     SurveyQuestionCode:
       type: string
       maxLength: 30
@@ -8965,123 +9086,6 @@ components:
         Survey element/question inside a block. Element ids are stable public identifiers used by
         logic, recall strings, response data, quotas, integrations, and analysis. `type` selects the
         allowed shape; unsupported fields are rejected instead of ignored.
-    SurveyDynamicReference:
-      type: object
-      description: Dynamic reference to another value in the survey document.
-      required:
-        - type
-        - value
-      properties:
-        type:
-          type: string
-          enum:
-            - element
-            - variable
-            - hiddenField
-            - reserved
-        value:
-          type: string
-          description: Element id, variable id, hidden field id, or — for `reserved` — the name of an Embedded Data field-catalog entry (`country`, `deviceType`, `utmSource`, …). Reserved names are checked for non-emptiness only, deliberately not against the catalog, so a survey authored against a newer catalog still parses on an older self-hosted deployment.
-        meta:
-          type: object
-          additionalProperties:
-            type: string
-      additionalProperties: false
-    SurveyLogicOperand:
-      oneOf:
-        - type: object
-          required:
-            - type
-            - value
-          properties:
-            type:
-              type: string
-              enum:
-                - static
-            value:
-              oneOf:
-                - type: string
-                - type: number
-                - type: array
-                  items:
-                    type: string
-          additionalProperties: false
-        - $ref: '#/components/schemas/SurveyDynamicReference'
-    SurveyCondition:
-      type: object
-      description: |
-        Single condition. Operators such as `isSubmitted`, `isSkipped`, `isClicked`, `isAccepted`,
-        `isBooked`, `isSet`, and `isEmpty` do not use `rightOperand`; comparison operators do.
-      required:
-        - id
-        - leftOperand
-        - operator
-      properties:
-        id:
-          type: string
-          format: cuid2
-        leftOperand:
-          $ref: '#/components/schemas/SurveyDynamicReference'
-        operator:
-          type: string
-          enum:
-            - equals
-            - doesNotEqual
-            - contains
-            - doesNotContain
-            - startsWith
-            - doesNotStartWith
-            - endsWith
-            - doesNotEndWith
-            - isSubmitted
-            - isSkipped
-            - isGreaterThan
-            - isLessThan
-            - isGreaterThanOrEqual
-            - isLessThanOrEqual
-            - equalsOneOf
-            - includesAllOf
-            - includesOneOf
-            - doesNotIncludeOneOf
-            - doesNotIncludeAllOf
-            - isClicked
-            - isNotClicked
-            - isAccepted
-            - isBefore
-            - isAfter
-            - isBooked
-            - isPartiallySubmitted
-            - isCompletelySubmitted
-            - isSet
-            - isNotSet
-            - isEmpty
-            - isNotEmpty
-            - isAnyOf
-        rightOperand:
-          $ref: '#/components/schemas/SurveyLogicOperand'
-      additionalProperties: false
-    SurveyConditionGroup:
-      type: object
-      required:
-        - id
-        - connector
-        - conditions
-      properties:
-        id:
-          type: string
-          format: cuid2
-        connector:
-          type: string
-          enum:
-            - and
-            - or
-        conditions:
-          type: array
-          items:
-            oneOf:
-              - $ref: '#/components/schemas/SurveyCondition'
-              - $ref: '#/components/schemas/SurveyConditionGroup'
-      additionalProperties: false
     SurveyCalculateAction:
       type: object
       description: Updates a survey variable when the logic rule matches.
@@ -9214,6 +9218,10 @@ components:
           description: |
             Block or ending id used when no logic condition matches. Only valid when this same block
             has at least one `logic` rule; omit it for normal sequential flow.
+        showIf:
+          allOf:
+            - $ref: '#/components/schemas/SurveyConditionGroup'
+          description: 'Show-if: the block is shown only when this condition group matches. A block whose show-if fails is skipped, and its `logic` still runs as if the block were submitted with no answers. A block whose elements are all hidden by their show-if is skipped the same way. Conditions use the same operands and operators as `logic`. Reference rule: a block''s show-if may use answers from earlier blocks only (plus hidden fields, variables and reserved fields); a violation fails with `misordered_reference` at the exact condition path. Omit it, or send an empty group, for a block that is always shown.'
         buttonLabel:
           $ref: '#/components/schemas/TranslatableText'
         backButtonLabel:
@@ -10196,6 +10204,10 @@ components:
           description: |
             Block or ending id used when no logic condition matches. Only valid when this same block
             has at least one `logic` rule; omit it for normal sequential flow.
+        showIf:
+          allOf:
+            - $ref: '#/components/schemas/SurveyConditionGroup'
+          description: 'Show-if: the block is shown only when this condition group matches. A block whose show-if fails is skipped, and its `logic` still runs as if the block were submitted with no answers. A block whose elements are all hidden by their show-if is skipped the same way. Conditions use the same operands and operators as `logic`. Reference rule: a block''s show-if may use answers from earlier blocks only (plus hidden fields, variables and reserved fields); a violation fails with `misordered_reference` at the exact condition path. Omit it, or send an empty group, for a block that is always shown.'
         buttonLabel:
           $ref: '#/components/schemas/TranslatableText'
         backButtonLabel:

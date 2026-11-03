@@ -186,6 +186,23 @@ export const SURVEY_BLOCK_EXAMPLE = {
 };
 
 /**
+ * Show-if (ENG-6931), worked: a follow-up shown only when the answer above it on the same block
+ * matches. Kept as data so a test can prove it still validates.
+ */
+export const SURVEY_SHOW_IF_EXAMPLE = {
+  id: "clshowifgroup00000000001",
+  connector: "and",
+  conditions: [
+    {
+      id: "clshowifcond000000000001",
+      leftOperand: { type: "element", value: "improve" },
+      operator: "contains",
+      rightOperand: { type: "static", value: "price" },
+    },
+  ],
+};
+
+/**
  * A `rating`'s two extra fields, read off the element schema rather than restated.
  *
  * Restating them would reintroduce the drift this whole description exists to avoid, and would already
@@ -217,7 +234,17 @@ const SURVEY_BLOCKS_DESCRIPTION = [
   `its own required fields — a \`rating\` needs \`scale\` (${RATING_SCALES.join("|")}) and \`range\``,
   `(${RATING_RANGES.join("|")}), a \`pictureSelection\` needs two or more choices. An element that is`,
   "missing one is reported by its position, not by the field name, so add the type's own fields before",
-  `retrying. Example block: ${JSON.stringify(SURVEY_BLOCK_EXAMPLE)}`,
+  "retrying.",
+  "Show-if: a block or an element may carry an optional `showIf`, a condition group in the block `logic`",
+  "format (`{ id, connector: and|or, conditions: [{ id, leftOperand: { type: element|variable|hiddenField|reserved,",
+  "value }, operator, rightOperand? } or a nested group] }`), and is shown only when it matches; an empty group",
+  "or none means always shown. A block whose show-if fails, or whose elements are all hidden, is skipped and its",
+  "`logic` still runs as if submitted with no answers. A hidden element is not validated (a hidden required",
+  "element never blocks) and its answer is not submitted. Reference rule: a block's show-if may use answers from",
+  "earlier blocks only; an element's show-if from earlier blocks and elements above it in the same block, never",
+  "itself or anything below (`misordered_reference` at the exact condition path).",
+  `Example element show-if: ${JSON.stringify(SURVEY_SHOW_IF_EXAMPLE)}.`,
+  `Example block: ${JSON.stringify(SURVEY_BLOCK_EXAMPLE)}`,
 ].join(" ");
 
 /**

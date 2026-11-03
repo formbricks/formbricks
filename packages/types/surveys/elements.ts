@@ -3,6 +3,7 @@ import { ZStorageUrl, isSafeLinkUrl } from "../common";
 import { ZI18nString } from "../i18n";
 import { ZAllowedFileExtension } from "../storage";
 import { TSurveyElementTypeEnum } from "./constants";
+import { ZConditionGroup } from "./logic";
 import { FORBIDDEN_IDS } from "./validation";
 import { ZValidationRules } from "./validation-rules";
 
@@ -70,6 +71,12 @@ export const ZSurveyElementBase = z.object({
   scale: z.enum(["number", "smiley", "star"]).optional(),
   range: z.union([z.literal(5), z.literal(3), z.literal(4), z.literal(7), z.literal(10)]).optional(),
   isDraft: z.boolean().optional(),
+  /**
+   * Show-if (ENG-6931): the element is shown only when this condition group matches, re-evaluated
+   * live as answers above it on the same page change. It may use earlier blocks plus elements above
+   * it in the same block. Absent, or an empty group, means always shown.
+   */
+  showIf: ZConditionGroup.optional(),
 });
 
 /**

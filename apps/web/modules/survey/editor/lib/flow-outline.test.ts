@@ -80,13 +80,28 @@ describe("buildFlowOutline: every construct in the fixture survey", () => {
     ]);
   });
 
-  test("everything today's survey holds is editable, and nothing is read-only", () => {
+  test("everything the survey holds is editable, and nothing is read-only", () => {
     expect(allRuleRows(outline).every((row) => row.editable)).toBe(true);
     expect(outline.start).toBeNull();
-    expect(outline.blocks.flatMap((block) => block.badges)).toEqual([]);
-    expect(outline.blocks.flatMap((block) => block.elements.flatMap((element) => element.badges))).toEqual(
-      []
-    );
+    const badges = outline.blocks.flatMap((block) => [
+      ...block.badges,
+      ...block.elements.flatMap((element) => element.badges),
+    ]);
+    expect(badges.length).toBeGreaterThan(0);
+    expect(badges.every((badge) => badge.editable)).toBe(true);
+  });
+
+  test("a block's show-if and a question's show-if come out as editable badges (ENG-6931)", () => {
+    const heavyUsers = surveyFlowFixture.blocks[2];
+    const appleReason = surveyFlowFixture.blocks[4].elements[1];
+
+    expect(outline.blocks[2].badges).toEqual([
+      { kind: "showIf", conditions: heavyUsers.showIf, editable: true },
+    ]);
+    expect(outline.blocks[4].elements[1].badges).toEqual([
+      { kind: "showIf", conditions: appleReason.showIf, editable: true },
+    ]);
+    expect(outline.blocks[4].elements[0].badges).toEqual([]);
   });
 });
 
@@ -207,16 +222,28 @@ describe("buildFlowOutline: constructs the Flow tab cannot edit yet come out rea
     ]);
   });
 
-  test("show-if on a block and on a question", () => {
+  test("a show-if on an operand type the editor doesn't know", () => {
+    const unknownShowIf = {
+      ...showIf,
+      conditions: [
+        {
+          id: "unknownoperand0000000002",
+          leftOperand: { type: "contactAttribute", value: "plan" },
+          operator: "isSet",
+        },
+      ],
+    };
     const survey = withUnknown((draft) => {
-      draft.blocks[2].showIf = showIf;
-      draft.blocks[1].elements[1].showIf = showIf;
+      draft.blocks[1].showIf = unknownShowIf;
+      draft.blocks[1].elements[1].showIf = unknownShowIf;
     });
     const outline = buildFlowOutline(survey);
 
-    expect(outline.blocks[2].badges).toEqual([{ kind: "showIf", conditions: showIf, editable: false }]);
+    expect(outline.blocks[1].badges).toEqual([
+      { kind: "showIf", conditions: unknownShowIf, editable: false },
+    ]);
     expect(outline.blocks[1].elements[1].badges).toEqual([
-      { kind: "showIf", conditions: showIf, editable: false },
+      { kind: "showIf", conditions: unknownShowIf, editable: false },
     ]);
   });
 

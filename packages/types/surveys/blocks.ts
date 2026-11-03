@@ -132,6 +132,12 @@ export const ZSurveyBlock = z
     }),
     logic: z.array(ZSurveyBlockLogic).optional(),
     logicFallback: ZSurveyBlockId.optional(),
+    /**
+     * Show-if (ENG-6931): the block is shown only when this condition group matches. A block whose
+     * show-if fails is skipped, and its logic still runs as if it were submitted with no answers. It
+     * may use earlier blocks only. Absent, or an empty group, means always shown.
+     */
+    showIf: ZConditionGroup.optional(),
     buttonLabel: ZI18nString.optional(),
     backButtonLabel: ZI18nString.optional(),
   })
