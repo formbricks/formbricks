@@ -55,8 +55,8 @@ request or response, a new endpoint or route, or an env var whose default keeps 
 working leaves every existing consumer working unchanged. So does any change to internal code —
 functions, modules, types, workspace-package exports other than the SDK surface above — that no
 external consumer reaches, additive or not: "internal API" means internal to this repo, and this
-section is not about it. Nor is a change to a shape this PR introduces, or that an unmerged PR it
-stacks on introduced: the shape exists only on the branch, so there is no consumer to break and no
+section is not about it. Nor is a change to a shape no published release contains yet: nothing above
+is public until a release (prerelease included) ships it, so there is no consumer to break and no
 upgrade step to document — rename or delete it and fix its callers.
 
 Uncertain? That means the change isn't clearly one of the bullets above — leave it unticked and say

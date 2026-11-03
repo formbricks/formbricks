@@ -78,12 +78,13 @@ These remain review checks until their enforcement handles the repository's exis
   or 422, a renamed `meta` field or a widened scope gets a breaking-change entry like any route edit.
   Shipped mobile SDKs, js-core's cached environment state and the Zapier app read `/api/v1` and the client
   API without updating, so a field there is renamed only by adding the new one beside the old.
-- Unreleased code has no compatibility obligation. A shape this PR introduces, or one an unmerged PR it
-  stacks on introduced, has no consumer yet: rename, retype or delete it and update every caller in the same
-  PR. An alias, deprecated re-export, fallback branch or data backfill for something that has never left the
-  branch is a finding, not diligence: it is dead weight from the day it merges, and the next reader has to
-  work out which of the two copies is real. Once it lands on `main`, other work and deployed clients can
-  reach it, and the rules above apply from there.
+- Unreleased code has no compatibility obligation: released is the line, not merged. Self-hosters and Cloud
+  run published releases — prereleases included — and no workflow deploys `main` on merge, so a shape this PR
+  introduces, one an unmerged PR it stacks on introduced, or one merged to `main` that no release contains
+  has no consumer: rename, retype or delete it and update every caller in the same PR. An alias, deprecated
+  re-export, fallback branch or data backfill for something no release has shipped is a finding, not
+  diligence: it is dead weight in the next release, and the next reader has to work out which of the two
+  copies is real. From the first release that ships the shape, the rules above apply.
 
 ## File Uploads and Downloads
 
