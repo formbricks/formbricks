@@ -226,7 +226,7 @@ export const getReservedFilterEntries = (survey: TSurvey): TReservedFieldCatalog
  * `pageReferrer` are unbounded in practice, and the whole record ships to the client when the
  * filter opens; past this many options a dropdown is no better than the free-text input anyway.
  */
-const MAX_FILTER_VALUE_OPTIONS = 50;
+export const MAX_FILTER_VALUE_OPTIONS = 50;
 
 const addBoundedValue = (values: Record<string, Set<string>>, key: string, value: string): void => {
   values[key] ??= new Set();
