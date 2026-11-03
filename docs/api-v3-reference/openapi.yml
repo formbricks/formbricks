@@ -8604,6 +8604,13 @@ components:
           $ref: '#/components/schemas/TranslatableText'
         code:
           $ref: '#/components/schemas/SurveyAnswerCode'
+        showIf:
+          allOf:
+            - $ref: '#/components/schemas/SurveyConditionGroup'
+          description: 'Option show-if: the option (or matrix row or column) is offered only when this condition group matches, re-evaluated live as earlier answers change. It may use what its element''s show-if may use: answers from earlier blocks and from elements above its element in the same block, never its own element or anything below (`misordered_reference` at the exact condition path). A question left with no option to offer is skipped and recorded as not shown. Omit it, or send an empty group, for an option that is always offered. Allowed on published surveys.'
+        hidden:
+          type: boolean
+          description: 'Hidden: the option is never offered, whatever its `showIf` says, and is recorded as not shown. Use it to retire an option on a published survey instead of deleting it (deleting an option that existed at launch is refused): it keeps its id, answer code and earlier answers, and stays in results labelled Hidden.'
       additionalProperties: false
     SurveyShuffleOption:
       type: string
@@ -8772,6 +8779,13 @@ components:
           allOf:
             - $ref: '#/components/schemas/TranslatableText'
           description: Text alternative for `imageUrl`, read by screen readers. Omit or leave empty to fall back to the positional label ("Option 1", "Option 2", …); a choice image is never decorative, since the respondent selects it.
+        showIf:
+          allOf:
+            - $ref: '#/components/schemas/SurveyConditionGroup'
+          description: 'Option show-if: the option (or matrix row or column) is offered only when this condition group matches, re-evaluated live as earlier answers change. It may use what its element''s show-if may use: answers from earlier blocks and from elements above its element in the same block, never its own element or anything below (`misordered_reference` at the exact condition path). A question left with no option to offer is skipped and recorded as not shown. Omit it, or send an empty group, for an option that is always offered. Allowed on published surveys.'
+        hidden:
+          type: boolean
+          description: 'Hidden: the option is never offered, whatever its `showIf` says, and is recorded as not shown. Use it to retire an option on a published survey instead of deleting it (deleting an option that existed at launch is refused): it keeps its id, answer code and earlier answers, and stays in results labelled Hidden.'
       additionalProperties: false
     SurveyPictureSelectionElement:
       allOf:

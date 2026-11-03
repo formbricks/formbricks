@@ -681,7 +681,15 @@ describe("removal guards also see show-if (ENG-6931)", () => {
     const survey = withoutLogic();
 
     expect(findOptionUsedInLogic(survey, "services", "prime")).toBe(flatIndexOf(survey, "hours"));
-    expect(findOptionUsedInLogic(survey, "services", "apple")).toBe(-1);
+    // ENG-6937: "Apple TV+" in "fav" is offered only if "services" includes Apple TV+.
+    expect(findOptionUsedInLogic(survey, "services", "apple")).toBe(flatIndexOf(survey, "fav"));
+  });
+
+  test("a question an option's show-if depends on is reported as used (ENG-6937)", () => {
+    const survey = withoutLogic();
+
+    // Poster B in "ad_pick" is offered only once "brand_rank" is answered.
+    expect(findElementUsedInLogic(survey, "brand_rank")).toBe(flatIndexOf(survey, "ad_pick"));
   });
 
   test("a hidden field a show-if reads is reported as used", () => {
@@ -702,6 +710,28 @@ describe("removal guards also see show-if (ENG-6931)", () => {
     };
 
     expect(findHiddenFieldUsedInLogic(survey, signupDate)).toBe(flatIndexOf(survey, "email"));
+  });
+});
+
+describe("ranking conditions in the editor (T21, ENG-6937)", () => {
+  const rankedCondition: TSingleCondition = {
+    id: "rankedcondition000000001",
+    leftOperand: { type: "element", value: "brand_rank" },
+    operator: "includesOneOf",
+    rightOperand: { type: "static", value: [] },
+  };
+
+  test("a ranking offers 'includes one of' and its options, by id", () => {
+    const operators = getConditionOperatorOptions(rankedCondition, surveyFlowFixture, t).map(
+      (option) => option.value
+    );
+    expect(operators).toEqual(expect.arrayContaining(["includesOneOf", "includesAllOf"]));
+
+    const props = getMatchValueProps(rankedCondition, surveyFlowFixture, t);
+    const values = (props.options as TComboboxGroupedOption[]).flatMap((group) =>
+      group.options.map((option) => option.value)
+    );
+    expect(values).toEqual(["netflix", "disney", "prime"]);
   });
 });
 

@@ -414,6 +414,14 @@ describe("show-if discoverability (ENG-6931)", () => {
 
     expect(parsed.error?.issues ?? []).toEqual([]);
   });
+
+  test("the blocks description documents option show-if and Hidden options (ENG-6937)", () => {
+    const description = surveyAndFeedbackSchemas.ZMcpCreateSurveyInput.shape.blocks.description ?? "";
+
+    expect(description).toContain("Option show-if and Hidden");
+    expect(description).toContain("`hidden: true`");
+    expect(description).toContain("matrix row and column");
+  });
 });
 
 /**

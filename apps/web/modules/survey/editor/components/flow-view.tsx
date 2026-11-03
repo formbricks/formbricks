@@ -22,11 +22,13 @@ import { Trans, useTranslation } from "react-i18next";
 import { TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { LogicEditor } from "@/modules/survey/editor/components/logic-editor";
+import { OptionsShowIfPopover } from "@/modules/survey/editor/components/options-show-if-popover";
 import { ShowIfPopover } from "@/modules/survey/editor/components/show-if-popover";
 import { getBlockDisplayName, isAutoBlockName } from "@/modules/survey/editor/lib/blocks";
 import {
   type TFlowBadge,
   type TFlowBlockSection,
+  type TFlowElementItem,
   type TFlowRuleRow,
   buildFlowOutline,
 } from "@/modules/survey/editor/lib/flow-outline";
@@ -285,6 +287,8 @@ export const FlowView = ({
           />
         );
       case "optionsShowIf":
+        // ENG-6937: editable ones open the question's "Options shown if" popover, rendered with it.
+        if (badge.editable) return null;
         return (
           <Badge
             key={key}
@@ -296,6 +300,7 @@ export const FlowView = ({
           />
         );
       case "hiddenOptions":
+        if (badge.editable) return null;
         return (
           <Badge
             key={key}
@@ -324,6 +329,37 @@ export const FlowView = ({
         );
       }
     }
+  };
+
+  /**
+   * A question with options gets the "Options shown if" popover (ENG-6937), opened from its option
+   * badges, or from a hover action when it has none. Badges a read-only option show-if made read-only
+   * render as plain badges instead.
+   */
+  const renderOptionsShowIf = (item: TFlowElementItem | undefined, blockIdx: number) => {
+    if (!item || item.optionLists.length === 0) return null;
+    const optionBadges = item.badges.filter(
+      (badge) => badge.kind === "optionsShowIf" || badge.kind === "hiddenOptions"
+    );
+    if (optionBadges.some((badge) => !badge.editable)) return null;
+    const countOf = (kind: "optionsShowIf" | "hiddenOptions") => {
+      const badge = optionBadges.find((candidate) => candidate.kind === kind);
+      return badge && "count" in badge ? badge.count : 0;
+    };
+    const key = `options:${item.id}`;
+    return (
+      <OptionsShowIfPopover
+        localSurvey={localSurvey}
+        setLocalSurvey={setLocalSurvey}
+        blockIdx={blockIdx}
+        elementIdx={item.elementIdx}
+        optionLists={item.optionLists}
+        showIfCount={countOf("optionsShowIf")}
+        hiddenCount={countOf("hiddenOptions")}
+        isOpen={openShowIfKey === key}
+        onOpenChange={(open) => setOpenShowIfKey(open ? key : null)}
+      />
+    );
   };
 
   const renderRuleRow = (row: TFlowRuleRow, rules: TSurveyBlockLogic[], scopeBlockIdx: number) => {
@@ -524,6 +560,7 @@ export const FlowView = ({
                                 key: showIfKey,
                               })
                             )}
+                            {renderOptionsShowIf(block.elements[elementIdx], block.blockIdx)}
                             {!element.showIf && canAddShowIf(localSurvey, showIfTarget) && (
                               <button
                                 type="button"

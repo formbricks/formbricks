@@ -1,8 +1,14 @@
 import { buildEmbeddedLookup } from "@formbricks/types/embedded-data-resolver";
 import { type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
-import { type TBlockVisibility, dropAnswers, getBlockVisibility } from "@formbricks/types/surveys/show-if";
+import {
+  type TBlockVisibility,
+  type TOptionsNotShown,
+  dropAnswers,
+  getBlockVisibility,
+} from "@formbricks/types/surveys/show-if";
 import { evaluateLogic, performActions } from "@/lib/logic";
+import { createDropOptionAnswers } from "@/lib/option-answers";
 import { END_BLOCK_ID, START_BLOCK_ID, getForwardTargetFromOffBlockId } from "@/lib/survey-navigation";
 
 export interface TAdvanceFromBlockInput {
@@ -41,11 +47,18 @@ export interface TAdvanceFromBlockResult {
   requiredQuestionIds: string[];
   /**
    * The answers to persist from the current block: `submittedData` without the answers of elements
-   * hidden by show-if on this page (an answer typed before the question hid is not submitted).
+   * hidden by show-if on this page (an answer typed before the question hid is not submitted). An
+   * answer of this page that picks options the page no longer offers (ENG-6937) is re-submitted
+   * without them, also when it was stored earlier and left untouched, so the response drops them.
    */
   submittedData: TResponseData;
-  /** Elements of the current block hidden by show-if when it was submitted. */
+  /**
+   * Elements of the current block not shown when it was submitted: hidden by show-if, or left with no
+   * options to offer (ENG-6937).
+   */
   hiddenElementIds: string[];
+  /** The options, rows and columns the current block's shown elements did not offer (ENG-6937). */
+  optionsNotShown: TOptionsNotShown;
   /**
    * Blocks passed over on the way to `nextBlockId` because they were not shown (their show-if
    * failed, or all their elements were hidden). Their logic ran as if submitted with no answers.
@@ -78,15 +91,19 @@ const getVisibility = (
   block: TSurveyBlock
 ): TPageVisibility => {
   const { survey, variables, selectedLanguage, reservedFieldValues } = input;
-  return getBlockVisibility(block, input.responseData, (group, data) =>
-    evaluateLogic(
-      survey,
-      data,
-      variables,
-      group,
-      selectedLanguage,
-      buildEmbeddedLookup(survey, reservedFieldValues, data)
-    )
+  return getBlockVisibility(
+    block,
+    input.responseData,
+    (group, data) =>
+      evaluateLogic(
+        survey,
+        data,
+        variables,
+        group,
+        selectedLanguage,
+        buildEmbeddedLookup(survey, reservedFieldValues, data)
+      ),
+    createDropOptionAnswers(selectedLanguage)
   );
 };
 
@@ -98,9 +115,31 @@ const getVisibility = (
 export const getPageVisibility = (input: TPageVisibilityInput): TPageVisibility => {
   const block = input.survey.blocks.find((candidate) => candidate.id === input.blockId);
   if (!block) {
-    return { shown: false, visibleElementIds: [], hiddenElementIds: [], data: input.responseData };
+    return {
+      shown: false,
+      visibleElementIds: [],
+      hiddenElementIds: [],
+      optionsNotShown: {},
+      data: input.responseData,
+    };
   }
   return getVisibility(input, block);
+};
+
+/**
+ * The answers a page is rendered with (ENG-6937): `responseData`, with each shown element's answer
+ * without the options the page no longer offers, so a stale pick is neither shown nor validated. The
+ * submit then sends the answer without them (`advanceFromBlock`).
+ */
+export const getPageAnswers = (responseData: TResponseData, page: TPageVisibility): TResponseData => {
+  let answers = responseData;
+  for (const elementId of Object.keys(page.optionsNotShown)) {
+    const value = page.data[elementId];
+    if (value !== undefined && value !== responseData[elementId]) {
+      answers = { ...answers, [elementId]: value };
+    }
+  }
+  return answers;
 };
 
 interface TLogicOutcome {
@@ -252,6 +291,7 @@ export const advanceFromBlock = (input: TAdvanceFromBlockInput): TAdvanceFromBlo
   let data: TResponseData = { ...input.responseData, ...input.submittedData };
   let submittedData = input.submittedData;
   let hiddenElementIds: string[] = [];
+  let optionsNotShown: TOptionsNotShown = {};
 
   if (blockId === START_BLOCK_ID) {
     rawNextBlockId = input.startBlockId || survey.blocks[0]?.id || firstEndingId;
@@ -262,8 +302,15 @@ export const advanceFromBlock = (input: TAdvanceFromBlockInput): TAdvanceFromBlo
     // its logic.
     const page = getVisibility({ ...input, responseData: data }, currentBlock);
     hiddenElementIds = page.hiddenElementIds;
-    data = page.data;
+    optionsNotShown = page.optionsNotShown;
     submittedData = dropAnswers(input.submittedData, hiddenElementIds);
+    // ENG-6937: an answer that picks options the page no longer offers goes out without them.
+    for (const elementId of Object.keys(optionsNotShown)) {
+      if (data[elementId] !== undefined && page.data[elementId] !== data[elementId]) {
+        submittedData = { ...submittedData, [elementId]: page.data[elementId] };
+      }
+    }
+    data = page.data;
 
     const outcome = runBlockLogic(input, currentBlock, data, input.variables);
     rawNextBlockId = outcome.jumpTarget || survey.blocks[currentBlockIndex + 1]?.id;
@@ -306,6 +353,7 @@ export const advanceFromBlock = (input: TAdvanceFromBlockInput): TAdvanceFromBlo
     requiredQuestionIds,
     submittedData,
     hiddenElementIds,
+    optionsNotShown,
     skippedBlockIds: skipped.skippedBlockIds,
     markLowQuality: markLowQuality || skipped.markLowQuality,
   };
@@ -331,6 +379,7 @@ export const enterBlock = (input: Omit<TAdvanceFromBlockInput, "submittedData">)
     requiredQuestionIds: skipped.requiredQuestionIds,
     submittedData: {},
     hiddenElementIds: [],
+    optionsNotShown: {},
     skippedBlockIds: skipped.skippedBlockIds,
     markLowQuality: skipped.markLowQuality,
   };

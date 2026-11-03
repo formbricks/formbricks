@@ -1,4 +1,5 @@
 import { type TResponseNotShown } from "@formbricks/types/surveys/not-shown";
+import { type TOptionListKey, type TOptionsNotShown } from "@formbricks/types/surveys/show-if";
 
 /**
  * The not-shown record the survey sends with every update (ENG-6936, ADR 0023), built from what
@@ -21,7 +22,19 @@ export interface TNotShownStep {
   hiddenElementIds: string[];
   /** Blocks passed over after it because they were not shown. */
   skippedBlockIds: string[];
+  /**
+   * The options, rows and columns that block's shown elements did not offer (ENG-6937). Optional: a
+   * step saved for offline progress before 6937 has none.
+   */
+  optionsNotShown?: TOptionsNotShown;
 }
+
+/** Where each option list goes in the record (json-shapes §8). */
+const RECORD_KEY_OF: Record<TOptionListKey, "options" | "rows" | "columns"> = {
+  choices: "options",
+  rows: "rows",
+  columns: "columns",
+};
 
 type TRecordSurvey = { blocks: readonly { id: string; elements: readonly { id: string }[] }[] };
 
@@ -42,18 +55,29 @@ export const buildNotShownRecord = (
 ): TResponseNotShown => {
   const blocks = new Set<string>();
   const elements = new Set<string>();
+  // Element id → what it did not offer, from the step that last submitted its block.
+  const options = new Map<string, TOptionsNotShown[string]>();
   const elementIdsOf = (blockId: string) =>
     survey.blocks.find((block) => block.id === blockId)?.elements.map((element) => element.id) ?? [];
 
   for (const step of steps) {
     // Submitted from this block, so it was shown, and only what its page hid stays hidden.
     blocks.delete(step.blockId);
-    for (const elementId of elementIdsOf(step.blockId)) elements.delete(elementId);
+    for (const elementId of elementIdsOf(step.blockId)) {
+      elements.delete(elementId);
+      options.delete(elementId);
+    }
     for (const elementId of step.hiddenElementIds) elements.add(elementId);
+    for (const [elementId, notShown] of Object.entries(step.optionsNotShown ?? {})) {
+      options.set(elementId, notShown);
+    }
 
     for (const blockId of step.skippedBlockIds) {
       blocks.add(blockId);
-      for (const elementId of elementIdsOf(blockId)) elements.delete(elementId);
+      for (const elementId of elementIdsOf(blockId)) {
+        elements.delete(elementId);
+        options.delete(elementId);
+      }
     }
   }
 
@@ -62,8 +86,23 @@ export const buildNotShownRecord = (
     block.elements.filter((element) => elements.has(element.id)).map((element) => element.id)
   );
 
+  // ENG-6937: per shown element, the options, rows and columns it did not offer, in survey order.
+  const maps: Pick<TResponseNotShown, "options" | "rows" | "columns"> = {};
+  for (const block of survey.blocks) {
+    for (const element of block.elements) {
+      const notShown = options.get(element.id);
+      if (!notShown || elements.has(element.id)) continue;
+      for (const [listKey, ids] of Object.entries(notShown) as [TOptionListKey, string[]][]) {
+        if (ids.length === 0) continue;
+        const recordKey = RECORD_KEY_OF[listKey];
+        maps[recordKey] = { ...maps[recordKey], [element.id]: ids };
+      }
+    }
+  }
+
   return {
     ...(orderedBlocks.length > 0 && { blocks: orderedBlocks }),
     ...(orderedElements.length > 0 && { elements: orderedElements }),
+    ...maps,
   };
 };

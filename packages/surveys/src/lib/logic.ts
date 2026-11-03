@@ -156,6 +156,17 @@ const getLeftOperandValue = (
         }
       }
 
+      // T21 (ENG-6937): a ranking stores the ranked labels in the respondent's language; conditions name
+      // option ids, so "was ranked" maps each label back, as multi select does.
+      if (currentQuestion.type === "ranking" && Array.isArray(responseValue)) {
+        return responseValue.flatMap((value) => {
+          const choice = currentQuestion.choices.find(
+            (candidate) => getLocalizedValue(candidate.label, selectedLanguage) === value
+          );
+          return choice ? [choice.id] : [];
+        });
+      }
+
       if (
         currentQuestion.type === "matrix" &&
         typeof responseValue === "object" &&

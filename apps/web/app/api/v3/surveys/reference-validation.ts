@@ -12,6 +12,7 @@ import {
   findUnknownMatrixIds,
   getMatrixLookup,
 } from "@formbricks/types/surveys/matrix-conditions";
+import { getOptionLists } from "@formbricks/types/surveys/show-if";
 import type { TSurveyEndings, TSurveyHiddenFields, TSurveyVariables } from "@formbricks/types/surveys/types";
 import { capInvalidParams } from "@/app/api/v3/lib/invalid-params";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
@@ -502,6 +503,18 @@ export function getV3SurveyReferenceInvalidParams(input: TReferenceValidationInp
           issues
         );
       }
+      // ENG-6937: option, row and column show-if reference the same things.
+      for (const { listKey, items } of getOptionLists(element)) {
+        items.forEach((item, itemIndex) => {
+          if (!item.showIf) return;
+          validateConditionGroup(
+            item.showIf,
+            `blocks.${blockIndex}.elements.${elementIndex}.${listKey}.${itemIndex}.showIf`,
+            references,
+            issues
+          );
+        });
+      }
     });
 
     block.logic?.forEach((logic, logicIndex) => {
@@ -848,16 +861,31 @@ function getV3SurveyPrecedenceViolations(input: TReferenceValidationInput): TPre
     }
 
     block.elements.forEach((element, elementIndex) => {
-      if (!element.showIf) return;
       const ownFlatIndex = positions.get(element.id)?.flatIndex ?? firstElementFlatIndex + elementIndex;
-      addShowIfViolations(
-        element.showIf,
-        `blocks.${blockIndex}.elements.${elementIndex}.showIf`,
-        `element:${element.id}`,
-        // Earlier blocks, or above it on the same block: strictly before it in flat order.
-        (target) => target.flatIndex < ownFlatIndex,
-        "an element's show-if can only use elements from earlier blocks or above it on the same block"
-      );
+      // Earlier blocks, or above it on the same block: strictly before it in flat order.
+      const isBefore = (target: TElementPosition) => target.flatIndex < ownFlatIndex;
+      if (element.showIf) {
+        addShowIfViolations(
+          element.showIf,
+          `blocks.${blockIndex}.elements.${elementIndex}.showIf`,
+          `element:${element.id}`,
+          isBefore,
+          "an element's show-if can only use elements from earlier blocks or above it on the same block"
+        );
+      }
+      // ENG-6937: an option, a row or a column follows its element's rule.
+      for (const { listKey, items } of getOptionLists(element)) {
+        items.forEach((item, itemIndex) => {
+          if (!item.showIf) return;
+          addShowIfViolations(
+            item.showIf,
+            `blocks.${blockIndex}.elements.${elementIndex}.${listKey}.${itemIndex}.showIf`,
+            `${listKey}:${element.id}:${item.id}`,
+            isBefore,
+            "an option's show-if can only use elements from earlier blocks or above its element on the same block"
+          );
+        });
+      }
     });
 
     block.logic?.forEach((logic, logicIndex) => {

@@ -6,7 +6,7 @@ import {
   surveyFlowFixture,
 } from "@formbricks/types/surveys/test-fixtures/survey-flow-fixture";
 import type { TSurvey } from "@formbricks/types/surveys/types";
-import { createShowIf, getShowIf, getShowIfScope, updateShowIf } from "./show-if-editing";
+import { createShowIf, getShowIf, getShowIfScope, setOptionHidden, updateShowIf } from "./show-if-editing";
 
 /**
  * Show-if editing on the Flow tab (ENG-6931). The fixture's blocks: 0 services (`services`),
@@ -137,5 +137,66 @@ describe("updateShowIf and getShowIf", () => {
     const next = updateShowIf(surveyFlowFixture, { type: "block", blockIdx: 2 }, () => undefined);
 
     expect("showIf" in next.blocks[2]).toBe(false);
+  });
+});
+
+describe("option show-if and Hidden (ENG-6937)", () => {
+  // `bundle` is question 3 of the Overall block (index 2); `brand_grid` is question 3 of Profile.
+  const bundleOption = (optionId: string) =>
+    ({ type: "option", blockIdx: 4, elementIdx: 2, listKey: "choices", optionId }) as const;
+  const gridRow = (optionId: string) =>
+    ({ type: "option", blockIdx: 5, elementIdx: 2, listKey: "rows", optionId }) as const;
+  const condition: TConditionGroup = {
+    id: "optionshowifgroup0000001",
+    connector: "and",
+    conditions: [
+      {
+        id: "optionshowifcond00000001",
+        leftOperand: { type: "element", value: "fav" },
+        operator: "isSubmitted",
+      },
+    ],
+  };
+
+  test("an option's show-if sees what its question's sees", () => {
+    const scope = getShowIfScope(surveyFlowFixture, bundleOption("no_bundle"));
+
+    expect(elementIds(scope.survey).slice(-2)).toEqual(["fav", "apple_reason"]);
+    expect(scope.blockIdx).toBe(4);
+  });
+
+  test("a new option show-if starts on the question right above the option's question", () => {
+    expect(createShowIf(surveyFlowFixture, bundleOption("no_bundle"), operator)?.conditions).toEqual([
+      expect.objectContaining({ leftOperand: { type: "element", value: "apple_reason" } }),
+    ]);
+  });
+
+  test("sets and removes an option's and a matrix row's show-if, key and all", () => {
+    const withCondition = updateShowIf(surveyFlowFixture, bundleOption("no_bundle"), () => condition);
+    const withRow = updateShowIf(withCondition, gridRow("row_netflix"), () => condition);
+
+    expect(getShowIf(withRow, bundleOption("no_bundle"))).toEqual(condition);
+    expect(getShowIf(withRow, gridRow("row_netflix"))).toEqual(condition);
+    expect(getShowIf(surveyFlowFixture, bundleOption("no_bundle"))).toBeUndefined();
+    expect(withRow.blocks[4].elements[2].showIf).toBeUndefined();
+
+    const removed = updateShowIf(withRow, bundleOption("no_bundle"), () => undefined);
+    const restored = updateShowIf(removed, gridRow("row_netflix"), (group) => ({ ...group, conditions: [] }));
+    expect(restored).toEqual(surveyFlowFixture);
+  });
+
+  test("hiding and showing an option again drops the key, so the survey compares equal to the saved one", () => {
+    const hidden = setOptionHidden(surveyFlowFixture, bundleOption("no_bundle"), true);
+    const bundle = hidden.blocks[4].elements[2] as unknown as { choices: { id: string; hidden?: boolean }[] };
+
+    expect(bundle.choices.find((choice) => choice.id === "no_bundle")?.hidden).toBe(true);
+    expect(setOptionHidden(hidden, bundleOption("no_bundle"), false)).toEqual(surveyFlowFixture);
+    // The fixture's Hidden bundle option shows again.
+    const shown = setOptionHidden(surveyFlowFixture, bundleOption("netflix_apple"), false);
+    expect(
+      (
+        shown.blocks[4].elements[2] as unknown as { choices: { id: string; hidden?: boolean }[] }
+      ).choices.find((choice) => choice.id === "netflix_apple")
+    ).not.toHaveProperty("hidden");
   });
 });

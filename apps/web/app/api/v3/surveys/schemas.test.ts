@@ -319,7 +319,7 @@ describe("ZV3CreateSurveyBody", () => {
     expect(
       result.error?.issues.find((issue) => issue.path.join(".") === "blocks.0.elements.0.choices.0.imageUrl")
     ).toMatchObject({
-      message: expect.stringContaining("Allowed fields: code, id, label"),
+      message: expect.stringContaining("Allowed fields: code, hidden, id, label, showIf"),
     });
   });
 
@@ -408,6 +408,80 @@ describe("ZV3CreateSurveyBody", () => {
     const rejected = ZV3CreateSurveyBody.safeParse(withShowIf({ ...showIf.conditions[0], note: "x" }));
     expect(rejected.error?.issues.map((issue) => issue.path.join("."))).toContain(
       "blocks.0.showIf.conditions.0.note"
+    );
+  });
+
+  test("accepts show-if and hidden on choices, picture choices and matrix rows and columns (ENG-6937)", () => {
+    const showIf = {
+      id: "clshowifgroup00000000001",
+      connector: "and",
+      conditions: [
+        {
+          id: "clshowifcond000000000001",
+          leftOperand: { type: "hiddenField", value: "plan" },
+          operator: "isSet",
+        },
+      ],
+    };
+    const option = (id: string, extra: Record<string, unknown> = {}) => ({
+      id,
+      label: { "en-US": id },
+      ...extra,
+    });
+    const body = (extra: Record<string, unknown> = {}) => ({
+      ...validCreateBody,
+      hiddenFields: { enabled: true, fieldIds: ["plan"] },
+      blocks: [
+        {
+          ...validCreateBody.blocks[0],
+          elements: [
+            {
+              id: "pick",
+              type: "multipleChoiceMulti",
+              headline: { "en-US": "Pick" },
+              required: false,
+              choices: [option("a", { showIf, ...extra }), option("b", { hidden: true })],
+            },
+            {
+              id: "poster",
+              type: "pictureSelection",
+              headline: { "en-US": "Poster" },
+              required: false,
+              choices: [
+                { id: "pa", imageUrl: "https://example.com/a.png", hidden: true },
+                { id: "pb", imageUrl: "https://example.com/b.png", showIf },
+              ],
+            },
+            {
+              id: "grid",
+              type: "matrix",
+              headline: { "en-US": "Rate" },
+              required: false,
+              rows: [option("r1", { showIf }), option("r2")],
+              columns: [option("c1"), option("c2", { hidden: true })],
+            },
+          ],
+        },
+      ],
+    });
+
+    const accepted = ZV3CreateSurveyBody.safeParse(body());
+    expect(accepted.error?.issues ?? []).toEqual([]);
+    const elements = accepted.data?.blocks[0].elements as unknown as Record<
+      string,
+      Record<string, unknown>[]
+    >[];
+    expect(elements[0].choices[0].showIf).toEqual(showIf);
+    expect(elements[0].choices[1].hidden).toBe(true);
+    expect(elements[1].choices[0].hidden).toBe(true);
+    expect(elements[2].rows[0].showIf).toEqual(showIf);
+    expect(elements[2].columns[1].hidden).toBe(true);
+
+    const rejected = ZV3CreateSurveyBody.safeParse(
+      body({ showIf: { ...showIf, conditions: [{ ...showIf.conditions[0], note: "x" }] } })
+    );
+    expect(rejected.error?.issues.map((issue) => issue.path.join("."))).toContain(
+      "blocks.0.elements.0.choices.0.showIf.conditions.0.note"
     );
   });
 

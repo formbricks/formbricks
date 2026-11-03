@@ -1,6 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
 import { type TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import type { TConditionGroup, TSurveyLogicConditionsOperator } from "@formbricks/types/surveys/logic";
+import type { TOptionListKey } from "@formbricks/types/surveys/show-if";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 
 /**
@@ -8,10 +9,16 @@ import type { TSurvey } from "@formbricks/types/surveys/types";
  * and how it is written back. Pure, so the popovers only render what these return.
  */
 
-/** What carries the show-if: a block, or one element of a block. */
+/**
+ * What carries the show-if: a block, one element of a block, or one option, matrix row or matrix
+ * column of an element (ENG-6937), named by id so a reorder doesn't move the edit to another option.
+ */
 export type TShowIfTarget =
   | { type: "block"; blockIdx: number }
-  | { type: "element"; blockIdx: number; elementIdx: number };
+  | { type: "element"; blockIdx: number; elementIdx: number }
+  | { type: "option"; blockIdx: number; elementIdx: number; listKey: TOptionListKey; optionId: string };
+
+type TOptionItem = { id: string; showIf?: TConditionGroup; hidden?: boolean };
 
 /**
  * The survey as the target's conditions editor sees it, with `blockIdx` for the shared conditions
@@ -19,8 +26,8 @@ export type TShowIfTarget =
  *
  * The reference rule (json-shapes §1) is narrower than block logic's "this block and earlier", so the
  * survey is cut down to what the rule allows: a block's show-if sees the earlier blocks; an element's
- * show-if sees the earlier blocks plus the elements above it on its block. Fields and variables are
- * kept, as they may be used anywhere.
+ * show-if sees the earlier blocks plus the elements above it on its block, and so does the show-if of
+ * one of its options. Fields and variables are kept, as they may be used anywhere.
  */
 export const getShowIfScope = (
   survey: TSurvey,
@@ -29,7 +36,7 @@ export const getShowIfScope = (
   const earlierBlocks = survey.blocks.slice(0, target.blockIdx);
   const ownBlock = survey.blocks[target.blockIdx];
   const blocks =
-    target.type === "element" && ownBlock && target.elementIdx > 0
+    target.type !== "block" && ownBlock && target.elementIdx > 0
       ? [...earlierBlocks, { ...ownBlock, elements: ownBlock.elements.slice(0, target.elementIdx) }]
       : earlierBlocks;
 
@@ -85,10 +92,24 @@ export const createShowIf = (
   return { id: createId(), connector: "and", conditions: [condition] };
 };
 
+const getOptionItems = (element: unknown, listKey: TOptionListKey): TOptionItem[] | undefined => {
+  const items = (element as Record<string, unknown> | undefined)?.[listKey];
+  return Array.isArray(items) ? (items as TOptionItem[]) : undefined;
+};
+
+/** The option a target names; `undefined` for a block or element target, or an option gone since. */
+export const getTargetOption = (survey: TSurvey, target: TShowIfTarget): TOptionItem | undefined => {
+  if (target.type !== "option") return undefined;
+  const element = survey.blocks[target.blockIdx]?.elements[target.elementIdx];
+  return getOptionItems(element, target.listKey)?.find((item) => item.id === target.optionId);
+};
+
 export const getShowIf = (survey: TSurvey, target: TShowIfTarget): TConditionGroup | undefined => {
   const block = survey.blocks[target.blockIdx];
   if (!block) return undefined;
-  return target.type === "block" ? block.showIf : block.elements[target.elementIdx]?.showIf;
+  if (target.type === "block") return block.showIf;
+  if (target.type === "option") return getTargetOption(survey, target)?.showIf;
+  return block.elements[target.elementIdx]?.showIf;
 };
 
 const withShowIf = <T extends { showIf?: TConditionGroup }>(
@@ -114,6 +135,8 @@ export const updateShowIf = (
   const updated = current ? updater(structuredClone(current)) : updater(createEmptyGroup());
   const next = updated && updated.conditions.length > 0 ? updated : undefined;
 
+  if (target.type === "option") return updateOption(survey, target, (option) => withShowIf(option, next));
+
   return {
     ...survey,
     blocks: survey.blocks.map((block, blockIdx) => {
@@ -128,5 +151,40 @@ export const updateShowIf = (
     }),
   };
 };
+
+type TOptionTarget = Extract<TShowIfTarget, { type: "option" }>;
+
+/** The survey with one option, row or column replaced by `update(option)`. */
+const updateOption = (
+  survey: TSurvey,
+  target: TOptionTarget,
+  update: (option: TOptionItem) => TOptionItem
+): TSurvey => ({
+  ...survey,
+  blocks: survey.blocks.map((block, blockIdx) => {
+    if (blockIdx !== target.blockIdx) return block;
+    return {
+      ...block,
+      elements: block.elements.map((element, elementIdx) => {
+        const items = elementIdx === target.elementIdx ? getOptionItems(element, target.listKey) : undefined;
+        if (!items) return element;
+        return {
+          ...element,
+          [target.listKey]: items.map((item) => (item.id === target.optionId ? update(item) : item)),
+        } as typeof element;
+      }),
+    };
+  }),
+});
+
+/**
+ * Hides an option, matrix row or matrix column for good, or shows it again (ENG-6937). Showing it
+ * again drops the key, so a survey hidden and shown again compares equal to the saved one.
+ */
+export const setOptionHidden = (survey: TSurvey, target: TOptionTarget, hidden: boolean): TSurvey =>
+  updateOption(survey, target, (option) => {
+    const { hidden: _removed, ...rest } = option;
+    return hidden ? { ...rest, hidden: true } : rest;
+  });
 
 const createEmptyGroup = (): TConditionGroup => ({ id: createId(), connector: "and", conditions: [] });
