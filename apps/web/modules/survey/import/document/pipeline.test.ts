@@ -329,6 +329,9 @@ describe("runDocumentImport: the AI's plan", () => {
         },
         schemaName: "DocumentImportPlan",
         abortSignal: expect.any(AbortSignal),
+        // The plan schema defaults what a JSON-object provider may leave out (`@formbricks/ai` turns
+        // strict decoding off for whichever provider is configured).
+        strictSchema: false,
       })
     );
 

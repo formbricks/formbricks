@@ -1,6 +1,8 @@
 import { Output, generateText } from "ai";
 import { AIOutputTokenLimitError } from "./errors";
 import { getAiModel } from "./provider";
+import { getOpenAICompatibleProviderName } from "./providers/openai-compatible";
+import { getAIEnvironment } from "./shared";
 import type {
   AIEnvironment,
   AIResolvedLanguageModel,
@@ -8,15 +10,40 @@ import type {
   TGenerateObjectResult,
 } from "./types";
 
+/**
+ * `providerOptions` with strict JSON-schema decoding turned off, under every key a strict-decoding
+ * adapter reads its options from: `openai` and `azure` (the Azure adapter reads either), and the
+ * OpenAI-compatible adapter's own name. A key no configured adapter reads is ignored.
+ */
+const withoutStrictSchema = (
+  providerOptions: TGenerateObjectOptions["providerOptions"],
+  environment?: AIEnvironment
+): NonNullable<TGenerateObjectOptions["providerOptions"]> => {
+  const keys = new Set([
+    "openai",
+    "azure",
+    "openaiCompatible",
+    getOpenAICompatibleProviderName(getAIEnvironment(environment)),
+  ]);
+  const options = { ...providerOptions };
+  for (const key of keys) {
+    options[key] = { ...options[key], strictJsonSchema: false };
+  }
+  return options;
+};
+
 export const generateObject = async <T = unknown>(
   options: TGenerateObjectOptions<T>,
   environment?: AIEnvironment,
   wrapModel?: (model: AIResolvedLanguageModel) => AIResolvedLanguageModel
 ): Promise<TGenerateObjectResult<T>> => {
-  const { schema, schemaName, schemaDescription, output: _output, ...textOptions } = options;
+  const { schema, schemaName, schemaDescription, output: _output, strictSchema, ...textOptions } = options;
   const model = getAiModel(environment);
   const request = {
     ...textOptions,
+    ...(strictSchema === false
+      ? { providerOptions: withoutStrictSchema(textOptions.providerOptions, environment) }
+      : {}),
     model: wrapModel ? wrapModel(model as AIResolvedLanguageModel) : model,
     output: Output.object<T>({
       schema,

@@ -46,15 +46,15 @@ function organizationGenerate(params: TRunQsfImportParams): TQsfPlanGenerate {
   const aiTracing = params.userId
     ? { distinctId: params.userId, feature: AI_TRACING_FEATURE.SurveyImport, workspaceId: params.workspaceId }
     : undefined;
-  // Non-strict JSON schema at the provider edge: the plan schemas leave optional fields defaulted
-  // so a JSON-object provider can leave them out, which OpenAI's strict mode rejects; the SDK still
-  // validates the answer against the same schema, and the lane's checks judge every field after it.
+  // Not strict: the plan schemas default the fields a JSON-object provider may leave out, which a
+  // strict-decoding provider refuses. The answer is still validated against the schema, and the lane's
+  // checks judge every field after it.
   return (request) =>
     generateOrganizationAIObject({
       organizationId: params.organizationId,
       aiTracing,
       ...request,
-      providerOptions: { openai: { strictJsonSchema: false } },
+      strictSchema: false,
     });
 }
 
