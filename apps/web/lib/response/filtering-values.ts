@@ -50,6 +50,11 @@ export interface TMetaFilterValueRow extends TFilterValueRow {
 
 type TFilterValueSlice = Pick<TResponse, "contactAttributes" | "data" | "meta">;
 
+/**
+ * Distinct contact attribute values. A jsonb `null` value is skipped: the schema stores strings only,
+ * and `getResponseContactAttributes` calls `.toString()` on each value, which threw on `null` and
+ * failed the whole filter load.
+ */
 export const queryContactAttributeValues = (surveyId: string): Promise<TFilterValueRow[]> =>
   prisma.$queryRaw<TFilterValueRow[]>`
     SELECT DISTINCT a.key AS "key", a.value::text AS "value"
@@ -58,6 +63,7 @@ export const queryContactAttributeValues = (surveyId: string): Promise<TFilterVa
       CASE WHEN jsonb_typeof(r."contactAttributes") = 'object' THEN r."contactAttributes" ELSE '{}'::jsonb END
     ) AS a
     WHERE r."surveyId" = ${surveyId}
+      AND jsonb_typeof(a.value) <> 'null'
     ORDER BY 1, 2
   `;
 
