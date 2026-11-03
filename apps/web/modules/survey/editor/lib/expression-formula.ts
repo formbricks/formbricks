@@ -290,6 +290,7 @@ export type TFormulaErrorCode =
   | "unclosed_text"
   | "unknown_function"
   | "unknown_reference"
+  | "incomplete_reference"
   | "text_too_long";
 
 export interface TFormulaError {
@@ -382,7 +383,8 @@ const tokenize = (text: string): TToken[] => {
         continue;
       }
       const reference = /^[A-Za-z0-9_]+/.exec(text.slice(idx + 1));
-      if (!reference) throw new FormulaError({ code: "unknown_reference", position: idx, detail: "@" });
+      // An `@` with no name after it: one being picked from the menu, or left behind.
+      if (!reference) throw new FormulaError({ code: "incomplete_reference", position: idx });
       tokens.push({ kind: "reference", value: reference[0], position: idx });
       idx += 1 + reference[0].length;
       continue;
@@ -541,4 +543,19 @@ export const parseFormula = (text: string, references: TFormulaReference[]): TFo
     if (error instanceof FormulaError) return { ok: false, error: error.error };
     throw error;
   }
+};
+
+/**
+ * The parse error the formula box shows while it is typed in, or none. Nothing is shown while the
+ * reference menu is open, nor for an `@` that ends the text: both are a reference being picked.
+ */
+export const getShownFormulaError = (
+  error: TFormulaError,
+  context: { text: string; isReferenceMenuOpen: boolean }
+): TFormulaError | null => {
+  if (context.isReferenceMenuOpen || error.code === "empty") return null;
+  if (error.code === "incomplete_reference" && context.text.slice(error.position + 1).trim() === "") {
+    return null;
+  }
+  return error;
 };

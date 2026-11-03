@@ -15,6 +15,7 @@ import {
   findHiddenFieldUsedInLogic,
   findOptionUsedInLogic,
   findVariableUsedInLogic,
+  getActionObjectiveOptions,
   getActionValueOptions,
   getActionVariableOptions,
   getConditionOperatorOptions,
@@ -700,5 +701,13 @@ describe("removal guards also see show-if (ENG-6931)", () => {
     };
 
     expect(findHiddenFieldUsedInLogic(survey, signupDate)).toBe(flatIndexOf(survey, "email"));
+  });
+});
+
+describe("getActionObjectiveOptions", () => {
+  test("the action that writes a field is called Set value, as in the glossary and Add logic", () => {
+    expect(getActionObjectiveOptions(t).find((option) => option.value === "calculate")?.label).toBe(
+      "workspace.surveys.edit.flow.set_value"
+    );
   });
 });

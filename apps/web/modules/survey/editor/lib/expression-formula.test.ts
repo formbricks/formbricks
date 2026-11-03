@@ -10,6 +10,7 @@ import {
   getFormulaIssues,
   getFormulaReferences,
   getFunctionSnippet,
+  getShownFormulaError,
   insertIntoFormula,
   oneStepToFormula,
   parseFormula,
@@ -85,6 +86,8 @@ describe("parseFormula: typed text into the tree AI writes", () => {
     ['"open', "unclosed_text", 0],
     ["1 # 2", "unexpected_character", 2],
     ["round(1", "unexpected_end", 7],
+    ["1 + @", "incomplete_reference", 4],
+    ["@ + 1", "incomplete_reference", 0],
   ])("refuses %j with %s at %d", (text, code, position) => {
     expect(parse(text)).toEqual({ ok: false, error: expect.objectContaining({ code, position }) });
   });
@@ -112,6 +115,31 @@ describe("oneStepToFormula: Use a formula on a one-step calculation", () => {
     expect(formatFormula(oneStepToFormula({ variableId: ids.variables.score, ...action }), references)).toBe(
       text
     );
+  });
+});
+
+describe("getShownFormulaError: what the box says while it is typed in", () => {
+  const shown = (text: string, isReferenceMenuOpen = false) => {
+    const result = parse(text);
+    return result.ok ? null : getShownFormulaError(result.error, { text, isReferenceMenuOpen });
+  };
+
+  test("a bare @ just typed is a reference being picked, not a mistake", () => {
+    expect(shown("@")).toBeNull();
+    expect(shown("round(@q1 * @ ")).toBeNull();
+  });
+
+  test("a bare @ with more formula after it is reported, without naming a reference", () => {
+    expect(shown("@ + 1")).toEqual({ code: "incomplete_reference", position: 0 });
+  });
+
+  test("nothing is reported while the reference menu is open", () => {
+    expect(shown("1 + ", true)).toBeNull();
+    expect(shown("1 + ")).toEqual(expect.objectContaining({ code: "unexpected_end" }));
+  });
+
+  test("other mistakes are reported as parsed", () => {
+    expect(shown("@nope")).toEqual(expect.objectContaining({ code: "unknown_reference", detail: "nope" }));
   });
 });
 

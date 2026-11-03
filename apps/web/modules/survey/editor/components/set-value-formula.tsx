@@ -16,10 +16,11 @@ import {
   getFormulaIssues,
   getFormulaReferences,
   getFunctionSnippet,
+  getShownFormulaError,
   insertIntoFormula,
   parseFormula,
 } from "@/modules/survey/editor/lib/expression-formula";
-import { getSampleResult } from "@/modules/survey/editor/lib/expression-sample";
+import { formatSampleResult, getSampleResult } from "@/modules/survey/editor/lib/expression-sample";
 import { Button } from "@/modules/ui/components/button";
 import {
   DropdownMenu,
@@ -55,8 +56,11 @@ export function SetValueFormula({
   scopeBlockIdx,
   onExpressionChange,
 }: SetValueFormulaProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  // Where the caret goes when the reference menu closes: after the picked reference, or back where it was.
+  const caretAfterMenuRef = useRef<number | null>(null);
   const references = useMemo(() => getFormulaReferences(localSurvey), [localSurvey]);
 
   const formatted = isEmptyFormula(expression) ? "" : formatFormula(expression, references);
@@ -105,10 +109,16 @@ export function SetValueFormula({
     };
     const result = insertIntoFormula(text, selection, insert, options);
     applyText(result.text);
+    caretAfterMenuRef.current = result.cursor;
     requestAnimationFrame(() => {
       textarea?.focus();
       textarea?.setSelectionRange(result.cursor, result.cursor);
     });
+  };
+
+  const openReferenceMenu = (open: boolean) => {
+    if (open) caretAfterMenuRef.current = null;
+    setIsReferenceMenuOpen(open);
   };
 
   const formulaIssues = useMemo(
@@ -141,6 +151,8 @@ export function SetValueFormula({
         return t("workspace.surveys.edit.flow.formula_error_unknown_function", { name: error.detail ?? "" });
       case "unknown_reference":
         return t("workspace.surveys.edit.flow.formula_error_unknown_reference", { name: error.detail ?? "" });
+      case "incomplete_reference":
+        return t("workspace.surveys.edit.flow.formula_error_incomplete_reference");
       case "too_long":
       case "text_too_long":
         return t("workspace.surveys.edit.flow.formula_error_too_long", { max: FORMULA_MAX_LENGTH });
@@ -167,9 +179,15 @@ export function SetValueFormula({
     },
   ].filter((group) => group.items.length > 0);
 
+  // A reference being picked (the menu open, or an `@` just typed) is not a mistake yet.
+  const shownParseError = parseError ? getShownFormulaError(parseError, { text, isReferenceMenuOpen }) : null;
   const problem = parseError
-    ? describeParseError(parseError)
+    ? shownParseError && describeParseError(shownParseError)
     : (formulaIssues[0]?.message.replace(/^Expression: /, "") ?? null);
+  const shownSample =
+    sampleResult !== null && sampleResult !== "" && targetDataType
+      ? formatSampleResult(sampleResult, targetDataType, locale)
+      : null;
 
   return (
     <div className="flex w-full flex-col gap-2">
@@ -190,10 +208,10 @@ export function SetValueFormula({
             const nextText = event.target.value;
             applyText(nextText);
             const cursor = event.target.selectionStart;
-            if (nextText.length > text.length && nextText[cursor - 1] === "@") setIsReferenceMenuOpen(true);
+            if (nextText.length > text.length && nextText[cursor - 1] === "@") openReferenceMenu(true);
           }}
         />
-        <DropdownMenu open={isReferenceMenuOpen} onOpenChange={setIsReferenceMenuOpen}>
+        <DropdownMenu open={isReferenceMenuOpen} onOpenChange={openReferenceMenu}>
           <DropdownMenuTrigger asChild>
             <Button
               type="button"
@@ -204,7 +222,20 @@ export function SetValueFormula({
               <AtSignIcon />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="max-h-72 overflow-y-auto">
+          <DropdownMenuContent
+            align="end"
+            className="max-h-72 overflow-y-auto"
+            onCloseAutoFocus={(event) => {
+              // Back to the formula, not the @ button: typing carries on where it left off, and a
+              // space typed next doesn't reopen the menu.
+              const textarea = textareaRef.current;
+              if (!textarea) return;
+              event.preventDefault();
+              const caret = caretAfterMenuRef.current ?? textarea.selectionEnd;
+              caretAfterMenuRef.current = null;
+              textarea.focus();
+              textarea.setSelectionRange(caret, caret);
+            }}>
             {groups.map((group) => (
               <div key={group.label}>
                 <DropdownMenuLabel>{group.label}</DropdownMenuLabel>
@@ -247,9 +278,13 @@ export function SetValueFormula({
         </p>
       ) : sampleResult !== null ? (
         <p className="text-xs text-slate-600" title={t("workspace.surveys.edit.flow.formula_sample_hint")}>
-          {sampleResult === ""
-            ? t("workspace.surveys.edit.flow.formula_sample_empty")
-            : t("workspace.surveys.edit.flow.formula_sample_result", { result: String(sampleResult) })}
+          {shownSample ? (
+            <span title={shownSample.title}>
+              {t("workspace.surveys.edit.flow.formula_sample_result", { result: shownSample.text })}
+            </span>
+          ) : (
+            t("workspace.surveys.edit.flow.formula_sample_empty")
+          )}
         </p>
       ) : null}
     </div>

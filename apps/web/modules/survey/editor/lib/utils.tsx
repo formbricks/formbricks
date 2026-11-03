@@ -441,7 +441,8 @@ export const replaceEndingCardHeadlineRecall = (survey: TSurvey, language: strin
 };
 
 export const getActionObjectiveOptions = (t: TFunction): TComboboxOption[] => [
-  { label: t("workspace.surveys.edit.calculate"), value: "calculate" },
+  // The glossary's Set value: one action, whether it writes a formula or a one-step calculation.
+  { label: t("workspace.surveys.edit.flow.set_value"), value: "calculate" },
   { label: t("workspace.surveys.edit.require_answer"), value: "requireAnswer" },
   { label: t("workspace.surveys.edit.jump_to_block"), value: "jumpToBlock" },
   { label: t("workspace.surveys.edit.mark_as_low_quality"), value: "markLowQuality" },

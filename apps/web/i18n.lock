@@ -3877,7 +3877,6 @@ checksums:
     workspace/surveys/edit/button_label: 9efe293aca430ecf0424c68b105608d7
     workspace/surveys/edit/button_url: 6f39f649a165a11873c11ea6403dba90
     workspace/surveys/edit/cal_username: a4a9c739af909d975beb1bc4998feae9
-    workspace/surveys/edit/calculate: c5fcf8d3a38706ae2071b6f78339ec68
     workspace/surveys/edit/capture_a_new_action_to_trigger_a_survey_on: 73410e9665a37bc4a9747db5d683d36c
     workspace/surveys/edit/capture_ip_address: e950f924f1c0b52f8c5b06ca118e049f
     workspace/surveys/edit/capture_ip_address_description: f6bf6046db16667237511265e9fba5f0
@@ -4038,6 +4037,7 @@ checksums:
     workspace/surveys/edit/flow/endings: 2341dcff7ba31840a90b7b12bf568c93
     workspace/surveys/edit/flow/expand_all: 98ea737f9501249c3a39d7d75563ff89
     workspace/surveys/edit/flow/formula: 48993c9897525cab41326c16c8cfdc24
+    workspace/surveys/edit/flow/formula_error_incomplete_reference: cae8f9ed3e79fa657a8dff6ae62bb56c
     workspace/surveys/edit/flow/formula_error_too_long: cc4d4f7d2a903488dd8a4bf0a951f019
     workspace/surveys/edit/flow/formula_error_unclosed_text: 7298357fe3abb9089afedf5442119307
     workspace/surveys/edit/flow/formula_error_unexpected_character: 6cabd73f2d0988530ffaa2079adfed8d
@@ -4068,6 +4068,7 @@ checksums:
     workspace/surveys/edit/flow/require_answer_to: dad9d4ff81a8e5f586bac60e2d8f20ea
     workspace/surveys/edit/flow/set_a_value: 1ea3aafd8d28d95eac4b3a3d199160db
     workspace/surveys/edit/flow/set_to_formula: 2490a289e45cfd0eb1d1ced22c1af3c9
+    workspace/surveys/edit/flow/set_value: 4ee48c6e9aeb9043c1351d3e0d5f31eb
     workspace/surveys/edit/flow/show_block_if: 50e1393de900d8ef19e6dddc09e7900e
     workspace/surveys/edit/flow/show_block_only_if: 3b821a5d5c068902515aff7fd7165bd4
     workspace/surveys/edit/flow/show_if: 7d09323e0b072ef05c2efed7c9c32e49

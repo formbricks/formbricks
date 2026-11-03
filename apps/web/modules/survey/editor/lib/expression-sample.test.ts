@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { surveyFlowFixture } from "@formbricks/types/surveys/test-fixtures/survey-flow-fixture";
 import { getFormulaReferences, parseFormula } from "./expression-formula";
-import { getSampleResult } from "./expression-sample";
+import { formatSampleResult, getSampleResult } from "./expression-sample";
 
 const references = getFormulaReferences(surveyFlowFixture);
 const NOW = new Date("2026-11-03T12:00:00.000Z");
@@ -29,5 +29,25 @@ describe("getSampleResult: the formula box's result for a made-up response", () 
 
   test("a result that is empty shows as empty", () => {
     expect(sample("1 / 0")).toBe("");
+  });
+});
+
+describe("formatSampleResult: how the sample result reads", () => {
+  test("a timestamp reads as a local date and time, with the ISO value as its title", () => {
+    const shown = formatSampleResult("2026-11-03T20:33:49.616Z", "date", "en-US", "UTC");
+    expect(shown.text).toMatch(/^Nov 3, 2026, 8:33\sPM$/);
+    expect(shown.title).toBe("2026-11-03T20:33:49.616Z");
+  });
+
+  test("a calendar date reads as that day in any time zone", () => {
+    expect(formatSampleResult("2026-10-04", "date", "en-US", "Pacific/Honolulu")).toEqual({
+      text: "Oct 4, 2026",
+      title: "2026-10-04",
+    });
+  });
+
+  test("numbers and text read as they are", () => {
+    expect(formatSampleResult(80, "number", "en-US")).toEqual({ text: "80" });
+    expect(formatSampleResult("ACME-123", "string", "en-US")).toEqual({ text: "ACME-123" });
   });
 });
