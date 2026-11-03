@@ -8,8 +8,7 @@ import type { TOpenSurveyImportUploadOptions, TSurveyImportUpload } from "../upl
  * cannot start the app's worker (`upload-thread.test.ts` runs the real one). It reads with the same
  * functions, and crosses the same boundary: what comes back is a structured clone, as `postMessage`
  * makes it, and a refusal is rebuilt from its posted form. It keeps the thread's contract too: a closed
- * upload, or one whose client left, reads nothing. It stays `async` so an aborted upload rejects, as the
- * thread's does.
+ * upload, or one whose client left, reads nothing. An aborted upload rejects, as the thread's does.
  */
 const inTheThread = <T>(run: () => T): T => {
   try {
@@ -30,36 +29,38 @@ export interface TInProcessUpload extends TSurveyImportUpload {
 /** Every upload opened so far; a test empties it before it runs (`openedUploads.length = 0`). */
 export const openedUploads: TInProcessUpload[] = [];
 
-export const openSurveyImportUploadInProcess = async (
+export const openSurveyImportUploadInProcess = (
   bytes: Uint8Array,
   { signal }: TOpenSurveyImportUploadOptions = {}
-): Promise<TSurveyImportUpload> => {
-  signal?.throwIfAborted();
-  // The thread keeps what it sniffed and posts only its type.
-  const sniffed = inTheThread(() => sniffSurveyImportFile(bytes));
-  let closed = false;
-  let read: Promise<TSurveyImportUploadRead> | null = null;
-  const upload: TInProcessUpload = {
-    type: sniffed.type,
-    get closed() {
-      return closed;
-    },
-    read: (fileName) => {
-      if (closed) return Promise.reject(new Error("The survey import's reader was closed"));
-      read ??= Promise.resolve()
-        .then(() => {
-          signal?.throwIfAborted();
-          return acrossTheThread(() => readSurveyImportUpload(sniffed, fileName));
-        })
-        .finally(() => {
-          closed = true;
-        });
-      return read;
-    },
-    close: () => {
-      closed = true;
-    },
-  };
-  openedUploads.push(upload);
-  return upload;
-};
+): Promise<TSurveyImportUpload> =>
+  // A callback, so an aborted upload rejects rather than throws, as the worker's answer does.
+  Promise.resolve().then(() => {
+    signal?.throwIfAborted();
+    // The thread keeps what it sniffed and posts only its type.
+    const sniffed = inTheThread(() => sniffSurveyImportFile(bytes));
+    let closed = false;
+    let read: Promise<TSurveyImportUploadRead> | null = null;
+    const upload: TInProcessUpload = {
+      type: sniffed.type,
+      get closed() {
+        return closed;
+      },
+      read: (fileName) => {
+        if (closed) return Promise.reject(new Error("The survey import's reader was closed"));
+        read ??= Promise.resolve()
+          .then(() => {
+            signal?.throwIfAborted();
+            return acrossTheThread(() => readSurveyImportUpload(sniffed, fileName));
+          })
+          .finally(() => {
+            closed = true;
+          });
+        return read;
+      },
+      close: () => {
+        closed = true;
+      },
+    };
+    openedUploads.push(upload);
+    return upload;
+  });
