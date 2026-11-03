@@ -224,11 +224,15 @@ describe("POST /api/v3/charts/preview", () => {
 
 describe("GET /api/v3/charts/{chartId}/data", () => {
   const COLLECTED_AT = "FeedbackRecords.collectedAt";
-  const charts: Record<"ranged" | "unranged" | "unassigned" | "hourly" | "wideHourly", string> = {
+  const charts: Record<
+    "ranged" | "unranged" | "unassigned" | "hourly" | "unrangedHourly" | "wideHourly",
+    string
+  > = {
     ranged: "",
     unranged: "",
     unassigned: "",
     hourly: "",
+    unrangedHourly: "",
     wideHourly: "",
   };
 
@@ -276,6 +280,12 @@ describe("GET /api/v3/charts/{chartId}/data", () => {
         timeDimensions: [{ dimension: COLLECTED_AT, granularity: "hour", dateRange: "last 7 days" }],
       })
     ).id;
+    charts.unrangedHourly = (
+      await create("Unranged hourly", {
+        measures: ["FeedbackRecords.count"],
+        timeDimensions: [{ dimension: COLLECTED_AT, granularity: "hour" }],
+      })
+    ).id;
     // Saved before the time-bucket limit existed: two years by the hour.
     charts.wideHourly = (
       await create("Wide hourly", {
@@ -296,7 +306,7 @@ describe("GET /api/v3/charts/{chartId}/data", () => {
     ]);
   });
 
-  test("a requested preset replaces the saved range on collectedAt, keeping the granularity", async () => {
+  test("a requested preset narrows the saved range on collectedAt, keeping the granularity", async () => {
     expect(await timeDimensionsSent(charts.ranged, { dateRange: "last 7 days" })).toEqual([
       { dimension: COLLECTED_AT, granularity: "week", dateRange: ["2026-03-04", "2026-03-10"] },
     ]);
@@ -308,10 +318,23 @@ describe("GET /api/v3/charts/{chartId}/data", () => {
     ]);
   });
 
-  test("all-time removes the saved range", async () => {
-    expect(await timeDimensionsSent(charts.ranged, { dateRange: "all-time" })).toEqual([
-      { dimension: COLLECTED_AT, granularity: "week" },
+  test("a requested range wider than the saved one leaves the saved range, and all-time keeps it too", async () => {
+    expect(await timeDimensionsSent(charts.ranged, { from: "2025-01-01", to: "2026-12-31" })).toEqual([
+      { dimension: COLLECTED_AT, granularity: "week", dateRange: ["2025-12-11", "2026-03-10"] },
     ]);
+    expect(await timeDimensionsSent(charts.ranged, { dateRange: "all-time" })).toEqual([
+      { dimension: COLLECTED_AT, granularity: "week", dateRange: ["2025-12-11", "2026-03-10"] },
+    ]);
+  });
+
+  test("a requested range disjoint from the saved one answers no rows without reaching Cube", async () => {
+    const response = await read(sessionOf(fixture.users.viewer), charts.wideHourly, {
+      from: "2026-02-01",
+      to: "2026-02-07",
+    });
+    expect(response.status).toBe(200);
+    expect(ZV3ChartData.parse((await response.json()).data).rows).toEqual([]);
+    expect(cubeFake.calls).toHaveLength(0);
   });
 
   test("refuses an invalid or half-given range with 422 and a timezone with 400, before reaching Cube", async () => {
@@ -332,7 +355,7 @@ describe("GET /api/v3/charts/{chartId}/data", () => {
 
   test("refuses a requested range too wide for the chart's granularity with 422 limit_exceeded, before reaching Cube", async () => {
     // Valid on its own, but two years by the hour is ~17,500 buckets — the limit is 10,000.
-    const response = await read(sessionOf(fixture.users.viewer), charts.hourly, {
+    const response = await read(sessionOf(fixture.users.viewer), charts.unrangedHourly, {
       from: "2025-01-01",
       to: "2026-12-31",
     });
@@ -343,10 +366,10 @@ describe("GET /api/v3/charts/{chartId}/data", () => {
     ]);
     expect(cubeFake.calls).toHaveLength(0);
 
-    // A saved range too wide for the limit does not block a read whose requested range replaces it,
-    // and is named as the saved query's when nothing replaces it.
-    expect(await timeDimensionsSent(charts.wideHourly, { dateRange: "last 7 days" })).toEqual([
-      { dimension: COLLECTED_AT, granularity: "hour", dateRange: ["2026-03-04", "2026-03-10"] },
+    // A saved range too wide for the limit does not block a read whose requested range narrows it,
+    // and is named as the saved query's when nothing narrows it.
+    expect(await timeDimensionsSent(charts.wideHourly, { from: "2025-12-01", to: "2025-12-07" })).toEqual([
+      { dimension: COLLECTED_AT, granularity: "hour", dateRange: ["2025-12-01", "2025-12-07"] },
     ]);
     const unreplaced = await read(sessionOf(fixture.users.viewer), charts.wideHourly);
     expect(unreplaced.status).toBe(422);
@@ -354,9 +377,9 @@ describe("GET /api/v3/charts/{chartId}/data", () => {
       expect.objectContaining({ name: "query.timeDimensions[0].dateRange", code: "limit_exceeded" }),
     ]);
 
-    // The same range is fine for a chart grouped by the week.
-    expect(await timeDimensionsSent(charts.ranged, { from: "2025-01-01", to: "2026-12-31" })).toEqual([
-      { dimension: COLLECTED_AT, granularity: "week", dateRange: ["2025-01-01", "2026-12-31"] },
+    // The same range is fine for a chart not grouped by time: only time buckets are limited.
+    expect(await timeDimensionsSent(charts.unranged, { from: "2025-01-01", to: "2026-12-31" })).toEqual([
+      { dimension: COLLECTED_AT, dateRange: ["2025-01-01", "2026-12-31"] },
     ]);
   });
 

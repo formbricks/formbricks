@@ -1,5 +1,6 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
+import type { TChartQuery } from "@formbricks/types/analysis";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import {
   refuseUnlessFeedbackDatasetAccess,
@@ -14,6 +15,8 @@ import {
   successResponse,
 } from "@/app/api/v3/lib/response";
 import type { V3WorkspaceContext } from "@/app/api/v3/lib/workspace-context";
+import { getReportingTimeZone } from "@/lib/date-ranges";
+import { getOrganization } from "@/lib/organization/service";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { CubeQueryError } from "@/modules/ee/analysis/api/lib/cube-client";
 import type { TCubeQuerySource } from "@/modules/ee/analysis/api/lib/cube-config";
@@ -23,6 +26,7 @@ import {
   applyDashboardDateFilter,
 } from "@/modules/ee/analysis/dashboards/lib/dashboard-date-filter";
 import {
+  type TRequestedDateRangeNames,
   checkTimeBucketLimit,
   parseRequestedDateRange,
   validateChartQuery,
@@ -64,13 +68,26 @@ const cubeFailure = (error: CubeQueryError, { requestId, instance }: TV3ChartOpe
     instance
   );
 
+/** The zone an organization's calendar days are cut in, as Cube reads every date range of its charts. */
+export const getOrganizationReportingTimeZone = async (organizationId: string): Promise<string> =>
+  getReportingTimeZone((await getOrganization(organizationId))?.displayTimeZone);
+
+/** The answer for a chart whose filters let nothing through: no rows, and Cube is never asked. */
+export const emptyChartData = (query: TChartQuery): TV3ChartData => ({
+  rows: [],
+  optionLabels: {},
+  fieldLabels: {},
+  query: query as TV3ChartData["query"],
+});
+
 /**
- * Validate, apply the requested date range, shape for the chart type, and run — the part preview and
+ * Validate, narrow to the requested date range, shape for the chart type, and run — the part preview and
  * data share once the caller is authorized for the dataset. `query` is caller input for a preview and
  * the stored query for a saved chart; both go through the validator, so a stored query that no longer
- * passes it answers 422 rather than reaching Cube. The time-bucket limit is checked once, on the query
- * that will run: a requested range replaces the saved one, so a saved range it replaces cannot refuse
- * the read, and a requested range too wide for the chart's granularity is named as `dateRange`.
+ * passes it answers 422 rather than reaching Cube. A requested range is ANDed with the saved one
+ * (ADR-0019); ranges that do not overlap answer an empty chart. The time-bucket limit is checked once, on
+ * the query that will run, and a narrowed range too wide for the chart's granularity is named as
+ * `dateRange`.
  */
 export async function runV3ChartQuery({
   access,
@@ -80,6 +97,7 @@ export async function runV3ChartQuery({
   dateRange,
   source,
   context,
+  dateRangeNames,
 }: {
   access: V3WorkspaceContext;
   datasetId: string;
@@ -88,6 +106,8 @@ export async function runV3ChartQuery({
   dateRange: unknown;
   source: TCubeQuerySource;
   context: TV3ChartOperationContext;
+  /** What the caller calls the date range: the data routes take query parameters, the preview a body field. */
+  dateRangeNames?: TRequestedDateRangeNames;
 }): Promise<Response> {
   // Reads take the relative ranges older charts were saved with: a saved chart's, and a preview of one being
   // edited in the builder. Nothing is saved here; a write keeps such a range only if its chart already had it.
@@ -97,10 +117,7 @@ export async function runV3ChartQuery({
     dataset: await loadDatasetChartFields(context.authentication, access, datasetId, query),
   });
   // The data route takes the range as query parameters; the preview takes it as one body field.
-  const requested = parseRequestedDateRange(
-    dateRange,
-    source === "v3.charts.data" ? { dateRange: "dateRange", from: "from", to: "to" } : undefined
-  );
+  const requested = parseRequestedDateRange(dateRange, dateRangeNames);
   const invalidParams: InvalidParam[] = [
     ...(validated.ok ? [] : validated.issues),
     ...(requested.ok ? [] : requested.issues),
@@ -111,10 +128,13 @@ export async function runV3ChartQuery({
   const actor = getV3AuthorizationActor(context.authentication);
   if (!actor) return problemUnauthorized(context.requestId, "Not authenticated", context.instance);
 
-  const runnable = prepareQueryForChartType(
-    applyDashboardDateFilter(validated.query, requested.filter),
-    type
-  );
+  const narrowed = applyDashboardDateFilter(validated.query, requested.filter, {
+    timeZone: await getOrganizationReportingTimeZone(access.organizationId),
+  });
+  if (!narrowed) {
+    return successResponse(emptyChartData(validated.query), { requestId: context.requestId });
+  }
+  const runnable = prepareQueryForChartType(narrowed, type);
   const bucketIssue = checkTimeBucketLimit(runnable, (index) =>
     requested.filter && runnable.timeDimensions?.[index]?.dimension === COLLECTED_AT_DIMENSION
       ? "dateRange"
@@ -200,11 +220,20 @@ export async function previewV3Chart({
   }
 }
 
+/** The data routes take the range as query parameters, named as the caller sent them. */
+export const DATA_ROUTE_DATE_RANGE_NAMES: TRequestedDateRangeNames = {
+  dateRange: "dateRange",
+  from: "from",
+  to: "to",
+};
+
 /**
  * The requested date range from the data route's query parameters: `dateRange`, or `from` and `to`
  * together. Mixing the two, or sending one of the pair, is refused like any other invalid range.
  */
-const requestedDateRangeOf = (query: TV3ChartDataQuery): unknown => {
+export const requestedDateRangeOf = (
+  query: Pick<TV3ChartDataQuery, "dateRange" | "from" | "to">
+): unknown => {
   const hasPair = query.from !== undefined || query.to !== undefined;
   if (!hasPair) return query.dateRange;
   if (query.dateRange !== undefined) return { dateRange: query.dateRange, from: query.from, to: query.to };
@@ -214,9 +243,9 @@ const requestedDateRangeOf = (query: TV3ChartDataQuery): unknown => {
 /**
  * `GET /api/v3/charts/{chartId}/data` → 200 `{ data: { rows, optionLabels, fieldLabels, query } }`.
  *
- * A requested date range replaces the chart's own on `collectedAt` — the dashboard date filter's rule — so
- * the numbers match what a person sees on a dashboard filtered the same way; `all-time` removes it, and
- * without one the saved range applies. Needs read access to the chart's workspace and to its Feedback
+ * A requested date range narrows the chart's own on `collectedAt` — the dashboard date filter's rule
+ * (ADR-0019) — so the numbers match what a person sees on a dashboard filtered the same way; `all-time` and
+ * no range leave the saved range as it is. Needs read access to the chart's workspace and to its Feedback
  * Dataset: a dashboards grant alone never reaches respondents' answers.
  */
 export async function getV3ChartData({
@@ -240,6 +269,7 @@ export async function getV3ChartData({
       query: loaded.row.query,
       dateRange: requestedDateRangeOf(query),
       source: "v3.charts.data",
+      dateRangeNames: DATA_ROUTE_DATE_RANGE_NAMES,
       context,
     });
   } catch (error) {

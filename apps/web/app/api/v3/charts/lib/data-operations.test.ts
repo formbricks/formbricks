@@ -34,6 +34,9 @@ vi.mock("@/app/api/v3/lib/dashboards-access", () => ({
 vi.mock("./dataset-fields", () => ({ loadDatasetChartFields: vi.fn().mockResolvedValue(undefined) }));
 vi.mock("./access", () => ({ loadAuthorizedChart: vi.fn() }));
 vi.mock("@/modules/ee/analysis/lib/run-chart-query", () => ({ runChartQuery: vi.fn() }));
+vi.mock("@/lib/organization/service", () => ({
+  getOrganization: vi.fn(async () => ({ displayTimeZone: "UTC" })),
+}));
 vi.mock("@formbricks/logger", () => ({
   logger: {
     withContext: vi.fn(() => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() })),
@@ -216,18 +219,36 @@ describe("chart queries within budget", () => {
       });
     });
 
-    test("applies a requested range to collectedAt", async () => {
+    test("narrows the range on collectedAt to where the requested one overlaps it", async () => {
       await preview({
         query: {
           measures: ["FeedbackRecords.count"],
-          timeDimensions: [{ dimension: COLLECTED_AT, granularity: "day", dateRange: "last 90 days" }],
+          timeDimensions: [
+            { dimension: COLLECTED_AT, granularity: "day", dateRange: ["2026-01-01", "2026-03-31"] },
+          ],
         },
-        dateRange: "last 7 days",
+        dateRange: { from: "2026-03-01", to: "2026-04-30" },
       });
 
       expect(sentQuery().timeDimensions).toEqual([
-        { dimension: COLLECTED_AT, granularity: "day", dateRange: "last 7 days" },
+        { dimension: COLLECTED_AT, granularity: "day", dateRange: ["2026-03-01", "2026-03-31"] },
       ]);
+    });
+
+    test("answers an empty chart without running Cube when the ranges do not overlap", async () => {
+      const response = await preview({
+        query: {
+          measures: ["FeedbackRecords.count"],
+          timeDimensions: [{ dimension: COLLECTED_AT, dateRange: ["2026-01-01", "2026-01-31"] }],
+        },
+        dateRange: { from: "2026-02-01", to: "2026-02-28" },
+      });
+
+      expect(response.status).toBe(200);
+      expect((await response.json()).data).toEqual(
+        expect.objectContaining({ rows: [], optionLabels: {}, fieldLabels: {} })
+      );
+      expect(runChartQuery).not.toHaveBeenCalled();
     });
 
     test("refuses an invalid query and an invalid range together with 422, before running anything", async () => {
@@ -272,7 +293,7 @@ describe("chart queries within budget", () => {
 
     test("names a requested range too wide for the query's granularity as dateRange", async () => {
       const response = await preview({
-        query: hourlyOver("last 7 days"),
+        query: hourlyOver(undefined),
         dateRange: { from: "2025-01-01", to: "2026-12-31" },
       });
 
@@ -376,15 +397,23 @@ describe("chart queries within budget", () => {
       );
     });
 
-    test("replaces the saved range with a requested preset or pair, and removes it for all-time", async () => {
-      await read({ dateRange: "last 7 days" });
-      await read({ from: "2026-01-01", to: "2026-01-31" });
+    test("narrows the saved range with a requested pair, and keeps it for all-time", async () => {
+      vi.mocked(loadAuthorizedChart).mockResolvedValue({
+        row: chartOf({
+          ...RANGED,
+          timeDimensions: [
+            { dimension: COLLECTED_AT, granularity: "week", dateRange: ["2026-01-01", "2026-06-30"] },
+          ],
+        }),
+        access,
+      });
+
+      await read({ from: "2025-12-01", to: "2026-01-31" });
       await read({ dateRange: "all-time" });
 
       expect(vi.mocked(runChartQuery).mock.calls.map(([run]) => run.query.timeDimensions)).toEqual([
-        [{ dimension: COLLECTED_AT, granularity: "week", dateRange: "last 7 days" }],
         [{ dimension: COLLECTED_AT, granularity: "week", dateRange: ["2026-01-01", "2026-01-31"] }],
-        [{ dimension: COLLECTED_AT, granularity: "week" }],
+        [{ dimension: COLLECTED_AT, granularity: "week", dateRange: ["2026-01-01", "2026-06-30"] }],
       ]);
     });
 
@@ -420,7 +449,7 @@ describe("chart queries within budget", () => {
     });
 
     test("names a requested range too wide for the chart's granularity as dateRange", async () => {
-      vi.mocked(loadAuthorizedChart).mockResolvedValue({ row: chartOf(hourlyOver("last 7 days")), access });
+      vi.mocked(loadAuthorizedChart).mockResolvedValue({ row: chartOf(hourlyOver(undefined)), access });
 
       const response = await read({ from: "2025-01-01", to: "2026-12-31" });
 
@@ -431,13 +460,13 @@ describe("chart queries within budget", () => {
       expect(runChartQuery).not.toHaveBeenCalled();
     });
 
-    test("lets a requested range replace a saved one too wide for the limit, and names the saved one otherwise", async () => {
+    test("lets a requested range narrow a saved one too wide for the limit, and names the saved one otherwise", async () => {
       vi.mocked(loadAuthorizedChart).mockResolvedValue({
         row: chartOf(hourlyOver(["2024-01-01", "2025-12-31"])),
         access,
       });
 
-      expect((await read({ dateRange: "last 7 days" })).status).toBe(200);
+      expect((await read({ from: "2025-12-01", to: "2025-12-07" })).status).toBe(200);
 
       const unreplaced = await read();
       expect(unreplaced.status).toBe(422);
