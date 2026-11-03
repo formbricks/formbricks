@@ -1,3 +1,4 @@
+import type { TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import { ZSurveyCreateInput } from "@formbricks/types/surveys/types";
 import type { TSurveyCreateInput, TSurveyLanguage } from "@formbricks/types/surveys/types";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
@@ -18,6 +19,11 @@ export function buildV3SurveyCreateInput(
   fields: {
     languages: TSurveyLanguage[];
     createdBy: string | null;
+    /**
+     * ENG-6930: the document's `embeddedFields` as the rows the service writes, library links already
+     * resolved to their ids. Omitted when the request sent none, so the legacy keys are the fields.
+     */
+    embeddedFields?: TLinkedEmbeddedField[];
     /** Applied last, in order: the app-survey distribution fields, then any caller overrides. */
     overrides?: Partial<TSurveyCreateInput>;
   }
@@ -36,6 +42,7 @@ export function buildV3SurveyCreateInput(
     variables: input.variables,
     // ENG-6932: no rules before the first question is stored as `null`, the column's "none".
     startLogic: input.startLogic.length > 0 ? input.startLogic : null,
+    ...(fields.embeddedFields ? { embeddedFields: fields.embeddedFields } : {}),
     languages: fields.languages,
     questions: [],
     createdBy: fields.createdBy,

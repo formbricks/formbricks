@@ -1,0 +1,55 @@
+type: object
+description: >
+  One typed Embedded Data field to give the survey (the shape `GET` returns, with defaults).
+
+
+  **A local field** (`key` omitted or `null`) needs `name` and `source`. `dataType` defaults to
+  `string`, `defaultValue` to `null`, `locked` to `false`. `storageKey` defaults to a new cuid2 for a
+  computed field and to `name` for an ingested one.
+
+
+  **A library field** is linked by its `key` alone: the server fills in the definition the workspace
+  library holds, and replaces any definition sent with it, because the workspace owns it. Its
+  `storageKey` defaults to the address the survey already links it at, else to a new cuid2
+  (computed) or the key (ingested). A `key` the workspace library does not have is refused with
+  **400** at `embeddedFields.<i>.key`; a `source` that contradicts the library's at `.source`.
+
+
+  Rules a field has to meet: only ingested fields can be `locked`; a computed field is `string` or
+  `number`; `defaultValue` matches `dataType`; storage keys are unique in the survey, and must also
+  be valid legacy ids (a computed field's a cuid2; an ingested field's free of reserved names, as for
+  `hiddenFields.fieldIds`).
+properties:
+  storageKey:
+    type: string
+    pattern: ^[a-zA-Z0-9_-]+$
+  key:
+    type:
+      - string
+      - "null"
+    minLength: 1
+    description: A workspace library key, to link that library field.
+  name:
+    type: string
+    minLength: 1
+  source:
+    type: string
+    enum:
+      - computed
+      - ingested
+  dataType:
+    type: string
+    enum:
+      - string
+      - number
+      - boolean
+      - date
+  defaultValue:
+    type:
+      - string
+      - number
+      - boolean
+      - "null"
+  locked:
+    type: boolean
+additionalProperties: false

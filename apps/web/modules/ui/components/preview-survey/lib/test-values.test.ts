@@ -10,12 +10,15 @@ import { getTestValueFields, getTestValuesKey, toHiddenFieldsRecord } from "./te
  * editor, handed to the preview so rules before the first question can be tried without leaving it.
  */
 describe("preview test values", () => {
-  test("offers the survey's URL parameters and hidden fields, in order", () => {
-    expect(getTestValueFields(surveyFlowFixture)).toEqual([
+  test("offers the survey's URL parameters and hidden fields, in order, and no computed field", () => {
+    const fields = getTestValueFields(surveyFlowFixture);
+
+    expect(fields.slice(0, 3)).toEqual([
       ids.hiddenFields.panelId,
       ids.hiddenFields.seg,
       ids.hiddenFields.signupDate,
     ]);
+    expect(fields).not.toContain(ids.variables.score);
   });
 
   test("hands the preview only the filled-in values of fields the survey still has", () => {

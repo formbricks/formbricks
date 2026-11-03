@@ -11,6 +11,7 @@ import type { TSurveyVisibilityGates } from "@/lib/survey/visibility/gates";
 import { toCustomCssSource } from "@/modules/custom-css/lib/source";
 import type { TSurvey as TSurveyListRecord } from "@/modules/survey/list/types/surveys";
 import { surveyToV3Distribution, surveyToV3Targeting } from "./distribution";
+import { toV3SurveyEmbeddedFields } from "./embedded-fields";
 import { isInternalI18nString, isPlainObject } from "./guards";
 import {
   type TV3SurveyResolverLanguage,
@@ -306,6 +307,8 @@ export function serializeV3SurveyResource(
     // ENG-6932: rules before the first question, always an array (`[]` when the survey has none). They
     // hold no translatable text, so they are emitted as stored.
     startLogic: survey.startLogic ?? [],
+    // ENG-6930: the typed fields the legacy pair above is derived from (ADR 0027).
+    embeddedFields: toV3SurveyEmbeddedFields(survey.embeddedFields ?? []),
     // App-only runtime/distribution + targeting, via the shared survey→public mappers. Omitted
     // entirely for link surveys to keep the contract clean.
     ...(survey.type === "app"

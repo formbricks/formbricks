@@ -1,5 +1,7 @@
 import "server-only";
+import { prisma } from "@formbricks/database";
 import type { TCustomCssStored, TCustomCssWarning } from "@formbricks/types/custom-css";
+import type { TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import type { TSurvey, TSurveyCreateInput } from "@formbricks/types/surveys/types";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import { type TV3SurveyWriteReport, toV3CustomCssError } from "@/app/api/v3/lib/custom-css";
@@ -17,6 +19,12 @@ import { resolveCustomCssWrite } from "@/modules/custom-css/lib/service";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import { buildV3SurveyCreateInput, getV3SurveyCreateInputInvalidParams } from "./create-input";
 import { v3DistributionToScalars } from "./distribution";
+import {
+  type TV3SurveyEmbeddedField,
+  V3SurveyEmbeddedFieldsError,
+  toLinkedEmbeddedFields,
+} from "./embedded-fields";
+import { getV3LibraryFieldIdsByKey, resolveV3EmbeddedFieldLibraryKeys } from "./embedded-fields-library";
 import { type TV3SurveyLanguageRequest, ensureV3WorkspaceLanguages } from "./languages";
 import { prepareV3SurveyCreate } from "./prepare";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
@@ -221,6 +229,29 @@ async function resolveV3SurveyCreateCustomCss(
   return { stored: outcome.stored, warnings: outcome.warnings };
 }
 
+/**
+ * ENG-6930: the document's typed fields as the `{ field, link }` rows `createSurvey` reconciles, each
+ * library entry pointing at the workspace row its key names.
+ */
+async function toV3SurveyCreateEmbeddedFields(
+  input: TV3CreateSurveyBody
+): Promise<TLinkedEmbeddedField[] | undefined> {
+  // Complete by now: prepare filled in every default (`settleV3EmbeddedFieldFormats`).
+  const entries = input.embeddedFields as TV3SurveyEmbeddedField[] | undefined;
+  if (!entries) {
+    return undefined;
+  }
+
+  const linked = toLinkedEmbeddedFields(
+    entries,
+    await getV3LibraryFieldIdsByKey(prisma, input.workspaceId, entries)
+  );
+  if (!linked.ok) {
+    throw new V3SurveyEmbeddedFieldsError(linked.invalidParams);
+  }
+  return linked.fields;
+}
+
 export async function executeV3SurveyCreate(params: {
   input: TV3CreateSurveyBody;
   authentication: TV3Authentication;
@@ -268,9 +299,11 @@ export async function executeV3SurveyCreate(params: {
   await assertWorkspaceSurveyLimit(input.workspaceId);
   const creationFacts = await resolveSurveyCreationFacts({ actor, organizationId });
 
+  const embeddedFields = await toV3SurveyCreateEmbeddedFields(input);
   const languages = await ensureV3WorkspaceLanguages(input.workspaceId, languageRequests, requestId);
   const surveyCreateInput = buildV3SurveyCreateInput(input, {
     languages,
+    embeddedFields,
     createdBy: getCreatedBy(authentication),
     overrides: { ...appCreateFields, ...surveyCreateInputOverrides },
   });
@@ -304,9 +337,17 @@ export async function createV3Survey(
   organizationId?: string,
   options: TV3SurveyCreateOptions = {}
 ) {
-  const preparation = prepareV3SurveyCreate(input);
+  // ENG-6930: library fields linked by key get the library's definition before anything is judged.
+  const resolved = await resolveV3EmbeddedFieldLibraryKeys(input.workspaceId, input);
+  if (!resolved.ok) {
+    throw new V3SurveyEmbeddedFieldsError(resolved.invalidParams);
+  }
+
+  const preparation = prepareV3SurveyCreate(resolved.input);
   if (!preparation.ok) {
-    throw new V3SurveyReferenceValidationError(preparation.validation.invalidParams);
+    throw preparation.origin === "embeddedFields"
+      ? new V3SurveyEmbeddedFieldsError(preparation.validation.invalidParams)
+      : new V3SurveyReferenceValidationError(preparation.validation.invalidParams);
   }
 
   await assertV3SurveyCreatePermissions(input, organizationId, options);

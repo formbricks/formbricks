@@ -47,6 +47,9 @@ vi.mock("@formbricks/database", () => ({
     language: {
       upsert: vi.fn(),
     },
+    embeddedData: {
+      findMany: vi.fn(),
+    },
   },
 }));
 
@@ -643,6 +646,94 @@ describe("createV3Survey", () => {
     expect(getOrganizationByWorkspaceId).toHaveBeenCalledWith(workspaceId);
     expect(getExternalUrlsPermission).toHaveBeenCalledWith("org_1");
     expect(createSurvey).not.toHaveBeenCalled();
+  });
+
+  describe("typed Embedded Data (ENG-6930)", () => {
+    const session = {
+      user: { id: "user_1", email: "user@example.com", name: "User" },
+      expires: "2026-05-01",
+    };
+    const npsRow = {
+      id: "clnpsscore00000000000000001",
+      key: "nps_score",
+      name: "NPS score",
+      source: "computed",
+      dataType: "number",
+      defaultValue: 0,
+      locked: false,
+    };
+
+    test("hands the survey service its fields as rows, a library field linked by its id", async () => {
+      vi.mocked(prisma.embeddedData.findMany).mockResolvedValue([npsRow] as never);
+      const body = ZV3CreateSurveyBody.parse({
+        ...rawCreateBody,
+        embeddedFields: [
+          { key: "nps_score", storageKey: "clnpslink000000000000000001" },
+          { name: "plan", source: "ingested", locked: true },
+        ],
+      });
+
+      await createV3Survey(body, session, "req_ed", "org_1");
+
+      expect(createSurvey).toHaveBeenCalledWith(
+        workspaceId,
+        expect.objectContaining({
+          embeddedFields: [
+            {
+              field: {
+                id: npsRow.id,
+                key: "nps_score",
+                name: "NPS score",
+                source: "computed",
+                dataType: "number",
+                defaultValue: 0,
+                locked: false,
+              },
+              link: { storageKey: "clnpslink000000000000000001" },
+            },
+            {
+              field: {
+                key: null,
+                name: "plan",
+                source: "ingested",
+                dataType: "string",
+                defaultValue: null,
+                locked: true,
+              },
+              link: { storageKey: "plan" },
+            },
+          ],
+          // The legacy format is derived from the fields; a library computed field answers to its key.
+          variables: [{ id: "clnpslink000000000000000001", name: "nps_score", type: "number", value: 0 }],
+          hiddenFields: { enabled: true, fieldIds: ["plan"] },
+        }),
+        expect.anything()
+      );
+    });
+
+    test("refuses an unknown library key with an Embedded Data error and creates nothing", async () => {
+      vi.mocked(prisma.embeddedData.findMany).mockResolvedValue([]);
+      const body = ZV3CreateSurveyBody.parse({ ...rawCreateBody, embeddedFields: [{ key: "nps_score" }] });
+
+      await expect(createV3Survey(body, session, "req_ed")).rejects.toMatchObject({
+        name: "V3SurveyEmbeddedFieldsError",
+        invalidParams: [expect.objectContaining({ name: "embeddedFields.0.key" })],
+      });
+      expect(createSurvey).not.toHaveBeenCalled();
+    });
+
+    test("refuses disagreeing formats with an Embedded Data error", async () => {
+      const body = ZV3CreateSurveyBody.parse({
+        ...rawCreateBody,
+        embeddedFields: [{ name: "plan", source: "ingested" }],
+        hiddenFields: { enabled: true, fieldIds: ["region"] },
+      });
+
+      await expect(createV3Survey(body, session, "req_ed")).rejects.toMatchObject({
+        name: "V3SurveyEmbeddedFieldsError",
+      });
+      expect(createSurvey).not.toHaveBeenCalled();
+    });
   });
 
   test("create still rejects invalid v3 documents", async () => {

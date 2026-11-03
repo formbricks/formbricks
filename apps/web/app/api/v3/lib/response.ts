@@ -512,6 +512,14 @@ export function problemConflict(
   });
 }
 
+/**
+ * 428: the write waits for the user's agreement. MCP-only (ENG-6930), like the refusal the response
+ * delete tools return, so it carries no `code`: no public v3 route answers it.
+ */
+export function problemConfirmationRequired(requestId: string, detail: string, instance?: string): Response {
+  return problemResponse(428, "Confirmation required", detail, requestId, { instance });
+}
+
 export function problemBadGateway(
   requestId: string,
   detail: string,

@@ -20,7 +20,7 @@ description: >
 
 
   `metadata`, `languages`, `welcomeCard`, `blocks`, `endings`, `hiddenFields`,
-  `variables` and `startLogic`
+  `variables`, `embeddedFields` and `startLogic`
 
   replace their full top-level value when provided. Missing ids in replaced
   arrays are deletions.
@@ -160,6 +160,19 @@ properties:
       - $ref: ./SurveyStartLogic.yml
       - type: "null"
     description: Replaces every rule before the first question. `null` or `[]` removes them; omit to keep them.
+  embeddedFields:
+    type: array
+    maxItems: 300
+    description: >-
+      Typed Embedded Data (ADR 0027): the survey's complete set of computed and ingested fields,
+      including workspace library fields linked by `key`. Optional: existing clients keep sending
+      `variables` and `hiddenFields` alone, which work exactly as before. Sent alone, the legacy
+      fields are derived from this list. Sent together with either legacy field, both have to
+      describe the same fields — matched by storage key, comparing a variable's name, type and value
+      — or the request is refused with **400**, `invalid_params` naming each path where they differ. Like the other arrays, it replaces the survey's whole set; a field left out is removed (a library
+      field is unlinked, never deleted).
+    items:
+      $ref: ./SurveyEmbeddedFieldInput.yml
   distribution:
     allOf:
       - $ref: ./SurveyDistribution.yml
