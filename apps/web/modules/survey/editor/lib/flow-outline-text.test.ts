@@ -28,6 +28,19 @@ describe("describeConditionGroup", () => {
     );
   });
 
+  test("names a matrix row and column by id after they were reordered (ADR 0026)", () => {
+    // The stored positions are stale: rows and columns were reversed since the rule was written.
+    const reordered = structuredClone(surveyFlowFixture);
+    const grid = reordered.blocks
+      .flatMap((block) => block.elements)
+      .find((element) => element.id === "brand_grid") as { rows: unknown[]; columns: unknown[] };
+    grid.rows.reverse();
+    grid.columns.reverse();
+    expect(describeConditionGroup(rule(5, 0).conditions, reordered, t)).toContain(
+      "“brand_grid” Netflix equals Good"
+    );
+  });
+
   test("reads computed and reserved fields on either side", () => {
     expect(describeConditionGroup(rule(2, 0).conditions, surveyFlowFixture, t)).toBe(
       "“hours” >= 20 or tenure_days < “hours”"
