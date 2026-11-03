@@ -197,12 +197,14 @@ export const declaredEmbeddedFieldName = ({ field, link }: TLinkedEmbeddedField)
  * sentence around it belongs to whichever control holds the declared name.
  *
  * `label` is already translated, because it is the control's own label: a passed-in field declares
- * its address, a calculated one its name.
+ * its address, a calculated one its name. `duplicateMessage` replaces the generic sentence for a
+ * duplicate when the caller knows what holds the name (a question's code, `describeQuestionCodeClash`).
  */
 export const getEmbeddedFieldErrorMessage = (
   error: TValidateIdError,
   label: string,
-  t: TFunction
+  t: TFunction,
+  duplicateMessage?: string
 ): string => {
   // A switch of literal keys rather than a lookup table: `scan-translations` reads `t("…")` calls
   // statically, and a key built by interpolation reads to it as six unused strings.
@@ -210,7 +212,7 @@ export const getEmbeddedFieldErrorMessage = (
     case TValidateIdErrorCode.Empty:
       return t("workspace.embedded_data.field_error_empty", { label });
     case TValidateIdErrorCode.Duplicate:
-      return t("workspace.embedded_data.survey_field_address_taken");
+      return duplicateMessage ?? t("workspace.embedded_data.survey_field_address_taken");
     case TValidateIdErrorCode.Reserved:
       return t("workspace.embedded_data.field_error_reserved", { label, field: error.field });
     case TValidateIdErrorCode.HasSpaces:

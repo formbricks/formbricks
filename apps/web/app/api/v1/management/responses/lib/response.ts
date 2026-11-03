@@ -7,9 +7,11 @@ import { ZId, ZOptionalNumber } from "@formbricks/types/common";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
+import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TTag } from "@formbricks/types/tags";
 import { buildPrismaResponseData } from "@/app/api/v1/lib/utils";
 import { RESPONSES_PER_PAGE } from "@/lib/constants";
+import { getQuestionCodes } from "@/lib/response/data-by-question-code";
 import { getResponseContact } from "@/lib/response/service";
 import { calculateTtcTotal } from "@/lib/response/utils";
 import { getSurvey } from "@/lib/survey/service";
@@ -36,6 +38,7 @@ export const responseSelection = {
   contactAttributes: true,
   singleUseId: true,
   language: true,
+  outcome: true,
   displayId: true,
   contact: {
     select: {
@@ -262,3 +265,19 @@ export const getResponses = reactCache(
     }
   }
 );
+
+/**
+ * The question codes of the given surveys, one query for all of them: `{ surveyId: { Question ID: code } }`.
+ * For the responses list, which carries `dataByQuestionCode` like the webhook body does, so a Zapier test
+ * sample shows the keys the Zap is built on.
+ */
+export const getQuestionCodesBySurveyId = async (
+  surveyIds: readonly string[]
+): Promise<Map<string, Record<string, string>>> => {
+  if (surveyIds.length === 0) return new Map();
+  const surveys = await prisma.survey.findMany({
+    where: { id: { in: [...surveyIds] } },
+    select: { id: true, blocks: true },
+  });
+  return new Map(surveys.map((survey) => [survey.id, getQuestionCodes(survey.blocks as TSurveyBlock[])]));
+};

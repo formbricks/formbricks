@@ -7,6 +7,7 @@ import { TSurvey, TSurveyElementSummary } from "@formbricks/types/surveys/types"
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { formatTextWithSlashes } from "@/modules/survey/editor/lib/utils";
+import { getElementBadgeText } from "@/modules/survey/lib/element-code-label";
 import { getElementTypes } from "@/modules/survey/lib/elements";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 
@@ -57,7 +58,7 @@ export const ElementSummaryHeader = ({
             {t("workspace.surveys.edit.optional")}
           </div>
         )}
-        <IdBadge id={elementSummary.element.id} />
+        <IdBadge id={getElementBadgeText(elementSummary.element)} />
       </div>
     </div>
   );

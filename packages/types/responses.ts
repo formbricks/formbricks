@@ -299,6 +299,14 @@ const ZQuotasFilterCriteriaScreenedOutNotInQuota = z.object({
   op: z.literal("screenedOutNotInQuota"),
 });
 
+/**
+ * A reviewer's verdict on a response (ENG-6780). Mirrors the `ResponseOutcome` database enum; a response
+ * with no verdict carries `null`, which is not a value of this enum. Marking never deletes: every count,
+ * list, webhook and integration still includes the response.
+ */
+export const ZResponseOutcome = z.enum(["lowQuality"]);
+export type TResponseOutcome = z.infer<typeof ZResponseOutcome>;
+
 /** One condition on a `data` key: a question, or an ingested field under its storage key. */
 const ZResponseFilterCriteriaDataCondition = z.union([
   ZResponseFilterCriteriaDataLessThan,
@@ -337,6 +345,13 @@ const ZResponseFilterCriteriaDataCondition = z.union([
 
 const ZResponseFilterCriteriaFields = z.object({
   finished: z.boolean().optional(),
+  /** Only responses carrying this outcome. Absent means no constraint, not "without an outcome". */
+  outcome: ZResponseOutcome.optional(),
+  /**
+   * Only responses without an outcome: the export's "leave Low quality out". Ignored when `outcome` selects
+   * one. Set by the export route, never by the Responses filter.
+   */
+  excludeLowQuality: z.boolean().optional(),
   responseIds: z.array(ZId).optional(),
   createdAt: z
     .object({
@@ -574,6 +589,9 @@ export const ZResponse = z.object({
   meta: ZResponseMeta,
   singleUseId: z.string().nullable(),
   language: z.string().nullable(),
+  // `nullish` so a snapshot built before the column existed (a queued job, a fixture) still parses;
+  // every select reads the column, so a live response always carries it, `null` when unset.
+  outcome: ZResponseOutcome.nullish(),
 });
 
 export type TResponse = z.infer<typeof ZResponse>;
@@ -678,6 +696,7 @@ export const ZResponseTableData = z.object({
    */
   reservedValues: z.record(z.string(), z.string()),
   quotas: z.array(z.string()).optional(),
+  outcome: ZResponseOutcome.nullish(),
 });
 
 export type TResponseTableData = z.infer<typeof ZResponseTableData>;

@@ -19,6 +19,14 @@ export const AUTHZED_PROJECTION_QUEUE_NAME = "authzed-projection";
 export const DATA_RETENTION_QUEUE_NAME = "data-retention";
 
 /**
+ * The six-hourly AuthZed reconciliation audit and the daily survey audit share a queue of their own: each
+ * walks every organization (or survey) in one job, so on the default queue every webhook delivery and
+ * response pipeline run would wait behind a whole sweep (ENG-3764). Neither is latency-sensitive, so one
+ * waiting behind the other is fine.
+ */
+export const AUTHZED_RECONCILIATION_QUEUE_NAME = "authzed-reconciliation";
+
+/**
  * Attachment exports build multi-GB ZIPs for minutes at a time (ENG-6862). On the default queue they
  * would hold its only worker slot and stall webhook deliveries and response pipelines behind them; here
  * one export at a time runs per process, and nothing else waits.
@@ -28,6 +36,7 @@ export const ATTACHMENT_EXPORT_QUEUE_NAME = "attachment-export";
 /** Queues that each get exactly one worker of their own, outside `workerCount`/`concurrency`. */
 export const DEDICATED_JOBS_QUEUE_NAMES = [
   AUTHZED_PROJECTION_QUEUE_NAME,
+  AUTHZED_RECONCILIATION_QUEUE_NAME,
   DATA_RETENTION_QUEUE_NAME,
   ATTACHMENT_EXPORT_QUEUE_NAME,
 ] as const;
