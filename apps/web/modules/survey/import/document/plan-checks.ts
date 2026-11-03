@@ -1,6 +1,7 @@
 import type { TImportCallFailure, TImportCheckedPlan, TImportPlanResponse } from "../core/ai-plan";
 import { cleanNote } from "../core/clean-note";
 import { normalizeImportLanguageCode } from "../core/language-codes";
+import { SURVEY_IMPORT_MAX_NAME_CHARS } from "../limits";
 import type { TDocumentModel } from "./model";
 import {
   DOCUMENT_PLAN_KINDS,
@@ -231,7 +232,7 @@ const labelText = (context: DocumentPlanContext, key: string | null, maxLine: nu
   const text = context.model.cells.get(key);
   if (line === undefined || text === undefined || line > maxLine) return null;
   const collapsed = collapseWhitespace(text);
-  return collapsed.length > 0 ? collapsed : null;
+  return collapsed.length > 0 ? collapsed.slice(0, SURVEY_IMPORT_MAX_NAME_CHARS) : null;
 };
 
 const readOptions = (
@@ -345,7 +346,8 @@ export function checkEntry(
     range,
     format: entry.format ?? "M-d-y",
     rules: kind === "welcome" || kind === "ending" ? [] : entry.rules,
-    notes: entry.logicNotes.map(cleanNote).filter((note) => note.length > 0),
+    // One note per rule, empty included: the report reads them by the rule's index.
+    notes: entry.logicNotes.map(cleanNote),
     cells,
     unsplitCell: null,
   };

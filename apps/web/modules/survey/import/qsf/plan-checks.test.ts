@@ -210,7 +210,7 @@ describe("checkQuestionRoles", () => {
     expect(nps.ok && nps.question.leftOut).toEqual([]);
   });
 
-  test("defaults an open text's input type and cleans its notes", () => {
+  test("defaults an open text's input type and cleans its notes, one per rule", () => {
     const result = checkQuestionRoles(
       question(simple, "QID3"),
       entry("QID3", "openText", { logicNotes: ["  Shown if  'X' is\n'Y'. ", ""] })
@@ -218,7 +218,7 @@ describe("checkQuestionRoles", () => {
 
     expect(result.ok && result.question).toMatchObject({
       inputType: "text",
-      notes: ["Shown if 'X' is 'Y'."],
+      notes: ["Shown if 'X' is 'Y'.", ""],
     });
   });
 });

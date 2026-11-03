@@ -18,7 +18,7 @@ import type {
 import { createSlicer } from "../core/event-loop";
 import { SurveyImportIdRegistry } from "../core/id-registry";
 import { languageSettingsFor } from "../core/language-settings";
-import type { TSurveyImportPipelineIssue } from "../core/report";
+import { type TSurveyImportPipelineIssue, joinOptionNames } from "../core/report";
 import { type TSanitizedTexts, type TSurveyImportText, sanitizeImportTexts } from "../core/sanitize-text";
 import { SURVEY_IMPORT_MAX_OPTIONS_PER_QUESTION } from "../limits";
 import {
@@ -260,6 +260,19 @@ class DocumentDraftBuilder {
     keepOther: boolean
   ): TDraftChoice[] {
     const capped = options.slice(0, SURVEY_IMPORT_MAX_OPTIONS_PER_QUESTION);
+    if (options.length > capped.length) {
+      const leftOut = options.slice(capped.length);
+      this.issues.push({
+        code: "options_left_out",
+        severity: "warning",
+        questionTag: entry.label ?? entry.ref,
+        questionRef: entry.ref,
+        params: {
+          count: leftOut.length,
+          options: joinOptionNames(leftOut.map((option) => option.text.get(this.languageCodes[0]) ?? "…")),
+        },
+      });
+    }
     // Formbricks keeps the "Other" choice last, under its fixed id.
     const otherIndex = keepOther ? capped.findIndex((option) => option.isOther) : -1;
     const order = capped.map((_option, index) => index).filter((index) => index !== otherIndex);

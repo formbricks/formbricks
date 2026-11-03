@@ -89,7 +89,8 @@ export interface TQsfPlanResponse {
   object: unknown;
 }
 
-const cleanNotes = (notes: string[]): string[] => notes.map(cleanNote).filter((note) => note.length > 0);
+/** One note per rule, empty included: the report reads them by the rule's index. */
+const cleanNotes = (notes: string[]): string[] => notes.map(cleanNote);
 
 const sourceKeys = (question: TQsfQuestion, source: "choices" | "answers" | null): TQsfTextKey[] =>
   source === null ? [] : question[source].map((option) => option.key);

@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { SURVEY_IMPORT_MAX_NAME_CHARS } from "../limits";
 import { buildGridModel } from "./model";
 import {
   DocumentPlanContext,
@@ -242,7 +243,7 @@ describe("checkDocumentPlanResponses: an entry's shape", () => {
     expect(plan.entries.get("R2")).toMatchObject({ kind: "welcome", required: false, rules: [] });
   });
 
-  test("reads the ID and section cells of the entry's lines, cleans its notes and drops empty ones", () => {
+  test("reads the ID and section cells of the entry's lines, one note per rule, empty ones kept", () => {
     const { plan } = check([
       answer(
         ["R2"],
@@ -259,7 +260,8 @@ describe("checkDocumentPlanResponses: an entry's shape", () => {
     expect(plan.entries.get("R2")).toMatchObject({
       label: "Q1",
       section: null,
-      notes: ["Ask if Q1 is yes."],
+      // The report reads a rule's note by the rule's index, so an empty one cannot be dropped.
+      notes: ["Ask if Q1 is yes.", ""],
     });
   });
 
@@ -349,5 +351,19 @@ describe("mergeDocumentPlans", () => {
 
     expect([...merged.entries.keys()]).toEqual(["R2", "R3"]);
     expect(merged.failures.size).toBe(0);
+  });
+});
+
+describe("labels from the file", () => {
+  test("are cut to the import's name cap before they name a block or a report line", () => {
+    const long = "S".repeat(SURVEY_IMPORT_MAX_NAME_CHARS + 40);
+    const context = new DocumentPlanContext(buildGridModel("csv", [["Question", long]]));
+    const plan = checkDocumentPlanResponses(
+      context,
+      [answer(["R1"], [entry("R1", { idCell: "B1", headline: [piece("en", "A1")] })])],
+      { retry: false }
+    );
+
+    expect(plan.entries.get("R1")?.label).toHaveLength(SURVEY_IMPORT_MAX_NAME_CHARS);
   });
 });

@@ -32,7 +32,7 @@ type TLocaleText = Record<string, string>;
  */
 function collectLocaleTexts(
   document: TSurveyImportDraft,
-  roots: unknown[] = [document.blocks, document.endings]
+  roots: unknown[] = [document.welcomeCard, document.blocks, document.endings]
 ): TLocaleText[] {
   const codes = new Set(document.languages.map((language) => language.code));
   const texts: TLocaleText[] = [];
@@ -97,6 +97,33 @@ function dropLanguages(
 }
 
 /**
+ * A jump to a block the cut removed is a jump to the end. The block was the last one when it was cut,
+ * so jumping to it and continuing past it end the same way; retargeting keeps the rule — and the
+ * report line that names it — instead of leaving the create to refuse a jump to a block that is gone.
+ */
+const retargetJumpsToCutBlocks = (document: TSurveyImportDraft, cutBlockIds: ReadonlySet<string>): void => {
+  if (cutBlockIds.size === 0) return;
+  const endingId = document.endings[0]?.id;
+
+  for (const block of document.blocks) {
+    if (block.logic) {
+      block.logic = block.logic.flatMap((rule) => {
+        const actions = rule.actions.flatMap((action) => {
+          if (action.objective !== "jumpToBlock" || !cutBlockIds.has(action.target)) return [action];
+          return endingId ? [{ ...action, target: endingId }] : [];
+        });
+        return actions.length > 0 ? [{ ...rule, actions }] : [];
+      });
+      if (block.logic.length === 0) delete block.logic;
+    }
+    if (block.logicFallback !== undefined && cutBlockIds.has(block.logicFallback)) {
+      if (endingId) block.logicFallback = endingId;
+      else delete block.logicFallback;
+    }
+  }
+};
+
+/**
  * Drop trailing questions, and a block once it empties, until the draft fits. Each step weighs only
  * what it removes: the element and its comma, or the emptied block and its comma.
  */
@@ -110,6 +137,7 @@ function dropTrailingQuestions(
   /** The questions cut, by the lane's own id: labels can repeat. */
   const droppedRefs = new Set<string>();
   const elementIds = new Set<string>();
+  const cutBlockIds = new Set<string>();
   let remaining = overBy;
 
   while (remaining > 0 && document.blocks.length > 0) {
@@ -131,10 +159,12 @@ function dropTrailingQuestions(
     }
     if (block.elements.length === 0) {
       remaining -= jsonBytes(block) + (document.blocks.length > 1 ? 1 : 0);
+      cutBlockIds.add(block.id);
       document.blocks.pop();
       elementRefs.pop();
     }
   }
+  retargetJumpsToCutBlocks(document, cutBlockIds);
   return { refs: droppedRefs, elementIds };
 }
 

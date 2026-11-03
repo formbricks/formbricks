@@ -804,3 +804,24 @@ describe("assembleDocumentDraft: questions asked only if", () => {
     expect(logicIssues(issues)).toEqual([["Q1", "logic_not_imported"]]);
   });
 });
+
+describe("options the import's per-question cap leaves out", () => {
+  test("are reported, so the draft does not lose them without a line", async () => {
+    const options = Array.from({ length: SURVEY_IMPORT_MAX_OPTIONS_PER_QUESTION + 2 }, (_, index) =>
+      option(`Option ${index + 1}`)
+    );
+
+    const { document, issues } = await assemble([entry("R1", { kind: "multipleChoiceMulti", options })]);
+
+    expect((elementsOf(document)[0] as unknown as { choices: unknown[] }).choices).toHaveLength(
+      SURVEY_IMPORT_MAX_OPTIONS_PER_QUESTION
+    );
+    expect(issues).toContainEqual({
+      code: "options_left_out",
+      severity: "warning",
+      questionTag: "R1",
+      questionRef: "R1",
+      params: { count: 2, options: "Option 201, Option 202" },
+    });
+  });
+});

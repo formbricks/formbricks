@@ -18,7 +18,7 @@ import type {
 import { createSlicer } from "../core/event-loop";
 import { SurveyImportIdRegistry, findFreeSuffixedName, isObjectMemberName } from "../core/id-registry";
 import { languageSettingsFor } from "../core/language-settings";
-import type { TSurveyImportPipelineIssue } from "../core/report";
+import { type TSurveyImportPipelineIssue, joinOptionNames } from "../core/report";
 import { type TSanitizedTexts, sanitizeName } from "../core/sanitize-text";
 import { type TPipedTextContext, replacePipedText } from "./piped-text";
 import { type TQsfCheckedPlan, type TQsfPlannedQuestion, sliderPoints } from "./plan-checks";
@@ -134,10 +134,6 @@ const choiceShuffle = (randomized: boolean, hasSpecial: boolean): "none" | "all"
   if (!randomized) return "none";
   return hasSpecial ? "exceptLast" : "all";
 };
-
-/** How many left-out options a report line names, and how much of each. */
-const MAX_NAMED_OPTIONS = 5;
-const MAX_OPTION_NAME_CHARS = 40;
 
 class QsfAssembler {
   private readonly issues: TSurveyImportPipelineIssue[] = [];
@@ -292,11 +288,7 @@ class QsfAssembler {
 
   /** Left-out options as a report line names them: their default-language text, a few, each short. */
   private optionNames(keys: TQsfTextKey[]): string {
-    const names = keys.slice(0, MAX_NAMED_OPTIONS).map((key) => {
-      const text = this.params.texts.plainDefault.get(key) || "…";
-      return text.length > MAX_OPTION_NAME_CHARS ? `${text.slice(0, MAX_OPTION_NAME_CHARS - 1)}…` : text;
-    });
-    return keys.length > MAX_NAMED_OPTIONS ? `${names.join(", ")}, …` : names.join(", ");
+    return joinOptionNames(keys.map((key) => this.params.texts.plainDefault.get(key) || "…"));
   }
 
   /** The same fixed text in every language, for a label the file left empty. */
