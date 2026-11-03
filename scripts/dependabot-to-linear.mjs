@@ -170,8 +170,10 @@ function alertLabel(title) {
 // Alert numbers restart in every repository, so one advisory can file a ticket in
 // each repo it reaches. Per-repo tickets are what makes the reconcile pass honest —
 // a ticket closes when *its* alert resolves — so instead of deduplicating, a new
-// ticket names the siblings that already exist, letting triage rate the advisory
-// once. Found by the advisory id every ticket description carries.
+// ticket names the siblings still open for the same advisory, letting triage rate
+// the vulnerability once. Found by the advisory id every ticket description carries.
+// A sibling already completed or canceled is skipped: its half of the advisory has
+// been dealt with, so it is history rather than a second live ticket.
 //
 // Best-effort: a failed lookup logs and returns nothing, so the ticket is still
 // filed with its advisory id and nothing is lost but the cross-reference.
@@ -185,14 +187,16 @@ async function findSiblingIssues(apiKey, ghsa, { excludePrefix, request = linear
           filter: { team: { id: { eq: $teamId } }, description: { contains: $ghsa } }
           first: 5
         ) {
-          nodes { identifier title url }
+          nodes { identifier title url state { type } }
         }
       }`,
       { teamId: LINEAR_TEAM_ID, ghsa }
     );
     return (data.issues?.nodes ?? []).filter(
       (issue) =>
-        issue.title?.startsWith("[Dependabot ") && !(excludePrefix && issue.title.startsWith(excludePrefix))
+        issue.title?.startsWith("[Dependabot ") &&
+        !(excludePrefix && issue.title.startsWith(excludePrefix)) &&
+        !["completed", "canceled"].includes(issue.state?.type)
     );
   } catch (err) {
     console.warn(`warn   sibling lookup failed for ${ghsa}: ${err.message}`);

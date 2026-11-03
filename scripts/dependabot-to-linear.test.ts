@@ -104,14 +104,34 @@ describe("isRepositoryName", () => {
 describe("findSiblingIssues", () => {
   const stub = (...nodes: unknown[]) => vi.fn(async () => ({ issues: { nodes } }));
 
-  test("keeps Dependabot tickets for the advisory, minus this repository's own", async () => {
+  const open = { state: { type: "triage" } };
+
+  test("keeps the Dependabot tickets still open for the advisory, minus this repository's own", async () => {
     const siblings = await findSiblingIssues("key", "GHSA-2m5v-pch6-74hx", {
       excludePrefix: "[Dependabot ee#197]",
       request: stub(
-        { identifier: "ENG-1", title: "[Hand-written] same GHSA pasted in a description", url: "u1" },
-        { identifier: "ENG-2", title: "[Dependabot #984] glob — injection", url: "u2" },
-        { identifier: "ENG-3", title: "[Dependabot ee#197] undici — undici DoS", url: "u3" },
-        { identifier: "ENG-4", title: "[Dependabot hub#7] glob — injection", url: "u4" }
+        {
+          identifier: "ENG-1",
+          title: "[Hand-written] same GHSA pasted in a description",
+          url: "u1",
+          ...open,
+        },
+        { identifier: "ENG-2", title: "[Dependabot #984] glob — injection", url: "u2", ...open },
+        { identifier: "ENG-3", title: "[Dependabot ee#197] undici — undici DoS", url: "u3", ...open },
+        { identifier: "ENG-4", title: "[Dependabot hub#7] glob — injection", url: "u4", ...open },
+        // Already dealt with in its own repository, so it is history, not a second live ticket.
+        {
+          identifier: "ENG-5",
+          title: "[Dependabot #970] minimatch — ReDoS",
+          url: "u5",
+          state: { type: "completed" },
+        },
+        {
+          identifier: "ENG-6",
+          title: "[Dependabot #971] joi — prototype pollution",
+          url: "u6",
+          state: { type: "canceled" },
+        }
       ),
     });
 
