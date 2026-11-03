@@ -63,7 +63,10 @@ export function ShowIfPopover({
         align="start"
         className="w-[min(44rem,calc(100vw-2rem))]"
         // The popover sits inside the block row in the React tree: keep its clicks off the row.
-        onClick={(event) => event.stopPropagation()}>
+        onClick={(event) => event.stopPropagation()}
+        // Opened from the Add logic menu, which hands focus back to its button as it closes; that must
+        // not close the popover it just opened. Escape, a click outside and Done still close it.
+        onFocusOutside={(event) => event.preventDefault()}>
         <ShowIfEditor
           localSurvey={localSurvey}
           setLocalSurvey={setLocalSurvey}
