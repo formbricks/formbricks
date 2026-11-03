@@ -321,6 +321,21 @@ describe("processAttachmentExportJob", () => {
     expect(mockedNotifyReady).not.toHaveBeenCalled();
   });
 
+  test("keeps the archive when its own build fails after another build completed the export", async () => {
+    mockedUpload.mockResolvedValue({ ok: false, error: { code: "unknown" } } as never);
+    prisma.attachmentExport.updateMany
+      .mockResolvedValueOnce({ count: 1 }) // claim
+      .mockResolvedValueOnce({ count: 0 }); // fail: the stalled original completed meanwhile
+    prisma.attachmentExport.findFirst
+      .mockResolvedValueOnce(queuedRow() as never)
+      .mockResolvedValueOnce({ status: "completed" } as never);
+
+    await processAttachmentExportJob(data, finalContext);
+
+    expect(mockedDeleteFile).not.toHaveBeenCalled();
+    expect(mockedNotifyFailed).not.toHaveBeenCalled();
+  });
+
   test("does not email a failure when the export was already settled elsewhere", async () => {
     mockedUpload.mockResolvedValue({ ok: false, error: { code: "unknown" } } as never);
     prisma.attachmentExport.updateMany

@@ -110,6 +110,15 @@ const buildArchiveAndUpload = async ({
   }
 };
 
+/** Whether another build already completed the export, so the archive under its key is that build's. */
+const isCompletedElsewhere = async (data: TAttachmentExportJobData): Promise<boolean> => {
+  const current = await prisma.attachmentExport.findFirst({
+    where: { id: data.attachmentExportId, workspaceId: data.workspaceId },
+    select: { status: true },
+  });
+  return current?.status === "completed";
+};
+
 const failExport = async (
   data: TAttachmentExportJobData,
   errorCode: string,
@@ -129,6 +138,9 @@ const failExport = async (
       attachmentExportId: data.attachmentExportId,
       workspaceId: data.workspaceId,
     });
+  } else if (await isCompletedElsewhere(data)) {
+    // A stalled job's re-run lost to the original, which completed: the archive is the export's result.
+    return;
   }
   if (storageKey) {
     // Normally nothing is there: a failed multipart upload is aborted. This covers an upload that
@@ -252,11 +264,7 @@ export const processAttachmentExportJob: JobHandler<TAttachmentExportJobData> = 
     if (completed.count === 0) {
       // Settled under us: failed as stale, or the survey and its exports were deleted. Nothing will ever
       // point at this archive, so it goes now — unless the row says completed, whose archive this key is.
-      const current = await prisma.attachmentExport.findFirst({
-        where: { id: data.attachmentExportId, workspaceId: data.workspaceId },
-        select: { status: true },
-      });
-      if (current?.status === "completed") {
+      if (await isCompletedElsewhere(data)) {
         logger.warn(logContext, "Attachment export was completed by another build; keeping its archive");
         return;
       }
