@@ -3,7 +3,12 @@ import { embeddedFieldsFromLegacyInput } from "@formbricks/types/embedded-data-m
 import { type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { type TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
-import { type TAdvanceFromBlockInput, advanceFromBlock } from "./block-flow";
+import {
+  type TAdvanceFromBlockInput,
+  type TStartSurveyInput,
+  advanceFromBlock,
+  startSurvey,
+} from "./block-flow";
 
 vi.mock("@/lib/i18n", () => ({
   getLocalizedValue: vi.fn((value, language) =>
@@ -223,13 +228,23 @@ describe("advanceFromBlock", () => {
     expect(advance(survey, { submittedData: { "b1-q": "no" } }).nextBlockId).toBe("b2");
   });
 
-  test("the start sentinel advances to the first block without evaluating logic", () => {
+  test("the start sentinel advances to the first block without evaluating block logic, keeping variables", () => {
     const result = advance(makeSurvey([block("b1"), block("b2")]), {
       blockId: "start",
       variables: { score: 3 },
     });
 
-    expect(result).toMatchObject({ nextBlockId: "b1", finished: false, variables: {} });
+    // Values set before the first question travel with the first submit (ENG-6932).
+    expect(result).toMatchObject({ nextBlockId: "b1", finished: false, variables: { score: 3 } });
+  });
+
+  test("the start sentinel advances to where the rules before the first question sent the respondent", () => {
+    const result = advance(makeSurvey([block("b1"), block("b2"), block("b3")]), {
+      blockId: "start",
+      startBlockId: "b3",
+    });
+
+    expect(result).toMatchObject({ nextBlockId: "b3", finished: false });
   });
 
   describe("a blockId that is not a block", () => {
@@ -269,6 +284,172 @@ describe("advanceFromBlock", () => {
       });
       expect(warn).toHaveBeenCalledTimes(1);
       warn.mockRestore();
+    });
+  });
+});
+
+describe("startSurvey: rules before the first question (ENG-6932)", () => {
+  const fieldIs = (fieldId: string, value: string) => ({
+    id: `cond-${fieldId}`,
+    connector: "and" as const,
+    conditions: [
+      {
+        id: `c-${fieldId}`,
+        operator: "equals" as const,
+        leftOperand: { type: "hiddenField" as const, value: fieldId },
+        rightOperand: { type: "static" as const, value },
+      },
+    ],
+  });
+
+  const startRule = (
+    id: string,
+    fieldId: string,
+    value: string,
+    actions: TSurveyBlockLogic["actions"]
+  ): TSurveyBlockLogic => ({ id, conditions: fieldIs(fieldId, value), actions });
+
+  const jumpTo = (target: string) => ({ id: `jump-${target}`, objective: "jumpToBlock" as const, target });
+  const setScore = (value: number) => ({
+    id: `set-${String(value)}`,
+    objective: "calculate" as const,
+    variableId: "score",
+    operator: "assign" as const,
+    value: { type: "static" as const, value },
+  });
+
+  const withStart = (
+    startLogic: TSurveyBlockLogic[] | null | undefined,
+    { welcome = false }: { welcome?: boolean } = {}
+  ): TJsWorkspaceStateSurvey => {
+    const survey = makeSurvey([block("b1"), block("b2"), block("b3")]);
+    return { ...survey, startLogic, welcomeCard: { ...survey.welcomeCard, enabled: welcome } };
+  };
+
+  const start = (survey: TJsWorkspaceStateSurvey, overrides: Partial<TStartSurveyInput> = {}) =>
+    startSurvey({
+      survey,
+      responseData: {},
+      variables: { score: 0 },
+      selectedLanguage: "default",
+      reservedFieldValues: {},
+      ...overrides,
+    });
+
+  const screener = [
+    startRule("screen-out", "panel", "none", [jumpTo("end2")]),
+    startRule("heavy", "seg", "heavy", [setScore(10), jumpTo("b3")]),
+  ];
+
+  test("without rules, the survey starts as it always did", () => {
+    expect(start(withStart(undefined))).toMatchObject({ firstCardId: "b1", finished: false });
+    expect(start(withStart(null, { welcome: true }))).toMatchObject({
+      firstCardId: "start",
+      startBlockId: undefined,
+      finished: false,
+    });
+    expect(start(withStart([]), { startAtBlockId: "b2" })).toMatchObject({ firstCardId: "b2" });
+  });
+
+  test("falls through to the first block when no rule matches", () => {
+    const result = start(withStart(screener), { responseData: { panel: "p1", seg: "light" } });
+
+    expect(result).toEqual({
+      firstCardId: "b1",
+      startBlockId: undefined,
+      finished: false,
+      endingId: undefined,
+      variables: { score: 0 },
+    });
+  });
+
+  test("a screen-out shows only the ending, before the welcome card", () => {
+    const result = start(withStart(screener, { welcome: true }), { responseData: { panel: "none" } });
+
+    expect(result).toMatchObject({ firstCardId: "end2", finished: true, endingId: "end2" });
+  });
+
+  test("a screen-out also applies on a start-at link, so screening can't be skipped", () => {
+    const result = start(withStart(screener), { responseData: { panel: "none" }, startAtBlockId: "b2" });
+
+    expect(result).toMatchObject({ firstCardId: "end2", finished: true, endingId: "end2" });
+  });
+
+  test("a jump to a block goes there, and the welcome card still shows first and leads there", () => {
+    const noWelcome = start(withStart(screener), { responseData: { seg: "heavy" } });
+    const welcome = start(withStart(screener, { welcome: true }), { responseData: { seg: "heavy" } });
+
+    expect(noWelcome).toMatchObject({ firstCardId: "b3", startBlockId: "b3", finished: false });
+    expect(welcome).toMatchObject({ firstCardId: "start", startBlockId: "b3", finished: false });
+  });
+
+  test("a jump wins over a start-at link; without one, the start-at block is kept", () => {
+    expect(
+      start(withStart(screener), { responseData: { seg: "heavy" }, startAtBlockId: "b2" })
+    ).toMatchObject({ firstCardId: "b3" });
+    expect(
+      start(withStart(screener), { responseData: { seg: "light" }, startAtBlockId: "b2" })
+    ).toMatchObject({ firstCardId: "b2" });
+  });
+
+  test("a set value is carried into the first page's submit", () => {
+    const survey = withStart([startRule("tag", "seg", "heavy", [setScore(10)])]);
+    const started = start(survey, { responseData: { seg: "heavy" } });
+
+    expect(started).toMatchObject({ firstCardId: "b1", variables: { score: 10 } });
+
+    const firstPage = advance(survey, { variables: started.variables, responseData: { seg: "heavy" } });
+    expect(firstPage.variables).toEqual({ score: 10 });
+  });
+
+  test("the first jump wins, and every matching rule's calculations run", () => {
+    const survey = withStart([
+      startRule("first", "seg", "heavy", [setScore(1), jumpTo("b2")]),
+      startRule("second", "seg", "heavy", [
+        { ...setScore(5), id: "add", operator: "add" as const },
+        jumpTo("end1"),
+      ]),
+    ]);
+
+    expect(start(survey, { responseData: { seg: "heavy" } })).toMatchObject({
+      firstCardId: "b2",
+      finished: false,
+      variables: { score: 6 },
+    });
+  });
+
+  test("a jump to a deleted block or ending counts as no jump", () => {
+    const survey = withStart([startRule("stale", "seg", "heavy", [jumpTo("gone")])]);
+
+    expect(start(survey, { responseData: { seg: "heavy" } })).toMatchObject({
+      firstCardId: "b1",
+      finished: false,
+    });
+  });
+
+  test("rules read reserved fields too", () => {
+    const survey = withStart([
+      {
+        id: "lang",
+        conditions: {
+          id: "g",
+          connector: "and",
+          conditions: [
+            {
+              id: "c",
+              operator: "equals",
+              leftOperand: { type: "reserved", value: "language" },
+              rightOperand: { type: "static", value: "de" },
+            },
+          ],
+        },
+        actions: [jumpTo("end1")],
+      },
+    ]);
+
+    expect(start(survey, { reservedFieldValues: { language: "de" } })).toMatchObject({
+      firstCardId: "end1",
+      finished: true,
     });
   });
 });

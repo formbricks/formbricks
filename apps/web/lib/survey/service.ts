@@ -165,6 +165,7 @@ export const selectSurvey = {
   delay: true,
   displayPercentage: true,
   showConditions: true,
+  startLogic: true,
   autoComplete: true,
   publishOn: true,
   closeOn: true,
@@ -928,6 +929,9 @@ export const updateSurveyInternal = async (
     if (data.showConditions === null) {
       data.showConditions = Prisma.DbNull;
     }
+    if (data.startLogic === null) {
+      data.startLogic = Prisma.DbNull;
+    }
 
     delete data.createdBy;
     const persistedSurvey = await prisma.$transaction(
@@ -1284,6 +1288,7 @@ export const createSurvey = async (
         : {}),
       styling: styling === null ? Prisma.JsonNull : styling,
       showConditions: restSurveyBody.showConditions === null ? Prisma.DbNull : restSurveyBody.showConditions,
+      startLogic: restSurveyBody.startLogic === null ? Prisma.DbNull : restSurveyBody.startLogic,
       ...normalizeSurveyScheduling({
         closeOn: normalizedCloseOn,
         publishOn: normalizedPublishOn,
