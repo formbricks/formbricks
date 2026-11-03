@@ -8,7 +8,8 @@ import type { TOpenSurveyImportUploadOptions, TSurveyImportUpload } from "../upl
  * cannot start the app's worker (`upload-thread.test.ts` runs the real one). It reads with the same
  * functions, and crosses the same boundary: what comes back is a structured clone, as `postMessage`
  * makes it, and a refusal is rebuilt from its posted form. It keeps the thread's contract too: a closed
- * upload, or one whose client left, reads nothing.
+ * upload, or one whose client left, reads nothing. It stays `async` so an aborted upload rejects, as the
+ * thread's does.
  */
 const inTheThread = <T>(run: () => T): T => {
   try {

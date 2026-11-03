@@ -126,7 +126,7 @@ const environmentGenerate =
   };
 
 /** Read a file the way the import route does: its type from its bytes, then its lane's reader. */
-const prepare = async (bytes: Uint8Array, fileName: string): Promise<TPreparedDocumentImport> => {
+const prepare = (bytes: Uint8Array, fileName: string): TPreparedDocumentImport => {
   const upload = sniffSurveyImportFile(bytes);
   if (!isDocumentUpload(upload)) throw new Error(`Not a document: ${upload.type}`);
   return prepareDocumentImport(upload, fileName);
