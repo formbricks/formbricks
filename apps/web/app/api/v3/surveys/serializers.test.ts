@@ -879,3 +879,45 @@ describe("option show-if and Hidden round-trip (ENG-6937)", () => {
     expect(optionStates((patched.data?.blocks as never) ?? [])).toEqual(stored);
   });
 });
+
+describe("copied options round-trip (ENG-6938)", () => {
+  const links = (blocks: { elements: Record<string, unknown>[] }[]) =>
+    blocks.flatMap((block) =>
+      block.elements.flatMap((element) =>
+        typeof element.optionsCopiedFrom === "string" ? [[element.id, element.optionsCopiedFrom]] : []
+      )
+    );
+
+  test("GET returns optionsCopiedFrom, and create and patch take it back", () => {
+    const resource = serializeV3SurveyResource(surveyFlowFixture, TEST_VISIBILITY);
+
+    expect(links(resource.blocks as never)).toEqual([["recommend", "services"]]);
+
+    const body = {
+      workspaceId: "clxx1234567890123456789012",
+      name: resource.name,
+      blocks: resource.blocks,
+      endings: resource.endings,
+      hiddenFields: resource.hiddenFields,
+      variables: resource.variables,
+    };
+    const created = ZV3CreateSurveyBody.safeParse(body);
+    expect(created.error?.issues ?? []).toEqual([]);
+    expect(links((created.data?.blocks as never) ?? [])).toEqual([["recommend", "services"]]);
+
+    const patched = ZV3PatchSurveyBody.safeParse({ blocks: resource.blocks });
+    expect(patched.error?.issues ?? []).toEqual([]);
+    expect(links((patched.data?.blocks as never) ?? [])).toEqual([["recommend", "services"]]);
+  });
+
+  test("optionsCopiedFrom must be an element id string", () => {
+    const resource = serializeV3SurveyResource(surveyFlowFixture, TEST_VISIBILITY);
+    const blocks = structuredClone(resource.blocks) as unknown as { elements: Record<string, unknown>[] }[];
+    blocks[5].elements[12].optionsCopiedFrom = 42;
+
+    const patched = ZV3PatchSurveyBody.safeParse({ blocks });
+    expect(patched.error?.issues.map((issue) => issue.path.join("."))).toContain(
+      "blocks.5.elements.12.optionsCopiedFrom"
+    );
+  });
+});

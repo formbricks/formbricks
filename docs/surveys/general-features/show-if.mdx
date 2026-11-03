@@ -1,6 +1,6 @@
 ---
 title: "Show If"
-description: "Show a question, a whole block or a single answer option only to the respondents it applies to, and retire an option on a live survey by hiding it."
+description: "Show a question, a whole block or a single answer option only to the respondents it applies to, copy the options a respondent picked into a later question, and retire an option on a live survey by hiding it."
 icon: "eye"
 ---
 
@@ -63,6 +63,30 @@ A published survey can't lose an option that existed at launch: deleting it woul
 
 Hidden is a separate state, not a condition that never matches, so the Flow tab and results tell a retired option apart from one shown only to some respondents.
 
+## Copied options
+
+A question can **copy the options of an earlier question** and offer each one only if the respondent picked it there. This is "only the brands you know": ask *Which streaming services do you use?*, then ask *Which services would you recommend to a friend?* about those services only.
+
+* **The copies keep their codes.** Each copied option keeps the source option's ID and [answer code](/surveys/analysis/question-codes), so one brand has one code in every question and in the export. A copied option's code can't be changed in the copy: change it in the source question.
+* **Each copy is shown only if it was picked in the source.** Copying writes an ordinary show-if on each copied option, which you can read and change like any other. It works in every language.
+* **Codes travel through every hop.** A question can copy from a question that copied its own options, and the codes stay the same.
+* **Add fixed options next to the copies**, such as *None of these*. They are always shown, unless you give them a condition, and take the next code that is free in both questions.
+* **Copy again after the source gains an option.** The copy doesn't follow the source by itself: **Copy again** adds the new options, with their IDs and codes.
+
+You can copy between single select, multi select and ranking questions, and between picture selection questions. The source must be above the question: in an earlier block, or above it on the same page. Matrix rows can't be copied from a question: give the rows a show-if on the source question instead.
+
+If the respondent picked none of the source's options and there is no fixed option, the question has nothing to offer and is skipped.
+
+### Copying options on the Flow tab
+
+Open a question's **Options shown if…** popover on the [Flow tab](/surveys/general-features/flow-tab) and pick the source question under **Options copied from**:
+
+* The first copy replaces the question's own options with the source's. *Other* and *None of these* stay, and so do, on a live survey, the options that existed at launch.
+* **Copy again** brings in the options the source gained since. The button says how many are new.
+* Choose **Not copied** to stop copying. The options stay, with their conditions, as the question's own.
+
+A question with copied options carries an **Options copied from …** badge. You can't delete a question while another copies its options from it.
+
 Link, website, app and mobile surveys behave the same.
 
 ## Adding and editing a show-if
@@ -91,4 +115,4 @@ Each response records what show-if kept from its respondent, at the moment they 
 
 ## Through the API
 
-In the survey document, a show-if is an optional `showIf` on a block, an element, a choice, or a matrix row or column. It uses the condition-group format of logic rules. A Hidden option carries `hidden: true`. A v3 response carries what its respondent was not shown as a read-only `notShown`. See the [Management API](/api-v3-reference/introduction) and [MCP](/platform/mcp/overview).
+In the survey document, a show-if is an optional `showIf` on a block, an element, a choice, or a matrix row or column. It uses the condition-group format of logic rules. A Hidden option carries `hidden: true`. A question with copied options names its source in `optionsCopiedFrom`, and its copied options carry the source's `id` and `code` and a `showIf` "picked in the source"; a code sent for a copy is replaced by the source option's. A v3 response carries what its respondent was not shown as a read-only `notShown`. See the [Management API](/api-v3-reference/introduction) and [MCP](/platform/mcp/overview).

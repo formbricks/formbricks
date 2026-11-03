@@ -1,4 +1,5 @@
 import type { TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
+import { canHaveCopiedOptions } from "@formbricks/types/surveys/copied-options";
 import type { TConditionGroup } from "@formbricks/types/surveys/logic";
 import { type TOptionListKey, getOptionLists } from "@formbricks/types/surveys/show-if";
 import type { TSurvey } from "@formbricks/types/surveys/types";
@@ -14,9 +15,7 @@ import type { TSurvey } from "@formbricks/types/surveys/types";
  * **Everything the survey holds produces a row or a badge** (D2, Javier's ENG-3651 rule): whatever
  * the v3 API or MCP can write is shown, so nothing an AI wrote is hidden from the person checking
  * it. A construct the Flow tab cannot edit yet comes out with `editable: false` and is rendered
- * read-only. The keys this module reads beyond `TSurvey` (`optionsCopiedFrom`, and rule actions or
- * values the editor doesn't know) are the approved shapes of the later Survey Flow Editor tickets;
- * each of those tickets makes its construct editable.
+ * read-only: rule actions, values or condition operands the editor doesn't know.
  *
  * Labels are left to the renderer: the model carries ids, indices and the raw rules, so it stays
  * free of translations and of the survey's languages.
@@ -62,13 +61,14 @@ export interface TFlowFallbackRow {
  *   the question's "Options shown if" popover (ENG-6937), unless a condition uses an operand type the
  *   conditions editor doesn't know
  * - `hiddenOptions`: `count` options are Hidden; edited in the same popover
- * - `optionsCopiedFrom`: the options are copied from the question `sourceId`
+ * - `optionsCopiedFrom`: the options are copied from the question `sourceId`. Edited in the same
+ *   popover, as "Options copied from" (ENG-6938)
  */
 export type TFlowBadge =
   | { kind: "showIf"; conditions: TConditionGroup; editable: boolean }
   | { kind: "optionsShowIf"; count: number; editable: boolean }
   | { kind: "hiddenOptions"; count: number; editable: boolean }
-  | { kind: "optionsCopiedFrom"; sourceId: string; editable: false };
+  | { kind: "optionsCopiedFrom"; sourceId: string; editable: boolean };
 
 export interface TFlowElementItem {
   id: string;
@@ -230,7 +230,12 @@ const getElementBadges = (element: unknown): TFlowBadge[] => {
   const badges: TFlowBadge[] = [...getShowIfBadge(element)];
 
   if (typeof element.optionsCopiedFrom === "string") {
-    badges.push({ kind: "optionsCopiedFrom", sourceId: element.optionsCopiedFrom, editable: false });
+    // ENG-6938: edited in the "Options shown if" popover, as "Options copied from".
+    badges.push({
+      kind: "optionsCopiedFrom",
+      sourceId: element.optionsCopiedFrom,
+      editable: typeof element.type === "string" && canHaveCopiedOptions(element.type),
+    });
   }
 
   const options = getOptionLikeItems(element);

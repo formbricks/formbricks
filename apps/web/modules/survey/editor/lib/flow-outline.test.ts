@@ -76,7 +76,7 @@ describe("buildFlowOutline: every construct in the fixture survey", () => {
       [1, 3],
       [1, 3],
       [4, 4],
-      [12, 2],
+      [13, 2],
     ]);
   });
 
@@ -114,6 +114,13 @@ describe("buildFlowOutline: every construct in the fixture survey", () => {
       { kind: "showIf", conditions: appleReason.showIf, editable: true },
     ]);
     expect(outline.blocks[4].elements[3].badges).toEqual([]);
+  });
+
+  test("a question with copied options comes out with an editable copied-options badge (ENG-6938)", () => {
+    expect(outline.blocks[5].elements[12].badges).toEqual([
+      { kind: "optionsCopiedFrom", sourceId: "services", editable: true },
+      { kind: "optionsShowIf", count: 4, editable: true },
+    ]);
   });
 });
 
@@ -296,7 +303,7 @@ describe("buildFlowOutline: constructs the Flow tab cannot edit yet come out rea
 
     // ENG-6937: option show-if and Hidden are edited in the "Options shown if" popover.
     expect(outline.blocks[4].elements[0].badges).toEqual([
-      { kind: "optionsCopiedFrom", sourceId: "services", editable: false },
+      { kind: "optionsCopiedFrom", sourceId: "services", editable: true },
       { kind: "optionsShowIf", count: 3, editable: true },
       { kind: "hiddenOptions", count: 1, editable: true },
     ]);

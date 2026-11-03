@@ -1013,6 +1013,108 @@ describe("ordering rules (ENG-3069)", () => {
       ]);
     });
   });
+
+  describe("copied options (ENG-6938)", () => {
+    const choices = [
+      { id: "a", label: { default: "A" } },
+      { id: "b", label: { default: "B" } },
+    ];
+    // Block 0: first_q, then `brands` (multi select). Block 1: second_q, then `fav` (single select)
+    // and `poster` (picture selection).
+    const withCopies = (patch: (elements: Record<string, unknown>[]) => void) => {
+      const survey = twoBlockSurvey();
+      survey.blocks[0].elements.push({
+        id: "brands",
+        type: "multipleChoiceMulti",
+        headline: { default: "Brands" },
+        required: false,
+        choices,
+      } as never);
+      survey.blocks[1].elements.push(
+        {
+          id: "fav",
+          type: "multipleChoiceSingle",
+          headline: { default: "Favourite" },
+          required: false,
+          choices,
+        } as never,
+        {
+          id: "poster",
+          type: "pictureSelection",
+          headline: { default: "Poster" },
+          required: false,
+          choices: [
+            { id: "p1", imageUrl: "https://example.com/1.png" },
+            { id: "p2", imageUrl: "https://example.com/2.png" },
+          ],
+        } as never
+      );
+      patch(survey.blocks.flatMap((block) => block.elements) as unknown as Record<string, unknown>[]);
+      return survey;
+    };
+    // Flat order: first_q, brands, second_q, fav, poster.
+    const FAV = 3;
+    const POSTER = 4;
+
+    test("an earlier source of the same kind is accepted", () => {
+      const survey = withCopies((elements) => (elements[FAV].optionsCopiedFrom = "brands"));
+
+      expect(validateV3SurveyReferences(refInput(survey)).invalidParams).toEqual([]);
+      expect(getV3SurveyPrecedenceInvalidParams(refInput(survey))).toEqual([]);
+    });
+
+    test("a source that doesn't exist is a dangling reference", () => {
+      const survey = withCopies((elements) => (elements[FAV].optionsCopiedFrom = "gone_q"));
+
+      expect(validateV3SurveyReferences(refInput(survey)).invalidParams).toEqual([
+        expect.objectContaining({
+          name: "blocks.1.elements.1.optionsCopiedFrom",
+          code: "dangling_reference",
+          referenceType: "element",
+          missingId: "gone_q",
+        }),
+      ]);
+    });
+
+    test("a source below the question is misordered, and only a new one is reported on PATCH", () => {
+      const baseline = withCopies(() => {});
+      const survey = withCopies((elements) => (elements[1].optionsCopiedFrom = "fav"));
+
+      const expected = [
+        expect.objectContaining({
+          name: "blocks.0.elements.1.optionsCopiedFrom",
+          code: "misordered_reference",
+          identifier: "fav",
+          referenceType: "element",
+        }),
+      ];
+      expect(getV3SurveyPrecedenceInvalidParams(refInput(survey))).toEqual(expected);
+      expect(getV3SurveyIntroducedPrecedenceInvalidParams(refInput(baseline), refInput(survey))).toEqual(
+        expected
+      );
+      expect(getV3SurveyIntroducedPrecedenceInvalidParams(refInput(survey), refInput(survey))).toEqual([]);
+    });
+
+    test("a source of another kind, or with no options, is an invalid reference", () => {
+      const survey = withCopies((elements) => {
+        elements[FAV].optionsCopiedFrom = "second_q";
+        elements[POSTER].optionsCopiedFrom = "brands";
+      });
+
+      expect(validateV3SurveyReferences(refInput(survey)).invalidParams).toEqual([
+        expect.objectContaining({
+          name: "blocks.1.elements.1.optionsCopiedFrom",
+          code: "invalid_reference",
+          identifier: "second_q",
+        }),
+        expect.objectContaining({
+          name: "blocks.1.elements.2.optionsCopiedFrom",
+          code: "invalid_reference",
+          identifier: "brands",
+        }),
+      ]);
+    });
+  });
 });
 
 describe("Set value expressions (ENG-6935)", () => {

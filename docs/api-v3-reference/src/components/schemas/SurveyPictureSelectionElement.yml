@@ -13,6 +13,8 @@ allOf:
       allowMulti:
         type: boolean
         default: false
+      optionsCopiedFrom:
+        $ref: ./SurveyOptionsCopiedFrom.yml
       choices:
         type: array
         minItems: 2

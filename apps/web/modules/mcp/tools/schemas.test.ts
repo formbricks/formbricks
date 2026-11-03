@@ -422,6 +422,14 @@ describe("show-if discoverability (ENG-6931)", () => {
     expect(description).toContain("`hidden: true`");
     expect(description).toContain("matrix row and column");
   });
+
+  test("the blocks description documents copied options (ENG-6938)", () => {
+    const description = surveyAndFeedbackSchemas.ZMcpCreateSurveyInput.shape.blocks.description ?? "";
+
+    expect(description).toContain("`optionsCopiedFrom`");
+    expect(description).toContain("picked in the source");
+    expect(description).toContain("None of these");
+  });
 });
 
 /**

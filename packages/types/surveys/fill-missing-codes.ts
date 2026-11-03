@@ -18,7 +18,11 @@
  *   question's code or an Embedded Data name is skipped, so a filled code never makes a clash.
  * - A duplicated question is an element whose `code` was dropped: it gets the next `q<n>` and its
  *   answer codes stay.
+ * - Copied options (ENG-6938, ENG-4024) take their source option's code, always, through every hop. A
+ *   fixed option of a question linked by copying takes the next number free in every linked question,
+ *   and so does a new option of the source, so a later "Copy again" never brings a clashing code.
  */
+import { getCopiedOptionIds, getCopyGroups } from "./copied-options";
 
 type TRecord = Record<string, unknown>;
 
@@ -73,11 +77,21 @@ const mapElements = <TBlock>(blocks: readonly TBlock[], update: (element: TRecor
  * Fills `code` on the options of one list in order; returns the same array when nothing is missing.
  * `isFree` turns down a number that is unused in the list but would clash elsewhere.
  */
-const fillOptionCodes = (options: unknown, isFree: (code: string) => boolean): unknown => {
+/**
+ * The answer codes taken across questions linked by copied options (ENG-4024): a fixed option in any
+ * of them takes a code none of them uses, so a copy never meets a fixed option with its code.
+ */
+type TSharedCodes = { used: Set<string>; highest: number };
+
+const fillOptionCodes = (
+  options: unknown,
+  isFree: (code: string) => boolean,
+  shared?: TSharedCodes
+): unknown => {
   if (!Array.isArray(options)) return options;
   const list = options as unknown[];
-  const used = new Set<string>();
-  let highest = 0;
+  const used = new Set<string>(shared?.used);
+  let highest = shared?.highest ?? 0;
   for (const option of list) {
     if (!isRecord(option) || typeof option.code !== "string") continue;
     used.add(option.code.toLowerCase());
@@ -89,9 +103,60 @@ const fillOptionCodes = (options: unknown, isFree: (code: string) => boolean): u
     do highest += 1;
     while (used.has(String(highest)) || !isFree(String(highest)));
     used.add(String(highest));
+    shared?.used.add(String(highest));
     return { ...option, code: String(highest) };
   });
+  if (shared) shared.highest = Math.max(shared.highest, highest);
   return filled.every((option, index) => option === list[index]) ? list : filled;
+};
+
+/** The codes of every choice of the questions in each copy group, before anything is filled. */
+const collectSharedCodes = (
+  blocks: readonly unknown[],
+  groups: ReadonlyMap<string, string>
+): Map<string, TSharedCodes> => {
+  const shared = new Map<string, TSharedCodes>();
+  forEachElement(blocks, (element) => {
+    const group = typeof element.id === "string" ? groups.get(element.id) : undefined;
+    if (group === undefined || !Array.isArray(element.choices)) return;
+    const entry = shared.get(group) ?? { used: new Set<string>(), highest: 0 };
+    for (const option of element.choices as unknown[]) {
+      if (!isRecord(option) || typeof option.code !== "string") continue;
+      entry.used.add(option.code.toLowerCase());
+      if (NUMERIC_CODE_PATTERN.test(option.code)) {
+        entry.highest = Math.max(entry.highest, countedNumber(option.code));
+      }
+    }
+    shared.set(group, entry);
+  });
+  return shared;
+};
+
+/**
+ * Copied options keep their source's code (ENG-4024): each copy of `element` takes the code its
+ * source option has, overwriting what the copy held, so a code is read-only in the target. `sources`
+ * holds the questions already filled, so a chain (Q1 → Q2 → Q3) carries Q1's codes all the way.
+ */
+const withSourceCodes = (element: TRecord, sources: ReadonlyMap<string, TRecord>): TRecord => {
+  const source =
+    typeof element.optionsCopiedFrom === "string" ? sources.get(element.optionsCopiedFrom) : undefined;
+  if (!source || !Array.isArray(element.choices) || !Array.isArray(source.choices)) return element;
+
+  const copiedIds = getCopiedOptionIds(source, element);
+  const sourceCodes = new Map<string, string>();
+  for (const option of source.choices as unknown[]) {
+    if (isRecord(option) && typeof option.id === "string" && typeof option.code === "string") {
+      sourceCodes.set(option.id, option.code);
+    }
+  }
+
+  const list = element.choices as unknown[];
+  const synced = list.map((option) => {
+    if (!isRecord(option) || typeof option.id !== "string" || !copiedIds.has(option.id)) return option;
+    const code = sourceCodes.get(option.id);
+    return code === undefined || option.code === code ? option : { ...option, code };
+  });
+  return synced.every((option, index) => option === list[index]) ? element : { ...element, choices: synced };
 };
 
 /** The option list whose codes the export puts into column names (`<code>_<answer>`), if any. */
@@ -104,7 +169,8 @@ const columnNamingList = (element: TRecord): string | null => {
 const fillAnswerCodes = (
   element: TRecord,
   questionCode: string,
-  takenNames: ReadonlySet<string>
+  takenNames: ReadonlySet<string>,
+  sharedChoiceCodes?: TSharedCodes
 ): TRecord => {
   let keys: string[] = [];
   if (element.type === "matrix") keys = ["rows", "columns"];
@@ -117,7 +183,11 @@ const fillAnswerCodes = (
 
   let result = element;
   for (const key of keys) {
-    const filled = fillOptionCodes(element[key], key === namingList ? isColumnNameFree : () => true);
+    const filled = fillOptionCodes(
+      element[key],
+      key === namingList ? isColumnNameFree : () => true,
+      key === "choices" ? sharedChoiceCodes : undefined
+    );
     if (filled !== element[key]) result = { ...result, [key]: filled };
   }
   return result;
@@ -159,11 +229,24 @@ export const fillMissingCodes = <TBlock>(
     return candidate;
   };
 
+  const copyGroups = getCopyGroups(blocks);
+  const sharedCodes = collectSharedCodes(blocks, copyGroups);
+  const filledById = new Map<string, TRecord>();
+
   return mapElements(blocks, (element) => {
     if (element.type === "cta") return element;
     const code = typeof element.code === "string" ? element.code : nextQuestionCode(element.id);
-    const filled = fillAnswerCodes(element, code, takenCodes);
-    return filled.code === code ? filled : { ...filled, code };
+    const group = typeof element.id === "string" ? copyGroups.get(element.id) : undefined;
+    const synced = withSourceCodes(element, filledById);
+    const filled = fillAnswerCodes(
+      synced,
+      code,
+      takenCodes,
+      group === undefined ? undefined : sharedCodes.get(group)
+    );
+    const result = filled.code === code ? filled : { ...filled, code };
+    if (typeof element.id === "string" && !filledById.has(element.id)) filledById.set(element.id, result);
+    return result;
   });
 };
 

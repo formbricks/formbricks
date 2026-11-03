@@ -1,6 +1,7 @@
 import type { TEmbeddedDataType } from "@formbricks/types/embedded-data";
 import { RESERVED_FIELD_CATALOG } from "@formbricks/types/embedded-data-resolver";
 import type { TSurveyBlocks } from "@formbricks/types/surveys/blocks";
+import { getCopiedOptionsIssues } from "@formbricks/types/surveys/copied-options";
 import {
   type TExpressionTypeContext,
   getSetValueExpressionIssues,
@@ -575,6 +576,21 @@ export function getV3SurveyReferenceInvalidParams(input: TReferenceValidationInp
     });
   });
 
+  // ENG-6938: the question `optionsCopiedFrom` names must exist and have options of the same kind. A
+  // source below the question is an ordering rule, reported with the others below.
+  for (const issue of getCopiedOptionsIssues(input.blocks)) {
+    if (issue.kind === "later_source") continue;
+    const isMissing = issue.kind === "missing_source";
+    issues.push({
+      name: issue.path.join("."),
+      reason: issue.message.replace("Copied options: ", ""),
+      code: isMissing ? "dangling_reference" : "invalid_reference",
+      identifier: issue.sourceId,
+      referenceType: "element",
+      ...(isMissing ? { missingId: issue.sourceId } : {}),
+    });
+  }
+
   addRecallReferenceIssues(input.blocks, "blocks", references, issues);
   addRecallReferenceIssues(input.endings, "endings", references, issues);
   addRecallReferenceIssues(input.welcomeCard, "welcomeCard", references, issues);
@@ -612,7 +628,7 @@ export function assertValidV3SurveyReferences(input: TReferenceValidationInput):
  * recalls an answer the respondent has not given yet becomes easy to create, and it passes every
  * other server check.
  *
- * Four rules, each mirroring what the editor or the shared refinement already enforces:
+ * The rules, each mirroring what the editor or the shared refinement already enforces:
  *
  *  - a recall of an element must point strictly backwards in flat element order
  *    (`recall-item-select.tsx` filters the picker the same way);
@@ -622,6 +638,7 @@ export function assertValidV3SurveyReferences(input: TReferenceValidationInput):
  *  - a show-if may use only what comes before it (ENG-6931, mirrors `validateShowIf`): a block's
  *    show-if earlier blocks only, an element's show-if earlier blocks plus elements above it on the
  *    same block. Both operands of a condition are checked.
+ *  - `optionsCopiedFrom` names an element before it (ENG-6938, mirrors `getCopiedOptionsIssues`).
  *
  * `jumpToBlock` and `logicFallback` deliberately have no ordering rule — jumping backwards is a
  * legitimate survey design, and only cycles are policed.
@@ -924,6 +941,21 @@ function getV3SurveyPrecedenceViolations(input: TReferenceValidationInput): TPre
       });
     });
   });
+
+  // ENG-6938: options may be copied only from a question above (earlier blocks, or above it on its page).
+  for (const issue of getCopiedOptionsIssues(input.blocks)) {
+    if (issue.kind !== "later_source") continue;
+    const [, blockIndex, , elementIndex] = issue.path;
+    const elementId = input.blocks[blockIndex as number]?.elements[elementIndex as number]?.id ?? "";
+    addViolation(violations, `optionsCopiedFrom|${elementId}|${issue.sourceId}`, () =>
+      misorderedIssue(
+        issue.path.join("."),
+        `optionsCopiedFrom references element '${issue.sourceId}' (${positions.get(issue.sourceId)?.path ?? "?"}), which is not before it; options can only be copied from elements in earlier blocks or above it on the same block`,
+        issue.sourceId,
+        "element"
+      )
+    );
+  }
 
   // One report per key, and the map has held that invariant since insert — see `addViolation`. The key
   // is also the dedupe unit the delta filter below relies on.

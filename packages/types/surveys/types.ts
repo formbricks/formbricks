@@ -32,6 +32,7 @@ import {
 } from "./blocks";
 import { findBlocksWithCyclicLogic } from "./blocks-validation";
 import { validateSurveyCodes } from "./codes";
+import { getCopiedOptionsIssues } from "./copied-options";
 import {
   type TSurveyElement,
   TSurveyElementTypeEnum,
@@ -1983,6 +1984,11 @@ export const surveyRefinement = (rawSurvey: z.infer<typeof ZSurveyBase>, ctx: z.
       validateShowIf(survey, blockIndex, block, allElements).forEach((issue) => {
         ctx.addIssue(issue as z.IssueData);
       });
+    });
+
+    // Copied options (ENG-6938): the source exists, comes earlier and has options of the same kind.
+    getCopiedOptionsIssues(blocks).forEach(({ path, message }) => {
+      ctx.addIssue({ code: "custom", message, path });
     });
 
     // Rules before the first question: jumps and Set value only, reading fields, never answers.

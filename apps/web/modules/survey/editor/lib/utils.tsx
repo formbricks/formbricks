@@ -162,7 +162,7 @@ const getElementHeadline = (
 };
 
 /** How a question reads in a picker: "q1 · question text" (ENG-6790), or the plain text before it has a code. */
-const getElementPickerLabel = (localSurvey: TSurvey, element: TSurveyElement, t: TFunction): string =>
+export const getElementPickerLabel = (localSurvey: TSurvey, element: TSurveyElement, t: TFunction): string =>
   formatCodedLabel(
     "code" in element ? element.code : undefined,
     getElementHeadline(localSurvey, element, "default", t)
@@ -1271,8 +1271,17 @@ export const findElementUsedInLogic = (survey: TSurvey, elementId: string): numb
     );
   });
 
-  return firstUse(logicIndex, () =>
-    findElementIndexByShowIf(survey, (group) => isUsedInCondition(group), elementId)
+  return firstUse(
+    firstUse(logicIndex, () =>
+      findElementIndexByShowIf(survey, (group) => isUsedInCondition(group), elementId)
+    ),
+    // ENG-6938: a question another question copies its options from.
+    () =>
+      elements.findIndex(
+        (element) =>
+          element.id !== elementId &&
+          (element as unknown as { optionsCopiedFrom?: unknown }).optionsCopiedFrom === elementId
+      )
   );
 };
 
