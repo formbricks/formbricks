@@ -1,5 +1,6 @@
 "use client";
 
+import type { TFunction } from "i18next";
 import { EyeIcon, EyeOffIcon, ListFilterIcon, TrashIcon } from "lucide-react";
 import { type Dispatch, type ReactNode, type SetStateAction, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -127,10 +128,16 @@ interface OptionsShowIfEditorProps {
   readonly onClose: () => void;
 }
 
-const LIST_HEADING_KEY: Record<TOptionListKey, string> = {
-  choices: "workspace.surveys.edit.flow.options",
-  rows: "workspace.surveys.edit.flow.rows",
-  columns: "workspace.surveys.edit.flow.columns",
+/** A list's heading. Literal keys, so the translation scan sees them. */
+const getListHeading = (listKey: TOptionListKey, t: TFunction): string => {
+  switch (listKey) {
+    case "rows":
+      return t("workspace.surveys.edit.flow.rows");
+    case "columns":
+      return t("workspace.surveys.edit.flow.columns");
+    default:
+      return t("workspace.surveys.edit.flow.options");
+  }
 };
 
 /** The popover's content, mounted only while it is open. */
@@ -180,7 +187,7 @@ function OptionsShowIfEditor({
           <section key={listKey} className="flex flex-col gap-1">
             {optionLists.length > 1 && (
               <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
-                {t(LIST_HEADING_KEY[listKey])}
+                {getListHeading(listKey, t)}
               </p>
             )}
             <ul className="divide-y divide-slate-100 rounded-md border border-slate-200">
