@@ -87,3 +87,52 @@ describe("AI schema context", () => {
     expect(guideline).not.toContain("`line`");
   });
 });
+
+describe("AI schema context for one dataset (ENG-6893, ENG-6894)", () => {
+  const dataset = {
+    embeddedFields: [
+      { name: "FeedbackRecords.ed_area_manager_1a2b3c4d", key: "Area Manager" },
+      { name: "FeedbackRecords.ed_o_brien_s_00000000", key: "O'Brien's \"quote\"" },
+    ],
+    answerQuestions: [
+      {
+        id: "q_delivery",
+        label: "How was delivery?",
+        kind: "choice" as const,
+        options: [
+          { value: "opt_late", label: "Late" },
+          { value: "opt_early", label: "Early" },
+        ],
+      },
+      {
+        id: "q_feat",
+        label: "Features",
+        kind: "multi" as const,
+        options: [{ value: "opt_a", label: "Surveys" }],
+      },
+    ],
+  };
+
+  test("is unchanged for a dataset without embedded data or answerable questions", () => {
+    expect(generateSchemaContext({ embeddedFields: [], answerQuestions: [] })).toBe(generateSchemaContext());
+    expect(generateSchemaContext()).not.toContain("FeedbackRecords.answer");
+  });
+
+  test("lists embedded keys by their original names, quoted as data", () => {
+    const context = generateSchemaContext(dataset);
+
+    expect(context).toContain('- FeedbackRecords.ed_area_manager_1a2b3c4d: embedded data "Area Manager"');
+    expect(context).toContain(`embedded data ${JSON.stringify("O'Brien's \"quote\"")}`);
+  });
+
+  test("lists the answerable questions with their ids, kinds and value keys, and the recipe", () => {
+    const context = generateSchemaContext(dataset);
+
+    expect(context).toContain(
+      '- "q_delivery" (choice) "How was delivery?": "opt_late" = "Late", "opt_early" = "Early"'
+    );
+    expect(context).toContain('- "q_feat" (multi) "Features": "opt_a" = "Surveys"');
+    expect(context).toContain('"NPS when delivery was late"');
+    expect(context).toContain('a multi question has no "does not contain"');
+  });
+});

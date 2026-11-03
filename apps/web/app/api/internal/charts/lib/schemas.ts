@@ -16,3 +16,7 @@ export const ZInternalMatrixQuestionsQuery = z
   .object({ workspaceId: z.cuid2(), datasetId: z.cuid2() })
   .strict();
 export type TInternalMatrixQuestionsQuery = z.infer<typeof ZInternalMatrixQuestionsQuery>;
+
+/** `GET /api/internal/answer-questions`: the questions an answer filter may name in one Feedback Dataset. */
+export const ZInternalAnswerQuestionsQuery = ZInternalMatrixQuestionsQuery;
+export type TInternalAnswerQuestionsQuery = z.infer<typeof ZInternalAnswerQuestionsQuery>;

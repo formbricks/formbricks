@@ -16,9 +16,15 @@ import { RedactedAIError } from "@/lib/ai/loggable-error";
 import { CubeQueryError } from "@/modules/ee/analysis/api/lib/cube-client";
 import { AI_CHART_PROMPT_ERROR_CODE } from "@/modules/ee/analysis/charts/lib/ai-chart-errors";
 import { generateAIChartQuery } from "@/modules/ee/analysis/charts/lib/ai-chart-query.server";
+import { getAnswerQuestions } from "@/modules/ee/analysis/charts/lib/answer-questions";
 import { getMatrixQuestions } from "@/modules/ee/analysis/charts/lib/matrix-questions";
+import { getDatasetChartFields } from "@/modules/ee/analysis/lib/dataset-chart-fields";
 import { runChartQuery } from "@/modules/ee/analysis/lib/run-chart-query";
-import { generateInternalChart, listInternalMatrixQuestions } from "./operations";
+import {
+  generateInternalChart,
+  listInternalAnswerQuestions,
+  listInternalMatrixQuestions,
+} from "./operations";
 
 const log = vi.hoisted(() => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() }));
 
@@ -30,8 +36,12 @@ vi.mock("@/app/api/v3/lib/dashboards-access", () => ({
   refuseUnlessFeedbackDatasetAccess: vi.fn(),
 }));
 vi.mock("@/modules/ee/analysis/charts/lib/ai-chart-query.server", () => ({ generateAIChartQuery: vi.fn() }));
+vi.mock("@/modules/ee/analysis/lib/dataset-chart-fields", () => ({
+  getDatasetChartFields: vi.fn().mockResolvedValue({ embeddedFields: [], answerQuestions: [] }),
+}));
 vi.mock("@/modules/ee/analysis/lib/run-chart-query", () => ({ runChartQuery: vi.fn() }));
 vi.mock("@/modules/ee/analysis/charts/lib/matrix-questions", () => ({ getMatrixQuestions: vi.fn() }));
+vi.mock("@/modules/ee/analysis/charts/lib/answer-questions", () => ({ getAnswerQuestions: vi.fn() }));
 vi.mock("@/modules/ee/analysis/api/lib/cube-client", () => ({
   CubeQueryError: class CubeQueryError extends Error {
     constructor(readonly timedOut: boolean) {
@@ -72,6 +82,11 @@ beforeEach(() => {
 
 describe("generateInternalChart", () => {
   test("returns the validated, unsaved chart with its rows, labels and suggested name", async () => {
+    const dataset = {
+      embeddedFields: [{ name: "FeedbackRecords.ed_plan_64879f7d", key: "plan" }],
+      answerQuestions: [],
+    };
+    vi.mocked(getDatasetChartFields).mockResolvedValue(dataset);
     vi.mocked(generateAIChartQuery).mockResolvedValue({
       chartType: "bar",
       query: validQuery,
@@ -101,7 +116,18 @@ describe("generateInternalChart", () => {
       feedbackDirectoryId: DATASET_ID,
       userId: USER_ID,
       prompt: "responses by source",
+      // The dataset's embedded keys and answerable questions are offered to the model (ENG-6893, ENG-6894).
+      dataset,
     });
+    expect(getDatasetChartFields).toHaveBeenCalledWith(
+      {
+        datasetId: DATASET_ID,
+        workspaceId: WORKSPACE_ID,
+        organizationId: ORGANIZATION_ID,
+        actor: { type: "user", id: USER_ID },
+      },
+      { withAnswerQuestions: true }
+    );
     expect(runChartQuery).toHaveBeenCalledWith(
       expect.objectContaining({
         datasetId: DATASET_ID,
@@ -365,6 +391,53 @@ describe("listInternalMatrixQuestions", () => {
 
   test("maps a thrown error through the v3 error mapper", async () => {
     vi.mocked(getMatrixQuestions).mockRejectedValue(new DatabaseError("connection lost"));
+
+    const response = await list();
+
+    expect(response.status).toBe(500);
+    expect(JSON.stringify(await response.json())).not.toContain("connection lost");
+  });
+});
+
+describe("listInternalAnswerQuestions (ENG-6637)", () => {
+  const list = () =>
+    listInternalAnswerQuestions({
+      query: { workspaceId: WORKSPACE_ID, datasetId: DATASET_ID },
+      authentication: session,
+      requestId: "req",
+      instance: "/api/internal/answer-questions",
+    });
+
+  test("lists the dataset's answerable questions for the resolved workspace", async () => {
+    const questions = [
+      {
+        id: "q_delivery",
+        label: "Delivery",
+        kind: "choice" as const,
+        options: [{ value: "opt_late", label: "Late" }],
+      },
+    ];
+    vi.mocked(getAnswerQuestions).mockResolvedValue(questions);
+
+    const response = await list();
+
+    expect(response.status).toBe(200);
+    expect((await response.json()).data).toEqual(questions);
+    expect(getAnswerQuestions).toHaveBeenCalledWith(WORKSPACE_ID, DATASET_ID);
+  });
+
+  test("passes the workspace and dataset refusals through, reading nothing", async () => {
+    vi.mocked(requireDashboardsAccess).mockResolvedValueOnce(problemForbidden("req"));
+    expect((await list()).status).toBe(403);
+
+    vi.mocked(refuseUnlessFeedbackDatasetAccess).mockResolvedValueOnce(problemForbidden("req"));
+    expect((await list()).status).toBe(403);
+
+    expect(getAnswerQuestions).not.toHaveBeenCalled();
+  });
+
+  test("maps a thrown error through the v3 error mapper", async () => {
+    vi.mocked(getAnswerQuestions).mockRejectedValue(new DatabaseError("connection lost"));
 
     const response = await list();
 

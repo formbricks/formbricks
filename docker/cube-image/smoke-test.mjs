@@ -5,7 +5,7 @@
 // the image, environment, mounts, entrypoint, command and healthcheck docker/docker-compose.yml
 // declares, rather than a hand-kept copy that could drift from it.
 import { spawnSync } from "node:child_process";
-import { createHmac, randomBytes, randomUUID } from "node:crypto";
+import { createHash, createHmac, randomBytes, randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 
 // Tenant a queries as a user, tenant b as an API key: the token names exactly one of the two actors.
@@ -14,6 +14,17 @@ const TENANTS = {
   "smoke-tenant-b": { sourceName: "smoke-source-b", npsValues: [0, 6], actor: { apiKeyId: "smoke-api-key" } },
 };
 const TENANT_FILTER_REJECTION = "tenant filters are enforced by Cube";
+// Chart fields (ENG-6893, ENG-6894): one submission per row, each with an NPS answer, a delivery answer
+// and an embedded `region`, so an embedded filter, an embedded grouping and an answer filter can each be
+// checked against numbers written out here.
+const FIELDS_TENANT = "smoke-tenant-fields";
+const FIELDS_SUBMISSIONS = [
+  { nps: 9, delivery: "late", region: "North" },
+  { nps: 3, delivery: "late", region: "South" },
+  { nps: 10, delivery: "on_time", region: "North" },
+  { nps: 6, delivery: null, region: "North" },
+];
+const FIELDS_KEY = "Area 'region' $1$";
 const CONTINUE_WAIT_ATTEMPTS = 60;
 
 const fail = (message) => {
@@ -101,12 +112,44 @@ const printSeedSql = () => {
       "(source_type, source_name, field_id, field_type, value_number, tenant_id, submission_id) VALUES\n" +
       `${rows.join(",\n")};`
   );
+
+  const fieldRows = FIELDS_SUBMISSIONS.flatMap(({ nps, delivery, region }, index) => {
+    const submission = sqlString(`${FIELDS_TENANT}-${index}`);
+    const metadata = sqlString(JSON.stringify({ embedded_data: { [FIELDS_KEY]: region } }));
+    return [
+      `('formbricks', 'q_nps', 'nps', ${nps}, NULL, ${sqlString(FIELDS_TENANT)}, ${submission}, ${metadata}::jsonb)`,
+      ...(delivery
+        ? [
+            `('formbricks', 'q_delivery', 'categorical', NULL, ${sqlString(delivery)}, ${sqlString(FIELDS_TENANT)}, ${submission}, ${metadata}::jsonb)`,
+          ]
+        : []),
+    ];
+  });
+  console.log(
+    "INSERT INTO feedback_records " +
+      "(source_type, field_id, field_type, value_number, value_id, tenant_id, submission_id, metadata) VALUES\n" +
+      `${fieldRows.join(",\n")};`
+  );
+};
+
+// Mirrors getEmbeddedMemberSuffix in docker/cube/cube.js.
+const embeddedMember = (key) => {
+  const slug = key
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 24)
+    .replace(/_+$/, "");
+  const hash = createHash("sha256").update(key, "utf8").digest("hex").slice(0, 8);
+  return `FeedbackRecords.ed_${slug ? `${slug}_` : ""}${hash}`;
 };
 
 const base64Url = (value) => Buffer.from(JSON.stringify(value)).toString("base64url");
 
 // Mirrors createCubeApiToken in apps/web/modules/ee/analysis/api/lib/cube-config.ts.
-const createToken = (environment, tenantId, actor) => {
+const createToken = (environment, tenantId, actor, extraClaims = {}) => {
   const now = Math.floor(Date.now() / 1000);
   const header = base64Url({ alg: "HS256", typ: "JWT" });
   const payload = base64Url({
@@ -122,6 +165,7 @@ const createToken = (environment, tenantId, actor) => {
     aud: environment.CUBEJS_JWT_AUDIENCE,
     iss: environment.CUBEJS_JWT_ISSUER,
     jti: randomUUID(),
+    ...extraClaims,
   });
   const signature = createHmac("sha256", environment.CUBEJS_API_SECRET)
     .update(`${header}.${payload}`)
@@ -189,6 +233,88 @@ const checkQueries = async (composeJsonPath, baseUrl) => {
     fail(`a query naming FeedbackRecords.tenantId was not rejected: HTTP ${status} ${JSON.stringify(body)}`);
   }
   pass("a query that references FeedbackRecords.tenantId is rejected");
+
+  await checkChartFields(environment, baseUrl);
+};
+
+const checkChartFields = async (environment, baseUrl) => {
+  const claims = { edKeys: [FIELDS_KEY], answerKinds: { q_delivery: "choice" } };
+  const token = () => createToken(environment, FIELDS_TENANT, { userId: "smoke-user" }, claims);
+  const region = embeddedMember(FIELDS_KEY);
+  const loadOk = async (query, label) => {
+    const { status, body } = await load(baseUrl, token(), query);
+    if (status !== 200) fail(`${label}: HTTP ${status} ${JSON.stringify(body)}`);
+    return body.data ?? [];
+  };
+
+  const grouped = await loadOk(
+    { measures: ["FeedbackRecords.count"], dimensions: [region], order: [[region, "asc"]] },
+    "embedded group-by"
+  );
+  const groupedCounts = grouped.map((row) => [row[region], Number(row["FeedbackRecords.count"])]);
+  if (
+    JSON.stringify(groupedCounts) !==
+    JSON.stringify([
+      ["North", 5],
+      ["South", 2],
+    ])
+  ) {
+    fail(`grouping by an embedded key returned ${JSON.stringify(groupedCounts)}`);
+  }
+  pass("an embedded-data key with an awkward name groups records");
+
+  const [filtered] = await loadOk(
+    {
+      measures: ["FeedbackRecords.count"],
+      filters: [
+        { member: region, operator: "equals", values: ["North"] },
+        { member: "FeedbackRecords.fieldId", operator: "equals", values: ["q_nps"] },
+      ],
+    },
+    "embedded filter"
+  );
+  if (Number(filtered?.["FeedbackRecords.count"]) !== 3)
+    fail(`an embedded filter returned ${JSON.stringify(filtered)}`);
+  pass("an embedded-data filter narrows records exactly");
+
+  const [late] = await loadOk(
+    {
+      measures: ["FeedbackRecords.count", "FeedbackRecords.npsAverage"],
+      filters: [
+        { member: "FeedbackRecords.fieldId", operator: "equals", values: ["q_nps"] },
+        { member: "FeedbackRecords.answer", operator: "equals", values: ["q_delivery:late"] },
+      ],
+    },
+    "answer filter"
+  );
+  if (Number(late?.["FeedbackRecords.count"]) !== 2 || Number(late?.["FeedbackRecords.npsAverage"]) !== 6) {
+    fail(`an answer filter returned ${JSON.stringify(late)}; expected NPS 9 and 3 only`);
+  }
+  pass("an answer filter keeps the records of submissions that answered that way");
+
+  const [notLate] = await loadOk(
+    {
+      measures: ["FeedbackRecords.count"],
+      filters: [
+        { member: "FeedbackRecords.fieldId", operator: "equals", values: ["q_nps"] },
+        { member: "FeedbackRecords.answer", operator: "notEquals", values: ["q_delivery:late"] },
+      ],
+    },
+    "answer filter (is not)"
+  );
+  if (Number(notLate?.["FeedbackRecords.count"]) !== 1) {
+    fail(`'is not' returned ${JSON.stringify(notLate)}; the unanswered submission must not match`);
+  }
+  pass("an 'is not' answer filter never matches a submission that skipped the question");
+
+  const metaResponse = await fetch(`${baseUrl}/cubejs-api/v1/meta`, {
+    headers: { Authorization: createToken(environment, "smoke-tenant-a", { userId: "smoke-user" }) },
+  });
+  const meta = await metaResponse.json();
+  if (JSON.stringify(meta).includes(region.split(".")[1])) {
+    fail("another tenant's /meta lists this tenant's embedded-data key");
+  }
+  pass("an embedded-data key is not listed in another tenant's /meta");
 };
 
 const [command, ...args] = process.argv.slice(2);

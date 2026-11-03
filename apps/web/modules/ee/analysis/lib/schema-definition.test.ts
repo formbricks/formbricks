@@ -1,5 +1,6 @@
 import type { TFunction } from "i18next";
 import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { createContext, runInContext } from "node:vm";
 import { describe, expect, test } from "vitest";
@@ -59,12 +60,26 @@ interface CubeDefinition {
  */
 const evaluateCubeSchema = (path: string): CubeDefinition => {
   let captured: CubeDefinition | undefined;
-  const sandbox = {
+  // The model is compiled per dataset inside `asyncModule` (ENG-6893) and joins the AnswerFilterN
+  // aliases (ENG-6894); it is evaluated here for a dataset without embedded-data keys.
+  process.env.CUBEJS_API_SECRET = process.env.CUBEJS_API_SECRET || "cube-secret";
+  const cubeConfig = createRequire(import.meta.url)(
+    path.replace(/schema\/FeedbackRecords\.js$/, "cube.js")
+  ) as { ANSWER_FILTER_ALIAS_COUNT: number };
+  const sandbox: Record<string, unknown> = {
     CUBE: "TBL",
-    cube: (_name: string, definition: CubeDefinition) => {
-      captured = definition;
+    COMPILE_CONTEXT: { securityContext: {} },
+    require: () => cubeConfig,
+    asyncModule: (define: () => unknown) => {
+      void define();
+    },
+    cube: (name: string, definition: CubeDefinition) => {
+      if (name === "FeedbackRecords") captured = definition;
     },
   };
+  for (let index = 1; index <= cubeConfig.ANSWER_FILTER_ALIAS_COUNT; index += 1) {
+    sandbox[`AnswerFilter${index}`] = `AF${index}`;
+  }
   createContext(sandbox);
   runInContext(readFileSync(path, "utf8"), sandbox);
   if (!captured) throw new Error(`No cube() definition found in ${path}`);

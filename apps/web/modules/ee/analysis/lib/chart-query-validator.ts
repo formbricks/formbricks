@@ -5,7 +5,20 @@ import {
   isRealIsoDate,
   isValidCalendarDateRange,
 } from "@/modules/ee/analysis/dashboards/lib/dashboard-date-filter";
-import { ALL_TIME_DATE_RANGE, type TChartField, type TChartFieldKind, getChartField } from "./field-catalog";
+import {
+  ANSWER_MEMBER,
+  type TAnswerQuestion,
+  type TAnswerRuleProblem,
+  checkAnswerRule,
+} from "./answer-filter";
+import {
+  ALL_TIME_DATE_RANGE,
+  FILTER_ONLY_FIELDS,
+  type TChartField,
+  type TChartFieldKind,
+  type TDatasetChartFields,
+  createChartFieldLookup,
+} from "./field-catalog";
 import { TIME_GRANULARITIES } from "./schema-definition";
 import { MAX_TIME_BUCKETS, countTimeBuckets } from "./time-buckets";
 
@@ -14,7 +27,9 @@ import { MAX_TIME_BUCKETS, countTimeBuckets } from "./time-buckets";
  * stored or run it is held to what the app itself produces:
  *
  * - every field is in the field catalog, in a position its kind allows — hidden members are refused
- *   simply because the catalog does not list them;
+ *   simply because the catalog does not list them. Given the chart's Feedback Dataset, that is the
+ *   dataset's catalog, so an embedded-data field of another dataset is refused; the answer filter is a
+ *   filter only, and with the dataset's questions each rule must name one of them;
  * - Cube options the app never uses are refused rather than passed through (`ungrouped`, `segments`,
  *   `renewQuery`, `joinHints`, `total`, `compareDateRange`), and so is `timezone`: every date range is
  *   read in the organization's display time zone;
@@ -292,8 +307,17 @@ export const checkTimeBucketLimit = (
 export const DATE_RANGE_REASON =
   "Must be a date preset from the field catalog, 'all-time', or a [from, to] pair of ISO calendar dates (YYYY-MM-DD) with from not after to.";
 
+/**
+ * Collects the problems found, and carries what they are judged against: the dataset's field lookup and,
+ * when loaded, its answerable questions.
+ */
 class IssueCollector {
   readonly issues: TChartQueryIssue[] = [];
+
+  constructor(
+    readonly lookupField: (name: string) => TChartField | undefined,
+    readonly answerQuestions?: ReadonlyMap<string, TAnswerQuestion>
+  ) {}
 
   add(name: string, reason: string, code?: TChartQueryIssue["code"]): void {
     this.issues.push({ name, reason, ...(code ? { code } : {}) });
@@ -325,16 +349,22 @@ const checkField = (
   value: unknown,
   path: string,
   kinds: readonly TChartFieldKind[],
-  issues: IssueCollector
+  issues: IssueCollector,
+  inFilter = false
 ): TChartField | undefined => {
   if (typeof value !== "string") {
     issues.add(path, "Must be a field name from the field catalog.");
     return undefined;
   }
 
-  const field = getChartField(value);
+  const field = issues.lookupField(value);
   if (!field) {
     issues.add(path, "Not a field in the field catalog (GET /api/v3/charts/fields).", "invalid_reference");
+    return undefined;
+  }
+
+  if (!inFilter && FILTER_ONLY_FIELDS.has(field.name)) {
+    issues.add(path, "Can only be used in a filter.", "invalid_reference");
     return undefined;
   }
 
@@ -435,6 +465,15 @@ const checkTimeDimension = (
 
 type TFilterBudget = { conditions: number };
 
+const ANSWER_RULE_REASONS: Readonly<Record<TAnswerRuleProblem, string>> = {
+  malformed_value: "Each answer value is '<questionId>:<valueKey>'.",
+  several_questions: "One answer condition names exactly one question.",
+  unknown_question: "Not a question of this dataset an answer filter can use.",
+  operator_not_allowed:
+    "This question's answers can only be matched with equals: a multi-select has no 'does not contain'.",
+  value_not_allowed: "Not a value this question's answers can hold (a number, or true/false).",
+};
+
 const checkCondition = (
   entry: Record<string, unknown>,
   path: string,
@@ -444,7 +483,13 @@ const checkCondition = (
   budget.conditions += 1;
   checkKnownKeys(entry, CONDITION_KEYS, path, issues);
 
-  const field = checkField(entry.member, `${path}.member`, ["measure", "dimension", "timeDimension"], issues);
+  const field = checkField(
+    entry.member,
+    `${path}.member`,
+    ["measure", "dimension", "timeDimension"],
+    issues,
+    true
+  );
   const operator = entry.operator;
   if (typeof operator !== "string" || (field && !field.filterOperators.includes(operator as never))) {
     issues.add(
@@ -458,6 +503,13 @@ const checkCondition = (
 
   const values = checkConditionValues(entry.values, operator, `${path}.values`, issues);
   if (!values || !field) return undefined;
+  if (field.name === ANSWER_MEMBER) {
+    const problem = checkAnswerRule(operator, values, issues.answerQuestions);
+    if (problem) {
+      issues.add(`${path}.values`, ANSWER_RULE_REASONS[problem], "invalid_reference");
+      return undefined;
+    }
+  }
   return values.length === 0 ? { member: field.name, operator } : { member: field.name, operator, values };
 };
 
@@ -648,14 +700,25 @@ export const validateChartQuery = (
     path = "query",
     timeBuckets = true,
     legacyDateRanges = false,
+    dataset,
   }: {
     path?: string;
     timeBuckets?: boolean;
     /** Also accept the relative ranges older charts were saved with: see `TLegacyDateRanges`. */
     legacyDateRanges?: TLegacyDateRanges;
+    /**
+     * The chart's Feedback Dataset: its embedded-data fields join the catalog and, when loaded, answer
+     * rules must name its questions. Without it only the fields every dataset shares are accepted.
+     */
+    dataset?: TDatasetChartFields;
   } = {}
 ): TChartQueryValidation => {
-  const issues = new IssueCollector();
+  const issues = new IssueCollector(
+    createChartFieldLookup(dataset),
+    dataset?.answerQuestions
+      ? new Map(dataset.answerQuestions.map((question) => [question.id, question]))
+      : undefined
+  );
 
   if (!isRecord(input)) {
     issues.add(path, "Must be a chart query object.");

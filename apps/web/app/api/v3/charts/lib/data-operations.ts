@@ -30,6 +30,7 @@ import {
 import { runChartQuery } from "@/modules/ee/analysis/lib/run-chart-query";
 import type { TChartType } from "@/modules/ee/analysis/types/analysis";
 import { type TV3ChartOperationContext, loadAuthorizedChart } from "./access";
+import { loadDatasetChartFields } from "./dataset-fields";
 import { refuseChartQuery } from "./problems";
 import type { TV3ChartData } from "./resources";
 import type { TV3ChartDataQuery, TV3ChartPreviewBody } from "./schemas";
@@ -90,7 +91,11 @@ export async function runV3ChartQuery({
 }): Promise<Response> {
   // Reads take the relative ranges older charts were saved with: a saved chart's, and a preview of one being
   // edited in the builder. Nothing is saved here; a write keeps such a range only if its chart already had it.
-  const validated = validateChartQuery(query, { timeBuckets: false, legacyDateRanges: true });
+  const validated = validateChartQuery(query, {
+    timeBuckets: false,
+    legacyDateRanges: true,
+    dataset: await loadDatasetChartFields(context.authentication, access, datasetId, query),
+  });
   // The data route takes the range as query parameters; the preview takes it as one body field.
   const requested = parseRequestedDateRange(
     dateRange,

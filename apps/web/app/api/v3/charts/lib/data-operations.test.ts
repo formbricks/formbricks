@@ -31,6 +31,7 @@ vi.mock("@/app/api/v3/lib/dashboards-access", () => ({
   requireDashboardsAccess: vi.fn(),
   refuseUnlessFeedbackDatasetAccess: vi.fn(),
 }));
+vi.mock("./dataset-fields", () => ({ loadDatasetChartFields: vi.fn().mockResolvedValue(undefined) }));
 vi.mock("./access", () => ({ loadAuthorizedChart: vi.fn() }));
 vi.mock("@/modules/ee/analysis/lib/run-chart-query", () => ({ runChartQuery: vi.fn() }));
 vi.mock("@formbricks/logger", () => ({

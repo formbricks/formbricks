@@ -20,7 +20,11 @@ const {
   mockLoggerWarn,
   mockQueueAuditEventWithoutRequest,
   mockTablePivot,
+  mockGetDatasetEmbeddedKeys,
+  mockGetAnswerQuestions,
 } = vi.hoisted(() => ({
+  mockGetDatasetEmbeddedKeys: vi.fn(),
+  mockGetAnswerQuestions: vi.fn(),
   auditFlags: { enabled: true },
   mockGetOrganization: vi.fn(),
   mockLoad: vi.fn(),
@@ -56,6 +60,14 @@ vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
 
 vi.mock("@/lib/organization/service", () => ({
   getOrganization: mockGetOrganization,
+}));
+
+vi.mock("@/modules/ee/analysis/lib/dataset-embedded-keys", () => ({
+  getDatasetEmbeddedKeys: mockGetDatasetEmbeddedKeys,
+}));
+
+vi.mock("@/modules/ee/analysis/charts/lib/answer-questions", () => ({
+  getAnswerQuestions: mockGetAnswerQuestions,
 }));
 
 const scopedInput = {
@@ -103,6 +115,8 @@ describe("executeTenantScopedQuery", () => {
     mockGetOrganization.mockResolvedValue({ displayTimeZone: null });
     mockQueueAuditEventWithoutRequest.mockResolvedValue(undefined);
     mockTablePivot.mockReturnValue([{ id: "1", count: 42 }]);
+    mockGetDatasetEmbeddedKeys.mockResolvedValue([]);
+    mockGetAnswerQuestions.mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -834,5 +848,80 @@ describe("executeTenantScopedQuery", () => {
 
       expect(rows).toHaveLength(2);
     });
+  });
+});
+
+describe("executeTenantScopedQuery token claims (ENG-6893, ENG-6894)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.resetModules();
+    auditFlags.enabled = false;
+    vi.stubEnv("NODE_ENV", "test");
+    vi.stubEnv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/formbricks?schema=public");
+    vi.stubEnv("ENCRYPTION_KEY", "12345678901234567890123456789012");
+    vi.stubEnv("HUB_API_URL", "https://hub.formbricks.local");
+    vi.stubEnv("HUB_API_KEY", "test-hub-api-key");
+    vi.stubEnv("CUBEJS_API_URL", "https://cube.example.com");
+    vi.stubEnv("CUBEJS_API_SECRET", "cube-secret");
+    mockLoad.mockResolvedValue(stubResultSet());
+    mockGetOrganization.mockResolvedValue({ displayTimeZone: null });
+    mockQueueAuditEventWithoutRequest.mockResolvedValue(undefined);
+    mockTablePivot.mockReturnValue([]);
+    mockGetDatasetEmbeddedKeys.mockResolvedValue(["plan", "région"]);
+    mockGetAnswerQuestions.mockResolvedValue([
+      { id: "q_delivery", label: "Delivery", kind: "choice", options: [] },
+      { id: "q_feat", label: "Features", kind: "multi", options: [] },
+      { id: "q_unused", label: "Unused", kind: "number", options: [] },
+    ]);
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  const signedClaims = async (): Promise<jwt.JwtPayload> => {
+    const cubejs = await getCubeJsMock();
+    return jwt.decode(cubejs.mock.calls[0][0]) as jwt.JwtPayload;
+  };
+
+  test("names the dataset's embedded keys and no answer kinds for a query without answer rules", async () => {
+    const { executeTenantScopedQuery } = await import("./cube-client");
+    await executeTenantScopedQuery(scopedInput);
+
+    const claims = await signedClaims();
+    expect(claims.edKeys).toEqual(["plan", "région"]);
+    expect(claims).not.toHaveProperty("answerKinds");
+    expect(mockGetDatasetEmbeddedKeys).toHaveBeenCalledWith({
+      datasetId: "frd-1",
+      workspaceId: "workspace-1",
+      organizationId: "organization-1",
+      actor: { type: "user", id: "user-1" },
+    });
+    expect(mockGetAnswerQuestions).not.toHaveBeenCalled();
+  });
+
+  test("names the kind of exactly the questions the answer rules name", async () => {
+    const { executeTenantScopedQuery } = await import("./cube-client");
+    await executeTenantScopedQuery({
+      ...scopedInput,
+      query: {
+        measures: ["FeedbackRecords.count"],
+        filters: [
+          { member: "FeedbackRecords.answer", operator: "equals", values: ["q_delivery:opt_late"] },
+          { or: [{ member: "FeedbackRecords.answer", operator: "equals", values: ["q_feat:opt_a"] }] },
+        ],
+      },
+    });
+
+    expect((await signedClaims()).answerKinds).toEqual({ q_delivery: "choice", q_feat: "multi" });
+    expect(mockGetAnswerQuestions).toHaveBeenCalledWith("workspace-1", "frd-1");
+  });
+
+  test("uses the keys it is given instead of the cached list, and omits an empty list", async () => {
+    const { executeTenantScopedQuery } = await import("./cube-client");
+    await executeTenantScopedQuery({ ...scopedInput, embeddedKeys: [] });
+
+    expect(await signedClaims()).not.toHaveProperty("edKeys");
+    expect(mockGetDatasetEmbeddedKeys).not.toHaveBeenCalled();
   });
 });

@@ -14,14 +14,16 @@ import {
 } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { CubeQueryError, executeTenantScopedQuery } from "@/modules/ee/analysis/api/lib/cube-client";
+import { getDatasetChartFields } from "@/modules/ee/analysis/lib/dataset-chart-fields";
 import {
   buildDimensionValueQuery,
   collectDimensionValues,
 } from "@/modules/ee/analysis/lib/dimension-value-lookup";
 import {
   CHART_DATE_PRESETS,
-  CHART_FIELD_CATALOG,
-  getChartField,
+  type TChartField,
+  createChartFieldLookup,
+  getChartFieldCatalog,
 } from "@/modules/ee/analysis/lib/field-catalog";
 import { applyChartQueryRateLimit, withChartQuerySlot } from "./data-operations";
 import type { TV3ChartFieldCatalog } from "./resources";
@@ -33,22 +35,21 @@ type TV3ReadContext = {
   instance: string;
 };
 
-/** The catalog never changes at runtime, so it is serialized once. */
-const FIELD_CATALOG: TV3ChartFieldCatalog = {
-  fields: CHART_FIELD_CATALOG.map((field) => ({
+const serializeCatalog = (fields: readonly TChartField[]): TV3ChartFieldCatalog => ({
+  fields: fields.map((field) => ({
     ...field,
     filterOperators: [...field.filterOperators],
     granularities: [...field.granularities],
   })),
   datePresets: [...CHART_DATE_PRESETS],
-};
+});
 
 /**
  * `GET /api/v3/charts/fields` → 200 `{ data: { fields, datePresets } }`.
  *
- * The same catalog for every Feedback Dataset today, but still answered per dataset: the caller has to be
- * able to read the dataset it is about to write a query for, and a future data source will have fields of
- * its own. Returns a `Response` and never throws — the MCP server calls it directly, with no wrapper.
+ * Answered per dataset: the caller has to be able to read the dataset it is about to write a query for,
+ * and each dataset adds its embedded-data keys as `FeedbackRecords.ed_*` fields, labelled by the key
+ * (ENG-6893). Returns a `Response` and never throws — the MCP server calls it directly, with no wrapper.
  */
 export async function getV3ChartFieldCatalog({
   workspaceId,
@@ -73,7 +74,16 @@ export async function getV3ChartFieldCatalog({
     );
     if (refused) return refused;
 
-    return successResponse(FIELD_CATALOG, { requestId });
+    const actor = getV3AuthorizationActor(authentication);
+    if (!actor) return problemUnauthorized(requestId, "Not authenticated", instance);
+
+    const dataset = await getDatasetChartFields({
+      datasetId,
+      workspaceId: access.workspaceId,
+      organizationId: access.organizationId,
+      actor,
+    });
+    return successResponse(serializeCatalog(getChartFieldCatalog(dataset)), { requestId });
   } catch (error) {
     return mapV3ThrownError(error, { log, requestId, instance, operation: "charts.fields" });
   }
@@ -126,7 +136,21 @@ export async function listV3ChartFieldValues({
     );
     if (refused) return refused;
 
-    if (!getChartField(field)?.valueLookup) {
+    const actor = getV3AuthorizationActor(authentication);
+    if (!actor) return problemUnauthorized(requestId, "Not authenticated", instance);
+
+    // A dataset's embedded-data fields are looked up like any low-cardinality dimension.
+    const lookupField = field.startsWith("FeedbackRecords.ed_")
+      ? createChartFieldLookup(
+          await getDatasetChartFields({
+            datasetId: query.datasetId,
+            workspaceId: access.workspaceId,
+            organizationId: access.organizationId,
+            actor,
+          })
+        )
+      : createChartFieldLookup();
+    if (!lookupField(field)?.valueLookup) {
       return problemUnprocessableContent(requestId, "This field's values cannot be looked up", {
         instance,
         invalid_params: [
@@ -139,9 +163,6 @@ export async function listV3ChartFieldValues({
         ],
       });
     }
-
-    const actor = getV3AuthorizationActor(authentication);
-    if (!actor) return problemUnauthorized(requestId, "Not authenticated", instance);
 
     return await withChartQuerySlot(context, async () => {
       const rows = await executeTenantScopedQuery({

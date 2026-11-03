@@ -11,6 +11,7 @@ import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { acquireInFlightSlot } from "@/modules/core/rate-limit/in-flight";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { CubeQueryError, executeTenantScopedQuery } from "@/modules/ee/analysis/api/lib/cube-client";
+import { getDatasetChartFields } from "@/modules/ee/analysis/lib/dataset-chart-fields";
 import { getV3ChartFieldCatalog, listV3ChartFieldValues } from "./field-operations";
 import { ZV3ChartFieldCatalog } from "./resources";
 
@@ -36,6 +37,10 @@ vi.mock("@/modules/ee/analysis/api/lib/cube-client", async (importOriginal) => (
   ...(await importOriginal<typeof import("@/modules/ee/analysis/api/lib/cube-client")>()),
   executeTenantScopedQuery: vi.fn(),
 }));
+
+vi.mock("@/modules/ee/analysis/lib/dataset-chart-fields", () => ({ getDatasetChartFields: vi.fn() }));
+
+const EMBEDDED_FIELD = { name: "FeedbackRecords.ed_area_manager_1a2b3c4d", key: "Area Manager" };
 
 const workspaceId = "clws000000000000000000001";
 const internalWorkspaceId = "clws000000000000000000009";
@@ -66,6 +71,7 @@ beforeEach(() => {
   vi.mocked(requireDashboardsAccess).mockResolvedValue(access);
   vi.mocked(refuseUnlessFeedbackDatasetAccess).mockResolvedValue(null);
   vi.mocked(getV3AuthorizationActor).mockReturnValue(actor);
+  vi.mocked(getDatasetChartFields).mockResolvedValue({ embeddedFields: [EMBEDDED_FIELD] });
 });
 
 describe("getV3ChartFieldCatalog", () => {
@@ -89,6 +95,39 @@ describe("getV3ChartFieldCatalog", () => {
       requestId,
       instance
     );
+  });
+
+  test("lists the dataset's embedded-data keys under their own names, and the answer filter (ENG-6893, ENG-6894)", async () => {
+    const response = await readCatalog();
+    const catalog = ZV3ChartFieldCatalog.parse(((await response.json()) as { data: unknown }).data);
+
+    expect(catalog.fields).toContainEqual(
+      expect.objectContaining({
+        name: EMBEDDED_FIELD.name,
+        kind: "dimension",
+        type: "string",
+        label: "Area Manager",
+        valueLookup: true,
+      })
+    );
+    expect(catalog.fields).toContainEqual(
+      expect.objectContaining({ name: "FeedbackRecords.answer", filterOperators: ["equals", "notEquals"] })
+    );
+    expect(getDatasetChartFields).toHaveBeenCalledWith({
+      datasetId,
+      workspaceId: internalWorkspaceId,
+      organizationId,
+      actor,
+    });
+  });
+
+  test("lists only the shared fields for a dataset without embedded data", async () => {
+    vi.mocked(getDatasetChartFields).mockResolvedValueOnce({ embeddedFields: [] });
+    const catalog = ZV3ChartFieldCatalog.parse(
+      ((await (await readCatalog()).json()) as { data: unknown }).data
+    );
+
+    expect(catalog.fields.some((field) => field.name.startsWith("FeedbackRecords.ed_"))).toBe(false);
   });
 
   test("passes the workspace and the dataset refusals through", async () => {
@@ -150,6 +189,28 @@ describe("listV3ChartFieldValues", () => {
       source: "v3.charts.fieldValues",
     });
     expect(applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.api.v3ChartQueries, "user_1");
+  });
+
+  test("looks up the values of this dataset's embedded-data field, exactly as collected (ENG-6893)", async () => {
+    vi.mocked(executeTenantScopedQuery).mockResolvedValue([
+      { [EMBEDDED_FIELD.name]: "Rossi" },
+      { [EMBEDDED_FIELD.name]: "rossi" },
+    ] as never);
+
+    const response = await lookup(EMBEDDED_FIELD.name);
+
+    expect(response.status).toBe(200);
+    expect(((await response.json()) as { data: unknown }).data).toEqual([
+      { value: "Rossi" },
+      { value: "rossi" },
+    ]);
+  });
+
+  test("refuses an embedded-data field of another dataset", async () => {
+    const response = await lookup("FeedbackRecords.ed_other_99999999");
+
+    expect(response.status).toBe(422);
+    expect(executeTenantScopedQuery).not.toHaveBeenCalled();
   });
 
   test("stops at 429 when the chart-query budget is spent, before checking access", async () => {

@@ -18,10 +18,16 @@ import { RedactedAIError } from "@/lib/ai/loggable-error";
 import { CubeQueryError } from "@/modules/ee/analysis/api/lib/cube-client";
 import { AI_CHART_PROMPT_ERROR_CODE } from "@/modules/ee/analysis/charts/lib/ai-chart-errors";
 import { generateAIChartQuery } from "@/modules/ee/analysis/charts/lib/ai-chart-query.server";
+import { getAnswerQuestions } from "@/modules/ee/analysis/charts/lib/answer-questions";
 import { getMatrixQuestions } from "@/modules/ee/analysis/charts/lib/matrix-questions";
 import { validateChartQuery } from "@/modules/ee/analysis/lib/chart-query-validator";
+import { getDatasetChartFields } from "@/modules/ee/analysis/lib/dataset-chart-fields";
 import { runChartQuery } from "@/modules/ee/analysis/lib/run-chart-query";
-import type { TInternalChartGenerateBody, TInternalMatrixQuestionsQuery } from "./schemas";
+import type {
+  TInternalAnswerQuestionsQuery,
+  TInternalChartGenerateBody,
+  TInternalMatrixQuestionsQuery,
+} from "./schemas";
 
 /**
  * The chart operations only the app's chart builder calls: describing a chart to the AI, and the
@@ -84,16 +90,28 @@ export async function generateInternalChart({
     );
     if (refused) return refused;
 
+    // The dataset's embedded-data fields and answerable questions are offered to the model (ENG-6893,
+    // ENG-6894), and the query it writes is judged against the same dataset.
+    const dataset = await getDatasetChartFields(
+      {
+        datasetId: body.datasetId,
+        workspaceId: access.workspaceId,
+        organizationId,
+        actor: { type: "user", id: userId },
+      },
+      { withAnswerQuestions: true }
+    );
     const { chartType, query, name } = await generateAIChartQuery({
       organizationId,
       workspaceId: access.workspaceId,
       feedbackDirectoryId: body.datasetId,
       userId,
       prompt: body.prompt,
+      dataset,
     });
     // The model's query goes through the same validator as one a person or agent writes, so it is
     // held to the same bounds (including the time-bucket limit) and can be saved as it is shown.
-    const validated = validateChartQuery(query);
+    const validated = validateChartQuery(query, { dataset });
     if (!validated.ok) {
       const tooFine = validated.issues.some((issue) => issue.code === "limit_exceeded");
       return promptNotChartable(requestId, instance, tooFine ? PROMPT_TOO_FINE_REASON : undefined);
@@ -217,5 +235,43 @@ export async function listInternalMatrixQuestions({
     return successResponse(await getMatrixQuestions(access.workspaceId, query.datasetId), { requestId });
   } catch (error) {
     return mapV3ThrownError(error, { log, requestId, instance, operation: "charts.matrixQuestions" });
+  }
+}
+
+/**
+ * `GET /api/internal/answer-questions?workspaceId=…&datasetId=…` → 200 `{ data }`: the questions of a
+ * Feedback Dataset an answer filter may name (ENG-6637), with their kind and options, for the chart
+ * builder's "Answer to question…" filter.
+ */
+export async function listInternalAnswerQuestions({
+  query,
+  ...context
+}: TV3ChartOperationContext & { query: TInternalAnswerQuestionsQuery }): Promise<Response> {
+  const { authentication, requestId, instance } = context;
+  const log = logger.withContext({ requestId, workspaceId: query.workspaceId });
+
+  try {
+    const access = await requireDashboardsAccess(
+      authentication,
+      query.workspaceId,
+      "read",
+      requestId,
+      instance
+    );
+    if (access instanceof Response) return access;
+
+    const refused = await refuseUnlessFeedbackDatasetAccess(
+      authentication,
+      access,
+      query.datasetId,
+      "read",
+      requestId,
+      instance
+    );
+    if (refused) return refused;
+
+    return successResponse(await getAnswerQuestions(access.workspaceId, query.datasetId), { requestId });
+  } catch (error) {
+    return mapV3ThrownError(error, { log, requestId, instance, operation: "charts.answerQuestions" });
   }
 }

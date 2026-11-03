@@ -4,6 +4,8 @@
  */
 import { DATE_RANGE_PRESETS } from "@/lib/date-ranges";
 import { CHART_TYPE_IDS } from "@/modules/ee/analysis/types/analysis";
+import { ANSWER_MEMBER, MAX_ANSWER_RULES, type TAnswerQuestion } from "./answer-filter";
+import type { TDatasetChartFields } from "./field-catalog";
 import {
   FEEDBACK_FIELDS,
   FILTER_OPERATORS,
@@ -38,7 +40,49 @@ function formatOperators(): string {
   return lines.join("\n");
 }
 
-export function generateSchemaContext(): string {
+/** Most options listed per question; a longer list is cut, which only costs the model the tail. */
+const MAX_LISTED_OPTIONS = 30;
+
+/**
+ * The dataset's embedded-data fields, each by its key's own name (ENG-6893). Keys are respondent- and
+ * integrator-supplied text, so they are quoted as data.
+ */
+function formatEmbeddedFields(dataset: TDatasetChartFields | undefined): string {
+  const fields = dataset?.embeddedFields ?? [];
+  if (fields.length === 0) return "";
+  const lines = fields.map(({ name, key }) => `- ${name}: embedded data ${JSON.stringify(key)}`);
+  return `### Embedded data (this dataset's own fields)
+Values passed in with each response, such as a product, region or account manager. Each is a dimension: group by it, or filter it with the string operators. Values match exactly as collected, case included.
+${lines.join("\n")}`;
+}
+
+function formatAnswerQuestion(question: TAnswerQuestion): string {
+  const options = question.options
+    .slice(0, MAX_LISTED_OPTIONS)
+    .map((option) => `${JSON.stringify(option.value)} = ${JSON.stringify(option.label)}`)
+    .join(", ");
+  const more = question.options.length > MAX_LISTED_OPTIONS ? ", …" : "";
+  return `- ${JSON.stringify(question.id)} (${question.kind}) ${JSON.stringify(question.label)}: ${options}${more}`;
+}
+
+/**
+ * The answer filter (ENG-6894) and the questions it can name, with the recipe the model needs for a
+ * request like "NPS when delivery was late".
+ */
+function formatAnswerFilters(dataset: TDatasetChartFields | undefined): string {
+  const questions = dataset?.answerQuestions ?? [];
+  if (questions.length === 0) return "";
+  return `### Answer filters (how the same response answered another question)
+Filter member \`${ANSWER_MEMBER}\` keeps records whose response answered another question a certain way. Each value is "<questionId>:<valueKey>" using the ids listed below, and one filter names exactly one question.
+- "is" / "contains": operator \`equals\` with one value; "is any of": \`equals\` with several values of the same question.
+- "is not": \`notEquals\` — only for choice, number and boolean questions; a multi question has no "does not contain".
+- A response that skipped the question never matches. At most ${MAX_ANSWER_RULES} such filters.
+- Recipe: "NPS when delivery was late" → measure \`${CUBE_NAME}.npsScore\`, filter \`${CUBE_NAME}.fieldType\` equals ["nps"], and filter \`${ANSWER_MEMBER}\` equals ["<delivery question id>:<late option id>"].
+Questions ("id" (kind) "label": "valueKey" = "option label", …):
+${questions.map(formatAnswerQuestion).join("\n")}`;
+}
+
+export function generateSchemaContext(dataset?: TDatasetChartFields): string {
   const measuresText = FEEDBACK_FIELDS.measures.map(formatMeasure).join("\n");
   const dimensionsText = FEEDBACK_FIELDS.dimensions.map(formatDimension).join("\n");
   const datePresetsText = DATE_RANGE_PRESETS.map((preset) => `"${preset}"`).join(", ");
@@ -81,7 +125,10 @@ like \`start/end\` in any of these fields.
 
 ### Filter operators by field type
 ${operatorsText}
-
+${[formatEmbeddedFields(dataset), formatAnswerFilters(dataset)]
+  .filter((section) => section.length > 0)
+  .map((section) => `\n${section}\n`)
+  .join("")}
 ## Guidelines
 - First decide whether the request can be answered from this feedback data at all. Set \`answerable\` to false when it is gibberish (random characters, keyboard mashing) or asks about something the data does not hold (the weather, a joke, general knowledge, writing code). A vague request that is still about the feedback ("show me something useful", "how are we doing") is answerable. When \`answerable\` is false, the rest of the query is ignored: still return every field, as placeholders (null, an empty \`measures\` array, any chart type), rather than inventing a query.
 - Always include at least one measure. If an answerable request names none, default to \`${CUBE_NAME}.count\`.
