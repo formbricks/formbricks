@@ -13,18 +13,24 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: dependabot-to-linear-sync
-  cancel-in-progress: false
-
 jobs:
   sync:
     name: Sync Dependabot alerts to Linear (${{ matrix.repository }})
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # Per repository, not one group for the run. A matrix leg that is queued behind
+    # another leg counts as `pending`, and the default queue replaces a pending
+    # entry — so one shared group lets the next trigger cancel the legs that have
+    # not started, silently skipping that repository's alerts.
+    concurrency:
+      group: dependabot-to-linear-sync-${{ matrix.repository }}
+      cancel-in-progress: false
     strategy:
       # One repository's API failure must not hide the others' alerts.
       fail-fast: false
+      # Sequential: a leg cross-references the tickets an earlier leg filed for the
+      # same advisory (findSiblingIssues), which a parallel leg could not see yet.
+      max-parallel: 1
       matrix:
         # DEPENDABOT_ALERTS_TOKEN needs "Dependabot alerts: read" on every repository listed.
         # formbricks/taxonomy joins once its Dependabot alerts are enabled (ENG-6884).
