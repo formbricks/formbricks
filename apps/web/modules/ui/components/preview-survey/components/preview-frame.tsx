@@ -38,9 +38,9 @@ export const PreviewWindowBar = ({ title, expand, children }: Readonly<PreviewWi
         <div className="size-3 rounded-full bg-emerald-500"></div>
       )}
     </div>
-    <div className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
-      {title && <p className="text-slate-600">{title}</p>}
-      <div className="ml-auto flex items-center">{children}</div>
+    <div className="ml-4 flex w-full min-w-0 items-center justify-between gap-x-3 font-mono text-sm text-slate-400">
+      {title && <p className="shrink-0 whitespace-nowrap text-slate-600">{title}</p>}
+      <div className="ml-auto flex min-w-0 items-center gap-x-1">{children}</div>
     </div>
   </div>
 );
