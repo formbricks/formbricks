@@ -876,6 +876,23 @@ const profileBlock: TSurveyBlock = {
       required: false,
       calUserName: "rick/get-rick-rolled",
     },
+    {
+      // ENG-6938: copied options. The services keep their ids and codes from "services", each shown
+      // only if it was picked there; "None of these" is a fixed option with the next code free in both.
+      id: "recommend",
+      code: "recommend",
+      type: TSurveyElementTypeEnum.MultipleChoiceMulti,
+      headline: i18n("Which services would you recommend to a friend?"),
+      required: false,
+      optionsCopiedFrom: "services",
+      choices: [
+        { ...choice("netflix", "Netflix", "1"), showIf: pickedIn("services", "netflix") },
+        { ...choice("disney", "Disney+", "2"), showIf: pickedIn("services", "disney") },
+        { ...choice("prime", "Prime Video", "3"), showIf: pickedIn("services", "prime") },
+        { ...choice("apple", "Apple TV+", "4"), showIf: pickedIn("services", "apple") },
+        choice("none", "None of these", "5"),
+      ],
+    },
   ],
   logic: [
     // A matrix row condition (ENG-6934: row and column ids next to the positions row 0, column 1)
