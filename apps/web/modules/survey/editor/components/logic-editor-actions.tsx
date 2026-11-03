@@ -177,23 +177,26 @@ export function LogicEditorActions({
 
                 {action.objective === "calculate" && action.value.type === "expression" && (
                   <>
-                    <div className="col-span-3">
-                      <InputCombobox
-                        id={`action-${idx}-variableId`}
-                        key={`variableId-${action.id}`}
-                        showSearch={false}
-                        options={getActionVariableOptions(localSurvey)}
-                        value={action.variableId}
-                        onChangeValue={(val: string | number | string[]) => {
-                          // The formula stays: a field of another type shows what no longer fits.
-                          handleValuesChange(idx, { variableId: String(val) });
-                        }}
-                        comboboxClasses="grow"
-                        emptyDropdownText={t("workspace.surveys.edit.add_a_variable_to_calculate")}
-                      />
-                    </div>
-                    <div className="col-span-6 flex items-center text-sm text-slate-600">
-                      {t("workspace.surveys.edit.flow.set_to_formula")}
+                    {/* The field takes the width its name needs, up to the row's, before the text. */}
+                    <div className="col-span-9 flex min-w-0 items-center gap-x-2">
+                      <div className="max-w-full min-w-0">
+                        <InputCombobox
+                          id={`action-${idx}-variableId`}
+                          key={`variableId-${action.id}`}
+                          showSearch={false}
+                          options={getActionVariableOptions(localSurvey)}
+                          value={action.variableId}
+                          onChangeValue={(val: string | number | string[]) => {
+                            // The formula stays: a field of another type shows what no longer fits.
+                            handleValuesChange(idx, { variableId: String(val) });
+                          }}
+                          comboboxClasses="grow"
+                          emptyDropdownText={t("workspace.surveys.edit.add_a_variable_to_calculate")}
+                        />
+                      </div>
+                      <span className="shrink-0 text-sm whitespace-nowrap text-slate-600">
+                        {t("workspace.surveys.edit.flow.set_to_formula")}
+                      </span>
                     </div>
                     <div className="col-span-12 mt-2">
                       <SetValueFormula
