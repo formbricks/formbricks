@@ -488,10 +488,11 @@ test.describe("Signature element @slow", () => {
     });
 
     await test.step("the CSV export carries the absolute URL in the Signature column", async () => {
-      await page.getByRole("button", { name: "Download" }).click();
-      await expect(page.getByTestId("fb__custom-filter-download-all-attachments")).toBeVisible();
+      // The Export modal's defaults download the Standard CSV.
+      await page.getByTestId("fb__custom-filter-export").click();
+      await expect(page.getByTestId("export-modal")).toBeVisible();
       const downloadPromise = page.waitForEvent("download");
-      await page.getByTestId("fb__custom-filter-download-all-csv").click();
+      await page.getByTestId("export-submit").click();
       const csvDownload = await downloadPromise;
       const csvPath = testInfo.outputPath(csvDownload.suggestedFilename());
       await csvDownload.saveAs(csvPath);
