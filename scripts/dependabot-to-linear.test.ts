@@ -1,5 +1,5 @@
-import { describe, expect, test } from "vitest";
-import { alertTitlePrefix, buildIssue } from "./dependabot-to-linear.mjs";
+import { describe, expect, test, vi } from "vitest";
+import { alertTitlePrefix, buildIssue, findSiblingIssues } from "./dependabot-to-linear.mjs";
 
 const alert = {
   number: 197,
@@ -44,5 +44,61 @@ describe("buildIssue", () => {
     expect(issue.description).toContain(`**Dependabot alert [formbricks/ee#197](${alert.html_url})**`);
     expect(issue.description).toContain("- **Repository:** `formbricks/ee`");
     expect(issue.description).toContain("- **Patched version:** 6.29.1");
+  });
+
+  test("cross-references the siblings already filed for the same advisory", () => {
+    const issue = buildIssue(alert, "formbricks/hub", [
+      {
+        identifier: "ENG-1234",
+        url: "https://linear.app/formbricks/issue/ENG-1234",
+        title: "[Dependabot ee#199] glob — glob command injection",
+      },
+      {
+        identifier: "ENG-1230",
+        url: "https://linear.app/formbricks/issue/ENG-1230",
+        title: "[Dependabot #984] glob — glob command injection",
+      },
+    ]);
+
+    expect(issue.description).toContain(
+      "- **Also tracked as:** [ENG-1234](https://linear.app/formbricks/issue/ENG-1234) (ee#199), " +
+        "[ENG-1230](https://linear.app/formbricks/issue/ENG-1230) (formbricks#984)"
+    );
+  });
+
+  test("omits the cross-reference when no sibling exists", () => {
+    expect(buildIssue(alert, "formbricks/ee").description).not.toContain("Also tracked as");
+    expect(buildIssue(alert, "formbricks/ee", []).description).not.toContain("Also tracked as");
+  });
+});
+
+describe("findSiblingIssues", () => {
+  const stub = (...nodes: unknown[]) => vi.fn(async () => ({ issues: { nodes } }));
+
+  test("keeps Dependabot tickets for the advisory, minus this repository's own", async () => {
+    const siblings = await findSiblingIssues("key", "GHSA-2m5v-pch6-74hx", {
+      excludePrefix: "[Dependabot ee#197]",
+      request: stub(
+        { identifier: "ENG-1", title: "[Hand-written] same GHSA pasted in a description", url: "u1" },
+        { identifier: "ENG-2", title: "[Dependabot #984] glob — injection", url: "u2" },
+        { identifier: "ENG-3", title: "[Dependabot ee#197] undici — undici DoS", url: "u3" },
+        { identifier: "ENG-4", title: "[Dependabot hub#7] glob — injection", url: "u4" }
+      ),
+    });
+
+    expect(siblings.map((issue: { identifier: string }) => issue.identifier)).toEqual(["ENG-2", "ENG-4"]);
+  });
+
+  test("returns nothing for an alert without an advisory id", async () => {
+    const request = stub();
+    expect(await findSiblingIssues("key", "", { request })).toEqual([]);
+    expect(request).not.toHaveBeenCalled();
+  });
+
+  test("survives a failing lookup rather than losing the ticket", async () => {
+    const request = vi.fn(async () => {
+      throw new Error("Linear API error: boom");
+    });
+    await expect(findSiblingIssues("key", "GHSA-2m5v-pch6-74hx", { request })).resolves.toEqual([]);
   });
 });

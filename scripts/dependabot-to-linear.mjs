@@ -18,6 +18,10 @@
 // repository: `[Dependabot ee#<number>]`. formbricks/formbricks keeps the bare
 // `[Dependabot #<number>]` its existing tickets were filed under.
 //
+// One advisory can therefore file one ticket per repository it reaches. That is
+// what keeps the reconcile pass honest, so a new ticket cross-references the
+// siblings already filed for the same advisory instead of deduplicating.
+//
 // Env:
 //   DEPENDABOT_REPOSITORY  "owner/repo" to sync; the workflow runs once per repository.
 //                          Falls back to GITHUB_REPOSITORY (provided in Actions).
@@ -146,6 +150,48 @@ async function findIssue(apiKey, titlePrefix) {
   return data.issues.nodes[0] ?? null;
 }
 
+// `[Dependabot ee#199] …` -> `ee#199`. The bare form belongs to the repository
+// whose prefix carries no name. Only used to label a cross-reference, so anything
+// unrecognised is passed through unchanged.
+function alertLabel(title) {
+  const match = /^\[Dependabot (?:(?<repo>[\w.-]+)#|#)(?<number>\d+)\]/.exec(title ?? "");
+  if (!match) return title;
+  return `${match.groups.repo ?? UNQUALIFIED_PREFIX_REPO.split("/")[1]}#${match.groups.number}`;
+}
+
+// Alert numbers restart in every repository, so one advisory can file a ticket in
+// each repo it reaches. Per-repo tickets are what makes the reconcile pass honest —
+// a ticket closes when *its* alert resolves — so instead of deduplicating, a new
+// ticket names the siblings that already exist, letting triage rate the advisory
+// once. Found by the advisory id every ticket description carries.
+//
+// Best-effort: a failed lookup logs and returns nothing, so the ticket is still
+// filed with its advisory id and nothing is lost but the cross-reference.
+async function findSiblingIssues(apiKey, ghsa, { excludePrefix, request = linearRequest } = {}) {
+  if (!ghsa) return [];
+  try {
+    const data = await request(
+      apiKey,
+      `query SiblingIssues($teamId: ID!, $ghsa: String!) {
+        issues(
+          filter: { team: { id: { eq: $teamId } }, description: { contains: $ghsa } }
+          first: 5
+        ) {
+          nodes { identifier title url }
+        }
+      }`,
+      { teamId: LINEAR_TEAM_ID, ghsa }
+    );
+    return (data.issues?.nodes ?? []).filter(
+      (issue) =>
+        issue.title?.startsWith("[Dependabot ") && !(excludePrefix && issue.title.startsWith(excludePrefix))
+    );
+  } catch (err) {
+    console.warn(`warn   sibling lookup failed for ${ghsa}: ${err.message}`);
+    return [];
+  }
+}
+
 // Resolve the team's target "done" state dynamically rather than hardcoding an
 // ID: pick the first `completed`-type state (preferring one literally named
 // "Done"). Falls back to a `canceled`-type state if the team has no completed
@@ -223,7 +269,7 @@ async function createIssue(
   return data.issueCreate.issue;
 }
 
-function buildIssue(alert, repo) {
+function buildIssue(alert, repo, siblings = []) {
   const number = alert.number;
   const severity = alert.security_vulnerability?.severity ?? "medium";
   const priority = PRIORITY_BY_SEVERITY[severity] ?? 3;
@@ -239,11 +285,17 @@ function buildIssue(alert, repo) {
 
   const titlePrefix = alertTitlePrefix(repo, number);
   const title = `${titlePrefix} ${pkg} — ${summary}`;
+  const alsoTracked = siblings.length
+    ? `- **Also tracked as:** ${siblings
+        .map((sibling) => `[${sibling.identifier}](${sibling.url}) (${alertLabel(sibling.title)})`)
+        .join(", ")}`
+    : null;
 
   const description = [
     `**Dependabot alert [${repo}#${number}](${alert.html_url})**`,
     "",
     `- **Repository:** \`${repo}\``,
+    alsoTracked,
     `- **Package:** \`${pkg}\`${ecosystem ? ` (${ecosystem})` : ""}`,
     `- **Severity:** ${severity}`,
     ghsa ? `- **Advisory:** ${ghsa}` : null,
@@ -310,7 +362,10 @@ async function main() {
         console.log(`reopen ${result.identifier} (alert open; was "${existing.state.name}") ${result.url}`);
         continue;
       }
-      const result = await createIssue(linearKey, issue);
+      const siblings = await findSiblingIssues(linearKey, alert.security_advisory?.ghsa_id, {
+        excludePrefix: issue.titlePrefix,
+      });
+      const result = await createIssue(linearKey, buildIssue(alert, repo, siblings));
       created += 1;
       console.log(`create ${result.identifier} ${result.url}`);
     } catch (err) {
@@ -354,6 +409,7 @@ async function main() {
 export {
   alertTitlePrefix,
   buildIssue,
+  findSiblingIssues,
   linearRequest,
   createIssue,
   setIssueState,
