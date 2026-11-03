@@ -641,8 +641,9 @@ type ElementTypeWithStrictKeys = keyof typeof ELEMENT_KEYS_BY_TYPE;
 function isElementTypeWithStrictKeys(type: string): type is ElementTypeWithStrictKeys {
   return Object.hasOwn(ELEMENT_KEYS_BY_TYPE, type);
 }
-const LABEL_CHOICE_KEYS = new Set(["id", "label", "code"]);
-const PICTURE_CHOICE_KEYS = new Set(["id", "code", "imageUrl", "imageAltText"]);
+// ENG-6937: option, row and column show-if and Hidden (json-shapes §2).
+const LABEL_CHOICE_KEYS = new Set(["id", "label", "code", "showIf", "hidden"]);
+const PICTURE_CHOICE_KEYS = new Set(["id", "code", "imageUrl", "imageAltText", "showIf", "hidden"]);
 const TOGGLE_INPUT_KEYS = new Set(["show", "required", "placeholder"]);
 const CHAR_LIMIT_KEYS = new Set(["enabled", "min", "max"]);
 const VALIDATION_KEYS = new Set(["rules", "logic"]);
@@ -801,6 +802,9 @@ function validateChoice(
   if (isPlainObject(value)) {
     validateTranslatableField(value.label, `${path}.label`, issues, defaultLanguage, options);
     validateTranslatableField(value.imageAltText, `${path}.imageAltText`, issues, defaultLanguage, options);
+    if (value.showIf !== undefined) {
+      validateConditionGroup(value.showIf, `${path}.showIf`, issues);
+    }
   }
 }
 

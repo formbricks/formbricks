@@ -837,3 +837,45 @@ describe("show-if round-trip (ENG-6931)", () => {
     expect(showIfs((patched.data?.blocks as never) ?? [])).toEqual(showIfs(surveyFlowFixture.blocks));
   });
 });
+
+describe("option show-if and Hidden round-trip (ENG-6937)", () => {
+  test("GET returns option, row and column show-if and hidden, and create and patch take them back", () => {
+    const resource = serializeV3SurveyResource(surveyFlowFixture, TEST_VISIBILITY);
+    type TItem = { id: string; showIf?: unknown; hidden?: boolean };
+    const optionStates = (blocks: { elements: Record<string, unknown>[] }[]) =>
+      blocks.flatMap((block) =>
+        block.elements.flatMap((element) =>
+          ["choices", "rows", "columns"].flatMap((key) =>
+            Array.isArray(element[key])
+              ? (element[key] as TItem[]).map((item) => ({
+                  id: item.id,
+                  showIf: item.showIf,
+                  hidden: item.hidden,
+                }))
+              : []
+          )
+        )
+      );
+    const stored = optionStates(surveyFlowFixture.blocks as never);
+
+    expect(stored.some((item) => item.showIf)).toBe(true);
+    expect(stored.some((item) => item.hidden)).toBe(true);
+    expect(optionStates(resource.blocks as never)).toEqual(stored);
+
+    const body = {
+      workspaceId: "clxx1234567890123456789012",
+      name: resource.name,
+      blocks: resource.blocks,
+      endings: resource.endings,
+      hiddenFields: resource.hiddenFields,
+      variables: resource.variables,
+    };
+    const created = ZV3CreateSurveyBody.safeParse(body);
+    expect(created.error?.issues ?? []).toEqual([]);
+    expect(optionStates((created.data?.blocks as never) ?? [])).toEqual(stored);
+
+    const patched = ZV3PatchSurveyBody.safeParse({ blocks: resource.blocks });
+    expect(patched.error?.issues ?? []).toEqual([]);
+    expect(optionStates((patched.data?.blocks as never) ?? [])).toEqual(stored);
+  });
+});

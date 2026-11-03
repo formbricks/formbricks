@@ -926,6 +926,71 @@ describe("ordering rules (ENG-3069)", () => {
       ]);
     });
 
+    describe("on options, rows and columns (ENG-6937)", () => {
+      // The follow-up becomes a multi select and a matrix is added below it, on block 1.
+      const withOptions = (patch: (survey: ReturnType<typeof twoBlockSurvey>) => void) =>
+        withShowIf((survey) => {
+          survey.blocks[1].elements[1] = {
+            id: "follow_up",
+            type: "multipleChoiceMulti",
+            headline: { default: "Which?" },
+            required: false,
+            choices: [
+              { id: "a", label: { default: "A" } },
+              { id: "b", label: { default: "B" } },
+            ],
+          } as never;
+          survey.blocks[1].elements.push({
+            id: "grid",
+            type: "matrix",
+            headline: { default: "Rate" },
+            required: false,
+            rows: [{ id: "r1", label: { default: "R1" } }],
+            columns: [{ id: "c1", label: { default: "C1" } }],
+          } as never);
+          patch(survey);
+        });
+      const optionsOf = (survey: ReturnType<typeof twoBlockSurvey>, elementIdx: number, key = "choices") =>
+        (survey.blocks[1].elements[elementIdx] as unknown as Record<string, { showIf?: unknown }[]>)[key];
+
+      test("an option's show-if may use what its question's may: not its own question or one below", () => {
+        const params = (patch: (survey: ReturnType<typeof twoBlockSurvey>) => void) =>
+          getV3SurveyPrecedenceInvalidParams(refInput(withOptions(patch)));
+
+        expect(params((survey) => (optionsOf(survey, 1)[0].showIf = submitted("second_q")))).toEqual([]);
+        expect(params((survey) => (optionsOf(survey, 1)[1].showIf = submitted("follow_up")))).toEqual([
+          expect.objectContaining({
+            name: "blocks.1.elements.1.choices.1.showIf.conditions.0.leftOperand.value",
+            code: "misordered_reference",
+          }),
+        ]);
+        expect(params((survey) => (optionsOf(survey, 2, "rows")[0].showIf = submitted("grid")))).toEqual([
+          expect.objectContaining({
+            name: "blocks.1.elements.2.rows.0.showIf.conditions.0.leftOperand.value",
+          }),
+        ]);
+        expect(params((survey) => (optionsOf(survey, 1)[0].showIf = submitted("grid")))).toEqual([
+          expect.objectContaining({
+            name: "blocks.1.elements.1.choices.0.showIf.conditions.0.leftOperand.value",
+          }),
+        ]);
+      });
+
+      test("a column's show-if naming an element that doesn't exist is a dangling reference", () => {
+        const survey = withOptions((draft) => {
+          optionsOf(draft, 2, "columns")[0].showIf = submitted("gone_q");
+        });
+
+        expect(validateV3SurveyReferences(refInput(survey)).invalidParams).toEqual([
+          expect.objectContaining({
+            name: "blocks.1.elements.2.columns.0.showIf.conditions.0.leftOperand.value",
+            code: "dangling_reference",
+            missingId: "gone_q",
+          }),
+        ]);
+      });
+    });
+
     test("a show-if naming an element that doesn't exist is a dangling reference", () => {
       const survey = withShowIf((draft) => {
         draft.blocks[1].showIf = submitted("gone_q");
