@@ -388,11 +388,14 @@ export const applyFormbricksFileReferences = async (
             noCodeConfig: actionClass.noCodeConfig ?? undefined,
           })),
           select: { id: true, name: true },
+          // A concurrent import may create the same one between the plan's read and this insert.
+          skipDuplicates: true,
         })
       : Promise.resolve([]),
     plan.attributeKeysToCreate.length > 0
       ? tx.contactAttributeKey.createMany({
           data: plan.attributeKeysToCreate.map((attributeKey) => ({ workspaceId, ...attributeKey })),
+          skipDuplicates: true,
         })
       : Promise.resolve(null),
     plan.languagesToCreate.length > 0
@@ -404,8 +407,31 @@ export const applyFormbricksFileReferences = async (
   ]);
 
   const createdIdByName = new Map(created.map((actionClass) => [actionClass.name, actionClass.id]));
+  // One the insert skipped belongs to the transaction that created it first: read it back, so this
+  // import links to it instead of failing, and leave it out of what this import reports as created.
+  const missing = creates.filter((actionClass) => !createdIdByName.has(actionClass.name));
+  const createdIdByKey = new Map<string, string>();
+  if (missing.length > 0) {
+    const existing = await tx.actionClass.findMany({
+      where: {
+        workspaceId,
+        OR: [
+          { name: { in: missing.map((actionClass) => actionClass.name) } },
+          { key: { in: missing.flatMap((actionClass) => (actionClass.key ? [actionClass.key] : [])) } },
+        ],
+      },
+      select: { id: true, name: true, key: true },
+    });
+    for (const actionClass of existing) {
+      if (actionClass.key) createdIdByKey.set(actionClass.key, actionClass.id);
+      if (!createdIdByName.has(actionClass.name)) createdIdByName.set(actionClass.name, actionClass.id);
+    }
+  }
+
   for (const [actionClass, sourceIds] of toCreate) {
-    const id = createdIdByName.get(actionClass.name);
+    const id =
+      createdIdByName.get(actionClass.name) ??
+      (actionClass.key ? createdIdByKey.get(actionClass.key) : undefined);
     if (!id) throw new Error("An action class the import created was not returned");
     for (const sourceId of sourceIds) actionClassIds.set(sourceId, id);
   }

@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 import type { TFormbricksFileReferences } from "./envelope";
-import { planFormbricksFileReferences } from "./resolve";
+import { applyFormbricksFileReferences, planFormbricksFileReferences } from "./resolve";
 
 const WORKSPACE_ID = "clxx1234567890123456789012";
 
@@ -49,5 +49,41 @@ describe("planFormbricksFileReferences", () => {
       { key: "plan", name: "Plan", description: null, dataType: "string" },
     ]);
     expect(plan.issues.filter((issue) => issue.code === "attribute_key_created")).toHaveLength(1);
+  });
+});
+
+describe("applyFormbricksFileReferences", () => {
+  test("links an action class a concurrent create took, instead of failing on its unique key", async () => {
+    const tx = {
+      // The insert skipped the row: another transaction created the same action after this one's plan.
+      actionClass: {
+        createManyAndReturn: vi.fn(async () => []),
+        findMany: vi.fn(async () => [{ id: "action_existing", name: "Pricing page", key: "pricing" }]),
+      },
+    } as never;
+
+    const applied = await applyFormbricksFileReferences(tx, WORKSPACE_ID, {
+      actionClasses: new Map([
+        [
+          "file_action_1",
+          {
+            create: {
+              name: "Pricing page",
+              description: null,
+              type: "code",
+              key: "pricing",
+              noCodeConfig: null,
+            },
+          },
+        ],
+      ]),
+      attributeKeysToCreate: [],
+      languagesToCreate: [],
+      issues: [],
+    });
+
+    expect(applied.actionClassIds.get("file_action_1")).toBe("action_existing");
+    // It is not this import's to report as created.
+    expect(applied.created.actionClasses).toEqual([]);
   });
 });
