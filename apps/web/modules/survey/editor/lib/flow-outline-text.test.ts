@@ -93,6 +93,16 @@ describe("describeAction", () => {
     expect(describeAction(action(4, 3), surveyFlowFixture, t).label).toBe("segment = “hot-lead”");
   });
 
+  test("a Set value step reads as field = formula (ENG-6935)", () => {
+    expect(describeAction(action(1, 1), surveyFlowFixture, t).label).toBe(
+      "score = round(ifEmpty(@sat_netflix, 0) + ifEmpty(@sat_disney, 0) * 2, 1)"
+    );
+    expect(describeAction(action(5, 1, 0), surveyFlowFixture, t).label).toBe("signed_up_at = now()");
+    expect(describeAction(action(5, 1, 1), surveyFlowFixture, t).label).toBe(
+      "tenure_days = daysBetween(@signup_date, @signed_up_at)"
+    );
+  });
+
   test("an action this editor doesn't know still reads as its objective", () => {
     const unknown = { id: "a", objective: "markLowQuality" } as unknown as TSurveyBlockLogicAction;
     expect(describeAction(unknown, surveyFlowFixture, t)).toEqual({

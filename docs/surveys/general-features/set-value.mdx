@@ -1,0 +1,118 @@
+---
+title: "Set Value and Formulas"
+description: "Set a calculated Embedded Data field anywhere in the survey flow from a formula: scores, auto-coding, text joining and days since a date."
+icon: "equals"
+---
+
+A **Set value** step writes a calculated [Embedded Data](/surveys/general-features/variables) field as the respondent moves through the survey. Its value comes from a formula, for example `round(@q1 + @q2 * 2)` for a score, `concat("segment-", @plan)` for auto-coding, or `daysBetween(@signup_date, now())` for days since a date.
+
+You add and edit Set value steps on the [Flow tab](/surveys/general-features/flow-tab).
+
+## Adding a step
+
+Under a block on the Flow tab, open **Add logic**:
+
+* **Set a value** adds a step that always runs after the block is submitted. It reads **Always** on the outline.
+* **Calculation** adds a rule with a condition first, so the value is set only when the condition matches.
+
+Choose the calculated field to set, then type the formula. A step that always runs can get a condition later with **Add a condition**, which makes it a calculation.
+
+A one-step calculation you already have, such as *score + 1*, keeps working exactly as before. To turn it into a formula, choose **Use a formula** in its operator list.
+
+## Writing a formula
+
+* **Numbers and text.** Type numbers as they are (`2`, `1.5`) and put text in quotes (`"gold"`). A date in quotes, such as `"2026-03-01"`, counts as a date where a date is expected.
+* **Answers and fields.** Type `@` or use the **@** button to insert an answer or a field. Questions are named by their question code, Embedded Data fields by their name, and auto-captured fields such as `language` by theirs. A name with spaces is written in braces: `@{Plan tier}`.
+* **Operators.** `+`, `-`, `*` and `/` work as in a calculator, with `*` and `/` first. Use brackets to change the order.
+* **Functions.** Click a function chip to insert it, or type its name.
+
+Below the formula, the box shows what a save would refuse, or the **sample result**: what the step computes for a made-up response with a typical answer to every question.
+
+### What an answer is in a formula
+
+| Question | In a formula |
+| -- | -- |
+| Rating, Net Promoter Score, CSAT, CES, a number open question | A number |
+| Other open questions | Text |
+| Date | A date |
+| Single select | Its answer code, as text, in every language |
+
+Other question types can't be used in a formula. An Embedded Data field has the type you gave it.
+
+## Functions
+
+| Function | Takes | Gives |
+| -- | -- | -- |
+| `a + b`, `a * b` | 2 to 50 numbers | A number |
+| `a - b`, `a / b` | 2 numbers | A number. Dividing by zero gives empty |
+| `round(x)`, `round(x, 2)` | A number, and how many decimals (0 to 10) | The number rounded, halves away from zero |
+| `min(a, b, …)`, `max(a, b, …)` | 2 to 50 numbers | The smallest or largest |
+| `abs(x)` | A number | The number without its sign |
+| `ifEmpty(x, fallback)` | A value and a fallback of the same type | `x`, or the fallback when `x` is empty |
+| `concat(a, b, …)` | 2 to 50 values | Text: numbers and dates are written out as text |
+| `now()` | Nothing | The date and time on the respondent's device, in UTC |
+| `daysBetween(a, b)` | 2 dates | The calendar days from `a` to `b`, counted in UTC; negative when `b` is earlier |
+
+## Empty values
+
+* **Empty in, empty out.** When a question wasn't answered or a field isn't set, a formula that uses it is empty. Use `ifEmpty` to set a default: `ifEmpty(@q1, 0) + 1`.
+* **Dividing by zero** gives empty.
+* **A value that isn't a number** counts as empty where a number is needed.
+* **Setting a field to empty clears it**, so the response doesn't keep an old value.
+
+One-step calculations keep their old behaviour: there, an empty field counts as `0`.
+
+## Dates
+
+A calculated field can be a **date**. Set it with `now()` to record when the respondent reached a step, and use it in `daysBetween()` to count days, for example the days since a date passed in a URL parameter. Dates are stored as ISO 8601 timestamps in UTC, and they appear in exports like every other field.
+
+`daysBetween()` counts calendar days in UTC, not 24-hour periods: from 23:59 to 00:01 the next day is one day.
+
+## Checks when you save
+
+A formula is checked when you save or publish the survey. It is refused, with the exact place marked, when:
+
+* it uses text where a number is needed, such as an open text answer in `+`
+* a function gets the wrong number of values, or a function doesn't exist
+* it names a question or field the survey doesn't have
+* its result doesn't fit the field: a number field takes a number, a text field text, a date field a date
+* it nests deeper than 12 levels or has more than 200 parts
+
+## Through the API
+
+The [Management API](/api-v3-reference/introduction) and [MCP](/platform/mcp/overview) store the same formula as a tree, which is what the survey runs. A Set value step is a `calculate` action with `operator: "assign"` and an `expression` value:
+
+```json
+{
+  "id": "clact123456789012345678901",
+  "objective": "calculate",
+  "variableId": "<the field's storageKey>",
+  "operator": "assign",
+  "value": {
+    "type": "expression",
+    "value": {
+      "type": "call",
+      "fn": "round",
+      "args": [
+        {
+          "type": "call",
+          "fn": "add",
+          "args": [
+            { "type": "element", "value": "q1" },
+            {
+              "type": "call",
+              "fn": "multiply",
+              "args": [
+                { "type": "element", "value": "q2" },
+                { "type": "static", "value": 2 }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
+```
+
+A step that always runs is a rule whose `conditions` is an empty `and` group. The survey evaluates formulas without `eval`, so they work on websites with a strict Content Security Policy.

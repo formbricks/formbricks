@@ -6,6 +6,7 @@ import {
   ArrowUpIcon,
   BinaryIcon,
   CopyIcon,
+  EqualIcon,
   EyeIcon,
   EyeOffIcon,
   FlagIcon,
@@ -36,13 +37,16 @@ import {
   getHeadlineText,
 } from "@/modules/survey/editor/lib/flow-outline-text";
 import {
+  START_SCOPE_BLOCK_IDX,
   type TNewRuleKind,
   createRule,
   duplicateRule,
+  getDefaultStartCondition,
   moveRule,
   removeRule,
   setBlockLogicFallback,
   setBlockRules,
+  setStartRules,
 } from "@/modules/survey/editor/lib/rule-list";
 import {
   type TShowIfTarget,
@@ -111,12 +115,13 @@ export const FlowView = ({
     const previous = previousInvalidRef.current ?? [];
     previousInvalidRef.current = invalidElements;
     if (!invalidElements?.length) return;
-    const invalidRow = outline.blocks
-      .flatMap((block) => block.rules)
-      .find((row) => invalidElements.includes(row.id) && !previous.includes(row.id));
-    if (!invalidRow || invalidRow.owner.type !== "block") return;
-    const blockId = invalidRow.owner.blockId;
+    const invalidRow = [...outline.start.rules, ...outline.blocks.flatMap((block) => block.rules)].find(
+      (row) => invalidElements.includes(row.id) && !previous.includes(row.id)
+    );
+    if (!invalidRow) return;
     setOpenRowId(invalidRow.id);
+    if (invalidRow.owner.type !== "block") return;
+    const blockId = invalidRow.owner.blockId;
     setCollapsedBlockIds((current) => {
       if (!current.has(blockId)) return current;
       const next = new Set(current);
@@ -131,17 +136,34 @@ export const FlowView = ({
   // added and not filled in yet is flagged by the next save or publish, not while it is being written.
   useEffect(() => {
     if (!invalidElements?.length) return;
-    const fixedIds = localSurvey.blocks
-      .flatMap((block) => block.logic ?? [])
+    const fixedIds = [
+      ...(localSurvey.startLogic ?? []),
+      ...localSurvey.blocks.flatMap((block) => block.logic ?? []),
+    ]
       .filter((rule) => invalidElements.includes(rule.id) && isBlockLogicItemValid(rule))
       .map((rule) => rule.id);
     if (fixedIds.length > 0) {
       setInvalidElements((current) => (current ?? []).filter((id) => !fixedIds.includes(id)));
     }
-  }, [localSurvey.blocks, invalidElements, setInvalidElements]);
+  }, [localSurvey.startLogic, localSurvey.blocks, invalidElements, setInvalidElements]);
 
   const updateBlockRules = (blockIdx: number, rules: TSurveyBlockLogic[]) =>
     setLocalSurvey((survey) => setBlockRules(survey, blockIdx, rules));
+
+  // The rules before the first question share the rule editor; their scope is START_SCOPE_BLOCK_IDX.
+  const updateRules = (scopeBlockIdx: number, rules: TSurveyBlockLogic[]) =>
+    scopeBlockIdx === START_SCOPE_BLOCK_IDX
+      ? setLocalSurvey((survey) => setStartRules(survey, rules))
+      : updateBlockRules(scopeBlockIdx, rules);
+
+  const addStartRule = (kind: TNewRuleKind) => {
+    const rule = createRule(kind, {
+      condition: getDefaultStartCondition(localSurvey),
+      variableId: String(getActionVariableOptions(localSurvey)[0]?.value ?? ""),
+    });
+    setLocalSurvey((survey) => setStartRules(survey, [...(survey.startLogic ?? []), rule]));
+    setOpenRowId(rule.id);
+  };
 
   const addRule = (block: TFlowBlockSection, kind: TNewRuleKind) => {
     const firstElement = localSurvey.blocks[block.blockIdx]?.elements[0];
@@ -298,7 +320,7 @@ export const FlowView = ({
   const renderRuleRow = (row: TFlowRuleRow, rules: TSurveyBlockLogic[], scopeBlockIdx: number) => {
     const isOpen = openRowId === row.id;
     const steps = describeRuleActions(row.rule.actions, localSurvey, t);
-    const onRulesChange = (next: TSurveyBlockLogic[]) => updateBlockRules(scopeBlockIdx, next);
+    const onRulesChange = (next: TSurveyBlockLogic[]) => updateRules(scopeBlockIdx, next);
 
     return (
       <FlowOutlineRow
@@ -311,7 +333,7 @@ export const FlowView = ({
         onToggle={row.editable ? () => toggleRow(row.id) : undefined}
         isOpen={isOpen}
         details={
-          row.editable && row.owner.type === "block" ? (
+          row.editable ? (
             <div className="flex flex-col gap-3">
               <LogicEditor
                 localSurvey={localSurvey}
@@ -363,7 +385,9 @@ export const FlowView = ({
           ) : null
         }>
         <span className="text-sm text-slate-700">
-          {t("workspace.surveys.edit.flow.if")} {describeConditionGroup(row.rule.conditions, localSurvey, t)}
+          {row.rule.conditions.conditions.length === 0
+            ? t("workspace.surveys.edit.flow.always_runs")
+            : `${t("workspace.surveys.edit.flow.if")} ${describeConditionGroup(row.rule.conditions, localSurvey, t)}`}
         </span>
         <ArrowRightIcon className="size-4 shrink-0 text-slate-400" aria-hidden="true" />
         {steps.map((step, idx) => renderActionStep(step, `${row.id}-${idx}`))}
@@ -405,14 +429,46 @@ export const FlowView = ({
         }
         hint={t("workspace.surveys.edit.flow.hint")}
         count={countText}>
-        {outline.start && (
-          <>
-            <FlowOutlineSectionLabel>
-              {t("workspace.surveys.edit.flow.before_first_question")}
-            </FlowOutlineSectionLabel>
-            {outline.start.rules.map((row) => renderRuleRow(row, [], -1))}
-          </>
-        )}
+        <FlowOutlineSectionLabel>
+          {t("workspace.surveys.edit.flow.before_first_question")}
+        </FlowOutlineSectionLabel>
+        <FlowOutlineChildren>
+          {outline.start.rules.length === 0 && (
+            <p className="pl-6 text-xs text-slate-500">
+              {t("workspace.surveys.edit.flow.before_first_question_hint")}
+            </p>
+          )}
+          {outline.start.rules.map((row) =>
+            renderRuleRow(row, localSurvey.startLogic ?? [], START_SCOPE_BLOCK_IDX)
+          )}
+          <div className="pl-6">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button type="button" size="sm" variant="secondary" id="flow-add-logic-start">
+                  {t("workspace.surveys.edit.add_logic")}
+                  <PlusIcon />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem
+                  icon={<SplitIcon className="size-4" />}
+                  onClick={() => addStartRule("jump")}>
+                  {t("workspace.surveys.edit.flow.jump_rule")}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  icon={<BinaryIcon className="size-4" />}
+                  onClick={() => addStartRule("calculate")}>
+                  {t("workspace.surveys.edit.flow.calculation")}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  icon={<EqualIcon className="size-4" />}
+                  onClick={() => addStartRule("setValue")}>
+                  {t("workspace.surveys.edit.flow.set_a_value")}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </FlowOutlineChildren>
 
         {outline.blocks.map((block) => {
           const surveyBlock = localSurvey.blocks[block.blockIdx];
@@ -550,6 +606,11 @@ export const FlowView = ({
                           icon={<BinaryIcon className="size-4" />}
                           onClick={() => addRule(block, "calculate")}>
                           {t("workspace.surveys.edit.flow.calculation")}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          icon={<EqualIcon className="size-4" />}
+                          onClick={() => addRule(block, "setValue")}>
+                          {t("workspace.surveys.edit.flow.set_a_value")}
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           icon={<EyeIcon className="size-4" />}

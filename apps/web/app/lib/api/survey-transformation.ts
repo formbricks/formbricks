@@ -335,7 +335,9 @@ const reverseLogicActions = (
       };
     }
 
-    return action;
+    // A Set value expression (ENG-6935) has no counterpart in the legacy question-logic types; it is
+    // passed through as stored so a legacy reader sees the step rather than losing it.
+    return action as TSurveyLogicAction;
   });
 };
 

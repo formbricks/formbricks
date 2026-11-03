@@ -14,6 +14,7 @@ import {
   findElementUsedInLogic,
   findHiddenFieldUsedInLogic,
   findOptionUsedInLogic,
+  findVariableUsedInLogic,
   getActionValueOptions,
   getActionVariableOptions,
   getConditionOperatorOptions,
@@ -264,6 +265,18 @@ describe("getConditionOperatorOptions", () => {
   test("a date field gets chronological comparison", () => {
     expect(operatorsFor("signed_up")).toContain("isBefore");
     expect(operatorsFor("signed_up")).toContain("isAfter");
+  });
+
+  test("a computed date field (ENG-6935) gets chronological comparison and a date input", () => {
+    const withComputedDate = survey([
+      field({ storageKey: "signed_up_at", source: "computed", dataType: "date" }),
+    ]);
+    const variableCondition = condition({ type: "variable", value: "signed_up_at" });
+
+    expect(operatorValues(getConditionOperatorOptions(variableCondition, withComputedDate, t))).toEqual(
+      expect.arrayContaining(["isBefore", "isAfter"])
+    );
+    expect(getMatchValueProps(variableCondition, withComputedDate, t).inputType).toBe("date");
   });
 
   test("a condition pointing at a deleted field falls back to the widest safe set", () => {
@@ -602,6 +615,39 @@ describe("operators that take no right-hand side", () => {
     expect(getMatchValueProps(condition({ type: "hiddenField", value: "plan" }, operator), typed, t)).toEqual(
       { show: false, options: [] }
     );
+  });
+});
+
+describe("a reference inside a Set value expression counts as used in logic (ENG-6935)", () => {
+  // `signup_date` and `signed_up_at` appear in the fixture only inside the tenure step's formula.
+  test("an ingested and a computed field read by a formula", () => {
+    expect(
+      findHiddenFieldUsedInLogic(surveyFlowFixture, SURVEY_FLOW_FIXTURE_IDS.hiddenFields.signupDate)
+    ).not.toBe(-1);
+    expect(findVariableUsedInLogic(surveyFlowFixture, SURVEY_FLOW_FIXTURE_IDS.variables.signedUpAt)).not.toBe(
+      -1
+    );
+  });
+
+  test("a question read by a formula", () => {
+    // Only the score step left, so nothing else (a jump into csat's block) can count as a use.
+    const survey = structuredClone(surveyFlowFixture);
+    survey.blocks = survey.blocks.map((block) => ({
+      ...block,
+      logic: (block.logic ?? []).filter((rule) => rule.id === SURVEY_FLOW_FIXTURE_IDS.setValue.scoreRule),
+    }));
+    expect(findElementUsedInLogic(survey, "csat")).toBe(-1);
+
+    const scoreStep = survey.blocks[1].logic![0];
+    scoreStep.actions[0] = {
+      ...scoreStep.actions[0],
+      value: {
+        type: "expression",
+        value: { type: "call", fn: "abs", args: [{ type: "element", value: "csat" }] },
+      },
+    } as (typeof scoreStep.actions)[number];
+
+    expect(findElementUsedInLogic(survey, "csat")).not.toBe(-1);
   });
 });
 

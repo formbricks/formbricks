@@ -205,7 +205,11 @@ const toLegacyVariable = (field: TDesiredEmbeddedField): TSurveyVariable =>
  * instead.
  */
 export const toLegacyEmbeddedFields = (desired: readonly TDesiredEmbeddedField[]): TLegacyEmbeddedColumns => {
-  const variables = desired.filter((field) => field.source === "computed").map(toLegacyVariable);
+  // A variable is a number or text, so a computed date (ENG-6935) lives only in the typed rows
+  // (json-shapes §6); a legacy reader would otherwise take it for a text variable.
+  const variables = desired
+    .filter((field) => field.source === "computed" && field.dataType !== "date")
+    .map(toLegacyVariable);
   const fieldIds = desired.filter((field) => field.source === "ingested").map((field) => field.storageKey);
 
   return { variables, hiddenFields: { enabled: fieldIds.length > 0, fieldIds } };

@@ -1,0 +1,35 @@
+type: object
+description: >
+  The value of a Set value step: an expression tree, evaluated in the respondent's browser without
+  `eval`. Validation refuses text in arithmetic, unknown functions, wrong argument counts, references
+  that don't exist and a result type that doesn't match the target field, each at its exact path
+  (`…value.value.args.1`). Trees are at most 12 levels deep and 200 nodes.
+required:
+  - type
+  - value
+properties:
+  type:
+    type: string
+    enum:
+      - expression
+  value:
+    $ref: ./SurveyExpression.yml
+additionalProperties: false
+example:
+  type: expression
+  value:
+    type: call
+    fn: round
+    args:
+      - type: call
+        fn: add
+        args:
+          - type: element
+            value: q1
+          - type: call
+            fn: multiply
+            args:
+              - type: element
+                value: q2
+              - type: static
+                value: 2

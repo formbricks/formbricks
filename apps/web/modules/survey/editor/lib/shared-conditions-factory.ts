@@ -16,6 +16,7 @@ import {
   toggleGroupConnector,
   updateCondition,
 } from "@/lib/surveyLogic/utils";
+import { START_SCOPE_BLOCK_IDX, getDefaultStartCondition } from "@/modules/survey/editor/lib/rule-list";
 import {
   getConditionOperatorOptions,
   getConditionValueOptions,
@@ -118,11 +119,15 @@ export function createSharedConditionsFactory(
       // When adding a condition in the context of a specific block, default to the first element
       const defaultLeftOperandValue = elements.length > 0 ? elements[0].id : "";
       const defaultOperator = elements.length > 0 ? getDefaultOperatorForElement(elements[0], t) : "equals";
-      const newCondition: TSingleCondition = {
-        id: createId(),
-        leftOperand: { value: defaultLeftOperandValue, type: "element" },
-        operator: defaultOperator,
-      };
+      // Before the first question there is no answer to read (ENG-6932).
+      const newCondition: TSingleCondition =
+        blockIdx === START_SCOPE_BLOCK_IDX
+          ? { id: createId(), ...getDefaultStartCondition(survey) }
+          : {
+              id: createId(),
+              leftOperand: { value: defaultLeftOperandValue, type: "element" },
+              operator: defaultOperator,
+            };
 
       onConditionsChange((conditions) => {
         const conditionsCopy = structuredClone(conditions);

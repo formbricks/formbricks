@@ -7,7 +7,7 @@ import type { TSurvey } from "@formbricks/types/surveys/types";
 import { type TFlowOutline, buildFlowOutline } from "./flow-outline";
 
 const allRuleRows = (outline: TFlowOutline) => [
-  ...(outline.start?.rules ?? []),
+  ...outline.start.rules,
   ...outline.blocks.flatMap((block) => block.rules),
 ];
 
@@ -72,17 +72,16 @@ describe("buildFlowOutline: every construct in the fixture survey", () => {
     expect(outline.counts).toEqual({ blocks: 6, endings: 4 });
     expect(outline.blocks.map((block) => [block.elementCount, block.ruleCount])).toEqual([
       [1, 2],
-      [2, 1],
-      [1, 1],
+      [2, 2],
+      [1, 2],
       [1, 3],
       [4, 4],
-      [12, 1],
+      [12, 2],
     ]);
   });
 
   test("everything the survey holds is editable, and nothing is read-only", () => {
     expect(allRuleRows(outline).every((row) => row.editable)).toBe(true);
-    expect(outline.start).toBeNull();
     const badges = outline.blocks.flatMap((block) => [
       ...block.badges,
       ...block.elements.flatMap((element) => element.badges),
@@ -168,6 +167,15 @@ describe("buildFlowOutline: constructs the Flow tab cannot edit yet come out rea
 
   test("a calculation from a value type the editor doesn't know", () => {
     const survey = withUnknown((draft) => {
+      draft.blocks[3].logic[0].actions[0].value = { type: "lookup", value: "concept" };
+    });
+    const row = buildFlowOutline(survey).blocks[3].rules[0];
+
+    expect(row).toMatchObject({ editable: false, readOnlyReason: "unsupportedValue", tone: "embeddedData" });
+  });
+
+  test("a Set value expression is editable (ENG-6935)", () => {
+    const survey = withUnknown((draft) => {
       draft.blocks[3].logic[0].actions[0].value = {
         type: "expression",
         value: { type: "call", fn: "abs", args: [{ type: "element", value: "concept" }] },
@@ -175,7 +183,8 @@ describe("buildFlowOutline: constructs the Flow tab cannot edit yet come out rea
     });
     const row = buildFlowOutline(survey).blocks[3].rules[0];
 
-    expect(row).toMatchObject({ editable: false, readOnlyReason: "unsupportedValue", tone: "embeddedData" });
+    expect(row).toMatchObject({ editable: true, tone: "embeddedData" });
+    expect(row.readOnlyReason).toBeUndefined();
   });
 
   test("a condition on an operand type the editor doesn't know", () => {
@@ -193,32 +202,37 @@ describe("buildFlowOutline: constructs the Flow tab cannot edit yet come out rea
     });
   });
 
-  test("rules before the first question get their own section", () => {
+  test("rules before the first question get their own section, editable (ENG-6932)", () => {
+    const { start } = buildFlowOutline(surveyFlowFixture);
+    const startLogic = surveyFlowFixture.startLogic ?? [];
+
+    expect(start.rules.map((row) => [row.id, row.owner, row.ruleIdx, row.editable])).toEqual(
+      startLogic.map((rule, ruleIdx) => [rule.id, { type: "start" }, ruleIdx, true])
+    );
+    // A screen-out is a rule; a Set value step on its own is an Embedded Data step.
+    expect(start.rules.map((row) => row.tone)).toEqual(["rule", "rule", "embeddedData"]);
+  });
+
+  test("the section is there, empty, when the survey has no rules before the first question", () => {
     const survey = withUnknown((draft) => {
-      draft.startLogic = [
-        {
-          id: "startrule000000000000001",
-          conditions: {
-            id: "startgroup00000000000001",
-            connector: "and",
-            conditions: [
-              {
-                id: "startcond000000000000001",
-                leftOperand: { type: "hiddenField", value: ids.hiddenFields.panelId },
-                operator: "isNotSet",
-              },
-            ],
-          },
-          actions: [
-            { id: "startaction0000000000001", objective: "jumpToBlock", target: ids.endings.notForYou },
-          ],
-        },
-      ];
+      delete draft.startLogic;
+    });
+
+    expect(buildFlowOutline(survey).start).toEqual({ rules: [] });
+    expect(buildFlowOutline({ ...surveyFlowFixture, startLogic: null }).start).toEqual({ rules: [] });
+  });
+
+  test("a rule before the first question that the editor can't offer there is read-only", () => {
+    const survey = withUnknown((draft) => {
+      const [first, second] = draft.startLogic;
+      first.actions = [{ id: "startaction0000000000009", objective: "requireAnswer", target: "fav" }];
+      second.conditions.conditions[0].leftOperand = { type: "element", value: "services" };
     });
     const { start } = buildFlowOutline(survey);
 
-    expect(start?.rules.map((row) => [row.id, row.owner, row.editable])).toEqual([
-      ["startrule000000000000001", { type: "start" }, false],
+    expect(start.rules.slice(0, 2).map((row) => [row.editable, row.readOnlyReason])).toEqual([
+      [false, "unsupportedAction"],
+      [false, "unsupportedCondition"],
     ]);
   });
 

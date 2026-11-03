@@ -393,6 +393,9 @@ export async function executeV3SurveyPatch(params: {
       declared
     ),
     endings: document.endings,
+    // ENG-6932: the merged document always carries the rules (omitted keeps the stored ones); none is
+    // stored as `null`, which a nullable JSON column takes as `Prisma.DbNull`.
+    startLogic: document.startLogic.length > 0 ? document.startLogic : Prisma.DbNull,
     closeOn: normalizedScheduling.closeOn,
     publishOn: normalizedScheduling.publishOn,
     languages: buildSurveyLanguageUpdate(currentSurvey, languages),

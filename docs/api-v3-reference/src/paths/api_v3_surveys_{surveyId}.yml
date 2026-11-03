@@ -143,6 +143,7 @@ get:
                       dataType: string
                       defaultValue: free
                       locked: true
+                  startLogic: []
                   customCss: null
             filtered:
               summary: Language-filtered projection with ?lang=de-DE
@@ -192,6 +193,7 @@ get:
                     enabled: false
                   variables: []
                   embeddedFields: []
+                  startLogic: []
                   customCss: null
     "400":
       description: >-

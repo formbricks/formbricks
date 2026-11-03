@@ -44,3 +44,7 @@ https://formbricks.com/clny997dj087ho30fdzyf4nkl?startAt=q3
 - **Link to a specific block from an external source:** Direct users to a specific block in your survey from emails, chatbots, or web pages.
 - **Use the same survey in different parts of the user journey:** Reuse the survey at different stages, starting at different blocks to gather insights.
 - **Create a personalized survey experience:** Tailor the survey by starting at a particular block based on the user's past interactions or preferences.
+
+## Rules before the first question still run
+
+A `startAt` link skips the welcome card, but not the survey's [rules before the first question](/surveys/general-features/flow-tab#rules-before-the-first-question). They run first: a screen-out still sends the respondent to its ending, and a rule that jumps to a block takes priority over `startAt`.

@@ -102,6 +102,7 @@ const getExistingSurvey = async (surveyId: string) => {
       delay: true,
       displayPercentage: true,
       showConditions: true,
+      startLogic: true,
       showLanguageSwitch: true,
       autoSelectLanguage: true,
       pin: true,
@@ -482,6 +483,8 @@ export const copySurveyToOtherWorkspace = async (
       showConditions: existingSurvey.showConditions
         ? structuredClone(existingSurvey.showConditions)
         : Prisma.DbNull,
+      // Names this survey's own blocks, endings and fields, whose ids the copy keeps.
+      startLogic: existingSurvey.startLogic ? structuredClone(existingSurvey.startLogic) : Prisma.DbNull,
       // "replace" means "run only this survey's scripts, not the workspace's". In another workspace
       // that would silently switch off the target's own head scripts (analytics, consent), so the
       // copy keeps its scripts but adds them to the target's instead.

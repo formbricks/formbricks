@@ -3,6 +3,7 @@ import { ZId } from "@formbricks/types/common";
 import { ZCustomCssScope } from "@formbricks/types/custom-css";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import { ZSurveyRatingElement } from "@formbricks/types/surveys/elements";
+import { EXPRESSION_FUNCTIONS } from "@formbricks/types/surveys/expressions";
 import { ZSurveyFilters, ZSurveyStatus, ZSurveyType } from "@formbricks/types/surveys/types";
 import {
   MAX_FEEDBACK_RECORDS_PER_BATCH,
@@ -20,6 +21,7 @@ import {
   V3_SURVEY_MAX_BLOCKS,
   V3_SURVEY_MAX_ENDINGS,
   V3_SURVEY_MAX_LANGUAGES,
+  V3_SURVEY_MAX_START_LOGIC_RULES,
   V3_SURVEY_MAX_VARIABLES,
   ZV3EditSurveyBlocksBody,
   ZV3SetSurveyBlockOrderBody,
@@ -215,6 +217,50 @@ const RATING_RANGES = (
   ZSurveyRatingElement.shape.range as unknown as { options: { value: number }[] }
 ).options.map((option) => option.value);
 
+/**
+ * Block logic and Set value expressions (ENG-6935, ADR 0024 / 0025), described for agents. The
+ * function list is read off the schema's catalogue, so the advertised functions are the accepted ones.
+ */
+const SURVEY_LOGIC_DESCRIPTION = [
+  "Block logic: a block's `logic` is a list of rules `{ id, conditions, actions[] }`; `conditions` is a",
+  "group `{ id, connector: and|or, conditions[] }` of conditions `{ id, leftOperand, operator, rightOperand? }`",
+  "or nested groups, and an empty `and` group always matches. Operands are `{ type: element|variable|",
+  "hiddenField|reserved|static, value }` (element id, computed or ingested storage key, reserved name).",
+  "Actions: `jumpToBlock` (target block or ending id), `requireAnswer` (target element id) and",
+  "`calculate` (`variableId` = a computed field's storageKey). Set value is a `calculate` with",
+  '`operator: "assign"` and `value: { type: "expression", value: <tree> }`; the tree is a leaf (an operand,',
+  "or `static` number/text) or `{ type: call, fn, args[] }` with fn one of",
+  `${EXPRESSION_FUNCTIONS.join(", ")}.`,
+  "add/multiply/min/max take 2–50 numbers, subtract/divide exactly 2, round a number and optional fixed",
+  "decimals 0–10, abs 1, ifEmpty a value and a same-type fallback, concat 2–50 values (to text), now none",
+  "(UTC ISO timestamp), daysBetween 2 dates (UTC calendar days). Answers: rating/nps/csat/ces and number",
+  "openText are numbers, other openText text, date a date, multipleChoiceSingle its answer code (text);",
+  "other types can't be used. Empty in, empty out (use ifEmpty for defaults); ÷ 0 gives empty; an empty",
+  "result clears the field. The result must match the field's dataType (number, string or date); text in",
+  "arithmetic is refused. At most 12 levels and 200 nodes. Example `score = round(q1 + q2 * 2)`:",
+  `${JSON.stringify({
+    type: "call",
+    fn: "round",
+    args: [
+      {
+        type: "call",
+        fn: "add",
+        args: [
+          { type: "element", value: "q1" },
+          {
+            type: "call",
+            fn: "multiply",
+            args: [
+              { type: "element", value: "q2" },
+              { type: "static", value: 2 },
+            ],
+          },
+        ],
+      },
+    ],
+  })}.`,
+].join(" ");
+
 const SURVEY_BLOCKS_DESCRIPTION = [
   "Survey blocks. A block is `{ name, elements[], id? }` and an element is `{ id, type, headline, ... }`,",
   `where \`type\` is one of: ${SURVEY_ELEMENT_TYPES}.`,
@@ -245,6 +291,26 @@ const SURVEY_BLOCKS_DESCRIPTION = [
   "itself or anything below (`misordered_reference` at the exact condition path).",
   `Example element show-if: ${JSON.stringify(SURVEY_SHOW_IF_EXAMPLE)}.`,
   `Example block: ${JSON.stringify(SURVEY_BLOCK_EXAMPLE)}`,
+  SURVEY_LOGIC_DESCRIPTION,
+].join(" ");
+
+/**
+ * Rules before the first question (ENG-6932, json-shapes.md section 4). Spelled out because the tool
+ * surface otherwise never says what a rule is, and these differ from block rules in what they may do.
+ */
+const START_LOGIC_DESCRIPTION = [
+  "Rules before the first question (`startLogic`): run as soon as the survey loads, before the welcome card,",
+  "and also when a start-at link skips ahead. Same rule shape as `blocks[].logic`:",
+  "`{ id, conditions: { id, connector: and|or, conditions[] }, actions[] }`, ids cuid2.",
+  "Allowed actions: `jumpToBlock` to a block id, or to an ending id to screen the respondent out (they see only",
+  "that ending, and a finished response is stored that counts as completed), and `calculate` to set a",
+  "computed field (variable). `requireAnswer` and any other action are refused, with the exact path.",
+  "Conditions and values may read `hiddenField` (URL parameters), `variable` and `reserved` operands only:",
+  "nothing has been answered yet, so an `element` operand is refused. The first jump wins; every calculate",
+  "runs; with no jump the respondent goes to the first block (or the start-at target).",
+  'Example: [{ "id": "<cuid2>", "conditions": { "id": "<cuid2>", "connector": "and", "conditions": [{ "id": "<cuid2>",',
+  '"leftOperand": { "type": "hiddenField", "value": "panel_id" }, "operator": "isNotSet" }] },',
+  '"actions": [{ "id": "<cuid2>", "objective": "jumpToBlock", "target": "<ending id>" }] }].',
 ].join(" ");
 
 /**
@@ -254,7 +320,8 @@ const SURVEY_BLOCKS_DESCRIPTION = [
 export const SURVEY_EMBEDDED_FIELDS_DESCRIPTION = [
   "Typed Embedded Data fields: `{ storageKey?, key?, name, source, dataType?, defaultValue?, locked? }`.",
   "`source` is `computed` (set by logic: `variable` operands and calculate actions name its storageKey, a cuid2",
-  "generated when omitted; dataType string or number) or `ingested` (arrives by URL parameter or SDK:",
+  "generated when omitted; dataType string, number or date — a date is set with a Set value expression and",
+  "is left out of the legacy `variables`) or `ingested` (arrives by URL parameter or SDK:",
   "`hiddenField` operands name its storageKey, which defaults to its name; dataType string, number, boolean",
   "or date; only these can be `locked`). Link a workspace library field by sending `{ key }` alone: the",
   "server fills in its definition. This list is the survey's complete set and the legacy",
@@ -318,6 +385,10 @@ export const ZMcpCreateSurveyInput = z
       max: V3_SURVEY_MAX_VARIABLES,
       description: "Survey variables using the v3 survey document contract.",
     }).optional(),
+    startLogic: lengthBoundedArray(ZMcpObjectInput, {
+      max: V3_SURVEY_MAX_START_LOGIC_RULES,
+      description: START_LOGIC_DESCRIPTION,
+    }).optional(),
     // The v3 entry schema itself (strict), so the advertised shape is the accepted one.
     embeddedFields: lengthBoundedArray(ZV3SurveyEmbeddedField, {
       max: V3_SURVEY_MAX_EMBEDDED_FIELDS,
@@ -333,7 +404,7 @@ export const ZMcpPatchSurveyInput = z
     data: z
       .record(z.string(), z.unknown())
       .describe(
-        `Strict top-level v3 survey patch payload. Omitted top-level fields are preserved; provided objects and arrays replace that whole subtree. \`customCss\` is \`{ light, dark }\` source (both keys) or null to clear; omit it to keep the current CSS. \`embeddedFields\`: ${SURVEY_EMBEDDED_FIELDS_DESCRIPTION} ${SURVEY_BLOCKS_DESCRIPTION}`
+        `Strict top-level v3 survey patch payload. Omitted top-level fields are preserved; provided objects and arrays replace that whole subtree. \`customCss\` is \`{ light, dark }\` source (both keys) or null to clear; omit it to keep the current CSS. \`startLogic\` replaces every rule before the first question; null or [] removes them. \`embeddedFields\`: ${SURVEY_EMBEDDED_FIELDS_DESCRIPTION} ${SURVEY_BLOCKS_DESCRIPTION} ${START_LOGIC_DESCRIPTION}`
       ),
     confirm: ZMcpSurveyWriteConfirm,
   })
@@ -387,7 +458,7 @@ export const ZMcpValidateSurveyInput = z
       "customCss validation only: `workspace` (shared survey CSS) or `survey` (one survey's CSS)."
     ),
     data: ZMcpObjectInput.describe(
-      `Create or patch payload to validate, or \`{ customCss: { light, dark } | null }\` for customCss. \`embeddedFields\`: ${SURVEY_EMBEDDED_FIELDS_DESCRIPTION} ${SURVEY_BLOCKS_DESCRIPTION}`
+      `Create or patch payload to validate, or \`{ customCss: { light, dark } | null }\` for customCss. \`embeddedFields\`: ${SURVEY_EMBEDDED_FIELDS_DESCRIPTION} ${SURVEY_BLOCKS_DESCRIPTION} ${START_LOGIC_DESCRIPTION}`
     ),
   })
   .strict();

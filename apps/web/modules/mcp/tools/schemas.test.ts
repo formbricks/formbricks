@@ -175,6 +175,7 @@ const EXPECTED_FREE_FORM_PATHS: Record<string, string[]> = {
     "ZMcpCreateSurveyInput.endings[]",
     "ZMcpCreateSurveyInput.hiddenFields",
     "ZMcpCreateSurveyInput.variables[]",
+    "ZMcpCreateSurveyInput.startLogic[]",
   ],
   ZMcpPatchSurveyInput: ["ZMcpPatchSurveyInput.data"],
   // Both op branches that carry a block: the payload is the v3 document's block shape, validated
@@ -293,6 +294,16 @@ describe("survey block discoverability (ENG-2180)", () => {
     expect(description).toContain("`range` (5|3|4|6|7|10)");
   });
 
+  test("the description documents Set value expressions with the functions the schema accepts (ENG-6935)", async () => {
+    const { ZMcpCreateSurveyInput } = surveyAndFeedbackSchemas;
+    const description = ZMcpCreateSurveyInput.shape.blocks.description ?? "";
+
+    expect(description).toContain('`value: { type: "expression", value: <tree> }`');
+    expect(description).toContain(
+      "fn one of add, subtract, multiply, divide, round, min, max, abs, ifEmpty, concat, now, daysBetween."
+    );
+  });
+
   /**
    * The handbook restates the element list in prose, and says of it that the two "cannot drift". That is
    * only true of the tool description, which is generated; the `.mdx` copy is hand-written and would go
@@ -327,6 +338,33 @@ describe("survey block discoverability (ENG-2180)", () => {
     // confident wrong answer, which is exactly what probing already gives an agent.
     expect(parsed.error?.issues ?? []).toEqual([]);
     expect(parsed.success).toBe(true);
+  });
+});
+
+describe("rules before the first question (ENG-6932)", () => {
+  const { ZMcpCreateSurveyInput, ZMcpPatchSurveyInput, ZMcpValidateSurveyInput } = surveyAndFeedbackSchemas;
+
+  test("create_survey accepts startLogic and describes what its rules may do", () => {
+    const parsed = ZMcpCreateSurveyInput.safeParse({
+      workspaceId: "clxx1234567890123456789012",
+      name: "Screener",
+      blocks: [surveyAndFeedbackSchemas.SURVEY_BLOCK_EXAMPLE],
+      startLogic: [{ id: "r1", conditions: {}, actions: [] }],
+    });
+    const advertised = z.toJSONSchema(ZMcpCreateSurveyInput, { io: "input" }) as {
+      properties: Record<string, { description?: string }>;
+    };
+    const description = advertised.properties.startLogic.description ?? "";
+
+    expect(parsed.error?.issues ?? []).toEqual([]);
+    for (const term of ["jumpToBlock", "calculate", "ending", "hiddenField", "welcome card", "start-at"]) {
+      expect(description).toContain(term);
+    }
+  });
+
+  test("patch_survey and validate_survey name startLogic in their payload description", () => {
+    expect(ZMcpPatchSurveyInput.shape.data.description).toContain("startLogic");
+    expect(ZMcpValidateSurveyInput.shape.data.description).toContain("startLogic");
   });
 });
 
