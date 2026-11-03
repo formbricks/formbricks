@@ -3,6 +3,14 @@
  * shared `ConditionsEditor`, so chart filters are drawn and edited exactly like survey logic.
  */
 import type { TFunction } from "i18next";
+import {
+  ANSWER_IS_ANY_OF_OPERATOR,
+  ANSWER_OPERATORS,
+  type TAnswerQuestion,
+  getAnswerBuilderQuestionId,
+  toAnswerBuilderField,
+} from "@/modules/ee/analysis/lib/answer-filter";
+import type { TEmbeddedChartField } from "@/modules/ee/analysis/lib/field-catalog";
 import { type FilterNode, type FilterRow, isFilterGroup } from "@/modules/ee/analysis/lib/query-builder";
 import {
   EMOTIONS_DIMENSION_ID,
@@ -35,6 +43,7 @@ export function getFilterFieldType(fieldId: string): TFilterFieldType {
  */
 export function getDefaultFilterOperator(fieldId: string): string {
   if (fieldId === EMOTIONS_DIMENSION_ID) return "contains";
+  if (getAnswerBuilderQuestionId(fieldId)) return "equals";
   return getFilterOperatorsForType(getFilterFieldType(fieldId))[0] ?? "equals";
 }
 
@@ -43,7 +52,16 @@ export function createDefaultFilterRow(): FilterRow {
   return { id: crypto.randomUUID(), field, operator: getDefaultFilterOperator(field), values: null };
 }
 
-export function getFilterFieldOptions(t: TFunction): TComboboxGroupedOption[] {
+/** What the chart's Feedback Dataset adds to the filter fields (ENG-6893, ENG-6637). */
+export type TDatasetFilterFields = {
+  embeddedFields: readonly TEmbeddedChartField[];
+  answerQuestions: readonly TAnswerQuestion[];
+};
+
+export function getFilterFieldOptions(
+  t: TFunction,
+  dataset: TDatasetFilterFields = { embeddedFields: [], answerQuestions: [] }
+): TComboboxGroupedOption[] {
   return [
     {
       label: t("workspace.analysis.charts.dimensions"),
@@ -65,6 +83,53 @@ export function getFilterFieldOptions(t: TFunction): TComboboxGroupedOption[] {
         .filter((m) => m.group === "score" || m.group === "average")
         .map((m) => ({ value: m.id, label: getTranslatedFieldLabel(m.id, t) })),
     },
+    // Groups the dataset has nothing for are left out rather than shown empty.
+    ...(dataset.embeddedFields.length > 0
+      ? [
+          {
+            label: t("workspace.analysis.charts.embedded_data"),
+            value: "embeddedData",
+            // Each key under its own name, as collected (ENG-6893).
+            options: dataset.embeddedFields.map((field) => ({ value: field.name, label: field.key })),
+          },
+        ]
+      : []),
+    ...(dataset.answerQuestions.length > 0
+      ? [
+          {
+            label: t("workspace.analysis.charts.answer_to_question"),
+            value: "answerToQuestion",
+            options: dataset.answerQuestions.map((question) => ({
+              value: toAnswerBuilderField(question.id),
+              label: question.label,
+            })),
+          },
+        ]
+      : []),
+  ];
+}
+
+/**
+ * The operators an answer rule offers for its question's kind (ENG-6637): is, is not and is any of; a
+ * multi-select reads "contains" for `equals` and has no "does not contain".
+ */
+export function getAnswerOperatorOptions(
+  question: TAnswerQuestion | undefined,
+  t: TFunction
+): { value: string; label: string }[] {
+  const operators = question ? ANSWER_OPERATORS[question.kind] : ANSWER_OPERATORS.choice;
+  const isMulti = question?.kind === "multi";
+  return [
+    ...operators.map((operator) => ({
+      value: operator,
+      label:
+        operator === "equals"
+          ? isMulti
+            ? t("workspace.analysis.charts.contains")
+            : t("workspace.analysis.charts.is")
+          : t("workspace.analysis.charts.is_not"),
+    })),
+    { value: ANSWER_IS_ANY_OF_OPERATOR, label: t("workspace.analysis.charts.is_any_of") },
   ];
 }
 
@@ -100,7 +165,8 @@ function toCondition(node: FilterNode): TGenericCondition | TGenericConditionGro
     return { id: node.id, connector: node.logic, conditions: node.children.map(toCondition) };
   }
 
-  const value = node.values?.[0];
+  // "Is any of" holds every picked value; every other operator shows its first.
+  const value = node.operator === ANSWER_IS_ANY_OF_OPERATOR ? node.values?.map(String) : node.values?.[0];
   return {
     id: node.id,
     leftOperand: { value: node.field, type: "field" },

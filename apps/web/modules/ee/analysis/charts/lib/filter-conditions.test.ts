@@ -4,6 +4,7 @@ import type { FilterNode } from "@/modules/ee/analysis/lib/query-builder";
 import { EMOTIONS_DIMENSION_ID } from "@/modules/ee/analysis/lib/schema-definition";
 import {
   CHART_FILTER_ROOT_ID,
+  getAnswerOperatorOptions,
   getDefaultFilterOperator,
   getFilterFieldOptions,
   getFilterFieldType,
@@ -101,5 +102,60 @@ describe("filter-conditions", () => {
       expect(getFilterFieldType("FeedbackRecords.doesNotExist")).toBe("string");
       expect(getDefaultFilterOperator("FeedbackRecords.doesNotExist")).toBe("equals");
     });
+  });
+});
+
+describe("dataset fields in the filter editor (ENG-6893, ENG-6637)", () => {
+  const dataset = {
+    embeddedFields: [{ name: "FeedbackRecords.ed_plan_64879f7d", key: "plan" }],
+    answerQuestions: [
+      { id: "q_delivery", label: "Delivery", kind: "choice" as const, options: [] },
+      { id: "q_feat", label: "Features", kind: "multi" as const, options: [] },
+    ],
+  };
+
+  test("adds no group for a dataset without embedded data or questions", () => {
+    expect(getFilterFieldOptions(t, { embeddedFields: [], answerQuestions: [] })).toEqual(
+      getFilterFieldOptions(t)
+    );
+  });
+
+  test("offers embedded keys under their own names and each question as 'Answer to question'", () => {
+    const groups = getFilterFieldOptions(t, dataset);
+
+    expect(groups.at(-2)).toEqual({
+      label: "workspace.analysis.charts.embedded_data",
+      value: "embeddedData",
+      options: [{ value: "FeedbackRecords.ed_plan_64879f7d", label: "plan" }],
+    });
+    expect(groups.at(-1)).toEqual({
+      label: "workspace.analysis.charts.answer_to_question",
+      value: "answerToQuestion",
+      options: [
+        { value: "FeedbackRecords.answer:q_delivery", label: "Delivery" },
+        { value: "FeedbackRecords.answer:q_feat", label: "Features" },
+      ],
+    });
+    expect(getDefaultFilterOperator("FeedbackRecords.answer:q_feat")).toBe("equals");
+  });
+
+  test("offers is, is not and is any of for a single-select, and contains and is any of for a multi-select", () => {
+    expect(getAnswerOperatorOptions(dataset.answerQuestions[0], t)).toEqual([
+      { value: "equals", label: "workspace.analysis.charts.is" },
+      { value: "notEquals", label: "workspace.analysis.charts.is_not" },
+      { value: "isAnyOf", label: "workspace.analysis.charts.is_any_of" },
+    ]);
+    expect(getAnswerOperatorOptions(dataset.answerQuestions[1], t)).toEqual([
+      { value: "equals", label: "workspace.analysis.charts.contains" },
+      { value: "isAnyOf", label: "workspace.analysis.charts.is_any_of" },
+    ]);
+  });
+
+  test("hands the editor every picked value of an 'is any of' rule", () => {
+    const group = toConditionGroup(
+      [{ id: "a", field: "FeedbackRecords.answer:q_feat", operator: "isAnyOf", values: ["x", "y"] }],
+      "and"
+    );
+    expect(group.conditions[0]).toMatchObject({ rightOperand: { value: ["x", "y"], type: "static" } });
   });
 });

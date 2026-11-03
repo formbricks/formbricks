@@ -1736,6 +1736,7 @@ checksums:
     workspace/analysis/charts/ai_status_querying: 1c3c61f73ad075cf6515f5575cd7910e
     workspace/analysis/charts/ai_status_reading: 871e53480f4b0e1db78b847885dab553
     workspace/analysis/charts/already_on_dashboard: c2cee946860c71a71cf03392b2d1fc3a
+    workspace/analysis/charts/answer_to_question: 190de60daf850808979f83d994e4610f
     workspace/analysis/charts/area_display: eb53ad78765ddc4050d898a70f2fac68
     workspace/analysis/charts/area_display_filled: 8a5591fe0fffc8cce37cb422c0a8cf78
     workspace/analysis/charts/area_display_line: b2083b10c8f7d21284e2892b97a5e8f1
@@ -1799,6 +1800,8 @@ checksums:
     workspace/analysis/charts/distribution_value_share: 954274ec06ca0aeafb52b68ef8a406f6
     workspace/analysis/charts/edit_chart_description: 822890e4b6068096e2fe8b7b78b4474f
     workspace/analysis/charts/edit_chart_title: d4d979e31c26af718cd0d000f6a34af0
+    workspace/analysis/charts/embedded_data: 8e5bed779eec367b8b9617182079d0d1
+    workspace/analysis/charts/embedded_data_field_description: 8f7ccbce969cce58312a48252909848a
     workspace/analysis/charts/emotion_value_anger: 4fd64fc804c247fc3fcbc7dc147b62fe
     workspace/analysis/charts/emotion_value_disgust: e5860fbfc609c8c8686db8a18cadf932
     workspace/analysis/charts/emotion_value_fear: b7621ac47c2543dff100f55f948df8cf
@@ -1904,6 +1907,9 @@ checksums:
     workspace/analysis/charts/group_by_description: bebcfe28bb315834aa3a307834acfbe0
     workspace/analysis/charts/group_data: 55c0035773d8c6b7f4d96363a61cda82
     workspace/analysis/charts/horizontal_bars: 9f7e34591bab8b54fb713078677cf9d5
+    workspace/analysis/charts/is: 6e18221b26a14df86537e89f50dcec16
+    workspace/analysis/charts/is_any_of: 692ceecb91b61066de37aa869014e7b6
+    workspace/analysis/charts/is_not: a59746bb7a7590c4dc5e57092a5fc138
     workspace/analysis/charts/is_not_set: 906801489132487ef457652af4835142
     workspace/analysis/charts/is_set: 9850468156356f95884bbaf56b6687aa
     workspace/analysis/charts/language_value_unspecified: 85dba018c7aea3e0590a113361f419c5

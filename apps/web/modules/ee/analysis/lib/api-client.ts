@@ -1,5 +1,5 @@
 import type { TChartConfig, TChartQuery } from "@formbricks/types/analysis";
-import type { TV3ChartData, TV3ChartResource } from "@/app/api/v3/charts/lib/resources";
+import type { TV3ChartData, TV3ChartFieldCatalog, TV3ChartResource } from "@/app/api/v3/charts/lib/resources";
 import type {
   TV3DashboardListItem,
   TV3DashboardResource,
@@ -218,6 +218,22 @@ export const getChartData = async ({
   const base = `${CHARTS_PATH}/${encodeURIComponent(chartId)}/data`;
   const path = search ? `${base}?${search}` : base;
   return toAppChartData(await readData<TV3ChartData>(await fetch(path, { cache: "no-store", signal })));
+};
+
+/** One Feedback Dataset's field catalog: the shared fields plus its embedded-data keys (ENG-6893). */
+export const getChartFieldCatalog = async ({
+  workspaceId,
+  datasetId,
+  signal,
+}: {
+  workspaceId: string;
+  datasetId: string;
+  signal?: AbortSignal;
+}): Promise<TV3ChartFieldCatalog> => {
+  const params = new URLSearchParams({ workspaceId, datasetId });
+  return readData<TV3ChartFieldCatalog>(
+    await fetch(`${CHARTS_PATH}/fields?${params.toString()}`, { cache: "no-store", signal })
+  );
 };
 
 /** A field's stored value, with the question type when the field is the question label. */
