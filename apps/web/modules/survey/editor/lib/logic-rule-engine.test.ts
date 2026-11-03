@@ -178,7 +178,8 @@ describe("getLogicRules", () => {
     test("Ranking", () => {
       const rules = elementRules[TSurveyQuestionTypeEnum.Ranking];
       expect(rules).toBeDefined();
-      expect(rules.options).toEqual([...SUBMISSION]);
+      // T21 (ENG-6937): "was ranked" compares the ranked options by id.
+      expect(rules.options).toEqual([...MULTI_SELECT, ...SUBMISSION]);
     });
 
     test("Cal", () => {

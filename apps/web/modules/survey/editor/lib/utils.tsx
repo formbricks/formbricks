@@ -700,7 +700,9 @@ const getElementMatchValueProps = (
     }
 
     case TSurveyElementTypeEnum.MultipleChoiceSingle:
-    case TSurveyElementTypeEnum.MultipleChoiceMulti: {
+    case TSurveyElementTypeEnum.MultipleChoiceMulti:
+    // T21 (ENG-6937): a ranking's options, by id ("was ranked").
+    case TSurveyElementTypeEnum.Ranking: {
       const operatorsToFilterNone = [
         "includesOneOf",
         "includesAllOf",
