@@ -76,6 +76,9 @@ checksums:
     auth/oauth/client_uri: 39d52c7cfea1185b843e6388d65df4bd
     auth/oauth/consent_failed: d6c92762fac20817ff0ec8d9cbc0412c
     auth/oauth/consent_revoked: f1c243aaacd7c466b9986e484b93247b
+    auth/oauth/dashboard_viewer_no_dashboard_scope: f1fad491ba174718d95d9d373e3aa9a8
+    auth/oauth/dashboard_viewer_scope_description: 85f1ce3b976406d7f0835fc2e375100c
+    auth/oauth/dashboard_viewer_scope_title: 409c50e64b51dad16a9f8728d654aa5a
     auth/oauth/deny_access: ba3ac7dc12f362da277df5c9ba21e752
     auth/oauth/formbricks_website: 95c2f69c6b6428e1aa6c26f4dd427e22
     auth/oauth/invalid_oauth_request: 02936ced8cd4df963282fe5d413f6900
@@ -2046,6 +2049,7 @@ checksums:
     workspace/analysis/dashboards/no_charts_match_search: 7ef6b1e501080e8a50d9997234a51fca
     workspace/analysis/dashboards/no_dashboards_found: b4d9dce52bf5f83d074306980b505477
     workspace/analysis/dashboards/no_dashboards_found_description: d5b83ba325d50cf69d8f0258981357ce
+    workspace/analysis/dashboards/no_dashboards_viewer: 2ae1e88f007d31b10b519df3947cb4b0
     workspace/analysis/dashboards/no_data_message: 464d50cf30281a5b6af2726846eb14b4
     workspace/analysis/dashboards/please_enter_name: b9211ed8a0882c0e0109beba48685d68
     workspace/analysis/dashboards/stale_description: 1121ce6eb8eceb3151f3dc2596cd68c5
@@ -2055,6 +2059,10 @@ checksums:
     workspace/analysis/dashboards/stale_title: 3225dec0fef3d3d84e61f3d7f92dcd70
     workspace/analysis/dashboards/upgrade_prompt_description: 738cf2e2aa5365b1199d11b683505050
     workspace/analysis/dashboards/upgrade_prompt_title: eef434745b5ef7ecc7f49a16e67e5a7a
+    workspace/analysis/dashboards/viewer_no_access_subtitle: a202cc1c94130305464ed984b44aeac6
+    workspace/analysis/dashboards/viewer_no_access_title: 71e219018e36d3acddcc00f29a7a3268
+    workspace/analysis/dashboards/viewer_plan_unavailable_subtitle: a36bae320e7bee5db477f810476f4add
+    workspace/analysis/dashboards/viewer_plan_unavailable_title: dfc2318f57ecd2f3a9c58bf5236b2f56
     workspace/analysis/dashboards/widget_view: 3104ba698f31ac027f53195f44427f28
     workspace/analysis/manage_feedback_sources: 6aa6a82334ab680b5aa187b7245e8ec8
     workspace/analysis/no_feedback_records_message: 9e877c86e7cc2ba897af65a8838b4e12
@@ -3527,6 +3535,7 @@ checksums:
     workspace/settings/general/ai_smart_tools_enabled: 1dda984f5262c5f9120ee9a409236758
     workspace/settings/general/ai_smart_tools_enabled_description: 1ceca6707746d3ab4a530712a06d91da
     workspace/settings/general/bulk_invite_billing_not_supported: 88980b9eb64135e6a20b1c62dbea94bd
+    workspace/settings/general/bulk_invite_dashboard_viewer_not_available: 67e93faf7bc08bfd262f8417fd7d35ba
     workspace/settings/general/bulk_invite_download_template: f4decce8ee5f0b408ad8c5ce11c4b586
     workspace/settings/general/bulk_invite_rows_detected: a1a9ec00c4168b647667aae39745f44f
     workspace/settings/general/bulk_invite_rows_more: 65d611aa1bad0c01b7603c6183bc56b9
@@ -3660,6 +3669,8 @@ checksums:
     workspace/settings/teams/create: 757ccd28dd533ff3a933355273c1e32a
     workspace/settings/teams/create_first_team_message: 0b76c0173691938561868c4bcaa7dee6
     workspace/settings/teams/create_new_team: 3f4d388a473f979d4bd366c3ef08e425
+    workspace/settings/teams/dashboard_viewer: b217bd372763d13d5b28ec519651269b
+    workspace/settings/teams/dashboard_viewer_role_description: 24c7322b460f7d7e01c733696c065f1d
     workspace/settings/teams/delete_team: 23e9200d46d42c7b89d42ae25c987ab6
     workspace/settings/teams/empty_teams_state: 785c1a638eb62211224fae951217fe3c
     workspace/settings/teams/enter_team_name: c324ef4c0ca524496a25a4afffda4f37
