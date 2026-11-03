@@ -3951,6 +3951,7 @@ checksums:
     workspace/surveys/edit/convert_to_single_choice: 8ecabfcb9276f29e6ac962ffcbc1ba64
     workspace/surveys/edit/cooldown_period_across_surveys: 6873c18d51830e2cadef67cce6a2c95c
     workspace/surveys/edit/cooldown_period_across_surveys_description: 6edafaeb3ccd8cadde81175776636c8e
+    workspace/surveys/edit/copied_code_from: 270f867d4c638d5c0704a53bf56f7501
     workspace/surveys/edit/copy_option_id: b3a0956c00eda761218907c451e74700
     workspace/surveys/edit/copy_question_id: 761e4b96d165fce3ec359786749223b0
     workspace/surveys/edit/country: 73581fc33a1e83e6a56db73558e7b5c6
@@ -4028,6 +4029,8 @@ checksums:
     workspace/surveys/edit/flow/calculation: a5c0d767c727673815add2587be206fe
     workspace/surveys/edit/flow/collapse_all: 7913f9a07410d09e5462eae278305f05
     workspace/surveys/edit/flow/columns: 14896556dc1535d70198854757f704ec
+    workspace/surveys/edit/flow/copy_again: 2e30a81d8c15a387fa3dc9f933e6394c
+    workspace/surveys/edit/flow/copy_again_new: 52c76bc4d5a6b595ad9ebc1a4b600268
     workspace/surveys/edit/flow/count_blocks: 24eb7cb66337b9d8a74588dac9f60800
     workspace/surveys/edit/flow/count_endings: a6bf3e296af06553fa41064ddb64a2da
     workspace/surveys/edit/flow/count_rules: ab0a6ff628ff637a8fa80e6d0527b6f2
@@ -4064,9 +4067,12 @@ checksums:
     workspace/surveys/edit/flow/logic_moved_description: 80f45077f77f4ea738903a5dc0f0af8a
     workspace/surveys/edit/flow/logic_moved_title: 6fb24161727601aa6c1d1b0a85cab061
     workspace/surveys/edit/flow/no_destination: 146cf2cfa9842012bdfaa6bddce6bdd1
+    workspace/surveys/edit/flow/not_copied: 74bc4586b882abe8ccee3832a3febf69
     workspace/surveys/edit/flow/open_flow: 8a592bebdfa56af7526dc73d959977b7
     workspace/surveys/edit/flow/options: 59156082418d80acb211f973b1218f11
     workspace/surveys/edit/flow/options_copied_from: 6937328306fab2a87951a5b4122804fc
+    workspace/surveys/edit/flow/options_copied_from_help: 3e9bcbd6befd8e0aa2ae2515be37a9f7
+    workspace/surveys/edit/flow/options_copied_from_label: 66d822a558278124c2de09c100edfc97
     workspace/surveys/edit/flow/options_show_if: b429b62ed6f5acc706b0f9aeb09de6a5
     workspace/surveys/edit/flow/options_shown_if: b036e2965980f3dd25b977be075f146f
     workspace/surveys/edit/flow/options_shown_if_help: 77bdcab881484ba9829f4cc1a1fb5d0e
