@@ -297,9 +297,37 @@ export const getSurveyTextFieldLabel = (field: TSurveyTextField, t: TFunction): 
     case "matrixColumn":
       return t("common.column_n", { n: field.index + 1 });
     case "subField":
-      return t("common.field_placeholder", { field: field.subField });
+      return t("common.field_placeholder", { field: getSubFieldLabel(field.subField, t) });
     case "property":
       return getPropertyLabel(field.property, t);
+  }
+};
+
+/** An address or contact info field's name, as the editor's element forms label it. */
+const getSubFieldLabel = (subField: TSurveyTextSubField, t: TFunction): string => {
+  switch (subField) {
+    case "addressLine1":
+      return t("workspace.surveys.edit.address_line_1");
+    case "addressLine2":
+      return t("workspace.surveys.edit.address_line_2");
+    case "city":
+      return t("workspace.surveys.edit.city");
+    case "state":
+      return t("workspace.surveys.edit.state");
+    case "zip":
+      return t("workspace.surveys.edit.zip");
+    case "country":
+      return t("workspace.surveys.edit.country");
+    case "firstName":
+      return t("workspace.surveys.edit.first_name");
+    case "lastName":
+      return t("workspace.surveys.edit.last_name");
+    case "email":
+      return t("common.email");
+    case "phone":
+      return t("common.phone");
+    case "company":
+      return t("workspace.surveys.edit.company");
   }
 };
 

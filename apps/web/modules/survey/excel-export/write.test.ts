@@ -101,7 +101,7 @@ describe("writeExcelExport", () => {
     ]);
     expect(rows.get("element.contact.email.placeholder")?.slice(0, 4)).toEqual([
       "contact",
-      "email Placeholder",
+      "Email Placeholder",
       "Email",
       "E-Mail",
     ]);
@@ -119,6 +119,22 @@ describe("writeExcelExport", () => {
       "Glad you are here",
       "Schön, dass du da bist",
     ]);
+  });
+
+  test("names an address or contact info field the way the editor does, in the export's language", () => {
+    const rowOf = (locale: string, key: string) => {
+      const workbook = readBack(writeExcelExport({ survey: SURVEY, t: createIcuTranslate(locale), locale }));
+      // The sheet's name is translated too; the survey's sheet is the first.
+      const rows = rowsOf(workbook.Sheets[workbook.SheetNames[0]]);
+      return new Map(rows.map((row) => [row[0], row])).get(key);
+    };
+
+    expect(rowOf("en-US", "element.address.addressLine1.placeholder")?.[2]).toBe(
+      "Address Line 1 Placeholder"
+    );
+    expect(rowOf("de-DE", "element.address.addressLine1.placeholder")?.[2]).toBe(
+      "Platzhalter für Adresszeile 1"
+    );
   });
 
   test("puts a block's logic in plain words on its first question's row", () => {
