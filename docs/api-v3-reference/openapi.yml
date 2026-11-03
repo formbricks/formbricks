@@ -8586,6 +8586,10 @@ components:
             validation:
               $ref: '#/components/schemas/SurveyValidation'
       unevaluatedProperties: false
+    SurveyOptionsCopiedFrom:
+      type: string
+      minLength: 1
+      description: 'Copied options: the id of an earlier element whose options this element copies ("only the brands you know"). Choices copy from a single select, multi select or ranking; pictures from a picture selection (matrix rows are not copied: give rows a `showIf` on the source instead). Write the copies yourself: each copied option keeps the source option''s `id` and `code`, and carries a `showIf` "picked in the source" (`includesOneOf` with its own id, or `equals` when the source is a single select), so the element offers exactly the options picked there. Copied codes follow the source''s: a code sent for a copy is replaced by the source option''s. Fixed options next to the copies (such as "None of these", id `none`) get the next code free in every linked element. The source must exist (`dangling_reference`), sit in an earlier block or above this element on its block (`misordered_reference`), and have options of the same kind (`invalid_reference`). To bring in options the source gained later, add them the same way.'
     SurveyAnswerCode:
       type: string
       maxLength: 20
@@ -8639,6 +8643,8 @@ components:
               type: string
               enum:
                 - multipleChoiceSingle
+            optionsCopiedFrom:
+              $ref: '#/components/schemas/SurveyOptionsCopiedFrom'
             choices:
               type: array
               minItems: 2
@@ -8664,6 +8670,8 @@ components:
               type: string
               enum:
                 - multipleChoiceMulti
+            optionsCopiedFrom:
+              $ref: '#/components/schemas/SurveyOptionsCopiedFrom'
             choices:
               type: array
               minItems: 2
@@ -8803,6 +8811,8 @@ components:
             allowMulti:
               type: boolean
               default: false
+            optionsCopiedFrom:
+              $ref: '#/components/schemas/SurveyOptionsCopiedFrom'
             choices:
               type: array
               minItems: 2
@@ -8966,6 +8976,8 @@ components:
               type: string
               enum:
                 - ranking
+            optionsCopiedFrom:
+              $ref: '#/components/schemas/SurveyOptionsCopiedFrom'
             choices:
               type: array
               minItems: 2

@@ -597,6 +597,7 @@ const ELEMENT_KEYS_BY_TYPE = {
   multipleChoiceMulti: new Set([
     ...CODED_ELEMENT_BASE_KEYS,
     "choices",
+    "optionsCopiedFrom",
     "shuffleOption",
     "otherOptionPlaceholder",
     "validation",
@@ -605,6 +606,7 @@ const ELEMENT_KEYS_BY_TYPE = {
   multipleChoiceSingle: new Set([
     ...CODED_ELEMENT_BASE_KEYS,
     "choices",
+    "optionsCopiedFrom",
     "shuffleOption",
     "otherOptionPlaceholder",
     "displayType",
@@ -619,10 +621,17 @@ const ELEMENT_KEYS_BY_TYPE = {
     "charLimit",
     "validation",
   ]),
-  pictureSelection: new Set([...CODED_ELEMENT_BASE_KEYS, "allowMulti", "choices", "validation"]),
+  pictureSelection: new Set([
+    ...CODED_ELEMENT_BASE_KEYS,
+    "allowMulti",
+    "choices",
+    "optionsCopiedFrom",
+    "validation",
+  ]),
   ranking: new Set([
     ...CODED_ELEMENT_BASE_KEYS,
     "choices",
+    "optionsCopiedFrom",
     "otherOptionPlaceholder",
     "shuffleOption",
     "validation",
