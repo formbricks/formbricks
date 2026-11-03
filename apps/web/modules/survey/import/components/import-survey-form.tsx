@@ -73,6 +73,24 @@ const SwitchedOffLanguagesAlert = ({ report }: Readonly<{ report: TSurveyImportR
  * and report around the question list. Mounted inside the dialog's content, so closing the dialog
  * drops its state and aborts a running import, exactly like Create with AI's form.
  */
+type TImportSurvey = ReturnType<typeof useImportSurvey>;
+
+/**
+ * What the review shows: the finished import's report while there is one, and the draft. An Update adds
+ * to the report what it removes from a survey with responses, and keeps the matched survey's name; only
+ * a new survey takes the draft's "<name> (imported)".
+ */
+const getReview = ({ report, match, choice, draft }: TImportSurvey, isReviewing: boolean) => {
+  const updated = match !== null && choice === "update" ? match : null;
+  return {
+    reviewReport:
+      isReviewing && report
+        ? { ...report, issues: updated ? [...updated.issues, ...report.issues] : report.issues }
+        : null,
+    reviewDraft: updated ? { ...draft, name: updated.name } : draft,
+  };
+};
+
 export const ImportSurveyForm = ({
   workspaceId,
   isAIAvailable,
@@ -91,20 +109,7 @@ export const ImportSurveyForm = ({
   const isImporting = importer.status === "generating";
   const isReviewing = importer.status === "review" || importer.status === "creating";
   const isUpdating = importer.match !== null && importer.choice === "update";
-  // The finished import's report, while the review shows it. An Update adds what it removes from a
-  // survey with responses.
-  const reviewReport =
-    isReviewing && importer.report
-      ? {
-          ...importer.report,
-          issues: isUpdating
-            ? [...(importer.match?.issues ?? []), ...importer.report.issues]
-            : importer.report.issues,
-        }
-      : null;
-  // An Update keeps the matched survey's name; only a new survey takes the draft's "<name> (imported)".
-  const reviewDraft =
-    isUpdating && importer.match ? { ...importer.draft, name: importer.match.name } : importer.draft;
+  const { reviewReport, reviewDraft } = getReview(importer, isReviewing);
 
   // The drop zone unmounts when the import starts; Stop is the only action left, so focus goes there.
   useEffect(() => {
