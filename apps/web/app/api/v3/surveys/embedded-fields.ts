@@ -1,11 +1,16 @@
 import { createId } from "@paralleldrive/cuid2";
 import { z } from "zod";
 import {
+  EMBEDDED_DATA_DEFAULT_VALUE_MAX_LENGTH,
+  EMBEDDED_DATA_KEY_MAX_LENGTH,
+  EMBEDDED_DATA_NAME_MAX_LENGTH,
+  NULL_BYTE_MESSAGE,
   type TEmbeddedDataDefaultValue,
   type TEmbeddedDataType,
   ZEmbeddedDataDefaultValue,
   ZEmbeddedDataType,
   getEmbeddedFieldDefinitionIssues,
+  hasNoNullByte,
 } from "@formbricks/types/embedded-data";
 import { type TDesiredEmbeddedField, toLegacyEmbeddedFields } from "@formbricks/types/embedded-data-mapping";
 import type { TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
@@ -27,8 +32,6 @@ import type { InvalidParam } from "@/app/api/v3/lib/response";
  * change: a `variable` operand names a computed field's storage key, a `hiddenField` operand an
  * ingested field's.
  */
-
-export const V3_SURVEY_MAX_EMBEDDED_FIELDS = 300;
 
 /** The unknown-key allowlist for one entry. */
 export const V3_EMBEDDED_FIELD_KEYS = new Set([
@@ -73,16 +76,52 @@ export const ZV3SurveyEmbeddedField = z
       .string()
       .refine((value) => !isBlank(value), "Storage key must not be blank")
       .refine(isLegacyIdCharset, "Storage key must contain only letters, digits, hyphens and underscores")
-      .optional(),
-    key: z.string().min(1).nullable().optional(),
+      .optional()
+      .describe(
+        "The survey's address for the field: logic operands name it. Optional; defaults to a new cuid2 (computed) or the name / library key (ingested)."
+      ),
+    key: z
+      .string()
+      .min(1)
+      .max(EMBEDDED_DATA_KEY_MAX_LENGTH)
+      .refine(hasNoNullByte, `Key ${NULL_BYTE_MESSAGE}`)
+      .nullable()
+      .optional()
+      .describe(
+        "A workspace library key, to link that library field; its definition is filled in from the library. null or omitted declares a local field."
+      ),
     name: z
       .string()
+      .max(EMBEDDED_DATA_NAME_MAX_LENGTH)
       .refine((value) => !isBlank(value), "Name must not be blank")
-      .optional(),
-    source: z.enum(["computed", "ingested"]).optional(),
-    dataType: ZEmbeddedDataType.optional(),
-    defaultValue: ZEmbeddedDataDefaultValue.optional(),
-    locked: z.boolean().optional(),
+      .refine(hasNoNullByte, `Name ${NULL_BYTE_MESSAGE}`)
+      .optional()
+      .describe("Display name. Required for a local field; for an ingested one also the URL parameter."),
+    source: z
+      .enum(["computed", "ingested"])
+      .optional()
+      .describe(
+        "computed: set by logic (Set value). ingested: read from the URL or the SDK. Required for a local field."
+      ),
+    dataType: ZEmbeddedDataType.optional().describe(
+      "string (default), number, boolean or date. A computed field is string, number or date."
+    ),
+    defaultValue: ZEmbeddedDataDefaultValue.refine(
+      (value) =>
+        typeof value !== "string" ||
+        (value.length <= EMBEDDED_DATA_DEFAULT_VALUE_MAX_LENGTH && hasNoNullByte(value)),
+      `A text default value may be at most ${String(EMBEDDED_DATA_DEFAULT_VALUE_MAX_LENGTH)} characters and ${NULL_BYTE_MESSAGE}`
+    )
+      .optional()
+      .describe(
+        "Initial value (computed) or fallback when nothing arrives (ingested), matching dataType; a date is ISO 8601. Defaults to null."
+      ),
+    locked: z
+      .boolean()
+      .optional()
+      .describe(
+        "Ingested fields only: true ignores what the URL or SDK sends and always uses defaultValue. Defaults to false."
+      ),
   })
   .strict()
   .superRefine((entry, ctx) => {

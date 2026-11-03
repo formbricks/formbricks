@@ -5,9 +5,11 @@ import {
   V3_SURVEY_BLOCK_OPS_MAX,
   V3_SURVEY_BLOCK_ORDER_MAX,
   V3_SURVEY_MAX_BLOCKS,
+  V3_SURVEY_MAX_EMBEDDED_FIELDS,
   V3_SURVEY_MAX_ENDINGS,
   V3_SURVEY_MAX_HIDDEN_FIELDS,
   V3_SURVEY_MAX_LANGUAGES,
+  V3_SURVEY_MAX_START_LOGIC_RULES,
   V3_SURVEY_MAX_TRIGGERS,
   V3_SURVEY_MAX_VARIABLES,
   ZV3CreateSurveyBody,
@@ -1414,6 +1416,13 @@ describe("top-level array bounds (ENG-3384)", () => {
   const variable = { id: "clvar123456789012345678901", name: "score", type: "number", value: 0 };
   const trigger = { actionClassId: "clact123456789012345678901" };
   const fieldIds = (count: number) => Array.from({ length: count }, (_unused, index) => `field_${index}`);
+  const embeddedFields = (count: number) =>
+    Array.from({ length: count }, (_unused, index) => ({ name: `field_${index}`, source: "ingested" }));
+  const startRule = {
+    id: "clrul123456789012345678901",
+    conditions: { id: "g", connector: "and", conditions: [] },
+    actions: [],
+  };
 
   const cases: [string, string[], Record<string, unknown>, Record<string, unknown>][] = [
     [
@@ -1445,6 +1454,18 @@ describe("top-level array bounds (ENG-3384)", () => {
       ["hiddenFields", "fieldIds"],
       { hiddenFields: { enabled: true, fieldIds: fieldIds(V3_SURVEY_MAX_HIDDEN_FIELDS + 1) } },
       { hiddenFields: { enabled: true, fieldIds: fieldIds(V3_SURVEY_MAX_HIDDEN_FIELDS + 1) } },
+    ],
+    [
+      "embeddedFields",
+      ["embeddedFields"],
+      { embeddedFields: embeddedFields(V3_SURVEY_MAX_EMBEDDED_FIELDS + 1) },
+      { embeddedFields: embeddedFields(V3_SURVEY_MAX_EMBEDDED_FIELDS + 1) },
+    ],
+    [
+      "startLogic",
+      ["startLogic"],
+      { startLogic: repeat(startRule, V3_SURVEY_MAX_START_LOGIC_RULES + 1) },
+      { startLogic: repeat(startRule, V3_SURVEY_MAX_START_LOGIC_RULES + 1) },
     ],
     [
       "distribution.triggers",
@@ -1488,6 +1509,12 @@ describe("top-level array bounds (ENG-3384)", () => {
       hiddenFields: { enabled: true, fieldIds: fieldIds(V3_SURVEY_MAX_HIDDEN_FIELDS) },
     });
     expect(atCap.success).toBe(true);
+
+    const embeddedAtCap = ZV3CreateSurveyBody.safeParse({
+      ...validCreateBody,
+      embeddedFields: embeddedFields(V3_SURVEY_MAX_EMBEDDED_FIELDS),
+    });
+    expect(embeddedAtCap.success).toBe(true);
 
     const noBlocks = ZV3CreateSurveyBody.safeParse({ ...validCreateBody, blocks: [] });
     expect(noBlocks.success).toBe(false);

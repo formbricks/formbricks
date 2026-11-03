@@ -1754,6 +1754,29 @@ describe("embeddedFields schema rules (ENG-6930)", () => {
       "embeddedFields.0.id"
     );
   });
+
+  test("caps the name, the library key and a text default at their boundary", () => {
+    const at = (length: number) => "a".repeat(length);
+    expect(parseCreate([{ name: at(255), source: "ingested", defaultValue: at(1000) }]).success).toBe(true);
+    expect(parseCreate([{ key: at(255) }]).success).toBe(true);
+    expect(issuePaths(parseCreate([{ name: at(256), source: "ingested" }]))).toEqual([
+      "embeddedFields.0.name",
+    ]);
+    expect(issuePaths(parseCreate([{ key: at(256) }]))).toEqual(["embeddedFields.0.key"]);
+    expect(issuePaths(parseCreate([{ name: "plan", source: "ingested", defaultValue: at(1001) }]))).toEqual([
+      "embeddedFields.0.defaultValue",
+    ]);
+  });
+
+  test("refuses a NULL byte in any text Postgres would store, as a 400 at its path", () => {
+    expect(issuePaths(parseCreate([{ name: "pl\u0000an", source: "ingested" }]))).toEqual([
+      "embeddedFields.0.name",
+    ]);
+    expect(issuePaths(parseCreate([{ key: "plan\u0000" }]))).toEqual(["embeddedFields.0.key"]);
+    expect(issuePaths(parseCreate([{ name: "plan", source: "ingested", defaultValue: "a\u0000b" }]))).toEqual(
+      ["embeddedFields.0.defaultValue"]
+    );
+  });
 });
 
 describe("the shared flow fixture's Embedded Data through v3 (ENG-6930)", () => {

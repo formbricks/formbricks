@@ -16,9 +16,10 @@ import {
   ZV3FeedbackRecordUpdateBodyFields,
 } from "@/app/api/v3/feedbackRecords/lib/schemas";
 import { lengthBoundedArray } from "@/app/api/v3/lib/bounded-array";
-import { V3_SURVEY_MAX_EMBEDDED_FIELDS, ZV3SurveyEmbeddedField } from "@/app/api/v3/surveys/embedded-fields";
+import { ZV3SurveyEmbeddedField } from "@/app/api/v3/surveys/embedded-fields";
 import {
   V3_SURVEY_MAX_BLOCKS,
+  V3_SURVEY_MAX_EMBEDDED_FIELDS,
   V3_SURVEY_MAX_ENDINGS,
   V3_SURVEY_MAX_LANGUAGES,
   V3_SURVEY_MAX_START_LOGIC_RULES,
