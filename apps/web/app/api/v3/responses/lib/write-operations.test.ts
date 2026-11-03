@@ -606,6 +606,15 @@ describe("file-upload answers", () => {
     });
 
     expect(response.status).toBe(422);
+    // The reason a file-upload failure has always carried: it is part of the API's responses.
+    expect((await bodyOf(response)).invalid_params).toEqual([
+      expect.objectContaining({
+        name: "data",
+        code: "invalid_reference",
+        reason:
+          "A file-upload answer references a file that does not belong to this survey's upload element.",
+      }),
+    ]);
     expect(mockCreate).not.toHaveBeenCalled();
   });
 
@@ -672,7 +681,49 @@ describe("file-upload answers", () => {
     });
 
     expect(response.status).toBe(422);
+    expect((await bodyOf(response)).invalid_params).toEqual([
+      expect.objectContaining({
+        name: "data",
+        code: "invalid_reference",
+        reason:
+          "A signature answer is malformed or references a file that does not belong to this survey's signature element.",
+      }),
+    ]);
     expect(mockCreate).not.toHaveBeenCalled();
+  });
+
+  test("a bad file-upload answer next to a Signature keeps the file-upload reason, and the Signature is checked apart", async () => {
+    mockGetSurveyForWrite.mockResolvedValue(
+      survey({
+        blocks: [
+          {
+            id: "blk",
+            name: "Block",
+            elements: [
+              { id: "upload", type: "fileUpload", headline: { default: "Upload" } },
+              { id: "sig", type: "signature", headline: { default: "Sign" }, required: false },
+            ],
+          },
+        ],
+      })
+    );
+    mockValidateFileUploads.mockReturnValueOnce(false);
+
+    const response = await createV3Response({
+      ...params,
+      body: {
+        surveyId: SURVEY_ID,
+        finished: true,
+        data: { upload: ["bad"], sig: "/storage/ws/private/surveys/s/elements/sig/s--fid--abc.png" },
+      } as never,
+    });
+
+    expect(response.status).toBe(422);
+    expect((await bodyOf(response)).invalid_params[0].reason).toMatch(/^A file-upload answer/);
+    expect(mockValidateFileUploads).toHaveBeenCalledTimes(1);
+    expect(mockValidateFileUploads).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { upload: ["bad"] } })
+    );
   });
 
   test("patch is checked too, not only create", async () => {
