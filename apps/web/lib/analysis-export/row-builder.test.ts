@@ -603,3 +603,87 @@ describe("not shown (ENG-6936)", () => {
     expect(cells()).toMatchObject({ q1: "1", q2_1: 1, q2_2: 0 });
   });
 });
+
+describe("option bases (ENG-6937)", () => {
+  const services = element({
+    id: "e2",
+    code: "q2",
+    type: "multipleChoiceMulti",
+    choices: [
+      choice("netflix", "1", "Netflix"),
+      choice("disney", "2", "Disney+"),
+      choice("apple", "3", "Apple"),
+    ],
+  });
+  const posters = element({
+    id: "e3",
+    code: "q3",
+    type: "pictureSelection",
+    allowMulti: true,
+    choices: [
+      { id: "pa", code: "1", imageUrl: "https://example.com/a.png" },
+      { id: "pb", code: "2", imageUrl: "https://example.com/b.png" },
+    ],
+  });
+  const grid = element({
+    id: "e4",
+    code: "q4",
+    type: "matrix",
+    rows: [choice("rn", "1", "Netflix"), choice("rd", "2", "Disney+")],
+    columns: [choice("cp", "1", "Poor"), choice("cg", "2", "Good"), choice("cf", "3", "Fair")],
+  });
+
+  test("a multi-select option column is 1 when picked, 0 when shown but not picked, blank when not shown", () => {
+    const { cells } = run(
+      [services],
+      [response({ e2: ["Netflix"] }, { notShown: { options: { e2: ["apple"] } } })]
+    );
+
+    expect(cells()).toMatchObject({ q2_1: 1, q2_2: 0, q2_3: null });
+  });
+
+  test("a stored pick of an option the record lists is blank too: it was not shown", () => {
+    const { cells } = run(
+      [services],
+      [response({ e2: ["Netflix", "Apple"] }, { notShown: { options: { e2: ["apple"] } } })]
+    );
+
+    expect(cells()).toMatchObject({ q2_1: 1, q2_2: 0, q2_3: null });
+  });
+
+  test("multi-select pictures follow the same rule", () => {
+    const { cells } = run([posters], [response({ e3: ["pa"] }, { notShown: { options: { e3: ["pb"] } } })]);
+
+    expect(cells()).toMatchObject({ q3_1: 1, q3_2: null });
+  });
+
+  test("as one cell, an option not shown is left out of the codes", () => {
+    const { cells } = run(
+      [services],
+      [response({ e2: ["Netflix", "Apple"] }, { notShown: { options: { e2: ["apple"] } } })],
+      { multiSelect: "cell" }
+    );
+
+    expect(cells()).toMatchObject({ q2: "1" });
+  });
+
+  test("matrix cells of rows or columns not shown are blank", () => {
+    const { cells } = run(
+      [grid],
+      [
+        response(
+          { e4: { Netflix: "Fair", "Disney+": "Good" } },
+          { notShown: { rows: { e4: ["rd"] }, columns: { e4: ["cf"] } } }
+        ),
+      ]
+    );
+
+    expect(cells()).toMatchObject({ q4_1: null, q4_2: null });
+  });
+
+  test("a response without a record keeps today's rule", () => {
+    const { cells } = run([services], [response({ e2: ["Netflix"] }, { notShown: null })]);
+
+    expect(cells()).toMatchObject({ q2_1: 1, q2_2: 0, q2_3: 0 });
+  });
+});

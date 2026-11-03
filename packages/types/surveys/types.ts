@@ -4553,6 +4553,16 @@ export const ZSurveyElementSummaryOpenText = z.object({
 
 export type TSurveyElementSummaryOpenText = z.infer<typeof ZSurveyElementSummaryOpenText>;
 
+/**
+ * Option bases (ENG-6937). `shownCount`: how many of the respondents in the element's base were shown
+ * the option (or matrix row), set only when that is fewer than all of them; percentages are over it.
+ * `hidden`: the option is Hidden (retired on a live survey) and stays in results labelled so.
+ */
+const ZSummaryOptionBase = {
+  shownCount: z.number().optional(),
+  hidden: z.literal(true).optional(),
+};
+
 export const ZSurveyElementSummaryMultipleChoice = z.object({
   type: z.union([
     z.literal(TSurveyElementTypeEnum.MultipleChoiceMulti),
@@ -4566,6 +4576,7 @@ export const ZSurveyElementSummaryMultipleChoice = z.object({
       value: z.string(),
       count: z.number(),
       percentage: z.number(),
+      ...ZSummaryOptionBase,
       others: z
         .array(
           z.object({
@@ -4597,6 +4608,7 @@ export const ZSurveyElementSummaryPictureSelection = z.object({
       imageUrl: ZStorageUrl,
       count: z.number(),
       percentage: z.number(),
+      ...ZSummaryOptionBase,
     })
   ),
 });
@@ -4802,6 +4814,7 @@ export const ZSurveyElementSummaryMatrix = z.object({
         })
       ),
       totalResponsesForRow: z.number(),
+      ...ZSummaryOptionBase,
     })
   ),
 });
@@ -4885,6 +4898,7 @@ export const ZSurveyElementSummaryRanking = z.object({
       value: z.string(),
       count: z.number(),
       avgRanking: z.number(),
+      ...ZSummaryOptionBase,
       others: z
         .array(
           z.object({

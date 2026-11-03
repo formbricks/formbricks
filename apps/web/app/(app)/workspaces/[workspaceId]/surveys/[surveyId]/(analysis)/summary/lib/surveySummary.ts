@@ -73,6 +73,44 @@ const createNotShownLookup = (survey: TSurvey) => {
   };
 };
 
+/**
+ * Option bases (ENG-6937): of `answered` (the respondents in an element's base), how many were not
+ * shown each option, matrix row or matrix column, by id. Read from each response's record; a response
+ * without one (`null`, from before 6.2) saw every option, as results read it today.
+ */
+const countOptionsNotShown = (
+  answered: readonly TSurveySummaryResponse[],
+  recordKey: "options" | "rows" | "columns",
+  elementId: string
+): Record<string, number> => {
+  const counts: Record<string, number> = {};
+  for (const response of answered) {
+    for (const optionId of new Set(response.notShown?.[recordKey]?.[elementId] ?? [])) {
+      counts[optionId] = (counts[optionId] ?? 0) + 1;
+    }
+  }
+  return counts;
+};
+
+/**
+ * An option's share over the respondents shown it: `base` (who answered the element) less those not
+ * shown it. `shownCount` is set only when that base is smaller than the element's, so a survey without
+ * option show-if reads exactly as before. A Hidden option carries `hidden`, so results label it.
+ */
+const getOptionBase = (
+  count: number,
+  base: number,
+  notShownCount: number | undefined,
+  option: { hidden?: boolean } | undefined
+): { percentage: number; shownCount?: number; hidden?: true } => {
+  const shown = base - (notShownCount ?? 0);
+  return {
+    percentage: shown > 0 ? convertFloatTo2Decimal((count / shown) * 100) : 0,
+    ...(notShownCount ? { shownCount: shown } : {}),
+    ...(option?.hidden ? { hidden: true as const } : {}),
+  };
+};
+
 /** A summary response as fetched, with the `createdAt` the batch loop continues after. */
 type TSurveySummaryResponseRow = TSurveySummaryResponse & { createdAt: Date };
 
@@ -412,6 +450,7 @@ export const getElementSummary = async (
         const otherValues: TSurveyElementSummaryMultipleChoice["choices"][number]["others"] = [];
         let totalSelectionCount = 0;
         let totalResponseCount = 0;
+        const answered: TSurveySummaryResponse[] = [];
         responses.forEach((response) => {
           const responseLanguageCode = getLanguageCode(survey.languages, response.language);
 
@@ -463,15 +502,22 @@ export const getElementSummary = async (
 
           if (hasValidAnswer) {
             totalResponseCount++;
+            answered.push(response);
           }
         });
 
+        // ENG-6937: each option's base is who answered less who wasn't shown it.
+        const notShownCounts = countOptionsNotShown(answered, "options", element.id);
+        const choiceByLabel = new Map(
+          element.choices.map((choice) => [getLocalizedValue(choice.label, "default"), choice])
+        );
+
         Object.entries(choiceCountMap).forEach(([label, count]) => {
+          const choice = choiceByLabel.get(label);
           values.push({
             value: label,
             count,
-            percentage:
-              totalResponseCount > 0 ? convertFloatTo2Decimal((count / totalResponseCount) * 100) : 0,
+            ...getOptionBase(count, totalResponseCount, choice && notShownCounts[choice.id], choice),
           });
         });
 
@@ -479,10 +525,7 @@ export const getElementSummary = async (
           values.push({
             value: getLocalizedValue(otherOption.label, "default") || "Other",
             count: otherValues.length,
-            percentage:
-              totalResponseCount > 0
-                ? convertFloatTo2Decimal((otherValues.length / totalResponseCount) * 100)
-                : 0,
+            ...getOptionBase(otherValues.length, totalResponseCount, notShownCounts.other, otherOption),
             others: otherValues.slice(0, VALUES_LIMIT),
           });
         }
@@ -492,8 +535,7 @@ export const getElementSummary = async (
           values.push({
             value: noneLabel,
             count: noneCount,
-            percentage:
-              totalResponseCount > 0 ? convertFloatTo2Decimal((noneCount / totalResponseCount) * 100) : 0,
+            ...getOptionBase(noneCount, totalResponseCount, notShownCounts.none, noneOption),
           });
         }
 
@@ -517,11 +559,13 @@ export const getElementSummary = async (
         });
         let totalResponseCount = 0;
         let totalSelectionCount = 0;
+        const answered: TSurveySummaryResponse[] = [];
 
         responses.forEach((response) => {
           const answer = response.data[element.id];
           if (Array.isArray(answer)) {
             totalResponseCount++;
+            answered.push(response);
             answer.forEach((value) => {
               totalSelectionCount++;
               choiceCountMap[value]++;
@@ -529,15 +573,18 @@ export const getElementSummary = async (
           }
         });
 
+        const notShownCounts = countOptionsNotShown(answered, "options", element.id);
         element.choices.forEach((choice) => {
           values.push({
             id: choice.id,
             imageUrl: choice.imageUrl,
             count: choiceCountMap[choice.id],
-            percentage:
-              totalResponseCount > 0
-                ? convertFloatTo2Decimal((choiceCountMap[choice.id] / totalResponseCount) * 100)
-                : 0,
+            ...getOptionBase(
+              choiceCountMap[choice.id],
+              totalResponseCount,
+              notShownCounts[choice.id],
+              choice
+            ),
           });
         });
 
@@ -847,11 +894,13 @@ export const getElementSummary = async (
           {} as Record<string, Record<string, number>>
         );
 
+        const answered: TSurveySummaryResponse[] = [];
         responses.forEach((response) => {
           const selectedResponses = response.data[element.id] as Record<string, string>;
           const responseLanguageCode = getLanguageCode(survey.languages, response.language);
           if (selectedResponses) {
             totalResponseCount++;
+            answered.push(response);
             element.rows.forEach((row) => {
               const localizedRow = getLocalizedValue(row.label, responseLanguageCode);
               const colValue = element.columns.find((column) => {
@@ -867,7 +916,10 @@ export const getElementSummary = async (
           }
         });
 
-        const matrixSummary = rows.map((row) => {
+        // ENG-6937: a row shown to fewer than everyone who answered says so.
+        const rowsNotShown = countOptionsNotShown(answered, "rows", element.id);
+        const matrixSummary = rows.map((row, rowIdx) => {
+          const elementRow = element.rows[rowIdx];
           let totalResponsesForRow = 0;
           columns.forEach((col) => {
             totalResponsesForRow += countMap[row][col];
@@ -883,7 +935,14 @@ export const getElementSummary = async (
             };
           });
 
-          return { rowLabel: row, columnPercentages, totalResponsesForRow };
+          const notShownCount = rowsNotShown[elementRow.id];
+          return {
+            rowLabel: row,
+            columnPercentages,
+            totalResponsesForRow,
+            ...(notShownCount ? { shownCount: totalResponseCount - notShownCount } : {}),
+            ...(elementRow.hidden ? { hidden: true as const } : {}),
+          };
         });
 
         summary.push({
@@ -957,6 +1016,7 @@ export const getElementSummary = async (
         let otherRankSum = 0;
         let otherCount = 0;
         const otherValues: NonNullable<TSurveyElementSummaryRanking["choices"][number]["others"]> = [];
+        const answered: TSurveySummaryResponse[] = [];
 
         elementChoices.forEach((choice: string) => {
           choiceRankSums[choice] = 0;
@@ -973,6 +1033,7 @@ export const getElementSummary = async (
 
           if (Array.isArray(answer)) {
             totalResponseCount++;
+            answered.push(response);
             answer.forEach((value, index) => {
               const ranking = index + 1; // Calculate ranking based on index
               if (elementChoices.includes(value)) {
@@ -993,13 +1054,25 @@ export const getElementSummary = async (
           }
         });
 
-        elementChoices.forEach((choice: string) => {
+        // ENG-6937: an option shown to fewer than everyone who ranked says so.
+        const notShownCounts = countOptionsNotShown(answered, "options", element.id);
+        const rankingChoices = element.choices.filter((choice) => choice.id !== "other");
+        const rankingBase = (choice: (typeof element.choices)[number] | undefined) => {
+          const notShownCount = choice ? notShownCounts[choice.id] : undefined;
+          return {
+            ...(notShownCount ? { shownCount: totalResponseCount - notShownCount } : {}),
+            ...(choice?.hidden ? { hidden: true as const } : {}),
+          };
+        };
+
+        elementChoices.forEach((choice: string, choiceIdx) => {
           const count = choiceCountMap[choice];
           const avgRanking = count > 0 ? choiceRankSums[choice] / count : 0;
           values.push({
             value: choice,
             count,
             avgRanking: convertFloatTo2Decimal(avgRanking),
+            ...rankingBase(rankingChoices[choiceIdx]),
           });
         });
 
@@ -1009,6 +1082,7 @@ export const getElementSummary = async (
             count: otherCount,
             avgRanking: convertFloatTo2Decimal(otherCount > 0 ? otherRankSum / otherCount : 0),
             others: otherValues.slice(0, VALUES_LIMIT),
+            ...rankingBase(otherOption),
           });
         }
 

@@ -5508,3 +5508,107 @@ describe("not shown (ENG-6936)", () => {
     expect(dropOffOf(after, "concept").notShownCount).toBe(0);
   });
 });
+
+describe("option bases (ENG-6937)", () => {
+  const survey = surveyFlowFixture;
+  const elements = getElementsFromBlocks(survey.blocks);
+
+  let sequence = 0;
+  const response = (data: Record<string, unknown>, notShown: Record<string, unknown> | null) => {
+    sequence += 1;
+    return {
+      id: `option-base-${sequence}`,
+      updatedAt: new Date(),
+      contact: null,
+      contactAttributes: {},
+      language: null,
+      finished: true,
+      data,
+      ttc: {},
+      notShown,
+    } as any;
+  };
+
+  const summaryOf = async (responses: any[], elementId: string) => {
+    const dropOff = getSurveySummaryDropOff(survey, elements, responses, responses.length);
+    const summary = await getElementSummary(survey, elements, responses, dropOff);
+    return summary.find((entry) => "element" in entry && entry.element.id === elementId) as any;
+  };
+
+  // "Apple TV+" in `fav` is offered only to who uses Apple TV+; "Netflix + Apple TV+" in `bundle` is Hidden.
+  const netflixOnly = response(
+    { fav: "Netflix", bundle: "No bundle" },
+    { options: { fav: ["apple"], bundle: ["netflix_apple"] } }
+  );
+  const appleUser = response(
+    { fav: "Apple TV+", bundle: "Netflix + Disney+" },
+    { options: { bundle: ["netflix_apple"] } }
+  );
+  const disneyFan = response({ fav: "Disney+" }, {});
+  // From before 6.2: no record, so every option counts as shown, as today.
+  const legacy = response({ fav: "Netflix", bundle: "Netflix + Apple TV+" }, null);
+
+  test("an option's percentage is over the respondents shown it, with 'shown to N' next to it", async () => {
+    const fav = await summaryOf([netflixOnly, appleUser, disneyFan, legacy], "fav");
+    const choice = (label: string) => fav.choices.find((entry: any) => entry.value === label);
+
+    expect(fav.responseCount).toBe(4);
+    expect(choice("Apple TV+")).toMatchObject({ count: 1, shownCount: 3, percentage: 33.33 });
+    // Shown to everyone who answered: the base is the question's, and no "shown to N".
+    expect(choice("Netflix")).toEqual({ value: "Netflix", count: 2, percentage: 50 });
+  });
+
+  test("a Hidden option stays in results, marked Hidden, with the answers given before it was hidden", async () => {
+    const bundle = await summaryOf([netflixOnly, appleUser, legacy], "bundle");
+    const hidden = bundle.choices.find((entry: any) => entry.value === "Netflix + Apple TV+");
+
+    expect(hidden).toEqual({
+      value: "Netflix + Apple TV+",
+      count: 1,
+      shownCount: 1,
+      percentage: 100,
+      hidden: true,
+    });
+  });
+
+  test("picture choices, ranking options and matrix rows report their base too", async () => {
+    const responses = [
+      response(
+        { ad_pick: ["poster_a"], brand_rank: ["Netflix", "Disney+"], brand_grid: { Netflix: "Good" } },
+        {
+          options: { ad_pick: ["poster_b"], brand_rank: ["prime"] },
+          rows: { brand_grid: ["row_disney"] },
+          columns: { brand_grid: ["col_fair"] },
+        }
+      ),
+      response(
+        {
+          ad_pick: ["poster_b"],
+          brand_rank: ["Prime Video", "Netflix"],
+          brand_grid: { Netflix: "Poor", "Disney+": "Good" },
+        },
+        { columns: { brand_grid: ["col_fair"] } }
+      ),
+    ];
+
+    const picture = await summaryOf(responses, "ad_pick");
+    expect(picture.choices.find((entry: any) => entry.id === "poster_b")).toMatchObject({
+      count: 1,
+      shownCount: 1,
+      percentage: 100,
+    });
+
+    const ranking = await summaryOf(responses, "brand_rank");
+    expect(ranking.choices.find((entry: any) => entry.value === "Prime Video")).toMatchObject({
+      count: 1,
+      shownCount: 1,
+    });
+
+    const matrix = await summaryOf(responses, "brand_grid");
+    expect(matrix.data.find((row: any) => row.rowLabel === "Disney+")).toMatchObject({
+      totalResponsesForRow: 1,
+      shownCount: 1,
+    });
+    expect(matrix.data.find((row: any) => row.rowLabel === "Netflix")).not.toHaveProperty("shownCount");
+  });
+});

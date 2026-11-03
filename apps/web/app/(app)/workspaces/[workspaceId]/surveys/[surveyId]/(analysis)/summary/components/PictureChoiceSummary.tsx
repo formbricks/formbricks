@@ -12,6 +12,7 @@ import { IdBadge } from "@/modules/ui/components/id-badge";
 import { ProgressBar } from "@/modules/ui/components/progress-bar";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { ElementSummaryHeader } from "./ElementSummaryHeader";
+import { OptionBaseNote } from "./OptionBaseNote";
 
 interface PictureChoiceSummaryProps {
   readonly elementSummary: TSurveyElementSummaryPictureSelection;
@@ -72,7 +73,10 @@ export const PictureChoiceSummary = ({ elementSummary, survey, setFilter }: Pict
                       unoptimized={isExternalImageSrc(result.imageUrl)}
                     />
                   </div>
-                  <div className="self-end">{choiceId && <IdBadge id={choiceId} />}</div>
+                  <div className="flex items-center gap-x-2 self-end">
+                    {choiceId && <IdBadge id={choiceId} />}
+                    <OptionBaseNote shownCount={result.shownCount} hidden={result.hidden} />
+                  </div>
                 </div>
                 <div className="flex w-full gap-x-2">
                   <p className="flex w-full pt-1 text-slate-600 sm:items-end sm:justify-end sm:pt-0">
