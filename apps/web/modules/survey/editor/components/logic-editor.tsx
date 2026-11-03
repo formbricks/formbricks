@@ -1,5 +1,7 @@
 "use client";
 
+import { createId } from "@paralleldrive/cuid2";
+import { PlusIcon } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
@@ -13,6 +15,7 @@ import {
   getDefaultOperatorForElement,
   replaceEndingCardHeadlineRecall,
 } from "@/modules/survey/editor/lib/utils";
+import { Button } from "@/modules/ui/components/button";
 
 interface LogicEditorProps {
   readonly localSurvey: TSurvey;
@@ -45,15 +48,46 @@ export function LogicEditor({ localSurvey, rules, ruleIdx, onRulesChange, scopeB
 
   if (!rule) return null;
 
+  // ENG-6935: a Set value step always runs — an empty `and` group (ADR 0025). It reads as such, and
+  // gets a condition only when asked, which makes it a calculation.
+  const alwaysRuns = rule.conditions.conditions.length === 0;
+  const addFirstCondition = () => {
+    if (!firstElement) return;
+    onRulesChange(
+      updateRuleConditions(rules, ruleIdx, (group) => ({
+        ...group,
+        conditions: [
+          {
+            id: createId(),
+            leftOperand: { type: "element", value: firstElement.id },
+            operator: getDefaultOperator(),
+          },
+        ],
+      }))
+    );
+  };
+
   return (
     <div className="flex w-full min-w-full grow flex-col gap-4 overflow-x-auto pb-2 text-sm">
-      <LogicEditorConditions
-        conditions={rule.conditions}
-        localSurvey={transformedSurvey}
-        scopeBlockIdx={scopeBlockIdx}
-        getDefaultOperator={getDefaultOperator}
-        onConditionsChange={(updater) => onRulesChange(updateRuleConditions(rules, ruleIdx, updater))}
-      />
+      {alwaysRuns ? (
+        <div className="flex items-center gap-3">
+          <span className="font-medium text-slate-900">{t("workspace.surveys.edit.flow.always_runs")}</span>
+          {firstElement && (
+            <Button type="button" size="sm" variant="secondary" onClick={addFirstCondition}>
+              <PlusIcon />
+              {t("workspace.surveys.edit.flow.add_condition")}
+            </Button>
+          )}
+        </div>
+      ) : (
+        <LogicEditorConditions
+          conditions={rule.conditions}
+          localSurvey={transformedSurvey}
+          scopeBlockIdx={scopeBlockIdx}
+          getDefaultOperator={getDefaultOperator}
+          onConditionsChange={(updater) => onRulesChange(updateRuleConditions(rules, ruleIdx, updater))}
+        />
+      )}
       <LogicEditorActions
         localSurvey={transformedSurvey}
         actions={rule.actions}

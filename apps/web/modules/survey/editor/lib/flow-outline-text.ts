@@ -15,6 +15,7 @@ import { getLocalizedValue } from "@/lib/i18n/utils";
 import { isConditionGroup } from "@/lib/surveyLogic/utils";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { getBlockDisplayName } from "@/modules/survey/editor/lib/blocks";
+import { formatFormula, getFormulaReferences } from "@/modules/survey/editor/lib/expression-formula";
 import { getConditionOperatorOptions } from "@/modules/survey/editor/lib/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { getElementBadgeText } from "@/modules/survey/lib/element-code-label";
@@ -173,6 +174,16 @@ export const describeAction = (
       return { kind: "requireAnswer", label: quote(element ? getElementBadgeText(element) : action.target) };
     }
     case "calculate": {
+      // ENG-6935: a Set value step reads as its formula, in the formula box's own text form.
+      if (action.value.type === "expression") {
+        const tree = action.value.value;
+        // A step just added has an empty formula until one is typed.
+        const formula =
+          tree.type === "static" && tree.value === ""
+            ? "…"
+            : formatFormula(tree, getFormulaReferences(survey));
+        return { kind: "calculate", label: `${getFieldName(survey, action.variableId)} = ${formula}` };
+      }
       const value =
         action.value.type === "static"
           ? typeof action.value.value === "number"

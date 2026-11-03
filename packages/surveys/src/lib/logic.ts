@@ -9,6 +9,7 @@ import { type TResponseData, type TResponseVariables } from "@formbricks/types/r
 import { type TActionCalculate, type TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import type { TSurveyElement } from "@formbricks/types/surveys/elements";
+import { evaluateSetValue } from "@formbricks/types/surveys/expression-evaluation";
 import { type TConditionGroup, type TSingleCondition } from "@formbricks/types/surveys/logic";
 import { evaluateConditionGroup } from "@formbricks/types/surveys/logic-evaluation";
 import { getLocalizedValue } from "@/lib/i18n";
@@ -40,11 +41,21 @@ export const evaluateLogic = (
     evaluateSingleCondition(localSurvey, data, variablesData, condition, selectedLanguage, embeddedValues)
   );
 
+/**
+ * What a Set value expression reads beyond answers and variables: the respondent's language (a
+ * single-select answer yields its answer code) and the reserved-field map a `reserved` leaf reads.
+ */
+export interface TPerformActionsContext {
+  selectedLanguage?: string;
+  embeddedValues?: TResponseData;
+}
+
 export const performActions = (
   survey: TJsWorkspaceStateSurvey,
   actions: TSurveyBlockLogicAction[],
   data: TResponseData,
-  calculationResults: TResponseVariables
+  calculationResults: TResponseVariables,
+  context: TPerformActionsContext = {}
 ): {
   jumpTarget: string | undefined;
   requiredQuestionIds: string[];
@@ -60,7 +71,7 @@ export const performActions = (
   actions.forEach((action) => {
     switch (action.objective) {
       case "calculate":
-        const result = performCalculation(survey, action, data, calculations);
+        const result = performCalculation(survey, action, data, calculations, context);
         if (result !== undefined) calculations[action.variableId] = result;
         break;
       case "requireAnswer":
@@ -462,13 +473,26 @@ const performCalculation = (
   survey: TJsWorkspaceStateSurvey,
   action: TActionCalculate,
   data: TResponseData,
-  calculations: Record<string, number | string>
+  calculations: Record<string, number | string>,
+  context: TPerformActionsContext
 ): number | string | undefined => {
   const computedField = findComputedEmbeddedField(getComputedEmbeddedFields(survey), action.variableId);
 
   if (!computedField) return undefined;
 
   const { dataType } = computedField.field;
+
+  // Set value (ENG-6935): the shared evaluator, "empty in, empty out". An empty result is written as
+  // "" so it clears the field; the one-step operators below keep "empty counts as 0".
+  if (action.value.type === "expression") {
+    return evaluateSetValue(action.value.value, dataType, {
+      survey,
+      data,
+      variables: calculations,
+      reservedValues: context.embeddedValues,
+      language: context.selectedLanguage ?? "default",
+    });
+  }
 
   let currentValue = calculations[action.variableId];
   if (currentValue === undefined) {

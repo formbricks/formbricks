@@ -1,5 +1,9 @@
 import type { z } from "zod";
+import type { TEmbeddedDataType } from "../embedded-data";
+import { RESERVED_FIELD_CATALOG, type TLinkedEmbeddedField } from "../embedded-data-resolver";
 import type { TSurveyBlockLogic, TSurveyBlockLogicAction } from "./blocks";
+import { getSetValueExpressionIssues } from "./expression-types";
+import type { TExpression } from "./expressions";
 import type { TConditionGroup, TSingleCondition } from "./logic";
 
 /**
@@ -25,6 +29,13 @@ export interface TStartLogicSurvey {
   endings: readonly { id: string }[];
   variables: readonly { id: string; type: "number" | "text" }[];
   hiddenFields: { fieldIds?: string[] };
+  /** The typed fields, when the payload has them: a computed date (ENG-6935) is declared only here. */
+  embeddedFields?:
+    | readonly (
+        | TLinkedEmbeddedField
+        | { storageKey?: string; source?: string; dataType?: TEmbeddedDataType }
+      )[]
+    | null;
 }
 
 type TIssue = z.core.$ZodIssue;
@@ -87,6 +98,79 @@ const validateConditions = (
   return issues;
 };
 
+/** A field's type by storage key: the typed rows when the payload has them, else the legacy columns. */
+const getFieldType = (
+  survey: TStartLogicSurvey,
+  storageKey: string,
+  source: "computed" | "ingested"
+): TEmbeddedDataType | undefined => {
+  if (survey.embeddedFields) {
+    for (const entry of survey.embeddedFields) {
+      // The editor and the stored survey hold linked rows; the v3 document holds flat entries.
+      const flat =
+        "field" in entry
+          ? { storageKey: entry.link.storageKey, source: entry.field.source, dataType: entry.field.dataType }
+          : entry;
+      if (flat.source === source && flat.storageKey === storageKey) return flat.dataType ?? "string";
+    }
+    return undefined;
+  }
+  if (source === "ingested") return survey.hiddenFields.fieldIds?.includes(storageKey) ? "string" : undefined;
+  const variable = survey.variables.find((item) => item.id === storageKey);
+  if (!variable) return undefined;
+  return variable.type === "number" ? "number" : "string";
+};
+
+/** The first answer a formula reads, as the path to it: nothing has been answered before the first question. */
+const findElementLeafPath = (
+  node: TExpression,
+  path: (string | number)[]
+): (string | number)[] | undefined => {
+  if (node.type === "element") return [...path, "value"];
+  if (node.type !== "call") return undefined;
+  for (const [idx, arg] of node.args.entries()) {
+    const found = findElementLeafPath(arg, [...path, "args", idx]);
+    if (found) return found;
+  }
+  return undefined;
+};
+
+const validateExpressionAction = (
+  survey: TStartLogicSurvey,
+  variableId: string,
+  expression: TExpression,
+  ruleIdx: number,
+  path: (string | number)[]
+): TIssue | undefined => {
+  const targetType = getFieldType(survey, variableId, "computed");
+  if (!targetType) {
+    return {
+      code: "custom",
+      message: `Conditional Logic: Variable ID ${variableId} does not exist in ${ruleLabel(ruleIdx)}`,
+      path: [...path, "variableId"],
+    };
+  }
+
+  const valuePath = [...path, "value", "value"];
+  const answerPath = findElementLeafPath(expression, valuePath);
+  if (answerPath) {
+    return {
+      code: "custom",
+      message: `Conditional Logic: ${ruleLabel(ruleIdx)} can't set a value from an answer: nothing has been answered yet.`,
+      path: answerPath,
+    };
+  }
+
+  const issues = getSetValueExpressionIssues(expression, targetType, {
+    getElement: () => undefined,
+    getComputedFieldType: (storageKey) => getFieldType(survey, storageKey, "computed"),
+    getIngestedFieldType: (storageKey) => getFieldType(survey, storageKey, "ingested"),
+    getReservedFieldType: (name) => RESERVED_FIELD_CATALOG.find((entry) => entry.name === name)?.dataType,
+  });
+  if (issues.length === 0) return undefined;
+  return { code: "custom", message: issues[0].message, path: [...valuePath, ...issues[0].path] };
+};
+
 const validateAction = (
   survey: TStartLogicSurvey,
   action: TSurveyBlockLogicAction,
@@ -126,6 +210,10 @@ const validateAction = (
   }
 
   if (action.objective === "calculate") {
+    // ENG-6935: a Set value formula, which may set a computed date (declared only in the typed rows).
+    if (action.value.type === "expression") {
+      return validateExpressionAction(survey, action.variableId, action.value.value, ruleIdx, path);
+    }
     const variable = survey.variables.find((item) => item.id === action.variableId);
     if (!variable) {
       return {

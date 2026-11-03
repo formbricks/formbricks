@@ -72,11 +72,11 @@ describe("buildFlowOutline: every construct in the fixture survey", () => {
     expect(outline.counts).toEqual({ blocks: 6, endings: 4 });
     expect(outline.blocks.map((block) => [block.elementCount, block.ruleCount])).toEqual([
       [1, 2],
-      [2, 1],
-      [1, 2],
+      [2, 2],
+      [1, 3],
       [1, 3],
       [4, 4],
-      [12, 1],
+      [12, 2],
     ]);
   });
 
@@ -180,6 +180,15 @@ describe("buildFlowOutline: constructs the Flow tab cannot edit yet come out rea
 
   test("a calculation from a value type the editor doesn't know", () => {
     const survey = withUnknown((draft) => {
+      draft.blocks[3].logic[0].actions[0].value = { type: "lookup", value: "concept" };
+    });
+    const row = buildFlowOutline(survey).blocks[3].rules[0];
+
+    expect(row).toMatchObject({ editable: false, readOnlyReason: "unsupportedValue", tone: "embeddedData" });
+  });
+
+  test("a Set value expression is editable (ENG-6935)", () => {
+    const survey = withUnknown((draft) => {
       draft.blocks[3].logic[0].actions[0].value = {
         type: "expression",
         value: { type: "call", fn: "abs", args: [{ type: "element", value: "concept" }] },
@@ -187,7 +196,8 @@ describe("buildFlowOutline: constructs the Flow tab cannot edit yet come out rea
     });
     const row = buildFlowOutline(survey).blocks[3].rules[0];
 
-    expect(row).toMatchObject({ editable: false, readOnlyReason: "unsupportedValue", tone: "embeddedData" });
+    expect(row).toMatchObject({ editable: true, tone: "embeddedData" });
+    expect(row.readOnlyReason).toBeUndefined();
   });
 
   test("a condition on an operand type the editor doesn't know", () => {

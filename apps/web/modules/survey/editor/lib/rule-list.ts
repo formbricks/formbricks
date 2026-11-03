@@ -59,31 +59,39 @@ export const updateRuleActions = (
   return rules.map((item, idx) => (idx === ruleIdx ? { ...item, actions } : item));
 };
 
-/** What the Add logic menu starts a rule as. */
-export type TNewRuleKind = "jump" | "calculate" | "markLowQuality";
+/**
+ * What the Add logic menu starts a rule as: a jump rule, a calculation (a condition, then a formula),
+ * a Set value step (ENG-6935), which always runs: its condition group is an empty `and` group
+ * (ADR 0025), or a Mark as low quality rule (ENG-6933).
+ */
+export type TNewRuleKind = "jump" | "calculate" | "setValue" | "markLowQuality";
 
 export interface TNewRuleOptions {
-  /** The first condition, without an id. */
+  /** The first condition, without an id. A Set value step has none. */
   condition: Omit<TSingleCondition, "id">;
   /** The computed field a calculation sets; empty when the survey has none yet. */
   variableId?: string;
 }
 
+/** An empty formula: the step is saved only once the formula box holds one. */
+const EMPTY_FORMULA = { type: "expression", value: { type: "static", value: "" } } as const;
+
 const createFirstAction = (kind: TNewRuleKind, variableId: string | undefined): TSurveyBlockLogicAction => {
   switch (kind) {
+    case "jump":
+      return { id: createId(), objective: "jumpToBlock", target: "" };
+    // ENG-6933: complete as it is; the respondent sees nothing when it fires.
+    case "markLowQuality":
+      return { id: createId(), objective: "markLowQuality" };
     case "calculate":
+    case "setValue":
       return {
         id: createId(),
         objective: "calculate",
         variableId: variableId ?? "",
         operator: "assign",
-        value: { type: "static", value: "" },
+        value: { ...EMPTY_FORMULA, value: { ...EMPTY_FORMULA.value } },
       };
-    // ENG-6933: complete as it is; the respondent sees nothing when it fires.
-    case "markLowQuality":
-      return { id: createId(), objective: "markLowQuality" };
-    case "jump":
-      return { id: createId(), objective: "jumpToBlock", target: "" };
   }
 };
 
@@ -98,7 +106,7 @@ export const createRule = (
     conditions: {
       id: createId(),
       connector: "and",
-      conditions: [{ id: createId(), ...condition }],
+      conditions: kind === "setValue" ? [] : [{ id: createId(), ...condition }],
     },
     actions: [action],
   };
