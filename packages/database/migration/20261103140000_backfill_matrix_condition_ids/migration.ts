@@ -195,7 +195,7 @@ export const backfillMatrixConditionIdRows = async (
 export const backfillMatrixConditionIds: MigrationScript = {
   type: "data",
   id: "diyvexi9jr9xxok2ytz7qli8",
-  name: "20261103130000_backfill_matrix_condition_ids",
+  name: "20261103140000_backfill_matrix_condition_ids",
   // `tx` is deliberately unused: the work commits in chunks on `prisma` (see backfillTable).
   run: async ({ prisma }) => {
     await backfillMatrixConditionIdRows(prisma);
