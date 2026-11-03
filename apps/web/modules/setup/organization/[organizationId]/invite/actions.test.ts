@@ -93,7 +93,8 @@ describe("setup invite rate-limit settlement", () => {
         "invitee@example.com",
         "Inviter",
         "",
-        organizationId
+        organizationId,
+        ctx.user.id
       );
     }
   );

@@ -30,6 +30,7 @@ export type TDedicatedJobsQueueName = (typeof DEDICATED_JOBS_QUEUE_NAMES)[number
 export const JOBS_PREFIX = "{formbricks:jobs}";
 
 export const JOB_NAMES = {
+  emailAuditMaintenance: "email-audit.maintain",
   authzedProjectionDelivery: "authzed-projection.deliver",
   authzedReconciliationAudit: "authzed-reconciliation.audit",
   authzedSurveyAudit: "authzed-survey.audit",

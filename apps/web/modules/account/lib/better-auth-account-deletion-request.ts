@@ -77,6 +77,7 @@ export const requestSsoAccountDeletionEmail = async (): Promise<void> => {
   const deleteLink = `${WEBAPP_URL}/api/auth/delete-user/callback?token=${token}&callbackURL=${encodeURIComponent(ACCOUNT_DELETED_PATH)}`;
 
   await sendDeleteAccountConfirmationEmail({
+    actorUserId: userId,
     email,
     locale,
     deleteLink,

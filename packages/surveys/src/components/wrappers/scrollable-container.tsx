@@ -95,7 +95,9 @@ export const ScrollableContainer = forwardRef<ScrollableContainerHandle, Scrolla
           className={cn(
             disableInternalScroll
               ? "overflow-visible"
-              : "bg-survey-bg [scroll-padding-top:calc(var(--fb-scroll-fade-solid,0px)+1rem)] overflow-auto px-4 pt-4"
+              : "bg-survey-bg [scroll-padding-top:calc(var(--fb-scroll-fade-solid,0px)+1rem)] overflow-auto px-4 pt-4",
+            // The sticky Back/Next row overlays the bottom of the content; keep a focused field above it.
+            !disableInternalScroll && fullSizeCards && "[scroll-padding-bottom:6rem]"
           )}>
           {children}
         </div>
