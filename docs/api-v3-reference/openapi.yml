@@ -1078,6 +1078,7 @@ paths:
                           dataType: string
                           defaultValue: free
                           locked: true
+                      startLogic: []
                       customCss: null
                 filtered:
                   summary: Language-filtered projection with ?lang=de-DE
@@ -1127,6 +1128,7 @@ paths:
                         enabled: false
                       variables: []
                       embeddedFields: []
+                      startLogic: []
                       customCss: null
         '400':
           description: Invalid survey id, unsupported query parameter, unknown language, or unsupported legacy survey shape
@@ -8259,6 +8261,123 @@ components:
         showResponseCount:
           type: boolean
       additionalProperties: false
+    SurveyDynamicReference:
+      type: object
+      description: Dynamic reference to another value in the survey document.
+      required:
+        - type
+        - value
+      properties:
+        type:
+          type: string
+          enum:
+            - element
+            - variable
+            - hiddenField
+            - reserved
+        value:
+          type: string
+          description: Element id, variable id, hidden field id, or — for `reserved` — the name of an Embedded Data field-catalog entry (`country`, `deviceType`, `utmSource`, …). Reserved names are checked for non-emptiness only, deliberately not against the catalog, so a survey authored against a newer catalog still parses on an older self-hosted deployment.
+        meta:
+          type: object
+          additionalProperties:
+            type: string
+      additionalProperties: false
+    SurveyLogicOperand:
+      oneOf:
+        - type: object
+          required:
+            - type
+            - value
+          properties:
+            type:
+              type: string
+              enum:
+                - static
+            value:
+              oneOf:
+                - type: string
+                - type: number
+                - type: array
+                  items:
+                    type: string
+          additionalProperties: false
+        - $ref: '#/components/schemas/SurveyDynamicReference'
+    SurveyCondition:
+      type: object
+      description: |
+        Single condition. Operators such as `isSubmitted`, `isSkipped`, `isClicked`, `isAccepted`,
+        `isBooked`, `isSet`, and `isEmpty` do not use `rightOperand`; comparison operators do.
+      required:
+        - id
+        - leftOperand
+        - operator
+      properties:
+        id:
+          type: string
+          format: cuid2
+        leftOperand:
+          $ref: '#/components/schemas/SurveyDynamicReference'
+        operator:
+          type: string
+          enum:
+            - equals
+            - doesNotEqual
+            - contains
+            - doesNotContain
+            - startsWith
+            - doesNotStartWith
+            - endsWith
+            - doesNotEndWith
+            - isSubmitted
+            - isSkipped
+            - isGreaterThan
+            - isLessThan
+            - isGreaterThanOrEqual
+            - isLessThanOrEqual
+            - equalsOneOf
+            - includesAllOf
+            - includesOneOf
+            - doesNotIncludeOneOf
+            - doesNotIncludeAllOf
+            - isClicked
+            - isNotClicked
+            - isAccepted
+            - isBefore
+            - isAfter
+            - isBooked
+            - isPartiallySubmitted
+            - isCompletelySubmitted
+            - isSet
+            - isNotSet
+            - isEmpty
+            - isNotEmpty
+            - isAnyOf
+        rightOperand:
+          $ref: '#/components/schemas/SurveyLogicOperand'
+      additionalProperties: false
+    SurveyConditionGroup:
+      type: object
+      required:
+        - id
+        - connector
+        - conditions
+      properties:
+        id:
+          type: string
+          format: cuid2
+        connector:
+          type: string
+          enum:
+            - and
+            - or
+        conditions:
+          type: array
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/SurveyCondition'
+              - $ref: '#/components/schemas/SurveyConditionGroup'
+      additionalProperties: false
     SurveyElementBase:
       type: object
       required:
@@ -8308,6 +8427,10 @@ components:
         isDraft:
           type: boolean
           description: Draft marker used by the editor and future update rules.
+        showIf:
+          allOf:
+            - $ref: '#/components/schemas/SurveyConditionGroup'
+          description: 'Show-if: the element is shown only when this condition group matches, re-evaluated live as answers above it on the same page change. A hidden element is not validated (a hidden required element never blocks submission) and its answer is not submitted. Conditions use the same operands and operators as block `logic`. Reference rule: an element''s show-if may use answers from earlier blocks and from elements above it in the same block, never itself or anything below it; a violation fails with `misordered_reference` at the exact condition path. Omit it, or send an empty group, for an element that is always shown.'
     SurveyQuestionCode:
       type: string
       maxLength: 30
@@ -8965,123 +9088,6 @@ components:
         Survey element/question inside a block. Element ids are stable public identifiers used by
         logic, recall strings, response data, quotas, integrations, and analysis. `type` selects the
         allowed shape; unsupported fields are rejected instead of ignored.
-    SurveyDynamicReference:
-      type: object
-      description: Dynamic reference to another value in the survey document.
-      required:
-        - type
-        - value
-      properties:
-        type:
-          type: string
-          enum:
-            - element
-            - variable
-            - hiddenField
-            - reserved
-        value:
-          type: string
-          description: Element id, variable id, hidden field id, or — for `reserved` — the name of an Embedded Data field-catalog entry (`country`, `deviceType`, `utmSource`, …). Reserved names are checked for non-emptiness only, deliberately not against the catalog, so a survey authored against a newer catalog still parses on an older self-hosted deployment.
-        meta:
-          type: object
-          additionalProperties:
-            type: string
-      additionalProperties: false
-    SurveyLogicOperand:
-      oneOf:
-        - type: object
-          required:
-            - type
-            - value
-          properties:
-            type:
-              type: string
-              enum:
-                - static
-            value:
-              oneOf:
-                - type: string
-                - type: number
-                - type: array
-                  items:
-                    type: string
-          additionalProperties: false
-        - $ref: '#/components/schemas/SurveyDynamicReference'
-    SurveyCondition:
-      type: object
-      description: |
-        Single condition. Operators such as `isSubmitted`, `isSkipped`, `isClicked`, `isAccepted`,
-        `isBooked`, `isSet`, and `isEmpty` do not use `rightOperand`; comparison operators do.
-      required:
-        - id
-        - leftOperand
-        - operator
-      properties:
-        id:
-          type: string
-          format: cuid2
-        leftOperand:
-          $ref: '#/components/schemas/SurveyDynamicReference'
-        operator:
-          type: string
-          enum:
-            - equals
-            - doesNotEqual
-            - contains
-            - doesNotContain
-            - startsWith
-            - doesNotStartWith
-            - endsWith
-            - doesNotEndWith
-            - isSubmitted
-            - isSkipped
-            - isGreaterThan
-            - isLessThan
-            - isGreaterThanOrEqual
-            - isLessThanOrEqual
-            - equalsOneOf
-            - includesAllOf
-            - includesOneOf
-            - doesNotIncludeOneOf
-            - doesNotIncludeAllOf
-            - isClicked
-            - isNotClicked
-            - isAccepted
-            - isBefore
-            - isAfter
-            - isBooked
-            - isPartiallySubmitted
-            - isCompletelySubmitted
-            - isSet
-            - isNotSet
-            - isEmpty
-            - isNotEmpty
-            - isAnyOf
-        rightOperand:
-          $ref: '#/components/schemas/SurveyLogicOperand'
-      additionalProperties: false
-    SurveyConditionGroup:
-      type: object
-      required:
-        - id
-        - connector
-        - conditions
-      properties:
-        id:
-          type: string
-          format: cuid2
-        connector:
-          type: string
-          enum:
-            - and
-            - or
-        conditions:
-          type: array
-          items:
-            oneOf:
-              - $ref: '#/components/schemas/SurveyCondition'
-              - $ref: '#/components/schemas/SurveyConditionGroup'
-      additionalProperties: false
     SurveyExpression:
       description: |
         One node of a Set value expression: a fixed value, a reference, or a function call.
@@ -9312,6 +9318,10 @@ components:
           description: |
             Block or ending id used when no logic condition matches. Only valid when this same block
             has at least one `logic` rule; omit it for normal sequential flow.
+        showIf:
+          allOf:
+            - $ref: '#/components/schemas/SurveyConditionGroup'
+          description: 'Show-if: the block is shown only when this condition group matches. A block whose show-if fails is skipped, and its `logic` still runs as if the block were submitted with no answers. A block whose elements are all hidden by their show-if is skipped the same way. Conditions use the same operands and operators as `logic`. Reference rule: a block''s show-if may use answers from earlier blocks only (plus hidden fields, variables and reserved fields); a violation fails with `misordered_reference` at the exact condition path. Omit it, or send an empty group, for a block that is always shown.'
         buttonLabel:
           $ref: '#/components/schemas/TranslatableText'
         backButtonLabel:
@@ -9469,6 +9479,27 @@ components:
         Survey variable accepted by `POST /api/v3/surveys`. `id` may be omitted and will be
         generated by the server. Provide an explicit cuid2 id when logic in the same request needs
         to reference this variable.
+    SurveyStartLogic:
+      type: array
+      maxItems: 100
+      description: 'Rules before the first question. The survey runs them as soon as it loads, before the welcome card, and also when a start-at link skips ahead. Each rule has the block-rule shape (`id`, `conditions`, `actions`), but only two actions are allowed: `jumpToBlock`, to a block or to an ending (an ending is a screen-out: the respondent sees only that ending, and a finished response is stored that counts as Completed), and `calculate`, to set a computed field. `requireAnswer` and any other action are rejected with a 422 naming `startLogic.<rule>.actions.<action>`. Nothing has been answered yet, so conditions and values may read `hiddenField` (URL parameters), `variable` and `reserved` operands only; an `element` operand is rejected with a 422 naming `startLogic.<rule>.conditions` (or the action''s `value`). A jump to a block or ending that does not exist is a `dangling_reference`. The first jump wins, every `calculate` runs, and with no jump the respondent continues to the first block (or the start-at target). `[]` means the survey has none.'
+      items:
+        $ref: '#/components/schemas/SurveyBlockLogic'
+      example:
+        - id: clrule12345678901234567890
+          conditions:
+            id: clgrp123456789012345678901
+            connector: and
+            conditions:
+              - id: clcond12345678901234567890
+                leftOperand:
+                  type: hiddenField
+                  value: panel_id
+                operator: isNotSet
+          actions:
+            - id: clact123456789012345678901
+              objective: jumpToBlock
+              target: clend123456789012345678901
     SurveyEmbeddedFieldInput:
       type: object
       description: |
@@ -10114,7 +10145,7 @@ components:
       type: object
       description: |
         Strict v3 survey creation document. This endpoint accepts survey structure only: name,
-        metadata, languages and language settings, welcome card, blocks/elements/logic, endings, hidden fields, and variables.
+        metadata, languages and language settings, welcome card, blocks/elements/logic, endings, hidden fields, variables, and rules before the first question (`startLogic`).
         App surveys (`type: app`) additionally accept the `distribution` (display options + triggers) and `targeting` (contact segment filters) objects; these are rejected for `link` surveys.
         It rejects legacy `questions` and out-of-scope settings such as styling, follow-ups, recaptcha, single-use/email verification, slug, custom scripts, analytics fields, timestamps, and `createdBy`.
 
@@ -10214,6 +10245,10 @@ components:
           maxItems: 100
           items:
             $ref: '#/components/schemas/CreateSurveyVariable'
+        startLogic:
+          allOf:
+            - $ref: '#/components/schemas/SurveyStartLogic'
+          default: []
         embeddedFields:
           type: array
           maxItems: 300
@@ -10294,6 +10329,10 @@ components:
           description: |
             Block or ending id used when no logic condition matches. Only valid when this same block
             has at least one `logic` rule; omit it for normal sequential flow.
+        showIf:
+          allOf:
+            - $ref: '#/components/schemas/SurveyConditionGroup'
+          description: 'Show-if: the block is shown only when this condition group matches. A block whose show-if fails is skipped, and its `logic` still runs as if the block were submitted with no answers. A block whose elements are all hidden by their show-if is skipped the same way. Conditions use the same operands and operators as `logic`. Reference rule: a block''s show-if may use answers from earlier blocks only (plus hidden fields, variables and reserved fields); a violation fails with `misordered_reference` at the exact condition path. Omit it, or send an empty group, for a block that is always shown.'
         buttonLabel:
           $ref: '#/components/schemas/TranslatableText'
         backButtonLabel:
@@ -10448,6 +10487,7 @@ components:
             - endings
             - hiddenFields
             - variables
+            - startLogic
             - embeddedFields
             - customCss
           properties:
@@ -10518,6 +10558,8 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/SurveyVariable'
+            startLogic:
+              $ref: '#/components/schemas/SurveyStartLogic'
             embeddedFields:
               type: array
               description: 'Typed Embedded Data (ADR 0027): the survey''s complete set of fields, which `variables` and `hiddenFields` are derived from. Library fields carry their `key`.'
@@ -10784,7 +10826,7 @@ components:
 
         The server-owned fields `GET` returns — `id`, `workspaceId`, `type`, `createdAt`, `updatedAt`, `archivedAt`, `defaultLanguage` and `languages[].alias` — are accepted and verified, so a survey fetched with `GET` can be sent straight back. Echoing the value you were given is a no-op; changing one is a **422** `read_only_field`. `visibility`, `owner` and `access` are accepted the same way, but a changed value is a **422** `unsupported_field`: visibility changes go through `POST /api/v3/surveys/{surveyId}/visibility`. A round-tripped `updatedAt` additionally acts as an optimistic-concurrency precondition, and a stale one is rejected with **409**. `questions`, analytics, styling and scripts remain rejected outright. App surveys (stored `type: app`) additionally accept `distribution` and `targeting`; both are rejected for link surveys, and changing `targeting` filters requires the Contacts entitlement.
 
-        `metadata`, `languages`, `welcomeCard`, `blocks`, `endings`, `hiddenFields`, `variables` and `embeddedFields`
+        `metadata`, `languages`, `welcomeCard`, `blocks`, `endings`, `hiddenFields`, `variables`, `embeddedFields` and `startLogic`
         replace their full top-level value when provided. Missing ids in replaced arrays are deletions.
         Non-default locale keys in translatable maps must be declared in `languages`; undeclared locale
         keys are rejected with `unsupported_locale`. To remove a language, remove it from both
@@ -10888,6 +10930,11 @@ components:
           maxItems: 100
           items:
             $ref: '#/components/schemas/SurveyVariable'
+        startLogic:
+          anyOf:
+            - $ref: '#/components/schemas/SurveyStartLogic'
+            - type: 'null'
+          description: Replaces every rule before the first question. `null` or `[]` removes them; omit to keep them.
         embeddedFields:
           type: array
           maxItems: 300

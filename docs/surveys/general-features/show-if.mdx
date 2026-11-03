@@ -1,0 +1,61 @@
+---
+title: "Show If"
+description: "Show a question, or a whole block, only to the respondents it applies to. A follow-up appears right under the answer it depends on."
+icon: "eye"
+---
+
+**Show if** shows a question or a whole block only when a condition holds. Everyone else never sees it.
+
+Use it to ask a follow-up only when it applies, or to skip a page that doesn't concern the respondent. For example:
+
+* Show *What would convince you to try Apple TV+?* only to respondents who picked Apple TV+ above it.
+* Show the *Heavy users* block only to respondents who use Netflix, Disney+ and Prime Video.
+* Show one of two wordings of a question, by adding both with opposite conditions. It works in every language, with no code.
+
+## The condition
+
+A show-if condition is written like the condition of a [logic rule](/surveys/general-features/conditional-logic). It can use:
+
+* answers to earlier questions
+* [Embedded Data](/surveys/general-features/variables) fields: hidden fields from the link, and calculated fields
+* response details, such as the respondent's language
+
+Combine several checks with **and** and **or**, and group them, as in a rule.
+
+## What a show-if may use
+
+A show-if can only depend on what the respondent has already seen, so the survey always knows whether to show it:
+
+* **A block's show-if** can use answers from earlier blocks only.
+* **A question's show-if** can use answers from earlier blocks, and from the questions above it on the same page.
+* Nothing can depend on itself or on anything below it.
+
+The editor only offers what a show-if may use. A survey written through the API or MCP that breaks the rule is refused, and the error names the exact condition that breaks it.
+
+## What respondents see
+
+* **A question appears and disappears live.** When an answer above it on the same page changes, the question shows up right under it, or hides again.
+* **A hidden question is not asked.** It never stops the respondent from going on, even if it is required, and an answer typed into it before it hid is not submitted.
+* **A hidden block is skipped.** The survey moves on to the next block. The block's [logic](/surveys/general-features/conditional-logic) still runs, as if the respondent had submitted it with no answers, so its calculations and jumps keep working.
+* **A block whose questions are all hidden is skipped** the same way.
+
+In conditions further on, a question that was never shown counts as unanswered: *is skipped* and *is empty* match it.
+
+Link, website, app and mobile surveys behave the same.
+
+## Adding and editing a show-if
+
+Show-if is edited on the [Flow tab](/surveys/general-features/flow-tab).
+
+* **On a block:** open **Add logic** under the block and choose **Show this block if…**.
+* **On a question:** hover the question in its block and choose **Show if…**.
+
+The new show-if starts on the question just before it. Change it in the popover that opens: pick what to test, an operator and a value, and add more conditions as needed.
+
+A block or a question with a show-if carries a **Show if:** badge that reads the condition. Click the badge to change the condition, or choose **Remove show-if** to show it to everyone again. Removing the last condition removes the show-if too.
+
+You can add and change show-if on a survey that is already live. Like any change to a live survey, it applies to respondents from then on.
+
+## Through the API
+
+In the survey document, a show-if is an optional `showIf` on a block or an element. It uses the condition-group format of logic rules. See the [Management API](/api-v3-reference/introduction) and [MCP](/platform/mcp/overview).

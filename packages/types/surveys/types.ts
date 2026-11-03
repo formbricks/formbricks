@@ -23,7 +23,7 @@ import { ZShowConditions } from "../show-conditions";
 import { ZAllowedFileExtension } from "../storage";
 import { ZBaseStyling } from "../styling";
 import { ZLanguage } from "../workspace";
-import { type TSurveyBlock, type TSurveyBlockLogicAction, ZSurveyBlocks } from "./blocks";
+import { type TSurveyBlock, type TSurveyBlockLogicAction, ZSurveyBlockLogic, ZSurveyBlocks } from "./blocks";
 import { findBlocksWithCyclicLogic } from "./blocks-validation";
 import { validateSurveyCodes } from "./codes";
 import {
@@ -61,6 +61,7 @@ import {
   ZConditionGroupDeprecated,
   ZDynamicLogicFieldValueDeprecated,
 } from "./logic";
+import { validateStartLogic } from "./start-logic-validation";
 import {
   FORBIDDEN_IDS,
   findLanguageCodesForDuplicateLabels,
@@ -1084,6 +1085,13 @@ export const ZSurveyBase = z.object({
    * still type-check.
    */
   showConditions: ZShowConditions.nullish(),
+  /**
+   * Rules before the first question (ENG-6932, json-shapes.md section 4): the block-rule format, run
+   * by the survey as soon as it loads, before the welcome card and on start-at links. They may jump
+   * to a block, screen out by jumping to an ending, and set a value; `surveyRefinement` refuses the
+   * rest. Nullish: `null` (the column default) and a missing key both mean none.
+   */
+  startLogic: z.array(ZSurveyBlockLogic).nullish(),
 });
 
 /**
@@ -1956,6 +1964,16 @@ export const surveyRefinement = (rawSurvey: z.infer<typeof ZSurveyBase>, ctx: z.
       logicIssues.forEach((issue) => {
         ctx.addIssue(issue as z.IssueData);
       });
+
+      // Show-if on the block and its elements (ENG-6931)
+      validateShowIf(survey, blockIndex, block, allElements).forEach((issue) => {
+        ctx.addIssue(issue as z.IssueData);
+      });
+    });
+
+    // Rules before the first question: jumps and Set value only, reading fields, never answers.
+    validateStartLogic(survey).forEach((issue) => {
+      ctx.addIssue(issue as z.IssueData);
     });
 
     // 5. Check for cyclic logic in blocks
@@ -3361,12 +3379,27 @@ const isInvalidOperatorsForElementType = (
   return isInvalidOperator;
 };
 
-const validateBlockConditions = (
+/**
+ * Where a condition group lives, for its error messages: the issue `path`, the `where` phrase that
+ * ends a message ("logic no: 2 of block 3"), and whether an element in a later block is reported
+ * here. Show-if reports its stricter reference rule itself, with exact paths (`validateShowIf`).
+ */
+interface TConditionScope {
+  path: (string | number)[];
+  where: string;
+  checkLaterBlock: boolean;
+}
+
+/**
+ * The operand and operator checks of one condition group — the element exists, the operator suits
+ * its type, the right operand fits — shared by block logic and show-if.
+ */
+const validateConditionGroupOperands = (
   survey: TSurvey,
   blockIndex: number,
-  logicIndex: number,
   conditions: TConditionGroup,
-  allElements: Map<string, { block: number; element: number; data: TSurveyElement }>
+  allElements: Map<string, { block: number; element: number; data: TSurveyElement }>,
+  scope: TConditionScope
 ): z.core.$ZodIssue[] => {
   const issues: z.core.$ZodIssue[] = [];
 
@@ -3381,15 +3414,15 @@ const validateBlockConditions = (
       if (!elementInfo) {
         issues.push({
           code: "custom",
-          message: `Conditional Logic: Element Id ${elementId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-          path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+          message: `Conditional Logic: Element Id ${elementId} does not exist in ${scope.where}`,
+          path: scope.path,
         });
         return;
-      } else if (blockIndex < elementInfo.block) {
+      } else if (scope.checkLaterBlock && blockIndex < elementInfo.block) {
         issues.push({
           code: "custom",
           message: `Conditional Logic: Block ${String(blockIndex + 1)} cannot refer to an element in block ${String(elementInfo.block + 1)} that appears later in the survey`,
-          path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+          path: scope.path,
         });
         return;
       }
@@ -3401,8 +3434,8 @@ const validateBlockConditions = (
       if (isInvalidOperator) {
         issues.push({
           code: "custom",
-          message: `Conditional Logic: Invalid operator "${operator}" for element type "${element.type}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-          path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+          message: `Conditional Logic: Invalid operator "${operator}" for element type "${element.type}" in ${scope.where}`,
+          path: scope.path,
         });
       }
 
@@ -3410,8 +3443,8 @@ const validateBlockConditions = (
       if (element.type === TSurveyElementTypeEnum.CTA && !element.buttonExternal) {
         issues.push({
           code: "custom",
-          message: `Conditional Logic: CTA element "${elementId}" does not have an external button and cannot be used in logic conditions in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-          path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+          message: `Conditional Logic: CTA element "${elementId}" does not have an external button and cannot be used in logic conditions in ${scope.where}`,
+          path: scope.path,
         });
         return;
       }
@@ -3434,8 +3467,8 @@ const validateBlockConditions = (
         if (rightOperand !== undefined) {
           issues.push({
             code: "custom",
-            message: `Conditional Logic: Right operand should not be defined for operator "${operator}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-            path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+            message: `Conditional Logic: Right operand should not be defined for operator "${operator}" in ${scope.where}`,
+            path: scope.path,
           });
         }
         return;
@@ -3450,8 +3483,8 @@ const validateBlockConditions = (
           if (!elem) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Element ID ${elemId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-              path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+              message: `Conditional Logic: Element ID ${elemId} does not exist in ${scope.where}`,
+              path: scope.path,
             });
           } else {
             const validElementTypes: TSurveyElementTypeEnum[] = [TSurveyElementTypeEnum.OpenText];
@@ -3475,8 +3508,8 @@ const validateBlockConditions = (
             if (!validElementTypes.includes(elem.data.type)) {
               issues.push({
                 code: "custom",
-                message: `Conditional Logic: Invalid element type "${elem.data.type}" for right operand in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-                path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+                message: `Conditional Logic: Invalid element type "${elem.data.type}" for right operand in ${scope.where}`,
+                path: scope.path,
               });
             }
           }
@@ -3487,8 +3520,8 @@ const validateBlockConditions = (
           if (!variable) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Variable ID ${variableId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-              path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+              message: `Conditional Logic: Variable ID ${variableId} does not exist in ${scope.where}`,
+              path: scope.path,
             });
           }
         } else if (rightOperand?.type === "hiddenField") {
@@ -3498,16 +3531,16 @@ const validateBlockConditions = (
           if (!field) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Hidden field ID ${fieldId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-              path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+              message: `Conditional Logic: Hidden field ID ${fieldId} does not exist in ${scope.where}`,
+              path: scope.path,
             });
           }
         } else if (rightOperand?.type === "static") {
           if (!rightOperand.value) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Static value is required in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-              path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+              message: `Conditional Logic: Static value is required in ${scope.where}`,
+              path: scope.path,
             });
           }
         }
@@ -3515,15 +3548,15 @@ const validateBlockConditions = (
         if (rightOperand?.type !== "static") {
           issues.push({
             code: "custom",
-            message: `Conditional Logic: Right operand should be a static value for "${operator}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-            path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+            message: `Conditional Logic: Right operand should be a static value for "${operator}" in ${scope.where}`,
+            path: scope.path,
           });
         } else if (condition.operator === "equals" || condition.operator === "doesNotEqual") {
           if (typeof rightOperand.value !== "string") {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Right operand should be a string for "${operator}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-              path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+              message: `Conditional Logic: Right operand should be a string for "${operator}" in ${scope.where}`,
+              path: scope.path,
             });
           } else {
             // Validate that the choice ID exists in the element's choices
@@ -3532,7 +3565,7 @@ const validateBlockConditions = (
               issues.push({
                 code: "custom",
                 message: `Conditional Logic: Choice "${rightOperand.value}" does not exist in element ${String(elementInfo.element + 1)} of block ${String(elementInfo.block + 1)}`,
-                path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+                path: scope.path,
               });
             }
           }
@@ -3545,15 +3578,15 @@ const validateBlockConditions = (
         if (rightOperand?.type !== "static") {
           issues.push({
             code: "custom",
-            message: `Conditional Logic: Right operand should be a static value for "${operator}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-            path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+            message: `Conditional Logic: Right operand should be a static value for "${operator}" in ${scope.where}`,
+            path: scope.path,
           });
         } else if (condition.operator === "equals" || condition.operator === "doesNotEqual") {
           if (typeof rightOperand.value !== "string") {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Right operand should be a string for "${operator}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-              path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+              message: `Conditional Logic: Right operand should be a string for "${operator}" in ${scope.where}`,
+              path: scope.path,
             });
           } else {
             // Validate that the choice ID exists in the element's choices
@@ -3562,7 +3595,7 @@ const validateBlockConditions = (
               issues.push({
                 code: "custom",
                 message: `Conditional Logic: Choice "${rightOperand.value}" does not exist in element ${String(elementInfo.element + 1)} of block ${String(elementInfo.block + 1)}`,
-                path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+                path: scope.path,
               });
             }
           }
@@ -3574,16 +3607,16 @@ const validateBlockConditions = (
           if (!Array.isArray(rightOperand.value)) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Right operand should be an array for "${operator}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-              path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+              message: `Conditional Logic: Right operand should be an array for "${operator}" in ${scope.where}`,
+              path: scope.path,
             });
           } else {
             rightOperand.value.forEach((value) => {
               if (typeof value !== "string") {
                 issues.push({
                   code: "custom",
-                  message: `Conditional Logic: Each value in the right operand should be a string for "${operator}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-                  path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+                  message: `Conditional Logic: Each value in the right operand should be a string for "${operator}" in ${scope.where}`,
+                  path: scope.path,
                 });
               }
             });
@@ -3593,8 +3626,8 @@ const validateBlockConditions = (
             if (rightOperand.value.some((value) => !choiceIds.includes(value))) {
               issues.push({
                 code: "custom",
-                message: `Conditional Logic: One or more choices selected in right operand do not exist in the element in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-                path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+                message: `Conditional Logic: One or more choices selected in right operand do not exist in the element in ${scope.where}`,
+                path: scope.path,
               });
             }
           }
@@ -3610,43 +3643,43 @@ const validateBlockConditions = (
           if (!variable) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Variable ID ${variableId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-              path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+              message: `Conditional Logic: Variable ID ${variableId} does not exist in ${scope.where}`,
+              path: scope.path,
             });
           } else if (variable.type !== "number") {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Variable type should be number in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-              path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+              message: `Conditional Logic: Variable type should be number in ${scope.where}`,
+              path: scope.path,
             });
           }
         } else if (rightOperand?.type === "static") {
           if (typeof rightOperand.value !== "number") {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Right operand should be a number for "${operator}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-              path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+              message: `Conditional Logic: Right operand should be a number for "${operator}" in ${scope.where}`,
+              path: scope.path,
             });
           } else if (element.type === TSurveyElementTypeEnum.NPS) {
             if (rightOperand.value < 0 || rightOperand.value > 10) {
               issues.push({
                 code: "custom",
-                message: `Conditional Logic: NPS score should be between 0 and 10 for "${operator}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-                path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+                message: `Conditional Logic: NPS score should be between 0 and 10 for "${operator}" in ${scope.where}`,
+                path: scope.path,
               });
             }
           } else if (rightOperand.value < 1 || rightOperand.value > element.range) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Rating value should be between 1 and ${String(element.range)} for "${operator}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-              path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+              message: `Conditional Logic: Rating value should be between 1 and ${String(element.range)} for "${operator}" in ${scope.where}`,
+              path: scope.path,
             });
           }
         } else {
           issues.push({
             code: "custom",
-            message: `Conditional Logic: Right operand should be a variable or a static value for "${operator}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-            path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+            message: `Conditional Logic: Right operand should be a variable or a static value for "${operator}" in ${scope.where}`,
+            path: scope.path,
           });
         }
       } else if (element.type === TSurveyElementTypeEnum.Date) {
@@ -3657,8 +3690,8 @@ const validateBlockConditions = (
           if (!elem) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Element ID ${elemId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-              path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+              message: `Conditional Logic: Element ID ${elemId} does not exist in ${scope.where}`,
+              path: scope.path,
             });
           } else {
             const validElementTypes: TSurveyElementTypeEnum[] = [
@@ -3668,8 +3701,8 @@ const validateBlockConditions = (
             if (!validElementTypes.includes(elem.data.type)) {
               issues.push({
                 code: "custom",
-                message: `Conditional Logic: Invalid element type "${elem.data.type}" for right operand in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-                path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+                message: `Conditional Logic: Invalid element type "${elem.data.type}" for right operand in ${scope.where}`,
+                path: scope.path,
               });
             }
           }
@@ -3680,14 +3713,14 @@ const validateBlockConditions = (
           if (!variable) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Variable ID ${variableId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-              path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+              message: `Conditional Logic: Variable ID ${variableId} does not exist in ${scope.where}`,
+              path: scope.path,
             });
           } else if (variable.type !== "text") {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Variable type should be text in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-              path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+              message: `Conditional Logic: Variable type should be text in ${scope.where}`,
+              path: scope.path,
             });
           }
         } else if (rightOperand?.type === "hiddenField") {
@@ -3697,8 +3730,8 @@ const validateBlockConditions = (
           if (!doesFieldExists) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Hidden field ID ${fieldId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-              path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+              message: `Conditional Logic: Hidden field ID ${fieldId} does not exist in ${scope.where}`,
+              path: scope.path,
             });
           }
         } else if (rightOperand?.type === "static") {
@@ -3707,14 +3740,14 @@ const validateBlockConditions = (
           if (!date) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Please select a date value in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-              path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+              message: `Conditional Logic: Please select a date value in ${scope.where}`,
+              path: scope.path,
             });
           } else if (isNaN(new Date(date).getTime())) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Invalid date format for right operand in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-              path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+              message: `Conditional Logic: Invalid date format for right operand in ${scope.where}`,
+              path: scope.path,
             });
           }
         }
@@ -3724,39 +3757,39 @@ const validateBlockConditions = (
           if (rightOperand?.value !== undefined) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Right operand is not allowed in matrix element in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-              path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+              message: `Conditional Logic: Right operand is not allowed in matrix element in ${scope.where}`,
+              path: scope.path,
             });
           }
           if (!["isPartiallySubmitted", "isCompletelySubmitted"].includes(operator)) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Operator "${operator}" is not allowed in matrix element in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-              path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+              message: `Conditional Logic: Operator "${operator}" is not allowed in matrix element in ${scope.where}`,
+              path: scope.path,
             });
           }
         } else {
           if (rightOperand === undefined) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Right operand is required in matrix element in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-              path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+              message: `Conditional Logic: Right operand is required in matrix element in ${scope.where}`,
+              path: scope.path,
             });
           }
           if (rightOperand) {
             if (rightOperand.type !== "static") {
               issues.push({
                 code: "custom",
-                message: `Conditional Logic: Right operand should be a static value in matrix element in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-                path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+                message: `Conditional Logic: Right operand should be a static value in matrix element in ${scope.where}`,
+                path: scope.path,
               });
             }
             const rowIndex = Number(row);
             if (rowIndex < 0 || rowIndex >= element.rows.length) {
               issues.push({
                 code: "custom",
-                message: `Conditional Logic: Invalid row index in matrix element in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-                path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+                message: `Conditional Logic: Invalid row index in matrix element in ${scope.where}`,
+                path: scope.path,
               });
             }
           }
@@ -3769,8 +3802,8 @@ const validateBlockConditions = (
       if (!variable) {
         issues.push({
           code: "custom",
-          message: `Conditional Logic: Variable ID ${variableId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-          path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+          message: `Conditional Logic: Variable ID ${variableId} does not exist in ${scope.where}`,
+          path: scope.path,
         });
         return;
       }
@@ -3782,8 +3815,8 @@ const validateBlockConditions = (
         if (!rightVariable) {
           issues.push({
             code: "custom",
-            message: `Conditional Logic: Variable ID ${rightVariableId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-            path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+            message: `Conditional Logic: Variable ID ${rightVariableId} does not exist in ${scope.where}`,
+            path: scope.path,
           });
         }
       }
@@ -3818,8 +3851,8 @@ const validateBlockConditions = (
       if (!field) {
         issues.push({
           code: "custom",
-          message: `Conditional Logic: Hidden field ID ${fieldId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-          path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+          message: `Conditional Logic: Hidden field ID ${fieldId} does not exist in ${scope.where}`,
+          path: scope.path,
         });
       }
     } else {
@@ -3845,6 +3878,108 @@ const validateBlockConditions = (
   };
 
   processConditionGroup(conditions);
+  return issues;
+};
+
+const validateBlockConditions = (
+  survey: TSurvey,
+  blockIndex: number,
+  logicIndex: number,
+  conditions: TConditionGroup,
+  allElements: Map<string, { block: number; element: number; data: TSurveyElement }>
+): z.core.$ZodIssue[] =>
+  validateConditionGroupOperands(survey, blockIndex, conditions, allElements, {
+    path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+    where: `logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+    checkLaterBlock: true,
+  });
+
+type TElementPositions = Map<string, { block: number; element: number; data: TSurveyElement }>;
+
+/**
+ * Show-if (ENG-6931). The operand checks of block logic, plus the reference rule (json-shapes §1),
+ * reported at the exact path of the offending condition:
+ *
+ * - a block's show-if may use earlier blocks only;
+ * - an element's show-if may use earlier blocks plus elements above it in the same block;
+ * - nothing may use itself or anything below it, which also makes loops impossible.
+ *
+ * Both sides of a condition are checked: an element can be the right operand too.
+ */
+const validateShowIf = (
+  survey: TSurvey,
+  blockIndex: number,
+  block: TSurveyBlock,
+  allElements: TElementPositions
+): z.core.$ZodIssue[] => {
+  const issues: z.core.$ZodIssue[] = [];
+  const blockLabel = `block ${String(blockIndex + 1)}`;
+
+  const checkReferences = (
+    group: TConditionGroup,
+    groupPath: (string | number)[],
+    canUse: (target: { block: number; element: number }) => boolean,
+    owner: string,
+    ownerElementId?: string
+  ): void => {
+    group.conditions.forEach((condition, conditionIndex) => {
+      const conditionPath = [...groupPath, "conditions", conditionIndex];
+      if (isConditionGroup(condition)) {
+        checkReferences(condition, conditionPath, canUse, owner, ownerElementId);
+        return;
+      }
+      const operands = [condition.leftOperand, condition.rightOperand];
+      for (const operand of operands) {
+        if (operand?.type !== "element") continue;
+        const target = allElements.get(operand.value);
+        // An element that doesn't exist is reported by the operand checks.
+        if (!target || canUse(target)) continue;
+        issues.push({
+          code: "custom",
+          message:
+            operand.value === ownerElementId
+              ? `Show-if: The show-if of ${owner} cannot use the question itself`
+              : `Show-if: The show-if of ${owner} cannot use question "${operand.value}", which is not above it. A block's show-if can use earlier blocks only; a question's show-if can use earlier blocks and questions above it on the same page`,
+          path: conditionPath,
+        });
+        // One issue per condition is enough to point at it.
+        break;
+      }
+    });
+  };
+
+  if (block.showIf) {
+    const path = ["blocks", blockIndex, "showIf"];
+    issues.push(
+      ...validateConditionGroupOperands(survey, blockIndex, block.showIf, allElements, {
+        path,
+        where: `the show-if of ${blockLabel}`,
+        checkLaterBlock: false,
+      })
+    );
+    checkReferences(block.showIf, path, (target) => target.block < blockIndex, blockLabel);
+  }
+
+  block.elements.forEach((element, elementIndex) => {
+    if (!element.showIf) return;
+    const path = ["blocks", blockIndex, "elements", elementIndex, "showIf"];
+    const owner = `question ${String(elementIndex + 1)} of ${blockLabel}`;
+    issues.push(
+      ...validateConditionGroupOperands(survey, blockIndex, element.showIf, allElements, {
+        path,
+        where: `the show-if of ${owner}`,
+        checkLaterBlock: false,
+      })
+    );
+    checkReferences(
+      element.showIf,
+      path,
+      (target) => target.block < blockIndex || (target.block === blockIndex && target.element < elementIndex),
+      owner,
+      element.id
+    );
+  });
+
   return issues;
 };
 

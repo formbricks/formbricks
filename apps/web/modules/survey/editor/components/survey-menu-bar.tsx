@@ -409,6 +409,13 @@ export const SurveyMenuBar = ({
             }
             firstInvalidScrollId ??= block?.logic?.[0]?.id ?? null;
           }
+        } else if (issue.path[0] === "startLogic" && typeof issue.path[1] === "number") {
+          // A rule before the first question (ENG-6932): flag its row on the Flow tab.
+          const startRule = localSurvey.startLogic?.[issue.path[1]];
+          if (startRule && !newInvalidIds.includes(startRule.id)) {
+            newInvalidIds.push(startRule.id);
+          }
+          firstInvalidScrollId ??= startRule?.id ?? null;
         } else if (issue.path[0] === "welcomeCard") {
           if (!newInvalidIds.includes("start")) {
             newInvalidIds.push("start");
@@ -445,8 +452,9 @@ export const SurveyMenuBar = ({
 
       // Rules and fallbacks live on the Flow tab (ENG-6929): open it, so the flagged row is on screen.
       if (
-        firstError.path[0] === "blocks" &&
-        (firstError.path[2] === "logic" || firstError.path[2] === "logicFallback")
+        firstError.path[0] === "startLogic" ||
+        (firstError.path[0] === "blocks" &&
+          (firstError.path[2] === "logic" || firstError.path[2] === "logicFallback"))
       ) {
         setActiveId("flow");
       }

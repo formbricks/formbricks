@@ -30,7 +30,9 @@ import { ResetProgressButton } from "@/modules/ui/components/reset-progress-butt
 import { SurveyInline } from "@/modules/ui/components/survey";
 import { Modal } from "./components/modal";
 import { PreviewModeSwitches, PreviewWindowBar } from "./components/preview-frame";
+import { TestValuesControl } from "./components/test-values-control";
 import { PREVIEW_BOUNDARY_CLASS_NAME, previewBoundaryProps } from "./lib/containment";
+import { getTestValueFields, getTestValuesKey, toHiddenFieldsRecord } from "./lib/test-values";
 import { mirrorPlacementForDir } from "./lib/utils";
 
 type TPreviewType = "modal" | "fullwidth" | "email";
@@ -85,6 +87,17 @@ export const PreviewSurvey = ({
   const [appSetupCompleted, setAppSetupCompleted] = useState(false);
 
   const [previewMode, setPreviewMode] = useState("desktop");
+
+  // "Test values" (ENG-6932): URL parameters and hidden fields for the preview, empty by default. The
+  // rules before the first question run when the survey loads, so the preview is keyed by the values
+  // and starts over whenever they change.
+  const [testValues, setTestValues] = useState<Record<string, string>>({});
+  const testValueFields = useMemo(() => getTestValueFields(survey), [survey]);
+  const hiddenFieldsRecord = useMemo(
+    () => toHiddenFieldsRecord(testValues, testValueFields),
+    [testValues, testValueFields]
+  );
+  const testValuesKey = getTestValuesKey(hiddenFieldsRecord);
   const ContentRef = useRef<HTMLDivElement | null>(null);
   const enabledLanguages = useMemo(() => survey.languages.filter((l) => l.enabled), [survey.languages]);
   const showLanguageSelector = setLanguageCode && enabledLanguages.length > 1;
@@ -337,6 +350,7 @@ export const PreviewSurvey = ({
                     locale={locale}
                   />
                 )}
+                <TestValuesControl fields={testValueFields} values={testValues} onApply={setTestValues} />
                 <ResetProgressButton onClick={resetProgress} />
               </div>
               <MediaBackground
@@ -357,6 +371,8 @@ export const PreviewSurvey = ({
                     borderRadius={styling?.roundness ?? 8}
                     background={modalBackground}>
                     <SurveyInline
+                      key={testValuesKey}
+                      hiddenFieldsRecord={hiddenFieldsRecord}
                       appUrl={publicDomain}
                       isPreviewMode={true}
                       customCss={customCss}
@@ -410,6 +426,8 @@ export const PreviewSurvey = ({
                           !isCardless && "justify-center"
                         )}>
                         <SurveyInline
+                          key={testValuesKey}
+                          hiddenFieldsRecord={hiddenFieldsRecord}
                           appUrl={publicDomain}
                           isPreviewMode={true}
                           customCss={customCss}
@@ -468,6 +486,7 @@ export const PreviewSurvey = ({
                     }}
                   />
                 )}
+                <TestValuesControl fields={testValueFields} values={testValues} onApply={setTestValues} />
                 <ResetProgressButton onClick={resetProgress} />
               </PreviewWindowBar>
 
@@ -487,6 +506,8 @@ export const PreviewSurvey = ({
                     borderRadius={styling.roundness ?? 8}
                     background={modalBackground}>
                     <SurveyInline
+                      key={testValuesKey}
+                      hiddenFieldsRecord={hiddenFieldsRecord}
                       appUrl={publicDomain}
                       isPreviewMode={true}
                       customCss={customCss}
@@ -546,6 +567,8 @@ export const PreviewSurvey = ({
                             !isCardless && "justify-center"
                           )}>
                           <SurveyInline
+                            key={testValuesKey}
+                            hiddenFieldsRecord={hiddenFieldsRecord}
                             appUrl={publicDomain}
                             isPreviewMode={true}
                             customCss={customCss}

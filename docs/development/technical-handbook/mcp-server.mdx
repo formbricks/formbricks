@@ -647,7 +647,7 @@ Array arguments are bounded. No array in a tool call may hold more than 1 000 it
 in one call together at most 50 000 elements, at any depth; and a call may nest at most 256 levels of
 objects and arrays. A call over any of these is refused with a JSON-RPC `-32602` error before its
 arguments are parsed. Fields with a tighter bound advertise it as
-`maxItems` in the tool's input schema — `create_survey`'s `blocks`, `endings`, `variables` and
+`maxItems` in the tool's input schema — `create_survey`'s `blocks`, `endings`, `variables`, `startLogic` and
 `languages`, `get_survey`'s `lang`, the list filters' `in` arrays, and `create_feedback_records`'
 `records`. A request body may be at most 2 MB, whether or not it declares a `Content-Length`.
 
@@ -879,6 +879,14 @@ The same list is carried on the tool's own `blocks` description, generated from
 position** rather than naming the field: the element schema is an undiscriminated union, so a wrong
 or absent `type` makes every branch fail and the message is a generic `Invalid input`. Send the
 type's own fields with the element rather than expecting the validator to name them.
+
+An optional `startLogic` array holds the **rules before the first question**: the survey runs them as
+soon as it loads, before the welcome card and on start-at links. Each rule has the shape of a block's
+`logic` rule, but may only `jumpToBlock` (to a block, or to an ending to screen the respondent out) and
+`calculate`, and may read `hiddenField`, `variable` and `reserved` operands only, since nothing has been
+answered yet. Anything else is refused with the exact path, such as `startLogic.0.actions.1`. On
+`patch_survey`, `null` or `[]` removes them and an omitted `startLogic` is kept; `get_survey` always
+returns the array, `[]` when there are none.
 
 Input:
 

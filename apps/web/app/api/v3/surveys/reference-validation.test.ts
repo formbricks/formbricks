@@ -841,6 +841,113 @@ describe("ordering rules (ENG-3069)", () => {
     expect(getV3SurveyPrecedenceInvalidParams(refInput(shifted))).toHaveLength(1);
     expect(getV3SurveyIntroducedPrecedenceInvalidParams(refInput(baseline), refInput(shifted))).toEqual([]);
   });
+
+  describe("show-if (ENG-6931)", () => {
+    const submitted = (elementId: string) => ({
+      id: "clshowifgroup00000000001",
+      connector: "and" as const,
+      conditions: [
+        {
+          id: "clshowifcond000000000001",
+          leftOperand: { type: "element" as const, value: elementId },
+          operator: "isSubmitted" as const,
+        },
+      ],
+    });
+
+    // Block 0: first_q, Block 1: second_q then a follow-up below it.
+    const withShowIf = (patch: (survey: ReturnType<typeof twoBlockSurvey>) => void) => {
+      const survey = twoBlockSurvey();
+      survey.blocks[1].elements.push({
+        id: "follow_up",
+        type: "openText",
+        headline: { default: "Why?" },
+        required: false,
+      } as never);
+      patch(survey);
+      return survey;
+    };
+
+    test("a block's show-if may use an earlier block, not its own", () => {
+      expect(
+        getV3SurveyPrecedenceInvalidParams(
+          refInput(withShowIf((survey) => (survey.blocks[1].showIf = submitted("first_q"))))
+        )
+      ).toEqual([]);
+
+      expect(
+        getV3SurveyPrecedenceInvalidParams(
+          refInput(withShowIf((survey) => (survey.blocks[1].showIf = submitted("second_q"))))
+        )
+      ).toEqual([
+        expect.objectContaining({
+          name: "blocks.1.showIf.conditions.0.leftOperand.value",
+          code: "misordered_reference",
+          identifier: "second_q",
+          referenceType: "element",
+        }),
+      ]);
+    });
+
+    test("an element's show-if may use the element above it, not itself or one below or later", () => {
+      const params = (elementPatch: (survey: ReturnType<typeof twoBlockSurvey>) => void) =>
+        getV3SurveyPrecedenceInvalidParams(refInput(withShowIf(elementPatch)));
+
+      expect(params((survey) => (survey.blocks[1].elements[1].showIf = submitted("second_q")))).toEqual([]);
+      expect(params((survey) => (survey.blocks[1].elements[1].showIf = submitted("follow_up")))).toEqual([
+        expect.objectContaining({ name: "blocks.1.elements.1.showIf.conditions.0.leftOperand.value" }),
+      ]);
+      expect(params((survey) => (survey.blocks[1].elements[0].showIf = submitted("follow_up")))).toEqual([
+        expect.objectContaining({ name: "blocks.1.elements.0.showIf.conditions.0.leftOperand.value" }),
+      ]);
+      expect(params((survey) => (survey.blocks[0].elements[0].showIf = submitted("second_q")))).toEqual([
+        expect.objectContaining({ name: "blocks.0.elements.0.showIf.conditions.0.leftOperand.value" }),
+      ]);
+    });
+
+    test("an element used as the right operand is checked too", () => {
+      const survey = withShowIf((draft) => {
+        draft.blocks[1].elements[0].showIf = {
+          id: "clshowifgroup00000000001",
+          connector: "and",
+          conditions: [
+            {
+              id: "clshowifcond000000000001",
+              leftOperand: { type: "hiddenField", value: "account_id" },
+              operator: "equals",
+              rightOperand: { type: "element", value: "follow_up" },
+            },
+          ],
+        };
+      });
+
+      expect(getV3SurveyPrecedenceInvalidParams(refInput(survey))).toEqual([
+        expect.objectContaining({ name: "blocks.1.elements.0.showIf.conditions.0.rightOperand.value" }),
+      ]);
+    });
+
+    test("a show-if naming an element that doesn't exist is a dangling reference", () => {
+      const survey = withShowIf((draft) => {
+        draft.blocks[1].showIf = submitted("gone_q");
+        draft.blocks[1].elements[1].showIf = submitted("also_gone");
+      });
+
+      const result = validateV3SurveyReferences(refInput(survey));
+
+      expect(result.invalidParams).toEqual([
+        expect.objectContaining({
+          name: "blocks.1.showIf.conditions.0.leftOperand.value",
+          code: "dangling_reference",
+          missingId: "gone_q",
+        }),
+        expect.objectContaining({
+          name: "blocks.1.elements.1.showIf.conditions.0.leftOperand.value",
+          code: "dangling_reference",
+          missingId: "also_gone",
+        }),
+      ]);
+    });
+  });
 });
 
 describe("Set value expressions (ENG-6935)", () => {

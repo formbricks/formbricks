@@ -90,6 +90,11 @@ interface BlockConditionalProps {
   fullSizeCards: boolean;
   isCardless?: boolean;
   surveyLanguages: TSurveyLanguage[];
+  /**
+   * The elements show-if leaves on this page (ENG-6931), re-evaluated by the survey as answers change.
+   * Hidden elements are not rendered, validated or submitted. Absent means every element is shown.
+   */
+  visibleElementIds?: string[];
 }
 
 export function BlockConditional({
@@ -116,9 +121,15 @@ export function BlockConditional({
   fullSizeCards,
   isCardless = false,
   surveyLanguages,
+  visibleElementIds,
 }: Readonly<BlockConditionalProps>) {
+  // What the page shows. Auto-progress still reads `block.elements`: a block with a follow-up hidden
+  // for now must not auto-submit on the answer that would reveal it.
+  const elements = visibleElementIds
+    ? block.elements.filter((element) => visibleElementIds.includes(element.id))
+    : block.elements;
   // Track the current element being filled (for TTC tracking)
-  const [currentElementId, setCurrentElementId] = useState(block.elements[0]?.id);
+  const [currentElementId, setCurrentElementId] = useState(elements[0]?.id);
 
   // State to store validation errors from centralized validation
   const [elementErrors, setElementErrors] = useState<TValidationErrorMap>({});
@@ -172,7 +183,7 @@ export function BlockConditional({
       });
     }
     const mergedValue = { ...value, ...responseData };
-    const blockResponses = block.elements.reduce<TResponseData>((acc, element) => {
+    const blockResponses = elements.reduce<TResponseData>((acc, element) => {
       const elementValue = mergedValue[element.id];
       if (elementValue !== undefined) {
         acc[element.id] = elementValue;
@@ -223,7 +234,7 @@ export function BlockConditional({
       const prefilledData: TResponseData = {};
       let hasAnyPrefilled = false;
 
-      block.elements.forEach((element) => {
+      elements.forEach((element) => {
         if (prefilledResponseData[element.id] !== undefined) {
           prefilledData[element.id] = prefilledResponseData[element.id];
           hasAnyPrefilled = true;
@@ -236,13 +247,13 @@ export function BlockConditional({
 
         // If skipPrefilled and ALL elements are prefilled, auto-submit
         if (skipPrefilled) {
-          const allElementsPrefilled = block.elements.every(
+          const allElementsPrefilled = elements.every(
             (element) => prefilledResponseData[element.id] !== undefined
           );
 
           if (allElementsPrefilled) {
             const prefilledTtc: TResponseTtc = {};
-            block.elements.forEach((element) => {
+            elements.forEach((element) => {
               prefilledTtc[element.id] = 0; // 0 TTC for prefilled/skipped questions
             });
             setTtc({ ...ttc, ...prefilledTtc });
@@ -337,7 +348,7 @@ export function BlockConditional({
   const findFirstInvalidForm = (): HTMLFormElement | null => {
     let firstInvalidForm: HTMLFormElement | null = null;
 
-    for (const element of block.elements) {
+    for (const element of elements) {
       const form = elementFormRefs.current.get(element.id);
       if (form && !validateElementForm(element, form)) {
         firstInvalidForm ??= form;
@@ -353,7 +364,7 @@ export function BlockConditional({
     ttcCollectorRef.current = {};
 
     // Call each form's submit method to trigger TTC calculation
-    block.elements.forEach((element) => {
+    elements.forEach((element) => {
       const form = elementFormRefs.current.get(element.id);
       if (form) {
         form.requestSubmit();
@@ -362,7 +373,7 @@ export function BlockConditional({
 
     // Collect TTC from the ref (populated synchronously by form submissions)
     const blockTtc: TResponseTtc = {};
-    block.elements.forEach((element) => {
+    elements.forEach((element) => {
       if (ttcCollectorRef.current[element.id] !== undefined) {
         blockTtc[element.id] = ttcCollectorRef.current[element.id];
       } else if (ttc[element.id] !== undefined) {
@@ -376,7 +387,7 @@ export function BlockConditional({
   // Collect responses for all elements in this block
   const collectBlockResponses = (): TResponseData => {
     const blockResponses: TResponseData = {};
-    block.elements.forEach((element) => {
+    elements.forEach((element) => {
       if (value[element.id] !== undefined) {
         blockResponses[element.id] = value[element.id];
       }
@@ -390,7 +401,7 @@ export function BlockConditional({
     }
 
     // Run centralized validation for elements that support it
-    const errorMap = validateBlockResponses(block.elements, value, languageCode);
+    const errorMap = validateBlockResponses(elements, value, languageCode);
 
     // Check if there are any validation errors from centralized validation
     const hasValidationErrors = Object.keys(errorMap).length > 0;
@@ -441,7 +452,7 @@ export function BlockConditional({
       <ScrollableContainer fullSizeCards={fullSizeCards} disableInternalScroll={isCardless}>
         <div className={isActionRowSticky ? undefined : "space-y-6"}>
           <div className="space-y-6">
-            {block.elements.map((element, index) => {
+            {elements.map((element, index) => {
               const isFirstElement = index === 0;
 
               return (

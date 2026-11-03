@@ -1,4 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
+import { embeddedFieldsFromLegacyInput } from "@formbricks/types/embedded-data-mapping";
 import {
   SURVEY_FLOW_FIXTURE_IDS,
   surveyFlowFixture,
@@ -1383,6 +1384,183 @@ describe("prepareV3SurveyPatchInput published lock (ENG-6783)", () => {
   });
 });
 
+/**
+ * Rules before the first question (ENG-6932, json-shapes.md section 4) on the v3 document: create,
+ * patch, validate and GET round-trip `startLogic`, and its refusals carry the exact path.
+ */
+describe("startLogic on the v3 survey document", () => {
+  const endingId = "clend123456789012345678901";
+  const hiddenFields = { enabled: true, fieldIds: ["panel_id"] };
+  const variables = [{ id: "clvar123456789012345678901", name: "segment", type: "text" as const, value: "" }];
+  const surveyWithFields = {
+    ...survey,
+    endings: [
+      {
+        id: endingId,
+        type: "endScreen",
+        headline: { default: "Sorry, not for you", "de-DE": "Leider nicht für Sie" },
+      },
+    ],
+    hiddenFields,
+    variables,
+    // GET also returns the typed fields (ENG-6930); they describe the same fields as the legacy pair.
+    embeddedFields: embeddedFieldsFromLegacyInput({ hiddenFields, variables }),
+  } as unknown as TSurvey;
+
+  const screenOut = {
+    id: "clrule12345678901234567890",
+    conditions: {
+      id: "clgrp123456789012345678901",
+      connector: "and",
+      conditions: [
+        {
+          id: "clcond12345678901234567890",
+          leftOperand: { type: "hiddenField", value: "panel_id" },
+          operator: "isNotSet",
+        },
+      ],
+    },
+    actions: [{ id: "clact123456789012345678901", objective: "jumpToBlock", target: endingId }],
+  };
+
+  const getInvalidParams = (preparation: ReturnType<typeof prepareV3SurveyPatchInput>) =>
+    preparation.ok ? [] : preparation.validation.invalidParams;
+
+  test("create accepts start logic, and defaults it to none", () => {
+    const withRules = prepareV3SurveyCreateInput({
+      ...rawCreateBody,
+      endings: [{ id: endingId, type: "endScreen", headline: { "en-US": "Sorry", "de-DE": "Schade" } }],
+      hiddenFields: { enabled: true, fieldIds: ["panel_id"] },
+      startLogic: [screenOut],
+    });
+    const withoutRules = prepareV3SurveyCreate(createBody);
+
+    expect(withRules.ok ? withRules.document.startLogic : withRules.validation.invalidParams).toEqual([
+      screenOut,
+    ]);
+    expect(withoutRules.ok && withoutRules.document.startLogic).toEqual([]);
+  });
+
+  test("patch replaces it, keeps it when omitted, and clears it with null or []", () => {
+    const stored = { ...surveyWithFields, startLogic: [screenOut] } as unknown as TSurvey;
+
+    const kept = prepareV3SurveyPatchInput(stored, { name: "Renamed" });
+    const cleared = prepareV3SurveyPatchInput(stored, { startLogic: null });
+    const emptied = prepareV3SurveyPatchInput(stored, { startLogic: [] });
+    const replaced = prepareV3SurveyPatchInput(surveyWithFields, { startLogic: [screenOut] });
+
+    expect(kept.ok && kept.document.startLogic).toEqual([screenOut]);
+    expect(cleared.ok && cleared.document.startLogic).toEqual([]);
+    expect(emptied.ok && emptied.document.startLogic).toEqual([]);
+    expect(replaced.ok && replaced.document.startLogic).toEqual([screenOut]);
+  });
+
+  test("GET returns it, [] when the survey has none, and accepts its own output back", () => {
+    const stored = { ...surveyWithFields, startLogic: [screenOut] } as unknown as TSurvey;
+    const resource = serializeV3SurveyResource(stored, TEST_VISIBILITY);
+
+    expect(resource.startLogic).toEqual([screenOut]);
+    expect(serializeV3SurveyResource({ ...survey, startLogic: null }, TEST_VISIBILITY).startLogic).toEqual(
+      []
+    );
+
+    const roundTrip = prepareV3SurveyPatchInput(stored, JSON.parse(JSON.stringify(resource)), {
+      reportedVisibility: resource,
+    });
+    expect(getInvalidParams(roundTrip)).toEqual([]);
+  });
+
+  test("refuses an action other than a jump or a Set value, with the exact path", () => {
+    const preparation = prepareV3SurveyPatchInput(surveyWithFields, {
+      startLogic: [
+        {
+          ...screenOut,
+          actions: [
+            screenOut.actions[0],
+            { id: "clact223456789012345678901", objective: "requireAnswer", target: "satisfaction" },
+          ],
+        },
+      ],
+    });
+
+    expect(getInvalidParams(preparation)).toEqual([
+      expect.objectContaining({ name: "startLogic.0.actions.1" }),
+    ]);
+  });
+
+  test("refuses an answer in a condition and names the rule's conditions", () => {
+    const preparation = prepareV3SurveyPatchInput(surveyWithFields, {
+      startLogic: [
+        {
+          ...screenOut,
+          conditions: {
+            ...screenOut.conditions,
+            conditions: [
+              {
+                id: "clcond22345678901234567890",
+                leftOperand: { type: "element", value: "satisfaction" },
+                operator: "isSubmitted",
+              },
+            ],
+          },
+        },
+      ],
+    });
+
+    expect(getInvalidParams(preparation)).toEqual([
+      expect.objectContaining({ name: "startLogic.0.conditions" }),
+    ]);
+  });
+
+  test("refuses a jump to a block or ending that does not exist as a dangling reference", () => {
+    const preparation = prepareV3SurveyPatchInput(surveyWithFields, {
+      startLogic: [
+        { ...screenOut, actions: [{ ...screenOut.actions[0], target: "clmissing2345678901234567" }] },
+      ],
+    });
+
+    expect(getInvalidParams(preparation)).toEqual([
+      expect.objectContaining({
+        name: "startLogic.0.actions.0.target",
+        code: "dangling_reference",
+        identifier: "clmissing2345678901234567",
+      }),
+    ]);
+  });
+
+  test("blames the request when it removes a block start logic still jumps to", () => {
+    const secondBlock = {
+      id: "clbk2234567890123456789012",
+      name: "Second",
+      elements: [{ id: "second_q", type: "openText", headline: { default: "More?" }, required: false }],
+    };
+    const stored = {
+      ...surveyWithFields,
+      blocks: [...survey.blocks, secondBlock],
+      startLogic: [{ ...screenOut, actions: [{ ...screenOut.actions[0], target: secondBlock.id }] }],
+    } as unknown as TSurvey;
+
+    const preparation = prepareV3SurveyPatchInput(stored, {
+      blocks: JSON.parse(JSON.stringify(serializeV3SurveyResource(survey, TEST_VISIBILITY).blocks)),
+    });
+
+    expect(getInvalidParams(preparation)).toEqual([
+      expect.objectContaining({ name: "startLogic.0.actions.0.target", code: "dangling_reference" }),
+    ]);
+  });
+
+  test("rejects unknown keys inside a rule", () => {
+    const preparation = prepareV3SurveyPatchInput(surveyWithFields, {
+      startLogic: [{ ...screenOut, fallback: endingId }],
+    });
+
+    expect(getInvalidParams(preparation)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: "startLogic.0.fallback", code: "unsupported_field" }),
+      ])
+    );
+  });
+});
 describe("typed Embedded Data on the v3 document (ENG-6930)", () => {
   const scoreId = "clvar1234567890123456789012";
   const scoreField = {

@@ -376,6 +376,41 @@ describe("ZV3CreateSurveyBody", () => {
     });
   });
 
+  test("accepts show-if on blocks and elements, and rejects unknown keys inside it (ENG-6931)", () => {
+    const showIf = {
+      id: "clshowifgroup00000000001",
+      connector: "and",
+      conditions: [
+        {
+          id: "clshowifcond000000000001",
+          leftOperand: { type: "hiddenField", value: "plan" },
+          operator: "isSet",
+        },
+      ],
+    };
+    const withShowIf = (condition: Record<string, unknown>) => ({
+      ...validCreateBody,
+      hiddenFields: { enabled: true, fieldIds: ["plan"] },
+      blocks: [
+        {
+          ...validCreateBody.blocks[0],
+          showIf: { ...showIf, conditions: [condition] },
+          elements: [{ ...validCreateBody.blocks[0].elements[0], showIf }],
+        },
+      ],
+    });
+
+    const accepted = ZV3CreateSurveyBody.safeParse(withShowIf(showIf.conditions[0]));
+    expect(accepted.error?.issues ?? []).toEqual([]);
+    expect(accepted.data?.blocks[0].showIf).toEqual(showIf);
+    expect(accepted.data?.blocks[0].elements[0].showIf).toEqual(showIf);
+
+    const rejected = ZV3CreateSurveyBody.safeParse(withShowIf({ ...showIf.conditions[0], note: "x" }));
+    expect(rejected.error?.issues.map((issue) => issue.path.join("."))).toContain(
+      "blocks.0.showIf.conditions.0.note"
+    );
+  });
+
   test("rejects the internal default translation key in public v3 input", () => {
     const result = ZV3CreateSurveyBody.safeParse({
       ...validCreateBody,

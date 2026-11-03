@@ -1,8 +1,10 @@
 import { createId } from "@paralleldrive/cuid2";
+import { getIngestedStorageKeys } from "@formbricks/types/embedded-data-fields";
 import type {
   TSurveyBlock,
   TSurveyBlockLogic,
   TSurveyBlockLogicAction,
+  TSurveyBlockLogicActionObjective,
 } from "@formbricks/types/surveys/blocks";
 import type { TConditionGroup, TSingleCondition } from "@formbricks/types/surveys/logic";
 import type { TSurvey } from "@formbricks/types/surveys/types";
@@ -134,3 +136,44 @@ export const setBlockLogicFallback = (
   blockIdx: number,
   logicFallback: string | undefined
 ): TSurvey => updateBlockAt(survey, blockIdx, (block) => withFallback(block, logicFallback));
+
+/**
+ * The rule editor's scope for the rules before the first question (ENG-6932): they run before any
+ * block, so no answer can be read and every block is a jump target.
+ */
+export const START_SCOPE_BLOCK_IDX = -1;
+
+/**
+ * Sets the rules before the first question. Without rules the survey stores none (`null`), as a
+ * survey that never had any does, so adding and removing a rule leaves no unsaved change behind.
+ */
+export const setStartRules = (survey: TSurvey, rules: TSurveyBlockLogic[]): TSurvey => ({
+  ...survey,
+  startLogic: rules.length > 0 ? rules : null,
+});
+
+/** What a rule's actions may do where it runs: before the first question only jump or set a value. */
+export const getAllowedActionObjectives = (scopeBlockIdx: number): TSurveyBlockLogicActionObjective[] =>
+  scopeBlockIdx === START_SCOPE_BLOCK_IDX
+    ? ["calculate", "jumpToBlock"]
+    : ["calculate", "requireAnswer", "jumpToBlock"];
+
+/** The objective of an action added below: a jump first, then whatever else the scope allows. */
+export const getNextActionObjective = (
+  actions: TSurveyBlockLogicAction[],
+  scopeBlockIdx: number
+): TSurveyBlockLogicActionObjective => {
+  if (!actions.some((action) => action.objective === "jumpToBlock")) return "jumpToBlock";
+  return scopeBlockIdx === START_SCOPE_BLOCK_IDX ? "calculate" : "requireAnswer";
+};
+
+/**
+ * The condition a new rule before the first question starts with. There is no answer yet, so it
+ * reads the first URL parameter (ingested field), or the page URL when the survey has none.
+ */
+export const getDefaultStartCondition = (survey: TSurvey): Omit<TSingleCondition, "id"> => {
+  const [firstField] = getIngestedStorageKeys(survey);
+  return firstField
+    ? { leftOperand: { type: "hiddenField", value: firstField }, operator: "isSet" }
+    : { leftOperand: { type: "reserved", value: "url" }, operator: "isSet" };
+};

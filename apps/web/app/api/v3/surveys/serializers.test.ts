@@ -1,6 +1,8 @@
 import { describe, expect, test } from "vitest";
+import { surveyFlowFixture } from "@formbricks/types/surveys/test-fixtures/survey-flow-fixture";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import type { TSurvey as TSurveyListRecord } from "@/modules/survey/list/types/surveys";
+import { ZV3CreateSurveyBody, ZV3PatchSurveyBody } from "./schemas";
 import {
   V3SurveyLanguageError,
   V3SurveyUnsupportedShapeError,
@@ -805,5 +807,33 @@ describe("serializeV3SurveyListItem", () => {
 
     expect(serialized.responseCount).toBe(7);
     expect(serialized.completedResponseCount).toBe(4);
+  });
+});
+
+describe("show-if round-trip (ENG-6931)", () => {
+  test("GET returns block and element show-if, and create and patch take it back unchanged", () => {
+    const resource = serializeV3SurveyResource(surveyFlowFixture, TEST_VISIBILITY);
+    const showIfs = (blocks: { showIf?: unknown; elements: { showIf?: unknown }[] }[]) =>
+      blocks.flatMap((block) => [block.showIf, ...block.elements.map((element) => element.showIf)]);
+    const stored = showIfs(surveyFlowFixture.blocks).filter(Boolean);
+
+    expect(stored.length).toBeGreaterThanOrEqual(2);
+    expect(showIfs(resource.blocks as never)).toEqual(showIfs(surveyFlowFixture.blocks));
+
+    const body = {
+      workspaceId: "clxx1234567890123456789012",
+      name: resource.name,
+      blocks: resource.blocks,
+      endings: resource.endings,
+      hiddenFields: resource.hiddenFields,
+      variables: resource.variables,
+    };
+    const created = ZV3CreateSurveyBody.safeParse(body);
+    expect(created.error?.issues ?? []).toEqual([]);
+    expect(showIfs(created.data?.blocks ?? [])).toEqual(showIfs(surveyFlowFixture.blocks));
+
+    const patched = ZV3PatchSurveyBody.safeParse({ blocks: resource.blocks });
+    expect(patched.error?.issues ?? []).toEqual([]);
+    expect(showIfs((patched.data?.blocks as never) ?? [])).toEqual(showIfs(surveyFlowFixture.blocks));
   });
 });

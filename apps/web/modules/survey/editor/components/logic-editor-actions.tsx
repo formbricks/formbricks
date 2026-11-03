@@ -13,13 +13,13 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { getUpdatedActionBody } from "@/lib/surveyLogic/utils";
 import { SetValueFormula } from "@/modules/survey/editor/components/set-value-formula";
 import { oneStepToFormula } from "@/modules/survey/editor/lib/expression-formula";
+import { getAllowedActionObjectives, getNextActionObjective } from "@/modules/survey/editor/lib/rule-list";
 import {
   getActionObjectiveOptions,
   getActionOperatorOptions,
   getActionTargetOptions,
   getActionValueOptions,
   getActionVariableOptions,
-  hasJumpToBlockAction,
 } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -82,11 +82,14 @@ export function LogicEditorActions({
           actionsClone.splice(actionIdx, 1);
           break;
         case "addBelow":
-          actionsClone.splice(actionIdx + 1, 0, {
-            id: createId(),
-            objective: hasJumpToBlockAction(actionsClone) ? "requireAnswer" : "jumpToBlock",
-            target: "",
-          });
+          actionsClone.splice(
+            actionIdx + 1,
+            0,
+            getUpdatedActionBody(
+              { id: createId(), objective: "jumpToBlock", target: "" },
+              getNextActionObjective(actionsClone, scopeBlockIdx)
+            )
+          );
           break;
         case "duplicate":
           actionsClone.splice(actionIdx + 1, 0, { ...actionsClone[actionIdx], id: createId() });
@@ -111,9 +114,12 @@ export function LogicEditorActions({
     handleActionsChange("update", actionIdx, actionBody);
   };
 
-  const filteredObjectiveOptions = getActionObjectiveOptions(t).filter(
-    (option) => option.value !== "jumpToBlock"
+  // Before the first question a rule may only jump or set a value (ENG-6932).
+  const allowedObjectives = new Set<string>(getAllowedActionObjectives(scopeBlockIdx));
+  const objectiveOptions = getActionObjectiveOptions(t).filter((option) =>
+    allowedObjectives.has(String(option.value))
   );
+  const filteredObjectiveOptions = objectiveOptions.filter((option) => option.value !== "jumpToBlock");
 
   const jumpToBlockActionIdx = actions.findIndex((action) => action.objective === "jumpToBlock");
 
@@ -142,7 +148,7 @@ export function LogicEditorActions({
                     showSearch={false}
                     options={
                       jumpToBlockActionIdx === -1 || idx === jumpToBlockActionIdx
-                        ? getActionObjectiveOptions(t)
+                        ? objectiveOptions
                         : filteredObjectiveOptions
                     }
                     value={action.objective}

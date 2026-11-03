@@ -467,6 +467,21 @@ export function getV3SurveyReferenceInvalidParams(input: TReferenceValidationInp
       });
     }
 
+    // ENG-6931: show-if conditions reference answers, fields and variables like logic conditions.
+    if (block.showIf) {
+      validateConditionGroup(block.showIf, `blocks.${blockIndex}.showIf`, references, issues);
+    }
+    block.elements.forEach((element, elementIndex) => {
+      if (element.showIf) {
+        validateConditionGroup(
+          element.showIf,
+          `blocks.${blockIndex}.elements.${elementIndex}.showIf`,
+          references,
+          issues
+        );
+      }
+    });
+
     block.logic?.forEach((logic, logicIndex) => {
       const logicPath = `blocks.${blockIndex}.logic.${logicIndex}`;
       validateConditionGroup(logic.conditions, `${logicPath}.conditions`, references, issues);
@@ -562,13 +577,16 @@ export function assertValidV3SurveyReferences(input: TReferenceValidationInput):
  * recalls an answer the respondent has not given yet becomes easy to create, and it passes every
  * other server check.
  *
- * Three rules, each mirroring what the editor or the shared refinement already enforces:
+ * Four rules, each mirroring what the editor or the shared refinement already enforces:
  *
  *  - a recall of an element must point strictly backwards in flat element order
  *    (`recall-item-select.tsx` filters the picker the same way);
  *  - a logic condition's element left operand must not sit in a later block, same block allowed
  *    (mirrors `validateBlockConditions` in `packages/types/surveys/types.ts`);
- *  - a `requireAnswer` target must sit in a *later* block (mirrors `validateBlockActions`).
+ *  - a `requireAnswer` target must sit in a *later* block (mirrors `validateBlockActions`);
+ *  - a show-if may use only what comes before it (ENG-6931, mirrors `validateShowIf`): a block's
+ *    show-if earlier blocks only, an element's show-if earlier blocks plus elements above it on the
+ *    same block. Both operands of a condition are checked.
  *
  * `jumpToBlock` and `logicFallback` deliberately have no ordering rule — jumping backwards is a
  * legitimate survey design, and only cycles are policed.
@@ -707,7 +725,10 @@ function addRecallPrecedenceViolations(
 function forEachSingleCondition(
   group: TConditionGroup,
   path: string,
-  visit: (condition: { leftOperand: TDynamicLogicFieldValue }, conditionPath: string) => void
+  visit: (
+    condition: { leftOperand: TDynamicLogicFieldValue; rightOperand?: { type: string; value?: unknown } },
+    conditionPath: string
+  ) => void
 ): void {
   group.conditions.forEach((condition, index) => {
     const conditionPath = `${path}.conditions.${index}`;
@@ -762,6 +783,58 @@ function getV3SurveyPrecedenceViolations(input: TReferenceValidationInput): TPre
         `element:${element.id}`,
         positions,
         violations
+      );
+    });
+
+    // Show-if: what the respondent has answered before this block (or this element) is shown.
+    const addShowIfViolations = (
+      group: TConditionGroup,
+      path: string,
+      scopeKey: string,
+      canUse: (target: TElementPosition) => boolean,
+      rule: string
+    ) =>
+      forEachSingleCondition(group, path, (condition, conditionPath) => {
+        for (const [side, operand] of [
+          ["leftOperand", condition.leftOperand],
+          ["rightOperand", condition.rightOperand],
+        ] as const) {
+          if (operand?.type !== "element" || typeof operand.value !== "string") continue;
+          const elementId = operand.value;
+          const target = positions.get(elementId);
+          if (!target || canUse(target)) continue;
+
+          addViolation(violations, `showIf|${scopeKey}|${elementId}`, () =>
+            misorderedIssue(
+              `${conditionPath}.${side}.value`,
+              `Show-if references element '${elementId}' (${target.path}), which is not before it; ${rule}`,
+              elementId,
+              "element"
+            )
+          );
+        }
+      });
+
+    if (block.showIf) {
+      addShowIfViolations(
+        block.showIf,
+        `blocks.${blockIndex}.showIf`,
+        `block:${block.id}`,
+        (target) => target.blockIndex < blockIndex,
+        "a block's show-if can only use elements from earlier blocks"
+      );
+    }
+
+    block.elements.forEach((element, elementIndex) => {
+      if (!element.showIf) return;
+      const ownFlatIndex = positions.get(element.id)?.flatIndex ?? firstElementFlatIndex + elementIndex;
+      addShowIfViolations(
+        element.showIf,
+        `blocks.${blockIndex}.elements.${elementIndex}.showIf`,
+        `element:${element.id}`,
+        // Earlier blocks, or above it on the same block: strictly before it in flat order.
+        (target) => target.flatIndex < ownFlatIndex,
+        "an element's show-if can only use elements from earlier blocks or above it on the same block"
       );
     });
 

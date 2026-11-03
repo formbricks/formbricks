@@ -3,7 +3,7 @@ import { z } from "zod";
 import { ZCustomCssInput, ZCustomCssScope } from "@formbricks/types/custom-css";
 import { ZSegmentFilters } from "@formbricks/types/segment";
 import { ZShowConditions } from "@formbricks/types/show-conditions";
-import { ZSurveyBlocks } from "@formbricks/types/surveys/blocks";
+import { ZSurveyBlockLogic, ZSurveyBlocks } from "@formbricks/types/surveys/blocks";
 import { EXPRESSION_MAX_DEPTH } from "@formbricks/types/surveys/expressions";
 import {
   type TSurveyType,
@@ -411,6 +411,7 @@ const ROOT_KEYS = new Set([
   "endings",
   "hiddenFields",
   "variables",
+  "startLogic",
   "embeddedFields",
   "distribution",
   "targeting",
@@ -428,6 +429,7 @@ const PATCH_ROOT_KEYS = new Set([
   "endings",
   "hiddenFields",
   "variables",
+  "startLogic",
   "embeddedFields",
   "distribution",
   "targeting",
@@ -466,6 +468,8 @@ const BLOCK_KEYS = new Set([
   "elements",
   "logic",
   "logicFallback",
+  // ENG-6931: the block's show-if condition group.
+  "showIf",
   "buttonLabel",
   "backButtonLabel",
 ]);
@@ -495,6 +499,8 @@ const ELEMENT_BASE_KEYS = new Set([
   "videoUrl",
   "required",
   "isDraft",
+  // ENG-6931: the element's show-if condition group.
+  "showIf",
 ]);
 // Everything but CTA can carry a question code (ENG-6778); a missing entry here would silently drop it.
 const CODED_ELEMENT_BASE_KEYS = new Set([...ELEMENT_BASE_KEYS, "code"]);
@@ -956,6 +962,10 @@ function validateElement(
 
   validateValidation(value.validation, `${path}.validation`, issues);
 
+  if (value.showIf !== undefined) {
+    validateConditionGroup(value.showIf, `${path}.showIf`, issues);
+  }
+
   if (Array.isArray(value.choices)) {
     const choiceKeys = value.type === "pictureSelection" ? PICTURE_CHOICE_KEYS : LABEL_CHOICE_KEYS;
     value.choices.forEach((choice, index) =>
@@ -1005,6 +1015,10 @@ function validateBlock(
 
   if (Array.isArray(value.logic)) {
     value.logic.forEach((logic, index) => validateBlockLogic(logic, `${path}.logic.${index}`, issues));
+  }
+
+  if (value.showIf !== undefined) {
+    validateConditionGroup(value.showIf, `${path}.showIf`, issues);
   }
 }
 
@@ -1094,6 +1108,10 @@ function getUnsupportedV3SurveyDocumentFields(
     value.endings.forEach((ending, index) =>
       validateEnding(ending, `endings.${index}`, issues, defaultLanguage, options)
     );
+  // Rules before the first question (ENG-6932) use the block-rule format, so the same allowlists.
+  if (Array.isArray(value.startLogic)) {
+    value.startLogic.forEach((rule, index) => validateBlockLogic(rule, `startLogic.${index}`, issues));
+  }
 
   const metadata = value.metadata;
   if (isPlainObject(metadata)) {
@@ -1184,6 +1202,8 @@ export const V3_SURVEY_MAX_VARIABLES = 100;
 export const V3_SURVEY_MAX_LANGUAGES = 50;
 export const V3_SURVEY_MAX_HIDDEN_FIELDS = 200;
 export const V3_SURVEY_MAX_TRIGGERS = 50;
+/** Rules before the first question (ENG-6932). A screener has a handful; this is a ceiling, not a target. */
+export const V3_SURVEY_MAX_START_LOGIC_RULES = 100;
 
 /**
  * A document array, capped for request input or plain for the stored document. Typed on the output
@@ -1211,6 +1231,13 @@ const createZV3SurveyEndings = (bound: boolean) =>
   documentArray(ZSurveyEndings.element, { max: V3_SURVEY_MAX_ENDINGS }, bound);
 const createZV3SurveyVariables = (bound: boolean) =>
   documentArray(ZSurveyVariables.element, { max: V3_SURVEY_MAX_VARIABLES }, bound);
+/**
+ * Rules before the first question (ENG-6932, json-shapes.md section 4): the block-rule format. Which
+ * actions and operands they may use is checked with the merged document (`validateStartLogic`), so a
+ * rule naming a block the same request removes is caught too.
+ */
+const createZV3SurveyStartLogic = (bound: boolean) =>
+  documentArray(ZSurveyBlockLogic, { max: V3_SURVEY_MAX_START_LOGIC_RULES }, bound);
 const createZV3SurveyEmbeddedFields = (bound: boolean) =>
   documentArray(ZV3SurveyEmbeddedField, { max: V3_SURVEY_MAX_EMBEDDED_FIELDS }, bound);
 const createZV3SurveyHiddenFields = (bound: boolean): z.ZodType<z.output<typeof ZSurveyHiddenFields>> =>
@@ -1344,6 +1371,7 @@ function createV3SurveyDocumentShape(options?: TV3LanguageCompatibilityOptions, 
     endings: createZV3SurveyEndings(bound).prefault([]),
     hiddenFields: createZV3SurveyHiddenFields(bound).prefault({ enabled: false }),
     variables: createZV3SurveyVariables(bound).prefault([]),
+    startLogic: createZV3SurveyStartLogic(bound).prefault([]),
     // ENG-6930: typed Embedded Data. Absent unless the request sent it: the legacy keys above are then
     // derived from it (`settleV3EmbeddedFieldFormats`), and the stored survey is parsed without it.
     embeddedFields: createZV3SurveyEmbeddedFields(bound).optional(),
@@ -1368,6 +1396,11 @@ function createV3SurveyPatchShape(options?: TV3LanguageCompatibilityOptions) {
     endings: createZV3SurveyEndings(true).optional(),
     hiddenFields: createZV3SurveyHiddenFields(true).optional(),
     variables: createZV3SurveyVariables(true).optional(),
+    // Omitted: unchanged. `null` or `[]`: no rules before the first question. An array: replaces them.
+    startLogic: createZV3SurveyStartLogic(true)
+      .nullable()
+      .transform((rules) => rules ?? [])
+      .optional(),
     embeddedFields: createZV3SurveyEmbeddedFields(true).optional(),
     distribution: ZV3SurveyDistribution.optional(),
     targeting: ZV3SurveyTargeting.optional(),

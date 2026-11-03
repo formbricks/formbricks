@@ -1,0 +1,31 @@
+type: array
+maxItems: 100
+description: >-
+  Rules before the first question. The survey runs them as soon as it loads, before the welcome card,
+  and also when a start-at link skips ahead. Each rule has the block-rule shape (`id`, `conditions`,
+  `actions`), but only two actions are allowed: `jumpToBlock`, to a block or to an ending (an ending is
+  a screen-out: the respondent sees only that ending, and a finished response is stored that counts as
+  Completed), and `calculate`, to set a computed field. `requireAnswer` and any other action are
+  rejected with a 422 naming `startLogic.<rule>.actions.<action>`. Nothing has been answered yet, so
+  conditions and values may read `hiddenField` (URL parameters), `variable` and `reserved` operands
+  only; an `element` operand is rejected with a 422 naming `startLogic.<rule>.conditions` (or the
+  action's `value`). A jump to a block or ending that does not exist is a `dangling_reference`. The
+  first jump wins, every `calculate` runs, and with no jump the respondent continues to the first block
+  (or the start-at target). `[]` means the survey has none.
+items:
+  $ref: ./SurveyBlockLogic.yml
+example:
+  - id: clrule12345678901234567890
+    conditions:
+      id: clgrp123456789012345678901
+      connector: and
+      conditions:
+        - id: clcond12345678901234567890
+          leftOperand:
+            type: hiddenField
+            value: panel_id
+          operator: isNotSet
+    actions:
+      - id: clact123456789012345678901
+        objective: jumpToBlock
+        target: clend123456789012345678901

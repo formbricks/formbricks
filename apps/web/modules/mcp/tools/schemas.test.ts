@@ -175,6 +175,7 @@ const EXPECTED_FREE_FORM_PATHS: Record<string, string[]> = {
     "ZMcpCreateSurveyInput.endings[]",
     "ZMcpCreateSurveyInput.hiddenFields",
     "ZMcpCreateSurveyInput.variables[]",
+    "ZMcpCreateSurveyInput.startLogic[]",
   ],
   ZMcpPatchSurveyInput: ["ZMcpPatchSurveyInput.data"],
   // Both op branches that carry a block: the payload is the v3 document's block shape, validated
@@ -337,6 +338,67 @@ describe("survey block discoverability (ENG-2180)", () => {
     // confident wrong answer, which is exactly what probing already gives an agent.
     expect(parsed.error?.issues ?? []).toEqual([]);
     expect(parsed.success).toBe(true);
+  });
+});
+
+describe("rules before the first question (ENG-6932)", () => {
+  const { ZMcpCreateSurveyInput, ZMcpPatchSurveyInput, ZMcpValidateSurveyInput } = surveyAndFeedbackSchemas;
+
+  test("create_survey accepts startLogic and describes what its rules may do", () => {
+    const parsed = ZMcpCreateSurveyInput.safeParse({
+      workspaceId: "clxx1234567890123456789012",
+      name: "Screener",
+      blocks: [surveyAndFeedbackSchemas.SURVEY_BLOCK_EXAMPLE],
+      startLogic: [{ id: "r1", conditions: {}, actions: [] }],
+    });
+    const advertised = z.toJSONSchema(ZMcpCreateSurveyInput, { io: "input" }) as {
+      properties: Record<string, { description?: string }>;
+    };
+    const description = advertised.properties.startLogic.description ?? "";
+
+    expect(parsed.error?.issues ?? []).toEqual([]);
+    for (const term of ["jumpToBlock", "calculate", "ending", "hiddenField", "welcome card", "start-at"]) {
+      expect(description).toContain(term);
+    }
+  });
+
+  test("patch_survey and validate_survey name startLogic in their payload description", () => {
+    expect(ZMcpPatchSurveyInput.shape.data.description).toContain("startLogic");
+    expect(ZMcpValidateSurveyInput.shape.data.description).toContain("startLogic");
+  });
+});
+
+describe("show-if discoverability (ENG-6931)", () => {
+  test("the blocks description documents show-if, and its example validates on a follow-up element", async () => {
+    const { ZV3CreateSurveyBody } = await import("@/app/api/v3/surveys/schemas");
+    const description = surveyAndFeedbackSchemas.ZMcpCreateSurveyInput.shape.blocks.description ?? "";
+    const { SURVEY_BLOCK_EXAMPLE, SURVEY_SHOW_IF_EXAMPLE } = surveyAndFeedbackSchemas;
+
+    expect(description).toContain("`showIf`");
+    expect(description).toContain("Reference rule");
+    expect(description).toContain(JSON.stringify(SURVEY_SHOW_IF_EXAMPLE));
+
+    const parsed = ZV3CreateSurveyBody.safeParse({
+      workspaceId: "clxx1234567890123456789012",
+      name: "Example",
+      blocks: [
+        {
+          ...SURVEY_BLOCK_EXAMPLE,
+          elements: [
+            ...SURVEY_BLOCK_EXAMPLE.elements,
+            {
+              id: "price_detail",
+              type: "openText",
+              headline: { "en-US": "Which price felt too high?" },
+              required: true,
+              showIf: SURVEY_SHOW_IF_EXAMPLE,
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(parsed.error?.issues ?? []).toEqual([]);
   });
 });
 

@@ -5,7 +5,7 @@ import type { TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resol
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import type { TSingleCondition } from "@formbricks/types/surveys/logic";
 import {
-  SURVEY_FLOW_FIXTURE_IDS as ids,
+  SURVEY_FLOW_FIXTURE_IDS,
   surveyFlowFixture,
 } from "@formbricks/types/surveys/test-fixtures/survey-flow-fixture";
 import type { TSurvey } from "@formbricks/types/surveys/types";
@@ -13,6 +13,7 @@ import type { TComboboxGroupedOption, TComboboxOption } from "@/modules/ui/compo
 import {
   findElementUsedInLogic,
   findHiddenFieldUsedInLogic,
+  findOptionUsedInLogic,
   findVariableUsedInLogic,
   getActionValueOptions,
   getActionVariableOptions,
@@ -620,8 +621,12 @@ describe("operators that take no right-hand side", () => {
 describe("a reference inside a Set value expression counts as used in logic (ENG-6935)", () => {
   // `signup_date` and `signed_up_at` appear in the fixture only inside the tenure step's formula.
   test("an ingested and a computed field read by a formula", () => {
-    expect(findHiddenFieldUsedInLogic(surveyFlowFixture, ids.hiddenFields.signupDate)).not.toBe(-1);
-    expect(findVariableUsedInLogic(surveyFlowFixture, ids.variables.signedUpAt)).not.toBe(-1);
+    expect(
+      findHiddenFieldUsedInLogic(surveyFlowFixture, SURVEY_FLOW_FIXTURE_IDS.hiddenFields.signupDate)
+    ).not.toBe(-1);
+    expect(findVariableUsedInLogic(surveyFlowFixture, SURVEY_FLOW_FIXTURE_IDS.variables.signedUpAt)).not.toBe(
+      -1
+    );
   });
 
   test("a question read by a formula", () => {
@@ -629,7 +634,7 @@ describe("a reference inside a Set value expression counts as used in logic (ENG
     const survey = structuredClone(surveyFlowFixture);
     survey.blocks = survey.blocks.map((block) => ({
       ...block,
-      logic: (block.logic ?? []).filter((rule) => rule.id === ids.setValue.scoreRule),
+      logic: (block.logic ?? []).filter((rule) => rule.id === SURVEY_FLOW_FIXTURE_IDS.setValue.scoreRule),
     }));
     expect(findElementUsedInLogic(survey, "csat")).toBe(-1);
 
@@ -643,5 +648,57 @@ describe("a reference inside a Set value expression counts as used in logic (ENG
     } as (typeof scoreStep.actions)[number];
 
     expect(findElementUsedInLogic(survey, "csat")).not.toBe(-1);
+  });
+});
+
+describe("removal guards also see show-if (ENG-6931)", () => {
+  // Without block logic, the fixture's only uses of "services" and its "prime" option are the show-if
+  // of the Heavy users block (block 2, question "hours").
+  const withoutLogic = (): TSurvey => {
+    const survey = structuredClone(surveyFlowFixture);
+    survey.blocks = survey.blocks.map((block) => ({ ...block, logic: [], logicFallback: undefined }));
+    return survey;
+  };
+  const flatIndexOf = (survey: TSurvey, elementId: string) =>
+    survey.blocks.flatMap((block) => block.elements).findIndex((element) => element.id === elementId);
+
+  test("a question a block's show-if depends on is reported as used", () => {
+    const survey = withoutLogic();
+
+    expect(findElementUsedInLogic(survey, "services")).toBe(flatIndexOf(survey, "hours"));
+  });
+
+  test("a question another question's show-if depends on is reported as used", () => {
+    const survey = withoutLogic();
+
+    // "apple_reason" is shown only if "fav" is Apple TV+.
+    expect(findElementUsedInLogic(survey, "fav")).toBe(flatIndexOf(survey, "apple_reason"));
+  });
+
+  test("an option a show-if compares against is reported as used", () => {
+    const survey = withoutLogic();
+
+    expect(findOptionUsedInLogic(survey, "services", "prime")).toBe(flatIndexOf(survey, "hours"));
+    expect(findOptionUsedInLogic(survey, "services", "apple")).toBe(-1);
+  });
+
+  test("a hidden field a show-if reads is reported as used", () => {
+    const survey = withoutLogic();
+    const signupDate = SURVEY_FLOW_FIXTURE_IDS.hiddenFields.signupDate;
+    expect(findHiddenFieldUsedInLogic(survey, signupDate)).toBe(-1);
+
+    survey.blocks[4].elements[3].showIf = {
+      id: "showifgroup0000000000010",
+      connector: "and",
+      conditions: [
+        {
+          id: "showifcond00000000000010",
+          leftOperand: { type: "hiddenField", value: signupDate },
+          operator: "isSet",
+        },
+      ],
+    };
+
+    expect(findHiddenFieldUsedInLogic(survey, signupDate)).toBe(flatIndexOf(survey, "email"));
   });
 });

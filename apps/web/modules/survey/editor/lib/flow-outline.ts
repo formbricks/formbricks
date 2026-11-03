@@ -6,14 +6,14 @@ import type { TSurvey } from "@formbricks/types/surveys/types";
  * The Flow tab's outline model (ENG-6929): a pure function from the survey to the rows the
  * FlowOutline renders, top to bottom in the order a respondent moves.
  *
- * - rules before the first question (`startLogic`), when the survey has any
+ * - rules before the first question (`startLogic`, ENG-6932), a section that is always there
  * - each block, with its questions, and indented under it its rules and its fallback
  * - the endings
  *
  * **Everything the survey holds produces a row or a badge** (D2, Javier's ENG-3651 rule): whatever
  * the v3 API or MCP can write is shown, so nothing an AI wrote is hidden from the person checking
  * it. A construct the Flow tab cannot edit yet comes out with `editable: false` and is rendered
- * read-only. The keys this module reads beyond `TSurvey` (`startLogic`, `showIf`, `hidden`,
+ * read-only. The keys this module reads beyond `TSurvey` (`hidden`,
  * `optionsCopiedFrom`, and rule actions or values the editor doesn't know) are the approved shapes
  * of the later Survey Flow Editor tickets; each of those tickets makes its construct editable.
  *
@@ -53,16 +53,16 @@ export interface TFlowFallbackRow {
 }
 
 /**
- * A badge on a block or a question. None of these are editable on the Flow tab yet; they are shown
- * so a survey written through the API never hides them.
+ * A badge on a block or a question, shown so a survey written through the API never hides them.
  *
- * - `showIf`: the item is shown only when its condition group matches
+ * - `showIf`: the item is shown only when its condition group matches. Edited in place (ENG-6931),
+ *   unless a condition uses an operand type the conditions editor doesn't know
  * - `optionsShowIf`: `count` options (or matrix rows and columns) carry their own show-if
  * - `hiddenOptions`: `count` options are hidden
  * - `optionsCopiedFrom`: the options are copied from the question `sourceId`
  */
 export type TFlowBadge =
-  | { kind: "showIf"; conditions: TConditionGroup; editable: false }
+  | { kind: "showIf"; conditions: TConditionGroup; editable: boolean }
   | { kind: "optionsShowIf"; count: number; editable: false }
   | { kind: "hiddenOptions"; count: number; editable: false }
   | { kind: "optionsCopiedFrom"; sourceId: string; editable: false };
@@ -98,8 +98,8 @@ export interface TFlowStartSection {
 }
 
 export interface TFlowOutline {
-  /** Rules before the first question; `null` when the survey has none. */
-  start: TFlowStartSection | null;
+  /** Rules before the first question; always there, so a first rule can be added (ENG-6932). */
+  start: TFlowStartSection;
   blocks: TFlowBlockSection[];
   endings: TFlowEndingRow[];
   counts: { blocks: number; endings: number };
@@ -107,9 +107,26 @@ export interface TFlowOutline {
 
 const EDITABLE_ACTION_OBJECTIVES = new Set(["jumpToBlock", "requireAnswer", "calculate"]);
 const EDITABLE_VALUE_TYPES = new Set(["static", "element", "variable", "hiddenField", "reserved"]);
-// ENG-6935: a calculation's value may also be a Set value expression, edited in the formula box.
-const EDITABLE_CALCULATE_VALUE_TYPES = new Set([...EDITABLE_VALUE_TYPES, "expression"]);
+// ENG-6935: a calculation's value may also be a Set value expression, edited in the formula box, in a
+// block's rules and before the first question alike.
+const EDITABLE_CALCULATE_ONLY_VALUE_TYPES = new Set(["expression"]);
 const EDITABLE_OPERAND_TYPES = new Set(["element", "variable", "hiddenField", "reserved"]);
+
+/**
+ * Before the first question the editor offers no answers and no "require answer" (ENG-6932). A rule
+ * written there through the API with either is shown read-only, as the validator refuses it anyway.
+ */
+const START_EDITABLE = {
+  objectives: new Set(["jumpToBlock", "calculate"]),
+  valueTypes: new Set(["static", "variable", "hiddenField", "reserved"]),
+  operandTypes: new Set(["variable", "hiddenField", "reserved"]),
+};
+const BLOCK_EDITABLE = {
+  objectives: EDITABLE_ACTION_OBJECTIVES,
+  valueTypes: EDITABLE_VALUE_TYPES,
+  operandTypes: EDITABLE_OPERAND_TYPES,
+};
+type TEditableSets = typeof BLOCK_EDITABLE;
 
 type TLooseRecord = Record<string, unknown>;
 
@@ -119,36 +136,39 @@ const isGroup = (value: unknown): value is { conditions: unknown[] } =>
   isRecord(value) && Array.isArray(value.conditions);
 
 /** Whether the rule editor can show every condition of a group: known operand types only. */
-const areConditionsEditable = (group: unknown): boolean => {
+const areConditionsEditable = (group: unknown, editable: TEditableSets = BLOCK_EDITABLE): boolean => {
   if (!isGroup(group)) return false;
   return group.conditions.every((condition) => {
-    if (isGroup(condition)) return areConditionsEditable(condition);
+    if (isGroup(condition)) return areConditionsEditable(condition, editable);
     if (!isRecord(condition) || !isRecord(condition.leftOperand)) return false;
     const leftType = condition.leftOperand.type;
-    if (typeof leftType !== "string" || !EDITABLE_OPERAND_TYPES.has(leftType)) return false;
+    if (typeof leftType !== "string" || !editable.operandTypes.has(leftType)) return false;
     const right = condition.rightOperand;
     if (right === undefined) return true;
-    return isRecord(right) && typeof right.type === "string" && EDITABLE_VALUE_TYPES.has(right.type);
+    return isRecord(right) && typeof right.type === "string" && editable.valueTypes.has(right.type);
   });
 };
 
-const getReadOnlyReason = (rule: TSurveyBlockLogic): TFlowReadOnlyReason | undefined => {
+const getReadOnlyReason = (
+  rule: TSurveyBlockLogic,
+  editable: TEditableSets = BLOCK_EDITABLE
+): TFlowReadOnlyReason | undefined => {
   const actions: unknown[] = Array.isArray(rule.actions) ? rule.actions : [];
   for (const action of actions) {
     if (!isRecord(action) || typeof action.objective !== "string") return "unsupportedAction";
-    if (!EDITABLE_ACTION_OBJECTIVES.has(action.objective)) return "unsupportedAction";
+    if (!editable.objectives.has(action.objective)) return "unsupportedAction";
     if (action.objective === "calculate") {
       const value = action.value;
-      if (
-        !isRecord(value) ||
-        typeof value.type !== "string" ||
-        !EDITABLE_CALCULATE_VALUE_TYPES.has(value.type)
-      ) {
+      const isEditableValue =
+        isRecord(value) &&
+        typeof value.type === "string" &&
+        (editable.valueTypes.has(value.type) || EDITABLE_CALCULATE_ONLY_VALUE_TYPES.has(value.type));
+      if (!isEditableValue) {
         return "unsupportedValue";
       }
     }
   }
-  if (!areConditionsEditable(rule.conditions)) return "unsupportedCondition";
+  if (!areConditionsEditable(rule.conditions, editable)) return "unsupportedCondition";
   return undefined;
 };
 
@@ -160,7 +180,7 @@ const getRuleTone = (rule: TSurveyBlockLogic): TFlowRuleTone => {
 };
 
 const toRuleRow = (rule: TSurveyBlockLogic, ruleIdx: number, owner: TFlowRuleOwner): TFlowRuleRow => {
-  const readOnlyReason = getReadOnlyReason(rule);
+  const readOnlyReason = getReadOnlyReason(rule, owner.type === "start" ? START_EDITABLE : BLOCK_EDITABLE);
   return {
     kind: "rule",
     id: rule.id,
@@ -175,7 +195,13 @@ const toRuleRow = (rule: TSurveyBlockLogic, ruleIdx: number, owner: TFlowRuleOwn
 
 const getShowIfBadge = (item: unknown): TFlowBadge[] =>
   isRecord(item) && isGroup(item.showIf)
-    ? [{ kind: "showIf", conditions: item.showIf as unknown as TConditionGroup, editable: false }]
+    ? [
+        {
+          kind: "showIf",
+          conditions: item.showIf as unknown as TConditionGroup,
+          editable: areConditionsEditable(item.showIf),
+        },
+      ]
     : [];
 
 /** The options of an element, wherever its type keeps them: choices, or matrix rows and columns. */
@@ -213,17 +239,9 @@ const getFallbackTarget = (survey: TSurvey, logicFallback: string | undefined): 
   return { kind: "missing", id: logicFallback };
 };
 
-const getStartSection = (survey: TSurvey): TFlowStartSection | null => {
-  const startLogic = (survey as unknown as TLooseRecord).startLogic;
-  if (!Array.isArray(startLogic) || startLogic.length === 0) return null;
-  return {
-    // Not editable until rules before the first question get their editor (ENG-6932).
-    rules: (startLogic as TSurveyBlockLogic[]).map((rule, ruleIdx) => ({
-      ...toRuleRow(rule, ruleIdx, { type: "start" }),
-      editable: false,
-    })),
-  };
-};
+const getStartSection = (survey: TSurvey): TFlowStartSection => ({
+  rules: (survey.startLogic ?? []).map((rule, ruleIdx) => toRuleRow(rule, ruleIdx, { type: "start" })),
+});
 
 export const buildFlowOutline = (survey: TSurvey): TFlowOutline => {
   const blocks = survey.blocks.map((block, blockIdx): TFlowBlockSection => {

@@ -76,7 +76,7 @@ const ids = SURVEY_FLOW_FIXTURE_IDS;
 
 // Sequential cuid2-shaped ids for rules, condition groups, conditions and actions.
 let sequence = 0;
-const nextId = (prefix: "rule" | "group" | "cond" | "action"): string => {
+const nextId = (prefix: "rule" | "group" | "cond" | "action" | "showif"): string => {
   sequence += 1;
   return `flow${prefix}${String(sequence).padStart(24 - 4 - prefix.length, "0")}`;
 };
@@ -322,6 +322,19 @@ const ratingsBlock: TSurveyBlock = {
 const heavyUsersBlock: TSurveyBlock = {
   id: ids.blocks.heavyUsers,
   name: "Heavy users",
+  // Block show-if (ENG-6931), on an earlier block's answer: only people using all three big services.
+  showIf: {
+    id: nextId("showif"),
+    connector: "and",
+    conditions: [
+      {
+        id: nextId("showif"),
+        leftOperand: { type: "element", value: "services" },
+        operator: "includesAllOf",
+        rightOperand: { type: "static", value: ["netflix", "disney", "prime"] },
+      },
+    ],
+  },
   elements: [
     {
       id: "hours",
@@ -501,6 +514,19 @@ const overallBlock: TSurveyBlock = {
       type: TSurveyElementTypeEnum.OpenText,
       headline: i18n("What would convince you to try Apple TV+?"),
       required: false,
+      // Question show-if (ENG-6931) on the question above it on the same page, shown live.
+      showIf: {
+        id: nextId("showif"),
+        connector: "and",
+        conditions: [
+          {
+            id: nextId("showif"),
+            leftOperand: { type: "element", value: "fav" },
+            operator: "equals",
+            rightOperand: { type: "static", value: "apple" },
+          },
+        ],
+      },
       inputType: "text",
       charLimit: { enabled: false },
     },
@@ -956,6 +982,78 @@ const blocks: TSurveyBlock[] = [
   withRules(profileBlock, [tenureStep]),
 ];
 
+/**
+ * Rules before the first question (ENG-6932), in the shape of json-shapes.md section 4: a screen-out
+ * on a missing panel id, a jump with a Set value from a URL parameter, and a Set value on a reserved
+ * field. Defined after the blocks so the sequential ids of the block rules above do not shift.
+ */
+const startLogic: TSurveyBlockLogic[] = [
+  {
+    id: nextId("rule"),
+    conditions: {
+      id: nextId("group"),
+      connector: "and",
+      conditions: [
+        {
+          id: nextId("cond"),
+          leftOperand: { type: "hiddenField", value: ids.hiddenFields.panelId },
+          operator: "isNotSet",
+        },
+      ],
+    },
+    actions: [{ id: nextId("action"), objective: "jumpToBlock", target: ids.endings.notForYou }],
+  },
+  {
+    id: nextId("rule"),
+    conditions: {
+      id: nextId("group"),
+      connector: "and",
+      conditions: [
+        {
+          id: nextId("cond"),
+          leftOperand: { type: "hiddenField", value: ids.hiddenFields.seg },
+          operator: "equals",
+          rightOperand: { type: "static", value: "heavy" },
+        },
+      ],
+    },
+    actions: [
+      {
+        id: nextId("action"),
+        objective: "calculate",
+        variableId: ids.variables.segment,
+        operator: "assign",
+        value: { type: "hiddenField", value: ids.hiddenFields.seg },
+      },
+      { id: nextId("action"), objective: "jumpToBlock", target: ids.blocks.heavyUsers },
+    ],
+  },
+  {
+    id: nextId("rule"),
+    conditions: {
+      id: nextId("group"),
+      connector: "and",
+      conditions: [
+        {
+          id: nextId("cond"),
+          leftOperand: { type: "reserved", value: "url" },
+          operator: "contains",
+          rightOperand: { type: "static", value: "preview" },
+        },
+      ],
+    },
+    actions: [
+      {
+        id: nextId("action"),
+        objective: "calculate",
+        variableId: ids.variables.segment,
+        operator: "concat",
+        value: { type: "static", value: "-preview" },
+      },
+    ],
+  },
+];
+
 export const surveyFlowFixture: TSurvey = {
   id: ids.survey,
   createdAt: new Date("2026-11-03T00:00:00.000Z"),
@@ -983,6 +1081,7 @@ export const surveyFlowFixture: TSurvey = {
     showResponseCount: false,
   },
   questions: [],
+  startLogic,
   blocks,
   endings: [
     { id: ids.endings.thanks, type: "endScreen", headline: i18n("Thanks for your feedback!") },

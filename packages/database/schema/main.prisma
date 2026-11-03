@@ -575,6 +575,10 @@ model Survey {
   /// (ENG-3873). null = no conditions, which is what every existing survey keeps.
   showConditions Json?
 
+  /// [SurveyStartLogic] Rules before the first question (ENG-6932): block-rule format, run by the
+  /// survey on load. null = none, which is what every existing survey keeps.
+  startLogic Json?
+
   @@unique([id, workspaceId])
   @@index([workspaceId, updatedAt])
   @@index([workspaceId, ownerId])

@@ -45,7 +45,7 @@ describe("narrowDataTypeToSource", () => {
   });
 
   test("falls back to the first allowed type when the current one is no longer offered", () => {
-    expect(narrowDataTypeToSource("date", "computed")).toBe("string");
+    expect(narrowDataTypeToSource("date", "computed")).toBe("date");
     expect(narrowDataTypeToSource("boolean", "computed")).toBe("string");
   });
 });

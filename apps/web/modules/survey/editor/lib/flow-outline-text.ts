@@ -195,3 +195,35 @@ export const describeAction = (
       return { kind: "unknown", label: String((action as { objective?: unknown }).objective ?? "") };
   }
 };
+
+/**
+ * How one action of a rule is introduced on its row: the first reads on its own, later ones are set
+ * apart ("·"), and the jump is announced with "then". Run together, "Require an answer to “q3” What
+ * went wrong" read the jump's destination as part of the question's name.
+ */
+export type TFlowActionLead = "none" | "and" | "then";
+
+export interface TFlowActionStep {
+  lead: TFlowActionLead;
+  action: TFlowActionText;
+}
+
+/**
+ * A rule's actions as the steps its row shows. The jump goes last whatever its position in the
+ * list: every other action runs before the respondent moves on.
+ */
+export const describeRuleActions = (
+  actions: TSurveyBlockLogicAction[],
+  survey: TSurvey,
+  t: TFunction
+): TFlowActionStep[] => {
+  const described = actions.map((action) => describeAction(action, survey, t));
+  const ordered = [
+    ...described.filter((action) => action.kind !== "jump"),
+    ...described.filter((action) => action.kind === "jump"),
+  ];
+  return ordered.map((action, idx): TFlowActionStep => {
+    if (idx === 0) return { lead: "none", action };
+    return { lead: action.kind === "jump" ? "then" : "and", action };
+  });
+};
