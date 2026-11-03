@@ -1,4 +1,8 @@
 import { describe, expect, test, vi } from "vitest";
+import {
+  SURVEY_FLOW_FIXTURE_IDS,
+  surveyFlowFixture,
+} from "@formbricks/types/surveys/test-fixtures/survey-flow-fixture";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { prepareV3SurveyCreate, prepareV3SurveyCreateInput, prepareV3SurveyPatchInput } from "./prepare";
 import { type TV3SurveyDocument, ZV3CreateSurveyBody } from "./schemas";
@@ -1570,5 +1574,48 @@ describe("embeddedFields schema rules (ENG-6930)", () => {
     expect(issuePaths(parseCreate([{ name: "tier", source: "computed", id: "x" }]))).toContain(
       "embeddedFields.0.id"
     );
+  });
+});
+
+describe("the shared flow fixture's Embedded Data through v3 (ENG-6930)", () => {
+  // Visibility fields are dropped as the route drops an exact echo of them; that is not under test here.
+  const {
+    visibility: _visibility,
+    owner: _owner,
+    access: _access,
+    ...resource
+  } = serializeV3SurveyResource(surveyFlowFixture, TEST_VISIBILITY);
+
+  test("GET returns every field typed, the library link by its key, and its output patches back unchanged", () => {
+    expect(resource.embeddedFields).toContainEqual({
+      storageKey: SURVEY_FLOW_FIXTURE_IDS.hiddenFields.planTier,
+      key: "plan_tier",
+      name: "Plan tier",
+      source: "ingested",
+      dataType: "string",
+      defaultValue: "free",
+      locked: true,
+    });
+
+    const preparation = prepareV3SurveyPatchInput(surveyFlowFixture, resource);
+
+    expect(preparation.ok).toBe(true);
+    if (!preparation.ok) return;
+    expect(preparation.document.embeddedFields).toEqual(resource.embeddedFields);
+    expect(preparation.document.variables).toEqual(surveyFlowFixture.variables);
+    expect(preparation.document.hiddenFields).toEqual(surveyFlowFixture.hiddenFields);
+  });
+
+  test("an echo that edits one format and not the other is refused, naming the path", () => {
+    const variables = surveyFlowFixture.variables.map((variable) =>
+      variable.id === SURVEY_FLOW_FIXTURE_IDS.variables.segment ? { ...variable, name: "audience" } : variable
+    );
+
+    const preparation = prepareV3SurveyPatchInput(surveyFlowFixture, { ...resource, variables });
+
+    expect(preparation.ok).toBe(false);
+    if (preparation.ok) return;
+    expect(preparation.origin).toBe("embeddedFields");
+    expect(preparation.validation.invalidParams.map((param) => param.name)).toEqual(["variables.2.name"]);
   });
 });
