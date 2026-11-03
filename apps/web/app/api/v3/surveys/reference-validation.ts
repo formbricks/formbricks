@@ -1,4 +1,11 @@
+import type { TEmbeddedDataType } from "@formbricks/types/embedded-data";
+import { RESERVED_FIELD_CATALOG } from "@formbricks/types/embedded-data-resolver";
 import type { TSurveyBlocks } from "@formbricks/types/surveys/blocks";
+import {
+  type TExpressionTypeContext,
+  getSetValueExpressionIssues,
+} from "@formbricks/types/surveys/expression-types";
+import type { TExpression } from "@formbricks/types/surveys/expressions";
 import type { TConditionGroup, TDynamicLogicFieldValue } from "@formbricks/types/surveys/logic";
 import type { TSurveyEndings, TSurveyHiddenFields, TSurveyVariables } from "@formbricks/types/surveys/types";
 import { capInvalidParams } from "@/app/api/v3/lib/invalid-params";
@@ -11,6 +18,8 @@ type TReferenceValidationInput = {
   metadata?: unknown;
   variables: TSurveyVariables;
   welcomeCard?: unknown;
+  /** ENG-6930's typed fields, when the document carries them: a computed date is declared only here. */
+  embeddedFields?: { storageKey: string; source: string; dataType: TEmbeddedDataType }[];
 };
 
 type TNamedReference = {
@@ -244,6 +253,77 @@ function validateDynamicOperand(
   // An operand naming an entry that does not exist resolves as unset, exactly like a stale variable.
 }
 
+/**
+ * A Set value expression (ENG-6935): every reference leaf is checked like a condition operand, so a
+ * dangling one is named by its exact path into the tree; once they all resolve, the shared type check
+ * (`getSetValueExpressionIssues`, the one `surveyRefinement` runs) names text in arithmetic or a result
+ * the target field can't hold, so the dry-run validate catches what a save would refuse.
+ */
+function validateExpressionValue(
+  expression: TExpression,
+  targetVariableId: string,
+  path: string,
+  input: TReferenceValidationInput,
+  references: TReferenceLookup,
+  issues: InvalidParam[]
+): void {
+  const before = issues.length;
+  const walk = (node: TExpression, nodePath: string): void => {
+    if (node.type === "call") {
+      node.args.forEach((arg, idx) => walk(arg, `${nodePath}.args.${String(idx)}`));
+    } else if (node.type !== "static") {
+      validateDynamicOperand(node, nodePath, references, issues);
+    }
+  };
+  walk(expression, path);
+
+  const targetDataType = getComputedFieldDataTypes(input).get(targetVariableId);
+  if (issues.length > before || targetDataType === undefined) return;
+
+  for (const issue of getSetValueExpressionIssues(expression, targetDataType, getTypeContext(input))) {
+    issues.push({ name: [path, ...issue.path].join("."), reason: issue.message });
+  }
+}
+
+/** Computed fields by storage key: the typed rows when sent (a computed date lives only there), else `variables`. */
+function getComputedFieldDataTypes(input: TReferenceValidationInput): Map<string, TEmbeddedDataType> {
+  if (input.embeddedFields !== undefined) {
+    return new Map(
+      input.embeddedFields
+        .filter((field) => field.source === "computed")
+        .map((field) => [field.storageKey, field.dataType])
+    );
+  }
+  return new Map(
+    input.variables.map((variable) => [variable.id, variable.type === "number" ? "number" : "string"])
+  );
+}
+
+function getTypeContext(input: TReferenceValidationInput): TExpressionTypeContext {
+  const elements = new Map(
+    input.blocks.flatMap((block) => block.elements).map((element) => [element.id, element])
+  );
+  const computed = getComputedFieldDataTypes(input);
+  const ingested = new Map<string, TEmbeddedDataType>(
+    input.embeddedFields !== undefined
+      ? input.embeddedFields
+          .filter((field) => field.source === "ingested")
+          .map((field) => [field.storageKey, field.dataType])
+      : (input.hiddenFields.fieldIds ?? []).map((id) => [id, "string"])
+  );
+
+  return {
+    getElement: (elementId) => {
+      const element = elements.get(elementId);
+      if (!element) return undefined;
+      return { type: element.type, inputType: "inputType" in element ? element.inputType : undefined };
+    },
+    getComputedFieldType: (storageKey) => computed.get(storageKey),
+    getIngestedFieldType: (storageKey) => ingested.get(storageKey),
+    getReservedFieldType: (name) => RESERVED_FIELD_CATALOG.find((entry) => entry.name === name)?.dataType,
+  };
+}
+
 function validateConditionGroup(
   conditionGroup: TConditionGroup,
   path: string,
@@ -291,6 +371,10 @@ export function getV3SurveyReferenceInvalidParams(input: TReferenceValidationInp
     path: `hiddenFields.fieldIds.${index}`,
   }));
   const variableIds = input.variables.map((variable) => variable.id);
+  // A computed date (ENG-6935) is declared only in the typed `embeddedFields`, never in `variables`.
+  const computedOnlyIds = (input.embeddedFields ?? [])
+    .filter((field) => field.source === "computed" && !variableIds.includes(field.storageKey))
+    .map((field) => field.storageKey);
   const variableIdEntries = variableIds.map((id, index) => ({
     id,
     path: `variables.${index}.id`,
@@ -307,7 +391,7 @@ export function getV3SurveyReferenceInvalidParams(input: TReferenceValidationInp
   ]);
   const references = {
     elementIds: new Set(elementIds),
-    variableIds: new Set(variableIds),
+    variableIds: new Set([...variableIds, ...computedOnlyIds]),
     hiddenFieldIds: new Set(hiddenFieldIds),
   };
 
@@ -396,7 +480,16 @@ export function getV3SurveyReferenceInvalidParams(input: TReferenceValidationInp
             });
           }
 
-          if (action.value.type !== "static") {
+          if (action.value.type === "expression") {
+            validateExpressionValue(
+              action.value.value,
+              action.variableId,
+              `${actionPath}.value.value`,
+              input,
+              references,
+              issues
+            );
+          } else if (action.value.type !== "static") {
             validateDynamicOperand(action.value, `${actionPath}.value`, references, issues);
           }
         }

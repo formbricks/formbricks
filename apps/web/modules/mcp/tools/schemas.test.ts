@@ -293,6 +293,16 @@ describe("survey block discoverability (ENG-2180)", () => {
     expect(description).toContain("`range` (5|3|4|6|7|10)");
   });
 
+  test("the description documents Set value expressions with the functions the schema accepts (ENG-6935)", async () => {
+    const { ZMcpCreateSurveyInput } = surveyAndFeedbackSchemas;
+    const description = ZMcpCreateSurveyInput.shape.blocks.description ?? "";
+
+    expect(description).toContain('`value: { type: "expression", value: <tree> }`');
+    expect(description).toContain(
+      "fn one of add, subtract, multiply, divide, round, min, max, abs, ifEmpty, concat, now, daysBetween."
+    );
+  });
+
   /**
    * The handbook restates the element list in prose, and says of it that the two "cannot drift". That is
    * only true of the tool description, which is generated; the `.mdx` copy is hand-written and would go

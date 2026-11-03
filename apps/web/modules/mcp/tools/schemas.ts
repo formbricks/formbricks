@@ -3,6 +3,7 @@ import { ZId } from "@formbricks/types/common";
 import { ZCustomCssScope } from "@formbricks/types/custom-css";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import { ZSurveyRatingElement } from "@formbricks/types/surveys/elements";
+import { EXPRESSION_FUNCTIONS } from "@formbricks/types/surveys/expressions";
 import { ZSurveyFilters, ZSurveyStatus, ZSurveyType } from "@formbricks/types/surveys/types";
 import {
   MAX_FEEDBACK_RECORDS_PER_BATCH,
@@ -198,6 +199,50 @@ const RATING_RANGES = (
   ZSurveyRatingElement.shape.range as unknown as { options: { value: number }[] }
 ).options.map((option) => option.value);
 
+/**
+ * Block logic and Set value expressions (ENG-6935, ADR 0024 / 0025), described for agents. The
+ * function list is read off the schema's catalogue, so the advertised functions are the accepted ones.
+ */
+const SURVEY_LOGIC_DESCRIPTION = [
+  "Block logic: a block's `logic` is a list of rules `{ id, conditions, actions[] }`; `conditions` is a",
+  "group `{ id, connector: and|or, conditions[] }` of conditions `{ id, leftOperand, operator, rightOperand? }`",
+  "or nested groups, and an empty `and` group always matches. Operands are `{ type: element|variable|",
+  "hiddenField|reserved|static, value }` (element id, computed or ingested storage key, reserved name).",
+  "Actions: `jumpToBlock` (target block or ending id), `requireAnswer` (target element id) and",
+  "`calculate` (`variableId` = a computed field's storageKey). Set value is a `calculate` with",
+  '`operator: "assign"` and `value: { type: "expression", value: <tree> }`; the tree is a leaf (an operand,',
+  "or `static` number/text) or `{ type: call, fn, args[] }` with fn one of",
+  `${EXPRESSION_FUNCTIONS.join(", ")}.`,
+  "add/multiply/min/max take 2–50 numbers, subtract/divide exactly 2, round a number and optional fixed",
+  "decimals 0–10, abs 1, ifEmpty a value and a same-type fallback, concat 2–50 values (to text), now none",
+  "(UTC ISO timestamp), daysBetween 2 dates (UTC calendar days). Answers: rating/nps/csat/ces and number",
+  "openText are numbers, other openText text, date a date, multipleChoiceSingle its answer code (text);",
+  "other types can't be used. Empty in, empty out (use ifEmpty for defaults); ÷ 0 gives empty; an empty",
+  "result clears the field. The result must match the field's dataType (number, string or date); text in",
+  "arithmetic is refused. At most 12 levels and 200 nodes. Example `score = round(q1 + q2 * 2)`:",
+  `${JSON.stringify({
+    type: "call",
+    fn: "round",
+    args: [
+      {
+        type: "call",
+        fn: "add",
+        args: [
+          { type: "element", value: "q1" },
+          {
+            type: "call",
+            fn: "multiply",
+            args: [
+              { type: "element", value: "q2" },
+              { type: "static", value: 2 },
+            ],
+          },
+        ],
+      },
+    ],
+  })}.`,
+].join(" ");
+
 const SURVEY_BLOCKS_DESCRIPTION = [
   "Survey blocks. A block is `{ name, elements[], id? }` and an element is `{ id, type, headline, ... }`,",
   `where \`type\` is one of: ${SURVEY_ELEMENT_TYPES}.`,
@@ -218,6 +263,7 @@ const SURVEY_BLOCKS_DESCRIPTION = [
   `(${RATING_RANGES.join("|")}), a \`pictureSelection\` needs two or more choices. An element that is`,
   "missing one is reported by its position, not by the field name, so add the type's own fields before",
   `retrying. Example block: ${JSON.stringify(SURVEY_BLOCK_EXAMPLE)}`,
+  SURVEY_LOGIC_DESCRIPTION,
 ].join(" ");
 
 /**
@@ -227,7 +273,8 @@ const SURVEY_BLOCKS_DESCRIPTION = [
 export const SURVEY_EMBEDDED_FIELDS_DESCRIPTION = [
   "Typed Embedded Data fields: `{ storageKey?, key?, name, source, dataType?, defaultValue?, locked? }`.",
   "`source` is `computed` (set by logic: `variable` operands and calculate actions name its storageKey, a cuid2",
-  "generated when omitted; dataType string or number) or `ingested` (arrives by URL parameter or SDK:",
+  "generated when omitted; dataType string, number or date — a date is set with a Set value expression and",
+  "is left out of the legacy `variables`) or `ingested` (arrives by URL parameter or SDK:",
   "`hiddenField` operands name its storageKey, which defaults to its name; dataType string, number, boolean",
   "or date; only these can be `locked`). Link a workspace library field by sending `{ key }` alone: the",
   "server fills in its definition. This list is the survey's complete set and the legacy",

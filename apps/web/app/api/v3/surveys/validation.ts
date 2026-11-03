@@ -359,6 +359,7 @@ function toReferenceInput(document: TV3SurveyDocument) {
     metadata: document.metadata,
     variables: document.variables,
     welcomeCard: document.welcomeCard,
+    embeddedFields: document.embeddedFields,
   };
 }
 

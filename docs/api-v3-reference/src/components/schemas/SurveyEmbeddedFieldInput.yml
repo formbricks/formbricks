@@ -15,8 +15,9 @@ description: >
   **400** at `embeddedFields.<i>.key`; a `source` that contradicts the library's at `.source`.
 
 
-  Rules a field has to meet: only ingested fields can be `locked`; a computed field is `string` or
-  `number`; `defaultValue` matches `dataType`; storage keys are unique in the survey, and must also
+  Rules a field has to meet: only ingested fields can be `locked`; a computed field is `string`,
+  `number` or `date` (a computed date is stored as an ISO 8601 UTC string and is left out of the
+  legacy `variables`); `defaultValue` matches `dataType`; storage keys are unique in the survey, and must also
   be valid legacy ids (a computed field's a cuid2; an ingested field's free of reserved names, as for
   `hiddenFields.fieldIds`).
 properties:

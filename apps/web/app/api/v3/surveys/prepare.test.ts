@@ -1540,10 +1540,11 @@ describe("embeddedFields schema rules (ENG-6930)", () => {
   const issuePaths = (result: ReturnType<typeof parseCreate>) =>
     result.success ? [] : result.error.issues.map((issue) => issue.path.join("."));
 
-  test("a computed field takes only the types the logic engine computes today", () => {
-    const result = parseCreate([{ name: "due", source: "computed", dataType: "date" }]);
-
-    expect(issuePaths(result)).toEqual(["embeddedFields.0.dataType"]);
+  test("a computed field takes only the types the logic engine computes: text, number and (ENG-6935) date", () => {
+    expect(parseCreate([{ name: "due", source: "computed", dataType: "date" }]).success).toBe(true);
+    expect(issuePaths(parseCreate([{ name: "flag", source: "computed", dataType: "boolean" }]))).toEqual([
+      "embeddedFields.0.dataType",
+    ]);
   });
 
   test("an ingested field may be a date, with an ISO default", () => {
@@ -1617,5 +1618,126 @@ describe("the shared flow fixture's Embedded Data through v3 (ENG-6930)", () => 
     if (preparation.ok) return;
     expect(preparation.origin).toBe("embeddedFields");
     expect(preparation.validation.invalidParams.map((param) => param.name)).toEqual(["variables.2.name"]);
+  });
+});
+
+describe("Set value expressions through v3 (ENG-6935)", () => {
+  const {
+    visibility: _visibility,
+    owner: _owner,
+    access: _access,
+    ...resource
+  } = serializeV3SurveyResource(surveyFlowFixture, TEST_VISIBILITY);
+
+  test("GET returns the expression trees and the computed date, and its output patches back unchanged", () => {
+    const fixtureRules = surveyFlowFixture.blocks.flatMap((block) => block.logic ?? []);
+    const resourceRules = resource.blocks.flatMap((block) => block.logic ?? []);
+    const scoreStep = (rules: typeof fixtureRules) =>
+      rules.find((rule) => rule.id === SURVEY_FLOW_FIXTURE_IDS.setValue.scoreRule);
+
+    expect(scoreStep(resourceRules)).toEqual(scoreStep(fixtureRules));
+    expect(resource.embeddedFields).toContainEqual(
+      expect.objectContaining({
+        storageKey: SURVEY_FLOW_FIXTURE_IDS.variables.signedUpAt,
+        source: "computed",
+        dataType: "date",
+      })
+    );
+    // json-shapes §6: the legacy projection leaves the computed date out.
+    expect(resource.variables.map((variable) => variable.id)).not.toContain(
+      SURVEY_FLOW_FIXTURE_IDS.variables.signedUpAt
+    );
+
+    const preparation = prepareV3SurveyPatchInput(surveyFlowFixture, resource);
+
+    expect(preparation.ok).toBe(true);
+    if (!preparation.ok) return;
+    expect(scoreStep(preparation.document.blocks.flatMap((block) => block.logic ?? []))).toEqual(
+      scoreStep(fixtureRules)
+    );
+  });
+
+  const createWithExpression = (expression: unknown) =>
+    prepareV3SurveyCreateInput({
+      ...rawCreateBody,
+      embeddedFields: [
+        { storageKey: "clscore1234567890123456789", name: "score", source: "computed", dataType: "number" },
+      ],
+      blocks: [
+        {
+          ...rawCreateBody.blocks[0],
+          logic: [
+            {
+              id: "cllog123456789012345678901",
+              conditions: { id: "clgrp123456789012345678901", connector: "and", conditions: [] },
+              actions: [
+                {
+                  id: "clact123456789012345678901",
+                  objective: "calculate",
+                  variableId: "clscore1234567890123456789",
+                  operator: "assign",
+                  value: { type: "expression", value: expression },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+  const failedNames = (preparation: ReturnType<typeof createWithExpression>) =>
+    preparation.ok ? [] : preparation.validation.invalidParams.map((param) => param.name);
+  const valuePath = "blocks.0.logic.0.actions.0.value.value";
+
+  test("create accepts an always-run Set value step", () => {
+    expect(
+      createWithExpression({
+        type: "call",
+        fn: "round",
+        args: [
+          {
+            type: "call",
+            fn: "divide",
+            args: [
+              { type: "static", value: 7 },
+              { type: "static", value: 2 },
+            ],
+          },
+        ],
+      }).ok
+    ).toBe(true);
+  });
+
+  test("an unknown key on a tree node is refused at its path", () => {
+    expect(
+      failedNames(
+        createWithExpression({
+          type: "call",
+          fn: "add",
+          args: [
+            { type: "static", value: 1, note: "x" },
+            { type: "static", value: 2 },
+          ],
+          label: "sum",
+        })
+      )
+    ).toEqual(expect.arrayContaining([`${valuePath}.label`, `${valuePath}.args.0.note`]));
+  });
+
+  test("a wrong argument count and text in arithmetic are refused at their paths", () => {
+    expect(failedNames(createWithExpression({ type: "call", fn: "abs", args: [] }))).toEqual([
+      `${valuePath}.args`,
+    ]);
+    expect(
+      failedNames(
+        createWithExpression({
+          type: "call",
+          fn: "add",
+          args: [
+            { type: "static", value: 1 },
+            { type: "element", value: "satisfaction" },
+          ],
+        })
+      )
+    ).toEqual([`${valuePath}.args.1`]);
   });
 });

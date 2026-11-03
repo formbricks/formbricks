@@ -1,0 +1,69 @@
+description: >
+  One node of a Set value expression: a fixed value, a reference, or a function call.
+
+
+  **Leaves.** `static` is a number or text (a text `2026-03-01` counts as a date where one is
+  expected). `element` is an answer, by element id: rating, NPS, CSAT, CES and number open text are
+  numbers; other open text is text; a date question is a date; a single select yields its answer
+  code as text. Other question types can't be used. `variable` is a computed field and `hiddenField`
+  an ingested field, by storage key, typed by their `dataType`; `reserved` is a reserved field by name.
+
+
+  **Functions** (`call`): `add`, `multiply`, `min`, `max` take 2–50 numbers; `subtract` and `divide`
+  exactly 2 (÷ 0 gives empty); `round` a number and optional fixed decimals (0–10, rounding half away
+  from zero); `abs` 1 number; `ifEmpty` a value and a fallback of the same type; `concat` 2–50
+  values of any type (numbers and dates become text); `now` none (the device clock as a UTC ISO
+  timestamp); `daysBetween` 2 dates (UTC calendar days from the first to the second, negative
+  allowed).
+
+
+  **Empty values.** An unanswered question or unset field is empty, and so is a value that isn't a
+  number where a number is needed; every function except `ifEmpty` then gives empty.
+oneOf:
+  - type: object
+    required:
+      - type
+      - value
+    properties:
+      type:
+        type: string
+        enum:
+          - static
+      value:
+        oneOf:
+          - type: number
+          - type: string
+            maxLength: 5000
+    additionalProperties: false
+  - $ref: ./SurveyDynamicReference.yml
+  - type: object
+    required:
+      - type
+      - fn
+      - args
+    properties:
+      type:
+        type: string
+        enum:
+          - call
+      fn:
+        type: string
+        enum:
+          - add
+          - subtract
+          - multiply
+          - divide
+          - round
+          - min
+          - max
+          - abs
+          - ifEmpty
+          - concat
+          - now
+          - daysBetween
+      args:
+        type: array
+        maxItems: 50
+        items:
+          $ref: ./SurveyExpression.yml
+    additionalProperties: false

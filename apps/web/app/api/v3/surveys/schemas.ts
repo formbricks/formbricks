@@ -4,6 +4,7 @@ import { ZCustomCssInput, ZCustomCssScope } from "@formbricks/types/custom-css";
 import { ZSegmentFilters } from "@formbricks/types/segment";
 import { ZShowConditions } from "@formbricks/types/show-conditions";
 import { ZSurveyBlocks } from "@formbricks/types/surveys/blocks";
+import { EXPRESSION_MAX_DEPTH } from "@formbricks/types/surveys/expressions";
 import {
   type TSurveyType,
   ZSurveyDisplayOption,
@@ -646,6 +647,8 @@ const CONDITION_KEYS = new Set(["id", "leftOperand", "operator", "rightOperand"]
 const DYNAMIC_REFERENCE_KEYS = new Set(["type", "value", "meta"]);
 const STATIC_OPERAND_KEYS = new Set(["type", "value"]);
 const CALCULATE_ACTION_KEYS = new Set(["id", "objective", "variableId", "operator", "value"]);
+const EXPRESSION_VALUE_KEYS = new Set(["type", "value"]);
+const EXPRESSION_CALL_KEYS = new Set(["type", "fn", "args"]);
 const REQUIRE_ANSWER_ACTION_KEYS = new Set(["id", "objective", "target"]);
 const JUMP_TO_BLOCK_ACTION_KEYS = REQUIRE_ANSWER_ACTION_KEYS;
 
@@ -857,6 +860,28 @@ function validateConditionGroup(value: unknown, path: string, issues: InvalidPar
   });
 }
 
+/**
+ * ENG-6935: unknown keys at every level of a Set value expression tree. The walk stops one level past
+ * the tree's depth limit, which the shared schema reports with its own path.
+ */
+function validateExpressionNode(value: unknown, path: string, issues: InvalidParam[], depth: number): void {
+  if (!isPlainObject(value) || depth > EXPRESSION_MAX_DEPTH + 1) {
+    return;
+  }
+
+  if (value.type === "call") {
+    addUnknownKeyIssues(value, EXPRESSION_CALL_KEYS, path, issues);
+    if (Array.isArray(value.args)) {
+      value.args.forEach((arg, index) =>
+        validateExpressionNode(arg, `${path}.args.${String(index)}`, issues, depth + 1)
+      );
+    }
+    return;
+  }
+
+  validateLogicOperand(value, path, issues);
+}
+
 function validateAction(value: unknown, path: string, issues: InvalidParam[]): void {
   if (!isPlainObject(value)) {
     return;
@@ -864,6 +889,11 @@ function validateAction(value: unknown, path: string, issues: InvalidParam[]): v
 
   if (value.objective === "calculate") {
     addUnknownKeyIssues(value, CALCULATE_ACTION_KEYS, path, issues);
+    if (isPlainObject(value.value) && value.value.type === "expression") {
+      addUnknownKeyIssues(value.value, EXPRESSION_VALUE_KEYS, `${path}.value`, issues);
+      validateExpressionNode(value.value.value, `${path}.value.value`, issues, 1);
+      return;
+    }
     validateLogicOperand(value.value, `${path}.value`, issues);
     return;
   }
