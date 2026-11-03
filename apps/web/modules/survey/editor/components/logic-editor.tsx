@@ -1,128 +1,65 @@
 "use client";
 
-import { ArrowRightIcon } from "lucide-react";
 import { useMemo } from "react";
-import { Trans, useTranslation } from "react-i18next";
-import { TSurveyBlock, TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
+import { useTranslation } from "react-i18next";
+import { TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
+import { TSurveyLogicConditionsOperator } from "@formbricks/types/surveys/logic";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { getTextContent } from "@formbricks/types/surveys/validation";
-import { recallToHeadline } from "@/lib/utils/recall";
+import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { LogicEditorActions } from "@/modules/survey/editor/components/logic-editor-actions";
 import { LogicEditorConditions } from "@/modules/survey/editor/components/logic-editor-conditions";
-import { getBlockDisplayName } from "@/modules/survey/editor/lib/blocks";
-import { InputCombobox } from "@/modules/ui/components/input-combo-box";
+import { updateRuleActions, updateRuleConditions } from "@/modules/survey/editor/lib/rule-list";
+import {
+  getDefaultOperatorForElement,
+  replaceEndingCardHeadlineRecall,
+} from "@/modules/survey/editor/lib/utils";
 
 interface LogicEditorProps {
   readonly localSurvey: TSurvey;
-  readonly logicItem: TSurveyBlockLogic;
-  readonly updateBlockLogic: (blockIdx: number, logic: TSurveyBlockLogic[]) => void;
-  readonly updateBlockLogicFallback: (blockIdx: number, logicFallback: string | undefined) => void;
-  readonly block: TSurveyBlock;
-  readonly blockIdx: number;
-  readonly logicIdx: number;
-  readonly isLast: boolean;
+  /** The whole list the rule belongs to: a block's rules, or the rules before the first question. */
+  readonly rules: TSurveyBlockLogic[];
+  readonly ruleIdx: number;
+  readonly onRulesChange: (rules: TSurveyBlockLogic[]) => void;
+  /** The index of the block the rules run after; `-1` before the first question. */
+  readonly scopeBlockIdx: number;
 }
 
-export function LogicEditor({
-  localSurvey,
-  logicItem,
-  updateBlockLogic,
-  updateBlockLogicFallback,
-  block,
-  blockIdx,
-  logicIdx,
-  isLast,
-}: LogicEditorProps) {
+/**
+ * Today's rule editor (If … then …) for one rule of any rule list (ENG-6929). It used to be wired to
+ * one block's index and `updateBlockLogic`; the list and its owner now come from the caller, so the
+ * Flow tab edits a block's rules and the rules before the first question (ENG-6932) with it.
+ */
+export function LogicEditor({ localSurvey, rules, ruleIdx, onRulesChange, scopeBlockIdx }: LogicEditorProps) {
   const { t } = useTranslation();
+  const rule = rules[ruleIdx];
 
-  const blockLogicFallback = block.logicFallback;
+  // Option labels in the pickers read recalled headlines as plain text.
+  const transformedSurvey = useMemo(
+    () => replaceEndingCardHeadlineRecall(replaceHeadlineRecall(localSurvey, "default"), "default"),
+    [localSurvey]
+  );
 
-  const fallbackOptions = useMemo(() => {
-    let options: {
-      label: string;
-      value: string;
-    }[] = [];
+  const firstElement = localSurvey.blocks[scopeBlockIdx]?.elements[0];
+  const getDefaultOperator = (): TSurveyLogicConditionsOperator =>
+    firstElement ? getDefaultOperatorForElement(firstElement, t) : "equals";
 
-    const blocks = localSurvey.blocks;
-
-    // Add blocks AFTER the current block
-    for (let i = blockIdx + 1; i < blocks.length; i++) {
-      const currentBlock = blocks[i];
-
-      options.push({
-        label: getBlockDisplayName(currentBlock, i, t),
-        value: currentBlock.id,
-      });
-    }
-
-    localSurvey.endings.forEach((ending) => {
-      options.push({
-        label:
-          ending.type === "endScreen"
-            ? getTextContent(
-                recallToHeadline(ending.headline ?? { default: "" }, localSurvey, false, "default").default ??
-                  ""
-              ) || t("workspace.surveys.edit.end_screen_card")
-            : ending.label || t("workspace.surveys.edit.redirect_thank_you_card"),
-        value: ending.id,
-      });
-    });
-
-    return options;
-  }, [localSurvey, blockIdx, t]);
+  if (!rule) return null;
 
   return (
     <div className="flex w-full min-w-full grow flex-col gap-4 overflow-x-auto pb-2 text-sm">
       <LogicEditorConditions
-        conditions={logicItem.conditions}
-        updateBlockLogic={updateBlockLogic}
-        block={block}
-        blockIdx={blockIdx}
-        localSurvey={localSurvey}
-        logicIdx={logicIdx}
+        conditions={rule.conditions}
+        localSurvey={transformedSurvey}
+        scopeBlockIdx={scopeBlockIdx}
+        getDefaultOperator={getDefaultOperator}
+        onConditionsChange={(updater) => onRulesChange(updateRuleConditions(rules, ruleIdx, updater))}
       />
       <LogicEditorActions
-        logicItem={logicItem}
-        logicIdx={logicIdx}
-        block={block}
-        updateBlockLogic={updateBlockLogic}
-        localSurvey={localSurvey}
-        blockIdx={blockIdx}
-        isLast={isLast}
+        localSurvey={transformedSurvey}
+        actions={rule.actions}
+        scopeBlockIdx={scopeBlockIdx}
+        onActionsChange={(updater) => onRulesChange(updateRuleActions(rules, ruleIdx, updater))}
       />
-
-      {isLast ? (
-        <div className="flex items-center gap-x-2">
-          <div className="flex w-10 shrink-0 items-center justify-end">
-            <ArrowRightIcon className="size-4 text-slate-500" />
-          </div>
-          <div className="inline-flex items-center gap-x-2 font-medium text-nowrap text-slate-900">
-            <Trans
-              i18nKey="workspace.surveys.edit.all_other_answers_will_continue_to_fallback"
-              components={{
-                fallbackSelect: (
-                  <InputCombobox
-                    id={`logic-${logicIdx}-fallback`}
-                    showSearch={true}
-                    options={[
-                      { label: t("workspace.surveys.edit.next_block"), value: "defaultSelection" },
-                      ...fallbackOptions,
-                    ]}
-                    value={blockLogicFallback ?? "defaultSelection"}
-                    onChangeValue={(val) => {
-                      updateBlockLogicFallback(
-                        blockIdx,
-                        val === "defaultSelection" ? undefined : String(val)
-                      );
-                    }}
-                    comboboxClasses="w-fit min-w-40 bg-white"
-                  />
-                ),
-              }}
-            />
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }

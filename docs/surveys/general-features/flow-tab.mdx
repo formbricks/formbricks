@@ -1,0 +1,59 @@
+---
+title: "Flow Tab"
+description: "See your whole survey flow on one outline: every block, the rules that run after it, where everyone else goes, and the endings. Add and edit logic where you see it."
+icon: "diagram-project"
+---
+
+The **Flow** tab sits next to **Questions** in the survey editor. It shows the path respondents take through your survey on one outline, so you can check every jump and calculation at a glance instead of opening each block.
+
+The Flow tab is there in every survey, including surveys created in CX mode.
+
+## Reading the outline
+
+Read the outline from top to bottom. That is the order a respondent moves through the survey.
+
+* **Blocks.** Each block is one page of the survey. Its row shows its number, its name, its questions and how many rules it has.
+* **Rules.** The rows indented under a block run after the respondent submits that block. Each row reads as a sentence, for example *If “services” includes one of Apple TV+ → Require an answer to “apple_reason”*.
+  * A **blue** row is a rule that jumps or requires an answer.
+  * A **green** row only calculates: it changes a calculated [Embedded Data](/surveys/general-features/variables) field.
+* **Everyone else.** Under a block's rules, **All other answers will continue to** says where respondents go when none of the rules jumped. It is the next block unless you choose another block or an ending.
+* **Endings.** The endings are listed last, in red. A redirect ending shows the address it sends respondents to.
+
+The header counts your blocks and endings. **Collapse all** folds every block down to its row, and **Expand all** opens them again. Click a block's row to fold or open just that block.
+
+## Editing logic
+
+Click any rule row to open its settings right there on the outline. The rule editor is the same one described in [Conditional Logic](/surveys/general-features/conditional-logic): choose what to test, an operator and a value, then one or more actions.
+
+An open rule also lets you:
+
+* **Duplicate** it, with the copy placed right below it.
+* **Move up** and **Move down**, because rules are checked from top to bottom and the first jump that matches wins.
+* **Remove** it. Removing a block's last rule also resets where everyone else goes, back to the next block.
+
+To add a rule, use **Add logic** under a block:
+
+* **Jump rule** starts a rule that sends respondents to a later block or an ending.
+* **Calculation** starts a rule that changes a calculated field.
+
+You can switch any action of a rule between Jump to block, Require Answer and Calculate, and add more actions to the same rule.
+
+Changes on the Flow tab are part of your survey draft, like changes on the Questions tab. They are kept when you save or publish the survey.
+
+Clicking an ending shows what kind of ending it is. Its text and button are edited on the **Questions** tab, and **Edit on the Questions tab** takes you there.
+
+## When something is wrong
+
+If a rule is incomplete or points at something that no longer exists, saving or publishing the survey opens the Flow tab, opens that rule and outlines it in red. The red outline goes away as soon as the rule is fixed.
+
+## Logic written through the API
+
+Surveys built through the [Management API](/api-v3-reference/introduction) or [MCP](/platform/mcp/overview) can carry logic too. Everything a survey holds shows up on the outline, so you can check what an AI or an integration wrote before you publish.
+
+A row marked **Read-only** holds something the Flow tab can show but cannot edit yet. Its other rules stay editable.
+
+## Where logic used to be
+
+Logic used to sit at the foot of each block on the Questions tab, under **Conditional Logic**. It has moved to the Flow tab, and your existing rules appear there with nothing for you to do.
+
+The first time you open the editor after the change, the Questions tab shows a **Logic has moved to the Flow tab** notice with an **Open Flow** button. Once you have opened the Flow tab, the notice no longer shows in that browser.
