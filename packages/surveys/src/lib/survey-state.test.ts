@@ -148,6 +148,13 @@ describe("SurveyState", () => {
       expect(surveyState.responseAcc.variables).toEqual({ varB: "valB" }); // variables are overwritten
       expect(surveyState.responseAcc.displayId).toBe("display123");
     });
+
+    test("keeps the Mark as low quality flag once a submit asked for it (ENG-6933)", () => {
+      surveyState.accumulateResponse({ finished: false, data: {}, markLowQuality: true });
+      surveyState.accumulateResponse({ finished: true, data: { q2: "ans2" } });
+
+      expect(surveyState.responseAcc.markLowQuality).toBe(true);
+    });
   });
 
   describe("bootstrap response create", () => {

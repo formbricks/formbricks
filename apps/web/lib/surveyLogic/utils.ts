@@ -236,6 +236,8 @@ export const getUpdatedActionBody = (
         objective: "jumpToBlock",
         target: "",
       };
+    case "markLowQuality":
+      return { id: action.id, objective: "markLowQuality" };
     default:
       return action;
   }

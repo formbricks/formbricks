@@ -4338,6 +4338,7 @@
         "make_default": "Als Standard festlegen",
         "manage_languages": "Sprachen verwalten",
         "manage_translations": "Übersetzungen verwalten",
+        "mark_as_low_quality": "Als minderwertig markieren",
         "matrix_all_fields": "Alle Felder",
         "matrix_rows": "Zeilen",
         "max_file_size": "Maximale Dateigröße",

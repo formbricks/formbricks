@@ -2,7 +2,11 @@ import { headers } from "next/headers";
 import { UAParser } from "ua-parser-js";
 import { logger } from "@formbricks/logger";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
-import { TResponseInput, ZResponseInput, pickAutoCapturedResponseMeta } from "@formbricks/types/responses";
+import {
+  TResponseInput,
+  ZClientResponseInput,
+  pickAutoCapturedResponseMeta,
+} from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import {
   canFoldSubmission,
@@ -94,7 +98,7 @@ export const POST = withV1ApiWrapper({
     }
     const { workspaceId } = resolved;
 
-    const responseInputValidation = ZResponseInput.safeParse({
+    const responseInputValidation = ZClientResponseInput.safeParse({
       ...responseInput,
       workspaceId,
     });

@@ -4338,6 +4338,7 @@
         "make_default": "設為預設",
         "manage_languages": "管理語言",
         "manage_translations": "管理翻譯",
+        "mark_as_low_quality": "標記為低品質",
         "matrix_all_fields": "所有欄位",
         "matrix_rows": "列",
         "max_file_size": "最大檔案大小",

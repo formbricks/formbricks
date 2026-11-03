@@ -60,7 +60,7 @@ export const updateRuleActions = (
 };
 
 /** What the Add logic menu starts a rule as. */
-export type TNewRuleKind = "jump" | "calculate";
+export type TNewRuleKind = "jump" | "calculate" | "markLowQuality";
 
 export interface TNewRuleOptions {
   /** The first condition, without an id. */
@@ -69,20 +69,29 @@ export interface TNewRuleOptions {
   variableId?: string;
 }
 
+const createFirstAction = (kind: TNewRuleKind, variableId: string | undefined): TSurveyBlockLogicAction => {
+  switch (kind) {
+    case "calculate":
+      return {
+        id: createId(),
+        objective: "calculate",
+        variableId: variableId ?? "",
+        operator: "assign",
+        value: { type: "static", value: "" },
+      };
+    // ENG-6933: complete as it is; the respondent sees nothing when it fires.
+    case "markLowQuality":
+      return { id: createId(), objective: "markLowQuality" };
+    case "jump":
+      return { id: createId(), objective: "jumpToBlock", target: "" };
+  }
+};
+
 export const createRule = (
   kind: TNewRuleKind,
   { condition, variableId }: TNewRuleOptions
 ): TSurveyBlockLogic => {
-  const action: TSurveyBlockLogicAction =
-    kind === "calculate"
-      ? {
-          id: createId(),
-          objective: "calculate",
-          variableId: variableId ?? "",
-          operator: "assign",
-          value: { type: "static", value: "" },
-        }
-      : { id: createId(), objective: "jumpToBlock", target: "" };
+  const action = createFirstAction(kind, variableId);
 
   return {
     id: createId(),
@@ -145,11 +154,34 @@ export const setStartRules = (survey: TSurvey, rules: TSurveyBlockLogic[]): TSur
   startLogic: rules.length > 0 ? rules : null,
 });
 
-/** What a rule's actions may do where it runs: before the first question only jump or set a value. */
+/**
+ * What a rule's actions may do where it runs: before the first question only jump or set a value; a
+ * block's rules may also require an answer and mark the response Low quality (ENG-6933).
+ */
 export const getAllowedActionObjectives = (scopeBlockIdx: number): TSurveyBlockLogicActionObjective[] =>
   scopeBlockIdx === START_SCOPE_BLOCK_IDX
     ? ["calculate", "jumpToBlock"]
-    : ["calculate", "requireAnswer", "jumpToBlock"];
+    : ["calculate", "requireAnswer", "jumpToBlock", "markLowQuality"];
+
+/** Objectives a rule holds at most once: one jump, and one Mark as low quality (ENG-6933). */
+const ONCE_PER_RULE = new Set<TSurveyBlockLogicActionObjective>(["jumpToBlock", "markLowQuality"]);
+
+/**
+ * What one action of a rule may change to: what the scope allows, less a jump or a Mark as low quality
+ * another action of the rule already is.
+ */
+export const getObjectivesForAction = (
+  actions: TSurveyBlockLogicAction[],
+  actionIdx: number,
+  scopeBlockIdx: number
+): TSurveyBlockLogicActionObjective[] => {
+  const takenElsewhere = new Set(
+    actions.filter((_, idx) => idx !== actionIdx).map((action) => action.objective)
+  );
+  return getAllowedActionObjectives(scopeBlockIdx).filter(
+    (objective) => !ONCE_PER_RULE.has(objective) || !takenElsewhere.has(objective)
+  );
+};
 
 /** The objective of an action added below: a jump first, then whatever else the scope allows. */
 export const getNextActionObjective = (

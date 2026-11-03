@@ -93,11 +93,19 @@ describe("describeAction", () => {
     expect(describeAction(action(4, 3), surveyFlowFixture, t).label).toBe("segment = “hot-lead”");
   });
 
+  test("Mark as low quality reads as its own step, with nothing to name (ENG-6933)", () => {
+    const markLowQuality: TSurveyBlockLogicAction = { id: "a", objective: "markLowQuality" };
+    expect(describeAction(markLowQuality, surveyFlowFixture, t)).toEqual({
+      kind: "markLowQuality",
+      label: "",
+    });
+  });
+
   test("an action this editor doesn't know still reads as its objective", () => {
-    const unknown = { id: "a", objective: "markLowQuality" } as unknown as TSurveyBlockLogicAction;
+    const unknown = { id: "a", objective: "setOutcome" } as unknown as TSurveyBlockLogicAction;
     expect(describeAction(unknown, surveyFlowFixture, t)).toEqual({
       kind: "unknown",
-      label: "markLowQuality",
+      label: "setOutcome",
     });
   });
 });

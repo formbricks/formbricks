@@ -4338,6 +4338,7 @@
         "make_default": "设为默认",
         "manage_languages": "管理语言",
         "manage_translations": "管理翻译",
+        "mark_as_low_quality": "标记为低质量",
         "matrix_all_fields": "所有字段",
         "matrix_rows": "行",
         "max_file_size": "最大文件大小",

@@ -629,6 +629,7 @@ export class ResponseQueue {
         language: responseUpdate.language,
         meta: responseUpdate.meta,
         endingId: responseUpdate.endingId,
+        markLowQuality: responseUpdate.markLowQuality,
       };
     }
 
@@ -642,6 +643,7 @@ export class ResponseQueue {
       language: accumulatedResponse.language ?? responseUpdate.language,
       meta: accumulatedResponse.meta ?? responseUpdate.meta,
       endingId: accumulatedResponse.endingId ?? responseUpdate.endingId,
+      markLowQuality: accumulatedResponse.markLowQuality ?? responseUpdate.markLowQuality,
     };
   }
 

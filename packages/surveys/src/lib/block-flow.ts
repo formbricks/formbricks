@@ -50,7 +50,12 @@ export interface TAdvanceFromBlockResult {
    * Blocks passed over on the way to `nextBlockId` because they were not shown (their show-if
    * failed, or all their elements were hidden). Their logic ran as if submitted with no answers.
    */
-  skippedBlockIds: string[];
+  skippedBlockIds: string[]; /**
+   * A rule that ran on the way, on this block or a block passed over, marked the response Low
+   * quality (ENG-6933). The caller sends `markLowQuality: true` with this submit's response write;
+   * the respondent sees nothing.
+   */
+  markLowQuality: boolean;
 }
 
 type TSurveyBlock = TJsWorkspaceStateSurvey["blocks"][number];
@@ -102,6 +107,7 @@ interface TLogicOutcome {
   jumpTarget: string | undefined;
   requiredQuestionIds: string[];
   variables: TResponseVariables;
+  markLowQuality: boolean;
 }
 
 const runBlockLogic = (
@@ -116,6 +122,7 @@ const runBlockLogic = (
   let variables = { ...startVariables };
   let jumpTarget: string | undefined;
   const requiredQuestionIds: string[] = [];
+  let markLowQuality = false;
 
   for (const logic of block.logic ?? []) {
     if (!evaluateLogic(survey, data, variables, logic.conditions, selectedLanguage, embeddedValues)) {
@@ -127,9 +134,10 @@ const runBlockLogic = (
     if (actions.jumpTarget && !jumpTarget) jumpTarget = actions.jumpTarget;
     requiredQuestionIds.push(...actions.requiredQuestionIds);
     variables = { ...variables, ...actions.calculations };
+    markLowQuality ||= actions.markLowQuality;
   }
 
-  return { jumpTarget: jumpTarget || block.logicFallback, requiredQuestionIds, variables };
+  return { jumpTarget: jumpTarget || block.logicFallback, requiredQuestionIds, variables, markLowQuality };
 };
 
 interface TSkipOutcome {
@@ -137,6 +145,7 @@ interface TSkipOutcome {
   skippedBlockIds: string[];
   variables: TResponseVariables;
   requiredQuestionIds: string[];
+  markLowQuality: boolean;
 }
 
 /**
@@ -157,6 +166,7 @@ const skipBlocksNotShown = (
   let variables = startVariables;
   let answers = data;
   let current = target;
+  let markLowQuality = false;
 
   for (;;) {
     const blockIndex = survey.blocks.findIndex((block) => block.id === current);
@@ -181,10 +191,11 @@ const skipBlocksNotShown = (
     const outcome = runBlockLogic(input, block, answers, variables);
     variables = outcome.variables;
     requiredQuestionIds.push(...outcome.requiredQuestionIds);
+    markLowQuality ||= outcome.markLowQuality;
     current = outcome.jumpTarget || survey.blocks[blockIndex + 1]?.id;
   }
 
-  return { target: current, skippedBlockIds, variables, requiredQuestionIds };
+  return { target: current, skippedBlockIds, variables, requiredQuestionIds, markLowQuality };
 };
 
 /**
@@ -218,7 +229,7 @@ const resolveDestination = (
  *
  * Owns the whole decision so the renderer only applies it: the answers the page hid by show-if
  * (dropped, ENG-6931), the block's logic rules (first jump wins, then `logicFallback`, then the next
- * block in order), passing over blocks that are not shown while running their logic, the guard that
+ * block in order; any rule that runs may mark the response Low quality, ENG-6933), passing over blocks that are not shown while running their logic, the guard that
  * treats a jump target naming a deleted block or ending as "no target", and the `finished` /
  * `endingId` the persisted response reports. It reads nothing from the renderer and writes nothing, so every branch is testable
  * without mounting a survey.
@@ -233,6 +244,7 @@ export const advanceFromBlock = (input: TAdvanceFromBlockInput): TAdvanceFromBlo
   let rawNextBlockId: string | undefined;
   let variables: TResponseVariables;
   let requiredQuestionIds: string[] = [];
+  let markLowQuality = false;
 
   let data: TResponseData = { ...input.responseData, ...input.submittedData };
   let submittedData = input.submittedData;
@@ -254,6 +266,7 @@ export const advanceFromBlock = (input: TAdvanceFromBlockInput): TAdvanceFromBlo
     rawNextBlockId = outcome.jumpTarget || survey.blocks[currentBlockIndex + 1]?.id;
     variables = outcome.variables;
     requiredQuestionIds = outcome.requiredQuestionIds;
+    markLowQuality = outcome.markLowQuality;
   } else {
     // `blockId` is not a block. The caller returns early for an ending id or the "end" sentinel, so in
     // practice this is a block that no longer exists because the survey was edited after progress
@@ -291,6 +304,7 @@ export const advanceFromBlock = (input: TAdvanceFromBlockInput): TAdvanceFromBlo
     submittedData,
     hiddenElementIds,
     skippedBlockIds: skipped.skippedBlockIds,
+    markLowQuality: markLowQuality || skipped.markLowQuality,
   };
 };
 
@@ -315,6 +329,7 @@ export const enterBlock = (input: Omit<TAdvanceFromBlockInput, "submittedData">)
     submittedData: {},
     hiddenElementIds: [],
     skippedBlockIds: skipped.skippedBlockIds,
+    markLowQuality: skipped.markLowQuality,
   };
 };
 

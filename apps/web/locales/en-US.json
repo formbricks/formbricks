@@ -4338,6 +4338,7 @@
         "make_default": "Make default",
         "manage_languages": "Manage languages",
         "manage_translations": "Manage translations",
+        "mark_as_low_quality": "Mark as low quality",
         "matrix_all_fields": "All fields",
         "matrix_rows": "Rows",
         "max_file_size": "Max file size",

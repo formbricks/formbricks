@@ -358,6 +358,20 @@ describe("rules before the first question (ENG-6932)", () => {
   });
 });
 
+describe("Mark as low quality discoverability (ENG-6933)", () => {
+  test("the blocks description documents the action, and startLogic says it is refused there", () => {
+    const { ZMcpCreateSurveyInput } = surveyAndFeedbackSchemas;
+    const blocks = ZMcpCreateSurveyInput.shape.blocks.description ?? "";
+    const advertised = z.toJSONSchema(ZMcpCreateSurveyInput, { io: "input" }) as {
+      properties: Record<string, { description?: string }>;
+    };
+
+    expect(blocks).toContain('{ "id": "<cuid2>", "objective": "markLowQuality" }');
+    expect(blocks).toContain("Low quality");
+    expect(advertised.properties.startLogic.description).toContain("`markLowQuality`");
+  });
+});
+
 describe("show-if discoverability (ENG-6931)", () => {
   test("the blocks description documents show-if, and its example validates on a follow-up element", async () => {
     const { ZV3CreateSurveyBody } = await import("@/app/api/v3/surveys/schemas");

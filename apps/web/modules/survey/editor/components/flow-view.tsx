@@ -12,6 +12,7 @@ import {
   LayersIcon,
   PlusIcon,
   Rows3Icon,
+  ShieldAlertIcon,
   SplitIcon,
   TrashIcon,
 } from "lucide-react";
@@ -222,6 +223,14 @@ export const FlowView = ({
       return (
         <span key={key} className="text-sm font-medium text-slate-900">
           {t("workspace.surveys.edit.flow.require_answer_to", { question: action.label })}
+        </span>
+      );
+    }
+    if (action.kind === "markLowQuality") {
+      return (
+        <span key={key} className="inline-flex items-center gap-1 text-sm font-medium text-slate-900">
+          <ShieldAlertIcon className="size-4 text-amber-600" aria-hidden="true" />
+          {t("workspace.surveys.edit.mark_as_low_quality")}
         </span>
       );
     }
@@ -598,6 +607,11 @@ export const FlowView = ({
                           icon={<BinaryIcon className="size-4" />}
                           onClick={() => addRule(block, "calculate")}>
                           {t("workspace.surveys.edit.flow.calculation")}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          icon={<ShieldAlertIcon className="size-4" />}
+                          onClick={() => addRule(block, "markLowQuality")}>
+                          {t("workspace.surveys.edit.mark_as_low_quality")}
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           icon={<EyeIcon className="size-4" />}

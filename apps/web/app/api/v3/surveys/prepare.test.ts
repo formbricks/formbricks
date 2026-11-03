@@ -1797,3 +1797,62 @@ describe("the shared flow fixture's Embedded Data through v3 (ENG-6930)", () => 
     expect(preparation.validation.invalidParams.map((param) => param.name)).toEqual(["variables.2.name"]);
   });
 });
+
+describe("Mark as low quality on the v3 survey document (ENG-6933)", () => {
+  const {
+    visibility: _visibility,
+    owner: _owner,
+    access: _access,
+    ...resource
+  } = serializeV3SurveyResource(surveyFlowFixture, TEST_VISIBILITY);
+  const lowQualityRule = { blockIdx: 2, ruleIdx: 1 };
+
+  const withAction = (action: Record<string, unknown>, at: "block" | "start") => {
+    const body = structuredClone(resource) as unknown as {
+      blocks: { logic: { actions: unknown[] }[] }[];
+      startLogic: { actions: unknown[] }[];
+    };
+    if (at === "block") body.blocks[lowQualityRule.blockIdx].logic[lowQualityRule.ruleIdx].actions = [action];
+    else body.startLogic[0].actions = [action];
+    return prepareV3SurveyPatchInput(surveyFlowFixture, body as never);
+  };
+
+  test("GET returns the action, and its output patches back unchanged", () => {
+    const blocks = resource.blocks as unknown as { logic: { id: string; actions: unknown[] }[] }[];
+    const rule = blocks[lowQualityRule.blockIdx].logic[lowQualityRule.ruleIdx];
+    expect(rule.id).toBe(SURVEY_FLOW_FIXTURE_IDS.lowQuality.rule);
+    expect(rule.actions).toEqual([
+      { id: SURVEY_FLOW_FIXTURE_IDS.lowQuality.action, objective: "markLowQuality" },
+    ]);
+
+    const preparation = prepareV3SurveyPatchInput(surveyFlowFixture, resource);
+
+    expect(preparation.ok ? [] : preparation.validation.invalidParams).toEqual([]);
+    if (!preparation.ok) return;
+    expect(preparation.document.blocks[lowQualityRule.blockIdx].logic).toEqual(
+      surveyFlowFixture.blocks[lowQualityRule.blockIdx].logic
+    );
+  });
+
+  test("takes nothing but its id and objective", () => {
+    const preparation = withAction(
+      { id: SURVEY_FLOW_FIXTURE_IDS.lowQuality.action, objective: "markLowQuality", target: "x" },
+      "block"
+    );
+
+    expect(preparation.ok ? [] : preparation.validation.invalidParams.map((param) => param.name)).toEqual([
+      "blocks.2.logic.1.actions.0.target",
+    ]);
+  });
+
+  test("is refused before the first question, with the exact path", () => {
+    const preparation = withAction(
+      { id: "clact923456789012345678901", objective: "markLowQuality" },
+      "start"
+    );
+
+    expect(preparation.ok ? [] : preparation.validation.invalidParams).toEqual([
+      expect.objectContaining({ name: "startLogic.0.actions.0" }),
+    ]);
+  });
+});

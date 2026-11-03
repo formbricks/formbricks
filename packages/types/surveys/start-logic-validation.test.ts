@@ -81,14 +81,14 @@ describe("rules before the first question", () => {
     expectIssues(issues, [[["startLogic", 0, "actions", 1], "before the first question"]]);
   });
 
-  test("refuses an action objective it does not know, such as markLowQuality", () => {
-    const markLowQuality = {
-      id: "startaction0000000000002",
-      objective: "markLowQuality",
-    } as unknown as TSurveyBlockLogicAction;
-    const issues = issuesOf(withStartLogic([rule([markLowQuality])]));
+  test("refuses Mark as low quality with the exact path of the action (ENG-6933)", () => {
+    const issues = issuesOf(
+      withStartLogic([
+        rule([jump(ids.blocks.ratings), { id: "startaction0000000000002", objective: "markLowQuality" }]),
+      ])
+    );
 
-    expect(issues.some((issue) => issue.path.join(".").startsWith("startLogic.0.actions.0"))).toBe(true);
+    expectIssues(issues, [[["startLogic", 0, "actions", 1], "can't mark the response Low quality"]]);
   });
 
   test("refuses a jump to a block or ending that does not exist", () => {

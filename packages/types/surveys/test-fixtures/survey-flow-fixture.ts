@@ -53,6 +53,11 @@ export const SURVEY_FLOW_FIXTURE_IDS = {
   libraryFields: {
     planTier: "flowlibraryplantier00001",
   },
+  /** ENG-6933: "If hours > 112 → Mark as low quality", the second rule of the Heavy users block. */
+  lowQuality: {
+    rule: "flowrulelowquality000001",
+    action: "flowactionlowquality0001",
+  },
 } as const;
 
 const ids = SURVEY_FLOW_FIXTURE_IDS;
@@ -355,6 +360,24 @@ const heavyUsersBlock: TSurveyBlock = {
           value: { type: "variable", value: ids.variables.tenureDays },
         },
       ],
+    },
+    // Mark as low quality (ENG-6933): an implausible answer marks the response, and the respondent
+    // carries on. Fixed ids, so adding it shifts none of the generated ones after it.
+    {
+      id: ids.lowQuality.rule,
+      conditions: {
+        id: "flowgrouplowquality00001",
+        connector: "and",
+        conditions: [
+          {
+            id: "flowcondlowquality000001",
+            leftOperand: { type: "element", value: "hours" },
+            operator: "isGreaterThan",
+            rightOperand: { type: "static", value: 112 },
+          },
+        ],
+      },
+      actions: [{ id: ids.lowQuality.action, objective: "markLowQuality" }],
     },
   ],
 };

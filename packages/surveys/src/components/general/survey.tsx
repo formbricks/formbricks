@@ -590,6 +590,10 @@ export function Survey({
   const [isDisplaySettled, setIsDisplaySettled] = useState(false);
   // A screen-out is sent at most once, and never for a session resumed from offline progress.
   const screenOutHandledRef = useRef(false);
+  // A rule marked the response Low quality (ENG-6933). The next response write carries
+  // `markLowQuality: true`, once: sent again on every later write, it would undo a reviewer's restore
+  // made while the respondent is still answering.
+  const pendingLowQualityRef = useRef(false);
 
   useEffect(() => {
     if (offlinePersistEnabled && !progressRestored) return;
@@ -993,7 +997,10 @@ export function Survey({
         }
 
         responseQueue.updateSurveyState(surveyState);
+        const markLowQuality = pendingLowQualityRef.current;
+        pendingLowQualityRef.current = false;
         responseQueue.add({
+          ...(markLowQuality && { markLowQuality: true }),
           data: responseUpdate.data,
           ttc: responseUpdate.ttc,
           finished: responseUpdate.finished,
@@ -1136,6 +1143,8 @@ export function Survey({
 
     setCurrentVariables(entry.variables);
     if (entry.requiredQuestionIds.length > 0) makeQuestionsRequired(entry.requiredQuestionIds);
+    // Travels with the first write, like the values the passed-over blocks set.
+    if (entry.markLowQuality) pendingLowQualityRef.current = true;
     if (entry.finished) {
       setIsSurveyFinished(true);
       onResponseCreateOrUpdate({
@@ -1267,6 +1276,7 @@ export function Survey({
       requiredQuestionIds,
       submittedData,
       hiddenElementIds,
+      markLowQuality,
     } = advanceFromBlock({
       survey: localSurvey,
       blockId,
@@ -1295,6 +1305,10 @@ export function Survey({
       return next;
     });
     onChangeVariables(calculatedVariables);
+
+    // A rule marked the response Low quality (ENG-6933): this submit's write carries the flag. The
+    // respondent sees nothing.
+    if (markLowQuality) pendingLowQualityRef.current = true;
 
     onResponseCreateOrUpdate({
       data: submittedData,

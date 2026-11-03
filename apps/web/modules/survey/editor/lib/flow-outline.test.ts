@@ -73,11 +73,24 @@ describe("buildFlowOutline: every construct in the fixture survey", () => {
     expect(outline.blocks.map((block) => [block.elementCount, block.ruleCount])).toEqual([
       [1, 2],
       [2, 1],
-      [1, 1],
+      [1, 2],
       [1, 3],
       [4, 4],
       [12, 1],
     ]);
+  });
+
+  test("a Mark as low quality rule is an editable rule of its block (ENG-6933)", () => {
+    const heavyUsers = outline.blocks[2];
+    const row = heavyUsers.rules.find((item) => item.id === ids.lowQuality.rule);
+
+    expect(row).toMatchObject({
+      owner: { type: "block", blockId: ids.blocks.heavyUsers, blockIdx: 2 },
+      ruleIdx: 1,
+      tone: "rule",
+      editable: true,
+    });
+    expect(row?.rule.actions).toEqual([{ id: ids.lowQuality.action, objective: "markLowQuality" }]);
   });
 
   test("everything the survey holds is editable, and nothing is read-only", () => {
@@ -158,7 +171,7 @@ describe("buildFlowOutline: constructs the Flow tab cannot edit yet come out rea
 
   test("a rule action the editor doesn't know", () => {
     const survey = withUnknown((draft) => {
-      draft.blocks[2].logic[0].actions.push({ id: "lowqualityaction00000001", objective: "markLowQuality" });
+      draft.blocks[2].logic[0].actions.push({ id: "unknownaction00000000001", objective: "setOutcome" });
     });
     const row = buildFlowOutline(survey).blocks[2].rules[0];
 
@@ -214,15 +227,17 @@ describe("buildFlowOutline: constructs the Flow tab cannot edit yet come out rea
 
   test("a rule before the first question that the editor can't offer there is read-only", () => {
     const survey = withUnknown((draft) => {
-      const [first, second] = draft.startLogic;
+      const [first, second, third] = draft.startLogic;
       first.actions = [{ id: "startaction0000000000009", objective: "requireAnswer", target: "fav" }];
       second.conditions.conditions[0].leftOperand = { type: "element", value: "services" };
+      third.actions.push({ id: "startaction0000000000010", objective: "markLowQuality" });
     });
     const { start } = buildFlowOutline(survey);
 
-    expect(start.rules.slice(0, 2).map((row) => [row.editable, row.readOnlyReason])).toEqual([
+    expect(start.rules.map((row) => [row.editable, row.readOnlyReason])).toEqual([
       [false, "unsupportedAction"],
       [false, "unsupportedCondition"],
+      [false, "unsupportedAction"],
     ]);
   });
 
