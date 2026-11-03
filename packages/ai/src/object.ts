@@ -1,8 +1,8 @@
-import { Output, generateText } from "ai";
+import { Output, asSchema, generateText } from "ai";
 import { AIOutputTokenLimitError } from "./errors";
 import { getAiModel } from "./provider";
 import { getOpenAICompatibleProviderName } from "./providers/openai-compatible";
-import { getAIEnvironment } from "./shared";
+import { getAIEnvironment, parseBooleanFlag, resolveActiveAIProvider } from "./shared";
 import type {
   AIEnvironment,
   AIResolvedLanguageModel,
@@ -32,6 +32,32 @@ const withoutStrictSchema = (
   return options;
 };
 
+/**
+ * Whether the configured provider decodes against the JSON schema itself. Azure, Bedrock and Vertex do;
+ * an OpenAI-compatible endpoint only when `AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS` says so.
+ * Without it the AI SDK asks only for "a JSON object" and drops the schema from the request.
+ */
+const providerDecodesSchema = (environment?: AIEnvironment): boolean => {
+  const resolved = getAIEnvironment(environment);
+  if (resolveActiveAIProvider(resolved.AI_PROVIDER) !== "openai-compatible") return true;
+  return parseBooleanFlag(resolved.AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS);
+};
+
+/**
+ * The caller's system prompt, followed by the JSON Schema the answer must match, for a provider that is
+ * asked only for "a JSON object": without the schema, a model makes up its own shape, and the answer
+ * fails validation. A system prompt given as messages is left as it is.
+ */
+const withSchemaInstructions = async (
+  system: TGenerateObjectOptions["system"],
+  schema: TGenerateObjectOptions["schema"]
+): Promise<TGenerateObjectOptions["system"]> => {
+  if (system !== undefined && typeof system !== "string") return system;
+  const jsonSchema = JSON.stringify(await asSchema(schema).jsonSchema);
+  const instructions = `Answer with one JSON object that matches this JSON Schema exactly: the same property names and nesting, every required property present, no other properties.\n${jsonSchema}`;
+  return system ? `${system}\n\n${instructions}` : instructions;
+};
+
 export const generateObject = async <T = unknown>(
   options: TGenerateObjectOptions<T>,
   environment?: AIEnvironment,
@@ -41,6 +67,9 @@ export const generateObject = async <T = unknown>(
   const model = getAiModel(environment);
   const request = {
     ...textOptions,
+    ...(providerDecodesSchema(environment)
+      ? {}
+      : { system: await withSchemaInstructions(textOptions.system, schema) }),
     ...(strictSchema === false
       ? { providerOptions: withoutStrictSchema(textOptions.providerOptions, environment) }
       : {}),

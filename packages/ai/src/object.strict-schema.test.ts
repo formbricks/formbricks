@@ -91,3 +91,32 @@ describe("generateObject: strictSchema", () => {
     expect(strictOf()).toBe(true);
   });
 });
+
+describe("generateObject: a provider that cannot decode against the schema", () => {
+  const systemOf = () =>
+    (requests[0]?.messages as { role: string; content: string }[] | undefined)?.find(
+      (message) => message.role === "system"
+    )?.content ?? "";
+
+  test("is shown the schema in the system prompt, after the caller's own instructions", async () => {
+    stubModel('{"title":"Survey"}');
+
+    await generateObject(
+      { schema, system: "Plan the survey.", prompt: "Plan" },
+      { ...compatible(), AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS: "false" }
+    );
+
+    const system = systemOf();
+    expect(system.startsWith("Plan the survey.")).toBe(true);
+    expect(system).toContain('"title"');
+    expect(system).toContain('"tags"');
+  });
+
+  test("is not, when the provider decodes against the schema itself", async () => {
+    stubModel('{"title":"Survey"}');
+
+    await generateObject({ schema, system: "Plan the survey.", prompt: "Plan" }, compatible());
+
+    expect(systemOf()).toBe("Plan the survey.");
+  });
+});
