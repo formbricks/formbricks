@@ -98,6 +98,8 @@ export const POST = withV1ApiWrapper({
     }
     const { workspaceId } = resolved;
 
+    // The survey's create input: `ZResponseInput` plus Mark as low quality (ENG-6933) and the not-shown
+    // record (ENG-6936).
     const responseInputValidation = ZClientResponseInput.safeParse({
       ...responseInput,
       workspaceId,

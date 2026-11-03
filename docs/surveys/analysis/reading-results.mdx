@@ -43,6 +43,16 @@ The table also carries columns you did not ask for directly:
 
 The table is wide, so scroll horizontally to reach the later columns, or use the column settings to hide the ones you do not need.
 
+## Questions a respondent was not shown
+
+A [show-if](/surveys/general-features/show-if) can keep a question or a whole block from a respondent. The survey records what it did not show each respondent while they answer, and results read that record:
+
+- **Summary.** A question's card says **Not shown to N** when show-if kept it from some respondents. Those respondents are left out of the question's figures: they are not counted as having skipped it, they are not a drop-off on it, and they are not in the base its percentages are taken from.
+- **Responses.** A response shows a **Not shown** marker where its respondent never saw a question, instead of the dotted *skipped* line.
+- **Changed answers.** If a respondent answers a question, then goes back and changes an earlier answer so that the question is hidden, their answer to it is removed and the question is recorded as not shown.
+
+"Not shown" is decided when the respondent answers, not by your current show-if. Editing or removing a show-if after responses have come in does not change how earlier responses read. Responses collected before this was recorded, or by an older cached copy of the survey, read as they always did: a question they did not answer counts as skipped.
+
 ## Filtering and exporting
 
 Both tabs share the same **Filter** and time-range controls at the top, so a filter you set on the Summary carries to the Responses table. Filter on any answer, tag, hidden field or metadata value.

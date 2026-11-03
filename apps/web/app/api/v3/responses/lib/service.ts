@@ -334,6 +334,8 @@ export const v3ResponseReadSelect = {
   endingId: true,
   language: true,
   outcome: true,
+  // ENG-6936: exposed read-only. Selected explicitly: the client omits it from every read without one.
+  notShown: true,
   data: true,
   variables: true,
   ttc: true,

@@ -79,6 +79,7 @@ export const mockResponse: ResponseMock = {
   endingId: null,
   displayId: null,
   ingestFlags: null,
+  notShown: null,
   outcome: null,
 };
 
@@ -153,6 +154,7 @@ export const mockResponses: ResponseMock[] = [
     endingId: null,
     displayId: null,
     ingestFlags: null,
+    notShown: null,
     outcome: null,
   },
   {
@@ -181,6 +183,7 @@ export const mockResponses: ResponseMock[] = [
     endingId: null,
     displayId: null,
     ingestFlags: null,
+    notShown: null,
     outcome: null,
   },
   {
@@ -208,6 +211,7 @@ export const mockResponses: ResponseMock[] = [
     endingId: null,
     displayId: null,
     ingestFlags: null,
+    notShown: null,
     outcome: null,
   },
   {
@@ -235,6 +239,7 @@ export const mockResponses: ResponseMock[] = [
     endingId: null,
     displayId: null,
     ingestFlags: null,
+    notShown: null,
     outcome: null,
   },
   {
@@ -262,6 +267,7 @@ export const mockResponses: ResponseMock[] = [
     endingId: null,
     displayId: null,
     ingestFlags: null,
+    notShown: null,
     outcome: null,
   },
 ];
@@ -396,6 +402,7 @@ export const mockSurveySummaryOutput = {
     {
       dropOffCount: 0,
       dropOffPercentage: 0,
+      notShownCount: 0,
       headline: "Question Text",
       elementType: "openText",
       elementId: "ars2tjk8hsi8oqk1uac00mo8",

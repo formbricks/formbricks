@@ -155,6 +155,14 @@ describe("SurveyState", () => {
 
       expect(surveyState.responseAcc.markLowQuality).toBe(true);
     });
+
+    test("keeps the latest not-shown record whole instead of merging it (ENG-6936)", () => {
+      surveyState.accumulateResponse({ finished: false, data: {}, notShown: { blocks: ["b2"] } });
+      surveyState.accumulateResponse({ finished: false, data: {}, notShown: { elements: ["q3"] } });
+      surveyState.accumulateResponse({ finished: false, data: {} });
+
+      expect(surveyState.responseAcc.notShown).toEqual({ elements: ["q3"] });
+    });
   });
 
   describe("bootstrap response create", () => {

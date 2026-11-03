@@ -1,6 +1,7 @@
 import type { TLinkedEmbeddedField } from "../../embedded-data-resolver";
 import type { TSurveyBlock, TSurveyBlockLogic } from "../blocks";
 import { TSurveyElementTypeEnum } from "../constants";
+import type { TResponseNotShown } from "../not-shown";
 import type { TSurvey } from "../types";
 
 /**
@@ -1161,3 +1162,13 @@ export const getSurveyFlowFixtureRules = (): { blockId: string; rule: TSurveyBlo
   surveyFlowFixture.blocks.flatMap((block) =>
     (block.logic ?? []).map((rule) => ({ blockId: block.id, rule }))
   );
+
+/**
+ * ENG-6936: the not-shown record of a respondent who uses Netflix only and would miss Netflix most —
+ * the "Heavy users" block's show-if fails, and "What would convince you to try Apple TV+?" stays
+ * hidden on the Overall page. What the survey sends with that respondent's updates.
+ */
+export const surveyFlowFixtureNotShown: TResponseNotShown = {
+  blocks: [ids.blocks.heavyUsers],
+  elements: ["apple_reason"],
+};

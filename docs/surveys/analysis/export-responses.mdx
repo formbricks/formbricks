@@ -17,7 +17,7 @@ There are two kinds of export:
 | Files | A CSV file, or an Excel file with one sheet named `Response Data` | An Excel workbook with several sheets, or a zip of CSV files and an SPSS syntax file |
 | Low quality responses | Included by default | Left out by default |
 
-The Standard export is the file Formbricks has always produced, with one change: the Excel sheet is now named `Response Data` instead of `Sheet1`. A pipeline that reads the Excel file by sheet name must use the new name, and one that reads the first sheet or a CSV file is not affected. It is plain UTF-8 text without a byte-order mark and with `\n` line breaks.
+The Standard export is the file Formbricks has always produced, with one change: the Excel sheet is now named `Response Data` instead of `Sheet1`. A pipeline that reads the Excel file by sheet name must use the new name, and one that reads the first sheet or a CSV file is not affected. It is plain UTF-8 text without a byte-order mark and with `\n` line breaks. A question a respondent was [not shown](/surveys/analysis/reading-results#questions-a-respondent-was-not-shown) is an empty cell, exactly like an unanswered one.
 
 <Note>
   Anyone who can read a survey can export it, including read-only seats.
@@ -101,6 +101,7 @@ When a selection is over the limit, the **Excel** option is greyed out, the moda
 - **Rating, NPS, CSAT and CES** questions hold the number. Number inputs are exported as numbers.
 - Address, contact info, file upload, date, consent and calendar questions hold the same cell as in the Standard export, under the question code.
 - Calls to action and welcome cards are left out of an Analysis export.
+- A question the respondent was **not shown** (a [show-if](/surveys/general-features/show-if) kept it from them) is blank in every one of its columns, never `0`. Responses collected before "not shown" was recorded keep the rules above.
 - **Blank always means "not asked or not answered".** There are no user-missing values. If you need codes such as `98` or `99`, add them as ordinary answer options.
 - With **Text and code**, the header cell in the `Labels` sheet and `labels.csv` adds the question text: `q2; How satisfied are you?`. The column name stays `q2`.
 - In CSV files, a line break inside a cell becomes a space, because SPSS cannot read records that span lines. The Excel file keeps the line breaks.

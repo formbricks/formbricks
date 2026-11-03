@@ -15,6 +15,7 @@ import {
   ZResponseFilterCriteria,
 } from "@formbricks/types/responses";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { type TResponseNotShown, getNotShownElementIds } from "@formbricks/types/surveys/not-shown";
 import {
   TSurvey,
   TSurveyElementSummaryAddress,
@@ -51,7 +52,26 @@ interface TSurveySummaryResponse {
   language: string | null;
   ttc: TResponseTtc;
   finished: boolean;
+  /** What the respondent was not shown (ENG-6936); `null` or absent means unknown, read as today. */
+  notShown?: TResponseNotShown | null;
 }
+
+/**
+ * Whether a response's not-shown record lists an element (ENG-6936). Read from the record written at
+ * answer time, never by re-running today's show-if, so editing a show-if leaves past results as
+ * they were. Resolved once per response.
+ */
+const createNotShownLookup = (survey: TSurvey) => {
+  const resolved = new WeakMap<TSurveySummaryResponse, Set<string>>();
+  return (response: TSurveySummaryResponse, elementId: string): boolean => {
+    let notShown = resolved.get(response);
+    if (!notShown) {
+      notShown = getNotShownElementIds(response.notShown, survey.blocks);
+      resolved.set(response, notShown);
+    }
+    return notShown.has(elementId);
+  };
+};
 
 /** A summary response as fetched, with the `createdAt` the batch loop continues after. */
 type TSurveySummaryResponseRow = TSurveySummaryResponse & { createdAt: Date };
@@ -153,7 +173,9 @@ export const getSurveySummaryDropOff = (
   let dropOffArr = new Array(elements.length).fill(0) as number[];
   let impressionsArr = new Array(elements.length).fill(0) as number[];
   let dropOffPercentageArr = new Array(elements.length).fill(0) as number[];
+  const notShownArr = new Array(elements.length).fill(0) as number[];
   const elementIdToBlockId = getElementIdToBlockIdMap(survey);
+  const isNotShown = createNotShownLookup(survey);
 
   responses.forEach((response) => {
     // Calculate total time-to-completion per element
@@ -161,7 +183,7 @@ export const getSurveySummaryDropOff = (
     Object.keys(totalTtc).forEach((elementId) => {
       const blockId = elementIdToBlockId[elementId];
       const blockTtc = blockId ? (blockTimes[blockId] ?? 0) : 0;
-      if (blockTtc > 0) {
+      if (blockTtc > 0 && !isNotShown(response, elementId)) {
         totalTtc[elementId] += blockTtc;
         responseCounts[elementId]++;
       }
@@ -173,6 +195,11 @@ export const getSurveySummaryDropOff = (
 
     for (let i = 0; i < elements.length; i++) {
       const element = elements[i];
+      // Not shown counts as neither seen nor skipped, so it is no impression and no drop-off either.
+      if (isNotShown(response, element.id)) {
+        notShownArr[i]++;
+        continue;
+      }
       if (wasElementSeen(response, element.id)) {
         impressionsArr[i]++;
         lastSeenIdx = i;
@@ -221,6 +248,7 @@ export const getSurveySummaryDropOff = (
       impressions: impressionsArr[index] || 0,
       dropOffCount: dropOffArr[index] || 0,
       dropOffPercentage: convertFloatTo2Decimal(dropOffPercentageArr[index]) || 0,
+      notShownCount: notShownArr[index] || 0,
     };
   });
 
@@ -323,13 +351,18 @@ const computeNumericScaleStats = (
 export const getElementSummary = async (
   survey: TSurvey,
   elements: TSurveyElement[],
-  responses: TSurveySummaryResponse[],
+  allResponses: TSurveySummaryResponse[],
   dropOff: TSurveySummary["dropOff"]
 ): Promise<TSurveySummary["summary"]> => {
   const VALUES_LIMIT = 50;
   let summary: TSurveySummary["summary"] = [];
+  const isNotShown = createNotShownLookup(survey);
 
   for (const element of elements) {
+    // A respondent who was not shown the element is outside its base (ENG-6936): never counted as
+    // skipped or dismissed, and never in its percentages.
+    const responses = allResponses.filter((response) => !isNotShown(response, element.id));
+
     switch (element.type) {
       case TSurveyElementTypeEnum.OpenText: {
         let values: TSurveyElementSummaryOpenText["samples"] = [];
@@ -995,7 +1028,7 @@ export const getElementSummary = async (
   // which stays on `id` — the two are the same string only for a field nobody renamed.
   labelEmbeddedFields(getIngestedEmbeddedFields(survey)).forEach(({ link, label }) => {
     let values: TSurveyElementSummaryHiddenFields["samples"] = [];
-    responses.forEach((response) => {
+    allResponses.forEach((response) => {
       const answer = displayEmbeddedValue(response.data[link.storageKey]);
       if (answer) {
         values.push({
@@ -1125,6 +1158,7 @@ export const getResponsesForSummary = reactCache(
           language: true,
           ttc: true,
           finished: true,
+          notShown: true,
         },
         orderBy: [
           {
@@ -1154,6 +1188,7 @@ export const getResponsesForSummary = reactCache(
         language: responsePrisma.language,
         ttc: (responsePrisma.ttc ?? {}) as TResponseTtc,
         finished: responsePrisma.finished,
+        notShown: responsePrisma.notShown,
       }));
 
       return transformedResponses;

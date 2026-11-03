@@ -56,6 +56,10 @@ A block or a question with a show-if carries a **Show if:** badge that reads the
 
 You can add and change show-if on a survey that is already live. Like any change to a live survey, it applies to respondents from then on.
 
+## In results
+
+Each response records what show-if kept from its respondent, at the moment they answered. The Summary shows **Not shown to N** on a question, and the response shows a **Not shown** marker, and neither counts it as skipped. The Analysis export leaves it blank, and the Standard export is unchanged. Because it is recorded at answer time, editing a show-if later does not change earlier results. See [Reading survey results](/surveys/analysis/reading-results#questions-a-respondent-was-not-shown).
+
 ## Through the API
 
-In the survey document, a show-if is an optional `showIf` on a block or an element. It uses the condition-group format of logic rules. See the [Management API](/api-v3-reference/introduction) and [MCP](/platform/mcp/overview).
+In the survey document, a show-if is an optional `showIf` on a block or an element. It uses the condition-group format of logic rules. A v3 response carries what its respondent was not shown as a read-only `notShown`. See the [Management API](/api-v3-reference/introduction) and [MCP](/platform/mcp/overview).

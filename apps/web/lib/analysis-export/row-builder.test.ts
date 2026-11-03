@@ -575,3 +575,31 @@ describe("recall in a headline", () => {
     expect(headline).toContain("how are you?");
   });
 });
+
+describe("not shown (ENG-6936)", () => {
+  const hobbies = element({
+    id: "e2",
+    code: "q2",
+    type: "multipleChoiceMulti",
+    choices: [choice("h1", "1", "Reading"), choice("h2", "2", "Chess")],
+  });
+  const answers = { e1: "Red", e2: ["Reading"] };
+
+  test("a question the record lists exports blank, even with an answer stored", () => {
+    const { cells } = run([colors, hobbies], [response(answers, { notShown: { elements: ["e2"] } })]);
+
+    expect(cells()).toMatchObject({ q1: "1", q2_1: null, q2_2: null });
+  });
+
+  test("every question of a block the record lists exports blank", () => {
+    const { cells } = run([colors, hobbies], [response(answers, { notShown: { blocks: ["b1"] } })]);
+
+    expect(cells()).toMatchObject({ q1: null, q2_1: null, q2_2: null });
+  });
+
+  test("a response without a record (unknown) keeps the current rule", () => {
+    const { cells } = run([colors, hobbies], [response(answers, { notShown: null })]);
+
+    expect(cells()).toMatchObject({ q1: "1", q2_1: 1, q2_2: 0 });
+  });
+});

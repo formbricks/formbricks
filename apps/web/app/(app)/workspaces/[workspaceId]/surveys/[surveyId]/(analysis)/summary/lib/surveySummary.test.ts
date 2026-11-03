@@ -6,6 +6,11 @@ import { embeddedFieldsFromLegacyInput } from "@formbricks/types/embedded-data-m
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponseFilterCriteria } from "@formbricks/types/responses";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import {
+  SURVEY_FLOW_FIXTURE_IDS,
+  surveyFlowFixture,
+  surveyFlowFixtureNotShown,
+} from "@formbricks/types/surveys/test-fixtures/survey-flow-fixture";
 import { TSurvey, TSurveyElementSummaryRanking, TSurveySummary } from "@formbricks/types/surveys/types";
 import { TLanguage } from "@formbricks/types/workspace";
 import { getQuotasSummary } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/survey";
@@ -1393,6 +1398,7 @@ describe("getResponsesForSummary", () => {
       personAttributes: {},
       singleUseId: null,
       ingestFlags: null,
+      notShown: null,
       outcome: null,
       isFinished: true,
       displayId: "display-1",
@@ -1438,6 +1444,7 @@ describe("getResponsesForSummary", () => {
       personAttributes: {},
       singleUseId: null,
       ingestFlags: null,
+      notShown: null,
       outcome: null,
       isFinished: true,
       displayId: "display-1",
@@ -1478,6 +1485,7 @@ describe("getResponsesForSummary", () => {
       personAttributes: {},
       singleUseId: null,
       ingestFlags: null,
+      notShown: null,
       outcome: null,
       isFinished: true,
       displayId: "display-1",
@@ -1629,6 +1637,7 @@ describe("getResponsesForSummary", () => {
       personAttributes: {},
       singleUseId: null,
       ingestFlags: null,
+      notShown: null,
       outcome: null,
       isFinished: true,
       displayId: "display-1",
@@ -5394,5 +5403,108 @@ describe("CES question type tests", () => {
     expect(summary[0].responseCount).toBe(0);
     expect(summary[0].average).toBe(0);
     expect(summary[0].choices.every((c: any) => c.count === 0)).toBe(true);
+  });
+});
+
+describe("not shown (ENG-6936)", () => {
+  const ids = SURVEY_FLOW_FIXTURE_IDS;
+  const survey = surveyFlowFixture;
+  const elements = getElementsFromBlocks(survey.blocks);
+  const dropOffOf = (dropOff: TSurveySummary["dropOff"], elementId: string) =>
+    dropOff.find((entry) => entry.elementId === elementId)!;
+
+  let sequence = 0;
+  const response = (overrides: Record<string, unknown>) => {
+    sequence += 1;
+    return {
+      id: `resp-${sequence}`,
+      updatedAt: new Date(),
+      contact: null,
+      contactAttributes: {},
+      language: null,
+      finished: true,
+      data: {},
+      ttc: {},
+      ...overrides,
+    } as any;
+  };
+
+  // Netflix only: the "Heavy users" block and the Apple TV+ follow-up were not shown.
+  const netflixOnly = response({
+    data: { services: ["Netflix"], fav: "Netflix" },
+    ttc: { services: 1000, fav: 800 },
+    notShown: surveyFlowFixtureNotShown,
+  });
+  const bigThree = response({
+    data: { services: ["Netflix", "Disney+", "Prime Video"], hours: "12", fav: "Apple TV+" },
+    ttc: { services: 1000, hours: 700, fav: 800, apple_reason: 300 },
+    notShown: {},
+  });
+  // From before 6.2: no record, read as today.
+  const legacy = response({ data: { services: ["Netflix"] }, ttc: { services: 900 }, notShown: null });
+
+  test("each element reports how many respondents it was not shown to", () => {
+    const dropOff = getSurveySummaryDropOff(survey, elements, [netflixOnly, bigThree, legacy], 3);
+
+    expect(dropOffOf(dropOff, "hours").notShownCount).toBe(1);
+    expect(dropOffOf(dropOff, "apple_reason").notShownCount).toBe(1);
+    expect(dropOffOf(dropOff, "services").notShownCount).toBe(0);
+  });
+
+  test("an element not shown is neither an impression nor a drop-off, even with time left on it", () => {
+    // Answered "Heavy users", then went Back, changed services and left: the stale timing on `hours`
+    // must not make it the last element seen.
+    const leftAfterBack = response({
+      finished: false,
+      data: { services: ["Netflix"] },
+      ttc: { services: 1000, hours: 700 },
+      notShown: { blocks: [ids.blocks.heavyUsers] },
+    });
+
+    const dropOff = getSurveySummaryDropOff(survey, elements, [leftAfterBack], 1);
+
+    expect(dropOffOf(dropOff, "hours")).toMatchObject({ impressions: 0, dropOffCount: 0, notShownCount: 1 });
+    expect(dropOffOf(dropOff, "services").dropOffCount).toBe(1);
+  });
+
+  test("a respondent who was not shown a question is outside its base, never skipped", async () => {
+    // Time on `sat_netflix` without an answer reads as skipped, unless the record lists its block.
+    const skipped = response({ ttc: { sat_netflix: 500 }, notShown: {} });
+    const notShown = response({ ttc: { sat_netflix: 500 }, notShown: { blocks: [ids.blocks.ratings] } });
+    const rated = response({ data: { sat_netflix: 5 }, ttc: { sat_netflix: 500 }, notShown: {} });
+    const responses = [skipped, notShown, rated];
+    const dropOff = getSurveySummaryDropOff(survey, elements, responses, 3);
+
+    const summary = await getElementSummary(survey, elements, responses, dropOff);
+    const rating = summary.find((entry) => "element" in entry && entry.element.id === "sat_netflix") as any;
+
+    expect(rating.dismissed.count).toBe(1);
+    expect(rating.responseCount).toBe(1);
+  });
+
+  test("changing a show-if after responses exist leaves their not-shown results unchanged", () => {
+    // After both responses came in, the block's show-if is removed and another block gains one.
+    const edited: TSurvey = {
+      ...survey,
+      blocks: survey.blocks.map((block) => {
+        if (block.id === ids.blocks.heavyUsers) return { ...block, showIf: undefined };
+        if (block.id === ids.blocks.concept) {
+          return { ...block, showIf: { id: "showifconcept", connector: "or", conditions: [] } };
+        }
+        return block;
+      }),
+    };
+
+    const before = getSurveySummaryDropOff(survey, elements, [netflixOnly, bigThree], 2);
+    const after = getSurveySummaryDropOff(
+      edited,
+      getElementsFromBlocks(edited.blocks),
+      [netflixOnly, bigThree],
+      2
+    );
+
+    expect(after.map((entry) => entry.notShownCount)).toEqual(before.map((entry) => entry.notShownCount));
+    expect(dropOffOf(after, "hours").notShownCount).toBe(1);
+    expect(dropOffOf(after, "concept").notShownCount).toBe(0);
   });
 });
