@@ -2,6 +2,7 @@ import "server-only";
 import { ErrorCode, createCacheKey } from "@formbricks/cache";
 import type { TCreativePayload } from "@formbricks/creatives";
 import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
 import { TJsWorkspaceState } from "@formbricks/types/js";
 import {
   addLegacyProjectOverwritesToList,
@@ -11,6 +12,7 @@ import { cache } from "@/lib/cache";
 import { IS_RECAPTCHA_CONFIGURED, POSTHOG_KEY, RECAPTCHA_SITE_KEY } from "@/lib/constants";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
+import { loggableError } from "@/lib/utils/loggable-error";
 import { getWorkspaceStateData } from "./data";
 
 /** The environment payload's `data`: the survey state plus the creatives (`@formbricks/creatives`). */
@@ -151,15 +153,17 @@ export const getWorkspaceState = async (workspaceId: string): Promise<{ data: TW
     ) {
       return loadDuringRedisOutage(workspaceId, loadState);
     }
-  } catch {
+  } catch (error) {
+    logger.debug(loggableError(error), "Workspace state cache read threw; using outage fallback");
     return loadDuringRedisOutage(workspaceId, loadState);
   }
 
   const fresh = await loadState();
   try {
     await cache.set(key, fresh, 60 * 1000);
-  } catch {
-    // The data is already fresh; cache writes are best-effort.
+  } catch (error) {
+    // The data is already fresh, so the request still succeeds without the write.
+    logger.error(loggableError(error), "Workspace state cache write threw");
   }
   return fresh;
 };

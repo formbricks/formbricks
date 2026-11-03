@@ -245,7 +245,7 @@ export const shouldLogAuthFailure = async (
     }
 
     // Check if we should log (every 10th or after 1 minute gap)
-    const recentEntries = await redis.zRange(rateLimitKey, -10, -1);
+    const recentEntries = await cache.runRedisOperation((client) => client.zRange(rateLimitKey, -10, -1));
     if (recentEntries.length === 0) return true;
 
     const lastLogTime = Number.parseInt(recentEntries[recentEntries.length - 1].split(":")[0]);

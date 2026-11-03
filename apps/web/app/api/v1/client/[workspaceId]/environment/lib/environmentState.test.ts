@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { DEFAULT_CREATIVE_STYLE } from "@formbricks/creatives";
 import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TJsWorkspaceStateSurvey, TJsWorkspaceStateWorkspaceSetting } from "@formbricks/types/js";
@@ -40,6 +41,7 @@ vi.mock("@formbricks/database", () => ({
 }));
 vi.mock("@formbricks/logger", () => ({
   logger: {
+    debug: vi.fn(),
     error: vi.fn(),
   },
 }));
@@ -86,6 +88,10 @@ vi.mock("@/lib/utils/helper", () => ({
 
 // Mock @formbricks/cache
 vi.mock("@formbricks/cache", () => ({
+  ErrorCode: {
+    RedisConnectionError: "redis_connection_error",
+    RedisOperationError: "redis_operation_error",
+  },
   createCacheKey: {
     workspace: {
       state: vi.fn((workspaceId: string) => `fb:env:${workspaceId}:state`),
@@ -353,6 +359,40 @@ describe("getWorkspaceState", () => {
 
     await expect(Promise.all([first, second])).resolves.toHaveLength(2);
     expect(getWorkspaceStateData).toHaveBeenCalledOnce();
+  });
+
+  test("falls back and logs safely when the cache read throws", async () => {
+    vi.mocked(cache.get).mockRejectedValueOnce(new Error("cache read failed"));
+
+    await expect(getWorkspaceState("thrown-read-workspace")).resolves.toHaveProperty("data");
+    expect(getWorkspaceStateData).toHaveBeenCalledOnce();
+    expect(logger.debug).toHaveBeenCalledWith(
+      expect.objectContaining({ errName: "Error" }),
+      "Workspace state cache read threw; using outage fallback"
+    );
+  });
+
+  test("returns fresh state and logs safely when the cache write throws", async () => {
+    vi.mocked(cache.set).mockRejectedValueOnce(new Error("cache write failed"));
+
+    await expect(getWorkspaceState("thrown-write-workspace")).resolves.toHaveProperty("data");
+    expect(getWorkspaceStateData).toHaveBeenCalledOnce();
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ errName: "Error" }),
+      "Workspace state cache write threw"
+    );
+  });
+
+  test("evicts the oldest fallback state when a Redis outage exceeds the local entry limit", async () => {
+    vi.mocked(cache.get).mockResolvedValue({ ok: false, error: { code: "redis_connection_error" } });
+
+    for (let index = 0; index < 101; index += 1) {
+      await getWorkspaceState(`eviction-workspace-${index}`);
+    }
+    expect(getWorkspaceStateData).toHaveBeenCalledTimes(101);
+
+    await getWorkspaceState("eviction-workspace-0");
+    expect(getWorkspaceStateData).toHaveBeenCalledTimes(102);
   });
 
   test("should propagate database update errors", async () => {
