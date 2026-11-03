@@ -1,5 +1,10 @@
 import { describe, expect, test } from "vitest";
-import { SIGNATURE_SUMMARY_LIMIT, getSignatureTile, summarizeSignatureAnswers } from "./signature-summary";
+import {
+  SIGNATURE_SUMMARY_LIMIT,
+  SIGNATURE_SUMMARY_PAGE_SIZE,
+  getSignatureTile,
+  summarizeSignatureAnswers,
+} from "./signature-summary";
 
 const url = (n: number) => `/storage/ws/private/surveys/s1/elements/sig/signature--fid--${n}.png`;
 
@@ -63,11 +68,12 @@ describe("summarizeSignatureAnswers", () => {
 
     const summary = summarizeSignatureAnswers("sig", responses);
 
-    expect(SIGNATURE_SUMMARY_LIMIT).toBe(10);
-    expect(summary.signedCount).toBe(15);
-    expect(summary.signatures).toHaveLength(10);
+    expect(SIGNATURE_SUMMARY_LIMIT).toBe(50);
+    expect(SIGNATURE_SUMMARY_PAGE_SIZE).toBe(10);
+    expect(summary.signedCount).toBe(SIGNATURE_SUMMARY_LIMIT + 5);
+    expect(summary.signatures).toHaveLength(SIGNATURE_SUMMARY_LIMIT);
     expect(summary.signatures[0].id).toBe("r0");
-    expect(summary.signatures[9].id).toBe("r9");
+    expect(summary.signatures[SIGNATURE_SUMMARY_LIMIT - 1].id).toBe(`r${SIGNATURE_SUMMARY_LIMIT - 1}`);
   });
 });
 

@@ -8,9 +8,10 @@ import { TUserLocale } from "@formbricks/types/user";
 import { convertFloatToNDecimal } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
 import { timeSince } from "@/lib/time";
 import { getClientOrigin } from "@/modules/storage/signature-image";
+import { Button } from "@/modules/ui/components/button";
 import { EmptyState } from "@/modules/ui/components/empty-state";
 import { ProgressBar } from "@/modules/ui/components/progress-bar";
-import { getSignatureTile } from "../lib/signature-summary";
+import { SIGNATURE_SUMMARY_PAGE_SIZE, getSignatureTile } from "../lib/signature-summary";
 import { ElementSummaryHeader } from "./ElementSummaryHeader";
 import { ResponseSampleModal } from "./ResponseSampleModal";
 
@@ -29,6 +30,7 @@ export const SignatureSummary = ({
 }: Readonly<SignatureSummaryProps>) => {
   const { t } = useTranslation();
   const [selectedResponseId, setSelectedResponseId] = useState<string | null>(null);
+  const [visibleCount, setVisibleCount] = useState(SIGNATURE_SUMMARY_PAGE_SIZE);
   const origin = getClientOrigin();
 
   const counts = [
@@ -69,10 +71,8 @@ export const SignatureSummary = ({
             <EmptyState text={t("workspace.surveys.summary.no_responses_found")} variant="simple" />
           </div>
         ) : (
-          <ul
-            className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5"
-            data-testid="signature-summary-list">
-            {elementSummary.signatures.map((signature) => {
+          <ul className="flex flex-wrap gap-4" data-testid="signature-summary-list">
+            {elementSummary.signatures.slice(0, visibleCount).map((signature) => {
               const tile = getSignatureTile(signature.value, origin);
               return (
                 <li key={signature.id} className="flex flex-col gap-1">
@@ -105,6 +105,20 @@ export const SignatureSummary = ({
               );
             })}
           </ul>
+        )}
+        {visibleCount < elementSummary.signatures.length && (
+          <div className="flex justify-center pt-4">
+            <Button
+              onClick={() => {
+                setVisibleCount((count) =>
+                  Math.min(count + SIGNATURE_SUMMARY_PAGE_SIZE, elementSummary.signatures.length)
+                );
+              }}
+              variant="secondary"
+              size="sm">
+              {t("common.load_more")}
+            </Button>
+          </div>
         )}
       </div>
       <ResponseSampleModal

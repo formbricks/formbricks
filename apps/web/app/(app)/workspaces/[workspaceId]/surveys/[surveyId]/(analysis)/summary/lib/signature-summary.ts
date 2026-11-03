@@ -2,8 +2,11 @@ import { TResponseContact, TResponseContactAttributes, TResponseData } from "@fo
 import { TSurveyElementSummarySignature } from "@formbricks/types/surveys/types";
 import { getSignatureImageSrc } from "@/modules/storage/signature-image";
 
-/** How many signatures the Summary tab shows as thumbnails. */
-export const SIGNATURE_SUMMARY_LIMIT = 10;
+/** How many of the latest signatures the summary carries: the same cap as the other summary lists. */
+export const SIGNATURE_SUMMARY_LIMIT = 50;
+
+/** How many thumbnails the Summary tab shows at first, and adds with each "Load more". */
+export const SIGNATURE_SUMMARY_PAGE_SIZE = 10;
 
 interface TSignatureSummaryResponse {
   id: string;

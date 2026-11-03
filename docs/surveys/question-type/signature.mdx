@@ -68,7 +68,7 @@ Typed names use the Dancing Script font. It covers Latin and Latin Extended char
 ## Where to find signatures
 
 - **Responses**: the response card shows the signature image with a **Download PNG** button. The downloaded file is named `signature-<response ID>.png`, so several downloads stay apart and each one traces back to its response. In the responses table, the signature column shows a small thumbnail that opens the full image in a new tab.
-- **Summary**: the question shows how many respondents signed and how many skipped it, and thumbnails of the latest 10 signatures. Select a thumbnail to open its response.
+- **Summary**: the question shows how many respondents signed and how many skipped it, and thumbnails of the latest signatures, 10 at first and up to 50 with **Load more**. Select a thumbnail to open its response.
 - **CSV and Excel export**: the column named after the question holds the full image URL, or nothing for a skipped question.
 - **Attachments**: **All attachments (ZIP)** in the download menu includes the signature images next to any file uploads, as `signature.png` inside a folder per response and question.
 - **API and webhooks**: the answer is the image URL as a string. In the v3 API a signature answer has the shape `{ "elementType": "signature", "imageUrl": "..." }`. Webhooks and integrations such as Google Sheets, Airtable, Slack and Notion receive the URL as well.
