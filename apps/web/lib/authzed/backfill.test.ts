@@ -388,6 +388,14 @@ describe("detecting records SpiceDB is missing", () => {
     vi.mocked(source.readOrganizationSource).mockResolvedValue({
       ...emptySource,
       apiKeyIds: ["key-1"],
+      // A source always carries the role relation its membership projects to.
+      expectedRelationships: [
+        {
+          relation: "member",
+          resource: { objectId: "org-1", objectType: "organization" },
+          subject: { objectId: "user-1", objectType: "user" },
+        },
+      ],
       memberships: [{ organizationId: "org-1", userId: "user-1" }],
       teamIds: ["team-1"],
     });
@@ -396,6 +404,18 @@ describe("detecting records SpiceDB is missing", () => {
 
     expect(result.counters.missing).toBe(3);
     expect(result.status).toBe("drifted");
+  });
+
+  test("never reports a Dashboard viewer missing, since it projects to no relation (ADR-0018)", async () => {
+    vi.mocked(source.readOrganizationSource).mockResolvedValue({
+      ...emptySource,
+      memberships: [{ organizationId: "org-1", userId: "viewer-1" }],
+    });
+
+    const result = await runAuthzedBackfill(request({ mode: "dry_run" }), dependencies);
+
+    expect(result.counters.missing).toBe(0);
+    expect(result.status).toBe("reconciled");
   });
 
   test("reports nothing missing once every record is projected", async () => {

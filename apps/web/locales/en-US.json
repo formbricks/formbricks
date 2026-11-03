@@ -3795,6 +3795,8 @@
         "create": "Create",
         "create_first_team_message": "You need to create a team first.",
         "create_new_team": "Create new team",
+        "dashboard_viewer": "Dashboard viewer",
+        "dashboard_viewer_role_description": "Dashboard viewers only see the dashboards of workspaces their teams can access.",
         "delete_team": "Delete team",
         "empty_teams_state": "Create your first team.",
         "enter_team_name": "Enter team name",

@@ -132,7 +132,16 @@ describe("listV3Dashboards", () => {
 
     expect(response.status).toBe(403);
     expect((await response.json()).code).toBe("forbidden");
-    expect(requireDashboardsAccess).toHaveBeenCalledWith(session, WORKSPACE_ID, "read", REQUEST_ID, INSTANCE);
+    expect(requireDashboardsAccess).toHaveBeenCalledWith(
+      session,
+      WORKSPACE_ID,
+      "read",
+      REQUEST_ID,
+      INSTANCE,
+      {
+        allowDashboardViewer: true,
+      }
+    );
     expect(listDashboardRows).not.toHaveBeenCalled();
   });
 
@@ -248,7 +257,9 @@ describe("getV3Dashboard", () => {
 
     expect(response.status).toBe(200);
     expect(getDashboardResourceRow).toHaveBeenCalledWith(DASHBOARD_ID);
-    expect(requireDashboardsAccess).toHaveBeenCalledWith(session, "clws_row", "read", REQUEST_ID, INSTANCE);
+    expect(requireDashboardsAccess).toHaveBeenCalledWith(session, "clws_row", "read", REQUEST_ID, INSTANCE, {
+      allowDashboardViewer: true,
+    });
     const { data } = await response.json();
     expect(data).toMatchObject({
       id: DASHBOARD_ID,
@@ -389,7 +400,8 @@ describe("renameV3Dashboard", () => {
       WORKSPACE_ID,
       "readWrite",
       REQUEST_ID,
-      INSTANCE
+      INSTANCE,
+      undefined
     );
 
     expect(renameDashboardRow).not.toHaveBeenCalled();

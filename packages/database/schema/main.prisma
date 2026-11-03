@@ -878,6 +878,9 @@ enum OrganizationRole {
   manager
   member
   billing
+  /// Reads only the dashboards of workspaces its teams are granted. Projects to no SpiceDB relation
+  /// (ADR-0018); the app-layer grant lives in modules/ee/analysis/lib/dashboard-viewer-access.ts.
+  dashboard_viewer
 }
 
 /// Links users to organizations with specific roles.

@@ -72,12 +72,14 @@ export async function listV3Dashboards({
   const log = logger.withContext({ requestId, workspaceId: query.workspaceId });
 
   try {
+    // A Dashboard viewer lists the dashboards of a workspace their team is granted (ADR-0018).
     const access = await requireDashboardsAccess(
       authentication,
       query.workspaceId,
       "read",
       requestId,
-      instance
+      instance,
+      { allowDashboardViewer: true }
     );
     if (access instanceof Response) return access;
 
@@ -140,7 +142,10 @@ export async function getV3Dashboard({
     const loaded = await authorizeLoadedDashboard(
       await getDashboardResourceRow(dashboardId),
       "read",
-      context
+      context,
+      {
+        allowDashboardViewer: true,
+      }
     );
     if (loaded instanceof Response) return loaded;
 

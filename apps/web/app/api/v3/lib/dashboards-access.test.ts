@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { can } from "@/lib/authorization";
+import {
+  canDashboardViewerReadFeedbackDataset,
+  canDashboardViewerReadWorkspace,
+} from "@/modules/ee/analysis/lib/dashboard-viewer-access";
 import { getIsDashboardsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { requireV3WorkspaceAccess } from "./auth";
 import { refuseUnlessFeedbackDatasetAccess, requireDashboardsAccess } from "./dashboards-access";
@@ -9,6 +13,16 @@ import type { TV3Authentication } from "./types";
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/authorization", () => ({ can: vi.fn() }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsDashboardsEnabled: vi.fn() }));
+vi.mock("@/modules/ee/analysis/lib/dashboard-viewer-access", () => ({
+  canDashboardViewerReadWorkspace: vi.fn(),
+  canDashboardViewerReadFeedbackDataset: vi.fn(),
+}));
+vi.mock("./workspace-context", () => ({
+  resolveV3WorkspaceContext: vi.fn(async (workspaceId: string) => ({
+    workspaceId,
+    organizationId: "clorg00000000000000000001",
+  })),
+}));
 vi.mock("./auth", async (importOriginal) => ({
   ...(await importOriginal<typeof import("./auth")>()),
   requireV3WorkspaceAccess: vi.fn(),
@@ -111,5 +125,91 @@ describe("refuseUnlessFeedbackDatasetAccess", () => {
     expect(result?.status).toBe(401);
     expect(await result?.json()).toMatchObject({ code: "not_authenticated" });
     expect(can).not.toHaveBeenCalled();
+  });
+});
+
+describe("the Dashboard viewer grant (ADR-0018)", () => {
+  const allow = { allowDashboardViewer: true } as const;
+
+  test("admits a viewer SpiceDB denied, on a read that opts in", async () => {
+    vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(problemForbidden("req"));
+    vi.mocked(canDashboardViewerReadWorkspace).mockResolvedValue(true);
+    vi.mocked(getIsDashboardsEnabled).mockResolvedValue(true);
+
+    await expect(requireDashboardsAccess(session, WORKSPACE_ID, "read", "req", "/i", allow)).resolves.toEqual(
+      context
+    );
+    expect(canDashboardViewerReadWorkspace).toHaveBeenCalledWith("user_1", WORKSPACE_ID);
+  });
+
+  test("never asks the viewer grant when SpiceDB allows", async () => {
+    vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(context);
+    vi.mocked(getIsDashboardsEnabled).mockResolvedValue(true);
+
+    await requireDashboardsAccess(session, WORKSPACE_ID, "read", "req", "/i", allow);
+    expect(canDashboardViewerReadWorkspace).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ["the operation does not opt in", "read", undefined],
+    ["the operation is a write", "readWrite", allow],
+    ["the operation needs manage", "manage", allow],
+  ] as const)("refuses a viewer when %s", async (_label, permission, options) => {
+    vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(problemForbidden("req"));
+    vi.mocked(canDashboardViewerReadWorkspace).mockResolvedValue(true);
+
+    const result = await requireDashboardsAccess(session, WORKSPACE_ID, permission, "req", "/i", options);
+
+    expect((result as Response).status).toBe(403);
+    expect(canDashboardViewerReadWorkspace).not.toHaveBeenCalled();
+  });
+
+  test("never admits an API key through the viewer grant", async () => {
+    vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(problemForbidden("req"));
+
+    const result = await requireDashboardsAccess(apiKey, WORKSPACE_ID, "read", "req", "/i", allow);
+
+    expect((result as Response).status).toBe(403);
+    expect(canDashboardViewerReadWorkspace).not.toHaveBeenCalled();
+  });
+
+  test("keeps the refusal when the viewer grant also says no", async () => {
+    vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(problemForbidden("req"));
+    vi.mocked(canDashboardViewerReadWorkspace).mockResolvedValue(false);
+
+    const result = await requireDashboardsAccess(session, WORKSPACE_ID, "read", "req", "/i", allow);
+
+    expect((result as Response).status).toBe(403);
+    expect(await (result as Response).json()).toMatchObject({ code: "forbidden" });
+  });
+
+  test("admits a viewer to a dataset only through the opted-in dashboard-bound read", async () => {
+    vi.mocked(can).mockResolvedValue(false);
+    vi.mocked(canDashboardViewerReadFeedbackDataset).mockResolvedValue(true);
+
+    await expect(
+      refuseUnlessFeedbackDatasetAccess(session, context, DATASET_ID, "read", "req", "/i", allow)
+    ).resolves.toBeNull();
+    expect(canDashboardViewerReadFeedbackDataset).toHaveBeenCalledWith("user_1", WORKSPACE_ID, DATASET_ID);
+
+    const refused = await refuseUnlessFeedbackDatasetAccess(session, context, DATASET_ID, "read", "req");
+    expect(refused?.status).toBe(403);
+  });
+
+  test("never admits a viewer to a dataset write", async () => {
+    vi.mocked(can).mockResolvedValue(false);
+    vi.mocked(canDashboardViewerReadFeedbackDataset).mockResolvedValue(true);
+
+    const result = await refuseUnlessFeedbackDatasetAccess(
+      session,
+      context,
+      DATASET_ID,
+      "readWrite",
+      "req",
+      "/i",
+      allow
+    );
+    expect(result?.status).toBe(403);
+    expect(canDashboardViewerReadFeedbackDataset).not.toHaveBeenCalled();
   });
 });

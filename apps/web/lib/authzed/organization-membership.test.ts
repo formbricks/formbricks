@@ -108,6 +108,24 @@ describe("organization membership projection", () => {
     expect(clientMocks.writeRelationships).toHaveBeenCalledTimes(1);
   });
 
+  test("projects a Dashboard viewer to no relation, deleting every role it may still hold (ADR-0018)", async () => {
+    vi.mocked(prisma.membership.findMany).mockResolvedValue(membershipRows("dashboard_viewer") as never);
+
+    await expect(reconcileOrganizationMembership(ORGANIZATION_ID, USER_ID)).resolves.toEqual({
+      passes: 1,
+      status: "projected",
+    });
+
+    const updates = clientMocks.writeRelationships.mock
+      .calls[0][0] as ReadonlyArray<TAuthzedRelationshipUpdate>;
+    expect(updates.map(({ operation, relationship }) => [operation, relationship.relation]).sort()).toEqual([
+      ["delete", "billing"],
+      ["delete", "manager"],
+      ["delete", "member"],
+      ["delete", "owner"],
+    ]);
+  });
+
   test("deletes every organization role when the source membership no longer exists", async () => {
     vi.mocked(prisma.membership.findMany).mockResolvedValue([] as never);
 

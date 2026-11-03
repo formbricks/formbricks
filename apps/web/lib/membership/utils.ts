@@ -17,6 +17,7 @@ export const getOrganizationRoleLabels = (t: TFunction): Record<TOrganizationRol
   manager: t("workspace.settings.teams.manager"),
   member: t("workspace.settings.teams.member"),
   billing: t("workspace.settings.teams.billing"),
+  dashboard_viewer: t("workspace.settings.teams.dashboard_viewer"),
 });
 
 export const getAccessFlags = (role?: TOrganizationRole) => {
@@ -24,12 +25,16 @@ export const getAccessFlags = (role?: TOrganizationRole) => {
   const isManager = role === "manager";
   const isBilling = role === "billing";
   const isMember = role === "member";
+  // Projects to no SpiceDB relation (ADR-0018): every product permission is denied, and the one grant it
+  // holds, dashboard read, is decided by `modules/ee/analysis/lib/dashboard-viewer-access.ts`.
+  const isDashboardViewer = role === "dashboard_viewer";
 
   return {
     isManager,
     isOwner,
     isBilling,
     isMember,
+    isDashboardViewer,
   };
 };
 

@@ -8,6 +8,7 @@ import {
 import {
   ORGANIZATION_ACCESS_RELATIONS,
   ORGANIZATION_RELATIONS,
+  ORGANIZATION_RELATION_NAMES,
   TEAM_RELATIONS,
   WORKSPACE_API_KEY_RELATIONS,
   WORKSPACE_TEAM_RELATIONS,
@@ -29,7 +30,13 @@ describe("relation name mappings", () => {
       [OrganizationRole.manager]: "manager",
       [OrganizationRole.member]: "member",
       [OrganizationRole.owner]: "owner",
+      [OrganizationRole.dashboard_viewer]: null,
     });
+  });
+
+  test("projects the Dashboard viewer to no relation, so SpiceDB denies it everything (ADR-0018)", () => {
+    expect(ORGANIZATION_RELATIONS[OrganizationRole.dashboard_viewer]).toBeNull();
+    expect(ORGANIZATION_RELATION_NAMES).toEqual(["billing", "manager", "member", "owner"]);
   });
 
   test("maps every team role to its schema relation", () => {

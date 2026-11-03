@@ -22,13 +22,26 @@ import {
  * not want.
  */
 
-/** `Membership.role` → `organization#<relation>@user`. Exactly one applies to a given membership. */
+/**
+ * `Membership.role` → `organization#<relation>@user`. At most one applies to a given membership.
+ *
+ * `dashboard_viewer` maps to no relation (ADR-0018): SpiceDB denies it every permission, and
+ * the one grant it holds, dashboard read, is decided in the app by
+ * `modules/ee/analysis/lib/dashboard-viewer-access.ts`. Projecting a viewer therefore deletes every
+ * organization role relation it may still hold, so a Member made a viewer loses `member` at once.
+ */
 export const ORGANIZATION_RELATIONS = {
   [OrganizationRole.billing]: "billing",
   [OrganizationRole.manager]: "manager",
   [OrganizationRole.member]: "member",
   [OrganizationRole.owner]: "owner",
-} as const satisfies Record<OrganizationRole, string>;
+  [OrganizationRole.dashboard_viewer]: null,
+} as const satisfies Record<OrganizationRole, string | null>;
+
+/** Every relation name `ORGANIZATION_RELATIONS` can write, without the roles that project to none. */
+export const ORGANIZATION_RELATION_NAMES: ReadonlyArray<string> = Object.values(
+  ORGANIZATION_RELATIONS
+).filter((relation): relation is NonNullable<typeof relation> => relation !== null);
 
 /** `TeamUser.role` → `team#<relation>@user`. */
 export const TEAM_RELATIONS = {

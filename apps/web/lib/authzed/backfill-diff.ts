@@ -2,7 +2,7 @@ import "server-only";
 import type { TAuthzedRelationship } from "./client";
 import {
   ORGANIZATION_ACCESS_RELATIONS,
-  ORGANIZATION_RELATIONS,
+  ORGANIZATION_RELATION_NAMES,
   SURVEY_RELATIONS,
   TEAM_RELATIONS,
   WORKSPACE_API_KEY_RELATIONS,
@@ -86,7 +86,7 @@ export type TAuthzedPermissionMismatch = Readonly<{
   source: TAuthzedSourceRef;
 }>;
 
-const ORGANIZATION_ROLE_RELATIONS = new Set<string>(Object.values(ORGANIZATION_RELATIONS));
+const ORGANIZATION_ROLE_RELATIONS = new Set<string>(ORGANIZATION_RELATION_NAMES);
 const ORGANIZATION_API_KEY_RELATIONS = new Set<string>(Object.values(ORGANIZATION_ACCESS_RELATIONS));
 const TEAM_ROLE_RELATIONS = new Set<string>(Object.values(TEAM_RELATIONS));
 const WORKSPACE_TEAM_GRANT_RELATIONS = new Set<string>(Object.values(WORKSPACE_TEAM_RELATIONS));

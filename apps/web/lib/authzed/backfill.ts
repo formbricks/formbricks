@@ -390,13 +390,32 @@ const expectedFeedbackDirectoryAssignmentIds = (
       .map(({ subject }) => subject.objectId)
   );
 
+/**
+ * The users holding an organization role relation in the expected set. A membership whose role projects
+ * to no relation (`dashboard_viewer`, ADR-0018) is still a reconcile target, so any stale role relation
+ * is deleted, but there is nothing to observe for it, so it never counts as unprojected.
+ */
+const expectedOrganizationMemberIds = (
+  expectedRelationships: ReadonlyArray<TAuthzedRelationship>
+): ReadonlySet<string> =>
+  new Set(
+    expectedRelationships
+      .filter(
+        ({ resource, subject }) => resource.objectType === "organization" && subject.objectType === "user"
+      )
+      .map(({ subject }) => subject.objectId)
+  );
+
 const toSourceRefs = (source: TAuthzedOrganizationSource): ReadonlyArray<TAuthzedSourceRef> => {
   const activeAssignmentIds = expectedFeedbackDirectoryAssignmentIds(source.expectedRelationships);
+  const projectedMemberIds = expectedOrganizationMemberIds(source.expectedRelationships);
 
   return [
-    ...source.memberships.map(
-      ({ organizationId, userId }): TAuthzedSourceRef => ({ kind: "membership", organizationId, userId })
-    ),
+    ...source.memberships
+      .filter(({ userId }) => projectedMemberIds.has(userId))
+      .map(
+        ({ organizationId, userId }): TAuthzedSourceRef => ({ kind: "membership", organizationId, userId })
+      ),
     ...source.teamIds.map((teamId): TAuthzedSourceRef => ({ kind: "team", teamId })),
     ...source.teamMemberships.map(
       ({ teamId, userId }): TAuthzedSourceRef => ({ kind: "teamMembership", teamId, userId })

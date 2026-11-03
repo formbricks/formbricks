@@ -201,6 +201,19 @@ export const getIsDashboardsEnabled = async (organizationId: string): Promise<bo
   return getCustomPlanFeaturePermission(organizationId, "dashboards");
 };
 
+/**
+ * Whether the Dashboard viewer role is available: it needs both Access Control (it is a role) and
+ * Dashboards (the only thing it can see). The role is offered, assigned and honored only while both
+ * are entitled; a lapse locks existing viewers out without changing their role (ADR-0018).
+ */
+export const getIsDashboardViewerRoleEnabled = async (organizationId: string): Promise<boolean> => {
+  const [isAccessControlAllowed, isDashboardsEnabled] = await Promise.all([
+    getAccessControlPermission(organizationId),
+    getIsDashboardsEnabled(organizationId),
+  ]);
+  return isAccessControlAllowed && isDashboardsEnabled;
+};
+
 export const getIsWorkflowsEnabled = async (organizationId: string): Promise<boolean> => {
   return getCustomPlanFeaturePermission(organizationId, "workflows");
 };
