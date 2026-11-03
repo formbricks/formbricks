@@ -145,8 +145,9 @@ export const getLogicRules = (t: TFunction) => {
       [TSurveyElementTypeEnum.FileUpload]: {
         options: [...getSubmissionOptions(t)],
       },
+      // T21 (ENG-6937): "was ranked" compares the ranked options by id, as a multi select does.
       [TSurveyElementTypeEnum.Ranking]: {
-        options: [...getSubmissionOptions(t)],
+        options: [...getMultiSelectOptions(t), ...getSubmissionOptions(t)],
       },
       [TSurveyElementTypeEnum.Cal]: {
         options: [

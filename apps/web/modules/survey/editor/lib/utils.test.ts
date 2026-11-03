@@ -20,6 +20,8 @@ import {
   getActionVariableOptions,
   getConditionOperatorOptions,
   getConditionValueOptions,
+  getFormatLeftOperandValue,
+  getFormatRightOperandValue,
   getMatchValueProps,
 } from "./utils";
 
@@ -680,7 +682,15 @@ describe("removal guards also see show-if (ENG-6931)", () => {
     const survey = withoutLogic();
 
     expect(findOptionUsedInLogic(survey, "services", "prime")).toBe(flatIndexOf(survey, "hours"));
-    expect(findOptionUsedInLogic(survey, "services", "apple")).toBe(-1);
+    // ENG-6937: "Apple TV+" in "fav" is offered only if "services" includes Apple TV+.
+    expect(findOptionUsedInLogic(survey, "services", "apple")).toBe(flatIndexOf(survey, "fav"));
+  });
+
+  test("a question an option's show-if depends on is reported as used (ENG-6937)", () => {
+    const survey = withoutLogic();
+
+    // Poster B in "ad_pick" is offered only once "brand_rank" is answered.
+    expect(findElementUsedInLogic(survey, "brand_rank")).toBe(flatIndexOf(survey, "ad_pick"));
   });
 
   test("a hidden field a show-if reads is reported as used", () => {
@@ -709,5 +719,77 @@ describe("getActionObjectiveOptions", () => {
     expect(getActionObjectiveOptions(t).find((option) => option.value === "calculate")?.label).toBe(
       "workspace.surveys.edit.flow.set_value"
     );
+  });
+});
+
+describe("ranking conditions in the editor (T21, ENG-6937)", () => {
+  const rankedCondition: TSingleCondition = {
+    id: "rankedcondition000000001",
+    leftOperand: { type: "element", value: "brand_rank" },
+    operator: "includesOneOf",
+    rightOperand: { type: "static", value: [] },
+  };
+
+  test("a ranking offers 'includes one of' and its options, by id", () => {
+    const operators = getConditionOperatorOptions(rankedCondition, surveyFlowFixture, t).map(
+      (option) => option.value
+    );
+    expect(operators).toEqual(expect.arrayContaining(["includesOneOf", "includesAllOf"]));
+
+    const props = getMatchValueProps(rankedCondition, surveyFlowFixture, t);
+    const values = (props.options as TComboboxGroupedOption[]).flatMap((group) =>
+      group.options.map((option) => option.value)
+    );
+    expect(values).toEqual(["netflix", "disney", "prime"]);
+  });
+});
+
+/**
+ * ENG-6934: the editor shows a matrix condition's row and column the way the engines read them, by id,
+ * so a row or column reordered in this session does not show the condition on another cell until the
+ * save rewrites the positions.
+ */
+describe("matrix conditions by id in the editor", () => {
+  const PROFILE = 5;
+  const reordered = (): TSurvey => {
+    const survey = structuredClone(surveyFlowFixture);
+    const grid = survey.blocks
+      .flatMap((block) => block.elements)
+      .find((element) => element.id === "brand_grid") as { rows: unknown[]; columns: unknown[] };
+    grid.rows.reverse();
+    grid.columns.reverse();
+    return survey;
+  };
+  const matrixCondition = (survey: TSurvey): TSingleCondition =>
+    survey.blocks[PROFILE].logic![0].conditions.conditions[0] as TSingleCondition;
+
+  test("the row picker shows the row the id names, after a reorder", () => {
+    const survey = reordered();
+
+    // Netflix (row_netflix) was row 0 and is now row 1.
+    expect(getFormatLeftOperandValue(matrixCondition(survey), survey)).toBe("brand_grid.1");
+  });
+
+  test("the column picker shows the column the id names, after a reorder", () => {
+    const survey = reordered();
+
+    // Good (col_good) was column 1 and is now column 0.
+    expect(getFormatRightOperandValue(matrixCondition(survey), survey)).toBe("0");
+  });
+
+  test("other conditions show their stored value", () => {
+    const survey = structuredClone(surveyFlowFixture);
+    const dateCondition = survey.blocks[PROFILE].logic![0].conditions.conditions[1] as TSingleCondition;
+
+    expect(getFormatRightOperandValue(dateCondition, survey)).toBe("2026-01-01");
+  });
+
+  test("a row condition written in the id form alone gets the row operators", () => {
+    const survey = structuredClone(surveyFlowFixture);
+    const condition = matrixCondition(survey);
+    if (condition.leftOperand.type === "element") condition.leftOperand.meta = { rowId: "row_disney" };
+
+    const operators = getConditionOperatorOptions(condition, survey, t).map((option) => option.value);
+    expect(operators).toContain("isAnyOf");
   });
 });

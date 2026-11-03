@@ -190,7 +190,11 @@ export function ConditionsEditor({
           groupedOptions={options}
           allowMultiSelect={allowMultiSelect}
           showCheckIcon={allowMultiSelect}
-          value={condition.rightOperand?.value}
+          value={
+            config.formatRightOperandValue
+              ? config.formatRightOperandValue(condition)
+              : condition.rightOperand?.value
+          }
           clearable={true}
           onChangeValue={(val, option) => {
             handleRightOperandChange(condition, val, option);

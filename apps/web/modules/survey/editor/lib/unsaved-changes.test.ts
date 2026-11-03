@@ -1,4 +1,6 @@
 import { describe, expect, test } from "vitest";
+import { withMatrixConditionIdsInBlocks } from "@formbricks/types/surveys/matrix-conditions";
+import { surveyFlowFixture } from "@formbricks/types/surveys/test-fixtures/survey-flow-fixture";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { hasUnsavedSurveyChanges, isJustSavedBypassValid } from "./unsaved-changes";
 
@@ -160,6 +162,21 @@ describe("hasUnsavedSurveyChanges", () => {
     });
 
     expect(hasUnsavedSurveyChanges(local, [baseSurvey])).toBe(false);
+  });
+
+  // ENG-6934: the save rewrites matrix condition positions from their ids; the auto-save keeps the
+  // result in refs, so a reorder must not leave the editor dirty forever.
+  test("a matrix reorder reads clean once saved, though the save rewrote the condition positions", () => {
+    const local = structuredClone(surveyFlowFixture);
+    const grid = local.blocks.flatMap((block) => block.elements).find((e) => e.id === "brand_grid") as {
+      rows: unknown[];
+    };
+    grid.rows.reverse();
+    const saved = { ...local, blocks: withMatrixConditionIdsInBlocks(local.blocks) };
+
+    expect(saved.blocks).not.toEqual(local.blocks);
+    expect(hasUnsavedSurveyChanges(local, [saved])).toBe(false);
+    expect(hasUnsavedSurveyChanges(local, [surveyFlowFixture])).toBe(true);
   });
 
   test("skips persisted states that are not there yet", () => {

@@ -1057,6 +1057,66 @@ describe("Survey Logic", () => {
       expect(evaluateLogic(mockSurvey, mockData, mockVariablesData, matrixCondition, "default")).toBe(true);
     });
 
+    describe("matrix conditions by id (ENG-6934)", () => {
+      // mockData answers Row 1 → Column 1 and Row 2 → Column 2.
+      const matrixRow = (
+        meta: Record<string, string>,
+        rightOperand: TSingleCondition["rightOperand"],
+        operator: TSingleCondition["operator"] = "equals"
+      ): TConditionGroup => ({
+        id: "group1",
+        connector: "and",
+        conditions: [
+          { id: "condition1", operator, leftOperand: { type: "element", value: "q8", meta }, rightOperand },
+        ],
+      });
+
+      test("the row and column ids win over positions that disagree (a reorder since the save)", () => {
+        // Positions alone read "Row 1 is Column 2", which is false; the ids read "Row 2 is Column 2".
+        const condition = matrixRow(
+          { row: "0", rowId: "row2" },
+          { type: "static", value: "1", columnId: "col2" }
+        );
+
+        expect(evaluateLogic(mockSurvey, mockData, mockVariablesData, condition, "default")).toBe(true);
+      });
+
+      test("ids match in the respondent's language", () => {
+        const spanish: TResponseData = { q8: { "Fila 1": "Columna 2" } };
+        const condition = matrixRow(
+          { row: "1", rowId: "row1" },
+          { type: "static", value: "0", columnId: "col2" }
+        );
+
+        expect(evaluateLogic(mockSurvey, spanish, mockVariablesData, condition, "es")).toBe(true);
+      });
+
+      test("an isAnyOf reads its column ids", () => {
+        const condition = matrixRow(
+          { row: "1", rowId: "row1" },
+          { type: "static", value: ["1"], columnIds: ["col1"] },
+          "isAnyOf"
+        );
+
+        expect(evaluateLogic(mockSurvey, mockData, mockVariablesData, condition, "default")).toBe(true);
+      });
+
+      test("a column id the matrix doesn't have never matches, whatever the position says", () => {
+        const condition = matrixRow(
+          { row: "0", rowId: "row1" },
+          { type: "static", value: "0", columnId: "gone" }
+        );
+
+        expect(evaluateLogic(mockSurvey, mockData, mockVariablesData, condition, "default")).toBe(false);
+      });
+
+      test("a row id the matrix doesn't have reads as no answer", () => {
+        const condition = matrixRow({ row: "0", rowId: "gone" }, undefined, "isNotEmpty");
+
+        expect(evaluateLogic(mockSurvey, mockData, mockVariablesData, condition, "default")).toBe(false);
+      });
+    });
+
     test("evaluates file upload questions", () => {
       const fileUploadCondition: TConditionGroup = {
         id: "group1",
@@ -2135,5 +2195,62 @@ describe("reserved field operands (ENG-1840)", () => {
 
   test("omitting the map keeps every reserved operand unset (already-deployed callers)", () => {
     expect(evaluateLogic(buildSurvey(), {}, {}, reservedCondition("url", "isSet"), "default")).toBe(false);
+  });
+});
+
+describe("ranking conditions on option ids (T21, ENG-6937)", () => {
+  const rankingSurvey = {
+    id: "survey1",
+    blocks: [
+      {
+        id: "b1",
+        name: "b1",
+        elements: [
+          {
+            id: "rank",
+            type: TSurveyElementTypeEnum.Ranking,
+            headline: { default: "Rank" },
+            required: false,
+            choices: [
+              { id: "netflix", label: { default: "Netflix" } },
+              { id: "disney", label: { default: "Disney+" } },
+              { id: "prime", label: { default: "Prime Video" } },
+            ],
+          },
+        ],
+      },
+    ],
+    variables: [],
+    embeddedFields: [],
+  } as unknown as TJsWorkspaceStateSurvey;
+
+  const ranked = (operator: TSingleCondition["operator"], value: string[]): TConditionGroup => ({
+    id: "g",
+    connector: "and",
+    conditions: [
+      {
+        id: "c",
+        leftOperand: { type: "element", value: "rank" },
+        operator,
+        rightOperand: { type: "static", value },
+      },
+    ],
+  });
+
+  test("a ranking answer's labels are matched by option id: 'was ranked'", () => {
+    const data: TResponseData = { rank: ["Prime Video", "Netflix"] };
+
+    expect(evaluateLogic(rankingSurvey, data, {}, ranked("includesOneOf", ["netflix"]), "default")).toBe(
+      true
+    );
+    expect(
+      evaluateLogic(rankingSurvey, data, {}, ranked("includesAllOf", ["netflix", "prime"]), "default")
+    ).toBe(true);
+    expect(evaluateLogic(rankingSurvey, data, {}, ranked("includesOneOf", ["disney"]), "default")).toBe(
+      false
+    );
+    expect(evaluateLogic(rankingSurvey, data, {}, ranked("doesNotIncludeOneOf", ["disney"]), "default")).toBe(
+      true
+    );
   });
 });

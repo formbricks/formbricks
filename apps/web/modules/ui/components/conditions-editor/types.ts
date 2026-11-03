@@ -45,6 +45,12 @@ export interface TConditionsEditorConfig<T extends TGenericCondition = TGenericC
   getDefaultOperator: () => string;
   formatLeftOperandValue: (condition: T) => string;
   /**
+   * The right operand as the value picker shows it, when it isn't the stored value as it is: a matrix
+   * row condition reads its column ids back to the positions its options use (ENG-6934). Omitted means
+   * the stored value.
+   */
+  formatRightOperandValue?: (condition: T) => string | number | string[] | undefined;
+  /**
    * Renders the right-operand control for a condition when the default combobox does not fit —
    * a date picker, or a pick-list fetched per data source. Return `undefined` to fall back to the
    * combobox described by `getValueProps`, `null` to render nothing (a valueless operator).

@@ -365,6 +365,30 @@ describe("getPublishedLockViolations: allowed edits", () => {
     ).toEqual([]);
   });
 
+  test("hiding a launch option and adding a show-if to it (ENG-6937): the only way to retire one", () => {
+    const showIf = {
+      id: "g1",
+      connector: "and",
+      conditions: [{ id: "c1", leftOperand: { type: "element", value: "q0" }, operator: "isSubmitted" }],
+    };
+    const next = survey(
+      "inProgress",
+      single({
+        choices: [
+          { ...apple, hidden: true },
+          { ...banana, showIf },
+        ],
+      }),
+      matrix({ rows: [{ ...row1, showIf }, row2], columns: [col1, { ...col2, hidden: true, showIf }] })
+    );
+    expect(getPublishedLockViolations(stored, next)).toEqual([]);
+  });
+
+  test("deleting a launch option stays refused next to a hidden one (ENG-6937)", () => {
+    const next = survey("inProgress", single({ choices: [{ ...apple, hidden: true }] }), matrix());
+    expect(kinds(stored, next)).toEqual(["option_deleted"]);
+  });
+
   test("tolerates malformed input instead of throwing", () => {
     expect(
       getPublishedLockViolations({ status: "inProgress", blocks: [null, { elements: "x" }] }, { blocks: [] })

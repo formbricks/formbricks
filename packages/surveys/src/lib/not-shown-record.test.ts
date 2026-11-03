@@ -41,6 +41,7 @@ const startRespondent = () => {
         blockId: cardId,
         hiddenElementIds: decision.hiddenElementIds,
         skippedBlockIds: decision.skippedBlockIds,
+        optionsNotShown: decision.optionsNotShown,
       });
       responseData = { ...responseData, ...decision.submittedData };
       history = [...history, cardId];
@@ -56,6 +57,9 @@ const startRespondent = () => {
 
 const netflixOnly = { services: ["Netflix"] };
 const bigThree = { services: ["Netflix", "Disney+", "Prime Video"] };
+const allFour = { services: ["Netflix", "Disney+", "Prime Video", "Apple TV+"] };
+/** ENG-6937: the Overall page never offers the Hidden bundle option. */
+const hiddenBundleOption = { options: { bundle: ["netflix_apple"] } };
 
 describe("the not-shown record the survey sends", () => {
   test("lists a block whose show-if failed and a question hidden on its page", () => {
@@ -110,17 +114,18 @@ describe("the not-shown record the survey sends", () => {
   test("re-submitting a page with a changed answer hides the follow-up it showed before", () => {
     const respondent = startRespondent();
     respondent.submit();
-    respondent.submit(bigThree);
+    respondent.submit(allFour);
     respondent.submit({ sat_netflix: 5 });
     respondent.submit({ hours: "12" });
     respondent.submit({ concept: 9 });
-    expect(respondent.submit({ fav: "Apple TV+", apple_reason: "Price" })).toEqual({});
+    expect(respondent.submit({ fav: "Apple TV+", apple_reason: "Price" })).toEqual(hiddenBundleOption);
 
     respondent.back();
     expect(respondent.cardId).toBe(blocks.overall);
 
     expect(respondent.submit({ fav: "Netflix", apple_reason: "Price" })).toEqual({
       elements: ["apple_reason"],
+      ...hiddenBundleOption,
     });
   });
 });

@@ -27,6 +27,7 @@ import { getLinkSurveyCardMaxWidth } from "@formbricks/types/styling";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { getNotShownElementIds } from "@formbricks/types/surveys/not-shown";
+import { withOptionsShown } from "@formbricks/types/surveys/show-if";
 import { BlockConditional } from "@/components/general/block-conditional";
 import { EndingCard } from "@/components/general/ending-card";
 import { ErrorComponent } from "@/components/general/error-component";
@@ -47,7 +48,13 @@ import { AutoCloseWrapper } from "@/components/wrappers/auto-close-wrapper";
 import { CardlessSurveyLayout } from "@/components/wrappers/cardless-survey-layout";
 import { StackedCardsContainer } from "@/components/wrappers/stacked-cards-container";
 import { ApiClient } from "@/lib/api-client";
-import { advanceFromBlock, enterBlock, getPageVisibility, startSurvey } from "@/lib/block-flow";
+import {
+  advanceFromBlock,
+  enterBlock,
+  getPageAnswers,
+  getPageVisibility,
+  startSurvey,
+} from "@/lib/block-flow";
 import { type TWebSurveyMeta, createWebSurveyMetaSnapshot } from "@/lib/browser-context";
 import { getCardStartsWithMedia } from "@/lib/card-header";
 import { getLocalizedValue } from "@/lib/i18n";
@@ -1294,6 +1301,7 @@ export function Survey({
       requiredQuestionIds,
       submittedData,
       hiddenElementIds,
+      optionsNotShown,
       markLowQuality,
       skippedBlockIds,
     } = advanceFromBlock({
@@ -1322,6 +1330,7 @@ export function Survey({
       blockId,
       hiddenElementIds,
       skippedBlockIds,
+      optionsNotShown,
     });
     setNotShownSteps(nextNotShownSteps);
     const notShown = buildNotShownRecord(
@@ -1536,8 +1545,9 @@ export function Survey({
         }
       } else {
         const block = localSurvey.blocks[blockIdx];
-        // Re-evaluated on every render, so a question appears or hides as the answers above it change.
-        const { visibleElementIds } = getPageVisibility({
+        // Re-evaluated on every render, so a question appears or hides as the answers above it change,
+        // and its options are filtered live (ENG-6937).
+        const pageVisibility = getPageVisibility({
           survey: localSurvey,
           blockId: block?.id ?? "",
           responseData,
@@ -1545,6 +1555,7 @@ export function Survey({
           selectedLanguage,
           reservedFieldValues: reservedValues,
         });
+        const { visibleElementIds, optionsNotShown } = pageVisibility;
         return (
           Boolean(block) && (
             <BlockConditional
@@ -1554,10 +1565,13 @@ export function Survey({
               block={{
                 ...block,
                 elements: block.elements.map((element) =>
-                  parseRecallInformation(element, selectedLanguage, recallValues, currentVariables)
+                  withOptionsShown(
+                    parseRecallInformation(element, selectedLanguage, recallValues, currentVariables),
+                    optionsNotShown[element.id]
+                  )
                 ),
               }}
-              value={responseData}
+              value={getPageAnswers(responseData, pageVisibility)}
               onChange={onChange}
               onSubmit={onSubmit}
               onBack={onBack}

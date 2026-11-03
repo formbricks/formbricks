@@ -12,6 +12,11 @@ import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { evaluateSetValue } from "@formbricks/types/surveys/expression-evaluation";
 import { type TConditionGroup, type TSingleCondition } from "@formbricks/types/surveys/logic";
 import { evaluateConditionGroup } from "@formbricks/types/surveys/logic-evaluation";
+import {
+  isMatrixRowCondition,
+  resolveMatrixColumnValue,
+  resolveMatrixRowIndex,
+} from "@formbricks/types/surveys/matrix-conditions";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getElementsFromSurveyBlocks } from "./utils";
 
@@ -151,17 +156,26 @@ const getLeftOperandValue = (
         }
       }
 
+      // T21 (ENG-6937): a ranking stores the ranked labels in the respondent's language; conditions name
+      // option ids, so "was ranked" maps each label back, as multi select does.
+      if (currentQuestion.type === "ranking" && Array.isArray(responseValue)) {
+        return responseValue.flatMap((value) => {
+          const choice = currentQuestion.choices.find(
+            (candidate) => getLocalizedValue(candidate.label, selectedLanguage) === value
+          );
+          return choice ? [choice.id] : [];
+        });
+      }
+
       if (
         currentQuestion.type === "matrix" &&
         typeof responseValue === "object" &&
         !Array.isArray(responseValue)
       ) {
-        if (leftOperand.meta && leftOperand.meta?.row !== undefined) {
-          const rowIndex = Number(leftOperand.meta.row);
-
-          if (isNaN(rowIndex) || rowIndex < 0 || rowIndex >= currentQuestion.rows.length) {
-            return undefined;
-          }
+        if (isMatrixRowCondition(leftOperand.meta)) {
+          // ENG-6934: the row id first, the position as the fallback; an unknown id is no row.
+          const rowIndex = resolveMatrixRowIndex(currentQuestion, leftOperand.meta);
+          if (rowIndex === undefined) return undefined;
 
           const row = getLocalizedValue(currentQuestion.rows[rowIndex].label, selectedLanguage);
 
@@ -277,6 +291,17 @@ const evaluateSingleCondition = (
       (condition.rightOperand?.type === "hiddenField" || condition.rightOperand?.type === "reserved")
     ) {
       rightValue = Number(rightValue as string);
+    }
+
+    // ENG-6934: a matrix row condition compares column positions; its column id(s) decide them.
+    if (
+      condition.leftOperand.type === "element" &&
+      condition.rightOperand?.type === "static" &&
+      typeof leftField === "object" &&
+      leftField.type === TSurveyElementTypeEnum.Matrix &&
+      isMatrixRowCondition(condition.leftOperand.meta)
+    ) {
+      rightValue = resolveMatrixColumnValue(leftField, condition.rightOperand);
     }
 
     switch (condition.operator) {

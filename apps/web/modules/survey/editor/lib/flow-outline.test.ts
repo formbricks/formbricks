@@ -113,7 +113,7 @@ describe("buildFlowOutline: every construct in the fixture survey", () => {
     expect(outline.blocks[4].elements[1].badges).toEqual([
       { kind: "showIf", conditions: appleReason.showIf, editable: true },
     ]);
-    expect(outline.blocks[4].elements[0].badges).toEqual([]);
+    expect(outline.blocks[4].elements[3].badges).toEqual([]);
   });
 });
 
@@ -280,26 +280,61 @@ describe("buildFlowOutline: constructs the Flow tab cannot edit yet come out rea
     const survey = withUnknown((draft) => {
       const fav = draft.blocks[4].elements[0];
       fav.optionsCopiedFrom = "services";
+      // The fixture's fourth option already has a show-if.
       fav.choices[0].showIf = showIf;
       fav.choices[1].showIf = showIf;
       // Hidden wins over show-if: counted once, as hidden.
       fav.choices[2].showIf = showIf;
       fav.choices[2].hidden = true;
 
+      // The fixture's second row has a show-if.
       const grid = draft.blocks[5].elements[2];
       grid.rows[0].showIf = showIf;
       grid.columns[1].hidden = true;
     });
     const outline = buildFlowOutline(survey);
 
+    // ENG-6937: option show-if and Hidden are edited in the "Options shown if" popover.
     expect(outline.blocks[4].elements[0].badges).toEqual([
       { kind: "optionsCopiedFrom", sourceId: "services", editable: false },
-      { kind: "optionsShowIf", count: 2, editable: false },
-      { kind: "hiddenOptions", count: 1, editable: false },
+      { kind: "optionsShowIf", count: 3, editable: true },
+      { kind: "hiddenOptions", count: 1, editable: true },
     ]);
     expect(outline.blocks[5].elements[2].badges).toEqual([
-      { kind: "optionsShowIf", count: 1, editable: false },
-      { kind: "hiddenOptions", count: 1, editable: false },
+      { kind: "optionsShowIf", count: 2, editable: true },
+      { kind: "hiddenOptions", count: 1, editable: true },
     ]);
+  });
+
+  test("an option show-if on an operand type the editor doesn't know makes the options badge read-only", () => {
+    const survey = withUnknown((draft) => {
+      draft.blocks[4].elements[0].choices[0].showIf = {
+        ...showIf,
+        conditions: [
+          {
+            id: "unknownoperand0000000003",
+            leftOperand: { type: "contactAttribute", value: "plan" },
+            operator: "isSet",
+          },
+        ],
+      };
+    });
+
+    expect(buildFlowOutline(survey).blocks[4].elements[0].badges).toEqual([
+      { kind: "optionsShowIf", count: 2, editable: false },
+    ]);
+  });
+
+  test("questions with options say which lists the popover edits", () => {
+    const outline = buildFlowOutline(surveyFlowFixture);
+    const listsOf = (elementId: string) =>
+      outline.blocks.flatMap((block) => block.elements).find((element) => element.id === elementId)
+        ?.optionLists;
+
+    expect(listsOf("services")).toEqual(["choices"]);
+    expect(listsOf("brand_rank")).toEqual(["choices"]);
+    expect(listsOf("ad_pick")).toEqual(["choices"]);
+    expect(listsOf("brand_grid")).toEqual(["rows", "columns"]);
+    expect(listsOf("hours")).toEqual([]);
   });
 });

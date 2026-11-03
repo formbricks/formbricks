@@ -1,5 +1,6 @@
 import type { TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import type { TConditionGroup } from "@formbricks/types/surveys/logic";
+import { type TOptionListKey, getOptionLists } from "@formbricks/types/surveys/show-if";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 
 /**
@@ -13,9 +14,9 @@ import type { TSurvey } from "@formbricks/types/surveys/types";
  * **Everything the survey holds produces a row or a badge** (D2, Javier's ENG-3651 rule): whatever
  * the v3 API or MCP can write is shown, so nothing an AI wrote is hidden from the person checking
  * it. A construct the Flow tab cannot edit yet comes out with `editable: false` and is rendered
- * read-only. The keys this module reads beyond `TSurvey` (`hidden`,
- * `optionsCopiedFrom`, and rule actions or values the editor doesn't know) are the approved shapes
- * of the later Survey Flow Editor tickets; each of those tickets makes its construct editable.
+ * read-only. The keys this module reads beyond `TSurvey` (`optionsCopiedFrom`, and rule actions or
+ * values the editor doesn't know) are the approved shapes of the later Survey Flow Editor tickets;
+ * each of those tickets makes its construct editable.
  *
  * Labels are left to the renderer: the model carries ids, indices and the raw rules, so it stays
  * free of translations and of the survey's languages.
@@ -57,20 +58,27 @@ export interface TFlowFallbackRow {
  *
  * - `showIf`: the item is shown only when its condition group matches. Edited in place (ENG-6931),
  *   unless a condition uses an operand type the conditions editor doesn't know
- * - `optionsShowIf`: `count` options (or matrix rows and columns) carry their own show-if
- * - `hiddenOptions`: `count` options are hidden
+ * - `optionsShowIf`: `count` options (or matrix rows and columns) carry their own show-if. Edited in
+ *   the question's "Options shown if" popover (ENG-6937), unless a condition uses an operand type the
+ *   conditions editor doesn't know
+ * - `hiddenOptions`: `count` options are Hidden; edited in the same popover
  * - `optionsCopiedFrom`: the options are copied from the question `sourceId`
  */
 export type TFlowBadge =
   | { kind: "showIf"; conditions: TConditionGroup; editable: boolean }
-  | { kind: "optionsShowIf"; count: number; editable: false }
-  | { kind: "hiddenOptions"; count: number; editable: false }
+  | { kind: "optionsShowIf"; count: number; editable: boolean }
+  | { kind: "hiddenOptions"; count: number; editable: boolean }
   | { kind: "optionsCopiedFrom"; sourceId: string; editable: false };
 
 export interface TFlowElementItem {
   id: string;
   elementIdx: number;
   badges: TFlowBadge[];
+  /**
+   * The option lists option show-if and Hidden apply to (ENG-6937): `["choices"]`, a matrix's
+   * `["rows", "columns"]`, or none. A question with any gets the "Options shown if" popover.
+   */
+  optionLists: TOptionListKey[];
 }
 
 export interface TFlowBlockSection {
@@ -212,6 +220,11 @@ const getOptionLikeItems = (element: TLooseRecord): unknown[] =>
     return Array.isArray(items) ? items : [];
   });
 
+const getOptionListKeys = (element: unknown): TOptionListKey[] =>
+  isRecord(element) && typeof element.type === "string"
+    ? getOptionLists({ type: element.type, ...element }).map((list) => list.listKey)
+    : [];
+
 const getElementBadges = (element: unknown): TFlowBadge[] => {
   if (!isRecord(element)) return [];
   const badges: TFlowBadge[] = [...getShowIfBadge(element)];
@@ -225,8 +238,15 @@ const getElementBadges = (element: unknown): TFlowBadge[] => {
   const showIfCount = options.filter(
     (option) => isRecord(option) && option.hidden !== true && isGroup(option.showIf)
   ).length;
-  if (showIfCount > 0) badges.push({ kind: "optionsShowIf", count: showIfCount, editable: false });
-  if (hiddenCount > 0) badges.push({ kind: "hiddenOptions", count: hiddenCount, editable: false });
+  // ENG-6937: editable in the "Options shown if" popover when the conditions editor shows every
+  // option's conditions, and the element is a type the popover offers.
+  const editable =
+    getOptionListKeys(element).length > 0 &&
+    options.every(
+      (option) => !isRecord(option) || !isGroup(option.showIf) || areConditionsEditable(option.showIf)
+    );
+  if (showIfCount > 0) badges.push({ kind: "optionsShowIf", count: showIfCount, editable });
+  if (hiddenCount > 0) badges.push({ kind: "hiddenOptions", count: hiddenCount, editable });
 
   return badges;
 };
@@ -260,6 +280,7 @@ export const buildFlowOutline = (survey: TSurvey): TFlowOutline => {
         id: element.id,
         elementIdx,
         badges: getElementBadges(element),
+        optionLists: getOptionListKeys(element),
       })),
       badges: getShowIfBadge(block),
       rules: logic.map((rule, ruleIdx) => toRuleRow(rule, ruleIdx, owner)),

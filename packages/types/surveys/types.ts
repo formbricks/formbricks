@@ -67,6 +67,8 @@ import {
   ZConditionGroupDeprecated,
   ZDynamicLogicFieldValueDeprecated,
 } from "./logic";
+import { type TFindMatrix, findUnknownMatrixIds, isMatrixRowCondition } from "./matrix-conditions";
+import { getOptionLists } from "./show-if";
 import { validateStartLogic } from "./start-logic-validation";
 import {
   FORBIDDEN_IDS,
@@ -3316,7 +3318,18 @@ const isInvalidOperatorsForElementType = (
       }
       break;
     case TSurveyElementTypeEnum.Ranking:
-      if (!["isSubmitted", "isSkipped"].includes(operator)) {
+      // T21 (ENG-6937): both engines map a ranking's stored labels back to option ids, so "was ranked"
+      // conditions match. Equality is left out: a ranking is an order, not a set.
+      if (
+        ![
+          "includesAllOf",
+          "includesOneOf",
+          "doesNotIncludeAllOf",
+          "doesNotIncludeOneOf",
+          "isSubmitted",
+          "isSkipped",
+        ].includes(operator)
+      ) {
         isInvalidOperator = true;
       }
       break;
@@ -3765,7 +3778,8 @@ const validateConditionGroupOperands = (
         }
       } else if (element.type === TSurveyElementTypeEnum.Matrix) {
         const row = leftOperand.meta?.row;
-        if (row === undefined) {
+        // ENG-6934: the id form alone is a row condition too; the write path fills the position.
+        if (!isMatrixRowCondition(leftOperand.meta)) {
           if (rightOperand?.value !== undefined) {
             issues.push({
               code: "custom",
@@ -3796,8 +3810,10 @@ const validateConditionGroupOperands = (
                 path: scope.path,
               });
             }
+            // With a row id, the id decides the row (and is checked on its own); the position is
+            // only the previous release's reading, rewritten from the id on every write.
             const rowIndex = Number(row);
-            if (rowIndex < 0 || rowIndex >= element.rows.length) {
+            if (leftOperand.meta?.rowId === undefined && (rowIndex < 0 || rowIndex >= element.rows.length)) {
               issues.push({
                 code: "custom",
                 message: `Conditional Logic: Invalid row index in matrix element in ${scope.where}`,
@@ -3890,6 +3906,14 @@ const validateConditionGroupOperands = (
   };
 
   processConditionGroup(conditions);
+  // ENG-6934: a row or column id the matrix doesn't have, at the exact path of the id.
+  const findMatrix: TFindMatrix = (elementId) => {
+    const element = allElements.get(elementId)?.data;
+    return element?.type === TSurveyElementTypeEnum.Matrix ? element : undefined;
+  };
+  for (const issue of findUnknownMatrixIds(conditions, findMatrix, scope.path)) {
+    issues.push({ code: "custom", message: `${issue.message} in ${scope.where}`, path: issue.path });
+  }
   return issues;
 };
 
@@ -3992,8 +4016,36 @@ const validateShowIf = (
     );
   });
 
+  // Option show-if (ENG-6937): an option, a matrix row or a matrix column follows its element's rule.
+  block.elements.forEach((element, elementIndex) => {
+    for (const { listKey, items } of getOptionLists(element)) {
+      items.forEach((item, itemIndex) => {
+        if (!item.showIf) return;
+        const path = ["blocks", blockIndex, "elements", elementIndex, listKey, itemIndex, "showIf"];
+        const owner = `${OPTION_LIST_NOUN[listKey]} ${String(itemIndex + 1)} of question ${String(elementIndex + 1)} of ${blockLabel}`;
+        issues.push(
+          ...validateConditionGroupOperands(survey, blockIndex, item.showIf, allElements, {
+            path,
+            where: `the show-if of ${owner}`,
+            checkLaterBlock: false,
+          })
+        );
+        checkReferences(
+          item.showIf,
+          path,
+          (target) =>
+            target.block < blockIndex || (target.block === blockIndex && target.element < elementIndex),
+          owner,
+          element.id
+        );
+      });
+    }
+  });
+
   return issues;
 };
+
+const OPTION_LIST_NOUN = { choices: "option", rows: "row", columns: "column" } as const;
 
 /** How a logic error names a block: its editable title, or its position when the title is blank. */
 const getBlockLabel = (block: TSurveyBlock, blockIndex: number): string =>
@@ -4513,6 +4565,16 @@ export const ZSurveyElementSummaryOpenText = z.object({
 
 export type TSurveyElementSummaryOpenText = z.infer<typeof ZSurveyElementSummaryOpenText>;
 
+/**
+ * Option bases (ENG-6937). `shownCount`: how many of the respondents in the element's base were shown
+ * the option (or matrix row), set only when that is fewer than all of them; percentages are over it.
+ * `hidden`: the option is Hidden (retired on a live survey) and stays in results labelled so.
+ */
+const ZSummaryOptionBase = {
+  shownCount: z.number().optional(),
+  hidden: z.literal(true).optional(),
+};
+
 export const ZSurveyElementSummaryMultipleChoice = z.object({
   type: z.union([
     z.literal(TSurveyElementTypeEnum.MultipleChoiceMulti),
@@ -4526,6 +4588,7 @@ export const ZSurveyElementSummaryMultipleChoice = z.object({
       value: z.string(),
       count: z.number(),
       percentage: z.number(),
+      ...ZSummaryOptionBase,
       others: z
         .array(
           z.object({
@@ -4557,6 +4620,7 @@ export const ZSurveyElementSummaryPictureSelection = z.object({
       imageUrl: ZStorageUrl,
       count: z.number(),
       percentage: z.number(),
+      ...ZSummaryOptionBase,
     })
   ),
 });
@@ -4762,6 +4826,7 @@ export const ZSurveyElementSummaryMatrix = z.object({
         })
       ),
       totalResponsesForRow: z.number(),
+      ...ZSummaryOptionBase,
     })
   ),
 });
@@ -4845,6 +4910,7 @@ export const ZSurveyElementSummaryRanking = z.object({
       value: z.string(),
       count: z.number(),
       avgRanking: z.number(),
+      ...ZSummaryOptionBase,
       others: z
         .array(
           z.object({
