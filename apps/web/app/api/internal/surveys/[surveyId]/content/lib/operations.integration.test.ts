@@ -704,7 +704,7 @@ describe("shared hidden fields and variables", () => {
 });
 
 describe("what an Update removes", () => {
-  test("warns about each question and option it takes from a survey with responses", async () => {
+  test("warns about each question and option it takes from a survey with responses, which a published one refuses", async () => {
     const surveyId = await seedSurvey({ status: "completed" });
     const file = await exportFile(surveyId);
     const fewer = editFile(file, (survey) => {
@@ -727,9 +727,33 @@ describe("what an Update removes", () => {
         params: { headline: "Anything else?" },
       },
     ]);
-    // The Update still goes ahead.
+    // Published surveys lock what they launched with (ENG-6782): the Update is refused, nothing is written.
+    const refused = await update(surveyId, done, { updatedAt: done.match!.updatedAt });
+    expect(refused.status).toBe(422);
+    expect(await refused.json()).toMatchObject({
+      code: "formbricks_file_invalid",
+      invalid_params: [expect.objectContaining({ code: "immutable_option_deletion" })],
+    });
+    expect(await prisma.response.count({ where: { surveyId } })).toBe(1);
+    expect((await storedSurvey(surveyId)).blocks).toEqual(BLOCKS);
+  });
+
+  test("a draft with responses takes the removals the report warns about", async () => {
+    const surveyId = await seedSurvey({ status: "draft" });
+    const file = await exportFile(surveyId);
+    const fewer = editFile(file, (survey) => {
+      const [block] = survey.blocks as { elements: { id: string; choices?: { id: string }[] }[] }[];
+      block.elements = block.elements.filter((element) => element.id !== "feedback");
+      block.elements[0].choices = block.elements[0].choices?.filter((option) => option.id !== "green");
+    });
+
+    await prisma.response.create({ data: { surveyId, finished: true, data: { color: "Green" } } });
+    const done = await preview(fewer);
+
+    expect(done.match?.issues?.map((issue) => issue.code)).toEqual(["option_removed", "question_removed"]);
     expect((await update(surveyId, done, { updatedAt: done.match!.updatedAt })).status).toBe(200);
     expect(await prisma.response.count({ where: { surveyId } })).toBe(1);
+    expect(headlineOf(await storedSurvey(surveyId))).toBe("Which color?");
   });
 
   test("removes the parts the workspace cannot hold with a warning, as a create does", async () => {

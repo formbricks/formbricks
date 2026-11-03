@@ -448,8 +448,11 @@ describe("a Formbricks file imported into another organization", () => {
       type: "app",
       status: "draft",
     });
-    // The content, ids included, as the source has it.
-    expect(created.blocks).toEqual(BLOCKS);
+    // The content, ids included, as the source has it — apart from the question and answer codes the
+    // create fills (ENG-6782).
+    expect(
+      JSON.parse(JSON.stringify(created.blocks), (key, value) => (key === "code" ? undefined : value))
+    ).toEqual(BLOCKS);
     expect(created.endings).toEqual([
       { id: ENDING_ID, type: "endScreen", headline: { default: "Thanks!", "de-DE": "Danke!" } },
     ]);
