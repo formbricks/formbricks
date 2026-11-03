@@ -122,6 +122,21 @@ describe("sniffSurveyImportFile: the type comes from the content", () => {
     });
   });
 
+  test.each([
+    ["a bracketed section header", "[Section A] Your visit,Answer\nHow was it?,Rating\n"],
+    ["a braced placeholder", "{Name} question;Typ\nWie heißen Sie?;Text\n"],
+  ])("reads a CSV that starts with %s as a CSV, not as broken JSON", (_what, text) => {
+    expect(sniffSurveyImportFile(encode(text))).toEqual({ type: "csv", text, encoding: "utf-8" });
+  });
+
+  test.each([
+    ["an object", '{ "SurveyEntry": '],
+    ["an array", "[ {"],
+    ["an empty object", "{}x"],
+  ])("still refuses JSON-shaped text that does not parse as broken JSON: %s", (_what, text) => {
+    expect(refusal(() => sniffSurveyImportFile(encode(text)))).toBeInstanceOf(SurveyImportInputError);
+  });
+
   test("refuses a .doc or .xls with a 415 that says to save it as .docx or .xlsx", () => {
     const param = expectUnsupported(legacyOffice(), "legacy_office");
 

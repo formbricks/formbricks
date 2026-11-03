@@ -140,6 +140,19 @@ const decodeText = (bytes: Uint8Array): { text: string; encoding: TSurveyImportT
   }
 };
 
+/** What may follow a JSON object's `{`, and an array's `[`, after whitespace. */
+const JSON_OBJECT_START = /^\{\s*["}]/;
+const JSON_ARRAY_START = /^\[\s*(?:[[{"\]\-\d]|true|false|null)/;
+
+/**
+ * Whether text is JSON by its first tokens, so a broken JSON file is refused as one, while a CSV whose
+ * first cell happens to start with a bracket (`[Section A] …`, `{Name} …`) is still read as a CSV.
+ */
+const looksLikeJson = (text: string): boolean => {
+  const start = text.trimStart();
+  return JSON_OBJECT_START.test(start) || JSON_ARRAY_START.test(start);
+};
+
 /**
  * Tell an uploaded file's type from its bytes, never from the name or the `Content-Type` the browser
  * sent (CODING_STANDARDS.md "File Uploads and Downloads"): the zip and Compound File signatures first,
@@ -163,7 +176,6 @@ export const sniffSurveyImportFile = (bytes: Uint8Array): TSurveyImportFile => {
   if (!decoded) throw unsupported();
   const { text, encoding } = decoded;
 
-  const first = text.trimStart()[0];
-  if (first === "{" || first === "[") return sniffJson(text);
+  if (looksLikeJson(text)) return sniffJson(text);
   return { type: "csv", text, encoding };
 };
