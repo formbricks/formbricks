@@ -629,6 +629,7 @@ export class ResponseQueue {
         language: responseUpdate.language,
         meta: responseUpdate.meta,
         endingId: responseUpdate.endingId,
+        notShown: responseUpdate.notShown,
       };
     }
 
@@ -642,6 +643,7 @@ export class ResponseQueue {
       language: accumulatedResponse.language ?? responseUpdate.language,
       meta: accumulatedResponse.meta ?? responseUpdate.meta,
       endingId: accumulatedResponse.endingId ?? responseUpdate.endingId,
+      notShown: accumulatedResponse.notShown ?? responseUpdate.notShown,
     };
   }
 

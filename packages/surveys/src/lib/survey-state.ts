@@ -107,6 +107,8 @@ export class SurveyState {
       meta: responseUpdate.meta ?? this.responseAcc.meta,
       hiddenFields: responseUpdate.hiddenFields ?? this.responseAcc.hiddenFields,
       endingId: responseUpdate.endingId,
+      // The whole current record rides on every update (ENG-6936), so the latest one is the record.
+      notShown: responseUpdate.notShown ?? this.responseAcc.notShown,
     };
   }
 
