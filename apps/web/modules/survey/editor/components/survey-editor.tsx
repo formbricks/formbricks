@@ -295,7 +295,7 @@ export const SurveyEditor = ({
             setLocalWorkspace(refetchWorkspaceResponse.data);
           }
         };
-        fetchLatestWorkspace();
+        void fetchLatestWorkspace();
       }
     };
     document.addEventListener("visibilitychange", listener);
