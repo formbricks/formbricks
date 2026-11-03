@@ -6,6 +6,7 @@ import { getSessionUserId } from "@/app/api/v3/surveys/lib/operations";
 import { ZV3CreateSurveyBody, formatV3ZodInvalidParams } from "@/app/api/v3/surveys/schemas";
 import { SurveyImportInputError, nameFromSurvey } from "./errors";
 import { getImportedSurveyName, getImporterTranslate } from "./imported-survey-name";
+import { assertSurveyWithinDraftSize, findSurveyContentPastLimits } from "./survey-limits";
 
 /**
  * Create the survey a reviewed import became when its file carried nothing outside the survey — a
@@ -17,7 +18,9 @@ import { getImportedSurveyName, getImporterTranslate } from "./imported-survey-n
  * free N, which another import may have taken since the review — and created as a draft, whatever
  * status the client sent, through the v3 create and its checks.
  *
- * @throws SurveyImportInputError — a 422 naming each field the create body refuses, nothing created.
+ * @throws SurveyImportFileTooLargeError — a 413: the draft weighs more than any import builds.
+ * @throws SurveyImportInputError — a 422 naming each field the create body refuses, or a question or
+ *   text past the import's caps, nothing created.
  * @throws whatever the v3 create throws, mapped by its caller like `POST /api/v3/surveys`.
  * @throws SurveyWriteAfterCommitError — the survey was created, but the work after its commit failed.
  */
@@ -34,6 +37,12 @@ export const createSurveyFromImportDraft = async ({
   authentication: TV3Authentication;
   requestId: string;
 }): Promise<TSurvey> => {
+  // The client sends the draft back, so it is held to what any import may create before anything
+  // reads it: the lookup below takes its name, and the parse is where a large survey costs.
+  assertSurveyWithinDraftSize(survey, null);
+  const pastLimits = findSurveyContentPastLimits(survey, null);
+  if (pastLimits.length > 0) throw new SurveyImportInputError(pastLimits, "The survey is not valid.");
+
   const t = await getImporterTranslate(getSessionUserId(authentication));
   const sourceName = typeof survey.name === "string" ? survey.name : "";
   const name = await getImportedSurveyName(workspaceId, sourceName, t);

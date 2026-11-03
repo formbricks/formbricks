@@ -7,6 +7,11 @@ import type { TV3AuditLog } from "@/app/api/v3/lib/types";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { type TDashboardsFixture, seedDashboardsFixture, sessionOf } from "@/integration/dashboards-fixture";
 import { openSurveyImportUploadInProcess } from "@/modules/survey/import/core/__fixtures__/in-process-upload";
+import {
+  SURVEY_IMPORT_MAX_DRAFT_BYTES,
+  SURVEY_IMPORT_MAX_OPTIONS_PER_QUESTION,
+  SURVEY_IMPORT_MAX_TEXT_CHARS,
+} from "@/modules/survey/import/limits";
 import { claimSurveyImportIdempotencyKey, fingerprintSurveyImportRequest } from "./idempotency";
 import { createSurveyImport } from "./operations";
 
@@ -787,6 +792,60 @@ describe("a reviewed draft that carries no references (Qualtrics, Word, Excel, C
     expect(problem.invalid_params.map((param) => param.name)).toContain(
       "survey.blocks.0.elements.0.headline"
     );
+    expect(await prisma.survey.count({ where: { workspaceId: target } })).toBe(before);
+  });
+});
+
+describe("a reviewed draft past the caps every import holds a survey to", () => {
+  test.each([
+    [
+      "a text longer than an import takes",
+      (payload: ReturnType<typeof documentDraft>) => {
+        payload.blocks[0].elements[0].headline = { "en-US": "x".repeat(SURVEY_IMPORT_MAX_TEXT_CHARS + 1) };
+      },
+      "survey.blocks.0.elements.0.headline.en-US",
+    ],
+    [
+      "a question with more choices than an import takes",
+      (payload: ReturnType<typeof documentDraft>) => {
+        Object.assign(payload.blocks[0].elements[0], {
+          type: "multipleChoiceSingle",
+          choices: Array.from({ length: SURVEY_IMPORT_MAX_OPTIONS_PER_QUESTION + 1 }, (_, index) => ({
+            id: `c${index}`,
+            label: { "en-US": `Choice ${index}` },
+          })),
+        });
+      },
+      "survey.blocks.0.elements.0.choices",
+    ],
+  ])("is refused 422 for %s, naming it, and creates nothing", async (_, breakIt, name) => {
+    const target = fixture.otherWorkspaceId;
+    const before = await prisma.survey.count({ where: { workspaceId: target } });
+    const payload = documentDraft(target);
+    breakIt(payload);
+
+    const response = await commit({ workspaceId: target, payload });
+
+    expect(response.status).toBe(422);
+    const problem = (await response.json()) as { invalid_params: { name: string; code?: string }[] };
+    expect(problem.invalid_params).toContainEqual(expect.objectContaining({ name, code: "limit_exceeded" }));
+    expect(await prisma.survey.count({ where: { workspaceId: target } })).toBe(before);
+  });
+
+  test("is refused 413 when it weighs more than a draft may, and creates nothing", async () => {
+    const target = fixture.otherWorkspaceId;
+    const before = await prisma.survey.count({ where: { workspaceId: target } });
+    const payload = documentDraft(target);
+    // Under the per-text cap, so the size is what refuses it.
+    const text = "x".repeat(SURVEY_IMPORT_MAX_TEXT_CHARS);
+    payload.blocks[0].elements = Array.from(
+      { length: Math.ceil(SURVEY_IMPORT_MAX_DRAFT_BYTES / SURVEY_IMPORT_MAX_TEXT_CHARS) + 1 },
+      (_, index) => ({ ...payload.blocks[0].elements[0], id: `q${index}`, headline: { "en-US": text } })
+    );
+
+    const response = await commit({ workspaceId: target, payload });
+
+    expect(response.status).toBe(413);
     expect(await prisma.survey.count({ where: { workspaceId: target } })).toBe(before);
   });
 });

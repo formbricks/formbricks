@@ -4,8 +4,12 @@ import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { isPlainObject } from "@/app/api/v3/surveys/guards";
 import { formatV3ZodInvalidParams } from "@/app/api/v3/surveys/schemas";
 import { collectV3TargetingAttributeKeys } from "@/app/api/v3/surveys/targeting-references";
-import { SurveyImportFileTooLargeError, SurveyImportInputError } from "@/modules/survey/import/core/errors";
+import { SurveyImportInputError } from "@/modules/survey/import/core/errors";
 import type { TSurveyImportPipelineIssue } from "@/modules/survey/import/core/report";
+import {
+  assertSurveyWithinDraftSize,
+  findSurveyContentPastLimits,
+} from "@/modules/survey/import/core/survey-limits";
 import {
   FORMBRICKS_FILE_FORMAT,
   type TFormbricksFileReferences,
@@ -14,13 +18,7 @@ import {
   ZFormbricksFileContentV1Input,
   ZFormbricksFileV1Input,
 } from "./envelope";
-import {
-  FORMBRICKS_FILE_MAX_OPTIONS_PER_QUESTION,
-  FORMBRICKS_FILE_MAX_REPORTED_DROPPED_KEYS,
-  FORMBRICKS_FILE_MAX_SURVEY_BYTES,
-  FORMBRICKS_FILE_MAX_TEXT_CHARS,
-  FORMBRICKS_FILE_MAX_UNKNOWN_KEY_PASSES,
-} from "./limits";
+import { FORMBRICKS_FILE_MAX_REPORTED_DROPPED_KEYS, FORMBRICKS_FILE_MAX_UNKNOWN_KEY_PASSES } from "./limits";
 
 /**
  * Reading a Formbricks file (ADR 0023): the format probe, the upgrade steps up to the current format,
@@ -256,70 +254,13 @@ const findDanglingReferences = (
   return invalidParams;
 };
 
-/** The lists of a question that hold its options. */
-const OPTION_LISTS = ["choices", "rows", "columns"] as const;
-
-const pastLimit = (name: string, reason: string): InvalidParam => ({ name, reason, code: "limit_exceeded" });
-
-/**
- * What the format allows but no import may bring in: a question with more options than any lane takes,
- * a text longer than any lane takes. The survey document caps neither, so the file is held to the
- * import's caps here. Reads the survey as sent, which the format has already bounded in depth and size,
- * so the walk is too.
- */
-const findContentPastLimits = (survey: unknown, prefix: string | null): InvalidParam[] => {
-  const invalidParams: InvalidParam[] = [];
-
-  const blocks = isPlainObject(survey) && Array.isArray(survey.blocks) ? survey.blocks : [];
-  blocks.forEach((block, blockIndex) => {
-    const elements = isPlainObject(block) && Array.isArray(block.elements) ? block.elements : [];
-    elements.forEach((element, elementIndex) => {
-      if (!isPlainObject(element)) return;
-      for (const list of OPTION_LISTS) {
-        const options = element[list];
-        if (Array.isArray(options) && options.length > FORMBRICKS_FILE_MAX_OPTIONS_PER_QUESTION) {
-          invalidParams.push(
-            pastLimit(
-              at(prefix, `survey.blocks.${blockIndex}.elements.${elementIndex}.${list}`),
-              `A question takes at most ${FORMBRICKS_FILE_MAX_OPTIONS_PER_QUESTION} ${list}`
-            )
-          );
-        }
-      }
-    });
-  });
-
-  const visit = (value: unknown, path: string): void => {
-    if (typeof value === "string") {
-      if (value.length > FORMBRICKS_FILE_MAX_TEXT_CHARS) {
-        invalidParams.push(
-          pastLimit(path, `A text must not exceed ${FORMBRICKS_FILE_MAX_TEXT_CHARS} characters`)
-        );
-      }
-    } else if (Array.isArray(value)) {
-      value.forEach((item, index) => visit(item, `${path}.${index}`));
-    } else if (isPlainObject(value)) {
-      Object.entries(value).forEach(([key, item]) => visit(item, `${path}.${key}`));
-    }
-  };
-  visit(survey, at(prefix, "survey"));
-
-  return invalidParams;
-};
-
 const readContent = (
   schema: typeof ZFormbricksFileV1Input | typeof ZFormbricksFileContentV1Input,
   input: Record<string, unknown>,
   prefix: string | null
 ): TFormbricksFileRead => {
   // Before the parse, which is where a large survey costs: the survey becomes a draft no larger than this.
-  if (Buffer.byteLength(JSON.stringify(input.survey ?? null)) > FORMBRICKS_FILE_MAX_SURVEY_BYTES) {
-    throw new SurveyImportFileTooLargeError(
-      "survey_size",
-      `The survey must not exceed ${FORMBRICKS_FILE_MAX_SURVEY_BYTES} bytes as JSON`,
-      at(prefix, "survey")
-    );
-  }
+  assertSurveyWithinDraftSize(input.survey, prefix);
 
   const { result, value, dropped } = parseDroppingUnknownKeys(schema, input);
   const fallbackName = prefix ?? "body";
@@ -336,7 +277,7 @@ const readContent = (
   const { survey, references } = result.data;
   const dangling = findDanglingReferences(survey, references, prefix);
   if (dangling.length > 0) throw refuseFile(capInvalidParams(dangling, fallbackName, "file"));
-  const pastLimits = findContentPastLimits(value.survey, prefix);
+  const pastLimits = findSurveyContentPastLimits(value.survey, prefix);
   if (pastLimits.length > 0) throw refuseFile(capInvalidParams(pastLimits, fallbackName, "file"));
 
   return {
