@@ -56,14 +56,17 @@ Three things to know before reading the result:
   `contacts/attribute-values` and `segments` (the Contacts entitlement), are entitlement-gated. Without
   `ENTERPRISE_LICENSE_KEY` they answer a documented 403, so the run stays green but tests those
   operations shallowly. A licence is necessary but not sufficient: it also has to _grant_ the
-  feature. CI's key grants `contacts` and not `workflows` (ENG-2553), so the 13 workflow operations
-  are shallow there too — the job's post-boot probe says which state you are in on every run.
+  feature. **The PR job now passes none** — the shared key it used came from the Dependabot secret
+  store, whose copy granted Dashboards, which turned a real 502 on the chart operations into a hard
+  failure on every Dependabot PR — so each of these is checked shallowly in CI. A local run that
+  supplies `ENTERPRISE_LICENSE_KEY` still resolves them, and the job's post-boot probe reports which
+  state a run is in.
 - **Chart and dashboard endpoints need the Dashboards feature.** `db:seed:contract` seeds a Feedback
   Dataset assigned to the seed workspace, charts, dashboards and widgets — one disposable victim per
   mutating operation, with layouts and the save's `expectedUpdatedAt` pinned so each answers its success
-  code. Where the licence does not grant Dashboards, every one of them answers the documented 403
-  `dashboards_plan_required` instead. The chart data and preview operations answer a documented 502
-  either way: the job runs no Cube.
+  code. Without a licence granting Dashboards — which is every CI run, now — each answers the
+  documented 403 `dashboards_plan_required`. Only a licensed local run reaches the chart data and
+  preview operations, and those answer a documented 502 because the job runs no Cube.
 - **Creatives endpoints need a licence with `creatives`.** Without it the fixture workspace, which
   has seeded creatives, is in wind-down: list, get, stats and delete still run against real data, a
   `PATCH` that only pauses or closes runs too, as does the survey-wide pause

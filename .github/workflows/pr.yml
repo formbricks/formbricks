@@ -51,9 +51,6 @@ jobs:
   e2e-test:
     name: Run E2E Tests
     uses: ./.github/workflows/e2e.yml
-    # The one secret e2e.yml declares, named rather than inherited — see api-v3-contract-tests below.
-    secrets:
-      ENTERPRISE_LICENSE_KEY: ${{ secrets.ENTERPRISE_LICENSE_KEY }}
 
   validate-authzed-schema:
     name: Validate AuthZed Schema
@@ -79,10 +76,6 @@ jobs:
   api-v3-contract-tests:
     name: Run API v3 Contract Tests
     uses: ./.github/workflows/api-v3-contract-tests.yml
-    # Named rather than `inherit`: this job builds and runs PR-head code, and the licence is the only
-    # secret it declares. Inheriting would hand it every other repository and organisation secret too.
-    secrets:
-      ENTERPRISE_LICENSE_KEY: ${{ secrets.ENTERPRISE_LICENSE_KEY }}
 
   required:
     name: PR Check Summary

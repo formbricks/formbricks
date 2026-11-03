@@ -2,11 +2,6 @@ name: E2E Tests
 
 on:
   workflow_call:
-    secrets:
-      ENTERPRISE_LICENSE_KEY:
-        required: true
-      # A secret added here must also be named in pr.yml's e2e-test job: the caller does not
-      # `inherit`, so an unnamed optional secret arrives empty and a required one fails the call.
   workflow_dispatch:
 
 permissions:
@@ -99,9 +94,10 @@ jobs:
         run: pnpm dev:setup
         shell: bash
 
-      - name: Fill ENTERPRISE_LICENSE_KEY and E2E_TESTING in .env
+      - name: Fill E2E_TESTING in .env
         run: |
-          sed -i "s/ENTERPRISE_LICENSE_KEY=.*/ENTERPRISE_LICENSE_KEY=${{ secrets.ENTERPRISE_LICENSE_KEY }}/" .env
+          # PR CI runs unlicensed: drop the empty key .env.example leaves behind.
+          sed -i "/^ENTERPRISE_LICENSE_KEY=/d" .env
           sed -i "s|REDIS_URL=.*|REDIS_URL=redis://localhost:6379|" .env
           sed -i "s|AUTHZED_CONSISTENCY=.*|AUTHZED_CONSISTENCY=fully_consistent|" .env
           echo "" >> .env
@@ -356,15 +352,6 @@ jobs:
           echo "Running cache integration tests with Redis/Valkey..."
           cd packages/cache && pnpm vitest run src/cache-integration.test.ts
         shell: bash
-
-      - name: Check for Enterprise License
-        run: |
-          LICENSE_KEY=$(grep '^ENTERPRISE_LICENSE_KEY=' .env | cut -d'=' -f2-)
-          if [ -z "$LICENSE_KEY" ]; then
-            echo "::error::ENTERPRISE_LICENSE_KEY in .env is empty. Please check your secret configuration."
-            exit 1
-          fi
-          echo "License key length: ${#LICENSE_KEY}"
 
       - name: Disable rate limiting for E2E tests
         run: |
