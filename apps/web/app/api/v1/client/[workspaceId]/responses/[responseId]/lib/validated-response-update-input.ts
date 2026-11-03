@@ -14,6 +14,8 @@ export const getValidatedResponseUpdateInput = async (
   const validatedInput: TParseAndValidateJsonBodyResult<TClientResponseUpdateInput> =
     await parseAndValidateJsonBody({
       request: req,
+      // The survey's update input: `ZResponseUpdateInput` plus Mark as low quality (ENG-6933) and the
+      // not-shown record (ENG-6936).
       schema: ZClientResponseUpdateInput,
       malformedJsonMessage: "Malformed JSON in request body",
     });

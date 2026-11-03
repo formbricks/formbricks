@@ -5,7 +5,12 @@ import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { type TIngestFlag } from "@formbricks/types/embedded-data-ingest";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
-import { TClientResponseInput, TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
+import {
+  TClientResponseInput,
+  TResponse,
+  TResponseInput,
+  ZClientResponseInput,
+} from "@formbricks/types/responses";
 import {
   type TClientResponseCreateContext,
   type TCreateResponseTxContext,
@@ -96,12 +101,12 @@ export const resolveCreateResponseContext = async ({
 };
 
 export const createResponse = async (
-  responseInput: TResponseInput,
+  responseInput: TClientResponseInput,
   { contact }: TClientResponseCreateContext,
   tx: Prisma.TransactionClient,
   ingestFlags?: readonly TIngestFlag[]
 ): Promise<TResponse> => {
-  validateInputs([responseInput, ZResponseInput]);
+  validateInputs([responseInput, ZClientResponseInput]);
 
   const { workspaceId, finished, ttc: initialTtc } = responseInput;
 

@@ -18,6 +18,7 @@ import type { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { EXPORT_COLUMN_NAMES } from "@formbricks/types/surveys/codes";
 import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { fillMissingCodes } from "@formbricks/types/surveys/fill-missing-codes";
+import { type TResponseNotShown, getNotShownElementIds } from "@formbricks/types/surveys/not-shown";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLanguageCode } from "@/lib/i18n/utils";
@@ -60,6 +61,11 @@ export type TAnalysisResponse = {
   contact?: { id: string; userId?: string } | null;
   /** The contact's attributes as they were when the response was given. */
   contactAttributes?: Record<string, unknown> | null;
+  /**
+   * What the respondent was not shown (ENG-6936). A question it lists exports blank, whatever `data`
+   * holds; `null` or absent (unknown) keeps the current rule.
+   */
+  notShown?: TResponseNotShown | null;
 };
 
 export type TUnmappedReport = {
@@ -827,10 +833,14 @@ export const createAnalysisRowBuilder = ({
 
     responseColumns.forEach((entry, index) => setCell(index, entry.read(ctx)));
 
+    const notShown = getNotShownElementIds(response.notShown, blocks);
     plans.forEach((plan, planIndex) => {
+      const questionId = questionIdOfPlan[planIndex];
+      // Never shown, so blank: not a 0 for "shown but not picked", and not an answer.
+      if (notShown.has(questionId)) return;
       const start = planOffsets[planIndex];
       const put: TPut = (offset, code, label = code) => setCell(start + offset, code, label);
-      plan.fill(ctx, response.data[questionIdOfPlan[planIndex]], put);
+      plan.fill(ctx, response.data[questionId], put);
     });
 
     if (embeddedColumns.length > 0) {

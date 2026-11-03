@@ -630,6 +630,7 @@ export class ResponseQueue {
         meta: responseUpdate.meta,
         endingId: responseUpdate.endingId,
         markLowQuality: responseUpdate.markLowQuality,
+        notShown: responseUpdate.notShown,
       };
     }
 
@@ -644,6 +645,7 @@ export class ResponseQueue {
       meta: accumulatedResponse.meta ?? responseUpdate.meta,
       endingId: accumulatedResponse.endingId ?? responseUpdate.endingId,
       markLowQuality: accumulatedResponse.markLowQuality ?? responseUpdate.markLowQuality,
+      notShown: accumulatedResponse.notShown ?? responseUpdate.notShown,
     };
   }
 

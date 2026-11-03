@@ -100,6 +100,7 @@ export class ApiClient {
     language,
     pinAuthToken,
     markLowQuality,
+    notShown,
   }: TClientResponseUpdateInput & { responseId: string }): Promise<
     Result<TResponseUpdateResponse, ApiErrorResponse>
   > {
@@ -112,6 +113,7 @@ export class ApiClient {
       language,
       pinAuthToken,
       markLowQuality,
+      notShown,
     });
   }
 

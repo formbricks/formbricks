@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { ZId } from "./common";
 import { ZSurveyQuota } from "./quota";
+import { ZResponseNotShown, ZResponseNotShownInput } from "./surveys/not-shown";
 import { ZSurvey } from "./surveys/types";
 import { ZTag } from "./tags";
 
@@ -634,9 +635,14 @@ export type TResponseInput = z.infer<typeof ZResponseInput>;
  */
 export const ZResponseMarkLowQuality = z.literal(true);
 
-/** The client create (`POST /api/v1|v2/client/{workspaceId}/responses`). */
+/**
+ * The survey's create input on the public client routes (`POST /api/v1|v2/client/{workspaceId}/responses`):
+ * `ZResponseInput` plus the Mark as low quality flag (ENG-6933) and the not-shown record (ENG-6936). Kept off
+ * `ZResponseInput` itself, which the v1 and v2 management APIs also parse, so their contracts stay as they are.
+ */
 export const ZClientResponseInput = ZResponseInput.extend({
   markLowQuality: ZResponseMarkLowQuality.optional(),
+  notShown: ZResponseNotShownInput.optional(),
 });
 
 export type TClientResponseInput = z.infer<typeof ZClientResponseInput>;
@@ -653,9 +659,16 @@ export const ZResponseUpdateInput = z.object({
 
 export type TResponseUpdateInput = z.infer<typeof ZResponseUpdateInput>;
 
-/** The client update (`PUT /api/v1|v2/client/{workspaceId}/responses/{responseId}`). */
+/**
+ * The survey's update input on the public client route
+ * (`PUT /api/v1|v2/client/{workspaceId}/responses/{responseId}`): `ZResponseUpdateInput` plus the Mark as
+ * low quality flag (ENG-6933) and the not-shown record (ENG-6936). The survey sends the whole current
+ * not-shown record with every update; the server replaces the stored one with it and removes the answers
+ * it lists. Kept off `ZResponseUpdateInput`, which the management APIs also parse.
+ */
 export const ZClientResponseUpdateInput = ZResponseUpdateInput.extend({
   markLowQuality: ZResponseMarkLowQuality.optional(),
+  notShown: ZResponseNotShownInput.optional(),
 });
 
 export type TClientResponseUpdateInput = z.infer<typeof ZClientResponseUpdateInput>;
@@ -698,6 +711,8 @@ export const ZResponseUpdate = z.object({
   // A rule marked the response Low quality on this submit (ENG-6933). Sent with this write and kept by
   // the accumulated response, so a create built from it carries the flag too.
   markLowQuality: ZResponseMarkLowQuality.optional(),
+  /** The whole current not-shown record (ENG-6936), sent with every create and update. */
+  notShown: ZResponseNotShownInput.optional(),
 });
 
 export type TResponseUpdate = z.infer<typeof ZResponseUpdate>;
@@ -731,6 +746,13 @@ export type TResponseTableData = z.infer<typeof ZResponseTableData>;
 
 export const ZResponseWithQuotas = ZResponse.extend({
   quotas: z.array(ZSurveyQuota.pick({ id: true, name: true })).optional(),
+  /**
+   * What the respondent was not shown (ENG-6936, ADR 0023); `null` means unknown. Read only for the
+   * app's own results (the responses page and the response card): it is not on `ZResponse`, and the
+   * shared response selection leaves it out, so webhooks, integrations and the v1/v2 payloads stay
+   * exactly as before.
+   */
+  notShown: ZResponseNotShown.nullish(),
 });
 
 export type TResponseWithQuotas = z.infer<typeof ZResponseWithQuotas>;

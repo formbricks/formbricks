@@ -4947,6 +4947,8 @@ export const ZSurveySummary = z.object({
       impressions: z.number(),
       dropOffCount: z.number(),
       dropOffPercentage: z.number(),
+      /** Respondents the element was not shown to, from their not-shown records (ENG-6936). */
+      notShownCount: z.number(),
     })
   ),
   quotas: z.array(
