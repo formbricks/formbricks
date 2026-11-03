@@ -68,6 +68,7 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/internal/workspaces/{workspaceId}/branding` | PATCH | session | dashboard | `/api/internal` | `app/api/internal/workspaces/[workspaceId]/branding/route.ts` |
 | `/api/organizations/{organizationId}/usage` | GET | session | dashboard | `(internal)` group | `app/api/(internal)/organizations/[organizationId]/usage/route.ts` |
 | `/api/surveys/{surveyId}/attachments` | GET | session | dashboard | `(internal)` group | `app/api/(internal)/surveys/[surveyId]/attachments/route.ts` |
+| `/api/surveys/{surveyId}/export` | POST | session | dashboard | `(internal)` group | `app/api/(internal)/surveys/[surveyId]/export/route.ts` |
 | `/api/traefik-auth/{...path}` | GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS | custom | gateway | `(internal)` group | `app/api/(internal)/traefik-auth/[...path]/route.ts` |
 | `/api/unify-feedback/sources/csv/import` | POST | custom | dashboard | `(internal)` group | `app/api/(internal)/unify-feedback/sources/csv/import/route.ts` |
 | `/api/v3/feedbackRecords/token` | POST | session | dashboard | `/api/v3`, not in the public spec | `app/api/v3/feedbackRecords/token/route.ts` |

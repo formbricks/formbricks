@@ -412,6 +412,7 @@ export const SurveyEditor = ({
           {activeView === "language" && (
             <LanguageView
               localSurvey={localSurvey}
+              persistedSurvey={survey}
               setLocalSurvey={setLocalSurveyNonNull}
               workspaceLanguages={localWorkspaceLanguages}
               locale={locale}

@@ -3,6 +3,7 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { problemForbidden } from "@/app/api/v3/lib/response";
 import {
   batchDeleteV3Responses,
+  batchSetV3ResponsesOutcome,
   countV3ResponsesOperation,
   createV3ResponseFromRawInput,
   deleteV3Response,
@@ -33,6 +34,10 @@ const {
   mockCount,
   mockGetScoped,
   mockGetSurveys,
+  mockListRefs,
+  mockSetOutcome,
+  mockDispatch,
+  mockRefuse,
 } = vi.hoisted(() => ({
   mockRequireAccess: vi.fn(),
   mockGetWorkspaceId: vi.fn(),
@@ -43,6 +48,10 @@ const {
   mockCount: vi.fn(),
   mockGetScoped: vi.fn(),
   mockGetSurveys: vi.fn(),
+  mockListRefs: vi.fn(),
+  mockSetOutcome: vi.fn(),
+  mockDispatch: vi.fn(),
+  mockRefuse: vi.fn(async (): Promise<Response | null> => null),
 }));
 
 vi.mock("@/app/api/v3/lib/auth", () => ({ requireV3WorkspaceAccess: mockRequireAccess }));
@@ -66,7 +75,9 @@ vi.mock("./write-service", () => ({
   createScopedResponse: vi.fn(),
   updateScopedResponse: vi.fn(),
   readbackV3Response: vi.fn(),
-  dispatchV3ResponsePipeline: vi.fn(),
+  dispatchV3ResponsePipeline: mockDispatch,
+  listScopedResponseSurveyRefs: mockListRefs,
+  setScopedResponsesOutcome: mockSetOutcome,
   normalizeV3Ttc: vi.fn(() => ({})),
 }));
 const { mockLogInfo } = vi.hoisted(() => ({ mockLogInfo: vi.fn() }));
@@ -93,14 +104,9 @@ const { mockStartRead, mockReadDone, observations } = vi.hoisted(() => {
 });
 vi.mock("./metrics", () => ({ startV3ResponsesRead: mockStartRead }));
 // ENG-3282: the readiness marker is off in these tests — nothing is refused and the predicate is open.
-// Plain functions, so the suites' mock resets cannot clear them; a test that needs a refusal sets
-// `visibility.refusal` and puts it back.
-const visibility = vi.hoisted(() => ({ refusal: null as Response | null, checks: [] as unknown[][] }));
+// Plain functions, so the suites' mock resets cannot clear them.
 vi.mock("./visibility", () => ({
-  refuseUnlessV3SurveyVisible: async (...args: unknown[]) => {
-    visibility.checks.push(args);
-    return visibility.refusal;
-  },
+  refuseUnlessV3SurveyVisible: mockRefuse,
   resolveV3ResponsesActorContext: async () => ({ enforced: false, kind: "apiKey" }),
 }));
 
@@ -345,6 +351,178 @@ describe("batchDeleteV3Responses", () => {
     mockBatchDelete.mockRejectedValue(new Error("something unexpected"));
 
     const response = await batchDeleteV3Responses(batchParams);
+
+    expect(response.status).toBe(500);
+    expect(JSON.stringify(await response.json())).not.toContain("something unexpected");
+  });
+});
+
+describe("batchSetV3ResponsesOutcome", () => {
+  const SURVEY_A = "clsvaaaaaaaaaaaaaaaaaaaa";
+  const SURVEY_B = "clsvbbbbbbbbbbbbbbbbbbbb";
+  const IDS = ["clrsaaaaaaaaaaaaaaaaaaaa", "clrsbbbbbbbbbbbbbbbbbbbb", "clrscccccccccccccccccccc"];
+  const batchParams = {
+    workspaceId: "clsww11111111111111111111",
+    ids: IDS,
+    outcome: "lowQuality" as const,
+    authentication: { apiKeyId: "key_1", workspacePermissions: [] } as never,
+    requestId: "req_1",
+    instance: "/api/v3/responses/batch-outcome",
+  };
+  const refs = [
+    { id: IDS[0], surveyId: SURVEY_A },
+    { id: IDS[1], surveyId: SURVEY_A },
+    { id: IDS[2], surveyId: SURVEY_B },
+  ];
+  const changes = refs.map((ref) => ({ ...ref, previous: null }));
+  const rows = refs.map((ref) => ({ id: ref.id, surveyId: ref.surveyId }));
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockRequireAccess.mockResolvedValue({ organizationId: "org_1", workspaceId: batchParams.workspaceId });
+    mockRefuse.mockResolvedValue(null);
+    mockListRefs.mockResolvedValue(refs);
+    mockSetOutcome.mockResolvedValue({ matched: 3, changes, rows });
+    mockDispatch.mockResolvedValue(undefined);
+  });
+
+  /** `readWrite`, like the single PATCH — not the `manage` a batch delete needs. */
+  test("requires readWrite on the supplied workspace", async () => {
+    await batchSetV3ResponsesOutcome(batchParams);
+
+    expect(mockRequireAccess).toHaveBeenCalledWith(
+      batchParams.authentication,
+      batchParams.workspaceId,
+      "readWrite",
+      batchParams.requestId,
+      batchParams.instance
+    );
+  });
+
+  test("refuses without reading or writing when workspace access is denied", async () => {
+    mockRequireAccess.mockResolvedValue(problemForbidden("req_1", undefined, batchParams.instance));
+
+    const response = await batchSetV3ResponsesOutcome(batchParams);
+
+    expect(response.status).toBe(403);
+    expect(mockListRefs).not.toHaveBeenCalled();
+    expect(mockSetOutcome).not.toHaveBeenCalled();
+  });
+
+  /**
+   * `response.write` is what a read-only seat lacks. Responses follow their survey, so one check per
+   * distinct survey covers every response in it — a hundred responses of one survey cost one check.
+   */
+  test("checks response.write once per distinct survey", async () => {
+    await batchSetV3ResponsesOutcome(batchParams);
+
+    expect(mockRefuse).toHaveBeenCalledTimes(2);
+    expect(mockRefuse).toHaveBeenCalledWith(
+      batchParams.authentication,
+      "response.write",
+      { type: "response", id: IDS[0] },
+      "req_1",
+      batchParams.instance
+    );
+    expect(mockRefuse).toHaveBeenCalledWith(
+      batchParams.authentication,
+      "response.write",
+      { type: "response", id: IDS[2] },
+      "req_1",
+      batchParams.instance
+    );
+  });
+
+  test("one survey the caller may not write refuses the whole batch and changes nothing", async () => {
+    mockRefuse.mockResolvedValueOnce(null).mockResolvedValueOnce(problemForbidden("req_1"));
+
+    const response = await batchSetV3ResponsesOutcome(batchParams);
+
+    expect(response.status).toBe(403);
+    expect(mockSetOutcome).not.toHaveBeenCalled();
+    expect(mockDispatch).not.toHaveBeenCalled();
+  });
+
+  test("filters by exactly the workspace it authorized against", async () => {
+    await batchSetV3ResponsesOutcome(batchParams);
+
+    expect(mockSetOutcome).toHaveBeenCalledWith(IDS, "lowQuality", {
+      visibleSurveyWhere: {},
+      workspaceId: batchParams.workspaceId,
+    });
+  });
+
+  test("reports the responses in scope as updated", async () => {
+    const { status, body } = await wire(await batchSetV3ResponsesOutcome(batchParams));
+
+    expect(status).toBe(200);
+    expect(body).toStrictEqual({ data: { updated: 3 } });
+  });
+
+  test("ids that match nothing are a 200 with zero, and nothing is authorized or written", async () => {
+    mockListRefs.mockResolvedValue([]);
+    mockSetOutcome.mockResolvedValue({ matched: 0, changes: [], rows: [] });
+
+    const { status, body } = await wire(await batchSetV3ResponsesOutcome(batchParams));
+
+    expect(status).toBe(200);
+    expect(body).toStrictEqual({ data: { updated: 0 } });
+    expect(mockRefuse).not.toHaveBeenCalled();
+  });
+
+  test.each(["lowQuality", null] as const)(
+    "sends responseUpdated for each changed response (%s)",
+    async (outcome) => {
+      await batchSetV3ResponsesOutcome({ ...batchParams, outcome });
+
+      expect(mockDispatch).toHaveBeenCalledTimes(3);
+      expect(mockDispatch).toHaveBeenCalledWith({
+        event: "responseUpdated",
+        workspaceId: batchParams.workspaceId,
+        surveyId: SURVEY_B,
+        response: rows[2],
+        alsoFinished: false,
+      });
+    }
+  );
+
+  test("a response that already carried the outcome sends nothing", async () => {
+    mockSetOutcome.mockResolvedValue({ matched: 3, changes: [], rows: [] });
+
+    await batchSetV3ResponsesOutcome(batchParams);
+
+    expect(mockDispatch).not.toHaveBeenCalled();
+  });
+
+  test("audits old and new outcome, by id", async () => {
+    const auditLog = {} as never;
+    mockSetOutcome.mockResolvedValue({
+      matched: 3,
+      changes: [{ ...changes[0], previous: "lowQuality" }, changes[1], changes[2]],
+      rows,
+    });
+
+    await batchSetV3ResponsesOutcome({ ...batchParams, outcome: null, auditLog });
+
+    expect(auditLog).toMatchObject({
+      organizationId: "org_1",
+      oldObject: {
+        workspaceId: batchParams.workspaceId,
+        requested: 3,
+        responses: [
+          { id: IDS[0], outcome: "lowQuality" },
+          { id: IDS[1], outcome: null },
+          { id: IDS[2], outcome: null },
+        ],
+      },
+      newObject: { outcome: null, updated: 3, responseIds: IDS },
+    });
+  });
+
+  test("returns a problem response rather than throwing, since MCP calls this without a wrapper", async () => {
+    mockSetOutcome.mockRejectedValue(new Error("something unexpected"));
+
+    const response = await batchSetV3ResponsesOutcome(batchParams);
 
     expect(response.status).toBe(500);
     expect(JSON.stringify(await response.json())).not.toContain("something unexpected");
@@ -622,28 +800,22 @@ describe("countV3ResponsesOperation", () => {
 
   /** ENG-3282: the import estimate counts one survey's responses, so it must not see a restricted one. */
   test("a survey the caller may not read is refused before anything is counted", async () => {
-    visibility.checks.length = 0;
-    visibility.refusal = new Response(null, { status: 403 });
-    try {
-      const res = await countV3ResponsesOperation({
-        ...read,
-        searchParams: query(`workspaceId=${WORKSPACE}&surveyId=${SURVEY.id}`),
-      });
+    mockRefuse.mockResolvedValueOnce(new Response(null, { status: 403 }));
 
-      expect(res.status).toBe(403);
-      expect(visibility.checks).toEqual([
-        [
-          read.authentication,
-          "survey.response_read",
-          { type: "survey", id: SURVEY.id },
-          read.requestId,
-          read.instance,
-        ],
-      ]);
-      expect(mockCount).not.toHaveBeenCalled();
-    } finally {
-      visibility.refusal = null;
-    }
+    const res = await countV3ResponsesOperation({
+      ...read,
+      searchParams: query(`workspaceId=${WORKSPACE}&surveyId=${SURVEY.id}`),
+    });
+
+    expect(res.status).toBe(403);
+    expect(mockRefuse).toHaveBeenCalledWith(
+      read.authentication,
+      "survey.response_read",
+      { type: "survey", id: SURVEY.id },
+      read.requestId,
+      read.instance
+    );
+    expect(mockCount).not.toHaveBeenCalled();
   });
 
   /** The unbounded `count(*)` never reaches the database: refused at the query boundary. */
