@@ -12,8 +12,11 @@ import { DEFAULT_POOL_ACQUIRE_TIMEOUT_MS, createPrismaPgAdapter } from "./prisma
  * responses routes and the pipeline payload served an internal column that no OpenAPI bundle describes
  * (ENG-2955). Omitted at the client rather than per query so the next internal column is one line here,
  * not a hunt through every route that forgot a `select`.
+ *
+ * `Response.notShown` (ENG-6936) is the next one: the results builders, the response card and v3
+ * Responses select it; v1/v2 payloads, webhooks and integrations stay exactly as before.
  */
-export const PRISMA_GLOBAL_OMIT = { response: { ingestFlags: true } } as const;
+export const PRISMA_GLOBAL_OMIT = { response: { ingestFlags: true, notShown: true } } as const;
 
 /**
  * Execution budget for the app client's `$transaction` calls, interactive and batch alike; a call that

@@ -1,7 +1,7 @@
 import { prisma } from "@formbricks/database";
 import { type TIngestFlag } from "@formbricks/types/embedded-data-ingest";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
-import { TResponseUpdateInput } from "@formbricks/types/responses";
+import { TClientResponseUpdateInput } from "@formbricks/types/responses";
 import { updateResponse } from "@/lib/response/service";
 import {
   evaluateResponseQuotas,
@@ -16,7 +16,7 @@ import {
 export const updateResponseWithQuotaEvaluation = async (
   responseId: string,
   surveyId: string,
-  responseInput: TResponseUpdateInput,
+  responseInput: TClientResponseUpdateInput,
   ingestFlags?: readonly TIngestFlag[]
 ): Promise<TResponseWithQuotaFull> => {
   const quotaContext = await loadQuotaEvaluationContext(surveyId);
