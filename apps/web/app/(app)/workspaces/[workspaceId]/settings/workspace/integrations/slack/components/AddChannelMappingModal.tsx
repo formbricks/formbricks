@@ -1,9 +1,9 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { CircleHelpIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -17,6 +17,7 @@ import {
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { createOrUpdateIntegrationAction } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/actions";
+import { integrationKeys } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/lib/query";
 import SlackLogo from "@/images/slacklogo.png";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { recallToHeadline } from "@/lib/utils/recall";
@@ -66,7 +67,9 @@ export const AddChannelMappingModal = ({
   // The mapping being edited keeps its survey selectable even if it has since been restricted.
   const attachedSurveyIds = selectedIntegration ? [selectedIntegration.surveyId] : [];
   const { t } = useTranslation();
-  const router = useRouter();
+  const queryClient = useQueryClient();
+  const refetchIntegration = () =>
+    queryClient.invalidateQueries({ queryKey: integrationKeys.byType(workspaceId, "slack") });
   const [selectedElements, setSelectedElements] = useState<string[]>([]);
   const [isLinkingChannel, setIsLinkingChannel] = useState(false);
   const [selectedSurvey, setSelectedSurvey] = useState<TSurvey | null>(null);
@@ -82,7 +85,8 @@ export const AddChannelMappingModal = ({
     type: "slack",
     config: {
       key: slackIntegration?.config?.key,
-      data: existingIntegrationData || [],
+      // A copy: the save and delete paths edit this array, and the original is the query cache's.
+      data: [...(existingIntegrationData ?? [])],
     },
   };
 
@@ -174,7 +178,7 @@ export const AddChannelMappingModal = ({
       }
       resetForm();
       setOpen(false);
-      router.refresh();
+      void refetchIntegration();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Unknown error occurred");
     } finally {
@@ -214,7 +218,7 @@ export const AddChannelMappingModal = ({
       }
       toast.success(t("workspace.integrations.integration_removed_successfully"));
       setOpen(false);
-      router.refresh();
+      void refetchIntegration();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unknown error occurred");
     } finally {
