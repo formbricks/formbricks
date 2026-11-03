@@ -67,6 +67,7 @@ import {
   ZConditionGroupDeprecated,
   ZDynamicLogicFieldValueDeprecated,
 } from "./logic";
+import { type TFindMatrix, findUnknownMatrixIds, isMatrixRowCondition } from "./matrix-conditions";
 import { validateStartLogic } from "./start-logic-validation";
 import {
   FORBIDDEN_IDS,
@@ -3765,7 +3766,8 @@ const validateConditionGroupOperands = (
         }
       } else if (element.type === TSurveyElementTypeEnum.Matrix) {
         const row = leftOperand.meta?.row;
-        if (row === undefined) {
+        // ENG-6934: the id form alone is a row condition too; the write path fills the position.
+        if (!isMatrixRowCondition(leftOperand.meta)) {
           if (rightOperand?.value !== undefined) {
             issues.push({
               code: "custom",
@@ -3796,8 +3798,10 @@ const validateConditionGroupOperands = (
                 path: scope.path,
               });
             }
+            // With a row id, the id decides the row (and is checked on its own); the position is
+            // only the previous release's reading, rewritten from the id on every write.
             const rowIndex = Number(row);
-            if (rowIndex < 0 || rowIndex >= element.rows.length) {
+            if (leftOperand.meta?.rowId === undefined && (rowIndex < 0 || rowIndex >= element.rows.length)) {
               issues.push({
                 code: "custom",
                 message: `Conditional Logic: Invalid row index in matrix element in ${scope.where}`,
@@ -3890,6 +3894,14 @@ const validateConditionGroupOperands = (
   };
 
   processConditionGroup(conditions);
+  // ENG-6934: a row or column id the matrix doesn't have, at the exact path of the id.
+  const findMatrix: TFindMatrix = (elementId) => {
+    const element = allElements.get(elementId)?.data;
+    return element?.type === TSurveyElementTypeEnum.Matrix ? element : undefined;
+  };
+  for (const issue of findUnknownMatrixIds(conditions, findMatrix, scope.path)) {
+    issues.push({ code: "custom", message: `${issue.message} in ${scope.where}`, path: issue.path });
+  }
   return issues;
 };
 

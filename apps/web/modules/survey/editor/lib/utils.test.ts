@@ -19,6 +19,8 @@ import {
   getActionVariableOptions,
   getConditionOperatorOptions,
   getConditionValueOptions,
+  getFormatLeftOperandValue,
+  getFormatRightOperandValue,
   getMatchValueProps,
 } from "./utils";
 
@@ -700,5 +702,55 @@ describe("removal guards also see show-if (ENG-6931)", () => {
     };
 
     expect(findHiddenFieldUsedInLogic(survey, signupDate)).toBe(flatIndexOf(survey, "email"));
+  });
+});
+
+/**
+ * ENG-6934: the editor shows a matrix condition's row and column the way the engines read them, by id,
+ * so a row or column reordered in this session does not show the condition on another cell until the
+ * save rewrites the positions.
+ */
+describe("matrix conditions by id in the editor", () => {
+  const PROFILE = 5;
+  const reordered = (): TSurvey => {
+    const survey = structuredClone(surveyFlowFixture);
+    const grid = survey.blocks
+      .flatMap((block) => block.elements)
+      .find((element) => element.id === "brand_grid") as { rows: unknown[]; columns: unknown[] };
+    grid.rows.reverse();
+    grid.columns.reverse();
+    return survey;
+  };
+  const matrixCondition = (survey: TSurvey): TSingleCondition =>
+    survey.blocks[PROFILE].logic![0].conditions.conditions[0] as TSingleCondition;
+
+  test("the row picker shows the row the id names, after a reorder", () => {
+    const survey = reordered();
+
+    // Netflix (row_netflix) was row 0 and is now row 1.
+    expect(getFormatLeftOperandValue(matrixCondition(survey), survey)).toBe("brand_grid.1");
+  });
+
+  test("the column picker shows the column the id names, after a reorder", () => {
+    const survey = reordered();
+
+    // Good (col_good) was column 1 and is now column 0.
+    expect(getFormatRightOperandValue(matrixCondition(survey), survey)).toBe("0");
+  });
+
+  test("other conditions show their stored value", () => {
+    const survey = structuredClone(surveyFlowFixture);
+    const dateCondition = survey.blocks[PROFILE].logic![0].conditions.conditions[1] as TSingleCondition;
+
+    expect(getFormatRightOperandValue(dateCondition, survey)).toBe("2026-01-01");
+  });
+
+  test("a row condition written in the id form alone gets the row operators", () => {
+    const survey = structuredClone(surveyFlowFixture);
+    const condition = matrixCondition(survey);
+    if (condition.leftOperand.type === "element") condition.leftOperand.meta = { rowId: "row_disney" };
+
+    const operators = getConditionOperatorOptions(condition, survey, t).map((option) => option.value);
+    expect(operators).toContain("isAnyOf");
   });
 });
