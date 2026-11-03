@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     "./base": "./base.mjs",
+    "./csp-safe": "./csp-safe.mjs",
     "./library": "./library.mjs",
     "./next": "./next.mjs",
     "./react": "./react.mjs",

@@ -54,7 +54,7 @@ const HTML_TEMPLATE = `<head>
 // script-src/connect-src, and a per-response nonce instead of 'unsafe-inline' for styles. Anything the
 // SDK or the survey renderer needs beyond this shows up as a violation and fails the journey.
 // 'strict-dynamic' and reCAPTCHA are deliberately not covered (ENG-1878).
-const buildHostCsp = (nonce: string, appUrl: string): string =>
+export const buildHostCsp = (nonce: string, appUrl: string): string =>
   [
     "default-src 'self'",
     `script-src 'nonce-${nonce}' ${appUrl}`,
