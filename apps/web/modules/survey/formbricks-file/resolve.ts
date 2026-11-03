@@ -355,14 +355,14 @@ export interface TFormbricksFileCreatedReferences {
   languages: string[];
 }
 
-/** What makes a planned action class and a stored one the same one: its key, or its configuration. */
+/** What makes a planned action class and a stored one the same one: its type and key, or its configuration. */
 const actionClassIdentity = (actionClass: {
   type: "code" | "noCode";
   key: string | null;
   noCodeConfig: unknown;
 }): string =>
-  actionClass.type === "code" && actionClass.key
-    ? `code:${actionClass.key}`
+  actionClass.type === "code"
+    ? `code:${actionClass.key ?? ""}`
     : `noCode:${canonicalJson(actionClass.noCodeConfig ?? null)}`;
 
 const workspaceChangedError = (name: string) =>
@@ -491,8 +491,9 @@ export const applyFormbricksFileReferences = async (
     actionClassIds,
     created: {
       actionClasses,
-      attributeKeys: attributeKeys.map(({ key }) => key),
-      languages: languages.map(({ code }) => code),
+      // Sorted: the order `INSERT … RETURNING` gives is not promised, and nothing reads it.
+      attributeKeys: attributeKeys.map(({ key }) => key).sort(),
+      languages: languages.map(({ code }) => code).sort(),
     },
   };
 };

@@ -111,6 +111,45 @@ describe("applyFormbricksFileReferences", () => {
     ).rejects.toBeInstanceOf(SurveyImportInputError);
   });
 
+  test("keeps a keyless code action and a no-code action distinct when both were skipped", async () => {
+    const tx = {
+      actionClass: {
+        createManyAndReturn: vi.fn(async () => []),
+        findMany: vi.fn(async () => [
+          { id: "code_row", type: "code", key: null, noCodeConfig: null },
+          { id: "nocode_row", type: "noCode", key: null, noCodeConfig: null },
+        ]),
+      },
+    } as never;
+
+    const applied = await applyFormbricksFileReferences(tx, WORKSPACE_ID, {
+      actionClasses: new Map([
+        [
+          "file_code",
+          { create: { name: "Code action", description: null, type: "code", key: null, noCodeConfig: null } },
+        ],
+        [
+          "file_nocode",
+          {
+            create: {
+              name: "No-code action",
+              description: null,
+              type: "noCode",
+              key: null,
+              noCodeConfig: null,
+            },
+          },
+        ],
+      ]),
+      attributeKeysToCreate: [],
+      languagesToCreate: [],
+      issues: [],
+    });
+
+    expect(applied.actionClassIds.get("file_code")).toBe("code_row");
+    expect(applied.actionClassIds.get("file_nocode")).toBe("nocode_row");
+  });
+
   test("reports only the attribute keys and languages this transaction inserted", async () => {
     const tx = {
       actionClass: { createManyAndReturn: vi.fn(async () => []), findMany: vi.fn(async () => []) },
