@@ -355,10 +355,102 @@ export interface TFormbricksFileCreatedReferences {
   languages: string[];
 }
 
+/** What makes a planned action class and a stored one the same one: its key, or its configuration. */
+const actionClassIdentity = (actionClass: {
+  type: "code" | "noCode";
+  key: string | null;
+  noCodeConfig: unknown;
+}): string =>
+  actionClass.type === "code" && actionClass.key
+    ? `code:${actionClass.key}`
+    : `noCode:${canonicalJson(actionClass.noCodeConfig ?? null)}`;
+
+const workspaceChangedError = (name: string) =>
+  new SurveyImportInputError(
+    [
+      {
+        name: "references.actionClasses",
+        reason: `Another import created the action class "${name}" while this one ran; import the file again`,
+      },
+    ],
+    "The workspace changed while the file was being imported.",
+    "formbricks_file_invalid"
+  );
+
+/**
+ * The action classes a concurrent create took, by identity: the insert skipped them, and only a row
+ * that is the one this plan means may be linked. A same-named row of another key or configuration is
+ * another action class, so it is not returned and the caller refuses rather than link the wrong one.
+ */
+const recoverSkippedActionClasses = async (
+  tx: Prisma.TransactionClient,
+  workspaceId: string,
+  missing: readonly TActionClassCreate[]
+): Promise<Map<string, string>> => {
+  const existing = await tx.actionClass.findMany({
+    where: {
+      workspaceId,
+      OR: [
+        { name: { in: missing.map((actionClass) => actionClass.name) } },
+        { key: { in: missing.flatMap((actionClass) => (actionClass.key ? [actionClass.key] : [])) } },
+      ],
+    },
+    select: { id: true, type: true, key: true, noCodeConfig: true },
+  });
+  const wanted = new Set(missing.map(actionClassIdentity));
+  const idByIdentity = new Map<string, string>();
+  for (const actionClass of existing) {
+    const identity = actionClassIdentity(actionClass);
+    if (wanted.has(identity)) idByIdentity.set(identity, actionClass.id);
+  }
+  return idByIdentity;
+};
+
+/** Create what the plan says is missing, one query per kind; the rows this transaction inserted come back. */
+const createMissingReferences = async (
+  tx: Prisma.TransactionClient,
+  workspaceId: string,
+  plan: TFormbricksFileReferencePlan,
+  creates: readonly TActionClassCreate[]
+) => {
+  const [actionClasses, attributeKeys, languages] = await Promise.all([
+    creates.length > 0
+      ? tx.actionClass.createManyAndReturn({
+          data: creates.map((actionClass) => ({
+            workspaceId,
+            name: actionClass.name,
+            description: actionClass.description,
+            type: actionClass.type,
+            key: actionClass.type === "code" ? actionClass.key : null,
+            noCodeConfig: actionClass.noCodeConfig ?? undefined,
+          })),
+          select: { id: true, name: true },
+          // A concurrent import may create the same one between the plan's read and this insert.
+          skipDuplicates: true,
+        })
+      : Promise.resolve([]),
+    plan.attributeKeysToCreate.length > 0
+      ? tx.contactAttributeKey.createManyAndReturn({
+          data: plan.attributeKeysToCreate.map((attributeKey) => ({ workspaceId, ...attributeKey })),
+          select: { key: true },
+          skipDuplicates: true,
+        })
+      : Promise.resolve([]),
+    plan.languagesToCreate.length > 0
+      ? tx.language.createManyAndReturn({
+          data: plan.languagesToCreate.map(({ code, alias }) => ({ workspaceId, code, alias })),
+          select: { code: true },
+          skipDuplicates: true,
+        })
+      : Promise.resolve([]),
+  ]);
+  return { actionClasses, attributeKeys, languages };
+};
+
 /**
  * Create what the plan says is missing, in the caller's transaction, one query per kind. Returns the
- * target id of every action class the survey's triggers name, by its id in the file, and what was
- * created.
+ * target id of every action class the survey's triggers name, by its id in the file, and what this
+ * transaction created — a row another transaction took first is linked, not claimed.
  */
 export const applyFormbricksFileReferences = async (
   tx: Prisma.TransactionClient,
@@ -376,71 +468,31 @@ export const applyFormbricksFileReferences = async (
   }
 
   const creates = [...toCreate.keys()];
-  const [created] = await Promise.all([
-    creates.length > 0
-      ? tx.actionClass.createManyAndReturn({
-          data: creates.map((actionClass) => ({
-            workspaceId,
-            name: actionClass.name,
-            description: actionClass.description,
-            type: actionClass.type,
-            key: actionClass.type === "code" ? actionClass.key : null,
-            noCodeConfig: actionClass.noCodeConfig ?? undefined,
-          })),
-          select: { id: true, name: true },
-          // A concurrent import may create the same one between the plan's read and this insert.
-          skipDuplicates: true,
-        })
-      : Promise.resolve([]),
-    plan.attributeKeysToCreate.length > 0
-      ? tx.contactAttributeKey.createMany({
-          data: plan.attributeKeysToCreate.map((attributeKey) => ({ workspaceId, ...attributeKey })),
-          skipDuplicates: true,
-        })
-      : Promise.resolve(null),
-    plan.languagesToCreate.length > 0
-      ? tx.language.createMany({
-          data: plan.languagesToCreate.map(({ code, alias }) => ({ workspaceId, code, alias })),
-          skipDuplicates: true,
-        })
-      : Promise.resolve(null),
-  ]);
+  const { actionClasses, attributeKeys, languages } = await createMissingReferences(
+    tx,
+    workspaceId,
+    plan,
+    creates
+  );
 
-  const createdIdByName = new Map(created.map((actionClass) => [actionClass.name, actionClass.id]));
-  // One the insert skipped belongs to the transaction that created it first: read it back, so this
-  // import links to it instead of failing, and leave it out of what this import reports as created.
-  const missing = creates.filter((actionClass) => !createdIdByName.has(actionClass.name));
-  const createdIdByKey = new Map<string, string>();
-  if (missing.length > 0) {
-    const existing = await tx.actionClass.findMany({
-      where: {
-        workspaceId,
-        OR: [
-          { name: { in: missing.map((actionClass) => actionClass.name) } },
-          { key: { in: missing.flatMap((actionClass) => (actionClass.key ? [actionClass.key] : [])) } },
-        ],
-      },
-      select: { id: true, name: true, key: true },
-    });
-    for (const actionClass of existing) {
-      if (actionClass.key) createdIdByKey.set(actionClass.key, actionClass.id);
-      if (!createdIdByName.has(actionClass.name)) createdIdByName.set(actionClass.name, actionClass.id);
-    }
-  }
+  const insertedByName = new Map(actionClasses.map(({ id, name }) => [name, id]));
+  const missing = creates.filter((actionClass) => !insertedByName.has(actionClass.name));
+  const recovered =
+    missing.length > 0
+      ? await recoverSkippedActionClasses(tx, workspaceId, missing)
+      : new Map<string, string>();
 
   for (const [actionClass, sourceIds] of toCreate) {
-    const id =
-      createdIdByName.get(actionClass.name) ??
-      (actionClass.key ? createdIdByKey.get(actionClass.key) : undefined);
-    if (!id) throw new Error("An action class the import created was not returned");
+    const id = insertedByName.get(actionClass.name) ?? recovered.get(actionClassIdentity(actionClass));
+    if (!id) throw workspaceChangedError(actionClass.name);
     for (const sourceId of sourceIds) actionClassIds.set(sourceId, id);
   }
   return {
     actionClassIds,
     created: {
-      actionClasses: created,
-      attributeKeys: plan.attributeKeysToCreate.map(({ key }) => key),
-      languages: plan.languagesToCreate.map(({ code }) => code),
+      actionClasses,
+      attributeKeys: attributeKeys.map(({ key }) => key),
+      languages: languages.map(({ code }) => code),
     },
   };
 };
