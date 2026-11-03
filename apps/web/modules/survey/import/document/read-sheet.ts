@@ -38,7 +38,8 @@ const VERY_HIDDEN = 2;
  * came out. Stored, so SheetJS copies rather than inflates; no larger than what the zip limits allow.
  */
 const rebuildCheckedArchive = (archive: TZipArchive): Uint8Array => {
-  const entries: Zippable = {};
+  // Null-prototype: an entry named `__proto__` is an ordinary key, not the object's prototype.
+  const entries = Object.create(null) as Zippable;
   for (const name of archive.names) {
     const bytes = archive.read(name);
     if (bytes === null) continue;

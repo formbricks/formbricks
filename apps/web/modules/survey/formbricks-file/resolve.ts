@@ -236,7 +236,15 @@ const planAttributeKeys = async (
     db.contactAttributeKey.count({ where: { workspaceId } }),
   ]);
   const existingKeys = new Set(existing.map((attributeKey) => attributeKey.key));
-  const attributeKeysToCreate = wanted.filter((attributeKey) => !existingKeys.has(attributeKey.key));
+  // A file may name one key more than once; its first definition is the one it is created with (as an
+  // action class's is), so the insert cannot fail on the key's unique constraint with a 500.
+  const wantedByKey = new Map<string, TFormbricksFileAttributeKey>();
+  for (const attributeKey of wanted) {
+    if (!wantedByKey.has(attributeKey.key)) wantedByKey.set(attributeKey.key, attributeKey);
+  }
+  const attributeKeysToCreate = [...wantedByKey.values()].filter(
+    (attributeKey) => !existingKeys.has(attributeKey.key)
+  );
 
   if (count + attributeKeysToCreate.length > MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT) {
     throw new SurveyImportInputError(
