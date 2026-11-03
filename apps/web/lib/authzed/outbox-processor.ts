@@ -7,8 +7,9 @@ import { AUTHZED_MAX_PARALLEL_RELATIONSHIP_DELETES } from "./constants";
 import { AUTHZED_ERROR_CODES } from "./errors";
 import { reconcileFeedbackDirectoryRelationships } from "./feedback-directory";
 import {
+  observeAuthzedOutboxStatus,
   recordAuthzedOutboxDelivery,
-  recordAuthzedOutboxStatus,
+  recordAuthzedOutboxDrain,
   recordAuthzedRevocationDelivery,
 } from "./metrics";
 import {
@@ -492,11 +493,21 @@ export const drainAuthzedOutbox = async (maxBatches = 100): Promise<TAuthzedOutb
   }
 
   const status = await getAuthzedOutboxStatus();
-  recordAuthzedOutboxStatus(status);
+  recordAuthzedOutboxDrain();
   return { ...totals, remaining: status.pending, status: status.pending === 0 ? "drained" : "partial" };
 };
 
 export const processAuthzedProjectionDeliveryJob = async (): Promise<void> => {
   if (!isAuthzedEnabled()) return;
   await drainAuthzedOutbox(10);
+};
+
+/**
+ * Report outbox health from PostgreSQL on every metrics collection, independently of delivery. Called
+ * once a process is going to run jobs, before the runtime connects to Redis: a Redis outage is one of
+ * the ways delivery stops, and the alert has to keep reporting through it.
+ */
+export const observeAuthzedOutboxHealth = (): void => {
+  if (!isAuthzedEnabled()) return;
+  observeAuthzedOutboxStatus(getAuthzedOutboxStatus);
 };

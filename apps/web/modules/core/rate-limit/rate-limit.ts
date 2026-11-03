@@ -45,7 +45,7 @@ const buildRateLimitResponse = (
 /**
  * The answer to a check that could not reach Redis. Abuse limits (`failClosed`: email, account creation,
  * brute-force guards) refuse; every other limit lets the request through unchecked, so a Redis outage does
- * not take the whole app down with it (docs/adr/0015-abuse-limits-fail-closed.md).
+ * not take the whole app down with it (docs/adr/0016-abuse-limits-fail-closed.md).
  */
 const limiterUnavailable = (
   config: TRateLimitConfig,

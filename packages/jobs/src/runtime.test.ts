@@ -12,6 +12,7 @@ import {
 } from "../test/boundary-mocks";
 import {
   AUTHZED_PROJECTION_QUEUE_NAME,
+  AUTHZED_RECONCILIATION_QUEUE_NAME,
   DATA_RETENTION_QUEUE_NAME,
   DEDICATED_JOBS_QUEUE_NAMES,
   JOBS_PREFIX,
@@ -27,6 +28,7 @@ let producerConnection = createMockRedisConnection();
 let queueMock = createMockQueue();
 let dedicatedQueueMock = createMockQueue();
 let retentionQueueMock = createMockQueue();
+let reconciliationQueueMock = createMockQueue();
 let workerConnections: MockRedisConnection[] = [];
 let workerMocks: MockWorker[] = [];
 
@@ -44,6 +46,7 @@ const mockCreateWorkerConnection = vi.fn((_: unknown) => {
 const mockCreateJobsQueues = vi.fn((_: unknown) => ({
   [JOBS_QUEUE_NAME]: asQueue(queueMock),
   [AUTHZED_PROJECTION_QUEUE_NAME]: asQueue(dedicatedQueueMock),
+  [AUTHZED_RECONCILIATION_QUEUE_NAME]: asQueue(reconciliationQueueMock),
   [DATA_RETENTION_QUEUE_NAME]: asQueue(retentionQueueMock),
 }));
 const mockWorkerConstructor = vi.fn(function MockWorker(_: string, __: unknown, ___?: unknown) {
@@ -102,6 +105,7 @@ describe("@formbricks/jobs runtime", () => {
     queueMock = createMockQueue();
     dedicatedQueueMock = createMockQueue();
     retentionQueueMock = createMockQueue();
+    reconciliationQueueMock = createMockQueue();
     workerConnections = [];
     workerMocks = [];
   });
@@ -235,6 +239,12 @@ describe("@formbricks/jobs runtime", () => {
       expect(retentionWorkerCalls).toHaveLength(1);
       expect(retentionWorkerCalls[0]?.[2]).toEqual(expect.objectContaining({ concurrency: 1 }));
       expect(runtime.queues[DATA_RETENTION_QUEUE_NAME]).toBe(asQueue(retentionQueueMock));
+      // And so does the AuthZed audits' queue, whatever the default queue is tuned to.
+      const reconciliationWorkerCalls = mockWorkerConstructor.mock.calls.filter(
+        ([queueName]) => queueName === AUTHZED_RECONCILIATION_QUEUE_NAME
+      );
+      expect(reconciliationWorkerCalls).toHaveLength(1);
+      expect(reconciliationWorkerCalls[0]?.[2]).toEqual(expect.objectContaining({ concurrency: 1 }));
 
       await runtime.close();
 

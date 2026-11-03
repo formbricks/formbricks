@@ -13,10 +13,10 @@ import { FormbricksLogo } from "@/modules/ui/components/formbricks-logo";
 import { getIntegrationDetails } from "./lib/utils";
 
 interface ConnectIntegrationProps {
-  isEnabled: boolean;
-  integrationType: TIntegrationType;
-  handleAuthorization: () => void;
-  integrationLogoSrc: string | StaticImageData;
+  readonly isEnabled: boolean;
+  readonly integrationType: TIntegrationType;
+  readonly handleAuthorization: () => void;
+  readonly integrationLogoSrc: string | StaticImageData;
 }
 
 export const ConnectIntegration = ({

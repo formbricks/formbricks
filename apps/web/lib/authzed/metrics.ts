@@ -1,5 +1,8 @@
 import "server-only";
-import { metrics } from "@opentelemetry/api";
+import { type BatchObservableResult, metrics } from "@opentelemetry/api";
+import { logger } from "@formbricks/logger";
+import { loggableError } from "@/lib/utils/loggable-error";
+import type { TAuthzedOutboxStatus } from "./outbox-types";
 
 /**
  * Operational metrics for AuthZed relationship sync.
@@ -118,15 +121,45 @@ const revocationDeliveryDuration = meter.createHistogram(
   }
 );
 
-const outboxStatus = meter.createGauge("formbricks_authzed_projection_outbox_status", {
+/**
+ * Observable rather than recorded, and read from PostgreSQL at collection time (ENG-3764).
+ *
+ * These used to be synchronous gauges set at the end of each delivery run, so the moment delivery stopped
+ * running — a wedged worker, a Redis outage — they kept exporting their last value, usually zero, while
+ * the freshness guard read PostgreSQL directly and started denying every authorization check. The alert
+ * was blind in exactly the failure it exists for. Read on every scrape or export instead, they report
+ * the outbox as it is, whether or not anything is draining it.
+ */
+const outboxStatus = meter.createObservableGauge("formbricks_authzed_projection_outbox_status", {
   description: "Point-in-time authorization projection outbox counts by bounded state",
   unit: "{event}",
 });
 
-const outboxOldestPendingAge = meter.createGauge(
+const outboxOldestPendingAge = meter.createObservableGauge(
   "formbricks_authzed_projection_outbox_oldest_pending_age_seconds",
   {
     description: "Point-in-time age of the oldest pending authorization projection event",
+    unit: "s",
+  }
+);
+
+/**
+ * When the outbox status was last read. A failed read cannot clear the gauges above: a cumulative reader
+ * keeps exporting their last values, so this timestamp falling behind is what says they are stale.
+ */
+const outboxStatusLastRead = meter.createObservableGauge(
+  "formbricks_authzed_projection_outbox_status_last_read_timestamp_seconds",
+  {
+    description: "Unix time at which the authorization projection outbox status was last read",
+    unit: "s",
+  }
+);
+
+/** When a delivery run last completed, so "delivery is not running" is alertable on its own. */
+const outboxLastDrain = meter.createGauge(
+  "formbricks_authzed_projection_outbox_last_drain_timestamp_seconds",
+  {
+    description: "Unix time at which the last authorization projection outbox drain completed",
     unit: "s",
   }
 );
@@ -201,28 +234,49 @@ export const recordAuthzedRevocationDelivery = (durationMs: number): void => {
   }
 };
 
-export const recordAuthzedOutboxStatus = ({
-  deadLettered,
-  oldestPendingAgeSeconds,
-  pending,
-  revocationsPastCritical,
-  revocationsPastWarning,
-}: Readonly<{
-  deadLettered: number;
-  oldestPendingAgeSeconds: number | null;
-  pending: number;
-  revocationsPastCritical: number;
-  revocationsPastWarning: number;
-}>): void => {
+export const recordAuthzedOutboxDrain = (): void => {
   try {
-    outboxStatus.record(pending, { state: "pending" });
-    outboxStatus.record(deadLettered, { state: "dead_lettered" });
-    outboxStatus.record(revocationsPastWarning, { state: "revocation_warning" });
-    outboxStatus.record(revocationsPastCritical, { state: "revocation_critical" });
-    outboxOldestPendingAge.record(oldestPendingAgeSeconds ?? 0);
+    outboxLastDrain.record(Date.now() / 1_000);
   } catch {
     // A metrics exporter failure must not discard the caller's drain result.
   }
+};
+
+let outboxStatusObserved = false;
+
+/**
+ * Start reporting outbox health on every collection, read through `readStatus`. Idempotent, so a retried
+ * worker startup does not register a second callback (and a second query per collection).
+ *
+ * A failed read observes nothing rather than zeros. The SDK then re-exports the last values it saw, so
+ * the read timestamp is observed only on success: its age is how an alert tells a stale reading apart.
+ */
+export const observeAuthzedOutboxStatus = (readStatus: () => Promise<TAuthzedOutboxStatus>): void => {
+  if (outboxStatusObserved) return;
+  outboxStatusObserved = true;
+
+  meter.addBatchObservableCallback(
+    async (result: BatchObservableResult) => {
+      let status: TAuthzedOutboxStatus;
+      try {
+        status = await readStatus();
+      } catch (error) {
+        logger.warn(
+          { component: "authzed", ...loggableError(error), operation: "outbox_status_metrics" },
+          "Could not read AuthZed outbox status for metrics"
+        );
+        return;
+      }
+
+      result.observe(outboxStatus, status.pending, { state: "pending" });
+      result.observe(outboxStatus, status.deadLettered, { state: "dead_lettered" });
+      result.observe(outboxStatus, status.revocationsPastWarning, { state: "revocation_warning" });
+      result.observe(outboxStatus, status.revocationsPastCritical, { state: "revocation_critical" });
+      result.observe(outboxOldestPendingAge, status.oldestPendingAgeSeconds ?? 0);
+      result.observe(outboxStatusLastRead, Date.now() / 1_000);
+    },
+    [outboxStatus, outboxOldestPendingAge, outboxStatusLastRead]
+  );
 };
 
 export const recordAuthzedReconciliationAudit = ({

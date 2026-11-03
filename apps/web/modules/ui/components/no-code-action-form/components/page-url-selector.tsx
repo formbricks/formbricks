@@ -55,8 +55,8 @@ const getRuleLabel = (rule: TActionClassPageUrlRule, t: TFunction): string => {
 };
 
 interface PageUrlSelectorProps {
-  form: UseFormReturn<TActionClassInput>;
-  isReadOnly: boolean;
+  readonly form: UseFormReturn<TActionClassInput>;
+  readonly isReadOnly: boolean;
 }
 
 export const PageUrlSelector = ({ form, isReadOnly }: PageUrlSelectorProps) => {
@@ -203,12 +203,12 @@ const UrlInput = ({
   connector,
   onConnectorChange,
 }: {
-  control: Control<TActionClassInput>;
-  fields: FieldArrayWithId<TActionClassInput, "noCodeConfig.urlFilters", "id">[];
-  removeUrlRule: UseFieldArrayRemove;
-  disabled: boolean;
-  connector: "or" | "and";
-  onConnectorChange: (value: string) => void;
+  readonly control: Control<TActionClassInput>;
+  readonly fields: FieldArrayWithId<TActionClassInput, "noCodeConfig.urlFilters", "id">[];
+  readonly removeUrlRule: UseFieldArrayRemove;
+  readonly disabled: boolean;
+  readonly connector: "or" | "and";
+  readonly onConnectorChange: (value: string) => void;
 }) => {
   const { t } = useTranslation();
 

@@ -9,7 +9,7 @@ import { V3ApiError } from "@/modules/api/lib/v3-client";
 import { isTaxonomyRunGone, useTaxonomyRun } from "./use-taxonomy-run";
 
 function createWrapper(queryClient: QueryClient) {
-  const Wrapper = ({ children }: { children: ReactNode }) =>
+  const Wrapper = ({ children }: { readonly children: ReactNode }) =>
     createElement(QueryClientProvider, { client: queryClient }, children);
   Wrapper.displayName = "UseTaxonomyRunTestWrapper";
   return Wrapper;

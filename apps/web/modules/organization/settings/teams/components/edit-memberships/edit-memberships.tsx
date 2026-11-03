@@ -7,11 +7,11 @@ import { getInvitesByOrganizationId } from "@/modules/organization/settings/team
 import { getMembershipByOrganizationId } from "@/modules/organization/settings/teams/lib/membership";
 
 interface EditMembershipsProps {
-  organization: TOrganization;
-  currentUserId: string;
-  role: TOrganizationRole;
-  isAccessControlAllowed: boolean;
-  isUserManagementDisabledFromUi: boolean;
+  readonly organization: TOrganization;
+  readonly currentUserId: string;
+  readonly role: TOrganizationRole;
+  readonly isAccessControlAllowed: boolean;
+  readonly isUserManagementDisabledFromUi: boolean;
 }
 
 /**

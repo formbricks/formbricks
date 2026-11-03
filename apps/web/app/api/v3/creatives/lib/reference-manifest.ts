@@ -59,6 +59,7 @@ export const V3_CREATIVE_BODY_FIELDS: Readonly<Record<string, TV3CreativeReferen
     resolvedAgainst: "repository.ensureCreativeLanguages: the creative workspace's Language by code",
   },
   "languages[].enabled": none(),
+  autoSelectLanguage: none(),
   "content.label{}": localeKeys,
   "content.icon": none(),
   "content.message{}": localeKeys,

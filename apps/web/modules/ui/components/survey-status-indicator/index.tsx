@@ -15,9 +15,9 @@ import { cn } from "@/lib/cn";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 
 interface SurveyStatusIndicatorProps {
-  status: TSurvey["status"];
-  isScheduled?: boolean;
-  tooltip?: boolean;
+  readonly status: TSurvey["status"];
+  readonly isScheduled?: boolean;
+  readonly tooltip?: boolean;
 }
 
 const InProgressIndicator = () => (
@@ -27,13 +27,19 @@ const InProgressIndicator = () => (
   </span>
 );
 
-const IconIndicator = ({ containerClassName, Icon }: { containerClassName: string; Icon: LucideIcon }) => (
+const IconIndicator = ({
+  containerClassName,
+  Icon,
+}: {
+  readonly containerClassName: string;
+  readonly Icon: LucideIcon;
+}) => (
   <div className={containerClassName}>
     <Icon className="size-3 text-slate-600" />
   </div>
 );
 
-const PausedIndicator = ({ isScheduled }: { isScheduled: boolean }) => (
+const PausedIndicator = ({ isScheduled }: { readonly isScheduled: boolean }) => (
   <IconIndicator
     containerClassName="rounded-full bg-slate-300 p-1"
     Icon={isScheduled ? CalendarClockIcon : PauseIcon}

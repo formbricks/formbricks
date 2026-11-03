@@ -6,7 +6,7 @@ import { FormControl, FormField, FormItem } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
 
 interface TwoFactorBackupProps {
-  form: UseFormReturn<
+  readonly form: UseFormReturn<
     {
       email: string;
       password: string;

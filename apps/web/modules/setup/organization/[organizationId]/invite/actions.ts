@@ -63,7 +63,8 @@ export const inviteOrganizationMemberAction = authenticatedActionClient
           parsedInput.email,
           ctx.user.name,
           "",
-          parsedInput.organizationId
+          parsedInput.organizationId,
+          ctx.user.id
         );
       } catch (error) {
         logger.error({ err: error }, "Failed to send onboarding invite email");

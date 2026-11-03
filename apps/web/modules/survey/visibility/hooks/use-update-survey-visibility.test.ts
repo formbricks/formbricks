@@ -10,7 +10,7 @@ import { TSurveyListPage } from "@/modules/survey/list/lib/v3-surveys-client";
 import { useUpdateSurveyVisibility } from "./use-update-survey-visibility";
 
 function createWrapper(queryClient: QueryClient) {
-  const Wrapper = ({ children }: { children: ReactNode }) =>
+  const Wrapper = ({ children }: { readonly children: ReactNode }) =>
     createElement(QueryClientProvider, { client: queryClient }, children);
 
   Wrapper.displayName = "UseUpdateSurveyVisibilityTestWrapper";

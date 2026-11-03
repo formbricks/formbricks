@@ -17,6 +17,7 @@ import { cache } from "@/lib/cache";
 import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@/lib/constants";
 import { capturePostHogEvent, groupIdentifyPostHog } from "@/lib/posthog";
 import { getPostHogFeatureFlag } from "@/lib/posthog/get-feature-flag";
+import { buildFreeTrialEndParams, getFreeTrialEndUnix, hasFreeTrialFallback } from "./free-trial-end";
 import {
   type TStandardCloudPlan,
   getCatalogItemForPlan,
@@ -620,23 +621,40 @@ export const createProTrialSubscription = async (
     }
   }
 
-  await stripeClient.subscriptions.create(
-    {
-      customer: customerId,
-      items: await getCatalogItemsForPlan("pro", "monthly"),
-      trial_period_days: trialDays,
-      trial_settings: {
-        end_behavior: {
-          missing_payment_method: "cancel",
+  // The trial ends on Hobby unless the org explicitly buys a plan, even with a card on file — see
+  // buildFreeTrialEndParams.
+  try {
+    await stripeClient.subscriptions.create(
+      {
+        customer: customerId,
+        items: await getCatalogItemsForPlan("pro", "monthly"),
+        ...buildFreeTrialEndParams(getFreeTrialEndUnix(trialDays)),
+        payment_settings: {
+          save_default_payment_method: "on_subscription",
         },
+        metadata: { organizationId },
       },
-      payment_settings: {
-        save_default_payment_method: "on_subscription",
-      },
-      metadata: { organizationId },
-    },
-    { idempotencyKey: `create-pro-trial-${organizationId}` }
-  );
+      { idempotencyKey: `create-pro-trial-${organizationId}` }
+    );
+  } catch (error) {
+    // A repeated call reuses the idempotency key with a later trial_end, so Stripe rejects it instead of
+    // replaying the first response. The trial that first call created is the result; return it as before.
+    if (!(error instanceof Stripe.errors.StripeIdempotencyError)) throw error;
+    if (!(await hasTrialSubscriptionForOrganization(organizationId, customerId))) throw error;
+  }
+};
+
+const hasTrialSubscriptionForOrganization = async (
+  organizationId: string,
+  customerId: string
+): Promise<boolean> => {
+  if (!stripeClient) return false;
+  const trialing = await stripeClient.subscriptions.list({
+    customer: customerId,
+    status: "trialing",
+    limit: 20,
+  });
+  return trialing.data.some((subscription) => subscription.metadata?.organizationId === organizationId);
 };
 
 export const createPaidPlanCheckoutSession = async (input: {
@@ -786,7 +804,9 @@ const previewFullConversionChargeCents = async (
       // must mirror that. Never send it otherwise — trial_end re-anchors the billing cycle, which
       // would turn an ordinary mid-cycle proration into a full-period charge (matches the real update
       // in updateSubscriptionItemsImmediately, which sends no trial_end when not trialing).
-      ...(subscription.status === "trialing" ? { trial_end: "now" as const } : {}),
+      // cancel_at too: the real conversion clears the trial's cancel_at, and left in the preview Stripe
+      // prorates the quote to it — a fraction of the full price the card is actually charged.
+      ...(subscription.status === "trialing" ? { trial_end: "now" as const, cancel_at: "" as const } : {}),
     },
   });
   return { amountDue: preview.amount_due, currency: preview.currency };
@@ -829,10 +849,13 @@ const updateSubscriptionItemsImmediately = async (
   const automaticTax = targetPlan === "hobby" ? null : await getMissingAutomaticTax(subscription, customerId);
 
   // Neither is a pending-update attribute, so set them in a separate plain update first. Tax goes on
-  // before the item change so the upgrade invoice already carries it.
-  if (subscription.cancel_at_period_end || automaticTax) {
+  // before the item change so the upgrade invoice already carries it. A trial's cancel flag is left to
+  // the conversion update below: clearing it here would also clear cancel_at before the charge, so a
+  // declined card would lose the trial's Hobby fallback (that update's cancel_at "" clears both).
+  const clearCancelAtPeriodEnd = subscription.cancel_at_period_end && subscription.status !== "trialing";
+  if (clearCancelAtPeriodEnd || automaticTax) {
     await stripeClient.subscriptions.update(subscription.id, {
-      ...(subscription.cancel_at_period_end ? { cancel_at_period_end: false } : {}),
+      ...(clearCancelAtPeriodEnd ? { cancel_at_period_end: false } : {}),
       ...(automaticTax ? { automatic_tax: automaticTax } : {}),
     });
   }
@@ -845,11 +868,17 @@ const updateSubscriptionItemsImmediately = async (
   // Trade-off: a card needing off-session 3DS also errors here (the update rolls back before the
   // browser can confirm, leaving no PaymentIntent) — translated into a distinct error via
   // toTrialConversionError so the UI can ask for a non-3DS card.
+  //
+  // Clearing cancel_at in this same update is what makes the purchase stick: the free trial is set to
+  // cancel at trial_end (buildFreeTrialEndParams), and a decline rolls the whole update back, so a failed
+  // purchase keeps that Hobby fallback. A trial that already expired is canceled, so this update fails
+  // instead of billing it.
   if (subscription.status === "trialing") {
     try {
       await stripeClient.subscriptions.update(subscription.id, {
         items: [...existingDeletions, ...targetItems],
         trial_end: "now",
+        cancel_at: "",
         proration_behavior: "always_invoice",
         payment_behavior: "error_if_incomplete",
       });
@@ -1041,6 +1070,13 @@ const scheduleSubscriptionPlanChange = async (
     throw new Error("Stripe is not configured");
   }
 
+  // A trial is converted or switched to Hobby immediately (switchOrganizationToCloudPlan), never
+  // scheduled: a schedule phase would bill the trial early, and clearing cancel_at_period_end below would
+  // also drop the trial's cancel_at Hobby fallback.
+  if (subscription.status === "trialing") {
+    throw new Error(`Refusing to schedule a plan change on trialing subscription ${subscription.id}`);
+  }
+
   // Looked up before anything changes, so a failed lookup leaves the subscription as it was. A paid
   // target requires a tax location; a Hobby target is free, so it never blocks the downgrade.
   let automaticTax: TAutomaticTax | null;
@@ -1182,10 +1218,12 @@ const switchTrialToHobbyImmediately = async (
   // (createProTrialSubscription), so ending the trial on a no-card org would CANCEL the subscription
   // instead of leaving it on Hobby — stranding a canceled subscriptionId that then breaks the next
   // upgrade. Hobby is free, so override to "create_invoice": the trial ends into an active $0 Hobby
-  // subscription with no payment method required.
+  // subscription with no payment method required. cancel_at is cleared too: it was the trial's Hobby
+  // fallback, and left in place it would cancel this Hobby subscription at the old trial end.
   await stripeClient.subscriptions.update(subscription.id, {
     items: [...existingDeletions, ...hobbyItems],
     trial_end: "now",
+    cancel_at: "",
     proration_behavior: "none",
     trial_settings: { end_behavior: { missing_payment_method: "create_invoice" } },
   });
@@ -1697,6 +1735,20 @@ export const undoPendingOrganizationPlanChange = async (
   customerId: string
 ): Promise<void> => {
   const subscription = await getRequiredActiveSubscription(organizationId, customerId);
+  // On a trial, both ways a downgrade can be pending would drop the trial's Hobby fallback when undone:
+  // clearing cancel_at_period_end also clears cancel_at, and releasing a schedule can take its cancellation
+  // with it. So release any schedule, then set cancel_at to the exact trial end — Stripe drops the flag and
+  // the "Scheduled" banner, and the trial still ends on Hobby rather than billing a saved card.
+  if (stripeClient && subscription.status === "trialing" && subscription.trial_end) {
+    if (subscription.schedule) {
+      const scheduleId =
+        typeof subscription.schedule === "string" ? subscription.schedule : subscription.schedule.id;
+      await stripeClient.subscriptionSchedules.release(scheduleId, { preserve_cancel_date: false });
+    }
+    await stripeClient.subscriptions.update(subscription.id, { cancel_at: subscription.trial_end });
+    await updatePendingPlanChangeSnapshot(organizationId, null);
+    return;
+  }
   await clearPendingPlanState(organizationId, subscription);
 };
 
@@ -2153,6 +2205,7 @@ export const syncOrganizationBillingFromStripe = async (
       trialEnd: subscription?.trial_end
         ? new Date(subscription.trial_end * 1000).toISOString()
         : (existingStripeSnapshot?.trialEnd ?? null),
+      trialEndsOnHobby: hasFreeTrialFallback(subscription),
     },
   };
 

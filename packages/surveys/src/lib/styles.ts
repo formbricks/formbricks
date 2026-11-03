@@ -42,6 +42,7 @@ export const getStyleNonce = (): string | undefined => {
 
 export const addStylesToDom = () => {
   if (document.getElementById("formbricks__css") === null) {
+    // eslint-disable-next-line no-restricted-syntax -- nonce is set below
     const styleElement = document.createElement("style");
     styleElement.id = "formbricks__css";
 
@@ -51,7 +52,7 @@ export const addStylesToDom = () => {
     }
 
     // Include survey-ui CSS variables before other styles
-    styleElement.innerHTML = preflight + global + editorCss + surveyUiCss;
+    styleElement.textContent = preflight + global + editorCss + surveyUiCss;
     document.head.appendChild(styleElement);
   } else {
     // If style element already exists, update its nonce if needed
@@ -232,6 +233,7 @@ export const addCustomThemeToDom = ({
     }
   } else {
     // Create it and append to the head
+    // eslint-disable-next-line no-restricted-syntax -- nonce is set below
     styleElement = document.createElement("style");
     styleElement.id = "formbricks__css__custom";
 
@@ -243,7 +245,7 @@ export const addCustomThemeToDom = ({
     document.head.appendChild(styleElement);
   }
 
-  // Start the innerHTML string with #fbjs
+  // Start the CSS string with #fbjs
   let cssVariables = "#fbjs {\n";
 
   // Helper function to append the variable if it's not undefined
@@ -610,6 +612,6 @@ export const addCustomThemeToDom = ({
       ":root #fbjs *,\n:root #fbjs ::before,\n:root #fbjs ::after {\n  font-family: inherit;\n}\n";
   }
 
-  // Set the innerHTML of the style element
-  styleElement.innerHTML = cssVariables;
+  // CSS text, never markup
+  styleElement.textContent = cssVariables;
 };

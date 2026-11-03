@@ -85,11 +85,11 @@ const getButtonClassName = (active: boolean): string =>
     : "text-slate-600 hover:bg-slate-100 hover:text-slate-900";
 
 interface ToolbarButtonProps {
-  icon: React.ComponentType<{ className?: string }>;
-  active: boolean;
-  onClick: () => void;
-  tooltipText: string;
-  disabled: boolean;
+  readonly icon: React.ComponentType<{ className?: string }>;
+  readonly active: boolean;
+  readonly onClick: () => void;
+  readonly tooltipText: string;
+  readonly disabled: boolean;
 }
 
 const ToolbarButton = ({ icon: Icon, active, onClick, tooltipText, disabled }: ToolbarButtonProps) => (
@@ -117,10 +117,10 @@ const ToolbarButton = ({ icon: Icon, active, onClick, tooltipText, disabled }: T
 
 export const ToolbarPlugin = (
   props: TextEditorProps & {
-    setShowRecallItemSelect: (show: boolean) => void;
-    recallItemsCount?: number;
-    setShowFallbackInput: (show: boolean) => void;
-    setShowLinkEditor: (show: boolean) => void;
+    readonly setShowRecallItemSelect: (show: boolean) => void;
+    readonly recallItemsCount?: number;
+    readonly setShowFallbackInput: (show: boolean) => void;
+    readonly setShowLinkEditor: (show: boolean) => void;
   }
 ) => {
   const [editor] = useLexicalComposerContext();

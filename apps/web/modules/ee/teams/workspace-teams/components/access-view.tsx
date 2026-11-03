@@ -7,7 +7,7 @@ import { ManageTeam } from "@/modules/ee/teams/workspace-teams/components/manage
 import { TWorkspaceTeam } from "@/modules/ee/teams/workspace-teams/types/team";
 
 interface AccessViewProps {
-  teams: TWorkspaceTeam[];
+  readonly teams: TWorkspaceTeam[];
 }
 
 export const AccessView = ({ teams }: AccessViewProps) => {

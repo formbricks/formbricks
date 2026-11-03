@@ -23,7 +23,7 @@ import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 export const generateMetadata = () =>
   getSettingsPageMetadata("workspace.integrations.google_sheets.google_sheets_integration");
 
-const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
+const Page = async (props: { readonly params: Promise<{ workspaceId: string }> }) => {
   const params = await props.params;
   const t = await getTranslate();
   const isEnabled = !!(GOOGLE_SHEETS_CLIENT_ID && GOOGLE_SHEETS_CLIENT_SECRET && GOOGLE_SHEETS_REDIRECT_URL);

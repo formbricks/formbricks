@@ -232,6 +232,8 @@ x-environment: &environment
     # OTEL_LOGS_ENABLED: 1
     # OTEL_TRACES_SAMPLER: parentbased_traceidratio
     # OTEL_TRACES_SAMPLER_ARG: 1
+    # OTLP metric export interval in milliseconds; 15000 or lower if you alert on the AuthZed outbox
+    # OTEL_METRIC_EXPORT_INTERVAL: 60000
 
     ########################################## OPTIONAL (AUDIT LOGGING) ###########################################
 
@@ -374,7 +376,11 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    <<: *environment
+    # validate-env requires these when .env enables AuthZed, so the migration gets the app's defaults too.
+    environment:
+      <<: *app-environment
+      AUTHZED_ENDPOINT: ${AUTHZED_ENDPOINT:-spicedb:50051}
+      AUTHZED_SYSTEM_KEY: ${AUTHZED_SYSTEM_KEY:-formbricks}
 
   formbricks:
     restart: always

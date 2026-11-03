@@ -13,14 +13,14 @@ import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-to
 import { Button } from "@/modules/ui/components/button";
 
 interface NPSElementFormProps {
-  localSurvey: TSurvey;
-  element: TSurveyNPSElement;
-  elementIdx: number;
-  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
-  isInvalid: boolean;
-  locale: TUserLocale;
-  isStorageConfigured: boolean;
-  isExternalUrlsAllowed?: boolean;
+  readonly localSurvey: TSurvey;
+  readonly element: TSurveyNPSElement;
+  readonly elementIdx: number;
+  readonly updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
+  readonly isInvalid: boolean;
+  readonly locale: TUserLocale;
+  readonly isStorageConfigured: boolean;
+  readonly isExternalUrlsAllowed?: boolean;
 }
 
 export const NPSElementForm = ({

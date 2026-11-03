@@ -25,7 +25,7 @@ import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { Small } from "@/modules/ui/components/typography";
 
 interface ShareViewProps {
-  tabs: Array<{
+  readonly tabs: Array<{
     id: ShareViaType | ShareSettingsType;
     type: LinkTabsType;
     label: string;
@@ -36,8 +36,8 @@ interface ShareViewProps {
     description?: string;
     disabled?: boolean;
   }>;
-  activeId: ShareViaType | ShareSettingsType;
-  setActiveId: React.Dispatch<React.SetStateAction<ShareViaType | ShareSettingsType>>;
+  readonly activeId: ShareViaType | ShareSettingsType;
+  readonly setActiveId: React.Dispatch<React.SetStateAction<ShareViaType | ShareSettingsType>>;
 }
 
 export const ShareView = ({ tabs, activeId, setActiveId }: ShareViewProps) => {

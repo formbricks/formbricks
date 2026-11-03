@@ -24,14 +24,14 @@ import {
 } from "@/modules/ui/components/dialog";
 
 interface BulkEditOptionsModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  regularChoices: TSurveyMultipleChoiceElement["choices"];
-  onSave: (updatedChoices: TSurveyMultipleChoiceElement["choices"]) => void;
-  element: TSurveyMultipleChoiceElement;
-  localSurvey: TSurvey;
-  surveyLanguageCodes: string[];
-  locale: TUserLocale;
+  readonly isOpen: boolean;
+  readonly onClose: () => void;
+  readonly regularChoices: TSurveyMultipleChoiceElement["choices"];
+  readonly onSave: (updatedChoices: TSurveyMultipleChoiceElement["choices"]) => void;
+  readonly element: TSurveyMultipleChoiceElement;
+  readonly localSurvey: TSurvey;
+  readonly surveyLanguageCodes: string[];
+  readonly locale: TUserLocale;
 }
 
 const parseUniqueLines = (content: string): string[] => {

@@ -9,7 +9,7 @@ import { surveyKeys } from "@/modules/survey/list/lib/query";
 import { useSurveyVisibility } from "./use-survey-visibility";
 
 function createWrapper(queryClient: QueryClient) {
-  const Wrapper = ({ children }: { children: ReactNode }) =>
+  const Wrapper = ({ children }: { readonly children: ReactNode }) =>
     createElement(QueryClientProvider, { client: queryClient }, children);
 
   Wrapper.displayName = "UseSurveyVisibilityTestWrapper";

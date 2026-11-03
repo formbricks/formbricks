@@ -1,7 +1,7 @@
 import { type ReactNode } from "react";
 import { SurveysQueryClientProvider } from "./query-client-provider";
 
-const SurveysLayout = ({ children }: { children: ReactNode }) => {
+const SurveysLayout = ({ children }: { readonly children: ReactNode }) => {
   return <SurveysQueryClientProvider>{children}</SurveysQueryClientProvider>;
 };
 

@@ -1051,6 +1051,7 @@ export const zCreativeResourceBase = z.object({
     .nullable(),
   defaultLanguage: zLocaleCode,
   languages: z.array(zCreativeLanguage),
+  autoSelectLanguage: z.boolean().nullable(),
   destination: zCreativeDestination.nullable(),
   distribution: zCreativeDistribution,
   schedule: zCreativeSchedule,
@@ -1174,6 +1175,7 @@ export const zFeedbackButtonCreative = z.strictObject({
     .nullable(),
   defaultLanguage: zLocaleCode,
   languages: z.array(zCreativeLanguage),
+  autoSelectLanguage: z.boolean().nullable(),
   destination: zCreativeDestination.nullable(),
   distribution: zCreativeDistribution,
   schedule: zCreativeSchedule,
@@ -1318,6 +1320,7 @@ export const zBannerCreative = z.strictObject({
     .nullable(),
   defaultLanguage: zLocaleCode,
   languages: z.array(zCreativeLanguage),
+  autoSelectLanguage: z.boolean().nullable(),
   destination: zCreativeDestination.nullable(),
   distribution: zCreativeDistribution,
   schedule: zCreativeSchedule,
@@ -1331,7 +1334,7 @@ export type BannerCreativeZodType = z.infer<typeof zBannerCreative>;
 /**
  * A creative: a page element the web SDK renders on the customer's site next to surveys, with its own content, look, display rules and schedule. `type` selects the `content` and `styling` shape: switch on it.
  *
- * The writable groups are `name`, `status`, `defaultLanguage` with `languages`, `content`, `styling`, `destination`, `distribution` and `schedule`; a `PATCH` replaces each group it sends as a whole. `displayStatus`, `displayStatusReason`, `warnings`, the timestamps, `creator` and `destination.opensAs` are read-only.
+ * The writable groups are `name`, `status`, `defaultLanguage` with `languages`, `autoSelectLanguage`, `content`, `styling`, `destination`, `distribution` and `schedule`; a `PATCH` replaces each group it sends as a whole. `displayStatus`, `displayStatusReason`, `warnings`, the timestamps, `creator` and `destination.opensAs` are read-only.
  *
  */
 export const zCreativeResource = z.discriminatedUnion("type", [
@@ -1410,6 +1413,7 @@ export const zCreateCreativeRequestBase = z.object({
     .optional()
     .default("en-US"),
   languages: z.array(zCreativeLanguageInput).max(50).optional(),
+  autoSelectLanguage: z.boolean().nullish().default(null),
   destination: zCreativeDestinationInput.nullish(),
   distribution: zCreativeDistribution.optional(),
   schedule: zCreativeSchedule.optional(),
@@ -1431,6 +1435,7 @@ export const zCreateFeedbackButtonCreativeRequest = z.strictObject({
     .optional()
     .default("en-US"),
   languages: z.array(zCreativeLanguageInput).max(50).optional(),
+  autoSelectLanguage: z.boolean().nullish().default(null),
   destination: zCreativeDestinationInput.nullish(),
   distribution: zCreativeDistribution.optional(),
   schedule: zCreativeSchedule.optional(),
@@ -1454,6 +1459,7 @@ export const zCreateBannerCreativeRequest = z.strictObject({
     .optional()
     .default("en-US"),
   languages: z.array(zCreativeLanguageInput).max(50).optional(),
+  autoSelectLanguage: z.boolean().nullish().default(null),
   destination: zCreativeDestinationInput.nullish(),
   distribution: zCreativeDistribution.optional(),
   schedule: zCreativeSchedule.optional(),
@@ -1504,6 +1510,7 @@ export const zPatchCreativeRequest = z.strictObject({
   status: zCreativeStatus.optional(),
   defaultLanguage: zLocaleCode.optional(),
   languages: z.array(zCreativeLanguageInput).max(50).optional(),
+  autoSelectLanguage: z.boolean().nullish(),
   content: z.union([zFeedbackButtonContent, zBannerContent]).optional(),
   styling: z.union([zFeedbackButtonStyling, zBannerStyling]).optional(),
   destination: zCreativeDestinationInput.nullish(),

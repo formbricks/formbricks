@@ -22,8 +22,8 @@ import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 
 interface CreateOrganizationModalProps {
-  open: boolean;
-  setOpen: (v: boolean) => void;
+  readonly open: boolean;
+  readonly setOpen: (v: boolean) => void;
 }
 
 type FormValues = {

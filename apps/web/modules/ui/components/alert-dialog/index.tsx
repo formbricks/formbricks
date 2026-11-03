@@ -11,15 +11,15 @@ import {
 } from "@/modules/ui/components/dialog";
 
 interface AlertDialogProps {
-  open: boolean;
-  setOpen: (open: boolean) => void;
-  headerText: string;
-  mainText: string;
-  confirmBtnLabel: string;
-  declineBtnLabel?: string;
-  declineBtnVariant?: "destructive" | "ghost" | "outline";
-  onDecline?: () => void;
-  onConfirm?: () => void;
+  readonly open: boolean;
+  readonly setOpen: (open: boolean) => void;
+  readonly headerText: string;
+  readonly mainText: string;
+  readonly confirmBtnLabel: string;
+  readonly declineBtnLabel?: string;
+  readonly declineBtnVariant?: "destructive" | "ghost" | "outline";
+  readonly onDecline?: () => void;
+  readonly onConfirm?: () => void;
 }
 
 export const AlertDialog = ({

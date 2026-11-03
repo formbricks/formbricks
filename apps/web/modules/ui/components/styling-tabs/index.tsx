@@ -9,21 +9,21 @@ interface Option<T> {
 }
 
 interface StylingTabsProps<T> {
-  id: string;
-  options: Option<T>[];
-  defaultSelected?: T;
+  readonly id: string;
+  readonly options: Option<T>[];
+  readonly defaultSelected?: T;
   /** The selection, when the parent owns it; the tabs then show this rather than their own state. */
-  value?: T;
-  onChange: (value: T) => void;
-  className?: string;
-  tabsContainerClassName?: string;
+  readonly value?: T;
+  readonly onChange: (value: T) => void;
+  readonly className?: string;
+  readonly tabsContainerClassName?: string;
 
-  label?: string;
-  subLabel?: string;
-  activeTabClassName?: string;
-  inactiveTabClassName?: string;
+  readonly label?: string;
+  readonly subLabel?: string;
+  readonly activeTabClassName?: string;
+  readonly inactiveTabClassName?: string;
   /** Locks the selection: the options show, but none can be chosen. */
-  disabled?: boolean;
+  readonly disabled?: boolean;
 }
 
 export const StylingTabs = <T extends string | number>({

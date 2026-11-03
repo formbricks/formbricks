@@ -5,7 +5,7 @@ import { PageHeader } from "@/modules/ui/components/page-header";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { EditTagsWrapper } from "./components/edit-tags-wrapper";
 
-export const TagsPage = async (props: { params: Promise<{ workspaceId: string }> }) => {
+export const TagsPage = async (props: { readonly params: Promise<{ workspaceId: string }> }) => {
   const params = await props.params;
   const t = await getTranslate();
 

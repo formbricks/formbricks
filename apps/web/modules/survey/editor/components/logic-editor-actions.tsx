@@ -35,13 +35,13 @@ import { InputCombobox } from "@/modules/ui/components/input-combo-box";
 import { cn } from "@/modules/ui/lib/utils";
 
 interface LogicEditorActionsProps {
-  localSurvey: TSurvey;
-  logicItem: TSurveyBlockLogic;
-  logicIdx: number;
-  block: TSurveyBlock;
-  updateBlockLogic: (blockIdx: number, logic: TSurveyBlockLogic[]) => void;
-  blockIdx: number;
-  isLast?: boolean;
+  readonly localSurvey: TSurvey;
+  readonly logicItem: TSurveyBlockLogic;
+  readonly logicIdx: number;
+  readonly block: TSurveyBlock;
+  readonly updateBlockLogic: (blockIdx: number, logic: TSurveyBlockLogic[]) => void;
+  readonly blockIdx: number;
+  readonly isLast?: boolean;
 }
 
 export function LogicEditorActions({

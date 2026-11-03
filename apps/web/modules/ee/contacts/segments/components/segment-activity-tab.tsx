@@ -8,8 +8,8 @@ import { Label } from "@/modules/ui/components/label";
 import { TSegmentActivitySummary } from "./segment-activity-utils";
 
 interface SegmentActivityTabProps {
-  currentSegment: TSegmentWithSurveyRefs;
-  activitySummary: TSegmentActivitySummary;
+  readonly currentSegment: TSegmentWithSurveyRefs;
+  readonly activitySummary: TSegmentActivitySummary;
 }
 
 export const SegmentActivityTab = ({ currentSegment, activitySummary }: SegmentActivityTabProps) => {

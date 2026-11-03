@@ -21,6 +21,7 @@ import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponse } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
 import { getSurveySummary } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/surveySummary";
+import { requestEmailAuditErasureRequired } from "@/modules/email/lib/email-audit-maintenance";
 import {
   mockContactAttributeKey,
   mockOrganizationOutput,
@@ -38,6 +39,10 @@ import {
   responseSelection,
   updateResponse,
 } from "../service";
+
+vi.mock("@/modules/email/lib/email-audit-maintenance", () => ({
+  requestEmailAuditErasureRequired: vi.fn().mockResolvedValue(undefined),
+}));
 
 const expectedResponseWithoutPerson: TResponse = {
   ...mockResponse,
@@ -464,6 +469,7 @@ describe("Tests for deleteResponse service", () => {
         quotaLinks: mockResponseWithQuotas.quotaLinks,
       });
       const response = await deleteResponse(mockResponse.id);
+      expect(requestEmailAuditErasureRequired).toHaveBeenCalledWith({ responseId: mockResponse.id }, mockTx);
       expect(mockTx.response.delete).toHaveBeenCalledWith({
         where: { id: mockResponse.id },
         select: {

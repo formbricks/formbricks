@@ -33,13 +33,13 @@ import { ValidationRuleRow } from "./validation-rule-row";
 type TValidationField = TAddressField | TContactInfoField | undefined;
 
 interface ValidationRulesEditorProps {
-  elementType: TSurveyElementTypeEnum;
-  validation?: { rules: TValidationRule[]; logic?: TValidationLogic };
-  onUpdateValidation: (validation: { rules: TValidationRule[]; logic: TValidationLogic }) => void;
-  element?: TSurveyElement;
+  readonly elementType: TSurveyElementTypeEnum;
+  readonly validation?: { rules: TValidationRule[]; logic?: TValidationLogic };
+  readonly onUpdateValidation: (validation: { rules: TValidationRule[]; logic: TValidationLogic }) => void;
+  readonly element?: TSurveyElement;
   // For OpenText: input type and callback to update it
-  inputType?: TSurveyOpenTextElementInputType;
-  onUpdateInputType?: (inputType: TSurveyOpenTextElementInputType) => void;
+  readonly inputType?: TSurveyOpenTextElementInputType;
+  readonly onUpdateInputType?: (inputType: TSurveyOpenTextElementInputType) => void;
 }
 
 export const ValidationRulesEditor = ({

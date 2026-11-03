@@ -75,6 +75,7 @@ export const buildCreativeCreateState = (body: TCreativeCreateInput, now: Date):
       archivedAt: null,
       defaultLanguage: body.defaultLanguage,
       languages: body.languages ?? [],
+      autoSelectLanguage: body.autoSelectLanguage ?? null,
       destination: body.destination ?? null,
       distribution: body.distribution ? toDistribution(body.distribution) : DEFAULT_CREATIVE_DISTRIBUTION,
       schedule: body.schedule ? toSchedule(body.schedule) : { startAt: null, endAt: null },
@@ -142,6 +143,8 @@ export const applyCreativePatch = (
         status: patch.status ?? current.status,
         defaultLanguage: patch.defaultLanguage ?? current.defaultLanguage,
         languages: patch.languages ?? current.languages,
+        autoSelectLanguage:
+          patch.autoSelectLanguage === undefined ? current.autoSelectLanguage : patch.autoSelectLanguage,
         destination: patch.destination === undefined ? current.destination : patch.destination,
         distribution: patch.distribution ? toDistribution(patch.distribution) : current.distribution,
         schedule: patch.schedule ? toSchedule(patch.schedule) : current.schedule,

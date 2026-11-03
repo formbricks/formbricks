@@ -9,9 +9,9 @@ import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 
 interface RedirectUrlFormProps {
-  localSurvey: TSurvey;
-  endingCard: TSurveyRedirectUrlCard;
-  updateSurvey: (input: Partial<TSurveyRedirectUrlCard>) => void;
+  readonly localSurvey: TSurvey;
+  readonly endingCard: TSurveyRedirectUrlCard;
+  readonly updateSurvey: (input: Partial<TSurveyRedirectUrlCard>) => void;
 }
 
 export const RedirectUrlForm = ({ localSurvey, endingCard, updateSurvey }: RedirectUrlFormProps) => {

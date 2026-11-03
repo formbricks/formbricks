@@ -1,3 +1,4 @@
+import type { LucideIcon } from "lucide-react";
 import type { TDateRangePreset } from "@/lib/date-ranges";
 
 /**
@@ -76,6 +77,8 @@ export type TFilterProperty = {
   suggestions?: readonly string[];
   /** Values loaded on demand, for value lists too long or too dynamic to ship with the page. */
   loadOptions?: (search: string) => Promise<TFilterOption[]>;
+  /** Shown before the label in Advanced filter's picker, so kinds of property read apart at a glance. */
+  icon?: LucideIcon;
   /** Heading the property sits under in Advanced filter's picker. Absent: the table's one list. */
   group?: string;
   /** Operators offered in Advanced filter. Empty or absent: the property is not offered there. */

@@ -3,6 +3,7 @@ import type IORedis from "ioredis";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
   AUTHZED_PROJECTION_QUEUE_NAME,
+  AUTHZED_RECONCILIATION_QUEUE_NAME,
   DATA_RETENTION_QUEUE_NAME,
   JOBS_DEFAULT_JOB_OPTIONS,
   JOBS_DEFAULT_JOB_SCHEDULER_TEMPLATE_OPTIONS,
@@ -216,15 +217,17 @@ describe("@formbricks/jobs queue helpers", () => {
     );
   });
 
-  // A delivery queued behind a long sweep makes every authorization check fail closed, and the sweep
-  // itself would hold up every default-queue job, so this pins the routing of every job: those two have
+  // A delivery queued behind a long sweep makes every authorization check fail closed, and the sweeps
+  // themselves would hold up every default-queue job, so this pins the routing of every job: those have
   // queues of their own, everything else shares the default one.
-  test("routes AuthZed projection delivery and the data retention sweep to their own queues, and only them", () => {
+  test("routes AuthZed delivery, the AuthZed audits and the data retention sweep to their own queues, and only them", () => {
     const queueNameByJob = Object.fromEntries(
       Object.values(backgroundJobDefinitions).map((definition) => [definition.name, definition.queueName])
     );
     const dedicated: Record<string, string> = {
       [JOB_NAMES.authzedProjectionDelivery]: AUTHZED_PROJECTION_QUEUE_NAME,
+      [JOB_NAMES.authzedReconciliationAudit]: AUTHZED_RECONCILIATION_QUEUE_NAME,
+      [JOB_NAMES.authzedSurveyAudit]: AUTHZED_RECONCILIATION_QUEUE_NAME,
       [JOB_NAMES.dataRetentionSweep]: DATA_RETENTION_QUEUE_NAME,
     };
 
@@ -242,6 +245,25 @@ describe("@formbricks/jobs queue helpers", () => {
     expect(queueNamesOf(mockQueueUpsertJobScheduler)).toEqual([DATA_RETENTION_QUEUE_NAME]);
     expect(queueNamesOf(mockQueueRemoveJobScheduler)).toEqual([JOBS_QUEUE_NAME]);
   });
+
+  test.each([
+    ["authzedReconciliationAudit", 6 * 60 * 60 * 1_000],
+    ["authzedSurveyAudit", 24 * 60 * 60 * 1_000],
+  ] as const)(
+    "upserts the %s schedule on the AuthZed reconciliation queue, then retires the legacy one",
+    async (key, everyMs) => {
+      mockQueueUpsertJobScheduler.mockResolvedValue({ id: `${key}-1` });
+      mockQueueRemoveJobScheduler.mockResolvedValue(true);
+
+      await recurringJobs[key].upsert({ everyMs, kind: "every" });
+
+      expect(queueNamesOf(mockQueueUpsertJobScheduler)).toEqual([AUTHZED_RECONCILIATION_QUEUE_NAME]);
+      expect(queueNamesOf(mockQueueRemoveJobScheduler)).toEqual([JOBS_QUEUE_NAME]);
+      expect(mockQueueUpsertJobScheduler.mock.invocationCallOrder[0]).toBeLessThan(
+        mockQueueRemoveJobScheduler.mock.invocationCallOrder[0]
+      );
+    }
+  );
 
   test("upserts the AuthZed delivery schedule on its own queue, then retires the legacy one", async () => {
     mockQueueUpsertJobScheduler.mockResolvedValue({ id: "delivery-1" });
