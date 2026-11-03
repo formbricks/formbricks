@@ -59,6 +59,7 @@ import type { TSurveyCreationFacts } from "@/lib/survey/visibility/creation";
 import { andVisibleSurveys } from "@/lib/survey/visibility/predicate";
 import {
   SURVEY_WRITE_TRANSACTION_OPTIONS,
+  SurveyWriteAfterCommitError,
   type TSurveyWriteTransaction,
 } from "@/lib/survey/write-transaction";
 import {
@@ -1427,7 +1428,12 @@ export const createSurvey = async (
       return transformedSurvey;
     }
 
-    return await finishAfterCommit();
+    try {
+      return await finishAfterCommit();
+    } catch (error) {
+      // The survey has committed: a caller must not answer this as nothing created, nor retry it.
+      throw new SurveyWriteAfterCommitError(transformedSurvey, error);
+    }
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       logger.error(error, "Error creating survey");

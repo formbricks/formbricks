@@ -4,7 +4,6 @@ import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { createV3Survey } from "@/app/api/v3/surveys/create";
 import { getSessionUserId } from "@/app/api/v3/surveys/lib/operations";
 import { ZV3CreateSurveyBody, formatV3ZodInvalidParams } from "@/app/api/v3/surveys/schemas";
-import { runInSurveyWriteTransaction } from "@/lib/survey/write-transaction";
 import { SurveyImportInputError, nameFromSurvey } from "./errors";
 import { getImportedSurveyName, getImporterTranslate } from "./imported-survey-name";
 
@@ -47,9 +46,8 @@ export const createSurveyFromImportDraft = async ({
     );
   }
 
-  // In a transaction of its own, so the work the create runs after its commit tells its failure apart
-  // (`SurveyWriteAfterCommitError`) from a failed create, as the Formbricks file's create does.
-  return runInSurveyWriteTransaction((transaction) =>
-    createV3Survey(parsed.data, authentication, requestId, organizationId, { transaction })
-  );
+  // No transaction of its own: the create commits by itself and throws `SurveyWriteAfterCommitError`
+  // when only the work after its commit failed. Holding one here would hold a pool connection through
+  // the create's checks, which read through another.
+  return createV3Survey(parsed.data, authentication, requestId, organizationId);
 };

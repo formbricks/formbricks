@@ -58,8 +58,10 @@ export class SurveyWriteAfterCommitError<T = unknown> extends Error {
  * writes inside it registered with `afterCommit`, in registration order — the order those writes would
  * have run it in on their own. A throw from `write` rolls everything back and runs none of it.
  *
- * A failure in that after-commit work stops the rest of it and throws a `SurveyWriteAfterCommitError`
- * carrying the write's result, so the caller can tell it from a failed write.
+ * Every effect runs, even after one fails: each is independent work on data that has committed (a
+ * subscription, a cache, a schedule), and nothing retries a skipped one. Any failure then throws one
+ * `SurveyWriteAfterCommitError` carrying the write's result — and the failure, or an `AggregateError` of
+ * them — so the caller can tell it from a failed write.
  */
 export const runInSurveyWriteTransaction = async <T>(
   write: (transaction: TSurveyWriteTransaction) => Promise<T>
@@ -77,12 +79,21 @@ export const runInSurveyWriteTransaction = async <T>(
     SURVEY_WRITE_TRANSACTION_OPTIONS
   );
 
-  try {
-    for (const effect of afterCommitEffects) {
-      await effect();
+  const failures: unknown[] = [];
+  for (const effect of afterCommitEffects) {
+    try {
+      // In order, one at a time: each runs as the write would have run it on its own.
+      await effect(); // NOSONAR(typescript:S9382) -- sequential on purpose
+    } catch (error) {
+      failures.push(error);
     }
-  } catch (error) {
-    throw new SurveyWriteAfterCommitError(result, error);
+  }
+  if (failures.length === 1) throw new SurveyWriteAfterCommitError(result, failures[0]);
+  if (failures.length > 1) {
+    throw new SurveyWriteAfterCommitError(
+      result,
+      new AggregateError(failures, `${failures.length} after-commit effects failed`)
+    );
   }
 
   return result;
