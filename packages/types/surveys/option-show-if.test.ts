@@ -148,7 +148,7 @@ describe("the option show-if reference rule", () => {
 
   test("the reserved options `other` and `none` may carry a show-if and be Hidden", () => {
     const survey = withSurvey((draft) => {
-      const services = element<TWithChoices & { choices: { id: string; label: unknown }[] }>(draft, 0, 0);
+      const services = element<{ choices: { id: string; label: unknown; hidden?: boolean }[] }>(draft, 0, 0);
       services.choices.push(
         { id: "other", label: { default: "Other" }, hidden: true },
         { id: "none", label: { default: "None of these" } }

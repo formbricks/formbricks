@@ -206,6 +206,7 @@ describe("isShownByShowIf and getBlockVisibility", () => {
       skipReason: "showIf",
       visibleElementIds: [],
       hiddenElementIds: [],
+      optionsNotShown: {},
       data: { a: "kept" },
     });
   });

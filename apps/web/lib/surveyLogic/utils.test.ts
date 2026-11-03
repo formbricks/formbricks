@@ -1923,3 +1923,60 @@ describe("reserved field operands, server engine (ENG-1840)", () => {
     ).toBe(true);
   });
 });
+
+describe("ranking conditions on option ids (T21, ENG-6937)", () => {
+  const rankingSurvey = {
+    id: "survey1",
+    blocks: [
+      {
+        id: "b1",
+        name: "b1",
+        elements: [
+          {
+            id: "rank",
+            type: TSurveyElementTypeEnum.Ranking,
+            headline: { default: "Rank" },
+            required: false,
+            choices: [
+              { id: "netflix", label: { default: "Netflix" } },
+              { id: "disney", label: { default: "Disney+" } },
+              { id: "prime", label: { default: "Prime Video" } },
+            ],
+          },
+        ],
+      },
+    ],
+    variables: [],
+    embeddedFields: [],
+  } as unknown as TJsWorkspaceStateSurvey;
+
+  const ranked = (operator: TSingleCondition["operator"], value: string[]): TConditionGroup => ({
+    id: "g",
+    connector: "and",
+    conditions: [
+      {
+        id: "c",
+        leftOperand: { type: "element", value: "rank" },
+        operator,
+        rightOperand: { type: "static", value },
+      },
+    ],
+  });
+
+  test("a ranking answer's labels are matched by option id: 'was ranked'", () => {
+    const data: TResponseData = { rank: ["Prime Video", "Netflix"] };
+
+    expect(evaluateLogic(rankingSurvey, data, {}, ranked("includesOneOf", ["netflix"]), "default")).toBe(
+      true
+    );
+    expect(
+      evaluateLogic(rankingSurvey, data, {}, ranked("includesAllOf", ["netflix", "prime"]), "default")
+    ).toBe(true);
+    expect(evaluateLogic(rankingSurvey, data, {}, ranked("includesOneOf", ["disney"]), "default")).toBe(
+      false
+    );
+    expect(evaluateLogic(rankingSurvey, data, {}, ranked("doesNotIncludeOneOf", ["disney"]), "default")).toBe(
+      true
+    );
+  });
+});

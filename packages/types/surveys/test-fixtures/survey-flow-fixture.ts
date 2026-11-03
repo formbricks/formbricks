@@ -1224,8 +1224,12 @@ export const getSurveyFlowFixtureRules = (): { blockId: string; rule: TSurveyBlo
  * ENG-6936: the not-shown record of a respondent who uses Netflix only and would miss Netflix most —
  * the "Heavy users" block's show-if fails, and "What would convince you to try Apple TV+?" stays
  * hidden on the Overall page. What the survey sends with that respondent's updates.
+ *
+ * ENG-6937: on the same page, "Apple TV+" is not offered in "Which one would you miss the most?" (its
+ * show-if needs Apple TV+ among the services), and the Hidden bundle option is never offered.
  */
 export const surveyFlowFixtureNotShown: TResponseNotShown = {
   blocks: [ids.blocks.heavyUsers],
   elements: ["apple_reason"],
+  options: { fav: ["apple"], bundle: ["netflix_apple"] },
 };
