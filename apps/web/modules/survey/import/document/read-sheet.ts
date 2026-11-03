@@ -13,7 +13,7 @@ import {
 } from "../limits";
 import { documentLimitExceeded } from "./errors";
 import { type TDocumentModel, buildGridModel, columnName } from "./model";
-import { checkDocumentXml } from "./xml";
+import { checkDocumentXml, createXmlBudget } from "./xml";
 
 /**
  * The Excel reader of the document import (ENG-6852): the first sheet of a `.xlsx`, read with the
@@ -25,25 +25,30 @@ import { checkDocumentXml } from "./xml";
  * way: the entries "on this disk", each named and sized from its local header. So it never gets the
  * upload. Every entry is read through the upload's zip guard (`core/zip.ts`), which counts what each one
  * inflates to against the zip limits, and each XML part is held to the XML limits — its depth, its
- * element count, no DTD. SheetJS then parses an archive rebuilt from exactly those entries, stored
- * uncompressed: nothing it reads is anything the guard has not read and checked.
+ * element count, no DTD, one budget for the whole file. SheetJS then parses an archive rebuilt from
+ * exactly those XML parts, stored uncompressed: nothing it reads is anything the guard has not read and
+ * checked.
  */
 
 /** A sheet hidden so the user cannot unhide it from Excel: a file's own bookkeeping, not a sheet to name. */
 const VERY_HIDDEN = 2;
 
 /**
- * The archive SheetJS parses: every entry read once through the zip guard, every XML part held to the XML
- * limits (`xml.ts`), since SheetJS parses them with none of its own, and all of them stored again as they
- * came out. Stored, so SheetJS copies rather than inflates; no larger than what the zip limits allow.
+ * The archive SheetJS parses: every XML part read once through the zip guard and held to the XML limits
+ * (`xml.ts`), since SheetJS parses them with none of its own, and stored again as it came out. Stored, so
+ * SheetJS copies rather than inflates; no larger than what the zip limits allow.
  */
 const rebuildCheckedArchive = (archive: TZipArchive): Uint8Array => {
   // Null-prototype: an entry named `__proto__` is an ordinary key, not the object's prototype.
   const entries = Object.create(null) as Zippable;
+  const budget = createXmlBudget();
   for (const name of archive.names) {
+    // Only XML parts: SheetJS reads a workbook from them alone, and a picture, an embedded file or a
+    // printer setting would only be copied twice more for nothing.
+    if (!XML_PART.test(name)) continue;
     const bytes = archive.read(name);
     if (bytes === null) continue;
-    if (XML_PART.test(name)) checkDocumentXml(bytes, name);
+    checkDocumentXml(bytes, name, budget);
     entries[name] = bytes;
   }
   return zipSync(entries, { level: 0 });

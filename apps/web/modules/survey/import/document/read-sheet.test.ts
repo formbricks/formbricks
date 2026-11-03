@@ -187,13 +187,24 @@ describe("readSheetDocument", () => {
     ]);
   });
 
-  test("counts what every part inflates to before SheetJS reads any, whatever the directory declares", () => {
-    // A part SheetJS never parses, whose directory claims it is small: 1 MiB of zeros declared as 1 KiB.
+  test("never inflates a part SheetJS does not read, whatever the directory declares", () => {
+    // A picture whose directory claims it is small: 1 MiB of zeros declared as 1 KiB. SheetJS reads a
+    // workbook from its XML parts alone, so the picture is never inflated, nor copied for it.
     const bombed = zipSync({
       ...unzipSync(workbook({ Sheet1: [["Q1"]] })),
       "xl/media/image1.bin": new Uint8Array(1024 * 1024),
     });
     const lying = setDeclaredSizes(bombed, "xl/media/image1.bin", { uncompressedSize: 1024 });
+
+    expect(read(lying).lines).toEqual([{ key: "R1", cells: [{ key: "A1", text: "Q1" }] }]);
+  });
+
+  test("counts what an XML part inflates to, whatever the directory declares", () => {
+    const bombed = zipSync({
+      ...unzipSync(workbook({ Sheet1: [["Q1"]] })),
+      "xl/padding.xml": new TextEncoder().encode(`<r>${" ".repeat(1024 * 1024)}</r>`),
+    });
+    const lying = setDeclaredSizes(bombed, "xl/padding.xml", { uncompressedSize: 1024 });
 
     expect(() => read(lying)).toThrow(SurveyImportFileTooLargeError);
   });

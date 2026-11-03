@@ -51,21 +51,35 @@ const endOfStartTag = (text: string, start: number, onAttribute: () => void): nu
 const unclosed = () => surveyImportFileUnreadable("A part of the file is not well-formed XML");
 
 /**
+ * What one file's XML parts may still hold together: its elements and attributes, drawn down as each part
+ * is read, so a file cannot reach the limits many times over by splitting its markup across parts, or by
+ * pointing several relationships at one part. One budget per file; a part read alone gets its own.
+ */
+export interface TXmlBudget {
+  elements: number;
+  attributes: number;
+}
+
+export const createXmlBudget = (): TXmlBudget => ({
+  elements: SURVEY_IMPORT_XML_MAX_ELEMENTS,
+  attributes: SURVEY_IMPORT_XML_MAX_ATTRIBUTES,
+});
+
+/**
  * Hold the part's raw text to the XML limits. Only markup is read: comments, CDATA sections and
  * processing instructions are skipped whole. Markup that never closes is refused here, since a lenient
- * reader would read on past it with nothing counted; other malformed markup is left for the parser.
+ * reader would read on past it with nothing counted, and so is a close tag with nothing open, which would
+ * credit the depth count; other malformed markup is left for the parser.
  */
-const checkShape = (text: string, part: string): void => {
+const checkShape = (text: string, part: string, budget: TXmlBudget): void => {
   let depth = 0;
-  let elements = 0;
-  let attributes = 0;
   const countAttribute = () => {
-    attributes += 1;
-    if (attributes > SURVEY_IMPORT_XML_MAX_ATTRIBUTES) {
+    budget.attributes -= 1;
+    if (budget.attributes < 0) {
       throw documentLimitExceeded(
         "xml_attributes",
         `file.${part}`,
-        `An XML part must not have more than ${SURVEY_IMPORT_XML_MAX_ATTRIBUTES} attributes`
+        `A file's XML must not have more than ${SURVEY_IMPORT_XML_MAX_ATTRIBUTES} attributes in all`
       );
     }
   };
@@ -75,6 +89,8 @@ const checkShape = (text: string, part: string): void => {
     const next = text.codePointAt(position + 1);
     let end: number;
     if (next === SLASH) {
+      // A close tag with nothing open is not XML, and would leave depth below zero to spend later.
+      if (depth === 0) throw unclosed();
       depth -= 1;
       end = text.indexOf(">", position);
     } else if (next === QUESTION) {
@@ -92,12 +108,12 @@ const checkShape = (text: string, part: string): void => {
         throw refuseDtd();
       }
     } else {
-      elements += 1;
-      if (elements > SURVEY_IMPORT_XML_MAX_ELEMENTS) {
+      budget.elements -= 1;
+      if (budget.elements < 0) {
         throw documentLimitExceeded(
           "xml_elements",
           `file.${part}`,
-          `An XML part must not have more than ${SURVEY_IMPORT_XML_MAX_ELEMENTS} elements`
+          `A file's XML must not have more than ${SURVEY_IMPORT_XML_MAX_ELEMENTS} elements in all`
         );
       }
       end = endOfStartTag(text, position, countAttribute);
@@ -138,8 +154,8 @@ const failOnError = (level: "warning" | "error" | "fatalError"): void => {
  * reader that parses the part itself, such as SheetJS, which applies none of them (`read-sheet.ts`).
  * Throws what {@link parseDocumentXml} throws for the same part, short of a malformed one.
  */
-export const checkDocumentXml = (bytes: Uint8Array, part: string): void => {
-  checkShape(decode(bytes), part);
+export const checkDocumentXml = (bytes: Uint8Array, part: string, budget = createXmlBudget()): void => {
+  checkShape(decode(bytes), part, budget);
 };
 
 /**
@@ -147,9 +163,9 @@ export const checkDocumentXml = (bytes: Uint8Array, part: string): void => {
  * `SurveyImportInputError` (422): `document_limit_exceeded` past the XML limits, `file_unreadable` for a
  * part that is not well-formed XML or declares a DTD.
  */
-export const parseDocumentXml = (bytes: Uint8Array, part: string): Element => {
+export const parseDocumentXml = (bytes: Uint8Array, part: string, budget = createXmlBudget()): Element => {
   const text = decode(bytes);
-  checkShape(text, part);
+  checkShape(text, part, budget);
   let root: Element | null;
   try {
     root = new DOMParser({ onError: failOnError }).parseFromString(

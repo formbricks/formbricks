@@ -26,7 +26,8 @@ import type { TUploadWorkerFailure, TUploadWorkerReply, TUploadWorkerRequest } f
  * aborted the process on Node 24 and 26 alike, and under 128 MB ended the thread: which one depends on
  * where the allocation fails, not on the file (2026-11-03). A cap would only add a way for a file to take
  * the server down. The thread's heap is V8's default, as the server's own thread's is; what a file can
- * make it hold is bounded by the upload's limits (about 250 MB for that file) and by one read at a time.
+ * make it hold is bounded by the upload's limits and by one read at a time: about 250 MB for that JSON
+ * file, and about 330 MB for the costliest Word file the XML budget lets through (2026-11-04).
  * A thread that runs out where V8 can stop it ends, and its file is refused like a slow one.
  */
 

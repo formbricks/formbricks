@@ -9,7 +9,7 @@ import {
 import { documentLimitExceeded } from "./errors";
 import { type TDocumentCell, type TDocumentLine, type TDocumentModel, buildDocumentModel } from "./model";
 import { WordNumbering } from "./word-numbering";
-import { parseDocumentXml } from "./xml";
+import { createXmlBudget, parseDocumentXml } from "./xml";
 
 /**
  * The Word reader of the document import (ENG-6853): our own walk over a `.docx`'s main document on
@@ -104,12 +104,15 @@ const relsPartOf = (part: string): string => {
 };
 
 class WordPackage {
+  /** The XML limits every part of this file draws from. */
+  private readonly budget = createXmlBudget();
+
   constructor(private readonly archive: TZipArchive) {}
 
   /** A part's root element, or `null` when the archive has no part by that name. */
   parse(part: string): Element | null {
     const bytes = this.archive.read(part);
-    return bytes === null ? null : parseDocumentXml(bytes, part);
+    return bytes === null ? null : parseDocumentXml(bytes, part, this.budget);
   }
 
   /**
@@ -489,19 +492,24 @@ export const readWordDocument = (archive: TZipArchive): TDocumentModel => {
   const wordPackage = new WordPackage(archive);
   const packageParts = wordPackage.relationships("");
   const documentPart = packageParts.get("officeDocument") ?? DEFAULT_DOCUMENT_PART;
+
+  // Styles and numbering first: each is read into maps and its DOM let go before the document's is built,
+  // so the reader holds one large DOM at a time. A relationship that points back at the document is no
+  // styles or numbering part.
+  const documentParts = wordPackage.relationships(documentPart);
+  const partOf = (type: string) => {
+    const part = documentParts.get(type);
+    return part && part !== documentPart ? wordPackage.parse(part) : null;
+  };
+  const styles = new WordStyles(partOf("styles"));
+  const numbering = new WordNumbering(partOf("numbering"));
+
   const document = wordPackage.parse(documentPart);
   const body = document && isW(document, "document") ? wChild(document, "body") : null;
   if (!body) {
     throw surveyImportFileUnreadable("The file has no Word document");
   }
-
-  const documentParts = wordPackage.relationships(documentPart);
-  const stylesPart = documentParts.get("styles");
-  const numberingPart = documentParts.get("numbering");
-  const walker = new WordWalker(
-    new WordStyles(stylesPart ? wordPackage.parse(stylesPart) : null),
-    new WordNumbering(numberingPart ? wordPackage.parse(numberingPart) : null)
-  );
+  const walker = new WordWalker(styles, numbering);
   const blocks = walker.readBlocks(body);
   const lines = toLines(blocks);
   if (lines.length === 0) throw surveyImportFileUnreadable("The document has no text");

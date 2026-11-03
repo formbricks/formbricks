@@ -156,4 +156,13 @@ describe("checkDocumentXml", () => {
   ])("refuses a part where %s never closes as unreadable", (_what, text) => {
     expect(refusal(() => check(text))).toMatchObject({ code: "file_unreadable" });
   });
+
+  test("refuses a part that closes more elements than it opened, so the depth it counts cannot go below zero", () => {
+    // Without this, each stray close tag is credit a later run of opening tags spends past the limit.
+    const credit = "</x>".repeat(SURVEY_IMPORT_XML_MAX_DEPTH);
+
+    expect(refusal(() => check(`${credit}${nested(SURVEY_IMPORT_XML_MAX_DEPTH + 1)}`))).toMatchObject({
+      code: "file_unreadable",
+    });
+  });
 });

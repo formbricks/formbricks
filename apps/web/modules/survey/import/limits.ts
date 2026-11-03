@@ -85,17 +85,20 @@ export const SURVEY_IMPORT_SHEET_MAX_CELL_CHARS = 32_767;
 export const SURVEY_IMPORT_XML_MAX_DEPTH = 256;
 
 /**
- * Elements in one part. A 150-question questionnaire's document is about 15,000; this bounds the DOM,
- * which weighs a few hundred bytes a node, to around 200 MB at the most.
+ * Elements in one file, all its XML parts together: a part read twice counts twice. A 150-question
+ * questionnaire's document is about 15,000. This bounds the DOMs the Word reader builds, which cost
+ * about 2 KB an element with Office's attributes while parsing: 499,000 elements in one part peaked near
+ * 1 GB, and a file whose relationships made the reader parse that part three times needed over 1.2 GB of
+ * heap (2026-11-04). The total is what bounds memory, not any one part.
  */
-export const SURVEY_IMPORT_XML_MAX_ELEMENTS = 500_000;
+export const SURVEY_IMPORT_XML_MAX_ELEMENTS = 150_000;
 
 /**
- * Attributes in one part. A DOM attribute weighs about what an element does (xmldom: ~800,000 in one
- * 8 MB part held ~390 MB), so they are bounded like elements: twice the element cap, since Office
- * writes about two to an element.
+ * Attributes in one file, all its XML parts together. A DOM attribute weighs about what an element
+ * does, so they are bounded like elements: twice the element budget, since Office writes about two to
+ * an element.
  */
-export const SURVEY_IMPORT_XML_MAX_ATTRIBUTES = 1_000_000;
+export const SURVEY_IMPORT_XML_MAX_ATTRIBUTES = 300_000;
 
 /*
  * A Word questionnaire's body (ENG-6853): its paragraphs, tables and table cells, counted as the reader

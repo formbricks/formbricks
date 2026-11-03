@@ -6,8 +6,9 @@ import {
   SURVEY_IMPORT_WORD_MAX_TABLES,
   SURVEY_IMPORT_WORD_MAX_TABLE_CELLS,
   SURVEY_IMPORT_XML_MAX_DEPTH,
+  SURVEY_IMPORT_XML_MAX_ELEMENTS,
 } from "../limits";
-import { docx, numbering, p, r, styles, tbl, tc, tr } from "./__fixtures__/docx-builders";
+import { W_NS, docx, numbering, p, r, styles, tbl, tc, tr } from "./__fixtures__/docx-builders";
 import { loadDocumentFixture } from "./__fixtures__/load-fixture";
 import { readWordDocument } from "./read-word";
 
@@ -301,6 +302,42 @@ describe("readWordDocument: the title", () => {
 });
 
 describe("readWordDocument: limits", () => {
+  // One paragraph of 5 runs: the paragraph, and each run with its `w:t`, 11 elements.
+  const runs = p(r("a") + r("b") + r("c") + r("d") + r("e"));
+  /** A document of about `share` of the file's element budget. */
+  const documentOf = (share: number) =>
+    runs.repeat(Math.floor((SURVEY_IMPORT_XML_MAX_ELEMENTS * share) / 11));
+  const RELS = "http://schemas.openxmlformats.org/package/2006/relationships";
+  const OFFICE = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
+
+  /** The document, with its styles and numbering relationships both pointing at `target`. */
+  const pointingAt = (target: string, parts: Record<string, string> = {}) =>
+    docx({
+      body: documentOf(0.4),
+      stored: true,
+      parts: {
+        "word/_rels/document.xml.rels": `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="${RELS}"><Relationship Id="rId1" Type="${OFFICE}/styles" Target="${target}"/><Relationship Id="rId2" Type="${OFFICE}/numbering" Target="${target}"/></Relationships>`,
+        ...parts,
+      },
+    });
+
+  test("holds the file's XML to one element budget across its parts, so a part read twice counts twice", () => {
+    const twice = pointingAt("big.xml", {
+      "word/big.xml": `<w:r xmlns:w="${W_NS}">${documentOf(0.4)}</w:r>`,
+    });
+
+    expect(refusal(() => read(twice))).toMatchObject({
+      code: "document_limit_exceeded",
+      identifier: "xml_elements",
+    });
+    // The same document on its own is well within the budget.
+    expect(read(docx({ body: documentOf(0.4), stored: true })).lines.length).toBeGreaterThan(0);
+  }, 30_000);
+
+  test("reads no styles or numbering from a relationship that points back at the document", () => {
+    expect(read(pointingAt("document.xml")).lines.length).toBeGreaterThan(0);
+  }, 30_000);
+
   test("takes exactly the paragraph limit and refuses one paragraph more", () => {
     const paragraphs = (count: number) => p("Q1") + "<w:p/>".repeat(count - 1);
 
