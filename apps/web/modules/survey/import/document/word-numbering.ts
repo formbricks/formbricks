@@ -20,6 +20,16 @@ const MAX_LEVELS = 9;
  * claim any start; past this a number is written in digits, so a huge one costs nothing to label.
  */
 const MAX_FORMATTED_NUMBER = 32_767;
+/**
+ * The most letters a number is written in: about as wide as the longest numeral under the cap above
+ * (41 characters). Letters repeat with the number (aa…zz, then aaa…), so past this it is digits too.
+ */
+const MAX_LETTERS = 40;
+/**
+ * A level's label pattern, and the label made from it: Word's own are a few characters (`%1.`,
+ * `Q%1`, `%1.%2.`). A file's longer pattern is cut, or every numbered paragraph would rebuild it whole.
+ */
+const MAX_LABEL_CHARS = 255;
 
 interface TLevel {
   start: number;
@@ -63,7 +73,7 @@ const readLevel = (level: Element): TLevel => {
   return {
     start: integer(attr(child(level, "start"), "val")) ?? 0,
     format: attr(child(level, "numFmt"), "val") ?? "decimal",
-    text: attr(child(level, "lvlText"), "val") ?? "",
+    text: (attr(child(level, "lvlText"), "val") ?? "").slice(0, MAX_LABEL_CHARS),
     isLegal: isLegal !== null && !["0", "false", "off"].includes(attr(isLegal, "val") ?? "true"),
   };
 };
@@ -107,10 +117,11 @@ const roman = (value: number): string => {
   return text;
 };
 
-/** Word's letters: a … z, then aa … zz, then aaa. */
+/** Word's letters: a … z, then aa … zz, then aaa; digits past `MAX_LETTERS` letters. */
 const letters = (value: number): string => {
-  const index = (value - 1) % 26;
-  return String.fromCodePoint(97 + index).repeat(Math.floor((value - 1) / 26) + 1);
+  const count = Math.floor((value - 1) / 26) + 1;
+  if (count > MAX_LETTERS) return String(value);
+  return String.fromCodePoint(97 + ((value - 1) % 26)).repeat(count);
 };
 
 const ordinal = (value: number): string => {
@@ -208,11 +219,12 @@ export class WordNumbering {
     for (let deeper = ilvl + 1; deeper < MAX_LEVELS; deeper += 1) counters[deeper] = undefined;
 
     if (level.format === "bullet") return "•";
-    return level.text.replaceAll(/%([1-9])/g, (_match, digit: string) => {
+    const label = level.text.replaceAll(/%([1-9])/g, (_match, digit: string) => {
       const index = Number(digit) - 1;
       const shown = levelAt(index);
       if (!shown) return "";
       return formatNumber(counters[index] ?? shown.start, level.isLegal ? "decimal" : shown.format);
     });
+    return label.slice(0, MAX_LABEL_CHARS);
   }
 }

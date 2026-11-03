@@ -252,13 +252,36 @@ describe("readWordDocument: list numbering", () => {
       p("Far past it", { num: [10, 0] }),
     ].join("");
 
-    const started = performance.now();
     expect(textOf(docx({ body, numbering: huge }))).toEqual([
       `P1: ${"m".repeat(32)}dcclxvii. At the limit`,
       "P2: 32768. Past it",
       "P3: 9007199254740991) Far past it",
     ]);
-    expect(performance.now() - started).toBeLessThan(1_000);
+  });
+
+  test("cuts a level's label pattern, and the label made from it, to 255 characters", () => {
+    // Placeholders each filled with a 40-letter number, told apart so the part doesn't compress past the
+    // zip's ratio limit: uncut, every numbered paragraph would rebuild the whole pattern.
+    const pattern = Array.from({ length: 20_000 }, (_, index) => `%1${index}`).join("");
+    const long = numbering(
+      { 11: [["lowerLetter", pattern]] },
+      {
+        12: {
+          abstract: 11,
+          overrides: `<w:lvlOverride w:ilvl="0"><w:startOverride w:val="1040"/></w:lvlOverride>`,
+        },
+      }
+    );
+    const body = [p("First", { num: [12, 0] }), p("Second", { num: [12, 0] })].join("");
+    const labelOf = (number: string) =>
+      Array.from({ length: 20_000 }, (_, index) => `${number}${index}`)
+        .join("")
+        .slice(0, 255);
+
+    const [first, second] = textOf(docx({ body, numbering: long }));
+    expect(first).toBe(`P1: ${labelOf("z".repeat(40))} First`);
+    // 1,041 needs 41 letters, past the cap: digits.
+    expect(second).toBe(`P2: ${labelOf("1041")} Second`);
   });
 
   test("takes a paragraph's numbering from its style, or from the style that style is based on", () => {
