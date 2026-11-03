@@ -263,8 +263,11 @@ The following IAM policy grants the minimum required permissions for Formbricks 
 
 `s3:AbortMultipartUpload` lets Formbricks clean up after an attachment export whose upload fails partway:
 the export ZIP is written to the bucket as a multipart upload. Without it, the uploaded parts of a failed
-export stay in the bucket, invisible but billed. A lifecycle rule that aborts incomplete multipart uploads
-after a day covers the same case.
+export stay in the bucket, invisible but billed.
+
+Also add a lifecycle rule that aborts incomplete multipart uploads after a day, even with that permission
+granted. A Formbricks process that is killed mid-upload (a crash or a forced restart) never sends the
+abort, and only the bucket can remove the parts it left.
 
 Attachment exports are downloaded straight from the bucket through a presigned URL, the same way file
 uploads reach it. The bucket endpoint in `S3_ENDPOINT_URL` therefore has to be reachable from your users'

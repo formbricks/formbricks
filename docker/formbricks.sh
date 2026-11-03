@@ -109,13 +109,11 @@ cat > /tmp/formbricks-policy.json << EOF
 }
 EOF
 
-echo '🔒 Creating policy (idempotent)...'
-if ! rc admin policy info rustfs "$RUSTFS_POLICY_NAME" >/dev/null 2>&1; then
-  rc admin policy create rustfs "$RUSTFS_POLICY_NAME" /tmp/formbricks-policy.json
-  echo 'Policy created successfully.'
-else
-  echo 'Policy already exists, skipping creation.'
-fi
+echo '🔒 Applying policy (creates it, or replaces an existing one)...'
+# Applied on every start rather than created once, so a permission a release adds (s3:AbortMultipartUpload,
+# for attachment exports) reaches installations whose policy already exists.
+rc admin policy create rustfs "$RUSTFS_POLICY_NAME" /tmp/formbricks-policy.json
+echo 'Policy applied successfully.'
 
 echo '👤 Creating service user (idempotent)...'
 if ! rc admin user info rustfs "$RUSTFS_SERVICE_USER" >/dev/null 2>&1; then
@@ -2326,6 +2324,11 @@ update_formbricks() {
   # Past every gate and with Cube stopped, so the next start serves the release's model. A failed refresh leaves
   # the previous model, which Cube still starts with, so it never stops the update.
   refresh_bundled_cube_files || true
+  # The bundled RustFS bootstrap re-applies the bucket policy on every start, so rewriting it here carries a
+  # permission this release added to the policy of an installation that already has one.
+  if [ -f rustfs-init.sh ]; then
+    write_rustfs_init_script rustfs-init.sh
+  fi
   if ! sudo docker compose up -d --wait postgres; then
     # With IPv6 just added and no network left behind, Docker could not create the network with it (no IPv6 subnet
     # free, say). Start once more from the previous file; any other failure stops the update as before.

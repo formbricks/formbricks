@@ -88,6 +88,9 @@ export type TWorkflowsUsageSnapshotJobData = TGlobalScopeJobData;
 export const ZAttachmentExportJobData = z.object({
   attachmentExportId: z.cuid2(),
   workspaceId: z.cuid2(),
+  // The export's dispatch count when this job was enqueued. A re-dispatch raises the count, so a job it
+  // superseded (still waiting behind a long build) can tell and skip, rather than build the export twice.
+  dispatchCount: z.number().int().nonnegative(),
 });
 
 export type TAttachmentExportJobData = z.infer<typeof ZAttachmentExportJobData>;

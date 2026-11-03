@@ -116,7 +116,7 @@ export const dispatchAttachmentExport = async (
   row: Pick<TAttachmentExportRow, "id" | "workspaceId" | "dispatchCount">
 ): Promise<void> => {
   await enqueueAttachmentExportJob(
-    { attachmentExportId: row.id, workspaceId: row.workspaceId },
+    { attachmentExportId: row.id, workspaceId: row.workspaceId, dispatchCount: row.dispatchCount },
     { jobId: `${row.id}-${row.dispatchCount}` }
   );
 };

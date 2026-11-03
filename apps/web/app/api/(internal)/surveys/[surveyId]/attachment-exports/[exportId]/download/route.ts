@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
-import { getSignedDownloadUrl } from "@formbricks/storage";
+import { StorageErrorCode, getSignedDownloadUrl } from "@formbricks/storage";
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
 import {
   problemConflict,
@@ -76,6 +76,16 @@ export const GET = withV3ApiWrapper({
       expiresIn: ATTACHMENT_EXPORT_DOWNLOAD_URL_TTL_SECONDS,
       responseContentDisposition: `attachment; filename="${fileName}"`,
     });
+
+    // The row says completed but the object is gone (deleted by hand, or lost by a bucket rule): no retry
+    // brings it back, so it reads as expired and the user starts a new export.
+    if (!signed.ok && signed.error.code === StorageErrorCode.FileNotFoundError) {
+      logger.warn({ attachmentExportId: row.id }, "Attachment export archive is missing from storage");
+      return problemGone(requestId, "This export has expired. Start a new one to download the attachments.", {
+        instance,
+        code: "attachment_export_expired",
+      });
+    }
 
     if (!signed.ok) {
       logger.error(

@@ -187,7 +187,6 @@ describe("docker/formbricks.sh RustFS bootstrap", () => {
       "bucket list rustfs",
       "bucket create rustfs/formbricks --ignore-existing",
       "bucket cors set rustfs/formbricks /tmp/formbricks-cors.xml",
-      "admin policy info rustfs formbricks-app-policy",
       "admin policy create rustfs formbricks-app-policy /tmp/formbricks-policy.json",
       "admin user info rustfs service-user",
       "admin user add rustfs service-user service-password",
@@ -232,7 +231,7 @@ describe("docker/formbricks.sh RustFS bootstrap", () => {
 `);
   });
 
-  test("generated init script reuses an existing policy and service user", () => {
+  test("generated init script re-applies an existing policy and reuses the service user", () => {
     const tempDir = createTempDir();
     const generatedScriptPath = join(tempDir, "rustfs-init.sh");
     const logFile = join(tempDir, "rc.log");
@@ -267,7 +266,8 @@ describe("docker/formbricks.sh RustFS bootstrap", () => {
       "alias set rustfs http://rustfs:9000 admin-user admin-password",
       "bucket list rustfs",
       "bucket create rustfs/formbricks --ignore-existing",
-      "admin policy info rustfs formbricks-app-policy",
+      // Replaced rather than skipped, so a permission a release adds reaches an existing installation.
+      "admin policy create rustfs formbricks-app-policy /tmp/formbricks-policy.json",
       "admin user info rustfs service-user",
       "admin policy attach rustfs formbricks-app-policy --user service-user",
     ]);

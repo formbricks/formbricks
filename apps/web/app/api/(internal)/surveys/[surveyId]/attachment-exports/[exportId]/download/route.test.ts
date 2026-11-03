@@ -24,7 +24,10 @@ vi.mock("@formbricks/logger", () => ({
   },
 }));
 vi.mock("../../lib/authorize", () => ({ authorizeAttachmentExportAccess: mocks.authorize }));
-vi.mock("@formbricks/storage", () => ({ getSignedDownloadUrl: mocks.sign }));
+vi.mock("@formbricks/storage", () => ({
+  getSignedDownloadUrl: mocks.sign,
+  StorageErrorCode: { FileNotFoundError: "file_not_found_error" },
+}));
 vi.mock("@/modules/storage/attachment-export/export-attachments", () => ({
   buildAttachmentArchiveFileName: (survey: { id: string }, date: Date) =>
     `${survey.id}-attachments-${date.toISOString().slice(0, 10)}.zip`,
@@ -132,6 +135,25 @@ describe("GET /api/surveys/{surveyId}/attachment-exports/{exportId}/download", (
     expect(response.status).toBe(410);
     expect((await response.json()).code).toBe("attachment_export_expired");
     expect(mocks.sign).not.toHaveBeenCalled();
+  });
+
+  test("answers 410 when the archive is gone from storage, since no retry brings it back", async () => {
+    mocks.getExport.mockResolvedValue(completedRow());
+    mocks.sign.mockResolvedValue({ ok: false, error: { code: "file_not_found_error" } });
+
+    const response = await GET(request("/download"), props);
+
+    expect(response.status).toBe(410);
+    expect((await response.json()).code).toBe("attachment_export_expired");
+  });
+
+  test("answers 500 when signing fails for any other reason", async () => {
+    mocks.getExport.mockResolvedValue(completedRow());
+    mocks.sign.mockResolvedValue({ ok: false, error: { code: "unknown" } });
+
+    const response = await GET(request("/download"), props);
+
+    expect(response.status).toBe(500);
   });
 
   test("answers 404 for another user's export, without signing anything", async () => {

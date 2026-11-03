@@ -124,7 +124,12 @@ const failExport = async (
     data: { status: "failed", errorCode, finishedAt: new Date() },
   });
   // Only the attempt that settled the export tells the requester, so a re-run never emails twice.
-  if (failed.count > 0) await notifyAttachmentExportFailed(data);
+  if (failed.count > 0) {
+    await notifyAttachmentExportFailed({
+      attachmentExportId: data.attachmentExportId,
+      workspaceId: data.workspaceId,
+    });
+  }
   if (storageKey) {
     // Normally nothing is there: a failed multipart upload is aborted. This covers an upload that
     // completed just before a later step failed. The reconcile job retries a failed delete.
@@ -174,6 +179,7 @@ export const processAttachmentExportJob: JobHandler<TAttachmentExportJobData> = 
   const logContext = {
     attachmentExportId: data.attachmentExportId,
     workspaceId: data.workspaceId,
+    dispatchCount: data.dispatchCount,
     attempt: context.attempt,
     maxAttempts: context.maxAttempts,
     jobId: context.jobId,
@@ -200,17 +206,23 @@ export const processAttachmentExportJob: JobHandler<TAttachmentExportJobData> = 
   });
 
   // The key is recorded at claim, before anything is written, so a build killed mid-upload still leaves
-  // the reconcile job a key to clean up.
+  // the reconcile job a key to clean up. Only the latest dispatch may claim: a job the reconcile job
+  // re-dispatched past (it waited behind a long build) would otherwise start a second build of the same
+  // archive, whose late finish would then delete the first one's result.
   const claimed = await prisma.attachmentExport.updateMany({
     where: {
       id: data.attachmentExportId,
       workspaceId: data.workspaceId,
       status: { in: ["queued", "running"] },
+      dispatchCount: data.dispatchCount,
     },
     data: { status: "running", startedAt: new Date(), storageKey, errorCode: null },
   });
   if (claimed.count === 0) {
-    logger.info(logContext, "Attachment export was settled before it could be claimed; skipping");
+    logger.info(
+      logContext,
+      "Attachment export was settled or re-dispatched before it could be claimed; skipping"
+    );
     return;
   }
 
@@ -239,7 +251,15 @@ export const processAttachmentExportJob: JobHandler<TAttachmentExportJobData> = 
 
     if (completed.count === 0) {
       // Settled under us: failed as stale, or the survey and its exports were deleted. Nothing will ever
-      // point at this archive, so it goes now.
+      // point at this archive, so it goes now — unless the row says completed, whose archive this key is.
+      const current = await prisma.attachmentExport.findFirst({
+        where: { id: data.attachmentExportId, workspaceId: data.workspaceId },
+        select: { status: true },
+      });
+      if (current?.status === "completed") {
+        logger.warn(logContext, "Attachment export was completed by another build; keeping its archive");
+        return;
+      }
       logger.warn(logContext, "Attachment export was settled while building; deleting its archive");
       await deleteFile(storageKey);
       return;
@@ -250,7 +270,8 @@ export const processAttachmentExportJob: JobHandler<TAttachmentExportJobData> = 
       "Attachment export completed"
     );
     await notifyAttachmentExportReady({
-      ...data,
+      attachmentExportId: data.attachmentExportId,
+      workspaceId: data.workspaceId,
       archiveBytes: result.archiveBytes,
       expiresAt,
       truncated: result.truncated,

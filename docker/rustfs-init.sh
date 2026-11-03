@@ -81,13 +81,11 @@ cat > /tmp/formbricks-policy.json << EOF
 }
 EOF
 
-echo '🔒 Creating policy (idempotent)...'
-if ! rc admin policy info rustfs "$RUSTFS_POLICY_NAME" >/dev/null 2>&1; then
-  rc admin policy create rustfs "$RUSTFS_POLICY_NAME" /tmp/formbricks-policy.json
-  echo 'Policy created successfully.'
-else
-  echo 'Policy already exists, skipping creation.'
-fi
+echo '🔒 Applying policy (creates it, or replaces an existing one)...'
+# Applied on every start rather than created once, so a permission a release adds (s3:AbortMultipartUpload,
+# for attachment exports) reaches installations whose policy already exists.
+rc admin policy create rustfs "$RUSTFS_POLICY_NAME" /tmp/formbricks-policy.json
+echo 'Policy applied successfully.'
 
 echo '👤 Creating service user (idempotent)...'
 if ! rc admin user info rustfs "$RUSTFS_SERVICE_USER" >/dev/null 2>&1; then

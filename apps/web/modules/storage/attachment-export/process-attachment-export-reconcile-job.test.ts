@@ -101,8 +101,9 @@ describe("processAttachmentExportReconcileJob", () => {
       where: { id: "exp-1", status: "queued", dispatchCount: 0 },
       data: { dispatchCount: { increment: 1 } },
     });
+    // The new job carries the bumped count, so the job it supersedes skips the export if it ever runs.
     expect(mockedEnqueue).toHaveBeenCalledWith(
-      { attachmentExportId: "exp-1", workspaceId: "ws-1" },
+      { attachmentExportId: "exp-1", workspaceId: "ws-1", dispatchCount: 1 },
       { jobId: "exp-1-1" }
     );
   });

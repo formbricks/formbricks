@@ -69,7 +69,7 @@ const SURVEY_ID = "cm8cmpnjj000108jfdr9srv01";
 const STORAGE_KEY = `${WORKSPACE_ID}/private/surveys/${SURVEY_ID}/exports/${EXPORT_ID}.zip`;
 const NOW = new Date("2026-11-03T12:00:00.000Z");
 
-const data = { attachmentExportId: EXPORT_ID, workspaceId: WORKSPACE_ID };
+const data = { attachmentExportId: EXPORT_ID, workspaceId: WORKSPACE_ID, dispatchCount: 0 };
 const context = {
   attempt: 1,
   maxAttempts: 2,
@@ -119,8 +119,14 @@ describe("processAttachmentExportJob", () => {
     await processAttachmentExportJob(data, context);
 
     // Claimed with the storage key recorded up front, so a killed build still leaves a key to clean up.
+    // Only by the export's current dispatch, so a job a re-dispatch superseded cannot claim it.
     expect(updateCalls()[0]).toEqual({
-      where: { id: EXPORT_ID, workspaceId: WORKSPACE_ID, status: { in: ["queued", "running"] } },
+      where: {
+        id: EXPORT_ID,
+        workspaceId: WORKSPACE_ID,
+        status: { in: ["queued", "running"] },
+        dispatchCount: 0,
+      },
       data: { status: "running", startedAt: NOW, storageKey: STORAGE_KEY, errorCode: null },
     });
     // Re-collected with the filter and zone stored at request time, under the same file cap.
@@ -298,6 +304,20 @@ describe("processAttachmentExportJob", () => {
     await processAttachmentExportJob(data, context);
 
     expect(mockedDeleteFile).toHaveBeenCalledWith(STORAGE_KEY);
+    expect(mockedNotifyReady).not.toHaveBeenCalled();
+  });
+
+  test("keeps the archive when another build completed the export", async () => {
+    prisma.attachmentExport.updateMany
+      .mockResolvedValueOnce({ count: 1 }) // claim
+      .mockResolvedValueOnce({ count: 0 }); // complete: the other build got there first
+    prisma.attachmentExport.findFirst
+      .mockResolvedValueOnce(queuedRow() as never)
+      .mockResolvedValueOnce({ status: "completed" } as never);
+
+    await processAttachmentExportJob(data, context);
+
+    expect(mockedDeleteFile).not.toHaveBeenCalled();
     expect(mockedNotifyReady).not.toHaveBeenCalled();
   });
 

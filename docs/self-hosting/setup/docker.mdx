@@ -710,9 +710,8 @@ services:
           ]
         }
         EOF
-        if ! rc admin policy info rustfs "$RUSTFS_POLICY_NAME" >/dev/null 2>&1; then
-          rc admin policy create rustfs "$RUSTFS_POLICY_NAME" /tmp/formbricks-policy.json
-        fi
+        # Applied on every start, so a permission a release adds reaches an existing policy.
+        rc admin policy create rustfs "$RUSTFS_POLICY_NAME" /tmp/formbricks-policy.json
         if ! rc admin user info rustfs "$RUSTFS_SERVICE_USER" >/dev/null 2>&1; then
           rc admin user add rustfs "$RUSTFS_SERVICE_USER" "$RUSTFS_SERVICE_PASSWORD"
         fi

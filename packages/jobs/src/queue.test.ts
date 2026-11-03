@@ -391,6 +391,7 @@ describe("@formbricks/jobs queue helpers", () => {
     const data = {
       attachmentExportId: "cm8cmpnjj000108jfdr9exp01",
       workspaceId: "cm8cmpnjj000108jfdr9wks01",
+      dispatchCount: 0,
     };
     mockQueueAdd.mockResolvedValue({ id: "cm8cmpnjj000108jfdr9exp01-0" });
 
@@ -408,7 +409,10 @@ describe("@formbricks/jobs queue helpers", () => {
 
   test("rejects an attachment export payload without valid ids before enqueueing", async () => {
     await expect(
-      enqueueAttachmentExportJob({ attachmentExportId: "not a cuid", workspaceId: "ws" }, { jobId: "x" })
+      enqueueAttachmentExportJob(
+        { attachmentExportId: "not a cuid", workspaceId: "ws", dispatchCount: 0 },
+        { jobId: "x" }
+      )
     ).rejects.toThrow();
     expect(mockQueueAdd).not.toHaveBeenCalled();
   });

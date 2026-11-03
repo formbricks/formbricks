@@ -92,7 +92,7 @@ Current workloads on the shared `background-jobs` queue include:
 | Creative counts   | `creative-stats.flush`                           | Copies creative Impressions and Clicks from Redis to the database every minute.            |
 | Usage telemetry   | `usage-telemetry.process`                        | Sends the instance's daily usage update.                                                   |
 | Workflows         | `workflow-run.process`, `workflow-run.reconcile` | Executes workflow runs and recovers stalled runs.                                          |
-| Attachment exports | `attachment-export.reconcile`                   | Re-dispatches lost exports, fails stuck ones and deletes export ZIPs after 3 months.        |
+| Attachment exports | `attachment-export.reconcile`                   | Re-dispatches lost exports, fails stuck ones and deletes export ZIPs after 3 months ([versioned buckets](/self-hosting/configuration/file-uploads) need a lifecycle rule). |
 
 <Note>
   [Creative](/surveys/creatives/measure-performance) Impressions and Clicks live only in Redis until
