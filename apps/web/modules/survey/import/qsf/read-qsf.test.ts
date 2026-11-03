@@ -358,9 +358,12 @@ describe("readQsf", () => {
         ]),
       ],
     ])("past the %s limit: qsf_limit_exceeded, naming it", (limit, qsf) => {
-      expect(readError(qsf).invalidParams).toEqual([
+      const error = readError(qsf);
+      expect(error.invalidParams).toEqual([
         expect.objectContaining({ code: "qsf_limit_exceeded", identifier: limit }),
       ]);
+      // It is a Qualtrics export, so the refusal doesn't say it isn't one.
+      expect(error.message).toBe("The file is past one of the import's limits.");
     });
   });
 

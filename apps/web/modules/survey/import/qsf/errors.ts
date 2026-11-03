@@ -14,4 +14,8 @@ export const qsfLimitExceeded = (
   limit: TSurveyImportLimit,
   name: string,
   reason: string
-): SurveyImportInputError => qsfRefused([{ name, reason, code: "qsf_limit_exceeded", identifier: limit }]);
+): SurveyImportInputError =>
+  new SurveyImportInputError(
+    [{ name, reason, code: "qsf_limit_exceeded", identifier: limit }],
+    "The file is past one of the import's limits."
+  );
