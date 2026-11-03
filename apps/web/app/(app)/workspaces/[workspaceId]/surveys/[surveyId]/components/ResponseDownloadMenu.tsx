@@ -283,12 +283,13 @@ export const ResponseDownloadMenu = ({
                   <li
                     key={attachmentExport.id}
                     data-testid="fb__attachment-export-row"
-                    className="flex items-center justify-between gap-2 text-xs text-slate-700">
+                    className="flex min-h-7 items-center justify-between gap-2 text-xs text-slate-700">
                     <span>{describeAttachmentExport(attachmentExport)}</span>
                     {attachmentExport.status === "completed" && (
                       <Button
                         variant="ghost"
                         size="sm"
+                        className="h-7 px-2"
                         onClick={() => {
                           void downloadAttachmentExport(attachmentExport);
                         }}>
