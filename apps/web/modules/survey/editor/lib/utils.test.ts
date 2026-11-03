@@ -711,6 +711,19 @@ describe("removal guards also see show-if (ENG-6931)", () => {
 
     expect(findHiddenFieldUsedInLogic(survey, signupDate)).toBe(flatIndexOf(survey, "email"));
   });
+
+  test("a question whose options another question copies is reported as used (ENG-6938)", () => {
+    const survey = withoutLogic();
+    // Only the link left: no show-if anywhere reads "brand_rank".
+    const adPick = survey.blocks[5].elements[4] as unknown as { choices: { showIf?: unknown }[] };
+    adPick.choices.forEach((choice) => delete choice.showIf);
+    expect(findElementUsedInLogic(survey, "brand_rank")).toBe(-1);
+
+    const recommend = survey.blocks[5].elements[12] as unknown as Record<string, unknown>;
+    recommend.optionsCopiedFrom = "brand_rank";
+
+    expect(findElementUsedInLogic(survey, "brand_rank")).toBe(flatIndexOf(survey, "recommend"));
+  });
 });
 
 describe("ranking conditions in the editor (T21, ENG-6937)", () => {

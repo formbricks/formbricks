@@ -85,6 +85,8 @@ interface FlowViewProps {
   readonly setInvalidElements: Dispatch<SetStateAction<string[] | null>>;
   /** Switches to the Questions tab with this question or ending open. */
   readonly onEditOnQuestionsTab: (id: string) => void;
+  /** The saved survey, for the published lock: copying options keeps the options that existed at launch. */
+  readonly persistedSurvey?: TSurvey;
 }
 
 const RULE_ICON = { rule: <SplitIcon />, embeddedData: <BinaryIcon /> };
@@ -100,6 +102,7 @@ export const FlowView = ({
   invalidElements,
   setInvalidElements,
   onEditOnQuestionsTab,
+  persistedSurvey,
 }: FlowViewProps) => {
   const { t } = useTranslation();
   const outline = useMemo(() => buildFlowOutline(localSurvey), [localSurvey]);
@@ -259,7 +262,23 @@ export const FlowView = ({
     </span>
   );
 
-  const renderBadge = (badge: TFlowBadge, key: string, target?: { showIf: TShowIfTarget; key: string }) => {
+  /**
+   * Whether a question gets the "Options shown if" popover (ENG-6937): it has option lists, and no
+   * option show-if is read-only. Its option badges and its copied-options badge are drawn inside it.
+   */
+  const hasOptionsPopover = (item: TFlowElementItem | undefined): item is TFlowElementItem =>
+    item !== undefined &&
+    item.optionLists.length > 0 &&
+    !item.badges.some(
+      (badge) => (badge.kind === "optionsShowIf" || badge.kind === "hiddenOptions") && !badge.editable
+    );
+
+  const renderBadge = (
+    badge: TFlowBadge,
+    key: string,
+    target?: { showIf: TShowIfTarget; key: string },
+    item?: TFlowElementItem
+  ) => {
     switch (badge.kind) {
       case "showIf":
         if (badge.editable && target) {
@@ -312,6 +331,8 @@ export const FlowView = ({
           />
         );
       case "optionsCopiedFrom": {
+        // ENG-6938: an editable link opens the question's "Options shown if" popover, rendered with it.
+        if (badge.editable && hasOptionsPopover(item)) return null;
         const source = localSurvey.blocks
           .flatMap((block) => block.elements)
           .find((element) => element.id === badge.sourceId);
@@ -337,11 +358,11 @@ export const FlowView = ({
    * render as plain badges instead.
    */
   const renderOptionsShowIf = (item: TFlowElementItem | undefined, blockIdx: number) => {
-    if (!item || item.optionLists.length === 0) return null;
+    if (!hasOptionsPopover(item)) return null;
     const optionBadges = item.badges.filter(
       (badge) => badge.kind === "optionsShowIf" || badge.kind === "hiddenOptions"
     );
-    if (optionBadges.some((badge) => !badge.editable)) return null;
+    const copiedFrom = item.badges.find((badge) => badge.kind === "optionsCopiedFrom");
     const countOf = (kind: "optionsShowIf" | "hiddenOptions") => {
       const badge = optionBadges.find((candidate) => candidate.kind === kind);
       return badge && "count" in badge ? badge.count : 0;
@@ -356,6 +377,8 @@ export const FlowView = ({
         optionLists={item.optionLists}
         showIfCount={countOf("optionsShowIf")}
         hiddenCount={countOf("hiddenOptions")}
+        copiedFromId={copiedFrom?.kind === "optionsCopiedFrom" ? copiedFrom.sourceId : undefined}
+        persistedSurvey={persistedSurvey}
         isOpen={openShowIfKey === key}
         onOpenChange={(open) => setOpenShowIfKey(open ? key : null)}
       />
@@ -555,10 +578,12 @@ export const FlowView = ({
                               {getHeadlineText(element.headline, localSurvey) || getElementBadgeText(element)}
                             </span>
                             {block.elements[elementIdx]?.badges.map((badge, idx) =>
-                              renderBadge(badge, `${element.id}-${idx}`, {
-                                showIf: showIfTarget,
-                                key: showIfKey,
-                              })
+                              renderBadge(
+                                badge,
+                                `${element.id}-${idx}`,
+                                { showIf: showIfTarget, key: showIfKey },
+                                block.elements[elementIdx]
+                              )
                             )}
                             {renderOptionsShowIf(block.elements[elementIdx], block.blockIdx)}
                             {!element.showIf && canAddShowIf(localSurvey, showIfTarget) && (

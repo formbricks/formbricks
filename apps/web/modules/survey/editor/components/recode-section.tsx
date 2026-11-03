@@ -13,6 +13,7 @@ import { isExternalImageSrc } from "@/lib/image-hosts";
 import { CopyIdButton } from "@/modules/survey/editor/components/copy-id-button";
 import { PublishedLockNotice } from "@/modules/survey/editor/components/published-lock-notice";
 import { describeCodeIssue, getCodeClashLabel } from "@/modules/survey/editor/lib/code-messages";
+import { getCopiedOptionsSource } from "@/modules/survey/editor/lib/copied-options-editing";
 import {
   TCodeDraft,
   TOptionListKey,
@@ -27,6 +28,7 @@ import {
   typeCode,
 } from "@/modules/survey/editor/lib/element-codes";
 import { NO_ELEMENT_LOCK, TElementLock } from "@/modules/survey/editor/lib/published-lock";
+import { getElementBadgeText } from "@/modules/survey/lib/element-code-label";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
@@ -41,6 +43,11 @@ interface CodeFieldProps {
   kind: "question" | "answer";
   /** The published lock: the field is read-only and a lock icon inside it says why. */
   locked?: boolean;
+  /**
+   * A copied option's code (ENG-6938): read-only here, because it is the source option's, and this
+   * note under the field names where it comes from.
+   */
+  readOnlyNote?: string;
   onChange: (value: string) => void;
   ariaLabel?: string;
   /** Sizes the input only: a message under it runs the full width of the row instead of wrapping. */
@@ -68,6 +75,7 @@ export const CodeField = ({
   clashLabel,
   kind,
   locked = false,
+  readOnlyNote,
   onChange,
   ariaLabel,
   inputClassName,
@@ -88,7 +96,7 @@ export const CodeField = ({
         <div className={cn("relative", inputClassName)}>
           <Input
             id={id}
-            disabled={locked}
+            disabled={locked || readOnlyNote !== undefined}
             value={draft?.value ?? value ?? ""}
             placeholder={t("workspace.surveys.edit.code_auto_placeholder")}
             aria-label={ariaLabel}
@@ -118,6 +126,7 @@ export const CodeField = ({
           {describeCodeIssue(issue, kind, t, clashLabel)}
         </p>
       )}
+      {readOnlyNote && !issue && <p className="text-xs text-slate-500">{readOnlyNote}</p>}
       {note && !issue && (
         // <output> has the status role; aria-live is spelled out for readers that do not infer it.
         <output htmlFor={id} aria-live="polite" className="block text-sm text-amber-800">
@@ -162,6 +171,7 @@ export const RecodeSection = ({
   const issues = getElementCodeIssues(localSurvey).get(element.id);
   const lists = getOptionCodeLists(element).filter(({ options }) => options.length > 0);
   const isRecodeLocked = lock.isActive && lock.isCodeLocked;
+  const copied = getCopiedOptionsSource(localSurvey, element);
 
   return (
     <section
@@ -255,6 +265,13 @@ export const RecodeSection = ({
                       )
                     }
                     locked={lock.isAnswerCodeLocked(key, option.id)}
+                    readOnlyNote={
+                      key === "choices" && copied?.copiedIds.has(option.id)
+                        ? t("workspace.surveys.edit.copied_code_from", {
+                            question: getElementBadgeText(copied.source),
+                          })
+                        : undefined
+                    }
                     ariaLabel={shownLabel}
                     value={option.code}
                     issue={issue}
