@@ -888,6 +888,10 @@ answered yet. Anything else is refused with the exact path, such as `startLogic.
 `patch_survey`, `null` or `[]` removes them and an omitted `startLogic` is kept; `get_survey` always
 returns the array, `[]` when there are none.
 
+A block rule may also carry a `markLowQuality` action, `{ "id": "<cuid2>", "objective": "markLowQuality" }`
+with no target (ENG-6933). When the rule fires, the respondent sees nothing and the response is marked Low
+quality as a reviewer would mark it. It is refused in `startLogic`, like `requireAnswer`.
+
 Input:
 
 ```json

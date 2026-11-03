@@ -61,10 +61,10 @@ export const updateRuleActions = (
 
 /**
  * What the Add logic menu starts a rule as: a jump rule, a calculation (a condition, then a formula),
- * or a Set value step (ENG-6935), which always runs: its condition group is an empty `and` group
- * (ADR 0025).
+ * a Set value step (ENG-6935), which always runs: its condition group is an empty `and` group
+ * (ADR 0025), or a Mark as low quality rule (ENG-6933).
  */
-export type TNewRuleKind = "jump" | "calculate" | "setValue";
+export type TNewRuleKind = "jump" | "calculate" | "setValue" | "markLowQuality";
 
 export interface TNewRuleOptions {
   /** The first condition, without an id. A Set value step has none. */
@@ -76,20 +76,30 @@ export interface TNewRuleOptions {
 /** An empty formula: the step is saved only once the formula box holds one. */
 const EMPTY_FORMULA = { type: "expression", value: { type: "static", value: "" } } as const;
 
+const createFirstAction = (kind: TNewRuleKind, variableId: string | undefined): TSurveyBlockLogicAction => {
+  switch (kind) {
+    case "jump":
+      return { id: createId(), objective: "jumpToBlock", target: "" };
+    // ENG-6933: complete as it is; the respondent sees nothing when it fires.
+    case "markLowQuality":
+      return { id: createId(), objective: "markLowQuality" };
+    case "calculate":
+    case "setValue":
+      return {
+        id: createId(),
+        objective: "calculate",
+        variableId: variableId ?? "",
+        operator: "assign",
+        value: { ...EMPTY_FORMULA, value: { ...EMPTY_FORMULA.value } },
+      };
+  }
+};
+
 export const createRule = (
   kind: TNewRuleKind,
   { condition, variableId }: TNewRuleOptions
 ): TSurveyBlockLogic => {
-  const action: TSurveyBlockLogicAction =
-    kind === "jump"
-      ? { id: createId(), objective: "jumpToBlock", target: "" }
-      : {
-          id: createId(),
-          objective: "calculate",
-          variableId: variableId ?? "",
-          operator: "assign",
-          value: { ...EMPTY_FORMULA, value: { ...EMPTY_FORMULA.value } },
-        };
+  const action = createFirstAction(kind, variableId);
 
   return {
     id: createId(),
@@ -152,11 +162,34 @@ export const setStartRules = (survey: TSurvey, rules: TSurveyBlockLogic[]): TSur
   startLogic: rules.length > 0 ? rules : null,
 });
 
-/** What a rule's actions may do where it runs: before the first question only jump or set a value. */
+/**
+ * What a rule's actions may do where it runs: before the first question only jump or set a value; a
+ * block's rules may also require an answer and mark the response Low quality (ENG-6933).
+ */
 export const getAllowedActionObjectives = (scopeBlockIdx: number): TSurveyBlockLogicActionObjective[] =>
   scopeBlockIdx === START_SCOPE_BLOCK_IDX
     ? ["calculate", "jumpToBlock"]
-    : ["calculate", "requireAnswer", "jumpToBlock"];
+    : ["calculate", "requireAnswer", "jumpToBlock", "markLowQuality"];
+
+/** Objectives a rule holds at most once: one jump, and one Mark as low quality (ENG-6933). */
+const ONCE_PER_RULE = new Set<TSurveyBlockLogicActionObjective>(["jumpToBlock", "markLowQuality"]);
+
+/**
+ * What one action of a rule may change to: what the scope allows, less a jump or a Mark as low quality
+ * another action of the rule already is.
+ */
+export const getObjectivesForAction = (
+  actions: TSurveyBlockLogicAction[],
+  actionIdx: number,
+  scopeBlockIdx: number
+): TSurveyBlockLogicActionObjective[] => {
+  const takenElsewhere = new Set(
+    actions.filter((_, idx) => idx !== actionIdx).map((action) => action.objective)
+  );
+  return getAllowedActionObjectives(scopeBlockIdx).filter(
+    (objective) => !ONCE_PER_RULE.has(objective) || !takenElsewhere.has(objective)
+  );
+};
 
 /** The objective of an action added below: a jump first, then whatever else the scope allows. */
 export const getNextActionObjective = (

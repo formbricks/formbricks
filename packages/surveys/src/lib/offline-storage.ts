@@ -5,6 +5,7 @@ import {
   TResponseVariables,
 } from "@formbricks/types/responses";
 import { type TWebSurveyMeta } from "./browser-context";
+import { type TNotShownStep } from "./not-shown-record";
 
 const DB_NAME = "formbricks-offline";
 const DB_VERSION = 1;
@@ -37,6 +38,11 @@ export interface SurveyProgressEntry {
   ttc: TResponseTtc;
   currentVariables: TResponseVariables;
   history: string[];
+  /**
+   * The not-shown steps next to `history` (ENG-6936), so a resumed session keeps sending the whole
+   * record. Optional: entries written before it restore with none, as the bundle that wrote them sent.
+   */
+  notShownSteps?: TNotShownStep[];
   selectedLanguage: string;
   surveyStateSnapshot: SerializedSurveyState;
   /**

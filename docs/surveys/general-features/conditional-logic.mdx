@@ -52,9 +52,22 @@ On the Flow tab, click `Add logic +` under a block, choose **Jump rule** or **Ca
 
 * **Jump to block**: send the respondent to a specific block instead of the next one.
 
+* **Mark as low quality**: mark the response Low quality when its answers are implausible, for example *If “hours” is greater than 112 → Mark as low quality*. See [Mark as low quality](#mark-as-low-quality).
+
 <Note>
   A rule can carry several actions. They run in the order they are listed.
 </Note>
+
+## Mark as low quality
+
+Some answers show that a response can't be trusted: someone who streams more than 112 hours a week, or who rates a product they said they never used. A rule with the **Mark as low quality** action marks such a response for you, so nobody has to review every response by hand.
+
+* **The respondent sees nothing.** The survey carries on as it would without the rule, and the rule's other actions, such as a jump, still run.
+* **The response is marked like one a reviewer marked.** It shows as Low quality in your responses, it is left out of the [Analysis export](/surveys/analysis/export-responses) by default, and it is removed from Dashboards.
+* **You can restore it.** A response a rule marked is restored like any other Low quality response.
+* **A rule can only mark.** Nothing a respondent does later clears the mark, and a rule never changes a response a reviewer already marked.
+
+The action is available in a block's rules. It isn't offered in the rules before the first question, because nothing has been answered yet; use a jump to an ending there to screen respondents out.
 
 ## Everyone else
 

@@ -65,10 +65,13 @@ export const performActions = (
   jumpTarget: string | undefined;
   requiredQuestionIds: string[];
   calculations: TResponseVariables;
+  /** A Mark as low quality action ran (ENG-6933): the next response write carries the flag. */
+  markLowQuality: boolean;
 } => {
   let jumpTarget: string | undefined;
   const requiredQuestionIds: string[] = [];
   const calculations: TResponseVariables = { ...calculationResults };
+  let markLowQuality = false;
 
   actions.forEach((action) => {
     switch (action.objective) {
@@ -84,10 +87,13 @@ export const performActions = (
           jumpTarget = action.target;
         }
         break;
+      case "markLowQuality":
+        markLowQuality = true;
+        break;
     }
   });
 
-  return { jumpTarget, requiredQuestionIds, calculations };
+  return { jumpTarget, requiredQuestionIds, calculations, markLowQuality };
 };
 
 const getLeftOperandValue = (

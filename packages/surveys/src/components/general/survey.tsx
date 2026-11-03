@@ -26,6 +26,7 @@ import { TUploadFileConfig } from "@formbricks/types/storage";
 import { getLinkSurveyCardMaxWidth } from "@formbricks/types/styling";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
+import { getNotShownElementIds } from "@formbricks/types/surveys/not-shown";
 import { BlockConditional } from "@/components/general/block-conditional";
 import { EndingCard } from "@/components/general/ending-card";
 import { ErrorComponent } from "@/components/general/error-component";
@@ -51,6 +52,7 @@ import { type TWebSurveyMeta, createWebSurveyMetaSnapshot } from "@/lib/browser-
 import { getCardStartsWithMedia } from "@/lib/card-header";
 import { getLocalizedValue } from "@/lib/i18n";
 import { INGEST_DROP_MESSAGES, logIngestResult } from "@/lib/ingest-logging";
+import { type TNotShownStep, appendNotShownStep, buildNotShownRecord } from "@/lib/not-shown-record";
 import {
   type SerializedSurveyState,
   clearSurveyProgress,
@@ -461,6 +463,13 @@ export function Survey({
   // The block the survey opened on after passing over blocks hidden by show-if (ENG-6931). Nothing
   // precedes it, so it shows no Back button, like the first block.
   const [entryBlockId, setEntryBlockId] = useState<string | undefined>(undefined);
+  /**
+   * What the survey kept from the respondent, one step per submitted card, next to `history` (ENG-6936).
+   * The record every update sends is folded from them; see `not-shown-record.ts`. The entry step holds
+   * the blocks passed over when the survey opened straight onto a block.
+   */
+  const [notShownSteps, setNotShownSteps] = useState<TNotShownStep[]>([]);
+  const [entryNotShownStep, setEntryNotShownStep] = useState<TNotShownStep | null>(null);
   const isNavigatingBackRef = useRef(false);
   const [responseData, setResponseData] = useState<TResponseData>(ingestedFieldsRecord);
   const [_variableStack, setVariableStack] = useState<VariableStackEntry[]>([]);
@@ -590,6 +599,10 @@ export function Survey({
   const [isDisplaySettled, setIsDisplaySettled] = useState(false);
   // A screen-out is sent at most once, and never for a session resumed from offline progress.
   const screenOutHandledRef = useRef(false);
+  // A rule marked the response Low quality (ENG-6933). The next response write carries
+  // `markLowQuality: true`, once: sent again on every later write, it would undo a reviewer's restore
+  // made while the respondent is still answering.
+  const pendingLowQualityRef = useRef(false);
 
   useEffect(() => {
     if (offlinePersistEnabled && !progressRestored) return;
@@ -744,6 +757,7 @@ export function Survey({
         setTtc(progress.ttc);
         setCurrentVariables(progress.currentVariables);
         setHistory(getRestorableHistory(localSurvey, progress.history));
+        setNotShownSteps(progress.notShownSteps ?? []);
         setSelectedLanguage(progress.selectedLanguage);
 
         // Restore survey state from snapshot
@@ -993,7 +1007,10 @@ export function Survey({
         }
 
         responseQueue.updateSurveyState(surveyState);
+        const markLowQuality = pendingLowQualityRef.current;
+        pendingLowQualityRef.current = false;
         responseQueue.add({
+          ...(markLowQuality && { markLowQuality: true }),
           data: responseUpdate.data,
           ttc: responseUpdate.ttc,
           finished: responseUpdate.finished,
@@ -1008,6 +1025,7 @@ export function Survey({
           variables: responseUpdate.variables,
           displayId: surveyState.displayId,
           endingId: responseUpdate.endingId,
+          notShown: responseUpdate.notShown,
           // The filtered record, not the raw prop: `ResponseQueue` merges `hiddenFields` over `data`
           // on every submit, so sending the raw bag here would put the dropped and uncoerced values
           // straight back.
@@ -1134,8 +1152,16 @@ export function Survey({
     });
     if (entry.skippedBlockIds.length === 0) return;
 
+    const entryStep: TNotShownStep = {
+      blockId: "",
+      hiddenElementIds: [],
+      skippedBlockIds: entry.skippedBlockIds,
+    };
+    setEntryNotShownStep(entryStep);
     setCurrentVariables(entry.variables);
     if (entry.requiredQuestionIds.length > 0) makeQuestionsRequired(entry.requiredQuestionIds);
+    // Travels with the first write, like the values the passed-over blocks set.
+    if (entry.markLowQuality) pendingLowQualityRef.current = true;
     if (entry.finished) {
       setIsSurveyFinished(true);
       onResponseCreateOrUpdate({
@@ -1145,6 +1171,7 @@ export function Survey({
         variables: entry.variables,
         language: selectedLanguage,
         endingId: entry.endingId,
+        notShown: buildNotShownRecord(localSurvey, [entryStep]),
       });
     }
     setEntryBlockId(entry.nextCardId);
@@ -1267,6 +1294,8 @@ export function Survey({
       requiredQuestionIds,
       submittedData,
       hiddenElementIds,
+      markLowQuality,
+      skippedBlockIds,
     } = advanceFromBlock({
       survey: localSurvey,
       blockId,
@@ -1287,14 +1316,35 @@ export function Survey({
 
     setIsSurveyFinished(finished);
 
+    // The not-shown record after this submit (ENG-6936): the steps of the cards still on the path,
+    // then this one. Sent whole with the update; the server replaces the stored record with it.
+    const nextNotShownSteps = appendNotShownStep(notShownSteps, history.length, {
+      blockId,
+      hiddenElementIds,
+      skippedBlockIds,
+    });
+    setNotShownSteps(nextNotShownSteps);
+    const notShown = buildNotShownRecord(
+      localSurvey,
+      entryNotShownStep ? [entryNotShownStep, ...nextNotShownSteps] : nextNotShownSteps
+    );
+    const notShownElementIds = getNotShownElementIds(notShown, localSurvey.blocks);
+
     // An answer typed into a question that show-if hid before the submit is dropped, not submitted
-    // (ENG-6931): from the response and from the answers later conditions and recall read.
+    // (ENG-6931), and so is an earlier answer to anything the record now lists, after Back or a changed
+    // answer (ENG-6936): from the answers later conditions and recall read. The server removes it from
+    // the response.
     setResponseData((prev) => {
       const next = { ...prev, ...submittedData };
       for (const elementId of hiddenElementIds) delete next[elementId];
+      for (const elementId of notShownElementIds) delete next[elementId];
       return next;
     });
     onChangeVariables(calculatedVariables);
+
+    // A rule marked the response Low quality (ENG-6933): this submit's write carries the flag. The
+    // respondent sees nothing.
+    if (markLowQuality) pendingLowQualityRef.current = true;
 
     onResponseCreateOrUpdate({
       data: submittedData,
@@ -1303,6 +1353,7 @@ export function Survey({
       variables: calculatedVariables,
       language: selectedLanguage,
       endingId,
+      notShown,
     });
 
     setBlockId(nextCardId);
@@ -1319,6 +1370,7 @@ export function Survey({
         ttc: { ...ttc, ...responsettc },
         currentVariables: calculatedVariables,
         history: newHistory,
+        notShownSteps: nextNotShownSteps,
         selectedLanguage,
         webSurveyMeta: getWebSurveyMeta(),
         surveyStateSnapshot: {

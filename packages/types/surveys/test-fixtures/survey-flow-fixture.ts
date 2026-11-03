@@ -1,6 +1,7 @@
 import type { TLinkedEmbeddedField } from "../../embedded-data-resolver";
 import type { TSurveyBlock, TSurveyBlockLogic } from "../blocks";
 import { TSurveyElementTypeEnum } from "../constants";
+import type { TResponseNotShown } from "../not-shown";
 import type { TSurvey } from "../types";
 
 /**
@@ -69,6 +70,11 @@ export const SURVEY_FLOW_FIXTURE_IDS = {
   /** ENG-6930: the workspace library rows the survey links. */
   libraryFields: {
     planTier: "flowlibraryplantier00001",
+  },
+  /** ENG-6933: "If hours > 112 → Mark as low quality", the second rule of the Heavy users block. */
+  lowQuality: {
+    rule: "flowrulelowquality000001",
+    action: "flowactionlowquality0001",
   },
 } as const;
 
@@ -384,6 +390,24 @@ const heavyUsersBlock: TSurveyBlock = {
           value: { type: "variable", value: ids.variables.tenureDays },
         },
       ],
+    },
+    // Mark as low quality (ENG-6933): an implausible answer marks the response, and the respondent
+    // carries on. Fixed ids, so adding it shifts none of the generated ones after it.
+    {
+      id: ids.lowQuality.rule,
+      conditions: {
+        id: "flowgrouplowquality00001",
+        connector: "and",
+        conditions: [
+          {
+            id: "flowcondlowquality000001",
+            leftOperand: { type: "element", value: "hours" },
+            operator: "isGreaterThan",
+            rightOperand: { type: "static", value: 112 },
+          },
+        ],
+      },
+      actions: [{ id: ids.lowQuality.action, objective: "markLowQuality" }],
     },
   ],
 };
@@ -1139,3 +1163,13 @@ export const getSurveyFlowFixtureRules = (): { blockId: string; rule: TSurveyBlo
   surveyFlowFixture.blocks.flatMap((block) =>
     (block.logic ?? []).map((rule) => ({ blockId: block.id, rule }))
   );
+
+/**
+ * ENG-6936: the not-shown record of a respondent who uses Netflix only and would miss Netflix most —
+ * the "Heavy users" block's show-if fails, and "What would convince you to try Apple TV+?" stays
+ * hidden on the Overall page. What the survey sends with that respondent's updates.
+ */
+export const surveyFlowFixtureNotShown: TResponseNotShown = {
+  blocks: [ids.blocks.heavyUsers],
+  elements: ["apple_reason"],
+};

@@ -12,6 +12,7 @@ import {
   getAllowedActionObjectives,
   getDefaultStartCondition,
   getNextActionObjective,
+  getObjectivesForAction,
   moveRule,
   removeRule,
   setBlockLogicFallback,
@@ -87,6 +88,13 @@ describe("new rules from the Add logic menu", () => {
 
     expect(rule.conditions).toMatchObject({ connector: "and", conditions: [condition] });
     expect(rule.actions).toEqual([{ id: expect.any(String), objective: "jumpToBlock", target: "" }]);
+  });
+
+  test("a Mark as low quality rule starts with one condition and the action, which takes nothing else (ENG-6933)", () => {
+    const rule = createRule("markLowQuality", { condition, variableId: ids.variables.score });
+
+    expect(rule.conditions).toMatchObject({ connector: "and", conditions: [condition] });
+    expect(rule.actions).toEqual([{ id: expect.any(String), objective: "markLowQuality" }]);
   });
 
   test("a calculation starts with one condition and the first computed field, set by an empty formula", () => {
@@ -172,9 +180,30 @@ describe("the rules before the first question (ENG-6932)", () => {
     expect(setStartRules(surveyFlowFixture, []).startLogic).toBeNull();
   });
 
-  test("offer only a jump and a calculation; a block's rules also offer require answer", () => {
+  test("offer only a jump and a calculation; a block's rules also offer require answer and Mark as low quality", () => {
     expect(getAllowedActionObjectives(START_SCOPE_BLOCK_IDX)).toEqual(["calculate", "jumpToBlock"]);
-    expect(getAllowedActionObjectives(0)).toEqual(["calculate", "requireAnswer", "jumpToBlock"]);
+    expect(getAllowedActionObjectives(0)).toEqual([
+      "calculate",
+      "requireAnswer",
+      "jumpToBlock",
+      "markLowQuality",
+    ]);
+  });
+
+  test("a rule jumps once and marks Low quality once: other actions don't offer either again (ENG-6933)", () => {
+    const actions = [
+      { id: "a", objective: "jumpToBlock" as const, target: "" },
+      { id: "b", objective: "markLowQuality" as const },
+      { id: "c", objective: "requireAnswer" as const, target: "" },
+    ];
+
+    expect(getObjectivesForAction(actions, 0, 2)).toEqual(["calculate", "requireAnswer", "jumpToBlock"]);
+    expect(getObjectivesForAction(actions, 1, 2)).toEqual(["calculate", "requireAnswer", "markLowQuality"]);
+    expect(getObjectivesForAction(actions, 2, 2)).toEqual(["calculate", "requireAnswer"]);
+    expect(getObjectivesForAction(actions.slice(0, 1), 0, START_SCOPE_BLOCK_IDX)).toEqual([
+      "calculate",
+      "jumpToBlock",
+    ]);
   });
 
   test("an action added below a jump is a calculation before the first question, a require answer after a block", () => {

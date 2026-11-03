@@ -75,6 +75,8 @@ export const buildAnalysisSelect = (fields: TAnalysisResponseFields, isQuotasAll
     language: true,
     outcome: true,
     data: true,
+    // Read for every export: a question the respondent was not shown exports blank (ENG-6936).
+    notShown: true,
     ...(fields.embeddedData || fields.metadata ? { variables: true } : {}),
     ...(fields.contactAttributes ? { contactAttributes: true } : {}),
     ...(fields.metadata ? { surveyId: true, updatedAt: true, meta: true, ttc: true } : {}),
@@ -110,6 +112,7 @@ type TAnalysisSelected = {
   language: string | null;
   outcome: string | null;
   data: unknown;
+  notShown: TAnalysisResponse["notShown"];
   tags?: { tag: { name: string } }[];
   contact?: { id: string; attributes: { value: string }[] } | null;
   contactAttributes?: Record<string, unknown> | null;
@@ -130,6 +133,7 @@ const toAnalysisResponse = (row: TAnalysisSelected): TAnalysisResponse => ({
   language: row.language,
   outcome: row.outcome,
   data: row.data as TAnalysisResponse["data"],
+  notShown: row.notShown,
   variables: row.variables,
   meta: row.meta,
   ttc: row.ttc,

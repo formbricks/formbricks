@@ -13,7 +13,8 @@ import type { TConditionGroup, TSingleCondition } from "./logic";
  * any answer exists:
  *
  * - **Actions** may only jump (to any block, or to an ending, which screens the respondent out) and
- *   set a value (`calculate`). Every other objective is refused at its exact path.
+ *   set a value (`calculate`). Every other objective, `requireAnswer` and `markLowQuality` included,
+ *   is refused at its exact path.
  * - **Conditions and values** may read hidden fields (URL parameters), computed fields and reserved
  *   fields. An `element` operand is refused: there is no answer to read yet.
  *
@@ -177,6 +178,15 @@ const validateAction = (
   actionIdx: number
 ): TIssue | undefined => {
   const path = ["startLogic", ruleIdx, "actions", actionIdx];
+
+  if (action.objective === "markLowQuality") {
+    // ENG-6933: there is no response to judge yet. A screener sends the respondent to an ending.
+    return {
+      code: "custom",
+      message: `Conditional Logic: ${ruleLabel(ruleIdx)} can't mark the response Low quality: nothing has been answered yet. Jump to an ending to screen the respondent out instead.`,
+      path,
+    };
+  }
 
   if (!ALLOWED_OBJECTIVES.has(action.objective)) {
     return {

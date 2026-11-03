@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { ZId } from "./common";
 import { ZSurveyQuota } from "./quota";
+import { ZResponseNotShown, ZResponseNotShownInput } from "./surveys/not-shown";
 import { ZSurvey } from "./surveys/types";
 import { ZTag } from "./tags";
 
@@ -623,6 +624,29 @@ export const ZResponseInput = z.object({
 
 export type TResponseInput = z.infer<typeof ZResponseInput>;
 
+/**
+ * Mark as low quality from the survey (ENG-6933, ADR 0022/0023): a rule's action asks the server to set the
+ * response's outcome to Low quality, with the create or update that follows it. The flag is one way: only
+ * `true` is accepted, it never clears an outcome and sets no other value. The server sets the outcome and
+ * queues the Hub reconcile, exactly as a reviewer marking the response does.
+ *
+ * Only the client response routes take it, so it lives on the client inputs below and not on
+ * `ZResponseInput` / `ZResponseUpdateInput`, which the management APIs share and document.
+ */
+export const ZResponseMarkLowQuality = z.literal(true);
+
+/**
+ * The survey's create input on the public client routes (`POST /api/v1|v2/client/{workspaceId}/responses`):
+ * `ZResponseInput` plus the Mark as low quality flag (ENG-6933) and the not-shown record (ENG-6936). Kept off
+ * `ZResponseInput` itself, which the v1 and v2 management APIs also parse, so their contracts stay as they are.
+ */
+export const ZClientResponseInput = ZResponseInput.extend({
+  markLowQuality: ZResponseMarkLowQuality.optional(),
+  notShown: ZResponseNotShownInput.optional(),
+});
+
+export type TClientResponseInput = z.infer<typeof ZClientResponseInput>;
+
 export const ZResponseUpdateInput = z.object({
   finished: z.boolean().optional(),
   endingId: z.string().nullish(),
@@ -634,6 +658,20 @@ export const ZResponseUpdateInput = z.object({
 });
 
 export type TResponseUpdateInput = z.infer<typeof ZResponseUpdateInput>;
+
+/**
+ * The survey's update input on the public client route
+ * (`PUT /api/v1|v2/client/{workspaceId}/responses/{responseId}`): `ZResponseUpdateInput` plus the Mark as
+ * low quality flag (ENG-6933) and the not-shown record (ENG-6936). The survey sends the whole current
+ * not-shown record with every update; the server replaces the stored one with it and removes the answers
+ * it lists. Kept off `ZResponseUpdateInput`, which the management APIs also parse.
+ */
+export const ZClientResponseUpdateInput = ZResponseUpdateInput.extend({
+  markLowQuality: ZResponseMarkLowQuality.optional(),
+  notShown: ZResponseNotShownInput.optional(),
+});
+
+export type TClientResponseUpdateInput = z.infer<typeof ZClientResponseUpdateInput>;
 
 export const ZResponseWithSurvey = ZResponse.extend({
   survey: ZSurvey,
@@ -670,6 +708,11 @@ export const ZResponseUpdate = z.object({
   hiddenFields: ZResponseData.optional(),
   displayId: z.string().nullish(),
   endingId: z.string().nullish(),
+  // A rule marked the response Low quality on this submit (ENG-6933). Sent with this write and kept by
+  // the accumulated response, so a create built from it carries the flag too.
+  markLowQuality: ZResponseMarkLowQuality.optional(),
+  /** The whole current not-shown record (ENG-6936), sent with every create and update. */
+  notShown: ZResponseNotShownInput.optional(),
 });
 
 export type TResponseUpdate = z.infer<typeof ZResponseUpdate>;
@@ -703,6 +746,13 @@ export type TResponseTableData = z.infer<typeof ZResponseTableData>;
 
 export const ZResponseWithQuotas = ZResponse.extend({
   quotas: z.array(ZSurveyQuota.pick({ id: true, name: true })).optional(),
+  /**
+   * What the respondent was not shown (ENG-6936, ADR 0023); `null` means unknown. Read only for the
+   * app's own results (the responses page and the response card): it is not on `ZResponse`, and the
+   * shared response selection leaves it out, so webhooks, integrations and the v1/v2 payloads stay
+   * exactly as before.
+   */
+  notShown: ZResponseNotShown.nullish(),
 });
 
 export type TResponseWithQuotas = z.infer<typeof ZResponseWithQuotas>;

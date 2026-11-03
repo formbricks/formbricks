@@ -195,6 +195,18 @@ describe("the v3 read path against real Postgres", () => {
     expect(() => ZV3ResponseResource.parse(resource)).not.toThrow();
   });
 
+  test("both views carry the stored not-shown record read-only, and null when unknown (ENG-6936)", async () => {
+    expect((await readAndSerialize(seeded.responseId)).listItem.notShown).toBeNull();
+
+    const notShown = { blocks: ["blk2"], elements: ["q2"] };
+    await prisma.response.update({ where: { id: seeded.responseId }, data: { notShown } });
+    const { listItem, resource } = await readAndSerialize(seeded.responseId);
+
+    expect(listItem.notShown).toEqual(notShown);
+    expect(resource.notShown).toEqual(notShown);
+    expect(() => ZV3ResponseResource.parse(resource)).not.toThrow();
+  });
+
   test("the envelope is drawn from the survey, not invented", async () => {
     const { listItem } = await readAndSerialize(seeded.responseId);
 

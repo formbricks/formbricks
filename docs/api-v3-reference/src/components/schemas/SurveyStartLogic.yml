@@ -5,8 +5,8 @@ description: >-
   and also when a start-at link skips ahead. Each rule has the block-rule shape (`id`, `conditions`,
   `actions`), but only two actions are allowed: `jumpToBlock`, to a block or to an ending (an ending is
   a screen-out: the respondent sees only that ending, and a finished response is stored that counts as
-  Completed), and `calculate`, to set a computed field. `requireAnswer` and any other action are
-  rejected with a 422 naming `startLogic.<rule>.actions.<action>`. Nothing has been answered yet, so
+  Completed), and `calculate`, to set a computed field. `requireAnswer`, `markLowQuality` and any
+  other action are rejected with a 422 naming `startLogic.<rule>.actions.<action>`. Nothing has been answered yet, so
   conditions and values may read `hiddenField` (URL parameters), `variable` and `reserved` operands
   only; an `element` operand is rejected with a 422 naming `startLogic.<rule>.conditions` (or the
   action's `value`). A jump to a block or ending that does not exist is a `dangling_reference`. The

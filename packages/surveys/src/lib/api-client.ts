@@ -2,7 +2,7 @@ import { TDisplayCreateInput } from "@formbricks/types/displays";
 import { Result } from "@formbricks/types/error-handlers";
 import { type ApiErrorResponse, FILE_UPLOAD_ERROR_NAMES } from "@formbricks/types/errors";
 import { TSurveyQuotaAction } from "@formbricks/types/quota";
-import { TResponseInput, TResponseUpdateInput } from "@formbricks/types/responses";
+import { TClientResponseInput, TClientResponseUpdateInput } from "@formbricks/types/responses";
 import {
   STORAGE_CONFIGURATION_ERROR_CODES,
   type TStorageApiErrorDetails,
@@ -75,7 +75,7 @@ export class ApiClient {
   }
 
   async createResponse(
-    responseInput: Omit<TResponseInput, "workspaceId"> & {
+    responseInput: Omit<TClientResponseInput, "workspaceId"> & {
       contactId: string | null;
       recaptchaToken?: string;
     }
@@ -99,7 +99,9 @@ export class ApiClient {
     variables,
     language,
     pinAuthToken,
-  }: TResponseUpdateInput & { responseId: string }): Promise<
+    markLowQuality,
+    notShown,
+  }: TClientResponseUpdateInput & { responseId: string }): Promise<
     Result<TResponseUpdateResponse, ApiErrorResponse>
   > {
     return makeRequest(this.appUrl, `/api/v1/client/${this.workspaceId}/responses/${responseId}`, "PUT", {
@@ -110,6 +112,8 @@ export class ApiClient {
       variables,
       language,
       pinAuthToken,
+      markLowQuality,
+      notShown,
     });
   }
 

@@ -230,6 +230,13 @@ describe("surveyLogic", () => {
     expect(req.objective).toBe("requireAnswer");
     const jump = getUpdatedActionBody(req, "jumpToBlock");
     expect(jump.objective).toBe("jumpToBlock");
+    // ENG-6933: takes no target, so none is left behind from the action it replaces.
+    expect(getUpdatedActionBody(jump, "markLowQuality")).toEqual({ id: "A", objective: "markLowQuality" });
+    expect(getUpdatedActionBody({ id: "A", objective: "markLowQuality" }, "jumpToBlock")).toEqual({
+      id: "A",
+      objective: "jumpToBlock",
+      target: "",
+    });
   });
 
   test("evaluateLogic handles AND/OR groups and single conditions", () => {

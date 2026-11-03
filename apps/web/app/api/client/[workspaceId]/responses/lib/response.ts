@@ -11,12 +11,15 @@ import {
   evaluateResponseQuotas,
   loadQuotaEvaluationContext,
 } from "@/modules/ee/quotas/lib/evaluation-service";
+import { markResponseLowQualityFromSurvey } from "./mark-low-quality";
 
 type TQuotaEvaluationResponseInput = {
   surveyId: string;
   data: TResponse["data"];
   variables?: TResponse["variables"];
   language?: string;
+  /** A rule marked the response Low quality (ENG-6933); see `markResponseLowQualityFromSurvey`. */
+  markLowQuality?: true;
 };
 
 export const buildClientResponse = (
@@ -92,7 +95,10 @@ export const createResponseWithQuotaEvaluation = async <TInput extends TQuotaEva
     quotaContext: TQuotaEvaluationContext | null,
     responseContext: TClientResponseCreateContext
   ) => {
-    const response = await createResponse(responseInput, responseContext, txClient, ingestFlags);
+    const created = await createResponse(responseInput, responseContext, txClient, ingestFlags);
+    const response = responseInput.markLowQuality
+      ? await markResponseLowQualityFromSurvey(txClient, created)
+      : created;
 
     const quotaResult = await evaluateResponseQuotas({
       surveyId: response.surveyId,

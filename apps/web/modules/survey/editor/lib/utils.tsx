@@ -453,6 +453,7 @@ export const getActionObjectiveOptions = (t: TFunction): TComboboxOption[] => [
   { label: t("workspace.surveys.edit.calculate"), value: "calculate" },
   { label: t("workspace.surveys.edit.require_answer"), value: "requireAnswer" },
   { label: t("workspace.surveys.edit.jump_to_block"), value: "jumpToBlock" },
+  { label: t("workspace.surveys.edit.mark_as_low_quality"), value: "markLowQuality" },
 ];
 
 export const hasJumpToBlockAction = (actions: TSurveyBlockLogicAction[]): boolean => {

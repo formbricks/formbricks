@@ -75,7 +75,11 @@ export const ZActionCalculate = z.union([
 
 export type TActionCalculate = z.infer<typeof ZActionCalculate>;
 
-export type TSurveyBlockLogicActionObjective = "calculate" | "requireAnswer" | "jumpToBlock";
+export type TSurveyBlockLogicActionObjective =
+  | "calculate"
+  | "requireAnswer"
+  | "jumpToBlock"
+  | "markLowQuality";
 
 // RequireAnswer action - targets element IDs
 
@@ -121,9 +125,25 @@ export const ZActionJumpToBlock = z.object({
 
 export type TActionJumpToBlock = z.infer<typeof ZActionJumpToBlock>;
 
+// MarkLowQuality action (ENG-6933, ADR 0022/0023): when the rule fires, the survey asks the server to
+// mark the response Low quality with its next create or update (`markLowQuality: true`). The respondent
+// sees nothing. It takes no target, and is refused in the rules before the first question.
+
+export const ZActionMarkLowQuality = z.object({
+  id: ZId,
+  objective: z.literal("markLowQuality"),
+});
+
+export type TActionMarkLowQuality = z.infer<typeof ZActionMarkLowQuality>;
+
 // Block logic actions
 
-export const ZSurveyBlockLogicAction = z.union([ZActionCalculate, ZActionRequireAnswer, ZActionJumpToBlock]);
+export const ZSurveyBlockLogicAction = z.union([
+  ZActionCalculate,
+  ZActionRequireAnswer,
+  ZActionJumpToBlock,
+  ZActionMarkLowQuality,
+]);
 
 export type TSurveyBlockLogicAction = z.infer<typeof ZSurveyBlockLogicAction>;
 
