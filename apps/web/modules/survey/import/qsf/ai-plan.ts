@@ -236,5 +236,7 @@ export async function planQsfImport(params: {
     throw new SurveyImportTimeoutError();
   }
 
-  return { plan, issues, usage: run.usage, calls: run.calls };
+  // Every question is asked about and one left out of an answer fails, so no failure on the way means
+  // every question was answered.
+  return { plan, issues, usage: run.usage, calls: run.calls, conclusive: !run.failedOnTheWay };
 }
