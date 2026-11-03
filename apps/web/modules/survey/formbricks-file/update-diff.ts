@@ -6,7 +6,9 @@ import type { TSurveyImportPipelineIssue } from "@/modules/survey/import/core/re
  * What an Update takes away from a survey that already has responses (ENG-6851): one warning per
  * question the file does not have, and per option, matrix row or column a question it keeps loses.
  * Their answers stay in the database but stop showing in the summary, which is what the editor warns
- * about before a change to a survey with responses. The Update still goes ahead.
+ * about before a change to a survey with responses. A removed question goes ahead with its warning; a
+ * removed option of a survey that has left draft is refused before this runs, by the published lock
+ * (`getUpdateRefusal`), so its warning shows only for a survey taken back to draft.
  *
  * Questions and options are matched by id, wherever the file moved them. The stored blocks keep their
  * texts under `default`; the draft's are keyed by language code, and only its ids are read. Pure: the
