@@ -39,6 +39,8 @@ export const ZJsWorkspaceStateSurvey = ZSurveyBase.pick({
   isAutoProgressingEnabled: true,
   recaptcha: true,
   showConditions: true,
+  // Rules before the first question (ENG-6932): the survey runs them on load.
+  startLogic: true,
 })
   .extend({
     // Resolved custom overlay, set by the environment endpoint (see environment/lib/data.ts).

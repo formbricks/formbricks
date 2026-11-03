@@ -769,6 +769,78 @@ const blocks: TSurveyBlock[] = [
   profileBlock,
 ];
 
+/**
+ * Rules before the first question (ENG-6932), in the shape of json-shapes.md section 4: a screen-out
+ * on a missing panel id, a jump with a Set value from a URL parameter, and a Set value on a reserved
+ * field. Defined after the blocks so the sequential ids of the block rules above do not shift.
+ */
+const startLogic: TSurveyBlockLogic[] = [
+  {
+    id: nextId("rule"),
+    conditions: {
+      id: nextId("group"),
+      connector: "and",
+      conditions: [
+        {
+          id: nextId("cond"),
+          leftOperand: { type: "hiddenField", value: ids.hiddenFields.panelId },
+          operator: "isNotSet",
+        },
+      ],
+    },
+    actions: [{ id: nextId("action"), objective: "jumpToBlock", target: ids.endings.notForYou }],
+  },
+  {
+    id: nextId("rule"),
+    conditions: {
+      id: nextId("group"),
+      connector: "and",
+      conditions: [
+        {
+          id: nextId("cond"),
+          leftOperand: { type: "hiddenField", value: ids.hiddenFields.seg },
+          operator: "equals",
+          rightOperand: { type: "static", value: "heavy" },
+        },
+      ],
+    },
+    actions: [
+      {
+        id: nextId("action"),
+        objective: "calculate",
+        variableId: ids.variables.segment,
+        operator: "assign",
+        value: { type: "hiddenField", value: ids.hiddenFields.seg },
+      },
+      { id: nextId("action"), objective: "jumpToBlock", target: ids.blocks.heavyUsers },
+    ],
+  },
+  {
+    id: nextId("rule"),
+    conditions: {
+      id: nextId("group"),
+      connector: "and",
+      conditions: [
+        {
+          id: nextId("cond"),
+          leftOperand: { type: "reserved", value: "url" },
+          operator: "contains",
+          rightOperand: { type: "static", value: "preview" },
+        },
+      ],
+    },
+    actions: [
+      {
+        id: nextId("action"),
+        objective: "calculate",
+        variableId: ids.variables.segment,
+        operator: "concat",
+        value: { type: "static", value: "-preview" },
+      },
+    ],
+  },
+];
+
 export const surveyFlowFixture: TSurvey = {
   id: ids.survey,
   createdAt: new Date("2026-11-03T00:00:00.000Z"),
@@ -796,6 +868,7 @@ export const surveyFlowFixture: TSurvey = {
     showResponseCount: false,
   },
   questions: [],
+  startLogic,
   blocks,
   endings: [
     { id: ids.endings.thanks, type: "endScreen", headline: i18n("Thanks for your feedback!") },

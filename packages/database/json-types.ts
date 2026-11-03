@@ -22,7 +22,7 @@ import {
 } from "@formbricks/types/responses";
 import { type TBaseFilters } from "@formbricks/types/segment";
 import type { TShowConditionGroup } from "@formbricks/types/show-conditions";
-import { type TSurveyBlock } from "@formbricks/types/surveys/blocks";
+import { type TSurveyBlock, type TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import type { TSurveyFollowUpAction, TSurveyFollowUpTrigger } from "@formbricks/types/surveys/follow-up";
 import {
   type TSurveyClosedMessage,
@@ -74,6 +74,7 @@ declare global {
     export type SurveySingleUse = TSurveySingleUse;
     export type SurveyRecaptcha = TSurveyRecaptcha;
     export type SurveyShowConditions = TShowConditionGroup;
+    export type SurveyStartLogic = TSurveyBlockLogic[];
     export type SurveyLinkMetadata = TSurveyMetadata;
     export type OrganizationBilling = TOrganizationBilling;
     export type OrganizationBillingPlanLimits = TOrganizationBillingPlanLimits;
