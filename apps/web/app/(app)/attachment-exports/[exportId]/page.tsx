@@ -17,7 +17,8 @@ const Page = async ({ params }: Readonly<{ params: Promise<{ exportId: string }>
   const { exportId } = await params;
   const session = await getSession();
   if (!session?.user) {
-    redirect(`/auth/login?callbackUrl=${encodeURIComponent(`/attachment-exports/${exportId}`)}`);
+    const callbackUrl = encodeURIComponent(`/attachment-exports/${exportId}`);
+    redirect(`/auth/login?callbackUrl=${callbackUrl}`);
   }
 
   const t = await getTranslate();
