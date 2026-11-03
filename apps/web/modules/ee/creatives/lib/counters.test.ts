@@ -62,4 +62,26 @@ describe("creative counter Redis commands", () => {
 
     await expect(incrementCreativeCounters(counts)).rejects.toThrow("Redis operation timed out");
   });
+
+  test("reads a full creative claim without issuing a 200-command burst", async () => {
+    const creativeIds = Array.from({ length: 11 }, (_, index) => `creative-${String(index)}`);
+    let activeReads = 0;
+    let peakReads = 0;
+    const readCommand = vi.fn(async (key: string) => {
+      activeReads += 1;
+      peakReads = Math.max(peakReads, activeReads);
+      await Promise.resolve();
+      activeReads -= 1;
+      return key.endsWith(":devices") ? { "impressions:phone": "1" } : { "impressions:example.com/": "1" };
+    });
+    const commandClient = { hGetAll: readCommand } as unknown as RedisClientType;
+    vi.mocked(cache.getRedisClient).mockResolvedValue({} as RedisClientType);
+    vi.mocked(cache.runRedisOperation).mockImplementation(async (operation) => operation(commandClient));
+
+    const result = await readCreativeCounters(DAY, creativeIds);
+
+    expect(result.deviceRows.map((row) => row.creativeId)).toEqual(creativeIds);
+    expect(result.pageRows.map((row) => row.creativeId)).toEqual(creativeIds);
+    expect(peakReads).toBeLessThanOrEqual(10);
+  });
 });

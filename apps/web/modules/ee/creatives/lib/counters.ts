@@ -26,6 +26,8 @@ import type { TCreativeDeviceCountRow, TCreativePageCountRow } from "./stats-rep
 
 export const CREATIVE_COUNTER_TTL_SECONDS = 48 * 60 * 60;
 export const MAX_COUNTED_PAGES_PER_DAY = 1000;
+/** Keep each deadline-bound read small even when every creative reaches the daily page cap. */
+const CREATIVE_COUNTER_READ_BATCH_SIZE = 5;
 
 export interface TCreativeEventCounts {
   page: string;
@@ -200,26 +202,28 @@ export const readCreativeCounters = async (
   const redis = await getRedis();
   if (!redis) throw new Error("Redis is not available to read the claimed creative counters");
 
-  const hashes = await cache.runRedisOperation((client) =>
-    Promise.all(
-      creativeIds.map(async (creativeId) => {
-        const [devices, pages] = await Promise.all([
-          client.hGetAll(createCacheKey.creativeStats.devices(day, creativeId)),
-          client.hGetAll(createCacheKey.creativeStats.pages(day, creativeId)),
-        ]);
-        return { creativeId, devices, pages };
-      })
-    )
-  );
-
   const deviceRows: TCreativeDeviceCountRow[] = [];
   const pageRows: TCreativePageCountRow[] = [];
-  for (const { creativeId, devices, pages } of hashes) {
-    for (const [deviceType, total] of readTotals(devices)) {
-      if (isDeviceType(deviceType)) deviceRows.push({ creativeId, date: day, deviceType, ...total });
-    }
-    for (const [page, total] of readTotals(pages)) {
-      pageRows.push({ creativeId, date: day, page, ...total });
+  for (let start = 0; start < creativeIds.length; start += CREATIVE_COUNTER_READ_BATCH_SIZE) {
+    const hashes = await cache.runRedisOperation((client) =>
+      Promise.all(
+        creativeIds.slice(start, start + CREATIVE_COUNTER_READ_BATCH_SIZE).map(async (creativeId) => {
+          const [devices, pages] = await Promise.all([
+            client.hGetAll(createCacheKey.creativeStats.devices(day, creativeId)),
+            client.hGetAll(createCacheKey.creativeStats.pages(day, creativeId)),
+          ]);
+          return { creativeId, devices, pages };
+        })
+      )
+    );
+
+    for (const { creativeId, devices, pages } of hashes) {
+      for (const [deviceType, total] of readTotals(devices)) {
+        if (isDeviceType(deviceType)) deviceRows.push({ creativeId, date: day, deviceType, ...total });
+      }
+      for (const [page, total] of readTotals(pages)) {
+        pageRows.push({ creativeId, date: day, page, ...total });
+      }
     }
   }
   return { deviceRows, pageRows };

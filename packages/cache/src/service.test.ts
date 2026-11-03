@@ -42,7 +42,7 @@ describe("CacheService", () => {
     cacheService = new CacheService(mockRedis as unknown as RedisClient);
   });
 
-  test("bounds a raw Redis operation and invokes client cleanup on timeout", async () => {
+  test("bounds a raw Redis operation before discarding a stalled client", async () => {
     vi.useFakeTimers();
     try {
       const onTimeout = vi.fn();
@@ -54,6 +54,8 @@ describe("CacheService", () => {
       await vi.advanceTimersByTimeAsync(500);
       await assertion;
 
+      expect(onTimeout).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(1000);
       expect(onTimeout).toHaveBeenCalledOnce();
       expect(vi.getTimerCount()).toBe(0);
     } finally {
