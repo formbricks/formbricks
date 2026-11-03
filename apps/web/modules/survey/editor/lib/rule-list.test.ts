@@ -4,13 +4,19 @@ import {
   SURVEY_FLOW_FIXTURE_IDS as ids,
   surveyFlowFixture,
 } from "@formbricks/types/surveys/test-fixtures/survey-flow-fixture";
+import type { TSurvey } from "@formbricks/types/surveys/types";
 import {
+  START_SCOPE_BLOCK_IDX,
   createRule,
   duplicateRule,
+  getAllowedActionObjectives,
+  getDefaultStartCondition,
+  getNextActionObjective,
   moveRule,
   removeRule,
   setBlockLogicFallback,
   setBlockRules,
+  setStartRules,
   updateRuleActions,
   updateRuleConditions,
 } from "./rule-list";
@@ -124,5 +130,52 @@ describe("a block's rules on the survey", () => {
   test("an index outside the survey changes nothing", () => {
     expect(setBlockRules(surveyFlowFixture, 9, [])).toBe(surveyFlowFixture);
     expect(setBlockLogicFallback(surveyFlowFixture, -1, undefined)).toBe(surveyFlowFixture);
+  });
+});
+
+describe("the rules before the first question (ENG-6932)", () => {
+  const startRules = (): TSurveyBlockLogic[] => structuredClone(surveyFlowFixture.startLogic ?? []);
+
+  test("are set on the survey, and removing the last one stores none, as a new survey has", () => {
+    const one = setStartRules(surveyFlowFixture, startRules().slice(0, 1));
+    expect(one.startLogic).toHaveLength(1);
+    expect(one.blocks).toBe(surveyFlowFixture.blocks);
+
+    expect(setStartRules(surveyFlowFixture, []).startLogic).toBeNull();
+  });
+
+  test("offer only a jump and a calculation; a block's rules also offer require answer", () => {
+    expect(getAllowedActionObjectives(START_SCOPE_BLOCK_IDX)).toEqual(["calculate", "jumpToBlock"]);
+    expect(getAllowedActionObjectives(0)).toEqual(["calculate", "requireAnswer", "jumpToBlock"]);
+  });
+
+  test("an action added below a jump is a calculation before the first question, a require answer after a block", () => {
+    const jump = [{ id: "a", objective: "jumpToBlock" as const, target: "" }];
+
+    expect(getNextActionObjective(jump, START_SCOPE_BLOCK_IDX)).toBe("calculate");
+    expect(getNextActionObjective(jump, 2)).toBe("requireAnswer");
+    expect(getNextActionObjective([], START_SCOPE_BLOCK_IDX)).toBe("jumpToBlock");
+  });
+
+  test("a new condition reads the first URL parameter, as there is no answer yet", () => {
+    expect(getDefaultStartCondition(surveyFlowFixture)).toEqual({
+      leftOperand: { type: "hiddenField", value: ids.hiddenFields.panelId },
+      operator: "isSet",
+    });
+  });
+
+  test("without URL parameters, a new condition reads the page URL", () => {
+    const survey: TSurvey = {
+      ...surveyFlowFixture,
+      embeddedFields: (surveyFlowFixture.embeddedFields ?? []).filter(
+        (field) => field.field.source !== "ingested"
+      ),
+      hiddenFields: { enabled: true, fieldIds: [] },
+    };
+
+    expect(getDefaultStartCondition(survey)).toEqual({
+      leftOperand: { type: "reserved", value: "url" },
+      operator: "isSet",
+    });
   });
 });
