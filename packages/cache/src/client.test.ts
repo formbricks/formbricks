@@ -284,6 +284,53 @@ describe("@formbricks/cache factory", () => {
       expect(mockCreateClient).toHaveBeenCalledTimes(1);
     });
 
+    test("does not extend backoff when another module instance already discarded the client", async () => {
+      process.env.REDIS_URL = "redis://localhost:6379";
+      const now = Date.now();
+      const clock = vi.spyOn(Date, "now").mockReturnValue(now);
+      const random = vi.spyOn(Math, "random").mockReturnValue(0);
+      const firstClient: MockRedisClient = {
+        isOpen: true,
+        isReady: true,
+        on: vi.fn(),
+        connect: vi.fn().mockResolvedValue(undefined),
+        destroy: vi.fn(),
+      };
+      const nextClient: MockRedisClient = {
+        isOpen: true,
+        isReady: true,
+        on: vi.fn(),
+        connect: vi.fn().mockResolvedValue(undefined),
+        destroy: vi.fn(),
+      };
+      mockCreateClient
+        .mockReturnValueOnce(firstClient as unknown as ReturnType<typeof createClient>)
+        .mockReturnValueOnce(nextClient as unknown as ReturnType<typeof createClient>);
+
+      try {
+        expect((await getCacheService()).ok).toBe(true);
+        vi.resetModules();
+        const anotherModule = await import("./client");
+        expect((await anotherModule.getCacheService()).ok).toBe(true);
+
+        firstClient.isReady = false;
+        firstClient.isOpen = false;
+        const onError = firstClient.on.mock.calls.find(([event]) => event === "error")?.[1] as
+          | ((error: Error) => void)
+          | undefined;
+        expect(onError).toBeDefined();
+        onError?.(new Error("socket closed"));
+
+        clock.mockReturnValue(now + 1001);
+        expect((await anotherModule.getCacheService()).ok).toBe(false);
+        expect((await anotherModule.getCacheService()).ok).toBe(true);
+        expect(mockCreateClient).toHaveBeenCalledTimes(2);
+      } finally {
+        clock.mockRestore();
+        random.mockRestore();
+      }
+    });
+
     test("should allow retry after failed initialization", async () => {
       const now = Date.now();
       const clock = vi.spyOn(Date, "now").mockReturnValue(now);
