@@ -39,6 +39,7 @@ import { lastActivePlugin, recordActivityOnSessionUpdate } from "./better-auth-l
 import { auditPasswordReset, betterAuthLogger, signInAuditPlugin } from "./better-auth-observability";
 import { requirePasswordResetEnabledBeforeHandler } from "./better-auth-password-reset-gate";
 import { healCredentialAccountIssuerBeforeHandler } from "./credential-issuer-heal";
+import { restrictDashboardViewerConsentBeforeHandler } from "./dashboard-viewer-oauth-consent";
 import { getMcpOauthProviderOptions } from "./mcp-oauth-provider-options";
 import { revokeOAuthConsentBeforeHandler } from "./oauth-grant-revocation";
 import { getAuthIssuerUrl, getMcpResourceUrl } from "./oauth-urls";
@@ -393,6 +394,10 @@ export const auth = betterAuth({
       // ENG-2499: revoking an app deletes its consent AND revokes its tokens, in one transaction. Returns
       // a response only for /oauth2/delete-consent, short-circuiting the upstream delete, which would
       // leave the tokens live. See oauth-grant-revocation.ts.
+      // ADR-0018 / ENG-6889: a Dashboard viewer grants at most dashboards:read, whatever was requested.
+      // Path-disjoint from the revocation below (consent and update-consent vs delete-consent).
+      const viewerConsent = await restrictDashboardViewerConsentBeforeHandler(ctx);
+      if (viewerConsent) return viewerConsent;
       return await revokeOAuthConsentBeforeHandler(ctx);
     }),
     after: createAuthMiddleware(runAfterAuthHooks),

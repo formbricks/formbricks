@@ -9,6 +9,7 @@ import { reconcileOrganizationMembership } from "@/lib/authzed/organization-memb
 import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { validateInputs } from "@/lib/utils/validate";
+import { revokeAllUserOAuthGrants } from "@/modules/auth/lib/oauth-grant-revocation";
 
 export const updateMembership = async (
   userId: string,
@@ -55,6 +56,16 @@ export const updateMembership = async (
         where: { userId, role: "admin", team: { organizationId } },
         data: { role: "contributor" },
       });
+
+      // Someone who is now only ever a Dashboard viewer keeps no OAuth grant from a wider role: their
+      // consents go and their refresh tokens are revoked, so the next authorization passes through a
+      // consent that offers only dashboards:read (ENG-6889), and no refresh mints a wider token.
+      const otherRoles = await client.membership.count({
+        where: { userId, role: { not: "dashboard_viewer" } },
+      });
+      if (otherRoles === 0) {
+        await revokeAllUserOAuthGrants(client, userId);
+      }
     }
 
     const teamMemberships = await client.teamUser.findMany({

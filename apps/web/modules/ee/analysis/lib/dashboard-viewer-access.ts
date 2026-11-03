@@ -151,3 +151,34 @@ export const getDashboardViewerHomePath = async (
   const target = workspaces.find(({ id }) => id === preferredWorkspaceId) ?? workspaces[0];
   return target ? `/workspaces/${target.id}/dashboards` : getDashboardViewerUnavailablePath(organizationId);
 };
+
+/**
+ * Whether every organization membership `userId` holds is the Dashboard viewer role. Such a user can
+ * only ever read dashboards, so an OAuth grant they give is limited to `dashboards:read`. A user who is
+ * a viewer in one organization and holds another role elsewhere grants as before: each operation still
+ * refuses them the viewer organization's data (ADR-0018).
+ */
+export const isDashboardViewerOnly = async (userId: string): Promise<boolean> => {
+  const memberships = await prisma.membership.findMany({ where: { userId }, select: { role: true } });
+  return memberships.length > 0 && memberships.every(({ role }) => role === "dashboard_viewer");
+};
+
+/**
+ * Every workspace whose dashboards `userId` may read as a Dashboard viewer, across the organizations
+ * where it is one and still entitled. What `GET /api/v3/workspaces` (and the MCP `list_workspaces` tool)
+ * adds for the role, so its MCP client can find the workspace ids its dashboard tools take.
+ */
+export const listDashboardViewerWorkspacesForUser = async (
+  userId: string
+): Promise<Array<{ id: string; name: string; organizationId: string }>> => {
+  const organizations = await listDashboardViewerOrganizations(userId);
+  const perOrganization = await Promise.all(
+    organizations.map(async ({ id: organizationId }) =>
+      (await listDashboardViewerWorkspaces(userId, organizationId)).map((workspace) => ({
+        ...workspace,
+        organizationId,
+      }))
+    )
+  );
+  return perOrganization.flat();
+};

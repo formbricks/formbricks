@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { resetDb } from "@/integration/reset-db";
 import { updateTeamDetails } from "@/modules/ee/teams/team-list/lib/team";
+import { createApiKeyAction } from "@/modules/organization/settings/api-keys/actions";
 import { bulkInviteUsersAction, inviteUserAction } from "@/modules/organization/settings/teams/actions";
 import { updateInviteAction, updateMembershipAction } from "./actions";
 
@@ -245,6 +246,21 @@ describe("role edits", () => {
         workspaces: [{ workspaceId: ids.workspace, permission: "read" }],
       })
     ).rejects.toThrow("A Dashboard viewer can't be a team admin");
+  });
+
+  test("a Dashboard viewer can't create an API key (regression, ENG-6903)", async () => {
+    as(ids.target);
+    const result = await createApiKeyAction({
+      organizationId: ids.organization,
+      apiKeyData: {
+        label: "viewer key",
+        workspaceAccess: [{ workspaceId: ids.workspace, permission: "read" }],
+        organizationAccess: { accessControl: { read: false, write: false } },
+      },
+    } as never);
+
+    expect(result?.serverError).toBeDefined();
+    expect(await prisma.apiKey.count({ where: { organizationId: ids.organization } })).toBe(0);
   });
 
   test("an Owner changes the viewer back to Member", async () => {

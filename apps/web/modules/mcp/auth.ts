@@ -20,6 +20,7 @@ import { withAuthorizationSurface } from "@/lib/authorization/context";
 import { parseApiKeyV2 } from "@/lib/crypto";
 import { authenticateApiKeyFromHeaders, getBearerTokenFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { auth } from "@/modules/auth/lib/auth";
+import { trimScopesForDashboardViewer } from "@/modules/auth/lib/dashboard-viewer-oauth-scopes";
 import {
   MCP_CHALLENGE_SCOPE,
   MCP_READ_SCOPES,
@@ -34,6 +35,7 @@ import {
 } from "@/modules/auth/lib/oauth-urls";
 import { applyIPRateLimit, applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
+import { isDashboardViewerOnly } from "@/modules/ee/analysis/lib/dashboard-viewer-access";
 
 const QUERY_CREDENTIAL_PARAMS = new Set([
   "api_key",
@@ -557,6 +559,13 @@ async function authenticateMcpOAuthBearer(
       logMessage: "MCP OAuth token user is inactive",
       logContext: { clientId: authInfo.clientId },
     });
+  }
+
+  // ADR-0018 / ENG-6889: a Dashboard viewer's grant never reaches past `dashboards:read`, whatever the
+  // token carries. Consent already narrows new grants; this bounds a token minted before the user became
+  // a viewer, for the up-to-15 minutes it stays valid, and any grant a revocation missed.
+  if (await isDashboardViewerOnly(sessionAuthentication.user.id)) {
+    authInfo.scopes = trimScopesForDashboardViewer(authInfo.scopes);
   }
 
   // Minimum grant required to authenticate against the MCP server at all: at least ONE *resource*

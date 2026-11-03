@@ -480,6 +480,52 @@ describe("everything else refuses a viewer", () => {
   });
 });
 
+describe("the free-form chart routes answer a viewer exactly as a member without access", () => {
+  test.each([
+    [
+      "POST /charts/preview",
+      (userId: string) =>
+        previewV3Chart({
+          body: ZV3ChartPreviewBody.parse({
+            workspaceId: fixture.workspaceId,
+            datasetId: fixture.datasetId,
+            type: "bar",
+            query: { measures: ["FeedbackRecords.count"] },
+          }),
+          ...ctx(userId, "/api/v3/charts/preview"),
+        }),
+    ],
+    [
+      "GET /charts/fields/{field}/values",
+      (userId: string) =>
+        listV3ChartFieldValues({
+          field: "sourceName",
+          query: ZV3ChartFieldValuesQuery.parse({
+            workspaceId: fixture.workspaceId,
+            datasetId: fixture.datasetId,
+          }),
+          ...ctx(userId, "/api/v3/charts/fields/values"),
+        }),
+    ],
+    [
+      "GET /charts/{id}/data",
+      (userId: string) =>
+        getV3ChartData({
+          chartId: ids.chart,
+          query: ZV3ChartDataQuery.parse({}),
+          ...ctx(userId, "/api/v3/charts/data"),
+        }),
+    ],
+  ] as const)("%s", async (_route, call) => {
+    const asViewer = await call(ids.viewer);
+    const asOutsider = await call(fixture.users.outsider);
+    const strip = (body: Record<string, unknown>) => ({ ...body, requestId: undefined });
+
+    expect(asViewer.status).toBe(403);
+    expect(strip(await asViewer.json())).toEqual(strip(await asOutsider.json()));
+  });
+});
+
 describe("role changes are projected at once", () => {
   test("a Member made a viewer loses the member relation and every raw read", async () => {
     await expect(

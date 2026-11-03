@@ -6,6 +6,7 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
+import { revokeAllUserOAuthGrants } from "@/modules/auth/lib/oauth-grant-revocation";
 import { updateMembership } from "./membership";
 
 vi.mock("@formbricks/database", () => ({
@@ -13,6 +14,7 @@ vi.mock("@formbricks/database", () => ({
     membership: {
       update: vi.fn(),
       findMany: vi.fn(),
+      count: vi.fn(),
     },
     teamUser: {
       findMany: vi.fn(),
@@ -24,6 +26,7 @@ vi.mock("@formbricks/database", () => ({
 vi.mock("@/lib/authzed/organization-membership", () => ({
   reconcileOrganizationMembership: vi.fn(),
 }));
+vi.mock("@/modules/auth/lib/oauth-grant-revocation", () => ({ revokeAllUserOAuthGrants: vi.fn() }));
 vi.mock("@/lib/authzed/team-workspace", () => ({
   reconcileTeamWorkspaceRelationships: vi.fn(),
 }));
@@ -139,6 +142,26 @@ describe("updateMembership", () => {
       teamMemberships: [{ teamId: "team1", userId: "user1" }],
     });
   });
+
+  test.each([
+    [0, true],
+    [1, false],
+  ])(
+    "with %d other non-viewer memberships, revokes the user's OAuth grants: %s",
+    async (otherRoles, revoked) => {
+      vi.mocked(prisma.membership.update).mockResolvedValue({ role: "dashboard_viewer" } as never);
+      vi.mocked(prisma.teamUser.findMany).mockResolvedValue([] as never);
+      vi.mocked(prisma.membership.count).mockResolvedValue(otherRoles);
+
+      await updateMembership("user1", "org1", { role: "dashboard_viewer" });
+
+      expect(prisma.membership.count).toHaveBeenCalledWith({
+        where: { userId: "user1", role: { not: "dashboard_viewer" } },
+      });
+      if (revoked) expect(revokeAllUserOAuthGrants).toHaveBeenCalledWith(prisma, "user1");
+      else expect(revokeAllUserOAuthGrants).not.toHaveBeenCalled();
+    }
+  );
 
   test("includes memberships added while team roles are being updated in reconciliation", async () => {
     const mockMembership = {

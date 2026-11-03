@@ -14,12 +14,14 @@ import {
   handleAuthenticatedMcpRequest,
 } from "./auth";
 
-const { getJwksMock, verifyBearerTokenMock, userFindUniqueMock, warnMock } = vi.hoisted(() => ({
-  getJwksMock: vi.fn(),
-  verifyBearerTokenMock: vi.fn(),
-  userFindUniqueMock: vi.fn(),
-  warnMock: vi.fn(),
-}));
+const { getJwksMock, verifyBearerTokenMock, userFindUniqueMock, warnMock, isDashboardViewerOnlyMock } =
+  vi.hoisted(() => ({
+    isDashboardViewerOnlyMock: vi.fn(async () => false),
+    getJwksMock: vi.fn(),
+    verifyBearerTokenMock: vi.fn(),
+    userFindUniqueMock: vi.fn(),
+    warnMock: vi.fn(),
+  }));
 
 vi.mock("better-auth/oauth2", async (importOriginal) => ({
   ...(await importOriginal<typeof import("better-auth/oauth2")>()),
@@ -53,6 +55,10 @@ vi.mock("@formbricks/database", () => ({
       upsert: (args: { create: unknown }) => Promise.resolve(args.create),
     },
   },
+}));
+
+vi.mock("@/modules/ee/analysis/lib/dashboard-viewer-access", () => ({
+  isDashboardViewerOnly: isDashboardViewerOnlyMock,
 }));
 
 vi.mock("@/modules/api/lib/api-key-auth", () => ({
@@ -329,6 +335,46 @@ describe("authenticateMcpRequest", () => {
       expect(result.response.status).toBe(429);
       expect(result.response.headers.get("Retry-After")).toBe("30");
     }
+  });
+
+  test("bounds a Dashboard viewer's OAuth token to dashboards:read, whatever it carries (ADR-0018)", async () => {
+    isDashboardViewerOnlyMock.mockResolvedValueOnce(true);
+    verifyBearerTokenMock.mockResolvedValue({
+      aud: MCP_AUDIENCE,
+      sub: "viewer_1",
+      exp: 2_000_000_000,
+      azp: "client_1",
+      scope:
+        "openid offline_access surveys:read responses:read feedbackRecords:read dashboards:read dashboards:write",
+    });
+
+    const result = await authenticateMcpRequest(
+      createRequest("http://localhost/api/mcp", { authorization: "Bearer oauth_access_token" })
+    );
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.authInfo.scopes).toEqual(["openid", "offline_access", "dashboards:read"]);
+    }
+    expect(isDashboardViewerOnlyMock).toHaveBeenCalledWith("viewer_1");
+  });
+
+  test("refuses a Dashboard viewer's token that carries no dashboards:read", async () => {
+    isDashboardViewerOnlyMock.mockResolvedValueOnce(true);
+    verifyBearerTokenMock.mockResolvedValue({
+      aud: MCP_AUDIENCE,
+      sub: "viewer_1",
+      exp: 2_000_000_000,
+      azp: "client_1",
+      scope: "openid surveys:read responses:read",
+    });
+
+    const result = await authenticateMcpRequest(
+      createRequest("http://localhost/api/mcp", { authorization: "Bearer oauth_access_token" })
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.response.status).toBe(403);
   });
 
   test("authenticates OAuth bearer tokens and rate limits by user and client", async () => {
